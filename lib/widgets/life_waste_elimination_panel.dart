@@ -77,7 +77,7 @@ class LifeWasteEliminationPanel extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        '時間・お金・健康・体力・知能・集中力を生命資本として扱い、浪費をAIで分析して次の改善に戻します。',
+                        '時間・お金・健康・体力・知能・集中力を生命資本として扱い、浪費をAIで分析して次の改善へ戻します。',
                         style: TextStyle(
                           color: subColor,
                           fontSize: 12,

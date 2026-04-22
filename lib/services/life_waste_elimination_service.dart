@@ -90,7 +90,7 @@ class LifeWasteAiReview {
     String? reason,
   }) {
     final reasonText =
-        reason == null || reason.trim().isEmpty ? '' : '（$reason）';
+        reason == null || reason.trim().isEmpty ? '' : ' $reason';
     final top = report.prioritySignals.first;
     return LifeWasteAiReview(
       summary:
@@ -131,7 +131,7 @@ class LifeWasteEliminationService {
       LifeWasteResourceSignal(
         resource: LifeWasteResource.time,
         label: '時間',
-        csf: '誘惑を開く前に止める',
+        csf: '惰性アプリを開く前に止める',
         kpi: '時間浪費ブロック率',
         actual: _timeWasteScore(
           totalSlips: totalSlips,
@@ -142,7 +142,7 @@ class LifeWasteEliminationService {
         currentLabel: '逸脱 $totalSlips件 / 取り戻した時間 $abstinenceTimeSavedMinutes分',
         nextAction: totalSlips > 0
             ? '今日の逸脱を1件だけ選び、次に開く前の代替行動を決める'
-            : '一番誘惑が強いアプリを先に閉じ、作業開始から25分だけ守る',
+            : '一番惰性が強いアプリを先に閉じ、作業開始から15分だけ守る',
       ),
       LifeWasteResourceSignal(
         resource: LifeWasteResource.money,
@@ -209,7 +209,7 @@ class LifeWasteEliminationService {
         resource: LifeWasteResource.focus,
         label: '集中力',
         csf: '未完了の必須タスクを先に畳む',
-        kpi: '集中ロック率',
+        kpi: '集中ブロック率',
         actual: _focusScore(
           pendingCriticalTaskCount: pendingCriticalTaskCount,
           featureProgress: featureProgress,
@@ -223,14 +223,14 @@ class LifeWasteEliminationService {
       ),
     ];
 
+    final averageProgress =
+        signals.map((s) => s.progress).reduce((a, b) => a + b) / signals.length;
     final plan = KgiCsfKpiPlan(
       domain: 'ライフマネジメント / 浪費ゼロ',
       kgi: '時間・お金・健康・体力・知能・集中力の浪費をなくす',
-      actualLabel:
-          '${((signals.map((s) => s.progress).reduce((a, b) => a + b) / signals.length) * 100).round()}点',
+      actualLabel: '${(averageProgress * 100).round()}点',
       targetLabel: '100点',
-      progress: signals.map((s) => s.progress).reduce((a, b) => a + b) /
-          signals.length,
+      progress: averageProgress,
       metrics: signals
           .map(
             (signal) => KgiCsfKpiMetric.number(
@@ -318,7 +318,7 @@ class LifeWasteAiReviewService {
       return LifeWasteAiReview.fallback(
         report: report,
         generatedAt: _now(),
-        reason: 'AI連携に失敗しました',
+        reason: 'AI連携に失敗しました。',
       );
     }
   }
@@ -332,7 +332,6 @@ class LifeWasteAiReviewService {
 あなたはライフマネジメントのAI COOです。
 最重要課題は、時間・お金・健康・体力・知能・集中力の浪費をなくすことです。
 以下のKGI/CSF/KPIから、現状分析、最重要CSF、今すぐの改善アクション、次回モニタリング観点を日本語3行以内で返してください。
-
 生命資本スコア: ${report.wasteFreeScore}/100
 KGI: ${report.plan.kgi}
 $lines

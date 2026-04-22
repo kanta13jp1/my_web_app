@@ -22,11 +22,17 @@ class FeatureStrategyMonitorService {
         monitoredAt: checkedAt,
       );
     }).toList();
+    final consolidationCandidates = _buildConsolidationCandidates(
+      catalog: uniqueCatalog,
+      signals: signals,
+      sectionNamesById: sectionNamesById,
+    );
 
     return FeatureStrategyReport(
       monitoredAt: checkedAt,
       signals: signals,
-      portfolioPlan: _buildPortfolioPlan(signals),
+      consolidationCandidates: consolidationCandidates,
+      portfolioPlan: _buildPortfolioPlan(signals, consolidationCandidates),
     );
   }
 
@@ -64,7 +70,7 @@ class FeatureStrategyMonitorService {
     );
     final plan = KgiCsfKpiPlan(
       domain: '$sectionName / ${entry.title}',
-      kgi: '${entry.title}をAI分析で成果に接続し、定期運用に載せる',
+      kgi: '${entry.title}をAI分析で成果に接続し、定期運用に乗せる',
       actualLabel: '${(progress * 100).round()}%',
       targetLabel: '100%',
       progress: progress,
@@ -153,8 +159,8 @@ class FeatureStrategyMonitorService {
   }) {
     final usage = switch (recentUsageScore) {
       2 => '直近利用が強く、継続運用の候補です',
-      1 => '直近利用があり、KPIを維持監視します',
-      _ => '利用シグナルが薄く、価値仮説の再確認が必要です',
+      1 => '直近利用があり、KPIを継続監視します',
+      _ => '利用シグナルが弱く、価値仮説の再確認が必要です',
     };
     final keywords = entry.keywords.take(2).join(' / ');
     final axis = keywords.isEmpty ? sectionName : keywords;
@@ -166,7 +172,7 @@ class FeatureStrategyMonitorService {
     int recentUsageScore,
   ) {
     if (entry.requiresClearDeck && recentUsageScore == 0) {
-      return '固定枠から通常導線へ移す条件を決め、初回利用KPIを設定する';
+      return '固定導線から通常導線へ移す条件を決め、初回利用KPIを設定する';
     }
     if (recentUsageScore == 0) {
       return 'ホーム導線またはAI推薦で再露出し、次回利用を1回発生させる';
@@ -174,7 +180,149 @@ class FeatureStrategyMonitorService {
     return '直近利用をもとに成果KPIを更新し、週次レビュー対象へ送る';
   }
 
-  KgiCsfKpiPlan _buildPortfolioPlan(List<FeatureStrategySignal> signals) {
+  List<FeatureConsolidationCandidate> _buildConsolidationCandidates({
+    required List<FeatureStrategyCatalogItem> catalog,
+    required List<FeatureStrategySignal> signals,
+    required Map<String, String> sectionNamesById,
+  }) {
+    final byId = {for (final signal in signals) signal.featureId: signal};
+    final groups = <String, List<FeatureStrategyCatalogItem>>{};
+    final axes = <String, String>{};
+
+    for (final entry in catalog) {
+      for (final axis in _candidateAxes(entry)) {
+        final groupKey = '${entry.sectionId}:$axis';
+        groups
+            .putIfAbsent(groupKey, () => <FeatureStrategyCatalogItem>[])
+            .add(entry);
+        axes[groupKey] = axis;
+      }
+    }
+
+    final candidates = <FeatureConsolidationCandidate>[];
+    for (final entry in groups.entries) {
+      final items = _uniqueItems(entry.value);
+      if (items.length < 2) continue;
+
+      items.sort((a, b) {
+        final aSignal = byId[a.id];
+        final bSignal = byId[b.id];
+        final byProgress =
+            (bSignal?.progress ?? 0).compareTo(aSignal?.progress ?? 0);
+        if (byProgress != 0) return byProgress;
+        return a.title.compareTo(b.title);
+      });
+
+      final canonical = items.first;
+      final sectionName =
+          sectionNamesById[canonical.sectionId] ?? canonical.sectionId;
+      final duplicateCount = items.length;
+      final plan = KgiCsfKpiPlan(
+        domain: '$sectionName / 類似機能統合',
+        kgi: '${canonical.title}へ似た機能を束ね、迷わず使える導線にする',
+        actualLabel: '1統合案',
+        targetLabel: '$duplicateCount機能整理',
+        progress: 1 / duplicateCount,
+        metrics: <KgiCsfKpiMetric>[
+          KgiCsfKpiMetric.number(
+            csf: '重複導線の削減',
+            kpi: '統合候補に含まれる機能数',
+            actual: duplicateCount,
+            target: duplicateCount,
+            unit: '機能',
+          ),
+          KgiCsfKpiMetric.number(
+            csf: '代表機能の明確化',
+            kpi: '代表導線の選定',
+            actual: 1,
+            target: 1,
+            unit: '件',
+          ),
+          KgiCsfKpiMetric.number(
+            csf: 'モニタリング継続',
+            kpi: '次回レビューで統合判断する候補',
+            actual: 1,
+            target: duplicateCount,
+            unit: '件',
+          ),
+        ],
+      );
+
+      candidates.add(
+        FeatureConsolidationCandidate(
+          groupKey: entry.key,
+          canonicalFeatureName: canonical.title,
+          featureNames: items.map((item) => item.title).toList(),
+          sectionName: sectionName,
+          sharedAxis: axes[entry.key] ?? '共通目的',
+          plan: plan,
+        ),
+      );
+    }
+
+    candidates.sort((a, b) {
+      final count = b.duplicateCount.compareTo(a.duplicateCount);
+      if (count != 0) return count;
+      return a.canonicalFeatureName.compareTo(b.canonicalFeatureName);
+    });
+    return candidates.take(8).toList(growable: false);
+  }
+
+  List<FeatureStrategyCatalogItem> _uniqueItems(
+    List<FeatureStrategyCatalogItem> items,
+  ) {
+    final seen = <String>{};
+    return [
+      for (final item in items)
+        if (seen.add(item.id)) item,
+    ];
+  }
+
+  List<String> _candidateAxes(FeatureStrategyCatalogItem entry) {
+    final axes = <String>{};
+    for (final keyword in entry.keywords) {
+      final normalized = _normalizeAxis(keyword);
+      if (_isUsefulAxis(normalized)) {
+        axes.add(normalized);
+      }
+    }
+    return axes.take(3).toList(growable: false);
+  }
+
+  String _normalizeAxis(String value) {
+    return value.toLowerCase().replaceAll(RegExp(r'[\s　_\-・/]+'), '').trim();
+  }
+
+  bool _isUsefulAxis(String axis) {
+    if (axis.length < 2) return false;
+    const stopwords = {
+      'ai',
+      'kpi',
+      '管理',
+      '分析',
+      '自動',
+      '機能',
+      'ツール',
+      'ダッシュボード',
+      '検索',
+      '共有',
+      '提案',
+      '生成',
+      '作成',
+      'メモ',
+      'ノート',
+      'タスク',
+      '戦略',
+      'dashboard',
+      'tool',
+    };
+    return !stopwords.contains(axis);
+  }
+
+  KgiCsfKpiPlan _buildPortfolioPlan(
+    List<FeatureStrategySignal> signals,
+    List<FeatureConsolidationCandidate> consolidationCandidates,
+  ) {
     final total = signals.length;
     if (total == 0) {
       return FeatureStrategyReport.empty(DateTime.now()).portfolioPlan;
@@ -194,6 +342,7 @@ class FeatureStrategyMonitorService {
             .map((signal) => signal.progress)
             .fold<double>(0, (sum, value) => sum + value) /
         math.max(1, total);
+    final consolidationTarget = math.max(1, consolidationCandidates.length);
 
     return KgiCsfKpiPlan(
       domain: '全機能AI戦略',
@@ -222,6 +371,13 @@ class FeatureStrategyMonitorService {
           actual: total - improve,
           target: total,
           unit: '機能',
+        ),
+        KgiCsfKpiMetric.number(
+          csf: '類似機能の抽象化',
+          kpi: '統合候補をレビュー対象として可視化',
+          actual: consolidationCandidates.length,
+          target: consolidationTarget,
+          unit: '候補',
         ),
       ],
     );

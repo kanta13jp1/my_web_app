@@ -13,9 +13,10 @@ void main() {
         expect(body['action'], 'provider.chat');
         expect(body['provider'], 'deepinfra');
         expect(body['message'].toString(), contains('総機能数'));
+        expect(body['message'].toString(), contains('類似機能の統合候補'));
         return {
           'success': true,
-          'text': '改善優先の機能を週次レビューに集約し、直近利用のない導線をAI推薦へ戻します。',
+          'text': '改善優先の機能を週次レビューへ集約し、未利用導線をAI推薦へ戻します。',
         };
       },
     );
@@ -38,7 +39,7 @@ void main() {
 
     expect(review.isFallback, isTrue);
     expect(review.source, 'local-kpi-engine');
-    expect(review.summary, contains('AI'));
+    expect(review.summary, contains('AIレビュー待機中'));
   });
 }
 
@@ -50,6 +51,13 @@ FeatureStrategyReport _buildReport() {
         sectionId: 'today',
         title: 'Daily Command',
         subtitle: 'Start the day',
+        keywords: <String>['daily'],
+      ),
+      FeatureStrategyCatalogItem(
+        id: 'daily-review',
+        sectionId: 'today',
+        title: 'Daily Review',
+        subtitle: 'Review the day',
         keywords: <String>['daily'],
       ),
       FeatureStrategyCatalogItem(

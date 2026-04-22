@@ -54,14 +54,39 @@ class FeatureStrategySignal {
   double get progress => plan.displayProgress;
 }
 
+class FeatureConsolidationCandidate {
+  final String groupKey;
+  final String canonicalFeatureName;
+  final List<String> featureNames;
+  final String sectionName;
+  final String sharedAxis;
+  final KgiCsfKpiPlan plan;
+
+  const FeatureConsolidationCandidate({
+    required this.groupKey,
+    required this.canonicalFeatureName,
+    required this.featureNames,
+    required this.sectionName,
+    required this.sharedAxis,
+    required this.plan,
+  });
+
+  int get duplicateCount => featureNames.length;
+
+  String get summary =>
+      '$sharedAxis を軸に ${featureNames.join(' / ')} を $canonicalFeatureName へ統合候補化';
+}
+
 class FeatureStrategyReport {
   final DateTime monitoredAt;
   final List<FeatureStrategySignal> signals;
+  final List<FeatureConsolidationCandidate> consolidationCandidates;
   final KgiCsfKpiPlan portfolioPlan;
 
   const FeatureStrategyReport({
     required this.monitoredAt,
     required this.signals,
+    required this.consolidationCandidates,
     required this.portfolioPlan,
   });
 
@@ -69,6 +94,7 @@ class FeatureStrategyReport {
     return FeatureStrategyReport(
       monitoredAt: monitoredAt,
       signals: const <FeatureStrategySignal>[],
+      consolidationCandidates: const <FeatureConsolidationCandidate>[],
       portfolioPlan: const KgiCsfKpiPlan(
         domain: '全機能AI戦略',
         kgi: '全機能をAI分析とKGI/CSF/KPI監視に接続する',
@@ -85,6 +111,7 @@ class FeatureStrategyReport {
   int get onTrackCount => _countByStatus(FeatureStrategyStatus.onTrack);
   int get watchCount => _countByStatus(FeatureStrategyStatus.watch);
   int get improveCount => _countByStatus(FeatureStrategyStatus.improve);
+  int get consolidationCount => consolidationCandidates.length;
 
   double get aiCoverageRatio =>
       totalFeatures == 0 ? 0 : monitoredFeatures / totalFeatures;
@@ -131,7 +158,7 @@ class FeatureStrategyAiReview {
       source: 'local-kpi-engine',
       isFallback: true,
       summary:
-          'AIレビュー待機中。${report.totalFeatures}機能をKGI/CSF/KPIで監視し、改善優先${report.improveCount}件、要観察${report.watchCount}件をローカル分析しています。$reasonText',
+          'AIレビュー待機中。${report.totalFeatures}機能をKGI/CSF/KPIで監視し、改善優先${report.improveCount}件、要観察${report.watchCount}件、統合候補${report.consolidationCount}件をローカル分析しています。$reasonText',
     );
   }
 }

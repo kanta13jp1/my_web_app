@@ -75,7 +75,7 @@ class FeatureStrategyMonitorPanel extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'ホームの全機能を対象に、AI分析、KGI、CSF、KPI、改善アクションを自動生成して横断監視します。',
+            'ホームの全機能を対象に、AI分析、KGI、CSF、KPI、改善アクションを自動生成して横断監視します。類似機能は統合候補として抽象化し、迷わず使える導線へ寄せます。',
             style: TextStyle(
               color: mutedColor,
               fontSize: isCompact ? 12 : 13,
@@ -127,9 +127,9 @@ class FeatureStrategyMonitorPanel extends StatelessWidget {
                     dark: isDark,
                   ),
                   _SummaryTile(
-                    label: '改善優先',
-                    value: '${report.improveCount}',
-                    color: const Color(0xFFDC2626),
+                    label: '統合候補',
+                    value: '${report.consolidationCount}',
+                    color: const Color(0xFF2563EB),
                     width: width,
                     dark: isDark,
                   ),
@@ -145,6 +145,12 @@ class FeatureStrategyMonitorPanel extends StatelessWidget {
                 : '${priorities.length}機能を優先確認',
             signals: priorities,
             initiallyExpanded: priorities.isNotEmpty,
+            dark: isDark,
+            compact: isCompact,
+          ),
+          const SizedBox(height: 8),
+          _ConsolidationAccordion(
+            candidates: report.consolidationCandidates,
             dark: isDark,
             compact: isCompact,
           ),
@@ -366,6 +372,167 @@ class _SignalAccordion extends StatelessWidget {
                   ],
                 ],
         ),
+      ),
+    );
+  }
+}
+
+class _ConsolidationAccordion extends StatelessWidget {
+  final List<FeatureConsolidationCandidate> candidates;
+  final bool dark;
+  final bool compact;
+
+  const _ConsolidationAccordion({
+    required this.candidates,
+    required this.dark,
+    required this.compact,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final border =
+        dark ? Colors.white.withValues(alpha: 0.10) : const Color(0xFFE5E7EB);
+    final titleColor = dark ? Colors.white : const Color(0xFF111827);
+    final subtitleColor =
+        dark ? Colors.white.withValues(alpha: 0.62) : const Color(0xFF64748B);
+
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: border),
+      ),
+      child: Theme(
+        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+        child: ExpansionTile(
+          initiallyExpanded: candidates.isNotEmpty,
+          tilePadding: EdgeInsets.symmetric(
+            horizontal: compact ? 10 : 12,
+            vertical: compact ? 0 : 2,
+          ),
+          childrenPadding: EdgeInsets.fromLTRB(
+            compact ? 10 : 12,
+            0,
+            compact ? 10 : 12,
+            compact ? 10 : 12,
+          ),
+          leading: const Icon(Icons.merge_type, color: Color(0xFF2563EB)),
+          title: Text(
+            '類似機能の抽象化・統合候補',
+            style: TextStyle(
+              color: titleColor,
+              fontSize: compact ? 13 : 14,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          subtitle: Text(
+            candidates.isEmpty
+                ? '現時点で明確な統合候補はありません'
+                : '${candidates.length}候補を次回レビューで判断',
+            style: TextStyle(
+              color: subtitleColor,
+              fontSize: compact ? 11 : 12,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          children: candidates.isEmpty
+              ? [
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      '機能名・キーワード・セクションをもとに、重複が見つかり次第ここへ表示します。',
+                      style: TextStyle(color: subtitleColor, fontSize: 12),
+                    ),
+                  ),
+                ]
+              : [
+                  for (final candidate in candidates) ...[
+                    _ConsolidationRow(
+                      candidate: candidate,
+                      dark: dark,
+                      compact: compact,
+                    ),
+                    if (candidate != candidates.last) const SizedBox(height: 8),
+                  ],
+                ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ConsolidationRow extends StatelessWidget {
+  final FeatureConsolidationCandidate candidate;
+  final bool dark;
+  final bool compact;
+
+  const _ConsolidationRow({
+    required this.candidate,
+    required this.dark,
+    required this.compact,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final textColor = dark ? Colors.white : const Color(0xFF0F172A);
+    final subColor =
+        dark ? Colors.white.withValues(alpha: 0.68) : const Color(0xFF64748B);
+    const color = Color(0xFF2563EB);
+
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(compact ? 10 : 12),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: dark ? 0.15 : 0.06),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: color.withValues(alpha: 0.16)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Wrap(
+            spacing: 8,
+            runSpacing: 6,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              Text(
+                candidate.canonicalFeatureName,
+                style: TextStyle(
+                  color: textColor,
+                  fontSize: compact ? 13 : 14,
+                  fontWeight: FontWeight.w800,
+                  height: 1.35,
+                ),
+              ),
+              _StatusPill(
+                label: '${candidate.duplicateCount}機能',
+                color: color,
+                dark: dark,
+              ),
+              _StatusPill(
+                label: candidate.sharedAxis,
+                color: const Color(0xFF7C3AED),
+                dark: dark,
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            candidate.summary,
+            style: TextStyle(
+              color: subColor,
+              fontSize: compact ? 11 : 12,
+              fontWeight: FontWeight.w600,
+              height: 1.45,
+            ),
+          ),
+          const SizedBox(height: 8),
+          KgiCsfKpiPanel(
+            plan: candidate.plan,
+            accentColor: color,
+            dense: true,
+            dark: dark,
+          ),
+        ],
       ),
     );
   }

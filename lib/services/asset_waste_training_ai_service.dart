@@ -104,9 +104,9 @@ class AssetWasteTrainingAiReview {
     String? reason,
   }) {
     final reasonText =
-        reason == null || reason.trim().isEmpty ? '' : '（$reason）';
+        reason == null || reason.trim().isEmpty ? '' : ' $reason';
     final focus = snapshot.wasteExpense > 0
-        ? '今月の浪費額を次の1件から止め、浪費カテゴリを訓練ログとして見直してください。'
+        ? '今月の浪費額を次の1件から止め、浪費カテゴリを記録ログとして見直してください。'
         : '支出のたびに「能力を伸ばす支出か」を確認し、浪費ゼロ日の精度を上げてください。';
     return AssetWasteTrainingAiReview(
       summary:
@@ -145,7 +145,7 @@ class AssetWasteTrainingAiService {
       return AssetWasteTrainingAiReview.fallback(
         snapshot: snapshot,
         generatedAt: _now(),
-        reason: 'AI連携に失敗しました',
+        reason: 'AI連携に失敗しました。',
       );
     }
   }
@@ -154,7 +154,6 @@ class AssetWasteTrainingAiService {
     return '''
 あなたは浪費抑制を「判断力を鍛える訓練」として支援するAI資産コーチです。
 以下の数値から、現状分析、KGI、KGI達成のためのCSF、CSFに基づくKPI改善、次回モニタリング観点を日本語で3行以内にまとめてください。
-
 対象月: ${snapshot.month.year}/${snapshot.month.month}
 浪費抑制スコア: ${snapshot.disciplineScore}/100
 支出総額: ${snapshot.totalExpense}円
@@ -165,7 +164,7 @@ class AssetWasteTrainingAiService {
 浪費ゼロ日: ${snapshot.noWasteDays}/${snapshot.elapsedDays}日
 日課達成: ${snapshot.ruleCompletedCount}/${snapshot.ruleTargetCount}件
 本日の違反: ${snapshot.todayViolationCount}件
-連続達成: ${snapshot.compliantStreakDays}日
+連続遵守: ${snapshot.compliantStreakDays}日
 ロックダウン稼働: ${snapshot.lockdownActive ? 'yes' : 'no'}
 ''';
   }
