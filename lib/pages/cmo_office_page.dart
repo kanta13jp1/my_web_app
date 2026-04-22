@@ -4,8 +4,10 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../models/agent_task.dart';
+import '../models/kgi_csf_kpi.dart';
 import '../services/agent_org_service.dart';
 import '../widgets/agent_workspace_panel.dart';
+import '../widgets/kgi_csf_kpi_panel.dart';
 import 'admin_analytics_page.dart';
 import 'feedback_page.dart';
 
@@ -161,6 +163,16 @@ class _CmoOfficePageState extends State<CmoOfficePage> {
                     onProcessTask: _processTask,
                   ),
                   const SizedBox(height: 16),
+                  KgiCsfKpiPanel(
+                    plan: _buildCmoKgiPlan(
+                      streak: (streak as num?)?.toInt() ?? 0,
+                      points: (points as num?)?.toInt() ?? 0,
+                      level: (level as num?)?.toInt() ?? 1,
+                    ),
+                    accentColor: const Color(0xFFFF6B35),
+                    initiallyExpanded: true,
+                  ),
+                  const SizedBox(height: 12),
                   _buildKpiCard(
                     '継続エンゲージメント日数',
                     '$streak日',
@@ -213,6 +225,43 @@ class _CmoOfficePageState extends State<CmoOfficePage> {
                 ],
               ),
             ),
+    );
+  }
+
+  KgiCsfKpiPlan _buildCmoKgiPlan({
+    required int streak,
+    required int points,
+    required int level,
+  }) {
+    return KgiCsfKpiPlan(
+      domain: 'マーケティング',
+      kgi: '継続利用と紹介が回る獲得エンジンを作る',
+      actualLabel: 'Lv.$level / $streak日継続',
+      targetLabel: 'Lv.10 / 30日継続',
+      progress: (level / 10).clamp(0, 1).toDouble(),
+      metrics: <KgiCsfKpiMetric>[
+        KgiCsfKpiMetric.number(
+          csf: '継続接触',
+          kpi: 'エンゲージメント日数',
+          actual: streak,
+          target: 30,
+          unit: '日',
+        ),
+        KgiCsfKpiMetric.number(
+          csf: '価値蓄積',
+          kpi: '獲得ポイント',
+          actual: points,
+          target: 1000,
+          unit: 'pt',
+        ),
+        KgiCsfKpiMetric.number(
+          csf: 'ブランド成熟',
+          kpi: 'ユーザーレベル',
+          actual: level,
+          target: 10,
+          unit: '',
+        ),
+      ],
     );
   }
 

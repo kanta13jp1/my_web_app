@@ -19,6 +19,7 @@ import '../services/home_tool_usage_service.dart';
 import '../services/personality_test_service.dart';
 import '../services/theme_service.dart';
 import '../services/waste_tracking_service.dart';
+import '../models/kgi_csf_kpi.dart';
 
 // Pages
 import 'notifications_page.dart';
@@ -44,6 +45,7 @@ import '../widgets/development_achievements_card.dart';
 import '../widgets/edge_function_summary_card.dart';
 import '../widgets/ai_university_home_card.dart';
 import '../widgets/api_key_status_banner.dart';
+import '../widgets/kgi_csf_kpi_panel.dart';
 import '../widgets/referral_share_card.dart';
 import '../widgets/thought_interrupt_quick_widget.dart';
 import 'ai_secretary_page.dart';
@@ -5218,6 +5220,32 @@ abstinence_slip_details: $slipDetailsText
                       goal.isAchieved ? '達成済み' : 'あと ${goal.remainingCount}件',
                     ),
                   ],
+                  strategicPlan: _buildOfficeStrategicPlan(
+                    domain: 'CEO',
+                    kgi: '今日の経営必須導線を100%完了する',
+                    actualLabel: '$coreFlowDone/3',
+                    targetLabel: '3/3',
+                    progress: coreFlowDone / 3,
+                    metrics: <KgiCsfKpiMetric>[
+                      KgiCsfKpiMetric.number(
+                        csf: '日次統制',
+                        kpi: '必須導線完了',
+                        actual: coreFlowDone,
+                        target: 3,
+                        unit: '件',
+                      ),
+                      KgiCsfKpiMetric.number(
+                        csf: 'リスク低減',
+                        kpi: '必須タスク残の圧縮',
+                        actual: math.max(
+                          0,
+                          5 - snapshot.pendingCriticalTaskCount,
+                        ),
+                        target: 5,
+                        unit: '件',
+                      ),
+                    ],
+                  ),
                   actionLabel: '役員会議へ',
                   onTap: () => _nav(context, const EmergencyMeetingPage()),
                 ),
@@ -5252,6 +5280,33 @@ abstinence_slip_details: $slipDetailsText
                           : '未実施',
                     ),
                   ],
+                  strategicPlan: _buildOfficeStrategicPlan(
+                    domain: 'CFO',
+                    kgi: '月次収支を黒字化し、資産状況を確認済みにする',
+                    actualLabel: _formatSignedYen(
+                      snapshot.monthlyCashflowSummary.netTotal.toDouble(),
+                    ),
+                    targetLabel: '黒字 / レビュー済み',
+                    progress:
+                        snapshot.monthlyCashflowSummary.reviewDone ? 1 : 0.5,
+                    metrics: <KgiCsfKpiMetric>[
+                      KgiCsfKpiMetric.number(
+                        csf: '取引記録',
+                        kpi: '月次記録件数',
+                        actual: snapshot.monthlyCashflowSummary.recordCount,
+                        target: 30,
+                        unit: '件',
+                      ),
+                      KgiCsfKpiMetric.number(
+                        csf: '決算レビュー',
+                        kpi: 'レビュー完了',
+                        actual:
+                            snapshot.monthlyCashflowSummary.reviewDone ? 1 : 0,
+                        target: 1,
+                        unit: '回',
+                      ),
+                    ],
+                  ),
                   actionLabel: '収支を見る',
                   onTap: () => _nav(context, const AssetManagementPage()),
                 ),
@@ -5283,6 +5338,36 @@ abstinence_slip_details: $slipDetailsText
                       '${marketing.todayShares}件 ${_shareChannelLabel(marketing.topShareChannelKey)}',
                     ),
                   ],
+                  strategicPlan: _buildOfficeStrategicPlan(
+                    domain: 'CMO',
+                    kgi: 'α版50ユーザー到達に向けて日次獲得導線を回す',
+                    actualLabel: '${marketing.totalUsers}人',
+                    targetLabel: '50人',
+                    progress: marketing.totalUsers / 50,
+                    metrics: <KgiCsfKpiMetric>[
+                      KgiCsfKpiMetric.number(
+                        csf: '流入獲得',
+                        kpi: '今日のLP View',
+                        actual: marketing.todayViews,
+                        target: 100,
+                        unit: '件',
+                      ),
+                      KgiCsfKpiMetric.number(
+                        csf: '登録転換',
+                        kpi: '今日の登録',
+                        actual: marketing.todayRegistrations,
+                        target: 1,
+                        unit: '件',
+                      ),
+                      KgiCsfKpiMetric.number(
+                        csf: '拡散',
+                        kpi: '今日のシェア',
+                        actual: marketing.todayShares,
+                        target: 3,
+                        unit: '件',
+                      ),
+                    ],
+                  ),
                   bottomWidget: marketing.lpSeries.length >= 2
                       ? _buildLpSparkline(marketing.lpSeries, isDark)
                       : null,
@@ -5315,6 +5400,29 @@ abstinence_slip_details: $slipDetailsText
                       snapshot.abstinencePrimarySignal ?? '監視中',
                     ),
                   ],
+                  strategicPlan: _buildOfficeStrategicPlan(
+                    domain: 'CHO',
+                    kgi: '集中を阻害する行動を日次で抑止する',
+                    actualLabel: '${snapshot.abstinenceFocusCount}件遮断中',
+                    targetLabel: '逸脱0回',
+                    progress: snapshot.abstinenceSlipCount == 0 ? 1 : 0.4,
+                    metrics: <KgiCsfKpiMetric>[
+                      KgiCsfKpiMetric.number(
+                        csf: '誘惑遮断',
+                        kpi: '遮断中の邪魔',
+                        actual: snapshot.abstinenceFocusCount,
+                        target: 3,
+                        unit: '件',
+                      ),
+                      KgiCsfKpiMetric.number(
+                        csf: '逸脱抑止',
+                        kpi: '逸脱0回',
+                        actual: snapshot.abstinenceSlipCount == 0 ? 1 : 0,
+                        target: 1,
+                        unit: '日',
+                      ),
+                    ],
+                  ),
                   actionLabel: '抑止設定へ',
                   onTap: () => _openAbstinenceGuard(context),
                 ),
@@ -5344,6 +5452,35 @@ abstinence_slip_details: $slipDetailsText
                       '${snapshot.pendingCriticalTaskCount}件',
                     ),
                   ],
+                  strategicPlan: _buildOfficeStrategicPlan(
+                    domain: 'CHRO',
+                    kgi: '今日の完了数を前日以上にする',
+                    actualLabel:
+                        '${goal.todayCompletedCount}/${goal.targetCount}',
+                    targetLabel: '${goal.targetCount}件',
+                    progress: goal.targetCount <= 0
+                        ? 0
+                        : goal.todayCompletedCount / goal.targetCount,
+                    metrics: <KgiCsfKpiMetric>[
+                      KgiCsfKpiMetric.number(
+                        csf: '実行完了',
+                        kpi: '今日の完了数',
+                        actual: goal.todayCompletedCount,
+                        target: goal.targetCount,
+                        unit: '件',
+                      ),
+                      KgiCsfKpiMetric.number(
+                        csf: '重要タスク処理',
+                        kpi: '重要タスク残の圧縮',
+                        actual: math.max(
+                          0,
+                          5 - snapshot.pendingCriticalTaskCount,
+                        ),
+                        target: 5,
+                        unit: '件',
+                      ),
+                    ],
+                  ),
                   actionLabel: 'タスクを見る',
                   onTap: () => _openMorningBriefing(context),
                 ),
@@ -5361,6 +5498,24 @@ abstinence_slip_details: $slipDetailsText
     );
   }
 
+  KgiCsfKpiPlan _buildOfficeStrategicPlan({
+    required String domain,
+    required String kgi,
+    required String actualLabel,
+    required String targetLabel,
+    required double progress,
+    required List<KgiCsfKpiMetric> metrics,
+  }) {
+    return KgiCsfKpiPlan(
+      domain: domain,
+      kgi: kgi,
+      actualLabel: actualLabel,
+      targetLabel: targetLabel,
+      progress: progress.clamp(0, 1).toDouble(),
+      metrics: metrics,
+    );
+  }
+
   Widget _buildOfficeKpiCard({
     required Key key,
     required bool isDark,
@@ -5373,6 +5528,7 @@ abstinence_slip_details: $slipDetailsText
     required List<_OfficeKpiMetricItem> metrics,
     required String actionLabel,
     required VoidCallback onTap,
+    KgiCsfKpiPlan? strategicPlan,
     Widget? bottomWidget,
   }) {
     final baseColor = isDark ? const Color(0xFF1E1E1E) : Colors.white;
@@ -5474,6 +5630,15 @@ abstinence_slip_details: $slipDetailsText
                     height: 1.5,
                   ),
                 ),
+                if (strategicPlan != null) ...[
+                  const SizedBox(height: 10),
+                  KgiCsfKpiPanel(
+                    plan: strategicPlan,
+                    accentColor: accentColor,
+                    dense: true,
+                    dark: isDark,
+                  ),
+                ],
                 const SizedBox(height: 12),
                 ...metrics
                     .take(3)

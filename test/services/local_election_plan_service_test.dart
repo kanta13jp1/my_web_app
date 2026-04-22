@@ -23,6 +23,10 @@ void main() {
     expect(plan.allocationGap, 0);
     expect(plan.prefectures.first.kgiTargetLocalMembers, greaterThan(0));
     expect(plan.prefectures.first.csfKpis, hasLength(5));
+    final tokyo =
+        plan.prefectures.firstWhere((item) => item.prefecture == '東京');
+    expect(tokyo.prefectureChairName, '川合孝典');
+    expect(tokyo.prefectureSecretaryGeneralName, isNotEmpty);
     expect(plan.monthlyCheckpoints, hasLength(12));
     expect(
       plan.monthlyCheckpoints.last.cumulativeNewCandidateTarget,

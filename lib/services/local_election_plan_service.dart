@@ -208,6 +208,7 @@ class LocalElectionPlanService {
                         : 1.0))
             .round(),
       );
+      final officerSeed = _officerSeedFor(seed.prefecture);
 
       prefectures.add(
         LocalElectionPrefecturePlan(
@@ -219,6 +220,10 @@ class LocalElectionPlanService {
           newCandidateTarget: newCandidateTarget,
           endorsementDeadlineMonth: _deadlineMonthForTier(seed.tier),
           closeRaceSupportRounds: supportRounds,
+          prefectureChairName: officerSeed?.chairName ?? '',
+          prefectureSecretaryGeneralName:
+              officerSeed?.secretaryGeneralName ?? '',
+          prefectureOfficerSourceUrl: officerSeed?.sourceUrl ?? '',
           notes: _defaultNoteForTier(seed.tier),
         ),
       );
@@ -255,6 +260,7 @@ class LocalElectionPlanService {
   LocalElectionPlanDashboard _normalizePlan(LocalElectionPlanDashboard plan) {
     final prefectures = <LocalElectionPrefecturePlan>[];
     for (final item in plan.prefectures) {
+      final officerSeed = _officerSeedFor(item.prefecture);
       prefectures.add(
         item.copyWith(
           additionalSeatTarget: clampPositiveInt(item.additionalSeatTarget),
@@ -272,6 +278,17 @@ class LocalElectionPlanService {
               clampPositiveInt(item.confirmedCandidateCount),
           cdpLocalMembers: clampPositiveInt(item.cdpLocalMembers),
           cdpSourceUrl: item.cdpSourceUrl.trim(),
+          prefectureChairName: item.prefectureChairName.trim().isNotEmpty
+              ? item.prefectureChairName.trim()
+              : officerSeed?.chairName,
+          prefectureSecretaryGeneralName:
+              item.prefectureSecretaryGeneralName.trim().isNotEmpty
+                  ? item.prefectureSecretaryGeneralName.trim()
+                  : officerSeed?.secretaryGeneralName,
+          prefectureOfficerSourceUrl:
+              item.prefectureOfficerSourceUrl.trim().isNotEmpty
+                  ? item.prefectureOfficerSourceUrl.trim()
+                  : officerSeed?.sourceUrl,
           endorsementDeadlineMonth:
               planningMonthKeys.contains(item.endorsementDeadlineMonth)
                   ? item.endorsementDeadlineMonth
@@ -574,6 +591,47 @@ class _PrefectureSeed {
 
   const _PrefectureSeed(this.prefecture, this.region, this.tier);
 }
+
+class _PrefectureOfficerSeed {
+  final String chairName;
+  final String secretaryGeneralName;
+  final String sourceUrl;
+
+  const _PrefectureOfficerSeed({
+    required this.chairName,
+    required this.secretaryGeneralName,
+    required this.sourceUrl,
+  });
+}
+
+_PrefectureOfficerSeed? _officerSeedFor(String prefecture) {
+  final key = prefecture.trim().replaceFirst(RegExp(r'[都府県]$'), '');
+  return _prefectureOfficerSeeds[key];
+}
+
+const Map<String, _PrefectureOfficerSeed> _prefectureOfficerSeeds =
+    <String, _PrefectureOfficerSeed>{
+  '東京': _PrefectureOfficerSeed(
+    chairName: '川合孝典',
+    secretaryGeneralName: '石黒たつお',
+    sourceUrl: 'https://www.new-kokumin.tokyo/2025/10/yakuin2025/',
+  ),
+  '岩手': _PrefectureOfficerSeed(
+    chairName: '軽石義則',
+    secretaryGeneralName: '斎藤明',
+    sourceUrl: 'https://kokumin-iwate.jp/member/index.html',
+  ),
+  '和歌山': _PrefectureOfficerSeed(
+    chairName: '浦口高典',
+    secretaryGeneralName: '永野裕久',
+    sourceUrl: 'https://dp-wakayama.jp/management/',
+  ),
+  '鹿児島': _PrefectureOfficerSeed(
+    chairName: '田村まみ',
+    secretaryGeneralName: '成川幸太郎',
+    sourceUrl: 'https://new-kokumin-kagoshima.jp/officer_list/',
+  ),
+};
 
 const List<_PrefectureSeed> _prefectureSeeds = <_PrefectureSeed>[
   _PrefectureSeed('北海道', '北海道', 1),

@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 
+import '../models/kgi_csf_kpi.dart';
+import 'kgi_csf_kpi_panel.dart';
+
 class ElectionProgressChart extends StatelessWidget {
   final int currentTotal;
   final int shortfall;
@@ -36,6 +39,33 @@ class ElectionProgressChart extends StatelessWidget {
                 fontWeight: FontWeight.bold,
                 height: 1.5,
               ),
+            ),
+            const SizedBox(height: 16),
+            KgiCsfKpiPanel(
+              plan: KgiCsfKpiPlan(
+                domain: '国民民主党 地方議員',
+                kgi: '地方議員700人を達成する',
+                actualLabel: '$currentTotal人',
+                targetLabel: '$target人',
+                progress: target <= 0 ? 0 : currentTotal / target,
+                metrics: <KgiCsfKpiMetric>[
+                  KgiCsfKpiMetric.number(
+                    csf: '現職基盤の維持',
+                    kpi: '公式地方議員数',
+                    actual: currentTotal,
+                    target: target,
+                    unit: '人',
+                  ),
+                  KgiCsfKpiMetric.number(
+                    csf: '純増計画の実行',
+                    kpi: '残り必要人数の解消',
+                    actual: target - shortfall,
+                    target: target,
+                    unit: '人',
+                  ),
+                ],
+              ),
+              accentColor: const Color(0xFF1E88E5),
             ),
             const SizedBox(height: 32),
             SizedBox(

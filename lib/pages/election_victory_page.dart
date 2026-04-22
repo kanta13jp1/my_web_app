@@ -4780,6 +4780,8 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
             ),
             const SizedBox(height: 12),
             _buildKgiCsfKpiPanel(plan),
+            const SizedBox(height: 12),
+            _buildPrefectureOfficerPanel(plan),
             if (reality != null) ...[
               const SizedBox(height: 12),
               Text(
@@ -4797,6 +4799,61 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
             ],
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildPrefectureOfficerPanel(LocalElectionPrefecturePlan plan) {
+    const accent = Color(0xFF7C3AED);
+    final chair = plan.prefectureChairName.trim().isEmpty
+        ? '公式未確認'
+        : plan.prefectureChairName.trim();
+    final secretary = plan.prefectureSecretaryGeneralName.trim().isEmpty
+        ? '公式未確認'
+        : plan.prefectureSecretaryGeneralName.trim();
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: accent.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: accent.withValues(alpha: 0.16)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.badge_outlined, size: 18, color: accent),
+              const SizedBox(width: 8),
+              Text(
+                '県連役員',
+                style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w800,
+                      color: accent,
+                    ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _buildMetricChip('県連代表', chair, color: accent),
+              _buildMetricChip('幹事長', secretary, color: accent),
+            ],
+          ),
+          if (plan.prefectureOfficerSourceUrl.trim().isNotEmpty) ...[
+            const SizedBox(height: 6),
+            Text(
+              '出典: ${plan.prefectureOfficerSourceUrl}',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ],
+        ],
       ),
     );
   }

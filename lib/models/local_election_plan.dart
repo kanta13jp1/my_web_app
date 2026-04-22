@@ -15,6 +15,9 @@ class LocalElectionPrefecturePlan {
   final int confirmedCandidateCount;
   final int cdpLocalMembers;
   final String cdpSourceUrl;
+  final String prefectureChairName;
+  final String prefectureSecretaryGeneralName;
+  final String prefectureOfficerSourceUrl;
   final String autoUpdatedAt;
   final bool endorsementConfirmed;
   final String notes;
@@ -34,6 +37,9 @@ class LocalElectionPrefecturePlan {
     this.confirmedCandidateCount = 0,
     this.cdpLocalMembers = 0,
     this.cdpSourceUrl = '',
+    this.prefectureChairName = '',
+    this.prefectureSecretaryGeneralName = '',
+    this.prefectureOfficerSourceUrl = '',
     this.autoUpdatedAt = '',
     this.endorsementConfirmed = false,
     this.notes = '',
@@ -56,6 +62,12 @@ class LocalElectionPrefecturePlan {
       confirmedCandidateCount: _readInt(json['confirmedCandidateCount']),
       cdpLocalMembers: _readInt(json['cdpLocalMembers']),
       cdpSourceUrl: (json['cdpSourceUrl'] as String? ?? '').trim(),
+      prefectureChairName:
+          (json['prefectureChairName'] as String? ?? '').trim(),
+      prefectureSecretaryGeneralName:
+          (json['prefectureSecretaryGeneralName'] as String? ?? '').trim(),
+      prefectureOfficerSourceUrl:
+          (json['prefectureOfficerSourceUrl'] as String? ?? '').trim(),
       autoUpdatedAt: (json['autoUpdatedAt'] as String? ?? '').trim(),
       endorsementConfirmed: json['endorsementConfirmed'] == true,
       notes: (json['notes'] as String? ?? '').trim(),
@@ -78,6 +90,9 @@ class LocalElectionPrefecturePlan {
       'confirmedCandidateCount': confirmedCandidateCount,
       'cdpLocalMembers': cdpLocalMembers,
       'cdpSourceUrl': cdpSourceUrl,
+      'prefectureChairName': prefectureChairName,
+      'prefectureSecretaryGeneralName': prefectureSecretaryGeneralName,
+      'prefectureOfficerSourceUrl': prefectureOfficerSourceUrl,
       'autoUpdatedAt': autoUpdatedAt,
       'endorsementConfirmed': endorsementConfirmed,
       'notes': notes,
@@ -99,6 +114,9 @@ class LocalElectionPrefecturePlan {
     int? confirmedCandidateCount,
     int? cdpLocalMembers,
     String? cdpSourceUrl,
+    String? prefectureChairName,
+    String? prefectureSecretaryGeneralName,
+    String? prefectureOfficerSourceUrl,
     String? autoUpdatedAt,
     bool? endorsementConfirmed,
     String? notes,
@@ -125,6 +143,11 @@ class LocalElectionPrefecturePlan {
           confirmedCandidateCount ?? this.confirmedCandidateCount,
       cdpLocalMembers: cdpLocalMembers ?? this.cdpLocalMembers,
       cdpSourceUrl: cdpSourceUrl ?? this.cdpSourceUrl,
+      prefectureChairName: prefectureChairName ?? this.prefectureChairName,
+      prefectureSecretaryGeneralName:
+          prefectureSecretaryGeneralName ?? this.prefectureSecretaryGeneralName,
+      prefectureOfficerSourceUrl:
+          prefectureOfficerSourceUrl ?? this.prefectureOfficerSourceUrl,
       autoUpdatedAt: autoUpdatedAt ?? this.autoUpdatedAt,
       endorsementConfirmed: endorsementConfirmed ?? this.endorsementConfirmed,
       notes: notes ?? this.notes,
@@ -160,6 +183,10 @@ class LocalElectionPrefecturePlan {
   int get cdpMemberGap => cdpLocalMembers - currentMembers;
 
   bool get hasCdpComparison => cdpLocalMembers > 0;
+
+  bool get hasPrefectureOfficerNames =>
+      prefectureChairName.isNotEmpty ||
+      prefectureSecretaryGeneralName.isNotEmpty;
 
   int get kgiTargetLocalMembers =>
       incumbentRetentionTarget + additionalSeatTarget;

@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../models/kgi_csf_kpi.dart';
+import '../widgets/kgi_csf_kpi_panel.dart';
+
 /// バイラル広告ジェネレーターページ
 /// viral-video-ad-generator / x-media-post / viral-growth-engine と連携
 /// Dark War風動画広告の生成・X投稿・バイラル指標を管理
@@ -627,6 +630,12 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
                       ),
                     ),
                     const SizedBox(height: 16),
+                    KgiCsfKpiPanel(
+                      plan: _buildViralKgiPlan(_viralStats!),
+                      accentColor: const Color(0xFF6366F1),
+                      initiallyExpanded: true,
+                    ),
+                    const SizedBox(height: 16),
                     _buildStatRow(
                       'バイラル係数 K',
                       _viralStats!['kFactor']?.toString() ?? '0',
@@ -774,6 +783,58 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
         ],
       ),
     );
+  }
+
+  KgiCsfKpiPlan _buildViralKgiPlan(Map<String, dynamic> stats) {
+    final kFactor = _readStatNum(stats['kFactor']);
+    final shares = _readStatNum(stats['totalShares']);
+    final conversions = _readStatNum(stats['totalConversions']);
+    final views = _readStatNum(stats['totalViews']);
+    final conversionRate = views <= 0 ? 0.0 : conversions / views * 100;
+    return KgiCsfKpiPlan(
+      domain: 'バイラル広告',
+      kgi: 'Kファクター1.0以上で自走する獲得ループを作る',
+      actualLabel: 'K ${kFactor.toStringAsFixed(2)}',
+      targetLabel: 'K 1.00以上',
+      progress: kFactor.clamp(0, 1).toDouble(),
+      metrics: <KgiCsfKpiMetric>[
+        KgiCsfKpiMetric.number(
+          csf: '拡散量',
+          kpi: '総シェア数',
+          actual: shares,
+          target: 100,
+          unit: '件',
+        ),
+        KgiCsfKpiMetric.number(
+          csf: '獲得効率',
+          kpi: '総コンバージョン',
+          actual: conversions,
+          target: 25,
+          unit: '件',
+        ),
+        KgiCsfKpiMetric.number(
+          csf: '導線母数',
+          kpi: 'ランディング訪問',
+          actual: views,
+          target: 1000,
+          unit: '件',
+        ),
+        KgiCsfKpiMetric.number(
+          csf: '訴求品質',
+          kpi: 'CVR',
+          actual: conversionRate,
+          target: 2.5,
+          unit: '%',
+        ),
+      ],
+    );
+  }
+
+  double _readStatNum(Object? value) {
+    if (value is num) {
+      return value.toDouble();
+    }
+    return double.tryParse('$value') ?? 0;
   }
 
   Widget _buildStatRow(String label, String value, String sub) {
@@ -941,7 +1002,9 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              content: Text('エラー: $e'), backgroundColor: const Color(0xFFE53935),),
+            content: Text('エラー: $e'),
+            backgroundColor: const Color(0xFFE53935),
+          ),
         );
       }
     } finally {

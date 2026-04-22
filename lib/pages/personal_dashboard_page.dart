@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:intl/intl.dart';
 
+import '../models/kgi_csf_kpi.dart';
+import '../widgets/kgi_csf_kpi_panel.dart';
+
 /// パーソナルダッシュボードページ
 /// ノート数・タスク・習慣・集中時間をチャートで可視化。
 /// Notion 3.4 ダッシュボードビュー対抗。
@@ -211,6 +214,18 @@ class _PersonalDashboardPageState extends State<PersonalDashboardPage>
             ),
           ),
           const SizedBox(height: 16),
+          KgiCsfKpiPanel(
+            plan: _buildPersonalKgiPlan(
+              totalNotes: totalNotes,
+              tasksCompleted: tasksCompleted,
+              focusMinutes: focusMinutes,
+              habitStreak: habitStreak,
+              taskRate: taskRate,
+            ),
+            accentColor: const Color(0xFF0891B2),
+            initiallyExpanded: true,
+          ),
+          const SizedBox(height: 16),
           // KPI グリッド
           GridView.count(
             crossAxisCount: 2,
@@ -350,6 +365,54 @@ class _PersonalDashboardPageState extends State<PersonalDashboardPage>
             ),
         ],
       ),
+    );
+  }
+
+  KgiCsfKpiPlan _buildPersonalKgiPlan({
+    required int totalNotes,
+    required int tasksCompleted,
+    required int focusMinutes,
+    required int habitStreak,
+    required double taskRate,
+  }) {
+    final taskRatePercent = (taskRate * 100).clamp(0, 100).toDouble();
+    final metrics = <KgiCsfKpiMetric>[
+      KgiCsfKpiMetric.number(
+        csf: '知識資産化',
+        kpi: '総ノート数',
+        actual: totalNotes,
+        target: 30,
+        unit: '件',
+      ),
+      KgiCsfKpiMetric.number(
+        csf: '実行完了',
+        kpi: 'タスク完了数',
+        actual: tasksCompleted,
+        target: 10,
+        unit: '件',
+      ),
+      KgiCsfKpiMetric.number(
+        csf: '集中投資',
+        kpi: '集中時間',
+        actual: focusMinutes,
+        target: 240,
+        unit: '分',
+      ),
+      KgiCsfKpiMetric.number(
+        csf: '習慣継続',
+        kpi: 'ストリーク',
+        actual: habitStreak,
+        target: 7,
+        unit: '日',
+      ),
+    ];
+    return KgiCsfKpiPlan(
+      domain: '個人生産性',
+      kgi: '週次の自己生産性を前週より高く保つ',
+      actualLabel: 'タスク達成率 ${taskRatePercent.toStringAsFixed(0)}%',
+      targetLabel: '70%以上',
+      progress: (taskRatePercent / 70).clamp(0, 1).toDouble(),
+      metrics: metrics,
     );
   }
 

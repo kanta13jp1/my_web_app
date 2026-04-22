@@ -31,6 +31,13 @@ void main() {
       'aiSummary': '地方議員数は333人で、700まで残り367人です。',
       'aiAlerts': <String>['議員不在県の穴埋めが必要です。'],
       'aiStrategicNotes': <String>['全県連に月次KPIを割り振る必要があります。'],
+      'sources': <Map<String, dynamic>>[
+        <String, dynamic>{
+          'label': 'Official members',
+          'url': 'https://new-kokumin.jp/member',
+          'category': 'official',
+        },
+      ],
       'prefectures': <Map<String, dynamic>>[
         <String, dynamic>{
           'prefecture': '東京都',
@@ -172,6 +179,10 @@ void main() {
           scheduledElectionCount: 3,
           announcedCandidateCount: 6,
           confirmedCandidateCount: 4,
+          prefectureChairName: '川合孝典',
+          prefectureSecretaryGeneralName: '石黒たつお',
+          prefectureOfficerSourceUrl:
+              'https://www.new-kokumin.tokyo/2025/10/yakuin2025/',
           cdpLocalMembers: 83,
         ),
         LocalElectionPrefecturePlan(
@@ -203,8 +214,14 @@ void main() {
 
     expect(draft.noteId, greaterThan(0));
     expect(draft.title, contains('2026/03/28'));
+    expect(draft.content, contains('国民民主党 地方議員集計'));
+    expect(draft.content, contains('公式地方議員数: 333人'));
+    expect(draft.content, contains('700まで残り: 367人'));
+    expect(draft.content, contains('AI要約'));
+    expect(draft.content, contains('アラート'));
     expect(draft.content, contains('全都道府県内訳'));
     expect(draft.content, contains('現職地方議員名簿'));
+    expect(draft.content, contains('公式ソース'));
     expect(draft.content, contains('🔴 鳥取県'));
     expect(draft.content, contains('🟡 島根県'));
     expect(draft.metadata['type'], LocalElectionShareService.metadataType);
@@ -345,6 +362,8 @@ void main() {
     expect(draft.content, contains('KGI55人'));
     expect(draft.content, contains('CSF/KPI'));
     expect(draft.content, contains('確認済み候補者6人'));
+    expect(draft.content, contains('県連代表川合孝典'));
+    expect(draft.content, contains('幹事長石黒たつお'));
     expect(draft.content, contains('純増12人'));
     expect(draft.content, contains('立憲参考83人'));
     expect(draft.content, contains('月次KPI'));
@@ -358,6 +377,7 @@ void main() {
         Map<String, dynamic>.from(prefectures.first as Map<dynamic, dynamic>);
     expect(tokyoMetadata['kgiTargetLocalMembers'], 55);
     expect(tokyoMetadata['csfKpis'], isA<List<dynamic>>());
+    expect(tokyoMetadata['prefectureChairName'], '川合孝典');
   });
 
   test('buildPlanDashboardXShareIntentUri shares one public note link', () {

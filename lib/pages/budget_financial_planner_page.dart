@@ -3,6 +3,9 @@ import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../models/kgi_csf_kpi.dart';
+import '../widgets/kgi_csf_kpi_panel.dart';
+
 /// 予算・財務プランナーページ (MoneyForward / Amazon Rufus 競合)
 /// budget-financial-planner Edge Function + ai-assistant Edge Function と連携
 /// - 月次予算設定・カテゴリ別支出管理
@@ -365,6 +368,17 @@ $breakdown
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          KgiCsfKpiPanel(
+            plan: _buildBudgetKgiPlan(
+              income: income,
+              expense: expense,
+              balance: balance,
+              savingsRate: savingsRate,
+            ),
+            accentColor: cs.primary,
+            initiallyExpanded: true,
+          ),
+          const SizedBox(height: 12),
           // KPI cards
           Row(
             children: [
@@ -464,6 +478,58 @@ $breakdown
         ],
       ),
     );
+  }
+
+  KgiCsfKpiPlan _buildBudgetKgiPlan({
+    required double income,
+    required double expense,
+    required double balance,
+    required double savingsRate,
+  }) {
+    final spendingTarget = income <= 0 ? 0.0 : income * 0.8;
+    final positiveBalance = balance > 0 ? balance : 0.0;
+    final savingsProgress = savingsRate <= 0 ? 0.0 : savingsRate / 20;
+    return KgiCsfKpiPlan(
+      domain: '月次家計',
+      kgi: '月次収支を黒字化し、貯蓄率20%を維持する',
+      actualLabel:
+          '収支 ${_formatBudgetAmount(balance)} / 貯蓄率 ${savingsRate.toStringAsFixed(1)}%',
+      targetLabel: '黒字 / 20%',
+      progress: savingsProgress.clamp(0, 1).toDouble(),
+      metrics: <KgiCsfKpiMetric>[
+        KgiCsfKpiMetric.number(
+          csf: '収入安定化',
+          kpi: '月次収入',
+          actual: income,
+          target: expense > 0 ? expense : 1,
+          unit: '円',
+        ),
+        KgiCsfKpiMetric(
+          csf: '支出統制',
+          kpi: '支出を収入の80%以内に抑える',
+          actualLabel: _formatBudgetAmount(expense),
+          targetLabel: _formatBudgetAmount(spendingTarget),
+          progress: expense <= 0 || spendingTarget <= 0
+              ? 0
+              : spendingTarget / expense,
+          remainingLabel: spendingTarget >= expense
+              ? '達成'
+              : '超過 ${_formatBudgetAmount(expense - spendingTarget)}',
+        ),
+        KgiCsfKpiMetric.number(
+          csf: '余剰資金創出',
+          kpi: '黒字額',
+          actual: positiveBalance,
+          target: income <= 0 ? 1 : income * 0.2,
+          unit: '円',
+        ),
+      ],
+    );
+  }
+
+  String _formatBudgetAmount(double value) {
+    final prefix = value < 0 ? '-¥' : '¥';
+    return '$prefix${_fmt.format(value.abs())}';
   }
 
   Widget _kpiCard(

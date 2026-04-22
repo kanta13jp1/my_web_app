@@ -1,6 +1,6 @@
 # 自分株式会社 開発 WBS (Work Breakdown Structure)
 
-> **最終更新**: 2026-04-22 Codex (統一地方選 KGI/CSF/KPI設計)
+> **最終更新**: 2026-04-22 Codex (統一地方選 県連役員表示)
 > **参照**: サイト上の `/project-gantt` ページでリアルタイム確認可能  
 > **DB**: `wbs_milestones` + `wbs_tasks` テーブル (migration 20260417180000 / 20260417190000 / 20260417200000)
 
@@ -30,6 +30,8 @@
 - 県連KPI X共有: 県連KPIの共有文生成と公開URL導線を追加。最終UIは下記の一括共有ノート方式へ統合。migration `20260422115000_wbs_codex_election_prefecture_x_share.sql` で反映。
 - 公開URL/一括共有ノート: `/local-election-700` を未ログイン時も公開ビューとして直接参照できるようにし、X共有は県連別ではなく全県連KPIを1つの共有ノートにまとめてリンク共有する導線へ変更。migration `20260422123000_wbs_codex_election_public_bulk_share.sql` で反映。
 - KGI/CSF/KPI設計: 各県連のKGIを「統一地方選後の地方議員到達数」として設定し、KGI達成のCSFごとに数値KPI・進捗・残数を自動算出。画面カードと一括共有ノートへ反映。migration `20260422124500_wbs_codex_election_kgi_csf_kpi.sql` で反映。
+- 全体KGI/CSF/KPI表示基盤: KPI表示を共通のKGI/CSF/KPIパネルに寄せ、ホーム、個人ダッシュボード、財務、CMO、バイラル指標、統一地方選チャートへ併記。国民民主党地方議員集計機能は残存テストで保護。migration `20260422131000_wbs_codex_global_kgi_csf_kpi.sql` で反映。
+- 県連役員表示: 県連代表・県連幹事長・出典URLを県連カードと共有メタデータへ追加。公式確認できた県から初期値を入れ、未確認県は公式未確認として表示。migration `20260422133000_wbs_codex_election_prefecture_officers.sql` で反映。
 
 ## マイルストーン概要 (ユーザー可視)
 
@@ -68,8 +70,8 @@
 
 | タスク | 状態 | 進捗 | α/β/v1 |
 |---|---|---|---|
-| DESIGN.md全ページ準拠 60%達成 (Codex引継ぎ) | 🟡進行中 | 72% | α |
-| モバイルレスポンシブ完全対応 (Codex引継ぎ) | 🟡進行中 | 77% | α |
+| DESIGN.md全ページ準拠 60%達成 (Codex引継ぎ) | 🟡進行中 | 73% | α |
+| モバイルレスポンシブ完全対応 (Codex引継ぎ) | 🟡進行中 | 78% | α |
 | タイポグラフィ統一 (Codex引継ぎ) | 🟡進行中 | 65% | β |
 | DESIGN.md全ページ準拠 100%達成 | ⚪未着手 | 0% | v1 |
 
@@ -110,6 +112,8 @@
 | 統一地方選 県連KPI X共有 | Codex | ✅完了 | 100% | α |
 | 統一地方選 公開URL/一括共有ノート | Codex | ✅完了 | 100% | α |
 | 統一地方選 KGI/CSF/KPI設計 | Codex | ✅完了 | 100% | α |
+| 全体KGI/CSF/KPI表示基盤 | Codex | ✅完了 | 100% | α |
+| 統一地方選 県連役員表示 | Codex | ✅完了 | 100% | α |
 
 ### 📈 カテゴリ6: グロース自動化 — **PS版 + Codex 担当**
 

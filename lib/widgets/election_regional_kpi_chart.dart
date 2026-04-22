@@ -9,7 +9,9 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../models/kgi_csf_kpi.dart';
 import '../models/local_election_plan.dart';
+import 'kgi_csf_kpi_panel.dart';
 
 class ElectionRegionalKpiChart extends StatefulWidget {
   final List<LocalElectionPrefecturePlan> prefectures;
@@ -287,6 +289,44 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
             const SizedBox(
               height: 16,
             ),
+            KgiCsfKpiPanel(
+              plan: KgiCsfKpiPlan(
+                domain: '都道府県連別配分',
+                kgi: '現職維持と新人擁立を県連別に数値配分する',
+                actualLabel: '$totalTarget人',
+                targetLabel: '700人',
+                progress: totalTarget / 700,
+                metrics: <KgiCsfKpiMetric>[
+                  KgiCsfKpiMetric.number(
+                    csf: '現職基盤の維持',
+                    kpi: '現職維持目標合計',
+                    actual: totalRetain,
+                    target: totalRetain + totalNew,
+                    unit: '人',
+                  ),
+                  KgiCsfKpiMetric.number(
+                    csf: '新人候補の上積み',
+                    kpi: '新人擁立目標合計',
+                    actual: totalNew,
+                    target: 360,
+                    unit: '人',
+                  ),
+                  KgiCsfKpiMetric.number(
+                    csf: '公認内定管理',
+                    kpi: '期限設定済み県連',
+                    actual: widget.prefectures
+                        .where(
+                          (item) => item.endorsementDeadlineMonth.isNotEmpty,
+                        )
+                        .length,
+                    target: widget.prefectures.length,
+                    unit: '県',
+                  ),
+                ],
+              ),
+              accentColor: const Color(0xFF1976D2),
+            ),
+            const SizedBox(height: 16),
             RepaintBoundary(
               key: _barChartKey,
               child: Container(

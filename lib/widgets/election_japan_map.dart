@@ -2,7 +2,9 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import '../models/kgi_csf_kpi.dart';
 import '../models/local_election_plan.dart';
+import 'kgi_csf_kpi_panel.dart';
 
 class ElectionJapanMap extends StatefulWidget {
   final List<LocalElectionPrefecturePlan> prefectures;
@@ -116,6 +118,39 @@ class _ElectionJapanMapState extends State<ElectionJapanMap> {
               ],
             ),
             const SizedBox(height: 16),
+            KgiCsfKpiPanel(
+              plan: KgiCsfKpiPlan(
+                domain: '全国県連KPI',
+                kgi: '47県連の純増計画を700人達成へ接続する',
+                actualLabel: '純増$totalAdditional / 新人$totalNew',
+                targetLabel: '700人必達',
+                metrics: <KgiCsfKpiMetric>[
+                  KgiCsfKpiMetric.number(
+                    csf: '候補者擁立',
+                    kpi: '新人擁立目標',
+                    actual: totalNew,
+                    target: totalAdditional,
+                    unit: '人',
+                  ),
+                  KgiCsfKpiMetric.number(
+                    csf: '重点自治体攻略',
+                    kpi: '重点自治体数',
+                    actual: totalFocus,
+                    target: widget.prefectures.length * 2,
+                    unit: '件',
+                  ),
+                  KgiCsfKpiMetric.number(
+                    csf: '県連配分',
+                    kpi: '純増配分',
+                    actual: totalAdditional,
+                    target: 360,
+                    unit: '人',
+                  ),
+                ],
+              ),
+              accentColor: const Color(0xFF0369A1),
+            ),
+            const SizedBox(height: 12),
             Wrap(
               spacing: 8,
               runSpacing: 8,
