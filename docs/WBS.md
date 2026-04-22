@@ -1,6 +1,6 @@
 # 自分株式会社 開発 WBS (Work Breakdown Structure)
 
-> **最終更新**: 2026-04-22 Codex (統一地方選 県連役員表示)
+> **最終更新**: 2026-04-22 Codex (統一地方選 地方議員集計ノート化導線)
 > **参照**: サイト上の `/project-gantt` ページでリアルタイム確認可能  
 > **DB**: `wbs_milestones` + `wbs_tasks` テーブル (migration 20260417180000 / 20260417190000 / 20260417200000)
 
@@ -32,6 +32,7 @@
 - KGI/CSF/KPI設計: 各県連のKGIを「統一地方選後の地方議員到達数」として設定し、KGI達成のCSFごとに数値KPI・進捗・残数を自動算出。画面カードと一括共有ノートへ反映。migration `20260422124500_wbs_codex_election_kgi_csf_kpi.sql` で反映。
 - 全体KGI/CSF/KPI表示基盤: KPI表示を共通のKGI/CSF/KPIパネルに寄せ、ホーム、個人ダッシュボード、財務、CMO、バイラル指標、統一地方選チャートへ併記。国民民主党地方議員集計機能は残存テストで保護。migration `20260422131000_wbs_codex_global_kgi_csf_kpi.sql` で反映。
 - 県連役員表示: 県連代表・県連幹事長・出典URLを県連カードと共有メタデータへ追加。公式確認できた県から初期値を入れ、未確認県は公式未確認として表示。migration `20260422133000_wbs_codex_election_prefecture_officers.sql` で反映。
+- 地方議員集計ノート化導線: `国民民主党 地方議員集計` の既存ノート生成機能を画面ボタンから直接実行できるようにし、全県連KPIノートとリンクコピー導線を分離。migration `20260422141000_wbs_codex_election_snapshot_note_button.sql` で反映。
 
 ## マイルストーン概要 (ユーザー可視)
 
@@ -114,6 +115,7 @@
 | 統一地方選 KGI/CSF/KPI設計 | Codex | ✅完了 | 100% | α |
 | 全体KGI/CSF/KPI表示基盤 | Codex | ✅完了 | 100% | α |
 | 統一地方選 県連役員表示 | Codex | ✅完了 | 100% | α |
+| 統一地方選 地方議員集計ノート化導線 | Codex | ✅完了 | 100% | α |
 
 ### 📈 カテゴリ6: グロース自動化 — **PS版 + Codex 担当**
 

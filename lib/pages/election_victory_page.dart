@@ -119,9 +119,11 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
       <String, LocalElectionLegislatorProfile>{};
   final Set<String> _memberProfileLoadingUrls = <String>{};
   final Map<String, String> _memberProfileErrors = <String, String>{};
+  PublicMemo? _publishedSnapshotMemo;
   PublicMemo? _publishedKpiMemo;
   bool _isLoading = true;
   bool _isRealityLoading = false;
+  bool _isPublishingSnapshotMemo = false;
   bool _isPublishingKpiMemo = false;
   bool _isGeminiLoading = false;
   String? _realityError;
@@ -186,6 +188,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
       _plan = plan;
       _realitySnapshot = cachedSnapshot;
       _realityHistory = cachedHistory;
+      _publishedSnapshotMemo = null;
       _publishedKpiMemo = null;
       _applyInitialPrefectureFilter(plan);
       if (!plan.regionLabels.contains(_selectedRegion)) {
@@ -196,6 +199,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
       _isLoading = false;
     });
 
+    unawaited(_loadPublishedSnapshotMemo(cachedSnapshot));
     unawaited(_loadPublishedKpiMemo());
     unawaited(_refreshRealityData(showSnackBar: false));
   }
@@ -459,6 +463,30 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
     });
   }
 
+  Future<void> _loadPublishedSnapshotMemo(
+    LocalElectionRealitySnapshot? snapshot,
+  ) async {
+    if (snapshot == null || !snapshot.hasData) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _publishedSnapshotMemo = null;
+      });
+      return;
+    }
+    final memo = await _shareService.loadPublishedSnapshot(snapshot);
+    if (!mounted) {
+      return;
+    }
+    if (_realitySnapshot?.fetchedAt != snapshot.fetchedAt) {
+      return;
+    }
+    setState(() {
+      _publishedSnapshotMemo = memo;
+    });
+  }
+
   Future<void> _refreshRealityData({
     required bool showSnackBar,
     bool forceRefresh = false,
@@ -495,10 +523,12 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
         _realitySnapshot = snapshot;
         _realityHistory = history;
         _realityError = null;
+        _publishedSnapshotMemo = null;
         _publishedKpiMemo = null;
         _syncMemberSelection(snapshot);
         _syncScheduleSelection(snapshot);
       });
+      unawaited(_loadPublishedSnapshotMemo(snapshot));
       unawaited(_loadPublishedKpiMemo());
       if (showSnackBar) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -667,6 +697,66 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
     }
   }
 
+  Future<PublicMemo?> _publishSnapshotMemo({
+    bool openAfterPublish = false,
+  }) async {
+    final snapshot = _realitySnapshot;
+    if (snapshot == null || !snapshot.hasData) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('最新の実データ取得後に地方議員集計をノート化できます')),
+      );
+      return null;
+    }
+    final user = Supabase.instance.client.auth.currentUser;
+    if (user == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('地方議員集計のノート化にはログインが必要です'),
+        ),
+      );
+      return null;
+    }
+    if (_isPublishingSnapshotMemo) {
+      return _publishedSnapshotMemo;
+    }
+
+    setState(() {
+      _isPublishingSnapshotMemo = true;
+    });
+
+    try {
+      final memo = await _shareService.publishSnapshot(
+        snapshot: snapshot,
+        members: snapshot.members,
+      );
+      if (!mounted) {
+        return memo;
+      }
+      if (memo == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('地方議員集計ノートの作成に失敗しました')),
+        );
+        return null;
+      }
+      setState(() {
+        _publishedSnapshotMemo = memo;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('地方議員集計ノートを更新しました')),
+      );
+      if (openAfterPublish) {
+        await Navigator.of(context).pushNamed('/public-memo?id=${memo.id}');
+      }
+      return memo;
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isPublishingSnapshotMemo = false;
+        });
+      }
+    }
+  }
+
   Future<void> _copyKpiMemoLink() async {
     final memo = _publishedKpiMemo ?? await _publishKpiMemo();
     if (memo == null) {
@@ -679,6 +769,21 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
     }
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('全県連KPI共有ノートのリンクをコピーしました')),
+    );
+  }
+
+  Future<void> _copySnapshotMemoLink() async {
+    final memo = _publishedSnapshotMemo ?? await _publishSnapshotMemo();
+    if (memo == null) {
+      return;
+    }
+    final url = PublicMemoService.buildPublicMemoUrl(memo.id);
+    await Clipboard.setData(ClipboardData(text: url));
+    if (!mounted) {
+      return;
+    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('地方議員集計ノートのリンクをコピーしました')),
     );
   }
 
@@ -1055,6 +1160,24 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                       label: const Text('公開URLコピー'),
                     ),
                     FilledButton.tonalIcon(
+                      onPressed:
+                          _isPublishingSnapshotMemo || realitySnapshot == null
+                              ? null
+                              : () => _publishSnapshotMemo(
+                                    openAfterPublish: true,
+                                  ),
+                      icon: _isPublishingSnapshotMemo
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.summarize_outlined),
+                      label: Text(
+                        _isPublishingSnapshotMemo ? '集計ノート作成中' : '地方議員集計ノート化',
+                      ),
+                    ),
+                    FilledButton.tonalIcon(
                       onPressed: _isPublishingKpiMemo
                           ? null
                           : () => _publishKpiMemo(openAfterPublish: true),
@@ -1070,9 +1193,17 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                       ),
                     ),
                     FilledButton.tonalIcon(
+                      onPressed:
+                          _isPublishingSnapshotMemo || realitySnapshot == null
+                              ? null
+                              : _copySnapshotMemoLink,
+                      icon: const Icon(Icons.copy_all),
+                      label: const Text('集計ノートリンクコピー'),
+                    ),
+                    FilledButton.tonalIcon(
                       onPressed: _isPublishingKpiMemo ? null : _copyKpiMemoLink,
                       icon: const Icon(Icons.copy_all),
-                      label: const Text('ノートリンクコピー'),
+                      label: const Text('KPIノートリンクコピー'),
                     ),
                     FilledButton.icon(
                       onPressed: _isPublishingKpiMemo ? null : _shareKpiMemoOnX,
@@ -1115,6 +1246,11 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                     '取得日時 ${_dateTimeFormat.format(realitySnapshot.fetchedAt.toLocal())}',
                     color: const Color(0xFF607D8B),
                   ),
+                  if (_publishedSnapshotMemo != null)
+                    _buildStatusChip(
+                      '地方議員集計ノート準備済み',
+                      color: const Color(0xFF0891B2),
+                    ),
                   if (_publishedKpiMemo != null)
                     _buildStatusChip(
                       '全県連KPI共有ノート準備済み',
