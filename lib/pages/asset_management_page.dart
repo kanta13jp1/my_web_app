@@ -128,7 +128,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   final DebtRepaymentPlannerService _debtRepaymentPlanner =
       const DebtRepaymentPlannerService();
   final AssetWasteTrainingAiService _wasteTrainingAiService =
-      const AssetWasteTrainingAiService();
+      AssetWasteTrainingAiService();
   bool _isGeneratingDebtPlan = false;
   String? _debtPlanMarkdown;
   DateTime? _debtPlanGeneratedAt;

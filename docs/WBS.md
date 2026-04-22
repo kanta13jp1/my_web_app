@@ -1,6 +1,6 @@
 # 自分株式会社 開発 WBS (Work Breakdown Structure)
 
-> **最終更新**: 2026-04-22 Codex (資産管理 浪費抑制AIトレーニング)
+> **最終更新**: 2026-04-22 Codex (ライフ浪費ゼロ司令塔 + AI抽象化)
 > **参照**: サイト上の `/project-gantt` ページでリアルタイム確認可能  
 > **DB**: `wbs_milestones` + `wbs_tasks` テーブル (migration 20260417180000 / 20260417190000 / 20260417200000)
 
@@ -38,6 +38,7 @@
 - 全機能AI戦略モニタリング基盤: HomeToolCatalog 全機能を対象に、AI分析、KGI、KGI達成のCSF、CSFベースの数値KPI、定期モニタリング、改善キューを自動生成するホーム横断パネルを追加。Migration `20260422150000_wbs_codex_feature_strategy_monitor.sql` で反映。
 - 全機能AI戦略レビュー実AI連携: 全機能AI戦略モニタリング結果を `ai-hub provider.chat` に渡し、現状分析、重要CSF、次回改善アクションをAIレビューとして表示。AI失敗時はローカルKPI分析へフォールバック。Migration `20260422153000_wbs_codex_feature_strategy_ai_review.sql` で反映。
 - 資産管理 浪費抑制AIトレーニング: 資産管理画面に「浪費しないことは能力を高める訓練」というKGI/CSF/KPIパネルを追加し、支出・浪費カテゴリ・借金ロックダウン日課からKPIを自動算出。`ai-hub provider.chat`で現状分析と次アクションを生成し、AI失敗時はローカルKPIエンジンにフォールバック。migration `20260422160000_wbs_codex_asset_waste_training_ai.sql` で反映。
+- ライフ浪費ゼロ司令塔 + AI抽象化: 類似していた `ai-hub provider.chat` 呼び出しを `AiHubChatService` に共通化し、ホームに時間・お金・健康・体力・知能・集中力の浪費を同じKGI/CSF/KPIで監視する「ライフ浪費ゼロ司令塔」を追加。AIが現状分析・最重要CSF・次アクション・次回モニタリング観点を生成し、失敗時はローカルKPIエンジンへフォールバック。migration `20260422170000_wbs_codex_life_waste_command_center.sql` で反映。
 
 ## マイルストーン概要 (ユーザー可視)
 
@@ -100,6 +101,7 @@
 | タスク管理 (Asana対抗) | 🟡進行中 | 50% | β |
 | 資産管理 (MoneyForward対抗) (Codex引継ぎ) | 🟡進行中 | 52% | β |
 | 資産管理 浪費抑制AIトレーニング | ✅完了 | 100% | β |
+| ライフ浪費ゼロ司令塔 + AI抽象化 | ✅完了 | 100% | β |
 | 競合比較ページ最新化 (Codex引継ぎ) | 🟡進行中 | 85% | α |
 | 課金機能実装 (Stripe) | ⚪未着手 | 0% | v1 |
 

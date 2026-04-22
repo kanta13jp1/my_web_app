@@ -9,6 +9,30 @@ import 'package:intl/intl.dart';
 class TimeWasteGuardWidget extends StatefulWidget {
   const TimeWasteGuardWidget({super.key});
 
+  static const List<String> guardItemIds = <String>[
+    'x_twitter',
+    'youtube',
+    'coffee',
+    'smoking',
+    'sns_general',
+    'manga_anime',
+    'game',
+    'snacking',
+  ];
+
+  static String dateKeyFor(DateTime date) =>
+      DateFormat('yyyy-MM-dd').format(date);
+
+  static Future<int> loadSlipCountFor(DateTime date) async {
+    final prefs = await SharedPreferences.getInstance();
+    final dateKey = dateKeyFor(date);
+    var total = 0;
+    for (final itemId in guardItemIds) {
+      total += prefs.getInt('twg_slips_${dateKey}_$itemId') ?? 0;
+    }
+    return total;
+  }
+
   @override
   State<TimeWasteGuardWidget> createState() => _TimeWasteGuardWidgetState();
 }

@@ -18,6 +18,7 @@ import '../services/completion_goal_service.dart';
 import '../services/feature_strategy_ai_review_service.dart';
 import '../services/feature_strategy_monitor_service.dart';
 import '../services/home_tool_usage_service.dart';
+import '../services/life_waste_elimination_service.dart';
 import '../services/personality_test_service.dart';
 import '../services/theme_service.dart';
 import '../services/waste_tracking_service.dart';
@@ -50,6 +51,7 @@ import '../widgets/ai_university_home_card.dart';
 import '../widgets/api_key_status_banner.dart';
 import '../widgets/feature_strategy_monitor_panel.dart';
 import '../widgets/kgi_csf_kpi_panel.dart';
+import '../widgets/life_waste_elimination_panel.dart';
 import '../widgets/referral_share_card.dart';
 import '../widgets/thought_interrupt_quick_widget.dart';
 import 'ai_secretary_page.dart';
@@ -83,6 +85,13 @@ class _HomePageState extends State<HomePage> {
   late Future<List<String>> _recentToolIdsFuture;
   late Future<FeatureStrategyReport> _featureStrategyReportFuture;
   late Future<FeatureStrategyAiReview> _featureStrategyAiReviewFuture;
+  late Future<int> _timeWasteSlipCountFuture;
+  Future<LifeWasteAiReview>? _lifeWasteAiReviewFuture;
+  String? _lifeWasteAiReviewKey;
+  final LifeWasteEliminationService _lifeWasteEliminationService =
+      const LifeWasteEliminationService();
+  final LifeWasteAiReviewService _lifeWasteAiReviewService =
+      LifeWasteAiReviewService();
   static const FlutterSecureStorage _secureStorage = FlutterSecureStorage();
 
   // Gemini 429 対策: グローバル排他ロック + 最小呼び出し間隔 (60秒)
@@ -134,6 +143,7 @@ class _HomePageState extends State<HomePage> {
       final command = _resolveNextAction(snapshot);
       return _loadAiNudgeIfNeeded(command, snapshot);
     });
+    _timeWasteSlipCountFuture = TimeWasteGuardWidget.loadSlipCountFor(_now());
     _reloadRecentToolSignals();
   }
 
@@ -161,7 +171,7 @@ class _HomePageState extends State<HomePage> {
       );
     });
     _featureStrategyAiReviewFuture = _featureStrategyReportFuture.then(
-      const FeatureStrategyAiReviewService().generateReview,
+      FeatureStrategyAiReviewService().generateReview,
     );
   }
 
@@ -185,6 +195,7 @@ class _HomePageState extends State<HomePage> {
     await _kpiOverviewFuture;
     await _marketingKpiFuture;
     await _aiNudgeFuture;
+    await _timeWasteSlipCountFuture;
     await _featureStrategyReportFuture;
     await _featureStrategyAiReviewFuture;
   }
@@ -4531,6 +4542,13 @@ abstinence_slip_details: $slipDetailsText
                             ),
                             const SizedBox(height: 12),
                             const TimeWasteGuardWidget(),
+                            const SizedBox(height: 12),
+                            _buildLifeWasteEliminationPanel(
+                              isDark,
+                              isCompact,
+                              opsSnapshot,
+                            ),
+                            const SizedBox(height: 12),
                             _buildMorningBriefingCard(
                               context,
                               isHighlighted: highlightMorning,
@@ -5242,6 +5260,99 @@ abstinence_slip_details: $slipDetailsText
         );
       },
     );
+  }
+
+  Widget _buildLifeWasteEliminationPanel(
+    bool isDark,
+    bool isCompact,
+    _HomeOpsSnapshot opsSnapshot,
+  ) {
+    return FutureBuilder<List<dynamic>>(
+      future: Future.wait<dynamic>([
+        _kpiOverviewFuture,
+        _featureStrategyReportFuture,
+        _timeWasteSlipCountFuture,
+      ]),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting &&
+            !snapshot.hasData) {
+          return Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF111827) : Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: isDark
+                    ? Colors.white.withValues(alpha: 0.12)
+                    : const Color(0xFFE5E7EB),
+              ),
+            ),
+            child: const LinearProgressIndicator(minHeight: 6),
+          );
+        }
+
+        final data = snapshot.data;
+        final overview = data != null && data.isNotEmpty
+            ? data[0] as _HomeKpiOverview
+            : const _HomeKpiOverview();
+        final featureReport = data != null && data.length > 1
+            ? data[1] as FeatureStrategyReport
+            : FeatureStrategyReport.empty(_now());
+        final timeSlipCount =
+            data != null && data.length > 2 ? data[2] as int : 0;
+        final coreRitualDoneCount = [
+          opsSnapshot.monthlyCashflowSummary.reviewDone,
+          opsSnapshot.morningBriefingDone,
+          opsSnapshot.balanceCheckDone,
+        ].where((value) => value).length;
+        final goal = opsSnapshot.completionGoalSnapshot;
+        final report = _lifeWasteEliminationService.buildReport(
+          monitoredAt: _now(),
+          timeSlipCount: timeSlipCount,
+          abstinenceSlipCount: opsSnapshot.abstinenceSlipCount,
+          abstinenceTimeSavedMinutes:
+              opsSnapshot.abstinenceDisciplineTimeSavedMinutes,
+          abstinenceMoneySaved: opsSnapshot.abstinenceDisciplineMoneySaved,
+          moneyWaste: overview.totalWaste,
+          pendingCriticalTaskCount: opsSnapshot.pendingCriticalTaskCount,
+          coreRitualDoneCount: coreRitualDoneCount,
+          coreRitualTarget: 3,
+          todayCompletedCount: goal.todayCompletedCount,
+          yesterdayCompletedCount: goal.yesterdayCompletedCount,
+          featureTotal: featureReport.totalFeatures,
+          featureImproveCount: featureReport.improveCount,
+          featureProgress: featureReport.portfolioPlan.displayProgress,
+        );
+        return FutureBuilder<LifeWasteAiReview>(
+          future: _lifeWasteReviewFor(report),
+          builder: (context, reviewSnapshot) {
+            return LifeWasteEliminationPanel(
+              report: report,
+              aiReview: reviewSnapshot.data,
+              isAiReviewLoading:
+                  reviewSnapshot.connectionState == ConnectionState.waiting &&
+                      !reviewSnapshot.hasData,
+              isDark: isDark,
+              isCompact: isCompact,
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Future<LifeWasteAiReview> _lifeWasteReviewFor(
+    LifeWasteEliminationReport report,
+  ) {
+    final key = report.cacheKey;
+    final current = _lifeWasteAiReviewFuture;
+    if (current == null || _lifeWasteAiReviewKey != key) {
+      _lifeWasteAiReviewKey = key;
+      _lifeWasteAiReviewFuture =
+          _lifeWasteAiReviewService.generateReview(report);
+    }
+    return _lifeWasteAiReviewFuture!;
   }
 
   Widget _buildOfficeKpiSummary(

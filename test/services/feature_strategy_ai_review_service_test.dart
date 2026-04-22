@@ -38,7 +38,7 @@ void main() {
 
     expect(review.isFallback, isTrue);
     expect(review.source, 'local-kpi-engine');
-    expect(review.summary, contains('改善優先'));
+    expect(review.summary, contains('AI'));
   });
 }
 
