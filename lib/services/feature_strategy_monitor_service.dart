@@ -401,7 +401,7 @@ class FeatureStrategyMonitorService {
 
     for (final entry in catalog) {
       for (final axis in _candidateAxes(entry)) {
-        final groupKey = '${entry.sectionId}:$axis';
+        final groupKey = 'axis:$axis';
         groups
             .putIfAbsent(groupKey, () => <FeatureStrategyCatalogItem>[])
             .add(entry);
@@ -426,9 +426,18 @@ class FeatureStrategyMonitorService {
       final canonical = items.first;
       final sectionName =
           sectionNamesById[canonical.sectionId] ?? canonical.sectionId;
+      final sectionNames = _sectionNamesFor(items, sectionNamesById);
       final duplicateCount = items.length;
+      final estimatedWasteMinutesSaved =
+          _estimatedConsolidationWasteMinutesSaved(items);
+      final sharedAxis = axes[entry.key] ?? '共通目的';
+      final consolidationAction = _buildConsolidationAction(
+        canonical: canonical,
+        items: items,
+        sharedAxis: sharedAxis,
+      );
       final plan = KgiCsfKpiPlan(
-        domain: '$sectionName / 類似機能統合',
+        domain: '${sectionNames.join(' / ')} / 類似機能統合',
         kgi: '${canonical.title}へ似た機能を束ね、迷わず使える導線にする',
         actualLabel: '1統合案',
         targetLabel: '$duplicateCount機能整理',
@@ -455,16 +464,28 @@ class FeatureStrategyMonitorService {
             target: duplicateCount,
             unit: '件',
           ),
+          KgiCsfKpiMetric.number(
+            csf: '時間と集中力の浪費削減',
+            kpi: '導線迷い削減の見込み時間',
+            actual: estimatedWasteMinutesSaved,
+            target: math.max(15, estimatedWasteMinutesSaved),
+            unit: '分',
+          ),
         ],
       );
 
       candidates.add(
         FeatureConsolidationCandidate(
           groupKey: entry.key,
+          canonicalFeatureId: canonical.id,
           canonicalFeatureName: canonical.title,
+          featureIds: items.map((item) => item.id).toList(),
           featureNames: items.map((item) => item.title).toList(),
+          sectionNames: sectionNames,
           sectionName: sectionName,
-          sharedAxis: axes[entry.key] ?? '共通目的',
+          sharedAxis: sharedAxis,
+          consolidationAction: consolidationAction,
+          estimatedWasteMinutesSaved: estimatedWasteMinutesSaved,
           plan: plan,
         ),
       );
@@ -486,6 +507,45 @@ class FeatureStrategyMonitorService {
       for (final item in items)
         if (seen.add(item.id)) item,
     ];
+  }
+
+  List<String> _sectionNamesFor(
+    List<FeatureStrategyCatalogItem> items,
+    Map<String, String> sectionNamesById,
+  ) {
+    final names = <String>{};
+    for (final item in items) {
+      names.add(sectionNamesById[item.sectionId] ?? item.sectionId);
+    }
+    return names.toList(growable: false)..sort();
+  }
+
+  int _estimatedConsolidationWasteMinutesSaved(
+    List<FeatureStrategyCatalogItem> items,
+  ) {
+    final duplicateCount = math.max(0, items.length - 1);
+    final clearDeckCount = items.where((item) => item.requiresClearDeck).length;
+    final keywordSpread = items
+        .expand((item) => item.keywords)
+        .map(_normalizeAxis)
+        .where(_isUsefulAxis)
+        .toSet()
+        .length;
+    return duplicateCount * 8 + clearDeckCount * 4 + math.min(8, keywordSpread);
+  }
+
+  String _buildConsolidationAction({
+    required FeatureStrategyCatalogItem canonical,
+    required List<FeatureStrategyCatalogItem> items,
+    required String sharedAxis,
+  }) {
+    final secondaryNames = items
+        .where((item) => item.id != canonical.id)
+        .map((item) => item.title)
+        .toList(growable: false);
+    final secondaryLabel =
+        secondaryNames.isEmpty ? '類似導線' : secondaryNames.join(' / ');
+    return '$sharedAxis を代表軸に、$secondaryLabel は ${canonical.title} のサブ導線・別名として扱い、KGI/CSF/KPIとAIレビューは1機能へ集約する';
   }
 
   List<String> _candidateAxes(FeatureStrategyCatalogItem entry) {
@@ -820,6 +880,10 @@ class FeatureStrategyMonitorService {
             .fold<double>(0, (sum, value) => sum + value) /
         math.max(1, total);
     final consolidationTarget = math.max(1, consolidationCandidates.length);
+    final consolidationSavedMinutes = consolidationCandidates.fold<int>(
+      0,
+      (sum, candidate) => sum + candidate.estimatedWasteMinutesSaved,
+    );
     final coveredLifeCapitalCount =
         lifeCapitalSummaries.where((summary) => summary.hasCoverage).length;
     final highWasteReductionCount =
@@ -921,6 +985,13 @@ class FeatureStrategyMonitorService {
           actual: consolidationCandidates.length,
           target: consolidationTarget,
           unit: '候補',
+        ),
+        KgiCsfKpiMetric.number(
+          csf: '類似機能の抽象化',
+          kpi: '統合で減らせる導線迷い時間',
+          actual: consolidationSavedMinutes,
+          target: math.max(15, consolidationSavedMinutes),
+          unit: '分',
         ),
       ],
     );

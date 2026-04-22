@@ -50,6 +50,7 @@ void main() {
     expect(report.signals, hasLength(3));
     expect(report.portfolioPlan.kgi, contains('全機能'));
     expect(report.consolidationCandidates, hasLength(1));
+    expect(report.consolidationWasteMinutesSaved, greaterThan(0));
     expect(
       report.lifeCapitalSummaries,
       hasLength(FeatureLifeCapitalResource.values.length),
@@ -95,6 +96,22 @@ void main() {
     expect(
       report.consolidationCandidates.single.summary,
       contains('タスクボード'),
+    );
+    expect(
+      report.consolidationCandidates.single.canonicalFeatureId,
+      'task-board',
+    );
+    expect(
+      report.consolidationCandidates.single.featureIds,
+      containsAll(<String>['task-board', 'task-kanban']),
+    );
+    expect(
+      report.consolidationCandidates.single.consolidationAction,
+      contains('KGI/CSF/KPIとAIレビューは1機能へ集約'),
+    );
+    expect(
+      report.portfolioPlan.metrics.map((metric) => metric.kpi).join(' / '),
+      contains('統合で減らせる導線迷い時間'),
     );
   });
 }

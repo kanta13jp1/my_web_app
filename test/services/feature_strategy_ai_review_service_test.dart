@@ -18,6 +18,8 @@ void main() {
         expect(body['message'].toString(), contains('低ハードル完了(7日)'));
         expect(body['message'].toString(), contains('解放条件'));
         expect(body['message'].toString(), contains('同時に広げず'));
+        expect(body['message'].toString(), contains('導線迷い削減見込み'));
+        expect(body['message'].toString(), contains('action='));
         return {
           'success': true,
           'text': '改善優先の機能を週次レビューへ集約し、未利用導線をAI推薦へ戻します。',

@@ -55,8 +55,10 @@ class FeatureStrategyAiReviewService {
     final consolidationLines =
         report.consolidationCandidates.take(5).map((candidate) {
       return '- ${candidate.canonicalFeatureName}: '
-          '${candidate.featureNames.join(' / ')} '
-          '(共通軸=${candidate.sharedAxis})';
+          '${candidate.featureNames.join(' / ')} / '
+          'sections=${candidate.sectionLabel} / '
+          'saved=${candidate.estimatedWasteMinutesSaved}分 / '
+          'action=${candidate.consolidationAction}';
     }).join('\n');
     final lifeCapitalLines = report.lifeCapitalSummaries.map((summary) {
       return '- ${summary.label}: ${summary.featureCount}機能, '
@@ -85,6 +87,7 @@ class FeatureStrategyAiReviewService {
 要観察: ${report.watchCount}
 改善優先: ${report.improveCount}
 統合候補: ${report.consolidationCount}
+統合による導線迷い削減見込み: ${report.consolidationWasteMinutesSaved}分
 全体KGI進捗: ${(report.portfolioPlan.displayProgress * 100).round()}%
 生命資本カバー: ${(report.lifeCapitalCoverageRatio * 100).round()}%
 浪費削減高スコア機能: ${report.highWasteReductionCount}

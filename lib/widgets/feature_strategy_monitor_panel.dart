@@ -270,6 +270,13 @@ class _FeatureStrategyMonitorPanelState
                     width: width,
                     dark: isDark,
                   ),
+                  _SummaryTile(
+                    label: '統合削減',
+                    value: '${report.consolidationWasteMinutesSaved}分',
+                    color: const Color(0xFF9333EA),
+                    width: width,
+                    dark: isDark,
+                  ),
                 ],
               );
             },
@@ -1119,9 +1126,24 @@ class _ConsolidationRow extends StatelessWidget {
                 color: const Color(0xFF7C3AED),
                 dark: dark,
               ),
+              _StatusPill(
+                label: '${candidate.estimatedWasteMinutesSaved}分削減見込',
+                color: const Color(0xFF9333EA),
+                dark: dark,
+              ),
             ],
           ),
           const SizedBox(height: 6),
+          Text(
+            '対象: ${candidate.sectionLabel} / 代表ID: ${candidate.canonicalFeatureId}',
+            style: TextStyle(
+              color: subColor,
+              fontSize: compact ? 11 : 12,
+              fontWeight: FontWeight.w700,
+              height: 1.45,
+            ),
+          ),
+          const SizedBox(height: 4),
           Text(
             candidate.summary,
             style: TextStyle(

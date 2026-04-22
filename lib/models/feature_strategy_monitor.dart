@@ -119,25 +119,39 @@ class FeatureStrategySignal {
 
 class FeatureConsolidationCandidate {
   final String groupKey;
+  final String canonicalFeatureId;
   final String canonicalFeatureName;
+  final List<String> featureIds;
   final List<String> featureNames;
+  final List<String> sectionNames;
   final String sectionName;
   final String sharedAxis;
+  final String consolidationAction;
+  final int estimatedWasteMinutesSaved;
   final KgiCsfKpiPlan plan;
 
   const FeatureConsolidationCandidate({
     required this.groupKey,
+    this.canonicalFeatureId = '',
     required this.canonicalFeatureName,
+    this.featureIds = const <String>[],
     required this.featureNames,
+    this.sectionNames = const <String>[],
     required this.sectionName,
     required this.sharedAxis,
+    this.consolidationAction = '',
+    this.estimatedWasteMinutesSaved = 0,
     required this.plan,
   });
 
   int get duplicateCount => featureNames.length;
+  int get secondaryFeatureCount => duplicateCount <= 1 ? 0 : duplicateCount - 1;
+  String get sectionLabel =>
+      sectionNames.isEmpty ? sectionName : sectionNames.join(' / ');
 
-  String get summary =>
-      '$sharedAxis を軸に ${featureNames.join(' / ')} を $canonicalFeatureName へ統合候補化';
+  String get summary => consolidationAction.isEmpty
+      ? '$sharedAxis を軸に ${featureNames.join(' / ')} を $canonicalFeatureName へ統合候補化'
+      : consolidationAction;
 }
 
 class FeatureLifeCapitalSummary {
@@ -241,6 +255,10 @@ class FeatureStrategyReport {
   int get watchCount => _countByStatus(FeatureStrategyStatus.watch);
   int get improveCount => _countByStatus(FeatureStrategyStatus.improve);
   int get consolidationCount => consolidationCandidates.length;
+  int get consolidationWasteMinutesSaved => consolidationCandidates.fold<int>(
+        0,
+        (sum, candidate) => sum + candidate.estimatedWasteMinutesSaved,
+      );
   int get highWasteReductionCount =>
       signals.where((signal) => signal.wasteReductionScore >= 3).length;
   int get focusActionsCompletedLast7 => signals.fold<int>(
