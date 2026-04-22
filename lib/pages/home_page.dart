@@ -15,10 +15,12 @@ import 'package:intl/intl.dart';
 import '../services/ai_service.dart';
 import '../services/abstinence_guard_store.dart';
 import '../services/completion_goal_service.dart';
+import '../services/feature_strategy_monitor_service.dart';
 import '../services/home_tool_usage_service.dart';
 import '../services/personality_test_service.dart';
 import '../services/theme_service.dart';
 import '../services/waste_tracking_service.dart';
+import '../models/feature_strategy_monitor.dart';
 import '../models/kgi_csf_kpi.dart';
 
 // Pages
@@ -45,6 +47,7 @@ import '../widgets/development_achievements_card.dart';
 import '../widgets/edge_function_summary_card.dart';
 import '../widgets/ai_university_home_card.dart';
 import '../widgets/api_key_status_banner.dart';
+import '../widgets/feature_strategy_monitor_panel.dart';
 import '../widgets/kgi_csf_kpi_panel.dart';
 import '../widgets/referral_share_card.dart';
 import '../widgets/thought_interrupt_quick_widget.dart';
@@ -77,6 +80,7 @@ class _HomePageState extends State<HomePage> {
   late Future<_HomeMarketingKpiSummary> _marketingKpiFuture;
   late Future<String?> _aiNudgeFuture;
   late Future<List<String>> _recentToolIdsFuture;
+  late Future<FeatureStrategyReport> _featureStrategyReportFuture;
   static const FlutterSecureStorage _secureStorage = FlutterSecureStorage();
 
   // Gemini 429 対策: グローバル排他ロック + 最小呼び出し間隔 (60秒)
@@ -128,7 +132,32 @@ class _HomePageState extends State<HomePage> {
       final command = _resolveNextAction(snapshot);
       return _loadAiNudgeIfNeeded(command, snapshot);
     });
+    _reloadRecentToolSignals();
+  }
+
+  void _reloadRecentToolSignals() {
     _recentToolIdsFuture = HomeToolUsageService.loadRecentToolIds();
+    _featureStrategyReportFuture = _recentToolIdsFuture.then((recentToolIds) {
+      final catalog = _buildHomeToolCatalog().map((entry) {
+        return FeatureStrategyCatalogItem(
+          id: entry.id,
+          sectionId: entry.sectionId,
+          title: entry.title,
+          subtitle: entry.subtitle,
+          keywords: entry.keywords,
+          requiresClearDeck: entry.requiresClearDeck,
+        );
+      }).toList();
+      final sectionNamesById = {
+        for (final section in homeToolSections) section.id: section.title,
+      };
+      return const FeatureStrategyMonitorService().buildReport(
+        catalog: catalog,
+        recentToolIds: recentToolIds,
+        sectionNamesById: sectionNamesById,
+        monitoredAt: _now(),
+      );
+    });
   }
 
   Future<void> _logout(BuildContext context) async {
@@ -151,6 +180,7 @@ class _HomePageState extends State<HomePage> {
     await _kpiOverviewFuture;
     await _marketingKpiFuture;
     await _aiNudgeFuture;
+    await _featureStrategyReportFuture;
   }
 
   String get _todayKey => DateFormat('yyyy-MM-dd').format(_now());
@@ -1491,7 +1521,7 @@ abstinence_slip_details: $slipDetailsText
     await action();
     if (!mounted) return;
     setState(() {
-      _recentToolIdsFuture = HomeToolUsageService.loadRecentToolIds();
+      _reloadRecentToolSignals();
     });
   }
 
@@ -1569,7 +1599,7 @@ abstinence_slip_details: $slipDetailsText
     );
     if (!mounted) return;
     setState(() {
-      _recentToolIdsFuture = HomeToolUsageService.loadRecentToolIds();
+      _reloadRecentToolSignals();
     });
   }
 
@@ -4563,6 +4593,16 @@ abstinence_slip_details: $slipDetailsText
                             ),
                             const SizedBox(height: 24),
                             _buildSectionHeader(
+                              'AI FEATURE STRATEGY MONITOR',
+                              Icons.auto_graph,
+                              const Color(0xFF7C3AED),
+                              key: const Key(
+                                'home_section_feature_strategy_monitor',
+                              ),
+                            ),
+                            _buildFeatureStrategyMonitor(isDark, isCompact),
+                            const SizedBox(height: 24),
+                            _buildSectionHeader(
                               'KPI SUMMARY',
                               Icons.show_chart,
                               const Color(0xFF3D5AFE),
@@ -5151,6 +5191,38 @@ abstinence_slip_details: $slipDetailsText
               ),
             ),
           ),
+        );
+      },
+    );
+  }
+
+  Widget _buildFeatureStrategyMonitor(bool isDark, bool isCompact) {
+    return FutureBuilder<FeatureStrategyReport>(
+      future: _featureStrategyReportFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting &&
+            !snapshot.hasData) {
+          return Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF111827) : Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: isDark
+                    ? Colors.white.withValues(alpha: 0.12)
+                    : const Color(0xFFE5E7EB),
+              ),
+            ),
+            child: const LinearProgressIndicator(minHeight: 6),
+          );
+        }
+
+        final report = snapshot.data ?? FeatureStrategyReport.empty(_now());
+        return FeatureStrategyMonitorPanel(
+          report: report,
+          isDark: isDark,
+          isCompact: isCompact,
         );
       },
     );

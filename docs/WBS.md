@@ -1,6 +1,6 @@
 # 自分株式会社 開発 WBS (Work Breakdown Structure)
 
-> **最終更新**: 2026-04-22 Codex (資産管理 銀行CSV取得改善)
+> **最終更新**: 2026-04-22 Codex (全機能AI戦略モニタリング基盤)
 > **参照**: サイト上の `/project-gantt` ページでリアルタイム確認可能  
 > **DB**: `wbs_milestones` + `wbs_tasks` テーブル (migration 20260417180000 / 20260417190000 / 20260417200000)
 
@@ -34,6 +34,8 @@
 - 県連役員表示: 県連代表・県連幹事長・出典URLを県連カードと共有メタデータへ追加。公式確認できた県から初期値を入れ、未確認県は公式未確認として表示。migration `20260422133000_wbs_codex_election_prefecture_officers.sql` で反映。
 - 地方議員集計ノート化導線: `国民民主党 地方議員集計` の既存ノート生成機能を画面ボタンから直接実行できるようにし、全県連KPIノートとリンクコピー導線を分離。migration `20260422141000_wbs_codex_election_snapshot_note_button.sql` で反映。
 - 資産管理 銀行CSV取得改善: `資産管理 (MoneyForward対抗)` を今回実際に着手する範囲だけCodexへ引き継ぎ。GoogleシートCSV取得を共通化し、三井住友/じぶん銀行の取得失敗を明示、ボタン列をモバイルでも折り返せるUIに改善。migration `20260422143000_wbs_codex_asset_bank_csv_import.sql` で反映。
+
+- 全機能AI戦略モニタリング基盤: HomeToolCatalog 全機能を対象に、AI分析、KGI、KGI達成のCSF、CSFベースの数値KPI、定期モニタリング、改善キューを自動生成するホーム横断パネルを追加。Migration `20260422150000_wbs_codex_feature_strategy_monitor.sql` で反映。
 
 ## マイルストーン概要 (ユーザー可視)
 
@@ -115,6 +117,7 @@
 | 統一地方選 公開URL/一括共有ノート | Codex | ✅完了 | 100% | α |
 | 統一地方選 KGI/CSF/KPI設計 | Codex | ✅完了 | 100% | α |
 | 全体KGI/CSF/KPI表示基盤 | Codex | ✅完了 | 100% | α |
+| 全機能AI戦略モニタリング基盤 | Codex | ✅完了 | 100% | α |
 | 統一地方選 県連役員表示 | Codex | ✅完了 | 100% | α |
 | 統一地方選 地方議員集計ノート化導線 | Codex | ✅完了 | 100% | α |
 
