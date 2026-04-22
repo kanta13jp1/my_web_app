@@ -43,6 +43,13 @@ class AssetManagementPage extends StatefulWidget {
 }
 
 class _AssetManagementPageState extends State<AssetManagementPage> {
+  static const String _bankSheetId =
+      '1WZlHr6YWG8ZbT9r-wXtYPEdPT5E4b47PSpNSNl8A1MM';
+  static const String _smbcSheetGid = '0';
+  static const List<String> _jibunCandidateSheetGids = <String>[
+    '0',
+  ];
+
   final _supabase = Supabase.instance.client;
 
   // --- 今日18:00締切のためのチェックリスト ---
@@ -63,6 +70,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   bool _mustTasksDone = false;
   bool _isLoadingClosing = false;
   bool _isFetchingSmbc = false;
+  bool _isFetchingJibun = false;
 
   // --- 資産・負債（ストック）用変数 ---
   Map<String, TextEditingController> _controllers = {};
@@ -1457,48 +1465,146 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   // 1 & 2. 資産・負債の記録（ストック）
   // ==========================================
 
+  Uri _bankSheetCsvUri(String gid) {
+    return Uri.https(
+      'docs.google.com',
+      '/spreadsheets/d/$_bankSheetId/export',
+      <String, String>{
+        'format': 'csv',
+        'gid': gid,
+      },
+    );
+  }
+
+  Future<List<List<String>>> _fetchBankSheetRows(String gid) async {
+    final response = await http.get(_bankSheetCsvUri(gid));
+    if (response.statusCode != 200) {
+      throw Exception('Googleシート取得 HTTP ${response.statusCode}');
+    }
+    final csvData = utf8.decode(response.bodyBytes);
+    return _parseCsvRows(csvData);
+  }
+
+  List<List<String>> _parseCsvRows(String csvData) {
+    return const LineSplitter()
+        .convert(csvData)
+        .map(_parseCsvLine)
+        .where((row) => row.any((cell) => cell.trim().isNotEmpty))
+        .toList();
+  }
+
+  List<String> _parseCsvLine(String line) {
+    final cells = <String>[];
+    final buffer = StringBuffer();
+    var inQuotes = false;
+
+    for (var index = 0; index < line.length; index++) {
+      final char = line[index];
+      if (char == '"') {
+        if (inQuotes && index + 1 < line.length && line[index + 1] == '"') {
+          buffer.write('"');
+          index++;
+        } else {
+          inQuotes = !inQuotes;
+        }
+      } else if (char == ',' && !inQuotes) {
+        cells.add(buffer.toString());
+        buffer.clear();
+      } else {
+        buffer.write(char);
+      }
+    }
+    cells.add(buffer.toString());
+    return cells;
+  }
+
+  double? _parseSheetAmount(String value) {
+    final normalized = value
+        .trim()
+        .replaceAll(',', '')
+        .replaceAll('¥', '')
+        .replaceAll('￥', '')
+        .replaceAll('円', '')
+        .replaceAll('−', '-')
+        .replaceAll(RegExp(r'\s+'), '');
+    if (normalized.isEmpty) {
+      return null;
+    }
+    return double.tryParse(normalized);
+  }
+
+  double? _extractSmbcBalance(List<List<String>> rows) {
+    for (final row in rows) {
+      if (row.length >= 6 &&
+          RegExp(r'^\d{4}/\d{1,2}/\d{1,2}$').hasMatch(row[1].trim())) {
+        final balance = _parseSheetAmount(row[5]);
+        if (balance != null) {
+          return balance;
+        }
+      }
+    }
+    return null;
+  }
+
+  double? _extractJibunBalance(List<List<String>> rows) {
+    for (final row in rows) {
+      if (row.length >= 5 &&
+          RegExp(r'^\d{4}年\d{1,2}月\d{1,2}日$').hasMatch(row[0].trim())) {
+        final balance = _parseSheetAmount(row[4]);
+        if (balance != null) {
+          return balance;
+        }
+      }
+    }
+    return null;
+  }
+
+  void _applyFetchedAssetBalance({
+    required String assetName,
+    required double balance,
+  }) {
+    if (!_assetTypes.contains(assetName)) {
+      _assetTypes.add(assetName);
+      _initControllers();
+      _updateLastUpdatedDates();
+      _sortAssetTypes();
+    }
+    _controllers[assetName]?.text = balance.toStringAsFixed(0);
+  }
+
+  void _showSheetFetchResult({
+    required String assetName,
+    required double balance,
+    required Color color,
+  }) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          '$assetNameの残高をシートから取得しました: ¥${NumberFormat('#,###').format(balance.round())}',
+        ),
+        backgroundColor: color,
+      ),
+    );
+  }
+
   Future<void> _fetchSmbcDataFromSheet() async {
     setState(() => _isFetchingSmbc = true);
     try {
-      final url = Uri.parse('https://docs.google.com/spreadsheets/d/1WZlHr6YWG8ZbT9r-wXtYPEdPT5E4b47PSpNSNl8A1MM/export?format=csv&gid=0');
-      final response = await http.get(url);
-      if (response.statusCode == 200) {
-        final String csvData = utf8.decode(response.bodyBytes);
-        final lines = const LineSplitter().convert(csvData);
-        for (int i = 0; i < lines.length; i++) {
-          final line = lines[i];
-          final cols = line.split(',');
-          if (cols.length >= 6 && RegExp(r'^\d{4}/\d{1,2}/\d{1,2}$').hasMatch(cols[1])) {
-            final balanceStr = cols[5].trim();
-            final balance = double.tryParse(balanceStr);
-            if (balance != null) {
-              const smbcName = '三井住友銀行';
-              if (!_assetTypes.contains(smbcName)) {
-                setState(() {
-                  _assetTypes.add(smbcName);
-                  _initControllers();
-                  _updateLastUpdatedDates();
-                  _sortAssetTypes();
-                });
-              }
-              setState(() {
-                _controllers[smbcName]?.text = balance.toStringAsFixed(0);
-              });
-              if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('$smbcNameの残高をシートから取得しました: ¥${balance.toStringAsFixed(0)}'),
-                    backgroundColor: const Color(0xFF047857),
-                  ),
-                );
-              }
-              return;
-            }
-          }
-        }
-        throw Exception('残高データが見つかりませんでした');
-      } else {
-        throw Exception('HTTP ${response.statusCode}');
+      final rows = await _fetchBankSheetRows(_smbcSheetGid);
+      final balance = _extractSmbcBalance(rows);
+      if (balance == null) {
+        throw Exception('三井住友銀行の残高データが見つかりませんでした');
+      }
+      const smbcName = '三井住友銀行';
+      setState(() {
+        _applyFetchedAssetBalance(assetName: smbcName, balance: balance);
+      });
+      if (mounted) {
+        _showSheetFetchResult(
+          assetName: smbcName,
+          balance: balance,
+          color: const Color(0xFF047857),
+        );
       }
     } catch (e) {
       if (mounted) {
@@ -1509,6 +1615,50 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     } finally {
       if (mounted) {
         setState(() => _isFetchingSmbc = false);
+      }
+    }
+  }
+
+  Future<void> _fetchJibunDataFromSheet() async {
+    setState(() => _isFetchingJibun = true);
+    try {
+      double? balance;
+      for (final gid in _jibunCandidateSheetGids) {
+        final rows = await _fetchBankSheetRows(gid);
+        balance = _extractJibunBalance(rows);
+        if (balance != null) {
+          break;
+        }
+      }
+      final resolvedBalance = balance;
+      if (resolvedBalance == null) {
+        throw Exception(
+          'じぶん銀行の残高行が見つかりませんでした。GoogleシートのGIDまたは日付/残高列を確認してください',
+        );
+      }
+      const jibunName = 'じぶん銀行';
+      setState(() {
+        _applyFetchedAssetBalance(
+          assetName: jibunName,
+          balance: resolvedBalance,
+        );
+      });
+      if (mounted) {
+        _showSheetFetchResult(
+          assetName: jibunName,
+          balance: resolvedBalance,
+          color: const Color(0xFFEA580C),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('データ取得に失敗しました: $e')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isFetchingJibun = false);
       }
     }
   }
@@ -4709,14 +4859,16 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             const SizedBox(height: 16),
             ..._assetTypes.map((type) => _buildAssetInputRow(type)),
             const SizedBox(height: 8),
-            Row(
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              alignment: WrapAlignment.end,
               children: [
                 TextButton.icon(
                   onPressed: _showAddAssetDialog,
                   icon: const Icon(Icons.add),
                   label: const Text('項目を追加'),
                 ),
-                const Spacer(),
                 TextButton.icon(
                   onPressed: _isFetchingSmbc ? null : _fetchSmbcDataFromSheet,
                   icon: _isFetchingSmbc
@@ -4725,8 +4877,21 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                           height: 16,
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
-                      : const Icon(Icons.cloud_download, color: Color(0xFF0D9488)),
+                      : const Icon(Icons.cloud_download,
+                          color: Color(0xFF0D9488)),
                   label: const Text('三井住友から取得'),
+                ),
+                TextButton.icon(
+                  onPressed: _isFetchingJibun ? null : _fetchJibunDataFromSheet,
+                  icon: _isFetchingJibun
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.cloud_download,
+                          color: Color(0xFFea580c)),
+                  label: const Text('じぶん銀行から取得'),
                 ),
               ],
             ),
