@@ -15,6 +15,7 @@ import 'package:intl/intl.dart';
 import '../services/ai_service.dart';
 import '../services/abstinence_guard_store.dart';
 import '../services/completion_goal_service.dart';
+import '../services/feature_strategy_ai_review_service.dart';
 import '../services/feature_strategy_monitor_service.dart';
 import '../services/home_tool_usage_service.dart';
 import '../services/personality_test_service.dart';
@@ -81,6 +82,7 @@ class _HomePageState extends State<HomePage> {
   late Future<String?> _aiNudgeFuture;
   late Future<List<String>> _recentToolIdsFuture;
   late Future<FeatureStrategyReport> _featureStrategyReportFuture;
+  late Future<FeatureStrategyAiReview> _featureStrategyAiReviewFuture;
   static const FlutterSecureStorage _secureStorage = FlutterSecureStorage();
 
   // Gemini 429 対策: グローバル排他ロック + 最小呼び出し間隔 (60秒)
@@ -158,6 +160,9 @@ class _HomePageState extends State<HomePage> {
         monitoredAt: _now(),
       );
     });
+    _featureStrategyAiReviewFuture = _featureStrategyReportFuture.then(
+      const FeatureStrategyAiReviewService().generateReview,
+    );
   }
 
   Future<void> _logout(BuildContext context) async {
@@ -181,6 +186,7 @@ class _HomePageState extends State<HomePage> {
     await _marketingKpiFuture;
     await _aiNudgeFuture;
     await _featureStrategyReportFuture;
+    await _featureStrategyAiReviewFuture;
   }
 
   String get _todayKey => DateFormat('yyyy-MM-dd').format(_now());
@@ -5197,8 +5203,11 @@ abstinence_slip_details: $slipDetailsText
   }
 
   Widget _buildFeatureStrategyMonitor(bool isDark, bool isCompact) {
-    return FutureBuilder<FeatureStrategyReport>(
-      future: _featureStrategyReportFuture,
+    return FutureBuilder<List<dynamic>>(
+      future: Future.wait<dynamic>([
+        _featureStrategyReportFuture,
+        _featureStrategyAiReviewFuture,
+      ]),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting &&
             !snapshot.hasData) {
@@ -5218,9 +5227,16 @@ abstinence_slip_details: $slipDetailsText
           );
         }
 
-        final report = snapshot.data ?? FeatureStrategyReport.empty(_now());
+        final data = snapshot.data;
+        final report = data != null && data.isNotEmpty
+            ? data[0] as FeatureStrategyReport
+            : FeatureStrategyReport.empty(_now());
+        final aiReview = data != null && data.length > 1
+            ? data[1] as FeatureStrategyAiReview
+            : null;
         return FeatureStrategyMonitorPanel(
           report: report,
+          aiReview: aiReview,
           isDark: isDark,
           isCompact: isCompact,
         );

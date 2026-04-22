@@ -6,12 +6,14 @@ import 'kgi_csf_kpi_panel.dart';
 
 class FeatureStrategyMonitorPanel extends StatelessWidget {
   final FeatureStrategyReport report;
+  final FeatureStrategyAiReview? aiReview;
   final bool isDark;
   final bool isCompact;
 
   const FeatureStrategyMonitorPanel({
     super.key,
     required this.report,
+    this.aiReview,
     this.isDark = false,
     this.isCompact = false,
   });
@@ -88,6 +90,10 @@ class FeatureStrategyMonitorPanel extends StatelessWidget {
             dense: isCompact,
             dark: isDark,
           ),
+          if (aiReview != null) ...[
+            const SizedBox(height: 12),
+            _AiReviewBox(review: aiReview!, accent: accent, dark: isDark),
+          ],
           const SizedBox(height: 14),
           LayoutBuilder(
             builder: (context, constraints) {
@@ -150,6 +156,74 @@ class FeatureStrategyMonitorPanel extends StatelessWidget {
             initiallyExpanded: false,
             dark: isDark,
             compact: isCompact,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AiReviewBox extends StatelessWidget {
+  final FeatureStrategyAiReview review;
+  final Color accent;
+  final bool dark;
+
+  const _AiReviewBox({
+    required this.review,
+    required this.accent,
+    required this.dark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final titleColor = dark ? Colors.white : const Color(0xFF111827);
+    final labelColor =
+        dark ? Colors.white.withValues(alpha: 0.68) : const Color(0xFF64748B);
+    final sourceColor =
+        review.isFallback ? const Color(0xFFF59E0B) : const Color(0xFF059669);
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: accent.withValues(alpha: dark ? 0.16 : 0.07),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: accent.withValues(alpha: 0.16)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Wrap(
+            spacing: 8,
+            runSpacing: 6,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              Icon(Icons.auto_awesome, size: 18, color: accent),
+              Text(
+                'AI戦略レビュー',
+                style: TextStyle(
+                  color: titleColor,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w900,
+                  height: 1.35,
+                ),
+              ),
+              _StatusPill(
+                label: review.source,
+                color: sourceColor,
+                dark: dark,
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            review.summary,
+            style: TextStyle(
+              color: labelColor,
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              height: 1.5,
+            ),
           ),
         ],
       ),

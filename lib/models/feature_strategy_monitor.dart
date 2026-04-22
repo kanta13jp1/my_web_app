@@ -105,3 +105,33 @@ class FeatureStrategyReport {
     return signals.where((signal) => signal.status == status).length;
   }
 }
+
+class FeatureStrategyAiReview {
+  final String summary;
+  final String source;
+  final DateTime generatedAt;
+  final bool isFallback;
+
+  const FeatureStrategyAiReview({
+    required this.summary,
+    required this.source,
+    required this.generatedAt,
+    this.isFallback = false,
+  });
+
+  factory FeatureStrategyAiReview.fallback({
+    required FeatureStrategyReport report,
+    required DateTime generatedAt,
+    String? reason,
+  }) {
+    final reasonText =
+        reason == null || reason.trim().isEmpty ? '' : ' $reason';
+    return FeatureStrategyAiReview(
+      generatedAt: generatedAt,
+      source: 'local-kpi-engine',
+      isFallback: true,
+      summary:
+          'AIレビュー待機中。${report.totalFeatures}機能をKGI/CSF/KPIで監視し、改善優先${report.improveCount}件、要観察${report.watchCount}件をローカル分析しています。$reasonText',
+    );
+  }
+}

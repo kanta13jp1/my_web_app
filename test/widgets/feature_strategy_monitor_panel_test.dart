@@ -38,7 +38,14 @@ void main() {
       MaterialApp(
         home: Scaffold(
           body: SingleChildScrollView(
-            child: FeatureStrategyMonitorPanel(report: report),
+            child: FeatureStrategyMonitorPanel(
+              report: report,
+              aiReview: FeatureStrategyAiReview(
+                summary: 'AIが改善優先を確認しました。',
+                source: 'ai-hub provider.chat / deepinfra',
+                generatedAt: DateTime(2026, 4, 22, 9, 15),
+              ),
+            ),
           ),
         ),
       ),
@@ -46,6 +53,7 @@ void main() {
 
     expect(find.text('全機能AI戦略モニタリング'), findsOneWidget);
     expect(find.text('AI監視率'), findsOneWidget);
+    expect(find.text('AI戦略レビュー'), findsOneWidget);
     expect(find.text('AI改善キュー'), findsOneWidget);
     expect(find.text('全機能AI監視リスト'), findsOneWidget);
     expect(find.text('Locked Lab'), findsOneWidget);
