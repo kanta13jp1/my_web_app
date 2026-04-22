@@ -513,8 +513,10 @@ class MyApp extends StatelessWidget {
             );
           case '/local-election-700':
             return MaterialPageRoute(
-              builder: (_) => const ElectionVictoryPage(),
-              settings: const RouteSettings(name: '/local-election-700'),
+              builder: (_) => ElectionVictoryPage(
+                publicView: supabase.auth.currentSession == null,
+              ),
+              settings: RouteSettings(name: settings.name),
             );
           case '/local-election-schedule':
             return MaterialPageRoute(

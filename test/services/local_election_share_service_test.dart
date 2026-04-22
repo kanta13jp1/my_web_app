@@ -150,6 +150,46 @@ void main() {
     });
   }
 
+  LocalElectionPlanDashboard buildPlan() {
+    return LocalElectionPlanDashboard(
+      currentLocalMembers: 333,
+      targetLocalMembers: 700,
+      previousUnifiedElectionWins: 183,
+      previousUnifiedElectionFirstHalfWins: 62,
+      previousUnifiedElectionSecondHalfWins: 121,
+      updatedAt: DateTime(2026, 4, 22, 10, 30),
+      prefectures: const <LocalElectionPrefecturePlan>[
+        LocalElectionPrefecturePlan(
+          prefecture: '東京都',
+          region: '関東',
+          additionalSeatTarget: 12,
+          incumbentRetentionTarget: 43,
+          focusMunicipalityCount: 20,
+          newCandidateTarget: 15,
+          endorsementDeadlineMonth: '2026-09',
+          closeRaceSupportRounds: 8,
+          currentMembers: 43,
+          scheduledElectionCount: 3,
+          cdpLocalMembers: 83,
+        ),
+        LocalElectionPrefecturePlan(
+          prefecture: '香川県',
+          region: '四国',
+          additionalSeatTarget: 5,
+          incumbentRetentionTarget: 23,
+          focusMunicipalityCount: 9,
+          newCandidateTarget: 7,
+          endorsementDeadlineMonth: '2026-08',
+          closeRaceSupportRounds: 4,
+          currentMembers: 23,
+          scheduledElectionCount: 2,
+          cdpLocalMembers: 20,
+          endorsementConfirmed: true,
+        ),
+      ],
+    );
+  }
+
   test('buildDraft creates full election public memo payload', () {
     final snapshot = buildSnapshot();
     final draft = service.buildDraft(
@@ -280,6 +320,52 @@ void main() {
     expect(
       uri.queryParameters['text'],
       isNot(contains('https://example.com/public/local-election-700')),
+    );
+  });
+
+  test('buildPlanDashboardDraft creates a public note for all prefecture KPIs',
+      () {
+    final plan = buildPlan();
+    final snapshot = buildSnapshot();
+    final draft = service.buildPlanDashboardDraft(
+      plan: plan,
+      snapshot: snapshot,
+      publicDashboardUrl: 'https://example.com/public/local-election-700',
+    );
+
+    expect(draft.noteId, greaterThan(0));
+    expect(draft.title, contains('統一地方選700 県連KPI一覧'));
+    expect(draft.content, contains('公開ダッシュボード:'));
+    expect(draft.content, contains('全県連KPI'));
+    expect(draft.content, contains('東京都(関東)'));
+    expect(draft.content, contains('純増12人'));
+    expect(draft.content, contains('立憲参考83人'));
+    expect(draft.content, contains('月次KPI'));
+    expect(
+      draft.metadata['type'],
+      LocalElectionShareService.planDashboardMetadataType,
+    );
+    expect(draft.metadata['prefectures'], isA<List<dynamic>>());
+  });
+
+  test('buildPlanDashboardXShareIntentUri shares one public note link', () {
+    final plan = buildPlan();
+    final uri = service.buildPlanDashboardXShareIntentUri(
+      plan: plan,
+      publicUrl: 'https://example.com/public-memo?id=700',
+    );
+
+    expect(
+      '${uri.scheme}://${uri.host}${uri.path}',
+      'https://x.com/intent/tweet',
+    );
+    expect(
+        uri.queryParameters['url'], 'https://example.com/public-memo?id=700');
+    expect(uri.queryParameters['text'], contains('全2県連'));
+    expect(uri.queryParameters['text'], contains('現職 333人'));
+    expect(
+      uri.queryParameters['text'],
+      isNot(contains('https://example.com/public-memo?id=700')),
     );
   });
 

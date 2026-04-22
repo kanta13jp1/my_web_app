@@ -58,9 +58,12 @@ class LocalElectionShareWindowRange {
 class LocalElectionShareService {
   static const String publicCategory = '選挙ダッシュボード';
   static const String metadataType = 'local_election_snapshot';
+  static const String planDashboardMetadataType =
+      'local_election_plan_dashboard';
   static const int lowPresenceThreshold = 4;
   static const int maxWeekendWindowCount = 28;
   static const int _syntheticNoteIdBase = 90000000000000;
+  static const int _planDashboardNoteId = _syntheticNoteIdBase + 7002027;
   static final List<LocalElectionShareWindow> availableWindows =
       List<LocalElectionShareWindow>.unmodifiable(
     List<LocalElectionShareWindow>.generate(
@@ -128,6 +131,50 @@ class LocalElectionShareService {
     );
   }
 
+  Future<PublicMemo?> publishPlanDashboard({
+    required LocalElectionPlanDashboard plan,
+    LocalElectionRealitySnapshot? snapshot,
+    required String publicDashboardUrl,
+  }) async {
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) {
+      return null;
+    }
+    final publishMemo = _publishMemo;
+    if (publishMemo == null) {
+      return null;
+    }
+
+    final draft = buildPlanDashboardDraft(
+      plan: plan,
+      snapshot: snapshot,
+      publicDashboardUrl: publicDashboardUrl,
+    );
+    return publishMemo(
+      noteId: draft.noteId,
+      userId: userId,
+      title: draft.title,
+      content: draft.content,
+      category: publicCategory,
+      metadata: draft.metadata,
+    );
+  }
+
+  Future<PublicMemo?> loadPublishedPlanDashboard() async {
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) {
+      return null;
+    }
+    final loadMemo = _loadMemo;
+    if (loadMemo == null) {
+      return null;
+    }
+    return loadMemo(
+      noteId: _planDashboardNoteId,
+      userId: userId,
+    );
+  }
+
   LocalElectionShareDraft buildDraft({
     required LocalElectionRealitySnapshot snapshot,
     required List<LocalElectionLegislatorProfile> members,
@@ -150,6 +197,30 @@ class LocalElectionShareService {
         snapshot: snapshot,
         prefectures: prefectures,
         members: resolvedMembers,
+      ),
+    );
+  }
+
+  LocalElectionShareDraft buildPlanDashboardDraft({
+    required LocalElectionPlanDashboard plan,
+    LocalElectionRealitySnapshot? snapshot,
+    required String publicDashboardUrl,
+  }) {
+    final title =
+        '統一地方選700 県連KPI一覧 ${_dateOnlyFormat.format(plan.updatedAt.toLocal())}';
+    return LocalElectionShareDraft(
+      noteId: _planDashboardNoteId,
+      title: title,
+      content: _buildPlanDashboardContent(
+        title: title,
+        plan: plan,
+        snapshot: snapshot,
+        publicDashboardUrl: publicDashboardUrl,
+      ),
+      metadata: _buildPlanDashboardMetadata(
+        plan: plan,
+        snapshot: snapshot,
+        publicDashboardUrl: publicDashboardUrl,
       ),
     );
   }
@@ -211,6 +282,43 @@ class LocalElectionShareService {
       <String, String>{
         'text': buildXShareBody(snapshot: snapshot),
         'url': publicUrl,
+      },
+    );
+  }
+
+  String buildPlanDashboardXShareText({
+    required LocalElectionPlanDashboard plan,
+    required String publicUrl,
+  }) {
+    final body = buildPlanDashboardXShareBody(plan: plan);
+    if (publicUrl.isEmpty) {
+      return body;
+    }
+    return '$body\n\n$publicUrl';
+  }
+
+  String buildPlanDashboardXShareBody({
+    required LocalElectionPlanDashboard plan,
+  }) {
+    return [
+      '統一地方選700 県連KPI一覧',
+      '全${plan.prefectures.length}県連の現職人数、純増目標、新人擁立、予定選挙、公認期限、立憲参考値を公開ノートにまとめました。',
+      '現職 ${plan.currentLocalMembers}人 / 700まで残り${plan.requiredNetIncrease}人',
+      '純増目標 ${plan.allocatedNetIncrease}人 / 新人 ${plan.totalNewCandidateTarget}人',
+      '#統一地方選 #国民民主党',
+    ].join('\n');
+  }
+
+  Uri buildPlanDashboardXShareIntentUri({
+    required LocalElectionPlanDashboard plan,
+    required String publicUrl,
+  }) {
+    return Uri.https(
+      'x.com',
+      '/intent/tweet',
+      <String, String>{
+        'text': buildPlanDashboardXShareBody(plan: plan),
+        if (publicUrl.isNotEmpty) 'url': publicUrl,
       },
     );
   }
@@ -625,6 +733,110 @@ class LocalElectionShareService {
     };
   }
 
+  String _buildPlanDashboardContent({
+    required String title,
+    required LocalElectionPlanDashboard plan,
+    required LocalElectionRealitySnapshot? snapshot,
+    required String publicDashboardUrl,
+  }) {
+    final fetchedAt = snapshot?.fetchedAt.toLocal();
+    final realityByPrefecture = <String, LocalElectionPrefectureReality>{
+      if (snapshot != null)
+        for (final item in snapshot.prefectures)
+          _normalizePrefectureKey(item.prefecture): item,
+    };
+
+    final buffer = StringBuffer()
+      ..writeln(title)
+      ..writeln()
+      ..writeln('公開ダッシュボード: $publicDashboardUrl')
+      ..writeln('更新日時: ${plan.updatedAt.toLocal().toIso8601String()}');
+    if (fetchedAt != null) {
+      buffer.writeln('公式データ取得: ${fetchedAt.toIso8601String()}');
+    }
+    buffer
+      ..writeln()
+      ..writeln('全国サマリー')
+      ..writeln('- 現職地方議員数: ${plan.currentLocalMembers}人')
+      ..writeln('- 目標地方議員数: ${plan.targetLocalMembers}人')
+      ..writeln('- 700まで残り: ${plan.requiredNetIncrease}人')
+      ..writeln('- 県連配分済み純増: ${plan.allocatedNetIncrease}人')
+      ..writeln('- 現職維持目標: ${plan.totalIncumbentRetentionTarget}人')
+      ..writeln('- 重点自治体: ${plan.totalFocusMunicipalityCount}')
+      ..writeln('- 新人擁立: ${plan.totalNewCandidateTarget}人')
+      ..writeln('- 予定支援回数: ${plan.totalCloseRaceSupportRounds}回')
+      ..writeln('- 公認内定済み県連: '
+          '${plan.confirmedEndorsementCount}/${plan.prefectures.length}')
+      ..writeln('- 立憲地方議員参考合計: ${plan.totalCdpLocalMembers}人');
+
+    buffer
+      ..writeln()
+      ..writeln('全県連KPI');
+    for (final item in plan.prefecturesForRegion('すべて')) {
+      final reality = realityByPrefecture[_normalizePrefectureKey(
+        item.prefecture,
+      )];
+      buffer.writeln(_describePlanPrefecture(item, reality));
+    }
+
+    buffer
+      ..writeln()
+      ..writeln('月次KPI');
+    for (final item in plan.monthlyCheckpoints) {
+      buffer.writeln(
+        '- ${item.label}: 現職維持累計${item.cumulativeIncumbentRetentionTarget} / '
+        '重点自治体累計${item.cumulativeFocusMunicipalityCount} / '
+        '新人累計${item.cumulativeNewCandidateTarget} / '
+        '内定期限到来${item.endorsementsDueThisMonth}県連 / '
+        '支援累計${item.cumulativeCloseRaceSupportRounds}回',
+      );
+    }
+
+    return buffer.toString().trimRight();
+  }
+
+  Map<String, dynamic> _buildPlanDashboardMetadata({
+    required LocalElectionPlanDashboard plan,
+    required LocalElectionRealitySnapshot? snapshot,
+    required String publicDashboardUrl,
+  }) {
+    return <String, dynamic>{
+      'type': planDashboardMetadataType,
+      'publicDashboardUrl': publicDashboardUrl,
+      'updatedAt': plan.updatedAt.toIso8601String(),
+      'snapshotFetchedAt': snapshot?.fetchedAt.toIso8601String(),
+      'currentLocalMembers': plan.currentLocalMembers,
+      'targetLocalMembers': plan.targetLocalMembers,
+      'requiredNetIncrease': plan.requiredNetIncrease,
+      'allocatedNetIncrease': plan.allocatedNetIncrease,
+      'totalIncumbentRetentionTarget': plan.totalIncumbentRetentionTarget,
+      'totalFocusMunicipalityCount': plan.totalFocusMunicipalityCount,
+      'totalNewCandidateTarget': plan.totalNewCandidateTarget,
+      'totalCloseRaceSupportRounds': plan.totalCloseRaceSupportRounds,
+      'confirmedEndorsementCount': plan.confirmedEndorsementCount,
+      'totalCdpLocalMembers': plan.totalCdpLocalMembers,
+      'prefectures': plan.prefectures
+          .map(
+            (item) => <String, dynamic>{
+              'prefecture': item.prefecture,
+              'region': item.region,
+              'currentMembers': item.currentMembers,
+              'additionalSeatTarget': item.additionalSeatTarget,
+              'incumbentRetentionTarget': item.incumbentRetentionTarget,
+              'focusMunicipalityCount': item.focusMunicipalityCount,
+              'newCandidateTarget': item.newCandidateTarget,
+              'scheduledElectionCount': item.scheduledElectionCount,
+              'endorsementDeadlineMonth': item.endorsementDeadlineMonth,
+              'endorsementConfirmed': item.endorsementConfirmed,
+              'closeRaceSupportRounds': item.closeRaceSupportRounds,
+              'cdpLocalMembers': item.cdpLocalMembers,
+              'cdpMemberGap': item.cdpMemberGap,
+            },
+          )
+          .toList(),
+    };
+  }
+
   List<LocalElectionPrefectureReality> _prefecturesForDisplay(
     LocalElectionRealitySnapshot snapshot,
   ) {
@@ -702,6 +914,34 @@ class LocalElectionShareService {
     if (profile.isNotEmpty) {
       segments.add(_truncate(profile, 120));
     }
+    return '- ${segments.join(' / ')}';
+  }
+
+  String _describePlanPrefecture(
+    LocalElectionPrefecturePlan plan,
+    LocalElectionPrefectureReality? reality,
+  ) {
+    final currentMembers = reality?.currentMembers ?? plan.currentMembers;
+    final cdpMembers = plan.cdpLocalMembers > 0
+        ? plan.cdpLocalMembers
+        : (reality?.cdpLocalMembers ?? 0);
+    final segments = <String>[
+      '${plan.prefecture}(${plan.region})',
+      '現職$currentMembers人',
+      '純増${plan.additionalSeatTarget}人',
+      '現職維持${plan.incumbentRetentionTarget}人',
+      '重点自治体${plan.focusMunicipalityCount}',
+      '新人${plan.newCandidateTarget}人',
+      '予定選挙${plan.scheduledElectionCount}件',
+      plan.endorsementConfirmed
+          ? '公認内定済み'
+          : '公認期限${formatMonthKey(plan.endorsementDeadlineMonth)}',
+      '支援${plan.closeRaceSupportRounds}回',
+      if (cdpMembers > 0)
+        '立憲参考$cdpMembers人(${_formatPrefectureKpiGap(cdpMembers - currentMembers)})',
+      if (reality != null)
+        '公式内訳 都道府県議${reality.prefecturalAssemblyMembers}/市区町村議${reality.municipalAssemblyMembers}',
+    ];
     return '- ${segments.join(' / ')}';
   }
 
