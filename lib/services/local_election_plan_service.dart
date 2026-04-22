@@ -4,6 +4,7 @@ import 'dart:math' as math;
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/local_election_plan.dart';
+import '../models/local_election_reality.dart';
 
 enum LocalElectionPlanTemplate {
   focused,
@@ -65,6 +66,93 @@ class LocalElectionPlanService {
   }) async {
     final plan = buildDefaultPlan(template: template);
     return savePlan(plan, prefs: prefs);
+  }
+
+  LocalElectionPlanDashboard buildAutoUpdatedPlan(
+    LocalElectionPlanDashboard plan,
+    LocalElectionRealitySnapshot snapshot, {
+    DateTime? now,
+  }) {
+    if (!snapshot.hasData) {
+      return plan;
+    }
+
+    final updatedAt = now ?? DateTime.now();
+    final realitiesByPrefecture = <String, LocalElectionPrefectureReality>{
+      for (final item in snapshot.prefectures)
+        _prefectureKey(item.prefecture): item,
+    };
+    final scheduleStatsByPrefecture = _scheduleStatsByPrefecture(snapshot);
+    final additionalTargets = _allocateSnapshotAdditionalTargets(
+      plan,
+      snapshot,
+      realitiesByPrefecture,
+      scheduleStatsByPrefecture,
+    );
+
+    final prefectures = <LocalElectionPrefecturePlan>[];
+    for (var index = 0; index < plan.prefectures.length; index++) {
+      final current = plan.prefectures[index];
+      final key = _prefectureKey(current.prefecture);
+      final reality = realitiesByPrefecture[key];
+      final stats = scheduleStatsByPrefecture[key] ?? _AutoScheduleStats.empty;
+      final currentMembers = reality?.currentMembers ?? current.currentMembers;
+      final scheduledElectionCount = stats.scheduledElectionCount;
+      final additionalTarget = additionalTargets[index];
+      final candidateTarget = math.max(
+        additionalTarget,
+        stats.kokuminCandidateCount +
+            stats.redAlertCount +
+            stats.yellowAlertCount,
+      );
+      final focusCount = math.max(
+        2,
+        math.max(currentMembers, scheduledElectionCount + stats.redAlertCount),
+      );
+      final supportRounds = math.max(
+        2,
+        scheduledElectionCount +
+            stats.redAlertCount * 2 +
+            stats.yellowAlertCount,
+      );
+
+      prefectures.add(
+        current.copyWith(
+          additionalSeatTarget: additionalTarget,
+          incumbentRetentionTarget: currentMembers > 0
+              ? currentMembers
+              : current.incumbentRetentionTarget,
+          focusMunicipalityCount: focusCount,
+          newCandidateTarget: candidateTarget,
+          endorsementDeadlineMonth: stats.earliestEndorsementMonth ??
+              current.endorsementDeadlineMonth,
+          closeRaceSupportRounds: supportRounds,
+          currentMembers: currentMembers,
+          scheduledElectionCount: scheduledElectionCount,
+          autoUpdatedAt: updatedAt.toIso8601String(),
+          endorsementConfirmed: stats.scheduledElectionCount > 0
+              ? stats.redAlertCount == 0 && stats.confirmedCandidateCount > 0
+              : current.endorsementConfirmed,
+          notes: _mergeAutoNote(
+            current.notes,
+            stats: stats,
+            currentMembers: currentMembers,
+            updatedAt: updatedAt,
+          ),
+        ),
+      );
+    }
+
+    return plan.copyWith(
+      currentLocalMembers: snapshot.officialCurrentLocalMembers,
+      targetLocalMembers: snapshot.targetLocalMembers,
+      previousUnifiedElectionWins: snapshot.official2023TotalWins,
+      previousUnifiedElectionFirstHalfWins: snapshot.official2023FirstHalfWins,
+      previousUnifiedElectionSecondHalfWins:
+          snapshot.official2023SecondHalfWins,
+      updatedAt: updatedAt,
+      prefectures: prefectures,
+    );
   }
 
   LocalElectionPlanDashboard buildDefaultPlan({
@@ -168,10 +256,13 @@ class LocalElectionPlanService {
           focusMunicipalityCount: clampPositiveInt(item.focusMunicipalityCount),
           newCandidateTarget: clampPositiveInt(item.newCandidateTarget),
           closeRaceSupportRounds: clampPositiveInt(item.closeRaceSupportRounds),
+          currentMembers: clampPositiveInt(item.currentMembers),
+          scheduledElectionCount: clampPositiveInt(item.scheduledElectionCount),
           endorsementDeadlineMonth:
               planningMonthKeys.contains(item.endorsementDeadlineMonth)
                   ? item.endorsementDeadlineMonth
                   : '2026-10',
+          autoUpdatedAt: item.autoUpdatedAt.trim(),
           notes: item.notes.trim(),
         ),
       );
@@ -253,6 +344,207 @@ class LocalElectionPlanService {
       default:
         return '現職防衛と基礎票の掘り起こしを先行する';
     }
+  }
+
+  List<int> _allocateSnapshotAdditionalTargets(
+    LocalElectionPlanDashboard plan,
+    LocalElectionRealitySnapshot snapshot,
+    Map<String, LocalElectionPrefectureReality> realitiesByPrefecture,
+    Map<String, _AutoScheduleStats> scheduleStatsByPrefecture,
+  ) {
+    final total = math.max(0, snapshot.actualNetIncreaseRequired);
+    if (total == 0 || plan.prefectures.isEmpty) {
+      return List<int>.filled(plan.prefectures.length, 0);
+    }
+
+    final weights = <double>[
+      for (final item in plan.prefectures)
+        _autoTargetWeight(
+          item,
+          realitiesByPrefecture[_prefectureKey(item.prefecture)],
+          scheduleStatsByPrefecture[_prefectureKey(item.prefecture)] ??
+              _AutoScheduleStats.empty,
+        ),
+    ];
+    final totalWeight = weights.fold<double>(0, (sum, value) => sum + value);
+    if (totalWeight <= 0) {
+      return _allocateAdditionalTargets(LocalElectionPlanTemplate.balanced);
+    }
+
+    final rawShares = <double>[
+      for (final weight in weights) total * weight / totalWeight,
+    ];
+    final floors = rawShares.map((value) => value.floor()).toList();
+    var remainder = total - floors.fold<int>(0, (sum, value) => sum + value);
+    final indexedFractions = <MapEntry<int, double>>[
+      for (var index = 0; index < rawShares.length; index++)
+        MapEntry(index, rawShares[index] - floors[index]),
+    ]..sort((a, b) => b.value.compareTo(a.value));
+
+    for (var index = 0;
+        index < indexedFractions.length && remainder > 0;
+        index++) {
+      floors[indexedFractions[index].key] += 1;
+      remainder--;
+    }
+    return floors;
+  }
+
+  double _autoTargetWeight(
+    LocalElectionPrefecturePlan plan,
+    LocalElectionPrefectureReality? reality,
+    _AutoScheduleStats stats,
+  ) {
+    final currentMembers = reality?.currentMembers ?? plan.currentMembers;
+    return 1 +
+        currentMembers * 0.12 +
+        stats.scheduledElectionCount * 1.45 +
+        stats.redAlertCount * 2.2 +
+        stats.yellowAlertCount * 0.9 +
+        plan.additionalSeatTarget * 0.08;
+  }
+
+  Map<String, _AutoScheduleStats> _scheduleStatsByPrefecture(
+    LocalElectionRealitySnapshot snapshot,
+  ) {
+    final stats = <String, _AutoScheduleStatsBuilder>{};
+    for (final item in snapshot.upcomingSchedules) {
+      if (item.isPast || item.prefecture.trim().isEmpty) {
+        continue;
+      }
+      final key = _prefectureKey(item.prefecture);
+      final builder = stats.putIfAbsent(key, _AutoScheduleStatsBuilder.new);
+      builder.add(item);
+    }
+    return <String, _AutoScheduleStats>{
+      for (final entry in stats.entries) entry.key: entry.value.build(),
+    };
+  }
+
+  String _mergeAutoNote(
+    String currentNotes, {
+    required _AutoScheduleStats stats,
+    required int currentMembers,
+    required DateTime updatedAt,
+  }) {
+    final manualLines = currentNotes
+        .split('\n')
+        .map((line) => line.trim())
+        .where((line) => line.isNotEmpty && !line.startsWith('AI自動更新:'))
+        .toList();
+    final date =
+        '${updatedAt.year}/${updatedAt.month.toString().padLeft(2, '0')}/${updatedAt.day.toString().padLeft(2, '0')}';
+    final autoLine = 'AI自動更新: 現職$currentMembers人 / '
+        '予定選挙${stats.scheduledElectionCount}件 / '
+        '未擁立${stats.redAlertCount}件 / '
+        '単騎${stats.yellowAlertCount}件 ($date)';
+    return <String>[...manualLines, autoLine].join('\n');
+  }
+
+  String _prefectureKey(String value) {
+    final trimmed = value.trim();
+    if (trimmed == '北海道') {
+      return trimmed;
+    }
+    return trimmed.replaceFirst(RegExp(r'[都府県]$'), '');
+  }
+}
+
+class _AutoScheduleStats {
+  final int scheduledElectionCount;
+  final int redAlertCount;
+  final int yellowAlertCount;
+  final int kokuminCandidateCount;
+  final int confirmedCandidateCount;
+  final String? earliestEndorsementMonth;
+
+  const _AutoScheduleStats({
+    required this.scheduledElectionCount,
+    required this.redAlertCount,
+    required this.yellowAlertCount,
+    required this.kokuminCandidateCount,
+    required this.confirmedCandidateCount,
+    required this.earliestEndorsementMonth,
+  });
+
+  static const empty = _AutoScheduleStats(
+    scheduledElectionCount: 0,
+    redAlertCount: 0,
+    yellowAlertCount: 0,
+    kokuminCandidateCount: 0,
+    confirmedCandidateCount: 0,
+    earliestEndorsementMonth: null,
+  );
+}
+
+class _AutoScheduleStatsBuilder {
+  int scheduledElectionCount = 0;
+  int redAlertCount = 0;
+  int yellowAlertCount = 0;
+  int kokuminCandidateCount = 0;
+  int confirmedCandidateCount = 0;
+  String? earliestEndorsementMonth;
+
+  void add(LocalElectionScheduleEntry item) {
+    scheduledElectionCount++;
+    kokuminCandidateCount += item.kokuminCandidateCount;
+    if (item.isAlertRed) {
+      redAlertCount++;
+    } else if (item.isAlertYellow) {
+      yellowAlertCount++;
+    }
+    if (item.kokuminCandidateStatuses.any((status) => status.contains('公認'))) {
+      confirmedCandidateCount += item.kokuminCandidateCount;
+    }
+
+    final month = _endorsementMonthForSchedule(item);
+    if (month != null &&
+        (earliestEndorsementMonth == null ||
+            month.compareTo(earliestEndorsementMonth!) < 0)) {
+      earliestEndorsementMonth = month;
+    }
+  }
+
+  _AutoScheduleStats build() {
+    return _AutoScheduleStats(
+      scheduledElectionCount: scheduledElectionCount,
+      redAlertCount: redAlertCount,
+      yellowAlertCount: yellowAlertCount,
+      kokuminCandidateCount: kokuminCandidateCount,
+      confirmedCandidateCount: confirmedCandidateCount,
+      earliestEndorsementMonth: earliestEndorsementMonth,
+    );
+  }
+
+  String? _endorsementMonthForSchedule(LocalElectionScheduleEntry item) {
+    final announcement = _parseDate(item.announcementDate);
+    final vote = _parseDate(item.voteDate);
+    final base = announcement ??
+        (vote == null ? null : DateTime(vote.year, vote.month - 1));
+    if (base == null) {
+      return null;
+    }
+    final monthKey =
+        '${base.year.toString().padLeft(4, '0')}-${base.month.toString().padLeft(2, '0')}';
+    if (planningMonthKeys.contains(monthKey)) {
+      return monthKey;
+    }
+    if (monthKey.compareTo(planningMonthKeys.first) < 0) {
+      return planningMonthKeys.first;
+    }
+    if (monthKey.compareTo(planningMonthKeys.last) > 0) {
+      return planningMonthKeys.last;
+    }
+    return monthKey;
+  }
+
+  DateTime? _parseDate(String raw) {
+    final value = raw.trim();
+    if (value.isEmpty) {
+      return null;
+    }
+    return DateTime.tryParse(value) ??
+        DateTime.tryParse(value.replaceAll('/', '-'));
   }
 }
 

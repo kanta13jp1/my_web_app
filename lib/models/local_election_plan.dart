@@ -9,6 +9,9 @@ class LocalElectionPrefecturePlan {
   final int newCandidateTarget;
   final String endorsementDeadlineMonth;
   final int closeRaceSupportRounds;
+  final int currentMembers;
+  final int scheduledElectionCount;
+  final String autoUpdatedAt;
   final bool endorsementConfirmed;
   final String notes;
 
@@ -21,6 +24,9 @@ class LocalElectionPrefecturePlan {
     required this.newCandidateTarget,
     required this.endorsementDeadlineMonth,
     required this.closeRaceSupportRounds,
+    this.currentMembers = 0,
+    this.scheduledElectionCount = 0,
+    this.autoUpdatedAt = '',
     this.endorsementConfirmed = false,
     this.notes = '',
   });
@@ -36,6 +42,9 @@ class LocalElectionPrefecturePlan {
       endorsementDeadlineMonth:
           (json['endorsementDeadlineMonth'] as String? ?? '2026-10').trim(),
       closeRaceSupportRounds: _readInt(json['closeRaceSupportRounds']),
+      currentMembers: _readInt(json['currentMembers']),
+      scheduledElectionCount: _readInt(json['scheduledElectionCount']),
+      autoUpdatedAt: (json['autoUpdatedAt'] as String? ?? '').trim(),
       endorsementConfirmed: json['endorsementConfirmed'] == true,
       notes: (json['notes'] as String? ?? '').trim(),
     );
@@ -51,6 +60,9 @@ class LocalElectionPrefecturePlan {
       'newCandidateTarget': newCandidateTarget,
       'endorsementDeadlineMonth': endorsementDeadlineMonth,
       'closeRaceSupportRounds': closeRaceSupportRounds,
+      'currentMembers': currentMembers,
+      'scheduledElectionCount': scheduledElectionCount,
+      'autoUpdatedAt': autoUpdatedAt,
       'endorsementConfirmed': endorsementConfirmed,
       'notes': notes,
     };
@@ -65,6 +77,9 @@ class LocalElectionPrefecturePlan {
     int? newCandidateTarget,
     String? endorsementDeadlineMonth,
     int? closeRaceSupportRounds,
+    int? currentMembers,
+    int? scheduledElectionCount,
+    String? autoUpdatedAt,
     bool? endorsementConfirmed,
     String? notes,
   }) {
@@ -81,6 +96,10 @@ class LocalElectionPrefecturePlan {
           endorsementDeadlineMonth ?? this.endorsementDeadlineMonth,
       closeRaceSupportRounds:
           closeRaceSupportRounds ?? this.closeRaceSupportRounds,
+      currentMembers: currentMembers ?? this.currentMembers,
+      scheduledElectionCount:
+          scheduledElectionCount ?? this.scheduledElectionCount,
+      autoUpdatedAt: autoUpdatedAt ?? this.autoUpdatedAt,
       endorsementConfirmed: endorsementConfirmed ?? this.endorsementConfirmed,
       notes: notes ?? this.notes,
     );

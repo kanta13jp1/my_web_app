@@ -480,10 +480,22 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
         forceRefresh: forceRefresh,
       );
       final history = await _realityService.loadSnapshotHistory();
+      LocalElectionPlanDashboard? syncedPlan;
+      if (!_isPublicView && _plan != null && snapshot.hasData) {
+        syncedPlan = await _service.savePlan(
+          _service.buildAutoUpdatedPlan(_plan!, snapshot),
+        );
+      }
       if (!mounted) {
         return;
       }
       setState(() {
+        if (syncedPlan != null) {
+          _plan = syncedPlan;
+          if (!syncedPlan.regionLabels.contains(_selectedRegion)) {
+            _selectedRegion = _allLabel;
+          }
+        }
         _realitySnapshot = snapshot;
         _realityHistory = history;
         _realityError = null;
@@ -497,6 +509,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
           SnackBar(
             content: Text(
               '最新の実データを取得しました '
+              '${syncedPlan != null ? ' / 県連KPIを自動更新しました ' : ''}'
               '(${_dateTimeFormat.format(snapshot.fetchedAt.toLocal())})',
             ),
           ),
@@ -731,21 +744,12 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
       return;
     }
 
-    await _savePlan(
-      plan.copyWith(
-        currentLocalMembers: snapshot.officialCurrentLocalMembers,
-        previousUnifiedElectionWins: snapshot.official2023TotalWins,
-        previousUnifiedElectionFirstHalfWins:
-            snapshot.official2023FirstHalfWins,
-        previousUnifiedElectionSecondHalfWins:
-            snapshot.official2023SecondHalfWins,
-      ),
-    );
+    await _savePlan(_service.buildAutoUpdatedPlan(plan, snapshot));
     if (!mounted) {
       return;
     }
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('最新の公式実数を計画値へ反映しました')),
+      const SnackBar(content: Text('最新の公式実数とAI推定KPIを計画へ反映しました')),
     );
   }
 
@@ -1255,7 +1259,8 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
             realitySnapshot.official2023FirstHalfWins !=
                 plan.previousUnifiedElectionFirstHalfWins ||
             realitySnapshot.official2023SecondHalfWins !=
-                plan.previousUnifiedElectionSecondHalfWins);
+                plan.previousUnifiedElectionSecondHalfWins ||
+            !plan.prefectures.any((item) => item.autoUpdatedAt.isNotEmpty));
 
     return Card(
       child: Padding(
@@ -1281,7 +1286,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                       Text(
                         hasSnapshot
                             ? '公式議員ページと2023年の公式選挙結果ページを取得して、'
-                                'AIで実務向けに要点を整理します。'
+                                'AIで各県連の現職人数・目標擁立数・予定選挙数・公認期限を自動更新します。'
                             : 'まだ最新データを取得できていません。'
                                 'ネット経由で公式ソースを再取得すると、'
                                 '計画値とのズレを把握できます。',
@@ -1401,6 +1406,13 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                     _buildStatusChip(
                       '公開ノート準備済み',
                       color: const Color(0xFF3D5AFE),
+                    ),
+                  if (plan.prefectures.any(
+                    (item) => item.autoUpdatedAt.isNotEmpty,
+                  ))
+                    _buildStatusChip(
+                      '県連KPI自動更新済み',
+                      color: const Color(0xFF10B981),
                     ),
                 ],
               ),

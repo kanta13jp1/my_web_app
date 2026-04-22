@@ -178,31 +178,92 @@ class _ElectionJapanMapState extends State<ElectionJapanMap> {
         item.additionalSeatTarget + item.newCandidateTarget,
       ),
     );
+    final safeIndex = math.min(_selectedIndex, widget.prefectures.length - 1);
+    final selectedPlan = widget.prefectures[safeIndex];
+    final selectedTile = _tileForIndex(safeIndex, selectedPlan);
 
     return LayoutBuilder(
       builder: (context, constraints) {
         final availableWidth =
             constraints.maxWidth.isFinite ? constraints.maxWidth : 360.0;
-        final cell = math.min(
-          34.0,
-          math.max(23.0, availableWidth / (_mapColumns + 0.6)),
+        const horizontalPadding = 16.0;
+        const headerHeight = 44.0;
+        final mapAvailableWidth = math.max(
+          120.0,
+          availableWidth - horizontalPadding * 2,
         );
+        final cell = math.min(34.0, math.max(12.0, mapAvailableWidth / 10.4));
         final width = cell * _mapColumns;
         final height = cell * _mapRows;
+        final surfaceWidth = width + horizontalPadding * 2;
+        final surfaceHeight = height + horizontalPadding * 2 + headerHeight;
 
         return Center(
           child: SizedBox(
-            width: width,
-            height: height,
+            width: surfaceWidth,
+            height: surfaceHeight,
             child: Stack(
               children: [
-                for (final tile in _japanTiles)
-                  _buildPrefectureTile(
-                    context: context,
-                    tile: tile,
-                    cell: cell,
-                    maxLoad: maxLoad,
+                Positioned.fill(
+                  child: CustomPaint(
+                    painter: _JapanMapSurfacePainter(
+                      outlineColor:
+                          Theme.of(context).colorScheme.outlineVariant,
+                      oceanColor: const Color(0xFFEFF6FF),
+                      gridColor: const Color(0xFF93C5FD),
+                    ),
                   ),
+                ),
+                Positioned(
+                  left: horizontalPadding,
+                  right: horizontalPadding,
+                  top: 12,
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          '日本地図UI',
+                          overflow: TextOverflow.ellipsis,
+                          style:
+                              Theme.of(context).textTheme.labelLarge?.copyWith(
+                                    color: const Color(0xFF0F172A),
+                                    fontWeight: FontWeight.w800,
+                                    height: 1.4,
+                                  ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      _SelectedMapBadge(
+                        label: '${selectedTile.shortName} 選択中',
+                        value:
+                            '純増${selectedPlan.additionalSeatTarget} / 新人${selectedPlan.newCandidateTarget}',
+                      ),
+                    ],
+                  ),
+                ),
+                for (final label in _regionLabels)
+                  Positioned(
+                    left: horizontalPadding + label.col * cell,
+                    top: headerHeight + label.row * cell,
+                    child: _RegionMapLabel(label: label.label),
+                  ),
+                Positioned(
+                  left: horizontalPadding,
+                  top: headerHeight,
+                  width: width,
+                  height: height,
+                  child: Stack(
+                    children: [
+                      for (final tile in _japanTiles)
+                        _buildPrefectureTile(
+                          context: context,
+                          tile: tile,
+                          cell: cell,
+                          maxLoad: maxLoad,
+                        ),
+                    ],
+                  ),
+                ),
               ],
             ),
           ),
@@ -313,16 +374,7 @@ class _ElectionJapanMapState extends State<ElectionJapanMap> {
     final theme = Theme.of(context);
     final safeIndex = math.min(_selectedIndex, widget.prefectures.length - 1);
     final plan = widget.prefectures[safeIndex];
-    final tile = _japanTiles.firstWhere(
-      (item) => item.index == safeIndex,
-      orElse: () => _JapanTile(
-        index: safeIndex,
-        name: plan.prefecture,
-        shortName: plan.prefecture,
-        row: 0,
-        col: 0,
-      ),
-    );
+    final tile = _tileForIndex(safeIndex, plan);
     final now = DateTime.now();
     final overdue = plan.isEndorsementOverdue(now);
     final dueSoon = plan.isEndorsementDueSoon(now);
@@ -388,11 +440,15 @@ class _ElectionJapanMapState extends State<ElectionJapanMap> {
             ],
           ),
           const SizedBox(height: 12),
+          _buildPriorityMeter(context, plan),
+          const SizedBox(height: 12),
           _buildDetailRows(
             context,
             entries: [
+              MapEntry('現職人数', '${plan.currentMembers}'),
               MapEntry('純増目標', '${plan.additionalSeatTarget}'),
               MapEntry('新人擁立', '${plan.newCandidateTarget}'),
+              MapEntry('予定選挙', '${plan.scheduledElectionCount}件'),
               MapEntry('現職維持', '${plan.incumbentRetentionTarget}'),
               MapEntry('重点自治体', '${plan.focusMunicipalityCount}'),
               MapEntry('接戦支援', '${plan.closeRaceSupportRounds}回'),
@@ -408,6 +464,71 @@ class _ElectionJapanMapState extends State<ElectionJapanMap> {
           ],
         ],
       ),
+    );
+  }
+
+  _JapanTile _tileForIndex(int index, LocalElectionPrefecturePlan plan) {
+    return _japanTiles.firstWhere(
+      (item) => item.index == index,
+      orElse: () => _JapanTile(
+        index: index,
+        name: plan.prefecture,
+        shortName: plan.prefecture,
+        row: 0,
+        col: 0,
+      ),
+    );
+  }
+
+  Widget _buildPriorityMeter(
+    BuildContext context,
+    LocalElectionPrefecturePlan plan,
+  ) {
+    final score = plan.additionalSeatTarget +
+        plan.newCandidateTarget +
+        plan.closeRaceSupportRounds;
+    final ratio = (score / 72).clamp(0.0, 1.0).toDouble();
+    final color = ratio >= 0.72
+        ? const Color(0xFFDC2626)
+        : ratio >= 0.48
+            ? const Color(0xFFF59E0B)
+            : const Color(0xFF2563EB);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                '重点度',
+                style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                      height: 1.4,
+                    ),
+              ),
+            ),
+            Text(
+              '$score pt',
+              style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                    color: color,
+                    fontWeight: FontWeight.w800,
+                    height: 1.4,
+                  ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 6),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(999),
+          child: LinearProgressIndicator(
+            value: ratio,
+            minHeight: 9,
+            backgroundColor: color.withValues(alpha: 0.12),
+            valueColor: AlwaysStoppedAnimation<Color>(color),
+          ),
+        ),
+      ],
     );
   }
 
@@ -493,6 +614,187 @@ class _ElectionJapanMapState extends State<ElectionJapanMap> {
         ? const Color(0xFFDCFCE7)
         : const Color(0xFFDBEAFE);
     return Color.lerp(tint, base, 0.22 + ratio * 0.68) ?? base;
+  }
+}
+
+class _SelectedMapBadge extends StatelessWidget {
+  final String label;
+  final String value;
+
+  const _SelectedMapBadge({
+    required this.label,
+    required this.value,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 168),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.92),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: const Color(0xFFBFDBFE)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Text(
+              label,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                color: Color(0xFF0F172A),
+                fontSize: 11,
+                fontWeight: FontWeight.w800,
+                height: 1.2,
+              ),
+            ),
+            Text(
+              value,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                color: Color(0xFF2563EB),
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
+                height: 1.2,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _RegionMapLabel extends StatelessWidget {
+  final String label;
+
+  const _RegionMapLabel({required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return IgnorePointer(
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.76),
+          borderRadius: BorderRadius.circular(6),
+        ),
+        child: Text(
+          label,
+          style: const TextStyle(
+            color: Color(0xFF475569),
+            fontSize: 10,
+            fontWeight: FontWeight.w700,
+            height: 1.2,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _JapanMapSurfacePainter extends CustomPainter {
+  final Color outlineColor;
+  final Color oceanColor;
+  final Color gridColor;
+
+  const _JapanMapSurfacePainter({
+    required this.outlineColor,
+    required this.oceanColor,
+    required this.gridColor,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final rect = Offset.zero & size;
+    final rrect = RRect.fromRectAndRadius(rect, const Radius.circular(14));
+    final backgroundPaint = Paint()..color = oceanColor;
+    canvas.drawRRect(rrect, backgroundPaint);
+
+    final gridPaint = Paint()
+      ..color = gridColor.withValues(alpha: 0.18)
+      ..strokeWidth = 1;
+    for (var x = 24.0; x < size.width; x += 42) {
+      canvas.drawLine(Offset(x, 0), Offset(x, size.height), gridPaint);
+    }
+    for (var y = 26.0; y < size.height; y += 42) {
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), gridPaint);
+    }
+
+    final coastlinePaint = Paint()
+      ..color = const Color(0xFFBFDBFE).withValues(alpha: 0.42)
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round
+      ..strokeWidth = math.max(14, size.width * 0.045);
+
+    final mainIsland = Path()
+      ..moveTo(size.width * 0.78, size.height * 0.18)
+      ..cubicTo(
+        size.width * 0.84,
+        size.height * 0.30,
+        size.width * 0.78,
+        size.height * 0.43,
+        size.width * 0.70,
+        size.height * 0.52,
+      )
+      ..cubicTo(
+        size.width * 0.58,
+        size.height * 0.66,
+        size.width * 0.42,
+        size.height * 0.61,
+        size.width * 0.32,
+        size.height * 0.70,
+      )
+      ..cubicTo(
+        size.width * 0.22,
+        size.height * 0.79,
+        size.width * 0.15,
+        size.height * 0.86,
+        size.width * 0.10,
+        size.height * 0.92,
+      );
+    canvas.drawPath(mainIsland, coastlinePaint);
+
+    final hokkaido = Path()
+      ..moveTo(size.width * 0.72, size.height * 0.09)
+      ..cubicTo(
+        size.width * 0.80,
+        size.height * 0.04,
+        size.width * 0.90,
+        size.height * 0.07,
+        size.width * 0.92,
+        size.height * 0.15,
+      );
+    canvas.drawPath(hokkaido, coastlinePaint);
+
+    final shikokuKyushu = Path()
+      ..moveTo(size.width * 0.17, size.height * 0.72)
+      ..cubicTo(
+        size.width * 0.27,
+        size.height * 0.75,
+        size.width * 0.28,
+        size.height * 0.83,
+        size.width * 0.20,
+        size.height * 0.91,
+      );
+    canvas.drawPath(shikokuKyushu, coastlinePaint);
+
+    final borderPaint = Paint()
+      ..color = outlineColor.withValues(alpha: 0.7)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1;
+    canvas.drawRRect(rrect, borderPaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _JapanMapSurfacePainter oldDelegate) {
+    return outlineColor != oldDelegate.outlineColor ||
+        oceanColor != oldDelegate.oceanColor ||
+        gridColor != oldDelegate.gridColor;
   }
 }
 
@@ -596,8 +898,27 @@ class _JapanTile {
   });
 }
 
+class _RegionLabel {
+  final String label;
+  final double row;
+  final double col;
+
+  const _RegionLabel(this.label, this.row, this.col);
+}
+
 const int _mapColumns = 10;
 const int _mapRows = 15;
+
+const List<_RegionLabel> _regionLabels = <_RegionLabel>[
+  _RegionLabel('北海道', 1.15, 7.05),
+  _RegionLabel('東北', 2.65, 7.10),
+  _RegionLabel('関東', 6.75, 6.85),
+  _RegionLabel('中部', 5.25, 4.80),
+  _RegionLabel('近畿', 7.00, 2.85),
+  _RegionLabel('中国', 6.55, 0.20),
+  _RegionLabel('四国', 9.70, 1.35),
+  _RegionLabel('九州', 11.55, 2.15),
+];
 
 const List<_JapanTile> _japanTiles = <_JapanTile>[
   _JapanTile(index: 0, name: '北海道', shortName: '北海道', row: 0, col: 8, width: 2),

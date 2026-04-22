@@ -89,8 +89,13 @@ void main() {
 
     expect(find.text('全国KPIマップ'), findsOneWidget);
     expect(find.text('都道府県別の純増・新人擁立・公認期限を地図で俯瞰'), findsOneWidget);
+    expect(find.text('日本地図UI'), findsOneWidget);
+    expect(find.text('東京 選択中'), findsOneWidget);
     expect(find.text('東京都 KPI'), findsOneWidget);
+    expect(find.text('重点度'), findsOneWidget);
     expect(find.text('純増目標'), findsOneWidget);
+    expect(find.text('現職人数'), findsOneWidget);
+    expect(find.text('予定選挙'), findsOneWidget);
     expect(find.text('公認期限'), findsOneWidget);
     expect(find.text('高負荷'), findsOneWidget);
   });
@@ -108,6 +113,8 @@ List<LocalElectionPrefecturePlan> _samplePrefecturePlans() {
       newCandidateTarget: isTokyo ? 26 : (index % 4) + 1,
       endorsementDeadlineMonth: isTokyo ? '2026-09' : '2026-11',
       closeRaceSupportRounds: isTokyo ? 18 : (index % 5) + 2,
+      currentMembers: isTokyo ? 14 : (index % 7),
+      scheduledElectionCount: isTokyo ? 3 : (index % 4),
       endorsementConfirmed: index == 0,
       notes: isTokyo ? '重点自治体から先に月次レビューする' : '',
     );

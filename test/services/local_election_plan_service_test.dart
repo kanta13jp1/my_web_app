@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:my_web_app/models/local_election_reality.dart';
 import 'package:my_web_app/services/local_election_plan_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -86,5 +87,123 @@ void main() {
       seatTargets.every((value) => value == 7 || value == 8),
       isTrue,
     );
+  });
+
+  test('auto update merges reality snapshot into prefecture KPIs', () async {
+    const service = LocalElectionPlanService();
+    final prefs = await SharedPreferences.getInstance();
+    final plan = await service.loadPlan(prefs: prefs);
+    final tokyo = plan.prefectures[12];
+    final aichi = plan.prefectures[22];
+    final now = DateTime(2026, 4, 22, 9);
+
+    final updated = service.buildAutoUpdatedPlan(
+      plan,
+      LocalElectionRealitySnapshot(
+        fetchedAt: now,
+        baselineCurrentLocalMembers: 340,
+        officialCurrentLocalMembers: 346,
+        targetLocalMembers: 700,
+        baselineNetIncreaseRequired: 360,
+        actualNetIncreaseRequired: 354,
+        official2023FirstHalfWins: 62,
+        official2023SecondHalfWins: 121,
+        official2023TotalWins: 183,
+        aiSummary: 'latest snapshot',
+        aiAlerts: const <String>[],
+        aiStrategicNotes: const <String>[],
+        scheduleAiSummary: 'upcoming schedules',
+        scheduleAiAlerts: const <String>[],
+        sources: const <LocalElectionRealitySource>[],
+        prefectures: <LocalElectionPrefectureReality>[
+          LocalElectionPrefectureReality(
+            prefecture: tokyo.prefecture,
+            sourceUrl: 'https://example.com/tokyo',
+            currentMembers: 20,
+            prefecturalAssemblyMembers: 3,
+            municipalAssemblyMembers: 17,
+          ),
+          LocalElectionPrefectureReality(
+            prefecture: aichi.prefecture,
+            sourceUrl: 'https://example.com/aichi',
+            currentMembers: 12,
+            prefecturalAssemblyMembers: 2,
+            municipalAssemblyMembers: 10,
+          ),
+        ],
+        members: const <LocalElectionLegislatorProfile>[],
+        upcomingSchedules: <LocalElectionScheduleEntry>[
+          LocalElectionScheduleEntry(
+            electionName: 'Tokyo assembly A',
+            prefecture: tokyo.prefecture,
+            municipality: 'Ward A',
+            electionCategory: 'city',
+            voteDate: '2026-08-09',
+            announcementDate: '2026-07-31',
+            detailUrl: 'https://example.com/tokyo-a',
+            officialCandidateSourceUrl: '',
+            seatCount: 30,
+            totalCandidateCount: 40,
+            kokuminCandidateCount: 2,
+            kokuminCandidateNames: const <String>['candidate-a'],
+            kokuminCandidateStatuses: const <String>['公認'],
+            kokuminCandidateXHandles: const <String>[],
+          ),
+          LocalElectionScheduleEntry(
+            electionName: 'Tokyo assembly B',
+            prefecture: tokyo.prefecture,
+            municipality: 'Ward B',
+            electionCategory: 'city',
+            voteDate: '2026-09-06',
+            announcementDate: '2026-08-28',
+            detailUrl: 'https://example.com/tokyo-b',
+            officialCandidateSourceUrl: '',
+            seatCount: 20,
+            totalCandidateCount: 26,
+            kokuminCandidateCount: 0,
+            kokuminCandidateNames: const <String>[],
+            kokuminCandidateStatuses: const <String>[],
+            kokuminCandidateXHandles: const <String>[],
+          ),
+          LocalElectionScheduleEntry(
+            electionName: 'Aichi assembly',
+            prefecture: aichi.prefecture,
+            municipality: 'City A',
+            electionCategory: 'city',
+            voteDate: '2026-10-18',
+            announcementDate: '2026-10-09',
+            detailUrl: 'https://example.com/aichi',
+            officialCandidateSourceUrl: '',
+            seatCount: 18,
+            totalCandidateCount: 24,
+            kokuminCandidateCount: 1,
+            kokuminCandidateNames: const <String>['candidate-b'],
+            kokuminCandidateStatuses: const <String>['予定'],
+            kokuminCandidateXHandles: const <String>[],
+          ),
+        ],
+      ),
+      now: now,
+    );
+
+    final updatedTokyo = updated.prefectures.firstWhere(
+      (item) => item.prefecture == tokyo.prefecture,
+    );
+    final updatedAichi = updated.prefectures.firstWhere(
+      (item) => item.prefecture == aichi.prefecture,
+    );
+
+    expect(updated.currentLocalMembers, 346);
+    expect(updated.allocatedNetIncrease, 354);
+    expect(updated.allocationGap, 0);
+    expect(updatedTokyo.currentMembers, 20);
+    expect(updatedTokyo.incumbentRetentionTarget, 20);
+    expect(updatedTokyo.scheduledElectionCount, 2);
+    expect(updatedTokyo.endorsementDeadlineMonth, '2026-07');
+    expect(updatedTokyo.newCandidateTarget, greaterThanOrEqualTo(3));
+    expect(updatedTokyo.notes, contains('AI自動更新'));
+    expect(updatedTokyo.autoUpdatedAt, now.toIso8601String());
+    expect(updatedAichi.currentMembers, 12);
+    expect(updatedAichi.scheduledElectionCount, 1);
   });
 }
