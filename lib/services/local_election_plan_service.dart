@@ -97,6 +97,9 @@ class LocalElectionPlanService {
       final reality = realitiesByPrefecture[key];
       final stats = scheduleStatsByPrefecture[key] ?? _AutoScheduleStats.empty;
       final currentMembers = reality?.currentMembers ?? current.currentMembers;
+      final cdpLocalMembers =
+          reality?.cdpLocalMembers ?? current.cdpLocalMembers;
+      final cdpSourceUrl = reality?.cdpSourceUrl ?? current.cdpSourceUrl;
       final scheduledElectionCount = stats.scheduledElectionCount;
       final additionalTarget = additionalTargets[index];
       final candidateTarget = math.max(
@@ -129,6 +132,8 @@ class LocalElectionPlanService {
           closeRaceSupportRounds: supportRounds,
           currentMembers: currentMembers,
           scheduledElectionCount: scheduledElectionCount,
+          cdpLocalMembers: cdpLocalMembers,
+          cdpSourceUrl: cdpSourceUrl,
           autoUpdatedAt: updatedAt.toIso8601String(),
           endorsementConfirmed: stats.scheduledElectionCount > 0
               ? stats.redAlertCount == 0 && stats.confirmedCandidateCount > 0
@@ -137,6 +142,7 @@ class LocalElectionPlanService {
             current.notes,
             stats: stats,
             currentMembers: currentMembers,
+            cdpLocalMembers: cdpLocalMembers,
             updatedAt: updatedAt,
           ),
         ),
@@ -258,6 +264,8 @@ class LocalElectionPlanService {
           closeRaceSupportRounds: clampPositiveInt(item.closeRaceSupportRounds),
           currentMembers: clampPositiveInt(item.currentMembers),
           scheduledElectionCount: clampPositiveInt(item.scheduledElectionCount),
+          cdpLocalMembers: clampPositiveInt(item.cdpLocalMembers),
+          cdpSourceUrl: item.cdpSourceUrl.trim(),
           endorsementDeadlineMonth:
               planningMonthKeys.contains(item.endorsementDeadlineMonth)
                   ? item.endorsementDeadlineMonth
@@ -396,8 +404,11 @@ class LocalElectionPlanService {
     _AutoScheduleStats stats,
   ) {
     final currentMembers = reality?.currentMembers ?? plan.currentMembers;
+    final cdpLocalMembers = reality?.cdpLocalMembers ?? plan.cdpLocalMembers;
+    final cdpGap = math.max(0, cdpLocalMembers - currentMembers);
     return 1 +
         currentMembers * 0.12 +
+        cdpGap * 0.10 +
         stats.scheduledElectionCount * 1.45 +
         stats.redAlertCount * 2.2 +
         stats.yellowAlertCount * 0.9 +
@@ -425,6 +436,7 @@ class LocalElectionPlanService {
     String currentNotes, {
     required _AutoScheduleStats stats,
     required int currentMembers,
+    required int cdpLocalMembers,
     required DateTime updatedAt,
   }) {
     final manualLines = currentNotes
@@ -435,6 +447,7 @@ class LocalElectionPlanService {
     final date =
         '${updatedAt.year}/${updatedAt.month.toString().padLeft(2, '0')}/${updatedAt.day.toString().padLeft(2, '0')}';
     final autoLine = 'AI自動更新: 現職$currentMembers人 / '
+        '立憲$cdpLocalMembers人 / '
         '予定選挙${stats.scheduledElectionCount}件 / '
         '未擁立${stats.redAlertCount}件 / '
         '単騎${stats.yellowAlertCount}件 ($date)';

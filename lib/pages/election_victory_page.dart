@@ -792,6 +792,8 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                   const SizedBox(height: 16),
                   _buildRealitySection(plan),
                   const SizedBox(height: 16),
+                  _buildCdpBenchmarkSection(plan),
+                  const SizedBox(height: 16),
                   _buildChartSection(plan),
                   const SizedBox(height: 16),
                   _buildAlertStrip(plan),
@@ -4054,6 +4056,141 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
     );
   }
 
+  Widget _buildCdpBenchmarkSection(LocalElectionPlanDashboard plan) {
+    final comparedCount = plan.cdpComparisonPrefectureCount;
+    if (comparedCount == 0) {
+      return _buildInlineNotice(
+        '立憲民主党の県別地方議員数は次回のAI更新で取り込みます。',
+        color: const Color(0xFF607D8B),
+        icon: Icons.insights_outlined,
+      );
+    }
+
+    final topGaps = plan.topCdpGapPrefectures();
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+      ),
+      child: Theme(
+        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+        child: ExpansionTile(
+          initiallyExpanded: true,
+          tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+          childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          leading: const Icon(Icons.insights_outlined),
+          title: Text(
+            '立憲地方議員ベンチマーク',
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+          ),
+          subtitle: Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: [
+                _buildMiniStatChip(
+                  '立憲合計',
+                  plan.totalCdpLocalMembers,
+                  color: const Color(0xFFDC2626),
+                ),
+                _buildMiniStatChip(
+                  '取得県連',
+                  comparedCount,
+                  suffix: '/47',
+                  color: const Color(0xFF2563EB),
+                ),
+                _buildMiniStatChip(
+                  '立憲先行',
+                  plan.cdpLeadPrefectureCount,
+                  color: const Color(0xFFF59E0B),
+                ),
+                _buildMiniStatChip(
+                  '国民同数以上',
+                  plan.kokuminLeadPrefectureCount,
+                  color: const Color(0xFF0F766E),
+                ),
+              ],
+            ),
+          ),
+          children: [
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  for (final item in topGaps) _buildCdpGapPill(item),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCdpGapPill(LocalElectionPrefecturePlan plan) {
+    final gap = plan.cdpMemberGap;
+    final color = gap > 0
+        ? const Color(0xFFDC2626)
+        : gap == 0
+            ? const Color(0xFF64748B)
+            : const Color(0xFF0F766E);
+    final label = gap > 0
+        ? '立憲+${_formatInt(gap)}'
+        : gap == 0
+            ? '同数'
+            : '国民+${_formatInt(-gap)}';
+
+    return Container(
+      constraints: const BoxConstraints(minWidth: 148),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withValues(alpha: 0.18)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            plan.prefecture,
+            style: TextStyle(
+              color: color,
+              fontWeight: FontWeight.w800,
+              height: 1.3,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            '国民 ${_formatInt(plan.currentMembers)} / 立憲 ${_formatInt(plan.cdpLocalMembers)}',
+            style: TextStyle(
+              color: color.withValues(alpha: 0.95),
+              fontWeight: FontWeight.w600,
+              height: 1.4,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            label,
+            style: TextStyle(
+              color: color.withValues(alpha: 0.95),
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              height: 1.3,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildAlertStrip(LocalElectionPlanDashboard plan) {
     final gap = plan.allocationGap;
     final overdue = plan.overdueEndorsementCount();
@@ -4458,6 +4595,10 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
       0,
       (sum, item) => sum + item.currentMembers,
     );
+    final cdpMembersTotal = prefectures.fold<int>(
+      0,
+      (sum, item) => sum + item.cdpLocalMembers,
+    );
     final scheduledTotal = prefectures.fold<int>(
       0,
       (sum, item) => sum + item.scheduledElectionCount,
@@ -4499,6 +4640,12 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                     currentMembersTotal,
                     color: const Color(0xFF0891B2),
                   ),
+                  if (cdpMembersTotal > 0)
+                    _buildMiniStatChip(
+                      '立憲',
+                      cdpMembersTotal,
+                      color: const Color(0xFFDC2626),
+                    ),
                   _buildMiniStatChip(
                     '純増',
                     additionalTotal,
@@ -4614,6 +4761,20 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                     '${_formatInt(reality.currentMembers)}人',
                     color: const Color(0xFF0891B2),
                   ),
+                if (plan.cdpLocalMembers > 0)
+                  _buildMetricChip(
+                    '立憲参考',
+                    '${_formatInt(plan.cdpLocalMembers)}人',
+                    color: const Color(0xFFDC2626),
+                  ),
+                if (plan.cdpLocalMembers > 0)
+                  _buildMetricChip(
+                    '地力差',
+                    _formatCdpGap(plan),
+                    color: plan.cdpMemberGap > 0
+                        ? const Color(0xFFDC2626)
+                        : const Color(0xFF0F766E),
+                  ),
               ],
             ),
             if (reality != null) ...[
@@ -4654,6 +4815,17 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
         ),
       ),
     );
+  }
+
+  String _formatCdpGap(LocalElectionPrefecturePlan plan) {
+    final gap = plan.cdpMemberGap;
+    if (gap > 0) {
+      return '立憲+${_formatInt(gap)}';
+    }
+    if (gap < 0) {
+      return '国民+${_formatInt(-gap)}';
+    }
+    return '同数';
   }
 
   Widget _buildMiniStatChip(

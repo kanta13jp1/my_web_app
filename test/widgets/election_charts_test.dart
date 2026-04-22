@@ -95,6 +95,7 @@ void main() {
     expect(find.text('重点度'), findsOneWidget);
     expect(find.text('純増目標'), findsOneWidget);
     expect(find.text('現職人数'), findsOneWidget);
+    expect(find.text('立憲地方議員'), findsOneWidget);
     expect(find.text('予定選挙'), findsOneWidget);
     expect(find.text('公認期限'), findsOneWidget);
     expect(find.text('高負荷'), findsOneWidget);
@@ -115,6 +116,9 @@ List<LocalElectionPrefecturePlan> _samplePrefecturePlans() {
       closeRaceSupportRounds: isTokyo ? 18 : (index % 5) + 2,
       currentMembers: isTokyo ? 14 : (index % 7),
       scheduledElectionCount: isTokyo ? 3 : (index % 4),
+      cdpLocalMembers: isTokyo ? 82 : 0,
+      cdpSourceUrl:
+          isTokyo ? 'https://cdp-japan.jp/members/prefecture/tokyo' : '',
       endorsementConfirmed: index == 0,
       notes: isTokyo ? '重点自治体から先に月次レビューする' : '',
     );

@@ -15,6 +15,10 @@ const OFFICIAL_2023_FIRST_HALF_URL =
 const OFFICIAL_2023_SECOND_HALF_URL =
   "https://new-kokumin.jp/news/election/20230423_1";
 const ELECTION_SCHEDULE_URL = "https://go2senkyo.com/schedule";
+const CDP_LOCAL_AUTHORITIES_URL =
+  "https://cdp-japan.jp/members/house/local_authorities";
+const CDP_PREFECTURE_MEMBERS_BASE_URL =
+  "https://cdp-japan.jp/members/prefecture/";
 const NEW_KOKUMIN_ELECTIONS_URL =
   "https://local-elections.new-kokumin.jp/electionslist/";
 const TARGET_LOCAL_MEMBERS = 700;
@@ -29,6 +33,7 @@ const SCHEDULE_DETAIL_WINDOW_DAYS = 14;
 const SCHEDULE_MAX_ENTRIES = 300;
 // 最低保証日数 (これを下回る window は使わない)
 const SCHEDULE_MIN_WINDOW_DAYS = 30;
+const CDP_PREFECTURE_MAX_PAGES = 24;
 
 const JP_LOCAL_ASSEMBLY_MEMBERS = "\u5730\u65b9\u81ea\u6cbb\u4f53\u8b70\u54e1";
 const JP_PLANNED_CANDIDATES = "\u5019\u88dc\u4e88\u5b9a\u8005";
@@ -130,6 +135,13 @@ interface PrefectureReality {
   prefecturalAssemblyMembers: number;
   municipalAssemblyMembers: number;
   members: LocalLegislatorProfile[];
+}
+
+interface CdpPrefectureLocalMemberStats {
+  prefecture: string;
+  sourceUrl: string;
+  localMembers: number;
+  pagesFetched: number;
 }
 
 interface HistoricalResult {
@@ -404,6 +416,12 @@ serve(async (req) => {
       return jsonResponse({ success: true, profile });
     }
 
+    const cdpStatsPromise = fetchCdpLocalMemberStatsByPrefecture().catch(
+      (error) => {
+        console.error("Failed to fetch CDP local member stats:", error);
+        return new Map<string, CdpPrefectureLocalMemberStats>();
+      },
+    );
     const memberPageHtml = await fetchText(OFFICIAL_MEMBER_PAGE_URL);
     const officialElectionHtml = await fetchText(OFFICIAL_ELECTION_PAGE_URL);
     const prefectureDirectoryEntries = parsePrefectureDirectoryEntries(
@@ -423,12 +441,19 @@ serve(async (req) => {
       compareMembers,
     );
     const officialCurrentLocalMembers = members.length;
+    const cdpStatsByPrefecture = await cdpStatsPromise;
     const prefectures = prefectureResults.map((item) => ({
       prefecture: item.prefecture,
       sourceUrl: item.sourceUrl,
       currentMembers: item.currentMembers,
       prefecturalAssemblyMembers: item.prefecturalAssemblyMembers,
       municipalAssemblyMembers: item.municipalAssemblyMembers,
+      cdpLocalMembers:
+        cdpStatsByPrefecture.get(prefectureLookupKey(item.prefecture))
+          ?.localMembers ?? 0,
+      cdpSourceUrl:
+        cdpStatsByPrefecture.get(prefectureLookupKey(item.prefecture))
+          ?.sourceUrl ?? CDP_LOCAL_AUTHORITIES_URL,
     }));
 
     const historical = await fetchHistoricalResult();
@@ -495,6 +520,13 @@ serve(async (req) => {
           url: OFFICIAL_ELECTION_PAGE_URL,
           category: "official_local_elections",
           note: "Official planned-candidate source.",
+        },
+        {
+          label: "CDP local authorities",
+          url: CDP_LOCAL_AUTHORITIES_URL,
+          category: "opposition_local_members",
+          note:
+            "Reference benchmark from Constitutional Democratic Party official local-authorities directory.",
         },
         {
           label: "Election schedule",
@@ -653,6 +685,83 @@ async function fetchPrefectureReality(
       members: [],
     };
   }
+}
+
+async function fetchCdpLocalMemberStatsByPrefecture(): Promise<
+  Map<string, CdpPrefectureLocalMemberStats>
+> {
+  const stats = await mapWithConcurrency(
+    [...PREFECTURES],
+    6,
+    fetchCdpPrefectureLocalMemberStats,
+  );
+  return new Map(
+    stats.map((item) => [prefectureLookupKey(item.prefecture), item]),
+  );
+}
+
+async function fetchCdpPrefectureLocalMemberStats(
+  prefecture: string,
+): Promise<CdpPrefectureLocalMemberStats> {
+  const sourceUrl = `${CDP_PREFECTURE_MEMBERS_BASE_URL}${
+    encodeURIComponent(prefectureSlug(prefecture))
+  }`;
+  let localMembers = 0;
+  let pagesFetched = 0;
+  let maxPage = 1;
+
+  try {
+    for (
+      let page = 1;
+      page <= Math.min(maxPage, CDP_PREFECTURE_MAX_PAGES);
+      page++
+    ) {
+      const pageUrl = page === 1 ? sourceUrl : `${sourceUrl}?page=${page}`;
+      const html = await fetchText(pageUrl);
+      pagesFetched += 1;
+      localMembers += countCdpLocalAuthorityCards(html);
+      if (page === 1) {
+        maxPage = Math.max(1, parseMaxPaginationPage(html));
+      }
+    }
+  } catch (error) {
+    console.error(`Failed to fetch CDP ${prefecture}:`, error);
+  }
+
+  return {
+    prefecture,
+    sourceUrl,
+    localMembers,
+    pagesFetched,
+  };
+}
+
+function countCdpLocalAuthorityCards(html: string): number {
+  return [
+    ...html.matchAll(
+      /class="[^"]*\bcard\b[^"]*\bmember\b[^"]*\bmember-local_[^"]*"/gi,
+    ),
+  ]
+    .length;
+}
+
+function parseMaxPaginationPage(html: string): number {
+  let maxPage = 1;
+  for (const match of html.matchAll(/\?page=(\d+)/g)) {
+    maxPage = Math.max(maxPage, toInt(match[1] ?? ""));
+  }
+  return maxPage;
+}
+
+function prefectureSlug(prefecture: string): string {
+  if (prefecture === "\u5317\u6d77\u9053") {
+    return prefecture;
+  }
+  return prefecture.replace(/[\u90fd\u5e9c\u770c]$/u, "");
+}
+
+function prefectureLookupKey(prefecture: string): string {
+  return prefectureSlug(normalizeWhitespace(prefecture).trim());
 }
 
 function parsePrefectureDirectoryEntries(
@@ -990,7 +1099,9 @@ async function fetchNewKokuminScheduleEntries(): Promise<
   return parseNewKokuminElectionListHtml(html);
 }
 
-function parseNewKokuminElectionListHtml(html: string): ScheduleOverviewEntry[] {
+function parseNewKokuminElectionListHtml(
+  html: string,
+): ScheduleOverviewEntry[] {
   const entries: ScheduleOverviewEntry[] = [];
   const prefSectionRegex =
     /<section[^>]+class="[^"]*\bpref-section\b[^"]*"[^>]*>([\s\S]*?)<\/section>/gi;
@@ -1420,6 +1531,8 @@ async function buildAiAnalysis(snapshot: {
       currentMembers: number;
       prefecturalAssemblyMembers: number;
       municipalAssemblyMembers: number;
+      cdpLocalMembers: number;
+      cdpSourceUrl: string;
     }
   >;
   members: LocalLegislatorProfile[];
@@ -1453,6 +1566,10 @@ async function buildAiAnalysis(snapshot: {
               official2023TotalWins: snapshot.official2023TotalWins,
               topPrefectures: [...snapshot.prefectures].sort((a, b) =>
                 b.currentMembers - a.currentMembers
+              ).slice(0, 10),
+              topCdpGaps: [...snapshot.prefectures].sort((a, b) =>
+                (b.cdpLocalMembers - b.currentMembers) -
+                (a.cdpLocalMembers - a.currentMembers)
               ).slice(0, 10),
               rosterCount: snapshot.members.length,
               upcomingSchedules: snapshot.upcomingSchedules?.slice(0, 10) ?? [],
@@ -1503,6 +1620,8 @@ function buildFallbackAnalysis(snapshot: {
       currentMembers: number;
       prefecturalAssemblyMembers: number;
       municipalAssemblyMembers: number;
+      cdpLocalMembers: number;
+      cdpSourceUrl: string;
     }
   >;
   members: LocalLegislatorProfile[];
@@ -1519,6 +1638,16 @@ function buildFallbackAnalysis(snapshot: {
   const topPrefectures = [...snapshot.prefectures].sort((a, b) =>
     b.currentMembers - a.currentMembers
   ).slice(0, 3).map((item) => `${item.prefecture}${item.currentMembers}`);
+  const cdpBenchmarked = snapshot.prefectures.filter((item) =>
+    item.cdpLocalMembers > 0
+  );
+  const topCdpGaps = cdpBenchmarked.sort((a, b) =>
+    (b.cdpLocalMembers - b.currentMembers) -
+    (a.cdpLocalMembers - a.currentMembers)
+  ).slice(0, 3).map((item) => {
+    const gap = item.cdpLocalMembers - item.currentMembers;
+    return `${item.prefecture}${gap >= 0 ? "+" : ""}${gap}`;
+  });
   const redSchedules = scheduleEntries.filter((item) =>
     item.kokuminCandidateCount === 0
   );
@@ -1537,6 +1666,9 @@ function buildFallbackAnalysis(snapshot: {
       topPrefectures.length === 0
         ? "Top prefectures unavailable."
         : `Top prefectures: ${topPrefectures.join(" / ")}.`,
+      topCdpGaps.length === 0
+        ? "CDP local benchmark unavailable."
+        : `CDP local benchmark gaps: ${topCdpGaps.join(" / ")}.`,
     ],
     strategicNotes: [
       "Protect incumbents, recruit challengers, and manage key municipalities in one monthly plan.",

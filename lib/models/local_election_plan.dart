@@ -11,6 +11,8 @@ class LocalElectionPrefecturePlan {
   final int closeRaceSupportRounds;
   final int currentMembers;
   final int scheduledElectionCount;
+  final int cdpLocalMembers;
+  final String cdpSourceUrl;
   final String autoUpdatedAt;
   final bool endorsementConfirmed;
   final String notes;
@@ -26,6 +28,8 @@ class LocalElectionPrefecturePlan {
     required this.closeRaceSupportRounds,
     this.currentMembers = 0,
     this.scheduledElectionCount = 0,
+    this.cdpLocalMembers = 0,
+    this.cdpSourceUrl = '',
     this.autoUpdatedAt = '',
     this.endorsementConfirmed = false,
     this.notes = '',
@@ -44,6 +48,8 @@ class LocalElectionPrefecturePlan {
       closeRaceSupportRounds: _readInt(json['closeRaceSupportRounds']),
       currentMembers: _readInt(json['currentMembers']),
       scheduledElectionCount: _readInt(json['scheduledElectionCount']),
+      cdpLocalMembers: _readInt(json['cdpLocalMembers']),
+      cdpSourceUrl: (json['cdpSourceUrl'] as String? ?? '').trim(),
       autoUpdatedAt: (json['autoUpdatedAt'] as String? ?? '').trim(),
       endorsementConfirmed: json['endorsementConfirmed'] == true,
       notes: (json['notes'] as String? ?? '').trim(),
@@ -62,6 +68,8 @@ class LocalElectionPrefecturePlan {
       'closeRaceSupportRounds': closeRaceSupportRounds,
       'currentMembers': currentMembers,
       'scheduledElectionCount': scheduledElectionCount,
+      'cdpLocalMembers': cdpLocalMembers,
+      'cdpSourceUrl': cdpSourceUrl,
       'autoUpdatedAt': autoUpdatedAt,
       'endorsementConfirmed': endorsementConfirmed,
       'notes': notes,
@@ -79,6 +87,8 @@ class LocalElectionPrefecturePlan {
     int? closeRaceSupportRounds,
     int? currentMembers,
     int? scheduledElectionCount,
+    int? cdpLocalMembers,
+    String? cdpSourceUrl,
     String? autoUpdatedAt,
     bool? endorsementConfirmed,
     String? notes,
@@ -99,6 +109,8 @@ class LocalElectionPrefecturePlan {
       currentMembers: currentMembers ?? this.currentMembers,
       scheduledElectionCount:
           scheduledElectionCount ?? this.scheduledElectionCount,
+      cdpLocalMembers: cdpLocalMembers ?? this.cdpLocalMembers,
+      cdpSourceUrl: cdpSourceUrl ?? this.cdpSourceUrl,
       autoUpdatedAt: autoUpdatedAt ?? this.autoUpdatedAt,
       endorsementConfirmed: endorsementConfirmed ?? this.endorsementConfirmed,
       notes: notes ?? this.notes,
@@ -130,6 +142,10 @@ class LocalElectionPrefecturePlan {
       incumbentRetentionTarget +
       newCandidateTarget +
       closeRaceSupportRounds;
+
+  int get cdpMemberGap => cdpLocalMembers - currentMembers;
+
+  bool get hasCdpComparison => cdpLocalMembers > 0;
 
   static int _readInt(Object? value) {
     if (value is int) {
@@ -288,6 +304,36 @@ class LocalElectionPlanDashboard {
         0,
         (sum, item) => sum + item.closeRaceSupportRounds,
       );
+
+  int get totalCdpLocalMembers => prefectures.fold<int>(
+        0,
+        (sum, item) => sum + item.cdpLocalMembers,
+      );
+
+  int get cdpComparisonPrefectureCount =>
+      prefectures.where((item) => item.hasCdpComparison).length;
+
+  int get cdpLeadPrefectureCount => prefectures.where((item) {
+        return item.hasCdpComparison &&
+            item.cdpLocalMembers > item.currentMembers;
+      }).length;
+
+  int get kokuminLeadPrefectureCount => prefectures.where((item) {
+        return item.hasCdpComparison &&
+            item.currentMembers >= item.cdpLocalMembers;
+      }).length;
+
+  List<LocalElectionPrefecturePlan> topCdpGapPrefectures({int limit = 8}) {
+    final sorted = prefectures.where((item) => item.hasCdpComparison).toList()
+      ..sort((a, b) {
+        final gapCompare = b.cdpMemberGap.compareTo(a.cdpMemberGap);
+        if (gapCompare != 0) {
+          return gapCompare;
+        }
+        return b.cdpLocalMembers.compareTo(a.cdpLocalMembers);
+      });
+    return sorted.take(limit).toList();
+  }
 
   int get confirmedEndorsementCount => prefectures.where((item) {
         return item.endorsementConfirmed;

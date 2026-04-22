@@ -468,6 +468,7 @@ class LocalElectionShareService {
       buffer.writeln(
         '${_prefectureMarker(prefecture)}${prefecture.prefecture} '
         '地方議員 ${prefecture.currentMembers}人 '
+        '立憲参考 ${prefecture.cdpLocalMembers}人 '
         '都道府県議 ${prefecture.prefecturalAssemblyMembers} / '
         '市区町村議 ${prefecture.municipalAssemblyMembers}',
       );
@@ -513,6 +514,10 @@ class LocalElectionShareService {
       'fetchedAt': snapshot.fetchedAt.toIso8601String(),
       'officialCurrentLocalMembers': snapshot.officialCurrentLocalMembers,
       'actualNetIncreaseRequired': snapshot.actualNetIncreaseRequired,
+      'cdpLocalMembers': prefectures.fold<int>(
+        0,
+        (sum, item) => sum + item.cdpLocalMembers,
+      ),
       'activePrefectureCount':
           prefectures.where((item) => item.currentMembers > 0).length,
       'missingPrefectureCount': missing.length,
@@ -527,6 +532,7 @@ class LocalElectionShareService {
             (item) => <String, dynamic>{
               'prefecture': item.prefecture,
               'currentMembers': item.currentMembers,
+              'cdpLocalMembers': item.cdpLocalMembers,
             },
           )
           .toList(),

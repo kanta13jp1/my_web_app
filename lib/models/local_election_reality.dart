@@ -216,6 +216,8 @@ class LocalElectionPrefectureReality {
   final int currentMembers;
   final int prefecturalAssemblyMembers;
   final int municipalAssemblyMembers;
+  final int cdpLocalMembers;
+  final String cdpSourceUrl;
 
   const LocalElectionPrefectureReality({
     required this.prefecture,
@@ -223,6 +225,8 @@ class LocalElectionPrefectureReality {
     required this.currentMembers,
     required this.prefecturalAssemblyMembers,
     required this.municipalAssemblyMembers,
+    this.cdpLocalMembers = 0,
+    this.cdpSourceUrl = '',
   });
 
   factory LocalElectionPrefectureReality.fromJson(Map<String, dynamic> json) {
@@ -232,6 +236,8 @@ class LocalElectionPrefectureReality {
       currentMembers: _readInt(json['currentMembers']),
       prefecturalAssemblyMembers: _readInt(json['prefecturalAssemblyMembers']),
       municipalAssemblyMembers: _readInt(json['municipalAssemblyMembers']),
+      cdpLocalMembers: _readInt(json['cdpLocalMembers']),
+      cdpSourceUrl: (json['cdpSourceUrl'] as String? ?? '').trim(),
     );
   }
 
@@ -242,6 +248,8 @@ class LocalElectionPrefectureReality {
       'currentMembers': currentMembers,
       'prefecturalAssemblyMembers': prefecturalAssemblyMembers,
       'municipalAssemblyMembers': municipalAssemblyMembers,
+      'cdpLocalMembers': cdpLocalMembers,
+      'cdpSourceUrl': cdpSourceUrl,
     };
   }
 

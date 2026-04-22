@@ -48,6 +48,8 @@ void main() {
           'currentMembers': 45,
           'prefecturalAssemblyMembers': 4,
           'municipalAssemblyMembers': 41,
+          'cdpLocalMembers': 83,
+          'cdpSourceUrl': 'https://cdp-japan.jp/members/prefecture/Tokyo',
         },
       ],
       'members': <Map<String, dynamic>>[
@@ -113,6 +115,11 @@ void main() {
     expect(loaded!.officialCurrentLocalMembers, 352);
     expect(loaded.deltaFromBaseline, 12);
     expect(loaded.topPrefectures().first.prefecture, 'Tokyo');
+    expect(loaded.prefectures.first.cdpLocalMembers, 83);
+    expect(
+      loaded.prefectures.first.cdpSourceUrl,
+      'https://cdp-japan.jp/members/prefecture/Tokyo',
+    );
     expect(loaded.sources.first.category, 'official_members');
     expect(loaded.members, hasLength(1));
     expect(loaded.members.single.name, 'Sample Member');

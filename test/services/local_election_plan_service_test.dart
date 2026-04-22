@@ -122,6 +122,8 @@ void main() {
             currentMembers: 20,
             prefecturalAssemblyMembers: 3,
             municipalAssemblyMembers: 17,
+            cdpLocalMembers: 64,
+            cdpSourceUrl: 'https://cdp-japan.jp/members/prefecture/tokyo',
           ),
           LocalElectionPrefectureReality(
             prefecture: aichi.prefecture,
@@ -129,6 +131,8 @@ void main() {
             currentMembers: 12,
             prefecturalAssemblyMembers: 2,
             municipalAssemblyMembers: 10,
+            cdpLocalMembers: 38,
+            cdpSourceUrl: 'https://cdp-japan.jp/members/prefecture/aichi',
           ),
         ],
         members: const <LocalElectionLegislatorProfile>[],
@@ -197,6 +201,11 @@ void main() {
     expect(updated.allocatedNetIncrease, 354);
     expect(updated.allocationGap, 0);
     expect(updatedTokyo.currentMembers, 20);
+    expect(updatedTokyo.cdpLocalMembers, 64);
+    expect(
+      updatedTokyo.cdpSourceUrl,
+      'https://cdp-japan.jp/members/prefecture/tokyo',
+    );
     expect(updatedTokyo.incumbentRetentionTarget, 20);
     expect(updatedTokyo.scheduledElectionCount, 2);
     expect(updatedTokyo.endorsementDeadlineMonth, '2026-07');
@@ -204,6 +213,7 @@ void main() {
     expect(updatedTokyo.notes, contains('AI自動更新'));
     expect(updatedTokyo.autoUpdatedAt, now.toIso8601String());
     expect(updatedAichi.currentMembers, 12);
+    expect(updatedAichi.cdpLocalMembers, 38);
     expect(updatedAichi.scheduledElectionCount, 1);
   });
 }

@@ -446,6 +446,8 @@ class _ElectionJapanMapState extends State<ElectionJapanMap> {
             context,
             entries: [
               MapEntry('現職人数', '${plan.currentMembers}'),
+              if (plan.cdpLocalMembers > 0)
+                MapEntry('立憲地方議員', '${plan.cdpLocalMembers}'),
               MapEntry('純増目標', '${plan.additionalSeatTarget}'),
               MapEntry('新人擁立', '${plan.newCandidateTarget}'),
               MapEntry('予定選挙', '${plan.scheduledElectionCount}件'),
