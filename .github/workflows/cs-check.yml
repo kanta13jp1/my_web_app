@@ -46,8 +46,34 @@ jobs:
           echo "$BODY" > /tmp/tickets_body.json
           echo "📋 チケット数: $TICKET_COUNT (HTTP: $HTTP_CODE)"
 
+      - name: Quota Guard — Anthropic circuit breaker check
+        id: quota_check
+        env:
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          RESPONSE=$(curl -s \
+            -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \
+            -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
+            "https://smmkxxavexumewbfaqpy.supabase.co/rest/v1/ai_circuit_breaker?provider=eq.anthropic&select=state,expires_at" \
+            --max-time 5 2>/dev/null || echo "[]")
+          STATE=$(echo "$RESPONSE" | jq -r '.[0].state // "closed"' 2>/dev/null || echo "closed")
+          EXPIRES=$(echo "$RESPONSE" | jq -r '.[0].expires_at // ""' 2>/dev/null || echo "")
+          # テーブル未存在 or 取得失敗 → closed 扱いでスキップしない
+          if [ "$STATE" = "open" ] && [ -n "$EXPIRES" ]; then
+            NOW=$(date -u +%s)
+            EXP=$(date -u -d "$EXPIRES" +%s 2>/dev/null || echo "9999999999")
+            [ "$EXP" -lt "$NOW" ] && STATE="closed" && echo "⏰ CB expired → closed"
+          fi
+          if [ "$STATE" = "open" ]; then
+            echo "⚠️ Anthropic quota exceeded (circuit open) — AI steps will be skipped"
+            echo "anthropic_available=false" >> $GITHUB_OUTPUT
+          else
+            echo "✅ Anthropic available"
+            echo "anthropic_available=true" >> $GITHUB_OUTPUT
+          fi
+
       - name: Step 2 - FAQ自動返信
-        if: steps.tickets.outputs.ticket_count != '0'
+        if: steps.tickets.outputs.ticket_count != '0' && steps.quota_check.outputs.anthropic_available == 'true'
         run: |
           cat /tmp/tickets_body.json | jq -r '.tickets[]? | .id' | while read -r ID; do
             TITLE=$(cat /tmp/tickets_body.json | jq -r --arg id "$ID" '.tickets[] | select(.id == $id) | .title')
