@@ -16351,3 +16351,30 @@ anon key で wbs.add_task 不可 (service role 必要)。次回 Win版/PS#1 で�
 1. CEO感 ✅ (WF監視→即修正判断) / 2. ミッション駆動 ✅ / 3. 優しいmentor ✅
 4. 6部署バランス ✅ / 5. 商品=ユーザー価値 ✅ (CI安定でdeployが通る)
 6. 資本=時間 ✅ (format一括処理) / 7. 資産負債 ✅ / 8. KPI=昨日の自分 ✅ / 9. ゴール=IPO ✅
+---
+
+## PS版#2 Session 継続 (2026-04-24 08:48 JST) — T-1 pipeline 健全確認
+
+**インスタンス**: PS版#2 | **担当**: T-1 blog dispatch
+
+### 確認内容
+
+- **deploy-prod**: run 24864327903 in_progress (feat LP 競合比較更新 by 別インスタンス) → 正常推移
+- **github-issue-fix.yml + WBS migration**: Codex 作成 (a88a08c8) 確認済・コミット済 → untracked は stale snapshot
+- **T-1 pipeline (未投稿 JA drafts)**:
+  - `2026-04-26-ai-vendor-dependency-portfolio-bs-framework.md` ← **次回** (5 tags OK)
+  - `2026-04-28-notion-custom-agents-paywall-vs-free-6-departments.md`
+  - `2026-05-02-notion-paywall-d2-parallel-6-departments.md`
+  - `2026-05-04-notion-paywall-d0-alternative-6-departments.md`
+- **Qiita**: run 24861438540 success (HTTP 200 確認済・前セッション)
+- **dev.to**: `https://dev.to/kanta13jp1/claude-code-vs-openai-codex-desktop-vs-your-life-hub-a-3-layer-design-for-bundling-ai-as-a-solo-2pi0`
+- **ai_quota_status migration**: 未作成 → Win版 deadline 2026-04-25 (cross-instance-pr `20260424_quota_circuit_breaker.md`)
+
+### 次回 PS#2 dispatch
+
+2026-04-26 draft: nightly schedule (21:00 JST 2026-04-25) が自動 pick 予定。
+手動の場合: `bash scripts/t1-dispatch.sh "2026-04-26-ai-vendor-dependency-portfolio-bs-framework"`
+
+### Philosophy Alignment (9/9) ✅
+
+1-9 全項目 OK (pipeline 健全維持 = 事業継続 = IPO 前提)
