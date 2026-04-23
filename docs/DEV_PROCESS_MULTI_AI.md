@@ -183,16 +183,32 @@ notebooklm ask "Edge Function設計方針の経緯"
 
 ## 6. 実装ロードマップ
 
+### 6a. GHA Fallback 広域ロードマップ
+
 | 優先度 | タスク | 担当 | 完了目標 |
 | --- | --- | --- | --- |
 | 🔴 **P0** | blog-draft.yml Gemini fallback | ✅ PS#1 S26 | 2026-04-24 |
-| 🔴 **P0** | `GOOGLE_AI_API_KEY` repo secretsに追加 | **ユーザー手動** | 2026-04-25 |
+| 🔴 **P0** | `GOOGLE_AI_API_KEY` + `GEMINI_API_KEY` + `SLACK_WEBHOOK_URL` secrets | ✅ **設定済 (2026-04-24)** | — |
 | 🟠 **P1** | ai-hub EF 自動quota routing | VSCode版 | 2026-04-26 |
 | 🟠 **P1** | blog-engagement.yml Gemini fallback | PS#2 | 2026-04-28 |
 | 🟠 **P1** | claude-agent-review.yml skip-on-quota | PS#1 | 2026-05-01 |
 | 🟡 **P2** | cs-check.yml Gemini fallback | PS#1 | 2026-05-05 |
-| 🟡 **P2** | Slack quota alert webhook | Win版 | 2026-05-10 |
 | 🟢 **P3** | Notion WBS mirror | Win版 | 2026-05-15 |
+
+### 6b. Circuit Breaker Backlog (Supabase ai_quota_status)
+
+| # | タスク | 担当 | 期限 | 優先度 | 依存 |
+|---|--------|------|------|-------|------|
+| 1 | `ai_quota_status` テーブル migration 作成 | **Win版** | 2026-04-25 | 🔴 緊急 | — |
+| 2 | `cs-check.yml` quota pre-check + lite mode | **PS#1** | 2026-04-26 | 🔴 | #1 |
+| 3 | `daily-report.yml` quota pre-check + lite mode | **PS#1** | 2026-04-26 | 🔴 | #1 |
+| 4 | `quota-monitor.yml` 自動フラグ設定ロジック | **PS#1** | 2026-04-28 | 🔴 | #1 |
+| 5 | `GEMINI_API_KEY` / `SLACK_WEBHOOK_URL` secrets | ~~Win版~~ | ~~2026-04-28~~ | ✅ **設定済 (2026-04-24)** | — |
+| 6 | `pr-auto-review` / `github-issue-fix` quota skip | **PS#1** | 2026-04-30 | 🟡 | #1 |
+| 7 | `cs_queue` テーブル + 復旧後一括処理 | **Win版** | 2026-05-07 | 🟢 | #1 |
+| 9 | KPI 計測 (token 削減率 week 比較) | **PS#4** | 2026-05-15 | 🟢 | — |
+
+**cross-instance-pr 発行**: `docs/cross-instance-prs/20260424_quota_circuit_breaker.md`
 
 ---
 
@@ -433,3 +449,12 @@ case 'notion.sync_wbs': {
 **関連ドキュメント**:
 - `docs/AI_FALLBACK_RUNBOOK.md` (PS#6 S26) — 開発ワークフロー別 fallback 手順
 - `supabase/migrations/20260424210000_create_ai_circuit_breaker.sql` (PS#1 S26) — quota 状態集約テーブル
+| AI | 用途 | セットアップ状態 | アクセス方法 |
+|----|------|----------------|------------|
+| **GitHub Copilot** | inline補完 / Chat | ✅ VS Code統合済 | Editor内 |
+| **OpenAI Codex** | SQL / GHA / EF Deno | ✅ Web + CLIあり | `codex` CLI / Web |
+| **Gemini Code Assist** | 長文refactor | ✅ VS Code拡張 | Editor内 |
+| **NotebookLM** | リサーチ / URL分析 | ✅ CLI認証済 | `notebooklm` CLI |
+| **Gemini API (direct)** | schedule fallback LLM | ✅ **GitHub Secret 設定済** | `GEMINI_API_KEY` |
+| **Slack** | quota alert通知 | ✅ **GitHub Secret 設定済** | `SLACK_WEBHOOK_URL` |
+| **Notion AI** | 草案作成 (human review後) | ⚠️ 5/4課金開始 | Web |

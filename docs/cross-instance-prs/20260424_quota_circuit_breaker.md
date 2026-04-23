@@ -57,11 +57,10 @@ CREATE POLICY "service_write" ON public.ai_quota_status
 -- UPDATE public.ai_quota_status SET is_limited=FALSE, reset_estimate=NULL, notes=NULL, updated_at=NOW() WHERE provider='anthropic';
 ```
 
-### #5 GEMINI_API_KEY GitHub Secret 追加 🟡 2026-04-28
+### #5 ✅ GEMINI_API_KEY + SLACK_WEBHOOK_URL — 設定済 (2026-04-24)
 
-GitHub リポジトリ Settings > Secrets and variables > Actions に追加:
-- `GEMINI_API_KEY`: Google AI Studio から取得 (gemini-1.5-flash-lite 用・無料枠)
-- `SLACK_WEBHOOK_URL`: (任意) Slack App の Incoming Webhook URL
+~~GitHub リポジトリ Settings > Secrets and variables > Actions に追加~~
+→ ユーザー確認済: 両 Secret は既に設定されている。Win版 作業不要。
 
 ### #7 cs_queue テーブル 🟢 2026-05-07 (任意)
 
@@ -98,7 +97,10 @@ Claude quota 時に CS 返信を退避するキューテーブル。
   if: steps.quota.outputs.is_limited == 'true'
   run: |
     echo "⚠️ Claude quota limited — cs-check skipped. Manual review required."
-    # TODO: Slack 通知 (Win版 #8 完了後に追加)
+    # Slack 通知 (SLACK_WEBHOOK_URL 設定済 → 即実装可)
+    curl -sf -X POST "$SLACK_WEBHOOK_URL" \
+      -H "Content-Type: application/json" \
+      -d '{"text":"⚠️ Claude quota limited — cs-check skipped ('"$(date -u +%Y-%m-%dT%H:%M:%SZ)"')"}'
 ```
 
 ### #3 daily-report.yml quota pre-check 追加 🔴 2026-04-26
