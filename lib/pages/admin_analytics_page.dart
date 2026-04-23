@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../services/growth_mission_service.dart';
 import '../widgets/schedule_task_monitor_card.dart';
 import '../widgets/competitor_monitoring_card.dart';
+import '../widgets/self_devin_control_tower_card.dart';
 import 'ai_secretary_page.dart';
 import 'admin/feedback_list_page.dart';
 import 'admin/quota_dashboard_page.dart';
@@ -1664,6 +1665,8 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                     _buildFeatureRequestsAdminCard(),
                     const SizedBox(height: 16),
                     _buildAutomationOpsCard(),
+                    const SizedBox(height: 16),
+                    const SelfDevinControlTowerCard(),
                     const SizedBox(height: 16),
                     const ScheduleTaskMonitorCard(),
                     const SizedBox(height: 16),

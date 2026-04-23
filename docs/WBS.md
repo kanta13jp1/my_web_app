@@ -323,3 +323,7 @@ WHERE title = 'ai-hub provider.chat 蜈ｨ蟇ｾ蠢・;
 - 対応内容: `github-issue-fix.yml` を新設し、Open Issue を oldest-first で 1 件選んで修正ブランチ・修正計画・draft PR を自動作成するオーケストレーターを追加した。以後の CI は既存 `ci-auto-fix.yml` と組み合わせて小さな自動修復ループに載せられる。
 - 実装補足: `workflow_dispatch` で Issue 番号を直接指定でき、対象がない場合は skip summary のみ返す。作成した plan は `docs/issue-fix-plans/issue-<number>.md` に保存する。
 - WBS DB反映: migration `20260424193000_wbs_codex_github_issue_fix_workflow.sql`
+- 実担当タスク: `[追加要望] ゴール: Claude Code 4インスタンスを「自社Devin」として機能させる`
+- 対応内容: Admin Analytics に `Self Devin control tower` を追加し、VSCode / WEB / Win / PowerShell の 4 レーンごとの進行、追加要望タスク件数、詰まり、平均進捗を一画面で見えるようにした。
+- 実装補足: `schedule_task_runs` をもとに `cs-check / github-issue-fix / ci-auto-fix / infra-health-check` の自動化ループ状態を集約し、次に救援すべきレーンを recommendation として表示する。`ScheduleTaskMonitorCard` にも `github-issue-fix` と `ci-auto-fix` を追加した。
+- WBS DB反映: migration `20260424213000_wbs_codex_self_devin_control_tower.sql`

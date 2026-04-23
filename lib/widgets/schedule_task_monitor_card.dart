@@ -2,11 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-/// Claude Code Schedule タスクの実行状況を管理者ダッシュボードで表示するカード。
-///
-/// - `_registeredTriggers`: claude.ai に実際に登録されたトリガー4件（リンク付き）
-/// - `_definedTasks`: `schedule_task_runs` テーブルから読む論理タスク一覧
-/// タップで詳細展開・管理ページへのリンクを提供。
 class ScheduleTaskMonitorCard extends StatefulWidget {
   const ScheduleTaskMonitorCard({super.key});
 
@@ -16,104 +11,120 @@ class ScheduleTaskMonitorCard extends StatefulWidget {
 }
 
 class _ScheduleTaskMonitorCardState extends State<ScheduleTaskMonitorCard> {
-  bool _loading = true;
-  List<_ScheduleTaskInfo> _tasks = [];
-  final Set<String> _expandedTasks = {};
-  bool _showTriggers = true;
-
-  // ──────────────────────────────────────────────
-  // claude.ai に実際に登録されているトリガー 4件
-  // ──────────────────────────────────────────────
-  static const List<_TriggerDef> _registeredTriggers = [
+  static const List<_TriggerDef> _registeredTriggers = <_TriggerDef>[
     _TriggerDef(
       id: 'trig_01MwKBLD1sffGZwxeMR1Gkxt',
       taskId: 'cs-check',
       name: 'cs-check',
-      description: 'CS対応・バグ修正・Edge UI自動連携・Scheduleヘルス',
-      schedule: '毎時',
+      description: 'CS, bug fix, health checks, and Edge UI sync',
+      schedule: 'Hourly',
       icon: Icons.support_agent,
     ),
     _TriggerDef(
       id: 'trig_01NMatLGr6gsxoTsYLXW4yQb',
       taskId: 'daily-report',
       name: 'daily-report',
-      description: '日次レポート生成・X投稿・競合モニタリング',
-      schedule: '毎日 09:00 JST',
+      description: 'Daily digest, X post, and competitor monitoring',
+      schedule: 'Daily 09:00 JST',
       icon: Icons.summarize,
     ),
     _TriggerDef(
       id: 'trig_019hVur8DeDvSsSSnGh1ppuE',
       taskId: 'blog-draft',
       name: 'blog-draft',
-      description: 'ブログ下書き生成・多プラットフォーム展開',
-      schedule: '毎日 08:00 JST',
+      description: 'Daily blog draft generation',
+      schedule: 'Daily 08:00 JST',
       icon: Icons.article,
     ),
     _TriggerDef(
       id: 'trig_01Ch9p74Nxoyv7P1GaKFeRH9',
       taskId: 'weekly-sns-draft',
       name: 'weekly-sns-draft',
-      description: '週次SNSドラフト・脆弱性チェック・PRレビュー',
-      schedule: '毎週月曜 09:00 JST',
+      description: 'Weekly SNS draft and dependency review pair',
+      schedule: 'Monday 09:00 JST',
       icon: Icons.edit_note,
     ),
   ];
 
-  // ──────────────────────────────────────────────
-  // schedule_task_runs から読む論理タスク
-  // ──────────────────────────────────────────────
-  static const List<_TaskDef> _definedTasks = [
+  static const List<_TaskDef> _definedTasks = <_TaskDef>[
     _TaskDef(
       'daily-report',
-      '日次レポート + X投稿',
-      '毎日 09:00 JST',
+      'Daily report + X post',
+      'Daily 09:00 JST',
       Icons.summarize,
     ),
-    _TaskDef('cs-check', 'CS対応・バグ修正・Edge UI', '毎時', Icons.support_agent),
+    _TaskDef(
+      'cs-check',
+      'CS / bug fix / Edge UI sync',
+      'Hourly',
+      Icons.support_agent,
+    ),
     _TaskDef(
       'weekly-sns-draft',
-      '週次SNSドラフト',
-      '毎週月曜 09:00 JST',
+      'Weekly SNS draft',
+      'Monday 09:00 JST',
       Icons.edit_note,
     ),
-    _TaskDef('blog-draft', 'ブログ下書き生成', '毎日 08:00 JST', Icons.article),
+    _TaskDef(
+      'github-issue-fix',
+      'Issue -> branch -> draft PR',
+      'Daily 10:00 JST',
+      Icons.alt_route,
+    ),
+    _TaskDef(
+      'ci-auto-fix',
+      'CI self-heal (dart fix / deno fmt)',
+      'workflow_run',
+      Icons.auto_fix_high,
+    ),
+    _TaskDef(
+      'blog-draft',
+      'Blog draft generation',
+      'Daily 08:00 JST',
+      Icons.article,
+    ),
     _TaskDef(
       'competitor-monitoring',
-      '競合21社モニタリング (daily-report内)',
-      '毎日 09:00 JST',
+      'Competitor monitoring',
+      'Daily 09:00 JST',
       Icons.monitor,
     ),
     _TaskDef(
       'infra-health-check',
-      'インフラ監視 (cs-check内)',
-      '毎時',
+      'Infra health check',
+      'Scheduled',
       Icons.health_and_safety,
     ),
     _TaskDef(
       'dependency-audit',
-      '脆弱性チェック (weekly-sns-draft内)',
-      '毎週月曜 09:00 JST',
+      'Dependency audit',
+      'Monday 09:00 JST',
       Icons.security,
     ),
     _TaskDef(
       'edge-function-ui-sync',
-      'Edge Function UI同期 (cs-check内)',
-      '毎時',
+      'Edge Function UI sync',
+      'Scheduled',
       Icons.sync,
     ),
     _TaskDef(
       'schedule-health-monitor',
-      'Scheduleヘルスモニター・自己修復 (cs-check内)',
-      '毎時',
+      'Schedule health monitor',
+      'Scheduled',
       Icons.monitor_heart,
     ),
     _TaskDef(
       'guitar-health-check',
-      'ギター録音スタジオ監視 (cs-check内)',
-      '毎時',
+      'Guitar health check',
+      'Scheduled',
       Icons.music_note,
     ),
   ];
+
+  bool _loading = true;
+  bool _showTriggers = true;
+  List<_ScheduleTaskInfo> _tasks = <_ScheduleTaskInfo>[];
+  final Set<String> _expandedTasks = <String>{};
 
   @override
   void initState() {
@@ -124,61 +135,70 @@ class _ScheduleTaskMonitorCardState extends State<ScheduleTaskMonitorCard> {
   Future<void> _loadTaskStatus() async {
     setState(() => _loading = true);
     try {
-      final supabase = Supabase.instance.client;
-      List<Map<String, dynamic>> runs = [];
+      final SupabaseClient supabase = Supabase.instance.client;
+      List<Map<String, dynamic>> runs = <Map<String, dynamic>>[];
       try {
-        final data = await supabase
+        final dynamic data = await supabase
             .from('schedule_task_runs')
             .select(
               'task_id, status, started_at, finished_at, summary, error_message',
             )
             .order('started_at', ascending: false)
-            .limit(100);
-        runs = List<Map<String, dynamic>>.from(data as List);
+            .limit(120);
+        runs = List<Map<String, dynamic>>.from(data as List<dynamic>);
       } catch (_) {
-        // テーブル未作成の場合は空リストのまま
+        runs = <Map<String, dynamic>>[];
       }
 
-      final tasks = _definedTasks.map((def) {
-        final latestRuns = runs.where((r) => r['task_id'] == def.id).toList();
-        if (latestRuns.isNotEmpty) {
-          final run = latestRuns.first;
-          int consecutiveErrors = 0;
-          for (final r in latestRuns) {
-            if (r['status'] == 'error') {
-              consecutiveErrors++;
-            } else {
-              break;
-            }
-          }
-          return _ScheduleTaskInfo(
-            def: def,
-            lastStatus: run['status']?.toString() ?? 'unknown',
-            lastRunAt: DateTime.tryParse(run['started_at']?.toString() ?? ''),
-            summary: run['summary']?.toString(),
-            errorMessage: run['error_message']?.toString(),
-            consecutiveErrors: consecutiveErrors,
-          );
+      final List<_ScheduleTaskInfo> tasks = _definedTasks.map((
+        final _TaskDef def,
+      ) {
+        final List<Map<String, dynamic>> latestRuns = runs
+            .where((final Map<String, dynamic> row) => row['task_id'] == def.id)
+            .toList();
+        if (latestRuns.isEmpty) {
+          return _ScheduleTaskInfo(def: def);
         }
-        return _ScheduleTaskInfo(def: def);
+        final Map<String, dynamic> run = latestRuns.first;
+        int consecutiveErrors = 0;
+        for (final Map<String, dynamic> row in latestRuns) {
+          if (row['status'] == 'error') {
+            consecutiveErrors += 1;
+          } else {
+            break;
+          }
+        }
+        return _ScheduleTaskInfo(
+          def: def,
+          lastStatus: run['status']?.toString() ?? 'unknown',
+          lastRunAt:
+              DateTime.tryParse(run['started_at']?.toString() ?? '')?.toLocal(),
+          summary: run['summary']?.toString(),
+          errorMessage: run['error_message']?.toString(),
+          consecutiveErrors: consecutiveErrors,
+        );
       }).toList();
 
-      if (mounted) {
-        setState(() {
-          _tasks = tasks;
-          _loading = false;
-        });
-      }
+      if (!mounted) return;
+      setState(() {
+        _tasks = tasks;
+        _loading = false;
+      });
     } catch (_) {
-      if (mounted) setState(() => _loading = false);
+      if (!mounted) return;
+      setState(() => _loading = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final errorCount = _tasks.where((t) => t.lastStatus == 'error').length;
-    final successCount = _tasks.where((t) => t.lastStatus == 'success').length;
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    final int successCount = _tasks
+        .where((final _ScheduleTaskInfo task) => task.lastStatus == 'success')
+        .length;
+    final int errorCount = _tasks
+        .where((final _ScheduleTaskInfo task) => task.lastStatus == 'error')
+        .length;
 
     return Card(
       elevation: 1,
@@ -187,10 +207,9 @@ class _ScheduleTaskMonitorCardState extends State<ScheduleTaskMonitorCard> {
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // ───── ヘッダー ─────
+          children: <Widget>[
             Row(
-              children: [
+              children: <Widget>[
                 const Icon(Icons.schedule, color: Color(0xFF6366F1)),
                 const SizedBox(width: 8),
                 const Expanded(
@@ -204,7 +223,7 @@ class _ScheduleTaskMonitorCardState extends State<ScheduleTaskMonitorCard> {
                   ),
                 ),
                 Tooltip(
-                  message: 'claude.ai スケジュール管理ページ',
+                  message: 'Open Claude Code Schedule',
                   child: IconButton(
                     icon: const Icon(Icons.open_in_new, size: 18),
                     onPressed: () => launchUrl(
@@ -216,30 +235,28 @@ class _ScheduleTaskMonitorCardState extends State<ScheduleTaskMonitorCard> {
                 IconButton(
                   icon: const Icon(Icons.refresh, size: 20),
                   onPressed: _loadTaskStatus,
-                  tooltip: '更新',
+                  tooltip: 'Refresh',
                 ),
               ],
             ),
-
-            // ───── 登録済みトリガーセクション ─────
             InkWell(
               borderRadius: BorderRadius.circular(8),
               onTap: () => setState(() => _showTriggers = !_showTriggers),
               child: Padding(
                 padding: const EdgeInsets.symmetric(vertical: 6),
                 child: Row(
-                  children: [
+                  children: <Widget>[
                     Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 8,
                         vertical: 2,
                       ),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF6366F1).withAlpha(20),
+                        color: const Color(0xFF6366F1).withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text(
-                        '登録済みトリガー ${_registeredTriggers.length}件',
+                        'Registered triggers ${_registeredTriggers.length}',
                         style: const TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
@@ -258,20 +275,17 @@ class _ScheduleTaskMonitorCardState extends State<ScheduleTaskMonitorCard> {
                 ),
               ),
             ),
-
-            if (_showTriggers) ...[
-              ...List.generate(_registeredTriggers.length, (i) {
-                final t = _registeredTriggers[i];
-                return _buildTriggerRow(t, isDark);
-              }),
+            if (_showTriggers) ...<Widget>[
+              ..._registeredTriggers.map(
+                (final _TriggerDef trigger) =>
+                    _buildTriggerRow(trigger, isDark),
+              ),
               const Divider(height: 20),
             ],
-
-            // ───── 実行ログサマリー ─────
             Row(
-              children: [
+              children: <Widget>[
                 Text(
-                  '実行ログ (${_tasks.length}タスク)',
+                  'Execution log (${_tasks.length} tasks)',
                   style: TextStyle(
                     fontSize: 12,
                     color: isDark
@@ -282,15 +296,14 @@ class _ScheduleTaskMonitorCardState extends State<ScheduleTaskMonitorCard> {
                 ),
                 const SizedBox(width: 8),
                 if (successCount > 0)
-                  _buildBadge('✓ $successCount', Colors.green),
-                if (errorCount > 0) ...[
+                  _buildBadge('OK $successCount', Colors.green),
+                if (errorCount > 0) ...<Widget>[
                   const SizedBox(width: 4),
-                  _buildBadge('✗ $errorCount', Colors.red),
+                  _buildBadge('ERR $errorCount', Colors.red),
                 ],
               ],
             ),
             const SizedBox(height: 8),
-
             if (_loading)
               const Center(
                 child: Padding(
@@ -304,8 +317,8 @@ class _ScheduleTaskMonitorCardState extends State<ScheduleTaskMonitorCard> {
                 physics: const NeverScrollableScrollPhysics(),
                 itemCount: _tasks.length,
                 separatorBuilder: (_, __) => const Divider(height: 1),
-                itemBuilder: (context, index) {
-                  final task = _tasks[index];
+                itemBuilder: (BuildContext context, int index) {
+                  final _ScheduleTaskInfo task = _tasks[index];
                   return _buildTaskRow(task, isDark);
                 },
               ),
@@ -315,7 +328,6 @@ class _ScheduleTaskMonitorCardState extends State<ScheduleTaskMonitorCard> {
     );
   }
 
-  /// claude.ai トリガー行（リンク付き）
   Widget _buildTriggerRow(_TriggerDef trigger, bool isDark) {
     return InkWell(
       borderRadius: BorderRadius.circular(8),
@@ -326,22 +338,25 @@ class _ScheduleTaskMonitorCardState extends State<ScheduleTaskMonitorCard> {
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
         child: Row(
-          children: [
+          children: <Widget>[
             Container(
               width: 30,
               height: 30,
               decoration: BoxDecoration(
-                color: const Color(0xFF6366F1).withAlpha(20),
+                color: const Color(0xFF6366F1).withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child:
-                  Icon(trigger.icon, size: 14, color: const Color(0xFF6366F1)),
+              child: Icon(
+                trigger.icon,
+                size: 14,
+                color: const Color(0xFF6366F1),
+              ),
             ),
             const SizedBox(width: 10),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
+                children: <Widget>[
                   Text(
                     trigger.name,
                     style: const TextStyle(
@@ -351,7 +366,7 @@ class _ScheduleTaskMonitorCardState extends State<ScheduleTaskMonitorCard> {
                     ),
                   ),
                   Text(
-                    '${trigger.schedule}  |  ${trigger.description}',
+                    '${trigger.schedule} | ${trigger.description}',
                     style: TextStyle(
                       fontSize: 10,
                       color: isDark
@@ -366,11 +381,11 @@ class _ScheduleTaskMonitorCardState extends State<ScheduleTaskMonitorCard> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
               decoration: BoxDecoration(
-                color: Colors.green.withAlpha(20),
+                color: Colors.green.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(4),
               ),
               child: const Text(
-                '有効',
+                'Live',
                 style: TextStyle(
                   fontSize: 9,
                   fontWeight: FontWeight.bold,
@@ -391,9 +406,9 @@ class _ScheduleTaskMonitorCardState extends State<ScheduleTaskMonitorCard> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
-        color: color.withAlpha(20),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(4),
-        border: Border.all(color: color.withAlpha(80)),
+        border: Border.all(color: color.withValues(alpha: 0.35)),
       ),
       child: Text(
         text,
@@ -408,17 +423,17 @@ class _ScheduleTaskMonitorCardState extends State<ScheduleTaskMonitorCard> {
   }
 
   Widget _buildTaskRow(_ScheduleTaskInfo task, bool isDark) {
-    final statusColor = _statusColor(task.lastStatus);
-    final statusLabel = _statusLabel(task.lastStatus);
-    final lastRunStr = task.lastRunAt != null
-        ? '${task.lastRunAt!.month}/${task.lastRunAt!.day} '
+    final Color statusColor = _statusColor(task.lastStatus);
+    final String statusLabel = _statusLabel(task.lastStatus);
+    final bool isExpanded = _expandedTasks.contains(task.def.id);
+    final bool hasDetail = (task.errorMessage?.isNotEmpty ?? false) ||
+        (task.summary?.isNotEmpty ?? false);
+    final String lastRunLabel = task.lastRunAt == null
+        ? 'No run yet'
+        : '${task.lastRunAt!.month.toString().padLeft(2, '0')}/'
+            '${task.lastRunAt!.day.toString().padLeft(2, '0')} '
             '${task.lastRunAt!.hour.toString().padLeft(2, '0')}:'
-            '${task.lastRunAt!.minute.toString().padLeft(2, '0')}'
-        : '未実行';
-    final isExpanded = _expandedTasks.contains(task.def.id);
-    final hasDetail =
-        (task.errorMessage != null && task.errorMessage!.isNotEmpty) ||
-            (task.summary != null && task.summary!.isNotEmpty);
+            '${task.lastRunAt!.minute.toString().padLeft(2, '0')}';
 
     return InkWell(
       onTap: hasDetail
@@ -437,15 +452,15 @@ class _ScheduleTaskMonitorCardState extends State<ScheduleTaskMonitorCard> {
         padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+          children: <Widget>[
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
+              children: <Widget>[
                 Container(
                   width: 32,
                   height: 32,
                   decoration: BoxDecoration(
-                    color: statusColor.withAlpha(25),
+                    color: statusColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Icon(task.def.icon, size: 16, color: statusColor),
@@ -454,29 +469,29 @@ class _ScheduleTaskMonitorCardState extends State<ScheduleTaskMonitorCard> {
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
+                    children: <Widget>[
                       Row(
-                        children: [
-                          Text(
-                            task.def.name,
-                            style: const TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                              height: 1.5,
+                        children: <Widget>[
+                          Expanded(
+                            child: Text(
+                              task.def.name,
+                              style: const TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                height: 1.5,
+                              ),
                             ),
                           ),
-                          if (task.consecutiveErrors >= 3) ...[
-                            const SizedBox(width: 6),
+                          if (task.consecutiveErrors >= 3)
                             _buildBadge(
-                              '連続失敗${task.consecutiveErrors}回',
+                              'ERR x${task.consecutiveErrors}',
                               Colors.red,
                             ),
-                          ],
                         ],
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        '${task.def.schedule}  |  最終: $lastRunStr',
+                        '${task.def.schedule} | Last run $lastRunLabel',
                         style: TextStyle(
                           fontSize: 11,
                           color: isDark
@@ -490,14 +505,14 @@ class _ScheduleTaskMonitorCardState extends State<ScheduleTaskMonitorCard> {
                 ),
                 Row(
                   mainAxisSize: MainAxisSize.min,
-                  children: [
+                  children: <Widget>[
                     Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 8,
                         vertical: 3,
                       ),
                       decoration: BoxDecoration(
-                        color: statusColor.withAlpha(20),
+                        color: statusColor.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(
@@ -510,7 +525,7 @@ class _ScheduleTaskMonitorCardState extends State<ScheduleTaskMonitorCard> {
                         ),
                       ),
                     ),
-                    if (hasDetail) ...[
+                    if (hasDetail) ...<Widget>[
                       const SizedBox(width: 4),
                       Icon(
                         isExpanded ? Icons.expand_less : Icons.expand_more,
@@ -522,29 +537,28 @@ class _ScheduleTaskMonitorCardState extends State<ScheduleTaskMonitorCard> {
                 ),
               ],
             ),
-            if (isExpanded && hasDetail) ...[
+            if (isExpanded && hasDetail) ...<Widget>[
               const SizedBox(height: 8),
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
                   color: task.lastStatus == 'error'
-                      ? Colors.red.withAlpha(15)
-                      : Colors.green.withAlpha(10),
+                      ? Colors.red.withValues(alpha: 0.08)
+                      : Colors.green.withValues(alpha: 0.06),
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
                     color: task.lastStatus == 'error'
-                        ? Colors.red.withAlpha(60)
-                        : Colors.green.withAlpha(40),
+                        ? Colors.red.withValues(alpha: 0.25)
+                        : Colors.green.withValues(alpha: 0.18),
                   ),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    if (task.errorMessage != null &&
-                        task.errorMessage!.isNotEmpty) ...[
+                  children: <Widget>[
+                    if (task.errorMessage?.isNotEmpty ?? false) ...<Widget>[
                       const Row(
-                        children: [
+                        children: <Widget>[
                           Icon(
                             Icons.error_outline,
                             size: 14,
@@ -552,7 +566,7 @@ class _ScheduleTaskMonitorCardState extends State<ScheduleTaskMonitorCard> {
                           ),
                           SizedBox(width: 4),
                           Text(
-                            'エラー詳細',
+                            'Error detail',
                             style: TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.bold,
@@ -567,11 +581,12 @@ class _ScheduleTaskMonitorCardState extends State<ScheduleTaskMonitorCard> {
                         task.errorMessage!,
                         style: const TextStyle(fontSize: 11, height: 1.5),
                       ),
-                      if (task.summary != null) const SizedBox(height: 8),
+                      if (task.summary?.isNotEmpty ?? false)
+                        const SizedBox(height: 8),
                     ],
-                    if (task.summary != null && task.summary!.isNotEmpty) ...[
+                    if (task.summary?.isNotEmpty ?? false) ...<Widget>[
                       const Text(
-                        '実行サマリー',
+                        'Summary',
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.bold,
@@ -612,22 +627,18 @@ class _ScheduleTaskMonitorCardState extends State<ScheduleTaskMonitorCard> {
   String _statusLabel(String? status) {
     switch (status) {
       case 'success':
-        return '成功';
+        return 'Success';
       case 'running':
-        return '実行中';
+        return 'Running';
       case 'error':
-        return 'エラー';
+        return 'Error';
       case 'skipped':
-        return 'スキップ';
+        return 'Skipped';
       default:
-        return '待機中';
+        return 'Waiting';
     }
   }
 }
-
-// ─────────────────────────────────────────────────────────
-// データクラス
-// ─────────────────────────────────────────────────────────
 
 class _TriggerDef {
   final String id;
@@ -637,8 +648,6 @@ class _TriggerDef {
   final String schedule;
   final IconData icon;
 
-  String get url => 'https://claude.ai/code/scheduled/$id';
-
   const _TriggerDef({
     required this.id,
     required this.taskId,
@@ -647,6 +656,8 @@ class _TriggerDef {
     required this.schedule,
     required this.icon,
   });
+
+  String get url => 'https://claude.ai/code/scheduled/$id';
 }
 
 class _TaskDef {
@@ -654,6 +665,7 @@ class _TaskDef {
   final String name;
   final String schedule;
   final IconData icon;
+
   const _TaskDef(this.id, this.name, this.schedule, this.icon);
 }
 
