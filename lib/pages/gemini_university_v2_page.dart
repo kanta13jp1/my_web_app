@@ -950,6 +950,17 @@ final Map<String, _ProviderMeta> _providerMeta = {
     emoji: '🏄',
     color: const Color(0xFF06B6D4),
     officialUrl: 'https://windsurf.com/',
+  'hume_ai': _ProviderMeta(
+    name: 'Hume AI',
+    emoji: '🎭',
+    color: const Color(0xFFF97316),
+    officialUrl: 'https://www.hume.ai/',
+  ),
+  'glean': _ProviderMeta(
+    name: 'Glean',
+    emoji: '🔍',
+    color: const Color(0xFF6366F1),
+    officialUrl: 'https://www.glean.com/',
   ),
 };
 
@@ -1967,6 +1978,23 @@ final Map<String, _Quiz> _quizzes = {
       '自律 multi-file edit + enterprise 向け SOC 2 + SAML SSO',
       '無料で無制限に使える OSS',
       'Windows 専用に最適化',
+  'hume_ai': _Quiz(
+    question: 'Hume AI の EVI が他の Voice AI と異なる最大の特徴は？',
+    options: [
+      '最速のリアルタイム音声合成速度を誇る',
+      'ユーザーの感情トーンをリアルタイムに検出し、それに応じた感情表現で応答する',
+      'GPT-4o を直接組み込んでいる',
+      '完全オープンソースで誰でも改変できる',
+    ],
+    correct: 1,
+  ),
+  'glean': _Quiz(
+    question: 'Glean が企業に選ばれる最大の理由は？',
+    options: [
+      'OpenAI の GPT-4 と完全互換のチャット API を提供する',
+      'Slack / Google Drive / Jira など 100+ データソースを横断する Work Knowledge Graph で社内知識を一元検索できる',
+      '無料プランで全機能が使える',
+      'コードレビューに特化した AI エンジンを持つ',
     ],
     correct: 1,
   ),
@@ -5065,6 +5093,49 @@ VS Code fork に Cascade agent (自律 multi-file edit) + Supercomplete (predict
 - Cursor (対話) vs Windsurf (自律) で routing 判断
 - Enterprise 向け compliance KPI 設計時の referent
 - AI大学 vibe-coding 三強対比 (Cursor / Windsurf / Cline)
+  'hume_ai': '''
+# Hume AI — 感情知能 Voice AI
+
+## 概要
+2021 年 NYC 創業。Dr. Alan Cowen (元 Google Brain) が感情知能を持つ Voice AI を目指し設立。
+EVI (Empathic Voice Interface) はユーザーの感情トーンを検出し、共感的に応答する。
+
+## 主要プロダクト
+- **EVI 3** (2025) — 最新安定版 / 超低レイテンシ / WebSocket 接続
+- **EVI 4-mini** (2026 preview) — コスト最適化軽量版
+- **Octave 2** — TTS / 感情表現・声質制御
+
+## 資金・バリュエーション
+- Series B (2024-03): \$50M / \$219M valuation / 累計 \$80.7M
+- 2026-01: Alan Cowen → Google DeepMind (Reverse Acqui-Hire)
+- 新 CEO: Andrew Ettinger / 2026 revenue 目標 \$100M
+
+## 試す
+- 公式: https://www.hume.ai/
+- API ドキュメント: https://dev.hume.ai/intro
+- 料金: 無料 \$20 クレジット / Business \$500/月
+''',
+  'glean': '''
+# Glean — Enterprise Work AI
+
+## 概要
+2019 年 Palo Alto 創業。元 Google エンジニア Arvind Jain が設立した企業向け AI 検索。
+Slack / Google Drive / Jira など 100+ データソースを横断する Work Knowledge Graph が核心。
+
+## 主要プロダクト
+- **Glean Search** — 全社横断 AI 意味検索
+- **Glean Assistant** — 社内データ参照 Q&A
+- **Glean Agents** — 自律 AI エージェント (MCP Server + Agents API)
+- **Glean Apps** — ノーコード部門別 AI アシスタント
+
+## 資金・バリュエーション
+- Series F (2025-06): \$150M / \$7.2B valuation (Wellington Management リード)
+- \$100M+ ARR / 1,000+ 企業導入 / 100M+ agent actions/年
+
+## 試す
+- 公式: https://www.glean.com/
+- デモリクエスト: https://www.glean.com/demo
+- 開発者ドキュメント: https://developers.glean.com/
 ''',
 };
 

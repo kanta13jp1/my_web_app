@@ -95,7 +95,7 @@ class AiProviderEntry {
   });
 }
 
-/// AI大学 登録プロバイダー全件のステータスカタログ (150社, 2026-04-24時点)
+/// AI大学 登録プロバイダー全件のステータスカタログ (152社, 2026-04-24時点)
 ///
 /// 実装済み: ai-assistant / ai-hub / ai-search に統合済みのもの
 /// 要APIキー: コード対応済みだが Supabase Secrets に追加が必要
@@ -1186,7 +1186,20 @@ const List<AiProviderEntry> kAiProviderRegistry = [
     status: AiProviderStatus.notImplemented,
     entryPoint: '(未実装 — Cascade agent + Supercomplete IDE)',
     note:
-        '旧 Codeium / Cascade 自律 multi-file agent + Supercomplete / SOC 2 + SAML SSO',
+        '旧 Codeium / Cascade 自律 multi-file agent + Supercomplete / SOC 2 + SAML SSO',,
+  AiProviderEntry(
+    id: 'hume_ai',
+    displayName: 'Hume AI',
+    status: AiProviderStatus.notImplemented,
+    entryPoint: '(未実装 — EVI WebSocket / Expression Measurement API・非OpenAI互換)',
+    note: r'感情知能 Voice AI (EVI 3 / EVI 4-mini) — $219M valuation / 2026-01 Google DeepMind acqui-hire',
+  ),
+  AiProviderEntry(
+    id: 'glean',
+    displayName: 'Glean',
+    status: AiProviderStatus.notImplemented,
+    entryPoint: '(未実装 — Enterprise SaaS / Agents API・MCP Server・法人契約必須)',
+    note: r'企業 Work AI 検索 (100+ コネクタ / Work Knowledge Graph) — $7.2B valuation / $100M+ ARR',
   ),
 ];
 
