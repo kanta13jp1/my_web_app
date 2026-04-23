@@ -239,3 +239,183 @@ notebooklm ask "Devin の差別化軸と料金体系を 3 point で"
 ## 9. 更新履歴
 
 - **2026-04-24 (Win版#132 part 3)**: 初版作成。Claude Code 単一依存リスク顕在化 (context compaction ループ + Max limit reset) を受けて策定。
+- **2026-04-24 (PS版#4)**: §10-11 追加。Scheduled Tasks 停止ループ防止 (Circuit Breaker) + 実装 Backlog 策定。
+
+---
+
+## 10. Scheduled Tasks 停止ループ防止 — Circuit Breaker 設計 (PS#4追記)
+
+> **発端**: Claude quota 超過 → GHA scheduled タスクが Claude Schedule を呼び出し続ける →
+> エラーを繰り返す → Anthropic API に不要な負荷 + GHA 分が無駄消費。
+
+### 10-1. 現状の問題フロー
+
+```
+quota 超過
+    ↓
+GHA cron (毎時/毎朝) → claude code schedule → 429/503 エラー
+    ↓                        ↑
+    └────── GHA retry 3回 ───┘
+    ↓
+GitHub Actions runs 消費 + エラーメール + ループ継続
+    ↓
+次のcronトリガー → 同じエラー繰り返し
+```
+
+### 10-2. 解決策: 3層 Circuit Breaker
+
+#### Layer 1: Supabase `ai_quota_status` テーブル (Win版担当)
+
+```sql
+-- 担当: Win版 / 期限: 2026-04-25
+-- supabase/migrations/YYYYMMDD_create_ai_quota_status.sql
+CREATE TABLE IF NOT EXISTS public.ai_quota_status (
+  provider     TEXT PRIMARY KEY,
+  is_limited   BOOLEAN NOT NULL DEFAULT FALSE,
+  limited_since TIMESTAMPTZ,
+  reset_estimate TIMESTAMPTZ,
+  notes        TEXT,
+  updated_at   TIMESTAMPTZ DEFAULT NOW()
+);
+
+INSERT INTO public.ai_quota_status (provider)
+VALUES ('anthropic'), ('openai'), ('google')
+ON CONFLICT DO NOTHING;
+
+-- RLS: service_role のみ書き込み可 / anon は読み取り可
+ALTER TABLE public.ai_quota_status ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "public read" ON public.ai_quota_status FOR SELECT USING (true);
+CREATE POLICY "service write" ON public.ai_quota_status FOR ALL
+  USING (auth.role() = 'service_role');
+```
+
+#### Layer 2: GHA pre-check ステップ (PS#1担当)
+
+**全ての Claude Schedule 呼び出しを含む workflow に追加**:
+
+```yaml
+# cs-check.yml / daily-report.yml / competitor-monitoring / pr-auto-review 等
+jobs:
+  run:
+    steps:
+      - name: Check Claude quota status
+        id: quota
+        run: |
+          RESP=$(curl -sf \
+            "${{ secrets.SUPABASE_URL }}/rest/v1/ai_quota_status?provider=eq.anthropic&select=is_limited" \
+            -H "apikey: ${{ secrets.SUPABASE_ANON_KEY }}" || echo '[{"is_limited":false}]')
+          IS_LIMITED=$(echo "$RESP" | python3 -c "import sys,json; print(json.load(sys.stdin)[0]['is_limited'])" 2>/dev/null || echo "false")
+          echo "is_limited=$IS_LIMITED" >> $GITHUB_OUTPUT
+
+      - name: Run Claude Schedule (skip if quota limited)
+        if: steps.quota.outputs.is_limited != 'true'
+        run: claude ...
+
+      - name: Fallback (lite mode)
+        if: steps.quota.outputs.is_limited == 'true'
+        run: |
+          echo "⚠️ Claude quota limited — running lite mode"
+          # タスク別の lite 処理 (後述)
+```
+
+#### Layer 3: 自動フラグ設定 (`quota-monitor.yml` 改修・PS#1担当)
+
+```yaml
+# quota-monitor.yml に追加: Claude API 連続失敗でフラグ自動 ON
+- name: Auto-flag quota exceeded
+  if: failure()  # claude schedule step が失敗した場合
+  run: |
+    curl -s -X PATCH \
+      "${{ secrets.SUPABASE_URL }}/rest/v1/ai_quota_status?provider=eq.anthropic" \
+      -H "apikey: ${{ secrets.SUPABASE_SERVICE_KEY }}" \
+      -H "Content-Type: application/json" \
+      -d '{"is_limited":true,"limited_since":"'"$(date -u +%Y-%m-%dT%H:%M:%SZ)"'","notes":"Auto-flagged by quota-monitor.yml"}'
+```
+
+### 10-3. 各ワークフロー別 Lite Mode 設計
+
+| Workflow | 通常モード | Lite モード (quota 停止時) |
+|----------|-----------|--------------------------|
+| `cs-check.yml` | Claude AI返信 | 未返信チケット数 → Supabase `cs_queue` に記録<br>Slack通知: "CS queue: N件 (Claude quota limited)" |
+| `daily-report.yml` | GHA統計 + Claude AI分析 | GHA統計のみ出力<br>AI分析 = "⚠️ Skipped (Claude quota limited)" |
+| `competitor-monitoring` | WebSearch + Claude分析 | スキップ<br>PS#4 次セッションで対応 |
+| `pr-auto-review` | Claude PR review | スキップ (PR に "⚠️ quota limited" ラベル付与) |
+| `github-issue-fix` | Claude Issue自動修正 | スキップ (Issue に "quota-limited" ラベル付与) |
+| `infra-health-check.yml` | curl + jq のみ | **影響なし** (Claude 不使用) |
+| `ai-university-update.yml` | GHA Python RSS | **影響なし** (Claude 不使用) |
+| `deploy-prod.yml` | CI + build | **影響なし** (Claude 不使用) |
+| `horse-racing-update.yml` | scraper | **影響なし** (Claude 不使用) |
+
+### 10-4. Gemini API Fallback (一部タスク向け)
+
+quota 停止時も AI を使いたいタスク (cs-check / daily AI分析) 向け:
+
+```bash
+# GitHub Secret に追加: GEMINI_API_KEY (Google AI Studio 無料枠)
+# Gemini 3.1 Flash-Lite = $0.25/M input / $1.50/M output (Claude の 1/10 以下)
+
+# fallback LLM 呼び出しヘルパー
+call_gemini() {
+  local prompt="$1"
+  curl -sf "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent?key=$GEMINI_API_KEY" \
+    -H "Content-Type: application/json" \
+    -d "{\"contents\":[{\"parts\":[{\"text\":\"$prompt\"}]}]}" \
+    | python3 -c "import sys,json; print(json.load(sys.stdin)['candidates'][0]['content']['parts'][0]['text'])"
+}
+```
+
+### 10-5. 手動 Quota フラグ操作 (緊急時手順)
+
+**quota 超過を検知したら即実行**:
+
+```sql
+-- Supabase Dashboard > SQL Editor
+UPDATE public.ai_quota_status
+SET is_limited    = TRUE,
+    limited_since = NOW(),
+    reset_estimate = NOW() + INTERVAL '8 hours',
+    notes         = 'Manual: quota hit YYYY-MM-DD HH:MM JST'
+WHERE provider = 'anthropic';
+```
+
+**Claude 復旧後**:
+
+```sql
+UPDATE public.ai_quota_status
+SET is_limited     = FALSE,
+    reset_estimate = NULL,
+    notes          = 'Restored YYYY-MM-DD HH:MM JST'
+WHERE provider = 'anthropic';
+```
+
+---
+
+## 11. 実装 Backlog (担当インスタンス + 期限)
+
+| # | タスク | 担当 | 期限 | 優先度 | 依存 |
+|---|--------|------|------|-------|------|
+| 1 | `ai_quota_status` テーブル migration 作成 | **Win版** | 2026-04-25 | 🔴 緊急 | — |
+| 2 | `cs-check.yml` quota pre-check + lite mode | **PS#1** | 2026-04-26 | 🔴 | #1 |
+| 3 | `daily-report.yml` quota pre-check + lite mode | **PS#1** | 2026-04-26 | 🔴 | #1 |
+| 4 | `quota-monitor.yml` 自動フラグ設定ロジック | **PS#1** | 2026-04-28 | 🔴 | #1 |
+| 5 | `GEMINI_API_KEY` secret 追加 + 動作確認 | **Win版** | 2026-04-28 | 🟡 | #1 |
+| 6 | `pr-auto-review` / `github-issue-fix` quota skip | **PS#1** | 2026-04-30 | 🟡 | #1 |
+| 7 | `cs_queue` テーブル + 復旧後一括処理 | **Win版** | 2026-05-07 | 🟢 | #1 |
+| 8 | Slack Incoming Webhook quota alert | **Win版** | 2026-05-07 | 🟢 | — |
+| 9 | KPI 計測 (token 削減率 week 比較) | **PS#4** | 2026-05-15 | 🟢 | — |
+
+**cross-instance-pr 発行**: `docs/cross-instance-prs/20260424_quota_circuit_breaker.md`
+
+---
+
+## 12. 他 AI ツール別現在のセットアップ状態
+
+| AI | 用途 | セットアップ状態 | アクセス方法 |
+|----|------|----------------|------------|
+| **GitHub Copilot** | inline補完 / Chat | ✅ VS Code統合済 | Editor内 |
+| **OpenAI Codex** | SQL / GHA / EF Deno | ✅ Web + CLIあり | `codex` CLI / Web |
+| **Gemini Code Assist** | 長文refactor | ✅ VS Code拡張 | Editor内 |
+| **NotebookLM** | リサーチ / URL分析 | ✅ CLI認証済 | `notebooklm` CLI |
+| **Gemini API (direct)** | schedule fallback LLM | 🔧 **要 secret 追加** | `GEMINI_API_KEY` |
+| **Slack** | quota alert通知 | 🔧 **要 Webhook設定** | Incoming Webhook |
+| **Notion AI** | 草案作成 (human review後) | ⚠️ 5/4課金開始 | Web |
