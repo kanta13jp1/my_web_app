@@ -1979,6 +1979,9 @@ final Map<String, _Quiz> _quizzes = {
       '自律 multi-file edit + enterprise 向け SOC 2 + SAML SSO',
       '無料で無制限に使える OSS',
       'Windows 専用に最適化',
+    ],
+    correct: 1,
+  ),
   'hume_ai': _Quiz(
     question: 'Hume AI の EVI が他の Voice AI と異なる最大の特徴は？',
     options: [

@@ -47,13 +47,17 @@ class _PollSurveyPageState extends State<PollSurveyPage> {
         final items = data['polls'];
         setState(() {
           _polls = items is List
-              ? (items as List).map<Map<String, dynamic>>((p) {
-                  final meta = (p['metadata'] as Map<String, dynamic>?) ?? {};
+              ? items.map<Map<String, dynamic>>((dynamic p) {
+                  final row = p as Map<String, dynamic>;
+                  final meta =
+                      (row['metadata'] as Map<String, dynamic>?) ?? {};
                   return {
-                    'id': p['id'],
-                    'question': meta['question'] ?? p['question'] ?? '',
-                    'options': meta['options'] ?? p['options'] ?? <dynamic>[],
-                    'votes': meta['votes'] ?? p['votes'] ?? <String, int>{},
+                    'id': row['id'],
+                    'question': meta['question'] ?? row['question'] ?? '',
+                    'options':
+                        meta['options'] ?? row['options'] ?? <dynamic>[],
+                    'votes':
+                        meta['votes'] ?? row['votes'] ?? <String, int>{},
                   };
                 }).toList()
               : [];
