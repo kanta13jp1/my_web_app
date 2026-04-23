@@ -237,6 +237,7 @@ void main() {
     );
 
     expect(shareText, contains('国民民主党の地方議員数 2026/03/28'));
+    expect(shareText, contains('次回統一地方選(2027/04/11目安)まであと379日'));
     expect(shareText, contains('🔴議員不在'));
     expect(shareText, contains('🟡要強化'));
     expect(shareText, contains('https://example.com/public-memo?id=10'));
@@ -399,6 +400,10 @@ void main() {
     expect(uri.queryParameters['text'], contains('現職 333人'));
     expect(
       uri.queryParameters['text'],
+      contains('次回統一地方選(2027/04/11目安)まであと354日'),
+    );
+    expect(
+      uri.queryParameters['text'],
       isNot(contains('https://example.com/public-memo?id=700')),
     );
   });
@@ -417,6 +422,10 @@ void main() {
     expect(tweets.first, contains('Second Weekend Assembly Race'));
     expect(tweets.first, isNot(contains('This Weekend Mayor Race')));
     expect(tweets.first, isNot(contains('Third Weekend Safe Race')));
+    expect(
+      tweets.last,
+      contains('次回統一地方選(2027/04/11目安)まであと368日'),
+    );
   });
 
   test(

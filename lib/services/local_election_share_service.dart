@@ -64,6 +64,8 @@ class LocalElectionShareService {
   static const int maxWeekendWindowCount = 28;
   static const int _syntheticNoteIdBase = 90000000000000;
   static const int _planDashboardNoteId = _syntheticNoteIdBase + 7002027;
+  static final DateTime nextUnifiedLocalElectionFirstHalfTargetDate =
+      DateTime(2027, 4, 11);
   static final List<LocalElectionShareWindow> availableWindows =
       List<LocalElectionShareWindow>.unmodifiable(
     List<LocalElectionShareWindow>.generate(
@@ -249,6 +251,9 @@ class LocalElectionShareService {
       '国民民主党の地方議員数 ${_dateOnlyFormat.format(snapshot.fetchedAt.toLocal())}',
       '${snapshot.officialCurrentLocalMembers}人',
       '700まで残り${snapshot.actualNetIncreaseRequired}人',
+      buildNextUnifiedLocalElectionCountdownLine(
+        now: snapshot.fetchedAt.toLocal(),
+      ),
       '',
       '🔴議員不在 $missingCount県',
       '🟡要強化($lowPresenceThreshold人以下) $lowCount県',
@@ -304,9 +309,29 @@ class LocalElectionShareService {
       '統一地方選700 県連KPI一覧',
       '全${plan.prefectures.length}県連のKGI、CSF、KPI、現職人数、候補者進捗、公認期限、立憲参考値を公開ノートにまとめました。',
       '現職 ${plan.currentLocalMembers}人 / 700まで残り${plan.requiredNetIncrease}人',
+      buildNextUnifiedLocalElectionCountdownLine(now: plan.updatedAt.toLocal()),
       '純増目標 ${plan.allocatedNetIncrease}人 / 新人 ${plan.totalNewCandidateTarget}人',
       '#統一地方選 #国民民主党',
     ].join('\n');
+  }
+
+  int daysUntilNextUnifiedLocalElection({DateTime? now}) {
+    final today = _dateOnly(now ?? DateTime.now());
+    final target = _dateOnly(nextUnifiedLocalElectionFirstHalfTargetDate);
+    final days = target.difference(today).inDays;
+    return days < 0 ? 0 : days;
+  }
+
+  String buildNextUnifiedLocalElectionCountdownLine({DateTime? now}) {
+    final dateLabel =
+        _dateOnlyFormat.format(nextUnifiedLocalElectionFirstHalfTargetDate);
+    final days = daysUntilNextUnifiedLocalElection(now: now);
+    return '次回統一地方選($dateLabel目安)まであと$days日';
+  }
+
+  static DateTime _dateOnly(DateTime value) {
+    final local = value.toLocal();
+    return DateTime(local.year, local.month, local.day);
   }
 
   Uri buildPlanDashboardXShareIntentUri({
@@ -556,6 +581,9 @@ class LocalElectionShareService {
       '国民民主党の地方議員数 $dateStr',
       '${snapshot.officialCurrentLocalMembers}人',
       '700まで残り${snapshot.actualNetIncreaseRequired}人',
+      buildNextUnifiedLocalElectionCountdownLine(
+        now: snapshot.fetchedAt.toLocal(),
+      ),
       '',
       '🔴議員不在 $missingCount県',
       '🟡要強化($lowPresenceThreshold人以下) $lowCount県',
