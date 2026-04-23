@@ -342,14 +342,24 @@ class LocalElectionScheduleEntry {
     };
   }
 
-  bool get isAlertRed => kokuminCandidateCount == 0;
+  bool get isChiefElection {
+    final category = electionCategory.trim().toLowerCase();
+    if (category == 'chief' || electionCategory.contains('首長')) {
+      return true;
+    }
+    return RegExp(r'(知事|市長|区長|町長|村長)選挙').hasMatch(electionName);
+  }
 
-  bool get isAlertYellow => kokuminCandidateCount == 1;
+  bool get isTargetElection => !isChiefElection;
+
+  bool get isAlertRed => isTargetElection && kokuminCandidateCount == 0;
+
+  bool get isAlertYellow => isTargetElection && kokuminCandidateCount == 1;
 
   DateTime? get parsedVoteDate => _parseDate(voteDate);
 
   bool isWithinDays(int days) {
-    if (isPast) return false;
+    if (isPast || !isTargetElection) return false;
     final date = parsedVoteDate;
     if (date == null) {
       return false;
@@ -740,12 +750,16 @@ class LocalElectionRealitySnapshot {
 
   int get ageAvailableCount => members.where((item) => item.age != null).length;
 
-  bool get hasScheduleData => upcomingSchedules.isNotEmpty;
+  List<LocalElectionScheduleEntry> get targetElectionSchedules =>
+      upcomingSchedules.where((item) => item.isTargetElection).toList();
 
-  int get redAlertScheduleCount =>
-      upcomingSchedules.where((item) => !item.isPast && item.isAlertRed).length;
+  bool get hasScheduleData => targetElectionSchedules.isNotEmpty;
 
-  int get yellowAlertScheduleCount => upcomingSchedules
+  int get redAlertScheduleCount => targetElectionSchedules
+      .where((item) => !item.isPast && item.isAlertRed)
+      .length;
+
+  int get yellowAlertScheduleCount => targetElectionSchedules
       .where((item) => !item.isPast && item.isAlertYellow)
       .length;
 
@@ -811,7 +825,9 @@ class LocalElectionRealitySnapshot {
   }
 
   List<LocalElectionScheduleEntry> schedulesWithinDays(int days) {
-    return upcomingSchedules.where((item) => item.isWithinDays(days)).toList();
+    return targetElectionSchedules
+        .where((item) => item.isWithinDays(days))
+        .toList();
   }
 
   /// Returns elections whose voteDate falls within the weekend window
@@ -826,7 +842,7 @@ class LocalElectionRealitySnapshot {
     );
     // Include Saturday through Sunday.
     final end = start.add(const Duration(days: 1));
-    return upcomingSchedules.where((item) {
+    return targetElectionSchedules.where((item) {
       final date = item.parsedVoteDate;
       if (date == null || item.isPast) return false;
       final d = DateTime(date.year, date.month, date.day);
@@ -862,24 +878,25 @@ class LocalElectionRealitySnapshot {
   }
 
   List<LocalElectionScheduleEntry> topScheduleAlerts({int limit = 8}) {
-    final sorted = List<LocalElectionScheduleEntry>.from(upcomingSchedules)
-      ..sort((left, right) {
-        final severityCompare = _scheduleSeverity(left).compareTo(
-          _scheduleSeverity(right),
-        );
-        if (severityCompare != 0) {
-          return severityCompare;
-        }
-        final leftDate = left.parsedVoteDate;
-        final rightDate = right.parsedVoteDate;
-        if (leftDate != null && rightDate != null) {
-          final dateCompare = leftDate.compareTo(rightDate);
-          if (dateCompare != 0) {
-            return dateCompare;
-          }
-        }
-        return left.electionName.compareTo(right.electionName);
-      });
+    final sorted =
+        List<LocalElectionScheduleEntry>.from(targetElectionSchedules)
+          ..sort((left, right) {
+            final severityCompare = _scheduleSeverity(left).compareTo(
+              _scheduleSeverity(right),
+            );
+            if (severityCompare != 0) {
+              return severityCompare;
+            }
+            final leftDate = left.parsedVoteDate;
+            final rightDate = right.parsedVoteDate;
+            if (leftDate != null && rightDate != null) {
+              final dateCompare = leftDate.compareTo(rightDate);
+              if (dateCompare != 0) {
+                return dateCompare;
+              }
+            }
+            return left.electionName.compareTo(right.electionName);
+          });
     return sorted.take(limit).toList();
   }
 
@@ -969,9 +986,9 @@ class LocalElectionRealitySnapshot {
   List<PastElectionResult> _derivePastElectionResultsFromSchedules() {
     final results = <PastElectionResult>[];
     for (var scheduleIndex = 0;
-        scheduleIndex < upcomingSchedules.length;
+        scheduleIndex < targetElectionSchedules.length;
         scheduleIndex++) {
-      final schedule = upcomingSchedules[scheduleIndex];
+      final schedule = targetElectionSchedules[scheduleIndex];
       if (!schedule.isPast) {
         continue;
       }

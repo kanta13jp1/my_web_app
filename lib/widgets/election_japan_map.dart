@@ -588,7 +588,10 @@ class _ElectionJapanMapState extends State<ElectionJapanMap> {
     final key = _prefectureKey(plan.prefecture);
     final schedules = widget.schedules
         .where(
-          (item) => !item.isPast && _prefectureKey(item.prefecture) == key,
+          (item) =>
+              !item.isPast &&
+              item.isTargetElection &&
+              _prefectureKey(item.prefecture) == key,
         )
         .toList()
       ..sort((left, right) {

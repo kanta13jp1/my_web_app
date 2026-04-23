@@ -267,7 +267,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
   }
 
   DateTime? _bestScheduleSelection(LocalElectionRealitySnapshot? snapshot) {
-    if (snapshot == null || snapshot.upcomingSchedules.isEmpty) {
+    if (snapshot == null || snapshot.targetElectionSchedules.isEmpty) {
       return null;
     }
 
@@ -1429,7 +1429,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                 color: const Color(0xFF0891B2),
               ),
               _buildStatusChip(
-                '日程 ${_formatInt(snapshot.upcomingSchedules.length)} 件',
+                '日程 ${_formatInt(snapshot.targetElectionSchedules.length)} 件',
                 color: const Color(0xFF2563EB),
               ),
               _buildStatusChip(
@@ -2064,7 +2064,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
     LocalElectionRealitySnapshot snapshot,
   ) async {
     // 未擁立 (Red) または 単騎 (Yellow) のスケジュールを抽出
-    final alertSchedules = snapshot.upcomingSchedules.where((s) {
+    final alertSchedules = snapshot.targetElectionSchedules.where((s) {
       return s.isAlertRed || s.isAlertYellow;
     }).toList();
 
@@ -2772,7 +2772,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
     LocalElectionRealitySnapshot snapshot,
     DateTime fallback,
   ) {
-    final dates = snapshot.upcomingSchedules
+    final dates = snapshot.targetElectionSchedules
         .map((item) => item.parsedVoteDate)
         .whereType<DateTime>()
         .map((item) => _normalizeDate(item.toLocal()))
@@ -2789,7 +2789,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
     LocalElectionRealitySnapshot snapshot,
     DateTime fallback,
   ) {
-    final dates = snapshot.upcomingSchedules
+    final dates = snapshot.targetElectionSchedules
         .map((item) => item.parsedVoteDate)
         .whereType<DateTime>()
         .map((item) => _normalizeDate(item.toLocal()))
@@ -2870,7 +2870,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
     bool reverseForPast = false,
   }) {
     final schedules = List<LocalElectionScheduleEntry>.from(
-      snapshot.upcomingSchedules,
+      snapshot.targetElectionSchedules,
     );
     schedules.sort((left, right) {
       final leftDate = left.parsedVoteDate;
@@ -4399,7 +4399,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
         );
         final japanMap = ElectionJapanMap(
           prefectures: plan.prefectures,
-          schedules: snapshot?.upcomingSchedules ?? const [],
+          schedules: snapshot?.targetElectionSchedules ?? const [],
         );
 
         if (stacked) {

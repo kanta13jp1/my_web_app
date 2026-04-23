@@ -210,26 +210,6 @@ interface PrefectureDirectoryEntry {
 
 const MANUAL_2026_SCHEDULES: ManualScheduleSupplement[] = [
   {
-    prefecture: "京都府",
-    municipality: "京都府",
-    electionName: "京都府知事選挙",
-    voteDate: "2026-04-05",
-    electionCategory: "chief",
-    candidates: [
-      { name: "にしわき隆俊", statusLabel: "推薦", xHandle: "nishiwaki_taka" },
-    ],
-  },
-  {
-    prefecture: "東京都",
-    municipality: "練馬区",
-    electionName: "練馬区長選挙",
-    voteDate: "2026-04-12",
-    electionCategory: "chief",
-    candidates: [
-      { name: "おじま紘平", statusLabel: "推薦", xHandle: "ojimakohei" },
-    ],
-  },
-  {
     prefecture: "東京都",
     municipality: "多摩市",
     electionName: "多摩市議会議員補欠選挙",
@@ -385,18 +365,6 @@ const MANUAL_2026_SCHEDULES: ManualScheduleSupplement[] = [
   {
     prefecture: "東京都",
     municipality: "中野区",
-    electionName: "中野区長選挙",
-    voteDate: "2026-06-07",
-    announcementDate: "2026-05-31",
-    electionCategory: "chief",
-    detailUrl:
-      "https://www.senkyo.metro.tokyo.lg.jp/election/schedule/senkyo2026",
-    seatCount: 1,
-    candidates: [],
-  },
-  {
-    prefecture: "東京都",
-    municipality: "中野区",
     electionName: "中野区議会議員補欠選挙",
     voteDate: "2026-06-07",
     announcementDate: "2026-05-31",
@@ -421,46 +389,10 @@ const MANUAL_2026_SCHEDULES: ManualScheduleSupplement[] = [
   {
     prefecture: "東京都",
     municipality: "杉並区",
-    electionName: "杉並区長選挙",
-    voteDate: "2026-06-28",
-    announcementDate: "2026-06-21",
-    electionCategory: "chief",
-    detailUrl:
-      "https://www.senkyo.metro.tokyo.lg.jp/election/schedule/senkyo2026",
-    seatCount: 1,
-    candidates: [],
-  },
-  {
-    prefecture: "東京都",
-    municipality: "杉並区",
     electionName: "杉並区議会議員補欠選挙",
     voteDate: "2026-06-28",
     announcementDate: "2026-06-21",
     electionCategory: "assembly",
-    detailUrl:
-      "https://www.senkyo.metro.tokyo.lg.jp/election/schedule/senkyo2026",
-    seatCount: 1,
-    candidates: [],
-  },
-  {
-    prefecture: "東京都",
-    municipality: "狛江市",
-    electionName: "狛江市長選挙",
-    voteDate: "2026-06-28",
-    announcementDate: "2026-06-21",
-    electionCategory: "chief",
-    detailUrl:
-      "https://www.senkyo.metro.tokyo.lg.jp/election/schedule/senkyo2026",
-    seatCount: 1,
-    candidates: [],
-  },
-  {
-    prefecture: "東京都",
-    municipality: "調布市",
-    electionName: "調布市長選挙",
-    voteDate: "2026-07-05",
-    announcementDate: "2026-06-28",
-    electionCategory: "chief",
     detailUrl:
       "https://www.senkyo.metro.tokyo.lg.jp/election/schedule/senkyo2026",
     seatCount: 1,
@@ -476,18 +408,6 @@ const MANUAL_2026_SCHEDULES: ManualScheduleSupplement[] = [
     detailUrl:
       "https://www.senkyo.metro.tokyo.lg.jp/election/schedule/senkyo2026",
     seatCount: 21,
-    candidates: [],
-  },
-  {
-    prefecture: "東京都",
-    municipality: "あきる野市",
-    electionName: "あきる野市長選挙",
-    voteDate: "2026-07-19",
-    announcementDate: "2026-07-12",
-    electionCategory: "chief",
-    detailUrl:
-      "https://www.senkyo.metro.tokyo.lg.jp/election/schedule/senkyo2026",
-    seatCount: 1,
     candidates: [],
   },
 ];
@@ -1111,7 +1031,7 @@ async function fetchUpcomingLocalElectionSchedules(
   const overviewEntries = mergeScheduleOverviewEntries(
     await fetchScheduleOverviewEntries(earliestDate, latestDate),
     buildManualOverviewEntries(manualSupplements),
-  );
+  ).filter(isTargetScheduleOverviewEntry);
   const upcomingEntries = overviewEntries
     .filter((entry) => {
       const voteDate = parseIsoDate(entry.voteDate);
@@ -1286,31 +1206,47 @@ function extractNewKokuminVoteDate(datesText: string): string {
 function buildManualScheduledCandidates(
   supplements: ManualScheduleSupplement[],
 ): OfficialScheduledCandidate[] {
-  return supplements.flatMap((entry) => {
-    const sourceUrl = entry.officialCandidateSourceUrl?.trim() ||
-      OFFICIAL_ELECTION_PAGE_URL;
-    return entry.candidates.map((candidate) => ({
-      prefecture: entry.prefecture,
-      electionName: entry.electionName,
-      voteDate: entry.voteDate,
-      name: normalizeMemberName(candidate.name),
-      statusLabel: candidate.statusLabel?.trim() ?? "",
-      detailUrl: entry.detailUrl?.trim() ?? "",
-      sourceUrl,
-      xHandle: normalizeXHandle(candidate.xHandle),
-    }));
-  });
+  return supplements.filter(isTargetManualScheduleSupplement).flatMap(
+    (entry) => {
+      const sourceUrl = entry.officialCandidateSourceUrl?.trim() ||
+        OFFICIAL_ELECTION_PAGE_URL;
+      return entry.candidates.map((candidate) => ({
+        prefecture: entry.prefecture,
+        electionName: entry.electionName,
+        voteDate: entry.voteDate,
+        name: normalizeMemberName(candidate.name),
+        statusLabel: candidate.statusLabel?.trim() ?? "",
+        detailUrl: entry.detailUrl?.trim() ?? "",
+        sourceUrl,
+        xHandle: normalizeXHandle(candidate.xHandle),
+      }));
+    },
+  );
 }
 
 function buildManualOverviewEntries(
   supplements: ManualScheduleSupplement[],
 ): ScheduleOverviewEntry[] {
-  return supplements.map((entry) => ({
+  return supplements.filter(isTargetManualScheduleSupplement).map((entry) => ({
     electionName: entry.electionName,
     prefecture: entry.prefecture,
     voteDate: entry.voteDate,
     detailUrl: entry.detailUrl?.trim() ?? "",
   }));
+}
+
+function isTargetManualScheduleSupplement(
+  entry: ManualScheduleSupplement,
+): boolean {
+  const category = entry.electionCategory?.trim() ?? "";
+  if (category === "chief" || category.includes("首長")) {
+    return false;
+  }
+  return inferElectionCategory(entry.electionName) !== "chief";
+}
+
+function isTargetScheduleOverviewEntry(entry: ScheduleOverviewEntry): boolean {
+  return inferElectionCategory(entry.electionName) !== "chief";
 }
 
 function mergeScheduleOverviewEntries(

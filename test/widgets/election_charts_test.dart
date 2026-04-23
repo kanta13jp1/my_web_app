@@ -112,6 +112,7 @@ void main() {
     expect(find.text('予定選挙'), findsOneWidget);
     expect(find.text('予定選挙内訳'), findsOneWidget);
     expect(find.text('中野区議会議員選挙'), findsOneWidget);
+    expect(find.text('東京区長選挙'), findsNothing);
     expect(find.textContaining('公示日 2026年05月17日'), findsOneWidget);
     expect(find.textContaining('投開票日 2026年05月24日'), findsOneWidget);
     expect(find.text('公認期限'), findsOneWidget);
@@ -155,6 +156,22 @@ List<LocalElectionScheduleEntry> _sampleSchedules() {
       officialCandidateSourceUrl: 'https://example.com/candidates',
       seatCount: 42,
       totalCandidateCount: 55,
+      kokuminCandidateCount: 0,
+      kokuminCandidateNames: <String>[],
+      kokuminCandidateStatuses: <String>[],
+      kokuminCandidateXHandles: <String>[],
+    ),
+    LocalElectionScheduleEntry(
+      electionName: '東京区長選挙',
+      prefecture: '東京都',
+      municipality: '東京区',
+      electionCategory: 'chief',
+      voteDate: '2026-05-24',
+      announcementDate: '2026-05-17',
+      detailUrl: 'https://example.com/chief',
+      officialCandidateSourceUrl: 'https://example.com/candidates',
+      seatCount: 1,
+      totalCandidateCount: 2,
       kokuminCandidateCount: 0,
       kokuminCandidateNames: <String>[],
       kokuminCandidateStatuses: <String>[],

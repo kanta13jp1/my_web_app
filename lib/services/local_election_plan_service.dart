@@ -587,7 +587,7 @@ class LocalElectionPlanService {
     LocalElectionRealitySnapshot snapshot,
   ) {
     final stats = <String, _AutoScheduleStatsBuilder>{};
-    for (final item in snapshot.upcomingSchedules) {
+    for (final item in snapshot.targetElectionSchedules) {
       if (item.isPast || item.prefecture.trim().isEmpty) {
         continue;
       }

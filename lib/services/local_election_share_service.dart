@@ -431,7 +431,7 @@ class LocalElectionShareService {
     DateTime? now,
   }) {
     final range = scheduleWindowRange(window, now: now);
-    final schedules = snapshot.upcomingSchedules.where((entry) {
+    final schedules = snapshot.targetElectionSchedules.where((entry) {
       if (entry.isPast) {
         return false;
       }

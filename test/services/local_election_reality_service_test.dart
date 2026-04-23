@@ -105,6 +105,23 @@ void main() {
           'kokuminCandidateStatuses': <String>['推薦'],
           'kokuminCandidateXHandles': <String>['ojimakohei'],
         },
+        <String, dynamic>{
+          'electionName': 'Tama city council by-election',
+          'prefecture': 'Tokyo',
+          'municipality': 'Tama',
+          'electionCategory': 'assembly',
+          'voteDate': '2026-04-12',
+          'announcementDate': '2026-04-05',
+          'detailUrl': '',
+          'officialCandidateSourceUrl':
+              'https://new-kokumin.jp/?post_type=election&prefectures=Tokyo',
+          'seatCount': 1,
+          'totalCandidateCount': 3,
+          'kokuminCandidateCount': 0,
+          'kokuminCandidateNames': <String>[],
+          'kokuminCandidateStatuses': <String>[],
+          'kokuminCandidateXHandles': <String>[],
+        },
       ],
     });
 
@@ -125,10 +142,12 @@ void main() {
     expect(loaded.members.single.name, 'Sample Member');
     expect(loaded.ageAvailableCount, 1);
     expect(loaded.scheduleAiAlerts, isNotEmpty);
-    expect(loaded.upcomingSchedules, hasLength(2));
+    expect(loaded.upcomingSchedules, hasLength(3));
+    expect(loaded.targetElectionSchedules, hasLength(1));
     expect(loaded.redAlertScheduleCount, 1);
+    expect(loaded.upcomingSchedules.first.isChiefElection, isTrue);
     expect(
-      loaded.upcomingSchedules.last.kokuminCandidateXHandles,
+      loaded.upcomingSchedules[1].kokuminCandidateXHandles,
       <String>['ojimakohei'],
     );
 
