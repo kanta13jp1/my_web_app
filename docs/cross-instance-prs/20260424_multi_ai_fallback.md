@@ -138,3 +138,21 @@ quota critical 時に OpenAI Codex API で Issue 修正 PR を生成。
 - [ ] P1: SLACK_WEBHOOK_URL secret 追加 (Win版)
 - [ ] P1: t1-dispatch.sh 作成 (PS#2) ← 本セッション
 - [ ] P2: github-issue-fix.yml Codex fallback (VSCode)
+
+---
+
+## 2026-04-24 更新 (PS#2)
+
+### 確認済み ✅
+
+- `GEMINI_API_KEY` → GitHub Secret 設定済 (ユーザー確認)
+- `SLACK_WEBHOOK_URL` → GitHub Secret 設定済 (ユーザー確認)
+- `ai_circuit_breaker` テーブル → migration 作成済 (`20260424210000_create_ai_circuit_breaker.sql` by PS#5 S33)
+- `cs-check.yml` quota guard → PS#5 S33 で追加済
+
+### 残タスク (アンブロック済)
+
+- [ ] P0: `quota-monitor.yml` → `ai_circuit_breaker` テーブルへの自動書き込み (PS#1)
+- [ ] P0: `claude-agent-review.yml` Gemini fallback (VSCode版) — GEMINI_API_KEY 利用可
+- [ ] P0: `ai_circuit_breaker` trigger → Slack Webhook 通知 (Win版 §Backlog S3)
+- [ ] P2: `github-issue-fix.yml` Codex fallback (VSCode版)
