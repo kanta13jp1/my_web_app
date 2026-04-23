@@ -209,7 +209,7 @@ async function createFeatureRequestWbsTask(
   const { data, error } = await admin.from("wbs_tasks").insert({
     category: "ユーザー要望",
     category_icon: "REQ",
-    category_order: 90,
+    category_order: 0,
     title: `[追加要望] ${params.title}`,
     description: descriptionLines.join("\n"),
     instance: "vscode",

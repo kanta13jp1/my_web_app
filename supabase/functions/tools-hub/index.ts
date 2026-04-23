@@ -29,6 +29,60 @@ function json(data: unknown, status = 200): Response {
   });
 }
 
+function wbsPriorityRank(priority: unknown): number {
+  const value = String(priority ?? "").toLowerCase();
+  if (value === "high") return 3;
+  if (value === "medium") return 2;
+  if (value === "low") return 1;
+  return 0;
+}
+
+function isFeatureRequestTask(task: Record<string, unknown>): boolean {
+  const category = String(task.category ?? "");
+  const title = String(task.title ?? "");
+  return category === "ユーザー要望" || title.startsWith("[追加要望]");
+}
+
+function wbsTaskSortBucket(task: Record<string, unknown>): number {
+  const status = String(task.status ?? "");
+  if (status === "completed") return 4;
+  if (isFeatureRequestTask(task)) return 0;
+  if (status === "in_progress") return 1;
+  if (status === "pending") return 2;
+  if (status === "blocked") return 3;
+  return 3;
+}
+
+function compareOptionalDate(a: unknown, b: unknown): number {
+  const aValue = typeof a === "string" && a ? Date.parse(a) : Number.NaN;
+  const bValue = typeof b === "string" && b ? Date.parse(b) : Number.NaN;
+  const aMissing = Number.isNaN(aValue);
+  const bMissing = Number.isNaN(bValue);
+  if (aMissing && bMissing) return 0;
+  if (aMissing) return 1;
+  if (bMissing) return -1;
+  return aValue - bValue;
+}
+
+function compareWbsTasks(a: Record<string, unknown>, b: Record<string, unknown>): number {
+  const bucketCmp = wbsTaskSortBucket(a) - wbsTaskSortBucket(b);
+  if (bucketCmp !== 0) return bucketCmp;
+
+  const priorityCmp = wbsPriorityRank(b.priority) - wbsPriorityRank(a.priority);
+  if (priorityCmp !== 0) return priorityCmp;
+
+  const categoryOrderCmp = Number(a.category_order ?? 999) - Number(b.category_order ?? 999);
+  if (categoryOrderCmp !== 0) return categoryOrderCmp;
+
+  const endDateCmp = compareOptionalDate(a.end_date, b.end_date);
+  if (endDateCmp !== 0) return endDateCmp;
+
+  const updatedAtCmp = compareOptionalDate(b.updated_at, a.updated_at);
+  if (updatedAtCmp !== 0) return updatedAtCmp;
+
+  return String(a.title ?? "").localeCompare(String(b.title ?? ""));
+}
+
 async function getUserId(req: Request): Promise<string | null> {
   const authHeader = req.headers.get("Authorization") ?? "";
   if (!authHeader) return null;
@@ -699,10 +753,7 @@ serve(async (req) => {
           const updatedSince = body.updated_since as string | undefined;
           const limit = Math.min(Number(body.limit ?? 50), 200);
           let q = admin.from("wbs_tasks")
-            .select("id, category, category_icon, title, description, instance, status, progress, start_date, end_date, milestone_code, priority, updated_at")
-            .order("priority", { ascending: false })
-            .order("end_date", { ascending: true, nullsFirst: false })
-            .limit(limit);
+            .select("id, category, category_icon, category_order, title, description, instance, status, progress, start_date, end_date, milestone_code, priority, updated_at");
           if (inst && inst !== "all") {
             // instance='all' のタスクは全 instance に該当 → OR 条件
             q = q.or(`instance.eq.${inst},instance.eq.all`);
@@ -711,12 +762,13 @@ serve(async (req) => {
           if (updatedSince) q = q.gte("updated_at", updatedSince);
           const { data, error } = await q;
           if (error) throw new Error(error.message);
+          const sortedTasks = [...(data ?? [])].sort(compareWbsTasks).slice(0, limit);
           // milestone 情報も同時取得
           const { data: milestones } = await admin.from("wbs_milestones")
             .select("code, name, target_date, goal_users, color");
           return json({
             success: true,
-            tasks: data ?? [],
+            tasks: sortedTasks,
             milestones: milestones ?? [],
             total: data?.length ?? 0,
           });
@@ -1028,14 +1080,12 @@ serve(async (req) => {
           const inst = String(body.instance ?? "");
           if (!inst) return json({ error: "instance required" }, 400);
           const { data, error } = await admin.from("wbs_tasks")
-            .select("id, category, title, status, progress, priority, end_date, instance")
+            .select("id, category, category_order, title, status, progress, priority, end_date, updated_at, instance")
             .or(`instance.eq.${inst},instance.eq.all`)
-            .in("status", ["pending", "in_progress"])
-            .order("priority", { ascending: false })
-            .order("end_date", { ascending: true, nullsFirst: false })
-            .limit(5);
+            .in("status", ["pending", "in_progress", "blocked"]);
           if (error) throw new Error(error.message);
-          return json({ success: true, instance: inst, top_tasks: data ?? [] });
+          const topTasks = [...(data ?? [])].sort(compareWbsTasks).slice(0, 5);
+          return json({ success: true, instance: inst, top_tasks: topTasks });
         }
         case "horseracing.register_race": {
           const { data: r, error: re } = await admin.from("horse_races").insert({

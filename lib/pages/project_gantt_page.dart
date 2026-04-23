@@ -213,6 +213,53 @@ class WbsTask {
         'gha' => const Color(0xFF6B7280),
         _ => const Color(0xFF707070),
       };
+
+  bool get isFeatureRequestTask =>
+      category == 'ユーザー要望' || title.startsWith('[追加要望]');
+
+  int get priorityRank => switch (priority) {
+        'high' => 3,
+        'medium' => 2,
+        'low' => 1,
+        _ => 0,
+      };
+}
+
+int _wbsTaskSortBucket(WbsTask task) {
+  if (task.status == 'completed') return 4;
+  if (task.isFeatureRequestTask) return 0;
+  return switch (task.status) {
+    'in_progress' => 1,
+    'pending' => 2,
+    'blocked' => 3,
+    _ => 3,
+  };
+}
+
+int _compareOptionalDate(DateTime? a, DateTime? b) {
+  if (a == null && b == null) return 0;
+  if (a == null) return 1;
+  if (b == null) return -1;
+  return a.compareTo(b);
+}
+
+int _compareWbsTasks(WbsTask a, WbsTask b) {
+  final bucketCmp = _wbsTaskSortBucket(a).compareTo(_wbsTaskSortBucket(b));
+  if (bucketCmp != 0) return bucketCmp;
+
+  final priorityCmp = b.priorityRank.compareTo(a.priorityRank);
+  if (priorityCmp != 0) return priorityCmp;
+
+  final categoryCmp = a.categoryOrder.compareTo(b.categoryOrder);
+  if (categoryCmp != 0) return categoryCmp;
+
+  final endDateCmp = _compareOptionalDate(a.endDate, b.endDate);
+  if (endDateCmp != 0) return endDateCmp;
+
+  final startDateCmp = _compareOptionalDate(a.startDate, b.startDate);
+  if (startDateCmp != 0) return startDateCmp;
+
+  return a.title.compareTo(b.title);
 }
 
 Color _hexColor(String hex) {
@@ -296,7 +343,8 @@ class _ProjectGanttPageState extends State<ProjectGanttPage>
               .toList();
           _tasks = (tData as List)
               .map((e) => WbsTask.fromMap(e as Map<String, dynamic>))
-              .toList();
+              .toList()
+            ..sort(_compareWbsTasks);
         });
       }
       // Win版#131 part 13: マイルストーン risk view (failures は silent)
@@ -379,9 +427,9 @@ class _ProjectGanttPageState extends State<ProjectGanttPage>
         title: Text(
           '開発ロードマップ & WBS',
           style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-          ),
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
         ),
         iconTheme: const IconThemeData(color: Colors.white),
         actions: [
@@ -578,15 +626,15 @@ class _WbsTab extends StatelessWidget {
             Text(
               '未完了のみ',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: const Color(0xFF9CA3AF),
-              ),
+                    color: const Color(0xFF9CA3AF),
+                  ),
             ),
             const SizedBox(width: 16),
             Text(
               '表示: ${_filtered.length} / ${tasks.length} 件',
               style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                color: const Color(0xFF707070),
-              ),
+                    color: const Color(0xFF707070),
+                  ),
             ),
           ],
         ),
@@ -648,16 +696,17 @@ class _OverallProgressCard extends StatelessWidget {
                   children: [
                     Text(
                       '自分株式会社 開発WBS',
-                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
+                      style:
+                          Theme.of(context).textTheme.headlineSmall?.copyWith(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
                     ),
                     Text(
                       '$taskCount タスク',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: const Color(0xFF707070),
-                      ),
+                            color: const Color(0xFF707070),
+                          ),
                     ),
                   ],
                 ),
@@ -1680,13 +1729,7 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
     if (widget.filterInstance != null) {
       list = list.where((t) => t.instance == widget.filterInstance).toList();
     }
-    list.sort((a, b) {
-      final catCmp = a.categoryOrder.compareTo(b.categoryOrder);
-      if (catCmp != 0) return catCmp;
-      final aStart = a.startDate ?? _timelineStart;
-      final bStart = b.startDate ?? _timelineStart;
-      return aStart.compareTo(bStart);
-    });
+    list.sort(_compareWbsTasks);
     return list;
   }
 
