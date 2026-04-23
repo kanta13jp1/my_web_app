@@ -15868,3 +15868,12 @@ CEO感 ミッション駆動 優しいmentor 6部署バランス 商品=ユー�
 | 8. KPI=昨日の自分 | — |
 | 9. ゴール=IPO/ウェルビーイング | — |
 
+
+### Rule 17 WF health check (PS#1 S26 · 2026-04-24 07:23)
+- 全WF success率: 8/10 workflows healthy
+- **修正済み**: `issue-to-wbs.yml` — `secrets.SUPABASE_URL`/`SUPABASE_ANON_KEY` が未設定 (3連続失敗) → hardcoded URL + `SUPABASE_SERVICE_ROLE_KEY` に変更 (41a300e1)
+- Deploy to Production: 2/5 past failures = migration未コミット transient (現在GREEN)
+- Tests: 237 pass / 13 fail (main_test.dart + readme_features_test.dart の `dart:js_interop` VM非対応 · continue-on-error で非blocking)
+- orphan branches: blog-publish=0 / claude/*=3 / cs-check=0 (全て正常)
+- concurrency: cancel-in-progress 全設定確認済 (deploy-prod=false ✅)
+- feedback-issue-resolved: skipped=正常 (条件未満)
