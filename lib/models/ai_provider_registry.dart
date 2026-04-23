@@ -95,7 +95,7 @@ class AiProviderEntry {
   });
 }
 
-/// AI大学 登録プロバイダー全件のステータスカタログ (154社, 2026-04-24時点)
+/// AI大学 登録プロバイダー全件のステータスカタログ (156社, 2026-04-24時点)
 ///
 /// 実装済み: ai-assistant / ai-hub / ai-search に統合済みのもの
 /// 要APIキー: コード対応済みだが Supabase Secrets に追加が必要
@@ -1218,6 +1218,22 @@ const List<AiProviderEntry> kAiProviderRegistry = [
     entryPoint: 'https://e2b.dev/',
     note:
         r'AI エージェント向けコード実行サンドボックス — 200ms 起動・Fortune 100 の 88% 採用・$21M Series A',
+  ),
+  AiProviderEntry(
+    id: 'firecrawl',
+    displayName: 'Firecrawl',
+    status: AiProviderStatus.notImplemented,
+    entryPoint: 'https://firecrawl.dev/',
+    note:
+        r'LLM 向け Web スクレイピング API — HTML → クリーン Markdown/JSON 変換・OSS 29k stars・RAG 必須ツール',
+  ),
+  AiProviderEntry(
+    id: 'weaviate',
+    displayName: 'Weaviate',
+    status: AiProviderStatus.notImplemented,
+    entryPoint: 'https://weaviate.io/',
+    note:
+        r'AI-native マルチモーダルベクターDB — 組み込み Embeddings/RAG・OSS 14k stars・$50M 調達・2,000+ 本番企業',
   ),
 ];
 
