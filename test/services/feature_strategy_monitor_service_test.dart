@@ -77,6 +77,9 @@ void main() {
     );
     expect(report.focusRecommendation!.actionStats.isHabitStable, isFalse);
     expect(report.focusActionsCompletedLast7, 2);
+    expect(report.reviewDueCount, greaterThan(0));
+    expect(report.reviewDueSignals.first.reviewDueLabel, contains('レビュー'));
+    expect(report.reviewCadenceComplianceRatio, lessThan(1));
     expect(
       report.focusRecommendation!.parkedResourceCount,
       greaterThanOrEqualTo(0),
@@ -112,6 +115,10 @@ void main() {
     expect(
       report.portfolioPlan.metrics.map((metric) => metric.kpi).join(' / '),
       contains('統合で減らせる導線迷い時間'),
+    );
+    expect(
+      report.portfolioPlan.metrics.map((metric) => metric.kpi).join(' / '),
+      contains('レビュー期限を守れている機能'),
     );
   });
 }

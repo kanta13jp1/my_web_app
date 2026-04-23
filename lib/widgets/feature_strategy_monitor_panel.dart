@@ -264,6 +264,15 @@ class _FeatureStrategyMonitorPanelState
                     dark: isDark,
                   ),
                   _SummaryTile(
+                    label: 'レビュー期限',
+                    value: '${report.reviewDueCount}',
+                    color: report.reviewOverdueCount > 0
+                        ? const Color(0xFFDC2626)
+                        : const Color(0xFF0EA5E9),
+                    width: width,
+                    dark: isDark,
+                  ),
+                  _SummaryTile(
                     label: '統合候補',
                     value: '${report.consolidationCount}',
                     color: const Color(0xFF2563EB),
@@ -1229,6 +1238,11 @@ class _SignalRow extends StatelessWidget {
                 color: const Color(0xFFF97316),
                 dark: dark,
               ),
+              _StatusPill(
+                label: signal.reviewDueLabel,
+                color: _reviewColor(signal),
+                dark: dark,
+              ),
             ],
           ),
           const SizedBox(height: 6),
@@ -1306,6 +1320,16 @@ Color _statusColor(FeatureStrategyStatus status) {
     FeatureStrategyStatus.watch => const Color(0xFFF59E0B),
     FeatureStrategyStatus.improve => const Color(0xFFDC2626),
   };
+}
+
+Color _reviewColor(FeatureStrategySignal signal) {
+  if (signal.reviewOverdueDays > 0) {
+    return const Color(0xFFDC2626);
+  }
+  if (signal.reviewDue) {
+    return const Color(0xFFF59E0B);
+  }
+  return const Color(0xFF0EA5E9);
 }
 
 String _statusLabel(FeatureStrategyStatus status) {

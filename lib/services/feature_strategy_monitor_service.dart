@@ -80,6 +80,20 @@ class FeatureStrategyMonitorService {
       resource: lifeCapitalResource,
       recentUsageScore: recentUsageScore,
     );
+    final monitoringCadence = _monitoringCadence(entry, lifeCapitalResource);
+    final monitoringIntervalDays = _monitoringIntervalDays(monitoringCadence);
+    final lastReviewedAt = _lastReviewedAt(
+      recentUsageScore: recentUsageScore,
+      focusActionStats: focusActionStats,
+      monitoredAt: monitoredAt,
+    );
+    final nextReviewAt = lastReviewedAt == null
+        ? monitoredAt
+        : lastReviewedAt.add(Duration(days: monitoringIntervalDays));
+    final reviewDue = !nextReviewAt.isAfter(monitoredAt);
+    final reviewOverdueDays = reviewDue
+        ? math.max(0, monitoredAt.difference(nextReviewAt).inDays)
+        : 0;
     final improvementScore = focusActionStats.hasHistory ? 2 : 1;
     final habitProgress = math.max(
       focusActionStats.closeRateLast7,
@@ -146,6 +160,13 @@ class FeatureStrategyMonitorService {
           target: 5,
           unit: '点',
         ),
+        KgiCsfKpiMetric.number(
+          csf: '定期的なモニタリングと改善',
+          kpi: '$monitoringCadenceレビュー期限の遵守',
+          actual: reviewDue ? 0 : 1,
+          target: 1,
+          unit: '件',
+        ),
       ],
     );
 
@@ -170,7 +191,12 @@ class FeatureStrategyMonitorService {
       lifeCapitalResource: lifeCapitalResource,
       wasteReductionScore: wasteReductionScore,
       wasteReductionCsf: _lifeCapitalCsf(lifeCapitalResource),
-      monitoringCadence: _monitoringCadence(entry, lifeCapitalResource),
+      monitoringCadence: monitoringCadence,
+      monitoringIntervalDays: monitoringIntervalDays,
+      lastReviewedAt: lastReviewedAt,
+      nextReviewAt: nextReviewAt,
+      reviewDue: reviewDue,
+      reviewOverdueDays: reviewOverdueDays,
       focusActionStats: focusActionStats,
     );
   }
@@ -388,6 +414,29 @@ class FeatureStrategyMonitorService {
       return '週2回';
     }
     return '週1回';
+  }
+
+  int _monitoringIntervalDays(String cadence) {
+    return switch (cadence) {
+      '毎日' => 1,
+      '週2回' => 3,
+      _ => 7,
+    };
+  }
+
+  DateTime? _lastReviewedAt({
+    required int recentUsageScore,
+    required FeatureStrategyFocusActionStats focusActionStats,
+    required DateTime monitoredAt,
+  }) {
+    final completedAt = focusActionStats.lastCompletedAt;
+    if (completedAt != null) {
+      return completedAt;
+    }
+    if (recentUsageScore > 0) {
+      return monitoredAt;
+    }
+    return null;
   }
 
   List<FeatureConsolidationCandidate> _buildConsolidationCandidates({
@@ -901,6 +950,10 @@ class FeatureStrategyMonitorService {
         focusRecommendation?.actionStats.currentStreakDays ?? 0;
     final selectedFocusEvidence =
         focusRecommendation?.actionStats.habitEvidenceDays ?? 0;
+    final reviewDueCount = signals.where((signal) => signal.reviewDue).length;
+    final reviewOverdueCount =
+        signals.where((signal) => signal.reviewOverdueDays > 0).length;
+    final reviewCompliantCount = math.max(0, total - reviewDueCount);
 
     return KgiCsfKpiPlan(
       domain: '全機能AI戦略',
@@ -927,6 +980,20 @@ class FeatureStrategyMonitorService {
           csf: '改善サイクル',
           kpi: '改善優先からの脱出対象',
           actual: total - improve,
+          target: total,
+          unit: '機能',
+        ),
+        KgiCsfKpiMetric.number(
+          csf: '定期的なモニタリングと改善',
+          kpi: 'レビュー期限を守れている機能',
+          actual: reviewCompliantCount,
+          target: total,
+          unit: '機能',
+        ),
+        KgiCsfKpiMetric.number(
+          csf: '定期的なモニタリングと改善',
+          kpi: '期限超過レビューの解消',
+          actual: total - reviewOverdueCount,
           target: total,
           unit: '機能',
         ),

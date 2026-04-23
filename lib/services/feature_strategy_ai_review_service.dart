@@ -49,6 +49,11 @@ class FeatureStrategyAiReviewService {
           'progress=${(signal.progress * 100).round()}%, '
           'next=${signal.nextImprovement}';
     }).join('\n');
+    final reviewDueLines = report.reviewDueSignals.take(8).map((signal) {
+      return '- ${signal.featureName}: ${signal.reviewDueLabel}, '
+          'cadence=${signal.monitoringCadence}, '
+          'next=${signal.nextImprovement}';
+    }).join('\n');
     final sectionLines = _sectionCounts(report).entries.map((entry) {
       return '- ${entry.key}: ${entry.value}機能';
     }).join('\n');
@@ -88,6 +93,9 @@ class FeatureStrategyAiReviewService {
 改善優先: ${report.improveCount}
 統合候補: ${report.consolidationCount}
 統合による導線迷い削減見込み: ${report.consolidationWasteMinutesSaved}分
+レビュー期限到来: ${report.reviewDueCount}
+レビュー期限超過: ${report.reviewOverdueCount}
+レビュー期限遵守率: ${(report.reviewCadenceComplianceRatio * 100).round()}%
 全体KGI進捗: ${(report.portfolioPlan.displayProgress * 100).round()}%
 生命資本カバー: ${(report.lifeCapitalCoverageRatio * 100).round()}%
 浪費削減高スコア機能: ${report.highWasteReductionCount}
@@ -106,6 +114,9 @@ $focusLine
 
 改善優先キュー:
 $priorityLines
+
+レビュー期限キュー:
+${reviewDueLines.isEmpty ? '- 期限到来レビューなし' : reviewDueLines}
 
 類似機能の統合候補:
 ${consolidationLines.isEmpty ? '- 現時点では明確な統合候補なし' : consolidationLines}

@@ -91,6 +91,11 @@ class FeatureStrategySignal {
   final int wasteReductionScore;
   final String wasteReductionCsf;
   final String monitoringCadence;
+  final int monitoringIntervalDays;
+  final DateTime? lastReviewedAt;
+  final DateTime nextReviewAt;
+  final bool reviewDue;
+  final int reviewOverdueDays;
   final FeatureStrategyFocusActionStats focusActionStats;
 
   const FeatureStrategySignal({
@@ -111,10 +116,22 @@ class FeatureStrategySignal {
     required this.wasteReductionScore,
     required this.wasteReductionCsf,
     required this.monitoringCadence,
+    required this.monitoringIntervalDays,
+    required this.lastReviewedAt,
+    required this.nextReviewAt,
+    required this.reviewDue,
+    required this.reviewOverdueDays,
     required this.focusActionStats,
   });
 
   double get progress => plan.displayProgress;
+
+  String get reviewDueLabel {
+    if (reviewDue) {
+      return reviewOverdueDays > 0 ? 'レビュー遅延 $reviewOverdueDays日' : '本日レビュー';
+    }
+    return '次回 ${_shortDate(nextReviewAt)}';
+  }
 }
 
 class FeatureConsolidationCandidate {
@@ -259,6 +276,14 @@ class FeatureStrategyReport {
         0,
         (sum, candidate) => sum + candidate.estimatedWasteMinutesSaved,
       );
+  int get reviewDueCount => signals.where((signal) => signal.reviewDue).length;
+  int get reviewOverdueCount =>
+      signals.where((signal) => signal.reviewOverdueDays > 0).length;
+  double get reviewCadenceComplianceRatio => signals.isEmpty
+      ? 0
+      : ((signals.length - reviewDueCount) / signals.length)
+          .clamp(0, 1)
+          .toDouble();
   int get highWasteReductionCount =>
       signals.where((signal) => signal.wasteReductionScore >= 3).length;
   int get focusActionsCompletedLast7 => signals.fold<int>(
@@ -303,10 +328,24 @@ class FeatureStrategyReport {
     return items;
   }
 
+  List<FeatureStrategySignal> get reviewDueSignals {
+    final items = signals.where((signal) => signal.reviewDue).toList();
+    items.sort((a, b) {
+      final byOverdue = b.reviewOverdueDays.compareTo(a.reviewOverdueDays);
+      if (byOverdue != 0) return byOverdue;
+      final byStatus = b.status.index.compareTo(a.status.index);
+      if (byStatus != 0) return byStatus;
+      return a.nextReviewAt.compareTo(b.nextReviewAt);
+    });
+    return items;
+  }
+
   int _countByStatus(FeatureStrategyStatus status) {
     return signals.where((signal) => signal.status == status).length;
   }
 }
+
+String _shortDate(DateTime date) => '${date.month}/${date.day}';
 
 class FeatureStrategyAiReview {
   final String summary;
