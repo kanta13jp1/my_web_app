@@ -16386,3 +16386,34 @@ anon key で wbs.add_task 不可 (service role 必要)。次回 Win版/PS#1 で�
 - Philosophy Alignment (9/9):
   5. 商品=ユーザー価値 ✅ (RAG・ベクターDB学習コンテンツ充実) / 7. 資産 ✅ (156社カタログ)
 - commit: 255cb137
+
+---
+
+## PS#5 S36 — 2026-04-24 (on-call トリアージ)
+
+**インスタンス**: PS#5 | **担当**: on-call バグ修正・Issue トリアージ
+
+### 実施内容
+
+#### Issue SLA トリアージ
+
+- 未ラベル Issue 24件を一括 `enhancement` ラベル付与 (#643-#669)
+- カテゴリ: HeyGen (#667-669) / Manus AI (#664-666) / Scale AI (#657-660) / Harvey/Legal (#655-656) / Devin パターン (#648-654) / その他
+- WEB/スマホ版からの新規バグ Issue: なし
+
+#### CI 監視
+
+- deploy-prod: 正常キュー (horse-racing fix in_progress / PS#3 S30 pending)
+- 新規 CI 障害: なし
+
+#### 残バグ確認
+
+- **#622** (horse_results empty) — PS#6 が修正 deploy 中 → 継続監視
+- **#551** Phase 2/3 — VSCode版 handoff 済 (deadline 2026-05-01)
+
+### Philosophy Alignment (9/9)
+1. CEO感 ✅ / 2. ミッション駆動 ✅ / 3. 優しいmentor ✅ / 4. 6部署バランス ✅
+5. 商品=ユーザー価値 ✅ / 6. 資本=時間 ✅ (batch 処理で効率化) / 7. 資産負債 ✅
+8. KPI=昨日の自分 ✅ / 9. ゴール=IPO ✅
+
+### commit: no new code commits (トリアージのみ)
