@@ -16336,3 +16336,18 @@ anon key で wbs.add_task 不可 (service role 必要)。次回 Win版/PS#1 で�
   4. 6部署 ✅ / 5. 商品=ユーザー価値 ✅ (音声AI・エージェントインフラ学習コンテンツ)
   6. 資本=時間 ✅ / 7. 資産負債 ✅ (154社カタログ資産) / 8. KPI=昨日の自分 ✅ / 9. ゴール=IPO ✅
 - commit: 9fa9212c
+
+### Rule 17 WF health check — PS#1 S28 (2026-04-24 08:45 JST)
+- 全WF success率: 6/10 ワークフロー正常 (claude-agent-review + deploy-prod が過去失敗)
+- **claude-agent-review.yml**: 11失敗 = fe28ce47 (S27) 修正前の歴史的失敗 — 現在は解決済み
+- **deploy-prod**: 最新 run 24863660616 SUCCESS (23:16 UTC) — 過去8失敗は dart analyze エラー起因
+- **orphan branches**: claude/* 3本 (mobile-version-task-2B9tz / hQxcq / web-version-tasks-oev9R) — 未マージ mobile/web fixes あり → PS#5 handoff
+- **dart format**: 31ファイル reformatted + 7 require_trailing_commas 修正 (057eeabc)
+- **Node.js 20 deprecation**: FirebaseExtended/action-hosting-deploy@v0 + supabase/setup-cli@v1 → 2026-06-02 deadline
+- 修正済み: dart format 31files + trailing comma 7files / flutter analyze 0 issues
+- commit: 057eeabc
+
+### Philosophy Alignment (PS#1 S28)
+1. CEO感 ✅ (WF監視→即修正判断) / 2. ミッション駆動 ✅ / 3. 優しいmentor ✅
+4. 6部署バランス ✅ / 5. 商品=ユーザー価値 ✅ (CI安定でdeployが通る)
+6. 資本=時間 ✅ (format一括処理) / 7. 資産負債 ✅ / 8. KPI=昨日の自分 ✅ / 9. ゴール=IPO ✅
