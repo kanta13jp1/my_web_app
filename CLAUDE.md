@@ -107,9 +107,12 @@ UIコンポーネントを新規作成・修正する際は、以下のファイ
 
 ## Multi-AI ワークフロー（毎回必ず実行）
 
-**設計思想**: Claude Code 5インスタンス (VSCode/Windowsアプリ/PowerShell/WEB/📱スマホ版) を主軸に、Gemini Code Assist・CODEX・GitHub Copilot を補完役で活用。
-「どの処理をどの AI に振るか」を設計することで、月 $20 プランで $200 相当の作業を実現する。
-Claude のトークンは「判断・編集・統合」のみに使い、重い分析は Google (NotebookLM/Gemini) に無料で投げる。
+> **⚠️ 重要 (2026-04-24 Win版#132 part 3 改訂)**: Claude Code 単独依存リスク顕在化 (Max プラン limit hit / context compaction ループ / Anthropic API outage) を受けて、**強制 task routing matrix** + **fallback plan** を `docs/DEV_PROCESS_MULTI_AI.md` に策定。新機能開発 / 新 AI 追加 / Migration 作成時は必ず同ドキュメントの routing matrix を参照。
+
+**設計思想**: Claude Code = CEO / アーキテクト専任 (判断・統合・memory 管理のみ)。
+実装タスクは Codex (SQL / algorithm) / Gemini Code Assist (長文 refactor) / GitHub Copilot (inline) / NotebookLM (リサーチ) に分散。
+目標: Claude Code token 消費量を月 50% 削減 / 他 AI で代替可能率 70%+ (`docs/DEV_PROCESS_MULTI_AI.md` Phase 3 KPI)。
+Anthropic API outage 時も他 AI で開発継続可能な体制を確立する。
 
 ### インスタンス別 推奨モデル / 制約表
 
@@ -142,18 +145,32 @@ Claude のトークンは「判断・編集・統合」のみに使い、重い�
 - 専用 skill: `.claude/skills/mobile-bug-triage/SKILL.md` (Issue テンプレ + WCAG/Touch target チェックリスト)
 - **強み = 実機検証** (iOS Safari の細かい挙動・PWA 動作・touch gesture は Playwright で再現困難)
 
-### AI振り分け早見表
+### AI振り分け早見表 (強制 routing / 2026-04-24 改訂)
 
-| タスク | 最適ツール | 理由 |
-| --- | --- | --- |
-| 行レベル補完 | GitHub Copilot | 最速・ゼロ待機 |
-| 5分以内の修正 | Copilot Inline Chat | コンテキスト取得コスト不要 |
-| 500行超リファクタリング | Gemini Code Assist | 長コンテキスト強み |
-| SQL/アルゴリズム最適化 | OpenAI CODEX | コード特化モデル |
-| 設計・戦略・ルール遵守 | Claude Code | Memory + プロジェクト文脈 |
-| ブログ・競合リサーチ | Claude Code WEB版 (WebSearch/WebFetch) | ローカルCLI不要・GitHub MCP対応 |
-| NotebookLM Deep Research | Windowsアプリ版 (notebooklm CLI) | WEB版は notebooklm 不可 |
-| クオータ使用状況確認 | `quota-monitor.yml` Dashboard | Supabase `ai_quota_usage` テーブル |
+> **詳細**: `docs/DEV_PROCESS_MULTI_AI.md` 参照。以下は短縮版。
+
+| タスク種別 | Primary AI | Secondary | Claude Code 役割 |
+| --- | --- | --- | --- |
+| 行レベル補完 | **GitHub Copilot** | — | 不使用 |
+| 5分以内の修正 | **Copilot Inline Chat** | — | 不使用 |
+| 500行超リファクタリング | **Gemini Code Assist** | Copilot | 事前レビュー |
+| SQL/アルゴリズム最適化 | **OpenAI Codex** | Copilot | 仕様確認のみ |
+| Migration (SQL DDL + seed) | **Codex** | Copilot | 命名則チェック |
+| AI大学 provider 追加 (seed SQL) | **Codex** (template ベース) | — | routing 判断のみ |
+| AI大学 provider UI 登録 | **Copilot** (pattern 補完) | Gemini | 整合性 review |
+| Flutter widget 新規 | **Gemini** (DESIGN.md 参照) | Copilot | design-skills gate |
+| EF (Deno) 新 action | **Codex** | Copilot | deny-by-default 原則確認 |
+| GHA workflow (yml) | **Codex** | Copilot | 不使用 |
+| 競合 21 社調査 | **NotebookLM Deep Research** | — | 統合レポート |
+| 設計・戦略・ルール遵守 | **Claude Code** 独占 | — | 主役 |
+| cross-instance-pr 作成 | **Claude Code** 独占 | — | 主役 |
+| memory/ consolidation | **Claude Code** 独占 | — | 主役 |
+| アーキテクチャ判断 | **Claude Code** 独占 | — | 主役 |
+| クオータ使用状況確認 | `quota-monitor.yml` Dashboard | — | 不使用 |
+
+**判定フロー**: タスク発生 → Q1 複数インスタンス調整? → Q2 判断 / trade-off? → Q3 既存 pattern? → Q4 500+ 行一括? → Q5 深いリサーチ? の順で振り分け (`docs/DEV_PROCESS_MULTI_AI.md` §2)。
+
+**Anthropic API 停止時 fallback**: AI大学 provider 追加 / Migration / Flutter 小修正 / GHA 修正 / 競合モニタリングは Codex + Copilot + Gemini + NotebookLM で継続可。Claude 必須タスク (アーキテクチャ判断 / cross-instance-pr / memory consolidation / design review) は 48h pause 許容。
 
 ### マルチエージェント協調パターン (新機能設計時に参照)
 
