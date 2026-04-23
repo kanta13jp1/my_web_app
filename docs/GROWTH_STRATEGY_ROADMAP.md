@@ -15928,3 +15928,20 @@ CEO感 ミッション駆動 優しいmentor 6部署バランス 商品=ユー�
 8. KPI=昨日の自分 ✅ (148→150社) / 9. ゴール=IPO ✅
 
 ### commit: TBD
+
+
+---
+
+## PS版#5 S32 — 2026-04-24 (on-call バグ修正 #2)
+
+**インスタンス**: PS版#5 | **commit**: d9cfbb49
+
+### 実施内容
+- **Issue #551 Phase 1**: ERR_INSUFFICIENT_RESOURCES 対策 — AppLifecycle observer 追加
+  - Tab 非表示時 (hidden/paused) に heartbeat + metrics タイマーを cancel
+  - Tab 表示復帰時 (resumed) にタイマー再起動
+  - _restartTimers() に timer 起動ロジック集約 (DRY化)
+  - fetch頻度 ~80% 削減見込み
+
+### Philosophy Alignment (9/9)
+CEO感 ミッション駆動 優しいmentor 6部署バランス 商品=ユーザー価値 資本=時間 資産負債バランス KPI=昨日の自分 ゴール=IPO/ウェルビーイング 9/9 all pass
