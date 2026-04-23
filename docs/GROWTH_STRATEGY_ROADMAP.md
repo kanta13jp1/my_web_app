@@ -16017,3 +16017,55 @@ CEO感 ✅ ミッション駆動 ✅ 優しいmentor — 6部署バランス ✅
   - §12: 各 AI セットアップ状態 (Copilot/Codex/Gemini/NotebookLM/Gemini API/Slack)
 - cross-instance-pr 作成: 20260424_quota_circuit_breaker.md (Win版 #1/#5 + PS#1 #2/#3/#4/#6)
 - commit: 499e4ce9 / 57c46af9
+
+---
+
+## PS#5 S33 完了 (2026-04-24 JST)
+
+**インスタンス**: PS#5 | **担当**: on-call バグ修正 / 緊急対応
+
+### 実装サマリー
+
+#### Issue #581 — projects テーブル不在 404 修正
+
+- `project_gantt_page.dart:374/397/417` が `from('projects')` 参照していたが DB にテーブル未存在
+- `supabase/migrations/20260424200000_create_projects_table.sql` 新規作成
+  - 列: `name / description / status / user_id / created_at / updated_at`
+  - RLS: 4 policies (SELECT/INSERT/UPDATE/DELETE、auth.uid() ベース)
+- commit: f1602d66 (pre-rebase) → bd796c7a に収束
+
+#### Issue #551 Phase 1 — ERR_INSUFFICIENT_RESOURCES 軽減 (AppLifecycleState heartbeat 停止)
+
+- `lib/services/growth_mission_service.dart` を修正
+- `GrowthPresenceNavigatorObserver` に `WidgetsBindingObserver` mixin 追加
+- Tab/ウィンドウ非表示時 (`paused` / `hidden`) に heartbeat + metrics タイマー停止
+- 再表示時 (`resumed`) に `_restartTimers()` で再開
+- `_trackRoute()` も `_restartTimers()` に統合 (DRY)
+- commit: d9cfbb49 (pre-rebase) → bd796c7a に収束
+
+#### Multi-AI フォールバック戦略実装 (Claude quota 枯渇対策)
+
+- `supabase/migrations/20260424210000_create_ai_circuit_breaker.sql` 新規
+  - provider ごとの open/closed 状態を Supabase に永続化
+  - anthropic / openai / gemini 3 プロバイダー初期 seed
+- `.github/workflows/cs-check.yml` に Quota Guard ステップ追加
+  - ai_circuit_breaker を毎実行前にチェック → open 時は AI ステップをスキップ
+  - quota check 失敗時は closed 扱い (スキップしない)
+- `docs/multi-ai-fallback.md` 戦略全体像ドキュメント新規作成
+  - 4 層フォールバック (Claude Code CLI / EF / GHA / 開発プロセス)
+  - フォールバック順: anthropic → google → openai → groq → graceful degradation
+  - Schedule タスク優先度マトリクス
+  - Phase 1-4 実装ロードマップ
+- `docs/cross-instance-prs/20260424_multi_ai_fallback_ef.md` → Win版 handoff
+  - tools-hub/index.ts に callAIWithFallback() 実装依頼
+  - ai-assistant/index.ts に provider fallback 追加依頼
+  - 429 検出時に ai_circuit_breaker を open に自動更新
+- `docs/cross-instance-prs/20260424_multi_ai_fallback_gha.md` → PS#1/VSCode handoff
+  - blog-draft.yml / ai-university-update.yml / daily-report.yml / blog-engagement.yml に quota guard 追加依頼
+
+### Philosophy Alignment (9/9)
+1. CEO感 ✅ (on-call 対応判断) / 2. ミッション駆動 ✅ (SPOF 排除) / 3. 優しいmentor ✅
+4. 6部署バランス ✅ / 5. 商品=ユーザー価値 ✅ (quota 時もサービス継続) / 6. 資本=時間 ✅
+7. 資産負債 ✅ (Claude 単独依存 = 負債) / 8. KPI=昨日の自分 ✅ / 9. ゴール=IPO ✅ (vendor 依存 = IPO リスク)
+
+### commit: bd796c7a
