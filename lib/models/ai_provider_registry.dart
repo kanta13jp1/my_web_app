@@ -95,7 +95,7 @@ class AiProviderEntry {
   });
 }
 
-/// AI大学 登録プロバイダー全件のステータスカタログ (100社, 2026-04-19時点)
+/// AI大学 登録プロバイダー全件のステータスカタログ (148社, 2026-04-24時点)
 ///
 /// 実装済み: ai-assistant / ai-hub / ai-search に統合済みのもの
 /// 要APIキー: コード対応済みだが Supabase Secrets に追加が必要
@@ -911,7 +911,7 @@ const List<AiProviderEntry> kAiProviderRegistry = [
     note: 'RAG・セマンティック検索に特化したクラウドネイティブベクター DB',
   ),
   AiProviderEntry(
-    id: 'jina',
+    id: 'jina_ai',
     displayName: 'Jina AI',
     status: AiProviderStatus.notImplemented,
     tier: AiProviderTier.budget,
@@ -990,7 +990,7 @@ const List<AiProviderEntry> kAiProviderRegistry = [
     note: 'LLM アプリ向けデータフレームワーク (RAG の標準ツール・LangChain と双璧)',
   ),
   AiProviderEntry(
-    id: 'oxen',
+    id: 'oxen_ai',
     displayName: 'Oxen AI',
     status: AiProviderStatus.notImplemented,
     entryPoint: '(参考 — ML データ Git ライクバージョン管理)',
@@ -1021,7 +1021,7 @@ const List<AiProviderEntry> kAiProviderRegistry = [
     note: 'ノーコードで LLM アプリを構築する OSS (GitHub ★80,000+)',
   ),
   AiProviderEntry(
-    id: 'lightning',
+    id: 'lightning_ai',
     displayName: 'Lightning AI',
     status: AiProviderStatus.notImplemented,
     tier: AiProviderTier.performance,
@@ -1042,6 +1042,129 @@ const List<AiProviderEntry> kAiProviderRegistry = [
     status: AiProviderStatus.notImplemented,
     entryPoint: '(参考 — LLM デバッグ・評価・改善プラットフォーム)',
     note: 'Weights & Biases 系 LLM アプリのデバッグ・評価・改善 (Weave Trace)',
+  ),
+
+  // ===== AI 研究・インフラ (2026-04-20 追加) =====
+  AiProviderEntry(
+    id: 'prime_intellect',
+    displayName: 'Prime Intellect',
+    status: AiProviderStatus.notImplemented,
+    entryPoint: '(未実装 — INTELLECT-1 分散学習 / P2P AI)',
+    note: '分散学習プロトコル INTELLECT-1 で 10B 規模モデルを P2P ネットワーク訓練',
+  ),
+  AiProviderEntry(
+    id: 'exa',
+    displayName: 'Exa',
+    status: AiProviderStatus.notImplemented,
+    entryPoint: '(未実装 — Neural Web Search API)',
+    note: 'ニューラル検索特化 API (LLM 向け Web 検索・意味的類似検索)',
+  ),
+  AiProviderEntry(
+    id: 'pleias',
+    displayName: 'Pleias',
+    status: AiProviderStatus.notImplemented,
+    entryPoint: '(未実装 — Common Corpus / EU AI Act 準拠 OSS)',
+    note: 'Common Corpus 2T トークン / Apache 2.0 / EU AI Act 対応・引用ネイティブ LLM',
+  ),
+  AiProviderEntry(
+    id: 'imbue',
+    displayName: 'Imbue',
+    status: AiProviderStatus.notImplemented,
+    entryPoint: '(未実装 — 推論特化 LLM / CARBS OSS)',
+    note: '推論特化 70B 自社訓練 + CARBS コスト認識 HPO OSS 公開',
+  ),
+  AiProviderEntry(
+    id: 'thinking_machines',
+    displayName: 'Thinking Machines Lab',
+    status: AiProviderStatus.notImplemented,
+    entryPoint: '(未実装 — Tinker fine-tune API / Mira Murati 創業)',
+    note: 'Mira Murati (ex-OpenAI CTO) + John Schulman 創業 / \$2B seed / Tinker API',
+  ),
+  AiProviderEntry(
+    id: 'kyutai',
+    displayName: 'Kyutai',
+    status: AiProviderStatus.notImplemented,
+    entryPoint: '(未実装 — Moshi full-duplex voice / CC-BY 4.0)',
+    note: 'フランス AI 研究所 / Moshi リアルタイム音声対話 + Helium-1 / 完全 OSS',
+  ),
+  AiProviderEntry(
+    id: 'contextual_ai',
+    displayName: 'Contextual AI',
+    status: AiProviderStatus.notImplemented,
+    entryPoint: '(未実装 — RAG 2.0 / Agent Composer)',
+    note: 'RAG 発明者 Douwe Kiela 創業 / RAG 2.0 end-to-end + GLM FACTS SOTA',
+  ),
+  AiProviderEntry(
+    id: 'snorkel_ai',
+    displayName: 'Snorkel AI',
+    status: AiProviderStatus.notImplemented,
+    entryPoint: '(未実装 — Weak Supervision / Data-Centric AI)',
+    note: 'Alex Ratner / Stanford DAWN lab 発 / 弱教師あり学習で LLM 学習データ効率化',
+  ),
+  AiProviderEntry(
+    id: 'haize_labs',
+    displayName: 'Haize Labs',
+    status: AiProviderStatus.notImplemented,
+    entryPoint: '(未実装 — AI 安全性評価 / Red-Teaming)',
+    note: '"Moody\'s for AI" / AI リスク自動評価 (ACG・Cascade・Sphynx) / Harvard trio',
+  ),
+  AiProviderEntry(
+    id: 'physical_intelligence',
+    displayName: 'Physical Intelligence',
+    status: AiProviderStatus.notImplemented,
+    entryPoint: '(未実装 — π-0 / π-0.5 VLA ロボット基盤モデル)',
+    note: 'Sergey Levine 共同創業 / π-0 OSS VLA / \$400M + \$600M / \$11B 交渉中',
+  ),
+  AiProviderEntry(
+    id: 'isomorphic_labs',
+    displayName: 'Isomorphic Labs',
+    status: AiProviderStatus.notImplemented,
+    entryPoint: '(未実装 — AlphaFold 3 / IsoDDE 創薬 AI)',
+    note: 'Demis Hassabis Nobel 2024 / DeepMind spinout / Eli Lilly + Novartis \$3B 契約',
+  ),
+
+  // ===== AI 企業・vibe-coding (2026-04-21 追加) =====
+  AiProviderEntry(
+    id: 'sierra_ai',
+    displayName: 'Sierra',
+    status: AiProviderStatus.notImplemented,
+    entryPoint: '(未実装 — Agentic CX SaaS / Fortune 50 顧客)',
+    note: 'Bret Taylor (OpenAI 会長) + Clay Bavor 創業 / ARR \$150M / \$10B valuation',
+  ),
+  AiProviderEntry(
+    id: 'figure_ai',
+    displayName: 'Figure AI',
+    status: AiProviderStatus.notImplemented,
+    entryPoint: '(未実装 — Figure 03 人型ロボット / Helix VLA)',
+    note: 'Brett Adcock 創業 / Helix VLA 自社化 + BMW 工場 / \$1.9B 累計 / \$39B valuation',
+  ),
+  AiProviderEntry(
+    id: 'replit',
+    displayName: 'Replit',
+    status: AiProviderStatus.notImplemented,
+    entryPoint: '(未実装 — Agent 4 cloud IDE + 即本番 deploy)',
+    note: 'Agent 4 canvas / FY2025 \$240M (24×) / \$400M Series D Georgian / \$9B val',
+  ),
+  AiProviderEntry(
+    id: 'cursor',
+    displayName: 'Cursor',
+    status: AiProviderStatus.notImplemented,
+    entryPoint: '(未実装 — AI-native コードエディタ / Composer)',
+    note: 'Anysphere 製 AI コードエディタ / \$9B valuation (2025) / Claude + GPT-4o',
+  ),
+  AiProviderEntry(
+    id: 'lovable',
+    displayName: 'Lovable',
+    status: AiProviderStatus.notImplemented,
+    entryPoint: '(未実装 — AI full-stack web builder / GitHub 連携)',
+    note: 'Anton Osika 創業 / \$120M ARR / \$155M Series B \$1.7B val / Claude Sonnet',
+  ),
+  AiProviderEntry(
+    id: 'bolt_new',
+    displayName: 'Bolt.new',
+    status: AiProviderStatus.notImplemented,
+    entryPoint: '(未実装 — StackBlitz WebContainer AI builder)',
+    note: 'StackBlitz 製ブラウザ内 AI full-stack builder / WebContainer でゼロ設定',
   ),
 ];
 

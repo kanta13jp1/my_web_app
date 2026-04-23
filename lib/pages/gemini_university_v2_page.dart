@@ -903,6 +903,42 @@ final Map<String, _ProviderMeta> _providerMeta = {
     color: const Color(0xFF10B981),
     officialUrl: 'https://www.isomorphiclabs.com/',
   ),
+  'sierra_ai': _ProviderMeta(
+    name: 'Sierra',
+    emoji: '🏔️',
+    color: const Color(0xFF1E40AF),
+    officialUrl: 'https://sierra.ai/',
+  ),
+  'figure_ai': _ProviderMeta(
+    name: 'Figure AI',
+    emoji: '🤖',
+    color: const Color(0xFF111827),
+    officialUrl: 'https://figure.ai/',
+  ),
+  'replit': _ProviderMeta(
+    name: 'Replit',
+    emoji: '🌐',
+    color: const Color(0xFFF26207),
+    officialUrl: 'https://replit.com/',
+  ),
+  'cursor': _ProviderMeta(
+    name: 'Cursor',
+    emoji: '✏️',
+    color: const Color(0xFF000000),
+    officialUrl: 'https://cursor.com/',
+  ),
+  'lovable': _ProviderMeta(
+    name: 'Lovable',
+    emoji: '💜',
+    color: const Color(0xFF8B5CF6),
+    officialUrl: 'https://lovable.dev/',
+  ),
+  'bolt_new': _ProviderMeta(
+    name: 'Bolt.new',
+    emoji: '⚡',
+    color: const Color(0xFF0EA5E9),
+    officialUrl: 'https://bolt.new/',
+  ),
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1839,6 +1875,66 @@ final Map<String, _Quiz> _quizzes = {
       'ビジュアル GUI でノーコード・ローコードで LLM ワークフローを構築できる',
       'Python コードで細かい制御ができる',
       '無料プランのトークン上限が最も高い',
+    ],
+    correct: 1,
+  ),
+  'sierra_ai': _Quiz(
+    question: 'Sierra の創業者 Bret Taylor の前職は？',
+    options: [
+      'Google CEO',
+      'OpenAI 会長 / Salesforce 共同 CEO',
+      'Microsoft CTO',
+      'Meta AI 研究所長',
+    ],
+    correct: 1,
+  ),
+  'figure_ai': _Quiz(
+    question: 'Figure AI の Helix VLA とは何か？',
+    options: [
+      'クラウド推論 API',
+      '人型ロボット用の自社開発 Vision-Language-Action 基盤モデル',
+      'ロボットアームの物理制御チップ',
+      'OpenAI との共同開発モデル',
+    ],
+    correct: 1,
+  ),
+  'replit': _Quiz(
+    question: 'Replit FY2025 の年間売上はいくらか？',
+    options: [
+      r'$24M',
+      r'$240M (FY2024 $10M から 24× 成長)',
+      r'$2.4B',
+      r'$40M',
+    ],
+    correct: 1,
+  ),
+  'cursor': _Quiz(
+    question: 'Cursor の開発元 Anysphere が採用している主な LLM は？',
+    options: [
+      'GPT-4o のみ',
+      'Claude + GPT-4o のマルチモデル構成',
+      'Gemini Ultra のみ',
+      'Llama 3 のみ',
+    ],
+    correct: 1,
+  ),
+  'lovable': _Quiz(
+    question: 'Lovable が他の vibe-coding ツールと差別化している最大の特徴は？',
+    options: [
+      'ローカル IDE に統合されている',
+      'GitHub リポジトリに直接出力・実コードを所有できる',
+      '音声入力のみで操作できる',
+      '無料プランが無制限',
+    ],
+    correct: 1,
+  ),
+  'bolt_new': _Quiz(
+    question: 'Bolt.new を支える技術 WebContainer の特徴は？',
+    options: [
+      'Docker コンテナをクラウドで実行する',
+      'ブラウザ内で Node.js を完全実行しサーバーレスで開発できる',
+      'Wasm で iOS 上のみ動作する',
+      'GitHub Codespaces のラッパー',
     ],
     correct: 1,
   ),
@@ -4772,6 +4868,110 @@ Rodolphe Saadé (CMA CGM CEO) + Eric Schmidt (ex Google CEO) が供出。
 - AI大学: biology 軸空白 → 第 12 カテゴリ (biology/drug discovery) 候補
 - user-manual: AlphaFold 3 論文の日本語要約化 → 個人健康理解の raw 材料
 - Physical Intelligence (S23) との対比: 「物理世界 robot」 vs 「分子世界 protein」の foundation model 2 本柱
+''',
+  'sierra_ai': '''
+# Sierra — Bret Taylor が創った Agentic CX SaaS
+
+2023 年 Bret Taylor (OpenAI 会長 / Salesforce 共同 CEO) + Clay Bavor (ex-Google) 創業。
+企業向け AI カスタマーサポートエージェント。Fortune 50 の 40% が顧客。
+
+## 主要指標 (2026-04)
+- ARR **\$150M** (2026-01 時点)
+- Valuation **\$10B** (2025-09)
+- 7 四半期で \$0→\$100M — SaaS 史上最速クラス
+
+## 特徴
+- outcome-based pricing (解決件数課金)
+- マルチチャネル対応 (Web / 電話 / SMS / WhatsApp)
+- 外部 LLM 依存なし (自社 fine-tuned モデル)
+''',
+  'figure_ai': '''
+# Figure AI — 人型ロボット + Helix VLA
+
+2022 年 Brett Adcock 創業 (San Jose)。Figure 01→03 人型ロボット。
+2025 年に OpenAI partnership を終了し Helix VLA を自社開発。
+
+## 業績
+- 累計 **\$1.9B** 調達
+- Valuation **\$39B** (2026-01)
+- BMW Spartanburg 工場で 11 ヶ月 QA ライン稼働
+- BotQ 工場: 12K→50K→100K/年産計画
+
+## Helix VLA
+- Vision-Language-Action 基盤モデルを社内完結開発
+- GPT-4o / OpenAI API 依存脱却
+- White House debut (2025-10) + 政府 100K robot 4 年供給
+''',
+  'replit': '''
+# Replit — Agent 4 + cloud IDE + 即本番 deploy 3 点統合
+
+2016 年 Amjad Masad 創業。ブラウザ完結 cloud IDE → AI agent vibe-coding に pivot。
+non-programmer の「自然言語 → 動く web app」を 1 session で実現。
+
+## 業績 (2026-04)
+- FY2025 revenue **\$240M** (FY2024 \$10M から 24× 成長)
+- **150K+** paying developers / **1M+ MAU**
+- **\$400M Series D** Georgian 主導 / **\$9B valuation**
+
+## Agent 4 (2026-01)
+- digital canvas: multi-step planning + visual preview + live rollback
+- built-in E2E テスト + 1 click で `*.replit.app` 即本番
+''',
+  'cursor': '''
+# Cursor — codebase-aware AI コードエディタ
+
+Anysphere 製 AI-first コードエディタ。既存コードベースを理解して
+ファイル編集・コマンド実行を行う Composer (agent モード) が特徴。
+
+## 業績 (2026-04)
+- Valuation **\$9B** (2025)
+- MRR **\$100M+** (2025-Q4)
+- Claude Sonnet + GPT-4o マルチモデル routing
+
+## 特徴
+- **Tab Completion**: 複数行の predictive edit
+- **Composer**: 自律的なコードベース横断修正
+- **@ symbols**: ファイル・ドキュメント・Web を文脈として指定
+''',
+  'lovable': '''
+# Lovable — GitHub 連携 AI full-stack web builder
+
+2023 年 Anton Osika (スウェーデン) 創業。
+「誰でも \$0 から SaaS を作れる」をミッションに vibe-coding を民主化。
+
+## 業績 (2026)
+- ARR **\$120M** (2025-Q4)
+- **\$155M Series B** @ **\$1.7B** valuation
+- 月間 100K+ プロジェクト生成
+
+## 差別化
+- **GitHub 統合**: 生成コードを実 repo に push → Cursor 等で続きを編集可能
+- **コード所有**: vendor lock-in なし (Bolt.new と対比)
+- **Supabase ネイティブ統合**: DB + Auth をワンクリック接続
+- Claude Sonnet 主力モデル
+
+## 自分株式会社との比較
+- Lovable: ゼロから SaaS MVP (30 分 → 動く URL)
+- 自分株式会社: 6 部署統合ライフマネジメント (Flutter + Supabase)
+''',
+  'bolt_new': '''
+# Bolt.new — StackBlitz WebContainer AI full-stack builder
+
+StackBlitz が 2024 年リリース。WebContainer 技術でブラウザ内に
+完全な Node.js 実行環境を構築し、AI agent がコードを生成・実行する。
+
+## 特徴
+- **WebContainer**: サーバーレス・ゼロ設定でブラウザ内 Node.js 完全実行
+- **Netlify / Supabase** 即 deploy ボタン
+- OSS リポジトリ公開 (github.com/stackblitz/bolt.new)
+- Claude Sonnet + GPT-4o マルチ LLM
+
+## 比較
+| 観点 | Bolt.new | Lovable | Replit |
+|------|----------|---------|--------|
+| GitHub export | △ (DL のみ) | ✅ native | △ |
+| コード所有 | △ | ✅ | ✅ |
+| deploy | Netlify/SB | Netlify/SB | replit.app |
 ''',
 };
 

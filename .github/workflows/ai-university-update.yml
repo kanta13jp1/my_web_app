@@ -104,6 +104,12 @@ jobs:
           upsert_provider "cerebrium"   "https://www.cerebrium.ai/blog/rss.xml"               "Cerebrium"
           upsert_provider "magic_ai"    "https://magic.dev/blog/rss.xml"                      "Magic AI"
           upsert_provider "nous_research" "https://nousresearch.com/feed/"                    "Nous Research (Hermes 4 / Psyche)"
+          upsert_provider "sierra_ai"    "https://sierra.ai/blog/rss.xml"                    "Sierra (Bret Taylor)"
+          upsert_provider "figure_ai"    "https://figure.ai/news/rss.xml"                    "Figure AI (Figure 03 / Helix VLA)"
+          upsert_provider "replit"       "https://blog.replit.com/rss.xml"                   "Replit (Agent 4)"
+          upsert_provider "cursor"       "https://cursor.com/blog/rss.xml"                   "Cursor (Anysphere)"
+          upsert_provider "lovable"      "https://lovable.dev/blog/rss.xml"                  "Lovable (Anton Osika)"
+          upsert_provider "bolt_new"     "https://bolt.new/blog/rss.xml"                     "Bolt.new (StackBlitz)"
           # RSS廃止/URL無効 (静的seedコンテンツを維持):
           # anthropic, meta, x, deepseek, mistral, perplexity, groq, cohere, ibm, sakana, baidu, stability, core, cerebras, prover
           # black_forest_labs, liquid_ai, recraft, krea, tencent, bytedance, inception_labs, world_labs, runware, sambanova
