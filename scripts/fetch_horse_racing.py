@@ -287,61 +287,96 @@ class ShutubaParser(html.parser.HTMLParser):
 
 
 class ResultParser(html.parser.HTMLParser):
-    """結果ページ (result.html) のパーサー"""
+    """結果ページ (result.html) のパーサー (2026-04 HTML構造対応版)
+
+    実際のHTMLは以下の構造:
+      データ行: <tr ><td class="Result_Num"><div class="Rank">1</div>...
+                <td class="Horse_Info"><span class="Horse_Name"><a ...>馬名</a>
+      三連単:   <tr class="Tan3"><th>3連単</th>...<td class="Payout"><span>19,970円</span>
+    """
 
     def __init__(self):
         super().__init__()
-        self.results = {}  # place -> horse_name
+        self.results = {}       # place -> horse_name
         self.trifecta_paid = None
-        self._in_result_row = False
-        self._cur_row = {}
-        self._col_idx = 0
-        self._in_td = False
-        self._td_text = ""
-        self._pay_type = ""
+        self._in_result_row = False   # data row (class-less <tr>)
+        self._cur_place = None        # "1" / "2" / "3" within current row
+        self._in_result_num_td = False
+        self._in_rank_div = False
+        self._in_horse_info_td = False
+        self._in_horse_name_a = False
+        self._in_tan3_row = False     # <tr class="Tan3">
+        self._in_payout_td = False
+        self._in_payout_span = False
+        self._buf = ""
 
     def handle_starttag(self, tag, attrs):
         attr_dict = dict(attrs)
         cls = attr_dict.get("class", "")
-        if tag == "tr" and "Result_Num" in cls:
-            self._in_result_row = True
-            self._cur_row = {}
-            self._col_idx = 0
-        if self._in_result_row and tag == "td":
-            self._in_td = True
-            self._td_text = ""
-            self._col_idx += 1
-        if tag == "tr" and "Payout" in cls:
-            self._pay_type = ""
+
+        if tag == "tr":
+            # Data rows have no class; header/payment rows have a class
+            self._in_result_row = not cls.strip()
+            self._in_tan3_row = "Tan3" in cls
+            self._cur_place = None
+            self._in_result_num_td = False
+            self._in_horse_info_td = False
+
+        if tag == "td":
+            if "Result_Num" in cls and self._in_result_row:
+                self._in_result_num_td = True
+            if "Horse_Info" in cls and self._in_result_row:
+                self._in_horse_info_td = True
+            if "Payout" in cls and self._in_tan3_row:
+                self._in_payout_td = True
+
+        if tag == "div" and attr_dict.get("class") == "Rank" and self._in_result_num_td:
+            self._in_rank_div = True
+            self._buf = ""
+
+        if tag == "a" and self._in_horse_info_td and not self._in_horse_name_a:
+            self._in_horse_name_a = True
+            self._buf = ""
+
+        if tag == "span" and self._in_payout_td:
+            self._in_payout_span = True
+            self._buf = ""
 
     def handle_endtag(self, tag):
-        if tag == "td" and self._in_td:
-            self._in_td = False
-            t = self._td_text.strip()
-            if self._in_result_row:
-                col = self._col_idx
-                if col == 1:
-                    self._cur_row["place"] = t
-                elif col == 3:
-                    self._cur_row["horse_name"] = t
-        if tag == "tr" and self._in_result_row:
+        if tag == "tr":
             self._in_result_row = False
-            place = self._cur_row.get("place", "")
-            name = self._cur_row.get("horse_name", "")
-            if place in ("1", "2", "3") and name:
-                self.results[place] = name
+            self._in_tan3_row = False
+            self._cur_place = None
+            self._in_result_num_td = False
+            self._in_horse_info_td = False
+
+        if tag == "td":
+            self._in_result_num_td = False
+            self._in_horse_info_td = False
+            self._in_payout_td = False
+
+        if tag == "div" and self._in_rank_div:
+            self._in_rank_div = False
+            t = self._buf.strip()
+            if t.isdigit():
+                self._cur_place = t
+
+        if tag == "a" and self._in_horse_name_a:
+            self._in_horse_name_a = False
+            horse_name = self._buf.strip()
+            if horse_name and self._cur_place in ("1", "2", "3"):
+                self.results[self._cur_place] = horse_name
+
+        if tag == "span" and self._in_payout_span:
+            self._in_payout_span = False
+            self._in_payout_td = False
+            m = re.search(r"([\d,]+)円", self._buf)
+            if m and self.trifecta_paid is None:
+                self.trifecta_paid = int(m.group(1).replace(",", ""))
 
     def handle_data(self, data):
-        if self._in_td:
-            self._td_text += data
-        t = data.strip()
-        if "三連単" in t:
-            self._pay_type = "trifecta"
-        if self._pay_type == "trifecta" and re.search(r"[\d,]+円", t):
-            m = re.search(r"([\d,]+)円", t)
-            if m:
-                self.trifecta_paid = int(m.group(1).replace(",", ""))
-                self._pay_type = ""
+        if (self._in_rank_div or self._in_horse_name_a or self._in_payout_span):
+            self._buf += data
 
 
 
@@ -715,14 +750,24 @@ def fetch_entries(target_date: str):
 
 
 def fetch_results(target_date: str):
-    """JRA + NAR の scheduled レースの結果を取得して Supabase に保存"""
-    print(f"[INFO] {target_date} のレース結果を取得中...")
-    races = supabase_rest("GET", "horse_races", params={
-        "race_date": f"eq.{target_date}",
-        "status": "eq.scheduled",
-        "race_id_ext": "not.is.null",
-        "select": "id,race_id_ext,race_name,source",
-    })
+    """JRA + NAR の scheduled レースの結果を取得して Supabase に保存
+
+    過去7日間の未確定レース (status=scheduled) も対象にする。
+    当日に結果が確定しなかった場合、翌日以降の run で自動リトライされる。
+    """
+    from_date = (
+        datetime.date.fromisoformat(target_date) - datetime.timedelta(days=7)
+    ).isoformat()
+    print(f"[INFO] {from_date}〜{target_date} のレース結果を取得中...")
+    # supabase_rest に list of tuples を渡すことで同一カラムへの複数条件を実現
+    races = supabase_rest("GET", "horse_races", params=[
+        ("race_date", f"lte.{target_date}"),
+        ("race_date", f"gte.{from_date}"),
+        ("status", "eq.scheduled"),
+        ("race_id_ext", "not.is.null"),
+        ("select", "id,race_id_ext,race_name,source,race_date"),
+        ("order", "race_date.asc"),
+    ])
     if not races:
         print("[INFO] 対象レースなし")
         return
@@ -744,7 +789,8 @@ def fetch_results(target_date: str):
         parser.feed(result_html)
 
         if not (parser.results.get("1") and parser.results.get("2") and parser.results.get("3")):
-            print(f"  [SKIP] [{source.upper()}] {race['race_name']}: 結果未確定")
+            race_date_label = race.get("race_date", "")
+            print(f"  [SKIP] [{source.upper()}] {race_date_label} {race['race_name']}: 結果未確定")
             continue
 
         pred = supabase_rest("GET", "horse_predictions", params={
@@ -775,8 +821,9 @@ def fetch_results(target_date: str):
 
         mark = "○ 的中" if is_correct else "× 外れ"
         src_label = f"[{source.upper()}]"
+        race_date_label = race.get("race_date", "")
         print(
-            f"  [OK] {src_label} {race['race_name']}: {mark} "
+            f"  [OK] {src_label} {race_date_label} {race['race_name']}: {mark} "
             f"1着={parser.results.get('1')} "
             f"2着={parser.results.get('2')} "
             f"3着={parser.results.get('3')}"
