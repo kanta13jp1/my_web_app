@@ -62,6 +62,7 @@ import 'package:my_web_app/pages/ai_observability_page.dart';
 import 'package:my_web_app/pages/conveni_store_page.dart';
 import 'package:my_web_app/pages/ai_search_page.dart';
 import 'package:my_web_app/pages/edge_function_status_page.dart';
+import 'package:my_web_app/pages/edge_llm_playground_page.dart';
 import 'package:my_web_app/pages/election_management_dashboard.dart';
 import 'package:my_web_app/pages/election_victory_page.dart';
 import 'package:my_web_app/pages/template_marketplace_page.dart';
@@ -519,6 +520,11 @@ class MyApp extends StatelessWidget {
                 name: settings.name,
                 arguments: initialQuestion,
               ),
+            );
+          case '/edge-llm-playground':
+            return MaterialPageRoute(
+              builder: (_) => const EdgeLlmPlaygroundPage(),
+              settings: settings,
             );
           case '/philosophy':
             return MaterialPageRoute(

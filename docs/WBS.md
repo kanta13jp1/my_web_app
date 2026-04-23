@@ -315,3 +315,7 @@ WHERE title = 'ai-hub provider.chat 蜈ｨ蟇ｾ蠢・;
 - 対応内容: AI大学に `/ai-university-video` を追加し、教材テキストをもとに Hedra 動画レッスンを生成できるようにした。HomeカードとAI大学本体から遷移可能。
 - 実装補足: `ai-hub my_agent.chat(video)` に `title / voice / conversation_context` の pass-through を追加。
 - WBS DB反映: migration `20260424163000_wbs_codex_ai_university_video_lesson.sql`
+- 実担当タスク: `[追加要望] Edge FunctionでのLLM呼び出し`
+- 対応内容: `ai-hub` に `edge_llm.invoke` を追加し、system prompt / user prompt / context JSON / text・JSON応答形式をまとめて Edge Function 経由で実行できるようにした。Home から `Edge LLM Playground` を開いて試せる。
+- 実装補足: `edge_llm.invoke` は自動 tier ルーティングと observability 返却に対応し、JSON 指定時は `parsed_json` も返す。
+- WBS DB反映: migration `20260424174500_wbs_codex_edge_llm_invoke.sql`

@@ -548,6 +548,17 @@ function asNumber(value: unknown, fallback = 0): number {
   return fallback;
 }
 
+function providerTier(providerId: string): Tier | null {
+  for (const tier of TIER_ORDER) {
+    if (TIER_PROVIDERS[tier].includes(providerId)) return tier;
+  }
+  return null;
+}
+
+function stripMarkdownCodeFence(text: string): string {
+  return text.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "").trim();
+}
+
 function parseInlineImage(
   body: Record<string, unknown>,
 ): { image?: InlineImage; error?: string; status?: number } {
@@ -2990,6 +3001,222 @@ serve(async (req: Request) => {
           model: usedModel ?? PROVIDER_CONFIGS[usedProvider]?.defaultModel,
           status: "implemented",
           text: resultText,
+        });
+      }
+
+      case "edge_llm.invoke": {
+        const requestedTier = body.tier as Tier | undefined;
+        const providerId = asString(body.provider) || undefined;
+        const systemPrompt = asString(body.system_prompt);
+        const userPrompt = asString(body.user_prompt) ||
+          asString(body.prompt) ||
+          asString(body.message);
+        if (!userPrompt) {
+          return json({ error: "user_prompt required" }, 400);
+        }
+
+        const responseFormat = asString(body.response_format) === "json"
+          ? "json"
+          : "text";
+        const contextPayload = body.context_data ?? body.context ?? null;
+        const contextText = contextPayload == null
+          ? ""
+          : typeof contextPayload === "string"
+          ? contextPayload.trim()
+          : JSON.stringify(contextPayload, null, 2);
+        const userContentParts = [
+          "# User request",
+          userPrompt,
+        ];
+        if (contextText.length > 0) {
+          userContentParts.push(
+            "\n# Context data\n```json\n" + contextText + "\n```",
+          );
+        }
+        userContentParts.push(
+          "\n# Output instructions",
+          responseFormat === "json"
+            ? "Return valid JSON only. Do not add markdown fences or commentary."
+            : "Respond in concise Japanese plain text.",
+        );
+        const finalMessages = [];
+        if (systemPrompt.length > 0) {
+          finalMessages.push({
+            role: "system",
+            content: systemPrompt,
+          });
+        }
+        finalMessages.push({
+          role: "user",
+          content: userContentParts.join("\n"),
+        });
+
+        const requestStartedAt = performance.now();
+        const traceId = String(body.trace_id ?? crypto.randomUUID());
+        const sessionId = body.session_id != null
+          ? String(body.session_id)
+          : null;
+        const explicitModel = asString(body.model) || undefined;
+
+        let resultText: string | undefined;
+        let usedProvider: string | undefined;
+        let usedTier: Tier | undefined;
+        let usedModel: string | undefined;
+        let failureDetail: string | undefined;
+
+        if (providerId) {
+          const cfg = PROVIDER_CONFIGS[providerId];
+          if (!cfg) {
+            return json({
+              success: false,
+              status: "notImplemented",
+              message: `Provider "${providerId}" is not available in ai-hub`,
+            }, 400);
+          }
+          const apiKey = Deno.env.get(cfg.envKey) ?? "";
+          if (!apiKey) {
+            return json({
+              success: false,
+              status: "apiKeyRequired",
+              secret_needed: cfg.envKey,
+              message: `Supabase Secret ${cfg.envKey} is required`,
+            }, 503);
+          }
+          const result = await callSingleProvider(
+            providerId,
+            finalMessages,
+            explicitModel,
+          );
+          if (result.ok && result.text) {
+            resultText = result.text;
+            usedProvider = providerId;
+            usedTier = providerTier(providerId) ?? requestedTier ??
+              "performance";
+            usedModel = result.modelUsed;
+          } else {
+            failureDetail = result.error ?? "provider failed";
+          }
+        } else {
+          const startTierIndex = requestedTier
+            ? TIER_ORDER.indexOf(requestedTier)
+            : 0;
+          if (startTierIndex === -1) {
+            return json({ error: "invalid tier" }, 400);
+          }
+
+          outerLoop:
+          for (let ti = startTierIndex; ti < TIER_ORDER.length; ti++) {
+            const tier = TIER_ORDER[ti];
+            const providers = TIER_PROVIDERS[tier].filter((p) =>
+              p in PROVIDER_CONFIGS
+            );
+            for (const pid of providers) {
+              const result = await callSingleProvider(
+                pid,
+                finalMessages,
+                explicitModel,
+              );
+              if (result.ok && result.text) {
+                resultText = result.text;
+                usedProvider = pid;
+                usedTier = tier;
+                usedModel = result.modelUsed;
+                break outerLoop;
+              }
+            }
+          }
+          if (!resultText) {
+            failureDetail = "all tiers exhausted";
+          }
+        }
+
+        const latencyMs = Math.round(performance.now() - requestStartedAt);
+        const inputChars = finalMessages
+          .map((m) => typeof m.content === "string" ? m.content.length : 0)
+          .reduce((a, b) => a + b, 0);
+
+        if (!resultText || !usedProvider || !usedTier) {
+          try {
+            const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
+            await admin.from("ai_hub_chat_logs").insert({
+              provider: providerId ?? "all",
+              tier: requestedTier ?? "auto",
+              success: false,
+              latency_ms: latencyMs,
+              trace_id: traceId,
+              session_id: sessionId,
+              input_chars: inputChars,
+              error_message: failureDetail ?? "edge_llm.invoke failed",
+              action: "edge_llm.invoke",
+              status_code: 502,
+            });
+          } catch {
+            // ignore logging errors
+          }
+
+          return json({
+            success: false,
+            status: "providerFailed",
+            provider: providerId,
+            detail: failureDetail ?? "edge_llm.invoke failed",
+          }, 502);
+        }
+
+        const outputChars = resultText.length;
+        const estimatedCost = TIER_COST_USD_PER_1K[usedTier] *
+          (inputChars / 1000);
+        let parsedJson: unknown = null;
+        let parseError: string | undefined;
+        if (responseFormat === "json") {
+          try {
+            parsedJson = JSON.parse(stripMarkdownCodeFence(resultText));
+          } catch (error) {
+            parseError = String(error);
+          }
+        }
+
+        try {
+          const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
+          await admin.from("ai_hub_chat_logs").insert({
+            provider: usedProvider,
+            tier: usedTier,
+            success: true,
+            estimated_cost_usd: estimatedCost,
+            model: usedModel ?? null,
+            latency_ms: latencyMs,
+            trace_id: traceId,
+            session_id: sessionId,
+            input_chars: inputChars,
+            output_chars: outputChars,
+            action: "edge_llm.invoke",
+            status_code: 200,
+          });
+        } catch {
+          // ignore logging errors
+        }
+
+        return json({
+          success: true,
+          status: "implemented",
+          provider: usedProvider,
+          tier: usedTier,
+          model: usedModel ?? PROVIDER_CONFIGS[usedProvider]?.defaultModel,
+          text: resultText,
+          response_format: responseFormat,
+          parsed_json: parsedJson,
+          parse_error: parseError,
+          observability: {
+            provider: usedProvider,
+            model: usedModel ?? PROVIDER_CONFIGS[usedProvider]?.defaultModel,
+            latency_ms: latencyMs,
+            estimated_cost_usd: estimatedCost,
+            trace_id: traceId,
+            session_id: sessionId,
+            input_chars: inputChars,
+            output_chars: outputChars,
+            action: "edge_llm.invoke",
+            status_code: 200,
+          },
         });
       }
 

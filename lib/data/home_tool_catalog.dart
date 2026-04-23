@@ -22,6 +22,7 @@ import '../pages/danshari_page.dart';
 import '../pages/decision_check_page.dart';
 import '../pages/digest_queue_page.dart';
 import '../pages/edge_function_status_page.dart';
+import '../pages/edge_llm_playground_page.dart';
 import '../pages/election_strategy_page.dart';
 import '../pages/election_management_dashboard.dart';
 import '../pages/election_victory_page.dart';
@@ -2336,6 +2337,26 @@ List<HomeToolEntry> buildHomeToolCatalog({
         'サポート',
       ],
       onOpen: (context) => Navigator.of(context).pushNamed('/site-guide-ai'),
+    ),
+    HomeToolEntry(
+      id: 'edge-llm-playground',
+      sectionId: 'ai',
+      title: 'Edge LLM Playground',
+      subtitle:
+          'Edge Function 経由で LLM を呼び出し、system prompt・JSON context・応答形式をまとめて試す',
+      icon: Icons.memory_outlined,
+      color: const Color(0xFF0F766E),
+      keywords: const <String>[
+        'Edge Function',
+        'LLM',
+        'ai-hub',
+        'prompt',
+        'json',
+        'playground',
+        'AI',
+        'observability',
+      ],
+      onOpen: (context) => _pushPage(context, const EdgeLlmPlaygroundPage()),
     ),
     HomeToolEntry(
       id: 'my-skills',
