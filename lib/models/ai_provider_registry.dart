@@ -1193,14 +1193,16 @@ const List<AiProviderEntry> kAiProviderRegistry = [
     displayName: 'Hume AI',
     status: AiProviderStatus.notImplemented,
     entryPoint: '(未実装 — EVI WebSocket / Expression Measurement API・非OpenAI互換)',
-    note: r'感情知能 Voice AI (EVI 3 / EVI 4-mini) — $219M valuation / 2026-01 Google DeepMind acqui-hire',
+    note:
+        r'感情知能 Voice AI (EVI 3 / EVI 4-mini) — $219M valuation / 2026-01 Google DeepMind acqui-hire',
   ),
   AiProviderEntry(
     id: 'glean',
     displayName: 'Glean',
     status: AiProviderStatus.notImplemented,
     entryPoint: '(未実装 — Enterprise SaaS / Agents API・MCP Server・法人契約必須)',
-    note: r'企業 Work AI 検索 (100+ コネクタ / Work Knowledge Graph) — $7.2B valuation / $100M+ ARR',
+    note:
+        r'企業 Work AI 検索 (100+ コネクタ / Work Knowledge Graph) — $7.2B valuation / $100M+ ARR',
   ),
 ];
 
