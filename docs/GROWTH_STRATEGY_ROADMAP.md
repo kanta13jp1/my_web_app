@@ -15945,3 +15945,24 @@ CEO感 ミッション駆動 優しいmentor 6部署バランス 商品=ユー�
 
 ### Philosophy Alignment (9/9)
 CEO感 ミッション駆動 優しいmentor 6部署バランス 商品=ユーザー価値 資本=時間 資産負債バランス KPI=昨日の自分 ゴール=IPO/ウェルビーイング 9/9 all pass
+
+---
+
+## PS版#6 セッション25 — 2026-04-24
+
+**インスタンス**: PS#6 | **担当**: EF cleanup / horse_racing / バッチ処理
+
+### 実装サマリー
+
+- **EF source cleanup: 9本削除** (DEAD_LIST ∩ functions/ 完全消化)
+  - Deleted: ab-testing-manager, chat-messaging, poll-survey, pomodoro-timer, invoice-generator, note-comments, competitor-feature-sync, agent-department-manager, agent-performance-monitor
+  - S15-S25 累計: **38 EF source dirs 削除** / functions/ 97本 → 88本
+- **hub actions 追加**: tools-hub:poll.list / app-hub:billing.create_invoice
+- **Flutter page migrations**: pomodoro→tools-hub / poll→tools-hub / invoice→app-hub / competitor→enterprise-hub
+- **agent pages**: static placeholder (enterprise-hub 移行準備中)
+- **horse_racing**: 5連続 success 継続確認
+- commit: c75cfb01
+
+### Philosophy Alignment (Rule 22) — 7/9
+
+CEO感 ✅ ミッション駆動 ✅ 優しいmentor — 6部署バランス ✅ 商品=ユーザー価値 ✅ 資本=時間 ✅ BS原則 — KPI=昨日の自分 ✅ ゴール=IPO ✅
