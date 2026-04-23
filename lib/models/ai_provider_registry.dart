@@ -95,7 +95,7 @@ class AiProviderEntry {
   });
 }
 
-/// AI大学 登録プロバイダー全件のステータスカタログ (152社, 2026-04-24時点)
+/// AI大学 登録プロバイダー全件のステータスカタログ (154社, 2026-04-24時点)
 ///
 /// 実装済み: ai-assistant / ai-hub / ai-search に統合済みのもの
 /// 要APIキー: コード対応済みだが Supabase Secrets に追加が必要
@@ -1203,6 +1203,21 @@ const List<AiProviderEntry> kAiProviderRegistry = [
     entryPoint: '(未実装 — Enterprise SaaS / Agents API・MCP Server・法人契約必須)',
     note:
         r'企業 Work AI 検索 (100+ コネクタ / Work Knowledge Graph) — $7.2B valuation / $100M+ ARR',
+  ),
+  AiProviderEntry(
+    id: 'vapi',
+    displayName: 'Vapi',
+    status: AiProviderStatus.notImplemented,
+    entryPoint: 'https://vapi.ai/',
+    note: r'リアルタイム音声 AI エージェントインフラ — $0.05/分・500-800ms レイテンシ・1M 同時通話対応',
+  ),
+  AiProviderEntry(
+    id: 'e2b',
+    displayName: 'E2B',
+    status: AiProviderStatus.notImplemented,
+    entryPoint: 'https://e2b.dev/',
+    note:
+        r'AI エージェント向けコード実行サンドボックス — 200ms 起動・Fortune 100 の 88% 採用・$21M Series A',
   ),
 ];
 

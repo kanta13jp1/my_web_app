@@ -114,6 +114,8 @@ jobs:
           upsert_provider "windsurf"     "https://windsurf.com/blog/rss.xml"                 "Windsurf (旧 Codeium / Cascade)"
           upsert_provider "hume_ai"     "https://www.hume.ai/blog/rss.xml"                   "Hume AI (EVI / 感情知能 Voice AI)"
           upsert_provider "glean"       "https://www.glean.com/blog/rss.xml"                 "Glean (Enterprise Work AI)"
+          upsert_provider "vapi"        "https://vapi.ai/blog/rss.xml"                       "Vapi (Voice AI Platform)"
+          upsert_provider "e2b"         "https://e2b.dev/blog/rss.xml"                       "E2B (AI Agent Code Execution)"
 
           # RSS廃止/URL無効 (静的seedコンテンツを維持):
           # anthropic, meta, x, deepseek, mistral, perplexity, groq, cohere, ibm, sakana, baidu, stability, core, cerebras, prover
