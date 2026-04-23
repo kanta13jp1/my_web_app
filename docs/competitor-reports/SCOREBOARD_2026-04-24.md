@@ -36,7 +36,7 @@
 | 12 | **claude-cowork** | Anthropic公式AIエージェント | Computer Use Pro/Max 解禁継続 / **Opus 4.7 powered** (4/17〜) / Enterprise pricing $20/seat+usage | 🔴🔴 | 個人6部署 / Supabase永続 / 日本語first (3軸) | 20260420_claude_cowork_threat.md → VSCode+Win |
 | 13 | **jobcan** | 勤怠 | AI自動仕訳 2026-04-13追加済 | 🟡 | 個人向け勤怠 | 定常 watchlist |
 | 14 | **amazon** | EC/AWS | Nova 2 Lite ($0.30/$2.50M) / Nova Act (agent機能) / **ai-hub routing再考必要** | 🔴 | 個人LP / Claude採用 | 20260420_nova2_lite_integration.md → Win |
-| 15 | **google** | 検索/AI | **Gemini 3.1 Pro GA** / Gemma 4ファミリー API公開 / **Gemini Embedding 2 preview (マルチモーダル)** / Google Cloud $750M partner fund (4/22) / Chrome統合 + auto browse preview / **I/O 2026 5/19-20** | 🔴 | Flutter Web統合 + 日本語first | 20260424_google_gemini_embedding2.md → Win / 20260420_gemini_flash_lite_migration.md → Win |
+| 15 | **google** | 検索/AI | **Gemini 3.1 Pro GA** / Gemma 4ファミリー API公開 / **Gemini Embedding 2 preview (マルチモーダル)** / **Google Cloud Next '26 (4/22): Agentic Enterprise宣言 + Agent Marketplace** / $750M partner fund / Chrome統合 + auto browse preview / **I/O 2026 5/19-20** | 🔴 | Flutter Web統合 + 日本語first / **法人向けAgent集中 = 個人向けPoC差別化強化** | 20260424_google_gemini_embedding2.md → Win / 20260420_gemini_flash_lite_migration.md → Win |
 | 16 | **microsoft** | OS/AI | Azure Foundry 3 — 変化なし | 🟠 | Flutter Web軽量 vs 重量企業向け | 定常 watchlist |
 | 17 | **discord** | SNS/コミュニティ | 変化なし | 🟠 | 個人AI vs コミュニティAI | 定常 watchlist |
 | 18 | **line** | メッセージ (JP) | ¥750/月 無制限 (GPT-4o/4o-mini) / 機能narrow 5項目のみ / code interpreter/deep research/GPTs 全無し | 🟠 | Flutter Web + 6部署統合 vs 対話 + feature-narrow | LP訂正完了 (VSCode 4/24 db32be24) |
