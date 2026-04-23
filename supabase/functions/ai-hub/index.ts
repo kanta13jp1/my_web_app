@@ -1282,6 +1282,168 @@ async function _deleteItem(admin: SupabaseClient, source: string, userId: string
   if (error) throw new Error(error.message);
 }
 
+type NoteSearchIndexRow = {
+  note_id: number;
+  title: string | null;
+  content: string | null;
+  tags: string[] | null;
+  category_id: string | null;
+  note_updated_at: string | null;
+  text_rank: number | null;
+  vector_rank: number | null;
+  combined_rank: number | null;
+  match_reason: string | null;
+};
+
+function buildNoteSearchText(
+  title: string | null | undefined,
+  content: string | null | undefined,
+  tags: string[] | null | undefined,
+): string {
+  return [
+    title ?? "",
+    Array.isArray(tags) ? tags.join(" ") : "",
+    content ?? "",
+  ]
+    .join("\n")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function truncateForEmbedding(text: string, maxChars = 3500): string {
+  if (text.length <= maxChars) return text;
+  return text.slice(0, maxChars);
+}
+
+async function embedTextsWithGemini(texts: string[], apiKey: string): Promise<number[][]> {
+  if (texts.length === 0) return [];
+  const response = await fetch(
+    "https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-001:batchEmbedContents",
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-goog-api-key": apiKey,
+      },
+      body: JSON.stringify({
+        requests: texts.map((text) => ({
+          model: "models/gemini-embedding-001",
+          content: {
+            parts: [{ text }],
+          },
+        })),
+      }),
+    },
+  );
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Gemini embedding ${response.status}: ${errorText.slice(0, 500)}`);
+  }
+  const data = await response.json() as {
+    embeddings?: Array<{ values?: number[] }>;
+  };
+  return (data.embeddings ?? []).map((item) => item.values ?? []);
+}
+
+async function syncNoteSearchIndex(admin: SupabaseClient, userId: string): Promise<void> {
+  const { error } = await admin.rpc("sync_note_search_index_text", {
+    p_user_id: userId,
+  });
+  if (error) throw new Error(`sync_note_search_index_text failed: ${error.message}`);
+}
+
+async function embedPendingNoteSearchRows(
+  admin: SupabaseClient,
+  userId: string,
+  apiKey: string,
+  limit = 12,
+): Promise<number> {
+  const { data, error } = await admin
+    .from("note_search_index")
+    .select("note_id, title, content, tags")
+    .eq("user_id", userId)
+    .eq("is_archived", false)
+    .is("embedding", null)
+    .order("note_updated_at", { ascending: false })
+    .limit(limit);
+  if (error) throw new Error(`note_search_index load failed: ${error.message}`);
+
+  const rows = (data ?? []) as Array<{
+    note_id: number;
+    title: string | null;
+    content: string | null;
+    tags: string[] | null;
+  }>;
+  if (rows.length === 0) return 0;
+
+  const embeddingInputs = rows.map((row) =>
+    truncateForEmbedding(buildNoteSearchText(row.title, row.content, row.tags))
+  );
+  const vectors = await embedTextsWithGemini(embeddingInputs, apiKey);
+
+  await Promise.all(rows.map(async (row, index) => {
+    const vector = vectors[index];
+    if (!vector || vector.length === 0) return;
+    const { error: upsertError } = await admin.rpc("upsert_note_search_embedding", {
+      p_note_id: row.note_id,
+      p_embedding: vector,
+    });
+    if (upsertError) {
+      throw new Error(`upsert_note_search_embedding failed: ${upsertError.message}`);
+    }
+  }));
+
+  return rows.length;
+}
+
+async function searchIndexedNotes(
+  admin: SupabaseClient,
+  userId: string,
+  query: string,
+  limit: number,
+  queryEmbedding: number[] | null,
+): Promise<NoteSearchIndexRow[]> {
+  const { data, error } = await admin.rpc("search_note_index_hybrid", {
+    p_user_id: userId,
+    p_query: query,
+    p_limit: limit,
+    p_query_embedding: queryEmbedding,
+  });
+  if (error) throw new Error(`search_note_index_hybrid failed: ${error.message}`);
+  return (data ?? []) as NoteSearchIndexRow[];
+}
+
+async function fallbackTextSearch(
+  admin: SupabaseClient,
+  userId: string,
+  query: string,
+  limit: number,
+): Promise<NoteSearchIndexRow[]> {
+  const escaped = query.replaceAll("%", "\\%").replaceAll("_", "\\_").replaceAll(",", " ");
+  const { data, error } = await admin
+    .from("notes")
+    .select("id, title, content, tags, category_id, updated_at")
+    .eq("user_id", userId)
+    .eq("is_archived", false)
+    .or(`title.ilike.%${escaped}%,content.ilike.%${escaped}%`)
+    .order("updated_at", { ascending: false })
+    .limit(limit);
+  if (error) throw new Error(`notes fallback search failed: ${error.message}`);
+
+  return ((data ?? []) as Array<Record<string, unknown>>).map((row) => ({
+    note_id: Number(row.id ?? 0),
+    title: String(row.title ?? ""),
+    content: String(row.content ?? ""),
+    tags: Array.isArray(row.tags) ? row.tags.map((tag) => String(tag)) : [],
+    category_id: row.category_id == null ? null : String(row.category_id),
+    note_updated_at: row.updated_at == null ? null : String(row.updated_at),
+    text_rank: null,
+    vector_rank: null,
+    combined_rank: null,
+    match_reason: "text_fallback",
+  }));
+}
+
 async function callGemini(prompt: string, apiKey: string, image?: InlineImage): Promise<string> {
   const parts: Record<string, unknown>[] = [{ text: prompt }];
   if (image) {
@@ -1319,6 +1481,7 @@ serve(async (req: Request) => {
 
     // Actions that require authentication
     const authRequired = [
+      "search.query",
       "secretary.task", "secretary.history",
       "summarize.text",
       "agent.list", "agent.create", "agent.run",
@@ -1352,15 +1515,83 @@ serve(async (req: Request) => {
       }
 
       case "search.query": {
-        const geminiKey = Deno.env.get("GEMINI_API_KEY") ?? "";
-        if (!geminiKey) return json({ error: "GEMINI_API_KEY not configured" }, 503);
-        const prompt = `検索クエリ「${body.query}」に対して、関連する情報を5件列挙してください。JSON: {"results":[{"title":"...","summary":"...","relevance":0-100}]}`;
-        const text = await callGemini(prompt, geminiKey);
-        try {
-          return json({ success: true, query: body.query, ...JSON.parse(text.replace(/```json\n?|\n?```/g, "")) });
-        } catch {
-          return json({ success: true, text });
+        if (!userId) return json({ error: "Unauthorized" }, 401);
+        const query = String(body.query ?? "").trim();
+        const limit = Math.min(Math.max(Number(body.limit ?? 20), 1), 30);
+        if (!query) {
+          return json({
+            success: true,
+            query,
+            results: [],
+            totalResults: 0,
+            searchMode: "text_fallback",
+            explanation: "Empty query.",
+          });
         }
+
+        const geminiKey = Deno.env.get("GEMINI_API_KEY") ?? "";
+
+        try {
+          await syncNoteSearchIndex(admin, userId);
+        } catch (error) {
+          console.warn("search.query sync failed", error);
+        }
+
+        let queryEmbedding: number[] | null = null;
+        let searchMode = "text_fallback";
+
+        if (geminiKey) {
+          try {
+            await embedPendingNoteSearchRows(admin, userId, geminiKey);
+            const embeddings = await embedTextsWithGemini(
+              [truncateForEmbedding(query, 1200)],
+              geminiKey,
+            );
+            queryEmbedding = embeddings[0] ?? null;
+            if (queryEmbedding && queryEmbedding.length > 0) {
+              searchMode = "ai";
+            }
+          } catch (error) {
+            console.warn("search.query embedding failed", error);
+          }
+        }
+
+        let rows: NoteSearchIndexRow[] = [];
+        try {
+          rows = await searchIndexedNotes(admin, userId, query, limit, queryEmbedding);
+        } catch (error) {
+          console.warn("search.query indexed search failed", error);
+        }
+        if (rows.length === 0) {
+          rows = await fallbackTextSearch(admin, userId, query, limit);
+          searchMode = "text_fallback";
+        }
+
+        const results = rows.map((row) => ({
+          id: row.note_id,
+          title: row.title ?? "",
+          content: row.content ?? "",
+          tags: row.tags ?? [],
+          category_id: row.category_id,
+          updated_at: row.note_updated_at,
+          search_score: row.combined_rank ?? row.text_rank ?? row.vector_rank ?? 0,
+          search_text_rank: row.text_rank ?? 0,
+          search_vector_rank: row.vector_rank ?? 0,
+          match_reason: row.match_reason ?? (queryEmbedding == null ? "text" : "hybrid"),
+        }));
+
+        const explanation = searchMode == "ai"
+          ? "Supabase pgvector + text similarity hybrid search"
+          : "Supabase text similarity fallback search";
+
+        return json({
+          success: true,
+          query,
+          results,
+          totalResults: results.length,
+          searchMode,
+          explanation,
+        });
       }
 
       case "tags.suggest": {
