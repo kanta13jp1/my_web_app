@@ -16234,3 +16234,15 @@ anon key で wbs.add_task 不可 (service role 必要)。次回 Win版/PS#1 で�
 8. KPI=昨日の自分 ✅ / 9. ゴール=IPO ✅
 
 ### commit: TBD
+
+---
+
+### Rule 17 WF health check (2026-04-24 08:20)
+- **全 WF success率**: Deploy: 0/6→1/7 ✅ / claude-agent-review: 0/5→修正中
+- **Deploy 失敗原因**: flutter analyze エラー (gemini_university_v2_page.dart syntax / invoice+poll avoid_dynamic_calls / AiUniversityPage import) — PS#6 S26 (ada2500c) + 本 session が修正
+- **claude-agent-review.yml 失敗原因**: YAML literal block broken — bash multiline string (lines 74-87) がインデント 0 で YAML block 終了と誤認識 → 全 push で "workflow file issue" / 0 jobs → fe28ce47 で修正
+- **orphan branches**: blog-publish 0, cs-check 0, claude/* 3 (問題なし)
+- **修正済**: `ada2500c` (PS#6) + `fe28ce47` (本 session PS#1 S27)
+- **deploy 結果**: run 24863377325 (ada2500c) SUCCESS ✅ — 本番環境緑化
+
+### commit: fe28ce47
