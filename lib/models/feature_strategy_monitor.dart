@@ -195,6 +195,37 @@ class FeatureLifeCapitalSummary {
   bool get hasCoverage => featureCount > 0;
 }
 
+class FeatureLifeCapitalConsolidationLane {
+  final FeatureLifeCapitalResource resource;
+  final String label;
+  final String canonicalFeatureId;
+  final String canonicalFeatureName;
+  final List<String> featureIds;
+  final List<String> featureNames;
+  final int consolidationCandidateCount;
+  final int estimatedWasteMinutesSaved;
+  final String nextAction;
+  final KgiCsfKpiPlan plan;
+
+  const FeatureLifeCapitalConsolidationLane({
+    required this.resource,
+    required this.label,
+    required this.canonicalFeatureId,
+    required this.canonicalFeatureName,
+    required this.featureIds,
+    required this.featureNames,
+    required this.consolidationCandidateCount,
+    required this.estimatedWasteMinutesSaved,
+    required this.nextAction,
+    required this.plan,
+  });
+
+  int get featureCount => featureIds.length;
+  bool get hasFeatures => featureIds.isNotEmpty;
+  String get featureLabel =>
+      featureNames.isEmpty ? '未接続' : featureNames.join(' / ');
+}
+
 class FeatureStrategyFocusRecommendation {
   final FeatureLifeCapitalResource resource;
   final String label;
@@ -236,6 +267,7 @@ class FeatureStrategyReport {
   final List<FeatureStrategySignal> signals;
   final List<FeatureConsolidationCandidate> consolidationCandidates;
   final List<FeatureLifeCapitalSummary> lifeCapitalSummaries;
+  final List<FeatureLifeCapitalConsolidationLane> lifeCapitalConsolidationLanes;
   final FeatureStrategyFocusRecommendation? focusRecommendation;
   final KgiCsfKpiPlan portfolioPlan;
 
@@ -244,6 +276,7 @@ class FeatureStrategyReport {
     required this.signals,
     required this.consolidationCandidates,
     required this.lifeCapitalSummaries,
+    required this.lifeCapitalConsolidationLanes,
     required this.focusRecommendation,
     required this.portfolioPlan,
   });
@@ -254,6 +287,7 @@ class FeatureStrategyReport {
       signals: const <FeatureStrategySignal>[],
       consolidationCandidates: const <FeatureConsolidationCandidate>[],
       lifeCapitalSummaries: const <FeatureLifeCapitalSummary>[],
+      lifeCapitalConsolidationLanes: const <FeatureLifeCapitalConsolidationLane>[],
       focusRecommendation: null,
       portfolioPlan: const KgiCsfKpiPlan(
         domain: '全機能AI戦略',
@@ -275,6 +309,13 @@ class FeatureStrategyReport {
   int get consolidationWasteMinutesSaved => consolidationCandidates.fold<int>(
         0,
         (sum, candidate) => sum + candidate.estimatedWasteMinutesSaved,
+      );
+  int get lifeCapitalLaneCount =>
+      lifeCapitalConsolidationLanes.where((lane) => lane.hasFeatures).length;
+  int get lifeCapitalLaneWasteMinutesSaved =>
+      lifeCapitalConsolidationLanes.fold<int>(
+        0,
+        (sum, lane) => sum + lane.estimatedWasteMinutesSaved,
       );
   int get reviewDueCount => signals.where((signal) => signal.reviewDue).length;
   int get reviewOverdueCount =>
@@ -372,7 +413,7 @@ class FeatureStrategyAiReview {
       source: 'local-kpi-engine',
       isFallback: true,
       summary:
-          'AIレビュー待機中。${report.totalFeatures}機能をKGI/CSF/KPIで監視し、改善優先${report.improveCount}件、要観察${report.watchCount}件、統合候補${report.consolidationCount}件をローカル分析しています。$reasonText',
+          'AIレビュー待機中。${report.totalFeatures}機能をKGI/CSF/KPIで監視し、改善優先${report.improveCount}件、要観察${report.watchCount}件、代表導線${report.lifeCapitalLaneCount}資本、統合候補${report.consolidationCount}件をローカル分析しています。$reasonText',
     );
   }
 }

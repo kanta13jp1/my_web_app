@@ -56,6 +56,23 @@ void main() {
       hasLength(FeatureLifeCapitalResource.values.length),
     );
     expect(report.lifeCapitalCoverageRatio, greaterThan(0));
+    expect(
+      report.lifeCapitalConsolidationLanes,
+      hasLength(FeatureLifeCapitalResource.values.length),
+    );
+    final focusLane = report.lifeCapitalConsolidationLanes.singleWhere(
+      (lane) => lane.resource == FeatureLifeCapitalResource.focus,
+    );
+    expect(focusLane.canonicalFeatureId, 'task-board');
+    expect(
+      focusLane.featureIds,
+      containsAll(<String>['task-board', 'task-kanban']),
+    );
+    expect(focusLane.consolidationCandidateCount, 1);
+    expect(focusLane.estimatedWasteMinutesSaved, greaterThan(0));
+    expect(focusLane.nextAction, contains('導線迷い'));
+    expect(report.lifeCapitalLaneCount, greaterThan(0));
+    expect(report.lifeCapitalLaneWasteMinutesSaved, greaterThan(0));
     expect(report.highWasteReductionCount, greaterThan(0));
     expect(
       report.signals
@@ -119,6 +136,10 @@ void main() {
     expect(
       report.portfolioPlan.metrics.map((metric) => metric.kpi).join(' / '),
       contains('レビュー期限を守れている機能'),
+    );
+    expect(
+      report.portfolioPlan.metrics.map((metric) => metric.kpi).join(' / '),
+      contains('生命資本別の代表導線レーン'),
     );
   });
 }

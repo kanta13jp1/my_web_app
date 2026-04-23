@@ -65,6 +65,7 @@ void main() {
     expect(find.text('生命資本'), findsOneWidget);
     expect(find.text('浪費削減'), findsOneWidget);
     expect(find.text('レビュー期限'), findsOneWidget);
+    expect(find.text('代表導線'), findsOneWidget);
     expect(find.text('統合削減'), findsOneWidget);
     expect(find.text('今日の低ハードル1手'), findsWidgets);
     await tester.pump();
@@ -77,6 +78,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('完了済み'), findsOneWidget);
     expect(find.text('生命資本・浪費ゼロKPI'), findsOneWidget);
+    expect(find.text('生命資本別 代表導線レーン'), findsOneWidget);
     expect(find.text('AI戦略レビュー'), findsOneWidget);
     expect(find.text('AI改善キュー'), findsOneWidget);
     expect(find.text('全機能AI監視リスト'), findsOneWidget);

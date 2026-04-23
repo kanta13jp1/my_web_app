@@ -32,6 +32,10 @@ class FeatureStrategyMonitorService {
       sectionNamesById: sectionNamesById,
     );
     final lifeCapitalSummaries = _buildLifeCapitalSummaries(signals);
+    final lifeCapitalConsolidationLanes = _buildLifeCapitalConsolidationLanes(
+      signals: signals,
+      consolidationCandidates: consolidationCandidates,
+    );
     final focusRecommendation = _buildFocusRecommendation(
       signals: signals,
       lifeCapitalSummaries: lifeCapitalSummaries,
@@ -42,11 +46,13 @@ class FeatureStrategyMonitorService {
       signals: signals,
       consolidationCandidates: consolidationCandidates,
       lifeCapitalSummaries: lifeCapitalSummaries,
+      lifeCapitalConsolidationLanes: lifeCapitalConsolidationLanes,
       focusRecommendation: focusRecommendation,
       portfolioPlan: _buildPortfolioPlan(
         signals,
         consolidationCandidates,
         lifeCapitalSummaries,
+        lifeCapitalConsolidationLanes,
         focusRecommendation,
       ),
     );
@@ -658,6 +664,196 @@ class FeatureStrategyMonitorService {
     ];
   }
 
+  List<FeatureLifeCapitalConsolidationLane>
+      _buildLifeCapitalConsolidationLanes({
+    required List<FeatureStrategySignal> signals,
+    required List<FeatureConsolidationCandidate> consolidationCandidates,
+  }) {
+    final signalsById = {
+      for (final signal in signals) signal.featureId: signal,
+    };
+    return [
+      for (final resource in FeatureLifeCapitalResource.values)
+        _buildLifeCapitalConsolidationLane(
+          resource: resource,
+          signals: signals,
+          signalsById: signalsById,
+          consolidationCandidates: consolidationCandidates,
+        ),
+    ];
+  }
+
+  FeatureLifeCapitalConsolidationLane _buildLifeCapitalConsolidationLane({
+    required FeatureLifeCapitalResource resource,
+    required List<FeatureStrategySignal> signals,
+    required Map<String, FeatureStrategySignal> signalsById,
+    required List<FeatureConsolidationCandidate> consolidationCandidates,
+  }) {
+    final label = _lifeCapitalLabel(resource);
+    final resourceSignals = signals
+        .where((signal) => signal.lifeCapitalResource == resource)
+        .toList();
+    if (resourceSignals.isEmpty) {
+      return FeatureLifeCapitalConsolidationLane(
+        resource: resource,
+        label: label,
+        canonicalFeatureId: '',
+        canonicalFeatureName: '未接続',
+        featureIds: const <String>[],
+        featureNames: const <String>[],
+        consolidationCandidateCount: 0,
+        estimatedWasteMinutesSaved: 0,
+        nextAction: '$labelを守る既存機能を1つ選び、KGI/CSF/KPIへ接続する',
+        plan: KgiCsfKpiPlan(
+          domain: '$label / 代表導線レーン',
+          kgi: '$labelを浪費しない入口を1つに束ねる',
+          actualLabel: '0機能',
+          targetLabel: '1代表導線',
+          progress: 0,
+          metrics: <KgiCsfKpiMetric>[
+            KgiCsfKpiMetric.number(
+              csf: '代表導線を作る',
+              kpi: '接続済み機能',
+              actual: 0,
+              target: 1,
+              unit: '機能',
+            ),
+          ],
+        ),
+      );
+    }
+
+    final resourceIds =
+        resourceSignals.map((signal) => signal.featureId).toSet();
+    final resourceCandidates = consolidationCandidates
+        .where((candidate) => candidate.featureIds.any(resourceIds.contains))
+        .toList();
+    final laneFeatureIds = <String>{};
+    for (final candidate in resourceCandidates) {
+      for (final featureId in candidate.featureIds) {
+        if (resourceIds.contains(featureId)) {
+          laneFeatureIds.add(featureId);
+        }
+      }
+    }
+    final rankedSignals = [...resourceSignals]..sort((a, b) {
+        final byProgress = b.progress.compareTo(a.progress);
+        if (byProgress != 0) return byProgress;
+        final byUsage = b.recentUsageScore.compareTo(a.recentUsageScore);
+        if (byUsage != 0) return byUsage;
+        return a.featureName.compareTo(b.featureName);
+      });
+    final canonicalSignal = _canonicalSignalForLane(
+      rankedSignals: rankedSignals,
+      laneFeatureIds: laneFeatureIds,
+      resourceIds: resourceIds,
+      resourceCandidates: resourceCandidates,
+      signalsById: signalsById,
+    );
+    laneFeatureIds.add(canonicalSignal.featureId);
+
+    final featureIds = laneFeatureIds.toList(growable: false)..sort();
+    final featureNames = featureIds
+        .map((featureId) => signalsById[featureId]?.featureName ?? featureId)
+        .toList(growable: false);
+    final estimatedWasteMinutesSaved = resourceCandidates.fold<int>(
+      0,
+      (sum, candidate) => sum + candidate.estimatedWasteMinutesSaved,
+    );
+    final improvementCount = resourceSignals
+        .where((signal) => signal.status != FeatureStrategyStatus.onTrack)
+        .length;
+    final laneCoverageProgress =
+        (featureIds.length / resourceSignals.length).clamp(0, 1).toDouble();
+    final savedProgress =
+        (estimatedWasteMinutesSaved / 15).clamp(0, 1).toDouble();
+    final stableProgress =
+        ((resourceSignals.length - improvementCount) / resourceSignals.length)
+            .clamp(0, 1)
+            .toDouble();
+    final progress = _averageProgress(
+      canonicalSignal.progress,
+      laneCoverageProgress,
+      resourceCandidates.isEmpty ? 0.5 : 1,
+      savedProgress,
+      stableProgress,
+    );
+    final candidateCount = resourceCandidates.length;
+    final nextAction = candidateCount == 0
+        ? '$labelは${canonicalSignal.featureName}を代表入口として固定し、他機能はこのKGI/CSF/KPIのサブ導線として扱う'
+        : '$labelは${canonicalSignal.featureName}へ${featureNames.join(' / ')}を束ね、導線迷いを$estimatedWasteMinutesSaved分削減する';
+
+    return FeatureLifeCapitalConsolidationLane(
+      resource: resource,
+      label: label,
+      canonicalFeatureId: canonicalSignal.featureId,
+      canonicalFeatureName: canonicalSignal.featureName,
+      featureIds: featureIds,
+      featureNames: featureNames,
+      consolidationCandidateCount: candidateCount,
+      estimatedWasteMinutesSaved: estimatedWasteMinutesSaved,
+      nextAction: nextAction,
+      plan: KgiCsfKpiPlan(
+        domain: '$label / 代表導線レーン',
+        kgi: '$labelを浪費しない入口を${canonicalSignal.featureName}へ集約する',
+        actualLabel: '${featureIds.length}/${resourceSignals.length}機能',
+        targetLabel: '1代表導線',
+        progress: progress,
+        metrics: <KgiCsfKpiMetric>[
+          KgiCsfKpiMetric.number(
+            csf: '代表導線の固定',
+            kpi: '代表機能の選定',
+            actual: 1,
+            target: 1,
+            unit: '件',
+          ),
+          KgiCsfKpiMetric.number(
+            csf: '重複導線の圧縮',
+            kpi: '代表レーンに束ねた機能',
+            actual: featureIds.length,
+            target: resourceSignals.length,
+            unit: '機能',
+          ),
+          KgiCsfKpiMetric.number(
+            csf: '生命資本の浪費削減',
+            kpi: '導線迷い削減の見込み時間',
+            actual: estimatedWasteMinutesSaved,
+            target: math.max(15, estimatedWasteMinutesSaved),
+            unit: '分',
+          ),
+          KgiCsfKpiMetric.number(
+            csf: '低ハードル改善',
+            kpi: '改善優先を残さない機能',
+            actual: resourceSignals.length - improvementCount,
+            target: resourceSignals.length,
+            unit: '機能',
+          ),
+        ],
+      ),
+    );
+  }
+
+  FeatureStrategySignal _canonicalSignalForLane({
+    required List<FeatureStrategySignal> rankedSignals,
+    required Set<String> laneFeatureIds,
+    required Set<String> resourceIds,
+    required List<FeatureConsolidationCandidate> resourceCandidates,
+    required Map<String, FeatureStrategySignal> signalsById,
+  }) {
+    for (final candidate in resourceCandidates) {
+      final canonical = signalsById[candidate.canonicalFeatureId];
+      if (canonical != null && resourceIds.contains(canonical.featureId)) {
+        return canonical;
+      }
+    }
+    for (final signal in rankedSignals) {
+      if (laneFeatureIds.contains(signal.featureId)) {
+        return signal;
+      }
+    }
+    return rankedSignals.first;
+  }
+
   FeatureLifeCapitalSummary _buildLifeCapitalSummary({
     required FeatureLifeCapitalResource resource,
     required List<FeatureStrategySignal> signals,
@@ -907,6 +1103,7 @@ class FeatureStrategyMonitorService {
     List<FeatureStrategySignal> signals,
     List<FeatureConsolidationCandidate> consolidationCandidates,
     List<FeatureLifeCapitalSummary> lifeCapitalSummaries,
+    List<FeatureLifeCapitalConsolidationLane> lifeCapitalConsolidationLanes,
     FeatureStrategyFocusRecommendation? focusRecommendation,
   ) {
     final total = signals.length;
@@ -932,6 +1129,13 @@ class FeatureStrategyMonitorService {
     final consolidationSavedMinutes = consolidationCandidates.fold<int>(
       0,
       (sum, candidate) => sum + candidate.estimatedWasteMinutesSaved,
+    );
+    final lifeCapitalLaneCount =
+        lifeCapitalConsolidationLanes.where((lane) => lane.hasFeatures).length;
+    final lifeCapitalLaneWasteSavedMinutes =
+        lifeCapitalConsolidationLanes.fold<int>(
+      0,
+      (sum, lane) => sum + lane.estimatedWasteMinutesSaved,
     );
     final coveredLifeCapitalCount =
         lifeCapitalSummaries.where((summary) => summary.hasCoverage).length;
@@ -1003,6 +1207,20 @@ class FeatureStrategyMonitorService {
           actual: coveredLifeCapitalCount,
           target: FeatureLifeCapitalResource.values.length,
           unit: '資本',
+        ),
+        KgiCsfKpiMetric.number(
+          csf: '生命資本別に抽象化する',
+          kpi: '生命資本別の代表導線レーン',
+          actual: lifeCapitalLaneCount,
+          target: FeatureLifeCapitalResource.values.length,
+          unit: '資本',
+        ),
+        KgiCsfKpiMetric.number(
+          csf: '生命資本別に抽象化する',
+          kpi: '代表レーンで減らせる導線迷い時間',
+          actual: lifeCapitalLaneWasteSavedMinutes,
+          target: math.max(15, lifeCapitalLaneWasteSavedMinutes),
+          unit: '分',
         ),
         KgiCsfKpiMetric.number(
           csf: '低ハードルから習慣化する',

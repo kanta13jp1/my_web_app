@@ -20,6 +20,8 @@ class FeatureStrategyDailySnapshot {
   final int reviewCadenceCompliancePercent;
   final int consolidationCount;
   final int consolidationWasteMinutesSaved;
+  final int lifeCapitalLaneCount;
+  final int lifeCapitalLaneWasteMinutesSaved;
   final int highWasteReductionCount;
   final String focusFeatureId;
   final String focusResource;
@@ -48,6 +50,8 @@ class FeatureStrategyDailySnapshot {
     required this.reviewCadenceCompliancePercent,
     required this.consolidationCount,
     required this.consolidationWasteMinutesSaved,
+    required this.lifeCapitalLaneCount,
+    required this.lifeCapitalLaneWasteMinutesSaved,
     required this.highWasteReductionCount,
     required this.focusFeatureId,
     required this.focusResource,
@@ -91,6 +95,8 @@ class FeatureStrategyDailySnapshot {
           (report.reviewCadenceComplianceRatio * 100).round(),
       consolidationCount: report.consolidationCount,
       consolidationWasteMinutesSaved: report.consolidationWasteMinutesSaved,
+      lifeCapitalLaneCount: report.lifeCapitalLaneCount,
+      lifeCapitalLaneWasteMinutesSaved: report.lifeCapitalLaneWasteMinutesSaved,
       highWasteReductionCount: report.highWasteReductionCount,
       focusFeatureId: focus?.featureId ?? '',
       focusResource: focus?.resource.name ?? '',
@@ -135,6 +141,9 @@ class FeatureStrategyDailySnapshot {
       consolidationCount: _readInt(json['consolidationCount']),
       consolidationWasteMinutesSaved:
           _readInt(json['consolidationWasteMinutesSaved']),
+      lifeCapitalLaneCount: _readInt(json['lifeCapitalLaneCount']),
+      lifeCapitalLaneWasteMinutesSaved:
+          _readInt(json['lifeCapitalLaneWasteMinutesSaved']),
       highWasteReductionCount: _readInt(json['highWasteReductionCount']),
       focusFeatureId: '${json['focusFeatureId'] ?? ''}',
       focusResource: '${json['focusResource'] ?? ''}',
@@ -170,6 +179,9 @@ class FeatureStrategyDailySnapshot {
       'consolidationCount': row['consolidation_count'],
       'consolidationWasteMinutesSaved':
           row['consolidation_waste_minutes_saved'],
+      'lifeCapitalLaneCount': row['life_capital_lane_count'],
+      'lifeCapitalLaneWasteMinutesSaved':
+          row['life_capital_lane_waste_minutes_saved'],
       'highWasteReductionCount': row['high_waste_reduction_count'],
       'focusFeatureId': row['focus_feature_id'],
       'focusResource': row['focus_resource'],
@@ -201,6 +213,8 @@ class FeatureStrategyDailySnapshot {
       reviewCadenceCompliancePercent: reviewCadenceCompliancePercent,
       consolidationCount: consolidationCount,
       consolidationWasteMinutesSaved: consolidationWasteMinutesSaved,
+      lifeCapitalLaneCount: lifeCapitalLaneCount,
+      lifeCapitalLaneWasteMinutesSaved: lifeCapitalLaneWasteMinutesSaved,
       highWasteReductionCount: highWasteReductionCount,
       focusFeatureId: focusFeatureId,
       focusResource: focusResource,
@@ -232,6 +246,8 @@ class FeatureStrategyDailySnapshot {
       'reviewCadenceCompliancePercent': reviewCadenceCompliancePercent,
       'consolidationCount': consolidationCount,
       'consolidationWasteMinutesSaved': consolidationWasteMinutesSaved,
+      'lifeCapitalLaneCount': lifeCapitalLaneCount,
+      'lifeCapitalLaneWasteMinutesSaved': lifeCapitalLaneWasteMinutesSaved,
       'highWasteReductionCount': highWasteReductionCount,
       'focusFeatureId': focusFeatureId,
       'focusResource': focusResource,
@@ -331,6 +347,9 @@ class SupabaseFeatureStrategyReportSnapshotRepository
         'consolidation_count': snapshot.consolidationCount,
         'consolidation_waste_minutes_saved':
             snapshot.consolidationWasteMinutesSaved,
+        'life_capital_lane_count': snapshot.lifeCapitalLaneCount,
+        'life_capital_lane_waste_minutes_saved':
+            snapshot.lifeCapitalLaneWasteMinutesSaved,
         'high_waste_reduction_count': snapshot.highWasteReductionCount,
         'focus_feature_id': snapshot.focusFeatureId,
         'focus_resource': snapshot.focusResource,
@@ -364,7 +383,9 @@ class SupabaseFeatureStrategyReportSnapshotRepository
           'ai_coverage_percent, life_capital_coverage_percent, '
           'review_due_count, review_overdue_count, '
           'review_cadence_compliance_percent, consolidation_count, '
-          'consolidation_waste_minutes_saved, high_waste_reduction_count, '
+          'consolidation_waste_minutes_saved, life_capital_lane_count, '
+          'life_capital_lane_waste_minutes_saved, '
+          'high_waste_reduction_count, '
           'focus_feature_id, focus_resource, focus_completed_days_last7, '
           'focus_deferred_days_last7, focus_streak_days, focus_habit_stable, '
           'priority_feature_ids, review_due_feature_ids, life_capital_scores, '

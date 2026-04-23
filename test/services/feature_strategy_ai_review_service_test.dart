@@ -19,6 +19,8 @@ void main() {
         expect(body['message'].toString(), contains('解放条件'));
         expect(body['message'].toString(), contains('同時に広げず'));
         expect(body['message'].toString(), contains('導線迷い削減見込み'));
+        expect(body['message'].toString(), contains('生命資本別代表導線'));
+        expect(body['message'].toString(), contains('生命資本別の代表導線レーン'));
         expect(body['message'].toString(), contains('action='));
         expect(body['message'].toString(), contains('レビュー期限到来'));
         expect(body['message'].toString(), contains('レビュー期限キュー'));

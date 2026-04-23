@@ -266,6 +266,14 @@ class _FeatureStrategyMonitorPanelState
                     dark: isDark,
                   ),
                   _SummaryTile(
+                    label: '代表導線',
+                    value:
+                        '${report.lifeCapitalLaneCount}/${FeatureLifeCapitalResource.values.length}',
+                    color: const Color(0xFF0D9488),
+                    width: width,
+                    dark: isDark,
+                  ),
+                  _SummaryTile(
                     label: '浪費削減',
                     value: '${report.highWasteReductionCount}',
                     color: const Color(0xFFF97316),
@@ -322,6 +330,12 @@ class _FeatureStrategyMonitorPanelState
           ],
           _LifeCapitalAccordion(
             summaries: report.lifeCapitalSummaries,
+            dark: isDark,
+            compact: isCompact,
+          ),
+          const SizedBox(height: 8),
+          _LifeCapitalLaneAccordion(
+            lanes: report.lifeCapitalConsolidationLanes,
             dark: isDark,
             compact: isCompact,
           ),
@@ -1115,6 +1129,180 @@ class _LifeCapitalRow extends StatelessWidget {
           const SizedBox(height: 8),
           KgiCsfKpiPanel(
             plan: summary.plan,
+            accentColor: color,
+            dense: true,
+            dark: dark,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _LifeCapitalLaneAccordion extends StatelessWidget {
+  final List<FeatureLifeCapitalConsolidationLane> lanes;
+  final bool dark;
+  final bool compact;
+
+  const _LifeCapitalLaneAccordion({
+    required this.lanes,
+    required this.dark,
+    required this.compact,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final border =
+        dark ? Colors.white.withValues(alpha: 0.10) : const Color(0xFFE5E7EB);
+    final titleColor = dark ? Colors.white : const Color(0xFF111827);
+    final subtitleColor =
+        dark ? Colors.white.withValues(alpha: 0.62) : const Color(0xFF64748B);
+    final activeCount = lanes.where((lane) => lane.hasFeatures).length;
+    final savedMinutes = lanes.fold<int>(
+      0,
+      (sum, lane) => sum + lane.estimatedWasteMinutesSaved,
+    );
+
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: border),
+      ),
+      child: Theme(
+        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+        child: ExpansionTile(
+          initiallyExpanded: true,
+          tilePadding: EdgeInsets.symmetric(
+            horizontal: compact ? 10 : 12,
+            vertical: compact ? 0 : 2,
+          ),
+          childrenPadding: EdgeInsets.fromLTRB(
+            compact ? 10 : 12,
+            0,
+            compact ? 10 : 12,
+            compact ? 10 : 12,
+          ),
+          leading: const Icon(Icons.alt_route, color: Color(0xFF0D9488)),
+          title: Text(
+            '生命資本別 代表導線レーン',
+            style: TextStyle(
+              color: titleColor,
+              fontSize: compact ? 13 : 14,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          subtitle: Text(
+            '$activeCount/6資本で代表導線を固定 / 迷い削減見込み$savedMinutes分',
+            style: TextStyle(
+              color: subtitleColor,
+              fontSize: compact ? 11 : 12,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          children: [
+            for (final lane in lanes) ...[
+              _LifeCapitalLaneRow(
+                lane: lane,
+                dark: dark,
+                compact: compact,
+              ),
+              if (lane != lanes.last) const SizedBox(height: 8),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _LifeCapitalLaneRow extends StatelessWidget {
+  final FeatureLifeCapitalConsolidationLane lane;
+  final bool dark;
+  final bool compact;
+
+  const _LifeCapitalLaneRow({
+    required this.lane,
+    required this.dark,
+    required this.compact,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final textColor = dark ? Colors.white : const Color(0xFF0F172A);
+    final subColor =
+        dark ? Colors.white.withValues(alpha: 0.68) : const Color(0xFF64748B);
+    final color = _lifeCapitalColor(lane.resource);
+
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(compact ? 10 : 12),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: dark ? 0.14 : 0.06),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: color.withValues(alpha: 0.16)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Wrap(
+            spacing: 8,
+            runSpacing: 6,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              Text(
+                lane.label,
+                style: TextStyle(
+                  color: textColor,
+                  fontSize: compact ? 13 : 14,
+                  fontWeight: FontWeight.w800,
+                  height: 1.35,
+                ),
+              ),
+              _StatusPill(
+                label: lane.canonicalFeatureName,
+                color: color,
+                dark: dark,
+              ),
+              _StatusPill(
+                label: '${lane.featureCount}機能',
+                color: const Color(0xFF2563EB),
+                dark: dark,
+              ),
+              _StatusPill(
+                label: '統合候補 ${lane.consolidationCandidateCount}',
+                color: const Color(0xFF7C3AED),
+                dark: dark,
+              ),
+              _StatusPill(
+                label: '${lane.estimatedWasteMinutesSaved}分削減',
+                color: const Color(0xFF9333EA),
+                dark: dark,
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            lane.hasFeatures ? '対象: ${lane.featureLabel}' : '対象機能が未接続です',
+            style: TextStyle(
+              color: subColor,
+              fontSize: compact ? 11 : 12,
+              fontWeight: FontWeight.w700,
+              height: 1.45,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            lane.nextAction,
+            style: TextStyle(
+              color: textColor,
+              fontSize: compact ? 11 : 12,
+              fontWeight: FontWeight.w800,
+              height: 1.45,
+            ),
+          ),
+          const SizedBox(height: 8),
+          KgiCsfKpiPanel(
+            plan: lane.plan,
             accentColor: color,
             dense: true,
             dark: dark,

@@ -57,6 +57,7 @@ void main() {
     expect(summary.latest!.totalFeatures, 3);
     expect(summary.latest!.priorityFeatureIds, isNotEmpty);
     expect(summary.latest!.reviewDueCount, greaterThanOrEqualTo(0));
+    expect(summary.latest!.lifeCapitalLaneCount, greaterThan(0));
     expect(summary.latest!.focusCompletedDaysLast7, 2);
     expect(repository.snapshots, hasLength(2));
   });

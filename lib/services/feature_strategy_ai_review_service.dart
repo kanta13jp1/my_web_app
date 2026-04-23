@@ -71,6 +71,14 @@ class FeatureStrategyAiReviewService {
           '進捗=${(summary.averageProgress * 100).round()}%, '
           '詰まり=${summary.bottleneckFeatureName}';
     }).join('\n');
+    final lifeCapitalLaneLines =
+        report.lifeCapitalConsolidationLanes.map((lane) {
+      return '- ${lane.label}: 代表=${lane.canonicalFeatureName}, '
+          '束ねる=${lane.featureCount}機能, '
+          '統合候補=${lane.consolidationCandidateCount}, '
+          '削減見込み=${lane.estimatedWasteMinutesSaved}分, '
+          'next=${lane.nextAction}';
+    }).join('\n');
     final focus = report.focusRecommendation;
     final focusLine = focus == null
         ? '未選定'
@@ -97,8 +105,10 @@ class FeatureStrategyAiReviewService {
 レビュー期限超過: ${report.reviewOverdueCount}
 レビュー期限遵守率: ${(report.reviewCadenceComplianceRatio * 100).round()}%
 全体KGI進捗: ${(report.portfolioPlan.displayProgress * 100).round()}%
-生命資本カバー: ${(report.lifeCapitalCoverageRatio * 100).round()}%
-浪費削減高スコア機能: ${report.highWasteReductionCount}
+  生命資本カバー: ${(report.lifeCapitalCoverageRatio * 100).round()}%
+  生命資本別代表導線: ${report.lifeCapitalLaneCount}/${FeatureLifeCapitalResource.values.length}資本
+  代表導線による迷い削減見込み: ${report.lifeCapitalLaneWasteMinutesSaved}分
+  浪費削減高スコア機能: ${report.highWasteReductionCount}
 低ハードル完了(7日): ${report.focusActionsCompletedLast7}
 低ハードル観察(7日): ${report.focusActionsDeferredLast7}
 選定1手の継続日数: ${report.focusActionStreakDays}
@@ -106,10 +116,13 @@ class FeatureStrategyAiReviewService {
 セクション別:
 $sectionLines
 
-生命資本別:
-$lifeCapitalLines
+  生命資本別:
+  $lifeCapitalLines
+  
+  生命資本別の代表導線レーン:
+  $lifeCapitalLaneLines
 
-今日の低ハードル1手:
+  今日の低ハードル1手:
 $focusLine
 
 改善優先キュー:
