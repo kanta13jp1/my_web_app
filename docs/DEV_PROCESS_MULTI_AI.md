@@ -204,3 +204,232 @@ notebooklm ask "Edge Function設計方針の経緯"
 | GHA schedule Claude依存ワークフロー中 fallback実装済み比率 | 80%+ | 12.5% (1/8) |
 | EF Claude依存中 fallback実装済み比率 | 60%+ | 0% |
 | 月次 Claude token 消費量削減 | -30% | 未測定 |
+
+---
+
+## 8. Slack 統合 — 非同期通知 + 緊急連絡バックアップ (Win版#132 part 4 追記)
+
+> **発端**: Anthropic outage 時、cross-instance-pr 作成 (Claude 依存) 不能 = 10 インスタンス間の連絡手段自体が Claude 経由に集中。Claude 独立な非同期連絡 channel が必要。
+
+### 8-1. Slack が担う 4 つの役割
+
+| 役割 | 契機 | 実装 |
+|------|------|------|
+| **A. quota alert** | `ai_circuit_breaker.state` が closed→open | Supabase trigger → `core-hub:slack.notify` → Incoming Webhook |
+| **B. WF failure 通知** | deploy-prod / scheduled task fail | 既存 `workflow-failure-handler.yml` 拡張 |
+| **C. cross-instance 非同期 handoff** | Claude outage 時の緊急 handoff | 手動 post or GHA `gh issue` 経由で投稿 |
+| **D. daily digest** | 毎朝 08:00 JST | Supabase `schedule-daily-digest` EF → Slack |
+
+### 8-2. Slack Channel 構成 (推奨)
+
+| Channel | 目的 | 投稿元 |
+|---------|------|--------|
+| `#jibun-quota` | Claude / OpenAI / Gemini quota 状態変化のみ | Supabase trigger |
+| `#jibun-ci` | GHA workflow 失敗通知 | workflow-failure-handler |
+| `#jibun-daily` | 毎朝のメトリクス digest | schedule-daily-digest EF |
+| `#jibun-handoff` | インスタンス間の非同期 handoff | 手動 post / GHA |
+| `#jibun-alerts` | 本番障害・P0/P1 | health-check EF |
+
+### 8-3. 実装ステップ (ユーザー手動 + Win版 EF 追加)
+
+```bash
+# 1. Slack Workspace で Incoming Webhook app 作成
+#    https://api.slack.com/messaging/webhooks
+#    → Webhook URL 取得 (例: https://hooks.slack.com/services/T.../B.../xxx)
+
+# 2. Supabase Secrets + GitHub Secrets に 3 つ追加
+supabase secrets set SLACK_WEBHOOK_URL="https://hooks.slack.com/services/..."
+supabase secrets set SLACK_WEBHOOK_QUOTA="https://hooks.slack.com/services/..."
+supabase secrets set SLACK_WEBHOOK_CI="https://hooks.slack.com/services/..."
+gh secret set SLACK_WEBHOOK_URL SLACK_WEBHOOK_QUOTA SLACK_WEBHOOK_CI
+
+# 3. core-hub に slack.notify action 追加 (Win版 Backlog)
+# 4. ai_circuit_breaker → Slack post trigger 作成 (Win版 Backlog)
+```
+
+### 8-4. core-hub:slack.notify action (設計 / 未実装)
+
+```typescript
+// supabase/functions/core-hub/index.ts
+case 'slack.notify': {
+  const { channel = 'default', text, blocks } = payload;
+  const webhookEnv = {
+    'default': 'SLACK_WEBHOOK_URL',
+    'quota':   'SLACK_WEBHOOK_QUOTA',
+    'ci':      'SLACK_WEBHOOK_CI',
+  }[channel] ?? 'SLACK_WEBHOOK_URL';
+
+  const url = Deno.env.get(webhookEnv);
+  if (!url) return jsonResponse({ success: false, error: 'webhook not configured' }, 500);
+
+  const resp = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(blocks ? { blocks } : { text }),
+  });
+  return jsonResponse({ success: resp.ok, status: resp.status });
+}
+```
+
+### 8-5. Supabase trigger: circuit breaker OPEN で Slack 通知 (設計 / 未実装)
+
+```sql
+CREATE OR REPLACE FUNCTION notify_circuit_breaker_open()
+RETURNS trigger LANGUAGE plpgsql AS $fn$
+BEGIN
+  IF NEW.state = 'open' AND (OLD.state IS NULL OR OLD.state = 'closed') THEN
+    PERFORM net.http_post(
+      url := current_setting('app.settings.supabase_url') || '/functions/v1/core-hub',
+      headers := jsonb_build_object('Authorization', 'Bearer ' || current_setting('app.settings.service_role_key')),
+      body := jsonb_build_object(
+        'action', 'slack.notify',
+        'channel', 'quota',
+        'text', format('🚨 %s quota OPEN at %s (expires: %s / reason: %s)',
+          NEW.provider, NEW.opened_at, NEW.expires_at, NEW.reason)
+      )
+    );
+  END IF;
+  RETURN NEW;
+END;
+$fn$;
+
+CREATE TRIGGER ai_circuit_breaker_notify
+  AFTER UPDATE ON public.ai_circuit_breaker
+  FOR EACH ROW EXECUTE FUNCTION notify_circuit_breaker_open();
+```
+
+### 8-6. Fallback: Slack 自体が停止したら?
+
+- **Slack outage** (発生頻度 <1 回/年): Discord webhook を secondary channel として併設推奨
+- **webhook URL 紛失**: `.env.local` + 1Password に複製保存 (Secrets 一元管理 + 二重化)
+
+---
+
+## 9. Notion 統合 — human-readable mirror (Claude 不使用で閲覧可能) (Win版#132 part 4 追記)
+
+> **発端**: Anthropic outage 時、「今日の WBS は?」「前回の memory は?」をユーザーが確認する手段が Claude 経由のみに集中。Claude 不使用でも閲覧可能な mirror が必要。
+
+### 9-1. Notion が担う 3 つの役割
+
+| 役割 | 元データ | 同期方法 |
+|------|---------|---------|
+| **A. ROADMAP mirror** | `docs/GROWTH_STRATEGY_ROADMAP.md` | GHA cron (1h 毎) → Notion API push |
+| **B. WBS mirror** | Supabase `wbs_tasks` テーブル | `schedule-hub:notion.sync_wbs` EF → Notion Database upsert |
+| **C. memory/ index mirror** | `memory/MEMORY.md` | GHA cron (毎朝) → Notion page replace |
+
+### 9-2. 既存 Notion AI との棲み分け
+
+- **既存 Notion AI** (5/4 課金開始): Notion 社側の AI (草案作成・文書作成)
+- **新 Notion mirror**: 自分株式会社側から Notion に**書き込む** (Notion = 単なる DB)
+
+→ Notion AI 課金有無に関わらず使える (base plan で十分)。
+
+### 9-3. Notion Database 構成
+
+```
+Workspace: 自分株式会社 mirror
+  ├── 📄 Page: ROADMAP (long-form / replace 全文)
+  ├── 🗂 Database: WBS Tasks
+  │     Properties: id (text) / title (text) / instance (select) /
+  │                 status (select) / progress (number) / deadline (date) /
+  │                 updated_at (datetime)
+  ├── 🗂 Database: Memory Index
+  │     Properties: filename / type (feedback_success/correction/project) /
+  │                 timestamp / description (rich_text)
+  └── 📄 Page: Today's Digest (毎朝 replace)
+```
+
+### 9-4. 実装ステップ (ユーザー手動 + Win版 EF 追加)
+
+```bash
+# 1. Notion API token 取得 (https://www.notion.so/my-integrations)
+#    - Internal Integration 作成 → "Read + Update + Insert content" 権限
+#    - Token = secret_xxx
+
+# 2. Workspace に手動で Database/Page 作成
+#    - "自分株式会社 mirror" 階層
+#    - 3 つの DB/Page を作成 → integration を "Connections" で invite
+#    - 各 DB の ID (URL から 32 文字 hash) を控える
+
+# 3. Supabase Secrets + GitHub Secrets に追加
+supabase secrets set NOTION_API_TOKEN="secret_xxx"
+supabase secrets set NOTION_WBS_DATABASE_ID="xxx..."
+supabase secrets set NOTION_MEMORY_DATABASE_ID="xxx..."
+supabase secrets set NOTION_ROADMAP_PAGE_ID="xxx..."
+
+# 4. schedule-hub に notion.sync_wbs action 追加 (Win版 Backlog)
+# 5. GHA cron 1h 毎に notion.sync_roadmap 呼び出し (Win版 Backlog)
+```
+
+### 9-5. schedule-hub:notion.sync_wbs action (設計 / 未実装)
+
+```typescript
+// supabase/functions/schedule-hub/index.ts
+case 'notion.sync_wbs': {
+  const token = Deno.env.get('NOTION_API_TOKEN');
+  const dbId = Deno.env.get('NOTION_WBS_DATABASE_ID');
+  if (!token || !dbId) return jsonResponse({ success: false, error: 'notion not configured' }, 500);
+
+  const { data: tasks } = await supabase
+    .from('wbs_tasks')
+    .select('id, title, instance, status, progress, end_date, updated_at')
+    .order('updated_at', { ascending: false })
+    .limit(500);
+
+  for (const t of tasks ?? []) {
+    await fetch(`https://api.notion.com/v1/pages`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Notion-Version': '2022-06-28',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        parent: { database_id: dbId },
+        properties: {
+          id:         { title:  [{ text: { content: t.id } }] },
+          title:      { rich_text: [{ text: { content: t.title } }] },
+          instance:   { select: { name: t.instance ?? 'all' } },
+          status:     { select: { name: t.status ?? 'pending' } },
+          progress:   { number: t.progress ?? 0 },
+          deadline:   t.end_date ? { date: { start: t.end_date } } : null,
+          updated_at: { date: { start: t.updated_at } },
+        },
+      }),
+    });
+  }
+
+  return jsonResponse({ success: true, count: tasks?.length ?? 0 });
+}
+```
+
+### 9-6. Notion mirror 停止時の fallback
+
+- **Notion outage**: GitHub `docs/` の Markdown 版が primary source として機能
+- **token 失効**: 月次動作確認 (PS#1 rule17 skill に組込推奨)
+
+### 9-7. 重要原則: 書き込み側を Notion にしない
+
+❌ Notion → Supabase の逆方向同期は避ける (ユーザーが Notion で WBS 編集 → Supabase と乖離)
+✅ **Supabase = source of truth / Notion = read-only mirror** に限定
+→ 唯一の例外: quota outage 時の緊急 roadmap 追記 → 復旧後に手動で GitHub に反映
+
+---
+
+## 10. Slack + Notion Backlog (Win版 担当)
+
+| # | タスク | 期限 | 優先度 | 依存 |
+|---|--------|------|-------|------|
+| S1 | Slack Webhook 3 ch 設定 | 2026-04-28 | 🔴 | ユーザー手動 |
+| S2 | `core-hub:slack.notify` action 追加 | 2026-04-30 | 🟡 | S1 |
+| S3 | ai_circuit_breaker Supabase trigger (Slack post) | 2026-04-30 | 🟡 | S2 |
+| S4 | Discord webhook secondary channel | 2026-05-15 | 🟢 | S1 |
+| N1 | Notion Integration token + DB 3 つ設計 | 2026-05-01 | 🟡 | ユーザー手動 |
+| N2 | `schedule-hub:notion.sync_wbs` action | 2026-05-05 | 🟡 | N1 |
+| N3 | `schedule-hub:notion.sync_roadmap` action | 2026-05-05 | 🟢 | N1 |
+| N4 | `schedule-hub:notion.sync_memory_index` action | 2026-05-07 | 🟢 | N1 |
+| N5 | GHA cron 1h 毎 notion sync 起動 | 2026-05-10 | 🟢 | N2-N4 |
+
+**関連ドキュメント**:
+- `docs/AI_FALLBACK_RUNBOOK.md` (PS#6 S26) — 開発ワークフロー別 fallback 手順
+- `supabase/migrations/20260424210000_create_ai_circuit_breaker.sql` (PS#1 S26) — quota 状態集約テーブル
