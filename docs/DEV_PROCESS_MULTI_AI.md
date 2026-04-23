@@ -240,6 +240,7 @@ notebooklm ask "Devin の差別化軸と料金体系を 3 point で"
 
 - **2026-04-24 (Win版#132 part 3)**: 初版作成。Claude Code 単一依存リスク顕在化 (context compaction ループ + Max limit reset) を受けて策定。
 - **2026-04-24 (PS版#4)**: §10-11 追加。Scheduled Tasks 停止ループ防止 (Circuit Breaker) + 実装 Backlog 策定。
+- **2026-04-24 (PS版#2)**: §13 追加。T-1 dispatch の Claude Code 完全無依存化 + multi-AI resilience 設計補完。
 
 ---
 
@@ -419,3 +420,41 @@ WHERE provider = 'anthropic';
 | **Gemini API (direct)** | schedule fallback LLM | 🔧 **要 secret 追加** | `GEMINI_API_KEY` |
 | **Slack** | quota alert通知 | 🔧 **要 Webhook設定** | Incoming Webhook |
 | **Notion AI** | 草案作成 (human review後) | ⚠️ 5/4課金開始 | Web |
+
+---
+
+## 13. PS#2 T-1 Dispatch の Claude Code 完全無依存化 (PS#2追記)
+
+### 結論
+
+**T-1 blog dispatch は Claude Code quota に完全無依存** ✅
+
+- `gh workflow run blog-publish.yml` → GHA は Claude CLI を呼ばない
+- `blog-publish.yml` 自体は ANTHROPIC_API_KEY を使わない (schedule-hub EF 経由でのみ呼ぶが、dispatch 自体は curl のみ)
+- Claude quota 枯渇中でも T-1 dispatch は正常継続可能
+
+### scripts/t1-dispatch.sh (2026-04-24 新設)
+
+Claude Code 不使用で dispatch → URL 抽出 → orphan branch merge → push を完結させるスクリプト。
+
+```bash
+# Claude Code 停止中でも実行可能:
+bash scripts/t1-dispatch.sh "2026-04-26-ai-vendor-dependency-portfolio-bs-framework"
+```
+
+### PS#2 担当タスクの Claude 依存度マップ
+
+| タスク | Claude Code 必要? | 代替手段 |
+|-------|-----------------|---------|
+| T-1 dispatch | ❌ 不要 | `scripts/t1-dispatch.sh` |
+| 4-tag cap チェック | ❌ 不要 | `grep '^tags:'` |
+| orphan branch merge | ❌ 不要 | `git merge` + `git push` |
+| ROADMAP 追記 | ❌ 不要 | `cat >>` |
+| Qiita rate limit チェック | ❌ 不要 | `gh run view --log` |
+
+**→ PS#2 は Claude quota 枯渇時も全タスク継続可能。**
+
+### 関連ファイル
+
+- `docs/multi-ai-resilience.md` — 3層 Resilience 設計全体図
+- `docs/cross-instance-prs/20260424_multi_ai_fallback.md` — P0/P1 実装タスク (各インスタンス向け)
