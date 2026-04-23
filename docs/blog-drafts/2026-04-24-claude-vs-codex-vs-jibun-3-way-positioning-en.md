@@ -1,7 +1,7 @@
 ---
 title: "Claude Code vs OpenAI Codex Desktop vs Your Life Hub — A 3-Layer Design for Bundling AI as a Solo CEO"
 tags: AI,Claude,OpenAI,buildinpublic,webdev
-published: false
+published: true
 ---
 
 # Claude Code vs OpenAI Codex Desktop vs Your Life Hub — A 3-Layer Design for Bundling AI as a Solo CEO

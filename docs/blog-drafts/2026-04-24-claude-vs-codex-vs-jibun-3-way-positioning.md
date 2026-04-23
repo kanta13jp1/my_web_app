@@ -1,7 +1,7 @@
 ---
 title: "Claude Code vs OpenAI Codex Desktop vs 自分株式会社 — AI を束ねる個人 CEO の 3 層設計"
 tags: AI,Claude,OpenAI,個人開発,buildinpublic
-published: false
+published: true
 ---
 
 # Claude Code vs OpenAI Codex Desktop vs 自分株式会社 — AI を束ねる個人 CEO の 3 層設計
