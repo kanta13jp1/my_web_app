@@ -16280,3 +16280,36 @@ anon key で wbs.add_task 不可 (service role 必要)。次回 Win版/PS#1 で�
 7. 資産負債 ✅ / 8. KPI=昨日の自分 ✅ / 9. ゴール=IPO ✅
 
 ### commit: no new commits (PS#6 の修正を活用)
+
+---
+
+## PS#5 S35 — 2026-04-24 (セッション継続・wrap-up)
+
+**インスタンス**: PS#5 | **担当**: on-call バグ修正
+
+### 実施内容
+
+#### WBS Priority 確認 (S35)
+
+- tools-hub `wbs.priority_for_instance` クエリ実行 (PYTHONUTF8=1 で encoding 修正)
+- Top task: ユーザー数50人達成 (α版目標) — in_progress 8% / high priority / 2026-05-31
+- PS#5 on-call scope では直接貢献できるタスクなし (ユーザー獲得は別インスタンス担当)
+
+#### 残 Issue 確認
+
+- **#622** (競馬 horse_results empty) — PS#6 スクレイパー担当 → スキップ
+- **#551** (ERR_INSUFFICIENT_RESOURCES) Phase 2/3 — VSCode版 handoff 済み → 待機
+- CI deploy-prod: 最新 success 確認 (hume_ai/glean dart format fix)
+- 新規 bug issue: なし
+
+#### Cross-instance-pr 確認
+
+- `20260424_issue551_phase2_font_sw.md` → VSCode版 (deadline 2026-05-01)
+- `20260424_multi_ai_fallback_gha.md` → PS#1/VSCode版 (deadline 2026-04-30)
+
+### Philosophy Alignment (9/9)
+1. CEO感 ✅ (on-call 完了 / 次インスタンスへ委譲判断) / 2. ミッション駆動 ✅
+3. 優しいmentor ✅ / 4. 6部署バランス ✅ / 5. 商品=ユーザー価値 ✅
+6. 資本=時間 ✅ (不要な作業スキップ) / 7. 資産負債 ✅ / 8. KPI=昨日の自分 ✅ / 9. ゴール=IPO ✅
+
+### commit: wrap-up only (ROADMAP + memory)
