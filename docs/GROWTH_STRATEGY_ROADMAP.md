@@ -15736,3 +15736,21 @@ Step 0 score: 9/9 (公式 API / OSS nix / SaaS + free / education 領域浸透)
 | 2026-04-28 | notion-custom-agents-paywall-vs-free-6-departments | unpublished |
 | 2026-05-02 | notion-paywall-d2-parallel-6-departments | unpublished |
 | 2026-05-04 | notion-paywall-d0-alternative-6-departments | unpublished |
+
+
+---
+
+## PS版#5 S31 — 2026-04-24 (on-call バグ修正)
+
+**インスタンス**: PS版#5 | **commit**: f1602d66
+
+### 実施内容
+- **Issue #581 Phase 1 解決**: projects テーブルが初日から存在しなかった dead feature を修復
+  - supabase/migrations/20260424200000_create_projects_table.sql 追加
+  - RLS 4 ポリシー + インデックス付与
+  - /project-gantt の「マイプロジェクト」タブが動作可能に
+- **Stale CI failure イシュー 627-642 クローズ**: 16件の自動通知を整理 (CI は現在 green)
+- **growth-hub 502 (Issue #581 Phase 2)**: スキーマ・CORSヘッダー問題なし、一時的なSupabaseインフラ障害と判断
+
+### Philosophy Alignment (9/9)
+CEO感 ミッション駆動 優しいmentor 6部署バランス 商品=ユーザー価値 資本=時間 資産負債バランス KPI=昨日の自分 ゴール=IPO/ウェルビーイング 9/9 all pass
