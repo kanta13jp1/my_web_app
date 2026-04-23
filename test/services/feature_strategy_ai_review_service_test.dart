@@ -23,6 +23,7 @@ void main() {
         expect(body['message'].toString(), contains('生命資本別代表導線'));
         expect(body['message'].toString(), contains('生命資本別の代表導線レーン'));
         expect(body['message'].toString(), contains('action='));
+        expect(body['message'].toString(), contains('生命資本回復ロードマップ'));
         expect(body['message'].toString(), contains('レビュー期限到来'));
         expect(body['message'].toString(), contains('レビュー期限キュー'));
         return {

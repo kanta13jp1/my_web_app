@@ -93,6 +93,10 @@ class FeatureStrategyAiReviewService {
         ? 'なし'
         : '${queuedFocus.label} / ${queuedFocus.featureName}: ${queuedFocus.action} '
             '(解放条件=${queuedFocus.unlockCondition})';
+    final recoveryRoadmapLines = report.recoveryRoadmap.take(6).map((step) {
+      return '- ${step.order}. ${step.label}: ${step.stageLabel} / '
+          '${step.featureName} / gate=${step.gate}';
+    }).join('\n');
 
     return '''
 あなたはプロダクト全体のAI戦略レビュー担当です。
@@ -112,6 +116,7 @@ class FeatureStrategyAiReviewService {
 全体KGI進捗: ${(report.portfolioPlan.displayProgress * 100).round()}%
   生命資本カバー: ${(report.lifeCapitalCoverageRatio * 100).round()}%
   生命資本別代表導線: ${report.lifeCapitalLaneCount}/${FeatureLifeCapitalResource.values.length}資本
+  生命資本回復ロードマップ: ${report.recoveryRoadmapCount}資本
   代表導線による迷い削減見込み: ${report.lifeCapitalLaneWasteMinutesSaved}分
   浪費削減高スコア機能: ${report.highWasteReductionCount}
 低ハードル完了(7日): ${report.focusActionsCompletedLast7}
@@ -132,6 +137,9 @@ $focusLine
 
 解放後の次候補:
 $queuedFocusLine
+
+生命資本回復ロードマップ:
+${recoveryRoadmapLines.isEmpty ? '- まだ順番はありません' : recoveryRoadmapLines}
 
 改善優先キュー:
 $priorityLines

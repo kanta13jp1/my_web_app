@@ -73,6 +73,10 @@ class FeatureStrategyDailySnapshot {
     final prioritySignals = report.prioritySignals.take(8).toList();
     final reviewDueSignals = report.reviewDueSignals.take(12).toList();
     final nextAction = focus?.action ??
+        report.queuedFocusRecommendation?.action ??
+        (report.recoveryRoadmap.isNotEmpty
+            ? report.recoveryRoadmap.first.action
+            : null) ??
         (prioritySignals.isNotEmpty
             ? prioritySignals.first.nextImprovement
             : 'All monitored features are currently stable.');

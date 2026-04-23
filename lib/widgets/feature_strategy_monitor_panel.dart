@@ -333,6 +333,13 @@ class _FeatureStrategyMonitorPanelState
             ),
             const SizedBox(height: 8),
           ],
+          _RecoveryRoadmapAccordion(
+            steps: report.recoveryRoadmap,
+            dark: isDark,
+            compact: isCompact,
+            onOpenFeature: widget.onOpenFeature,
+          ),
+          const SizedBox(height: 8),
           _LifeCapitalAccordion(
             summaries: report.lifeCapitalSummaries,
             dark: isDark,
@@ -831,6 +838,233 @@ class _FocusRecommendationCard extends StatelessWidget {
             onComplete: onComplete,
             onDefer: onDefer,
           ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RecoveryRoadmapAccordion extends StatelessWidget {
+  final List<FeatureStrategyRecoveryRoadmapStep> steps;
+  final bool dark;
+  final bool compact;
+  final FeatureStrategyOpenFeature? onOpenFeature;
+
+  const _RecoveryRoadmapAccordion({
+    required this.steps,
+    required this.dark,
+    required this.compact,
+    required this.onOpenFeature,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final border =
+        dark ? Colors.white.withValues(alpha: 0.10) : const Color(0xFFE5E7EB);
+    final titleColor = dark ? Colors.white : const Color(0xFF111827);
+    final subtitleColor =
+        dark ? Colors.white.withValues(alpha: 0.62) : const Color(0xFF64748B);
+    final currentCount = steps.where((step) => step.isCurrent).length;
+    final queuedCount = steps.where((step) => step.isQueued).length;
+
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: border),
+      ),
+      child: Theme(
+        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+        child: ExpansionTile(
+          initiallyExpanded: steps.isNotEmpty,
+          tilePadding: EdgeInsets.symmetric(
+            horizontal: compact ? 10 : 12,
+            vertical: compact ? 0 : 2,
+          ),
+          childrenPadding: EdgeInsets.fromLTRB(
+            compact ? 10 : 12,
+            0,
+            compact ? 10 : 12,
+            compact ? 10 : 12,
+          ),
+          leading: const Icon(Icons.route_rounded, color: Color(0xFF2563EB)),
+          title: Text(
+            '生命資本回復ロードマップ',
+            style: TextStyle(
+              color: titleColor,
+              fontSize: compact ? 13 : 14,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          subtitle: Text(
+            steps.isEmpty
+                ? 'まだ順番はありません'
+                : '${steps.length}資本を順番固定 / 今$currentCount / 次$queuedCount',
+            style: TextStyle(
+              color: subtitleColor,
+              fontSize: compact ? 11 : 12,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          children: steps.isEmpty
+              ? [
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      '回復ロードマップを作る対象がまだありません。',
+                      style: TextStyle(color: subtitleColor, fontSize: 12),
+                    ),
+                  ),
+                ]
+              : [
+                  for (final step in steps) ...[
+                    _RecoveryRoadmapRow(
+                      step: step,
+                      dark: dark,
+                      compact: compact,
+                      onOpenFeature: onOpenFeature,
+                    ),
+                    if (step != steps.last) const SizedBox(height: 8),
+                  ],
+                ],
+        ),
+      ),
+    );
+  }
+}
+
+class _RecoveryRoadmapRow extends StatelessWidget {
+  final FeatureStrategyRecoveryRoadmapStep step;
+  final bool dark;
+  final bool compact;
+  final FeatureStrategyOpenFeature? onOpenFeature;
+
+  const _RecoveryRoadmapRow({
+    required this.step,
+    required this.dark,
+    required this.compact,
+    required this.onOpenFeature,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final titleColor = dark ? Colors.white : const Color(0xFF0F172A);
+    final subColor =
+        dark ? Colors.white.withValues(alpha: 0.68) : const Color(0xFF64748B);
+    final color = _lifeCapitalColor(step.resource);
+    final stageColor = step.isCurrent
+        ? const Color(0xFF059669)
+        : step.isQueued
+            ? const Color(0xFF2563EB)
+            : const Color(0xFFF59E0B);
+
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(compact ? 10 : 12),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: dark ? 0.14 : 0.06),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: color.withValues(alpha: 0.16)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Wrap(
+            spacing: 8,
+            runSpacing: 6,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              _StatusPill(
+                label: '${step.order}番目',
+                color: const Color(0xFF64748B),
+                dark: dark,
+              ),
+              _StatusPill(
+                label: step.stageLabel,
+                color: stageColor,
+                dark: dark,
+              ),
+              _StatusPill(
+                label: step.label,
+                color: color,
+                dark: dark,
+              ),
+              _StatusPill(
+                label: '${(step.progress * 100).round()}%',
+                color: const Color(0xFF7C3AED),
+                dark: dark,
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            '${step.sectionName} / ${step.featureName}',
+            style: TextStyle(
+              color: titleColor,
+              fontSize: compact ? 12 : 13,
+              fontWeight: FontWeight.w900,
+              height: 1.35,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            step.action,
+            style: TextStyle(
+              color: titleColor,
+              fontSize: compact ? 11 : 12,
+              fontWeight: FontWeight.w700,
+              height: 1.45,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            step.gate,
+            style: TextStyle(
+              color: subColor,
+              fontSize: compact ? 11 : 12,
+              fontWeight: FontWeight.w700,
+              height: 1.45,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            step.rationale,
+            style: TextStyle(
+              color: subColor,
+              fontSize: compact ? 11 : 12,
+              fontWeight: FontWeight.w600,
+              height: 1.45,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'KGI: ${step.plan.kgi}',
+            style: TextStyle(
+              color: titleColor,
+              fontSize: compact ? 11 : 12,
+              fontWeight: FontWeight.w700,
+              height: 1.45,
+            ),
+          ),
+          if (onOpenFeature != null) ...[
+            const SizedBox(height: 8),
+            Align(
+              alignment: Alignment.centerRight,
+              child: OutlinedButton.icon(
+                key: Key('feature_strategy_roadmap_open_${step.resource.name}'),
+                onPressed: () => onOpenFeature!(step.featureId),
+                icon: const Icon(Icons.open_in_new, size: 18),
+                label: const Text('この導線を開く'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: color,
+                  side: BorderSide(color: color.withValues(alpha: 0.32)),
+                  textStyle: TextStyle(
+                    fontSize: compact ? 12 : 13,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );

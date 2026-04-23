@@ -45,6 +45,12 @@ class FeatureStrategyMonitorService {
       lifeCapitalSummaries: lifeCapitalSummaries,
       focusRecommendation: focusRecommendation,
     );
+    final recoveryRoadmap = _buildRecoveryRoadmap(
+      signals: signals,
+      lifeCapitalSummaries: lifeCapitalSummaries,
+      focusRecommendation: focusRecommendation,
+      queuedFocusRecommendation: queuedFocusRecommendation,
+    );
 
     return FeatureStrategyReport(
       monitoredAt: checkedAt,
@@ -54,6 +60,7 @@ class FeatureStrategyMonitorService {
       lifeCapitalConsolidationLanes: lifeCapitalConsolidationLanes,
       focusRecommendation: focusRecommendation,
       queuedFocusRecommendation: queuedFocusRecommendation,
+      recoveryRoadmap: recoveryRoadmap,
       portfolioPlan: _buildPortfolioPlan(
         signals,
         consolidationCandidates,
@@ -61,6 +68,7 @@ class FeatureStrategyMonitorService {
         lifeCapitalConsolidationLanes,
         focusRecommendation,
         queuedFocusRecommendation,
+        recoveryRoadmap,
       ),
     );
   }
@@ -1191,6 +1199,122 @@ class FeatureStrategyMonitorService {
     );
   }
 
+  List<FeatureStrategyRecoveryRoadmapStep> _buildRecoveryRoadmap({
+    required List<FeatureStrategySignal> signals,
+    required List<FeatureLifeCapitalSummary> lifeCapitalSummaries,
+    required FeatureStrategyFocusRecommendation? focusRecommendation,
+    required FeatureStrategyQueuedRecommendation? queuedFocusRecommendation,
+  }) {
+    final coveredSummaries =
+        lifeCapitalSummaries.where((summary) => summary.hasCoverage).toList()
+          ..sort((a, b) {
+            final byProgress = a.averageProgress.compareTo(b.averageProgress);
+            if (byProgress != 0) return byProgress;
+            return a.featureCount.compareTo(b.featureCount);
+          });
+    if (coveredSummaries.isEmpty) {
+      return const <FeatureStrategyRecoveryRoadmapStep>[];
+    }
+
+    final signalsById = <String, FeatureStrategySignal>{
+      for (final signal in signals) signal.featureId: signal,
+    };
+    final steps = <FeatureStrategyRecoveryRoadmapStep>[];
+
+    for (var i = 0; i < coveredSummaries.length; i++) {
+      final summary = coveredSummaries[i];
+      final candidates = signals
+          .where((signal) => signal.lifeCapitalResource == summary.resource)
+          .toList()
+        ..sort((a, b) {
+          final byHurdle = _focusHurdleScore(b).compareTo(_focusHurdleScore(a));
+          if (byHurdle != 0) return byHurdle;
+          return a.progress.compareTo(b.progress);
+        });
+      if (candidates.isEmpty) continue;
+
+      final currentSignal = focusRecommendation == null
+          ? null
+          : signalsById[focusRecommendation.featureId];
+      final queuedSignal = queuedFocusRecommendation == null
+          ? null
+          : signalsById[queuedFocusRecommendation.featureId];
+      final selectedSignal = currentSignal != null &&
+              currentSignal.lifeCapitalResource == summary.resource
+          ? currentSignal
+          : queuedSignal != null &&
+                  queuedSignal.lifeCapitalResource == summary.resource
+              ? queuedSignal
+              : candidates.first;
+      final isCurrent =
+          focusRecommendation?.featureId == selectedSignal.featureId;
+      final isQueued = !isCurrent &&
+          queuedFocusRecommendation?.featureId == selectedSignal.featureId;
+      final stageLabel = isCurrent
+          ? '今'
+          : isQueued
+              ? '次'
+              : '待機';
+      final gate = isCurrent
+          ? (focusRecommendation!.actionStats.isHabitStable
+              ? '解放条件を達成済みです。次候補へ広げられます。'
+              : 'あと${focusRecommendation.actionStats.remainingUnlockDays}日で次へ進めます。')
+          : isQueued
+              ? queuedFocusRecommendation!.unlockCondition
+              : '${i + 1}番目の待機資本です。今の1手と次候補が整ったら着手します。';
+      final rationale = isCurrent
+          ? '${summary.label}は今いちばん弱い生命資本です。${selectedSignal.featureName}を習慣化し、他資本へ広げる前提を作ります。'
+          : isQueued
+              ? '${summary.label}は解放後すぐに着手する生命資本です。${summary.bottleneckFeatureName}の詰まりを早めにほどきます。'
+              : '${summary.label}は${summary.bottleneckFeatureName}がボトルネックです。順番を固定して、同時並行の浪費を防ぎます。';
+
+      steps.add(
+        FeatureStrategyRecoveryRoadmapStep(
+          order: i + 1,
+          resource: summary.resource,
+          label: summary.label,
+          featureId: selectedSignal.featureId,
+          featureName: selectedSignal.featureName,
+          sectionName: selectedSignal.sectionName,
+          stageLabel: stageLabel,
+          action: isCurrent
+              ? focusRecommendation!.action
+              : _buildFocusAction(selectedSignal),
+          gate: gate,
+          rationale: rationale,
+          progress: selectedSignal.progress,
+          isCurrent: isCurrent,
+          isQueued: isQueued,
+          plan: KgiCsfKpiPlan(
+            domain: '${summary.label} / 回復ロードマップ',
+            kgi: '${summary.label}の浪費を減らす順番を固定し、無理なく次へ進む',
+            actualLabel: '${i + 1}番目',
+            targetLabel: '${coveredSummaries.length}資本',
+            progress: selectedSignal.progress,
+            metrics: <KgiCsfKpiMetric>[
+              KgiCsfKpiMetric.number(
+                csf: '順番を固定して迷いを減らす',
+                kpi: '回復ロードマップ順位',
+                actual: i + 1,
+                target: coveredSummaries.length,
+                unit: '番目',
+              ),
+              KgiCsfKpiMetric.number(
+                csf: _lifeCapitalCsf(summary.resource),
+                kpi: _lifeCapitalKpi(summary.resource),
+                actual: summary.highImpactFeatureCount,
+                target: math.max(1, summary.featureCount),
+                unit: '機能',
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return steps;
+  }
+
   KgiCsfKpiPlan _buildPortfolioPlan(
     List<FeatureStrategySignal> signals,
     List<FeatureConsolidationCandidate> consolidationCandidates,
@@ -1198,6 +1322,7 @@ class FeatureStrategyMonitorService {
     List<FeatureLifeCapitalConsolidationLane> lifeCapitalConsolidationLanes,
     FeatureStrategyFocusRecommendation? focusRecommendation,
     FeatureStrategyQueuedRecommendation? queuedFocusRecommendation,
+    List<FeatureStrategyRecoveryRoadmapStep> recoveryRoadmap,
   ) {
     final total = signals.length;
     if (total == 0) {
@@ -1232,6 +1357,9 @@ class FeatureStrategyMonitorService {
     );
     final coveredLifeCapitalCount =
         lifeCapitalSummaries.where((summary) => summary.hasCoverage).length;
+    final recoveryRoadmapCount = recoveryRoadmap.length;
+    final recoveryRoadmapActiveCount =
+        recoveryRoadmap.where((step) => step.isCurrent || step.isQueued).length;
     final highWasteReductionCount =
         signals.where((signal) => signal.wasteReductionScore >= 3).length;
     final focusSelected = focusRecommendation == null ? 0 : 1;
@@ -1311,6 +1439,20 @@ class FeatureStrategyMonitorService {
           kpi: '生命資本別の代表導線レーン',
           actual: lifeCapitalLaneCount,
           target: FeatureLifeCapitalResource.values.length,
+          unit: '資本',
+        ),
+        KgiCsfKpiMetric.number(
+          csf: '生命資本の回復順を固定する',
+          kpi: '生命資本回復ロードマップ',
+          actual: recoveryRoadmapCount,
+          target: coveredLifeCapitalCount,
+          unit: '資本',
+        ),
+        KgiCsfKpiMetric.number(
+          csf: '今と次を固定して拡散を防ぐ',
+          kpi: '回復順の先頭整理',
+          actual: recoveryRoadmapActiveCount,
+          target: math.min(2, recoveryRoadmapCount),
           unit: '資本',
         ),
         KgiCsfKpiMetric.number(

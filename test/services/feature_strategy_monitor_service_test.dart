@@ -93,6 +93,15 @@ void main() {
       report.queuedFocusRecommendation!.featureId,
       isNot(report.focusRecommendation!.featureId),
     );
+    expect(report.recoveryRoadmap, isNotEmpty);
+    expect(
+      report.recoveryRoadmap.singleWhere((step) => step.isCurrent).featureId,
+      report.focusRecommendation!.featureId,
+    );
+    expect(
+      report.recoveryRoadmap.map((step) => step.featureId),
+      contains(report.queuedFocusRecommendation!.featureId),
+    );
     expect(
       report.focusRecommendation!.actionStats.completedDaysLast7,
       2,
@@ -121,6 +130,10 @@ void main() {
     expect(
       report.portfolioPlan.metrics.map((metric) => metric.kpi).join(' / '),
       contains('解放後の次候補キュー'),
+    );
+    expect(
+      report.portfolioPlan.metrics.map((metric) => metric.kpi).join(' / '),
+      contains('生命資本回復ロードマップ'),
     );
     expect(
       report.consolidationCandidates.single.summary,

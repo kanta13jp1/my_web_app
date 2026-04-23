@@ -286,6 +286,42 @@ class FeatureStrategyQueuedRecommendation {
   });
 }
 
+class FeatureStrategyRecoveryRoadmapStep {
+  final int order;
+  final FeatureLifeCapitalResource resource;
+  final String label;
+  final String featureId;
+  final String featureName;
+  final String sectionName;
+  final String stageLabel;
+  final String action;
+  final String gate;
+  final String rationale;
+  final double progress;
+  final bool isCurrent;
+  final bool isQueued;
+  final KgiCsfKpiPlan plan;
+
+  const FeatureStrategyRecoveryRoadmapStep({
+    required this.order,
+    required this.resource,
+    required this.label,
+    required this.featureId,
+    required this.featureName,
+    required this.sectionName,
+    required this.stageLabel,
+    required this.action,
+    required this.gate,
+    required this.rationale,
+    required this.progress,
+    required this.isCurrent,
+    required this.isQueued,
+    required this.plan,
+  });
+
+  bool get isLater => !isCurrent && !isQueued;
+}
+
 class FeatureStrategyReport {
   final DateTime monitoredAt;
   final List<FeatureStrategySignal> signals;
@@ -294,6 +330,7 @@ class FeatureStrategyReport {
   final List<FeatureLifeCapitalConsolidationLane> lifeCapitalConsolidationLanes;
   final FeatureStrategyFocusRecommendation? focusRecommendation;
   final FeatureStrategyQueuedRecommendation? queuedFocusRecommendation;
+  final List<FeatureStrategyRecoveryRoadmapStep> recoveryRoadmap;
   final KgiCsfKpiPlan portfolioPlan;
 
   const FeatureStrategyReport({
@@ -304,6 +341,7 @@ class FeatureStrategyReport {
     required this.lifeCapitalConsolidationLanes,
     required this.focusRecommendation,
     required this.queuedFocusRecommendation,
+    required this.recoveryRoadmap,
     required this.portfolioPlan,
   });
 
@@ -316,6 +354,7 @@ class FeatureStrategyReport {
       lifeCapitalConsolidationLanes: const <FeatureLifeCapitalConsolidationLane>[],
       focusRecommendation: null,
       queuedFocusRecommendation: null,
+      recoveryRoadmap: const <FeatureStrategyRecoveryRoadmapStep>[],
       portfolioPlan: const KgiCsfKpiPlan(
         domain: '全機能AI戦略',
         kgi: '全機能をAI分析とKGI/CSF/KPI監視に接続する',
@@ -339,6 +378,7 @@ class FeatureStrategyReport {
       );
   int get lifeCapitalLaneCount =>
       lifeCapitalConsolidationLanes.where((lane) => lane.hasFeatures).length;
+  int get recoveryRoadmapCount => recoveryRoadmap.length;
   int get lifeCapitalLaneWasteMinutesSaved =>
       lifeCapitalConsolidationLanes.fold<int>(
         0,
