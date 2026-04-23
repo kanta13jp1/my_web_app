@@ -15718,3 +15718,21 @@ Step 0 score: 9/9 (公式 API / OSS nix / SaaS + free / education 領域浸透)
 9. ゴール=IPO/ウェルビーイング ✅ (競合把握で戦略精度向上)
 
 **9/9 ✅**
+## PS版#2 Session (2026-04-24) — T-1 第24弾 dispatch
+
+### タスク
+
+- T-1 第24弾: Claude Code vs OpenAI Codex Desktop vs 自分株式会社 3層設計
+  - JA: `docs/blog-drafts/2026-04-24-claude-vs-codex-vs-jibun-3-way-positioning.md` → Qiita 予定
+  - EN: `docs/blog-drafts/2026-04-24-claude-vs-codex-vs-jibun-3-way-positioning-en.md` → dev.to 投稿成功
+    - https://dev.to/kanta13jp1/claude-code-vs-openai-codex-desktop-vs-your-life-hub-a-3-layer-design-for-bundling-ai-as-a-solo-2pi0
+  - 両ファイル `published: true` 更新済 / orphan branch マージ + 削除済
+
+### 次回 dispatch 予定
+
+| 日付 | ファイル | 状態 |
+|------|---------|------|
+| 2026-04-26 | ai-vendor-dependency-portfolio-bs-framework | unpublished |
+| 2026-04-28 | notion-custom-agents-paywall-vs-free-6-departments | unpublished |
+| 2026-05-02 | notion-paywall-d2-parallel-6-departments | unpublished |
+| 2026-05-04 | notion-paywall-d0-alternative-6-departments | unpublished |
