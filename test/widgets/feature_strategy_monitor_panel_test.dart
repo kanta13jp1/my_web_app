@@ -7,6 +7,55 @@ import 'package:my_web_app/widgets/feature_strategy_monitor_panel.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
+  testWidgets('FeatureStrategyMonitorPanel opens representative lane feature', (
+    tester,
+  ) async {
+    SharedPreferences.setMockInitialValues(<String, Object>{});
+    final report = const FeatureStrategyMonitorService().buildReport(
+      catalog: const <FeatureStrategyCatalogItem>[
+        FeatureStrategyCatalogItem(
+          id: 'asset-management',
+          sectionId: 'office',
+          title: 'Asset Management',
+          subtitle: 'Manage money waste',
+          keywords: <String>['money', 'budget', 'asset'],
+        ),
+      ],
+      recentToolIds: const <String>['asset-management'],
+      sectionNamesById: const <String, String>{
+        'office': 'Office',
+      },
+      monitoredAt: DateTime(2026, 4, 23, 10, 0),
+    );
+    String? openedFeatureId;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SingleChildScrollView(
+            child: FeatureStrategyMonitorPanel(
+              report: report,
+              onOpenFeature: (featureId) async {
+                openedFeatureId = featureId;
+              },
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(const Key('feature_strategy_lane_open_money')),
+      findsOneWidget,
+    );
+
+    await tester.tap(find.byKey(const Key('feature_strategy_lane_open_money')));
+    await tester.pumpAndSettle();
+
+    expect(openedFeatureId, 'asset-management');
+  });
+
   testWidgets('FeatureStrategyMonitorPanel renders portfolio and queues', (
     tester,
   ) async {

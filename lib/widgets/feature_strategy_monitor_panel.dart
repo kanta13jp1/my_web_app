@@ -6,6 +6,8 @@ import '../services/feature_strategy_focus_action_service.dart';
 import '../services/feature_strategy_report_snapshot_service.dart';
 import 'kgi_csf_kpi_panel.dart';
 
+typedef FeatureStrategyOpenFeature = Future<void> Function(String featureId);
+
 class FeatureStrategyMonitorPanel extends StatefulWidget {
   final FeatureStrategyReport report;
   final FeatureStrategyAiReview? aiReview;
@@ -13,6 +15,7 @@ class FeatureStrategyMonitorPanel extends StatefulWidget {
   final bool isDark;
   final bool isCompact;
   final FeatureStrategyFocusActionService? focusActionService;
+  final FeatureStrategyOpenFeature? onOpenFeature;
 
   const FeatureStrategyMonitorPanel({
     super.key,
@@ -22,6 +25,7 @@ class FeatureStrategyMonitorPanel extends StatefulWidget {
     this.isDark = false,
     this.isCompact = false,
     this.focusActionService,
+    this.onOpenFeature,
   });
 
   @override
@@ -338,6 +342,7 @@ class _FeatureStrategyMonitorPanelState
             lanes: report.lifeCapitalConsolidationLanes,
             dark: isDark,
             compact: isCompact,
+            onOpenFeature: widget.onOpenFeature,
           ),
           const SizedBox(height: 8),
           _SignalAccordion(
@@ -1143,11 +1148,13 @@ class _LifeCapitalLaneAccordion extends StatelessWidget {
   final List<FeatureLifeCapitalConsolidationLane> lanes;
   final bool dark;
   final bool compact;
+  final FeatureStrategyOpenFeature? onOpenFeature;
 
   const _LifeCapitalLaneAccordion({
     required this.lanes,
     required this.dark,
     required this.compact,
+    required this.onOpenFeature,
   });
 
   @override
@@ -1205,6 +1212,7 @@ class _LifeCapitalLaneAccordion extends StatelessWidget {
                 lane: lane,
                 dark: dark,
                 compact: compact,
+                onOpenFeature: onOpenFeature,
               ),
               if (lane != lanes.last) const SizedBox(height: 8),
             ],
@@ -1219,12 +1227,109 @@ class _LifeCapitalLaneRow extends StatelessWidget {
   final FeatureLifeCapitalConsolidationLane lane;
   final bool dark;
   final bool compact;
+  final FeatureStrategyOpenFeature? onOpenFeature;
 
   const _LifeCapitalLaneRow({
     required this.lane,
     required this.dark,
     required this.compact,
+    required this.onOpenFeature,
   });
+
+  List<MapEntry<String, String>> _featureLinks() {
+    final items = <MapEntry<String, String>>[];
+    final seen = <String>{};
+    for (var i = 0; i < lane.featureIds.length; i++) {
+      final id = lane.featureIds[i];
+      if (!seen.add(id)) continue;
+      final name = i < lane.featureNames.length ? lane.featureNames[i] : id;
+      items.add(MapEntry<String, String>(id, name));
+    }
+    return items;
+  }
+
+  Future<void> _openFeature(BuildContext context, String featureId) async {
+    final opener = onOpenFeature;
+    if (opener == null) return;
+    await opener(featureId);
+  }
+
+  Future<void> _showFeatureSheet(
+    BuildContext context,
+    List<MapEntry<String, String>> featureLinks,
+  ) async {
+    final opener = onOpenFeature;
+    if (opener == null || featureLinks.isEmpty) return;
+    await showModalBottomSheet<void>(
+      context: context,
+      useSafeArea: true,
+      showDragHandle: true,
+      builder: (sheetContext) {
+        final titleColor = dark ? Colors.white : const Color(0xFF0F172A);
+        final subColor = dark
+            ? Colors.white.withValues(alpha: 0.68)
+            : const Color(0xFF64748B);
+        final color = _lifeCapitalColor(lane.resource);
+        return Container(
+          color: dark ? const Color(0xFF111827) : Colors.white,
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+            children: [
+              Text(
+                '${lane.label} の代表導線',
+                style: TextStyle(
+                  color: titleColor,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
+                  height: 1.4,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                '代表機能に寄せつつ、必要なサブ導線だけここから開けます。',
+                style: TextStyle(
+                  color: subColor,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  height: 1.5,
+                ),
+              ),
+              const SizedBox(height: 12),
+              for (var i = 0; i < featureLinks.length; i++)
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: Icon(
+                    i == 0 ? Icons.star_rounded : Icons.subdirectory_arrow_right,
+                    color: i == 0 ? color : subColor,
+                  ),
+                  title: Text(
+                    featureLinks[i].value,
+                    style: TextStyle(
+                      color: titleColor,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  subtitle: Text(
+                    i == 0 ? '代表導線' : 'サブ導線',
+                    style: TextStyle(
+                      color: subColor,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  trailing: const Icon(Icons.open_in_new, size: 18),
+                  onTap: () async {
+                    Navigator.of(sheetContext).pop();
+                    await opener(featureLinks[i].key);
+                  },
+                ),
+            ],
+          ),
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -1232,6 +1337,7 @@ class _LifeCapitalLaneRow extends StatelessWidget {
     final subColor =
         dark ? Colors.white.withValues(alpha: 0.68) : const Color(0xFF64748B);
     final color = _lifeCapitalColor(lane.resource);
+    final featureLinks = _featureLinks();
 
     return Container(
       width: double.infinity,
@@ -1300,6 +1406,32 @@ class _LifeCapitalLaneRow extends StatelessWidget {
               height: 1.45,
             ),
           ),
+          if (lane.hasFeatures && onOpenFeature != null) ...[
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                FilledButton.icon(
+                  key: Key('feature_strategy_lane_open_${lane.resource.name}'),
+                  onPressed: () =>
+                      _openFeature(context, lane.canonicalFeatureId),
+                  icon: const Icon(Icons.open_in_new, size: 16),
+                  label: const Text('代表導線を開く'),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: color,
+                    foregroundColor: Colors.white,
+                  ),
+                ),
+                if (featureLinks.length > 1)
+                  OutlinedButton.icon(
+                    onPressed: () => _showFeatureSheet(context, featureLinks),
+                    icon: const Icon(Icons.account_tree_outlined, size: 16),
+                    label: Text('束ねた機能 ${featureLinks.length}'),
+                  ),
+              ],
+            ),
+          ],
           const SizedBox(height: 8),
           KgiCsfKpiPanel(
             plan: lane.plan,

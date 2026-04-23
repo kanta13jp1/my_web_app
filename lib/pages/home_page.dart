@@ -1660,6 +1660,24 @@ abstinence_slip_details: $slipDetailsText
     );
   }
 
+  Future<void> _openFeatureStrategyFeature(String featureId) async {
+    final match = _buildHomeToolCatalog().where(
+      (entry) => entry.id == featureId,
+    );
+    if (match.isEmpty) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('代表導線の移動先がまだ見つかりません')),
+      );
+      return;
+    }
+    final entry = match.first;
+    await _runTrackedAction(
+      entry.id,
+      () => entry.onOpen(context),
+    );
+  }
+
   Set<String> _buildHighlightedToolIds({
     required bool highlightMorning,
     required bool highlightMonthlyFlow,
@@ -5381,6 +5399,7 @@ abstinence_slip_details: $slipDetailsText
           isDark: isDark,
           isCompact: isCompact,
           focusActionService: _featureStrategyFocusActionService,
+          onOpenFeature: _openFeatureStrategyFeature,
         );
       },
     );
