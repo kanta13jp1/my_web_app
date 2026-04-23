@@ -123,7 +123,7 @@ class _PetCareManagerPageState extends State<PetCareManagerPage>
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.error_outline, size: 48, color: Colors.red),
+          const Icon(Icons.error_outline, size: 48, color: Color(0xFFE53935)),
           const SizedBox(height: 12),
           Text(_errorMessage!),
           const SizedBox(height: 12),
@@ -277,7 +277,7 @@ class _PetCareManagerPageState extends State<PetCareManagerPage>
           child: ListTile(
             leading: Icon(
               Icons.vaccines,
-              color: overdue ? Colors.red : Colors.green,
+              color: overdue ? const Color(0xFFE53935) : const Color(0xFF4CAF50),
             ),
             title: Text('$petName — $vaccine'),
             subtitle: Text(
@@ -292,7 +292,9 @@ class _PetCareManagerPageState extends State<PetCareManagerPage>
                         '次回: ${nextDue.length >= 10 ? nextDue.substring(0, 10) : nextDue}',
                         style: TextStyle(
                           fontSize: 11,
-                          color: overdue ? Colors.red : const Color(0xFF9CA3AF),
+                          color: overdue
+                              ? const Color(0xFFE53935)
+                              : const Color(0xFF9CA3AF),
                           fontWeight: overdue ? FontWeight.bold : null,
                           height: 1.5,
                         ),
@@ -302,7 +304,7 @@ class _PetCareManagerPageState extends State<PetCareManagerPage>
                           '期限超過',
                           style: TextStyle(
                             fontSize: 10,
-                            color: Colors.red,
+                            color: Color(0xFFE53935),
                             fontWeight: FontWeight.bold,
                             height: 1.5,
                           ),

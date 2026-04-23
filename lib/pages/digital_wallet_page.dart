@@ -74,14 +74,14 @@ class _DigitalWalletPageState extends State<DigitalWalletPage> {
                       const Icon(
                         Icons.error_outline,
                         size: 48,
-                        color: Colors.red,
+                        color: Color(0xFFE53935),
                       ),
                       const SizedBox(height: 16),
                       Text(
                         _errorMessage!,
                         textAlign: TextAlign.center,
                         style: const TextStyle(
-                          color: Colors.red,
+                          color: Color(0xFFE53935),
                           height: 1.5,
                         ),
                       ),
@@ -111,8 +111,9 @@ class _DigitalWalletPageState extends State<DigitalWalletPage> {
                               type == 'credit'
                                   ? Icons.arrow_downward
                                   : Icons.arrow_upward,
-                              color:
-                                  type == 'credit' ? Colors.green : Colors.red,
+                              color: type == 'credit'
+                                  ? const Color(0xFF4CAF50)
+                                  : const Color(0xFFE53935),
                             ),
                             title: Text(
                               description,
@@ -126,8 +127,8 @@ class _DigitalWalletPageState extends State<DigitalWalletPage> {
                               '¥$amount',
                               style: TextStyle(
                                 color: type == 'credit'
-                                    ? Colors.green
-                                    : Colors.red,
+                                    ? const Color(0xFF4CAF50)
+                                    : const Color(0xFFE53935),
                                 fontWeight: FontWeight.bold,
                                 height: 1.5,
                               ),

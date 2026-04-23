@@ -771,7 +771,7 @@ class _DnsDomainManagerPageState extends State<DnsDomainManagerPage>
     String label;
     switch (status) {
       case 'active':
-        color = Colors.green;
+        color = const Color(0xFF4CAF50);
         label = '有効';
       case 'pending':
         color = const Color(0xFFFF6B35);
@@ -812,8 +812,8 @@ class _DnsDomainManagerPageState extends State<DnsDomainManagerPage>
       'CNAME': const Color(0xFF3D5AFE),
       'MX': const Color(0xFFFF6B35),
       'TXT': const Color(0xFF3D5AFE),
-      'NS': Colors.green,
-      'SRV': Colors.red,
+      'NS': const Color(0xFF4CAF50),
+      'SRV': const Color(0xFFE53935),
       'CAA': const Color(0xFF3D5AFE),
     };
     final color = colors[type] ?? colorScheme.primary;
@@ -842,8 +842,8 @@ class _DnsDomainManagerPageState extends State<DnsDomainManagerPage>
     switch (status) {
       case 'valid':
         return CircleAvatar(
-          backgroundColor: Colors.green.withValues(alpha: 0.15),
-          child: const Icon(Icons.lock, color: Colors.green),
+          backgroundColor: const Color(0xFF4CAF50).withValues(alpha: 0.15),
+          child: const Icon(Icons.lock, color: Color(0xFF4CAF50)),
         );
       case 'expiring_soon':
         return CircleAvatar(
@@ -868,7 +868,7 @@ class _DnsDomainManagerPageState extends State<DnsDomainManagerPage>
     String label;
     switch (status) {
       case 'valid':
-        color = Colors.green;
+        color = const Color(0xFF4CAF50);
         label = '有効';
       case 'expiring_soon':
         color = const Color(0xFFFF6B35);

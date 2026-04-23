@@ -96,7 +96,7 @@ class _GrowthAcquisitionSignalPageState
     return Scaffold(
       appBar: AppBar(
         title: const Text('集客シグナル記録'),
-        backgroundColor: Colors.green,
+        backgroundColor: const Color(0xFF4CAF50),
         foregroundColor: Colors.white,
       ),
       body: Padding(
@@ -136,7 +136,7 @@ class _GrowthAcquisitionSignalPageState
                               shape: BoxShape.circle,
                               border: Border.all(
                                 color: selected
-                                    ? Colors.green
+                                    ? const Color(0xFF4CAF50)
                                     : const Color(0xFFB0B0B0),
                                 width: 2,
                               ),
@@ -148,7 +148,7 @@ class _GrowthAcquisitionSignalPageState
                                       height: 10,
                                       decoration: const BoxDecoration(
                                         shape: BoxShape.circle,
-                                        color: Colors.green,
+                                        color: Color(0xFF4CAF50),
                                       ),
                                     ),
                                   )
@@ -191,7 +191,7 @@ class _GrowthAcquisitionSignalPageState
               Text(
                 _errorMessage!,
                 style: const TextStyle(
-                  color: Colors.red,
+                  color: Color(0xFFE53935),
                   height: 1.5,
                 ),
               ),
@@ -201,7 +201,7 @@ class _GrowthAcquisitionSignalPageState
               Text(
                 _successMessage!,
                 style: const TextStyle(
-                  color: Colors.green,
+                  color: Color(0xFF4CAF50),
                   height: 1.5,
                 ),
               ),
@@ -212,7 +212,7 @@ class _GrowthAcquisitionSignalPageState
               child: ElevatedButton(
                 onPressed: _isLoading ? null : _record,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green,
+                  backgroundColor: const Color(0xFF4CAF50),
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                 ),

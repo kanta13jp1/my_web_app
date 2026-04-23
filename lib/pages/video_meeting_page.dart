@@ -145,7 +145,7 @@ class _VideoMeetingPageState extends State<VideoMeetingPage>
       case 'video':
         return const Color(0xFF3D5AFE);
       case 'audio':
-        return Colors.green;
+        return const Color(0xFF4CAF50);
       case 'webinar':
         return const Color(0xFF3D5AFE);
       case 'screen_share':
@@ -217,7 +217,7 @@ class _VideoMeetingPageState extends State<VideoMeetingPage>
                       Text(
                         _errorMessage!,
                         style: const TextStyle(
-                          color: Colors.red,
+                          color: Color(0xFFE53935),
                           height: 1.5,
                         ),
                         textAlign: TextAlign.center,
@@ -296,7 +296,7 @@ class _VideoMeetingPageState extends State<VideoMeetingPage>
                         height: 1.5,
                       ),
                     ),
-                    backgroundColor: Colors.red,
+                    backgroundColor: Color(0xFFE53935),
                     padding: EdgeInsets.zero,
                   )
                 : null,
@@ -399,11 +399,11 @@ class _VideoMeetingPageState extends State<VideoMeetingPage>
           child: ListTile(
             leading: CircleAvatar(
               backgroundColor: done
-                  ? Colors.green.withAlpha(30)
+                  ? const Color(0xFF4CAF50).withAlpha(30)
                   : const Color(0xFFFF6B35).withAlpha(30),
               child: Icon(
                 done ? Icons.check_circle : Icons.radio_button_unchecked,
-                color: done ? Colors.green : const Color(0xFFFF6B35),
+                color: done ? const Color(0xFF4CAF50) : const Color(0xFFFF6B35),
               ),
             ),
             title: Text(

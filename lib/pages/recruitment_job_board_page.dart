@@ -105,7 +105,7 @@ class _RecruitmentJobBoardPageState extends State<RecruitmentJobBoardPage>
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.error_outline, size: 48, color: Colors.red),
+          const Icon(Icons.error_outline, size: 48, color: Color(0xFFE53935)),
           const SizedBox(height: 12),
           Text(_errorMessage!),
           const SizedBox(height: 12),
@@ -151,12 +151,13 @@ class _RecruitmentJobBoardPageState extends State<RecruitmentJobBoardPage>
           child: ListTile(
             leading: CircleAvatar(
               backgroundColor: status == 'open'
-                  ? Colors.green.shade100
+                  ? const Color(0xFFC8E6C9)
                   : Theme.of(context).colorScheme.surfaceContainerHigh,
               child: Icon(
                 Icons.work,
-                color:
-                    status == 'open' ? Colors.green : const Color(0xFF9CA3AF),
+                color: status == 'open'
+                    ? const Color(0xFF4CAF50)
+                    : const Color(0xFF9CA3AF),
               ),
             ),
             title: Text(
@@ -227,8 +228,8 @@ class _RecruitmentJobBoardPageState extends State<RecruitmentJobBoardPage>
           'screening': const Color(0xFFFF6B35),
           'interview': const Color(0xFF3D5AFE),
           'offer': const Color(0xFF009688),
-          'hired': Colors.green,
-          'rejected': Colors.red,
+          'hired': const Color(0xFF4CAF50),
+          'rejected': const Color(0xFFE53935),
         };
         final stageLabels = <String, String>{
           'applied': '応募済',

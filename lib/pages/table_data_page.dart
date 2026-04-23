@@ -214,7 +214,7 @@ class _TableDataPageState extends State<TableDataPage> {
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            style: TextButton.styleFrom(foregroundColor: const Color(0xFFE53935)),
             child: const Text('削除'),
           ),
         ],
@@ -351,7 +351,7 @@ class _TableDataPageState extends State<TableDataPage> {
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            style: TextButton.styleFrom(foregroundColor: const Color(0xFFE53935)),
             child: const Text('削除'),
           ),
         ],
@@ -703,7 +703,7 @@ class _TableDataPageState extends State<TableDataPage> {
                     child: Text(
                       '削除',
                       style: TextStyle(
-                        color: Colors.red,
+                        color: Color(0xFFE53935),
                         height: 1.5,
                       ),
                     ),
@@ -879,7 +879,7 @@ class _TableDataPageState extends State<TableDataPage> {
                         DataCell(
                           IconButton(
                             icon: const Icon(Icons.delete_outline, size: 18),
-                            color: Colors.red.shade300,
+                            color: const Color(0xFFE57373),
                             onPressed: () => _deleteRow(i),
                           ),
                         ),
