@@ -41,14 +41,28 @@ class _InvoiceGeneratorPageState extends State<InvoiceGeneratorPage> {
     });
     try {
       final response = await _supabase.functions.invoke(
-        'invoice-generator',
-        body: {'action': 'list'},
+        'app-hub',
+        body: {'action': 'billing.invoice'},
       );
       final data = response.data;
       if (data is Map<String, dynamic>) {
         final items = data['invoices'];
         setState(() {
-          _invoices = items is List ? items.cast<Map<String, dynamic>>() : [];
+          _invoices = items is List
+              ? (items as List).map<Map<String, dynamic>>((inv) {
+                  final meta =
+                      (inv['metadata'] as Map<String, dynamic>?) ?? {};
+                  return {
+                    'id': inv['id'],
+                    'client_name':
+                        meta['client_name'] ?? inv['client_name'] ?? '不明',
+                    'amount': meta['amount'] ?? inv['amount'] ?? 0,
+                    'description':
+                        meta['description'] ?? inv['description'] ?? '',
+                    'status': meta['status'] ?? inv['status'] ?? 'draft',
+                  };
+                }).toList()
+              : [];
         });
       }
     } catch (e) {
@@ -67,9 +81,9 @@ class _InvoiceGeneratorPageState extends State<InvoiceGeneratorPage> {
     setState(() => _isLoading = true);
     try {
       await _supabase.functions.invoke(
-        'invoice-generator',
+        'app-hub',
         body: {
-          'action': 'create',
+          'action': 'billing.create_invoice',
           'client_name': client,
           'amount': double.tryParse(amount) ?? 0,
           'description': description,

@@ -29,19 +29,25 @@ class _CompetitorFeatureSyncPageState extends State<CompetitorFeatureSyncPage> {
     });
     try {
       final res = await _supabase.functions.invoke(
-        'competitor-feature-sync',
-        queryParameters: {'action': 'progress'},
+        'enterprise-hub',
+        body: {'action': 'competitor.sync'},
       );
       final data = res.data;
       if (data is Map) {
-        if (data['competitors'] is List) {
-          _competitors =
-              (data['competitors'] as List).cast<Map<String, dynamic>>();
+        final features = data['features'];
+        if (features is List) {
+          _pendingFeatures = features.map<Map<String, dynamic>>((f) {
+            final meta = (f['metadata'] as Map<String, dynamic>?) ?? {};
+            return {
+              'id': f['id'] ?? '',
+              'competitor': meta['competitor'] ?? '',
+              'feature_name': meta['feature'] ?? '',
+              'category': meta['status'] ?? 'detected',
+              'status': meta['status'] ?? 'detected',
+            };
+          }).toList();
         }
-        if (data['pending'] is List) {
-          _pendingFeatures =
-              (data['pending'] as List).cast<Map<String, dynamic>>();
-        }
+        _competitors = [];
       }
       setState(() {});
     } catch (e) {
@@ -58,11 +64,11 @@ class _CompetitorFeatureSyncPageState extends State<CompetitorFeatureSyncPage> {
   ) async {
     try {
       await _supabase.functions.invoke(
-        'competitor-feature-sync',
+        'enterprise-hub',
         body: {
-          'action': 'update_status',
-          'feature_id': featureId,
+          'action': 'competitor.add_feature',
           'competitor': competitor,
+          'feature': featureId,
           'status': status,
         },
       );

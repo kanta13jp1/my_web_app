@@ -178,13 +178,6 @@ class _EdgeFunctionSummaryCardState extends State<EdgeFunctionSummaryCard> {
       '/admin-notifications',
       '管理者通知ハブページ > 重要度別通知フィルタリング',
     ),
-    _FnDef(
-      'competitor-feature-sync',
-      '競合機能パリティ管理 (進捗トラッキング/ステータス更新)',
-      true,
-      '/competitor-feature-sync',
-      '競合機能パリティページ > 競合別進捗率・未実装機能一覧',
-    ),
     // 追加 (cs-check 自動連携 2026-04-18)
     _FnDef(
       'daily-judgment',
@@ -230,20 +223,6 @@ class _EdgeFunctionSummaryCardState extends State<EdgeFunctionSummaryCard> {
       'ソーシャルフィードページ > 公開/フォロー別フィード表示',
     ),
     // 追加 (cs-check 自動連携 2026-04-18)
-    _FnDef(
-      'invoice-generator',
-      '請求書ジェネレーター',
-      true,
-      '/invoice-generator',
-      '請求書ジェネレーターページ > 請求書作成・一覧表示',
-    ),
-    _FnDef(
-      'poll-survey',
-      'アンケート・投票',
-      true,
-      '/poll-survey',
-      'アンケートページ > 質問作成・投票',
-    ),
     _FnDef(
       'notification-digest',
       '通知ダイジェスト',
@@ -363,13 +342,6 @@ class _EdgeFunctionSummaryCardState extends State<EdgeFunctionSummaryCard> {
     ),
     // 追加 (cs-check 自動連携 2026-04-19)
     _FnDef(
-      'ab-testing-manager',
-      'A/Bテスト管理',
-      true,
-      '/ab-testing-manager',
-      'A/Bテスト管理ページ > テスト作成・結果確認',
-    ),
-    _FnDef(
       'habit-tracker',
       '習慣トラッカー',
       true,
@@ -384,20 +356,6 @@ class _EdgeFunctionSummaryCardState extends State<EdgeFunctionSummaryCard> {
       'SNSスケジューラーページ > 投稿予約・プラットフォーム選択',
     ),
     // 追加 (cs-check 自動連携 2026-04-19)
-    _FnDef(
-      'agent-department-manager',
-      'AIエージェント部署管理',
-      true,
-      '/agent-department-manager',
-      'エージェント部署管理ページ > 部署一覧・エージェント数確認',
-    ),
-    _FnDef(
-      'agent-performance-monitor',
-      'エージェントパフォーマンス監視',
-      true,
-      '/agent-performance-monitor',
-      'パフォーマンス監視ページ > スコア・タスク完了数確認',
-    ),
     _FnDef(
       'app-analytics-dashboard',
       'アプリアナリティクスダッシュボード',
@@ -441,13 +399,6 @@ class _EdgeFunctionSummaryCardState extends State<EdgeFunctionSummaryCard> {
       true,
       '/performance-review',
       'パフォーマンスレビューページ > 評価期間別レビュー提出・履歴確認',
-    ),
-    _FnDef(
-      'pomodoro-timer',
-      'ポモドーロタイマー (作業セッション記録)',
-      true,
-      '/pomodoro-timer',
-      'ポモドーロタイマーページ > 25分作業セッション開始・完了履歴確認',
     ),
     // 追加 (cs-check 自動連携 2026-04-19)
     _FnDef(
@@ -538,13 +489,6 @@ class _EdgeFunctionSummaryCardState extends State<EdgeFunctionSummaryCard> {
       'フィードバックページ > 顧客フィードバック収集・分析・対応状況確認',
     ),
     // 追加 (cs-check 自動連携 2026-04-19)
-    _FnDef(
-      'chat-messaging',
-      'チャットメッセージング',
-      true,
-      '/team-chat',
-      'チームチャットページ > メッセージ送受信・チャンネル管理',
-    ),
     _FnDef(
       'digital-wallet',
       'デジタルウォレット (資産管理)',
@@ -795,13 +739,6 @@ class _EdgeFunctionSummaryCardState extends State<EdgeFunctionSummaryCard> {
       'ペットケアページ > ペット情報登録・ケアスケジュール・ワクチン記録',
     ),
     // 追加 (cs-check 自動連携 2026-04-20)
-    _FnDef(
-      'note-comments',
-      'ノートコメント管理 (コメント一覧・投稿)',
-      true,
-      '/note-comments',
-      'ノートコメントページ > コメント一覧・新規投稿',
-    ),
     _FnDef(
       'music-playlist-manager',
       '音楽プレイリスト管理 (再生リスト作成・編集)',

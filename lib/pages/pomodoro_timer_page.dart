@@ -47,7 +47,7 @@ class _PomodoroTimerPageState extends State<PomodoroTimerPage> {
     });
     try {
       final response = await _supabase.functions
-          .invoke('pomodoro-timer', body: {'action': 'list'});
+          .invoke('tools-hub', body: {'action': 'pomodoro.history'});
       final data = response.data;
       if (data is Map<String, dynamic> && data['sessions'] is List) {
         setState(
@@ -123,12 +123,10 @@ class _PomodoroTimerPageState extends State<PomodoroTimerPage> {
   Future<void> _saveSession() async {
     try {
       await _supabase.functions.invoke(
-        'pomodoro-timer',
+        'tools-hub',
         body: {
-          'action': 'save',
-          'task_name': _taskCtrl.text.isEmpty ? '作業セッション' : _taskCtrl.text,
-          'duration_minutes': _workMinutes,
-          'completed_at': DateTime.now().toIso8601String(),
+          'action': 'pomodoro.complete',
+          'duration_min': _workMinutes,
         },
       );
       await _fetchSessions();

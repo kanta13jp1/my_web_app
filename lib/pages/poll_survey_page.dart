@@ -39,14 +39,25 @@ class _PollSurveyPageState extends State<PollSurveyPage> {
     });
     try {
       final response = await _supabase.functions.invoke(
-        'poll-survey',
-        body: {'action': 'list'},
+        'tools-hub',
+        body: {'action': 'poll.list'},
       );
       final data = response.data;
       if (data is Map<String, dynamic>) {
         final items = data['polls'];
         setState(() {
-          _polls = items is List ? items.cast<Map<String, dynamic>>() : [];
+          _polls = items is List
+              ? (items as List).map<Map<String, dynamic>>((p) {
+                  final meta =
+                      (p['metadata'] as Map<String, dynamic>?) ?? {};
+                  return {
+                    'id': p['id'],
+                    'question': meta['question'] ?? p['question'] ?? '',
+                    'options': meta['options'] ?? p['options'] ?? <dynamic>[],
+                    'votes': meta['votes'] ?? p['votes'] ?? <String, int>{},
+                  };
+                }).toList()
+              : [];
         });
       }
     } catch (e) {
@@ -74,9 +85,9 @@ class _PollSurveyPageState extends State<PollSurveyPage> {
     setState(() => _isLoading = true);
     try {
       await _supabase.functions.invoke(
-        'poll-survey',
+        'tools-hub',
         body: {
-          'action': 'create',
+          'action': 'poll.create',
           'question': question,
           'options': options,
         },
@@ -94,8 +105,8 @@ class _PollSurveyPageState extends State<PollSurveyPage> {
   Future<void> _vote(String pollId, String option) async {
     try {
       await _supabase.functions.invoke(
-        'poll-survey',
-        body: {'action': 'vote', 'poll_id': pollId, 'option': option},
+        'tools-hub',
+        body: {'action': 'poll.vote', 'poll_id': pollId, 'option': option},
       );
       await _fetchPolls();
     } catch (e) {

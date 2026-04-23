@@ -1395,6 +1395,7 @@ serve(async (req) => {
       }
 
       // ── Polls & Forms ────────────────────────────────────────────────────────
+      case "poll.list": return json({ success: true, polls: await listItems(admin, "poll", userId, 100) });
       case "poll.create": {
         const item = await addItem(admin, "poll", userId, {
           question: body.question, options: body.options ?? [], votes: {},
@@ -1550,7 +1551,7 @@ serve(async (req) => {
             "rss.list_feeds", "rss.add_feed", "rss.fetch",
             "changelog.list", "changelog.create",
             "mindmap.list", "mindmap.create", "mindmap.update", "mindmap.delete",
-            "poll.create", "poll.vote", "form.create", "form.submit",
+            "poll.list", "poll.create", "poll.vote", "form.create", "form.submit",
             "note_share.create", "note_share.get",
             "version.list", "version.create",
             "vault.list", "vault.add", "vault.delete",

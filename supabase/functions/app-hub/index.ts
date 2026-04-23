@@ -98,6 +98,13 @@ serve(async (req: Request) => {
         const invoices = await listItems(admin, "invoice", userId);
         return json({ success: true, invoices });
       }
+      case "billing.create_invoice": {
+        const item = await addItem(admin, "invoice", userId, {
+          client_name: body.client_name, amount: body.amount ?? 0,
+          description: body.description ?? "", status: "draft",
+        });
+        return json({ success: true, invoice: item });
+      }
 
       // --- Email ---
       case "email.send": {
