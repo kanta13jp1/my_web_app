@@ -1366,7 +1366,8 @@ $inviteUrl
   }
 }
 
-class GrowthPresenceNavigatorObserver extends NavigatorObserver {
+class GrowthPresenceNavigatorObserver extends NavigatorObserver
+    with WidgetsBindingObserver {
   final GrowthMissionService _service;
   final GrowthAcquisitionService _acquisitionService;
   Timer? _heartbeatTimer;
@@ -1378,7 +1379,39 @@ class GrowthPresenceNavigatorObserver extends NavigatorObserver {
     GrowthAcquisitionService acquisitionService =
         const GrowthAcquisitionService(),
   })  : _service = service,
-        _acquisitionService = acquisitionService;
+        _acquisitionService = acquisitionService {
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _heartbeatTimer?.cancel();
+    _metricsTimer?.cancel();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.hidden) {
+      _heartbeatTimer?.cancel();
+      _metricsTimer?.cancel();
+    } else if (state == AppLifecycleState.resumed) {
+      _restartTimers();
+    }
+  }
+
+  void _restartTimers() {
+    _heartbeatTimer?.cancel();
+    _metricsTimer?.cancel();
+    if (!_service.isPresenceTrackingAvailable) return;
+    unawaited(_service.syncPresence(pagePath: _currentPagePath));
+    _heartbeatTimer = Timer.periodic(const Duration(minutes: 2), (_) {
+      unawaited(_service.syncPresence(pagePath: _currentPagePath));
+    });
+    _metricsTimer = Timer.periodic(const Duration(minutes: 5), (_) {
+      unawaited(_service.refreshAggregateMetrics());
+    });
+  }
 
   @override
   void didPush(Route<dynamic> route, Route<dynamic>? previousRoute) {
@@ -1412,22 +1445,7 @@ class GrowthPresenceNavigatorObserver extends NavigatorObserver {
     );
     unawaited(_service.capturePendingReferralFromUri());
     unawaited(_service.applyPendingReferralIfPossible());
-    _heartbeatTimer?.cancel();
-    _metricsTimer?.cancel();
-    if (!_service.isPresenceTrackingAvailable) {
-      return;
-    }
-
-    // #551 Phase 1: heartbeat を 45 秒 → 2 分に延長 + refreshAggregateMetrics
-    // を 5 分毎の別 Timer に切り出して 1 分あたりの fetch 頻度を 1/4 以下に削減。
-    unawaited(_service.syncPresence(pagePath: _currentPagePath));
-    unawaited(_service.refreshAggregateMetrics());
-    _heartbeatTimer = Timer.periodic(const Duration(minutes: 2), (_) {
-      unawaited(_service.syncPresence(pagePath: _currentPagePath));
-    });
-    _metricsTimer = Timer.periodic(const Duration(minutes: 5), (_) {
-      unawaited(_service.refreshAggregateMetrics());
-    });
+    _restartTimers();
   }
 
   String _resolvePagePath(Route<dynamic> route) {
