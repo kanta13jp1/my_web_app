@@ -319,3 +319,7 @@ WHERE title = 'ai-hub provider.chat 蜈ｨ蟇ｾ蠢・;
 - 対応内容: `ai-hub` に `edge_llm.invoke` を追加し、system prompt / user prompt / context JSON / text・JSON応答形式をまとめて Edge Function 経由で実行できるようにした。Home から `Edge LLM Playground` を開いて試せる。
 - 実装補足: `edge_llm.invoke` は自動 tier ルーティングと observability 返却に対応し、JSON 指定時は `parsed_json` も返す。
 - WBS DB反映: migration `20260424174500_wbs_codex_edge_llm_invoke.sql`
+- 実担当タスク: `[追加要望] github-issue-fix.yml + ci-auto-fix.yml = Devin的な自立修正パターン`
+- 対応内容: `github-issue-fix.yml` を新設し、Open Issue を oldest-first で 1 件選んで修正ブランチ・修正計画・draft PR を自動作成するオーケストレーターを追加した。以後の CI は既存 `ci-auto-fix.yml` と組み合わせて小さな自動修復ループに載せられる。
+- 実装補足: `workflow_dispatch` で Issue 番号を直接指定でき、対象がない場合は skip summary のみ返す。作成した plan は `docs/issue-fix-plans/issue-<number>.md` に保存する。
+- WBS DB反映: migration `20260424193000_wbs_codex_github_issue_fix_workflow.sql`

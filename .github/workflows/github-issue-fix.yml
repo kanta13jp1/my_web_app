@@ -1,0 +1,302 @@
+name: GitHub Issue Fix
+
+# Open Issue を 1 件ずつ修正レーンに載せるオーケストレーター
+# 10:00 JST に oldest-first で対象 Issue を選び、修正ブランチ + draft PR を自動作成する
+# 以後は通常の CI と ci-auto-fix.yml が小さな整形/自動修復を引き継ぐ
+
+on:
+  schedule:
+    - cron: '0 1 * * *' # 10:00 JST
+  workflow_dispatch:
+    inputs:
+      issue_number:
+        description: '処理する Issue 番号 (空欄で oldest-first 自動選択)'
+        required: false
+        default: ''
+      dry_run:
+        description: 'true なら対象選定と summary のみ'
+        required: false
+        default: 'false'
+
+concurrency:
+  group: github-issue-fix
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+jobs:
+  orchestrate:
+    name: Issue -> Draft PR bootstrap
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      GH_TOKEN: ${{ secrets.GH_PAT || secrets.GITHUB_TOKEN }}
+      DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GH_PAT || secrets.GITHUB_TOKEN }}
+
+      - name: Step 1 - Select target issue
+        id: target
+        uses: actions/github-script@v9
+        env:
+          REQUESTED_ISSUE: ${{ github.event.inputs.issue_number || '' }}
+        with:
+          script: |
+            const requested = (process.env.REQUESTED_ISSUE || '').trim();
+            const { owner, repo } = context.repo;
+
+            const issues = await github.paginate(github.rest.issues.listForRepo, {
+              owner,
+              repo,
+              state: 'open',
+              per_page: 100,
+            });
+            const pullRequests = await github.paginate(github.rest.pulls.list, {
+              owner,
+              repo,
+              state: 'open',
+              per_page: 100,
+            });
+
+            const issueList = issues
+              .filter((issue) => !issue.pull_request)
+              .map((issue) => {
+                const labels = (issue.labels || []).map((label) =>
+                  typeof label === 'string' ? label : (label.name || ''),
+                );
+                return { issue, labels };
+              });
+
+            const hasExistingRepairPr = (issueNumber) =>
+              pullRequests.some((pr) => {
+                const headRef = pr.head?.ref || '';
+                const title = pr.title || '';
+                const body = pr.body || '';
+                return (
+                  headRef.startsWith(`issue-fix/${issueNumber}-`) ||
+                  title.includes(`#${issueNumber}`) ||
+                  body.includes(`#${issueNumber}`)
+                );
+              });
+
+            const isEligible = ({ issue, labels }) => {
+              const title = issue.title || '';
+              const lowerLabels = labels.map((label) => label.toLowerCase());
+              const allowed =
+                lowerLabels.some((label) =>
+                  ['bug', 'enhancement', 'feature', 'user-feedback', 'workflow-failure'].includes(label),
+                ) || title.startsWith('[追加要望]');
+              const blocked = lowerLabels.some((label) =>
+                ['question', 'duplicate', 'invalid', 'wontfix'].includes(label),
+              );
+              return allowed && !blocked && !hasExistingRepairPr(issue.number);
+            };
+
+            let selected;
+            if (requested) {
+              selected = issueList.find(({ issue }) => String(issue.number) === requested);
+              if (!selected) {
+                core.setOutput('has_issue', 'false');
+                core.setOutput('skip_reason', `Issue #${requested} was not found or is closed.`);
+                return;
+              }
+              if (!isEligible(selected)) {
+                core.setOutput('has_issue', 'false');
+                core.setOutput('skip_reason', `Issue #${requested} is not eligible or already has an open repair PR.`);
+                return;
+              }
+            } else {
+              selected = issueList
+                .filter(isEligible)
+                .sort((a, b) => new Date(a.issue.created_at) - new Date(b.issue.created_at))[0];
+              if (!selected) {
+                core.setOutput('has_issue', 'false');
+                core.setOutput('skip_reason', 'No eligible open issue was found.');
+                return;
+              }
+            }
+
+            const issue = selected.issue;
+            const labels = selected.labels;
+            const slug = issue.title
+              .toLowerCase()
+              .replace(/\[[^\]]+\]/g, '')
+              .replace(/[^a-z0-9]+/g, '-')
+              .replace(/^-+|-+$/g, '')
+              .slice(0, 32) || 'autofix';
+
+            core.setOutput('has_issue', 'true');
+            core.setOutput('issue_number', String(issue.number));
+            core.setOutput('issue_title', issue.title);
+            core.setOutput('issue_url', issue.html_url);
+            core.setOutput('labels', labels.join(','));
+            core.setOutput('branch_slug', slug);
+
+      - name: Step 2 - Skip summary when no issue is selected
+        if: steps.target.outputs.has_issue != 'true'
+        run: |
+          echo "No target issue selected."
+          echo "Reason: ${{ steps.target.outputs.skip_reason }}"
+
+      - name: Step 3 - Bootstrap branch and repair plan
+        if: steps.target.outputs.has_issue == 'true' && env.DRY_RUN != 'true'
+        id: bootstrap
+        env:
+          ISSUE_NUMBER: ${{ steps.target.outputs.issue_number }}
+          ISSUE_TITLE: ${{ steps.target.outputs.issue_title }}
+          ISSUE_URL: ${{ steps.target.outputs.issue_url }}
+          ISSUE_LABELS: ${{ steps.target.outputs.labels }}
+          BRANCH_SLUG: ${{ steps.target.outputs.branch_slug }}
+        run: |
+          set -euo pipefail
+
+          BRANCH="issue-fix/${ISSUE_NUMBER}-${BRANCH_SLUG}-${GITHUB_RUN_ID}"
+          PLAN_FILE="docs/issue-fix-plans/issue-${ISSUE_NUMBER}.md"
+          mkdir -p docs/issue-fix-plans
+
+          gh issue view "$ISSUE_NUMBER" --repo "$GITHUB_REPOSITORY" --json body --jq '.body' > /tmp/issue_body.txt
+          sed -n '1,40p' /tmp/issue_body.txt > /tmp/issue_body_excerpt.txt
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin main
+          git checkout -b "$BRANCH" origin/main
+
+          {
+            printf '# Issue Fix Plan #%s\n\n' "$ISSUE_NUMBER"
+            printf '%s\n' "- Issue: [$ISSUE_TITLE]($ISSUE_URL)"
+            printf '%s\n' "- Labels: $ISSUE_LABELS"
+            printf '%s\n' '- Workflow: `.github/workflows/github-issue-fix.yml`'
+            printf '%s\n' '- CI repair pair: `.github/workflows/ci-auto-fix.yml`'
+            printf '%s\n\n' "- Run: https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+            printf '## Goal\n\n'
+            printf '%s\n\n' "$ISSUE_TITLE"
+            printf '## Current Context\n\n```text\n'
+            cat /tmp/issue_body_excerpt.txt
+            printf '\n```\n\n'
+            printf '## Autonomous Repair Loop\n\n'
+            printf '%s\n' '1. Reproduce the smallest failing path for this issue.'
+            printf '%s\n' '2. Apply the minimum safe fix on this branch.'
+            printf '%s\n' '3. Let normal CI run on the draft PR.'
+            printf '%s\n' '4. If CI fails on mechanical issues, `ci-auto-fix.yml` attempts `dart fix --apply` and `deno fmt`.'
+            printf '%s\n\n' '5. Merge only after CI is green and the issue scope is satisfied.'
+            printf '## Checklist\n\n'
+            printf '%s\n' '- [ ] Reproduction is clear'
+            printf '%s\n' '- [ ] Smallest safe fix is implemented'
+            printf '%s\n' '- [ ] Analyze/tests/CI are checked'
+            printf '%s\n' '- [ ] PR notes explain the change and the remaining risk'
+          } > "$PLAN_FILE"
+
+          git add "$PLAN_FILE"
+          git commit -m "chore: bootstrap issue fix lane for #${ISSUE_NUMBER}"
+          git push origin "$BRANCH"
+
+          echo "branch=$BRANCH" >> "$GITHUB_OUTPUT"
+          echo "plan_file=$PLAN_FILE" >> "$GITHUB_OUTPUT"
+
+      - name: Step 4 - Create draft PR
+        if: steps.target.outputs.has_issue == 'true' && env.DRY_RUN != 'true'
+        id: pr
+        env:
+          ISSUE_NUMBER: ${{ steps.target.outputs.issue_number }}
+          ISSUE_TITLE: ${{ steps.target.outputs.issue_title }}
+          BRANCH: ${{ steps.bootstrap.outputs.branch }}
+          PLAN_FILE: ${{ steps.bootstrap.outputs.plan_file }}
+        run: |
+          set -euo pipefail
+
+          {
+            printf '## Summary\n\n'
+            printf '%s\n' "- bootstrap the autonomous repair lane for #$ISSUE_NUMBER"
+            printf '%s\n' '- create a dedicated fix branch and plan file'
+            printf '%s\n\n' '- pair this lane with `ci-auto-fix.yml` for small CI repair commits'
+            printf 'Closes #%s\n\n' "$ISSUE_NUMBER"
+            printf '## Repair Loop\n\n'
+            printf '%s\n' "1. \`github-issue-fix.yml\` created branch \`$BRANCH\`"
+            printf '%s\n' '2. make the smallest fix needed for the issue'
+            printf '%s\n' '3. let CI run normally'
+            printf '%s\n' '4. if CI fails on mechanical fixes, `ci-auto-fix.yml` will try `dart fix --apply` and `deno fmt`'
+            printf '%s\n\n' '5. merge after green CI and issue-scope confirmation'
+            printf '## Plan File\n\n'
+            printf '%s\n' "- \`$PLAN_FILE\`"
+          } > /tmp/github_issue_fix_pr.md
+
+          PR_URL=$(gh pr create \
+            --repo "$GITHUB_REPOSITORY" \
+            --draft \
+            --base main \
+            --head "$BRANCH" \
+            --title "auto: issue #$ISSUE_NUMBER $ISSUE_TITLE" \
+            --body-file /tmp/github_issue_fix_pr.md)
+
+          echo "pr_url=$PR_URL" >> "$GITHUB_OUTPUT"
+
+      - name: Step 5 - Comment back on issue
+        if: steps.target.outputs.has_issue == 'true' && env.DRY_RUN != 'true'
+        env:
+          ISSUE_NUMBER: ${{ steps.target.outputs.issue_number }}
+          BRANCH: ${{ steps.bootstrap.outputs.branch }}
+          PLAN_FILE: ${{ steps.bootstrap.outputs.plan_file }}
+          PR_URL: ${{ steps.pr.outputs.pr_url }}
+        run: |
+          {
+            printf '%s\n' 'Automated repair lane bootstrapped by github-issue-fix.yml.'
+            printf '\n'
+            printf '%s\n' "- branch: $BRANCH"
+            printf '%s\n' "- draft PR: $PR_URL"
+            printf '%s\n' "- plan: $PLAN_FILE"
+            printf '%s\n' '- CI healer: ci-auto-fix.yml'
+            printf '\n'
+            printf '%s\n' 'Flow: issue -> draft PR -> CI -> small auto-fixes.'
+          } > /tmp/github_issue_fix_comment.md
+
+          gh issue comment "$ISSUE_NUMBER" \
+            --repo "$GITHUB_REPOSITORY" \
+            --body-file /tmp/github_issue_fix_comment.md
+
+      - name: Step 6 - Record to schedule_task_runs
+        if: always()
+        run: |
+          ISSUE_NUMBER="${{ steps.target.outputs.issue_number }}"
+          ISSUE_TITLE="${{ steps.target.outputs.issue_title }}"
+          STATUS="success"
+          if [ "${{ steps.target.outputs.has_issue }}" != "true" ]; then
+            SUMMARY="github-issue-fix: skipped (${{ steps.target.outputs.skip_reason }})"
+          elif [ "$DRY_RUN" = "true" ]; then
+            SUMMARY="github-issue-fix: dry-run issue #${ISSUE_NUMBER} ${ISSUE_TITLE}"
+          else
+            SUMMARY="github-issue-fix: bootstrapped issue #${ISSUE_NUMBER} -> ${{ steps.pr.outputs.pr_url }}"
+          fi
+          curl -s -o /dev/null \
+            -X POST \
+            -H "apikey: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
+            -H "Content-Type: application/json" \
+            -H "Prefer: return=minimal" \
+            -d "{\"task_id\":\"github-issue-fix\",\"status\":\"$STATUS\",\"summary\":$(echo "$SUMMARY" | jq -R .)}" \
+            "https://smmkxxavexumewbfaqpy.supabase.co/rest/v1/schedule_task_runs" \
+            --max-time 10 || true
+
+      - name: Job Summary
+        if: always()
+        run: |
+          {
+            echo "## GitHub Issue Fix $(TZ=Asia/Tokyo date +'%Y-%m-%d %H:%M JST')"
+            echo ""
+            echo "| 項目 | 値 |"
+            echo "| --- | --- |"
+            echo "| dry_run | ${DRY_RUN} |"
+            echo "| issue selected | ${{ steps.target.outputs.has_issue || 'false' }} |"
+            echo "| issue | #${{ steps.target.outputs.issue_number || 'n/a' }} ${{ steps.target.outputs.issue_title || '' }} |"
+            echo "| branch | \`${{ steps.bootstrap.outputs.branch || 'n/a' }}\` |"
+            echo "| draft PR | ${{ steps.pr.outputs.pr_url || 'n/a' }} |"
+            echo "| note | ${{ steps.target.outputs.skip_reason || 'bootstrapped' }} |"
+          } >> "$GITHUB_STEP_SUMMARY"
