@@ -50,8 +50,7 @@ class _InvoiceGeneratorPageState extends State<InvoiceGeneratorPage> {
         setState(() {
           _invoices = items is List
               ? (items as List).map<Map<String, dynamic>>((inv) {
-                  final meta =
-                      (inv['metadata'] as Map<String, dynamic>?) ?? {};
+                  final meta = (inv['metadata'] as Map<String, dynamic>?) ?? {};
                   return {
                     'id': inv['id'],
                     'client_name':

@@ -16078,3 +16078,34 @@ CEO感 ✅ ミッション駆動 ✅ 優しいmentor — 6部署バランス ✅
 - **VSCode handoff**: `docs/cross-instance-prs/20260424_ai_hub_quota_fallback.md` — ai-hub EF quota自動routing
 - **ユーザーアクション必要**: `GOOGLE_AI_API_KEY` を GitHub repo secrets に追加 (Settings→Secrets)
 - Philosophy: 7/9 ✅ (1.CEO感 2.ミッション 5.商品価値 6.時間資本 7.BS 8.KPI 9.IPO)
+
+## PS版#6 セッション26 — 2026-04-24
+
+**インスタンス**: PS#6 | **担当**: 開発プロセス Multi-AI 耐障害性改善
+
+### 背景
+
+Claude Code quota 超過時に開発プロセスが完全停止するリスクを確認。
+スケジュールタスクがエラーループする問題を根本解決する設計見直しを実施。
+
+### 実装サマリー
+
+- **`claude-agent-review.yml` → `AI Agent PR Review` にリネーム+改修**
+  - Claude → Gemini 1.5 Flash 自動フォールバック実装
+  - 両プロバイダー quota 超過時: graceful skip (PRブロックなし)
+  - 新 secret: `GEMINI_API_KEY` (Google AI Studio 無料枠)
+- **`docs/AI_FALLBACK_RUNBOOK.md` 新規作成**
+  - 4シナリオ別フォールバック手順
+  - GHA ワークフロー Claude 依存度マトリクス (大半は Claude 非依存と判明)
+  - Codex CLI / Gemini Code Assist / Copilot セットアップ手順
+  - quota 超過チェックリスト
+- **`CLAUDE.md` 更新**
+  - AI振り分け早見表に "Claude quota 超過時" 列追加
+  - フォールバック runbook へのポインタ追加
+- **発見: GHA スケジュールタスクは既に Claude 非依存**
+  - cs-check / daily-report / ai-university-update / quota-monitor → 影響なし
+  - claude-agent-review のみ Claude 依存 → Gemini fallback で解決済み
+
+### Philosophy Alignment (Rule 22) — 8/9
+
+CEO感 ✅ ミッション駆動 ✅ 優しいmentor ✅ 6部署バランス ✅ 商品=ユーザー価値 ✅ 資本=時間 ✅ BS原則 ✅ KPI=昨日の自分 ✅ ゴール=IPO —

@@ -48,8 +48,7 @@ class _PollSurveyPageState extends State<PollSurveyPage> {
         setState(() {
           _polls = items is List
               ? (items as List).map<Map<String, dynamic>>((p) {
-                  final meta =
-                      (p['metadata'] as Map<String, dynamic>?) ?? {};
+                  final meta = (p['metadata'] as Map<String, dynamic>?) ?? {};
                   return {
                     'id': p['id'],
                     'question': meta['question'] ?? p['question'] ?? '',

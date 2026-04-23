@@ -1,6 +1,10 @@
 # 自分株式会社 — Claude Code 設定
 
-> **注意 (一時対応)**: 現在 `Claude` がクォータ制限に達しているため、他担当のタスクは一時的に `Codex` に引き継いで開発を進めます。該当の再割当は `docs/WBS.md` と WBS データ本体に反映し、Claude の利用が再開次第、必要に応じてロールバックまたは調整を行います。
+> **Claude quota 超過時のフォールバック** (2026-04-24 更新):  
+> Claude Code quota 超過 → **Codex CLI / Gemini Code Assist / GitHub Copilot** で継続開発。  
+> GHA スケジュールタスクは Claude 非依存設計のため影響なし。  
+> PR レビューは Gemini 1.5 Flash へ自動フォールバック済み。  
+> 詳細手順: [`docs/AI_FALLBACK_RUNBOOK.md`](docs/AI_FALLBACK_RUNBOOK.md)
 
 
 ## プロジェクト概要
@@ -162,6 +166,7 @@ Anthropic API outage 時も他 AI で開発継続可能な体制を確立する�
 | EF (Deno) 新 action | **Codex** | Copilot | deny-by-default 原則確認 |
 | GHA workflow (yml) | **Codex** | Copilot | 不使用 |
 | 競合 21 社調査 | **NotebookLM Deep Research** | — | 統合レポート |
+| PR レビュー (GHA) | **Claude API** (claude-sonnet-4-6) | **Gemini 1.5 Flash** (自動 fallback) | 不使用 |
 | 設計・戦略・ルール遵守 | **Claude Code** 独占 | — | 主役 |
 | cross-instance-pr 作成 | **Claude Code** 独占 | — | 主役 |
 | memory/ consolidation | **Claude Code** 独占 | — | 主役 |
@@ -170,7 +175,9 @@ Anthropic API outage 時も他 AI で開発継続可能な体制を確立する�
 
 **判定フロー**: タスク発生 → Q1 複数インスタンス調整? → Q2 判断 / trade-off? → Q3 既存 pattern? → Q4 500+ 行一括? → Q5 深いリサーチ? の順で振り分け (`docs/DEV_PROCESS_MULTI_AI.md` §2)。
 
-**Anthropic API 停止時 fallback**: AI大学 provider 追加 / Migration / Flutter 小修正 / GHA 修正 / 競合モニタリングは Codex + Copilot + Gemini + NotebookLM で継続可。Claude 必須タスク (アーキテクチャ判断 / cross-instance-pr / memory consolidation / design review) は 48h pause 許容。
+**Anthropic API 停止時 fallback**: AI大学 provider 追加 / Migration / Flutter 小修正 / GHA 修正 / 競合モニタリングは Codex + Copilot + Gemini + NotebookLM で継続可。Claude 必須タスク (アーキテクチャ判断 / cross-instance-pr / memory consolidation / design review) は 48h pause 許容。GHA schedule タスクは Claude 非依存設計済 (cs-check/daily-report/ai-university-update)。
+
+> **フォールバック詳細**: [`docs/AI_FALLBACK_RUNBOOK.md`](docs/AI_FALLBACK_RUNBOOK.md)
 
 ### マルチエージェント協調パターン (新機能設計時に参照)
 
