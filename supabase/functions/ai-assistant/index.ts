@@ -14,6 +14,7 @@ const KEYS = {
     anthropic: Deno.env.get('ANTHROPIC_API_KEY'),
     deepseek: Deno.env.get('DEEPSEEK_API_KEY'),
     grok: Deno.env.get('XAI_API_KEY'),
+    hedra: Deno.env.get('HEDRA_API_KEY'),
 };
 
 const FALLBACK_MODELS = [
@@ -106,6 +107,10 @@ interface AIRequest {
     conversationId?: string;
     conversationContext?: string;  // 'general_chat' | 'ai_university_quiz' | 'habit_coach'
     voiceUsed?: boolean;
+    responseMode?: string;
+    avatarImageUrl?: string;
+    voice?: string;
+    title?: string;
 }
 
 interface Fighter {
@@ -274,6 +279,65 @@ serve(async (req) => {
                 JSON.stringify({ success: true, ...getProviderStatus() }),
                 { headers: corsHeaders }
             );
+        }
+
+        if (action === 'assistant_video_reply') {
+            const userMessage = (requestData.message ?? requestContent ?? '').trim();
+            if (!userMessage) throw new Error('content is required');
+
+            const script = await runPromptWithStrategy(buildAssistantVideoPrompt(userMessage));
+
+            if (!KEYS.hedra) {
+                return new Response(
+                    JSON.stringify({
+                        success: true,
+                        result: {
+                            provider: 'hedra',
+                            status: 'fallback_text',
+                            script,
+                            id: null,
+                            videoUrl: null,
+                            previewUrl: null,
+                            downloadUrl: null,
+                            reason: 'HEDRA_API_KEY not configured',
+                        },
+                    }),
+                    { headers: corsHeaders },
+                );
+            }
+
+            try {
+                const video = await createHedraVideo(requestData, script);
+                return new Response(
+                    JSON.stringify({
+                        success: true,
+                        result: {
+                            provider: 'hedra',
+                            script,
+                            ...video,
+                        },
+                    }),
+                    { headers: corsHeaders },
+                );
+            } catch (error: unknown) {
+                const reason = error instanceof Error ? error.message : String(error);
+                return new Response(
+                    JSON.stringify({
+                        success: true,
+                        result: {
+                            provider: 'hedra',
+                            status: 'fallback_text',
+                            script,
+                            id: null,
+                            videoUrl: null,
+                            previewUrl: null,
+                            downloadUrl: null,
+                            reason,
+                        },
+                    }),
+                    { headers: corsHeaders },
+                );
+            }
         }
 
         // --- 2. リアル断捨離クエスト ---
@@ -882,6 +946,7 @@ ${entryData}`;
                 'my_struggle_column', 'behavior_analysis',
                 'improve', 'summarize', 'expand', 'translate',
                 'suggest_title', 'custom_prompt',
+                'assistant_video_reply',
                 'save_skill', 'list_skills', 'delete_skill', 'run_skill',
                 'chat',
             ],
@@ -1141,6 +1206,8 @@ function isProviderAvailable(providerName: string): boolean {
         case 'xai':
         case 'grok':
             return Boolean(KEYS.grok);
+        case 'hedra':
+            return Boolean(KEYS.hedra);
         default:
             return false;
     }
@@ -1159,6 +1226,7 @@ function getProviderStatus(): {
         anthropic: { env: 'ANTHROPIC_API_KEY', configured: Boolean(KEYS.anthropic) },
         deepseek: { env: 'DEEPSEEK_API_KEY', configured: Boolean(KEYS.deepseek) },
         xai: { env: 'XAI_API_KEY', configured: Boolean(KEYS.grok) },
+        hedra: { env: 'HEDRA_API_KEY', configured: Boolean(KEYS.hedra) },
     };
     const configured = Object.entries(details)
         .filter(([_, v]) => v.configured)
@@ -1167,6 +1235,140 @@ function getProviderStatus(): {
         .filter(([_, v]) => !v.configured)
         .map(([k]) => k);
     return { configured, missing, total: Object.keys(details).length, details };
+}
+
+function buildAssistantVideoPrompt(userMessage: string): string {
+    return `
+あなたは「自分株式会社」のAIアシスタントです。
+ユーザーの依頼に対して、アバター動画がそのまま読み上げられる短い返答原稿を作成してください。
+
+必須ルール:
+- 出力は日本語の話し言葉
+- 2〜4文で簡潔にまとめる
+- 箇条書き、絵文字、見出し、Markdown を使わない
+- 「こんにちは」などの短い導入は可
+- 動画向けなので一文を長くしすぎない
+- 根拠のない断定や誇張を避ける
+
+ユーザー依頼:
+${userMessage}
+`.trim();
+}
+
+function firstNonEmptyString(...values: unknown[]): string | null {
+    for (const value of values) {
+        if (typeof value === 'string' && value.trim().length > 0) {
+            return value.trim();
+        }
+    }
+    return null;
+}
+
+function buildHedraAvatarImage(data: AIRequest): string | null {
+    const avatarImageUrl = data.avatarImageUrl?.trim();
+    if (avatarImageUrl) return avatarImageUrl;
+    const base64 = data.imageBase64?.trim();
+    if (!base64) return null;
+    const mimeType = data.mimeType?.trim() || 'image/jpeg';
+    return `data:${mimeType};base64,${base64}`;
+}
+
+function normalizeHedraVideoResponse(payload: unknown): {
+    id: string | null;
+    status: string;
+    videoUrl: string | null;
+    previewUrl: string | null;
+    downloadUrl: string | null;
+} {
+    const data = payload as Record<string, unknown> | null;
+    const id = firstNonEmptyString(
+        data?.id,
+        data?.video_id,
+        (data?.video as Record<string, unknown> | null)?.id,
+        (data?.job as Record<string, unknown> | null)?.id,
+    );
+    const videoUrl = firstNonEmptyString(
+        data?.url,
+        data?.video_url,
+        data?.download_url,
+        (data?.result as Record<string, unknown> | null)?.url,
+        (data?.video as Record<string, unknown> | null)?.url,
+        (data?.video as Record<string, unknown> | null)?.download_url,
+        (data?.asset as Record<string, unknown> | null)?.url,
+    );
+    const previewUrl = firstNonEmptyString(
+        data?.preview_url,
+        (data?.video as Record<string, unknown> | null)?.preview_url,
+        (data?.asset as Record<string, unknown> | null)?.preview_url,
+    );
+    const downloadUrl = firstNonEmptyString(
+        data?.download_url,
+        (data?.video as Record<string, unknown> | null)?.download_url,
+        videoUrl,
+    );
+    const status = firstNonEmptyString(
+        data?.status,
+        data?.state,
+        (data?.job as Record<string, unknown> | null)?.status,
+        (data?.video as Record<string, unknown> | null)?.status,
+    ) ?? (videoUrl ? 'completed' : 'submitted');
+
+    return {
+        id,
+        status,
+        videoUrl,
+        previewUrl,
+        downloadUrl,
+    };
+}
+
+async function createHedraVideo(
+    data: AIRequest,
+    script: string,
+): Promise<{
+    id: string | null;
+    status: string;
+    videoUrl: string | null;
+    previewUrl: string | null;
+    downloadUrl: string | null;
+}> {
+    const avatarImage = buildHedraAvatarImage(data);
+    const body: Record<string, unknown> = {
+        text: script,
+        voice: data.voice?.trim() || 'ja-JP',
+    };
+    if (avatarImage) body.avatarImage = avatarImage;
+    if (data.title?.trim()) body.title = data.title.trim();
+
+    const response = await fetch('https://mercury.dev.dream-ai.com/api/v1/characters', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-API-KEY': KEYS.hedra!,
+        },
+        body: JSON.stringify(body),
+    });
+
+    const rawText = await response.text();
+    let parsed: unknown = {};
+    if (rawText.trim().length > 0) {
+        try {
+            parsed = JSON.parse(rawText);
+        } catch {
+            parsed = { raw: rawText };
+        }
+    }
+
+    if (!response.ok) {
+        const message = firstNonEmptyString(
+            (parsed as Record<string, unknown> | null)?.error,
+            (parsed as Record<string, unknown> | null)?.message,
+            rawText,
+        ) ?? `Hedra request failed with status ${response.status}`;
+        throw new Error(message);
+    }
+
+    return normalizeHedraVideoResponse(parsed);
 }
 
 async function callOpenAICompatible(

@@ -8,6 +8,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:web/web.dart' as web;
 
 class AiAssistantChatPage extends StatefulWidget {
@@ -25,6 +26,7 @@ class _AiAssistantChatPageState extends State<AiAssistantChatPage>
 
   List<_ChatMessage> _messages = [];
   _ChatImageAttachment? _selectedImage;
+  bool _preferVideoResponse = false;
   bool _isLoading = false;
   bool _isListening = false;
   bool _speechSupported = true;
@@ -146,7 +148,20 @@ class _AiAssistantChatPageState extends State<AiAssistantChatPage>
             );
           }
           if (resp.isNotEmpty) {
-            msgs.add(_ChatMessage(role: 'assistant', content: resp));
+            msgs.add(
+              _ChatMessage(
+                role: 'assistant',
+                content: resp,
+                videoUrl: meta['video_url']?.toString() ??
+                    meta['video_download_url']?.toString() ??
+                    meta['video_preview_url']?.toString(),
+                videoPreviewUrl: meta['video_preview_url']?.toString(),
+                videoDownloadUrl: meta['video_download_url']?.toString(),
+                videoStatus: meta['video_status']?.toString(),
+                videoProvider: meta['video_provider']?.toString(),
+                videoReason: meta['video_reason']?.toString(),
+              ),
+            );
           }
         }
         if (mounted) setState(() => _messages = msgs);
@@ -184,6 +199,7 @@ class _AiAssistantChatPageState extends State<AiAssistantChatPage>
         body: {
           'action': 'my_agent.chat',
           'message': displayText,
+          'response_mode': _preferVideoResponse ? 'video' : 'text',
           if (image != null) ...{
             'imageBase64': image.base64,
             'mimeType': image.mimeType,
@@ -192,10 +208,24 @@ class _AiAssistantChatPageState extends State<AiAssistantChatPage>
         },
       );
       final data = res.data as Map<String, dynamic>?;
+      final video = data?['video'] as Map<String, dynamic>?;
       final response = data?['response'] as String? ?? 'エラーが発生しました。';
       if (mounted) {
         setState(() {
-          _messages.add(_ChatMessage(role: 'assistant', content: response));
+          _messages.add(
+            _ChatMessage(
+              role: 'assistant',
+              content: response,
+              videoUrl: video?['video_url']?.toString() ??
+                  video?['download_url']?.toString() ??
+                  video?['preview_url']?.toString(),
+              videoPreviewUrl: video?['preview_url']?.toString(),
+              videoDownloadUrl: video?['download_url']?.toString(),
+              videoStatus: video?['status']?.toString(),
+              videoProvider: video?['provider']?.toString(),
+              videoReason: video?['reason']?.toString(),
+            ),
+          );
           _isLoading = false;
         });
         _scrollToBottom();
@@ -299,6 +329,18 @@ class _AiAssistantChatPageState extends State<AiAssistantChatPage>
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(msg), backgroundColor: const Color(0xFF1A1A2E)),
     );
+  }
+
+  Future<void> _openExternalUrl(String rawUrl) async {
+    final uri = Uri.tryParse(rawUrl);
+    if (uri == null) {
+      _showSnackBar('動画URLを開けませんでした');
+      return;
+    }
+    final launched = await launchUrl(uri, mode: LaunchMode.platformDefault);
+    if (!launched) {
+      _showSnackBar('動画URLを開けませんでした');
+    }
   }
 
   @override
@@ -486,6 +528,96 @@ class _AiAssistantChatPageState extends State<AiAssistantChatPage>
                         ],
                       ),
                     ),
+                  if (!isUser &&
+                      (message.videoStatus != null ||
+                          message.videoUrl != null ||
+                          message.videoReason != null))
+                    Container(
+                      margin: const EdgeInsets.only(bottom: 8),
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withAlpha(18),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: Colors.white12),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              const Icon(
+                                Icons.videocam_outlined,
+                                size: 16,
+                                color: _orange,
+                              ),
+                              const SizedBox(width: 6),
+                              Expanded(
+                                child: Text(
+                                  message.videoProvider == null
+                                      ? '動画回答'
+                                      : '動画回答 (${message.videoProvider})',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    height: 1.4,
+                                  ),
+                                ),
+                              ),
+                              if (message.videoStatus != null)
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 3,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: _orange.withAlpha(30),
+                                    borderRadius: BorderRadius.circular(999),
+                                  ),
+                                  child: Text(
+                                    message.videoStatus!,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 11,
+                                      height: 1.3,
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                          if (message.videoReason != null &&
+                              message.videoReason!.trim().isNotEmpty) ...[
+                            const SizedBox(height: 6),
+                            Text(
+                              message.videoReason!,
+                              style: const TextStyle(
+                                color: Colors.white70,
+                                fontSize: 12,
+                                height: 1.4,
+                              ),
+                            ),
+                          ],
+                          if (message.videoUrl != null &&
+                              message.videoUrl!.trim().isNotEmpty) ...[
+                            const SizedBox(height: 8),
+                            OutlinedButton.icon(
+                              onPressed: () =>
+                                  _openExternalUrl(message.videoUrl!),
+                              icon: const Icon(Icons.open_in_new, size: 16),
+                              label: const Text('動画を開く'),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: Colors.white,
+                                side: const BorderSide(color: Colors.white24),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 8,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
                   Text(
                     message.content,
                     style: TextStyle(
@@ -558,6 +690,53 @@ class _AiAssistantChatPageState extends State<AiAssistantChatPage>
             ],
             Row(
               children: [
+                ChoiceChip(
+                  label: const Text('テキスト回答'),
+                  selected: !_preferVideoResponse,
+                  onSelected: _isLoading
+                      ? null
+                      : (_) => setState(() => _preferVideoResponse = false),
+                  selectedColor: _orange.withAlpha(38),
+                  backgroundColor: Colors.white10,
+                  labelStyle: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                    height: 1.4,
+                  ),
+                  side: const BorderSide(color: Colors.white12),
+                ),
+                const SizedBox(width: 8),
+                ChoiceChip(
+                  label: const Text('動画回答'),
+                  selected: _preferVideoResponse,
+                  onSelected: _isLoading
+                      ? null
+                      : (_) => setState(() => _preferVideoResponse = true),
+                  selectedColor: _orange.withAlpha(52),
+                  backgroundColor: Colors.white10,
+                  labelStyle: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                    height: 1.4,
+                  ),
+                  side: const BorderSide(color: Colors.white12),
+                ),
+                const SizedBox(width: 10),
+                const Expanded(
+                  child: Text(
+                    '画像添付時はアバター動画の素材として使います',
+                    style: TextStyle(
+                      color: Colors.white54,
+                      fontSize: 11,
+                      height: 1.4,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
                 IconButton(
                   onPressed: _isLoading ? null : _pickImage,
                   tooltip: '画像を添付',
@@ -588,7 +767,8 @@ class _AiAssistantChatPageState extends State<AiAssistantChatPage>
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(24),
-                        borderSide: const BorderSide(color: _orange, width: 1.5),
+                        borderSide:
+                            const BorderSide(color: _orange, width: 1.5),
                       ),
                       contentPadding: const EdgeInsets.symmetric(
                         horizontal: 16,
@@ -690,12 +870,24 @@ class _ChatMessage {
     required this.content,
     this.attachmentName,
     this.imageBytes,
+    this.videoUrl,
+    this.videoPreviewUrl,
+    this.videoDownloadUrl,
+    this.videoStatus,
+    this.videoProvider,
+    this.videoReason,
   });
 
   final String role;
   final String content;
   final String? attachmentName;
   final Uint8List? imageBytes;
+  final String? videoUrl;
+  final String? videoPreviewUrl;
+  final String? videoDownloadUrl;
+  final String? videoStatus;
+  final String? videoProvider;
+  final String? videoReason;
 }
 
 class _ChatImageAttachment {

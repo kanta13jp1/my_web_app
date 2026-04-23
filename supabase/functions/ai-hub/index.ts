@@ -1444,6 +1444,37 @@ async function fallbackTextSearch(
   }));
 }
 
+async function invokeAiAssistant(
+  authHeader: string,
+  payload: Record<string, unknown>,
+): Promise<Record<string, unknown>> {
+  if (!authHeader) throw new Error("Missing authorization header");
+  const response = await fetch(`${SUPABASE_URL}/functions/v1/ai-assistant`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "apikey": SUPABASE_ANON_KEY,
+      "Authorization": authHeader,
+    },
+    body: JSON.stringify(payload),
+  });
+  const rawText = await response.text();
+  let parsed: Record<string, unknown> = {};
+  if (rawText.trim()) {
+    try {
+      parsed = JSON.parse(rawText) as Record<string, unknown>;
+    } catch {
+      parsed = { raw: rawText };
+    }
+  }
+  if (!response.ok) {
+    const message = asString(parsed.error ?? parsed.message ?? rawText) ||
+      `ai-assistant request failed (${response.status})`;
+    throw new Error(message);
+  }
+  return parsed;
+}
+
 async function callGemini(prompt: string, apiKey: string, image?: InlineImage): Promise<string> {
   const parts: Record<string, unknown>[] = [{ text: prompt }];
   if (image) {
@@ -1682,6 +1713,7 @@ serve(async (req: Request) => {
         const geminiKey = Deno.env.get("GEMINI_API_KEY") ?? "";
         if (!geminiKey) return json({ error: "GEMINI_API_KEY not configured" }, 503);
         const message = asString(body.message) || "この画像を分析してください";
+        const responseMode = asString(body.response_mode) || "text";
         const parsedImage = parseInlineImage(body);
         if (parsedImage.error) return json({ error: parsedImage.error }, parsedImage.status ?? 400);
         const image = parsedImage.image;
@@ -1694,16 +1726,61 @@ serve(async (req: Request) => {
           ? "\n添付画像も確認し、見えている内容・文脈・ユーザーの質問に関係する示唆を含めて回答してください。"
           : "";
         const prompt = `あなたは個人AIエージェントです。${recentContext ? "履歴:\n" + recentContext + "\n\n" : ""}ユーザーメッセージ: ${message}${imageInstruction}`;
-        const response = await callGemini(prompt, geminiKey, image);
+        let response = "";
+        let videoMetadata: Record<string, unknown> | null = null;
+        if (responseMode === "video") {
+          const assistantResponse = await invokeAiAssistant(
+            req.headers.get("Authorization") ?? "",
+            {
+              action: "assistant_video_reply",
+              message,
+              content: prompt,
+              useMagi: true,
+              ...(image
+                ? {
+                  imageBase64: image.base64,
+                  mimeType: image.mimeType,
+                }
+                : {}),
+            },
+          );
+          const result = (assistantResponse.result ?? {}) as Record<string, unknown>;
+          response = asString(result.script) || "動画回答を準備しました。";
+          videoMetadata = {
+            provider: asString(result.provider) || "hedra",
+            status: asString(result.status) || "submitted",
+            video_url: asString(result.videoUrl),
+            preview_url: asString(result.previewUrl),
+            download_url: asString(result.downloadUrl),
+            reason: asString(result.reason),
+            id: asString(result.id),
+          };
+        } else {
+          response = await callGemini(prompt, geminiKey, image);
+        }
         await addItem(admin, "my_agent_history", userId!, {
           message,
           response,
+          response_mode: responseMode,
           has_image: Boolean(image),
           image_mime_type: image?.mimeType ?? null,
           image_name: image?.name ?? null,
           image_base64_chars: image?.base64.length ?? 0,
+          video_provider: videoMetadata?.provider ?? null,
+          video_status: videoMetadata?.status ?? null,
+          video_url: videoMetadata?.video_url ?? null,
+          video_preview_url: videoMetadata?.preview_url ?? null,
+          video_download_url: videoMetadata?.download_url ?? null,
+          video_reason: videoMetadata?.reason ?? null,
+          video_id: videoMetadata?.id ?? null,
         });
-        return json({ success: true, response, multimodal: Boolean(image) });
+        return json({
+          success: true,
+          response,
+          multimodal: Boolean(image),
+          response_mode: responseMode,
+          video: videoMetadata,
+        });
       }
 
       case "my_agent.history": {

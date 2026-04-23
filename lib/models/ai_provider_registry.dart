@@ -567,7 +567,12 @@ const List<AiProviderEntry> kAiProviderRegistry = [
   AiProviderEntry(
     id: 'hedra',
     displayName: 'Hedra',
-    status: AiProviderStatus.notImplemented,
+    status: AiProviderStatus.apiKeyRequired,
+    tier: AiProviderTier.premium,
+    envKeyName: 'HEDRA_API_KEY',
+    entryPoint:
+        'ai-assistant:assistant_video_reply / ai-hub:my_agent.chat(video)',
+    note: '会話テキストをアバター動画へ昇格。画像添付時は avatarImage として利用。',
   ),
   AiProviderEntry(
     id: 'heygen',
