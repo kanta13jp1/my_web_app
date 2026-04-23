@@ -21,7 +21,10 @@ import 'package:my_web_app/widgets/kgi_csf_kpi_panel.dart';
 
 enum AssetManagementInitialFocus {
   overview,
+  assets,
   flow,
+  subscriptions,
+  mustTasks,
 }
 
 enum AssetDebtPlannerMode {
@@ -33,12 +36,16 @@ class AssetManagementPage extends StatefulWidget {
   final AssetManagementInitialFocus initialFocus;
   final bool emphasizeMonthlyFlow;
   final AssetWatchlistService watchlistService;
+  final String? entryLabel;
+  final String? entryDescription;
 
   const AssetManagementPage({
     super.key,
     this.initialFocus = AssetManagementInitialFocus.overview,
     this.emphasizeMonthlyFlow = false,
     this.watchlistService = const AssetWatchlistService(),
+    this.entryLabel,
+    this.entryDescription,
   });
 
   @override
@@ -176,9 +183,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     _loadSourceOptionsFromDb();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      if (widget.initialFocus == AssetManagementInitialFocus.flow) {
-        _scrollTo(_keyFlow);
-      }
+      _scrollToInitialFocus();
     });
   }
 
@@ -223,6 +228,25 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       _dateOnly(DateTime.now().subtract(const Duration(days: 1)));
 
   DateTime _monthStart(DateTime dt) => DateTime(dt.year, dt.month, 1);
+
+  void _scrollToInitialFocus() {
+    switch (widget.initialFocus) {
+      case AssetManagementInitialFocus.overview:
+        return;
+      case AssetManagementInitialFocus.assets:
+        _scrollTo(_keyStock);
+        return;
+      case AssetManagementInitialFocus.flow:
+        _scrollTo(_keyFlow);
+        return;
+      case AssetManagementInitialFocus.subscriptions:
+        _scrollTo(_keySubs);
+        return;
+      case AssetManagementInitialFocus.mustTasks:
+        _scrollTo(_keyMust);
+        return;
+    }
+  }
 
   bool _isSameMonth(DateTime a, DateTime b) =>
       a.year == b.year && a.month == b.month;
@@ -3582,6 +3606,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            if ((widget.entryLabel?.trim().isNotEmpty ?? false) ||
+                (widget.entryDescription?.trim().isNotEmpty ?? false)) ...[
+              _buildUnifiedEntryBanner(),
+              const SizedBox(height: 16),
+            ],
             _buildMonthlyFlowFirstCard(),
             const SizedBox(height: 16),
             _buildMonthlyFlowPrimaryActionBar(),
@@ -3608,6 +3637,93 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             _buildChartCard(), // グラフ
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildUnifiedEntryBanner() {
+    final label = widget.entryLabel?.trim();
+    final description = widget.entryDescription?.trim();
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFFECFDF5),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFF99F6E4)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: const Color(0xFF0F766E).withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Icon(
+              Icons.merge_type,
+              color: Color(0xFF0F766E),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    const Text(
+                      'お金まわりの操作は資産管理に統合しました',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF0F172A),
+                        height: 1.4,
+                      ),
+                    ),
+                    if (label != null && label.isNotEmpty)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFCCFBF1),
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                        child: Text(
+                          label,
+                          style: const TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w800,
+                            color: Color(0xFF115E59),
+                            height: 1.2,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+                if (description != null && description.isNotEmpty) ...[
+                  const SizedBox(height: 6),
+                  Text(
+                    description,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: Color(0xFF134E4A),
+                      fontWeight: FontWeight.w600,
+                      height: 1.5,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

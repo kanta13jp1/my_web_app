@@ -105,7 +105,6 @@ import '../pages/appointment_scheduler_page.dart';
 import '../pages/ar_navigation_page.dart';
 import '../pages/auction_marketplace_page.dart';
 import '../pages/audio_effects_processor_page.dart';
-import '../pages/budget_financial_planner_page.dart';
 import '../pages/calendar_events_page.dart';
 import '../pages/carbon_footprint_tracker_page.dart';
 import '../pages/customer_feedback_page.dart';
@@ -115,7 +114,6 @@ import '../pages/donation_crowdfunding_page.dart';
 import '../pages/emergency_contacts_page.dart';
 import '../pages/enterprise_page.dart';
 import '../pages/event_ticketing_page.dart';
-import '../pages/expense_tracker_page.dart';
 import '../pages/family_sharing_manager_page.dart';
 import '../pages/feature_flags_page.dart';
 import '../pages/feature_requests_page.dart';
@@ -1409,7 +1407,7 @@ List<HomeToolEntry> buildHomeToolCatalog({
       id: 'expense-tracker',
       sectionId: 'personal',
       title: '支出トラッカー',
-      subtitle: '支出記録・カテゴリ分析。MoneyForward競合',
+      subtitle: '資産管理に統合。支出記録・浪費カテゴリ・月次収支を一画面で確認',
       icon: Icons.receipt_long_outlined,
       color: const Color(0xFF2E7D32),
       keywords: const <String>[
@@ -1420,18 +1418,35 @@ List<HomeToolEntry> buildHomeToolCatalog({
         'expense',
         'MoneyForward',
       ],
-      onOpen: (context) => _pushPage(context, const ExpenseTrackerPage()),
+      onOpen: (context) => _pushPage(
+        context,
+        const AssetManagementPage(
+          initialFocus: AssetManagementInitialFocus.flow,
+          emphasizeMonthlyFlow: true,
+          entryLabel: '支出トラッカー',
+          entryDescription:
+              '支出記録、浪費カテゴリ、月次収支の確認は資産管理に統合しました。AIが現状を分析し、KGI / CSF / KPI で浪費削減を継続監視します。',
+        ),
+      ),
     ),
     HomeToolEntry(
       id: 'budget-financial-planner',
       sectionId: 'personal',
       title: '予算・財務プランナー',
-      subtitle: '月次予算設定・資産計画・支出管理',
+      subtitle: '資産管理に統合。予算・固定費・収支・借金ロックダウンを一つに集約',
       icon: Icons.savings_outlined,
       color: const Color(0xFF00695C),
       keywords: const <String>['予算', '財務', 'プランナー', '資産', '計画', 'budget'],
-      onOpen: (context) =>
-          _pushPage(context, const BudgetFinancialPlannerPage()),
+      onOpen: (context) => _pushPage(
+        context,
+        const AssetManagementPage(
+          initialFocus: AssetManagementInitialFocus.flow,
+          emphasizeMonthlyFlow: true,
+          entryLabel: '予算・財務プランナー',
+          entryDescription:
+              '月次予算、固定費、収支、借金ロックダウンは資産管理に統合しました。お金の判断を一画面に集約して、時間と集中力の浪費も減らします。',
+        ),
+      ),
     ),
     HomeToolEntry(
       id: 'reading-list',

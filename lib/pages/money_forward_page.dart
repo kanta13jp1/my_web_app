@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'asset_management_page.dart';
+
 /// MoneyForward 連携ページ
 /// moneyforward-sync Edge Function と連携して家計簿・資産データを取り込む
 class MoneyForwardPage extends StatefulWidget {
@@ -147,6 +149,22 @@ class _MoneyForwardPageState extends State<MoneyForwardPage>
       appBar: AppBar(
         title: const Text('MoneyForward 連携'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.account_balance_wallet_outlined),
+            tooltip: '資産管理へ',
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => const AssetManagementPage(
+                    initialFocus: AssetManagementInitialFocus.assets,
+                    entryLabel: 'MoneyForward連携',
+                    entryDescription:
+                        '口座・証券・家計の確認は資産管理に統合しました。資産残高、収支、固定費、借金ロックダウン、浪費抑制AIを一つの画面で見られます。',
+                  ),
+                ),
+              );
+            },
+          ),
           if (_isLoading)
             const Padding(
               padding: EdgeInsets.all(14),
@@ -526,7 +544,9 @@ class _TransactionsTab extends StatelessWidget {
                   isExpense ? const Color(0xFFFFEBEE) : const Color(0xFFE8F5E9),
               child: Icon(
                 isExpense ? Icons.arrow_upward : Icons.arrow_downward,
-                color: isExpense ? const Color(0xFFE53935) : const Color(0xFF4CAF50),
+                color: isExpense
+                    ? const Color(0xFFE53935)
+                    : const Color(0xFF4CAF50),
                 size: 18,
               ),
             ),
@@ -542,7 +562,9 @@ class _TransactionsTab extends StatelessWidget {
               formatAmount(amount),
               style: TextStyle(
                 fontWeight: FontWeight.bold,
-                color: isExpense ? const Color(0xFFE53935) : const Color(0xFF4CAF50),
+                color: isExpense
+                    ? const Color(0xFFE53935)
+                    : const Color(0xFF4CAF50),
                 height: 1.5,
               ),
             ),

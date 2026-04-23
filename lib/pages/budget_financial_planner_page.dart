@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'asset_management_page.dart';
 import '../models/kgi_csf_kpi.dart';
 import '../widgets/kgi_csf_kpi_panel.dart';
 
@@ -305,6 +306,23 @@ $breakdown
           ],
         ),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.account_balance_wallet_outlined),
+            tooltip: '資産管理へ',
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => const AssetManagementPage(
+                    initialFocus: AssetManagementInitialFocus.flow,
+                    emphasizeMonthlyFlow: true,
+                    entryLabel: '予算・財務プランナー',
+                    entryDescription:
+                        '日々の予算管理と収支の判断は資産管理に統合しました。資産残高、固定費、借金ロックダウン、浪費抑制AIまで一つの画面で確認できます。',
+                  ),
+                ),
+              );
+            },
+          ),
           // Month picker
           TextButton.icon(
             icon: const Icon(Icons.calendar_month, size: 18),
