@@ -10,6 +10,7 @@ class FeatureStrategyMonitorPanel extends StatefulWidget {
   final FeatureStrategyAiReview? aiReview;
   final bool isDark;
   final bool isCompact;
+  final FeatureStrategyFocusActionService? focusActionService;
 
   const FeatureStrategyMonitorPanel({
     super.key,
@@ -17,6 +18,7 @@ class FeatureStrategyMonitorPanel extends StatefulWidget {
     this.aiReview,
     this.isDark = false,
     this.isCompact = false,
+    this.focusActionService,
   });
 
   @override
@@ -26,8 +28,10 @@ class FeatureStrategyMonitorPanel extends StatefulWidget {
 
 class _FeatureStrategyMonitorPanelState
     extends State<FeatureStrategyMonitorPanel> {
-  final FeatureStrategyFocusActionService _focusActionService =
-      const FeatureStrategyFocusActionService();
+  static const _localFocusActionService = FeatureStrategyFocusActionService();
+
+  FeatureStrategyFocusActionService get _focusActionService =>
+      widget.focusActionService ?? _localFocusActionService;
 
   FeatureStrategyFocusActionState? _focusActionState;
   bool _focusActionLoading = false;
@@ -672,6 +676,13 @@ class _FocusActionControls extends StatelessWidget {
             label: completed ? _completedLabel(streak) : '今日は観察',
             color:
                 completed ? const Color(0xFF059669) : const Color(0xFFF59E0B),
+            dark: dark,
+          ),
+          _StatusPill(
+            label: state?.cloudSynced == true ? 'Cloud sync' : 'Local save',
+            color: state?.cloudSynced == true
+                ? const Color(0xFF2563EB)
+                : const Color(0xFF64748B),
             dark: dark,
           ),
           Text(

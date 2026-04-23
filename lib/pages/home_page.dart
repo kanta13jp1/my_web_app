@@ -99,6 +99,10 @@ class _HomePageState extends State<HomePage> {
   );
   final LifeWasteAiReviewService _lifeWasteAiReviewService =
       LifeWasteAiReviewService();
+  final FeatureStrategyFocusActionService _featureStrategyFocusActionService =
+      const FeatureStrategyFocusActionService(
+    actionRepository: SupabaseFeatureStrategyFocusActionRepository(),
+  );
   static const FlutterSecureStorage _secureStorage = FlutterSecureStorage();
 
   // Gemini 429 対策: グローバル排他ロック + 最小呼び出し間隔 (60秒)
@@ -188,7 +192,7 @@ class _HomePageState extends State<HomePage> {
         for (final section in homeToolSections) section.id: section.title,
       };
       final actionStats =
-          await const FeatureStrategyFocusActionService().loadStatsByFeatureIds(
+          await _featureStrategyFocusActionService.loadStatsByFeatureIds(
         catalog.map((entry) => entry.id),
         now: _now(),
       );
@@ -5360,6 +5364,7 @@ abstinence_slip_details: $slipDetailsText
           aiReview: aiReview,
           isDark: isDark,
           isCompact: isCompact,
+          focusActionService: _featureStrategyFocusActionService,
         );
       },
     );

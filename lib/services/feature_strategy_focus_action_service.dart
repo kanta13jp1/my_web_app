@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../models/feature_strategy_monitor.dart';
 
@@ -12,6 +13,7 @@ class FeatureStrategyFocusActionState {
   final DateTime? completedAt;
   final DateTime? deferredAt;
   final int completionStreakDays;
+  final bool cloudSynced;
 
   const FeatureStrategyFocusActionState({
     required this.featureId,
@@ -21,6 +23,7 @@ class FeatureStrategyFocusActionState {
     required this.completedAt,
     required this.deferredAt,
     required this.completionStreakDays,
+    this.cloudSynced = false,
   });
 
   bool get isClosedForToday => completed || deferred;
@@ -40,14 +43,171 @@ class FeatureStrategyFocusActionState {
       completionStreakDays: completionStreakDays,
     );
   }
+
+  factory FeatureStrategyFocusActionState.fromSupabaseRow(
+    Map<String, dynamic> row,
+  ) {
+    final status = '${row['status'] ?? ''}';
+    return FeatureStrategyFocusActionState(
+      featureId: '${row['feature_id'] ?? ''}',
+      dateKey: _normalizeDateKey('${row['action_date'] ?? ''}'),
+      completed: status == 'completed',
+      deferred: status == 'deferred',
+      completedAt: _parseDateValue(row['completed_at']),
+      deferredAt: _parseDateValue(row['deferred_at']),
+      completionStreakDays:
+          _readInt(row['completion_streak_days']).clamp(0, 365).toInt(),
+      cloudSynced: true,
+    );
+  }
+
+  FeatureStrategyFocusActionState copyWith({
+    bool? completed,
+    bool? deferred,
+    DateTime? completedAt,
+    DateTime? deferredAt,
+    int? completionStreakDays,
+    bool? cloudSynced,
+  }) {
+    return FeatureStrategyFocusActionState(
+      featureId: featureId,
+      dateKey: dateKey,
+      completed: completed ?? this.completed,
+      deferred: deferred ?? this.deferred,
+      completedAt: completedAt ?? this.completedAt,
+      deferredAt: deferredAt ?? this.deferredAt,
+      completionStreakDays: completionStreakDays ?? this.completionStreakDays,
+      cloudSynced: cloudSynced ?? this.cloudSynced,
+    );
+  }
+}
+
+abstract class FeatureStrategyFocusActionRepository {
+  Future<void> upsertActionState({
+    required FeatureStrategyFocusRecommendation recommendation,
+    required FeatureStrategyFocusActionState state,
+  });
+
+  Future<List<FeatureStrategyFocusActionState>> loadRecentActionStates({
+    required Iterable<String> featureIds,
+    required DateTime startDate,
+    required DateTime endDate,
+    int limit = 500,
+  });
+}
+
+class SupabaseFeatureStrategyFocusActionRepository
+    implements FeatureStrategyFocusActionRepository {
+  final SupabaseClient? client;
+
+  const SupabaseFeatureStrategyFocusActionRepository({this.client});
+
+  SupabaseClient get _client => client ?? Supabase.instance.client;
+
+  @override
+  Future<void> upsertActionState({
+    required FeatureStrategyFocusRecommendation recommendation,
+    required FeatureStrategyFocusActionState state,
+  }) async {
+    final userId = _client.auth.currentUser?.id;
+    if (userId == null) {
+      throw StateError('Feature focus action sync requires a signed-in user.');
+    }
+
+    final status = state.completed
+        ? 'completed'
+        : state.deferred
+            ? 'deferred'
+            : 'pending';
+    await _client.from('feature_strategy_focus_actions').upsert(
+      {
+        'user_id': userId,
+        'feature_id': state.featureId,
+        'action_date': state.dateKey,
+        'status': status,
+        'completed_at': state.completedAt?.toUtc().toIso8601String(),
+        'deferred_at': state.deferredAt?.toUtc().toIso8601String(),
+        'completion_streak_days': state.completionStreakDays,
+        'life_capital_resource': recommendation.resource.name,
+        'feature_name': recommendation.featureName,
+        'section_name': recommendation.sectionName,
+        'csf': recommendation.csf,
+        'kpi': recommendation.kpi,
+        'action': recommendation.action,
+        'monitoring_cadence': recommendation.monitoringCadence,
+        'metadata': {
+          'parkedResourceCount': recommendation.parkedResourceCount,
+          'parkedFeatureCount': recommendation.parkedFeatureCount,
+          'progress': recommendation.progress,
+        },
+      },
+      onConflict: 'user_id,feature_id,action_date',
+    );
+  }
+
+  @override
+  Future<List<FeatureStrategyFocusActionState>> loadRecentActionStates({
+    required Iterable<String> featureIds,
+    required DateTime startDate,
+    required DateTime endDate,
+    int limit = 500,
+  }) async {
+    final userId = _client.auth.currentUser?.id;
+    final ids = featureIds.where((id) => id.trim().isNotEmpty).toSet().toList();
+    if (userId == null || ids.isEmpty) {
+      return const <FeatureStrategyFocusActionState>[];
+    }
+
+    final startKey = const FeatureStrategyFocusActionService().formatDateKey(
+      startDate,
+    );
+    final endKey =
+        const FeatureStrategyFocusActionService().formatDateKey(endDate);
+    final rows = ids.length == 1
+        ? await _client
+            .from('feature_strategy_focus_actions')
+            .select(
+              'feature_id, action_date, status, completed_at, deferred_at, '
+              'completion_streak_days',
+            )
+            .eq('user_id', userId)
+            .eq('feature_id', ids.single)
+            .gte('action_date', startKey)
+            .lte('action_date', endKey)
+            .order('action_date')
+            .limit(limit)
+        : await _client
+            .from('feature_strategy_focus_actions')
+            .select(
+              'feature_id, action_date, status, completed_at, deferred_at, '
+              'completion_streak_days',
+            )
+            .eq('user_id', userId)
+            .inFilter('feature_id', ids)
+            .gte('action_date', startKey)
+            .lte('action_date', endKey)
+            .order('action_date')
+            .limit(limit);
+
+    return rows
+        .whereType<Map>()
+        .map(
+          (row) => FeatureStrategyFocusActionState.fromSupabaseRow(
+            Map<String, dynamic>.from(row),
+          ),
+        )
+        .where((state) => state.featureId.trim().isNotEmpty)
+        .toList(growable: false);
+  }
 }
 
 class FeatureStrategyFocusActionService {
   static const _statePrefix = 'feature_strategy_focus_action_state_v1';
   static const _historyPrefix = 'feature_strategy_focus_completion_history_v1';
   static const _deferHistoryPrefix = 'feature_strategy_focus_defer_history_v1';
+  final FeatureStrategyFocusActionRepository? actionRepository;
 
-  const FeatureStrategyFocusActionService();
+  const FeatureStrategyFocusActionService({this.actionRepository});
 
   Future<FeatureStrategyFocusActionState> loadState(
     FeatureStrategyFocusRecommendation recommendation, {
@@ -57,6 +217,12 @@ class FeatureStrategyFocusActionService {
     final store = prefs ?? await SharedPreferences.getInstance();
     final today = _dateOnly(now ?? DateTime.now());
     final dateKey = formatDateKey(today);
+    await _syncRemoteStates(
+      store: store,
+      featureIds: <String>[recommendation.featureId],
+      startDate: today.subtract(const Duration(days: 6)),
+      endDate: today,
+    );
     final saved = _readState(
       store.getString(_stateKey(recommendation.featureId, dateKey)),
     );
@@ -84,6 +250,7 @@ class FeatureStrategyFocusActionService {
       completedAt: saved.completedAt,
       deferredAt: saved.deferredAt,
       completionStreakDays: streak,
+      cloudSynced: saved.cloudSynced,
     );
   }
 
@@ -119,7 +286,11 @@ class FeatureStrategyFocusActionService {
       _stateKey(recommendation.featureId, dateKey),
       _encodeState(state),
     );
-    return state;
+    return _syncActionState(
+      recommendation: recommendation,
+      state: state,
+      store: store,
+    );
   }
 
   Future<FeatureStrategyFocusActionState> deferToday(
@@ -153,7 +324,11 @@ class FeatureStrategyFocusActionService {
       _stateKey(recommendation.featureId, dateKey),
       _encodeState(state),
     );
-    return state;
+    return _syncActionState(
+      recommendation: recommendation,
+      state: state,
+      store: store,
+    );
   }
 
   Future<void> clearToday(
@@ -184,6 +359,12 @@ class FeatureStrategyFocusActionService {
     final store = prefs ?? await SharedPreferences.getInstance();
     final today = _dateOnly(now ?? DateTime.now());
     final ids = featureIds.where((id) => id.trim().isNotEmpty).toSet();
+    await _syncRemoteStates(
+      store: store,
+      featureIds: ids,
+      startDate: today.subtract(const Duration(days: 6)),
+      endDate: today,
+    );
     return <String, FeatureStrategyFocusActionStats>{
       for (final id in ids) id: _buildStats(store, id, today),
     };
@@ -218,6 +399,88 @@ class FeatureStrategyFocusActionService {
     String dateKey,
   ) async {
     await _addHistoryDate(store, _historyKey(featureId), dateKey);
+  }
+
+  Future<FeatureStrategyFocusActionState> _syncActionState({
+    required FeatureStrategyFocusRecommendation recommendation,
+    required FeatureStrategyFocusActionState state,
+    required SharedPreferences store,
+  }) async {
+    final repository = actionRepository;
+    if (repository == null) {
+      return state;
+    }
+    try {
+      await repository.upsertActionState(
+        recommendation: recommendation,
+        state: state,
+      );
+      final synced = state.copyWith(cloudSynced: true);
+      await store.setString(
+        _stateKey(synced.featureId, synced.dateKey),
+        _encodeState(synced),
+      );
+      return synced;
+    } catch (_) {
+      return state;
+    }
+  }
+
+  Future<void> _syncRemoteStates({
+    required SharedPreferences store,
+    required Iterable<String> featureIds,
+    required DateTime startDate,
+    required DateTime endDate,
+  }) async {
+    final repository = actionRepository;
+    if (repository == null) {
+      return;
+    }
+    try {
+      final states = await repository.loadRecentActionStates(
+        featureIds: featureIds,
+        startDate: startDate,
+        endDate: endDate,
+      );
+      await _cacheRemoteStates(store, states);
+    } catch (_) {
+      // Local feedback must remain available when cloud sync is unavailable.
+    }
+  }
+
+  Future<void> _cacheRemoteStates(
+    SharedPreferences store,
+    Iterable<FeatureStrategyFocusActionState> states,
+  ) async {
+    for (final state in states) {
+      if (state.completed) {
+        await _addHistoryDate(
+          store,
+          _historyKey(state.featureId),
+          state.dateKey,
+        );
+        await _removeHistoryDate(
+          store,
+          _deferHistoryKey(state.featureId),
+          state.dateKey,
+        );
+      } else if (state.deferred) {
+        await _addHistoryDate(
+          store,
+          _deferHistoryKey(state.featureId),
+          state.dateKey,
+        );
+        await _removeHistoryDate(
+          store,
+          _historyKey(state.featureId),
+          state.dateKey,
+        );
+      }
+      await store.setString(
+        _stateKey(state.featureId, state.dateKey),
+        _encodeState(state.copyWith(cloudSynced: true)),
+      );
+    }
   }
 
   Future<void> _addHistoryDate(
@@ -314,6 +577,7 @@ class FeatureStrategyFocusActionService {
         completedAt: _parseDate(decoded['completedAt']),
         deferredAt: _parseDate(decoded['deferredAt']),
         completionStreakDays: 0,
+        cloudSynced: decoded['cloudSynced'] == true,
       );
     } catch (_) {
       return null;
@@ -333,6 +597,26 @@ class FeatureStrategyFocusActionService {
       'deferred': state.deferred,
       'completedAt': state.completedAt?.toIso8601String(),
       'deferredAt': state.deferredAt?.toIso8601String(),
+      'cloudSynced': state.cloudSynced,
     });
   }
+}
+
+DateTime? _parseDateValue(Object? value) {
+  if (value == null) return null;
+  return DateTime.tryParse(value.toString());
+}
+
+int _readInt(Object? value) {
+  if (value is int) return value;
+  if (value is num) return value.round();
+  return int.tryParse('${value ?? ''}') ?? 0;
+}
+
+String _normalizeDateKey(String value) {
+  final trimmed = value.trim();
+  if (trimmed.length >= 10) {
+    return trimmed.substring(0, 10);
+  }
+  return trimmed;
 }
