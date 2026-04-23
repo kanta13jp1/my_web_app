@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/models/local_election_plan.dart';
+import 'package:my_web_app/models/local_election_reality.dart';
 import 'package:my_web_app/widgets/election_japan_map.dart';
 import 'package:my_web_app/widgets/election_progress_chart.dart';
 import 'package:my_web_app/widgets/election_regional_kpi_chart.dart';
@@ -82,7 +83,10 @@ void main() {
       MaterialApp(
         home: Scaffold(
           body: SingleChildScrollView(
-            child: ElectionJapanMap(prefectures: _samplePrefecturePlans()),
+            child: ElectionJapanMap(
+              prefectures: _samplePrefecturePlans(),
+              schedules: _sampleSchedules(),
+            ),
           ),
         ),
       ),
@@ -106,6 +110,10 @@ void main() {
     expect(find.text('新人擁立目標'), findsWidgets);
     expect(find.text('現状当選率'), findsWidgets);
     expect(find.text('予定選挙'), findsOneWidget);
+    expect(find.text('予定選挙内訳'), findsOneWidget);
+    expect(find.text('中野区議会議員選挙'), findsOneWidget);
+    expect(find.textContaining('公示日 2026年05月17日'), findsOneWidget);
+    expect(find.textContaining('投開票日 2026年05月24日'), findsOneWidget);
     expect(find.text('公認期限'), findsOneWidget);
     expect(find.text('高負荷'), findsOneWidget);
   });
@@ -115,7 +123,7 @@ List<LocalElectionPrefecturePlan> _samplePrefecturePlans() {
   return List<LocalElectionPrefecturePlan>.generate(47, (index) {
     final isTokyo = index == 12;
     return LocalElectionPrefecturePlan(
-      prefecture: 'prefecture-$index',
+      prefecture: isTokyo ? '東京' : 'prefecture-$index',
       region: 'region',
       additionalSeatTarget: isTokyo ? 24 : (index % 5) + 1,
       incumbentRetentionTarget: isTokyo ? 12 : (index % 3) + 1,
@@ -132,4 +140,42 @@ List<LocalElectionPrefecturePlan> _samplePrefecturePlans() {
       notes: isTokyo ? '重点自治体から先に月次レビューする' : '',
     );
   });
+}
+
+List<LocalElectionScheduleEntry> _sampleSchedules() {
+  return const <LocalElectionScheduleEntry>[
+    LocalElectionScheduleEntry(
+      electionName: '中野区議会議員選挙',
+      prefecture: '東京都',
+      municipality: '中野区',
+      electionCategory: '区議会議員選挙',
+      voteDate: '2026-05-24',
+      announcementDate: '2026-05-17',
+      detailUrl: 'https://example.com/nakano',
+      officialCandidateSourceUrl: 'https://example.com/candidates',
+      seatCount: 42,
+      totalCandidateCount: 55,
+      kokuminCandidateCount: 0,
+      kokuminCandidateNames: <String>[],
+      kokuminCandidateStatuses: <String>[],
+      kokuminCandidateXHandles: <String>[],
+    ),
+    LocalElectionScheduleEntry(
+      electionName: '過去の東京都選挙',
+      prefecture: '東京都',
+      municipality: '過去区',
+      electionCategory: '区長選挙',
+      voteDate: '2026-04-01',
+      announcementDate: '2026-03-25',
+      detailUrl: '',
+      officialCandidateSourceUrl: '',
+      seatCount: 1,
+      totalCandidateCount: 2,
+      kokuminCandidateCount: 0,
+      kokuminCandidateNames: <String>[],
+      kokuminCandidateStatuses: <String>[],
+      kokuminCandidateXHandles: <String>[],
+      isPast: true,
+    ),
+  ];
 }

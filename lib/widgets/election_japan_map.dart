@@ -4,14 +4,17 @@ import 'package:flutter/material.dart';
 
 import '../models/kgi_csf_kpi.dart';
 import '../models/local_election_plan.dart';
+import '../models/local_election_reality.dart';
 import 'kgi_csf_kpi_panel.dart';
 
 class ElectionJapanMap extends StatefulWidget {
   final List<LocalElectionPrefecturePlan> prefectures;
+  final List<LocalElectionScheduleEntry> schedules;
 
   const ElectionJapanMap({
     super.key,
     required this.prefectures,
+    this.schedules = const <LocalElectionScheduleEntry>[],
   });
 
   @override
@@ -469,6 +472,10 @@ class _ElectionJapanMapState extends State<ElectionJapanMap> {
     final safeIndex = math.min(_selectedIndex, widget.prefectures.length - 1);
     final plan = widget.prefectures[safeIndex];
     final tile = _tileForIndex(safeIndex, plan);
+    final schedules = _schedulesForPlan(plan);
+    final scheduledElectionLabel = schedules.isEmpty
+        ? '${plan.scheduledElectionCount}件'
+        : '${schedules.length}件';
     final now = DateTime.now();
     final overdue = plan.isEndorsementOverdue(now);
     final dueSoon = plan.isEndorsementDueSoon(now);
@@ -553,12 +560,16 @@ class _ElectionJapanMapState extends State<ElectionJapanMap> {
                 '現状当選率',
                 '${plan.currentCandidateWinRateLabel} / 想定80%',
               ),
-              MapEntry('予定選挙', '${plan.scheduledElectionCount}件'),
+              MapEntry('予定選挙', scheduledElectionLabel),
               MapEntry('重点自治体', '${plan.focusMunicipalityCount}'),
               MapEntry('接戦支援', '${plan.closeRaceSupportRounds}回'),
               MapEntry('公認期限', formatMonthKey(plan.endorsementDeadlineMonth)),
             ],
           ),
+          if (schedules.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            _buildScheduleBreakdown(context, schedules),
+          ],
           if (plan.notes.trim().isNotEmpty) ...[
             const SizedBox(height: 12),
             Text(
@@ -568,6 +579,61 @@ class _ElectionJapanMapState extends State<ElectionJapanMap> {
           ],
         ],
       ),
+    );
+  }
+
+  List<LocalElectionScheduleEntry> _schedulesForPlan(
+    LocalElectionPrefecturePlan plan,
+  ) {
+    final key = _prefectureKey(plan.prefecture);
+    final schedules = widget.schedules
+        .where(
+          (item) => !item.isPast && _prefectureKey(item.prefecture) == key,
+        )
+        .toList()
+      ..sort((left, right) {
+        final leftDate = left.parsedVoteDate;
+        final rightDate = right.parsedVoteDate;
+        if (leftDate != null && rightDate != null) {
+          final dateCompare = leftDate.compareTo(rightDate);
+          if (dateCompare != 0) {
+            return dateCompare;
+          }
+        } else if (leftDate != null) {
+          return -1;
+        } else if (rightDate != null) {
+          return 1;
+        }
+        return left.electionName.compareTo(right.electionName);
+      });
+    return schedules;
+  }
+
+  Widget _buildScheduleBreakdown(
+    BuildContext context,
+    List<LocalElectionScheduleEntry> schedules,
+  ) {
+    final theme = Theme.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          '予定選挙内訳',
+          style: theme.textTheme.labelLarge?.copyWith(
+            fontWeight: FontWeight.w800,
+            height: 1.4,
+          ),
+        ),
+        const SizedBox(height: 8),
+        for (var index = 0; index < schedules.length; index++) ...[
+          if (index > 0)
+            Divider(
+              height: 14,
+              color: theme.colorScheme.outlineVariant,
+            ),
+          _ScheduleBreakdownRow(schedule: schedules[index]),
+        ],
+      ],
     );
   }
 
@@ -982,6 +1048,127 @@ class _LegendItem extends StatelessWidget {
       ],
     );
   }
+}
+
+class _ScheduleBreakdownRow extends StatelessWidget {
+  final LocalElectionScheduleEntry schedule;
+
+  const _ScheduleBreakdownRow({required this.schedule});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final candidateColor = schedule.isAlertRed
+        ? theme.colorScheme.error
+        : schedule.isAlertYellow
+            ? const Color(0xFFF59E0B)
+            : const Color(0xFF16A34A);
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            schedule.electionName,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              fontWeight: FontWeight.w800,
+              height: 1.5,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Wrap(
+            spacing: 10,
+            runSpacing: 6,
+            children: [
+              _ScheduleDateLabel(
+                label: '公示日',
+                value: _formatScheduleDate(schedule.announcementDate),
+              ),
+              _ScheduleDateLabel(
+                label: '投開票日',
+                value: _formatScheduleDate(schedule.voteDate),
+              ),
+              if (schedule.municipality.trim().isNotEmpty)
+                _ScheduleDateLabel(
+                  label: '自治体',
+                  value: schedule.municipality.trim(),
+                ),
+              _ScheduleDateLabel(
+                label: '国民候補',
+                value: '${schedule.kokuminCandidateCount}人',
+                valueColor: candidateColor,
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ScheduleDateLabel extends StatelessWidget {
+  final String label;
+  final String value;
+  final Color? valueColor;
+
+  const _ScheduleDateLabel({
+    required this.label,
+    required this.value,
+    this.valueColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Text.rich(
+      TextSpan(
+        children: [
+          TextSpan(text: '$label '),
+          TextSpan(
+            text: value,
+            style: TextStyle(
+              color: valueColor ?? theme.colorScheme.onSurface,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+      style: theme.textTheme.bodySmall?.copyWith(
+        color: theme.colorScheme.onSurfaceVariant,
+        height: 1.5,
+      ),
+    );
+  }
+}
+
+String _prefectureKey(String value) {
+  final trimmed = value.trim();
+  if (trimmed == '北海道') {
+    return trimmed;
+  }
+  if (trimmed == '東京都') {
+    return '東京';
+  }
+  if (trimmed.endsWith('府') || trimmed.endsWith('県')) {
+    return trimmed.substring(0, trimmed.length - 1);
+  }
+  return trimmed;
+}
+
+String _formatScheduleDate(String raw) {
+  final normalized = raw.trim();
+  if (normalized.isEmpty) {
+    return '未定';
+  }
+  final parsed = DateTime.tryParse(normalized) ??
+      DateTime.tryParse(normalized.replaceAll('/', '-'));
+  if (parsed == null) {
+    return normalized;
+  }
+  final local = parsed.toLocal();
+  return '${local.year}年${local.month.toString().padLeft(2, '0')}月'
+      '${local.day.toString().padLeft(2, '0')}日';
 }
 
 class _JapanTile {

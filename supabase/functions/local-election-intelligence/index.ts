@@ -208,7 +208,7 @@ interface PrefectureDirectoryEntry {
   sourceUrl: string;
 }
 
-const MANUAL_APRIL_2026_SCHEDULES: ManualScheduleSupplement[] = [
+const MANUAL_2026_SCHEDULES: ManualScheduleSupplement[] = [
   {
     prefecture: "京都府",
     municipality: "京都府",
@@ -382,6 +382,114 @@ const MANUAL_APRIL_2026_SCHEDULES: ManualScheduleSupplement[] = [
     electionCategory: "assembly",
     candidates: [{ name: "下之園政宏" }],
   },
+  {
+    prefecture: "東京都",
+    municipality: "中野区",
+    electionName: "中野区長選挙",
+    voteDate: "2026-06-07",
+    announcementDate: "2026-05-31",
+    electionCategory: "chief",
+    detailUrl:
+      "https://www.senkyo.metro.tokyo.lg.jp/election/schedule/senkyo2026",
+    seatCount: 1,
+    candidates: [],
+  },
+  {
+    prefecture: "東京都",
+    municipality: "中野区",
+    electionName: "中野区議会議員補欠選挙",
+    voteDate: "2026-06-07",
+    announcementDate: "2026-05-31",
+    electionCategory: "assembly",
+    detailUrl:
+      "https://www.senkyo.metro.tokyo.lg.jp/election/schedule/senkyo2026",
+    seatCount: 1,
+    candidates: [],
+  },
+  {
+    prefecture: "東京都",
+    municipality: "立川市",
+    electionName: "立川市議会議員選挙",
+    voteDate: "2026-06-21",
+    announcementDate: "2026-06-14",
+    electionCategory: "assembly",
+    detailUrl:
+      "https://www.senkyo.metro.tokyo.lg.jp/election/schedule/senkyo2026",
+    seatCount: 28,
+    candidates: [],
+  },
+  {
+    prefecture: "東京都",
+    municipality: "杉並区",
+    electionName: "杉並区長選挙",
+    voteDate: "2026-06-28",
+    announcementDate: "2026-06-21",
+    electionCategory: "chief",
+    detailUrl:
+      "https://www.senkyo.metro.tokyo.lg.jp/election/schedule/senkyo2026",
+    seatCount: 1,
+    candidates: [],
+  },
+  {
+    prefecture: "東京都",
+    municipality: "杉並区",
+    electionName: "杉並区議会議員補欠選挙",
+    voteDate: "2026-06-28",
+    announcementDate: "2026-06-21",
+    electionCategory: "assembly",
+    detailUrl:
+      "https://www.senkyo.metro.tokyo.lg.jp/election/schedule/senkyo2026",
+    seatCount: 1,
+    candidates: [],
+  },
+  {
+    prefecture: "東京都",
+    municipality: "狛江市",
+    electionName: "狛江市長選挙",
+    voteDate: "2026-06-28",
+    announcementDate: "2026-06-21",
+    electionCategory: "chief",
+    detailUrl:
+      "https://www.senkyo.metro.tokyo.lg.jp/election/schedule/senkyo2026",
+    seatCount: 1,
+    candidates: [],
+  },
+  {
+    prefecture: "東京都",
+    municipality: "調布市",
+    electionName: "調布市長選挙",
+    voteDate: "2026-07-05",
+    announcementDate: "2026-06-28",
+    electionCategory: "chief",
+    detailUrl:
+      "https://www.senkyo.metro.tokyo.lg.jp/election/schedule/senkyo2026",
+    seatCount: 1,
+    candidates: [],
+  },
+  {
+    prefecture: "東京都",
+    municipality: "あきる野市",
+    electionName: "あきる野市議会議員選挙",
+    voteDate: "2026-07-19",
+    announcementDate: "2026-07-12",
+    electionCategory: "assembly",
+    detailUrl:
+      "https://www.senkyo.metro.tokyo.lg.jp/election/schedule/senkyo2026",
+    seatCount: 21,
+    candidates: [],
+  },
+  {
+    prefecture: "東京都",
+    municipality: "あきる野市",
+    electionName: "あきる野市長選挙",
+    voteDate: "2026-07-19",
+    announcementDate: "2026-07-12",
+    electionCategory: "chief",
+    detailUrl:
+      "https://www.senkyo.metro.tokyo.lg.jp/election/schedule/senkyo2026",
+    seatCount: 1,
+    candidates: [],
+  },
 ];
 
 interface SnapshotRequest {
@@ -469,11 +577,11 @@ serve(async (req) => {
     ).flat();
     const officialScheduledCandidates = mergeScheduledCandidates(
       scrapedScheduledCandidates,
-      buildManualScheduledCandidates(MANUAL_APRIL_2026_SCHEDULES),
+      buildManualScheduledCandidates(MANUAL_2026_SCHEDULES),
     );
     const upcomingSchedules = await fetchUpcomingLocalElectionSchedules(
       officialScheduledCandidates,
-      MANUAL_APRIL_2026_SCHEDULES,
+      MANUAL_2026_SCHEDULES,
     );
 
     const snapshotBase = {
@@ -1979,6 +2087,7 @@ function normalizeElectionNameForMatch(value: string): string {
     .replace(/\u88dc\u9078/g, "\u88dc\u6b20")
     .replace(/\u9078\u6319/g, "")
     .replace(/\u9078/g, "")
+    .replace(/(\u88dc\u6b20)+/g, "\u88dc\u6b20")
     .trim();
 }
 

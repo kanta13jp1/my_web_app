@@ -4397,7 +4397,10 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
         final regionalChart = ElectionRegionalKpiChart(
           prefectures: topPrefectures,
         );
-        final japanMap = ElectionJapanMap(prefectures: plan.prefectures);
+        final japanMap = ElectionJapanMap(
+          prefectures: plan.prefectures,
+          schedules: snapshot?.upcomingSchedules ?? const [],
+        );
 
         if (stacked) {
           return Column(
