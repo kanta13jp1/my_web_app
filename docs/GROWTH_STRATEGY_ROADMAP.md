@@ -16246,3 +16246,37 @@ anon key で wbs.add_task 不可 (service role 必要)。次回 Win版/PS#1 で�
 - **deploy 結果**: run 24863377325 (ada2500c) SUCCESS ✅ — 本番環境緑化
 
 ### commit: fe28ce47
+
+---
+
+## PS#5 S34 完了 (2026-04-24 JST)
+
+**インスタンス**: PS#5 | **担当**: on-call バグ修正
+
+### 実施内容
+
+#### CI 障害 Issues #671-#676 クローズ
+
+- 根本原因: PS#3 S28 (Hume AI / Glean 追加) で gemini_university_v2_page.dart / ai_provider_registry.dart に構文エラー混入
+- 修正: PS#6 S26 (ada2500c) が windsurf 文字列閉じ `''',` 追加 + `avoid_dynamic_calls` 修正
+- CI 確認: 2連続 success (run 24863377325 / 24863660616)
+- Issue #671-676 クローズ (PS#5 S34)
+
+#### Issue #550 クローズ (user_presence 502)
+
+- 調査: anon key で GET → HTTP 200 / POST → 401 (正常) を確認
+- 結論: 2026-04-19 の一時的 Supabase インフラ障害であり現在は解消済み
+- Phase 1 (heartbeat AppLifecycleState 停止) が再発防止として有効
+- Issue #550 クローズ
+
+#### Issue #551 Phase 1 コメント追記
+
+- Phase 1 (d9cfbb49) の修正詳細をコメントで記録
+- Phase 2/3 は VSCode版 handoff 予定を明示
+
+### Philosophy Alignment (9/9)
+1. CEO感 ✅ (on-call トリアージ判断) / 2. ミッション駆動 ✅ / 3. 優しいmentor ✅
+4. 6部署バランス ✅ / 5. 商品=ユーザー価値 ✅ (CI 緑化 = deploy 継続) / 6. 資本=時間 ✅
+7. 資産負債 ✅ / 8. KPI=昨日の自分 ✅ / 9. ゴール=IPO ✅
+
+### commit: no new commits (PS#6 の修正を活用)
