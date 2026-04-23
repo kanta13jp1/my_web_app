@@ -119,7 +119,7 @@ jobs:
         if: steps.skip_check.outputs.skip == 'false' && steps.gitlog.outputs.has_log == 'true'
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          GOOGLE_AI_API_KEY: ${{ secrets.GOOGLE_AI_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           TARGET_DATE: ${{ steps.period.outputs.target_date }}
           GITLOG_B64: ${{ steps.gitlog.outputs.gitlog_b64 }}
           DRAFT_JA: ${{ steps.period.outputs.draft_ja }}

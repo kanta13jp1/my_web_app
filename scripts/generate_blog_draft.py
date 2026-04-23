@@ -208,7 +208,7 @@ def generate_with_ai(prompt: str, anthropic_key: str, gemini_key: str) -> tuple[
 
 def main() -> int:
     anthropic_key = os.environ.get("ANTHROPIC_API_KEY", "")
-    gemini_key = os.environ.get("GOOGLE_AI_API_KEY", "")
+    gemini_key = os.environ.get("GEMINI_API_KEY", "")
     target_date = os.environ["TARGET_DATE"]
     gitlog_b64 = os.environ["GITLOG_B64"]
     draft_ja = pathlib.Path(os.environ["DRAFT_JA"])
