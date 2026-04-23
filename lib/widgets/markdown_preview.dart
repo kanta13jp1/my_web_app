@@ -4,8 +4,9 @@ import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:markdown/markdown.dart' as md;
 import 'package:highlight/highlight.dart' as highlight;
+import '../services/attachment_service.dart';
 
-class MarkdownPreview extends StatelessWidget {
+class MarkdownPreview extends StatefulWidget {
   final String data;
   final bool selectable;
 
@@ -16,10 +17,79 @@ class MarkdownPreview extends StatelessWidget {
   });
 
   @override
+  State<MarkdownPreview> createState() => _MarkdownPreviewState();
+}
+
+class _MarkdownPreviewState extends State<MarkdownPreview> {
+  late String _resolvedData;
+  bool _isResolvingAttachments = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _resolvedData = widget.data;
+    _resolveAttachmentUrls();
+  }
+
+  @override
+  void didUpdateWidget(covariant MarkdownPreview oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.data != widget.data) {
+      _resolvedData = widget.data;
+      _resolveAttachmentUrls();
+    }
+  }
+
+  Future<void> _resolveAttachmentUrls() async {
+    if (!AttachmentService.containsAttachmentReference(widget.data)) {
+      if (mounted) {
+        setState(() {
+          _resolvedData = widget.data;
+          _isResolvingAttachments = false;
+        });
+      }
+      return;
+    }
+
+    setState(() {
+      _isResolvingAttachments = true;
+    });
+
+    try {
+      final resolved =
+          await AttachmentService.resolveMarkdownAttachmentUrls(widget.data);
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _resolvedData = resolved;
+        _isResolvingAttachments = false;
+      });
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _resolvedData = widget.data;
+        _isResolvingAttachments = false;
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    if (_isResolvingAttachments) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 24),
+        child: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
     return Markdown(
-      data: data,
-      selectable: selectable,
+      data: _resolvedData,
+      selectable: widget.selectable,
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       styleSheet: MarkdownStyleSheet(

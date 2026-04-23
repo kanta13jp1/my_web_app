@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../widgets/paddle_approval_readiness_card.dart';
+
 /// サブスクリプション請求ページ
 /// subscription-billing Edge Function と連携して請求情報を管理
 class SubscriptionBillingPage extends StatefulWidget {
@@ -80,6 +82,14 @@ class _SubscriptionBillingPageState extends State<SubscriptionBillingPage> {
                         ),
                       ),
                     ),
+                  PaddleApprovalReadinessCard(
+                    compact: true,
+                    touchesRegulatedData: true,
+                    onOpenLegalPage: () {
+                      Navigator.of(context).pushNamed('/legal-compliance');
+                    },
+                  ),
+                  const SizedBox(height: 16),
                   Card(
                     child: Padding(
                       padding: const EdgeInsets.all(16),

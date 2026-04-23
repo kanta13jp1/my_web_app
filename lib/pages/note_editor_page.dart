@@ -12,6 +12,7 @@ import '../services/ai_service.dart';
 import '../services/attachment_cache_service.dart';
 import '../services/attachment_service.dart';
 import '../services/auto_save_service.dart';
+import '../services/note_comments_service.dart';
 import '../services/note_prompt_library_service.dart';
 import '../services/public_memo_service.dart';
 import '../services/undo_redo_service.dart';
@@ -19,6 +20,7 @@ import '../utils/note_image_clipboard.dart';
 import '../utils/note_image_drop.dart';
 import '../widgets/attachment_list_widget.dart';
 import '../widgets/markdown_preview.dart';
+import '../widgets/note_comments_panel.dart';
 import '../widgets/note_editor/ai_assistant_menu.dart';
 import '../widgets/note_editor/editor_dialogs.dart';
 
@@ -139,7 +141,9 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
   late UndoRedoService _undoRedoService;
   late final SupabaseClient _supabase;
   late final AIService _aiService;
+  late final NoteCommentsService _noteCommentsService;
   NoteImagePasteRegistration? _imagePasteRegistration;
+  StreamSubscription<void>? _commentSubscription;
 
   String? _currentNoteId;
   DateTime? _reminderDate;
@@ -200,6 +204,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     super.initState();
     _supabase = widget.supabaseClient ?? Supabase.instance.client;
     _aiService = widget.aiService ?? AIService(_supabase);
+    _noteCommentsService = SupabaseNoteCommentsService(_supabase);
     _currentNoteId = widget.noteId;
     _titleController = TextEditingController(text: widget.initialTitle ?? '');
     _contentController =
@@ -226,6 +231,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     await _loadPromptTemplates();
     if (_currentNoteId != null) {
       await _loadNote(_currentNoteId!);
+      _startCommentCountSubscription();
       unawaited(_loadCommentCount());
     }
     await _loadAttachments();
@@ -413,6 +419,8 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     }
 
     _currentNoteId = createdNoteId.toString();
+    _startCommentCountSubscription();
+    unawaited(_loadCommentCount());
     _autoSaveService.markAsSaved();
     await _clearDraftFromLocal();
     if (mounted) {
@@ -540,7 +548,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
   }
 
   String _buildAttachmentMarkdown(Attachment attachment) {
-    final url = AttachmentService.getPublicUrl(attachment.filePath);
+    final url = AttachmentService.getMarkdownUrl(attachment.filePath);
     final label = _escapeMarkdownLabel(
       attachment.fileName.replaceFirst(RegExp(r'\.[^.]+$'), ''),
     );
@@ -1242,6 +1250,8 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
 
       if (inserted is Map && inserted['id'] != null) {
         _currentNoteId = inserted['id'].toString();
+        _startCommentCountSubscription();
+        unawaited(_loadCommentCount());
         if (mounted) {
           setState(() {});
         }
@@ -1351,19 +1361,20 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     }
   }
 
-  static const String _kCommentsUrl =
-      'https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/note-comments';
+  void _startCommentCountSubscription() {
+    final noteId = int.tryParse(_currentNoteId ?? '');
+    if (noteId == null) return;
+    _commentSubscription?.cancel();
+    _commentSubscription = _noteCommentsService
+        .watchCommentChanges(noteId: noteId)
+        .listen((_) => unawaited(_loadCommentCount()));
+  }
 
   Future<void> _loadCommentCount() async {
-    final noteId = _currentNoteId;
+    final noteId = int.tryParse(_currentNoteId ?? '');
     if (noteId == null) return;
     try {
-      final res = await _supabase
-          .from('note_comments')
-          .select('id')
-          .eq('note_id', int.parse(noteId))
-          .eq('user_id', _supabase.auth.currentUser?.id ?? '');
-      final count = (res as List).length;
+      final count = await _noteCommentsService.getCommentCount(noteId: noteId);
       if (mounted) setState(() => _commentCount = count);
     } catch (_) {
       // silently ignore
@@ -1371,7 +1382,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
   }
 
   Future<void> _showComments() async {
-    final noteId = _currentNoteId;
+    final noteId = int.tryParse(_currentNoteId ?? '');
     if (noteId == null) return;
 
     if (!mounted) return;
@@ -1381,10 +1392,10 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
-      builder: (ctx) => _NoteCommentsSheet(
-        noteId: int.parse(noteId),
-        supabase: _supabase,
-        commentsUrl: _kCommentsUrl,
+      builder: (ctx) => NoteCommentsSheet(
+        noteId: noteId,
+        service: _noteCommentsService,
+        currentUserId: _supabase.auth.currentUser?.id,
         onCountChanged: (count) {
           if (mounted) setState(() => _commentCount = count);
         },
@@ -2160,6 +2171,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
 
   @override
   void dispose() {
+    _commentSubscription?.cancel();
     _imagePasteRegistration?.dispose();
     _contentFocusNode.dispose();
     _detachTextListeners();

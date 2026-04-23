@@ -1,3 +1,4 @@
+import '../services/ai_hub_chat_service.dart';
 import 'kgi_csf_kpi.dart';
 
 enum FeatureStrategyStatus { onTrack, watch, improve }
@@ -460,12 +461,14 @@ class FeatureStrategyAiReview {
   final String source;
   final DateTime generatedAt;
   final bool isFallback;
+  final AiHubChatObservability? observability;
 
   const FeatureStrategyAiReview({
     required this.summary,
     required this.source,
     required this.generatedAt,
     this.isFallback = false,
+    this.observability,
   });
 
   factory FeatureStrategyAiReview.fallback({

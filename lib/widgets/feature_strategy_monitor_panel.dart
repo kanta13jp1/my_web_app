@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../models/feature_strategy_monitor.dart';
 import '../services/feature_strategy_focus_action_service.dart';
 import '../services/feature_strategy_report_snapshot_service.dart';
+import 'ai_response_observability_panel.dart';
 import 'kgi_csf_kpi_panel.dart';
 
 typedef FeatureStrategyOpenFeature = Future<void> Function(String featureId);
@@ -446,6 +447,15 @@ class _AiReviewBox extends StatelessWidget {
               height: 1.5,
             ),
           ),
+          if (review.observability != null) ...[
+            const SizedBox(height: 10),
+            AiResponseObservabilityPanel(
+              observability: review.observability!,
+              isDark: dark,
+              accentColor: accent,
+              fallbackLabel: review.source,
+            ),
+          ],
         ],
       ),
     );

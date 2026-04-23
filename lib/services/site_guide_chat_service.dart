@@ -27,6 +27,7 @@ class SiteGuideChatAnswer {
   final DateTime answeredAt;
   final bool isFallback;
   final List<SiteGuideToolSuggestion> suggestions;
+  final AiHubChatObservability? observability;
 
   const SiteGuideChatAnswer({
     required this.text,
@@ -34,6 +35,7 @@ class SiteGuideChatAnswer {
     required this.answeredAt,
     this.isFallback = false,
     this.suggestions = const <SiteGuideToolSuggestion>[],
+    this.observability,
   });
 }
 
@@ -51,7 +53,10 @@ class SiteGuideChatService {
         _catalog = catalog,
         _now = now ?? DateTime.now;
 
-  Future<SiteGuideChatAnswer> answerQuestion(String question) async {
+  Future<SiteGuideChatAnswer> answerQuestion(
+    String question, {
+    String? sessionId,
+  }) async {
     final normalizedQuestion = question.trim();
     final suggestions = _rankSuggestions(normalizedQuestion);
     if (normalizedQuestion.isEmpty) {
@@ -63,17 +68,19 @@ class SiteGuideChatService {
     }
 
     try {
-      final response = await _chatService.sendProviderChat(
+      final response = await _chatService.sendAutoChat(
         message: _buildPrompt(
           question: normalizedQuestion,
           suggestions: suggestions,
         ),
+        sessionId: sessionId,
       );
       return SiteGuideChatAnswer(
         text: _normalize(response.text),
         source: response.source,
         answeredAt: _now(),
         suggestions: suggestions,
+        observability: response.observability,
       );
     } catch (_) {
       return _buildFallbackAnswer(

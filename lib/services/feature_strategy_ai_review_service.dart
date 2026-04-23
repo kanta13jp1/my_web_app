@@ -26,13 +26,14 @@ class FeatureStrategyAiReviewService {
     }
 
     try {
-      final response = await _chatService.sendProviderChat(
+      final response = await _chatService.sendAutoChat(
         message: _buildPrompt(report),
       );
       return FeatureStrategyAiReview(
         summary: _normalize(response.text),
         source: response.source,
         generatedAt: _now(),
+        observability: response.observability,
       );
     } catch (_) {
       return FeatureStrategyAiReview.fallback(

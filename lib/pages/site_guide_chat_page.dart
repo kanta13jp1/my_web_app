@@ -1,10 +1,13 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:uuid/uuid.dart';
 
 import '../models/site_guide_catalog_item.dart';
+import '../services/ai_hub_chat_service.dart';
 import '../services/home_tool_usage_service.dart';
 import '../services/site_guide_chat_service.dart';
+import '../widgets/ai_response_observability_panel.dart';
 
 typedef SiteGuideOpenCallback = Future<void> Function(BuildContext context);
 
@@ -51,6 +54,7 @@ class _SiteGuideChatPageState extends State<SiteGuideChatPage> {
   final TextEditingController _inputController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   final List<_SiteGuideMessage> _messages = <_SiteGuideMessage>[];
+  final String _sessionId = const Uuid().v4();
 
   bool _isSending = false;
 
@@ -96,7 +100,10 @@ class _SiteGuideChatPageState extends State<SiteGuideChatPage> {
     });
     _scrollToBottom();
 
-    final answer = await _service.answerQuestion(normalized);
+    final answer = await _service.answerQuestion(
+      normalized,
+      sessionId: _sessionId,
+    );
     if (!mounted) return;
 
     setState(() {
@@ -106,6 +113,7 @@ class _SiteGuideChatPageState extends State<SiteGuideChatPage> {
           source: answer.source,
           suggestions: answer.suggestions,
           isFallback: answer.isFallback,
+          observability: answer.observability,
         ),
       );
       _isSending = false;
@@ -408,6 +416,15 @@ class _SiteGuideChatPageState extends State<SiteGuideChatPage> {
                         ],
                       ),
                     ],
+                    if (!isUser && message.observability != null) ...[
+                      const SizedBox(height: 10),
+                      AiResponseObservabilityPanel(
+                        observability: message.observability!,
+                        isDark: isDark,
+                        accentColor: const Color(0xFF4F46E5),
+                        fallbackLabel: message.source,
+                      ),
+                    ],
                     if (!isUser && message.suggestions.isNotEmpty) ...[
                       const SizedBox(height: 12),
                       Wrap(
@@ -527,6 +544,7 @@ class _SiteGuideMessage {
   final String? source;
   final bool isFallback;
   final List<SiteGuideToolSuggestion> suggestions;
+  final AiHubChatObservability? observability;
 
   const _SiteGuideMessage._({
     required this.isUser,
@@ -534,6 +552,7 @@ class _SiteGuideMessage {
     this.source,
     this.isFallback = false,
     this.suggestions = const <SiteGuideToolSuggestion>[],
+    this.observability,
   });
 
   factory _SiteGuideMessage.user(String text) {
@@ -546,6 +565,7 @@ class _SiteGuideMessage {
     bool isFallback = false,
     List<SiteGuideToolSuggestion> suggestions =
         const <SiteGuideToolSuggestion>[],
+    AiHubChatObservability? observability,
   }) {
     return _SiteGuideMessage._(
       isUser: false,
@@ -553,6 +573,7 @@ class _SiteGuideMessage {
       source: source,
       isFallback: isFallback,
       suggestions: suggestions,
+      observability: observability,
     );
   }
 }

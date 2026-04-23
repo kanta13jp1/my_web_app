@@ -186,15 +186,15 @@ class NoteComment {
 
   factory NoteComment.fromJson(Map<String, dynamic> json) {
     return NoteComment(
-      id: json['id'] as String,
-      noteId: json['note_id'] as String,
-      userId: json['user_id'] as String,
-      content: json['content'] as String,
+      id: json['id'].toString(),
+      noteId: json['note_id'].toString(),
+      userId: json['user_id'].toString(),
+      content: json['content']?.toString() ?? '',
       createdAt: json['created_at'] != null
-          ? DateTime.parse(json['created_at'] as String)
+          ? DateTime.parse(json['created_at'].toString())
           : DateTime.now(),
       updatedAt: json['updated_at'] != null
-          ? DateTime.parse(json['updated_at'] as String)
+          ? DateTime.parse(json['updated_at'].toString())
           : DateTime.now(),
       userDisplayName: json['user_display_name'] as String?,
       userAvatarUrl: json['user_avatar_url'] as String?,

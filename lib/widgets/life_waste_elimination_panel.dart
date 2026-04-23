@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../services/life_waste_elimination_service.dart';
+import 'ai_response_observability_panel.dart';
 import 'kgi_csf_kpi_panel.dart';
 
 class LifeWasteEliminationPanel extends StatelessWidget {
@@ -311,6 +312,15 @@ class _AiReviewBox extends StatelessWidget {
               height: 1.55,
             ),
           ),
+          if (!isLoading && review?.observability != null) ...[
+            const SizedBox(height: 10),
+            AiResponseObservabilityPanel(
+              observability: review!.observability!,
+              isDark: isDark,
+              accentColor: const Color(0xFF2563EB),
+              fallbackLabel: source,
+            ),
+          ],
         ],
       ),
     );

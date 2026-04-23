@@ -5,6 +5,76 @@ import 'package:intl/intl.dart';
 import '../models/kgi_csf_kpi.dart';
 import '../widgets/kgi_csf_kpi_panel.dart';
 
+enum PersonalDashboardDataMode { live, fallback }
+
+class PersonalDashboardGridSpec {
+  const PersonalDashboardGridSpec({
+    required this.crossAxisCount,
+    required this.childAspectRatio,
+  });
+
+  final int crossAxisCount;
+  final double childAspectRatio;
+}
+
+@visibleForTesting
+PersonalDashboardGridSpec personalDashboardGridSpec(double maxWidth) {
+  if (maxWidth >= 1180) {
+    return const PersonalDashboardGridSpec(
+      crossAxisCount: 4,
+      childAspectRatio: 1.38,
+    );
+  }
+  if (maxWidth >= 720) {
+    return const PersonalDashboardGridSpec(
+      crossAxisCount: 2,
+      childAspectRatio: 1.28,
+    );
+  }
+  return const PersonalDashboardGridSpec(
+    crossAxisCount: 1,
+    childAspectRatio: 2.7,
+  );
+}
+
+@visibleForTesting
+double personalDashboardBarHeightFactor({
+  required int value,
+  required int maxValue,
+}) {
+  if (value <= 0 || maxValue <= 0) return 0.02;
+  return (value / maxValue).clamp(0.02, 1.0).toDouble();
+}
+
+@visibleForTesting
+bool personalDashboardHasRecordedData({
+  required Map<String, dynamic> kpiData,
+  required List<Map<String, dynamic>> weeklyActivity,
+  required List<Map<String, dynamic>> habitStats,
+  required List<Map<String, dynamic>> recentNotes,
+}) {
+  if (recentNotes.isNotEmpty) return true;
+  if (habitStats.any((habit) {
+    final streak = (habit['streak'] as num?)?.toInt() ?? 0;
+    final completedToday = habit['completed_today'] as bool? ?? false;
+    return streak > 0 || completedToday;
+  })) {
+    return true;
+  }
+  if (weeklyActivity.any((day) {
+    final notes = (day['notes'] as num?)?.toInt() ?? 0;
+    final tasks = (day['tasks'] as num?)?.toInt() ?? 0;
+    final focusMinutes = (day['focus_min'] as num?)?.toInt() ?? 0;
+    return notes > 0 || tasks > 0 || focusMinutes > 0;
+  })) {
+    return true;
+  }
+  return kpiData.entries.any((entry) {
+    final value = entry.value;
+    return value is num && value > 0;
+  });
+}
+
 /// パーソナルダッシュボードページ
 /// ノート数・タスク・習慣・集中時間をチャートで可視化。
 /// Notion 3.4 ダッシュボードビュー対抗。
@@ -23,6 +93,9 @@ class _PersonalDashboardPageState extends State<PersonalDashboardPage>
 
   bool _isLoading = false;
   String? _errorMessage;
+  PersonalDashboardDataMode _dataMode = PersonalDashboardDataMode.fallback;
+  bool _hasRecordedData = false;
+  DateTime? _lastLoadedAt;
 
   // KPI データ
   Map<String, dynamic> _kpiData = {};
@@ -69,24 +142,37 @@ class _PersonalDashboardPageState extends State<PersonalDashboardPage>
       if (!mounted) return;
 
       final data = res.data as Map<String, dynamic>? ?? {};
+      final kpiData = _normalizeKpi(data['kpi']);
+      final weeklyActivity = _normalizeWeeklyActivity(data['weekly_activity']);
+      final habitStats = _normalizeHabitStats(data['habit_stats']);
+      final recentNotes = _normalizeRecentNotes(data['recent_notes']);
+      final hasRecordedData = personalDashboardHasRecordedData(
+        kpiData: kpiData,
+        weeklyActivity: weeklyActivity,
+        habitStats: habitStats,
+        recentNotes: recentNotes,
+      );
       setState(() {
-        _kpiData = data['kpi'] as Map<String, dynamic>? ?? _buildFallbackKpi();
+        _dataMode = PersonalDashboardDataMode.live;
+        _hasRecordedData = hasRecordedData;
+        _lastLoadedAt = DateTime.now();
+        _kpiData = kpiData;
         _weeklyActivity =
-            List<Map<String, dynamic>>.from(data['weekly_activity'] ?? []);
-        _habitStats =
-            List<Map<String, dynamic>>.from(data['habit_stats'] ?? []);
-        _recentNotes =
-            List<Map<String, dynamic>>.from(data['recent_notes'] ?? []);
-        if (_weeklyActivity.isEmpty) _weeklyActivity = _buildFallbackWeekly();
-        if (_habitStats.isEmpty) _habitStats = _buildFallbackHabits();
+            weeklyActivity.isEmpty ? _buildFallbackWeekly() : weeklyActivity;
+        _habitStats = habitStats;
+        _recentNotes = recentNotes;
         _isLoading = false;
       });
     } catch (_) {
       if (!mounted) return;
       setState(() {
+        _dataMode = PersonalDashboardDataMode.fallback;
+        _hasRecordedData = false;
+        _lastLoadedAt = DateTime.now();
         _kpiData = _buildFallbackKpi();
         _weeklyActivity = _buildFallbackWeekly();
         _habitStats = _buildFallbackHabits();
+        _recentNotes = const [];
         _isLoading = false;
       });
     }
@@ -114,11 +200,59 @@ class _PersonalDashboardPageState extends State<PersonalDashboardPage>
     });
   }
 
-  List<Map<String, dynamic>> _buildFallbackHabits() => [
-        {'name': '朝の記録', 'streak': 0, 'completed_today': false},
-        {'name': '集中タイマー', 'streak': 0, 'completed_today': false},
-        {'name': '振り返りメモ', 'streak': 0, 'completed_today': false},
-      ];
+  List<Map<String, dynamic>> _buildFallbackHabits() => const [];
+
+  Map<String, dynamic> _normalizeKpi(Object? raw) {
+    if (raw is! Map<String, dynamic>) return _buildFallbackKpi();
+    return {
+      'total_notes': (raw['total_notes'] as num?)?.toInt() ?? 0,
+      'tasks_completed': (raw['tasks_completed'] as num?)?.toInt() ?? 0,
+      'focus_minutes': (raw['focus_minutes'] as num?)?.toInt() ?? 0,
+      'habit_streak': (raw['habit_streak'] as num?)?.toInt() ?? 0,
+      'note_growth': (raw['note_growth'] as num?)?.toInt() ?? 0,
+      'task_rate': (raw['task_rate'] as num?)?.toDouble() ?? 0.0,
+    };
+  }
+
+  List<Map<String, dynamic>> _normalizeWeeklyActivity(Object? raw) {
+    if (raw is! List) return const [];
+    return raw.whereType<Map<String, dynamic>>().map((day) {
+      final dateLabel = '${day['date'] ?? ''}'.trim();
+      return {
+        'date': dateLabel.isEmpty ? '--/--' : dateLabel,
+        'notes': (day['notes'] as num?)?.toInt() ?? 0,
+        'tasks': (day['tasks'] as num?)?.toInt() ?? 0,
+        'focus_min': (day['focus_min'] as num?)?.toInt() ?? 0,
+      };
+    }).toList();
+  }
+
+  List<Map<String, dynamic>> _normalizeHabitStats(Object? raw) {
+    if (raw is! List) return const [];
+    return raw
+        .whereType<Map<String, dynamic>>()
+        .map((habit) {
+          final name = '${habit['name'] ?? ''}'.trim();
+          if (name.isEmpty) return <String, dynamic>{};
+          return {
+            'name': name,
+            'streak': (habit['streak'] as num?)?.toInt() ?? 0,
+            'completed_today': habit['completed_today'] as bool? ?? false,
+          };
+        })
+        .where((habit) => habit.isNotEmpty)
+        .toList();
+  }
+
+  List<Map<String, dynamic>> _normalizeRecentNotes(Object? raw) {
+    if (raw is! List) return const [];
+    return raw.whereType<Map<String, dynamic>>().map((note) {
+      return {
+        'title': '${note['title'] ?? ''}'.trim(),
+        'updated_at': note['updated_at'],
+      };
+    }).toList();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -180,6 +314,79 @@ class _PersonalDashboardPageState extends State<PersonalDashboardPage>
     );
   }
 
+  Widget _buildDashboardStatusCard({bool compact = false}) {
+    final isFallback = _dataMode == PersonalDashboardDataMode.fallback;
+    final statusColor =
+        isFallback ? const Color(0xFFF59E0B) : const Color(0xFF0891B2);
+    final backgroundColor =
+        isFallback ? const Color(0xFFFFFBEB) : const Color(0xFFF0F9FF);
+    final borderColor =
+        isFallback ? const Color(0xFFFCD34D) : const Color(0xFFBAE6FD);
+    final statusLabel = isFallback ? 'FALLBACK 0データ' : 'LIVEデータ';
+    final recordLabel = _hasRecordedData ? '記録あり' : 'まだ記録前';
+    final timestamp = _lastLoadedAt == null
+        ? null
+        : DateFormat('MM/dd HH:mm').format(_lastLoadedAt!);
+    final description = isFallback
+        ? 'personal-dashboard Edge Function に接続できなかったため、安全な 0 データで表示しています。接続が戻ると自動で実データに置き換わります。'
+        : _hasRecordedData
+            ? 'Supabase から取得した実データを表示しています。ノート、タスク、集中、習慣を週次のKPIとして確認できます。'
+            : 'Supabase には接続できています。まだ実績が少ないため 0 中心ですが、棒グラフは空白にならないよう最小表示しています。';
+
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(compact ? 12 : 14),
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: borderColor),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _statusChip(statusLabel, statusColor),
+              _statusChip(recordLabel, const Color(0xFF475569)),
+              if (timestamp != null)
+                _statusChip('最終取得 $timestamp', const Color(0xFF64748B)),
+            ],
+          ),
+          SizedBox(height: compact ? 8 : 10),
+          Text(
+            description,
+            style: TextStyle(
+              fontSize: compact ? 11 : 12,
+              color: const Color(0xFF334155),
+              height: 1.6,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _statusChip(String label, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+          color: color,
+          height: 1.4,
+        ),
+      ),
+    );
+  }
+
   Widget _buildKpiTab() {
     final totalNotes = _kpiData['total_notes'] as int? ?? 0;
     final tasksCompleted = _kpiData['tasks_completed'] as int? ?? 0;
@@ -214,6 +421,8 @@ class _PersonalDashboardPageState extends State<PersonalDashboardPage>
             ),
           ),
           const SizedBox(height: 16),
+          _buildDashboardStatusCard(),
+          const SizedBox(height: 16),
           KgiCsfKpiPanel(
             plan: _buildPersonalKgiPlan(
               totalNotes: totalNotes,
@@ -227,80 +436,85 @@ class _PersonalDashboardPageState extends State<PersonalDashboardPage>
           ),
           const SizedBox(height: 16),
           // KPI グリッド
-          GridView.count(
-            crossAxisCount: 2,
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            crossAxisSpacing: 12,
-            mainAxisSpacing: 12,
-            childAspectRatio: 1.5,
-            children: [
-              _kpiCard(
-                '総ノート数',
-                totalNotes.toString(),
-                Icons.note_alt,
-                const Color(0xFF7C3AED),
-                noteGrowth > 0 ? '+$noteGrowth 今週' : null,
-              ),
-              _kpiCard(
-                'タスク完了',
-                tasksCompleted.toString(),
-                Icons.task_alt,
-                const Color(0xFF059669),
-                taskRate > 0
-                    ? '達成率 ${(taskRate * 100).toStringAsFixed(0)}%'
-                    : null,
-              ),
-              _kpiCard(
-                '集中時間',
-                focusHours,
-                Icons.timer,
-                const Color(0xFFDC2626),
-                focusMinutes > 0 ? '合計 $focusMinutes分' : null,
-              ),
-              _kpiCard(
-                '習慣ストリーク',
-                '$habitStreak日',
-                Icons.local_fire_department,
-                const Color(0xFFF59E0B),
-                habitStreak >= 7 ? '🔥 週間達成！' : null,
-              ),
-            ],
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final gridSpec = personalDashboardGridSpec(constraints.maxWidth);
+              return GridView.count(
+                crossAxisCount: gridSpec.crossAxisCount,
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                crossAxisSpacing: 12,
+                mainAxisSpacing: 12,
+                childAspectRatio: gridSpec.childAspectRatio,
+                children: [
+                  _kpiCard(
+                    '総ノート数',
+                    totalNotes.toString(),
+                    Icons.note_alt,
+                    const Color(0xFF7C3AED),
+                    noteGrowth > 0 ? '+$noteGrowth 今週' : '記録が増えると週次差分を表示',
+                  ),
+                  _kpiCard(
+                    'タスク完了',
+                    tasksCompleted.toString(),
+                    Icons.task_alt,
+                    const Color(0xFF059669),
+                    taskRate > 0
+                        ? '達成率 ${(taskRate * 100).toStringAsFixed(0)}%'
+                        : '記録前でも達成率バーを表示',
+                  ),
+                  _kpiCard(
+                    '集中時間',
+                    focusHours,
+                    Icons.timer,
+                    const Color(0xFFDC2626),
+                    focusMinutes > 0 ? '合計 $focusMinutes分' : 'ポモドーロや集中ログを待機中',
+                  ),
+                  _kpiCard(
+                    '習慣ストリーク',
+                    '$habitStreak日',
+                    Icons.local_fire_department,
+                    const Color(0xFFF59E0B),
+                    habitStreak >= 7 ? '🔥 週間達成！' : '習慣が入ると継続日数を追跡',
+                  ),
+                ],
+              );
+            },
           ),
           const SizedBox(height: 24),
           // タスク達成率バー
-          if (taskRate > 0) ...[
-            const Text(
-              'タスク達成率',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w700,
-                color: Color(0xFF1E293B),
-                height: 1.5,
-              ),
+          const Text(
+            'タスク達成率',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+              color: Color(0xFF1E293B),
+              height: 1.5,
             ),
-            const SizedBox(height: 8),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(4),
-              child: LinearProgressIndicator(
-                value: taskRate.clamp(0.0, 1.0),
-                backgroundColor: const Color(0xFFE2E8F0),
-                valueColor:
-                    const AlwaysStoppedAnimation<Color>(Color(0xFF059669)),
-                minHeight: 12,
-              ),
+          ),
+          const SizedBox(height: 8),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: LinearProgressIndicator(
+              value: taskRate.clamp(0.0, 1.0),
+              backgroundColor: const Color(0xFFE2E8F0),
+              valueColor:
+                  const AlwaysStoppedAnimation<Color>(Color(0xFF059669)),
+              minHeight: 12,
             ),
-            const SizedBox(height: 4),
-            Text(
-              '${(taskRate * 100).toStringAsFixed(1)}% 完了',
-              style: const TextStyle(
-                fontSize: 12,
-                color: Color(0xFF64748B),
-                height: 1.5,
-              ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            taskRate > 0
+                ? '${(taskRate * 100).toStringAsFixed(1)}% 完了'
+                : 'まだ実績がありません。タスクを完了するとここが伸びます。',
+            style: const TextStyle(
+              fontSize: 12,
+              color: Color(0xFF64748B),
+              height: 1.5,
             ),
-            const SizedBox(height: 24),
-          ],
+          ),
+          const SizedBox(height: 24),
           // 最近のノート
           if (_recentNotes.isNotEmpty) ...[
             const Text(
@@ -519,6 +733,8 @@ class _PersonalDashboardPageState extends State<PersonalDashboardPage>
               height: 1.5,
             ),
           ),
+          const SizedBox(height: 12),
+          _buildDashboardStatusCard(compact: true),
           const SizedBox(height: 20),
           // ノート数バーチャート
           _barChartSection(
@@ -555,19 +771,37 @@ class _PersonalDashboardPageState extends State<PersonalDashboardPage>
     String key,
     int maxVal,
   ) {
+    final total = data.fold<int>(0, (sum, day) {
+      return sum + ((day[key] as num?)?.toInt() ?? 0);
+    });
+    final allZero = total == 0;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Icon(icon, size: 16, color: color),
-            const SizedBox(width: 6),
+            Row(
+              children: [
+                Icon(icon, size: 16, color: color),
+                const SizedBox(width: 6),
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: color,
+                    height: 1.5,
+                  ),
+                ),
+              ],
+            ),
             Text(
-              title,
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w700,
-                color: color,
+              allZero ? '記録前' : '合計 $total',
+              style: const TextStyle(
+                fontSize: 11,
+                color: Color(0xFF64748B),
                 height: 1.5,
               ),
             ),
@@ -580,7 +814,6 @@ class _PersonalDashboardPageState extends State<PersonalDashboardPage>
             crossAxisAlignment: CrossAxisAlignment.end,
             children: data.map((day) {
               final val = (day[key] as num?)?.toInt() ?? 0;
-              final heightRatio = maxVal > 0 ? val / maxVal : 0.0;
               final dateLabel = day['date'] as String? ?? '';
               return Expanded(
                 child: Column(
@@ -601,7 +834,10 @@ class _PersonalDashboardPageState extends State<PersonalDashboardPage>
                       child: Align(
                         alignment: Alignment.bottomCenter,
                         child: FractionallySizedBox(
-                          heightFactor: heightRatio.clamp(0.02, 1.0),
+                          heightFactor: personalDashboardBarHeightFactor(
+                            value: val,
+                            maxValue: maxVal,
+                          ),
                           child: Container(
                             margin: const EdgeInsets.symmetric(horizontal: 3),
                             decoration: BoxDecoration(
@@ -631,6 +867,17 @@ class _PersonalDashboardPageState extends State<PersonalDashboardPage>
             }).toList(),
           ),
         ),
+        if (allZero) ...[
+          const SizedBox(height: 8),
+          const Text(
+            '0の日でも棒を細く残しています。記録が入り始めると高さが伸びて、空白の週になりません。',
+            style: TextStyle(
+              fontSize: 11,
+              color: Color(0xFF64748B),
+              height: 1.5,
+            ),
+          ),
+        ],
       ],
     );
   }
@@ -660,6 +907,19 @@ class _PersonalDashboardPageState extends State<PersonalDashboardPage>
             ),
           ],
         ),
+        const SizedBox(height: 4),
+        Text(
+          _weeklyActivity.every(
+            (day) => ((day['focus_min'] as num?)?.toInt() ?? 0) == 0,
+          )
+              ? '集中ログがまだ無いので、最小バーで7日分の枠だけ見せています。'
+              : '集中セッションが増えると、この棒グラフで日ごとの差が追えます。',
+          style: const TextStyle(
+            fontSize: 11,
+            color: Color(0xFF64748B),
+            height: 1.5,
+          ),
+        ),
         const SizedBox(height: 12),
         SizedBox(
           height: 120,
@@ -667,7 +927,6 @@ class _PersonalDashboardPageState extends State<PersonalDashboardPage>
             crossAxisAlignment: CrossAxisAlignment.end,
             children: _weeklyActivity.map((day) {
               final val = (day['focus_min'] as num?)?.toInt() ?? 0;
-              final heightRatio = maxFocus > 0 ? val / maxFocus : 0.0;
               final dateLabel = day['date'] as String? ?? '';
               return Expanded(
                 child: Column(
@@ -688,7 +947,10 @@ class _PersonalDashboardPageState extends State<PersonalDashboardPage>
                       child: Align(
                         alignment: Alignment.bottomCenter,
                         child: FractionallySizedBox(
-                          heightFactor: heightRatio.clamp(0.02, 1.0),
+                          heightFactor: personalDashboardBarHeightFactor(
+                            value: val,
+                            maxValue: maxFocus,
+                          ),
                           child: Container(
                             margin: const EdgeInsets.symmetric(horizontal: 3),
                             decoration: BoxDecoration(
@@ -747,22 +1009,37 @@ class _PersonalDashboardPageState extends State<PersonalDashboardPage>
               height: 1.5,
             ),
           ),
+          const SizedBox(height: 12),
+          _buildDashboardStatusCard(compact: true),
           const SizedBox(height: 16),
           if (_habitStats.isEmpty)
-            const Center(
+            Center(
               child: Padding(
-                padding: EdgeInsets.symmetric(vertical: 48),
+                padding: const EdgeInsets.symmetric(vertical: 48),
                 child: Column(
                   children: [
-                    Icon(Icons.loop, size: 48, color: Color(0xFF94A3B8)),
-                    SizedBox(height: 12),
+                    const Icon(Icons.loop, size: 48, color: Color(0xFF94A3B8)),
+                    const SizedBox(height: 12),
                     Text(
-                      '習慣を登録するとここに表示されます',
-                      style: TextStyle(
+                      _dataMode == PersonalDashboardDataMode.fallback
+                          ? '習慣データを取得できなかったため、いまは空の状態で表示しています'
+                          : '習慣を登録するとここに表示されます',
+                      style: const TextStyle(
                         color: Color(0xFF94A3B8),
                         fontSize: 13,
                         height: 1.5,
                       ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      'まずはハードルの低い習慣を1つだけ登録して、継続日数を伸ばしていくのがおすすめです。',
+                      style: TextStyle(
+                        color: Color(0xFF64748B),
+                        fontSize: 12,
+                        height: 1.6,
+                      ),
+                      textAlign: TextAlign.center,
                     ),
                   ],
                 ),

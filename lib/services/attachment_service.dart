@@ -7,6 +7,7 @@ import '../models/attachment.dart';
 
 class AttachmentService {
   static const int maxFileSize = 5 * 1024 * 1024; // 5MB
+  static const String markdownAttachmentScheme = 'attachment';
   static const List<String> allowedImageTypes = [
     'image/jpeg',
     'image/jpg',
@@ -222,6 +223,78 @@ class AttachmentService {
   // ファイルの公開URLを取得
   static String getPublicUrl(String filePath) {
     return supabase.storage.from('attachments').getPublicUrl(filePath);
+  }
+
+  static String getMarkdownUrl(String filePath) {
+    return '$markdownAttachmentScheme:${Uri.encodeComponent(filePath)}';
+  }
+
+  static bool containsAttachmentReference(String markdown) {
+    return markdown.contains('$markdownAttachmentScheme:') ||
+        markdown.contains('/storage/v1/object/public/attachments/');
+  }
+
+  static String? extractAttachmentFilePath(String url) {
+    final uri = Uri.tryParse(url);
+    if (uri == null) {
+      return null;
+    }
+
+    if (uri.scheme == markdownAttachmentScheme) {
+      final encodedPath = uri.path.isNotEmpty
+          ? uri.path
+          : url.substring('$markdownAttachmentScheme:'.length);
+      if (encodedPath.isEmpty) {
+        return null;
+      }
+      return Uri.decodeComponent(encodedPath);
+    }
+
+    final segments = uri.pathSegments;
+    final publicIndex = segments.indexOf('public');
+    if (publicIndex == -1 || publicIndex + 1 >= segments.length) {
+      return null;
+    }
+    if (segments[publicIndex + 1] != 'attachments') {
+      return null;
+    }
+
+    final objectPath = segments.skip(publicIndex + 2).join('/');
+    if (objectPath.isEmpty) {
+      return null;
+    }
+    return Uri.decodeComponent(objectPath);
+  }
+
+  static Future<String> resolveMarkdownAttachmentUrls(String markdown) async {
+    if (!containsAttachmentReference(markdown)) {
+      return markdown;
+    }
+
+    final replacements = <String, String>{};
+    for (final match in RegExp(r'\(([^)]+)\)').allMatches(markdown)) {
+      final originalUrl = match.group(1);
+      if (originalUrl == null || replacements.containsKey(originalUrl)) {
+        continue;
+      }
+      final filePath = extractAttachmentFilePath(originalUrl);
+      if (filePath == null) {
+        continue;
+      }
+      try {
+        replacements[originalUrl] = await getSignedUrl(filePath);
+      } catch (error) {
+        debugPrint(
+          '[AttachmentService] Failed to sign markdown attachment $filePath: $error',
+        );
+      }
+    }
+
+    var resolved = markdown;
+    for (final entry in replacements.entries) {
+      resolved = resolved.replaceAll('(${entry.key})', '(${entry.value})');
+    }
+    return resolved;
   }
 
   // ファイルをダウンロード

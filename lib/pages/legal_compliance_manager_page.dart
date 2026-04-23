@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../widgets/paddle_approval_readiness_card.dart';
+
 /// 法務・コンプライアンス管理ページ
 /// 契約管理・コンプライアンスチェック・期限アラート。
 /// legal-compliance-manager Edge Function と連携。
@@ -25,7 +27,7 @@ class _LegalComplianceManagerPageState extends State<LegalComplianceManagerPage>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _tabController = TabController(length: 3, vsync: this);
     _fetchData();
   }
 
@@ -83,6 +85,7 @@ class _LegalComplianceManagerPageState extends State<LegalComplianceManagerPage>
           tabs: const [
             Tab(icon: Icon(Icons.description), text: '契約'),
             Tab(icon: Icon(Icons.checklist), text: 'チェック'),
+            Tab(icon: Icon(Icons.verified_user_outlined), text: 'SaaS審査'),
           ],
         ),
       ),
@@ -92,7 +95,11 @@ class _LegalComplianceManagerPageState extends State<LegalComplianceManagerPage>
               ? _buildError()
               : TabBarView(
                   controller: _tabController,
-                  children: [_buildContractsTab(), _buildChecklistTab()],
+                  children: [
+                    _buildContractsTab(),
+                    _buildChecklistTab(),
+                    _buildSaasReviewTab(),
+                  ],
                 ),
     );
   }
@@ -256,6 +263,17 @@ class _LegalComplianceManagerPageState extends State<LegalComplianceManagerPage>
               );
             },
           ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSaasReviewTab() {
+    return ListView(
+      padding: const EdgeInsets.all(12),
+      children: const [
+        PaddleApprovalReadinessCard(
+          touchesRegulatedData: true,
         ),
       ],
     );

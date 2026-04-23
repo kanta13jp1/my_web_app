@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/models/site_guide_catalog_item.dart';
 import 'package:my_web_app/pages/site_guide_chat_page.dart';
+import 'package:my_web_app/services/ai_hub_chat_service.dart';
 import 'package:my_web_app/services/site_guide_chat_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -10,10 +11,15 @@ class _FakeSiteGuideChatService extends SiteGuideChatService {
 
   final SiteGuideChatAnswer _answer;
   String? lastQuestion;
+  String? lastSessionId;
 
   @override
-  Future<SiteGuideChatAnswer> answerQuestion(String question) async {
+  Future<SiteGuideChatAnswer> answerQuestion(
+    String question, {
+    String? sessionId,
+  }) async {
     lastQuestion = question;
+    lastSessionId = sessionId;
     return _answer;
   }
 }
@@ -23,7 +29,7 @@ void main() {
     SharedPreferences.setMockInitialValues(<String, Object>{});
   });
 
-  testWidgets('SiteGuideChatPage sends questions and opens suggestions', (
+  testWidgets('SiteGuideChatPage sends questions and shows observability', (
     tester,
   ) async {
     var openedTool = false;
@@ -33,6 +39,12 @@ void main() {
         text: '資産管理を開くと、お金まわりを一か所で見られます。',
         source: 'test-source',
         answeredAt: DateTime(2026, 4, 23, 22, 30),
+        observability: const AiHubChatObservability(
+          provider: 'deepinfra',
+          latencyMs: 150,
+          traceId: 'trace-12345678',
+          sessionId: 'session-87654321',
+        ),
         suggestions: const <SiteGuideToolSuggestion>[
           SiteGuideToolSuggestion(
             id: 'asset-management',
@@ -75,12 +87,15 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.enterText(find.byType(TextField), '資産管理はどこ？');
+    await tester.enterText(find.byType(TextField), '資産管理はどこですか');
     await tester.tap(find.byKey(const Key('site_guide_send')));
     await tester.pumpAndSettle();
 
-    expect(service.lastQuestion, '資産管理はどこ？');
+    expect(service.lastQuestion, '資産管理はどこですか');
+    expect(service.lastSessionId, isNotNull);
     expect(find.text('資産管理を開くと、お金まわりを一か所で見られます。'), findsOneWidget);
+    expect(find.text('AI observability'), findsOneWidget);
+    expect(find.textContaining('trace '), findsOneWidget);
     expect(
       find.byKey(const Key('site_guide_open_asset-management')),
       findsOneWidget,
@@ -109,7 +124,7 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         home: SiteGuideChatPage(
-          initialQuestion: 'まず何から使えばいい？',
+          initialQuestion: 'まずは何を使えばよいですか',
           service: service,
           toolCatalog: const <SiteGuideActionEntry>[],
         ),
@@ -117,7 +132,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(service.lastQuestion, 'まず何から使えばいい？');
+    expect(service.lastQuestion, 'まずは何を使えばよいですか');
     expect(find.text('まずは今日の一手から始めましょう。'), findsOneWidget);
   });
 }

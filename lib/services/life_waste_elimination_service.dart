@@ -199,12 +199,14 @@ class LifeWasteAiReview {
   final String source;
   final DateTime generatedAt;
   final bool isFallback;
+  final AiHubChatObservability? observability;
 
   const LifeWasteAiReview({
     required this.summary,
     required this.source,
     required this.generatedAt,
     this.isFallback = false,
+    this.observability,
   });
 
   factory LifeWasteAiReview.fallback({
@@ -1183,13 +1185,14 @@ class LifeWasteAiReviewService {
     LifeWasteEliminationReport report,
   ) async {
     try {
-      final response = await _chatService.sendProviderChat(
+      final response = await _chatService.sendAutoChat(
         message: _buildPrompt(report),
       );
       return LifeWasteAiReview(
         summary: _normalize(response.text),
         source: response.source,
         generatedAt: _now(),
+        observability: response.observability,
       );
     } catch (_) {
       return LifeWasteAiReview.fallback(
