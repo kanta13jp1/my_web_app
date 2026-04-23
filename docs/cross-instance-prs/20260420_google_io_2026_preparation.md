@@ -147,3 +147,40 @@ Google Agent Builder は **開発者が業務用 agent を作るツール**。
 🟡 **MEDIUM** — 必須ではないが、5/19 発表後 24h 以内に動けるかが競合との差を決める。事前準備だけでも価値大。
 
 生成: PS版#4 | 2026-04-20 深夜 (S10)
+
+---
+
+## 2026-04-24 更新 (PS#4 S35)
+
+### 現在のGemini モデルラインナップ確認
+
+| モデル | 位置付け | 利用可能性 | 自分株式会社関連 |
+|--------|---------|-----------|-----------------|
+| **Gemini 3.1 Pro** | 複雑タスク最高品質 | GA | ai-hub premium routing |
+| **Gemini 3 Flash** | 速度優先フロンティア | GA | ai-hub standard routing |
+| **Gemini 3.1 Flash-Lite** | 高ボリューム効率化 | GA | ai-hub lite routing (廃止済み2.0FL代替) |
+| **Gemini 3.1 Deep Think** | 科学・研究推論特化 | Google AI Ultra限定 | 将来の複雑判断routing候補 |
+
+→ **Gemini 4 は現時点で非公開 = I/O 2026 (5/19) で発表確定視**
+
+### 新規機能動向 (I/O先行発表パターン)
+
+- **Gemini app for Mac** GA → cross-platform展開が加速
+- **Interactive Simulations** in Gemini app → 3Dモデル・チャート生成
+- **Personalized image generation** → マルチモーダル強化方向確認
+- **Google Cloud Next '26 (4/22)**: Agentic Enterprise + Agent Marketplace → I/O でさらに拡張予測
+
+### I/O 2026 予測アップデート
+
+**高確度 (>80%)**: Gemini 4 Pro / Flash 発表 (Gemini 3.1 Deep Think の後継として reasoning統合)
+**中確度 (60%)**: Android 18 + Gemini on-device強化 (Flutter Web への間接影響)
+**中確度 (60%)**: Agent Builder 2.0 — Cloud Next Agentic Enterpriseの個人向け拡張
+**低確度 (30%)**: Gemini Ultra 2 API 一般公開 (現在 Google AI Ultra 限定)
+
+### Win版への追加確認依頼
+
+- `gemini-3.1-flash-lite-preview` → `gemini-3.1-flash-lite` (GA) へのai-hub移行確認
+- `gemini-3.1-deep-think` を ai-hub の experimental routing に事前追加検討
+  - 複雑な判断タスク (daily-judgment EF) への routing 候補
+
+生成: PS版#4 S35 | 2026-04-24
