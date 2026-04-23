@@ -1186,7 +1186,8 @@ const List<AiProviderEntry> kAiProviderRegistry = [
     status: AiProviderStatus.notImplemented,
     entryPoint: '(未実装 — Cascade agent + Supercomplete IDE)',
     note:
-        '旧 Codeium / Cascade 自律 multi-file agent + Supercomplete / SOC 2 + SAML SSO',,
+        '旧 Codeium / Cascade 自律 multi-file agent + Supercomplete / SOC 2 + SAML SSO',
+  ),
   AiProviderEntry(
     id: 'hume_ai',
     displayName: 'Hume AI',

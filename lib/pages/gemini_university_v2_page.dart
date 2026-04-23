@@ -950,6 +950,7 @@ final Map<String, _ProviderMeta> _providerMeta = {
     emoji: '🏄',
     color: const Color(0xFF06B6D4),
     officialUrl: 'https://windsurf.com/',
+  ),
   'hume_ai': _ProviderMeta(
     name: 'Hume AI',
     emoji: '🎭',
@@ -5093,6 +5094,7 @@ VS Code fork に Cascade agent (自律 multi-file edit) + Supercomplete (predict
 - Cursor (対話) vs Windsurf (自律) で routing 判断
 - Enterprise 向け compliance KPI 設計時の referent
 - AI大学 vibe-coding 三強対比 (Cursor / Windsurf / Cline)
+''',
   'hume_ai': '''
 # Hume AI — 感情知能 Voice AI
 

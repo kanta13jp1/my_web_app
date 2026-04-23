@@ -37,9 +37,10 @@ class _CompetitorFeatureSyncPageState extends State<CompetitorFeatureSyncPage> {
         final features = data['features'];
         if (features is List) {
           _pendingFeatures = features.map<Map<String, dynamic>>((f) {
-            final meta = (f['metadata'] as Map<String, dynamic>?) ?? {};
+            final row = (f as Map<String, dynamic>);
+            final meta = (row['metadata'] as Map<String, dynamic>?) ?? {};
             return {
-              'id': f['id'] ?? '',
+              'id': row['id'] ?? '',
               'competitor': meta['competitor'] ?? '',
               'feature_name': meta['feature'] ?? '',
               'category': meta['status'] ?? 'detected',
