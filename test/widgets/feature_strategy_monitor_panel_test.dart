@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/models/feature_strategy_monitor.dart';
 import 'package:my_web_app/services/feature_strategy_monitor_service.dart';
+import 'package:my_web_app/services/feature_strategy_report_snapshot_service.dart';
 import 'package:my_web_app/widgets/feature_strategy_monitor_panel.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -47,6 +48,12 @@ void main() {
                 source: 'ai-hub provider.chat / deepinfra',
                 generatedAt: DateTime(2026, 4, 22, 9, 15),
               ),
+              monitoringSummary: FeatureStrategyMonitoringSummary(
+                cloudSynced: true,
+                snapshots: <FeatureStrategyDailySnapshot>[
+                  FeatureStrategyDailySnapshot.fromReport(report),
+                ],
+              ),
             ),
           ),
         ),
@@ -74,6 +81,8 @@ void main() {
     expect(find.text('AI改善キュー'), findsOneWidget);
     expect(find.text('全機能AI監視リスト'), findsOneWidget);
     expect(find.text('Locked Lab'), findsOneWidget);
+    expect(find.text('Monitoring snapshots'), findsOneWidget);
+    expect(find.text('Cloud sync'), findsOneWidget);
     expect(find.text('改善優先'), findsWidgets);
   });
 }

@@ -19,6 +19,7 @@ import '../services/completion_goal_service.dart';
 import '../services/feature_strategy_ai_review_service.dart';
 import '../services/feature_strategy_focus_action_service.dart';
 import '../services/feature_strategy_monitor_service.dart';
+import '../services/feature_strategy_report_snapshot_service.dart';
 import '../services/home_tool_usage_service.dart';
 import '../services/life_waste_elimination_service.dart';
 import '../services/personality_test_service.dart';
@@ -87,6 +88,8 @@ class _HomePageState extends State<HomePage> {
   late Future<List<String>> _recentToolIdsFuture;
   late Future<FeatureStrategyReport> _featureStrategyReportFuture;
   late Future<FeatureStrategyAiReview> _featureStrategyAiReviewFuture;
+  late Future<FeatureStrategyMonitoringSummary>
+      _featureStrategyMonitoringFuture;
   late Future<int> _timeWasteSlipCountFuture;
   Future<LifeWasteAiReview>? _lifeWasteAiReviewFuture;
   String? _lifeWasteAiReviewKey;
@@ -102,6 +105,10 @@ class _HomePageState extends State<HomePage> {
   final FeatureStrategyFocusActionService _featureStrategyFocusActionService =
       const FeatureStrategyFocusActionService(
     actionRepository: SupabaseFeatureStrategyFocusActionRepository(),
+  );
+  final FeatureStrategyReportSnapshotService _featureStrategySnapshotService =
+      const FeatureStrategyReportSnapshotService(
+    snapshotRepository: SupabaseFeatureStrategyReportSnapshotRepository(),
   );
   static const FlutterSecureStorage _secureStorage = FlutterSecureStorage();
 
@@ -207,6 +214,9 @@ class _HomePageState extends State<HomePage> {
     _featureStrategyAiReviewFuture = _featureStrategyReportFuture.then(
       FeatureStrategyAiReviewService().generateReview,
     );
+    _featureStrategyMonitoringFuture = _featureStrategyReportFuture.then(
+      _featureStrategySnapshotService.recordReport,
+    );
   }
 
   Future<void> _logout(BuildContext context) async {
@@ -232,6 +242,7 @@ class _HomePageState extends State<HomePage> {
     await _timeWasteSlipCountFuture;
     await _featureStrategyReportFuture;
     await _featureStrategyAiReviewFuture;
+    await _featureStrategyMonitoringFuture;
   }
 
   Future<void> _submitHomeFeatureRequest() async {
@@ -5332,6 +5343,7 @@ abstinence_slip_details: $slipDetailsText
       future: Future.wait<dynamic>([
         _featureStrategyReportFuture,
         _featureStrategyAiReviewFuture,
+        _featureStrategyMonitoringFuture,
       ]),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting &&
@@ -5359,9 +5371,13 @@ abstinence_slip_details: $slipDetailsText
         final aiReview = data != null && data.length > 1
             ? data[1] as FeatureStrategyAiReview
             : null;
+        final monitoringSummary = data != null && data.length > 2
+            ? data[2] as FeatureStrategyMonitoringSummary
+            : null;
         return FeatureStrategyMonitorPanel(
           report: report,
           aiReview: aiReview,
+          monitoringSummary: monitoringSummary,
           isDark: isDark,
           isCompact: isCompact,
           focusActionService: _featureStrategyFocusActionService,

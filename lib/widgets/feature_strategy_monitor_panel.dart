@@ -3,11 +3,13 @@ import 'package:intl/intl.dart';
 
 import '../models/feature_strategy_monitor.dart';
 import '../services/feature_strategy_focus_action_service.dart';
+import '../services/feature_strategy_report_snapshot_service.dart';
 import 'kgi_csf_kpi_panel.dart';
 
 class FeatureStrategyMonitorPanel extends StatefulWidget {
   final FeatureStrategyReport report;
   final FeatureStrategyAiReview? aiReview;
+  final FeatureStrategyMonitoringSummary? monitoringSummary;
   final bool isDark;
   final bool isCompact;
   final FeatureStrategyFocusActionService? focusActionService;
@@ -16,6 +18,7 @@ class FeatureStrategyMonitorPanel extends StatefulWidget {
     super.key,
     required this.report,
     this.aiReview,
+    this.monitoringSummary,
     this.isDark = false,
     this.isCompact = false,
     this.focusActionService,
@@ -220,6 +223,15 @@ class _FeatureStrategyMonitorPanelState
             const SizedBox(height: 12),
             _AiReviewBox(review: aiReview, accent: accent, dark: isDark),
           ],
+          if (widget.monitoringSummary != null) ...[
+            const SizedBox(height: 12),
+            _MonitoringHistoryBox(
+              summary: widget.monitoringSummary!,
+              accent: accent,
+              dark: isDark,
+              compact: isCompact,
+            ),
+          ],
           const SizedBox(height: 14),
           LayoutBuilder(
             builder: (context, constraints) {
@@ -407,6 +419,109 @@ class _AiReviewBox extends StatelessWidget {
               height: 1.5,
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MonitoringHistoryBox extends StatelessWidget {
+  final FeatureStrategyMonitoringSummary summary;
+  final Color accent;
+  final bool dark;
+  final bool compact;
+
+  const _MonitoringHistoryBox({
+    required this.summary,
+    required this.accent,
+    required this.dark,
+    required this.compact,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final latest = summary.latest;
+    final titleColor = dark ? Colors.white : const Color(0xFF0F172A);
+    final subColor =
+        dark ? Colors.white.withValues(alpha: 0.70) : const Color(0xFF64748B);
+    final alertColor =
+        summary.needsReview ? const Color(0xFFDC2626) : const Color(0xFF059669);
+
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(compact ? 11 : 13),
+      decoration: BoxDecoration(
+        color: accent.withValues(alpha: dark ? 0.14 : 0.06),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: accent.withValues(alpha: 0.18)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Wrap(
+            spacing: 8,
+            runSpacing: 6,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              Icon(Icons.history_toggle_off, size: 18, color: accent),
+              Text(
+                'Monitoring snapshots',
+                style: TextStyle(
+                  color: titleColor,
+                  fontSize: compact ? 12 : 13,
+                  fontWeight: FontWeight.w900,
+                  height: 1.35,
+                ),
+              ),
+              _StatusPill(
+                label: summary.syncLabel,
+                color: summary.cloudSynced ? const Color(0xFF2563EB) : accent,
+                dark: dark,
+              ),
+              _StatusPill(
+                label: '${summary.snapshotCount} days',
+                color: const Color(0xFF0891B2),
+                dark: dark,
+              ),
+              _StatusPill(
+                label: summary.progressDeltaLabel,
+                color: summary.portfolioProgressDelta >= 0
+                    ? const Color(0xFF059669)
+                    : const Color(0xFFDC2626),
+                dark: dark,
+              ),
+              if (latest != null)
+                _StatusPill(
+                  label: 'overdue ${latest.reviewOverdueCount}',
+                  color: alertColor,
+                  dark: dark,
+                ),
+            ],
+          ),
+          if (latest != null) ...[
+            const SizedBox(height: 6),
+            Text(
+              'KGI ${latest.portfolioProgressPercent}% / AI ${latest.aiCoveragePercent}% / life capital ${latest.lifeCapitalCoveragePercent}% / focus streak ${latest.focusStreakDays}d',
+              style: TextStyle(
+                color: subColor,
+                fontSize: compact ? 11 : 12,
+                fontWeight: FontWeight.w700,
+                height: 1.45,
+              ),
+            ),
+            const SizedBox(height: 3),
+            Text(
+              latest.nextAction,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: titleColor,
+                fontSize: compact ? 11 : 12,
+                fontWeight: FontWeight.w800,
+                height: 1.45,
+              ),
+            ),
+          ],
         ],
       ),
     );
