@@ -262,6 +262,30 @@ class FeatureStrategyFocusRecommendation {
   });
 }
 
+class FeatureStrategyQueuedRecommendation {
+  final FeatureLifeCapitalResource resource;
+  final String label;
+  final String featureId;
+  final String featureName;
+  final String sectionName;
+  final String action;
+  final String rationale;
+  final String unlockCondition;
+  final KgiCsfKpiPlan plan;
+
+  const FeatureStrategyQueuedRecommendation({
+    required this.resource,
+    required this.label,
+    required this.featureId,
+    required this.featureName,
+    required this.sectionName,
+    required this.action,
+    required this.rationale,
+    required this.unlockCondition,
+    required this.plan,
+  });
+}
+
 class FeatureStrategyReport {
   final DateTime monitoredAt;
   final List<FeatureStrategySignal> signals;
@@ -269,6 +293,7 @@ class FeatureStrategyReport {
   final List<FeatureLifeCapitalSummary> lifeCapitalSummaries;
   final List<FeatureLifeCapitalConsolidationLane> lifeCapitalConsolidationLanes;
   final FeatureStrategyFocusRecommendation? focusRecommendation;
+  final FeatureStrategyQueuedRecommendation? queuedFocusRecommendation;
   final KgiCsfKpiPlan portfolioPlan;
 
   const FeatureStrategyReport({
@@ -278,6 +303,7 @@ class FeatureStrategyReport {
     required this.lifeCapitalSummaries,
     required this.lifeCapitalConsolidationLanes,
     required this.focusRecommendation,
+    required this.queuedFocusRecommendation,
     required this.portfolioPlan,
   });
 
@@ -289,6 +315,7 @@ class FeatureStrategyReport {
       lifeCapitalSummaries: const <FeatureLifeCapitalSummary>[],
       lifeCapitalConsolidationLanes: const <FeatureLifeCapitalConsolidationLane>[],
       focusRecommendation: null,
+      queuedFocusRecommendation: null,
       portfolioPlan: const KgiCsfKpiPlan(
         domain: '全機能AI戦略',
         kgi: '全機能をAI分析とKGI/CSF/KPI監視に接続する',

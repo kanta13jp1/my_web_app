@@ -88,6 +88,11 @@ class FeatureStrategyAiReviewService {
             '継続=${focus.actionStats.currentStreakDays}日, '
             '解放=${focus.actionStats.unlockStatusLabel}, '
             '保留=${focus.parkedResourceCount}資本/${focus.parkedFeatureCount}機能)';
+    final queuedFocus = report.queuedFocusRecommendation;
+    final queuedFocusLine = queuedFocus == null
+        ? 'なし'
+        : '${queuedFocus.label} / ${queuedFocus.featureName}: ${queuedFocus.action} '
+            '(解放条件=${queuedFocus.unlockCondition})';
 
     return '''
 あなたはプロダクト全体のAI戦略レビュー担当です。
@@ -122,8 +127,11 @@ $sectionLines
   生命資本別の代表導線レーン:
   $lifeCapitalLaneLines
 
-  今日の低ハードル1手:
+ 今日の低ハードル1手:
 $focusLine
+
+解放後の次候補:
+$queuedFocusLine
 
 改善優先キュー:
 $priorityLines

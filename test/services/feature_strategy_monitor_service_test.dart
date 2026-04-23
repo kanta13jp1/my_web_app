@@ -88,6 +88,11 @@ void main() {
     expect(report.focusRecommendation!.featureId, 'asset-training');
     expect(report.focusRecommendation!.action, contains('今日'));
     expect(report.focusRecommendation!.rationale, contains('あと1日'));
+    expect(report.queuedFocusRecommendation, isNotNull);
+    expect(
+      report.queuedFocusRecommendation!.featureId,
+      isNot(report.focusRecommendation!.featureId),
+    );
     expect(
       report.focusRecommendation!.actionStats.completedDaysLast7,
       2,
@@ -112,6 +117,10 @@ void main() {
     expect(
       report.portfolioPlan.metrics.map((metric) => metric.kpi).join(' / '),
       contains('次へ進むための習慣化証跡'),
+    );
+    expect(
+      report.portfolioPlan.metrics.map((metric) => metric.kpi).join(' / '),
+      contains('解放後の次候補キュー'),
     );
     expect(
       report.consolidationCandidates.single.summary,

@@ -40,6 +40,11 @@ class FeatureStrategyMonitorService {
       signals: signals,
       lifeCapitalSummaries: lifeCapitalSummaries,
     );
+    final queuedFocusRecommendation = _buildQueuedFocusRecommendation(
+      signals: signals,
+      lifeCapitalSummaries: lifeCapitalSummaries,
+      focusRecommendation: focusRecommendation,
+    );
 
     return FeatureStrategyReport(
       monitoredAt: checkedAt,
@@ -48,12 +53,14 @@ class FeatureStrategyMonitorService {
       lifeCapitalSummaries: lifeCapitalSummaries,
       lifeCapitalConsolidationLanes: lifeCapitalConsolidationLanes,
       focusRecommendation: focusRecommendation,
+      queuedFocusRecommendation: queuedFocusRecommendation,
       portfolioPlan: _buildPortfolioPlan(
         signals,
         consolidationCandidates,
         lifeCapitalSummaries,
         lifeCapitalConsolidationLanes,
         focusRecommendation,
+        queuedFocusRecommendation,
       ),
     );
   }
@@ -1099,12 +1106,98 @@ class FeatureStrategyMonitorService {
     return '${signal.featureName}を今日の通常導線で1回使い、成果KPIを更新する';
   }
 
+  FeatureStrategyQueuedRecommendation? _buildQueuedFocusRecommendation({
+    required List<FeatureStrategySignal> signals,
+    required List<FeatureLifeCapitalSummary> lifeCapitalSummaries,
+    required FeatureStrategyFocusRecommendation? focusRecommendation,
+  }) {
+    if (focusRecommendation == null) return null;
+
+    final coveredSummaries =
+        lifeCapitalSummaries.where((summary) => summary.hasCoverage).toList()
+          ..sort((a, b) {
+            final byProgress = a.averageProgress.compareTo(b.averageProgress);
+            if (byProgress != 0) return byProgress;
+            return a.featureCount.compareTo(b.featureCount);
+          });
+    if (coveredSummaries.isEmpty) return null;
+
+    final preferredSummary = coveredSummaries.firstWhere(
+      (summary) => summary.resource != focusRecommendation.resource,
+      orElse: () => coveredSummaries.first,
+    );
+    var candidates = signals
+        .where((signal) => signal.featureId != focusRecommendation.featureId)
+        .where(
+          (signal) => signal.lifeCapitalResource == preferredSummary.resource,
+        )
+        .toList();
+    if (candidates.isEmpty) {
+      candidates = signals
+          .where((signal) => signal.featureId != focusRecommendation.featureId)
+          .toList();
+    }
+    if (candidates.isEmpty) return null;
+
+    candidates.sort((a, b) {
+      final byHurdle = _focusHurdleScore(b).compareTo(_focusHurdleScore(a));
+      if (byHurdle != 0) return byHurdle;
+      return a.progress.compareTo(b.progress);
+    });
+    final queuedSignal = candidates.first;
+    final targetSummary = coveredSummaries.firstWhere(
+      (summary) => summary.resource == queuedSignal.lifeCapitalResource,
+      orElse: () => preferredSummary,
+    );
+    final unlockCondition = focusRecommendation.actionStats.isHabitStable
+        ? '現在の1手は解放済みです。次はこの候補へ進めます。'
+        : '現在の1手が${FeatureStrategyFocusActionStats.habitUnlockDays}日定着したら、この候補を開放します。';
+    final rationale =
+        '${targetSummary.label}は次に着手する生命資本候補です。${focusRecommendation.featureName}が定着するまでは待機し、解放後に${queuedSignal.featureName}へ移ります。';
+
+    return FeatureStrategyQueuedRecommendation(
+      resource: queuedSignal.lifeCapitalResource,
+      label: targetSummary.label,
+      featureId: queuedSignal.featureId,
+      featureName: queuedSignal.featureName,
+      sectionName: queuedSignal.sectionName,
+      action: _buildFocusAction(queuedSignal),
+      rationale: rationale,
+      unlockCondition: unlockCondition,
+      plan: KgiCsfKpiPlan(
+        domain: '${targetSummary.label} / 解放後の次候補',
+        kgi: '現在の1手が定着したら、次の生命資本へ無理なく移行する',
+        actualLabel:
+            focusRecommendation.actionStats.isHabitStable ? '解放済み' : '待機中',
+        targetLabel: queuedSignal.featureName,
+        progress: focusRecommendation.actionStats.isHabitStable ? 1 : 0,
+        metrics: <KgiCsfKpiMetric>[
+          KgiCsfKpiMetric.number(
+            csf: '習慣化まで広げない',
+            kpi: '解放条件の必要日数',
+            actual: focusRecommendation.actionStats.habitEvidenceDays,
+            target: FeatureStrategyFocusActionStats.habitUnlockDays,
+            unit: '日',
+          ),
+          KgiCsfKpiMetric.number(
+            csf: '定着後に次へ進む',
+            kpi: '待機中の次候補',
+            actual: 1,
+            target: 1,
+            unit: '件',
+          ),
+        ],
+      ),
+    );
+  }
+
   KgiCsfKpiPlan _buildPortfolioPlan(
     List<FeatureStrategySignal> signals,
     List<FeatureConsolidationCandidate> consolidationCandidates,
     List<FeatureLifeCapitalSummary> lifeCapitalSummaries,
     List<FeatureLifeCapitalConsolidationLane> lifeCapitalConsolidationLanes,
     FeatureStrategyFocusRecommendation? focusRecommendation,
+    FeatureStrategyQueuedRecommendation? queuedFocusRecommendation,
   ) {
     final total = signals.length;
     if (total == 0) {
@@ -1154,6 +1247,11 @@ class FeatureStrategyMonitorService {
         focusRecommendation?.actionStats.currentStreakDays ?? 0;
     final selectedFocusEvidence =
         focusRecommendation?.actionStats.habitEvidenceDays ?? 0;
+    final queuedFocusReady = queuedFocusRecommendation == null
+        ? 0
+        : (focusRecommendation?.actionStats.isHabitStable ?? false)
+            ? 1
+            : 0;
     final reviewDueCount = signals.where((signal) => signal.reviewDue).length;
     final reviewOverdueCount =
         signals.where((signal) => signal.reviewOverdueDays > 0).length;
@@ -1263,6 +1361,20 @@ class FeatureStrategyMonitorService {
           actual: selectedFocusEvidence,
           target: FeatureStrategyFocusActionStats.habitUnlockDays,
           unit: '日',
+        ),
+        KgiCsfKpiMetric.number(
+          csf: '定着後に次へ進む',
+          kpi: '解放後の次候補キュー',
+          actual: queuedFocusRecommendation == null ? 0 : 1,
+          target: 1,
+          unit: '件',
+        ),
+        KgiCsfKpiMetric.number(
+          csf: '定着後に次へ進む',
+          kpi: '次候補の解放準備',
+          actual: queuedFocusReady,
+          target: queuedFocusRecommendation == null ? 0 : 1,
+          unit: '件',
         ),
         KgiCsfKpiMetric.number(
           csf: '類似機能の抽象化',

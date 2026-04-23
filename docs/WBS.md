@@ -293,6 +293,9 @@ WHERE title = 'ai-hub provider.chat 全対応';
 - 実着手タスクのみCodex担当へ変更: 「全機能生命資本習慣化解放ゲート」をCodex担当として完了。
 - 対応内容: 低ハードル1手を完了3日分または3日継続まで固定し、解放条件を満たすまで新しい継続タスクを増やさない判定を追加。UI、KGI/CSF/KPI、AIレビューに解放状態を表示。
 - WBS DB反映: migration `20260423113000_wbs_codex_feature_habit_unlock.sql`。
+- 実着手タスクのみCodex担当へ変更: 「全機能生命資本次候補キュー」をCodex担当として完了。
+- 対応内容: 現在の低ハードル1手が解放された後に進む次の生命資本・代表機能をキュー表示し、AIレビューとKGI/CSF/KPIで移行順を案内。
+- WBS DB反映: migration `20260423201000_wbs_codex_feature_next_focus_queue.sql`。
 - 実着手タスクのみCodex担当へ変更: 「全機能生命資本別 代表導線レーン」をCodex担当として完了。
 - 対応内容: 時間・お金・健康・体力・知能・集中力ごとに代表機能を1つ固定し、類似機能をサブ導線として束ねるレーンを追加。代表レーン数、導線迷い削減見込み、KGI/CSF/KPI、AIレビュー、日次スナップショットへ反映。
 - WBS DB反映: migration `20260423163000_wbs_codex_life_capital_lane_abstraction.sql`。

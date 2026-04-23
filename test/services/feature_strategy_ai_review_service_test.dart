@@ -17,6 +17,7 @@ void main() {
         expect(body['message'].toString(), contains('今日の低ハードル1手'));
         expect(body['message'].toString(), contains('低ハードル完了(7日)'));
         expect(body['message'].toString(), contains('解放条件'));
+        expect(body['message'].toString(), contains('解放後の次候補'));
         expect(body['message'].toString(), contains('同時に広げず'));
         expect(body['message'].toString(), contains('導線迷い削減見込み'));
         expect(body['message'].toString(), contains('生命資本別代表導線'));

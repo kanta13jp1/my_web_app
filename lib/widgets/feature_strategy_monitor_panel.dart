@@ -322,6 +322,7 @@ class _FeatureStrategyMonitorPanelState
           if (report.focusRecommendation != null) ...[
             _FocusRecommendationCard(
               recommendation: report.focusRecommendation!,
+              queuedRecommendation: report.queuedFocusRecommendation,
               dark: isDark,
               compact: isCompact,
               actionState: _focusActionState,
@@ -607,6 +608,7 @@ class _SummaryTile extends StatelessWidget {
 
 class _FocusRecommendationCard extends StatelessWidget {
   final FeatureStrategyFocusRecommendation recommendation;
+  final FeatureStrategyQueuedRecommendation? queuedRecommendation;
   final bool dark;
   final bool compact;
   final FeatureStrategyFocusActionState? actionState;
@@ -617,6 +619,7 @@ class _FocusRecommendationCard extends StatelessWidget {
 
   const _FocusRecommendationCard({
     required this.recommendation,
+    required this.queuedRecommendation,
     required this.dark,
     required this.compact,
     required this.actionState,
@@ -754,6 +757,69 @@ class _FocusRecommendationCard extends StatelessWidget {
             dense: true,
             dark: dark,
           ),
+          if (queuedRecommendation != null) ...[
+            const SizedBox(height: 10),
+            Container(
+              width: double.infinity,
+              padding: EdgeInsets.all(compact ? 10 : 12),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: dark ? 0.06 : 0.38),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: color.withValues(alpha: 0.14)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 6,
+                    children: [
+                      _StatusPill(
+                        label: '解放後の次候補',
+                        color: const Color(0xFF2563EB),
+                        dark: dark,
+                      ),
+                      _StatusPill(
+                        label: queuedRecommendation!.label,
+                        color: color,
+                        dark: dark,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    '${queuedRecommendation!.sectionName} / ${queuedRecommendation!.featureName}',
+                    style: TextStyle(
+                      color: titleColor,
+                      fontSize: compact ? 12 : 13,
+                      fontWeight: FontWeight.w900,
+                      height: 1.35,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    queuedRecommendation!.action,
+                    style: TextStyle(
+                      color: titleColor,
+                      fontSize: compact ? 11 : 12,
+                      fontWeight: FontWeight.w700,
+                      height: 1.45,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    queuedRecommendation!.unlockCondition,
+                    style: TextStyle(
+                      color: subColor,
+                      fontSize: compact ? 11 : 12,
+                      fontWeight: FontWeight.w700,
+                      height: 1.45,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
           const SizedBox(height: 10),
           _FocusActionControls(
             state: actionState,
@@ -1299,7 +1365,9 @@ class _LifeCapitalLaneRow extends StatelessWidget {
                 ListTile(
                   contentPadding: EdgeInsets.zero,
                   leading: Icon(
-                    i == 0 ? Icons.star_rounded : Icons.subdirectory_arrow_right,
+                    i == 0
+                        ? Icons.star_rounded
+                        : Icons.subdirectory_arrow_right,
                     color: i == 0 ? color : subColor,
                   ),
                   title: Text(

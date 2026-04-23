@@ -50,6 +50,10 @@ void main() {
       findsOneWidget,
     );
 
+    await tester.ensureVisible(
+      find.byKey(const Key('feature_strategy_lane_open_money')),
+    );
+    await tester.pump();
     await tester.tap(find.byKey(const Key('feature_strategy_lane_open_money')));
     await tester.pumpAndSettle();
 
@@ -120,6 +124,7 @@ void main() {
     await tester.pump();
     expect(find.textContaining('7日完了'), findsWidgets);
     expect(find.textContaining('固定 あと'), findsWidgets);
+    expect(find.text('解放後の次候補'), findsOneWidget);
     expect(find.text('1手完了'), findsOneWidget);
     await tester.ensureVisible(find.text('1手完了'));
     await tester.pump();
