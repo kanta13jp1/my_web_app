@@ -120,7 +120,9 @@ class _BookmarkFoldersPageState extends State<BookmarkFoldersPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              content: Text('エラー: $e'), backgroundColor: const Color(0xFFE53935),),
+            content: Text('エラー: $e'),
+            backgroundColor: const Color(0xFFE53935),
+          ),
         );
       }
     }
@@ -151,7 +153,9 @@ class _BookmarkFoldersPageState extends State<BookmarkFoldersPage> {
             child: const Text('キャンセル'),
           ),
           FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: const Color(0xFFE53935)),
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFFE53935),
+            ),
             onPressed: () => Navigator.pop(ctx, true),
             child: const Text('削除'),
           ),
@@ -170,7 +174,9 @@ class _BookmarkFoldersPageState extends State<BookmarkFoldersPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              content: Text('エラー: $e'), backgroundColor: const Color(0xFFE53935),),
+            content: Text('エラー: $e'),
+            backgroundColor: const Color(0xFFE53935),
+          ),
         );
       }
     }
@@ -318,7 +324,8 @@ class _BookmarkFoldersPageState extends State<BookmarkFoldersPage> {
       child: ListTile(
         leading: Icon(
           isOrganized ? Icons.check_circle : _platformIcon(platform),
-          color: isOrganized ? const Color(0xFF4CAF50) : _platformColor(platform),
+          color:
+              isOrganized ? const Color(0xFF4CAF50) : _platformColor(platform),
         ),
         title: Text(
           name,

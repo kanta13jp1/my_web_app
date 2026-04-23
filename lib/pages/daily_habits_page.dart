@@ -194,7 +194,9 @@ class _DailyHabitsPageState extends State<DailyHabitsPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              content: Text('エラー: $e'), backgroundColor: const Color(0xFFE53935),),
+            content: Text('エラー: $e'),
+            backgroundColor: const Color(0xFFE53935),
+          ),
         );
       }
     }
@@ -309,7 +311,9 @@ class _DailyHabitsPageState extends State<DailyHabitsPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              content: Text('エラー: $e'), backgroundColor: const Color(0xFFE53935),),
+            content: Text('エラー: $e'),
+            backgroundColor: const Color(0xFFE53935),
+          ),
         );
       }
     }
@@ -327,7 +331,9 @@ class _DailyHabitsPageState extends State<DailyHabitsPage> {
             child: const Text('キャンセル'),
           ),
           FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: const Color(0xFFE53935)),
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFFE53935),
+            ),
             onPressed: () => Navigator.pop(ctx, true),
             child: const Text('削除'),
           ),
@@ -346,7 +352,9 @@ class _DailyHabitsPageState extends State<DailyHabitsPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              content: Text('エラー: $e'), backgroundColor: const Color(0xFFE53935),),
+            content: Text('エラー: $e'),
+            backgroundColor: const Color(0xFFE53935),
+          ),
         );
       }
     }
@@ -661,7 +669,9 @@ class _DailyHabitsPageState extends State<DailyHabitsPage> {
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  color: isCompleted ? const Color(0xFFE8F5E9) : color.withAlpha(20),
+                  color: isCompleted
+                      ? const Color(0xFFE8F5E9)
+                      : color.withAlpha(20),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(

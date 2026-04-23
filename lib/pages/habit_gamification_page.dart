@@ -106,7 +106,10 @@ class _HabitGamificationPageState extends State<HabitGamificationPage>
           String msg = '+${xp}XP 獲得！';
           if (newBadges.isNotEmpty) msg += ' バッジ解除: ${newBadges.join(', ')}';
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(msg), backgroundColor: const Color(0xFF4CAF50)),
+            SnackBar(
+              content: Text(msg),
+              backgroundColor: const Color(0xFF4CAF50),
+            ),
           );
           _fetchAll();
         }
@@ -125,7 +128,9 @@ class _HabitGamificationPageState extends State<HabitGamificationPage>
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              content: Text('エラー: $e'), backgroundColor: const Color(0xFFE53935),),
+            content: Text('エラー: $e'),
+            backgroundColor: const Color(0xFFE53935),
+          ),
         );
       }
     }
@@ -312,7 +317,10 @@ class _HabitGamificationPageState extends State<HabitGamificationPage>
                 const Color(0xFFFF6B35),
               ),
               _statChip(
-                  Icons.check_circle, '$totalTasks タスク', const Color(0xFF4CAF50),),
+                Icons.check_circle,
+                '$totalTasks タスク',
+                const Color(0xFF4CAF50),
+              ),
               _statChip(
                 Icons.stars,
                 '${_badges.where((b) => b['earned'] == true).length}バッジ',
@@ -371,8 +379,9 @@ class _HabitGamificationPageState extends State<HabitGamificationPage>
               child: ListTile(
                 leading: Icon(
                   completed ? Icons.check_circle : Icons.radio_button_unchecked,
-                  color:
-                      completed ? const Color(0xFF4CAF50) : const Color(0xFF9CA3AF),
+                  color: completed
+                      ? const Color(0xFF4CAF50)
+                      : const Color(0xFF9CA3AF),
                 ),
                 title: Text(
                   c['title'] as String? ?? '',

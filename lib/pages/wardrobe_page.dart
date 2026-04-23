@@ -207,7 +207,9 @@ class _WardrobePageState extends State<WardrobePage>
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFE53935)),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFE53935),
+            ),
             child: const Text('削除'),
           ),
         ],
@@ -489,7 +491,8 @@ class _WardrobePageState extends State<WardrobePage>
                 Icon(
                   Icons.schedule,
                   size: 12,
-                  color: isOld ? const Color(0xFFE53935) : const Color(0xFF9CA3AF),
+                  color:
+                      isOld ? const Color(0xFFE53935) : const Color(0xFF9CA3AF),
                 ),
                 const SizedBox(width: 4),
                 Text(
@@ -498,7 +501,9 @@ class _WardrobePageState extends State<WardrobePage>
                       : '着用記録なし',
                   style: TextStyle(
                     fontSize: 11,
-                    color: isOld ? const Color(0xFFE53935) : const Color(0xFF9CA3AF),
+                    color: isOld
+                        ? const Color(0xFFE53935)
+                        : const Color(0xFF9CA3AF),
                     height: 1.5,
                   ),
                 ),
@@ -662,7 +667,10 @@ class _WardrobePageState extends State<WardrobePage>
                     children: [
                       _summaryItem('総数', '$total件', const Color(0xFF795548)),
                       _summaryItem(
-                          '保持', '${counts['keep']}件', const Color(0xFF4CAF50),),
+                        '保持',
+                        '${counts['keep']}件',
+                        const Color(0xFF4CAF50),
+                      ),
                       _summaryItem(
                         '寄付',
                         '${counts['donate']}件',
@@ -674,7 +682,10 @@ class _WardrobePageState extends State<WardrobePage>
                         const Color(0xFFFF6B35),
                       ),
                       _summaryItem(
-                          '処分', '${counts['discard']}件', const Color(0xFFE53935),),
+                        '処分',
+                        '${counts['discard']}件',
+                        const Color(0xFFE53935),
+                      ),
                     ],
                   ),
                 ],
