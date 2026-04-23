@@ -1,7 +1,7 @@
 ---
 title: "Turn AI Dependency Into a Portfolio — Claude / Codex / Jibun Inc. on a Balance Sheet"
 tags: AI,Claude,OpenAI,buildinpublic,webdev
-published: false
+published: true
 ---
 
 # Turn AI Dependency Into a Portfolio — Claude / Codex / Jibun Inc. on a Balance Sheet

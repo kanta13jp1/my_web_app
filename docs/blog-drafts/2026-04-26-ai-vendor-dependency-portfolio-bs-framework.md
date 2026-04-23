@@ -1,7 +1,7 @@
 ---
 title: "AI 依存をポートフォリオ化する — Claude / OpenAI Codex / 自分株式会社を BS で語る"
 tags: AI,Claude,OpenAI,個人開発,buildinpublic
-published: false
+published: true
 ---
 
 # AI 依存をポートフォリオ化する — Claude / OpenAI Codex / 自分株式会社を BS で語る
