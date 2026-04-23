@@ -7,12 +7,20 @@
 // NOTE: ai-assistant stays standalone (1079 lines, complex multi-provider logic)
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
+import {
+  createClient,
+  SupabaseClient,
+} from "https://esm.sh/@supabase/supabase-js@2";
 
-const corsHeaders = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type" };
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type",
+};
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
-const SERVICE_ROLE_KEY = Deno.env.get("SERVICE_ROLE_KEY") ?? Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+const SERVICE_ROLE_KEY = Deno.env.get("SERVICE_ROLE_KEY") ??
+  Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 const QUIZ_MASTER_3 = {
   badge_id: "quiz_master_3",
   badge_name: "クイズ3冠",
@@ -27,7 +35,10 @@ const QUIZ_MASTER_ALL = {
 };
 
 function json(data: unknown, status = 200): Response {
-  return new Response(JSON.stringify(data), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
 }
 
 // AI大学プロバイダー統一呼び出し設定 (Phase 2)
@@ -428,8 +439,24 @@ type Tier = "free" | "budget" | "performance" | "premium";
 
 const TIER_PROVIDERS: Record<Tier, string[]> = {
   free: ["deepseek", "groq", "cerebras", "siliconflow", "novita_ai"],
-  budget: ["sambanova", "arcee_ai", "minimax", "deepinfra", "together_ai", "fireworks_ai", "moonshot"],
-  performance: ["openai", "google", "mistral", "cohere", "perplexity", "nebius", "qwen"],
+  budget: [
+    "sambanova",
+    "arcee_ai",
+    "minimax",
+    "deepinfra",
+    "together_ai",
+    "fireworks_ai",
+    "moonshot",
+  ],
+  performance: [
+    "openai",
+    "google",
+    "mistral",
+    "cohere",
+    "perplexity",
+    "nebius",
+    "qwen",
+  ],
   premium: ["anthropic", "openai", "google"],
 };
 
@@ -446,13 +473,25 @@ async function callSingleProvider(
   providerId: string,
   messages: { role: string; content: string }[],
   model?: string,
-): Promise<{ ok: boolean; text?: string; modelUsed?: string; error?: string; isRetriable: boolean }> {
+): Promise<
+  {
+    ok: boolean;
+    text?: string;
+    modelUsed?: string;
+    error?: string;
+    isRetriable: boolean;
+  }
+> {
   const cfg = PROVIDER_CONFIGS[providerId];
   if (!cfg) return { ok: false, error: "unknown provider", isRetriable: false };
   const apiKey = Deno.env.get(cfg.envKey) ?? "";
-  if (!apiKey) return { ok: false, error: "apiKeyRequired", isRetriable: false };
+  if (!apiKey) {
+    return { ok: false, error: "apiKeyRequired", isRetriable: false };
+  }
   try {
-    let authHeaders: Record<string, string> = { Authorization: `Bearer ${apiKey}` };
+    let authHeaders: Record<string, string> = {
+      Authorization: `Bearer ${apiKey}`,
+    };
     let fetchUrl = cfg.chatUrl;
     if (providerId === "anthropic") {
       authHeaders = { "x-api-key": apiKey, "anthropic-version": "2023-06-01" };
@@ -462,7 +501,11 @@ async function callSingleProvider(
     }
     const resp = await fetch(fetchUrl, {
       method: "POST",
-      headers: { ...authHeaders, "Content-Type": "application/json", ...(cfg.extraHeaders ?? {}) },
+      headers: {
+        ...authHeaders,
+        "Content-Type": "application/json",
+        ...(cfg.extraHeaders ?? {}),
+      },
       body: JSON.stringify(cfg.buildBody(messages, model ?? cfg.defaultModel)),
     });
     if (!resp.ok) {
@@ -474,12 +517,18 @@ async function callSingleProvider(
     try {
       data = JSON.parse(respText);
     } catch {
-      return { ok: true, text: respText.slice(0, 2000), modelUsed: model ?? cfg.defaultModel, isRetriable: false };
+      return {
+        ok: true,
+        text: respText.slice(0, 2000),
+        modelUsed: model ?? cfg.defaultModel,
+        isRetriable: false,
+      };
     }
     const content = cfg.parseResponse(data);
-    const modelUsed = (typeof (data as Record<string, unknown>)?.model === "string"
-      ? (data as Record<string, unknown>).model
-      : model ?? cfg.defaultModel) as string;
+    const modelUsed =
+      (typeof (data as Record<string, unknown>)?.model === "string"
+        ? (data as Record<string, unknown>).model
+        : model ?? cfg.defaultModel) as string;
     return { ok: true, text: content, modelUsed, isRetriable: false };
   } catch (e) {
     return { ok: false, error: String(e), isRetriable: true };
@@ -499,7 +548,9 @@ function asNumber(value: unknown, fallback = 0): number {
   return fallback;
 }
 
-function parseInlineImage(body: Record<string, unknown>): { image?: InlineImage; error?: string; status?: number } {
+function parseInlineImage(
+  body: Record<string, unknown>,
+): { image?: InlineImage; error?: string; status?: number } {
   const rawImage = asString(body.imageBase64);
   if (!rawImage) return {};
   const dataUrlMatch = rawImage.match(/^data:([^;]+);base64,(.+)$/);
@@ -562,7 +613,8 @@ const COMPANY_MANAGER_BLUEPRINTS: CompanyAgentBlueprint[] = [
     key: "chief",
     display_name: "Chief",
     role_title: "Business Generator",
-    focus: "Turns the idea into an operating plan and delegates the first wave of work.",
+    focus:
+      "Turns the idea into an operating plan and delegates the first wave of work.",
   },
   {
     key: "max",
@@ -603,42 +655,184 @@ const COMPANY_MANAGER_BLUEPRINTS: CompanyAgentBlueprint[] = [
 ];
 
 const COMPANY_TOOL_BLUEPRINTS: CompanyAgentBlueprint[] = [
-  { key: "atlas", display_name: "Atlas", role_title: "Architect", focus: "System architecture and technical tradeoffs." },
-  { key: "maya", display_name: "Maya", role_title: "Designer", focus: "UX, structure, and interface direction." },
-  { key: "kai", display_name: "Kai", role_title: "Frontend Developer", focus: "Customer-facing product implementation." },
-  { key: "dev", display_name: "Dev", role_title: "Backend Developer", focus: "APIs, data flow, and server logic." },
-  { key: "shield", display_name: "Shield", role_title: "Security Reviewer", focus: "Security, auth, privacy, and abuse review." },
-  { key: "nova", display_name: "Nova", role_title: "Researcher", focus: "Market, competitors, pricing, and citations." },
-  { key: "sage", display_name: "Sage", role_title: "Writer", focus: "Copy, docs, emails, and knowledge distillation." },
-  { key: "piper", display_name: "Piper", role_title: "Content Strategist", focus: "Content calendar and editorial systems." },
-  { key: "flux", display_name: "Flux", role_title: "Growth Operator", focus: "Acquisition loops and channel experiments." },
-  { key: "echo", display_name: "Echo", role_title: "Email Operator", focus: "Lifecycle messaging and campaign sequencing." },
-  { key: "scout", display_name: "Scout", role_title: "SEO Analyst", focus: "Search intent, pages, and ranking opportunities." },
-  { key: "forge", display_name: "Forge", role_title: "Automation Builder", focus: "Workflow setup and operational automation." },
-  { key: "pilot", display_name: "Pilot", role_title: "QA Engineer", focus: "Test passes, regressions, and release confidence." },
-  { key: "pulse", display_name: "Pulse", role_title: "Analytics Lead", focus: "Metrics, instrumentation, and dashboards." },
-  { key: "loom", display_name: "Loom", role_title: "Brand Strategist", focus: "Narrative, tone, and brand coherence." },
-  { key: "spark", display_name: "Spark", role_title: "Experiment Lead", focus: "Hypothesis design and iteration loops." },
-  { key: "orbit", display_name: "Orbit", role_title: "Integration Engineer", focus: "Connectors, APIs, and external systems." },
-  { key: "beacon", display_name: "Beacon", role_title: "Sales Ops", focus: "Lead routing, pipelines, and qualification logic." },
-  { key: "ledger", display_name: "Ledger", role_title: "Business Analyst", focus: "Unit economics and scenario modeling." },
-  { key: "relay", display_name: "Relay", role_title: "Support Ops", focus: "Support workflows and service quality loops." },
-  { key: "prism", display_name: "Prism", role_title: "Customer Research", focus: "User interviews, pain points, and retention insights." },
+  {
+    key: "atlas",
+    display_name: "Atlas",
+    role_title: "Architect",
+    focus: "System architecture and technical tradeoffs.",
+  },
+  {
+    key: "maya",
+    display_name: "Maya",
+    role_title: "Designer",
+    focus: "UX, structure, and interface direction.",
+  },
+  {
+    key: "kai",
+    display_name: "Kai",
+    role_title: "Frontend Developer",
+    focus: "Customer-facing product implementation.",
+  },
+  {
+    key: "dev",
+    display_name: "Dev",
+    role_title: "Backend Developer",
+    focus: "APIs, data flow, and server logic.",
+  },
+  {
+    key: "shield",
+    display_name: "Shield",
+    role_title: "Security Reviewer",
+    focus: "Security, auth, privacy, and abuse review.",
+  },
+  {
+    key: "nova",
+    display_name: "Nova",
+    role_title: "Researcher",
+    focus: "Market, competitors, pricing, and citations.",
+  },
+  {
+    key: "sage",
+    display_name: "Sage",
+    role_title: "Writer",
+    focus: "Copy, docs, emails, and knowledge distillation.",
+  },
+  {
+    key: "piper",
+    display_name: "Piper",
+    role_title: "Content Strategist",
+    focus: "Content calendar and editorial systems.",
+  },
+  {
+    key: "flux",
+    display_name: "Flux",
+    role_title: "Growth Operator",
+    focus: "Acquisition loops and channel experiments.",
+  },
+  {
+    key: "echo",
+    display_name: "Echo",
+    role_title: "Email Operator",
+    focus: "Lifecycle messaging and campaign sequencing.",
+  },
+  {
+    key: "scout",
+    display_name: "Scout",
+    role_title: "SEO Analyst",
+    focus: "Search intent, pages, and ranking opportunities.",
+  },
+  {
+    key: "forge",
+    display_name: "Forge",
+    role_title: "Automation Builder",
+    focus: "Workflow setup and operational automation.",
+  },
+  {
+    key: "pilot",
+    display_name: "Pilot",
+    role_title: "QA Engineer",
+    focus: "Test passes, regressions, and release confidence.",
+  },
+  {
+    key: "pulse",
+    display_name: "Pulse",
+    role_title: "Analytics Lead",
+    focus: "Metrics, instrumentation, and dashboards.",
+  },
+  {
+    key: "loom",
+    display_name: "Loom",
+    role_title: "Brand Strategist",
+    focus: "Narrative, tone, and brand coherence.",
+  },
+  {
+    key: "spark",
+    display_name: "Spark",
+    role_title: "Experiment Lead",
+    focus: "Hypothesis design and iteration loops.",
+  },
+  {
+    key: "orbit",
+    display_name: "Orbit",
+    role_title: "Integration Engineer",
+    focus: "Connectors, APIs, and external systems.",
+  },
+  {
+    key: "beacon",
+    display_name: "Beacon",
+    role_title: "Sales Ops",
+    focus: "Lead routing, pipelines, and qualification logic.",
+  },
+  {
+    key: "ledger",
+    display_name: "Ledger",
+    role_title: "Business Analyst",
+    focus: "Unit economics and scenario modeling.",
+  },
+  {
+    key: "relay",
+    display_name: "Relay",
+    role_title: "Support Ops",
+    focus: "Support workflows and service quality loops.",
+  },
+  {
+    key: "prism",
+    display_name: "Prism",
+    role_title: "Customer Research",
+    focus: "User interviews, pain points, and retention insights.",
+  },
 ];
 
 const COMPANY_CRITERIA_TEMPLATE: CompanyBuilderCriterion[] = [
-  { key: "market_size", label: "Market size", weight: 20, score: 7, rationale: "" },
-  { key: "competition_level", label: "Competition level", weight: 20, score: 6, rationale: "" },
-  { key: "niche_uniqueness", label: "Niche uniqueness", weight: 15, score: 8, rationale: "" },
-  { key: "revenue_potential", label: "Revenue potential", weight: 15, score: 7, rationale: "" },
-  { key: "acquisition_cost", label: "Acquisition cost", weight: 15, score: 6, rationale: "" },
-  { key: "channel_accessibility", label: "Channel accessibility", weight: 15, score: 7, rationale: "" },
+  {
+    key: "market_size",
+    label: "Market size",
+    weight: 20,
+    score: 7,
+    rationale: "",
+  },
+  {
+    key: "competition_level",
+    label: "Competition level",
+    weight: 20,
+    score: 6,
+    rationale: "",
+  },
+  {
+    key: "niche_uniqueness",
+    label: "Niche uniqueness",
+    weight: 15,
+    score: 8,
+    rationale: "",
+  },
+  {
+    key: "revenue_potential",
+    label: "Revenue potential",
+    weight: 15,
+    score: 7,
+    rationale: "",
+  },
+  {
+    key: "acquisition_cost",
+    label: "Acquisition cost",
+    weight: 15,
+    score: 6,
+    rationale: "",
+  },
+  {
+    key: "channel_accessibility",
+    label: "Channel accessibility",
+    weight: 15,
+    score: 7,
+    rationale: "",
+  },
 ];
 
 const COMPANY_INITIAL_TASKS: CompanyTaskBlueprint[] = [
   {
     title: "Map the market and competitor set",
-    description: "Build a fast market view, identify direct competitors, and capture the opening angle for this company.",
+    description:
+      "Build a fast market view, identify direct competitors, and capture the opening angle for this company.",
     manager_key: "chief",
     tool_key: "nova",
     priority: "high",
@@ -646,7 +840,8 @@ const COMPANY_INITIAL_TASKS: CompanyTaskBlueprint[] = [
   },
   {
     title: "Shape the MVP and architecture",
-    description: "Turn the company brief into a first MVP scope, architecture outline, and a release sequence.",
+    description:
+      "Turn the company brief into a first MVP scope, architecture outline, and a release sequence.",
     manager_key: "max",
     tool_key: "atlas",
     priority: "high",
@@ -654,7 +849,8 @@ const COMPANY_INITIAL_TASKS: CompanyTaskBlueprint[] = [
   },
   {
     title: "Design landing page structure and voice",
-    description: "Create the initial narrative, hero promise, and page sections that explain the offer clearly.",
+    description:
+      "Create the initial narrative, hero promise, and page sections that explain the offer clearly.",
     manager_key: "ivy",
     tool_key: "maya",
     priority: "normal",
@@ -662,7 +858,8 @@ const COMPANY_INITIAL_TASKS: CompanyTaskBlueprint[] = [
   },
   {
     title: "Draft the first sales motion",
-    description: "Outline the ICP, outreach hooks, qualification questions, and the first CTA path.",
+    description:
+      "Outline the ICP, outreach hooks, qualification questions, and the first CTA path.",
     manager_key: "sam",
     tool_key: "beacon",
     priority: "normal",
@@ -670,7 +867,8 @@ const COMPANY_INITIAL_TASKS: CompanyTaskBlueprint[] = [
   },
   {
     title: "Model pricing and unit economics",
-    description: "Estimate pricing, gross margin, CAC sensitivity, and the shortest route to positive economics.",
+    description:
+      "Estimate pricing, gross margin, CAC sensitivity, and the shortest route to positive economics.",
     manager_key: "finn",
     tool_key: "ledger",
     priority: "normal",
@@ -678,7 +876,8 @@ const COMPANY_INITIAL_TASKS: CompanyTaskBlueprint[] = [
   },
   {
     title: "Prepare onboarding and support loop",
-    description: "Define onboarding milestones, support touchpoints, and the first retention feedback loop.",
+    description:
+      "Define onboarding milestones, support touchpoints, and the first retention feedback loop.",
     manager_key: "joy",
     tool_key: "relay",
     priority: "normal",
@@ -686,7 +885,8 @@ const COMPANY_INITIAL_TASKS: CompanyTaskBlueprint[] = [
   },
   {
     title: "Review legal and compliance exposure",
-    description: "List privacy, policy, and compliance issues that need an answer before launch.",
+    description:
+      "List privacy, policy, and compliance issues that need an answer before launch.",
     manager_key: "lex",
     tool_key: "shield",
     priority: "high",
@@ -729,7 +929,9 @@ function extractJsonObject(raw: string): Record<string, unknown> | null {
   const candidate = fenced ? fenced[1].trim() : raw.trim();
   const start = candidate.indexOf("{");
   const end = candidate.lastIndexOf("}");
-  const jsonText = start >= 0 && end > start ? candidate.slice(start, end + 1) : candidate;
+  const jsonText = start >= 0 && end > start
+    ? candidate.slice(start, end + 1)
+    : candidate;
   try {
     const parsed = JSON.parse(jsonText);
     return parsed && typeof parsed === "object" && !Array.isArray(parsed)
@@ -741,20 +943,29 @@ function extractJsonObject(raw: string): Record<string, unknown> | null {
 }
 
 function computeOverallScore(criteria: CompanyBuilderCriterion[]): number {
-  const totalWeight = criteria.reduce((sum, item) => sum + item.weight, 0) || 100;
-  const weighted = criteria.reduce((sum, item) => sum + item.score * item.weight, 0) / totalWeight;
+  const totalWeight = criteria.reduce((sum, item) => sum + item.weight, 0) ||
+    100;
+  const weighted =
+    criteria.reduce((sum, item) => sum + item.score * item.weight, 0) /
+    totalWeight;
   return Math.round(weighted * 10) / 10;
 }
 
-function buildFallbackCompanyPlan(idea: string, threshold: number): CompanyBuilderPlan {
+function buildFallbackCompanyPlan(
+  idea: string,
+  threshold: number,
+): CompanyBuilderPlan {
   const companyName = deriveCompanyName(idea);
   const criteria = COMPANY_CRITERIA_TEMPLATE.map((item, index) => {
     const adjustment = [0.4, -0.3, 0.8, 0.2, -0.2, 0.4][index] ?? 0;
-    const heuristic = clampScore(6.4 + adjustment + Math.min(idea.length / 120, 1));
+    const heuristic = clampScore(
+      6.4 + adjustment + Math.min(idea.length / 120, 1),
+    );
     return {
       ...item,
       score: Math.round(heuristic * 10) / 10,
-      rationale: `Initial heuristic assessment for ${item.label.toLowerCase()} based on the idea wording and likely launch complexity.`,
+      rationale:
+        `Initial heuristic assessment for ${item.label.toLowerCase()} based on the idea wording and likely launch complexity.`,
     };
   });
   const overall = computeOverallScore(criteria);
@@ -763,9 +974,15 @@ function buildFallbackCompanyPlan(idea: string, threshold: number): CompanyBuild
     company_name: companyName,
     summary: `A focused AI-native business built from the idea: ${idea}`,
     offer: `Deliver a faster and more opinionated version of ${idea}`,
-    audience: "Early adopters who already feel the pain and can validate the workflow quickly.",
-    business_model: "Subscription with a paid pilot or concierge-assisted onboarding.",
-    launch_channels: ["Direct outreach", "Founder-led content", "SEO landing pages"],
+    audience:
+      "Early adopters who already feel the pain and can validate the workflow quickly.",
+    business_model:
+      "Subscription with a paid pilot or concierge-assisted onboarding.",
+    launch_channels: [
+      "Direct outreach",
+      "Founder-led content",
+      "SEO landing pages",
+    ],
     recommendation: passed
       ? "The concept clears the first gate. Start with a narrow MVP and validate demand before expanding scope."
       : "The concept needs a sharper niche or cheaper channel before committing to a full build.",
@@ -773,7 +990,11 @@ function buildFallbackCompanyPlan(idea: string, threshold: number): CompanyBuild
   };
 }
 
-function buildCompanyPlanFromModel(raw: Record<string, unknown>, idea: string, threshold: number): CompanyBuilderPlan {
+function buildCompanyPlanFromModel(
+  raw: Record<string, unknown>,
+  idea: string,
+  threshold: number,
+): CompanyBuilderPlan {
   const fallback = buildFallbackCompanyPlan(idea, threshold);
   const rawCriteria = Array.isArray(raw.criteria) ? raw.criteria : [];
   const criteria = COMPANY_CRITERIA_TEMPLATE.map((template, index) => {
@@ -786,8 +1007,11 @@ function buildCompanyPlanFromModel(raw: Record<string, unknown>, idea: string, t
       key: asString(candidate.key) || template.key,
       label: asString(candidate.label) || template.label,
       weight: asNumber(candidate.weight, template.weight),
-      score: clampScore(asNumber(candidate.score, fallback.criteria[index].score)),
-      rationale: asString(candidate.rationale) || fallback.criteria[index].rationale,
+      score: clampScore(
+        asNumber(candidate.score, fallback.criteria[index].score),
+      ),
+      rationale: asString(candidate.rationale) ||
+        fallback.criteria[index].rationale,
     };
   });
   return {
@@ -797,14 +1021,21 @@ function buildCompanyPlanFromModel(raw: Record<string, unknown>, idea: string, t
     audience: asString(raw.audience) || fallback.audience,
     business_model: asString(raw.business_model) || fallback.business_model,
     launch_channels: Array.isArray(raw.launch_channels)
-      ? raw.launch_channels.map((item) => asString(item)).filter(Boolean).slice(0, 5)
+      ? raw.launch_channels.map((item) => asString(item)).filter(Boolean).slice(
+        0,
+        5,
+      )
       : fallback.launch_channels,
     recommendation: asString(raw.recommendation) || fallback.recommendation,
     criteria,
   };
 }
 
-async function generateCompanyPlan(idea: string, threshold: number, geminiKey: string): Promise<CompanyBuilderPlan> {
+async function generateCompanyPlan(
+  idea: string,
+  threshold: number,
+  geminiKey: string,
+): Promise<CompanyBuilderPlan> {
   const fallback = buildFallbackCompanyPlan(idea, threshold);
   if (geminiKey === "") return fallback;
 
@@ -814,7 +1045,9 @@ async function generateCompanyPlan(idea: string, threshold: number, geminiKey: s
     "Score each criterion from 1 to 10.",
     `Idea: ${idea}`,
     `Pass threshold: ${threshold}`,
-    `Use exactly these criteria keys in order: ${COMPANY_CRITERIA_TEMPLATE.map((item) => item.key).join(", ")}`,
+    `Use exactly these criteria keys in order: ${
+      COMPANY_CRITERIA_TEMPLATE.map((item) => item.key).join(", ")
+    }`,
     JSON.stringify({
       company_name: "string",
       summary: "string",
@@ -838,7 +1071,11 @@ async function generateCompanyPlan(idea: string, threshold: number, geminiKey: s
   return parsed ? buildCompanyPlanFromModel(parsed, idea, threshold) : fallback;
 }
 
-async function findAgentBySlug(admin: SupabaseClient, userId: string, slug: string) {
+async function findAgentBySlug(
+  admin: SupabaseClient,
+  userId: string,
+  slug: string,
+) {
   const { data, error } = await admin
     .from("agents")
     .select("*")
@@ -905,8 +1142,10 @@ async function createManagerAgents(
         role_title: blueprint.role_title,
         department: companyName,
         status: "active",
-        identity_prompt: `${blueprint.focus}\nCompany: ${companyName}\nIdea: ${idea}`,
-        permissions_summary: "Dedicated manager agent for a single company instance.",
+        identity_prompt:
+          `${blueprint.focus}\nCompany: ${companyName}\nIdea: ${idea}`,
+        permissions_summary:
+          "Dedicated manager agent for a single company instance.",
         metadata: {
           system: "company_builder",
           layer: "business",
@@ -941,7 +1180,8 @@ async function seedCompanyMemories(
       agent_id: managerIds[blueprint.key],
       memory_layer: "knowledge",
       source: "company_builder_bootstrap",
-      content: `${companyName}: ${blueprint.focus}\nIdea: ${idea}\nOffer: ${plan.offer}`,
+      content:
+        `${companyName}: ${blueprint.focus}\nIdea: ${idea}\nOffer: ${plan.offer}`,
       metadata: {
         system: "company_builder",
         company_id: companyId,
@@ -954,7 +1194,10 @@ async function seedCompanyMemories(
   if (error) throw new Error(error.message);
 }
 
-function buildCompanyWorkflowSteps(companyName: string, plan: CompanyBuilderPlan) {
+function buildCompanyWorkflowSteps(
+  companyName: string,
+  plan: CompanyBuilderPlan,
+) {
   return COMPANY_INITIAL_TASKS.map((task) => ({
     key: `${task.stage}-${task.tool_key}`,
     title: task.title,
@@ -968,7 +1211,8 @@ function buildCompanyWorkflowSteps(companyName: string, plan: CompanyBuilderPlan
       title: "Summarize launch recommendation",
       manager_key: "chief",
       tool_key: "sage",
-      description: `Condense the launch recommendation for ${companyName}. ${plan.recommendation}`,
+      description:
+        `Condense the launch recommendation for ${companyName}. ${plan.recommendation}`,
       status: "queued",
     },
   ]);
@@ -990,7 +1234,8 @@ async function seedCompanyTasks(
       supervisor_agent_id: managerIds[task.manager_key],
       assignee_agent_id: toolIds[task.tool_key],
       title: task.title,
-      description: `${task.description}\nCompany: ${companyName}\nAudience: ${plan.audience}`,
+      description:
+        `${task.description}\nCompany: ${companyName}\nAudience: ${plan.audience}`,
       status: "queued",
       priority: task.priority,
       task_type: "company_builder_bootstrap",
@@ -1005,7 +1250,8 @@ async function seedCompanyTasks(
       },
     }));
   if (inserts.length === 0) return [];
-  const { data, error } = await admin.from("agent_tasks").insert(inserts).select("*");
+  const { data, error } = await admin.from("agent_tasks").insert(inserts)
+    .select("*");
   if (error) throw new Error(error.message);
   return data ?? [];
 }
@@ -1057,7 +1303,11 @@ async function seedCompanyVault(
         `Overall: ${overall.toFixed(1)}`,
         `Passed: ${passed ? "yes" : "no"}`,
         "",
-        ...plan.criteria.map((item) => `- ${item.label}: ${item.score.toFixed(1)}/10 (${item.weight}%) - ${item.rationale}`),
+        ...plan.criteria.map((item) =>
+          `- ${item.label}: ${
+            item.score.toFixed(1)
+          }/10 (${item.weight}%) - ${item.rationale}`
+        ),
         "",
         `Recommendation: ${plan.recommendation}`,
       ].join("\n"),
@@ -1076,10 +1326,14 @@ async function seedCompanyVault(
         `# ${companyName} Operating System`,
         "",
         "Managers:",
-        ...COMPANY_MANAGER_BLUEPRINTS.map((item) => `- ${item.display_name}: ${item.role_title} - ${item.focus}`),
+        ...COMPANY_MANAGER_BLUEPRINTS.map((item) =>
+          `- ${item.display_name}: ${item.role_title} - ${item.focus}`
+        ),
         "",
         "Shared tool agents:",
-        ...COMPANY_TOOL_BLUEPRINTS.map((item) => `- ${item.display_name}: ${item.role_title}`),
+        ...COMPANY_TOOL_BLUEPRINTS.map((item) =>
+          `- ${item.display_name}: ${item.role_title}`
+        ),
       ].join("\n"),
       metadata: {
         system: "company_builder",
@@ -1121,7 +1375,11 @@ async function addCompanyAudit(
   });
 }
 
-async function getCompanyBuilderDetail(admin: SupabaseClient, userId: string, companyId: string) {
+async function getCompanyBuilderDetail(
+  admin: SupabaseClient,
+  userId: string,
+  companyId: string,
+) {
   const { data: company, error: companyError } = await admin
     .from("hub_data")
     .select("id, metadata, created_at")
@@ -1174,7 +1432,9 @@ async function getCompanyBuilderDetail(admin: SupabaseClient, userId: string, co
       .limit(40),
   ]);
 
-  if (managerAgentsResult.error) throw new Error(managerAgentsResult.error.message);
+  if (managerAgentsResult.error) {
+    throw new Error(managerAgentsResult.error.message);
+  }
   if (toolAgentsResult.error) throw new Error(toolAgentsResult.error.message);
   if (tasksResult.error) throw new Error(tasksResult.error.message);
   if (memoriesResult.error) throw new Error(memoriesResult.error.message);
@@ -1197,12 +1457,17 @@ async function getCompanyBuilderDetail(admin: SupabaseClient, userId: string, co
 async function getUserId(req: Request): Promise<string | null> {
   const auth = req.headers.get("Authorization") ?? "";
   if (!auth) return null;
-  const c = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { global: { headers: { Authorization: auth } } });
+  const c = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    global: { headers: { Authorization: auth } },
+  });
   const { data: { user } } = await c.auth.getUser();
   return user?.id ?? null;
 }
 
-async function evaluateUniversityQuizMaster(admin: SupabaseClient, userId: string) {
+async function evaluateUniversityQuizMaster(
+  admin: SupabaseClient,
+  userId: string,
+) {
   const { data: scoreRows, error: scoreErr } = await admin
     .from("ai_university_scores")
     .select("provider_id")
@@ -1260,15 +1525,27 @@ async function evaluateUniversityQuizMaster(admin: SupabaseClient, userId: strin
   };
 }
 
-async function listItems(admin: SupabaseClient, source: string, userId: string, limit = 50) {
-  const { data, error } = await admin.from("hub_data").select("id, metadata, created_at")
+async function listItems(
+  admin: SupabaseClient,
+  source: string,
+  userId: string,
+  limit = 50,
+) {
+  const { data, error } = await admin.from("hub_data").select(
+    "id, metadata, created_at",
+  )
     .eq("source", source).filter("metadata->>user_id", "eq", userId)
     .order("created_at", { ascending: false }).limit(limit);
   if (error) throw new Error(error.message);
   return data ?? [];
 }
 
-async function addItem(admin: SupabaseClient, source: string, userId: string, meta: Record<string, unknown>) {
+async function addItem(
+  admin: SupabaseClient,
+  source: string,
+  userId: string,
+  meta: Record<string, unknown>,
+) {
   const { data, error } = await admin.from("hub_data")
     .insert({ source, metadata: { ...meta, user_id: userId } })
     .select("id, metadata, created_at").single();
@@ -1276,9 +1553,18 @@ async function addItem(admin: SupabaseClient, source: string, userId: string, me
   return data;
 }
 
-async function _deleteItem(admin: SupabaseClient, source: string, userId: string, id: string) {
+async function _deleteItem(
+  admin: SupabaseClient,
+  source: string,
+  userId: string,
+  id: string,
+) {
   const { error } = await admin.from("hub_data")
-    .delete().eq("id", id).eq("source", source).filter("metadata->>user_id", "eq", userId);
+    .delete().eq("id", id).eq("source", source).filter(
+      "metadata->>user_id",
+      "eq",
+      userId,
+    );
   if (error) throw new Error(error.message);
 }
 
@@ -1315,7 +1601,10 @@ function truncateForEmbedding(text: string, maxChars = 3500): string {
   return text.slice(0, maxChars);
 }
 
-async function embedTextsWithGemini(texts: string[], apiKey: string): Promise<number[][]> {
+async function embedTextsWithGemini(
+  texts: string[],
+  apiKey: string,
+): Promise<number[][]> {
   if (texts.length === 0) return [];
   const response = await fetch(
     "https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-001:batchEmbedContents",
@@ -1337,7 +1626,9 @@ async function embedTextsWithGemini(texts: string[], apiKey: string): Promise<nu
   );
   if (!response.ok) {
     const errorText = await response.text();
-    throw new Error(`Gemini embedding ${response.status}: ${errorText.slice(0, 500)}`);
+    throw new Error(
+      `Gemini embedding ${response.status}: ${errorText.slice(0, 500)}`,
+    );
   }
   const data = await response.json() as {
     embeddings?: Array<{ values?: number[] }>;
@@ -1345,11 +1636,16 @@ async function embedTextsWithGemini(texts: string[], apiKey: string): Promise<nu
   return (data.embeddings ?? []).map((item) => item.values ?? []);
 }
 
-async function syncNoteSearchIndex(admin: SupabaseClient, userId: string): Promise<void> {
+async function syncNoteSearchIndex(
+  admin: SupabaseClient,
+  userId: string,
+): Promise<void> {
   const { error } = await admin.rpc("sync_note_search_index_text", {
     p_user_id: userId,
   });
-  if (error) throw new Error(`sync_note_search_index_text failed: ${error.message}`);
+  if (error) {
+    throw new Error(`sync_note_search_index_text failed: ${error.message}`);
+  }
 }
 
 async function embedPendingNoteSearchRows(
@@ -1384,12 +1680,17 @@ async function embedPendingNoteSearchRows(
   await Promise.all(rows.map(async (row, index) => {
     const vector = vectors[index];
     if (!vector || vector.length === 0) return;
-    const { error: upsertError } = await admin.rpc("upsert_note_search_embedding", {
-      p_note_id: row.note_id,
-      p_embedding: vector,
-    });
+    const { error: upsertError } = await admin.rpc(
+      "upsert_note_search_embedding",
+      {
+        p_note_id: row.note_id,
+        p_embedding: vector,
+      },
+    );
     if (upsertError) {
-      throw new Error(`upsert_note_search_embedding failed: ${upsertError.message}`);
+      throw new Error(
+        `upsert_note_search_embedding failed: ${upsertError.message}`,
+      );
     }
   }));
 
@@ -1409,7 +1710,9 @@ async function searchIndexedNotes(
     p_limit: limit,
     p_query_embedding: queryEmbedding,
   });
-  if (error) throw new Error(`search_note_index_hybrid failed: ${error.message}`);
+  if (error) {
+    throw new Error(`search_note_index_hybrid failed: ${error.message}`);
+  }
   return (data ?? []) as NoteSearchIndexRow[];
 }
 
@@ -1419,7 +1722,8 @@ async function fallbackTextSearch(
   query: string,
   limit: number,
 ): Promise<NoteSearchIndexRow[]> {
-  const escaped = query.replaceAll("%", "\\%").replaceAll("_", "\\_").replaceAll(",", " ");
+  const escaped = query.replaceAll("%", "\\%").replaceAll("_", "\\_")
+    .replaceAll(",", " ");
   const { data, error } = await admin
     .from("notes")
     .select("id, title, content, tags, category_id, updated_at")
@@ -1475,7 +1779,11 @@ async function invokeAiAssistant(
   return parsed;
 }
 
-async function callGemini(prompt: string, apiKey: string, image?: InlineImage): Promise<string> {
+async function callGemini(
+  prompt: string,
+  apiKey: string,
+  image?: InlineImage,
+): Promise<string> {
   const parts: Record<string, unknown>[] = [{ text: prompt }];
   if (image) {
     parts.push({
@@ -1491,41 +1799,59 @@ async function callGemini(prompt: string, apiKey: string, image?: InlineImage): 
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ contents: [{ parts }] }),
-    }
+    },
   );
   if (!res.ok) {
     const errorText = await res.text();
     throw new Error(`Gemini ${res.status}: ${errorText.slice(0, 500)}`);
   }
-  const data = await res.json() as { candidates?: [{ content: { parts: [{ text: string }] } }] };
+  const data = await res.json() as {
+    candidates?: [{ content: { parts: [{ text: string }] } }];
+  };
   return data.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
 }
 
 serve(async (req: Request) => {
-  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  if (req.method === "OPTIONS") {
+    return new Response("ok", { headers: corsHeaders });
+  }
 
   try {
     const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
-    const body = req.method === "POST" ? await req.json() as Record<string, unknown> : {};
-    const action = String(body.action ?? new URL(req.url).searchParams.get("action") ?? "");
+    const body = req.method === "POST"
+      ? await req.json() as Record<string, unknown>
+      : {};
+    const action = String(
+      body.action ?? new URL(req.url).searchParams.get("action") ?? "",
+    );
     const userId = await getUserId(req);
 
     // Actions that require authentication
     const authRequired = [
       "search.query",
-      "secretary.task", "secretary.history",
+      "secretary.task",
+      "secretary.history",
       "summarize.text",
-      "agent.list", "agent.create", "agent.run",
+      "agent.list",
+      "agent.create",
+      "agent.run",
       "org.get",
-      "my_agent.chat", "my_agent.history",
+      "my_agent.chat",
+      "my_agent.history",
       "challenges.list",
-      "trigger.analyze", "analyze.reality",
-      "company_builder.list", "company_builder.get", "company_builder.bootstrap",
+      "trigger.analyze",
+      "analyze.reality",
+      "company_builder.list",
+      "company_builder.get",
+      "company_builder.bootstrap",
       // AI大学 v2 (P1〜P4)
-      "quiz.fsrs_next", "quiz.fsrs_grade",
+      "quiz.fsrs_next",
+      "quiz.fsrs_grade",
       "learner.update_profile",
-      "quiz.evaluate", "quiz.explain",
-      "voice.tts", "voice.stt",
+      "quiz.evaluate",
+      "quiz.explain",
+      "voice.tts",
+      "voice.stt",
     ];
     if (authRequired.includes(action) && !userId) {
       return json({ error: "Unauthorized" }, 401);
@@ -1534,12 +1860,18 @@ serve(async (req: Request) => {
     switch (action) {
       case "judgment.get": {
         const geminiKey = Deno.env.get("GEMINI_API_KEY") ?? "";
-        if (!geminiKey) return json({ error: "GEMINI_API_KEY not configured" }, 503);
+        if (!geminiKey) {
+          return json({ error: "GEMINI_API_KEY not configured" }, 503);
+        }
         const today = new Date().toLocaleDateString("ja-JP");
-        const prompt = `今日${today}の自己成長・キャリア・健康に関するAI判定をしてください。JSON: {"score":0-100,"judgment":"良好/注意/警戒","advice":"...", "focus_area":"..."}`;
+        const prompt =
+          `今日${today}の自己成長・キャリア・健康に関するAI判定をしてください。JSON: {"score":0-100,"judgment":"良好/注意/警戒","advice":"...", "focus_area":"..."}`;
         const text = await callGemini(prompt, geminiKey);
         try {
-          return json({ success: true, ...JSON.parse(text.replace(/```json\n?|\n?```/g, "")) });
+          return json({
+            success: true,
+            ...JSON.parse(text.replace(/```json\n?|\n?```/g, "")),
+          });
         } catch {
           return json({ success: true, text });
         }
@@ -1589,7 +1921,13 @@ serve(async (req: Request) => {
 
         let rows: NoteSearchIndexRow[] = [];
         try {
-          rows = await searchIndexedNotes(admin, userId, query, limit, queryEmbedding);
+          rows = await searchIndexedNotes(
+            admin,
+            userId,
+            query,
+            limit,
+            queryEmbedding,
+          );
         } catch (error) {
           console.warn("search.query indexed search failed", error);
         }
@@ -1605,10 +1943,12 @@ serve(async (req: Request) => {
           tags: row.tags ?? [],
           category_id: row.category_id,
           updated_at: row.note_updated_at,
-          search_score: row.combined_rank ?? row.text_rank ?? row.vector_rank ?? 0,
+          search_score: row.combined_rank ?? row.text_rank ?? row.vector_rank ??
+            0,
           search_text_rank: row.text_rank ?? 0,
           search_vector_rank: row.vector_rank ?? 0,
-          match_reason: row.match_reason ?? (queryEmbedding == null ? "text" : "hybrid"),
+          match_reason: row.match_reason ??
+            (queryEmbedding == null ? "text" : "hybrid"),
         }));
 
         const explanation = searchMode == "ai"
@@ -1627,8 +1967,11 @@ serve(async (req: Request) => {
 
       case "tags.suggest": {
         const geminiKey = Deno.env.get("GEMINI_API_KEY") ?? "";
-        if (!geminiKey) return json({ error: "GEMINI_API_KEY not configured" }, 503);
-        const prompt = `次のテキストに適切なタグを5つ提案してください: "${body.text}". JSON: {"tags":["tag1","tag2","tag3","tag4","tag5"]}`;
+        if (!geminiKey) {
+          return json({ error: "GEMINI_API_KEY not configured" }, 503);
+        }
+        const prompt =
+          `次のテキストに適切なタグを5つ提案してください: "${body.text}". JSON: {"tags":["tag1","tag2","tag3","tag4","tag5"]}`;
         const text = await callGemini(prompt, geminiKey);
         try {
           const parsed = JSON.parse(text.replace(/```json\n?|\n?```/g, ""));
@@ -1640,11 +1983,18 @@ serve(async (req: Request) => {
 
       case "secretary.task": {
         const geminiKey = Deno.env.get("GEMINI_API_KEY") ?? "";
-        if (!geminiKey) return json({ error: "GEMINI_API_KEY not configured" }, 503);
-        const prompt = `あなたはAI秘書です。以下のタスクを処理してください: ${body.task ?? body.message ?? ""}. 返答はJSON: {"result":"...","actions":[],"priority":"high|medium|low"}`;
+        if (!geminiKey) {
+          return json({ error: "GEMINI_API_KEY not configured" }, 503);
+        }
+        const prompt = `あなたはAI秘書です。以下のタスクを処理してください: ${
+          body.task ?? body.message ?? ""
+        }. 返答はJSON: {"result":"...","actions":[],"priority":"high|medium|low"}`;
         const text = await callGemini(prompt, geminiKey);
         try {
-          return json({ success: true, ...JSON.parse(text.replace(/```json\n?|\n?```/g, "")) });
+          return json({
+            success: true,
+            ...JSON.parse(text.replace(/```json\n?|\n?```/g, "")),
+          });
         } catch {
           return json({ success: true, text });
         }
@@ -1661,18 +2011,31 @@ serve(async (req: Request) => {
         const text = String(body.text ?? "");
         if (!text) return json({ error: "text required" }, 400);
         if (geminiKey) {
-          const prompt = `次のテキストを日本語で200字以内に要約してください:\n\n${text}`;
+          const prompt =
+            `次のテキストを日本語で200字以内に要約してください:\n\n${text}`;
           const result = await callGemini(prompt, geminiKey);
-          await addItem(admin, "summary_log", userId!, { original_length: text.length, summary: result });
+          await addItem(admin, "summary_log", userId!, {
+            original_length: text.length,
+            summary: result,
+          });
           return json({ success: true, summary: result });
         }
         if (openaiKey) {
           const r = await fetch("https://api.openai.com/v1/chat/completions", {
             method: "POST",
-            headers: { Authorization: `Bearer ${openaiKey}`, "Content-Type": "application/json" },
-            body: JSON.stringify({ model: "gpt-4o-mini", messages: [{ role: "user", content: `200字以内で要約: ${text}` }], max_tokens: 300 }),
+            headers: {
+              Authorization: `Bearer ${openaiKey}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              model: "gpt-4o-mini",
+              messages: [{ role: "user", content: `200字以内で要約: ${text}` }],
+              max_tokens: 300,
+            }),
           });
-          const d = await r.json() as { choices?: [{ message: { content: string } }] };
+          const d = await r.json() as {
+            choices?: [{ message: { content: string } }];
+          };
           const summary = d.choices?.[0]?.message?.content ?? "";
           return json({ success: true, summary });
         }
@@ -1706,16 +2069,23 @@ serve(async (req: Request) => {
 
       case "org.get": {
         const agents = await listItems(admin, "agent_config", userId!, 20);
-        return json({ success: true, org: { agents, departments: ["CEO", "CMO", "CTO", "CFO", "COO"] } });
+        return json({
+          success: true,
+          org: { agents, departments: ["CEO", "CMO", "CTO", "CFO", "COO"] },
+        });
       }
 
       case "my_agent.chat": {
         const geminiKey = Deno.env.get("GEMINI_API_KEY") ?? "";
-        if (!geminiKey) return json({ error: "GEMINI_API_KEY not configured" }, 503);
+        if (!geminiKey) {
+          return json({ error: "GEMINI_API_KEY not configured" }, 503);
+        }
         const message = asString(body.message) || "この画像を分析してください";
         const responseMode = asString(body.response_mode) || "text";
         const parsedImage = parseInlineImage(body);
-        if (parsedImage.error) return json({ error: parsedImage.error }, parsedImage.status ?? 400);
+        if (parsedImage.error) {
+          return json({ error: parsedImage.error }, parsedImage.status ?? 400);
+        }
         const image = parsedImage.image;
         const history = await listItems(admin, "my_agent_history", userId!, 10);
         const recentContext = history.map((h) => {
@@ -1725,10 +2095,17 @@ serve(async (req: Request) => {
         const imageInstruction = image
           ? "\n添付画像も確認し、見えている内容・文脈・ユーザーの質問に関係する示唆を含めて回答してください。"
           : "";
-        const prompt = `あなたは個人AIエージェントです。${recentContext ? "履歴:\n" + recentContext + "\n\n" : ""}ユーザーメッセージ: ${message}${imageInstruction}`;
+        const prompt = `あなたは個人AIエージェントです。${
+          recentContext ? "履歴:\n" + recentContext + "\n\n" : ""
+        }ユーザーメッセージ: ${message}${imageInstruction}`;
         let response = "";
         let videoMetadata: Record<string, unknown> | null = null;
         if (responseMode === "video") {
+          const avatarImageUrl = asString(body.avatarImageUrl) || undefined;
+          const voice = asString(body.voice) || undefined;
+          const title = asString(body.title) || undefined;
+          const conversationContext = asString(body.conversation_context) ||
+            undefined;
           const assistantResponse = await invokeAiAssistant(
             req.headers.get("Authorization") ?? "",
             {
@@ -1736,6 +2113,10 @@ serve(async (req: Request) => {
               message,
               content: prompt,
               useMagi: true,
+              ...(avatarImageUrl ? { avatarImageUrl } : {}),
+              ...(voice ? { voice } : {}),
+              ...(title ? { title } : {}),
+              ...(conversationContext ? { conversationContext } : {}),
               ...(image
                 ? {
                   imageBase64: image.base64,
@@ -1744,7 +2125,10 @@ serve(async (req: Request) => {
                 : {}),
             },
           );
-          const result = (assistantResponse.result ?? {}) as Record<string, unknown>;
+          const result = (assistantResponse.result ?? {}) as Record<
+            string,
+            unknown
+          >;
           response = asString(result.script) || "動画回答を準備しました。";
           videoMetadata = {
             provider: asString(result.provider) || "hedra",
@@ -1791,15 +2175,21 @@ serve(async (req: Request) => {
       case "challenges.list": {
         const today = new Date().toISOString().split("T")[0];
         const existing = await listItems(admin, "daily_challenge", userId!, 3);
-        if (existing.length > 0) return json({ success: true, challenges: existing });
+        if (existing.length > 0) {
+          return json({ success: true, challenges: existing });
+        }
         const geminiKey = Deno.env.get("GEMINI_API_KEY") ?? "";
         if (!geminiKey) return json({ success: true, challenges: [] });
-        const prompt = `今日${today}のAI・生産性・健康に関するチャレンジを3つ生成してください。JSON: {"challenges":[{"id":"1","title":"...","description":"...","points":10,"category":"ai|productivity|health"}]}`;
+        const prompt =
+          `今日${today}のAI・生産性・健康に関するチャレンジを3つ生成してください。JSON: {"challenges":[{"id":"1","title":"...","description":"...","points":10,"category":"ai|productivity|health"}]}`;
         const text = await callGemini(prompt, geminiKey);
         try {
           const parsed = JSON.parse(text.replace(/```json\n?|\n?```/g, ""));
           for (const c of (parsed.challenges ?? [])) {
-            await addItem(admin, "daily_challenge", userId!, { ...c as Record<string, unknown>, date: today });
+            await addItem(admin, "daily_challenge", userId!, {
+              ...c as Record<string, unknown>,
+              date: today,
+            });
           }
           return json({ success: true, challenges: parsed.challenges ?? [] });
         } catch {
@@ -1809,11 +2199,18 @@ serve(async (req: Request) => {
 
       case "trigger.analyze": {
         const geminiKey = Deno.env.get("GEMINI_API_KEY") ?? "";
-        if (!geminiKey) return json({ error: "GEMINI_API_KEY not configured" }, 503);
-        const prompt = `行動トリガー分析: ${JSON.stringify(body)}. 引き金となる感情・状況・パターンを分析してください。JSON: {"triggers":[],"recommendations":[],"risk_level":"low|medium|high"}`;
+        if (!geminiKey) {
+          return json({ error: "GEMINI_API_KEY not configured" }, 503);
+        }
+        const prompt = `行動トリガー分析: ${
+          JSON.stringify(body)
+        }. 引き金となる感情・状況・パターンを分析してください。JSON: {"triggers":[],"recommendations":[],"risk_level":"low|medium|high"}`;
         const text = await callGemini(prompt, geminiKey);
         try {
-          return json({ success: true, ...JSON.parse(text.replace(/```json\n?|\n?```/g, "")) });
+          return json({
+            success: true,
+            ...JSON.parse(text.replace(/```json\n?|\n?```/g, "")),
+          });
         } catch {
           return json({ success: true, text });
         }
@@ -1821,18 +2218,30 @@ serve(async (req: Request) => {
 
       case "analyze.reality": {
         const geminiKey = Deno.env.get("GEMINI_API_KEY") ?? "";
-        if (!geminiKey) return json({ error: "GEMINI_API_KEY not configured" }, 503);
-        const prompt = `現実分析: ${body.situation ?? ""}. 客観的な状況評価と改善策を提案してください。JSON: {"assessment":"...","score":0-100,"recommendations":[],"next_steps":[]}`;
+        if (!geminiKey) {
+          return json({ error: "GEMINI_API_KEY not configured" }, 503);
+        }
+        const prompt = `現実分析: ${
+          body.situation ?? ""
+        }. 客観的な状況評価と改善策を提案してください。JSON: {"assessment":"...","score":0-100,"recommendations":[],"next_steps":[]}`;
         const text = await callGemini(prompt, geminiKey);
         try {
-          return json({ success: true, ...JSON.parse(text.replace(/```json\n?|\n?```/g, "")) });
+          return json({
+            success: true,
+            ...JSON.parse(text.replace(/```json\n?|\n?```/g, "")),
+          });
         } catch {
           return json({ success: true, text });
         }
       }
 
       case "company_builder.list": {
-        const companies = await listItems(admin, "company_builder_company", userId!, 50);
+        const companies = await listItems(
+          admin,
+          "company_builder_company",
+          userId!,
+          50,
+        );
         return json({ success: true, companies });
       }
 
@@ -1848,7 +2257,10 @@ serve(async (req: Request) => {
         const idea = asString(body.idea);
         if (!idea) return json({ error: "idea required" }, 400);
 
-        const threshold = Math.max(1, Math.min(10, asNumber(body.threshold, 7)));
+        const threshold = Math.max(
+          1,
+          Math.min(10, asNumber(body.threshold, 7)),
+        );
         const geminiKey = Deno.env.get("GEMINI_API_KEY") ?? "";
         const plan = await generateCompanyPlan(idea, threshold, geminiKey);
         const overallScore = computeOverallScore(plan.criteria);
@@ -1856,32 +2268,43 @@ serve(async (req: Request) => {
         const companyName = plan.company_name;
         const companySlug = slugify(companyName);
 
-        const companyRecord = await addItem(admin, "company_builder_company", userId!, {
-          system: "company_builder",
-          idea,
-          threshold,
-          company_name: companyName,
-          company_slug: companySlug,
-          summary: plan.summary,
-          offer: plan.offer,
-          audience: plan.audience,
-          business_model: plan.business_model,
-          launch_channels: plan.launch_channels,
-          recommendation: plan.recommendation,
-          criteria: plan.criteria,
-          overall_score: overallScore,
-          passed,
-          manager_count: COMPANY_MANAGER_BLUEPRINTS.length,
-          tool_agent_count: COMPANY_TOOL_BLUEPRINTS.length,
-          status: passed ? "approved" : "revise",
-        });
+        const companyRecord = await addItem(
+          admin,
+          "company_builder_company",
+          userId!,
+          {
+            system: "company_builder",
+            idea,
+            threshold,
+            company_name: companyName,
+            company_slug: companySlug,
+            summary: plan.summary,
+            offer: plan.offer,
+            audience: plan.audience,
+            business_model: plan.business_model,
+            launch_channels: plan.launch_channels,
+            recommendation: plan.recommendation,
+            criteria: plan.criteria,
+            overall_score: overallScore,
+            passed,
+            manager_count: COMPANY_MANAGER_BLUEPRINTS.length,
+            tool_agent_count: COMPANY_TOOL_BLUEPRINTS.length,
+            status: passed ? "approved" : "revise",
+          },
+        );
 
         const companyId = String(companyRecord.id);
-        await addCompanyAudit(admin, userId!, companyId, "company_builder.bootstrap_requested", {
-          company_name: companyName,
-          overall_score: overallScore,
-          passed,
-        });
+        await addCompanyAudit(
+          admin,
+          userId!,
+          companyId,
+          "company_builder.bootstrap_requested",
+          {
+            company_name: companyName,
+            overall_score: overallScore,
+            passed,
+          },
+        );
 
         const toolIds = await ensureSharedToolAgents(admin, userId!);
         const managerIds = await createManagerAgents(
@@ -1892,7 +2315,15 @@ serve(async (req: Request) => {
           companyName,
           idea,
         );
-        await seedCompanyMemories(admin, userId!, companyId, companyName, idea, plan, managerIds);
+        await seedCompanyMemories(
+          admin,
+          userId!,
+          companyId,
+          companyName,
+          idea,
+          plan,
+          managerIds,
+        );
         const taskRows = await seedCompanyTasks(
           admin,
           userId!,
@@ -1921,14 +2352,20 @@ serve(async (req: Request) => {
           threshold,
           plan,
         );
-        await addCompanyAudit(admin, userId!, companyId, "company_builder.bootstrap_completed", {
-          company_name: companyName,
-          manager_count: Object.keys(managerIds).length,
-          tool_agent_count: Object.keys(toolIds).length,
-          task_count: taskRows.length,
-          workflow_id: workflow.id,
-          vault_note_count: vaultNotes.length,
-        });
+        await addCompanyAudit(
+          admin,
+          userId!,
+          companyId,
+          "company_builder.bootstrap_completed",
+          {
+            company_name: companyName,
+            manager_count: Object.keys(managerIds).length,
+            tool_agent_count: Object.keys(toolIds).length,
+            task_count: taskRows.length,
+            workflow_id: workflow.id,
+            vault_note_count: vaultNotes.length,
+          },
+        );
 
         const detail = await getCompanyBuilderDetail(admin, userId!, companyId);
         return json({
@@ -1966,9 +2403,10 @@ serve(async (req: Request) => {
             category: body.category ?? "news",
             title: body.title,
             content: body.content,
-            published_at: body.published_at ?? new Date().toISOString().split("T")[0],
+            published_at: body.published_at ??
+              new Date().toISOString().split("T")[0],
           },
-          { onConflict: "provider,category" }
+          { onConflict: "provider,category" },
         );
         if (error) throw new Error(error.message);
         return json({ success: true });
@@ -1998,7 +2436,11 @@ serve(async (req: Request) => {
         });
         if (error) throw new Error(error.message);
         const row = Array.isArray(data) && data.length > 0
-          ? data[0] as { current_streak?: number; longest_streak?: number; is_new_streak_day?: boolean }
+          ? data[0] as {
+            current_streak?: number;
+            longest_streak?: number;
+            is_new_streak_day?: boolean;
+          }
           : null;
         return json({
           success: true,
@@ -2021,7 +2463,9 @@ serve(async (req: Request) => {
         if (!userId) return json({ error: "Unauthorized" }, 401);
         const badgeId = asString(body.badge_id ?? body.badge_type);
         const badgeName = asString(body.badge_name);
-        if (!badgeId || !badgeName) return json({ error: "badge_id and badge_name required" }, 400);
+        if (!badgeId || !badgeName) {
+          return json({ error: "badge_id and badge_name required" }, 400);
+        }
         const { data, error } = await admin.rpc("award_ai_university_badge", {
           p_user_id: userId,
           p_badge_id: badgeId,
@@ -2125,16 +2569,29 @@ serve(async (req: Request) => {
           .maybeSingle();
         const currentStability = (existing?.stability as number) ?? 1.0;
         const reps = ((existing?.reps as number) ?? 0) + 1;
-        const lapses = grade === 1 ? ((existing?.lapses as number) ?? 0) + 1 : ((existing?.lapses as number) ?? 0);
+        const lapses = grade === 1
+          ? ((existing?.lapses as number) ?? 0) + 1
+          : ((existing?.lapses as number) ?? 0);
         let newStability = currentStability;
         let daysUntilNext = 1;
-        if (grade === 1) { newStability = Math.max(currentStability * 0.5, 0.5); daysUntilNext = 1; }
-        else if (grade === 2) { newStability = currentStability * 0.8; daysUntilNext = Math.max(newStability, 1); }
-        else if (grade === 3) { daysUntilNext = Math.max(currentStability, 1); }
-        else { newStability = currentStability * 1.3; daysUntilNext = Math.max(newStability * 1.3, 1); }
+        if (grade === 1) {
+          newStability = Math.max(currentStability * 0.5, 0.5);
+          daysUntilNext = 1;
+        } else if (grade === 2) {
+          newStability = currentStability * 0.8;
+          daysUntilNext = Math.max(newStability, 1);
+        } else if (grade === 3) daysUntilNext = Math.max(currentStability, 1);
+        else {
+          newStability = currentStability * 1.3;
+          daysUntilNext = Math.max(newStability * 1.3, 1);
+        }
         const nextDue = new Date();
         nextDue.setDate(nextDue.getDate() + Math.round(daysUntilNext));
-        const state = grade === 1 ? "relearning" : reps > 2 ? "review" : "learning";
+        const state = grade === 1
+          ? "relearning"
+          : reps > 2
+          ? "review"
+          : "learning";
         const { error } = await admin
           .from("ai_university_fsrs_cards")
           .upsert({
@@ -2149,7 +2606,11 @@ serve(async (req: Request) => {
             state,
           }, { onConflict: "user_id,provider,question_id" });
         if (error) return json({ error: error.message }, 500);
-        return json({ success: true, next_due: nextDue.toISOString(), stability: newStability });
+        return json({
+          success: true,
+          next_due: nextDue.toISOString(),
+          stability: newStability,
+        });
       }
 
       // ── AI大学 v2: Memory Agent ──────────────────────────────────────────
@@ -2158,29 +2619,40 @@ serve(async (req: Request) => {
         const sessionSummary = String(body.session_summary ?? "");
         const scores = body.scores ?? [];
         const claudeKey = Deno.env.get("ANTHROPIC_API_KEY") ?? "";
-        if (!claudeKey) return json({ error: "ANTHROPIC_API_KEY not configured" }, 503);
-        const prompt = `学習セッションのデータから構造化プロファイルを抽出してください。
+        if (!claudeKey) {
+          return json({ error: "ANTHROPIC_API_KEY not configured" }, 503);
+        }
+        const prompt =
+          `学習セッションのデータから構造化プロファイルを抽出してください。
 セッションサマリー: ${sessionSummary}
 スコアデータ: ${JSON.stringify(scores).slice(0, 2000)}
 弱点プロバイダー・得意プロバイダー・学習スタイルをJSONで返してください。
 形式: {"weak_providers":["..."],"strong_providers":["..."],"preferred_style":"visual|text|voice","insights":"..."}`;
-        const claudeResp = await fetch("https://api.anthropic.com/v1/messages", {
-          method: "POST",
-          headers: {
-            "x-api-key": claudeKey,
-            "anthropic-version": "2023-06-01",
-            "content-type": "application/json",
+        const claudeResp = await fetch(
+          "https://api.anthropic.com/v1/messages",
+          {
+            method: "POST",
+            headers: {
+              "x-api-key": claudeKey,
+              "anthropic-version": "2023-06-01",
+              "content-type": "application/json",
+            },
+            body: JSON.stringify({
+              model: "claude-sonnet-4-6",
+              max_tokens: 512,
+              messages: [{ role: "user", content: prompt }],
+            }),
           },
-          body: JSON.stringify({
-            model: "claude-sonnet-4-6",
-            max_tokens: 512,
-            messages: [{ role: "user", content: prompt }],
-          }),
-        });
+        );
         const claudeData = await claudeResp.json() as Record<string, unknown>;
-        const rawText = (claudeData.content as Array<{text: string}>)?.[0]?.text ?? "{}";
+        const rawText =
+          (claudeData.content as Array<{ text: string }>)?.[0]?.text ?? "{}";
         let profileJson: Record<string, unknown> = {};
-        try { profileJson = JSON.parse(rawText.replace(/```json\n?|\n?```/g, "").trim()); } catch { /* malformed */ }
+        try {
+          profileJson = JSON.parse(
+            rawText.replace(/```json\n?|\n?```/g, "").trim(),
+          );
+        } catch { /* malformed */ }
         const { data: existingProfile } = await admin
           .from("ai_university_learner_profiles")
           .select("total_sessions")
@@ -2192,7 +2664,8 @@ serve(async (req: Request) => {
           strong_providers: profileJson.strong_providers ?? [],
           preferred_style: profileJson.preferred_style ?? "text",
           profile_json: profileJson,
-          total_sessions: ((existingProfile?.total_sessions as number) ?? 0) + 1,
+          total_sessions: ((existingProfile?.total_sessions as number) ?? 0) +
+            1,
           updated_at: new Date().toISOString(),
         }, { onConflict: "user_id" });
         return json({ success: true, profile_json: profileJson });
@@ -2205,29 +2678,51 @@ serve(async (req: Request) => {
         const userAnswer = String(body.user_answer ?? "");
         const correctAnswer = String(body.correct_answer ?? "");
         const groqKey = Deno.env.get("GROQ_API_KEY") ?? "";
-        if (!groqKey) return json({ error: "GROQ_API_KEY not configured" }, 503);
-        const groqResp = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-          method: "POST",
-          headers: { "Authorization": `Bearer ${groqKey}`, "Content-Type": "application/json" },
-          body: JSON.stringify({
-            model: "llama-3.3-70b-versatile",
-            max_tokens: 100,
-            temperature: 0,
-            messages: [{
-              role: "user",
-              content: `問題: ${question}\n模範回答: ${correctAnswer}\nユーザー回答: ${userAnswer}\n\n評価: {"result":"correct|incorrect|partial","confidence":0-100}`,
-            }],
-            response_format: { type: "json_object" },
-          }),
-        }).catch(() => null);
+        if (!groqKey) {
+          return json({ error: "GROQ_API_KEY not configured" }, 503);
+        }
+        const groqResp = await fetch(
+          "https://api.groq.com/openai/v1/chat/completions",
+          {
+            method: "POST",
+            headers: {
+              "Authorization": `Bearer ${groqKey}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              model: "llama-3.3-70b-versatile",
+              max_tokens: 100,
+              temperature: 0,
+              messages: [{
+                role: "user",
+                content:
+                  `問題: ${question}\n模範回答: ${correctAnswer}\nユーザー回答: ${userAnswer}\n\n評価: {"result":"correct|incorrect|partial","confidence":0-100}`,
+              }],
+              response_format: { type: "json_object" },
+            }),
+          },
+        ).catch(() => null);
         if (!groqResp || !groqResp.ok) {
-          const isCorrect = userAnswer.trim().toLowerCase() === correctAnswer.trim().toLowerCase();
-          return json({ success: true, result: isCorrect ? "correct" : "incorrect", confidence: 100, fallback: true });
+          const isCorrect = userAnswer.trim().toLowerCase() ===
+            correctAnswer.trim().toLowerCase();
+          return json({
+            success: true,
+            result: isCorrect ? "correct" : "incorrect",
+            confidence: 100,
+            fallback: true,
+          });
         }
         const groqData = await groqResp.json() as Record<string, unknown>;
-        const raw = (groqData.choices as Array<{message: {content: string}}>)?.[0]?.message?.content ?? '{"result":"incorrect","confidence":0}';
-        let evaluation: Record<string, unknown> = { result: "incorrect", confidence: 0 };
-        try { evaluation = JSON.parse(raw); } catch { /* use default */ }
+        const raw =
+          (groqData.choices as Array<{ message: { content: string } }>)?.[0]
+            ?.message?.content ?? '{"result":"incorrect","confidence":0}';
+        let evaluation: Record<string, unknown> = {
+          result: "incorrect",
+          confidence: 0,
+        };
+        try {
+          evaluation = JSON.parse(raw);
+        } catch { /* use default */ }
         return json({ success: true, ...evaluation });
       }
 
@@ -2238,27 +2733,35 @@ serve(async (req: Request) => {
         const correctAnswer = String(body.correct_answer ?? "");
         const provider = String(body.provider ?? "");
         const claudeKey = Deno.env.get("ANTHROPIC_API_KEY") ?? "";
-        if (!claudeKey) return json({ error: "ANTHROPIC_API_KEY not configured" }, 503);
-        const prompt = `${provider} についての問題で不正解でした。わかりやすく詳細に解説してください。
+        if (!claudeKey) {
+          return json({ error: "ANTHROPIC_API_KEY not configured" }, 503);
+        }
+        const prompt =
+          `${provider} についての問題で不正解でした。わかりやすく詳細に解説してください。
 問題: ${question}
 正解: ${correctAnswer}
 ユーザーの回答: ${userAnswer}
 なぜ正解がそうなるのか、関連する背景知識も含めて日本語で300字以内で説明してください。`;
-        const claudeResp2 = await fetch("https://api.anthropic.com/v1/messages", {
-          method: "POST",
-          headers: {
-            "x-api-key": claudeKey,
-            "anthropic-version": "2023-06-01",
-            "content-type": "application/json",
+        const claudeResp2 = await fetch(
+          "https://api.anthropic.com/v1/messages",
+          {
+            method: "POST",
+            headers: {
+              "x-api-key": claudeKey,
+              "anthropic-version": "2023-06-01",
+              "content-type": "application/json",
+            },
+            body: JSON.stringify({
+              model: "claude-sonnet-4-6",
+              max_tokens: 512,
+              messages: [{ role: "user", content: prompt }],
+            }),
           },
-          body: JSON.stringify({
-            model: "claude-sonnet-4-6",
-            max_tokens: 512,
-            messages: [{ role: "user", content: prompt }],
-          }),
-        });
+        );
         const claudeData2 = await claudeResp2.json() as Record<string, unknown>;
-        const explanation = (claudeData2.content as Array<{text: string}>)?.[0]?.text ?? "解説を生成できませんでした。";
+        const explanation =
+          (claudeData2.content as Array<{ text: string }>)?.[0]?.text ??
+            "解説を生成できませんでした。";
         return json({ success: true, explanation });
       }
 
@@ -2271,24 +2774,40 @@ serve(async (req: Request) => {
         const messages = Array.isArray(body.messages) ? body.messages : null;
         const userMsg = String(body.message ?? "");
         if (!providerId) return json({ error: "provider required" }, 400);
-        if (!messages && !userMsg) return json({ error: "messages or message required" }, 400);
+        if (!messages && !userMsg) {
+          return json({ error: "messages or message required" }, 400);
+        }
         const finalMessages = messages ?? [{ role: "user", content: userMsg }];
 
         const cfg = PROVIDER_CONFIGS[providerId];
         if (!cfg) {
-          return json({ success: false, status: "notImplemented", message: `Provider "${providerId}" はまだ実装されていません。` }, 400);
+          return json({
+            success: false,
+            status: "notImplemented",
+            message: `Provider "${providerId}" はまだ実装されていません。`,
+          }, 400);
         }
         const apiKey = Deno.env.get(cfg.envKey) ?? "";
         if (!apiKey) {
-          return json({ success: false, status: "apiKeyRequired", secret_needed: cfg.envKey, message: `Supabase Secret ${cfg.envKey} を設定してください。` });
+          return json({
+            success: false,
+            status: "apiKeyRequired",
+            secret_needed: cfg.envKey,
+            message: `Supabase Secret ${cfg.envKey} を設定してください。`,
+          });
         }
 
         try {
           // 認証方式はプロバイダーごとに異なる
-          let authHeaders: Record<string, string> = { Authorization: `Bearer ${apiKey}` };
+          let authHeaders: Record<string, string> = {
+            Authorization: `Bearer ${apiKey}`,
+          };
           let fetchUrl = cfg.chatUrl;
           if (providerId === "anthropic") {
-            authHeaders = { "x-api-key": apiKey, "anthropic-version": "2023-06-01" };
+            authHeaders = {
+              "x-api-key": apiKey,
+              "anthropic-version": "2023-06-01",
+            };
           } else if (providerId === "google") {
             authHeaders = {};
             fetchUrl = `${cfg.chatUrl}?key=${apiKey}`;
@@ -2300,45 +2819,88 @@ serve(async (req: Request) => {
               "Content-Type": "application/json",
               ...(cfg.extraHeaders ?? {}),
             },
-            body: JSON.stringify(cfg.buildBody(finalMessages, String(body.model ?? cfg.defaultModel))),
+            body: JSON.stringify(
+              cfg.buildBody(
+                finalMessages,
+                String(body.model ?? cfg.defaultModel),
+              ),
+            ),
           });
           const respText = await resp.text();
           if (!resp.ok) {
             // Free tier / 課金制限検知
-            if (respText.includes("paid_plan_required") || respText.includes("payment_required") ||
-                resp.status === 402 || respText.includes("insufficient_quota") ||
-                respText.includes("billing") || respText.includes("credit")) {
-              return json({ success: false, status: "paidPlanRequired", provider: providerId, message: `${cfg.displayName} はプロバイダー側で課金が必要です。`, detail: respText.slice(0, 300) });
+            if (
+              respText.includes("paid_plan_required") ||
+              respText.includes("payment_required") ||
+              resp.status === 402 || respText.includes("insufficient_quota") ||
+              respText.includes("billing") || respText.includes("credit")
+            ) {
+              return json({
+                success: false,
+                status: "paidPlanRequired",
+                provider: providerId,
+                message:
+                  `${cfg.displayName} はプロバイダー側で課金が必要です。`,
+                detail: respText.slice(0, 300),
+              });
             }
-            return json({ success: false, status: "error", provider: providerId, http_status: resp.status, detail: respText.slice(0, 500) }, 502);
+            return json({
+              success: false,
+              status: "error",
+              provider: providerId,
+              http_status: resp.status,
+              detail: respText.slice(0, 500),
+            }, 502);
           }
           let data: unknown;
           try {
             data = JSON.parse(respText);
           } catch {
-            return json({ success: true, provider: providerId, status: "implemented", text: respText.slice(0, 2000) });
+            return json({
+              success: true,
+              provider: providerId,
+              status: "implemented",
+              text: respText.slice(0, 2000),
+            });
           }
           const content = cfg.parseResponse(data);
           const modelUsed = pick(data, "model");
-          return json({ success: true, provider: providerId, status: "implemented", text: content, model: modelUsed ?? cfg.defaultModel });
+          return json({
+            success: true,
+            provider: providerId,
+            status: "implemented",
+            text: content,
+            model: modelUsed ?? cfg.defaultModel,
+          });
         } catch (e) {
-          return json({ success: false, status: "error", provider: providerId, message: String(e) }, 500);
+          return json({
+            success: false,
+            status: "error",
+            provider: providerId,
+            message: String(e),
+          }, 500);
         }
       }
 
       case "provider.chat_auto": {
-        const requestedTier = (body.tier as Tier | undefined);
+        const requestedTier = body.tier as Tier | undefined;
         const messages = Array.isArray(body.messages) ? body.messages : null;
         const userMsg = String(body.message ?? "");
-        if (!messages && !userMsg) return json({ error: "messages or message required" }, 400);
+        if (!messages && !userMsg) {
+          return json({ error: "messages or message required" }, 400);
+        }
         const finalMessages = messages ?? [{ role: "user", content: userMsg }];
-        const startTierIndex = requestedTier ? TIER_ORDER.indexOf(requestedTier) : 0;
+        const startTierIndex = requestedTier
+          ? TIER_ORDER.indexOf(requestedTier)
+          : 0;
         if (startTierIndex === -1) return json({ error: "invalid tier" }, 400);
 
         // Win版#131 part 4: Observability — trace_id / session_id / latency 計測
         const requestStartedAt = performance.now();
         const traceId = String(body.trace_id ?? crypto.randomUUID());
-        const sessionId = body.session_id != null ? String(body.session_id) : null;
+        const sessionId = body.session_id != null
+          ? String(body.session_id)
+          : null;
 
         let resultText: string | undefined;
         let usedProvider: string | undefined;
@@ -2348,9 +2910,15 @@ serve(async (req: Request) => {
         outerLoop:
         for (let ti = startTierIndex; ti < TIER_ORDER.length; ti++) {
           const tier = TIER_ORDER[ti];
-          const providers = TIER_PROVIDERS[tier].filter((p) => p in PROVIDER_CONFIGS);
+          const providers = TIER_PROVIDERS[tier].filter((p) =>
+            p in PROVIDER_CONFIGS
+          );
           for (const pid of providers) {
-            const result = await callSingleProvider(pid, finalMessages, undefined);
+            const result = await callSingleProvider(
+              pid,
+              finalMessages,
+              undefined,
+            );
             if (result.ok && result.text) {
               resultText = result.text;
               usedProvider = pid;
@@ -2381,7 +2949,11 @@ serve(async (req: Request) => {
               status_code: 502,
             });
           } catch { /* ignore */ }
-          return json({ success: false, status: "allProvidersFailed", message: "すべての Tier のプロバイダーが失敗しました" }, 502);
+          return json({
+            success: false,
+            status: "allProvidersFailed",
+            message: "すべての Tier のプロバイダーが失敗しました",
+          }, 502);
         }
 
         // コスト + 観測データ記録 (best-effort、失敗してもレスポンスには影響しない)
@@ -2393,7 +2965,8 @@ serve(async (req: Request) => {
             .map((m) => typeof m.content === "string" ? m.content.length : 0)
             .reduce((a, b) => a + b, 0);
           const outputChars = resultText?.length ?? 0;
-          const estimatedCost = TIER_COST_USD_PER_1K[usedTier] * (inputChars / 1000);
+          const estimatedCost = TIER_COST_USD_PER_1K[usedTier] *
+            (inputChars / 1000);
           await admin.from("ai_hub_chat_logs").insert({
             provider: usedProvider,
             tier: usedTier,
@@ -2422,7 +2995,10 @@ serve(async (req: Request) => {
 
       case "provider.list": {
         // UIから呼ばれる: 各プロバイダーのEnv有無だけ返す (APIコールなし・安全)
-        const result: Record<string, { envConfigured: boolean; displayName: string }> = {};
+        const result: Record<
+          string,
+          { envConfigured: boolean; displayName: string }
+        > = {};
         for (const [id, cfg] of Object.entries(PROVIDER_CONFIGS)) {
           result[id] = {
             envConfigured: (Deno.env.get(cfg.envKey) ?? "") !== "",
@@ -2438,31 +3014,60 @@ serve(async (req: Request) => {
         const voiceId = String(body.voice_id ?? "21m00Tcm4TlvDq8ikWAM");
         const elevenKey = Deno.env.get("ELEVENLABS_API_KEY") ?? "";
         if (!elevenKey) {
-          return json({ success: false, fallback: "webspeech", text, reason: "ELEVENLABS_API_KEY not configured" });
-        }
-        const ttsResp = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
-          method: "POST",
-          headers: { "xi-api-key": elevenKey, "Content-Type": "application/json" },
-          body: JSON.stringify({
+          return json({
+            success: false,
+            fallback: "webspeech",
             text,
-            model_id: "eleven_multilingual_v2",
-            voice_settings: { stability: 0.5, similarity_boost: 0.75 },
-          }),
-        });
+            reason: "ELEVENLABS_API_KEY not configured",
+          });
+        }
+        const ttsResp = await fetch(
+          `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`,
+          {
+            method: "POST",
+            headers: {
+              "xi-api-key": elevenKey,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              text,
+              model_id: "eleven_multilingual_v2",
+              voice_settings: { stability: 0.5, similarity_boost: 0.75 },
+            }),
+          },
+        );
         if (!ttsResp.ok) {
           const errText = await ttsResp.text();
           // Free-tier / paid-plan-required → フォールバックで Web Speech API 利用を UI に通知
-          if (errText.includes("paid_plan_required") || errText.includes("payment_required")) {
-            return json({ success: false, fallback: "webspeech", text, reason: "elevenlabs_paid_plan_required" });
+          if (
+            errText.includes("paid_plan_required") ||
+            errText.includes("payment_required")
+          ) {
+            return json({
+              success: false,
+              fallback: "webspeech",
+              text,
+              reason: "elevenlabs_paid_plan_required",
+            });
           }
-          return json({ error: `ElevenLabs error: ${errText}`, fallback: "webspeech", text }, 502);
+          return json({
+            error: `ElevenLabs error: ${errText}`,
+            fallback: "webspeech",
+            text,
+          }, 502);
         }
         const audioBuffer = await ttsResp.arrayBuffer();
         const bytes = new Uint8Array(audioBuffer);
         let binary = "";
-        for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i]);
+        for (let i = 0; i < bytes.byteLength; i++) {
+          binary += String.fromCharCode(bytes[i]);
+        }
         const base64Audio = btoa(binary);
-        return json({ success: true, audio_base64: base64Audio, content_type: "audio/mpeg" });
+        return json({
+          success: true,
+          audio_base64: base64Audio,
+          content_type: "audio/mpeg",
+        });
       }
 
       case "voice.stt": {
@@ -2470,10 +3075,15 @@ serve(async (req: Request) => {
         const audioBase64 = String(body.audio_base64 ?? "");
         const language = String(body.language ?? "ja");
         const deepgramKey = Deno.env.get("DEEPGRAM_API_KEY") ?? "";
-        if (!deepgramKey) return json({ error: "DEEPGRAM_API_KEY not configured" }, 503);
+        if (!deepgramKey) {
+          return json({ error: "DEEPGRAM_API_KEY not configured" }, 503);
+        }
         let audioBytes: Uint8Array;
         try {
-          audioBytes = Uint8Array.from(atob(audioBase64), (c) => c.charCodeAt(0));
+          audioBytes = Uint8Array.from(
+            atob(audioBase64),
+            (c) => c.charCodeAt(0),
+          );
         } catch {
           return json({ error: "Invalid base64 audio data" }, 400);
         }
@@ -2483,7 +3093,10 @@ serve(async (req: Request) => {
           `https://api.deepgram.com/v1/listen?language=${language}&model=nova-2&punctuate=true`,
           {
             method: "POST",
-            headers: { "Authorization": `Token ${deepgramKey}`, "Content-Type": "audio/webm" },
+            headers: {
+              "Authorization": `Token ${deepgramKey}`,
+              "Content-Type": "audio/webm",
+            },
             body: audioBody,
           },
         );
@@ -2492,7 +3105,10 @@ serve(async (req: Request) => {
           return json({ error: `Deepgram error: ${errText}` }, 502);
         }
         const dgData = await dgResp.json() as Record<string, unknown>;
-        const transcript = ((dgData.results as Record<string, unknown>)?.channels as Array<Record<string, unknown>>)?.[0]?.alternatives as Array<{transcript: string}>;
+        const transcript =
+          ((dgData.results as Record<string, unknown>)?.channels as Array<
+            Record<string, unknown>
+          >)?.[0]?.alternatives as Array<{ transcript: string }>;
         const transcriptText = transcript?.[0]?.transcript ?? "";
         return json({ success: true, transcript: transcriptText });
       }
@@ -2508,16 +3124,48 @@ serve(async (req: Request) => {
           .eq("user_id", userId)
           .order("last_used_at", { ascending: false })
           .limit(30);
-        const recent = new Set((usage ?? []).map((r: Record<string, unknown>) => String(r.feature_id)));
+        const recent = new Set(
+          (usage ?? []).map((r: Record<string, unknown>) =>
+            String(r.feature_id)
+          ),
+        );
         const recommendations: Array<Record<string, unknown>> = [];
         const suggestions = [
-          { id: "ai-search", title: "AI 検索", reason: "自然言語で過去メモを横断検索" },
-          { id: "daily-judgment", title: "今日のデイリー判定", reason: "AI が当日の行動を評価" },
-          { id: "ai-assistant-chat", title: "AI アシスタントチャット", reason: "MAGI 3 モデル並列思考" },
-          { id: "ai-summarizer", title: "AI 要約", reason: "長文を要点だけに圧縮" },
-          { id: "home-insights", title: "成長・支援ダッシュボード", reason: "学習・開発・成長の統合ビュー" },
-          { id: "horseracing-predictor", title: "競馬 AI 予想", reason: "マルチプロバイダーアンサンブル予想" },
-          { id: "ai-university", title: "AI 大学", reason: "FSRS で AI 最新動向を学習" },
+          {
+            id: "ai-search",
+            title: "AI 検索",
+            reason: "自然言語で過去メモを横断検索",
+          },
+          {
+            id: "daily-judgment",
+            title: "今日のデイリー判定",
+            reason: "AI が当日の行動を評価",
+          },
+          {
+            id: "ai-assistant-chat",
+            title: "AI アシスタントチャット",
+            reason: "MAGI 3 モデル並列思考",
+          },
+          {
+            id: "ai-summarizer",
+            title: "AI 要約",
+            reason: "長文を要点だけに圧縮",
+          },
+          {
+            id: "home-insights",
+            title: "成長・支援ダッシュボード",
+            reason: "学習・開発・成長の統合ビュー",
+          },
+          {
+            id: "horseracing-predictor",
+            title: "競馬 AI 予想",
+            reason: "マルチプロバイダーアンサンブル予想",
+          },
+          {
+            id: "ai-university",
+            title: "AI 大学",
+            reason: "FSRS で AI 最新動向を学習",
+          },
         ];
         for (const s of suggestions) {
           if (!recent.has(s.id)) recommendations.push(s);
@@ -2566,7 +3214,7 @@ serve(async (req: Request) => {
           .from("ai_hub_chat_logs")
           .select(
             "id, provider, tier, action, success, latency_ms, status_code, error_message, " +
-            "input_chars, output_chars, estimated_cost_usd, model, trace_id, created_at",
+              "input_chars, output_chars, estimated_cost_usd, model, trace_id, created_at",
           )
           .eq("session_id", sessionId)
           .order("created_at", { ascending: true });
@@ -2654,12 +3302,18 @@ serve(async (req: Request) => {
           );
           if (!r.ok) {
             const errBody = await r.text();
-            return json({ success: false, error: `Gemini ${r.status}: ${errBody}` }, 500);
+            return json({
+              success: false,
+              error: `Gemini ${r.status}: ${errBody}`,
+            }, 500);
           }
           const data = await r.json();
           const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
           if (!text) {
-            return json({ success: false, error: "Empty Gemini response" }, 500);
+            return json(
+              { success: false, error: "Empty Gemini response" },
+              500,
+            );
           }
           const parsed = JSON.parse(text);
           return json({

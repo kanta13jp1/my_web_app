@@ -5354,6 +5354,25 @@ class _AiUniversityPageState extends State<AiUniversityPage>
                 Navigator.pushNamed(context, '/ai-provider-status'),
           ),
           IconButton(
+            icon: const Icon(Icons.videocam_outlined),
+            tooltip: '動画レッスン',
+            onPressed: () {
+              final controller = _tabController;
+              final provider = controller != null &&
+                      controller.index >= 0 &&
+                      controller.index < _providers.length
+                  ? _providers[controller.index]
+                  : (_providers.isNotEmpty ? _providers.first : null);
+              Navigator.pushNamed(
+                context,
+                '/ai-university-video',
+                arguments: {
+                  if (provider != null) 'provider': provider,
+                },
+              );
+            },
+          ),
+          IconButton(
             icon: const Icon(Icons.share),
             tooltip: 'シェアカード',
             onPressed: _showShareCardDialog,

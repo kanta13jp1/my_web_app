@@ -309,4 +309,9 @@ WHERE title = 'ai-hub provider.chat 蜈ｨ蟇ｾ蠢・;
 - WBS DB蜿肴丐: migration `20260423213000_wbs_codex_feature_recovery_roadmap.sql`縲・
 - 螳溽捩謇九ち繧ｹ繧ｯ縺ｮ縺ｿCodex諡・ｽ薙∈螟画峩: 縲後し繧､繝域｡亥・AI繝√Ε繝・ヨ縲阪ｒCodex諡・ｽ薙→縺励※螳御ｺ・・- 蟇ｾ蠢懷・螳ｹ: Home 縺ｫ縲郡ITE GUIDE AI縲阪そ繧ｯ繧ｷ繝ｧ繝ｳ縺ｨ蝗ｺ螳壼ｰ守ｷ壹ｒ霑ｽ蜉縺励√し繧､繝亥・讖溯・縺ｮ菴ｿ縺・婿繝ｻ蜈･蜿｣繝ｻ縺翫☆縺吶ａ蟆守ｷ壹ｒ雉ｪ蝠上〒縺阪ｋ繝√Ε繝・ヨ繝壹・繧ｸ繧・ai-hub provider.chat 繝吶・繧ｹ縺ｧ螳溯｣・・I螟ｱ謨玲凾繧ゅΟ繝ｼ繧ｫ繝ｫ蛟呵｣懊°繧画｡亥・縺励・未騾｣讖溯・繧偵◎縺ｮ縺ｾ縺ｾ髢九￠繧九・- WBS DB蜿肴丐: migration `20260423223000_wbs_codex_site_guide_chatbot.sql`縲・
 
+# Codex更新 2026-04-24
 
+- 実担当タスク: `[追加要望] AI大学のコンテンツ形式革新`
+- 対応内容: AI大学に `/ai-university-video` を追加し、教材テキストをもとに Hedra 動画レッスンを生成できるようにした。HomeカードとAI大学本体から遷移可能。
+- 実装補足: `ai-hub my_agent.chat(video)` に `title / voice / conversation_context` の pass-through を追加。
+- WBS DB反映: migration `20260424163000_wbs_codex_ai_university_video_lesson.sql`

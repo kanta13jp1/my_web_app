@@ -173,6 +173,10 @@ class _AiUniversityHomeCardState extends State<AiUniversityHomeCard> {
     Navigator.of(context).pushNamed('/ai-university-ranking');
   }
 
+  void _openVideoLesson() {
+    Navigator.of(context).pushNamed('/ai-university-video');
+  }
+
   String _buildRefreshLabel() {
     final updatedAt = _latestContentUpdatedAt;
     if (updatedAt == null) return '毎週更新';
@@ -655,8 +659,28 @@ class _AiUniversityHomeCardState extends State<AiUniversityHomeCard> {
                         ),
                       ),
                     ),
+                    const SizedBox(height: 10),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: _openVideoLesson,
+                        icon: const Icon(Icons.videocam_outlined),
+                        label: const Text('動画で学ぶ'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: const Color(0xFF90CAF9),
+                          side: const BorderSide(color: Color(0x3390CAF9)),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
+                    ),
                   ] else
-                    Row(
+                    Wrap(
+                      spacing: 12,
+                      runSpacing: 8,
+                      crossAxisAlignment: WrapCrossAlignment.center,
                       children: [
                         FilledButton.icon(
                           onPressed: _openUniversity,
@@ -674,7 +698,6 @@ class _AiUniversityHomeCardState extends State<AiUniversityHomeCard> {
                             ),
                           ),
                         ),
-                        const SizedBox(width: 12),
                         OutlinedButton.icon(
                           onPressed: _openRanking,
                           icon: const Icon(Icons.leaderboard_outlined),
@@ -693,7 +716,22 @@ class _AiUniversityHomeCardState extends State<AiUniversityHomeCard> {
                             ),
                           ),
                         ),
-                        const SizedBox(width: 12),
+                        TextButton.icon(
+                          onPressed: _openVideoLesson,
+                          icon: const Icon(
+                            Icons.videocam_outlined,
+                            size: 16,
+                            color: Color(0xFF90CAF9),
+                          ),
+                          label: const Text(
+                            '動画で学ぶ',
+                            style: TextStyle(
+                              color: Color(0xFF90CAF9),
+                              fontSize: 13,
+                              height: 1.5,
+                            ),
+                          ),
+                        ),
                         TextButton.icon(
                           onPressed: () => Navigator.pushNamed(
                             context,
