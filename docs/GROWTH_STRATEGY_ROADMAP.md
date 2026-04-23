@@ -16188,3 +16188,49 @@ CEO感 ✅ ミッション駆動 ✅ 優しいmentor ✅ 6部署バランス ✅
 
 純粋 docs 修正 (cross-instance-prs handoff ファイル 2 件)。
 anon key で wbs.add_task 不可 (service role 必要)。次回 Win版/PS#1 で登録。
+
+---
+
+
+---
+
+## Win版#132 part 5 完了 (2026-04-24 朝)
+
+### 実施内容: Slack + Notion 手動セットアップ手順書
+
+**契機**: ユーザー要請「具体的な手順を提示してください」 (Win#132 part 4 の Backlog S1/N1 = ユーザー手動タスクの実行手順)。
+
+**実装**: `docs/SETUP_SLACK_NOTION_MANUAL.md` 新規 (320 行 / 4 Part + トラブルシューティング)
+
+### 現状確認 (2026-04-24 08:00 JST)
+- ✅ `SLACK_WEBHOOK_URL` (default) — 設定済 (commit a30d3b50 ユーザー確認)
+- ❓ `SLACK_WEBHOOK_QUOTA` — 残タスク
+- ❓ `SLACK_WEBHOOK_CI` — 残タスク
+- ❌ Notion 全体 — 完全未着手
+
+### 手順書構成
+- **Part A**: Slack 追加セットアップ (所要 10 分 / 7 step)
+  - channel 5 作成 / Webhook 2 追加取得 / curl test / GitHub+Supabase Secrets 登録
+- **Part B**: Notion Workspace セットアップ (所要 20 分 / 9 step)
+  - 4 page/DB 階層作成 / properties 設定 (WBS 7 / Memory 4) / Integration 作成 / 接続 / ID 取得 / curl 疎通 / Secrets 5 つ登録
+- **Part C**: 完了報告 (gh issue or Slack post で Win 側にシグナル)
+- **Part D**: トラブルシューティング 5 項目
+
+### セキュリティ考慮
+- Integration capability 最小権限 (Read/Update/Insert / No user information)
+- Webhook URL / Integration Secret の secret 扱い徹底
+- `.env.local` + 1Password backup 推奨
+
+### 完了後の自動実装予定 (Win 次 session)
+- S2: `core-hub:slack.notify` EF action
+- S3: Supabase trigger (ai_circuit_breaker OPEN → Slack post)
+- S4: Discord webhook secondary
+- N2-N4: `schedule-hub:notion.sync_{wbs,roadmap,memory_index}` actions
+- N5: GHA cron 1h 毎 Notion sync
+
+### Philosophy Alignment (9/9) ✅
+1. CEO感 ✅ / 2. ミッション駆動 ✅ / 3. 優しいmentor ✅ (手順を段階的提示) / 4. 6部署バランス ✅
+5. 商品=ユーザー価値 ✅ / 6. 資本=時間 ✅ (35 分で完結設計) / 7. 資産負債 ✅
+8. KPI=昨日の自分 ✅ / 9. ゴール=IPO ✅
+
+### commit: TBD
