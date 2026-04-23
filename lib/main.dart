@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
+import 'package:my_web_app/data/home_tool_catalog.dart';
+import 'package:my_web_app/models/site_guide_catalog_item.dart';
 import 'package:my_web_app/pages/agent_org_page.dart';
 import 'package:my_web_app/pages/ai_company_builder_page.dart';
 import 'package:my_web_app/pages/ai_agent_page.dart';
@@ -20,6 +22,7 @@ import 'package:my_web_app/pages/shopping_list_page.dart';
 import 'package:my_web_app/pages/digest_queue_page.dart';
 import 'package:my_web_app/pages/gemini_university_v2_page.dart';
 import 'package:my_web_app/pages/growth_mission_page.dart';
+import 'package:my_web_app/pages/site_guide_chat_page.dart';
 import 'package:my_web_app/pages/user_manual_page.dart';
 import 'package:my_web_app/pages/home_page.dart';
 import 'package:my_web_app/pages/import_page.dart';
@@ -474,6 +477,40 @@ class MyApp extends StatelessWidget {
             );
           case '/user-manual':
             return MaterialPageRoute(builder: (_) => const UserManualPage());
+          case '/site-guide-ai':
+            final argumentQuestion = settings.arguments is String
+                ? settings.arguments as String
+                : null;
+            final queryQuestion = uri.queryParameters['q'];
+            final initialQuestion = argumentQuestion ?? queryQuestion;
+            final sectionNamesById = <String, String>{
+              for (final section in homeToolSections) section.id: section.title,
+              'ai': 'AI',
+            };
+            final toolCatalog = buildHomeToolCatalog().map((entry) {
+              return SiteGuideActionEntry(
+                item: SiteGuideCatalogItem(
+                  id: entry.id,
+                  sectionId: entry.sectionId,
+                  sectionTitle:
+                      sectionNamesById[entry.sectionId] ?? entry.sectionId,
+                  title: entry.title,
+                  subtitle: entry.subtitle,
+                  keywords: entry.keywords,
+                ),
+                onOpen: entry.onOpen,
+              );
+            }).toList();
+            return MaterialPageRoute(
+              builder: (_) => SiteGuideChatPage(
+                initialQuestion: initialQuestion,
+                toolCatalog: toolCatalog,
+              ),
+              settings: RouteSettings(
+                name: settings.name,
+                arguments: initialQuestion,
+              ),
+            );
           case '/philosophy':
             return MaterialPageRoute(
               builder: (_) => const PhilosophyPage(),

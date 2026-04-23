@@ -1639,6 +1639,15 @@ abstinence_slip_details: $slipDetailsText
     }
   }
 
+  Future<void> _openSiteGuideAi([
+    String? initialQuestion,
+  ]) async {
+    await Navigator.of(context).pushNamed(
+      '/site-guide-ai',
+      arguments: initialQuestion,
+    );
+  }
+
   Future<void> _runTrackedAction(
     String toolId,
     Future<dynamic> Function() action,
@@ -4755,6 +4764,14 @@ abstinence_slip_details: $slipDetailsText
                             _buildFeatureStrategyMonitor(isDark, isCompact),
                             const SizedBox(height: 24),
                             _buildSectionHeader(
+                              'SITE GUIDE AI',
+                              Icons.support_agent_outlined,
+                              const Color(0xFF4F46E5),
+                              key: const Key('home_section_site_guide_ai'),
+                            ),
+                            _buildSiteGuideAiCard(isDark, isCompact),
+                            const SizedBox(height: 24),
+                            _buildSectionHeader(
                               '追加要望フォーム',
                               Icons.add_task_outlined,
                               const Color(0xFF0F766E),
@@ -5703,6 +5720,124 @@ abstinence_slip_details: $slipDetailsText
               ],
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSiteGuideAiCard(bool isDark, bool isCompact) {
+    final theme = Theme.of(context);
+    final cardColor = isDark ? const Color(0xFF111827) : Colors.white;
+    final outlineColor =
+        isDark ? Colors.white.withValues(alpha: 0.12) : const Color(0xFFDDE8E4);
+    const quickQuestions = <String>[
+      'まず何から使えばいい？',
+      '資産管理はどこ？',
+      'AI大学の始め方は？',
+    ];
+
+    return Card(
+      elevation: 0,
+      color: cardColor,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: outlineColor),
+      ),
+      child: Padding(
+        padding: EdgeInsets.all(isCompact ? 14 : 18),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF4F46E5).withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(
+                    Icons.support_agent_outlined,
+                    color: Color(0xFF4F46E5),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'サイト案内AIチャット',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                          height: 1.5,
+                        ),
+                      ),
+                      SizedBox(height: 2),
+                      Text(
+                        '使い方が分からないときに、このサイトの機能名と入口をそのまま案内します。',
+                        style: TextStyle(fontSize: 12, height: 1.5),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color:
+                    isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Text(
+                '「どこを開けばいい？」「何から始める？」「この機能の違いは？」をそのまま質問できます。',
+                style: TextStyle(fontSize: 12, height: 1.6),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: quickQuestions.map((question) {
+                return ActionChip(
+                  label: Text(question),
+                  onPressed: () => _runTrackedAction(
+                    'site-guide-ai',
+                    () => _openSiteGuideAi(question),
+                  ),
+                );
+              }).toList(),
+            ),
+            const SizedBox(height: 14),
+            Row(
+              children: [
+                FilledButton.icon(
+                  onPressed: () => _runTrackedAction(
+                    'site-guide-ai',
+                    () => _openSiteGuideAi(),
+                  ),
+                  icon: const Icon(Icons.chat_bubble_outline),
+                  label: const Text('AIに聞く'),
+                ),
+                const SizedBox(width: 10),
+                OutlinedButton.icon(
+                  onPressed: () =>
+                      Navigator.of(context).pushNamed('/user-manual'),
+                  icon: const Icon(Icons.menu_book_outlined),
+                  label: const Text('マニュアル'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: theme.colorScheme.primary,
+                  ),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );

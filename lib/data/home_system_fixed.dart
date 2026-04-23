@@ -16,6 +16,12 @@ class HomeFixedFeature {
 
 const List<HomeFixedFeature> kHomeSystemFixed = [
   HomeFixedFeature(
+    route: '/site-guide-ai',
+    label: 'サイト案内AI',
+    icon: Icons.support_agent_outlined,
+    color: Color(0xFF4F46E5),
+  ),
+  HomeFixedFeature(
     route: '/ai-assistant',
     label: 'AI秘書',
     icon: Icons.smart_toy_outlined,
