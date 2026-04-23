@@ -175,9 +175,11 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
     final cachedSnapshot = results[1] as LocalElectionRealitySnapshot?;
     final cachedHistory = results[2] as List<LocalElectionRealityHistoryPoint>;
 
-    if (!_isPublicView && cachedSnapshot != null && cachedSnapshot.hasData) {
-      plan = await _service.savePlan(
-        _service.buildAutoUpdatedPlan(plan, cachedSnapshot),
+    if (cachedSnapshot != null && cachedSnapshot.hasData) {
+      plan = await _syncPlanWithSnapshot(
+        plan,
+        cachedSnapshot,
+        persist: !_isPublicView,
       );
       if (!mounted) {
         return;
@@ -205,7 +207,15 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
   }
 
   Future<void> _loadPlan() async {
-    final plan = await _service.loadPlan();
+    var plan = await _service.loadPlan();
+    final snapshot = _realitySnapshot;
+    if (snapshot != null && snapshot.hasData) {
+      plan = await _syncPlanWithSnapshot(
+        plan,
+        snapshot,
+        persist: !_isPublicView,
+      );
+    }
     if (!mounted) {
       return;
     }
@@ -507,9 +517,11 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
       );
       final history = await _realityService.loadSnapshotHistory();
       LocalElectionPlanDashboard? syncedPlan;
-      if (!_isPublicView && _plan != null && snapshot.hasData) {
-        syncedPlan = await _service.savePlan(
-          _service.buildAutoUpdatedPlan(_plan!, snapshot),
+      if (_plan != null && snapshot.hasData) {
+        syncedPlan = await _syncPlanWithSnapshot(
+          _plan!,
+          snapshot,
+          persist: !_isPublicView,
         );
       }
       if (!mounted) {
@@ -563,6 +575,22 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
         });
       }
     }
+  }
+
+  Future<LocalElectionPlanDashboard> _syncPlanWithSnapshot(
+    LocalElectionPlanDashboard plan,
+    LocalElectionRealitySnapshot snapshot, {
+    required bool persist,
+  }) async {
+    final syncedPlan = _service.buildAutoUpdatedPlan(
+      plan,
+      snapshot,
+      now: snapshot.fetchedAt,
+    );
+    if (!persist) {
+      return syncedPlan;
+    }
+    return _service.savePlan(syncedPlan);
   }
 
   Future<void> _runGeminiAnalysis() async {
