@@ -2836,10 +2836,16 @@ $input
   /// 競合サービスとの価格・機能数比較セクション
   Widget _buildPricingComparisonSection() {
     final rows = [
-      const _CompetitorRow('Notion', '¥1,100〜/月', '100+', false),
+      const _CompetitorRow('Notion', '¥1,100〜/月 (+AI従量課金)', '100+', false),
       const _CompetitorRow('Evernote', '¥1,300〜/月', '50+', false),
       const _CompetitorRow('MoneyForward', '¥500〜/月', '30+', false),
-      const _CompetitorRow('Slack', '¥925〜/月', '80+', false),
+      const _CompetitorRow('Slack (Agentforce)', '¥2,250〜/月', '80+', false),
+      const _CompetitorRow(
+        'Claude Cowork',
+        '¥3,000〜/月 (Pro \$20)',
+        '30+',
+        false,
+      ),
       const _CompetitorRow('Google Workspace', '¥680〜/月', '80+', false),
       const _CompetitorRow('Microsoft 365', '¥1,241〜/月', '90+', false),
       const _CompetitorRow('LINE AI', '¥750〜/月 (5項目)', '5', false),
@@ -3274,6 +3280,18 @@ $input
       (
         q: 'AIサービスが障害を起こしたらアプリが使えなくなりませんか?',
         a: 'LINE AIはOpenAI単一依存、一部のAIサービスはAnthropic単一依存のため、障害時に全機能が停止するリスクがあります。自分株式会社はAnthropic・Google Gemini・AWS Novaの3社マルチベンダー構成で、用途ごとに最適なAIを選択し、1社が障害でも他社で継続できる設計です。',
+      ),
+      (
+        q: 'Claude Cowork (Anthropic公式) が出ましたが、何が違うの?',
+        a: 'Claude Cowork (Pro \$20/月〜) は仕事のSaaS連携に特化した企業向けAIエージェントです。分離VM内で動作するため、セッションが終わるとデータが消えます。自分株式会社は「財務・健康・習慣・KPI」など人生6部署をSupabaseに永続保存し、昨日の自分と毎日比較できます。仕事だけでなく人生全体を経営したい個人CEOには、完全無料の自分株式会社が最適です。',
+      ),
+      (
+        q: 'Perplexity Mac Agentに毎日のタスクを任せればよいのでは?',
+        a: 'Perplexity Mac Agentは「PCの操作を代行する」ツールです。自分株式会社は代行ではなく、あなたがCEOとして最終決定権を持つ設計です（原則1）。AIは判断材料を整理し、行動はあなたが選ぶ。デスクトップ操作の自動化と、人生6部署のバランスシート管理は目的が異なります。',
+      ),
+      (
+        q: 'Notion Custom Agentsが課金されるようになりましたが?',
+        a: '2026年5月4日からNotion Custom Agentsは\$10/1,000 creditの従量課金（Business/Enterprise add-on）となりました。credit残高を気にしながらAIを使うより、自分株式会社は課金の概念自体が存在しません。予測可能なゼロコストで「KPI＝昨日の自分」を継続観察できます。',
       ),
       (
         q: 'データは安全ですか?',

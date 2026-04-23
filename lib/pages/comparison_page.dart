@@ -196,15 +196,15 @@ final _competitorInfo = <String, _CompetitorInfo>{
     ],
   ),
   'slack': const _CompetitorInfo(
-    name: 'Slack',
+    name: 'Slack (Agentforce)',
     emoji: '💬',
-    tagline: 'チームコミュニケーションをAIが支援。月額ゼロ円で始める。',
-    searchKeyword: 'Slack代替',
+    tagline: 'Salesforce Agentforce搭載AIが仕事を代行。でも個人の人生6部署は扱えない。',
+    searchKeyword: 'Slack代替 SlackAgentforce代替',
     accentColor: Color(0xFF4A154B),
     painPoints: [
-      'Slackの無料プランはメッセージ履歴が90日に限定',
-      'Proプランは月額925円〜/人',
-      '他の業務ツールと連携が必要で複数アプリを行き来する',
+      'Agentforce利用にはBusiness+ \$15/seat/月〜が必要 (約¥2,250〜)',
+      '企業・チーム向けで個人利用には過剰・高コスト',
+      '仕事のコミュニケーション特化で健康・家計・習慣は対象外',
     ],
     features: [
       _FeatureComparison(
@@ -492,13 +492,13 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'claude-cowork': const _CompetitorInfo(
     name: 'Claude Cowork',
     emoji: '🏛️',
-    tagline: '法人 AI ワークスペースを個人でも。ゼロ円で始める自分株式会社。',
-    searchKeyword: 'Claude Cowork代替 法人AIワークスペース代替',
+    tagline: 'Anthropic公式AIワークスペース。でも仕事のみ・データ揮発・月\$20〜。',
+    searchKeyword: 'Claude Cowork代替 Anthropic Cowork代替',
     accentColor: Color(0xFF6366F1),
     painPoints: [
-      'Claude Cowork は法人向けで個人利用には過剰・高コスト',
-      'チームライセンス料が継続的に発生する',
-      '個人の成長・資産管理には対応していない',
+      'Pro \$20/月〜 (Max \$100〜) — 個人利用でも課金が継続発生',
+      '分離VM内で動作するためセッション終了でデータが消える',
+      '仕事SaaS連携のみで財務・健康・習慣・KPI管理は対象外',
     ],
     features: [
       _FeatureComparison(
