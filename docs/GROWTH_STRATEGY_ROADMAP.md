@@ -16160,3 +16160,31 @@ CEO感 ✅ ミッション駆動 ✅ 優しいmentor ✅ 6部署バランス ✅
 9. ゴール=IPO ✅ (インフラ resilience は事業継続前提)
 
 **9/9 ✅**
+## VSCode版 Session S2 (2026-04-24) — Multi-AI フォールバック cross-instance-prs 起票
+
+**インスタンス**: VSCode版 | **担当**: UI/design + 横断設計
+
+### 実装サマリー
+
+- **`docs/cross-instance-prs/20260424_multi_ai_fallback_ps1.md`** 新規作成 → PS#1 宛
+  - GHA: `continue-on-error: true` + `QUOTA_EXHAUSTED` 検知 + Gemini fallback step
+  - 対象 WF: cs-check / competitor-monitoring / ai-university-update / blog-draft / pr-auto-review
+  - Supabase `ai_quota_status` テーブルへの自動ログ記録
+- **`docs/cross-instance-prs/20260424_multi_ai_fallback_win.md`** 新規作成 → Win版 宛
+  - EF `callAiWithFallback()` 実装仕様 (Claude → Gemini Flash 2.0 自動切替)
+  - `ai_quota_status` テーブル migration 仕様
+  - `GEMINI_API_KEY` → GitHub Secrets 設定済み確認 (2026-04-24)
+  - Supabase EF secrets 追加のみ残タスク
+- **commit**: `39322fac` (cross-instance-prs 作成) + `b4245d87` (GEMINI_API_KEY確認更新)
+
+### Philosophy Alignment (Rule 22) — 7/9 ✅
+
+- 主要作業: cross-instance-prs 起票 (docs 修正のみ・実装なし)
+- 原則1 CEO感 ✅ (quota 枯渇でも CEO 判断能力維持) / 2.ミッション駆動 ✅ / 5.商品=ユーザー価値 ✅ (CS継続)
+- 6.資本=時間 ✅ (停止コスト削減) / 7.BS原則 ✅ (Claude単独依存=負債) / 8.KPI=昨日の自分 ✅ / 9.IPO ✅
+- 懸念: 3.優しいmentor / 4.6部署バランス は直接関係なし
+
+### WBS-SYNC skip 理由
+
+純粋 docs 修正 (cross-instance-prs handoff ファイル 2 件)。
+anon key で wbs.add_task 不可 (service role 必要)。次回 Win版/PS#1 で登録。
