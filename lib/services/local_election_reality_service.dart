@@ -14,6 +14,7 @@ class LocalElectionRealityService {
   static const String _memberProfileStoragePrefix =
       'local_election_member_profile_v1_';
   static const Duration _freshSnapshotWindow = Duration(hours: 2);
+  static const Duration _edgeFunctionTimeout = Duration(seconds: 90);
   static LocalElectionRealitySnapshot? _memorySnapshot;
   static Future<LocalElectionRealitySnapshot>? _latestSnapshotInFlight;
 
@@ -274,7 +275,7 @@ class LocalElectionRealityService {
       body: <String, dynamic>{
         'includeAiSummary': includeAiSummary,
       },
-    ).timeout(const Duration(seconds: 50));
+    ).timeout(_edgeFunctionTimeout);
     final data = _toMap(response.data);
     if (data['success'] != true) {
       throw Exception(

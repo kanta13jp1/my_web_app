@@ -501,6 +501,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
 
     try {
       final snapshot = await _realityService.fetchLatestSnapshot(
+        includeAiSummary: false,
         forceRefresh: forceRefresh,
       );
       final history = await _realityService.loadSnapshotHistory();
@@ -5291,6 +5292,11 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
         message.contains('Failed to fetch') ||
         message.contains('NetworkError')) {
       return 'Edge Function への接続がブロックされました (CORS)。しばらくしてから再試行してください。';
+    }
+    if (message.contains('TimeoutException') ||
+        message.contains('timed out') ||
+        message.contains('timeout')) {
+      return '最新データの取得が時間切れになりました。外部公式サイトの応答が遅い可能性があります。少し待って再試行してください。';
     }
     return '最新データの取得に失敗しました。通信状態と Edge Function の設定を確認してください。';
   }

@@ -31,6 +31,7 @@ const SCHEDULE_PAST_DAYS = 14;
 const SCHEDULE_WINDOW_DAYS = 90;
 const SCHEDULE_DETAIL_WINDOW_DAYS = 14;
 const SCHEDULE_MAX_ENTRIES = 300;
+const AI_ANALYSIS_TIMEOUT_MS = 6000;
 // 最低保証日数 (これを下回る window は使わない)
 const SCHEDULE_MIN_WINDOW_DAYS = 30;
 const CDP_PREFECTURE_MAX_PAGES = 24;
@@ -1602,6 +1603,11 @@ async function buildAiAnalysis(snapshot: {
   if (OPENAI_API_KEY === "") {
     return buildFallbackAnalysis(snapshot);
   }
+  const controller = new AbortController();
+  const timeoutId = setTimeout(
+    () => controller.abort(),
+    AI_ANALYSIS_TIMEOUT_MS,
+  );
   try {
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
@@ -1609,9 +1615,11 @@ async function buildAiAnalysis(snapshot: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${OPENAI_API_KEY}`,
       },
+      signal: controller.signal,
       body: JSON.stringify({
         model: "gpt-4o-mini",
         temperature: 0.2,
+        max_tokens: 500,
         response_format: { type: "json_object" },
         messages: [
           {
@@ -1662,6 +1670,8 @@ async function buildAiAnalysis(snapshot: {
     };
   } catch {
     return buildFallbackAnalysis(snapshot);
+  } finally {
+    clearTimeout(timeoutId);
   }
 }
 
