@@ -2842,7 +2842,7 @@ $input
       const _CompetitorRow('Slack', '¥925〜/月', '80+', false),
       const _CompetitorRow('Google Workspace', '¥680〜/月', '80+', false),
       const _CompetitorRow('Microsoft 365', '¥1,241〜/月', '90+', false),
-      const _CompetitorRow('LINE (Business)', '¥5,000〜/月', '30+', false),
+      const _CompetitorRow('LINE AI', '¥750〜/月 (5項目)', '5', false),
       const _CompetitorRow('自分株式会社', '完全無料', '21サービス分', true),
     ];
 
@@ -3252,8 +3252,8 @@ $input
   Widget _buildFaqSection() {
     const faqs = [
       (
-        q: 'Notionと何が違うの?',
-        a: '自分株式会社はAIが「今日やるべき1件」を決めてくれる点が最大の違いです。Notionは情報整理ツールですが、本アプリはAIが優先順位を付けて行動提案まで行います。さらに12部署20人のAI組織OS・資産管理・習慣化・性格診断も1つのアプリで完結します。',
+        q: 'Notion AI がカレンダー・メール・Slack連携を始めました。それでも違いはありますか?',
+        a: '2026年4月にNotion AIはカレンダー・Mail・Slack統合をGA化しました。ただし「財務管理」「健康・習慣管理」「KPI＝昨日の自分（自己比較）」「日本語文化対応」は依然として対象外です。自分株式会社はAIが「今日やるべき1件」を決め、MoneyForward型資産管理・習慣化・AI診断まで人生6部署を一元管理します。Notionは仕事を整理しますが、自分株式会社は人生全体を整理します。しかも完全無料です。',
       ),
       (
         q: '12部署20人のAI組織OSって何?',
@@ -3270,6 +3270,10 @@ $input
       (
         q: 'LINE・Discord・SNSの代わりになりますか?',
         a: 'LINE・Discordのメッセージ・通話機能の代替ではありませんが、個人のタスク管理・メモ・習慣化・資産管理という日常生活の生産性ツールとしては大きく上回ります。SNSで分散した情報を一元管理したい方に特に適しています。',
+      ),
+      (
+        q: 'AIサービスが障害を起こしたらアプリが使えなくなりませんか?',
+        a: 'LINE AIはOpenAI単一依存、一部のAIサービスはAnthropic単一依存のため、障害時に全機能が停止するリスクがあります。自分株式会社はAnthropic・Google Gemini・AWS Novaの3社マルチベンダー構成で、用途ごとに最適なAIを選択し、1社が障害でも他社で継続できる設計です。',
       ),
       (
         q: 'データは安全ですか?',
