@@ -1,17 +1,19 @@
 #!/usr/bin/env python3
 """
-Generate blog draft (Japanese + English) via Anthropic Claude API.
+Generate blog draft (Japanese + English) via AI API with multi-model fallback.
 
-Env vars (all required):
-- ANTHROPIC_API_KEY
+Provider chain (quota-resilient):
+  1. Anthropic Claude Haiku (primary — low cost, fast)
+  2. Google Gemini Flash (fallback — free tier, triggered on 429/529)
+  3. Template (last resort — never skip a day)
+
+Env vars:
+- ANTHROPIC_API_KEY  (optional — skips to Gemini if absent)
+- GOOGLE_AI_API_KEY  (optional — skips to template if absent)
 - TARGET_DATE (YYYY-MM-DD)
 - GITLOG_B64 (base64-encoded git log text)
 - DRAFT_JA (output path, .md)
 - DRAFT_EN (output path, .md)
-
-Design:
-- Single API call returns both JA and EN draft as JSON
-- Falls back to template if API call fails (we never want a no-post day)
 """
 from __future__ import annotations
 
@@ -25,8 +27,11 @@ import textwrap
 import requests
 
 ANTHROPIC_API = "https://api.anthropic.com/v1/messages"
-MODEL = "claude-haiku-4-5-20251001"  # GHA バッチ用途は Haiku 4.5 (低コスト・高速)
+GEMINI_API = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent"
+CLAUDE_MODEL = "claude-haiku-4-5-20251001"
 MAX_TOKENS = 8000
+
+QUOTA_ERRORS = {429, 529}  # rate limit / quota exhausted
 
 
 def call_claude(api_key: str, prompt: str) -> str:
@@ -38,15 +43,35 @@ def call_claude(api_key: str, prompt: str) -> str:
             "content-type": "application/json",
         },
         json={
-            "model": MODEL,
+            "model": CLAUDE_MODEL,
             "max_tokens": MAX_TOKENS,
             "messages": [{"role": "user", "content": prompt}],
         },
         timeout=120,
     )
+    if resp.status_code in QUOTA_ERRORS:
+        raise QuotaExceededError(f"Claude quota/rate-limit: HTTP {resp.status_code}")
     resp.raise_for_status()
     data = resp.json()
     return data["content"][0]["text"]
+
+
+def call_gemini(api_key: str, prompt: str) -> str:
+    resp = requests.post(
+        f"{GEMINI_API}?key={api_key}",
+        headers={"content-type": "application/json"},
+        json={"contents": [{"parts": [{"text": prompt}]}]},
+        timeout=120,
+    )
+    if resp.status_code in QUOTA_ERRORS:
+        raise QuotaExceededError(f"Gemini quota/rate-limit: HTTP {resp.status_code}")
+    resp.raise_for_status()
+    data = resp.json()
+    return data["candidates"][0]["content"]["parts"][0]["text"]
+
+
+class QuotaExceededError(Exception):
+    pass
 
 
 PROMPT_TEMPLATE = """あなたは技術ブロガーです。以下の git log から、2本の技術ブログドラフト (日本語 Qiita用・英語 dev.to用) を生成してください。
@@ -83,12 +108,10 @@ JSON で返答してください。他のテキストは一切含めないこと
 
 
 def extract_json(text: str) -> dict:
-    """Extract JSON from Claude response (may be wrapped in ```json ... ```)"""
-    # Try plain JSON first
+    """Extract JSON from AI response (may be wrapped in ```json ... ```)"""
     text = text.strip()
     if text.startswith("{"):
         return json.loads(text)
-    # Try fenced
     if "```json" in text:
         start = text.index("```json") + len("```json")
         end = text.index("```", start)
@@ -101,7 +124,7 @@ def extract_json(text: str) -> dict:
 
 
 def fallback_template(target_date: str, gitlog: str) -> tuple[str, str]:
-    """Generate a minimal template draft when API fails — never skip a day."""
+    """Last-resort template — never skip a day."""
     ja = textwrap.dedent(f"""\
         ---
         title: "自分株式会社 開発日誌 {target_date}"
@@ -147,8 +170,45 @@ def fallback_template(target_date: str, gitlog: str) -> tuple[str, str]:
     return ja, en
 
 
+def generate_with_ai(prompt: str, anthropic_key: str, gemini_key: str) -> tuple[str, str, str]:
+    """Try Claude → Gemini → template. Returns (ja, en, provider_used)."""
+    # 1. Claude (primary)
+    if anthropic_key:
+        try:
+            print("Calling Anthropic Claude API...", flush=True)
+            raw = call_claude(anthropic_key, prompt)
+            parsed = extract_json(raw)
+            print(f"✅ Claude: JA={len(parsed['ja_content'])} chars, EN={len(parsed['en_content'])} chars")
+            return parsed["ja_content"], parsed["en_content"], "claude"
+        except QuotaExceededError as e:
+            print(f"⚠️ {e} — falling back to Gemini", file=sys.stderr)
+        except Exception as e:
+            print(f"⚠️ Claude failed: {e} — falling back to Gemini", file=sys.stderr)
+    else:
+        print("⚠️ ANTHROPIC_API_KEY not set — trying Gemini", file=sys.stderr)
+
+    # 2. Gemini Flash (fallback)
+    if gemini_key:
+        try:
+            print("Calling Google Gemini Flash API...", flush=True)
+            raw = call_gemini(gemini_key, prompt)
+            parsed = extract_json(raw)
+            print(f"✅ Gemini: JA={len(parsed['ja_content'])} chars, EN={len(parsed['en_content'])} chars")
+            return parsed["ja_content"], parsed["en_content"], "gemini"
+        except QuotaExceededError as e:
+            print(f"⚠️ {e} — falling back to template", file=sys.stderr)
+        except Exception as e:
+            print(f"⚠️ Gemini failed: {e} — falling back to template", file=sys.stderr)
+    else:
+        print("⚠️ GOOGLE_AI_API_KEY not set — using template", file=sys.stderr)
+
+    # 3. Template (last resort)
+    return None, None, "template"
+
+
 def main() -> int:
-    api_key = os.environ.get("ANTHROPIC_API_KEY", "")
+    anthropic_key = os.environ.get("ANTHROPIC_API_KEY", "")
+    gemini_key = os.environ.get("GOOGLE_AI_API_KEY", "")
     target_date = os.environ["TARGET_DATE"]
     gitlog_b64 = os.environ["GITLOG_B64"]
     draft_ja = pathlib.Path(os.environ["DRAFT_JA"])
@@ -160,26 +220,17 @@ def main() -> int:
         return 1
 
     draft_ja.parent.mkdir(parents=True, exist_ok=True)
+    prompt = PROMPT_TEMPLATE.format(target_date=target_date, gitlog=gitlog)
 
-    if not api_key:
-        print("⚠️ ANTHROPIC_API_KEY not set — using template fallback", file=sys.stderr)
+    ja_content, en_content, provider = generate_with_ai(prompt, anthropic_key, gemini_key)
+
+    if provider == "template":
+        print("⚠️ All AI providers failed — using static template", file=sys.stderr)
         ja_content, en_content = fallback_template(target_date, gitlog)
-    else:
-        prompt = PROMPT_TEMPLATE.format(target_date=target_date, gitlog=gitlog)
-        try:
-            print("Calling Anthropic API...", flush=True)
-            raw = call_claude(api_key, prompt)
-            parsed = extract_json(raw)
-            ja_content = parsed["ja_content"]
-            en_content = parsed["en_content"]
-            print(f"✅ API generated JA={len(ja_content)} chars, EN={len(en_content)} chars", flush=True)
-        except Exception as exc:  # noqa: BLE001 - never skip a day
-            print(f"⚠️ API failed: {exc} — using template fallback", file=sys.stderr)
-            ja_content, en_content = fallback_template(target_date, gitlog)
 
     draft_ja.write_text(ja_content, encoding="utf-8")
     draft_en.write_text(en_content, encoding="utf-8")
-    print(f"✅ Wrote {draft_ja} and {draft_en}")
+    print(f"✅ [{provider}] Wrote {draft_ja} and {draft_en}")
     return 0
 
 
