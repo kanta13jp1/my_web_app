@@ -202,23 +202,20 @@ case 'wbs.quota_status': {
 }
 ```
 
-### 5. GitHub Secrets 追加 (手動作業 — ユーザー実施)
+### 5. GitHub Secrets 追加 ✅ 設定済み
 
-```
-GEMINI_API_KEY = <取得した API キー>
-```
-
-取得先: https://aistudio.google.com/apikey
-- 無料枠: 15 req/min, 1M tokens/day
-- Flash 2.0 使用: 低コスト・高速 (fallback に最適)
+`GEMINI_API_KEY` は GitHub Secrets に設定済み (2026-04-24 確認)。
+Supabase Edge Function secrets への追加のみ残り:
 
 ## 前提条件
 
 - Win版ワークフロー: `my_web_app_win` worktree で作業
 - `GEMINI_API_KEY` を Supabase Edge Function secrets にも追加:
+
   ```bash
   supabase secrets set GEMINI_API_KEY=<キー>
   ```
+
 - migration 適用後に `ai_quota_status` テーブル存在確認
 
 ## 実装ステップ
