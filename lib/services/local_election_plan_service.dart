@@ -629,7 +629,13 @@ class LocalElectionPlanService {
     if (trimmed == '北海道') {
       return trimmed;
     }
-    return trimmed.replaceFirst(RegExp(r'[都府県]$'), '');
+    if (trimmed == '東京都') {
+      return '東京';
+    }
+    if (trimmed.endsWith('府') || trimmed.endsWith('県')) {
+      return trimmed.substring(0, trimmed.length - 1);
+    }
+    return trimmed;
   }
 }
 

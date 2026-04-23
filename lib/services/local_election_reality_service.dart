@@ -8,7 +8,7 @@ import '../models/local_election_reality.dart';
 
 class LocalElectionRealityService {
   static const String _snapshotStorageKey =
-      'local_election_reality_snapshot_v3';
+      'local_election_reality_snapshot_v4';
   static const String _historyStorageKey =
       'local_election_reality_snapshot_history_v1';
   static const String _memberProfileStoragePrefix =
@@ -51,6 +51,13 @@ class LocalElectionRealityService {
       final snapshot = LocalElectionRealitySnapshot.fromJson(
         Map<String, dynamic>.from(decoded),
       );
+      if (snapshot.hasSuspiciousEmptyOfficialPrefecture) {
+        debugPrint(
+          'Ignoring suspicious local election snapshot: '
+          '${snapshot.suspiciousEmptyOfficialPrefectures.join(', ')}',
+        );
+        return null;
+      }
       return snapshot.hasData ? snapshot : null;
     } catch (error) {
       debugPrint('Local election cached snapshot parse failed: $error');
@@ -62,6 +69,13 @@ class LocalElectionRealityService {
     LocalElectionRealitySnapshot snapshot, {
     SharedPreferences? prefs,
   }) async {
+    if (snapshot.hasSuspiciousEmptyOfficialPrefecture) {
+      debugPrint(
+        'Skipping suspicious local election snapshot cache: '
+        '${snapshot.suspiciousEmptyOfficialPrefectures.join(', ')}',
+      );
+      return;
+    }
     final store = prefs ?? await SharedPreferences.getInstance();
     await store.setString(_snapshotStorageKey, jsonEncode(snapshot.toJson()));
     await _cacheHistoryPoint(snapshot, prefs: store);
@@ -176,7 +190,7 @@ class LocalElectionRealityService {
         _fetchLatestSnapshotFromEdgeFunction(
       client: client,
       includeAiSummary: includeAiSummary,
-    );
+    ).then(_rejectSuspiciousSnapshot);
     _latestSnapshotInFlight = request;
 
     try {
@@ -277,8 +291,23 @@ class LocalElectionRealityService {
     if (!snapshot.hasData) {
       return false;
     }
+    if (snapshot.hasSuspiciousEmptyOfficialPrefecture) {
+      return false;
+    }
     return DateTime.now().difference(snapshot.fetchedAt) <=
         _freshSnapshotWindow;
+  }
+
+  LocalElectionRealitySnapshot _rejectSuspiciousSnapshot(
+    LocalElectionRealitySnapshot snapshot,
+  ) {
+    if (snapshot.hasSuspiciousEmptyOfficialPrefecture) {
+      throw Exception(
+        'Official prefecture pages parsed as zero members: '
+        '${snapshot.suspiciousEmptyOfficialPrefectures.join(', ')}',
+      );
+    }
+    return snapshot;
   }
 
   LocalElectionRealitySnapshot? _pickNewerSnapshot(

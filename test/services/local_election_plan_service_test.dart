@@ -315,4 +315,57 @@ void main() {
     expect(updatedTottori.newCandidateTarget, 2);
     expect(updatedTottori.kgiTargetLocalMembers, 1);
   });
+
+  test('auto update matches Kyoto reality even when official name has suffix',
+      () async {
+    const service = LocalElectionPlanService();
+    final prefs = await SharedPreferences.getInstance();
+    final plan = await service.loadPlan(prefs: prefs);
+    final kyoto =
+        plan.prefectures.firstWhere((item) => item.prefecture == '京都');
+    final now = DateTime(2026, 4, 23, 9);
+
+    final updated = service.buildAutoUpdatedPlan(
+      plan,
+      LocalElectionRealitySnapshot(
+        fetchedAt: now,
+        baselineCurrentLocalMembers: 340,
+        officialCurrentLocalMembers: 351,
+        targetLocalMembers: 700,
+        baselineNetIncreaseRequired: 360,
+        actualNetIncreaseRequired: 349,
+        official2023FirstHalfWins: 62,
+        official2023SecondHalfWins: 121,
+        official2023TotalWins: 183,
+        aiSummary: '',
+        aiAlerts: const <String>[],
+        aiStrategicNotes: const <String>[],
+        scheduleAiSummary: '',
+        scheduleAiAlerts: const <String>[],
+        sources: const <LocalElectionRealitySource>[],
+        prefectures: const <LocalElectionPrefectureReality>[
+          LocalElectionPrefectureReality(
+            prefecture: '京都府',
+            sourceUrl: 'https://new-kokumin.jp/member_tag/kyoto',
+            currentMembers: 11,
+            prefecturalAssemblyMembers: 2,
+            municipalAssemblyMembers: 9,
+          ),
+        ],
+        members: const <LocalElectionLegislatorProfile>[],
+        upcomingSchedules: const <LocalElectionScheduleEntry>[],
+      ),
+      now: now,
+    );
+
+    final updatedKyoto = updated.prefectures.firstWhere(
+      (item) => item.prefecture == kyoto.prefecture,
+    );
+
+    expect(updatedKyoto.currentMembers, 11);
+    expect(updatedKyoto.incumbentRetentionTarget, 11);
+    expect(updatedKyoto.newElectionTarget, 11);
+    expect(updatedKyoto.kpiActualLocalMembers, 11);
+    expect(updatedKyoto.kgiTargetLocalMembers, 22);
+  });
 }

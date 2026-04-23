@@ -711,6 +711,25 @@ class LocalElectionRealitySnapshot {
 
   bool get hasData => officialCurrentLocalMembers > 0;
 
+  List<String> get suspiciousEmptyOfficialPrefectures {
+    final memberPrefectures = members
+        .map((item) => item.prefecture.trim())
+        .where((value) => value.isNotEmpty)
+        .toSet();
+    return prefectures
+        .where(
+          (item) =>
+              item.sourceUrl.trim().isNotEmpty &&
+              item.currentMembers == 0 &&
+              !memberPrefectures.contains(item.prefecture.trim()),
+        )
+        .map((item) => item.prefecture)
+        .toList(growable: false);
+  }
+
+  bool get hasSuspiciousEmptyOfficialPrefecture =>
+      suspiciousEmptyOfficialPrefectures.isNotEmpty;
+
   int get deltaFromBaseline =>
       officialCurrentLocalMembers - baselineCurrentLocalMembers;
 

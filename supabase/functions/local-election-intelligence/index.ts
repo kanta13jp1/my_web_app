@@ -644,6 +644,10 @@ async function fetchText(url: string): Promise<string> {
   }
 }
 
+function delay(milliseconds: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, milliseconds));
+}
+
 async function fetchPrefectureReality(
   prefecture: string,
   sourceUrl: string,
@@ -659,32 +663,40 @@ async function fetchPrefectureReality(
     };
   }
 
-  try {
-    const html = await fetchText(sourceUrl);
-    const members = parsePrefectureMembers(prefecture, sourceUrl, html);
-    return {
-      prefecture,
-      sourceUrl,
-      currentMembers: members.length,
-      prefecturalAssemblyMembers: members.filter((item) =>
-        item.assemblyCategory === "prefectural"
-      ).length,
-      municipalAssemblyMembers: members.filter((item) =>
-        item.assemblyCategory === "municipal"
-      ).length,
-      members,
-    };
-  } catch (error) {
-    console.error(`Failed to fetch ${prefecture}:`, error);
-    return {
-      prefecture,
-      sourceUrl,
-      currentMembers: 0,
-      prefecturalAssemblyMembers: 0,
-      municipalAssemblyMembers: 0,
-      members: [],
-    };
+  let lastError: unknown = null;
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    try {
+      const html = await fetchText(sourceUrl);
+      const members = parsePrefectureMembers(prefecture, sourceUrl, html);
+      return {
+        prefecture,
+        sourceUrl,
+        currentMembers: members.length,
+        prefecturalAssemblyMembers: members.filter((item) =>
+          item.assemblyCategory === "prefectural"
+        ).length,
+        municipalAssemblyMembers: members.filter((item) =>
+          item.assemblyCategory === "municipal"
+        ).length,
+        members,
+      };
+    } catch (error) {
+      lastError = error;
+      if (attempt < 2) {
+        await delay(350);
+      }
+    }
   }
+
+  console.error(`Failed to fetch ${prefecture}:`, lastError);
+  return {
+    prefecture,
+    sourceUrl,
+    currentMembers: 0,
+    prefecturalAssemblyMembers: 0,
+    municipalAssemblyMembers: 0,
+    members: [],
+  };
 }
 
 async function fetchCdpLocalMemberStatsByPrefecture(): Promise<
@@ -771,17 +783,22 @@ function parsePrefectureDirectoryEntries(
   const linkRegex =
     /<a[^>]+href="([^"]*\/member_tag\/[^"]+)"[^>]*>([\s\S]*?)<\/a>/gsi;
   for (const match of html.matchAll(linkRegex)) {
-    const label = normalizeWhitespace(decodeHtml(stripTags(match[2] ?? "")))
+    const rawLabel = normalizeWhitespace(decodeHtml(stripTags(match[2] ?? "")))
       .trim();
+    const label = extractPrefectureLabel(rawLabel);
     const rawHref = match[1]?.trim() ?? "";
     if (!isPrefectureName(label) || rawHref === "") {
       continue;
     }
-    links.set(label, new URL(rawHref, OFFICIAL_MEMBER_PAGE_URL).toString());
+    const sourceUrl = new URL(rawHref, OFFICIAL_MEMBER_PAGE_URL).toString();
+    links.set(label, sourceUrl);
+    links.set(prefectureLookupKey(label), sourceUrl);
   }
   return PREFECTURES.map((prefecture) => ({
     prefecture,
-    sourceUrl: links.get(prefecture) ?? "",
+    sourceUrl: links.get(prefecture) ??
+      links.get(prefectureLookupKey(prefecture)) ??
+      "",
   }));
 }
 

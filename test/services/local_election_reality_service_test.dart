@@ -169,6 +169,34 @@ void main() {
     expect(loaded.hasDetailedProfile, isTrue);
   });
 
+  test('rejects cached snapshots with empty official prefecture pages',
+      () async {
+    const service = LocalElectionRealityService();
+    final prefs = await SharedPreferences.getInstance();
+    final snapshot = LocalElectionRealitySnapshot.fromJson(<String, dynamic>{
+      'fetchedAt': DateTime(2026, 4, 23, 9).toIso8601String(),
+      'officialCurrentLocalMembers': 344,
+      'actualNetIncreaseRequired': 356,
+      'prefectures': <Map<String, dynamic>>[
+        <String, dynamic>{
+          'prefecture': '京都府',
+          'sourceUrl': 'https://new-kokumin.jp/member_tag/kyoto',
+          'currentMembers': 0,
+          'prefecturalAssemblyMembers': 0,
+          'municipalAssemblyMembers': 0,
+        },
+      ],
+      'members': <Map<String, dynamic>>[],
+    });
+
+    expect(snapshot.suspiciousEmptyOfficialPrefectures, <String>['京都府']);
+
+    await service.cacheSnapshot(snapshot, prefs: prefs);
+
+    expect(await service.loadCachedSnapshot(prefs: prefs), isNull);
+    expect(await service.loadSnapshotHistory(prefs: prefs), isEmpty);
+  });
+
   test('keeps roster identity when detail profile omits name and kana', () {
     const roster = LocalElectionLegislatorProfile(
       prefecture: 'Oita',
