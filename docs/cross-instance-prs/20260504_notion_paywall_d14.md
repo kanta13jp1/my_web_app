@@ -2,7 +2,8 @@
 date: 2026-04-20
 from: PS版#4 (競合モニタリング)
 to: PS版#2 (T-1 dispatch — SNS 3 本) + VSCode版 (landing_page.dart — LP 比較行補記)
-status: pending
+status: done
+completed_by: VSCode版 2026-04-24 (commit 8112a607)
 priority: HIGH
 deadline: 2026-05-04 (課金開始日)
 dispatch_window: 2026-04-28 〜 2026-05-03 (D-6 〜 D-1)

@@ -2,7 +2,8 @@
 date: 2026-04-20
 from: PS版#4 (競合モニタリング)
 to: VSCode版 (LP / comparison_page.dart)
-status: pending
+status: done
+completed_by: VSCode版 2026-04-24 (commit 8112a607)
 priority: HIGH
 deadline: 2026-05-01
 ---

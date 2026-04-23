@@ -2,7 +2,8 @@
 date: 2026-04-20
 from: PS版#4 (競合モニタリング S13)
 to: VSCode版 (LP/comparison) + Win版 (戦略判断)
-status: pending
+status: done
+completed_by: VSCode版 2026-04-24 (commit 8112a607)
 priority: 🔴🔴 CRITICAL
 deadline: 2026-05-01 (LP 反映・GW 前)
 ---

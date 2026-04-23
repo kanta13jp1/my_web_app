@@ -2,7 +2,8 @@
 date: 2026-04-20
 from: PS版#4 (競合モニタリング / S21)
 to: Win版 (ai-hub routing 戦略判断) + VSCode版 (LP 競合表更新)
-status: pending
+status: done
+completed_by: VSCode版 2026-04-24 (commit 8112a607)
 priority: HIGH
 deadline: 2026-05-31 (次の ai-hub major revision まで)
 related: 20260420_claude_cowork_threat.md (Anthropic 側同軸脅威)
