@@ -16069,3 +16069,12 @@ CEO感 ✅ ミッション駆動 ✅ 優しいmentor — 6部署バランス ✅
 7. 資産負債 ✅ (Claude 単独依存 = 負債) / 8. KPI=昨日の自分 ✅ / 9. ゴール=IPO ✅ (vendor 依存 = IPO リスク)
 
 ### commit: bd796c7a
+
+### Multi-AI Resilience 設計 (PS#1 S26 · 2026-04-24 08:00)
+- **背景**: Claude quota枯渇 → 開発プロセス完全停止リスクを解消
+- **実装**: `scripts/generate_blog_draft.py` — Claude Haiku → Gemini Flash → template の3段フォールバックchain (7dcfed5d)
+- **GHA**: `blog-draft.yml` に `GOOGLE_AI_API_KEY` secret追加 (自動切替対応)
+- **ドキュメント**: `docs/MULTI_AI_RESILIENCE.md` + `docs/DEV_PROCESS_MULTI_AI.md` (Win版と合流)
+- **VSCode handoff**: `docs/cross-instance-prs/20260424_ai_hub_quota_fallback.md` — ai-hub EF quota自動routing
+- **ユーザーアクション必要**: `GOOGLE_AI_API_KEY` を GitHub repo secrets に追加 (Settings→Secrets)
+- Philosophy: 7/9 ✅ (1.CEO感 2.ミッション 5.商品価値 6.時間資本 7.BS 8.KPI 9.IPO)
