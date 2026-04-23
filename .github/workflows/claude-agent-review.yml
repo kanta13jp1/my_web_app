@@ -71,20 +71,20 @@ jobs:
 
           REVIEW_PROMPT="自分株式会社 (Flutter Web + Supabase) のPRをレビューしてください。
 
-【観点 — static アナライザが検出できないものに集中】
-1. セキュリティ: ハードコードシークレット / SQL injection / 認証バイパス
-2. ルール違反: ダミーデータ使用 / flutter analyze スキップ / continue-on-error 不適切追加
-3. EF 上限管理: 新規 supabase function が Tier1 (100本デプロイ制限) 超過リスク
-4. アーキテクチャ: 複雑ロジックがフロントに置かれ Edge Function ファーストに反する
-5. データ整合性: 実 Supabase データを使っているか (ダミーデータ禁止)
+          【観点 — static アナライザが検出できないものに集中】
+          1. セキュリティ: ハードコードシークレット / SQL injection / 認証バイパス
+          2. ルール違反: ダミーデータ使用 / flutter analyze スキップ / continue-on-error 不適切追加
+          3. EF 上限管理: 新規 supabase function が Tier1 (100本デプロイ制限) 超過リスク
+          4. アーキテクチャ: 複雑ロジックがフロントに置かれ Edge Function ファーストに反する
+          5. データ整合性: 実 Supabase データを使っているか (ダミーデータ禁止)
 
-問題なし → 「✅ LGTM — 問題なし」の1行のみ。
-問題あり → 各問題を「### 問題N: タイトル\n**ファイル:** path\n**内容:** 説明\n**修正:** 方法」で列挙。
+          問題なし → 「✅ LGTM — 問題なし」の1行のみ。
+          問題あり → 各問題を「### 問題N: タイトル\n**ファイル:** path\n**内容:** 説明\n**修正:** 方法」で列挙。
 
-差分:
-\`\`\`
-${DIFF}
-\`\`\`"
+          差分:
+          \`\`\`
+          ${DIFF}
+          \`\`\`"
 
           USED_MODEL=""
           REVIEW_TEXT=""
