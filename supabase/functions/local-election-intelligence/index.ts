@@ -416,6 +416,7 @@ const MANUAL_2026_SCHEDULES: ManualScheduleSupplement[] = [
 interface SnapshotRequest {
   action: "snapshot";
   includeAiSummary: boolean;
+  includeCdpBenchmarks: boolean;
 }
 
 interface MemberDetailRequest {
@@ -445,12 +446,12 @@ serve(async (req) => {
       return jsonResponse({ success: true, profile });
     }
 
-    const cdpStatsPromise = fetchCdpLocalMemberStatsByPrefecture().catch(
-      (error) => {
+    const cdpStatsPromise = parsedRequest.includeCdpBenchmarks
+      ? fetchCdpLocalMemberStatsByPrefecture().catch((error) => {
         console.error("Failed to fetch CDP local member stats:", error);
         return new Map<string, CdpPrefectureLocalMemberStats>();
-      },
-    );
+      })
+      : Promise.resolve(new Map<string, CdpPrefectureLocalMemberStats>());
     const memberPageHtml = await fetchText(OFFICIAL_MEMBER_PAGE_URL);
     const officialElectionHtml = await fetchText(OFFICIAL_ELECTION_PAGE_URL);
     const prefectureDirectoryEntries = parsePrefectureDirectoryEntries(
@@ -631,12 +632,15 @@ async function parseRequest(req: Request): Promise<ParsedRequest> {
     return {
       action: "snapshot",
       includeAiSummary: url.searchParams.get("includeAiSummary") !== "false",
+      includeCdpBenchmarks:
+        url.searchParams.get("includeCdpBenchmarks") !== "false",
     };
   }
 
   return {
     action: "snapshot",
     includeAiSummary: body.includeAiSummary !== false,
+    includeCdpBenchmarks: body.includeCdpBenchmarks !== false,
   };
 }
 

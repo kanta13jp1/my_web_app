@@ -97,9 +97,8 @@ class LocalElectionPlanService {
       final reality = realitiesByPrefecture[key];
       final stats = scheduleStatsByPrefecture[key] ?? _AutoScheduleStats.empty;
       final currentMembers = reality?.currentMembers ?? current.currentMembers;
-      final cdpLocalMembers =
-          reality?.cdpLocalMembers ?? current.cdpLocalMembers;
-      final cdpSourceUrl = reality?.cdpSourceUrl ?? current.cdpSourceUrl;
+      final cdpLocalMembers = _mergedCdpLocalMembers(current, reality);
+      final cdpSourceUrl = _mergedCdpSourceUrl(current, reality);
       final scheduledElectionCount = stats.scheduledElectionCount;
       final additionalTarget = additionalTargets[index];
       final batchNewWins = current.autoUpdatedAt.trim().isEmpty
@@ -402,7 +401,7 @@ class LocalElectionPlanService {
       final reality = realitiesByPrefecture[key];
       final stats = scheduleStatsByPrefecture[key] ?? _AutoScheduleStats.empty;
       final currentMembers = reality?.currentMembers ?? item.currentMembers;
-      final cdpLocalMembers = reality?.cdpLocalMembers ?? item.cdpLocalMembers;
+      final cdpLocalMembers = _mergedCdpLocalMembers(item, reality);
       baseTargets.add(
         _baseNewElectionTarget(
           currentMembers: currentMembers,
@@ -572,7 +571,7 @@ class LocalElectionPlanService {
     _AutoScheduleStats stats,
   ) {
     final currentMembers = reality?.currentMembers ?? plan.currentMembers;
-    final cdpLocalMembers = reality?.cdpLocalMembers ?? plan.cdpLocalMembers;
+    final cdpLocalMembers = _mergedCdpLocalMembers(plan, reality);
     final cdpGap = math.max(0, cdpLocalMembers - currentMembers);
     return 1 +
         currentMembers * 0.12 +
@@ -636,6 +635,28 @@ class LocalElectionPlanService {
       return trimmed.substring(0, trimmed.length - 1);
     }
     return trimmed;
+  }
+
+  int _mergedCdpLocalMembers(
+    LocalElectionPrefecturePlan plan,
+    LocalElectionPrefectureReality? reality,
+  ) {
+    final benchmark = reality?.cdpLocalMembers ?? 0;
+    if (benchmark <= 0) {
+      return plan.cdpLocalMembers;
+    }
+    return benchmark;
+  }
+
+  String _mergedCdpSourceUrl(
+    LocalElectionPrefecturePlan plan,
+    LocalElectionPrefectureReality? reality,
+  ) {
+    final sourceUrl = reality?.cdpSourceUrl.trim() ?? '';
+    if (sourceUrl.isEmpty || (reality?.cdpLocalMembers ?? 0) <= 0) {
+      return plan.cdpSourceUrl;
+    }
+    return sourceUrl;
   }
 }
 

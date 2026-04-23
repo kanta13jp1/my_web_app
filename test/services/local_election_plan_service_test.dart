@@ -332,6 +332,74 @@ void main() {
     expect(updatedTottori.kgiTargetLocalMembers, 1);
   });
 
+  test('auto update preserves existing cdp benchmarks when snapshot omits them',
+      () async {
+    const service = LocalElectionPlanService();
+    final prefs = await SharedPreferences.getInstance();
+    final plan = await service.loadPlan(prefs: prefs);
+    final tokyo =
+        plan.prefectures.firstWhere((item) => item.prefecture == '東京');
+    final seededPlan = plan.copyWith(
+      prefectures: <LocalElectionPrefecturePlan>[
+        for (final item in plan.prefectures)
+          if (item.prefecture == tokyo.prefecture)
+            item.copyWith(
+              cdpLocalMembers: 83,
+              cdpSourceUrl: 'https://cdp-japan.jp/members/prefecture/tokyo',
+            )
+          else
+            item,
+      ],
+    );
+    final now = DateTime(2026, 4, 23, 10);
+
+    final updated = service.buildAutoUpdatedPlan(
+      seededPlan,
+      LocalElectionRealitySnapshot(
+        fetchedAt: now,
+        baselineCurrentLocalMembers: 340,
+        officialCurrentLocalMembers: 356,
+        targetLocalMembers: 700,
+        baselineNetIncreaseRequired: 360,
+        actualNetIncreaseRequired: 344,
+        official2023FirstHalfWins: 62,
+        official2023SecondHalfWins: 121,
+        official2023TotalWins: 183,
+        aiSummary: '',
+        aiAlerts: const <String>[],
+        aiStrategicNotes: const <String>[],
+        scheduleAiSummary: '',
+        scheduleAiAlerts: const <String>[],
+        sources: const <LocalElectionRealitySource>[],
+        prefectures: <LocalElectionPrefectureReality>[
+          LocalElectionPrefectureReality(
+            prefecture: tokyo.prefecture,
+            sourceUrl: 'https://example.com/tokyo',
+            currentMembers: 45,
+            prefecturalAssemblyMembers: 9,
+            municipalAssemblyMembers: 36,
+            cdpLocalMembers: 0,
+            cdpSourceUrl: '',
+          ),
+        ],
+        members: const <LocalElectionLegislatorProfile>[],
+        upcomingSchedules: const <LocalElectionScheduleEntry>[],
+      ),
+      now: now,
+    );
+
+    final updatedTokyo = updated.prefectures.firstWhere(
+      (item) => item.prefecture == tokyo.prefecture,
+    );
+    expect(updatedTokyo.currentMembers, 45);
+    expect(updatedTokyo.cdpLocalMembers, 83);
+    expect(
+      updatedTokyo.cdpSourceUrl,
+      'https://cdp-japan.jp/members/prefecture/tokyo',
+    );
+    expect(updatedTokyo.notes, contains('立憲83人'));
+  });
+
   test('auto update matches Kyoto reality even when official name has suffix',
       () async {
     const service = LocalElectionPlanService();
