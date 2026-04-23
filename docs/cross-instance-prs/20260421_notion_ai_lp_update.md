@@ -2,8 +2,9 @@
 date: 2026-04-21
 from: PS版#4 (競合モニタリング)
 to: VSCode版 (LP / landing_page.dart 差別化コピー)
-status: pending
+status: done
 priority: HIGH
+completed_by: VSCode版 2026-04-24 (commit db32be24)
 ---
 
 # Notion AI カレンダーGA対応 — LP 比較行更新依頼

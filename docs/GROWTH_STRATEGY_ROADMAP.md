@@ -15782,3 +15782,92 @@ CEO感 ミッション駆動 優しいmentor 6部署バランス 商品=ユー�
 9. ゴール=IPO ✅ — AI知識ハブとしての差別化強化
 
 ### commit: 3be8c8e8
+### commit: TBD
+## VSCode版 Session (2026-04-24) — LP 競合比較更新 + 差別化軸追加
+
+### タスク
+
+- **LP: LINE AI 価格訂正** — `¥5,000/月 (LINE Business B2B)` → `¥750/月 (LINE AI 個人向け, 5項目のみ)`
+  - PS#4 S29 検証値 (7 sources) を反映。個人向け比較表に B2B 商材掲載の誤誘導を是正
+  - commit: db32be24
+- **LP: Notion AI GA 対応 FAQ 更新** — カレンダー/Mail/Slack GA 認定しつつ財務・健康・KPI 自己比較の優位を明示
+  - 「Notionと何が違うの?」→「Notion AI がカレンダー・メール・Slack連携を始めました。それでも違いはありますか?」に刷新
+  - commit: db32be24
+- **LP: 差別化軸7 FAQ 新設** — AI vendor 分散 (LINE AI=OpenAI単一 / 自分株式会社=Anthropic+Gemini+Nova 3社)
+  - commit: db32be24
+- **Design tokens: Batch 19 残 7 pages** — Colors.red/green → hex 完了
+  - commit: 4a04ef3e
+
+### Philosophy Alignment (Rule 22)
+
+| 原則 | 評価 |
+|------|------|
+| 1. CEO感 (数字の正確さ = 経営判断資産) | ✅ |
+| 2. ミッション駆動 (LP訴求力向上) | ✅ |
+| 3. 優しいmentor | — |
+| 4. 6部署バランス | ✅ (LP で 6 部署統合訴求強化) |
+| 5. 商品=ユーザー価値 (誤情報排除) | ✅ |
+| 6. 資本=時間 | — |
+| 7. BS原則 (vendor分散を資産として明示) | ✅ |
+| 8. KPI=昨日の自分 | — |
+| 9. ゴール=IPO/ウェルビーイング | — |
+
+**6/9 ✅**
+
+### 実施内容
+- **AI大学 148社化**: 6プロバイダー追加 + registry/UI sync
+  - sierra_ai (Bret Taylor / ARR $150M / $10B val)
+  - figure_ai (Figure 03 / Helix VLA 自社化 / $39B val)
+  - replit (Agent 4 canvas / FY2025 $240M 24× / $9B val)
+  - cursor (Anysphere / $9B val / Claude+GPT-4o)
+  - lovable (Anton Osika / $120M ARR / $155M B / $1.7B val)
+  - bolt_new (StackBlitz WebContainer / OSS)
+- **registry sync**: jina/oxen/lightning → *_ai rename + 17 missing entries追加
+- **UI sync**: _providerMeta 142→148 / _quizzes +6 / _fallback +6
+- **ai-university-update.yml**: RSS 6行追加
+
+### Philosophy Alignment (9/9)
+1. CEO感 ✅ — Win専任タスク自己完結
+2. ミッション駆動 ✅ — AI大学でユーザー価値向上
+3. 優しいmentor ✅ — 詳細な日本語コンテンツ
+4. 6部署バランス ✅ — 学習・研究部署強化
+5. 商品=ユーザー価値 ✅ — 148社比較でユーザー選択肢増
+6. 資本=時間 ✅ — 1セッション6社バッチ処理
+7. 資産負債 ✅ — AI大学はユーザー獲得資産
+8. KPI=昨日の自分 ✅ — 131→148社 (17社追加)
+9. ゴール=IPO ✅ — AI知識ハブとしての差別化強化
+
+### commit: 3be8c8e8
+
+---
+
+## VSCode版 Session (2026-04-24) — LP 競合比較更新 + 差別化軸追加
+
+### タスク
+
+- **LP: LINE AI 価格訂正** — `¥5,000/月 (LINE Business B2B)` → `¥750/月 (LINE AI 個人向け, 5項目のみ)`
+  - PS#4 S29 検証値 (7 sources) を反映。個人向け比較表に B2B 商材掲載の誤誘導を是正
+  - commit: db32be24
+- **LP: Notion AI GA 対応 FAQ 更新** — カレンダー/Mail/Slack GA 認定しつつ財務・健康・KPI 自己比較の優位を明示
+  - 「Notionと何が違うの?」→「Notion AI がカレンダー・メール・Slack連携を始めました。それでも違いはありますか?」に刷新
+  - commit: db32be24
+- **LP: 差別化軸7 FAQ 新設** — AI vendor 分散 (LINE AI=OpenAI単一 / 自分株式会社=Anthropic+Gemini+Nova 3社)
+  - commit: db32be24
+- **Design tokens: Batch 19 残 7 pages** — Colors.red/green → hex 完了
+  - commit: 4a04ef3e
+
+### Philosophy Alignment (Rule 22)
+
+| 原則 | 評価 |
+|------|------|
+| 1. CEO感 (数字の正確さ = 経営判断資産) | ✅ |
+| 2. ミッション駆動 (LP訴求力向上) | ✅ |
+| 3. 優しいmentor | — |
+| 4. 6部署バランス | ✅ (LP で 6 部署統合訴求強化) |
+| 5. 商品=ユーザー価値 (誤情報排除) | ✅ |
+| 6. 資本=時間 | — |
+| 7. BS原則 (vendor分散を資産として明示) | ✅ |
+| 8. KPI=昨日の自分 | — |
+| 9. ゴール=IPO/ウェルビーイング | — |
+
+**6/9 ✅**
