@@ -110,6 +110,8 @@ jobs:
           upsert_provider "cursor"       "https://cursor.com/blog/rss.xml"                   "Cursor (Anysphere)"
           upsert_provider "lovable"      "https://lovable.dev/blog/rss.xml"                  "Lovable (Anton Osika)"
           upsert_provider "bolt_new"     "https://bolt.new/blog/rss.xml"                     "Bolt.new (StackBlitz)"
+          upsert_provider "v0"           "https://vercel.com/blog/rss.xml"                   "v0 by Vercel"
+          upsert_provider "windsurf"     "https://windsurf.com/blog/rss.xml"                 "Windsurf (旧 Codeium / Cascade)"
           # RSS廃止/URL無効 (静的seedコンテンツを維持):
           # anthropic, meta, x, deepseek, mistral, perplexity, groq, cohere, ibm, sakana, baidu, stability, core, cerebras, prover
           # black_forest_labs, liquid_ai, recraft, krea, tencent, bytedance, inception_labs, world_labs, runware, sambanova

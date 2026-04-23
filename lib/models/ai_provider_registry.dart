@@ -95,7 +95,7 @@ class AiProviderEntry {
   });
 }
 
-/// AI大学 登録プロバイダー全件のステータスカタログ (148社, 2026-04-24時点)
+/// AI大学 登録プロバイダー全件のステータスカタログ (150社, 2026-04-24時点)
 ///
 /// 実装済み: ai-assistant / ai-hub / ai-search に統合済みのもの
 /// 要APIキー: コード対応済みだが Supabase Secrets に追加が必要
@@ -1078,7 +1078,8 @@ const List<AiProviderEntry> kAiProviderRegistry = [
     displayName: 'Thinking Machines Lab',
     status: AiProviderStatus.notImplemented,
     entryPoint: '(未実装 — Tinker fine-tune API / Mira Murati 創業)',
-    note: 'Mira Murati (ex-OpenAI CTO) + John Schulman 創業 / \$2B seed / Tinker API',
+    note:
+        'Mira Murati (ex-OpenAI CTO) + John Schulman 創業 / \$2B seed / Tinker API',
   ),
   AiProviderEntry(
     id: 'kyutai',
@@ -1120,7 +1121,8 @@ const List<AiProviderEntry> kAiProviderRegistry = [
     displayName: 'Isomorphic Labs',
     status: AiProviderStatus.notImplemented,
     entryPoint: '(未実装 — AlphaFold 3 / IsoDDE 創薬 AI)',
-    note: 'Demis Hassabis Nobel 2024 / DeepMind spinout / Eli Lilly + Novartis \$3B 契約',
+    note:
+        'Demis Hassabis Nobel 2024 / DeepMind spinout / Eli Lilly + Novartis \$3B 契約',
   ),
 
   // ===== AI 企業・vibe-coding (2026-04-21 追加) =====
@@ -1129,21 +1131,24 @@ const List<AiProviderEntry> kAiProviderRegistry = [
     displayName: 'Sierra',
     status: AiProviderStatus.notImplemented,
     entryPoint: '(未実装 — Agentic CX SaaS / Fortune 50 顧客)',
-    note: 'Bret Taylor (OpenAI 会長) + Clay Bavor 創業 / ARR \$150M / \$10B valuation',
+    note:
+        'Bret Taylor (OpenAI 会長) + Clay Bavor 創業 / ARR \$150M / \$10B valuation',
   ),
   AiProviderEntry(
     id: 'figure_ai',
     displayName: 'Figure AI',
     status: AiProviderStatus.notImplemented,
     entryPoint: '(未実装 — Figure 03 人型ロボット / Helix VLA)',
-    note: 'Brett Adcock 創業 / Helix VLA 自社化 + BMW 工場 / \$1.9B 累計 / \$39B valuation',
+    note:
+        'Brett Adcock 創業 / Helix VLA 自社化 + BMW 工場 / \$1.9B 累計 / \$39B valuation',
   ),
   AiProviderEntry(
     id: 'replit',
     displayName: 'Replit',
     status: AiProviderStatus.notImplemented,
     entryPoint: '(未実装 — Agent 4 cloud IDE + 即本番 deploy)',
-    note: 'Agent 4 canvas / FY2025 \$240M (24×) / \$400M Series D Georgian / \$9B val',
+    note:
+        'Agent 4 canvas / FY2025 \$240M (24×) / \$400M Series D Georgian / \$9B val',
   ),
   AiProviderEntry(
     id: 'cursor',
@@ -1157,7 +1162,8 @@ const List<AiProviderEntry> kAiProviderRegistry = [
     displayName: 'Lovable',
     status: AiProviderStatus.notImplemented,
     entryPoint: '(未実装 — AI full-stack web builder / GitHub 連携)',
-    note: 'Anton Osika 創業 / \$120M ARR / \$155M Series B \$1.7B val / Claude Sonnet',
+    note:
+        'Anton Osika 創業 / \$120M ARR / \$155M Series B \$1.7B val / Claude Sonnet',
   ),
   AiProviderEntry(
     id: 'bolt_new',
@@ -1165,6 +1171,22 @@ const List<AiProviderEntry> kAiProviderRegistry = [
     status: AiProviderStatus.notImplemented,
     entryPoint: '(未実装 — StackBlitz WebContainer AI builder)',
     note: 'StackBlitz 製ブラウザ内 AI full-stack builder / WebContainer でゼロ設定',
+  ),
+  AiProviderEntry(
+    id: 'v0',
+    displayName: 'v0 by Vercel',
+    status: AiProviderStatus.notImplemented,
+    entryPoint: '(未実装 — AI UI generator + Vercel 直結 deploy)',
+    note:
+        'Vercel 公式 AI UI 生成 / React + Next.js + shadcn/ui / 1 click Vercel deploy',
+  ),
+  AiProviderEntry(
+    id: 'windsurf',
+    displayName: 'Windsurf',
+    status: AiProviderStatus.notImplemented,
+    entryPoint: '(未実装 — Cascade agent + Supercomplete IDE)',
+    note:
+        '旧 Codeium / Cascade 自律 multi-file agent + Supercomplete / SOC 2 + SAML SSO',
   ),
 ];
 

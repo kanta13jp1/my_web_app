@@ -939,6 +939,18 @@ final Map<String, _ProviderMeta> _providerMeta = {
     color: const Color(0xFF0EA5E9),
     officialUrl: 'https://bolt.new/',
   ),
+  'v0': _ProviderMeta(
+    name: 'v0 by Vercel',
+    emoji: '▲',
+    color: const Color(0xFF000000),
+    officialUrl: 'https://v0.dev/',
+  ),
+  'windsurf': _ProviderMeta(
+    name: 'Windsurf',
+    emoji: '🏄',
+    color: const Color(0xFF06B6D4),
+    officialUrl: 'https://windsurf.com/',
+  ),
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1935,6 +1947,26 @@ final Map<String, _Quiz> _quizzes = {
       'ブラウザ内で Node.js を完全実行しサーバーレスで開発できる',
       'Wasm で iOS 上のみ動作する',
       'GitHub Codespaces のラッパー',
+    ],
+    correct: 1,
+  ),
+  'v0': _Quiz(
+    question: 'v0 by Vercel が生成するコードのフレームワークは？',
+    options: [
+      'Vue + Nuxt',
+      'React + Next.js + shadcn/ui',
+      'Svelte + SvelteKit',
+      'Angular',
+    ],
+    correct: 1,
+  ),
+  'windsurf': _Quiz(
+    question: 'Windsurf の Cascade agent が他の AI IDE と差別化される点は？',
+    options: [
+      'ブラウザ内で完結する cloud IDE',
+      '自律 multi-file edit + enterprise 向け SOC 2 + SAML SSO',
+      '無料で無制限に使える OSS',
+      'Windows 専用に最適化',
     ],
     correct: 1,
   ),
@@ -4972,6 +5004,67 @@ StackBlitz が 2024 年リリース。WebContainer 技術でブラウザ内に
 | GitHub export | △ (DL のみ) | ✅ native | △ |
 | コード所有 | △ | ✅ | ✅ |
 | deploy | Netlify/SB | Netlify/SB | replit.app |
+''',
+  'v0': '''
+# v0 by Vercel — AI UI generator + Vercel 直結 deploy
+
+Vercel が 2023-10 に β 公開した AI UI/コード生成プラットフォーム。
+テキストプロンプト → React + Next.js + Tailwind + shadcn/ui の生成 → v0.dev で
+即プレビュー → Vercel へ 1 click deploy の統合 UX。
+
+## 特徴
+- **Chat-first UI generation**: 自然言語 → shadcn/ui コンポーネント
+- **v0.dev live preview**: 生成物を共有 URL で公開プレビュー可能
+- **Vercel deploy button**: 1 click で `<project>.vercel.app` 即本番
+- **Next.js App Router ネイティブ**: server components 対応コード生成
+
+## 比較 (vibe-coding 4 強との差別化)
+| 観点 | v0 | Lovable | Bolt.new | Replit |
+|------|----|---------|----------|--------|
+| 出力形式 | React+Next.js+shadcn | Vite+Supabase | Node.js full-stack | 任意 runtime |
+| deploy 先 | **Vercel 直結** | Netlify/SB | Netlify/SB | replit.app |
+| モデル | OpenAI + Anthropic mix | Claude Sonnet | Claude + GPT-4o | Claude + GPT-4o |
+| 対象 | **UI/コンポーネント特化** | SaaS 1st draft | full-stack prototype | 学習 + prod |
+
+## 料金 (2026-04)
+- Pro \$20/月 / Premium \$50/月 (seat pricing)
+- Enterprise は Vercel 契約と統合
+
+## 自分株式会社での活用
+- LP 改修の high-fidelity draft (3 variant 生成 → 最良採用)
+- admin UI prototype (社内デモ用「動く画面」)
+- Cursor / Claude Code への port 用途
+''',
+  'windsurf': '''
+# Windsurf — Cascade agent + Supercomplete 搭載 AI IDE
+
+2024 年 Codeium から リブランディングして生まれた AI-native IDE。
+VS Code fork に Cascade agent (自律 multi-file edit) + Supercomplete (predictive edit)
+を統合。エンタープライズ向け契約 + SOC 2 + SAML SSO が Cursor との差別化軸。
+
+## Cascade agent (2025 launch)
+- **自律 multi-file edit**: 指示 1 回で repo 横断変更 (refactor / 大規模機能追加)
+- **Flow state**: ユーザーの操作を agent がリアルタイム把握・先読み
+- **Undo history**: 各 step snapshot → 自然言語 rollback 可
+- **Terminal integration**: コマンド実行 + 出力 parse → 次 step 自動起案
+
+## Supercomplete
+- ファイル横断の文脈を把握した predictive edit
+- 次にユーザーが書きそうな「diff」を先回り提案
+- Cursor Tab と並ぶ IDE agent 2 大 autocomplete
+
+## 比較
+| 観点 | Windsurf | Cursor | Cline (OSS) |
+|------|----------|--------|-------------|
+| 価格 | Free + Pro \$15/月 | Free + Pro \$20/月 | BYOK |
+| Agent | **Cascade** 自律 | Composer 対話 | Plan/Act |
+| Enterprise | **SOC 2 + SAML SSO** 強み | 追加課金 | 個人のみ |
+| Self-hosted | ✅ VPC 内 deploy | ❌ | — |
+
+## 自分株式会社での活用
+- Cursor (対話) vs Windsurf (自律) で routing 判断
+- Enterprise 向け compliance KPI 設計時の referent
+- AI大学 vibe-coding 三強対比 (Cursor / Windsurf / Cline)
 ''',
 };
 
