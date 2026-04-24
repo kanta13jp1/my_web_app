@@ -355,3 +355,7 @@ WHERE title = 'ai-hub provider.chat 蜈ｨ蟇ｾ蠢・;
 - 対応内容: AI大学の動画レッスン画面に `HeyGen AI大学 v3 設計` を追加し、選択教材ごとに HeyGen Avatar V 用の制作ブリーフ、5シーン構成、画面テキスト、多言語展開メモを自動生成できるようにした。
 - 実装補足: 動画生成プロンプトも HeyGen v3 前提に更新し、短尺・多言語リップシンク翻訳に崩れにくい教材原稿になるようにした。設計全文はコピー可能。
 - WBS DB反映: migration `20260425034500_wbs_codex_heygen_ai_university_v3.sql`
+- 実担当タスク: `[追加要望] 【HeyGen】ブログコンテンツの動画化`
+- 対応内容: テックブログ投稿管理の Schedule 自動生成下書きを展開すると、各ブログ下書きごとに `HeyGenブログ動画化` ブリーフを確認・コピーできるようにした。
+- 実装補足: 下書きタイトル、配信先、URL、draft path から HeyGen Avatar V 用の制作ブリーフ、5シーン構成、SNS投稿文、X / YouTube Shorts / LinkedIn 再利用チェックリストを生成する共通サービスを追加。
+- WBS DB反映: migration `20260425040000_wbs_codex_heygen_blog_video.sql`

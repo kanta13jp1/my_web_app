@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:intl/intl.dart';
+
+import '../services/heygen_blog_video_service.dart';
 
 /// テック技術ブログ投稿管理ページ
 /// Zenn/Qiita/はてなブログ/note/Medium/dev.to/Hashnode/Substack/GitHub Pages/NOTION/X Article への
@@ -209,6 +212,17 @@ class _TechBlogTrackerPageState extends State<TechBlogTrackerPage> {
       check = check.subtract(const Duration(days: 1));
     }
     return streak;
+  }
+
+  Future<void> _copyHeyGenBlogVideoPlan(HeyGenBlogVideoPlan plan) async {
+    await Clipboard.setData(ClipboardData(text: plan.clipboardText));
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('HeyGenブログ動画化ブリーフをコピーしました'),
+        backgroundColor: Color(0xFF26A69A),
+      ),
+    );
   }
 
   int get _totalPostedDays {
@@ -547,12 +561,18 @@ class _TechBlogTrackerPageState extends State<TechBlogTrackerPage> {
           final status = draft['status']?.toString() ?? 'draft';
           final title = draft['title']?.toString() ?? '(タイトルなし)';
           final platforms = draft['target_platforms'];
-          final platformLabels = (platforms is List)
-              ? platforms.map((p) {
-                  final match = _platforms.where((pl) => pl.id == p);
-                  return match.isNotEmpty ? match.first.label : p.toString();
-                }).join(', ')
-              : '';
+          final targetPlatformLabels = (platforms is List)
+              ? platforms
+                  .map<String>((p) {
+                    final match = _platforms.where((pl) => pl.id == p);
+                    return match.isNotEmpty ? match.first.label : p.toString();
+                  })
+                  .where((label) => label.trim().isNotEmpty)
+                  .toList(
+                    growable: false,
+                  )
+              : const <String>[];
+          final platformLabels = targetPlatformLabels.join(', ');
           final createdAt = DateTime.tryParse(
             draft['created_at']?.toString() ?? '',
           );
@@ -560,12 +580,22 @@ class _TechBlogTrackerPageState extends State<TechBlogTrackerPage> {
               ? DateFormat('MM/dd HH:mm').format(createdAt)
               : '';
           final isPosted = status == 'posted';
+          final plan = HeyGenBlogVideoService.buildPlan(
+            title: title,
+            draftPath: draft['draft_path']?.toString(),
+            sourceUrl: draft['url']?.toString(),
+            targetPlatforms: targetPlatformLabels,
+          );
 
           return Card(
             color: const Color(0xFF1E1E1E),
             margin: const EdgeInsets.only(bottom: 6),
-            child: ListTile(
-              dense: true,
+            child: ExpansionTile(
+              tilePadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 2,
+              ),
+              childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
               leading: Icon(
                 isPosted ? Icons.check_circle : Icons.edit_note,
                 color: isPosted
@@ -584,7 +614,7 @@ class _TechBlogTrackerPageState extends State<TechBlogTrackerPage> {
                 overflow: TextOverflow.ellipsis,
               ),
               subtitle: Text(
-                '$dateLabel  |  $platformLabels',
+                '$dateLabel  |  $platformLabels  |  ${isPosted ? '投稿済み' : '下書き'}',
                 style: TextStyle(
                   fontSize: 11,
                   color: isDark
@@ -613,10 +643,120 @@ class _TechBlogTrackerPageState extends State<TechBlogTrackerPage> {
                   ),
                 ),
               ),
+              children: [_buildHeyGenBlogVideoPlan(plan, isDark)],
             ),
           );
         })),
       ],
+    );
+  }
+
+  Widget _buildHeyGenBlogVideoPlan(HeyGenBlogVideoPlan plan, bool isDark) {
+    final foreground = isDark ? Colors.white : const Color(0xFFE5E7EB);
+    final muted = isDark ? const Color(0xFF9CA3AF) : const Color(0xFFC7D2FE);
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFF111827),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: const Color(0xFF334155)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.video_camera_front, color: Color(0xFF38BDF8)),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'HeyGenブログ動画化',
+                  style: TextStyle(
+                    color: foreground,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    height: 1.4,
+                  ),
+                ),
+              ),
+              TextButton.icon(
+                onPressed: () => _copyHeyGenBlogVideoPlan(plan),
+                icon: const Icon(Icons.copy, size: 16),
+                label: const Text('コピー'),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            plan.productionBrief,
+            style: TextStyle(color: muted, fontSize: 12, height: 1.5),
+          ),
+          const SizedBox(height: 12),
+          ...plan.scenes.map(
+            (scene) => Container(
+              width: double.infinity,
+              margin: const EdgeInsets.only(bottom: 8),
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: const Color(0xFF0F172A),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: const Color(0xFF1E293B)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    scene.label,
+                    style: const TextStyle(
+                      color: Color(0xFF93C5FD),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      height: 1.4,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    scene.narration,
+                    style: const TextStyle(
+                      color: Color(0xFFE5E7EB),
+                      fontSize: 12,
+                      height: 1.5,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Caption: ${scene.caption}',
+                    style: const TextStyle(
+                      color: Color(0xFF94A3B8),
+                      fontSize: 11,
+                      height: 1.5,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: plan.reuseChecklist
+                .map(
+                  (item) => Chip(
+                    label: Text(item),
+                    labelStyle: const TextStyle(
+                      color: Color(0xFFE5E7EB),
+                      fontSize: 11,
+                    ),
+                    backgroundColor: const Color(0xFF1E293B),
+                    side: const BorderSide(color: Color(0xFF334155)),
+                  ),
+                )
+                .toList(growable: false),
+          ),
+        ],
+      ),
     );
   }
 
