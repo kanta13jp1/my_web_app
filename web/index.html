@@ -560,6 +560,23 @@
       }
     });
   </script>
+  <script>
+    // Phase 3 (#551): SW registration failure fallback — suppress unhandled SW rejections
+    // flutter_bootstrap.js registers flutter_service_worker.js; on ERR_INSUFFICIENT_RESOURCES
+    // this can throw an unhandled rejection that breaks the app startup.
+    window.addEventListener('unhandledrejection', function(event) {
+      if (event.reason && String(event.reason).indexOf('service') !== -1) {
+        event.preventDefault();
+        console.warn('[SW] Registration failed, continuing without service worker:', event.reason);
+      }
+    });
+    // Ensure SW registration errors don't surface as fatal on unsupported browsers
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('flutter-first-frame', function() {
+        navigator.serviceWorker.getRegistrations().catch(function() {});
+      });
+    }
+  </script>
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>
