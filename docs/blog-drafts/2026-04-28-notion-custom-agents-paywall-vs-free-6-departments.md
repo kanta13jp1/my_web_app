@@ -1,7 +1,7 @@
 ---
 title: "Notion Custom Agents 5/4 から $10/1000 credit 課金 — 無料で 6 部署を全部回す方法"
 tags: Notion,AI,個人開発,buildinpublic,SaaS
-published: false
+published: true
 ---
 
 # Notion Custom Agents 5/4 から $10/1000 credit 課金 — 無料で 6 部署を全部回す方法
