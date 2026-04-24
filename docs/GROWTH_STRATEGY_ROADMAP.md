@@ -17320,6 +17320,7 @@ supabase migration repair --status reverted 20260424241500 2>/dev/null || true
 
 9/9 ✅ — CI緑化 + Meta seed 追加 / タイムスタンプ衝突パターンを feedback_correction に記録必須
 
+<<<<<<< Updated upstream
 ---
 
 ## PS#1 S33 — Rule 17 WF health check + migration duplicate fix (2026-04-24 19:54 JST)
@@ -17342,3 +17343,26 @@ supabase migration repair --status reverted 20260424241500 2>/dev/null || true
 ### Philosophy Alignment (PS#1 S33)
 
 9/9 ✅ — migration 重複検出・修正 / CI 安定性維持
+=======
+## PS#6 S33 — focus-timer → tools-hub:focus.* migration + duplicate migration fix (2026-04-24 20:00 JST)
+
+### 実施内容
+
+**EF hub migration #4** (82→81):
+- `focus-timer` → `tools-hub:focus.start/complete/cancel/stats`
+- tools-hub に focus.complete/cancel/stats 3 action 新規追加
+- focus.start: task_label/duration_minutes/status フィールド拡張
+- Flutter page: GET queryParams → POST body に変換 (tools-hub は POST のみ)
+- Delete focus-timer source dir + DEAD_LIST 追加
+
+**deploy 緑化作業**:
+- S32 commit `bbb4428f` が `20260425053000` 重複で FAIL (PS#4 が wbs + meta 同一タイムスタンプ)
+- `20260425053000_wbs_codex_manus_my_agent_provider.sql` → `054500` リネーム
+- deploy-prod.yml repair list に 051500/053000/054500 追加
+
+### EF count: 85→81 (S15から累計 -4)
+
+### Philosophy Alignment (PS#6 S33)
+
+9/9 ✅ — Migration broken action 修正パターン継続 / UX downgrade 許容 (hub_data vs focus_sessions)
+>>>>>>> Stashed changes
