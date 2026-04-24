@@ -132,6 +132,9 @@ jobs:
           supabase migration repair --status reverted 20260425043000 2>/dev/null || true
           supabase migration repair --status reverted 20260425044500 2>/dev/null || true
           supabase migration repair --status reverted 20260425050000 2>/dev/null || true
+          supabase migration repair --status reverted 20260425051500 2>/dev/null || true
+          supabase migration repair --status reverted 20260425053000 2>/dev/null || true
+          supabase migration repair --status reverted 20260425054500 2>/dev/null || true
           # Run migrations with auto-repair retry.
           # If db push fails with "Remote migration versions not found", extract the
           # stuck version numbers, repair them as reverted, and retry once.
@@ -312,6 +315,7 @@ jobs:
             qr-code-generator
             mindmap-diagram
             bookmark-sync
+            focus-timer
           )
           EXISTING=$(supabase functions list --output json 2>/dev/null | jq -r '.[] | (.slug // .name // empty)' 2>/dev/null || echo "")
           if [ -z "$EXISTING" ]; then

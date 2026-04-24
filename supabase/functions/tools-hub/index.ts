@@ -1471,9 +1471,49 @@ serve(async (req) => {
 
       case "focus.start": {
         const item = await addItem(admin, "focus_timer", userId, {
-          task: body.task ?? "", started_at: new Date().toISOString(),
+          task: body.task_label ?? body.task ?? "",
+          duration_minutes: body.duration_minutes ?? 25,
+          started_at: new Date().toISOString(),
+          status: "active",
         });
         return json({ success: true, session: item });
+      }
+      case "focus.complete": {
+        const { data: fm } = await admin.from("hub_data")
+          .select("metadata").eq("id", String(body.session_id ?? "")).eq("source", "focus_timer").maybeSingle();
+        if (fm) {
+          await admin.from("hub_data")
+            .update({ metadata: { ...(fm.metadata as Record<string, unknown>), status: "completed", completed_at: new Date().toISOString() } })
+            .eq("id", String(body.session_id ?? "")).eq("source", "focus_timer");
+        }
+        return json({ success: true });
+      }
+      case "focus.cancel": {
+        const { data: fc } = await admin.from("hub_data")
+          .select("metadata").eq("id", String(body.session_id ?? "")).eq("source", "focus_timer").maybeSingle();
+        if (fc) {
+          await admin.from("hub_data")
+            .update({ metadata: { ...(fc.metadata as Record<string, unknown>), status: "cancelled" } })
+            .eq("id", String(body.session_id ?? "")).eq("source", "focus_timer");
+        }
+        return json({ success: true });
+      }
+      case "focus.stats": {
+        const days = parseInt(String(body.days ?? "30"), 10);
+        const since = new Date(Date.now() - days * 86400000).toISOString();
+        const allItems = await listItems(admin, "focus_timer", userId, 200);
+        const recent = allItems.filter((i: Record<string, unknown>) => String(i.created_at ?? "") >= since);
+        const completed = recent.filter((i: Record<string, unknown>) => (i.metadata as Record<string, unknown>)?.status === "completed");
+        const totalMinutes = completed.reduce((s: number, i: Record<string, unknown>) =>
+          s + (Number((i.metadata as Record<string, unknown>)?.duration_minutes) || 25), 0);
+        const focusScore = Math.min(100, Math.round(completed.length * 10));
+        return json({
+          success: true,
+          sessions: recent.map((i: Record<string, unknown>) => ({
+            ...(i.metadata as Record<string, unknown>), id: i.id, created_at: i.created_at,
+          })),
+          stats: { total_sessions: completed.length, total_minutes: totalMinutes, focus_score: focusScore },
+        });
       }
 
       // ── Clipboard History ────────────────────────────────────────────────────

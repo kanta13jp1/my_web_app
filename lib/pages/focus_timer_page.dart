@@ -73,9 +73,9 @@ class _FocusTimerPageState extends State<FocusTimerPage>
     }
     try {
       final res = await _supabase.functions.invoke(
-        'focus-timer',
+        'tools-hub',
         body: {
-          'action': 'start',
+          'action': 'focus.start',
           'task_label':
               _taskController.text.isEmpty ? '集中作業' : _taskController.text,
           'duration_minutes': _workMinutes,
@@ -123,8 +123,8 @@ class _FocusTimerPageState extends State<FocusTimerPage>
     if (_activeSessionId != null) {
       try {
         await _supabase.functions.invoke(
-          'focus-timer',
-          body: {'action': 'cancel', 'session_id': _activeSessionId},
+          'tools-hub',
+          body: {'action': 'focus.cancel', 'session_id': _activeSessionId},
         );
       } catch (_) {}
       _activeSessionId = null;
@@ -138,8 +138,8 @@ class _FocusTimerPageState extends State<FocusTimerPage>
     if (!_isBreak && _activeSessionId != null) {
       try {
         await _supabase.functions.invoke(
-          'focus-timer',
-          body: {'action': 'complete', 'session_id': _activeSessionId},
+          'tools-hub',
+          body: {'action': 'focus.complete', 'session_id': _activeSessionId},
         );
         _activeSessionId = null;
       } catch (_) {}
@@ -193,9 +193,8 @@ class _FocusTimerPageState extends State<FocusTimerPage>
     setState(() => _loadingStats = true);
     try {
       final res = await _supabase.functions.invoke(
-        'focus-timer',
-        method: HttpMethod.get,
-        queryParameters: {'action': 'stats', 'days': '30'},
+        'tools-hub',
+        body: {'action': 'focus.stats', 'days': 30},
       );
       final data = res.data;
       if (data is Map<String, dynamic>) {
