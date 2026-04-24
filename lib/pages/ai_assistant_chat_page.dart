@@ -27,6 +27,7 @@ class _AiAssistantChatPageState extends State<AiAssistantChatPage>
   List<_ChatMessage> _messages = [];
   _ChatImageAttachment? _selectedImage;
   bool _preferVideoResponse = false;
+  String _selectedAgentProvider = 'gemini';
   bool _isLoading = false;
   bool _isListening = false;
   bool _speechSupported = true;
@@ -160,6 +161,9 @@ class _AiAssistantChatPageState extends State<AiAssistantChatPage>
                 videoStatus: meta['video_status']?.toString(),
                 videoProvider: meta['video_provider']?.toString(),
                 videoReason: meta['video_reason']?.toString(),
+                agentProvider: meta['agent_provider']?.toString(),
+                manusTaskId: meta['manus_task_id']?.toString(),
+                manusTaskUrl: meta['manus_task_url']?.toString(),
               ),
             );
           }
@@ -200,6 +204,7 @@ class _AiAssistantChatPageState extends State<AiAssistantChatPage>
           'action': 'my_agent.chat',
           'message': displayText,
           'response_mode': _preferVideoResponse ? 'video' : 'text',
+          'provider': _preferVideoResponse ? 'gemini' : _selectedAgentProvider,
           if (image != null) ...{
             'imageBase64': image.base64,
             'mimeType': image.mimeType,
@@ -209,6 +214,7 @@ class _AiAssistantChatPageState extends State<AiAssistantChatPage>
       );
       final data = res.data as Map<String, dynamic>?;
       final video = data?['video'] as Map<String, dynamic>?;
+      final manus = data?['manus'] as Map<String, dynamic>?;
       final response = data?['response'] as String? ?? 'エラーが発生しました。';
       if (mounted) {
         setState(() {
@@ -224,6 +230,9 @@ class _AiAssistantChatPageState extends State<AiAssistantChatPage>
               videoStatus: video?['status']?.toString(),
               videoProvider: video?['provider']?.toString(),
               videoReason: video?['reason']?.toString(),
+              agentProvider: data?['provider']?.toString(),
+              manusTaskId: manus?['task_id']?.toString(),
+              manusTaskUrl: manus?['task_url']?.toString(),
             ),
           );
           _isLoading = false;
@@ -618,6 +627,76 @@ class _AiAssistantChatPageState extends State<AiAssistantChatPage>
                         ],
                       ),
                     ),
+                  if (!isUser &&
+                      ((message.agentProvider ?? '').toLowerCase() == 'manus' ||
+                          (message.manusTaskId ?? '').isNotEmpty ||
+                          (message.manusTaskUrl ?? '').isNotEmpty))
+                    Container(
+                      margin: const EdgeInsets.only(bottom: 8),
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withAlpha(18),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: Colors.white12),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              const Icon(
+                                Icons.route_outlined,
+                                size: 16,
+                                color: _orange,
+                              ),
+                              const SizedBox(width: 6),
+                              const Expanded(
+                                child: Text(
+                                  'Manus task',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    height: 1.4,
+                                  ),
+                                ),
+                              ),
+                              if ((message.manusTaskId ?? '').isNotEmpty)
+                                Flexible(
+                                  child: Text(
+                                    message.manusTaskId!,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    textAlign: TextAlign.right,
+                                    style: const TextStyle(
+                                      color: Colors.white54,
+                                      fontSize: 11,
+                                      height: 1.3,
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                          if ((message.manusTaskUrl ?? '').isNotEmpty) ...[
+                            const SizedBox(height: 8),
+                            OutlinedButton.icon(
+                              onPressed: () =>
+                                  _openExternalUrl(message.manusTaskUrl!),
+                              icon: const Icon(Icons.open_in_new, size: 16),
+                              label: const Text('Open Manus'),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: Colors.white,
+                                side: const BorderSide(color: Colors.white24),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 8,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
                   Text(
                     message.content,
                     style: TextStyle(
@@ -688,6 +767,57 @@ class _AiAssistantChatPageState extends State<AiAssistantChatPage>
               _buildSelectedImagePreview(_selectedImage!),
               const SizedBox(height: 8),
             ],
+            Row(
+              children: [
+                const Icon(
+                  Icons.psychology_alt_outlined,
+                  color: Colors.white54,
+                  size: 18,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: SegmentedButton<String>(
+                    segments: const [
+                      ButtonSegment(
+                        value: 'gemini',
+                        icon: Icon(Icons.chat_bubble_outline, size: 16),
+                        label: Text('Gemini'),
+                      ),
+                      ButtonSegment(
+                        value: 'manus',
+                        icon: Icon(Icons.route_outlined, size: 16),
+                        label: Text('Manus'),
+                      ),
+                    ],
+                    selected: {_selectedAgentProvider},
+                    onSelectionChanged: _isLoading || _preferVideoResponse
+                        ? null
+                        : (selection) => setState(
+                              () => _selectedAgentProvider = selection.first,
+                            ),
+                    style: ButtonStyle(
+                      foregroundColor:
+                          WidgetStateProperty.resolveWith((states) {
+                        return states.contains(WidgetState.selected)
+                            ? Colors.white
+                            : Colors.white70;
+                      }),
+                      backgroundColor:
+                          WidgetStateProperty.resolveWith((states) {
+                        return states.contains(WidgetState.selected)
+                            ? _orange.withAlpha(52)
+                            : Colors.white10;
+                      }),
+                      side: const WidgetStatePropertyAll(
+                        BorderSide(color: Colors.white12),
+                      ),
+                      visualDensity: VisualDensity.compact,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
             Row(
               children: [
                 ChoiceChip(
@@ -876,6 +1006,9 @@ class _ChatMessage {
     this.videoStatus,
     this.videoProvider,
     this.videoReason,
+    this.agentProvider,
+    this.manusTaskId,
+    this.manusTaskUrl,
   });
 
   final String role;
@@ -888,6 +1021,9 @@ class _ChatMessage {
   final String? videoStatus;
   final String? videoProvider;
   final String? videoReason;
+  final String? agentProvider;
+  final String? manusTaskId;
+  final String? manusTaskUrl;
 }
 
 class _ChatImageAttachment {

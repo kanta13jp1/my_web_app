@@ -566,9 +566,11 @@ const List<AiProviderEntry> kAiProviderRegistry = [
   AiProviderEntry(
     id: 'manus',
     displayName: 'Manus',
-    status: AiProviderStatus.implemented,
+    status: AiProviderStatus.apiKeyRequired,
     tier: AiProviderTier.premium,
-    entryPoint: '/agent-org: Manus-like multi-step autopilot',
+    envKeyName: 'MANUS_API_KEY',
+    entryPoint:
+        'ai-hub:my_agent.chat(provider=manus) / /agent-org: Manus-like autopilot',
     note: 'AI組織OSで目的を要件整理/KGI設計/主担当案/専門レビュー/CEO確認へ自動分解し、部門タスクとして委任する。',
   ),
   AiProviderEntry(

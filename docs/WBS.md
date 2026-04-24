@@ -367,3 +367,7 @@ WHERE title = 'ai-hub provider.chat 蜈ｨ蟇ｾ蠢・;
 - 対応内容: 競合機能同期画面に `Manus週次競合レポート` を追加し、最新の `competitor_feature` を集約して `competitor_report` として保存・確認できるようにした。
 - 実装補足: Enterprise Hub に `competitor.reports` と `competitor.weekly_manus_report` を追加し、KGI/CSF/KPI、競合別サマリー、次の実行案をMarkdownで生成する。
 - WBS DB反映: migration `20260425050000_wbs_codex_manus_competitor_weekly_report.sql`
+- 実担当タスク: `[追加要望] 【Manus AI】マイAIエージェント機能強化: my-ai-agent EFにManusのAPIを選択肢として追加`
+- 対応内容: AIアシスタントチャットから `Gemini / Manus` を切り替えられるようにし、Manus選択時は `MANUS_API_KEY` で公式 Manus task.create API に非同期タスクを作成するようにした。
+- 実装補足: `ai-hub my_agent.chat(provider=manus)` が task id / task url を返し、履歴にも `agent_provider` と Manus task metadata を保存する。Geminiテキスト回答とHedra動画回答は既存どおり残す。
+- WBS DB反映: migration `20260425053000_wbs_codex_manus_my_agent_provider.sql`

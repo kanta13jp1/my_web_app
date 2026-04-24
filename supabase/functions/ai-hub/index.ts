@@ -1822,6 +1822,70 @@ async function callGemini(
   return data.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
 }
 
+type ManusTaskResult = {
+  response: string;
+  taskId: string | null;
+  taskUrl: string | null;
+};
+
+async function callManusTask(
+  prompt: string,
+  apiKey: string,
+  image?: InlineImage,
+): Promise<ManusTaskResult> {
+  const baseUrl = (Deno.env.get("MANUS_API_BASE_URL") ??
+    "https://api.manus.ai/v2").replace(/\/+$/, "");
+  const manusPrompt = image
+    ? `${prompt}\n\nNote: an image was attached in my-ai-agent, but this Manus task.create integration sends the text prompt only.`
+    : prompt;
+  const res = await fetch(`${baseUrl}/task.create`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-manus-api-key": apiKey,
+    },
+    body: JSON.stringify({ prompt: manusPrompt }),
+  });
+  const rawText = await res.text();
+  let data: Record<string, unknown> = {};
+  if (rawText.trim()) {
+    try {
+      data = JSON.parse(rawText) as Record<string, unknown>;
+    } catch {
+      data = { raw: rawText };
+    }
+  }
+  if (!res.ok) {
+    const message = asString(
+      pick(data, "error") ?? pick(data, "message") ?? rawText,
+    );
+    throw new Error(`Manus ${res.status}: ${message.slice(0, 500)}`);
+  }
+
+  const taskId = asString(pick(data, "task_id")) ||
+    asString(pick(data, "id")) ||
+    asString(pick(data, "data", "task_id")) ||
+    asString(pick(data, "data", "id")) ||
+    null;
+  const taskUrl = asString(pick(data, "task_url")) ||
+    asString(pick(data, "url")) ||
+    asString(pick(data, "data", "task_url")) ||
+    asString(pick(data, "data", "url")) ||
+    null;
+  const detailLines = [
+    "Manus task submitted.",
+    taskId ? `task_id: ${taskId}` : null,
+    taskUrl ? `task_url: ${taskUrl}` : null,
+    "Open Manus to monitor the asynchronous execution result.",
+  ].filter(Boolean);
+
+  return {
+    response: detailLines.join("\n"),
+    taskId,
+    taskUrl,
+  };
+}
+
 serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -2087,12 +2151,13 @@ serve(async (req: Request) => {
       }
 
       case "my_agent.chat": {
-        const geminiKey = Deno.env.get("GEMINI_API_KEY") ?? "";
-        if (!geminiKey) {
-          return json({ error: "GEMINI_API_KEY not configured" }, 503);
-        }
         const message = asString(body.message) || "この画像を分析してください";
         const responseMode = asString(body.response_mode) || "text";
+        const requestedProvider = asString(body.provider) ||
+          asString(body.ai_provider) || "gemini";
+        const agentProvider = requestedProvider === "manus"
+          ? "manus"
+          : "gemini";
         const parsedImage = parseInlineImage(body);
         if (parsedImage.error) {
           return json({ error: parsedImage.error }, parsedImage.status ?? 400);
@@ -2111,6 +2176,7 @@ serve(async (req: Request) => {
         }ユーザーメッセージ: ${message}${imageInstruction}`;
         let response = "";
         let videoMetadata: Record<string, unknown> | null = null;
+        let manusMetadata: Record<string, unknown> | null = null;
         if (responseMode === "video") {
           const avatarImageUrl = asString(body.avatarImageUrl) || undefined;
           const voice = asString(body.voice) || undefined;
@@ -2151,16 +2217,39 @@ serve(async (req: Request) => {
             id: asString(result.id),
           };
         } else {
-          response = await callGemini(prompt, geminiKey, image);
+          if (agentProvider === "manus") {
+            const manusKey = Deno.env.get("MANUS_API_KEY") ?? "";
+            if (!manusKey) {
+              return json({
+                error: "MANUS_API_KEY not configured",
+                provider: "manus",
+              }, 503);
+            }
+            const result = await callManusTask(prompt, manusKey, image);
+            response = result.response;
+            manusMetadata = {
+              task_id: result.taskId,
+              task_url: result.taskUrl,
+            };
+          } else {
+            const geminiKey = Deno.env.get("GEMINI_API_KEY") ?? "";
+            if (!geminiKey) {
+              return json({ error: "GEMINI_API_KEY not configured" }, 503);
+            }
+            response = await callGemini(prompt, geminiKey, image);
+          }
         }
         await addItem(admin, "my_agent_history", userId!, {
           message,
           response,
           response_mode: responseMode,
+          agent_provider: responseMode === "video" ? "hedra" : agentProvider,
           has_image: Boolean(image),
           image_mime_type: image?.mimeType ?? null,
           image_name: image?.name ?? null,
           image_base64_chars: image?.base64.length ?? 0,
+          manus_task_id: manusMetadata?.task_id ?? null,
+          manus_task_url: manusMetadata?.task_url ?? null,
           video_provider: videoMetadata?.provider ?? null,
           video_status: videoMetadata?.status ?? null,
           video_url: videoMetadata?.video_url ?? null,
@@ -2174,6 +2263,8 @@ serve(async (req: Request) => {
           response,
           multimodal: Boolean(image),
           response_mode: responseMode,
+          provider: responseMode === "video" ? "hedra" : agentProvider,
+          manus: manusMetadata,
           video: videoMetadata,
         });
       }
