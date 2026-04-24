@@ -16583,6 +16583,47 @@ anon key で wbs.add_task 不可 (service role 必要)。次回 Win版/PS#1 で�
 
 ---
 
+## PS版#6 セッション27 (S27) — 2026-04-24
+
+**インスタンス**: PS版#6 | **担当**: horse_racing scraper / data 修復
+
+### 実装サマリー
+
+**Issue #622 修復: horse_results テーブル空 / 的中率「集計中...」永久表示**
+
+#### 根本原因 (2バグ確認)
+
+1. **ResultParser HTML構造ミスマッチ** — 旧コードは `<tr class="Result_Num">` を探したが実際のHTMLは `<tr >`(class無し) + `<td class="Result_Num">` / 馬名は `<td class="Horse_Info"><a>` のテキスト / 三連単は「三連単」でなく「3連単」+ `<tr class="Tan3"><td class="Payout"><span>`
+
+2. **fetch_results の日付範囲バグ** — `race_date=eq.TODAY` のみ → 前日以前の未確定レースを永遠に見ない設計
+
+#### 修正内容
+
+- `ResultParser` を実際の netkeiba HTML 構造に合わせて全面書き直し (`div.Rank` / `td.Horse_Info a` / `tr.Tan3 td.Payout span`)
+- `fetch_results`: `race_date lte TODAY + gte TODAY-7d + status=scheduled` で過去7日リトライ
+- list of tuples を `supabase_rest` に渡す方式 (`urllib.parse.urlencode` はlistをサポート)
+- ログ改善: SKIP/OK行に `race_date` 表示
+
+**commit**: `4a92d64d`
+**検証**: ローカルで `202642042301` (浦和R1 2026-04-23) をフェッチ → `{'1': 'アルディバ', '2': 'センチュリーラヴ', '3': 'ビナナムディン'} trifecta_paid=19970` 取得成功
+**dispatch**: `gh workflow run horse-racing-update.yml --field mode=results --field date=2026-04-23` (run 24864580129) で過去分バックフィル実行済み
+
+### Philosophy Alignment
+
+1. CEO感 ✅ (horse_racing機能の技術判断 = 自立した修正)
+2. ミッション駆動 ✅ (的中率ゲーミフィケーション = ユーザー継続動機)
+3. 優しいmentor ✅ (ログ改善でデバッグ体験向上)
+4. 6部署バランス ✅ (データ品質 = 事業基盤)
+5. 商品=ユーザー価値 ✅ (「集計中...」→実際の的中率表示)
+6. 資本=時間 ✅ (根本2バグ同時修正で工数節約)
+7. 資産負債 ✅ (スクレイパー技術負債削減)
+8. KPI=昨日の自分 ✅ (horse_results 0件 → 修復)
+9. ゴール=IPO ✅ (機能品質向上)
+
+**Philosophy Score: 9/9** ✅
+
+---
+
 ## PS版#3 Session 33 — 2026-04-24 (AI大学 160→162社化)
 
 ### 追加プロバイダー

@@ -24,7 +24,15 @@
       "mcp__plugin_claude-mem_mcp-search__smart_search",
       "mcp__plugin_claude-mem_mcp-search__search",
       "mcp__plugin_claude-mem_mcp-search__get_observations",
-      "mcp__plugin_claude-mem_mcp-search__timeline"
+      "mcp__plugin_claude-mem_mcp-search__timeline",
+      "PowerShell(Set-Location \"C:\\\\Users\\\\kanta\\\\GitHub\\\\my_web_app\\\\.claude\\\\worktrees\\\\instance-vscode\"; dart format lib/pages/landing_page.dart lib/pages/comparison_page.dart --set-exit-if-changed; Write-Host \"exit: $LASTEXITCODE\")",
+      "PowerShell(Set-Location \"C:\\\\Users\\\\kanta\\\\GitHub\\\\my_web_app\\\\.claude\\\\worktrees\\\\instance-vscode\"; dart format lib/pages/landing_page.dart --set-exit-if-changed; Write-Host \"exit: $LASTEXITCODE\")",
+      "PowerShell(Set-Location \"C:\\\\Users\\\\kanta\\\\GitHub\\\\my_web_app\\\\.claude\\\\worktrees\\\\instance-vscode\"; dart format lib/pages/landing_page.dart --set-exit-if-changed; Write-Host \"fmt:$LASTEXITCODE\"; flutter analyze lib/pages/landing_page.dart lib/pages/comparison_page.dart 2>&1 | Select-String \"error|warning|No issues|Analyzing\")",
+      "Bash(git -C C:/Users/kanta/GitHub/my_web_app/.claude/worktrees/instance-vscode status --short)",
+      "Bash(xargs -I{} sh -c 'echo \"=== {} ===\"; grep \"^to:\\\\|^priority:\\\\|^status:\" {} | head -3')",
+      "PowerShell(Set-Location \"C:\\\\Users\\\\kanta\\\\GitHub\\\\my_web_app\\\\.claude\\\\worktrees\\\\instance-vscode\"; dart format lib/services/feature_strategy_ai_review_service.dart --set-exit-if-changed; Write-Host \"fmt:$LASTEXITCODE\"; flutter analyze lib/services/feature_strategy_ai_review_service.dart 2>&1 | Select-String \"error|warning|No issues\")",
+      "PowerShell(Set-Location \"C:/Users/kanta/GitHub/my_web_app/.claude/worktrees/instance-vscode\"; dart format lib/pages/landing_page.dart; echo \"Exit: $LASTEXITCODE\")",
+      "Bash(echo \"exit:$?\")"
     ]
   }
 }
