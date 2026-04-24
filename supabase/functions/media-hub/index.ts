@@ -367,7 +367,6 @@ serve(async (req) => {
       case "esign.list": return json({ success: true, requests: await listItems(admin, "esign_request", userId) });
 
       // ── Podcast Manager ──────────────────────────────────────────────────────
-      case "podcast.episodes": return json({ success: true, episodes: await listItems(admin, "podcast_episode", userId) });
       case "podcast.channels": return json({ success: true, channels: await listItems(admin, "podcast_channel", userId) });
       case "podcast.channel.add": {
         const item = await addItem(admin, "podcast_channel", userId, {
