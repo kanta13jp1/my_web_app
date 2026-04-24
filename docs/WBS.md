@@ -311,6 +311,10 @@ WHERE title = 'ai-hub provider.chat 蜈ｨ蟇ｾ蠢・;
 
 # Codex更新 2026-04-24
 
+- 実担当タスク: `[追加要望] AIアシスタント動画`
+- 対応内容: `ai-assistant` Edge Function に Hedra 動画回答アクションを接続し、`/ai-assistant` チャットから `テキスト回答 / 動画回答` を切り替えて返答動画 URL と状態を受け取れるようにした。
+- 実装補足: `ai-hub my_agent.chat(video)` から `ai-assistant assistant_video_reply` を呼び、`HEDRA_API_KEY` 未設定時や失敗時はテキスト回答へフォールバックする。
+- WBS DB反映: migration `20260424113000_wbs_codex_ai_assistant_video.sql`
 - 実担当タスク: `[追加要望] AI大学のコンテンツ形式革新`
 - 対応内容: AI大学に `/ai-university-video` を追加し、教材テキストをもとに Hedra 動画レッスンを生成できるようにした。HomeカードとAI大学本体から遷移可能。
 - 実装補足: `ai-hub my_agent.chat(video)` に `title / voice / conversation_context` の pass-through を追加。
