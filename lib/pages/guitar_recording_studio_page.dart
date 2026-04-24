@@ -77,6 +77,12 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
   // AI分析
   Map<String, dynamic>? _aiAnalysis;
   bool _isLoadingAI = false;
+  bool _isGeneratingAvatarCoach = false;
+  String? _avatarCoachScript;
+  String? _avatarCoachVideoUrl;
+  String? _avatarCoachVideoStatus;
+  String? _avatarCoachVideoProvider;
+  String? _avatarCoachVideoReason;
 
   // X投稿
   bool _isPostingToX = false;
@@ -992,6 +998,106 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
       }
     } catch (_) {}
     if (mounted) setState(() => _isLoadingAI = false);
+  }
+
+  Future<void> _generateAvatarCoachFeedback() async {
+    final user = _supabase.auth.currentUser;
+    final latestFeedback = (_latestRecordingAiFeedback ?? '').trim();
+    if (user == null) return;
+    if (latestFeedback.isEmpty && _aiAnalysis == null) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('まず録音を保存して AI フィードバックを作成してください。'),
+        ),
+      );
+      return;
+    }
+
+    setState(() {
+      _isGeneratingAvatarCoach = true;
+      _avatarCoachScript = null;
+      _avatarCoachVideoUrl = null;
+      _avatarCoachVideoStatus = null;
+      _avatarCoachVideoProvider = null;
+      _avatarCoachVideoReason = null;
+    });
+
+    try {
+      final prompt = _buildAvatarCoachPrompt(latestFeedback);
+      final response = await _supabase.functions.invoke(
+        'ai-hub',
+        body: {
+          'action': 'my_agent.chat',
+          'message': prompt,
+          'response_mode': 'video',
+          'title': 'Guitar Coach Feedback',
+          'voice': 'ja-JP',
+          'conversation_context': 'guitar_feedback_avatar',
+        },
+      );
+      final data = _parseResponse(response.data);
+      final video = data?['video'] as Map<String, dynamic>? ?? const {};
+
+      if (!mounted) return;
+      setState(() {
+        _isGeneratingAvatarCoach = false;
+        _avatarCoachScript = data?['response']?.toString();
+        _avatarCoachVideoUrl = video['video_url']?.toString() ??
+            video['download_url']?.toString() ??
+            video['preview_url']?.toString();
+        _avatarCoachVideoStatus = video['status']?.toString();
+        _avatarCoachVideoProvider = video['provider']?.toString();
+        _avatarCoachVideoReason = video['reason']?.toString();
+      });
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _isGeneratingAvatarCoach = false;
+        _avatarCoachVideoStatus = 'fallback_text';
+        _avatarCoachVideoReason = '$error';
+      });
+    }
+  }
+
+  String _buildAvatarCoachPrompt(String latestFeedback) {
+    final buffer = StringBuffer(
+      'あなたは優秀な日本語のギターコーチです。'
+      '次の演奏評価結果をもとに、3つの改善ポイントと次に練習すべき1メニューを、'
+      'やさしく背中を押す口調で60秒以内の動画スクリプトとして解説してください。'
+      '専門用語は必要最小限にして、最後は次の1本を録る行動で締めてください。',
+    );
+    if (latestFeedback.isNotEmpty) {
+      buffer.write('\n\n最新録音フィードバック:\n$latestFeedback');
+    }
+
+    final analysis = _aiAnalysis;
+    if (analysis != null) {
+      final insights = (analysis['insights'] as List? ?? const [])
+          .map((item) => '- $item')
+          .join('\n');
+      final recommendations = (analysis['recommendations'] as List? ?? const [])
+          .map((item) => '- $item')
+          .join('\n');
+      final practiceMenu = (analysis['practiceMenu'] as List? ?? const [])
+          .map((item) => '- ${item is Map ? item['title'] ?? item['task'] ?? item : item}')
+          .join('\n');
+      if (insights.isNotEmpty) {
+        buffer.write('\n\n分析インサイト:\n$insights');
+      }
+      if (recommendations.isNotEmpty) {
+        buffer.write('\n\nおすすめ:\n$recommendations');
+      }
+      if (practiceMenu.isNotEmpty) {
+        buffer.write('\n\n練習メニュー候補:\n$practiceMenu');
+      }
+    }
+    return buffer.toString();
+  }
+
+  void _openExternalUrl(String rawUrl) {
+    if (rawUrl.trim().isEmpty) return;
+    web.window.open(rawUrl, '_blank');
   }
 
   Future<void> _deleteRecording(String recordingId) async {
@@ -3619,6 +3725,35 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
                     ),
                   ),
                 ),
+                const SizedBox(height: 10),
+                OutlinedButton.icon(
+                  onPressed: _isGeneratingAvatarCoach
+                      ? null
+                      : _generateAvatarCoachFeedback,
+                  icon: _isGeneratingAvatarCoach
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Icon(Icons.videocam_outlined),
+                  label: Text(
+                    _isGeneratingAvatarCoach
+                        ? 'アバター解説を生成中...'
+                        : 'アバター解説を生成',
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.white,
+                    side: const BorderSide(color: Colors.white38),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 12,
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
@@ -3634,6 +3769,78 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
                   color: Colors.white70,
                   height: 1.5,
                 ),
+              ),
+            ),
+          ],
+
+          if (_avatarCoachScript != null ||
+              _avatarCoachVideoStatus != null ||
+              _avatarCoachVideoUrl != null ||
+              _avatarCoachVideoReason != null) ...[
+            const SizedBox(height: 16),
+            _aiSection(
+              'アバター解説',
+              Icons.videocam_outlined,
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (_avatarCoachVideoProvider != null ||
+                      _avatarCoachVideoStatus != null)
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        if (_avatarCoachVideoProvider != null)
+                          Chip(
+                            label: Text(_avatarCoachVideoProvider!),
+                            backgroundColor: const Color(0xFF7C3AED).withAlpha(35),
+                            labelStyle: const TextStyle(color: Colors.white),
+                          ),
+                        if (_avatarCoachVideoStatus != null)
+                          Chip(
+                            label: Text(_avatarCoachVideoStatus!),
+                            backgroundColor: const Color(0xFFFF6B35).withAlpha(35),
+                            labelStyle: const TextStyle(color: Colors.white),
+                          ),
+                      ],
+                    ),
+                  if (_avatarCoachScript != null &&
+                      _avatarCoachScript!.trim().isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      _avatarCoachScript!,
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        height: 1.6,
+                      ),
+                    ),
+                  ],
+                  if (_avatarCoachVideoReason != null &&
+                      _avatarCoachVideoReason!.trim().isNotEmpty) ...[
+                    const SizedBox(height: 10),
+                    Text(
+                      _avatarCoachVideoReason!,
+                      style: const TextStyle(
+                        color: Colors.white54,
+                        fontSize: 12,
+                        height: 1.5,
+                      ),
+                    ),
+                  ],
+                  if (_avatarCoachVideoUrl != null &&
+                      _avatarCoachVideoUrl!.trim().isNotEmpty) ...[
+                    const SizedBox(height: 12),
+                    ElevatedButton.icon(
+                      onPressed: () => _openExternalUrl(_avatarCoachVideoUrl!),
+                      icon: const Icon(Icons.open_in_new),
+                      label: const Text('動画を開く'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF7C3AED),
+                        foregroundColor: Colors.white,
+                      ),
+                    ),
+                  ],
+                ],
               ),
             ),
           ],

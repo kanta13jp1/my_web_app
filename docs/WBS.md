@@ -319,6 +319,10 @@ WHERE title = 'ai-hub provider.chat 蜈ｨ蟇ｾ蠢・;
 - 対応内容: `viral-video-ad-generator` に Hedra プレゼンター動画生成を追加し、バイラル広告ジェネレーター画面から `画像広告 / プレゼンター動画` を切り替えて生成・プレビュー・X 投稿できるようにした。
 - 実装補足: `viral_ad_generations` に動画URL系カラムを追加し、Hedra 失敗時は理由を表示してテキスト投稿へフォールバックする。履歴でも動画広告を開けるようにした。
 - WBS DB反映: migration `20260425001000_wbs_codex_viral_video_presenter.sql`
+- 実担当タスク: `[追加要望] ギター評価の進化` / `[追加要望] ギター評価フィードバック`
+- 対応内容: ギターレコーディングスタジオの `AIギターコーチ` タブにアバター解説生成を追加し、最新の演奏評価結果と練習分析をもとに Hedra 動画で口頭フィードバックを返せるようにした。
+- 実装補足: `ai-hub my_agent.chat(video)` を使って動画化し、動画URLが返らないときもスクリプトと理由を残して改善ポイントを確認できるようにした。
+- WBS DB反映: migration `20260425003000_wbs_codex_guitar_avatar_feedback.sql`
 - 実担当タスク: `[追加要望] AI大学のコンテンツ形式革新`
 - 対応内容: AI大学に `/ai-university-video` を追加し、教材テキストをもとに Hedra 動画レッスンを生成できるようにした。HomeカードとAI大学本体から遷移可能。
 - 実装補足: `ai-hub my_agent.chat(video)` に `title / voice / conversation_context` の pass-through を追加。
