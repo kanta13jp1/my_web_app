@@ -104,13 +104,8 @@ jobs:
       - name: Run Supabase migrations
         run: |
           supabase link --project-ref ${{ secrets.SUPABASE_PROJECT_ID_PROD }} --password ${{ secrets.SUPABASE_DB_PASSWORD_PROD }}
-          # Repair any stuck schema_migrations entries that cause "duplicate key" errors.
-          # These arise when a deploy was aborted after INSERT into schema_migrations
-          # but before the CLI could confirm completion — leaving an orphan row the
-          # next run can't overwrite. All affected seed files use ON CONFLICT DO NOTHING
-          # so reverting + re-applying is idempotent.
-          # Repair stuck schema_migrations entries (duplicate key errors from aborted deploys).
-          # All affected migrations are idempotent (ON CONFLICT DO NOTHING / IF NOT EXISTS / UPDATE).
+          # Repair known stuck migrations (duplicate key from aborted deploys).
+          # All are idempotent (ON CONFLICT DO NOTHING / IF NOT EXISTS / UPDATE).
           supabase migration repair --status reverted 20260424234000 2>/dev/null || true
           supabase migration repair --status reverted 20260424235000 2>/dev/null || true
           supabase migration repair --status reverted 20260424240000 2>/dev/null || true
@@ -122,10 +117,24 @@ jobs:
           supabase migration repair --status reverted 20260425001000 2>/dev/null || true
           supabase migration repair --status reverted 20260425003000 2>/dev/null || true
           supabase migration repair --status reverted 20260425013000 2>/dev/null || true
-          # Run only unapplied migrations.
-          # All migrations use IF NOT EXISTS / ON CONFLICT DO NOTHING so they are
-          # safe to run even if the DDL was applied manually before.
-          supabase db push --include-all
+          supabase migration repair --status reverted 20260425021000 2>/dev/null || true
+          supabase migration repair --status reverted 20260425022000 2>/dev/null || true
+          # Run migrations with auto-repair retry.
+          # If db push fails with "Remote migration versions not found", extract the
+          # stuck version numbers, repair them as reverted, and retry once.
+          PUSH_LOG=$(supabase db push --include-all 2>&1)
+          PUSH_EXIT=$?
+          echo "$PUSH_LOG"
+          if [ $PUSH_EXIT -ne 0 ]; then
+            STUCK=$(echo "$PUSH_LOG" | grep -oE '\b[0-9]{14}\b' | sort -u)
+            if [ -n "$STUCK" ]; then
+              echo "Auto-repairing remote-only versions: $STUCK"
+              for v in $STUCK; do supabase migration repair --status reverted "$v" 2>/dev/null || true; done
+              supabase db push --include-all
+            else
+              exit 1
+            fi
+          fi
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
           SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD_PROD }}
