@@ -1163,23 +1163,25 @@ const List<AiProviderEntry> kAiProviderRegistry = [
     id: 'cursor',
     displayName: 'Cursor',
     status: AiProviderStatus.notImplemented,
-    entryPoint: '(未実装 — AI-native コードエディタ / Composer)',
-    note: 'Anysphere 製 AI コードエディタ / \$9B valuation (2025) / Claude + GPT-4o',
+    entryPoint: 'https://www.cursor.com/',
+    note:
+        r'Anysphere 製 AI ネイティブコードエディタ (VS Code fork) / $9.9B valuation / Tab+Composer+Agent / Claude Sonnet 4.6 標準',
   ),
   AiProviderEntry(
     id: 'lovable',
     displayName: 'Lovable',
     status: AiProviderStatus.notImplemented,
-    entryPoint: '(未実装 — AI full-stack web builder / GitHub 連携)',
+    entryPoint: 'https://lovable.dev/',
     note:
-        'Anton Osika 創業 / \$120M ARR / \$155M Series B \$1.7B val / Claude Sonnet',
+        r'Anton Osika 創業 (GPT Engineer 後継) / $50M Series A Balderton / Claude + Supabase / vibe-coding 旗手',
   ),
   AiProviderEntry(
     id: 'bolt_new',
     displayName: 'Bolt.new',
     status: AiProviderStatus.notImplemented,
-    entryPoint: '(未実装 — StackBlitz WebContainer AI builder)',
-    note: 'StackBlitz 製ブラウザ内 AI full-stack builder / WebContainer でゼロ設定',
+    entryPoint: 'https://bolt.new/',
+    note:
+        r'StackBlitz 製 WebContainers (ブラウザ内 Node.js) / 初月 450 万 PJ / Claude Sonnet デフォルト',
   ),
   AiProviderEntry(
     id: 'v0',
