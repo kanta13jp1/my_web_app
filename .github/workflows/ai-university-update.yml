@@ -126,6 +126,8 @@ jobs:
           upsert_provider "chroma"       "https://www.trychroma.com/blog/rss.xml"             "Chroma (Open Source Vector DB)"
           upsert_provider "upstage"      "https://www.upstage.ai/blog/rss.xml"                "Upstage (Solar LLM / Korea AI Unicorn)"
           upsert_provider "modal"        "https://modal.com/blog/rss.xml"                     "Modal (Serverless GPU Cloud)"
+          upsert_provider "runpod"       "https://blog.runpod.io/rss/"                        "RunPod (GPU Cloud Marketplace)"
+          upsert_provider "scale_ai"     "https://scale.com/blog/rss"                         "Scale AI (Data & Enterprise AI)"
 
           # RSS廃止/URL無効 (静的seedコンテンツを維持):
           # anthropic, meta, x, deepseek, mistral, perplexity, groq, cohere, ibm, sakana, baidu, stability, core, cerebras, prover

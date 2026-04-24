@@ -95,7 +95,7 @@ class AiProviderEntry {
   });
 }
 
-/// AI大学 登録プロバイダー全件のステータスカタログ (164社, 2026-04-24時点)
+/// AI大学 登録プロバイダー全件のステータスカタログ (166社, 2026-04-24時点)
 ///
 /// 実装済み: ai-assistant / ai-hub / ai-search に統合済みのもの
 /// 要APIキー: コード対応済みだが Supabase Secrets に追加が必要
@@ -1301,6 +1301,22 @@ const List<AiProviderEntry> kAiProviderRegistry = [
     entryPoint: 'https://modal.com/',
     note:
         r'Python-native サーバーレス GPU クラウド — @modal.function 1行デプロイ / H100/B200対応 / $1.1B 評価 / 無料 $30/月',
+  ),
+  AiProviderEntry(
+    id: 'runpod',
+    displayName: 'RunPod',
+    status: AiProviderStatus.notImplemented,
+    entryPoint: 'https://www.runpod.io/',
+    note:
+        r'格安 GPU マーケットプレイス — RTX3090 $0.19/h / Serverless 200ms CS / 30+ GPU SKU / 秒課金',
+  ),
+  AiProviderEntry(
+    id: 'scale_ai',
+    displayName: 'Scale AI',
+    status: AiProviderStatus.notImplemented,
+    entryPoint: 'https://scale.com/',
+    note:
+        r'データラベリング→Enterprise AI — RLHF供給 / Scale Donovan (DoD) / $13.8B / $1B+ 売上 / Alexandr Wang',
   ),
 ];
 
