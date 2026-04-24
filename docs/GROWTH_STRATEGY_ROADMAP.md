@@ -16955,3 +16955,26 @@ supabase migration repair --status reverted 20260424241500 2>/dev/null || true
 7. ✅ 個人最適 — LLM エコシステム補完
 8. ✅ 学習 — 老舗 (Comet 2013) vs 新興 (LangSmith 2022) 対比
 9. ✅ 開放 — OSS (Opik Apache 2.0) 明示
+
+## PS版#6 Session 30 — 2026-04-24 (health_check_page → admin-hub:health.check)
+
+### 問題
+- `health_check_page.dart` が `health-check` EF を直接 invoke していたが EF source dir なし
+- `health-check` は DEAD_LIST に含まれていたため Supabase から削除される可能性あり
+- `admin-hub` に `health.check` action が既存するが、シンプルな `{db: bool}` 形式のみ返していた
+
+### 修正
+1. `admin-hub/index.ts` `health.check` 強化 — Promise.allSettled 3 テーブル確認 + `{status, checks{latencyMs}, timestamp}` 形式 (UI 期待形式に対応)
+2. `health_check_page.dart` — `invoke('health-check')` → `invoke('admin-hub', body: {'action': 'health.check'})`
+3. `deploy-prod.yml` — DEAD_LIST から `health-check` 削除 (source dir なし・削除不要)
+
+### 確認
+- #686/#687 (CI失敗 issue) クローズ — commit 5e35998a で既修正
+- horse-racing-update.yml: 連続 5 runs SUCCESS — Phase A 修正 (4a92d64d) 有効
+- commit `d758910d` — deploy pending
+
+### Philosophy Alignment
+
+1. CEO感 ✅ / 2. ミッション駆動 ✅ / 3. 優しいmentor ✅ / 4. 6部署バランス ✅
+5. 商品=ユーザー価値 ✅ / 6. 資本=時間 ✅ / 7. 資産負債 ✅
+8. KPI=昨日の自分 ✅ / 9. ゴール=IPO ✅
