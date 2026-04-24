@@ -16645,3 +16645,31 @@ supabase migration repair --status reverted 20260424241500 2>/dev/null || true
 1. CEO感 ✅ / 2. ミッション駆動 ✅ / 3. 優しいmentor ✅ / 4. 6部署バランス ✅
 5. 商品=ユーザー価値 ✅ / 6. 資本=時間 ✅ / 7. 資産負債 ✅
 8. KPI=昨日の自分 ✅ / 9. ゴール=IPO ✅
+
+---
+
+## PS版#3 Session 34 — 2026-04-24 (AI大学 162→164社化)
+
+### 追加プロバイダー
+
+#### Upstage (upstage) — 韓国初ジェネラティブ AI ユニコーン
+- **概要**: Sung Kim 創業 (2020 / 韓国) / 2026-04-15 韓国初ジェネラティブ AI ユニコーン認定
+- **資金**: Series C 第1弾 $125.9M / 累計 ~$279.7M / KOSPI 2026 年 IPO 準備中
+- **主力**: Solar Pro 2 (GPT-4.1 + DeepSeek V3 超え / 韓国初フロンティアモデル) / Document Parse
+- **評価**: 8/9 (Solar Pro 2 GPT-4.1超え / ユニコーン / AWS連携 / KOSPI IPO予定)
+- **migration**: 20260424244000
+
+#### Modal (modal) — Python-Native サーバーレス GPU クラウド
+- **概要**: Eric Abe ら創業 (2021) / $87M Series B (Lux Capital) / 累計 $111M / 評価額 $1.1B
+- **主力**: @modal.function デコレータ1行でクラウド GPU デプロイ / YAML・Docker不要
+- **特徴**: サブ秒コールドスタート / H100・B200対応 / 無料 $30/月 / 秒単位課金
+- **評価**: 9/9 (Python-native / $1.1B評価 / 無料枠 / sub-second cold start / H100/B200)
+- **migration**: 20260424245500
+
+### commit: b2ef81c1
+
+### Philosophy Alignment
+
+1. CEO感 ✅ / 2. ミッション駆動 ✅ / 3. 優しいmentor ✅ / 4. 6部署バランス ✅
+5. 商品=ユーザー価値 ✅ / 6. 資本=時間 ✅ / 7. 資産負債 ✅
+8. KPI=昨日の自分 ✅ / 9. ゴール=IPO ✅
