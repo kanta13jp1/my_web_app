@@ -42,12 +42,12 @@ class _PodcastManagerPageState extends State<PodcastManagerPage>
     });
     try {
       final epRes = await _supabase.functions.invoke(
-        'podcast-manager',
-        queryParameters: {'view': 'episodes'},
+        'media-hub',
+        body: {'action': 'podcast.episodes'},
       );
       final chRes = await _supabase.functions.invoke(
-        'podcast-manager',
-        queryParameters: {'view': 'channels'},
+        'media-hub',
+        body: {'action': 'podcast.channels'},
       );
       setState(() {
         _episodes = _toList(epRes.data, 'episodes');

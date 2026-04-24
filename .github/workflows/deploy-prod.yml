@@ -318,6 +318,7 @@ jobs:
             focus-timer
             audio-effects-processor
             screen-recorder
+            podcast-manager
           )
           EXISTING=$(supabase functions list --output json 2>/dev/null | jq -r '.[] | (.slug // .name // empty)' 2>/dev/null || echo "")
           if [ -z "$EXISTING" ]; then

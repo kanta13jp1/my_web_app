@@ -356,6 +356,23 @@ serve(async (req) => {
       }
       case "esign.list": return json({ success: true, requests: await listItems(admin, "esign_request", userId) });
 
+      // ── Podcast Manager ──────────────────────────────────────────────────────
+      case "podcast.episodes": return json({ success: true, episodes: await listItems(admin, "podcast_episode", userId) });
+      case "podcast.channels": return json({ success: true, channels: await listItems(admin, "podcast_channel", userId) });
+      case "podcast.channel.add": {
+        const item = await addItem(admin, "podcast_channel", userId, {
+          title: body.title ?? "", url: body.url ?? "", category: body.category ?? "technology",
+        });
+        return json({ success: true, channel: item });
+      }
+      case "podcast.episode.save": {
+        const item = await addItem(admin, "podcast_episode", userId, {
+          title: body.title ?? "", audio_url: body.audio_url ?? "", channel_id: body.channel_id ?? "",
+          duration_sec: body.duration_sec ?? 0, played: false,
+        });
+        return json({ success: true, episode: item });
+      }
+
       // ── Audio Effects ────────────────────────────────────────────────────────
       case "audio.catalog": {
         const effects = [
