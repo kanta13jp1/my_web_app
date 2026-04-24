@@ -41,16 +41,16 @@ class _VideoMeetingPageState extends State<VideoMeetingPage>
     });
     try {
       final res = await _supabase.functions.invoke(
-        'video-meeting-manager',
-        body: {'action': 'list'},
+        'media-hub',
+        body: {'action': 'meeting.list'},
       );
       final data = res.data;
       if (data is Map<String, dynamic>) {
         setState(() {
-          _rooms = (data['rooms'] as List?) ?? [];
-          _minutes = (data['minutes'] as List?) ?? [];
-          _actionItems = (data['action_items'] as List?) ?? [];
-          _stats = data['stats'] as Map<String, dynamic>?;
+          _rooms = (data['meetings'] as List?) ?? [];
+          _minutes = [];
+          _actionItems = [];
+          _stats = null;
         });
       }
     } catch (e) {
@@ -108,10 +108,10 @@ class _VideoMeetingPageState extends State<VideoMeetingPage>
               Navigator.pop(ctx);
               try {
                 await _supabase.functions.invoke(
-                  'video-meeting-manager',
+                  'media-hub',
                   body: {
-                    'action': 'create_room',
-                    'name': nameCtrl.text.trim(),
+                    'action': 'meeting.create',
+                    'title': nameCtrl.text.trim(),
                     'type': typeVal.value,
                   },
                 );
