@@ -188,7 +188,8 @@ void main() {
     expect(loaded.hasDetailedProfile, isTrue);
   });
 
-  test('target schedules keep local assemblies and exclude chiefs/national', () {
+  test('target schedules keep local assemblies and exclude chiefs/national',
+      () {
     final snapshot = LocalElectionRealitySnapshot(
       fetchedAt: DateTime(2026, 4, 24),
       baselineCurrentLocalMembers: 340,
