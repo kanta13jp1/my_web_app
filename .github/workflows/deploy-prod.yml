@@ -109,9 +109,17 @@ jobs:
           # but before the CLI could confirm completion — leaving an orphan row the
           # next run can't overwrite. All affected seed files use ON CONFLICT DO NOTHING
           # so reverting + re-applying is idempotent.
+          # Repair stuck schema_migrations entries (duplicate key errors from aborted deploys).
+          # All affected migrations are idempotent (ON CONFLICT DO NOTHING / IF NOT EXISTS / UPDATE).
+          supabase migration repair --status reverted 20260424234000 2>/dev/null || true
           supabase migration repair --status reverted 20260424235000 2>/dev/null || true
           supabase migration repair --status reverted 20260424240000 2>/dev/null || true
           supabase migration repair --status reverted 20260424241500 2>/dev/null || true
+          supabase migration repair --status reverted 20260424242000 2>/dev/null || true
+          supabase migration repair --status reverted 20260424243500 2>/dev/null || true
+          supabase migration repair --status reverted 20260425001000 2>/dev/null || true
+          supabase migration repair --status reverted 20260425003000 2>/dev/null || true
+          supabase migration repair --status reverted 20260425013000 2>/dev/null || true
           # Run only unapplied migrations.
           # All migrations use IF NOT EXISTS / ON CONFLICT DO NOTHING so they are
           # safe to run even if the DDL was applied manually before.

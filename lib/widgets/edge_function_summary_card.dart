@@ -820,6 +820,14 @@ class _EdgeFunctionSummaryCardState extends State<EdgeFunctionSummaryCard> {
       '/viral-ad-generator',
       'バイラル広告ジェネレーターページ > ターゲット設定・AI広告動画企画生成',
     ),
+    // 追加 (cs-check 自動連携 2026-04-24)
+    _FnDef(
+      'health-check',
+      'インフラ健全性チェック (DB接続・テーブル・EFランタイム)',
+      true,
+      '/health-check',
+      'インフラ健全性ページ > DB接続・テーブルアクセス・EFランタイム状態確認',
+    ),
   ];
 
   int get _withUiCount => _functions.where((f) => f.hasUi).length;

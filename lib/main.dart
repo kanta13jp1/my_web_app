@@ -258,6 +258,7 @@ import 'package:my_web_app/pages/app_analytics_dashboard_page.dart';
 import 'package:my_web_app/pages/leave_management_page.dart';
 import 'package:my_web_app/pages/performance_review_page.dart';
 import 'package:my_web_app/pages/pomodoro_timer_page.dart';
+import 'package:my_web_app/pages/health_check_page.dart';
 import 'package:my_web_app/dev/claude_design/importer_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -1491,6 +1492,10 @@ class MyApp extends StatelessWidget {
           case '/pomodoro-timer':
             return MaterialPageRoute(
               builder: (_) => const PomodoroTimerPage(),
+            );
+          case '/health-check':
+            return MaterialPageRoute(
+              builder: (_) => const HealthCheckPage(),
             );
           default:
             return MaterialPageRoute(builder: (_) => const LandingPage());
