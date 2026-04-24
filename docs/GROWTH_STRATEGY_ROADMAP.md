@@ -16978,3 +16978,35 @@ supabase migration repair --status reverted 20260424241500 2>/dev/null || true
 1. CEO感 ✅ / 2. ミッション駆動 ✅ / 3. 優しいmentor ✅ / 4. 6部署バランス ✅
 5. 商品=ユーザー価値 ✅ / 6. 資本=時間 ✅ / 7. 資産負債 ✅
 8. KPI=昨日の自分 ✅ / 9. ゴール=IPO ✅
+
+## PS#3 Session38 — 2026-04-24 AI大学 170→172社化
+
+**担当インスタンス**: PowerShell版 #3
+**commit**: d9b588cd
+
+### 追加プロバイダー
+
+| # | プロバイダー | ID | 評価 | 軸 |
+|---|---|---|---|---|
+| 171 | Braintrust | `braintrust` | 9/9 ⭐⭐ | AI観測・評価インフラ |
+| 172 | Galileo AI | `galileo` | 8/9 | LLM評価・ガードレール・本番監視 |
+
+### 特記事項
+
+- **Braintrust**: 2026-02 Series B $80M @ $800M (ICONIQ+a16z) / Loop AI agent / 1M spans無料 (業界最大)
+- **Galileo AI**: Google AI 創業 / Cisco公式採用 / Luna-2 軽量評価モデルで100%本番監視実現
+- **Langfuse 除外**: ClickHouse が 2026-01 買収済のため独立 provider として追加不可
+- **Humanloop 除外** (S37同): Anthropic が 2025-08 買収済
+- 次回候補: Prefect (workflow orchestration) / ZenML (MLOps pipeline OSS) / Maxim AI / Confident AI
+
+### Philosophy 9原則チェック
+
+1. ✅ ユーザー価値 — LLM評価・ガードレール軸で差別化価値あり
+2. ✅ データ主権 — Galileo self-hosting / Braintrust private deploy 対応
+3. ✅ 透明性 — 料金・Luna-2 技術詳細を掲載
+4. ✅ 段階的 — Step 0 種まき継続
+5. ✅ AI協調 — Multi-AI routing 遵守
+6. ✅ 持続性 — seed only / EF 増加なし
+7. ✅ 個人最適 — AI品質保証エコシステム補完
+8. ✅ 学習 — Evaluate→Observe→Protect の3層アーキテクチャ理解
+9. ✅ 開放 — ガードレール・評価手法の透明性
