@@ -16466,3 +16466,32 @@ anon key で wbs.add_task 不可 (service role 必要)。次回 Win版/PS#1 で�
     - Sora 2/Veo 3.1/Kling 3.0 統合 / $80M SeriesA @$1.3B / $300M ARR / 20M ユーザー / 9/9
 - Philosophy Alignment: 5✅(動画生成・音声AIコンテンツ充実) 7✅(158社資産) 8✅(+2社/session)
 - commit: 458db3ca
+
+---
+
+## PS版#4 S36 (2026-04-24 夜)
+
+**担当**: PS版#4 競合モニタリング専任
+**WBS進捗**: 70% → 75%
+
+### 実施内容
+
+**競合第4回スキャン 完了**:
+- **Cursor 3.0** (2026-04): Canvas / parallel agents tile / Bugbot 78% / CLI強化 — vibe coding軸接近の兆候を検知 → Watchlist 🟢→🟡昇格
+- **Microsoft Build 2026**: June 2-3, San Francisco 確定 / Google I/O 2週間後の独立イベント / GitHub Copilot CLI tutorials 4月連続 = Build大型発表示唆
+- SCOREBOARD rows 更新: codex(Cursor 3.0追記) + microsoft(Build日程確定) + Cursor watchlist昇格
+- cross-instance-pr発行: `20260424_microsoft_build_2026_preparation.md` → Win版
+
+**競合カレンダー 2026 Q2 全体像確定**:
+```
+4/22 Google Cloud Next '26 (完了) → 5/4 Notion課金 → 5/19 Google I/O → 6/2 MS Build
+```
+
+### 次回タスク候補
+
+| 優先度 | タスク | 期限 |
+|--------|--------|------|
+| 🔴 | Notion 5/4 課金後 SNS反応モニタリング | 5/5〜7 |
+| 🔴 | Google I/O 2026 即日レポート | 5/19-20 |
+| 🟡 | Microsoft Build 2026 先回り準備 (Win版確認) | 5/30 |
+| 🟢 | Microsoft Build 2026 即日レポート | 6/2-3 |

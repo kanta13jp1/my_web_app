@@ -30,14 +30,14 @@
 | 6 | **x (Twitter/xAI)** | SNS/AI | Grok 4.3 beta 4-agent team (SuperGrok Heavy限定) — 変化なし | 🟠 | SNS は価値消費・自分株は価値増大・CEO感 | 定常 watchlist |
 | 7 | **animaworks** | アバター AI | 変化なし | 🟢 | フル3D = philosophy違反 | 定常 watchlist |
 | 8 | **claude-code** | 開発ツール | **Claude Opus 4.7 GA** (software engineering強化 / vision高解像度) / Claude Code大型更新 (大セッション67%高速化 / MCP起動改善) / Claude Managed Agents public beta | 🟢 | Flutter Web個人向けは別軸 | ai-hub synthesis候補 |
-| 9 | **codex (OpenAI)** | 開発ツール | **GPT-5.5 (Spud) 2026-04-23リリース** (paid subscribers向け) / GPT-5.4 mini rollout継続 / 6週でGPT-5.4→5.5とモデル更新ペース加速 | 🟠 | コーディングツール vs 人生フレームワーク | **ai-hub model update依頼 → Win (新規)** |
+| 9 | **codex (OpenAI)** | 開発ツール | **GPT-5.5 (Spud) 2026-04-23リリース** (paid subscribers向け) / GPT-5.4 mini rollout継続 / 6週でGPT-5.4→5.5とモデル更新ペース加速 / **Cursor 3.0 (4/2): Canvas UI builder + Bugbot 78% + parallel agents tile** / Bugbot = PR自動修正現実化 | 🟠 | コーディングツール vs 人生フレームワーク / Canvas拡張に注意 | **ai-hub model update依頼 → Win (新規)** |
 | 10 | **netkeiba** | 競馬 | UMAI予想ビルダー (ユーザー独自モデル) — 変化なし | 🔴 | PS版#6 horse_racing戦略 | 定常監視 |
 | 11 | **openclaw** | OSS AI agent | 変化なし | 🟠 | 日本語 + Flutter Web即起動 vs CLI/chat | 定常 watchlist |
 | 12 | **claude-cowork** | Anthropic公式AIエージェント | Computer Use Pro/Max 解禁継続 / **Opus 4.7 powered** (4/17〜) / Enterprise pricing $20/seat+usage | 🔴🔴 | 個人6部署 / Supabase永続 / 日本語first (3軸) | 20260420_claude_cowork_threat.md → VSCode+Win |
 | 13 | **jobcan** | 勤怠 | AI自動仕訳 2026-04-13追加済 | 🟡 | 個人向け勤怠 | 定常 watchlist |
 | 14 | **amazon** | EC/AWS | Nova 2 Lite ($0.30/$2.50M) / Nova Act (agent機能) / **ai-hub routing再考必要** | 🔴 | 個人LP / Claude採用 | 20260420_nova2_lite_integration.md → Win |
 | 15 | **google** | 検索/AI | **Gemini 3.1 Pro GA** / Gemma 4ファミリー API公開 / **Gemini Embedding 2 preview (マルチモーダル)** / **Google Cloud Next '26 (4/22): Agentic Enterprise宣言 + Agent Marketplace** / $750M partner fund / Chrome統合 + auto browse preview / **I/O 2026 5/19-20** | 🔴 | Flutter Web統合 + 日本語first / **法人向けAgent集中 = 個人向けPoC差別化強化** | 20260424_google_gemini_embedding2.md → Win / 20260420_gemini_flash_lite_migration.md → Win |
-| 16 | **microsoft** | OS/AI | Azure Foundry 3 — 変化なし | 🟠 | Flutter Web軽量 vs 重量企業向け | 定常 watchlist |
+| 16 | **microsoft** | OS/AI | **Microsoft Build 2026: June 2-3 San Francisco 確定** / GitHub Copilot CLI tutorials 4月連続投稿 / Azure Foundry 3 継続 / GitHub Models preview | 🟠 | Flutter Web軽量 vs 重量企業向け | **Build 2026先回り準備 → Win版 (cross-instance-pr発行済)** |
 | 17 | **discord** | SNS/コミュニティ | 変化なし | 🟠 | 個人AI vs コミュニティAI | 定常 watchlist |
 | 18 | **line** | メッセージ (JP) | ¥750/月 無制限 (GPT-4o/4o-mini) / 機能narrow 5項目のみ / code interpreter/deep research/GPTs 全無し | 🟠 | Flutter Web + 6部署統合 vs 対話 + feature-narrow | LP訂正完了 (VSCode 4/24 db32be24) |
 | 19 | **facebook (Meta)** | SNS/AI | Llama 4 進行中 | 🟢 | SNS時間消費 vs 価値増大 | 定常 watchlist |
@@ -120,7 +120,7 @@ Notion:
 
 | 競合 | 2026-04 動向 | 判定 | 住み分け根拠 |
 |------|-------------|------|-------------|
-| **Cursor** | $50B調達協議中 / $2B ARR / Battery Ventures追加 | 🟢 watchlist | コーディングツール vs 人生フレームワーク |
+| **Cursor** | $50B調達協議中 / $2B ARR / Battery Ventures追加 / **Cursor 3.0 (4/2) Canvas + Bugbot 78% + parallel agents** / Canvas = vibe coding軸接近の兆候 | 🟡 watchlist-upgraded | コーディングツール → Canvas拡張で軸接近可能性 (Lovableと同様パターン) |
 | **Cognition** (Windsurf+Devin) | $10.2B評価 / SWE-Bench #1 | 🟢 watchlist | 自律SWEエージェント vs 個人CEO 6部署 |
 | **Lovable** | $100M ARR 8ヶ月 / $2B評価 | 🟢 watchlist | vibe coding vs 生活統合 |
 | **Replit** | $400M Series D @ $9B Georgian主導 / ARR 24× / **Agent 4 digital canvas** (non-programmer pivot) | 🟠 watchlist-upgraded | pivot警戒: non-programmer層で軸接近可能性 |
