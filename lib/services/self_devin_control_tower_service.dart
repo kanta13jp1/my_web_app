@@ -99,6 +99,13 @@ class SelfDevinControlTowerService {
       staleAfter: Duration(hours: 3),
     ),
     _LoopDef(
+      id: 'self-devin-schedule',
+      label: 'WBS -> issue router',
+      cadenceLabel: 'daily 09:30 JST',
+      fallbackDetail: 'Configured in .github/workflows/self-devin-schedule.yml',
+      staleAfter: Duration(hours: 36),
+    ),
+    _LoopDef(
       id: 'github-issue-fix',
       label: 'Issue -> branch -> draft PR',
       cadenceLabel: 'daily 10:00 JST',

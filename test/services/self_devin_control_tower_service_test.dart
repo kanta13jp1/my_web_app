@@ -81,7 +81,7 @@ void main() {
       expect(snapshot.blockedTaskCount, 1);
       expect(snapshot.activeLaneCount, 3);
       expect(snapshot.healthyLoopCount, 2);
-      expect(snapshot.totalLoopCount, 4);
+      expect(snapshot.totalLoopCount, 5);
       expect(snapshot.nextActionTitle, contains('WEB'));
 
       final webLane = snapshot.lanes.firstWhere((lane) => lane.id == 'web');
@@ -98,6 +98,11 @@ void main() {
         (loop) => loop.id == 'github-issue-fix',
       );
       expect(issueFixLoop.status, 'error');
+
+      final selfDevinLoop = snapshot.loops.firstWhere(
+        (loop) => loop.id == 'self-devin-schedule',
+      );
+      expect(selfDevinLoop.status, 'configured');
 
       final infraLoop = snapshot.loops.firstWhere(
         (loop) => loop.id == 'infra-health-check',

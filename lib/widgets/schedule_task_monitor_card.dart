@@ -66,6 +66,12 @@ class _ScheduleTaskMonitorCardState extends State<ScheduleTaskMonitorCard> {
       Icons.edit_note,
     ),
     _TaskDef(
+      'self-devin-schedule',
+      'WBS -> Issue repair lane',
+      'Daily 09:30 JST',
+      Icons.hub,
+    ),
+    _TaskDef(
       'github-issue-fix',
       'Issue -> branch -> draft PR',
       'Daily 10:00 JST',

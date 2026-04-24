@@ -1,0 +1,224 @@
+name: Self Devin Schedule
+
+# WBS feature request -> GitHub Issue -> github-issue-fix.yml -> ci-auto-fix.yml
+# This is the scheduled bridge that makes the existing repair lane behave like
+# a small, self-hosted Devin loop without adding another long-running service.
+
+on:
+  schedule:
+    - cron: '30 0 * * *' # 09:30 JST
+  workflow_dispatch:
+    inputs:
+      wbs_task_id:
+        description: 'Optional WBS task id to route'
+        required: false
+        default: ''
+      dry_run:
+        description: 'true only selects and summarizes the next task'
+        required: false
+        default: 'false'
+
+concurrency:
+  group: self-devin-schedule
+  cancel-in-progress: false
+
+permissions:
+  actions: write
+  contents: read
+  issues: write
+
+jobs:
+  route-next-feature-request:
+    name: WBS -> Issue fix lane
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    env:
+      SUPABASE_URL: https://smmkxxavexumewbfaqpy.supabase.co
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      GH_TOKEN: ${{ secrets.BYPASS_RULES || secrets.GITHUB_TOKEN }}
+      REQUESTED_WBS_TASK_ID: ${{ github.event.inputs.wbs_task_id || '' }}
+      DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
+
+    steps:
+      - name: Select next WBS feature request
+        id: select
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [ -z "${SUPABASE_SERVICE_ROLE_KEY:-}" ]; then
+            echo "has_task=false" >> "$GITHUB_OUTPUT"
+            echo "skip_reason=SUPABASE_SERVICE_ROLE_KEY is not configured" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          curl -sS -X POST "${SUPABASE_URL}/functions/v1/tools-hub" \
+            -H "Authorization: Bearer ${SUPABASE_SERVICE_ROLE_KEY}" \
+            -H "apikey: ${SUPABASE_SERVICE_ROLE_KEY}" \
+            -H "Content-Type: application/json" \
+            -d '{"action":"wbs.list_tasks","instance":"all","status":"pending","limit":200}' \
+            > /tmp/wbs_tasks.json
+
+          python3 <<'PY'
+          import json
+          import os
+          import re
+
+          data = json.load(open('/tmp/wbs_tasks.json', encoding='utf-8'))
+          tasks = data.get('tasks') or []
+          requested = os.environ.get('REQUESTED_WBS_TASK_ID', '').strip()
+
+          def is_feature_request(task):
+              title = str(task.get('title') or '')
+              category = str(task.get('category') or '')
+              return (
+                  '追加要望' in title
+                  or '追加要望' in category
+                  or title.startswith('[è¿½å')
+              )
+
+          if requested:
+              selected = next((task for task in tasks if str(task.get('id')) == requested), None)
+          else:
+              selected = next((task for task in tasks if is_feature_request(task)), None)
+
+          out_path = os.environ['GITHUB_OUTPUT']
+          with open(out_path, 'a', encoding='utf-8') as out:
+              if not selected:
+                  out.write('has_task=false\n')
+                  out.write('skip_reason=No pending WBS feature request was found.\n')
+                  raise SystemExit(0)
+
+              description = str(selected.get('description') or '')
+              match = re.search(r'github\.com/[^/\s]+/[^/\s]+/issues/(\d+)', description, re.I)
+              issue_number = match.group(1) if match else ''
+              out.write('has_task=true\n')
+              out.write(f"task_id={selected.get('id')}\n")
+              out.write(f"title={str(selected.get('title') or '').replace(chr(10), ' ')}\n")
+              out.write(f"issue_number={issue_number}\n")
+          PY
+
+      - name: Mark selected WBS task in progress
+        if: steps.select.outputs.has_task == 'true' && env.DRY_RUN != 'true'
+        shell: bash
+        env:
+          WBS_TASK_ID: ${{ steps.select.outputs.task_id }}
+        run: |
+          jq -nc --arg id "$WBS_TASK_ID" \
+            '{action:"wbs.update_progress",id:$id,progress:20,status:"in_progress"}' \
+            > /tmp/wbs_progress.json
+          curl -sS -X POST "${SUPABASE_URL}/functions/v1/tools-hub" \
+            -H "Authorization: Bearer ${SUPABASE_SERVICE_ROLE_KEY}" \
+            -H "apikey: ${SUPABASE_SERVICE_ROLE_KEY}" \
+            -H "Content-Type: application/json" \
+            --data-binary @/tmp/wbs_progress.json
+
+      - name: Route to Issue repair lane
+        id: route
+        if: steps.select.outputs.has_task == 'true'
+        shell: bash
+        env:
+          WBS_TASK_ID: ${{ steps.select.outputs.task_id }}
+          TASK_TITLE: ${{ steps.select.outputs.title }}
+          ISSUE_NUMBER: ${{ steps.select.outputs.issue_number }}
+        run: |
+          set -euo pipefail
+
+          status="skipped"
+          summary=""
+          issue_number="${ISSUE_NUMBER:-}"
+
+          if [ -z "$issue_number" ]; then
+            if [ "$DRY_RUN" = "true" ]; then
+              summary="dry-run: would create an Issue for WBS ${WBS_TASK_ID}"
+            else
+              {
+                echo "Created by self-devin-schedule from WBS task ${WBS_TASK_ID}."
+                echo
+                echo "## WBS task"
+                echo "${TASK_TITLE}"
+                echo
+                echo "Flow: WBS -> Issue -> github-issue-fix.yml -> ci-auto-fix.yml"
+              } > /tmp/self_devin_issue.md
+              issue_url=$(gh issue create \
+                --repo "$GITHUB_REPOSITORY" \
+                --title "${TASK_TITLE}" \
+                --body-file /tmp/self_devin_issue.md \
+                --label enhancement)
+              issue_number="${issue_url##*/}"
+              summary="created Issue #${issue_number} from WBS ${WBS_TASK_ID}"
+              status="success"
+            fi
+          fi
+
+          if [ -n "$issue_number" ] && [ "$DRY_RUN" != "true" ]; then
+            issue_state=$(gh issue view "$issue_number" \
+              --repo "$GITHUB_REPOSITORY" \
+              --json state \
+              --jq '.state')
+            if [ "$issue_state" = "CLOSED" ]; then
+              jq -nc --arg id "$WBS_TASK_ID" \
+                '{action:"wbs.update_progress",id:$id,progress:100,status:"completed"}' \
+                > /tmp/wbs_completed.json
+              curl -sS -X POST "${SUPABASE_URL}/functions/v1/tools-hub" \
+                -H "Authorization: Bearer ${SUPABASE_SERVICE_ROLE_KEY}" \
+                -H "apikey: ${SUPABASE_SERVICE_ROLE_KEY}" \
+                -H "Content-Type: application/json" \
+                --data-binary @/tmp/wbs_completed.json
+              summary="linked Issue #${issue_number} is already closed; WBS ${WBS_TASK_ID} marked completed"
+              status="success"
+            else
+              gh workflow run github-issue-fix.yml \
+                --repo "$GITHUB_REPOSITORY" \
+                -f issue_number="$issue_number" \
+                -f dry_run=false
+              summary="dispatched github-issue-fix.yml for Issue #${issue_number} from WBS ${WBS_TASK_ID}"
+              status="success"
+            fi
+          elif [ -n "$issue_number" ]; then
+            summary="dry-run: would route WBS ${WBS_TASK_ID} to Issue #${issue_number}"
+          fi
+
+          echo "status=${status}" >> "$GITHUB_OUTPUT"
+          echo "summary=${summary}" >> "$GITHUB_OUTPUT"
+          echo "$summary"
+
+      - name: Record schedule run
+        if: always()
+        shell: bash
+        env:
+          ROUTE_STATUS: ${{ steps.route.outputs.status || 'skipped' }}
+          ROUTE_SUMMARY: ${{ steps.route.outputs.summary || steps.select.outputs.skip_reason || 'Self Devin schedule completed without a routed task.' }}
+        run: |
+          if [ -z "${SUPABASE_SERVICE_ROLE_KEY:-}" ]; then
+            exit 0
+          fi
+          jq -nc \
+            --arg task_id "self-devin-schedule" \
+            --arg status "$ROUTE_STATUS" \
+            --arg summary "$ROUTE_SUMMARY" \
+            '{task_id:$task_id,status:$status,summary:$summary}' \
+            > /tmp/schedule_task_run.json
+          curl -sS -o /dev/null -X POST \
+            -H "apikey: ${SUPABASE_SERVICE_ROLE_KEY}" \
+            -H "Authorization: Bearer ${SUPABASE_SERVICE_ROLE_KEY}" \
+            -H "Content-Type: application/json" \
+            -H "Prefer: return=minimal" \
+            --data-binary @/tmp/schedule_task_run.json \
+            "${SUPABASE_URL}/rest/v1/schedule_task_runs" \
+            --max-time 10 || true
+
+      - name: Job summary
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo "## Self Devin Schedule"
+            echo
+            echo "| item | value |"
+            echo "| --- | --- |"
+            echo "| dry_run | ${DRY_RUN} |"
+            echo "| WBS task | ${{ steps.select.outputs.task_id || 'n/a' }} |"
+            echo "| Issue | #${{ steps.select.outputs.issue_number || 'n/a' }} |"
+            echo "| result | ${{ steps.route.outputs.summary || steps.select.outputs.skip_reason || 'n/a' }} |"
+          } >> "$GITHUB_STEP_SUMMARY"

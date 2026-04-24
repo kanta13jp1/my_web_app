@@ -235,6 +235,28 @@ GET https://my-web-app-b67f4.web.app/
 
 ---
 
+### Task: self-devin-schedule (daily 09:30 JST)
+
+Routes the next pending WBS feature request into the existing autonomous repair lane.
+
+1. Read pending WBS tasks from `tools-hub:wbs.list_tasks`.
+2. Pick the next task whose title/category includes `追加要望`.
+3. Mark the task `in_progress`.
+4. If the task description has a GitHub Issue URL:
+   - closed Issue -> mark WBS task `completed`
+   - open Issue -> dispatch `.github/workflows/github-issue-fix.yml`
+5. If no Issue URL exists, create a GitHub Issue and dispatch the same repair workflow.
+6. Record the result in `schedule_task_runs` as `self-devin-schedule`.
+
+Manual run:
+
+```bash
+gh workflow run self-devin-schedule.yml -f dry_run=true
+gh workflow run self-devin-schedule.yml -f wbs_task_id=<task-id> -f dry_run=false
+```
+
+---
+
 ### Task: github-issue-fix (毎日 10:00 JST に実行)
 
 GitHub Issues を自動チェックし、修正可能なものを自動対応する。

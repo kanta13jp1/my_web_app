@@ -371,3 +371,7 @@ WHERE title = 'ai-hub provider.chat 蜈ｨ蟇ｾ蠢・;
 - 対応内容: AIアシスタントチャットから `Gemini / Manus` を切り替えられるようにし、Manus選択時は `MANUS_API_KEY` で公式 Manus task.create API に非同期タスクを作成するようにした。
 - 実装補足: `ai-hub my_agent.chat(provider=manus)` が task id / task url を返し、履歴にも `agent_provider` と Manus task metadata を保存する。Geminiテキスト回答とHedra動画回答は既存どおり残す。
 - WBS DB反映: migration `20260425053000_wbs_codex_manus_my_agent_provider.sql`
+- 実担当タスク: `[追加要望] Claude Code Schedule + GitHub Actions = 自作Devinパターン`
+- 対応内容: `.github/workflows/self-devin-schedule.yml` を追加し、WBSの追加要望をGitHub Issue修復レーンへ自動ルーティングする日次スケジュールを作った。
+- 実装補足: pendingの追加要望を選び、Issueが閉じていればWBSを完了、Issueが開いていれば `github-issue-fix.yml` をdispatch、Issue未作成なら作成してからdispatchする。`schedule_task_runs` には `self-devin-schedule` として記録する。
+- WBS DB反映: migration `20260425060000_wbs_codex_self_devin_schedule_router.sql`
