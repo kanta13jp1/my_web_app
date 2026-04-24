@@ -17068,3 +17068,28 @@ supabase migration repair --status reverted 20260424241500 2>/dev/null || true
 - migration dynamic auto-repair: 全 run で正常動作確認
 - dart format warning: 解消済み
 
+## PS#1 S31 — Rule 17 WF health check + orphan branch merge (2026-04-24 14:30 JST)
+
+### WF 集計
+
+| WF | 状況 | 判定 |
+|---|---|---|
+| Deploy to Production | e42e76b8❌(esm.sh 522 transient) / 82e246fe❌(test const) / 176db5dd❌(test const) | 2ccef144✅修復済 |
+| GitHub Issue Fix | BYPASS_RULES fix live — 次 run 2026-04-25 10:00 JST | 待機中 |
+| その他全 WF | 全 success / skipped (正常) | 健全 |
+
+### 今回対応
+
+- **esm.sh 522 transient**: 非コードエラー — 自然 retry で解消 (記録済パターン)
+- **test const errors** (`82e246fe` / `176db5dd`): local_election test ファイル const constructor → `2ccef144` で修復
+- **orphan branch 3本 マージ完了** (PS#5 handoff → PS#1 escalate):
+  - `claude/mobile-version-task-hQxcq` (10 commits): WBS-gantt 列非表示 / WCAG dark bg / MarkdownBody table / AppVersion const
+  - `claude/mobile-version-task-2B9tz` (1 commit): cross-instance-pr docs
+  - `claude/web-version-tasks-oev9R` (2 commits): X share fix + Notion slim (conflict解消: EF deleted file kept / import merged)
+- orphan claude/*: **0本** (全削除)
+
+### Philosophy Alignment (PS#1 S31)
+
+1. CEO感 ✅ / 2. ミッション駆動 ✅ / 3. 優しいmentor ✅ / 4. 6部署バランス ✅
+5. 商品=ユーザー価値 ✅ / 6. 資本=時間 ✅ / 7. 資産負債 ✅
+8. KPI=昨日の自分 ✅ / 9. ゴール=IPO ✅ — 9/9 ✅ (orphan 解消・mobile/web UX fixes 本番反映)
