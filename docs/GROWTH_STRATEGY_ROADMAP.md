@@ -16537,3 +16537,12 @@ anon key で wbs.add_task 不可 (service role 必要)。次回 Win版/PS#1 で�
 7. 資産負債 ✅ (Notion 負債 framing 記事) / 8. KPI=昨日の自分 ✅ / 9. ゴール=IPO ✅
 
 - commit: cb4c2bb7 (orphan merge) + 本 commit
+
+### Rule 17 WF health check 続報 — PS#1 S28 cont. (2026-04-24 09:00 JST)
+- deploy-prod failure root cause: migration timestamp collision (SQLSTATE 23505)
+  - `20260424230000_seed_ps6_s25_ef_cleanup.sql` 先登録済み
+  - `20260424230000_seed_vapi_ai_university.sql` (PS#3) が同 version で衝突
+  - PS#2 が 230100 にリネーム解決 → PS#1 rename skip → dart format 24files 再同期
+- WBS更新: BYPASS_RULES 70→90% / deploy-prod 80→88%
+- 教訓: 複数インスタンス同日 migration 作成は 5 分間隔必須 (feedback_correction 記録)
+- commit: 61c92a9f (dart format sync)
