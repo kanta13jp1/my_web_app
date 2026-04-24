@@ -33,7 +33,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
-      GH_TOKEN: ${{ secrets.GH_PAT || secrets.GITHUB_TOKEN }}
+      GH_TOKEN: ${{ secrets.BYPASS_RULES || secrets.GITHUB_TOKEN }}
       DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
 
     steps:
@@ -41,7 +41,7 @@ jobs:
         uses: actions/checkout@v6
         with:
           fetch-depth: 0
-          token: ${{ secrets.GH_PAT || secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.BYPASS_RULES || secrets.GITHUB_TOKEN }}
 
       - name: Step 1 - Select target issue
         id: target
