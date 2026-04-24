@@ -207,8 +207,8 @@ void main() {
       sources: <LocalElectionRealitySource>[],
       prefectures: <LocalElectionPrefectureReality>[],
       members: <LocalElectionLegislatorProfile>[],
-      upcomingSchedules: <LocalElectionScheduleEntry>[
-        const LocalElectionScheduleEntry(
+      upcomingSchedules: const <LocalElectionScheduleEntry>[
+        LocalElectionScheduleEntry(
           electionName: '山口市議会議員選挙',
           prefecture: '山口県',
           municipality: '山口市',
@@ -224,7 +224,7 @@ void main() {
           kokuminCandidateStatuses: <String>[],
           kokuminCandidateXHandles: <String>[],
         ),
-        const LocalElectionScheduleEntry(
+        LocalElectionScheduleEntry(
           electionName: '鹿島市長選挙',
           prefecture: '佐賀県',
           municipality: '鹿島市',
@@ -240,7 +240,7 @@ void main() {
           kokuminCandidateStatuses: <String>[],
           kokuminCandidateXHandles: <String>[],
         ),
-        const LocalElectionScheduleEntry(
+        LocalElectionScheduleEntry(
           electionName: '参議院議員選挙',
           prefecture: '東京都',
           municipality: '',
