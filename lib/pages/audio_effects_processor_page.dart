@@ -30,8 +30,8 @@ class _AudioEffectsProcessorPageState extends State<AudioEffectsProcessorPage> {
     });
     try {
       final response = await _supabase.functions.invoke(
-        'audio-effects-processor',
-        body: {'action': 'catalog'},
+        'media-hub',
+        body: {'action': 'audio.catalog'},
       );
       final data = response.data;
       if (data is Map<String, dynamic> && data['effects'] is List) {

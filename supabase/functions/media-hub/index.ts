@@ -350,6 +350,24 @@ serve(async (req) => {
       case "esign.list": return json({ success: true, requests: await listItems(admin, "esign_request", userId) });
 
       // ── Audio Effects ────────────────────────────────────────────────────────
+      case "audio.catalog": {
+        const effects = [
+          { id: "reverb_hall", name: "Hall Reverb", description: "広大なホールの残響", category: "reverb" },
+          { id: "reverb_room", name: "Room Reverb", description: "小部屋の自然な響き", category: "reverb" },
+          { id: "reverb_plate", name: "Plate Reverb", description: "プレートリバーブ風の明るい響き", category: "reverb" },
+          { id: "delay_slapback", name: "Slapback Delay", description: "短いディレイ", category: "delay" },
+          { id: "delay_ping_pong", name: "Ping Pong Delay", description: "左右交互のディレイ", category: "delay" },
+          { id: "chorus_subtle", name: "Subtle Chorus", description: "自然なコーラス効果", category: "chorus" },
+          { id: "chorus_lush", name: "Lush Chorus", description: "豊かなコーラス", category: "chorus" },
+          { id: "distortion_light", name: "Light Distortion", description: "軽いオーバードライブ", category: "distortion" },
+          { id: "distortion_heavy", name: "Heavy Distortion", description: "ヘビーなディストーション", category: "distortion" },
+          { id: "compressor_light", name: "Light Compressor", description: "軽いコンプレッション", category: "compressor" },
+          { id: "compressor_medium", name: "Medium Compressor", description: "中程度のコンプレッション", category: "compressor" },
+          { id: "eq_bass_boost", name: "Bass Boost", description: "低音域を強調", category: "eq" },
+          { id: "eq_presence", name: "Presence Boost", description: "中高域を明瞭化", category: "eq" },
+        ];
+        return json({ success: true, effects, categories: ["reverb","delay","chorus","distortion","compressor","eq"], totalEffects: effects.length });
+      }
       case "audio.effects": {
         const item = await addItem(admin, "audio_effect", userId, {
           effect: body.effect ?? "reverb", audio_url: body.audio_url, params: body.params ?? {},
