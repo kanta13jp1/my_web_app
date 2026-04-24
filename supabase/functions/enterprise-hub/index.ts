@@ -575,6 +575,83 @@ serve(async (req) => {
           .limit(50);
         return json({ success: true, features: data ?? [] });
       }
+      case "competitor.reports": {
+        const reports = await listItems(admin, "competitor_report", userId, 12);
+        return json({ success: true, reports });
+      }
+      case "competitor.weekly_manus_report": {
+        const { data } = await admin.from("hub_data")
+          .select("metadata, created_at")
+          .eq("source", "competitor_feature")
+          .filter("metadata->>user_id", "eq", userId)
+          .order("created_at", { ascending: false })
+          .limit(80);
+        const rows = data ?? [];
+        const byCompetitor = new Map<string, { total: number; statuses: Map<string, number>; latest: string[] }>();
+        for (const row of rows) {
+          const meta = (row.metadata ?? {}) as Record<string, unknown>;
+          const competitor = String(meta.competitor ?? "unknown");
+          const status = String(meta.status ?? "detected");
+          const feature = String(meta.feature ?? "(feature)");
+          const current = byCompetitor.get(competitor) ?? {
+            total: 0,
+            statuses: new Map<string, number>(),
+            latest: [],
+          };
+          current.total += 1;
+          current.statuses.set(status, (current.statuses.get(status) ?? 0) + 1);
+          if (current.latest.length < 5) current.latest.push(feature);
+          byCompetitor.set(competitor, current);
+        }
+        const generatedAt = new Date().toISOString();
+        const reportId = `manus-weekly-${generatedAt.slice(0, 10)}`;
+        const competitorSummaries = Array.from(byCompetitor.entries()).map(([name, value]) => ({
+          name,
+          total: value.total,
+          statuses: Object.fromEntries(value.statuses.entries()),
+          latest: value.latest,
+        }));
+        const topLines = competitorSummaries.length === 0
+          ? ["- No competitor features recorded yet. Start by adding detected features from the sync screen."]
+          : competitorSummaries.map((c) =>
+            `- ${c.name}: ${c.total}件 / ${Object.entries(c.statuses).map(([k, v]) => `${k}:${v}`).join(", ")} / latest: ${c.latest.slice(0, 3).join("、")}`
+          );
+        const reportMarkdown = [
+          `# Manus Weekly Competitor Report (${generatedAt.slice(0, 10)})`,
+          "",
+          "## KGI",
+          "競合の新機能・訴求・運用変化を週次で把握し、自社の次の改善タスクへ接続する。",
+          "",
+          "## CSF",
+          "- 競合ごとの変化量を比較する",
+          "- 未対応の差分をプロダクト/マーケ/営業タスクへ落とす",
+          "- 週次で同じ観点を継続観測する",
+          "",
+          "## KPI",
+          `- 監視対象フィーチャー: ${rows.length}件`,
+          `- 競合数: ${competitorSummaries.length}件`,
+          "- 次回実行: 7日後",
+          "",
+          "## Competitor Summary",
+          ...topLines,
+          "",
+          "## Manus Action Plan",
+          "1. 変化量が多い競合を1社選び、差分機能を自社WBSへ追加する。",
+          "2. 既存機能で代替できる差分はUI/導線改善として小さく実装する。",
+          "3. 差分が大きいものはAI大学/AI組織OS/ライフマネジメントのどれに効くか分類する。",
+        ].join("\n");
+        const report = await addItem(admin, "competitor_report", userId, {
+          report_id: reportId,
+          generated_at: generatedAt,
+          engine: "manus_like",
+          cadence: "weekly",
+          feature_count: rows.length,
+          competitor_count: competitorSummaries.length,
+          competitor_summaries: competitorSummaries,
+          report_markdown: reportMarkdown,
+        });
+        return json({ success: true, report });
+      }
       case "competitor.add_feature": {
         const item = await addItem(admin, "competitor_feature", userId, {
           competitor: body.competitor, feature: body.feature, status: body.status ?? "detected",

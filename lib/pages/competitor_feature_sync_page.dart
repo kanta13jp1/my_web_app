@@ -15,6 +15,8 @@ class _CompetitorFeatureSyncPageState extends State<CompetitorFeatureSyncPage> {
   String? _error;
   List<Map<String, dynamic>> _competitors = [];
   List<Map<String, dynamic>> _pendingFeatures = [];
+  List<Map<String, dynamic>> _reports = [];
+  bool _isGeneratingReport = false;
 
   @override
   void initState() {
@@ -49,6 +51,18 @@ class _CompetitorFeatureSyncPageState extends State<CompetitorFeatureSyncPage> {
           }).toList();
         }
         _competitors = [];
+      }
+      final reportRes = await _supabase.functions.invoke(
+        'enterprise-hub',
+        body: {'action': 'competitor.reports'},
+      );
+      final reportData = reportRes.data;
+      if (reportData is Map && reportData['reports'] is List) {
+        _reports = (reportData['reports'] as List)
+            .map<Map<String, dynamic>>(
+              (row) => Map<String, dynamic>.from(row as Map),
+            )
+            .toList();
       }
       setState(() {});
     } catch (e) {
@@ -88,6 +102,28 @@ class _CompetitorFeatureSyncPageState extends State<CompetitorFeatureSyncPage> {
     }
   }
 
+  Future<void> _generateWeeklyManusReport() async {
+    setState(() => _isGeneratingReport = true);
+    try {
+      await _supabase.functions.invoke(
+        'enterprise-hub',
+        body: {'action': 'competitor.weekly_manus_report'},
+      );
+      await _fetchData();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Manus週次競合レポートを生成しました')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('レポート生成に失敗しました: $e')),
+      );
+    } finally {
+      if (mounted) setState(() => _isGeneratingReport = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -121,6 +157,13 @@ class _CompetitorFeatureSyncPageState extends State<CompetitorFeatureSyncPage> {
                       ),
                     ),
                     SliverToBoxAdapter(
+                      child: _ManusWeeklyReportPanel(
+                        reports: _reports,
+                        isGenerating: _isGeneratingReport,
+                        onGenerate: _generateWeeklyManusReport,
+                      ),
+                    ),
+                    SliverToBoxAdapter(
                       child: Padding(
                         padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
                         child: Text(
@@ -145,6 +188,118 @@ class _CompetitorFeatureSyncPageState extends State<CompetitorFeatureSyncPage> {
                     const SliverToBoxAdapter(child: SizedBox(height: 80)),
                   ],
                 ),
+    );
+  }
+}
+
+class _ManusWeeklyReportPanel extends StatelessWidget {
+  final List<Map<String, dynamic>> reports;
+  final bool isGenerating;
+  final VoidCallback onGenerate;
+
+  const _ManusWeeklyReportPanel({
+    required this.reports,
+    required this.isGenerating,
+    required this.onGenerate,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final latest = reports.isNotEmpty ? reports.first : null;
+    final latestMeta = latest?['metadata'] is Map
+        ? Map<String, dynamic>.from(latest!['metadata'] as Map)
+        : const <String, dynamic>{};
+    final markdown = latestMeta['report_markdown']?.toString() ?? '';
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+      child: Card(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.auto_awesome, color: Color(0xFF2563EB)),
+                  const SizedBox(width: 8),
+                  const Expanded(
+                    child: Text(
+                      'Manus週次競合レポート',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                        height: 1.5,
+                      ),
+                    ),
+                  ),
+                  FilledButton.icon(
+                    onPressed: isGenerating ? null : onGenerate,
+                    icon: isGenerating
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.summarize),
+                    label: const Text('生成'),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'competitor_feature を週次で集約し、KGI/CSF/KPI、競合別サマリー、次の実行案を competitor_report として保存します。',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  height: 1.5,
+                ),
+              ),
+              if (latestMeta.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    Chip(
+                      label: Text('履歴 ${reports.length}件'),
+                      avatar: const Icon(Icons.history, size: 16),
+                    ),
+                    Chip(
+                      label: Text('監視 ${latestMeta['feature_count'] ?? 0}件'),
+                      avatar: const Icon(Icons.radar, size: 16),
+                    ),
+                    Chip(
+                      label: Text('競合 ${latestMeta['competitor_count'] ?? 0}社'),
+                      avatar: const Icon(Icons.business, size: 16),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                ExpansionTile(
+                  tilePadding: EdgeInsets.zero,
+                  title: Text(
+                    latestMeta['report_id']?.toString() ?? 'latest report',
+                    style: const TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                  subtitle: Text(
+                    latestMeta['generated_at']?.toString() ?? '',
+                    style: const TextStyle(fontSize: 12),
+                  ),
+                  children: [
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: SelectableText(
+                        markdown,
+                        style: const TextStyle(fontSize: 12, height: 1.5),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

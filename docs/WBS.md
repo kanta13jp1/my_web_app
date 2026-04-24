@@ -363,3 +363,7 @@ WHERE title = 'ai-hub provider.chat 蜈ｨ蟇ｾ蠢・;
 - 対応内容: AI組織OSに `Manus-like マルチステップ自動実行` を追加し、目的を1つ入力すると要件整理、KGI/CSF/KPI設計、主担当案、専門レビュー、CEO確認準備までを部門タスクへ自動展開できるようにした。
 - 実装補足: 目的のキーワードから財務/マーケ/営業/法務/健康/プロダクト/技術などの戦略を判定し、既存の有効エージェントへ5ステップの `agent_tasks` と executive board summary を作成する。
 - WBS DB反映: migration `20260425043000_wbs_codex_manus_like_multistep.sql`
+- 実担当タスク: `[追加要望] 【Manus AI】競合モニタリング高度化: 週次Manus実行でcompetitor-reportsを自動生成`
+- 対応内容: 競合機能同期画面に `Manus週次競合レポート` を追加し、最新の `competitor_feature` を集約して `competitor_report` として保存・確認できるようにした。
+- 実装補足: Enterprise Hub に `competitor.reports` と `competitor.weekly_manus_report` を追加し、KGI/CSF/KPI、競合別サマリー、次の実行案をMarkdownで生成する。
+- WBS DB反映: migration `20260425050000_wbs_codex_manus_competitor_weekly_report.sql`
