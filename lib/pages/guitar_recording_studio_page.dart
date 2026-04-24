@@ -1080,7 +1080,8 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
           .map((item) => '- $item')
           .join('\n');
       final practiceMenu = (analysis['practiceMenu'] as List? ?? const [])
-          .map((item) => '- ${item is Map ? item['title'] ?? item['task'] ?? item : item}')
+          .map((item) =>
+              '- ${item is Map ? item['title'] ?? item['task'] ?? item : item}')
           .join('\n');
       if (insights.isNotEmpty) {
         buffer.write('\n\n分析インサイト:\n$insights');
@@ -3741,9 +3742,7 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
                         )
                       : const Icon(Icons.videocam_outlined),
                   label: Text(
-                    _isGeneratingAvatarCoach
-                        ? 'アバター解説を生成中...'
-                        : 'アバター解説を生成',
+                    _isGeneratingAvatarCoach ? 'アバター解説を生成中...' : 'アバター解説を生成',
                   ),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: Colors.white,
@@ -3793,13 +3792,15 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
                         if (_avatarCoachVideoProvider != null)
                           Chip(
                             label: Text(_avatarCoachVideoProvider!),
-                            backgroundColor: const Color(0xFF7C3AED).withAlpha(35),
+                            backgroundColor:
+                                const Color(0xFF7C3AED).withAlpha(35),
                             labelStyle: const TextStyle(color: Colors.white),
                           ),
                         if (_avatarCoachVideoStatus != null)
                           Chip(
                             label: Text(_avatarCoachVideoStatus!),
-                            backgroundColor: const Color(0xFFFF6B35).withAlpha(35),
+                            backgroundColor:
+                                const Color(0xFFFF6B35).withAlpha(35),
                             labelStyle: const TextStyle(color: Colors.white),
                           ),
                       ],

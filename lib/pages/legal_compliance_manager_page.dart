@@ -142,8 +142,7 @@ class _LegalComplianceManagerPageState extends State<LegalComplianceManagerPage>
         return;
       }
 
-      final sources =
-          (map['sources'] as List?)
+      final sources = (map['sources'] as List?)
               ?.whereType<Map>()
               .map((item) => Map<String, dynamic>.from(item))
               .toList() ??
@@ -151,9 +150,8 @@ class _LegalComplianceManagerPageState extends State<LegalComplianceManagerPage>
 
       setState(() {
         _harveyResponse = map['response']?.toString().trim();
-        _harveyCitationsResponse = map['response_with_citations']
-            ?.toString()
-            .trim();
+        _harveyCitationsResponse =
+            map['response_with_citations']?.toString().trim();
         _harveySources = sources;
       });
     } catch (e) {
@@ -205,16 +203,16 @@ class _LegalComplianceManagerPageState extends State<LegalComplianceManagerPage>
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _errorMessage != null
-          ? _buildError()
-          : TabBarView(
-              controller: _tabController,
-              children: [
-                _buildContractsTab(),
-                _buildChecklistTab(),
-                _buildSaasReviewTab(),
-                _buildHarveyTab(),
-              ],
-            ),
+              ? _buildError()
+              : TabBarView(
+                  controller: _tabController,
+                  children: [
+                    _buildContractsTab(),
+                    _buildChecklistTab(),
+                    _buildSaasReviewTab(),
+                    _buildHarveyTab(),
+                  ],
+                ),
     );
   }
 
@@ -378,8 +376,7 @@ class _LegalComplianceManagerPageState extends State<LegalComplianceManagerPage>
   }
 
   Widget _buildHarveyTab() {
-    final answer =
-        (_harveyCitationsResponse != null &&
+    final answer = (_harveyCitationsResponse != null &&
             _harveyCitationsResponse!.isNotEmpty)
         ? _harveyCitationsResponse!
         : (_harveyResponse ?? '');

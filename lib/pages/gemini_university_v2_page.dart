@@ -5574,9 +5574,8 @@ class _AiUniversityPageState extends State<AiUniversityPage>
       final providers =
           grouped.isEmpty ? _providerMeta.keys.toList() : grouped.keys.toList();
       final requestedProvider = widget.initialProviderId;
-      final requestedIndex = requestedProvider == null
-          ? -1
-          : providers.indexOf(requestedProvider);
+      final requestedIndex =
+          requestedProvider == null ? -1 : providers.indexOf(requestedProvider);
       final initialIndex = requestedIndex >= 0 ? requestedIndex : 0;
 
       _tabController?.dispose();

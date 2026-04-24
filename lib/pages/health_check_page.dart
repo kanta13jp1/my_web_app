@@ -146,9 +146,10 @@ class _HealthCheckPageState extends State<HealthCheckPage> {
                                         Text(
                                           timestamp,
                                           style: const TextStyle(
-                                              fontSize: 12,
-                                              color: Colors.grey,
-                                              height: 1.5,),
+                                            fontSize: 12,
+                                            color: Colors.grey,
+                                            height: 1.5,
+                                          ),
                                         ),
                                     ],
                                   ),
@@ -163,14 +164,14 @@ class _HealthCheckPageState extends State<HealthCheckPage> {
                           const Text(
                             'チェック詳細',
                             style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                height: 1.5,),
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              height: 1.5,
+                            ),
                           ),
                           const SizedBox(height: 8),
                           ...checks.entries.map((entry) {
-                            final check =
-                                entry.value as Map<String, dynamic>?;
+                            final check = entry.value as Map<String, dynamic>?;
                             final ok = check?['ok'] as bool? ?? false;
                             final latency = check?['latencyMs'];
                             final detail = check?['detail'] as String?;
@@ -187,9 +188,10 @@ class _HealthCheckPageState extends State<HealthCheckPage> {
                                 title: Text(
                                   entry.key,
                                   style: const TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w600,
-                                      height: 1.5,),
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    height: 1.5,
+                                  ),
                                 ),
                                 subtitle: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -198,13 +200,17 @@ class _HealthCheckPageState extends State<HealthCheckPage> {
                                       Text(
                                         'レイテンシ: ${latency}ms',
                                         style: const TextStyle(
-                                            fontSize: 12, height: 1.5,),
+                                          fontSize: 12,
+                                          height: 1.5,
+                                        ),
                                       ),
                                     if (detail != null)
                                       Text(
                                         detail,
                                         style: const TextStyle(
-                                            fontSize: 12, height: 1.5,),
+                                          fontSize: 12,
+                                          height: 1.5,
+                                        ),
                                       ),
                                   ],
                                 ),
@@ -213,9 +219,10 @@ class _HealthCheckPageState extends State<HealthCheckPage> {
                                         label: Text(
                                           'OK',
                                           style: TextStyle(
-                                              fontSize: 11,
-                                              color: Colors.white,
-                                              height: 1.5,),
+                                            fontSize: 11,
+                                            color: Colors.white,
+                                            height: 1.5,
+                                          ),
                                         ),
                                         backgroundColor: Colors.green,
                                         padding: EdgeInsets.zero,
@@ -224,9 +231,10 @@ class _HealthCheckPageState extends State<HealthCheckPage> {
                                         label: Text(
                                           'NG',
                                           style: TextStyle(
-                                              fontSize: 11,
-                                              color: Colors.white,
-                                              height: 1.5,),
+                                            fontSize: 11,
+                                            color: Colors.white,
+                                            height: 1.5,
+                                          ),
                                         ),
                                         backgroundColor: Colors.red,
                                         padding: EdgeInsets.zero,

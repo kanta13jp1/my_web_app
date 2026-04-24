@@ -139,9 +139,8 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
       String endpoint;
       Map<String, dynamic> body;
 
-      final mediaUrl = (videoUrl != null && videoUrl.isNotEmpty)
-          ? videoUrl
-          : imageUrl;
+      final mediaUrl =
+          (videoUrl != null && videoUrl.isNotEmpty) ? videoUrl : imageUrl;
 
       if (mediaUrl != null && mediaUrl.isNotEmpty) {
         endpoint = 'x-media-post';
@@ -373,7 +372,8 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
               ChoiceChip(
                 label: const Text('画像広告'),
                 selected: _selectedOutputType == 'image',
-                onSelected: (_) => setState(() => _selectedOutputType = 'image'),
+                onSelected: (_) =>
+                    setState(() => _selectedOutputType = 'image'),
               ),
               const SizedBox(width: 8),
               ChoiceChip(
@@ -401,8 +401,8 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
               _loading
                   ? '生成中...'
                   : _selectedOutputType == 'presenter_video'
-                  ? 'プレゼンター動画を生成'
-                  : '広告を生成',
+                      ? 'プレゼンター動画を生成'
+                      : '広告を生成',
             ),
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF6366F1),
@@ -533,23 +533,23 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
                     color: hasVideo
                         ? const Color(0xFF7C3AED).withAlpha(30)
                         : hasImage
-                        ? const Color(0xFF4CAF50).withAlpha(30)
-                        : const Color(0xFFFF6B35).withAlpha(30),
+                            ? const Color(0xFF4CAF50).withAlpha(30)
+                            : const Color(0xFFFF6B35).withAlpha(30),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
                     hasVideo
                         ? '🎬 プレゼンター動画'
                         : hasImage
-                        ? '🖼️ 画像付き'
-                        : '📝 テキストのみ',
+                            ? '🖼️ 画像付き'
+                            : '📝 テキストのみ',
                     style: TextStyle(
                       fontSize: 11,
                       color: hasVideo
                           ? const Color(0xFF7C3AED)
                           : hasImage
-                          ? const Color(0xFF4CAF50)
-                          : const Color(0xFFFF6B35),
+                              ? const Color(0xFF4CAF50)
+                              : const Color(0xFFFF6B35),
                       fontWeight: FontWeight.bold,
                       height: 1.5,
                     ),
@@ -566,7 +566,8 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
                   color: isDark ? Colors.black26 : Colors.white,
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(
-                    color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                    color:
+                        Theme.of(context).colorScheme.surfaceContainerHighest,
                   ),
                 ),
                 child: Column(
@@ -637,9 +638,7 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
                 ),
               ),
             ],
-            if (!hasVideo &&
-                videoReason != null &&
-                videoReason.isNotEmpty) ...[
+            if (!hasVideo && videoReason != null && videoReason.isNotEmpty) ...[
               const SizedBox(height: 12),
               Container(
                 padding: const EdgeInsets.all(12),
@@ -724,8 +723,8 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
                       _isPosting
                           ? '投稿中...'
                           : mediaReady
-                          ? 'Xに投稿'
-                          : 'メディア準備待ち',
+                              ? 'Xに投稿'
+                              : 'メディア準備待ち',
                     ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.black,
