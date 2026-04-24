@@ -95,7 +95,7 @@ class AiProviderEntry {
   });
 }
 
-/// AI大学 登録プロバイダー全件のステータスカタログ (160社, 2026-04-24時点)
+/// AI大学 登録プロバイダー全件のステータスカタログ (162社, 2026-04-24時点)
 ///
 /// 実装済み: ai-assistant / ai-hub / ai-search に統合済みのもの
 /// 要APIキー: コード対応済みだが Supabase Secrets に追加が必要
@@ -1266,6 +1266,22 @@ const List<AiProviderEntry> kAiProviderRegistry = [
     entryPoint: 'https://tavily.com/',
     note:
         r'AI エージェント・RAG 向けリアルタイム Web 検索 API — LangChain/LlamaIndex 公式統合・Free 1,000 クレジット/月',
+  ),
+  AiProviderEntry(
+    id: 'nomic_ai',
+    displayName: 'Nomic AI',
+    status: AiProviderStatus.notImplemented,
+    entryPoint: 'https://www.nomic.ai/',
+    note:
+        r'OSS 特化 embedding インフラ — nomic-embed-text (8192ctx / OpenAI 超え) / Apache 2.0 / Ollama 対応 / $17M Series A',
+  ),
+  AiProviderEntry(
+    id: 'chroma',
+    displayName: 'Chroma',
+    status: AiProviderStatus.notImplemented,
+    entryPoint: 'https://www.trychroma.com/',
+    note:
+        r'Developer-first OSS ベクターDB — pip install 3行起動 / Rust 4× / Chroma Cloud GA / $18M seed / GitHub 20k+ stars',
   ),
 ];
 

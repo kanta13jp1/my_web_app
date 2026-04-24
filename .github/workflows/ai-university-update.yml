@@ -122,6 +122,8 @@ jobs:
           upsert_provider "higgsfield"   "https://higgsfield.ai/blog/rss.xml"                "Higgsfield AI (Multi-Model Video)"
           upsert_provider "browserbase"  "https://www.browserbase.com/blog/rss.xml"          "Browserbase (AI Browser Automation)"
           upsert_provider "tavily"       "https://blog.tavily.com/rss.xml"                   "Tavily (AI Search API for Agents)"
+          upsert_provider "nomic_ai"     "https://www.nomic.ai/blog/rss.xml"                 "Nomic AI (Open Source Embeddings)"
+          upsert_provider "chroma"       "https://www.trychroma.com/blog/rss.xml"             "Chroma (Open Source Vector DB)"
 
           # RSS廃止/URL無効 (静的seedコンテンツを維持):
           # anthropic, meta, x, deepseek, mistral, perplexity, groq, cohere, ibm, sakana, baidu, stability, core, cerebras, prover
