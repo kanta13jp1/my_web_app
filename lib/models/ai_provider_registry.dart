@@ -95,7 +95,7 @@ class AiProviderEntry {
   });
 }
 
-/// AI大学 登録プロバイダー全件のステータスカタログ (170社, 2026-04-24時点)
+/// AI大学 登録プロバイダー全件のステータスカタログ (172社, 2026-04-24時点)
 ///
 /// 実装済み: ai-assistant / ai-hub / ai-search に統合済みのもの
 /// 要APIキー: コード対応済みだが Supabase Secrets に追加が必要
@@ -1349,6 +1349,22 @@ const List<AiProviderEntry> kAiProviderRegistry = [
     entryPoint: 'https://www.comet.com/',
     note:
         r'ML実験追跡 & LLMトレーシング — Opik OSS (Apache 2.0 / self-host) / 2013年老舗 / $70M累計 / $17M ARR / W&B補完',
+  ),
+  AiProviderEntry(
+    id: 'braintrust',
+    displayName: 'Braintrust',
+    status: AiProviderStatus.notImplemented,
+    entryPoint: 'https://www.braintrust.dev',
+    note:
+        r'AI観測・評価インフラ — $800M評価 (2026-02 Series B $80M / ICONIQ+a16z) / Loop AI agent / Notion Stripe Vercel採用 / 1M spans無料',
+  ),
+  AiProviderEntry(
+    id: 'galileo',
+    displayName: 'Galileo AI',
+    status: AiProviderStatus.notImplemented,
+    entryPoint: 'https://galileo.ai/',
+    note:
+        r'LLM評価・ガードレール・本番監視 — Google AI創業 / $68M / Luna-2評価モデル / Cisco提携 / Evaluate+Observe+Protect 3層',
   ),
 ];
 
