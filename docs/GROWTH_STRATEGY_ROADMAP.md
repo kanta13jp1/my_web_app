@@ -16792,3 +16792,31 @@ supabase migration repair --status reverted 20260424241500 2>/dev/null || true
 
 ### Philosophy Alignment (PS#5 S39)
 1-9 ✅ (CI green 維持 / 自動化パターンの実地検証)
+
+---
+
+## PS版#3 Session 36 — 2026-04-24 (AI大学 166→168社化)
+
+### 追加プロバイダー
+
+#### Baseten (baseten) — エンタープライズ ML 推論インフラ
+- **概要**: 2020年創業 / 2026-01 Series E $300M @ $5B (IVP + CapitalG + Nvidia $150M) / 累計 ~$585M
+- **性能**: 週数十億 LLM コール / YoY 10× 収益成長 / Blackwell で 225% コストパフォーマンス向上
+- **主力**: Model APIs (OpenAI互換 / 50%安) / Chains SDK (マルチモデルパイプライン) / Dedicated Deployments
+- **評価**: 9/9 (Series E $5B / Nvidia $150M / 10× 収益 / OpenAI互換 / Chains SDK / Blackwell 225%)
+- **migration**: 20260424252000
+
+#### Arize AI (arize_ai) — LLM 観測・評価プラットフォーム
+- **概要**: 2020年創業 (Berkeley CA) / 累計 $131M (Series C $70M / Adams Street)
+- **主力**: Phoenix (完全OSS / self-host / Apache 2.0) / Arize AX ($50K+/年 Enterprise)
+- **特徴**: 2026-01 CLI で Claude Code / Cursor 統合 / LLM-as-judge / 多フレームワーク対応
+- **評価**: 8/9 (Phoenix OSS / Claude Code CLI統合 / LLM-as-judge / 多フレームワーク)
+- **migration**: 20260424253500
+
+### commit: e42e76b8
+
+### Philosophy Alignment
+
+1. CEO感 ✅ / 2. ミッション駆動 ✅ / 3. 優しいmentor ✅ / 4. 6部署バランス ✅
+5. 商品=ユーザー価値 ✅ / 6. 資本=時間 ✅ / 7. 資産負債 ✅
+8. KPI=昨日の自分 ✅ / 9. ゴール=IPO ✅
