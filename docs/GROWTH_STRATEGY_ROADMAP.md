@@ -16510,3 +16510,30 @@ anon key で wbs.add_task 不可 (service role 必要)。次回 Win版/PS#1 で�
     - LangChain/LlamaIndex公式統合 / Free 1,000クレジット/月 / Nebius買収
 - Philosophy Alignment: 5✅(エージェント開発必須ツール教育) 7✅(160社資産) 8✅
 - commit: 58fdf886
+
+---
+
+## PS版#2 Session S20 追記 (2026-04-24 09:16 JST) — T-1 第26弾 2026-04-28 dispatch
+
+### T-1 第26弾: Notion paywall D-5 弾
+
+- draft: `2026-04-28-notion-custom-agents-paywall-vs-free-6-departments`
+- `platforms="qiita,devto"` 同時 dispatch (lesson learned: 今後この方式統一)
+- Qiita HTTP 200 ✅ / dev.to HTTP 200 ✅ / run 24865475290 success
+- dev.to URL: https://dev.to/kanta13jp1/notion-custom-agents-goes-101000-credit-on-54-a-free-way-to-run-all-6-departments-7cj
+- orphan branch `blog-publish/24865475290-20260424-091642` → merged + deleted
+
+### 残 pipeline
+
+| Draft | 対象日 | 残作業 |
+|-------|--------|--------|
+| `2026-05-02-notion-paywall-d2-parallel-6-departments` | D-1 前 (5/1頃) | dispatch |
+| `2026-05-04-notion-paywall-d0-alternative-6-departments` | D-0 (5/3頃) | dispatch |
+
+### Philosophy Alignment (9/9) ✅
+
+1. CEO感 ✅ / 2. ミッション駆動 ✅ / 3. 優しいmentor ✅ / 4. 6部署バランス ✅
+5. 商品=ユーザー価値 ✅ (Notion 課金対比コンテンツで離脱促進) / 6. 資本=時間 ✅
+7. 資産負債 ✅ (Notion 負債 framing 記事) / 8. KPI=昨日の自分 ✅ / 9. ゴール=IPO ✅
+
+- commit: cb4c2bb7 (orphan merge) + 本 commit
