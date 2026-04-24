@@ -247,7 +247,7 @@ serve(async (req: Request) => {
     }
 
     const action: string = body.action ?? "";
-    const serviceRoleActions = new Set(["notify.feature_request"]);
+    const serviceRoleActions = new Set(["notify.feature_request", "notification.broadcast_release"]);
     const bearer = (req.headers.get("authorization") ?? "").replace(/^Bearer\s+/i, "").trim();
     const isServiceRole = SERVICE_ROLE_KEY !== "" && bearer === SERVICE_ROLE_KEY;
     let userId = "";
@@ -440,6 +440,57 @@ serve(async (req: Request) => {
           await admin.from("hub_data").update({ metadata: meta }).eq("id", row.id);
         }
         return json({ success: true, updated: (rows ?? []).length });
+      }
+
+      case "notification.broadcast_release": {
+        const version = String(body.version ?? "").trim();
+        const releaseUrl = String(body.releaseUrl ?? "").trim();
+        const commit = String(body.commit ?? "").trim().slice(0, 7);
+        if (!version) return json({ error: "version required" }, 400);
+
+        // Idempotency: 同じ version が既に broadcast 済みならスキップ
+        const { data: existing } = await admin
+          .from("hub_data")
+          .select("id")
+          .eq("source", "notification")
+          .filter("metadata->>type", "eq", "feature_update")
+          .filter("metadata->>version", "eq", version)
+          .limit(1);
+        if ((existing?.length ?? 0) > 0) {
+          return json({ success: true, skipped: "already_broadcast", version });
+        }
+
+        // アクティブユーザー取得 (過去90日以内ログイン)
+        const ninetyDaysAgo = new Date(Date.now() - 90 * 86_400_000).toISOString();
+        const { data: userList, error: userErr } = await admin.auth.admin.listUsers({
+          perPage: 1000,
+        });
+        if (userErr) return json({ error: userErr.message }, 500);
+        const activeUsers = (userList?.users ?? []).filter(
+          (u) => u.last_sign_in_at && u.last_sign_in_at >= ninetyDaysAgo,
+        );
+        if (activeUsers.length === 0) {
+          return json({ success: true, broadcast_to: 0, version });
+        }
+
+        const rows = activeUsers.map((u) => ({
+          source: "notification",
+          metadata: {
+            title: `🚀 新バージョン v${version} をリリースしました`,
+            message: `アプリを更新すると新機能・改善が反映されます。ページを再読み込みしてください。`,
+            type: "feature_update",
+            read: false,
+            user_id: u.id,
+            version,
+            releaseUrl,
+            commit,
+            action: "update_app",
+          },
+        }));
+
+        const { error: insertErr } = await admin.from("hub_data").insert(rows);
+        if (insertErr) return json({ error: insertErr.message }, 500);
+        return json({ success: true, broadcast_to: activeUsers.length, version });
       }
 
       // ---- User profile ----

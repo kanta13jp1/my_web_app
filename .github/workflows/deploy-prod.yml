@@ -481,6 +481,19 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Broadcast release notification
+        continue-on-error: true
+        env:
+          SUPABASE_URL: https://smmkxxavexumewbfaqpy.supabase.co
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+        run: |
+          curl -fsS -X POST \
+            "$SUPABASE_URL/functions/v1/core-hub" \
+            -H "Authorization: Bearer $SUPABASE_SERVICE_KEY" \
+            -H "Content-Type: application/json" \
+            -d "{\"action\":\"notification.broadcast_release\",\"version\":\"${{ steps.version.outputs.version }}\",\"commit\":\"${{ github.sha }}\",\"releaseUrl\":\"https://github.com/kanta13jp1/my_web_app/releases/tag/${{ steps.version.outputs.tag }}\"}" \
+            || true
+
       - name: Job Summary
         if: always()
         run: |
