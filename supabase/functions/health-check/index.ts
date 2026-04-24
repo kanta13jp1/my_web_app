@@ -85,10 +85,10 @@ serve(async (req) => {
     };
     if (!checks["wbs_tasks"].ok) failCount++;
 
-    // Check 4: ai_circuit_breaker table
+    // Check 4: ai_circuit_breaker table (PK is "provider", no "id" column)
     const { error: cbError } = await admin
       .from("ai_circuit_breaker")
-      .select("id", { count: "exact", head: true });
+      .select("provider", { count: "exact", head: true });
     checks["ai_circuit_breaker"] = {
       ok: !cbError,
       detail: cbError ? cbError.message : "ai_circuit_breaker reachable",
