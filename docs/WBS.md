@@ -315,6 +315,10 @@ WHERE title = 'ai-hub provider.chat 蜈ｨ蟇ｾ蠢・;
 - 対応内容: `ai-assistant` Edge Function に Hedra 動画回答アクションを接続し、`/ai-assistant` チャットから `テキスト回答 / 動画回答` を切り替えて返答動画 URL と状態を受け取れるようにした。
 - 実装補足: `ai-hub my_agent.chat(video)` から `ai-assistant assistant_video_reply` を呼び、`HEDRA_API_KEY` 未設定時や失敗時はテキスト回答へフォールバックする。
 - WBS DB反映: migration `20260424113000_wbs_codex_ai_assistant_video.sql`
+- 実担当タスク: `[追加要望] バイラル動画パイプライン強化`
+- 対応内容: `viral-video-ad-generator` に Hedra プレゼンター動画生成を追加し、バイラル広告ジェネレーター画面から `画像広告 / プレゼンター動画` を切り替えて生成・プレビュー・X 投稿できるようにした。
+- 実装補足: `viral_ad_generations` に動画URL系カラムを追加し、Hedra 失敗時は理由を表示してテキスト投稿へフォールバックする。履歴でも動画広告を開けるようにした。
+- WBS DB反映: migration `20260425001000_wbs_codex_viral_video_presenter.sql`
 - 実担当タスク: `[追加要望] AI大学のコンテンツ形式革新`
 - 対応内容: AI大学に `/ai-university-video` を追加し、教材テキストをもとに Hedra 動画レッスンを生成できるようにした。HomeカードとAI大学本体から遷移可能。
 - 実装補足: `ai-hub my_agent.chat(video)` に `title / voice / conversation_context` の pass-through を追加。

@@ -2,12 +2,13 @@
 // Dark War風バイラル動画広告生成パイプライン
 //
 // 機能:
-// - FAL.ai (fast-sdxl / video generation) を使った動画/画像生成
+// - FAL.ai (fast-sdxl) を使った広告画像生成
+// - Hedra を使ったプレゼンター動画生成
 // - 自分株式会社の「21の競合を超える」ストーリーを動画化
 // - 生成したメディアをSupabase Storageに保存
 // - X投稿用の動画URL + キャプションを返す
 //
-// POST { "type": "image" | "video_script", "template": "dark_war" | "feature_highlight" | "user_growth", "lang": "ja" | "en" }
+// POST { "type": "image" | "presenter_video" | "video_script", "template": "dark_war" | "feature_highlight" | "user_growth", "lang": "ja" | "en" }
 // GET  ?view=templates | ?view=history
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
@@ -21,6 +22,7 @@ const corsHeaders = {
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SERVICE_ROLE_KEY = Deno.env.get("SERVICE_ROLE_KEY") ?? "";
 const FAL_KEY = Deno.env.get("FAL_KEY") ?? "";
+const HEDRA_API_KEY = Deno.env.get("HEDRA_API_KEY") ?? "";
 
 // Dark War風 広告テンプレート定義
 const AD_TEMPLATES = {
@@ -157,6 +159,8 @@ serve(async (req) => {
       template?: string;
       lang?: string;
       customPrompt?: string;
+      title?: string;
+      voice?: string;
     };
 
     const templateKey = body.template ?? "dark_war";
@@ -173,7 +177,13 @@ serve(async (req) => {
     const imagePrompt = body.customPrompt ?? template.imagePrompt;
 
     let generatedImageUrl: string | null = null;
+    let generatedVideoUrl: string | null = null;
+    let generatedPreviewUrl: string | null = null;
+    let generatedDownloadUrl: string | null = null;
     let falJobId: string | null = null;
+    let videoProvider: string | null = null;
+    let videoStatus: string | null = null;
+    let videoReason: string | null = null;
 
     // FAL.ai で画像生成 (キーが設定されている場合)
     if (FAL_KEY && type === "image") {
@@ -203,6 +213,43 @@ serve(async (req) => {
       }
     }
 
+    if (type === "presenter_video") {
+      if (!HEDRA_API_KEY) {
+        videoProvider = "hedra";
+        videoStatus = "fallback_text";
+        videoReason = "HEDRA_API_KEY not configured";
+      } else {
+        try {
+          const hedraVideo = await createHedraPresenterVideo({
+            apiKey: HEDRA_API_KEY,
+            script,
+            title: body.title ?? template.name,
+            voice: body.voice ?? defaultVoiceForLang(lang),
+          });
+          generatedVideoUrl = hedraVideo.videoUrl;
+          generatedPreviewUrl = hedraVideo.previewUrl;
+          generatedDownloadUrl = hedraVideo.downloadUrl;
+          videoProvider = "hedra";
+          videoStatus = hedraVideo.status;
+          if (!generatedVideoUrl) {
+            videoReason = "Hedra did not return a video URL";
+          }
+        } catch (error) {
+          videoProvider = "hedra";
+          videoStatus = "fallback_text";
+          videoReason = error instanceof Error ? error.message : String(error);
+        }
+      }
+    }
+
+    const generationStatus = generatedVideoUrl != null
+      ? "video_ready"
+      : generatedImageUrl != null
+      ? "ready"
+      : type === "presenter_video" && videoStatus != null
+      ? videoStatus
+      : "script_only";
+
     // 生成履歴をDBに記録
     let recordId: string | null = null;
     try {
@@ -216,9 +263,15 @@ serve(async (req) => {
           caption,
           image_prompt: imagePrompt,
           generated_image_url: generatedImageUrl,
+          generated_video_url: generatedVideoUrl,
+          generated_preview_url: generatedPreviewUrl,
+          generated_download_url: generatedDownloadUrl,
           fal_job_id: falJobId,
           hashtags: template.hashtags,
-          status: generatedImageUrl ? "ready" : "script_only",
+          video_provider: videoProvider,
+          video_status: videoStatus,
+          video_reason: videoReason,
+          status: generationStatus,
         })
         .select("id")
         .single();
@@ -238,10 +291,22 @@ serve(async (req) => {
       hashtags: template.hashtags,
       imagePrompt,
       generatedImageUrl,
+      generatedVideoUrl,
+      generatedPreviewUrl,
+      generatedDownloadUrl,
       falJobId,
-      status: generatedImageUrl ? "ready_to_post" : "script_only",
-      nextStep: generatedImageUrl
+      videoProvider,
+      videoStatus,
+      videoReason,
+      status: generatedVideoUrl != null || generatedImageUrl != null
+        ? "ready_to_post"
+        : generationStatus,
+      nextStep: generatedVideoUrl != null
+        ? "Call x-media-post with this videoUrl and caption to post to X"
+        : generatedImageUrl != null
         ? "Call x-media-post with this imageUrl and caption to post to X"
+        : type === "presenter_video"
+        ? "Hedra video generation is unavailable. Use the caption for text-only X post or retry after checking HEDRA_API_KEY."
         : "FAL_KEY not set or generation failed. Use caption for text-only X post via post-x-update",
       textPost: {
         endpoint: "post-x-update",
@@ -258,4 +323,96 @@ function jsonRes(data: unknown, status = 200) {
     status,
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
+}
+
+function defaultVoiceForLang(lang: "ja" | "en"): string {
+  return lang === "en" ? "en-US" : "ja-JP";
+}
+
+async function createHedraPresenterVideo(params: {
+  apiKey: string;
+  script: string[];
+  title?: string;
+  voice: string;
+}): Promise<{
+  id: string | null;
+  status: string;
+  videoUrl: string | null;
+  previewUrl: string | null;
+  downloadUrl: string | null;
+}> {
+  const response = await fetch("https://mercury.dev.dream-ai.com/api/v1/characters", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-API-KEY": params.apiKey,
+    },
+    body: JSON.stringify({
+      text: params.script.join("\n"),
+      title: params.title,
+      voice: params.voice,
+    }),
+  });
+
+  const rawText = await response.text();
+  let parsed: Record<string, unknown> = {};
+  if (rawText.trim().length > 0) {
+    try {
+      parsed = JSON.parse(rawText) as Record<string, unknown>;
+    } catch {
+      parsed = { raw: rawText };
+    }
+  }
+
+  if (!response.ok) {
+    const message = firstNonEmptyString(
+      parsed["error"],
+      parsed["message"],
+      rawText,
+    ) ?? `Hedra request failed with status ${response.status}`;
+    throw new Error(message);
+  }
+
+  return normalizeHedraVideoResponse(parsed);
+}
+
+function normalizeHedraVideoResponse(payload: Record<string, unknown>): {
+  id: string | null;
+  status: string;
+  videoUrl: string | null;
+  previewUrl: string | null;
+  downloadUrl: string | null;
+} {
+  const video = asRecord(payload["video"]);
+  const result = asRecord(payload["result"]);
+  return {
+    id: firstNonEmptyString(payload["id"], payload["video_id"], video?.["id"], result?.["id"]),
+    status: firstNonEmptyString(payload["status"], video?.["status"], result?.["status"]) ?? "submitted",
+    videoUrl: firstNonEmptyString(
+      payload["url"],
+      payload["video_url"],
+      payload["download_url"],
+      video?.["url"],
+      video?.["download_url"],
+      result?.["url"],
+      result?.["download_url"],
+    ),
+    previewUrl: firstNonEmptyString(payload["preview_url"], video?.["preview_url"], result?.["preview_url"]),
+    downloadUrl: firstNonEmptyString(payload["download_url"], video?.["download_url"], result?.["download_url"]),
+  };
+}
+
+function asRecord(value: unknown): Record<string, unknown> | null {
+  return typeof value === "object" && value !== null
+    ? value as Record<string, unknown>
+    : null;
+}
+
+function firstNonEmptyString(...values: unknown[]): string | null {
+  for (const value of values) {
+    if (typeof value === "string" && value.trim().length > 0) {
+      return value.trim();
+    }
+  }
+  return null;
 }

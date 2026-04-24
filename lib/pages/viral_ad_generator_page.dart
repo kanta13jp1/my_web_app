@@ -29,6 +29,7 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
 
   String _selectedTemplate = 'dark_war';
   String _selectedLang = 'ja';
+  String _selectedOutputType = 'image';
   bool _isPosting = false;
 
   @override
@@ -111,7 +112,7 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
         body: {
           'template': _selectedTemplate,
           'lang': _selectedLang,
-          'type': 'image',
+          'type': _selectedOutputType,
         },
       );
       final data = res.data;
@@ -132,16 +133,21 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
     try {
       final caption = _generatedAd!['caption']?.toString() ?? '';
       final imageUrl = _generatedAd!['generatedImageUrl']?.toString();
+      final videoUrl = _generatedAd!['generatedVideoUrl']?.toString();
       final adId = _generatedAd!['id']?.toString();
 
       String endpoint;
       Map<String, dynamic> body;
 
-      if (imageUrl != null && imageUrl.isNotEmpty) {
+      final mediaUrl = (videoUrl != null && videoUrl.isNotEmpty)
+          ? videoUrl
+          : imageUrl;
+
+      if (mediaUrl != null && mediaUrl.isNotEmpty) {
         endpoint = 'x-media-post';
         body = {
           'text': caption.length > 280 ? caption.substring(0, 280) : caption,
-          'mediaUrl': imageUrl,
+          'mediaUrl': mediaUrl,
           'adGenerationId': adId,
         };
       } else {
@@ -353,6 +359,32 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
               ),
             ],
           ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              const Text(
+                '出力: ',
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  height: 1.5,
+                ),
+              ),
+              const SizedBox(width: 8),
+              ChoiceChip(
+                label: const Text('画像広告'),
+                selected: _selectedOutputType == 'image',
+                onSelected: (_) => setState(() => _selectedOutputType = 'image'),
+              ),
+              const SizedBox(width: 8),
+              ChoiceChip(
+                label: const Text('プレゼンター動画'),
+                selected: _selectedOutputType == 'presenter_video',
+                onSelected: (_) => setState(
+                  () => _selectedOutputType = 'presenter_video',
+                ),
+              ),
+            ],
+          ),
           const SizedBox(height: 16),
 
           // 生成ボタン
@@ -365,7 +397,13 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
                 : const Icon(Icons.auto_awesome),
-            label: Text(_loading ? '生成中...' : '広告スクリプトを生成'),
+            label: Text(
+              _loading
+                  ? '生成中...'
+                  : _selectedOutputType == 'presenter_video'
+                  ? 'プレゼンター動画を生成'
+                  : '広告を生成',
+            ),
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF6366F1),
               foregroundColor: Colors.white,
@@ -459,9 +497,14 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
 
   Widget _buildGeneratedAdCard(Map<String, dynamic> ad, bool isDark) {
     final caption = ad['caption']?.toString() ?? '';
-    final hasImage = ad['generatedImageUrl'] != null;
     final imageUrl = ad['generatedImageUrl']?.toString();
+    final videoUrl = ad['generatedVideoUrl']?.toString();
+    final videoStatus = ad['videoStatus']?.toString();
+    final videoReason = ad['videoReason']?.toString();
+    final hasVideo = videoUrl != null && videoUrl.isNotEmpty;
+    final hasImage = imageUrl != null && imageUrl.isNotEmpty;
     final script = ad['script'] as List? ?? [];
+    final mediaReady = hasVideo || hasImage;
 
     return Card(
       color: isDark ? const Color(0xFF303030) : const Color(0xFFE8EAF6),
@@ -487,16 +530,24 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
                   padding:
                       const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                   decoration: BoxDecoration(
-                    color: hasImage
+                    color: hasVideo
+                        ? const Color(0xFF7C3AED).withAlpha(30)
+                        : hasImage
                         ? const Color(0xFF4CAF50).withAlpha(30)
                         : const Color(0xFFFF6B35).withAlpha(30),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
-                    hasImage ? '🖼️ 画像付き' : '📝 テキストのみ',
+                    hasVideo
+                        ? '🎬 プレゼンター動画'
+                        : hasImage
+                        ? '🖼️ 画像付き'
+                        : '📝 テキストのみ',
                     style: TextStyle(
                       fontSize: 11,
-                      color: hasImage
+                      color: hasVideo
+                          ? const Color(0xFF7C3AED)
+                          : hasImage
                           ? const Color(0xFF4CAF50)
                           : const Color(0xFFFF6B35),
                       fontWeight: FontWeight.bold,
@@ -506,7 +557,63 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
                 ),
               ],
             ),
-            if (imageUrl != null) ...[
+            if (hasVideo) ...[
+              const SizedBox(height: 12),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: isDark ? Colors.black26 : Colors.white,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.videocam_outlined,
+                          color: Color(0xFF7C3AED),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            videoStatus == null || videoStatus.isEmpty
+                                ? 'Hedra プレゼンター動画'
+                                : 'Hedra プレゼンター動画 / $videoStatus',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w600,
+                              height: 1.5,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    ElevatedButton.icon(
+                      onPressed: () async {
+                        final uri = Uri.tryParse(videoUrl);
+                        if (uri != null) {
+                          await launchUrl(
+                            uri,
+                            mode: LaunchMode.externalApplication,
+                          );
+                        }
+                      },
+                      icon: const Icon(Icons.open_in_new),
+                      label: const Text('動画を開く'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF7C3AED),
+                        foregroundColor: Colors.white,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ] else if (hasImage) ...[
               const SizedBox(height: 12),
               ClipRRect(
                 borderRadius: BorderRadius.circular(8),
@@ -526,6 +633,27 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
                         color: Color(0xFF9CA3AF),
                       ),
                     ),
+                  ),
+                ),
+              ),
+            ],
+            if (!hasVideo &&
+                videoReason != null &&
+                videoReason.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFF3E0),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: const Color(0xFFFFCC80)),
+                ),
+                child: Text(
+                  '動画生成メモ: $videoReason',
+                  style: const TextStyle(
+                    color: Color(0xFF8A4B00),
+                    fontSize: 12,
+                    height: 1.5,
                   ),
                 ),
               ),
@@ -584,7 +712,7 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
               children: [
                 Expanded(
                   child: ElevatedButton.icon(
-                    onPressed: _isPosting ? null : _postToX,
+                    onPressed: _isPosting || !mediaReady ? null : _postToX,
                     icon: _isPosting
                         ? const SizedBox(
                             width: 14,
@@ -592,7 +720,13 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
                         : const Icon(Icons.send),
-                    label: Text(_isPosting ? '投稿中...' : 'Xに投稿'),
+                    label: Text(
+                      _isPosting
+                          ? '投稿中...'
+                          : mediaReady
+                          ? 'Xに投稿'
+                          : 'メディア準備待ち',
+                    ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.black,
                       foregroundColor: Colors.white,
@@ -906,8 +1040,10 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
         final item = _history[index];
         final templateKey = item['template_key']?.toString() ?? '';
         final status = item['status']?.toString() ?? 'draft';
+        final type = item['type']?.toString() ?? 'image';
         final postedAt = item['posted_at']?.toString();
         final tweetUrl = item['posted_tweet_url']?.toString();
+        final generatedVideoUrl = item['generated_video_url']?.toString();
         final createdAt = item['created_at']?.toString() ?? '';
 
         return Card(
@@ -926,7 +1062,7 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
               ),
             ),
             title: Text(
-              _templateLabel(templateKey),
+              '${_templateLabel(templateKey)}${type == 'presenter_video' ? ' / 動画' : ' / 画像'}',
               style: const TextStyle(
                 fontWeight: FontWeight.w600,
                 height: 1.5,
@@ -940,8 +1076,25 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
                 height: 1.5,
               ),
             ),
-            trailing: status == 'posted' && tweetUrl != null
-                ? IconButton(
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (generatedVideoUrl != null && generatedVideoUrl.isNotEmpty)
+                  IconButton(
+                    icon: const Icon(Icons.videocam_outlined, size: 18),
+                    onPressed: () async {
+                      final uri = Uri.tryParse(generatedVideoUrl);
+                      if (uri != null) {
+                        await launchUrl(
+                          uri,
+                          mode: LaunchMode.externalApplication,
+                        );
+                      }
+                    },
+                    tooltip: '動画を開く',
+                  ),
+                if (status == 'posted' && tweetUrl != null)
+                  IconButton(
                     icon: const Icon(Icons.open_in_new, size: 18),
                     onPressed: () async {
                       final uri = Uri.tryParse(tweetUrl);
@@ -954,7 +1107,8 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
                     },
                     tooltip: 'Xで見る',
                   )
-                : Container(
+                else
+                  Container(
                     padding:
                         const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                     decoration: BoxDecoration(
@@ -971,6 +1125,8 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
                       ),
                     ),
                   ),
+              ],
+            ),
           ),
         );
       },
