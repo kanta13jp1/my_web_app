@@ -681,7 +681,7 @@ List<HomeToolEntry> buildHomeToolCatalog({
       sectionId: 'knowledge',
       title: 'AI Company Builder',
       subtitle:
-          'One sentence to gate review, dedicated managers, shared tools, tasks, and vault notes',
+          '30-day SaaS gate review with MRR targets, pricing, tasks, and vault notes',
       icon: Icons.approval_outlined,
       color: const Color(0xFF2563EB),
       keywords: const <String>[
@@ -691,6 +691,10 @@ List<HomeToolEntry> buildHomeToolCatalog({
         'vault',
         'workflow',
         'startup',
+        '30 day saas',
+        'mrr',
+        'pricing',
+        'build in public',
       ],
       onOpen: (context) => _pushPage(context, const AiCompanyBuilderPage()),
       requiresClearDeck: true,

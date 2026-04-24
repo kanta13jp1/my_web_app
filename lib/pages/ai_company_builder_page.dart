@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class AiCompanyBuilderPage extends StatefulWidget {
@@ -43,6 +44,14 @@ class _AiCompanyBuilderPageState extends State<AiCompanyBuilderPage> {
     return value
         .whereType<Map>()
         .map((item) => Map<String, dynamic>.from(item))
+        .toList(growable: false);
+  }
+
+  List<String> _asStringList(dynamic value) {
+    if (value is! List) return const <String>[];
+    return value
+        .map((item) => item.toString())
+        .where((item) => item.trim().isNotEmpty)
         .toList(growable: false);
   }
 
@@ -159,6 +168,16 @@ class _AiCompanyBuilderPageState extends State<AiCompanyBuilderPage> {
     }
   }
 
+  Future<void> _copyBlueprintPost(Map<String, dynamic> blueprint) async {
+    final text = blueprint['launch_post_prompt']?.toString().trim() ?? '';
+    if (text.isEmpty) return;
+    await Clipboard.setData(ClipboardData(text: text));
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Build-in-public post copied')),
+    );
+  }
+
   Widget _buildComposer() {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -181,7 +200,7 @@ class _AiCompanyBuilderPageState extends State<AiCompanyBuilderPage> {
           ),
           const SizedBox(height: 8),
           const Text(
-            'Describe a business in one sentence. The system will run a gate review, create the business-layer manager agents, attach the shared tool layer, seed initial tasks, and write the first vault notes.',
+            'Describe a business in one sentence. The system will run a gate review, apply the 30-day SaaS validation blueprint, create manager agents, seed tasks, and write the first vault notes.',
             style: TextStyle(
               color: Color(0xB3E5E7EB),
               height: 1.5,
@@ -522,6 +541,234 @@ class _AiCompanyBuilderPageState extends State<AiCompanyBuilderPage> {
     );
   }
 
+  Widget _buildBlueprintMetric(String label, String value, String note) {
+    return Container(
+      width: 180,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFE5E7EB).withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: const Color(0x1AFFFFFF)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(
+              color: Color(0x8AE5E7EB),
+              fontSize: 12,
+              height: 1.4,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            value,
+            style: const TextStyle(
+              color: Color(0xFFE5E7EB),
+              fontSize: 20,
+              fontWeight: FontWeight.w800,
+              height: 1.2,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            note,
+            style: const TextStyle(
+              color: Color(0xB3E5E7EB),
+              fontSize: 12,
+              height: 1.4,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildThirtyDayBlueprint(Map<String, dynamic> company) {
+    final metadata = _metadataOf(company);
+    final blueprint = _asMap(metadata['thirty_day_saas_blueprint']);
+    if (blueprint.isEmpty) return const SizedBox.shrink();
+
+    final pricing = _asMap(blueprint['pricing']);
+    final validationTargets = _asMap(blueprint['validation_targets']);
+    final weeks = _asMapList(blueprint['weeks']);
+    final guardrails = _asStringList(blueprint['guardrails']);
+    final publicMetrics = _asStringList(blueprint['build_in_public_metrics']);
+    final mrrTarget = (blueprint['mrr_target'] as num?)?.round() ?? 1287;
+    final trialTarget =
+        (blueprint['trial_signups_target'] as num?)?.round() ?? 312;
+    final paidTarget = (blueprint['paid_users_target'] as num?)?.round() ?? 41;
+    final interviews = (validationTargets['interviews'] as num?)?.round() ?? 20;
+
+    return _buildDetailSection(
+      title: '30-Day SaaS Blueprint',
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: const Color(0xFF111827),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: const Color(0x1FFFFFFF)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    blueprint['north_star']?.toString() ??
+                        'Validate one painful workflow before expanding scope.',
+                    style: const TextStyle(
+                      color: Color(0xFFE5E7EB),
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      height: 1.5,
+                    ),
+                  ),
+                ),
+                IconButton(
+                  tooltip: 'Copy build-in-public post',
+                  onPressed: () => _copyBlueprintPost(blueprint),
+                  icon: const Icon(Icons.copy_all_outlined),
+                  color: const Color(0xFFE5E7EB),
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: [
+                _buildBlueprintMetric(
+                  'MRR target',
+                  '\$$mrrTarget',
+                  '30-day paid signal',
+                ),
+                _buildBlueprintMetric(
+                  'Trial signups',
+                  '$trialTarget',
+                  'Launch traffic target',
+                ),
+                _buildBlueprintMetric(
+                  'Paid users',
+                  '$paidTarget',
+                  'Conversion target',
+                ),
+                _buildBlueprintMetric(
+                  'Interviews',
+                  '$interviews',
+                  'User-request filter',
+                ),
+              ],
+            ),
+            const SizedBox(height: 18),
+            const Text(
+              'Pricing discipline',
+              style: TextStyle(
+                color: Color(0xFFE5E7EB),
+                fontWeight: FontWeight.w700,
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                _buildPill('Free', pricing['free']?.toString() ?? '-'),
+                _buildPill('Pro', pricing['pro']?.toString() ?? '-'),
+                _buildPill('Team', pricing['team']?.toString() ?? '-'),
+                _buildPill('Rule', pricing['rule']?.toString() ?? '-'),
+              ],
+            ),
+            const SizedBox(height: 18),
+            const Text(
+              'Weekly validation loop',
+              style: TextStyle(
+                color: Color(0xFFE5E7EB),
+                fontWeight: FontWeight.w700,
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 10),
+            for (final week in weeks) ...[
+              Container(
+                width: double.infinity,
+                margin: const EdgeInsets.only(bottom: 10),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF020617).withValues(alpha: 0.65),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: const Color(0x1AFFFFFF)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '${week['label'] ?? '-'}: ${week['goal'] ?? '-'}',
+                      style: const TextStyle(
+                        color: Color(0xFFE5E7EB),
+                        fontWeight: FontWeight.w700,
+                        height: 1.5,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    for (final item in _asStringList(week['ship']))
+                      Text(
+                        '- $item',
+                        style: const TextStyle(
+                          color: Color(0xB3E5E7EB),
+                          height: 1.5,
+                        ),
+                      ),
+                    const SizedBox(height: 6),
+                    Text(
+                      'Exit signal: ${week['exit_signal'] ?? '-'}',
+                      style: const TextStyle(
+                        color: Color(0x8AE5E7EB),
+                        height: 1.5,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+            const SizedBox(height: 8),
+            const Text(
+              'Guardrails',
+              style: TextStyle(
+                color: Color(0xFFE5E7EB),
+                fontWeight: FontWeight.w700,
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 8),
+            for (final item in guardrails)
+              Text(
+                '- $item',
+                style: const TextStyle(
+                  color: Color(0xB3E5E7EB),
+                  height: 1.5,
+                ),
+              ),
+            if (publicMetrics.isNotEmpty) ...[
+              const SizedBox(height: 14),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  for (final metric in publicMetrics)
+                    _buildPill('Metric', metric),
+                ],
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildPill(String label, String value) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
@@ -843,12 +1090,19 @@ class _AiCompanyBuilderPageState extends State<AiCompanyBuilderPage> {
     final tasks = _asMapList(_detail!['tasks']);
     final notes = _asMapList(_detail!['vault_notes']);
     final auditEntries = _asMapList(_detail!['audit_entries']);
+    final blueprint = _asMap(
+      _metadataOf(company)['thirty_day_saas_blueprint'],
+    );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildOverview(company),
         const SizedBox(height: 24),
+        if (blueprint.isNotEmpty) ...[
+          _buildThirtyDayBlueprint(company),
+          const SizedBox(height: 24),
+        ],
         _buildAgentsSection('Business Layer Managers', managers),
         const SizedBox(height: 24),
         _buildAgentsSection('Shared Tool Layer', tools),

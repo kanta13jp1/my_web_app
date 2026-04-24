@@ -619,6 +619,39 @@ type CompanyBuilderPlan = {
   criteria: CompanyBuilderCriterion[];
 };
 
+type CompanyBuilderWeekBlueprint = {
+  label: string;
+  goal: string;
+  ship: string[];
+  exit_signal: string;
+};
+
+type CompanyBuilderThirtyDayBlueprint = {
+  source_title: string;
+  source_url: string;
+  north_star: string;
+  mrr_target: number;
+  trial_signups_target: number;
+  paid_users_target: number;
+  pricing: {
+    free: string;
+    pro: string;
+    team: string;
+    rule: string;
+  };
+  validation_targets: {
+    prototype_testers: number;
+    useful_votes: number;
+    paid_intent: number;
+    interviews: number;
+    paying_users: number;
+  };
+  weeks: CompanyBuilderWeekBlueprint[];
+  guardrails: string[];
+  build_in_public_metrics: string[];
+  launch_post_prompt: string;
+};
+
 const COMPANY_MANAGER_BLUEPRINTS: CompanyAgentBlueprint[] = [
   {
     key: "chief",
@@ -852,16 +885,25 @@ const COMPANY_INITIAL_TASKS: CompanyTaskBlueprint[] = [
   {
     title: "Shape the MVP and architecture",
     description:
-      "Turn the company brief into a first MVP scope, architecture outline, and a release sequence.",
+      "Turn the company brief into a one-screen MVP scope, architecture outline, and a release sequence.",
     manager_key: "max",
     tool_key: "atlas",
     priority: "high",
     stage: "product",
   },
   {
+    title: "Cut scope to the ugly paid MVP",
+    description:
+      "Halve the first scope, remove dashboards and polish, and keep only the painful workflow that can be charged for on day one.",
+    manager_key: "max",
+    tool_key: "kai",
+    priority: "high",
+    stage: "mvp",
+  },
+  {
     title: "Design landing page structure and voice",
     description:
-      "Create the initial narrative, hero promise, and page sections that explain the offer clearly.",
+      "Create the initial narrative, hero promise, pricing promise, and page sections that explain the offer clearly before the product is polished.",
     manager_key: "ivy",
     tool_key: "maya",
     priority: "normal",
@@ -877,13 +919,31 @@ const COMPANY_INITIAL_TASKS: CompanyTaskBlueprint[] = [
     stage: "sales",
   },
   {
+    title: "Run the first 20 customer conversations",
+    description:
+      "Interview people with the target pain, capture exact wording, and only promote features that users ask for repeatedly.",
+    manager_key: "sam",
+    tool_key: "prism",
+    priority: "high",
+    stage: "validation",
+  },
+  {
     title: "Model pricing and unit economics",
     description:
-      "Estimate pricing, gross margin, CAC sensitivity, and the shortest route to positive economics.",
+      "Estimate pricing, gross margin, CAC sensitivity, and the shortest route to positive economics with free, pro, and team tiers.",
     manager_key: "finn",
     tool_key: "ledger",
     priority: "normal",
     stage: "finance",
+  },
+  {
+    title: "Instrument MRR and conversion signals",
+    description:
+      "Track signups, activated trials, paid users, MRR, churn risk, and requested features from the first public build.",
+    manager_key: "finn",
+    tool_key: "pulse",
+    priority: "high",
+    stage: "metrics",
   },
   {
     title: "Prepare onboarding and support loop",
@@ -902,6 +962,15 @@ const COMPANY_INITIAL_TASKS: CompanyTaskBlueprint[] = [
     tool_key: "shield",
     priority: "high",
     stage: "legal",
+  },
+  {
+    title: "Publish the build-in-public launch log",
+    description:
+      "Share the problem, shipped scope, usage numbers, paid conversion, mistakes, and next experiment transparently.",
+    manager_key: "ivy",
+    tool_key: "piper",
+    priority: "normal",
+    stage: "growth",
   },
 ];
 
@@ -960,6 +1029,110 @@ function computeOverallScore(criteria: CompanyBuilderCriterion[]): number {
     criteria.reduce((sum, item) => sum + item.score * item.weight, 0) /
     totalWeight;
   return Math.round(weighted * 10) / 10;
+}
+
+function buildThirtyDaySaasBlueprint(
+  companyName: string,
+  idea: string,
+  plan: CompanyBuilderPlan,
+): CompanyBuilderThirtyDayBlueprint {
+  return {
+    source_title: "The 30-Day SaaS Blueprint: From Zero to $1,287 MRR",
+    source_url:
+      "https://dev.to/thegiansorianodev/i-built-a-saas-in-30-days-heres-exactly-what-happened-48j8",
+    north_star:
+      `Take ${companyName} from zero to a paid validation loop: 312 signups, 41 paying users, and $1,287 MRR in 30 days by solving one painful workflow before expanding scope.`,
+    mrr_target: 1287,
+    trial_signups_target: 312,
+    paid_users_target: 41,
+    pricing: {
+      free: "Free tier with a tight usage cap for self-serve discovery.",
+      pro: "$19/month for the core workflow and saved history.",
+      team: "$49/month for collaboration, integrations, and shared visibility.",
+      rule:
+        "Show pricing on day one; never wait for polish before testing paid intent.",
+    },
+    validation_targets: {
+      prototype_testers: 14,
+      useful_votes: 4,
+      paid_intent: 2,
+      interviews: 20,
+      paying_users: 41,
+    },
+    weeks: [
+      {
+        label: "Week 1",
+        goal: "Ship the ugly paid MVP",
+        ship: [
+          "One-page landing page",
+          "One painful workflow",
+          "Copy/export action",
+          "Visible free/pro/team pricing",
+        ],
+        exit_signal:
+          "At least 14 testers, 4 useful votes, and 2 people asking to pay.",
+      },
+      {
+        label: "Week 2",
+        goal: "Build only user-requested features",
+        ship: [
+          "API or integration only if users ask for it",
+          "Saved history",
+          "Data redaction or privacy controls",
+          "Activation tracking",
+        ],
+        exit_signal:
+          "A repeatable onboarding path and a clear list of top requested features.",
+      },
+      {
+        label: "Week 3",
+        goal: "Launch in public",
+        ship: [
+          "Transparent launch post",
+          "Metrics snapshot",
+          "Trial activation follow-up",
+          "Founder-led replies and interviews",
+        ],
+        exit_signal:
+          "Public traffic converts into signups and activated trials.",
+      },
+      {
+        label: "Week 4",
+        goal: "Improve retention and economics",
+        ship: [
+          "MRR dashboard",
+          "Churn-risk review",
+          "Top support fixes",
+          "Pricing and limit adjustments",
+        ],
+        exit_signal:
+          "Paid users understand the value, keep using the workflow, and ask for next capabilities.",
+      },
+    ],
+    guardrails: [
+      "Use boring, proven infrastructure before inventing new architecture.",
+      "No polished dashboards until users prove the workflow matters.",
+      "No microservices, logo redesigns, or broad roadmaps before paid signal.",
+      "Every new feature needs a user quote, usage signal, or paid conversion reason.",
+      "Prefer a narrow painful problem over a broad attractive category.",
+    ],
+    build_in_public_metrics: [
+      "signups",
+      "activated_trials",
+      "paid_users",
+      "mrr",
+      "requested_features",
+      "mistakes",
+      "next_experiment",
+    ],
+    launch_post_prompt: [
+      `I am building ${companyName} in public for 30 days.`,
+      `Problem: ${plan.summary || idea}`,
+      `Offer: ${plan.offer}`,
+      "Week 1 goal: one ugly paid MVP, visible pricing, and direct tester feedback.",
+      "I will share signups, activated trials, paid users, MRR, mistakes, and the next experiment every week.",
+    ].join("\n"),
+  };
 }
 
 function buildFallbackCompanyPlan(
@@ -1054,6 +1227,8 @@ async function generateCompanyPlan(
     "You are generating the bootstrap plan for an AI company builder.",
     "Return JSON only.",
     "Score each criterion from 1 to 10.",
+    "Apply a 30-day SaaS validation discipline: one painful workflow, boring infrastructure, visible pricing on day one, user-requested features only, and weekly build-in-public metrics.",
+    "Penalize ideas that need a broad polished platform before the first paid signal.",
     `Idea: ${idea}`,
     `Pass threshold: ${threshold}`,
     `Use exactly these criteria keys in order: ${
@@ -1275,6 +1450,7 @@ async function seedCompanyVault(
   companyName: string,
   threshold: number,
   plan: CompanyBuilderPlan,
+  blueprint: CompanyBuilderThirtyDayBlueprint,
 ) {
   const overall = computeOverallScore(plan.criteria);
   const passed = overall >= threshold;
@@ -1327,6 +1503,50 @@ async function seedCompanyVault(
         company_id: companyId,
         note_type: "gate",
         path: `companies/${companySlug}/gate.md`,
+      },
+    },
+    {
+      title: `${companyName} 30-Day SaaS Blueprint`,
+      category: "company_builder",
+      tags: ["ai-company-builder", companySlug, "30-day-saas", "mrr"],
+      content: [
+        `# ${companyName} 30-Day SaaS Blueprint`,
+        "",
+        `Source: ${blueprint.source_title}`,
+        blueprint.source_url,
+        "",
+        `North star: ${blueprint.north_star}`,
+        "",
+        "Targets:",
+        `- MRR: $${blueprint.mrr_target}`,
+        `- Trial signups: ${blueprint.trial_signups_target}`,
+        `- Paid users: ${blueprint.paid_users_target}`,
+        `- Interviews: ${blueprint.validation_targets.interviews}`,
+        "",
+        "Pricing:",
+        `- Free: ${blueprint.pricing.free}`,
+        `- Pro: ${blueprint.pricing.pro}`,
+        `- Team: ${blueprint.pricing.team}`,
+        `- Rule: ${blueprint.pricing.rule}`,
+        "",
+        "Weekly loop:",
+        ...blueprint.weeks.flatMap((week) => [
+          `## ${week.label}: ${week.goal}`,
+          ...week.ship.map((item) => `- ${item}`),
+          `Exit signal: ${week.exit_signal}`,
+          "",
+        ]),
+        "Guardrails:",
+        ...blueprint.guardrails.map((item) => `- ${item}`),
+        "",
+        "Build in public metrics:",
+        ...blueprint.build_in_public_metrics.map((item) => `- ${item}`),
+      ].join("\n"),
+      metadata: {
+        system: "company_builder",
+        company_id: companyId,
+        note_type: "30_day_saas_blueprint",
+        path: `companies/${companySlug}/30-day-saas-blueprint.md`,
       },
     },
     {
@@ -2369,6 +2589,11 @@ serve(async (req: Request) => {
         const passed = overallScore >= threshold;
         const companyName = plan.company_name;
         const companySlug = slugify(companyName);
+        const thirtyDaySaasBlueprint = buildThirtyDaySaasBlueprint(
+          companyName,
+          idea,
+          plan,
+        );
 
         const companyRecord = await addItem(
           admin,
@@ -2389,6 +2614,7 @@ serve(async (req: Request) => {
             criteria: plan.criteria,
             overall_score: overallScore,
             passed,
+            thirty_day_saas_blueprint: thirtyDaySaasBlueprint,
             manager_count: COMPANY_MANAGER_BLUEPRINTS.length,
             tool_agent_count: COMPANY_TOOL_BLUEPRINTS.length,
             status: passed ? "approved" : "revise",
@@ -2453,6 +2679,7 @@ serve(async (req: Request) => {
           companyName,
           threshold,
           plan,
+          thirtyDaySaasBlueprint,
         );
         await addCompanyAudit(
           admin,
@@ -2466,6 +2693,8 @@ serve(async (req: Request) => {
             task_count: taskRows.length,
             workflow_id: workflow.id,
             vault_note_count: vaultNotes.length,
+            mrr_target: thirtyDaySaasBlueprint.mrr_target,
+            paid_users_target: thirtyDaySaasBlueprint.paid_users_target,
           },
         );
 
