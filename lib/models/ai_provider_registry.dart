@@ -95,7 +95,7 @@ class AiProviderEntry {
   });
 }
 
-/// AI大学 登録プロバイダー全件のステータスカタログ (180社, 2026-04-24時点)
+/// AI大学 登録プロバイダー全件のステータスカタログ (182社, 2026-04-24時点)
 ///
 /// 実装済み: ai-assistant / ai-hub / ai-search に統合済みのもの
 /// 要APIキー: コード対応済みだが Supabase Secrets に追加が必要
@@ -1437,6 +1437,22 @@ const List<AiProviderEntry> kAiProviderRegistry = [
     entryPoint: 'https://zenml.io/',
     note:
         r'OSS MLOps パイプライン — @step/@pipeline デコレータ / Stack抽象化 (Vertex/SageMaker) / 50+ integrations / ZenML Pro',
+  ),
+  AiProviderEntry(
+    id: 'vllm',
+    displayName: 'vLLM',
+    status: AiProviderStatus.notImplemented,
+    entryPoint: 'https://docs.vllm.ai/',
+    note:
+        r'UC Berkeley 高スループット LLM 推論 — PagedAttention / 35k+ Stars / Continuous Batching / OpenAI互換 / 量子化AWQ/GPTQ',
+  ),
+  AiProviderEntry(
+    id: 'ragas',
+    displayName: 'Ragas',
+    status: AiProviderStatus.notImplemented,
+    entryPoint: 'https://docs.ragas.io/',
+    note:
+        r'RAG評価OSS — Faithfulness/Answer Relevance/Context 4メトリクス / TestsetGenerator / LangChain・LlamaIndex統合 / pytest CI',
   ),
 ];
 

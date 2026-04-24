@@ -142,6 +142,8 @@ jobs:
           upsert_provider "agno"         "https://www.agno.com/blog/rss.xml"                 "Agno / phidata (Python-native Agent Framework)"
           upsert_provider "haystack"     "https://haystack.deepset.ai/blog/feed"             "Haystack deepset (OSS RAG & LLM App Framework)"
           upsert_provider "zenml"        "https://www.zenml.io/blog/rss.xml"                 "ZenML (MLOps Pipeline OSS)"
+          upsert_provider "vllm"         "https://blog.vllm.ai/feed.xml"                    "vLLM (UC Berkeley High-Throughput LLM Serving)"
+          upsert_provider "ragas"        "https://docs.ragas.io/blog/rss.xml"               "Ragas (RAG Evaluation Framework OSS)"
 
           # RSS廃止/URL無効 (静的seedコンテンツを維持):
           # anthropic, meta, x, deepseek, mistral, perplexity, groq, cohere, ibm, sakana, baidu, stability, core, cerebras, prover
