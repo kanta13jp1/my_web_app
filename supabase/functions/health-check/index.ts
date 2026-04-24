@@ -1,0 +1,112 @@
+// health-check
+// Infra health check endpoint called by the automated scheduled task.
+// Checks: DB connectivity, key table accessibility, EF runtime env.
+// Returns: { status: "healthy"|"degraded"|"unhealthy", checks: {...}, timestamp }
+// Auth: requires SERVICE_ROLE_KEY bearer token (admin-only endpoint).
+
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type",
+};
+
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
+const SERVICE_ROLE_KEY = Deno.env.get("SERVICE_ROLE_KEY") ?? "";
+
+type CheckResult = {
+  ok: boolean;
+  latencyMs?: number;
+  detail?: string;
+};
+
+type HealthResponse = {
+  status: "healthy" | "degraded" | "unhealthy";
+  checks: Record<string, CheckResult>;
+  timestamp: string;
+};
+
+serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response("ok", { headers: corsHeaders });
+  }
+
+  // Auth: only SERVICE_ROLE_KEY allowed
+  const authHeader = req.headers.get("Authorization") ?? "";
+  const token = authHeader.replace(/^Bearer\s+/i, "");
+  if (!token || token !== SERVICE_ROLE_KEY) {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
+  const checks: Record<string, CheckResult> = {};
+  let failCount = 0;
+
+  // Check 1: env vars present
+  checks["env"] = {
+    ok: SUPABASE_URL !== "" && SERVICE_ROLE_KEY !== "",
+    detail:
+      SUPABASE_URL !== "" && SERVICE_ROLE_KEY !== ""
+        ? "SUPABASE_URL + SERVICE_ROLE_KEY set"
+        : "missing env vars",
+  };
+  if (!checks["env"].ok) failCount++;
+
+  // Check 2: DB connectivity via profiles table count
+  if (checks["env"].ok) {
+    const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
+      auth: { autoRefreshToken: false, persistSession: false },
+    });
+
+    const t0 = Date.now();
+    const { error: dbError } = await admin
+      .from("profiles")
+      .select("id", { count: "exact", head: true });
+    const latencyMs = Date.now() - t0;
+
+    checks["db_connectivity"] = {
+      ok: !dbError,
+      latencyMs,
+      detail: dbError ? dbError.message : `profiles reachable in ${latencyMs}ms`,
+    };
+    if (!checks["db_connectivity"].ok) failCount++;
+
+    // Check 3: wbs_tasks table (WBS sync depends on this)
+    const { error: wbsError } = await admin
+      .from("wbs_tasks")
+      .select("id", { count: "exact", head: true });
+    checks["wbs_tasks"] = {
+      ok: !wbsError,
+      detail: wbsError ? wbsError.message : "wbs_tasks reachable",
+    };
+    if (!checks["wbs_tasks"].ok) failCount++;
+
+    // Check 4: ai_circuit_breaker table
+    const { error: cbError } = await admin
+      .from("ai_circuit_breaker")
+      .select("id", { count: "exact", head: true });
+    checks["ai_circuit_breaker"] = {
+      ok: !cbError,
+      detail: cbError ? cbError.message : "ai_circuit_breaker reachable",
+    };
+    if (!checks["ai_circuit_breaker"].ok) failCount++;
+  }
+
+  const status: HealthResponse["status"] =
+    failCount === 0 ? "healthy" : failCount <= 1 ? "degraded" : "unhealthy";
+
+  const body: HealthResponse = {
+    status,
+    checks,
+    timestamp: new Date().toISOString(),
+  };
+
+  return new Response(JSON.stringify(body, null, 2), {
+    status: 200,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+});
