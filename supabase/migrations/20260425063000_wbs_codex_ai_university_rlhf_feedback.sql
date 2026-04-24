@@ -1,7 +1,6 @@
 update public.wbs_tasks
 set
   owner_instance = 'codex',
-  instance = 'codex',
   status = 'completed',
   progress = 100,
   start_date = coalesce(start_date, date '2026-04-24'),
@@ -17,7 +16,6 @@ where id = 'dcecc10d-713b-4b1b-9839-0e0c08743ecf';
 update public.wbs_tasks
 set
   owner_instance = 'codex',
-  instance = 'codex',
   status = 'completed',
   progress = 100,
   start_date = coalesce(start_date, date '2026-04-24'),
