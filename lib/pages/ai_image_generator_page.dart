@@ -167,9 +167,7 @@ class _AiImageGeneratorPageState extends State<AiImageGeneratorPage> {
                       value: entry.key,
                       label: Text(entry.value),
                       icon: Icon(
-                        entry.key == 'vivid'
-                            ? Icons.palette
-                            : Icons.landscape,
+                        entry.key == 'vivid' ? Icons.palette : Icons.landscape,
                       ),
                     ),
                   )

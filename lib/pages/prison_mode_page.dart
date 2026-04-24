@@ -113,7 +113,9 @@ class _PrisonModePageState extends State<PrisonModePage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              content: Text('エラー: $e'), backgroundColor: const Color(0xFFE53935),),
+            content: Text('エラー: $e'),
+            backgroundColor: const Color(0xFFE53935),
+          ),
         );
       }
     }
@@ -180,7 +182,9 @@ class _PrisonModePageState extends State<PrisonModePage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              content: Text('エラー: $e'), backgroundColor: const Color(0xFFE53935),),
+            content: Text('エラー: $e'),
+            backgroundColor: const Color(0xFFE53935),
+          ),
         );
       }
     }
@@ -238,7 +242,9 @@ class _PrisonModePageState extends State<PrisonModePage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              content: Text('エラー: $e'), backgroundColor: const Color(0xFFE53935),),
+            content: Text('エラー: $e'),
+            backgroundColor: const Color(0xFFE53935),
+          ),
         );
       }
     }
@@ -550,7 +556,9 @@ class _PrisonModePageState extends State<PrisonModePage> {
               children: [
                 Icon(
                   isPaidOff ? Icons.check_circle : Icons.account_balance,
-                  color: isPaidOff ? const Color(0xFF4CAF50) : const Color(0xFFC62828),
+                  color: isPaidOff
+                      ? const Color(0xFF4CAF50)
+                      : const Color(0xFFC62828),
                   size: 20,
                 ),
                 const SizedBox(width: 8),
@@ -576,7 +584,9 @@ class _PrisonModePageState extends State<PrisonModePage> {
               '残高: ¥${_formatNumber(remaining)} / ¥${_formatNumber(original)}',
               style: TextStyle(
                 fontSize: 12,
-                color: isPaidOff ? const Color(0xFF4CAF50) : const Color(0xFFC62828),
+                color: isPaidOff
+                    ? const Color(0xFF4CAF50)
+                    : const Color(0xFFC62828),
                 fontWeight: FontWeight.w600,
                 height: 1.5,
               ),

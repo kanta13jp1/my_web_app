@@ -181,7 +181,9 @@ class _CodePlaygroundPageState extends State<CodePlaygroundPage>
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              content: Text('エラー: $e'), backgroundColor: const Color(0xFFE53935),),
+            content: Text('エラー: $e'),
+            backgroundColor: const Color(0xFFE53935),
+          ),
         );
       }
     }
@@ -400,8 +402,11 @@ class _CodePlaygroundPageState extends State<CodePlaygroundPage>
                   if (isPublic)
                     const Tooltip(
                       message: '公開',
-                      child: Icon(Icons.public,
-                          size: 16, color: Color(0xFF4CAF50),),
+                      child: Icon(
+                        Icons.public,
+                        size: 16,
+                        color: Color(0xFF4CAF50),
+                      ),
                     ),
                   const Icon(Icons.expand_more),
                 ],

@@ -297,7 +297,8 @@ class _VehicleFleetManagerPageState extends State<VehicleFleetManagerPage>
           child: ListTile(
             leading: Icon(
               Icons.build,
-              color: overdue ? const Color(0xFFE53935) : const Color(0xFFFF6B35),
+              color:
+                  overdue ? const Color(0xFFE53935) : const Color(0xFFFF6B35),
             ),
             title: Text('$vehicle — $type'),
             subtitle: cost > 0 ? Text('費用: ¥${cost.toStringAsFixed(0)}') : null,
@@ -319,8 +320,9 @@ class _VehicleFleetManagerPageState extends State<VehicleFleetManagerPage>
                     '次回: ${nextDue.substring(0, 10)}',
                     style: TextStyle(
                       fontSize: 11,
-                      color:
-                          overdue ? const Color(0xFFE53935) : const Color(0xFF9CA3AF),
+                      color: overdue
+                          ? const Color(0xFFE53935)
+                          : const Color(0xFF9CA3AF),
                       fontWeight: overdue ? FontWeight.bold : null,
                       height: 1.5,
                     ),

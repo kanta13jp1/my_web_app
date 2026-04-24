@@ -3237,7 +3237,8 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
           colors: [Color(0x33FF5252), Color(0x229C27B0)],
         ),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE53935).withValues(alpha: 0.8)),
+        border:
+            Border.all(color: const Color(0xFFE53935).withValues(alpha: 0.8)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

@@ -1017,8 +1017,9 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              content: Text('削除に失敗しました: $e'),
-              backgroundColor: const Color(0xFFE53935),),
+            content: Text('削除に失敗しました: $e'),
+            backgroundColor: const Color(0xFFE53935),
+          ),
         );
       }
     }

@@ -184,7 +184,9 @@ class _BehaviorLogPageState extends State<BehaviorLogPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              content: Text('エラー: $e'), backgroundColor: const Color(0xFFE53935),),
+            content: Text('エラー: $e'),
+            backgroundColor: const Color(0xFFE53935),
+          ),
         );
       }
     }
@@ -220,7 +222,9 @@ class _BehaviorLogPageState extends State<BehaviorLogPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              content: Text('AI分析エラー: $e'), backgroundColor: const Color(0xFFE53935),),
+            content: Text('AI分析エラー: $e'),
+            backgroundColor: const Color(0xFFE53935),
+          ),
         );
       }
     }

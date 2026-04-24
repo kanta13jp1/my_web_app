@@ -777,11 +777,16 @@ class _TravelItineraryPageState extends State<TravelItineraryPage>
                         const Color(0xFF3D5AFE),
                       ),
                       _budgetStat(
-                          '支出', '¥${_formatNum(spent)}', const Color(0xFFE53935),),
+                        '支出',
+                        '¥${_formatNum(spent)}',
+                        const Color(0xFFE53935),
+                      ),
                       _budgetStat(
                         '残高',
                         '¥${_formatNum(remaining)}',
-                        remaining >= 0 ? const Color(0xFF4CAF50) : const Color(0xFFE53935),
+                        remaining >= 0
+                            ? const Color(0xFF4CAF50)
+                            : const Color(0xFFE53935),
                       ),
                     ],
                   ),

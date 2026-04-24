@@ -522,7 +522,9 @@ class _YoutubeStatsPageState extends State<YoutubeStatsPage>
                 _importResult!,
                 style: TextStyle(
                   fontSize: 12,
-                  color: _importSuccess ? const Color(0xFF4CAF50) : const Color(0xFFE53935),
+                  color: _importSuccess
+                      ? const Color(0xFF4CAF50)
+                      : const Color(0xFFE53935),
                   fontWeight: FontWeight.w600,
                   height: 1.5,
                 ),

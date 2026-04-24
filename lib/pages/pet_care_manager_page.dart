@@ -277,7 +277,8 @@ class _PetCareManagerPageState extends State<PetCareManagerPage>
           child: ListTile(
             leading: Icon(
               Icons.vaccines,
-              color: overdue ? const Color(0xFFE53935) : const Color(0xFF4CAF50),
+              color:
+                  overdue ? const Color(0xFFE53935) : const Color(0xFF4CAF50),
             ),
             title: Text('$petName — $vaccine'),
             subtitle: Text(

@@ -504,8 +504,10 @@ class _LanguageLearningPageState extends State<LanguageLearningPage>
                           onPressed: _showAddCardDialog,
                         ),
                       IconButton(
-                        icon: const Icon(Icons.play_arrow,
-                            color: Color(0xFF4CAF50),),
+                        icon: const Icon(
+                          Icons.play_arrow,
+                          color: Color(0xFF4CAF50),
+                        ),
                         tooltip: 'レビュー開始',
                         onPressed: () async {
                           setState(() => _selectedDeck = deck);

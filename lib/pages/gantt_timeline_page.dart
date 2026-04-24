@@ -675,7 +675,9 @@ class _GanttTimelinePageState extends State<GanttTimelinePage>
                   _formatDate(dueDate),
                   style: TextStyle(
                     fontSize: 12,
-                    color: isPast ? const Color(0xFFE53935) : const Color(0xFFFF8F00),
+                    color: isPast
+                        ? const Color(0xFFE53935)
+                        : const Color(0xFFFF8F00),
                     height: 1.5,
                   ),
                 ),

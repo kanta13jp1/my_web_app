@@ -341,8 +341,9 @@ class _WeeklySlipReportPageState extends State<WeeklySlipReportPage> {
                             '${d.count}',
                             style: TextStyle(
                               fontSize: 10,
-                              color:
-                                  isWorst ? const Color(0xFFE53935) : Colors.black54,
+                              color: isWorst
+                                  ? const Color(0xFFE53935)
+                                  : Colors.black54,
                               fontWeight:
                                   isWorst ? FontWeight.bold : FontWeight.normal,
                               height: 1.5,
@@ -363,8 +364,9 @@ class _WeeklySlipReportPageState extends State<WeeklySlipReportPage> {
                             _dayNames[d.day],
                             style: TextStyle(
                               fontSize: 11,
-                              color:
-                                  isWorst ? const Color(0xFFE53935) : Colors.black54,
+                              color: isWorst
+                                  ? const Color(0xFFE53935)
+                                  : Colors.black54,
                               fontWeight:
                                   isWorst ? FontWeight.bold : FontWeight.normal,
                               height: 1.5,
@@ -423,7 +425,9 @@ class _WeeklySlipReportPageState extends State<WeeklySlipReportPage> {
                           h.label,
                           style: TextStyle(
                             fontSize: 12,
-                            color: isWorst ? const Color(0xFFE53935) : Colors.black54,
+                            color: isWorst
+                                ? const Color(0xFFE53935)
+                                : Colors.black54,
                             fontWeight:
                                 isWorst ? FontWeight.bold : FontWeight.normal,
                             height: 1.5,
@@ -460,7 +464,9 @@ class _WeeklySlipReportPageState extends State<WeeklySlipReportPage> {
                         '${h.count}回',
                         style: TextStyle(
                           fontSize: 12,
-                          color: isWorst ? const Color(0xFFE53935) : Colors.black54,
+                          color: isWorst
+                              ? const Color(0xFFE53935)
+                              : Colors.black54,
                           fontWeight:
                               isWorst ? FontWeight.bold : FontWeight.normal,
                           height: 1.5,
@@ -533,7 +539,8 @@ class _WeeklySlipReportPageState extends State<WeeklySlipReportPage> {
                     child: Text(
                       '${item.count}回',
                       style: TextStyle(
-                        color: rank == 1 ? const Color(0xFFC62828) : _primaryColor,
+                        color:
+                            rank == 1 ? const Color(0xFFC62828) : _primaryColor,
                         fontWeight: FontWeight.bold,
                         fontSize: 13,
                         height: 1.5,

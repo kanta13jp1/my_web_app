@@ -620,7 +620,9 @@ class _CrmSalesPipelinePageState extends State<CrmSalesPipelinePage>
                   '勝率',
                   '$winRate%',
                   Icons.trending_up,
-                  winRate >= 50 ? const Color(0xFF4CAF50) : const Color(0xFFFF6B35),
+                  winRate >= 50
+                      ? const Color(0xFF4CAF50)
+                      : const Color(0xFFFF6B35),
                 ),
               ),
               const SizedBox(width: 12),

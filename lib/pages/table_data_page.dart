@@ -214,7 +214,8 @@ class _TableDataPageState extends State<TableDataPage> {
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            style: TextButton.styleFrom(foregroundColor: const Color(0xFFE53935)),
+            style:
+                TextButton.styleFrom(foregroundColor: const Color(0xFFE53935)),
             child: const Text('削除'),
           ),
         ],
@@ -351,7 +352,8 @@ class _TableDataPageState extends State<TableDataPage> {
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            style: TextButton.styleFrom(foregroundColor: const Color(0xFFE53935)),
+            style:
+                TextButton.styleFrom(foregroundColor: const Color(0xFFE53935)),
             child: const Text('削除'),
           ),
         ],

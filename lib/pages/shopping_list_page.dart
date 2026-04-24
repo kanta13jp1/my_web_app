@@ -330,7 +330,9 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              content: Text('エラー: $e'), backgroundColor: const Color(0xFFE53935),),
+            content: Text('エラー: $e'),
+            backgroundColor: const Color(0xFFE53935),
+          ),
         );
       }
     }
@@ -385,7 +387,9 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              content: Text('エラー: $e'), backgroundColor: const Color(0xFFE53935),),
+            content: Text('エラー: $e'),
+            backgroundColor: const Color(0xFFE53935),
+          ),
         );
       }
     }
@@ -403,7 +407,9 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              content: Text('エラー: $e'), backgroundColor: const Color(0xFFE53935),),
+            content: Text('エラー: $e'),
+            backgroundColor: const Color(0xFFE53935),
+          ),
         );
       }
     }

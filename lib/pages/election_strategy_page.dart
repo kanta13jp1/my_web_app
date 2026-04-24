@@ -177,7 +177,9 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              content: Text('起動エラー: $e'), backgroundColor: const Color(0xFFE53935),),
+            content: Text('起動エラー: $e'),
+            backgroundColor: const Color(0xFFE53935),
+          ),
         );
       }
     } finally {

@@ -203,8 +203,9 @@ class _TwoFactorAuthPageState extends State<TwoFactorAuthPage> {
                   children: [
                     Icon(
                       Icons.security,
-                      color:
-                          enabled ? const Color(0xFF4CAF50) : const Color(0xFF9CA3AF),
+                      color: enabled
+                          ? const Color(0xFF4CAF50)
+                          : const Color(0xFF9CA3AF),
                       size: 28,
                     ),
                     const SizedBox(width: 12),

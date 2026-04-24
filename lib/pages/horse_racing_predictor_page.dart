@@ -564,7 +564,8 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
     Color statusColor;
     String statusLabel;
     if (hasResult) {
-      statusColor = isCorrect == true ? const Color(0xFF4CAF50) : const Color(0xFFE53935);
+      statusColor =
+          isCorrect == true ? const Color(0xFF4CAF50) : const Color(0xFFE53935);
       statusLabel = isCorrect == true ? '的中' : '外れ';
     } else if (status == 'scheduled') {
       statusColor = const Color(0xFFFF6B35);
@@ -1056,8 +1057,11 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
           trailing = Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.check_circle,
-                  color: Color(0xFF4CAF50), size: 20,),
+              const Icon(
+                Icons.check_circle,
+                color: Color(0xFF4CAF50),
+                size: 20,
+              ),
               if (trifectaPaid != null)
                 Text(
                   '¥${NumberFormat('#,###').format(trifectaPaid)}',
