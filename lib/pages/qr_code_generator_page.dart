@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// QR コード生成ページ
-/// qr-code-generator Edge Function と連携して QR コードを生成・管理
+/// tools-hub:generate_qr で QR コードを生成
 class QrCodeGeneratorPage extends StatefulWidget {
   const QrCodeGeneratorPage({super.key});
 
@@ -31,33 +31,7 @@ class _QrCodeGeneratorPageState extends State<QrCodeGeneratorPage> {
   }
 
   Future<void> _fetchHistory() async {
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-    });
-    try {
-      final response = await _supabase.functions.invoke(
-        'qr-code-generator',
-        body: {'action': 'history'},
-      );
-      final data = response.data;
-      if (data is Map<String, dynamic> && data['history'] is List) {
-        setState(
-          () =>
-              _history = (data['history'] as List).cast<Map<String, dynamic>>(),
-        );
-      } else if (data is List) {
-        setState(() => _history = data.cast<Map<String, dynamic>>());
-      } else {
-        setState(() => _history = []);
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() => _errorMessage = 'QR コード履歴の取得に失敗しました: $e');
-      }
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
-    }
+    setState(() => _history = []);
   }
 
   Future<void> _generateQr() async {
@@ -70,13 +44,12 @@ class _QrCodeGeneratorPageState extends State<QrCodeGeneratorPage> {
     });
     try {
       final response = await _supabase.functions.invoke(
-        'qr-code-generator',
-        body: {'action': 'generate', 'url': url},
+        'tools-hub',
+        body: {'action': 'generate_qr', 'text': url},
       );
       final data = response.data;
       if (data is Map<String, dynamic>) {
         setState(() => _generatedUrl = data['qr_url']?.toString());
-        await _fetchHistory();
       }
     } catch (e) {
       if (mounted) {
