@@ -95,7 +95,7 @@ class AiProviderEntry {
   });
 }
 
-/// AI大学 登録プロバイダー全件のステータスカタログ (158社, 2026-04-24時点)
+/// AI大学 登録プロバイダー全件のステータスカタログ (160社, 2026-04-24時点)
 ///
 /// 実装済み: ai-assistant / ai-hub / ai-search に統合済みのもの
 /// 要APIキー: コード対応済みだが Supabase Secrets に追加が必要
@@ -1250,6 +1250,22 @@ const List<AiProviderEntry> kAiProviderRegistry = [
     entryPoint: 'https://higgsfield.ai/',
     note:
         r'マルチモデル AI 動画生成プラットフォーム — Sora 2/Veo 3.1/Kling 3.0 統合・$1.3B valuation・$300M ARR',
+  ),
+  AiProviderEntry(
+    id: 'browserbase',
+    displayName: 'Browserbase',
+    status: AiProviderStatus.notImplemented,
+    entryPoint: 'https://www.browserbase.com/',
+    note:
+        r'AI エージェント向けヘッドレスブラウザインフラ — Stagehand OSS / Perplexity+Vercel 採用 / $40M Series B @$300M',
+  ),
+  AiProviderEntry(
+    id: 'tavily',
+    displayName: 'Tavily',
+    status: AiProviderStatus.notImplemented,
+    entryPoint: 'https://tavily.com/',
+    note:
+        r'AI エージェント・RAG 向けリアルタイム Web 検索 API — LangChain/LlamaIndex 公式統合・Free 1,000 クレジット/月',
   ),
 ];
 

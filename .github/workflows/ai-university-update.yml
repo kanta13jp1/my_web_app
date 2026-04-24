@@ -119,7 +119,9 @@ jobs:
           upsert_provider "firecrawl"   "https://www.firecrawl.dev/blog/rss.xml"              "Firecrawl (Web Scraping for AI)"
           upsert_provider "weaviate"    "https://weaviate.io/blog/rss.xml"                    "Weaviate (AI-Native Vector DB)"
           upsert_provider "livekit"    "https://blog.livekit.io/rss/"                        "LiveKit (Realtime AI Agents)"
-          upsert_provider "higgsfield" "https://higgsfield.ai/blog/rss.xml"                  "Higgsfield AI (Multi-Model Video)"
+          upsert_provider "higgsfield"   "https://higgsfield.ai/blog/rss.xml"                "Higgsfield AI (Multi-Model Video)"
+          upsert_provider "browserbase"  "https://www.browserbase.com/blog/rss.xml"          "Browserbase (AI Browser Automation)"
+          upsert_provider "tavily"       "https://blog.tavily.com/rss.xml"                   "Tavily (AI Search API for Agents)"
 
           # RSS廃止/URL無効 (静的seedコンテンツを維持):
           # anthropic, meta, x, deepseek, mistral, perplexity, groq, cohere, ibm, sakana, baidu, stability, core, cerebras, prover
