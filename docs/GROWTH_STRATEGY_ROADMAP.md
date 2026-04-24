@@ -16700,3 +16700,21 @@ supabase migration repair --status reverted 20260424241500 2>/dev/null || true
 - 8✅/9: CI修復でデプロイ安定性維持 / GH_PAT→BYPASS_RULES でパーミッション問題解消
 - 懸念: なし
 
+
+---
+
+## PS#5 S38 — CI migrate dynamic auto-repair (2026-04-24 11:27 JST)
+
+**インスタンス**: PS#5 | **オンコール bugfix 専任**
+
+### やったこと
+- CI #683 原因特定: flutter analyze 0 は `1aff4576` (別インスタンス) が先行修正済
+- 本セッション: migration "Remote migration versions not found" の根本修正
+  - `20260425021000` / `20260425022000` を静的 repair リストに追加
+  - **動的 auto-repair 実装**: `db push` 失敗時に 14桁バージョン番号を自動抽出 → repair → retry
+  - commit `13a32d04` push済 / CI run `24869081959` pending
+- deploy-prod.yml: 静的リスト11本 → 13本 + retry ロジック追加
+  - 以降は手動リスト更新不要 — 自動復旧
+
+### Philosophy Alignment
+1-9 ✅ (自動化で再発防止 / 最小変更で最大効果)
