@@ -95,7 +95,7 @@ class AiProviderEntry {
   });
 }
 
-/// AI大学 登録プロバイダー全件のステータスカタログ (156社, 2026-04-24時点)
+/// AI大学 登録プロバイダー全件のステータスカタログ (158社, 2026-04-24時点)
 ///
 /// 実装済み: ai-assistant / ai-hub / ai-search に統合済みのもの
 /// 要APIキー: コード対応済みだが Supabase Secrets に追加が必要
@@ -1234,6 +1234,22 @@ const List<AiProviderEntry> kAiProviderRegistry = [
     entryPoint: 'https://weaviate.io/',
     note:
         r'AI-native マルチモーダルベクターDB — 組み込み Embeddings/RAG・OSS 14k stars・$50M 調達・2,000+ 本番企業',
+  ),
+  AiProviderEntry(
+    id: 'livekit',
+    displayName: 'LiveKit',
+    status: AiProviderStatus.notImplemented,
+    entryPoint: 'https://livekit.io/',
+    note:
+        r'リアルタイム音声・映像 AI エージェントインフラ — OpenAI Voice Mode バックエンド・$100M Series C・$1B valuation',
+  ),
+  AiProviderEntry(
+    id: 'higgsfield',
+    displayName: 'Higgsfield AI',
+    status: AiProviderStatus.notImplemented,
+    entryPoint: 'https://higgsfield.ai/',
+    note:
+        r'マルチモデル AI 動画生成プラットフォーム — Sora 2/Veo 3.1/Kling 3.0 統合・$1.3B valuation・$300M ARR',
   ),
 ];
 
