@@ -30,14 +30,15 @@ class _AffiliateMarketingPageState extends State<AffiliateMarketingPage> {
     });
     try {
       final response = await _supabase.functions.invoke(
-        'affiliate-marketing',
-        body: {'action': 'list'},
+        'social-commerce-hub',
+        body: {'action': 'affiliate.list_links'},
       );
       final data = response.data;
       if (data is Map<String, dynamic>) {
         setState(() {
-          _campaigns =
-              (data['campaigns'] as List?)?.cast<Map<String, dynamic>>() ?? [];
+          _campaigns = ((data['links'] ?? data['campaigns']) as List?)
+                  ?.cast<Map<String, dynamic>>() ??
+              [];
           _summary = data['summary'] as Map<String, dynamic>?;
         });
       } else if (data is List) {

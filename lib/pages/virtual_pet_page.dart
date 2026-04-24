@@ -30,8 +30,8 @@ class _VirtualPetPageState extends State<VirtualPetPage> {
     });
     try {
       final response = await _supabase.functions.invoke(
-        'virtual-pet',
-        body: {'action': 'status'},
+        'tools-hub',
+        body: {'action': 'pet.status'},
       );
       final data = response.data;
       if (data is Map<String, dynamic>) {
@@ -58,8 +58,8 @@ class _VirtualPetPageState extends State<VirtualPetPage> {
     });
     try {
       final response = await _supabase.functions.invoke(
-        'virtual-pet',
-        body: {'action': action},
+        'tools-hub',
+        body: {'action': 'pet.$action'},
       );
       final data = response.data;
       if (data is Map<String, dynamic>) {

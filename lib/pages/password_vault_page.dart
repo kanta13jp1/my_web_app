@@ -33,8 +33,8 @@ class _PasswordVaultPageState extends State<PasswordVaultPage> {
     });
     try {
       final res = await _supabase.functions.invoke(
-        'password-vault',
-        queryParameters: {'view': 'entries'},
+        'tools-hub',
+        body: {'action': 'vault.list'},
       );
       final data = res.data;
       if (data is Map<String, dynamic>) {
@@ -245,9 +245,9 @@ class _PasswordVaultPageState extends State<PasswordVaultPage> {
               if (site.isEmpty) return;
               try {
                 await _supabase.functions.invoke(
-                  'password-vault',
+                  'tools-hub',
                   body: {
-                    'action': 'add_entry',
+                    'action': 'vault.add',
                     'site': site,
                     'username': userCtrl.text.trim(),
                   },

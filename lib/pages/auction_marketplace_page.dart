@@ -29,13 +29,16 @@ class _AuctionMarketplacePageState extends State<AuctionMarketplacePage> {
     });
     try {
       final response = await _supabase.functions.invoke(
-        'auction-marketplace',
-        body: {'action': 'list'},
+        'social-commerce-hub',
+        body: {'action': 'auction.list'},
       );
       final data = response.data;
-      if (data is Map<String, dynamic> && data['items'] is List) {
+      final auctionList = data is Map<String, dynamic>
+          ? (data['items'] ?? data['auctions'])
+          : null;
+      if (auctionList is List) {
         setState(
-          () => _items = (data['items'] as List).cast<Map<String, dynamic>>(),
+          () => _items = auctionList.cast<Map<String, dynamic>>(),
         );
       } else if (data is List) {
         setState(() => _items = data.cast<Map<String, dynamic>>());

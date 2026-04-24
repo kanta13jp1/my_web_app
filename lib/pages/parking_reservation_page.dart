@@ -29,8 +29,8 @@ class _ParkingReservationPageState extends State<ParkingReservationPage> {
     });
     try {
       final response = await _supabase.functions.invoke(
-        'parking-reservation',
-        body: {'action': 'list'},
+        'lifestyle-hub',
+        body: {'action': 'parking.list'},
       );
       final data = response.data;
       if (data is Map<String, dynamic> && data['reservations'] is List) {

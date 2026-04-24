@@ -340,6 +340,11 @@ jobs:
             loyalty-points
             emergency-contacts
             donation-crowdfunding
+            parking-reservation
+            affiliate-marketing
+            auction-marketplace
+            password-vault
+            virtual-pet
           )
           EXISTING=$(supabase functions list --output json 2>/dev/null | jq -r '.[] | (.slug // .name // empty)' 2>/dev/null || echo "")
           if [ -z "$EXISTING" ]; then
