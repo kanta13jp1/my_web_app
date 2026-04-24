@@ -41,15 +41,15 @@ class _SocialMediaSchedulerPageState extends State<SocialMediaSchedulerPage>
     });
     try {
       final res = await _supabase.functions.invoke(
-        'social-media-scheduler',
-        body: {'action': 'list'},
+        'social-commerce-hub',
+        body: {'action': 'schedule.list'},
       );
       final data = res.data;
       if (data is Map<String, dynamic>) {
         setState(() {
-          _scheduled = (data['scheduled'] as List?) ?? [];
-          _published = (data['published'] as List?) ?? [];
-          _drafts = (data['drafts'] as List?) ?? [];
+          _scheduled = (data['posts'] as List?) ?? [];
+          _published = [];
+          _drafts = [];
         });
       }
     } catch (e) {
@@ -117,12 +117,11 @@ class _SocialMediaSchedulerPageState extends State<SocialMediaSchedulerPage>
               Navigator.pop(ctx);
               try {
                 await _supabase.functions.invoke(
-                  'social-media-scheduler',
+                  'social-commerce-hub',
                   body: {
-                    'action': 'create',
-                    'platform': selectedPlatform,
+                    'action': 'schedule.create',
+                    'platforms': [selectedPlatform],
                     'content': contentCtrl.text.trim(),
-                    'status': 'draft',
                   },
                 );
                 await _fetchPosts();

@@ -42,16 +42,12 @@ class _RecipeMealPlannerPageState extends State<RecipeMealPlannerPage>
     });
     try {
       final recipesRes = await _supabase.functions.invoke(
-        'recipe-meal-planner',
-        queryParameters: {'view': 'recipes'},
+        'lifestyle-hub',
+        body: {'action': 'recipe.list'},
       );
       final planRes = await _supabase.functions.invoke(
-        'recipe-meal-planner',
-        queryParameters: {'view': 'weekly_plan'},
-      );
-      final shoppingRes = await _supabase.functions.invoke(
-        'recipe-meal-planner',
-        queryParameters: {'view': 'shopping_list'},
+        'lifestyle-hub',
+        body: {'action': 'meal.list_plans'},
       );
 
       setState(() {
@@ -65,19 +61,13 @@ class _RecipeMealPlannerPageState extends State<RecipeMealPlannerPage>
 
         final pd = planRes.data;
         if (pd is Map<String, dynamic>) {
-          final list = pd['plan'];
+          final list = pd['plans'];
           if (list is List) {
             _weekPlan = list.map((p) => p as Map<String, dynamic>).toList();
           }
         }
 
-        final sd = shoppingRes.data;
-        if (sd is Map<String, dynamic>) {
-          final list = sd['items'];
-          if (list is List) {
-            _shoppingList = list.map((s) => s as Map<String, dynamic>).toList();
-          }
-        }
+        _shoppingList = [];
       });
     } catch (e) {
       setState(() => _errorMessage = '$e');
@@ -221,8 +211,8 @@ class _RecipeMealPlannerPageState extends State<RecipeMealPlannerPage>
               onPressed: () async {
                 try {
                   await _supabase.functions.invoke(
-                    'recipe-meal-planner',
-                    body: {'action': 'generate_weekly_plan'},
+                    'lifestyle-hub',
+                    body: {'action': 'meal.plan'},
                   );
                   await _fetchData();
                 } catch (e) {

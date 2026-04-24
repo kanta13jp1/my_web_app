@@ -42,16 +42,12 @@ class _PetCareManagerPageState extends State<PetCareManagerPage>
     });
     try {
       final petsRes = await _supabase.functions.invoke(
-        'pet-care-manager',
-        queryParameters: {'view': 'pets'},
+        'lifestyle-hub',
+        body: {'action': 'pet.list'},
       );
       final healthRes = await _supabase.functions.invoke(
-        'pet-care-manager',
-        queryParameters: {'view': 'health_logs'},
-      );
-      final vaccRes = await _supabase.functions.invoke(
-        'pet-care-manager',
-        queryParameters: {'view': 'vaccinations'},
+        'lifestyle-hub',
+        body: {'action': 'pet.vet_records'},
       );
 
       setState(() {
@@ -65,19 +61,13 @@ class _PetCareManagerPageState extends State<PetCareManagerPage>
 
         final hd = healthRes.data;
         if (hd is Map<String, dynamic>) {
-          final list = hd['logs'];
+          final list = hd['records'];
           if (list is List) {
             _healthLogs = list.map((h) => h as Map<String, dynamic>).toList();
           }
         }
 
-        final vd = vaccRes.data;
-        if (vd is Map<String, dynamic>) {
-          final list = vd['vaccinations'];
-          if (list is List) {
-            _vaccinations = list.map((v) => v as Map<String, dynamic>).toList();
-          }
-        }
+        _vaccinations = [];
       });
     } catch (e) {
       setState(() => _errorMessage = '$e');
