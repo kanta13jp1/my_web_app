@@ -14,7 +14,7 @@
 - **チャンス (二重)**: Evernote Free = **50ノート/1ノートブック** + Notion 5/4課金 = 二段階離脱ウェーブ
 - **新発見**: GPT-5.5 (Spud) 2026-04-23リリース / OpenAI モデル更新ペースが週次レベルに加速
 - **Google I/O 2026**: 5/19-20 (25日後) — 先回り準備必須
-- **Pending cross-instance-pr**: 4件 (緊急度付き)
+- **Pending cross-instance-pr**: 11件 (S36最終版 / うち完了1件)
 
 ---
 
@@ -84,20 +84,23 @@ Notion:
 
 ---
 
-## Pending cross-instance-pr 更新版 (4/24時点)
+## Pending cross-instance-pr 更新版 (4/24時点 S36最終)
 
 | # | ファイル | 優先度 | 宛先 | 期限 | ステータス |
 |---|---------|-------|------|------|-----------|
-| 1 | `20260424_notion_agent_skills_counter.md` | 🔴 | VSCode版 | 2026-05-03 | **未着手** |
-| 2 | `20260420_gemini_flash_lite_migration.md` | 🔴 | Win版 | 2026-06-01 | 未確認 |
-| 3 | `20260424_natural_phone_launch_confirmed.md` | 🟡 | Win版 | 2026-05-15 | 未着手 |
-| 4 | `20260424_google_gemini_embedding2.md` | 🟢 | Win版 | 2026-05-31 | 未着手 |
-| 5 | `20260420_claude_cowork_threat.md` | 🔴🔴 | VSCode+Win | 2026-05-01 | 未確認 |
-| 6 | `20260420_slack_agentforce_threat.md` | 🔴 | VSCode版 | 2026-05-01 | 未確認 |
-| 7 | `20260504_notion_paywall_d14.md` | 🔴 | PS#2 | 2026-04-28 | dispatch待ち |
-| 8 | `20260421_lp_differentiation_axes_s29_s31.md` | - | VSCode版 | - | **完了** (4/24 db32be24) |
+| 1 | `20260424_quota_circuit_breaker.md` | 🔴🔴 | Win版+PS#1 | 2026-04-25〜28 | **Win #1 未実装 / PS#1 #2-4 未実装** |
+| 2 | `20260424_notion_agent_skills_counter.md` | 🔴 | VSCode版 | 2026-05-03 | **未着手** |
+| 3 | `20260420_claude_cowork_threat.md` | 🔴🔴 | VSCode+Win | 2026-05-01 | 未確認 |
+| 4 | `20260420_slack_agentforce_threat.md` | 🔴 | VSCode版 | 2026-05-01 | 未確認 |
+| 5 | `20260504_notion_paywall_d14.md` | 🔴 | PS#2 | 2026-04-28 | dispatch待ち |
+| 6 | `20260420_gemini_flash_lite_migration.md` | 🔴 | Win版 | 2026-06-01 | 未確認 |
+| 7 | `20260424_natural_phone_launch_confirmed.md` | 🟡 | Win版 | 2026-05-15 | 未着手 |
+| 8 | `20260424_gpt55_aihub_routing_update.md` | 🟡 | Win版 | 2026-05-15 | **NEW (S36)** |
+| 9 | `20260424_google_gemini_embedding2.md` | 🟢 | Win版 | 2026-05-31 | 未着手 |
+| 10 | `20260424_microsoft_build_2026_preparation.md` | 🟢 | Win版 | 2026-05-30 | **NEW (S36)** |
+| 11 | `20260421_lp_differentiation_axes_s29_s31.md` | - | VSCode版 | - | **完了** (4/24 db32be24) |
 
-**🔴 最急**: #1 (VSCode 5/3期限) / #7 (PS#2 4/28dispatch) / #5/#6 (Win+VSCode 5/1)
+**🔴 最急**: #1 (Win+PS#1 quota circuit breaker / 期限超過) / #2 (VSCode 5/3) / #3/#4 (5/1)
 
 ---
 
