@@ -95,7 +95,7 @@ class AiProviderEntry {
   });
 }
 
-/// AI大学 登録プロバイダー全件のステータスカタログ (168社, 2026-04-24時点)
+/// AI大学 登録プロバイダー全件のステータスカタログ (170社, 2026-04-24時点)
 ///
 /// 実装済み: ai-assistant / ai-hub / ai-search に統合済みのもの
 /// 要APIキー: コード対応済みだが Supabase Secrets に追加が必要
@@ -1333,6 +1333,22 @@ const List<AiProviderEntry> kAiProviderRegistry = [
     entryPoint: 'https://arize.com/',
     note:
         r'LLM観測・評価 — Phoenix OSS (完全無料 / Claude Code CLI統合) / LLM-as-judge / $131M / 多フレームワーク',
+  ),
+  AiProviderEntry(
+    id: 'langsmith',
+    displayName: 'LangSmith',
+    status: AiProviderStatus.notImplemented,
+    entryPoint: 'https://www.langchain.com/langsmith',
+    note:
+        r'LangChain公式 LLM観測 — ユニコーン$1.25B / 9,000万DL / Fortune500 35% / 12×トレース成長 / BYOC self-host / $260M累計',
+  ),
+  AiProviderEntry(
+    id: 'comet_ml',
+    displayName: 'Comet ML',
+    status: AiProviderStatus.notImplemented,
+    entryPoint: 'https://www.comet.com/',
+    note:
+        r'ML実験追跡 & LLMトレーシング — Opik OSS (Apache 2.0 / self-host) / 2013年老舗 / $70M累計 / $17M ARR / W&B補完',
   ),
 ];
 
