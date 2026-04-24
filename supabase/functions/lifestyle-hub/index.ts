@@ -119,6 +119,16 @@ serve(async (req) => {
         return json({ success: true, total_kg_co2: total, entries: logs.length });
       }
 
+      // ── Donation / Crowdfunding ───────────────────────────────────────────────
+      case "donation.list": return json({ success: true, projects: await listItems(admin, "donation_project", userId) });
+      case "donation.create": {
+        const item = await addItem(admin, "donation_project", userId, {
+          title: body.title, goal_amount: body.goal_amount, description: body.description,
+          raised_amount: 0, status: "active",
+        });
+        return json({ success: true, project: item });
+      }
+
       // ── Appointments ──────────────────────────────────────────────────────────
       case "appt.list": return json({ success: true, appointments: await listItems(admin, "appointment", userId) });
       case "appt.create": {

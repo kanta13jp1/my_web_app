@@ -30,8 +30,8 @@ class _DonationCrowdfundingPageState extends State<DonationCrowdfundingPage> {
     });
     try {
       final response = await _supabase.functions.invoke(
-        'donation-crowdfunding',
-        body: {'action': 'list'},
+        'lifestyle-hub',
+        body: {'action': 'donation.list'},
       );
       final data = response.data;
       if (data is Map<String, dynamic> && data['projects'] is List) {

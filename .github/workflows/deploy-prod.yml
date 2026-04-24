@@ -335,6 +335,11 @@ jobs:
             carbon-footprint-tracker
             travel-itinerary-planner
             appointment-scheduler
+            gift-registry
+            digital-wallet
+            loyalty-points
+            emergency-contacts
+            donation-crowdfunding
           )
           EXISTING=$(supabase functions list --output json 2>/dev/null | jq -r '.[] | (.slug // .name // empty)' 2>/dev/null || echo "")
           if [ -z "$EXISTING" ]; then

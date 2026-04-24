@@ -29,8 +29,8 @@ class _DigitalWalletPageState extends State<DigitalWalletPage> {
     });
     try {
       final response = await _supabase.functions.invoke(
-        'digital-wallet',
-        body: {'action': 'list'},
+        'social-commerce-hub',
+        body: {'action': 'wallet.balance'},
       );
       final data = response.data;
       if (data is Map<String, dynamic> && data['transactions'] is List) {

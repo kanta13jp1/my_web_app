@@ -29,8 +29,8 @@ class _LoyaltyPointsPageState extends State<LoyaltyPointsPage> {
     });
     try {
       final response = await _supabase.functions.invoke(
-        'loyalty-points',
-        body: {'action': 'list'},
+        'social-commerce-hub',
+        body: {'action': 'loyalty.balance'},
       );
       final data = response.data;
       if (data is Map<String, dynamic> && data['history'] is List) {

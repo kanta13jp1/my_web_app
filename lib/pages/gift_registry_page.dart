@@ -29,13 +29,16 @@ class _GiftRegistryPageState extends State<GiftRegistryPage> {
     });
     try {
       final response = await _supabase.functions.invoke(
-        'gift-registry',
-        body: {'action': 'list'},
+        'social-commerce-hub',
+        body: {'action': 'gift.list'},
       );
       final data = response.data;
-      if (data is Map<String, dynamic> && data['gifts'] is List) {
+      final giftList = data is Map<String, dynamic>
+          ? (data['gifts'] ?? data['items'])
+          : null;
+      if (giftList is List) {
         setState(
-          () => _gifts = (data['gifts'] as List).cast<Map<String, dynamic>>(),
+          () => _gifts = giftList.cast<Map<String, dynamic>>(),
         );
       } else if (data is List) {
         setState(() => _gifts = data.cast<Map<String, dynamic>>());

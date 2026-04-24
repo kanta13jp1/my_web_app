@@ -29,8 +29,8 @@ class _EmergencyContactsPageState extends State<EmergencyContactsPage> {
     });
     try {
       final response = await _supabase.functions.invoke(
-        'emergency-contacts',
-        body: {'action': 'list'},
+        'tools-hub',
+        body: {'action': 'emergency.list'},
       );
       final data = response.data;
       if (data is Map<String, dynamic> && data['contacts'] is List) {
