@@ -122,6 +122,13 @@ serve(async (req) => {
         return json({ success: true });
       }
       case "recording.list": return json({ success: true, recordings: await listItems(admin, "screen_recording", userId) });
+      case "screenshot.list": return json({ success: true, screenshots: await listItems(admin, "screenshot", userId) });
+      case "screenshot.save": {
+        const item = await addItem(admin, "screenshot", userId, {
+          url: body.url ?? "", title: body.title ?? "", captured_at: new Date().toISOString(),
+        });
+        return json({ success: true, screenshot: item });
+      }
 
       // ── Live Streaming ───────────────────────────────────────────────────────
       case "stream.create": {

@@ -42,12 +42,12 @@ class _ScreenRecorderPageState extends State<ScreenRecorderPage>
     });
     try {
       final recRes = await _supabase.functions.invoke(
-        'screen-recorder',
-        queryParameters: {'view': 'recordings'},
+        'media-hub',
+        body: {'action': 'recording.list'},
       );
       final ssRes = await _supabase.functions.invoke(
-        'screen-recorder',
-        queryParameters: {'view': 'screenshots'},
+        'media-hub',
+        body: {'action': 'screenshot.list'},
       );
       setState(() {
         _recordings = _toList(recRes.data, 'recordings');
