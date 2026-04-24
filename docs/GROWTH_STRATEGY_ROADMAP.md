@@ -16424,3 +16424,36 @@ anon key で wbs.add_task 不可 (service role 必要)。次回 Win版/PS#1 で�
 - WBS競合21社モニタリング自動化: 65% → 70%
 - Philosophy Alignment: 1✅(先回り判断) 2✅(競合優位維持) 5✅(ユーザー体験向上) 8✅(昨日の自分超え) → 4/9
 - commit: 367e9821
+
+---
+
+## PS版#2 Session S20 (2026-04-24 09:00 JST) — T-1 第25弾 dispatch
+
+**インスタンス**: PS版#2 | **担当**: T-1 blog dispatch (dev.to EN)
+
+### 実施内容
+
+- **ワークトレー確認**: instance-ps2 に切替 + `git pull --rebase origin main` で最新同期
+- **Draft 選定**: `2026-04-26-ai-vendor-dependency-portfolio-bs-framework` (本B: BS フレームワーク)
+  - JA: 5 tags (AI,Claude,OpenAI,個人開発,buildinpublic) → 5th buildinpublic acceptable
+  - EN: 5 tags (AI,Claude,OpenAI,buildinpublic,webdev) → 5th webdev acceptable drop
+- **Step 2.3 並行検出**: last 5min runs = 0 → 安全
+- **Dispatch**: `gh workflow run blog-publish.yml -f platforms="devto"` → run 24864941807 ✅ success
+- **dev.to URL**: https://dev.to/kanta13jp1/turn-ai-dependency-into-a-portfolio-claude-codex-jibun-inc-on-a-balance-sheet-4g4c
+- **Orphan branch**: `blog-publish/24864941807-20260424-085918` マージ + 削除済
+- **published: true**: JA + EN 両 draft ともに orphan branch で自動更新済
+- **Qiita (JA)**: nightly schedule 21:00 JST が本日自動投稿予定 (auto-select 確認済)
+
+### 次回 PS#2
+
+- `2026-04-28-notion-custom-agents-paywall-vs-free-6-departments` → nightly schedule 自動 or 手動
+- dev.to 手動: `bash scripts/t1-dispatch.sh "2026-04-28-notion-custom-agents-paywall-vs-free-6-departments" "devto"`
+
+### Philosophy Alignment (9/9) ✅
+
+1. CEO感 ✅ (dispatch 判断・worktree 正常化) / 2. ミッション駆動 ✅
+3. 優しいmentor ✅ / 4. 6部署バランス ✅ / 5. 商品=ユーザー価値 ✅ (コンテンツ発信継続)
+6. 資本=時間 ✅ (schedule 活用・手動は EN のみ) / 7. 資産負債 ✅ (BS framing 記事)
+8. KPI=昨日の自分 ✅ / 9. ゴール=IPO ✅
+
+- commit: a2e0c424 (orphan merge) + 本 commit
