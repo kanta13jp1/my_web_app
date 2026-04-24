@@ -24,13 +24,14 @@ const NEW_KOKUMIN_ELECTIONS_URL =
 const TARGET_LOCAL_MEMBERS = 700;
 const BASELINE_CURRENT_LOCAL_MEMBERS = 340;
 const SCHEDULE_PAST_DAYS = 14;
+const NEXT_UNIFIED_LOCAL_ELECTION_SCHEDULE_END = "2027-04-25";
 // ユーザー要件: 最低でも 1ヶ月分 (30日) の地方選予定を取得する。
 // new-kokumin は 1,014件のデータを返すため cap に余裕を持たせる。
 // PS版#112: window 60→90 / cap 100→200
 // Win版#80: cap 200→300 + SCHEDULE_MIN_WINDOW_DAYS=30 の最低保証を追加
 const SCHEDULE_WINDOW_DAYS = 90;
 const SCHEDULE_DETAIL_WINDOW_DAYS = 14;
-const SCHEDULE_MAX_ENTRIES = 300;
+const SCHEDULE_MAX_ENTRIES = 2000;
 const AI_ANALYSIS_TIMEOUT_MS = 6000;
 // 最低保証日数 (これを下回る window は使わない)
 const SCHEDULE_MIN_WINDOW_DAYS = 30;
@@ -1029,9 +1030,9 @@ async function fetchUpcomingLocalElectionSchedules(
 ): Promise<LocalElectionScheduleEntry[]> {
   const today = startOfDay(new Date());
   const earliestDate = addDays(today, -SCHEDULE_PAST_DAYS);
-  // 最低保証日数 (SCHEDULE_MIN_WINDOW_DAYS) を下限として最終日を決定
   const windowDays = Math.max(SCHEDULE_WINDOW_DAYS, SCHEDULE_MIN_WINDOW_DAYS);
-  const latestDate = addDays(today, windowDays);
+  // 最低保証日数 (SCHEDULE_MIN_WINDOW_DAYS) を下限として最終日を決定
+  const latestDate = resolveScheduleLatestDate(today, windowDays);
   const detailCutoffDate = addDays(today, SCHEDULE_DETAIL_WINDOW_DAYS);
   const overviewEntries = mergeScheduleOverviewEntries(
     await fetchScheduleOverviewEntries(earliestDate, latestDate),
@@ -1089,6 +1090,22 @@ async function fetchUpcomingLocalElectionSchedules(
     }
     return left.electionName.localeCompare(right.electionName, "ja");
   });
+}
+
+function resolveScheduleLatestDate(today: Date, windowDays: number): Date {
+  const rollingLatestDate = addDays(today, windowDays);
+  const unifiedElectionEndDate = parseIsoDate(
+    NEXT_UNIFIED_LOCAL_ELECTION_SCHEDULE_END,
+  );
+  if (
+    unifiedElectionEndDate == null ||
+    unifiedElectionEndDate.getTime() < today.getTime()
+  ) {
+    return rollingLatestDate;
+  }
+  return unifiedElectionEndDate.getTime() > rollingLatestDate.getTime()
+    ? unifiedElectionEndDate
+    : rollingLatestDate;
 }
 
 async function fetchScheduleOverviewEntries(
@@ -1247,11 +1264,14 @@ function isTargetManualScheduleSupplement(
   if (category === "chief" || category.includes("首長")) {
     return false;
   }
-  return inferElectionCategory(entry.electionName) !== "chief";
+  if (category === "assembly") {
+    return true;
+  }
+  return inferElectionCategory(entry.electionName) === "assembly";
 }
 
 function isTargetScheduleOverviewEntry(entry: ScheduleOverviewEntry): boolean {
-  return inferElectionCategory(entry.electionName) !== "chief";
+  return inferElectionCategory(entry.electionName) === "assembly";
 }
 
 function mergeScheduleOverviewEntries(
@@ -2020,10 +2040,16 @@ function inferElectionCategory(electionName: string): string {
     /(\u77e5\u4e8b|\u5e02\u9577|\u533a\u9577|\u753a\u9577|\u6751\u9577)\u9078\u6319/u
       .test(electionName)
   ) return "chief";
-  if (/\u8b70\u4f1a\u8b70\u54e1\u9078\u6319/u.test(electionName)) {
+  if (
+    /(?:\u90fd|\u9053|\u5e9c|\u770c|\u5e02|\u533a|\u753a|\u6751)\u8b70\u4f1a\u8b70\u54e1(?:\u88dc\u6b20|\u518d)?\u9078\u6319/u
+      .test(electionName) ||
+    /\u8b70\u4f1a\u8b70\u54e1(?:\u88dc\u6b20|\u518d)?\u9078\u6319/u.test(
+      electionName,
+    )
+  ) {
     return "assembly";
   }
-  return "local-election";
+  return "other";
 }
 
 function normalizeElectionNameForMatch(value: string): string {

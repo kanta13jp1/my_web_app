@@ -20,6 +20,7 @@ import '../services/public_memo_service.dart';
 import '../widgets/election_japan_map.dart';
 import '../widgets/election_progress_chart.dart';
 import '../widgets/election_regional_kpi_chart.dart';
+import '../widgets/election_x_post_composer_dialog.dart';
 
 class ElectionVictoryPage extends StatefulWidget {
   final bool publicView;
@@ -858,6 +859,29 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
     );
   }
 
+  Future<void> _openElectionXPostComposer() async {
+    final snapshot = _realitySnapshot;
+    if (snapshot == null || !snapshot.hasData) {
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('最新の実データ取得後に地方選ポストを作成できます'),
+        ),
+      );
+      return;
+    }
+
+    await ElectionXPostComposerDialog.show(
+      context,
+      snapshot: snapshot,
+      shareService: _shareService,
+      publishedMemo: _publishedSnapshotMemo,
+      initialWindowIndex: _filterToWindowIndex(_selectedScheduleFilter),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final plan = _plan;
@@ -1234,6 +1258,13 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                       onPressed: _isPublishingKpiMemo ? null : _copyKpiMemoLink,
                       icon: const Icon(Icons.copy_all),
                       label: const Text('KPIノートリンクコピー'),
+                    ),
+                    FilledButton.icon(
+                      onPressed: _isRealityLoading || realitySnapshot == null
+                          ? null
+                          : _openElectionXPostComposer,
+                      icon: const Icon(Icons.campaign_outlined),
+                      label: const Text('選挙ポスト作成'),
                     ),
                     FilledButton.icon(
                       onPressed: _isPublishingKpiMemo ? null : _shareKpiMemoOnX,

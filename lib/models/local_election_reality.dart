@@ -350,7 +350,19 @@ class LocalElectionScheduleEntry {
     return RegExp(r'(知事|市長|区長|町長|村長)選挙').hasMatch(electionName);
   }
 
-  bool get isTargetElection => !isChiefElection;
+  bool get isLocalAssemblyElection {
+    final category = electionCategory.trim().toLowerCase();
+    if (category == 'assembly' || electionCategory.contains('議会')) {
+      return true;
+    }
+    final name = electionName.trim();
+    if (RegExp(r'(都|道|府|県|市|区|町|村)議会議員(補欠|再)?選挙').hasMatch(name)) {
+      return true;
+    }
+    return name.toLowerCase().contains('council');
+  }
+
+  bool get isTargetElection => !isChiefElection && isLocalAssemblyElection;
 
   bool get isAlertRed => isTargetElection && kokuminCandidateCount == 0;
 

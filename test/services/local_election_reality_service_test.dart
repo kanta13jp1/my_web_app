@@ -188,6 +188,83 @@ void main() {
     expect(loaded.hasDetailedProfile, isTrue);
   });
 
+  test('target schedules keep local assemblies and exclude chiefs/national', () {
+    final snapshot = LocalElectionRealitySnapshot(
+      fetchedAt: DateTime(2026, 4, 24),
+      baselineCurrentLocalMembers: 340,
+      officialCurrentLocalMembers: 355,
+      targetLocalMembers: 700,
+      baselineNetIncreaseRequired: 360,
+      actualNetIncreaseRequired: 345,
+      official2023FirstHalfWins: 62,
+      official2023SecondHalfWins: 121,
+      official2023TotalWins: 183,
+      aiSummary: '',
+      aiAlerts: <String>[],
+      aiStrategicNotes: <String>[],
+      scheduleAiSummary: '',
+      scheduleAiAlerts: <String>[],
+      sources: <LocalElectionRealitySource>[],
+      prefectures: <LocalElectionPrefectureReality>[],
+      members: <LocalElectionLegislatorProfile>[],
+      upcomingSchedules: <LocalElectionScheduleEntry>[
+        LocalElectionScheduleEntry(
+          electionName: '山口市議会議員選挙',
+          prefecture: '山口県',
+          municipality: '山口市',
+          electionCategory: 'assembly',
+          voteDate: '2026-04-26',
+          announcementDate: '2026-04-19',
+          detailUrl: '',
+          officialCandidateSourceUrl: '',
+          seatCount: 34,
+          totalCandidateCount: 40,
+          kokuminCandidateCount: 2,
+          kokuminCandidateNames: <String>[],
+          kokuminCandidateStatuses: <String>[],
+          kokuminCandidateXHandles: <String>[],
+        ),
+        LocalElectionScheduleEntry(
+          electionName: '鹿島市長選挙',
+          prefecture: '佐賀県',
+          municipality: '鹿島市',
+          electionCategory: 'chief',
+          voteDate: '2026-04-26',
+          announcementDate: '2026-04-19',
+          detailUrl: '',
+          officialCandidateSourceUrl: '',
+          seatCount: 1,
+          totalCandidateCount: 2,
+          kokuminCandidateCount: 0,
+          kokuminCandidateNames: <String>[],
+          kokuminCandidateStatuses: <String>[],
+          kokuminCandidateXHandles: <String>[],
+        ),
+        LocalElectionScheduleEntry(
+          electionName: '参議院議員選挙',
+          prefecture: '東京都',
+          municipality: '',
+          electionCategory: 'other',
+          voteDate: '2026-07-12',
+          announcementDate: '2026-06-25',
+          detailUrl: '',
+          officialCandidateSourceUrl: '',
+          seatCount: 0,
+          totalCandidateCount: 0,
+          kokuminCandidateCount: 0,
+          kokuminCandidateNames: <String>[],
+          kokuminCandidateStatuses: <String>[],
+          kokuminCandidateXHandles: <String>[],
+        ),
+      ],
+    );
+
+    expect(
+      snapshot.targetElectionSchedules.map((item) => item.electionName),
+      <String>['山口市議会議員選挙'],
+    );
+  });
+
   test('rejects cached snapshots with empty official prefecture pages',
       () async {
     const service = LocalElectionRealityService();

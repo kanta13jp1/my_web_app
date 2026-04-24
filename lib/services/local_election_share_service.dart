@@ -61,7 +61,7 @@ class LocalElectionShareService {
   static const String planDashboardMetadataType =
       'local_election_plan_dashboard';
   static const int lowPresenceThreshold = 4;
-  static const int maxWeekendWindowCount = 28;
+  static const int maxWeekendWindowCount = 60;
   static const int _syntheticNoteIdBase = 90000000000000;
   static const int _planDashboardNoteId = _syntheticNoteIdBase + 7002027;
   static final DateTime nextUnifiedLocalElectionFirstHalfTargetDate =
