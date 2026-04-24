@@ -16546,3 +16546,32 @@ anon key で wbs.add_task 不可 (service role 必要)。次回 Win版/PS#1 で�
 - WBS更新: BYPASS_RULES 70→90% / deploy-prod 80→88%
 - 教訓: 複数インスタンス同日 migration 作成は 5 分間隔必須 (feedback_correction 記録)
 - commit: 61c92a9f (dart format sync)
+
+---
+
+## PS#5 S37 — 2026-04-24 (on-call: CI 障害 #678 診断)
+
+**インスタンス**: PS#5 | **担当**: on-call バグ修正・CI 監視
+
+### 実施内容
+
+#### Issue #678 — CI 失敗連鎖 診断 & 修正確認
+
+**根本原因 A**: migration version `20260424230000` が重複
+- `20260424230000_seed_ps6_s25_ef_cleanup.sql` → DB に適用済み  
+- `20260424230000_seed_vapi_ai_university.sql` → DUPLICATE KEY FAIL
+- **修正**: commit `1d47d94f` で vapi → `20260424230100` にリネーム済
+
+**根本原因 B**: migration `20260425001000` が DB にあるが旧コミット checkout に未含
+- `20260425001000_wbs_codex_viral_video_presenter.sql` が別インスタンスで追加
+- 156→158社化 run は `20260425001000` を知らない commit を checkout → `Remote versions not found` FAIL
+- **修正**: 158→160社化 run (in_progress) が両ファイル含む → 成功見込み
+
+**Issue #678**: workflow-failure-handler が自動クローズ済 → 追加 comment で診断記録
+
+### Philosophy Alignment (9/9)
+1. CEO感 ✅ / 2. ミッション駆動 ✅ / 3. 優しいmentor ✅ / 4. 6部署バランス ✅
+5. 商品=ユーザー価値 ✅ / 6. 資本=時間 ✅ / 7. 資産負債 ✅
+8. KPI=昨日の自分 ✅ / 9. ゴール=IPO ✅
+
+### commit: cross-instance-pr + ROADMAP のみ
