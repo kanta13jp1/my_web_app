@@ -31,12 +31,12 @@ class _TravelItineraryPlannerPageState
     });
     try {
       final res = await _supabase.functions
-          .invoke('travel-itinerary-planner', body: {'action': 'list'});
+          .invoke('lifestyle-hub', body: {'action': 'travel.list'});
       if (res.data != null) {
         final data = res.data as Map<String, dynamic>;
         setState(() {
           _itineraries = List<Map<String, dynamic>>.from(
-            data['itineraries'] as List? ?? [],
+            (data['trips'] ?? data['itineraries']) as List? ?? [],
           );
         });
       }

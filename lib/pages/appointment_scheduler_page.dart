@@ -30,8 +30,8 @@ class _AppointmentSchedulerPageState extends State<AppointmentSchedulerPage> {
     });
     try {
       final response = await _supabase.functions.invoke(
-        'appointment-scheduler',
-        body: {'action': 'list'},
+        'lifestyle-hub',
+        body: {'action': 'appt.list'},
       );
       final data = response.data;
       if (data is Map<String, dynamic> && data['appointments'] is List) {

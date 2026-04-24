@@ -31,8 +31,8 @@ class _CarbonFootprintTrackerPageState
     });
     try {
       final response = await _supabase.functions.invoke(
-        'carbon-footprint-tracker',
-        body: {'action': 'list'},
+        'lifestyle-hub',
+        body: {'action': 'carbon.list'},
       );
       final data = response.data;
       if (data is Map<String, dynamic> && data['records'] is List) {

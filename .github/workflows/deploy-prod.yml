@@ -332,6 +332,9 @@ jobs:
             social-media-scheduler
             pet-care-manager
             recipe-meal-planner
+            carbon-footprint-tracker
+            travel-itinerary-planner
+            appointment-scheduler
           )
           EXISTING=$(supabase functions list --output json 2>/dev/null | jq -r '.[] | (.slug // .name // empty)' 2>/dev/null || echo "")
           if [ -z "$EXISTING" ]; then

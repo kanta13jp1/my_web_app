@@ -112,10 +112,21 @@ serve(async (req) => {
         });
         return json({ success: true, log: item });
       }
+      case "carbon.list": return json({ success: true, records: await listItems(admin, "carbon_log", userId) });
       case "carbon.summary": {
         const logs = await listItems(admin, "carbon_log", userId, 365);
         const total = logs.reduce((s, l) => s + Number((l.metadata as Record<string, unknown>)?.kg_co2 ?? 0), 0);
         return json({ success: true, total_kg_co2: total, entries: logs.length });
+      }
+
+      // ── Appointments ──────────────────────────────────────────────────────────
+      case "appt.list": return json({ success: true, appointments: await listItems(admin, "appointment", userId) });
+      case "appt.create": {
+        const item = await addItem(admin, "appointment", userId, {
+          title: body.title, date: body.date, time: body.time,
+          location: body.location, notes: body.notes, status: "scheduled",
+        });
+        return json({ success: true, appointment: item });
       }
 
       // ── Pet Care ──────────────────────────────────────────────────────────────
