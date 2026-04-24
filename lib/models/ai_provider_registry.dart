@@ -95,7 +95,7 @@ class AiProviderEntry {
   });
 }
 
-/// AI大学 登録プロバイダー全件のステータスカタログ (174社, 2026-04-24時点)
+/// AI大学 登録プロバイダー全件のステータスカタログ (176社, 2026-04-24時点)
 ///
 /// 実装済み: ai-assistant / ai-hub / ai-search に統合済みのもの
 /// 要APIキー: コード対応済みだが Supabase Secrets に追加が必要
@@ -1385,6 +1385,22 @@ const List<AiProviderEntry> kAiProviderRegistry = [
     entryPoint: 'https://www.confident-ai.com/',
     note:
         r'LLM評価OSS DeepEval — Apache 2.0 / Pytest互換 / 50+メトリクス / G-Eval / RAG+Agent+安全性評価 / CI/CD統合',
+  ),
+  AiProviderEntry(
+    id: 'crewai',
+    displayName: 'CrewAI',
+    status: AiProviderStatus.notImplemented,
+    entryPoint: 'https://crewai.com/',
+    note:
+        r'マルチエージェントオーケストレーション — Fortune500 60%採用 / 月4.5億workflow / 10万+認定dev / $24.5M Insight Partners / DocuSign PwC',
+  ),
+  AiProviderEntry(
+    id: 'patronus_ai',
+    displayName: 'Patronus AI',
+    status: AiProviderStatus.notImplemented,
+    entryPoint: 'https://www.patronus.ai/',
+    note:
+        r'LLM自動評価・安全 — Meta AI創業 / $40.1M Lightspeed / FinanceBench (業界初) / CopyrightCatcher / 50+失敗カテゴリ',
   ),
 ];
 

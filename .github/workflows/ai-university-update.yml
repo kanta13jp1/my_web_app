@@ -136,6 +136,8 @@ jobs:
           upsert_provider "galileo"      "https://www.galileo.ai/blog/rss.xml"               "Galileo AI (LLM Eval Guardrails Monitoring)"
           upsert_provider "prefect"      "https://www.prefect.io/blog/rss.xml"               "Prefect (Python Workflow Orchestration)"
           upsert_provider "confident_ai" "https://www.confident-ai.com/blog/rss.xml"         "Confident AI / DeepEval (LLM Evaluation)"
+          upsert_provider "crewai"       "https://www.crewai.com/blog/rss.xml"               "CrewAI (Multi-Agent Orchestration)"
+          upsert_provider "patronus_ai"  "https://www.patronus.ai/blog/rss.xml"              "Patronus AI (LLM Evaluation & Safety)"
 
           # RSS廃止/URL無効 (静的seedコンテンツを維持):
           # anthropic, meta, x, deepseek, mistral, perplexity, groq, cohere, ibm, sakana, baidu, stability, core, cerebras, prover
