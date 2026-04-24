@@ -26,8 +26,9 @@ class FeatureStrategyAiReviewService {
     }
 
     try {
-      final response = await _chatService.sendAutoChat(
+      final response = await _chatService.sendProviderChat(
         message: _buildPrompt(report),
+        provider: 'deepinfra',
       );
       return FeatureStrategyAiReview(
         summary: _normalize(response.text),
