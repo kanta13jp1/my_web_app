@@ -6,6 +6,7 @@ import '../models/agent_profile.dart';
 import '../models/agent_relationship.dart';
 import '../models/agent_task.dart';
 import '../services/agent_org_service.dart';
+import '../services/manus_like_task_service.dart';
 
 class AgentTaskTemplate {
   final String id;
@@ -106,9 +107,13 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
   final Set<String> _reactionRequestsInFlight = <String>{};
   final TextEditingController _secretaryController = TextEditingController();
   final TextEditingController _goalController = TextEditingController();
+  final TextEditingController _manusObjectiveController =
+      TextEditingController();
   bool _isTalkingToSecretary = false;
   bool _isSettingGoal = false;
+  bool _isRunningManusPlan = false;
   String? _secretaryReply;
+  ManusLikeTaskPlan? _latestManusPlan;
 
   @override
   void initState() {
@@ -123,6 +128,7 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
     _boardMessageController.dispose();
     _secretaryController.dispose();
     _goalController.dispose();
+    _manusObjectiveController.dispose();
     super.dispose();
   }
 
@@ -618,6 +624,79 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
     }
   }
 
+  Future<void> _runManusLikePlan() async {
+    final objective = _manusObjectiveController.text.trim();
+    if (objective.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Manusに任せる目的を入力してください。')),
+      );
+      return;
+    }
+    final ceoAgent = _ceoAgent;
+    if (ceoAgent == null) return;
+
+    final plan = ManusLikeTaskService.buildPlan(
+      objective: objective,
+      availableAgentSlugs: _snapshot.agents
+          .where((agent) => agent.isActive)
+          .map(
+            (agent) => agent.slug,
+          )
+          .toSet(),
+    );
+
+    setState(() => _isRunningManusPlan = true);
+    try {
+      await widget.service.postBoardMessage(
+        fromAgentId: ceoAgent.id,
+        channel: 'executive',
+        summary: '【Manus-like実行開始】\n${plan.executionSummary}',
+      );
+
+      for (final step in plan.steps) {
+        final assignee = _findAgentBySlug(step.agentSlug);
+        if (assignee == null || !assignee.isActive) continue;
+        await widget.service.delegateTask(
+          supervisorAgentId: ceoAgent.id,
+          assigneeAgentId: assignee.id,
+          title: step.title,
+          description: [
+            step.description,
+            '',
+            '期待成果: ${step.expectedOutput}',
+            if (step.dependsOn.isNotEmpty)
+              '依存ステップ: ${step.dependsOn.join(', ')}',
+            'レビューゲート: ${plan.reviewGate}',
+          ].join('\n'),
+          priority: step.priority,
+          taskType: 'manus_like_step',
+          source: 'manus_like_autopilot',
+        );
+      }
+
+      await widget.service.appendMemoryEntry(
+        agentId: ceoAgent.id,
+        content: 'Manus-like自動実行を開始: ${plan.objective}',
+        memoryLayer: 'episodes',
+      );
+
+      if (!mounted) return;
+      _manusObjectiveController.clear();
+      setState(() => _latestManusPlan = plan);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Manus-like計画を部門タスクへ自動展開しました。')),
+      );
+      await _loadSnapshot();
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Manus-like実行に失敗しました: $error')),
+      );
+    } finally {
+      if (mounted) setState(() => _isRunningManusPlan = false);
+    }
+  }
+
   void _applyTaskTemplate(AgentTaskTemplate template) {
     _taskTitleController.text = template.title;
     _taskDescriptionController.text = template.description;
@@ -803,6 +882,8 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
                       _buildSecretarySection(),
                       const SizedBox(height: 16),
                       _buildGoalSection(),
+                      const SizedBox(height: 16),
+                      _buildManusLikeSection(),
                       const SizedBox(height: 16),
                       _buildDelegationComposer(),
                       const SizedBox(height: 24),
@@ -1847,6 +1928,117 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
                 label: const Text('秘書に送る'),
               ),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildManusLikeSection() {
+    final plan = _latestManusPlan;
+    return Card(
+      elevation: 2,
+      color: const Color(0xFFEFF6FF),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Row(
+              children: [
+                Icon(Icons.auto_awesome_motion, color: Color(0xFF2563EB)),
+                SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Manus-like マルチステップ自動実行',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w800,
+                      height: 1.5,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            Text(
+              '目的を1つ入れると、要件整理、KGI/CSF/KPI設計、主担当案、専門レビュー、CEO確認までを部門タスクに分解します。',
+              style: TextStyle(
+                fontSize: 12,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _manusObjectiveController,
+              enabled: !_isRunningManusPlan,
+              minLines: 2,
+              maxLines: 4,
+              decoration: const InputDecoration(
+                labelText: 'Manusに任せる目的',
+                hintText: '例: AI大学の離脱率を下げる改善案を今日中に実行可能な形にする',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 10),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                onPressed: _isRunningManusPlan ? null : _runManusLikePlan,
+                icon: _isRunningManusPlan
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.playlist_add_check_circle),
+                label: const Text('部門タスクへ自動展開'),
+              ),
+            ),
+            if (plan != null) ...[
+              const SizedBox(height: 14),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: const Color(0xFFBFDBFE)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      plan.strategyLabel,
+                      style: const TextStyle(
+                        color: Color(0xFF1D4ED8),
+                        fontWeight: FontWeight.w800,
+                        height: 1.5,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    ...plan.steps.map(
+                      (step) => Padding(
+                        padding: const EdgeInsets.only(bottom: 6),
+                        child: Text(
+                          '${step.stepNumber}. ${step.agentSlug} / ${step.title}',
+                          style: const TextStyle(fontSize: 12, height: 1.5),
+                        ),
+                      ),
+                    ),
+                    Text(
+                      plan.reviewGate,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Color(0xFF475569),
+                        height: 1.5,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ],
         ),
       ),
