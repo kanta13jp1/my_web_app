@@ -347,3 +347,7 @@ WHERE title = 'ai-hub provider.chat 蜈ｨ蟇ｾ蠢・;
 - 対応内容: AI大学トップとHomeカードに `法律AI` ジャンル導線を追加し、Harvey を代表教材として契約レビュー・リーガルリサーチ・Due Diligence を学べる入口を新設した。
 - 実装補足: `ai_university_genre_catalog` を追加して今後の専門ジャンル展開に備えつつ、`/gemini-university` は引数で代表プロバイダーを直接開けるようにした。Harvey の provider status も `HARVEY_API_KEY` 前提の実装済みに更新。
 - WBS DB反映: migration `20260425022000_wbs_codex_ai_university_legal_ai_genre.sql`
+- 実担当タスク: `[追加要望] 【HeyGen】多言語SNS展開`
+- 対応内容: バイラル広告ジェネレーターの生成結果に `HeyGen 多言語SNS展開` を追加し、日本語・英語・韓国語・中国語・スペイン語の短尺動画原稿、HeyGenリップシンク翻訳指示、X投稿文、LinkedIn投稿文を自動展開できるようにした。
+- 実装補足: 各言語ごとに投稿キットをコピーでき、X intent で即投稿画面を開ける。全言語の一括コピーにも対応。
+- WBS DB反映: migration `20260425033000_wbs_codex_heygen_multilingual_sns.sql`

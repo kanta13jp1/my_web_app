@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../models/kgi_csf_kpi.dart';
+import '../services/heygen_multilingual_sns_service.dart';
 import '../widgets/kgi_csf_kpi_panel.dart';
 
 /// バイラル広告ジェネレーターページ
@@ -189,6 +191,22 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
     } finally {
       if (mounted) setState(() => _isPosting = false);
     }
+  }
+
+  Future<void> _copyToClipboard(String text, String message) async {
+    await Clipboard.setData(ClipboardData(text: text));
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: const Color(0xFF00897B),
+      ),
+    );
+  }
+
+  Future<void> _openXComposer(String text) async {
+    final uri = Uri.https('twitter.com', '/intent/tweet', {'text': text});
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
   }
 
   Future<void> _generateInviteCode() async {
@@ -706,6 +724,7 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
                 ),
               ),
             ),
+            ..._buildHeyGenMultilingualSnsSection(ad, isDark),
             const SizedBox(height: 16),
             Row(
               children: [
@@ -733,6 +752,190 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
                   ),
                 ),
               ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  List<Widget> _buildHeyGenMultilingualSnsSection(
+    Map<String, dynamic> ad,
+    bool isDark,
+  ) {
+    final caption = ad['caption']?.toString() ?? '';
+    final rawScript = ad['script'] as List? ?? const <Object?>[];
+    final script = rawScript
+        .map((line) => line.toString().trim())
+        .where((line) => line.isNotEmpty)
+        .toList(growable: false);
+    if (caption.trim().isEmpty && script.isEmpty) return const [];
+
+    final kit = HeyGenMultilingualSnsService.buildKit(
+      templateKey: ad['template']?.toString() ?? _selectedTemplate,
+      sourceLanguage: ad['lang']?.toString() ?? _selectedLang,
+      caption: caption,
+      script: script,
+    );
+    final borderColor = Theme.of(context).colorScheme.surfaceContainerHighest;
+
+    return [
+      const SizedBox(height: 16),
+      Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: isDark ? Colors.black26 : const Color(0xFFF8FAFC),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: borderColor),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.translate, color: Color(0xFF0EA5E9)),
+                const SizedBox(width: 8),
+                const Expanded(
+                  child: Text(
+                    'HeyGen 多言語SNS展開',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      height: 1.5,
+                    ),
+                  ),
+                ),
+                TextButton.icon(
+                  onPressed: () => _copyToClipboard(
+                    kit.allPostsForClipboard,
+                    '全言語のSNS投稿をコピーしました',
+                  ),
+                  icon: const Icon(Icons.copy, size: 18),
+                  label: const Text('一括コピー'),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              '生成済み広告を HeyGen のリップシンク翻訳に流し込む前提で、各国向けの短尺動画原稿とSNS投稿文を自動展開します。',
+              style: TextStyle(
+                color:
+                    isDark ? const Color(0xFFD1D5DB) : const Color(0xFF475569),
+                fontSize: 12,
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: kit.variants
+                  .map(
+                    (variant) => Chip(
+                      label: Text(variant.localeLabel),
+                      backgroundColor: const Color(0xFF0EA5E9).withAlpha(24),
+                      side: BorderSide(
+                        color: const Color(0xFF0EA5E9).withAlpha(64),
+                      ),
+                    ),
+                  )
+                  .toList(),
+            ),
+            const SizedBox(height: 8),
+            ...kit.variants.map(
+              (variant) => Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: isDark ? const Color(0xFF1F2937) : Colors.white,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: borderColor),
+                  ),
+                  child: ExpansionTile(
+                    tilePadding: const EdgeInsets.symmetric(horizontal: 12),
+                    childrenPadding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+                    title: Text(
+                      variant.localeLabel,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w700,
+                        height: 1.5,
+                      ),
+                    ),
+                    subtitle: Text(
+                      variant.audienceHook,
+                      style: const TextStyle(fontSize: 12, height: 1.4),
+                    ),
+                    children: [
+                      _buildVariantTextBlock(
+                        'HeyGen指示',
+                        variant.heygenBrief,
+                        isDark,
+                      ),
+                      _buildVariantTextBlock(
+                        '動画原稿',
+                        variant.videoScript.join('\n'),
+                        isDark,
+                      ),
+                      _buildVariantTextBlock('X投稿', variant.xPost, isDark),
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          OutlinedButton.icon(
+                            onPressed: () => _copyToClipboard(
+                              variant.clipboardBundle,
+                              '${variant.localeLabel}の投稿キットをコピーしました',
+                            ),
+                            icon: const Icon(Icons.copy, size: 18),
+                            label: const Text('コピー'),
+                          ),
+                          ElevatedButton.icon(
+                            onPressed: () => _openXComposer(variant.xPost),
+                            icon: const Icon(Icons.open_in_new, size: 18),
+                            label: const Text('Xで開く'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.black,
+                              foregroundColor: Colors.white,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    ];
+  }
+
+  Widget _buildVariantTextBlock(String label, String text, bool isDark) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 8),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: isDark ? Colors.black26 : const Color(0xFFF8FAFC),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                height: 1.4,
+              ),
+            ),
+            const SizedBox(height: 4),
+            SelectableText(
+              text,
+              style: const TextStyle(fontSize: 12, height: 1.45),
             ),
           ],
         ),
