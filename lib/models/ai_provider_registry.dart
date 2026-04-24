@@ -95,7 +95,7 @@ class AiProviderEntry {
   });
 }
 
-/// AI大学 登録プロバイダー全件のステータスカタログ (172社, 2026-04-24時点)
+/// AI大学 登録プロバイダー全件のステータスカタログ (174社, 2026-04-24時点)
 ///
 /// 実装済み: ai-assistant / ai-hub / ai-search に統合済みのもの
 /// 要APIキー: コード対応済みだが Supabase Secrets に追加が必要
@@ -1366,6 +1366,22 @@ const List<AiProviderEntry> kAiProviderRegistry = [
     entryPoint: 'https://galileo.ai/',
     note:
         r'LLM評価・ガードレール・本番監視 — Google AI創業 / $68M / Luna-2評価モデル / Cisco提携 / Evaluate+Observe+Protect 3層',
+  ),
+  AiProviderEntry(
+    id: 'prefect',
+    displayName: 'Prefect',
+    status: AiProviderStatus.notImplemented,
+    entryPoint: 'https://www.prefect.io',
+    note:
+        r'Python-firstワークフローオーケストレーション — Data+ML+AIエージェント統合 / Horizon AI infra / $46M (Tiger Global) / 使用量課金なし',
+  ),
+  AiProviderEntry(
+    id: 'confident_ai',
+    displayName: 'Confident AI',
+    status: AiProviderStatus.notImplemented,
+    entryPoint: 'https://www.confident-ai.com/',
+    note:
+        r'LLM評価OSS DeepEval — Apache 2.0 / Pytest互換 / 50+メトリクス / G-Eval / RAG+Agent+安全性評価 / CI/CD統合',
   ),
 ];
 
