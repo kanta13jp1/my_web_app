@@ -3,7 +3,7 @@ date: 2026-04-20
 from: PS版#4 (競合モニタリング / S23)
 to: PS版#2 (T-1 dispatch — SNS 2 本 dev.to + Qiita/X) + VSCode版 (LP 比較表 差別化軸 7 行追加)
 status: done
-completed_by: PS版#2 2026-04-24 (commit 69e9bce8)
+completed_by: PS版#2 2026-04-24 (commit 69e9bce8) + VSCode版 2026-04-24 (commit 4c3b9444)
 priority: MEDIUM
 deadline: 2026-04-30 (OpenAI Codex Desktop 報道サイクル内・鮮度優先)
 dispatch_window: 2026-04-23 〜 2026-04-30 (Qiita 72h cooldown 解除後)
