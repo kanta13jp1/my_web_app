@@ -1080,8 +1080,10 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
           .map((item) => '- $item')
           .join('\n');
       final practiceMenu = (analysis['practiceMenu'] as List? ?? const [])
-          .map((item) =>
-              '- ${item is Map ? item['title'] ?? item['task'] ?? item : item}')
+          .map(
+            (item) =>
+                '- ${item is Map ? item['title'] ?? item['task'] ?? item : item}',
+          )
           .join('\n');
       if (insights.isNotEmpty) {
         buffer.write('\n\n分析インサイト:\n$insights');
