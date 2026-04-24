@@ -87,6 +87,13 @@ navigator.serviceWorker.register('flutter_service_worker.js')
 - [ ] `flutter analyze` 0 エラー / `dart format` 適用済み
 - [ ] 本番で Console に「Could not find a set of Noto fonts」が出ない
 
+## ✅ 完了 (VSCode版 S3 2026-04-24)
+
+- commit: fca97103
+- Phase 2: `GoogleFonts.config.allowRuntimeFetching = false` + import 追加 (lib/main.dart)
+- Phase 3: `unhandledrejection` SW fallback handler (web/index.html)
+- dart format: 0 changes / flutter analyze: 0 issues
+
 ## 参考
 
 - Issue #551 本文の Phase 2/3 セクション

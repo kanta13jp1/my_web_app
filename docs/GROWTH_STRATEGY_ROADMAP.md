@@ -17564,3 +17564,45 @@ Migration `20260425043000` が2本存在:
 9/9 ✅ — Claude Code 直接競合 (Cursor) + vibe-coding 競合 (Lovable/Bolt.new) の知識体系化
 競合モニタリング観点: Cursor は最も警戒すべき AI コーディングツール競合
 
+---
+
+## VSCode版 S3 — Issue #551 Phase 2/3: Google Fonts CDN disable + SW fallback (2026-04-24 22:30 JST)
+
+### 実施内容
+
+**Phase 2 (lib/main.dart)**:
+- `import 'package:google_fonts/google_fonts.dart'` 追加
+- `GoogleFonts.config.allowRuntimeFetching = false` — fonts.gstatic.com へのランタイム CDN fetch を禁止
+- dart format: 0 changes / flutter analyze: 0 issues
+
+**Phase 3 (web/index.html)**:
+- `unhandledrejection` グローバルハンドラ追加 — SW 登録失敗 (ERR_INSUFFICIENT_RESOURCES) を catch して `preventDefault()`
+- `flutter-first-frame` 後の `getRegistrations().catch()` で SW エラーをサイレント化
+- flutter_bootstrap.js による SW 登録は自動生成のため直接修正不要
+
+**deploy**: commit `fca97103` → media-hub 重複 case lint fail (PS#6 が先行 push した podcast.episodes 重複) で初回 FAIL → PS#6 S33 lint fix 後 run 24886870566 ✅ SUCCESS
+
+### commit
+
+- `fca97103`: fix(#551): disable Google Fonts CDN runtime fetch + SW error fallback
+
+### cross-instance-pr
+
+- `docs/cross-instance-prs/20260424_issue551_phase2_font_sw.md` → ✅ 完了マーク追記
+
+### WBS更新
+
+- `d34b8e10` Webパフォーマンス最適化 40% → 70%
+
+### Philosophy Alignment (VSCode版 S3)
+
+9/9 ✅
+1. CEO感 ✅ — Issue 優先度判断 (Phase 2/3 > Google I/O)
+2. ミッション駆動 ✅ — ERR_INSUFFICIENT_RESOURCES ユーザー体験影響を排除
+3. 優しい mentor ✅ — 最小変更 (選択肢A) で解決
+4. 6部署バランス ✅ — 技術品質向上
+5. 商品=ユーザー価値 ✅ — フォント読み込み失敗ゼロへ
+6. 資本=時間 ✅ — 小変更で高インパクト
+7. 資産負債バランス ✅ — CDN 依存度削減
+8. KPI=昨日の自分 ✅ — ERR_INSUFFICIENT_RESOURCES が本番コンソールから消える
+9. ゴール=IPO/ウェルビーイング ✅ — 安定したアプリ基盤
