@@ -17469,3 +17469,25 @@ Migration `20260425043000` が2本存在:
 
 9/9 ✅ — hub.pattern 安定 / broken pages 修正継続 / UX downgrade 許容
 >>>>>>> Stashed changes
+
+## PS#3 Session42 — 2026-04-24 (AI大学 178→180社化)
+
+| Provider | ID | 評価 | カテゴリ | 特徴 |
+|---|---|---|---|---|
+| Haystack (deepset) | haystack | 8/9 | RAG/LLMアプリFW | OSS / Component DAG / 17k+ Stars / v2刷新 / deepset Cloud |
+| ZenML | zenml | 7/9 | MLOpsパイプライン | @step/@pipeline / Stack抽象化 / 50+ integrations / ZenML Pro |
+
+- commit: b9237729
+- migrations: 20260424273000 (haystack) / 20260424274500 (zenml)
+- 次候補: Ragas / Weights & Biases (W&B) / Langfuse v2 / OpenAI Swarm / SmolAI
+
+### Philosophy 9原則チェック (S42)
+1. ユーザー価値最優先 ✅ — RAG実装 + MLOps空白を埋める
+2. シンプル・透明 ✅ — SQL 3レコード×2 / registry 2エントリ
+3. 段階的・検証駆動 ✅ — 評価スコア基準で選定
+4. 持続可能 ✅ — dart format 0 changes / clean push
+5. 学習・改善 ✅ — HaystackのComponent DAG設計把握
+6. 協調・共有 ✅ — COMPRESSED_PROMPT_V3 Session42更新
+7. 倫理・責任 ✅ — OSS正確記述 / deepset社情報正確
+8. 技術卓越 ✅ — DAGパイプライン / Stack抽象化の本質を正確に記述
+9. 長期思考 ✅ — アプリ層(Haystack) + インフラ層(ZenML) 軸補完
