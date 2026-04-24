@@ -1866,6 +1866,186 @@ function buildRlhfSnapshot(
   };
 }
 
+type DailyJudgmentQualityCriterion = {
+  id: string;
+  label: string;
+  score: number;
+  weight: number;
+  reason: string;
+};
+
+type DailyJudgmentQualityEvaluation = {
+  method: string;
+  threshold: number;
+  overall_score: number;
+  passed: boolean;
+  quality_gate: string;
+  criteria: DailyJudgmentQualityCriterion[];
+  improvement_actions: string[];
+  monitoring_cadence: string;
+  scale_pattern: Record<string, unknown>;
+};
+
+function clampPercent(value: number): number {
+  if (!Number.isFinite(value)) return 0;
+  return Math.max(0, Math.min(100, Math.round(value)));
+}
+
+function textLengthScore(text: string, minGood: number, maxGood: number): number {
+  const length = text.trim().length;
+  if (length <= 0) return 20;
+  if (length >= minGood && length <= maxGood) return 100;
+  if (length < minGood) return clampPercent(45 + (length / minGood) * 45);
+  const overflowRatio = Math.min((length - maxGood) / maxGood, 1);
+  return clampPercent(100 - overflowRatio * 35);
+}
+
+function keywordScore(text: string, keywords: string[], base = 45): number {
+  const normalized = text.toLowerCase();
+  const hits = keywords.filter((keyword) =>
+    normalized.includes(keyword.toLowerCase())
+  ).length;
+  return clampPercent(base + hits * Math.floor((100 - base) / Math.max(1, keywords.length)));
+}
+
+function normalizeDailyJudgmentPayload(
+  parsed: Record<string, unknown> | null,
+  rawText: string,
+): Record<string, unknown> {
+  if (parsed) {
+    const score = clampPercent(asNumber(parsed.score, 0));
+    return {
+      score,
+      judgment: asString(parsed.judgment) ||
+        (score >= 75 ? "良好" : score >= 50 ? "注意" : "警戒"),
+      advice: asString(parsed.advice) || rawText.slice(0, 600),
+      focus_area: asString(parsed.focus_area) || asString(parsed.focusArea) ||
+        "今日の最重要行動",
+      kgi: parsed.kgi ?? "今日の意思決定品質を上げる",
+      csf: Array.isArray(parsed.csf) ? parsed.csf : [
+        "浪費を減らす",
+        "最重要タスクに集中する",
+      ],
+      kpi: parsed.kpi ?? {
+        focus_minutes: 90,
+        waste_interruptions: 0,
+        review_count: 1,
+      },
+    };
+  }
+  return {
+    score: 50,
+    judgment: "要確認",
+    advice: rawText.slice(0, 1000),
+    focus_area: "今日の最重要行動",
+    kgi: "今日の意思決定品質を上げる",
+    csf: ["浪費を減らす", "最重要タスクに集中する"],
+    kpi: {
+      focus_minutes: 90,
+      waste_interruptions: 0,
+      review_count: 1,
+    },
+  };
+}
+
+function buildDailyJudgmentQualityEvaluation(
+  judgment: Record<string, unknown>,
+): DailyJudgmentQualityEvaluation {
+  const advice = asString(judgment.advice);
+  const focusArea = asString(judgment.focus_area ?? judgment.focusArea);
+  const kgiText = asString(judgment.kgi);
+  const csfText = JSON.stringify(judgment.csf ?? "");
+  const kpiText = JSON.stringify(judgment.kpi ?? "");
+  const combined = [advice, focusArea, kgiText, csfText, kpiText].join("\n");
+
+  const criteria: DailyJudgmentQualityCriterion[] = [
+    {
+      id: "kgi_csf_kpi_alignment",
+      label: "KGI/CSF/KPI alignment",
+      score: keywordScore(
+        combined,
+        ["kgi", "csf", "kpi", "目標", "成功要因", "数値", "レビュー"],
+        35,
+      ),
+      weight: 30,
+      reason: "Checks whether the answer has a measurable goal structure.",
+    },
+    {
+      id: "actionability",
+      label: "Actionability",
+      score: clampPercent(
+        (textLengthScore(advice, 80, 700) +
+          keywordScore(
+            advice,
+            ["今日", "次", "やる", "減らす", "集中", "記録", "確認"],
+            35,
+          )) / 2,
+      ),
+      weight: 30,
+      reason: "Checks whether the advice can be executed today.",
+    },
+    {
+      id: "context_grounding",
+      label: "Context grounding",
+      score: clampPercent(
+        (focusArea ? 25 : 0) +
+          (asNumber(judgment.score, -1) >= 0 ? 25 : 0) +
+          (advice.length > 0 ? 20 : 0) +
+          (kgiText || csfText !== "\"\"" || kpiText !== "\"\"" ? 30 : 0),
+      ),
+      weight: 25,
+      reason: "Checks whether score, focus, and decision context are present.",
+    },
+    {
+      id: "clarity",
+      label: "Clarity",
+      score: textLengthScore(combined, 120, 1200),
+      weight: 15,
+      reason: "Checks whether the response is concise enough to review.",
+    },
+  ];
+
+  const totalWeight = criteria.reduce((sum, item) => sum + item.weight, 0);
+  const overall = clampPercent(
+    criteria.reduce((sum, item) => sum + item.score * item.weight, 0) /
+      totalWeight,
+  );
+  const threshold = 80;
+  const improvementActions = criteria
+    .filter((item) => item.score < threshold)
+    .map((item) => {
+      if (item.id === "kgi_csf_kpi_alignment") {
+        return "Add explicit KGI, CSF, and numeric KPI before relying on the judgment.";
+      }
+      if (item.id === "actionability") {
+        return "Rewrite the advice as one concrete next action for today.";
+      }
+      if (item.id === "context_grounding") {
+        return "Attach score, focus area, and decision context for auditability.";
+      }
+      return "Shorten the answer and remove vague phrasing.";
+    });
+
+  return {
+    method: "scale_evaluation_pattern_v1",
+    threshold,
+    overall_score: overall,
+    passed: overall >= threshold,
+    quality_gate: overall >= threshold ? "approved" : "needs_review",
+    criteria,
+    improvement_actions: improvementActions.length > 0
+      ? improvementActions
+      : ["Monitor outcome and feed the result into the next daily review."],
+    monitoring_cadence: "daily",
+    scale_pattern: {
+      evaluator: "automatic_rubric",
+      dimensions: criteria.map((item) => item.id),
+      pass_rule: `overall_score >= ${threshold}`,
+      feedback_loop: "save evaluation snapshots and review failures weekly",
+    },
+  };
+}
+
 async function _deleteItem(
   admin: SupabaseClient,
   source: string,
@@ -2238,6 +2418,42 @@ serve(async (req: Request) => {
 
     switch (action) {
       case "judgment.get": {
+        const geminiKey = Deno.env.get("GEMINI_API_KEY") ?? "";
+        if (!geminiKey) {
+          return json({ error: "GEMINI_API_KEY not configured" }, 503);
+        }
+        const today = new Date().toLocaleDateString("ja-JP");
+        const prompt = [
+          `今日は${today}です。`,
+          "自分株式会社のCEOとして、今日の意思決定を日本語で判定してください。",
+          "浪費を減らし、時間・お金・健康・体力・知能・集中力を守ることを最重要にしてください。",
+          "必ずJSONのみで返してください。",
+          '{"score":0-100,"judgment":"良好/注意/警戒","advice":"今日やるべき1-3個の具体行動","focus_area":"最優先領域","kgi":"今日のKGI","csf":["CSF1","CSF2"],"kpi":{"focus_minutes":90,"waste_interruptions":0,"review_count":1}}',
+        ].join("\n");
+        const text = await callGemini(prompt, geminiKey);
+        const parsed = extractJsonObject(text);
+        const payload = normalizeDailyJudgmentPayload(parsed, text);
+        const qualityEvaluation = buildDailyJudgmentQualityEvaluation(payload);
+        if (userId) {
+          try {
+            await addItem(admin, "daily_judgment_quality_evaluation", userId, {
+              judgment: payload,
+              quality_evaluation: qualityEvaluation,
+              evaluated_at: new Date().toISOString(),
+            });
+          } catch (error) {
+            console.warn("judgment.get evaluation save failed", error);
+          }
+        }
+        return json({
+          success: true,
+          ...payload,
+          raw_text: text,
+          quality_evaluation: qualityEvaluation,
+        });
+      }
+
+      case "judgment.get.legacy": {
         const geminiKey = Deno.env.get("GEMINI_API_KEY") ?? "";
         if (!geminiKey) {
           return json({ error: "GEMINI_API_KEY not configured" }, 503);

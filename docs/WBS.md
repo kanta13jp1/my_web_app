@@ -379,3 +379,7 @@ WHERE title = 'ai-hub provider.chat 蜈ｨ蟇ｾ蠢・;
 - 対応内容: AI大学の各プロバイダー画面に `RLHF quality loop` を追加し、ユーザーの `Useful / Needs fix` 反応を preference signal として保存、教材品質スコア・平均評価・ファインチューニング準備状況・次アクションを表示できるようにした。
 - 実装補足: `ai-hub` に `university.rlhf_signal` / `university.rlhf_snapshot` を追加し、`hub_data` の `ai_university_rlhf_signal` をScale風の学習データ品質セットとして集計する。閉じ済みIssue #654/#652 もWBSへ完了同期した。
 - WBS DB反映: migration `20260425063000_wbs_codex_ai_university_rlhf_feedback.sql`
+- 実担当タスク: `[追加要望] daily-judgment EF → Scale Evaluationパターンで回答品質を自動スコアリング可能`
+- 対応内容: `ai-hub judgment.get` の生成結果を KGI / CSF / KPI 付きの構造に正規化し、KGI整合・実行可能性・文脈根拠・明瞭性をScale Evaluation風の品質ゲートで自動採点するようにした。
+- 実装補足: ログイン済みユーザーは `daily_judgment_quality_evaluation` として品質スナップショットを保存し、Daily Judgment UIでは総合スコア、しきい値、評価軸、改善アクションを確認できる。
+- WBS DB反映: migration `20260425100000_wbs_codex_daily_judgment_scale_eval_start.sql`, `20260425101500_wbs_codex_daily_judgment_scale_eval_done.sql`

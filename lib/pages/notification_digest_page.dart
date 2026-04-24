@@ -51,7 +51,7 @@ class _NotificationDigestPageState extends State<NotificationDigestPage> {
         body: {
           'action': 'notification.create',
           'title': 'ダイジェスト送信',
-          'type': 'digest'
+          'type': 'digest',
         },
       );
       await _fetchDigest();

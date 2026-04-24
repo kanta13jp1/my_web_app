@@ -56,16 +56,6 @@ class _SitemapAnalyticsPageState extends State<SitemapAnalyticsPage>
     }
   }
 
-  List<Map<String, dynamic>> _toList(dynamic data, String key) {
-    if (data is Map<String, dynamic>) {
-      final list = data[key];
-      if (list is List) {
-        return list.map((e) => e as Map<String, dynamic>).toList();
-      }
-    }
-    return [];
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
