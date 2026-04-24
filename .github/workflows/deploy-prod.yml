@@ -117,6 +117,8 @@ jobs:
           supabase migration repair --status reverted 20260424241500 2>/dev/null || true
           supabase migration repair --status reverted 20260424242000 2>/dev/null || true
           supabase migration repair --status reverted 20260424243500 2>/dev/null || true
+          supabase migration repair --status reverted 20260424244000 2>/dev/null || true
+          supabase migration repair --status reverted 20260424245500 2>/dev/null || true
           supabase migration repair --status reverted 20260425001000 2>/dev/null || true
           supabase migration repair --status reverted 20260425003000 2>/dev/null || true
           supabase migration repair --status reverted 20260425013000 2>/dev/null || true
