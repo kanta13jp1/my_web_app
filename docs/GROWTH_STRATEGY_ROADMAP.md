@@ -17178,3 +17178,29 @@ supabase migration repair --status reverted 20260424241500 2>/dev/null || true
 7. ✅ 個人最適 — 開発者生産性・品質保証
 8. ✅ 学習 — ワークフロー自動化 × LLM評価の相互補完理解
 9. ✅ 開放 — Apache 2.0 OSS / ローカル実行保証
+
+---
+
+## PS#4 S38 — AI大学 174→176社化 Anthropic + Google (2026-04-24 16:30 JST)
+
+### 実施内容
+
+**AI大学 Anthropic + Google 追加**:
+
+| provider | migration | 内容 |
+|---|---|---|
+| `anthropic` | `20260425041500` | Constitutional AI / RSP / Claude 4.x (Haiku 4.5 / Sonnet 4.6 / Opus 4.7) / Extended Thinking |
+| `google` | `20260425043000` | Google DeepMind / Gemini 2.5 Pro (1M ctx / Thinking) / NotebookLM / Gemma 3 OSS |
+
+**Step 0 評価**:
+- Anthropic: 9/9 (AI安全性リーダー / Constitutional AI / $7.3B / Claude 4 / Amazon統合)
+- Google: 9/9 (Alphabet $2T / DeepMind統合 / Gemini 2.5 1M ctx / NotebookLM / TPU独占)
+
+**特記事項**:
+- Anthropic = このプロジェクト本番採用 (claude-sonnet-4-6 + claude-opus-4-7) — 自己紹介的 seed
+- Google Gemini 2.5 Flash = このプロジェクト本番採用 (Casper 役) — 同上
+- NotebookLM Deep Research = このプロジェクトのリサーチワークフローで実活用中
+
+### Philosophy Alignment (PS#4 S38)
+
+9/9 ✅ — AI大学コアプロバイダー (Anthropic/Google) を網羅 / 実プロジェクト採用事実を正直に記述
