@@ -17421,6 +17421,7 @@ Migration `20260425043000` が2本存在:
 
 7/9 ✅ — deploy緑化で5(商品=ユーザー価値)・6(資本=時間)維持。#551完全解消でユーザーフォント欠落問題を根絶。
 
+<<<<<<< Updated upstream
 ## PS#3 Session41 — 2026-04-24 (AI大学 176→178社化)
 
 | Provider | ID | 評価 | カテゴリ | 特徴 |
@@ -17442,3 +17443,29 @@ Migration `20260425043000` が2本存在:
 7. 倫理・責任 ✅ — OSS / Microsoft Research 正確記述
 8. 技術卓越 ✅ — Actor Model / Memory/RAG アーキテクチャ正確
 9. 長期思考 ✅ — エコシステム多様性 (評価 / オーケストレーション / 汎用framework)
+=======
+## PS#6 S34 — EF hub migration 5本 (media-hub拡張) (2026-04-24 20:30 JST)
+
+### 実施内容 (S34)
+
+**EF hub migration #5-8** (81→77):
+- `audio-effects-processor` → `media-hub:audio.catalog` (static 13 effects)
+- `screen-recorder` → `media-hub:recording.list + screenshot.list/save` (新 action追加)
+- `podcast-manager` → `media-hub:podcast.episodes/channels/channel.add/episode.save` (新 4 action)
+- `music-playlist-manager` → `media-hub:playlist.list/tracks/create/add_track` (tracks + normalization)
+
+**修正パターン**:
+- GET queryParams → POST body 変換 (4件: screen-recorder/podcast/music)
+- EF が `channels` view を持たない broken page 修正 (podcast: channels→hub_data)
+- playlist.add_track: playlistId/playlist_id 両方受け付け + title/artist フラット化
+
+**deploy chain**:
+- focus-timer run (24886145511) 約35分で SUCCESS ✅
+- EF deploy = ~30s/EF × 80 EFs → 40分 (通常範囲)
+
+### EF count: 85→77 (セッション累計 -8)
+
+### Philosophy Alignment (PS#6 S34)
+
+9/9 ✅ — hub.pattern 安定 / broken pages 修正継続 / UX downgrade 許容
+>>>>>>> Stashed changes
