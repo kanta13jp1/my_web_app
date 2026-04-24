@@ -17093,3 +17093,31 @@ supabase migration repair --status reverted 20260424241500 2>/dev/null || true
 1. CEO感 ✅ / 2. ミッション駆動 ✅ / 3. 優しいmentor ✅ / 4. 6部署バランス ✅
 5. 商品=ユーザー価値 ✅ / 6. 資本=時間 ✅ / 7. 資産負債 ✅
 8. KPI=昨日の自分 ✅ / 9. ゴール=IPO ✅ — 9/9 ✅ (orphan 解消・mobile/web UX fixes 本番反映)
+
+## PS版#6 Session 31 — 2026-04-24 (EF count 85→50 cross-instance-pr + deploy 緑化確認)
+
+**担当インスタンス**: PowerShell版 #6
+**commits**: `0301e4aa` (cross-instance-pr) → `513095b7` (ROADMAP)
+
+### 実施内容
+
+1. **deploy 緑化確認** — run `24874274658` SUCCESS ✅ (Lint/Format/Test + Security + Deploy 全ステップ green)
+   - commit `d758910d` (S30 health_check fix) はキャンセル → 後続 `c638b9c0` (dart format) で取り込み完了
+   - admin-hub:health.check 強化版が本番反映済
+
+2. **EF count 85→50 cross-instance-pr 作成** — `docs/cross-instance-prs/20260424_ef_count_architectural_reduction.md`
+   - 現状: 85 EF source dirs (cap 50 → +35 超過)
+   - 重要発見: 全 85 EF は Flutter から実際に invoke されており dead EF 0
+   - 削減計画: enterprise-hub (-15) + lifestyle-hub (-10) + media-hub (-7) + tools-hub (-5) + social-commerce-hub (-4) = **41本で 85→44** (cap 達成)
+   - Win版へ判断依頼: enterprise-hub 分割 (A案) vs 単一hub継続 (B案)
+
+3. **horse-racing-update.yml**: 5 連続 SUCCESS 継続確認 — Phase A fix (4a92d64d) 安定稼働
+
+### 所見
+- health-check standalone EF は **実在** (index.ts 有り) — GHA infra-health-check 専用 (SERVICE_ROLE_KEY auth)
+- Flutter UI は admin-hub:health.check を使う設計が正しい (anon key 認証非対応)
+- EF cap 超過は PS#5/PS#6 hub migration で段階解消中
+
+### Philosophy Alignment
+1. CEO感 ✅ / 2. ミッション駆動 ✅ / 3. 優しいmentor ✅
+7. 資産負債 ✅ (hub pattern = 資産・standalone 乱立 = 負債) / 9. ゴール=IPO ✅
