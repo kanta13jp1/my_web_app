@@ -40,7 +40,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
         with:
           fetch-depth: 10
           token: ${{ secrets.BYPASS_RULES || github.token }}
@@ -314,13 +314,7 @@ except:
           # ── Fallback: スタティックテンプレート ─────────────────────────────
           if [ -z "$AI_REPORT" ] || [ ${#AI_REPORT} -le 100 ]; then
             USED_MODEL="static-template"
-            AI_REPORT="## AI生成スキップ (API未設定 or 全プロバイダー失敗)
-
-競合インテリジェンス生成には GEMINI_API_KEY または ANTHROPIC_API_KEY が必要です。
-
-## 可用性チェック結果のみ記録
-
-$(cat /tmp/avail_results.txt)"
+            AI_REPORT=$(printf '## AI生成スキップ (API未設定 or 全プロバイダー失敗)\n\n競合インテリジェンス生成には GEMINI_API_KEY または ANTHROPIC_API_KEY が必要です。\n\n## 可用性チェック結果のみ記録\n\n%s' "$(cat /tmp/avail_results.txt)")
           fi
 
           echo "used_model=$USED_MODEL" >> $GITHUB_OUTPUT

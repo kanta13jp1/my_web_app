@@ -17705,3 +17705,12 @@ Migration `20260425043000` が2本存在:
 7. 倫理・責任 ✅ — UC Berkeley OSS / 正確な技術記述
 8. 技術卓越 ✅ — Continuous Batching / LLM-as-judge アーキテクチャ正確記述
 9. 長期思考 ✅ — 推論層(vLLM) + 品質保証層(Ragas) でインフラスタック補完
+
+### Rule 17 WF health check (PS#1 S36 — 2026-04-24 22:50 JST)
+- 全 WF 集計: 1失敗 (competitor-monitoring.yml) / 他全 success
+- 失敗原因:
+  - `actions/checkout@v6` 非存在バージョン → `v4` に修正
+  - `run: |` ブロック内 0列インデント行 (日本語テキスト) → YAML block scalar 強制終了 → `printf` 1行化で修正
+- 重複 migration `20260425063000` 発見 (seed_release_notification_broadcast + wbs_codex_rlhf_feedback) → `064500` にリネーム
+- repair list: `20260425064500` 追加 (deploy-prod.yml)
+- orphan branches: 全カテゴリ 0本
