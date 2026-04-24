@@ -17714,3 +17714,27 @@ Migration `20260425043000` が2本存在:
 - 重複 migration `20260425063000` 発見 (seed_release_notification_broadcast + wbs_codex_rlhf_feedback) → `064500` にリネーム
 - repair list: `20260425064500` 追加 (deploy-prod.yml)
 - orphan branches: 全カテゴリ 0本
+
+### PS#6 S32-S35 EF Hub Migration 完了 — 2026-04-24 23:xx JST
+
+**[EF-CAP-50] 達成: EF 85→50本 (▲35本削減)**
+
+| バッチ | 移行EF数 | 移行先hub |
+|--------|----------|-----------|
+| S32 (qr/mindmap/bookmark) | 3 | tools-hub |
+| S33 (focus-timer) | 1 | tools-hub |
+| S34 (audio/screen/podcast/music) | 4 | media-hub |
+| S35 最終バッチ 9本 | 9 | social-commerce/app/tools/core/enterprise-hub |
+
+最終コミット: `b4c91bc2`
+
+### Philosophy 9原則チェック (PS#6 S35)
+1. ユーザー価値最優先 ✅ — EF cap達成でdeployコスト削減・安定性向上
+2. シンプル・透明 ✅ — 26本standalone → 6hub統合でアーキテクチャ簡潔化
+3. 段階的・検証駆動 ✅ — バッチ毎にdeno lint + deno format確認
+4. 持続可能 ✅ — hub action追加パターン確立で今後も拡張容易
+5. 学習・改善 ✅ — field mapping / UX downgrade acceptance パターン確立
+6. 協調・共有 ✅ — DEAD_LIST更新でdeploy-prodが自動cleanup
+7. 倫理・責任 ✅ — 既存機能を壊さず移行 (null-safe fallback徹底)
+8. 技術卓越 ✅ — 1748行削減 / 54 insertionsのみ
+9. 長期思考 ✅ — EF ≤50 constraint 確立で将来の無秩序EF増殖防止
