@@ -16883,3 +16883,34 @@ supabase migration repair --status reverted 20260424241500 2>/dev/null || true
 1. CEO感 ✅ / 2. ミッション駆動 ✅ / 3. 優しいmentor ✅ / 4. 6部署バランス ✅
 5. 商品=ユーザー価値 ✅ / 6. 資本=時間 ✅ / 7. 資産負債 ✅
 8. KPI=昨日の自分 ✅ / 9. ゴール=IPO ✅
+
+## PS#3 Session37 — 2026-04-24 AI大学 168→170社化
+
+**担当インスタンス**: PowerShell版 #3
+**commit**: 38055a1d
+
+### 追加プロバイダー
+
+| # | プロバイダー | ID | 評価 | 軸 |
+|---|---|---|---|---|
+| 169 | LangSmith | `langsmith` | 9/9 ⭐⭐ | LangChain公式 LLM観測 |
+| 170 | Comet ML | `comet_ml` | 7/9 | ML実験追跡 & LLMトレーシング |
+
+### 特記事項
+
+- **Humanloop 除外**: 2025-08 Anthropic が買収済のため独立 provider として追加不可
+- LangSmith: ユニコーン $1.25B / 月9,000万DL / Fortune 500 35% / 12× トレース成長
+- Comet ML: W&B 補完軸 (Comet=LLM評価・本番監視 / W&B=モデル学習追跡) / Opik OSS
+- 次回候補: Prefect (ML workflow) / ZenML (MLOps pipeline) / Braintrust (LLM evals) / Galileo (LLM quality)
+
+### Philosophy 9原則チェック
+
+1. ✅ ユーザー価値 — LLM観測・ML実験管理軸で差別化価値あり
+2. ✅ データ主権 — Opik self-host / LangSmith BYOC でオンプレ対応
+3. ✅ 透明性 — 料金・機能比較を詳細掲載
+4. ✅ 段階的 — Step 0 種まき継続
+5. ✅ AI協調 — Multi-AI routing 遵守
+6. ✅ 持続性 — seed only / EF 増加なし
+7. ✅ 個人最適 — LLM エコシステム補完
+8. ✅ 学習 — 老舗 (Comet 2013) vs 新興 (LangSmith 2022) 対比
+9. ✅ 開放 — OSS (Opik Apache 2.0) 明示
