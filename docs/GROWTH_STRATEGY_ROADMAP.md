@@ -16495,3 +16495,9 @@ anon key で wbs.add_task 不可 (service role 必要)。次回 Win版/PS#1 で�
 | 🔴 | Google I/O 2026 即日レポート | 5/19-20 |
 | 🟡 | Microsoft Build 2026 先回り準備 (Win版確認) | 5/30 |
 | 🟢 | Microsoft Build 2026 即日レポート | 6/2-3 |
+### 追記: 2026-04-26 JA → Qiita 事後 dispatch (09:10 JST)
+
+- **発見**: devto-only dispatch で draft_path も `published: true` 化 → schedule が skip → Qiita unposted
+- **修正**: `platforms="qiita"` で手動再 dispatch → run 24865284356 ✅ Qiita HTTP 200
+- **学び**: dev.to 単独 dispatch 時も draft_path (JA) が `published: true` になる → Qiita 投稿は同回か別回で明示必須
+- **推奨パターン**: `platforms="qiita,devto"` で両方同時 dispatch (Qiita rolling window OK 確認後)
