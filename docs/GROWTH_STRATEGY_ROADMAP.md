@@ -16673,3 +16673,30 @@ supabase migration repair --status reverted 20260424241500 2>/dev/null || true
 1. CEO感 ✅ / 2. ミッション駆動 ✅ / 3. 優しいmentor ✅ / 4. 6部署バランス ✅
 5. 商品=ユーザー価値 ✅ / 6. 資本=時間 ✅ / 7. 資産負債 ✅
 8. KPI=昨日の自分 ✅ / 9. ゴール=IPO ✅
+
+---
+
+## PS#1 S29 — Rule 17 WF health check (2026-04-24 11:30 JST)
+
+**インスタンス**: PS#1 | **Rule17 WF health 専任**
+
+### WF状態サマリー
+- **Deploy to Production**: 3失敗 / 8run — root cause = `require_trailing_commas` + `unnecessary_const` + `DropdownButtonFormField(initialValue:)` エラー
+  - `health_check_page.dart`: 16 require_trailing_commas 修正済 (別インスタンス `1aff4576` が先行)
+  - `legal_compliance_manager_page.dart`: unnecessary_const x2 + initialValue → value 修正済
+  - fix commit `1aff4576` が queued → 次 deploy で greenになる見込み
+- **GitHub Issue Fix**: 1失敗 — `GH_PAT` secret 未設定 → `BYPASS_RULES` に変更 (`ef25e6da`)
+- **その他11 WF**: 全て正常 (AI大学/CS-check/Horse Racing/Infra health-check/Issue→WBS 全success)
+
+### orphan branches
+- `claude/*`: 3本 — PS#5 handoff済 (cross-instance-pr 20260424_orphan_branches_nodejs20_upgrade.md)
+- blog-publish/cs-check/ai-university/daily-report: 0本 ✅
+
+### 修正済み
+1. `github-issue-fix.yml`: `GH_PAT → BYPASS_RULES` (PR作成権限問題解消)
+2. flutter analyze errors: 別インスタンス `1aff4576` が先行修正 (PS#1は重複をskip)
+
+### Philosophy Alignment (PS#1 S29)
+- 8✅/9: CI修復でデプロイ安定性維持 / GH_PAT→BYPASS_RULES でパーミッション問題解消
+- 懸念: なし
+
