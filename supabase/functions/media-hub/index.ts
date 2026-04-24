@@ -219,7 +219,14 @@ serve(async (req) => {
         });
         return json({ success: true, photo: item });
       }
-      case "gallery.list_photos": return json({ success: true, photos: await listItems(admin, "photo", userId) });
+      case "gallery.list_photos": {
+        const allPhotos = await listItems(admin, "photo", userId, 200);
+        const albumId = String(body.album_id ?? body.albumId ?? "");
+        const photos = albumId
+          ? allPhotos.filter((p: Record<string, unknown>) => (p.metadata as Record<string, unknown>)?.album_id === albumId)
+          : allPhotos;
+        return json({ success: true, photos });
+      }
 
       // ── Podcast Manager ──────────────────────────────────────────────────────
       case "podcast.list": return json({ success: true, podcasts: await listItems(admin, "podcast", userId) });

@@ -34,8 +34,8 @@ class _PhotoGalleryManagerPageState extends State<PhotoGalleryManagerPage> {
     });
     try {
       final res = await _supabase.functions.invoke(
-        'photo-gallery-manager',
-        queryParameters: {'view': 'albums'},
+        'media-hub',
+        body: {'action': 'gallery.list'},
       );
       final data = res.data;
       if (data is Map<String, dynamic>) {
@@ -56,8 +56,8 @@ class _PhotoGalleryManagerPageState extends State<PhotoGalleryManagerPage> {
   Future<void> _fetchPhotos(String albumId) async {
     try {
       final res = await _supabase.functions.invoke(
-        'photo-gallery-manager',
-        queryParameters: {'view': 'photos', 'albumId': albumId},
+        'media-hub',
+        body: {'action': 'gallery.list_photos', 'album_id': albumId},
       );
       final data = res.data;
       if (data is Map<String, dynamic>) {
