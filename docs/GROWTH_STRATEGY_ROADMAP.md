@@ -17385,3 +17385,38 @@ supabase migration repair --status reverted 20260424241500 2>/dev/null || true
 ### Philosophy Alignment (PS#4 S39)
 
 9/9 ✅ — 競合最大勢力 (企業向け AI) の知識体系化 / MS Build 2026 モニタリング候補追加
+
+---
+
+## PS#5 S42 — 2026-04-24 (on-call バグ修正)
+
+**インスタンス**: PowerShell版#5 (on-call バグ修正)
+
+### 実施内容
+
+| タスク | commit / 結果 |
+|------|------|
+| Migration タイムスタンプ重複修正 | c8951280 (repair list 拡張) |
+| deploy-prod.yml repair list 20260425030000-050000 追加 | c8951280 |
+| #691/#692 CI失敗 Issue クローズ | ✅ root cause: 重複 043000 |
+| #551 Phase 2/3 完了確認 + クローズ | ✅ fca97103 (VSCode版実装) |
+| Deploy 緑化確認 | ✅ 24886145511 success |
+
+### 根本原因と修正
+
+Migration `20260425043000` が2本存在:
+- `seed_google_ai_university` (PS#4 S38)
+- `wbs_codex_manus_like_multistep` (Manus autopilot)
+
+並行インスタンスが同タイムスタンプで push → SQLSTATE 23505。
+修正: manus→044500 (9dff1a9a) + google→051500 (a62a0b45) + repair list拡張 (c8951280)。
+
+### 教訓
+
+- esm.sh 522: transient, 次run自動回復 ✅
+- 重複タイムスタンプ: 同日複数インスタンスは `feedback_correction_20260424_duplicate_migration_version.md` の5分間隔ルールを再確認
+- cancel-in-progress: false でも queued (未実行) jobは新push到来で cancel される
+
+### Philosophy Alignment (PS#5 S42)
+
+7/9 ✅ — deploy緑化で5(商品=ユーザー価値)・6(資本=時間)維持。#551完全解消でユーザーフォント欠落問題を根絶。
