@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// マインドマップ・ダイアグラムページ
-/// mindmap-diagram Edge Function と連携してマインドマップを管理
+/// tools-hub:mindmap.* actions でマインドマップを管理
 class MindmapDiagramPage extends StatefulWidget {
   const MindmapDiagramPage({super.key});
 
@@ -29,14 +29,13 @@ class _MindmapDiagramPageState extends State<MindmapDiagramPage> {
     });
     try {
       final response = await _supabase.functions.invoke(
-        'mindmap-diagram',
-        body: {'action': 'list'},
+        'tools-hub',
+        body: {'action': 'mindmap.list'},
       );
       final data = response.data;
-      if (data is Map<String, dynamic> && data['diagrams'] is List) {
+      if (data is Map<String, dynamic> && data['maps'] is List) {
         setState(
-          () => _diagrams =
-              (data['diagrams'] as List).cast<Map<String, dynamic>>(),
+          () => _diagrams = (data['maps'] as List).cast<Map<String, dynamic>>(),
         );
       } else if (data is List) {
         setState(() => _diagrams = data.cast<Map<String, dynamic>>());
