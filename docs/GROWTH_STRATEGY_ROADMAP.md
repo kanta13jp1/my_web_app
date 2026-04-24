@@ -16718,3 +16718,36 @@ supabase migration repair --status reverted 20260424241500 2>/dev/null || true
 
 ### Philosophy Alignment
 1-9 ✅ (自動化で再発防止 / 最小変更で最大効果)
+
+---
+
+## PS版#3 Session 35 — 2026-04-24 (AI大学 164→166社化)
+
+### 追加プロバイダー
+
+#### RunPod (runpod) — 格安 GPU クラウドマーケットプレイス
+- **概要**: 2022年創業 / 世界データセンターGPU在庫を集約 / 業界最安水準
+- **価格**: RTX 3090 $0.19/h / A100 80GB $0.89/h / AWS比60〜80%安
+- **Serverless**: 秒課金 / 48% コールドスタート 200ms 以下 / 30+ GPU SKU / 8+ リージョン
+- **評価**: 7.5/9 (RTX3090 $0.19 業界最安 / Serverless 200ms / 30+ GPU SKU)
+- **migration**: 20260424250000
+
+#### Scale AI (scale_ai) — データラベリング → Enterprise AI プラットフォーム
+- **概要**: Alexandr Wang 創業 (2016 / 当時19歳) / RLHF データのデファクト供給者
+- **資金**: Series F $1B / 評価額 $13.8B / 年間売上 $1B+ (2024)
+- **主力**: Scale Data Engine (RLHF/ラベリング) / Scale Donovan (DoD GAIA-1) / SEAL Leaderboard
+- **顧客**: OpenAI / Meta / Microsoft / DoD / US Army
+- **評価**: 8.5/9 (OpenAI/Meta/DoD顧客 / $13.8B / $1B+ 売上 / RLHF標準)
+- **migration**: 20260424251500
+
+### 判断ログ
+- Groq は registry 既登録 → RunPod に変更
+- Lepton AI は Nvidia 買収済み → Scale AI に変更
+
+### commit: 503429dd
+
+### Philosophy Alignment
+
+1. CEO感 ✅ / 2. ミッション駆動 ✅ / 3. 優しいmentor ✅ / 4. 6部署バランス ✅
+5. 商品=ユーザー価値 ✅ / 6. 資本=時間 ✅ / 7. 資産負債 ✅
+8. KPI=昨日の自分 ✅ / 9. ゴール=IPO ✅
