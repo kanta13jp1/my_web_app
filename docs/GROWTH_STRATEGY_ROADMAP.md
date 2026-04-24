@@ -17656,3 +17656,29 @@ Migration `20260425043000` が2本存在:
 - 原則 6 (資本=時間): MEMORY.md 肥大化解消でコンテキスト読み込みコスト削減
 - 原則 7 (資産負債): 陳腐化 memory = 負債 → cleanup = 負債解消
 - 原則 8 (KPI=昨日の自分): repair list 鮮度向上
+
+---
+
+## PS#4 S41 — 競合モニタリング自動化 GHA workflow 新設 (2026-04-24 22:00 JST)
+
+### 実施内容
+
+**`competitor-monitoring.yml` 新設** — WBS `競合21社モニタリング自動化` 70%→100%:
+
+| 機能 | 内容 |
+|---|---|
+| スケジュール | 毎日 07:00 JST (UTC 22:00) |
+| 可用性チェック | 21社全社 HTTP status チェック |
+| AI生成 | Gemini 1.5 Flash (primary) → Claude Sonnet (fallback) → static template |
+| イベントカレンダー | 5/4 Notion課金 / 5/19 Google I/O / 6/2 MS Build 自動検出 |
+| 手動保護 | `<!-- generated-by: github-actions -->` タグなし = 手動レポート保護 |
+| 出力先 | `docs/competitor-reports/YYYY-MM-DD.md` 自動 commit |
+
+**コスト設計**:
+- Gemini 1.5 Flash (無料枠) を primary → Claude API 消費 ≈ 0
+- 特記イベント発生日のみ重点分析セクション追加
+
+### Philosophy Alignment (PS#4 S41)
+
+9/9 ✅ — 手動 PS#4 作業を自動化 / 資本=時間を節約 / 競合追跡の持続可能性
+

@@ -1,0 +1,463 @@
+name: Competitor Monitoring (競合インテリジェンスレポート)
+
+# PS版#4 担当: 競合21社の戦略インテリジェンスを毎日自動生成
+# daily-report.yml の可用性チェックを補完する「戦略分析」レイヤー
+# Primary AI: Gemini 1.5 Flash (無料枠) / Fallback: Claude Sonnet
+
+on:
+  schedule:
+    - cron: "0 22 * * *"  # 毎日 07:00 JST (UTC 22:00)
+  workflow_dispatch:
+    inputs:
+      focus_competitor:
+        description: '重点競合 (例: notion, slack, openai) — 省略時は全社'
+        required: false
+        default: ''
+      event_override:
+        description: '特定イベント (例: google-io-2026, ms-build-2026)'
+        required: false
+        default: ''
+
+concurrency:
+  group: competitor-monitoring
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  generate-report:
+    name: Competitor Intelligence Report
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    env:
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      BYPASS_TOKEN: ${{ secrets.BYPASS_RULES }}
+      SUPABASE_URL: https://smmkxxavexumewbfaqpy.supabase.co
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 10
+          token: ${{ secrets.BYPASS_RULES || github.token }}
+
+      # ── Step 1: 日付・イベントカレンダー判定 ─────────────────────────────
+      - name: Step 1 - 日付 + 特記イベント検出
+        id: calendar
+        run: |
+          TODAY=$(TZ=Asia/Tokyo date +'%Y-%m-%d')
+          MONTH=$(TZ=Asia/Tokyo date +'%m')
+          DAY=$(TZ=Asia/Tokyo date +'%d')
+          echo "today=$TODAY" >> $GITHUB_OUTPUT
+
+          # 特記イベントカレンダー (PS#4 競合モニタリング対象)
+          SPECIAL_EVENT=""
+          EVENT_DESC=""
+
+          case "$TODAY" in
+            "2026-05-04"|"2026-05-05"|"2026-05-06"|"2026-05-07"|"2026-05-08")
+              SPECIAL_EVENT="notion-billing-start"
+              EVENT_DESC="Notion AI Agent credit課金 開始 (5/4〜) — SNS反応・ユーザー離脱モニタリング"
+              ;;
+            "2026-05-19"|"2026-05-20"|"2026-05-21")
+              SPECIAL_EVENT="google-io-2026"
+              EVENT_DESC="Google I/O 2026 — Gemini 3.x発表予定 / NotebookLM新機能 / Android AI"
+              ;;
+            "2026-06-02"|"2026-06-03"|"2026-06-04")
+              SPECIAL_EVENT="ms-build-2026"
+              EVENT_DESC="MS Build 2026 — Copilot Studio次世代 / Azure AI Foundry / Phi-5予定"
+              ;;
+            "2026-09-09"|"2026-09-10"|"2026-09-11")
+              SPECIAL_EVENT="apple-event-2026"
+              EVENT_DESC="Apple Event 2026 — iPhone 18 / Apple Intelligence v2"
+              ;;
+          esac
+
+          # 手動 override
+          if [ -n "${{ github.event.inputs.event_override }}" ]; then
+            SPECIAL_EVENT="${{ github.event.inputs.event_override }}"
+            EVENT_DESC="手動指定イベント: $SPECIAL_EVENT"
+          fi
+
+          echo "special_event=$SPECIAL_EVENT" >> $GITHUB_OUTPUT
+          echo "event_desc=$EVENT_DESC" >> $GITHUB_OUTPUT
+          echo "focus=${{ github.event.inputs.focus_competitor || '' }}" >> $GITHUB_OUTPUT
+
+          echo "📅 Today: $TODAY"
+          echo "🎯 Special event: ${SPECIAL_EVENT:-なし}"
+          if [ -n "$EVENT_DESC" ]; then
+            echo "📌 $EVENT_DESC"
+          fi
+
+      # ── Step 2: 前日レポート取得 (差分分析用) ──────────────────────────────
+      - name: Step 2 - 前日レポート取得
+        id: prev_report
+        run: |
+          YESTERDAY=$(TZ=Asia/Tokyo date -d 'yesterday' +'%Y-%m-%d' 2>/dev/null || \
+                      TZ=Asia/Tokyo date -v-1d +'%Y-%m-%d' 2>/dev/null || \
+                      python3 -c "from datetime import date, timedelta; print((date.today() - timedelta(1)).strftime('%Y-%m-%d'))")
+          PREV_FILE="docs/competitor-reports/${YESTERDAY}.md"
+
+          if [ -f "$PREV_FILE" ]; then
+            # 前日レポートの脅威サマリーセクションのみ抽出 (トークン節約)
+            python3 -c "
+import sys
+content = open('$PREV_FILE').read()
+# 脅威サマリーテーブルのみ抽出 (最大50行)
+lines = content.split('\n')
+in_table = False
+result = []
+for line in lines:
+    if '脅威サマリー' in line or 'threat' in line.lower():
+        in_table = True
+    if in_table:
+        result.append(line)
+        if len(result) > 50:
+            break
+print('\n'.join(result[:50]))
+" > /tmp/prev_summary.txt 2>/dev/null || echo "(前日サマリーなし)" > /tmp/prev_summary.txt
+            echo "prev_exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "(前日レポートなし)" > /tmp/prev_summary.txt
+            echo "prev_exists=false" >> $GITHUB_OUTPUT
+          fi
+          echo "yesterday=$YESTERDAY" >> $GITHUB_OUTPUT
+
+      # ── Step 3: 競合サイト可用性チェック (21社) ──────────────────────────
+      - name: Step 3 - 競合21社 可用性チェック
+        id: availability
+        run: |
+          > /tmp/avail_results.txt
+
+          check_site() {
+            local NAME="$1" URL="$2" TIER="$3"
+            local HTTP
+            HTTP=$(curl -s -o /dev/null -w "%{http_code}" \
+              -L --max-time 10 -A "Mozilla/5.0 (compatible)" "$URL" 2>/dev/null || echo "000")
+            local STATUS="✅"
+            if [ "$HTTP" != "200" ] && [ "$HTTP" != "301" ] && [ "$HTTP" != "302" ]; then
+              STATUS="⚠️"
+            fi
+            echo "| $NAME | $URL | HTTP $HTTP | $STATUS | $TIER |" >> /tmp/avail_results.txt
+          }
+
+          # 21社 (CLAUDE.md 競合リスト)
+          check_site "Notion"       "https://www.notion.so/"          "🔴"
+          check_site "Evernote"     "https://evernote.com/"           "🟠"
+          check_site "MoneyForward" "https://moneyforward.com/"       "🔴"
+          check_site "Slack"        "https://slack.com/"              "🔴"
+          check_site "Chatwork"     "https://go.chatwork.com/"        "🟠"
+          check_site "X/Twitter"    "https://x.com/"                  "🟠"
+          check_site "AnimaWorks"   "https://animaworks.com/"         "🟡"
+          check_site "Claude Code"  "https://claude.ai/code"          "🔴"
+          check_site "Codex"        "https://openai.com/codex"        "🔴"
+          check_site "netkeiba"     "https://www.netkeiba.com/"       "🟡"
+          check_site "OpenClaw"     "https://openclaw.ai/"            "🟡"
+          check_site "JobCan"       "https://jobcan.ne.jp/"           "🟡"
+          check_site "Amazon"       "https://www.amazon.co.jp/"       "🟠"
+          check_site "Google"       "https://www.google.com/"         "🔴"
+          check_site "Microsoft"    "https://www.microsoft.com/ja-jp/" "🔴"
+          check_site "Discord"      "https://discord.com/"            "🟠"
+          check_site "LINE"         "https://line.me/ja/"             "🔴"
+          check_site "Facebook"     "https://www.facebook.com/"       "🟡"
+          check_site "Liven"        "https://liven.app/"              "🟡"
+          check_site "GitHub"       "https://github.com/"             "🔴"
+
+          DOWN_COUNT=$(grep -c "⚠️" /tmp/avail_results.txt 2>/dev/null || echo 0)
+          echo "down_count=$DOWN_COUNT" >> $GITHUB_OUTPUT
+          echo "✅ 可用性チェック完了: ${DOWN_COUNT}社 要注意"
+          cat /tmp/avail_results.txt
+
+      # ── Step 4: AI で戦略インテリジェンスレポート生成 ─────────────────────
+      - name: Step 4 - AI 戦略インテリジェンス生成 (Gemini primary / Claude fallback)
+        id: ai_report
+        run: |
+          TODAY="${{ steps.calendar.outputs.today }}"
+          SPECIAL_EVENT="${{ steps.calendar.outputs.special_event }}"
+          EVENT_DESC="${{ steps.calendar.outputs.event_desc }}"
+          FOCUS="${{ steps.calendar.outputs.focus }}"
+          PREV_SUMMARY=$(cat /tmp/prev_summary.txt | head -c 2000)
+          AVAIL=$(cat /tmp/avail_results.txt | head -c 3000)
+
+          # 特記イベント時の重点セクション追加
+          EVENT_SECTION=""
+          if [ -n "$SPECIAL_EVENT" ]; then
+            EVENT_SECTION="
+
+## 🚨 特記イベント: $SPECIAL_EVENT
+**$EVENT_DESC**
+
+このイベントについて以下を分析してください:
+1. 自分株式会社への直接的な影響 (脅威/機会)
+2. 具体的な対応アクション (今週中/今月中)
+3. SNS投稿候補テキスト (差別化訴求)"
+          fi
+
+          REPORT_PROMPT="# 自分株式会社 競合インテリジェンスレポート ${TODAY}
+
+あなたは自分株式会社 (Flutter Web + Supabase AI統合ライフマネジメントアプリ) の競合モニタリング専門家です。
+
+## 自分株式会社について
+- 21競合 (Notion/Evernote/MoneyForward/Slack/ChatWork/X/Amazon/GitHub等) の機能を1アプリに統合
+- 差別化軸: 1)哲学的KPI(昨日の自分比較) 2)6部署均衡 3)Supabase永続データ 4)プライバシー 5)AI 6)無料
+- 重要: 自分株式会社は「個人のCEO」としてユーザーをエンパワーするというミッション
+
+## 前日脅威サマリー (差分参照用)
+$PREV_SUMMARY
+
+## 本日の可用性チェック結果
+$AVAIL
+${EVENT_SECTION}
+
+## 依頼内容
+以下の形式で競合インテリジェンスレポートを生成してください。日本語で500〜800字。
+
+---
+# 競合モニタリングレポート ${TODAY}
+
+生成: GitHub Actions (Gemini/Claude自動生成)
+${SPECIAL_EVENT:+⚡ 特記イベント: $SPECIAL_EVENT}
+
+## 今週の脅威サマリー
+
+| 優先度 | 競合 | 動向 | 脅威変化 |
+|--------|------|------|---------|
+(重要な変化があった競合のみ。前日サマリーと比較して変化なしは記載省略可)
+
+## 🎯 今週の重点モニタリング
+
+(向こう7日で注意すべきイベント・発表・課金変更等)
+
+## 自分株式会社への示唆
+
+(差別化強化の機会・リスク対応のアクション提案 2〜3点)
+---
+
+前日から特に変化がなければ「変化なし」と簡潔に記載してください。過去の情報ではなく今日の観点で分析してください。"
+
+          AI_REPORT=""
+          USED_MODEL=""
+
+          # ── Primary: Gemini 1.5 Flash (無料枠) ──────────────────────────────
+          if [ -n "$GEMINI_API_KEY" ]; then
+            echo "🤖 Gemini Flash API 試行..."
+            GEMINI_PAYLOAD=$(python3 -c "
+import json, sys
+prompt = sys.argv[1]
+payload = {'contents': [{'parts': [{'text': prompt}]}], 'generationConfig': {'maxOutputTokens': 2000, 'temperature': 0.3}}
+print(json.dumps(payload))
+" "$REPORT_PROMPT" 2>/dev/null)
+
+            GEMINI_RESPONSE=$(curl -s -X POST \
+              "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}" \
+              -H "Content-Type: application/json" \
+              -d "$GEMINI_PAYLOAD" \
+              --max-time 30 2>/dev/null)
+
+            AI_REPORT=$(echo "$GEMINI_RESPONSE" | python3 -c "
+import sys, json
+try:
+    d = json.load(sys.stdin)
+    text = d['candidates'][0]['content']['parts'][0]['text']
+    print(text)
+except:
+    print('')
+" 2>/dev/null)
+
+            if [ -n "$AI_REPORT" ] && [ ${#AI_REPORT} -gt 100 ]; then
+              USED_MODEL="gemini-1.5-flash"
+              echo "✅ Gemini Flash 生成成功 (${#AI_REPORT} chars)"
+            else
+              echo "⚠️ Gemini Flash 失敗 — Claude fallback へ"
+            fi
+          fi
+
+          # ── Fallback: Claude Sonnet ──────────────────────────────────────────
+          if [ -z "$AI_REPORT" ] || [ ${#AI_REPORT} -le 100 ]; then
+            if [ -n "$ANTHROPIC_API_KEY" ]; then
+              echo "🤖 Claude API fallback 試行..."
+              CLAUDE_PAYLOAD=$(python3 -c "
+import json, sys
+prompt = sys.argv[1]
+payload = {'model': 'claude-sonnet-4-6', 'max_tokens': 2000, 'messages': [{'role': 'user', 'content': prompt}]}
+print(json.dumps(payload))
+" "$REPORT_PROMPT" 2>/dev/null)
+
+              CLAUDE_RESPONSE=$(curl -s -X POST \
+                "https://api.anthropic.com/v1/messages" \
+                -H "x-api-key: $ANTHROPIC_API_KEY" \
+                -H "anthropic-version: 2023-06-01" \
+                -H "Content-Type: application/json" \
+                -d "$CLAUDE_PAYLOAD" \
+                --max-time 30 2>/dev/null)
+
+              AI_REPORT=$(echo "$CLAUDE_RESPONSE" | python3 -c "
+import sys, json
+try:
+    d = json.load(sys.stdin)
+    print(d['content'][0]['text'])
+except:
+    print('')
+" 2>/dev/null)
+
+              if [ -n "$AI_REPORT" ] && [ ${#AI_REPORT} -gt 100 ]; then
+                USED_MODEL="claude-sonnet-4-6"
+                echo "✅ Claude fallback 成功 (${#AI_REPORT} chars)"
+              fi
+            fi
+          fi
+
+          # ── Fallback: スタティックテンプレート ─────────────────────────────
+          if [ -z "$AI_REPORT" ] || [ ${#AI_REPORT} -le 100 ]; then
+            USED_MODEL="static-template"
+            AI_REPORT="## AI生成スキップ (API未設定 or 全プロバイダー失敗)
+
+競合インテリジェンス生成には GEMINI_API_KEY または ANTHROPIC_API_KEY が必要です。
+
+## 可用性チェック結果のみ記録
+
+$(cat /tmp/avail_results.txt)"
+          fi
+
+          echo "used_model=$USED_MODEL" >> $GITHUB_OUTPUT
+
+          # レポートをファイルに保存
+          python3 -c "
+import sys
+content = sys.argv[1]
+with open('/tmp/ai_report.txt', 'w', encoding='utf-8') as f:
+    f.write(content)
+print(f'Written {len(content)} chars')
+" "$AI_REPORT"
+
+      # ── Step 5: レポートファイル組み立て ─────────────────────────────────
+      - name: Step 5 - レポートファイル生成
+        id: report
+        run: |
+          TODAY="${{ steps.calendar.outputs.today }}"
+          SPECIAL_EVENT="${{ steps.calendar.outputs.special_event }}"
+          DOWN="${{ steps.availability.outputs.down_count }}"
+          USED_MODEL="${{ steps.ai_report.outputs.used_model }}"
+          AVAIL_TABLE=$(cat /tmp/avail_results.txt)
+          AI_CONTENT=$(cat /tmp/ai_report.txt 2>/dev/null || echo "(AI生成なし)")
+
+          OUTPUT_FILE="docs/competitor-reports/${TODAY}.md"
+
+          python3 - << 'PYEOF'
+import os
+
+today = os.environ.get('TODAY', '')
+special_event = os.environ.get('SPECIAL_EVENT', '')
+down = os.environ.get('DOWN', '0')
+used_model = os.environ.get('USED_MODEL', 'unknown')
+
+with open('/tmp/avail_results.txt') as f:
+    avail_table = f.read()
+with open('/tmp/ai_report.txt') as f:
+    ai_content = f.read()
+
+output_file = f"docs/competitor-reports/{today}.md"
+
+# 既存ファイルがあれば上書きしない (手動レポートを保護)
+if os.path.exists(output_file):
+    with open(output_file) as f:
+        existing = f.read()
+    if '<!-- generated-by: github-actions -->' not in existing:
+        print(f"⚠️ 手動レポート保護: {output_file} は上書きしません")
+        exit(0)
+
+event_badge = f"\n⚡ **特記イベント: {special_event}**\n" if special_event else ""
+
+content = f"""<!-- generated-by: github-actions -->
+<!-- model: {used_model} -->
+{ai_content}
+
+---
+
+## 可用性チェック詳細 (21社)
+
+| 競合 | URL | HTTP | 状態 | 脅威度 |
+|-----|-----|-----|-----|-----|
+{avail_table}
+
+*{down}社 要注意 / 生成モデル: {used_model} / 生成: GitHub Actions {today}*
+"""
+
+os.makedirs('docs/competitor-reports', exist_ok=True)
+with open(output_file, 'w', encoding='utf-8') as f:
+    f.write(content)
+print(f"✅ {output_file} ({len(content)} chars)")
+PYEOF
+
+          TODAY_VAR=$TODAY
+          echo "output_file=docs/competitor-reports/${TODAY_VAR}.md" >> $GITHUB_OUTPUT
+          echo "today=$TODAY_VAR" >> $GITHUB_OUTPUT
+        env:
+          TODAY: ${{ steps.calendar.outputs.today }}
+          SPECIAL_EVENT: ${{ steps.calendar.outputs.special_event }}
+          DOWN: ${{ steps.availability.outputs.down_count }}
+          USED_MODEL: ${{ steps.ai_report.outputs.used_model }}
+
+      # ── Step 6: コミット ─────────────────────────────────────────────────
+      - name: Step 6 - コミット & push
+        run: |
+          TODAY="${{ steps.calendar.outputs.today }}"
+          OUTPUT_FILE="${{ steps.report.outputs.output_file }}"
+          USED_MODEL="${{ steps.ai_report.outputs.used_model }}"
+          SPECIAL_EVENT="${{ steps.calendar.outputs.special_event }}"
+
+          if [ ! -f "$OUTPUT_FILE" ]; then
+            echo "📝 レポートファイルなし — スキップ"
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git fetch origin main
+          git checkout main
+          git reset --hard origin/main
+
+          git add docs/competitor-reports/
+          if git diff --cached --quiet; then
+            echo "📝 変更なし — スキップ"
+            exit 0
+          fi
+
+          EVENT_TAG="${SPECIAL_EVENT:+ [$SPECIAL_EVENT]}"
+          git commit -m "自動: 競合レポート ${TODAY}${EVENT_TAG} (${USED_MODEL})"
+
+          git config --local --unset-all http.https://github.com/.extraheader 2>/dev/null || true
+          PUSH_TOKEN="${{ secrets.BYPASS_RULES || github.token }}"
+          git remote set-url origin "https://x-access-token:${PUSH_TOKEN}@github.com/${{ github.repository }}.git"
+          git push origin main
+          echo "✅ 競合レポート push 完了: $OUTPUT_FILE"
+
+      - name: Job Summary
+        if: always()
+        run: |
+          TODAY="${{ steps.calendar.outputs.today }}"
+          SPECIAL_EVENT="${{ steps.calendar.outputs.special_event }}"
+          DOWN="${{ steps.availability.outputs.down_count }}"
+          USED_MODEL="${{ steps.ai_report.outputs.used_model }}"
+
+          DOWN_ICON=$([ "${DOWN:-0}" = "0" ] && echo "✅ 全21社正常" || echo "⚠️ ${DOWN}社 要注意")
+          EVENT_ROW=""
+          if [ -n "$SPECIAL_EVENT" ]; then
+            EVENT_ROW="| 特記イベント | ⚡ $SPECIAL_EVENT |"$'\n'
+          fi
+
+          {
+            echo "## 競合インテリジェンスレポート $TODAY"
+            echo ""
+            echo "| 項目 | 値 |"
+            echo "|-----|---|"
+            echo "| 可用性 (21社) | $DOWN_ICON |"
+            echo "| AIモデル | $USED_MODEL |"
+            echo "| レポートファイル | docs/competitor-reports/${TODAY}.md |"
+            echo "$EVENT_ROW"
+          } >> $GITHUB_STEP_SUMMARY
