@@ -343,3 +343,7 @@ WHERE title = 'ai-hub provider.chat 蜈ｨ蟇ｾ蠢・;
 - 対応内容: Admin Analytics に `Self Devin control tower` を追加し、VSCode / WEB / Win / PowerShell の 4 レーンごとの進行、追加要望タスク件数、詰まり、平均進捗を一画面で見えるようにした。
 - 実装補足: `schedule_task_runs` をもとに `cs-check / github-issue-fix / ci-auto-fix / infra-health-check` の自動化ループ状態を集約し、次に救援すべきレーンを recommendation として表示する。`ScheduleTaskMonitorCard` にも `github-issue-fix` と `ci-auto-fix` を追加した。
 - WBS DB反映: migration `20260424213000_wbs_codex_self_devin_control_tower.sql`
+- 実担当タスク: `[追加要望] AI大学コンテンツ: 法律AIという新ジャンルを開拓（競合は未対応が多い）`
+- 対応内容: AI大学トップとHomeカードに `法律AI` ジャンル導線を追加し、Harvey を代表教材として契約レビュー・リーガルリサーチ・Due Diligence を学べる入口を新設した。
+- 実装補足: `ai_university_genre_catalog` を追加して今後の専門ジャンル展開に備えつつ、`/gemini-university` は引数で代表プロバイダーを直接開けるようにした。Harvey の provider status も `HARVEY_API_KEY` 前提の実装済みに更新。
+- WBS DB反映: migration `20260425022000_wbs_codex_ai_university_legal_ai_genre.sql`

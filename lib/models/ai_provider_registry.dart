@@ -556,8 +556,11 @@ const List<AiProviderEntry> kAiProviderRegistry = [
   AiProviderEntry(
     id: 'harvey',
     displayName: 'Harvey',
-    status: AiProviderStatus.notImplemented,
+    status: AiProviderStatus.apiKeyRequired,
     tier: AiProviderTier.premium,
+    envKeyName: 'HARVEY_API_KEY',
+    entryPoint: 'tools-hub:legal.harvey.complete',
+    note: '法務・コンプライアンス画面の Harvey タブから法律AIレビューを実行',
   ),
   AiProviderEntry(
     id: 'manus',

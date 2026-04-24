@@ -11,6 +11,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:web/web.dart' as web_api;
+import '../data/ai_university_genre_catalog.dart';
 import '../services/ai_fsrs_service.dart';
 import '../services/ai_learner_profile_service.dart';
 import '../services/gamification_service.dart';
@@ -5149,7 +5150,9 @@ Slack / Google Drive / Jira など 100+ データソースを横断する Work K
 // ─────────────────────────────────────────────────────────────────────────────
 
 class AiUniversityPage extends StatefulWidget {
-  const AiUniversityPage({super.key});
+  const AiUniversityPage({super.key, this.initialProviderId});
+
+  final String? initialProviderId;
 
   @override
   State<AiUniversityPage> createState() => _AiUniversityPageState();
@@ -5570,15 +5573,24 @@ class _AiUniversityPageState extends State<AiUniversityPage>
       // DB が空なら _providerMeta の全キーをフォールバックで表示
       final providers =
           grouped.isEmpty ? _providerMeta.keys.toList() : grouped.keys.toList();
+      final requestedProvider = widget.initialProviderId;
+      final requestedIndex = requestedProvider == null
+          ? -1
+          : providers.indexOf(requestedProvider);
+      final initialIndex = requestedIndex >= 0 ? requestedIndex : 0;
 
       _tabController?.dispose();
-      final tc = TabController(length: providers.length, vsync: this);
+      final tc = TabController(
+        length: providers.length,
+        vsync: this,
+        initialIndex: initialIndex,
+      );
       tc.addListener(() {
         if (!tc.indexIsChanging && tc.index < providers.length) {
           _loadFsrsDue(providers[tc.index]);
         }
       });
-      if (providers.isNotEmpty) _loadFsrsDue(providers[0]);
+      if (providers.isNotEmpty) _loadFsrsDue(providers[tc.index]);
       if (mounted) {
         setState(() {
           _providers = providers;
@@ -5603,6 +5615,20 @@ class _AiUniversityPageState extends State<AiUniversityPage>
   }
 
   _ProviderMeta _meta(String id) => _providerMeta[id] ?? _unknownMeta;
+
+  List<AiUniversityGenreEntry> _availableGenres() {
+    return kAiUniversityGenres
+        .where((genre) => genre.providerIds.any(_providers.contains))
+        .toList();
+  }
+
+  void _selectProvider(String providerId) {
+    final controller = _tabController;
+    final index = _providers.indexOf(providerId);
+    if (controller == null || index < 0) return;
+    controller.animateTo(index);
+    _loadFsrsDue(providerId);
+  }
 
   Future<void> _awardQuizPoints(String providerId) async {
     if (_answeredQuizzes.contains(providerId)) return;
@@ -5801,12 +5827,188 @@ class _AiUniversityPageState extends State<AiUniversityPage>
                 ],
               ),
             ),
+          _buildGenreShelf(),
           Expanded(
             child: TabBarView(
               controller: tc,
               children: _providers
                   .map((id) => _buildProviderTab(id, isDark))
                   .toList(),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGenreShelf() {
+    final genres = _availableGenres();
+    if (genres.isEmpty) return const SizedBox.shrink();
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            '新ジャンル',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 18,
+              fontWeight: FontWeight.w800,
+              height: 1.5,
+            ),
+          ),
+          const SizedBox(height: 4),
+          const Text(
+            '競合がまだ薄い専門領域を、AI大学の中でも独立した入口として育てます。',
+            style: TextStyle(
+              color: Color(0xFFB0B0B0),
+              fontSize: 12,
+              height: 1.6,
+            ),
+          ),
+          const SizedBox(height: 10),
+          ...genres.map(_buildGenreCard),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGenreCard(AiUniversityGenreEntry genre) {
+    final providerNames = genre.providerIds
+        .where(_providers.contains)
+        .map((providerId) => _meta(providerId).name)
+        .toList();
+
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            const Color(0xFF151B27),
+            Color.alphaBlend(
+              genre.accentColor.withValues(alpha: 0.18),
+              const Color(0xFF1E2434),
+            ),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: genre.accentColor.withValues(alpha: 0.32),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Text(
+                  genre.title,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
+                    height: 1.5,
+                  ),
+                ),
+              ),
+              const Spacer(),
+              Text(
+                '${providerNames.length}教材',
+                style: TextStyle(
+                  color: genre.accentColor.withValues(alpha: 0.95),
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  height: 1.5,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(
+            genre.headline,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 16,
+              fontWeight: FontWeight.w800,
+              height: 1.5,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            genre.description,
+            style: const TextStyle(
+              color: Color(0xFFD7DBE8),
+              fontSize: 13,
+              height: 1.7,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (final area in genre.focusAreas)
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(999),
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.10),
+                    ),
+                  ),
+                  child: Text(
+                    area,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      height: 1.5,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          if (providerNames.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            Text(
+              '代表プロバイダー: ${providerNames.join(' / ')}',
+              style: const TextStyle(
+                color: Color(0xFFB0B0B0),
+                fontSize: 12,
+                height: 1.6,
+              ),
+            ),
+          ],
+          const SizedBox(height: 12),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: FilledButton.icon(
+              onPressed: () => _selectProvider(genre.launchProviderId),
+              icon: const Icon(Icons.gavel_rounded),
+              label: Text('${genre.title}を開く'),
+              style: FilledButton.styleFrom(
+                backgroundColor: genre.accentColor,
+                foregroundColor: Colors.white,
+              ),
             ),
           ),
         ],
@@ -5840,6 +6042,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
     _ProviderMeta m,
     List<Map<String, dynamic>>? rows,
   ) {
+    final genre = aiUniversityGenreForProvider(id);
     String? updatedAt;
     if (rows != null && rows.isNotEmpty) {
       final ts = rows.first['updated_at'];
@@ -5910,6 +6113,31 @@ class _AiUniversityPageState extends State<AiUniversityPage>
                       height: 1.5,
                     ),
                   ),
+                if (genre != null) ...[
+                  const SizedBox(height: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: genre.accentColor.withValues(alpha: 0.18),
+                      borderRadius: BorderRadius.circular(999),
+                      border: Border.all(
+                        color: genre.accentColor.withValues(alpha: 0.32),
+                      ),
+                    ),
+                    child: Text(
+                      '新ジャンル: ${genre.title}',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        height: 1.5,
+                      ),
+                    ),
+                  ),
+                ],
                 if (rows == null || rows.isEmpty)
                   const Text(
                     'フォールバック表示',

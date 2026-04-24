@@ -450,8 +450,11 @@ class MyApp extends StatelessWidget {
             );
           case '/ai-university':
           case '/gemini-university':
+            final args = settings.arguments as Map<String, dynamic>?;
             return MaterialPageRoute(
-              builder: (_) => const AiUniversityPage(),
+              builder: (_) => AiUniversityPage(
+                initialProviderId: args?['provider'] as String?,
+              ),
             );
           case '/danshari':
             return MaterialPageRoute(builder: (_) => const DanshariPage());

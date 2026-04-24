@@ -6,6 +6,7 @@ import 'package:share_plus/share_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../data/ai_university_genre_catalog.dart';
 
 /// AI大学ホームカード — ホーム最上部に表示するキラーコンテンツバナー
 ///
@@ -167,6 +168,13 @@ class _AiUniversityHomeCardState extends State<AiUniversityHomeCard> {
 
   void _openUniversity() {
     Navigator.of(context).pushNamed('/gemini-university');
+  }
+
+  void _openProvider(String providerId) {
+    Navigator.of(context).pushNamed(
+      '/gemini-university',
+      arguments: {'provider': providerId},
+    );
   }
 
   void _openRanking() {
@@ -483,6 +491,109 @@ class _AiUniversityHomeCardState extends State<AiUniversityHomeCard> {
                       if (extraProviders > 0)
                         _buildProviderChip('+$extraProviders'),
                     ],
+                  ),
+                  const SizedBox(height: 14),
+                  Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: kLegalAiGenre.accentColor.withValues(alpha: 0.16),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: kLegalAiGenre.accentColor.withValues(
+                          alpha: 0.34,
+                        ),
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 6,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.10),
+                                borderRadius: BorderRadius.circular(999),
+                              ),
+                              child: const Text(
+                                '新ジャンル',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w800,
+                                  height: 1.5,
+                                ),
+                              ),
+                            ),
+                            Text(
+                              kLegalAiGenre.title,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w800,
+                                height: 1.5,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          kLegalAiGenre.headline,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                            height: 1.6,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          kLegalAiGenre.description,
+                          style: const TextStyle(
+                            color: Color(0xFFD7DBE8),
+                            fontSize: 12,
+                            height: 1.7,
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: [
+                            for (final area in kLegalAiGenre.focusAreas)
+                              _buildProviderChip(area),
+                          ],
+                        ),
+                        const SizedBox(height: 10),
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: TextButton.icon(
+                            onPressed: () =>
+                                _openProvider(kLegalAiGenre.launchProviderId),
+                            icon: const Icon(
+                              Icons.gavel_rounded,
+                              size: 16,
+                              color: Colors.white,
+                            ),
+                            label: const Text(
+                              '法律AIから学ぶ',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                                height: 1.5,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                   const SizedBox(height: 14),
                   Wrap(
