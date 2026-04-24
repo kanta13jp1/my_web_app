@@ -88,12 +88,17 @@ class _HealthCheckPageState extends State<HealthCheckPage> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.error_outline,
-                          color: Colors.red, size: 48),
+                      const Icon(
+                        Icons.error_outline,
+                        color: Colors.red,
+                        size: 48,
+                      ),
                       const SizedBox(height: 12),
-                      Text(_errorMessage!,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(color: Colors.red)),
+                      Text(
+                        _errorMessage!,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(color: Colors.red),
+                      ),
                       const SizedBox(height: 16),
                       ElevatedButton.icon(
                         icon: const Icon(Icons.refresh),
@@ -111,13 +116,17 @@ class _HealthCheckPageState extends State<HealthCheckPage> {
                         // ステータスサマリーカード
                         Card(
                           shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12)),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                           child: Padding(
                             padding: const EdgeInsets.all(20),
                             child: Row(
                               children: [
-                                Icon(_statusIcon(status),
-                                    color: _statusColor(status), size: 40),
+                                Icon(
+                                  _statusIcon(status),
+                                  color: _statusColor(status),
+                                  size: 40,
+                                ),
                                 const SizedBox(width: 16),
                                 Expanded(
                                   child: Column(
@@ -139,7 +148,7 @@ class _HealthCheckPageState extends State<HealthCheckPage> {
                                           style: const TextStyle(
                                               fontSize: 12,
                                               color: Colors.grey,
-                                              height: 1.5),
+                                              height: 1.5,),
                                         ),
                                     ],
                                   ),
@@ -156,7 +165,7 @@ class _HealthCheckPageState extends State<HealthCheckPage> {
                             style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
-                                height: 1.5),
+                                height: 1.5,),
                           ),
                           const SizedBox(height: 8),
                           ...checks.entries.map((entry) {
@@ -168,7 +177,8 @@ class _HealthCheckPageState extends State<HealthCheckPage> {
                             return Card(
                               margin: const EdgeInsets.only(bottom: 8),
                               shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8)),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
                               child: ListTile(
                                 leading: Icon(
                                   ok ? Icons.check_circle : Icons.cancel,
@@ -179,37 +189,45 @@ class _HealthCheckPageState extends State<HealthCheckPage> {
                                   style: const TextStyle(
                                       fontSize: 14,
                                       fontWeight: FontWeight.w600,
-                                      height: 1.5),
+                                      height: 1.5,),
                                 ),
                                 subtitle: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     if (latency != null)
-                                      Text('レイテンシ: ${latency}ms',
-                                          style: const TextStyle(
-                                              fontSize: 12, height: 1.5)),
+                                      Text(
+                                        'レイテンシ: ${latency}ms',
+                                        style: const TextStyle(
+                                            fontSize: 12, height: 1.5,),
+                                      ),
                                     if (detail != null)
-                                      Text(detail,
-                                          style: const TextStyle(
-                                              fontSize: 12, height: 1.5)),
+                                      Text(
+                                        detail,
+                                        style: const TextStyle(
+                                            fontSize: 12, height: 1.5,),
+                                      ),
                                   ],
                                 ),
                                 trailing: ok
                                     ? const Chip(
-                                        label: Text('OK',
-                                            style: TextStyle(
-                                                fontSize: 11,
-                                                color: Colors.white,
-                                                height: 1.5)),
+                                        label: Text(
+                                          'OK',
+                                          style: TextStyle(
+                                              fontSize: 11,
+                                              color: Colors.white,
+                                              height: 1.5,),
+                                        ),
                                         backgroundColor: Colors.green,
                                         padding: EdgeInsets.zero,
                                       )
                                     : const Chip(
-                                        label: Text('NG',
-                                            style: TextStyle(
-                                                fontSize: 11,
-                                                color: Colors.white,
-                                                height: 1.5)),
+                                        label: Text(
+                                          'NG',
+                                          style: TextStyle(
+                                              fontSize: 11,
+                                              color: Colors.white,
+                                              height: 1.5,),
+                                        ),
                                         backgroundColor: Colors.red,
                                         padding: EdgeInsets.zero,
                                       ),

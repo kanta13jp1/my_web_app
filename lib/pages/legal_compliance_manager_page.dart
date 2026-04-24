@@ -389,10 +389,10 @@ class _LegalComplianceManagerPageState extends State<LegalComplianceManagerPage>
       children: [
         const Card(
           child: Padding(
-            padding: const EdgeInsets.all(16),
+            padding: EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
+              children: [
                 Row(
                   children: [
                     Icon(Icons.hub_outlined, color: Color(0xFF3D5AFE)),
