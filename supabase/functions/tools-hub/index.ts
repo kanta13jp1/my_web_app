@@ -29,6 +29,133 @@ function json(data: unknown, status = 200): Response {
   });
 }
 
+function asRecord(value: unknown): Record<string, unknown> | null {
+  return typeof value === "object" && value !== null && !Array.isArray(value)
+    ? value as Record<string, unknown>
+    : null;
+}
+
+function parseBooleanish(value: unknown, defaultValue: boolean): boolean {
+  if (typeof value === "boolean") return value;
+  const normalized = String(value ?? "").trim().toLowerCase();
+  if (["true", "1", "yes", "on"].includes(normalized)) return true;
+  if (["false", "0", "no", "off"].includes(normalized)) return false;
+  return defaultValue;
+}
+
+function getHarveyBaseUrl(region: unknown): string {
+  const normalized = String(region ?? "").trim().toLowerCase();
+  if (normalized === "eu") return "https://eu.api.harvey.ai";
+  if (normalized === "au") return "https://au.api.harvey.ai";
+  return "https://api.harvey.ai";
+}
+
+function normalizeHarveyKnowledgeSources(value: unknown): Array<Record<string, unknown>> {
+  if (Array.isArray(value)) {
+    return value.map((item) => asRecord(item)).filter((item): item is Record<string, unknown> => item !== null);
+  }
+  if (typeof value === "string" && value.trim().length > 0) {
+    try {
+      const parsed = JSON.parse(value);
+      if (Array.isArray(parsed)) {
+        return parsed.map((item) => asRecord(item)).filter((item): item is Record<string, unknown> => item !== null);
+      }
+    } catch {
+      return [];
+    }
+  }
+  return [];
+}
+
+async function callHarveyCompletion(body: Record<string, unknown>) {
+  const token = Deno.env.get("HARVEY_API_KEY") ?? "";
+  if (!token) {
+    return { ok: false, status: 503, error: "HARVEY_API_KEY not configured" };
+  }
+
+  const prompt = String(body.prompt ?? "").trim();
+  if (!prompt) {
+    return { ok: false, status: 400, error: "prompt is required" };
+  }
+
+  const includeCitations = parseBooleanish(
+    body.include_citations ?? body.includeCitations,
+    true,
+  );
+  const modeRaw = String(body.mode ?? "draft").trim().toLowerCase();
+  const mode = modeRaw === "assist" ? "assist" : "draft";
+  const clientMatterId = String(
+    body.client_matter_id ?? body.clientMatterId ?? "",
+  ).trim();
+  const model = String(body.model ?? "").trim();
+  const knowledgeSources = normalizeHarveyKnowledgeSources(
+    body.knowledge_sources ?? body.knowledgeSources,
+  );
+  if (
+    knowledgeSources.length === 0 &&
+    parseBooleanish(body.use_web ?? body.useWeb, false)
+  ) {
+    knowledgeSources.push({ type: "web" });
+  }
+
+  const form = new FormData();
+  form.set("prompt", prompt);
+  form.set("stream", "false");
+  form.set("mode", mode);
+  if (clientMatterId) form.set("client_matter_id", clientMatterId);
+  if (knowledgeSources.length > 0) {
+    form.set("knowledge_sources", JSON.stringify(knowledgeSources));
+  }
+  if (model) form.set("model", model);
+
+  const baseUrl = getHarveyBaseUrl(body.region);
+  const endpoint =
+    `${baseUrl}/api/v2/completion?include_citations=${includeCitations ? "true" : "false"}`;
+  const response = await fetch(endpoint, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    body: form,
+  });
+  const rawText = await response.text();
+
+  let parsed: Record<string, unknown> = {};
+  try {
+    parsed = asRecord(JSON.parse(rawText)) ?? {};
+  } catch {
+    parsed = {};
+  }
+
+  if (!response.ok) {
+    return {
+      ok: false,
+      status: response.status,
+      error: String(
+        parsed.error ??
+          parsed.message ??
+          `Harvey API error: ${response.status}`,
+      ),
+      details: rawText.slice(0, 500),
+    };
+  }
+
+  return {
+    ok: true,
+    status: response.status,
+    data: {
+      provider: "harvey",
+      mode,
+      base_url: baseUrl,
+      response: String(parsed.response ?? ""),
+      response_with_citations: parsed.response_with_citations ?? null,
+      sources: Array.isArray(parsed.sources) ? parsed.sources : [],
+      model: model.length > 0 ? model : parsed.model ?? null,
+      used_knowledge_sources: knowledgeSources,
+    },
+  };
+}
+
 function wbsPriorityRank(priority: unknown): number {
   const value = String(priority ?? "").toLowerCase();
   if (value === "high") return 3;
@@ -1530,6 +1657,23 @@ serve(async (req) => {
         return json({ success: true, total: msgData?.total ?? 0, messages });
       }
 
+      // ── Legal / Harvey Integration ───────────────────────────────────────────
+      case "legal.harvey.complete": {
+        const result = await callHarveyCompletion(body);
+        if (!result.ok) {
+          return json({
+            success: false,
+            provider: "harvey",
+            error: result.error,
+            details: result.details ?? null,
+          }, result.status);
+        }
+        return json({
+          success: true,
+          ...result.data,
+        });
+      }
+
       default:
         return json({
           error: `Unknown action: ${action}`,
@@ -1562,6 +1706,7 @@ serve(async (req) => {
             "horseracing.predictions", "horseracing.store_results", "horseracing.accuracy",
             "horseracing.register_race", "horseracing.stats",
             "slack.post", "slack.search",
+            "legal.harvey.complete",
           ],
         }, 400);
     }

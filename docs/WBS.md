@@ -218,6 +218,10 @@
 
 ## 騾ｲ謐玲峩譁ｰ繝ｫ繝ｼ繝ｫ
 
+## Codex 引き継ぎメモ (2026-04-24)
+
+- Harvey 法務レビュー基盤: `[追加要望] legal-assistant EF: Harvey APIをtools-hub の新actionとして追加可能` と `[追加要望] LP掲載: 「法務管理」コア機能のバックエンドとしてHarveyをアピール材料に` を Codex で着手・完了。`tools-hub` に `legal.harvey.complete` を追加し、Harvey Completion API を `HARVEY_API_KEY` 経由で呼べるようにしました。法務管理ページには Harvey 実行タブを追加し、契約レビューや法務メモの草案をその場で試せるようにしています。LP の法務管理カードも Harvey 連携を含む説明へ更新しました。
+
 蜷・そ繝・す繝ｧ繝ｳ邨ゆｺ・凾縺ｫ `wbs_tasks` 繝・・繝悶Ν縺ｮ progress 縺ｨ status 繧呈峩譁ｰ縺吶ｋ縺薙→:
 
 ```sql
