@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// ブックマーク同期ページ
-/// bookmark-sync Edge Function と連携
+/// tools-hub:bookmark.* actions でブックマークを管理
 /// Pocket / Instapaper 競合 — URL保存・タグ管理・既読管理・クロスデバイス同期
 class BookmarkSyncPage extends StatefulWidget {
   const BookmarkSyncPage({super.key});
@@ -54,8 +54,8 @@ class _BookmarkSyncPageState extends State<BookmarkSyncPage> {
       if (_unreadOnly) params['unread'] = 'true';
 
       final response = await _supabase.functions.invoke(
-        'bookmark-sync',
-        queryParameters: params,
+        'tools-hub',
+        body: {'action': 'bookmark.list'},
       );
       final data = response.data;
       if (data is Map) {
@@ -63,11 +63,8 @@ class _BookmarkSyncPageState extends State<BookmarkSyncPage> {
           _bookmarks = data['bookmarks'] is List
               ? (data['bookmarks'] as List).cast<Map<String, dynamic>>()
               : [];
-          _allTags =
-              data['tags'] is List ? (data['tags'] as List).cast<String>() : [];
-          _stats = data['stats'] is Map
-              ? Map<String, dynamic>.from(data['stats'] as Map)
-              : {};
+          _allTags = [];
+          _stats = {};
         });
       }
     } catch (e) {
@@ -84,9 +81,9 @@ class _BookmarkSyncPageState extends State<BookmarkSyncPage> {
     final messenger = ScaffoldMessenger.of(context);
     try {
       await _supabase.functions.invoke(
-        'bookmark-sync',
+        'tools-hub',
         body: {
-          'action': 'add',
+          'action': 'bookmark.add',
           'url': url,
           'title':
               _titleCtrl.text.trim().isNotEmpty ? _titleCtrl.text.trim() : url,
@@ -110,8 +107,8 @@ class _BookmarkSyncPageState extends State<BookmarkSyncPage> {
   Future<void> _markRead(String id) async {
     try {
       await _supabase.functions.invoke(
-        'bookmark-sync',
-        body: {'action': 'mark_read', 'id': id},
+        'tools-hub',
+        body: {'action': 'bookmark.mark_read', 'id': id},
       );
       await _fetchBookmarks();
     } catch (e) {
@@ -126,8 +123,8 @@ class _BookmarkSyncPageState extends State<BookmarkSyncPage> {
   Future<void> _deleteBookmark(String id) async {
     try {
       await _supabase.functions.invoke(
-        'bookmark-sync',
-        body: {'action': 'delete', 'id': id},
+        'tools-hub',
+        body: {'action': 'bookmark.delete', 'id': id},
       );
       await _fetchBookmarks();
     } catch (e) {

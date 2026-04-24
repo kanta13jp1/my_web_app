@@ -1254,6 +1254,16 @@ serve(async (req) => {
         await deleteItem(admin, "bookmark", userId, String(body.id ?? ""));
         return json({ success: true });
       }
+      case "bookmark.mark_read": {
+        const { data: bm } = await admin.from("hub_data")
+          .select("metadata").eq("id", String(body.id ?? "")).eq("source", "bookmark").maybeSingle();
+        if (!bm) return json({ success: false, error: "not found" }, 404);
+        const { error } = await admin.from("hub_data")
+          .update({ metadata: { ...(bm.metadata as Record<string, unknown>), read: true } })
+          .eq("id", String(body.id ?? "")).eq("source", "bookmark");
+        if (error) throw new Error(error.message);
+        return json({ success: true });
+      }
       case "bookmark.sync": {
         const bookmarks = body.bookmarks as unknown[] ?? [];
         for (const bm of bookmarks) {
