@@ -95,7 +95,7 @@ class AiProviderEntry {
   });
 }
 
-/// AI大学 登録プロバイダー全件のステータスカタログ (162社, 2026-04-24時点)
+/// AI大学 登録プロバイダー全件のステータスカタログ (164社, 2026-04-24時点)
 ///
 /// 実装済み: ai-assistant / ai-hub / ai-search に統合済みのもの
 /// 要APIキー: コード対応済みだが Supabase Secrets に追加が必要
@@ -1282,6 +1282,22 @@ const List<AiProviderEntry> kAiProviderRegistry = [
     entryPoint: 'https://www.trychroma.com/',
     note:
         r'Developer-first OSS ベクターDB — pip install 3行起動 / Rust 4× / Chroma Cloud GA / $18M seed / GitHub 20k+ stars',
+  ),
+  AiProviderEntry(
+    id: 'upstage',
+    displayName: 'Upstage',
+    status: AiProviderStatus.notImplemented,
+    entryPoint: 'https://www.upstage.ai/',
+    note:
+        r'韓国初ジェネラティブ AI ユニコーン — Solar Pro 2 (GPT-4.1 超え) / Document Parse / $279.7M 累計 / KOSPI IPO 2026',
+  ),
+  AiProviderEntry(
+    id: 'modal',
+    displayName: 'Modal',
+    status: AiProviderStatus.notImplemented,
+    entryPoint: 'https://modal.com/',
+    note:
+        r'Python-native サーバーレス GPU クラウド — @modal.function 1行デプロイ / H100/B200対応 / $1.1B 評価 / 無料 $30/月',
   ),
 ];
 
