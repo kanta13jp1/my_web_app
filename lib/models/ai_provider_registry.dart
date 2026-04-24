@@ -95,7 +95,7 @@ class AiProviderEntry {
   });
 }
 
-/// AI大学 登録プロバイダー全件のステータスカタログ (176社, 2026-04-24時点)
+/// AI大学 登録プロバイダー全件のステータスカタログ (178社, 2026-04-24時点)
 ///
 /// 実装済み: ai-assistant / ai-hub / ai-search に統合済みのもの
 /// 要APIキー: コード対応済みだが Supabase Secrets に追加が必要
@@ -1403,6 +1403,22 @@ const List<AiProviderEntry> kAiProviderRegistry = [
     entryPoint: 'https://www.patronus.ai/',
     note:
         r'LLM自動評価・安全 — Meta AI創業 / $40.1M Lightspeed / FinanceBench (業界初) / CopyrightCatcher / 50+失敗カテゴリ',
+  ),
+  AiProviderEntry(
+    id: 'autogen',
+    displayName: 'AutoGen',
+    status: AiProviderStatus.notImplemented,
+    entryPoint: 'https://microsoft.github.io/autogen/',
+    note:
+        r'Microsoft Research OSS マルチエージェント — 40k+ Stars / AgentChat+Core+Studio 3層 / Actor Model / Claude対応',
+  ),
+  AiProviderEntry(
+    id: 'agno',
+    displayName: 'Agno (旧 phidata)',
+    status: AiProviderStatus.notImplemented,
+    entryPoint: 'https://www.agno.com/',
+    note:
+        r'Python-native エージェント — Memory (SQLite/PG) + Knowledge (RAG) + Tools 100+ + Agent Teams / Agno Cloud',
   ),
 ];
 
