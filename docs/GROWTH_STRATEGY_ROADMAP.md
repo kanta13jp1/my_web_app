@@ -17238,3 +17238,29 @@ supabase migration repair --status reverted 20260424241500 2>/dev/null || true
 ### Philosophy Alignment
 
 6/9 — トリアージ専任セッションのため実装なし。#622 close + #551 Phase 1 documentation が品質保証 (5.商品=ユーザー価値) に寄与。
+
+## PS版#6 Session 32 — 2026-04-24夜 (EF hub migration 3本 + Issue #622 Phase C)
+
+**担当インスタンス**: PowerShell版 #6
+**commits**: `2cf77402` / `338671a1` / `0c96dfe8` / `342df529`
+
+### 実施内容
+
+1. **Issue #622 Phase C 完了** — `workflow-failure-handler.yml` に `Horse Racing Auto Update` 追加
+   - horse-racing-update.yml 失敗時に自動 Issue 作成されるようになった
+   - horse-racing: 8 連続 SUCCESS 確認
+
+2. **EF hub migration 3本** (85→82):
+   - `qr-code-generator` → `tools-hub:generate_qr` (既存 action 活用 / ページバグも修正)
+   - `mindmap-diagram` → `tools-hub:mindmap.list` (既存 action 活用)
+   - `bookmark-sync` → `tools-hub:bookmark.*` (bookmark.mark_read を tools-hub に追加)
+
+3. **tools-hub 拡張**: `bookmark.mark_read` action 追加
+
+### 所見
+- qr-code-generator / mindmap-diagram: action 名不一致でページが完全 broken だった → hub 移行で修正
+- bookmark-sync: 4 actions 全て移行成功 (tags/stats は UX downgrade 許容)
+- EF 総数: 85 → 82 (cap 50 まで残り -32)
+
+### Philosophy Alignment
+7. 資産負債 ✅ (hub集約で EF 乱立という負債解消) / 5. 商品=ユーザー価値 ✅ (ページ動作修正)
