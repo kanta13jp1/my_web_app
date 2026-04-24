@@ -3290,6 +3290,10 @@ $input
         a: 'Perplexity Mac Agentは「PCの操作を代行する」ツールです。自分株式会社は代行ではなく、あなたがCEOとして最終決定権を持つ設計です（原則1）。AIは判断材料を整理し、行動はあなたが選ぶ。デスクトップ操作の自動化と、人生6部署のバランスシート管理は目的が異なります。',
       ),
       (
+        q: 'OpenAI Codex DesktopとClaude Codeが競合していますが、自分株式会社はどう違うの?',
+        a: 'Claude Code（423 plugins / 2,849 skills）とOpenAI Codex Desktop（Computer Use先行・20+ plugins）はツール選択の問題です。自分株式会社のai-hubは両方を含むClaude・OpenAI・Geminiを束ねる「指揮所」です。どのAIを使うかより「AIを使い分けるハブを持つか」が個人CEOの合理解。単一vendorへの依存は負債、分散が資産（原則7）。しかも完全無料。',
+      ),
+      (
         q: 'Notion Custom Agentsが課金されるようになりましたが?',
         a: '2026年5月4日からNotion Custom Agentsは\$10/1,000 creditの従量課金（Business/Enterprise add-on）となりました。credit残高を気にしながらAIを使うより、自分株式会社は課金の概念自体が存在しません。予測可能なゼロコストで「KPI＝昨日の自分」を継続観察できます。',
       ),
