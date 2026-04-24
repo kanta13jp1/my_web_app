@@ -48,8 +48,8 @@ class _MusicPlaylistManagerPageState extends State<MusicPlaylistManagerPage> {
     });
     try {
       final res = await _supabase.functions.invoke(
-        'music-playlist-manager',
-        queryParameters: {'view': 'playlists'},
+        'media-hub',
+        body: {'action': 'playlist.list'},
       );
       final data = res.data;
       if (data is Map<String, dynamic>) {
@@ -71,8 +71,8 @@ class _MusicPlaylistManagerPageState extends State<MusicPlaylistManagerPage> {
     setState(() => _isLoadingTracks = true);
     try {
       final res = await _supabase.functions.invoke(
-        'music-playlist-manager',
-        queryParameters: {'view': 'tracks', 'playlistId': playlistId},
+        'media-hub',
+        body: {'action': 'playlist.tracks', 'playlist_id': playlistId},
       );
       final data = res.data;
       if (data is Map<String, dynamic>) {
@@ -96,8 +96,8 @@ class _MusicPlaylistManagerPageState extends State<MusicPlaylistManagerPage> {
     setState(() => _isSaving = true);
     try {
       await _supabase.functions.invoke(
-        'music-playlist-manager',
-        body: {'action': 'create_playlist', 'name': name},
+        'media-hub',
+        body: {'action': 'playlist.create', 'name': name},
       );
       _playlistNameController.clear();
       await _fetchPlaylists();
@@ -123,10 +123,10 @@ class _MusicPlaylistManagerPageState extends State<MusicPlaylistManagerPage> {
     setState(() => _isSaving = true);
     try {
       await _supabase.functions.invoke(
-        'music-playlist-manager',
+        'media-hub',
         body: {
-          'action': 'add_track',
-          'playlistId': playlistId,
+          'action': 'playlist.add_track',
+          'playlist_id': playlistId,
           'title': title,
           'artist': _trackArtistController.text.trim(),
         },

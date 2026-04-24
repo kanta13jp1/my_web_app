@@ -180,13 +180,23 @@ serve(async (req) => {
         });
         return json({ success: true, playlist: item });
       }
+      case "playlist.tracks": {
+        const plId = String(body.playlist_id ?? body.playlistId ?? "");
+        const playlists = await listItems(admin, "playlist", userId, 100);
+        const pl = playlists.find((p) => p.id === plId);
+        if (!pl) return json({ success: true, tracks: [] });
+        const meta = pl.metadata as Record<string, unknown>;
+        return json({ success: true, tracks: (meta.tracks as unknown[]) ?? [] });
+      }
       case "playlist.add_track": {
         const playlists = await listItems(admin, "playlist", userId, 100);
-        const pl = playlists.find((p) => p.id === body.playlist_id);
+        const plId2 = String(body.playlist_id ?? body.playlistId ?? "");
+        const pl = playlists.find((p) => p.id === plId2);
         if (!pl) return json({ error: "Playlist not found" }, 404);
         const meta = pl.metadata as Record<string, unknown>;
         const tracks = (meta.tracks as unknown[]) ?? [];
-        tracks.push(body.track);
+        const newTrack = body.track ?? { title: body.title, artist: body.artist };
+        tracks.push(newTrack);
         await admin.from("hub_data").update({ metadata: { ...meta, tracks } }).eq("id", pl.id);
         return json({ success: true, track_count: tracks.length });
       }
