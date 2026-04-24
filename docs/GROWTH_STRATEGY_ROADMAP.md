@@ -17606,3 +17606,25 @@ Migration `20260425043000` が2本存在:
 7. 資産負債バランス ✅ — CDN 依存度削減
 8. KPI=昨日の自分 ✅ — ERR_INSUFFICIENT_RESOURCES が本番コンソールから消える
 9. ゴール=IPO/ウェルビーイング ✅ — 安定したアプリ基盤
+
+## PS#5 S44 (2026-04-24) — #515 リリース通知 fan-out Phase 1 実装
+
+- `core-hub/index.ts`: `notification.broadcast_release` action 追加
+  - Service Role Key 認証 (未認証は 403)
+  - Idempotency: 同一 version の重複 broadcast を防ぐ
+  - 過去90日アクティブユーザーに `feature_update` 通知一括挿入
+  - `admin.auth.admin.listUsers()` 経由で最大1000ユーザー取得
+- `deploy-prod.yml`: `Broadcast release notification` step 追加 (continue-on-error: true)
+- migration: `20260425063000_seed_release_notification_broadcast.sql`
+- commit: b7cfa333
+
+### Philosophy 9原則チェック (S44)
+1. ユーザー価値最優先 ✅ — リリース直後に通知センターで告知、ユーザーが選択
+2. シンプル・透明 ✅ — 既存 hub_data テーブル活用、新テーブル不要
+3. 段階的・検証駆動 ✅ — Phase 1 のみ実装、Phase 2/3 は別 Issue
+4. 持続可能 ✅ — continue-on-error で broadcast 失敗もデプロイ継続
+5. 学習・改善 ✅ — idempotency で冪等性確保
+6. 協調・共有 ✅ — serviceRoleActions パターン再利用
+7. 倫理・責任 ✅ — dormant ユーザー除外 (90日フィルタ)
+8. 技術卓越 ✅ — deno lint 0 errors
+9. 長期思考 ✅ — Phase 2 (#514 との統合) / Phase 3 (Web Push) への拡張口を設計
