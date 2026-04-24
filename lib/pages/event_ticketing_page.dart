@@ -72,9 +72,9 @@ class _EventTicketingPageState extends State<EventTicketingPage> {
     setState(() => _isLoading = true);
     try {
       await _supabase.functions.invoke(
-        'event-ticketing',
+        'social-commerce-hub',
         body: {
-          'action': 'create',
+          'action': 'event.create',
           'title': title,
           if (_dateController.text.trim().isNotEmpty)
             'date': _dateController.text.trim(),
@@ -95,8 +95,8 @@ class _EventTicketingPageState extends State<EventTicketingPage> {
     });
     try {
       final response = await _supabase.functions.invoke(
-        'event-ticketing',
-        body: {'action': 'list'},
+        'social-commerce-hub',
+        body: {'action': 'event.list'},
       );
       final data = response.data;
       if (data is Map<String, dynamic> && data['events'] is List) {

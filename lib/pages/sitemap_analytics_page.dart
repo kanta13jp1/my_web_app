@@ -40,16 +40,12 @@ class _SitemapAnalyticsPageState extends State<SitemapAnalyticsPage>
       _errorMessage = null;
     });
     try {
-      final pgRes = await _supabase.functions.invoke(
-        'sitemap-analytics',
-        queryParameters: {'view': 'pages'},
-      );
       final ovRes = await _supabase.functions.invoke(
-        'sitemap-analytics',
-        queryParameters: {'view': 'overview'},
+        'enterprise-hub',
+        body: {'action': 'sitemap.analyze'},
       );
       setState(() {
-        _pages = _toList(pgRes.data, 'pages');
+        _pages = [];
         final ovData = ovRes.data;
         if (ovData is Map<String, dynamic>) _overview = ovData;
       });

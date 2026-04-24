@@ -1589,6 +1589,7 @@ serve(async (req) => {
         await admin.from("hub_data").update({ metadata: { ...meta, votes } }).eq("id", poll.id);
         return json({ success: true, votes });
       }
+      case "form.list": return json({ success: true, forms: await listItems(admin, "form", userId) });
       case "form.create": {
         const item = await addItem(admin, "form", userId, {
           title: body.title, fields: body.fields ?? [], responses: [],

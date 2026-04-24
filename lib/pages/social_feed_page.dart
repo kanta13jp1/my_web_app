@@ -30,8 +30,8 @@ class _SocialFeedPageState extends State<SocialFeedPage> {
     });
     try {
       final response = await _supabase.functions.invoke(
-        'social-feed',
-        body: {'type': _feedType, 'limit': 30},
+        'social-commerce-hub',
+        body: {'action': 'feed.timeline', 'type': _feedType, 'limit': 30},
       );
       final data = response.data;
       if (data is Map<String, dynamic> && data['posts'] is List) {

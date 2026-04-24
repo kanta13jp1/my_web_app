@@ -36,15 +36,18 @@ class _AddressBookPageState extends State<AddressBookPage> {
     });
     try {
       final response = await _supabase.functions.invoke(
-        'address-book',
+        'tools-hub',
         body: {
-          'action': 'list',
+          'action': 'address.list',
           if (query != null && query.isNotEmpty) 'query': query,
         },
       );
       final data = response.data;
-      if (data is Map<String, dynamic> && data['contacts'] is List) {
-        setState(() => _contacts = data['contacts'] as List);
+      final cList = data is Map<String, dynamic>
+          ? (data['contacts'] ?? data['addresses'])
+          : null;
+      if (cList is List) {
+        setState(() => _contacts = cList);
       } else if (data is List) {
         setState(() => _contacts = data);
       } else {
@@ -180,9 +183,9 @@ class _AddressBookPageState extends State<AddressBookPage> {
               Navigator.pop(ctx);
               try {
                 await _supabase.functions.invoke(
-                  'address-book',
+                  'tools-hub',
                   body: {
-                    'action': 'add',
+                    'action': 'address.add',
                     'name': nameController.text.trim(),
                     'email': emailController.text.trim(),
                   },

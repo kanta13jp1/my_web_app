@@ -29,15 +29,15 @@ class _WorkflowTemplatesPageState extends State<WorkflowTemplatesPage> {
     });
     try {
       final response = await _supabase.functions.invoke(
-        'workflow-templates',
-        queryParameters: {'view': 'gallery'},
+        'app-hub',
+        body: {'action': 'workflow.list'},
       );
       final data = response.data;
-      if (data is Map<String, dynamic> && data['templates'] is List) {
-        setState(() => _templates = data['templates'] as List);
-      } else if (data is Map<String, dynamic> &&
-          data['builtinTemplates'] is List) {
-        setState(() => _templates = data['builtinTemplates'] as List);
+      final wList = data is Map<String, dynamic>
+          ? (data['workflows'] ?? data['templates'] ?? data['builtinTemplates'])
+          : null;
+      if (wList is List) {
+        setState(() => _templates = wList);
       } else if (data is List) {
         setState(() => _templates = data);
       } else {

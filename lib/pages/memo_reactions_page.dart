@@ -49,8 +49,8 @@ class _MemoReactionsPageState extends State<MemoReactionsPage> {
 
     try {
       final response = await _supabase.functions.invoke(
-        'memo-reactions',
-        queryParameters: {'memo_id': memoId.toString()},
+        'core-hub',
+        body: {'action': 'memo.share_list', 'memo_id': memoId},
       );
       final data = response.data;
       if (data is Map<String, dynamic>) {
@@ -75,8 +75,8 @@ class _MemoReactionsPageState extends State<MemoReactionsPage> {
 
     try {
       await _supabase.functions.invoke(
-        'memo-reactions',
-        body: {'memo_id': memoId, 'reaction': reaction},
+        'core-hub',
+        body: {'action': 'memo.share', 'memo_id': memoId, 'reaction': reaction},
       );
       await _load();
     } catch (e) {

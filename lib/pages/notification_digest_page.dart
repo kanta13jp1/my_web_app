@@ -29,8 +29,8 @@ class _NotificationDigestPageState extends State<NotificationDigestPage> {
     });
     try {
       final response = await _supabase.functions.invoke(
-        'notification-digest',
-        body: {'action': 'get_digest'},
+        'core-hub',
+        body: {'action': 'notification.list'},
       );
       final data = response.data;
       if (data is Map<String, dynamic>) {
@@ -47,8 +47,12 @@ class _NotificationDigestPageState extends State<NotificationDigestPage> {
     setState(() => _isLoading = true);
     try {
       await _supabase.functions.invoke(
-        'notification-digest',
-        body: {'action': 'send_digest'},
+        'core-hub',
+        body: {
+          'action': 'notification.create',
+          'title': 'ダイジェスト送信',
+          'type': 'digest'
+        },
       );
       await _fetchDigest();
     } catch (e) {

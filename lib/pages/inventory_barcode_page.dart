@@ -41,16 +41,12 @@ class _InventoryBarcodePageState extends State<InventoryBarcodePage>
     });
     try {
       final iRes = await _supabase.functions.invoke(
-        'inventory-barcode',
-        queryParameters: {'view': 'items'},
-      );
-      final mRes = await _supabase.functions.invoke(
-        'inventory-barcode',
-        queryParameters: {'view': 'movements'},
+        'social-commerce-hub',
+        body: {'action': 'inventory.list'},
       );
       setState(() {
         _items = _toList(iRes.data, 'items');
-        _movements = _toList(mRes.data, 'movements');
+        _movements = [];
       });
     } catch (e) {
       setState(() => _errorMessage = '$e');

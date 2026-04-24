@@ -71,9 +71,9 @@ class _FormBuilderPageState extends State<FormBuilderPage> {
     setState(() => _isLoading = true);
     try {
       await _supabase.functions.invoke(
-        'form-builder',
+        'tools-hub',
         body: {
-          'action': 'create',
+          'action': 'form.create',
           'title': title,
           if (_descController.text.trim().isNotEmpty)
             'description': _descController.text.trim(),
@@ -94,8 +94,8 @@ class _FormBuilderPageState extends State<FormBuilderPage> {
     });
     try {
       final response = await _supabase.functions.invoke(
-        'form-builder',
-        body: {'action': 'list'},
+        'tools-hub',
+        body: {'action': 'form.list'},
       );
       final data = response.data;
       if (data is Map<String, dynamic> && data['forms'] is List) {
