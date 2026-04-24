@@ -16,6 +16,62 @@ class AiUniversityVideoLessonTopic {
   String get id => '$provider::$category::$title';
 }
 
+class AiUniversityVideoV3Scene {
+  const AiUniversityVideoV3Scene({
+    required this.label,
+    required this.narration,
+    required this.visualDirection,
+    required this.onScreenText,
+  });
+
+  final String label;
+  final String narration;
+  final String visualDirection;
+  final String onScreenText;
+}
+
+class AiUniversityVideoV3Plan {
+  const AiUniversityVideoV3Plan({
+    required this.title,
+    required this.learningGoal,
+    required this.heygenBrief,
+    required this.scenes,
+    required this.localizationNotes,
+    required this.cta,
+  });
+
+  final String title;
+  final String learningGoal;
+  final String heygenBrief;
+  final List<AiUniversityVideoV3Scene> scenes;
+  final List<String> localizationNotes;
+  final String cta;
+
+  String get clipboardText => [
+        title,
+        '',
+        'Learning goal: $learningGoal',
+        '',
+        'HeyGen brief:',
+        heygenBrief,
+        '',
+        'Scenes:',
+        ...scenes.map(
+          (scene) => [
+            '- ${scene.label}',
+            '  Narration: ${scene.narration}',
+            '  Visual: ${scene.visualDirection}',
+            '  Text: ${scene.onScreenText}',
+          ].join('\n'),
+        ),
+        '',
+        'Localization:',
+        ...localizationNotes.map((note) => '- $note'),
+        '',
+        'CTA: $cta',
+      ].join('\n');
+}
+
 class AiUniversityVideoLessonService {
   static const int _maxPromptContentChars = 1800;
 
@@ -87,6 +143,63 @@ class AiUniversityVideoLessonService {
   static String providerLabel(String provider) =>
       _providerLabels[provider] ?? provider.toUpperCase();
 
+  static AiUniversityVideoV3Plan buildHeyGenV3Plan({
+    required String providerLabel,
+    required AiUniversityVideoLessonTopic topic,
+  }) {
+    final source = _normalizeSource(topic.content);
+    final category = categoryLabel(topic.category);
+    final oneLine = _firstSentence(source, fallback: topic.title);
+    final useCase = _pickUseCase(topic.category);
+
+    return AiUniversityVideoV3Plan(
+      title: 'HeyGen AI大学 v3: $providerLabel / ${topic.title}',
+      learningGoal: '$providerLabel の $category を90秒以内で理解し、$useCase に使う判断材料を得る',
+      heygenBrief: 'HeyGen Avatar Vで、落ち着いた講師アバターが日本語で説明する。'
+          '1シーン15秒前後、字幕は短く、口調は断定しすぎず教材根拠ベースにする。'
+          '生成後は英語・韓国語・中国語・スペイン語へリップシンク翻訳できる構成にする。',
+      scenes: [
+        AiUniversityVideoV3Scene(
+          label: 'Hook',
+          narration: '$providerLabel は何を解決するAIなのか。まず一言で押さえます。',
+          visualDirection: '講師アバター正面。背景にプロバイダー名とカテゴリを表示。',
+          onScreenText: '$providerLabel: $category',
+        ),
+        AiUniversityVideoV3Scene(
+          label: 'Core concept',
+          narration: oneLine,
+          visualDirection: 'キーワード3つを横並びで表示し、講師が順番に指し示す。',
+          onScreenText: _keywords(source).join(' / '),
+        ),
+        AiUniversityVideoV3Scene(
+          label: 'Why it matters',
+          narration: '$useCase で使うと、調査・制作・判断の手戻りを減らせます。',
+          visualDirection: 'Before/Afterの2カラム。左は手作業、右はAI活用。',
+          onScreenText: '手戻り削減 / 判断高速化 / 再利用',
+        ),
+        const AiUniversityVideoV3Scene(
+          label: 'How to try',
+          narration: 'まずは小さな教材や業務メモで試し、結果をKGI、CSF、KPIで確認します。',
+          visualDirection: 'チェックリストUI。入力、生成、評価、改善の4ステップ。',
+          onScreenText: '入力 -> 生成 -> 評価 -> 改善',
+        ),
+        AiUniversityVideoV3Scene(
+          label: 'Recap',
+          narration: '$providerLabel は、$category の理解を動画で素早く共有する入口になります。',
+          visualDirection: '講師アバター横にまとめカード。最後にAI大学への導線。',
+          onScreenText: 'AI大学で次の教材へ',
+        ),
+      ],
+      localizationNotes: [
+        '英語版は専門用語を残し、短い文でテンポを上げる',
+        '韓国語・中国語版は画面テキストを詰め込みすぎない',
+        'SNS短尺版はHook、Core concept、CTAの3シーンだけに圧縮する',
+        '各言語で字幕が長くなる場合は1行18文字前後に分割する',
+      ],
+      cta: 'AI大学で $providerLabel の教材を開き、次のユースケースを試す',
+    );
+  }
+
   static String categoryLabel(String category) {
     switch (category) {
       case 'overview':
@@ -141,6 +254,28 @@ $clipped
         .trim();
   }
 
+  static String buildHeyGenV3Prompt({
+    required String providerLabel,
+    required AiUniversityVideoLessonTopic topic,
+  }) {
+    final basePrompt = buildPrompt(providerLabel: providerLabel, topic: topic);
+    final plan = buildHeyGenV3Plan(providerLabel: providerLabel, topic: topic);
+    return '''
+$basePrompt
+
+追加条件:
+- HeyGen Avatar V でそのまま動画化できる構成にする
+- 冒頭に学習ゴールを1文で入れる
+- 5シーン構成で、各シーンは15秒以内の短い台詞にする
+- 日本語版を主原稿にし、英語・韓国語・中国語・スペイン語への翻訳時に崩れにくい短文にする
+- 最後に「次に試す小さな実践」を1つだけ示す
+
+HeyGen v3 設計メモ:
+${plan.clipboardText}
+'''
+        .trim();
+  }
+
   static int _categoryRank(String category) {
     switch (category) {
       case 'overview':
@@ -157,6 +292,51 @@ $clipped
         return 5;
       default:
         return 99;
+    }
+  }
+
+  static String _firstSentence(String source, {required String fallback}) {
+    if (source.trim().isEmpty) return fallback;
+    final parts = source.split(RegExp(r'[。.!?]\s*'));
+    for (final part in parts) {
+      final trimmed = part.trim();
+      if (trimmed.length >= 12) {
+        return trimmed.length > 90 ? '${trimmed.substring(0, 90)}...' : trimmed;
+      }
+    }
+    final clipped = source.trim();
+    return clipped.length > 90 ? '${clipped.substring(0, 90)}...' : clipped;
+  }
+
+  static List<String> _keywords(String source) {
+    final matches = RegExp(r'[A-Za-z][A-Za-z0-9.+-]{2,}|[一-龥ぁ-んァ-ンー]{3,}')
+        .allMatches(source)
+        .map((match) => match.group(0) ?? '')
+        .where((word) => word.trim().isNotEmpty)
+        .toList();
+    final unique = <String>[];
+    for (final word in matches) {
+      if (!unique.contains(word)) unique.add(word);
+      if (unique.length == 3) break;
+    }
+    return unique.isEmpty ? ['概要', '使いどころ', '次の実践'] : unique;
+  }
+
+  static String _pickUseCase(String category) {
+    switch (category) {
+      case 'api':
+        return 'プロダクト実装やEdge Function連携';
+      case 'models':
+        return 'モデル選定や性能比較';
+      case 'use_cases':
+        return '実務への適用判断';
+      case 'pricing':
+        return '費用対効果の見積もり';
+      case 'news':
+        return '最新動向の共有';
+      case 'overview':
+      default:
+        return '初回学習とチーム共有';
     }
   }
 

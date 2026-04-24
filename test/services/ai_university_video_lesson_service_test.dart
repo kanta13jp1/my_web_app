@@ -1,5 +1,5 @@
-import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/services/ai_university_video_lesson_service.dart';
+import 'package:test/test.dart';
 
 void main() {
   test('topicsFromRows sorts overview before api', () {
@@ -63,5 +63,45 @@ void main() {
     expect(prompt, contains('Character-3'));
     expect(prompt, isNot(contains('# Heading')));
     expect(prompt.length, lessThan(2600));
+  });
+
+  test('buildHeyGenV3Plan creates five scenes and copy text', () {
+    const topic = AiUniversityVideoLessonTopic(
+      provider: 'heygen',
+      category: 'api',
+      title: 'HeyGen API',
+      content:
+          'HeyGen API can generate avatar videos and translate videos into many languages. It is useful for product education.',
+    );
+
+    final plan = AiUniversityVideoLessonService.buildHeyGenV3Plan(
+      providerLabel: 'HeyGen',
+      topic: topic,
+    );
+
+    expect(plan.title, contains('HeyGen AI大学 v3'));
+    expect(plan.scenes, hasLength(5));
+    expect(plan.heygenBrief, contains('HeyGen Avatar V'));
+    expect(plan.localizationNotes, isNotEmpty);
+    expect(plan.clipboardText, contains('Learning goal'));
+  });
+
+  test('buildHeyGenV3Prompt adds HeyGen video constraints', () {
+    const topic = AiUniversityVideoLessonTopic(
+      provider: 'openai',
+      category: 'overview',
+      title: 'Overview',
+      content:
+          'OpenAI provides models for reasoning, coding, multimodal understanding, and agents.',
+    );
+
+    final prompt = AiUniversityVideoLessonService.buildHeyGenV3Prompt(
+      providerLabel: 'OpenAI',
+      topic: topic,
+    );
+
+    expect(prompt, contains('HeyGen Avatar V'));
+    expect(prompt, contains('5シーン構成'));
+    expect(prompt, contains('OpenAI'));
   });
 }

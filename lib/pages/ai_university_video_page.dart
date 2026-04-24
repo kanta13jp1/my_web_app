@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -126,7 +127,7 @@ class _AiUniversityVideoPageState extends State<AiUniversityVideoPage> {
 
     final providerLabel =
         AiUniversityVideoLessonService.providerLabel(_provider!);
-    final prompt = AiUniversityVideoLessonService.buildPrompt(
+    final prompt = AiUniversityVideoLessonService.buildHeyGenV3Prompt(
       providerLabel: providerLabel,
       topic: topic,
     );
@@ -182,6 +183,17 @@ class _AiUniversityVideoPageState extends State<AiUniversityVideoPage> {
     await launchUrl(uri, mode: LaunchMode.platformDefault);
   }
 
+  Future<void> _copyToClipboard(String text) async {
+    await Clipboard.setData(ClipboardData(text: text));
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('HeyGen v3設計をコピーしました'),
+        backgroundColor: Color(0xFF26A69A),
+      ),
+    );
+  }
+
   void _onProviderChanged(String? value) {
     if (value == null) return;
     final topic = AiUniversityVideoLessonService.pickInitialTopic(
@@ -206,6 +218,15 @@ class _AiUniversityVideoPageState extends State<AiUniversityVideoPage> {
     const surface2 = Color(0xFF1E1E1E);
     const accent = Color(0xFFFF6B35);
     final topic = _selectedTopic;
+    final providerLabel = _provider == null
+        ? null
+        : AiUniversityVideoLessonService.providerLabel(_provider!);
+    final v3Plan = topic == null || providerLabel == null
+        ? null
+        : AiUniversityVideoLessonService.buildHeyGenV3Plan(
+            providerLabel: providerLabel,
+            topic: topic,
+          );
 
     return Scaffold(
       backgroundColor: pageBg,
@@ -383,6 +404,13 @@ class _AiUniversityVideoPageState extends State<AiUniversityVideoPage> {
                         ],
                       ),
                     ),
+                  if (v3Plan != null) ...[
+                    const SizedBox(height: 12),
+                    _HeyGenV3PlanCard(
+                      plan: v3Plan,
+                      onCopy: () => _copyToClipboard(v3Plan.clipboardText),
+                    ),
+                  ],
                   if (_generationError != null) ...[
                     const SizedBox(height: 12),
                     _InfoCard(
@@ -500,6 +528,154 @@ class _AiUniversityVideoPageState extends State<AiUniversityVideoPage> {
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
         borderSide: const BorderSide(color: Colors.white12),
+      ),
+    );
+  }
+}
+
+class _HeyGenV3PlanCard extends StatelessWidget {
+  const _HeyGenV3PlanCard({
+    required this.plan,
+    required this.onCopy,
+  });
+
+  final AiUniversityVideoV3Plan plan;
+  final VoidCallback onCopy;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFF101820),
+        borderRadius: BorderRadius.circular(16),
+        border:
+            Border.all(color: const Color(0xFF26A69A).withValues(alpha: 0.34)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.smart_display, color: Color(0xFF26A69A)),
+              const SizedBox(width: 8),
+              const Expanded(
+                child: Text(
+                  'HeyGen AI大学 v3 設計',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    height: 1.5,
+                  ),
+                ),
+              ),
+              TextButton.icon(
+                onPressed: onCopy,
+                icon: const Icon(Icons.copy, size: 16),
+                label: const Text('コピー'),
+                style: TextButton.styleFrom(
+                  foregroundColor: const Color(0xFF80CBC4),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(
+            plan.learningGoal,
+            style: const TextStyle(
+              color: Colors.white70,
+              fontSize: 13,
+              height: 1.6,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.black26,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.white10),
+            ),
+            child: Text(
+              plan.heygenBrief,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 13,
+                height: 1.6,
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          ...plan.scenes.map(
+            (scene) => Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1A1A1A),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.white10),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      scene.label,
+                      style: const TextStyle(
+                        color: Color(0xFF80CBC4),
+                        fontWeight: FontWeight.bold,
+                        height: 1.5,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      scene.narration,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 13,
+                        height: 1.55,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      scene.onScreenText,
+                      style: const TextStyle(
+                        color: Colors.white54,
+                        fontSize: 12,
+                        height: 1.45,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 4),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: plan.localizationNotes
+                .map(
+                  (note) => Chip(
+                    label: Text(note),
+                    backgroundColor:
+                        const Color(0xFF26A69A).withValues(alpha: 0.14),
+                    side: BorderSide(
+                      color: const Color(0xFF26A69A).withValues(alpha: 0.24),
+                    ),
+                    labelStyle: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 12,
+                      height: 1.35,
+                    ),
+                  ),
+                )
+                .toList(),
+          ),
+        ],
       ),
     );
   }
