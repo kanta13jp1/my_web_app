@@ -140,6 +140,8 @@ jobs:
           upsert_provider "patronus_ai"  "https://www.patronus.ai/blog/rss.xml"              "Patronus AI (LLM Evaluation & Safety)"
           upsert_provider "autogen"      "https://devblogs.microsoft.com/autogen/feed/"      "AutoGen (Microsoft Research Multi-Agent OSS)"
           upsert_provider "agno"         "https://www.agno.com/blog/rss.xml"                 "Agno / phidata (Python-native Agent Framework)"
+          upsert_provider "haystack"     "https://haystack.deepset.ai/blog/feed"             "Haystack deepset (OSS RAG & LLM App Framework)"
+          upsert_provider "zenml"        "https://www.zenml.io/blog/rss.xml"                 "ZenML (MLOps Pipeline OSS)"
 
           # RSS廃止/URL無効 (静的seedコンテンツを維持):
           # anthropic, meta, x, deepseek, mistral, perplexity, groq, cohere, ibm, sakana, baidu, stability, core, cerebras, prover

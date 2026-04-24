@@ -95,7 +95,7 @@ class AiProviderEntry {
   });
 }
 
-/// AI大学 登録プロバイダー全件のステータスカタログ (178社, 2026-04-24時点)
+/// AI大学 登録プロバイダー全件のステータスカタログ (180社, 2026-04-24時点)
 ///
 /// 実装済み: ai-assistant / ai-hub / ai-search に統合済みのもの
 /// 要APIキー: コード対応済みだが Supabase Secrets に追加が必要
@@ -1419,6 +1419,22 @@ const List<AiProviderEntry> kAiProviderRegistry = [
     entryPoint: 'https://www.agno.com/',
     note:
         r'Python-native エージェント — Memory (SQLite/PG) + Knowledge (RAG) + Tools 100+ + Agent Teams / Agno Cloud',
+  ),
+  AiProviderEntry(
+    id: 'haystack',
+    displayName: 'Haystack (deepset)',
+    status: AiProviderStatus.notImplemented,
+    entryPoint: 'https://haystack.deepset.ai/',
+    note:
+        r'OSS RAG・LLM アプリフレームワーク — 17k+ Stars / Component DAG / 50+DocumentStore / deepset Cloud / Claude対応',
+  ),
+  AiProviderEntry(
+    id: 'zenml',
+    displayName: 'ZenML',
+    status: AiProviderStatus.notImplemented,
+    entryPoint: 'https://zenml.io/',
+    note:
+        r'OSS MLOps パイプライン — @step/@pipeline デコレータ / Stack抽象化 (Vertex/SageMaker) / 50+ integrations / ZenML Pro',
   ),
 ];
 
