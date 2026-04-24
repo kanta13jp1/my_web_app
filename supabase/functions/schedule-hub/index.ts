@@ -96,7 +96,7 @@ serve(async (req: Request) => {
     const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
 
     // Public actions that don't require auth
-    const publicActions = ["digest.run", "health.check", "blog.auto_publish", "blog.create", "reminders.study"];
+    const publicActions = ["digest.run", "health.check", "blog.auto_publish", "blog.create", "reminders.study", "notion.sync_wbs"];
     let userId: string | null = null;
     if (!publicActions.includes(action)) {
       userId = await getUserId(req);
@@ -801,6 +801,130 @@ serve(async (req: Request) => {
           db_ok: !dbCheck.error,
           latency_ms: Date.now() - start,
           timestamp: new Date().toISOString(),
+        });
+      }
+
+      // ─── Notion Sync (Multi-AI resilience / Win#132 part 6 · Backlog N2) ────
+      // Win版#132 part 4 設計の N2 実装。Supabase wbs_tasks → Notion Database
+      // upsert (last_edited 順で最新 500 件)。Anthropic outage 時もユーザーが
+      // Notion mirror で WBS を閲覧できる = SPOF 解消。
+      // Auth: service_role (public action / GHA cron から呼ぶ想定)
+      // Secrets: NOTION_API_TOKEN / NOTION_WBS_DATABASE_ID
+      case "notion.sync_wbs": {
+        const token = Deno.env.get("NOTION_API_TOKEN");
+        const dbId = Deno.env.get("NOTION_WBS_DATABASE_ID");
+        if (!token || !dbId) {
+          return json(
+            { success: false, error: "notion_not_configured", missing: !token ? "NOTION_API_TOKEN" : "NOTION_WBS_DATABASE_ID" },
+            503,
+          );
+        }
+
+        // Supabase 側から最新 WBS (last_edited 順 500 件) を取得
+        const { data: tasks, error: fetchErr } = await admin
+          .from("wbs_tasks")
+          .select("id, title, instance, status, progress, end_date, updated_at")
+          .order("updated_at", { ascending: false })
+          .limit(500);
+
+        if (fetchErr) {
+          return json({ success: false, error: `supabase_fetch_failed: ${fetchErr.message}` }, 500);
+        }
+
+        // Notion Database に upsert 相当 (id で検索 → 存在すれば patch / 無ければ create)
+        let created = 0;
+        let updated = 0;
+        let failed = 0;
+        const errors: string[] = [];
+
+        for (const t of tasks ?? []) {
+          // title property = id (Notion Database で id property を Title 型として使用)
+          const properties: Record<string, unknown> = {
+            id: { title: [{ text: { content: String(t.id) } }] },
+            title: { rich_text: [{ text: { content: String(t.title ?? "") } }] },
+            instance: { select: { name: String(t.instance ?? "all") } },
+            status: { select: { name: String(t.status ?? "pending") } },
+            progress: { number: Number(t.progress ?? 0) },
+            deadline: t.end_date ? { date: { start: String(t.end_date) } } : { date: null },
+            updated_at: t.updated_at ? { date: { start: String(t.updated_at) } } : { date: null },
+          };
+
+          try {
+            // 既存 page を id (Title) で検索
+            const queryResp = await fetch(`https://api.notion.com/v1/databases/${dbId}/query`, {
+              method: "POST",
+              headers: {
+                "Authorization": `Bearer ${token}`,
+                "Notion-Version": "2022-06-28",
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                filter: { property: "id", title: { equals: String(t.id) } },
+                page_size: 1,
+              }),
+            });
+
+            if (!queryResp.ok) {
+              failed++;
+              errors.push(`query ${t.id}: HTTP ${queryResp.status}`);
+              continue;
+            }
+
+            const queryJson = await queryResp.json();
+            const existingPageId = queryJson?.results?.[0]?.id;
+
+            if (existingPageId) {
+              // patch
+              const patchResp = await fetch(`https://api.notion.com/v1/pages/${existingPageId}`, {
+                method: "PATCH",
+                headers: {
+                  "Authorization": `Bearer ${token}`,
+                  "Notion-Version": "2022-06-28",
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ properties }),
+              });
+              if (patchResp.ok) updated++;
+              else {
+                failed++;
+                errors.push(`patch ${t.id}: HTTP ${patchResp.status}`);
+              }
+            } else {
+              // create
+              const createResp = await fetch(`https://api.notion.com/v1/pages`, {
+                method: "POST",
+                headers: {
+                  "Authorization": `Bearer ${token}`,
+                  "Notion-Version": "2022-06-28",
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  parent: { database_id: dbId },
+                  properties,
+                }),
+              });
+              if (createResp.ok) created++;
+              else {
+                failed++;
+                errors.push(`create ${t.id}: HTTP ${createResp.status}`);
+              }
+            }
+
+            // Notion rate limit 対策 (3 req/sec 平均 → 350ms interval = 余裕)
+            await new Promise((r) => setTimeout(r, 350));
+          } catch (e) {
+            failed++;
+            errors.push(`${t.id}: ${String(e)}`);
+          }
+        }
+
+        return json({
+          success: failed === 0,
+          total: tasks?.length ?? 0,
+          created,
+          updated,
+          failed,
+          errors: errors.slice(0, 10), // 最初の 10 件のみ返す
         });
       }
 

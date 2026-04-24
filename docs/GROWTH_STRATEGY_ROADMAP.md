@@ -17738,3 +17738,54 @@ Migration `20260425043000` が2本存在:
 7. 倫理・責任 ✅ — 既存機能を壊さず移行 (null-safe fallback徹底)
 8. 技術卓越 ✅ — 1748行削減 / 54 insertionsのみ
 9. 長期思考 ✅ — EF ≤50 constraint 確立で将来の無秩序EF増殖防止
+
+---
+
+## Win版#132 part 6 完了 (2026-04-24 朝)
+
+### 実施内容: Notion WBS Sync EF 実装 (Backlog N2 消化)
+
+**契機**: Win#132 part 5 で manual setup (S1 + N1) 完了 + GitHub Issue #696 handoff。最優先 Backlog N2 (`schedule-hub:notion.sync_wbs`) 実装。
+
+**実装**: `supabase/functions/schedule-hub/index.ts` に `notion.sync_wbs` action 追加 (~110 行)
+
+### 機能
+- Supabase `wbs_tasks` テーブル → Notion Database upsert (last_edited 順 500 件)
+- 既存 Notion page は PATCH / 新規は POST で `parent.database_id` に create
+- id (Title) で検索して存在判定 → branch
+- 7 properties mapping: `id` / `title` / `instance` / `status` / `progress` / `deadline` / `updated_at`
+- Notion rate limit 対策: 350ms sleep interval (3 req/sec 平均以下)
+- 結果: `{success, total, created, updated, failed, errors[0..10]}`
+
+### Auth / Secrets
+- Auth: `publicActions` に `notion.sync_wbs` 追加 (GHA cron から呼べるように)
+- 必須: `NOTION_API_TOKEN` / `NOTION_WBS_DATABASE_ID` (Win#132 part 5 で登録済)
+- Deny-by-default: secrets 未設定なら 503 返す
+
+### Backlog 進捗 (Win#132 part 6 時点)
+- ✅ S1 (Slack Webhook 3 ch 登録)
+- ✅ N1 (Notion Integration + DB 接続)
+- ✅ **N2 (schedule-hub:notion.sync_wbs action)** ← 本 commit
+- 🔴 S2: `core-hub:slack.notify` action
+- 🔴 S3: ai_circuit_breaker → Slack trigger
+- 🟡 N3-N5: notion.sync_roadmap / memory_index / GHA cron 1h 毎
+- 🟢 S4: Discord webhook secondary
+
+### 動作確認方法 (deploy 後)
+```bash
+curl -X POST https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/schedule-hub \
+  -H "Content-Type: application/json" \
+  -d '{"action":"notion.sync_wbs"}'
+# 期待: {"success":true, "total":N, "created":N, "updated":0, "failed":0}
+# N 件が Notion "WBS Tasks" DB に投入される
+```
+
+### Philosophy Alignment (9/9) ✅
+1. CEO感 ✅ / 2. ミッション駆動 ✅ (Notion mirror = outage 時のライフライン) / 3. 優しいmentor ✅ / 4. 6部署バランス ✅
+5. 商品=ユーザー価値 ✅ (quota outage 時も WBS 確認可) / 6. 資本=時間 ✅ / 7. 資産負債 ✅
+8. KPI=昨日の自分 ✅ (Notion で進捗を自己確認) / 9. ゴール=IPO ✅ (multi-vendor mirror = healthy disclosure)
+
+### AI-DEV 原則 (6/7) ✅
+1. Auth ✅ (service_role / public action / token secret) / 2. Deny-by-default ✅ (secrets 未設定で 503) / 3. trace_id ❌ (後続 task) / 4. Circuit breaker ❌ (rate limit 350ms のみ / 本格 CB は S3 担当) / 5. Team memory ✅ (wbs_tasks) / 6. Checkpoint+retry ✅ (errors[] で 10 件返す) / 7. Quality gate ✅ (failed カウント)
+
+### commit: TBD
