@@ -95,7 +95,7 @@ class AiProviderEntry {
   });
 }
 
-/// AI大学 登録プロバイダー全件のステータスカタログ (166社, 2026-04-24時点)
+/// AI大学 登録プロバイダー全件のステータスカタログ (168社, 2026-04-24時点)
 ///
 /// 実装済み: ai-assistant / ai-hub / ai-search に統合済みのもの
 /// 要APIキー: コード対応済みだが Supabase Secrets に追加が必要
@@ -1317,6 +1317,22 @@ const List<AiProviderEntry> kAiProviderRegistry = [
     entryPoint: 'https://scale.com/',
     note:
         r'データラベリング→Enterprise AI — RLHF供給 / Scale Donovan (DoD) / $13.8B / $1B+ 売上 / Alexandr Wang',
+  ),
+  AiProviderEntry(
+    id: 'baseten',
+    displayName: 'Baseten',
+    status: AiProviderStatus.notImplemented,
+    entryPoint: 'https://www.baseten.co/',
+    note:
+        r'ML推論インフラ — Chains SDK / OpenAI互換50%安 / Series E $5B / Nvidia $150M投資 / Blackwell 225%効率',
+  ),
+  AiProviderEntry(
+    id: 'arize_ai',
+    displayName: 'Arize AI',
+    status: AiProviderStatus.notImplemented,
+    entryPoint: 'https://arize.com/',
+    note:
+        r'LLM観測・評価 — Phoenix OSS (完全無料 / Claude Code CLI統合) / LLM-as-judge / $131M / 多フレームワーク',
   ),
 ];
 
