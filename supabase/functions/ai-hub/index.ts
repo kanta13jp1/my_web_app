@@ -1784,6 +1784,88 @@ async function addItem(
   return data;
 }
 
+const AI_UNIVERSITY_RLHF_SOURCE = "ai_university_rlhf_signal";
+
+function rlhfLabel(rating: number, helpful: boolean): string {
+  if (helpful || rating >= 4) return "positive";
+  if (!helpful || rating <= 2) return "negative";
+  return "neutral";
+}
+
+function rlhfQualityScore(
+  positiveSignals: number,
+  neutralSignals: number,
+  totalSignals: number,
+): number {
+  if (totalSignals <= 0) return 0;
+  return Math.round(
+    ((positiveSignals + neutralSignals * 0.5) / totalSignals) * 100,
+  );
+}
+
+function rlhfNextAction(totalSignals: number, qualityScore: number): string {
+  if (totalSignals < 20) {
+    return "Collect at least 20 preference signals before tuning.";
+  }
+  if (qualityScore < 70) {
+    return "Review low-rated lessons and regenerate weak explanations.";
+  }
+  return "Dataset is ready for fine-tuning or evaluation batches.";
+}
+
+function buildRlhfSnapshot(
+  rows: Array<{ metadata?: Record<string, unknown> | null }>,
+) {
+  let positiveSignals = 0;
+  let neutralSignals = 0;
+  let negativeSignals = 0;
+  let ratingSum = 0;
+  const providerSignalCounts: Record<string, number> = {};
+
+  for (const row of rows) {
+    const metadata = row.metadata ?? {};
+    const providerId = asString(metadata.provider_id);
+    const rating = Math.min(
+      Math.max(Math.round(asNumber(metadata.rating, 3)), 1),
+      5,
+    );
+    const helpful = metadata.helpful === true;
+    const label = asString(metadata.quality_label) ||
+      rlhfLabel(rating, helpful);
+
+    ratingSum += rating;
+    if (providerId) {
+      providerSignalCounts[providerId] =
+        (providerSignalCounts[providerId] ?? 0) + 1;
+    }
+    if (label === "positive") positiveSignals += 1;
+    else if (label === "negative") negativeSignals += 1;
+    else neutralSignals += 1;
+  }
+
+  const totalSignals = rows.length;
+  const averageRating = totalSignals === 0
+    ? 0
+    : Math.round((ratingSum / totalSignals) * 10) / 10;
+  const qualityScore = rlhfQualityScore(
+    positiveSignals,
+    neutralSignals,
+    totalSignals,
+  );
+
+  return {
+    total_signals: totalSignals,
+    positive_signals: positiveSignals,
+    neutral_signals: neutralSignals,
+    negative_signals: negativeSignals,
+    average_rating: averageRating,
+    quality_score: qualityScore,
+    ready_for_fine_tune: totalSignals >= 20 && qualityScore >= 70,
+    provider_signal_counts: providerSignalCounts,
+    next_action: rlhfNextAction(totalSignals, qualityScore),
+  };
+}
+
 async function _deleteItem(
   admin: SupabaseClient,
   source: string,
@@ -2142,6 +2224,8 @@ serve(async (req: Request) => {
       // AI大学 v2 (P1〜P4)
       "quiz.fsrs_next",
       "quiz.fsrs_grade",
+      "university.rlhf_signal",
+      "university.rlhf_snapshot",
       "learner.update_profile",
       "quiz.evaluate",
       "quiz.explain",
@@ -2867,6 +2951,55 @@ serve(async (req: Request) => {
           correct_count: correctCount,
           total_providers: totalProviders,
         });
+      }
+
+      case "university.rlhf_signal": {
+        if (!userId) return json({ error: "Unauthorized" }, 401);
+        const providerId = asString(body.provider_id);
+        if (!providerId) return json({ error: "provider_id required" }, 400);
+
+        const rating = Math.min(
+          Math.max(Math.round(asNumber(body.rating, 3)), 1),
+          5,
+        );
+        const helpful = body.helpful === true;
+        const qualityLabel = rlhfLabel(rating, helpful);
+        const row = await addItem(
+          admin,
+          AI_UNIVERSITY_RLHF_SOURCE,
+          userId,
+          {
+            provider_id: providerId,
+            content_id: asString(body.content_id) || `${providerId}-overview`,
+            content_title: asString(body.content_title) || providerId,
+            rating,
+            helpful,
+            comment: asString(body.comment),
+            quality_label: qualityLabel,
+            collection_pattern: "scale_rlhf_preference_signal",
+            improvement_use: qualityLabel === "negative"
+              ? "regenerate_or_rewrite_lesson"
+              : "candidate_training_example",
+            captured_at: new Date().toISOString(),
+          },
+        );
+
+        return json({
+          success: true,
+          signal: row,
+          quality_label: qualityLabel,
+        });
+      }
+
+      case "university.rlhf_snapshot": {
+        if (!userId) return json({ error: "Unauthorized" }, 401);
+        const rows = await listItems(
+          admin,
+          AI_UNIVERSITY_RLHF_SOURCE,
+          userId,
+          500,
+        ) as Array<{ metadata?: Record<string, unknown> | null }>;
+        return json({ success: true, snapshot: buildRlhfSnapshot(rows) });
       }
 
       // ── AI大学 v2: FSRS スペース反復 ────────────────────────────────────

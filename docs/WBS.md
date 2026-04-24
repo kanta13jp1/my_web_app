@@ -375,3 +375,7 @@ WHERE title = 'ai-hub provider.chat 蜈ｨ蟇ｾ蠢・;
 - 対応内容: `.github/workflows/self-devin-schedule.yml` を追加し、WBSの追加要望をGitHub Issue修復レーンへ自動ルーティングする日次スケジュールを作った。
 - 実装補足: pendingの追加要望を選び、Issueが閉じていればWBSを完了、Issueが開いていれば `github-issue-fix.yml` をdispatch、Issue未作成なら作成してからdispatchする。`schedule_task_runs` には `self-devin-schedule` として記録する。
 - WBS DB反映: migration `20260425060000_wbs_codex_self_devin_schedule_router.sql`
+- 実担当タスク: `[追加要望] 自分株式会社の「AI大学」機能→ユーザーの学習データもScaleのRLHFコンセプトで品質向上`
+- 対応内容: AI大学の各プロバイダー画面に `RLHF quality loop` を追加し、ユーザーの `Useful / Needs fix` 反応を preference signal として保存、教材品質スコア・平均評価・ファインチューニング準備状況・次アクションを表示できるようにした。
+- 実装補足: `ai-hub` に `university.rlhf_signal` / `university.rlhf_snapshot` を追加し、`hub_data` の `ai_university_rlhf_signal` をScale風の学習データ品質セットとして集計する。閉じ済みIssue #654/#652 もWBSへ完了同期した。
+- WBS DB反映: migration `20260425063000_wbs_codex_ai_university_rlhf_feedback.sql`

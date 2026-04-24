@@ -14,6 +14,7 @@ import 'package:web/web.dart' as web_api;
 import '../data/ai_university_genre_catalog.dart';
 import '../services/ai_fsrs_service.dart';
 import '../services/ai_learner_profile_service.dart';
+import '../services/ai_university_rlhf_service.dart';
 import '../services/gamification_service.dart';
 import '../services/theme_service.dart';
 import 'ai_university_ranking_page.dart';
@@ -5172,17 +5173,28 @@ class _AiUniversityPageState extends State<AiUniversityPage>
   final _shareCardKey = GlobalKey();
   final _fsrsService = AiFsrsService();
   final _learnerProfileService = AiLearnerProfileService();
+  final _rlhfService = AiUniversityRlhfService();
   final Map<String, DateTime> _fsrsNextDue = {};
   final Map<String, String> _quizExplanations = {};
   final Map<String, bool> _quizEvaluating = {};
   final Map<String, List<FsrsCard>> _fsrsDue = {};
   final Set<String> _fsrsDueRequested = {};
+  final Map<String, bool> _rlhfSubmitting = {};
+  AiUniversityRlhfSnapshot _rlhfSnapshot = AiUniversityRlhfSnapshot.empty();
 
   @override
   void initState() {
     super.initState();
     _fetchContent();
     _loadAnsweredQuizzes();
+    _loadRlhfSnapshot();
+  }
+
+  Future<void> _loadRlhfSnapshot() async {
+    final snapshot = await _rlhfService.loadSnapshot();
+    if (mounted && snapshot != null) {
+      setState(() => _rlhfSnapshot = snapshot);
+    }
   }
 
   Future<void> _loadAnsweredQuizzes() async {
@@ -5629,6 +5641,36 @@ class _AiUniversityPageState extends State<AiUniversityPage>
     _loadFsrsDue(providerId);
   }
 
+  Future<void> _submitRlhfSignal({
+    required String providerId,
+    required bool helpful,
+  }) async {
+    setState(() => _rlhfSubmitting[providerId] = true);
+    final ok = await _rlhfService.submitSignal(
+      providerId: providerId,
+      contentId: '$providerId-overview',
+      contentTitle: _meta(providerId).name,
+      rating: helpful ? 5 : 2,
+      helpful: helpful,
+    );
+    final snapshot = ok ? await _rlhfService.loadSnapshot() : null;
+    if (!mounted) return;
+    setState(() {
+      _rlhfSubmitting[providerId] = false;
+      if (snapshot != null) _rlhfSnapshot = snapshot;
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          ok
+              ? 'RLHF signal saved: ${_meta(providerId).name}'
+              : 'Login is required to save RLHF feedback.',
+        ),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
   Future<void> _awardQuizPoints(String providerId) async {
     if (_answeredQuizzes.contains(providerId)) return;
     setState(() => _answeredQuizzes.add(providerId));
@@ -6025,6 +6067,8 @@ class _AiUniversityPageState extends State<AiUniversityPage>
       children: [
         _buildProviderHeader(providerId, m, rows),
         const SizedBox(height: 12),
+        _buildRlhfCard(providerId, m),
+        const SizedBox(height: 12),
         if (rows != null && rows.isNotEmpty)
           ...rows.map((row) => _buildContentCard(row, isDark, surface))
         else
@@ -6033,6 +6077,151 @@ class _AiUniversityPageState extends State<AiUniversityPage>
         _buildQuizCard(providerId, m),
         const SizedBox(height: 32),
       ],
+    );
+  }
+
+  Widget _buildRlhfCard(String providerId, _ProviderMeta m) {
+    final snapshot = _rlhfSnapshot;
+    final providerSignals = snapshot.providerSignalCounts[providerId] ?? 0;
+    final submitting = _rlhfSubmitting[providerId] == true;
+    final progress = snapshot.qualityScore / 100;
+
+    return Card(
+      color: const Color(0xFF151B27),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: m.color.withValues(alpha: 0.32)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.tune, color: m.color, size: 20),
+                const SizedBox(width: 8),
+                const Expanded(
+                  child: Text(
+                    'RLHF quality loop',
+                    style: TextStyle(
+                      color: Color(0xFFE5E7EB),
+                      fontWeight: FontWeight.w800,
+                      height: 1.5,
+                    ),
+                  ),
+                ),
+                Text(
+                  '${snapshot.qualityScore}%',
+                  style: TextStyle(
+                    color: m.color,
+                    fontWeight: FontWeight.w800,
+                    height: 1.5,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(999),
+              child: LinearProgressIndicator(
+                minHeight: 8,
+                value: progress.clamp(0.0, 1.0).toDouble(),
+                backgroundColor: Colors.white.withValues(alpha: 0.10),
+                valueColor: AlwaysStoppedAnimation<Color>(m.color),
+              ),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              'Learner reactions are stored as preference data, scored like a Scale-style feedback set, and used to decide what to improve next.',
+              style: TextStyle(
+                color: Colors.white.withValues(alpha: 0.74),
+                fontSize: 12,
+                height: 1.6,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                _buildRlhfMetricChip('Signals', '${snapshot.totalSignals}'),
+                _buildRlhfMetricChip(
+                  'Provider',
+                  providerSignals.toString(),
+                ),
+                _buildRlhfMetricChip(
+                  'Avg',
+                  snapshot.averageRating.toStringAsFixed(1),
+                ),
+                _buildRlhfMetricChip(
+                  'Ready',
+                  snapshot.readyForFineTune ? 'Yes' : 'No',
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Text(
+              snapshot.nextAction,
+              style: const TextStyle(
+                color: Color(0xFFB0B0B0),
+                fontSize: 12,
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 12),
+            if (submitting)
+              const LinearProgressIndicator(minHeight: 3)
+            else
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  FilledButton.icon(
+                    onPressed: () => _submitRlhfSignal(
+                      providerId: providerId,
+                      helpful: true,
+                    ),
+                    icon: const Icon(Icons.thumb_up_alt_outlined, size: 16),
+                    label: const Text('Useful'),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: m.color,
+                      foregroundColor: Colors.white,
+                    ),
+                  ),
+                  OutlinedButton.icon(
+                    onPressed: () => _submitRlhfSignal(
+                      providerId: providerId,
+                      helpful: false,
+                    ),
+                    icon: const Icon(Icons.report_problem_outlined, size: 16),
+                    label: const Text('Needs fix'),
+                  ),
+                ],
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRlhfMetricChip(String label, String value) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.10)),
+      ),
+      child: Text(
+        '$label $value',
+        style: const TextStyle(
+          color: Color(0xFFE5E7EB),
+          fontSize: 12,
+          fontWeight: FontWeight.w700,
+          height: 1.3,
+        ),
+      ),
     );
   }
 
