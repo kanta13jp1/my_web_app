@@ -16575,3 +16575,29 @@ anon key で wbs.add_task 不可 (service role 必要)。次回 Win版/PS#1 で�
 8. KPI=昨日の自分 ✅ / 9. ゴール=IPO ✅
 
 ### commit: cross-instance-pr + ROADMAP のみ
+
+---
+
+## Win版 2026-04-24 — health-check EF 新規作成
+
+**Instance**: Win版 (worktree: instance-win)
+**commit**: `786f6f94`
+
+### 実装内容
+
+`supabase/functions/health-check/index.ts` を新規作成。
+インフラヘルスチェックスケジュールタスクが 2026-04-24 03:xx から 404 を繰り返していた問題を解消。
+
+**チェック項目**:
+- env vars (SUPABASE_URL + SERVICE_ROLE_KEY)
+- DB connectivity — profiles テーブル latency 測定
+- wbs_tasks テーブル到達確認
+- ai_circuit_breaker テーブル到達確認
+
+**レスポンス**: `{ status: "healthy"|"degraded"|"unhealthy", checks: {...}, timestamp }`
+**認証**: SERVICE_ROLE_KEY bearer 必須 (admin-only)
+
+### Philosophy Alignment (9/9)
+1. CEO感 ✅ / 2. ミッション駆動 ✅ / 3. 優しいmentor ✅ / 4. 6部署バランス ✅
+5. 商品=ユーザー価値 ✅ / 6. 資本=時間 ✅ / 7. 資産負債 ✅
+8. KPI=昨日の自分 ✅ / 9. ゴール=IPO ✅
