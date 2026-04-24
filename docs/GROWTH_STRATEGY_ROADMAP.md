@@ -16580,3 +16580,31 @@ anon key で wbs.add_task 不可 (service role 必要)。次回 Win版/PS#1 で�
 1. CEO感 ✅ / 2. ミッション駆動 ✅ / 3. 優しいmentor ✅ / 4. 6部署バランス ✅
 5. 商品=ユーザー価値 ✅ / 6. 資本=時間 ✅ / 7. 資産負債 ✅
 8. KPI=昨日の自分 ✅ / 9. ゴール=IPO ✅
+
+---
+
+## PS版#3 Session 33 — 2026-04-24 (AI大学 160→162社化)
+
+### 追加プロバイダー
+
+#### Nomic AI (nomic_ai) — OSS 特化 embedding インフラ
+- **概要**: Brandon Duderstadt + Andriy Mulyar 創業 (2021 / NYC) / $17M Series A (Coatue 主導)
+- **主力**: nomic-embed-text (8192 tokens / OpenAI ada-002 超え / Apache 2.0 open weights)
+- **特徴**: Nomic Embed v2 137M params・CPU 推論可・Ollama 対応・Matryoshka Embeddings
+- **評価**: 8/9 (OSS Apache 2.0 / MTEB SOTA / Ollama / Coatue 調達)
+- **migration**: 20260424242000
+
+#### Chroma (chroma) — Developer-First OSS ベクターデータベース
+- **概要**: Jeff Huber + Anton Troynikov 創業 (2022) / $18M seed (Amplify Partners)
+- **主力**: pip install chromadb 3行起動・LangChain/LlamaIndex 最頻出 vector DB
+- **特徴**: Rust 4× 速度向上 (2026) / Chroma Cloud GA / GitHub 20k+ stars
+- **評価**: 8/9 (20k+ stars / LangChain 公式 / Rust 4× / Cloud GA)
+- **migration**: 20260424243500
+
+### commit: 792a320c
+
+### Philosophy Alignment
+
+1. CEO感 ✅ / 2. ミッション駆動 ✅ / 3. 優しいmentor ✅ / 4. 6部署バランス ✅
+5. 商品=ユーザー価値 ✅ / 6. 資本=時間 ✅ / 7. 資産負債 ✅
+8. KPI=昨日の自分 ✅ / 9. ゴール=IPO ✅
