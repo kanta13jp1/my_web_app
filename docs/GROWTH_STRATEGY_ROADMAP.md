@@ -16608,3 +16608,40 @@ anon key で wbs.add_task 不可 (service role 必要)。次回 Win版/PS#1 で�
 1. CEO感 ✅ / 2. ミッション駆動 ✅ / 3. 優しいmentor ✅ / 4. 6部署バランス ✅
 5. 商品=ユーザー価値 ✅ / 6. 資本=時間 ✅ / 7. 資産負債 ✅
 8. KPI=昨日の自分 ✅ / 9. ゴール=IPO ✅
+
+---
+
+## PS版#6 Session 28 — 2026-04-24 (deploy chain 緑化 / schema_migrations 修復)
+
+### 問題
+
+PS#3 S32 deploy が `duplicate key value violates unique constraint "schema_migrations_pkey"` で失敗。
+原因: `20260424235000_seed_higgsfield_ai_university.sql` が schema_migrations に孤立行として残存し、
+Supabase CLI の読み取りでは未適用に見えるが INSERT 時に duplicate key error が発生。
+
+### 根本原因
+
+中断されたデプロイが schema_migrations への INSERT を完了した後にプロセスが終了 →
+次回デプロイ時に CLI は未適用と判断 → INSERT 試行 → duplicate key error の悪循環。
+
+### 修正 (commit: 05e9103c)
+
+`deploy-prod.yml` の `supabase db push --include-all` 前に repair ステップを追加:
+```bash
+supabase migration repair --status reverted 20260424235000 2>/dev/null || true
+supabase migration repair --status reverted 20260424240000 2>/dev/null || true
+supabase migration repair --status reverted 20260424241500 2>/dev/null || true
+```
+孤立行を削除 → db push が再適用 (seed は ON CONFLICT DO NOTHING で冪等)。
+
+### 結果
+
+- run `24865664824` (health-check EF): ✅ SUCCESS (15m29s)
+- run `24866052825` (migration repair fix): ✅ SUCCESS (13m40s)
+- deploy chain 緑化完了
+
+### Philosophy Alignment
+
+1. CEO感 ✅ / 2. ミッション駆動 ✅ / 3. 優しいmentor ✅ / 4. 6部署バランス ✅
+5. 商品=ユーザー価値 ✅ / 6. 資本=時間 ✅ / 7. 資産負債 ✅
+8. KPI=昨日の自分 ✅ / 9. ゴール=IPO ✅
