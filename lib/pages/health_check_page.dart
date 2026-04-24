@@ -30,7 +30,10 @@ class _HealthCheckPageState extends State<HealthCheckPage> {
       _result = null;
     });
     try {
-      final res = await _supabase.functions.invoke('health-check');
+      final res = await _supabase.functions.invoke(
+        'admin-hub',
+        body: {'action': 'health.check'},
+      );
       setState(() => _result = res.data as Map<String, dynamic>?);
     } catch (e) {
       setState(() => _errorMessage = '$e');

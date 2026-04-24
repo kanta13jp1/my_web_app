@@ -235,7 +235,6 @@ jobs:
             get-support-tickets
             get-competitor-features
             import-from-competitors
-            health-check
             get-competitor-monitoring
             edge-function-coverage
             content-moderation

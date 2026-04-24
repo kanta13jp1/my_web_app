@@ -177,13 +177,26 @@ serve(async (req: Request) => {
 
       // ---- Health check ----
       case "health.check": {
-        const checks = await Promise.allSettled([
+        const t0 = Date.now();
+        const [hubCheck, achieveCheck, efCheck] = await Promise.allSettled([
           admin.from("hub_data").select("id").limit(1),
           admin.from("development_achievements").select("id").limit(1),
+          admin.from("ai_circuit_breaker").select("id").limit(1),
         ]);
+        const t1 = Date.now();
+        const dbOk = hubCheck.status === "fulfilled" && !hubCheck.value.error;
+        const achieveOk = achieveCheck.status === "fulfilled" && !achieveCheck.value.error;
+        const efOk = efCheck.status === "fulfilled" && !efCheck.value.error;
+        const allOk = dbOk && achieveOk;
+        const status = allOk ? (efOk ? "healthy" : "degraded") : "unhealthy";
         return json({
           success: true,
-          db: checks.every((c) => c.status === "fulfilled"),
+          status,
+          checks: {
+            database: { ok: dbOk, latencyMs: t1 - t0 },
+            achievements: { ok: achieveOk, latencyMs: t1 - t0 },
+            circuit_breaker: { ok: efOk, latencyMs: t1 - t0 },
+          },
           timestamp: new Date().toISOString(),
         });
       }
