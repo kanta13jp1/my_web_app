@@ -82,29 +82,12 @@ jobs:
             CATEGORY=$(echo "$CATEGORY" | xargs)
             echo "🔍 カテゴリ調査: $CATEGORY"
 
-            PROMPT="You are a competitive intelligence analyst for a Japanese AI life-management app.
-Identify ${MAX_PER_CAT} trending or emerging SaaS/app companies in the '${CATEGORY}' space that have gained traction in the past 30 days (as of $(date +'%Y-%m-%d')).
-EXCLUDE already-known competitors: ${EXISTING_NAMES:0:500}
-
-For each company, return a JSON array (only JSON, no markdown) like:
-[
-  {
-    \"id\": \"lowercase-hyphen-id\",
-    \"display_name\": \"Company Name\",
-    \"category\": \"${CATEGORY}\",
-    \"website\": \"https://...\",
-    \"description\": \"Japanese 2-sentence description of what they do and why they are trending\",
-    \"founded_year\": 2022,
-    \"headquarters\": \"City, Country\",
-    \"funding\": \"$XXM Series X\",
-    \"key_features\": [\"feature1\", \"feature2\", \"feature3\"],
-    \"our_overlap_score\": 5,
-    \"threat_level\": \"medium\",
-    \"ai_score\": 0.7,
-    \"reason_trending\": \"Why this company is trending now (1 sentence)\"
-  }
-]
-Only return the JSON array, nothing else."
+            PROMPT="You are a competitive intelligence analyst for a Japanese AI life-management app."
+            PROMPT+=$'\n'"Identify ${MAX_PER_CAT} trending or emerging SaaS/app companies in the '${CATEGORY}' space that have gained traction in the past 30 days (as of $(date +'%Y-%m-%d'))."
+            PROMPT+=$'\n'"EXCLUDE already-known competitors: ${EXISTING_NAMES:0:500}"
+            PROMPT+=$'\n\n'"For each company, return a JSON array (only JSON, no markdown) like:"
+            PROMPT+=$'\n''[{"id":"lowercase-hyphen-id","display_name":"Company Name","category":"'"${CATEGORY}"'","website":"https://...","description":"Japanese 2-sentence description of what they do and why trending","founded_year":2022,"headquarters":"City, Country","funding":"$XXM Series X","key_features":["feature1","feature2","feature3"],"our_overlap_score":5,"threat_level":"medium","ai_score":0.7,"reason_trending":"Why trending now (1 sentence)"}]'
+            PROMPT+=$'\n'"Only return the JSON array, nothing else."
 
             GEMINI_RESP=$(curl -sf \
               "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}" \
@@ -119,35 +102,9 @@ Only return the JSON array, nothing else."
               continue
             fi
 
-            CAT_CANDIDATES=$(echo "$GEMINI_RESP" | python3 -c "
-import sys, json, re
-resp = json.load(sys.stdin)
-text = resp.get('candidates', [{}])[0].get('content', {}).get('parts', [{}])[0].get('text', '[]')
-# JSONブロックを抽出
-m = re.search(r'\[.*\]', text, re.DOTALL)
-if m:
-    try:
-        data = json.loads(m.group())
-        print(json.dumps(data))
-    except:
-        print('[]')
-else:
-    print('[]')
-" 2>/dev/null || echo "[]")
+            CAT_CANDIDATES=$(echo "$GEMINI_RESP" | python3 -c "import sys,json,re; resp=json.load(sys.stdin); text=resp.get('candidates',[{}])[0].get('content',{}).get('parts',[{}])[0].get('text','[]'); m=re.search(r'\[.*\]',text,re.DOTALL); print(json.dumps(json.loads(m.group())) if m else '[]')" 2>/dev/null || echo "[]")
 
-            echo "$CAT_CANDIDATES" | python3 -c "
-import sys, json
-cat_data = json.load(sys.stdin)
-try:
-    with open('/tmp/all_candidates.json') as f:
-        all_data = json.load(f)
-except:
-    all_data = []
-all_data.extend(cat_data)
-with open('/tmp/all_candidates.json', 'w') as f:
-    json.dump(all_data, f)
-print(f'✅ {len(cat_data)} candidates added for ${CATEGORY}')
-" 2>/dev/null || true
+            echo "$CAT_CANDIDATES" | python3 -c "import sys,json,os; cat_data=json.load(sys.stdin); all_data=(json.load(open('/tmp/all_candidates.json')) if os.path.exists('/tmp/all_candidates.json') else []); all_data.extend(cat_data); json.dump(all_data,open('/tmp/all_candidates.json','w')); print(f'added {len(cat_data)} candidates')" 2>/dev/null || true
 
           done
 
@@ -158,165 +115,124 @@ print(f'✅ {len(cat_data)} candidates added for ${CATEGORY}')
       # ── Step 3: 既存競合と重複除去 + Supabase staging ────────────────────
       - name: Step 3 - 重複除去 + competitor_candidates に INSERT
         id: stage
+        env:
+          STAGE_PY: |
+            import json, os, urllib.request, urllib.error, subprocess
+            supabase_url = os.environ['SUPABASE_URL']
+            service_key = os.environ['SUPABASE_SERVICE_ROLE_KEY']
+            week_str = subprocess.check_output(['date', '+%Y-%V']).decode().strip()
+            candidates = json.load(open('/tmp/all_candidates.json'))
+            existing = json.load(open('/tmp/existing_competitors.json'))
+            existing_ids = {c['id'].lower() for c in existing}
+            existing_names = {c.get('name', c.get('display_name', '')).lower() for c in existing}
+            new_count = skip_count = error_count = 0
+            for c in candidates:
+                cid = c.get('id', '').lower().replace(' ', '-')
+                cname = c.get('display_name', '').lower()
+                if cid in existing_ids or cname in existing_names:
+                    skip_count += 1
+                    continue
+                payload = {k: v for k, v in {'id': cid, 'display_name': c.get('display_name', cid), 'category': c.get('category'), 'website': c.get('website'), 'description': c.get('description'), 'source': 'gemini-discovery', 'ai_score': c.get('ai_score'), 'threat_level': c.get('threat_level'), 'founded_year': c.get('founded_year'), 'headquarters': c.get('headquarters'), 'funding': c.get('funding'), 'key_features': c.get('key_features', []), 'our_overlap_score': c.get('our_overlap_score'), 'reviewed': False, 'promoted': False, 'discovery_week': week_str, 'raw_gemini_output': json.dumps(c)}.items() if v is not None}
+                req = urllib.request.Request(f"{supabase_url}/rest/v1/competitor_candidates", data=json.dumps(payload).encode(), headers={'apikey': service_key, 'Authorization': f'Bearer {service_key}', 'Content-Type': 'application/json', 'Prefer': 'resolution=ignore-duplicates,return=minimal'}, method='POST')
+                try:
+                    urllib.request.urlopen(req)
+                    new_count += 1
+                except urllib.error.HTTPError as e:
+                    body = e.read().decode()
+                    if '23505' in body or 'duplicate' in body.lower():
+                        skip_count += 1
+                    else:
+                        print(f'err {cid}: {body[:200]}')
+                        error_count += 1
+            print(f'Staged:{new_count} Skip:{skip_count} Err:{error_count}')
+            gh_out = os.environ.get('GITHUB_OUTPUT', '/dev/null')
+            open(gh_out, 'a').write(f'staged_count={new_count}\nskip_count={skip_count}\n')
         run: |
           WEEK="${{ steps.discover.outputs.discovery_week }}"
-
-          python3 << 'PYEOF'
-import json, os, urllib.request, urllib.error
-
-supabase_url = os.environ['SUPABASE_URL']
-service_key = os.environ['SUPABASE_SERVICE_ROLE_KEY']
-week = os.environ.get('GITHUB_OUTPUT', '')
-
-with open('/tmp/all_candidates.json') as f:
-    candidates = json.load(f)
-
-with open('/tmp/existing_competitors.json') as f:
-    existing = json.load(f)
-
-existing_ids = {c['id'].lower() for c in existing}
-existing_names = {c['name'].lower() for c in existing}
-
-new_count = 0
-skip_count = 0
-error_count = 0
-
-import subprocess
-week_str = subprocess.check_output(['date', '+%Y-%V']).decode().strip()
-
-for c in candidates:
-    cid = c.get('id', '').lower().replace(' ', '-')
-    cname = c.get('display_name', '').lower()
-
-    if cid in existing_ids or cname in existing_names:
-        skip_count += 1
-        continue
-
-    payload = {
-        'id': cid,
-        'display_name': c.get('display_name', cid),
-        'category': c.get('category'),
-        'website': c.get('website'),
-        'description': c.get('description'),
-        'source': 'gemini-discovery',
-        'ai_score': c.get('ai_score'),
-        'threat_level': c.get('threat_level'),
-        'founded_year': c.get('founded_year'),
-        'headquarters': c.get('headquarters'),
-        'funding': c.get('funding'),
-        'key_features': c.get('key_features', []),
-        'our_overlap_score': c.get('our_overlap_score'),
-        'reviewed': False,
-        'promoted': False,
-        'discovery_week': week_str,
-        'raw_gemini_output': json.dumps(c)
-    }
-    payload = {k: v for k, v in payload.items() if v is not None}
-
-    data = json.dumps(payload).encode('utf-8')
-    req = urllib.request.Request(
-        f"{supabase_url}/rest/v1/competitor_candidates",
-        data=data,
-        headers={
-            'apikey': service_key,
-            'Authorization': f'Bearer {service_key}',
-            'Content-Type': 'application/json',
-            'Prefer': 'resolution=ignore-duplicates,return=minimal'
-        },
-        method='POST'
-    )
-    try:
-        with urllib.request.urlopen(req) as resp:
-            new_count += 1
-    except urllib.error.HTTPError as e:
-        body = e.read().decode()
-        if '23505' in body or 'duplicate' in body.lower():
-            skip_count += 1
-        else:
-            print(f'⚠️ INSERT error for {cid}: {body[:200]}')
-            error_count += 1
-
-print(f'✅ Staged: {new_count} new | Skipped: {skip_count} duplicates | Errors: {error_count}')
-
-with open(os.environ.get('GITHUB_OUTPUT', '/dev/null'), 'a') as f:
-    f.write(f'staged_count={new_count}\n')
-    f.write(f'skip_count={skip_count}\n')
-PYEOF
+          echo "$STAGE_PY" | python3
 
       # ── Step 4: サマリーレポート生成 ──────────────────────────────────────
       - name: Step 4 - サマリーレポート生成
         id: summary
+        env:
+          DISCOVERY_WEEK: ${{ steps.discover.outputs.discovery_week }}
+          TOTAL_CANDIDATES: ${{ steps.discover.outputs.total_candidates }}
+          STAGED_COUNT: ${{ steps.stage.outputs.staged_count }}
+          SKIPPED_COUNT: ${{ steps.stage.outputs.skip_count }}
+          EXISTING_COUNT: ${{ steps.existing.outputs.existing_count }}
+          REPORT_PY: |
+            import os, json, subprocess
+            from collections import Counter
+            today = subprocess.check_output(['bash', '-c', "TZ=Asia/Tokyo date +'%Y-%m-%d'"]).decode().strip()
+            week = os.environ.get('DISCOVERY_WEEK', '')
+            total = os.environ.get('TOTAL_CANDIDATES', '0')
+            staged = os.environ.get('STAGED_COUNT', '0')
+            skipped = os.environ.get('SKIPPED_COUNT', '0')
+            existing = os.environ.get('EXISTING_COUNT', '0')
+            try:
+                data = json.load(open('/tmp/all_candidates.json'))
+            except Exception:
+                data = []
+            cats = Counter(c.get('category', 'unknown') for c in data)
+            cat_lines = '\n'.join(f'- **{cat}**: {n} 社' for cat, n in sorted(cats.items())) or '- (データなし)'
+            cands = []
+            for c in data[:20]:
+                score = c.get('ai_score', 0)
+                threat = c.get('threat_level', '?')
+                name = c.get('display_name', c.get('id', '?'))
+                cat = c.get('category', '?')
+                website = c.get('website', '')
+                desc = str(c.get('description', ''))[:100]
+                reason = c.get('reason_trending', '')
+                cands += [f'### {name} ({cat})', f'- **サイト**: {website}',
+                          f'- **脅威レベル**: {threat} / AI Score: {score}', f'- **概要**: {desc}']
+                if reason:
+                    cands.append(f'- **トレンド理由**: {reason}')
+                cands.append('')
+            cands_str = '\n'.join(cands) if cands else '(候補なし)'
+            tick = chr(96)
+            sql_fence = tick * 3
+            lines = [
+                f'# 競合候補発掘レポート — {today} (Week {week})',
+                '',
+                f'**既存競合数**: {existing} 社',
+                f'**Gemini 発掘候補**: {total} 社',
+                f'**新規 staging**: {staged} 社',
+                f'**重複スキップ**: {skipped} 社',
+                '',
+                '## 発掘カテゴリ',
+                '',
+                cat_lines,
+                '',
+                '## 新規候補 (PS#4 review 待ち)',
+                '',
+                cands_str,
+                '',
+                '## 次のアクション',
+                '',
+                f'1. {tick}competitor_candidates{tick} テーブルを確認 (reviewed=false の候補)',
+                '2. 採用判断 → seed migration 作成 → competitors に promote',
+                '3. 拒否 → rejected_reason 記入 + reviewed=true',
+                '',
+                sql_fence + 'sql',
+                '-- 未レビュー候補一覧',
+                'SELECT id, display_name, category, ai_score, threat_level, staged_at',
+                'FROM competitor_candidates',
+                'WHERE reviewed = false AND promoted = false',
+                'ORDER BY ai_score DESC NULLS LAST, staged_at DESC;',
+                sql_fence,
+                '',
+                '---',
+                f'*Generated by competitor-discovery.yml — Week {week}*',
+            ]
+            os.makedirs('docs/competitor-reports', exist_ok=True)
+            report_path = f'docs/competitor-reports/discovery-{today}.md'
+            open(report_path, 'w', encoding='utf-8').write('\n'.join(lines) + '\n')
+            gh_out = os.environ.get('GITHUB_OUTPUT', '/dev/null')
+            open(gh_out, 'a').write(f'report_path={report_path}\n')
+            print(f'✅ レポート作成: {report_path}')
         run: |
-          TODAY=$(TZ=Asia/Tokyo date +'%Y-%m-%d')
-          WEEK="${{ steps.discover.outputs.discovery_week }}"
-          TOTAL="${{ steps.discover.outputs.total_candidates }}"
-          STAGED="${{ steps.stage.outputs.staged_count }}"
-          SKIPPED="${{ steps.stage.outputs.skip_count }}"
-          EXISTING="${{ steps.existing.outputs.existing_count }}"
-
-          mkdir -p docs/competitor-reports
-
-          cat > "docs/competitor-reports/discovery-${TODAY}.md" << MDEOF
-# 競合候補発掘レポート — ${TODAY} (Week ${WEEK})
-
-**既存競合数**: ${EXISTING} 社
-**Gemini 発掘候補**: ${TOTAL} 社
-**新規 staging**: ${STAGED} 社
-**重複スキップ**: ${SKIPPED} 社
-
-## 発掘カテゴリ
-
-$(cat /tmp/all_candidates.json | python3 -c "
-import sys, json
-data = json.load(sys.stdin)
-from collections import Counter
-cats = Counter(c.get('category','unknown') for c in data)
-for cat, n in sorted(cats.items()):
-    print(f'- **{cat}**: {n} 社')
-" 2>/dev/null || echo "- (データなし)")
-
-## 新規候補 (PS#4 review 待ち)
-
-$(cat /tmp/all_candidates.json | python3 -c "
-import sys, json
-data = json.load(sys.stdin)
-for c in data[:20]:
-    score = c.get('ai_score', 0)
-    threat = c.get('threat_level', '?')
-    name = c.get('display_name', c.get('id', '?'))
-    cat = c.get('category', '?')
-    website = c.get('website', '')
-    desc = c.get('description', '')[:100]
-    reason = c.get('reason_trending', '')
-    print(f'### {name} ({cat})')
-    print(f'- **サイト**: {website}')
-    print(f'- **脅威レベル**: {threat} / AI Score: {score}')
-    print(f'- **概要**: {desc}')
-    if reason:
-        print(f'- **トレンド理由**: {reason}')
-    print()
-" 2>/dev/null || echo "(候補なし)")
-
-## 次のアクション
-
-1. \`competitor_candidates\` テーブルを確認 (reviewed=false の候補)
-2. 採用判断 → seed migration 作成 → competitors に promote
-3. 拒否 → rejected_reason 記入 + reviewed=true
-
-```sql
--- 未レビュー候補一覧
-SELECT id, display_name, category, ai_score, threat_level, staged_at
-FROM competitor_candidates
-WHERE reviewed = false AND promoted = false
-ORDER BY ai_score DESC NULLS LAST, staged_at DESC;
-```
-
----
-*Generated by competitor-discovery.yml — Week ${WEEK}*
-MDEOF
-
-          echo "✅ レポート作成: docs/competitor-reports/discovery-${TODAY}.md"
-          echo "report_path=docs/competitor-reports/discovery-${TODAY}.md" >> $GITHUB_OUTPUT
+          echo "$REPORT_PY" | python3
 
       # ── Step 5: git commit ────────────────────────────────────────────────
       - name: Step 5 - Commit report
