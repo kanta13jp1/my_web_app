@@ -5986,8 +5986,8 @@ abstinence_slip_details: $slipDetailsText
     final cashflow = snapshot.monthlyCashflowSummary;
     final habitDelta = goal.todayCompletedCount - goal.yesterdayCompletedCount;
     final habitValue = habitDelta >= 0
-        ? '${goal.todayCompletedCount}件 / 前日+${habitDelta}件'
-        : '${goal.todayCompletedCount}件 / 前日${habitDelta}件';
+        ? '${goal.todayCompletedCount}件 / 前日+$habitDelta件'
+        : '${goal.todayCompletedCount}件 / 前日$habitDelta件';
     final healthValue = snapshot.abstinenceSlipCount == 0
         ? '防衛中 ${snapshot.abstinenceDisciplineStreakDays}日'
         : '注意 ${snapshot.abstinenceSlipCount}件';
