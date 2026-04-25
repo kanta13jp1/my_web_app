@@ -163,6 +163,7 @@ import '../pages/ai_summarizer_page.dart';
 import '../pages/revenue_forecaster_page.dart';
 import '../pages/weather_widget_page.dart';
 import '../pages/personal_dashboard_page.dart';
+import '../pages/tome_deck_studio_page.dart';
 
 typedef HomeToolOpenCallback = Future<void> Function(BuildContext context);
 
@@ -2421,6 +2422,28 @@ List<HomeToolEntry> buildHomeToolCatalog({
         'observability',
       ],
       onOpen: (context) => _pushPage(context, const EdgeLlmPlaygroundPage()),
+    ),
+    HomeToolEntry(
+      id: 'tome-deck-studio',
+      sectionId: 'ai',
+      title: 'Tome Deck Studio',
+      subtitle: 'Tome向けの投資家資料・AI大学インフォグラフィック・競合比較をKGI/CSF/KPIから生成',
+      icon: Icons.auto_awesome_motion_outlined,
+      color: const Color(0xFF6D28D9),
+      keywords: const <String>[
+        'Tome',
+        'プレゼン',
+        '資料',
+        '投資家',
+        'AI大学',
+        'インフォグラフィック',
+        'Airtable',
+        '競合比較',
+        'KGI',
+        'CSF',
+        'KPI',
+      ],
+      onOpen: (context) => _pushPage(context, const TomeDeckStudioPage()),
     ),
     HomeToolEntry(
       id: 'my-skills',

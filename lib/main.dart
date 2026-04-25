@@ -237,6 +237,7 @@ import 'package:my_web_app/pages/thought_interrupt_diagnosis_page.dart';
 import 'package:my_web_app/pages/mental_health_tracker_page.dart';
 import 'package:my_web_app/pages/freelance_manager_page.dart';
 import 'package:my_web_app/pages/ai_presentation_builder_page.dart';
+import 'package:my_web_app/pages/tome_deck_studio_page.dart';
 import 'package:my_web_app/pages/data_backup_page.dart';
 import 'package:my_web_app/pages/content_calendar_page.dart';
 import 'package:my_web_app/pages/home_budget_planner_page.dart';
@@ -1428,6 +1429,10 @@ class _MyAppState extends State<MyApp> {
           case '/ai-presentation-builder':
             return MaterialPageRoute(
               builder: (_) => const AiPresentationBuilderPage(),
+            );
+          case '/tome-deck-studio':
+            return MaterialPageRoute(
+              builder: (_) => const TomeDeckStudioPage(),
             );
           case '/data-backup':
             return MaterialPageRoute(
