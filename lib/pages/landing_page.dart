@@ -734,7 +734,7 @@ $input
           const SizedBox(height: 20),
           // メインヘッドライン
           const Text(
-            'Notion・Slack・LINE・GitHub\n21サービスを1つに。完全無料。',
+            'Google Workspaceだけじゃない\n財務・健康・習慣・6部署を1つに。',
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 32,
@@ -746,7 +746,7 @@ $input
           ),
           const SizedBox(height: 14),
           const Text(
-            '21のSaaSの機能を1アプリに統合。AIが今日の最優先タスクを整理し、資産管理・習慣化・チームコラボまで一元管理。登録30秒・クレジットカード不要。',
+            'Gmail・Calendar・Driveの予定整理に加えて、お金、健康、習慣、学習、広報、開発までAIが横断。今日の最優先タスクを1件に絞り、人生全体を経営するための無料コックピットです。',
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 16,
@@ -754,6 +754,8 @@ $input
               height: 1.7,
             ),
           ),
+          const SizedBox(height: 14),
+          const _PlannerGapStrip(),
           const SizedBox(height: 14),
           // 実績バッジ
           if (_achievementCount > 0)
@@ -3903,6 +3905,117 @@ class _FaqItemState extends State<_FaqItem> {
           ),
         const Divider(height: 1),
       ],
+    );
+  }
+}
+
+class _PlannerGapStrip extends StatelessWidget {
+  const _PlannerGapStrip();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.82),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: const Wrap(
+        alignment: WrapAlignment.center,
+        spacing: 10,
+        runSpacing: 10,
+        children: [
+          _PlannerGapChip(
+            icon: Icons.mail_outline,
+            label: 'Google Planner Gem',
+            value: 'Gmail・予定・Drive中心',
+            color: Color(0xFF4285F4),
+          ),
+          _PlannerGapChip(
+            icon: Icons.account_balance_wallet_outlined,
+            label: '財務',
+            value: '支出・資産・浪費を監視',
+            color: Color(0xFF16A34A),
+          ),
+          _PlannerGapChip(
+            icon: Icons.favorite_border,
+            label: '健康・習慣',
+            value: '体調・継続・集中を保護',
+            color: Color(0xFFDC2626),
+          ),
+          _PlannerGapChip(
+            icon: Icons.corporate_fare_outlined,
+            label: '6部署AI',
+            value: 'CEO/CFO/CMO/CHO/CHRO/R&D',
+            color: Color(0xFFFF6B35),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PlannerGapChip extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+  final Color color;
+
+  const _PlannerGapChip({
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      constraints: const BoxConstraints(minWidth: 148, maxWidth: 210),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withValues(alpha: 0.18)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, color: color, size: 18),
+          const SizedBox(width: 8),
+          Flexible(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: color,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
+                    height: 1.4,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  value,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Color(0xFF334155),
+                    fontSize: 11,
+                    height: 1.45,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
