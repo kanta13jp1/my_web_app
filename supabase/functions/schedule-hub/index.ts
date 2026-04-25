@@ -96,7 +96,7 @@ serve(async (req: Request) => {
     const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
 
     // Public actions that don't require auth
-    const publicActions = ["digest.run", "health.check", "blog.auto_publish", "blog.create", "reminders.study", "notion.sync_wbs"];
+    const publicActions = ["digest.run", "health.check", "blog.auto_publish", "blog.create", "reminders.study", "notion.sync_wbs", "wbs.unblock_dependents"];
     let userId: string | null = null;
     if (!publicActions.includes(action)) {
       userId = await getUserId(req);
@@ -988,6 +988,64 @@ serve(async (req: Request) => {
           updated,
           failed,
           errors: errors.slice(0, 10), // 最初の 10 件のみ返す
+        });
+      }
+
+      // ─── WBS Unblock Dependents (Win版#132 part 12 / wbs-ai-review.yml 補完) ───
+      // pending かつ depends_on の全要素が completed の task を in_progress に遷移。
+      // Public action (GHA cron から呼ぶ) / service_role で raw SQL 相当の logic を実行。
+      // 設計: docs/BUSINESS_WBS_AI_AUTOMATION.md (Phase 2 unblock loop)
+      case "wbs.unblock_dependents": {
+        // 全 pending task を fetch (depends_on を含む)
+        const { data: pending, error: pendingErr } = await admin
+          .from("wbs_tasks")
+          .select("id, depends_on")
+          .eq("status", "pending")
+          .not("depends_on", "is", null);
+
+        if (pendingErr) {
+          return json({ success: false, error: `fetch_pending_failed: ${pendingErr.message}` }, 500);
+        }
+
+        // 全 completed task の id set を取得
+        const { data: completed, error: completedErr } = await admin
+          .from("wbs_tasks")
+          .select("id")
+          .eq("status", "completed");
+
+        if (completedErr) {
+          return json({ success: false, error: `fetch_completed_failed: ${completedErr.message}` }, 500);
+        }
+
+        const completedSet = new Set((completed ?? []).map((c) => c.id));
+
+        // depends_on の全要素が completed の task を unblock
+        const unblockable: string[] = [];
+        for (const t of pending ?? []) {
+          const deps = (t.depends_on ?? []) as string[];
+          if (deps.length === 0) continue; // depends_on 空 = ここでは触らない
+          const allCompleted = deps.every((d) => completedSet.has(d));
+          if (allCompleted) unblockable.push(t.id);
+        }
+
+        // bulk update
+        let unblocked = 0;
+        if (unblockable.length > 0) {
+          const { error: updErr } = await admin
+            .from("wbs_tasks")
+            .update({ status: "in_progress" })
+            .in("id", unblockable);
+          if (updErr) {
+            return json({ success: false, error: `update_failed: ${updErr.message}` }, 500);
+          }
+          unblocked = unblockable.length;
+        }
+
+        return json({
+          success: true,
+          checked: pending?.length ?? 0,
+          unblocked,
+          ids: unblockable.slice(0, 20),
         });
       }
 

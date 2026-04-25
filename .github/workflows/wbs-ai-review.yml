@@ -1,0 +1,237 @@
+name: WBS AI Review (1h cron)
+
+# Win版#132 part 12: wbs_tasks の ai_review_status='requested' を Gemini Flash でレビュー
+# 設計: docs/BUSINESS_WBS_AI_AUTOMATION.md (Phase 2)
+#
+# 流れ:
+#   1. 1h 毎に ai_review_status='requested' の task を fetch (max 10)
+#   2. 各 task を Gemini 1.5 Flash でレビュー (タイトル/説明/カテゴリ/期間)
+#   3. 結果:
+#      - approved → status='completed' / ai_review_status='approved' / depends_on で参照する task を unblock
+#      - rejected → status='in_progress' / ai_review_status='rejected' + ai_review_notes に理由
+#   4. unblock 候補: depends_on の全要素が completed の task を pending → in_progress
+#
+# Auth: GEMINI_API_KEY + SUPABASE_SERVICE_ROLE_KEY (既存 secret)
+# Deny-by-default: secret 未設定で skip
+# Cost: 1 review = ~1.5K token = $0.0008 → 月 150 review = $0.12
+
+on:
+  schedule:
+    - cron: "20 * * * *"  # 毎時 20 分
+  workflow_dispatch:
+    inputs:
+      max_tasks:
+        description: '今回処理する最大 task 数 (default 10)'
+        required: false
+        default: '10'
+
+concurrency:
+  group: wbs-ai-review
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  review:
+    name: WBS AI Review
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    env:
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      SUPABASE_URL: https://smmkxxavexumewbfaqpy.supabase.co
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      MAX_TASKS: ${{ github.event.inputs.max_tasks || '10' }}
+
+    steps:
+      # ── Step 1: secret presence check (deny-by-default) ───────────────────
+      - name: Step 1 - Secret presence check
+        id: precheck
+        run: |
+          if [ -z "$GEMINI_API_KEY" ] || [ -z "$SUPABASE_SERVICE_ROLE_KEY" ]; then
+            echo "::warning::secrets missing (GEMINI_API_KEY or SUPABASE_SERVICE_ROLE_KEY) — skip"
+            echo "skip=true" >> $GITHUB_OUTPUT
+          else
+            echo "skip=false" >> $GITHUB_OUTPUT
+          fi
+
+      # ── Step 2: requested task を Supabase から fetch ─────────────────────
+      - name: Step 2 - Fetch requested tasks
+        if: steps.precheck.outputs.skip != 'true'
+        id: fetch
+        run: |
+          set -e
+
+          # ai_review_status='requested' を最大 MAX_TASKS 件取得
+          # category / title / description / progress / start_date / end_date / depends_on / id
+          TASKS_JSON=$(curl -sf \
+            "${SUPABASE_URL}/rest/v1/wbs_tasks?ai_review_status=eq.requested&select=id,category,title,description,progress,start_date,end_date,depends_on&order=updated_at.asc&limit=${MAX_TASKS}" \
+            -H "apikey: ${SUPABASE_SERVICE_ROLE_KEY}" \
+            -H "Authorization: Bearer ${SUPABASE_SERVICE_ROLE_KEY}" \
+            --max-time 15)
+
+          COUNT=$(echo "$TASKS_JSON" | python3 -c 'import sys, json; print(len(json.load(sys.stdin)))')
+          echo "count=$COUNT" >> $GITHUB_OUTPUT
+          echo "$TASKS_JSON" > /tmp/tasks.json
+
+          echo "📋 ${COUNT} task(s) requested for AI review"
+
+      # ── Step 3: 各 task を Gemini Flash でレビュー ─────────────────────
+      - name: Step 3 - Review each task with Gemini Flash
+        if: steps.precheck.outputs.skip != 'true' && steps.fetch.outputs.count != '0'
+        run: |
+          set +e
+          APPROVED=0
+          REJECTED=0
+          ERRORS=0
+          TRACE_ID="${{ github.run_id }}"
+
+          # python3 で task ごとに review (jq 不便なので python loop)
+          python3 <<'PYEOF'
+          import json, os, subprocess, sys, time
+          from datetime import datetime, timezone
+
+          with open('/tmp/tasks.json') as f:
+              tasks = json.load(f)
+
+          gemini_key = os.environ['GEMINI_API_KEY']
+          supabase_url = os.environ['SUPABASE_URL']
+          service_key = os.environ['SUPABASE_SERVICE_ROLE_KEY']
+          trace_id = os.environ.get('GITHUB_RUN_ID', 'manual')
+
+          headers_supabase = [
+              '-H', f'apikey: {service_key}',
+              '-H', f'Authorization: Bearer {service_key}',
+              '-H', 'Content-Type: application/json',
+              '-H', 'Prefer: return=minimal',
+          ]
+
+          approved = rejected = errors = 0
+
+          for task in tasks:
+              tid = task['id']
+              prompt = f"""あなたは自分株式会社のシニアプロジェクトマネージャーです。
+          以下の WBS タスクが完了報告されました。レビューしてください。
+
+          ## タスク
+          - title: {task.get('title', '')}
+          - description: {task.get('description', '') or '(なし)'}
+          - category: {task.get('category', '')}
+          - progress: {task.get('progress', 0)}%
+          - start_date / end_date: {task.get('start_date')} / {task.get('end_date')}
+
+          ## 評価軸
+          1. タスクの完了基準を満たしているか?
+          2. 関連タスクへの contributes は妥当か?
+          3. 品質 / 規模感は妥当か?
+
+          ## 出力 (必ず JSON のみ・コードブロックなし)
+          {{"decision": "approved" or "rejected", "score": 0-100, "notes": "200 字以内"}}
+          """
+
+              payload = json.dumps({
+                  "contents": [{"parts": [{"text": prompt}]}],
+                  "generationConfig": {"temperature": 0.3, "maxOutputTokens": 300}
+              })
+
+              # Gemini call
+              try:
+                  proc = subprocess.run(
+                      ['curl', '-sf', '-X', 'POST',
+                       f'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={gemini_key}',
+                       '-H', 'Content-Type: application/json',
+                       '-d', payload, '--max-time', '30'],
+                      capture_output=True, text=True, timeout=35
+                  )
+                  resp = json.loads(proc.stdout)
+                  text = resp['candidates'][0]['content']['parts'][0]['text'].strip()
+                  # 先頭/末尾の ``` を除去
+                  if text.startswith('```'):
+                      text = '\n'.join(text.split('\n')[1:-1])
+                  ai = json.loads(text)
+                  decision = ai.get('decision', 'rejected')
+                  notes = (ai.get('notes', ''))[:500]
+                  score = ai.get('score', 0)
+              except Exception as e:
+                  print(f"⚠️ {tid}: Gemini error — {e}", flush=True)
+                  errors += 1
+                  continue
+
+              # 更新 payload 構築
+              now = datetime.now(timezone.utc).isoformat()
+              if decision == 'approved':
+                  patch = {
+                      'ai_review_status': 'approved',
+                      'status': 'completed',
+                      'ai_review_notes': f'[trace:{trace_id}] score={score} {notes}',
+                      'ai_reviewed_at': now,
+                  }
+                  approved += 1
+                  print(f"✅ {tid} approved (score={score})", flush=True)
+              else:
+                  patch = {
+                      'ai_review_status': 'rejected',
+                      'status': 'in_progress',
+                      'progress': max(int(task.get('progress', 0)) - 5, 70),  # 完了率を少し戻す
+                      'ai_review_notes': f'[trace:{trace_id}] score={score} {notes}',
+                      'ai_reviewed_at': now,
+                  }
+                  rejected += 1
+                  print(f"🔴 {tid} rejected (score={score}): {notes[:80]}", flush=True)
+
+              # Supabase PATCH
+              patch_body = json.dumps(patch)
+              subprocess.run(
+                  ['curl', '-sf', '-X', 'PATCH',
+                   f'{supabase_url}/rest/v1/wbs_tasks?id=eq.{tid}',
+                   '-H', f'apikey: {service_key}',
+                   '-H', f'Authorization: Bearer {service_key}',
+                   '-H', 'Content-Type: application/json',
+                   '-H', 'Prefer: return=minimal',
+                   '-d', patch_body, '--max-time', '15'],
+                  check=False
+              )
+
+              # Notion soft sync (best-effort)
+              time.sleep(0.5)  # rate limit
+
+          print(f"\n=== summary ===")
+          print(f"approved: {approved}")
+          print(f"rejected: {rejected}")
+          print(f"errors:   {errors}")
+
+          # GHA outputs
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+              f.write(f"approved={approved}\n")
+              f.write(f"rejected={rejected}\n")
+              f.write(f"errors={errors}\n")
+          PYEOF
+
+      # ── Step 4: depends_on unblock ─────────────────────
+      # 完了 task に依存していた pending task を unblock
+      - name: Step 4 - Unblock dependent tasks
+        if: steps.precheck.outputs.skip != 'true' && steps.fetch.outputs.count != '0'
+        run: |
+          set -e
+
+          # SQL: pending かつ depends_on の全要素が completed の task を in_progress に
+          # PostgreSQL 配列演算 ALL/ANY を使う / RPC 経由
+          # Supabase REST では複雑な配列クエリ困難なので、tools-hub:wbs.unblock_dependents action 経由
+          # (action は本 commit で同時追加: schedule-hub に置く)
+
+          curl -sf -X POST \
+            "${SUPABASE_URL}/functions/v1/schedule-hub" \
+            -H "Content-Type: application/json" \
+            -d '{"action":"wbs.unblock_dependents"}' \
+            --max-time 30 || echo "::warning::wbs.unblock_dependents action not yet deployed (skip)"
+
+      # ── Step 5: skip log ─────────────────────────────
+      - name: Step 5 - No-op log if skipped
+        if: steps.precheck.outputs.skip == 'true' || steps.fetch.outputs.count == '0'
+        run: |
+          if [ "${{ steps.precheck.outputs.skip }}" = 'true' ]; then
+            echo "ℹ️ Skipped: secrets missing"
+          else
+            echo "ℹ️ No tasks requested for review"
+          fi

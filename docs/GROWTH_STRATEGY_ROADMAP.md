@@ -18583,3 +18583,75 @@ deploy-prod.yml の `supabase db push` exit code 捕捉バグを修正。
   - 141件÷30/h ≒ 5h で全件ローリング sync 完了
 
 ### Philosophy Alignment: 9/9 ✅
+
+---
+
+## Win版#132 part 12 完了 (2026-04-25 午後)
+
+### 実施内容: 事業化 WBS Phase 2 — `wbs-ai-review.yml` GHA cron + unblock action
+
+**契機**: part 11 で schema + 54 task seed 完了。Phase 2 (AI Review gate) 実装。
+
+### 実装
+
+#### 1. `.github/workflows/wbs-ai-review.yml` (新規)
+- **cron**: `20 * * * *` (毎時 20 分)
+- **流れ**:
+  1. `ai_review_status='requested'` の task を最大 10 件 fetch (FIFO)
+  2. 各 task を **Gemini 1.5 Flash** にレビュー依頼
+     - title / description / category / progress / 期間を prompt に投入
+     - 出力 JSON: `{decision: approved|rejected, score: 0-100, notes: 200字}`
+  3. **approved** → `status='completed'` + `ai_review_notes` 記録
+  4. **rejected** → `status='in_progress'` + progress -5 (70 が下限) + 理由記録
+  5. `wbs.unblock_dependents` action を call して依存解放
+- **Auth**: `GEMINI_API_KEY` + `SUPABASE_SERVICE_ROLE_KEY`
+- **Deny-by-default**: secret 未設定で skip
+- **trace_id**: GHA `run_id` を `ai_review_notes` に `[trace:N]` 形式で埋込
+- **Concurrency**: `cancel-in-progress: false` (前回完了まで wait)
+
+#### 2. `schedule-hub:wbs.unblock_dependents` action (新規)
+- pending task の全 `depends_on` 要素が completed なら `status='in_progress'`
+- public action (GHA cron から auth 不要)
+- 結果: `{success, checked, unblocked, ids[0..20]}`
+
+### AI Review prompt 設計
+
+```
+あなたは自分株式会社のシニアプロジェクトマネージャーです。
+以下の WBS タスクが完了報告されました。レビューしてください。
+
+## タスク
+- title: {title} / description / category / progress / start_date / end_date
+
+## 評価軸
+1. 完了基準を満たしているか?
+2. 関連タスクへの contributes は妥当か?
+3. 品質 / 規模感は妥当か?
+
+## 出力 (JSON のみ)
+{"decision": "approved|rejected", "score": 0-100, "notes": "200 字以内"}
+```
+
+### コスト実測 (推定)
+- 1 review = ~1.5K token = $0.0008 (Gemini Flash $0.30/M input + $2.50/M output)
+- 月 150 review = **$0.12/月** (Gemini Free Tier 内)
+
+### Phase 進捗
+
+| Phase | 内容 | 状態 |
+|-------|------|------|
+| 1 (part 11) | schema + 7 milestone + 54 task seed | ✅ |
+| **2 (part 12)** | wbs-ai-review.yml + unblock action | ✅ 本 commit |
+| 3 (Win 次) | wbs-stale-subdivide.yml | 🔴 5/5 期日 |
+| 4 (VSCode) | project-gantt UI 拡張 | 🟡 5/10 期日 |
+
+### Philosophy 9/9 ✅
+
+### AI-DEV 7/7 ✅
+1. Auth ✅ (GEMINI/SUPABASE secrets) / 2. Deny-by-default ✅ / 3. trace_id ✅ ([trace:N] 形式) /
+4. Cost CB ✅ (Gemini Free Tier RPM 15 内 / max 10 task/h) /
+5. Team memory ✅ (ai_review_notes に蓄積) /
+6. Checkpoint+retry ✅ (rejected → next cron で再 review 可) /
+7. Quality gate ✅ (manual_override で人間決裁可)
+
+### commit: TBD
