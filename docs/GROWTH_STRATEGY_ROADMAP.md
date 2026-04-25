@@ -19739,3 +19739,26 @@ GitHub Secrets に SLACK_WEBHOOK_URL を設定するだけで有効化。
    - Supabase 取得失敗時: 固定10社フォールバック
 
 ### commit: ecd93e7c
+
+---
+
+## PS#2 S29 — SEO改善 + 動的タスクルーティング実装 (2026-04-25)
+
+### 実施内容
+
+| 作業 | 詳細 |
+|---|---|
+| SEO: sitemap.xml | /user-tasks + /legal-compliance 追加 / ai-university lastmod 2026-04-25更新 / changefreq=daily |
+| SEO: index.html meta | description「21の競合」→「190社以上」/ keywords += AI大学/user-tasks/Cursor/v0 |
+| SEO: og/twitter | title/description を190社・200社AI大学対応に更新 |
+| WBS動的クレーム | SEO改善タスク (02b91199) をvscode→ps2 claim → 実行 → 100%完了 |
+| inject-rules.txt | [DYNAMIC-CLAIM] + [WBS-DEDUP] 追加 (全インスタンス適用) |
+| cross-instance-pr | docs/cross-instance-prs/20260425_wbs_dedup_fix.md → Win版 |
+
+### commit: 6519ec4a (SEO) / inject-rules: local only
+
+### [DYNAMIC-CLAIM] 仕組み
+
+T-1 no-op 時: wbs.rebalance_suggest → claim → 実行 → completed の自動化フロー。
+PS#2 が引き取れる: marketing/docs/seo/product-light。
+禁止: business-legal / urgent / IPO。
