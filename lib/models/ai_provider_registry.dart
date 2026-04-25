@@ -1623,6 +1623,22 @@ const List<AiProviderEntry> kAiProviderRegistry = [
     note:
         r'リアルタイム音声クローン & 合成 — <50ms レイテンシ / ゲーム・会話 AI 向け / Deepfake Detection / $8M 調達 / 感情・スタイル制御',
   ),
+  AiProviderEntry(
+    id: 'speechify',
+    displayName: 'Speechify',
+    status: AiProviderStatus.notImplemented,
+    entryPoint: 'https://speechify.com/',
+    note:
+        r'AI 読み上げ & 音声クローン SaaS — 20M+ ユーザー / 30+ 言語 / 著名人音声 / API 提供 / Chrome 拡張 / iOS/Android / $76M 調達 / ★8/9',
+  ),
+  AiProviderEntry(
+    id: 'wellsaid_labs',
+    displayName: 'WellSaid Labs',
+    status: AiProviderStatus.notImplemented,
+    entryPoint: 'https://wellsaidlabs.com/',
+    note:
+        r'エンタープライズ向け AI 音声クローン — スタジオ品質 / API + Studio UI / 同意ベース声クローン / コンテンツ制作特化 / $10M+ 調達 / ★8/9',
+  ),
 ];
 
 /// ステータス別件数を集計
