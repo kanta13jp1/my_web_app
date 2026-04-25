@@ -402,3 +402,7 @@ WHERE title = 'ai-hub provider.chat 蜈ｨ蟇ｾ蠢・;
 - 対応内容: LPの機能カードを `法務管理 / Harvey AI` に更新し、契約レビュー・論点整理・引用付き確認をHarveyバックエンドで進められることを明示した。
 - 実装補足: FAQにも「法務管理ではHarvey AIをどこに使っているか」を追加し、法務・コンプライアンス画面のHarveyタブとLPの訴求を接続した。
 - WBS DB反映: migration `20260425141500_wbs_codex_harvey_lp_start.sql`, `20260425143000_wbs_codex_harvey_lp_done.sql`
+- 実担当タスク: `[追加要望] 【Harvey AI】AI大学コンテンツ：法律AIという新ジャンルを開拓（競合は未対応が多い）` / `[Issue #709] [追加要望] 【Harvey AI】AI大学コンテンツ：法律AIという新ジャンルを開拓（競合は未対応が多い）`
+- 対応内容: AI大学の `法律AI` ジャンルを、競合がまだ薄いホワイトスペース領域として明示し、Harveyを代表プロバイダーにした新ジャンル訴求へ強化した。
+- 実装補足: フォーカス領域に `コンプライアンス` を追加し、契約レビュー・リーガルリサーチ・Due Diligence・コンプライアンスの4軸で学べることをテストでも保証した。
+- WBS DB反映: migration `20260425144500_wbs_codex_harvey_legal_ai_genre_start.sql`, `20260425150000_wbs_codex_harvey_legal_ai_genre_done.sql`

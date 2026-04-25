@@ -8,6 +8,12 @@ void main() {
     expect(kAiUniversityGenres, isNotEmpty);
     expect(kLegalAiGenre.providerIds, contains('harvey'));
     expect(kLegalAiGenre.launchProviderId, 'harvey');
+    expect(kLegalAiGenre.headline, contains('\u7af6\u5408'));
+    expect(kLegalAiGenre.description, contains('Harvey'));
+    expect(
+      kLegalAiGenre.focusAreas,
+      contains('\u30b3\u30f3\u30d7\u30e9\u30a4\u30a2\u30f3\u30b9'),
+    );
   });
 
   test(
