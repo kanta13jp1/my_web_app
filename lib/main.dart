@@ -8,6 +8,7 @@ import 'package:flutter_web_plugins/url_strategy.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:my_web_app/data/home_tool_catalog.dart';
 import 'package:my_web_app/models/site_guide_catalog_item.dart';
+import 'package:my_web_app/pages/abstinence_guard_page.dart';
 import 'package:my_web_app/pages/agent_org_page.dart';
 import 'package:my_web_app/pages/ai_company_builder_page.dart';
 import 'package:my_web_app/pages/ai_agent_page.dart';
@@ -651,6 +652,10 @@ class _MyAppState extends State<MyApp> {
             return MaterialPageRoute(
               builder: (_) => const DailyHabitsPage(),
             );
+          case '/abstinence-guard':
+            return MaterialPageRoute(
+              builder: (_) => const AbstinenceGuardPage(),
+            );
           case '/my-struggle':
             return MaterialPageRoute(
               builder: (_) => const MyStrugglePage(),
@@ -918,6 +923,7 @@ class _MyAppState extends State<MyApp> {
               builder: (_) => const AiProviderStatusPage(),
             );
           case '/note-list':
+          case '/notes':
             // Win版#110: feature_releases から「ノート」deep link
             return MaterialPageRoute(
               builder: (_) => const NoteListPage(),
