@@ -871,7 +871,7 @@ serve(async (req) => {
         // ─── WBS (Work Breakdown Structure) actions (Win版#128) ─────────
         case "wbs.list_tasks": {
           // インスタンス + status でフィルタしてタスク一覧取得
-          // body: { instance?: 'all'|'vscode'|'windows'|'ps'|'ps1'..'ps6'|'web'|'mobile'|'schedule'|'gha',
+          // body: { instance?: 'codex'|'vscode'|'win'|'ps1'..'ps6'|'web'|'mobile'|'schedule'|'gha',
           //        status?: 'pending'|'in_progress'|'completed'|'blocked',
           //        updated_since?: 'YYYY-MM-DDTHH:MM:SSZ' (ISO-8601),
           //        limit?: 50 }
@@ -882,8 +882,7 @@ serve(async (req) => {
           let q = admin.from("wbs_tasks")
             .select("id, category, category_icon, category_order, title, description, instance, status, progress, start_date, end_date, milestone_code, priority, updated_at");
           if (inst && inst !== "all") {
-            // instance='all' のタスクは全 instance に該当 → OR 条件
-            q = q.or(`instance.eq.${inst},instance.eq.all`);
+            q = q.eq("instance", inst);
           }
           if (status) q = q.eq("status", status);
           if (updatedSince) q = q.gte("updated_at", updatedSince);
@@ -1150,19 +1149,16 @@ serve(async (req) => {
           // body: { category, title, instance, owner_instance?, description?,
           //        priority?, end_date?, planned_end_date?, milestone_code? }
           // PS#6 S23 (2026-04-21): instance を required 化 (ALL leak 防止)
-          // 'all' は全インスタンス責任の goal のみ明示指定可 (user 要望: 原則は owner 1 instance)
-          // Win版#131 part 15 / T4-Win: owner_instance NOT NULL + 'all' 禁止対応
+          // 2026-04-25: 'all' を廃止し、codex を正式な instance として追加。
           const category = String(body.category ?? "");
           const title = String(body.title ?? "");
           const instance = String(body.instance ?? "");
           const validInstances = [
-            "vscode", "win", "ps1", "ps2", "ps3", "ps4", "ps5", "ps6",
-            "web", "mobile", "schedule", "gha", "all",
-          ];
-          const validOwnerInstances = [
-            ...validInstances.filter((v) => v !== "all"),
             "codex",
+            "vscode", "win", "ps1", "ps2", "ps3", "ps4", "ps5", "ps6",
+            "web", "mobile", "schedule", "gha",
           ];
+          const validOwnerInstances = validInstances;
           if (!category || !title) {
             return json({ error: "category and title required" }, 400);
           }
@@ -1171,17 +1167,13 @@ serve(async (req) => {
               error: `instance required (one of: ${validInstances.join(", ")})`,
             }, 400);
           }
-          // owner_instance 決定:
-          //   - body.owner_instance 指定あり → それを使う (CHECK 制約で検証)
-          //   - 無し + instance != 'all' → instance をそのまま owner に
-          //   - 無し + instance == 'all' → 'all' タスクは primary owner 必須 → 400
           const ownerInstance = body.owner_instance !== undefined
             ? String(body.owner_instance)
-            : (instance !== "all" ? instance : "");
+            : instance;
           if (!ownerInstance || !validOwnerInstances.includes(ownerInstance)) {
             return json({
               error:
-                `owner_instance required (one of: ${validOwnerInstances.join(", ")}). instance='all' の共同責任タスクでも primary owner は必ず指定必須`,
+                `owner_instance required (one of: ${validOwnerInstances.join(", ")})`,
             }, 400);
           }
           const { data, error } = await admin.from("wbs_tasks").insert({
@@ -1203,12 +1195,12 @@ serve(async (req) => {
         }
         case "wbs.priority_for_instance": {
           // 指定インスタンスの優先タスク TOP 5 を返す (session-start-check 用)
-          // body: { instance: 'vscode'|'windows'|'ps' }
+          // body: { instance: 'codex'|'vscode'|'win'|'ps1'..'ps6'|'web'|'mobile'|'schedule'|'gha' }
           const inst = String(body.instance ?? "");
           if (!inst) return json({ error: "instance required" }, 400);
           const { data, error } = await admin.from("wbs_tasks")
             .select("id, category, category_order, title, status, progress, priority, end_date, updated_at, instance")
-            .or(`instance.eq.${inst},instance.eq.all`)
+            .eq("instance", inst)
             .in("status", ["pending", "in_progress", "blocked"]);
           if (error) throw new Error(error.message);
           const topTasks = [...(data ?? [])].sort(compareWbsTasks).slice(0, 5);

@@ -88,7 +88,7 @@ class WbsTask {
         categoryOrder: (m['category_order'] as int?) ?? 0,
         title: m['title'] as String,
         description: m['description'] as String? ?? '',
-        instance: m['instance'] as String? ?? 'all',
+        instance: m['instance'] as String? ?? 'codex',
         status: m['status'] as String? ?? 'pending',
         progress: (m['progress'] as int?) ?? 0,
         startDate: m['start_date'] != null
@@ -100,7 +100,7 @@ class WbsTask {
         milestoneCode: m['milestone_code'] as String?,
         priority: m['priority'] as String? ?? 'medium',
         ownerInstance: m['owner_instance'] as String? ??
-            (m['instance'] as String? ?? 'all'),
+            (m['instance'] as String? ?? 'codex'),
         recoveryPlan: (m['recovery_plan'] as String?) ?? '',
         rescheduledCount: (m['rescheduled_count'] as int?) ?? 0,
         remainingWork: (m['remaining_work'] as String?) ?? '',
@@ -153,7 +153,7 @@ class WbsTask {
         // Win版#131 part 13
         'schedule' => '⏰ Schedule',
         'gha' => '🔧 GHA',
-        _ => '⚠ 全 (要分割)',
+        _ => '未割当',
       };
 
   Color get instanceColor => switch (instance) {
@@ -173,7 +173,7 @@ class WbsTask {
         // Win版#131 part 13
         'schedule' => const Color(0xFFEAB308),
         'gha' => const Color(0xFF6B7280),
-        _ => const Color(0xFFEF4444), // 'all' = 警告色 (要 explode)
+        _ => const Color(0xFF64748B),
       };
 
   String get ownerLabel => switch (ownerInstance) {
@@ -2127,6 +2127,7 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
             ...[
               ('全', null, const Color(0xFFFF6B35)),
               ('VS', 'vscode', const Color(0xFF007ACC)),
+              ('Codex', 'codex', const Color(0xFF10B981)),
               ('Win', 'win', const Color(0xFF00BCF2)),
               ('PS#1', 'ps1', const Color(0xFF4B0082)),
               ('PS#2', 'ps2', const Color(0xFF6A0DAD)),
@@ -2138,7 +2139,6 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
               ('📱', 'mobile', const Color(0xFFF97316)),
               ('⏰', 'schedule', const Color(0xFFEAB308)),
               ('🔧', 'gha', const Color(0xFF6B7280)),
-              ('⚠ ALL', 'all', const Color(0xFFEF4444)),
             ].map((t) {
               final on = widget.filterInstance == t.$2;
               return Padding(
@@ -2901,8 +2901,7 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
         'mobile' => 'MOB',
         'schedule' => 'SCH',
         'gha' => 'GHA',
-        'all' => 'ALL',
-        _ => 'ALL',
+        _ => '未割当',
       };
 
   Widget _buildMonthHeader() {
