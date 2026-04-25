@@ -20387,3 +20387,24 @@ if (provider == null) continue;
 **Philosophy**: ✅KPI=昨日の自分 (deploy-prod 継続失敗を解消) ✅商品=ユーザー価値 (AI大学コンテンツ正常適用)
 
 **commit**: `1bd6b6c6`
+
+
+### PS#4 S58 (2026-04-26) — competitor_features Phase 1 seed + deploy-prod 連続修正 (433eb2b1)
+
+**タスク**: 21社×10機能 Phase 1 seed commit + deploy-prod SQLSTATE 23505/42703 連鎖修正
+
+**実装内容**:
+1. `20260426140000_seed_competitor_features_phase1.sql` — 21社×10機能=210行 (130000→140000 リネーム)
+2. `20260426125000_ai_university_content_schema_v2.sql` — SELECT 1 no-op (誤ったDROP NOT NULL 撤回)
+3. deploy-prod.yml: DUP ハンドラ追加 (schema_migrations_pkey 23505 → repair applied)
+4. deploy-prod.yml: 133000 を reverted→applied に変更 (coqui データ既適用)
+5. repair list: 100000-153000 全範囲追加
+
+**根本原因**:
+- 130000 collision (otter_ai vs competitor_features) → 140000 リネーム
+- 133000 (coqui) stuck in schema_migrations: SQL実行済み・INSERT 23505 で追跡失敗
+- 125000 の DROP NOT NULL が別インスタンスの seeds を破壊
+
+**Philosophy**: ✅KPI=昨日の自分 (deploy chain 修復) ✅商品=ユーザー価値 (competitor_features DB適用)
+
+**commit**: `433eb2b1`
