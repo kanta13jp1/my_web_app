@@ -18378,3 +18378,35 @@ PS#3 S45 は追加 2 社として LiteLLM + LangGraph を追加。
 - **Notion DB**: `task_title` property未作成 → ユーザー手動対応必要 (soft-fail で CI はブロックしない)
 
 ### Philosophy Alignment: 9/9 ✅
+
+---
+
+## PS版#5 S47 — 2026-04-25 (on-call バグ修正)
+
+**Instance**: PS版#5 | **Commit**: b0e7e538 (dart format) + 6724d797 + 6880098d + 741da90d
+
+### 実装サマリ
+
+1. **CI failure 修復** (Issue #712/#710)
+   - `deploy-prod.yml` migration repair list に `110000〜143000` (8種+6種) を追加
+   - `supabase db push` 失敗時の diagnostic echo markers 追加 (exit code + raw output)
+   - dart format 差分修正: `settings_page.dart` (5349062b 残差の長行分割)
+
+2. **check-competitor-updates EF #711 クローズ**
+   - admin-hub:competitor.check (14社) で既に稼働中を確認
+   - CLAUDE.md EF 一覧を `admin-hub:competitor.check` に更新
+   - Issue #711 クローズ
+
+3. **deploy-prod re-run**
+   - `gh run rerun 24922534074 --failed` でキック
+   - `a75b4f2c` run で repair list 全適用 → 現在実行中
+
+### Next Actions
+
+- CI `a75b4f2c` 完了後に #710/#712 クローズ
+- `b0e7e538` (dart format) deploy 確認
+
+### Philosophy Alignment: 7/9 ✅
+- ✅ 1.CEO感(技術判断) ✅ 2.ミッション駆動(インフラ安定) ✅ 5.商品=ユーザー価値 ✅ 6.資本=時間
+- ✅ 7.資産負債(EF cap維持) ✅ 8.KPI=昨日の自分(CI緑化) ✅ 9.ゴール=IPO
+- 🔶 3.mentor (PS#5専任バグ修正のみ) 🔶 4.6部署バランス (今回は CI/インフラ特化)
