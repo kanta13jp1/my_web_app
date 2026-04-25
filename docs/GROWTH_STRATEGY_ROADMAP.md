@@ -18958,3 +18958,57 @@ Deploy failure `24924215661` (feat business-wbs) を解析・修正。
 
 ### Philosophy 9/9 ✅
 ### AI-DEV 7/7 ✅
+
+---
+
+## Win版#132 part 15 完了 (2026-04-25 午後)
+
+### 実施内容: 全ページ X シェア + AI 自動生成 Phase 1
+
+**契機**: ユーザー要請「全ページに X シェア機能 + ページごとに AI が文言・画像・動画 自動生成」
+
+### 4-Phase 計画 (docs/PAGE_LEVEL_SHARE.md)
+
+| Phase | 内容 | 担当 | 期日 |
+|-------|------|------|------|
+| **1 (本 commit)** | page_shares テーブル + core-hub:page.share_generate | Win | 2026-04-25 |
+| 2 | Flutter ShareToXButton widget + MainScaffold 組込 | VSCode | 2026-05-05 |
+| 3 | 動画生成 (high-traffic page のみ) | Win | 2026-05-15 |
+| 4 | KPI ダッシュボード (admin/share-analytics) | VSCode | 2026-05-30 |
+
+### Phase 1 実装
+
+**Migration**: `20260425183000_create_page_shares.sql`
+- `page_shares` テーブル新設 (page_path UNIQUE / tweet_text / image_url / video_url / share_count / video_enabled flag)
+- 3 index (path / freshness / video_enabled 部分 index)
+- RLS public read / service_role write
+- 6 主要 page を初期 seed (/ /ai-university /comparison /landing /project-gantt /feature-requests)
+- video_enabled=true は 4 page (LP / AI大学 / comparison / landing)
+
+**EF action**: `core-hub:page.share_generate`
+- **Auth**: anonymous OK (新たに `anonymousActions` set 追加)
+- **Cache**: 7 日 TTL / `force=true` で bypass
+- **Flow**: cache check → Gemini Flash で tweet 文 → FAL flux/schnell で画像 → upsert
+- **Fallback**: Gemini fail → template / FAL fail → /ogp.png
+- **share_count auto-increment** (KPI 用 / fire-and-forget)
+- **trace_id**: generated_by に "gemini-flash+fal-flux-schnell" / "template+fal-flux-schnell" / "fallback" の 3 段階記録
+
+**設計 doc**: `docs/PAGE_LEVEL_SHARE.md` (新規 12 section)
+- アーキテクチャ + auth + cache 戦略
+- Flutter UI 設計 (Phase 2 / VSCode handoff)
+- Cost 試算 ($2-3/月 with cache hit)
+- KPI 設計 (share_count / UTM)
+- Philosophy 9/9 ✅ + AI-DEV 7/7 ✅
+
+### Cost (cache 7 日効果込み)
+- Gemini Flash: $0.64/月
+- FAL flux/schnell: $2.40/月
+- 合計 **$2-3/月** (大半 cache hit で実コスト圧縮)
+
+### Philosophy 9/9 ✅
+特に原則 5 (商品=ユーザー価値): 1 click でシェアハードル消失
+
+### AI-DEV 7/7 ✅
+3 段階 fallback (Gemini → template / FAL → ogp.png) で resilient
+
+### commit: TBD

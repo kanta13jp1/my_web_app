@@ -248,10 +248,14 @@ serve(async (req: Request) => {
 
     const action: string = body.action ?? "";
     const serviceRoleActions = new Set(["notify.feature_request", "notification.broadcast_release"]);
+    // Anonymous-allowed actions (no auth required / page-specific cache)
+    const anonymousActions = new Set(["page.share_generate"]);
     const bearer = (req.headers.get("authorization") ?? "").replace(/^Bearer\s+/i, "").trim();
     const isServiceRole = SERVICE_ROLE_KEY !== "" && bearer === SERVICE_ROLE_KEY;
     let userId = "";
-    if (!(serviceRoleActions.has(action) && isServiceRole)) {
+    if (anonymousActions.has(action)) {
+      // skip auth — anonymous OK
+    } else if (!(serviceRoleActions.has(action) && isServiceRole)) {
       const authed = await getUserId(req);
       if (!authed) return json({ error: "Unauthorized" }, 401);
       userId = authed;
@@ -974,6 +978,186 @@ serve(async (req: Request) => {
           status: "ok",
           timestamp: new Date().toISOString(),
           version: "1.0.0",
+        });
+      }
+
+      // ─── Page Share Generation (Win版#132 part 15) ──────────────────────
+      // 全ページの X シェアボタン用 asset (tweet 文 + 画像) を AI で自動生成。
+      // 設計: docs/PAGE_LEVEL_SHARE.md / 7 日 TTL cache / page_path UNIQUE
+      // Auth: anonymous OK (page-specific cache のためユーザー秘匿情報なし)
+      // Fallback: Gemini fail → template / FAL fail → /ogp.png
+      case "page.share_generate": {
+        const pagePath = textValue(body.page_path, 200);
+        const pageTitle = textValue(body.page_title, 200);
+        const pageDescription = textValue(body.page_description, 1000);
+        const force = body.force === true;
+
+        if (!pagePath) {
+          return json({ error: "page_path required" }, 400);
+        }
+
+        // 1. Cache check (7 日以内 + force=false)
+        if (!force) {
+          const sevenDaysAgo = new Date(
+            Date.now() - 7 * 24 * 3600 * 1000,
+          ).toISOString();
+          const { data: cached } = await admin
+            .from("page_shares")
+            .select("*")
+            .eq("page_path", pagePath)
+            .gte("created_at", sevenDaysAgo)
+            .maybeSingle();
+          if (cached?.tweet_text && cached?.image_url) {
+            // share_count increment (fire-and-forget)
+            admin
+              .from("page_shares")
+              .update({ share_count: (cached.share_count ?? 0) + 1 })
+              .eq("id", cached.id)
+              .then(() => {});
+            return json({
+              success: true,
+              cached: true,
+              tweet_text: cached.tweet_text,
+              image_url: cached.image_url,
+              video_url: cached.video_url,
+            });
+          }
+        }
+
+        // 2. Gemini Flash で tweet 文生成
+        const geminiKey = Deno.env.get("GEMINI_API_KEY");
+        let tweetText = "";
+        if (geminiKey) {
+          const prompt = `あなたは自分株式会社のSNS担当です。以下のページを X (旧Twitter) で
+シェアする魅力的な日本語 tweet を作ってください。
+- 140字以内
+- ハッシュタグ 2-3 個含む (#自分株式会社 #buildinpublic 等)
+- 末尾に LP リンク https://my-web-app-b67f4.web.app${pagePath} を含める
+- 絵文字 1-2 個
+
+## ページ情報
+title: ${pageTitle}
+description: ${pageDescription}
+
+## 出力 (JSON のみ・コードブロックなし)
+{"tweet_text": "..."}`;
+
+          try {
+            const resp = await fetch(
+              `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`,
+              {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  contents: [{ parts: [{ text: prompt }] }],
+                  generationConfig: {
+                    temperature: 0.7,
+                    maxOutputTokens: 300,
+                  },
+                }),
+              },
+            );
+            if (resp.ok) {
+              const data = await resp.json();
+              let text = String(
+                data?.candidates?.[0]?.content?.parts?.[0]?.text ?? "",
+              ).trim();
+              if (text.startsWith("```")) {
+                text = text.split("\n").slice(1, -1).join("\n");
+              }
+              try {
+                const parsed = JSON.parse(text);
+                tweetText = String(parsed.tweet_text ?? "").slice(0, 280);
+              } catch {
+                // JSON parse fail → fallthrough
+              }
+            }
+          } catch {
+            // Gemini call fail → fallthrough
+          }
+        }
+
+        // Gemini fallback: simple template
+        if (!tweetText) {
+          tweetText =
+            `🚀 ${pageTitle || "自分株式会社"}\n` +
+            `21の競合SaaSを1つに統合する AI life management\n\n` +
+            `https://my-web-app-b67f4.web.app${pagePath}\n\n` +
+            `#自分株式会社 #buildinpublic #SaaS統合`;
+          tweetText = tweetText.slice(0, 280);
+        }
+
+        // 3. FAL flux/schnell で画像生成
+        const falKey = Deno.env.get("FAL_KEY");
+        let imageUrl = "https://my-web-app-b67f4.web.app/ogp.png"; // fallback
+        let cost = 0;
+        let generatedBy = "fallback";
+        if (falKey) {
+          try {
+            const imagePrompt =
+              `Modern minimalist OGP banner for "${pageTitle || "自分株式会社"}", ` +
+              `1200x630 aspect ratio, gradient orange-purple-indigo background, ` +
+              `Japanese-inspired typography style, futuristic UI elements floating, ` +
+              `no text overlay, professional and clean, photorealistic high quality`;
+            const falResp = await fetch(
+              "https://fal.run/fal-ai/flux/schnell",
+              {
+                method: "POST",
+                headers: {
+                  "Authorization": `Key ${falKey}`,
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  prompt: imagePrompt,
+                  image_size: "landscape_16_9",
+                  num_inference_steps: 4,
+                  num_images: 1,
+                  enable_safety_checker: true,
+                }),
+              },
+            );
+            if (falResp.ok) {
+              const falData = await falResp.json();
+              if (falData?.images?.[0]?.url) {
+                imageUrl = falData.images[0].url;
+                cost = 0.003;
+                generatedBy = geminiKey
+                  ? "gemini-flash+fal-flux-schnell"
+                  : "template+fal-flux-schnell";
+              }
+            }
+          } catch {
+            // FAL fail → fallback /ogp.png
+          }
+        }
+
+        // 4. page_shares に upsert
+        const { data: upserted } = await admin
+          .from("page_shares")
+          .upsert(
+            {
+              page_path: pagePath,
+              page_title: pageTitle,
+              page_description: pageDescription,
+              tweet_text: tweetText,
+              image_url: imageUrl,
+              generated_by: generatedBy,
+              cost_usd: cost,
+              share_count: 1,
+              updated_at: new Date().toISOString(),
+            },
+            { onConflict: "page_path" },
+          )
+          .select()
+          .single();
+
+        return json({
+          success: true,
+          cached: false,
+          tweet_text: tweetText,
+          image_url: imageUrl,
+          page_share_id: upserted?.id,
+          generated_by: generatedBy,
         });
       }
 
