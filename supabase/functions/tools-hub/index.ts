@@ -1832,6 +1832,126 @@ serve(async (req) => {
             status: "in_progress",
           });
         }
+        // ── WBS Get User Tasks (UI向け) ──────────────────────────────────────
+        case "wbs.get_user_tasks": {
+          // UI から呼ぶユーザータスク一覧 (pending/in_progress/blocked + completed 直近10件)
+          const includeCompleted = body.include_completed === true;
+          const limitN = Math.min(Number(body.limit ?? 50), 100);
+
+          const statusFilter = includeCompleted
+            ? ["pending", "in_progress", "blocked", "completed"]
+            : ["pending", "in_progress", "blocked"];
+
+          const { data: tasks, error: tasksErr } = await admin
+            .from("wbs_tasks")
+            .select("id, category, title, description, status, progress, priority, end_date, notebooklm_note, updated_at")
+            .eq("owner_instance", "user")
+            .in("status", statusFilter)
+            .order("priority", { ascending: false })
+            .order("end_date", { ascending: true, nullsFirst: false })
+            .limit(limitN);
+          if (tasksErr) throw new Error(tasksErr.message);
+
+          // 最新レポート取得
+          const taskIds = (tasks ?? []).map((t: Record<string, unknown>) => t.id);
+          let latestReports: Record<string, Record<string, unknown>> = {};
+          if (taskIds.length > 0) {
+            const { data: reports } = await admin
+              .from("user_task_reports")
+              .select("task_id, status, progress, report_text, next_action, blockers, created_at")
+              .in("task_id", taskIds)
+              .order("created_at", { ascending: false })
+              .limit(taskIds.length * 3);
+            for (const r of reports ?? []) {
+              const rep = r as Record<string, unknown>;
+              if (!latestReports[String(rep.task_id)]) {
+                latestReports[String(rep.task_id)] = rep;
+              }
+            }
+          }
+
+          const enriched = (tasks ?? []).map((t: Record<string, unknown>) => ({
+            ...t,
+            latest_report: latestReports[String(t.id)] ?? null,
+          }));
+
+          return json({ success: true, count: enriched.length, tasks: enriched });
+        }
+
+        // ── WBS Submit User Task Report ───────────────────────────────────────
+        case "wbs.submit_user_task_report": {
+          // UI からタスク進捗報告。user_task_reports に INSERT + wbs_tasks.progress を更新。
+          const taskId   = String(body.task_id ?? "");
+          const status   = String(body.status ?? "in_progress");
+          const progress = Math.max(0, Math.min(100, Number(body.progress ?? 0)));
+          const reportText = String(body.report_text ?? "");
+          const nextAction = String(body.next_action ?? "");
+          const blockers   = String(body.blockers ?? "");
+
+          if (!taskId) return json({ error: "task_id required" }, 400);
+          const validStatuses = ["not_started", "in_progress", "completed", "blocked", "delegated"];
+          if (!validStatuses.includes(status)) {
+            return json({ error: `status must be one of: ${validStatuses.join(", ")}` }, 400);
+          }
+
+          // 1. Insert report
+          const { data: report, error: insertErr } = await admin
+            .from("user_task_reports")
+            .insert({
+              task_id: taskId,
+              status,
+              progress,
+              report_text: reportText || null,
+              next_action: nextAction || null,
+              blockers: blockers || null,
+              reported_by: "user",
+            })
+            .select("id")
+            .single();
+          if (insertErr) throw new Error(insertErr.message);
+
+          // 2. Update wbs_tasks progress (and status if completed)
+          const taskUpdate: Record<string, unknown> = {
+            progress,
+            updated_at: new Date().toISOString(),
+          };
+          if (status === "completed" && progress === 100) {
+            taskUpdate.status = "completed";
+          } else if (status === "in_progress") {
+            taskUpdate.status = "in_progress";
+          } else if (status === "blocked") {
+            taskUpdate.status = "blocked";
+          }
+          await admin.from("wbs_tasks").update(taskUpdate).eq("id", taskId);
+
+          // 3. Slack notification on completion
+          if (status === "completed") {
+            const { data: task } = await admin
+              .from("wbs_tasks")
+              .select("title, category")
+              .eq("id", taskId)
+              .maybeSingle();
+            const webhookUrl = Deno.env.get("SLACK_WEBHOOK_URL") ?? "";
+            if (webhookUrl && task) {
+              try {
+                await fetch(webhookUrl, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    text: `✅ *ユーザータスク完了*
+[${task.category}] ${task.title}
+${reportText ? `> ${reportText}` : ""}`,
+                    username: "自分株式会社 WBS Bot",
+                    icon_emoji: ":white_check_mark:",
+                  }),
+                });
+              } catch (_) { /* non-fatal */ }
+            }
+          }
+
+          return json({ success: true, report_id: report?.id, task_id: taskId, status, progress });
+        }
+
         case "horseracing.register_race": {
           const { data: r, error: re } = await admin.from("horse_races").insert({
             source: "manual", race_name: String(body.name ?? ""),
@@ -2378,6 +2498,8 @@ serve(async (req) => {
             "horseracing.register_race", "horseracing.stats",
             "slack.post", "slack.search",
             "wbs.notify_user_tasks",
+            "wbs.get_user_tasks",
+            "wbs.submit_user_task_report",
             "legal.harvey.complete",
             "legal-assistant.harvey.complete",
             "legal-assistant.review",
