@@ -120,7 +120,7 @@ jobs:
           TASK_ID=$(curl -s -X POST "$SUPABASE_URL/functions/v1/tools-hub" \
             -H "Authorization: Bearer $SUPABASE_ANON_KEY" \
             -H "Content-Type: application/json" \
-            -d '{"action":"wbs.list_tasks","instance":"all"}' \
+            -d '{"action":"wbs.list_tasks"}' \
             | TITLE_PREFIX="$TITLE_PREFIX" python3 -c "import json,os,sys; data=json.load(sys.stdin); tasks=data.get('tasks',[]); print(next((t['id'] for t in tasks if t.get('title','').startswith(os.environ['TITLE_PREFIX'])),''))")
 
           if [ -n "$TASK_ID" ]; then

@@ -56,7 +56,7 @@ jobs:
             -H "Authorization: Bearer ${SUPABASE_SERVICE_ROLE_KEY}" \
             -H "apikey: ${SUPABASE_SERVICE_ROLE_KEY}" \
             -H "Content-Type: application/json" \
-            -d '{"action":"wbs.list_tasks","instance":"all","status":"pending","limit":200}' \
+            -d '{"action":"wbs.list_tasks","status":"pending","limit":200}' \
             > /tmp/wbs_tasks.json
 
           python3 <<'PY'
