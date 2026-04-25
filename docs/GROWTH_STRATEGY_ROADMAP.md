@@ -20081,3 +20081,22 @@ deploy-prod 連続失敗の根本原因を特定し、各インスタンスの�
 - 資本=時間: 同種 GH006 の再発時に即発見 (silent failure 排除) ✅
 - KPI=昨日の自分: 1 修正 → 3 防御層 ✅
 
+
+## PS#6 S46 — 2026-04-25 22:40 JST (deploy failure #746-749 診断・確認)
+
+**Instance**: PowerShell版 #6 | **Commit**: d84de3a8 (診断のみ・修正は別インスタンス先行)
+
+### 実装内容
+- CI failure issues #746-749 調査: run 24931864982 の "Run Supabase migrations" step failure
+- 根本原因特定: `20260425234000_wbs_user_instances_reports.sql` の大型UPDATE に NOT EXISTS ガード不足
+  - `wbs_tasks_title_instance_unique` (20260426080000 で作成) が存在する状態で reverted migration 再実行
+  - 同一 title で instance='user' が重複 → SQLSTATE 23505
+- 修正 `d84de3a8` ("fix(wbs): guard user report reassignment") が先行適用済みを確認
+- run `24932142682` で Deploy to Production SUCCESS ✓
+- issues #746 / #747 / #748 / #749 auto-closed ✓
+
+### Philosophy Alignment: PS#6 S46
+- CEO感: 4件並行 CI failure を単一根本原因に絞り込み ✅
+- ミッション駆動: 本番 deploy 正常化 ✅
+- 資本=時間: 重複修正を回避 (先行commit確認→stash drop) ✅
+- KPI=昨日の自分: migration reverted + UNIQUE INDEX 組合せ = 再発パターン文書化 ✅
