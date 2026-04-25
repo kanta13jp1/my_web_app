@@ -64,7 +64,8 @@ ALTER TABLE public.wbs_tasks ADD CONSTRAINT wbs_tasks_instance_check
     -- 後続 migration で追加される値 (super-set / 230000 で正式定義)
     'user',      -- ユーザー手動操作タスク
     'gemini',    -- Gemini Code Assist
-    'copilot'    -- GitHub Copilot
+    'copilot',   -- GitHub Copilot (no-hyphen form)
+    'co-pilot'   -- GitHub Copilot (hyphen alias added by 225000)
     -- 'all' は廃止 (進捗 tracking 不可だったため / 2026-04-25 Win#132 part 16)
   ));
 
