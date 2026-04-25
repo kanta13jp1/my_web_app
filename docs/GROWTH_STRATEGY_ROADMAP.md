@@ -19169,3 +19169,22 @@ Deploy failure `24924215661` (feat business-wbs) を解析・修正。
 原則 1 (CEO 感): 責任分担明確化 / 原則 8 (KPI=昨日の自分): instance 別進捗可視化
 
 ### commit: TBD
+
+### Rule 17 WF health check (2026-04-25 16:25 JST) — PS#1 S39
+
+#### WF全体健全 (main branch)
+- 全 WF: 前セッション修正済みで追加 failure なし
+- deploy `24925347569`: SUCCESS (horse-racing fix含む全 commits deploy 完了)
+
+#### 実施内容
+1. **claude/mobile-version-task-hQxcq 独自 commit merge** — horse_racing_predictor_page.dart 503/EDGE_RUNTIME_ERROR friendly copy → `8f0cfdc9`
+2. **mobile orphan branch 削除** — `claude/mobile-version-task-hQxcq` (11 commits中10件はmain済 / horse_racing のみ未merge)
+3. **deploy 監視** — `24925347569` SUCCESS 確認
+
+#### WBS progress
+- `deploy-prod 成功率100%維持`: 95% → 97%
+- `EFハードキャップ16本維持`: 90% 維持
+
+#### 残課題
+- `claude/vscode-wip`: まだリモートに存在 (VSCode版管理 — PS#1 は触らない)
+- Notion sync: 次cron 07:10 UTCで IDLE_TIMEOUT 再発チェック中
