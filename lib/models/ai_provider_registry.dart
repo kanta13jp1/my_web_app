@@ -1639,6 +1639,22 @@ const List<AiProviderEntry> kAiProviderRegistry = [
     note:
         r'エンタープライズ向け AI 音声クローン — スタジオ品質 / API + Studio UI / 同意ベース声クローン / コンテンツ制作特化 / $10M+ 調達 / ★8/9',
   ),
+  AiProviderEntry(
+    id: 'lovo_ai',
+    displayName: 'LOVO (Genny)',
+    status: AiProviderStatus.notImplemented,
+    entryPoint: 'https://lovo.ai/',
+    note:
+        r'AI 音声 + 動画エディタ統合 — 500+ AI 音声 / 100+ 言語 / Genny AI 動画ツール / 感情制御 / Canva 対抗 / $7M 調達 / ★8/9',
+  ),
+  AiProviderEntry(
+    id: 'aiva',
+    displayName: 'AIVA',
+    status: AiProviderStatus.notImplemented,
+    entryPoint: 'https://www.aiva.ai/',
+    note:
+        r'AI 作曲 (Artificial Intelligence Virtual Artist) — SACEM 登録 / クラシック/ゲーム/映画音楽生成 / 著作権フリー / API 提供 / ★8/9',
+  ),
 ];
 
 /// ステータス別件数を集計
