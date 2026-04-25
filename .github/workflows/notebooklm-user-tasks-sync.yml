@@ -33,7 +33,7 @@ jobs:
 
     env:
       TOOLS_HUB_URL: ${{ secrets.SUPABASE_TOOLS_HUB_URL }}
-      SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY_PROD }}
       INCLUDE_COMPLETED: ${{ github.event.inputs.include_completed || 'false' }}
       RECENT_REPORTS: ${{ github.event.inputs.recent_reports || '3' }}
 
@@ -46,8 +46,8 @@ jobs:
             echo "TOOLS_HUB_URL=$TOOLS_HUB_URL" >> "$GITHUB_ENV"
           fi
 
-          if [ -z "$SERVICE_ROLE_KEY" ]; then
-            echo "::warning::SUPABASE_SERVICE_ROLE_KEY missing; skip snapshot"
+          if [ -z "$ANON_KEY" ]; then
+            echo "::warning::SUPABASE_ANON_KEY_PROD missing; skip snapshot"
             echo "skip=true" >> "$GITHUB_OUTPUT"
           else
             echo "skip=false" >> "$GITHUB_OUTPUT"
@@ -66,7 +66,8 @@ jobs:
           HTTP_CODE=$(curl -s -o /tmp/resp.json -w "%{http_code}" \
             -X POST \
             "$TOOLS_HUB_URL" \
-            -H "Authorization: Bearer ${SERVICE_ROLE_KEY}" \
+            -H "Authorization: Bearer ${ANON_KEY}" \
+            -H "apikey: ${ANON_KEY}" \
             -H "Content-Type: application/json" \
             -d "{\"action\":\"wbs.export_user_tasks_md\",\"include_completed\":${INCLUDE_COMPLETED},\"recent_reports\":${RECENT_REPORTS}}" \
             --max-time 30)
