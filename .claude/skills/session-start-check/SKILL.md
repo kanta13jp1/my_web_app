@@ -119,11 +119,18 @@ grep -E "^### 原則 [0-9]" docs/PHILOSOPHY.md | head -10
 
 ```bash
 INST=$(echo $INSTANCE | tr A-Z a-z | sed -E s/版.*//)  # win/vscode/ps
-curl -X POST https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/tools-hub   -H "Authorization: Bearer "   -H "apikey: "   -H "Content-Type: application/json"   -d "{"action":"wbs.priority_for_instance","instance":"\"}"   | jq .top_tasks
+AUTH_KEY="${SUPABASE_SERVICE_ROLE_KEY:-${SUPABASE_ANON_KEY:-}}"
+curl -s -X POST https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/tools-hub \
+  -H "Authorization: Bearer $AUTH_KEY" \
+  -H "apikey: $AUTH_KEY" \
+  -H "Content-Type: application/json" \
+  -d "{\"action\":\"wbs.priority_for_instance\",\"instance\":\"$INST\",\"notify_slack\":true}" \
+  | jq '.top_tasks, .user_tasks'
 ```
 
 優先タスク TOP 5 を確認 → 本セッションの着手タスクを決定。
 WBS 表示: https://my-web-app-b67f4.web.app/project-gantt
+ユーザー手動タスクUI: https://my-web-app-b67f4.web.app/user-tasks
 
 ### Step 5: レポート生成
 
