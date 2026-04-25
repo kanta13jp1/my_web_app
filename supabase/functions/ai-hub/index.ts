@@ -2527,6 +2527,7 @@ serve(async (req: Request) => {
       // AI大学 v2 (P1〜P4)
       "quiz.fsrs_next",
       "quiz.fsrs_grade",
+      "quiz.fsrs_stats",
       "university.rlhf_signal",
       "university.rlhf_snapshot",
       "user_data.finetune_readiness",
@@ -3429,6 +3430,39 @@ serve(async (req: Request) => {
           success: true,
           next_due: nextDue.toISOString(),
           stability: newStability,
+        });
+      }
+
+      case "quiz.fsrs_stats": {
+        if (!userId) return json({ error: "Unauthorized" }, 401);
+        const provider = String(body.provider ?? "");
+        const todayIso = new Date().toISOString();
+        const baseQ = admin
+          .from("ai_university_fsrs_cards")
+          .select("stability, reps, lapses, state, due_date")
+          .eq("user_id", userId);
+        const q = provider ? baseQ.eq("provider", provider) : baseQ;
+        const { data, error } = await q;
+        if (error) return json({ error: error.message }, 500);
+        const cards = (data ?? []) as Array<Record<string, unknown>>;
+        const totalCards = cards.length;
+        const dueToday = cards.filter((c) => String(c.due_date ?? "") <= todayIso).length;
+        const totalReps = cards.reduce((s, c) => s + (Number(c.reps) || 0), 0);
+        const totalLapses = cards.reduce((s, c) => s + (Number(c.lapses) || 0), 0);
+        const avgStability = totalCards > 0
+          ? cards.reduce((s, c) => s + (Number(c.stability) || 1), 0) / totalCards
+          : 0;
+        const retentionRate = totalReps > 0
+          ? Math.round((1 - totalLapses / totalReps) * 100)
+          : null;
+        return json({
+          success: true,
+          provider: provider || "all",
+          total_cards: totalCards,
+          due_today: dueToday,
+          total_reviews: totalReps,
+          avg_stability: Math.round(avgStability * 10) / 10,
+          retention_rate: retentionRate,
         });
       }
 
