@@ -18090,3 +18090,37 @@ curl -X POST https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/schedule-hub 
 | 9. ゴール=IPO/ウェルビーイング | ✅ | — |
 
 **スコア**: 9/9 ✅
+
+---
+
+## PS#3 S45 — AI大学 187→189社化 (2026-04-25)
+
+**追加プロバイダー**:
+
+| # | Provider | カテゴリ | Step 0 | 根拠 |
+| --- | --- | --- | --- | --- |
+| 188 | **DSPy** (Stanford / Omar Khattab) | LLM フレームワーク | 7.5/9 | 独自パラダイム (プログラミング vs プロンプティング) / 18k+ Stars / Apache 2.0 / Databricks採用 |
+| 189 | **Pydantic AI** (Samuel Colvin) | エージェントFW | 7/9 | Pydantic V2 基盤 / 型安全 / 依存性注入 / FastAPI 親和性 / MIT |
+
+**その他対応**:
+- `ai-university-update.yml` に continue_dev / aider / dspy / pydantic_ai の `upsert_provider` 追加 (S44 で欠落していた分)
+- `TOTAL_PROVIDERS` カウント 8 → 12 に更新
+
+**累計**: 189社 (seed migrations 189本)
+
+
+---
+
+## PS版#4 S41 — 2026-04-25 競合モニタリング追加調査
+
+**インスタンス**: PS版#4 (競合モニタリング専任)
+**commit**: c0c5230d
+
+### 実装サマリー
+
+- GPT-5.5 API正式公開 (2026-04-24) + GPT-Rosalind (ライフサイエンス特化) 記録
+- **Claude Opus 4.7** 発見 — Claude Design (Anthropic Labs) で使用中 → ai-hub更新検討
+- check-competitor-updates EF欠損確認 (PS#6 cleanup犠牲) → PS#5 cross-instance-pr発行
+- cross-instance-pr→PS#5: EF復旧 or admin-hub統合 (Option B推奨)
+
+### Philosophy Alignment: 9/9 ✅

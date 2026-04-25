@@ -1470,6 +1470,22 @@ const List<AiProviderEntry> kAiProviderRegistry = [
     note:
         r'AI ペアプログラマー CLI — Git自動コミット / 複数ファイル横断編集 / Claude/DeepSeek対応 / 22k+ Stars / SWE-bench高スコア',
   ),
+  AiProviderEntry(
+    id: 'dspy',
+    displayName: 'DSPy',
+    status: AiProviderStatus.notImplemented,
+    entryPoint: 'https://dspy.ai/',
+    note:
+        r'Stanford発 LLM "プログラミング" FW — Signature/Module/Optimizer / BootstrapFewShot自動最適化 / 18k+ Stars / Apache 2.0',
+  ),
+  AiProviderEntry(
+    id: 'pydantic_ai',
+    displayName: 'Pydantic AI',
+    status: AiProviderStatus.notImplemented,
+    entryPoint: 'https://ai.pydantic.dev/',
+    note:
+        r'型安全 Python エージェントFW — Pydantic V2 基盤 / 依存性注入 / TestModel / FastAPI 親和性 / 6k+ Stars / MIT',
+  ),
 ];
 
 /// ステータス別件数を集計
