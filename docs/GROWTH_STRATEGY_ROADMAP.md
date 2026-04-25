@@ -20143,26 +20143,29 @@ deploy-prod 連続失敗の根本原因を特定し、各インスタンスの�
 - KPI=昨日の自分: 同等の skip パターンが他 workflow にある場合は次回以降テンプレ化 ✅
 
 
----
+## PS#6 S47 — 2026-04-26 00:10 JST (定期 cleanup + 監視)
 
-## PS#3 S54 — 2026-04-26 (c89aa7a1)
+**Instance**: PowerShell版 #6 | **Commit**: なし (cleanup/監視のみ)
 
-### AI大学 200→202社化 — Otter.ai + Murf (PS#3-S54)
+### 実施内容
+- WBS top-5: business-legal/finance → 禁止カテゴリ → DYNAMIC-CLAIM試行
+- issue #719 ([CI失敗]) クローズ — run 24926675860 は後続 deploy で解消済み
+- orphan worktree `claude/exciting-wu-3856d1` 削除 (merged to main確認済み)
+- remote branches prune (claude/* = vscode-wip 1本のみ残存)
+- horse_racing Auto Update: 5/5 success ✓
+- cron-batch.yml: workflow_dispatch only (secrets未設定) = 想定通り停止中
+- blog-batch-publish.yml: 既にgit switch -c修正済み (Win#132 part 30)
+- "Post X with OGP Image": dry_run + secrets空 → exit3 (対処不要)
+- 13 failing tests: dart:ui VM非対応 (既知 / VSCode版 handoff済み)
+- deploy-prod.yml repair list: 94件 (今後の最適化候補として記録)
 
-**実施内容**:
-- **Otter.ai** (AI ミーティングアシスタント / SpeechX モデル / リアルタイム文字起こし+要約+アクションアイテム / OtterPilot 自動参加 / $50M / 月間 1M+ / ★8/9)
-- **Murf** (AI TTS / 200+ AI 音声 / 120+ 言語 / スタジオ品質 / Voice Clone / Canva 統合 / API 提供 / $10M / ★8/9)
+### 所見: repair list 過多問題
+現在94件のrepair --status revokedエントリが毎deployで実行されている。
+全て成功deployで適用済みなので、段階的削除が可能。
+→ 次回PS#6: repair list audit & reduction タスク (Win版に cross-instance-pr推奨)
 
-**次回候補**: Coqui AI / Resemble AI / Play.ht / AssemblyAI (音声系で統一) / Deepgram / Speechify
-
-### Rule 17 WF health check PS#1 S44 (2026-04-26 朝)
-- 全 WF 健全: last 50 runs で失敗は deploy-prod 1件のみ (esm.sh 522 transient / 自己回復済)
-- infra-health-check: 5/5 SUCCESS (11:53 以降の全 cron clean) ✅
-- issue-to-wbs: 13/13 SUCCESS ✅
-- 前セッション修正確認:
-  - d95e50d6 endpoint fix → 11:53 run SUCCESS ✅
-  - 77cd060c Tome/Krisp migration → 複数 SUCCESS deploy 確認 ✅
-- orphan branches: blog-publish 0 / cs-check 0 / ai-university 0 / claude/vscode-wip 1 (VSCode worktree / 正常)
-- deploy-prod 24934867980 in_progress (671f28bf) / CI green / Deploy step実行中
-
-### commits: なし (health check only)
+### Philosophy Alignment: PS#6 S47
+- CEO感: 現状を正確に把握・不要な変更をしない判断 ✅
+- ミッション駆動: 本番安定稼働の確認 ✅
+- 資本=時間: 危険な変更より安全な監視優先 ✅
+- KPI=昨日の自分: repair list 94件問題を発見・記録 ✅
