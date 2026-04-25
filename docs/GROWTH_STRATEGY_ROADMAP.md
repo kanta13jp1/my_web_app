@@ -19324,27 +19324,93 @@ curl -sS -X POST "$SUPABASE_URL/functions/v1/tools-hub" \
 
 Philosophy 9/9✅
 
-## PS#6 S44 — migration collision 200000 fix + repair batch (200100/201500/211500/220000/223000) (2026-04-25)
+---
 
-**Commits**: ddc2738f
+## Win版#132 part 18 完了 (2026-04-25 夜)
 
-### 実施内容
+### 実施内容: WBS instance 拡張 (gemini/copilot/user) + user タスク Slack 通知
 
-1. **Migration collision 200000 検出・修正** (ddc2738f)
-   - `seed_competitors_phase2_batch4` + `seed_tabnine_ai_university` 両方が 200000
-   - `git mv` で seed_tabnine を 200000→200100 にリネーム
+**契機**: ユーザー要請「gemini, co-pilot, user を instance 種類に追加 / user 担当 = 手動操作タスク / 各セッションで user タスクをユーザー通知 + Slack 通知」
 
-2. **repair list 一括追加** (ddc2738f)
-   - 200100 (tabnine renamed)
-   - 201500 (seed_gamma)
-   - 211500 (seed_competitors_phase3_batch1)
-   - 220000 (wbs_rebalance_log)
-   - 223000 (increment_wbs_rebalance_count)
+### 実装
 
-3. **hotfix run 24926480131 SUCCESS確認**
-   - Win版の wbs_instance_check 修正が本番 deploy 成功
-   - horse racing batch in-progress (latest schedule run)
+1. **Migration** `20260425230000_wbs_add_gemini_copilot_user_instances.sql`
+   - instance CHECK: 12 → 15 (gemini / copilot / user 追加)
+   - owner_instance CHECK 同期
+   - 既存「ユーザー手動」task を自動再割当:
+     - Notion 設定系 / Slack Webhook 設定 / 法人登記 / 商標出願 / 司法書士契約 / 銀行口座 / 会計ソフト / 監査法人選定 / 主幹事証券 / 上場審査 → instance='user'
+   - `'all'` は part 16 で既に廃止済 (継続)
 
-### Philosophy/AI-DEV
-### Philosophy 9/9 ✅
-### AI-DEV 7/7 ✅
+2. **EF action** `tools-hub:wbs.notify_user_tasks`
+   - input: `{send_slack: bool=true, limit: int=10}`
+   - flow:
+     1. instance='user' の pending/in_progress task fetch (priority desc / end_date asc)
+     2. Slack #jibun-handoff (SLACK_WEBHOOK_URL) に整形 post
+     3. priority icon (🔴 high / 🟡 medium / 🟢 low) + due / progress 表示
+   - soft-fail: SLACK_WEBHOOK_URL 欠落で skipped 返却
+
+3. **GHA workflow** `.github/workflows/wbs-user-tasks-notify.yml`
+   - cron: `0 0 * * *` (毎朝 09:00 JST)
+   - tools-hub:wbs.notify_user_tasks call
+   - HTTP 200 以外で warning + skip (soft-fail)
+
+### Instance 種類 一覧 (15)
+
+| # | instance | 用途 |
+|---|----------|------|
+| 1 | vscode | UI/design / 大規模 refactor |
+| 2 | win | AI大学追加 / migration / EF cleanup / 動画 / アーキテクチャ |
+| 3-8 | ps1..ps6 | 専任 (Rule17 / T-1 / AI大学 / 競合 / on-call / horse) |
+| 9 | web | screenshot + Issue 起票 |
+| 10 | mobile | 実機 UAT screenshot + Issue 起票 |
+| 11 | schedule | Claude Code Schedule (cron) |
+| 12 | gha | GitHub Actions Workflow |
+| 13 | codex | OpenAI Codex (frontend Dart / SQL / GHA) |
+| 14 | **gemini** (新) | Gemini Code Assist (大規模 refactor / 長文) |
+| 15 | **copilot** (新) | GitHub Copilot (inline 補完 / Chat) |
+| 16 | **user** (新) | **ユーザー手動操作タスク** (Notion 設定 / Slack Webhook / 法人登記 / IPO 決裁等) |
+
+`'all'` は廃止 (Win#132 part 16)。
+
+### 動作確認 (deploy 完了後)
+```bash
+# 手動 trigger
+gh workflow run wbs-user-tasks-notify.yml --field limit=10
+
+# Slack #jibun-handoff に通知が届くか確認
+```
+
+期待 Slack message:
+```
+📋 WBS user タスク N 件 (要ユーザー手動操作)
+
+1. 🔴 株式会社設立登記 — business-legal 0% 期限 2026-09-30
+2. 🟡 商標出願 (自分株式会社 / Logo) — business-legal 0% 期限 2026-10-31
+...
+
+🔗 WBS Gantt: https://my-web-app-b67f4.web.app/project-gantt
+```
+
+### Philosophy 9/9 ✅ + AI-DEV 7/7 ✅
+原則 1 (CEO 感): user 専任 task の明示で意思決定 visibility
+原則 4 (6 部署): user = 経営層の専任行動 = HR 的位置づけ
+
+### commit: TBD
+
+---
+
+## Win版#132 part 18 完了 (2026-04-25 夜)
+
+### 実施内容: WBS instance 拡張 (gemini/copilot/user) + user タスク Slack 通知
+
+**契機**: ユーザー要請「gemini, co-pilot, user を instance 種類に追加 / user 担当 = 手動操作タスク / 各セッションで user タスクをユーザー通知 + Slack 通知」
+
+### 実装
+- Migration: instance CHECK 12 → 15 (gemini/copilot/user 追加) + 既存 user 手動タスク再割当
+- EF: tools-hub:wbs.notify_user_tasks (Slack post)
+- GHA: wbs-user-tasks-notify.yml (毎朝 09:00 JST cron)
+
+### Instance 種類 (15)
+vscode/win/ps1..ps6/web/mobile/schedule/gha/codex/**gemini/copilot/user** (新)
+
+### commit: TBD (本 commit)
