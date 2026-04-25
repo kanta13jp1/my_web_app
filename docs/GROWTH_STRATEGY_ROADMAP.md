@@ -18410,3 +18410,25 @@ PS#3 S45 は追加 2 社として LiteLLM + LangGraph を追加。
 - ✅ 1.CEO感(技術判断) ✅ 2.ミッション駆動(インフラ安定) ✅ 5.商品=ユーザー価値 ✅ 6.資本=時間
 - ✅ 7.資産負債(EF cap維持) ✅ 8.KPI=昨日の自分(CI緑化) ✅ 9.ゴール=IPO
 - 🔶 3.mentor (PS#5専任バグ修正のみ) 🔶 4.6部署バランス (今回は CI/インフラ特化)
+
+---
+
+## PS#6 S39 — bash -e PUSH_EXIT fix (2026-04-25)
+
+**インスタンス**: PS#6 (PowerShell版#6)
+**コミット**: `09fddac8`
+**デプロイ**: run 24923337356 (pending→実行中)
+
+### 作業内容
+
+deploy-prod.yml の `supabase db push` exit code 捕捉バグを修正。
+
+**根本原因**: GHA デフォルト `bash -e` により、`PUSH_LOG=$(supabase db push 2>&1)` が
+失敗すると PUSH_EXIT=$? の前にスクリプトが即終了。ログに出力なし・exit 1 のみ。
+
+**修正**: `PUSH_EXIT=0; PUSH_LOG=$(cmd 2>&1) || PUSH_EXIT=$?` パターンへ変更。
+
+### Philosophy Alignment: 6/9 ✅
+- ✅ 1.CEO感(根本原因特定) ✅ 2.ミッション駆動(CI安定) ✅ 5.商品=ユーザー価値
+- ✅ 7.資産負債(deploy chain保護) ✅ 8.KPI=昨日の自分(S38→S39継続修正) ✅ 9.ゴール=IPO
+- 🔶 3.mentor 🔶 4.6部署 🔶 6.資本=時間(連続CI失敗で時間消費)
