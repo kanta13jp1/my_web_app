@@ -19762,3 +19762,26 @@ GitHub Secrets に SLACK_WEBHOOK_URL を設定するだけで有効化。
 T-1 no-op 時: wbs.rebalance_suggest → claim → 実行 → completed の自動化フロー。
 PS#2 が引き取れる: marketing/docs/seo/product-light。
 禁止: business-legal / urgent / IPO。
+
+---
+
+## PS#4 S52 — WBS重複クリーンアップ + competitors スキーマ修正 (2026-04-26)
+
+### 実装内容
+
+1. **WBS タスク重複クリーンアップ** (migration 20260426080000)
+   - 89 title+instance 重複コンボ / 余剰行 582 件 DELETE
+   - `DISTINCT ON (title, instance) ORDER BY created_at ASC` で最古行保持
+   - `wbs_tasks_title_instance_unique` INDEX で再発防止
+
+2. **competitors テーブル Phase 3 スキーマ拡張** (migration 20260426090000)
+   - Phase 3 seed migrations が使う新カラムを ADD COLUMN IF NOT EXISTS
+     `threat_level / our_overlap_score / website_url / headquarters / name /
+      funding_or_valuation / employee_count_range / key_features / created_at`
+   - 既存 Phase 1 データを新カラムにコピー (website→website_url 等)
+
+3. **competitor-monitoring.yml YAML 修正**
+   - Python code at col-0 → YAML parse error → single-line python3 -c に修正
+   - Phase 1/3 両スキーマ対応 (website_url OR website)
+
+### commits: 031c132b (dedup) → e8045440 (schema+yaml) → 390dcd68 (push)
