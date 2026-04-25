@@ -19279,3 +19279,27 @@ curl -sS -X POST "$SUPABASE_URL/functions/v1/tools-hub" \
 特に原則 5 (team memory) wbs_rebalance_log = 完全 audit / 原則 7 (quality gate) 抑制ルール多重防御
 
 ### commit: TBD
+---
+
+## PS#6 S43 — deploy failure triage: wbs_instance_check SQLSTATE 23514 + repair 203000 (2026-04-25)
+
+**Commits**: 8749a456 (repair 203000)
+
+### 実施内容
+
+1. **Deploy failure 24925692958 (fix: split WBS all instance tasks) 原因特定**
+   - `ERROR: wbs_tasks_instance_check (SQLSTATE 23514)` — instance='all' が CHECK 制約違反
+   - Win版#132 part 16 (210000) が CHECK 制約から 'all' を削除済みなのに、後続 migration が instance='all' を INSERT
+   - Win版が hotfix commit cf9a375b で対応中 (run 24926480131)
+
+2. **repair list 203000 追加** (8749a456)
+   - `20260425203000_wbs_remove_all_instances_add_codex.sql` (Win版 hotfix) が repair list 未登録
+   - 203000 を repair list に追加
+
+3. **Migration 整合性確認**
+   - duplicate: 0件 ✅
+   - repair list 203000/210000 追加済み ✅
+
+### Philosophy/AI-DEV
+### Philosophy 9/9 ✅
+### AI-DEV 7/7 ✅
