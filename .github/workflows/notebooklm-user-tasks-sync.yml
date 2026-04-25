@@ -1,23 +1,22 @@
-name: NotebookLM User Tasks Snapshot (週次 commit)
+name: NotebookLM User Tasks Snapshot
 
-# Win版#132 part 19: user タスクを markdown export → docs/user-tasks-snapshot.md に commit
-# 設計: docs/PAGE_LEVEL_SHARE.md / WBS_REBALANCE.md と並列の user task 蓄積機構
-# 関連 EF: tools-hub:wbs.export_user_tasks_md
-# NotebookLM 取込: ユーザーが手動で `notebooklm source add docs/user-tasks-snapshot.md` する想定
+# Exports WBS instance=user tasks to docs/user-tasks-snapshot.md so the
+# NotebookLM master notebook can ingest and analyze manual task procedures.
+# Related edge action: tools-hub:wbs.export_user_tasks_md
 
 on:
   schedule:
-    - cron: "30 0 * * 1"  # 毎週月曜 09:30 JST (UTC 00:30)
+    - cron: "30 0 * * *" # 09:30 JST
   workflow_dispatch:
     inputs:
       include_completed:
-        description: '完了済タスクも含める (default false)'
+        description: "Include completed tasks"
         required: false
-        default: 'false'
+        default: "false"
       recent_reports:
-        description: '各 task の直近 report 数 (default 3)'
+        description: "Recent reports per task"
         required: false
-        default: '3'
+        default: "3"
 
 concurrency:
   group: notebooklm-user-tasks-sync
@@ -33,8 +32,8 @@ jobs:
     timeout-minutes: 5
 
     env:
-      SUPABASE_URL: https://smmkxxavexumewbfaqpy.supabase.co
-      SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+      TOOLS_HUB_URL: ${{ secrets.SUPABASE_TOOLS_HUB_URL }}
+      SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
       INCLUDE_COMPLETED: ${{ github.event.inputs.include_completed || 'false' }}
       RECENT_REPORTS: ${{ github.event.inputs.recent_reports || '3' }}
 
@@ -42,28 +41,32 @@ jobs:
       - name: Step 1 - Secret presence check
         id: precheck
         run: |
-          if [ -z "$SUPABASE_ANON_KEY" ]; then
-            echo "::warning::SUPABASE_ANON_KEY missing — skip"
-            echo "skip=true" >> $GITHUB_OUTPUT
+          if [ -z "$TOOLS_HUB_URL" ]; then
+            TOOLS_HUB_URL="https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/tools-hub"
+            echo "TOOLS_HUB_URL=$TOOLS_HUB_URL" >> "$GITHUB_ENV"
+          fi
+
+          if [ -z "$SERVICE_ROLE_KEY" ]; then
+            echo "::warning::SUPABASE_SERVICE_ROLE_KEY missing; skip snapshot"
+            echo "skip=true" >> "$GITHUB_OUTPUT"
           else
-            echo "skip=false" >> $GITHUB_OUTPUT
+            echo "skip=false" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Step 2 - Checkout
         if: steps.precheck.outputs.skip != 'true'
         uses: actions/checkout@v4
         with:
-          token: ${{ secrets.BYPASS_RULES || github.token }}
+          token: ${{ secrets.BYPASS_RULES || secrets.GH_PAT || github.token }}
 
       - name: Step 3 - Fetch user tasks markdown
         if: steps.precheck.outputs.skip != 'true'
         id: fetch
         run: |
-          # soft-fail: HTTP code 取得 / -f なし
           HTTP_CODE=$(curl -s -o /tmp/resp.json -w "%{http_code}" \
             -X POST \
-            "${SUPABASE_URL}/functions/v1/tools-hub" \
-            -H "Authorization: Bearer ${SUPABASE_ANON_KEY}" \
+            "$TOOLS_HUB_URL" \
+            -H "Authorization: Bearer ${SERVICE_ROLE_KEY}" \
             -H "Content-Type: application/json" \
             -d "{\"action\":\"wbs.export_user_tasks_md\",\"include_completed\":${INCLUDE_COMPLETED},\"recent_reports\":${RECENT_REPORTS}}" \
             --max-time 30)
@@ -73,31 +76,31 @@ jobs:
           if [ "$HTTP_CODE" != "200" ]; then
             BODY=$(head -c 500 /tmp/resp.json)
             echo "::warning::HTTP ${HTTP_CODE}: ${BODY}"
-            echo "skip=true" >> $GITHUB_OUTPUT
+            echo "skip=true" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
-          # markdown 抽出 → docs/user-tasks-snapshot.md
           mkdir -p docs
-          python3 -c "
+          python3 <<'PY'
           import json
-          with open('/tmp/resp.json') as f:
-              d = json.load(f)
-          md = d.get('markdown', '')
-          with open('docs/user-tasks-snapshot.md', 'w', encoding='utf-8') as f:
-              f.write(md)
-          print(f'task_count={d.get(\"task_count\", 0)}')
-          print(f'report_count={d.get(\"report_count\", 0)}')
-          "
+          from pathlib import Path
+
+          data = json.loads(Path("/tmp/resp.json").read_text(encoding="utf-8"))
+          markdown = data.get("markdown", "")
+          Path("docs/user-tasks-snapshot.md").write_text(markdown, encoding="utf-8")
+          print(f"task_count={data.get('task_count', 0)}")
+          print(f"report_count={data.get('report_count', 0)}")
+          PY
+
           BYTES=$(stat -c %s docs/user-tasks-snapshot.md 2>/dev/null || echo "0")
           echo "snapshot bytes: $BYTES"
 
           if [ "$BYTES" -lt 50 ]; then
-            echo "::warning::Snapshot too small (${BYTES} bytes) — skip commit"
-            echo "skip=true" >> $GITHUB_OUTPUT
+            echo "::warning::Snapshot too small (${BYTES} bytes); skip commit"
+            echo "skip=true" >> "$GITHUB_OUTPUT"
             exit 0
           fi
-          echo "skip=false" >> $GITHUB_OUTPUT
+          echo "skip=false" >> "$GITHUB_OUTPUT"
 
       - name: Step 4 - Commit + push
         if: steps.precheck.outputs.skip != 'true' && steps.fetch.outputs.skip != 'true'
@@ -106,13 +109,29 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add docs/user-tasks-snapshot.md
           if git diff --staged --quiet; then
-            echo "ℹ️ No changes to commit"
+            echo "No changes to commit"
             exit 0
           fi
-          git commit \n            -m "chore(wbs): user tasks snapshot for NotebookLM ($(date -u +%Y-%m-%d))" \n            -m "Auto-generated by tools-hub:wbs.export_user_tasks_md. Trace: ${{ github.run_id }}"
+          git commit \
+            -m "chore(wbs): refresh user tasks snapshot for NotebookLM ($(date -u +%Y-%m-%d))" \
+            -m "Auto-generated by tools-hub:wbs.export_user_tasks_md. Trace: ${{ github.run_id }}"
+          git pull --rebase origin main
           git push origin HEAD:main || echo "::warning::push failed"
 
       - name: Step 5 - Skip log
         if: steps.precheck.outputs.skip == 'true' || steps.fetch.outputs.skip == 'true'
         run: |
-          echo "ℹ️ Snapshot skipped (secret missing / HTTP error / empty result)"
+          echo "Snapshot skipped (secret missing / HTTP error / empty result)"
+
+      - name: Step 6 - NotebookLM instruction
+        if: steps.precheck.outputs.skip != 'true' && steps.fetch.outputs.skip != 'true'
+        run: |
+          echo "## NotebookLM user task snapshot" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "Generated: docs/user-tasks-snapshot.md" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo '```bash' >> "$GITHUB_STEP_SUMMARY"
+          echo 'notebooklm use ea6cff25' >> "$GITHUB_STEP_SUMMARY"
+          echo 'notebooklm source add docs/user-tasks-snapshot.md' >> "$GITHUB_STEP_SUMMARY"
+          echo 'notebooklm ask "ユーザータスクの最短手順、詰まりポイント、今日やるべき順番を整理して"' >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"

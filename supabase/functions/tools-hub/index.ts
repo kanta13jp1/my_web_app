@@ -1785,7 +1785,7 @@ serve(async (req) => {
           const { data: userTasks, error: fetchErr } = await admin
             .from("wbs_tasks")
             .select("id, title, description, category, status, progress, end_date, priority, created_at, updated_at")
-            .eq("instance", "user")
+            .or("instance.eq.user,owner_instance.eq.user")
             .in("status", statusFilter)
             .order("priority", { ascending: false })
             .order("end_date", { ascending: true, nullsFirst: false })
@@ -1994,8 +1994,8 @@ serve(async (req) => {
 
           const { data: tasks, error: tasksErr } = await admin
             .from("wbs_tasks")
-            .select("id, category, title, description, status, progress, priority, end_date, notebooklm_note, updated_at")
-            .eq("owner_instance", "user")
+            .select("id, category, title, description, status, progress, priority, end_date, instance, owner_instance, user_report_status, user_report_note, user_reported_at, updated_at")
+            .or("instance.eq.user,owner_instance.eq.user")
             .in("status", statusFilter)
             .order("priority", { ascending: false })
             .order("end_date", { ascending: true, nullsFirst: false })
@@ -2006,16 +2006,20 @@ serve(async (req) => {
           const taskIds = (tasks ?? []).map((t: Record<string, unknown>) => t.id);
           const latestReports: Record<string, Record<string, unknown>> = {};
           if (taskIds.length > 0) {
-            const { data: reports } = await admin
-              .from("user_task_reports")
+            const { data: reports, error: reportsErr } = await admin
+              .from("wbs_user_task_reports")
               .select("task_id, status, progress, report_text, next_action, blockers, created_at")
               .in("task_id", taskIds)
               .order("created_at", { ascending: false })
               .limit(taskIds.length * 3);
-            for (const r of reports ?? []) {
-              const rep = r as Record<string, unknown>;
-              if (!latestReports[String(rep.task_id)]) {
-                latestReports[String(rep.task_id)] = rep;
+            if (reportsErr) {
+              console.warn(`wbs_user_task_reports fetch skipped: ${reportsErr.message}`);
+            } else {
+              for (const r of reports ?? []) {
+                const rep = r as Record<string, unknown>;
+                if (!latestReports[String(rep.task_id)]) {
+                  latestReports[String(rep.task_id)] = rep;
+                }
               }
             }
           }
