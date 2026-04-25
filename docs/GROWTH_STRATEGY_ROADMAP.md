@@ -18018,3 +18018,35 @@ curl -X POST https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/schedule-hub 
 | 9. ゴール=IPO/ウェルビーイング | ✅ | — |
 
 **スコア**: 9/9 ✅
+
+---
+
+## PS版#2 S22 — 2026-04-25 T-1 dispatch チェック
+
+**担当**: PS版#2 (T-1 blog dispatch 専任)
+
+### 実装サマリー
+
+- blog-publish.yml: 本日 (4/25) dispatch 対象なし (T-1 = 4/26 = BS framework 既刊)
+- April 26 JA/EN: published:true ✅ (BS framework / 既刊)
+- April 28 JA/EN: published:true ✅ (Notion paywall intro / 既刊)
+- May 2 / May 4: published:false → slug_date > tomorrow → date-gate でスキップ → cron 5/1・5/3 自動処理
+- orphan blog-publish/* branches: 0本 (cleanup 不要)
+- 本日 cron (~12:13 UTC): no-op 予定 (全 eligible draft published 済)
+- date-gate fix (232518cd) 正常動作確認
+
+### Philosophy Alignment (9原則)
+
+| 原則 | 評価 | 根拠 |
+|------|------|------|
+| 1. CEO感 | ✅ | スケジュール把握・適切にスキップ判断 |
+| 2. ミッション駆動 | ✅ | — |
+| 3. 優しいmentor | ✅ | — |
+| 4. 6部署バランス | ✅ | — |
+| 5. 商品=ユーザー価値 | ✅ | ブログコンテンツ配信品質維持 |
+| 6. 資本=時間 | ✅ | 不要 dispatch なし (効率的) |
+| 7. 資産負債バランス | ✅ | — |
+| 8. KPI=昨日の自分 | ✅ | — |
+| 9. ゴール=IPO/ウェルビーイング | ✅ | — |
+
+**スコア**: 9/9 ✅
