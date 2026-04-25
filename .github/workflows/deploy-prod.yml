@@ -219,8 +219,16 @@ jobs:
           echo "=== db push exit=$PUSH_EXIT ==="
           echo "$PUSH_LOG"
           if [ $PUSH_EXIT -ne 0 ]; then
+            # SQLSTATE 23505 on schema_migrations_pkey = version already applied by a
+            # concurrent run. Mark those as applied so db push skips them.
+            DUP=$(echo "$PUSH_LOG" | grep -E "schema_migrations_pkey|Key \(version\)=" | grep -oE '[0-9]{14}' | sort -u)
+            # "Remote migration versions not found" = DB has version not in local files.
             STUCK=$(echo "$PUSH_LOG" | grep -oE '[0-9]{14}' | sort -u)
-            if [ -n "$STUCK" ]; then
+            if [ -n "$DUP" ]; then
+              echo "Marking as applied (concurrent-run duplicate): $DUP"
+              for v in $DUP; do supabase migration repair --status applied "$v" 2>/dev/null || true; done
+              supabase db push --include-all
+            elif [ -n "$STUCK" ]; then
               echo "Auto-repairing remote-only versions: $STUCK"
               for v in $STUCK; do supabase migration repair --status reverted "$v" 2>/dev/null || true; done
               supabase db push --include-all
