@@ -246,12 +246,16 @@ jobs:
           fi
 
           git commit -m "自動: CS チェック ${DATETIME}:00 (GitHub Actions)"
-          # BYPASS_RULES secret が設定されていれば保護ブランチを突破できる
+          # BYPASS_RULES (PAT with bypass) が設定されていれば優先使用、なければ GITHUB_TOKEN で試行
           if [ -n "${{ secrets.BYPASS_RULES }}" ]; then
             git remote set-url origin "https://x-access-token:${{ secrets.BYPASS_RULES }}@github.com/kanta13jp1/my_web_app.git"
+          else
+            git remote set-url origin "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/kanta13jp1/my_web_app.git"
           fi
-          git push origin main || echo "⚠️ push失敗: BYPASS_RULES secret が未設定の可能性あり — ローカルでの手動push推奨"
-          echo "✅ CS ノート記録 & キャッシュ更新完了"
+          git push origin main && echo "✅ CS ノート記録 & キャッシュ更新完了" || {
+            echo "⚠️ push失敗: ブランチ保護ルールを回避するには BYPASS_RULES secret (bypass権限付きPAT) を設定してください"
+            echo "  または Repository Settings > Branches > Branch protection rules > Allow GitHub Actions to bypass"
+          }
 
       - name: Record to schedule_task_runs
         if: always()
