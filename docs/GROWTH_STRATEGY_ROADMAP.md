@@ -19417,7 +19417,7 @@ vscode/win/ps1..ps6/web/mobile/schedule/gha/codex/**gemini/copilot/user** (新)
 ## PS#4 S48 2026-04-25 — WBS instance拡張 + ユーザー通知自動化
 
 **担当**: PS版#4  
-**commit**: TBD (push後更新)
+**commit**: b529dff5
 
 ### 変更内容
 
@@ -19446,7 +19446,7 @@ Incoming Webhook URL は https://api.slack.com/messaging/webhooks で取得。
 ## PS#4 S48 2026-04-25 — WBS instance拡張 + ユーザー通知自動化
 
 **担当**: PS版#4  
-**commit**: TBD (push後更新)
+**commit**: b529dff5
 
 ### 変更内容
 
