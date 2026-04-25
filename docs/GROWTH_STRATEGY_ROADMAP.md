@@ -20508,3 +20508,12 @@ Voicemod / Replica Studios / Soundraw / Lalal.ai / Moises
 - Lalal.ai: AI 音声・ステム分離 / Phoenix Neural Net / ボーカル/ドラム/ベース/ギター 10音源分離 / ノイズ除去 / REST API (Business プラン) / ★8/9
 - Soundraw: AI 音楽生成 / ムード・テンポ・楽器 GUI 指定 / 無制限生成 / 著作権フリー / Adobe Premiere Pro 公式統合 / 日本発 / ★8/9
 - 累計: 212社 / 音楽・音声カテゴリ強化継続
+
+## 2026-04-26 PS#6 S49: deploy-prod repair list 3件孤立エントリ削除 (611d3462)
+- **修正内容**: deploy-prod.yml の `--status reverted` エントリのうち対応 migration ファイルが存在しない3件を削除
+  - `20260425043000` → `20260425044500` にリネーム済 (9dff1a9a) → reverted エントリ削除
+  - `20260426090000` → `20260426000500` にリネーム済 (b7be8511) → reverted エントリ削除
+  - `20260426143000` → `20260426142000` にリネーム済 → reverted エントリ削除
+  - `20260426133000 --status applied` は PS#4 S58 意図的追加 → 保持
+- **結果**: repair list 112件 → 109件 / silent no-op エントリが整理されリポジトリクリーン化
+- **確認**: `20260425143000` (April 25版) は別エントリとして残存・正常
