@@ -210,6 +210,129 @@ function compareWbsTasks(a: Record<string, unknown>, b: Record<string, unknown>)
   return String(a.title ?? "").localeCompare(String(b.title ?? ""));
 }
 
+const WBS_INSTANCE_VALUES = [
+  "codex",
+  "vscode",
+  "win",
+  "ps1",
+  "ps2",
+  "ps3",
+  "ps4",
+  "ps5",
+  "ps6",
+  "web",
+  "mobile",
+  "schedule",
+  "gha",
+];
+
+const WBS_OPEN_STATUSES = ["pending", "in_progress", "blocked"];
+
+function normalizeWbsInstance(value: unknown): string {
+  const normalized = String(value ?? "").trim().toLowerCase();
+  if (normalized === "windows") return "win";
+  if (normalized === "ps") return "ps1";
+  return WBS_INSTANCE_VALUES.includes(normalized) ? normalized : "codex";
+}
+
+function wbsTaskLane(task: Record<string, unknown>): string {
+  return normalizeWbsInstance(task.owner_instance ?? task.instance);
+}
+
+function wbsDeadline(task: Record<string, unknown>): string {
+  return String(task.planned_end_date ?? task.end_date ?? "");
+}
+
+function wbsOverdueDays(task: Record<string, unknown>, today: Date): number {
+  const raw = wbsDeadline(task);
+  if (!raw) return 0;
+  const due = new Date(`${raw.slice(0, 10)}T00:00:00.000Z`);
+  if (Number.isNaN(due.getTime()) || due >= today) return 0;
+  return Math.ceil((today.getTime() - due.getTime()) / 86_400_000);
+}
+
+function wbsStaleDays(task: Record<string, unknown>, now: Date): number {
+  const raw = String(task.updated_at ?? "");
+  if (!raw) return 0;
+  const updated = new Date(raw);
+  if (Number.isNaN(updated.getTime()) || updated >= now) return 0;
+  return Math.floor((now.getTime() - updated.getTime()) / 86_400_000);
+}
+
+function wbsRescueScore(task: Record<string, unknown>, now: Date): number {
+  const today = new Date(now.toISOString().slice(0, 10));
+  const status = String(task.status ?? "");
+  const overdueDays = wbsOverdueDays(task, today);
+  const staleDays = wbsStaleDays(task, now);
+  return (status === "blocked" ? 500 : 0) +
+    (overdueDays * 30) +
+    (staleDays >= 3 ? staleDays * 12 : 0) +
+    (wbsPriorityRank(task.priority) * 25) +
+    (isFeatureRequestTask(task) ? 40 : 0) +
+    (status === "in_progress" ? 20 : 0);
+}
+
+function buildWbsWorkload(tasks: Array<Record<string, unknown>>, now: Date) {
+  const today = new Date(now.toISOString().slice(0, 10));
+  const workload = WBS_INSTANCE_VALUES.map((instance) => {
+    const laneTasks = tasks.filter((task) => wbsTaskLane(task) === instance);
+    const openTasks = laneTasks.filter((task) =>
+      WBS_OPEN_STATUSES.includes(String(task.status ?? ""))
+    );
+    const blockedTasks = openTasks.filter((task) => task.status === "blocked").length;
+    const overdueTasks = openTasks.filter((task) => wbsOverdueDays(task, today) > 0).length;
+    const staleTasks = openTasks.filter((task) => wbsStaleDays(task, now) >= 3).length;
+    const highPriorityTasks = openTasks.filter((task) => task.priority === "high").length;
+    const rescueScore = openTasks.reduce((sum, task) => sum + wbsRescueScore(task, now), 0);
+    return {
+      instance,
+      open_tasks: openTasks.length,
+      blocked_tasks: blockedTasks,
+      overdue_tasks: overdueTasks,
+      stale_tasks: staleTasks,
+      high_priority_tasks: highPriorityTasks,
+      rescue_score: rescueScore,
+    };
+  });
+  return workload.sort((a, b) => b.rescue_score - a.rescue_score || b.open_tasks - a.open_tasks);
+}
+
+function pickWbsRescueCandidate(
+  tasks: Array<Record<string, unknown>>,
+  targetInstance: string,
+  now: Date,
+): Record<string, unknown> | null {
+  const candidates = tasks.filter((task) => {
+    const lane = wbsTaskLane(task);
+    const status = String(task.status ?? "");
+    return lane !== targetInstance && WBS_OPEN_STATUSES.includes(status);
+  });
+  candidates.sort((a, b) => wbsRescueScore(b, now) - wbsRescueScore(a, now));
+  return candidates.find((task) => wbsRescueScore(task, now) > 0) ?? candidates[0] ?? null;
+}
+
+function buildWbsRebalanceSuggestions(
+  tasks: Array<Record<string, unknown>>,
+  now: Date,
+): Array<Record<string, unknown>> {
+  const workload = buildWbsWorkload(tasks, now);
+  const idleInstances = workload.filter((lane) => lane.open_tasks === 0).map((lane) => lane.instance);
+  const suggestions: Array<Record<string, unknown>> = [];
+  for (const target of idleInstances) {
+    const candidate = pickWbsRescueCandidate(tasks, target, now);
+    if (!candidate) continue;
+    suggestions.push({
+      target_instance: target,
+      from_instance: wbsTaskLane(candidate),
+      task_id: candidate.id,
+      title: candidate.title,
+      reason: "target_idle_and_source_has_stalled_work",
+      rescue_score: wbsRescueScore(candidate, now),
+    });
+  }
+  return suggestions;
+}
+
 async function getUserId(req: Request): Promise<string | null> {
   const authHeader = req.headers.get("Authorization") ?? "";
   if (!authHeader) return null;
@@ -1153,11 +1276,7 @@ serve(async (req) => {
           const category = String(body.category ?? "");
           const title = String(body.title ?? "");
           const instance = String(body.instance ?? "");
-          const validInstances = [
-            "codex",
-            "vscode", "win", "ps1", "ps2", "ps3", "ps4", "ps5", "ps6",
-            "web", "mobile", "schedule", "gha",
-          ];
+          const validInstances = WBS_INSTANCE_VALUES;
           const validOwnerInstances = validInstances;
           if (!category || !title) {
             return json({ error: "category and title required" }, 400);
@@ -1195,16 +1314,93 @@ serve(async (req) => {
         }
         case "wbs.priority_for_instance": {
           // 指定インスタンスの優先タスク TOP 5 を返す (session-start-check 用)
-          // body: { instance: 'codex'|'vscode'|'win'|'ps1'..'ps6'|'web'|'mobile'|'schedule'|'gha' }
-          const inst = String(body.instance ?? "");
-          if (!inst) return json({ error: "instance required" }, 400);
+          // 担当なしの場合は他 instance の滞留タスクを自担当へ救援 reassign する。
+          // body: { instance: 'codex'|'vscode'|'win'|'ps1'..'ps6'|'web'|'mobile'|'schedule'|'gha',
+          //         auto_reassign?: true, limit?: 5 }
+          const rawInstance = String(body.instance ?? "").trim();
+          if (!rawInstance) return json({ error: "instance required" }, 400);
+          if (!WBS_INSTANCE_VALUES.includes(rawInstance.toLowerCase()) &&
+              !["windows", "ps"].includes(rawInstance.toLowerCase())) {
+            return json({
+              error: `instance must be one of: ${WBS_INSTANCE_VALUES.join(", ")}`,
+            }, 400);
+          }
+          const inst = normalizeWbsInstance(rawInstance);
+          const limit = Math.min(Math.max(Number(body.limit ?? 5), 1), 20);
+          const autoReassign = parseBooleanish(body.auto_reassign ?? body.autoReassign, true);
+          const taskSelect =
+            "id, category, category_order, title, status, progress, priority, end_date, planned_end_date, updated_at, instance, owner_instance, recovery_plan";
           const { data, error } = await admin.from("wbs_tasks")
-            .select("id, category, category_order, title, status, progress, priority, end_date, updated_at, instance")
+            .select(taskSelect)
             .eq("instance", inst)
             .in("status", ["pending", "in_progress", "blocked"]);
           if (error) throw new Error(error.message);
-          const topTasks = [...(data ?? [])].sort(compareWbsTasks).slice(0, 5);
-          return json({ success: true, instance: inst, top_tasks: topTasks });
+          let topTasks = ([...(data ?? [])] as Array<Record<string, unknown>>)
+            .sort(compareWbsTasks)
+            .slice(0, limit);
+
+          const { data: allOpen, error: allErr } = await admin.from("wbs_tasks")
+            .select(taskSelect)
+            .in("status", ["pending", "in_progress", "blocked"]);
+          if (allErr) throw new Error(allErr.message);
+          const now = new Date();
+          const openTasks = [...(allOpen ?? [])] as Array<Record<string, unknown>>;
+          const workload = buildWbsWorkload(openTasks, now);
+          const rebalanceSuggestions = buildWbsRebalanceSuggestions(openTasks, now);
+          let reassignedTask: Record<string, unknown> | null = null;
+
+          if (topTasks.length === 0 && autoReassign) {
+            const candidate = pickWbsRescueCandidate(openTasks, inst, now);
+            if (candidate) {
+              const update: Record<string, unknown> = {
+                instance: inst,
+                owner_instance: inst,
+              };
+              const needsRecoveryPlan =
+                wbsOverdueDays(candidate, new Date(now.toISOString().slice(0, 10))) > 0 &&
+                String(candidate.recovery_plan ?? "").trim().length === 0;
+              if (needsRecoveryPlan) {
+                update.recovery_plan =
+                  `担当作業が空いた ${inst} が救援として引き取り、次セッションで最小単位に分割して進める。`;
+                update.recovery_planned_at = now.toISOString();
+              }
+              const { data: updated, error: updateErr } = await admin.from("wbs_tasks")
+                .update(update)
+                .eq("id", String(candidate.id))
+                .select(taskSelect)
+                .single();
+              if (updateErr) throw new Error(updateErr.message);
+              reassignedTask = updated as Record<string, unknown>;
+              topTasks = [reassignedTask];
+            }
+          }
+
+          return json({
+            success: true,
+            instance: inst,
+            top_tasks: topTasks,
+            workload,
+            rebalance_suggestions: rebalanceSuggestions,
+            auto_reassign: autoReassign,
+            reassigned_task: reassignedTask,
+          });
+        }
+        case "wbs.instance_workload": {
+          // body: { instance?: string } 任意。全 instance の負荷と救援候補を返す。
+          const taskSelect =
+            "id, category, category_order, title, status, progress, priority, end_date, planned_end_date, updated_at, instance, owner_instance, recovery_plan";
+          const { data, error } = await admin.from("wbs_tasks")
+            .select(taskSelect)
+            .in("status", ["pending", "in_progress", "blocked"]);
+          if (error) throw new Error(error.message);
+          const now = new Date();
+          const openTasks = [...(data ?? [])] as Array<Record<string, unknown>>;
+          return json({
+            success: true,
+            instance: body.instance ? normalizeWbsInstance(body.instance) : null,
+            workload: buildWbsWorkload(openTasks, now),
+            rebalance_suggestions: buildWbsRebalanceSuggestions(openTasks, now),
+          });
         }
 
         // ─── WBS Rebalance (Win版#132 part 17) ────────────────────────────
