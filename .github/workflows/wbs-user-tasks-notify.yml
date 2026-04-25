@@ -1,0 +1,70 @@
+name: WBS User Tasks Notify (毎朝 + manual)
+
+# Win版#132 part 18: instance='user' の pending タスクを Slack 通知
+# 設計: 毎朝 09:00 JST にユーザー手動操作タスクをまとめて通知
+# 関連 EF: tools-hub:wbs.notify_user_tasks (本 commit 同時)
+
+on:
+  schedule:
+    - cron: "0 0 * * *"  # 毎日 09:00 JST (UTC 00:00)
+  workflow_dispatch:
+    inputs:
+      limit:
+        description: '通知する最大 task 数 (default 10)'
+        required: false
+        default: '10'
+
+concurrency:
+  group: wbs-user-tasks-notify
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  notify:
+    name: Notify user tasks
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    env:
+      SUPABASE_URL: https://smmkxxavexumewbfaqpy.supabase.co
+      SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+      LIMIT: ${{ github.event.inputs.limit || '10' }}
+
+    steps:
+      - name: Step 1 - Secret presence check
+        id: precheck
+        run: |
+          if [ -z "$SUPABASE_ANON_KEY" ]; then
+            # SUPABASE_ANON_KEY が無い場合は hardcoded fallback (anon key は public)
+            # ただし無い環境では skip
+            echo "::warning::SUPABASE_ANON_KEY missing — skip"
+            echo "skip=true" >> $GITHUB_OUTPUT
+          else
+            echo "skip=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Step 2 - Call wbs.notify_user_tasks
+        if: steps.precheck.outputs.skip != 'true'
+        run: |
+          # soft-fail (set -e なし / HTTP code 取得)
+          HTTP_CODE=$(curl -s -o /tmp/notify.json -w "%{http_code}" \
+            -X POST \
+            "${SUPABASE_URL}/functions/v1/tools-hub" \
+            -H "Authorization: Bearer ${SUPABASE_ANON_KEY}" \
+            -H "Content-Type: application/json" \
+            -d "{\"action\":\"wbs.notify_user_tasks\",\"send_slack\":true,\"limit\":${LIMIT}}" \
+            --max-time 30)
+
+          echo "HTTP code: $HTTP_CODE"
+          BODY=$(head -c 800 /tmp/notify.json 2>/dev/null || echo "")
+          echo "Body: $BODY"
+
+          if [ "$HTTP_CODE" = "200" ]; then
+            COUNT=$(python3 -c 'import sys, json; print(json.load(open("/tmp/notify.json")).get("user_tasks_count", 0))' 2>/dev/null || echo "?")
+            echo "✅ Notified ${COUNT} user task(s) to Slack"
+          else
+            echo "::warning::HTTP ${HTTP_CODE} (not fatal)"
+            echo "::warning::Body: ${BODY}"
+          fi

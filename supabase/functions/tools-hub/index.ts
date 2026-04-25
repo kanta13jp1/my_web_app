@@ -1512,6 +1512,77 @@ serve(async (req) => {
           });
         }
 
+        // ─── WBS User Tasks Notify (Win版#132 part 18) ────────────────────
+        // instance='user' の pending/in_progress task をフェッチして Slack 通知。
+        // 各 session 開始 + 日次 GHA cron で呼び出す想定。
+        // body: { send_slack: bool (default true), limit: int (default 10) }
+        case "wbs.notify_user_tasks": {
+          const sendSlack = body.send_slack !== false;
+          const limitN = Math.min(Number(body.limit ?? 10), 50);
+
+          // 1. user 担当の active task fetch (priority desc / end_date asc)
+          const { data: userTasks, error: fetchErr } = await admin
+            .from("wbs_tasks")
+            .select("id, title, description, category, status, progress, end_date, priority, updated_at")
+            .eq("instance", "user")
+            .in("status", ["pending", "in_progress", "blocked"])
+            .order("priority", { ascending: false })
+            .order("end_date", { ascending: true, nullsFirst: false })
+            .limit(limitN);
+          if (fetchErr) throw new Error(fetchErr.message);
+
+          const tasks = userTasks ?? [];
+          const count = tasks.length;
+
+          // 2. Slack 通知 (sendSlack=true + tasks > 0 の場合)
+          let slackResult: Record<string, unknown> = { skipped: true };
+          if (sendSlack && count > 0) {
+            const webhookUrl = Deno.env.get("SLACK_WEBHOOK_URL") ?? "";
+            if (!webhookUrl) {
+              slackResult = { skipped: true, reason: "SLACK_WEBHOOK_URL not configured" };
+            } else {
+              const priorityIcon = (p: string) =>
+                p === "high" ? "🔴" : p === "low" ? "🟢" : "🟡";
+              const lines = [
+                `📋 *WBS user タスク ${count} 件* (要ユーザー手動操作)`,
+                "",
+                ...tasks.slice(0, 10).map((t, i) => {
+                  const due = t.end_date ? ` 期限 ${t.end_date}` : "";
+                  const prog = t.progress ? ` ${t.progress}%` : "";
+                  return `${i + 1}. ${priorityIcon(String(t.priority ?? "medium"))} *${t.title}* — ${t.category}${prog}${due}`;
+                }),
+                "",
+                `🔗 WBS Gantt: https://my-web-app-b67f4.web.app/project-gantt`,
+              ];
+              const text = lines.join("\n");
+
+              try {
+                const resp = await fetch(webhookUrl, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ text, mrkdwn: true }),
+                });
+                slackResult = {
+                  posted: resp.ok,
+                  status: resp.status,
+                  count,
+                };
+              } catch (e) {
+                slackResult = { posted: false, error: String(e) };
+              }
+            }
+          } else if (count === 0) {
+            slackResult = { skipped: true, reason: "no user tasks pending" };
+          }
+
+          return json({
+            success: true,
+            user_tasks_count: count,
+            tasks,
+            slack: slackResult,
+          });
+        }
+
         // ─── WBS Claim Task (Win版#132 part 17) ───────────────────────────
         // 他 instance の task を自担当に変更。audit log + cooldown + guard。
         case "wbs.claim_task": {
