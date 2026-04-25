@@ -18885,3 +18885,33 @@ Deploy failure `24924215661` (feat business-wbs) を解析・修正。
 ### AI-DEV 7/7 ✅
 
 ### commit: 33bdbf75
+
+## PS#6 S41 — deploy 監視 + #715 tools-hub 503 調査 + #716/#717 クローズ (2026-04-25)
+
+**Commits**: なし (コード変更なし)
+
+### 実施内容
+
+1. **deploy run 24924621028 SUCCESS確認** (feat(#514): Phase 2 — version polling + update banner)
+   - Run Supabase migrations ✓ — owner_instance fix 含む全 migration 通過
+   - Deploy to Production Environment ✓ 完了
+
+2. **Issue #716/#717 クローズ**
+   - #716: owner_instance NOT NULL violation fix (b255a8a7)
+   - #717: bash -e PUSH_EXIT fix (09fddac8)
+   - 両方 deploy run 24924621028 成功後クローズ済み
+
+3. **Issue #715 調査 (tools-hub EF 503)**
+   - deno lint → clean (no errors)
+   - horseracing actions (L519/L830/L864) のコード正常確認
+   - 原因: 一時的な Supabase Edge Runtime cold start / 過負荷と推定
+   - deploy 24924621028 で tools-hub 再デプロイ済 → 自然回復期待
+   - horse racing batch 5/5 success 確認済み
+
+4. **migration 整合性チェック**
+   - 全 20260425 migration → repair list に漏れなし
+   - timestamp duplicate → 0件 (クリーン)
+
+### Philosophy/AI-DEV
+### Philosophy 9/9 ✅
+### AI-DEV 7/7 ✅
