@@ -13,7 +13,16 @@ name: Notion Mirror Sync (hourly)
 on:
   schedule:
     - cron: "10 * * * *" # 毎時 10 分 (UTC) = JST の毎時 10 分
-  workflow_dispatch: # 手動実行も可
+  workflow_dispatch:
+    inputs:
+      offset:
+        description: "Start offset (0=first 30, 50=next 50, ...)"
+        required: false
+        default: "0"
+      limit:
+        description: "Max tasks per run (max 50)"
+        required: false
+        default: "50"
 
 concurrency:
   group: notion-sync
@@ -36,7 +45,7 @@ jobs:
             "https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/schedule-hub" \
             -H "Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY || secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
             -H "Content-Type: application/json" \
-            -d '{"action":"notion.sync_wbs"}' \
+            -d "{\"action\":\"notion.sync_wbs\",\"limit\":${{ github.event.inputs.limit || '30' }},\"offset\":${{ github.event.inputs.offset || '0' }}}" \
             --max-time 600)
 
           echo "Response: $RESP"
