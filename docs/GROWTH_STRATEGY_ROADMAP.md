@@ -18510,3 +18510,58 @@ deploy-prod.yml の `supabase db push` exit code 捕捉バグを修正。
 ### AI-DEV 7/7 ✅ (Phase 3 設計時)
 
 ### commit: TBD
+
+---
+
+## Win版#132 part 11 完了 (2026-04-25 午後)
+
+### 実施内容: 事業化 WBS + AI 自動化 Phase 1
+
+**契機**: ユーザー要請「事業化に必要なタスクを WBS化 + ガントチャートで見れるように。AI レビュー完了で次へ進行 + 1日進捗 0 で AI 自動細分化」
+
+### 設計 (4-Phase)
+
+| Phase | 内容 | 担当 | 期日 |
+|-------|------|------|------|
+| **1 (本 commit)** | schema 拡張 + 7 milestone + 54 task seed | Win | 2026-04-25 |
+| 2 | `wbs-ai-review.yml` GHA cron (Gemini Flash) | Win | 2026-05-01 |
+| 3 | `wbs-stale-subdivide.yml` GHA cron | Win | 2026-05-05 |
+| 4 | project-gantt UI 拡張 (badge / hierarchy) | VSCode | 2026-05-10 |
+
+### Phase 1 実装
+
+**設計 doc**: `docs/BUSINESS_WBS_AI_AUTOMATION.md` (新規 9 section)
+- AI Review prompt + Subdivide prompt 設計
+- depends_on でタスク dependencies
+- AI コスト見積 $0.42/月 (Gemini Flash 無料枠内)
+
+**Migration**: `20260425170000_business_wbs_phase1.sql`
+- `wbs_tasks` 拡張 6 カラム:
+  - `parent_task_id` (FK / 自己参照 / sub-task hierarchy)
+  - `ai_review_status` (pending/requested/approved/rejected/manual_override/skip)
+  - `ai_review_notes` / `ai_reviewed_at`
+  - `depends_on uuid[]` (前提タスク全 completed まで unblock しない)
+  - `auto_subdivided_at` (重複分解防止)
+  - `stale_threshold_hours` (default 24h / 大規模 168h 等)
+- **trigger**: `progress=100` で `ai_review_status='requested'` に自動遷移
+- 7 マイルストーン seed (legal-setup → mvp-launch → seed-round → paying-100 → series-a → audit-ready → **ipo-listed 2029-12-31**)
+- 54 事業化タスク seed (8 カテゴリ: legal 8 / finance 8 / product 8 / marketing 8 / sales 6 / hr 6 / ops 4 / ipo 6)
+
+### KPI (3 年)
+
+| 期日 | milestone | 達成基準 |
+|------|----------|---------|
+| 2026-09-30 | legal-setup | 株式会社設立完了 |
+| 2026-09-30 | mvp-launch | MVP 公開 / 1,000 user |
+| 2026-12-31 | seed-round | Seed ¥50M-¥200M クロージング |
+| 2027-03-31 | paying-100 | 有料 100 顧客 |
+| 2027-12-31 | series-a | Series A ¥500M-¥2B |
+| 2028-09-30 | audit-ready | 内部統制 + 監査対応完了 |
+| 2029-12-31 | **ipo-listed** | **東証グロース上場** |
+
+### Philosophy 9/9 ✅
+原則 9 (ゴール=IPO): 直接 KPI 化 / `business-ipo` カテゴリで IPO までの 6 タスク管理
+
+### AI-DEV 7/7 ✅ (Phase 2-3 設計時)
+
+### commit: TBD
