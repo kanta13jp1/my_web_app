@@ -126,30 +126,65 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
         run: |
+          # Safety guard: only auto-close bot-created issues or issues labeled wbs-auto-close.
+          # User-created feature requests (追加要望/enhancement/feature) must never be auto-closed.
           python3 <<'PY' > /tmp/issues-to-close.tsv
           import json
 
           with open("/tmp/wbs-sync-response.json", encoding="utf-8") as fh:
               response = json.load(fh)
 
+          with open("/tmp/issues.json", encoding="utf-8") as fh:
+              issues = json.load(fh)
+
+          issue_map = {str(i.get("number", "")): i for i in issues}
+
+          # Labels that block auto-close (user-created content)
+          BLOCK_LABELS = {"追加要望", "enhancement", "feature", "feature-request"}
+          # Labels that allow auto-close even for non-bot issues
+          ALLOW_LABELS = {"wbs-auto-close"}
+          # Authors whose issues can be auto-closed
+          ALLOW_AUTHORS = {"github-actions[bot]", "github-actions"}
+
           seen = set()
           for item in response.get("issues_to_close", []):
               number = str(item.get("number", "")).strip()
               if not number or number in seen:
                   continue
+              issue = issue_map.get(number, {})
+              labels = {lbl.get("name", "") if isinstance(lbl, dict) else str(lbl)
+                        for lbl in issue.get("labels", [])}
+              author = issue.get("author", {})
+              author_login = author.get("login", "") if isinstance(author, dict) else ""
+
+              # Allow if explicitly opted-in
+              if labels & ALLOW_LABELS:
+                  pass
+              # Allow if bot-created (CI failure issues etc.)
+              elif author_login in ALLOW_AUTHORS:
+                  pass
+              # Block if user feature request
+              elif labels & BLOCK_LABELS:
+                  print(f"# SKIP #{number}: blocked by labels {labels & BLOCK_LABELS}", flush=True)
+                  continue
+              else:
+                  # Unknown: skip to be safe (require explicit opt-in)
+                  print(f"# SKIP #{number}: no allow-label, author={author_login!r}", flush=True)
+                  continue
+
               seen.add(number)
               task_id = str(item.get("task_id", "")).strip()
               reason = str(item.get("reason", "")).replace("\t", " ").strip()
               print(f"{number}\t{task_id}\t{reason}")
           PY
 
-          while IFS=$'\t' read -r number task_id reason; do
+          grep -v '^#' /tmp/issues-to-close.tsv | while IFS=$'\t' read -r number task_id reason; do
             [ -n "$number" ] || continue
             gh issue close "$number" \
               --repo "$REPO" \
               --comment "WBS task $task_id is completed, so scheduled WBS sync closed this issue. Reason: $reason" \
               || true
-          done < /tmp/issues-to-close.tsv
+          done
 
       - name: Sync Notion WBS mirror
         run: |
