@@ -330,6 +330,12 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _analyzeFeatureRequestAttachment() async {
+    if (Supabase.instance.client.auth.currentUser == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('AI診断にはログインが必要です')),
+      );
+      return;
+    }
     final file = _featureRequestAttachment;
     final bytes = file?.bytes;
     if (file == null || bytes == null || bytes.isEmpty) {
@@ -415,6 +421,12 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _submitHomeFeatureRequest() async {
+    if (Supabase.instance.client.auth.currentUser == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('追加要望の送信にはログインが必要です')),
+      );
+      return;
+    }
     if (!(_featureRequestFormKey.currentState?.validate() ?? false)) {
       return;
     }
