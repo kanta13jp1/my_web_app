@@ -94,6 +94,10 @@ ON CONFLICT (code) DO UPDATE SET
 -- ai_review_status='skip' は WBS UI 上の管理対象だが AI review 不要なもの
 -- (例: 「銀行口座開設」みたいな単純 ops は AI が判定する余地がない)
 
+-- owner_instance NOT NULL constraint: temporarily relaxed for bulk INSERT
+-- restored after UPDATE derives correct value from instance column
+ALTER TABLE public.wbs_tasks ALTER COLUMN owner_instance DROP NOT NULL;
+
 INSERT INTO public.wbs_tasks
   (category, category_icon, category_order, title, description, instance, status, progress,
    start_date, end_date, milestone_code, priority, ai_review_status, stale_threshold_hours)
@@ -225,6 +229,14 @@ VALUES
 ON CONFLICT DO NOTHING;
 -- 注: wbs_tasks に UNIQUE 制約は title + category にないため初回のみ INSERT。
 -- 重複起動した場合は何もしない (idempotent)。
+
+-- Derive owner_instance: 'all' tasks owned by 'win' (architect), specific instance tasks own themselves
+UPDATE public.wbs_tasks
+SET owner_instance = CASE WHEN instance = 'all' THEN 'win' ELSE instance END
+WHERE category LIKE 'business-%' AND owner_instance IS NULL;
+
+-- Restore NOT NULL constraint
+ALTER TABLE public.wbs_tasks ALTER COLUMN owner_instance SET NOT NULL;
 
 -- ============================================================
 -- 5. development_achievements 記録
