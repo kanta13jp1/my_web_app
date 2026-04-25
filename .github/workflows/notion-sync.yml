@@ -61,9 +61,14 @@ jobs:
           if [ "$SUCCESS" = "False" ]; then
             ERROR=$(echo "$RESP" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('error','unknown'))" 2>/dev/null || echo "unknown")
             echo "::error::Notion sync returned success=false / error=$ERROR"
-            # ただし "notion_not_configured" は環境セットアップ未完了の意味なので soft-fail
+            # notion_not_configured = 環境セットアップ未完了 → soft-fail
             if echo "$ERROR" | grep -q "notion_not_configured"; then
               echo "::warning::NOTION_* secrets not configured yet — skip (set in Supabase dashboard)"
+              exit 0
+            fi
+            # Notion DB property schema mismatch (e.g. task_title not created yet) → soft-fail
+            if echo "$RESP" | grep -q "is not a property that exists"; then
+              echo "::warning::Notion DB schema mismatch — add required properties to Notion WBS DB (task_title rich_text / instance select / status select / progress number / deadline date / updated_at date)"
               exit 0
             fi
             exit 1
