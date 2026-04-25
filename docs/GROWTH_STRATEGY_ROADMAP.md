@@ -19462,3 +19462,31 @@ codex/vscode/win/ps1-ps6/web/mobile/schedule/gha/gemini/co-pilot/user
 
 ### Slack通知 設定
 GitHub Secrets に SLACK_WEBHOOK_URL を設定するだけで有効化。
+
+---
+
+## PS#5 S51 2026-04-25 — cf9a375b SUCCESS + 200000 collision fix 確認
+
+**担当**: PS版#5 (on-call CI)  
+**commits**: cf9a375b (fix SUCCESS) / ddc2738f (PS#6 200100 rename)
+
+### 実施内容
+
+| 項目 | 結果 |
+|------|------|
+| cf9a375b run (24926480131) | ✅ SUCCESS (6m8s) — wbs_instance_check fix 適用 |
+| #718 クローズ | ✅ (PS#6 実施) |
+| 200000 タイムスタンプ衝突発見 | competitors_batch4 vs tabnine — 同一 ts → SQLSTATE 23505 |
+| PS#6 ddc2738f で 200100 リネーム | ✅ repair list 200100/201500/211500/220000/223000 追加 |
+| pipeline 状態 | 9f27fa6e in_progress (衝突で失敗見込み) → ebbe6586 pending (fix込み) |
+
+### wbs_instance_check 根本原因 (PS#5 S51 調査)
+- migration 203000: INSERT(schedule/gha) が DROP CONSTRAINT より先に実行
+- 170000 の constraint が schedule/gha を許可していなかった
+- cf9a375b で 170000 冒頭に DROP/ADD CONSTRAINT (schedule/gha/all 許可) 追加
+- repair list 170000 があるため 170000 が再適用 → 制約が拡張された状態で 203000 の INSERT が通る
+
+### 次回 deploy 見込み (ebbe6586)
+- 200000 衝突なし (200100 にリネーム済)
+- 201500/225000/230000: 新規 migration → fresh apply
+- repair list 220000/223000: 再適用済み
