@@ -19995,3 +19995,27 @@ Win版 dedup fix (20260425_wbs_dedup_fix.md) で対応予定。
 - CEO感: SQLSTATE根本原因の特定と修正判断 ✅
 - KPI=昨日の自分: 連続するCI失敗チェーンを断ち切る ✅
 - 資本=時間: 長時間監視から根本修正アプローチに切替 ✅
+
+## Win版 #132 part 29 — 2026-04-25 22:00 JST (deploy修復追加ガード)
+
+**Instance**: Windowsアプリ版 | **Commit**: 73f146e0
+
+### 実装内容
+- 並行修正の上塗り: PS#4 S57 + 2363ff66 (Codex) の修正を残しつつ、`20260425203000` と `20260425210000` の他の `UPDATE WHERE instance='X'` パターンにも同様の SQLSTATE 23505 ガード追加
+  - 203000: `windows`→`win` / `ps`→`ps1` / `NOT IN (whitelist)`→`codex` の各 UPDATE 前に DELETE 衝突行
+  - 210000: business-* category 別 CASE UPDATE all→mapped instance の前に DELETE 衝突行
+- 防御的: 将来 repair re-run でも同種衝突発生時に SQLSTATE 23505 が起きないよう全 UPDATE パターンを idempotent 化
+- 確認した先行修正:
+  - 2363ff66 (Codex): target_instances に `codex` 追加 + `UPDATE all→codex` を `DELETE WHERE instance='all'` に置換 — fan-out で codex 行も生成済なので legacy 'all' 行は単純削除でOK
+  - b94d502f (PS#4 S57): pre-cleanup migration 20260425202000 + repair list 追記
+- 結果: 203000 と 210000 が複数 UPDATE パターンで再実行に強くなる (5パターン全てに DELETE-then-UPDATE / repair re-run 対応)
+
+### 副作用
+- ありません (DELETE は EXISTS 条件付きなので新DBでは no-op、re-run でのみ衝突行を排除)
+
+### Philosophy Alignment: Win版 #132 part 29
+- CEO感: 並行修正の重複を排除しつつ、追加防御を加える判断 ✅
+- 商品=ユーザー価値: deploy 完走で機能リリース可能 ✅
+- 資本=時間: 同種衝突の再発防止 (将来 1 回の deploy ループ削減) ✅
+- KPI=昨日の自分: 1パターン → 5パターン全 idempotent 化 ✅
+
