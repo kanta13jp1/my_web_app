@@ -1621,6 +1621,12 @@ $input
       (key: 'amazon', name: 'Amazon', emoji: '📦', color: Color(0xFFFF9900)),
       (key: 'google', name: 'Google', emoji: '🔍', color: Color(0xFF4285F4)),
       (
+        key: 'google_agent_builder',
+        name: 'Google Agent Builder',
+        emoji: '🤖',
+        color: Color(0xFF34A853)
+      ),
+      (
         key: 'microsoft',
         name: 'Microsoft',
         emoji: '🪟',

@@ -658,6 +658,50 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'google_agent_builder': const _CompetitorInfo(
+    name: 'Google Agent Builder',
+    emoji: '🤖',
+    tagline: 'Google Agent Builder はコード必須の開発者ツール。自分株式会社はノーコードで個人の人生6部署を無料管理。',
+    searchKeyword: 'GoogleAgentBuilder代替 Vertex AI Agent代替 Gemini Agent代替',
+    accentColor: Color(0xFF4285F4),
+    painPoints: [
+      'Python/JSのコーディング知識が必須 — 非エンジニアには利用不可',
+      'GCP従量課金 (Vertex AI) — 個人利用でも予測できないコスト発生リスク',
+      '業務ワークフロー特化で、健康・習慣・家計など個人の6部署を管理できない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ノーコード操作',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: 'Gemini AIアシスタント',
+        competitorHas: true,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '日本語ネイティブUI',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '個人の6部署統合 (健康・財務・習慣)',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '予測可能な完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: 'マルチステップAIエージェント',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
   'microsoft': const _CompetitorInfo(
     name: 'Microsoft',
     emoji: '🪟',
