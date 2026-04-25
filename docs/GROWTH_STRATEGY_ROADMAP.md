@@ -19860,3 +19860,14 @@ PS#4 S52 の dedup fix 後も `business-marketing` カテゴリに同タイト�
 Win版 dedup fix (20260425_wbs_dedup_fix.md) で対応予定。
 
 ### commits: 675a3eed
+
+## PS#4 S53 2026-04-26: competitor-discovery Python scripts + flutter analyze fix
+
+- competitor-discovery.yml: Python scripts を .github/scripts/ に分離 (col-0 YAML解消)
+- .github/scripts/competitor_discover.py: Gemini Flash per-category discovery
+- .github/scripts/competitor_stage.py: Supabase competitor_candidates INSERT
+- .github/scripts/competitor_report_gen.py: markdown report生成
+- lib/pages/user_tasks_page.dart:583 trailing comma fix (flutter analyze)
+- PS#1 S42 (9bc7b6fa) との merge conflict 解消
+
+### commits: ae49e27e
