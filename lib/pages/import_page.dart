@@ -51,7 +51,7 @@ class _ImportPageState extends State<ImportPage> {
     });
 
     try {
-      final result = await FilePicker.platform.pickFiles(
+      final result = await FilePicker.pickFiles(
         withData: true,
         type: FileType.custom,
         allowedExtensions: _extensionsFor(sourceType),

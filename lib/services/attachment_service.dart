@@ -24,7 +24,7 @@ class AttachmentService {
     try {
       debugPrint('pickFile start');
       // Web版向けの修正：allowMultipleを明示的にfalseに設定
-      final result = await FilePicker.platform.pickFiles(
+      final result = await FilePicker.pickFiles(
         type: FileType.custom,
         allowedExtensions: ['jpg', 'jpeg', 'png', 'gif', 'webp', 'pdf'],
         withData: true, // Web用（必須）

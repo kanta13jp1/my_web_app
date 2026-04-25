@@ -255,7 +255,7 @@ class _AiAssistantChatPageState extends State<AiAssistantChatPage>
   Future<void> _pickImage() async {
     if (_isLoading) return;
     try {
-      final result = await FilePicker.platform.pickFiles(
+      final result = await FilePicker.pickFiles(
         type: FileType.image,
         allowMultiple: false,
         withData: true,

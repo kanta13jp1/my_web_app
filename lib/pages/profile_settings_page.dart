@@ -127,7 +127,7 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
 
   // 画像選択・アップロード処理
   Future<void> _pickAndUploadAvatar() async {
-    final result = await FilePicker.platform.pickFiles(
+    final result = await FilePicker.pickFiles(
       type: FileType.image,
       allowMultiple: false,
     );
