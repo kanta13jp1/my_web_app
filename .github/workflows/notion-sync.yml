@@ -85,5 +85,10 @@ jobs:
               echo "::warning::Notion sync EF idle timeout — batch too large for Supabase 150s limit (will retry next hour)"
               exit 0
             fi
+            # Notion API rate limit (HTTP 429) → soft-fail (will retry next hour)
+            if echo "$RESP" | grep -q "rate_limited\|\"429\""; then
+              echo "::warning::Notion API rate limited (HTTP 429) — will retry next cron"
+              exit 0
+            fi
             exit 1
           fi
