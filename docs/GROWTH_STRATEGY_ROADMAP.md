@@ -18432,3 +18432,31 @@ deploy-prod.yml の `supabase db push` exit code 捕捉バグを修正。
 - ✅ 1.CEO感(根本原因特定) ✅ 2.ミッション駆動(CI安定) ✅ 5.商品=ユーザー価値
 - ✅ 7.資産負債(deploy chain保護) ✅ 8.KPI=昨日の自分(S38→S39継続修正) ✅ 9.ゴール=IPO
 - 🔶 3.mentor 🔶 4.6部署 🔶 6.資本=時間(連続CI失敗で時間消費)
+
+## PS#5 S48 2026-04-25 午後
+
+**Commits**: 952ec214
+
+### 実施内容
+
+1. **CI継続修正** (bash -e PUSH_EXIT issue)
+   - run 24923067224 (a75b4f2c) 失敗ログ分析: `echo "=== db push start ==="` 表示後 1.41s で終了
+   - bash -e flag により `PUSH_LOG=$(supabase db push 2>&1)` が非ゼロ終了 → 即exit (診断出力なし)
+   - PS#6が `09fddac8` で `PUSH_EXIT=0; cmd || PUSH_EXIT=$?` パターン修正済み
+   - deploy-prod.yml に修正 repair list 追加: 20260425144500/150000 (Harvey legal AI genre)
+   - commit: 952ec214
+
+2. **パイプライン状態** (14:17 JST時点)
+   - b0e7e538 (in_progress): bash -e fix なし → 失敗見込み
+   - 952ec214 (pending): bash -e fix + 144500/150000 repair → 本命
+
+### 発見した制約
+
+- bash -e flag + `VAR=$(cmd)` パターン: cmd失敗 → 即exit → 診断出力 echo が届かない
+  → `PUSH_EXIT=0; VAR=$(cmd 2>&1) || PUSH_EXIT=$?` パターン必須 (PS#6 S39 fix)
+- 新 migration 追加後は必ず repair list に追加 (5分間隔 + セッション末尾)
+
+### Philosophy Alignment: 6/9 ✅
+- ✅ 1.CEO感(bash -e 根本原因特定) ✅ 2.ミッション駆動(CI安定化継続) ✅ 5.商品=ユーザー価値
+- ✅ 7.資産負債(deploy chain保護) ✅ 8.KPI=昨日の自分(S47→S48継続) ✅ 9.ゴール=IPO
+- 🔶 3.mentor 🔶 4.6部署 🔶 6.資本=時間(CI失敗で時間消費継続)
