@@ -107,6 +107,7 @@ serve(async (req: Request) => {
       "blog.create",
       "reminders.study",
       "notion.sync_wbs",
+      "notion.fix_wbs_all_instances",
       "wbs.unblock_dependents",
     ];
     let userId: string | null = null;
@@ -1061,11 +1062,16 @@ serve(async (req: Request) => {
         // Supabase 側から最新 WBS (last_edited 順 30 件) を取得
         // 30件 × ~150ms/task ≈ 4.5s sleep + HTTP = ~30s 合計 (Supabase 150s limit に余裕)
         // 毎時 cron で 30件ずつローリング sync → 141件 ≒ 5h で全件完了
+        const limitN = Math.min(Math.max(Number(body.limit ?? 30), 1), 50);
+        const offsetN = Math.max(Number(body.offset ?? 0), 0);
+        const delayMs = Math.min(Math.max(Number(body.delay_ms ?? 750), 350), 2000);
+        const rangeTo = offsetN + limitN - 1;
         const { data: tasks, error: fetchErr } = await admin
           .from("wbs_tasks")
           .select("id, title, instance, status, progress, end_date, updated_at")
           .order("updated_at", { ascending: false })
-          .limit(30);
+          .order("id", { ascending: true })
+          .range(offsetN, rangeTo);
 
         if (fetchErr) {
           return json({
@@ -1096,6 +1102,8 @@ serve(async (req: Request) => {
           "ps6",
           "web",
           "mobile",
+          "schedule",
+          "gha",
           "codex",
           "gemini",
           "co-pilot",
@@ -1109,8 +1117,8 @@ serve(async (req: Request) => {
         ]);
         const normalizeInstance = (v: unknown): string => {
           const s = String(v ?? "win").trim();
-          // alias: legacy 'all' / 'schedule' / 'gha' は win にフォールバック
-          if (s === "all" || s === "schedule" || s === "gha") return "win";
+          // alias: legacy 'all' は Codex に寄せ、実行系の schedule/gha は維持する
+          if (s === "all") return "codex";
           if (s === "copilot" || s === "github-copilot") return "co-pilot";
           return VALID_INSTANCES.has(s) ? s : "win";
         };
@@ -1230,7 +1238,7 @@ serve(async (req: Request) => {
             }
 
             // Notion rate limit 対策 (3 req/sec → 150ms interval = 6.7 req/sec で余裕)
-            await new Promise((r) => setTimeout(r, 150));
+            await new Promise((r) => setTimeout(r, delayMs));
           } catch (e) {
             failed++;
             errors.push(`${t.id}: ${String(e)}`);
@@ -1240,10 +1248,207 @@ serve(async (req: Request) => {
         return json({
           success: failed === 0,
           total: tasks?.length ?? 0,
+          limit: limitN,
+          offset: offsetN,
+          delay_ms: delayMs,
           created,
           updated,
           failed,
           errors: errors.slice(0, 10), // 最初の 10 件のみ返す
+        });
+      }
+
+      // ─── Notion WBS Mirror Repair ───
+      case "notion.fix_wbs_all_instances": {
+        const token = Deno.env.get("NOTION_API_TOKEN");
+        const dbId = Deno.env.get("NOTION_WBS_DATABASE_ID");
+        if (!token || !dbId) {
+          return json(
+            {
+              success: false,
+              error: "notion_not_configured",
+              missing: !token ? "NOTION_API_TOKEN" : "NOTION_WBS_DATABASE_ID",
+            },
+            503,
+          );
+        }
+
+        const notionHeaders = {
+          "Authorization": `Bearer ${token}`,
+          "Notion-Version": "2022-06-28",
+          "Content-Type": "application/json",
+        };
+        const validInstances = new Set([
+          "codex",
+          "gemini",
+          "co-pilot",
+          "vscode",
+          "win",
+          "ps1",
+          "ps2",
+          "ps3",
+          "ps4",
+          "ps5",
+          "ps6",
+          "web",
+          "mobile",
+          "schedule",
+          "gha",
+          "user",
+        ]);
+        const normalizeInstance = (v: unknown): string => {
+          const s = String(v ?? "codex").trim();
+          if (s === "all") return "codex";
+          if (s === "copilot" || s === "github-copilot") return "co-pilot";
+          return validInstances.has(s) ? s : "codex";
+        };
+        const normalizeStatus = (v: unknown): string => {
+          const s = String(v ?? "pending").trim();
+          if (s === "in-progress") return "in_progress";
+          if (s === "not_started" || s === "draft") return "pending";
+          if (s === "done") return "completed";
+          return ["pending", "in_progress", "completed", "blocked"].includes(s)
+            ? s
+            : "pending";
+        };
+
+        const maxPages = Math.min(Math.max(Number(body.max_pages ?? 40), 1), 80);
+        const pages: Record<string, unknown>[] = [];
+        let cursor: string | null = null;
+        for (let i = 0; i < 10; i++) {
+          const pageSize = Math.min(maxPages - pages.length, 100);
+          if (pageSize <= 0) break;
+          const queryResp: Response = await fetch(
+            `https://api.notion.com/v1/databases/${dbId}/query`,
+            {
+              method: "POST",
+              headers: notionHeaders,
+              body: JSON.stringify({
+                filter: { property: "instance", select: { equals: "all" } },
+                page_size: pageSize,
+                ...(cursor ? { start_cursor: cursor } : {}),
+              }),
+            },
+          );
+          if (!queryResp.ok) {
+            const text = await queryResp.text().catch(() => "");
+            return json({
+              success: false,
+              error: `notion_query_failed: HTTP ${queryResp.status}`,
+              details: text.slice(0, 300),
+            }, 502);
+          }
+          const queryJson = await queryResp.json() as {
+            results?: Record<string, unknown>[];
+            has_more?: boolean;
+            next_cursor?: string | null;
+          };
+          pages.push(...(queryJson.results ?? []));
+          if (pages.length >= maxPages) break;
+          if (!queryJson.has_more || !queryJson.next_cursor) break;
+          cursor = queryJson.next_cursor;
+        }
+
+        const pageIdByTaskId = new Map<string, string>();
+        for (const page of pages) {
+          const props = (page.properties ?? {}) as Record<string, unknown>;
+          const idProp = (props.id ?? {}) as Record<string, unknown>;
+          const titleItems = (idProp.title ?? []) as Record<string, unknown>[];
+          const taskId = String(
+            titleItems[0]?.plain_text ??
+              ((titleItems[0]?.text as Record<string, unknown> | undefined)?.content) ??
+              "",
+          ).trim();
+          if (taskId && page.id) pageIdByTaskId.set(taskId, String(page.id));
+        }
+
+        const taskIds = Array.from(pageIdByTaskId.keys());
+        const tasksById = new Map<string, Record<string, unknown>>();
+        if (taskIds.length > 0) {
+          const { data: tasks, error: tasksErr } = await admin
+            .from("wbs_tasks")
+            .select("id, title, instance, status, progress, end_date, updated_at")
+            .in("id", taskIds);
+          if (tasksErr) {
+            return json({
+              success: false,
+              error: `supabase_fetch_failed: ${tasksErr.message}`,
+            }, 500);
+          }
+          for (const task of tasks ?? []) {
+            tasksById.set(String(task.id), task as Record<string, unknown>);
+          }
+        }
+
+        let updated = 0;
+        let missing = 0;
+        let failed = 0;
+        const errors: string[] = [];
+        const delayMs = Math.min(Math.max(Number(body.delay_ms ?? 900), 500), 2500);
+
+        for (const [taskId, pageId] of pageIdByTaskId.entries()) {
+          const task = tasksById.get(taskId);
+          if (!task) missing++;
+          const properties: Record<string, unknown> = {
+            instance: { select: { name: normalizeInstance(task?.instance ?? "codex") } },
+          };
+          if (task) {
+            properties.task_title = {
+              rich_text: [{ text: { content: String(task.title ?? "") } }],
+            };
+            properties.status = { select: { name: normalizeStatus(task.status) } };
+            properties.progress = { number: Number(task.progress ?? 0) };
+            if (task.end_date) {
+              properties.deadline = { date: { start: String(task.end_date) } };
+            }
+            if (task.updated_at) {
+              properties.updated_at = { date: { start: String(task.updated_at) } };
+            }
+          }
+
+          const patchResp = await fetch(`https://api.notion.com/v1/pages/${pageId}`, {
+            method: "PATCH",
+            headers: notionHeaders,
+            body: JSON.stringify({ properties }),
+          });
+          if (patchResp.ok) {
+            updated++;
+          } else {
+            failed++;
+            const text = await patchResp.text().catch(() => "");
+            errors.push(`patch ${taskId}: HTTP ${patchResp.status} ${text.slice(0, 180)}`);
+          }
+          await new Promise((r) => setTimeout(r, delayMs));
+        }
+
+        const verifyResp = await fetch(
+          `https://api.notion.com/v1/databases/${dbId}/query`,
+          {
+            method: "POST",
+            headers: notionHeaders,
+            body: JSON.stringify({
+              filter: { property: "instance", select: { equals: "all" } },
+              page_size: 1,
+            }),
+          },
+        );
+        let remainingAll: number | null = null;
+        if (verifyResp.ok) {
+          const verifyJson = await verifyResp.json();
+          remainingAll = Number(verifyJson.results?.length ?? 0);
+          if (verifyJson.has_more) remainingAll = -1;
+        }
+
+        return json({
+          success: failed === 0,
+          max_pages: maxPages,
+          found_all_pages: pages.length,
+          matched_task_ids: taskIds.length,
+          updated,
+          missing,
+          failed,
+          remaining_all_sample_count: remainingAll,
+          errors: errors.slice(0, 10),
         });
       }
 
