@@ -1,4 +1,4 @@
-﻿// schedule-hub — スケジュール・ブログ・X投稿・自動化統合EF
+// schedule-hub — スケジュール・ブログ・X投稿・自動化統合EF
 // Merges (6 EFs): schedule-daily-digest, schedule-manager, notification-center(reminders),
 //   post-x-update, blog-post-manager, blog-auto-publisher
 //
@@ -9,6 +9,7 @@
 
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { getXAccountHandle, isXConfigured, postTweet } from "../_shared/x-client.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -90,13 +91,24 @@ serve(async (req: Request) => {
   }
 
   try {
-    const body = (await req.json().catch(() => ({}))) as Record<string, unknown>;
+    const body = (await req.json().catch(() => ({}))) as Record<
+      string,
+      unknown
+    >;
     const action = (body.action as string) ?? "";
 
     const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
 
     // Public actions that don't require auth
-    const publicActions = ["digest.run", "health.check", "blog.auto_publish", "blog.create", "reminders.study", "notion.sync_wbs", "wbs.unblock_dependents"];
+    const publicActions = [
+      "digest.run",
+      "health.check",
+      "blog.auto_publish",
+      "blog.create",
+      "reminders.study",
+      "notion.sync_wbs",
+      "wbs.unblock_dependents",
+    ];
     let userId: string | null = null;
     if (!publicActions.includes(action)) {
       userId = await getUserId(req);
@@ -135,7 +147,9 @@ serve(async (req: Request) => {
           success: true,
           digest: {
             date: today,
-            users: { total: usersRes.data?.total ?? 0 },
+            users: {
+              total: ((usersRes.data as { total?: number } | null)?.total) ?? 0,
+            },
             featureRequests: {
               newToday: newFrRes.data?.length ?? 0,
               openCount: openFrRes.count ?? 0,
@@ -186,14 +200,53 @@ serve(async (req: Request) => {
 
       // ─── X Post ───────────────────────────────────────────────────────────────
       case "x.post": {
-        // Post to X via Twitter API v2 OAuth 1.0a (requires X_OAUTH_* env vars)
-        // Forward to post-x-update EF if still deployed, otherwise log only
-        const log = await addItem(admin, "x_post", userId!, {
-          text: body.text,
+        const text = String(body.text ?? "").trim();
+        const dryRun = body.dryRun === true;
+        if (!text) return json({ success: false, error: "text required" }, 400);
+        if (text.length > 280) {
+          return json({
+            success: false,
+            error: "text exceeds 280 characters",
+          }, 400);
+        }
+
+        const baseLog = {
+          text,
           posted_at: new Date().toISOString(),
-          status: "queued",
+          source: body.source ?? "schedule-hub",
+        };
+
+        if (dryRun || !isXConfigured()) {
+          const log = await addItem(admin, "x_post", userId!, {
+            ...baseLog,
+            status: dryRun ? "dry_run" : "credentials_missing",
+          });
+          return json({
+            success: true,
+            posted: false,
+            dryRun,
+            account: getXAccountHandle(),
+            text,
+            log,
+            warning: dryRun ? undefined : "X API credentials are not configured in Supabase secrets.",
+          });
+        }
+
+        const result = await postTweet({ text });
+        const log = await addItem(admin, "x_post", userId!, {
+          ...baseLog,
+          status: "posted",
+          tweet_id: result.tweetId,
+          account: result.account,
         });
-        return json({ success: true, log, text: body.text });
+        return json({
+          success: true,
+          posted: true,
+          text,
+          tweetId: result.tweetId,
+          account: result.account,
+          log,
+        });
       }
 
       case "x.history": {
@@ -283,7 +336,10 @@ serve(async (req: Request) => {
         const title = String(body.title ?? "");
         const rawContent = String(body.content ?? "");
         // YAML frontmatter (---...---) を除去
-        const content = rawContent.replace(/^---[\r\n][\s\S]*?[\r\n]---[\r\n]?/, "").trimStart();
+        const content = rawContent.replace(
+          /^---[\r\n][\s\S]*?[\r\n]---[\r\n]?/,
+          "",
+        ).trimStart();
         const rawTags = (body.tags as string[]) ?? [];
         const platformsRaw = String(body.platforms ?? "qiita,devto");
         const platforms = platformsRaw.split(",").map((p: string) => p.trim());
@@ -324,9 +380,7 @@ serve(async (req: Request) => {
 
         if (platforms.includes("devto") && devtoKey) {
           try {
-            const cleanTags = rawTags.slice(0, 4).map((t: string) =>
-              t.toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 30)
-            ).filter((t: string) => t.length > 0);
+            const cleanTags = rawTags.slice(0, 4).map((t: string) => t.toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 30)).filter((t: string) => t.length > 0);
             const dr = await fetch("https://dev.to/api/articles", {
               method: "POST",
               headers: {
@@ -359,24 +413,31 @@ serve(async (req: Request) => {
         return json({ success: true, results });
       }
 
-
       // ─── Blog Management: Qiita / dev.to ─────────────────────────────────────
 
       // blog.qiita_list — 自分の全記事一覧 (per_page最大100)
       case "blog.qiita_list": {
         const qiitaToken = Deno.env.get("QIITA_ACCESS_TOKEN") ?? "";
-        if (!qiitaToken) return json({ error: "QIITA_ACCESS_TOKEN not set" }, 500);
+        if (!qiitaToken) {
+          return json({ error: "QIITA_ACCESS_TOKEN not set" }, 500);
+        }
         const page = Number(body.page ?? 1);
         const perPage = Math.min(Number(body.per_page ?? 100), 100);
         const qr = await fetch(
           `https://qiita.com/api/v2/authenticated_user/items?page=${page}&per_page=${perPage}`,
           { headers: { Authorization: `Bearer ${qiitaToken}` } },
         );
-        if (!qr.ok) return json({ error: `Qiita ${qr.status}: ${await qr.text()}` }, 502);
+        if (!qr.ok) {
+          return json({ error: `Qiita ${qr.status}: ${await qr.text()}` }, 502);
+        }
         const articles = await qr.json() as Array<{
-          id: string; title: string; url: string;
-          likes_count: number; comments_count: number;
-          created_at: string; tags: Array<{ name: string }>;
+          id: string;
+          title: string;
+          url: string;
+          likes_count: number;
+          comments_count: number;
+          created_at: string;
+          tags: Array<{ name: string }>;
         }>;
         return json({ success: true, articles, total: articles.length });
       }
@@ -384,7 +445,9 @@ serve(async (req: Request) => {
       // blog.qiita_comments — 記事のコメント一覧
       case "blog.qiita_comments": {
         const qiitaToken = Deno.env.get("QIITA_ACCESS_TOKEN") ?? "";
-        if (!qiitaToken) return json({ error: "QIITA_ACCESS_TOKEN not set" }, 500);
+        if (!qiitaToken) {
+          return json({ error: "QIITA_ACCESS_TOKEN not set" }, 500);
+        }
         const itemId = String(body.item_id ?? "");
         if (!itemId) return json({ error: "item_id required" }, 400);
         const qr = await fetch(
@@ -393,8 +456,11 @@ serve(async (req: Request) => {
         );
         if (!qr.ok) return json({ error: `Qiita ${qr.status}` }, 502);
         const comments = await qr.json() as Array<{
-          id: string; body: string; rendered_body: string;
-          created_at: string; user: { id: string; name: string; profile_image_url: string };
+          id: string;
+          body: string;
+          rendered_body: string;
+          created_at: string;
+          user: { id: string; name: string; profile_image_url: string };
         }>;
         return json({ success: true, comments, item_id: itemId });
       }
@@ -402,10 +468,14 @@ serve(async (req: Request) => {
       // blog.qiita_comment_post — コメントに返信 (Qiita では同記事へのコメント追加)
       case "blog.qiita_comment_post": {
         const qiitaToken = Deno.env.get("QIITA_ACCESS_TOKEN") ?? "";
-        if (!qiitaToken) return json({ error: "QIITA_ACCESS_TOKEN not set" }, 500);
+        if (!qiitaToken) {
+          return json({ error: "QIITA_ACCESS_TOKEN not set" }, 500);
+        }
         const itemId = String(body.item_id ?? "");
         const replyBody = String(body.body ?? "");
-        if (!itemId || !replyBody) return json({ error: "item_id and body required" }, 400);
+        if (!itemId || !replyBody) {
+          return json({ error: "item_id and body required" }, 400);
+        }
         const qr = await fetch("https://qiita.com/api/v2/comments", {
           method: "POST",
           headers: {
@@ -414,7 +484,9 @@ serve(async (req: Request) => {
           },
           body: JSON.stringify({ item_id: itemId, body: replyBody }),
         });
-        if (!qr.ok) return json({ error: `Qiita ${qr.status}: ${await qr.text()}` }, 502);
+        if (!qr.ok) {
+          return json({ error: `Qiita ${qr.status}: ${await qr.text()}` }, 502);
+        }
         const comment = await qr.json();
         return json({ success: true, comment });
       }
@@ -422,7 +494,9 @@ serve(async (req: Request) => {
       // blog.qiita_likers — 記事にLGTMした人の一覧
       case "blog.qiita_likers": {
         const qiitaToken = Deno.env.get("QIITA_ACCESS_TOKEN") ?? "";
-        if (!qiitaToken) return json({ error: "QIITA_ACCESS_TOKEN not set" }, 500);
+        if (!qiitaToken) {
+          return json({ error: "QIITA_ACCESS_TOKEN not set" }, 500);
+        }
         const itemId = String(body.item_id ?? "");
         if (!itemId) return json({ error: "item_id required" }, 400);
         const qr = await fetch(
@@ -430,14 +504,18 @@ serve(async (req: Request) => {
           { headers: { Authorization: `Bearer ${qiitaToken}` } },
         );
         if (!qr.ok) return json({ error: `Qiita ${qr.status}` }, 502);
-        const likers = await qr.json() as Array<{ user: { id: string; name: string; profile_image_url: string } }>;
+        const likers = await qr.json() as Array<
+          { user: { id: string; name: string; profile_image_url: string } }
+        >;
         return json({ success: true, likers, item_id: itemId });
       }
 
       // blog.qiita_follow — ユーザーをフォロー
       case "blog.qiita_follow": {
         const qiitaToken = Deno.env.get("QIITA_ACCESS_TOKEN") ?? "";
-        if (!qiitaToken) return json({ error: "QIITA_ACCESS_TOKEN not set" }, 500);
+        if (!qiitaToken) {
+          return json({ error: "QIITA_ACCESS_TOKEN not set" }, 500);
+        }
         const userId = String(body.user_id ?? "");
         if (!userId) return json({ error: "user_id required" }, 400);
         const qr = await fetch(
@@ -455,7 +533,9 @@ serve(async (req: Request) => {
       // blog.qiita_delete — 記事を削除
       case "blog.qiita_delete": {
         const qiitaToken = Deno.env.get("QIITA_ACCESS_TOKEN") ?? "";
-        if (!qiitaToken) return json({ error: "QIITA_ACCESS_TOKEN not set" }, 500);
+        if (!qiitaToken) {
+          return json({ error: "QIITA_ACCESS_TOKEN not set" }, 500);
+        }
         const itemId = String(body.item_id ?? "");
         if (!itemId) return json({ error: "item_id required" }, 400);
         const qr = await fetch(
@@ -465,19 +545,29 @@ serve(async (req: Request) => {
             headers: { Authorization: `Bearer ${qiitaToken}` },
           },
         );
-        return json({ success: qr.status === 204, status: qr.status, item_id: itemId });
+        return json({
+          success: qr.status === 204,
+          status: qr.status,
+          item_id: itemId,
+        });
       }
 
       // blog.qiita_update — 記事を更新 (内容訂正)
       case "blog.qiita_update": {
         const qiitaToken = Deno.env.get("QIITA_ACCESS_TOKEN") ?? "";
-        if (!qiitaToken) return json({ error: "QIITA_ACCESS_TOKEN not set" }, 500);
+        if (!qiitaToken) {
+          return json({ error: "QIITA_ACCESS_TOKEN not set" }, 500);
+        }
         const itemId = String(body.item_id ?? "");
         if (!itemId) return json({ error: "item_id required" }, 400);
         const patchBody: Record<string, unknown> = {};
         if (body.title) patchBody.title = String(body.title);
         if (body.body) patchBody.body = String(body.body);
-        if (body.tags) patchBody.tags = (body.tags as string[]).map((t: string) => ({ name: t }));
+        if (body.tags) {
+          patchBody.tags = (body.tags as string[]).map((t: string) => ({
+            name: t,
+          }));
+        }
         const qr = await fetch(
           `https://qiita.com/api/v2/items/${itemId}`,
           {
@@ -489,9 +579,18 @@ serve(async (req: Request) => {
             body: JSON.stringify(patchBody),
           },
         );
-        if (!qr.ok) return json({ error: `Qiita ${qr.status}: ${await qr.text()}` }, 502);
-        const updated = await qr.json() as { id: string; url: string; title: string };
-        return json({ success: true, item: { id: updated.id, url: updated.url, title: updated.title } });
+        if (!qr.ok) {
+          return json({ error: `Qiita ${qr.status}: ${await qr.text()}` }, 502);
+        }
+        const updated = await qr.json() as {
+          id: string;
+          url: string;
+          title: string;
+        };
+        return json({
+          success: true,
+          item: { id: updated.id, url: updated.url, title: updated.title },
+        });
       }
 
       // blog.devto_list — dev.to 全記事一覧
@@ -504,11 +603,20 @@ serve(async (req: Request) => {
           `https://dev.to/api/articles/me?page=${page}&per_page=${perPage}`,
           { headers: { "api-key": devtoKey } },
         );
-        if (!dr.ok) return json({ error: `dev.to ${dr.status}: ${await dr.text()}` }, 502);
+        if (!dr.ok) {
+          return json(
+            { error: `dev.to ${dr.status}: ${await dr.text()}` },
+            502,
+          );
+        }
         const articles = await dr.json() as Array<{
-          id: number; title: string; url: string;
-          public_reactions_count: number; comments_count: number;
-          published_at: string; tag_list: string[];
+          id: number;
+          title: string;
+          url: string;
+          public_reactions_count: number;
+          comments_count: number;
+          published_at: string;
+          tag_list: string[];
         }>;
         return json({ success: true, articles, total: articles.length });
       }
@@ -517,11 +625,14 @@ serve(async (req: Request) => {
       // body: { auto_reply?: bool, auto_follow?: bool, reply_template?: string }
       case "blog.sync_engagement": {
         const qiitaToken = Deno.env.get("QIITA_ACCESS_TOKEN") ?? "";
-        if (!qiitaToken) return json({ error: "QIITA_ACCESS_TOKEN not set" }, 500);
+        if (!qiitaToken) {
+          return json({ error: "QIITA_ACCESS_TOKEN not set" }, 500);
+        }
         const autoReply = Boolean(body.auto_reply);
         const autoFollow = Boolean(body.auto_follow);
         const replyTemplate = String(
-          body.reply_template ?? "コメントありがとうございます！参考になれば幸いです。",
+          body.reply_template ??
+            "コメントありがとうございます！参考になれば幸いです。",
         );
 
         // 1. 全記事取得
@@ -529,10 +640,15 @@ serve(async (req: Request) => {
           "https://qiita.com/api/v2/authenticated_user/items?page=1&per_page=100",
           { headers: { Authorization: `Bearer ${qiitaToken}` } },
         );
-        if (!articlesRes.ok) return json({ error: `Qiita list: ${articlesRes.status}` }, 502);
+        if (!articlesRes.ok) {
+          return json({ error: `Qiita list: ${articlesRes.status}` }, 502);
+        }
         const articles = await articlesRes.json() as Array<{
-          id: string; title: string; url: string;
-          likes_count: number; comments_count: number;
+          id: string;
+          title: string;
+          url: string;
+          likes_count: number;
+          comments_count: number;
           page_views_count: number;
         }>;
 
@@ -564,8 +680,10 @@ serve(async (req: Request) => {
             );
             if (cr.ok) {
               const comments = await cr.json() as Array<{
-                id: string; body: string;
-                created_at: string; user: { id: string };
+                id: string;
+                body: string;
+                created_at: string;
+                user: { id: string };
               }>;
               totalComments += comments.length;
               for (const c of comments) {
@@ -587,7 +705,10 @@ serve(async (req: Request) => {
                   created_at: c.created_at,
                   fetched_at: new Date().toISOString(),
                   replied: alreadyReplied,
-                }, { onConflict: "platform,comment_id", ignoreDuplicates: true });
+                }, {
+                  onConflict: "platform,comment_id",
+                  ignoreDuplicates: true,
+                });
 
                 // auto-reply
                 if (autoReply && !alreadyReplied) {
@@ -597,11 +718,18 @@ serve(async (req: Request) => {
                       Authorization: `Bearer ${qiitaToken}`,
                       "Content-Type": "application/json",
                     },
-                    body: JSON.stringify({ item_id: article.id, body: replyTemplate }),
+                    body: JSON.stringify({
+                      item_id: article.id,
+                      body: replyTemplate,
+                    }),
                   });
                   if (rr.ok) {
                     await admin.from("blog_comments")
-                      .update({ replied: true, reply_text: replyTemplate, replied_at: new Date().toISOString() })
+                      .update({
+                        replied: true,
+                        reply_text: replyTemplate,
+                        replied_at: new Date().toISOString(),
+                      })
                       .eq("platform", "qiita")
                       .eq("comment_id", c.id);
                     repliedCount++;
@@ -618,7 +746,9 @@ serve(async (req: Request) => {
               { headers: { Authorization: `Bearer ${qiitaToken}` } },
             );
             if (lr.ok) {
-              const likers = await lr.json() as Array<{ user: { id: string; name: string } }>;
+              const likers = await lr.json() as Array<
+                { user: { id: string; name: string } }
+              >;
               totalLikers += likers.length;
               for (const liker of likers) {
                 const uid = liker.user.id;
@@ -629,24 +759,34 @@ serve(async (req: Request) => {
                   .eq("qiita_user_id", uid)
                   .single();
 
-                const alreadyFollowed = (existingLiker as { followed?: boolean } | null)?.followed === true;
+                const alreadyFollowed = (existingLiker as { followed?: boolean } | null)?.followed ===
+                  true;
                 await admin.from("blog_likers").upsert({
                   article_id: article.id,
                   qiita_user_id: uid,
                   username: liker.user.name,
                   followed: alreadyFollowed,
                   fetched_at: new Date().toISOString(),
-                }, { onConflict: "article_id,qiita_user_id", ignoreDuplicates: true });
+                }, {
+                  onConflict: "article_id,qiita_user_id",
+                  ignoreDuplicates: true,
+                });
 
                 // auto-follow
                 if (autoFollow && !alreadyFollowed) {
                   const fr = await fetch(
                     `https://qiita.com/api/v2/users/${uid}/following`,
-                    { method: "PUT", headers: { Authorization: `Bearer ${qiitaToken}` } },
+                    {
+                      method: "PUT",
+                      headers: { Authorization: `Bearer ${qiitaToken}` },
+                    },
                   );
                   if (fr.status === 204 || fr.ok) {
                     await admin.from("blog_likers")
-                      .update({ followed: true, followed_at: new Date().toISOString() })
+                      .update({
+                        followed: true,
+                        followed_at: new Date().toISOString(),
+                      })
                       .eq("article_id", article.id)
                       .eq("qiita_user_id", uid);
                     followedCount++;
@@ -681,7 +821,11 @@ serve(async (req: Request) => {
           headers: { "api-key": devtoKey, "Content-Type": "application/json" },
           body: JSON.stringify({ article: { published: false } }),
         });
-        return json({ success: dr.ok, status: dr.status, article_id: articleId });
+        return json({
+          success: dr.ok,
+          status: dr.status,
+          article_id: articleId,
+        });
       }
 
       // ─── Study Reminders (AI大学 学習リマインダー) ────────────────────────────
@@ -693,12 +837,8 @@ serve(async (req: Request) => {
           return json({ error: "Service role required" }, 403);
         }
 
-        const minIdleDays = typeof body.min_idle_days === "number"
-          ? Math.max(1, Math.min(30, body.min_idle_days as number))
-          : 3;
-        const maxIdleDays = typeof body.max_idle_days === "number"
-          ? Math.max(minIdleDays, Math.min(90, body.max_idle_days as number))
-          : 30;
+        const minIdleDays = typeof body.min_idle_days === "number" ? Math.max(1, Math.min(30, body.min_idle_days as number)) : 3;
+        const maxIdleDays = typeof body.max_idle_days === "number" ? Math.max(minIdleDays, Math.min(90, body.max_idle_days as number)) : 30;
         const dryRun = Boolean(body.dry_run);
 
         const nowJst = new Date(Date.now() + 9 * 60 * 60 * 1000);
@@ -719,8 +859,11 @@ serve(async (req: Request) => {
         const candidates = streakRows ?? [];
         if (candidates.length === 0) {
           return json({
-            success: true, eligible: 0, sent: 0,
-            skipped_recently_reminded: 0, dry_run: dryRun,
+            success: true,
+            eligible: 0,
+            sent: 0,
+            skipped_recently_reminded: 0,
+            dry_run: dryRun,
             today: todayStr,
             window: { min_idle_days: minIdleDays, max_idle_days: maxIdleDays },
           });
@@ -731,9 +874,7 @@ serve(async (req: Request) => {
           Date.now() - minIdleDays * 86_400_000,
         ).toISOString();
 
-        const userIds = candidates.map((r) =>
-          (r as { user_id: string }).user_id
-        );
+        const userIds = candidates.map((r) => (r as { user_id: string }).user_id);
 
         const { data: recentRows, error: recentErr } = await admin
           .from("app_notifications")
@@ -780,14 +921,13 @@ serve(async (req: Request) => {
           const idleDays = Math.max(
             0,
             Math.floor(
-              (Date.parse(todayStr) - Date.parse(r.last_studied_date)) / 86_400_000,
+              (Date.parse(todayStr) - Date.parse(r.last_studied_date)) /
+                86_400_000,
             ),
           );
           const bestStreak = Math.max(r.current_streak, r.longest_streak);
           const title = `${REMINDER_PREFIX} — ${idleDays}日ぶりにAIを学ぼう`;
-          const message = bestStreak > 1
-            ? `前回の学習から${idleDays}日経過。過去最長 ${bestStreak} 日連続を更新しよう！１分クイズでストリーク復活。`
-            : `前回の学習から${idleDays}日経過。AI大学で１分クイズに挑戦して知識をアップデート。`;
+          const message = bestStreak > 1 ? `前回の学習から${idleDays}日経過。過去最長 ${bestStreak} 日連続を更新しよう！１分クイズでストリーク復活。` : `前回の学習から${idleDays}日経過。AI大学で１分クイズに挑戦して知識をアップデート。`;
           return {
             user_id: r.user_id,
             title,
@@ -839,7 +979,11 @@ serve(async (req: Request) => {
         const dbId = Deno.env.get("NOTION_WBS_DATABASE_ID");
         if (!token || !dbId) {
           return json(
-            { success: false, error: "notion_not_configured", missing: !token ? "NOTION_API_TOKEN" : "NOTION_WBS_DATABASE_ID" },
+            {
+              success: false,
+              error: "notion_not_configured",
+              missing: !token ? "NOTION_API_TOKEN" : "NOTION_WBS_DATABASE_ID",
+            },
             503,
           );
         }
@@ -854,7 +998,10 @@ serve(async (req: Request) => {
           .limit(30);
 
         if (fetchErr) {
-          return json({ success: false, error: `supabase_fetch_failed: ${fetchErr.message}` }, 500);
+          return json({
+            success: false,
+            error: `supabase_fetch_failed: ${fetchErr.message}`,
+          }, 500);
         }
 
         // Notion Database に upsert 相当 (id で検索 → 存在すれば patch / 無ければ create)
@@ -866,10 +1013,23 @@ serve(async (req: Request) => {
         // Notion select property options (DB schema の options と一致必須)
         // mismatch 値は default にフォールバック (400 error 回避)
         const VALID_INSTANCES = new Set([
-          "vscode", "win", "ps1", "ps2", "ps3", "ps4", "ps5", "ps6", "web", "mobile", "all",
+          "vscode",
+          "win",
+          "ps1",
+          "ps2",
+          "ps3",
+          "ps4",
+          "ps5",
+          "ps6",
+          "web",
+          "mobile",
+          "all",
         ]);
         const VALID_STATUSES = new Set([
-          "pending", "in_progress", "completed", "blocked",
+          "pending",
+          "in_progress",
+          "completed",
+          "blocked",
         ]);
         const normalizeInstance = (v: unknown): string => {
           const s = String(v ?? "all").trim();
@@ -897,7 +1057,9 @@ serve(async (req: Request) => {
           // 他の type では 400 になるため全て conditional 構築)
           const properties: Record<string, unknown> = {
             id: { title: [{ text: { content: String(t.id) } }] },
-            task_title: { rich_text: [{ text: { content: String(t.title ?? "") } }] },
+            task_title: {
+              rich_text: [{ text: { content: String(t.title ?? "") } }],
+            },
             instance: { select: { name: normalizeInstance(t.instance) } },
             status: { select: { name: normalizeStatus(t.status) } },
             progress: { number: Number(t.progress ?? 0) },
@@ -911,23 +1073,28 @@ serve(async (req: Request) => {
 
           try {
             // 既存 page を id (Title) で検索
-            const queryResp = await fetch(`https://api.notion.com/v1/databases/${dbId}/query`, {
-              method: "POST",
-              headers: {
-                "Authorization": `Bearer ${token}`,
-                "Notion-Version": "2022-06-28",
-                "Content-Type": "application/json",
+            const queryResp = await fetch(
+              `https://api.notion.com/v1/databases/${dbId}/query`,
+              {
+                method: "POST",
+                headers: {
+                  "Authorization": `Bearer ${token}`,
+                  "Notion-Version": "2022-06-28",
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  filter: { property: "id", title: { equals: String(t.id) } },
+                  page_size: 1,
+                }),
               },
-              body: JSON.stringify({
-                filter: { property: "id", title: { equals: String(t.id) } },
-                page_size: 1,
-              }),
-            });
+            );
 
             if (!queryResp.ok) {
               failed++;
               const eb = await queryResp.text().catch(() => "");
-              errors.push(`query ${t.id}: HTTP ${queryResp.status} ${eb.slice(0, 150)}`);
+              errors.push(
+                `query ${t.id}: HTTP ${queryResp.status} ${eb.slice(0, 150)}`,
+              );
               continue;
             }
 
@@ -936,40 +1103,50 @@ serve(async (req: Request) => {
 
             if (existingPageId) {
               // patch
-              const patchResp = await fetch(`https://api.notion.com/v1/pages/${existingPageId}`, {
-                method: "PATCH",
-                headers: {
-                  "Authorization": `Bearer ${token}`,
-                  "Notion-Version": "2022-06-28",
-                  "Content-Type": "application/json",
+              const patchResp = await fetch(
+                `https://api.notion.com/v1/pages/${existingPageId}`,
+                {
+                  method: "PATCH",
+                  headers: {
+                    "Authorization": `Bearer ${token}`,
+                    "Notion-Version": "2022-06-28",
+                    "Content-Type": "application/json",
+                  },
+                  body: JSON.stringify({ properties }),
                 },
-                body: JSON.stringify({ properties }),
-              });
+              );
               if (patchResp.ok) updated++;
               else {
                 failed++;
                 const eb = await patchResp.text().catch(() => "");
-                errors.push(`patch ${t.id}: HTTP ${patchResp.status} ${eb.slice(0, 200)}`);
+                errors.push(
+                  `patch ${t.id}: HTTP ${patchResp.status} ${eb.slice(0, 200)}`,
+                );
               }
             } else {
               // create
-              const createResp = await fetch(`https://api.notion.com/v1/pages`, {
-                method: "POST",
-                headers: {
-                  "Authorization": `Bearer ${token}`,
-                  "Notion-Version": "2022-06-28",
-                  "Content-Type": "application/json",
+              const createResp = await fetch(
+                `https://api.notion.com/v1/pages`,
+                {
+                  method: "POST",
+                  headers: {
+                    "Authorization": `Bearer ${token}`,
+                    "Notion-Version": "2022-06-28",
+                    "Content-Type": "application/json",
+                  },
+                  body: JSON.stringify({
+                    parent: { database_id: dbId },
+                    properties,
+                  }),
                 },
-                body: JSON.stringify({
-                  parent: { database_id: dbId },
-                  properties,
-                }),
-              });
+              );
               if (createResp.ok) created++;
               else {
                 failed++;
                 const eb = await createResp.text().catch(() => "");
-                errors.push(`create ${t.id}: HTTP ${createResp.status} ${eb.slice(0, 200)}`);
+                errors.push(
+                  `create ${t.id}: HTTP ${createResp.status} ${eb.slice(0, 200)}`,
+                );
               }
             }
 
@@ -1004,7 +1181,10 @@ serve(async (req: Request) => {
           .not("depends_on", "is", null);
 
         if (pendingErr) {
-          return json({ success: false, error: `fetch_pending_failed: ${pendingErr.message}` }, 500);
+          return json({
+            success: false,
+            error: `fetch_pending_failed: ${pendingErr.message}`,
+          }, 500);
         }
 
         // 全 completed task の id set を取得
@@ -1014,7 +1194,10 @@ serve(async (req: Request) => {
           .eq("status", "completed");
 
         if (completedErr) {
-          return json({ success: false, error: `fetch_completed_failed: ${completedErr.message}` }, 500);
+          return json({
+            success: false,
+            error: `fetch_completed_failed: ${completedErr.message}`,
+          }, 500);
         }
 
         const completedSet = new Set((completed ?? []).map((c) => c.id));
@@ -1036,7 +1219,10 @@ serve(async (req: Request) => {
             .update({ status: "in_progress" })
             .in("id", unblockable);
           if (updErr) {
-            return json({ success: false, error: `update_failed: ${updErr.message}` }, 500);
+            return json({
+              success: false,
+              error: `update_failed: ${updErr.message}`,
+            }, 500);
           }
           unblocked = unblockable.length;
         }

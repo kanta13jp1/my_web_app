@@ -15,6 +15,7 @@ import '../data/ai_university_genre_catalog.dart';
 import '../services/ai_fsrs_service.dart';
 import '../services/ai_learner_profile_service.dart';
 import '../services/ai_university_rlhf_service.dart';
+import '../services/ai_university_x_post_service.dart';
 import '../services/gamification_service.dart';
 import '../services/theme_service.dart';
 import '../services/user_data_finetune_readiness_service.dart';
@@ -5182,6 +5183,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
   final Map<String, List<FsrsCard>> _fsrsDue = {};
   final Set<String> _fsrsDueRequested = {};
   final Map<String, bool> _rlhfSubmitting = {};
+  bool _xPostSubmitting = false;
   AiUniversityRlhfSnapshot _rlhfSnapshot = AiUniversityRlhfSnapshot.empty();
   UserDataFineTuneReadinessSnapshot _fineTuneReadiness =
       UserDataFineTuneReadinessSnapshot.empty();
@@ -5319,7 +5321,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
   Future<void> _shareProgress() async {
     final count = _answeredQuizzes.length;
     final total = _quizzes.length;
-    const url = 'https://my-web-app-b67f4.web.app/ai-university';
+    const url = AiUniversityXPostService.defaultUrl;
 
     // A/B/C テスト: 3バリエーションをランダム選択
     final variant = Random().nextInt(3);
@@ -5357,6 +5359,41 @@ class _AiUniversityPageState extends State<AiUniversityPage>
   // ─────────────────────────────────────────────────────────────────────────
   // SNS シェアカード — OGP スタイル画像プレビュー + ダウンロード
   // ─────────────────────────────────────────────────────────────────────────
+
+  Future<void> _postAiGeneratedXUpdate() async {
+    if (_xPostSubmitting) return;
+    setState(() => _xPostSubmitting = true);
+    try {
+      final service = AiUniversityXPostService(supabase: _supabase);
+      final result = await service.generateAndPostLearningUpdate(
+        metrics: AiUniversityXPostMetrics(
+          correctAnswers: _answeredQuizzes.length,
+          totalQuestions: _quizzes.length,
+          providerCount:
+              _providers.isNotEmpty ? _providers.length : _quizzes.length,
+          currentStreak: 0,
+          insight: 'モデル間の設計思想の違い',
+        ),
+      );
+      if (!mounted) return;
+      final account = result.account ?? '@kanta13jp1';
+      final message = result.posted
+          ? '$account にAI大学の学習ログを投稿しました'
+          : 'X投稿文を作成しました。SupabaseのX API secret設定を確認してください';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message)),
+      );
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('AI X投稿に失敗しました: $error')),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _xPostSubmitting = false);
+      }
+    }
+  }
 
   Future<void> _showShareCardDialog() async {
     await showDialog<void>(
@@ -5400,6 +5437,30 @@ class _AiUniversityPageState extends State<AiUniversityPage>
                       ),
                     ),
                   ],
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: FilledButton.icon(
+                    icon: _xPostSubmitting
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.auto_awesome),
+                    label: Text(
+                      _xPostSubmitting ? 'AI生成・投稿中' : 'AI生成してXへ投稿',
+                    ),
+                    onPressed: _xPostSubmitting
+                        ? null
+                        : () {
+                            Navigator.pop(ctx);
+                            _postAiGeneratedXUpdate();
+                          },
+                  ),
                 ),
               ),
             ],

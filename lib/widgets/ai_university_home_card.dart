@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../data/ai_university_genre_catalog.dart';
+import '../services/ai_university_x_post_service.dart';
 
 /// AI大学ホームカード — ホーム最上部に表示するキラーコンテンツバナー
 ///
@@ -26,11 +27,13 @@ class AiUniversityHomeCard extends StatefulWidget {
 class _AiUniversityHomeCardState extends State<AiUniversityHomeCard> {
   final _supabase = Supabase.instance.client;
   int _answeredCount = 0;
+  int _quizAttemptCount = 0;
   int _currentStreak = 0;
   int _badgeCount = 0;
   int _providerCount = 0;
   int _dueCardCount = 0;
   DateTime? _latestContentUpdatedAt;
+  bool _xPostSubmitting = false;
   static const String _prefsKey = 'ai_univ_answered_quizzes';
 
   static const List<String> _featuredProviders = [
@@ -53,7 +56,10 @@ class _AiUniversityHomeCardState extends State<AiUniversityHomeCard> {
     final saved = prefs.getString(_prefsKey) ?? '';
     final answered = saved.isEmpty ? <String>[] : saved.split(',');
     if (mounted) {
-      setState(() => _answeredCount = answered.length);
+      setState(() {
+        _answeredCount = answered.length;
+        _quizAttemptCount = answered.length;
+      });
     }
 
     try {
@@ -97,12 +103,13 @@ class _AiUniversityHomeCardState extends State<AiUniversityHomeCard> {
     try {
       final scoresRow = await _supabase
           .from('ai_university_scores')
-          .select('provider_id')
+          .select('provider_id, quiz_correct')
           .eq('user_id', user.id)
-          .eq('quiz_correct', true)
           .timeout(const Duration(seconds: 5));
+      final scoreMaps = (scoresRow as List).cast<Map<String, dynamic>>();
       final remoteCount =
-          ((scoresRow as List).cast<Map<String, dynamic>>()).length;
+          scoreMaps.where((row) => row['quiz_correct'] == true).length;
+      final remoteAttempts = scoreMaps.length;
       final streakRow = await _supabase
           .from('ai_university_streaks')
           .select('current_streak')
@@ -123,6 +130,9 @@ class _AiUniversityHomeCardState extends State<AiUniversityHomeCard> {
         setState(() {
           // リモート記録があればローカルより優先 (クロスデバイス対応)
           if (remoteCount > _answeredCount) _answeredCount = remoteCount;
+          if (remoteAttempts > _quizAttemptCount) {
+            _quizAttemptCount = remoteAttempts;
+          }
           _currentStreak = (streakRow?['current_streak'] as num?)?.toInt() ?? 0;
           _badgeCount = badgeRow.count;
           _dueCardCount = dueCardRow.count;
@@ -145,12 +155,12 @@ class _AiUniversityHomeCardState extends State<AiUniversityHomeCard> {
         ? '🤖 自分株式会社の AI 大学で学習中！\n'
             '$providerCountTextのAIを1か所で横断しながら学べます。'
             '$learnedText$streakText\n'
-            'https://my-web-app-b67f4.web.app/ai-university'
+            '${AiUniversityXPostService.defaultUrl}'
         : '🎓 最新AIの違いが3分でわかる！\n'
             'Google / OpenAI / Anthropic など $providerCountTextを '
             'クイズ+ニュースで横断学習。\n'
             '$learnedText$streakText\n'
-            'https://my-web-app-b67f4.web.app/ai-university';
+            '${AiUniversityXPostService.defaultUrl}';
 
     // Web: OS native share sheet omits X on Windows/desktop → open X intent
     // directly. Native platforms keep the familiar SharePlus flow.
@@ -164,6 +174,43 @@ class _AiUniversityHomeCardState extends State<AiUniversityHomeCard> {
     await SharePlus.instance.share(
       ShareParams(text: shareText),
     );
+  }
+
+  Future<void> _postAiGeneratedXUpdate() async {
+    if (_xPostSubmitting) return;
+    setState(() => _xPostSubmitting = true);
+    try {
+      final service = AiUniversityXPostService(supabase: _supabase);
+      final result = await service.generateAndPostLearningUpdate(
+        metrics: AiUniversityXPostMetrics(
+          correctAnswers: _answeredCount,
+          totalQuestions: max(
+            AiUniversityXPostService.defaultQuestionTotal,
+            max(_quizAttemptCount, _answeredCount),
+          ),
+          providerCount: _providerCount,
+          currentStreak: _currentStreak,
+          insight: 'モデル間の設計思想の違い',
+        ),
+      );
+      if (!mounted) return;
+      final account = result.account ?? '@kanta13jp1';
+      final message = result.posted
+          ? '$account にAI大学の学習ログを投稿しました'
+          : 'X投稿文を作成しました。SupabaseのX API secret設定を確認してください';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message)),
+      );
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('AI X投稿に失敗しました: $error')),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _xPostSubmitting = false);
+      }
+    }
   }
 
   void _openUniversity() {
@@ -225,6 +272,29 @@ class _AiUniversityHomeCardState extends State<AiUniversityHomeCard> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildAiXPostButton() {
+    return OutlinedButton.icon(
+      onPressed: _xPostSubmitting ? null : _postAiGeneratedXUpdate,
+      icon: _xPostSubmitting
+          ? const SizedBox(
+              width: 16,
+              height: 16,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            )
+          : const Icon(Icons.auto_awesome),
+      label: Text(_xPostSubmitting ? 'AI投稿中' : 'AIでX投稿'),
+      style: OutlinedButton.styleFrom(
+        foregroundColor: const Color(0xFFFFD54F),
+        disabledForegroundColor: Colors.white.withValues(alpha: 0.38),
+        side: const BorderSide(color: Color(0x66FFD54F)),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
       ),
     );
   }
@@ -787,6 +857,11 @@ class _AiUniversityHomeCardState extends State<AiUniversityHomeCard> {
                         ),
                       ),
                     ),
+                    const SizedBox(height: 10),
+                    SizedBox(
+                      width: double.infinity,
+                      child: _buildAiXPostButton(),
+                    ),
                   ] else
                     Wrap(
                       spacing: 12,
@@ -843,6 +918,7 @@ class _AiUniversityHomeCardState extends State<AiUniversityHomeCard> {
                             ),
                           ),
                         ),
+                        _buildAiXPostButton(),
                         TextButton.icon(
                           onPressed: () => Navigator.pushNamed(
                             context,

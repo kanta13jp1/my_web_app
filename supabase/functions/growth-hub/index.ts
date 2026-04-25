@@ -1,4 +1,4 @@
-﻿// growth-hub — グロース・バイラル・マーケティング統合EF
+// growth-hub — グロース・バイラル・マーケティング統合EF
 // Merges (20 EFs): growth-acquisition, growth-command-center, growth-referral,
 //   growth-share-signal, growth-achievement-summary, growth-import-preview,
 //   growth-import-commit, get-growth-roadmap-progress, video-ad-generator,
@@ -11,6 +11,11 @@ import {
   createClient,
   SupabaseClient,
 } from "https://esm.sh/@supabase/supabase-js@2";
+import {
+  getXAccountHandle,
+  isXConfigured,
+  postTweet,
+} from "../_shared/x-client.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -829,12 +834,55 @@ serve(async (req: Request) => {
 
       // ─── X Post ───────────────────────────────────────────────────────────────
       case "x.post": {
-        // POST to X via post-x-update EF (still deployed standalone)
-        await addItem(admin, "x_post_log", userId!, {
-          text: body.text,
+        const text = String(body.text ?? "").trim();
+        const dryRun = body.dryRun === true;
+        if (!text) return json({ success: false, error: "text required" }, 400);
+        if (text.length > 280) {
+          return json({
+            success: false,
+            error: "text exceeds 280 characters",
+          }, 400);
+        }
+
+        const baseLog = {
+          text,
           posted_at: new Date().toISOString(),
+          source: body.source ?? "growth-hub",
+        };
+
+        if (dryRun || !isXConfigured()) {
+          const log = await addItem(admin, "x_post_log", userId!, {
+            ...baseLog,
+            status: dryRun ? "dry_run" : "credentials_missing",
+          });
+          return json({
+            success: true,
+            posted: false,
+            dryRun,
+            account: getXAccountHandle(),
+            text,
+            log,
+            warning: dryRun
+              ? undefined
+              : "X API credentials are not configured in Supabase secrets.",
+          });
+        }
+
+        const result = await postTweet({ text });
+        const log = await addItem(admin, "x_post_log", userId!, {
+          ...baseLog,
+          status: "posted",
+          tweet_id: result.tweetId,
+          account: result.account,
         });
-        return json({ success: true, text: body.text });
+        return json({
+          success: true,
+          posted: true,
+          text,
+          tweetId: result.tweetId,
+          account: result.account,
+          log,
+        });
       }
 
       // ─── Automation ───────────────────────────────────────────────────────────
