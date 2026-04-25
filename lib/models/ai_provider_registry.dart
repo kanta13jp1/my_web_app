@@ -1526,6 +1526,22 @@ const List<AiProviderEntry> kAiProviderRegistry = [
     note:
         r'AWS マネージド LLM サービス — Claude・Titan・Llama・Mistral を API 1 本で提供 / Guardrails / Agents / Knowledge Bases / エンタープライズ RAG / VPC 統合',
   ),
+  AiProviderEntry(
+    id: 'codeium',
+    displayName: 'Codeium',
+    status: AiProviderStatus.notImplemented,
+    entryPoint: 'https://codeium.com/',
+    note:
+        r'無料 AI コード補完 — VS Code/JetBrains/Vim 70+ エディタ対応 / Windsurf IDE 同社製 / 企業向け Codeium Enterprise / 70k+ 開発者 / $150M Series C',
+  ),
+  AiProviderEntry(
+    id: 'n8n',
+    displayName: 'n8n',
+    status: AiProviderStatus.notImplemented,
+    entryPoint: 'https://n8n.io/',
+    note:
+        r'オープンソースワークフロー自動化 — 400+ 統合 / AI Agent ノード内蔵 / セルフホスト可 / 40k+ Stars / Apache 2.0 / LLM+ツール組合せ自由',
+  ),
 ];
 
 /// ステータス別件数を集計
