@@ -5409,7 +5409,13 @@ class _AiUniversityPageState extends State<AiUniversityPage>
     await showDialog<void>(
       context: context,
       builder: (ctx) => Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        backgroundColor: const Color(0xFF1E1E1E),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: BorderSide(
+            color: const Color(0xFFE5E7EB).withValues(alpha: 0.12),
+          ),
+        ),
         child: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -5627,7 +5633,14 @@ class _AiUniversityPageState extends State<AiUniversityPage>
     try {
       final boundary = _shareCardKey.currentContext?.findRenderObject()
           as RenderRepaintBoundary?;
-      if (boundary == null) return;
+      if (boundary == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('カードの読み込みが完了していません。再度お試しください。')),
+          );
+        }
+        return;
+      }
       final image = await boundary.toImage(pixelRatio: 2.0);
       final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
       if (byteData == null) return;
@@ -5639,8 +5652,23 @@ class _AiUniversityPageState extends State<AiUniversityPage>
       web_api.document.body?.append(a);
       a.click();
       a.remove();
-    } catch (_) {
-      // キャプチャ失敗はサイレント
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('画像を保存しました')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('画像の保存に失敗しました。「テキストでシェア」をお試しください。'),
+            action: SnackBarAction(
+              label: 'テキストでシェア',
+              onPressed: _shareProgress,
+            ),
+          ),
+        );
+      }
     }
   }
 
