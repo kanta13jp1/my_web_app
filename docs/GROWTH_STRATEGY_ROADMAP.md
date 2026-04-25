@@ -20019,3 +20019,28 @@ Win版 dedup fix (20260425_wbs_dedup_fix.md) で対応予定。
 - 資本=時間: 同種衝突の再発防止 (将来 1 回の deploy ループ削減) ✅
 - KPI=昨日の自分: 1パターン → 5パターン全 idempotent 化 ✅
 
+
+---
+
+## PS版#6 S45 — deploy修復監視 + 根本原因分析 (2026-04-25)
+
+**コミット**: なし (監視・診断のみ)
+
+### 実装内容
+
+deploy-prod 連続失敗の根本原因を特定し、各インスタンスの修正を適切に誘導:
+
+1. **SQLSTATE 23514 (threat_level_check)**: `20260426000500` の CHECK 制約が `'critical'` 非許容 → `7b4e18f6` (Win#132 part 27) で `20260426015000` を追加して修正確認 ✅
+2. **flutter analyze error (unnecessary_brace_in_string_interps)**: `home_page.dart:5989-5990` の `${habitDelta}` → `$habitDelta` 修正 — `88d30458` で先行push確認 ✅
+3. **SQLSTATE 23505 (wbs_tasks_title_instance_unique)**: `20260425203000` が repair list で `reverted` のため再実行 → UNIQUE INDEX 違反 → PS#4 S57 (`b94d502f`) + Win版 (`73f146e0`) + Codex (`2363ff66`) が修正中
+
+### 修正パターン発見
+
+- `repair --status reverted` = DB から tracking 削除 → db push が再実行する (NOT スキップ)
+- idempotent でない INSERT/UPDATE migration を `reverted` にすると UNIQUE violation 連鎖
+- 正しい運用: 再実行禁止 migration は `repair --status applied` か migration 自体を idempotent 化
+
+### Philosophy Alignment
+
+- CEO感: 根本原因を他インスタンスに伝達して修正連携 ✅
+- KPI=昨日の自分: deploy 緑化プロセスの診断能力向上 ✅
