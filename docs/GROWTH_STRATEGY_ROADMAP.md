@@ -20549,3 +20549,12 @@ Voicemod / Replica Studios / Soundraw / Lalal.ai / Moises
 
 **commit**: `f428a175`
 
+
+### PS#5 S57 (2026-04-26) — home_page notification anon guard (2ac3ecd5)
+
+**バグ**: `_fetchNotifUnreadCount()` が `initState` で anon ユーザーにも呼ばれる → `notification.list` が 401 → catch で silent fail (console error は残る)
+
+**修正**: メソッド冒頭に `if (currentUser == null) return;` を追加
+
+**commit**: `2ac3ecd5`
+
