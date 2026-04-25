@@ -50,11 +50,22 @@ export async function authorizeAutomationActor(
   };
 }
 
+// Extracts the bearer token from either the Authorization header (preferred)
+// or the ?token= / ?apikey= URL query param (fallback for WebFetch which
+// cannot set custom headers, used by WEB版 Claude Schedule).
 function getBearerToken(req: Request): string {
   const authHeader = req.headers.get("authorization") ?? "";
-  return authHeader.toLowerCase().startsWith("bearer ")
-    ? authHeader.slice(7).trim()
-    : "";
+  if (authHeader.toLowerCase().startsWith("bearer ")) {
+    return authHeader.slice(7).trim();
+  }
+
+  try {
+    const url = new URL(req.url);
+    const param = url.searchParams.get("token") ?? url.searchParams.get("apikey") ?? "";
+    return param.trim();
+  } catch {
+    return "";
+  }
 }
 
 function getAllowedAdminEmails(): Set<string> {
