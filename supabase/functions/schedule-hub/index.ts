@@ -109,6 +109,7 @@ serve(async (req: Request) => {
       "notion.sync_wbs",
       "notion.fix_wbs_all_instances",
       "wbs.unblock_dependents",
+      "x.post_with_media",
     ];
     let userId: string | null = null;
     if (!publicActions.includes(action)) {
@@ -221,7 +222,7 @@ serve(async (req: Request) => {
         };
 
         if (dryRun || !isXConfigured()) {
-          const log = await addItem(admin, "x_post", userId!, {
+          const log = await addItem(admin, "x_post", userId ?? "gha", {
             ...baseLog,
             status: dryRun ? "dry_run" : "credentials_missing",
           });
@@ -286,7 +287,7 @@ serve(async (req: Request) => {
         };
 
         if (dryRun || !isXConfigured()) {
-          const log = await addItem(admin, "x_post", userId!, {
+          const log = await addItem(admin, "x_post", userId ?? "gha", {
             ...baseLog,
             status: dryRun ? "dry_run" : "credentials_missing",
           });
@@ -306,7 +307,7 @@ serve(async (req: Request) => {
         const mediaCategory = String(body.mediaCategory ?? "tweet_image");
         const uploadResult = await uploadMediaFromUrl(mediaUrl, { mediaType, mediaCategory });
         const result = await postTweet({ text, mediaIds: [uploadResult.mediaId] });
-        const log = await addItem(admin, "x_post", userId!, {
+        const log = await addItem(admin, "x_post", userId ?? "gha", {
           ...baseLog,
           status: "posted",
           tweet_id: result.tweetId,
