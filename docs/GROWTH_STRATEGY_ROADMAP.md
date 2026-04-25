@@ -18932,3 +18932,29 @@ Deploy failure `24924215661` (feat business-wbs) を解析・修正。
 ### Philosophy/AI-DEV
 ### Philosophy 9/9 ✅
 ### AI-DEV 7/7 ✅
+
+---
+
+## 2026-04-25 VSCode版 S4 — OGP cache-bust + x.post_with_media (dc2d8f25)
+
+### 実装内容
+
+1. **Phase 1: OGP deploy-time cache-bust** (deploy-prod.yml)
+   - `build/web/index.html` の `ogp.png"` → `ogp.png?v=VERSION"` に sed 置換
+   - Twitter は URL 変化で OGP 再クロール → 古いカード表示解消
+
+2. **Phase 2b: schedule-hub x.post_with_media action**
+   - `uploadMediaFromUrl` import 追加 + `x.post_with_media` case 実装
+   - mediaUrl → Twitter Media Upload API (INIT/APPEND/FINALIZE) → postTweet
+   - dry_run + credentials_missing ガード + x_post テーブルへのDB log
+
+3. **GHA: post-x-with-media.yml**
+   - cron: 毎週月曜 09:00 UTC (= 18:00 JST)
+   - schedule-hub:x.post_with_media → ogp.png + 自動生成ツイートテキスト
+   - workflow_dispatch: dry_run / custom text 対応
+
+### 関連 commit
+- `dc2d8f25` feat(ogp+x): OGP cache-bust on deploy + x.post_with_media EF action + weekly X post workflow
+
+### Philosophy 9/9 ✅
+### AI-DEV 7/7 ✅
