@@ -39,8 +39,8 @@ class _UserTasksPageState extends State<UserTasksPage> {
       final response = await _supabase.functions.invoke(
         'tools-hub',
         body: {
-          'action': 'wbs.notify_user_tasks',
-          'send_slack': false,
+          'action': 'wbs.get_user_tasks',
+          'include_completed': _showCompleted,
           'limit': 100,
         },
       );
@@ -54,9 +54,7 @@ class _UserTasksPageState extends State<UserTasksPage> {
       rows.sort(_compareTasks);
       if (mounted) {
         setState(() {
-          _tasks = _showCompleted
-              ? rows
-              : rows.where((task) => task['status'] != 'completed').toList();
+          _tasks = rows;
         });
       }
     } catch (e) {

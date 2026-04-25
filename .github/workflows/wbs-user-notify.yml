@@ -1,219 +1,59 @@
-name: WBS User Task Notify + NotebookLM Report
+name: WBS User Task Notify
 
 on:
   schedule:
-    # 毎朝9:00 JST (= 00:00 UTC)
-    - cron: '0 0 * * *'
+    - cron: "0 0 * * *" # 09:00 JST
   workflow_dispatch:
     inputs:
-      dry_run:
-        description: 'Slack通知をスキップ (true/false)'
+      limit:
+        description: "Maximum user tasks to notify"
         required: false
-        default: 'false'
+        default: "20"
 
 concurrency:
   group: wbs-user-notify
   cancel-in-progress: false
 
+permissions:
+  contents: read
+
 jobs:
-  notify-and-report:
+  notify:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
-    permissions:
-      contents: write
+    timeout-minutes: 5
+
+    env:
+      TOOLS_HUB_URL: ${{ secrets.SUPABASE_TOOLS_HUB_URL }}
+      SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      LIMIT: ${{ github.event.inputs.limit || '20' }}
 
     steps:
-      - uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Fetch user tasks and notify Slack
-        id: notify
-        env:
-          TOOLS_HUB_URL: ${{ secrets.SUPABASE_TOOLS_HUB_URL }}
-          SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      - name: Notify Slack
         run: |
           if [ -z "$TOOLS_HUB_URL" ]; then
-            TOOLS_HUB_URL="https://qwxkntrdqmzlfgmtcecf.supabase.co/functions/v1/tools-hub"
+            TOOLS_HUB_URL="https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/tools-hub"
+          fi
+
+          if [ -z "$SERVICE_ROLE_KEY" ]; then
+            echo "::warning::SUPABASE_SERVICE_ROLE_KEY is missing; skip WBS user task notify"
+            exit 0
           fi
 
           HTTP_CODE=$(curl -s -o /tmp/notify_resp.json -w "%{http_code}" \
             -X POST "$TOOLS_HUB_URL" \
             -H "Content-Type: application/json" \
             -H "Authorization: Bearer $SERVICE_ROLE_KEY" \
-            -d '{"action":"wbs.notify_user_tasks"}')
+            -d "{\"action\":\"wbs.notify_user_tasks\",\"send_slack\":true,\"limit\":${LIMIT}}" \
+            --max-time 30)
 
           echo "HTTP_CODE=$HTTP_CODE"
           cat /tmp/notify_resp.json
 
           if [ "$HTTP_CODE" != "200" ]; then
-            echo "::warning::tools-hub returned HTTP $HTTP_CODE — skipping"
-            echo "count=0" >> "$GITHUB_OUTPUT"
+            echo "::warning::tools-hub returned HTTP $HTTP_CODE"
             exit 0
           fi
 
           COUNT=$(jq -r '.user_tasks_count // .count // 0' /tmp/notify_resp.json)
-          echo "count=$COUNT" >> "$GITHUB_OUTPUT"
-          echo "✅ user tasks: $COUNT件"
-
-      - name: Generate NotebookLM report markdown
-        id: report
-        if: steps.notify.outputs.count != '0'
-        env:
-          TOOLS_HUB_URL: ${{ secrets.SUPABASE_TOOLS_HUB_URL }}
-          SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-        run: |
-          if [ -z "$TOOLS_HUB_URL" ]; then
-            TOOLS_HUB_URL="https://qwxkntrdqmzlfgmtcecf.supabase.co/functions/v1/tools-hub"
-          fi
-
-          TODAY=$(TZ=Asia/Tokyo date '+%Y-%m-%d')
-          REPORT_DIR="docs/user-tasks-report"
-          REPORT_FILE="${REPORT_DIR}/${TODAY}.md"
-          mkdir -p "$REPORT_DIR"
-
-          # Fetch detailed user tasks
-          HTTP_CODE=$(curl -s -o /tmp/tasks_resp.json -w "%{http_code}" \
-            -X POST "$TOOLS_HUB_URL" \
-            -H "Content-Type: application/json" \
-            -H "Authorization: Bearer $SERVICE_ROLE_KEY" \
-            -d '{"action":"wbs.get_user_tasks","include_completed":false,"limit":50}')
-
-          if [ "$HTTP_CODE" != "200" ]; then
-            echo "::warning::get_user_tasks returned HTTP $HTTP_CODE"
-            exit 0
-          fi
-
-          # Generate markdown report via jq
-          python3 << 'PYEOF'
-import json, pathlib, sys
-from datetime import datetime
-
-today = datetime.now().strftime('%Y-%m-%d')
-data = json.loads(pathlib.Path('/tmp/tasks_resp.json').read_text())
-tasks = data.get('tasks', [])
-
-lines = [
-    f'# 自分株式会社 ユーザータスク レポート — {today}',
-    '',
-    f'> 生成日時: {today} 09:00 JST | タスク数: {len(tasks)}件',
-    '',
-    '## 概要',
-    '',
-    f'あなた (user instance) の手動対応が必要なタスクが **{len(tasks)}件** あります。',
-    'このレポートは毎朝 NotebookLM に蓄積され、AI による手順明確化・優先度分析に使用されます。',
-    '',
-    '## タスク一覧',
-    '',
-]
-
-# Group by category
-from collections import defaultdict
-by_category = defaultdict(list)
-for t in tasks:
-    by_category[t.get('category', 'その他')].append(t)
-
-priority_labels = {'high': '🔴 高', 'medium': '🟡 中', 'low': '🟢 低'}
-status_labels = {'not_started': '未着手', 'in_progress': '進行中', 'blocked': '停止中'}
-
-for cat, cat_tasks in sorted(by_category.items()):
-    lines.append(f'### {cat}')
-    lines.append('')
-    for t in cat_tasks:
-        pri = priority_labels.get(t.get('priority', 'medium'), '🟡 中')
-        status = status_labels.get(t.get('status', ''), t.get('status', ''))
-        progress = t.get('progress', 0)
-        end_date = t.get('end_date', '未設定')
-        title = t.get('title', '')
-        desc = t.get('description', '')
-        note = t.get('notebooklm_note', '')
-        latest = t.get('latest_report')
-
-        lines.append(f'#### {pri} {title}')
-        lines.append('')
-        lines.append(f'- **ステータス**: {status}')
-        lines.append(f'- **進捗**: {progress}%')
-        lines.append(f'- **期限**: {end_date}')
-        if desc:
-            lines.append(f'- **説明**: {desc}')
-        if note:
-            lines.append(f'- **AI手順メモ**: {note}')
-        if latest:
-            if latest.get('report_text'):
-                lines.append(f'- **最新報告**: {latest["report_text"]}')
-            if latest.get('next_action'):
-                lines.append(f'- **次のアクション**: {latest["next_action"]}')
-            if latest.get('blockers'):
-                lines.append(f'- **ブロッカー**: {latest["blockers"]}')
-        lines.append('')
-
-lines += [
-    '## NotebookLM 活用方法',
-    '',
-    'このファイルを NotebookLM に追加することで、以下の分析が可能になります:',
-    '',
-    '1. **手順の明確化**: 各タスクの具体的な実施ステップを AI が提案',
-    '2. **優先度の分析**: 期限・重要度・依存関係から最適な着手順を提示',
-    '3. **ブロッカーの解決策**: 停止中タスクの障害を分析し解決策を提案',
-    '4. **進捗トレンド分析**: 過去レポートとの比較で改善点を発見',
-    '',
-    '```bash',
-    f'# NotebookLM に追加するコマンド (ローカルで実行):',
-    f'notebooklm use jibun-master-brain',
-    f'notebooklm source add "./docs/user-tasks-report/{today}.md"',
-    f'notebooklm ask "今日のユーザータスクの中で最優先で取り組むべきものは何か、具体的な手順を教えて"',
-    '```',
-    '',
-    '---',
-    f'*Generated by wbs-user-notify.yml on {today}*',
-]
-
-pathlib.Path('/tmp/report.md').write_text('\n'.join(lines), encoding='utf-8')
-print(f"Report generated: {len(tasks)} tasks, {len(lines)} lines")
-PYEOF
-
-          cp /tmp/report.md "$REPORT_FILE"
-          echo "report_file=$REPORT_FILE" >> "$GITHUB_OUTPUT"
-          echo "✅ Report generated: $REPORT_FILE"
-
-      - name: Commit NotebookLM report
-        if: steps.report.outputs.report_file != ''
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add docs/user-tasks-report/
-          git diff --staged --quiet && echo "No changes" && exit 0
-          TODAY=$(TZ=Asia/Tokyo date '+%Y-%m-%d')
-          git commit -m "docs(user-tasks): $TODAY ユーザータスクレポート生成 (NotebookLM用)"
-          git push origin HEAD:main
-
-      - name: Post NotebookLM tip to Slack
-        if: steps.report.outputs.report_file != ''
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-        run: |
-          if [ -z "$SLACK_WEBHOOK_URL" ]; then
-            echo "SLACK_WEBHOOK_URL not set — skipping"
-            exit 0
-          fi
-          TODAY=$(TZ=Asia/Tokyo date '+%Y-%m-%d')
-          REPORT_FILE="${{ steps.report.outputs.report_file }}"
-          curl -s -X POST "$SLACK_WEBHOOK_URL" \
-            -H "Content-Type: application/json" \
-            -d "{
-              \"text\": \"📓 *NotebookLM レポート生成完了* ($TODAY)\n\`\`\`\nnotebooklm use jibun-master-brain\nnotebooklm source add \\\"./$REPORT_FILE\\\"\nnotebooklm ask \\\"今日の最優先ユーザータスクと具体的な手順を教えて\\\"\n\`\`\`\",
-              \"username\": \"自分株式会社 WBS Bot\",
-              \"icon_emoji\": \":notebook:\"
-            }"
-
-      - name: Summary
-        if: always()
-        run: |
-          COUNT="${{ steps.notify.outputs.count }}"
-          REPORT="${{ steps.report.outputs.report_file }}"
-          echo "## WBS User Task Notify 結果" >> "$GITHUB_STEP_SUMMARY"
-          echo "| 項目 | 値 |" >> "$GITHUB_STEP_SUMMARY"
-          echo "|---|---|" >> "$GITHUB_STEP_SUMMARY"
-          echo "| ユーザータスク数 | ${COUNT:-0}件 |" >> "$GITHUB_STEP_SUMMARY"
-          echo "| NotebookLMレポート | ${REPORT:-生成なし} |" >> "$GITHUB_STEP_SUMMARY"
-          echo "| 実行時刻 (JST) | $(TZ=Asia/Tokyo date '+%Y-%m-%d %H:%M') |" >> "$GITHUB_STEP_SUMMARY"
+          URGENT=$(jq -r '.urgent_count // 0' /tmp/notify_resp.json)
+          echo "WBS user tasks notified: count=${COUNT}, urgent=${URGENT}"
