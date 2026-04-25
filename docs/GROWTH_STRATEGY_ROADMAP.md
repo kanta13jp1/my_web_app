@@ -20355,3 +20355,21 @@ Voicemod / Replica Studios / Beatoven.ai / Mubert / Soundraw (音声/音楽系�
 - ミッション駆動: 競合Notion との差別化コンテンツで認知拡大 ✅
 - KPI=昨日の自分: SEO 50本計画 2→3本 進捗 ✅
 - 資本=時間: GHA weekly-sns-draft 自動化検証 ✅
+
+### PS#5 S54 (2026-04-26) — AI大学 `_fetchContent` null-safe provider fix (38a50027)
+
+**バグ**: `ai_university_content` schema v2 で `provider` カラムが nullable 化 → `_fetchContent` の `row['provider'] as String` がランタイムクラッシュ
+
+**根本原因**: `20260426125000_ai_university_content_schema_v2.sql` が `provider` を nullable にした。新形式 row (Otter.ai/Murf/Coqui/Resemble AI) は `provider=null, provider_id='...'` で返ってくる。Dart の `as String` は null で `TypeError` → AI大学コンテンツタブが白画面
+
+**修正** (`lib/pages/gemini_university_v2_page.dart` `_fetchContent`):
+```dart
+final provider = (row['provider'] as String?) ??
+    (row['provider_id'] as String?);
+if (provider == null) continue;
+```
+
+**Philosophy**: ✅KPI=昨日の自分 (schema v2 移行の後始末) ✅商品=ユーザー価値 (白画面解消)
+
+**commit**: `38a50027`
+
