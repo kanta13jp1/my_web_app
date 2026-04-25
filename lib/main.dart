@@ -1449,6 +1449,11 @@ class _MyAppState extends State<MyApp> {
               settings: const RouteSettings(name: '/user-tasks'),
               builder: (_) => const UserTasksPage(),
             );
+          case '/wbs-user-tasks':
+            return MaterialPageRoute(
+              settings: const RouteSettings(name: '/wbs-user-tasks'),
+              builder: (_) => const UserTasksPage(),
+            );
           case '/business-card-manager':
             return MaterialPageRoute(
               builder: (_) => const BusinessCardManagerPage(),

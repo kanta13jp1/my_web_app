@@ -90,6 +90,7 @@ import '../pages/social_media_scheduler_page.dart';
 import '../pages/video_meeting_page.dart';
 import '../pages/gantt_timeline_page.dart';
 import '../pages/project_gantt_page.dart';
+import '../pages/user_tasks_page.dart';
 import '../pages/guitar_recording_studio_page.dart';
 import '../pages/public_guitar_gallery_page.dart';
 import '../pages/music_collaboration_page.dart';
@@ -1221,6 +1222,22 @@ List<HomeToolEntry> buildHomeToolCatalog({
         'プロジェクトガント',
       ],
       onOpen: (context) => _pushPage(context, const ProjectGanttPage()),
+    ),
+    HomeToolEntry(
+      id: 'user-tasks',
+      sectionId: 'growth',
+      title: 'WBS ユーザータスク',
+      subtitle: '手動操作が必要なWBSタスクの確認、進捗報告、完了報告',
+      icon: Icons.assignment_ind_outlined,
+      color: const Color(0xFFEF4444),
+      keywords: const <String>[
+        'WBS',
+        'ユーザータスク',
+        '手動操作',
+        '進捗報告',
+        'Slack',
+      ],
+      onOpen: (context) => _pushPage(context, const UserTasksPage()),
     ),
     HomeToolEntry(
       id: 'gantt-timeline',

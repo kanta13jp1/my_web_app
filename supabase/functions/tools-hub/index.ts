@@ -213,7 +213,7 @@ function compareWbsTasks(a: Record<string, unknown>, b: Record<string, unknown>)
 const WBS_INSTANCE_VALUES = [
   "codex",     // OpenAI Codex CLI
   "gemini",    // Google Gemini Code Assist
-  "copilot",   // GitHub Copilot Chat / Inline
+  "co-pilot",  // GitHub Copilot Chat / Inline
   "vscode",
   "win",
   "ps1",
@@ -235,7 +235,7 @@ function normalizeWbsInstance(value: unknown): string {
   const normalized = String(value ?? "").trim().toLowerCase();
   if (normalized === "windows") return "win";
   if (normalized === "ps") return "ps1";
-  if (normalized === "co-pilot" || normalized === "github-copilot") return "copilot";
+  if (normalized === "copilot" || normalized === "github-copilot") return "co-pilot";
   return WBS_INSTANCE_VALUES.includes(normalized) ? normalized : "codex";
 }
 
@@ -1323,8 +1323,9 @@ serve(async (req) => {
           //         auto_reassign?: true, limit?: 5 }
           const rawInstance = String(body.instance ?? "").trim();
           if (!rawInstance) return json({ error: "instance required" }, 400);
-          if (!WBS_INSTANCE_VALUES.includes(rawInstance.toLowerCase()) &&
-              !["windows", "ps"].includes(rawInstance.toLowerCase())) {
+          const rawInstanceLower = rawInstance.toLowerCase();
+          if (!WBS_INSTANCE_VALUES.includes(rawInstanceLower) &&
+              !["windows", "ps", "copilot", "github-copilot"].includes(rawInstanceLower)) {
             return json({
               error: `instance must be one of: ${WBS_INSTANCE_VALUES.join(", ")}`,
             }, 400);
@@ -1381,8 +1382,8 @@ serve(async (req) => {
 
           // user タスク (手動操作が必要なタスク) も合わせて返す + Slack 通知
           const { data: userTasksRaw } = await admin.from("wbs_tasks")
-            .select("id, title, category, status, progress, priority, end_date")
-            .eq("instance", "user")
+            .select("id, title, category, status, progress, priority, end_date, user_report_status, user_report_note, user_reported_at")
+            .or("instance.eq.user,owner_instance.eq.user")
             .in("status", ["pending", "in_progress", "blocked"])
             .order("end_date", { ascending: true, nullsFirst: false })
             .limit(10);
@@ -1398,13 +1399,14 @@ serve(async (req) => {
                 "",
                 ...userTasks.slice(0, 5).map((t, i) => {
                   const due = t.end_date ? ` | 期限 ${t.end_date}` : "";
-                  return `${i + 1}. ${icon(String(t.priority ?? "medium"))} *${t.title}* — ${t.category}${due}`;
+                  const report = t.user_report_status ? ` | 報告 ${t.user_report_status}` : "";
+                  return `${i + 1}. ${icon(String(t.priority ?? "medium"))} *${t.title}* — ${t.category}${due}${report}`;
                 }),
                 userTasks.length > 5 ? `…他 ${userTasks.length - 5} 件` : "",
                 "",
-                `🔗 https://my-web-app-b67f4.web.app/project-gantt`,
+                `🔗 https://my-web-app-b67f4.web.app/user-tasks`,
               ].filter((l) => l !== "");
-              fetch(webhookUrl, {
+              await fetch(webhookUrl, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ text: lines.join("\n"), mrkdwn: true }),
@@ -1551,8 +1553,149 @@ serve(async (req) => {
           });
         }
 
-        // ─── WBS User Tasks Notify は line 1904+ (PS#3/4) に統合済 ────────
-        // (本 Win#132 part 18 の重複実装は part 19 で削除)
+        case "wbs.notify_user_tasks": {
+          const sendSlack = body.send_slack !== false;
+          const limitN = Math.min(Math.max(Number(body.limit ?? 10), 1), 50);
+          const { data: userTasks, error: queryErr } = await admin
+            .from("wbs_tasks")
+            .select("id, category, title, description, status, progress, priority, end_date, instance, owner_instance, user_report_status, user_report_note, user_reported_at")
+            .or("instance.eq.user,owner_instance.eq.user")
+            .in("status", ["pending", "in_progress", "blocked"])
+            .order("priority", { ascending: false })
+            .order("end_date", { ascending: true, nullsFirst: false })
+            .limit(limitN);
+          if (queryErr) throw new Error(queryErr.message);
+
+          const tasks = userTasks ?? [];
+          const today = new Date();
+          const urgentTasks = tasks.filter((t: Record<string, unknown>) => {
+            if (!t.end_date) return false;
+            const due = new Date(String(t.end_date));
+            if (Number.isNaN(due.getTime())) return false;
+            return Math.ceil((due.getTime() - today.getTime()) / 86_400_000) <= 7;
+          });
+
+          let slackPosted = false;
+          let slackError: string | null = null;
+          if (sendSlack && tasks.length > 0) {
+            const webhookUrl = Deno.env.get("SLACK_WEBHOOK_URL") ?? "";
+            if (!webhookUrl) {
+              slackError = "SLACK_WEBHOOK_URL not configured";
+            } else {
+              const priorityIcon = (p: string) =>
+                p === "high" ? "🔴" : p === "low" ? "🟢" : "🟡";
+              const lines = [
+                `📋 *自分株式会社 WBS - ユーザー手動タスク*`,
+                `合計 *${tasks.length}件* / 期限7日以内 *${urgentTasks.length}件*`,
+                "",
+                ...tasks.slice(0, 10).map((t: Record<string, unknown>, i: number) => {
+                  const due = t.end_date ? ` / 期限 ${t.end_date}` : "";
+                  const progress = ` / ${t.progress ?? 0}%`;
+                  const report = t.user_report_status ? ` / 報告 ${t.user_report_status}` : "";
+                  return `${i + 1}. ${priorityIcon(String(t.priority ?? "medium"))} *${t.title}* - ${t.category}${progress}${due}${report}`;
+                }),
+                tasks.length > 10 ? `...他 ${tasks.length - 10} 件` : "",
+                "",
+                `報告UI: https://my-web-app-b67f4.web.app/user-tasks`,
+                `WBS: https://my-web-app-b67f4.web.app/project-gantt`,
+              ].filter((line) => line !== "");
+              try {
+                const resp = await fetch(webhookUrl, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    text: lines.join("\n"),
+                    username: "自分株式会社 WBS Bot",
+                    icon_emoji: ":clipboard:",
+                  }),
+                });
+                slackPosted = resp.ok;
+                if (!resp.ok) slackError = `HTTP ${resp.status}`;
+              } catch (err) {
+                slackError = String(err);
+              }
+            }
+          }
+
+          return json({
+            success: true,
+            count: tasks.length,
+            urgent_count: urgentTasks.length,
+            user_tasks_count: tasks.length,
+            slack_posted: slackPosted,
+            slack_error: slackError,
+            tasks,
+          });
+        }
+
+        case "wbs.update_user_task_report": {
+          const taskId = String(body.task_id ?? body.id ?? "").trim();
+          if (!taskId) return json({ error: "task_id required" }, 400);
+          const reportStatus = String(
+            body.user_report_status ?? body.report_status ?? "in_progress",
+          ).trim();
+          const allowedReportStatuses = [
+            "not_reported",
+            "in_progress",
+            "waiting",
+            "completed",
+            "blocked",
+          ];
+          if (!allowedReportStatuses.includes(reportStatus)) {
+            return json({ error: `invalid user_report_status: ${reportStatus}` }, 400);
+          }
+
+          const nowIso = new Date().toISOString();
+          const update: Record<string, unknown> = {
+            user_report_status: reportStatus,
+            user_report_note: String(body.note ?? body.user_report_note ?? "").trim(),
+            user_reported_at: nowIso,
+            updated_at: nowIso,
+          };
+          if (body.progress !== undefined) {
+            update.progress = Math.min(Math.max(Number(body.progress), 0), 100);
+          }
+          if (body.status !== undefined) {
+            const status = String(body.status);
+            if (!["pending", "in_progress", "blocked", "completed"].includes(status)) {
+              return json({ error: `invalid status: ${status}` }, 400);
+            }
+            update.status = status;
+          } else if (reportStatus === "completed") {
+            update.status = "completed";
+            update.progress = 100;
+          } else if (reportStatus === "blocked") {
+            update.status = "blocked";
+          } else if (reportStatus === "in_progress") {
+            update.status = "in_progress";
+            if (update.progress === undefined) update.progress = 10;
+          }
+
+          const { data: updated, error: updateErr } = await admin
+            .from("wbs_tasks")
+            .update(update)
+            .eq("id", taskId)
+            .or("instance.eq.user,owner_instance.eq.user")
+            .select("id, title, category, status, progress, priority, end_date, user_report_status, user_report_note, user_reported_at")
+            .maybeSingle();
+          if (updateErr) throw new Error(updateErr.message);
+          if (!updated) return json({ error: "user task not found" }, 404);
+
+          try {
+            await admin.from("wbs_user_task_reports").insert({
+              task_id: taskId,
+              reporter: "user",
+              progress: updated.progress ?? update.progress ?? null,
+              status: updated.status ?? update.status ?? null,
+              report_text: update.user_report_note || null,
+              metadata: { source: "wbs.update_user_task_report" },
+            });
+          } catch (err) {
+            console.warn(`wbs_user_task_reports insert skipped: ${String(err)}`);
+          }
+
+          return json({ success: true, task: updated });
+        }
 
         // ─── WBS User Task Report (Win版#132 part 19) ─────────────────────
         // user instance task の進捗報告 + NotebookLM 蓄積用 history 保存。
@@ -1564,12 +1707,12 @@ serve(async (req) => {
           // 1. task fetch + instance='user' guard
           const { data: task, error: fetchErr } = await admin
             .from("wbs_tasks")
-            .select("id, instance, title, progress, status")
+            .select("id, instance, owner_instance, title, progress, status")
             .eq("id", taskId)
             .maybeSingle();
           if (fetchErr) throw new Error(fetchErr.message);
           if (!task) return json({ error: "task not found" }, 404);
-          if (task.instance !== "user") {
+          if (task.instance !== "user" && task.owner_instance !== "user") {
             return json({ error: "instance != 'user' / report 不可", reason: "non_user_task" }, 403);
           }
 
@@ -1587,6 +1730,13 @@ serve(async (req) => {
           if (newStatus && ["pending", "in_progress", "completed", "blocked"].includes(newStatus)) {
             updates.status = newStatus;
           }
+          updates.user_report_status =
+            updates.status === "completed" ? "completed" :
+            updates.status === "blocked" ? "blocked" :
+            updates.status === "in_progress" ? "in_progress" :
+            "in_progress";
+          updates.user_report_note = body.report_text ? String(body.report_text).slice(0, 4000) : "";
+          updates.user_reported_at = new Date().toISOString();
           if (Object.keys(updates).length > 1) {
             // updated_at 以外に変更ある場合のみ UPDATE
             await admin.from("wbs_tasks").update(updates).eq("id", taskId);
@@ -1854,7 +2004,7 @@ serve(async (req) => {
 
           // 最新レポート取得
           const taskIds = (tasks ?? []).map((t: Record<string, unknown>) => t.id);
-          let latestReports: Record<string, Record<string, unknown>> = {};
+          const latestReports: Record<string, Record<string, unknown>> = {};
           if (taskIds.length > 0) {
             const { data: reports } = await admin
               .from("user_task_reports")
@@ -2498,6 +2648,9 @@ ${reportText ? `> ${reportText}` : ""}`,
             "horseracing.register_race", "horseracing.stats",
             "slack.post", "slack.search",
             "wbs.notify_user_tasks",
+            "wbs.update_user_task_report",
+            "wbs.user_task_report",
+            "wbs.export_user_tasks_md",
             "wbs.get_user_tasks",
             "wbs.submit_user_task_report",
             "legal.harvey.complete",
