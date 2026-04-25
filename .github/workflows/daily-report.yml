@@ -49,6 +49,14 @@ jobs:
             jq -r '.digest.recentAchievements // [] | .[] | "- " + .title' \
               /tmp/digest.json > /tmp/achievements.txt 2>/dev/null || echo "(なし)" > /tmp/achievements.txt
             echo "api_ok=true" >> $GITHUB_OUTPUT
+
+            # WEB版 Claude Schedule 用: メトリクスJSONをリポジトリに保存
+            # (WebFetchはAuthヘッダー不可のため、GitHub MCP経由でこのファイルを読む)
+            mkdir -p docs/metrics
+            DATE=$(TZ=Asia/Tokyo date +%Y-%m-%d)
+            jq --arg date "$DATE" --arg ts "$(TZ=Asia/Tokyo date -Iseconds)" \
+              '. + {fetched_at: $ts, report_date: $date}' \
+              /tmp/digest.json > docs/metrics/daily-metrics.json
           else
             TOTAL_USERS="取得失敗(HTTP $HTTP_CODE)"
             NEW_TODAY="0"
@@ -289,7 +297,7 @@ jobs:
           git fetch origin main
           git checkout main
           git reset --hard origin/main
-          git add docs/daily-reports/
+          git add docs/daily-reports/ docs/metrics/
           if git diff --cached --quiet; then
             echo "📝 変更なし — スキップ"
             exit 0
@@ -324,4 +332,5 @@ jobs:
             echo "| 24h コミット | ${COMMITS}件 |"
             echo "| X投稿 | $X_ICON |"
             echo "| 競合監視 (7社) | $COMP_ICON |"
+            echo "| メトリクスJSON | $([ -f docs/metrics/daily-metrics.json ] && echo "✅ 保存済" || echo "— API失敗のためスキップ") |"
           } >> $GITHUB_STEP_SUMMARY
