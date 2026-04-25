@@ -29,19 +29,23 @@ jobs:
 
     env:
       SUPABASE_URL: https://smmkxxavexumewbfaqpy.supabase.co
-      SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+      # Secret が未設定なら lib/main.dart にも入っている public anon key を fallback。
+      # ANON key は public 仕様 (Flutter Web bundle に同梱済 / RLS で保護)。
+      # 鍵をローテーションしたら secrets.SUPABASE_ANON_KEY の上書きが優先される。
+      SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNtbWt4eGF2ZXh1bWV3YmZhcXB5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA2OTExNzYsImV4cCI6MjA3NjI2NzE3Nn0.U2OsYRYFvbpu2QjTwXulJ67v9wouMMpn0y9B9K5-WHw' }}
       LIMIT: ${{ github.event.inputs.limit || '10' }}
 
     steps:
       - name: Step 1 - Secret presence check
         id: precheck
         run: |
+          # Defense-in-depth: env を埋める時点で fallback が効いているはずだが、
+          # 万一 fallback も空 (e.g. 将来 expr が壊れた場合) は skip して silent fail を防ぐ。
           if [ -z "$SUPABASE_ANON_KEY" ]; then
-            # SUPABASE_ANON_KEY が無い場合は hardcoded fallback (anon key は public)
-            # ただし無い環境では skip
-            echo "::warning::SUPABASE_ANON_KEY missing — skip"
+            echo "::warning::SUPABASE_ANON_KEY missing AND fallback empty — skip"
             echo "skip=true" >> $GITHUB_OUTPUT
           else
+            echo "ANON key length: ${#SUPABASE_ANON_KEY}"
             echo "skip=false" >> $GITHUB_OUTPUT
           fi
 
