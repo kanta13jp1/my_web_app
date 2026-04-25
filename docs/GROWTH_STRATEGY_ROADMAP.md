@@ -19012,3 +19012,29 @@ Deploy failure `24924215661` (feat business-wbs) を解析・修正。
 3 段階 fallback (Gemini → template / FAL → ogp.png) で resilient
 
 ### commit: TBD
+
+### Rule 17 WF health check (2026-04-25 15:55 JST) — PS#1 S38
+
+#### 全 WF success率 (main branch)
+| WF | ✅ | ❌ | 状態 |
+|---|---|---|---|
+| ogp-image-refresh | 0 | 5 | **全件修正済** (YAML syntax error → fix `67d264cf`) |
+| Deploy to Production | 3 | 2 | healthy (2 in_progress concurrency group) |
+| Notion Mirror Sync | 1 | 1 | **修正済** (IDLE_TIMEOUT `f02c252b` / soft-fail `a13014c1`) |
+| WBS AI Review | 4 | 1 | **修正済** (ai_review_status col deploy `20260425170000`) |
+| その他 8 WF | 全 ✅ | 0 | healthy |
+
+#### 修正済み
+1. **ogp-image-refresh YAML syntax** — multi-line `git commit -m "..."` が column-0 行で YAML block 破壊。`-m` 2 回に分割 (`67d264cf`)
+2. **Notion Mirror Sync IDLE_TIMEOUT** — 141 tasks × 350ms > 150s → limit 500→30 / sleep 350ms→150ms (`f02c252b`)
+3. **ROADMAP orphaned conflict markers** — origin/main に `<<<<<<< HEAD` + `=======` のみ存在 (closing `>>>>>>>` なし) → Python 削除
+4. **deploy-prod repair list +8** — 20260425110000-124500 追加
+5. **wbs-ai-review curl exit 22** — `ai_review_status` col が deploy 前に manual dispatch → deploy 完了後 3 success 確認
+
+#### orphan branches
+- `claude/vscode-wip`: VSCode版 active work (`dc2d8f25` で main にマージ済確認)
+- blog-publish / cs-check 等: 0本
+
+#### 次回チェック予定
+- Notion sync: 次 cron (毎時10分) で IDLE_TIMEOUT 再発しないか確認
+- ogp-image-refresh: 次月曜 cron または manual dispatch でFAL_KEY 動作確認
