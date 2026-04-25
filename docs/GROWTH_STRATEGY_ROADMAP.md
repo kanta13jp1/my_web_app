@@ -20279,3 +20279,19 @@ LOVO (Genny) / Voicemod / Bark (Suno AI OSS TTS) / Replica Studios / AIVA (音�
   - Fix (commit b8bec666): notion-sync.yml に rate_limited パターン追加 → ::warning:: + exit 0
 - **deploy-prod 9b4f7952 pending** (fixes 含む)
 - **修正 commit**: 4c39f625 (4migration fix) + b8bec666 (notion-sync 429) + 933d46f8 push
+
+## 2026-04-26 PS#2 S35: weekly-sns-draft.yml 作成 (WBS e320edea 完了)
+
+### 実施内容
+- **T-1 dispatch**: no-op (date-gate: May 2/4 slugs — May 1 dispatch 予定)
+- **weekly-sns-draft.yml**: 毎週月曜 09:00 JST cron / Claude Haiku → Gemini Flash → template 3段階フォールバック
+  - `docs/daily-reports/` 直近7日分 + git log を読み込みXドラフト + Zenn記事ネタを生成
+  - `docs/weekly-drafts/YYYY-MM-DD-week.md` にコミット→push
+  - GitHub Actions workflow ID: 266350526 (active確認 ✅)
+- **generate_weekly_sns_draft.py**: scripts/ に新規追加 (blog-draft スクリプトと同パターン)
+- **Commits**: 29295430 / 093a1608
+
+### Philosophy Alignment: PS#2 S35
+- CEO感: GHA schedule 自動化でSNS運用コスト0化 ✅
+- KPI=昨日の自分: WBS e320edea 80%→100% 完了 ✅
+- 資本=時間: 手動ドラフト作業を自動化 ✅
