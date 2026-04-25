@@ -146,11 +146,21 @@ jobs:
           supabase migration repair --status reverted 20260425101500 2>/dev/null || true
           supabase migration repair --status reverted 20260425103000 2>/dev/null || true
           supabase migration repair --status reverted 20260425104500 2>/dev/null || true
+          supabase migration repair --status reverted 20260425110000 2>/dev/null || true
+          supabase migration repair --status reverted 20260425111500 2>/dev/null || true
+          supabase migration repair --status reverted 20260425113000 2>/dev/null || true
+          supabase migration repair --status reverted 20260425114500 2>/dev/null || true
+          supabase migration repair --status reverted 20260425120000 2>/dev/null || true
+          supabase migration repair --status reverted 20260425121500 2>/dev/null || true
+          supabase migration repair --status reverted 20260425123000 2>/dev/null || true
+          supabase migration repair --status reverted 20260425124500 2>/dev/null || true
           # Run migrations with auto-repair retry.
           # If db push fails with "Remote migration versions not found", extract the
           # stuck version numbers, repair them as reverted, and retry once.
+          echo "=== supabase db push start ==="
           PUSH_LOG=$(supabase db push --include-all 2>&1)
           PUSH_EXIT=$?
+          echo "=== db push exit=$PUSH_EXIT ==="
           echo "$PUSH_LOG"
           if [ $PUSH_EXIT -ne 0 ]; then
             STUCK=$(echo "$PUSH_LOG" | grep -oE '\b[0-9]{14}\b' | sort -u)
@@ -159,6 +169,7 @@ jobs:
               for v in $STUCK; do supabase migration repair --status reverted "$v" 2>/dev/null || true; done
               supabase db push --include-all
             else
+              echo "=== db push failed (no stuck versions found). See output above. ==="
               exit 1
             fi
           fi
