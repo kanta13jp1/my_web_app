@@ -19810,3 +19810,27 @@ PS#2 が引き取れる: marketing/docs/seo/product-light。
 - 今後: `wbs.rebalance_suggest` に category_filter パラメータ追加 → Win版 cross-instance-pr
 
 ### commits: SEO completed via WBS API (no code change)
+
+---
+
+## PS#1 S42 — Rule17 WF health check (2026-04-25)
+
+### 全 WF success率 (直近20件)
+- Notion Mirror Sync: 2OK / Deploy to Production: 3F 0OK (in-progress) / competitor-discovery: 7F / competitor-monitoring: 2F / Edge Function Audit: 1OK / WF Failure Handler: 4OK
+
+### 失敗 WF と原因
+
+| WF | 失敗数 | 原因 | 対応 |
+|---|---|---|---|
+| `competitor-discovery.yml` | 7 | YAML block scalar column-0 bug — `run: \|` 内の多行 bash string (PROMPT) + Python heredoc が column 0 で YAML block 終了 | **修正済み 9bc7b6fa** — Step2 PROMPT+= 連結 / Step3 env:STAGE_PY / Step4 env:REPORT_PY |
+| `competitor-monitoring.yml` | 2 | 同上 Python inline が column 0 | upstream fix `5302a24c` 適用済 (R/O/Y tier code approach) |
+| `deploy-prod.yml` | 3 | SQLSTATE 23514 (migration 210000 CHECK constraint 違反) — 後続 migration で追加された user/gemini/co-pilot rows に対して旧 constraint が拒否 | **修正済み 0ea89450** — 210000 に user/gemini/copilot/co-pilot を super-set 追加 |
+
+### orphan branches: 0本 (前回削除済)
+
+### 修正済み
+- migration 20260425210000: forward-compatible CHECK constraint (commit 0ea89450)
+- competitor-discovery.yml: 全 Steps の column-0 YAML bug 修正 (commit 9bc7b6fa)
+- competitor-monitoring.yml: upstream fix 確認 + autostash conflict 解消
+
+### commits: 9bc7b6fa (ci fix)
