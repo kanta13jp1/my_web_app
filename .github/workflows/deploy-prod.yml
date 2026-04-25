@@ -412,7 +412,10 @@ jobs:
           # get-public-memo-preview: directory deleted — removed from deploy (2026-04-19)
           supabase functions deploy memo-reactions --no-verify-jwt
 
-          # Total: 17 functions deployed (ハードキャップ50本に対し17本 — 余裕33本)
+          # --- Public health-check (認証不要・スケジュールタスクからの死活監視用) ---
+          supabase functions deploy health-check --no-verify-jwt
+
+          # Total: 18 functions deployed (ハードキャップ50本に対し18本 — 余裕32本)
           #
           # Hub対応表:
           # core-hub:         public-memo-share, memo-reactions, get-ogp, get-public-memo-ogp,
