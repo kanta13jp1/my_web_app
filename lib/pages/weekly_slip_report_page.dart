@@ -227,19 +227,22 @@ class _WeeklySlipReportPageState extends State<WeeklySlipReportPage> {
   }
 
   Widget _buildError() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: const Color(0xFFFFEBEE),
+          color: isDark ? const Color(0xFF3A1010) : const Color(0xFFFFEBEE),
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: const Color(0xFFEF9A9A)),
+          border: Border.all(
+            color: isDark ? const Color(0xFF5A2020) : const Color(0xFFEF9A9A),
+          ),
         ),
         child: Text(
           _errorMessage!,
-          style: const TextStyle(
-            color: Color(0xFFC62828),
+          style: TextStyle(
+            color: isDark ? const Color(0xFFEF9A9A) : const Color(0xFFC62828),
             fontSize: 13,
             height: 1.5,
           ),
@@ -440,7 +443,10 @@ class _WeeklySlipReportPageState extends State<WeeklySlipReportPage> {
                             Container(
                               height: 18,
                               decoration: BoxDecoration(
-                                color: const Color(0xFFEEEEEE),
+                                color: Theme.of(context).brightness ==
+                                        Brightness.dark
+                                    ? const Color(0xFF2A2A2A)
+                                    : const Color(0xFFEEEEEE),
                                 borderRadius: BorderRadius.circular(4),
                               ),
                             ),

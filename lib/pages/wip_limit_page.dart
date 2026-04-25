@@ -106,9 +106,15 @@ class _WipLimitPageState extends State<WipLimitPage> {
                     Container(
                       padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFFFEBEE),
+                        color: Theme.of(ctx).brightness == Brightness.dark
+                            ? const Color(0xFF3A1010)
+                            : const Color(0xFFFFEBEE),
                         borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: const Color(0xFFEF9A9A)),
+                        border: Border.all(
+                          color: Theme.of(ctx).brightness == Brightness.dark
+                              ? const Color(0xFF5A2020)
+                              : const Color(0xFFEF9A9A),
+                        ),
                       ),
                       child: Row(
                         children: [

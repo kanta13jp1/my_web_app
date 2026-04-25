@@ -148,18 +148,28 @@ class _TeamChatPageState extends State<TeamChatPage> {
       body: Column(
         children: [
           if (_errorMessage != null)
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              color: const Color(0xFFFFEBEE),
-              child: Text(
-                _errorMessage!,
-                style: const TextStyle(
-                  color: Color(0xFFC62828),
-                  fontSize: 13,
-                  height: 1.5,
-                ),
-              ),
+            Builder(
+              builder: (ctx) {
+                final isDark = Theme.of(ctx).brightness == Brightness.dark;
+                return Container(
+                  width: double.infinity,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  color: isDark
+                      ? const Color(0xFF3A1010)
+                      : const Color(0xFFFFEBEE),
+                  child: Text(
+                    _errorMessage!,
+                    style: TextStyle(
+                      color: isDark
+                          ? const Color(0xFFEF9A9A)
+                          : const Color(0xFFC62828),
+                      fontSize: 13,
+                      height: 1.5,
+                    ),
+                  ),
+                );
+              },
             ),
           Expanded(
             child: Row(
@@ -365,8 +375,14 @@ class _MessageInput extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(12),
-      decoration: const BoxDecoration(
-        border: Border(top: BorderSide(color: Color(0xFFEEEEEE))),
+      decoration: BoxDecoration(
+        border: Border(
+          top: BorderSide(
+            color: Theme.of(context).brightness == Brightness.dark
+                ? const Color(0xFF2A2A2A)
+                : const Color(0xFFEEEEEE),
+          ),
+        ),
       ),
       child: Row(
         children: [

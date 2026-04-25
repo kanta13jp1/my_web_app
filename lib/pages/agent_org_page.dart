@@ -1935,10 +1935,11 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
   }
 
   Widget _buildManusLikeSection() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final plan = _latestManusPlan;
     return Card(
       elevation: 2,
-      color: const Color(0xFFEFF6FF),
+      color: isDark ? const Color(0xFF1A1A2E) : const Color(0xFFEFF6FF),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -2046,9 +2047,10 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
   }
 
   Widget _buildGoalSection() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Card(
       elevation: 2,
-      color: const Color(0xFFFFF3E0),
+      color: isDark ? const Color(0xFF2A1F0A) : const Color(0xFFFFF3E0),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
