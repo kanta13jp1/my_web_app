@@ -20491,3 +20491,8 @@ Voicemod / Replica Studios / Soundraw / Lalal.ai / Moises
 - ミッション駆動: 個人体験記で「なぜ自分で作ったか」の narrative 確立 ✅
 - KPI=昨日の自分: SEO 50本計画 4→5本 ✅
 - 資本=時間: 記事バッファ5本→5月全週カバー ✅
+
+## 2026-04-26 PS#3 S59: AI大学 210→212社化 — Lalal.ai + Soundraw (ea0325ab)
+- Lalal.ai: AI 音声・ステム分離 / Phoenix Neural Net / ボーカル/ドラム/ベース/ギター 10音源分離 / ノイズ除去 / REST API (Business プラン) / ★8/9
+- Soundraw: AI 音楽生成 / ムード・テンポ・楽器 GUI 指定 / 無制限生成 / 著作権フリー / Adobe Premiere Pro 公式統合 / 日本発 / ★8/9
+- 累計: 212社 / 音楽・音声カテゴリ強化継続
