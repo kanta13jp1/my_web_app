@@ -18021,6 +18021,46 @@ curl -X POST https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/schedule-hub 
 
 ---
 
+## PS#6 S37 — orphan branch / worktree 大規模 cleanup (2026-04-25)
+
+**インスタンス**: PS#6 (S37) | **commit**: なし (git オブジェクト操作のみ)
+
+### 実施内容
+
+| 項目 | Before | After | 削除数 |
+|------|--------|-------|--------|
+| local worktree (非instance) | 9本 | 0本 | 9 |
+| remote orphan branch | 70本 | 4本 | 66 |
+| **合計** | **79** | **4** | **75** |
+
+**削除対象の内訳**:
+- local worktree: merged PR 2本 (brave-visvesvaraya/sleepy-curran) + ahead=0 7本
+- remote branch (merged): docs-add-* 4本 + docs-* 6本 + feat-* 29本 + fix-* 12本 + seo/feature 2本 = 53本
+- remote branch (stale/audit): issue-fix/514-old + wbs-staleness 3本 + schedule-orphan-chain = 5本 + merged (docs/gemini-cli-tasks など 5本) = 13本
+
+**残留 (保留)**:
+- `codex/vscode-ui-rollout`: 3 commits ahead, 機能コード, no PR (16日放置) → Win版/VSCode版 評価
+- `fix/issue-251-comparison-cvr-limit`: 2 commits ahead, `.limit(2000)` fix未適用, Issue #251 closed (2026-03-30) → PS#5 評価
+- `issue-fix/514-autofix-24919485897`: PR #704 OPEN → 継続
+- `issue-fix/660-scale-egp-24918786745`: PR #701 OPEN → 継続
+
+**horse_racing / batch 状態確認**:
+- Horse Racing Auto Update: 直近5回すべて success ✅
+- Scheduled Analysis Batch: 直近5回すべて success ✅
+- deploy-prod: success (latest: 24921371080)
+
+### Philosophy Alignment
+
+| 原則 | 評価 | 根拠 |
+|------|------|------|
+| 1. CEO感 | ✅ | merged/staleを的確に判断、unmerged実装を保留 |
+| 2. ミッション駆動 | ✅ | — |
+| 3. 優しいmentor | ✅ | — |
+| 4. 6部署バランス | ✅ | — |
+| 5. 商品=ユーザー価値 | ✅ | リポジトリ汚染解消でCI/CD信頼性向上 |
+| 6. 資本=時間 | ✅ | 75本削除で git worktree list / branch -r の可読性大幅改善 |
+| 7. 資産負債バランス | ✅ | 70本orphan = 負債 → 4本のみ残存 |
+| 8. KPI=昨日の自分 | ✅ | 前回S36: 9本削除 → 今回S37: 75本削除 |
 ## PS版#2 S22 — 2026-04-25 T-1 dispatch チェック
 
 **担当**: PS版#2 (T-1 blog dispatch 専任)
