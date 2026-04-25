@@ -24,6 +24,10 @@ class _SupportTicketsPageState extends State<SupportTicketsPage> {
   }
 
   Future<void> _loadTickets() async {
+    if (_supabase.auth.currentUser == null) {
+      setState(() => _isLoading = false);
+      return;
+    }
     setState(() {
       _isLoading = true;
       _errorMessage = null;
