@@ -20373,3 +20373,17 @@ if (provider == null) continue;
 
 **commit**: `38a50027`
 
+
+### PS#1 S48 (2026-04-26) — migration 150000/151000 old-schema columns fix (1bd6b6c6)
+
+**バグ**: `20260426150000_fix_arcee_ai_news_rss_fallback.sql` と `20260426151000_fix_nomic_ai_news_rss_fallback.sql` が `provider_id, section, content_md, display_order` カラムを INSERT に含む → `SQLSTATE 42703: column "provider_id" does not exist`
+
+**根本原因**: これらのカラムは `ai_university_content` テーブルに存在しない。`20260426125000_ai_university_content_schema_v2.sql` はのちに no-op (SELECT 1) に変更されたため、スキーマ拡張は実行されなかった。
+
+**修正**: 両ファイルから `provider_id/section/content_md/display_order` を削除し、実在する7カラム `(provider, category, title, content, source_url, published_at, sort_order, is_active)` のみを使用
+
+**repair list**: `150000` / `151000` は PS#4 S58 (commit `433eb2b1`) で既に reverted 登録済み → 次回 deploy で再実行される
+
+**Philosophy**: ✅KPI=昨日の自分 (deploy-prod 継続失敗を解消) ✅商品=ユーザー価値 (AI大学コンテンツ正常適用)
+
+**commit**: `1bd6b6c6`
