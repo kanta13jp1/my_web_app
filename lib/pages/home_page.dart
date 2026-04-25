@@ -155,6 +155,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _fetchNotifUnreadCount() async {
+    if (Supabase.instance.client.auth.currentUser == null) return;
     try {
       final res = await Supabase.instance.client.functions.invoke(
         'core-hub',
