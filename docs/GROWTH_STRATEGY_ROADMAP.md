@@ -18581,6 +18581,20 @@ deploy-prod.yml の `supabase db push` exit code 捕捉バグを修正。
   - 修正②: `schedule-hub` EF の wbs_tasks limit 500→30 / sleep 350ms→150ms
   - 結果: 30件×150ms ≈ 4.5s + HTTP ≈ 30s合計 (150s制限に余裕)
   - 141件÷30/h ≒ 5h で全件ローリング sync 完了
+## PS#4 S43 — 競合 21→36社化 Phase 2 Batch 1 (2026-04-25)
+
+**インスタンス**: PS版#4 / commit: (本セッション)
+
+### 追加15社
+
+| カテゴリ | 追加社 |
+|---------|-------|
+| ai-coding (7) | cursor / windsurf / replit / lovable / bolt-new / v0 / devin |
+| productivity (4) | obsidian / mem-ai / anytype / craft-docs |
+| fintech JP (2) | freee / yayoi |
+| chat (2) | telegram / teams |
+
+**背景**: Win版#132 part 10 が `competitors` テーブル作成 → PS#4 Phase 2 Batch 1 着手。目標190社中36社完了。
 
 ### Philosophy Alignment: 9/9 ✅
 
