@@ -19033,8 +19033,7 @@ Deploy failure `24924215661` (feat business-wbs) を解析・修正。
 #### 修正済み
 1. **ogp-image-refresh YAML syntax** — multi-line `git commit -m "..."` が column-0 行で YAML block 破壊。`-m` 2 回に分割 (`67d264cf`)
 2. **Notion Mirror Sync IDLE_TIMEOUT** — 141 tasks × 350ms > 150s → limit 500→30 / sleep 350ms→150ms (`f02c252b`)
-3. **ROADMAP orphaned conflict markers** — origin/main に `<<<<<<< HEAD` + `=======` のみ存在 (closing `>>>>>>>` なし) → Python 削除
-4. **deploy-prod repair list +8** — 20260425110000-124500 追加
+3. **ROADMAP orphaned conflict markers** — origin/main に `4. **deploy-prod repair list +8** — 20260425110000-124500 追加
 5. **wbs-ai-review curl exit 22** — `ai_review_status` col が deploy 前に manual dispatch → deploy 完了後 3 success 確認
 
 #### orphan branches
@@ -19213,3 +19212,70 @@ Deploy failure `24924215661` (feat business-wbs) を解析・修正。
 - ✅ 実データのみ (市場評価・ユーザー数は公開情報)
 - ✅ ON CONFLICT DO UPDATE 冪等
 - ✅ Phase 3 目標 120社に向けて順調
+
+---
+
+## Win版#132 part 17 完了 (2026-04-25 夜)
+
+### 実施内容: WBS タスク動的再分担 (Rebalance) Phase 1
+
+**契機**: ユーザー要請「instance 毎にタスク量に偏り / 担当作業ない instance / 各セッションで役割見直し / 滞留タスクを自担当に変更する臨機応変」
+
+### 設計 (3-Phase)
+
+| Phase | 内容 | 担当 | 期日 |
+|-------|------|------|------|
+| **1 (本 commit)** | wbs_rebalance_log + tools-hub:wbs.rebalance_suggest + wbs.claim_task | Win | 2026-04-25 |
+| 2 | session-start hook ([WBS-SYNC] rule で 0 件時 auto-suggest) | PS#1 | 2026-04-30 |
+| 3 | KPI dashboard (admin/instance-load) | VSCode | 2026-05-15 |
+
+### Phase 1 実装
+
+**設計 doc**: `docs/WBS_REBALANCE.md` (新規 10 section)
+- アーキテクチャ + stale_score スコアリング
+- 抑制ルール (1 session 最大 2 claim / 7 日 cooldown / completed 保護 / IPO 専決保護 / PS 専任保護)
+- KPI 設計 + Philosophy 9/9 + AI-DEV 7/7
+
+**Migration**: `20260425220000_wbs_rebalance_log.sql`
+- wbs_rebalance_log テーブル (audit log + 戻し可能性)
+- wbs_tasks 拡張 2 カラム (last_rebalanced_at / rebalance_count)
+- RLS public read / service_role write
+
+**EF actions**: tools-hub に 2 actions 追加
+1. `wbs.rebalance_suggest({my_instance, limit})` — 他 instance の滞留 task 候補 (stale_score 順)
+2. `wbs.claim_task({task_id, my_instance, reason})` — 自担当に変更 + audit log
+
+### stale_score スコアリング
+```
+score = 期限ペナルティ (50/30/15) + 進捗停滞 (30/20/10) +
+        half-way stuck (25) + priority bonus (20/10) - cooldown (-30)
+```
+
+### 抑制ルール
+- 1 session 最大 2 claim (詰込防止)
+- 7 日 cooldown (loop 防止)
+- 専任保護: rule17-* → PS#1 / blog-* → PS#2 / urgent bug → PS#5 / business-ipo → CEO
+- 期限直前 (1 日切) + priority=high → 元担当に集中
+
+### 動作確認 (deploy 完了後)
+```bash
+# 自 instance task 0 件想定 → suggest
+curl -sS -X POST "$SUPABASE_URL/functions/v1/tools-hub" \
+  -H "Authorization: Bearer $ANON_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"action":"wbs.rebalance_suggest","my_instance":"win"}'
+
+# 候補から 1 件 claim
+curl -sS -X POST "$SUPABASE_URL/functions/v1/tools-hub" \
+  -H "Authorization: Bearer $ANON_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"action":"wbs.claim_task","task_id":"<uuid>","my_instance":"win","reason":"auto_idle_session"}'
+```
+
+### Philosophy 9/9 ✅
+原則 4 (6 部署バランス) 直接実装 + 原則 6 (資本=時間) instance 時間消費削減
+
+### AI-DEV 7/7 ✅
+特に原則 5 (team memory) wbs_rebalance_log = 完全 audit / 原則 7 (quality gate) 抑制ルール多重防御
+
+### commit: TBD
