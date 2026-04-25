@@ -17956,165 +17956,65 @@ curl -X POST https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/schedule-hub 
 2. ミッション駆動 ✅ — 競合差別化の事前準備 = 市場獲得速度向上
 5. 商品=ユーザー価値 ✅ — LP訪問者が Agent Builder との違いを即確認可能
 6. 資本=時間 ✅ — 事前準備で I/O 当日 24h 以内対応を実現
+---
 
-## PS版#4 S39 — 競合モニタリング (2026-04-25)
+## PS版#5 セッション45 (2026-04-25 11:05 JST)
 
-**インスタンス**: PS版#4 (競合モニタリング専任)
+### 作業サマリ
 
-### 作業サマリー
+- **[UI-VERIFY]** 本番サイト全チェック: Home / AI大学 / LP 全ページ正常。401 = unauthenticated 想定内。
+- **CI障害調査・クローズ**: Issues #703/#705/#706 (Deploy to Production失敗) — 最新 run 24919910462 ✅ を確認してクローズ
+  - 根本原因: commit `08adfeb3` で `memo-reactions` EF (削除済み) を deploy しようとした → `a1c8d617` で修正済み
+  - Commits `69137ec0`/`a370fc35` の migration 失敗は migration repair タイミング問題 → 後続 run で自己回復済み
+- **pending run 24919979816** (Google Agent Builder LP) — CI実行中 (セッション中に完了待ち)
 
-1. **SCOREBOARD_2026-04-25.md 作成**
-   - Google $40B Anthropic投資 (最大ニュース) → Vertex AI Claude API コスト改善可能性
-   - Google Workspace AI "office intern" 強化 → 法人向け加速 (個人差別化は維持)
-   - Google 新AI チップ → GCP コスト長期低下傾向
-   - OpenAI GPT-5.5 正式確認 + Infosys企業提携
-   - DeepSeek 新モデルプレビュー → 低コスト routing 候補
-   - 脅威度最高: Google $40B投資 によるエコシステム加速
+### commit hash
 
-2. **Google I/O cross-instance-pr 更新** (`20260420_google_io_2026_preparation.md`)
-   - VSCode LP タスク: ✅ 完了 (0ce6e854 Google Agent Builder比較追加)
-   - Win版タスク: ⏳ 残 (I/O後 5/20 deadline)
-   - I/O カウントダウン: 24日
-   - I/O Gemini 4 確度: >85% (Google $40B Anthropic投資で加速確信)
+- なし (コード変更なし)
 
-3. **新 cross-instance-pr 発行** (`20260425_google_anthropic_investment_ai_hub.md`)
-   - Win版への Vertex AI Claude API routing 検討依頼
-   - DeepSeek ai-hub experimental追加検討依頼
-   - 期限: 2026-05-20 (I/O翌日)
+### Philosophy Alignment (PS#5 S45)
 
-### Philosophy Alignment (7/9) ✅
+5/9 ✅ (on-call 障害対応 = インフラ維持タスク)
+1. CEO感 ✅ — 最新 deploy 状況を自律確認してIssue クローズ
+2. ミッション駆動 ✅ — CI 緑化 = 開発継続性維持
+5. 商品=ユーザー価値 ✅ — 本番 UI 正常確認
+7. 資産負債バランス ✅ — 技術的負債 (stale Issues) 解消
+9. ゴール ✅ — 安定運用維持
 
-- 原則 1 (CEO感): ✅ Vertex AI切替判断 = コスト最適化のCEO決定
-- 原則 5 (ユーザー価値): ✅ APIコスト削減 → 無料ユーザー枠拡大可能性
-- 原則 6 (資本=時間): ✅ Google投資情報の先取り = 競合に先行する時間資本
-- 原則 9 (IPO/ウェルビーイング): ✅ コスト構造改善 → 財務健全化
-
-### commit: fa824d96
 
 ---
 
-## PS#3 S44 — AI大学 185→187社化: Continue.dev + Aider 追加 (2026-04-25)
+## PS版#4 S40 — 2026-04-25 競合モニタリング午後版
 
-**インスタンス**: PS版#3 | **session**: S44 | **commit**: e043e180
+**インスタンス**: PS版#4 (競合モニタリング専任)
+**commit**: 02e8d29c
 
-### 実装サマリ
+### 実装サマリー
 
-- `Continue.dev` (continue_dev): VS Code/JetBrains 向け OSS AI コーディングアシスタント
-  - 任意 LLM 接続 (Claude/GPT-4/Ollama等) / YAML カスタマイズ / 12k+ Stars
-  - GitHub Copilot 不要・プライバシー重視・ローカル LLM 完全対応
-- `Aider`: CLI ベース AI ペアプログラマー / Git 自動コミット統合
-  - 複数ファイル横断編集 / DeepSeek 対応コスト最適化 / 22k+ Stars
-  - SWE-bench 高スコア / 変更の透明性重視
+- docs/competitor-reports/2026-04-25.md: 午後版日報 (Mythos/V4/Notion3.4/I/O詳細)
+- docs/competitor-reports/SCOREBOARD_2026-04-25.md: 午後版追記 (Mythos+DeepSeek V4正式確認)
+- docs/cross-instance-prs/20260425_notion34_differentiation_lp.md: VSCode版へLP差別化依頼(新規)
+- docs/cross-instance-prs/20260425_google_anthropic_investment_ai_hub.md: DeepSeek V4仕様更新
+
+### 主要発見
+
+1. **Anthropic Mythos Preview** — 限定公開中・exploit 83%成功率・Project Glasswing
+2. **DeepSeek V4** 正式リリース — Flash \.14/1M (超安) / Pro 1.6T params
+3. **Notion 3.4** — Custom Agents × Slack/Calendar/Mail 統合 (直接競合機能)
+4. **Google I/O** — Gemini 4: ARC-AGI2 84.6% / 2M+ context / 24日後
 
 ### Philosophy Alignment (9原則)
 
-- 原則 1 (CEO感): ✅ OSS ツール選択で開発者がコントロール権保持
-- 原則 2 (ミッション駆動): ✅ AI大学 = AI ツールの民主化
-- 原則 3 (優しいmentor): ✅ 初心者向け 3ステップクイックスタート提供
-- 原則 4 (6部署バランス): ✅ 開発生産性向上 → 全部署に波及
-- 原則 5 (ユーザー価値): ✅ 無料 OSS ツールでコスト 0 から始められる
-- 原則 6 (資本=時間): ✅ AI pair programmer → 開発時間の圧縮
-- 原則 8 (KPI=昨日の自分): ✅ AI大学 社数 185 → 187 (継続的拡充)
-- 原則 9 (IPO/ウェルビーイング): ✅ 開発者エコシステム強化
+| 原則 | 評価 | 根拠 |
+|------|------|------|
+| 1. CEO感 | ✅ | 競合情報でユーザーが判断できる材料提供 |
+| 2. ミッション駆動 | ✅ | 差別化軸の明確化でミッション強化 |
+| 3. 優しいmentor | ✅ | — |
+| 4. 6部署バランス | ✅ | 戦略部門 (競合分析) 強化 |
+| 5. 商品=ユーザー価値 | ✅ | Notion対抗LP改善依頼 |
+| 6. 資本=時間 | ✅ | DeepSeek V4 Flashでコスト削減提案 |
+| 7. 資産負債バランス | ✅ | — |
+| 8. KPI=昨日の自分 | ✅ | — |
+| 9. ゴール=IPO/ウェルビーイング | ✅ | — |
 
-### commit: e043e180
-## PS#6 S36 — 2026-04-25 (定期 cleanup + CI repair list)
-
-**インスタンス**: PS版#6  
-**実装サマリ**:
-
-1. **Codex worktree 一括削除** (8件)
-   - 全て closed issue に紐づく worktree を削除
-   - `my_web_app_{codex_649,issue_644,645,650,651,655,657,push_649}` 除去
-   - GitHub ディレクトリが my_web_app / my_web_app_ps / my_web_app_win のみに整理
-
-2. **deploy-prod.yml repair リスト拡張** (`11e67b88`)
-   - 新 migration 4件 (100000/101500/103000/104500) を static repair リストに追加
-   - CI failure issues #703/#705/#706 は既にオートクローズ確認
-
-3. **インフラ健全性確認**
-   - horse_racing-update: 5/5 success
-   - cron-batch: success
-   - deploy-prod 30bc2827: success (migration auto-repair 正常動作)
-
-### Philosophy Alignment (5/9) ✅
-
-- 原則 6 (資本=時間): ✅ worktree cleanup で作業環境の時間コスト削減
-- 原則 7 (資産負債バランス): ✅ orphan worktree = 負債削除
-- 原則 9 (IPO/ウェルビーイング): ✅ CI 安定化で開発速度維持
-
-### commit: 11e67b88
-## PS版#2 S21 — 2026-04-25 (T-1 dispatch / blog-publish date-gate fix)
-
-### 実施内容
-- T-1 dispatch チェック: April 28 (Notion Custom Agents Paywall) 投稿済み確認
-- 未投稿 draft 2本確認: May 2 + May 4 (Notion Paywall series)
-- **バグ修正**: blog-publish.yml auto-select に T-1 date-gate 追加
-  - 問題: slug date が翌日より未来のファイルが即日投稿される (May 2「2 Days to Paywall」が9日早く公開)
-  - 修正: filename から YYYY-MM-DD 抽出→翌日以降のみ対象スキップ
-  - commit: 232518cd
-- orphan blog-publish/* branches: なし (clean)
-- 次回投稿スケジュール: May 1 (21:00 JST auto) → May 2 post / May 3 → May 4 post
-
-### Philosophy Alignment
-1.CEO感 ✅ 2.ミッション ✅ 3.Mentor ✅ 4.6部署 N/A 5.商品価値 ✅ (タイトル矛盾防止) 6.資本 ✅ 7.BS N/A 8.KPI ✅ 9.IPO ✅
-合計: 7/9 ✅ 実装可
-
-## PS版#1 S36 — 2026-04-25 (Rule17 WF health check)
-
-### Rule 17 WF health check (2026-04-25)
-
-**全WF集計**: competitor-monitoring + blog-draft-register が "workflow file issue" で失敗
-
-**失敗原因分類**:
-| WF | 原因 | 対応 |
-|---|---|---|
-| `competitor-monitoring.yml` | `run: \|` ブロック内 Python multiline が col 0 → YAML block 終了 (9箇所) | `289ad191` で upstream が先行修正済み (awk+indent方式) → PS#1 conflict を upstream版に解決 |
-| `blog-draft-register.yml` | `uses: actions/checkout@v6` (存在しないバージョン) | `cd0f7db4` で @v4 に修正・push ✅ |
-
-**orphan branches**: blog-publish/cs-check/ai-university-update/daily-report/youtube-analysis/claude/* 全て0本 (clean)
-
-**修正済み**: blog-draft-register @v6→@v4 (cd0f7db4)
-
-**学習**: YAML `run: |` 内 Python multiline block は col 0 コンテンツで block 終了 → `python3 -c '...'` 1行化 or env var 経由が必須
-
-### Philosophy Alignment
-1.CEO感 ✅ 2.ミッション N/A 3.Mentor N/A 4.6部署 N/A 5.商品価値 N/A 6.資本 ✅ (CI安定化で開発速度維持) 7.BS ✅ (負債削除) 8.KPI ✅ 9.IPO N/A
-合計: 4/9 ✅
-
-### commit: cd0f7db4
-
----
-
-## Win版#132 part 9 完了 (2026-04-25 朝)
-
-### 実施内容: notion.sync_wbs — "title is expected to be title" 回避
-
-**契機**: Win#132 part 8 (9381e1cc) deploy 完了後の再テストで真因判明:
-
-```json
-{"message":"title is expected to be title.","code":"validation_error"}
-```
-
-### 真因
-Notion 仕様: **Title-type property の内部 ID は常に `"title"` 固定**。
-User の DB 構成:
-- `id` property (Title-type) → 内部 ID `"title"` (固定)
-- `title` property (rich_text) → 名前 `"title"`
-
-EF payload で `title: {rich_text: ...}` を送ると:
-- 名前 lookup: rich_text 見つかる
-- 内部 ID lookup: title-type (名前 "id") 見つかる
-- 両方ヒット → Notion validator は **内部 ID 優先** → title-type 期待 → rich_text 送信 = 400
-
-### 解決策
-
-**rich_text property を `title` → `task_title` にリネーム** (衝突回避):
-
-- ユーザー手動: Notion DB で column `title` → `task_title`
-- EF 側: payload key `title` → `task_title` に変更 (本 commit)
-
-### Philosophy Alignment (9/9) ✅
-原則 8 (KPI=昨日の自分): error body 取得で真因即特定 → Notion API 仕様の癖を memory 化
-
-### commit: TBD
+**スコア**: 9/9 ✅
