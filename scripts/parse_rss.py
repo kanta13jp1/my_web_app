@@ -1,141 +1,152 @@
 #!/usr/bin/env python3
-"""RSS/Atom フィードを解析して AI大学コンテンツ用 Markdown を生成する。
+"""Build AI University Markdown from an RSS/Atom feed.
 
-RSSにdescriptionがない場合、最初の記事URLのmeta descriptionを取得して概要とする。
-
-Usage: python3 scripts/parse_rss.py <rss_url> <provider_name> <today_YYYY-MM-DD>
+The scheduled workflow stores this output directly in Supabase, so failures must
+exit non-zero. Otherwise a transient feed error would become user-facing content.
 """
-import sys
-import urllib.request
-import re
+
+from __future__ import annotations
+
 import html as html_mod
+import re
+import sys
+import urllib.error
+import urllib.request
 
 
-def strip_tags(s: str) -> str:
-    s = re.sub(r"<[^>]+>", " ", s)
-    s = html_mod.unescape(s)
-    return re.sub(r"\s+", " ", s).strip()
+class FeedError(RuntimeError):
+    """Raised when a feed cannot produce usable article content."""
+
+
+def strip_tags(value: str) -> str:
+    value = re.sub(r"<[^>]+>", " ", value)
+    value = html_mod.unescape(value)
+    return re.sub(r"\s+", " ", value).strip()
 
 
 def fetch_text(url: str, timeout: int = 8) -> str:
+    req = urllib.request.Request(
+        url,
+        headers={"User-Agent": "Mozilla/5.0 (compatible; AIUniversity/1.0)"},
+    )
     try:
-        req = urllib.request.Request(
-            url, headers={"User-Agent": "Mozilla/5.0 (compatible; AIUniversity/1.0)"}
-        )
-        return urllib.request.urlopen(req, timeout=timeout).read().decode("utf-8", errors="replace")
-    except Exception:
-        return ""
+        with urllib.request.urlopen(req, timeout=timeout) as response:
+            status = getattr(response, "status", 200)
+            if status >= 400:
+                raise FeedError(f"HTTP {status}")
+            body = response.read()
+    except urllib.error.HTTPError as exc:
+        raise FeedError(f"HTTP {exc.code}") from exc
+    except Exception as exc:  # noqa: BLE001 - keep workflow diagnostics compact.
+        raise FeedError("RSS取得失敗") from exc
+
+    if not body:
+        raise FeedError("RSS取得失敗")
+    return body.decode("utf-8", errors="replace")
 
 
 def extract_rss_desc(item: str) -> str:
-    """RSS item から description/summary/content を試みる (20文字以上なら採用)"""
     patterns = [
         r"<description\b[^>]*>(.*?)</description>",
         r"<summary\b[^>]*>(.*?)</summary>",
         r"<content:encoded\b[^>]*>(.*?)</content:encoded>",
         r"<content\b[^>]*>(.*?)</content>",
     ]
-    for pat in patterns:
-        m = re.search(pat, item, re.DOTALL)
-        if m:
-            text = strip_tags(m.group(1))
+    for pattern in patterns:
+        match = re.search(pattern, item, re.DOTALL)
+        if match:
+            text = strip_tags(match.group(1))
             if len(text) >= 20:
                 return text[:400]
     return ""
 
 
 def fetch_meta_description(url: str) -> str:
-    """記事ページの <meta name="description"> を取得する"""
     if not url:
         return ""
-    html = fetch_text(url)
-    if not html:
+    try:
+        page = fetch_text(url)
+    except FeedError:
         return ""
-    m = re.search(
+    patterns = [
         r'<meta\s+(?:name=["\']description["\']\s+content=["\']([^"\']*)["\']'
-        r'|content=["\']([^"\']*)["\']s+\name=["\']description["\'])',
-        html,
-        re.IGNORECASE,
-    )
-    if m:
-        desc = html_mod.unescape((m.group(1) or m.group(2) or "").strip())
-        if len(desc) >= 20:
-            return desc[:400]
-    # fallback: og:description
-    m2 = re.search(
+        r'|content=["\']([^"\']*)["\']\s+name=["\']description["\'])',
         r'<meta\s+(?:property=["\']og:description["\']\s+content=["\']([^"\']*)["\']'
-        r'|content=["\']([^"\']*)["\']s+\property=["\']og:description["\'])',
-        html,
-        re.IGNORECASE,
-    )
-    if m2:
-        desc = html_mod.unescape((m2.group(1) or m2.group(2) or "").strip())
-        if len(desc) >= 20:
-            return desc[:400]
+        r'|content=["\']([^"\']*)["\']\s+property=["\']og:description["\'])',
+    ]
+    for pattern in patterns:
+        match = re.search(pattern, page, re.IGNORECASE)
+        if match:
+            desc = html_mod.unescape((match.group(1) or match.group(2) or "").strip())
+            if len(desc) >= 20:
+                return desc[:400]
     return ""
 
 
 def extract_link(item: str) -> str:
-    """RSS item から記事URLを取得する"""
-    m = re.search(r"<link\b[^>]*/?>([^<]*)</link>|<link\b[^>]*href=['\"]([^'\"]+)['\"]", item, re.DOTALL)
-    if m:
-        return (m.group(1) or m.group(2) or "").strip()
+    match = re.search(
+        r"<link\b[^>]*/?>([^<]*)</link>|<link\b[^>]*href=['\"]([^'\"]+)['\"]",
+        item,
+        re.DOTALL,
+    )
+    if match:
+        return (match.group(1) or match.group(2) or "").strip()
     return ""
+
+
+def build_markdown(url: str, provider_name: str, today: str) -> str:
+    data = fetch_text(url)
+    data = re.sub(r"<!\[CDATA\[", "", data)
+    data = re.sub(r"\]\]>", "", data)
+
+    items = re.findall(r"<item\b[^>]*>(.*?)</item>", data, re.DOTALL)
+    if not items:
+        items = re.findall(r"<entry\b[^>]*>(.*?)</entry>", data, re.DOTALL)
+
+    articles: list[dict[str, str]] = []
+    for item in items[:5]:
+        title_match = re.search(r"<title\b[^>]*>(.*?)</title>", item, re.DOTALL)
+        title = strip_tags(title_match.group(1)) if title_match else ""
+        if not title:
+            continue
+        articles.append(
+            {
+                "title": title,
+                "desc": extract_rss_desc(item),
+                "link": extract_link(item),
+            }
+        )
+
+    if articles and not articles[0]["desc"] and articles[0]["link"]:
+        articles[0]["desc"] = fetch_meta_description(articles[0]["link"])
+    if not articles:
+        raise FeedError("RSS取得失敗")
+
+    content = f"## {provider_name} 最新情報 ({today})\n\n"
+    content += "### 最新記事\n\n"
+    for article in articles:
+        content += f"**{article['title']}**\n"
+        if article["desc"]:
+            suffix = "..." if len(article["desc"]) == 400 else ""
+            content += f"{article['desc']}{suffix}\n"
+        if article["link"]:
+            content += f"[記事を読む]({article['link']})\n"
+        content += "\n"
+    content += f"> 出典: {url}"
+    return content
 
 
 def main() -> None:
     if len(sys.argv) < 4:
-        print("Usage: parse_rss.py <url> <provider_name> <today>")
+        print("Usage: parse_rss.py <url> <provider_name> <today>", file=sys.stderr)
         sys.exit(1)
 
-    url, pname, today = sys.argv[1], sys.argv[2], sys.argv[3]
-
+    url, provider_name, today = sys.argv[1], sys.argv[2], sys.argv[3]
     try:
-        data = fetch_text(url)
-        if not data:
-            raise RuntimeError("RSS取得失敗")
-
-        # CDATA unwrap
-        data = re.sub(r"<!\[CDATA\[", "", data)
-        data = re.sub(r"\]\]>", "", data)
-
-        # Extract items (RSS) or entries (Atom)
-        items = re.findall(r"<item\b[^>]*>(.*?)</item>", data, re.DOTALL)
-        if not items:
-            items = re.findall(r"<entry\b[^>]*>(.*?)</entry>", data, re.DOTALL)
-
-        articles = []
-        for item in items[:5]:
-            t = re.search(r"<title\b[^>]*>(.*?)</title>", item, re.DOTALL)
-            title = strip_tags(t.group(1)) if t else ""
-            desc = extract_rss_desc(item)
-            link = extract_link(item)
-            if title:
-                articles.append({"title": title, "desc": desc, "link": link})
-
-        # RSS に description がない場合、最初の記事ページから meta description を取得
-        if articles and not articles[0]["desc"] and articles[0]["link"]:
-            articles[0]["desc"] = fetch_meta_description(articles[0]["link"])
-
-        content = f"## {pname} 最新情報 ({today})\n\n"
-        if articles:
-            content += "### 最新記事\n\n"
-            for a in articles:
-                content += f"**{a['title']}**\n"
-                if a["desc"]:
-                    suffix = "..." if len(a["desc"]) == 400 else ""
-                    content += f"{a['desc']}{suffix}\n"
-                if a["link"]:
-                    content += f"[記事を読む]({a['link']})\n"
-                content += "\n"
-        else:
-            content += "RSS取得失敗 — 次回更新をお待ちください\n"
-
-        content += f"> 出典: {url}"
-        print(content)
-
-    except Exception as exc:
-        print(f"## {pname} 最新情報 ({today})\n\nRSS取得エラー: {exc}\n\n> 出典: {url}")
+        print(build_markdown(url, provider_name, today))
+    except Exception as exc:  # noqa: BLE001 - the workflow only needs a short reason.
+        print(f"RSS fetch failed for {provider_name}: {exc}", file=sys.stderr)
+        sys.exit(2)
 
 
 if __name__ == "__main__":
