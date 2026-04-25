@@ -64,6 +64,14 @@ jobs:
             if grep -q "^published: true" "$f" 2>/dev/null; then
               continue
             fi
+            # スラグ日付が翌日より未来ならスキップ (T-1 date-gate: 時間固定記事の早期投稿防止)
+            SLUG_DATE=$(echo "$f" | grep -oE '[0-9]{4}-[0-9]{2}-[0-9]{2}')
+            if [ -n "$SLUG_DATE" ]; then
+              TOMORROW=$(date -u -d '+1 day' +%Y-%m-%d 2>/dev/null || date -u -v+1d +%Y-%m-%d)
+              if [[ "$SLUG_DATE" > "$TOMORROW" ]]; then
+                continue
+              fi
+            fi
             # title: または # 見出しがあれば投稿可能
             if grep -q "^title:" "$f" 2>/dev/null || grep -q "^# " "$f" 2>/dev/null; then
               echo "$f"
