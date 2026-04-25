@@ -20142,3 +20142,15 @@ deploy-prod 連続失敗の根本原因を特定し、各インスタンスの�
 - 資本=時間: secret 設定漏れによる silent skip を排除 ✅
 - KPI=昨日の自分: 同等の skip パターンが他 workflow にある場合は次回以降テンプレ化 ✅
 
+
+### Rule 17 WF health check PS#1 S44 (2026-04-26 朝)
+- 全 WF 健全: last 50 runs で失敗は deploy-prod 1件のみ (esm.sh 522 transient / 自己回復済)
+- infra-health-check: 5/5 SUCCESS (11:53 以降の全 cron clean) ✅
+- issue-to-wbs: 13/13 SUCCESS ✅
+- 前セッション修正確認:
+  - d95e50d6 endpoint fix → 11:53 run SUCCESS ✅
+  - 77cd060c Tome/Krisp migration → 複数 SUCCESS deploy 確認 ✅
+- orphan branches: blog-publish 0 / cs-check 0 / ai-university 0 / claude/vscode-wip 1 (VSCode worktree / 正常)
+- deploy-prod 24934867980 in_progress (671f28bf) / CI green / Deploy step実行中
+
+### commits: なし (health check only)
