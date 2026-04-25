@@ -107,19 +107,43 @@ serve(async (req: Request) => {
       // ─── Digest ───────────────────────────────────────────────────────────────
       case "digest.run": {
         const today = new Date().toISOString().split("T")[0];
-        const [usersRes, analyticsRes] = await Promise.all([
+        const [usersRes, newFrRes, openFrRes, topFrRes, achievementsRes] = await Promise.all([
           admin.auth.admin.listUsers({ page: 1, perPage: 1 }),
           admin
-            .from("hub_data")
-            .select("metadata")
-            .eq("date", today)
-            .limit(1),
+            .from("feature_requests")
+            .select("id, title, created_at")
+            .gte("created_at", `${today}T00:00:00Z`)
+            .order("created_at", { ascending: false })
+            .limit(10),
+          admin
+            .from("feature_requests")
+            .select("count", { count: "exact", head: true })
+            .eq("status", "open"),
+          admin
+            .from("feature_requests")
+            .select("title, votes")
+            .eq("status", "open")
+            .order("votes", { ascending: false })
+            .limit(5),
+          admin
+            .from("development_achievements")
+            .select("title, completed_at")
+            .order("completed_at", { ascending: false })
+            .limit(5),
         ]);
         return json({
           success: true,
-          date: today,
-          total_users: usersRes.data?.total ?? 0,
-          analytics: analyticsRes.data?.[0]?.metadata ?? {},
+          digest: {
+            date: today,
+            users: { total: usersRes.data?.total ?? 0 },
+            featureRequests: {
+              newToday: newFrRes.data?.length ?? 0,
+              openCount: openFrRes.count ?? 0,
+              newTodayList: newFrRes.data ?? [],
+              topOpen: topFrRes.data ?? [],
+            },
+            recentAchievements: achievementsRes.data ?? [],
+          },
         });
       }
 

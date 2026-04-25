@@ -403,7 +403,7 @@ web/
 
 | Function | 用途 |
 | --- | --- |
-| `schedule-daily-digest` | Claude Schedule 用の日次メトリクス API |
+| `schedule-hub` (`digest.run`) | Claude Schedule 用の日次メトリクス API (旧 `schedule-daily-digest` の後継) |
 | `get-support-tickets` | Claude Schedule 用: 未返信チケット+FAQ一覧 |
 | `reply-support-request` | Claude Schedule 用: チケット返信・エスカレーション |
 | `get-home-dashboard` | ホーム画面統合データ |

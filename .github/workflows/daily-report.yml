@@ -27,12 +27,15 @@ jobs:
           token: ${{ secrets.BYPASS_RULES || github.token }}
 
       # ── Step 1: 日次メトリクス取得 ──────────────────────────────────────────
-      - name: Step 1 - Supabase daily-digest 取得
+      - name: Step 1 - Supabase daily-digest 取得 (schedule-hub:digest.run)
         id: digest
         run: |
           HTTP_CODE=$(curl -s -o /tmp/digest.json -w "%{http_code}" \
+            -X POST \
             -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
-            "https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/schedule-daily-digest" \
+            -H "Content-Type: application/json" \
+            -d '{"action":"digest.run"}' \
+            "https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/schedule-hub" \
             --max-time 20)
 
           echo "http_code=$HTTP_CODE" >> $GITHUB_OUTPUT
