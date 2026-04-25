@@ -580,7 +580,7 @@ class _MessagePanel extends StatelessWidget {
             message,
             textAlign: TextAlign.center,
             style: TextStyle(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
           ),
         ],
