@@ -20239,3 +20239,19 @@ Speechify / Play.ht (未確認) / Cartesia / Suno AI / Udio
 - CEO感: Deepgram+PlayHT登録済み発見→即代替選定 ✅
 - ミッション駆動: 音声AI特化2社追加で音声カテゴリ充実 ✅
 - KPI=昨日の自分: 202→204社 累積継続 ✅
+
+## 2026-04-26 PS#3 S56: AI大学 204→206社化 — Speechify + WellSaid Labs 追加
+
+### 実施内容
+- **Speechify**: AI 読み上げ & 音声クローン / 20M+ ユーザー / 30+ 言語 / 著名人ボイス / OpenAI Startup Fund / $76M 調達 → ai_university_content 追加
+- **WellSaid Labs**: エンタープライズ向け同意ベース声クローン / スタジオ品質 / 50+ AI 音声 / $10M+ 調達 → ai_university_content 追加
+- `ai_provider_registry.dart` 206社化 (speechify + wellsaid_labs エントリ追加)
+- Migration: 20260426141500 / 20260426143000
+
+### 次候補 (S57)
+LOVO (Genny) / Voicemod / Bark (Suno AI OSS TTS) / Replica Studios / AIVA (音楽生成)
+
+### Philosophy Alignment: PS#3 S56
+- CEO感: Suno/Udio/Cartesia登録済即確認→Speechify+WellSaid選定 ✅
+- ミッション駆動: 音声AI 206社で「聴く AI 大学」構想の基盤拡充 ✅
+- KPI=昨日の自分: 204→206社 累積継続 ✅
