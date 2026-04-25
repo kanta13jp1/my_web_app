@@ -48,6 +48,10 @@ WHERE instance = 'all';
 -- ============================================================
 -- 2. instance CHECK 制約: 'all' を削除 + 'codex' を追加
 -- ============================================================
+-- Win#132 part 21 hotfix (2026-04-25): super-set 化。後続の 225000/230000 で
+-- user/gemini/copilot を追加するが、それまでに rows が存在しても CHECK violation を
+-- 起こさないよう defensively allow (idempotent / future-proof)。restrictive CHECK は
+-- 230000 で再定義される。
 ALTER TABLE public.wbs_tasks DROP CONSTRAINT IF EXISTS wbs_tasks_instance_check;
 ALTER TABLE public.wbs_tasks ADD CONSTRAINT wbs_tasks_instance_check
   CHECK (instance IN (
@@ -56,7 +60,11 @@ ALTER TABLE public.wbs_tasks ADD CONSTRAINT wbs_tasks_instance_check
     'web', 'mobile',
     'schedule',  -- Claude Code Schedule (cron で自動実行)
     'gha',       -- GitHub Actions Workflow
-    'codex'      -- OpenAI Codex (frontend / SQL / GHA タスク)
+    'codex',     -- OpenAI Codex (frontend / SQL / GHA タスク)
+    -- 後続 migration で追加される値 (super-set / 230000 で正式定義)
+    'user',      -- ユーザー手動操作タスク
+    'gemini',    -- Gemini Code Assist
+    'copilot'    -- GitHub Copilot
     -- 'all' は廃止 (進捗 tracking 不可だったため / 2026-04-25 Win#132 part 16)
   ));
 

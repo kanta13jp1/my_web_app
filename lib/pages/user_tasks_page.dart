@@ -71,8 +71,8 @@ class _UserTasksPageState extends State<UserTasksPage> {
       'in_progress': 2,
       'completed': 3,
     };
-    final statusCmp = (statusRank[a['status']] ?? 9)
-        .compareTo(statusRank[b['status']] ?? 9);
+    final statusCmp =
+        (statusRank[a['status']] ?? 9).compareTo(statusRank[b['status']] ?? 9);
     if (statusCmp != 0) return statusCmp;
 
     const priorityRank = {'high': 0, 'medium': 1, 'low': 2};
@@ -529,7 +529,8 @@ class _Chip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = danger ? Colors.deepOrange : Theme.of(context).colorScheme.primary;
+    final color =
+        danger ? Colors.deepOrange : Theme.of(context).colorScheme.primary;
     return DecoratedBox(
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
@@ -578,7 +579,8 @@ class _MessagePanel extends StatelessWidget {
           Text(
             message,
             textAlign: TextAlign.center,
-            style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
+            style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurfaceVariant),
           ),
         ],
       ),
