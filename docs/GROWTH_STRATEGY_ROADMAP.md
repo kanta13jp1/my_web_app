@@ -19871,3 +19871,11 @@ Win版 dedup fix (20260425_wbs_dedup_fix.md) で対応予定。
 - PS#1 S42 (9bc7b6fa) との merge conflict 解消
 
 ### commits: ae49e27e
+
+## PS#4 S54 2026-04-26: migration スキーマ修正 (AI大学 Tome/Krisp + user_task_reports policy)
+
+- 20260425231600 Tome: provider_id→provider / section→category / content_md→content / title追加
+- 20260425233000 Krisp: 同上
+- 20260425231500 user_task_reports: DROP POLICY IF EXISTS (SQLSTATE 42710 対策)
+
+### commits: 5fae8a8a
