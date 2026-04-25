@@ -20312,3 +20312,12 @@ LOVO (Genny) / Voicemod / Bark (Suno AI OSS TTS) / Replica Studios / AIVA (音�
 - CEO感: UI品質を段階的に向上 ✅
 - KPI=昨日の自分: 9ページ追加で DESIGN.md 準拠率向上 ✅
 - 資本=時間: 高トラフィックページ優先で ROI 最大化 ✅
+
+### Rule 17 WF health check (2026-04-26 PS#1 S47)
+- **deploy-prod SQLSTATE 23505 (duplicate key schema_migrations_pkey) → 修正完了**
+  - 原因: timestamp 20260426133000 + 20260426143000 の2か所で AI大学 seed と wbs_* migration が衝突
+  - Fix (commit b4dfa577): seed_coqui 133000→132000 / seed_wellsaid 143000→142000 rename
+  - deploy-prod.yml repair list 更新: 132000/142000/143000 追加
+  - 666件全 migration の collision scan → 残存 collision ゼロ確認
+- **deploy 5d9082e4** in_progress 中 / **38a50027** pending (collision fix 含む)
+- **修正 commit**: b4dfa577 / push 23428652
