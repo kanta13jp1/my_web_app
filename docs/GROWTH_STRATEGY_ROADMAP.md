@@ -20471,3 +20471,23 @@ Voicemod / Replica Studios / Soundraw / Lalal.ai / Moises
 
 **Philosophy**: ✅商品=ユーザー価値 (本番デプロイ回復) ✅CEO感 (deploy chain診断完了)
 
+
+## 2026-04-26 PS#2 S38: SEO記事 #5 why-i-left-notion-for-supabase-flutter
+
+### 実施内容
+- **T-1 dispatch**: no-op (May 1 dispatch予定)
+- **SEO Phase 1 記事 #5**: `2026-05-23-why-i-left-notion-for-supabase-flutter` JA+EN ドラフト作成
+  - JA: Flutter+Supabase自作の経緯 (個人開発体験記)
+  - EN: "Why I Left Notion and Built My Own App with Flutter + Supabase"
+  - tags: JA 4/4 (Flutter,Supabase,個人開発,buildinpublic) / EN 4/4 (notion,flutter,supabase,saas)
+  - T-1 dispatch予定: 2026-05-22 → 2026-05-23投稿
+- **Commit**: 7bb950b9 → 3cfe6728
+
+### SEO Phase 1 バッファ状況
+- #1 May-02 / #2 May-04 ✅ scheduled
+- #3 May-09 / #4 May-16 / #5 May-23 ✅ draft ready (S36-S38)
+
+### Philosophy Alignment: PS#2 S38
+- ミッション駆動: 個人体験記で「なぜ自分で作ったか」の narrative 確立 ✅
+- KPI=昨日の自分: SEO 50本計画 4→5本 ✅
+- 資本=時間: 記事バッファ5本→5月全週カバー ✅
