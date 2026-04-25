@@ -1510,6 +1510,22 @@ const List<AiProviderEntry> kAiProviderRegistry = [
     note:
         r'LLM 構造化出力ライブラリ — Pydantic モデルで型安全な LLM レスポンス / OpenAI・Anthropic・Gemini 対応 / 自動バリデーション&リトライ / 10k+ Stars / MIT / Jason Liu 作',
   ),
+  AiProviderEntry(
+    id: 'flowise',
+    displayName: 'Flowise',
+    status: AiProviderStatus.notImplemented,
+    entryPoint: 'https://flowiseai.com/',
+    note:
+        r'ノーコード LLM アプリビルダー — ドラッグ&ドロップ UI / LangChain・LlamaIndex ベース / セルフホスト可 / 28k+ Stars / MIT / Chatflow & Agentflow',
+  ),
+  AiProviderEntry(
+    id: 'amazon_bedrock',
+    displayName: 'Amazon Bedrock',
+    status: AiProviderStatus.notImplemented,
+    entryPoint: 'https://aws.amazon.com/bedrock/',
+    note:
+        r'AWS マネージド LLM サービス — Claude・Titan・Llama・Mistral を API 1 本で提供 / Guardrails / Agents / Knowledge Bases / エンタープライズ RAG / VPC 統合',
+  ),
 ];
 
 /// ステータス別件数を集計
