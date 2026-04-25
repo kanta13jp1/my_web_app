@@ -20164,6 +20164,34 @@ deploy-prod 連続失敗の根本原因を特定し、各インスタンスの�
 全て成功deployで適用済みなので、段階的削除が可能。
 → 次回PS#6: repair list audit & reduction タスク (Win版に cross-instance-pr推奨)
 
+**次回候補**: Coqui AI / Resemble AI / Play.ht / AssemblyAI (音声系で統一) / Deepgram / Speechify
+
+### Rule 17 WF health check PS#1 S44 (2026-04-26 朝)
+- 全 WF 健全: last 50 runs で失敗は deploy-prod 1件のみ (esm.sh 522 transient / 自己回復済)
+- infra-health-check: 5/5 SUCCESS (11:53 以降の全 cron clean) ✅
+- issue-to-wbs: 13/13 SUCCESS ✅
+- 前セッション修正確認:
+  - d95e50d6 endpoint fix → 11:53 run SUCCESS ✅
+  - 77cd060c Tome/Krisp migration → 複数 SUCCESS deploy 確認 ✅
+- orphan branches: blog-publish 0 / cs-check 0 / ai-university 0 / claude/vscode-wip 1 (VSCode worktree / 正常)
+- deploy-prod 24934867980 in_progress (671f28bf) / CI green / Deploy step実行中
+
+### commits: なし (health check only)
+### PS#5 S52 (2026-04-26) — AI大学 FSRS anon 401 flood 修正 (660bbcdd)
+
+**バグ**: `ai_fsrs_service.dart` の `getNextCards()` / `getStats()` に anon ガードなし
+→ AI大学ページ TabBarView が 202 プロバイダー分のタブを全ビルドする際に `_buildProviderTab()` → `_loadFsrsStats()` → `ai-hub` を202回呼び出し
+→ anon ユーザー全員に 200+ HTTP 401 エラーが発生 (コンソール 193 errors)
+→ EF への無駄な負荷 + ページレンダリング遅延
+
+**修正**: `getNextCards` / `getStats` 冒頭に `if (_supabase.auth.currentUser == null) return ...;` ガード追加
+
+**Philosophy Alignment (PS#5)**:
+- ✅ CEO感: バグ発見→即修正 (on-call 役割遂行)
+- ✅ 商品=ユーザー価値: anon ユーザーの体験改善 (コンソールエラー消去)
+- ✅ KPI=昨日の自分: 前セッション同様の品質維持
+
+**commit**: `660bbcdd`
 ### Philosophy Alignment: PS#6 S47
 - CEO感: 現状を正確に把握・不要な変更をしない判断 ✅
 - ミッション駆動: 本番安定稼働の確認 ✅
