@@ -1,4 +1,4 @@
-﻿// viral-video-ad-generator Edge Function
+// viral-video-ad-generator Edge Function
 // Dark War風バイラル動画広告生成パイプライン
 //
 // 機能:
@@ -159,6 +159,8 @@ serve(async (req) => {
       template?: string;
       lang?: string;
       customPrompt?: string;
+      customScript?: string[];
+      customHashtags?: string[];
       title?: string;
       voice?: string;
     };
@@ -172,8 +174,9 @@ serve(async (req) => {
       return jsonRes({ error: `Unknown template: ${templateKey}. Available: ${Object.keys(AD_TEMPLATES).join(", ")}` }, 400);
     }
 
-    const script = template.script[lang];
-    const caption = script.join("\n") + "\n\n" + template.hashtags.join(" ");
+    const script = Array.isArray(body.customScript) && body.customScript.length > 0 ? body.customScript.map((line) => String(line).trim()).filter((line) => line.length > 0).slice(0, 6) : template.script[lang];
+    const hashtags = Array.isArray(body.customHashtags) && body.customHashtags.length > 0 ? body.customHashtags.map((tag) => String(tag).trim()).filter((tag) => tag.length > 0).slice(0, 6) : template.hashtags;
+    const caption = script.join("\n") + "\n\n" + hashtags.join(" ");
     const imagePrompt = body.customPrompt ?? template.imagePrompt;
 
     let generatedImageUrl: string | null = null;
@@ -242,13 +245,7 @@ serve(async (req) => {
       }
     }
 
-    const generationStatus = generatedVideoUrl != null
-      ? "video_ready"
-      : generatedImageUrl != null
-      ? "ready"
-      : type === "presenter_video" && videoStatus != null
-      ? videoStatus
-      : "script_only";
+    const generationStatus = generatedVideoUrl != null ? "video_ready" : generatedImageUrl != null ? "ready" : type === "presenter_video" && videoStatus != null ? videoStatus : "script_only";
 
     // 生成履歴をDBに記録
     let recordId: string | null = null;
@@ -267,7 +264,7 @@ serve(async (req) => {
           generated_preview_url: generatedPreviewUrl,
           generated_download_url: generatedDownloadUrl,
           fal_job_id: falJobId,
-          hashtags: template.hashtags,
+          hashtags,
           video_provider: videoProvider,
           video_status: videoStatus,
           video_reason: videoReason,
@@ -288,7 +285,7 @@ serve(async (req) => {
       type,
       caption,
       script,
-      hashtags: template.hashtags,
+      hashtags,
       imagePrompt,
       generatedImageUrl,
       generatedVideoUrl,
@@ -298,16 +295,8 @@ serve(async (req) => {
       videoProvider,
       videoStatus,
       videoReason,
-      status: generatedVideoUrl != null || generatedImageUrl != null
-        ? "ready_to_post"
-        : generationStatus,
-      nextStep: generatedVideoUrl != null
-        ? "Call x-media-post with this videoUrl and caption to post to X"
-        : generatedImageUrl != null
-        ? "Call x-media-post with this imageUrl and caption to post to X"
-        : type === "presenter_video"
-        ? "Hedra video generation is unavailable. Use the caption for text-only X post or retry after checking HEDRA_API_KEY."
-        : "FAL_KEY not set or generation failed. Use caption for text-only X post via post-x-update",
+      status: generatedVideoUrl != null || generatedImageUrl != null ? "ready_to_post" : generationStatus,
+      nextStep: generatedVideoUrl != null ? "Call x-media-post with this videoUrl and caption to post to X" : generatedImageUrl != null ? "Call x-media-post with this imageUrl and caption to post to X" : type === "presenter_video" ? "Hedra video generation is unavailable. Use the caption for text-only X post or retry after checking HEDRA_API_KEY." : "FAL_KEY not set or generation failed. Use caption for text-only X post via post-x-update",
       textPost: {
         endpoint: "post-x-update",
         body: { text: caption.slice(0, 280) },
@@ -403,9 +392,7 @@ function normalizeHedraVideoResponse(payload: Record<string, unknown>): {
 }
 
 function asRecord(value: unknown): Record<string, unknown> | null {
-  return typeof value === "object" && value !== null
-    ? value as Record<string, unknown>
-    : null;
+  return typeof value === "object" && value !== null ? value as Record<string, unknown> : null;
 }
 
 function firstNonEmptyString(...values: unknown[]): string | null {
