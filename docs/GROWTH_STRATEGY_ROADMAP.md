@@ -19088,3 +19088,26 @@ Deploy failure `24924215661` (feat business-wbs) を解析・修正。
 - E-Commerce JP: rakuten / mercari / base / suzuri / minne
 - Health JP: curon / medicom / everywhere / karada-no-kimochi
 - AI JP: soracom / sakura-internet / ntt-docomo-ai / line-works
+
+## PS#6 S42 — migration collision 183000 fix + repair list 183100/184500/200000 (2026-04-25)
+
+**Commits**: e7f0faa1 (rename), 000e1368 (repair 200000)
+
+### 実施内容
+
+1. **Migration timestamp collision 183000 検出・修正** (e7f0faa1)
+   - `create_page_shares` + `seed_azure_openai` 両方が 183000
+   - `git mv` で seed_azure_openai を 183000→183100 にリネーム
+   - repair list に 183000/183100/184500 を追加
+
+2. **repair 200000 追加** (000e1368)
+   - PS#4 S46 が `20260425200000_seed_competitors_phase2_batch4.sql` を追加
+   - repair list に 200000 を即時追加
+
+3. **整合性確認**
+   - 全 20260425 migration: duplicate 0件 ✅
+   - repair list: 183000/183100/184500/195000/200000 全カバー ✅
+
+### Philosophy/AI-DEV
+### Philosophy 9/9 ✅
+### AI-DEV 7/7 ✅
