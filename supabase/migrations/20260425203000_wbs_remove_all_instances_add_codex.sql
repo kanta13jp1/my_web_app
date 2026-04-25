@@ -24,6 +24,7 @@ ALTER TABLE public.wbs_tasks
 
 WITH target_instances(instance) AS (
   VALUES
+    ('codex'),
     ('vscode'),
     ('win'),
     ('ps1'),
@@ -106,14 +107,14 @@ WHERE src.instance = 'all'
   AND NOT EXISTS (
     SELECT 1
     FROM public.wbs_tasks existing
-    WHERE existing.category = src.category
-      AND existing.title = src.title
+    WHERE existing.title = src.title
       AND existing.instance = target_instances.instance
   );
 
-UPDATE public.wbs_tasks
-SET instance = 'codex',
-    owner_instance = 'codex'
+-- The fan-out above now includes codex, so the legacy shared row is redundant.
+-- Deleting it avoids title+instance collisions when production already has
+-- codex rows or the later duplicate-prevention index has been applied.
+DELETE FROM public.wbs_tasks
 WHERE instance = 'all';
 
 UPDATE public.wbs_tasks
