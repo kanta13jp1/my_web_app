@@ -2,7 +2,7 @@
 // Infra health check endpoint called by the automated scheduled task.
 // Checks: DB connectivity, key table accessibility, EF runtime env.
 // Returns: { status: "healthy"|"degraded"|"unhealthy", checks: {...}, timestamp }
-// Auth: requires SERVICE_ROLE_KEY bearer token (admin-only endpoint).
+// Auth: public endpoint (no sensitive data returned — only boolean connectivity status).
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
@@ -31,16 +31,6 @@ type HealthResponse = {
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
-  }
-
-  // Auth: only SERVICE_ROLE_KEY allowed
-  const authHeader = req.headers.get("Authorization") ?? "";
-  const token = authHeader.replace(/^Bearer\s+/i, "");
-  if (!token || token !== SERVICE_ROLE_KEY) {
-    return new Response(JSON.stringify({ error: "Unauthorized" }), {
-      status: 401,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
   }
 
   const checks: Record<string, CheckResult> = {};
