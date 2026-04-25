@@ -19614,6 +19614,25 @@ GitHub Secrets に SLACK_WEBHOOK_URL を設定するだけで有効化。
 
 ---
 
+## PS#3 S53 — 2026-04-25 (a3a43e00)
+
+### ユーザータスク全機能 確認 + Gantt ナビボタン追加 (PS#3-S53)
+
+**実施内容**:
+- 既実装確認: WBS instance 拡張 (all廃止/gemini/copilot/user追加) / Slack通知 / NotebookLM蓄積バックエンド / Flutter UI (/user-tasks)
+- **新規**: project_gantt_page AppBar に `👤 person_outline` アイコンボタン追加 → `/user-tasks` 遷移
+- dart format 0 / flutter analyze 0 確認
+
+**ユーザータスク機能フル実装状況**:
+- Slack 毎朝 09:00 JST cron (wbs-user-tasks-notify.yml)
+- NotebookLM snapshot 毎週月曜 (notebooklm-user-tasks-sync.yml → docs/user-tasks-snapshot.md)
+- Flutter UI: https://my-web-app-b67f4.web.app/user-tasks (Active/Completed タブ / 進捗報告フォーム)
+- tools-hub: wbs.get_user_tasks / wbs.submit_user_task_report / wbs.export_user_tasks_md
+
+**残: ユーザー手動設定**:
+- `supabase secrets set SLACK_WEBHOOK_URL=https://hooks.slack.com/services/xxx`
+- `notebooklm source add docs/user-tasks-snapshot.md` (初回のみ)
+
 ## Win版#132 part 20 完了 (2026-04-26 朝)
 
 ### 実施内容: deploy-prod CI fail hotfix — wbs_tasks_instance_check 違反
