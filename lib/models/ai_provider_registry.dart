@@ -1559,6 +1559,22 @@ const List<AiProviderEntry> kAiProviderRegistry = [
     note:
         r'Microsoft 製 AI エージェント SDK — .NET / Python / Java 対応 / Planner (自動タスク分解) / Memory / Plugin / GitHub Copilot・Azure OpenAI 統合 / MIT / 21k+ Stars',
   ),
+  AiProviderEntry(
+    id: 'tabnine',
+    displayName: 'Tabnine',
+    status: AiProviderStatus.notImplemented,
+    entryPoint: 'https://www.tabnine.com/',
+    note:
+        r'エンタープライズ AI コード補完 — オンプレミス/VPC デプロイ / SOC2・GDPR / 学習データ非使用保証 / 1M+ 開発者 / $53M 調達 / VS Code・JetBrains 対応',
+  ),
+  AiProviderEntry(
+    id: 'gamma_app',
+    displayName: 'Gamma',
+    status: AiProviderStatus.notImplemented,
+    entryPoint: 'https://gamma.app/',
+    note:
+        r'AI プレゼンテーション・ドキュメントビルダー — テキスト→スライド瞬時生成 / Notion+Canva 融合型 / Web公開可 / $12M 調達 / 月間4M+ ユーザー',
+  ),
 ];
 
 /// ステータス別件数を集計
