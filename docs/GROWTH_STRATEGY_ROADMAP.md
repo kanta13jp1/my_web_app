@@ -19509,3 +19509,59 @@ GitHub Secrets に SLACK_WEBHOOK_URL を設定するだけで有効化。
 - Krisp: 音声 AI の実用ツールとして 20M+ ユーザーの実績あり
 
 **次回候補**: Coqui AI / Otter.ai / Descript / Murf / ElevenLabs (TTS特化) / Resemble AI
+
+---
+
+## Win版#132 part 19 完了 (2026-04-26 朝)
+
+### 実施内容: user タスク進捗報告 + NotebookLM 蓄積基盤 + UI handoff
+
+**契機**: ユーザー追加要請「user タスクを NotebookLM に蓄積して具体的手順分析 + 完了/状況報告 UI」
+
+### 実装
+
+1. **Migration** `20260426000000_wbs_user_task_reports.sql`
+   - `wbs_user_task_reports` テーブル (時系列の進捗報告)
+   - columns: task_id (FK) / reporter / progress / status / report_text / blockers / next_action / metadata / created_at
+   - RLS: public read / service_role write
+
+2. **EF actions** `tools-hub`:
+   - `wbs.user_task_report`: 進捗報告 + 履歴 INSERT (instance='user' guard)
+   - `wbs.export_user_tasks_md`: NotebookLM 用 markdown export (active task + 直近 report 3 件)
+   - 重複 `wbs.notify_user_tasks` (本 part 18 で追加した版) を削除 — PS#3/4 の改良版に統合
+
+3. **GHA workflow** `notebooklm-user-tasks-sync.yml`
+   - cron: `30 0 * * 1` (毎週月曜 09:30 JST)
+   - tools-hub:wbs.export_user_tasks_md call → docs/user-tasks-snapshot.md commit
+   - soft-fail: HTTP error / size <50bytes で skip
+
+4. **cross-instance-pr** `docs/cross-instance-prs/20260426_user_task_report_ui.md`
+   - VSCode へ UI 実装 handoff (期限 2026-05-05)
+   - `/user-tasks` ページ + 進捗報告モーダル仕様
+
+### NotebookLM 蓄積フロー
+
+```
+1. ユーザーが Notion/Slack 等で「報告する」
+   ↓
+2. tools-hub:wbs.user_task_report → wbs_user_task_reports に履歴
+   ↓
+3. 毎週月曜 09:30 JST GHA cron が markdown export
+   ↓
+4. docs/user-tasks-snapshot.md として commit
+   ↓
+5. ユーザーが手動で `notebooklm source add docs/user-tasks-snapshot.md`
+   ↓
+6. NotebookLM が「具体的手順」「詰まり解消法」を分析回答
+```
+
+### 質問例 (NotebookLM)
+- 「商標出願の具体的手順を弁理士選定から登録完了まで step-by-step で」
+- 「blockers で「料金が不明」とあるタスクの最新相場を調査」
+- 「期限が 30 日以内のタスクを priority 順に並べて、最短ルートを提示」
+- 「進捗が 1 週間動いていないタスクの典型的な詰まりパターンを抽出」
+
+### Philosophy 9/9 ✅ + AI-DEV 7/7 ✅
+特に原則 5 (team memory): wbs_user_task_reports = NotebookLM source 化
+
+### commit: TBD
