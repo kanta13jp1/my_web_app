@@ -23,6 +23,13 @@ class _GrowthWeeklyDigestPageState extends State<GrowthWeeklyDigestPage> {
   }
 
   Future<void> _load() async {
+    if (_supabase.auth.currentUser == null) {
+      setState(() {
+        _isLoading = false;
+        _errorMessage = '週次ダイジェストにはログインが必要です';
+      });
+      return;
+    }
     setState(() {
       _isLoading = true;
       _errorMessage = null;
