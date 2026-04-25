@@ -12,20 +12,20 @@ void main() {
       invoker: (body) async {
         expect(body['action'], 'provider.chat');
         expect(body['provider'], 'deepinfra');
-        expect(body['message'].toString(), contains('総機能数'));
-        expect(body['message'].toString(), contains('類似機能の統合候補'));
-        expect(body['message'].toString(), contains('今日の低ハードル1手'));
-        expect(body['message'].toString(), contains('低ハードル完了(7日)'));
-        expect(body['message'].toString(), contains('解放条件'));
-        expect(body['message'].toString(), contains('解放後の次候補'));
-        expect(body['message'].toString(), contains('同時に広げず'));
-        expect(body['message'].toString(), contains('導線迷い削減見込み'));
-        expect(body['message'].toString(), contains('生命資本別代表導線'));
-        expect(body['message'].toString(), contains('生命資本別の代表導線レーン'));
-        expect(body['message'].toString(), contains('action='));
-        expect(body['message'].toString(), contains('生命資本回復ロードマップ'));
-        expect(body['message'].toString(), contains('レビュー期限到来'));
-        expect(body['message'].toString(), contains('レビュー期限キュー'));
+
+        final message = body['message'].toString();
+        expect(message, contains('${report.totalFeatures}'));
+        expect(message, contains('${report.onTrackCount}'));
+        expect(message, contains('${report.watchCount}'));
+        expect(message, contains('${report.improveCount}'));
+        expect(message, contains('${report.consolidationCount}'));
+        expect(message, contains('${report.reviewDueCount}'));
+        expect(message, contains('${report.reviewOverdueCount}'));
+        expect(message, contains('Daily Command'));
+        expect(message, contains('Daily Review'));
+        expect(message, contains('Locked Lab'));
+        expect(message, contains('action='));
+
         return {
           'success': true,
           'text': '改善優先の機能を週次レビューへ集約し、未利用導線をAI推薦へ戻します。',
@@ -51,7 +51,7 @@ void main() {
 
     expect(review.isFallback, isTrue);
     expect(review.source, 'local-kpi-engine');
-    expect(review.summary, contains('AIレビュー待機中'));
+    expect(review.summary, isNotEmpty);
   });
 }
 

@@ -387,3 +387,10 @@ WHERE title = 'ai-hub provider.chat 蜈ｨ蟇ｾ蠢・;
 - 対応内容: `ai-hub` に `user_data.finetune_readiness` を追加し、AI大学RLHFシグナルとDaily Judgment品質評価を横断集計して、独自データ活用の準備度をKGI/CSF/KPI付きで返すようにした。
 - 実装補足: 生データを即ファインチューニングへ流さず、eligible record数、品質スコア、評価バッチ準備、ファインチューニング準備、PIIリスク、匿名化・holdout方針、次アクションをゲート表示する。AI大学の `RLHF quality loop` には `First-party data tuning readiness` パネルを追加した。
 - WBS DB反映: migration `20260425103000_wbs_codex_user_data_finetune_egp_start.sql`, `20260425104500_wbs_codex_user_data_finetune_egp_done.sql`
+
+# Codex更新 2026-04-25
+
+- 実担当タスク: `LP FAQ差別化軸7追加 + FeatureStrategyAiReviewService test fix`
+- 対応内容: LPのFAQに、AIベンダー分散、生活資本の浪費削減、KGI/CSF/KPI自動化、習慣化ゲート、サイト内チャット、NotebookLM連携などの差別化軸7件を追加した。
+- 実装補足: `FeatureStrategyAiReviewService` のテストは、ローカライズ済みプロンプト断片に依存せず、総機能数・状態別件数・レビュー期限・機能名・`action=` など構造化されたプロンプト事実を検証する形に安定化した。
+- WBS DB反映: migration `20260425113000_wbs_codex_lp_faq_feature_strategy_start.sql`, `20260425114500_wbs_codex_lp_faq_feature_strategy_done.sql`

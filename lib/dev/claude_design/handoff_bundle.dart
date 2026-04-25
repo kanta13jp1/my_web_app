@@ -110,9 +110,7 @@ class DesignTokens {
         'typography': typography.map(
           (k, v) => MapEntry(k, {
             'fontSize': v.fontSize,
-            'fontWeight': v.fontWeight != null
-                ? '${(v.fontWeight!.index + 1) * 100}'
-                : null,
+            'fontWeight': v.fontWeight?.value.toString(),
             'letterSpacing': v.letterSpacing,
             'lineHeight': v.height,
           }),
