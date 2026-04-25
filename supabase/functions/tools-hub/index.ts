@@ -1570,7 +1570,16 @@ serve(async (req) => {
           }
 
           // increment rebalance_count (best-effort)
-          await admin.rpc("increment_wbs_rebalance_count", { p_task_id: taskId }).catch(() => {});
+          try {
+            const { error: countErr } = await admin.rpc("increment_wbs_rebalance_count", {
+              p_task_id: taskId,
+            });
+            if (countErr) {
+              console.warn(`increment_wbs_rebalance_count failed: ${countErr.message}`);
+            }
+          } catch (err) {
+            console.warn(`increment_wbs_rebalance_count threw: ${String(err)}`);
+          }
 
           // 4. audit log INSERT
           const { error: logErr } = await admin
