@@ -18726,3 +18726,38 @@ Deploy failure `24924215661` (feat business-wbs) を解析・修正。
 - ✅ 1.CEO感(根本原因特定) ✅ 2.ミッション駆動(CI安定) ✅ 5.商品=ユーザー価値
 - ✅ 6.資本=時間(連鎖修正を1セッションで完結) ✅ 7.資産負債(deploy chain保護) ✅ 8.KPI=昨日の自分 ✅ 9.ゴール=IPO
 - 🔶 3.mentor 🔶 4.6部署バランス
+
+---
+
+---
+
+## Win版#132 part 13 完了 (2026-04-25 午後)
+
+### 実施内容: wbs-ai-review.yml soft-fail 化 (curl exit 22 対処)
+
+**契機**: Win#132 part 12 (a17e82a1) deploy 後の手動 trigger テスト (run 24924564742) で Step 2 失敗:
+- Step 2 - Fetch requested tasks: exit code 22
+
+**Root cause**: `curl -sf` の `-f` flag (fail silently on HTTP error) が、**migration 20260425170000 (ai_review_status column 追加) がまだ deploy 完了前**だったため Supabase REST が 400 を返し → curl exit 22 → `set -e` で workflow abort。
+
+**修正**:
+1. `set -e` 削除 (Step 2 内)
+2. `curl -sf` → `curl -s -o /tmp/tasks.json -w "%{http_code}"` で HTTP code 取得
+3. 200 以外なら `::warning::` 出力 + `skip=true` output で Step 3-5 を skip
+4. body も 300 字まで warning に含める (デバッグ可)
+5. Step 5 (no-op log) に "Skipped: Supabase fetch error" 分岐追加
+
+これで:
+- migration 未 deploy 時 → 警告のみで workflow success
+- transient 5xx 時 → 警告のみで次 cron 待ち
+- 200 + 0 件 → 通常 no-op
+- 200 + 件あり → 通常 review
+
+### Backlog
+- Phase 3 (`wbs-stale-subdivide.yml`): 5/5 期日
+- Phase 4 (project-gantt UI): VSCode 5/10 期日
+
+### Philosophy 9/9 ✅ (失敗時の resilience = 原則 7 BS / 原則 8 KPI)
+### AI-DEV 6/7 ✅ (Phase 3 で trace_id 充足)
+
+### commit: TBD

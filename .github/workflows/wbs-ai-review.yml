@@ -61,25 +61,35 @@ jobs:
         if: steps.precheck.outputs.skip != 'true'
         id: fetch
         run: |
-          set -e
+          # Soft-fail policy: ai_review_status column 未 deploy 時 (400) や
+          # transient エラー時に workflow 全体を fail させない。
+          # set -e は使わない (curl exit 22 で abort しないように)。
 
-          # ai_review_status='requested' を最大 MAX_TASKS 件取得
-          # category / title / description / progress / start_date / end_date / depends_on / id
-          TASKS_JSON=$(curl -sf \
+          HTTP_CODE=$(curl -s -o /tmp/tasks.json -w "%{http_code}" \
             "${SUPABASE_URL}/rest/v1/wbs_tasks?ai_review_status=eq.requested&select=id,category,title,description,progress,start_date,end_date,depends_on&order=updated_at.asc&limit=${MAX_TASKS}" \
             -H "apikey: ${SUPABASE_SERVICE_ROLE_KEY}" \
             -H "Authorization: Bearer ${SUPABASE_SERVICE_ROLE_KEY}" \
             --max-time 15)
 
-          COUNT=$(echo "$TASKS_JSON" | python3 -c 'import sys, json; print(len(json.load(sys.stdin)))')
-          echo "count=$COUNT" >> $GITHUB_OUTPUT
-          echo "$TASKS_JSON" > /tmp/tasks.json
+          echo "HTTP code: ${HTTP_CODE}"
 
-          echo "📋 ${COUNT} task(s) requested for AI review"
+          if [ "$HTTP_CODE" = "200" ]; then
+            COUNT=$(python3 -c 'import sys, json; print(len(json.load(open("/tmp/tasks.json"))))' 2>/dev/null || echo "0")
+            echo "count=$COUNT" >> $GITHUB_OUTPUT
+            echo "skip=false" >> $GITHUB_OUTPUT
+            echo "📋 ${COUNT} task(s) requested for AI review"
+          else
+            BODY=$(head -c 300 /tmp/tasks.json 2>/dev/null || echo "")
+            echo "::warning::Supabase fetch failed (HTTP ${HTTP_CODE}). Body: ${BODY}"
+            echo "::warning::Possible cause: ai_review_status column not yet deployed (migration 20260425170000 pending) or service_role key issue"
+            echo "count=0" >> $GITHUB_OUTPUT
+            echo "skip=true" >> $GITHUB_OUTPUT
+            echo "ℹ️ Soft-fail: skipping AI review this cron"
+          fi
 
       # ── Step 3: 各 task を Gemini Flash でレビュー ─────────────────────
       - name: Step 3 - Review each task with Gemini Flash
-        if: steps.precheck.outputs.skip != 'true' && steps.fetch.outputs.count != '0'
+        if: steps.precheck.outputs.skip != 'true' && steps.fetch.outputs.skip != 'true' && steps.fetch.outputs.count != '0'
         run: |
           set +e
           APPROVED=0
@@ -211,7 +221,7 @@ jobs:
       # ── Step 4: depends_on unblock ─────────────────────
       # 完了 task に依存していた pending task を unblock
       - name: Step 4 - Unblock dependent tasks
-        if: steps.precheck.outputs.skip != 'true' && steps.fetch.outputs.count != '0'
+        if: steps.precheck.outputs.skip != 'true' && steps.fetch.outputs.skip != 'true' && steps.fetch.outputs.count != '0'
         run: |
           set -e
 
@@ -228,10 +238,12 @@ jobs:
 
       # ── Step 5: skip log ─────────────────────────────
       - name: Step 5 - No-op log if skipped
-        if: steps.precheck.outputs.skip == 'true' || steps.fetch.outputs.count == '0'
+        if: steps.precheck.outputs.skip == 'true' || steps.fetch.outputs.skip == 'true' || steps.fetch.outputs.count == '0'
         run: |
           if [ "${{ steps.precheck.outputs.skip }}" = 'true' ]; then
             echo "ℹ️ Skipped: secrets missing"
+          elif [ "${{ steps.fetch.outputs.skip }}" = 'true' ]; then
+            echo "ℹ️ Skipped: Supabase fetch error (likely migration not yet deployed)"
           else
             echo "ℹ️ No tasks requested for review"
           fi
