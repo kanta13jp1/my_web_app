@@ -1,17 +1,110 @@
-# Cross-Instance PR: VSCode Flutter 作業の補佐 → PS#2
+# Cross-Instance PR: VSCode 作業の移譲 → PS#2
 
-**作成**: VSCode版 S4 / 2026-04-25
+**作成**: VSCode版 S4 / 2026-04-25 (rev2: Flutter タスク追加)
 **宛先**: PS版#2 (T-1 dispatch 空き時間に実施)
-**優先度**: medium (T-1 dispatch が優先・空き時間のみ)
+**優先度**: high (LP差別化) / medium (その他)
 **期限**: 2026-05-07 (Google I/O 前)
 
 ---
 
 ## 背景
 
-VSCode版の pending タスク (LP差別化 / ShareToXButton widget) は Flutter/Dart 作業のため
-VSCode 専任継続。ただし以下の **非 Flutter バックエンド補佐タスク** は PS#2 で処理可能。
+VSCode版の pending タスクを PS#2 に移譲。
+`dart format` + `flutter analyze` は PS インスタンスでも実行可能。
 T-1 dispatch (次回 May 1) が空いている間に対応をお願いします。
+作業は `C:/Users/kanta/GitHub/my_web_app_ps` worktree (`instance-ps2`) で実施。
+
+---
+
+## タスク 0: LP「vs Notion」差別化強化 (🔴 HIGH / 2026-05-10 期限)
+
+**元依頼**: `20260425_notion34_differentiation_lp.md` (PS#4 S40 発行)
+
+**対象ファイル**: `lib/pages/landing_page.dart`
+
+**変更内容**:
+
+1. **「vs Notion」差別化セクション強化** — Notion がやれないことを明示
+
+   ```text
+   自分株式会社 vs Notion 比較表:
+   - 「昨日の自分」KPI  vs  チーム向けナレッジ管理
+   - CEO感 (意思決定OS)  vs  コラボツール
+   - 資産/負債バランスシート  vs  プロジェクト管理
+   - IPO/ウェルビーイング目標  vs  ゴール設定なし
+   ```
+   追加メッセージ案:
+   > Notion があなたのチームを助けるなら、自分株式会社はあなた自身の「CEO」を育てます。
+
+2. **LP FAQ 追加** — 「Notion / Slack 使ってるけど？」
+
+   ```text
+   Q: すでに Notion + Slack を使っています。なぜ自分株式会社が必要ですか？
+   A: Notion はチームのナレッジを整理します。Slack はチームとのコミュニケーション。
+      しかし「あなた自身の意思決定」「昨日の自分との比較」「人生のバランスシート」
+      を管理するツールは存在しません。自分株式会社はその空白を埋めます。
+   ```
+
+3. **LP ヒーロー文言微調整** (optional)
+   「NotionでもSlackでもない、あなた自身のCEOオフィス。」
+
+**必須**: DESIGN.md トークン適用 / `dart format` / `flutter analyze 0`
+
+---
+
+## タスク 00: ShareToXButton widget (Flutter / Phase 2)
+
+**元依頼**: `project_20260425_win132_part15.md` (Win#132 part 15 VSCode handoff)
+
+`core-hub:page.share_generate` EF action (Phase 1 完了) を呼び出す Flutter widget。
+
+**新規ファイル**: `lib/widgets/share_to_x_button.dart`
+
+```dart
+class ShareToXButton extends StatefulWidget {
+  const ShareToXButton({super.key, required this.pagePath});
+  final String pagePath;
+  @override
+  State<ShareToXButton> createState() => _ShareToXButtonState();
+}
+
+class _ShareToXButtonState extends State<ShareToXButton> {
+  bool _loading = false;
+
+  Future<void> _share() async {
+    setState(() => _loading = true);
+    try {
+      // core-hub:page.share_generate を呼ぶ (EF action)
+      // レスポンスの tweet_text + image_url を X シェアリンクに組み込む
+      // https://twitter.com/intent/tweet?text=...&url=...
+      final uri = Uri.parse(
+        'https://twitter.com/intent/tweet'
+        '?text=${Uri.encodeComponent("自分株式会社でシェア")}',
+      );
+      // TODO: launchUrl(uri) — url_launcher パッケージ使用
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      icon: _loading
+          ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
+          : const Icon(Icons.share),
+      tooltip: 'X でシェア',
+      onPressed: _loading ? null : _share,
+    );
+  }
+}
+```
+
+EF 呼び出し詳細: `core-hub` POST `{"action":"page.share_generate","page_path":"<pagePath>"}`
+
+**対象ページ** (Phase 2 は AI大学ページのみ): `lib/pages/ai_university_page.dart` の AppBar に追加
+
+**必須**: DESIGN.md トークン / `dart format` / `flutter analyze 0`
 
 ---
 
