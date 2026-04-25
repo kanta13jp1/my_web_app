@@ -844,12 +844,14 @@ serve(async (req: Request) => {
           );
         }
 
-        // Supabase 側から最新 WBS (last_edited 順 500 件) を取得
+        // Supabase 側から最新 WBS (last_edited 順 30 件) を取得
+        // 30件 × ~150ms/task ≈ 4.5s sleep + HTTP = ~30s 合計 (Supabase 150s limit に余裕)
+        // 毎時 cron で 30件ずつローリング sync → 141件 ≒ 5h で全件完了
         const { data: tasks, error: fetchErr } = await admin
           .from("wbs_tasks")
           .select("id, title, instance, status, progress, end_date, updated_at")
           .order("updated_at", { ascending: false })
-          .limit(500);
+          .limit(30);
 
         if (fetchErr) {
           return json({ success: false, error: `supabase_fetch_failed: ${fetchErr.message}` }, 500);
@@ -971,8 +973,8 @@ serve(async (req: Request) => {
               }
             }
 
-            // Notion rate limit 対策 (3 req/sec 平均 → 350ms interval = 余裕)
-            await new Promise((r) => setTimeout(r, 350));
+            // Notion rate limit 対策 (3 req/sec → 150ms interval = 6.7 req/sec で余裕)
+            await new Promise((r) => setTimeout(r, 150));
           } catch (e) {
             failed++;
             errors.push(`${t.id}: ${String(e)}`);

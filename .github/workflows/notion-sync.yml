@@ -71,5 +71,10 @@ jobs:
               echo "::warning::Notion DB schema mismatch — add required properties to Notion WBS DB (task_title rich_text / instance select / status select / progress number / deadline date / updated_at date)"
               exit 0
             fi
+            # Supabase EF idle timeout (141 tasks × Notion rate limit > 150s) → soft-fail
+            if echo "$RESP" | grep -q "IDLE_TIMEOUT"; then
+              echo "::warning::Notion sync EF idle timeout — batch too large for Supabase 150s limit (will retry next hour)"
+              exit 0
+            fi
             exit 1
           fi
