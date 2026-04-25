@@ -19586,3 +19586,28 @@ GitHub Secrets に SLACK_WEBHOOK_URL を設定するだけで有効化。
 - Win版 part 19 が先行して wbs_user_task_reports テーブル + wbs.user_task_report/export_user_tasks_md を実装
 - PS#4 は別テーブル user_task_reports + UI向け wbs.get_user_tasks/submit_user_task_report を追加（相補的設計）
 - tools-hub conflict: Win版追加分 (1560/1627行) を保持 + 我々の追加分 (1835行〜) をマージ
+
+---
+
+## PS#2 S26 — T-1 dispatch no-op + user tasks feature routing 完了確認 (2026-04-25)
+
+### T-1 dispatch 状況
+
+| slug | 公開日 | T-1 dispatch日 | 状況 |
+|---|---|---|---|
+| 2026-05-02-notion-paywall-d2-parallel-6-departments | May 2 | May 1 | date-gate skip (今日Apr 25) |
+| 2026-05-04-notion-paywall-d0-alternative-6-departments | May 4 | May 3 | date-gate skip (今日Apr 25) |
+
+- Orphan branch: 0本
+- 次回 dispatch: May 1 JST (PS#2 S27予定)
+
+### user tasks 機能 — 完了確認
+
+| 機能 | 担当 | 状況 |
+|---|---|---|
+| wbs.notify_user_tasks Slack通知 | PS#2 (duplicate case fix) | ✅ 493fea50 |
+| user task report + NotebookLM EF | Win版#132 part 19 | ✅ 0ca06637 |
+| Flutter user_tasks_page.dart | PS#4 S49 | ✅ e419da51 |
+| notebooklm-user-tasks-sync GHA | Win版#132 part 19 | ✅ 0ca06637 |
+
+### commit: no-op (ROADMAP append only)
