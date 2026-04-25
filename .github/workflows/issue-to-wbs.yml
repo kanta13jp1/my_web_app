@@ -107,14 +107,19 @@ jobs:
           print(json.dumps(payload, ensure_ascii=False))
           PY
 
-          curl -fsS -X POST "$SUPABASE_URL/functions/v1/tools-hub" \
+          HTTP_CODE=$(curl -sS -o /tmp/wbs-sync-response.json -w "%{http_code}" \
+            -X POST "$SUPABASE_URL/functions/v1/tools-hub" \
             -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \
             -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
             -H "Content-Type: application/json" \
-            --data-binary @/tmp/wbs-sync-payload.json \
-            > /tmp/wbs-sync-response.json
+            --data-binary @/tmp/wbs-sync-payload.json)
 
           cat /tmp/wbs-sync-response.json
+
+          if [ "$HTTP_CODE" -ge 400 ]; then
+            echo "::warning::tools-hub wbs.sync_github_issues returned HTTP $HTTP_CODE. This can happen before the latest Edge Function deploy finishes; the next scheduled run will retry."
+            echo '{"success":false,"issues_to_close":[],"duplicate_wbs_tasks":[]}' > /tmp/wbs-sync-response.json
+          fi
 
       - name: Close GitHub issues completed in WBS
         env:
