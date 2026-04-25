@@ -1671,6 +1671,22 @@ const List<AiProviderEntry> kAiProviderRegistry = [
     note:
         r'動画・Podcast 向け AI BGM 生成 — シーン別感情 BGM / 自動楽曲カスタム / 著作権フリー / MP3/WAV / $3M 調達 / ★7/9',
   ),
+  AiProviderEntry(
+    id: 'lalal_ai',
+    displayName: 'Lalal.ai',
+    status: AiProviderStatus.notImplemented,
+    entryPoint: 'https://www.lalal.ai/',
+    note:
+        r'AI 音声・ステム分離 — ボーカル / 楽器 / ドラム / ベースを個別抽出 / Phoenix Neural Net / 10音源分離 / API 提供 / ★8/9',
+  ),
+  AiProviderEntry(
+    id: 'soundraw',
+    displayName: 'Soundraw',
+    status: AiProviderStatus.notImplemented,
+    entryPoint: 'https://soundraw.io/',
+    note:
+        r'AI 音楽生成 (クリエイター向け) — ムード/テンポ/楽器を GUI で指定 / 無制限生成 / 著作権フリー / Premiere Pro 統合 / ★8/9',
+  ),
 ];
 
 /// ステータス別件数を集計
