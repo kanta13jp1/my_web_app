@@ -46,6 +46,7 @@ $md$,
 (
   'tome_app',
   'api',
+  'Tome — API・統合 (Figma/Loom/Airtable ライブ埋め込み)',
   $md$## Tome API / 統合
 
 ### パートナー統合 (公式)
@@ -68,6 +69,7 @@ $md$,
 (
   'tome_app',
   'models',
+  'Tome — AIモデル (GPT-4 / DALL·E 3 / ElevenLabs TTS)',
   $md$## Tome が使用する AI モデル
 
 | 用途 | モデル |
