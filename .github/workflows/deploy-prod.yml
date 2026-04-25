@@ -129,7 +129,6 @@ jobs:
           supabase migration repair --status reverted 20260425034500 2>/dev/null || true
           supabase migration repair --status reverted 20260425040000 2>/dev/null || true
           supabase migration repair --status reverted 20260425041500 2>/dev/null || true
-          supabase migration repair --status reverted 20260425043000 2>/dev/null || true
           supabase migration repair --status reverted 20260425044500 2>/dev/null || true
           supabase migration repair --status reverted 20260425050000 2>/dev/null || true
           supabase migration repair --status reverted 20260425051500 2>/dev/null || true
@@ -198,7 +197,6 @@ jobs:
           supabase migration repair --status reverted 20260426010000 2>/dev/null || true
           supabase migration repair --status reverted 20260426015000 2>/dev/null || true
           supabase migration repair --status reverted 20260426020000 2>/dev/null || true
-          supabase migration repair --status reverted 20260426090000 2>/dev/null || true
           supabase migration repair --status reverted 20260426100000 2>/dev/null || true
           supabase migration repair --status reverted 20260426110000 2>/dev/null || true
           supabase migration repair --status reverted 20260426120000 2>/dev/null || true
@@ -211,7 +209,6 @@ jobs:
           supabase migration repair --status applied 20260426133000 2>/dev/null || true
           supabase migration repair --status reverted 20260426134500 2>/dev/null || true
           supabase migration repair --status reverted 20260426142000 2>/dev/null || true
-          supabase migration repair --status reverted 20260426143000 2>/dev/null || true
           supabase migration repair --status reverted 20260426140000 2>/dev/null || true
           supabase migration repair --status reverted 20260426143500 2>/dev/null || true
           supabase migration repair --status reverted 20260426150000 2>/dev/null || true
