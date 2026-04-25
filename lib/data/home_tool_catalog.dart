@@ -88,6 +88,7 @@ import '../pages/team_workspace_page.dart';
 import '../pages/workflow_automation_page.dart';
 import '../pages/social_media_scheduler_page.dart';
 import '../pages/video_meeting_page.dart';
+import '../pages/krisp_audio_quality_page.dart';
 import '../pages/gantt_timeline_page.dart';
 import '../pages/project_gantt_page.dart';
 import '../pages/user_tasks_page.dart';
@@ -1201,6 +1202,28 @@ List<HomeToolEntry> buildHomeToolCatalog({
         'ミーティング',
       ],
       onOpen: (context) => _pushPage(context, const VideoMeetingPage()),
+    ),
+    HomeToolEntry(
+      id: 'krisp-audio-quality',
+      sectionId: 'office',
+      title: 'Krisp音声品質',
+      subtitle: '会議・収録・面談・AIコーチSDKのノイズ対策KGI/CSF/KPIを一元管理',
+      icon: Icons.hearing_outlined,
+      color: const Color(0xFF0EA5E9),
+      keywords: const <String>[
+        'Krisp',
+        'noise cancellation',
+        'audio',
+        'voice',
+        'meeting',
+        'podcast',
+        'SDK',
+        '音声',
+        'ノイズ',
+        '会議',
+        '収録',
+      ],
+      onOpen: (context) => _pushPage(context, const KrispAudioQualityPage()),
     ),
     HomeToolEntry(
       id: 'project-gantt',
