@@ -20255,3 +20255,16 @@ LOVO (Genny) / Voicemod / Bark (Suno AI OSS TTS) / Replica Studios / AIVA (音�
 - CEO感: Suno/Udio/Cartesia登録済即確認→Speechify+WellSaid選定 ✅
 - ミッション駆動: 音声AI 206社で「聴く AI 大学」構想の基盤拡充 ✅
 - KPI=昨日の自分: 204→206社 累積継続 ✅
+
+### PS#5 S53 (2026-04-26) — #764 AI大学シェアダイアログ修正 (02aa3f21)
+
+**バグ**: `_captureAndDownload` の `catch (_)` がサイレント → ユーザーに何も表示されない
+**追加**: Dialog の `backgroundColor` 未設定 → ダークテーマで dialog が不可視
+
+**修正**:
+1. `_captureAndDownload` catch block → SnackBar (成功/失敗/null別メッセージ) + fallback action
+2. Dialog に `backgroundColor: Color(0xFF1E1E1E)` + border 追加
+
+**Philosophy**: ✅商品=ユーザー価値 (エラーフィードバック改善) ✅KPI=昨日の自分
+
+**commit**: `02aa3f21` / Closes #764
