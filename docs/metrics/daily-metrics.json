@@ -1,0 +1,111 @@
+{
+  "success": true,
+  "digest": {
+    "date": "2026-04-25",
+    "users": {
+      "total": 21
+    },
+    "featureRequests": {
+      "newToday": 10,
+      "openCount": 41,
+      "newTodayList": [
+        {
+          "id": "166e708b-675e-4794-aaaa-185e14d23f7b",
+          "title": "【Poolside AI】4インスタンス体制の競争優位: Poolside/Devinは単一エージェント。当プロジェクトの Multi-AIアーキテクチャは独自の強み",
+          "created_at": "2026-04-25T16:58:54.048473+00:00"
+        },
+        {
+          "id": "0dedcb39-3dda-4985-8c43-e375e2e7b1d5",
+          "title": "【Poolside AI】将来のai-assistant EF: Poolside MalibuをDartコード生成オプションとして組み込む余地あり",
+          "created_at": "2026-04-25T16:58:37.308105+00:00"
+        },
+        {
+          "id": "90a8082e-ab55-4d65-a2a8-ff74b0a89011",
+          "title": "【Poolside AI】Claude Codeの立ち位置確認：Poolside/Devinの台頭により 「コーディングAI」競争が激化→Claude Codeの差別化は「プロジェクト文脈の深い理解」 と「マルチインスタンス協調」",
+          "created_at": "2026-04-25T16:58:25.453414+00:00"
+        },
+        {
+          "id": "c5b247f8-85cf-444c-8330-012e5ce60862",
+          "title": "【Tome】競合比較資料の自動更新（Airtable データ連携）",
+          "created_at": "2026-04-25T16:49:45.218425+00:00"
+        },
+        {
+          "id": "372e05b2-96cf-436d-b4c7-f7df6b5c45b1",
+          "title": "【Tome】AI大学コンテンツの四角か（インフォグラフィック → Tomeページ）",
+          "created_at": "2026-04-25T16:49:35.08904+00:00"
+        },
+        {
+          "id": "cf500c0f-d745-4115-a3bc-83a8386eb335",
+          "title": "【Tome】プレゼン資料の自動生成（投資家向け / 社内報告）",
+          "created_at": "2026-04-25T16:49:25.403186+00:00"
+        },
+        {
+          "id": "dca87360-af05-4162-8bcc-bc52f708df42",
+          "title": "【Krisp】SDKを使った音声機能組み込み（将来のAIコーチ機能）",
+          "created_at": "2026-04-25T16:18:05.242601+00:00"
+        },
+        {
+          "id": "dd2f8653-ab56-4fcb-b860-c5476e26df09",
+          "title": "【Krisp】投資家面談・クライアントコール品質向上",
+          "created_at": "2026-04-25T16:17:46.908902+00:00"
+        },
+        {
+          "id": "2786812f-c50d-44ea-bdd3-37aa223ada78",
+          "title": "【Krisp】AI大学 Tech Talk / Podcast 収録のノイズ除去",
+          "created_at": "2026-04-25T16:17:31.684959+00:00"
+        },
+        {
+          "id": "65601679-0f40-49ba-93b1-d5735654c803",
+          "title": "【Krisp】リモートミーティング環境改善（雑音多い在宅／カフェ作業時）",
+          "created_at": "2026-04-25T16:17:15.922723+00:00"
+        }
+      ],
+      "topOpen": [
+        {
+          "title": "AI大学をもっと改善して",
+          "votes": 1
+        },
+        {
+          "title": "あります。 ただ、**今の3つ（Claude Code / Codex / Gemini Code Assist）ですでに“汎用コーダー”は十分**なので、4つ目以降は**同じ種類を増やすより、役割特化のエージェントを足す**方が効果が出やすいです。GitHub Copilot の agent mode は VS Code Stable で使え、MCP 連携にも対応していますが、Claude/Codex/Gemini と役割がかなり重なるので、追加するなら「汎用生成」より「レビュー・セキュリティ・ブラウザ実行・非同期実行」の穴埋めがおすすめです。([Visual Studio Code][1])  おすすめ順で言うと、まずは **Qodo か Semgrep Assistant** です。 Qodo は PR レビュー特化で、複数の review agent とルールシステムで、Git workflow の中で文脈付きレビューを返す設計です。Semgrep Assistant は AppSec 特化で、Semgrep Code の findings を AI で triage / remediation してくれるので、**「AI がコードを書く量が増えたぶん、AI にレビューさせる」** という補完関係が作れます。今の3つに一番足しやすいのはこの系統です。([docs.qodo.ai][2])  次に ROI が高いのは **Playwright MCP** です。 これは厳密には新しい“汎用AI agent”ではなく、**既存の Claude Code / Codex / Copilot などにブラウザ実行能力を足す層**です。VS Code や Claude Code などの MCP client で使え、画面操作や E2E 確認を AI に任せやすくなります。フロント実装や UI 回帰確認が多いなら、4つ目のモデルを増やすよりこっちの方が効くことが多いです。([Playwright][3])  その次は **Jules か OpenHands** です。 Jules は GitHub 連携の**非同期 coding agent**で、バグ修正やドキュメント追加などをバックグラウンドで進める方向に向いています。OpenHands は CLI / SDK / Local GUI があり、Claude や GPT などをバックエンドにして、**より実験的に“別作業者”を増やす**用途に向いています。つまり、VS Code 内の並行使用を強めるというより、**別レーンで走らせる agent** として相性がいいです。([Jules][4])  結論だけ言うと、あなたの構成ならこうです。 **レビュー強化なら Qodo、セキュリティなら Semgrep Assistant、UI/E2E なら Playwright MCP、非同期の別働隊なら Jules か OpenHands。** 逆に、Cursor / Windsurf / もう1つの汎用コーディング agent を足す優先度は低めです。今の3つと役割が被りやすいからです。([docs.qodo.ai][2])  あなたの使い方だと、最初の1つは **Qodo か Playwright MCP** がいちばん自然です。  [1]: https://code.visualstudio.com/blogs/2025/02/24/introducing-copilot-agent-mode?utm_source=chatgpt.com \"Introducing GitHub Copilot agent mode (preview)\" [2]: https://docs.qodo.ai/qodo-documentation/code-review?utm_source=chatgpt.com \"The Qodo Code Review Experience | Git | Qodo Documentation\" [3]: https://playwright.dev/docs/getting-started-mcp?utm_source=chatgpt.com \"Playwright MCP | Playwright\" [4]: https://jules.google/docs/?utm_source=chatgpt.com \"Getting started | Jules\"",
+          "votes": 1
+        },
+        {
+          "title": "ok",
+          "votes": 1
+        },
+        {
+          "title": "AI大学のコンテンツ形式革新",
+          "votes": 1
+        },
+        {
+          "title": "不具合報告: Loading from existing service worker.",
+          "votes": 1
+        }
+      ]
+    },
+    "recentAchievements": [
+      {
+        "title": "user タスク進捗報告 + NotebookLM 蓄積基盤 (Win#132 part 19)",
+        "completed_at": "2026-04-26T00:00:00+00:00"
+      },
+      {
+        "title": "GitHub Issues <-> WBS sync metadata",
+        "completed_at": "2026-04-26T00:00:00+00:00"
+      },
+      {
+        "title": "user タスク進捗報告 + NotebookLM 蓄積基盤 (Win#132 part 19)",
+        "completed_at": "2026-04-26T00:00:00+00:00"
+      },
+      {
+        "title": "user タスク進捗報告 + NotebookLM 蓄積基盤 (Win#132 part 19)",
+        "completed_at": "2026-04-26T00:00:00+00:00"
+      },
+      {
+        "title": "user タスク進捗報告 + NotebookLM 蓄積基盤 (Win#132 part 19)",
+        "completed_at": "2026-04-26T00:00:00+00:00"
+      }
+    ]
+  },
+  "fetched_at": "2026-04-26T07:47:20+09:00",
+  "report_date": "2026-04-26"
+}
