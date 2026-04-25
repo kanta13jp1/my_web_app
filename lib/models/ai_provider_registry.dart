@@ -1454,6 +1454,22 @@ const List<AiProviderEntry> kAiProviderRegistry = [
     note:
         r'RAG評価OSS — Faithfulness/Answer Relevance/Context 4メトリクス / TestsetGenerator / LangChain・LlamaIndex統合 / pytest CI',
   ),
+  AiProviderEntry(
+    id: 'continue_dev',
+    displayName: 'Continue.dev',
+    status: AiProviderStatus.notImplemented,
+    entryPoint: 'https://docs.continue.dev/',
+    note:
+        r'OSS AIコーディングアシスタント — VS Code/JetBrains / 任意LLM接続 (Claude/Ollama) / YAML設定 / 12k+ Stars / Apache 2.0',
+  ),
+  AiProviderEntry(
+    id: 'aider',
+    displayName: 'Aider',
+    status: AiProviderStatus.notImplemented,
+    entryPoint: 'https://aider.chat/',
+    note:
+        r'AI ペアプログラマー CLI — Git自動コミット / 複数ファイル横断編集 / Claude/DeepSeek対応 / 22k+ Stars / SWE-bench高スコア',
+  ),
 ];
 
 /// ステータス別件数を集計
