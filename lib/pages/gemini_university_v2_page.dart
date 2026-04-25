@@ -17,6 +17,7 @@ import '../services/ai_learner_profile_service.dart';
 import '../services/ai_university_rlhf_service.dart';
 import '../services/gamification_service.dart';
 import '../services/theme_service.dart';
+import '../services/user_data_finetune_readiness_service.dart';
 import 'ai_university_ranking_page.dart';
 import 'api_playground_page.dart';
 
@@ -5174,6 +5175,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
   final _fsrsService = AiFsrsService();
   final _learnerProfileService = AiLearnerProfileService();
   final _rlhfService = AiUniversityRlhfService();
+  final _fineTuneReadinessService = UserDataFineTuneReadinessService();
   final Map<String, DateTime> _fsrsNextDue = {};
   final Map<String, String> _quizExplanations = {};
   final Map<String, bool> _quizEvaluating = {};
@@ -5181,6 +5183,8 @@ class _AiUniversityPageState extends State<AiUniversityPage>
   final Set<String> _fsrsDueRequested = {};
   final Map<String, bool> _rlhfSubmitting = {};
   AiUniversityRlhfSnapshot _rlhfSnapshot = AiUniversityRlhfSnapshot.empty();
+  UserDataFineTuneReadinessSnapshot _fineTuneReadiness =
+      UserDataFineTuneReadinessSnapshot.empty();
 
   @override
   void initState() {
@@ -5188,12 +5192,20 @@ class _AiUniversityPageState extends State<AiUniversityPage>
     _fetchContent();
     _loadAnsweredQuizzes();
     _loadRlhfSnapshot();
+    _loadFineTuneReadiness();
   }
 
   Future<void> _loadRlhfSnapshot() async {
     final snapshot = await _rlhfService.loadSnapshot();
     if (mounted && snapshot != null) {
       setState(() => _rlhfSnapshot = snapshot);
+    }
+  }
+
+  Future<void> _loadFineTuneReadiness() async {
+    final snapshot = await _fineTuneReadinessService.loadSnapshot();
+    if (mounted && snapshot != null) {
+      setState(() => _fineTuneReadiness = snapshot);
     }
   }
 
@@ -5654,10 +5666,13 @@ class _AiUniversityPageState extends State<AiUniversityPage>
       helpful: helpful,
     );
     final snapshot = ok ? await _rlhfService.loadSnapshot() : null;
+    final fineTuneReadiness =
+        ok ? await _fineTuneReadinessService.loadSnapshot() : null;
     if (!mounted) return;
     setState(() {
       _rlhfSubmitting[providerId] = false;
       if (snapshot != null) _rlhfSnapshot = snapshot;
+      if (fineTuneReadiness != null) _fineTuneReadiness = fineTuneReadiness;
     });
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -6082,9 +6097,15 @@ class _AiUniversityPageState extends State<AiUniversityPage>
 
   Widget _buildRlhfCard(String providerId, _ProviderMeta m) {
     final snapshot = _rlhfSnapshot;
+    final fineTune = _fineTuneReadiness;
     final providerSignals = snapshot.providerSignalCounts[providerId] ?? 0;
     final submitting = _rlhfSubmitting[providerId] == true;
     final progress = snapshot.qualityScore / 100;
+    final fineTuneColor = fineTune.readyForFineTune
+        ? const Color(0xFF22C55E)
+        : fineTune.readyForEvalBatch
+            ? const Color(0xFF38BDF8)
+            : const Color(0xFFF59E0B);
 
     return Card(
       color: const Color(0xFF151B27),
@@ -6170,6 +6191,8 @@ class _AiUniversityPageState extends State<AiUniversityPage>
               ),
             ),
             const SizedBox(height: 12),
+            _buildFineTuneReadinessPanel(fineTune, fineTuneColor),
+            const SizedBox(height: 12),
             if (submitting)
               const LinearProgressIndicator(minHeight: 3)
             else
@@ -6201,6 +6224,102 @@ class _AiUniversityPageState extends State<AiUniversityPage>
               ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildFineTuneReadinessPanel(
+    UserDataFineTuneReadinessSnapshot snapshot,
+    Color accent,
+  ) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: accent.withValues(alpha: 0.35)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.dataset_outlined, color: accent, size: 18),
+              const SizedBox(width: 8),
+              const Expanded(
+                child: Text(
+                  'First-party data tuning readiness',
+                  style: TextStyle(
+                    color: Color(0xFFE5E7EB),
+                    fontSize: 13,
+                    fontWeight: FontWeight.w800,
+                    height: 1.4,
+                  ),
+                ),
+              ),
+              Text(
+                '${snapshot.qualityScore}%',
+                style: TextStyle(
+                  color: accent,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w800,
+                  height: 1.4,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(999),
+            child: LinearProgressIndicator(
+              minHeight: 7,
+              value: snapshot.eligibleProgress,
+              backgroundColor: Colors.white.withValues(alpha: 0.10),
+              valueColor: AlwaysStoppedAnimation<Color>(accent),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            snapshot.kgi,
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.74),
+              fontSize: 12,
+              height: 1.5,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _buildRlhfMetricChip(
+                'Eligible',
+                '${snapshot.eligibleRecords}/${snapshot.eligibleTarget}',
+              ),
+              _buildRlhfMetricChip('Total', '${snapshot.totalRecords}'),
+              _buildRlhfMetricChip('Blocked', '${snapshot.blockedRecords}'),
+              _buildRlhfMetricChip('PII', snapshot.piiRisk),
+              _buildRlhfMetricChip(
+                'Eval',
+                snapshot.readyForEvalBatch ? 'Ready' : 'No',
+              ),
+              _buildRlhfMetricChip(
+                'Tune',
+                snapshot.readyForFineTune ? 'Ready' : 'No',
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            snapshot.nextAction,
+            style: const TextStyle(
+              color: Color(0xFFB0B0B0),
+              fontSize: 12,
+              height: 1.5,
+            ),
+          ),
+        ],
       ),
     );
   }

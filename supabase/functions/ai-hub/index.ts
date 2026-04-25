@@ -1785,6 +1785,7 @@ async function addItem(
 }
 
 const AI_UNIVERSITY_RLHF_SOURCE = "ai_university_rlhf_signal";
+const DAILY_JUDGMENT_QUALITY_SOURCE = "daily_judgment_quality_evaluation";
 
 function rlhfLabel(rating: number, helpful: boolean): string {
   if (helpful || rating >= 4) return "positive";
@@ -1863,6 +1864,128 @@ function buildRlhfSnapshot(
     ready_for_fine_tune: totalSignals >= 20 && qualityScore >= 70,
     provider_signal_counts: providerSignalCounts,
     next_action: rlhfNextAction(totalSignals, qualityScore),
+  };
+}
+
+function buildUserDataFineTuneReadiness(
+  rlhfRows: Array<{ metadata?: Record<string, unknown> | null }>,
+  judgmentRows: Array<{ metadata?: Record<string, unknown> | null }>,
+) {
+  let positiveSignals = 0;
+  let neutralSignals = 0;
+  let negativeSignals = 0;
+  let ratingSum = 0;
+  let judgmentScoreSum = 0;
+  let approvedJudgments = 0;
+  let reviewJudgments = 0;
+  let commentRows = 0;
+
+  for (const row of rlhfRows) {
+    const metadata = row.metadata ?? {};
+    const rating = Math.min(
+      Math.max(Math.round(asNumber(metadata.rating, 3)), 1),
+      5,
+    );
+    const helpful = metadata.helpful === true;
+    const label = asString(metadata.quality_label) ||
+      rlhfLabel(rating, helpful);
+    ratingSum += rating;
+    if (asString(metadata.comment)) commentRows += 1;
+    if (label === "positive") positiveSignals += 1;
+    else if (label === "negative") negativeSignals += 1;
+    else neutralSignals += 1;
+  }
+
+  for (const row of judgmentRows) {
+    const metadata = row.metadata ?? {};
+    const evaluation = metadata.quality_evaluation as
+      | Record<string, unknown>
+      | undefined;
+    const score = asNumber(evaluation?.overall_score, 0);
+    judgmentScoreSum += score;
+    if (score >= 80 || evaluation?.passed === true) approvedJudgments += 1;
+    else reviewJudgments += 1;
+  }
+
+  const rlhfTotal = rlhfRows.length;
+  const judgmentTotal = judgmentRows.length;
+  const totalRecords = rlhfTotal + judgmentTotal;
+  const rlhfScore = rlhfQualityScore(
+    positiveSignals,
+    neutralSignals,
+    rlhfTotal,
+  );
+  const averageRating = rlhfTotal === 0
+    ? 0
+    : Math.round((ratingSum / rlhfTotal) * 10) / 10;
+  const judgmentQualityScore = judgmentTotal === 0
+    ? 0
+    : Math.round(judgmentScoreSum / judgmentTotal);
+  const sourceCoverage = [
+    rlhfTotal > 0,
+    judgmentTotal > 0,
+  ].filter(Boolean).length;
+  const eligibleRecords = positiveSignals + negativeSignals +
+    approvedJudgments;
+  const qualityScore = clampPercent(
+    rlhfScore * 0.55 + judgmentQualityScore * 0.35 + sourceCoverage * 5,
+  );
+  const readyForEvalBatch = eligibleRecords >= 20 && qualityScore >= 70;
+  const readyForFineTune = eligibleRecords >= 100 && qualityScore >= 80 &&
+    sourceCoverage >= 2;
+  const piiRisk = commentRows > 0 || judgmentTotal > 0 ? "medium" : "low";
+  const nextAction = readyForFineTune
+    ? "Freeze a de-identified JSONL training set and run an offline evaluation before any fine-tune job."
+    : readyForEvalBatch
+    ? "Create an evaluation batch first; keep collecting preference pairs until 100+ eligible records."
+    : "Collect more explicit Useful/Needs fix feedback and daily judgment outcomes before tuning.";
+
+  return {
+    method: "scale_egp_first_party_data_engine_v1",
+    total_records: totalRecords,
+    eligible_records: eligibleRecords,
+    blocked_records: Math.max(totalRecords - eligibleRecords, 0),
+    quality_score: qualityScore,
+    ready_for_eval_batch: readyForEvalBatch,
+    ready_for_fine_tune: readyForFineTune,
+    pii_risk: piiRisk,
+    average_rating: averageRating,
+    source_counts: {
+      ai_university_rlhf: rlhfTotal,
+      daily_judgment_quality: judgmentTotal,
+    },
+    signal_summary: {
+      positive_signals: positiveSignals,
+      neutral_signals: neutralSignals,
+      negative_signals: negativeSignals,
+      approved_judgments: approvedJudgments,
+      review_judgments: reviewJudgments,
+    },
+    kgi: "Use first-party product data to improve AI answer quality without unsafe raw-data fine-tuning.",
+    csf: [
+      "Consent-aware first-party signal collection",
+      "De-identification before export",
+      "Quality gate before training",
+      "Evaluation batch before fine-tune",
+    ],
+    kpi: {
+      eligible_records_target: 100,
+      quality_score_target: 80,
+      source_coverage_target: 2,
+      current_eligible_records: eligibleRecords,
+      current_quality_score: qualityScore,
+      current_source_coverage: sourceCoverage,
+    },
+    export_plan: {
+      formats: ["jsonl_sft", "preference_pairs", "evaluation_set"],
+      governance_steps: [
+        "Remove direct identifiers and long free-form comments unless reviewed.",
+        "Keep negative examples as preference/improvement pairs, not as SFT gold answers.",
+        "Hold back at least 20% as an evaluation set before training.",
+      ],
+      suggested_holdout_ratio: 0.2,
+    },
+    next_action: nextAction,
   };
 }
 
@@ -2406,6 +2529,7 @@ serve(async (req: Request) => {
       "quiz.fsrs_grade",
       "university.rlhf_signal",
       "university.rlhf_snapshot",
+      "user_data.finetune_readiness",
       "learner.update_profile",
       "quiz.evaluate",
       "quiz.explain",
@@ -3216,6 +3340,21 @@ serve(async (req: Request) => {
           500,
         ) as Array<{ metadata?: Record<string, unknown> | null }>;
         return json({ success: true, snapshot: buildRlhfSnapshot(rows) });
+      }
+
+      case "user_data.finetune_readiness": {
+        if (!userId) return json({ error: "Unauthorized" }, 401);
+        const [rlhfRows, judgmentRows] = await Promise.all([
+          listItems(admin, AI_UNIVERSITY_RLHF_SOURCE, userId, 1000),
+          listItems(admin, DAILY_JUDGMENT_QUALITY_SOURCE, userId, 500),
+        ]) as [
+          Array<{ metadata?: Record<string, unknown> | null }>,
+          Array<{ metadata?: Record<string, unknown> | null }>,
+        ];
+        return json({
+          success: true,
+          snapshot: buildUserDataFineTuneReadiness(rlhfRows, judgmentRows),
+        });
       }
 
       // ── AI大学 v2: FSRS スペース反復 ────────────────────────────────────

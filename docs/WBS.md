@@ -383,3 +383,7 @@ WHERE title = 'ai-hub provider.chat 蜈ｨ蟇ｾ蠢・;
 - 対応内容: `ai-hub judgment.get` の生成結果を KGI / CSF / KPI 付きの構造に正規化し、KGI整合・実行可能性・文脈根拠・明瞭性をScale Evaluation風の品質ゲートで自動採点するようにした。
 - 実装補足: ログイン済みユーザーは `daily_judgment_quality_evaluation` として品質スナップショットを保存し、Daily Judgment UIでは総合スコア、しきい値、評価軸、改善アクションを確認できる。
 - WBS DB反映: migration `20260425100000_wbs_codex_daily_judgment_scale_eval_start.sql`, `20260425101500_wbs_codex_daily_judgment_scale_eval_done.sql`
+- 実担当タスク: `[追加要望] 長期：独自ユーザーデータをファインチューニングに活用（Scale EGP的アプローチ）`
+- 対応内容: `ai-hub` に `user_data.finetune_readiness` を追加し、AI大学RLHFシグナルとDaily Judgment品質評価を横断集計して、独自データ活用の準備度をKGI/CSF/KPI付きで返すようにした。
+- 実装補足: 生データを即ファインチューニングへ流さず、eligible record数、品質スコア、評価バッチ準備、ファインチューニング準備、PIIリスク、匿名化・holdout方針、次アクションをゲート表示する。AI大学の `RLHF quality loop` には `First-party data tuning readiness` パネルを追加した。
+- WBS DB反映: migration `20260425103000_wbs_codex_user_data_finetune_egp_start.sql`, `20260425104500_wbs_codex_user_data_finetune_egp_done.sql`
