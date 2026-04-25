@@ -158,7 +158,7 @@ class _UserTasksPageState extends State<UserTasksPage> {
                   ),
                   const SizedBox(height: 16),
                   DropdownButtonFormField<String>(
-                    value: reportStatus,
+                    initialValue: reportStatus,
                     decoration: const InputDecoration(labelText: '状況'),
                     items: const [
                       DropdownMenuItem(
