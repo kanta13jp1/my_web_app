@@ -40,9 +40,9 @@ jobs:
         run: |
           # メイン機能 guitar-recording-studio を含む重要EFを監視
           ENDPOINTS=(
-            "development-achievements:POST"
-            "get-competitor-features:POST"
-            "get-growth-roadmap-progress:POST"
+            "schedule-hub:POST"
+            "tools-hub:POST"
+            "admin-hub:POST"
             "guitar-recording-studio:POST"
             "get-home-dashboard:POST"
             "health-check:GET"
