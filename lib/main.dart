@@ -213,6 +213,7 @@ import 'package:my_web_app/pages/vehicle_fleet_manager_page.dart';
 import 'package:my_web_app/pages/recruitment_job_board_page.dart';
 import 'package:my_web_app/pages/home_iot_manager_page.dart';
 import 'package:my_web_app/pages/legal_compliance_manager_page.dart';
+import 'package:my_web_app/pages/user_tasks_page.dart';
 import 'package:my_web_app/pages/email_template_builder_page.dart';
 import 'package:my_web_app/pages/two_factor_auth_page.dart';
 import 'package:my_web_app/pages/inventory_barcode_page.dart';
@@ -1442,6 +1443,11 @@ class _MyAppState extends State<MyApp> {
           case '/project-gantt':
             return MaterialPageRoute(
               builder: (_) => const ProjectGanttPage(),
+            );
+          case '/user-tasks':
+            return MaterialPageRoute(
+              settings: const RouteSettings(name: '/user-tasks'),
+              builder: (_) => const UserTasksPage(),
             );
           case '/business-card-manager':
             return MaterialPageRoute(
