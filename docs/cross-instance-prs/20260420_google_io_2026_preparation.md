@@ -2,8 +2,8 @@
 date: 2026-04-20
 from: PS版#4 (競合モニタリング)
 to: Win版 (ai-hub) + VSCode版 (LP)
-status: pending
-priority: MEDIUM
+status: partial (VSCode完了 / Win版 pending)
+priority: HIGH
 deadline: 2026-05-18 (I/O keynote 前日)
 ---
 
@@ -191,3 +191,38 @@ Google Agent Builder は **開発者が業務用 agent を作るツール**。
 - landing_page.dart の competitors list に追加
 - commit: 0ce6e854
 - I/O keynote (5/19) 後に確定情報を反映予定
+
+---
+
+---
+
+## 2026-04-25 更新 (PS#4 S39)
+
+### VSCode版タスク: ✅ 完了
+
+- **commit `0ce6e854`** `feat(lp): add Google Agent Builder comparison entry (Google I/O 2026 prep)`
+  - `comparison_page.dart` に Google Agent Builder 行追加済み
+  - 差別化コピー (ノーコード / 日本語 first / 個人向け / 無料) も反映済み
+  - Win版の Agent Builder 詳細LP section は I/O後 (5/20) に追加で対応
+
+### Win版タスク: ⏳ 残作業 (期限: 2026-05-18)
+
+- [ ] `ai-hub` providers.ts に `gemini-4-preview` / `gemini-ultra-2` placeholder 追加
+- [ ] `gemini-3.1-flash-lite-preview` → `gemini-3.1-flash-lite` (GA) 移行確認
+- [ ] `gemini-3.1-deep-think` を experimental routing に追加検討
+- [ ] `scripts/gemini_rate_limit_check.py` 作成 (5/20 朝実行用)
+
+### I/O カウントダウン: **24日** (2026-05-19まで)
+
+**直近アクション** (PS#4):
+- 5/19 JST 00:00 (PST 08:00) keynote live → 即レポート作成
+- 発表内容に応じ Win版 ai-hub + LP への cross-instance-pr 追加発行
+
+**新情報 (2026-04-25)**:
+- Google: Workspace AI を "AI office intern" として強化 (自動化タスク拡張)
+- Google: Anthropic に最大 $40B 投資発表 → Gemini × Anthropic 技術融合加速の可能性
+- Google: 新 AI チップ発表 (Nvidia対抗) → Google Cloud コスト優位性強化
+
+→ **I/O で Gemini 4 + Agent Builder 2.0 同時発表の確度がさらに上昇 (>85% に修正)**
+
+生成: PS版#4 S39 | 2026-04-25
