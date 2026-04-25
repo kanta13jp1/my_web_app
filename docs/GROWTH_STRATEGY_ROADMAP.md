@@ -17989,4 +17989,4 @@ curl -X POST https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/schedule-hub 
 - 原則 6 (資本=時間): ✅ Google投資情報の先取り = 競合に先行する時間資本
 - 原則 9 (IPO/ウェルビーイング): ✅ コスト構造改善 → 財務健全化
 
-### commit: TBD
+### commit: fa824d96
