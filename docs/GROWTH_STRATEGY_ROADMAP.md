@@ -17872,3 +17872,50 @@ gh run watch
 8. KPI=昨日の自分 ✅ / 9. ゴール=IPO ✅
 
 ### commit: TBD
+
+---
+
+## Win版#132 part 8 完了 (2026-04-25 朝)
+
+### 実施内容: notion.sync_wbs fix — HTTP 400 全 139 件失敗の原因修正
+
+**契機**: 初回手動実行で 139/139 全 HTTP 400 失敗 (ユーザー報告):
+
+```
+{"success":false,"total":139,"created":0,"updated":0,"failed":139,
+ "errors":["create ...: HTTP 400", ...]}
+```
+
+**原因推定**:
+1. `deadline: { date: null }` — Notion API の null date 構文が誤り (property omit 必須)
+2. select options mismatch — Supabase wbs_tasks.status / instance に Notion DB 側に未登録の値 (例: `in-progress` / `not_started` / `done` 等)
+3. error body 非取得でデバッグ困難
+
+**修正** (`supabase/functions/schedule-hub/index.ts` / `notion.sync_wbs` action):
+1. null date → property 自体を omit (conditional build)
+2. `VALID_INSTANCES` / `VALID_STATUSES` set で option normalize
+   - alias: `in-progress` → `in_progress` / `not_started`/`draft` → `pending` / `done` → `completed`
+   - 未登録値は `all` / `pending` にフォールバック
+3. error body を `await resp.text()` で取得 → errors[] に 200 字まで含める
+
+### 次回手動テスト
+
+```bash
+# deploy-prod 完了後 (2-3 min 待機)
+curl -X POST https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/schedule-hub \
+  -H "Content-Type: application/json" \
+  -d '{"action":"notion.sync_wbs"}'
+```
+
+期待: `"success":true, "total":139, "created":139, "failed":0`
+失敗時: errors[] に具体的な Notion error message が入る → 次修正に直結
+
+### Backlog 進捗
+- ✅ S1 / N1 / N2 / N5
+- ✅ **N2 fix (part 8)** ← 本 commit
+- 🔴 S2 / S3 / N3 / N4 / S4 残
+
+### Philosophy Alignment (9/9) ✅
+特に原則 8 (KPI=昨日の自分): error body 取得で失敗 → 改善サイクル高速化
+
+### commit: TBD

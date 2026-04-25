@@ -861,17 +861,44 @@ serve(async (req: Request) => {
         let failed = 0;
         const errors: string[] = [];
 
+        // Notion select property options (DB schema の options と一致必須)
+        // mismatch 値は default にフォールバック (400 error 回避)
+        const VALID_INSTANCES = new Set([
+          "vscode", "win", "ps1", "ps2", "ps3", "ps4", "ps5", "ps6", "web", "mobile", "all",
+        ]);
+        const VALID_STATUSES = new Set([
+          "pending", "in_progress", "completed", "blocked",
+        ]);
+        const normalizeInstance = (v: unknown): string => {
+          const s = String(v ?? "all").trim();
+          return VALID_INSTANCES.has(s) ? s : "all";
+        };
+        const normalizeStatus = (v: unknown): string => {
+          const s = String(v ?? "pending").trim();
+          // alias: Supabase 側が "in-progress" / "not_started" を使うケースを吸収
+          if (s === "in-progress") return "in_progress";
+          if (s === "not_started" || s === "draft") return "pending";
+          if (s === "done") return "completed";
+          return VALID_STATUSES.has(s) ? s : "pending";
+        };
+
         for (const t of tasks ?? []) {
           // title property = id (Notion Database で id property を Title 型として使用)
+          // null 値の property は omit (Notion API は `{date: null}` を受けるが
+          // 他の type では 400 になるため全て conditional 構築)
           const properties: Record<string, unknown> = {
             id: { title: [{ text: { content: String(t.id) } }] },
             title: { rich_text: [{ text: { content: String(t.title ?? "") } }] },
-            instance: { select: { name: String(t.instance ?? "all") } },
-            status: { select: { name: String(t.status ?? "pending") } },
+            instance: { select: { name: normalizeInstance(t.instance) } },
+            status: { select: { name: normalizeStatus(t.status) } },
             progress: { number: Number(t.progress ?? 0) },
-            deadline: t.end_date ? { date: { start: String(t.end_date) } } : { date: null },
-            updated_at: t.updated_at ? { date: { start: String(t.updated_at) } } : { date: null },
           };
+          if (t.end_date) {
+            properties.deadline = { date: { start: String(t.end_date) } };
+          }
+          if (t.updated_at) {
+            properties.updated_at = { date: { start: String(t.updated_at) } };
+          }
 
           try {
             // 既存 page を id (Title) で検索
@@ -890,7 +917,8 @@ serve(async (req: Request) => {
 
             if (!queryResp.ok) {
               failed++;
-              errors.push(`query ${t.id}: HTTP ${queryResp.status}`);
+              const eb = await queryResp.text().catch(() => "");
+              errors.push(`query ${t.id}: HTTP ${queryResp.status} ${eb.slice(0, 150)}`);
               continue;
             }
 
@@ -911,7 +939,8 @@ serve(async (req: Request) => {
               if (patchResp.ok) updated++;
               else {
                 failed++;
-                errors.push(`patch ${t.id}: HTTP ${patchResp.status}`);
+                const eb = await patchResp.text().catch(() => "");
+                errors.push(`patch ${t.id}: HTTP ${patchResp.status} ${eb.slice(0, 200)}`);
               }
             } else {
               // create
@@ -930,7 +959,8 @@ serve(async (req: Request) => {
               if (createResp.ok) created++;
               else {
                 failed++;
-                errors.push(`create ${t.id}: HTTP ${createResp.status}`);
+                const eb = await createResp.text().catch(() => "");
+                errors.push(`create ${t.id}: HTTP ${createResp.status} ${eb.slice(0, 200)}`);
               }
             }
 
