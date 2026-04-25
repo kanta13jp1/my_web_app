@@ -61,6 +61,153 @@ async function addItem(admin: SupabaseClient, source: string, userId: string, me
   return data;
 }
 
+type TomeCompetitorRow = {
+  Product: string;
+  Feature: string;
+  Price: string;
+  Risk: string;
+  Countermove: string;
+  Source: string;
+};
+
+function textValue(value: unknown, fallback = ""): string {
+  if (value === null || value === undefined) return fallback;
+  if (Array.isArray(value)) return value.map((item) => textValue(item)).filter(Boolean).join(" / ");
+  return String(value).trim() || fallback;
+}
+
+function pickField(fields: Record<string, unknown>, keys: string[], fallback = ""): string {
+  for (const key of keys) {
+    const value = fields[key] ?? fields[key.toLowerCase()] ?? fields[key.toUpperCase()];
+    const text = textValue(value);
+    if (text) return text;
+  }
+  return fallback;
+}
+
+function csvCell(value: string): string {
+  if (!/[",\n\r]/.test(value)) return value;
+  return `"${value.replaceAll('"', '""')}"`;
+}
+
+function competitorRowsToCsv(rows: TomeCompetitorRow[]): string {
+  const headers: Array<keyof TomeCompetitorRow> = ["Product", "Feature", "Price", "Risk", "Countermove", "Source"];
+  return [
+    headers.join(","),
+    ...rows.map((row) => headers.map((header) => csvCell(row[header])).join(",")),
+  ].join("\n");
+}
+
+function buildTomeCompetitorMarkdown(
+  topic: string,
+  audience: string,
+  rows: TomeCompetitorRow[],
+  source: string,
+): string {
+  const topRows = rows.slice(0, 8);
+  const lines = topRows.map((row) =>
+    `- ${row.Product}: feature=${row.Feature || "-"} / risk=${row.Risk || "-"} / countermove=${row.Countermove || "-"}`
+  );
+  return [
+    `# Tome Competitor Comparison (${new Date().toISOString().slice(0, 10)})`,
+    "",
+    `Audience: ${audience || "Product and marketing team"}`,
+    `Source: ${source}`,
+    "",
+    "## KGI",
+    `Keep ${topic || "competitor comparison"} fresh enough to guide weekly product decisions.`,
+    "",
+    "## CSF",
+    "- Use Airtable or the competitors table as the structured source of facts",
+    "- Separate factual comparison from strategic interpretation",
+    "- Convert every high-risk finding into a WBS action",
+    "",
+    "## KPI",
+    `- Source rows: ${rows.length}`,
+    "- Weekly refreshes: 1",
+    "- WBS actions per high-risk finding: 1",
+    "",
+    "## Competitor Summary",
+    ...(lines.length > 0 ? lines : ["- No competitor rows available yet."]),
+    "",
+    "## Tome Prompt",
+    "Create a concise Tome deck with a market map, comparison table, threat ranking, counter strategy, and automation cadence.",
+  ].join("\n");
+}
+
+async function fetchAirtableCompetitorRows(): Promise<{
+  configured: boolean;
+  rows: TomeCompetitorRow[];
+}> {
+  const token = Deno.env.get("AIRTABLE_API_KEY") ?? Deno.env.get("AIRTABLE_PAT") ?? "";
+  const baseId = Deno.env.get("AIRTABLE_BASE_ID") ?? "";
+  const tableName = Deno.env.get("AIRTABLE_TABLE_NAME") ?? Deno.env.get("AIRTABLE_COMPETITOR_TABLE") ?? "";
+  const view = Deno.env.get("AIRTABLE_VIEW") ?? "";
+  if (!token || !baseId || !tableName) {
+    return { configured: false, rows: [] };
+  }
+
+  const rows: TomeCompetitorRow[] = [];
+  let offset = "";
+  do {
+    const url = new URL(`https://api.airtable.com/v0/${baseId}/${encodeURIComponent(tableName)}`);
+    url.searchParams.set("pageSize", "100");
+    if (view) url.searchParams.set("view", view);
+    if (offset) url.searchParams.set("offset", offset);
+
+    const res = await fetch(url, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) {
+      throw new Error(`Airtable request failed: ${res.status} ${await res.text()}`);
+    }
+    const payload = await res.json() as {
+      records?: Array<{ fields?: Record<string, unknown> }>;
+      offset?: string;
+    };
+    for (const record of payload.records ?? []) {
+      const fields = record.fields ?? {};
+      rows.push({
+        Product: pickField(fields, ["Product", "Name", "Competitor", "Company"], "Unknown"),
+        Feature: pickField(fields, ["Feature", "Key Feature", "Capability", "Description"]),
+        Price: pickField(fields, ["Price", "Pricing", "Plan"]),
+        Risk: pickField(fields, ["Risk", "Threat", "Threat Level", "Overlap"]),
+        Countermove: pickField(fields, ["Countermove", "Next Step", "Action", "WBS Action"]),
+        Source: "Airtable",
+      });
+    }
+    offset = payload.offset ?? "";
+  } while (offset && rows.length < 500);
+
+  return { configured: true, rows };
+}
+
+async function fetchSupabaseCompetitorRows(admin: SupabaseClient): Promise<TomeCompetitorRow[]> {
+  const { data, error } = await admin.from("competitors")
+    .select("id, display_name, name, category, description, funding_or_valuation, key_features, jp_strength, jp_weakness, threat_level, our_overlap_score")
+    .eq("is_active", true)
+    .order("sort_order", { ascending: true })
+    .limit(30);
+  if (error) throw new Error(error.message);
+  return (data ?? []).map((row: Record<string, unknown>) => {
+    const product = textValue(row.name, textValue(row.display_name, textValue(row.id, "Unknown")));
+    const feature = textValue(row.key_features, textValue(row.description, textValue(row.category)));
+    const risk = [
+      textValue(row.threat_level),
+      textValue(row.our_overlap_score) ? `overlap ${row.our_overlap_score}/10` : "",
+      textValue(row.jp_strength),
+    ].filter(Boolean).join(" / ");
+    return {
+      Product: product,
+      Feature: feature,
+      Price: textValue(row.funding_or_valuation, "unknown"),
+      Risk: risk,
+      Countermove: textValue(row.jp_weakness, "Add WBS counter task"),
+      Source: "Supabase competitors",
+    };
+  });
+}
+
 async function deleteItem(admin: SupabaseClient, source: string, userId: string, id: string) {
   const { error } = await admin.from("hub_data")
     .delete().eq("id", id).eq("source", source)
@@ -578,6 +725,51 @@ serve(async (req) => {
       case "competitor.reports": {
         const reports = await listItems(admin, "competitor_report", userId, 12);
         return json({ success: true, reports });
+      }
+      case "tome.competitor_airtable_deck": {
+        const topic = String(body.topic ?? "Competitor comparison and weekly product decision");
+        const audience = String(body.audience ?? "Product and marketing team");
+        let source = "Airtable";
+        let warning = "";
+        let rows: TomeCompetitorRow[] = [];
+        try {
+          const airtable = await fetchAirtableCompetitorRows();
+          if (airtable.configured && airtable.rows.length > 0) {
+            rows = airtable.rows;
+          } else {
+            source = "Supabase competitors";
+            warning = airtable.configured
+              ? "Airtable returned no records; fallback competitors table was used."
+              : "Airtable secrets are not fully configured; fallback competitors table was used.";
+            rows = await fetchSupabaseCompetitorRows(admin);
+          }
+        } catch (error) {
+          source = "Supabase competitors";
+          warning = `Airtable sync failed (${error instanceof Error ? error.message : String(error)}); fallback competitors table was used.`;
+          rows = await fetchSupabaseCompetitorRows(admin);
+        }
+
+        const csv = competitorRowsToCsv(rows);
+        const markdown = buildTomeCompetitorMarkdown(topic, audience, rows, source);
+        const report = await addItem(admin, "tome_competitor_deck", userId, {
+          topic,
+          audience,
+          source,
+          warning,
+          row_count: rows.length,
+          csv,
+          markdown,
+          generated_at: new Date().toISOString(),
+        });
+        return json({
+          success: true,
+          source,
+          warning,
+          rowCount: rows.length,
+          csv,
+          markdown,
+          report,
+        });
       }
       case "competitor.weekly_manus_report": {
         const { data } = await admin.from("hub_data")

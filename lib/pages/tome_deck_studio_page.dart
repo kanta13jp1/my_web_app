@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../services/tome_deck_studio_service.dart';
 
@@ -17,6 +18,8 @@ class _TomeDeckStudioPageState extends State<TomeDeckStudioPage> {
     text: 'Investors / internal executive meeting',
   );
   final _sourceCtrl = TextEditingController();
+  bool _isSyncingCompetitors = false;
+  String? _syncStatus;
   TomeDeckScenario _scenario = TomeDeckScenario.investorDeck;
 
   @override
@@ -40,6 +43,7 @@ class _TomeDeckStudioPageState extends State<TomeDeckStudioPage> {
       _topicCtrl.text = _scenarioTopic(scenario);
       _audienceCtrl.text = _scenarioAudience(scenario);
       _sourceCtrl.text = _scenarioSource(scenario);
+      _syncStatus = null;
     });
   }
 
@@ -57,6 +61,46 @@ class _TomeDeckStudioPageState extends State<TomeDeckStudioPage> {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Tome AI prompt copied')),
     );
+  }
+
+  Future<void> _syncCompetitorSource() async {
+    setState(() {
+      _isSyncingCompetitors = true;
+      _syncStatus = 'Syncing competitor source...';
+    });
+    try {
+      final response = await Supabase.instance.client.functions.invoke(
+        'enterprise-hub',
+        body: {
+          'action': 'tome.competitor_airtable_deck',
+          'topic': _topicCtrl.text,
+          'audience': _audienceCtrl.text,
+        },
+      );
+      final data = response.data;
+      if (data is! Map || data['success'] != true || data['csv'] is! String) {
+        throw StateError('Unexpected sync response');
+      }
+      final rowCount = data['rowCount'] ?? 0;
+      final source = data['source'] ?? 'unknown';
+      final warning = data['warning'];
+      setState(() {
+        _sourceCtrl.text = data['csv'] as String;
+        _syncStatus = warning is String && warning.isNotEmpty
+            ? 'Loaded $rowCount rows from $source. $warning'
+            : 'Loaded $rowCount rows from $source.';
+      });
+    } catch (error) {
+      setState(() => _syncStatus = 'Sync failed: $error');
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Competitor sync failed: $error')),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isSyncingCompetitors = false);
+      }
+    }
   }
 
   @override
@@ -94,6 +138,9 @@ class _TomeDeckStudioPageState extends State<TomeDeckStudioPage> {
                 scenario: _scenario,
                 onChanged: () => setState(() {}),
                 onCopyPrompt: _copyPrompt,
+                onSyncCompetitors: _syncCompetitorSource,
+                isSyncingCompetitors: _isSyncingCompetitors,
+                syncStatus: _syncStatus,
               );
               final outline = _OutlinePanel(plan: plan);
               if (!wide) {
@@ -236,6 +283,9 @@ class _EditorPanel extends StatelessWidget {
     required this.scenario,
     required this.onChanged,
     required this.onCopyPrompt,
+    required this.onSyncCompetitors,
+    required this.isSyncingCompetitors,
+    required this.syncStatus,
   });
 
   final TextEditingController topicCtrl;
@@ -244,6 +294,9 @@ class _EditorPanel extends StatelessWidget {
   final TomeDeckScenario scenario;
   final VoidCallback onChanged;
   final VoidCallback onCopyPrompt;
+  final VoidCallback onSyncCompetitors;
+  final bool isSyncingCompetitors;
+  final String? syncStatus;
 
   @override
   Widget build(BuildContext context) {
@@ -293,6 +346,37 @@ class _EditorPanel extends StatelessWidget {
               label: const Text('Copy Tome AI prompt'),
             ),
           ),
+          if (scenario == TomeDeckScenario.competitorAirtable) ...[
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: isSyncingCompetitors ? null : onSyncCompetitors,
+                icon: isSyncingCompetitors
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.sync_outlined),
+                label: const Text('Sync Airtable / competitor source'),
+              ),
+            ),
+            if (syncStatus != null) ...[
+              const SizedBox(height: 8),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  syncStatus!,
+                  style: const TextStyle(
+                    color: Color(0xFF475569),
+                    fontSize: 12,
+                    height: 1.4,
+                  ),
+                ),
+              ),
+            ],
+          ],
         ],
       ),
     );
