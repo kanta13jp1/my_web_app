@@ -165,6 +165,9 @@ jobs:
           supabase migration repair --status reverted 20260425150000 2>/dev/null || true
           supabase migration repair --status reverted 20260425160000 2>/dev/null || true
           supabase migration repair --status reverted 20260425170000 2>/dev/null || true
+          supabase migration repair --status reverted 20260425142000 2>/dev/null || true
+          supabase migration repair --status reverted 20260425171500 2>/dev/null || true
+          supabase migration repair --status reverted 20260425173000 2>/dev/null || true
           # Run migrations with auto-repair retry.
           # If db push fails with "Remote migration versions not found", extract the
           # stuck version numbers, repair them as reverted, and retry once.
