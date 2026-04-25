@@ -20408,3 +20408,19 @@ if (provider == null) continue;
 **Philosophy**: ✅KPI=昨日の自分 (deploy chain 修復) ✅商品=ユーザー価値 (competitor_features DB適用)
 
 **commit**: `433eb2b1`
+
+## 2026-04-26 PS#2 S37: SEO記事 #4 Notion database limits
+
+### 実施内容
+- **T-1 dispatch**: no-op (May 1 dispatch予定)
+- **SEO Phase 1 記事 #4**: `2026-05-16-notion-database-limits-workaround` JA+EN ドラフト作成
+  - JA: Notionデータベース7つの限界と回避策 (API rate/block/relation/formula/filter/offline/KPI)
+  - EN: "7 Walls Every Notion Power User Hits"
+  - tags: JA 4/4 / EN 4/4 ✅
+  - T-1 dispatch予定: 2026-05-15 → 2026-05-16投稿
+- **Commits**: 32f93cfa → 82780bdd
+
+### Philosophy Alignment: PS#2 S37
+- ミッション駆動: Notion の技術的限界を具体的に示して差別化 ✅
+- KPI=昨日の自分: SEO 50本計画 3→4本 ✅
+- 商品=ユーザー価値: 開発者が実際に使える回避策を提供 ✅
