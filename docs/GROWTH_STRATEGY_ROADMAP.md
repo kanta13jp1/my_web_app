@@ -18059,3 +18059,27 @@ curl -X POST https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/schedule-hub 
 ### Philosophy Alignment
 1.CEO感 ✅ 2.ミッション ✅ 3.Mentor ✅ 4.6部署 N/A 5.商品価値 ✅ (タイトル矛盾防止) 6.資本 ✅ 7.BS N/A 8.KPI ✅ 9.IPO ✅
 合計: 7/9 ✅ 実装可
+
+## PS版#1 S36 — 2026-04-25 (Rule17 WF health check)
+
+### Rule 17 WF health check (2026-04-25)
+
+**全WF集計**: competitor-monitoring + blog-draft-register が "workflow file issue" で失敗
+
+**失敗原因分類**:
+| WF | 原因 | 対応 |
+|---|---|---|
+| `competitor-monitoring.yml` | `run: \|` ブロック内 Python multiline が col 0 → YAML block 終了 (9箇所) | `289ad191` で upstream が先行修正済み (awk+indent方式) → PS#1 conflict を upstream版に解決 |
+| `blog-draft-register.yml` | `uses: actions/checkout@v6` (存在しないバージョン) | `cd0f7db4` で @v4 に修正・push ✅ |
+
+**orphan branches**: blog-publish/cs-check/ai-university-update/daily-report/youtube-analysis/claude/* 全て0本 (clean)
+
+**修正済み**: blog-draft-register @v6→@v4 (cd0f7db4)
+
+**学習**: YAML `run: |` 内 Python multiline block は col 0 コンテンツで block 終了 → `python3 -c '...'` 1行化 or env var 経由が必須
+
+### Philosophy Alignment
+1.CEO感 ✅ 2.ミッション N/A 3.Mentor N/A 4.6部署 N/A 5.商品価値 N/A 6.資本 ✅ (CI安定化で開発速度維持) 7.BS ✅ (負債削除) 8.KPI ✅ 9.IPO N/A
+合計: 4/9 ✅
+
+### commit: cd0f7db4
