@@ -20268,3 +20268,14 @@ LOVO (Genny) / Voicemod / Bark (Suno AI OSS TTS) / Replica Studios / AIVA (音�
 **Philosophy**: ✅商品=ユーザー価値 (エラーフィードバック改善) ✅KPI=昨日の自分
 
 **commit**: `02aa3f21` / Closes #764
+
+### Rule 17 WF health check (2026-04-26 PS#1 S46)
+- **deploy-prod 4連続失敗 → 根本修正完了**
+  - SQLSTATE 23502: 4件の AI大学 seed migration (Otter.ai/Murf/Coqui/Resemble AI) が旧スキーマ (provider_id, section, content_md) 使用 → provider NOT NULL 違反
+  - Fix (commit 4c39f625): 全4件を新スキーマ (provider, category, title, content, source_url, published_at, sort_order) に書き直し + $$ 区切り + ON CONFLICT (provider, category) DO NOTHING
+  - 全4タイムスタンプは deploy-prod repair list 登録済 → 次回 deploy で再実行
+- **Notion Mirror Sync (hourly) 1件失敗 → soft-fail 追加**
+  - Notion API HTTP 429 rate_limited でクラッシュ (既存 soft-fail chain に 429 パターンなし)
+  - Fix (commit b8bec666): notion-sync.yml に rate_limited パターン追加 → ::warning:: + exit 0
+- **deploy-prod 9b4f7952 pending** (fixes 含む)
+- **修正 commit**: 4c39f625 (4migration fix) + b8bec666 (notion-sync 429) + 933d46f8 push
