@@ -1097,6 +1097,9 @@ serve(async (req: Request) => {
           "web",
           "mobile",
           "codex",
+          "gemini",
+          "co-pilot",
+          "user",
         ]);
         const VALID_STATUSES = new Set([
           "pending",
@@ -1108,6 +1111,7 @@ serve(async (req: Request) => {
           const s = String(v ?? "win").trim();
           // alias: legacy 'all' / 'schedule' / 'gha' は win にフォールバック
           if (s === "all" || s === "schedule" || s === "gha") return "win";
+          if (s === "copilot" || s === "github-copilot") return "co-pilot";
           return VALID_INSTANCES.has(s) ? s : "win";
         };
         const normalizeStatus = (v: unknown): string => {

@@ -138,6 +138,10 @@ class WbsTask {
 
   String get instanceLabel => switch (instance) {
         'codex' => 'Codex',
+        'gemini' => 'Gemini',
+        'co-pilot' => 'Co-pilot',
+        'copilot' => 'Co-pilot',
+        'user' => 'User',
         'vscode' => 'VSCode版',
         'win' => 'Win版',
         'windows' => 'Win版',
@@ -158,6 +162,10 @@ class WbsTask {
 
   Color get instanceColor => switch (instance) {
         'codex' => const Color(0xFF10B981),
+        'gemini' => const Color(0xFF4285F4),
+        'co-pilot' => const Color(0xFF111827),
+        'copilot' => const Color(0xFF111827),
+        'user' => const Color(0xFFEF4444),
         'vscode' => const Color(0xFF007ACC),
         'win' => const Color(0xFF00BCF2),
         'windows' => const Color(0xFF00BCF2),
@@ -178,6 +186,10 @@ class WbsTask {
 
   String get ownerLabel => switch (ownerInstance) {
         'codex' => 'Codex',
+        'gemini' => 'Gemini',
+        'co-pilot' => 'Co-pilot',
+        'copilot' => 'Co-pilot',
+        'user' => 'User',
         'vscode' => 'VSCode版',
         'win' => 'Win版',
         'windows' => 'Win版',
@@ -197,6 +209,10 @@ class WbsTask {
 
   Color get ownerColor => switch (ownerInstance) {
         'codex' => const Color(0xFF10B981),
+        'gemini' => const Color(0xFF4285F4),
+        'co-pilot' => const Color(0xFF111827),
+        'copilot' => const Color(0xFF111827),
+        'user' => const Color(0xFFEF4444),
         'vscode' => const Color(0xFF007ACC),
         'win' => const Color(0xFF00BCF2),
         'windows' => const Color(0xFF00BCF2),
@@ -895,6 +911,38 @@ class _FilterRow extends StatelessWidget {
             filterInstance,
             onFilterInstance,
             const Color(0xFFFF6B35),
+          ),
+          const SizedBox(width: 6),
+          _chip(
+            'Codex',
+            'codex',
+            filterInstance,
+            onFilterInstance,
+            const Color(0xFF10B981),
+          ),
+          const SizedBox(width: 6),
+          _chip(
+            'Gemini',
+            'gemini',
+            filterInstance,
+            onFilterInstance,
+            const Color(0xFF4285F4),
+          ),
+          const SizedBox(width: 6),
+          _chip(
+            'Co-pilot',
+            'co-pilot',
+            filterInstance,
+            onFilterInstance,
+            const Color(0xFF111827),
+          ),
+          const SizedBox(width: 6),
+          _chip(
+            'User',
+            'user',
+            filterInstance,
+            onFilterInstance,
+            const Color(0xFFEF4444),
           ),
           const SizedBox(width: 6),
           _chip(
@@ -2128,6 +2176,9 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
               ('全', null, const Color(0xFFFF6B35)),
               ('VS', 'vscode', const Color(0xFF007ACC)),
               ('Codex', 'codex', const Color(0xFF10B981)),
+              ('Gemini', 'gemini', const Color(0xFF4285F4)),
+              ('Co-pilot', 'co-pilot', const Color(0xFF111827)),
+              ('User', 'user', const Color(0xFFEF4444)),
               ('Win', 'win', const Color(0xFF00BCF2)),
               ('PS#1', 'ps1', const Color(0xFF4B0082)),
               ('PS#2', 'ps2', const Color(0xFF6A0DAD)),
@@ -2887,6 +2938,10 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
 
   String _shortInstance(String i) => switch (i) {
         'codex' => 'CX',
+        'gemini' => 'GM',
+        'co-pilot' => 'CP',
+        'copilot' => 'CP',
+        'user' => 'USR',
         'vscode' => 'VS',
         'win' => 'Win',
         'windows' => 'Win',
