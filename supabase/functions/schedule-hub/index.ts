@@ -9,7 +9,7 @@
 
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { getXAccountHandle, isXConfigured, postTweet } from "../_shared/x-client.ts";
+import { getXAccountHandle, isXConfigured, postTweet, uploadMediaFromUrl } from "../_shared/x-client.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -252,6 +252,63 @@ serve(async (req: Request) => {
       case "x.history": {
         const items = await listItems(admin, "x_post", userId!);
         return json({ success: true, items });
+      }
+
+      case "x.post_with_media": {
+        const text = String(body.text ?? "").trim();
+        const mediaUrl = String(body.mediaUrl ?? "").trim();
+        const dryRun = body.dryRun === true;
+        if (!text) return json({ success: false, error: "text required" }, 400);
+        if (text.length > 280) {
+          return json({ success: false, error: "text exceeds 280 characters" }, 400);
+        }
+        if (!mediaUrl) return json({ success: false, error: "mediaUrl required" }, 400);
+
+        const baseLog = {
+          text,
+          media_url: mediaUrl,
+          posted_at: new Date().toISOString(),
+          source: body.source ?? "schedule-hub",
+        };
+
+        if (dryRun || !isXConfigured()) {
+          const log = await addItem(admin, "x_post", userId!, {
+            ...baseLog,
+            status: dryRun ? "dry_run" : "credentials_missing",
+          });
+          return json({
+            success: true,
+            posted: false,
+            dryRun,
+            account: getXAccountHandle(),
+            text,
+            mediaUrl,
+            log,
+            warning: dryRun ? undefined : "X API credentials are not configured in Supabase secrets.",
+          });
+        }
+
+        const mediaType = String(body.mediaType ?? "image/png");
+        const mediaCategory = String(body.mediaCategory ?? "tweet_image");
+        const uploadResult = await uploadMediaFromUrl(mediaUrl, { mediaType, mediaCategory });
+        const result = await postTweet({ text, mediaIds: [uploadResult.mediaId] });
+        const log = await addItem(admin, "x_post", userId!, {
+          ...baseLog,
+          status: "posted",
+          tweet_id: result.tweetId,
+          account: result.account,
+          media_id: uploadResult.mediaId,
+        });
+        return json({
+          success: true,
+          posted: true,
+          text,
+          mediaUrl,
+          tweetId: result.tweetId,
+          account: result.account,
+          mediaId: uploadResult.mediaId,
+          log,
+        });
       }
 
       // ─── Blog ─────────────────────────────────────────────────────────────────

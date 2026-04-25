@@ -1,0 +1,68 @@
+name: Post X with OGP Image
+
+on:
+  schedule:
+    # Every Monday 09:00 UTC (= 18:00 JST)
+    - cron: "0 9 * * 1"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Dry run (no actual post)"
+        type: boolean
+        default: true
+      text:
+        description: "Tweet text (leave empty for auto-generated)"
+        type: string
+        default: ""
+
+jobs:
+  post:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Build tweet text
+        id: tweet
+        run: |
+          CUSTOM_TEXT="${{ github.event.inputs.text }}"
+          if [ -n "$CUSTOM_TEXT" ]; then
+            TEXT="$CUSTOM_TEXT"
+          else
+            WEEK=$(date +"%Y年%-m月%-d日週")
+            TEXT="🤖 自分株式会社 週次アップデート (${WEEK})\n\nAI統合ライフマネジメントアプリ — Notion/MoneyForward/Slack など21競合の機能を1つに。\n\nhttps://my-web-app-b67f4.web.app/ #AI #Flutter #個人開発"
+          fi
+          # Truncate to 280 chars if needed
+          TEXT="${TEXT:0:280}"
+          echo "text=$TEXT" >> $GITHUB_OUTPUT
+
+      - name: Post to X with OGP image
+        run: |
+          DRY_RUN="${{ github.event.inputs.dry_run }}"
+          # Default to false for scheduled runs
+          if [ -z "$DRY_RUN" ]; then
+            DRY_RUN="false"
+          fi
+
+          PAYLOAD=$(jq -n \
+            --arg action "x.post_with_media" \
+            --arg text "${{ steps.tweet.outputs.text }}" \
+            --arg mediaUrl "https://my-web-app-b67f4.web.app/ogp.png" \
+            --arg mediaType "image/png" \
+            --arg mediaCategory "tweet_image" \
+            --arg source "post-x-with-media.yml" \
+            --argjson dryRun "$DRY_RUN" \
+            '{action: $action, text: $text, mediaUrl: $mediaUrl, mediaType: $mediaType, mediaCategory: $mediaCategory, source: $source, dryRun: $dryRun}')
+
+          RESPONSE=$(curl -sf -X POST \
+            "${{ secrets.SUPABASE_DIGEST_URL }}" \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_KEY }}" \
+            -d "$PAYLOAD")
+
+          echo "Response: $RESPONSE"
+          SUCCESS=$(echo "$RESPONSE" | jq -r '.success')
+          if [ "$SUCCESS" != "true" ]; then
+            echo "::error::X post failed: $RESPONSE"
+            exit 1
+          fi
+          POSTED=$(echo "$RESPONSE" | jq -r '.posted')
+          TWEET_ID=$(echo "$RESPONSE" | jq -r '.tweetId // "N/A"')
+          echo "Posted: $POSTED | Tweet ID: $TWEET_ID"

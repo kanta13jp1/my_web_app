@@ -498,6 +498,10 @@ jobs:
         run: |
           echo '{"version":"${{ steps.version.outputs.version }}","buildNumber":"${{ github.run_number }}","commit":"${{ github.sha }}","deployedAt":"'"$(date -u +%Y-%m-%dT%H:%M:%SZ)"'"}' > build/web/version.json
 
+      - name: Cache-bust OGP image URLs
+        run: |
+          sed -i 's|/ogp\.png"|/ogp.png?v=${{ steps.version.outputs.version }}"|g' build/web/index.html
+
       - name: Deploy to Firebase Hosting (Production)
         uses: FirebaseExtended/action-hosting-deploy@v0
         continue-on-error: true  # 509 Bandwidth Exceeded 発生中 (2026-04-18) — 復旧後に削除
