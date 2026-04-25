@@ -19672,3 +19672,14 @@ GitHub Secrets に SLACK_WEBHOOK_URL を設定するだけで有効化。
 - COMPETITOR_EXPANSION_PLAN.md Phase 1+2+3 全完了
 - critical threat: Notion AI / Linear / HubSpot / Zoho / Harvey / TikTok Shop 等を捕捉
 - 新カテゴリ追加: advertising / mobility / gov-tech / legal-tech / media / logistics / telecom / education
+
+---
+
+## PS#2 S27 — T-1 dispatch no-op (同日再起動) (2026-04-25)
+
+- 同日 S26 完了後に再起動。今日 Apr 25 → date-gate変化なし。
+- Orphan branch: 0本
+- 新規 unpublished draft: なし (May 2 / May 4 slug のみ)
+- 次回 dispatch: **May 1 JST**
+
+### commit: no-op
