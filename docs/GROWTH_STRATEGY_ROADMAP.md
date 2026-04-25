@@ -20321,3 +20321,23 @@ LOVO (Genny) / Voicemod / Bark (Suno AI OSS TTS) / Replica Studios / AIVA (音�
   - 666件全 migration の collision scan → 残存 collision ゼロ確認
 - **deploy 5d9082e4** in_progress 中 / **38a50027** pending (collision fix 含む)
 - **修正 commit**: b4dfa577 / push 23428652
+## 2026-04-26 PS#3 S57: Speechify/WellSaid スキーマ修正 + AI大学 206→208社化 — LOVO + AIVA
+
+### 実施内容
+- **S56修正**: Speechify (141500) + WellSaid Labs (143000) を旧スキーマ→新スキーマに書き直し (PS#1 S46 同様 SQLSTATE 23502 対策)
+- **LOVO (Genny)**: AI 音声 + 動画エディタ統合 / 500+ AI 音声 / 100+ 言語 / 14 感情スタイル / 7M USD → ai_university_content 追加
+- **AIVA**: 世界初 SACEM 登録 AI 作曲 / ゲーム・映画音楽 / 著作権 100% / MIDI + 楽譜出力 / API / 8/9 → ai_university_content 追加
+- `ai_provider_registry.dart` 208社化 (lovo_ai + aiva エントリ追加)
+- Migration: 20260426151500 / 20260426153000 (新スキーマ)
+
+### 新スキーマ教訓 (PS#1 S46 学習)
+AI大学 seed migration は `provider, category, title, content, source_url, published_at, sort_order` が正しいスキーマ。
+`provider_id, section, content_md` は旧スキーマ → NOT NULL 違反 (SQLSTATE 23502)。
+
+### 次候補 (S58)
+Voicemod / Replica Studios / Beatoven.ai / Mubert / Soundraw (音声/音楽系続き)
+
+### Philosophy Alignment: PS#3 S57
+- CEO感: MEMORY.md でPS#1 S46 修正を即座に発見→S56修正→S57新規追加の優先順位判断 ✅
+- ミッション駆動: 旧スキーマ修正で deploy 品質維持 + 208社継続 ✅
+- KPI=昨日の自分: 206→208社 + schema fix完了 ✅
