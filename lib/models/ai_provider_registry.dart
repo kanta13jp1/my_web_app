@@ -1607,6 +1607,22 @@ const List<AiProviderEntry> kAiProviderRegistry = [
     note:
         r'AI 音声生成 (Text-to-Speech) — 120+ 言語・声 / スタジオ品質 / ビデオ同期 / Canva 統合 / API 提供 / $10M 調達 / エンタープライズ対応',
   ),
+  AiProviderEntry(
+    id: 'coqui_ai',
+    displayName: 'Coqui',
+    status: AiProviderStatus.notImplemented,
+    entryPoint: 'https://coqui.ai/',
+    note:
+        r'OSS 音声クローン TTS — XTTS-v2 (多言語 / 3秒サンプルで声クローン) / Apache 2.0 / Hugging Face 統合 / 6ヶ国語対応 / コミュニティ主導継続開発',
+  ),
+  AiProviderEntry(
+    id: 'resemble_ai',
+    displayName: 'Resemble AI',
+    status: AiProviderStatus.notImplemented,
+    entryPoint: 'https://www.resemble.ai/',
+    note:
+        r'リアルタイム音声クローン & 合成 — <50ms レイテンシ / ゲーム・会話 AI 向け / Deepfake Detection / $8M 調達 / 感情・スタイル制御',
+  ),
 ];
 
 /// ステータス別件数を集計
