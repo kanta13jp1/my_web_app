@@ -20100,3 +20100,22 @@ deploy-prod 連続失敗の根本原因を特定し、各インスタンスの�
 - ミッション駆動: 本番 deploy 正常化 ✅
 - 資本=時間: 重複修正を回避 (先行commit確認→stash drop) ✅
 - KPI=昨日の自分: migration reverted + UNIQUE INDEX 組合せ = 再発パターン文書化 ✅
+
+## Win版 #132 part 31 — 2026-04-25 22:45 JST (blog-batch-publish 防御強化)
+
+**Instance**: Windowsアプリ版 | **Commit**: 3b7a5a5f
+
+### 実装内容
+- 旧 run 24525525768 (2026-04-16) の GH006 失敗は 9ca3e2dc で解消済 (per-run unique branch) を確認
+- Win#132 part 30 と同じ三層防御を blog-batch-publish.yml にも適用:
+  1. `set -euo pipefail` — silent step failure を即検知
+  2. `git switch -c` (modern porcelain) で `git checkout -b` の意味曖昧性を排除
+  3. 明示 refspec `HEAD:refs/heads/$BRANCH` で `push.default` 設定差異の影響排除
+
+### Philosophy Alignment: Win版 #132 part 31
+- CEO感: blog 自動化系 WF 全体に統一防御を適用 ✅
+- ミッション駆動: ブログ一括投稿が再開可能 ✅
+- 商品=ユーザー価値: コンテンツ配信パイプライン健全化 ✅
+- 資本=時間: 同種失敗の即検知で復旧時間削減 ✅
+- KPI=昨日の自分: blog-backfill (part 30) → blog-batch-publish (part 31) 一貫性 ✅
+
