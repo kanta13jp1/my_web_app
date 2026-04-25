@@ -1,11 +1,12 @@
 -- PS#3 S52: AI大学 199→200社化 — Krisp 追加
 -- Krisp: AI ノイズキャンセリング & ミーティングアシスタント / $9.5M / 20M+ ユーザー
 
-INSERT INTO ai_university_content (provider_id, section, content_md, display_order)
+INSERT INTO ai_university_content (provider, category, title, content, sort_order)
 VALUES
 (
   'krisp',
   'overview',
+  'Krisp — AI ノイズキャンセリング & ミーティングアシスタント (CPU DNN / 20M+ ユーザー)',
   $md$## Krisp — AI ノイズキャンセリング & ミーティングアシスタント
 
 **カテゴリ**: AI Audio Processing / Meeting Intelligence
@@ -102,12 +103,9 @@ $md$,
 - 投資家面談・クライアントコール品質向上
 - SDK を使った音声機能組み込み (将来の AI コーチ機能)
 $md$,
-  3
+  198
 )
-ON CONFLICT (provider_id, section) DO UPDATE
-  SET content_md = EXCLUDED.content_md,
-      display_order = EXCLUDED.display_order,
-      updated_at = NOW();
+ON CONFLICT DO NOTHING;
 
 INSERT INTO development_achievements (title, description, completed_at)
 VALUES (

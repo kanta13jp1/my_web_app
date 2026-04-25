@@ -29,9 +29,11 @@ CREATE INDEX IF NOT EXISTS user_task_reports_created_at_idx
 -- RLS
 ALTER TABLE public.user_task_reports ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "public_read_user_task_reports" ON public.user_task_reports;
 CREATE POLICY "public_read_user_task_reports"
   ON public.user_task_reports FOR SELECT USING (true);
 
+DROP POLICY IF EXISTS "service_role_write_user_task_reports" ON public.user_task_reports;
 CREATE POLICY "service_role_write_user_task_reports"
   ON public.user_task_reports FOR ALL
   USING (auth.role() = 'service_role');
