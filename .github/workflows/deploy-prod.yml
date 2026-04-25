@@ -177,6 +177,11 @@ jobs:
           supabase migration repair --status reverted 20260425184500 2>/dev/null || true
           supabase migration repair --status reverted 20260425195000 2>/dev/null || true
           supabase migration repair --status reverted 20260425200000 2>/dev/null || true
+          supabase migration repair --status reverted 20260425200100 2>/dev/null || true
+          supabase migration repair --status reverted 20260425201500 2>/dev/null || true
+          supabase migration repair --status reverted 20260425211500 2>/dev/null || true
+          supabase migration repair --status reverted 20260425220000 2>/dev/null || true
+          supabase migration repair --status reverted 20260425223000 2>/dev/null || true
           supabase migration repair --status reverted 20260425203000 2>/dev/null || true
           supabase migration repair --status reverted 20260425210000 2>/dev/null || true
           # Run migrations with auto-repair retry.
