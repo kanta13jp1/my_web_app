@@ -201,6 +201,8 @@ serve(async (req: Request) => {
       // ─── X Post ───────────────────────────────────────────────────────────────
       case "x.post": {
         const text = String(body.text ?? "").trim();
+        const mediaUrl = String(body.mediaUrl ?? body.media_url ?? "").trim();
+        const mediaType = String(body.mediaType ?? body.media_type ?? "").trim();
         const dryRun = body.dryRun === true;
         if (!text) return json({ success: false, error: "text required" }, 400);
         if (text.length > 280) {
@@ -214,6 +216,7 @@ serve(async (req: Request) => {
           text,
           posted_at: new Date().toISOString(),
           source: body.source ?? "schedule-hub",
+          media_url: mediaUrl || null,
         };
 
         if (dryRun || !isXConfigured()) {
@@ -232,12 +235,22 @@ serve(async (req: Request) => {
           });
         }
 
-        const result = await postTweet({ text });
+        const uploadedMedia = mediaUrl
+          ? await uploadMediaFromUrl(mediaUrl, {
+            mediaType: mediaType || undefined,
+          })
+          : null;
+        const result = await postTweet({
+          text,
+          mediaIds: uploadedMedia ? [uploadedMedia.mediaId] : undefined,
+        });
         const log = await addItem(admin, "x_post", userId!, {
           ...baseLog,
           status: "posted",
           tweet_id: result.tweetId,
           account: result.account,
+          media_id: uploadedMedia?.mediaId ?? null,
+          media_type: uploadedMedia?.mediaType ?? null,
         });
         return json({
           success: true,

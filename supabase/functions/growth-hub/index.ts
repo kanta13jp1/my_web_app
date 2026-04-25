@@ -7,20 +7,12 @@
 //   seo-optimizer, send-waitlist-notification, viral-ad-generator, viral-growth-engine
 
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
-import {
-  createClient,
-  SupabaseClient,
-} from "https://esm.sh/@supabase/supabase-js@2";
-import {
-  getXAccountHandle,
-  isXConfigured,
-  postTweet,
-} from "../_shared/x-client.ts";
+import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { getXAccountHandle, isXConfigured, postTweet, uploadMediaFromUrl } from "../_shared/x-client.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
@@ -197,12 +189,9 @@ async function applyPendingReferral(
   if (countError) throw new Error(countError.message);
 
   const totalReferrals = (rows ?? []).length;
-  const successfulReferrals =
-    (rows ?? []).filter((row) => row.status === "completed").length;
+  const successfulReferrals = (rows ?? []).filter((row) => row.status === "completed").length;
   const bonusPointsEarned = (rows ?? []).reduce((sum, row) => {
-    return row.status === "completed"
-      ? sum + (Number(row.bonus_points) || 0)
-      : sum;
+    return row.status === "completed" ? sum + (Number(row.bonus_points) || 0) : sum;
   }, 0);
 
   const { error: updateError } = await admin
@@ -239,8 +228,7 @@ async function buildReferralPayload(
   if (error) throw new Error(error.message);
 
   const rows = (referrals ?? []) as ReferralRow[];
-  const successfulReferrals =
-    rows.filter((row) => row.status === "completed").length;
+  const successfulReferrals = rows.filter((row) => row.status === "completed").length;
   return {
     success: true,
     referralCode,
@@ -360,9 +348,8 @@ serve(async (req: Request) => {
         if (error) throw new Error(error.message);
         const summary: Record<string, number> = {};
         for (const row of data ?? []) {
-          const channel =
-            ((row.metadata as Record<string, unknown>)?.channel as string) ??
-              "unknown";
+          const channel = ((row.metadata as Record<string, unknown>)?.channel as string) ??
+            "unknown";
           summary[channel] = (summary[channel] ?? 0) + 1;
         }
         return json({ success: true, summary });
@@ -401,9 +388,7 @@ serve(async (req: Request) => {
           ? body.dateKey
           : (() => {
             const d = new Date();
-            return `${d.getFullYear()}-${
-              String(d.getMonth() + 1).padStart(2, "0")
-            }-${String(d.getDate()).padStart(2, "0")}`;
+            return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
           })();
         const { data: existing } = await admin
           .from("app_analytics")
@@ -493,20 +478,13 @@ serve(async (req: Request) => {
             signalKey: "import_preview_markdown",
           },
         ];
-        const windowDaysRaw = typeof body.windowDays === "number"
-          ? body.windowDays
-          : Number(body.windowDays ?? 30);
-        const windowDays = Number.isFinite(windowDaysRaw)
-          ? Math.max(7, Math.min(90, Math.trunc(windowDaysRaw)))
-          : 30;
+        const windowDaysRaw = typeof body.windowDays === "number" ? body.windowDays : Number(body.windowDays ?? 30);
+        const windowDays = Number.isFinite(windowDaysRaw) ? Math.max(7, Math.min(90, Math.trunc(windowDaysRaw))) : 30;
         const endDate = new Date();
         endDate.setHours(0, 0, 0, 0);
         const startDate = new Date(endDate);
         startDate.setDate(startDate.getDate() - (windowDays - 1));
-        const fmt = (d: Date) =>
-          `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${
-            String(d.getDate()).padStart(2, "0")
-          }`;
+        const fmt = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
         const startKey = fmt(startDate);
         const endKey = fmt(endDate);
         const { data } = await admin
@@ -526,9 +504,7 @@ serve(async (req: Request) => {
         const touchpoints = TOUCHPOINT_DEFS.map((def) => {
           const touches = counts[def.touchSignal] ?? 0;
           const signups = counts[def.signupSignal] ?? 0;
-          const rate = touches > 0
-            ? Math.round((signups / touches) * 1000) / 10
-            : 0;
+          const rate = touches > 0 ? Math.round((signups / touches) * 1000) / 10 : 0;
           return {
             id: def.id,
             touchpoint: def.label,
@@ -539,9 +515,7 @@ serve(async (req: Request) => {
         });
         const totalTouches = touchpoints.reduce((a, b) => a + b.touches, 0);
         const totalSignups = touchpoints.reduce((a, b) => a + b.signups, 0);
-        const conversionRate = totalTouches > 0
-          ? Math.round((totalSignups / totalTouches) * 1000) / 10
-          : 0;
+        const conversionRate = totalTouches > 0 ? Math.round((totalSignups / totalTouches) * 1000) / 10 : 0;
         const importPreviews = IMPORT_PREVIEW_DEFS.map((def) => ({
           id: def.id,
           label: def.label,
@@ -568,9 +542,7 @@ serve(async (req: Request) => {
           ? (body.date as string)
           : (() => {
             const d = new Date();
-            return `${d.getFullYear()}-${
-              String(d.getMonth() + 1).padStart(2, "0")
-            }-${String(d.getDate()).padStart(2, "0")}`;
+            return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
           })();
         const defaults = [
           {
@@ -626,13 +598,8 @@ serve(async (req: Request) => {
           });
         }
         const userCount = Number(body.totalUsers ?? 0);
-        const stage = userCount < 100
-          ? "Pre-PMF"
-          : userCount < 1000
-          ? "Early traction"
-          : "Scale-up";
-        const prompt =
-          `あなたは自分株式会社のCGO（最高グロース責任者）です。ユーザー数: ${userCount}人, ステージ: ${stage}. 今週の最優先アクションを3つ提案してください。JSON形式: {"stage":"...","actions":["...","...","..."]}`;
+        const stage = userCount < 100 ? "Pre-PMF" : userCount < 1000 ? "Early traction" : "Scale-up";
+        const prompt = `あなたは自分株式会社のCGO（最高グロース責任者）です。ユーザー数: ${userCount}人, ステージ: ${stage}. 今週の最優先アクションを3つ提案してください。JSON形式: {"stage":"...","actions":["...","...","..."]}`;
         const res = await fetch(
           `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiKey}`,
           {
@@ -776,8 +743,7 @@ serve(async (req: Request) => {
             .from("development_achievements")
             .select("id", { count: "exact", head: true }),
         ]);
-        const totalUsers =
-          ((authListResult.data as { total?: number } | null)?.total) ?? 0;
+        const totalUsers = ((authListResult.data as { total?: number } | null)?.total) ?? 0;
         const totalAchievements = achievementsCount ?? 0;
         const plans = _applyAchievements(
           (plansData ?? []) as Array<
@@ -835,6 +801,8 @@ serve(async (req: Request) => {
       // ─── X Post ───────────────────────────────────────────────────────────────
       case "x.post": {
         const text = String(body.text ?? "").trim();
+        const mediaUrl = String(body.mediaUrl ?? body.media_url ?? "").trim();
+        const mediaType = String(body.mediaType ?? body.media_type ?? "").trim();
         const dryRun = body.dryRun === true;
         if (!text) return json({ success: false, error: "text required" }, 400);
         if (text.length > 280) {
@@ -848,6 +816,7 @@ serve(async (req: Request) => {
           text,
           posted_at: new Date().toISOString(),
           source: body.source ?? "growth-hub",
+          media_url: mediaUrl || null,
         };
 
         if (dryRun || !isXConfigured()) {
@@ -862,18 +831,26 @@ serve(async (req: Request) => {
             account: getXAccountHandle(),
             text,
             log,
-            warning: dryRun
-              ? undefined
-              : "X API credentials are not configured in Supabase secrets.",
+            warning: dryRun ? undefined : "X API credentials are not configured in Supabase secrets.",
           });
         }
 
-        const result = await postTweet({ text });
+        const uploadedMedia = mediaUrl
+          ? await uploadMediaFromUrl(mediaUrl, {
+            mediaType: mediaType || undefined,
+          })
+          : null;
+        const result = await postTweet({
+          text,
+          mediaIds: uploadedMedia ? [uploadedMedia.mediaId] : undefined,
+        });
         const log = await addItem(admin, "x_post_log", userId!, {
           ...baseLog,
           status: "posted",
           tweet_id: result.tweetId,
           account: result.account,
+          media_id: uploadedMedia?.mediaId ?? null,
+          media_type: uploadedMedia?.mediaType ?? null,
         });
         return json({
           success: true,
@@ -889,9 +866,7 @@ serve(async (req: Request) => {
       case "automation.analyze": {
         const geminiKey2 = Deno.env.get("GEMINI_API_KEY") ?? "";
         if (!geminiKey2) return json({ success: true, recommendations: [] });
-        const p2 = `グロース自動化の推奨事項を3つ提案してください。現状: ${
-          JSON.stringify(body)
-        }. JSON: {"recommendations":[{"action":"...","priority":"high|medium|low","impact":"..."}]}`;
+        const p2 = `グロース自動化の推奨事項を3つ提案してください。現状: ${JSON.stringify(body)}. JSON: {"recommendations":[{"action":"...","priority":"high|medium|low","impact":"..."}]}`;
         const r2 = await fetch(
           `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiKey2}`,
           {
@@ -991,8 +966,7 @@ serve(async (req: Request) => {
           .from("app_analytics")
           .select("metadata")
           .eq("source", "ab_test_conversion");
-        const ctaStats: Record<string, { views: number; conversions: number }> =
-          {};
+        const ctaStats: Record<string, { views: number; conversions: number }> = {};
         for (const a of assignments ?? []) {
           const cId = (a.metadata as Record<string, unknown>)
             .cta_variant as string;
@@ -1008,9 +982,7 @@ serve(async (req: Request) => {
         const variants = [
           ...CTA_VARIANTS.map((v) => {
             const s = ctaStats[v.id] ?? { views: 0, conversions: 0 };
-            const cvr = s.views > 0
-              ? Math.round((s.conversions / s.views) * 10000) / 100
-              : 0;
+            const cvr = s.views > 0 ? Math.round((s.conversions / s.views) * 10000) / 100 : 0;
             return {
               ...v,
               kind: "cta",
@@ -1059,8 +1031,7 @@ serve(async (req: Request) => {
       case "seo.optimize": {
         const geminiKey3 = Deno.env.get("GEMINI_API_KEY") ?? "";
         if (!geminiKey3) return json({ success: true, suggestions: [] });
-        const p3 =
-          `次のページのSEOを最適化してください: タイトル="${body.title}", 説明="${body.description}", キーワード="${body.keywords}". JSON: {"title":"...","description":"...","keywords":[],"score":0}`;
+        const p3 = `次のページのSEOを最適化してください: タイトル="${body.title}", 説明="${body.description}", キーワード="${body.keywords}". JSON: {"title":"...","description":"...","keywords":[],"score":0}`;
         const r3 = await fetch(
           `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiKey3}`,
           {

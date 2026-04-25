@@ -120,6 +120,7 @@ import 'package:my_web_app/pages/notifications_page.dart';
 import 'package:my_web_app/pages/wardrobe_page.dart';
 import 'package:my_web_app/services/gamification_service.dart';
 import 'package:my_web_app/services/growth_mission_service.dart';
+import 'package:my_web_app/widgets/universal_ai_share_shell.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:provider/provider.dart';
@@ -426,14 +427,16 @@ class _MyAppState extends State<MyApp> {
       themeMode: themeService.getFlutterThemeMode(),
       builder: (context, child) {
         return GlobalHeaderClockShell(
-          child: Column(
-            children: [
-              if (_showUpdateBanner)
-                UpdateBanner(
-                  onDismiss: () => setState(() => _showUpdateBanner = false),
-                ),
-              Expanded(child: child ?? const SizedBox.shrink()),
-            ],
+          child: UniversalAiShareShell(
+            child: Column(
+              children: [
+                if (_showUpdateBanner)
+                  UpdateBanner(
+                    onDismiss: () => setState(() => _showUpdateBanner = false),
+                  ),
+                Expanded(child: child ?? const SizedBox.shrink()),
+              ],
+            ),
           ),
         );
       },
@@ -446,6 +449,7 @@ class _MyAppState extends State<MyApp> {
       locale: const Locale('ja'),
       navigatorObservers: <NavigatorObserver>[
         _growthPresenceObserver,
+        universalAiShareRouteObserver,
         if (MyApp._sentryNavigatorObserver != null)
           MyApp._sentryNavigatorObserver!,
       ],
