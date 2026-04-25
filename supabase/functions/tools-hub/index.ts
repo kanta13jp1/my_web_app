@@ -1206,6 +1206,202 @@ serve(async (req) => {
           const topTasks = [...(data ?? [])].sort(compareWbsTasks).slice(0, 5);
           return json({ success: true, instance: inst, top_tasks: topTasks });
         }
+
+        // ─── WBS Rebalance (Win版#132 part 17) ────────────────────────────
+        // 自 instance に task が無い時、他 instance の滞留 task を suggest。
+        // 設計: docs/WBS_REBALANCE.md
+        case "wbs.rebalance_suggest": {
+          const myInstance = String(body.my_instance ?? "");
+          const limitN = Math.min(Number(body.limit ?? 5), 20);
+          if (!myInstance) return json({ error: "my_instance required" }, 400);
+
+          // 1. 自 instance の active task 数 fetch
+          const { count: myActiveCount } = await admin.from("wbs_tasks")
+            .select("id", { count: "exact", head: true })
+            .eq("instance", myInstance)
+            .in("status", ["pending", "in_progress", "blocked"]);
+
+          // 2. 他 instance の active task 取得 (rebalance 候補)
+          const { data: otherTasks, error } = await admin.from("wbs_tasks")
+            .select("id, category, title, instance, owner_instance, status, progress, priority, end_date, updated_at, last_rebalanced_at")
+            .neq("instance", myInstance)
+            .in("status", ["pending", "in_progress", "blocked"])
+            .neq("priority", "completed")
+            .limit(200);
+          if (error) throw new Error(error.message);
+
+          // 3. 抑制ルール: PS 専任 / IPO 専決 / 期限直前は除外
+          const NOW = Date.now();
+          const HOUR = 3600 * 1000;
+          const filtered = (otherTasks ?? []).filter((t) => {
+            const cat = String(t.category ?? "");
+            const title = String(t.title ?? "");
+            // PS#1 専任 (Rule17)
+            if (cat.startsWith("rule17-")) return false;
+            // PS#2 専任 (T-1 dispatch)
+            if (cat.startsWith("blog-") || title.includes("T-1")) return false;
+            // PS#5 専任 (urgent on-call)
+            if (t.priority === "high" && cat === "bug") return false;
+            // IPO 専決 (CEO 固定)
+            if (cat === "business-ipo") return false;
+            // 期限直前 (1 日切ってる) は元担当継続
+            if (t.end_date) {
+              const dueMs = new Date(t.end_date).getTime();
+              if (dueMs - NOW < 24 * HOUR && t.priority === "high") return false;
+            }
+            // 7 日以内に rebalance 済 = loop 防止
+            if (t.last_rebalanced_at) {
+              const lastMs = new Date(t.last_rebalanced_at).getTime();
+              if (NOW - lastMs < 7 * 24 * HOUR) return false;
+            }
+            return true;
+          });
+
+          // 4. stale_score 計算
+          const scored = filtered.map((t) => {
+            let score = 0;
+            const reasons: string[] = [];
+            const dueMs = t.end_date ? new Date(t.end_date).getTime() : null;
+            const updMs = t.updated_at ? new Date(t.updated_at).getTime() : null;
+
+            // 期限ペナルティ
+            if (dueMs !== null) {
+              if (dueMs < NOW) { score += 50; reasons.push("期限超過"); }
+              else if (dueMs - NOW < 3 * 24 * HOUR) { score += 30; reasons.push("期限間近 (3 日以内)"); }
+              else if (dueMs - NOW < 7 * 24 * HOUR) { score += 15; reasons.push("期限間近 (7 日以内)"); }
+            }
+            // 進捗停滞ペナルティ
+            if (updMs !== null) {
+              const hoursSince = (NOW - updMs) / HOUR;
+              if (hoursSince > 168) { score += 30; reasons.push("7 日停滞"); }
+              else if (hoursSince > 72) { score += 20; reasons.push("3 日停滞"); }
+              else if (hoursSince > 24) { score += 10; reasons.push("1 日停滞"); }
+              // half-way 50-90% で 48h 以上 stuck
+              const progress = Number(t.progress ?? 0);
+              if (progress >= 50 && progress < 90 && hoursSince > 48) {
+                score += 25;
+                reasons.push("half-way stuck (50-90%)");
+              }
+            }
+            // priority bonus
+            if (t.priority === "high") { score += 20; reasons.push("priority=high"); }
+            else if (t.priority === "medium") { score += 10; }
+
+            return {
+              id: t.id,
+              title: t.title,
+              category: t.category,
+              current_instance: t.instance,
+              current_owner: t.owner_instance,
+              progress: t.progress,
+              priority: t.priority,
+              end_date: t.end_date,
+              updated_at: t.updated_at,
+              stale_score: score,
+              stale_reasons: reasons,
+            };
+          });
+
+          // 5. score 高い順 sort + limit
+          const candidates = scored
+            .filter((s) => s.stale_score > 0)
+            .sort((a, b) => b.stale_score - a.stale_score)
+            .slice(0, limitN);
+
+          return json({
+            success: true,
+            my_instance: myInstance,
+            my_active_count: myActiveCount ?? 0,
+            candidates,
+          });
+        }
+
+        // ─── WBS Claim Task (Win版#132 part 17) ───────────────────────────
+        // 他 instance の task を自担当に変更。audit log + cooldown + guard。
+        case "wbs.claim_task": {
+          const taskId = String(body.task_id ?? "");
+          const myInstance = String(body.my_instance ?? "");
+          const reason = String(body.reason ?? "manual_review");
+          const triggeredBy = String(body.triggered_by ?? "user");
+
+          if (!taskId) return json({ error: "task_id required" }, 400);
+          if (!myInstance) return json({ error: "my_instance required" }, 400);
+
+          // 1. task fetch
+          const { data: task, error: fetchErr } = await admin
+            .from("wbs_tasks")
+            .select("id, instance, owner_instance, status, category, title, last_rebalanced_at")
+            .eq("id", taskId)
+            .maybeSingle();
+          if (fetchErr) throw new Error(fetchErr.message);
+          if (!task) return json({ error: "task not found" }, 404);
+
+          // 2. guard checks
+          if (task.status === "completed") {
+            return json({ error: "completed task cannot be claimed", reason: "completed_protect" }, 409);
+          }
+          if (task.instance === myInstance) {
+            return json({ success: false, reason: "already_owner", task_id: taskId });
+          }
+          if (task.category === "business-ipo") {
+            return json({ error: "business-ipo は CEO 専決 / claim 不可", reason: "ipo_protect" }, 403);
+          }
+          // 7 日 cooldown
+          if (task.last_rebalanced_at) {
+            const lastMs = new Date(task.last_rebalanced_at).getTime();
+            if (Date.now() - lastMs < 7 * 24 * 3600 * 1000) {
+              return json({ error: "7 日以内に既に rebalance 済 / cooldown 中", reason: "cooldown" }, 429);
+            }
+          }
+
+          // 3. update wbs_tasks
+          const fromInstance = String(task.instance ?? "");
+          const fromOwner = String(task.owner_instance ?? "");
+          const nowIso = new Date().toISOString();
+
+          const { error: updErr } = await admin
+            .from("wbs_tasks")
+            .update({
+              instance: myInstance,
+              owner_instance: myInstance,
+              status: task.status === "blocked" || task.status === "pending" ? "in_progress" : task.status,
+              last_rebalanced_at: nowIso,
+              updated_at: nowIso,
+            })
+            .eq("id", taskId);
+          if (updErr) {
+            return json({ error: `update_failed: ${updErr.message}` }, 500);
+          }
+
+          // increment rebalance_count (best-effort)
+          await admin.rpc("increment_wbs_rebalance_count", { p_task_id: taskId }).catch(() => {});
+
+          // 4. audit log INSERT
+          const { error: logErr } = await admin
+            .from("wbs_rebalance_log")
+            .insert({
+              task_id: taskId,
+              from_instance: fromInstance,
+              to_instance: myInstance,
+              from_owner: fromOwner,
+              to_owner: myInstance,
+              reason,
+              triggered_by: triggeredBy,
+              metadata: { task_title: task.title, task_category: task.category },
+            });
+          if (logErr) {
+            // log failure は non-fatal
+            console.warn(`rebalance_log insert failed: ${logErr.message}`);
+          }
+
+          return json({
+            success: true,
+            task_id: taskId,
+            from_instance: fromInstance,
+            to_instance: myInstance,
+            status: "in_progress",
+          });
+        }
         case "horseracing.register_race": {
           const { data: r, error: re } = await admin.from("horse_races").insert({
             source: "manual", race_name: String(body.name ?? ""),
