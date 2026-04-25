@@ -133,25 +133,21 @@ jobs:
           }
 
           # competitors テーブルから動的取得 (190社対応 / threat_level → tier アイコン変換)
+          # Phase 1 スキーマ: website カラム / Phase 3 スキーマ: website_url カラム (両方 SELECT)
           COMP_JSON=$(curl -sf \
-            "$SUPABASE_URL/rest/v1/competitors?select=display_name,website_url,threat_level&is_active=eq.true&limit=50" \
+            "$SUPABASE_URL/rest/v1/competitors?select=display_name,website,website_url,threat_level&is_active=eq.true&limit=50" \
             -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
             -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" 2>/dev/null || echo "[]")
 
           COMP_COUNT=$(echo "$COMP_JSON" | python3 -c "import sys,json; print(len(json.load(sys.stdin)))" 2>/dev/null || echo "0")
 
           if [ "$COMP_COUNT" -gt 0 ]; then
-            echo "$COMP_JSON" | python3 -c "
-import sys, json
-data = json.load(sys.stdin)
-tier_map = {'high': '🔴', 'medium': '🟠', 'low': '🟡'}
-for c in data:
-    name = c.get('display_name', '?').replace('\"', '')
-    url = c.get('website_url', '')
-    tier = tier_map.get(c.get('threat_level', 'low'), '🟡')
-    if url:
-        print(f'{name}|{url}|{tier}')
-" 2>/dev/null | while IFS='|' read -r NAME URL TIER; do
+            TIERS='{"high":"R","medium":"O","low":"Y"}'
+            echo "$COMP_JSON" | python3 -c "import sys,json; data=json.load(sys.stdin); tm={'high':'R','medium':'O','low':'Y'}; [print(f'{c.get(\"display_name\",\"?\").replace(chr(34),\"\")}|{c.get(\"website_url\") or c.get(\"website\",\"\")}|{tm.get(c.get(\"threat_level\") or \"low\",\"Y\")}') for c in data if c.get('website_url') or c.get('website')]" 2>/dev/null | \
+            while IFS='|' read -r NAME URL TIER_CODE; do
+              case "$TIER_CODE" in
+                R) TIER="🔴" ;; O) TIER="🟠" ;; *) TIER="🟡" ;;
+              esac
               [ -n "$URL" ] && check_site "$NAME" "$URL" "$TIER"
             done
             echo "✅ 動的取得: ${COMP_COUNT}社チェック"
