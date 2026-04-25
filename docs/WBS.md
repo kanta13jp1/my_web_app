@@ -398,3 +398,7 @@ WHERE title = 'ai-hub provider.chat 蜈ｨ蟇ｾ蠢・;
 - 対応内容: `tools-hub` のHarvey API連携に `legal-assistant.harvey.complete` と `legal-assistant.review` の互換actionを追加し、既存の `legal.harvey.complete` と同じ `HARVEY_API_KEY` ベースのCompletion APIへルーティングできるようにした。
 - 実装補足: 法務・コンプライアンス画面のHarveyタブは新しい `legal-assistant.harvey.complete` を呼ぶように更新した。既存actionは後方互換として残す。
 - WBS DB反映: migration `20260425125000_wbs_codex_harvey_legal_assistant_start.sql`, `20260425130500_wbs_codex_harvey_legal_assistant_done.sql`
+- 実担当タスク: `[追加要望] 【Harvey AI】LP掲載：「法務管理」コア機能のバックエンドとしてHarveyをアピール材料に` / `[Issue #708] [追加要望] 【Harvey AI】LP掲載：「法務管理」コア機能のバックエンドとしてHarveyをアピール材料に`
+- 対応内容: LPの機能カードを `法務管理 / Harvey AI` に更新し、契約レビュー・論点整理・引用付き確認をHarveyバックエンドで進められることを明示した。
+- 実装補足: FAQにも「法務管理ではHarvey AIをどこに使っているか」を追加し、法務・コンプライアンス画面のHarveyタブとLPの訴求を接続した。
+- WBS DB反映: migration `20260425141500_wbs_codex_harvey_lp_start.sql`, `20260425143000_wbs_codex_harvey_lp_done.sql`
