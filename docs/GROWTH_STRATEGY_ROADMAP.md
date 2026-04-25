@@ -20062,3 +20062,22 @@ deploy-prod 連続失敗の根本原因を特定し、各インスタンスの�
 - ミッション駆動: AI大学の記憶定着機能完成 → ユーザー価値直結 ✅
 - 商品=ユーザー価値: 復習メトリクス表示でFSRSの可視性向上 ✅
 - KPI=昨日の自分: FSRS完全実装 1タスク completed ✅
+
+## Win版 #132 part 30 — 2026-04-25 22:30 JST (blog-backfill 防御強化)
+
+**Instance**: Windowsアプリ版 | **Commit**: 40da58d0
+
+### 実装内容
+- 旧 run 24524644089 (2026-04-16) の GH006 失敗は 71ffa0df で解消済 (push to main → PR ブランチ経由) を確認
+- 残存リスクを 3 点で追加防御:
+  1. `permissions:` に `pull-requests: write` 追加 — `gh pr create` で必要 (旧設定は contents/actions のみ)
+  2. Commit step に `set -euo pipefail` — silent な `git checkout -b` 失敗 (= 元 GH006 の根本原因) を即座に検知
+  3. `git switch -c` (modern porcelain) + 明示的 refspec `HEAD:refs/heads/$BRANCH` で `push.default` 設定差異の影響を排除
+
+### Philosophy Alignment: Win版 #132 part 30
+- CEO感: 既存修正の上に防御層を加える判断 ✅
+- ミッション駆動: ブログ自動投稿が再開可能 ✅
+- 商品=ユーザー価値: コンテンツ生成パイプライン健全化 ✅
+- 資本=時間: 同種 GH006 の再発時に即発見 (silent failure 排除) ✅
+- KPI=昨日の自分: 1 修正 → 3 防御層 ✅
+
