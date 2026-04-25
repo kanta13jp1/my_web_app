@@ -80,15 +80,7 @@ jobs:
             fi
 
             # schedule-hub blog.create で登録
-            PAYLOAD=$(python3 -c "
-import json, sys
-print(json.dumps({
-  'action': 'blog.create',
-  'title': sys.argv[1],
-  'platform': 'zenn,qiita,note,hatena,medium,devto,hashnode,substack,github-pages,notion,x-article',
-  'draft_path': sys.argv[2],
-}))
-" "$TITLE" "$DRAFT_PATH")
+            PAYLOAD=$(TITLE="$TITLE" DRAFT_PATH="$DRAFT_PATH" python3 -c 'import json, os; print(json.dumps({"action": "blog.create", "title": os.environ["TITLE"], "platform": "zenn,qiita,note,hatena,medium,devto,hashnode,substack,github-pages,notion,x-article", "draft_path": os.environ["DRAFT_PATH"]}))')
 
             RESPONSE=$(curl -s -w "\n%{http_code}" \
               -X POST \
@@ -109,16 +101,7 @@ print(json.dumps({
               echo "  ⚠️ Registration failed (HTTP $HTTP_CODE) — falling back to REST API direct insert"
               # Fallback: REST API 直接 INSERT
               ISO_NOW=$(date -u +%Y-%m-%dT%H:%M:%SZ)
-              FALLBACK_PAYLOAD=$(python3 -c "
-import json, sys
-print(json.dumps({
-  'title': sys.argv[1],
-  'draft_path': sys.argv[2],
-  'status': 'draft',
-  'target_platforms': ['zenn','qiita','note','hatena','medium','devto','hashnode','substack','github-pages','notion','x-article'],
-  'created_at': sys.argv[3],
-}))
-" "$TITLE" "$DRAFT_PATH" "$ISO_NOW")
+              FALLBACK_PAYLOAD=$(TITLE="$TITLE" DRAFT_PATH="$DRAFT_PATH" ISO_NOW="$ISO_NOW" python3 -c 'import json, os; print(json.dumps({"title": os.environ["TITLE"], "draft_path": os.environ["DRAFT_PATH"], "status": "draft", "target_platforms": ["zenn", "qiita", "note", "hatena", "medium", "devto", "hashnode", "substack", "github-pages", "notion", "x-article"], "created_at": os.environ["ISO_NOW"]}))')
 
               curl -s -o /dev/null -w "Fallback HTTP: %{http_code}\n" \
                 -X POST \
