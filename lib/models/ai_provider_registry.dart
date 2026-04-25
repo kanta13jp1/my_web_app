@@ -1591,6 +1591,22 @@ const List<AiProviderEntry> kAiProviderRegistry = [
     note:
         r'AI ノイズキャンセリング & ミーティングアシスタント — 背景雑音/エコー/残響除去 / Zoom・Teams・Meet 対応 / 文字起こし・サマリー / $9.5M 調達 / 20M+ ユーザー',
   ),
+  AiProviderEntry(
+    id: 'otter_ai',
+    displayName: 'Otter.ai',
+    status: AiProviderStatus.notImplemented,
+    entryPoint: 'https://otter.ai/',
+    note:
+        r'AI ミーティングアシスタント — リアルタイム文字起こし / 要約・アクションアイテム自動抽出 / Zoom・Teams・Meet 統合 / $50M 調達 / 月間 1M+ ユーザー / SpeechX モデル',
+  ),
+  AiProviderEntry(
+    id: 'murf_ai',
+    displayName: 'Murf',
+    status: AiProviderStatus.notImplemented,
+    entryPoint: 'https://murf.ai/',
+    note:
+        r'AI 音声生成 (Text-to-Speech) — 120+ 言語・声 / スタジオ品質 / ビデオ同期 / Canva 統合 / API 提供 / $10M 調達 / エンタープライズ対応',
+  ),
 ];
 
 /// ステータス別件数を集計
