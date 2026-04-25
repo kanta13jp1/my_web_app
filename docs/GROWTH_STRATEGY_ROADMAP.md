@@ -19565,3 +19565,24 @@ GitHub Secrets に SLACK_WEBHOOK_URL を設定するだけで有効化。
 特に原則 5 (team memory): wbs_user_task_reports = NotebookLM source 化
 
 ### commit: TBD
+
+---
+
+## PS#4 S49 — ユーザータスク進捗報告UI + NotebookLM蓄積基盤 (2026-04-25)
+
+### 実装内容
+
+| コンポーネント | 変更 |
+|---|---|
+| migration 231500 | user_task_reports テーブル + wbs_tasks.notebooklm_note/notebooklm_synced_at |
+| tools-hub | wbs.get_user_tasks (UI用一覧+latest_report) + wbs.submit_user_task_report (報告INSERT+Slack) |
+| lib/pages/user_tasks_page.dart | 新規Flutterページ (未完了/完了タブ / 優先度バッジ / 進捗バー / 期限カウント / 報告ダイアログ) |
+| lib/main.dart | /user-tasks ルート追加 |
+| wbs-user-notify.yml | NotebookLM用MD生成+commit+Slack CLI手順通知 |
+
+### commit: e419da51
+
+### 注記
+- Win版 part 19 が先行して wbs_user_task_reports テーブル + wbs.user_task_report/export_user_tasks_md を実装
+- PS#4 は別テーブル user_task_reports + UI向け wbs.get_user_tasks/submit_user_task_report を追加（相補的設計）
+- tools-hub conflict: Win版追加分 (1560/1627行) を保持 + 我々の追加分 (1835行〜) をマージ
