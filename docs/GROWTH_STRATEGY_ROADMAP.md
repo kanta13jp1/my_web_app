@@ -18460,3 +18460,53 @@ deploy-prod.yml の `supabase db push` exit code 捕捉バグを修正。
 - ✅ 1.CEO感(bash -e 根本原因特定) ✅ 2.ミッション駆動(CI安定化継続) ✅ 5.商品=ユーザー価値
 - ✅ 7.資産負債(deploy chain保護) ✅ 8.KPI=昨日の自分(S47→S48継続) ✅ 9.ゴール=IPO
 - 🔶 3.mentor 🔶 4.6部署 🔶 6.資本=時間(CI失敗で時間消費継続)
+
+---
+
+## Win版#132 part 10 完了 (2026-04-25 午後)
+
+### 実施内容: 競合 21→190 社化 Phase 1 — 設計 + DB schema + 21 seed
+
+**契機**: ユーザー要請「AI大学のコンテンツ数と同数程度には増やしたい」
+
+### 現状分析
+
+| 項目 | AI大学 (190+) | 競合 (21) |
+|------|--------------|-----------|
+| Source | DB + seed migration | Hard-coded `_CompetitorInfo` const map (comparison_page.dart) |
+| 拡張 | seed 1 file/provider (軽量) | Dart 50+ 行/社 (重い) |
+
+→ **アーキテクチャ的に AI大学方式へ移行が必要**
+
+### 実装
+
+#### 1. 設計 doc: `docs/COMPETITOR_EXPANSION_PLAN.md` (新規)
+- 3-Phase 計画 (Phase 1: DB 化 / Phase 2: 段階拡張 50→100 / Phase 3: 自動 discovery)
+- KPI: Phase 1 (5/1) → Phase 2 50 社 (6/30) → 100 社 (9/30) → Phase 3 190 社 (2027-03)
+- 既存自動化 (`competitor-monitoring.yml` / `check-competitor-updates`) との統合方針
+- リスク + 緩和策 (UI overload / DB cost / 品質低下 / monitoring cost / PS#4 工数)
+- Philosophy 9/9 ✅ + AI-DEV 7/7 ✅
+
+#### 2. Migration: `20260425160000_create_competitors_phase1.sql` (新規)
+- `competitors` テーブル新設 (id / display_name / category / website / description / market_cap / etc)
+- `competitor_features` テーブル新設 (機能パリティ管理 / 既存 competitor_feature_status と独立)
+- RLS: public read / service_role write
+- **既存 21 社 seed** (productivity 2 / fintech 1 / chat 4 / sns 2 / ai-coding 4 / cloud-office 4 / hr-attendance 1 / specialty 3 = 21)
+- ON CONFLICT DO UPDATE で idempotent
+
+### 後続タスク
+
+| Phase | task | 担当 | 期限 |
+|-------|------|------|------|
+| 1-4 | Flutter UI を const map → Supabase fetch にリファクタ | **VSCode 版** (cross-instance-pr) | 2026-05-01 |
+| 2 | カテゴリ別 +30 社 (vibe-coding / second-brain / fintech 等) | **PS#4** | 2026-06-30 |
+| 2 | +50 社 (合計 100) | **PS#4** | 2026-09-30 |
+| 3 | `competitor-discovery.yml` (Gemini Flash 週次 staging) | **Win** | 2026-12-31 |
+| 3 | 190 社到達 | 全 instance | 2027-03-31 |
+
+### Philosophy Alignment (9/9) ✅
+特に原則 5 (商品=ユーザー価値): 190 社見せても User 価値あるか? → カテゴリ filter で「主要 5-10 社」default 表示で UI overload 回避
+
+### AI-DEV 7/7 ✅ (Phase 3 設計時)
+
+### commit: TBD
