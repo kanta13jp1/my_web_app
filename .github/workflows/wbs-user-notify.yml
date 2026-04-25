@@ -1,0 +1,69 @@
+name: WBS User Task Notify
+
+on:
+  schedule:
+    # 毎朝9:00 JST (= 00:00 UTC) に実行
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Slack通知をスキップしてタスク一覧のみ取得 (true/false)'
+        required: false
+        default: 'false'
+
+concurrency:
+  group: wbs-user-notify
+  cancel-in-progress: false
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Notify user tasks via tools-hub
+        id: notify
+        env:
+          TOOLS_HUB_URL: ${{ secrets.SUPABASE_TOOLS_HUB_URL }}
+          SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          if [ -z "$TOOLS_HUB_URL" ]; then
+            TOOLS_HUB_URL="https://qwxkntrdqmzlfgmtcecf.supabase.co/functions/v1/tools-hub"
+          fi
+
+          HTTP_CODE=$(curl -s -o /tmp/notify_resp.json -w "%{http_code}" \
+            -X POST "$TOOLS_HUB_URL" \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer $SERVICE_ROLE_KEY" \
+            -d '{"action":"wbs.notify_user_tasks"}')
+
+          echo "HTTP_CODE=$HTTP_CODE"
+          cat /tmp/notify_resp.json
+
+          if [ "$HTTP_CODE" != "200" ]; then
+            echo "::warning::tools-hub returned HTTP $HTTP_CODE — skipping"
+            echo "skipped=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          COUNT=$(jq -r '.count // 0' /tmp/notify_resp.json)
+          URGENT=$(jq -r '.urgent_count // 0' /tmp/notify_resp.json)
+          SLACK_POSTED=$(jq -r '.slack_posted // false' /tmp/notify_resp.json)
+
+          echo "count=$COUNT" >> "$GITHUB_OUTPUT"
+          echo "urgent=$URGENT" >> "$GITHUB_OUTPUT"
+          echo "slack_posted=$SLACK_POSTED" >> "$GITHUB_OUTPUT"
+          echo "✅ user tasks: $COUNT件 (urgent: $URGENT件) / slack_posted=$SLACK_POSTED"
+
+      - name: Summary
+        if: always()
+        run: |
+          COUNT="${{ steps.notify.outputs.count }}"
+          URGENT="${{ steps.notify.outputs.urgent }}"
+          SLACK="${{ steps.notify.outputs.slack_posted }}"
+          echo "## WBS User Task Notify 結果" >> "$GITHUB_STEP_SUMMARY"
+          echo "| 項目 | 値 |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|---|---|" >> "$GITHUB_STEP_SUMMARY"
+          echo "| 未完了ユーザータスク | ${COUNT:-N/A}件 |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| 期限7日以内 | ${URGENT:-N/A}件 |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Slack通知 | ${SLACK:-N/A} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| 実行時刻 (JST) | $(TZ=Asia/Tokyo date '+%Y-%m-%d %H:%M') |" >> "$GITHUB_STEP_SUMMARY"
