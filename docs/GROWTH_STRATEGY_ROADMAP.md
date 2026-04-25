@@ -17919,3 +17919,40 @@ curl -X POST https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/schedule-hub 
 特に原則 8 (KPI=昨日の自分): error body 取得で失敗 → 改善サイクル高速化
 
 ### commit: TBD
+
+---
+
+## VSCode版 S4 — Node.js 24対応 + Google Agent Builder LP追加 (2026-04-25)
+
+### 実施内容
+
+**[1] supabase/setup-cli@v1 → @v2 upgrade** (S):
+- deploy-prod/dev/staging.yml の `supabase/setup-cli@v1` → `@v2`
+- v2.0.0 (2026-04-21 released) — Node.js 20 deprecation deadline 2026-06-02 対応
+- commit: 7842bd8c
+
+**[2] Google Agent Builder 比較エントリ追加** (M):
+- `comparison_page.dart` に `'google_agent_builder'` エントリ追加 (6 feature comparisons)
+  - painPoints: コード必須・GCP従量課金・個人6部署未対応
+  - features: ノーコード/日本語UI/6部署/無料を優位として強調
+- `landing_page.dart` competitors list に追加 (Google I/O 2026 5/19 先回り準備)
+- commit: 0ce6e854
+- 5/19 keynote 後に PS#4 レポート受信 → 確定情報で内容更新予定
+
+**[3] cross-instance-prs 完了マーク**:
+- `20260424_orphan_branches_nodejs20_upgrade.md` タスクB ✅
+- `20260420_google_io_2026_preparation.md` VSCode版LP対応 ✅
+
+### test確認
+
+- `feature_strategy_ai_review_service_test.dart` 2/2 ✅ (ファイルオープン確認)
+
+### WBS: 競合比較ページ最新化 `63720339` 85%→88%
+
+### Philosophy Alignment (VSCode版 S4)
+
+9/9 ✅
+1. CEO感 ✅ — deadline 駆動で優先度判断 (Node.js upgrade → Google I/O LP)
+2. ミッション駆動 ✅ — 競合差別化の事前準備 = 市場獲得速度向上
+5. 商品=ユーザー価値 ✅ — LP訪問者が Agent Builder との違いを即確認可能
+6. 資本=時間 ✅ — 事前準備で I/O 当日 24h 以内対応を実現

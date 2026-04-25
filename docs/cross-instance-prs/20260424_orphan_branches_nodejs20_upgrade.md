@@ -70,3 +70,9 @@ dart format 差分があれば先に実行して commit。
 ```
 
 ファイル: `.github/workflows/deploy-prod.yml`
+
+## ✅ タスクB完了 (VSCode版 S4 2026-04-25)
+
+- `supabase/setup-cli@v1` → `@v2` 更新 (deploy-prod/dev/staging.yml)
+- commit: 7842bd8c
+- Node.js 24 互換確保 / deadline 2026-06-02 対応済み

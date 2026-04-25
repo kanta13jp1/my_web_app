@@ -184,3 +184,10 @@ Google Agent Builder は **開発者が業務用 agent を作るツール**。
   - 複雑な判断タスク (daily-judgment EF) への routing 候補
 
 生成: PS版#4 S35 | 2026-04-24
+
+## ✅ VSCode版LP対応完了 (VSCode版 S4 2026-04-25)
+
+- `google_agent_builder` エントリを comparison_page.dart に追加 (6 feature comparisons)
+- landing_page.dart の competitors list に追加
+- commit: 0ce6e854
+- I/O keynote (5/19) 後に確定情報を反映予定
