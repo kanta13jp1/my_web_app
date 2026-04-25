@@ -46,6 +46,7 @@ $md$,
 (
   'krisp',
   'api',
+  'Krisp — SDK・API (B2B組み込み / WebAssembly / Meeting Transcription REST)',
   $md$## Krisp API / SDK
 
 ### Krisp SDK (B2B 組み込み)
@@ -82,6 +83,7 @@ $md$,
 (
   'krisp',
   'models',
+  'Krisp — AIモデル (独自DNN / AEC / Whisperベース文字起こし / CPU < 5%)',
   $md$## Krisp の AI モデル
 
 | 用途 | 技術 |
