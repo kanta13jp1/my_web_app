@@ -1,153 +1,156 @@
-name: Issue → WBS Auto-Sync
-
-# Win版#131 part 21
-# WEB版 / 📱スマホ版が起票した GitHub Issue を WBS タスクに自動同期。
-# - opened: tools-hub:wbs.add_task で WBS に追加 (instance=ps5, priority=high)
-# - closed: 該当 WBS タスクを completed 化
+name: GitHub Issues WBS Sync
 
 on:
   issues:
-    types: [opened, closed, reopened, edited]
+    types: [opened, edited, closed, reopened, labeled, unlabeled]
+  schedule:
+    - cron: "25 * * * *"
   workflow_dispatch:
 
 permissions:
-  issues: write
   contents: read
+  issues: write
 
 env:
   SUPABASE_URL: https://smmkxxavexumewbfaqpy.supabase.co
-  SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+  SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
 
 jobs:
   sync:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 10
     steps:
-      - name: Determine action
-        id: action
-        env:
-          ACTION: ${{ github.event.action }}
-          ISSUE_NUMBER: ${{ github.event.issue.number }}
-          ISSUE_TITLE: ${{ github.event.issue.title }}
-          ISSUE_URL: ${{ github.event.issue.html_url }}
-          AUTHOR: ${{ github.event.issue.user.login }}
-          LABELS_JSON: ${{ toJson(github.event.issue.labels) }}
-        run: |
-          LABELS=$(printf '%s' "$LABELS_JSON" | python3 -c "import json,sys; print(','.join(l['name'] for l in json.load(sys.stdin)))" 2>/dev/null || echo "")
-
-          # Severity 判定: label=critical/high → high / label=bug → medium / その他 → low
-          PRIORITY="low"
-          if echo "$LABELS" | grep -qiE "critical|p0"; then
-            PRIORITY="high"
-          elif echo "$LABELS" | grep -qiE "bug|high|p1"; then
-            PRIORITY="high"
-          elif echo "$LABELS" | grep -qiE "feature|enhancement|p2"; then
-            PRIORITY="medium"
-          fi
-
-          # Mobile/Web 判定 → owner_instance
-          OWNER_INSTANCE="ps5"  # default = on-call
-          if echo "$LABELS" | grep -qiE "mobile|ios|android"; then
-            OWNER_INSTANCE="ps5"  # mobile bug → ps5 (on-call) でトリアージ
-          fi
-
-          # End date: bug=今日+1日 / それ以外=今日+3日
-          if echo "$LABELS" | grep -qiE "bug|critical"; then
-            END_DATE=$(date -u -d "+1 day" +%Y-%m-%d)
-          else
-            END_DATE=$(date -u -d "+3 days" +%Y-%m-%d)
-          fi
-          START_DATE=$(date -u +%Y-%m-%d)
-
-          {
-            echo "action=$ACTION"
-            echo "issue_number=$ISSUE_NUMBER"
-            echo "issue_title=$ISSUE_TITLE"
-            echo "issue_url=$ISSUE_URL"
-            echo "labels=$LABELS"
-            echo "author=$AUTHOR"
-            echo "priority=$PRIORITY"
-            echo "owner_instance=$OWNER_INSTANCE"
-            echo "start_date=$START_DATE"
-            echo "end_date=$END_DATE"
-          } >> "$GITHUB_OUTPUT"
-
-      - name: Add task to WBS (on opened/reopened)
-        if: steps.action.outputs.action == 'opened' || steps.action.outputs.action == 'reopened'
-        env:
-          ISSUE_NUMBER: ${{ steps.action.outputs.issue_number }}
-          ISSUE_TITLE: ${{ steps.action.outputs.issue_title }}
-          ISSUE_URL: ${{ steps.action.outputs.issue_url }}
-          AUTHOR: ${{ steps.action.outputs.author }}
-          LABELS: ${{ steps.action.outputs.labels }}
-          OWNER_INSTANCE: ${{ steps.action.outputs.owner_instance }}
-          START_DATE: ${{ steps.action.outputs.start_date }}
-          END_DATE: ${{ steps.action.outputs.end_date }}
-          PRIORITY: ${{ steps.action.outputs.priority }}
-        run: |
-          python3 <<'PY' > /tmp/wbs_payload.json
-          import json, os
-          payload = {
-              "action": "wbs.add_task",
-              "title": f"[Issue #{os.environ['ISSUE_NUMBER']}] {os.environ['ISSUE_TITLE']}",
-              "description": f"GitHub Issue: {os.environ['ISSUE_URL']} / 起票: {os.environ['AUTHOR']} / labels: {os.environ['LABELS']}",
-              "instance": os.environ["OWNER_INSTANCE"],
-              "owner_instance": os.environ["OWNER_INSTANCE"],
-              "category": "🐛 Bug Fix",
-              "category_icon": "🐛",
-              "category_order": 99,
-              "status": "pending",
-              "progress": 0,
-              "start_date": os.environ["START_DATE"],
-              "end_date": os.environ["END_DATE"],
-              "priority": os.environ["PRIORITY"],
-              "remaining_work": "1) WEB/📱 が screenshot で再現確認  2) PS#5 が即修正 (1行〜数行)  3) 重い場合は cross-instance-pr で win/vscode へ handoff",
-          }
-          print(json.dumps(payload, ensure_ascii=False))
-          PY
-          curl -s -X POST "$SUPABASE_URL/functions/v1/tools-hub" \
-            -H "Authorization: Bearer $SUPABASE_ANON_KEY" \
-            -H "Content-Type: application/json" \
-            --data-binary @/tmp/wbs_payload.json || true
-          echo "✅ WBS task added for Issue #$ISSUE_NUMBER"
-
-      - name: Mark task completed (on closed)
-        if: steps.action.outputs.action == 'closed'
-        env:
-          ISSUE_NUMBER: ${{ steps.action.outputs.issue_number }}
-        run: |
-          TITLE_PREFIX="[Issue #$ISSUE_NUMBER]"
-          TASK_ID=$(curl -s -X POST "$SUPABASE_URL/functions/v1/tools-hub" \
-            -H "Authorization: Bearer $SUPABASE_ANON_KEY" \
-            -H "Content-Type: application/json" \
-            -d '{"action":"wbs.list_tasks"}' \
-            | TITLE_PREFIX="$TITLE_PREFIX" python3 -c "import json,os,sys; data=json.load(sys.stdin); tasks=data.get('tasks',[]); print(next((t['id'] for t in tasks if t.get('title','').startswith(os.environ['TITLE_PREFIX'])),''))")
-
-          if [ -n "$TASK_ID" ]; then
-            curl -s -X POST "$SUPABASE_URL/functions/v1/tools-hub" \
-              -H "Authorization: Bearer $SUPABASE_ANON_KEY" \
-              -H "Content-Type: application/json" \
-              -d "{\"action\":\"wbs.update_progress\",\"id\":\"$TASK_ID\",\"progress\":100,\"status\":\"completed\"}" || true
-            echo "✅ WBS task $TASK_ID marked completed"
-          else
-            echo "⚠ No WBS task matched prefix $TITLE_PREFIX (Issue 起票前に WBS 作成?)"
-          fi
-
-      - name: Comment on Issue (on opened)
-        if: steps.action.outputs.action == 'opened'
+      - name: Fetch GitHub issues
         env:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
-          ISSUE_NUMBER: ${{ steps.action.outputs.issue_number }}
-          OWNER_INSTANCE: ${{ steps.action.outputs.owner_instance }}
-          PRIORITY: ${{ steps.action.outputs.priority }}
-          END_DATE: ${{ steps.action.outputs.end_date }}
         run: |
-          BODY="🤖 WBS に自動追加しました (instance: $OWNER_INSTANCE / priority: $PRIORITY / 期限: $END_DATE)
+          gh issue list \
+            --repo "$REPO" \
+            --state all \
+            --limit 1000 \
+            --json number,title,url,state,labels,author,createdAt,updatedAt \
+            > /tmp/issues.json
 
-          - PS版#5 が **4 時間以内** にトリアージ (severity 判定 + assign)
-          - 軽量修正 (severity ≤ normal): **24 時間以内** に PR
-          - 重い修正: **24 時間以内** に \`cross-instance-pr\` で win / vscode に handoff
+      - name: Close duplicate GitHub issues
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          python3 <<'PY' > /tmp/duplicate-issues.tsv
+          import json
+          import re
+          from collections import defaultdict
 
-          進捗: https://my-web-app-b67f4.web.app/project-gantt"
-          gh issue comment "$ISSUE_NUMBER" --repo "$REPO" --body "$BODY"
+          with open("/tmp/issues.json", encoding="utf-8") as fh:
+              issues = json.load(fh)
+
+          groups = defaultdict(list)
+          for issue in issues:
+              if str(issue.get("state", "")).upper() != "OPEN":
+                  continue
+              title = re.sub(r"^\s*\[Issue #\d+\]\s*", "", issue.get("title", ""))
+              key = re.sub(r"\s+", " ", title).strip().lower()
+              if key:
+                  groups[key].append(issue)
+
+          for items in groups.values():
+              if len(items) < 2:
+                  continue
+              items.sort(key=lambda item: int(item["number"]))
+              keep = items[0]
+              for duplicate in items[1:]:
+                  print(f"{duplicate['number']}\t{keep['number']}\t{duplicate['title']}")
+          PY
+
+          while IFS=$'\t' read -r duplicate keep title; do
+            [ -n "$duplicate" ] || continue
+            gh issue close "$duplicate" \
+              --repo "$REPO" \
+              --comment "Duplicate issue. Keeping #$keep as the canonical task; scheduled WBS sync closed this duplicate." \
+              || true
+          done < /tmp/duplicate-issues.tsv
+
+      - name: Refetch GitHub issues after dedupe
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          gh issue list \
+            --repo "$REPO" \
+            --state all \
+            --limit 1000 \
+            --json number,title,url,state,labels,author,createdAt,updatedAt \
+            > /tmp/issues.json
+
+      - name: Sync issues to WBS
+        env:
+          REPO: ${{ github.repository }}
+        run: |
+          if [ -z "$SUPABASE_SERVICE_ROLE_KEY" ]; then
+            echo "SUPABASE_SERVICE_ROLE_KEY is not configured"
+            exit 1
+          fi
+
+          python3 <<'PY' > /tmp/wbs-sync-payload.json
+          import json
+          import os
+
+          with open("/tmp/issues.json", encoding="utf-8") as fh:
+              issues = json.load(fh)
+
+          payload = {
+              "action": "wbs.sync_github_issues",
+              "repo": os.environ["REPO"],
+              "issues": issues,
+          }
+          print(json.dumps(payload, ensure_ascii=False))
+          PY
+
+          curl -fsS -X POST "$SUPABASE_URL/functions/v1/tools-hub" \
+            -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \
+            -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
+            -H "Content-Type: application/json" \
+            --data-binary @/tmp/wbs-sync-payload.json \
+            > /tmp/wbs-sync-response.json
+
+          cat /tmp/wbs-sync-response.json
+
+      - name: Close GitHub issues completed in WBS
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          python3 <<'PY' > /tmp/issues-to-close.tsv
+          import json
+
+          with open("/tmp/wbs-sync-response.json", encoding="utf-8") as fh:
+              response = json.load(fh)
+
+          seen = set()
+          for item in response.get("issues_to_close", []):
+              number = str(item.get("number", "")).strip()
+              if not number or number in seen:
+                  continue
+              seen.add(number)
+              task_id = str(item.get("task_id", "")).strip()
+              reason = str(item.get("reason", "")).replace("\t", " ").strip()
+              print(f"{number}\t{task_id}\t{reason}")
+          PY
+
+          while IFS=$'\t' read -r number task_id reason; do
+            [ -n "$number" ] || continue
+            gh issue close "$number" \
+              --repo "$REPO" \
+              --comment "WBS task $task_id is completed, so scheduled WBS sync closed this issue. Reason: $reason" \
+              || true
+          done < /tmp/issues-to-close.tsv
+
+      - name: Sync Notion WBS mirror
+        run: |
+          curl -fsS -X POST "$SUPABASE_URL/functions/v1/schedule-hub" \
+            -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \
+            -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
+            -H "Content-Type: application/json" \
+            -d '{"action":"notion.sync_wbs","limit":100,"offset":0}' \
+            || true
