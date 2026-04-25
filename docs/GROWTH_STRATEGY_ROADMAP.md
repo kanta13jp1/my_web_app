@@ -19683,3 +19683,26 @@ GitHub Secrets に SLACK_WEBHOOK_URL を設定するだけで有効化。
 - 次回 dispatch: **May 1 JST**
 
 ### commit: no-op
+## PS#1 S41 — Rule17 WF health check + YAML/deploy修復 (2026-04-25)
+
+### Rule17 WF集計
+
+| WF | ✅ | ❌ | 状態 |
+|---|---|---|---|
+| Deploy to Production | 1 | 3 (+ 12 cancelled) | **in_progress 24927211757 (9e42fb8d)** |
+| notebooklm-user-tasks-sync | 0 | 1 | **修正済** (YAML block scalar) |
+| Notion Mirror Sync | 2 | 0 | healthy |
+| WBS AI Review | 2 | 0 | healthy |
+| AI大学コンテンツ更新 | 1 | 0 | healthy |
+| CS Check | 2 | 0 | healthy |
+| その他 | 全✅ | 0 | healthy |
+
+### 修正内容
+
+1. **Rebase conflict解消**: tabnine 200000 collision — origin が 200100 に rename済み確認 → ローカル 202000 commit を drop + fast-forward
+2. **tools-hub duplicate case**: Deno lint `wbs.notify_user_tasks` 重複 → origin/main `493fea50` で修正済み確認 (deploy 24927211757 で検証中)
+3. **notebooklm-user-tasks-sync YAML syntax error**: `git commit -m "..."` multi-line body at column-0 → split `-m` fix via GitHub API PUT (`9e42fb8d`)
+4. **orphan branch削除**: `claude/mobile-version-task-hQxcq` (horse_racing merged) 削除
+
+### deploy状況
+- Run `24927211757` on `9e42fb8d` — in_progress at time of writing
