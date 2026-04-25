@@ -18019,3 +18019,18 @@ curl -X POST https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/schedule-hub 
 - 原則 9 (IPO/ウェルビーイング): ✅ CI 安定化で開発速度維持
 
 ### commit: 11e67b88
+## PS版#2 S21 — 2026-04-25 (T-1 dispatch / blog-publish date-gate fix)
+
+### 実施内容
+- T-1 dispatch チェック: April 28 (Notion Custom Agents Paywall) 投稿済み確認
+- 未投稿 draft 2本確認: May 2 + May 4 (Notion Paywall series)
+- **バグ修正**: blog-publish.yml auto-select に T-1 date-gate 追加
+  - 問題: slug date が翌日より未来のファイルが即日投稿される (May 2「2 Days to Paywall」が9日早く公開)
+  - 修正: filename から YYYY-MM-DD 抽出→翌日以降のみ対象スキップ
+  - commit: 232518cd
+- orphan blog-publish/* branches: なし (clean)
+- 次回投稿スケジュール: May 1 (21:00 JST auto) → May 2 post / May 3 → May 4 post
+
+### Philosophy Alignment
+1.CEO感 ✅ 2.ミッション ✅ 3.Mentor ✅ 4.6部署 N/A 5.商品価値 ✅ (タイトル矛盾防止) 6.資本 ✅ 7.BS N/A 8.KPI ✅ 9.IPO ✅
+合計: 7/9 ✅ 実装可
