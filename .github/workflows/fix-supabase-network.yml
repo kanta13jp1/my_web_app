@@ -1,0 +1,129 @@
+name: Supabase Network Restrictions 管理
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: '実行アクション'
+        required: true
+        default: 'check'
+        type: choice
+        options:
+          - check       # 現在の制限を確認するだけ
+          - allow-all   # 制限を全解除 (0.0.0.0/0)
+
+concurrency:
+  group: supabase-network-fix
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  manage-network:
+    name: Supabase Network Restrictions
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Check current Network Restrictions
+        id: check
+        run: |
+          PROJECT_REF="smmkxxavexumewbfaqpy"
+          API_URL="https://api.supabase.com/v1/projects/${PROJECT_REF}/network-restrictions"
+
+          echo "=== 現在のネットワーク制限 ==="
+          RESPONSE=$(curl -s -w "\nHTTP:%{http_code}" \
+            "$API_URL" \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_ACCESS_TOKEN }}" \
+            --max-time 15 2>/dev/null)
+          HTTP_CODE=$(echo "$RESPONSE" | tail -1 | sed 's/HTTP://')
+          BODY=$(echo "$RESPONSE" | head -n -1)
+
+          echo "HTTP: $HTTP_CODE"
+          echo "Body: $BODY"
+          echo "check_code=$HTTP_CODE" >> $GITHUB_OUTPUT
+          echo "body=$BODY" >> $GITHUB_OUTPUT
+
+          # 現在の allowed CIDRs を表示
+          DB_CIDRS=$(echo "$BODY" | jq -r '.config.dbAllowedCidrs // [] | join(", ")' 2>/dev/null || echo "取得失敗")
+          echo ""
+          echo "dbAllowedCidrs: ${DB_CIDRS:-（空 = 全許可）}"
+
+      - name: Allow all IPs (制限解除)
+        if: github.event.inputs.action == 'allow-all'
+        run: |
+          PROJECT_REF="smmkxxavexumewbfaqpy"
+          API_URL="https://api.supabase.com/v1/projects/${PROJECT_REF}/network-restrictions"
+
+          echo "=== ネットワーク制限を全解除 (0.0.0.0/0, ::/0) ==="
+          RESPONSE=$(curl -s -w "\nHTTP:%{http_code}" \
+            -X PUT "$API_URL" \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_ACCESS_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d '{"dbAllowedCidrs": [], "dbAllowedCidrsV6": []}' \
+            --max-time 15 2>/dev/null)
+          HTTP_CODE=$(echo "$RESPONSE" | tail -1 | sed 's/HTTP://')
+          BODY=$(echo "$RESPONSE" | head -n -1)
+
+          echo "HTTP: $HTTP_CODE"
+          echo "Body: $BODY"
+
+          if [ "$HTTP_CODE" = "200" ] || [ "$HTTP_CODE" = "201" ]; then
+            echo "✅ Network Restrictions 解除成功"
+          else
+            echo "❌ 解除失敗 (HTTP $HTTP_CODE)"
+            echo "  → SUPABASE_ACCESS_TOKEN の権限を確認してください"
+            echo "  → または Supabase Dashboard > Settings > Network > Network Restrictions から手動設定"
+            exit 1
+          fi
+
+      - name: Verify after update
+        if: github.event.inputs.action == 'allow-all'
+        run: |
+          PROJECT_REF="smmkxxavexumewbfaqpy"
+          API_URL="https://api.supabase.com/v1/projects/${PROJECT_REF}/network-restrictions"
+
+          sleep 5  # 反映待機
+          echo "=== 更新後の確認 ==="
+          RESPONSE=$(curl -s "$API_URL" \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_ACCESS_TOKEN }}" \
+            --max-time 15 2>/dev/null)
+          echo "$RESPONSE" | jq . 2>/dev/null || echo "$RESPONSE"
+
+          # 動作テスト: admin-hub にアクセス
+          echo ""
+          echo "=== 動作テスト: admin-hub EF ==="
+          TEST_CODE=$(curl -s -o /dev/null -w "%{http_code}" \
+            -X POST \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
+            -H "Content-Type: application/json" \
+            -d '{"action":"support.list"}' \
+            "https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/admin-hub" \
+            --max-time 15)
+          echo "admin-hub: HTTP $TEST_CODE"
+
+          if [ "$TEST_CODE" = "200" ]; then
+            echo "✅ EF アクセス正常"
+          elif [ "$TEST_CODE" = "403" ]; then
+            echo "⚠️ まだ 403 — Network Restrictions の反映に時間がかかる場合があります (5〜15 分)"
+          else
+            echo "ℹ️ HTTP $TEST_CODE (認証エラー等は正常範囲)"
+          fi
+
+      - name: Job Summary
+        if: always()
+        run: |
+          {
+            echo "## Supabase Network Restrictions $(date +'%Y-%m-%d %H:%M UTC')"
+            echo ""
+            echo "| 項目 | 値 |"
+            echo "|-----|---|"
+            echo "| アクション | ${{ github.event.inputs.action }} |"
+            echo "| Management API | HTTP ${{ steps.check.outputs.check_code }} |"
+            if [ "${{ github.event.inputs.action }}" = "allow-all" ]; then
+              echo "| 結果 | Network Restrictions 全解除を試みました |"
+            fi
+            echo ""
+            echo "> **手動設定の場合**: Supabase Dashboard → Settings → Network → Network Restrictions → IP を削除 → Save"
+          } >> $GITHUB_STEP_SUMMARY

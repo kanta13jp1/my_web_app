@@ -11,7 +11,7 @@ concurrency:
   cancel-in-progress: false
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   health-check:
@@ -66,6 +66,56 @@ jobs:
 
           echo "all_ok=$ALL_OK" >> $GITHUB_OUTPUT
           echo "results=$RESULTS" >> $GITHUB_OUTPUT
+
+      - name: Write infra-status cache (WEB版フォールバック用)
+        if: always()
+        run: |
+          FIREBASE_CODE="${{ steps.firebase.outputs.code }}"
+          ALL_OK="${{ steps.supabase.outputs.all_ok }}"
+          RESULTS="${{ steps.supabase.outputs.results }}"
+          FETCHED_AT=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+
+          # 403 = Network Restrictions ブロック → 異常扱いにしない (既知の制限)
+          if echo "$RESULTS" | grep -q "403"; then
+            NOTE="Supabase Network Restrictions により一部エンドポイントが 403。fix-supabase-network.yml (allow-all) で解除可能。"
+          else
+            NOTE=""
+          fi
+
+          mkdir -p docs
+          jq -n \
+            --arg firebase "$FIREBASE_CODE" \
+            --arg supabase_all_ok "$ALL_OK" \
+            --arg results "$RESULTS" \
+            --arg fetched_at "$FETCHED_AT" \
+            --arg note "$NOTE" \
+            '{
+              firebase: {code: $firebase, ok: ($firebase == "200")},
+              supabase: {all_ok: ($supabase_all_ok == "true"), results: $results},
+              fetched_at: $fetched_at,
+              note: $note
+            }' > docs/infra-status.json
+
+          echo "✅ docs/infra-status.json 更新: Firebase=$FIREBASE_CODE supabase_ok=$ALL_OK"
+
+          # コミット & push (ファイルが変わった場合のみ)
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin main --quiet
+          git checkout main --quiet
+          git reset --hard origin/main --quiet
+          git add docs/infra-status.json
+          if git diff --cached --quiet; then
+            echo "変更なし — スキップ"
+          else
+            git commit -m "自動: インフラヘルスチェック $(date -u +%Y-%m-%d-%H):00 (GitHub Actions)"
+            if [ -n "${{ secrets.BYPASS_RULES }}" ]; then
+              git remote set-url origin "https://x-access-token:${{ secrets.BYPASS_RULES }}@github.com/kanta13jp1/my_web_app.git"
+            else
+              git remote set-url origin "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/kanta13jp1/my_web_app.git"
+            fi
+            git push origin main && echo "✅ infra-status.json push 完了" || echo "⚠️ push 失敗 (ブランチ保護)"
+          fi
 
       - name: Record to schedule_task_runs
         if: always()
