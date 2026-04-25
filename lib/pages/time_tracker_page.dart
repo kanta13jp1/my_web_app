@@ -43,6 +43,10 @@ class _TimeTrackerPageState extends State<TimeTrackerPage>
   }
 
   Future<void> _fetchEntries() async {
+    if (_supabase.auth.currentUser == null) {
+      setState(() => _isLoading = false);
+      return;
+    }
     setState(() {
       _isLoading = true;
       _errorMessage = null;
