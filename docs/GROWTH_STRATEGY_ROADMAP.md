@@ -19785,3 +19785,28 @@ PS#2 が引き取れる: marketing/docs/seo/product-light。
    - Phase 1/3 両スキーマ対応 (website_url OR website)
 
 ### commits: 031c132b (dedup) → e8045440 (schema+yaml) → 390dcd68 (push)
+
+---
+
+## PS#2 S30 — [DYNAMIC-CLAIM] 2nd slot + SEO完了マーク (2026-04-25)
+
+### 実施内容
+
+1. **T-1 check**: no-op (May 2 slug = May 1 dispatch待ち / orphan 0本)
+2. **[DYNAMIC-CLAIM] wbs.rebalance_suggest(ps2)**: top-5 全 business-legal → PS#2 禁止カテゴリ
+3. **wbs.list_tasks(category=marketing)**: pending marketing tasks なし (future milestones only)
+4. **SEO task 02b91199 → completed**: in_progress+100% → status=completed に更新
+5. **2nd claim**: 適切タスクなし → 1 session 1 claim (SEO = 1/2 slot)
+
+### WBS-SYNC
+
+- `wbs.update_progress(02b91199, 100, completed)` ✅
+- 更新件数: 1件
+
+### 所見
+
+- `wbs.rebalance_suggest` は stale_score で重み付けするため high-priority の business-legal が常に上位
+- PS#2 が引き取れる marketing/docs/seo タスクは現時点で pending なし
+- 今後: `wbs.rebalance_suggest` に category_filter パラメータ追加 → Win版 cross-instance-pr
+
+### commits: SEO completed via WBS API (no code change)
