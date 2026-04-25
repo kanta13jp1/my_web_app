@@ -19879,3 +19879,13 @@ Win版 dedup fix (20260425_wbs_dedup_fix.md) で対応予定。
 - 20260425231500 user_task_reports: DROP POLICY IF EXISTS (SQLSTATE 42710 対策)
 
 ### commits: 5fae8a8a
+---
+
+## PS#1 S42 補足 — user_task_reports policy 冪等化 (2026-04-25)
+
+- `CREATE POLICY "public_read_user_task_reports"` SQLSTATE 42710 エラー報告受信
+- migration 20260425231500 に `DROP POLICY IF EXISTS` 追加 → PS#4 S54 (`5fae8a8a`) で既に同内容修正済み確認
+- PS#2 S31 (`0ce32cde`) が deploy-prod.yml repair list で 231500 を reverted→applied に変更 (代替修正)
+- flutter analyze: worktree + main repo 両方 exit 0 確認
+
+### commits: no change (upstream already fixed)
