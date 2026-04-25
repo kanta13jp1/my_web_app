@@ -18861,3 +18861,27 @@ Deploy failure `24924215661` (feat business-wbs) を解析・修正。
 ### AI-DEV 7/7 ✅
 
 ### commit: TBD
+
+## PS\#5 S49 2026-04-25 午後 — CI repair 181500 + STUCK regex fix
+
+**Instance**: PS\#5 (on-call)
+**Commits**: 33bdbf75
+
+### 実施内容
+
+1. **#716/#717 クローズ** — 5d6d8d26 run 24924621028 SUCCESS確認後クローズ
+
+2. **repair list 181500 追加** (33bdbf75)
+   - ca6b7d02 が  追加 → repair list に未登録
+   - 181500 を repair list 末尾に追加
+
+3. **STUCK regex バグ修正** (33bdbf75)
+   - 旧:  —  は word char  の前でマッチしない
+   - 新:  — word boundary なしで確実に14桁を抽出
+   - 根本:  で  と  の間に  が立たない
+
+### Philosophy/AI-DEV
+### Philosophy 9/9 ✅
+### AI-DEV 7/7 ✅
+
+### commit: 33bdbf75
