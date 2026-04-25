@@ -1,6 +1,6 @@
 name: Competitor Monitoring (競合インテリジェンスレポート)
 
-# PS版#4 担当: 競合21社の戦略インテリジェンスを毎日自動生成
+# PS版#4 担当: 競合モニタリング (competitors テーブル動的取得 / 190社対応)
 # daily-report.yml の可用性チェックを補完する「戦略分析」レイヤー
 # Primary AI: Gemini 1.5 Flash (無料枠) / Fallback: Claude Sonnet
 
@@ -112,9 +112,11 @@ jobs:
           fi
           echo "yesterday=$YESTERDAY" >> $GITHUB_OUTPUT
 
-      # ── Step 3: 競合サイト可用性チェック (21社) ──────────────────────────
-      - name: Step 3 - 競合21社 可用性チェック
+      # ── Step 3: 競合サイト可用性チェック (competitors テーブル動的取得 / 190社対応) ──
+      - name: Step 3 - 競合可用性チェック (動的取得)
         id: availability
+        env:
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: |
           > /tmp/avail_results.txt
 
@@ -130,31 +132,49 @@ jobs:
             echo "| $NAME | $URL | HTTP $HTTP | $STATUS | $TIER |" >> /tmp/avail_results.txt
           }
 
-          # 21社 (CLAUDE.md 競合リスト)
-          check_site "Notion"       "https://www.notion.so/"          "🔴"
-          check_site "Evernote"     "https://evernote.com/"           "🟠"
-          check_site "MoneyForward" "https://moneyforward.com/"       "🔴"
-          check_site "Slack"        "https://slack.com/"              "🔴"
-          check_site "Chatwork"     "https://go.chatwork.com/"        "🟠"
-          check_site "X/Twitter"    "https://x.com/"                  "🟠"
-          check_site "AnimaWorks"   "https://animaworks.com/"         "🟡"
-          check_site "Claude Code"  "https://claude.ai/code"          "🔴"
-          check_site "Codex"        "https://openai.com/codex"        "🔴"
-          check_site "netkeiba"     "https://www.netkeiba.com/"       "🟡"
-          check_site "OpenClaw"     "https://openclaw.ai/"            "🟡"
-          check_site "JobCan"       "https://jobcan.ne.jp/"           "🟡"
-          check_site "Amazon"       "https://www.amazon.co.jp/"       "🟠"
-          check_site "Google"       "https://www.google.com/"         "🔴"
-          check_site "Microsoft"    "https://www.microsoft.com/ja-jp/" "🔴"
-          check_site "Discord"      "https://discord.com/"            "🟠"
-          check_site "LINE"         "https://line.me/ja/"             "🔴"
-          check_site "Facebook"     "https://www.facebook.com/"       "🟡"
-          check_site "Liven"        "https://liven.app/"              "🟡"
-          check_site "GitHub"       "https://github.com/"             "🔴"
+          # competitors テーブルから動的取得 (190社対応 / threat_level → tier アイコン変換)
+          COMP_JSON=$(curl -sf \
+            "$SUPABASE_URL/rest/v1/competitors?select=display_name,website_url,threat_level&is_active=eq.true&limit=50" \
+            -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
+            -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" 2>/dev/null || echo "[]")
+
+          COMP_COUNT=$(echo "$COMP_JSON" | python3 -c "import sys,json; print(len(json.load(sys.stdin)))" 2>/dev/null || echo "0")
+
+          if [ "$COMP_COUNT" -gt 0 ]; then
+            echo "$COMP_JSON" | python3 -c "
+import sys, json
+data = json.load(sys.stdin)
+tier_map = {'high': '🔴', 'medium': '🟠', 'low': '🟡'}
+for c in data:
+    name = c.get('display_name', '?').replace('\"', '')
+    url = c.get('website_url', '')
+    tier = tier_map.get(c.get('threat_level', 'low'), '🟡')
+    if url:
+        print(f'{name}|{url}|{tier}')
+" 2>/dev/null | while IFS='|' read -r NAME URL TIER; do
+              [ -n "$URL" ] && check_site "$NAME" "$URL" "$TIER"
+            done
+            echo "✅ 動的取得: ${COMP_COUNT}社チェック"
+          else
+            # フォールバック: 元の21社固定リスト
+            echo "⚠️ competitors テーブル取得失敗 → 固定21社でフォールバック"
+            check_site "Notion"       "https://www.notion.so/"          "🔴"
+            check_site "Evernote"     "https://evernote.com/"           "🟠"
+            check_site "MoneyForward" "https://moneyforward.com/"       "🔴"
+            check_site "Slack"        "https://slack.com/"              "🔴"
+            check_site "Claude Code"  "https://claude.ai/code"          "🔴"
+            check_site "Google"       "https://www.google.com/"         "🔴"
+            check_site "GitHub"       "https://github.com/"             "🔴"
+            check_site "Microsoft"    "https://www.microsoft.com/ja-jp/" "🔴"
+            check_site "LINE"         "https://line.me/ja/"             "🔴"
+            check_site "Amazon"       "https://www.amazon.co.jp/"       "🟠"
+            COMP_COUNT=10
+          fi
 
           DOWN_COUNT=$(grep -c "⚠️" /tmp/avail_results.txt 2>/dev/null || echo 0)
           echo "down_count=$DOWN_COUNT" >> $GITHUB_OUTPUT
-          echo "✅ 可用性チェック完了: ${DOWN_COUNT}社 要注意"
+          echo "comp_count=$COMP_COUNT" >> $GITHUB_OUTPUT
+          echo "✅ 可用性チェック完了: ${DOWN_COUNT}社 要注意 / ${COMP_COUNT}社チェック"
           cat /tmp/avail_results.txt
 
       # ── Step 4: AI で戦略インテリジェンスレポート生成 ─────────────────────
@@ -327,7 +347,7 @@ jobs:
 
           ---
 
-          ## 可用性チェック詳細 (21社)
+          ## 可用性チェック詳細
 
           | 競合 | URL | HTTP | 状態 | 脅威度 |
           |-----|-----|-----|-----|-----|
@@ -394,7 +414,8 @@ jobs:
           DOWN="${{ steps.availability.outputs.down_count }}"
           USED_MODEL="${{ steps.ai_report.outputs.used_model }}"
 
-          DOWN_ICON=$([ "${DOWN:-0}" = "0" ] && echo "✅ 全21社正常" || echo "⚠️ ${DOWN}社 要注意")
+          COMP_COUNT="${{ steps.availability.outputs.comp_count }}"
+          DOWN_ICON=$([ "${DOWN:-0}" = "0" ] && echo "✅ 全${COMP_COUNT:-?}社正常" || echo "⚠️ ${DOWN}社 要注意")
           EVENT_ROW=""
           if [ -n "$SPECIAL_EVENT" ]; then
             EVENT_ROW="| 特記イベント | ⚡ $SPECIAL_EVENT |"$'\n'
@@ -405,7 +426,7 @@ jobs:
             echo ""
             echo "| 項目 | 値 |"
             echo "|-----|---|"
-            echo "| 可用性 (21社) | $DOWN_ICON |"
+            echo "| 可用性 (${COMP_COUNT:-?}社) | $DOWN_ICON |"
             echo "| AIモデル | $USED_MODEL |"
             echo "| レポートファイル | docs/competitor-reports/${TODAY}.md |"
             echo "$EVENT_ROW"
