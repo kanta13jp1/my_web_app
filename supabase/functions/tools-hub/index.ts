@@ -1551,6 +1551,192 @@ serve(async (req) => {
           });
         }
 
+        // ─── WBS User Tasks Notify は line 1904+ (PS#3/4) に統合済 ────────
+        // (本 Win#132 part 18 の重複実装は part 19 で削除)
+
+        // ─── WBS User Task Report (Win版#132 part 19) ─────────────────────
+        // user instance task の進捗報告 + NotebookLM 蓄積用 history 保存。
+        // body: {task_id, progress?, status?, report_text?, blockers?, next_action?}
+        case "wbs.user_task_report": {
+          const taskId = String(body.task_id ?? "");
+          if (!taskId) return json({ error: "task_id required" }, 400);
+
+          // 1. task fetch + instance='user' guard
+          const { data: task, error: fetchErr } = await admin
+            .from("wbs_tasks")
+            .select("id, instance, title, progress, status")
+            .eq("id", taskId)
+            .maybeSingle();
+          if (fetchErr) throw new Error(fetchErr.message);
+          if (!task) return json({ error: "task not found" }, 404);
+          if (task.instance !== "user") {
+            return json({ error: "instance != 'user' / report 不可", reason: "non_user_task" }, 403);
+          }
+
+          // 2. wbs_tasks 更新 (progress / status のみ更新可 / 他は不変)
+          const updates: Record<string, unknown> = { updated_at: new Date().toISOString() };
+          const newProgress = body.progress !== undefined ? Number(body.progress) : null;
+          const newStatus = body.status !== undefined ? String(body.status) : null;
+          if (newProgress !== null && newProgress >= 0 && newProgress <= 100) {
+            updates.progress = newProgress;
+            // 100% で auto-completed
+            if (newProgress === 100 && task.status !== "completed") {
+              updates.status = "completed";
+            }
+          }
+          if (newStatus && ["pending", "in_progress", "completed", "blocked"].includes(newStatus)) {
+            updates.status = newStatus;
+          }
+          if (Object.keys(updates).length > 1) {
+            // updated_at 以外に変更ある場合のみ UPDATE
+            await admin.from("wbs_tasks").update(updates).eq("id", taskId);
+          }
+
+          // 3. wbs_user_task_reports に履歴 INSERT
+          const { data: report, error: insertErr } = await admin
+            .from("wbs_user_task_reports")
+            .insert({
+              task_id: taskId,
+              reporter: String(body.reporter ?? "user"),
+              progress: newProgress ?? task.progress,
+              status: (updates.status as string) ?? task.status,
+              report_text: body.report_text ? String(body.report_text).slice(0, 4000) : null,
+              blockers: body.blockers ? String(body.blockers).slice(0, 2000) : null,
+              next_action: body.next_action ? String(body.next_action).slice(0, 1000) : null,
+              metadata: body.metadata ?? {},
+            })
+            .select("id, created_at")
+            .single();
+          if (insertErr) throw new Error(insertErr.message);
+
+          return json({
+            success: true,
+            task_id: taskId,
+            task_title: task.title,
+            new_progress: updates.progress ?? task.progress,
+            new_status: updates.status ?? task.status,
+            report_id: report?.id,
+            reported_at: report?.created_at,
+          });
+        }
+
+        // ─── WBS Export User Tasks (NotebookLM 用 markdown) ───────────────
+        // user instance の active task + 直近 report を markdown で返却。
+        // GHA cron が docs/user-tasks-snapshot.md として commit → NotebookLM source 候補。
+        // body: {include_completed: bool=false, recent_reports: int=3}
+        case "wbs.export_user_tasks_md": {
+          const includeCompleted = body.include_completed === true;
+          const recentReports = Math.min(Number(body.recent_reports ?? 3), 10);
+
+          const statusFilter = includeCompleted
+            ? ["pending", "in_progress", "completed", "blocked"]
+            : ["pending", "in_progress", "blocked"];
+
+          const { data: userTasks, error: fetchErr } = await admin
+            .from("wbs_tasks")
+            .select("id, title, description, category, status, progress, end_date, priority, created_at, updated_at")
+            .eq("instance", "user")
+            .in("status", statusFilter)
+            .order("priority", { ascending: false })
+            .order("end_date", { ascending: true, nullsFirst: false })
+            .limit(100);
+          if (fetchErr) throw new Error(fetchErr.message);
+
+          const tasks = userTasks ?? [];
+          const taskIds = tasks.map((t) => t.id);
+
+          // 各 task の直近 report も fetch
+          const reportsByTask = new Map<string, Record<string, unknown>[]>();
+          if (taskIds.length > 0 && recentReports > 0) {
+            const { data: allReports } = await admin
+              .from("wbs_user_task_reports")
+              .select("task_id, progress, status, report_text, blockers, next_action, created_at")
+              .in("task_id", taskIds)
+              .order("created_at", { ascending: false });
+            for (const r of allReports ?? []) {
+              const tid = r.task_id as string;
+              const arr = reportsByTask.get(tid) ?? [];
+              if (arr.length < recentReports) {
+                arr.push(r);
+                reportsByTask.set(tid, arr);
+              }
+            }
+          }
+
+          // markdown 生成
+          const todayJst = new Date().toLocaleDateString("ja-JP", { timeZone: "Asia/Tokyo" });
+          const lines = [
+            `# 自分株式会社 — User Tasks Snapshot`,
+            ``,
+            `_Generated: ${todayJst} (JST)_`,
+            `_Active user tasks: ${tasks.length}_`,
+            ``,
+            `## 概要`,
+            ``,
+            `このドキュメントは \`instance='user'\` (ユーザー手動操作タスク) の最新スナップショットです。`,
+            `NotebookLM に source として追加し、「具体的手順」「詰まりポイントの解消手順」を分析させる前提で生成されています。`,
+            ``,
+            `カテゴリ別の手動タスクが含まれます: 法人登記 / 商標 / Notion 設定 / Slack Webhook / 監査法人選定 / 上場審査 等。`,
+            ``,
+            `## タスク一覧`,
+            ``,
+          ];
+
+          for (const t of tasks) {
+            const priIcon = t.priority === "high" ? "🔴" : t.priority === "low" ? "🟢" : "🟡";
+            const stIcon = t.status === "completed" ? "✅" : t.status === "blocked" ? "🚧" : t.status === "in_progress" ? "🔧" : "⏳";
+            lines.push(`### ${priIcon} ${stIcon} ${t.title}`);
+            lines.push(``);
+            lines.push(`- **id**: \`${t.id}\``);
+            lines.push(`- **category**: ${t.category}`);
+            lines.push(`- **progress**: ${t.progress ?? 0}%`);
+            lines.push(`- **status**: ${t.status}`);
+            lines.push(`- **priority**: ${t.priority ?? "medium"}`);
+            if (t.end_date) lines.push(`- **deadline**: ${t.end_date}`);
+            if (t.description) {
+              lines.push(``);
+              lines.push(`**説明**:`);
+              lines.push(``);
+              lines.push(`${t.description}`);
+            }
+
+            const reports = reportsByTask.get(t.id as string) ?? [];
+            if (reports.length > 0) {
+              lines.push(``);
+              lines.push(`**直近 ${reports.length} 報告**:`);
+              lines.push(``);
+              for (const r of reports) {
+                const ts = r.created_at ? new Date(String(r.created_at)).toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" }) : "-";
+                lines.push(`- _${ts}_ — progress=${r.progress ?? "?"}% status=${r.status}`);
+                if (r.report_text) lines.push(`  - 📝 ${r.report_text}`);
+                if (r.blockers) lines.push(`  - 🚧 詰まり: ${r.blockers}`);
+                if (r.next_action) lines.push(`  - ➡️ 次: ${r.next_action}`);
+              }
+            }
+            lines.push(``);
+            lines.push(`---`);
+            lines.push(``);
+          }
+
+          lines.push(`## NotebookLM への質問例`);
+          lines.push(``);
+          lines.push(`- 「商標出願の具体的手順を弁理士選定から登録完了まで step-by-step で」`);
+          lines.push(`- 「\`blockers\` で「料金が不明」とあるタスクの最新相場を調査して」`);
+          lines.push(`- 「期限が 30 日以内のタスクを priority 順に並べて、それぞれの最短ルートを提示」`);
+          lines.push(`- 「進捗が 1 週間動いていないタスクの典型的な詰まりパターンを 3 つ抽出」`);
+          lines.push(``);
+
+          const md = lines.join("\n");
+
+          return json({
+            success: true,
+            task_count: tasks.length,
+            report_count: Array.from(reportsByTask.values()).reduce((acc, arr) => acc + arr.length, 0),
+            markdown: md,
+            generated_at: new Date().toISOString(),
+          });
+        }
+
         // ─── WBS Claim Task (Win版#132 part 17) ───────────────────────────
         // 他 instance の task を自担当に変更。audit log + cooldown + guard。
         case "wbs.claim_task": {
