@@ -45,7 +45,7 @@ WHERE instance IN ('all', 'windows', 'ps', 'copilot')
    OR owner_instance IS NULL
    OR owner_instance IN ('all', 'windows', 'ps', 'copilot');
 
-UPDATE public.wbs_tasks
+UPDATE public.wbs_tasks AS task
 SET
   instance = 'user',
   owner_instance = 'user',
@@ -54,34 +54,41 @@ SET
     ELSE user_report_status
   END,
   updated_at = now()
-WHERE status != 'completed'
+WHERE task.status != 'completed'
   AND (
-    title ILIKE '%手動%'
-    OR title ILIKE '%ユーザー操作%'
-    OR title ILIKE '%Slack Webhook%'
-    OR title ILIKE '%Notion%'
-    OR title ILIKE '%GitHub Issue%'
-    OR title ILIKE '%外部連携設定%'
-    OR title ILIKE '%登録%'
-    OR title ILIKE '%登記%'
-    OR title ILIKE '%口座%'
-    OR title ILIKE '%届出%'
-    OR title ILIKE '%申請%'
-    OR title ILIKE '%契約%'
-    OR title ILIKE '%署名%'
-    OR title ILIKE '%捺印%'
-    OR title ILIKE '%本人確認%'
-    OR title ILIKE '%面談%'
-    OR title ILIKE '%面接%'
-    OR title ILIKE '%選定%'
-    OR title ILIKE '%承認%'
-    OR title ILIKE '%公証%'
-    OR title ILIKE '%司法書士%'
-    OR title ILIKE '%税理士%'
-    OR title ILIKE '%監査法人%'
-    OR title ILIKE '%銀行%'
-    OR title ILIKE '%freee%'
-    OR title ILIKE '%マネフォ%'
+    task.title ILIKE '%手動%'
+    OR task.title ILIKE '%ユーザー操作%'
+    OR task.title ILIKE '%Slack Webhook%'
+    OR task.title ILIKE '%Notion%'
+    OR task.title ILIKE '%GitHub Issue%'
+    OR task.title ILIKE '%外部連携設定%'
+    OR task.title ILIKE '%登録%'
+    OR task.title ILIKE '%登記%'
+    OR task.title ILIKE '%口座%'
+    OR task.title ILIKE '%届出%'
+    OR task.title ILIKE '%申請%'
+    OR task.title ILIKE '%契約%'
+    OR task.title ILIKE '%署名%'
+    OR task.title ILIKE '%捺印%'
+    OR task.title ILIKE '%本人確認%'
+    OR task.title ILIKE '%面談%'
+    OR task.title ILIKE '%面接%'
+    OR task.title ILIKE '%選定%'
+    OR task.title ILIKE '%承認%'
+    OR task.title ILIKE '%公証%'
+    OR task.title ILIKE '%司法書士%'
+    OR task.title ILIKE '%税理士%'
+    OR task.title ILIKE '%監査法人%'
+    OR task.title ILIKE '%銀行%'
+    OR task.title ILIKE '%freee%'
+    OR task.title ILIKE '%マネフォ%'
+  )
+  AND NOT EXISTS (
+    SELECT 1
+    FROM public.wbs_tasks existing
+    WHERE existing.title = task.title
+      AND existing.instance = 'user'
+      AND existing.id <> task.id
   );
 
 ALTER TABLE public.wbs_tasks ADD CONSTRAINT wbs_tasks_instance_check
