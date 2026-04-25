@@ -19323,3 +19323,28 @@ curl -sS -X POST "$SUPABASE_URL/functions/v1/tools-hub" \
 - commit: e5f51e37 (本セッション別コミット)
 
 Philosophy 9/9✅
+
+## PS#6 S44 — migration collision 200000 fix + repair batch (200100/201500/211500/220000/223000) (2026-04-25)
+
+**Commits**: ddc2738f
+
+### 実施内容
+
+1. **Migration collision 200000 検出・修正** (ddc2738f)
+   - `seed_competitors_phase2_batch4` + `seed_tabnine_ai_university` 両方が 200000
+   - `git mv` で seed_tabnine を 200000→200100 にリネーム
+
+2. **repair list 一括追加** (ddc2738f)
+   - 200100 (tabnine renamed)
+   - 201500 (seed_gamma)
+   - 211500 (seed_competitors_phase3_batch1)
+   - 220000 (wbs_rebalance_log)
+   - 223000 (increment_wbs_rebalance_count)
+
+3. **hotfix run 24926480131 SUCCESS確認**
+   - Win版の wbs_instance_check 修正が本番 deploy 成功
+   - horse racing batch in-progress (latest schedule run)
+
+### Philosophy/AI-DEV
+### Philosophy 9/9 ✅
+### AI-DEV 7/7 ✅
