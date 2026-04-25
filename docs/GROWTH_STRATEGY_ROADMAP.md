@@ -20558,3 +20558,18 @@ Voicemod / Replica Studios / Soundraw / Lalal.ai / Moises
 
 **commit**: `2ac3ecd5`
 
+
+
+### PS#5 S58 (2026-04-26) — migration 160000 collision fix + anon guards (614fb373 / 54255548)
+
+**バグ1**: `20260426160000_wbs_design_compliance_progress_vscode_s6.sql` が `20260426160000_seed_beatoven_ai_university.sql` (PS#3 S58) と timestamp 衝突 → SQLSTATE 23505 → deploy `24938576999` 失敗
+
+**修正**: WBS ファイルを `20260426160100` にリネーム → beatoven は既 applied → WBS が 160100 として正常 apply
+
+**補足**: auto-repair DUP ロジックが `repair --status applied 160000` しても supabase が filename mismatch を検出して再試行 → 再失敗する (retry では file name 比較が入る)
+
+**バグ2 & 3**: `notifications_page.dart` + `daily_judgment_page.dart` が initState で auth-required EF を anon ユーザーに対して呼ぶ → 401
+
+**修正**: `_fetchNotifications()` / `_fetchJudgment()` 冒頭に `currentUser == null` guard 追加
+
+**commit**: `614fb373` (migration rename) / `54255548` (anon guards)
