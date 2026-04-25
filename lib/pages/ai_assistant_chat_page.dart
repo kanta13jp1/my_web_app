@@ -123,6 +123,7 @@ class _AiAssistantChatPageState extends State<AiAssistantChatPage>
   }
 
   Future<void> _loadHistory() async {
+    if (_supabase.auth.currentUser == null) return;
     try {
       final res = await _supabase.functions.invoke(
         'ai-hub',
