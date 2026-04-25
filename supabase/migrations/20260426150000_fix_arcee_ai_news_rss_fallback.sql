@@ -10,17 +10,13 @@ INSERT INTO public.ai_university_content (
   source_url,
   published_at,
   sort_order,
-  provider_id,
-  section,
-  content_md,
-  display_order,
   is_active
 )
 VALUES (
   'arcee_ai',
   'news',
   'Arcee AI Trinity 最新情報 (2026-04-26)',
-  $md$
+  $$
 ## Arcee AI Trinity 最新情報 (2026-04-26)
 
 ### 公式ブログ確認済み
@@ -40,23 +36,9 @@ Arcee AI Trinity は「企業や開発者が重みを所有し、検証し、自
 > 出典: https://www.arcee.ai/blog
 > Trinity Builders Program: https://www.arcee.ai/blog/introducing-the-trinity-builders-program
 > Trinity-Large-Thinking: https://www.arcee.ai/blog/trinity-large-thinking
-$md$,
+$$,
   'https://www.arcee.ai/blog',
   '2026-04-26',
-  1,
-  'arcee_ai',
-  'news',
-  $md$
-## Arcee AI Trinity 最新情報 (2026-04-26)
-
-- 2026-04-14: Trinity Builders Program。Trinity モデル利用者向けの無料 API クレジット助成。
-- 2026-04-01: Trinity-Large-Thinking。長期エージェントと多段ツール呼び出しを意識した open-weight reasoning model。
-- 2025-12-01: Trinity Manifesto。米国発 open-weight MoE モデルファミリーとして Trinity Nano / Mini を発表。
-
-RSS が取得できない場合は既存ニュースをエラー文で上書きせず、公式ブログを基準に手動シードを維持します。
-
-> 出典: https://www.arcee.ai/blog
-$md$,
   1,
   true
 )
@@ -66,9 +48,5 @@ ON CONFLICT (provider, category) DO UPDATE
       source_url = EXCLUDED.source_url,
       published_at = EXCLUDED.published_at,
       sort_order = EXCLUDED.sort_order,
-      provider_id = EXCLUDED.provider_id,
-      section = EXCLUDED.section,
-      content_md = EXCLUDED.content_md,
-      display_order = EXCLUDED.display_order,
       is_active = EXCLUDED.is_active,
       updated_at = now();

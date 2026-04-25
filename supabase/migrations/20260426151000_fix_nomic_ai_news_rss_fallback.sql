@@ -10,17 +10,13 @@ INSERT INTO public.ai_university_content (
   source_url,
   published_at,
   sort_order,
-  provider_id,
-  section,
-  content_md,
-  display_order,
   is_active
 )
 VALUES (
   'nomic_ai',
   'news',
   'Nomic AI 最新情報 (2026-04-26)',
-  $md$
+  $$
 ## Nomic AI 最新情報 (2026-04-26)
 
 ### 公式ブログ確認済み
@@ -40,23 +36,9 @@ Nomic AI は単なる embedding provider ではなく、PDF・図面・チャー
 > 出典: https://www.nomic.ai/blog/nomic-layout-muna-on-device
 > 出典: https://www.nomic.ai/news/nomic-named-one-of-builtworlds-40-ai-driven-aec-solutions
 > 出典: https://www.nomic.ai/news/nomic-embed-multimodal
-$md$,
+$$,
   'https://www.nomic.ai/blog/nomic-layout-muna-on-device',
   '2026-04-26',
-  1,
-  'nomic_ai',
-  'news',
-  $md$
-## Nomic AI 最新情報 (2026-04-26)
-
-- 2026-04-08: Nomic Layout Meets Muna。オンデバイスでPDF/図面レイアウトを解析する research preview。
-- 2026-01-27: BuiltWorlds の 40 AI-Driven AEC Solutions に選出。AEC領域の実務AI基盤として評価。
-- 2025-04-02: Nomic Embed Multimodal。テキスト、画像、PDF、チャート向けの open source multimodal embedding models。
-
-RSS が取得できない場合は既存ニュースをエラー文で上書きせず、公式ブログ/ニュースを基準に手動シードを維持します。
-
-> 出典: https://www.nomic.ai/blog/nomic-layout-muna-on-device
-$md$,
   1,
   true
 )
@@ -66,9 +48,5 @@ ON CONFLICT (provider, category) DO UPDATE
       source_url = EXCLUDED.source_url,
       published_at = EXCLUDED.published_at,
       sort_order = EXCLUDED.sort_order,
-      provider_id = EXCLUDED.provider_id,
-      section = EXCLUDED.section,
-      content_md = EXCLUDED.content_md,
-      display_order = EXCLUDED.display_order,
       is_active = EXCLUDED.is_active,
       updated_at = now();
