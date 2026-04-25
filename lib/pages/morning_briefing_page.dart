@@ -2748,7 +2748,9 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
             children: [
               // ヘッダーメッセージ
               Container(
-                color: const Color(0xFFEEF2FF),
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? const Color(0xFF1A1A2E)
+                    : const Color(0xFFEEF2FF),
                 child: ExpansionTile(
                   title: const Text(
                     '今日のミッション',
@@ -4122,7 +4124,9 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
       margin: const EdgeInsets.fromLTRB(12, 8, 12, 0),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFFEEF2FF),
+        color: Theme.of(context).brightness == Brightness.dark
+            ? const Color(0xFF1A1A2E)
+            : const Color(0xFFEEF2FF),
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
@@ -4195,9 +4199,11 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
           Container(
             width: double.infinity,
             padding: EdgeInsets.all(dense ? 12 : 14),
-            decoration: const BoxDecoration(
-              color: Color(0xFFEEF2FF),
-              borderRadius: BorderRadius.vertical(
+            decoration: BoxDecoration(
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? const Color(0xFF1A1A2E)
+                  : const Color(0xFFEEF2FF),
+              borderRadius: const BorderRadius.vertical(
                 top: Radius.circular(20),
               ),
             ),

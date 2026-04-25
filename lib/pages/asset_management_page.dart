@@ -4019,13 +4019,16 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     final source = review?.source ?? 'ai-hub provider.chat';
     final summary = review?.summary ?? 'AIが現在の支出・浪費・日課達成を分析しています。';
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
+        color: isDark ? const Color(0xFF1E1E1E) : const Color(0xFFF8FAFC),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(
+          color: isDark ? const Color(0xFF2A2A2A) : const Color(0xFFE2E8F0),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -4044,24 +4047,28 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                       ? Icons.auto_awesome_motion_outlined
                       : Icons.auto_awesome,
                   size: 18,
-                  color: const Color(0xFF2563EB),
+                  color: isDark
+                      ? const Color(0xFF3D5AFE)
+                      : const Color(0xFF2563EB),
                 ),
               const SizedBox(width: 8),
-              const Text(
+              Text(
                 'AI現状分析',
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w800,
-                  color: Color(0xFF0F172A),
+                  color: isDark ? Colors.white : const Color(0xFF0F172A),
                   height: 1.5,
                 ),
               ),
               const Spacer(),
               Text(
                 source,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 10,
-                  color: Color(0xFF64748B),
+                  color: isDark
+                      ? const Color(0xFFB0B0B0)
+                      : const Color(0xFF64748B),
                   height: 1.5,
                 ),
               ),
@@ -4070,9 +4077,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           const SizedBox(height: 8),
           Text(
             summary,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 12,
-              color: Color(0xFF334155),
+              color: isDark ? const Color(0xFFB0B0B0) : const Color(0xFF334155),
               height: 1.55,
             ),
           ),

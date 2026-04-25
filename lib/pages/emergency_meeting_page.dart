@@ -2969,6 +2969,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
   Widget _buildMessageCard(BoardMessage msg) {
     final isCeo = msg.role == 'CEO';
     final isCso = msg.role == 'CSO';
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
@@ -2979,7 +2980,9 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
             ? const BorderSide(color: Color(0xFFFF6B35), width: 2)
             : BorderSide.none,
       ),
-      color: isCeo ? const Color(0xFFE3F2FD) : Colors.white,
+      color: isCeo
+          ? (isDark ? const Color(0xFF1A2533) : const Color(0xFFE3F2FD))
+          : (isDark ? const Color(0xFF1A1A1A) : Colors.white),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(

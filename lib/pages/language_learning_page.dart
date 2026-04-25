@@ -440,7 +440,9 @@ class _LanguageLearningPageState extends State<LanguageLearningPage>
         // Streak banner
         if (_streak.isNotEmpty)
           Container(
-            color: const Color(0xFFFFF3E0),
+            color: Theme.of(context).brightness == Brightness.dark
+                ? const Color(0xFF2A1F0A)
+                : const Color(0xFFFFF3E0),
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: Row(
               children: [
@@ -828,7 +830,9 @@ class _LanguageLearningPageState extends State<LanguageLearningPage>
         children: [
           // Streak card
           Card(
-            color: const Color(0xFFFFF3E0),
+            color: Theme.of(context).brightness == Brightness.dark
+                ? const Color(0xFF2A1F0A)
+                : const Color(0xFFFFF3E0),
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Row(
