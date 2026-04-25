@@ -20534,3 +20534,18 @@ Voicemod / Replica Studios / Soundraw / Lalal.ai / Moises
 **Philosophy**: ✅KPI=昨日の自分 ✅商品=ユーザー価値 (競合優位明確化) ✅ミッション駆動
 
 **commit**: `00d43110`
+
+### PS#5 S56 (2026-04-26) — feature_request form anon auth guard (f428a175)
+
+**バグ**: `_analyzeFeatureRequestAttachment()` / `_submitHomeFeatureRequest()` に auth check なし → anon ユーザーが "AI診断" / "送信" ボタンを押すと EF から 401 が返り `画像AI診断に失敗しました: FunctionException...` という粗い SnackBar が表示される
+
+**修正** (`lib/pages/home_page.dart`):
+- `_analyzeFeatureRequestAttachment()` 冒頭: `currentUser == null` → 「AI診断にはログインが必要です」
+- `_submitHomeFeatureRequest()` 冒頭: `currentUser == null` → 「追加要望の送信にはログインが必要です」
+
+**Pattern**: feature request form 自体は anon にも表示 (フォームを埋めてからログインを促す UX) → EF は deny-by-default で 401 → Flutter 側で friendly guard が必須
+
+**Philosophy**: ✅商品=ユーザー価値 (UX改善) ✅KPI=昨日の自分
+
+**commit**: `f428a175`
+
