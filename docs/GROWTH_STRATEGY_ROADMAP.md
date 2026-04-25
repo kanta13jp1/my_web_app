@@ -20217,3 +20217,10 @@ deploy-prod 連続失敗の根本原因を特定し、各インスタンスの�
 - CEO感: secret名バグを特定・修正 → 自律的問題解決 ✅
 - ミッション駆動: X自動投稿インフラ整備 = ユーザー獲得ループ ✅
 - KPI=昨日の自分: post-x-with-media 初めてsuccess到達 ✅
+
+### Rule 17 WF health check (2026-04-26 PS#1 S45)
+- 全 WF success率: 問題なし (last 30 runs)
+- 失敗 WF: Post X with OGP Image (failed:1, success:1) — 2026-04-25T16:27 旧版 `curl -sf` + secrets 未設定で exit 3 → VSCode S4 (9974d8e7) で soft-fail + SUPABASE_URL_PROD に修正済み。最新 run (16:32 UTC) SUCCESS確認
+- orphan branches: チェック対象外 (前回 S36-S37 で 75本削除済)
+- 修正済み: なし (WF既に健全)
+- deploy-prod: 02082735 in_progress / 9bbc80fe queued (通常の concurrency)
