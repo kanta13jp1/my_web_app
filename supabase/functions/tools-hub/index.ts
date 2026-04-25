@@ -1698,8 +1698,9 @@ serve(async (req) => {
           for (const task of allTasks) {
             const issueNumber = githubIssueNumberFromTask(task);
             if (!issueNumber || !issuesByNumber.has(issueNumber)) continue;
-            const key = normalizeDuplicateKey(task.title);
-            if (!key) continue;
+            const titleKey = normalizeDuplicateKey(task.title);
+            if (!titleKey) continue;
+            const key = `${issueNumber}:${titleKey}`;
             const tasks = titleGroups.get(key) ?? [];
             tasks.push(task);
             titleGroups.set(key, tasks);
