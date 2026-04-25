@@ -1,4 +1,4 @@
-// Fitness & Health Tracker Edge Function
+﻿// Fitness & Health Tracker Edge Function
 // フィットネス・健康管理 (Google Fit/Apple Health競合)
 // - ワークアウト記録
 // - 体重・体組成記録
@@ -9,7 +9,7 @@
 // GET  → ワークアウト一覧 / 体重推移 / メトリクス / 目標 / サマリー
 // POST → ワークアウト記録 / 体重記録 / メトリクス記録 / 目標設定
 
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {

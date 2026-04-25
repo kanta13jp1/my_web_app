@@ -1,4 +1,4 @@
-// AI Writing Assistant Edge Function
+﻿// AI Writing Assistant Edge Function
 // AI文章作成支援 (Grammarly/Notion AI競合)
 // - 文章の改善・校正・要約
 // - トーン変換 (フォーマル/カジュアル/SNS向け)
@@ -11,7 +11,7 @@
 //
 // POST → improve / summarize / continue / translate / tone / titles / minutes / thread / blog
 
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {

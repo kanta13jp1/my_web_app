@@ -1,4 +1,4 @@
-// Family Sharing Manager Edge Function
+﻿// Family Sharing Manager Edge Function
 // ファミリー共有管理 (Apple Family/Google Family競合)
 // - ファミリーグループ管理
 // - 共有カレンダー・ToDo
@@ -9,7 +9,7 @@
 // GET  → グループ一覧 / メンバー / 共有カレンダー / 共有支出 / 統計
 // POST → グループ作成 / メンバー追加 / イベント共有 / 支出記録
 
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {

@@ -1,4 +1,4 @@
-// Smart Inbox Triage Edge Function
+﻿// Smart Inbox Triage Edge Function
 // スマート受信トレイ (Gmail/Slack/LINE/Chatwork統合)
 // - マルチチャネル統合受信箱
 // - AI優先度分類
@@ -9,7 +9,7 @@
 // GET  → 受信箱 / 優先度別 / ラベル / スヌーズ / 統計
 // POST → メッセージ追加 / 優先度変更 / ラベル付け / スヌーズ / アーカイブ
 
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {

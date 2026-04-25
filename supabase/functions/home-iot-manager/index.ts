@@ -1,4 +1,4 @@
-// Home IoT Manager Edge Function
+﻿// Home IoT Manager Edge Function
 // スマートホーム・IoT管理 (Google Home/Amazon Alexa競合)
 // - デバイス登録・管理
 // - センサーデータ記録
@@ -9,7 +9,7 @@
 // GET  → デバイス一覧 / センサーデータ / ルール / シーン / 統計
 // POST → デバイス登録 / データ記録 / ルール作成 / シーン実行
 
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {

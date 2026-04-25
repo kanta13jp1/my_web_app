@@ -1,4 +1,4 @@
-// tools-hub — 個人生産性ツール統合EF
+﻿// tools-hub — 個人生産性ツール統合EF
 // Merges (30 EFs): password-generator, password-vault, currency-converter,
 //   weather-widget, qr-code-generator, markdown-renderer, pomodoro-timer,
 //   focus-timer, clipboard-history, quick-note, goal-tracker, contact-manager,
@@ -10,7 +10,7 @@
 // GET/POST ?action=<action> or body { action: "..." }
 // All data stored in hub_data table (source column = feature name)
 
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {

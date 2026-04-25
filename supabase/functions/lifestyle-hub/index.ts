@@ -1,4 +1,4 @@
-// lifestyle-hub — ライフスタイル・通知・セキュリティ統合EF
+﻿// lifestyle-hub — ライフスタイル・通知・セキュリティ統合EF
 // Merges (29 EFs): fitness-health-tracker, recipe-meal-planner, carbon-footprint-tracker,
 //   pet-care-manager, travel-itinerary-planner, vehicle-fleet-manager,
 //   parking-reservation, geo-checkin, ar-navigation, smart-home-automation,
@@ -10,7 +10,7 @@
 //
 // GET/POST ?action=<action> or body { action: "..." }
 
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {

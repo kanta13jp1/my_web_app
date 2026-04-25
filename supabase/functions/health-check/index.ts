@@ -1,10 +1,10 @@
-// health-check
+﻿// health-check
 // Infra health check endpoint called by the automated scheduled task.
 // Checks: DB connectivity, key table accessibility, EF runtime env.
 // Returns: { status: "healthy"|"degraded"|"unhealthy", checks: {...}, timestamp }
 // Auth: public endpoint (no sensitive data returned — only boolean connectivity status).
 
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {

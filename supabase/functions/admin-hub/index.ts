@@ -1,5 +1,5 @@
-// admin-hub — 管理・サポート・監視・分析統合EF
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+﻿// admin-hub — 管理・サポート・監視・分析統合EF
+import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
@@ -134,13 +134,23 @@ serve(async (req: Request) => {
         return json({ success: true, features: data ?? [] });
       }
 
-      // ---- Competitor availability check ----
+      // ---- Competitor availability check (14社) ----
       case "competitor.check": {
         const competitors = [
           "notion.so",
           "evernote.com",
           "slack.com",
           "moneyforward.com",
+          "x.com",
+          "chatwork.com",
+          "jobcan.ne.jp",
+          "amazon.co.jp",
+          "netkeiba.com",
+          "openai.com",
+          "claude.ai",
+          "animaworks.com",
+          "github.com",
+          "discord.com",
         ];
         const results = await Promise.allSettled(
           competitors.map(async (c) => {

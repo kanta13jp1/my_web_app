@@ -1,4 +1,4 @@
-// social-commerce-hub — ソーシャル・EC・コマース統合EF
+﻿// social-commerce-hub — ソーシャル・EC・コマース統合EF
 // Merges (26 EFs): social-feed, social-stories, social-media-scheduler,
 //   social-proof-generator, marketplace, marketplace-reviews, auction-marketplace,
 //   donation-crowdfunding, gift-registry, loyalty-points, digital-wallet,
@@ -9,7 +9,7 @@
 //
 // GET/POST ?action=<action> or body { action: "..." }
 
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient, SupabaseClient } from "npm:@supabase/supabase-js@2";
 
 const corsHeaders = {

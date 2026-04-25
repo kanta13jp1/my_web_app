@@ -1,4 +1,4 @@
-// Access Control & Permissions Edge Function
+﻿// Access Control & Permissions Edge Function
 // アクセス制御・権限管理 (Google Workspace/Microsoft 365競合)
 // - ロール管理
 // - リソースアクセス制御
@@ -6,7 +6,7 @@
 // - アクセスログ
 // - 招待管理
 
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {

@@ -1,4 +1,4 @@
-// Knowledge Base Edge Function
+﻿// Knowledge Base Edge Function
 // ナレッジベース/ヘルプセンター (Notion/GitHub競合)
 // - カテゴリ別記事管理
 // - 検索
@@ -8,7 +8,7 @@
 // GET  → 記事一覧 / カテゴリ / 検索 / FAQ
 // POST → 記事作成 / フィードバック
 
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {

@@ -1,4 +1,4 @@
-// growth-hub — グロース・バイラル・マーケティング統合EF
+﻿// growth-hub — グロース・バイラル・マーケティング統合EF
 // Merges (20 EFs): growth-acquisition, growth-command-center, growth-referral,
 //   growth-share-signal, growth-achievement-summary, growth-import-preview,
 //   growth-import-commit, get-growth-roadmap-progress, video-ad-generator,
@@ -6,7 +6,7 @@
 //   landing-ab-test, referral-program, share-quote, generate-quote-image,
 //   seo-optimizer, send-waitlist-notification, viral-ad-generator, viral-growth-engine
 
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import {
   createClient,
   SupabaseClient,

@@ -1,4 +1,4 @@
-// Legal Compliance Manager Edge Function
+﻿// Legal Compliance Manager Edge Function
 // 法務・コンプライアンス管理 (Microsoft/Google/エンタープライズ競合)
 // - 契約テンプレート管理
 // - コンプライアンスチェックリスト
@@ -8,7 +8,7 @@
 // GET  → テンプレート / チェックリスト / 契約一覧 / 同意管理
 // POST → 契約作成 / チェック完了 / 同意記録
 
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {

@@ -1,4 +1,4 @@
-// Document E-Signature Edge Function
+﻿// Document E-Signature Edge Function
 // 電子署名・契約管理 (DocuSign/Adobe Sign競合)
 // - 署名リクエスト作成
 // - 署名ステータス追跡
@@ -9,7 +9,7 @@
 // GET  → リクエスト一覧 / 監査ログ / テンプレート / 統計
 // POST → 署名リクエスト / 署名完了 / テンプレート作成
 
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {

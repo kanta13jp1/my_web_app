@@ -1,4 +1,4 @@
-// Vehicle & Fleet Manager Edge Function
+﻿// Vehicle & Fleet Manager Edge Function
 // 車両・フリート管理 (企業向け/個人向け)
 // - 車両登録・管理
 // - 走行記録
@@ -6,7 +6,7 @@
 // - メンテナンス予定
 // - コスト統計
 
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {

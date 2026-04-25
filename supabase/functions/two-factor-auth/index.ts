@@ -1,4 +1,4 @@
-// Two-Factor Authentication Edge Function
+﻿// Two-Factor Authentication Edge Function
 // 二要素認証管理 (Google/Microsoft/GitHub競合)
 // - TOTP設定・検証
 // - バックアップコード生成
@@ -6,7 +6,7 @@
 // - デバイス管理
 // - セキュリティ設定
 
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {

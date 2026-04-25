@@ -1,5 +1,5 @@
-// core-hub — コアUI・メモ・通知・ユーザー管理統合EF
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+﻿// core-hub — コアUI・メモ・通知・ユーザー管理統合EF
+import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
@@ -848,10 +848,90 @@ serve(async (req: Request) => {
         });
       }
 
-      // ---- Personal dashboard ----
+      // ---- Personal dashboard (昨日比較付き) ----
       case "personal.dashboard": {
-        const stats = await listItems(admin, "personal_stat", userId, 10);
-        return json({ success: true, stats });
+        const now = new Date();
+        const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const yesterdayStart = new Date(todayStart);
+        yesterdayStart.setDate(yesterdayStart.getDate() - 1);
+        const weekStart = new Date(todayStart);
+        weekStart.setDate(weekStart.getDate() - 7);
+        const todayStr = todayStart.toISOString().slice(0, 10);
+        const yesterdayStr = yesterdayStart.toISOString().slice(0, 10);
+
+        const [
+          totalNotesRes, notesTodayRes, notesYesterdayRes, notesWeekRes, recentNotesRes,
+          focusTodayRes, focusYesterdayRes,
+          habitsRes, habitLogsTodayRes, habitLogsYesterdayRes,
+        ] = await Promise.all([
+          admin.from("reality_notes").select("id", { count: "exact", head: true }).eq("user_id", userId),
+          admin.from("reality_notes").select("id", { count: "exact", head: true }).eq("user_id", userId).gte("created_at", todayStart.toISOString()),
+          admin.from("reality_notes").select("id", { count: "exact", head: true }).eq("user_id", userId).gte("created_at", yesterdayStart.toISOString()).lt("created_at", todayStart.toISOString()),
+          admin.from("reality_notes").select("id", { count: "exact", head: true }).eq("user_id", userId).gte("created_at", weekStart.toISOString()),
+          admin.from("reality_notes").select("raw_text, created_at").eq("user_id", userId).order("created_at", { ascending: false }).limit(5),
+          admin.from("focus_sessions").select("duration_minutes").eq("user_id", userId).eq("status", "completed").gte("started_at", todayStart.toISOString()),
+          admin.from("focus_sessions").select("duration_minutes").eq("user_id", userId).eq("status", "completed").gte("started_at", yesterdayStart.toISOString()).lt("started_at", todayStart.toISOString()),
+          admin.from("daily_habits").select("id, title, streak").eq("user_id", userId).eq("is_active", true).limit(10),
+          admin.from("daily_habit_logs").select("habit_id").eq("user_id", userId).eq("completed_date", todayStr),
+          admin.from("daily_habit_logs").select("id", { count: "exact", head: true }).eq("user_id", userId).eq("completed_date", yesterdayStr),
+        ]);
+
+        type FocusRow = { duration_minutes: number };
+        type HabitRow = { id: string; title: string; streak: number };
+        type NoteRow = { raw_text: string; created_at: string };
+
+        const focusTodayMin = ((focusTodayRes.data as FocusRow[]) ?? []).reduce((s, r) => s + (r.duration_minutes ?? 0), 0);
+        const focusYesterdayMin = ((focusYesterdayRes.data as FocusRow[]) ?? []).reduce((s, r) => s + (r.duration_minutes ?? 0), 0);
+        const habitsArr = (habitsRes.data as HabitRow[]) ?? [];
+        const completedTodayIds = new Set(((habitLogsTodayRes.data as { habit_id: string }[]) ?? []).map((l) => l.habit_id));
+        const habitsTodayCount = completedTodayIds.size;
+        const habitsYesterdayCount = habitLogsYesterdayRes.count ?? 0;
+        const maxStreak = habitsArr.length > 0 ? Math.max(...habitsArr.map((h) => h.streak ?? 0)) : 0;
+        const notesTodayCount = notesTodayRes.count ?? 0;
+        const notesYesterdayCount = notesYesterdayRes.count ?? 0;
+
+        // 昨日比スコア: notes*30 + focus*0.5 + habits*20 (上限100)
+        const scoreToday = Math.min(100, notesTodayCount * 30 + focusTodayMin * 0.5 + habitsTodayCount * 20);
+        const scoreYesterday = Math.min(100, notesYesterdayCount * 30 + focusYesterdayMin * 0.5 + habitsYesterdayCount * 20);
+        const scoreDeltaPct = scoreYesterday > 0
+          ? Math.round((scoreToday - scoreYesterday) / scoreYesterday * 100)
+          : (scoreToday > 0 ? 100 : 0);
+
+        return json({
+          success: true,
+          kpi: {
+            total_notes: totalNotesRes.count ?? 0,
+            tasks_completed: 0,
+            focus_minutes: focusTodayMin,
+            habit_streak: maxStreak,
+            note_growth: notesWeekRes.count ?? 0,
+            task_rate: 0,
+          },
+          weekly_activity: [],
+          habit_stats: habitsArr.map((h) => ({
+            name: h.title,
+            streak: h.streak ?? 0,
+            completed_today: completedTodayIds.has(h.id),
+          })),
+          recent_notes: ((recentNotesRes.data as NoteRow[]) ?? []).map((n) => ({
+            title: (n.raw_text ?? "").slice(0, 60),
+            updated_at: n.created_at,
+          })),
+          yesterday_comparison: {
+            notes_today: notesTodayCount,
+            notes_yesterday: notesYesterdayCount,
+            notes_delta: notesTodayCount - notesYesterdayCount,
+            focus_today: focusTodayMin,
+            focus_yesterday: focusYesterdayMin,
+            focus_delta: focusTodayMin - focusYesterdayMin,
+            habits_today: habitsTodayCount,
+            habits_yesterday: habitsYesterdayCount,
+            habits_delta: habitsTodayCount - habitsYesterdayCount,
+            score_today: Math.round(scoreToday),
+            score_yesterday: Math.round(scoreYesterday),
+            score_delta_pct: scoreDeltaPct,
+          },
+        });
       }
 
       // ---- Development achievements ----

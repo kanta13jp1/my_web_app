@@ -1,4 +1,4 @@
-// Customer Feedback & NPS Edge Function
+﻿// Customer Feedback & NPS Edge Function
 // 顧客フィードバック・NPS管理 (Slack/Intercom競合)
 // - フィードバック収集
 // - NPS (Net Promoter Score) 調査
@@ -6,7 +6,7 @@
 // - フィードバック分類
 // - トレンド分析
 
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {

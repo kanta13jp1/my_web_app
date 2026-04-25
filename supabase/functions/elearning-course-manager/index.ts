@@ -1,4 +1,4 @@
-// E-Learning Course Manager Edge Function
+﻿// E-Learning Course Manager Edge Function
 // eラーニング・コース管理 (Google Classroom/Udemy競合)
 // - コース作成 (セクション/レッスン/クイズ)
 // - 学習進捗追跡
@@ -8,7 +8,7 @@
 // GET  → コース一覧 / レッスン / 進捗 / 証明書 / スキル分析
 // POST → コース作成 / レッスン追加 / 進捗更新 / クイズ回答
 
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {

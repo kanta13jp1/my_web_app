@@ -1,4 +1,4 @@
-// enterprise-hub — 業務・エンタープライズ機能統合EF
+﻿// enterprise-hub — 業務・エンタープライズ機能統合EF
 // Merges (42 EFs): leave-management, performance-review, compensation-manager,
 //   recruitment-job-board, compliance-checker, legal-compliance-manager, audit-trail,
 //   ci-cd-pipeline, code-playground, api-docs-generator, api-key-manager,
@@ -13,7 +13,7 @@
 //
 // GET/POST ?action=<action> or body { action: "..." }
 
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {

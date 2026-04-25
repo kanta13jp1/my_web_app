@@ -1,4 +1,4 @@
-// Language Learning Edge Function
+﻿// Language Learning Edge Function
 // 語学学習 (Duolingo競合)
 // - 単語帳管理
 // - フラッシュカード (間隔反復)
@@ -9,7 +9,7 @@
 // GET  → 単語帳一覧 / カード / クイズ / ストリーク / 統計
 // POST → 単語帳作成 / カード追加 / 回答記録 / ストリーク更新
 
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {

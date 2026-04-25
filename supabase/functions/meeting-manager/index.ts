@@ -1,4 +1,4 @@
-// Meeting Manager Edge Function
+﻿// Meeting Manager Edge Function
 // ミーティング管理 (Google Meet/Microsoft Teams/Slack Huddles競合)
 // - ミーティング作成・RSVP管理
 // - アジェンダ作成
@@ -9,7 +9,7 @@
 // GET  → ミーティング一覧 / 詳細 / アジェンダ / 議事録 / 統計
 // POST → 作成 / RSVP / アジェンダ追加 / 議事録保存
 
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {

@@ -1,11 +1,11 @@
-// get-home-dashboard
+﻿// get-home-dashboard
 // Authenticated endpoint that returns home screen KPI snapshot:
 //   - totalUsers, todaySignups (admin-level counts)
 //   - todayViews, todayShares, topShareChannel (from app_analytics)
 //   - lpStats 7-day series (from get_lp_view_stats RPC)
 // Consolidates 3 separate client-side DB calls into a single round-trip.
 
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {

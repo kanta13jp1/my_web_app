@@ -1,4 +1,4 @@
-// viral-video-ad-generator Edge Function
+﻿// viral-video-ad-generator Edge Function
 // Dark War風バイラル動画広告生成パイプライン
 //
 // 機能:
@@ -11,7 +11,7 @@
 // POST { "type": "image" | "presenter_video" | "video_script", "template": "dark_war" | "feature_highlight" | "user_growth", "lang": "ja" | "en" }
 // GET  ?view=templates | ?view=history
 
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {

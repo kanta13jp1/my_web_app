@@ -1,4 +1,4 @@
-// media-hub — メディア・ドキュメント管理統合EF
+﻿// media-hub — メディア・ドキュメント管理統合EF
 // Merges (18 EFs): video-audio-manager, voice-memo-transcriber, screen-recorder,
 //   live-streaming, video-meeting-manager, music-playlist-manager, photo-gallery-manager,
 //   podcast-manager, ai-image-generator, viral-video-generator, viral-video-ad-generator,
@@ -7,7 +7,7 @@
 //
 // GET/POST ?action=<action> or body { action: "..." }
 
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {

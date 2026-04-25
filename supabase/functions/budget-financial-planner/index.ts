@@ -1,4 +1,4 @@
-// Budget & Financial Planner Edge Function
+﻿// Budget & Financial Planner Edge Function
 // 予算・家計プランナー (MoneyForward競合強化)
 // - 月次予算設定
 // - カテゴリ別支出管理
@@ -6,7 +6,7 @@
 // - キャッシュフロー予測
 // - 家計診断
 
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {

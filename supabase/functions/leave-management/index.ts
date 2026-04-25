@@ -1,4 +1,4 @@
-// Leave Management Edge Function
+﻿// Leave Management Edge Function
 // 休暇管理 (ジョブカン競合)
 // - 有給/病欠/特別休暇の申請
 // - 承認ワークフロー
@@ -8,7 +8,7 @@
 // GET  → 休暇一覧 / 残日数 / チーム状況
 // POST → 申請 / 承認 / 却下
 
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {

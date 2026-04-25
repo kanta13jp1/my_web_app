@@ -1,4 +1,4 @@
-// Performance Review Edge Function
+﻿// Performance Review Edge Function
 // 人事評価・パフォーマンスレビュー (ジョブカン/Microsoft競合)
 // - 目標設定 (OKR/KPI)
 // - 自己評価・上司評価
@@ -8,7 +8,7 @@
 // GET  → 評価一覧 / 詳細 / 統計
 // POST → 評価作成 / フィードバック
 
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {

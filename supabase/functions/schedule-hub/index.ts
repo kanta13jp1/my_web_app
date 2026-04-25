@@ -1,4 +1,4 @@
-// schedule-hub — スケジュール・ブログ・X投稿・自動化統合EF
+﻿// schedule-hub — スケジュール・ブログ・X投稿・自動化統合EF
 // Merges (6 EFs): schedule-daily-digest, schedule-manager, notification-center(reminders),
 //   post-x-update, blog-post-manager, blog-auto-publisher
 //
@@ -7,7 +7,7 @@
 // CLAUDE.md references will be updated to use this hub. The standalone EFs will
 // be kept in Supabase but removed from the deploy list.
 
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {

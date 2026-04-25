@@ -1,4 +1,4 @@
-// ai-hub — AI・エージェント・AI大学統合EF
+﻿// ai-hub — AI・エージェント・AI大学統合EF
 // Merges (16 EFs): daily-judgment, ai-search, ai-suggest-tags, ai-secretary,
 //   ai-summarizer, agent-hub, virtual-organization, my-ai-agent,
 //   generate-daily-challenges, trigger-analysis, analyze-reality,
@@ -6,7 +6,7 @@
 //   ai-university-streaks, ai-university-badges
 // NOTE: ai-assistant stays standalone (1079 lines, complex multi-provider logic)
 
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import {
   createClient,
   SupabaseClient,

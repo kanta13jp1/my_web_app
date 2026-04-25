@@ -1,4 +1,4 @@
-// Recruitment Job Board Edge Function
+﻿// Recruitment Job Board Edge Function
 // 採用・求人管理 (ジョブカン競合)
 // - 求人掲載 CRUD
 // - 応募管理 (ATS)
@@ -9,7 +9,7 @@
 // GET  → 求人一覧 / 応募者一覧 / 選考状況 / 統計
 // POST → 求人作成 / 応募 / ステータス更新 / 面接設定
 
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {

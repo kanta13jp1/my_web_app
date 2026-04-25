@@ -1,4 +1,4 @@
-// Virtual Whiteboard Edge Function
+﻿// Virtual Whiteboard Edge Function
 // バーチャルホワイトボード (Miro/Figma/Microsoft Whiteboard競合)
 // - キャンバス管理
 // - 図形・テキスト配置
@@ -6,7 +6,7 @@
 // - テンプレート
 // - コラボレーション
 
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type" };

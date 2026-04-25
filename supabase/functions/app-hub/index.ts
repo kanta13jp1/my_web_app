@@ -1,4 +1,4 @@
-// app-hub — コアアプリ機能統合EF
+﻿// app-hub — コアアプリ機能統合EF
 // Merges (17 EFs): subscription-management, subscription-billing,
 //   email-service, gamification-engine, calendar-events, kanban-board,
 //   chat-messaging, team-task-manager, team-collaboration-sync,
@@ -6,7 +6,7 @@
 //   automation-workflows, data-export-manager, webhook-manager,
 //   api-rate-limiter, music-collaboration
 
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type" };

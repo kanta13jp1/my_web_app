@@ -1,4 +1,4 @@
-// Feature Flags Edge Function
+﻿// Feature Flags Edge Function
 // フィーチャーフラグ管理 (GitHub/LaunchDarkly競合)
 // - フラグ作成・管理
 // - ユーザーセグメント
@@ -6,7 +6,7 @@
 // - A/Bテスト連携
 // - フラグ評価
 
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type" };

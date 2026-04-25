@@ -1,4 +1,4 @@
-// AI Workflow Automation Edge Function
+﻿// AI Workflow Automation Edge Function
 // AIワークフロー自動化 (Zapier/Power Automate/Slack Workflows競合)
 // - ワークフロー定義 (トリガー→条件→アクション)
 // - AI判定ステップ
@@ -9,7 +9,7 @@
 // GET  → ワークフロー一覧 / 実行履歴 / テンプレート / 統計
 // POST → ワークフロー作成 / 実行 / 有効化・無効化
 
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {

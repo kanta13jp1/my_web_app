@@ -1,4 +1,4 @@
-// Semantic Search Edge Function
+﻿// Semantic Search Edge Function
 // セマンティック検索 (Google/Notion競合)
 // - 全文検索 (ノート/タスク/ファイル横断)
 // - 検索フィルタ (タイプ/日付/タグ)
@@ -8,7 +8,7 @@
 // GET  → 検索 / 検索履歴 / サジェスト
 // POST → 保存検索
 
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
