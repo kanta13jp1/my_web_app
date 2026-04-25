@@ -20119,3 +20119,26 @@ deploy-prod 連続失敗の根本原因を特定し、各インスタンスの�
 - 資本=時間: 同種失敗の即検知で復旧時間削減 ✅
 - KPI=昨日の自分: blog-backfill (part 30) → blog-batch-publish (part 31) 一貫性 ✅
 
+
+## Win版 #132 part 32 — 2026-04-26 00:30 JST (wbs-user-tasks-notify ANON fallback)
+
+**Instance**: Windowsアプリ版 | **Commit**: c33eaec9
+
+### 実装内容
+- 既存 workflow の comment が "hardcoded fallback (anon key は public)" と記述するも実装は skip のみ
+- 実装ギャップを修正: `env.SUPABASE_ANON_KEY` 表現に `||` fallback を追加し、`lib/main.dart` line 296 と同じ public anon key を埋め込み
+- precheck step では fallback 後も空の場合のみ skip するように防御
+- 鍵ローテーション時は `secrets.SUPABASE_ANON_KEY` を repo settings で上書きすれば即適用 (workflow 改修不要)
+- ANON key は public 仕様 (RLS で保護 / Flutter Web bundle に同梱済) なので workflow への埋込は client bundle と同等の露出度
+
+### 検証
+- 手動 dispatch run 24934140606 SUCCESS — Step 2 `wbs.notify_user_tasks` 200 OK ✅
+- 全 step success / soft-fail なし
+
+### Philosophy Alignment: Win版 #132 part 32
+- CEO感: comment と実装の乖離を修正する判断 ✅
+- ミッション駆動: ユーザータスク Slack 通知が再開可能 ✅
+- 商品=ユーザー価値: 毎朝 09:00 JST cron 通知が機能 ✅
+- 資本=時間: secret 設定漏れによる silent skip を排除 ✅
+- KPI=昨日の自分: 同等の skip パターンが他 workflow にある場合は次回以降テンプレ化 ✅
+
