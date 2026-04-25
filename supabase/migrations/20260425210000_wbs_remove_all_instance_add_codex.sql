@@ -20,6 +20,36 @@
 -- ============================================================
 -- 1. 既存 'all' タスクを category 別に再割当 (CHECK 制約変更前に必須)
 -- ============================================================
+-- Idempotent fix (Win版#132 part 29 / 2026-04-25): On repair re-run, 'all' rows
+-- that have a counterpart with the mapped target instance must be DELETEd first
+-- to avoid SQLSTATE 23505 against wbs_tasks_title_instance_unique
+-- (added by PS#4 S52 / 20260426080000). Without this guard the migration fails
+-- e.g. when (title='B2B Lead 100 件獲得', instance='ps5') already exists from
+-- 203000's earlier per-instance INSERT.
+DELETE FROM public.wbs_tasks t1
+WHERE t1.instance = 'all'
+  AND EXISTS (
+    SELECT 1 FROM public.wbs_tasks t2
+    WHERE t2.title = t1.title
+      AND t2.instance = CASE
+        WHEN t1.category = 'business-legal'      THEN 'win'
+        WHEN t1.category = 'business-finance'    THEN 'win'
+        WHEN t1.category = 'business-product'    THEN 'win'
+        WHEN t1.category = 'business-marketing'  THEN 'ps2'
+        WHEN t1.category = 'business-sales'      THEN 'ps5'
+        WHEN t1.category = 'business-hr'         THEN 'win'
+        WHEN t1.category = 'business-ops'        THEN 'win'
+        WHEN t1.category = 'business-ipo'        THEN 'win'
+        WHEN t1.category LIKE '%UI%' OR t1.category LIKE '%design%' OR t1.category LIKE '%デザイン%' THEN 'vscode'
+        WHEN t1.category LIKE '%marketing%' OR t1.category LIKE '%blog%' OR t1.category LIKE '%SNS%' THEN 'ps2'
+        WHEN t1.category LIKE '%CS%' OR t1.category LIKE '%support%' THEN 'ps5'
+        WHEN t1.category LIKE '%horse%' OR t1.category LIKE '%batch%' THEN 'ps6'
+        WHEN t1.category LIKE '%AI大学%' OR t1.category LIKE '%provider%' THEN 'ps3'
+        WHEN t1.category LIKE '%competitor%' OR t1.category LIKE '%競合%' THEN 'ps4'
+        ELSE 'win'
+      END
+  );
+
 UPDATE public.wbs_tasks
 SET instance = CASE
   -- 事業化タスク (Win#132 part 11 seed)

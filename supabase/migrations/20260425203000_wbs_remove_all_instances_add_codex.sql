@@ -117,9 +117,27 @@ WHERE src.instance = 'all'
 DELETE FROM public.wbs_tasks
 WHERE instance = 'all';
 
+-- Same idempotency guard for 'windows' → 'win'
+DELETE FROM public.wbs_tasks t1
+WHERE t1.instance = 'windows'
+  AND EXISTS (
+    SELECT 1 FROM public.wbs_tasks t2
+    WHERE t2.title = t1.title
+      AND t2.instance = 'win'
+  );
+
 UPDATE public.wbs_tasks
 SET instance = 'win'
 WHERE instance = 'windows';
+
+-- Same idempotency guard for 'ps' → 'ps1'
+DELETE FROM public.wbs_tasks t1
+WHERE t1.instance = 'ps'
+  AND EXISTS (
+    SELECT 1 FROM public.wbs_tasks t2
+    WHERE t2.title = t1.title
+      AND t2.instance = 'ps1'
+  );
 
 UPDATE public.wbs_tasks
 SET instance = 'ps1'
@@ -139,6 +157,22 @@ SET owner_instance = CASE
   ELSE owner_instance
 END
 WHERE owner_instance IN ('windows', 'ps', 'all') OR owner_instance IS NULL;
+
+-- Same idempotency guard for catch-all invalid → codex
+DELETE FROM public.wbs_tasks t1
+WHERE t1.instance NOT IN (
+    'codex',
+    'vscode', 'win',
+    'ps1', 'ps2', 'ps3', 'ps4', 'ps5', 'ps6',
+    'web', 'mobile',
+    'schedule', 'gha',
+    'user', 'gemini', 'copilot'
+  )
+  AND EXISTS (
+    SELECT 1 FROM public.wbs_tasks t2
+    WHERE t2.title = t1.title
+      AND t2.instance = 'codex'
+  );
 
 UPDATE public.wbs_tasks
 SET instance = 'codex'
