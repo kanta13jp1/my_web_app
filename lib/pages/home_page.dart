@@ -4569,6 +4569,13 @@ abstinence_slip_details: $slipDetailsText
                             const ProfileCompletionBanner(),
                             const ProfileProgressCard(),
                             const ReferralShareCard(),
+                            const SizedBox(height: 10),
+                            _buildIntegratedBriefingCard(
+                              context,
+                              isDark,
+                              isCompact,
+                              opsSnapshot,
+                            ),
                             const _PersonalityTypeBanner(),
                             const SizedBox(height: 10),
                             _buildMonthlyCashflowPriorityCard(
@@ -5967,6 +5974,239 @@ abstinence_slip_details: $slipDetailsText
       );
     }
     return _lifeWasteMonitoringFuture!;
+  }
+
+  Widget _buildIntegratedBriefingCard(
+    BuildContext context,
+    bool isDark,
+    bool isCompact,
+    _HomeOpsSnapshot snapshot,
+  ) {
+    final goal = snapshot.completionGoalSnapshot;
+    final cashflow = snapshot.monthlyCashflowSummary;
+    final habitDelta = goal.todayCompletedCount - goal.yesterdayCompletedCount;
+    final habitValue = habitDelta >= 0
+        ? '${goal.todayCompletedCount}件 / 前日+${habitDelta}件'
+        : '${goal.todayCompletedCount}件 / 前日${habitDelta}件';
+    final healthValue = snapshot.abstinenceSlipCount == 0
+        ? '防衛中 ${snapshot.abstinenceDisciplineStreakDays}日'
+        : '注意 ${snapshot.abstinenceSlipCount}件';
+    final financeValue = cashflow.recordCount == 0
+        ? '未記録'
+        : _formatSignedYen(cashflow.netTotal.toDouble());
+    final borderColor = isDark
+        ? const Color(0xFF334155)
+        : const Color(0xFFE2E8F0);
+    final backgroundColor = isDark
+        ? const Color(0xFF0F172A)
+        : const Color(0xFFFFFFFF);
+    final subtitleColor = isDark
+        ? const Color(0xFFCBD5E1)
+        : const Color(0xFF475569);
+
+    return Container(
+      key: const Key('home_integrated_briefing_card'),
+      width: double.infinity,
+      padding: EdgeInsets.all(isCompact ? 14 : 16),
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: borderColor),
+        boxShadow: [
+          if (!isDark)
+            BoxShadow(
+              color: const Color(0xFF0F172A).withValues(alpha: 0.05),
+              blurRadius: 18,
+              offset: const Offset(0, 10),
+            ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFF6B35).withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(
+                  Icons.hub_outlined,
+                  color: Color(0xFFFF6B35),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      '今日の統合ブリーフィング',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                        height: 1.5,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Googleの予定整理だけでなく、財務・健康・習慣を横断して今日の経営判断を固定します。',
+                      style: TextStyle(
+                        color: subtitleColor,
+                        fontSize: 12,
+                        height: 1.7,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Tooltip(
+                message: 'モーニング・ブリーフィングを開く',
+                child: IconButton(
+                  icon: const Icon(Icons.play_arrow_rounded),
+                  color: const Color(0xFFFF6B35),
+                  onPressed: () => _openMorningBriefing(context),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final columns = isCompact || constraints.maxWidth < 740 ? 1 : 3;
+              const spacing = 10.0;
+              final tileWidth = columns == 1
+                  ? constraints.maxWidth
+                  : (constraints.maxWidth - spacing * (columns - 1)) /
+                      columns;
+              return Wrap(
+                spacing: spacing,
+                runSpacing: spacing,
+                children: [
+                  SizedBox(
+                    width: tileWidth,
+                    child: _buildIntegratedBriefingTile(
+                      icon: Icons.account_balance_wallet_outlined,
+                      color: const Color(0xFF16A34A),
+                      title: '財務',
+                      value: financeValue,
+                      detail: cashflow.reviewDone
+                          ? '月次レビュー済み'
+                          : cashflow.summaryLine,
+                      onTap: () => _runTrackedAction(
+                        'cfo-office',
+                        () => _openCfoOffice(context),
+                      ),
+                    ),
+                  ),
+                  SizedBox(
+                    width: tileWidth,
+                    child: _buildIntegratedBriefingTile(
+                      icon: Icons.favorite_border,
+                      color: const Color(0xFFDC2626),
+                      title: '健康',
+                      value: healthValue,
+                      detail: snapshot.abstinencePrimaryAction ??
+                          '体調を崩す前に、朝の状態確認と防衛行動を先に置きます。',
+                      onTap: () => _runTrackedAction(
+                        'abstinence-guard',
+                        () => _openAbstinenceGuard(context),
+                      ),
+                    ),
+                  ),
+                  SizedBox(
+                    width: tileWidth,
+                    child: _buildIntegratedBriefingTile(
+                      icon: Icons.repeat,
+                      color: const Color(0xFF4338CA),
+                      title: '習慣',
+                      value: habitValue,
+                      detail: goal.isAchieved
+                          ? '前日超え目標を達成済み'
+                          : 'あと${goal.remainingCount}件で昨日の自分を超えます。',
+                      onTap: () => _runTrackedAction(
+                        'daily-habits',
+                        () => Navigator.pushNamed(context, '/daily-habits'),
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildIntegratedBriefingTile({
+    required IconData icon,
+    required Color color,
+    required String title,
+    required String value,
+    required String detail,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(12),
+      onTap: onTap,
+      child: Container(
+        constraints: const BoxConstraints(minHeight: 118),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: color.withValues(alpha: 0.18)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(icon, color: color, size: 18),
+                const SizedBox(width: 8),
+                Text(
+                  title,
+                  style: TextStyle(
+                    color: color,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w800,
+                    height: 1.4,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              value,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontSize: 17,
+                fontWeight: FontWeight.w800,
+                height: 1.45,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              detail,
+              maxLines: 3,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                color: Color(0xFF64748B),
+                fontSize: 11,
+                height: 1.5,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Widget _buildOfficeKpiSummary(
