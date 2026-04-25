@@ -19926,3 +19926,21 @@ Win版 dedup fix (20260425_wbs_dedup_fix.md) で対応予定。
 - 77cd060c deploy pending → 次回 run で Tome/Krisp data INSERT 完了予定
 
 ### commits: 77cd060c (Tome/Krisp migration fix)
+
+### PS#4 S55 — Tome/Krisp title fix + competitor_features Phase 1 準備 (2026-04-25 ~11:15)
+- deploy-prod run 24929297325: SQLSTATE 42601 (VALUES lists must all be the same length)
+  - 原因: Tome/Krisp migration の api/models rows に title 値が欠落 (PS#3 S52 の 3-col fix 漏れ)
+  - Fix: `1025c71c` — api/models rows に title 文字列を追加 (5col 正常化)
+- competitor_features seed 準備: `20260426120000_seed_competitor_features_phase1.sql` 作成
+  - 21社×10機能キー / jibun_status (done/partial/notYet) / ON CONFLICT UPDATE
+
+### commits: 1025c71c (Tome/Krisp title fix)
+
+### PS#4 S56 — competitors_schema_v2 タイムスタンプ修正 (2026-04-25 ~11:40)
+- deploy-prod run 24929615122: SQLSTATE 42703 (column "name" of relation "competitors" does not exist)
+  - 原因: 20260426090000_competitors_schema_v2.sql が batch2-7 seeds (010000-060000) より後に実行
+  - Fix: git mv → 20260426000500 (batch2 前) + repair 090000 in deploy-prod.yml
+  - Tome/Krisp migrations は今回 run で成功 ✅ (231600/233000 passed)
+- 24929878401 (PS#1 definitive 7col fix) in_progress / 24930105850 (schema fix) pending
+
+### commits: b7be8511 (competitors_schema_v2 timestamp fix)
