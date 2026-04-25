@@ -18565,3 +18565,21 @@ deploy-prod.yml の `supabase db push` exit code 捕捉バグを修正。
 ### AI-DEV 7/7 ✅ (Phase 2-3 設計時)
 
 ### commit: TBD
+
+---
+
+## PS#1 S37 — Notion sync IDLE_TIMEOUT fix (2026-04-25 15:10 JST)
+
+**インスタンス**: PS版#1 (Rule17 WF health 専任)
+**commit**: f02c252b
+
+### 発見・修正
+
+- **Notion Mirror Sync 05:46 UTC 再failure**: `IDLE_TIMEOUT` (Supabase EF 150s wall clock limit)
+  - 原因: 141タスク × Notion API rate limit 350ms/task ≈ 49s sleep + HTTP overhead > 150s
+  - 修正①: `notion-sync.yml` に `IDLE_TIMEOUT` soft-fail 追加
+  - 修正②: `schedule-hub` EF の wbs_tasks limit 500→30 / sleep 350ms→150ms
+  - 結果: 30件×150ms ≈ 4.5s + HTTP ≈ 30s合計 (150s制限に余裕)
+  - 141件÷30/h ≒ 5h で全件ローリング sync 完了
+
+### Philosophy Alignment: 9/9 ✅
