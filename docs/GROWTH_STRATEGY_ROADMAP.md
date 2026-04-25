@@ -19916,3 +19916,13 @@ Win版 dedup fix (20260425_wbs_dedup_fix.md) で対応予定。
 - 全WF healthy残: 0件 (issue-to-wbs ✅ + infra-health-check fix pushed)
 
 ### commits: d95e50d6 (infra-health-check endpoint fix)
+
+### Rule 17 追加修正 PS#1 S43b — Tome/Krisp migration SQLSTATE 42601 (2026-04-25 ~11:30)
+- deploy-prod 全 run が 20260425231600 (Tome) で失敗継続
+  - 原因: 5col 多行VALUES + $md$ タグが "VALUES lists must all be the same length" を引き起こす
+  - Git 保存は LF 確認済。Supabase CLI の dollar-quote パーサー or 多行VALUES 非互換
+  - Fix: 3本独立 INSERT + $$ タグ + 7cols (source_url/published_at NULL) に書き換え (77cd060c)
+  - 同様に 20260425233000 (Krisp) も同パターンで書き換え
+- 77cd060c deploy pending → 次回 run で Tome/Krisp data INSERT 完了予定
+
+### commits: 77cd060c (Tome/Krisp migration fix)
