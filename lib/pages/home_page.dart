@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'dart:math' as math;
 
 import 'package:fl_chart/fl_chart.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -130,6 +131,9 @@ class _HomePageState extends State<HomePage> {
   String _featureRequestCategory = '機能追加';
   String _featureRequestPriority = 'medium';
   bool _isSubmittingFeatureRequest = false;
+  bool _isAnalyzingFeatureRequestAttachment = false;
+  PlatformFile? _featureRequestAttachment;
+  Map<String, dynamic>? _featureRequestAttachmentAnalysis;
   Map<String, dynamic>? _lastFeatureRequestSubmission;
 
   @override
@@ -245,6 +249,171 @@ class _HomePageState extends State<HomePage> {
     await _featureStrategyMonitoringFuture;
   }
 
+  String _featureRequestAttachmentMimeType(PlatformFile file) {
+    final extension = (file.extension ??
+            (file.name.contains('.') ? file.name.split('.').last : ''))
+        .toLowerCase();
+    switch (extension) {
+      case 'jpg':
+      case 'jpeg':
+        return 'image/jpeg';
+      case 'webp':
+        return 'image/webp';
+      case 'png':
+      default:
+        return 'image/png';
+    }
+  }
+
+  String _formatFeatureRequestAttachmentSize(int bytes) {
+    if (bytes < 1024) return '$bytes B';
+    final kb = bytes / 1024;
+    if (kb < 1024) return '${kb.toStringAsFixed(1)} KB';
+    return '${(kb / 1024).toStringAsFixed(1)} MB';
+  }
+
+  String _analysisText(Map<String, dynamic> analysis, String key) =>
+      (analysis[key] ?? '').toString().trim();
+
+  String _buildFeatureRequestAnalysisMemo(Map<String, dynamic> analysis) {
+    final lines = <String>['[画像AI診断]'];
+    void add(String label, String key) {
+      final value = _analysisText(analysis, key);
+      if (value.isNotEmpty) lines.add('$label: $value');
+    }
+
+    add('観察事実', 'observation');
+    add('課題仮説', 'inferred_problem');
+    add('改善案', 'proposal');
+    add('再現手順', 'reproduction_steps');
+    add('受入条件', 'acceptance_criteria');
+    return lines.join('\n');
+  }
+
+  Future<void> _pickFeatureRequestAttachment() async {
+    try {
+      final result = await FilePicker.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: const ['png', 'jpg', 'jpeg', 'webp'],
+        allowMultiple: false,
+        withData: true,
+      );
+      if (result == null || result.files.isEmpty) return;
+      final file = result.files.first;
+      if (file.bytes == null || file.bytes!.isEmpty) {
+        throw Exception('画像データを取得できませんでした');
+      }
+      if (file.size > 6 * 1024 * 1024) {
+        throw Exception('画像サイズは6MB以下にしてください');
+      }
+      if (!mounted) return;
+      setState(() {
+        _featureRequestAttachment = file;
+        _featureRequestAttachmentAnalysis = null;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('画像の選択に失敗しました: $e'),
+          backgroundColor: Theme.of(context).colorScheme.error,
+        ),
+      );
+    }
+  }
+
+  void _clearFeatureRequestAttachment() {
+    setState(() {
+      _featureRequestAttachment = null;
+      _featureRequestAttachmentAnalysis = null;
+    });
+  }
+
+  Future<void> _analyzeFeatureRequestAttachment() async {
+    final file = _featureRequestAttachment;
+    final bytes = file?.bytes;
+    if (file == null || bytes == null || bytes.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('先にスクリーンショットまたは写真を選択してください')),
+      );
+      return;
+    }
+
+    setState(() => _isAnalyzingFeatureRequestAttachment = true);
+    try {
+      final response = await Supabase.instance.client.functions.invoke(
+        'core-hub',
+        body: {
+          'action': 'feature_request.analyze_attachment',
+          'file_name': file.name,
+          'mime_type': _featureRequestAttachmentMimeType(file),
+          'image_base64': base64Encode(bytes),
+          'current_title': _featureRequestTitleController.text.trim(),
+          'current_description':
+              _featureRequestDescriptionController.text.trim(),
+          'current_expected_outcome':
+              _featureRequestOutcomeController.text.trim(),
+          'category': _featureRequestCategory,
+          'priority': _featureRequestPriority,
+        },
+      );
+      final rawData = response.data;
+      if (rawData is! Map) {
+        throw const FormatException('Invalid attachment analysis response');
+      }
+      final analysisRaw = rawData['analysis'];
+      if (analysisRaw is! Map) {
+        throw Exception(rawData['error'] ?? 'AI診断結果を取得できませんでした');
+      }
+      final analysis = Map<String, dynamic>.from(analysisRaw);
+      if (!mounted) return;
+
+      final title = _analysisText(analysis, 'title');
+      if (_featureRequestTitleController.text.trim().isEmpty &&
+          title.isNotEmpty) {
+        _featureRequestTitleController.text = title;
+      }
+
+      final memo = _buildFeatureRequestAnalysisMemo(analysis);
+      final currentDescription =
+          _featureRequestDescriptionController.text.trim();
+      if (currentDescription.isEmpty) {
+        _featureRequestDescriptionController.text = memo;
+      } else if (!currentDescription.contains('[画像AI診断]')) {
+        _featureRequestDescriptionController.text =
+            '$currentDescription\n\n$memo';
+      }
+
+      final outcome = _analysisText(analysis, 'expected_outcome');
+      if (_featureRequestOutcomeController.text.trim().isEmpty &&
+          outcome.isNotEmpty) {
+        _featureRequestOutcomeController.text = outcome;
+      }
+
+      final priority = _analysisText(analysis, 'priority').toLowerCase();
+      if (priority == 'high' || priority == 'medium' || priority == 'low') {
+        _featureRequestPriority = priority;
+      }
+
+      setState(() => _featureRequestAttachmentAnalysis = analysis);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('画像から追加要望の下書きを作成しました')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('画像AI診断に失敗しました: $e'),
+          backgroundColor: Theme.of(context).colorScheme.error,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isAnalyzingFeatureRequestAttachment = false);
+      }
+    }
+  }
+
   Future<void> _submitHomeFeatureRequest() async {
     if (!(_featureRequestFormKey.currentState?.validate() ?? false)) {
       return;
@@ -265,6 +434,13 @@ class _HomePageState extends State<HomePage> {
           'expected_outcome': _featureRequestOutcomeController.text.trim(),
           'category': _featureRequestCategory,
           'priority': _featureRequestPriority,
+          if (_featureRequestAttachmentAnalysis != null)
+            'attachment_analysis': _featureRequestAttachmentAnalysis,
+          if (_featureRequestAttachment != null) ...{
+            'attachment_file_name': _featureRequestAttachment!.name,
+            'attachment_mime_type':
+                _featureRequestAttachmentMimeType(_featureRequestAttachment!),
+          },
         },
       );
       final rawData = response.data;
@@ -285,6 +461,8 @@ class _HomePageState extends State<HomePage> {
         _featureRequestOutcomeController.clear();
         _featureRequestCategory = '機能追加';
         _featureRequestPriority = 'medium';
+        _featureRequestAttachment = null;
+        _featureRequestAttachmentAnalysis = null;
       });
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -5527,6 +5705,118 @@ abstinence_slip_details: $slipDetailsText
       );
     }
 
+    Widget attachmentAnalyzer() {
+      final file = _featureRequestAttachment;
+      final analysis = _featureRequestAttachmentAnalysis;
+      final observation =
+          analysis == null ? '' : _analysisText(analysis, 'observation');
+      final proposal =
+          analysis == null ? '' : _analysisText(analysis, 'proposal');
+
+      return Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.42),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: colorScheme.outlineVariant),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(
+                  Icons.image_search_outlined,
+                  color: colorScheme.primary,
+                  size: 20,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'スクリーンショット・写真からAIが追加要望を下書きします',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                      height: 1.4,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            if (file != null) ...[
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: colorScheme.surface.withValues(alpha: 0.72),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  '${file.name} / ${_formatFeatureRequestAttachmentSize(file.size)}',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    height: 1.4,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
+            ],
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                OutlinedButton.icon(
+                  onPressed: _isSubmittingFeatureRequest ||
+                          _isAnalyzingFeatureRequestAttachment
+                      ? null
+                      : _pickFeatureRequestAttachment,
+                  icon: const Icon(Icons.attach_file_outlined),
+                  label: Text(file == null ? '画像を選択' : '画像を変更'),
+                ),
+                FilledButton.tonalIcon(
+                  onPressed: file == null ||
+                          _isSubmittingFeatureRequest ||
+                          _isAnalyzingFeatureRequestAttachment
+                      ? null
+                      : _analyzeFeatureRequestAttachment,
+                  icon: _isAnalyzingFeatureRequestAttachment
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.auto_awesome_outlined),
+                  label: Text(
+                    _isAnalyzingFeatureRequestAttachment ? 'AI診断中' : 'AI診断',
+                  ),
+                ),
+                if (file != null)
+                  TextButton.icon(
+                    onPressed: _isSubmittingFeatureRequest ||
+                            _isAnalyzingFeatureRequestAttachment
+                        ? null
+                        : _clearFeatureRequestAttachment,
+                    icon: const Icon(Icons.close_outlined),
+                    label: const Text('クリア'),
+                  ),
+              ],
+            ),
+            if (analysis != null) ...[
+              const SizedBox(height: 10),
+              Text(
+                [
+                  if (observation.isNotEmpty) '観察: $observation',
+                  if (proposal.isNotEmpty) '改善案: $proposal',
+                ].join('\n'),
+                style: theme.textTheme.bodySmall?.copyWith(height: 1.55),
+              ),
+            ],
+          ],
+        ),
+      );
+    }
+
     return Card(
       elevation: 0,
       color: isDark ? const Color(0xFF111827) : Colors.white,
@@ -5603,6 +5893,8 @@ abstinence_slip_details: $slipDetailsText
               ),
               const SizedBox(height: 10),
               dropdowns(),
+              const SizedBox(height: 10),
+              attachmentAnalyzer(),
               const SizedBox(height: 10),
               TextFormField(
                 controller: _featureRequestDescriptionController,
@@ -5994,15 +6286,12 @@ abstinence_slip_details: $slipDetailsText
     final financeValue = cashflow.recordCount == 0
         ? '未記録'
         : _formatSignedYen(cashflow.netTotal.toDouble());
-    final borderColor = isDark
-        ? const Color(0xFF334155)
-        : const Color(0xFFE2E8F0);
-    final backgroundColor = isDark
-        ? const Color(0xFF0F172A)
-        : const Color(0xFFFFFFFF);
-    final subtitleColor = isDark
-        ? const Color(0xFFCBD5E1)
-        : const Color(0xFF475569);
+    final borderColor =
+        isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0);
+    final backgroundColor =
+        isDark ? const Color(0xFF0F172A) : const Color(0xFFFFFFFF);
+    final subtitleColor =
+        isDark ? const Color(0xFFCBD5E1) : const Color(0xFF475569);
 
     return Container(
       key: const Key('home_integrated_briefing_card'),
@@ -6082,8 +6371,7 @@ abstinence_slip_details: $slipDetailsText
               const spacing = 10.0;
               final tileWidth = columns == 1
                   ? constraints.maxWidth
-                  : (constraints.maxWidth - spacing * (columns - 1)) /
-                      columns;
+                  : (constraints.maxWidth - spacing * (columns - 1)) / columns;
               return Wrap(
                 spacing: spacing,
                 runSpacing: spacing,
