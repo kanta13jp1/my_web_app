@@ -13,7 +13,7 @@ enum RaceType {
   final String label;
 }
 
-enum ErrorType { network, api, unknown }
+enum ErrorType { network, serviceUnavailable, api, unknown }
 
 ErrorType _parseErrorType(dynamic error) {
   final msg = error.toString().toLowerCase();
@@ -22,7 +22,16 @@ ErrorType _parseErrorType(dynamic error) {
       msg.contains('socket') ||
       msg.contains('connection refused')) {
     return ErrorType.network;
-  } else if (msg.contains('statuscode') ||
+  }
+  // Supabase Edge Function 一時不可用 (cold start / quota / 5xx)
+  if (msg.contains('503') ||
+      msg.contains('temporarily unavailable') ||
+      msg.contains('supabase_edge_runtime_error') ||
+      msg.contains('boot_error') ||
+      msg.contains('worker_limit')) {
+    return ErrorType.serviceUnavailable;
+  }
+  if (msg.contains('statuscode') ||
       msg.contains('api') ||
       msg.contains('400') ||
       msg.contains('401') ||
@@ -112,9 +121,11 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
     } catch (e) {
       final errorType = _parseErrorType(e);
       final errorMsg = switch (errorType) {
-        ErrorType.network => 'ネットワーク接続エラー: $e\n数秒後に再度お試しください。',
-        ErrorType.api => 'データ取得に失敗しました: $e\nサーバーに問題がある可能性があります。',
-        ErrorType.unknown => 'データ取得失敗: $e',
+        ErrorType.network => 'インターネット接続を確認のうえ、数秒後にもう一度お試しください。',
+        ErrorType.serviceUnavailable =>
+          'サーバーが一時的に混み合っています。\n少し待ってから「再試行」ボタンを押してください。',
+        ErrorType.api => 'サーバー側で問題が発生しました。\n少し待ってから再試行してください。',
+        ErrorType.unknown => 'データの取得に失敗しました。\n再試行しても解消しない場合はお問い合わせください。',
       };
       if (mounted) {
         setState(() {
@@ -220,23 +231,26 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(
-                        _errorType == ErrorType.network
-                            ? Icons.cloud_off
-                            : _errorType == ErrorType.api
-                                ? Icons.error
-                                : Icons.warning,
+                        switch (_errorType) {
+                          ErrorType.network => Icons.cloud_off,
+                          ErrorType.serviceUnavailable => Icons.hourglass_empty,
+                          ErrorType.api => Icons.error,
+                          _ => Icons.warning,
+                        },
                         size: 64,
-                        color: _errorType == ErrorType.network
+                        color: _errorType == ErrorType.network ||
+                                _errorType == ErrorType.serviceUnavailable
                             ? const Color(0xFFFF6B35)
                             : const Color(0xFFE53935),
                       ),
                       const SizedBox(height: 16),
                       Text(
-                        _errorType == ErrorType.network
-                            ? 'ネットワーク接続エラー'
-                            : _errorType == ErrorType.api
-                                ? 'サーバーエラー'
-                                : 'エラーが発生しました',
+                        switch (_errorType) {
+                          ErrorType.network => 'ネットワーク接続エラー',
+                          ErrorType.serviceUnavailable => 'サーバー混雑中',
+                          ErrorType.api => 'サーバーエラー',
+                          _ => 'エラーが発生しました',
+                        },
                         style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
