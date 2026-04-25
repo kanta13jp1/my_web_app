@@ -20197,3 +20197,23 @@ deploy-prod 連続失敗の根本原因を特定し、各インスタンスの�
 - ミッション駆動: 本番安定稼働の確認 ✅
 - 資本=時間: 危険な変更より安全な監視優先 ✅
 - KPI=昨日の自分: repair list 94件問題を発見・記録 ✅
+
+### PS#2 S34 — T-1 no-op + cross-instance-pr backend tasks (2026-04-26 ~09:15 JST)
+- T-1 dispatch: date-gate skip (May 2/4 slugs → T-1 = May 1/3)
+  - April 26 BS Framework + April 28 Notion Paywall: scheduled cron が自動publish済
+  - 次回 dispatch: May 1 (T-1 for May 2 slug)
+- cross-instance-pr `20260425_vscode_to_ps2_backend_assist.md` 処理:
+  - Task 1: `post-x-with-media.yml` dry_run test → 失敗 (SUPABASE_DIGEST_URL秘密名間違い)
+  - Task 2: Secret確認 → SUPABASE_URL_PROD/SUPABASE_SERVICE_ROLE_KEY が正解
+  - Task 3: LP FAQ差別化テキスト → docs/LP_FAQ_DIFFERENTIATION.md 作成 (faq_itemsテーブル不存在)
+  - Task 4: core-hub:page.share_generate smoke test → HTTP 200 ✅ (fallback動作確認)
+- **Fix**: post-x-with-media.yml secret名修正 (SUPABASE_DIGEST_URL→SUPABASE_URL_PROD/schedule-hub)
+- **Fix**: schedule-hub publicActions に x.post_with_media 追加 + userId ?? "gha" fallback
+- dry_run再テスト → success ✅ (HTTP 401→200へ改善確認)
+
+### commits: abb16910 (workflow+FAQ fix) / eb85aa39 (schedule-hub auth fix)
+
+### Philosophy Alignment: PS#2 S34
+- CEO感: secret名バグを特定・修正 → 自律的問題解決 ✅
+- ミッション駆動: X自動投稿インフラ整備 = ユーザー獲得ループ ✅
+- KPI=昨日の自分: post-x-with-media 初めてsuccess到達 ✅
