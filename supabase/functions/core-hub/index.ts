@@ -312,6 +312,118 @@ async function analyzeFeatureRequestAttachment(params: {
   }
 }
 
+type ProactiveFinding = {
+  id: string;
+  area: "WBS" | "GitHub Issues" | "Actions" | "Supabase";
+  severity: "critical" | "warning" | "info";
+  title: string;
+  detail: string;
+  next_action: string;
+  user_task: boolean;
+  count?: number;
+};
+
+function proactiveSeverityWeight(severity: ProactiveFinding["severity"]) {
+  if (severity === "critical") return 0;
+  if (severity === "warning") return 1;
+  return 2;
+}
+
+function proactiveFallbackReview(input: {
+  score: number;
+  findings: ProactiveFinding[];
+}): Record<string, unknown> {
+  const topFindings = [...input.findings].sort((a, b) =>
+    proactiveSeverityWeight(a.severity) - proactiveSeverityWeight(b.severity)
+  ).slice(0, 3);
+  const summary = input.score >= 90
+    ? "自動化基盤は概ね安定しています。小さなズレを定期的に潰せば、このまま開発速度を維持できます。"
+    : input.score >= 70
+    ? "運用は継続可能ですが、放置すると手戻りになりやすい警告があります。上位の警告から順に処理してください。"
+    : "WBS、Issue、定期実行のどこかに詰まりがあり、先に運用の詰まりを解消する必要があります。";
+  return {
+    summary,
+    root_cause: topFindings.length === 0
+      ? "重大な異常は検出されていません。"
+      : "未完了タスク、同期状態、定期実行ログのズレが複合して運用負荷を上げています。",
+    next_actions: topFindings.map((finding) => finding.next_action),
+    generated_by: "heuristic",
+  };
+}
+
+async function buildProactiveAiReview(input: {
+  score: number;
+  stats: Record<string, unknown>;
+  findings: ProactiveFinding[];
+}): Promise<Record<string, unknown>> {
+  const fallback = proactiveFallbackReview(input);
+  const geminiKey = Deno.env.get("GEMINI_API_KEY") ?? "";
+  if (!geminiKey || input.findings.length === 0) {
+    return fallback;
+  }
+
+  const prompt =
+    `あなたは自分株式会社のSRE兼プロダクトマネージャーです。以下の運用診断データから、ユーザーが次に取るべき対応を短く具体化してください。
+
+ルール:
+- 日本語で返す
+- 重大度の高いものを優先する
+- 「自動修正できるもの」と「ユーザー手動確認が必要なもの」を区別する
+- JSONだけで返す
+
+診断スコア: ${input.score}
+統計: ${JSON.stringify(input.stats)}
+検出事項: ${JSON.stringify(input.findings.slice(0, 10))}
+
+出力JSON:
+{
+  "summary": "全体状況を1-2文で要約",
+  "root_cause": "主な原因仮説",
+  "next_actions": ["次の一手1", "次の一手2", "次の一手3"],
+  "generated_by": "gemini-2.5-flash"
+}`;
+
+  try {
+    const resp = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiKey}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: {
+            temperature: 0.2,
+            maxOutputTokens: 900,
+          },
+        }),
+      },
+    );
+    if (!resp.ok) {
+      return { ...fallback, generated_by: "heuristic:gemini_error" };
+    }
+    const data = await resp.json();
+    const text = String(
+      data?.candidates?.[0]?.content?.parts?.[0]?.text ?? "",
+    );
+    const parsed = JSON.parse(cleanJsonText(text)) as Record<string, unknown>;
+    const nextActions = Array.isArray(parsed.next_actions)
+      ? parsed.next_actions.map((item) => textValue(item, 180)).filter(Boolean)
+      : (fallback.next_actions as string[]);
+    return {
+      summary: stringField(parsed.summary, String(fallback.summary), 500),
+      root_cause: stringField(
+        parsed.root_cause,
+        String(fallback.root_cause),
+        500,
+      ),
+      next_actions: nextActions.slice(0, 4),
+      generated_by: "gemini-2.5-flash",
+    };
+  } catch {
+    return { ...fallback, generated_by: "heuristic:exception" };
+  }
+}
+
 function buildFeatureRequestBody(params: {
   title: string;
   description: string;
@@ -499,6 +611,7 @@ serve(async (req: Request) => {
     const serviceRoleActions = new Set([
       "notify.feature_request",
       "notification.broadcast_release",
+      "system.proactive_diagnostics",
     ]);
     // Anonymous-allowed actions (no auth required / page-specific cache)
     const anonymousActions = new Set(["page.share_generate"]);
@@ -1435,6 +1548,287 @@ serve(async (req: Request) => {
       // 設計: docs/PAGE_LEVEL_SHARE.md / 7 日 TTL cache / page_path UNIQUE
       // Auth: anonymous OK (page-specific cache のためユーザー秘匿情報なし)
       // Fallback: Gemini fail → template / FAL fail → /ogp.png
+      case "system.proactive_diagnostics": {
+        const now = new Date();
+        const today = now.toISOString().slice(0, 10);
+        const staleCutoff = new Date(now.getTime() - 48 * 60 * 60 * 1000);
+        const findings: ProactiveFinding[] = [];
+
+        const [wbsRes, runsRes, hubRes] = await Promise.all([
+          admin.from("wbs_tasks").select(
+            "id,title,status,progress,updated_at,end_date,priority,instance,owner_instance,github_issue_number,github_issue_state,user_report_status",
+          ).limit(5000),
+          admin.from("schedule_task_runs").select(
+            "task_id,status,started_at,finished_at,summary,error_message",
+          ).order("started_at", { ascending: false }).limit(180),
+          admin.from("hub_data").select("id", { count: "exact", head: true }),
+        ]);
+
+        if (wbsRes.error) {
+          findings.push({
+            id: "supabase-wbs-unreachable",
+            area: "Supabase",
+            severity: "critical",
+            title: "WBSテーブルへ接続できません",
+            detail: wbsRes.error.message,
+            next_action:
+              "SupabaseのRLS、service role、wbs_tasksのスキーマを確認する",
+            user_task: false,
+          });
+        }
+        if (runsRes.error) {
+          findings.push({
+            id: "supabase-schedule-runs-unreachable",
+            area: "Supabase",
+            severity: "warning",
+            title: "定期実行ログへ接続できません",
+            detail: runsRes.error.message,
+            next_action:
+              "schedule_task_runsテーブルとGitHub Actionsの記録処理を確認する",
+            user_task: false,
+          });
+        }
+        if (hubRes.error) {
+          findings.push({
+            id: "supabase-hub-data-unreachable",
+            area: "Supabase",
+            severity: "warning",
+            title: "hub_dataへ接続できません",
+            detail: hubRes.error.message,
+            next_action: "core-hubの蓄積先テーブルと権限を確認する",
+            user_task: false,
+          });
+        }
+
+        const tasks = (wbsRes.data ?? []) as Array<Record<string, unknown>>;
+        const openTasks = tasks.filter((task) =>
+          String(task.status ?? "") !== "completed"
+        );
+        const blockedTasks = openTasks.filter((task) =>
+          String(task.status ?? "") === "blocked"
+        );
+        const overdueTasks = openTasks.filter((task) => {
+          const endDate = textValue(task.end_date, 20);
+          return endDate !== "" && endDate < today;
+        });
+        const staleTasks = openTasks.filter((task) => {
+          const updatedAt = Date.parse(String(task.updated_at ?? ""));
+          return Number.isFinite(updatedAt) &&
+            updatedAt < staleCutoff.getTime();
+        });
+        const userTasks = openTasks.filter((task) =>
+          String(task.owner_instance ?? task.instance ?? "") === "user"
+        );
+        const completedWithOpenIssues = tasks.filter((task) =>
+          String(task.status ?? "") === "completed" &&
+          Number(task.github_issue_number ?? 0) > 0 &&
+          String(task.github_issue_state ?? "").toUpperCase() === "OPEN"
+        );
+        const openWithClosedIssues = openTasks.filter((task) =>
+          Number(task.github_issue_number ?? 0) > 0 &&
+          String(task.github_issue_state ?? "").toUpperCase() === "CLOSED"
+        );
+
+        if (blockedTasks.length > 0) {
+          findings.push({
+            id: "wbs-blocked",
+            area: "WBS",
+            severity: "critical",
+            title: `ブロック中のWBSタスクが${blockedTasks.length}件あります`,
+            detail: blockedTasks.slice(0, 3).map((task) => task.title).join(
+              " / ",
+            ),
+            next_action:
+              "ブロック理由を確認し、userタスクか他インスタンスへの引き継ぎに分解する",
+            user_task: true,
+            count: blockedTasks.length,
+          });
+        }
+        if (overdueTasks.length > 0) {
+          findings.push({
+            id: "wbs-overdue",
+            area: "WBS",
+            severity: overdueTasks.length >= 10 ? "critical" : "warning",
+            title: `期限超過のWBSタスクが${overdueTasks.length}件あります`,
+            detail: overdueTasks.slice(0, 3).map((task) => task.title).join(
+              " / ",
+            ),
+            next_action:
+              "期限超過タスクを優先度順に再計画し、今日対応する1件だけをin_progressにする",
+            user_task: false,
+            count: overdueTasks.length,
+          });
+        }
+        if (staleTasks.length > 0) {
+          findings.push({
+            id: "wbs-stale",
+            area: "WBS",
+            severity: staleTasks.length >= 20 ? "warning" : "info",
+            title:
+              `48時間以上更新されていない未完了タスクが${staleTasks.length}件あります`,
+            detail: staleTasks.slice(0, 3).map((task) => task.title).join(
+              " / ",
+            ),
+            next_action:
+              "滞留タスクを追加要望・不具合・ユーザー手動操作に分類し、不要なものは閉じる",
+            user_task: false,
+            count: staleTasks.length,
+          });
+        }
+        if (userTasks.length > 0) {
+          findings.push({
+            id: "wbs-user-tasks",
+            area: "WBS",
+            severity: "info",
+            title: `ユーザー手動確認タスクが${userTasks.length}件あります`,
+            detail: userTasks.slice(0, 3).map((task) => task.title).join(" / "),
+            next_action: "/wbs-user-tasks で実施状況を更新する",
+            user_task: true,
+            count: userTasks.length,
+          });
+        }
+        if (completedWithOpenIssues.length > 0) {
+          findings.push({
+            id: "github-completed-wbs-open-issue",
+            area: "GitHub Issues",
+            severity: "warning",
+            title:
+              `完了WBSに紐づく未クローズIssueが${completedWithOpenIssues.length}件あります`,
+            detail: completedWithOpenIssues.slice(0, 3).map((task) =>
+              `#${task.github_issue_number} ${task.title}`
+            ).join(" / "),
+            next_action:
+              "実装済みであることを確認してIssueへ完了コメントを残し、クローズする",
+            user_task: false,
+            count: completedWithOpenIssues.length,
+          });
+        }
+        if (openWithClosedIssues.length > 0) {
+          findings.push({
+            id: "github-closed-issue-open-wbs",
+            area: "GitHub Issues",
+            severity: "warning",
+            title:
+              `クローズ済みIssueに紐づく未完了WBSが${openWithClosedIssues.length}件あります`,
+            detail: openWithClosedIssues.slice(0, 3).map((task) =>
+              `#${task.github_issue_number} ${task.title}`
+            ).join(" / "),
+            next_action:
+              "Issueが誤クローズでないか確認し、WBSを完了またはIssueを再オープンする",
+            user_task: false,
+            count: openWithClosedIssues.length,
+          });
+        }
+
+        const runs = (runsRes.data ?? []) as Array<Record<string, unknown>>;
+        const latestByTask = new Map<string, Record<string, unknown>>();
+        for (const run of runs) {
+          const taskId = textValue(run.task_id, 120);
+          if (taskId !== "" && !latestByTask.has(taskId)) {
+            latestByTask.set(taskId, run);
+          }
+        }
+        const latestErrors = [...latestByTask.values()].filter((run) =>
+          String(run.status ?? "") === "error"
+        );
+        if (latestErrors.length > 0) {
+          findings.push({
+            id: "actions-latest-errors",
+            area: "Actions",
+            severity: latestErrors.length >= 3 ? "critical" : "warning",
+            title:
+              `最新実行が失敗している定期処理が${latestErrors.length}件あります`,
+            detail: latestErrors.slice(0, 3).map((run) =>
+              `${run.task_id}: ${
+                textValue(run.error_message ?? run.summary, 120)
+              }`
+            ).join(" / "),
+            next_action:
+              "失敗しているworkflowの最新ログを確認し、secret不足・YAML・APIエラーに分類する",
+            user_task: false,
+            count: latestErrors.length,
+          });
+        }
+        if (runs.length === 0 && !runsRes.error) {
+          findings.push({
+            id: "actions-no-runs",
+            area: "Actions",
+            severity: "warning",
+            title: "定期実行ログがありません",
+            detail: "schedule_task_runsに最近の実行履歴がありません。",
+            next_action:
+              "GitHub Actionsからschedule_task_runsへ記録する経路を確認する",
+            user_task: false,
+          });
+        }
+        if (findings.length === 0) {
+          findings.push({
+            id: "system-healthy",
+            area: "Supabase",
+            severity: "info",
+            title: "重大な異常は検出されていません",
+            detail: "WBS、Issue同期、定期実行ログは確認可能です。",
+            next_action: "追加要望の優先順位を維持し、次の中粒度タスクへ進む",
+            user_task: false,
+          });
+        }
+
+        findings.sort((a, b) =>
+          proactiveSeverityWeight(a.severity) -
+          proactiveSeverityWeight(b.severity)
+        );
+        const criticalCount = findings.filter((finding) =>
+          finding.severity === "critical"
+        ).length;
+        const warningCount = findings.filter((finding) =>
+          finding.severity === "warning"
+        ).length;
+        const score = Math.max(
+          0,
+          Math.min(100, 100 - criticalCount * 18 - warningCount * 8),
+        );
+        const stats = {
+          open_wbs_tasks: openTasks.length,
+          blocked_wbs_tasks: blockedTasks.length,
+          overdue_wbs_tasks: overdueTasks.length,
+          stale_wbs_tasks: staleTasks.length,
+          user_tasks: userTasks.length,
+          linked_issue_tasks: tasks.filter((task) =>
+            Number(task.github_issue_number ?? 0) > 0
+          ).length,
+          latest_action_errors: latestErrors.length,
+          recorded_action_runs: runs.length,
+          hub_data_rows: hubRes.count ?? null,
+        };
+        const aiReview = await buildProactiveAiReview({
+          score,
+          stats,
+          findings,
+        });
+        const item = await addItem(
+          admin,
+          "system_proactive_diagnostics",
+          userId,
+          {
+            score,
+            stats,
+            findings: findings.slice(0, 20),
+            ai_review: aiReview,
+            created_at: now.toISOString(),
+          },
+        );
+        return json({
+          success: true,
+          status: score >= 90 ? "healthy" : score >= 70 ? "degraded" : "risk",
+          score,
+          checked_at: now.toISOString(),
+          stats,
+          findings: findings.slice(0, 20),
+          ai_review: aiReview,
+          item,
+        });
+      }
+
       case "page.share_generate": {
         const pagePath = textValue(body.page_path, 200);
         const pageTitle = textValue(body.page_title, 200);

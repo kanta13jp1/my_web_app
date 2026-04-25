@@ -49,6 +49,7 @@ import '../widgets/time_waste_guard_widget.dart';
 import '../widgets/welcome_new_user_card.dart';
 import '../widgets/profile_completion_banner.dart';
 import '../widgets/profile_progress_card.dart';
+import '../widgets/proactive_diagnostics_card.dart';
 import '../widgets/development_achievements_card.dart';
 import '../widgets/edge_function_summary_card.dart';
 import '../widgets/ai_university_home_card.dart';
@@ -4655,6 +4656,8 @@ abstinence_slip_details: $slipDetailsText
                           children: [
                             // AI プロバイダー API キー未設定バナー (Windows版#94)
                             const ApiKeyStatusBanner(),
+                            const ProactiveDiagnosticsCard(),
+                            const SizedBox(height: 8),
                             // 最上部: AI大学キラーコンテンツバナー
                             const AiUniversityHomeCard(),
                             const SizedBox(height: 8),
