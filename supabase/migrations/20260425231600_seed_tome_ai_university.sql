@@ -1,11 +1,12 @@
 -- PS#3 S52: AI大学 198→200社化 — Tome 追加
 -- Tome: AI プレゼンテーション・ドキュメント生成 / GPT-4 統合 / $75M / 5M+ ユーザー
 
-INSERT INTO ai_university_content (provider_id, section, content_md, display_order)
+INSERT INTO ai_university_content (provider, category, title, content, sort_order)
 VALUES
 (
   'tome_app',
   'overview',
+  'Tome — AI プレゼンテーション・ドキュメント生成 (GPT-4 統合 / $75M / 5M+ ユーザー)',
   $md$## Tome — AI プレゼンテーション・ドキュメント生成
 
 **カテゴリ**: AI Presentation Builder / Document Creation
@@ -87,12 +88,9 @@ $md$,
 - AI 大学コンテンツの視覚化 (インフォグラフィック → Tome ページ)
 - 競合比較資料の自動更新 (Airtable データ連携)
 $md$,
-  3
+  197
 )
-ON CONFLICT (provider_id, section) DO UPDATE
-  SET content_md = EXCLUDED.content_md,
-      display_order = EXCLUDED.display_order,
-      updated_at = NOW();
+ON CONFLICT DO NOTHING;
 
 INSERT INTO development_achievements (title, description, completed_at)
 VALUES (
