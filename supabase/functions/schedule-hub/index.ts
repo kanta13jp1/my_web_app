@@ -1082,6 +1082,9 @@ serve(async (req: Request) => {
 
         // Notion select property options (DB schema の options と一致必須)
         // mismatch 値は default にフォールバック (400 error 回避)
+        // 2026-04-25 Win#132 part 16: 'all' 廃止 / 'codex' 追加
+        // ('schedule' / 'gha' は CHECK 上は有効だが Notion options 未登録のため
+        //  fallback で 'win' に振り分け)
         const VALID_INSTANCES = new Set([
           "vscode",
           "win",
@@ -1093,7 +1096,7 @@ serve(async (req: Request) => {
           "ps6",
           "web",
           "mobile",
-          "all",
+          "codex",
         ]);
         const VALID_STATUSES = new Set([
           "pending",
@@ -1102,8 +1105,10 @@ serve(async (req: Request) => {
           "blocked",
         ]);
         const normalizeInstance = (v: unknown): string => {
-          const s = String(v ?? "all").trim();
-          return VALID_INSTANCES.has(s) ? s : "all";
+          const s = String(v ?? "win").trim();
+          // alias: legacy 'all' / 'schedule' / 'gha' は win にフォールバック
+          if (s === "all" || s === "schedule" || s === "gha") return "win";
+          return VALID_INSTANCES.has(s) ? s : "win";
         };
         const normalizeStatus = (v: unknown): string => {
           const s = String(v ?? "pending").trim();

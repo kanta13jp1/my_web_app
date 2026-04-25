@@ -19111,3 +19111,61 @@ Deploy failure `24924215661` (feat business-wbs) を解析・修正。
 ### Philosophy/AI-DEV
 ### Philosophy 9/9 ✅
 ### AI-DEV 7/7 ✅
+
+---
+
+## Win版#132 part 16 完了 (2026-04-25 夜)
+
+### 実施内容: WBS instance='all' 廃止 + 'codex' 追加
+
+**契機**: ユーザー要請「instance='all' は進捗が見えない / 各 instance 個別 task に / codex を instance 種類に追加」
+
+### 既存状態
+- `instance` CHECK 値: `vscode/win/ps1..ps6/web/mobile/schedule/gha/all` (10 + 'all')
+- `owner_instance` CHECK: 既に `'all'` 禁止 + `codex` 追加済 (2026-04-21 / Win#131 part 15)
+
+### 修正
+
+**Migration**: `20260425210000_wbs_remove_all_instance_add_codex.sql`
+
+1. **既存 `instance='all'` task を category 別 default rule で再割当**:
+   ```sql
+   business-legal/finance/product/hr/ops/ipo → win
+   business-marketing → ps2 (T-1 dispatch)
+   business-sales → ps5 (CS)
+   UI/design 系 → vscode
+   AI大学 / provider → ps3
+   competitor → ps4
+   horse / batch → ps6
+   default fallback → win (経営担当)
+   ```
+
+2. **CHECK 制約更新**:
+   - `'all'` 削除 (新規 all task 作成不可)
+   - `'codex'` 追加 (OpenAI Codex 担当 / frontend Dart / SQL / GHA)
+   - 残: `vscode/win/ps1..ps6/web/mobile/schedule/gha/codex` (12)
+
+3. **schedule-hub:notion.sync_wbs の VALID_INSTANCES set 更新**:
+   - 'all' 削除 / 'codex' 追加
+   - alias: legacy 'all'/'schedule'/'gha' は 'win' にフォールバック (Notion select option 整合)
+   - default 値も 'all' → 'win' に変更
+
+### 影響
+- **進捗 tracking 改善**: instance 別の `wbs.priority_for_instance` が正しく動作
+- **責任明確化**: 各 task に primary owner instance が存在
+- **Notion mirror も整合**: select option mismatch で 400 出ない
+- **codex routing 拡張**: frontend Dart / SQL / GHA タスクを Codex に明示的に割当可能
+
+### 後続必要タスク
+
+| # | タスク | 担当 | 期日 |
+|---|------|------|------|
+| 1 | Notion DB の `instance` select option に `codex` 追加 (manual) | ユーザー | 2026-04-26 |
+| 2 | Notion DB の `instance` select option から `all` 削除 (manual) | ユーザー | 2026-04-26 |
+| 3 | Flutter UI の instance dropdown に `codex` 追加 | VSCode | 2026-04-30 |
+| 4 | wbs-ai-review.yml prompt template に codex routing rule 追記 | Win 後続 | 2026-05-01 |
+
+### Philosophy 9/9 ✅
+原則 1 (CEO 感): 責任分担明確化 / 原則 8 (KPI=昨日の自分): instance 別進捗可視化
+
+### commit: TBD
