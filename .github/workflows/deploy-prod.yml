@@ -353,7 +353,6 @@ jobs:
             inventory-barcode
             form-builder
             sitemap-analytics
-            memo-reactions
           )
           EXISTING=$(supabase functions list --output json 2>/dev/null | jq -r '.[] | (.slug // .name // empty)' 2>/dev/null || echo "")
           if [ -z "$EXISTING" ]; then
@@ -406,16 +405,11 @@ jobs:
           supabase functions deploy lifestyle-hub --no-verify-jwt
           supabase functions deploy local-election-intelligence --no-verify-jwt
 
-          # --- Public-facing standalone (2本: server-side OGP + 匿名 IP-based reactions) ---
-          # 一度 core-hub に統合したが、IP-based 匿名トラッキング・server-side OGP rendering の
-          # 都合で分離維持 (Win版#85, 2026-04-18)
-          # get-public-memo-preview: directory deleted — removed from deploy (2026-04-19)
-          supabase functions deploy memo-reactions --no-verify-jwt
-
           # --- Public health-check (認証不要・スケジュールタスクからの死活監視用) ---
           supabase functions deploy health-check --no-verify-jwt
 
-          # Total: 18 functions deployed (ハードキャップ50本に対し18本 — 余裕32本)
+          # Total: 17 functions deployed (ハードキャップ50本に対し17本 — 余裕33本)
+          # memo-reactions → core-hub に統合済み (b4c91bc2 2026-04-24)
           #
           # Hub対応表:
           # core-hub:         public-memo-share, memo-reactions, get-ogp, get-public-memo-ogp,
