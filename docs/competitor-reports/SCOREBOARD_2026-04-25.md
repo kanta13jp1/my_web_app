@@ -1,8 +1,56 @@
 # 競合 21社 現況スコアボード (2026-04-25 snapshot)
 
-**生成**: PS版#4 (競合モニタリング専任) — SCOREBOARD_2026-04-24 からの差分集約
-**前回スナップショット**: `SCOREBOARD_2026-04-24.md`
+**生成**: PS版#4 (競合モニタリング専任) — SCOREBOARD_2026-04-24 からの差分集約  
+**最終更新**: S42 (2026-04-25 夕)  
+**前回スナップショット**: `SCOREBOARD_2026-04-24.md`  
 **変更ルール**: 変化なし項目は前回スナップショット参照。差分のみ記載。
+
+---
+
+## ⚡ 2026-04-25 重大アップデート (差分) — 夕版 S42 追記
+
+### 🔴🔴 Notion — Custom Agents 正式発表 (S42 NEW)
+
+**自律型ワークフローエージェント**: Notion が全ワークフローを自律処理する AI チームメイトを発表。  
+- "Introducing Custom Agents" + セキュリティ設計 blog 同時公開  
+- Notion 社内でも実運用中  
+- Enterprise/Business ターゲット  
+
+**自分株式会社**: 個人 CEO OS vs チームツール の差別化軸を即強化。LP更新急務。  
+**脅威評価**: 🔴🔴 (最高)
+
+---
+
+### 🔴 Notion — 日本・韓国データセンター 2026年5月開設 (S42 NEW)
+
+- Enterprise プランで日本国内データ保存が選択可能に  
+- 個人情報保護法コンプライアンス障壁が消滅 → JP 企業採用が加速  
+
+**自分株式会社**: Supabase Tokyo リージョン移行検討を Win版に cross-instance-pr 発行予定。  
+**脅威評価**: 🔴 (高) — JP エンタープライズ市場での Notion 優位性が急拡大。
+
+---
+
+### 🟠 Slack — Agentforce + 料金改定 (S42 NEW)
+
+Salesforce AI と統合した "Agentforce in Slack" (自律 digital teammate) + 料金プラン更新。  
+**脅威評価**: 🟠 (中)
+
+---
+
+### 🟡 Microsoft — 7% 自発的人員削減 (S42 NEW)
+
+AI 投資加速に伴うコスト再編。Copilot 開発は加速、品質影響は監視継続。  
+**脅威評価**: 🟡 (低-中)
+
+---
+
+### 🟢 Google — Agents CLI + LiteRT (S42 NEW)
+
+- **Agents CLI** (4/22): AI エージェント "concept → production in hours"  
+- **LiteRT** (4/23): NPU オンデバイス AI  
+
+**自分株式会社**: AI大学コンテンツ候補として PS#3 に連絡。**脅威評価**: 🟢 (チャンス)
 
 ---
 
