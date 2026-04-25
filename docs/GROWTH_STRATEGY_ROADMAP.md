@@ -18083,3 +18083,38 @@ curl -X POST https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/schedule-hub 
 合計: 4/9 ✅
 
 ### commit: cd0f7db4
+
+---
+
+## Win版#132 part 9 完了 (2026-04-25 朝)
+
+### 実施内容: notion.sync_wbs — "title is expected to be title" 回避
+
+**契機**: Win#132 part 8 (9381e1cc) deploy 完了後の再テストで真因判明:
+
+```json
+{"message":"title is expected to be title.","code":"validation_error"}
+```
+
+### 真因
+Notion 仕様: **Title-type property の内部 ID は常に `"title"` 固定**。
+User の DB 構成:
+- `id` property (Title-type) → 内部 ID `"title"` (固定)
+- `title` property (rich_text) → 名前 `"title"`
+
+EF payload で `title: {rich_text: ...}` を送ると:
+- 名前 lookup: rich_text 見つかる
+- 内部 ID lookup: title-type (名前 "id") 見つかる
+- 両方ヒット → Notion validator は **内部 ID 優先** → title-type 期待 → rich_text 送信 = 400
+
+### 解決策
+
+**rich_text property を `title` → `task_title` にリネーム** (衝突回避):
+
+- ユーザー手動: Notion DB で column `title` → `task_title`
+- EF 側: payload key `title` → `task_title` に変更 (本 commit)
+
+### Philosophy Alignment (9/9) ✅
+原則 8 (KPI=昨日の自分): error body 取得で真因即特定 → Notion API 仕様の癖を memory 化
+
+### commit: TBD

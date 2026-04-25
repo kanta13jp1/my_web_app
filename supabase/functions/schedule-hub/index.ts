@@ -883,12 +883,19 @@ serve(async (req: Request) => {
         };
 
         for (const t of tasks ?? []) {
-          // title property = id (Notion Database で id property を Title 型として使用)
+          // Notion DB 側: id = Title-type (内部 ID "title") / task_title = rich_text
+          //
+          // 重要: Notion は Title-type property の内部 ID を常に "title" に固定する
+          // 仕様。user の DB で Title 名が "id" でも、内部 ID "title" と重複する
+          // ため、rich_text property に "title" という名前を付けると
+          // "title is expected to be title" validation_error が出る。
+          // → rich_text property は task_title にリネーム済 (user 手動)。
+          //
           // null 値の property は omit (Notion API は `{date: null}` を受けるが
           // 他の type では 400 になるため全て conditional 構築)
           const properties: Record<string, unknown> = {
             id: { title: [{ text: { content: String(t.id) } }] },
-            title: { rich_text: [{ text: { content: String(t.title ?? "") } }] },
+            task_title: { rich_text: [{ text: { content: String(t.title ?? "") } }] },
             instance: { select: { name: normalizeInstance(t.instance) } },
             status: { select: { name: normalizeStatus(t.status) } },
             progress: { number: Number(t.progress ?? 0) },
