@@ -5689,7 +5689,9 @@ class _AiUniversityPageState extends State<AiUniversityPage>
 
       final Map<String, List<Map<String, dynamic>>> grouped = {};
       for (final row in (rows as List).cast<Map<String, dynamic>>()) {
-        final provider = row['provider'] as String;
+        final provider =
+            (row['provider'] as String?) ?? (row['provider_id'] as String?);
+        if (provider == null) continue;
         (grouped[provider] ??= []).add(row);
       }
 
