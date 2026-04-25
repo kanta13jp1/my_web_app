@@ -19414,3 +19414,51 @@ gh workflow run wbs-user-tasks-notify.yml --field limit=10
 vscode/win/ps1..ps6/web/mobile/schedule/gha/codex/**gemini/copilot/user** (新)
 
 ### commit: TBD (本 commit)
+## PS#4 S48 2026-04-25 — WBS instance拡張 + ユーザー通知自動化
+
+**担当**: PS版#4  
+**commit**: TBD (push後更新)
+
+### 変更内容
+
+| コンポーネント | 変更 |
+|--------------|------|
+| DB migration (225000) | CHECK制約拡張: `gemini`/`co-pilot`/`user` 追加 + 手動タスク自動再割当 |
+| tools-hub WBS_INSTANCE_VALUES | `gemini`/`co-pilot`/`user` 追加 (17種類に) |
+| tools-hub `wbs.notify_user_tasks` | user担当タスク一覧取得 + Slack push |
+| GHA `wbs-user-notify.yml` | 毎朝9:00 JST 自動実行 (manual dispatch も可) |
+
+### instance種類 (最終版 17種)
+```
+codex / vscode / win / ps1-ps6 / web / mobile / schedule / gha
+gemini / co-pilot / user  ← NEW
+```
+
+### user instanceの自動割当ルール
+登記/口座/届出/契約/署名/印鑑/社会保険/採用面接/出資/融資 等の title ILIKE で自動判定。
+
+### Slack通知 設定方法
+GitHub Secrets に `SLACK_WEBHOOK_URL` を設定するだけで有効化。
+Incoming Webhook URL は https://api.slack.com/messaging/webhooks で取得。
+
+---
+
+## PS#4 S48 2026-04-25 — WBS instance拡張 + ユーザー通知自動化
+
+**担当**: PS版#4  
+**commit**: TBD (push後更新)
+
+### 変更内容
+
+| コンポーネント | 変更 |
+|--------------|------|
+| DB migration (225000) | CHECK制約拡張: gemini/co-pilot/user 追加 + 手動タスク自動再割当 |
+| tools-hub WBS_INSTANCE_VALUES | gemini/co-pilot/user 追加 (17種類に) |
+| tools-hub wbs.notify_user_tasks | user担当タスク一覧取得 + Slack push |
+| GHA wbs-user-notify.yml | 毎朝9:00 JST 自動実行 |
+
+### instance種類 (最終版 17種)
+codex/vscode/win/ps1-ps6/web/mobile/schedule/gha/gemini/co-pilot/user
+
+### Slack通知 設定
+GitHub Secrets に SLACK_WEBHOOK_URL を設定するだけで有効化。
