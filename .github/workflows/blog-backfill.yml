@@ -30,6 +30,7 @@ concurrency:
 permissions:
   contents: write
   actions: write  # blog-publish.yml を dispatch するため
+  pull-requests: write  # gh pr create で必要 (Win版#132 part 30)
 
 jobs:
   backfill:
@@ -62,21 +63,23 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          set -euo pipefail
           git config user.name "kanta13jp1"
           git config user.email "kanta13jp1@users.noreply.github.com"
           git add docs/blog-drafts/*.md
           if git diff --cached --quiet; then
             echo "No frontmatter changes to commit"
-          else
-            BRANCH="blog-backfill/frontmatter-${{ github.run_id }}"
-            git checkout -b "$BRANCH"
-            git commit -m "自動: 過去ドラフトにfrontmatter追加 (AI生成)"
-            git push origin "$BRANCH"
-            gh pr create --title "自動: 過去ドラフトfrontmatter追加" \
-              --body "blog-backfill.yml による自動生成" \
-              --base main --head "$BRANCH"
-            echo "PR created for frontmatter additions"
+            exit 0
           fi
+          BRANCH="blog-backfill/frontmatter-${{ github.run_id }}"
+          git switch -c "$BRANCH"
+          git commit -m "自動: 過去ドラフトにfrontmatter追加 (AI生成)"
+          # Explicit refspec to avoid ambiguous defaults if local branch state drifted
+          git push -u origin "HEAD:refs/heads/$BRANCH"
+          gh pr create --title "自動: 過去ドラフトfrontmatter追加" \
+            --body "blog-backfill.yml による自動生成" \
+            --base main --head "$BRANCH"
+          echo "PR created for frontmatter additions"
 
       # ── Step 2: 順次投稿 (add_and_publish or publish_only) ──────
       - name: Sequential publish
