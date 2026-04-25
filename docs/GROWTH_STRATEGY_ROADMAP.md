@@ -18192,3 +18192,19 @@ curl -X POST https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/schedule-hub 
 | 9. ゴール=IPO/ウェルビーイング | ✅ | — |
 
 **スコア**: 9/9 ✅
+
+---
+
+## PS#3 S45 — AI大学 189→191社化 (2026-04-25)
+
+**注**: DSPy + Pydantic AI は PS#4 S41 (a7317230) が先行実装済み。
+PS#3 S45 は追加 2 社として LiteLLM + LangGraph を追加。
+
+| # | Provider | カテゴリ | Step 0 | 根拠 |
+| --- | --- | --- | --- | --- |
+| 190 | **LiteLLM** (BerriAI) | LLM ユニファイド API | 8/9 | 100+ LLM を1つの OpenAI 互換 API で統合 / フォールバック / 15k+ Stars / Apache 2.0 |
+| 191 | **LangGraph** (LangChain) | エージェントグラフFW | 7.5/9 | ステートフル/ループ/Human-in-Loop / 永続化 / 11k+ Stars / MIT |
+
+**workflow**: litellm / langgraph の `upsert_provider` 追加 / `TOTAL_PROVIDERS` 12→14
+
+**累計**: 191社 (seed migrations 191本)

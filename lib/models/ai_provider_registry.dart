@@ -1486,6 +1486,22 @@ const List<AiProviderEntry> kAiProviderRegistry = [
     note:
         r'型安全 Python エージェントFW — Pydantic V2 基盤 / 依存性注入 / TestModel / FastAPI 親和性 / 6k+ Stars / MIT',
   ),
+  AiProviderEntry(
+    id: 'litellm',
+    displayName: 'LiteLLM',
+    status: AiProviderStatus.notImplemented,
+    entryPoint: 'https://docs.litellm.ai/',
+    note:
+        r'100+ LLM 統合プロキシ — OpenAI 互換 API / フォールバック / ロードバランシング / Redis キャッシュ / 15k+ Stars / Apache 2.0',
+  ),
+  AiProviderEntry(
+    id: 'langgraph',
+    displayName: 'LangGraph',
+    status: AiProviderStatus.notImplemented,
+    entryPoint: 'https://langchain-ai.github.io/langgraph/',
+    note:
+        r'ステートフル LLM グラフFW — ループ/条件分岐/Human-in-Loop / 永続化 / マルチエージェント / 11k+ Stars / MIT',
+  ),
 ];
 
 /// ステータス別件数を集計

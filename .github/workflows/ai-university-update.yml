@@ -148,6 +148,8 @@ jobs:
           upsert_provider "aider"        "https://aider.chat/feed.xml"                     "Aider (AI Pair Programmer CLI with Git Integration)"
           upsert_provider "dspy"         "https://dspy.ai/blog/rss.xml"                    "DSPy (Stanford — Programming not Prompting LLM Framework)"
           upsert_provider "pydantic_ai"  "https://ai.pydantic.dev/blog/rss.xml"            "Pydantic AI (Type-Safe Production Agent Framework)"
+          upsert_provider "litellm"      "https://blog.litellm.ai/rss.xml"                "LiteLLM (100+ LLM Unified Proxy / OpenAI Compatible)"
+          upsert_provider "langgraph"    "https://blog.langchain.dev/rss/"                "LangGraph (Stateful Multi-Actor LLM Graph Framework)"
 
           # RSS廃止/URL無効 (静的seedコンテンツを維持):
           # anthropic, meta, x, deepseek, mistral, perplexity, groq, cohere, ibm, sakana, baidu, stability, core, cerebras, prover
@@ -159,7 +161,7 @@ jobs:
           echo "success_count=${SUCCESS_COUNT}" >> $GITHUB_OUTPUT
           echo "failed_providers=${FAILED_PROVIDERS}" >> $GITHUB_OUTPUT
           echo "updated_at=${TODAY}" >> $GITHUB_OUTPUT
-          TOTAL_PROVIDERS=12  # RSS有効プロバイダー数
+          TOTAL_PROVIDERS=14  # RSS有効プロバイダー数
           echo "📊 更新結果: ${SUCCESS_COUNT}/${TOTAL_PROVIDERS} 成功"
           echo "total_providers=${TOTAL_PROVIDERS}" >> $GITHUB_OUTPUT
 
