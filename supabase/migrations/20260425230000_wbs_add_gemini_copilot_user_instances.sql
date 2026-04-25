@@ -64,28 +64,35 @@ COMMENT ON COLUMN public.wbs_tasks.instance IS
 -- 2. 既存「ユーザー手動」タスクを instance='user' に再割当
 -- ============================================================
 -- Slack/Notion セットアップ手順書記載の手動タスクを user 担当化
-UPDATE public.wbs_tasks
+UPDATE public.wbs_tasks AS task
 SET instance = 'user',
     owner_instance = 'user'
 WHERE (
   -- Notion / Slack manual setup 系
-  title ILIKE '%Notion%手動%' OR
-  title ILIKE '%Slack%Webhook%設定%' OR
-  title ILIKE '%Notion DB%' OR
-  title ILIKE '%Notion Integration%' OR
+  task.title ILIKE '%Notion%手動%' OR
+  task.title ILIKE '%Slack%Webhook%設定%' OR
+  task.title ILIKE '%Notion DB%' OR
+  task.title ILIKE '%Notion Integration%' OR
   -- 法人登記 / 司法書士契約 (法人手続き)
-  title ILIKE '%株式会社設立登記%' OR
-  title ILIKE '%司法書士%契約%' OR
-  title ILIKE '%商標出願%' OR
+  task.title ILIKE '%株式会社設立登記%' OR
+  task.title ILIKE '%司法書士%契約%' OR
+  task.title ILIKE '%商標出願%' OR
   -- 銀行口座 / 会計ソフト導入
-  title ILIKE '%法人銀行口座%' OR
-  title ILIKE '%会計ソフト導入%' OR
+  task.title ILIKE '%法人銀行口座%' OR
+  task.title ILIKE '%会計ソフト導入%' OR
   -- IPO 関連の決裁系
-  title ILIKE '%監査法人選定%' OR
-  title ILIKE '%主幹事証券%' OR
-  title ILIKE '%上場審査対応%'
+  task.title ILIKE '%監査法人選定%' OR
+  task.title ILIKE '%主幹事証券%' OR
+  task.title ILIKE '%上場審査対応%'
 )
-  AND status != 'completed';
+  AND task.status != 'completed'
+  AND NOT EXISTS (
+    SELECT 1
+    FROM public.wbs_tasks existing
+    WHERE existing.title = task.title
+      AND existing.instance = 'user'
+      AND existing.id <> task.id
+  );
 
 -- ============================================================
 -- 3. development_achievements 記録

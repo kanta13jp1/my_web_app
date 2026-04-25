@@ -39,43 +39,50 @@ COMMENT ON COLUMN public.wbs_tasks.owner_instance IS
 --    対象: 法的手続き・物理的手続き・署名・届出が必要なタスク
 -- ============================================================
 
-UPDATE public.wbs_tasks
+UPDATE public.wbs_tasks AS task
 SET
   instance       = 'user',
   owner_instance = 'user',
   updated_at     = now()
-WHERE
+WHERE (
   -- 会社設立・法務登記
-  title ILIKE '%会社設立%'
-  OR title ILIKE '%登記%'
-  OR title ILIKE '%定款%'
+  task.title ILIKE '%会社設立%'
+  OR task.title ILIKE '%登記%'
+  OR task.title ILIKE '%定款%'
   -- 銀行・金融口座
-  OR title ILIKE '%銀行口座%'
-  OR title ILIKE '%口座開設%'
+  OR task.title ILIKE '%銀行口座%'
+  OR task.title ILIKE '%口座開設%'
   -- 行政・税務届出
-  OR title ILIKE '%税務署%'
-  OR title ILIKE '%届出%'
-  OR title ILIKE '%申告%'
-  OR title ILIKE '%許認可%'
+  OR task.title ILIKE '%税務署%'
+  OR task.title ILIKE '%届出%'
+  OR task.title ILIKE '%申告%'
+  OR task.title ILIKE '%許認可%'
   -- 契約・署名
-  OR title ILIKE '%契約書%'
-  OR title ILIKE '%署名%'
-  OR title ILIKE '%印鑑%'
+  OR task.title ILIKE '%契約書%'
+  OR task.title ILIKE '%署名%'
+  OR task.title ILIKE '%印鑑%'
   -- 資金調達 (実際の意思決定)
-  OR title ILIKE '%出資%'
-  OR title ILIKE '%融資%'
-  OR title ILIKE '%投資家%'
+  OR task.title ILIKE '%出資%'
+  OR task.title ILIKE '%融資%'
+  OR task.title ILIKE '%投資家%'
   -- 採用・面接 (物理)
-  OR title ILIKE '%採用面接%'
-  OR title ILIKE '%内定%'
+  OR task.title ILIKE '%採用面接%'
+  OR task.title ILIKE '%内定%'
   -- 労務
-  OR title ILIKE '%社会保険%'
-  OR title ILIKE '%雇用保険%'
-  OR title ILIKE '%労働保険%'
+  OR task.title ILIKE '%社会保険%'
+  OR task.title ILIKE '%雇用保険%'
+  OR task.title ILIKE '%労働保険%'
   -- 公的認証・資格
-  OR title ILIKE '%公証%'
-  OR title ILIKE '%認証%'
-;
+  OR task.title ILIKE '%公証%'
+  OR task.title ILIKE '%認証%'
+)
+AND NOT EXISTS (
+  SELECT 1
+  FROM public.wbs_tasks existing
+  WHERE existing.title = task.title
+    AND existing.instance = 'user'
+    AND existing.id <> task.id
+);
 
 -- ============================================================
 -- 3. 実績記録
