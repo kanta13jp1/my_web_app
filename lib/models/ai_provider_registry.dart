@@ -1655,6 +1655,22 @@ const List<AiProviderEntry> kAiProviderRegistry = [
     note:
         r'AI 作曲 (Artificial Intelligence Virtual Artist) — SACEM 登録 / クラシック/ゲーム/映画音楽生成 / 著作権フリー / API 提供 / ★8/9',
   ),
+  AiProviderEntry(
+    id: 'mubert',
+    displayName: 'Mubert',
+    status: AiProviderStatus.notImplemented,
+    entryPoint: 'https://mubert.com/',
+    note:
+        r'AI BGM ストリーミング生成 — リアルタイム無限ループ / ムード・BPM・ジャンル指定 / React Native SDK / API 提供 / 著作権フリー / ★8/9',
+  ),
+  AiProviderEntry(
+    id: 'beatoven_ai',
+    displayName: 'Beatoven.ai',
+    status: AiProviderStatus.notImplemented,
+    entryPoint: 'https://www.beatoven.ai/',
+    note:
+        r'動画・Podcast 向け AI BGM 生成 — シーン別感情 BGM / 自動楽曲カスタム / 著作権フリー / MP3/WAV / $3M 調達 / ★7/9',
+  ),
 ];
 
 /// ステータス別件数を集計
