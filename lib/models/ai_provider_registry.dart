@@ -894,14 +894,6 @@ const List<AiProviderEntry> kAiProviderRegistry = [
     note: 'NVIDIA 傘下の超高速推論プラットフォーム (DGX Cloud 統合)',
   ),
   AiProviderEntry(
-    id: 'modal',
-    displayName: 'Modal Labs',
-    status: AiProviderStatus.notImplemented,
-    tier: AiProviderTier.performance,
-    entryPoint: '(未実装 — Python decorator serverless GPU)',
-    note: 'Python デコレータ 1 行でクラウド GPU をサーバーレス実行',
-  ),
-  AiProviderEntry(
     id: 'radixark',
     displayName: 'RadixArk (SGLang)',
     status: AiProviderStatus.notImplemented,
@@ -1501,6 +1493,22 @@ const List<AiProviderEntry> kAiProviderRegistry = [
     entryPoint: 'https://langchain-ai.github.io/langgraph/',
     note:
         r'ステートフル LLM グラフFW — ループ/条件分岐/Human-in-Loop / 永続化 / マルチエージェント / 11k+ Stars / MIT',
+  ),
+  AiProviderEntry(
+    id: 'composio',
+    displayName: 'Composio',
+    status: AiProviderStatus.notImplemented,
+    entryPoint: 'https://composio.dev/',
+    note:
+        r'AI エージェント向けツール統合プラットフォーム — 250+ アプリ (GitHub/Slack/Gmail等) / OAuth 管理 / LangGraph・CrewAI・OpenAI Agents SDK 対応 / $53M Series A (Kleiner Perkins)',
+  ),
+  AiProviderEntry(
+    id: 'instructor',
+    displayName: 'Instructor',
+    status: AiProviderStatus.notImplemented,
+    entryPoint: 'https://python.useinstructor.com/',
+    note:
+        r'LLM 構造化出力ライブラリ — Pydantic モデルで型安全な LLM レスポンス / OpenAI・Anthropic・Gemini 対応 / 自動バリデーション&リトライ / 10k+ Stars / MIT / Jason Liu 作',
   ),
 ];
 
