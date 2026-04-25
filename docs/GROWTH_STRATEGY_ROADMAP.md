@@ -19979,3 +19979,19 @@ Win版 dedup fix (20260425_wbs_dedup_fix.md) で対応予定。
 - CEO感: T-1 routine完遂 (date-gate 判断 = CEO判断) ✅
 - ミッション駆動: Notion paywall 記事の May 1/3 予約投稿準備 ✅
 - KPI=昨日の自分: WBS 2タスク completed 化 ✅
+
+## PS#4 S57 — 2026-04-25 (競合モニタリング / deploy修復)
+
+**Instance**: PS版#4 | **Commit**: bb1f5afd→b94d502f
+
+### 実装内容
+- deploy-prod CI SQLSTATE 23505 修復: `wbs_tasks_title_instance_unique` 重複キーエラー
+- 根本原因: `20260425203000_wbs_remove_all_instances_add_codex.sql` の `UPDATE instance='all'→'codex'` が `20260425170000_business_wbs_phase1.sql` で既にseeded された 'codex' 行と衝突
+- 修正: `20260425202000_fix_wbs_all_codex_conflict.sql` — 203000実行前に衝突する 'all' 行をDELETE
+- deploy-prod.yml に repair entry 追加 (202000)
+- 別インスタンス(2363ff66)も203000をDELETE方式に修正 — 両修正が協調して機能
+
+### Philosophy Alignment: PS#4 S57
+- CEO感: SQLSTATE根本原因の特定と修正判断 ✅
+- KPI=昨日の自分: 連続するCI失敗チェーンを断ち切る ✅
+- 資本=時間: 長時間監視から根本修正アプローチに切替 ✅
