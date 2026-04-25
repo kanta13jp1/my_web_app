@@ -1,0 +1,216 @@
+name: OGP Image Refresh (週次)
+
+# Win版#132 part 14: OGP 画像を週次で AI 自動生成 → web/ogp-YYYYWW.png
+# 設計: docs/OGP_VIDEO_AUTO_POST.md (Phase 1)
+#
+# 流れ:
+#   1. 週番号 (YYYYWW) を取得
+#   2. FAL flux/schnell で 1200x630 OGP 画像生成
+#   3. PNG download → web/ogp-YYYYWW.png
+#   4. web/index.html の og:image URL を週番号付き URL に更新
+#   5. og_assets テーブルに記録 (Supabase REST)
+#   6. git commit + push (auto-deploy で反映)
+#
+# Auth: FAL_KEY (既存 / viral-video-ad-generator で使用) +
+#       SUPABASE_SERVICE_ROLE_KEY (既存)
+# Deny-by-default: secret 未設定で skip
+# Cost: $0.003/週 = $0.012/月 (FAL flux/schnell)
+
+on:
+  schedule:
+    - cron: "0 0 * * 1"  # 毎週月曜 09:00 JST (UTC 00:00)
+  workflow_dispatch:
+    inputs:
+      prompt_override:
+        description: 'image prompt 上書き (省略時は default)'
+        required: false
+        default: ''
+
+concurrency:
+  group: ogp-image-refresh
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    name: OGP Image Refresh
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    env:
+      FAL_KEY: ${{ secrets.FAL_KEY }}
+      SUPABASE_URL: https://smmkxxavexumewbfaqpy.supabase.co
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      PROMPT_OVERRIDE: ${{ github.event.inputs.prompt_override || '' }}
+
+    steps:
+      # ── Step 1: secret presence check (deny-by-default) ───────────────────
+      - name: Step 1 - Secret presence check
+        id: precheck
+        run: |
+          if [ -z "$FAL_KEY" ]; then
+            echo "::warning::FAL_KEY not configured — skip"
+            echo "skip=true" >> $GITHUB_OUTPUT
+          else
+            echo "skip=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Step 2 - Checkout
+        if: steps.precheck.outputs.skip != 'true'
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.BYPASS_RULES || github.token }}
+
+      - name: Step 3 - Compute week-numbered filename
+        if: steps.precheck.outputs.skip != 'true'
+        id: weeknum
+        run: |
+          WEEK=$(TZ=Asia/Tokyo date +%Y%V)
+          FILENAME="ogp-${WEEK}.png"
+          echo "week=$WEEK" >> $GITHUB_OUTPUT
+          echo "filename=$FILENAME" >> $GITHUB_OUTPUT
+          echo "📅 Week: $WEEK / Filename: $FILENAME"
+
+      - name: Step 4 - Generate OGP image via FAL flux/schnell
+        if: steps.precheck.outputs.skip != 'true'
+        id: gen
+        run: |
+          # Default prompt (季節 / 月変更可能 / Phase 1 は固定)
+          DEFAULT_PROMPT="Modern minimalist OGP banner for life management SaaS named 自分株式会社 (Jibun Kabushikigaisha), 1200x630 aspect ratio, gradient orange-purple-indigo background, futuristic UI elements floating in space, Japanese typography style, no text overlay, professional and clean, photorealistic high quality"
+
+          PROMPT="${PROMPT_OVERRIDE:-$DEFAULT_PROMPT}"
+          echo "🎨 Prompt: ${PROMPT:0:120}..."
+
+          # FAL flux/schnell call
+          PAYLOAD=$(python3 -c "import json,os; print(json.dumps({'prompt': os.environ['PROMPT'], 'image_size': 'landscape_16_9', 'num_inference_steps': 4, 'num_images': 1, 'enable_safety_checker': True}))" PROMPT="$PROMPT")
+
+          FAL_RESP=$(curl -s -w "\n%{http_code}" \
+            "https://fal.run/fal-ai/flux/schnell" \
+            -H "Authorization: Key ${FAL_KEY}" \
+            -H "Content-Type: application/json" \
+            -d "$PAYLOAD" \
+            --max-time 60)
+
+          BODY=$(echo "$FAL_RESP" | head -n -1)
+          CODE=$(echo "$FAL_RESP" | tail -n 1)
+
+          echo "FAL HTTP code: $CODE"
+
+          if [ "$CODE" != "200" ]; then
+            echo "::warning::FAL fail HTTP ${CODE}: $(echo "$BODY" | head -c 300)"
+            echo "skip=true" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          # PNG URL 抽出
+          IMG_URL=$(echo "$BODY" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d['images'][0]['url'])" 2>/dev/null || echo "")
+
+          if [ -z "$IMG_URL" ]; then
+            echo "::warning::FAL response no image URL"
+            echo "skip=true" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          echo "📥 Downloading: $IMG_URL"
+          DOWNLOAD_CODE=$(curl -s -L -o "web/${{ steps.weeknum.outputs.filename }}" -w "%{http_code}" "$IMG_URL" --max-time 30)
+          echo "Download code: $DOWNLOAD_CODE"
+
+          if [ "$DOWNLOAD_CODE" != "200" ]; then
+            echo "::warning::Download fail HTTP $DOWNLOAD_CODE"
+            echo "skip=true" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          # サイズ確認 (空ファイル防止)
+          BYTES=$(stat -c %s "web/${{ steps.weeknum.outputs.filename }}" 2>/dev/null || echo "0")
+          if [ "$BYTES" -lt 10000 ]; then
+            echo "::warning::Image too small (${BYTES} bytes) — skip"
+            echo "skip=true" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          echo "✅ Image saved (${BYTES} bytes): web/${{ steps.weeknum.outputs.filename }}"
+          echo "skip=false" >> $GITHUB_OUTPUT
+          echo "img_url=$IMG_URL" >> $GITHUB_OUTPUT
+
+      - name: Step 5 - Update web/index.html og:image meta
+        if: steps.precheck.outputs.skip != 'true' && steps.gen.outputs.skip != 'true'
+        run: |
+          NEW_URL="https://my-web-app-b67f4.web.app/${{ steps.weeknum.outputs.filename }}"
+
+          # 既存 og:image content URL を sed で置換
+          # 既存形式: content="https://my-web-app-b67f4.web.app/ogp.png" or
+          # 既存形式: content="https://my-web-app-b67f4.web.app/ogp-YYYYWW.png"
+          sed -i -E "s|content=\"https://my-web-app-b67f4\.web\.app/ogp[^\"]*\"|content=\"${NEW_URL}\"|g" web/index.html
+
+          # diff 確認
+          if git diff --quiet web/index.html; then
+            echo "::warning::index.html not modified (URL already up-to-date or pattern mismatch)"
+          else
+            echo "✅ index.html og:image updated to: $NEW_URL"
+            git diff web/index.html | head -10
+          fi
+
+      - name: Step 6 - Record to og_assets table (best-effort)
+        if: steps.precheck.outputs.skip != 'true' && steps.gen.outputs.skip != 'true'
+        run: |
+          if [ -z "$SUPABASE_SERVICE_ROLE_KEY" ]; then
+            echo "::warning::SUPABASE_SERVICE_ROLE_KEY missing — skip recording"
+            exit 0
+          fi
+
+          NEW_URL="https://my-web-app-b67f4.web.app/${{ steps.weeknum.outputs.filename }}"
+          TRACE="${{ github.run_id }}"
+
+          PAYLOAD=$(python3 -c "import json,os; print(json.dumps({'asset_type': 'ogp_image', 'url': os.environ['NEW_URL'], 'prompt': 'weekly auto-refresh ' + os.environ.get('PROMPT_OVERRIDE') or 'default', 'generated_by': 'fal-flux-schnell', 'cost_usd': 0.003, 'metadata': {'week': os.environ.get('WEEK'), 'trace_id': os.environ.get('TRACE')}}))" \
+            NEW_URL="$NEW_URL" PROMPT_OVERRIDE="$PROMPT_OVERRIDE" WEEK="${{ steps.weeknum.outputs.week }}" TRACE="$TRACE")
+
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" \
+            "${SUPABASE_URL}/rest/v1/og_assets" \
+            -H "apikey: ${SUPABASE_SERVICE_ROLE_KEY}" \
+            -H "Authorization: Bearer ${SUPABASE_SERVICE_ROLE_KEY}" \
+            -H "Content-Type: application/json" \
+            -H "Prefer: return=minimal" \
+            -d "$PAYLOAD" \
+            --max-time 15)
+
+          echo "Supabase record HTTP $HTTP_CODE"
+
+          if [ "$HTTP_CODE" != "201" ] && [ "$HTTP_CODE" != "204" ]; then
+            echo "::warning::Failed to record to og_assets (HTTP $HTTP_CODE) — likely table not yet deployed"
+          else
+            echo "✅ Recorded to og_assets"
+          fi
+
+      - name: Step 7 - Commit + push
+        if: steps.precheck.outputs.skip != 'true' && steps.gen.outputs.skip != 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add "web/${{ steps.weeknum.outputs.filename }}" web/index.html
+
+          if git diff --staged --quiet; then
+            echo "ℹ️ No changes to commit"
+            exit 0
+          fi
+
+          git commit -m "chore(ogp): auto-refresh OGP image for week ${{ steps.weeknum.outputs.week }}
+
+Generated by FAL flux/schnell.
+Filename: ${{ steps.weeknum.outputs.filename }}
+Trace: ${{ github.run_id }}"
+          git push origin HEAD:main
+
+          echo "✅ Pushed OGP refresh commit"
+
+      - name: Step 8 - No-op log
+        if: steps.precheck.outputs.skip == 'true' || steps.gen.outputs.skip == 'true'
+        run: |
+          if [ "${{ steps.precheck.outputs.skip }}" = 'true' ]; then
+            echo "ℹ️ Skipped: FAL_KEY missing"
+          else
+            echo "ℹ️ Skipped: FAL gen / download / size validation failed"
+          fi

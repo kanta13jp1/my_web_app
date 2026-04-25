@@ -18811,3 +18811,53 @@ Deploy failure `24924215661` (feat business-wbs) を解析・修正。
 **スコア**: 9/9 ✅
 
 **次回**: Semantic Kernel / Azure OpenAI / Tabnine / OpenRouter 等
+
+---
+
+## Win版#132 part 14 完了 (2026-04-25 午後)
+
+### 実施内容: OGP 画像自動更新 + AI 動画 X 投稿 設計 + Phase 1 実装
+
+**契機**: ユーザー要請「OGP 画像が古い / scheduled task で自動更新 / AI 動画 + LP リンク付き X 投稿」
+
+### 設計 (3-Phase)
+
+| Phase | 内容 | 担当 | 期日 |
+|-------|------|------|------|
+| **1 (本 commit)** | OGP image 週次自動更新 (FAL flux/schnell + GHA cron) | Win | 2026-04-30 |
+| 2 | 動画自動生成 (viral-video-ad-generator 既存活用) | Win | 2026-05-07 |
+| 3 | X 自動投稿 (動画 + LP リンク / X API v2) | Win | 2026-05-15 |
+| 4 | OGP CTR / engagement KPI 効果測定 | VSCode | 2026-05-30 |
+
+### Phase 1 実装
+
+**設計 doc**: `docs/OGP_VIDEO_AUTO_POST.md` (新規 9 section)
+- 現状分析 (web/ogp.png 固定 / X cache 問題 / 既存 viral-video-ad-generator 活用可能)
+- AI image prompt 設計 (季節 / 月変更可)
+- og_assets テーブル設計
+- Cost: $0.012/月 (FAL flux/schnell)
+- Phase 2-4 詳細
+- Philosophy 9/9 + AI-DEV 7/7
+
+**Migration**: `20260425180000_create_og_assets.sql`
+- og_assets テーブル新設 (asset_type / url / prompt / generated_by / cost_usd / posted_to_x / x_post_id / metadata)
+- 2 index (type+created / pending_x_post 部分 index)
+- RLS public read / service_role write
+
+**GHA workflow**: `.github/workflows/ogp-image-refresh.yml` (新規)
+- cron: `0 0 * * 1` (毎週月曜 09:00 JST)
+- Step 1 secret check → Step 2 checkout → Step 3 週番号取得 → Step 4 FAL flux/schnell 生成 → Step 5 web/index.html og:image 更新 → Step 6 og_assets 記録 (best-effort) → Step 7 commit+push → Step 8 skip log
+- Auth: FAL_KEY (既存) + SUPABASE_SERVICE_ROLE_KEY (既存)
+- Deny-by-default: secret 欠落で skip
+- soft-fail: HTTP error / image size <10K で warning + skip
+- 出力: `web/ogp-YYYYWW.png` (cache buster 効果あり)
+
+### コスト
+- FAL flux/schnell: $0.003 × 4 週 = **$0.012/月** (誤差レベル)
+- Phase 2 (動画) 月 1 本: 追加 $0.32/月
+- Phase 3 (X 投稿): 無料枠
+
+### Philosophy 9/9 ✅ (5 のみ要 quality gate / Phase 4 で実装)
+### AI-DEV 7/7 ✅
+
+### commit: TBD
