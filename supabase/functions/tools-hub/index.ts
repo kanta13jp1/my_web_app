@@ -324,6 +324,21 @@ function isCompletedWbsTask(task: Record<string, unknown>): boolean {
   return String(task.status ?? "") === "completed" || Number(task.progress ?? 0) >= 100;
 }
 
+function isGithubIssueClosureReadyWbsTask(task: Record<string, unknown>): boolean {
+  if (!isCompletedWbsTask(task)) return false;
+  const reviewStatus = String(task.ai_review_status ?? "").trim().toLowerCase();
+  return ["approved", "verified", "passed"].includes(reviewStatus);
+}
+
+function wbsStatusForOpenGithubIssue(task: Record<string, unknown> | null): string {
+  const status = String(task?.status ?? "pending");
+  return status === "completed" ? "in_progress" : status;
+}
+
+function wbsProgressForOpenGithubIssue(task: Record<string, unknown> | null): number {
+  return Math.max(0, Math.min(99, Number(task?.progress ?? 0)));
+}
+
 function pickGithubIssueWbsKeeper(
   tasks: Array<Record<string, unknown>>,
 ): Record<string, unknown> | null {
@@ -1505,7 +1520,7 @@ serve(async (req) => {
           const nowIso = now.toISOString();
           const today = nowIso.slice(0, 10);
           const taskSelect =
-            "id, category, category_icon, category_order, title, description, instance, owner_instance, status, progress, start_date, end_date, planned_end_date, milestone_code, priority, remaining_work, recovery_plan, created_at, updated_at, github_issue_number, github_issue_url, github_issue_state, github_issue_labels, github_issue_synced_at";
+            "id, category, category_icon, category_order, title, description, instance, owner_instance, status, progress, start_date, end_date, planned_end_date, milestone_code, priority, remaining_work, recovery_plan, ai_review_status, created_at, updated_at, github_issue_number, github_issue_url, github_issue_state, github_issue_labels, github_issue_synced_at";
           const { data: existingTasks, error: existingError } = await admin.from("wbs_tasks")
             .select(taskSelect)
             .limit(5000);
@@ -1562,16 +1577,17 @@ serve(async (req) => {
               issueUpdatedAt ? `GitHub updated: ${issueUpdatedAt}` : null,
             ].filter((line) => line !== null).join(" / ");
             const currentCompleted = keeper ? isCompletedWbsTask(keeper) : false;
+            const closureReady = keeper ? isGithubIssueClosureReadyWbsTask(keeper) : false;
             const nextStatus = isClosed
               ? "completed"
-              : currentCompleted
+              : closureReady
               ? "completed"
-              : String(keeper?.status ?? "pending");
+              : wbsStatusForOpenGithubIssue(keeper);
             const nextProgress = isClosed
               ? 100
-              : currentCompleted
+              : closureReady
               ? 100
-              : Math.max(0, Math.min(99, Number(keeper?.progress ?? 0)));
+              : wbsProgressForOpenGithubIssue(keeper);
             const payload: Record<string, unknown> = {
               category: githubIssueCategory(labels),
               category_icon: githubIssueCategoryIcon(labels),
@@ -1596,6 +1612,10 @@ serve(async (req) => {
               github_issue_labels: labels,
               github_issue_synced_at: nowIso,
             };
+            if (!isClosed && currentCompleted && !closureReady) {
+              payload.remaining_work =
+                "GitHub Issue is still open; WBS completion must pass AI review before the issue can be closed.";
+            }
 
             if (!keeper) {
               const { data: created, error: createError } = await admin.from("wbs_tasks")
@@ -1618,11 +1638,11 @@ serve(async (req) => {
             if (updateError) throw new Error(updateError.message);
             stats.updated += 1;
             if (isClosed) stats.completed_from_closed_issues += 1;
-            if (!isClosed && currentCompleted && !closedIssueNumbers.has(issueNumber)) {
+            if (!isClosed && closureReady && !closedIssueNumbers.has(issueNumber)) {
               issuesToClose.push({
                 number: issueNumber,
                 task_id: keeper.id,
-                reason: "linked WBS task is completed",
+                reason: "linked WBS task is completed and AI review approved",
               });
               closedIssueNumbers.add(issueNumber);
             }
@@ -1661,11 +1681,11 @@ serve(async (req) => {
             if (!issueNumber || closedIssueNumbers.has(issueNumber)) continue;
             const issue = issuesByNumber.get(issueNumber);
             if (!issue || githubIssueState(issue) !== "OPEN") continue;
-            if (isCompletedWbsTask(task)) {
+            if (isGithubIssueClosureReadyWbsTask(task)) {
               issuesToClose.push({
                 number: issueNumber,
                 task_id: task.id,
-                reason: "WBS task was completed before scheduled sync",
+                reason: "WBS task was completed and AI review approved before scheduled sync",
               });
               closedIssueNumbers.add(issueNumber);
             }
@@ -1676,7 +1696,8 @@ serve(async (req) => {
           );
           const titleGroups = new Map<string, Array<Record<string, unknown>>>();
           for (const task of allTasks) {
-            if (!githubIssueNumberFromTask(task)) continue;
+            const issueNumber = githubIssueNumberFromTask(task);
+            if (!issueNumber || !issuesByNumber.has(issueNumber)) continue;
             const key = normalizeDuplicateKey(task.title);
             if (!key) continue;
             const tasks = titleGroups.get(key) ?? [];
