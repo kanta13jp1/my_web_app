@@ -1,10 +1,14 @@
-﻿// core-hub — コアUI・メモ・通知・ユーザー管理統合EF
+// core-hub — コアUI・メモ・通知・ユーザー管理統合EF
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
-import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
+import {
+  createClient,
+  SupabaseClient,
+} from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type",
 };
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
@@ -85,7 +89,9 @@ function normalizePriority(value: unknown): "high" | "medium" | "low" {
   return priority === "high" || priority === "low" ? priority : "medium";
 }
 
-function estimateFeatureRequestHours(priority: "high" | "medium" | "low"): number {
+function estimateFeatureRequestHours(
+  priority: "high" | "medium" | "low",
+): number {
   if (priority === "high") return 6;
   if (priority === "low") return 2;
   return 4;
@@ -103,6 +109,209 @@ async function getUserEmail(
   }
 }
 
+type FeatureRequestAttachmentAnalysis = {
+  title: string;
+  category: string;
+  priority: "high" | "medium" | "low";
+  observation: string;
+  inferred_problem: string;
+  proposal: string;
+  reproduction_steps: string;
+  acceptance_criteria: string;
+  expected_outcome: string;
+  confidence: "low" | "medium" | "high";
+  generated_by: string;
+};
+
+function cleanJsonText(text: string): string {
+  let cleaned = text.trim();
+  if (cleaned.startsWith("```")) {
+    cleaned = cleaned.split("\n").slice(1, -1).join("\n").trim();
+  }
+  const match = cleaned.match(/\{[\s\S]*\}/);
+  return match?.[0] ?? cleaned;
+}
+
+function stringField(value: unknown, fallback = "", maxLength = 800): string {
+  return textValue(value ?? fallback, maxLength);
+}
+
+function normalizeFeatureRequestAnalysis(
+  raw: Record<string, unknown>,
+  fallback: FeatureRequestAttachmentAnalysis,
+): FeatureRequestAttachmentAnalysis {
+  const priority = normalizePriority(raw.priority ?? fallback.priority);
+  const confidenceRaw = textValue(raw.confidence ?? fallback.confidence, 20)
+    .toLowerCase();
+  const confidence = confidenceRaw === "high" || confidenceRaw === "low"
+    ? confidenceRaw
+    : "medium";
+  return {
+    title: stringField(raw.title, fallback.title, 120),
+    category: stringField(raw.category, fallback.category, 80),
+    priority,
+    observation: stringField(raw.observation, fallback.observation, 1200),
+    inferred_problem: stringField(
+      raw.inferred_problem,
+      fallback.inferred_problem,
+      1200,
+    ),
+    proposal: stringField(raw.proposal, fallback.proposal, 1200),
+    reproduction_steps: stringField(
+      raw.reproduction_steps,
+      fallback.reproduction_steps,
+      1200,
+    ),
+    acceptance_criteria: stringField(
+      raw.acceptance_criteria,
+      fallback.acceptance_criteria,
+      1200,
+    ),
+    expected_outcome: stringField(
+      raw.expected_outcome,
+      fallback.expected_outcome,
+      800,
+    ),
+    confidence,
+    generated_by: stringField(raw.generated_by, fallback.generated_by, 80),
+  };
+}
+
+function fallbackFeatureRequestAttachmentAnalysis(params: {
+  fileName: string;
+  currentTitle: string;
+  currentDescription: string;
+  currentExpectedOutcome: string;
+  category: string;
+  priority: "high" | "medium" | "low";
+  reason: string;
+}): FeatureRequestAttachmentAnalysis {
+  return {
+    title: params.currentTitle || "スクリーンショットからの改善要望",
+    category: params.category || "UX改善",
+    priority: params.priority,
+    observation:
+      `添付画像 ${params.fileName} を受け取りました。${params.reason}`,
+    inferred_problem: params.currentDescription ||
+      "画像で示された画面や操作に、ユーザーが迷う・失敗する・手戻りする要因がある可能性があります。",
+    proposal:
+      "画面上の該当箇所を確認し、ユーザーが次に取るべき行動が分かるUI・導線・状態表示へ改善します。",
+    reproduction_steps:
+      "1. 対象画面を開く\n2. 添付画像と同じ状態にする\n3. 迷い・エラー・不足している案内を確認する",
+    acceptance_criteria:
+      "添付画像の課題がIssue本文に残り、WBSタスクとして改善作業へ引き継げること。",
+    expected_outcome: params.currentExpectedOutcome ||
+      "ユーザーが状況を説明しなくても、画像から改善要望を登録できるようになる。",
+    confidence: "low",
+    generated_by: "fallback",
+  };
+}
+
+async function analyzeFeatureRequestAttachment(params: {
+  fileName: string;
+  mimeType: string;
+  imageBase64: string;
+  currentTitle: string;
+  currentDescription: string;
+  currentExpectedOutcome: string;
+  category: string;
+  priority: "high" | "medium" | "low";
+}): Promise<FeatureRequestAttachmentAnalysis> {
+  const fallback = fallbackFeatureRequestAttachmentAnalysis({
+    fileName: params.fileName,
+    currentTitle: params.currentTitle,
+    currentDescription: params.currentDescription,
+    currentExpectedOutcome: params.currentExpectedOutcome,
+    category: params.category,
+    priority: params.priority,
+    reason: "Gemini画像診断が利用できない場合の暫定診断です。",
+  });
+  const geminiKey = Deno.env.get("GEMINI_API_KEY") ?? "";
+  if (!geminiKey) {
+    return { ...fallback, generated_by: "fallback:no_gemini_key" };
+  }
+
+  const prompt =
+    `あなたはWebアプリのUX改善担当です。添付画像を観察し、Home画面の追加要望フォームからGitHub Issue/WBSへ登録するための下書きをJSONだけで返してください。
+
+前提:
+- 画像はスクリーンショットまたは写真です。
+- ユーザーが長文入力しなくても、課題・改善案・受入条件が伝わることを重視します。
+- 推測は推測と分かるように書き、個人情報が写っている可能性がある場合は本文に転記しないでください。
+
+現在入力されている文脈:
+- title: ${params.currentTitle || "未入力"}
+- description: ${params.currentDescription || "未入力"}
+- expected_outcome: ${params.currentExpectedOutcome || "未入力"}
+- category: ${params.category}
+- priority: ${params.priority}
+
+出力JSON:
+{
+  "title": "120字以内のIssueタイトル",
+  "category": "機能追加|UX改善|不具合|AI連携|データ連携|その他",
+  "priority": "high|medium|low",
+  "observation": "画像から確認できる事実",
+  "inferred_problem": "課題仮説",
+  "proposal": "改善案",
+  "reproduction_steps": "再現手順または確認手順",
+  "acceptance_criteria": "受入条件",
+  "expected_outcome": "期待する成果",
+  "confidence": "low|medium|high"
+}`;
+
+  try {
+    const resp = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiKey}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{
+            parts: [
+              { text: prompt },
+              {
+                inlineData: {
+                  mimeType: params.mimeType,
+                  data: params.imageBase64,
+                },
+              },
+            ],
+          }],
+          generationConfig: {
+            temperature: 0.25,
+            maxOutputTokens: 1200,
+          },
+        }),
+      },
+    );
+    if (!resp.ok) {
+      return {
+        ...fallback,
+        observation:
+          `${fallback.observation} Gemini API status: ${resp.status}`,
+        generated_by: "fallback:gemini_error",
+      };
+    }
+    const data = await resp.json();
+    const text = String(
+      data?.candidates?.[0]?.content?.parts?.[0]?.text ?? "",
+    );
+    const parsed = JSON.parse(cleanJsonText(text)) as Record<string, unknown>;
+    return normalizeFeatureRequestAnalysis(parsed, {
+      ...fallback,
+      confidence: "medium",
+      generated_by: "gemini-2.5-flash",
+    });
+  } catch (e) {
+    return {
+      ...fallback,
+      observation: `${fallback.observation} AI診断例外: ${String(e)}`,
+      generated_by: "fallback:exception",
+    };
+  }
+}
+
 function buildFeatureRequestBody(params: {
   title: string;
   description: string;
@@ -112,6 +321,8 @@ function buildFeatureRequestBody(params: {
   userId: string;
   userEmail: string;
   createdAt: string;
+  attachmentFileName?: string;
+  attachmentAnalysis?: FeatureRequestAttachmentAnalysis | null;
 }): string {
   const lines = [
     "Home画面の追加要望フォームから登録されました。",
@@ -127,10 +338,36 @@ function buildFeatureRequestBody(params: {
     `- 優先度: ${params.priority}`,
     `- 登録者: ${params.userEmail || params.userId}`,
     `- 登録日時: ${params.createdAt}`,
+  ];
+  if (params.attachmentAnalysis) {
+    lines.push(
+      "",
+      "## 添付画像AI診断",
+      `- ファイル: ${params.attachmentFileName || "未保存"}`,
+      `- 診断生成: ${params.attachmentAnalysis.generated_by}`,
+      `- 信頼度: ${params.attachmentAnalysis.confidence}`,
+      "",
+      "### 観察事実",
+      params.attachmentAnalysis.observation || "未入力",
+      "",
+      "### 課題仮説",
+      params.attachmentAnalysis.inferred_problem || "未入力",
+      "",
+      "### 改善案",
+      params.attachmentAnalysis.proposal || "未入力",
+      "",
+      "### 確認手順",
+      params.attachmentAnalysis.reproduction_steps || "未入力",
+      "",
+      "### 受入条件",
+      params.attachmentAnalysis.acceptance_criteria || "未入力",
+    );
+  }
+  lines.push(
     "",
     "## WBS連携",
     "このIssue作成後、同じ内容をWBSのユーザー要望タスクとして登録します。",
-  ];
+  );
   return lines.join("\n");
 }
 
@@ -172,7 +409,9 @@ async function createGitHubIssue(params: {
     return {
       skipped: false,
       status: res.status,
-      error: String((data as Record<string, unknown>).message ?? "GitHub API error"),
+      error: String(
+        (data as Record<string, unknown>).message ?? "GitHub API error",
+      ),
     };
   }
   const issue = data as Record<string, unknown>;
@@ -193,6 +432,7 @@ async function createFeatureRequestWbsTask(
     priority: "high" | "medium" | "low";
     issueUrl: string;
     issueNumber: number | null;
+    attachmentAnalysis?: FeatureRequestAttachmentAnalysis | null;
   },
 ): Promise<Record<string, unknown>> {
   const issueLine = params.issueUrl
@@ -205,6 +445,15 @@ async function createFeatureRequestWbsTask(
     `期待する成果: ${params.expectedOutcome || "未入力"}`,
     issueLine,
   ];
+  if (params.attachmentAnalysis) {
+    descriptionLines.push(
+      "",
+      "添付画像AI診断:",
+      `観察: ${params.attachmentAnalysis.observation}`,
+      `改善案: ${params.attachmentAnalysis.proposal}`,
+      `受入条件: ${params.attachmentAnalysis.acceptance_criteria}`,
+    );
+  }
 
   const { data, error } = await admin.from("wbs_tasks").insert({
     category: "ユーザー要望",
@@ -247,11 +496,18 @@ serve(async (req: Request) => {
     }
 
     const action: string = body.action ?? "";
-    const serviceRoleActions = new Set(["notify.feature_request", "notification.broadcast_release"]);
+    const serviceRoleActions = new Set([
+      "notify.feature_request",
+      "notification.broadcast_release",
+    ]);
     // Anonymous-allowed actions (no auth required / page-specific cache)
     const anonymousActions = new Set(["page.share_generate"]);
-    const bearer = (req.headers.get("authorization") ?? "").replace(/^Bearer\s+/i, "").trim();
-    const isServiceRole = SERVICE_ROLE_KEY !== "" && bearer === SERVICE_ROLE_KEY;
+    const bearer = (req.headers.get("authorization") ?? "").replace(
+      /^Bearer\s+/i,
+      "",
+    ).trim();
+    const isServiceRole = SERVICE_ROLE_KEY !== "" &&
+      bearer === SERVICE_ROLE_KEY;
     let userId = "";
     if (anonymousActions.has(action)) {
       // skip auth — anonymous OK
@@ -440,8 +696,14 @@ serve(async (req: Request) => {
           .filter("metadata->>user_id", "eq", userId);
         if (listErr) return json({ error: listErr.message }, 400);
         for (const row of rows ?? []) {
-          const meta = { ...(row.metadata as Record<string, unknown>), read: true };
-          await admin.from("hub_data").update({ metadata: meta }).eq("id", row.id);
+          const meta = {
+            ...(row.metadata as Record<string, unknown>),
+            read: true,
+          };
+          await admin.from("hub_data").update({ metadata: meta }).eq(
+            "id",
+            row.id,
+          );
         }
         return json({ success: true, updated: (rows ?? []).length });
       }
@@ -465,10 +727,12 @@ serve(async (req: Request) => {
         }
 
         // アクティブユーザー取得 (過去90日以内ログイン)
-        const ninetyDaysAgo = new Date(Date.now() - 90 * 86_400_000).toISOString();
-        const { data: userList, error: userErr } = await admin.auth.admin.listUsers({
-          perPage: 1000,
-        });
+        const ninetyDaysAgo = new Date(Date.now() - 90 * 86_400_000)
+          .toISOString();
+        const { data: userList, error: userErr } = await admin.auth.admin
+          .listUsers({
+            perPage: 1000,
+          });
         if (userErr) return json({ error: userErr.message }, 500);
         const activeUsers = (userList?.users ?? []).filter(
           (u) => u.last_sign_in_at && u.last_sign_in_at >= ninetyDaysAgo,
@@ -481,7 +745,8 @@ serve(async (req: Request) => {
           source: "notification",
           metadata: {
             title: `🚀 新バージョン v${version} をリリースしました`,
-            message: `アプリを更新すると新機能・改善が反映されます。ページを再読み込みしてください。`,
+            message:
+              `アプリを更新すると新機能・改善が反映されます。ページを再読み込みしてください。`,
             type: "feature_update",
             read: false,
             user_id: u.id,
@@ -494,7 +759,11 @@ serve(async (req: Request) => {
 
         const { error: insertErr } = await admin.from("hub_data").insert(rows);
         if (insertErr) return json({ error: insertErr.message }, 500);
-        return json({ success: true, broadcast_to: activeUsers.length, version });
+        return json({
+          success: true,
+          broadcast_to: activeUsers.length,
+          version,
+        });
       }
 
       // ---- User profile ----
@@ -546,6 +815,67 @@ serve(async (req: Request) => {
         return json({ success: true, item });
       }
 
+      case "feature_request.analyze_attachment": {
+        const fileName = textValue(body.file_name ?? body.fileName, 240) ||
+          "attachment.png";
+        const mimeType = textValue(body.mime_type ?? body.mimeType, 80) ||
+          "image/png";
+        const imageBase64 = textValue(
+          body.image_base64 ?? body.imageBase64,
+          9_000_000,
+        );
+        const currentTitle = textValue(
+          body.current_title ?? body.currentTitle,
+          120,
+        );
+        const currentDescription = textValue(
+          body.current_description ?? body.currentDescription,
+          4000,
+        );
+        const currentExpectedOutcome = textValue(
+          body.current_expected_outcome ?? body.currentExpectedOutcome,
+          1000,
+        );
+        const category = textValue(body.category, 80) || "UX改善";
+        const priority = normalizePriority(body.priority);
+
+        if (!mimeType.startsWith("image/")) {
+          return json({ error: "image attachment required" }, 400);
+        }
+        if (imageBase64.length < 32) {
+          return json({ error: "image_base64 required" }, 400);
+        }
+        if (imageBase64.length > 8_500_000) {
+          return json({ error: "image is too large" }, 413);
+        }
+
+        const analysis = await analyzeFeatureRequestAttachment({
+          fileName,
+          mimeType,
+          imageBase64,
+          currentTitle,
+          currentDescription,
+          currentExpectedOutcome,
+          category,
+          priority,
+        });
+        const item = await addItem(
+          admin,
+          "feature_request_attachment_analysis",
+          userId,
+          {
+            file_name: fileName,
+            mime_type: mimeType,
+            current_title: currentTitle,
+            current_description: currentDescription,
+            current_expected_outcome: currentExpectedOutcome,
+            analysis,
+            created_at: new Date().toISOString(),
+          },
+        );
+        return json({ success: true, analysis, item });
+      }
+
       case "feature_request.submit": {
         const title = textValue(body.title, 120);
         const description = textValue(body.description, 4000);
@@ -555,11 +885,40 @@ serve(async (req: Request) => {
         );
         const category = textValue(body.category, 80) || "機能追加";
         const priority = normalizePriority(body.priority);
+        const attachmentFileName = textValue(
+          body.attachment_file_name ?? body.attachmentFileName,
+          240,
+        );
+        const attachmentMimeType = textValue(
+          body.attachment_mime_type ?? body.attachmentMimeType,
+          80,
+        );
+        let attachmentAnalysis: FeatureRequestAttachmentAnalysis | null = null;
+        if (
+          body.attachment_analysis &&
+          typeof body.attachment_analysis === "object"
+        ) {
+          attachmentAnalysis = normalizeFeatureRequestAnalysis(
+            body.attachment_analysis as Record<string, unknown>,
+            fallbackFeatureRequestAttachmentAnalysis({
+              fileName: attachmentFileName || "attachment.png",
+              currentTitle: title,
+              currentDescription: description,
+              currentExpectedOutcome: expectedOutcome,
+              category,
+              priority,
+              reason: "送信済みのAI診断結果をIssue本文へ反映します。",
+            }),
+          );
+        }
         if (title.length < 3) {
           return json({ error: "title must be at least 3 characters" }, 400);
         }
         if (description.length < 10) {
-          return json({ error: "description must be at least 10 characters" }, 400);
+          return json(
+            { error: "description must be at least 10 characters" },
+            400,
+          );
         }
 
         const createdAt = new Date().toISOString();
@@ -573,6 +932,8 @@ serve(async (req: Request) => {
           userId,
           userEmail,
           createdAt,
+          attachmentFileName,
+          attachmentAnalysis,
         });
         const githubIssue = await createGitHubIssue({
           title,
@@ -589,6 +950,7 @@ serve(async (req: Request) => {
           priority,
           issueUrl,
           issueNumber,
+          attachmentAnalysis,
         });
 
         let publicFeatureRequest: Record<string, unknown> | null = null;
@@ -646,6 +1008,9 @@ serve(async (req: Request) => {
           created_at: createdAt,
           github_issue: githubIssue,
           wbs_task: wbsTask,
+          attachment_file_name: attachmentFileName || undefined,
+          attachment_mime_type: attachmentMimeType || undefined,
+          attachment_analysis: attachmentAnalysis || undefined,
           feature_request: publicFeatureRequest,
           feature_request_error: publicFeatureRequestError || undefined,
           app_feedback: appFeedback,
@@ -733,7 +1098,9 @@ serve(async (req: Request) => {
         if (appFeedbackId !== null) {
           const { data, error } = await admin
             .from("app_feedback")
-            .select("id, category, content, user_email, status, github_issue_number, github_issue_url")
+            .select(
+              "id, category, content, user_email, status, github_issue_number, github_issue_url",
+            )
             .eq("id", appFeedbackId)
             .maybeSingle();
           if (error) throw new Error(error.message);
@@ -747,7 +1114,8 @@ serve(async (req: Request) => {
           return json({ error: "No matching feedback record found" }, 404);
         }
 
-        const frStatus = (featureRequest?.status as string | null)?.trim() ?? "";
+        const frStatus = (featureRequest?.status as string | null)?.trim() ??
+          "";
         const fbStatus = (appFeedback?.status as string | null) ?? "";
         const finalStatus = requestedStatus !== ""
           ? requestedStatus
@@ -772,7 +1140,11 @@ serve(async (req: Request) => {
             markAsResolved &&
             String(featureRequest.admin_reply ?? "").trim() === ""
           ) {
-            upd.admin_reply = _buildDefaultResolutionSummary(issueNumber, releaseTitle, releaseUrl);
+            upd.admin_reply = _buildDefaultResolutionSummary(
+              issueNumber,
+              releaseTitle,
+              releaseUrl,
+            );
           }
           const { error } = await admin
             .from("feature_requests")
@@ -802,10 +1174,16 @@ serve(async (req: Request) => {
           return json({ error: "No recipient email on feedback" }, 400);
         }
 
-        const description = String(featureRequest?.description ?? appFeedback?.content ?? "");
+        const description = String(
+          featureRequest?.description ?? appFeedback?.content ?? "",
+        );
         const finalSummary = resolutionSummary !== ""
           ? resolutionSummary
-          : _buildDefaultResolutionSummary(issueNumber, releaseTitle, releaseUrl);
+          : _buildDefaultResolutionSummary(
+            issueNumber,
+            releaseTitle,
+            releaseUrl,
+          );
         const html = _buildNotificationEmailHtml({
           title,
           description,
@@ -855,7 +1233,11 @@ serve(async (req: Request) => {
       // ---- Personal dashboard (昨日比較付き) ----
       case "personal.dashboard": {
         const now = new Date();
-        const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const todayStart = new Date(
+          now.getFullYear(),
+          now.getMonth(),
+          now.getDate(),
+        );
         const yesterdayStart = new Date(todayStart);
         yesterdayStart.setDate(yesterdayStart.getDate() - 1);
         const weekStart = new Date(todayStart);
@@ -864,39 +1246,102 @@ serve(async (req: Request) => {
         const yesterdayStr = yesterdayStart.toISOString().slice(0, 10);
 
         const [
-          totalNotesRes, notesTodayRes, notesYesterdayRes, notesWeekRes, recentNotesRes,
-          focusTodayRes, focusYesterdayRes,
-          habitsRes, habitLogsTodayRes, habitLogsYesterdayRes,
+          totalNotesRes,
+          notesTodayRes,
+          notesYesterdayRes,
+          notesWeekRes,
+          recentNotesRes,
+          focusTodayRes,
+          focusYesterdayRes,
+          habitsRes,
+          habitLogsTodayRes,
+          habitLogsYesterdayRes,
         ] = await Promise.all([
-          admin.from("reality_notes").select("id", { count: "exact", head: true }).eq("user_id", userId),
-          admin.from("reality_notes").select("id", { count: "exact", head: true }).eq("user_id", userId).gte("created_at", todayStart.toISOString()),
-          admin.from("reality_notes").select("id", { count: "exact", head: true }).eq("user_id", userId).gte("created_at", yesterdayStart.toISOString()).lt("created_at", todayStart.toISOString()),
-          admin.from("reality_notes").select("id", { count: "exact", head: true }).eq("user_id", userId).gte("created_at", weekStart.toISOString()),
-          admin.from("reality_notes").select("raw_text, created_at").eq("user_id", userId).order("created_at", { ascending: false }).limit(5),
-          admin.from("focus_sessions").select("duration_minutes").eq("user_id", userId).eq("status", "completed").gte("started_at", todayStart.toISOString()),
-          admin.from("focus_sessions").select("duration_minutes").eq("user_id", userId).eq("status", "completed").gte("started_at", yesterdayStart.toISOString()).lt("started_at", todayStart.toISOString()),
-          admin.from("daily_habits").select("id, title, streak").eq("user_id", userId).eq("is_active", true).limit(10),
-          admin.from("daily_habit_logs").select("habit_id").eq("user_id", userId).eq("completed_date", todayStr),
-          admin.from("daily_habit_logs").select("id", { count: "exact", head: true }).eq("user_id", userId).eq("completed_date", yesterdayStr),
+          admin.from("reality_notes").select("id", {
+            count: "exact",
+            head: true,
+          }).eq("user_id", userId),
+          admin.from("reality_notes").select("id", {
+            count: "exact",
+            head: true,
+          }).eq("user_id", userId).gte("created_at", todayStart.toISOString()),
+          admin.from("reality_notes").select("id", {
+            count: "exact",
+            head: true,
+          }).eq("user_id", userId).gte(
+            "created_at",
+            yesterdayStart.toISOString(),
+          ).lt("created_at", todayStart.toISOString()),
+          admin.from("reality_notes").select("id", {
+            count: "exact",
+            head: true,
+          }).eq("user_id", userId).gte("created_at", weekStart.toISOString()),
+          admin.from("reality_notes").select("raw_text, created_at").eq(
+            "user_id",
+            userId,
+          ).order("created_at", { ascending: false }).limit(5),
+          admin.from("focus_sessions").select("duration_minutes").eq(
+            "user_id",
+            userId,
+          ).eq("status", "completed").gte(
+            "started_at",
+            todayStart.toISOString(),
+          ),
+          admin.from("focus_sessions").select("duration_minutes").eq(
+            "user_id",
+            userId,
+          ).eq("status", "completed").gte(
+            "started_at",
+            yesterdayStart.toISOString(),
+          ).lt("started_at", todayStart.toISOString()),
+          admin.from("daily_habits").select("id, title, streak").eq(
+            "user_id",
+            userId,
+          ).eq("is_active", true).limit(10),
+          admin.from("daily_habit_logs").select("habit_id").eq(
+            "user_id",
+            userId,
+          ).eq("completed_date", todayStr),
+          admin.from("daily_habit_logs").select("id", {
+            count: "exact",
+            head: true,
+          }).eq("user_id", userId).eq("completed_date", yesterdayStr),
         ]);
 
         type FocusRow = { duration_minutes: number };
         type HabitRow = { id: string; title: string; streak: number };
         type NoteRow = { raw_text: string; created_at: string };
 
-        const focusTodayMin = ((focusTodayRes.data as FocusRow[]) ?? []).reduce((s, r) => s + (r.duration_minutes ?? 0), 0);
-        const focusYesterdayMin = ((focusYesterdayRes.data as FocusRow[]) ?? []).reduce((s, r) => s + (r.duration_minutes ?? 0), 0);
+        const focusTodayMin = ((focusTodayRes.data as FocusRow[]) ?? []).reduce(
+          (s, r) => s + (r.duration_minutes ?? 0),
+          0,
+        );
+        const focusYesterdayMin = ((focusYesterdayRes.data as FocusRow[]) ?? [])
+          .reduce((s, r) => s + (r.duration_minutes ?? 0), 0);
         const habitsArr = (habitsRes.data as HabitRow[]) ?? [];
-        const completedTodayIds = new Set(((habitLogsTodayRes.data as { habit_id: string }[]) ?? []).map((l) => l.habit_id));
+        const completedTodayIds = new Set(
+          ((habitLogsTodayRes.data as { habit_id: string }[]) ?? []).map((l) =>
+            l.habit_id
+          ),
+        );
         const habitsTodayCount = completedTodayIds.size;
         const habitsYesterdayCount = habitLogsYesterdayRes.count ?? 0;
-        const maxStreak = habitsArr.length > 0 ? Math.max(...habitsArr.map((h) => h.streak ?? 0)) : 0;
+        const maxStreak = habitsArr.length > 0
+          ? Math.max(...habitsArr.map((h) => h.streak ?? 0))
+          : 0;
         const notesTodayCount = notesTodayRes.count ?? 0;
         const notesYesterdayCount = notesYesterdayRes.count ?? 0;
 
         // 昨日比スコア: notes*30 + focus*0.5 + habits*20 (上限100)
-        const scoreToday = Math.min(100, notesTodayCount * 30 + focusTodayMin * 0.5 + habitsTodayCount * 20);
-        const scoreYesterday = Math.min(100, notesYesterdayCount * 30 + focusYesterdayMin * 0.5 + habitsYesterdayCount * 20);
+        const scoreToday = Math.min(
+          100,
+          notesTodayCount * 30 + focusTodayMin * 0.5 + habitsTodayCount * 20,
+        );
+        const scoreYesterday = Math.min(
+          100,
+          notesYesterdayCount * 30 + focusYesterdayMin * 0.5 +
+            habitsYesterdayCount * 20,
+        );
         const scoreDeltaPct = scoreYesterday > 0
           ? Math.round((scoreToday - scoreYesterday) / scoreYesterday * 100)
           : (scoreToday > 0 ? 100 : 0);
@@ -958,7 +1403,11 @@ serve(async (req: Request) => {
         if (!body.title) return json({ error: "title required" }, 400);
         const { data, error: insertErr } = await admin
           .from("development_achievements")
-          .insert({ title: String(body.title), description: body.description ?? "", completed_at: new Date().toISOString() })
+          .insert({
+            title: String(body.title),
+            description: body.description ?? "",
+            completed_at: new Date().toISOString(),
+          })
           .select()
           .single();
         if (insertErr) return json({ error: insertErr.message }, 400);
@@ -1028,7 +1477,8 @@ serve(async (req: Request) => {
         const geminiKey = Deno.env.get("GEMINI_API_KEY");
         let tweetText = "";
         if (geminiKey) {
-          const prompt = `あなたは自分株式会社のSNS担当です。以下のページを X (旧Twitter) で
+          const prompt =
+            `あなたは自分株式会社のSNS担当です。以下のページを X (旧Twitter) で
 シェアする魅力的な日本語 tweet を作ってください。
 - 140字以内
 - ハッシュタグ 2-3 個含む (#自分株式会社 #buildinpublic 等)
@@ -1079,8 +1529,7 @@ description: ${pageDescription}
 
         // Gemini fallback: simple template
         if (!tweetText) {
-          tweetText =
-            `🚀 ${pageTitle || "自分株式会社"}\n` +
+          tweetText = `🚀 ${pageTitle || "自分株式会社"}\n` +
             `21の競合SaaSを1つに統合する AI life management\n\n` +
             `https://my-web-app-b67f4.web.app${pagePath}\n\n` +
             `#自分株式会社 #buildinpublic #SaaS統合`;
@@ -1095,7 +1544,9 @@ description: ${pageDescription}
         if (falKey) {
           try {
             const imagePrompt =
-              `Modern minimalist OGP banner for "${pageTitle || "自分株式会社"}", ` +
+              `Modern minimalist OGP banner for "${
+                pageTitle || "自分株式会社"
+              }", ` +
               `1200x630 aspect ratio, gradient orange-purple-indigo background, ` +
               `Japanese-inspired typography style, futuristic UI elements floating, ` +
               `no text overlay, professional and clean, photorealistic high quality`;
@@ -1219,24 +1670,26 @@ function _buildNotificationEmailHtml(input: {
     : input.status === "in_progress"
     ? "対応中"
     : "更新";
-  const issueBlock = (input.issueNumber !== null || input.issueUrl.trim() !== "")
-    ? `<div style="background:#eef2ff;border-radius:12px;padding:16px;margin-top:20px;"><div style="font-size:12px;color:#4f46e5;font-weight:700;">GitHub Issue</div><div style="margin-top:6px;color:#111827;">${
-      input.issueNumber !== null ? `#${input.issueNumber}` : ""
-    } ${_escapeHtml(input.issueTitle)}</div>${
-      input.issueUrl.trim() !== ""
-        ? `<div style="margin-top:10px;"><a href="${input.issueUrl}" style="color:#4f46e5;text-decoration:none;font-weight:700;">Issue を見る</a></div>`
-        : ""
-    }</div>`
-    : "";
-  const releaseBlock = (input.releaseTitle.trim() !== "" || input.releaseUrl.trim() !== "")
-    ? `<div style="background:#ecfdf5;border-radius:12px;padding:16px;margin-top:20px;"><div style="font-size:12px;color:#047857;font-weight:700;">リリース情報</div><div style="margin-top:6px;color:#111827;">${
-      _escapeHtml(input.releaseTitle)
-    }</div>${
-      input.releaseUrl.trim() !== ""
-        ? `<div style="margin-top:10px;"><a href="${input.releaseUrl}" style="color:#047857;text-decoration:none;font-weight:700;">変更内容を見る</a></div>`
-        : ""
-    }</div>`
-    : "";
+  const issueBlock =
+    (input.issueNumber !== null || input.issueUrl.trim() !== "")
+      ? `<div style="background:#eef2ff;border-radius:12px;padding:16px;margin-top:20px;"><div style="font-size:12px;color:#4f46e5;font-weight:700;">GitHub Issue</div><div style="margin-top:6px;color:#111827;">${
+        input.issueNumber !== null ? `#${input.issueNumber}` : ""
+      } ${_escapeHtml(input.issueTitle)}</div>${
+        input.issueUrl.trim() !== ""
+          ? `<div style="margin-top:10px;"><a href="${input.issueUrl}" style="color:#4f46e5;text-decoration:none;font-weight:700;">Issue を見る</a></div>`
+          : ""
+      }</div>`
+      : "";
+  const releaseBlock =
+    (input.releaseTitle.trim() !== "" || input.releaseUrl.trim() !== "")
+      ? `<div style="background:#ecfdf5;border-radius:12px;padding:16px;margin-top:20px;"><div style="font-size:12px;color:#047857;font-weight:700;">リリース情報</div><div style="margin-top:6px;color:#111827;">${
+        _escapeHtml(input.releaseTitle)
+      }</div>${
+        input.releaseUrl.trim() !== ""
+          ? `<div style="margin-top:10px;"><a href="${input.releaseUrl}" style="color:#047857;text-decoration:none;font-weight:700;">変更内容を見る</a></div>`
+          : ""
+      }</div>`
+      : "";
   return `<!DOCTYPE html>
 <html lang="ja"><head><meta charset="UTF-8"></head>
 <body style="font-family:sans-serif;max-width:640px;margin:0 auto;padding:24px;color:#111827;">
@@ -1247,7 +1700,9 @@ function _buildNotificationEmailHtml(input: {
   <h2 style="font-size:18px;margin:0 0 12px;">${_escapeHtml(input.title)}</h2>
   <div style="background:#f8fafc;border-radius:12px;padding:16px;line-height:1.8;">
     <div style="font-size:12px;color:#6b7280;">ご投稿内容</div>
-    <div style="margin-top:8px;color:#374151;">${_escapeHtml(input.description).replace(/\n/g, "<br>")}</div>
+    <div style="margin-top:8px;color:#374151;">${
+    _escapeHtml(input.description).replace(/\n/g, "<br>")
+  }</div>
   </div>
   <div style="background:#fff7ed;border-radius:12px;padding:16px;margin-top:20px;">
     <div style="font-size:12px;color:#c2410c;font-weight:700;">対応内容</div>
