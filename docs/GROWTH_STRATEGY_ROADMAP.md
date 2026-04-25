@@ -17990,3 +17990,32 @@ curl -X POST https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/schedule-hub 
 - 原則 9 (IPO/ウェルビーイング): ✅ コスト構造改善 → 財務健全化
 
 ### commit: fa824d96
+
+---
+
+## PS#6 S36 — 2026-04-25 (定期 cleanup + CI repair list)
+
+**インスタンス**: PS版#6  
+**実装サマリ**:
+
+1. **Codex worktree 一括削除** (8件)
+   - 全て closed issue に紐づく worktree を削除
+   - `my_web_app_{codex_649,issue_644,645,650,651,655,657,push_649}` 除去
+   - GitHub ディレクトリが my_web_app / my_web_app_ps / my_web_app_win のみに整理
+
+2. **deploy-prod.yml repair リスト拡張** (`11e67b88`)
+   - 新 migration 4件 (100000/101500/103000/104500) を static repair リストに追加
+   - CI failure issues #703/#705/#706 は既にオートクローズ確認
+
+3. **インフラ健全性確認**
+   - horse_racing-update: 5/5 success
+   - cron-batch: success
+   - deploy-prod 30bc2827: success (migration auto-repair 正常動作)
+
+### Philosophy Alignment (5/9) ✅
+
+- 原則 6 (資本=時間): ✅ worktree cleanup で作業環境の時間コスト削減
+- 原則 7 (資産負債バランス): ✅ orphan worktree = 負債削除
+- 原則 9 (IPO/ウェルビーイング): ✅ CI 安定化で開発速度維持
+
+### commit: 11e67b88
