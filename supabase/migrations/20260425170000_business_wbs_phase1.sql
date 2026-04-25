@@ -98,6 +98,21 @@ ON CONFLICT (code) DO UPDATE SET
 -- restored after UPDATE derives correct value from instance column
 ALTER TABLE public.wbs_tasks ALTER COLUMN owner_instance DROP NOT NULL;
 
+-- This seed intentionally uses instance='all' for business-wide tasks, then a
+-- later migration (20260425203000) splits those rows into per-instance copies.
+-- Some remote databases already have the newer no-all CHECK constraint, so
+-- keep this migration self-contained by temporarily allowing legacy values.
+ALTER TABLE public.wbs_tasks DROP CONSTRAINT IF EXISTS wbs_tasks_instance_check;
+ALTER TABLE public.wbs_tasks ADD CONSTRAINT wbs_tasks_instance_check
+  CHECK (instance IN (
+    'codex',
+    'vscode', 'win', 'windows', 'ps',
+    'ps1', 'ps2', 'ps3', 'ps4', 'ps5', 'ps6',
+    'web', 'mobile',
+    'schedule', 'gha',
+    'all'
+  )) NOT VALID;
+
 INSERT INTO public.wbs_tasks
   (category, category_icon, category_order, title, description, instance, status, progress,
    start_date, end_date, milestone_code, priority, ai_review_status, stale_threshold_hours)
