@@ -76,6 +76,7 @@ class AiFsrsService {
   }
 
   Future<List<FsrsCard>> getNextCards(String provider, {int limit = 10}) async {
+    if (_supabase.auth.currentUser == null) return [];
     try {
       final response = await _supabase.functions.invoke(
         'ai-hub',
@@ -127,6 +128,7 @@ class AiFsrsService {
   }
 
   Future<FsrsStats> getStats(String provider) async {
+    if (_supabase.auth.currentUser == null) return FsrsStats.empty(provider);
     try {
       final response = await _supabase.functions.invoke(
         'ai-hub',
