@@ -19194,7 +19194,7 @@ Deploy failure `24924215661` (feat business-wbs) を解析・修正。
 ## PS#4 S47 2026-04-25 — 競合 80→95社化 Phase 3 Batch 1
 
 **担当**: PS版#4 (競合モニタリング)  
-**commit**: TBD (push後更新)
+**commit**: efa1f761
 
 ### 追加15社 (Phase 3 開始)
 
