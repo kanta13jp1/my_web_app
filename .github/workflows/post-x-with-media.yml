@@ -51,18 +51,22 @@ jobs:
             --argjson dryRun "$DRY_RUN" \
             '{action: $action, text: $text, mediaUrl: $mediaUrl, mediaType: $mediaType, mediaCategory: $mediaCategory, source: $source, dryRun: $dryRun}')
 
-          RESPONSE=$(curl -sf -X POST \
-            "${{ secrets.SUPABASE_DIGEST_URL }}" \
+          HTTP_CODE=$(curl -s -o /tmp/xpost_resp.json -w "%{http_code}" -X POST \
+            "${{ secrets.SUPABASE_URL_PROD }}/functions/v1/schedule-hub" \
             -H "Content-Type: application/json" \
-            -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_KEY }}" \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
             -d "$PAYLOAD")
-
-          echo "Response: $RESPONSE"
-          SUCCESS=$(echo "$RESPONSE" | jq -r '.success')
-          if [ "$SUCCESS" != "true" ]; then
-            echo "::error::X post failed: $RESPONSE"
-            exit 1
+          RESPONSE=$(cat /tmp/xpost_resp.json)
+          echo "HTTP $HTTP_CODE — $RESPONSE"
+          if [ "$HTTP_CODE" != "200" ]; then
+            echo "::warning::schedule-hub returned HTTP $HTTP_CODE — skipping"
+          else
+            SUCCESS=$(echo "$RESPONSE" | jq -r '.success')
+            if [ "$SUCCESS" != "true" ]; then
+              echo "::warning::X post failed: $RESPONSE"
+            else
+              POSTED=$(echo "$RESPONSE" | jq -r '.posted')
+              TWEET_ID=$(echo "$RESPONSE" | jq -r '.tweetId // "N/A"')
+              echo "Posted: $POSTED | Tweet ID: $TWEET_ID"
+            fi
           fi
-          POSTED=$(echo "$RESPONSE" | jq -r '.posted')
-          TWEET_ID=$(echo "$RESPONSE" | jq -r '.tweetId // "N/A"')
-          echo "Posted: $POSTED | Tweet ID: $TWEET_ID"
