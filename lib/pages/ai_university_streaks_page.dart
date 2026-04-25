@@ -16,6 +16,10 @@ class _AiUniversityStreaksPageState extends State<AiUniversityStreaksPage> {
   String? _error;
 
   Future<void> _fetch() async {
+    if (Supabase.instance.client.auth.currentUser == null) {
+      setState(() => _loading = false);
+      return;
+    }
     setState(() {
       _loading = true;
       _error = null;
