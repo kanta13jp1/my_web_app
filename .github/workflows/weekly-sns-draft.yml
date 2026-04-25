@@ -1,0 +1,173 @@
+name: Weekly SNS Draft (毎週月曜)
+
+# 毎週月曜 09:00 JST に先週の実績を集約してXドラフトを自動生成
+# 生成したドラフトを docs/weekly-drafts/YYYY-MM-DD-week.md にコミット
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_date:
+        description: '週末日付 (YYYY-MM-DD・空でtoday/Mon)'
+        required: false
+        default: ''
+      dry_run:
+        description: 'true=生成のみ・false=コミット'
+        required: false
+        default: 'false'
+  schedule:
+    # Every Monday 00:00 UTC = 09:00 JST
+    - cron: '0 0 * * 1'
+
+concurrency:
+  group: weekly-sns-draft-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  generate:
+    name: Generate Weekly SNS Draft via AI API
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      - name: Install deps
+        run: pip install requests
+
+      - name: Determine target week
+        id: period
+        run: |
+          # target_date = 週末 (日曜) の日付 (空の場合は直近日曜)
+          TARGET_DATE="${{ github.event.inputs.target_date }}"
+          if [ -z "$TARGET_DATE" ]; then
+            # 直近の日曜日を計算
+            DOW=$(date -u +%u)  # 1=Mon ... 7=Sun
+            DAYS_SINCE_SUN=$((DOW % 7))
+            TARGET_DATE=$(date -u -d "$DAYS_SINCE_SUN days ago" +%Y-%m-%d 2>/dev/null \
+              || date -u -v-${DAYS_SINCE_SUN}d +%Y-%m-%d 2>/dev/null \
+              || date -u +%Y-%m-%d)
+          fi
+          # 週頭 (月曜)
+          WEEK_START=$(date -d "$TARGET_DATE -6 days" +%Y-%m-%d 2>/dev/null \
+            || date -v-6d -j -f %Y-%m-%d "$TARGET_DATE" +%Y-%m-%d 2>/dev/null \
+            || echo "$TARGET_DATE")
+          OUTFILE="docs/weekly-drafts/${TARGET_DATE}-week.md"
+          echo "target_date=$TARGET_DATE" >> $GITHUB_OUTPUT
+          echo "week_start=$WEEK_START" >> $GITHUB_OUTPUT
+          echo "outfile=$OUTFILE" >> $GITHUB_OUTPUT
+
+      - name: Skip if draft already exists
+        id: skip_check
+        run: |
+          OUTFILE="${{ steps.period.outputs.outfile }}"
+          if [ -f "$OUTFILE" ]; then
+            echo "skip=true" >> $GITHUB_OUTPUT
+            echo "ℹ️ Draft $OUTFILE already exists — skipping"
+          else
+            echo "skip=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Collect weekly git log
+        if: steps.skip_check.outputs.skip == 'false'
+        id: gitlog
+        run: |
+          SINCE="${{ steps.period.outputs.week_start }}"
+          UNTIL="${{ steps.period.outputs.target_date }}"
+          LOG=$(git log --after="${SINCE}T00:00:00" --before="${UNTIL}T23:59:59" \
+            --pretty=format:"- %s" --no-merges \
+            | grep -iv "^- 自動:" \
+            | grep -iv "^- auto:" \
+            | grep -iv "^- merge " \
+            | head -50)
+          if [ -z "$LOG" ]; then
+            echo "ℹ️ No manual commits in period — using recent 20"
+            LOG=$(git log --pretty=format:"- %s" --no-merges \
+              | grep -iv "^- 自動:" | grep -iv "^- auto:" \
+              | head -20)
+          fi
+          echo "$LOG" | base64 -w0 > /tmp/weeklog.b64
+          echo "gitlog_b64=$(cat /tmp/weeklog.b64)" >> $GITHUB_OUTPUT
+
+      - name: Collect daily reports
+        if: steps.skip_check.outputs.skip == 'false'
+        id: reports
+        run: |
+          SINCE="${{ steps.period.outputs.week_start }}"
+          UNTIL="${{ steps.period.outputs.target_date }}"
+          REPORT_CONTENT=""
+          # 直近7日分のレポートを結合
+          for f in docs/daily-reports/*.md; do
+            [ -f "$f" ] || continue
+            FNAME=$(basename "$f" .md)
+            if [[ "$FNAME" > "${SINCE}" ]] || [[ "$FNAME" == "${SINCE}" ]]; then
+              if [[ "$FNAME" < "${UNTIL}" ]] || [[ "$FNAME" == "${UNTIL}" ]]; then
+                REPORT_CONTENT="${REPORT_CONTENT}$(head -30 "$f")\n\n---\n\n"
+              fi
+            fi
+          done
+          if [ -z "$REPORT_CONTENT" ]; then
+            echo "reports_b64=" >> $GITHUB_OUTPUT
+          else
+            echo "$REPORT_CONTENT" | base64 -w0 > /tmp/reports.b64
+            echo "reports_b64=$(cat /tmp/reports.b64)" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Generate weekly SNS draft
+        if: steps.skip_check.outputs.skip == 'false'
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          TARGET_DATE: ${{ steps.period.outputs.target_date }}
+          WEEK_START: ${{ steps.period.outputs.week_start }}
+          OUTFILE: ${{ steps.period.outputs.outfile }}
+          GITLOG_B64: ${{ steps.gitlog.outputs.gitlog_b64 }}
+          REPORTS_B64: ${{ steps.reports.outputs.reports_b64 }}
+        run: |
+          python3 scripts/generate_weekly_sns_draft.py
+
+      - name: Commit draft
+        if: |
+          steps.skip_check.outputs.skip == 'false' &&
+          github.event.inputs.dry_run != 'true'
+        env:
+          BYPASS_TOKEN: ${{ secrets.BYPASS_RULES }}
+        run: |
+          OUTFILE="${{ steps.period.outputs.outfile }}"
+          TARGET_DATE="${{ steps.period.outputs.target_date }}"
+          git config user.name "kanta13jp1"
+          git config user.email "kanta13jp1@users.noreply.github.com"
+          git add "$OUTFILE" 2>/dev/null || true
+          if git diff --cached --quiet; then
+            echo "ℹ️ No changes to commit"
+          else
+            git commit -m "自動: 週次SNSドラフト $TARGET_DATE"
+            git config --local --unset-all http.https://github.com/.extraheader 2>/dev/null || true
+            git remote set-url origin "https://x-access-token:${BYPASS_TOKEN}@github.com/${{ github.repository }}.git"
+            git push origin HEAD:main
+          fi
+
+      - name: Summary
+        if: always()
+        run: |
+          OUTFILE="${{ steps.period.outputs.outfile }}"
+          SKIP="${{ steps.skip_check.outputs.skip }}"
+          echo "## Weekly SNS Draft $(TZ=Asia/Tokyo date +'%Y-%m-%d %H:%M JST')" >> $GITHUB_STEP_SUMMARY
+          echo "| 項目 | 値 |" >> $GITHUB_STEP_SUMMARY
+          echo "| --- | --- |" >> $GITHUB_STEP_SUMMARY
+          echo "| 出力ファイル | \`$OUTFILE\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| スキップ | $SKIP |" >> $GITHUB_STEP_SUMMARY
+          if [ -f "$OUTFILE" ]; then
+            echo "" >> $GITHUB_STEP_SUMMARY
+            head -5 "$OUTFILE" >> $GITHUB_STEP_SUMMARY
+          fi
