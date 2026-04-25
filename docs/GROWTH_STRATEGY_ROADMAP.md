@@ -19834,3 +19834,29 @@ PS#2 が引き取れる: marketing/docs/seo/product-light。
 - competitor-monitoring.yml: upstream fix 確認 + autostash conflict 解消
 
 ### commits: 9bc7b6fa (ci fix)
+
+---
+
+## PS#2 S31 — DYNAMIC-CLAIM: SEO 記事50本計画 策定 (2026-04-25)
+
+### 実施内容
+
+1. **T-1 check**: no-op (May 2/4 slugs = May 1/3 dispatch待ち) / orphan 0本
+2. **[DYNAMIC-CLAIM]**: wbs.rebalance_suggest top-5 = 全 business-legal → スキップ
+3. **wbs.list_tasks(ps2, pending)**: 50タスク中 business-marketing「SEO戦略(記事50本計画)」発見
+4. **実行**: `docs/seo/50-article-plan.md` 作成 — Phase 1-5 × 各10本 = 50本スケジュール
+   - Phase 1: Notion代替シリーズ (5月〜6月)
+   - Phase 2: AI開発ツール比較 (7月〜8月)
+   - Phase 3: 自分株式会社機能紹介 (9月〜10月)
+   - Phase 4: スタートアップ創業 (11月〜1月)
+   - Phase 5: 振り返り深掘り (2月〜)
+5. **WBS更新**: f294d7b3 → completed ✅
+6. **副次発見**: 同タイトルのWBSタスクが16件重複 (PS#4 S52 dedup後も残存)
+
+### 副次発見: WBS重複タスク残存
+
+PS#4 S52 の dedup fix 後も `business-marketing` カテゴリに同タイトル×16件残存。
+原因推定: dedup は (title, instance) の `DISTINCT` だが、instance='ps2' のみに絞ると16件全部残る。
+Win版 dedup fix (20260425_wbs_dedup_fix.md) で対応予定。
+
+### commits: 675a3eed
