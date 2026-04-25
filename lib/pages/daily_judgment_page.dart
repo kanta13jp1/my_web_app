@@ -15,6 +15,13 @@ class _DailyJudgmentPageState extends State<DailyJudgmentPage> {
   String? _error;
 
   Future<void> _fetchJudgment() async {
+    if (Supabase.instance.client.auth.currentUser == null) {
+      setState(() {
+        _loading = false;
+        _error = 'AIデイリー判断にはログインが必要です';
+      });
+      return;
+    }
     setState(() {
       _loading = true;
       _error = null;
