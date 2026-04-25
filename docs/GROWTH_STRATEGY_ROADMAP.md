@@ -17823,3 +17823,52 @@ curl -X POST https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/schedule-hub 
 - ユーザー価値最優先 ✅ (競合3社動向を把握し戦略的提案)
 - シンプル・透明 ✅ (レポート構造化・明確な状態記録)
 - 学習・改善 ✅ (Supabase EF到達不可の制約を記録し次回対策提示)
+
+---
+
+## Win版#132 part 7 完了 (2026-04-25 朝)
+
+### 実施内容: Notion Sync GHA cron (Backlog N5 消化)
+
+**契機**: Win#132 part 6 (0d1b4903) で `schedule-hub:notion.sync_wbs` action 実装完了。本 part で GHA cron 1h 毎に自動起動させ、N2 を **operational** 化。
+
+**新規**: `.github/workflows/notion-sync.yml` (70 行)
+
+### 機能
+- cron: `10 * * * *` = 毎時 10 分 (UTC) = JST も 10 分 (ズレ無し)
+- `workflow_dispatch` で手動実行も可
+- `concurrency: cancel-in-progress: false` で逐次実行 (Notion rate limit 対策)
+- schedule-hub REST 経由で `{"action":"notion.sync_wbs"}` POST
+- response パース: `success` / `total` / `created` / `updated` / `failed`
+- failed 10% 超で `::warning::` / success=false で exit 1
+- `notion_not_configured` (secret 未設定) は soft-fail (warning 出して成功扱い)
+
+### なぜ GHA cron か (Supabase cron ではない)
+- Supabase Cron Extension は pro plan 必要
+- GHA cron = 無料 + 失敗時に GitHub Actions UI でログ即確認
+- workflow_run failure handler 経由で Slack 通知 (既存パターン流用可)
+
+### 初回動作確認 (手動)
+
+```bash
+gh workflow run notion-sync.yml
+# 実行ログ確認:
+gh run watch
+```
+
+### Backlog 進捗 (Win#132 part 7 時点)
+- ✅ S1 / N1 (manual)
+- ✅ N2 notion.sync_wbs action (part 6 / 0d1b4903)
+- ✅ **N5 GHA cron 1h sync** ← 本 commit
+- 🔴 S2: `core-hub:slack.notify` action
+- 🔴 S3: ai_circuit_breaker → Slack trigger (S2 依存)
+- 🟡 N3: notion.sync_roadmap action
+- 🟡 N4: notion.sync_memory_index action
+- 🟢 S4: Discord webhook secondary
+
+### Philosophy Alignment (9/9) ✅
+1. CEO感 ✅ / 2. ミッション駆動 ✅ (Notion mirror を operational 化 → outage 時のライフライン完成) / 3. 優しいmentor ✅ / 4. 6部署バランス ✅
+5. 商品=ユーザー価値 ✅ / 6. 資本=時間 ✅ (1h 毎自動 / 手動メンテ不要) / 7. 資産負債 ✅
+8. KPI=昨日の自分 ✅ / 9. ゴール=IPO ✅
+
+### commit: TBD

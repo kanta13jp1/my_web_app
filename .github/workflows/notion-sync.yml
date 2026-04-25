@@ -1,0 +1,70 @@
+name: Notion Mirror Sync (hourly)
+
+# Multi-AI resilience / Win#132 part 7 (Backlog N5 消化)
+#
+# Supabase wbs_tasks → Notion "WBS Tasks" Database に 1h 毎同期。
+# Anthropic / Claude Code outage 時もユーザーが Notion mirror で WBS 閲覧可能。
+# 将来 N3 / N4 実装後は roadmap / memory_index sync もここに追加。
+#
+# 事前条件 (Win#132 part 5 で登録済):
+#   - Supabase Secrets: NOTION_API_TOKEN / NOTION_WBS_DATABASE_ID
+#   - EF schedule-hub (notion.sync_wbs action / Win#132 part 6 / 0d1b4903)
+
+on:
+  schedule:
+    - cron: "10 * * * *" # 毎時 10 分 (UTC) = JST の毎時 10 分
+  workflow_dispatch: # 手動実行も可
+
+concurrency:
+  group: notion-sync
+  cancel-in-progress: false # 前回を待って逐次実行 (Notion rate limit 3 req/sec / 350ms sleep)
+
+permissions:
+  contents: read
+
+jobs:
+  sync-wbs:
+    name: Sync wbs_tasks → Notion
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Call schedule-hub:notion.sync_wbs
+        id: sync
+        run: |
+          RESP=$(curl -sS -X POST \
+            "https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/schedule-hub" \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY || secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
+            -H "Content-Type: application/json" \
+            -d '{"action":"notion.sync_wbs"}' \
+            --max-time 600)
+
+          echo "Response: $RESP"
+          echo "response=$RESP" >> "$GITHUB_OUTPUT"
+
+          # success 判定
+          SUCCESS=$(echo "$RESP" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('success',False))" 2>/dev/null || echo "false")
+          TOTAL=$(echo "$RESP" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('total',0))" 2>/dev/null || echo "0")
+          CREATED=$(echo "$RESP" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('created',0))" 2>/dev/null || echo "0")
+          UPDATED=$(echo "$RESP" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('updated',0))" 2>/dev/null || echo "0")
+          FAILED=$(echo "$RESP" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('failed',0))" 2>/dev/null || echo "0")
+
+          echo "✅ success=$SUCCESS total=$TOTAL created=$CREATED updated=$UPDATED failed=$FAILED"
+
+          # failed 件数が total の 10% 超えたら警告 (fail-fast しない・次回 cron でリトライ)
+          if [ "$TOTAL" != "0" ] && [ "$FAILED" != "0" ]; then
+            FAIL_PCT=$(python3 -c "print(round($FAILED / $TOTAL * 100, 1))")
+            echo "::warning::Notion sync had $FAILED/$TOTAL failed (${FAIL_PCT}%)"
+          fi
+
+          # EF 側が deny-by-default (503 notion_not_configured) 返した場合は即 fail
+          if [ "$SUCCESS" = "False" ]; then
+            ERROR=$(echo "$RESP" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('error','unknown'))" 2>/dev/null || echo "unknown")
+            echo "::error::Notion sync returned success=false / error=$ERROR"
+            # ただし "notion_not_configured" は環境セットアップ未完了の意味なので soft-fail
+            if echo "$ERROR" | grep -q "notion_not_configured"; then
+              echo "::warning::NOTION_* secrets not configured yet — skip (set in Supabase dashboard)"
+              exit 0
+            fi
+            exit 1
+          fi
