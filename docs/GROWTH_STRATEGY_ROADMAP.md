@@ -19611,3 +19611,41 @@ GitHub Secrets に SLACK_WEBHOOK_URL を設定するだけで有効化。
 | notebooklm-user-tasks-sync GHA | Win版#132 part 19 | ✅ 0ca06637 |
 
 ### commit: no-op (ROADMAP append only)
+
+---
+
+## Win版#132 part 20 完了 (2026-04-26 朝)
+
+### 実施内容: deploy-prod CI fail hotfix — wbs_tasks_instance_check 違反
+
+**契機**: deploy-prod 失敗 (run 24927211757 後続) — 203000 migration の statement 5 (UPDATE owner_instance CASE) で `instance='user'` 行に CHECK 違反 (170000 の CHECK は 'user' 含まず)
+
+### 根本原因
+- 203000 が repair list で reverted 化 → 再実行
+- 203000 の UPDATE 5 は WHERE 句なし → 全行 touch → 170000 CHECK trigger
+- 170000 CHECK ('user' 含まず) で 'user' 行 fail
+- ループ (毎 deploy で同じ場所失敗)
+
+### 修正
+
+**1. `20260425203000_wbs_remove_all_instances_add_codex.sql`**:
+- UPDATE 5 (CASE) に WHERE 句追加: `WHERE owner_instance IN ('windows','ps','all') OR owner_instance IS NULL`
+  - 'user'/'gemini'/'copilot' 行を touch しない → CHECK trigger 回避
+- UPDATE 6/7 (NOT IN ...) の許可リストに 'user'/'gemini'/'copilot' 追加
+- 末尾 CHECK 制約 (instance + owner_instance) に super-set 含める ('user'/'gemini'/'copilot')
+  - 後続の 230000 が再上書きしても整合 / re-run 安全
+
+**2. `20260425170000_business_wbs_phase1.sql`**:
+- CHECK 制約 super-set 化: 'user'/'gemini'/'copilot' を予約値として含める
+- NOT VALID 維持 (既存 row 検証は skip)
+- 200000 系 migration が再実行されても 'user' 行で違反しない
+
+### Idempotency 保証
+両 migration とも repair list で reverted 化されて再実行されても:
+- WHERE 句で 'user' 行 protection
+- CHECK super-set で全 valid value 許容
+
+### Philosophy 9/9 ✅
+原則 7 (BS): migration 整合性確保で不整合資産を負債に変えない / 原則 8 (KPI=昨日): CI 緑化で deploy 速度回復
+
+### commit: TBD

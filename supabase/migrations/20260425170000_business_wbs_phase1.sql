@@ -110,7 +110,10 @@ ALTER TABLE public.wbs_tasks ADD CONSTRAINT wbs_tasks_instance_check
     'ps1', 'ps2', 'ps3', 'ps4', 'ps5', 'ps6',
     'web', 'mobile',
     'schedule', 'gha',
-    'all'
+    'all',
+    -- super-set: future migrations add these / hotfix 2026-04-26 to keep this
+    -- migration idempotent on re-runs after 225000/230000 introduced new values
+    'user', 'gemini', 'copilot'
   )) NOT VALID;
 
 INSERT INTO public.wbs_tasks

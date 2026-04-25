@@ -124,6 +124,11 @@ UPDATE public.wbs_tasks
 SET instance = 'ps1'
 WHERE instance = 'ps';
 
+-- Defensive WHERE: avoid touching rows with newer valid instance values
+-- ('user'/'gemini'/'copilot' added in 20260425225000+ / 20260425230000) so that
+-- this migration is idempotent on re-runs. Without this guard, UPDATE fires CHECK
+-- on every touched row and fails when 170000's CHECK lacks the new values.
+-- Fix: Win版#132 hotfix 2026-04-26.
 UPDATE public.wbs_tasks
 SET owner_instance = CASE
   WHEN owner_instance = 'windows' THEN 'win'
@@ -131,7 +136,8 @@ SET owner_instance = CASE
   WHEN owner_instance = 'all' THEN 'codex'
   WHEN owner_instance IS NULL THEN instance
   ELSE owner_instance
-END;
+END
+WHERE owner_instance IN ('windows', 'ps', 'all') OR owner_instance IS NULL;
 
 UPDATE public.wbs_tasks
 SET instance = 'codex'
@@ -140,7 +146,9 @@ WHERE instance NOT IN (
   'vscode', 'win',
   'ps1', 'ps2', 'ps3', 'ps4', 'ps5', 'ps6',
   'web', 'mobile',
-  'schedule', 'gha'
+  'schedule', 'gha',
+  -- Allow newer valid values (added by 225000/230000 migrations)
+  'user', 'gemini', 'copilot'
 );
 
 UPDATE public.wbs_tasks
@@ -150,7 +158,9 @@ WHERE owner_instance NOT IN (
   'vscode', 'win',
   'ps1', 'ps2', 'ps3', 'ps4', 'ps5', 'ps6',
   'web', 'mobile',
-  'schedule', 'gha'
+  'schedule', 'gha',
+  -- Allow newer valid values
+  'user', 'gemini', 'copilot'
 );
 
 ALTER TABLE public.wbs_tasks
@@ -158,6 +168,8 @@ ALTER TABLE public.wbs_tasks
   ALTER COLUMN owner_instance SET DEFAULT 'codex',
   ALTER COLUMN owner_instance SET NOT NULL;
 
+-- CHECK 制約: 'user'/'gemini'/'copilot' を super-set に含める (idempotent / future-proof)
+-- 後続の 230000 でも同じ super-set + 'user'/'gemini'/'copilot' で再設定される。
 ALTER TABLE public.wbs_tasks DROP CONSTRAINT IF EXISTS wbs_tasks_instance_check;
 ALTER TABLE public.wbs_tasks ADD CONSTRAINT wbs_tasks_instance_check
   CHECK (instance IN (
@@ -165,7 +177,8 @@ ALTER TABLE public.wbs_tasks ADD CONSTRAINT wbs_tasks_instance_check
     'vscode', 'win',
     'ps1', 'ps2', 'ps3', 'ps4', 'ps5', 'ps6',
     'web', 'mobile',
-    'schedule', 'gha'
+    'schedule', 'gha',
+    'user', 'gemini', 'copilot'
   ));
 
 ALTER TABLE public.wbs_tasks DROP CONSTRAINT IF EXISTS wbs_tasks_owner_instance_check;
@@ -175,7 +188,8 @@ ALTER TABLE public.wbs_tasks ADD CONSTRAINT wbs_tasks_owner_instance_check
     'vscode', 'win',
     'ps1', 'ps2', 'ps3', 'ps4', 'ps5', 'ps6',
     'web', 'mobile',
-    'schedule', 'gha'
+    'schedule', 'gha',
+    'user', 'gemini', 'copilot'
   ));
 
 COMMENT ON COLUMN public.wbs_tasks.instance IS
