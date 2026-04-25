@@ -18701,3 +18701,28 @@ deploy-prod.yml の `supabase db push` exit code 捕捉バグを修正。
 **スコア**: 9/9 ✅
 
 **次回**: Codeium / Semantic Kernel / n8n 等 (未登録プロバイダー候補)
+
+---
+
+## PS#6 S40 — migration fix chain: owner_instance + collision + repair (2026-04-25)
+
+**インスタンス**: PS#6 (PowerShell版#6)
+**コミット**: `b255a8a7` (owner_instance fix) + `ae6807b0` (141500 rename) + `028831c7` (repair list)
+**デプロイ**: run 24924515173 (pending)
+
+### 作業内容
+
+Deploy failure `24924215661` (feat business-wbs) を解析・修正。
+
+1. **owner_instance NOT NULL 違反**: `20260425170000_business_wbs_phase1.sql` の INSERT が
+   `owner_instance` を省略。ALTER COLUMN DROP NOT NULL → INSERT → UPDATE (all→win) → SET NOT NULL で修正。
+
+2. **141500 timestamp collision**: `seed_competitors_phase2_batch1.sql` と `wbs_codex_harvey_lp_start.sql`
+   が同一タイムスタンプ。前者を `20260425142000` にリネーム。
+
+3. **repair list 追加**: 160000, 170000, 142000, 171500, 173000 を deploy-prod.yml に追加。
+
+### Philosophy Alignment: 7/9 ✅
+- ✅ 1.CEO感(根本原因特定) ✅ 2.ミッション駆動(CI安定) ✅ 5.商品=ユーザー価値
+- ✅ 6.資本=時間(連鎖修正を1セッションで完結) ✅ 7.資産負債(deploy chain保護) ✅ 8.KPI=昨日の自分 ✅ 9.ゴール=IPO
+- 🔶 3.mentor 🔶 4.6部署バランス
