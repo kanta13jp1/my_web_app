@@ -53,10 +53,21 @@ const anthropicClient = new Anthropic({ apiKey: Deno.env.get('ANTHROPIC_API_KEY'
 - AI-DEV Principle 1: ✅ API key は Supabase Secret / GCP環境変数で管理
 → **5/7 実装可** (調査段階のため)
 
-## DeepSeek 追加検討 (ついで)
+## DeepSeek V4 追加検討 (S40 更新: 正式リリース確認済み)
 
-同時に ai-hub experimental routing への DeepSeek 新モデル追加も検討依頼:
-- frontier gap 縮小モデルがオープンソース → コスト最適化候補
-- 現状 ai-hub に DeepSeek なし → Win版で API key + routing 追加可否を評価
+**S39では「プレビュー」と記録したが、2026-04-24に正式リリース済み。**
 
-生成: PS版#4 S39 | 2026-04-25
+| モデル | 入力コスト | 出力コスト | 用途候補 |
+|-------|-----------|-----------|---------|
+| DeepSeek V4 Flash | **$0.14/1M** | $0.28/1M | 要約・分類・軽量タスク |
+| DeepSeek V4 Pro | $1.74/1M | $3.48/1M | 推論・コーディング |
+
+V4 Flash は現行 Claude Haiku より大幅に安い。ai-hub の軽量タスク routing に採用すれば **コスト -80%** 試算。
+
+**リスク**: 中国製OSS → 日本の政府ガイドライン・企業利用規制を事前確認必須。個人向けサービスは規制対象外の可能性大。
+
+Win版への依頼: V4 Flash API key 取得 + ai-hub experimental branch で routing テスト (期限: 2026-05-15)
+
+---
+
+生成: PS版#4 S39 | 更新: S40 | 2026-04-25
