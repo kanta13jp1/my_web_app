@@ -6256,7 +6256,11 @@ class _AiUniversityPageState extends State<AiUniversityPage>
   }
 
   Widget _fsrsStatChip(
-      String label, String value, Color valueColor, Color borderColor) {
+    String label,
+    String value,
+    Color valueColor,
+    Color borderColor,
+  ) {
     return Expanded(
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 8),
