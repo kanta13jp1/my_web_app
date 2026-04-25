@@ -104,22 +104,7 @@ jobs:
 
           if [ -f "$PREV_FILE" ]; then
             # 前日レポートの脅威サマリーセクションのみ抽出 (トークン節約)
-            python3 -c "
-import sys
-content = open('$PREV_FILE').read()
-# 脅威サマリーテーブルのみ抽出 (最大50行)
-lines = content.split('\n')
-in_table = False
-result = []
-for line in lines:
-    if '脅威サマリー' in line or 'threat' in line.lower():
-        in_table = True
-    if in_table:
-        result.append(line)
-        if len(result) > 50:
-            break
-print('\n'.join(result[:50]))
-" > /tmp/prev_summary.txt 2>/dev/null || echo "(前日サマリーなし)" > /tmp/prev_summary.txt
+            awk 'BEGIN{in_table=0; count=0} tolower($0) ~ /threat/ || $0 ~ /脅威/ {in_table=1} in_table {print; count++; if (count >= 50) exit}' "$PREV_FILE" > /tmp/prev_summary.txt 2>/dev/null || echo "(前日サマリーなし)" > /tmp/prev_summary.txt
             echo "prev_exists=true" >> $GITHUB_OUTPUT
           else
             echo "(前日レポートなし)" > /tmp/prev_summary.txt
@@ -188,56 +173,56 @@ print('\n'.join(result[:50]))
           if [ -n "$SPECIAL_EVENT" ]; then
             EVENT_SECTION="
 
-## 🚨 特記イベント: $SPECIAL_EVENT
-**$EVENT_DESC**
+          ## 🚨 特記イベント: $SPECIAL_EVENT
+          **$EVENT_DESC**
 
-このイベントについて以下を分析してください:
-1. 自分株式会社への直接的な影響 (脅威/機会)
-2. 具体的な対応アクション (今週中/今月中)
-3. SNS投稿候補テキスト (差別化訴求)"
+          このイベントについて以下を分析してください:
+          1. 自分株式会社への直接的な影響 (脅威/機会)
+          2. 具体的な対応アクション (今週中/今月中)
+          3. SNS投稿候補テキスト (差別化訴求)"
           fi
 
           REPORT_PROMPT="# 自分株式会社 競合インテリジェンスレポート ${TODAY}
 
-あなたは自分株式会社 (Flutter Web + Supabase AI統合ライフマネジメントアプリ) の競合モニタリング専門家です。
+          あなたは自分株式会社 (Flutter Web + Supabase AI統合ライフマネジメントアプリ) の競合モニタリング専門家です。
 
-## 自分株式会社について
-- 21競合 (Notion/Evernote/MoneyForward/Slack/ChatWork/X/Amazon/GitHub等) の機能を1アプリに統合
-- 差別化軸: 1)哲学的KPI(昨日の自分比較) 2)6部署均衡 3)Supabase永続データ 4)プライバシー 5)AI 6)無料
-- 重要: 自分株式会社は「個人のCEO」としてユーザーをエンパワーするというミッション
+          ## 自分株式会社について
+          - 21競合 (Notion/Evernote/MoneyForward/Slack/ChatWork/X/Amazon/GitHub等) の機能を1アプリに統合
+          - 差別化軸: 1)哲学的KPI(昨日の自分比較) 2)6部署均衡 3)Supabase永続データ 4)プライバシー 5)AI 6)無料
+          - 重要: 自分株式会社は「個人のCEO」としてユーザーをエンパワーするというミッション
 
-## 前日脅威サマリー (差分参照用)
-$PREV_SUMMARY
+          ## 前日脅威サマリー (差分参照用)
+          $PREV_SUMMARY
 
-## 本日の可用性チェック結果
-$AVAIL
-${EVENT_SECTION}
+          ## 本日の可用性チェック結果
+          $AVAIL
+          ${EVENT_SECTION}
 
-## 依頼内容
-以下の形式で競合インテリジェンスレポートを生成してください。日本語で500〜800字。
+          ## 依頼内容
+          以下の形式で競合インテリジェンスレポートを生成してください。日本語で500〜800字。
 
----
-# 競合モニタリングレポート ${TODAY}
+          ---
+          # 競合モニタリングレポート ${TODAY}
 
-生成: GitHub Actions (Gemini/Claude自動生成)
-${SPECIAL_EVENT:+⚡ 特記イベント: $SPECIAL_EVENT}
+          生成: GitHub Actions (Gemini/Claude自動生成)
+          ${SPECIAL_EVENT:+⚡ 特記イベント: $SPECIAL_EVENT}
 
-## 今週の脅威サマリー
+          ## 今週の脅威サマリー
 
-| 優先度 | 競合 | 動向 | 脅威変化 |
-|--------|------|------|---------|
-(重要な変化があった競合のみ。前日サマリーと比較して変化なしは記載省略可)
+          | 優先度 | 競合 | 動向 | 脅威変化 |
+          |--------|------|------|---------|
+          (重要な変化があった競合のみ。前日サマリーと比較して変化なしは記載省略可)
 
-## 🎯 今週の重点モニタリング
+          ## 🎯 今週の重点モニタリング
 
-(向こう7日で注意すべきイベント・発表・課金変更等)
+          (向こう7日で注意すべきイベント・発表・課金変更等)
 
-## 自分株式会社への示唆
+          ## 自分株式会社への示唆
 
-(差別化強化の機会・リスク対応のアクション提案 2〜3点)
----
+          (差別化強化の機会・リスク対応のアクション提案 2〜3点)
+          ---
 
-前日から特に変化がなければ「変化なし」と簡潔に記載してください。過去の情報ではなく今日の観点で分析してください。"
+          前日から特に変化がなければ「変化なし」と簡潔に記載してください。過去の情報ではなく今日の観点で分析してください。"
 
           AI_REPORT=""
           USED_MODEL=""
@@ -245,12 +230,7 @@ ${SPECIAL_EVENT:+⚡ 特記イベント: $SPECIAL_EVENT}
           # ── Primary: Gemini 1.5 Flash (無料枠) ──────────────────────────────
           if [ -n "$GEMINI_API_KEY" ]; then
             echo "🤖 Gemini Flash API 試行..."
-            GEMINI_PAYLOAD=$(python3 -c "
-import json, sys
-prompt = sys.argv[1]
-payload = {'contents': [{'parts': [{'text': prompt}]}], 'generationConfig': {'maxOutputTokens': 2000, 'temperature': 0.3}}
-print(json.dumps(payload))
-" "$REPORT_PROMPT" 2>/dev/null)
+            GEMINI_PAYLOAD=$(REPORT_PROMPT="$REPORT_PROMPT" python3 -c 'import json, os; prompt = os.environ["REPORT_PROMPT"]; print(json.dumps({"contents": [{"parts": [{"text": prompt}]}], "generationConfig": {"maxOutputTokens": 2000, "temperature": 0.3}}))' 2>/dev/null)
 
             GEMINI_RESPONSE=$(curl -s -X POST \
               "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}" \
@@ -258,15 +238,7 @@ print(json.dumps(payload))
               -d "$GEMINI_PAYLOAD" \
               --max-time 30 2>/dev/null)
 
-            AI_REPORT=$(echo "$GEMINI_RESPONSE" | python3 -c "
-import sys, json
-try:
-    d = json.load(sys.stdin)
-    text = d['candidates'][0]['content']['parts'][0]['text']
-    print(text)
-except:
-    print('')
-" 2>/dev/null)
+            AI_REPORT=$(echo "$GEMINI_RESPONSE" | python3 -c 'import sys, json; d = json.load(sys.stdin); print((((d.get("candidates") or [{}])[0].get("content") or {}).get("parts") or [{}])[0].get("text", ""))' 2>/dev/null || true)
 
             if [ -n "$AI_REPORT" ] && [ ${#AI_REPORT} -gt 100 ]; then
               USED_MODEL="gemini-1.5-flash"
@@ -280,12 +252,7 @@ except:
           if [ -z "$AI_REPORT" ] || [ ${#AI_REPORT} -le 100 ]; then
             if [ -n "$ANTHROPIC_API_KEY" ]; then
               echo "🤖 Claude API fallback 試行..."
-              CLAUDE_PAYLOAD=$(python3 -c "
-import json, sys
-prompt = sys.argv[1]
-payload = {'model': 'claude-sonnet-4-6', 'max_tokens': 2000, 'messages': [{'role': 'user', 'content': prompt}]}
-print(json.dumps(payload))
-" "$REPORT_PROMPT" 2>/dev/null)
+              CLAUDE_PAYLOAD=$(REPORT_PROMPT="$REPORT_PROMPT" python3 -c 'import json, os; prompt = os.environ["REPORT_PROMPT"]; print(json.dumps({"model": "claude-sonnet-4-6", "max_tokens": 2000, "messages": [{"role": "user", "content": prompt}]}))' 2>/dev/null)
 
               CLAUDE_RESPONSE=$(curl -s -X POST \
                 "https://api.anthropic.com/v1/messages" \
@@ -295,14 +262,7 @@ print(json.dumps(payload))
                 -d "$CLAUDE_PAYLOAD" \
                 --max-time 30 2>/dev/null)
 
-              AI_REPORT=$(echo "$CLAUDE_RESPONSE" | python3 -c "
-import sys, json
-try:
-    d = json.load(sys.stdin)
-    print(d['content'][0]['text'])
-except:
-    print('')
-" 2>/dev/null)
+              AI_REPORT=$(echo "$CLAUDE_RESPONSE" | python3 -c 'import sys, json; d = json.load(sys.stdin); print((d.get("content") or [{}])[0].get("text", ""))' 2>/dev/null || true)
 
               if [ -n "$AI_REPORT" ] && [ ${#AI_REPORT} -gt 100 ]; then
                 USED_MODEL="claude-sonnet-4-6"
@@ -320,13 +280,8 @@ except:
           echo "used_model=$USED_MODEL" >> $GITHUB_OUTPUT
 
           # レポートをファイルに保存
-          python3 -c "
-import sys
-content = sys.argv[1]
-with open('/tmp/ai_report.txt', 'w', encoding='utf-8') as f:
-    f.write(content)
-print(f'Written {len(content)} chars')
-" "$AI_REPORT"
+          printf '%s' "$AI_REPORT" > /tmp/ai_report.txt
+          echo "Written ${#AI_REPORT} chars"
 
       # ── Step 5: レポートファイル組み立て ─────────────────────────────────
       - name: Step 5 - レポートファイル生成
@@ -342,50 +297,50 @@ print(f'Written {len(content)} chars')
           OUTPUT_FILE="docs/competitor-reports/${TODAY}.md"
 
           python3 - << 'PYEOF'
-import os
+          import os
 
-today = os.environ.get('TODAY', '')
-special_event = os.environ.get('SPECIAL_EVENT', '')
-down = os.environ.get('DOWN', '0')
-used_model = os.environ.get('USED_MODEL', 'unknown')
+          today = os.environ.get('TODAY', '')
+          special_event = os.environ.get('SPECIAL_EVENT', '')
+          down = os.environ.get('DOWN', '0')
+          used_model = os.environ.get('USED_MODEL', 'unknown')
 
-with open('/tmp/avail_results.txt') as f:
-    avail_table = f.read()
-with open('/tmp/ai_report.txt') as f:
-    ai_content = f.read()
+          with open('/tmp/avail_results.txt') as f:
+              avail_table = f.read()
+          with open('/tmp/ai_report.txt') as f:
+              ai_content = f.read()
 
-output_file = f"docs/competitor-reports/{today}.md"
+          output_file = f"docs/competitor-reports/{today}.md"
 
-# 既存ファイルがあれば上書きしない (手動レポートを保護)
-if os.path.exists(output_file):
-    with open(output_file) as f:
-        existing = f.read()
-    if '<!-- generated-by: github-actions -->' not in existing:
-        print(f"⚠️ 手動レポート保護: {output_file} は上書きしません")
-        exit(0)
+          # 既存ファイルがあれば上書きしない (手動レポートを保護)
+          if os.path.exists(output_file):
+              with open(output_file) as f:
+                  existing = f.read()
+              if '<!-- generated-by: github-actions -->' not in existing:
+                  print(f"⚠️ 手動レポート保護: {output_file} は上書きしません")
+                  exit(0)
 
-event_badge = f"\n⚡ **特記イベント: {special_event}**\n" if special_event else ""
+          event_badge = f"\n⚡ **特記イベント: {special_event}**\n" if special_event else ""
 
-content = f"""<!-- generated-by: github-actions -->
-<!-- model: {used_model} -->
-{ai_content}
+          content = f"""<!-- generated-by: github-actions -->
+          <!-- model: {used_model} -->
+          {ai_content}
 
----
+          ---
 
-## 可用性チェック詳細 (21社)
+          ## 可用性チェック詳細 (21社)
 
-| 競合 | URL | HTTP | 状態 | 脅威度 |
-|-----|-----|-----|-----|-----|
-{avail_table}
+          | 競合 | URL | HTTP | 状態 | 脅威度 |
+          |-----|-----|-----|-----|-----|
+          {avail_table}
 
-*{down}社 要注意 / 生成モデル: {used_model} / 生成: GitHub Actions {today}*
-"""
+          *{down}社 要注意 / 生成モデル: {used_model} / 生成: GitHub Actions {today}*
+          """
 
-os.makedirs('docs/competitor-reports', exist_ok=True)
-with open(output_file, 'w', encoding='utf-8') as f:
-    f.write(content)
-print(f"✅ {output_file} ({len(content)} chars)")
-PYEOF
+          os.makedirs('docs/competitor-reports', exist_ok=True)
+          with open(output_file, 'w', encoding='utf-8') as f:
+              f.write(content)
+          print(f"✅ {output_file} ({len(content)} chars)")
+          PYEOF
 
           TODAY_VAR=$TODAY
           echo "output_file=docs/competitor-reports/${TODAY_VAR}.md" >> $GITHUB_OUTPUT
