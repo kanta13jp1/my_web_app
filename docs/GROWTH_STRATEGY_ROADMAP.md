@@ -19905,3 +19905,14 @@ Win版 dedup fix (20260425_wbs_dedup_fix.md) で対応予定。
 4. **WBS-SYNC**: 57009177 → completed ✅
 
 ### commits: 0ce32cde (deploy fix) → bab257fa (X strategy)
+
+### Rule 17 WF health check PS#1 S43 (2026-04-25 11:00)
+- issue-to-wbs.yml: 最新run SUCCESS (24929194970) — 前session修正で解消済
+- infra-health-check.yml: exit 128 (fatal: not in a git directory)
+  - 原因A: 廃止EF3本(development-achievements/get-competitor-features/get-growth-roadmap-progress)が404 → ALL_OK誤判定
+  - 原因B: bfffca4f(actions/checkout追加)が10:37 cron trigger前に未push → git dir不在
+  - Fix: ENDPOINTS更新 (schedule-hub/tools-hub/admin-hub に置換) / d95e50d6
+  - exit 128は次回11:37 cronで自己回復 (checkout済み)
+- 全WF healthy残: 0件 (issue-to-wbs ✅ + infra-health-check fix pushed)
+
+### commits: d95e50d6 (infra-health-check endpoint fix)
