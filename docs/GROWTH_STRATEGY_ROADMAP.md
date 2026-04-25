@@ -18124,7 +18124,6 @@ curl -X POST https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/schedule-hub 
 - cross-instance-pr→PS#5: EF復旧 or admin-hub統合 (Option B推奨)
 
 ### Philosophy Alignment: 9/9 ✅
-<<<<<<< HEAD
 ## PS#5 S46 — 2026-04-25
 
 **インスタンス**: PS版#5 (on-call バグ修正)
@@ -18150,7 +18149,6 @@ curl -X POST https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/schedule-hub 
 | 4. 6部署バランス | ✅ | — |
 | 5. 商品=ユーザー価値 | ✅ | PWAキャッシュ問題の緩和に直結 |
 | 6. 資本=時間 | ✅ | 古いバージョン起因の混乱を防ぐ |
-=======
 
 ---
 
@@ -18357,3 +18355,26 @@ PS#3 S45 は追加 2 社として LiteLLM + LangGraph を追加。
 **スコア**: 9/9 ✅
 
 **次回**: deploy-prod repair list の自動化 or 次回 migration 追加時の更新
+
+---
+
+## PS#1 S36 — Rule17 WF health check (2026-04-25 14:50 JST)
+
+**インスタンス**: PS版#1 (Rule17 WF health 専任)
+
+### WF集計 (直近50 runs)
+
+| WF | success | failed | cancelled | 判定 |
+|---|---|---|---|---|
+| Deploy to Production | 3 | 1 | 7 | ✅ esm.sh 522 transient (次run自動回復) |
+| competitor-monitoring.yml | 0 | 8 | 0 | ✅ 解決済 (02:25 YAML fix 289ad191) |
+| Notion Mirror Sync | 0 | 1 | 0 | ✅ soft-fail修正済 (a13014c1) |
+| その他 | 全success | 0 | 0 | ✅ |
+
+### 修正内容
+
+- **deploy-prod.yml** repair list 110000-124500 追加確認 (6880098dで先行追加済)
+- **orphan branches**: 0本 (全pattern) — PS#6 S37 cleanup済み
+- **Notion DB**: `task_title` property未作成 → ユーザー手動対応必要 (soft-fail で CI はブロックしない)
+
+### Philosophy Alignment: 9/9 ✅
