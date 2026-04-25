@@ -19490,3 +19490,22 @@ GitHub Secrets に SLACK_WEBHOOK_URL を設定するだけで有効化。
 - 200000 衝突なし (200100 にリネーム済)
 - 201500/225000/230000: 新規 migration → fresh apply
 - repair list 220000/223000: 再適用済み
+
+---
+
+## PS#3 S52 — 2026-04-25 (5516bf57)
+
+### AI大学 198→200社化 — Tome + Krisp (PS#3-S52)
+
+**実施内容**:
+- **Tome** (AI プレゼンテーション・ドキュメント生成 / GPT-4 統合 / $75M Series B Coatue / 5M+ ユーザー / ★8/9)
+- **Krisp** (AI ノイズキャンセリング & ミーティングアシスタント / CPU DNN / 双方向雑音除去 + 文字起こし + AI サマリー / $9.5M / 20M+ / ★8/9)
+- ai_university_content に各 3 section (overview/api/models) 追加
+- **AI大学 200社マイルストーン達成** 🎉
+
+**選定理由**:
+- AssemblyAI/Synthesia/Luma AI は既登録 → Tome + Krisp が未登録候補
+- Tome: プレゼン生成 AI として Gamma と並ぶ重要プレイヤー ($75M 大型調達)
+- Krisp: 音声 AI の実用ツールとして 20M+ ユーザーの実績あり
+
+**次回候補**: Coqui AI / Otter.ai / Descript / Murf / ElevenLabs (TTS特化) / Resemble AI
