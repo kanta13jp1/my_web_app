@@ -484,10 +484,15 @@ jobs:
             --build-number=${{ github.run_number }} \
             --dart-define=ENVIRONMENT=production \
             --dart-define=APP_VERSION=${{ steps.version.outputs.version }} \
+            --dart-define=BUILD_NUMBER=${{ github.run_number }} \
             --dart-define=LANDING_GOOGLE_LOGIN_ENABLED=${{ env.LANDING_GOOGLE_LOGIN_ENABLED }}
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL_PROD }}
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY_PROD }}
+
+      - name: Write version.json
+        run: |
+          echo '{"version":"${{ steps.version.outputs.version }}","buildNumber":"${{ github.run_number }}","commit":"${{ github.sha }}","deployedAt":"'"$(date -u +%Y-%m-%dT%H:%M:%SZ)"'"}' > build/web/version.json
 
       - name: Deploy to Firebase Hosting (Production)
         uses: FirebaseExtended/action-hosting-deploy@v0

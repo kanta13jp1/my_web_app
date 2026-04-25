@@ -1,6 +1,8 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:my_web_app/services/version_check_service.dart';
+import 'package:my_web_app/widgets/update_banner.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -382,11 +384,34 @@ class _AuthenticatedHomePageState extends State<_AuthenticatedHomePage> {
   }
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
 
   static final SentryNavigatorObserver? _sentryNavigatorObserver =
       ErrorReporter.instance.sentryEnabled ? SentryNavigatorObserver() : null;
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  final _scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
+  final _versionCheckService = VersionCheckService();
+  bool _showUpdateBanner = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _versionCheckService.startPolling(() {
+      if (mounted) setState(() => _showUpdateBanner = true);
+    });
+  }
+
+  @override
+  void dispose() {
+    _versionCheckService.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -395,12 +420,21 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: '自分株式会社', //  旧: マイメモ -> 新: 自分株式会社
       debugShowCheckedModeBanner: false,
+      scaffoldMessengerKey: _scaffoldMessengerKey,
       theme: themeService.getLightTheme(),
       darkTheme: themeService.getDarkTheme(),
       themeMode: themeService.getFlutterThemeMode(),
       builder: (context, child) {
         return GlobalHeaderClockShell(
-          child: child ?? const SizedBox.shrink(),
+          child: Column(
+            children: [
+              if (_showUpdateBanner)
+                UpdateBanner(
+                  onDismiss: () => setState(() => _showUpdateBanner = false),
+                ),
+              Expanded(child: child ?? const SizedBox.shrink()),
+            ],
+          ),
         );
       },
       localizationsDelegates: const [
@@ -412,7 +446,8 @@ class MyApp extends StatelessWidget {
       locale: const Locale('ja'),
       navigatorObservers: <NavigatorObserver>[
         _growthPresenceObserver,
-        if (_sentryNavigatorObserver != null) _sentryNavigatorObserver!,
+        if (MyApp._sentryNavigatorObserver != null)
+          MyApp._sentryNavigatorObserver!,
       ],
       onGenerateRoute: (settings) {
         final uri = Uri.parse(settings.name ?? '/');
