@@ -417,7 +417,7 @@ web/
 | `get-growth-roadmap-progress` | 進捗バーデータ (21競合+短中長期) |
 | `get-competitor-features` | 競合21社の機能比較データ |
 | `health-check` | インフラヘルスチェック |
-| `check-competitor-updates` | 競合21社のWebサイト可用性チェック |
+| `admin-hub:competitor.check` | 競合可用性チェック (旧 `check-competitor-updates` → admin-hub 統合済) |
 
 ---
 
