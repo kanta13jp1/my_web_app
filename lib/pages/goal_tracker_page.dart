@@ -57,6 +57,10 @@ class _GoalTrackerPageState extends State<GoalTrackerPage>
   }
 
   Future<void> _fetchGoals() async {
+    if (_supabase.auth.currentUser == null) {
+      setState(() => _isLoading = false);
+      return;
+    }
     setState(() {
       _isLoading = true;
       _errorMessage = null;
