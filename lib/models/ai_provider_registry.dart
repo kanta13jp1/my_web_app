@@ -1575,6 +1575,22 @@ const List<AiProviderEntry> kAiProviderRegistry = [
     note:
         r'AI プレゼンテーション・ドキュメントビルダー — テキスト→スライド瞬時生成 / Notion+Canva 融合型 / Web公開可 / $12M 調達 / 月間4M+ ユーザー',
   ),
+  AiProviderEntry(
+    id: 'tome_app',
+    displayName: 'Tome',
+    status: AiProviderStatus.notImplemented,
+    entryPoint: 'https://tome.app/',
+    note:
+        r'AI プレゼンテーション・ドキュメント生成 — テキスト→ページ/スライド自動生成 / AI narration / GPT-4 統合 / $75M 調達 / 5M+ ユーザー / Coatue 主導 Series B',
+  ),
+  AiProviderEntry(
+    id: 'krisp',
+    displayName: 'Krisp',
+    status: AiProviderStatus.notImplemented,
+    entryPoint: 'https://krisp.ai/',
+    note:
+        r'AI ノイズキャンセリング & ミーティングアシスタント — 背景雑音/エコー/残響除去 / Zoom・Teams・Meet 対応 / 文字起こし・サマリー / $9.5M 調達 / 20M+ ユーザー',
+  ),
 ];
 
 /// ステータス別件数を集計
