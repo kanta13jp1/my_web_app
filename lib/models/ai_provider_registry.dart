@@ -1542,6 +1542,23 @@ const List<AiProviderEntry> kAiProviderRegistry = [
     note:
         r'オープンソースワークフロー自動化 — 400+ 統合 / AI Agent ノード内蔵 / セルフホスト可 / 40k+ Stars / Apache 2.0 / LLM+ツール組合せ自由',
   ),
+  AiProviderEntry(
+    id: 'azure_openai',
+    displayName: 'Azure OpenAI',
+    status: AiProviderStatus.notImplemented,
+    entryPoint:
+        'https://azure.microsoft.com/ja-jp/products/ai-services/openai-service',
+    note:
+        r'Microsoft Azure上のマネージドOpenAI — GPT-4o/o1/DALL-E/Whisper / プライベートエンドポイント / RBAC / HIPAA・SOC2対応 / Fortune 100の90%+ 採用 / コンテンツフィルタ',
+  ),
+  AiProviderEntry(
+    id: 'semantic_kernel',
+    displayName: 'Semantic Kernel',
+    status: AiProviderStatus.notImplemented,
+    entryPoint: 'https://learn.microsoft.com/ja-jp/semantic-kernel/',
+    note:
+        r'Microsoft 製 AI エージェント SDK — .NET / Python / Java 対応 / Planner (自動タスク分解) / Memory / Plugin / GitHub Copilot・Azure OpenAI 統合 / MIT / 21k+ Stars',
+  ),
 ];
 
 /// ステータス別件数を集計
