@@ -211,7 +211,9 @@ function compareWbsTasks(a: Record<string, unknown>, b: Record<string, unknown>)
 }
 
 const WBS_INSTANCE_VALUES = [
-  "codex",
+  "codex",     // OpenAI Codex CLI
+  "gemini",    // Google Gemini Code Assist
+  "copilot",   // GitHub Copilot Chat / Inline
   "vscode",
   "win",
   "ps1",
@@ -224,9 +226,7 @@ const WBS_INSTANCE_VALUES = [
   "mobile",
   "schedule",
   "gha",
-  "gemini",
-  "co-pilot",
-  "user",
+  "user",      // ユーザー手動操作タスク (法人登記/銀行口座/外部面談等)
 ];
 
 const WBS_OPEN_STATUSES = ["pending", "in_progress", "blocked"];
@@ -235,6 +235,7 @@ function normalizeWbsInstance(value: unknown): string {
   const normalized = String(value ?? "").trim().toLowerCase();
   if (normalized === "windows") return "win";
   if (normalized === "ps") return "ps1";
+  if (normalized === "co-pilot" || normalized === "github-copilot") return "copilot";
   return WBS_INSTANCE_VALUES.includes(normalized) ? normalized : "codex";
 }
 
@@ -1378,10 +1379,45 @@ serve(async (req) => {
             }
           }
 
+          // user タスク (手動操作が必要なタスク) も合わせて返す + Slack 通知
+          const { data: userTasksRaw } = await admin.from("wbs_tasks")
+            .select("id, title, category, status, progress, priority, end_date")
+            .eq("instance", "user")
+            .in("status", ["pending", "in_progress", "blocked"])
+            .order("end_date", { ascending: true, nullsFirst: false })
+            .limit(10);
+          const userTasks = userTasksRaw ?? [];
+
+          // Slack 通知: user タスクがある場合 (セッション開始時)
+          if (userTasks.length > 0 && body.notify_slack !== false) {
+            const webhookUrl = Deno.env.get("SLACK_WEBHOOK_URL") ?? "";
+            if (webhookUrl) {
+              const icon = (p: string) => p === "high" ? "🔴" : p === "low" ? "🟢" : "🟡";
+              const lines = [
+                `🙋 *[WBS] ユーザー手動タスク ${userTasks.length} 件* (要対応)`,
+                "",
+                ...userTasks.slice(0, 5).map((t, i) => {
+                  const due = t.end_date ? ` | 期限 ${t.end_date}` : "";
+                  return `${i + 1}. ${icon(String(t.priority ?? "medium"))} *${t.title}* — ${t.category}${due}`;
+                }),
+                userTasks.length > 5 ? `…他 ${userTasks.length - 5} 件` : "",
+                "",
+                `🔗 https://my-web-app-b67f4.web.app/project-gantt`,
+              ].filter((l) => l !== "");
+              fetch(webhookUrl, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ text: lines.join("\n"), mrkdwn: true }),
+              }).catch(() => {/* fire-and-forget */});
+            }
+          }
+
           return json({
             success: true,
             instance: inst,
             top_tasks: topTasks,
+            user_tasks: userTasks,
+            user_tasks_count: userTasks.length,
             workload,
             rebalance_suggestions: rebalanceSuggestions,
             auto_reassign: autoReassign,
@@ -2322,6 +2358,7 @@ serve(async (req) => {
             "horseracing.predictions", "horseracing.store_results", "horseracing.accuracy",
             "horseracing.register_race", "horseracing.stats",
             "slack.post", "slack.search",
+            "wbs.notify_user_tasks",
             "legal.harvey.complete",
             "legal-assistant.harvey.complete",
             "legal-assistant.review",
