@@ -165,8 +165,8 @@ jobs:
           # If db push fails with "Remote migration versions not found", extract the
           # stuck version numbers, repair them as reverted, and retry once.
           echo "=== supabase db push start ==="
-          PUSH_LOG=$(supabase db push --include-all 2>&1)
-          PUSH_EXIT=$?
+          PUSH_EXIT=0
+          PUSH_LOG=$(supabase db push --include-all 2>&1) || PUSH_EXIT=$?
           echo "=== db push exit=$PUSH_EXIT ==="
           echo "$PUSH_LOG"
           if [ $PUSH_EXIT -ne 0 ]; then
