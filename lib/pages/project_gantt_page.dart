@@ -450,6 +450,11 @@ class _ProjectGanttPageState extends State<ProjectGanttPage>
         iconTheme: const IconThemeData(color: Colors.white),
         actions: [
           IconButton(
+            icon: const Icon(Icons.person_outline),
+            tooltip: 'ユーザータスク',
+            onPressed: () => Navigator.of(context).pushNamed('/user-tasks'),
+          ),
+          IconButton(
             icon: const Icon(Icons.refresh),
             tooltip: '更新',
             onPressed: () {
