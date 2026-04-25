@@ -394,3 +394,7 @@ WHERE title = 'ai-hub provider.chat 蜈ｨ蟇ｾ蠢・;
 - 対応内容: LPのFAQに、AIベンダー分散、生活資本の浪費削減、KGI/CSF/KPI自動化、習慣化ゲート、サイト内チャット、NotebookLM連携などの差別化軸7件を追加した。
 - 実装補足: `FeatureStrategyAiReviewService` のテストは、ローカライズ済みプロンプト断片に依存せず、総機能数・状態別件数・レビュー期限・機能名・`action=` など構造化されたプロンプト事実を検証する形に安定化した。
 - WBS DB反映: migration `20260425113000_wbs_codex_lp_faq_feature_strategy_start.sql`, `20260425114500_wbs_codex_lp_faq_feature_strategy_done.sql`
+- 実担当タスク: `[追加要望] 【Harvey AI】legal-assistant EF` / `[Issue #707] [追加要望] 【Harvey AI】legal-assistant EF`
+- 対応内容: `tools-hub` のHarvey API連携に `legal-assistant.harvey.complete` と `legal-assistant.review` の互換actionを追加し、既存の `legal.harvey.complete` と同じ `HARVEY_API_KEY` ベースのCompletion APIへルーティングできるようにした。
+- 実装補足: 法務・コンプライアンス画面のHarveyタブは新しい `legal-assistant.harvey.complete` を呼ぶように更新した。既存actionは後方互換として残す。
+- WBS DB反映: migration `20260425125000_wbs_codex_harvey_legal_assistant_start.sql`, `20260425130500_wbs_codex_harvey_legal_assistant_done.sql`

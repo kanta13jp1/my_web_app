@@ -1709,7 +1709,9 @@ serve(async (req) => {
       }
 
       // ── Legal / Harvey Integration ───────────────────────────────────────────
-      case "legal.harvey.complete": {
+      case "legal.harvey.complete":
+      case "legal-assistant.harvey.complete":
+      case "legal-assistant.review": {
         const result = await callHarveyCompletion(body);
         if (!result.ok) {
           return json({
@@ -1758,6 +1760,8 @@ serve(async (req) => {
             "horseracing.register_race", "horseracing.stats",
             "slack.post", "slack.search",
             "legal.harvey.complete",
+            "legal-assistant.harvey.complete",
+            "legal-assistant.review",
           ],
         }, 400);
     }

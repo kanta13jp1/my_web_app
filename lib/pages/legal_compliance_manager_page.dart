@@ -108,7 +108,7 @@ class _LegalComplianceManagerPageState extends State<LegalComplianceManagerPage>
       final response = await _supabase.functions.invoke(
         'tools-hub',
         body: {
-          'action': 'legal.harvey.complete',
+          'action': 'legal-assistant.harvey.complete',
           'prompt': prompt,
           'mode': _harveyMode,
           'include_citations': _harveyIncludeCitations,
