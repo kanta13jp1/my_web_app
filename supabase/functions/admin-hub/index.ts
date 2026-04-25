@@ -80,9 +80,15 @@ serve(async (req: Request) => {
 
     const action: string = body.action ?? "";
     const userId = await getUserId(req);
-    if (!userId) {
+    // Service-role key bypass: schedule tasks (cs-check etc.) use the service key,
+    // which cannot pass auth.getUser(). Allow access for admin actions.
+    const authHeader = req.headers.get("Authorization") ?? "";
+    const isServiceRole =
+      SERVICE_ROLE_KEY !== "" && authHeader === `Bearer ${SERVICE_ROLE_KEY}`;
+    if (!userId && !isServiceRole) {
       return json({ error: "Unauthorized" }, 401);
     }
+    const effectiveUserId = userId ?? "service-role";
 
     switch (action) {
       // ---- Support tickets ----
@@ -99,7 +105,7 @@ serve(async (req: Request) => {
       }
 
       case "support.create": {
-        const item = await addItem(admin, "support_ticket", userId, {
+        const item = await addItem(admin, "support_ticket", effectiveUserId, {
           title: body.title,
           message: body.message,
           status: "open",
@@ -113,7 +119,7 @@ serve(async (req: Request) => {
           .from("hub_data")
           .update({
             metadata: {
-              user_id: body.original_user_id ?? userId,
+              user_id: body.original_user_id ?? effectiveUserId,
               status: body.new_status ?? "resolved",
               reply: body.reply,
               replied_at: new Date().toISOString(),

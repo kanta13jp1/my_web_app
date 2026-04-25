@@ -27,9 +27,13 @@ jobs:
       - name: Step 1 - 未返信サポートチケット取得
         id: tickets
         run: |
+          # get-support-tickets は admin-hub に統合済み (support.list action)
           HTTP_CODE=$(curl -s -o /tmp/tickets.json -w "%{http_code}" \
+            -X POST \
             -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
-            "https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/get-support-tickets" \
+            -H "Content-Type: application/json" \
+            -d '{"action":"support.list"}' \
+            "https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/admin-hub" \
             --max-time 15)
 
           if [ "$HTTP_CODE" = "200" ]; then
@@ -87,18 +91,20 @@ jobs:
       - name: Step 2 - FAQ自動返信
         if: steps.tickets.outputs.ticket_count != '0' && steps.quota_check.outputs.anthropic_available == 'true'
         run: |
+          # admin-hub レスポンス: tickets[].metadata.title (旧: tickets[].title)
           cat /tmp/tickets_body.json | jq -r '.tickets[]? | .id' | while read -r ID; do
-            TITLE=$(cat /tmp/tickets_body.json | jq -r --arg id "$ID" '.tickets[] | select(.id == $id) | .title')
+            TITLE=$(cat /tmp/tickets_body.json | jq -r --arg id "$ID" '.tickets[] | select(.id == $id) | .metadata.title // .title // "(no title)"')
             echo "🎫 処理中: $TITLE (ID: $ID)"
 
             REPLY="お問い合わせありがとうございます。確認いたしますので少々お待ちください。"
 
+            # reply-support-request は admin-hub に統合済み (support.reply action)
             REPLY_CODE=$(curl -s -o /dev/null -w "%{http_code}" \
               -X POST \
               -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
               -H "Content-Type: application/json" \
-              -d "{\"id\":\"$ID\",\"reply\":\"$REPLY\",\"newStatus\":\"open\"}" \
-              "https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/reply-support-request" \
+              -d "{\"action\":\"support.reply\",\"id\":\"$ID\",\"reply\":\"$REPLY\",\"new_status\":\"open\"}" \
+              "https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/admin-hub" \
               --max-time 15)
 
             if [ "$REPLY_CODE" = "200" ]; then
