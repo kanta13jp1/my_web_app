@@ -24,6 +24,42 @@ class FsrsCard {
       );
 }
 
+class FsrsStats {
+  final String provider;
+  final int totalCards;
+  final int dueToday;
+  final int totalReviews;
+  final double avgStability;
+  final int? retentionRate;
+
+  const FsrsStats({
+    required this.provider,
+    required this.totalCards,
+    required this.dueToday,
+    required this.totalReviews,
+    required this.avgStability,
+    required this.retentionRate,
+  });
+
+  factory FsrsStats.fromJson(Map<String, dynamic> json) => FsrsStats(
+        provider: json['provider'] as String? ?? 'all',
+        totalCards: (json['total_cards'] as num?)?.toInt() ?? 0,
+        dueToday: (json['due_today'] as num?)?.toInt() ?? 0,
+        totalReviews: (json['total_reviews'] as num?)?.toInt() ?? 0,
+        avgStability: (json['avg_stability'] as num?)?.toDouble() ?? 0.0,
+        retentionRate: (json['retention_rate'] as num?)?.toInt(),
+      );
+
+  static FsrsStats empty(String provider) => FsrsStats(
+        provider: provider,
+        totalCards: 0,
+        dueToday: 0,
+        totalReviews: 0,
+        avgStability: 0,
+        retentionRate: null,
+      );
+}
+
 class AiFsrsService {
   final _supabase = Supabase.instance.client;
 
@@ -87,6 +123,22 @@ class AiFsrsService {
         nextDue: DateTime.now().add(const Duration(days: 1)),
         stability: 1.0
       );
+    }
+  }
+
+  Future<FsrsStats> getStats(String provider) async {
+    try {
+      final response = await _supabase.functions.invoke(
+        'ai-hub',
+        body: {'action': 'quiz.fsrs_stats', 'provider': provider},
+      );
+      final data = response.data as Map<String, dynamic>?;
+      if (data == null || data['success'] != true) {
+        return FsrsStats.empty(provider);
+      }
+      return FsrsStats.fromJson(data);
+    } catch (_) {
+      return FsrsStats.empty(provider);
     }
   }
 

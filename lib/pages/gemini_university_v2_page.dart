@@ -5182,6 +5182,8 @@ class _AiUniversityPageState extends State<AiUniversityPage>
   final Map<String, bool> _quizEvaluating = {};
   final Map<String, List<FsrsCard>> _fsrsDue = {};
   final Set<String> _fsrsDueRequested = {};
+  final Map<String, FsrsStats> _fsrsStats = {};
+  final Set<String> _fsrsStatsRequested = {};
   final Map<String, bool> _rlhfSubmitting = {};
   bool _xPostSubmitting = false;
   AiUniversityRlhfSnapshot _rlhfSnapshot = AiUniversityRlhfSnapshot.empty();
@@ -5259,6 +5261,14 @@ class _AiUniversityPageState extends State<AiUniversityPage>
       if (mounted && cards.isNotEmpty) {
         setState(() => _fsrsDue[provider] = cards);
       }
+    });
+  }
+
+  void _loadFsrsStats(String provider) {
+    if (_fsrsStatsRequested.contains(provider)) return;
+    _fsrsStatsRequested.add(provider);
+    _fsrsService.getStats(provider).then((stats) {
+      if (mounted) setState(() => _fsrsStats[provider] = stats);
     });
   }
 
@@ -6138,6 +6148,8 @@ class _AiUniversityPageState extends State<AiUniversityPage>
     final rows = _content[providerId];
     final surface = isDark ? const Color(0xFF1E1E1E) : const Color(0xFF1E1E1E);
 
+    _loadFsrsStats(providerId);
+
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
@@ -6151,8 +6163,130 @@ class _AiUniversityPageState extends State<AiUniversityPage>
           _buildFallbackCard(providerId, surface),
         const SizedBox(height: 16),
         _buildQuizCard(providerId, m),
+        if (_fsrsStats.containsKey(providerId) &&
+            _fsrsStats[providerId]!.totalReviews > 0) ...[
+          const SizedBox(height: 12),
+          _buildFsrsStatsCard(providerId, m),
+        ],
         const SizedBox(height: 32),
       ],
+    );
+  }
+
+  Widget _buildFsrsStatsCard(String providerId, _ProviderMeta m) {
+    final stats = _fsrsStats[providerId]!;
+    return Card(
+      color: const Color(0xFF0F1929),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: m.color.withValues(alpha: 0.28)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.auto_stories, color: m.color, size: 18),
+                const SizedBox(width: 8),
+                const Expanded(
+                  child: Text(
+                    '復習メトリクス',
+                    style: TextStyle(
+                      color: Color(0xFFE5E7EB),
+                      fontWeight: FontWeight.w700,
+                      fontSize: 13,
+                      height: 1.5,
+                    ),
+                  ),
+                ),
+                if (stats.dueToday > 0)
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF59E0B).withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: const Color(0xFFF59E0B).withValues(alpha: 0.5),
+                      ),
+                    ),
+                    child: Text(
+                      '今日 ${stats.dueToday}枚',
+                      style: const TextStyle(
+                        color: Color(0xFFF59E0B),
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        height: 1.5,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                _fsrsStatChip(
+                  '総復習',
+                  '${stats.totalReviews}回',
+                  const Color(0xFF38BDF8),
+                  m.color,
+                ),
+                const SizedBox(width: 8),
+                _fsrsStatChip(
+                  '安定度',
+                  '${stats.avgStability}日',
+                  const Color(0xFF818CF8),
+                  m.color,
+                ),
+                const SizedBox(width: 8),
+                _fsrsStatChip(
+                  '記憶率',
+                  stats.retentionRate != null ? '${stats.retentionRate}%' : '-',
+                  const Color(0xFF34D399),
+                  m.color,
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _fsrsStatChip(
+      String label, String value, Color valueColor, Color borderColor) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        decoration: BoxDecoration(
+          color: const Color(0xFF151B27),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: borderColor.withValues(alpha: 0.2)),
+        ),
+        child: Column(
+          children: [
+            Text(
+              value,
+              style: TextStyle(
+                color: valueColor,
+                fontSize: 15,
+                fontWeight: FontWeight.w800,
+                height: 1.4,
+              ),
+            ),
+            Text(
+              label,
+              style: const TextStyle(
+                color: Color(0xFF9CA3AF),
+                fontSize: 10,
+                height: 1.5,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
