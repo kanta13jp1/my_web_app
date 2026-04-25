@@ -44,7 +44,11 @@ jobs:
 
             # scripts/parse_rss.py で RSS を解析してリッチなコンテンツを生成
             local CONTENT
-            CONTENT=$(python3 scripts/parse_rss.py "$rss_url" "$provider_name" "$TODAY")
+            if ! CONTENT=$(python3 scripts/parse_rss.py "$rss_url" "$provider_name" "$TODAY"); then
+              echo "skip ${provider_name}: RSS fetch failed"
+              FAILED_PROVIDERS="${FAILED_PROVIDERS} ${provider}"
+              return 0
+            fi
 
             local HTTP_CODE
             HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" \
