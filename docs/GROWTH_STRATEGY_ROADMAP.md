@@ -20573,3 +20573,21 @@ Voicemod / Replica Studios / Soundraw / Lalal.ai / Moises
 **修正**: `_fetchNotifications()` / `_fetchJudgment()` 冒頭に `currentUser == null` guard 追加
 
 **commit**: `614fb373` (migration rename) / `54255548` (anon guards)
+
+
+### PS#5 S59 (2026-04-26) — 系統的 anon auth guard バッチ修正 (a117715a)
+
+**発見**: 130 ページが initState で auth-required EF を呼んでいるが anon guard なし → 401 flood
+
+**修正済みページ** (S56-S59 合計 16 ページ):
+notifications_page / daily_judgment_page / growth_weekly_digest_page / ai_assistant_chat_page /
+ai_university_badges/content/streaks / support_tickets / knowledge_base / goal_tracker /
+habit_tracker / time_tracker / reading_list / calendar_events
+
+**cross-instance-pr**: `docs/cross-instance-prs/20260426_ps5_anon_auth_guard_bulk.md` — 残り ~120 ページの bulk fix を VSCode版に handoff
+
+**長期対策提案**: main.dart ルーターに auth middleware → anon→ログインページ redirect (共通化)
+
+**Pattern**: `if (_supabase.auth.currentUser == null) { setState(() => _isLoading = false); return; }`
+
+**Philosophy**: ✅商品=ユーザー価値 (anon UX改善・エラー消去) ✅本質優先
