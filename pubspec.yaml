@@ -41,7 +41,7 @@ dependencies:
   timeago: ^3.7.0                  # 相対時刻表示（例: 3分前）
   fl_chart: ^1.0.0                 # グラフ描画
   package_info_plus: ^8.0.0        # アプリ情報（バージョン等）
-  device_info_plus: ^12.3.0        # デバイス情報 (13.x requires Dart>=3.11+win32 conflict)
+  device_info_plus: ^12.4.0        # デバイス情報
   uuid: ^4.3.3                     # UUID生成
   image_picker: ^1.2.1
   google_generative_ai: ^0.4.7
