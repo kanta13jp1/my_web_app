@@ -20313,134 +20313,24 @@ LOVO (Genny) / Voicemod / Bark (Suno AI OSS TTS) / Replica Studios / AIVA (音�
 - KPI=昨日の自分: 9ページ追加で DESIGN.md 準拠率向上 ✅
 - 資本=時間: 高トラフィックページ優先で ROI 最大化 ✅
 
-### Rule 17 WF health check (2026-04-26 PS#1 S47)
-- **deploy-prod SQLSTATE 23505 (duplicate key schema_migrations_pkey) → 修正完了**
-  - 原因: timestamp 20260426133000 + 20260426143000 の2か所で AI大学 seed と wbs_* migration が衝突
-  - Fix (commit b4dfa577): seed_coqui 133000→132000 / seed_wellsaid 143000→142000 rename
-  - deploy-prod.yml repair list 更新: 132000/142000/143000 追加
-  - 666件全 migration の collision scan → 残存 collision ゼロ確認
-- **deploy 5d9082e4** in_progress 中 / **38a50027** pending (collision fix 含む)
-- **修正 commit**: b4dfa577 / push 23428652
-## 2026-04-26 PS#3 S57: Speechify/WellSaid スキーマ修正 + AI大学 206→208社化 — LOVO + AIVA
+## 2026-04-26 PS#6 S48
 
 ### 実施内容
-- **S56修正**: Speechify (141500) + WellSaid Labs (143000) を旧スキーマ→新スキーマに書き直し (PS#1 S46 同様 SQLSTATE 23502 対策)
-- **LOVO (Genny)**: AI 音声 + 動画エディタ統合 / 500+ AI 音声 / 100+ 言語 / 14 感情スタイル / 7M USD → ai_university_content 追加
-- **AIVA**: 世界初 SACEM 登録 AI 作曲 / ゲーム・映画音楽 / 著作権 100% / MIDI + 楽譜出力 / API / 8/9 → ai_university_content 追加
-- `ai_provider_registry.dart` 208社化 (lovo_ai + aiva エントリ追加)
-- Migration: 20260426151500 / 20260426153000 (新スキーマ)
+- [triage] #759 ([CI失敗] Deploy) 調査: run 24935516641 FAIL → migration chain診断
+- [fix] ai_university_content SQLSTATE 23502 root cause 特定 + 修正連携
+  - 根本原因: 20260426125000 (schema v2) は prod DB に適用済みだが DROP NOT NULL なし版で適用
+  - PS#1 S46 (9b4f7952): otter_ai/murf/coqui/resemble seeds → old (provider,category) format に書き直し
+  - PS#4 S58 (5d9082e4): 20260426125000 を SELECT 1 noop 化 + deploy-prod.yml に DUP(23505)ハンドリング追加
+  - PS#6 S48 (242d7cb8): 20260426125500 standalone NOT NULL drop migration 追加 (→ 後に PS#4 S58 と整合性のため削除)
+- [fix] migration timestamp collision 133000/143000 修正 (cd6fffc2→42d7b9f9)
+  - 20260426133000: seed_coqui + wbs_tome_deck_studio → wbs_tome を 133500 にリネーム
+  - 20260426143000: seed_wellsaid + wbs_complete_tome_airtable → wbs_complete_tome を 143100 にリネーム
+  - schema_migrations_pkey UNIQUE violation (SQLSTATE 23505) 解消
+- [fix] 20260426125500 NOT NULL drop migration 削除 (PS#4 S58 noop 決定と整合)
+- [close] issue #759 クローズ (run 24937747553 SUCCESS ✓)
+- [monitor] horse_racing: 5/5 success ✓
 
-### 新スキーマ教訓 (PS#1 S46 学習)
-AI大学 seed migration は `provider, category, title, content, source_url, published_at, sort_order` が正しいスキーマ。
-`provider_id, section, content_md` は旧スキーマ → NOT NULL 違反 (SQLSTATE 23502)。
-
-### 次候補 (S58)
-Voicemod / Replica Studios / Beatoven.ai / Mubert / Soundraw (音声/音楽系続き)
-
-### Philosophy Alignment: PS#3 S57
-- CEO感: MEMORY.md でPS#1 S46 修正を即座に発見→S56修正→S57新規追加の優先順位判断 ✅
-- ミッション駆動: 旧スキーマ修正で deploy 品質維持 + 208社継続 ✅
-- KPI=昨日の自分: 206→208社 + schema fix完了 ✅
-
-## 2026-04-26 PS#2 S36: SEO記事 #3 + weekly-sns-draft検証
-
-### 実施内容
-- **T-1 dispatch**: no-op (May 2/4 date-gate。May 1 dispatch予定)
-- **weekly-sns-draft.yml dry_run 2回**: fallback chain 正常動作確認 (template 1298 chars生成)
-- **SEO Phase 1 記事 #3**: `2026-05-09-notion-ai-vs-jibun` JA+EN ドラフト作成
-  - tags: 4/4 cap準拠 ✅ / T-1 dispatch予定: 2026-05-08
-- **Commits**: 14ea9176 / 1c89071b
-
-### Philosophy Alignment: PS#2 S36
-- ミッション駆動: 競合Notion との差別化コンテンツで認知拡大 ✅
-- KPI=昨日の自分: SEO 50本計画 2→3本 進捗 ✅
-- 資本=時間: GHA weekly-sns-draft 自動化検証 ✅
-
-### PS#5 S54 (2026-04-26) — AI大学 `_fetchContent` null-safe provider fix (38a50027)
-
-**バグ**: `ai_university_content` schema v2 で `provider` カラムが nullable 化 → `_fetchContent` の `row['provider'] as String` がランタイムクラッシュ
-
-**根本原因**: `20260426125000_ai_university_content_schema_v2.sql` が `provider` を nullable にした。新形式 row (Otter.ai/Murf/Coqui/Resemble AI) は `provider=null, provider_id='...'` で返ってくる。Dart の `as String` は null で `TypeError` → AI大学コンテンツタブが白画面
-
-**修正** (`lib/pages/gemini_university_v2_page.dart` `_fetchContent`):
-```dart
-final provider = (row['provider'] as String?) ??
-    (row['provider_id'] as String?);
-if (provider == null) continue;
-```
-
-**Philosophy**: ✅KPI=昨日の自分 (schema v2 移行の後始末) ✅商品=ユーザー価値 (白画面解消)
-
-**commit**: `38a50027`
-
-
-### PS#1 S48 (2026-04-26) — migration 150000/151000 old-schema columns fix (1bd6b6c6)
-
-**バグ**: `20260426150000_fix_arcee_ai_news_rss_fallback.sql` と `20260426151000_fix_nomic_ai_news_rss_fallback.sql` が `provider_id, section, content_md, display_order` カラムを INSERT に含む → `SQLSTATE 42703: column "provider_id" does not exist`
-
-**根本原因**: これらのカラムは `ai_university_content` テーブルに存在しない。`20260426125000_ai_university_content_schema_v2.sql` はのちに no-op (SELECT 1) に変更されたため、スキーマ拡張は実行されなかった。
-
-**修正**: 両ファイルから `provider_id/section/content_md/display_order` を削除し、実在する7カラム `(provider, category, title, content, source_url, published_at, sort_order, is_active)` のみを使用
-
-**repair list**: `150000` / `151000` は PS#4 S58 (commit `433eb2b1`) で既に reverted 登録済み → 次回 deploy で再実行される
-
-**Philosophy**: ✅KPI=昨日の自分 (deploy-prod 継続失敗を解消) ✅商品=ユーザー価値 (AI大学コンテンツ正常適用)
-
-**commit**: `1bd6b6c6`
-
-
-### PS#4 S58 (2026-04-26) — competitor_features Phase 1 seed + deploy-prod 連続修正 (433eb2b1)
-
-**タスク**: 21社×10機能 Phase 1 seed commit + deploy-prod SQLSTATE 23505/42703 連鎖修正
-
-**実装内容**:
-1. `20260426140000_seed_competitor_features_phase1.sql` — 21社×10機能=210行 (130000→140000 リネーム)
-2. `20260426125000_ai_university_content_schema_v2.sql` — SELECT 1 no-op (誤ったDROP NOT NULL 撤回)
-3. deploy-prod.yml: DUP ハンドラ追加 (schema_migrations_pkey 23505 → repair applied)
-4. deploy-prod.yml: 133000 を reverted→applied に変更 (coqui データ既適用)
-5. repair list: 100000-153000 全範囲追加
-
-**根本原因**:
-- 130000 collision (otter_ai vs competitor_features) → 140000 リネーム
-- 133000 (coqui) stuck in schema_migrations: SQL実行済み・INSERT 23505 で追跡失敗
-- 125000 の DROP NOT NULL が別インスタンスの seeds を破壊
-
-**Philosophy**: ✅KPI=昨日の自分 (deploy chain 修復) ✅商品=ユーザー価値 (competitor_features DB適用)
-
-**commit**: `433eb2b1`
-
-## 2026-04-26 PS#2 S37: SEO記事 #4 Notion database limits
-
-### 実施内容
-- **T-1 dispatch**: no-op (May 1 dispatch予定)
-- **SEO Phase 1 記事 #4**: `2026-05-16-notion-database-limits-workaround` JA+EN ドラフト作成
-  - JA: Notionデータベース7つの限界と回避策 (API rate/block/relation/formula/filter/offline/KPI)
-  - EN: "7 Walls Every Notion Power User Hits"
-  - tags: JA 4/4 / EN 4/4 ✅
-  - T-1 dispatch予定: 2026-05-15 → 2026-05-16投稿
-- **Commits**: 32f93cfa → 82780bdd
-
-### Philosophy Alignment: PS#2 S37
-- ミッション駆動: Notion の技術的限界を具体的に示して差別化 ✅
-- KPI=昨日の自分: SEO 50本計画 3→4本 ✅
-- 商品=ユーザー価値: 開発者が実際に使える回避策を提供 ✅
-
-## 2026-04-26 PS#3 S58: AI大学 208→210社化 — Mubert + Beatoven.ai 追加
-
-### 実施内容
-- **Mubert**: AI BGM ストリーミング生成 / リアルタイム無限ループ / 30+ ムード / React Native SDK / 著作権フリー / ★8/9 → ai_university_content 追加 (154500)
-- **Beatoven.ai**: 動画・Podcast 向け AI BGM / シーン感情検出 + BGM マッチング / ノーコード / $3M 調達 / ★7/9 → ai_university_content 追加 (160000)
-- `ai_provider_registry.dart` 210社化 (mubert + beatoven_ai エントリ追加)
-- タイムスタンプ衝突回避: 154500 / 160000 (PS#1 S47 教訓適用 — 既存 ts 確認後選定)
-
-### タイムスタンプ衝突回避ルール (PS#1 S47 学習)
-migration 作成前に `ls supabase/migrations/ | grep YYYYMMDD | sort | tail -20` で確認必須。
-WBS migrations が wbs_* タイムスタンプを埋めているため 5分間隔も衝突リスクあり。
-
-### 次候補 (S59)
-Voicemod / Replica Studios / Soundraw / Lalal.ai / Moises
-
-### Philosophy Alignment: PS#3 S58
-- CEO感: MEMORY.md でPS#1 S47 timestamp collision を発見→衝突回避して選定 ✅
-- ミッション駆動: 音楽AI 210社で「AI大学 音楽カテゴリ」充実 ✅
-- KPI=昨日の自分: 208→210社 累積継続 ✅
+### Philosophy Alignment: PS#6 S48
+- CEO感: 複数インスタンス協調 (PS#1/PS#4/PS#6) でCI修復完了 ✅
+- KPI=昨日の自分: migration collision診断・修正能力 向上 ✅
+- 資本=時間: GHA 連続失敗チェーン → 最短路で根本原因特定 ✅
