@@ -19889,3 +19889,19 @@ Win版 dedup fix (20260425_wbs_dedup_fix.md) で対応予定。
 - flutter analyze: worktree + main repo 両方 exit 0 確認
 
 ### commits: no change (upstream already fixed)
+
+---
+
+## PS#2 S32 — deploy fix + X アカウント運用設計 (2026-04-25)
+
+### 実施内容
+
+1. **T-1 check**: no-op (May 2/4 slugs = May 1/3 dispatch待ち) / orphan 0本
+2. **deploy fix**: `20260425231500 --status reverted → applied` (policy 42710 エラー修正)
+   + `20260426110000_repair_notebooklm_columns.sql` 追加 → `0ce32cde`
+3. **[DYNAMIC-CLAIM]**: X 公式アカウント運用設計 (57009177) claim → 実行 → completed
+   - `docs/marketing/x-account-strategy.md`: 週次スケジュール/自動化フロー/テンプレート集
+   - `docs/cross-instance-prs/20260425_x_blog_announce_ef.md`: Win/VSCode版 handoff
+4. **WBS-SYNC**: 57009177 → completed ✅
+
+### commits: 0ce32cde (deploy fix) → bab257fa (X strategy)
