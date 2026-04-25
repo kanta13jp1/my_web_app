@@ -19715,3 +19715,27 @@ GitHub Secrets に SLACK_WEBHOOK_URL を設定するだけで有効化。
 次回 dispatch: May 1 JST。
 
 ### commit: no-op
+
+---
+
+## PS#4 S51 — Phase 3 競合自動 discovery 完成 (2026-04-26)
+
+### 実装内容
+
+1. **`competitor_candidates` テーブル** (migration 20260426070000)
+   - Phase 3 週次 discovery の staging テーブル
+   - ai_score / threat_level / reviewed / promoted / discovery_week フラグ
+   - RLS: public read / service_role write
+
+2. **`competitor-discovery.yml`** (新規 GHA)
+   - 毎週月曜 08:00 JST cron / workflow_dispatch 対応
+   - Gemini 1.5 Flash で 10 カテゴリ × 5 社自動発掘
+   - 既存 190 社と重複除去 → competitor_candidates に staging
+   - `docs/competitor-reports/discovery-YYYY-MM-DD.md` レポート生成
+
+3. **`competitor-monitoring.yml` 更新**
+   - Step 3: 21社固定 → `competitors` テーブル動的取得 (190社対応)
+   - threat_level → tier アイコン変換 (high=🔴 / medium=🟠 / low=🟡)
+   - Supabase 取得失敗時: 固定10社フォールバック
+
+### commit: ecd93e7c
