@@ -43,7 +43,7 @@ set
   status = 'in_progress',
   progress = greatest(progress, 60),
   start_date = coalesce(start_date, date '2026-04-26'),
-  recovery_plan = coalesce(recovery_plan, 'Krisp SDK integration pending until SDK credentials/contract confirmed. Implementation plan documented in /krisp-audio-quality.'),
+  recovery_plan = CASE WHEN COALESCE(recovery_plan, '') = '' THEN 'Krisp SDK integration pending until SDK credentials/contract confirmed. Implementation plan documented in /krisp-audio-quality.' ELSE recovery_plan END,
   ai_review_status = 'pending',
   github_issue_state = 'OPEN',
   remaining_work = 'Krisp SDK readiness plan is visible in /krisp-audio-quality. Remaining work: confirm Krisp SDK contract/API key/model distribution, then implement the WebRTC/Web Audio noise filter in the future AI coach voice pipeline.',
