@@ -20942,3 +20942,52 @@ habit_tracker / time_tracker / reading_list / calendar_events
 - **失敗WF**: cs-check.yml Step3 — `cp: same file` (flutter-analyze-cache.json が a68425b0 でrepooに commit された後、$GITHUB_WORKSPACE/docs/ と docs/ が同一パスに解決) → `/tmp`退避パターンに修正 (a8da11a8)
 - **orphan**: 確認なし (S52時点0本)
 - **修正済み**: cs-check.yml Write step→`/tmp/flutter-analyze-cache.json` + Step3 cp元を`/tmp`に統一
+
+### Win版#132 part 25 完了 (2026-04-26 12:50 JST)
+
+**🎬 NotebookLM 動画パイプライン実行** — Anthropic Claude Apps 解説動画 (D variant) 制作 + サイト埋め込み
+
+**ソース**: NotebookLM notebook `e89d2ca7-1dc9-41a1-8fe2-bad5103a757b` (Anthropic Evolution: Claude Apps, Opus 4.7, and Enterprise Expansion)
+
+**パイプライン (memory feedback_success_20260418_video_editing_workflow.md 完全踏襲)**:
+
+| Step | 内容 | 成果物 |
+|------|------|--------|
+| 1 | `notebooklm download video -a f2d7b791` | `videos/anthropic-claude-apps-os.mp4` (35MB / 7m02s / 1280x720@24fps) |
+| 2 | ElevenLabs Scribe 文字起こし | `videos/edit/transcripts/*.json` (2789 char-words) |
+| 3 | 自前 SRT 分割 (`videos/build_srt.py`) | `videos/master.srt` (133 cues / 419.7s / 句読点+18字+4秒+28字 cap + ASR 補正 14 件) |
+| 4 | PIL intro/outro PNG (Noto Sans JP / Orange+Indigo brand) | `intro.png` + `outro.png` |
+| 5 | ffmpeg intro/outro mp4 (1280x720@24, 3s/4s, silent) | `intro.mp4` + `outro.mp4` |
+| 6 | concat filter + grade (sat 1.15, contrast 1.05, gamma 0.95) + 30ms afade + Noto Sans JP 字幕焼き込み | `videos/output_D.mp4` (16MB / 7m10s / 429.9s) |
+| 7 | YouTube unlisted upload (Win版#126 OAuth) | https://youtu.be/Zclp_zK9cYM |
+| 8 | `lib/pages/philosophy_page.dart` `_videos` に 6 本目追加 | embed 完了 (initState で iframe registerView 自動) |
+
+**学び (memory に追記予定)**:
+- ffmpeg subtitles filter を絶対パスで concat と同 invocation に入れると silent に moov atom 不整合 (12-13MB で abort)
+- 解決: ① concat+grade+afade で `output_D_no_subs.mp4` を作る → ② cd videos && 相対パス subtitle filter で再 encode (2-step)
+- pip install --user は Bash tool background で stdout 消失 → 既存 `.venv/Scripts/python.exe` で deps 確認すべし (今回は main repo .venv に既存)
+
+**Philosophy Alignment (9/9)**:
+1. CEO感 ✅ Win版アーキテクチャ判断 = ソース選定 + variant 設計
+2. ミッション駆動 ✅ AI大学コンテンツ拡充
+3. 優しい mentor ✅ 字幕で日本語学習者にも親切
+4. 6部署バランス ✅ プロダクト × マーケ × R&D 横断
+5. 商品=価値 ✅ 視聴者に Anthropic 戦略の明確な解説提供
+6. 資本=時間 ✅ NotebookLM + ElevenLabs + ffmpeg 自動化で 15 分 1 動画
+7. BS ✅ youtu.be/Zclp_zK9cYM = 知的資産
+8. KPI ✅ AI大学 video 数 (前回 5 → 今回 6)
+9. IPO ✅ 動画資産は IR / マーケ素材
+
+**AI-DEV Alignment (7/7)**:
+1. Auth ✅ ElevenLabs / YouTube OAuth (token.json refresh)
+2. Deny-by-default ✅ `--privacy unlisted` 固定
+3. trace_id ✅ 該当なし (静的パイプ)
+4. Cost CB ✅ 該当なし
+5. Team memory ✅ memory + ROADMAP
+6. Retry/DLQ ✅ resumable upload (chunk リトライ)
+7. Quality gate ✅ ffprobe duration 検証 + 字幕 cue ASR 補正
+
+**Out of scope (next)**:
+- A/B/C variant (字幕版 / 3 分ハイライト / 60 秒 SNS) — 同 source mp4 から再 encode 可
+- AI大学ページに専用「動画解説」タブ追加 (現在 philosophy_page._videos の番外扱い)
+- YouTube channel branding (チャンネルアート + about)

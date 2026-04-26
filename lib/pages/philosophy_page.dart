@@ -5,7 +5,7 @@ import '../utils/platform_view.dart' as platform_view;
 
 /// 自分株式会社 — 基本理念ページ
 ///
-/// docs/PHILOSOPHY.md の 9 原則を可視化し、NotebookLM 動画 5 本を埋め込む。
+/// docs/PHILOSOPHY.md の 9 原則を可視化し、NotebookLM 動画 6 本を埋め込む。
 /// 全機能はこのページに記載された理念に照らして方向性を検証する (CLAUDE.md Rule 22)。
 class PhilosophyPage extends StatefulWidget {
   const PhilosophyPage({super.key});
@@ -549,6 +549,14 @@ const _videos = [
     label: 'D: プレミアム版',
     duration: '6:49',
     description: 'intro/outro カード + カラーグレード + 字幕。公式映像・ピッチ用途。',
+  ),
+  _Video(
+    id: 'Zclp_zK9cYM',
+    label: '番外: AnthropicのClaude Apps 解説 (D variant)',
+    duration: '7:10',
+    description: 'NotebookLM Deep Research + intro/outro + カラーグレード + 字幕焼き込み。'
+        'Anthropic Claude Apps の MCP オープン化戦略・市場シェア 18→29%・3500億ドル評価・'
+        'ChatGPT との設計思想の違いを 7 分で解説。AI大学シリーズ #1。',
   ),
 ];
 
