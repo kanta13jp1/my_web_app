@@ -35,8 +35,8 @@ class _AnalyzeRealityPageState extends State<AnalyzeRealityPage> {
 
     try {
       final response = await _supabase.functions.invoke(
-        'analyze-reality',
-        body: {'text': text},
+        'ai-hub',
+        body: {'action': 'analyze.reality', 'situation': text},
       );
 
       final data = response.data;

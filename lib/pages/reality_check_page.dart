@@ -209,8 +209,8 @@ class _RealityCheckPageState extends State<RealityCheckPage> {
         final analysisText =
             '主張: $claim\n観測事実: $facts\n解釈: ${interpretationController.text}';
         final resp = await Supabase.instance.client.functions.invoke(
-          'analyze-reality',
-          body: {'text': analysisText},
+          'ai-hub',
+          body: {'action': 'analyze.reality', 'situation': analysisText},
         );
         final data = resp.data as Map<String, dynamic>?;
         final analysis = data?['analysis'] as String?;

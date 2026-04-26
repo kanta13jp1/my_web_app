@@ -209,16 +209,8 @@ class _ThoughtInterruptDiagnosisPageState
     setState(() => _isSaving = true);
     try {
       final res = await _supabase.functions.invoke(
-        'daily-judgment',
-        body: {
-          'action': 'save_thought_interrupt_diagnosis',
-          'answers': {
-            'focus_break': _answers[0],
-            'impulse': _answers[1],
-            'peak_distraction_time': _answers[2],
-            'warning_sign': _answers[3],
-          },
-        },
+        'ai-hub',
+        body: {'action': 'judgment.get'},
       );
       final data = res.data;
       setState(() {

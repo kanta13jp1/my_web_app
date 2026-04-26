@@ -135,8 +135,8 @@ class _PersonalDashboardPageState extends State<PersonalDashboardPage>
 
       // Edge Function 呼び出し
       final res = await _supabase.functions.invoke(
-        'personal-dashboard',
-        body: {'action': 'get_overview', 'user_id': userId},
+        'core-hub',
+        body: {'action': 'personal.dashboard'},
       );
 
       if (!mounted) return;

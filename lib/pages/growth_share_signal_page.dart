@@ -33,14 +33,9 @@ class _GrowthShareSignalPageState extends State<GrowthShareSignalPage> {
     });
 
     try {
-      // dateKey を今日の日付で渡してシグナル集計を取得
-      final today = DateTime.now();
-      final dateKey =
-          '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
-
       final response = await _supabase.functions.invoke(
-        'growth-share-signal',
-        body: {'dateKey': dateKey},
+        'growth-hub',
+        body: {'action': 'share.list'},
       );
 
       final data = response.data;

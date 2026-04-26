@@ -37,8 +37,8 @@ class _GrowthAchievementSummaryPageState
 
     try {
       final response = await _supabase.functions.invoke(
-        'growth-achievement-summary',
-        body: {'period': _period},
+        'growth-hub',
+        body: {'action': 'achievement.list'},
       );
 
       final data = response.data;

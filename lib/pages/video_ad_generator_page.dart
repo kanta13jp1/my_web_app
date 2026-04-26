@@ -33,11 +33,15 @@ class _VideoAdGeneratorPageState extends State<VideoAdGeneratorPage> {
     });
     try {
       final response = await _supabase.functions.invoke(
-        'video-ad-generator',
-        body: {'action': 'list'},
+        'growth-hub',
+        body: {'action': 'video_ad.list'},
       );
       final data = response.data;
-      if (data is Map<String, dynamic> && data['ads'] is List) {
+      if (data is Map<String, dynamic> && data['items'] is List) {
+        setState(
+          () => _ads = (data['items'] as List).cast<Map<String, dynamic>>(),
+        );
+      } else if (data is Map<String, dynamic> && data['ads'] is List) {
         setState(
           () => _ads = (data['ads'] as List).cast<Map<String, dynamic>>(),
         );

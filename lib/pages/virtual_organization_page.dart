@@ -47,40 +47,25 @@ class _VirtualOrganizationPageState extends State<VirtualOrganizationPage>
       _errorMessage = null;
     });
     try {
-      final deptRes = await _supabase.functions.invoke(
-        'virtual-organization',
-        queryParameters: {'view': 'departments'},
-      );
-      final agentRes = await _supabase.functions.invoke(
-        'virtual-organization',
-        queryParameters: {'view': 'agents'},
-      );
-      final taskRes = await _supabase.functions.invoke(
-        'virtual-organization',
-        queryParameters: {'view': 'tasks'},
+      final orgRes = await _supabase.functions.invoke(
+        'ai-hub',
+        body: {'action': 'org.get'},
       );
 
-      final deptData = deptRes.data;
-      final agentData = agentRes.data;
-      final taskData = taskRes.data;
-
+      final orgData = orgRes.data;
       setState(() {
-        if (deptData is Map<String, dynamic>) {
-          final list = deptData['departments'];
-          if (list is List) {
-            _departments = list.map((d) => d as Map<String, dynamic>).toList();
+        if (orgData is Map<String, dynamic>) {
+          final org = orgData['org'] as Map<String, dynamic>? ?? {};
+          final deptList = org['departments'];
+          if (deptList is List) {
+            _departments = deptList.map((d) {
+              if (d is Map<String, dynamic>) return d;
+              return <String, dynamic>{'name': d.toString()};
+            }).toList();
           }
-        }
-        if (agentData is Map<String, dynamic>) {
-          final list = agentData['agents'];
-          if (list is List) {
-            _agents = list.map((a) => a as Map<String, dynamic>).toList();
-          }
-        }
-        if (taskData is Map<String, dynamic>) {
-          final list = taskData['tasks'];
-          if (list is List) {
-            _tasks = list.map((t) => t as Map<String, dynamic>).toList();
+          final agentList = org['agents'];
+          if (agentList is List) {
+            _agents = agentList.map((a) => a as Map<String, dynamic>).toList();
           }
         }
       });
@@ -94,8 +79,8 @@ class _VirtualOrganizationPageState extends State<VirtualOrganizationPage>
   Future<void> _assignTask(String goal) async {
     try {
       await _supabase.functions.invoke(
-        'virtual-organization',
-        body: {'action': 'assign_task', 'goal': goal},
+        'ai-hub',
+        body: {'action': 'org.get', 'goal': goal},
       );
       await _fetchOrganization();
       if (mounted) {
