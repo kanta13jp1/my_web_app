@@ -41,14 +41,14 @@ AI大学コンテンツと連動。Cursor / Claude Code / Codex 比較。
 | # | slug候補 | タグ | 想定投稿日 |
 |---|----------|------|-----------|
 | 11 | cursor-vs-claude-code-2026 | cursor,ai,programming,productivity | 2026-07-04 |
-| 12 | claude-code-best-practices | claude,ai,programming,productivity | 2026-07-11 |
-| 13 | openai-codex-vs-github-copilot | codex,copilot,ai,programming | 2026-07-18 |
-| 14 | multi-ai-workflow-real-costs | ai,saas,productivity,startup | 2026-07-25 |
-| 15 | litellm-unified-ai-gateway | litellm,ai,programming,api | 2026-08-01 |
-| 16 | langgraph-state-machine-patterns | langgraph,ai,programming,python | 2026-08-08 |
-| 17 | ai-university-200-providers-guide | ai,education,programming,saas | 2026-08-15 |
-| 18 | supabase-edge-functions-ai-cost | supabase,ai,programming,saas | 2026-08-22 |
-| 19 | flutter-web-ai-integration-2026 | flutter,ai,programming,webdev | 2026-08-29 |
+| 12 | claude-code-best-practices | claude,ai,programming,productivity | 2026-07-11 ✅ drafted |
+| 13 | openai-codex-vs-github-copilot | codex,copilot,ai,programming | 2026-07-18 ✅ drafted |
+| 14 | multi-ai-workflow-real-costs | ai,saas,productivity,startup | 2026-07-25 ✅ drafted |
+| 15 | litellm-unified-ai-gateway | litellm,ai,programming,api | 2026-08-01 ✅ drafted |
+| 16 | langgraph-state-machine-patterns | langgraph,ai,programming,python | 2026-08-08 ✅ drafted |
+| 17 | ai-university-200-providers-guide | ai,education,programming,saas | 2026-08-15 ✅ drafted |
+| 18 | supabase-edge-functions-ai-cost | supabase,ai,programming,saas | 2026-08-22 ✅ drafted |
+| 19 | flutter-web-ai-integration-2026 | flutter,ai,programming,webdev | 2026-08-29 ✅ drafted |
 | 20 | deno-vs-node-edge-functions | deno,programming,webdev,saas | 2026-09-05 |
 
 ### Phase 3 (9月): 自分株式会社 機能紹介シリーズ — 10本
