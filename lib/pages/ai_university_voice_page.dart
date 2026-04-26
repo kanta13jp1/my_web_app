@@ -44,6 +44,10 @@ class _AiUniversityVoicePageState extends State<AiUniversityVoicePage> {
   }
 
   Future<void> _loadQuestion() async {
+    if (_supabase.auth.currentUser == null) {
+      setState(() => _questionText = 'ログインが必要です');
+      return;
+    }
     setState(() {
       _questionText = '読み込み中...';
       _ttsStatus = 'idle';
@@ -119,6 +123,10 @@ class _AiUniversityVoicePageState extends State<AiUniversityVoicePage> {
 
   Future<void> _submitAnswer(String answer) async {
     if (answer.trim().isEmpty) return;
+    if (_supabase.auth.currentUser == null) {
+      setState(() => _feedbackText = 'ログインが必要です');
+      return;
+    }
     setState(() => _feedbackText = '評価中...');
     try {
       final resp = await _supabase.functions.invoke(

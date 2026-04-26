@@ -28,6 +28,10 @@ class _AiSearchPageState extends State<AiSearchPage> {
   Future<void> _search(String query) async {
     final trimmed = query.trim();
     if (trimmed.isEmpty) return;
+    if (_supabase.auth.currentUser == null) {
+      setState(() => _errorMessage = 'この機能はログインが必要です');
+      return;
+    }
 
     setState(() {
       _isLoading = true;
