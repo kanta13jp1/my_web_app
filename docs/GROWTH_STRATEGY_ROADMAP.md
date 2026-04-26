@@ -21573,3 +21573,15 @@ Google I/O 2026 競合脅威 事前ブリーフィング
   - `virtual-organization` → `ai-hub:org.get` (3call→1call統合)
 - **cross-instance-pr**: `20260420_ps5_flutter_stale_invoke_audit_24ef.md` A11件完了
 - **dart format**: 0 changed (already formatted)
+
+## PS#5 S61b — 2026-04-26 (lint fix + B全件確認 → 23/23完了)
+- **担当**: PS版#5 (on-call bug fix)
+- **lint fix**: `virtual_organization_page.dart` `_tasks` → `final` (prefer_final_fields) / commit 85fe7715
+- **B セクション grep 確認**:
+  - `competitor-feature-sync` → `enterprise-hub:competitor.sync` ✅ 既移行済
+  - `invoice-generator` → `app-hub:billing.invoice` ✅ 既移行済
+  - `poll-survey` → `tools-hub:poll.list/create/vote` ✅ 既移行済
+- **cross-instance-pr**: `20260420_ps5_flutter_stale_invoke_audit_24ef.md` 23/23 完了更新
+- **PS#5 スコープ完了**: 23/23 (D=2件はWin/VSCode担当)
+- **commit**: e03be91c
+- **push**: SUCCESS ✅
