@@ -636,6 +636,7 @@ class _DailyHabitsPageState extends State<DailyHabitsPage> {
   }
 
   Widget _buildHabitCard(Map<String, dynamic> habit) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final habitId = habit['id']?.toString() ?? '';
     final title = habit['title']?.toString() ?? '';
     final desc = habit['description']?.toString();
@@ -670,7 +671,9 @@ class _DailyHabitsPageState extends State<DailyHabitsPage> {
                 height: 40,
                 decoration: BoxDecoration(
                   color: isCompleted
-                      ? const Color(0xFFE8F5E9)
+                      ? (isDark
+                          ? const Color(0xFF0A1A0A)
+                          : const Color(0xFFE8F5E9))
                       : color.withAlpha(20),
                   borderRadius: BorderRadius.circular(10),
                 ),
@@ -715,7 +718,9 @@ class _DailyHabitsPageState extends State<DailyHabitsPage> {
                     vertical: 4,
                   ),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFFFF3E0),
+                    color: isDark
+                        ? const Color(0xFF2A1A00)
+                        : const Color(0xFFFFF3E0),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(

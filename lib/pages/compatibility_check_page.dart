@@ -284,6 +284,7 @@ class _CompatibilityCheckPageState extends State<CompatibilityCheckPage> {
     required String level,
     required String title,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final personalityType = PersonalityTestService.personalityTypes.firstWhere(
       (t) => t.code == type,
       orElse: () => PersonalityTestService.personalityTypes[0],
@@ -407,7 +408,9 @@ class _CompatibilityCheckPageState extends State<CompatibilityCheckPage> {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFFF3E0),
+                  color: isDark
+                      ? const Color(0xFF2A1A00)
+                      : const Color(0xFFFFF3E0),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Row(

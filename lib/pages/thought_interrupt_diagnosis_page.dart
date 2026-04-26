@@ -382,6 +382,7 @@ class _ThoughtInterruptDiagnosisPageState
   }
 
   Widget _buildResult() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final disruptors = _result?['top_disruptors'] as List? ?? [];
     final peakTime = _result?['peak_time']?.toString() ?? '';
     final advice = _result?['advice']?.toString() ?? '';
@@ -440,7 +441,9 @@ class _ThoughtInterruptDiagnosisPageState
                           vertical: 6,
                         ),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFFFE0B2),
+                          color: isDark
+                              ? const Color(0xFF2A1500)
+                              : const Color(0xFFFFE0B2),
                           borderRadius: BorderRadius.circular(16),
                         ),
                         child: Text(
