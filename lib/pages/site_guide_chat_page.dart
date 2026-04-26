@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 
 import '../models/site_guide_catalog_item.dart';
@@ -92,6 +93,14 @@ class _SiteGuideChatPageState extends State<SiteGuideChatPage> {
   Future<void> _sendQuestion(String question) async {
     final normalized = question.trim();
     if (normalized.isEmpty || _isSending) return;
+    if (Supabase.instance.client.auth.currentUser == null) {
+      setState(() {
+        _messages.add(
+          _SiteGuideMessage.assistant('ログインが必要です', source: 'anon-guard'),
+        );
+      });
+      return;
+    }
 
     setState(() {
       _messages.add(_SiteGuideMessage.user(normalized));
