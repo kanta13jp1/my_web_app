@@ -437,7 +437,7 @@ case 'notion.sync_wbs': {
 | # | タスク | 期限 | 優先度 | 依存 |
 |---|--------|------|-------|------|
 | S1 | Slack Webhook 3 ch 設定 | 2026-04-28 | 🔴 | ユーザー手動 |
-| S2 | `core-hub:slack.notify` action 追加 | 2026-04-30 | 🟡 | S1 |
+| S2 | `core-hub:slack.notify` action 追加 | 2026-04-30 | ✅ Win版#132 part 36 (2026-04-26) | S1 |
 | S3 | ai_circuit_breaker Supabase trigger (Slack post) | 2026-04-30 | 🟡 | S2 |
 | S4 | Discord webhook secondary channel | 2026-05-15 | 🟢 | S1 |
 | N1 | Notion Integration token + DB 3 つ設計 | 2026-05-01 | 🟡 | ユーザー手動 |

@@ -879,6 +879,57 @@ serve(async (req: Request) => {
         });
       }
 
+      // Issue #696 S2 — Slack Incoming Webhook 投稿 action.
+      // 6 channel (default/quota/ci/alerts/daily/handoff) を env var で切替。
+      // payload: { channel?: string, text?: string, blocks?: SlackBlock[] }
+      case "slack.notify": {
+        const channel = String(body.channel ?? "default").trim();
+        const text = typeof body.text === "string" ? body.text.trim() : "";
+        const blocks = Array.isArray(body.blocks) ? body.blocks : null;
+        if (!text && !blocks) {
+          return json({ error: "text or blocks required" }, 400);
+        }
+
+        const webhookEnvMap: Record<string, string> = {
+          "default": "SLACK_WEBHOOK_URL",
+          "quota": "SLACK_WEBHOOK_QUOTA",
+          "ci": "SLACK_WEBHOOK_CI",
+          "alerts": "SLACK_WEBHOOK_ALERTS",
+          "daily": "SLACK_WEBHOOK_DAILY",
+          "handoff": "SLACK_WEBHOOK_HANDOFF",
+        };
+        const envKey = webhookEnvMap[channel] ?? "SLACK_WEBHOOK_URL";
+        const url = Deno.env.get(envKey);
+        if (!url) {
+          return json({
+            error: `webhook not configured: ${envKey}`,
+            channel,
+          }, 500);
+        }
+
+        const slackPayload: Record<string, unknown> = {};
+        if (text) slackPayload.text = text;
+        if (blocks) slackPayload.blocks = blocks;
+
+        const resp = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(slackPayload),
+        });
+
+        if (!resp.ok) {
+          const errBody = await resp.text();
+          return json({
+            error: `slack webhook failed: ${resp.status}`,
+            detail: errBody.slice(0, 500),
+            channel,
+            envKey,
+          }, 502);
+        }
+
+        return json({ success: true, channel, envKey, status: resp.status });
+      }
+
       // ---- User profile ----
       case "user.profile": {
         const { data } = await admin
