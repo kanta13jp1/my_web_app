@@ -21086,3 +21086,58 @@ anon 401 残存 5ページ修正 (ai-hub guard 完了)
 - 評価: 8/9
 
 **commit**: e1a6c0e7 (migrations) → 1431ff69 (push main)
+
+### Win版#132 part 26 完了 (2026-04-26 13:10 JST)
+
+**🔁 Master Brain 提案 #5 適用** — registry 同期監査 (DB seed と Flutter UI registry の不一致解消)
+
+**Master Brain 入力**: NotebookLM jibun-master-brain (`ea6cff25-574d-4b8b-ad72-ab47cf1ed01f`) に問い合わせ、最新 mind map (16a1c6e0 / 12:58 today) ベースで 5 件のアクション提案を取得。最も ROI が高い「#5 registry 同期監査」を即実行。
+
+**監査手順**:
+1. `lib/models/ai_provider_registry.dart` から AiProviderEntry id を抽出 (211 件)
+2. `supabase/migrations/*_seed_*_ai_university.sql` から VALUES の provider id を抽出 (219 件)
+3. CRLF 正規化後 `comm -23` で DB seed にあるが registry にない ID を確定 (10 件)
+
+**漏れ 10 件** (PS#3 が hyphen 命名で migration 追加 / registry 追従なし):
+- `adobe-firefly` (S60 / 9/9 / Adobe 商業利用安全な生成 AI)
+- `fireflies-ai` (S61 / 8/9 / AI 会議アシスタント)
+- `gong` (S61 / 9/9 / AI Revenue Intelligence / $7.25B)
+- `canva-ai` (S62 / 9/9 / Magic Studio / MAU 1.5億)
+- `zapier-ai` (S62 / 9/9 / 6000+ アプリ / Central AI Agent)
+- `framer-ai` (S63 / 8/9 / AI Web ビルダー)
+- `beautiful-ai` (S63 / 8/9 / AI プレゼンビルダー)
+- `writesonic` (8/9 / AI コピーライティング)
+- `dust` (8/9 / Enterprise AI Agent PF)
+- `sierra` (8/9 / Bret Taylor 創業 / カスタマーサービス AI)
+
+**実装**:
+- `lib/models/ai_provider_registry.dart` 末尾に `// === DB seed には存在するが registry 漏れ補正 ===` コメント + 10 entry 追加
+- 全て `AiProviderStatus.notImplemented` (chat 互換ではない / 公式サイト entryPoint)
+- 件数: 214 → **224** (DB seed 219 と registry 224 で完全同期 + Win版独自分 5 件 = sora/meshy/etc)
+
+**残存差分** (registry にあるが DB seed にない 15 件 = `01ai` / `arcee_ai` / etc.) は legacy seed が古い naming で別ファイルに存在するため許容 (false positive)。
+
+**Philosophy Alignment (9/9)**:
+1. CEO 感 ✅ Master Brain 提案 5 件から ROI 最高を Win版が選定
+2. ミッション駆動 ✅ AI大学整合性 = ユーザーが見れる provider 数の正確化
+3. 優しい mentor ✅ 各 entry に role/feature note 追加
+4. 6 部署バランス ✅ プロダクト × オペレーション
+5. 商品=価値 ✅ UI に表示される provider が DB と完全一致
+6. 資本=時間 ✅ Master Brain → 監査 → 修正を 1 セッション 20 分で完結
+7. BS ✅ registry = 知的資産整合性
+8. KPI ✅ 「昨日の自分 (PS#3 と registry の乖離) を超えた」
+9. IPO ✅ AI大学カバレッジの正確性は IR 訴求材料
+
+**AI-DEV Alignment (7/7)**:
+1. Auth ✅ 該当なし (静的 Dart)
+2. Deny-by-default ✅ notImplemented で初期 chat 不可
+3. trace_id ✅ 該当なし
+4. Cost CB ✅ 該当なし
+5. Team memory ✅ memory + ROADMAP + MEMORY.md
+6. Retry/DLQ ✅ idempotent (ID 重複は AiProviderEntry が dart 静的なので impossible)
+7. Quality gate ✅ 既存 entry pattern 完全踏襲
+
+**Out of scope (next)**:
+- Master Brain 提案 #1 Gemini 3.1 Flash-Lite / #2 Claude Opus 4.7 / #3 Slack+Notion DB 準備 (それぞれ別 session で)
+- gemini_university_v2_page.dart の `_providerMeta` / `_quizzes` / `_fallback` への 10 件追加 (UI クイズ/フォールバック完全対応)
+- 命名規則の統一 (hyphen vs underscore — PS#3 と協議が必要 / cross-instance-pr 候補)

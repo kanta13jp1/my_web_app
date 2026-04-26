@@ -1703,6 +1703,87 @@ const List<AiProviderEntry> kAiProviderRegistry = [
     note:
         r'AI 3D モデル生成 — text-to-3D / image-to-3D / GLB/FBX/USDZ 出力 / Unity・Unreal 統合 / Pro \$20/月 / ★8/9',
   ),
+  // === DB seed には存在するが registry 漏れ補正 (Win版#132 part 26 / Master Brain 提案 #5) ===
+  AiProviderEntry(
+    id: 'adobe-firefly',
+    displayName: 'Adobe Firefly',
+    status: AiProviderStatus.notImplemented,
+    entryPoint: 'https://firefly.adobe.com/',
+    note:
+        r'Adobe 商業利用安全な生成 AI — Creative Cloud 統合 / 学習データ商用 OK / Generative Fill / Text-to-Image / ★9/9',
+  ),
+  AiProviderEntry(
+    id: 'fireflies-ai',
+    displayName: 'Fireflies.ai',
+    status: AiProviderStatus.notImplemented,
+    entryPoint: 'https://fireflies.ai/',
+    note:
+        r'AI 会議アシスタント — 自動文字起こし + 要約 + Action Items / Slack/CRM 統合 / GraphQL API / ★8/9',
+  ),
+  AiProviderEntry(
+    id: 'gong',
+    displayName: 'Gong',
+    status: AiProviderStatus.notImplemented,
+    entryPoint: 'https://www.gong.io/',
+    note:
+        r'AI Revenue Intelligence — 営業通話録音 + 分析 + コーチング / 勝率 +21% / \$7.25B 評価 / エンタープライズ特化 / ★9/9',
+  ),
+  AiProviderEntry(
+    id: 'canva-ai',
+    displayName: 'Canva AI',
+    status: AiProviderStatus.notImplemented,
+    entryPoint: 'https://www.canva.com/ai/',
+    note:
+        r'世界最大デザイン PF + AI — Magic Studio / Magic Design / Magic Write / MAU 1.5 億+ / \$26B 評価 / ★9/9',
+  ),
+  AiProviderEntry(
+    id: 'zapier-ai',
+    displayName: 'Zapier AI',
+    status: AiProviderStatus.notImplemented,
+    entryPoint: 'https://zapier.com/ai',
+    note:
+        r'WF 自動化の王者 + AI — 6000+ アプリ連携 / Zapier Central AI Agent / Fortune 500 87% 利用 / ★9/9',
+  ),
+  AiProviderEntry(
+    id: 'framer-ai',
+    displayName: 'Framer AI',
+    status: AiProviderStatus.notImplemented,
+    entryPoint: 'https://www.framer.com/ai/',
+    note:
+        r'AI Web サイトビルダー — 自然言語でサイト生成 / React 出力 / デザイナー特化 / ノーコード / ★8/9',
+  ),
+  AiProviderEntry(
+    id: 'beautiful-ai',
+    displayName: 'Beautiful.ai',
+    status: AiProviderStatus.notImplemented,
+    entryPoint: 'https://www.beautiful.ai/',
+    note:
+        r'AI プレゼンビルダー — Smart Slides 自動レイアウト調整 / デザイン品質担保 / 企業向け / API 提供 / ★8/9',
+  ),
+  AiProviderEntry(
+    id: 'writesonic',
+    displayName: 'Writesonic',
+    status: AiProviderStatus.notImplemented,
+    entryPoint: 'https://writesonic.com/',
+    note:
+        r'AI コピーライティング — Chatsonic / Botsonic / Article Writer 6 / 100+ 言語 / SEO 最適化 / ★8/9',
+  ),
+  AiProviderEntry(
+    id: 'dust',
+    displayName: 'Dust',
+    status: AiProviderStatus.notImplemented,
+    entryPoint: 'https://dust.tt/',
+    note:
+        r'エンタープライズ AI Agent PF — カスタム AI アシスタント / Slack/Notion 統合 / マルチモデル対応 / ★8/9',
+  ),
+  AiProviderEntry(
+    id: 'sierra',
+    displayName: 'Sierra',
+    status: AiProviderStatus.notImplemented,
+    entryPoint: 'https://sierra.ai/',
+    note:
+        r'AI カスタマーサービス Agent — Bret Taylor (元 OpenAI 会長 / 元 Salesforce co-CEO) + Clay Bavor 創業 / エンタープライズ特化 / ★8/9',
+  ),
 ];
 
 /// ステータス別件数を集計
