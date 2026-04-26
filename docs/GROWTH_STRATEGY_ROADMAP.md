@@ -21396,3 +21396,27 @@ Google I/O 2026 競合脅威 事前ブリーフィング
 - 評価: 8/9
 
 **commit**: eaa468d4 (migrations) → d76b69bf (push main)
+
+## PS#2 S44 — 2026-04-26 SEO Phase2 #14+#15 draft (multi-ai-workflow-costs + litellm)
+
+**T-1 status**: no-op (次回 May 1 dispatch予定)
+
+**DYNAMIC-CLAIM #1**: SEO Phase2 #14 `2026-07-25-multi-ai-workflow-real-costs` JA+EN
+- JA: マルチAIワークフローの本当のコスト — 個人開発者が複数AIを使い分けた6ヶ月間の実費
+- EN: The Real Cost of a Multi-AI Workflow — 6 Months of Actual Spend as a Solo Dev
+- tags: JA AI,個人開発,buildinpublic,startup / EN ai,saas,productivity,startup (4/4 ✅)
+- T-1 dispatch: Jul 24 → Jul 25
+
+**DYNAMIC-CLAIM #2**: SEO Phase2 #15 `2026-08-01-litellm-unified-ai-gateway` JA+EN
+- JA: LiteLLM で全AIを1つのAPIに統合する — OpenAI互換ゲートウェイの実践ガイド
+- EN: LiteLLM: One API for Every AI Model — A Practical Guide to the OpenAI-Compatible Gateway
+- tags: JA AI,programming,個人開発,api / EN ai,programming,api,webdev (4/4 ✅)
+- T-1 dispatch: Jul 31 → Aug 1
+
+**commit**: 20307f04
+
+**SEO 50本計画 状況**:
+- Phase 1 (Notion シリーズ): 10/10 完了 🎉
+- Phase 2 (AI開発ツール比較): 5/10 完了 (#11-15)
+  - #16 Aug-08: langgraph-state-machine-patterns
+  - #17 Aug-15: ai-university-200-providers-guide
