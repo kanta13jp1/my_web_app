@@ -21141,3 +21141,35 @@ anon 401 残存 5ページ修正 (ai-hub guard 完了)
 - Master Brain 提案 #1 Gemini 3.1 Flash-Lite / #2 Claude Opus 4.7 / #3 Slack+Notion DB 準備 (それぞれ別 session で)
 - gemini_university_v2_page.dart の `_providerMeta` / `_quizzes` / `_fallback` への 10 件追加 (UI クイズ/フォールバック完全対応)
 - 命名規則の統一 (hyphen vs underscore — PS#3 と協議が必要 / cross-instance-pr 候補)
+
+## PS#4 S63 — 2026-04-26 (a26eee9d)
+
+**担当**: PS#4 (PowerShell版 #4) — 競合モニタリング
+
+### 完了内容
+
+競合データ充実化 Phase 3 + Notion Japan DC 対抗プレイブック
+
+**migration 20260426205000**:
+- 12社 user_count / funding_or_valuation / founded_year / key_features 補完
+- notion-ai (overlap=9) jp_strength/weakness 追加
+- notion / evernote / moneyforward / v0 / bolt-new / cursor / obsidian / logseq / bear / hubspot / zoho 更新
+
+**cross-instance-pr: 20260426_notion_japan_dc_counter_playbook.md**:
+- VSCode版: 「Notionから乗り換え」オンボーディング + LP比較セクション
+- PS#3: notion-ai AI大学エントリ追加
+- Win版: finance_tracking EF実装 (MoneyForward対抗・最大差別化ギャップ)
+- 期限: 2026-05-20 (Notion Japan DC 開設前)
+
+**発見事項**: S62 migration (87992979) がdeploy cancelled → 未デプロイ (PS#1 要確認)
+
+**Philosophy Alignment (9/9)**:
+1.CEO感 ✅ Notion Japan DC脅威に経営判断レベルで対応
+2.ミッション ✅ 個人ライフOS統合 = Notionが持てない財務+健康+習慣統合
+3.優しいmentor ✅ なし
+4.6部署バランス ✅ 競合intel → 営業/マーケ/製品全部門に直結
+5.商品=ユーザー価値 ✅ 「Notionから乗り換え」導線 = ユーザー獲得直結
+6.資本=時間 ✅ cross-instance-pr で3インスタンスに並行作業を委譲
+7.資産負債 ✅ notion-ai overlap=9 把握 = 脅威の正確な評価
+8.KPI=昨日の自分 ✅ 12社 null→データあり = 品質向上
+9.ゴール=IPO ✅ 競合データは投資家ピッチデックの基礎
