@@ -111,6 +111,11 @@ class UniversalXPostResult {
 
 class UniversalXShareService {
   static const int maxTweetLength = 280;
+  static const List<String> _creativePipeline = <String>[
+    'gpt-image-2',
+    'gpt-5.5',
+    'seedance-2.0',
+  ];
 
   final SupabaseClient? _supabase;
   final AiHubChatService _chatService;
@@ -157,7 +162,7 @@ class UniversalXShareService {
       'size': '1792x1024',
       'style': 'vivid',
       'preferredModel': 'gpt-image-2',
-      'creativePipeline': const ['gpt-image-2', 'gpt-5.5', 'seedance-2.0'],
+      'creativePipeline': _creativePipeline,
       'source': 'universal_x_share',
       'route': context.routePath,
     });
@@ -174,14 +179,14 @@ class UniversalXShareService {
   }) async {
     final data = await _invoke('viral-video-ad-generator', {
       'type': 'presenter_video',
-      'template': 'feature_highlight',
+      'template': _videoTemplateFor(context),
       'lang': 'ja',
-      'title': context.title,
-      'customPrompt': draft.videoPrompt,
+      'title': _shareTitleFor(context),
+      'customPrompt': _videoPromptFor(context, draft),
       'customScript': _scriptLinesFromText(draft.text),
       'customHashtags': draft.hashtags,
       'preferredModel': 'seedance-2.0',
-      'creativePipeline': const ['gpt-image-2', 'gpt-5.5', 'seedance-2.0'],
+      'creativePipeline': _creativePipeline,
       'source': 'universal_x_share',
       'route': context.routePath,
     });
@@ -223,23 +228,39 @@ class UniversalXShareService {
   static UniversalXShareDraft buildFallbackDraft(
     UniversalSharePageContext context,
   ) {
-    final title = context.title;
-    final text = sanitizeTweet(
-      '''$title をアップデートしました。
+    final title = _shareTitleFor(context);
+    final isFinanceUx = _isMyFinanceUxContext(context);
+    final text = isFinanceUx
+        ? sanitizeTweet(
+            '''動くスマホアプリUX検証動画「マイファイナンス」
+お金の浪費を減らすため、資産・支出・KGI/CSF/KPIを一画面で検証します。
+GPT image2 → GPT-5.5 → Seedance 2.0
+
+${context.url}
+
+#AI動画 #FlutterWeb #資産管理''',
+            url: context.url,
+          )
+        : sanitizeTweet(
+            '''$title をアップデートしました。
 自分株式会社の中で、今日の改善をそのまま使える形にしています。
 
 ${context.url}
 
 #buildinpublic #FlutterWeb #Supabase''',
-      url: context.url,
-    );
+            url: context.url,
+          );
     return UniversalXShareDraft(
       text: text,
-      imagePrompt:
-          'A clean 16:9 product screenshot style hero image for "$title", Flutter web app UI, crisp dashboard details, no text overlays, modern Japanese productivity app, bright and trustworthy.',
-      videoPrompt:
-          'A short 16:9 presenter video concept introducing "$title" as a practical improvement in a Flutter web life-management app.',
-      hashtags: const ['#buildinpublic', '#FlutterWeb', '#Supabase'],
+      imagePrompt: isFinanceUx
+          ? 'A 16:9 moving smartphone app UX validation key visual for "My Finance", Japanese personal finance app, asset dashboard, spending review, KPI cards, tap gestures, clean fintech UI, no text overlays.'
+          : 'A clean 16:9 product screenshot style hero image for "$title", Flutter web app UI, crisp dashboard details, no text overlays, modern Japanese productivity app, bright and trustworthy.',
+      videoPrompt: isFinanceUx
+          ? 'A short moving smartphone app UX validation video for "My Finance", showing a Japanese mobile finance app flow with assets, spending, KGI/CSF/KPI, and an improvement loop. Creative pipeline: GPT image2 -> GPT-5.5 -> Seedance 2.0.'
+          : 'A short 16:9 presenter video concept introducing "$title" as a practical improvement in a Flutter web life-management app.',
+      hashtags: isFinanceUx
+          ? const ['#AI動画', '#FlutterWeb', '#資産管理']
+          : const ['#buildinpublic', '#FlutterWeb', '#Supabase'],
       fallbackUsed: true,
       source: 'fallback',
     );
@@ -346,6 +367,9 @@ ${context.url}
     UniversalSharePageContext context,
     UniversalXShareDraft fallback,
   ) {
+    final financeRule = _isMyFinanceUxContext(context)
+        ? '- For finance routes, frame this as 動くスマホアプリUX検証動画「マイファイナンス」 and mention GPT image2 -> GPT-5.5 -> Seedance 2.0 when natural.'
+        : '';
     return '''
 You are a Japanese build-in-public social media strategist.
 Create one X sharing package for the current page of a Flutter Web app.
@@ -369,10 +393,48 @@ Rules:
 - Emphasize what changed, what users can do, and why it matters.
 - Treat the creative workflow as GPT image2 -> GPT-5.5 -> Seedance 2.0.
 - Keep the post natural, concise, and credible.
+$financeRule
 
 Fallback style:
 ${fallback.text}
 ''';
+  }
+
+  static bool _isMyFinanceUxContext(UniversalSharePageContext context) {
+    final key = '${context.routePath} ${context.title}'.toLowerCase();
+    return key.contains('asset-management') ||
+        key.contains('money-forward') ||
+        key.contains('cfo-office') ||
+        key.contains('finance') ||
+        context.title.contains('資産') ||
+        context.title.contains('財務');
+  }
+
+  static String _shareTitleFor(UniversalSharePageContext context) {
+    return _isMyFinanceUxContext(context) ? 'マイファイナンス' : context.title;
+  }
+
+  static String _videoTemplateFor(UniversalSharePageContext context) {
+    return _isMyFinanceUxContext(context)
+        ? 'mobile_ux_validation'
+        : 'feature_highlight';
+  }
+
+  static String _videoPromptFor(
+    UniversalSharePageContext context,
+    UniversalXShareDraft draft,
+  ) {
+    if (!_isMyFinanceUxContext(context)) {
+      return draft.videoPrompt;
+    }
+    return '''
+Moving smartphone app UX validation video for "My Finance".
+Use the actual product context from ${context.url}.
+Show a Japanese mobile finance app flow: assets, spending, KGI/CSF/KPI, waste reduction, and an improvement loop.
+Creative pipeline: GPT image2 -> GPT-5.5 -> Seedance 2.0.
+${draft.videoPrompt}
+'''
+        .trim();
   }
 
   static List<String> _scriptLinesFromText(String text) {
