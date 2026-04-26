@@ -21071,3 +21071,18 @@ anon 401 残存 5ページ修正 (ai-hub guard 完了)
 7.資産負債 ✅ Notionのjp_weakness = 自分株式会社の資産
 8.KPI=昨日の自分 ✅ jp_weakness 空白 → 18社補完で品質向上
 9.ゴール=IPO ✅ 競合分析は投資家向け資料の基礎データ
+
+## PS#3 S64 — 2026-04-26 AI大学 222→224社化 (Writesonic + Dust)
+
+**migration 20260426202000**: Writesonic 追加 (222→223)
+- AIコピーライティング / Article Writer 6 (SEO最適化長文記事) / Chatsonic (Google検索連携)
+- Botsonic (ノーコードチャットボットビルダー) / SurferSEO統合 / 100+言語 / YC S21
+- 評価: 8/9
+
+**migration 20260426203500**: Dust 追加 (223→224)
+- エンタープライズAIエージェントプラットフォーム / 20+データソース (Notion/Slack/GitHub等)
+- マルチモデル対応 (GPT-4o/Claude 3.5/Gemini 1.5) / GDPR準拠 EU製 / YC S22 / Sequoia
+- Slack @メンション一発でカスタムエージェント呼び出し / 引用元透明性
+- 評価: 8/9
+
+**commit**: e1a6c0e7 (migrations) → 1431ff69 (push main)
