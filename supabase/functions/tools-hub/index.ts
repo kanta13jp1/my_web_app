@@ -1691,7 +1691,27 @@ serve(async (req) => {
           const { data, error: le } = await admin.from("horse_provider_leaderboard")
             .select("*");
           if (le) throw new Error(le.message);
-          return json({ success: true, leaderboard: data ?? [] });
+          const lb = data ?? [];
+          // Attach best bet type per provider/model from horse_bet_type_provider_accuracy
+          const { data: btRows } = await admin.from("horse_bet_type_provider_accuracy")
+            .select("provider, model, bet_type, hit_rate_pct, total_predictions")
+            .neq("bet_type", "購入しない");
+          const btMap = new Map<string, { bet_type: string; hit_rate_pct: number }>();
+          for (const row of (btRows ?? []) as Array<Record<string, unknown>>) {
+            const key = `${row.provider}|${row.model}`;
+            if (!btMap.has(key)) {
+              btMap.set(key, {
+                bet_type: String(row.bet_type ?? ""),
+                hit_rate_pct: Number(row.hit_rate_pct ?? 0),
+              });
+            }
+          }
+          const enriched = lb.map((row: Record<string, unknown>) => {
+            const key = `${row.provider}|${row.model}`;
+            const best = btMap.get(key);
+            return { ...row, best_bet_type: best?.bet_type ?? null, best_bet_hit_rate: best?.hit_rate_pct ?? null };
+          });
+          return json({ success: true, leaderboard: enriched });
         }
         case "horseracing.evaluate_accuracy": {
           // 結果確定済みレースの ensemble 予想を全てスコアリング
