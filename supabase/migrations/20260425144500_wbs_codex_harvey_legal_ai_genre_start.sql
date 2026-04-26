@@ -4,7 +4,7 @@ set
   status = 'in_progress',
   progress = greatest(progress, 30),
   start_date = coalesce(start_date, date '2026-04-25'),
-  recovery_plan = coalesce(recovery_plan, 'Completed same day (2026-04-25): Legal AI genre positioning strengthened in AI University. Follow-up migration marks task completed.'),
+  recovery_plan = CASE WHEN COALESCE(recovery_plan, '') = '' THEN 'Completed same day (2026-04-25): Legal AI genre positioning strengthened in AI University. Follow-up migration marks task completed.' ELSE recovery_plan END,
   description = case
     when coalesce(description, '') like '%Started 2026-04-25: Codex took over Harvey Legal AI genre%'
       then description
