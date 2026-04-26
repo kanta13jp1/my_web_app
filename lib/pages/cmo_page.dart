@@ -299,7 +299,7 @@ $hashtags
   }
 
   Future<void> _generatePressRelease() async {
-    if (Supabase.instance.client.auth.currentUser == null) {
+    if (supabase.auth.currentUser == null) {
       setState(() => _isLoading = false);
       return;
     }
