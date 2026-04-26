@@ -401,6 +401,7 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   final _scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
+  final _navigatorKey = GlobalKey<NavigatorState>();
   final _versionCheckService = VersionCheckService();
   bool _showUpdateBanner = false;
 
@@ -426,12 +427,14 @@ class _MyAppState extends State<MyApp> {
       title: '自分株式会社', //  旧: マイメモ -> 新: 自分株式会社
       debugShowCheckedModeBanner: false,
       scaffoldMessengerKey: _scaffoldMessengerKey,
+      navigatorKey: _navigatorKey,
       theme: themeService.getLightTheme(),
       darkTheme: themeService.getDarkTheme(),
       themeMode: themeService.getFlutterThemeMode(),
       builder: (context, child) {
         return GlobalHeaderClockShell(
           child: UniversalAiShareShell(
+            navigatorKey: _navigatorKey,
             child: Column(
               children: [
                 if (_showUpdateBanner)
