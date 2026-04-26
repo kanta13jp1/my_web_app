@@ -59,10 +59,11 @@ JRA_VENUE_MAP = {
 # NAR 競馬場コード (race_id の 5-6 桁目 = positions [4:6])
 # NAR race_id 構造: YYYY(4) + venue(2) + MM(2) + DD(2) + race(2) = 12桁
 NAR_VENUE_MAP = {
+    # netkeiba NAR race_id codes. These differ from some NAR official venue codes.
     "30": "門別", "35": "盛岡", "36": "水沢", "42": "浦和",
     "43": "船橋", "44": "大井", "45": "川崎", "46": "金沢",
-    "48": "笠松", "50": "名古屋", "54": "園田", "55": "姫路",
-    "61": "高知", "63": "佐賀", "68": "帯広",
+    "47": "笠松", "48": "名古屋", "50": "園田", "51": "姫路",
+    "54": "高知", "55": "佐賀", "65": "帯広",
 }
 
 HEADERS = {
@@ -122,15 +123,12 @@ def _data_quality_score(entry: dict) -> float:
 # ─── HTTP ヘルパー ─────────────────────────────────────────────────────────────
 def http_get(url: str, timeout: int = 15) -> Optional[str]:
     """HTML を取得して正しいエンコーディングで文字列に変換する。
-    NAR 全ページ (race/ horse/ top/) は EUC-JP で確定デコードする。"""
+    netkeiba は NAR の一覧ページが UTF-8、出走表/馬ページが EUC-JP の場合があるため自動判定する。"""
     req = urllib.request.Request(url, headers=HEADERS)
     try:
         with urllib.request.urlopen(req, timeout=timeout) as resp:
             raw = resp.read()
-            # NAR ページは常に EUC-JP — UTF-8 で誤デコードする前に確定デコード
-            if "nar.netkeiba.com" in url:
-                return raw.decode("euc-jp", errors="replace")
-            # その他のページ: Content-Type → meta charset → フォールバック
+            # Content-Type → meta charset → フォールバック
             charset = resp.headers.get_content_charset()
             if not charset:
                 m = re.search(rb"charset=[\"']?\s*([A-Za-z0-9_-]+)", raw[:4096])

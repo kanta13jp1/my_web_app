@@ -518,6 +518,58 @@ const HORSE_PREMIUM_PROVIDER_CHAIN: HorseProviderConfig[] = [
   { provider: "openrouter", model: Deno.env.get("HORSE_DEEPSEEK_REASONER_MODEL") ?? "deepseek/deepseek-r1", apiKeyEnv: "OPENROUTER_API_KEY", estimatedCostUsd: 0.006, tier: "premium", family: "DeepSeek" },
 ];
 
+const NETKEIBA_NAR_VENUE_MAP: Record<string, string> = {
+  // netkeiba NAR race_id codes. These differ from some NAR official venue codes.
+  "30": "門別",
+  "35": "盛岡",
+  "36": "水沢",
+  "42": "浦和",
+  "43": "船橋",
+  "44": "大井",
+  "45": "川崎",
+  "46": "金沢",
+  "47": "笠松",
+  "48": "名古屋",
+  "50": "園田",
+  "51": "姫路",
+  "54": "高知",
+  "55": "佐賀",
+  "65": "帯広",
+};
+
+const NETKEIBA_JRA_VENUE_MAP: Record<string, string> = {
+  "01": "札幌",
+  "02": "函館",
+  "03": "福島",
+  "04": "新潟",
+  "05": "東京",
+  "06": "中山",
+  "07": "中京",
+  "08": "京都",
+  "09": "阪神",
+  "10": "小倉",
+};
+
+function inferHorseVenueFromRaceId(
+  raceIdExt: unknown,
+  source: unknown,
+): string | null {
+  const raceId = String(raceIdExt ?? "");
+  const sourceKey = String(source ?? "").toLowerCase();
+  if (!/^\d{12,}$/.test(raceId)) return null;
+  const code = raceId.slice(4, 6);
+  if (sourceKey === "nar") return NETKEIBA_NAR_VENUE_MAP[code] ?? null;
+  if (sourceKey === "jra") return NETKEIBA_JRA_VENUE_MAP[code] ?? null;
+  return null;
+}
+
+function normalizeHorseRaceVenue(race: Record<string, unknown>): string | null {
+  const inferred = inferHorseVenueFromRaceId(race.race_id_ext, race.source);
+  const current = String(race.venue ?? "").trim();
+  if (inferred) return inferred;
+  return current || null;
+}
+
 function horseProviderChain(includePremium = false): HorseProviderConfig[] {
   const premiumEnabled = includePremium || /^true$/i.test(Deno.env.get("HORSE_USE_PREMIUM_MODELS") ?? "");
   const chain = premiumEnabled
@@ -835,22 +887,26 @@ function enrichHorsePredictionForClient(
 }
 
 function enrichHorseRaceForClient(race: Record<string, unknown>): Record<string, unknown> {
+  const normalizedRace = {
+    ...race,
+    venue: normalizeHorseRaceVenue(race),
+  };
   const entriesRaw = race.horse_entries;
   const entries = Array.isArray(entriesRaw) ? entriesRaw as Record<string, unknown>[] : [];
   const predRaw = race.horse_predictions;
   if (Array.isArray(predRaw)) {
     return {
-      ...race,
+      ...normalizedRace,
       horse_predictions: predRaw.map((pred) => enrichHorsePredictionForClient(pred as Record<string, unknown>, entries)),
     };
   }
   if (predRaw && typeof predRaw === "object") {
     return {
-      ...race,
+      ...normalizedRace,
       horse_predictions: enrichHorsePredictionForClient(predRaw as Record<string, unknown>, entries),
     };
   }
-  return race;
+  return normalizedRace;
 }
 
 function sortedPair(values: string[]): string {
