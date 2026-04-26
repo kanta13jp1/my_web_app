@@ -4,6 +4,7 @@ set
   status = 'in_progress',
   progress = greatest(progress, 30),
   start_date = coalesce(start_date, date '2026-04-25'),
+  recovery_plan = coalesce(recovery_plan, '完了済み — 翌日 migration 適用'),
   description = case
     when coalesce(description, '') like '%Started 2026-04-25: Codex took over LP FAQ differentiation and FeatureStrategyAiReviewService test fix%'
       then description
