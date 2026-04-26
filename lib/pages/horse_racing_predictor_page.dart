@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'horse_provider_leaderboard_page.dart';
@@ -46,7 +47,9 @@ ErrorType _parseErrorType(dynamic error) {
 /// JRA/NAR の出走表を自動取得し、Gemini AI が全レースの3連単を予想する。
 /// netkeiba 競合 — 完全自動化パイプライン版
 class HorseRacingPredictorPage extends StatefulWidget {
-  const HorseRacingPredictorPage({super.key});
+  const HorseRacingPredictorPage({super.key, this.initialTabIndex = 0});
+
+  final int initialTabIndex;
 
   @override
   State<HorseRacingPredictorPage> createState() =>
@@ -57,6 +60,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
     with SingleTickerProviderStateMixin {
   final _supabase = Supabase.instance.client;
   late final TabController _tabController;
+  late int _lastSyncedTabIndex;
 
   bool _isLoading = false;
   bool _isPredicting = false;
@@ -73,14 +77,43 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    final initialIndex = widget.initialTabIndex < 0
+        ? 0
+        : widget.initialTabIndex > 2
+            ? 2
+            : widget.initialTabIndex;
+    _lastSyncedTabIndex = initialIndex;
+    _tabController = TabController(
+      length: 3,
+      vsync: this,
+      initialIndex: initialIndex,
+    )..addListener(_syncTabRoute);
     _loadAll();
   }
 
   @override
   void dispose() {
+    _tabController.removeListener(_syncTabRoute);
     _tabController.dispose();
     super.dispose();
+  }
+
+  String _routeForTab(int index) {
+    return switch (index) {
+      1 => '/horse-racing/history',
+      2 => '/horse-racing/analysis',
+      _ => '/horse-racing',
+    };
+  }
+
+  void _syncTabRoute() {
+    final index = _tabController.index;
+    if (_lastSyncedTabIndex == index) return;
+    _lastSyncedTabIndex = index;
+    SystemNavigator.routeInformationUpdated(
+      uri: Uri.parse(_routeForTab(index)),
+      replace: true,
+    );
   }
 
   Future<void> _loadAll() async {
