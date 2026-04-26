@@ -32,8 +32,10 @@ class _KrispAudioQualityPageState extends State<KrispAudioQualityPage> {
   @override
   Widget build(BuildContext context) {
     final plan = _plan;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      backgroundColor: const Color(0xFFF7FAFC),
+      backgroundColor:
+          isDark ? const Color(0xFF0A0A0A) : const Color(0xFFF7FAFC),
       appBar: AppBar(
         title: const Text('Krisp音声品質コックピット'),
         actions: [
@@ -118,12 +120,15 @@ class _Header extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: const Color(0xFFD7E3EA)),
+        border: Border.all(
+          color: isDark ? const Color(0xFF2A2A2A) : const Color(0xFFD7E3EA),
+        ),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -132,7 +137,7 @@ class _Header extends StatelessWidget {
             width: 48,
             height: 48,
             decoration: BoxDecoration(
-              color: const Color(0xFFE0F2FE),
+              color: isDark ? const Color(0xFF0C2030) : const Color(0xFFE0F2FE),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(
@@ -323,7 +328,10 @@ class _KpiPanel extends StatelessWidget {
                     value: kpi.progress,
                     minHeight: 8,
                     borderRadius: BorderRadius.circular(999),
-                    backgroundColor: const Color(0xFFE2E8F0),
+                    backgroundColor:
+                        Theme.of(context).brightness == Brightness.dark
+                            ? const Color(0xFF2A2A2A)
+                            : const Color(0xFFE2E8F0),
                     color: const Color(0xFF0EA5E9),
                   ),
                 ],
@@ -422,12 +430,15 @@ class _Panel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Card(
       elevation: 0,
-      color: Colors.white,
+      color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(8),
-        side: const BorderSide(color: Color(0xFFD7E3EA)),
+        side: BorderSide(
+          color: isDark ? const Color(0xFF2A2A2A) : const Color(0xFFD7E3EA),
+        ),
       ),
       child: Padding(
         padding: const EdgeInsets.all(16),

@@ -661,7 +661,9 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFFF3E0),
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? const Color(0xFF2A1F0A)
+                      : const Color(0xFFFFF3E0),
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(color: const Color(0xFFFFCC80)),
                 ),

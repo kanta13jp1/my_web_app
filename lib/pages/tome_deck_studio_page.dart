@@ -106,8 +106,10 @@ class _TomeDeckStudioPageState extends State<TomeDeckStudioPage> {
   @override
   Widget build(BuildContext context) {
     final plan = _plan;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor:
+          isDark ? const Color(0xFF0A0A0A) : const Color(0xFFF8FAFC),
       appBar: AppBar(
         title: const Text('Tome Deck Studio'),
         actions: [
@@ -186,12 +188,15 @@ class _Hero extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: const Color(0xFFD8E2EA)),
+        border: Border.all(
+          color: isDark ? const Color(0xFF2A2A2A) : const Color(0xFFD8E2EA),
+        ),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -200,7 +205,7 @@ class _Hero extends StatelessWidget {
             width: 52,
             height: 52,
             decoration: BoxDecoration(
-              color: const Color(0xFFEDE9FE),
+              color: isDark ? const Color(0xFF2D2040) : const Color(0xFFEDE9FE),
               borderRadius: BorderRadius.circular(8),
             ),
             child: const Icon(
@@ -511,13 +516,16 @@ class _PageCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFFFAFAFF),
+        color: isDark ? const Color(0xFF1E1E1E) : const Color(0xFFFAFAFF),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(
+          color: isDark ? const Color(0xFF2A2A2A) : const Color(0xFFE2E8F0),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -526,8 +534,10 @@ class _PageCard extends StatelessWidget {
             children: [
               CircleAvatar(
                 radius: 14,
-                backgroundColor: const Color(0xFFDDD6FE),
-                foregroundColor: const Color(0xFF5B21B6),
+                backgroundColor:
+                    isDark ? const Color(0xFF4A3A7A) : const Color(0xFFDDD6FE),
+                foregroundColor:
+                    isDark ? const Color(0xFFDDD6FE) : const Color(0xFF5B21B6),
                 child: Text('$index'),
               ),
               const SizedBox(width: 10),
@@ -588,12 +598,15 @@ class _Panel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Card(
       elevation: 0,
-      color: Colors.white,
+      color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(8),
-        side: const BorderSide(color: Color(0xFFD8E2EA)),
+        side: BorderSide(
+          color: isDark ? const Color(0xFF2A2A2A) : const Color(0xFFD8E2EA),
+        ),
       ),
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -632,12 +645,15 @@ class _ScoreBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: const Color(0xFFF5F3FF),
+        color: isDark ? const Color(0xFF2D2040) : const Color(0xFFF5F3FF),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: const Color(0xFFDDD6FE)),
+        border: Border.all(
+          color: isDark ? const Color(0xFF4A3A7A) : const Color(0xFFDDD6FE),
+        ),
       ),
       child: Column(
         children: [

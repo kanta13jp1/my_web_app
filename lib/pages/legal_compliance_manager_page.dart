@@ -522,7 +522,9 @@ class _LegalComplianceManagerPageState extends State<LegalComplianceManagerPage>
         if (_harveyError != null) ...[
           const SizedBox(height: 12),
           Card(
-            color: const Color(0xFFFFEBEE),
+            color: Theme.of(context).brightness == Brightness.dark
+                ? const Color(0xFF3A1010)
+                : const Color(0xFFFFEBEE),
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Text(

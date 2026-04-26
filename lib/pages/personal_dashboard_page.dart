@@ -637,12 +637,15 @@ class _PersonalDashboardPageState extends State<PersonalDashboardPage>
     Color color,
     String? subtitle,
   ) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(
+          color: isDark ? const Color(0xFF2A2A2A) : const Color(0xFFE2E8F0),
+        ),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.04),
@@ -1100,16 +1103,19 @@ class _PersonalDashboardPageState extends State<PersonalDashboardPage>
     final streak = (habit['streak'] as num?)?.toInt() ?? 0;
     final completedToday = habit['completed_today'] as bool? ?? false;
 
+    final isDarkHabit = Theme.of(context).brightness == Brightness.dark;
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDarkHabit ? const Color(0xFF1A1A1A) : Colors.white,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: completedToday
               ? const Color(0xFF059669)
-              : const Color(0xFFE2E8F0),
+              : (isDarkHabit
+                  ? const Color(0xFF2A2A2A)
+                  : const Color(0xFFE2E8F0)),
         ),
         boxShadow: [
           BoxShadow(

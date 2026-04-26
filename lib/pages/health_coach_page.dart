@@ -116,7 +116,9 @@ class _HealthCoachPageState extends State<HealthCoachPage>
             Container(
               width: double.infinity,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              color: const Color(0xFFFFEBEE),
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? const Color(0xFF3A1010)
+                  : const Color(0xFFFFEBEE),
               child: Text(
                 _errorMessage!,
                 style: const TextStyle(

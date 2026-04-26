@@ -182,9 +182,15 @@ class _SlackNotificationPageState extends State<SlackNotificationPage> {
                 child: Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFFFEBEE),
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? const Color(0xFF3A1010)
+                        : const Color(0xFFFFEBEE),
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: const Color(0xFFEF9A9A)),
+                    border: Border.all(
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? const Color(0xFF5A2020)
+                          : const Color(0xFFEF9A9A),
+                    ),
                   ),
                   child: Text(
                     _errorMessage!,
