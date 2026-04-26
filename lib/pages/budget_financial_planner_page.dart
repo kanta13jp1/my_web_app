@@ -100,6 +100,10 @@ class _BudgetFinancialPlannerPageState extends State<BudgetFinancialPlannerPage>
   }
 
   Future<void> _loadData() async {
+    if (_supabase.auth.currentUser == null) {
+      setState(() => _isLoading = false);
+      return;
+    }
     setState(() => _isLoading = true);
     try {
       final results = await Future.wait([
