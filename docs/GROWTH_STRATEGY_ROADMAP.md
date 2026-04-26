@@ -21548,3 +21548,11 @@ Google I/O 2026 競合脅威 事前ブリーフィング
   - cross-instance-pr → VSCode: leaderboard UI 更新依頼 (学習スコア/スキップ精度/ベスト券種)
 - **commit**: 342c851b
 - **push**: SUCCESS ✅
+
+## PS#6 S57b — 2026-04-26 (evaluate mode + GHA nightly backfill)
+- **担当**: PS版#6 (horse_racing / data 担当)
+- **実装**:
+  - fetch_horse_racing.py: `--mode evaluate [--limit N]` 追加 (精度再評価バッチ)
+  - horse-racing-update.yml: JST 23時台に evaluate ステップ追加 (日次 bet_type_hits/learning_score backfill)
+- **commit**: e4b55a53
+- **push**: SUCCESS ✅
