@@ -160,6 +160,7 @@ jobs:
           # black_forest_labs, liquid_ai, recraft, krea, tencent, bytedance, inception_labs, world_labs, runware, sambanova
           # decart, goodfire, prime_intellect, exa, pleias, imbue, thinking_machines, kyutai, contextual_ai, snorkel_ai, haize_labs, physical_intelligence, isomorphic_labs (seed only — RSS なし)
           # xai, openai, google, microsoft, cursor, lovable, bolt_new (seed only — RSS 別途管理)
+          # sora (OpenAI 動画生成 / openai 親 RSS で代替), meshy (3D 生成 / 公式 RSS なし) — seed only
           # 新規追加時は upsert_provider 行を追加する
 
           echo "success_count=${SUCCESS_COUNT}" >> $GITHUB_OUTPUT

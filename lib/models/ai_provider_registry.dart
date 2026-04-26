@@ -1687,6 +1687,22 @@ const List<AiProviderEntry> kAiProviderRegistry = [
     note:
         r'AI 音楽生成 (クリエイター向け) — ムード/テンポ/楽器を GUI で指定 / 無制限生成 / 著作権フリー / Premiere Pro 統合 / ★8/9',
   ),
+  AiProviderEntry(
+    id: 'sora',
+    displayName: 'Sora',
+    status: AiProviderStatus.notImplemented,
+    entryPoint: 'https://openai.com/sora',
+    note:
+        r'OpenAI 動画生成 AI — Sora 2 / DiT / 最大 60 秒長尺 / 物理シミュレーション / Multi-shot / 2026 GA / API ($0.10-0.50/秒) / ★9/9',
+  ),
+  AiProviderEntry(
+    id: 'meshy',
+    displayName: 'Meshy',
+    status: AiProviderStatus.notImplemented,
+    entryPoint: 'https://www.meshy.ai/',
+    note:
+        r'AI 3D モデル生成 — text-to-3D / image-to-3D / GLB/FBX/USDZ 出力 / Unity・Unreal 統合 / Pro \$20/月 / ★8/9',
+  ),
 ];
 
 /// ステータス別件数を集計
