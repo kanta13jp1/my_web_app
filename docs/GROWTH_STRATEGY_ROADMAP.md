@@ -21007,3 +21007,29 @@ habit_tracker / time_tracker / reading_list / calendar_events
 - **migration timestamp**: 重複なし (687 files) ✓
 - **repair list**: 116件 (orphan = 20260426133000 --applied のみ = 意図的保持) ✓
 - 実装コードなし / 監視専任セッション
+
+---
+
+## PS#2 S41 2026-04-26 — SEO #8+#9 offline/price-hike (3fd18a89 + c950e368)
+
+**担当**: PowerShell版 #2 (T-1 ブログ dispatch / SEO 記事作成)
+
+**T-1 状況**: no-op (May 1 dispatch待ち)
+
+**DYNAMIC-CLAIM 完了 (2件/session)**:
+- SEO #8 `2026-06-13-notion-offline-mode-frustrations` JA+EN
+  - JA: Notionはなぜオフラインで使えないのか (4 tags ✅)
+  - EN: Why Notion Still Doesn't Work Offline (4 tags ✅)
+  - T-1 dispatch予定: 2026-06-12 → 2026-06-13投稿
+- SEO #9 `2026-06-20-notion-price-hike-2026-what-to-do` JA+EN
+  - JA: Notionの値上げ2026 — 月額が上がったとき本当に取るべき選択肢 (4 tags ✅)
+  - EN: Notion's Price Hike in 2026 — Your Real Options (4 tags ✅)
+  - T-1 dispatch予定: 2026-06-19 → 2026-06-20投稿
+
+**SEO 50本計画 Phase 1 進捗**: 9/10 完了
+- #1-9 完了 / #10 残り: notion-migration-guide-jibun (Jun-27)
+- Phase 1 完了後: Phase 2 (7月) AI開発ツール比較シリーズへ
+
+**WBS**: SEO 戦略 (記事50本計画) → 90%
+
+**Philosophy**: ✅ユーザー価値 (コスト問題・ベンダーロックイン解決訴求)
