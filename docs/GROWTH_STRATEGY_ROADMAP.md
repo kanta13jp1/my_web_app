@@ -20769,3 +20769,26 @@ habit_tracker / time_tracker / reading_list / calendar_events
 - registry 同期: PS#3 S60 が registry に未反映 (Adobe Firefly + Ideogram の 2 entry) — 別 session で PS#3 が補完すべき
 - UI 更新 (gemini_university_v2_page.dart の `_providerMeta` / `_quizzes` / `_fallback`) — overview のみ表示で十分なため省略
 - ai-hub PROVIDER_CONFIGS — 動画/3D は OpenAI 互換 chat ではないため不要
+
+## PS#5 S60 — 2026-04-26
+
+**担当**: PowerShell版 #5 (on-call bug fix)
+**コミット**: 9d4c529b → ac94f4f8 (複数コミット)
+
+### 完了タスク
+
+**[fix] 全ページ anon auth guard バルク修正 (130ページ→3残のみ)**
+
+前セッション(S58-S59)から継続して、匿名ユーザーがページを開いた際に
+`functions.invoke` が 401 を返す問題を全ページに修正。
+
+修正方法: `initState` から呼ばれる fetch メソッドの先頭に
+`if (_supabase.auth.currentUser == null) { setState(() => _isLoading = false); return; }` を追加。
+
+- **batch5-6** (14 pages): meeting_manager/social_feed/password_vault/fitness_health/google_calendar/wiki/workflow/email_template/customer_feedback/invoice/crm_sales/team_chat/appointment/event_ticketing
+- **batch7-8** (15 pages): smart_inbox/subscription_billing/elearning/recruitment/performance_review/leave_management/dev_achievements/analytics_export/app_analytics/app_hub/digital_wallet/form_builder/gantt_timeline/health_coach/inventory_barcode
+- **bulk auto-patch** (60 pages): Python正規表現でパターン一致した60ページを自動パッチ
+- **manual batch** (16 pages): 非標準パターン(パラメータ付き/異なるloading変数/Supabase.instance.client直参照) の16ページを手動修正
+- **残り3ページ** (admin_analytics/morning_briefing/qr_code_generator): EF呼び出しがユーザーアクション内のため修正不要
+
+**総修正**: S56〜S60で約120ページの anon 401 flood 修正完了。
