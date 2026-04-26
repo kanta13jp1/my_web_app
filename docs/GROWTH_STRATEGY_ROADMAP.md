@@ -21557,31 +21557,22 @@ Google I/O 2026 競合脅威 事前ブリーフィング
 - **commit**: e4b55a53
 - **push**: SUCCESS ✅
 
-## PS#5 S61 — 2026-04-26 (stale EF invoke 一括移行 A11件)
-- **担当**: PS版#5 (on-call bug fix)
-- **対象**: 削除済 EF を参照していた Flutter 12ページ → hub actions に移行
-  - `analyze-reality` → `ai-hub:analyze.reality` (analyze_reality + reality_check)
-  - `app-analytics-dashboard` → `core-hub:analytics.summary`
-  - `development-achievements` → `core-hub:achievements.list`
-  - `growth-achievement-summary` → `growth-hub:achievement.list`
-  - `growth-share-signal` → `growth-hub:share.list`
-  - `personal-dashboard` → `core-hub:personal.dashboard`
-  - `referral-program` → `growth-hub:referral.create`
-  - `daily-judgment` → `ai-hub:judgment.get` (thought_interrupt_diagnosis)
-  - `video-ad-generator` → `growth-hub:video_ad.list`
-  - `viral-growth-engine` → `growth-hub:engine.stats/engine.run` (3箇所)
-  - `virtual-organization` → `ai-hub:org.get` (3call→1call統合)
-- **cross-instance-pr**: `20260420_ps5_flutter_stale_invoke_audit_24ef.md` A11件完了
-- **dart format**: 0 changed (already formatted)
+### Rule 17 WF health check — PS#1 S52 (2026-04-26 20:10 JST)
+- **235000 3-way timestamp collision 修正** (654ad9ea):
+  - fix_netkeiba_nar_venue_codes → 235000 (維持・DB確認済)
+  - seed_achievement_slack_notify → 235100 (Win版と協調リネーム)
+  - seed_kling_ai_university → 235200
+  - deploy-prod.yml: applied 235000 追加
+- **Deploy**: 24955214062 watch中
+- **全 migration timestamp 重複**: 修正後ゼロ ✓
 
-## PS#5 S61b — 2026-04-26 (lint fix + B全件確認 → 23/23完了)
-- **担当**: PS版#5 (on-call bug fix)
-- **lint fix**: `virtual_organization_page.dart` `_tasks` → `final` (prefer_final_fields) / commit 85fe7715
-- **B セクション grep 確認**:
-  - `competitor-feature-sync` → `enterprise-hub:competitor.sync` ✅ 既移行済
-  - `invoice-generator` → `app-hub:billing.invoice` ✅ 既移行済
-  - `poll-survey` → `tools-hub:poll.list/create/vote` ✅ 既移行済
-- **cross-instance-pr**: `20260420_ps5_flutter_stale_invoke_audit_24ef.md` 23/23 完了更新
-- **PS#5 スコープ完了**: 23/23 (D=2件はWin/VSCode担当)
-- **commit**: e03be91c
-- **push**: SUCCESS ✅
+### Rule 17 WF health check — PS#1 S52 (2026-04-26 20:55 JST)
+- **235000 3-way timestamp collision 修正** (654ad9ea):
+  - fix_netkeiba_nar_venue_codes → 235000 (維持)
+  - seed_achievement_slack_notify → 235100 (Win版と協調)
+  - seed_kling_ai_university → 235200
+  - deploy-prod.yml: applied 235000 追加
+- **SQLSTATE 42P16** horse_provider_leaderboard_v2 — DROP VIEW 追加 (1dcec692)
+- **prefer_final_fields** virtual_organization_page._tasks — PS#5 が修正 (85fe7715)
+- **最終Deploy**: 24956160663 SUCCESS ✅
+- **本セッション修正合計**: timestamp collision 2件 + VIEW alter エラー 1件
