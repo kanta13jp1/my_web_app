@@ -538,7 +538,7 @@ const NETKEIBA_NAR_VENUE_MAP: Record<string, string> = {
 };
 
 const NETKEIBA_NAR_ODDSPARK_TRACK_MAP: Record<string, string> = {
-  "30": "36", // 門別
+  "30": "06", // 門別
   "35": "10", // 盛岡
   "36": "11", // 水沢
   "42": "18", // 浦和
@@ -550,8 +550,8 @@ const NETKEIBA_NAR_ODDSPARK_TRACK_MAP: Record<string, string> = {
   "48": "24", // 名古屋
   "50": "27", // 園田
   "51": "28", // 姫路
-  "54": "31", // 高知
-  "55": "32", // 佐賀
+  "54": "55", // 高知
+  "55": "61", // 佐賀
   "65": "03", // 帯広
 };
 
