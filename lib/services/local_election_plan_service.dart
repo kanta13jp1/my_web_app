@@ -82,7 +82,10 @@ class LocalElectionPlanService {
       for (final item in snapshot.prefectures)
         _prefectureKey(item.prefecture): item,
     };
-    final scheduleStatsByPrefecture = _scheduleStatsByPrefecture(snapshot);
+    final scheduleStatsByPrefecture = _scheduleStatsByPrefecture(
+      snapshot,
+      now: updatedAt,
+    );
     final additionalTargets = _allocateSnapshotAdditionalTargets(
       plan,
       snapshot,
@@ -105,8 +108,10 @@ class LocalElectionPlanService {
           ? 0
           : math.max(0, currentMembers - current.currentMembers);
       final candidateWinRatePercent = _candidateWinRatePercent(
-        wins: batchNewWins,
-        candidates: stats.kokuminCandidateCount,
+        wins: stats.postConventionWinCount,
+        battles: stats.postConventionBattleCount,
+        fallbackWins: batchNewWins,
+        fallbackCandidates: stats.kokuminCandidateCount,
       );
       final candidateTarget =
           LocalElectionPrefecturePlan.candidateTargetForElectionTarget(
@@ -135,6 +140,9 @@ class LocalElectionPlanService {
           announcedCandidateCount: stats.kokuminCandidateCount,
           confirmedCandidateCount: stats.confirmedCandidateCount,
           candidateWinRatePercent: candidateWinRatePercent,
+          postConventionBattleCount: stats.postConventionBattleCount,
+          postConventionWinCount: stats.postConventionWinCount,
+          postConventionLossCount: stats.postConventionLossCount,
           cdpLocalMembers: cdpLocalMembers,
           cdpSourceUrl: cdpSourceUrl,
           autoUpdatedAt: updatedAt.toIso8601String(),
@@ -282,6 +290,14 @@ class LocalElectionPlanService {
           candidateWinRatePercent: clampPositiveInt(
             item.candidateWinRatePercent,
           ).clamp(0, 100).toInt(),
+          postConventionBattleCount:
+              clampPositiveInt(item.postConventionBattleCount),
+          postConventionWinCount: clampPositiveInt(
+            item.postConventionWinCount,
+          ),
+          postConventionLossCount: clampPositiveInt(
+            item.postConventionLossCount,
+          ),
           cdpLocalMembers: clampPositiveInt(item.cdpLocalMembers),
           cdpSourceUrl: item.cdpSourceUrl.trim(),
           prefectureChairName: item.prefectureChairName.trim().isNotEmpty
@@ -528,12 +544,20 @@ class LocalElectionPlanService {
 
   int _candidateWinRatePercent({
     required int wins,
-    required int candidates,
+    required int battles,
+    required int fallbackWins,
+    required int fallbackCandidates,
   }) {
-    if (candidates <= 0) {
+    if (battles > 0) {
+      return ((wins / battles) * 100).round().clamp(0, 100).toInt();
+    }
+    if (fallbackCandidates <= 0) {
       return 0;
     }
-    return ((wins / candidates) * 100).round().clamp(0, 100).toInt();
+    return ((fallbackWins / fallbackCandidates) * 100)
+        .round()
+        .clamp(0, 100)
+        .toInt();
   }
 
   int _realisticFocusMunicipalityCount({
@@ -583,16 +607,18 @@ class LocalElectionPlanService {
   }
 
   Map<String, _AutoScheduleStats> _scheduleStatsByPrefecture(
-    LocalElectionRealitySnapshot snapshot,
-  ) {
+    LocalElectionRealitySnapshot snapshot, {
+    DateTime? now,
+  }) {
+    final current = now ?? DateTime.now();
     final stats = <String, _AutoScheduleStatsBuilder>{};
     for (final item in snapshot.targetElectionSchedules) {
-      if (item.isPast || item.prefecture.trim().isEmpty) {
+      if (item.prefecture.trim().isEmpty) {
         continue;
       }
       final key = _prefectureKey(item.prefecture);
       final builder = stats.putIfAbsent(key, _AutoScheduleStatsBuilder.new);
-      builder.add(item);
+      builder.add(item, now: current);
     }
     return <String, _AutoScheduleStats>{
       for (final entry in stats.entries) entry.key: entry.value.build(),
@@ -666,6 +692,9 @@ class _AutoScheduleStats {
   final int yellowAlertCount;
   final int kokuminCandidateCount;
   final int confirmedCandidateCount;
+  final int postConventionBattleCount;
+  final int postConventionWinCount;
+  final int postConventionLossCount;
   final String? earliestEndorsementMonth;
 
   const _AutoScheduleStats({
@@ -674,6 +703,9 @@ class _AutoScheduleStats {
     required this.yellowAlertCount,
     required this.kokuminCandidateCount,
     required this.confirmedCandidateCount,
+    required this.postConventionBattleCount,
+    required this.postConventionWinCount,
+    required this.postConventionLossCount,
     required this.earliestEndorsementMonth,
   });
 
@@ -683,6 +715,9 @@ class _AutoScheduleStats {
     yellowAlertCount: 0,
     kokuminCandidateCount: 0,
     confirmedCandidateCount: 0,
+    postConventionBattleCount: 0,
+    postConventionWinCount: 0,
+    postConventionLossCount: 0,
     earliestEndorsementMonth: null,
   );
 }
@@ -693,9 +728,16 @@ class _AutoScheduleStatsBuilder {
   int yellowAlertCount = 0;
   int kokuminCandidateCount = 0;
   int confirmedCandidateCount = 0;
+  int postConventionBattleCount = 0;
+  int postConventionWinCount = 0;
+  int postConventionLossCount = 0;
   String? earliestEndorsementMonth;
 
-  void add(LocalElectionScheduleEntry item) {
+  void add(LocalElectionScheduleEntry item, {required DateTime now}) {
+    _addPostConventionBattle(item, now: now);
+    if (_isCompleted(item, now: now)) {
+      return;
+    }
     scheduledElectionCount++;
     kokuminCandidateCount += item.kokuminCandidateCount;
     if (item.isAlertRed) {
@@ -722,8 +764,64 @@ class _AutoScheduleStatsBuilder {
       yellowAlertCount: yellowAlertCount,
       kokuminCandidateCount: kokuminCandidateCount,
       confirmedCandidateCount: confirmedCandidateCount,
+      postConventionBattleCount: postConventionBattleCount,
+      postConventionWinCount: postConventionWinCount,
+      postConventionLossCount: postConventionLossCount,
       earliestEndorsementMonth: earliestEndorsementMonth,
     );
+  }
+
+  void _addPostConventionBattle(
+    LocalElectionScheduleEntry item, {
+    required DateTime now,
+  }) {
+    final voteDate = item.parsedVoteDate;
+    if (voteDate == null) {
+      return;
+    }
+    final electionDate = DateTime(voteDate.year, voteDate.month, voteDate.day);
+    final baseline = LocalElectionPrefecturePlan.battleRecordBaselineDate;
+    final baselineDate = DateTime(baseline.year, baseline.month, baseline.day);
+    if (electionDate.isBefore(baselineDate) || !_isCompleted(item, now: now)) {
+      return;
+    }
+    postConventionBattleCount++;
+    if (_hasKokuminWin(item)) {
+      postConventionWinCount++;
+    } else {
+      postConventionLossCount++;
+    }
+  }
+
+  bool _isCompleted(LocalElectionScheduleEntry item, {required DateTime now}) {
+    if (item.isPast) {
+      return true;
+    }
+    final voteDate = item.parsedVoteDate;
+    if (voteDate == null) {
+      return false;
+    }
+    final today = DateTime(now.year, now.month, now.day);
+    final electionDate = DateTime(voteDate.year, voteDate.month, voteDate.day);
+    return !electionDate.isAfter(today);
+  }
+
+  bool _hasKokuminWin(LocalElectionScheduleEntry item) {
+    return item.kokuminCandidateStatuses.any(_isWinningStatus);
+  }
+
+  bool _isWinningStatus(String raw) {
+    final value = raw.trim();
+    if (value.isEmpty) {
+      return false;
+    }
+    return value.contains('当選') ||
+        value.contains('蠖馴∈') ||
+        value.contains('トップ') ||
+        value.contains('再選') ||
+        value.contains('蜀埼∈') ||
+        value.contains('無投票') ||
+        value.contains('辟｡謚慕･ｨ');
   }
 
   String? _endorsementMonthForSchedule(LocalElectionScheduleEntry item) {
