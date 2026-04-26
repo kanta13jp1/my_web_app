@@ -20725,3 +20725,47 @@ habit_tracker / time_tracker / reading_list / calendar_events
 - Achievement seed の自動化 (毎週金曜 GHA cron で前週分を seed)
 - development_achievements テーブルに `category` 列を活用した分類表示
 
+
+### Win版#132 part 24 完了 (2026-04-26 10:30 JST)
+
+**🎓 AI大学 214→216社化** — Sora + Meshy 追加 (動画/3D 系新カテゴリ)
+
+**Step 0 discovery 評価**:
+- **Sora (OpenAI)** — 9/9 (技術 3/3 DiT世界モデル+物理 / API 3/3 GA 2026 / 話題 3/3 Sora 2 GA連日トレンド)
+- **Meshy** — 8/9 (技術 3/3 ゲームエンジン直接利用可能な polygon mesh / API 3/3 / 話題 2/3 ゲーム開発者で人気)
+- **見送り**: Hippocratic (medical / API limited 7/9), iambic (bio / API なし 6/9)
+
+**実装内容**:
+- migration 2本: `20260426190000_seed_sora_ai_university.sql` + `20260426191500_seed_meshy_ai_university.sql`
+- registry: `kAiProviderRegistry` に 2 entry 追加 (Sora/Meshy / both notImplemented — 動画・3D は OpenAI 互換 chat 不可)
+- ai-university-update.yml: seed-only コメント行に sora/meshy 追記 (RSS なし — Sora は OpenAI 親 RSS / Meshy は公式 RSS なし)
+- development_achievements: 各 migration に 1 行ずつ INSERT (合計 +2)
+
+**カテゴリ多様化** (PS#3 が S54-S60 で音声/音楽/画像系を 14 社追加した直後):
+- PS#3 範疇: TTS (Speechify, WellSaid) / 音楽 (LOVO, AIVA, Mubert, Beatoven) / 音楽分離 (Lalal.ai, Soundraw) / 画像 (Adobe Firefly, Ideogram)
+- Win版 補完: 動画 (Sora) + 3D (Meshy) — 被り 0 / 「個人ライフ OS のアセット制作カバレッジ強化」
+
+**Philosophy Alignment (9/9)**:
+1. CEO感 ✅ Win版アーキテクチャ判断で provider 選定
+2. ミッション駆動 ✅ AI大学 = ユーザー学習価値創出
+3. 優しい mentor ✅ overview に評価/注意点/料金まで網羅
+4. 6部署バランス ✅ プロダクト/教育両軸
+5. 商品=価値 ✅ 動画/3D は映像クリエイター/ゲーム開発者の生産性 10x
+6. 資本=時間 ✅ skill 経由で 1 セッション完結
+7. BS ✅ ai_university_content table = 知的資産
+8. KPI ✅ 215, 216 社目で「昨日の自分超え」
+9. IPO ✅ AI大学カバレッジ拡大は IR 訴求材料
+
+**AI-DEV Alignment (7/7)** (適用範囲: provider 追加自体は AI 機能ではないが、追加先の AI 大学コンテンツとして安全):
+1. Auth ✅ ANON_KEY only / RLS public read
+2. Deny-by-default ✅ ON CONFLICT DO NOTHING
+3. trace_id ✅ 該当なし (静的 seed)
+4. Cost CB ✅ 該当なし
+5. Team memory ✅ MEMORY.md + ROADMAP
+6. Retry/DLQ ✅ idempotent migration
+7. Quality gate ✅ Dart syntax preserved (registry 既存パターン踏襲)
+
+**Out of scope (next)**:
+- registry 同期: PS#3 S60 が registry に未反映 (Adobe Firefly + Ideogram の 2 entry) — 別 session で PS#3 が補完すべき
+- UI 更新 (gemini_university_v2_page.dart の `_providerMeta` / `_quizzes` / `_fallback`) — overview のみ表示で十分なため省略
+- ai-hub PROVIDER_CONFIGS — 動画/3D は OpenAI 互換 chat ではないため不要
