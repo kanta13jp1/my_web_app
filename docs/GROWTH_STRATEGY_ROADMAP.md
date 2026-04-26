@@ -20854,3 +20854,28 @@ habit_tracker / time_tracker / reading_list / calendar_events
 - **fix2 (b64f902a)**: hook が自動追加した unused `supabase_flutter` import 削除 → CI `unused_import` error 解消
 - **deploy**: 3連続failure (`24945365712/308590/643476`) → b64f902a push で green queue待ち
 - **教訓**: `Supabase.instance.client` より `supabase` global が推奨パターン / `supabase_flutter` 直接 import 不要
+
+## VSCode S7 — 2026-04-26: DESIGN.md dark mode 13ページ修正 (commit ef2d2a98)
+
+### 実施内容
+- **tome_deck_studio_page.dart**: 新ページ全体を dark mode 対応 (5 StatelessWidget subclass)
+- **krisp_audio_quality_page.dart**: 新ページ全体を dark mode 対応 (_Header/_Panel/LinearProgressIndicator)
+- **morning_briefing_page.dart**: 追加の EEF2FF container 2件 → 0xFF1A1A2E
+- **wardrobe/slack_notification/my_struggle/legal_compliance_manager/health_coach/google_calendar_sync**: FFEBEE → 0xFF3A1010 (6ファイル)
+- **shopping_list/viral_ad_generator**: FFF3E0 → 0xFF2A1F0A
+- **mindless_task_page.dart**: FFF8E1 amber container (const→非const) + 境界線色
+- **personal_dashboard_page.dart**: 2件の Colors.white KPI/habit カード
+
+### WBS 進捗
+- DESIGN.md全ページ準拠: 75% → **82%** (32731c06-a313-4280-adda-5ceb7b14da90)
+
+### Philosophy Alignment (9/9)
+1. CEO感 ✅ — ダークモード設計方針を自ら決定
+2. ミッション ✅ — ユーザー視認性・UX 改善
+3. Mentor ✅ — DESIGN.md トークン体系を一貫適用
+4. 6部署 ✅ — 全カテゴリページ対象
+5. 商品価値 ✅ — ダーク環境での可読性向上
+6. 時間資本 ✅ — batch script で効率化
+7. B/S ✅ — 技術負債削減 (hardcoded light color)
+8. KPI ✅ — 13ページ / 82% compliance 達成
+9. IPO ✅ — デザイン品質基準確立
