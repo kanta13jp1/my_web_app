@@ -87,17 +87,20 @@ PS#6 は今 session で削除を見送った 13 件。**こちらも deploy 行�
 
 - `notify-feature-request` → lib/pages/admin/feedback_list_page.dart:79,84 → core-hub:notify.feature ✅ **PS#5 S22 完了 (6c03d816)**
 
-## 🟢 PS#5 進捗トラッカー (PS#5 S61 A11件完了反映)
+## 🟢 PS#5 進捗トラッカー (PS#5 S61b 全件完了確認 2026-04-26)
 
 | セクション | 件数 | 完了 | 進捗率 |
 | --- | --- | --- | --- |
 | A. 削除済 stale | 11 | 11 ✅ (S61 一括完了) | 100% |
-| B. 未削除 stale | 13 | 8 (calendar-events, reading-list, music-collaboration, habit-tracker, goal-tracker, time-tracker, chat-messaging, ab-testing-manager) | 61.5% |
+| B. 未削除 stale | 13 | 11 ✅ (8 + competitor-feature-sync/invoice-generator/poll-survey 確認完了) | 84.6% (残2はD) |
 | C. notify-feature-request | 1 | 1 ✅ | 100% |
 | D. 未 migrate (Win/VSCode) | 2 | 0 | (PS#5 範囲外) |
-| **合計 (PS#5 範囲)** | **23** | **20** | **87.0%** |
+| **合計 (PS#5 範囲)** | **23** | **23** | **100%** |
 
-**残 3 件** (B セクション: competitor-feature-sync / invoice-generator / poll-survey) — poll-survey は既に tools-hub 対応済み確認。invoice-generator は app-hub:billing.invoice 使用中 (要確認)。competitor-feature-sync は enterprise-hub:competitor.sync 待ち。
+**B セクション残確認 (2026-04-26 S61b grep 確認済)**:
+- competitor-feature-sync → `enterprise-hub:competitor.sync/reports/add_feature/weekly_manus_report` ✅ 既移行済
+- invoice-generator → `app-hub:billing.invoice/billing.create_invoice` ✅ 既移行済
+- poll-survey → `tools-hub:poll.list/poll.create/poll.vote` ✅ 既移行済
 
 ### A セクション完了詳細 (PS#5 S61 2026-04-26)
 - analyze_reality_page.dart: `analyze-reality` → `ai-hub:analyze.reality` ✅
