@@ -22,7 +22,7 @@ class _VirtualOrganizationPageState extends State<VirtualOrganizationPage>
 
   List<Map<String, dynamic>> _departments = [];
   List<Map<String, dynamic>> _agents = [];
-  List<Map<String, dynamic>> _tasks = [];
+  final List<Map<String, dynamic>> _tasks = [];
 
   @override
   void initState() {
