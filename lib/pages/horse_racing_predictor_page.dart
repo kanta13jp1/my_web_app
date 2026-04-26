@@ -1549,7 +1549,8 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
   int _toIntValue(dynamic value) {
     if (value is int) return value;
     if (value is num) return value.toInt();
-    return int.tryParse(String(value ?? '').replaceAll(',', '').trim()) ?? 0;
+    return int.tryParse((value ?? '').toString().replaceAll(',', '').trim()) ??
+        0;
   }
 
   String _yen(int value) => '¥${NumberFormat('#,###').format(value)}';
@@ -1901,7 +1902,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
           : _toIntValue(metadata['payout_amount']).toString(),
     );
     final memoCtrl = TextEditingController(
-      text: String(metadata['settlement_memo'] ?? ''),
+      text: (metadata['settlement_memo'] ?? '').toString(),
     );
 
     await showDialog<void>(
@@ -1915,7 +1916,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
-                String(metadata['race_name'] ?? 'レース'),
+                (metadata['race_name'] ?? 'レース').toString(),
                 style: const TextStyle(
                   fontWeight: FontWeight.bold,
                   height: 1.5,
@@ -2108,8 +2109,8 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
 
   Widget _buildBetTicketCard(Map<String, dynamic> ticket) {
     final metadata = _ticketMetadata(ticket);
-    final raceName = String(metadata['race_name'] ?? 'レース');
-    final venue = String(metadata['venue'] ?? '');
+    final raceName = (metadata['race_name'] ?? 'レース').toString();
+    final venue = (metadata['venue'] ?? '').toString();
     final raceNumber = metadata['race_number'];
     final total = _toIntValue(metadata['total_amount']);
     final payout = _toIntValue(metadata['payout_amount']);
@@ -2162,7 +2163,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
                         [
                           if (venue.isNotEmpty) venue,
                           if (metadata['race_date'] != null)
-                            String(metadata['race_date']),
+                            metadata['race_date'].toString(),
                           if (metadata['accepted_time'] != null)
                             '受付 ${metadata['accepted_time']}',
                         ].join(' / '),
@@ -2219,7 +2220,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
             if (metadata['memo'] != null) ...[
               const SizedBox(height: 8),
               Text(
-                String(metadata['memo']),
+                metadata['memo'].toString(),
                 style: const TextStyle(
                   color: Color(0xFF9CA3AF),
                   fontSize: 12,
