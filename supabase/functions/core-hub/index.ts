@@ -612,6 +612,7 @@ serve(async (req: Request) => {
       "notify.feature_request",
       "notification.broadcast_release",
       "system.proactive_diagnostics",
+      "slack.notify",
     ]);
     // Anonymous-allowed actions (no auth required / page-specific cache)
     const anonymousActions = new Set(["page.share_generate"]);
