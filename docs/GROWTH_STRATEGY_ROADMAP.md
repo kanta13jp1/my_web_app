@@ -21539,3 +21539,12 @@ Google I/O 2026 競合脅威 事前ブリーフィング
 - **orphan branches**: claude/fix-dart-exceptions-osjRb (1 commit未マージ) / claude/vscode-wip (1 commit未マージ) — 合計2本 (閾値5本以下 ✓)
 - **test failures**: 21件 (continue-on-error で非ブロック / 要別途調査)
 - **orphan blog-publish**: 0本 ✓
+
+## PS#6 S57 — 2026-04-26 (horseracing leaderboard v2)
+- **担当**: PS版#6 (horse_racing / data 担当)
+- **実装**: horse_provider_leaderboard view v2 + tools-hub EF enrichment
+  - Migration `20260426241000`: avg_learning_score / skip_accuracy_pct / skip_recommendations_evaluated 追加
+  - tools-hub `horseracing.provider_leaderboard`: best_bet_type / best_bet_hit_rate をレスポンスに付加
+  - cross-instance-pr → VSCode: leaderboard UI 更新依頼 (学習スコア/スキップ精度/ベスト券種)
+- **commit**: 342c851b
+- **push**: SUCCESS ✅
