@@ -20920,3 +20920,10 @@ habit_tracker / time_tracker / reading_list / calendar_events
 - 新規パターン: `CASE WHEN COALESCE(recovery_plan,'')='' THEN '...' ELSE recovery_plan END`
 
 **Philosophy Alignment**: 9/9 ✅ (技術的負債の根本解決 / システム整合性維持)
+
+## 2026-04-26 PS#6 S52: deploy green確認 + 定期監視 (3d2932c5 base)
+- **deploy**: 24947061812 SUCCESS (fa39eebc) ✓
+- **horse_racing**: 3/3 success (24946994260, 24945441442, 24944562753) ✓
+- **migration timestamp**: 重複なし (675+ files audit) ✓
+- **repair list**: 109 → 114件 (5件新規追加・全て対応ファイルあり / orphan = 20260426133000 --applied のみ = 意図的保持) ✓
+- **WBS rebalance**: Feature Request 5件 = PS#6対象外 → DYNAMIC-CLAIM なし
