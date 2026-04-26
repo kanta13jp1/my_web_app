@@ -21585,3 +21585,14 @@ Google I/O 2026 競合脅威 事前ブリーフィング
   - (これら3ファイルは既に `4e360657` でmainに含まれていたため今回はGHA変更のみcommit)
 - **GHA horse-racing-update.yml**: backfill step 追加 (日曜JST23時 自動 + workflow_dispatch `--days` input)
 - **commit**: ab745bd9
+
+## PS#5 S62 — 2026-04-26 (virtual_org assign stub + bug fixes)
+- **担当**: PS版#5 (on-call bug fix)
+- **CI Issues クローズ**: #812 #811 #805 (S61 lint → 85fe7715 fix済確認)
+- **console-errors.txt 調査**: 197件 ai-hub 401 → pre-S60 stale data、現在は全44ページguard済
+- **bug fix**: `virtual_organization_page.dart` `_assignTask` が `org.get`(noopに) → false success snackbar
+  - 修正: "タスク割り振り機能は準備中です" stub表示
+  - cross-instance-pr起票: Win版(org.assign EF追加) + VSCode版(Flutter UI更新)
+- **EF count確認**: 50/50 (limit達成・新standalone EF追加不可)
+- **commit**: 1ca92e6e
+- **push**: SUCCESS ✅
