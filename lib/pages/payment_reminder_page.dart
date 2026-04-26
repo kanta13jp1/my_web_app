@@ -512,7 +512,9 @@ class _PaymentReminderPageState extends State<PaymentReminderPage> {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFEBEE),
+        color: Theme.of(context).brightness == Brightness.dark
+            ? const Color(0xFF3A1010)
+            : const Color(0xFFFFEBEE),
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: const Color(0xFFEF9A9A)),
       ),
@@ -604,7 +606,10 @@ class _PaymentReminderPageState extends State<PaymentReminderPage> {
                                 vertical: 1,
                               ),
                               decoration: BoxDecoration(
-                                color: const Color(0xFFE3F2FD),
+                                color: Theme.of(context).brightness ==
+                                        Brightness.dark
+                                    ? const Color(0xFF0C1A2A)
+                                    : const Color(0xFFE3F2FD),
                                 borderRadius: BorderRadius.circular(4),
                               ),
                               child: const Text(

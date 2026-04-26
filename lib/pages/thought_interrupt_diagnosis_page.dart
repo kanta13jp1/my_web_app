@@ -470,7 +470,9 @@ class _ThoughtInterruptDiagnosisPageState
         const SizedBox(height: 12),
         if (advice.isNotEmpty)
           Card(
-            color: const Color(0xFFE8EAF6),
+            color: Theme.of(context).brightness == Brightness.dark
+                ? const Color(0xFF1A1A2E)
+                : const Color(0xFFE8EAF6),
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Column(

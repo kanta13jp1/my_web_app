@@ -167,7 +167,9 @@ class _DataBackupPageState extends State<DataBackupPage> {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFE3F2FD),
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? const Color(0xFF0C1A2A)
+                      : const Color(0xFFE3F2FD),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Column(

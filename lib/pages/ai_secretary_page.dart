@@ -577,7 +577,10 @@ class _AISecretaryPageState extends State<AISecretaryPage> {
                                           vertical: 4,
                                         ),
                                         decoration: BoxDecoration(
-                                          color: const Color(0xFFFFECB3),
+                                          color: Theme.of(context).brightness ==
+                                                  Brightness.dark
+                                              ? const Color(0xFF2A1A00)
+                                              : const Color(0xFFFFECB3),
                                           borderRadius:
                                               BorderRadius.circular(4),
                                         ),

@@ -109,7 +109,9 @@ class _ElectionManagementDashboardState
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Card(
-            color: const Color(0xFFFFEBEE),
+            color: Theme.of(context).brightness == Brightness.dark
+                ? const Color(0xFF3A1010)
+                : const Color(0xFFFFEBEE),
             elevation: 0,
             shape: RoundedRectangleBorder(
               side: const BorderSide(color: Color(0xFFEF9A9A)),

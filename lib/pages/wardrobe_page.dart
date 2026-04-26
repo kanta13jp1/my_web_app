@@ -776,7 +776,10 @@ class _WardrobePageState extends State<WardrobePage>
                                       vertical: 2,
                                     ),
                                     decoration: BoxDecoration(
-                                      color: const Color(0xFFE3F2FD),
+                                      color: Theme.of(context).brightness ==
+                                              Brightness.dark
+                                          ? const Color(0xFF0C1A2A)
+                                          : const Color(0xFFE3F2FD),
                                       borderRadius: BorderRadius.circular(4),
                                     ),
                                     child: const Text(

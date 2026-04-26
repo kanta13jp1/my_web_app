@@ -479,7 +479,9 @@ class _BehaviorLogPageState extends State<BehaviorLogPage> {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFE8EAF6),
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? const Color(0xFF1A1A2E)
+                      : const Color(0xFFE8EAF6),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Column(

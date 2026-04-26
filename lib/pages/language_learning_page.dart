@@ -913,7 +913,9 @@ class _LanguageLearningPageState extends State<LanguageLearningPage>
           const SizedBox(height: 16),
           // Tips card
           Card(
-            color: const Color(0xFFE3F2FD),
+            color: Theme.of(context).brightness == Brightness.dark
+                ? const Color(0xFF0C1A2A)
+                : const Color(0xFFE3F2FD),
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Column(
