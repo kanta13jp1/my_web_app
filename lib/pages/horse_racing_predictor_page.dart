@@ -3162,9 +3162,9 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              const Expanded(
+          const Row(
+            children: <Widget>[
+              Expanded(
                 child: Text(
                   '券種別学習AI',
                   style: TextStyle(
@@ -3282,7 +3282,8 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
       decoration: BoxDecoration(
         color: const Color(0xFF0B1220),
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: const Color(0xFF2563EB).withValues(alpha: 0.3)),
+        border:
+            Border.all(color: const Color(0xFF2563EB).withValues(alpha: 0.3)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -3384,7 +3385,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
           ),
           Expanded(
             child: Text(
-              '結果$result/$races  予想$predicted  評価$evaluated',
+              '結果$results/$races  予想$predicted  評価$evaluated',
               style: const TextStyle(
                 color: Color(0xFF9CA3AF),
                 fontSize: 11,
