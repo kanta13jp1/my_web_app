@@ -1,3 +1,5 @@
+// ignore_for_file: require_trailing_commas
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
@@ -151,9 +153,19 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
           ? (d1['predictions'] as List).cast<Map<String, dynamic>>()
           : [];
       final d2 = results[2].data;
-      _accuracyStats = (d2 is Map && d2['stats'] is Map)
-          ? d2['stats'] as Map<String, dynamic>
-          : {};
+      if (d2 is Map) {
+        final stats = d2['stats'] is Map
+            ? Map<String, dynamic>.from(d2['stats'] as Map)
+            : <String, dynamic>{};
+        _accuracyStats = {
+          ...stats,
+          'recent_hits': d2['recent_hits'],
+          'bet_type_accuracy': d2['bet_type_accuracy'],
+          'learning': d2['learning'],
+        };
+      } else {
+        _accuracyStats = {};
+      }
       _betTickets = await _fetchBetTickets();
     } catch (e) {
       final errorType = _parseErrorType(e);
@@ -248,6 +260,31 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
     }
   }
 
+  Future<void> _refreshAccuracyLearning() async {
+    setState(() {
+      _isPredicting = true;
+      _predictionStatus = 'レース結果と予想を照合し、券種別の学習データを更新しています';
+    });
+    try {
+      await _supabase.functions.invoke(
+        'tools-hub',
+        body: {'action': 'horseracing.evaluate_accuracy'},
+      );
+      await _loadAll();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('券種別の的中率と学習データを更新しました')),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('学習データの更新に失敗しました。結果取得後に再試行してください')),
+      );
+    } finally {
+      if (mounted) setState(() => _isPredicting = false);
+    }
+  }
+
   void _pickDate() async {
     final picked = await showDatePicker(
       context: context,
@@ -281,6 +318,16 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
           .toList();
     }
     if (entriesRaw is Map) return [Map<String, dynamic>.from(entriesRaw)];
+    return const [];
+  }
+
+  List<Map<String, dynamic>> _mapList(dynamic value) {
+    if (value is List) {
+      return value
+          .whereType<Map>()
+          .map((item) => Map<String, dynamic>.from(item))
+          .toList();
+    }
     return const [];
   }
 
@@ -1381,6 +1428,14 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
     final third = picks.length > 2 ? picks[2] : '?';
     final confidence = (pred['confidence'] as num?)?.toDouble() ?? 0.5;
     final reasoning = pred['ai_reasoning'] as String?;
+    final resolvedPred = {
+      ...pred,
+      'first_pick': first,
+      'second_pick': second,
+      'third_pick': third,
+      'confidence': confidence,
+    };
+    final betSuggestions = _predictionBetSuggestions(resolvedPred, entries);
     final wasCorrected = rawPicks.any(
       (pick) => pick.trim().isNotEmpty && !validNames.contains(pick.trim()),
     );
@@ -1474,13 +1529,14 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
             ),
           ],
           const SizedBox(height: 10),
-          _buildBetTypeGuide(first, second, third),
+          _buildBetTypeGuide(betSuggestions, result),
         ],
       ),
     );
   }
 
-  Widget _buildBetTypeGuide(String first, String second, String third) {
+  // ignore: unused_element
+  Widget _buildLegacyBetTypeGuide(String first, String second, String third) {
     final bets = [
       ('複勝', first, '最小リスク'),
       ('単勝', first, '軸'),
@@ -1513,6 +1569,155 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
             ),
           ),
       ],
+    );
+  }
+
+  Widget _buildBetTypeGuide(
+    List<Map<String, dynamic>> suggestions,
+    Map<String, dynamic>? result,
+  ) {
+    if (suggestions.isEmpty) return const SizedBox.shrink();
+    final recommended =
+        suggestions.where((item) => item['recommended'] == true).toList()
+          ..sort(
+            (a, b) => ((a['priority'] as num?)?.toInt() ?? 99)
+                .compareTo((b['priority'] as num?)?.toInt() ?? 99),
+          );
+    final sorted = [...suggestions]..sort(
+        (a, b) => ((a['priority'] as num?)?.toInt() ?? 99)
+            .compareTo((b['priority'] as num?)?.toInt() ?? 99),
+      );
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Row(
+          children: [
+            Icon(
+              Icons.confirmation_number_outlined,
+              color: Color(0xFF60A5FA),
+              size: 15,
+            ),
+            SizedBox(width: 6),
+            Text(
+              '券種別AI予想',
+              style: TextStyle(
+                color: Color(0xFFE5E7EB),
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                height: 1.5,
+              ),
+            ),
+          ],
+        ),
+        if (recommended.isNotEmpty) ...[
+          const SizedBox(height: 8),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: const Color(0xFF064E3B).withValues(alpha: 0.22),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: const Color(0xFF34D399).withValues(alpha: 0.22),
+              ),
+            ),
+            child: Text(
+              '特におすすめ: ${recommended.map((item) => '${item['bet_type']} ${item['combination']}').join(' / ')}',
+              style: const TextStyle(
+                color: Color(0xFFD1FAE5),
+                fontSize: 11,
+                height: 1.45,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 6,
+          runSpacing: 6,
+          children: [
+            for (final bet in sorted) _buildBetSuggestionChip(bet, result),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildBetSuggestionChip(
+    Map<String, dynamic> bet,
+    Map<String, dynamic>? result,
+  ) {
+    final risk = bet['risk']?.toString() ?? '';
+    final riskColor = _riskColor(risk);
+    final hit = _betSuggestionHit(bet, result);
+    final confidence = (bet['confidence'] as num?)?.toDouble() ?? 0;
+    final borderColor = hit == true
+        ? const Color(0xFF4CAF50)
+        : hit == false
+            ? const Color(0xFFE53935)
+            : riskColor;
+    return Container(
+      constraints: const BoxConstraints(minWidth: 128),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 7),
+      decoration: BoxDecoration(
+        color: const Color(0xFF111827),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: borderColor.withValues(alpha: 0.35)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                bet['bet_type']?.toString() ?? '-',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                  height: 1.35,
+                ),
+              ),
+              const SizedBox(width: 6),
+              Text(
+                hit == true
+                    ? '的中'
+                    : hit == false
+                        ? '不的中'
+                        : _riskLabel(risk),
+                style: TextStyle(
+                  color: borderColor,
+                  fontSize: 10,
+                  height: 1.35,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 3),
+          Text(
+            bet['combination']?.toString() ?? '-',
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              color: Color(0xFFE5E7EB),
+              fontSize: 10,
+              height: 1.35,
+            ),
+          ),
+          Text(
+            '信頼 ${(confidence * 100).toStringAsFixed(0)}% / ${bet['stake_units'] ?? 1}口',
+            style: const TextStyle(
+              color: Color(0xFF9CA3AF),
+              fontSize: 9,
+              height: 1.35,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -1576,10 +1781,270 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
     return horseName;
   }
 
+  Map<String, dynamic>? _entryForHorse(
+    List<Map<String, dynamic>> entries,
+    String horseName,
+  ) {
+    final normalized = horseName.trim();
+    for (final entry in entries) {
+      if ((entry['horse_name'] as String? ?? '').trim() == normalized) {
+        return entry;
+      }
+    }
+    return null;
+  }
+
+  int? _horseNumberValue(
+    List<Map<String, dynamic>> entries,
+    String horseName,
+  ) {
+    final entry = _entryForHorse(entries, horseName);
+    final value = entry?['horse_number'];
+    if (value is num) return value.toInt();
+    return int.tryParse((value ?? '').toString());
+  }
+
+  int? _frameForHorseNumber(int? horseNumber, int fieldSize) {
+    if (horseNumber == null || fieldSize <= 0) return null;
+    if (fieldSize <= 8) return horseNumber;
+    final base = fieldSize ~/ 8;
+    final extra = fieldSize % 8;
+    var start = 1;
+    for (var frame = 1; frame <= 8; frame++) {
+      final size = base + (frame > 8 - extra ? 1 : 0);
+      final end = start + size - 1;
+      if (horseNumber >= start && horseNumber <= end) return frame;
+      start = end + 1;
+    }
+    return null;
+  }
+
+  List<Map<String, dynamic>> _predictionBetSuggestions(
+    Map<String, dynamic> pred,
+    List<Map<String, dynamic>> entries,
+  ) {
+    final serverSuggestions = _mapList(pred['bet_suggestions']);
+    if (serverSuggestions.isNotEmpty) return serverSuggestions;
+
+    final first = (pred['first_pick'] as String? ?? '').trim();
+    final second = (pred['second_pick'] as String? ?? '').trim();
+    final third = (pred['third_pick'] as String? ?? '').trim();
+    if (first.isEmpty || second.isEmpty || third.isEmpty) return const [];
+
+    final confidence = (pred['confidence'] as num?)?.toDouble() ?? 0.5;
+    final n1 = _horseNumberValue(entries, first);
+    final n2 = _horseNumberValue(entries, second);
+    final n3 = _horseNumberValue(entries, third);
+    final l1 = _horseNumberLabel(entries, first);
+    final l2 = _horseNumberLabel(entries, second);
+    final l3 = _horseNumberLabel(entries, third);
+    final f1 = _frameForHorseNumber(n1, entries.length);
+    final f2 = _frameForHorseNumber(n2, entries.length);
+
+    Map<String, dynamic> suggestion(
+      String type,
+      String combination,
+      List<String> horses,
+      List<int?> numbers,
+      String risk,
+      double confidenceDelta,
+      int stakeUnits,
+      bool recommended,
+      int priority,
+      String rationale, {
+      List<int?> frames = const [],
+      List<Map<String, dynamic>> tickets = const [],
+    }) {
+      return {
+        'bet_type': type,
+        'combination': combination,
+        'horses': horses,
+        'horse_numbers': numbers.whereType<int>().toList(),
+        if (frames.isNotEmpty) 'frames': frames.whereType<int>().toList(),
+        'risk': risk,
+        'confidence': (confidence + confidenceDelta).clamp(0.05, 0.95),
+        'stake_units': stakeUnits,
+        'recommended': recommended,
+        'priority': priority,
+        'rationale': rationale,
+        if (tickets.isNotEmpty) 'tickets': tickets,
+      };
+    }
+
+    final wideTickets = [
+      {
+        'combination': '$l1-$l2',
+        'horses': [first, second],
+        'horse_numbers': [n1, n2].whereType<int>().toList(),
+      },
+      {
+        'combination': '$l1-$l3',
+        'horses': [first, third],
+        'horse_numbers': [n1, n3].whereType<int>().toList(),
+      },
+      {
+        'combination': '$l2-$l3',
+        'horses': [second, third],
+        'horse_numbers': [n2, n3].whereType<int>().toList(),
+      },
+    ];
+
+    return [
+      suggestion('複勝', l1, [first], [n1], 'low', 0.14, 3, true, 1,
+          '本命馬が3着以内に入る前提の最小リスク本線。'),
+      suggestion(
+        'ワイド',
+        '$l1-$l2 / $l1-$l3',
+        [first, second, third],
+        [n1, n2, n3],
+        'low',
+        0.08,
+        2,
+        true,
+        2,
+        '本命から相手2頭へ分散し、3着内の組み合わせを狙う。',
+        tickets: wideTickets,
+      ),
+      suggestion('単勝', l1, [first], [n1], 'medium', 0.02, 1, false, 3,
+          '本命の勝ち切り狙い。複勝よりブレが大きい。'),
+      suggestion('馬連', '$l1-$l2', [first, second], [n1, n2], 'medium', -0.02, 1,
+          false, 4, '上位2頭の順不同。'),
+      suggestion(
+        '枠連',
+        f1 != null && f2 != null ? '$f1-$f2' : '$l1-$l2の枠',
+        [first, second],
+        [n1, n2],
+        'medium',
+        -0.03,
+        1,
+        false,
+        5,
+        '枠番ベースで上位2頭を押さえる。',
+        frames: [f1, f2],
+      ),
+      suggestion('馬単', '$l1→$l2', [first, second], [n1, n2], 'high', -0.08, 1,
+          false, 6, '本命1着固定。順序リスクが高い。'),
+      suggestion('3連複', '$l1-$l2-$l3', [first, second, third], [n1, n2, n3],
+          'high', -0.12, 1, false, 7, '上位3頭の順不同。'),
+      suggestion('3連単', '$l1→$l2→$l3', [first, second, third], [n1, n2, n3],
+          'high', -0.18, 1, false, 8, '着順完全固定。少額向け。'),
+    ];
+  }
+
+  String _riskLabel(String risk) {
+    return switch (risk) {
+      'low' => '低リスク',
+      'medium' => '中リスク',
+      'high' => '高リスク',
+      _ => risk,
+    };
+  }
+
+  Color _riskColor(String risk) {
+    return switch (risk) {
+      'low' => const Color(0xFF4CAF50),
+      'medium' => const Color(0xFFFFC107),
+      'high' => const Color(0xFFFF6B35),
+      _ => const Color(0xFF9CA3AF),
+    };
+  }
+
+  bool? _betSuggestionHit(
+    Map<String, dynamic> suggestion,
+    Map<String, dynamic>? result,
+  ) {
+    if (result == null) return null;
+    final first = (result['first_place'] ?? '').toString().trim();
+    final second = (result['second_place'] ?? '').toString().trim();
+    final third = (result['third_place'] ?? '').toString().trim();
+    if (first.isEmpty || second.isEmpty || third.isEmpty) return null;
+    final actualTop3 = {first, second, third};
+    final actualPair = [first, second]..sort();
+    final horses = (suggestion['horses'] is List)
+        ? (suggestion['horses'] as List).map((e) => e.toString()).toList()
+        : <String>[];
+    if (horses.isEmpty) return null;
+    final type = suggestion['bet_type']?.toString() ?? '';
+    return switch (type) {
+      '単勝' => horses.first == first,
+      '複勝' => actualTop3.contains(horses.first),
+      '馬単' => horses.length >= 2 && horses[0] == first && horses[1] == second,
+      '馬連' => horses.length >= 2 &&
+          (([horses[0], horses[1]]..sort()).join('|') == actualPair.join('|')),
+      'ワイド' => _wideSuggestionHit(suggestion, actualTop3),
+      '3連複' => horses.length >= 3 &&
+          (([horses[0], horses[1], horses[2]]..sort()).join('|') ==
+              ([first, second, third]..sort()).join('|')),
+      '3連単' => horses.length >= 3 &&
+          horses[0] == first &&
+          horses[1] == second &&
+          horses[2] == third,
+      _ => null,
+    };
+  }
+
+  bool _wideSuggestionHit(
+    Map<String, dynamic> suggestion,
+    Set<String> actualTop3,
+  ) {
+    final tickets = _mapList(suggestion['tickets']);
+    if (tickets.isNotEmpty) {
+      return tickets.any((ticket) {
+        final horses = (ticket['horses'] is List)
+            ? (ticket['horses'] as List).map((e) => e.toString()).toList()
+            : <String>[];
+        return horses.length >= 2 &&
+            actualTop3.contains(horses[0]) &&
+            actualTop3.contains(horses[1]);
+      });
+    }
+    final horses = (suggestion['horses'] is List)
+        ? (suggestion['horses'] as List).map((e) => e.toString()).toList()
+        : <String>[];
+    for (var i = 0; i < horses.length; i++) {
+      for (var j = i + 1; j < horses.length; j++) {
+        if (actualTop3.contains(horses[i]) && actualTop3.contains(horses[j])) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
   List<_BetLineDraft> _defaultBetLineDrafts(Map<String, dynamic> race) {
     final entries = _entriesOf(race);
     final pred = _firstMap(race['horse_predictions']);
     if (pred == null) return [_BetLineDraft(betType: 'ワイド')];
+    final suggestions = _predictionBetSuggestions(pred, entries)
+        .where((suggestion) => suggestion['recommended'] == true)
+        .toList()
+      ..sort((a, b) => ((a['priority'] as num?)?.toInt() ?? 99)
+          .compareTo((b['priority'] as num?)?.toInt() ?? 99));
+    final recommendedDrafts = <_BetLineDraft>[];
+    for (final suggestion in suggestions) {
+      final betType = suggestion['bet_type']?.toString() ?? 'ワイド';
+      final tickets = _mapList(suggestion['tickets']);
+      if (tickets.isNotEmpty) {
+        for (final ticket in tickets.take(2)) {
+          recommendedDrafts.add(
+            _BetLineDraft(
+              betType: betType,
+              combination: ticket['combination']?.toString() ?? '',
+              amount: 100,
+            ),
+          );
+        }
+      } else {
+        recommendedDrafts.add(
+          _BetLineDraft(
+            betType: betType,
+            combination: suggestion['combination']?.toString() ?? '',
+            amount: betType == '複勝' ? 300 : 100,
+          ),
+        );
+      }
+    }
+    if (recommendedDrafts.isNotEmpty) return recommendedDrafts;
 
     final first = pred['first_pick'] as String? ?? '';
     final second = pred['second_pick'] as String? ?? '';
@@ -2420,6 +2885,10 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
     final hitRate = (_accuracyStats['hit_rate_pct'] as num?)?.toDouble() ?? 0;
     final totalPayout = (_accuracyStats['total_payout'] as num?)?.toInt() ?? 0;
     final maxPayout = (_accuracyStats['max_payout'] as num?)?.toInt() ?? 0;
+    final betTypeAccuracy = _mapList(_accuracyStats['bet_type_accuracy']);
+    final learning = _accuracyStats['learning'] is Map
+        ? Map<String, dynamic>.from(_accuracyStats['learning'] as Map)
+        : <String, dynamic>{};
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -2527,7 +2996,132 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
             ),
           ),
           const SizedBox(height: 8),
+          _buildBetTypeLearningSection(betTypeAccuracy, learning),
+          const SizedBox(height: 12),
           ..._systemInfoRows(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBetTypeLearningSection(
+    List<Map<String, dynamic>> betTypeAccuracy,
+    Map<String, dynamic> learning,
+  ) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFF111827),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Expanded(
+                child: Text(
+                  '券種別学習AI',
+                  style: TextStyle(
+                    color: Colors.white70,
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    height: 1.5,
+                  ),
+                ),
+              ),
+              TextButton.icon(
+                onPressed: _isPredicting ? null : _refreshAccuracyLearning,
+                icon: const Icon(Icons.model_training, size: 16),
+                label: const Text('結果分析を更新'),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          if (betTypeAccuracy.isEmpty)
+            const Text(
+              '結果取得後に、単勝・複勝・枠連・馬連・ワイド・馬単・3連複・3連単の的中率を自動集計します。',
+              style: TextStyle(
+                color: Color(0xFF9CA3AF),
+                fontSize: 12,
+                height: 1.5,
+              ),
+            )
+          else
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final row in betTypeAccuracy)
+                  _buildBetTypeAccuracyCard(row),
+              ],
+            ),
+          if (learning.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            Text(
+              '推奨更新: ${learning['best_low_risk_bet_type'] ?? '集計中'} を現時点の最有力低リスク券種として学習中',
+              style: const TextStyle(
+                color: Color(0xFF9CA3AF),
+                fontSize: 11,
+                height: 1.5,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBetTypeAccuracyCard(Map<String, dynamic> row) {
+    final betType = row['bet_type']?.toString() ?? '-';
+    final total = (row['total_predictions'] as num?)?.toInt() ?? 0;
+    final hits = (row['hits'] as num?)?.toInt() ?? 0;
+    final rate = (row['hit_rate_pct'] as num?)?.toDouble() ?? 0;
+    final color = rate >= 50
+        ? const Color(0xFF4CAF50)
+        : rate >= 25
+            ? const Color(0xFFFFC107)
+            : const Color(0xFFFF6B35);
+    return Container(
+      width: 132,
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: color.withValues(alpha: 0.25)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            betType,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              height: 1.4,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            '${rate.toStringAsFixed(1)}%',
+            style: TextStyle(
+              color: color,
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              height: 1.2,
+            ),
+          ),
+          Text(
+            '$hits / $total 的中',
+            style: const TextStyle(
+              color: Color(0xFF9CA3AF),
+              fontSize: 10,
+              height: 1.4,
+            ),
+          ),
         ],
       ),
     );
@@ -2535,6 +3129,10 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
 
   List<Widget> _systemInfoRows() {
     return [
+      ('予想対象', '全レースの単勝・複勝・枠連・馬連・ワイド・馬単・3連複・3連単'),
+      ('低リスク推奨', '複勝とワイドを中心に、購入記録へ初期買い目として反映'),
+      ('学習ループ', '結果取得後に券種別的中率を計算し、翌日以降の推奨判断へ蓄積'),
+      ('AIモデル', 'Gemini / OpenAI / Claude / xAI / OpenRouter(設定時)'),
       ('データソース', 'netkeiba.com (JRA/NAR)'),
       ('AIモデル', 'Gemini 2.5 Flash'),
       ('予想方式', '3連単 (1着-2着-3着の順序予想)'),
