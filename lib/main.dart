@@ -201,6 +201,7 @@ import 'package:my_web_app/pages/virtual_whiteboard_page.dart';
 import 'package:my_web_app/pages/recipe_meal_planner_page.dart';
 import 'package:my_web_app/pages/language_learning_page.dart';
 import 'package:my_web_app/pages/habit_gamification_page.dart';
+import 'package:my_web_app/pages/focus_capture_game_page.dart';
 import 'package:my_web_app/pages/code_playground_page.dart';
 import 'package:my_web_app/pages/real_estate_tracker_page.dart';
 import 'package:my_web_app/pages/spreadsheet_database_page.dart';
@@ -1326,6 +1327,10 @@ class _MyAppState extends State<MyApp> {
           case '/habit-gamification':
             return MaterialPageRoute(
               builder: (_) => const HabitGamificationPage(),
+            );
+          case '/focus-capture':
+            return MaterialPageRoute(
+              builder: (_) => const FocusCaptureGamePage(),
             );
           case '/code-playground':
             return MaterialPageRoute(
