@@ -1234,8 +1234,29 @@ class _MyAppState extends State<MyApp> {
               builder: (_) => const CrmSalesPipelinePage(),
             );
           case '/horse-racing':
+          case '/horse-racing/today':
+          case '/horse-racing/predictions':
             return MaterialPageRoute(
               builder: (_) => const HorseRacingPredictorPage(),
+              settings: RouteSettings(name: settings.name),
+            );
+          case '/horse-racing/history':
+          case '/horse-racing/prediction-history':
+            return MaterialPageRoute(
+              builder: (_) => const HorseRacingPredictorPage(
+                initialTabIndex: 1,
+              ),
+              settings: RouteSettings(name: settings.name),
+            );
+          case '/horse-racing/analysis':
+          case '/horse-racing/accuracy':
+          case '/horse-racing-analysis':
+          case '/horse-racing-analytics':
+            return MaterialPageRoute(
+              builder: (_) => const HorseRacingPredictorPage(
+                initialTabIndex: 2,
+              ),
+              settings: RouteSettings(name: settings.name),
             );
           case '/horse-provider-leaderboard':
             return MaterialPageRoute(
