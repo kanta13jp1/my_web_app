@@ -878,6 +878,64 @@ function horseRaceDataQualityScore(entries: Record<string, unknown>[]): number {
   return Math.round((filled / (entries.length * fields.length)) * 1000) / 1000;
 }
 
+function numericOrFallback(value: unknown, fallback: number): number {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+function recentFinishScore(value: unknown): number {
+  const text = String(value ?? "");
+  const match = text.match(/\d+/);
+  if (!match) return 99;
+  const place = Number(match[0]);
+  return Number.isFinite(place) ? place : 99;
+}
+
+function sortHorseEntriesForLearning(entries: Record<string, unknown>[]): Record<string, unknown>[] {
+  return [...entries].sort((a, b) => {
+    const popularity = numericOrFallback(a.popularity, 999) - numericOrFallback(b.popularity, 999);
+    if (popularity !== 0) return popularity;
+    const odds = numericOrFallback(a.win_odds, 999) - numericOrFallback(b.win_odds, 999);
+    if (odds !== 0) return odds;
+    const recent = recentFinishScore(a.prev_finish) - recentFinishScore(b.prev_finish);
+    if (recent !== 0) return recent;
+    const quality = numericOrFallback(b.data_quality_score, 0) - numericOrFallback(a.data_quality_score, 0);
+    if (quality !== 0) return quality;
+    return numericOrFallback(a.horse_number, 999) - numericOrFallback(b.horse_number, 999);
+  });
+}
+
+function buildHistoricalBaselinePrediction(
+  race: Record<string, unknown>,
+  entries: Record<string, unknown>[],
+): ProviderPredictionResult {
+  const ranked = sortHorseEntriesForLearning(entries);
+  const [first, second, third] = ranked;
+  const dataQuality = horseRaceDataQualityScore(entries);
+  const oddsCoverage = entries.length > 0
+    ? entries.filter((entry) => entry.win_odds !== null && entry.win_odds !== undefined).length / entries.length
+    : 0;
+  const historyCoverage = entries.length > 0
+    ? entries.filter((entry) => entry.prev_finish || entry.prev_time || entry.best_time).length / entries.length
+    : 0;
+  const confidence = clampConfidence(0.36 + dataQuality * 0.22 + oddsCoverage * 0.12 + historyCoverage * 0.08);
+  return {
+    success: true,
+    prediction: {
+      first: String(first?.horse_name ?? ""),
+      second: String(second?.horse_name ?? ""),
+      third: String(third?.horse_name ?? ""),
+      confidence,
+      reasoning: [
+        "過去レース学習用の低リスク基準予想。",
+        "レース結果は参照せず、人気・単勝オッズ・前走・馬体/騎手/調教師/血統など取得済み特徴量から順位付け。",
+        `対象:${race.race_date ?? ""} ${race.venue ?? ""}${race.race_number ?? ""}R ${race.race_name ?? ""}`,
+      ].join(" "),
+    },
+    latency_ms: 0,
+  };
+}
+
 function horsePurchaseDecision(confidence: number, entries: Record<string, unknown>[]) {
   const base = clampConfidence(confidence);
   const dataQuality = horseRaceDataQualityScore(entries);
@@ -1109,6 +1167,104 @@ function hitMapForHorsePrediction(
     },
     suggestions: buildHorseBetSuggestions(first, second, third, entries, Number(pred.confidence ?? 0.5)).bet_suggestions,
   };
+}
+
+async function evaluateHorsePredictionAccuracy(
+  admin: SupabaseClient,
+  options: { raceId?: string | null; limit?: number } = {},
+) {
+  const raceId = options.raceId ? String(options.raceId) : null;
+  const limit = Math.max(1, Math.min(500, Number(options.limit ?? 50)));
+  const resultsQuery = admin.from("horse_results")
+    .select("race_id, first_place, second_place, third_place");
+  const { data: resultsRows, error: resErr } = raceId
+    ? await resultsQuery.eq("race_id", raceId)
+    : await resultsQuery.order("created_at", { ascending: false }).limit(limit);
+  if (resErr) throw new Error(resErr.message);
+  if (!resultsRows || resultsRows.length === 0) {
+    return { success: true, evaluated: 0, races_processed: 0, message: "no finalized results" };
+  }
+
+  let evaluated = 0;
+  for (const r of resultsRows as Array<Record<string, unknown>>) {
+    const rid = String(r.race_id);
+    const { data: entriesRows } = await admin.from("horse_entries")
+      .select("*")
+      .eq("race_id", rid);
+    const entries = (entriesRows ?? []) as Array<Record<string, unknown>>;
+    const { data: preds } = await admin.from("horse_race_predictions_ensemble")
+      .select("provider, model, first_pick, second_pick, third_pick, confidence")
+      .eq("race_id", rid);
+    for (const p of (preds ?? []) as Array<Record<string, unknown>>) {
+      const firstCorrect = String(p.first_pick ?? "").trim() === String(r.first_place ?? "").trim();
+      const trifectaCorrect = firstCorrect
+        && String(p.second_pick ?? "").trim() === String(r.second_place ?? "").trim()
+        && String(p.third_pick ?? "").trim() === String(r.third_place ?? "").trim();
+      const typeEval = hitMapForHorsePrediction(p, r, entries);
+      const hits = typeEval.hits as Record<string, boolean>;
+      const suggestions = typeEval.suggestions as HorseBetSuggestion[];
+      const skipRecommended = suggestions.some((s) => s.bet_type === "購入しない" && s.recommended);
+      const weightedScore = (
+        (skipRecommended && hits["購入しない"] ? 0.22 : 0) +
+        (hits["複勝"] ? 0.28 : 0) +
+        (hits["ワイド"] ? 0.22 : 0) +
+        (hits["単勝"] ? 0.16 : 0) +
+        (hits["馬連"] ? 0.11 : 0) +
+        (hits["枠連"] ? 0.08 : 0) +
+        (hits["馬単"] ? 0.07 : 0) +
+        (hits["3連複"] ? 0.05 : 0) +
+        (hits["3連単"] ? 0.03 : 0)
+      );
+      const payload = {
+        race_id: rid,
+        provider: p.provider,
+        model: p.model,
+        predicted_first: p.first_pick,
+        predicted_second: p.second_pick,
+        predicted_third: p.third_pick,
+        actual_first: r.first_place,
+        actual_second: r.second_place,
+        actual_third: r.third_place,
+        first_correct: firstCorrect,
+        trifecta_correct: trifectaCorrect,
+        bet_type_hits: hits,
+        recommended_hits: {
+          low_risk_core: Boolean(hits["複勝"] || hits["ワイド"]),
+          skip_purchase: skipRecommended ? Boolean(hits["購入しない"]) : null,
+          recommended_bet_types: ["複勝", "ワイド"].filter((type) => hits[type]),
+        },
+        bet_type_predictions: suggestions,
+        skip_recommendation_correct: skipRecommended ? Boolean(hits["購入しない"]) : null,
+        evaluated_features: {
+          data_quality_score: horseRaceDataQualityScore(entries),
+          entry_count: entries.length,
+          features: ["血統", "前走", "馬体重", "騎手", "調教師", "厩舎", "タイム", "オッズ", "人気"],
+        },
+        learning_score: Math.round(weightedScore * 1000) / 1000,
+      };
+      const { error: accErr } = await admin.from("horse_prediction_accuracy").upsert(
+        payload,
+        { onConflict: "race_id,provider,model" },
+      );
+      if (accErr) {
+        console.warn("horse_prediction_accuracy extended upsert failed; retrying legacy payload", accErr.message);
+        const legacyPayload = { ...payload } as Record<string, unknown>;
+        delete legacyPayload.bet_type_hits;
+        delete legacyPayload.recommended_hits;
+        delete legacyPayload.bet_type_predictions;
+        delete legacyPayload.skip_recommendation_correct;
+        delete legacyPayload.evaluated_features;
+        delete legacyPayload.learning_score;
+        await admin.from("horse_prediction_accuracy").upsert(
+          legacyPayload,
+          { onConflict: "race_id,provider,model" },
+        );
+      }
+      evaluated += 1;
+    }
+  }
+
+  return { success: true, evaluated, races_processed: resultsRows.length };
 }
 
 type UrgentHorseEntrySeed = {
@@ -1929,94 +2085,128 @@ serve(async (req) => {
           // 結果確定済みレースの ensemble 予想を全てスコアリング
           // body: { race_id? } (指定時は1レース、省略時は最新50レース)
           const raceId = body.race_id ? String(body.race_id) : null;
-          const resultsQuery = admin.from("horse_results")
-            .select("race_id, first_place, second_place, third_place");
-          const { data: resultsRows, error: resErr } = raceId
-            ? await resultsQuery.eq("race_id", raceId)
-            : await resultsQuery.order("created_at", { ascending: false }).limit(50);
-          if (resErr) throw new Error(resErr.message);
-          if (!resultsRows || resultsRows.length === 0) {
-            return json({ success: true, evaluated: 0, message: "no finalized results" });
-          }
-          let evaluated = 0;
-          for (const r of resultsRows as Array<Record<string, unknown>>) {
-            const rid = String(r.race_id);
-            const { data: entriesRows } = await admin.from("horse_entries")
-              .select("*")
-              .eq("race_id", rid);
-            const entries = (entriesRows ?? []) as Array<Record<string, unknown>>;
-            const { data: preds } = await admin.from("horse_race_predictions_ensemble")
-              .select("provider, model, first_pick, second_pick, third_pick, confidence")
-              .eq("race_id", rid);
-            for (const p of (preds ?? []) as Array<Record<string, unknown>>) {
-              const firstCorrect = String(p.first_pick ?? "").trim() === String(r.first_place ?? "").trim();
-              const trifectaCorrect = firstCorrect
-                && String(p.second_pick ?? "").trim() === String(r.second_place ?? "").trim()
-                && String(p.third_pick ?? "").trim() === String(r.third_place ?? "").trim();
-              const typeEval = hitMapForHorsePrediction(p, r, entries);
-              const hits = typeEval.hits as Record<string, boolean>;
-              const suggestions = typeEval.suggestions as HorseBetSuggestion[];
-              const skipRecommended = suggestions.some((s) => s.bet_type === "購入しない" && s.recommended);
-              const weightedScore = (
-                (skipRecommended && hits["購入しない"] ? 0.22 : 0) +
-                (hits["複勝"] ? 0.28 : 0) +
-                (hits["ワイド"] ? 0.22 : 0) +
-                (hits["単勝"] ? 0.16 : 0) +
-                (hits["馬連"] ? 0.11 : 0) +
-                (hits["枠連"] ? 0.08 : 0) +
-                (hits["馬単"] ? 0.07 : 0) +
-                (hits["3連複"] ? 0.05 : 0) +
-                (hits["3連単"] ? 0.03 : 0)
-              );
-              const payload = {
-                race_id: rid,
-                provider: p.provider,
-                model: p.model,
-                predicted_first: p.first_pick,
-                predicted_second: p.second_pick,
-                predicted_third: p.third_pick,
-                actual_first: r.first_place,
-                actual_second: r.second_place,
-                actual_third: r.third_place,
-                first_correct: firstCorrect,
-                trifecta_correct: trifectaCorrect,
-                bet_type_hits: hits,
-                recommended_hits: {
-                  low_risk_core: Boolean(hits["複勝"] || hits["ワイド"]),
-                  skip_purchase: skipRecommended ? Boolean(hits["購入しない"]) : null,
-                  recommended_bet_types: ["複勝", "ワイド"].filter((type) => hits[type]),
-                },
-                bet_type_predictions: suggestions,
-                skip_recommendation_correct: skipRecommended ? Boolean(hits["購入しない"]) : null,
-                evaluated_features: {
-                  data_quality_score: horseRaceDataQualityScore(entries),
-                  entry_count: entries.length,
-                  features: ["血統", "前走", "馬体重", "騎手", "調教師", "厩舎", "タイム", "オッズ", "人気"],
-                },
-                learning_score: Math.round(weightedScore * 1000) / 1000,
-              };
-              const { error: accErr } = await admin.from("horse_prediction_accuracy").upsert(
-                payload,
-                { onConflict: "race_id,provider,model" },
-              );
-              if (accErr) {
-                console.warn("horse_prediction_accuracy extended upsert failed; retrying legacy payload", accErr.message);
-                const legacyPayload = { ...payload } as Record<string, unknown>;
-                delete legacyPayload.bet_type_hits;
-                delete legacyPayload.recommended_hits;
-                delete legacyPayload.bet_type_predictions;
-                delete legacyPayload.skip_recommendation_correct;
-                delete legacyPayload.evaluated_features;
-                delete legacyPayload.learning_score;
-                await admin.from("horse_prediction_accuracy").upsert(
-                  legacyPayload,
-                  { onConflict: "race_id,provider,model" },
-                );
-              }
-              evaluated += 1;
+          const limit = Math.max(1, Math.min(500, Number(body.limit ?? 50)));
+          return json(await evaluateHorsePredictionAccuracy(admin, { raceId, limit }));
+        }
+        case "horseracing.backfill_learning_data": {
+          // 過去レースの出走表から「結果を見ない」低リスク基準予想を作り、
+          // 既に取得済みの結果と照合して学習データを増やす。
+          const targetDate = String(body.date_to ?? body.date ?? new Date().toISOString().split("T")[0]);
+          const days = Math.max(1, Math.min(180, Number(body.days ?? 21)));
+          const dateFromMs = Date.parse(`${targetDate}T00:00:00.000Z`) - (days - 1) * 86_400_000;
+          const dateFrom = String(body.date_from ?? new Date(dateFromMs).toISOString().split("T")[0]);
+          const limit = Math.max(1, Math.min(500, Number(body.limit ?? 160)));
+          const force = Boolean(body.force ?? false);
+          const type = String(body.type ?? body.source ?? "all");
+          const baselineCfg: HorseProviderConfig = {
+            provider: "baseline",
+            model: "low-risk-ranker-v1",
+            apiKeyEnv: "",
+            estimatedCostUsd: 0,
+            tier: "base",
+            family: "HistoricalBaseline",
+          };
+
+          let raceQuery = admin.from("horse_races")
+            .select("*, horse_entries(*), horse_predictions(id), horse_results(race_id,first_place,second_place,third_place)")
+            .gte("race_date", dateFrom)
+            .lte("race_date", targetDate)
+            .order("race_date", { ascending: false })
+            .limit(limit);
+          if (type === "jra") raceQuery = raceQuery.eq("source", "jra");
+          else if (type === "nar") raceQuery = raceQuery.eq("source", "nar");
+          else if (type === "overseas") raceQuery = raceQuery.eq("source", "overseas");
+
+          const { data: races, error: raceErr } = await raceQuery;
+          if (raceErr) throw new Error(raceErr.message);
+          const raceRows = (races ?? []) as Array<Record<string, unknown>>;
+          const raceIds = raceRows.map((race) => String(race.id ?? "")).filter(Boolean);
+          const existingBaseline = new Set<string>();
+          if (raceIds.length > 0) {
+            const { data: existing } = await admin.from("horse_race_predictions_ensemble")
+              .select("race_id")
+              .in("race_id", raceIds)
+              .eq("provider", baselineCfg.provider)
+              .eq("model", baselineCfg.model);
+            for (const row of (existing ?? []) as Array<Record<string, unknown>>) {
+              existingBaseline.add(String(row.race_id));
             }
           }
-          return json({ success: true, evaluated, races_processed: resultsRows.length });
+
+          let backfilled = 0;
+          let representativeInserted = 0;
+          let skipped = 0;
+          let withResults = 0;
+          const samples: Array<Record<string, unknown>> = [];
+
+          for (const rawRace of raceRows) {
+            const race = await ensureLiveHorseRaceInfo(admin, rawRace);
+            const raceId = String(race.id ?? "");
+            if (!raceId) {
+              skipped += 1;
+              continue;
+            }
+            const entries = Array.isArray(race.horse_entries)
+              ? (race.horse_entries as Array<Record<string, unknown>>)
+              : [];
+            if (entries.length < 3) {
+              skipped += 1;
+              continue;
+            }
+            const hasResult = Array.isArray(race.horse_results) && race.horse_results.length > 0;
+            if (hasResult) withResults += 1;
+            if (!force && existingBaseline.has(raceId)) {
+              skipped += 1;
+              continue;
+            }
+
+            const baseline = buildHistoricalBaselinePrediction(race, entries);
+            await persistEnsemblePrediction(admin, raceId, baselineCfg, baseline, entries);
+            backfilled += 1;
+
+            const representative = Array.isArray(race.horse_predictions) ? race.horse_predictions : [];
+            if (representative.length === 0 && baseline.prediction) {
+              const pred = sanitizeHorsePrediction(baseline.prediction, entries);
+              const { error: insertErr } = await admin.from("horse_predictions").insert({
+                race_id: raceId,
+                first_pick: pred.first,
+                second_pick: pred.second,
+                third_pick: pred.third,
+                confidence: pred.confidence,
+                ai_reasoning: `${pred.reasoning} / historical backfill baseline`,
+                ai_model: `${baselineCfg.provider}:${baselineCfg.model}`,
+              });
+              if (!insertErr) representativeInserted += 1;
+            }
+
+            if (samples.length < 8 && baseline.prediction) {
+              samples.push({
+                race_id: raceId,
+                race_date: race.race_date,
+                race_name: race.race_name,
+                venue: race.venue,
+                first: baseline.prediction.first,
+                second: baseline.prediction.second,
+                third: baseline.prediction.third,
+                confidence: baseline.prediction.confidence,
+                has_result: hasResult,
+              });
+            }
+          }
+
+          const evaluation = await evaluateHorsePredictionAccuracy(admin, { limit: Math.max(limit, 100) });
+          return json({
+            success: true,
+            date_from: dateFrom,
+            date_to: targetDate,
+            scanned: raceRows.length,
+            backfilled,
+            representative_inserted: representativeInserted,
+            skipped,
+            races_with_results: withResults,
+            evaluation,
+            samples,
+          });
         }
         case "horseracing.predictions": {
           const { data: preds, error: pe } = await admin.from("horse_predictions")
@@ -2061,7 +2251,8 @@ serve(async (req) => {
           }, { onConflict: "race_id" });
           await admin.from("horse_races").update({ status: "completed" }).eq("id", raceId);
           if (re) throw new Error(re.message);
-          return json({ success: true, is_correct: isCorrect });
+          const evaluation = await evaluateHorsePredictionAccuracy(admin, { raceId, limit: 1 });
+          return json({ success: true, is_correct: isCorrect, evaluation });
         }
         case "horseracing.accuracy": {
           const { data: stats } = await admin.from("horse_accuracy_stats").select("*").maybeSingle();
@@ -2076,6 +2267,13 @@ serve(async (req) => {
           const rankedBetTypes = [...(betTypeRows ?? [])].sort((a: Record<string, unknown>, b: Record<string, unknown>) =>
             Number(b.hit_rate_pct ?? 0) - Number(a.hit_rate_pct ?? 0)
           );
+          const { data: dailyLearning, error: dailyLearningError } = await admin.from("horse_learning_daily_accuracy")
+            .select("*")
+            .order("race_date", { ascending: false })
+            .limit(14);
+          if (dailyLearningError) {
+            console.warn("horse_learning_daily_accuracy unavailable", dailyLearningError.message);
+          }
           const activeChain = horseProviderChain(false);
           return json({
             success: true,
@@ -2085,8 +2283,10 @@ serve(async (req) => {
             learning: {
               best_low_risk_bet_type: rankedBetTypes[0]?.bet_type ?? null,
               best_purchase_decision: rankedBetTypes.find((row: Record<string, unknown>) => row.bet_type === "購入しない") ?? null,
+              daily_accuracy: dailyLearning ?? [],
               evaluated_bet_types: rankedBetTypes.length,
-              feedback_loop: "レース結果取得後に horseracing.evaluate_accuracy が券種別と購入見送り判断を照合し、翌日以降の低リスク推奨に反映できる形で蓄積します。",
+              feedback_loop: "レース結果取得後に horseracing.evaluate_accuracy が券種別と購入見送り判断を照合し、horseracing.backfill_learning_data で過去レースも低リスク基準予想として蓄積します。",
+              backfill_action: "horseracing.backfill_learning_data",
               model_chain: activeChain.map((cfg) => `${cfg.provider}:${cfg.model}`),
               model_candidates: horseModelCandidates(),
               feature_set: ["血統", "前走", "馬体重", "騎手", "調教師", "厩舎", "タイム", "オッズ", "人気"],
@@ -4092,6 +4292,7 @@ ${reportText ? `> ${reportText}` : ""}`,
             "horseracing.today", "horseracing.list_races", "horseracing.predict_all",
             "horseracing.predict_ensemble", "horseracing.consensus",
             "horseracing.provider_leaderboard", "horseracing.evaluate_accuracy",
+            "horseracing.backfill_learning_data",
             "horseracing.predictions", "horseracing.store_results", "horseracing.accuracy",
             "horseracing.register_race", "horseracing.stats",
             "slack.post", "slack.search",
