@@ -1574,6 +1574,16 @@ List<HomeToolEntry> buildHomeToolCatalog({
       onOpen: (context) => _pushPage(context, const VirtualPetPage()),
     ),
     HomeToolEntry(
+      id: 'focus-capture',
+      sectionId: 'personal',
+      title: 'フォーカス捕獲ゲーム',
+      subtitle: '低いハードルの習慣化を遊びに変えるオリジナル捕獲ミニゲーム',
+      icon: Icons.center_focus_strong,
+      color: const Color(0xFF16A34A),
+      keywords: const <String>['ゲーム', '捕獲', '習慣', '集中', 'focus', 'ミニゲーム'],
+      onOpen: (context) => Navigator.of(context).pushNamed('/focus-capture'),
+    ),
+    HomeToolEntry(
       id: 'carbon-footprint',
       sectionId: 'personal',
       title: 'カーボンフットプリント',
