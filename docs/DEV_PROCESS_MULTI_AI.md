@@ -263,7 +263,7 @@ gh secret set SLACK_WEBHOOK_URL SLACK_WEBHOOK_QUOTA SLACK_WEBHOOK_CI
 # 4. ai_circuit_breaker → Slack post trigger 作成 (Win版 Backlog)
 ```
 
-### 8-4. core-hub:slack.notify action (設計 / 未実装)
+### 8-4. core-hub:slack.notify action (✅ 実装済 Win版#132 part 36 / 2026-04-26)
 
 ```typescript
 // supabase/functions/core-hub/index.ts
@@ -287,7 +287,43 @@ case 'slack.notify': {
 }
 ```
 
-### 8-5. Supabase trigger: circuit breaker OPEN で Slack 通知 (設計 / 未実装)
+### 8-5. Supabase trigger: circuit breaker OPEN で Slack 通知 (✅ 実装済 Win版#132 part 36 / 2026-04-26)
+
+実装: `supabase/migrations/20260426253000_ai_circuit_breaker_slack_trigger.sql`
+
+**ユーザー手動 setup (一度のみ)**:
+
+Supabase Studio → SQL Editor で SERVICE_ROLE_KEY を Vault に保存:
+
+```sql
+-- Settings → API → service_role secret をコピーして以下に貼付
+SELECT vault.create_secret(
+  '<paste_service_role_key_here>',
+  'service_role_key'
+);
+```
+
+未保存時の挙動: trigger は NOTICE を出して silent skip (本体 UPDATE は影響なし)。
+
+**動作確認**:
+
+```sql
+-- Test: anthropic を closed→open に変更 → Slack #jibun-quota に通知届くはず
+UPDATE public.ai_circuit_breaker
+SET state = 'open',
+    reason = 'manual test',
+    expires_at = NOW() + INTERVAL '1 minute'
+WHERE provider = 'anthropic';
+
+-- 確認後 closed に戻す
+UPDATE public.ai_circuit_breaker
+SET state = 'closed', reason = NULL, expires_at = NULL
+WHERE provider = 'anthropic';
+```
+
+---
+
+### 8-5b. (旧設計参考) — 元の設計 sketch
 
 ```sql
 CREATE OR REPLACE FUNCTION notify_circuit_breaker_open()
@@ -438,7 +474,7 @@ case 'notion.sync_wbs': {
 |---|--------|------|-------|------|
 | S1 | Slack Webhook 3 ch 設定 | 2026-04-28 | 🔴 | ユーザー手動 |
 | S2 | `core-hub:slack.notify` action 追加 | 2026-04-30 | ✅ Win版#132 part 36 (2026-04-26) | S1 |
-| S3 | ai_circuit_breaker Supabase trigger (Slack post) | 2026-04-30 | 🟡 | S2 |
+| S3 | ai_circuit_breaker Supabase trigger (Slack post) | 2026-04-30 | ✅ Win版#132 part 36 (2026-04-26) — 🔧 vault 手動 setup 必須 (下記参照) | S2 |
 | S4 | Discord webhook secondary channel | 2026-05-15 | 🟢 | S1 |
 | N1 | Notion Integration token + DB 3 つ設計 | 2026-05-01 | 🟡 | ユーザー手動 |
 | N2 | `schedule-hub:notion.sync_wbs` action | 2026-05-05 | 🟡 | N1 |
