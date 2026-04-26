@@ -7,13 +7,17 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: "実行モード (entries / results / predict / all)"
+        description: "実行モード (entries / results / predict / all / backfill)"
         required: false
         default: "all"
       date:
         description: "対象日付 YYYY-MM-DD (省略時は今日)"
         required: false
         default: ""
+      days:
+        description: "backfill モード時に遡る日数 (デフォルト: 21)"
+        required: false
+        default: "21"
 
 concurrency:
   group: horse-racing-update
@@ -81,6 +85,23 @@ jobs:
             python scripts/fetch_horse_racing.py --mode evaluate --limit 100
           else
             echo "精度再評価はスキップ (時刻: ${HOUR}時)"
+          fi
+
+      - name: 過去学習データbackfill (日曜JST 23時台 or backfill モード時のみ)
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL_PROD }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          TOOLS_HUB_URL: ${{ secrets.SUPABASE_URL_PROD }}/functions/v1/tools-hub
+        run: |
+          MODE="${{ inputs.mode }}"
+          HOUR=$(TZ=Asia/Tokyo date +%H)
+          DOW=$(TZ=Asia/Tokyo date +%u)
+          DAYS="${{ inputs.days || '21' }}"
+          if [ "$MODE" = "backfill" ] || ([ "$DOW" = "7" ] && [ "$HOUR" = "23" ]); then
+            echo "過去学習データbackfillを実行 (DOW=${DOW}, 時刻=${HOUR}時, days=${DAYS})"
+            python scripts/fetch_horse_racing.py --mode backfill --date "$TARGET_DATE" --days "$DAYS"
+          else
+            echo "backfillはスキップ (DOW=${DOW}, 時刻=${HOUR}時)"
           fi
 
       - name: 完了サマリー
