@@ -20847,3 +20847,10 @@ habit_tracker / time_tracker / reading_list / calendar_events
 
 **Philosophy Alignment**: 7/9 ✅ (CEO/ミッション/価値/時間/BS/KPI/IPO)
 
+
+## 2026-04-26 PS#6 S51: flutter analyze CI修復 — Supabase undefined + unused_import (b64f902a)
+- **根本原因**: PS#5 anon guard が `Supabase.instance.client.auth.currentUser` を追加したが `import 'package:supabase_flutter/supabase_flutter.dart'` なし → `undefined_identifier` (cmo_page.dart:301 + my_skills_page.dart:27)
+- **fix1 (cf437e79)**: `Supabase.instance.client.auth.currentUser` → `supabase.auth.currentUser` (main.dart global 統一)
+- **fix2 (b64f902a)**: hook が自動追加した unused `supabase_flutter` import 削除 → CI `unused_import` error 解消
+- **deploy**: 3連続failure (`24945365712/308590/643476`) → b64f902a push で green queue待ち
+- **教訓**: `Supabase.instance.client` より `supabase` global が推奨パターン / `supabase_flutter` 直接 import 不要
