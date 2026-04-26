@@ -21142,6 +21142,24 @@ anon 401 残存 5ページ修正 (ai-hub guard 完了)
 - gemini_university_v2_page.dart の `_providerMeta` / `_quizzes` / `_fallback` への 10 件追加 (UI クイズ/フォールバック完全対応)
 - 命名規則の統一 (hyphen vs underscore — PS#3 と協議が必要 / cross-instance-pr 候補)
 
+## PS#3 S65 — 2026-04-26 AI大学 224→226社化 (Bardeen + Relevance AI)
+
+**migration 20260426205000**: Bardeen 追加 (224→225)
+- AIブラウザ自動化 / Chrome拡張 / Magic Action (自然言語→Playbook自動生成)
+- Scraper AI (任意ページの構造自動解析) / LinkedIn×CRM統合 / 70+アプリ対応
+- Insight Partners / ~$15M
+- 評価: 8/9
+
+**migration 20260426210500**: Relevance AI 追加 (225→226)
+- AIエージェントチームビルダー / BDR Agent / Research Agent / Support Agent
+- ノーコード Multi-Agent Orchestration / ReAct ループ / Multi-LLM (GPT-4o/Claude/Gemini)
+- Vector Memory / Sydney, Australia / ~$15M
+- 評価: 8/9
+
+**commit**: 7d393e31 (migrations) → 612eb6d4 (push main)
+
+**Win版との連携**: Win版 e6364f3b で ai_provider_registry.dart 214→224 更新済。
+bardeen/relevance-ai の registry 追加は Win版に cross-instance-pr 発行予定。
 ## PS#4 S63 — 2026-04-26 (a26eee9d)
 
 **担当**: PS#4 (PowerShell版 #4) — 競合モニタリング
