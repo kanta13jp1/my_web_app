@@ -492,8 +492,8 @@ def parse_race_id(race_id: str, source: str) -> dict:
     else:
         if len(race_id) < 12:
             return {}
-        venue_code = race_id[8:10]
-        race_num = race_id[12:14] if len(race_id) >= 14 else ""
+        venue_code = race_id[4:6]
+        race_num = race_id[10:12]
         venue = JRA_VENUE_MAP.get(venue_code, "不明")
     return {
         "venue": venue,

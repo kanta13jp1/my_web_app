@@ -7,6 +7,7 @@ import 'horseracing_race_detail_page.dart';
 enum RaceType {
   all('すべて'),
   jra('中央'),
+  overseas('海外'),
   nar('地方');
 
   const RaceType(this.label);
@@ -606,6 +607,18 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
     );
   }
 
+  int _venueSortRank(String venue) {
+    const priority = {
+      '東京': 0,
+      '京都': 1,
+      'シャンティン': 2,
+      'シャティン': 2,
+      'Sha Tin': 2,
+      '沙田': 2,
+    };
+    return priority[venue] ?? 100;
+  }
+
   Widget _buildTodayRacesList() {
     final hasPredictions = _todayRaces.any(_hasPrediction);
 
@@ -622,7 +635,12 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
         return na.compareTo(nb);
       });
     }
-    final venues = byVenue.keys.toList()..sort();
+    final venues = byVenue.keys.toList()
+      ..sort((a, b) {
+        final rank = _venueSortRank(a).compareTo(_venueSortRank(b));
+        if (rank != 0) return rank;
+        return a.compareTo(b);
+      });
 
     return Column(
       children: [
@@ -720,8 +738,14 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
       '帯広',
       '不明',
     };
-    final isJra = !narVenues.contains(venue);
-    final color = isJra ? const Color(0xFF2563EB) : const Color(0xFF7C3AED);
+    const overseasVenues = {'シャンティン', 'シャティン', 'Sha Tin', '沙田'};
+    final isOverseas = overseasVenues.contains(venue);
+    final isJra = !isOverseas && !narVenues.contains(venue);
+    final color = isOverseas
+        ? const Color(0xFF059669)
+        : isJra
+            ? const Color(0xFF2563EB)
+            : const Color(0xFF7C3AED);
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -733,7 +757,11 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
       child: Row(
         children: [
           Icon(
-            isJra ? Icons.stadium : Icons.location_on,
+            isOverseas
+                ? Icons.flight_takeoff
+                : isJra
+                    ? Icons.stadium
+                    : Icons.location_on,
             color: color,
             size: 16,
           ),
@@ -755,7 +783,11 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
               borderRadius: BorderRadius.circular(4),
             ),
             child: Text(
-              isJra ? 'JRA' : '地方',
+              isOverseas
+                  ? '海外'
+                  : isJra
+                      ? 'JRA'
+                      : '地方',
               style: TextStyle(
                 color: color,
                 fontSize: 10,

@@ -532,6 +532,254 @@ function buildHorseRacePrompt(race: Record<string, unknown>, entries: Record<str
   return `競馬レース「${race.race_name}」(${race.venue ?? ""}/${race.course_type ?? "芝"}${race.distance ?? ""}m/${race.grade ?? ""}) の3連単予想をしてください。\n出走馬:\n${entryText}\n\nJSON形式のみで回答 (前後に説明文を入れない): {"first":"予想馬名1","second":"予想馬名2","third":"予想馬名3","confidence":0.0,"reasoning":"根拠"}`;
 }
 
+type UrgentHorseEntrySeed = {
+  horse_number: number;
+  horse_name: string;
+  jockey?: string;
+  trainer?: string;
+  win_odds?: number | null;
+  popularity?: number | null;
+};
+
+type UrgentHorseRaceSeed = {
+  race_id_ext: string;
+  source: string;
+  race_name: string;
+  race_date: string;
+  venue: string;
+  race_number: number;
+  post_time: string;
+  course_type: string;
+  distance: number;
+  grade: string;
+  entries: UrgentHorseEntrySeed[];
+  prediction: {
+    first_pick: string;
+    second_pick: string;
+    third_pick: string;
+    confidence: number;
+    ai_reasoning: string;
+  };
+};
+
+const URGENT_HORSE_RACES_20260426: UrgentHorseRaceSeed[] = [
+  {
+    race_id_ext: "202605020211",
+    source: "jra",
+    race_name: "フローラステークス",
+    race_date: "2026-04-26",
+    venue: "東京",
+    race_number: 11,
+    post_time: "15:45",
+    course_type: "芝",
+    distance: 2000,
+    grade: "G2",
+    entries: [
+      { horse_number: 1, horse_name: "リスレジャンデール", jockey: "津村明秀", trainer: "栗田徹" },
+      { horse_number: 2, horse_name: "ラベルセーヌ", jockey: "荻野極", trainer: "鹿戸雄一" },
+      { horse_number: 4, horse_name: "ペイシャシス", jockey: "北村宏司", trainer: "加藤公太" },
+      { horse_number: 5, horse_name: "ラフターラインズ", jockey: "D.レーン", trainer: "小笠倫弘" },
+      { horse_number: 6, horse_name: "ペンダント", jockey: "佐々木大輔", trainer: "池江泰寿" },
+      { horse_number: 7, horse_name: "リアライズルミナス", jockey: "松山弘平", trainer: "橋口慎介" },
+      { horse_number: 8, horse_name: "ゴバド", jockey: "原優介", trainer: "加藤征弘" },
+      { horse_number: 9, horse_name: "コウギョク", jockey: "横山和生", trainer: "昆貢" },
+      { horse_number: 10, horse_name: "エイシンウィスパー", jockey: "松若風馬", trainer: "今野貞一" },
+      { horse_number: 11, horse_name: "ファムクラジューズ", jockey: "横山武史", trainer: "黒岩陽一" },
+      { horse_number: 12, horse_name: "スタニングレディ", jockey: "三浦皇成", trainer: "高木登" },
+      { horse_number: 13, horse_name: "エンネ", jockey: "A.ディー", trainer: "吉岡辰弥" },
+    ],
+    prediction: {
+      first_pick: "エンネ",
+      second_pick: "ファムクラジューズ",
+      third_pick: "ラフターラインズ",
+      confidence: 0.62,
+      ai_reasoning: "オークス権利取りの東京芝2000m。末脚と騎手配置を重視し、エンネを軸にファムクラジューズ、ラフターラインズを相手筆頭。取消馬を除外して即戦力の予想に補正。",
+    },
+  },
+  {
+    race_id_ext: "202608030211",
+    source: "jra",
+    race_name: "マイラーズカップ",
+    race_date: "2026-04-26",
+    venue: "京都",
+    race_number: 11,
+    post_time: "15:35",
+    course_type: "芝",
+    distance: 1600,
+    grade: "G2",
+    entries: [
+      { horse_number: 1, horse_name: "ドラゴンブースト", jockey: "丹内祐次", trainer: "藤野健太" },
+      { horse_number: 2, horse_name: "オフトレイル", jockey: "岩田望来", trainer: "吉村圭司" },
+      { horse_number: 3, horse_name: "ファインライン", jockey: "鮫島克駿", trainer: "松永幹夫" },
+      { horse_number: 4, horse_name: "クルゼイロドスル", jockey: "太宰啓介", trainer: "高橋義忠" },
+      { horse_number: 5, horse_name: "ショウナンアデイブ", jockey: "池添謙一", trainer: "高野友和" },
+      { horse_number: 6, horse_name: "ブエナオンダ", jockey: "田口貫太", trainer: "須貝尚介" },
+      { horse_number: 7, horse_name: "ベラジオボンド", jockey: "北村友一", trainer: "上村洋行" },
+      { horse_number: 8, horse_name: "シャンパンカラー", jockey: "岩田康誠", trainer: "田中剛" },
+      { horse_number: 9, horse_name: "アドマイヤズーム", jockey: "武豊", trainer: "友道康夫" },
+      { horse_number: 10, horse_name: "ウォーターリヒト", jockey: "高杉吏麒", trainer: "石橋守" },
+      { horse_number: 11, horse_name: "キョウエイブリッサ", jockey: "田山旺佑", trainer: "武市康男" },
+      { horse_number: 12, horse_name: "ファーヴェント", jockey: "坂井瑠星", trainer: "藤原英昭" },
+      { horse_number: 13, horse_name: "アサヒ", jockey: "松本大輝", trainer: "金成貴史" },
+      { horse_number: 14, horse_name: "ロングラン", jockey: "団野大成", trainer: "和田勇介" },
+      { horse_number: 15, horse_name: "マテンロウスカイ", jockey: "横山典弘", trainer: "松永幹夫" },
+      { horse_number: 16, horse_name: "シックスペンス", jockey: "戸崎圭太", trainer: "田中博康" },
+      { horse_number: 17, horse_name: "エルトンバローズ", jockey: "西村淳也", trainer: "杉山晴紀" },
+      { horse_number: 18, horse_name: "ランスオブカオス", jockey: "吉村誠之助", trainer: "奥村豊" },
+    ],
+    prediction: {
+      first_pick: "シックスペンス",
+      second_pick: "アドマイヤズーム",
+      third_pick: "エルトンバローズ",
+      confidence: 0.66,
+      ai_reasoning: "京都外回りマイルは決め手と位置取りの両立を重視。シックスペンスの総合力を軸に、アドマイヤズームの成長力とエルトンバローズの重賞実績を上位評価。",
+    },
+  },
+  {
+    race_id_ext: "HKJC-20260426-ST-05",
+    source: "overseas",
+    race_name: "Chairman's Sprint Prize",
+    race_date: "2026-04-26",
+    venue: "シャンティン",
+    race_number: 5,
+    post_time: "15:50",
+    course_type: "芝",
+    distance: 1200,
+    grade: "G1",
+    entries: [
+      { horse_number: 1, horse_name: "Ka Ying Rising" },
+      { horse_number: 2, horse_name: "Lucky Sweynesse" },
+      { horse_number: 3, horse_name: "Satono Reve" },
+      { horse_number: 4, horse_name: "Helios Express" },
+      { horse_number: 5, horse_name: "Invincible Sage" },
+      { horse_number: 6, horse_name: "Victor The Winner" },
+      { horse_number: 7, horse_name: "Beauty Waves" },
+    ],
+    prediction: {
+      first_pick: "Ka Ying Rising",
+      second_pick: "Satono Reve",
+      third_pick: "Lucky Sweynesse",
+      confidence: 0.7,
+      ai_reasoning: "香港短距離路線の能力上位を素直に評価。Ka Ying Risingを本命、遠征馬Satono Reveを対抗、地元実績のLucky Sweynesseを3番手に置く。",
+    },
+  },
+  {
+    race_id_ext: "HKJC-20260426-ST-07",
+    source: "overseas",
+    race_name: "Champions Mile",
+    race_date: "2026-04-26",
+    venue: "シャンティン",
+    race_number: 7,
+    post_time: "17:00",
+    course_type: "芝",
+    distance: 1600,
+    grade: "G1",
+    entries: [
+      { horse_number: 1, horse_name: "Jantar Mantar" },
+      { horse_number: 2, horse_name: "Voyage Bubble" },
+      { horse_number: 3, horse_name: "Soul Rush" },
+      { horse_number: 4, horse_name: "Mr Brightside" },
+      { horse_number: 5, horse_name: "Beauty Joy" },
+      { horse_number: 6, horse_name: "My Wish" },
+      { horse_number: 7, horse_name: "Royal Patronage" },
+      { horse_number: 8, horse_name: "Happy Together" },
+    ],
+    prediction: {
+      first_pick: "Jantar Mantar",
+      second_pick: "Voyage Bubble",
+      third_pick: "Soul Rush",
+      confidence: 0.64,
+      ai_reasoning: "マイルG1は完成度と瞬発力を重視。Jantar Mantarの地力を軸に、地元のVoyage Bubble、差し脚安定のSoul Rushを相手本線。",
+    },
+  },
+  {
+    race_id_ext: "HKJC-20260426-ST-09",
+    source: "overseas",
+    race_name: "Queen Elizabeth II Cup",
+    race_date: "2026-04-26",
+    venue: "シャンティン",
+    race_number: 9,
+    post_time: "18:10",
+    course_type: "芝",
+    distance: 2000,
+    grade: "G1",
+    entries: [
+      { horse_number: 1, horse_name: "Liberty Island" },
+      { horse_number: 2, horse_name: "Masquerade Ball" },
+      { horse_number: 3, horse_name: "Goliath" },
+      { horse_number: 4, horse_name: "Tastiera" },
+      { horse_number: 5, horse_name: "Dubai Honour" },
+      { horse_number: 6, horse_name: "Cap Ferrat" },
+      { horse_number: 7, horse_name: "Calif" },
+      { horse_number: 8, horse_name: "Ensued" },
+      { horse_number: 9, horse_name: "Moments In Time" },
+    ],
+    prediction: {
+      first_pick: "Liberty Island",
+      second_pick: "Masquerade Ball",
+      third_pick: "Goliath",
+      confidence: 0.63,
+      ai_reasoning: "2000mの総合力勝負。Liberty Islandの能力を最上位に、勢いあるMasquerade Ball、欧州型の持続力を持つGoliathを上位評価。TastieraとDubai Honourは押さえ。",
+    },
+  },
+];
+
+function urgentHorseRacesForDate(targetDate: string): UrgentHorseRaceSeed[] {
+  return targetDate === "2026-04-26" ? URGENT_HORSE_RACES_20260426 : [];
+}
+
+async function upsertUrgentHorseRaces(admin: SupabaseClient, targetDate: string) {
+  const seeds = urgentHorseRacesForDate(targetDate);
+  for (const seed of seeds) {
+    const { data: race, error: raceError } = await admin.from("horse_races").upsert({
+      source: seed.source,
+      race_id_ext: seed.race_id_ext,
+      race_name: seed.race_name,
+      race_date: seed.race_date,
+      venue: seed.venue,
+      race_number: seed.race_number,
+      post_time: seed.post_time,
+      course_type: seed.course_type,
+      distance: seed.distance,
+      grade: seed.grade,
+      num_horses: seed.entries.length,
+      status: "scheduled",
+    }, { onConflict: "race_id_ext" }).select("id").single();
+    if (raceError || !race) {
+      console.warn("urgent horse race upsert failed", seed.race_id_ext, raceError?.message);
+      continue;
+    }
+
+    const raceId = String((race as { id: string }).id);
+    await admin.from("horse_entries").delete().eq("race_id", raceId);
+    const { error: entryError } = await admin.from("horse_entries").insert(seed.entries.map((entry) => ({
+      race_id: raceId,
+      horse_number: entry.horse_number,
+      horse_name: entry.horse_name,
+      jockey: entry.jockey ?? null,
+      trainer: entry.trainer ?? null,
+      win_odds: entry.win_odds ?? null,
+      popularity: entry.popularity ?? null,
+    })));
+    if (entryError) {
+      console.warn("urgent horse entry upsert failed", seed.race_id_ext, entryError.message);
+    }
+
+    const { error: predictionError } = await admin.from("horse_predictions").upsert({
+      race_id: raceId,
+      first_pick: seed.prediction.first_pick,
+      second_pick: seed.prediction.second_pick,
+      third_pick: seed.prediction.third_pick,
+      confidence: seed.prediction.confidence,
+      ai_reasoning: seed.prediction.ai_reasoning,
+      ai_model: "urgent-20260426-seed",
+    }, { onConflict: "race_id" });
+    if (predictionError) {
+      console.warn("urgent horse prediction upsert failed", seed.race_id_ext, predictionError.message);
+    }
+  }
+}
+
 async function callProviderForHorsePrediction(
   cfg: HorseProviderConfig,
   prompt: string,
@@ -758,6 +1006,7 @@ serve(async (req) => {
         case "horseracing.today": {
           const targetDate = String(body.date ?? new Date().toISOString().split("T")[0]);
           const type = String(body.type ?? "all");
+          await upsertUrgentHorseRaces(admin, targetDate);
           
           let query = admin
             .from("horse_races")
@@ -766,6 +1015,7 @@ serve(async (req) => {
             
           if (type === "jra") query = query.eq("source", "jra");
           else if (type === "nar") query = query.eq("source", "nar");
+          else if (type === "overseas") query = query.eq("source", "overseas");
             
           const { data: races, error: re } = await query.order("post_time", { ascending: true });
           if (re) throw new Error(re.message);
@@ -789,11 +1039,13 @@ serve(async (req) => {
           const type = String(body.type ?? body.source ?? "all");
           const raceId = body.race_id ? String(body.race_id) : null;
           const force = Boolean(body.force ?? false);
+          await upsertUrgentHorseRaces(admin, targetDate);
           let raceQuery = admin.from("horse_races")
             .select("*, horse_entries(*), horse_predictions(id)")
             .eq("race_date", targetDate).eq("status", "scheduled");
           if (type === "jra") raceQuery = raceQuery.eq("source", "jra");
           else if (type === "nar") raceQuery = raceQuery.eq("source", "nar");
+          else if (type === "overseas") raceQuery = raceQuery.eq("source", "overseas");
           if (raceId) raceQuery = raceQuery.eq("id", raceId);
           const { data: races } = await raceQuery;
           if (!races || races.length === 0) return json({ success: true, predictions: [], message: "本日のレースなし" });
