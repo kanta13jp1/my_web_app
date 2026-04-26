@@ -276,6 +276,15 @@ class _UniversalAiShareDialogState extends State<UniversalAiShareDialog> {
                 style: Theme.of(context).textTheme.bodySmall,
               ),
               const SizedBox(height: 12),
+              _CreativePipelineCard(
+                textReady: !_loadingDraft && _draft != null,
+                imageReady: _imageUrl != null,
+                videoReady: _videoUrl != null,
+                generatingText: _loadingDraft,
+                generatingImage: _generatingImage,
+                generatingVideo: _generatingVideo,
+              ),
+              const SizedBox(height: 12),
               if (_loadingDraft)
                 const LinearProgressIndicator()
               else
@@ -370,6 +379,178 @@ class _UniversalAiShareDialogState extends State<UniversalAiShareDialog> {
           label: Text(_posting ? '投稿中' : 'AI生成して投稿'),
         ),
       ],
+    );
+  }
+}
+
+class _CreativePipelineCard extends StatelessWidget {
+  final bool textReady;
+  final bool imageReady;
+  final bool videoReady;
+  final bool generatingText;
+  final bool generatingImage;
+  final bool generatingVideo;
+
+  const _CreativePipelineCard({
+    required this.textReady,
+    required this.imageReady,
+    required this.videoReady,
+    required this.generatingText,
+    required this.generatingImage,
+    required this.generatingVideo,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final steps = <_PipelineStepData>[
+      _PipelineStepData(
+        index: 1,
+        model: 'GPT image2',
+        role: 'share image',
+        icon: Icons.image_outlined,
+        state: _stateFor(ready: imageReady, running: generatingImage),
+      ),
+      _PipelineStepData(
+        index: 2,
+        model: 'GPT-5.5',
+        role: 'X copy',
+        icon: Icons.edit_note,
+        state: _stateFor(ready: textReady, running: generatingText),
+      ),
+      _PipelineStepData(
+        index: 3,
+        model: 'Seedance 2.0',
+        role: 'short video',
+        icon: Icons.movie_creation_outlined,
+        state: _stateFor(ready: videoReady, running: generatingVideo),
+      ),
+    ];
+
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color:
+            theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.62),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.72),
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Row(
+              children: <Widget>[
+                Icon(
+                  Icons.auto_awesome,
+                  size: 18,
+                  color: theme.colorScheme.primary,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'AI creative pipeline',
+                  style: theme.textTheme.labelLarge?.copyWith(
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: steps.map(_PipelineStepChip.new).toList(),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  static _PipelineStepState _stateFor({
+    required bool ready,
+    required bool running,
+  }) {
+    if (running) return _PipelineStepState.running;
+    if (ready) return _PipelineStepState.ready;
+    return _PipelineStepState.waiting;
+  }
+}
+
+enum _PipelineStepState { waiting, running, ready }
+
+class _PipelineStepData {
+  final int index;
+  final String model;
+  final String role;
+  final IconData icon;
+  final _PipelineStepState state;
+
+  const _PipelineStepData({
+    required this.index,
+    required this.model,
+    required this.role,
+    required this.icon,
+    required this.state,
+  });
+}
+
+class _PipelineStepChip extends StatelessWidget {
+  final _PipelineStepData step;
+
+  const _PipelineStepChip(this.step);
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final color = switch (step.state) {
+      _PipelineStepState.ready => const Color(0xFF059669),
+      _PipelineStepState.running => const Color(0xFFF97316),
+      _PipelineStepState.waiting => theme.colorScheme.onSurfaceVariant,
+    };
+    final status = switch (step.state) {
+      _PipelineStepState.ready => 'ready',
+      _PipelineStepState.running => 'running',
+      _PipelineStepState.waiting => 'waiting',
+    };
+
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withValues(alpha: 0.32)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            Icon(step.icon, size: 18, color: color),
+            const SizedBox(width: 8),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                Text(
+                  '${step.index}. ${step.model}',
+                  style: theme.textTheme.labelMedium?.copyWith(
+                    color: color,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                Text(
+                  '${step.role} / $status',
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

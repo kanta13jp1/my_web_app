@@ -156,6 +156,8 @@ class UniversalXShareService {
       'prompt': draft.imagePrompt,
       'size': '1792x1024',
       'style': 'vivid',
+      'preferredModel': 'gpt-image-2',
+      'creativePipeline': const ['gpt-image-2', 'gpt-5.5', 'seedance-2.0'],
       'source': 'universal_x_share',
       'route': context.routePath,
     });
@@ -178,6 +180,8 @@ class UniversalXShareService {
       'customPrompt': draft.videoPrompt,
       'customScript': _scriptLinesFromText(draft.text),
       'customHashtags': draft.hashtags,
+      'preferredModel': 'seedance-2.0',
+      'creativePipeline': const ['gpt-image-2', 'gpt-5.5', 'seedance-2.0'],
       'source': 'universal_x_share',
       'route': context.routePath,
     });
@@ -363,6 +367,7 @@ Rules:
 - Do not use hash routing. The URL must not contain # or /#/.
 - Make the copy specific to this page, not generic app promotion.
 - Emphasize what changed, what users can do, and why it matters.
+- Treat the creative workflow as GPT image2 -> GPT-5.5 -> Seedance 2.0.
 - Keep the post natural, concise, and credible.
 
 Fallback style:
