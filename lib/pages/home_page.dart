@@ -179,6 +179,9 @@ class _HomePageState extends State<HomePage> {
     _aiNudgeFuture = _opsSnapshotFuture.then((snapshot) {
       final command = _resolveNextAction(snapshot);
       return _loadAiNudgeIfNeeded(command, snapshot);
+    }).catchError((Object error) {
+      debugPrint('AI nudge chain failed: $error');
+      return null;
     });
     _timeWasteSlipCountFuture = TimeWasteGuardWidget.loadSlipCountFor(_now());
     _reloadRecentToolSignals();
@@ -1264,56 +1267,62 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<_HomeOpsSnapshot> _loadOpsSnapshot() async {
-    final prefs = await SharedPreferences.getInstance();
-    final today = _startOfDay(_now());
-    final monthlyCashflowSummary = await _loadMonthlyCashflowSummary(
-      prefs: prefs,
-      month: today,
-    );
-    final pendingCriticalTaskCount = await _fetchPendingCriticalTaskCount();
-    final pendingStockTaskCount = await _fetchPendingStockTaskCount();
-    final homeDailyMap = await _loadHomeDailyStatusMap(
-      prefs: prefs,
-      startDate: today,
-      endDate: today,
-    );
-    final todayStatus =
-        homeDailyMap[_statusDateKey(today)] ?? const _HomeDailyStatusRecord();
-    final abstinenceSnapshot = await AbstinenceGuardStore.loadSnapshot(
-      now: today,
-    );
-    final completionGoalSnapshot = await _loadDailyCompletionGoalSnapshot(
-      now: today,
-    );
-    final primaryInterference = abstinenceSnapshot.primaryInterference;
-    final calendarDays = await _loadCalendarDays(prefs: prefs);
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final today = _startOfDay(_now());
+      final monthlyCashflowSummary = await _loadMonthlyCashflowSummary(
+        prefs: prefs,
+        month: today,
+      );
+      final pendingCriticalTaskCount = await _fetchPendingCriticalTaskCount();
+      final pendingStockTaskCount = await _fetchPendingStockTaskCount();
+      final homeDailyMap = await _loadHomeDailyStatusMap(
+        prefs: prefs,
+        startDate: today,
+        endDate: today,
+      );
+      final todayStatus =
+          homeDailyMap[_statusDateKey(today)] ?? const _HomeDailyStatusRecord();
+      final abstinenceSnapshot = await AbstinenceGuardStore.loadSnapshot(
+        now: today,
+      );
+      final completionGoalSnapshot = await _loadDailyCompletionGoalSnapshot(
+        now: today,
+      );
+      final primaryInterference = abstinenceSnapshot.primaryInterference;
+      final calendarDays = await _loadCalendarDays(prefs: prefs);
 
-    return _HomeOpsSnapshot(
-      morningBriefingDone: todayStatus.morningBriefingDone,
-      balanceCheckDone: todayStatus.balanceCheckDone,
-      pendingCriticalTaskCount: pendingCriticalTaskCount,
-      pendingStockTaskCount: pendingStockTaskCount,
-      abstinenceFocusCount: abstinenceSnapshot.enabledCount,
-      abstinenceSlipCount: abstinenceSnapshot.totalSlipCount,
-      abstinenceSlipDetails: abstinenceSnapshot.slipDetails,
-      abstinenceTopLabels: abstinenceSnapshot.topEnabledLabels,
-      abstinencePrimaryLabel: primaryInterference?.item.label,
-      abstinencePrimarySignal: primaryInterference?.item.interruptionSignal,
-      abstinencePrimaryAction: primaryInterference?.item.eliminationAction,
-      abstinenceDisciplineRepCount:
-          abstinenceSnapshot.disciplineSnapshot.totalRepCount,
-      abstinenceDisciplineMoneySaved:
-          abstinenceSnapshot.disciplineSnapshot.totalMoneySaved,
-      abstinenceDisciplineTimeSavedMinutes:
-          abstinenceSnapshot.disciplineSnapshot.totalTimeSavedMinutes,
-      abstinenceDisciplineStreakDays:
-          abstinenceSnapshot.disciplineSnapshot.streakDays,
-      abstinenceDisciplineStageLabel:
-          abstinenceSnapshot.disciplineSnapshot.mindsetStageLabel,
-      completionGoalSnapshot: completionGoalSnapshot,
-      calendarDays: calendarDays,
-      monthlyCashflowSummary: monthlyCashflowSummary,
-    );
+      return _HomeOpsSnapshot(
+        morningBriefingDone: todayStatus.morningBriefingDone,
+        balanceCheckDone: todayStatus.balanceCheckDone,
+        pendingCriticalTaskCount: pendingCriticalTaskCount,
+        pendingStockTaskCount: pendingStockTaskCount,
+        abstinenceFocusCount: abstinenceSnapshot.enabledCount,
+        abstinenceSlipCount: abstinenceSnapshot.totalSlipCount,
+        abstinenceSlipDetails: abstinenceSnapshot.slipDetails,
+        abstinenceTopLabels: abstinenceSnapshot.topEnabledLabels,
+        abstinencePrimaryLabel: primaryInterference?.item.label,
+        abstinencePrimarySignal: primaryInterference?.item.interruptionSignal,
+        abstinencePrimaryAction: primaryInterference?.item.eliminationAction,
+        abstinenceDisciplineRepCount:
+            abstinenceSnapshot.disciplineSnapshot.totalRepCount,
+        abstinenceDisciplineMoneySaved:
+            abstinenceSnapshot.disciplineSnapshot.totalMoneySaved,
+        abstinenceDisciplineTimeSavedMinutes:
+            abstinenceSnapshot.disciplineSnapshot.totalTimeSavedMinutes,
+        abstinenceDisciplineStreakDays:
+            abstinenceSnapshot.disciplineSnapshot.streakDays,
+        abstinenceDisciplineStageLabel:
+            abstinenceSnapshot.disciplineSnapshot.mindsetStageLabel,
+        completionGoalSnapshot: completionGoalSnapshot,
+        calendarDays: calendarDays,
+        monthlyCashflowSummary: monthlyCashflowSummary,
+      );
+    } catch (error, stackTrace) {
+      debugPrint('Home ops snapshot load failed: $error');
+      debugPrintStack(stackTrace: stackTrace);
+      return const _HomeOpsSnapshot();
+    }
   }
 
   Future<List<_HomeCalendarDay>> _loadCalendarDays({
