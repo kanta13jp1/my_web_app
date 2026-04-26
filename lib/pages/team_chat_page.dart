@@ -37,6 +37,10 @@ class _TeamChatPageState extends State<TeamChatPage> {
   }
 
   Future<void> _fetchChannels() async {
+    if (_supabase.auth.currentUser == null) {
+      setState(() => _isLoading = false);
+      return;
+    }
     setState(() {
       _isLoading = true;
       _errorMessage = null;
