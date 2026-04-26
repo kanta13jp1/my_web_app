@@ -20679,3 +20679,19 @@ habit_tracker / time_tracker / reading_list / calendar_events
 - **orphan worktree 削除**: `instance-ps` (claude/ps-wip・remote未存在・1152 commits behind) → `git worktree remove --force` + `git branch -D` 完了
 - **remote branch prune**: 完了 (fix/issue-* / codex/vscode-ui-rollout はuser確認待ちで保留)
 - **deploy `24944724047`**: in_progress 監視中
+
+### 2026-04-26 (PS版#4 scheduled-task competitor-monitoring 追記)
+
+**🔴 NEW HIGH 競合動向 — Anthropic 「Workplace Command Center」化**:
+- **Claude 内 Slack/Figma/Asana/Canva/Box/Clay 埋め込み (MCP)** — Claude チャットがワークプレイス指令所化 (VentureBeat)
+- **Claude Design (Anthropic Labs) GA** — プロトタイプ/スライド生成 → Figma/Canva 領域に侵食
+- **OpenAI Codex デスクトップ強化 (4-16)** — Claude Code 直接対抗 (TechCrunch)
+- **Anthropic × NEC** — 日本最大級 AI エンジニア組織 (4-24)
+
+**自分株式会社 戦略含意**:
+- `schedule-hub` MCP 互換エンドポイント実装の優先度 ↑↑ (Notion MCP + Anthropic ワークプレイス両方の対抗)
+- "個人ライフ OS" 軸を強化 — enterprise ワークプレイス三つ巴 (Claude/Notion/Slack) に巻き込まれない差別化
+- AI大学コンテンツ "Claude Code vs OpenAI Codex (2026 デスクトップ版)" 比較記事のタイミング (PS#3/PS#2 経由)
+
+**Philosophy Alignment**: 9/9 (CEO/ミッション/mentor/6部署/価値/時間/BS/KPI/IPO 全✅ — 競合監視は CEO 領域)
+**詳細**: `docs/competitor-reports/2026-04-26.md` (PM Update セクション)
