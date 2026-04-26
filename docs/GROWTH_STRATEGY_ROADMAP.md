@@ -20672,3 +20672,10 @@ habit_tracker / time_tracker / reading_list / calendar_events
 - 次: #7 Jun-06 — テーマ未定 (50-article-plan.md 参照)
 
 **Philosophy**: ✅ユーザー価値 (SEOバッファ拡充) ✅本質優先
+
+## 2026-04-26 PS#6 S50: 定期クリーンアップ + deploy監視 (a066a4d9)
+- **horse_racing**: 5/5 success (24944562753〜24939725486) ✓
+- **repair list 深層 audit**: 109件中 真の孤立 = 0件 (20260426133000 --applied は PS#4 S58 意図的追加・保持)
+- **orphan worktree 削除**: `instance-ps` (claude/ps-wip・remote未存在・1152 commits behind) → `git worktree remove --force` + `git branch -D` 完了
+- **remote branch prune**: 完了 (fix/issue-* / codex/vscode-ui-rollout はuser確認待ちで保留)
+- **deploy `24944724047`**: in_progress 監視中
