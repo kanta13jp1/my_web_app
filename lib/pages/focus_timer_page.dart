@@ -190,6 +190,10 @@ class _FocusTimerPageState extends State<FocusTimerPage>
 
   Future<void> _fetchStats() async {
     if (!mounted) return;
+    if (_supabase.auth.currentUser == null) {
+      setState(() => _loadingStats = false);
+      return;
+    }
     setState(() => _loadingStats = true);
     try {
       final res = await _supabase.functions.invoke(
