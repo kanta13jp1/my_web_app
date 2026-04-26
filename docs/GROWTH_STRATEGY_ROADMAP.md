@@ -21238,3 +21238,11 @@ bardeen/relevance-ai の registry 追加は Win版に cross-instance-pr 発行�
 **Out of scope (next)**:
 - 残 7 artifact (Slide Deck / Audio / Mind Map / Quiz / Flashcards / Report / Infographic / Data Table) を AI大学コンテンツに転用
 - A/B/C variant (字幕版 / 3 分ハイライト / 60 秒 SNS) の自動 encode (パイプライン GHA 化候補)
+
+### Rule 17 WF health check — PS#1 S55 (2026-04-26 13:05)
+- **deploy-prod**: 3F chain (8bdc1077→a17e86c5: Deno lint `any` type) → f94745b7 fix → SUCCESS ✅
+  - root cause: feat(horseracing) で `(r: any)` を deno-lint-ignore 位置がずれた複数行化で覆えず
+  - fix: `r as { horse_predictions?: unknown }` 型アサーションに変換 (f94745b7)
+- **test failures**: 19件 soft fail (continue-on-error: true) — deploy非ブロック
+- **CS Check**: a8da11a8 fix済み / 次回スケジュール実行で回復予定
+- **orphan**: claude/*=1本 (自worktree のみ・正常)
