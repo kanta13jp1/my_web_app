@@ -21525,3 +21525,17 @@ Google I/O 2026 競合脅威 事前ブリーフィング
   - shopping_list_page: 削除スワイプ bg FFCDD2→3A1010
   - thought_interrupt_diagnosis_page: 妨害要因チップ FFE0B2→2A1500
 - **WBS**: 91%→94%
+
+### Rule 17 WF health check — PS#1 S51 (2026-04-26 17:00 JST)
+- **全WF 12種**: Deploy to Production のみ失敗 / 他11種 100% green
+- **Deploy失敗パターン**:
+  - `20260426215000` 重複キー → `--status applied` 済 (3ce1e931)
+  - `20260426222000` タイムスタンプ衝突 — `seed_you_com_ai_university` + `seed_competitors_jp_strength_weakness_batch2` が同一 timestamp に共存
+  - Flutter analyze `new String()` エラー → `a5bb72e0` で修正済
+- **修正内容** (32fbfcc8):
+  - `20260426222000_competitors_batch2` → `20260426222500` にリネーム
+  - deploy-prod.yml: 222000 repair を `reverted→applied` に変更 (you_com データは DB 済)
+- **Deploy結果**: 24951826914 SUCCESS ✅
+- **orphan branches**: claude/fix-dart-exceptions-osjRb (1 commit未マージ) / claude/vscode-wip (1 commit未マージ) — 合計2本 (閾値5本以下 ✓)
+- **test failures**: 21件 (continue-on-error で非ブロック / 要別途調査)
+- **orphan blog-publish**: 0本 ✓
