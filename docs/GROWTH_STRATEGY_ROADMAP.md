@@ -20792,3 +20792,25 @@ habit_tracker / time_tracker / reading_list / calendar_events
 - **残り3ページ** (admin_analytics/morning_briefing/qr_code_generator): EF呼び出しがユーザーアクション内のため修正不要
 
 **総修正**: S56〜S60で約120ページの anon 401 flood 修正完了。
+
+---
+
+## PS#2 S40 2026-04-26 — SEO #7 notion-api-rate-limits-solution (f100c2e8)
+
+**担当**: PowerShell版 #2 (T-1 ブログ dispatch / SEO 記事作成)
+
+**T-1 状況**: no-op (May 1 dispatch待ち)
+
+**DYNAMIC-CLAIM 完了**:
+- SEO Phase 1 記事 #7 `2026-06-06-notion-api-rate-limits-solution` JA+EN ドラフト作成
+  - JA: Notion API レート制限の限界と解決策 — 毎秒3リクエストの壁を個人開発者が突破する方法
+  - EN: Notion API Rate Limits Are Breaking Your Automation — Here's the Real Fix
+  - tags JA: Notion,API,個人開発,buildinpublic (4/4 ✅)
+  - tags EN: notion,api,productivity,webdev (4/4 ✅)
+  - T-1 dispatch予定: 2026-06-05 → 2026-06-06投稿
+
+**SEO 50本計画 Phase 1 進捗**: 7/10 完了
+- #1-6 完了 / #7 Jun-06 ✅ (draft ready)
+- 次: #8 Jun-13 — notion-offline-mode-frustrations
+
+**Philosophy**: ✅ユーザー価値 (SEOバッファ拡充・API制限ペイン解決訴求)
