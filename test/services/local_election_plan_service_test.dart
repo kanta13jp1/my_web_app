@@ -168,7 +168,7 @@ void main() {
             electionName: 'Tokyo assembly A',
             prefecture: tokyo.prefecture,
             municipality: 'Ward A',
-            electionCategory: 'city',
+            electionCategory: 'assembly',
             voteDate: '2026-08-09',
             announcementDate: '2026-07-31',
             detailUrl: 'https://example.com/tokyo-a',
@@ -184,7 +184,7 @@ void main() {
             electionName: 'Tokyo assembly B',
             prefecture: tokyo.prefecture,
             municipality: 'Ward B',
-            electionCategory: 'city',
+            electionCategory: 'assembly',
             voteDate: '2026-09-06',
             announcementDate: '2026-08-28',
             detailUrl: 'https://example.com/tokyo-b',
@@ -200,7 +200,7 @@ void main() {
             electionName: 'Aichi assembly',
             prefecture: aichi.prefecture,
             municipality: 'City A',
-            electionCategory: 'city',
+            electionCategory: 'assembly',
             voteDate: '2026-10-18',
             announcementDate: '2026-10-09',
             detailUrl: 'https://example.com/aichi',
@@ -232,7 +232,7 @@ void main() {
             electionName: 'Tottori city A',
             prefecture: tottori.prefecture,
             municipality: 'City A',
-            electionCategory: 'city',
+            electionCategory: 'assembly',
             voteDate: '2026-08-09',
             announcementDate: '2026-07-31',
             detailUrl: 'https://example.com/tottori-a',
@@ -248,7 +248,7 @@ void main() {
             electionName: 'Tottori city B',
             prefecture: tottori.prefecture,
             municipality: 'City B',
-            electionCategory: 'city',
+            electionCategory: 'assembly',
             voteDate: '2026-09-06',
             announcementDate: '2026-08-28',
             detailUrl: 'https://example.com/tottori-b',
@@ -264,7 +264,7 @@ void main() {
             electionName: 'Tottori city C',
             prefecture: tottori.prefecture,
             municipality: 'City C',
-            electionCategory: 'city',
+            electionCategory: 'assembly',
             voteDate: '2026-10-18',
             announcementDate: '2026-10-09',
             detailUrl: 'https://example.com/tottori-c',
@@ -330,6 +330,159 @@ void main() {
     expect(updatedTottori.newElectionTarget, 1);
     expect(updatedTottori.newCandidateTarget, 2);
     expect(updatedTottori.kgiTargetLocalMembers, 1);
+  });
+
+  test('auto update counts post convention election battle record', () async {
+    const service = LocalElectionPlanService();
+    final prefs = await SharedPreferences.getInstance();
+    final plan = await service.loadPlan(prefs: prefs);
+    final first = plan.prefectures.first;
+    final second = plan.prefectures[1];
+    final now = DateTime(2026, 4, 26, 21);
+
+    final updated = service.buildAutoUpdatedPlan(
+      plan,
+      LocalElectionRealitySnapshot(
+        fetchedAt: now,
+        baselineCurrentLocalMembers: 340,
+        officialCurrentLocalMembers: 342,
+        targetLocalMembers: 700,
+        baselineNetIncreaseRequired: 360,
+        actualNetIncreaseRequired: 358,
+        official2023FirstHalfWins: 62,
+        official2023SecondHalfWins: 121,
+        official2023TotalWins: 183,
+        aiSummary: 'battle record snapshot',
+        aiAlerts: const <String>[],
+        aiStrategicNotes: const <String>[],
+        scheduleAiSummary: 'battle schedules',
+        scheduleAiAlerts: const <String>[],
+        sources: const <LocalElectionRealitySource>[],
+        prefectures: <LocalElectionPrefectureReality>[
+          LocalElectionPrefectureReality(
+            prefecture: first.prefecture,
+            sourceUrl: 'https://example.com/first',
+            currentMembers: 10,
+            prefecturalAssemblyMembers: 1,
+            municipalAssemblyMembers: 9,
+          ),
+          LocalElectionPrefectureReality(
+            prefecture: second.prefecture,
+            sourceUrl: 'https://example.com/second',
+            currentMembers: 5,
+            prefecturalAssemblyMembers: 1,
+            municipalAssemblyMembers: 4,
+          ),
+        ],
+        members: const <LocalElectionLegislatorProfile>[],
+        upcomingSchedules: <LocalElectionScheduleEntry>[
+          LocalElectionScheduleEntry(
+            electionName: 'Before baseline council',
+            prefecture: first.prefecture,
+            municipality: 'Before City',
+            electionCategory: 'assembly',
+            voteDate: '2026-04-04',
+            announcementDate: '2026-03-28',
+            detailUrl: 'https://example.com/before',
+            officialCandidateSourceUrl: '',
+            seatCount: 10,
+            totalCandidateCount: 12,
+            kokuminCandidateCount: 0,
+            kokuminCandidateNames: const <String>[],
+            kokuminCandidateStatuses: const <String>[],
+            kokuminCandidateXHandles: const <String>[],
+            isPast: true,
+          ),
+          LocalElectionScheduleEntry(
+            electionName: 'Post convention win council',
+            prefecture: first.prefecture,
+            municipality: 'Win City',
+            electionCategory: 'assembly',
+            voteDate: '2026-04-12',
+            announcementDate: '2026-04-05',
+            detailUrl: 'https://example.com/win',
+            officialCandidateSourceUrl: '',
+            seatCount: 10,
+            totalCandidateCount: 12,
+            kokuminCandidateCount: 1,
+            kokuminCandidateNames: const <String>['candidate-a'],
+            kokuminCandidateStatuses: const <String>['当選'],
+            kokuminCandidateXHandles: const <String>[],
+            isPast: true,
+          ),
+          LocalElectionScheduleEntry(
+            electionName: 'Post convention no field council',
+            prefecture: first.prefecture,
+            municipality: 'No Field City',
+            electionCategory: 'assembly',
+            voteDate: '2026-04-19',
+            announcementDate: '2026-04-12',
+            detailUrl: 'https://example.com/no-field',
+            officialCandidateSourceUrl: '',
+            seatCount: 10,
+            totalCandidateCount: 12,
+            kokuminCandidateCount: 0,
+            kokuminCandidateNames: const <String>[],
+            kokuminCandidateStatuses: const <String>[],
+            kokuminCandidateXHandles: const <String>[],
+            isPast: true,
+          ),
+          LocalElectionScheduleEntry(
+            electionName: 'Today unresolved council',
+            prefecture: second.prefecture,
+            municipality: 'Today City',
+            electionCategory: 'assembly',
+            voteDate: '2026-04-26',
+            announcementDate: '2026-04-19',
+            detailUrl: 'https://example.com/today',
+            officialCandidateSourceUrl: '',
+            seatCount: 10,
+            totalCandidateCount: 12,
+            kokuminCandidateCount: 1,
+            kokuminCandidateNames: const <String>['candidate-b'],
+            kokuminCandidateStatuses: const <String>['公認'],
+            kokuminCandidateXHandles: const <String>[],
+          ),
+          LocalElectionScheduleEntry(
+            electionName: 'Future council',
+            prefecture: first.prefecture,
+            municipality: 'Future City',
+            electionCategory: 'assembly',
+            voteDate: '2026-05-10',
+            announcementDate: '2026-05-03',
+            detailUrl: 'https://example.com/future',
+            officialCandidateSourceUrl: '',
+            seatCount: 10,
+            totalCandidateCount: 12,
+            kokuminCandidateCount: 0,
+            kokuminCandidateNames: const <String>[],
+            kokuminCandidateStatuses: const <String>[],
+            kokuminCandidateXHandles: const <String>[],
+          ),
+        ],
+      ),
+      now: now,
+    );
+
+    final updatedFirst = updated.prefectures.firstWhere(
+      (item) => item.prefecture == first.prefecture,
+    );
+    final updatedSecond = updated.prefectures.firstWhere(
+      (item) => item.prefecture == second.prefecture,
+    );
+
+    expect(updatedFirst.postConventionBattleCount, 2);
+    expect(updatedFirst.postConventionWinCount, 1);
+    expect(updatedFirst.postConventionLossCount, 1);
+    expect(updatedFirst.currentCandidateWinRatePercent, 50);
+    expect(updatedFirst.scheduledElectionCount, 1);
+    expect(updatedSecond.postConventionBattleCount, 1);
+    expect(updatedSecond.postConventionWinCount, 0);
+    expect(updatedSecond.postConventionLossCount, 1);
+    expect(updated.totalPostConventionBattleCount, 3);
+    expect(updated.totalPostConventionWinCount, 1);
+    expect(updated.totalPostConventionLossCount, 2);
+    expect(updated.currentCandidateWinRatePercent, 33);
   });
 
   test('auto update preserves existing cdp benchmarks when snapshot omits them',

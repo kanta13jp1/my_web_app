@@ -96,9 +96,24 @@ class _ElectionJapanMapState extends State<ElectionJapanMap> {
       0,
       (sum, item) => sum + item.announcedCandidateCount,
     );
-    final currentWinRateLabel = totalAnnouncedCandidates <= 0
+    final totalPostConventionBattles = widget.prefectures.fold<int>(
+      0,
+      (sum, item) => sum + item.postConventionBattleCount,
+    );
+    final totalPostConventionWins = widget.prefectures.fold<int>(
+      0,
+      (sum, item) => sum + item.postConventionWinCount,
+    );
+    final totalPostConventionLosses = widget.prefectures.fold<int>(
+      0,
+      (sum, item) => sum + item.postConventionLossCount,
+    );
+    final postConventionRecordLabel =
+        '$totalPostConventionBattles戦$totalPostConventionWins勝'
+        '$totalPostConventionLosses敗';
+    final currentWinRateLabel = totalPostConventionBattles <= 0
         ? '-'
-        : '${((totalNewElectionActual / totalAnnouncedCandidates) * 100).round().clamp(0, 100)}%';
+        : '${((totalPostConventionWins / totalPostConventionBattles) * 100).round().clamp(0, 100)}%';
     final totalFocus = widget.prefectures.fold<int>(
       0,
       (sum, item) => sum + item.focusMunicipalityCount,
@@ -189,9 +204,10 @@ class _ElectionJapanMapState extends State<ElectionJapanMap> {
                   KgiCsfKpiMetric.number(
                     csf: '当選率管理',
                     kpi: '現状当選率',
-                    actual: totalAnnouncedCandidates <= 0
+                    actual: totalPostConventionBattles <= 0
                         ? 0
-                        : ((totalNewElectionActual / totalAnnouncedCandidates) *
+                        : ((totalPostConventionWins /
+                                    totalPostConventionBattles) *
                                 100)
                             .round()
                             .clamp(0, 100),
@@ -224,9 +240,14 @@ class _ElectionJapanMapState extends State<ElectionJapanMap> {
                   color: const Color(0xFF0891B2),
                 ),
                 _MetricChip(
+                  label: '党大会後成績',
+                  value: postConventionRecordLabel,
+                  color: const Color(0xFFB45309),
+                ),
+                _MetricChip(
                   label: '現状当選率',
                   value: currentWinRateLabel,
-                  color: const Color(0xFFB45309),
+                  color: const Color(0xFFEA580C),
                 ),
                 _MetricChip(
                   label: '重点自治体',
@@ -558,6 +579,7 @@ class _ElectionJapanMapState extends State<ElectionJapanMap> {
                 MapEntry('立憲地方議員', '${plan.cdpLocalMembers}'),
               MapEntry('KGI目標', '${plan.kgiTargetLocalMembers}'),
               MapEntry('KPI実績', '${plan.kpiActualLocalMembers}'),
+              MapEntry('党大会後成績', plan.postConventionRecordLabel),
               MapEntry('現職維持目標', '${plan.incumbentRetentionTarget}'),
               MapEntry('現職維持数', '${plan.incumbentRetentionActual}'),
               MapEntry('新人当選目標', '${plan.newElectionTarget}'),

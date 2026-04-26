@@ -14,6 +14,9 @@ class LocalElectionPrefecturePlan {
   final int announcedCandidateCount;
   final int confirmedCandidateCount;
   final int candidateWinRatePercent;
+  final int postConventionBattleCount;
+  final int postConventionWinCount;
+  final int postConventionLossCount;
   final int cdpLocalMembers;
   final String cdpSourceUrl;
   final String prefectureChairName;
@@ -37,6 +40,9 @@ class LocalElectionPrefecturePlan {
     this.announcedCandidateCount = 0,
     this.confirmedCandidateCount = 0,
     this.candidateWinRatePercent = 0,
+    this.postConventionBattleCount = 0,
+    this.postConventionWinCount = 0,
+    this.postConventionLossCount = 0,
     this.cdpLocalMembers = 0,
     this.cdpSourceUrl = '',
     this.prefectureChairName = '',
@@ -63,6 +69,9 @@ class LocalElectionPrefecturePlan {
       announcedCandidateCount: _readInt(json['announcedCandidateCount']),
       confirmedCandidateCount: _readInt(json['confirmedCandidateCount']),
       candidateWinRatePercent: _readInt(json['candidateWinRatePercent']),
+      postConventionBattleCount: _readInt(json['postConventionBattleCount']),
+      postConventionWinCount: _readInt(json['postConventionWinCount']),
+      postConventionLossCount: _readInt(json['postConventionLossCount']),
       cdpLocalMembers: _readInt(json['cdpLocalMembers']),
       cdpSourceUrl: (json['cdpSourceUrl'] as String? ?? '').trim(),
       prefectureChairName:
@@ -92,6 +101,9 @@ class LocalElectionPrefecturePlan {
       'announcedCandidateCount': announcedCandidateCount,
       'confirmedCandidateCount': confirmedCandidateCount,
       'candidateWinRatePercent': candidateWinRatePercent,
+      'postConventionBattleCount': postConventionBattleCount,
+      'postConventionWinCount': postConventionWinCount,
+      'postConventionLossCount': postConventionLossCount,
       'cdpLocalMembers': cdpLocalMembers,
       'cdpSourceUrl': cdpSourceUrl,
       'prefectureChairName': prefectureChairName,
@@ -117,6 +129,9 @@ class LocalElectionPrefecturePlan {
     int? announcedCandidateCount,
     int? confirmedCandidateCount,
     int? candidateWinRatePercent,
+    int? postConventionBattleCount,
+    int? postConventionWinCount,
+    int? postConventionLossCount,
     int? cdpLocalMembers,
     String? cdpSourceUrl,
     String? prefectureChairName,
@@ -148,6 +163,12 @@ class LocalElectionPrefecturePlan {
           confirmedCandidateCount ?? this.confirmedCandidateCount,
       candidateWinRatePercent:
           candidateWinRatePercent ?? this.candidateWinRatePercent,
+      postConventionBattleCount:
+          postConventionBattleCount ?? this.postConventionBattleCount,
+      postConventionWinCount:
+          postConventionWinCount ?? this.postConventionWinCount,
+      postConventionLossCount:
+          postConventionLossCount ?? this.postConventionLossCount,
       cdpLocalMembers: cdpLocalMembers ?? this.cdpLocalMembers,
       cdpSourceUrl: cdpSourceUrl ?? this.cdpSourceUrl,
       prefectureChairName: prefectureChairName ?? this.prefectureChairName,
@@ -208,6 +229,8 @@ class LocalElectionPrefecturePlan {
   }
 
   static const int assumedCandidateWinRatePercent = 80;
+  static final DateTime battleRecordBaselineDate = DateTime(2026, 4, 5);
+  static const String battleRecordBaselineLabel = '2026/04/05';
 
   int get incumbentRetentionActual =>
       math.min(currentMembers, incumbentRetentionTarget);
@@ -215,7 +238,24 @@ class LocalElectionPrefecturePlan {
   int get newElectionActual =>
       math.max(0, currentMembers - incumbentRetentionTarget);
 
+  int get postConventionWinRatePercent => postConventionBattleCount <= 0
+      ? 0
+      : ((postConventionWinCount / postConventionBattleCount) * 100)
+          .round()
+          .clamp(0, 100)
+          .toInt();
+
+  String get postConventionWinRateLabel =>
+      postConventionBattleCount <= 0 ? '-' : '$postConventionWinRatePercent%';
+
+  String get postConventionRecordLabel =>
+      '$postConventionBattleCount戦$postConventionWinCount勝'
+      '$postConventionLossCount敗';
+
   int get currentCandidateWinRatePercent {
+    if (postConventionBattleCount > 0) {
+      return postConventionWinRatePercent;
+    }
     if (announcedCandidateCount <= 0) {
       return 0;
     }
@@ -229,7 +269,9 @@ class LocalElectionPrefecturePlan {
   }
 
   String get currentCandidateWinRateLabel =>
-      announcedCandidateCount <= 0 ? '-' : '$currentCandidateWinRatePercent%';
+      postConventionBattleCount > 0 || announcedCandidateCount > 0
+          ? '$currentCandidateWinRatePercent%'
+          : '-';
 
   int get kpiActualLocalMembers => incumbentRetentionActual + newElectionActual;
 
@@ -482,18 +524,50 @@ class LocalElectionPlanDashboard {
         (sum, item) => sum + item.announcedCandidateCount,
       );
 
+  int get totalPostConventionBattleCount => prefectures.fold<int>(
+        0,
+        (sum, item) => sum + item.postConventionBattleCount,
+      );
+
+  int get totalPostConventionWinCount => prefectures.fold<int>(
+        0,
+        (sum, item) => sum + item.postConventionWinCount,
+      );
+
+  int get totalPostConventionLossCount => prefectures.fold<int>(
+        0,
+        (sum, item) => sum + item.postConventionLossCount,
+      );
+
+  String get postConventionRecordLabel =>
+      '$totalPostConventionBattleCount戦$totalPostConventionWinCount勝'
+      '$totalPostConventionLossCount敗';
+
   int get totalNewElectionActual => prefectures.fold<int>(
         0,
         (sum, item) => sum + item.newElectionActual,
       );
 
-  int get currentCandidateWinRatePercent => totalAnnouncedCandidateCount <= 0
-      ? 0
-      : ((totalNewElectionActual / totalAnnouncedCandidateCount) * 100).round();
+  int get currentCandidateWinRatePercent {
+    if (totalPostConventionBattleCount > 0) {
+      return ((totalPostConventionWinCount / totalPostConventionBattleCount) *
+              100)
+          .round()
+          .clamp(0, 100)
+          .toInt();
+    }
+    return totalAnnouncedCandidateCount <= 0
+        ? 0
+        : ((totalNewElectionActual / totalAnnouncedCandidateCount) * 100)
+            .round()
+            .clamp(0, 100)
+            .toInt();
+  }
 
-  String get currentCandidateWinRateLabel => totalAnnouncedCandidateCount <= 0
-      ? '-'
-      : '$currentCandidateWinRatePercent%';
+  String get currentCandidateWinRateLabel =>
+      totalPostConventionBattleCount > 0 || totalAnnouncedCandidateCount > 0
+          ? '$currentCandidateWinRatePercent%'
+          : '-';
 
   int get totalCloseRaceSupportRounds => prefectures.fold<int>(
         0,
