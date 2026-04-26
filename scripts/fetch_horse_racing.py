@@ -9,6 +9,7 @@ JRA / NAR (地方競馬) の出走表と結果を netkeiba.com からスクレ�
   python fetch_horse_racing.py --mode results [--date YYYY-MM-DD]   # 結果取得
   python fetch_horse_racing.py --mode predict                        # AI予想実行 (EF呼び出し)
   python fetch_horse_racing.py --mode evaluate [--limit N]          # 精度再評価バッチ (デフォルト50件)
+  python fetch_horse_racing.py --mode backfill [--days N]           # 過去レースを学習データ化
   python fetch_horse_racing.py --mode all                            # 全て実行
 
 必須環境変数:
@@ -968,6 +969,26 @@ def fetch_results(target_date: str):
     print(f"[DONE] 的中 {hits}件")
 
 
+def backfill_learning_data(target_date: str, days: int = 21, limit: int = 160):
+    """Create historical baseline predictions and evaluate them against stored results."""
+    print(f"[INFO] 過去{days}日分の競馬AI学習データをバックフィル中...")
+    result = tools_hub_call(
+        "horseracing.backfill_learning_data",
+        {"date_to": target_date, "days": days, "limit": limit},
+        timeout=300,
+    )
+    if not result:
+        print("[WARN] backfill_learning_data の呼び出しに失敗しました")
+        return
+    print(
+        "[DONE] 学習データbackfill: "
+        f"scan={result.get('scanned', 0)} "
+        f"backfilled={result.get('backfilled', 0)} "
+        f"with_results={result.get('races_with_results', 0)} "
+        f"evaluated={(result.get('evaluation') or {}).get('evaluated', 0)}"
+    )
+
+
 def trigger_ai_predictions(target_date: str):
     """tools-hub を呼び出して AI 3連単予想を実行 (multi-provider fallback chain)
 
@@ -1071,9 +1092,9 @@ def main():
     parser = argparse.ArgumentParser(description="競馬情報自動取得スクリプト (JRA + NAR)")
     parser.add_argument(
         "--mode",
-        choices=["entries", "results", "predict", "history", "evaluate", "all"],
+        choices=["entries", "results", "predict", "history", "evaluate", "backfill", "all"],
         required=True,
-        help="実行モード: entries=出走表, results=結果, predict=AI予想, history=前走情報, evaluate=精度再評価, all=全て実行",
+        help="実行モード: entries=出走表, results=結果, predict=AI予想, history=前走情報, evaluate=精度再評価, backfill=過去学習データ化, all=全て実行",
     )
     parser.add_argument(
         "--date",
@@ -1085,6 +1106,12 @@ def main():
         type=int,
         default=50,
         help="evaluate モード時の処理件数 (デフォルト: 50)",
+    )
+    parser.add_argument(
+        "--days",
+        type=int,
+        default=21,
+        help="backfill モード時に遡る日数 (デフォルト: 21)",
     )
     args = parser.parse_args()
 
@@ -1108,12 +1135,15 @@ def main():
         evaluated = result.get("evaluated", 0)
         races = result.get("races_processed", 0)
         print(f"[DONE] 精度再評価完了: {evaluated} 件 ({races} レース)")
+    elif args.mode == "backfill":
+        backfill_learning_data(target_date, getattr(args, "days", 21) or 21, getattr(args, "limit", 160) or 160)
     elif args.mode == "all":
         cleanup_stale_races()
         fetch_entries(target_date)
         fetch_horse_histories(target_date)
         trigger_ai_predictions(target_date)
         fetch_results(target_date)
+        backfill_learning_data(target_date, getattr(args, "days", 21) or 21, getattr(args, "limit", 160) or 160)
 
 
 if __name__ == "__main__":
