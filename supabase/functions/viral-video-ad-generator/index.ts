@@ -8,7 +8,7 @@
 // - 生成したメディアをSupabase Storageに保存
 // - X投稿用の動画URL + キャプションを返す
 //
-// POST { "type": "image" | "presenter_video" | "video_script", "template": "dark_war" | "feature_highlight" | "user_growth", "lang": "ja" | "en" }
+// POST { "type": "image" | "presenter_video" | "video_script", "template": "dark_war" | "feature_highlight" | "mobile_ux_validation" | "user_growth", "lang": "ja" | "en" }
 // GET  ?view=templates | ?view=history
 
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
@@ -69,6 +69,28 @@ const AD_TEMPLATES = {
     },
     imagePrompt: "Clean modern app interface collage, multiple feature screens arranged in elegant grid, gradient purple background, material design, 16:9",
     hashtags: ["#ProductHunt", "#IndieHacker", "#FlutterApp"],
+  },
+  mobile_ux_validation: {
+    name: "スマホアプリUX検証動画",
+    description: "動くスマホアプリの体験検証を短尺動画にする",
+    script: {
+      ja: [
+        "動くスマホアプリUX検証動画「マイファイナンス」",
+        "資産・支出・KGI/CSF/KPIを一画面で確認。",
+        "お金の浪費を減らし、判断を能力投資へ戻す。",
+        "GPT image2 → GPT-5.5 → Seedance 2.0 の流れで制作。",
+        "https://my-web-app-b67f4.web.app/asset-management",
+      ],
+      en: [
+        "Mobile UX validation video: My Finance.",
+        "Track assets, spending, and KPI decisions in one screen.",
+        "Reduce waste and redirect money into capability.",
+        "Produced with GPT image2 -> GPT-5.5 -> Seedance 2.0.",
+        "https://my-web-app-b67f4.web.app/asset-management",
+      ],
+    },
+    imagePrompt: "A polished moving smartphone app UX validation storyboard for a Japanese personal finance app called My Finance, mobile screens, tap gestures, spending alerts, asset dashboard, clean fintech UI, 16:9",
+    hashtags: ["#AI動画", "#FlutterWeb", "#資産管理", "#buildinpublic"],
   },
   user_growth: {
     name: "ユーザー成長ストーリー",
@@ -163,11 +185,15 @@ serve(async (req) => {
       customHashtags?: string[];
       title?: string;
       voice?: string;
+      preferredModel?: string;
+      creativePipeline?: string[];
     };
 
     const templateKey = body.template ?? "dark_war";
     const lang = (body.lang ?? "ja") as "ja" | "en";
     const type = body.type ?? "image";
+    const preferredModel = typeof body.preferredModel === "string" && body.preferredModel.trim().length > 0 ? body.preferredModel.trim() : null;
+    const creativePipeline = Array.isArray(body.creativePipeline) ? body.creativePipeline.map((step) => String(step).trim()).filter((step) => step.length > 0).slice(0, 8) : [];
 
     const template = AD_TEMPLATES[templateKey as keyof typeof AD_TEMPLATES];
     if (!template) {
@@ -283,6 +309,8 @@ serve(async (req) => {
       template: templateKey,
       lang,
       type,
+      preferredModel,
+      creativePipeline,
       caption,
       script,
       hashtags,

@@ -72,4 +72,44 @@ void main() {
     expect(capturedBody?['action'], 'x.post');
     expect(capturedBody?['mediaUrl'], 'https://example.com/share.png');
   });
+
+  test('generateVideo uses My Finance mobile UX template for finance pages',
+      () async {
+    Map<String, dynamic>? capturedBody;
+    String? capturedFunction;
+    final service = UniversalXShareService(
+      functionInvoker: (functionName, body) async {
+        capturedFunction = functionName;
+        capturedBody = body;
+        return {
+          'success': true,
+          'status': 'fallback_text',
+        };
+      },
+    );
+    const financePage = UniversalSharePageContext(
+      routePath: '/asset-management',
+      title: 'Asset Management',
+      url: 'https://my-web-app-b67f4.web.app/asset-management',
+    );
+    final draft = UniversalXShareService.buildFallbackDraft(financePage);
+
+    await service.generateVideo(
+      context: financePage,
+      draft: draft,
+    );
+
+    expect(capturedFunction, 'viral-video-ad-generator');
+    expect(capturedBody?['template'], 'mobile_ux_validation');
+    expect(capturedBody?['title'], 'マイファイナンス');
+    expect(capturedBody?['preferredModel'], 'seedance-2.0');
+    expect(
+      capturedBody?['creativePipeline'],
+      const ['gpt-image-2', 'gpt-5.5', 'seedance-2.0'],
+    );
+    expect(
+      capturedBody?['customPrompt'],
+      contains('Moving smartphone app UX validation video'),
+    );
+  });
 }
