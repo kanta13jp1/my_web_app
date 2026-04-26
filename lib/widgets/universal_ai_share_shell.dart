@@ -81,13 +81,15 @@ class _UniversalAiShareFab extends StatelessWidget {
   });
 
   void _openShareDialog() {
-    final overlayContext = navigatorKey.currentState?.overlay?.context;
-    if (overlayContext == null) return;
-    showDialog<void>(
-      context: overlayContext,
-      useRootNavigator: true,
-      builder: (_) => UniversalAiShareDialog(page: page),
-    );
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final overlayContext = navigatorKey.currentState?.overlay?.context;
+      if (overlayContext == null || !overlayContext.mounted) return;
+      showDialog<void>(
+        context: overlayContext,
+        useRootNavigator: true,
+        builder: (_) => UniversalAiShareDialog(page: page),
+      );
+    });
   }
 
   @override

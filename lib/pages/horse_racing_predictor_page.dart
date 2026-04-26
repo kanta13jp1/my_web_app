@@ -147,18 +147,12 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
         ), // Trailing comma added here
       ]);
       final d0 = results[0].data;
-      _todayRaces = (d0 is Map && d0['races'] is List)
-          ? (d0['races'] as List).cast<Map<String, dynamic>>()
-          : [];
+      _todayRaces = d0 is Map ? _mapList(d0['races']) : [];
       final d1 = results[1].data;
-      _predictionHistory = (d1 is Map && d1['predictions'] is List)
-          ? (d1['predictions'] as List).cast<Map<String, dynamic>>()
-          : [];
+      _predictionHistory = d1 is Map ? _mapList(d1['predictions']) : [];
       final d2 = results[2].data;
       if (d2 is Map) {
-        final stats = d2['stats'] is Map
-            ? Map<String, dynamic>.from(d2['stats'] as Map)
-            : <String, dynamic>{};
+        final stats = _dynamicMap(d2['stats']);
         _accuracyStats = {
           ...stats,
           'recent_hits': d2['recent_hits'],
@@ -199,9 +193,10 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
         .filter('metadata->>user_id', 'eq', userId)
         .order('created_at', ascending: false)
         .limit(80);
-    return (rows as List<dynamic>)
+    return rows
         .whereType<Map>()
-        .map((row) => Map<String, dynamic>.from(row))
+        .map(_dynamicMap)
+        .where((row) => row.isNotEmpty)
         .toList();
   }
 
@@ -342,12 +337,10 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
   }
 
   Map<String, dynamic>? _firstMap(dynamic value) {
-    if (value is Map<String, dynamic>) return value;
-    if (value is Map) return Map<String, dynamic>.from(value);
+    if (value is Map) return _dynamicMap(value);
     if (value is List && value.isNotEmpty) {
       final first = value.first;
-      if (first is Map<String, dynamic>) return first;
-      if (first is Map) return Map<String, dynamic>.from(first);
+      if (first is Map) return _dynamicMap(first);
     }
     return null;
   }
@@ -357,10 +350,11 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
     if (entriesRaw is List) {
       return entriesRaw
           .whereType<Map>()
-          .map((entry) => Map<String, dynamic>.from(entry))
+          .map(_dynamicMap)
+          .where((entry) => entry.isNotEmpty)
           .toList();
     }
-    if (entriesRaw is Map) return [Map<String, dynamic>.from(entriesRaw)];
+    if (entriesRaw is Map) return [_dynamicMap(entriesRaw)];
     return const [];
   }
 
@@ -368,10 +362,21 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
     if (value is List) {
       return value
           .whereType<Map>()
-          .map((item) => Map<String, dynamic>.from(item))
+          .map(_dynamicMap)
+          .where((item) => item.isNotEmpty)
           .toList();
     }
     return const [];
+  }
+
+  Map<String, dynamic> _dynamicMap(dynamic value) {
+    if (value is! Map) return <String, dynamic>{};
+    return value.map((key, val) => MapEntry(key.toString(), val));
+  }
+
+  List<dynamic> _objectList(dynamic value) {
+    if (value is! List) return const [];
+    return List<dynamic>.from(value);
   }
 
   num? _numValue(dynamic value) {
@@ -1013,6 +1018,15 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
       child: Theme(
         data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
         child: ExpansionTile(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          collapsedShape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          backgroundColor: const Color(0xFF1E1E1E),
+          collapsedBackgroundColor: const Color(0xFF1E1E1E),
+          clipBehavior: Clip.antiAlias,
           tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
           childrenPadding:
               const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -1815,10 +1829,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
   String _yen(int value) => '¥${NumberFormat('#,###').format(value)}';
 
   Map<String, dynamic> _ticketMetadata(Map<String, dynamic> ticket) {
-    final metadata = ticket['metadata'];
-    if (metadata is Map<String, dynamic>) return metadata;
-    if (metadata is Map) return Map<String, dynamic>.from(metadata);
-    return const {};
+    return _dynamicMap(ticket['metadata']);
   }
 
   String _horseNumberLabel(
@@ -2227,275 +2238,291 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
       '3連複',
       '3連単',
     ];
+    final fallbackBetType = betTypes.length > 5 ? betTypes[5] : betTypes.first;
+    for (final draft in drafts) {
+      if (!betTypes.contains(draft.betType)) {
+        draft.betType = fallbackBetType;
+      }
+    }
 
-    await showDialog<void>(
-      context: context,
-      builder: (dialogContext) => StatefulBuilder(
-        builder: (dialogContext, setDialogState) {
-          final total = drafts.fold<int>(
-            0,
-            (sum, draft) => sum + _toIntValue(draft.amountCtrl.text),
-          );
-          final isSkipRecord =
-              drafts.any((draft) => draft.betType == '購入しない') &&
-                  drafts.every((draft) => draft.betType == '購入しない');
+    try {
+      await showDialog<void>(
+        context: context,
+        useRootNavigator: true,
+        builder: (dialogContext) => StatefulBuilder(
+          builder: (dialogContext, setDialogState) {
+            final total = drafts.fold<int>(
+              0,
+              (sum, draft) => sum + _toIntValue(draft.amountCtrl.text),
+            );
+            final isSkipRecord =
+                drafts.any((draft) => draft.betType == '購入しない') &&
+                    drafts.every((draft) => draft.betType == '購入しない');
 
-          return AlertDialog(
-            title: const Text('購入馬券を記録'),
-            content: SizedBox(
-              width: 560,
-              child: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Text(
-                      [
-                        if (venue.isNotEmpty) venue,
-                        if (raceNumber != null) '${raceNumber}R',
-                        raceName,
-                      ].join(' '),
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        height: 1.5,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: TextField(
-                            controller: receiptCtrl,
-                            decoration: const InputDecoration(
-                              labelText: '受付番号',
-                              hintText: '例: 0001',
-                              border: OutlineInputBorder(),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: TextField(
-                            controller: acceptedAtCtrl,
-                            decoration: const InputDecoration(
-                              labelText: '受付時刻',
-                              hintText: '15:26',
-                              border: OutlineInputBorder(),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    ...List.generate(drafts.length, (index) {
-                      final draft = drafts[index];
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 8),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            SizedBox(
-                              width: 108,
-                              child: DropdownButtonFormField<String>(
-                                initialValue: draft.betType,
-                                decoration: const InputDecoration(
-                                  labelText: '券種',
-                                  border: OutlineInputBorder(),
-                                ),
-                                items: betTypes
-                                    .map(
-                                      (type) => DropdownMenuItem(
-                                        value: type,
-                                        child: Text(type),
-                                      ),
-                                    )
-                                    .toList(),
-                                onChanged: (value) {
-                                  if (value == null) return;
-                                  setDialogState(() => draft.betType = value);
-                                },
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: TextField(
-                                controller: draft.combinationCtrl,
-                                decoration: const InputDecoration(
-                                  labelText: '買い目',
-                                  hintText: '例: 05-11 / 05-11-13',
-                                  border: OutlineInputBorder(),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            SizedBox(
-                              width: 104,
-                              child: TextField(
-                                controller: draft.amountCtrl,
-                                keyboardType: TextInputType.number,
-                                inputFormatters: [
-                                  FilteringTextInputFormatter.digitsOnly,
-                                ],
-                                decoration: const InputDecoration(
-                                  labelText: '金額',
-                                  prefixText: '¥',
-                                  border: OutlineInputBorder(),
-                                ),
-                                onChanged: (_) => setDialogState(() {}),
-                              ),
-                            ),
-                            IconButton(
-                              tooltip: '削除',
-                              onPressed: drafts.length <= 1
-                                  ? null
-                                  : () {
-                                      setDialogState(() {
-                                        drafts.removeAt(index).dispose();
-                                      });
-                                    },
-                              icon: const Icon(Icons.close),
-                            ),
-                          ],
-                        ),
-                      );
-                    }),
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: TextButton.icon(
-                        onPressed: () {
-                          setDialogState(() {
-                            drafts.add(_BetLineDraft(betType: 'ワイド'));
-                          });
-                        },
-                        icon: const Icon(Icons.add),
-                        label: const Text('買い目を追加'),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    TextField(
-                      controller: memoCtrl,
-                      decoration: const InputDecoration(
-                        labelText: 'メモ',
-                        hintText: '例: フローラS ワイド3点。低リスク本線。',
-                        border: OutlineInputBorder(),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFFF6B35).withValues(alpha: 0.08),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color:
-                              const Color(0xFFFF6B35).withValues(alpha: 0.25),
+            return AlertDialog(
+              title: const Text('購入馬券を記録'),
+              content: SizedBox(
+                width: 560,
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Text(
+                        [
+                          if (venue.isNotEmpty) venue,
+                          if (raceNumber != null) '${raceNumber}R',
+                          raceName,
+                        ].join(' '),
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          height: 1.5,
                         ),
                       ),
-                      child: Row(
+                      const SizedBox(height: 12),
+                      Row(
                         children: [
-                          const Icon(Icons.payments_outlined),
+                          Expanded(
+                            child: TextField(
+                              controller: receiptCtrl,
+                              decoration: const InputDecoration(
+                                labelText: '受付番号',
+                                hintText: '例: 0001',
+                                border: OutlineInputBorder(),
+                              ),
+                            ),
+                          ),
                           const SizedBox(width: 8),
-                          Text(
-                            '購入合計 ${_yen(total)}',
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              height: 1.5,
+                          Expanded(
+                            child: TextField(
+                              controller: acceptedAtCtrl,
+                              decoration: const InputDecoration(
+                                labelText: '受付時刻',
+                                hintText: '15:26',
+                                border: OutlineInputBorder(),
+                              ),
                             ),
                           ),
                         ],
                       ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(dialogContext),
-                child: const Text('キャンセル'),
-              ),
-              FilledButton.icon(
-                icon: const Icon(Icons.save),
-                label: Text(isSkipRecord ? '見送りを記録' : '記録する'),
-                onPressed: total <= 0 && !isSkipRecord
-                    ? null
-                    : () async {
-                        final lines = <Map<String, dynamic>>[];
-                        for (final draft in drafts) {
-                          final combination = draft.combinationCtrl.text.trim();
-                          final amount = _toIntValue(draft.amountCtrl.text);
-                          if (draft.betType == '購入しない') {
-                            if (!isSkipRecord) continue;
-                            lines.add({
-                              'bet_type': '購入しない',
-                              'combination':
-                                  combination.isEmpty ? '見送り' : combination,
-                              'amount': 0,
-                            });
-                            continue;
-                          }
-                          if (combination.isEmpty || amount <= 0) continue;
-                          lines.add({
-                            'bet_type': draft.betType,
-                            'combination': combination,
-                            'amount': amount,
-                          });
-                        }
-                        if (lines.isEmpty) return;
-                        final now = DateTime.now();
-                        await _supabase.from('hub_data').insert({
-                          'source': 'horse_bet_ticket',
-                          'metadata': {
-                            'user_id': userId,
-                            'race_id': race['id'],
-                            'race_id_ext': race['race_id_ext'],
-                            'race_date': race['race_date'],
-                            'venue': venue,
-                            'race_number': raceNumber,
-                            'race_name': raceName,
-                            'post_time': race['post_time'],
-                            'receipt_no': receiptCtrl.text.trim().isEmpty
-                                ? null
-                                : receiptCtrl.text.trim(),
-                            'accepted_time': acceptedAtCtrl.text.trim(),
-                            'purchased_at': now.toIso8601String(),
-                            'line_count': lines.length,
-                            'total_amount': total,
-                            'payout_amount': 0,
-                            'settled': isSkipRecord,
-                            'purchase_decision': isSkipRecord ? 'skip' : 'buy',
-                            'memo': memoCtrl.text.trim().isEmpty
-                                ? null
-                                : memoCtrl.text.trim(),
-                            'lines': lines,
-                          },
-                        });
-                        if (dialogContext.mounted) {
-                          Navigator.pop(dialogContext);
-                        }
-                        await _reloadBetTickets();
-                        if (!mounted) return;
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(isSkipRecord
-                                ? '購入見送りを記録しました'
-                                : '購入馬券を記録しました: ${_yen(total)}'),
+                      const SizedBox(height: 12),
+                      ...List.generate(drafts.length, (index) {
+                        final draft = drafts[index];
+                        final selectedBetType = betTypes.contains(draft.betType)
+                            ? draft.betType
+                            : fallbackBetType;
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 8),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              SizedBox(
+                                width: 108,
+                                child: DropdownButtonFormField<String>(
+                                  initialValue: selectedBetType,
+                                  decoration: const InputDecoration(
+                                    labelText: '券種',
+                                    border: OutlineInputBorder(),
+                                  ),
+                                  items: betTypes
+                                      .map(
+                                        (type) => DropdownMenuItem(
+                                          value: type,
+                                          child: Text(type),
+                                        ),
+                                      )
+                                      .toList(),
+                                  onChanged: (value) {
+                                    if (value == null) return;
+                                    setDialogState(() => draft.betType = value);
+                                  },
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: TextField(
+                                  controller: draft.combinationCtrl,
+                                  decoration: const InputDecoration(
+                                    labelText: '買い目',
+                                    hintText: '例: 05-11 / 05-11-13',
+                                    border: OutlineInputBorder(),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              SizedBox(
+                                width: 104,
+                                child: TextField(
+                                  controller: draft.amountCtrl,
+                                  keyboardType: TextInputType.number,
+                                  inputFormatters: [
+                                    FilteringTextInputFormatter.digitsOnly,
+                                  ],
+                                  decoration: const InputDecoration(
+                                    labelText: '金額',
+                                    prefixText: '¥',
+                                    border: OutlineInputBorder(),
+                                  ),
+                                  onChanged: (_) => setDialogState(() {}),
+                                ),
+                              ),
+                              IconButton(
+                                tooltip: '削除',
+                                onPressed: drafts.length <= 1
+                                    ? null
+                                    : () {
+                                        setDialogState(() {
+                                          drafts.removeAt(index).dispose();
+                                        });
+                                      },
+                                icon: const Icon(Icons.close),
+                              ),
+                            ],
                           ),
                         );
-                      },
+                      }),
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: TextButton.icon(
+                          onPressed: () {
+                            setDialogState(() {
+                              drafts.add(_BetLineDraft(betType: 'ワイド'));
+                            });
+                          },
+                          icon: const Icon(Icons.add),
+                          label: const Text('買い目を追加'),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      TextField(
+                        controller: memoCtrl,
+                        decoration: const InputDecoration(
+                          labelText: 'メモ',
+                          hintText: '例: フローラS ワイド3点。低リスク本線。',
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color:
+                              const Color(0xFFFF6B35).withValues(alpha: 0.08),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color:
+                                const Color(0xFFFF6B35).withValues(alpha: 0.25),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.payments_outlined),
+                            const SizedBox(width: 8),
+                            Text(
+                              '購入合計 ${_yen(total)}',
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                height: 1.5,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
-            ],
-          );
-        },
-      ),
-    );
-    for (final draft in drafts) {
-      draft.dispose();
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(dialogContext),
+                  child: const Text('キャンセル'),
+                ),
+                FilledButton.icon(
+                  icon: const Icon(Icons.save),
+                  label: Text(isSkipRecord ? '見送りを記録' : '記録する'),
+                  onPressed: total <= 0 && !isSkipRecord
+                      ? null
+                      : () async {
+                          final lines = <Map<String, dynamic>>[];
+                          for (final draft in drafts) {
+                            final combination =
+                                draft.combinationCtrl.text.trim();
+                            final amount = _toIntValue(draft.amountCtrl.text);
+                            if (draft.betType == '購入しない') {
+                              if (!isSkipRecord) continue;
+                              lines.add({
+                                'bet_type': '購入しない',
+                                'combination':
+                                    combination.isEmpty ? '見送り' : combination,
+                                'amount': 0,
+                              });
+                              continue;
+                            }
+                            if (combination.isEmpty || amount <= 0) continue;
+                            lines.add({
+                              'bet_type': draft.betType,
+                              'combination': combination,
+                              'amount': amount,
+                            });
+                          }
+                          if (lines.isEmpty) return;
+                          final now = DateTime.now();
+                          await _supabase.from('hub_data').insert({
+                            'source': 'horse_bet_ticket',
+                            'metadata': {
+                              'user_id': userId,
+                              'race_id': race['id'],
+                              'race_id_ext': race['race_id_ext'],
+                              'race_date': race['race_date'],
+                              'venue': venue,
+                              'race_number': raceNumber,
+                              'race_name': raceName,
+                              'post_time': race['post_time'],
+                              'receipt_no': receiptCtrl.text.trim().isEmpty
+                                  ? null
+                                  : receiptCtrl.text.trim(),
+                              'accepted_time': acceptedAtCtrl.text.trim(),
+                              'purchased_at': now.toIso8601String(),
+                              'line_count': lines.length,
+                              'total_amount': total,
+                              'payout_amount': 0,
+                              'settled': isSkipRecord,
+                              'purchase_decision':
+                                  isSkipRecord ? 'skip' : 'buy',
+                              'memo': memoCtrl.text.trim().isEmpty
+                                  ? null
+                                  : memoCtrl.text.trim(),
+                              'lines': lines,
+                            },
+                          });
+                          if (dialogContext.mounted) {
+                            Navigator.pop(dialogContext);
+                          }
+                          await _reloadBetTickets();
+                          if (!mounted) return;
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(isSkipRecord
+                                  ? '購入見送りを記録しました'
+                                  : '購入馬券を記録しました: ${_yen(total)}'),
+                            ),
+                          );
+                        },
+                ),
+              ],
+            );
+          },
+        ),
+      );
+    } finally {
+      for (final draft in drafts) {
+        draft.dispose();
+      }
+      acceptedAtCtrl.dispose();
+      receiptCtrl.dispose();
+      memoCtrl.dispose();
     }
-    acceptedAtCtrl.dispose();
-    receiptCtrl.dispose();
-    memoCtrl.dispose();
   }
 
   Future<void> _showSettleBetTicketDialog(Map<String, dynamic> ticket) async {
@@ -2722,7 +2749,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
     final payout = _toIntValue(metadata['payout_amount']);
     final settled = metadata['settled'] == true;
     final profit = payout - total;
-    final lines = (metadata['lines'] as List?) ?? const [];
+    final lines = _objectList(metadata['lines']);
 
     return Card(
       color: const Color(0xFF1E1E1E),
