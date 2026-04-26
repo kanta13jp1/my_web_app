@@ -21576,3 +21576,12 @@ Google I/O 2026 競合脅威 事前ブリーフィング
 - **prefer_final_fields** virtual_organization_page._tasks — PS#5 が修正 (85fe7715)
 - **最終Deploy**: 24956160663 SUCCESS ✅
 - **本セッション修正合計**: timestamp collision 2件 + VIEW alter エラー 1件
+
+### PS#6 S58 — horse racing backfill GHA step (2026-04-26 夜)
+- **Codex horse-learning-loop 実装をレビュー・マージ済**:
+  - Migration `20260427002000`: 4 views (bet_type_accuracy/provider_accuracy/daily_accuracy/backfill_status)
+  - tools-hub: `horseracing.backfill_learning_data` action + `evaluateHorsePredictionAccuracy` helper 関数化
+  - fetch_horse_racing.py: `--mode backfill --days N` 追加
+  - (これら3ファイルは既に `4e360657` でmainに含まれていたため今回はGHA変更のみcommit)
+- **GHA horse-racing-update.yml**: backfill step 追加 (日曜JST23時 自動 + workflow_dispatch `--days` input)
+- **commit**: ab745bd9
