@@ -23,6 +23,10 @@ class _AiProviderStatusPageState extends State<AiProviderStatusPage>
   final _supabase = Supabase.instance.client;
 
   Future<void> _testProvider(String providerId) async {
+    if (_supabase.auth.currentUser == null) {
+      setState(() => _testResults[providerId] = 'ログインが必要です');
+      return;
+    }
     setState(() {
       _testing.add(providerId);
       _testResults.remove(providerId);

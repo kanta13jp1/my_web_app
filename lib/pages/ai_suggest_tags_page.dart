@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../services/ai_service.dart';
 
@@ -32,6 +33,10 @@ class _AiSuggestTagsPageState extends State<AiSuggestTagsPage> {
   Future<void> _suggestTags() async {
     final text = _controller.text.trim();
     if (text.isEmpty) return;
+    if (Supabase.instance.client.auth.currentUser == null) {
+      setState(() => _errorMessage = 'この機能はログインが必要です');
+      return;
+    }
 
     setState(() {
       _isLoading = true;

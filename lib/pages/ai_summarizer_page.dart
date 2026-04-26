@@ -32,6 +32,10 @@ class _AiSummarizerPageState extends State<AiSummarizerPage> {
   }
 
   Future<void> _fetchSummaries() async {
+    if (_supabase.auth.currentUser == null) {
+      if (mounted) setState(() => _isLoading = false);
+      return;
+    }
     setState(() {
       _isLoading = true;
       _errorMessage = null;
@@ -58,6 +62,10 @@ class _AiSummarizerPageState extends State<AiSummarizerPage> {
   Future<void> _summarize() async {
     final text = _textCtrl.text.trim();
     if (text.isEmpty) return;
+    if (_supabase.auth.currentUser == null) {
+      if (mounted) setState(() => _errorMessage = 'この機能はログインが必要です');
+      return;
+    }
     setState(() {
       _isSummarizing = true;
       _summary = null;
