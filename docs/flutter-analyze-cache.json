@@ -1,0 +1,8 @@
+{
+  "analyze_ok": null,
+  "conclusion": "unknown",
+  "status": "unknown",
+  "updated_at": "",
+  "head_sha": "",
+  "note": "cs-check.yml が毎時7分に自動更新。analyze_ok=true なら flutter analyze 0エラー。null/unknown の場合は cs-check.yml 未実行 or GH_TOKEN 取得失敗。WEB版では GitHub MCP pull_request_read(get_check_runs) でも確認可。"
+}
