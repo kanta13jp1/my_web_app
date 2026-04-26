@@ -1258,6 +1258,15 @@ class _MyAppState extends State<MyApp> {
               ),
               settings: RouteSettings(name: settings.name),
             );
+          case '/horse-racing/bets':
+          case '/horse-racing/tickets':
+          case '/horse-racing-bets':
+            return MaterialPageRoute(
+              builder: (_) => const HorseRacingPredictorPage(
+                initialTabIndex: 3,
+              ),
+              settings: RouteSettings(name: settings.name),
+            );
           case '/horse-provider-leaderboard':
             return MaterialPageRoute(
               builder: (_) => const HorseProviderLeaderboardPage(),
