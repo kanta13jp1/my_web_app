@@ -498,15 +498,49 @@ type HorseProviderConfig = {
   model: string;
   apiKeyEnv: string;
   estimatedCostUsd: number;
+  tier?: "base" | "premium";
+  family?: string;
 };
 
-const HORSE_PROVIDER_CHAIN: HorseProviderConfig[] = [
-  { provider: "google", model: "gemini-2.5-flash", apiKeyEnv: "GEMINI_API_KEY", estimatedCostUsd: 0.0005 },
-  { provider: "openai", model: "gpt-4o-mini", apiKeyEnv: "OPENAI_API_KEY", estimatedCostUsd: 0.002 },
-  { provider: "anthropic", model: "claude-haiku-4-5", apiKeyEnv: "ANTHROPIC_API_KEY", estimatedCostUsd: 0.003 },
-  { provider: "xai", model: "grok-4-1-fast-non-reasoning", apiKeyEnv: "XAI_API_KEY", estimatedCostUsd: 0.002 },
-  { provider: "openrouter", model: "deepseek/deepseek-chat-v3.1", apiKeyEnv: "OPENROUTER_API_KEY", estimatedCostUsd: 0.0015 },
+const HORSE_BASE_PROVIDER_CHAIN: HorseProviderConfig[] = [
+  { provider: "google", model: "gemini-2.5-flash", apiKeyEnv: "GEMINI_API_KEY", estimatedCostUsd: 0.0005, tier: "base", family: "Gemini" },
+  { provider: "openai", model: "gpt-4o-mini", apiKeyEnv: "OPENAI_API_KEY", estimatedCostUsd: 0.002, tier: "base", family: "GPT" },
+  { provider: "anthropic", model: "claude-haiku-4-5", apiKeyEnv: "ANTHROPIC_API_KEY", estimatedCostUsd: 0.003, tier: "base", family: "Claude" },
+  { provider: "xai", model: "grok-4-1-fast-non-reasoning", apiKeyEnv: "XAI_API_KEY", estimatedCostUsd: 0.002, tier: "base", family: "grok/xAI" },
+  { provider: "openrouter", model: "deepseek/deepseek-chat-v3.1", apiKeyEnv: "OPENROUTER_API_KEY", estimatedCostUsd: 0.0015, tier: "base", family: "DeepSeek" },
 ];
+
+const HORSE_PREMIUM_PROVIDER_CHAIN: HorseProviderConfig[] = [
+  { provider: "anthropic", model: Deno.env.get("HORSE_ANTHROPIC_SONNET_MODEL") ?? "claude-sonnet-4-5", apiKeyEnv: "ANTHROPIC_API_KEY", estimatedCostUsd: 0.012, tier: "premium", family: "Sonnet" },
+  { provider: "anthropic", model: Deno.env.get("HORSE_ANTHROPIC_OPUS_MODEL") ?? "claude-opus-4-1", apiKeyEnv: "ANTHROPIC_API_KEY", estimatedCostUsd: 0.03, tier: "premium", family: "Opus" },
+  { provider: "openai", model: Deno.env.get("HORSE_OPENAI_PREMIUM_MODEL") ?? "gpt-4.1", apiKeyEnv: "OPENAI_API_KEY", estimatedCostUsd: 0.01, tier: "premium", family: "GPT" },
+  { provider: "xai", model: Deno.env.get("HORSE_XAI_PREMIUM_MODEL") ?? "grok-4", apiKeyEnv: "XAI_API_KEY", estimatedCostUsd: 0.012, tier: "premium", family: "grok/xAI" },
+  { provider: "openrouter", model: Deno.env.get("HORSE_DEEPSEEK_REASONER_MODEL") ?? "deepseek/deepseek-r1", apiKeyEnv: "OPENROUTER_API_KEY", estimatedCostUsd: 0.006, tier: "premium", family: "DeepSeek" },
+];
+
+function horseProviderChain(includePremium = false): HorseProviderConfig[] {
+  const premiumEnabled = includePremium || /^true$/i.test(Deno.env.get("HORSE_USE_PREMIUM_MODELS") ?? "");
+  const chain = premiumEnabled
+    ? [...HORSE_BASE_PROVIDER_CHAIN, ...HORSE_PREMIUM_PROVIDER_CHAIN]
+    : HORSE_BASE_PROVIDER_CHAIN;
+  const seen = new Set<string>();
+  return chain.filter((cfg) => {
+    const key = `${cfg.provider}:${cfg.model}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+function horseModelCandidates() {
+  return [...HORSE_BASE_PROVIDER_CHAIN, ...HORSE_PREMIUM_PROVIDER_CHAIN].map((cfg) => ({
+    provider: cfg.provider,
+    model: cfg.model,
+    family: cfg.family ?? cfg.provider,
+    tier: cfg.tier ?? "base",
+    api_key_env: cfg.apiKeyEnv,
+  }));
+}
 
 type ProviderPredictionResult = {
   success: boolean;
@@ -538,14 +572,36 @@ type HorseBetSuggestion = {
   recommended: boolean;
   priority: number;
   rationale: string;
+  purchase_action?: "buy" | "skip";
+  data_quality_score?: number;
   tickets?: Array<{ combination: string; horses: string[]; horse_numbers: number[] }>;
 };
 
+function formatHorseEntryForPrompt(e: Record<string, unknown>): string {
+  const parts = [
+    `馬番${e.horse_number}`,
+    String(e.horse_name ?? ""),
+    `騎手:${e.jockey ?? "不明"}`,
+    `調教師:${e.trainer ?? "不明"}`,
+    e.stable ? `厩舎:${e.stable}` : null,
+    e.age_sex ? `性齢:${e.age_sex}` : null,
+    e.weight_kg ? `斤量:${e.weight_kg}` : null,
+    e.horse_weight ? `馬体重:${e.horse_weight}${e.horse_weight_change !== undefined && e.horse_weight_change !== null ? `(${e.horse_weight_change})` : ""}` : null,
+    e.win_odds ? `単勝:${e.win_odds}倍` : null,
+    e.popularity ? `${e.popularity}番人気` : null,
+    e.sire || e.dam || e.damsire ? `血統:${[e.sire ? `父${e.sire}` : null, e.dam ? `母${e.dam}` : null, e.damsire ? `母父${e.damsire}` : null].filter(Boolean).join("/")}` : null,
+    e.prev_race_name || e.prev_finish || e.prev_time
+      ? `前走:${[e.prev_race_date, e.prev_venue, e.prev_race_name, e.prev_finish ? `${e.prev_finish}着` : null, e.prev_distance ? `${e.prev_course_type ?? ""}${e.prev_distance}m` : null, e.prev_time ? `時計${e.prev_time}` : null, e.prev_last_3f ? `上り${e.prev_last_3f}` : null, e.prev_days_ago ? `${e.prev_days_ago}日前` : null].filter(Boolean).join(" ")}`
+      : null,
+    e.best_time ? `持ち時計:${e.best_time}` : null,
+  ].filter((part) => part !== null && String(part).trim().length > 0);
+  return parts.join(" / ");
+}
+
 function buildHorseRacePrompt(race: Record<string, unknown>, entries: Record<string, unknown>[]): string {
-  const entryText = entries.map((e) =>
-    `馬番${e.horse_number} ${e.horse_name} (騎手:${e.jockey ?? "不明"}, 単勝${e.win_odds ?? "?"}倍, ${e.popularity ?? "?"}番人気)`
-  ).join("\n");
-  return `競馬レース「${race.race_name}」(${race.venue ?? ""}/${race.course_type ?? "芝"}${race.distance ?? ""}m/${race.grade ?? ""}) の低リスク予想をしてください。\n必ず下記の出走馬リストに存在する馬名だけを選び、取消・非出走・リスト外の馬名は絶対に入れないでください。\n最優先は的中確率です。単勝、複勝、枠連、馬連、ワイド、馬単、3連複、3連単をすべて検討し、低リスク順の買い方をreasoningに含めてください。\n出走馬:\n${entryText}\n\nJSON形式のみで回答 (前後に説明文を入れない): {"first":"予想馬名1","second":"予想馬名2","third":"予想馬名3","confidence":0.0,"reasoning":"根拠と券種別の低リスク買い目"}`;
+  const entryText = entries.map(formatHorseEntryForPrompt).join("\n");
+  const dataQuality = horseRaceDataQualityScore(entries);
+  return `競馬レース「${race.race_name}」(${race.venue ?? ""}/${race.course_type ?? "芝"}${race.distance ?? ""}m/${race.grade ?? ""}) の低リスク予想をしてください。\n必ず下記の出走馬リストに存在する馬名だけを選び、取消・非出走・リスト外の馬名は絶対に入れないでください。\n最優先は的中確率と資金保全です。単勝、複勝、枠連、馬連、ワイド、馬単、3連複、3連単をすべて検討し、低リスク順の買い方をreasoningに含めてください。\n血統、前走、馬体重、騎手、調教師、厩舎、タイム、オッズ、人気を重視してください。データ不足または信頼度が低い場合は「購入しない」選択もreasoningに明記してください。\nデータ充足度:${Math.round(dataQuality * 100)}%\n出走馬:\n${entryText}\n\nJSON形式のみで回答 (前後に説明文を入れない): {"first":"予想馬名1","second":"予想馬名2","third":"予想馬名3","confidence":0.0,"reasoning":"根拠と券種別の低リスク買い目。購入しない判断が妥当ならその理由"}`;
 }
 
 function normalizeHorseNameForMatch(value: unknown): string {
@@ -604,6 +660,49 @@ function clampConfidence(value: number): number {
   return Math.max(0.05, Math.min(0.95, Math.round(value * 1000) / 1000));
 }
 
+function horseRaceDataQualityScore(entries: Record<string, unknown>[]): number {
+  if (entries.length === 0) return 0;
+  const fields = [
+    "jockey",
+    "trainer",
+    "win_odds",
+    "popularity",
+    "age_sex",
+    "horse_weight",
+    "weight_kg",
+    "prev_finish",
+    "prev_time",
+    "sire",
+    "dam",
+    "damsire",
+    "stable",
+  ];
+  let filled = 0;
+  for (const entry of entries) {
+    for (const field of fields) {
+      const value = entry[field];
+      if (value !== null && value !== undefined && String(value).trim() !== "") filled += 1;
+    }
+  }
+  return Math.round((filled / (entries.length * fields.length)) * 1000) / 1000;
+}
+
+function horsePurchaseDecision(confidence: number, entries: Record<string, unknown>[]) {
+  const base = clampConfidence(confidence);
+  const dataQuality = horseRaceDataQualityScore(entries);
+  const hasOdds = entries.filter((entry) => entry.win_odds !== null && entry.win_odds !== undefined).length >= Math.max(3, Math.ceil(entries.length * 0.6));
+  const skipRecommended = base < 0.42 || dataQuality < 0.28 || !hasOdds;
+  const reason = skipRecommended
+    ? `信頼度${Math.round(base * 100)}%・データ充足度${Math.round(dataQuality * 100)}%のため、資金保全を優先して購入見送りを推奨。`
+    : `信頼度${Math.round(base * 100)}%・データ充足度${Math.round(dataQuality * 100)}%。低リスク券種に限定する前提で購入検討可。`;
+  return {
+    skipRecommended,
+    reason,
+    dataQuality,
+    confidence: clampConfidence(skipRecommended ? Math.max(1 - base, 0.58) : Math.max(0.12, 1 - base)),
+  };
+}
+
 function buildHorseBetSuggestions(
   first: string,
   second: string,
@@ -624,6 +723,8 @@ function buildHorseBetSuggestions(
   const l1 = horseNumberLabel(firstEntry);
   const l2 = horseNumberLabel(secondEntry);
   const l3 = horseNumberLabel(thirdEntry);
+  const purchaseDecision = horsePurchaseDecision(confidence, entries);
+  const shouldRecommendBuy = !purchaseDecision.skipRecommended;
   const wideTickets = [
     { combination: `${l1}-${l2}`, horses: [first, second], horse_numbers: [n1, n2].filter((n): n is number => n !== null) },
     { combination: `${l1}-${l3}`, horses: [first, third], horse_numbers: [n1, n3].filter((n): n is number => n !== null) },
@@ -643,6 +744,7 @@ function buildHorseBetSuggestions(
     rationale: string,
     frames?: Array<number | null>,
     tickets?: HorseBetSuggestion["tickets"],
+    purchaseAction: "buy" | "skip" = "buy",
   ): HorseBetSuggestion => ({
     bet_type: betType,
     combination,
@@ -655,11 +757,14 @@ function buildHorseBetSuggestions(
     recommended,
     priority,
     rationale,
+    purchase_action: purchaseAction,
+    data_quality_score: purchaseDecision.dataQuality,
     tickets,
   });
   const betSuggestions: HorseBetSuggestion[] = [
-    suggestion("複勝", l1, [first], [n1], "low", 0.14, 3, true, 1, "本命馬が3着以内に入る前提の最小リスク本線。"),
-    suggestion("ワイド", `${l1}-${l2} / ${l1}-${l3}`, [first, second, third], [n1, n2, n3], "low", 0.08, 2, true, 2, "本命から相手2頭へ分散し、3着内の組み合わせを狙う。", undefined, wideTickets),
+    suggestion("購入しない", "見送り", [first, second, third], [n1, n2, n3], "low", purchaseDecision.confidence - base, 0, purchaseDecision.skipRecommended, purchaseDecision.skipRecommended ? 0 : 9, purchaseDecision.reason, undefined, undefined, "skip"),
+    suggestion("複勝", l1, [first], [n1], "low", 0.14, 3, shouldRecommendBuy, 1, "本命馬が3着以内に入る前提の最小リスク本線。"),
+    suggestion("ワイド", `${l1}-${l2} / ${l1}-${l3}`, [first, second, third], [n1, n2, n3], "low", 0.08, 2, shouldRecommendBuy, 2, "本命から相手2頭へ分散し、3着内の組み合わせを狙う。", undefined, wideTickets),
     suggestion("単勝", l1, [first], [n1], "medium", 0.02, 1, false, 3, "本命の勝ち切りを狙うが、複勝よりブレが大きい。"),
     suggestion("馬連", `${l1}-${l2}`, [first, second], [n1, n2], "medium", -0.02, 1, false, 4, "1・2着の順不同。上位2頭の能力差が小さい時の相手本線。"),
     suggestion("枠連", f1 && f2 ? `${f1}-${f2}` : `${l1}-${l2}の枠`, [first, second], [n1, n2], "medium", -0.03, 1, false, 5, "枠番ベースで上位2頭を押さえる。", [f1, f2]),
@@ -786,19 +891,26 @@ function hitMapForHorsePrediction(
   ]);
   const frameHit = predFrame1 !== null && predFrame2 !== null && actualFrame1 !== null && actualFrame2 !== null &&
     sortedPair([String(predFrame1), String(predFrame2)]) === sortedPair([String(actualFrame1), String(actualFrame2)]);
+  const winHit = normalizeHorseNameForMatch(first) === normalizeHorseNameForMatch(actualFirst);
+  const placeHit = actualTop3.map(normalizeHorseNameForMatch).includes(normalizeHorseNameForMatch(first));
+  const quinellaHit = predictedPair === actualPair;
+  const wideHit = widePairs.some((pair) => actualWidePairs.has(pair));
+  const exactaHit = normalizeHorseNameForMatch(first) === normalizeHorseNameForMatch(actualFirst) &&
+    normalizeHorseNameForMatch(second) === normalizeHorseNameForMatch(actualSecond);
+  const trioHit = predictedTriple === actualTriple;
+  const trifectaHit = exactaHit && normalizeHorseNameForMatch(third) === normalizeHorseNameForMatch(actualThird);
+  const noBetCorrect = !placeHit && !wideHit;
   return {
     hits: {
-      "単勝": normalizeHorseNameForMatch(first) === normalizeHorseNameForMatch(actualFirst),
-      "複勝": actualTop3.map(normalizeHorseNameForMatch).includes(normalizeHorseNameForMatch(first)),
+      "購入しない": noBetCorrect,
+      "単勝": winHit,
+      "複勝": placeHit,
       "枠連": frameHit,
-      "馬連": predictedPair === actualPair,
-      "ワイド": widePairs.some((pair) => actualWidePairs.has(pair)),
-      "馬単": normalizeHorseNameForMatch(first) === normalizeHorseNameForMatch(actualFirst) &&
-        normalizeHorseNameForMatch(second) === normalizeHorseNameForMatch(actualSecond),
-      "3連複": predictedTriple === actualTriple,
-      "3連単": normalizeHorseNameForMatch(first) === normalizeHorseNameForMatch(actualFirst) &&
-        normalizeHorseNameForMatch(second) === normalizeHorseNameForMatch(actualSecond) &&
-        normalizeHorseNameForMatch(third) === normalizeHorseNameForMatch(actualThird),
+      "馬連": quinellaHit,
+      "ワイド": wideHit,
+      "馬単": exactaHit,
+      "3連複": trioHit,
+      "3連単": trifectaHit,
     },
     suggestions: buildHorseBetSuggestions(first, second, third, entries, Number(pred.confidence ?? 0.5)).bet_suggestions,
   };
@@ -1329,6 +1441,7 @@ serve(async (req) => {
           const type = String(body.type ?? body.source ?? "all");
           const raceId = body.race_id ? String(body.race_id) : null;
           const force = Boolean(body.force ?? false);
+          const providerChain = horseProviderChain(parseBooleanish(body.use_premium_models ?? body.premium_models, false));
           await upsertUrgentHorseRaces(admin, targetDate);
           let raceQuery = admin.from("horse_races")
             .select("*, horse_entries(*), horse_predictions(id)")
@@ -1354,13 +1467,13 @@ serve(async (req) => {
           const results: Array<Record<string, unknown>> = [];
           const failures: Array<Record<string, unknown>> = [];
           const providerStats: Record<string, { attempts: number; hits: number; quotas: number }> = {};
-          for (const cfg of HORSE_PROVIDER_CHAIN) {
+          for (const cfg of providerChain) {
             providerStats[cfg.provider] = { attempts: 0, hits: 0, quotas: 0 };
           }
           const exhaustedProviders = new Set<string>();
 
           for (const race of unpredicted) {
-            if (exhaustedProviders.size >= HORSE_PROVIDER_CHAIN.length) {
+            if (exhaustedProviders.size >= providerChain.length) {
               failures.push({
                 race_id: race.id,
                 race_name: race.race_name,
@@ -1383,7 +1496,7 @@ serve(async (req) => {
             let succeededResult: ProviderPredictionResult | null = null;
             const perRaceFailures: Array<Record<string, unknown>> = [];
 
-            for (const cfg of HORSE_PROVIDER_CHAIN) {
+            for (const cfg of providerChain) {
               if (exhaustedProviders.has(cfg.provider)) continue;
               providerStats[cfg.provider].attempts += 1;
               const result = await callProviderForHorsePrediction(cfg, prompt);
@@ -1459,6 +1572,7 @@ serve(async (req) => {
             remaining,
             batch_size: unpredicted.length,
             total_unpredicted: allUnpredicted.length,
+            model_chain: providerChain.map((cfg) => `${cfg.provider}:${cfg.model}`),
           });
         }
         case "horseracing.predict_ensemble": {
@@ -1468,6 +1582,7 @@ serve(async (req) => {
           if (!raceId) return json({ error: "race_id required" }, 400);
           const whitelist: string[] | null = Array.isArray(body.providers) ? body.providers.map(String) : null;
           const force = Boolean(body.force ?? false);
+          const providerChain = horseProviderChain(parseBooleanish(body.use_premium_models ?? body.premium_models, false));
           const { data: race, error: re } = await admin.from("horse_races")
             .select("*, horse_entries(*)")
             .eq("id", raceId)
@@ -1479,8 +1594,8 @@ serve(async (req) => {
           if (entries.length < 3) return json({ error: `entries < 3 (${entries.length})` }, 400);
 
           const targetCfgs = whitelist
-            ? HORSE_PROVIDER_CHAIN.filter((c) => whitelist.includes(c.provider))
-            : HORSE_PROVIDER_CHAIN;
+            ? providerChain.filter((c) => whitelist.includes(c.provider) || whitelist.includes(`${c.provider}:${c.model}`))
+            : providerChain;
           if (targetCfgs.length === 0) return json({ error: "no providers selected" }, 400);
 
           // 既に予想済みの provider は skip (force=true でやり直し)
@@ -1608,7 +1723,10 @@ serve(async (req) => {
                 && String(p.third_pick ?? "").trim() === String(r.third_place ?? "").trim();
               const typeEval = hitMapForHorsePrediction(p, r, entries);
               const hits = typeEval.hits as Record<string, boolean>;
+              const suggestions = typeEval.suggestions as HorseBetSuggestion[];
+              const skipRecommended = suggestions.some((s) => s.bet_type === "購入しない" && s.recommended);
               const weightedScore = (
+                (skipRecommended && hits["購入しない"] ? 0.22 : 0) +
                 (hits["複勝"] ? 0.28 : 0) +
                 (hits["ワイド"] ? 0.22 : 0) +
                 (hits["単勝"] ? 0.16 : 0) +
@@ -1633,9 +1751,16 @@ serve(async (req) => {
                 bet_type_hits: hits,
                 recommended_hits: {
                   low_risk_core: Boolean(hits["複勝"] || hits["ワイド"]),
+                  skip_purchase: skipRecommended ? Boolean(hits["購入しない"]) : null,
                   recommended_bet_types: ["複勝", "ワイド"].filter((type) => hits[type]),
                 },
-                bet_type_predictions: typeEval.suggestions,
+                bet_type_predictions: suggestions,
+                skip_recommendation_correct: skipRecommended ? Boolean(hits["購入しない"]) : null,
+                evaluated_features: {
+                  data_quality_score: horseRaceDataQualityScore(entries),
+                  entry_count: entries.length,
+                  features: ["血統", "前走", "馬体重", "騎手", "調教師", "厩舎", "タイム", "オッズ", "人気"],
+                },
                 learning_score: Math.round(weightedScore * 1000) / 1000,
               };
               const { error: accErr } = await admin.from("horse_prediction_accuracy").upsert(
@@ -1648,6 +1773,8 @@ serve(async (req) => {
                 delete legacyPayload.bet_type_hits;
                 delete legacyPayload.recommended_hits;
                 delete legacyPayload.bet_type_predictions;
+                delete legacyPayload.skip_recommendation_correct;
+                delete legacyPayload.evaluated_features;
                 delete legacyPayload.learning_score;
                 await admin.from("horse_prediction_accuracy").upsert(
                   legacyPayload,
@@ -1698,6 +1825,7 @@ serve(async (req) => {
             race_id: raceId, first_place: body.first_place, second_place: body.second_place,
             third_place: body.third_place, trifecta_paid: body.trifecta_paid ?? null,
             winner_odds: body.winner_odds ?? null, is_prediction_correct: isCorrect,
+            payouts: body.payouts ?? {},
           }, { onConflict: "race_id" });
           await admin.from("horse_races").update({ status: "completed" }).eq("id", raceId);
           if (re) throw new Error(re.message);
@@ -1716,6 +1844,7 @@ serve(async (req) => {
           const rankedBetTypes = [...(betTypeRows ?? [])].sort((a: Record<string, unknown>, b: Record<string, unknown>) =>
             Number(b.hit_rate_pct ?? 0) - Number(a.hit_rate_pct ?? 0)
           );
+          const activeChain = horseProviderChain(false);
           return json({
             success: true,
             stats: stats ?? {},
@@ -1723,9 +1852,12 @@ serve(async (req) => {
             bet_type_accuracy: betTypeRows ?? [],
             learning: {
               best_low_risk_bet_type: rankedBetTypes[0]?.bet_type ?? null,
+              best_purchase_decision: rankedBetTypes.find((row: Record<string, unknown>) => row.bet_type === "購入しない") ?? null,
               evaluated_bet_types: rankedBetTypes.length,
-              feedback_loop: "レース結果取得後に horseracing.evaluate_accuracy が券種別に予想と結果を照合し、翌日以降の低リスク推奨に反映できる形で蓄積します。",
-              model_chain: HORSE_PROVIDER_CHAIN.map((cfg) => `${cfg.provider}:${cfg.model}`),
+              feedback_loop: "レース結果取得後に horseracing.evaluate_accuracy が券種別と購入見送り判断を照合し、翌日以降の低リスク推奨に反映できる形で蓄積します。",
+              model_chain: activeChain.map((cfg) => `${cfg.provider}:${cfg.model}`),
+              model_candidates: horseModelCandidates(),
+              feature_set: ["血統", "前走", "馬体重", "騎手", "調教師", "厩舎", "タイム", "オッズ", "人気"],
             },
           });
         }
