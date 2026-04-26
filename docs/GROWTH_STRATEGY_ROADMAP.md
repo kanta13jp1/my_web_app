@@ -21247,6 +21247,7 @@ bardeen/relevance-ai の registry 追加は Win版に cross-instance-pr 発行�
 - **CS Check**: a8da11a8 fix済み / 次回スケジュール実行で回復予定
 - **orphan**: claude/*=1本 (自worktree のみ・正常)
 
+<<<<<<< Updated upstream
 ## PS#6 S54 (2026-04-26 13:xx JST)
 
 ### 実施内容
@@ -21259,3 +21260,15 @@ bardeen/relevance-ai の registry 追加は Win版に cross-instance-pr 発行�
   - repair list +2 (205000/205100 reverted)
 - **repair list**: 116→118件 (0 orphan reverted)
 - **commit**: a928ed8f
+=======
+### PS#5 S63 — site-guide anon guard (2026-04-26)
+- **fix**: `site_guide_chat_page.dart` `_sendQuestion()` にanon guard追加
+  - `Supabase.instance.client.auth.currentUser == null` チェック → assistant message 'ログインが必要です' 表示して return
+  - `import 'package:supabase_flutter/supabase_flutter.dart'` 追加
+  - 背景: `initialQuestion` route param (`?q=`) 経由でanonymousユーザーが自動的にai-hub呼出→401
+- **dart format**: 0 changed / **flutter analyze**: No issues found
+- **commit**: `e04c9601` | deploy-prod triggered
+- **S59-S60-S62-S63**: ai-hub anon guard 全ページ完了 🎉
+  - 直接invoke: S59/S60(113p) + S62(5p) = 118p
+  - サービス経由: S63 site_guide_chat = 1p (auto-call path via initialQuestion)
+>>>>>>> Stashed changes
