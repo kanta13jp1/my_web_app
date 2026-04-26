@@ -1623,7 +1623,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
               ),
             ),
             child: Text(
-              '特におすすめ: ${recommended.map((item) => '${item['bet_type']} ${item['combination']}').join(' / ')}',
+              '特におすすめ: ${recommended.map((item) => item['bet_type'] == '購入しない' ? '購入しない (${item['rationale'] ?? '見送り推奨'})' : '${item['bet_type']} ${item['combination']}').join(' / ')}',
               style: const TextStyle(
                 color: Color(0xFFD1FAE5),
                 fontSize: 11,
@@ -1653,6 +1653,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
     final riskColor = _riskColor(risk);
     final hit = _betSuggestionHit(bet, result);
     final confidence = (bet['confidence'] as num?)?.toDouble() ?? 0;
+    final isSkip = bet['bet_type'] == '購入しない';
     final borderColor = hit == true
         ? const Color(0xFF4CAF50)
         : hit == false
@@ -1688,7 +1689,9 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
                     ? '的中'
                     : hit == false
                         ? '不的中'
-                        : _riskLabel(risk),
+                        : isSkip
+                            ? '見送り'
+                            : _riskLabel(risk),
                 style: TextStyle(
                   color: borderColor,
                   fontSize: 10,
@@ -1709,7 +1712,9 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
             ),
           ),
           Text(
-            '信頼 ${(confidence * 100).toStringAsFixed(0)}% / ${bet['stake_units'] ?? 1}口',
+            isSkip
+                ? '信頼 ${(confidence * 100).toStringAsFixed(0)}% / 購入額 ¥0'
+                : '信頼 ${(confidence * 100).toStringAsFixed(0)}% / ${bet['stake_units'] ?? 1}口',
             style: const TextStyle(
               color: Color(0xFF9CA3AF),
               fontSize: 9,
@@ -1819,6 +1824,35 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
     return null;
   }
 
+  double _entryDataQualityScore(List<Map<String, dynamic>> entries) {
+    if (entries.isEmpty) return 0;
+    const fields = [
+      'jockey',
+      'trainer',
+      'stable',
+      'age_sex',
+      'weight_kg',
+      'horse_weight',
+      'win_odds',
+      'popularity',
+      'sire',
+      'dam',
+      'damsire',
+      'prev_finish',
+      'prev_time',
+    ];
+    var filled = 0;
+    for (final entry in entries) {
+      for (final field in fields) {
+        final value = entry[field];
+        if (value != null && value.toString().trim().isNotEmpty) {
+          filled++;
+        }
+      }
+    }
+    return filled / (entries.length * fields.length);
+  }
+
   List<Map<String, dynamic>> _predictionBetSuggestions(
     Map<String, dynamic> pred,
     List<Map<String, dynamic>> entries,
@@ -1832,6 +1866,14 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
     if (first.isEmpty || second.isEmpty || third.isEmpty) return const [];
 
     final confidence = (pred['confidence'] as num?)?.toDouble() ?? 0.5;
+    final dataQuality = _entryDataQualityScore(entries);
+    final requiredOdds = entries.isEmpty
+        ? 0
+        : (entries.length * 0.6).ceil().clamp(1, entries.length);
+    final hasOdds =
+        entries.where((entry) => entry['win_odds'] != null).length >=
+            requiredOdds;
+    final skipRecommended = confidence < 0.42 || dataQuality < 0.28 || !hasOdds;
     final n1 = _horseNumberValue(entries, first);
     final n2 = _horseNumberValue(entries, second);
     final n3 = _horseNumberValue(entries, third);
@@ -1854,6 +1896,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
       String rationale, {
       List<int?> frames = const [],
       List<Map<String, dynamic>> tickets = const [],
+      String purchaseAction = 'buy',
     }) {
       return {
         'bet_type': type,
@@ -1867,6 +1910,8 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
         'recommended': recommended,
         'priority': priority,
         'rationale': rationale,
+        'purchase_action': purchaseAction,
+        'data_quality_score': dataQuality,
         if (tickets.isNotEmpty) 'tickets': tickets,
       };
     }
@@ -1890,7 +1935,22 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
     ];
 
     return [
-      suggestion('複勝', l1, [first], [n1], 'low', 0.14, 3, true, 1,
+      suggestion(
+        '購入しない',
+        '見送り',
+        [first, second, third],
+        [n1, n2, n3],
+        'low',
+        (skipRecommended ? 0.16 : -0.18),
+        0,
+        skipRecommended,
+        skipRecommended ? 0 : 9,
+        skipRecommended
+            ? '信頼度とデータ充足度が低いため、資金保全を優先して購入見送り。'
+            : '低リスク券種に限定すれば購入検討可。オッズ急変時は見送り。',
+        purchaseAction: 'skip',
+      ),
+      suggestion('複勝', l1, [first], [n1], 'low', 0.14, 3, !skipRecommended, 1,
           '本命馬が3着以内に入る前提の最小リスク本線。'),
       suggestion(
         'ワイド',
@@ -1900,7 +1960,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
         'low',
         0.08,
         2,
-        true,
+        !skipRecommended,
         2,
         '本命から相手2頭へ分散し、3着内の組み合わせを狙う。',
         tickets: wideTickets,
@@ -1963,8 +2023,14 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
     final horses = (suggestion['horses'] is List)
         ? (suggestion['horses'] as List).map((e) => e.toString()).toList()
         : <String>[];
-    if (horses.isEmpty) return null;
     final type = suggestion['bet_type']?.toString() ?? '';
+    if (type == '購入しない') {
+      if (horses.length < 3) return null;
+      final placeHit = actualTop3.contains(horses.first);
+      final wideHit = _wideSuggestionHit(suggestion, actualTop3);
+      return !placeHit && !wideHit;
+    }
+    if (horses.isEmpty) return null;
     return switch (type) {
       '単勝' => horses.first == first,
       '複勝' => actualTop3.contains(horses.first),
@@ -2023,6 +2089,15 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
     final recommendedDrafts = <_BetLineDraft>[];
     for (final suggestion in suggestions) {
       final betType = suggestion['bet_type']?.toString() ?? 'ワイド';
+      if (betType == '購入しない') {
+        return [
+          _BetLineDraft(
+            betType: '購入しない',
+            combination: '見送り',
+            amount: 0,
+          ),
+        ];
+      }
       final tickets = _mapList(suggestion['tickets']);
       if (tickets.isNotEmpty) {
         for (final ticket in tickets.take(2)) {
@@ -2093,6 +2168,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
     final memoCtrl = TextEditingController();
     final drafts = _defaultBetLineDrafts(race);
     const betTypes = [
+      '購入しない',
       '単勝',
       '複勝',
       '枠連',
@@ -2111,6 +2187,9 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
             0,
             (sum, draft) => sum + _toIntValue(draft.amountCtrl.text),
           );
+          final isSkipRecord =
+              drafts.any((draft) => draft.betType == '購入しない') &&
+                  drafts.every((draft) => draft.betType == '購入しない');
 
           return AlertDialog(
             title: const Text('購入馬券を記録'),
@@ -2289,14 +2368,24 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
               ),
               FilledButton.icon(
                 icon: const Icon(Icons.save),
-                label: const Text('記録する'),
-                onPressed: total <= 0
+                label: Text(isSkipRecord ? '見送りを記録' : '記録する'),
+                onPressed: total <= 0 && !isSkipRecord
                     ? null
                     : () async {
                         final lines = <Map<String, dynamic>>[];
                         for (final draft in drafts) {
                           final combination = draft.combinationCtrl.text.trim();
                           final amount = _toIntValue(draft.amountCtrl.text);
+                          if (draft.betType == '購入しない') {
+                            if (!isSkipRecord) continue;
+                            lines.add({
+                              'bet_type': '購入しない',
+                              'combination':
+                                  combination.isEmpty ? '見送り' : combination,
+                              'amount': 0,
+                            });
+                            continue;
+                          }
                           if (combination.isEmpty || amount <= 0) continue;
                           lines.add({
                             'bet_type': draft.betType,
@@ -2325,7 +2414,8 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
                             'line_count': lines.length,
                             'total_amount': total,
                             'payout_amount': 0,
-                            'settled': false,
+                            'settled': isSkipRecord,
+                            'purchase_decision': isSkipRecord ? 'skip' : 'buy',
                             'memo': memoCtrl.text.trim().isEmpty
                                 ? null
                                 : memoCtrl.text.trim(),
@@ -2339,7 +2429,9 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
                         if (!mounted) return;
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
-                            content: Text('購入馬券を記録しました: ${_yen(total)}'),
+                            content: Text(isSkipRecord
+                                ? '購入見送りを記録しました'
+                                : '購入馬券を記録しました: ${_yen(total)}'),
                           ),
                         );
                       },
@@ -3042,7 +3134,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
           const SizedBox(height: 8),
           if (betTypeAccuracy.isEmpty)
             const Text(
-              '結果取得後に、単勝・複勝・枠連・馬連・ワイド・馬単・3連複・3連単の的中率を自動集計します。',
+              '結果取得後に、購入しない判断・単勝・複勝・枠連・馬連・ワイド・馬単・3連複・3連単の的中率を自動集計します。',
               style: TextStyle(
                 color: Color(0xFF9CA3AF),
                 fontSize: 12,
@@ -3129,13 +3221,13 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
 
   List<Widget> _systemInfoRows() {
     return [
-      ('予想対象', '全レースの単勝・複勝・枠連・馬連・ワイド・馬単・3連複・3連単'),
-      ('低リスク推奨', '複勝とワイドを中心に、購入記録へ初期買い目として反映'),
-      ('学習ループ', '結果取得後に券種別的中率を計算し、翌日以降の推奨判断へ蓄積'),
-      ('AIモデル', 'Gemini / OpenAI / Claude / xAI / OpenRouter(設定時)'),
+      ('予想対象', '全レースの購入しない・単勝・複勝・枠連・馬連・ワイド・馬単・3連複・3連単'),
+      ('低リスク推奨', '信頼度やデータ不足時は購入しない。購入時は複勝とワイド中心'),
+      ('学習ループ', '結果取得後に券種別的中率と購入見送り判断を計算し、翌日以降の推奨へ蓄積'),
+      ('AIモデル', 'Gemini / GPT / Sonnet / Opus / grok・xAI / DeepSeek を候補化'),
+      ('取得パラメータ', '血統・前走・馬体重・騎手・調教師・厩舎・タイム・オッズ・人気'),
       ('データソース', 'netkeiba.com (JRA/NAR)'),
-      ('AIモデル', 'Gemini 2.5 Flash'),
-      ('予想方式', '3連単 (1着-2着-3着の順序予想)'),
+      ('予想方式', '全券種 + 購入判断の低リスク提案'),
       ('取得タイミング', '毎朝 07:30 JST 自動実行'),
       ('結果取得', '毎日 17:30 / 21:00 JST 自動実行'),
     ]

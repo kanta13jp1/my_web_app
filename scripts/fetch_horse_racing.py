@@ -83,6 +83,42 @@ _CJK_EXT_A_START = 0x3400
 _CJK_EXT_A_END = 0x4DBF
 
 
+def _split_stable_and_trainer(value: str) -> tuple[Optional[str], Optional[str]]:
+    """厩舎セルから所属(美浦/栗東/地方など)と調教師名をゆるく分離する。"""
+    text = re.sub(r"\s+", " ", value or "").strip()
+    if not text:
+        return None, None
+    for stable in ("美浦", "栗東", "地方", "海外", "大井", "船橋", "川崎", "浦和", "園田", "高知", "佐賀"):
+        if text.startswith(stable):
+            trainer = text[len(stable):].strip(" /　")
+            return stable, trainer or None
+        if f"{stable} " in text:
+            trainer = text.split(stable, 1)[1].strip(" /　")
+            return stable, trainer or None
+    return None, text
+
+
+def _time_to_seconds(value: str) -> Optional[float]:
+    text = (value or "").strip()
+    m = re.search(r"(?:(\d+):)?(\d{1,2})\.(\d)", text)
+    if not m:
+        return None
+    minutes = int(m.group(1) or 0)
+    seconds = int(m.group(2))
+    tenth = int(m.group(3))
+    return minutes * 60 + seconds + tenth / 10
+
+
+def _data_quality_score(entry: dict) -> float:
+    fields = [
+        "jockey", "trainer", "stable", "age_sex", "weight_kg",
+        "horse_weight", "win_odds", "popularity", "sire", "dam",
+        "damsire", "prev_finish", "prev_time",
+    ]
+    filled = sum(1 for field in fields if entry.get(field) not in (None, ""))
+    return round(filled / len(fields), 3)
+
+
 # ─── HTTP ヘルパー ─────────────────────────────────────────────────────────────
 def http_get(url: str, timeout: int = 15) -> Optional[str]:
     """HTML を取得して正しいエンコーディングで文字列に変換する。
@@ -257,7 +293,9 @@ class ShutubaParser(html.parser.HTMLParser):
             elif col == 7:
                 self._cur_horse["jockey"] = t or None
             elif col == 8:
-                self._cur_horse["trainer"] = t or None
+                stable, trainer = _split_stable_and_trainer(t)
+                self._cur_horse["stable"] = stable
+                self._cur_horse["trainer"] = trainer or (t or None)
             elif col == 9:
                 # 馬体重: "480(+2)" or "480(-4)" or "480" or "計不"
                 wm = re.search(r"(\d{3,4})", t)
@@ -279,6 +317,8 @@ class ShutubaParser(html.parser.HTMLParser):
         if tag == "tr" and self._in_horse_row:
             self._in_horse_row = False
             if self._cur_horse.get("horse_name"):
+                self._cur_horse["odds_updated_at"] = datetime.datetime.now(datetime.timezone.utc).isoformat()
+                self._cur_horse["data_quality_score"] = _data_quality_score(self._cur_horse)
                 self.entries.append(dict(self._cur_horse))
 
     def handle_data(self, data):
@@ -412,6 +452,7 @@ class HorsePageParser(html.parser.HTMLParser):
     def __init__(self):
         super().__init__()
         self.prev_race: dict = {}
+        self.history_features: dict = {}
         self._in_table = False
         self._headers: list[str] = []
         self._rows: list[list[str]] = []
@@ -480,6 +521,9 @@ class HorsePageParser(html.parser.HTMLParser):
             venue_idx = col_map.get("開催", 1)
             dist_idx = col_map.get("距離", 14)
             time_idx = col_map.get("タイム", 16)
+            margin_idx = col_map.get("着差", 18)
+            corner_idx = col_map.get("通過", 15)
+            last_3f_idx = col_map.get("上り", col_map.get("上がり", 17))
 
             def safe_get(r: list, idx: int) -> str:
                 return r[idx].strip() if idx < len(r) else ""
@@ -489,6 +533,12 @@ class HorsePageParser(html.parser.HTMLParser):
             finish = int(finish_clean) if finish_clean else None
             dist_str = safe_get(row, dist_idx)
             dist_m = re.search(r"(芝|ダート|障害|ばんえい)\s*(\d+)", dist_str)
+            last_3f = None
+            try:
+                last_3f_text = safe_get(row, last_3f_idx)
+                last_3f = float(last_3f_text) if re.fullmatch(r"\d{2}\.\d", last_3f_text) else None
+            except ValueError:
+                last_3f = None
             prev_date = f"{dm.group(1)}-{int(dm.group(2)):02d}-{int(dm.group(3)):02d}"
             self.prev_race = {
                 "prev_race_date": prev_date,
@@ -498,7 +548,19 @@ class HorsePageParser(html.parser.HTMLParser):
                 "prev_course_type": dist_m.group(1) if dist_m else None,
                 "prev_distance": int(dist_m.group(2)) if dist_m else None,
                 "prev_time": safe_get(row, time_idx) or None,
+                "prev_margin": safe_get(row, margin_idx) or None,
+                "prev_corner": safe_get(row, corner_idx) or None,
+                "prev_last_3f": last_3f,
             }
+            times = [
+                safe_get(history_row, time_idx)
+                for history_row in self._rows
+                if time_idx < len(history_row)
+            ]
+            valid_times = [(time_text, _time_to_seconds(time_text)) for time_text in times]
+            valid_times = [(time_text, seconds) for time_text, seconds in valid_times if seconds is not None]
+            if valid_times:
+                self.history_features["best_time"] = min(valid_times, key=lambda item: item[1])[0]
             break
 
 
@@ -541,7 +603,7 @@ def fetch_prev_race_info(horse_id_ext: str, source: str, race_date: str) -> dict
         return {}
     p = HorsePageParser()
     p.feed(html_text)
-    info = p.prev_race
+    info = {**p.prev_race, **p.history_features, **extract_pedigree_info(html_text)}
     if not info:
         return {}
     prev_date_str = info.get("prev_race_date")
@@ -553,6 +615,46 @@ def fetch_prev_race_info(horse_id_ext: str, source: str, race_date: str) -> dict
         except ValueError:
             pass
     return info
+
+
+def extract_pedigree_info(html_text: str) -> dict:
+    """馬個別ページから父・母・母父を可能な範囲で抽出する。
+
+    netkeiba のHTMLはJRA/NARや時期で構造差があるため、複数パターンを許容する。
+    取得できない場合は空dictを返し、既存の前走取得処理を妨げない。
+    """
+    text = re.sub(r"\s+", " ", html_text)
+    result: dict = {}
+    patterns = {
+        "sire": [r"父[:：]\s*<a[^>]*>([^<]+)</a>", r"父[:：]\s*([^<\s]+)"],
+        "dam": [r"母[:：]\s*<a[^>]*>([^<]+)</a>", r"母[:：]\s*([^<\s]+)"],
+        "damsire": [r"母父[:：]\s*<a[^>]*>([^<]+)</a>", r"母父[:：]\s*([^<\s]+)"],
+    }
+    for key, regexes in patterns.items():
+        for pattern in regexes:
+            m = re.search(pattern, text)
+            if m:
+                value = re.sub(r"<[^>]+>", "", m.group(1)).strip()
+                if value:
+                    result[key] = value
+                    break
+
+    # blood_table 系の祖先リンクから最低限の父・母を補完する
+    if "sire" not in result or "dam" not in result:
+        table_match = re.search(r'<table[^>]+class="[^"]*(?:blood|Blood)[^"]*"[^>]*>(.*?)</table>', text, re.I)
+        if table_match:
+            names = [
+                re.sub(r"<[^>]+>", "", name).strip()
+                for name in re.findall(r"<a[^>]+/horse/[^>]*>(.*?)</a>", table_match.group(1), re.I)
+            ]
+            names = [name for name in names if name]
+            if names and "sire" not in result:
+                result["sire"] = names[0]
+            if len(names) > 1 and "dam" not in result:
+                result["dam"] = names[1]
+            if len(names) > 2 and "damsire" not in result:
+                result["damsire"] = names[2]
+    return result
 
 
 def fetch_horse_histories(target_date: str) -> None:
@@ -576,7 +678,7 @@ def fetch_horse_histories(target_date: str) -> None:
             "race_id": f"eq.{race_id}",
             "horse_id_ext": "not.is.null",
             "prev_history_fetched": "eq.false",
-            "select": "id,horse_id_ext,horse_name",
+            "select": "*",
         })
         if not entries:
             continue
@@ -593,6 +695,7 @@ def fetch_horse_histories(target_date: str) -> None:
                 print(f"    [SKIP] {entry.get('horse_name', '?')}: 前走情報取得失敗 (フラグ設定)")
                 continue
             time.sleep(1)  # レート制限: 成功した HTML ページ取得後のみ待機
+            prev_info["data_quality_score"] = _data_quality_score({**entry, **prev_info})
             supabase_rest("PATCH", f"horse_entries?id=eq.{entry['id']}",
                           {**prev_info, "prev_history_fetched": True})
             print(
