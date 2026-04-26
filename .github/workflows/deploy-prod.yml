@@ -544,6 +544,7 @@ jobs:
         run: |
           flutter build web \
             --release \
+            --pwa-strategy=none \
             --no-tree-shake-icons \
             --build-name=${{ steps.version.outputs.version }} \
             --build-number=${{ github.run_number }} \

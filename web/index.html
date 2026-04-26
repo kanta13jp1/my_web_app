@@ -69,7 +69,6 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="preload" href="flutter_bootstrap.js" as="script">
-  <link rel="preload" href="main.dart.js" as="script">
   <link
     href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Noto+Serif+JP:wght@700&display=swap"
     rel="stylesheet"
@@ -561,21 +560,62 @@
     });
   </script>
   <script>
-    // Phase 3 (#551): SW registration failure fallback — suppress unhandled SW rejections
-    // flutter_bootstrap.js registers flutter_service_worker.js; on ERR_INSUFFICIENT_RESOURCES
-    // this can throw an unhandled rejection that breaks the app startup.
+    // Service worker fallback: this app deploys often, so stale Flutter PWA caches
+    // are more harmful than offline support. New CI builds use --pwa-strategy=none;
+    // this runtime cleanup removes service workers left in existing browsers.
+    (function cleanupFlutterServiceWorker() {
+      if (!('serviceWorker' in navigator)) return;
+
+      window.addEventListener('load', function() {
+        navigator.serviceWorker.getRegistrations()
+          .then(function(registrations) {
+            registrations.forEach(function(registration) {
+              var active = registration.active && registration.active.scriptURL;
+              var installing = registration.installing && registration.installing.scriptURL;
+              var waiting = registration.waiting && registration.waiting.scriptURL;
+              var scriptUrl = active || installing || waiting || '';
+              if (scriptUrl.indexOf('flutter_service_worker.js') !== -1) {
+                registration.unregister();
+              }
+            });
+          })
+          .catch(function() {});
+
+        if (window.caches && caches.keys) {
+          caches.keys()
+            .then(function(keys) {
+              keys
+                .filter(function(key) {
+                  return key.indexOf('flutter-') !== -1 ||
+                    key.indexOf('flutter-app-cache') !== -1 ||
+                    key.indexOf('flutter-app-manifest') !== -1;
+                })
+                .forEach(function(key) {
+                  caches.delete(key);
+                });
+            })
+            .catch(function() {});
+        }
+      });
+    })();
+
+    // Suppress non-fatal service worker/cache update rejections during rollout.
     window.addEventListener('unhandledrejection', function(event) {
-      if (event.reason && String(event.reason).indexOf('service') !== -1) {
+      var reason = String(event.reason || '');
+      if (
+        reason.indexOf('service') !== -1 ||
+        reason.indexOf('ServiceWorker') !== -1 ||
+        reason.indexOf('flutter_service_worker') !== -1 ||
+        reason.indexOf('Cache.addAll') !== -1 ||
+        reason.indexOf("Failed to execute 'addAll'") !== -1 ||
+        reason.indexOf('prepareServiceWorker') !== -1 ||
+        reason.indexOf('NetworkError') !== -1 ||
+        reason.indexOf('ERR_INSUFFICIENT_RESOURCES') !== -1
+      ) {
         event.preventDefault();
-        console.warn('[SW] Registration failed, continuing without service worker:', event.reason);
+        console.warn('[SW] Cache/update failed, continuing without service worker:', event.reason);
       }
     });
-    // Ensure SW registration errors don't surface as fatal on unsupported browsers
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('flutter-first-frame', function() {
-        navigator.serviceWorker.getRegistrations().catch(function() {});
-      });
-    }
   </script>
   <script src="flutter_bootstrap.js" async></script>
 </body>

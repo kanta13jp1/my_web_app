@@ -163,7 +163,7 @@ jobs:
       - name: Build web (production)
         if: github.event_name != 'workflow_call'
         run: >
-          flutter build web --release --no-tree-shake-icons
+          flutter build web --release --pwa-strategy=none --no-tree-shake-icons
           --dart-define=LANDING_GOOGLE_LOGIN_ENABLED=true
         env:
           FLUTTER_WEB: true

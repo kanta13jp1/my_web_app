@@ -9,22 +9,46 @@ class UpdateBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialBanner(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      content: const Text('新しいバージョンが利用可能です'),
-      actions: [
-        TextButton(
-          onPressed: () {
-            triggerWebReload();
-            onDismiss();
-          },
-          child: const Text('更新する'),
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return Material(
+      color: colorScheme.surfaceContainerHighest,
+      child: SafeArea(
+        bottom: false,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: Wrap(
+            spacing: 12,
+            runSpacing: 8,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            alignment: WrapAlignment.end,
+            children: [
+              ConstrainedBox(
+                constraints: const BoxConstraints(minWidth: 220),
+                child: Text(
+                  '新しいバージョンが利用可能です',
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: colorScheme.onSurface,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              TextButton(
+                onPressed: () {
+                  triggerWebReload();
+                  onDismiss();
+                },
+                child: const Text('更新する'),
+              ),
+              TextButton(
+                onPressed: onDismiss,
+                child: const Text('あとで'),
+              ),
+            ],
+          ),
         ),
-        TextButton(
-          onPressed: onDismiss,
-          child: const Text('あとで'),
-        ),
-      ],
+      ),
     );
   }
 }
