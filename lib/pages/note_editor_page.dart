@@ -1367,7 +1367,12 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     _commentSubscription?.cancel();
     _commentSubscription = _noteCommentsService
         .watchCommentChanges(noteId: noteId)
-        .listen((_) => unawaited(_loadCommentCount()));
+        .listen(
+      (_) => unawaited(_loadCommentCount()),
+      onError: (Object error) {
+        debugPrint('Note comment realtime stream error: $error');
+      },
+    );
   }
 
   Future<void> _loadCommentCount() async {
