@@ -11,6 +11,7 @@ import {
   createClient,
   SupabaseClient,
 } from "https://esm.sh/@supabase/supabase-js@2";
+import { AI_CHARACTER_PREAMBLE } from "../_shared/ai_character_preamble.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -3904,12 +3905,15 @@ serve(async (req: Request) => {
             : "Respond in concise Japanese plain text.",
         );
         const finalMessages = [];
-        if (systemPrompt.length > 0) {
-          finalMessages.push({
-            role: "system",
-            content: systemPrompt,
-          });
-        }
+        // [AI-CHARACTER-24] Prepend common character preamble to ensure
+        // consistent persona across all edge_llm.invoke callers.
+        const composedSystemPrompt = systemPrompt.length > 0
+          ? `${AI_CHARACTER_PREAMBLE}\n\n${systemPrompt}`
+          : AI_CHARACTER_PREAMBLE;
+        finalMessages.push({
+          role: "system",
+          content: composedSystemPrompt,
+        });
         finalMessages.push({
           role: "user",
           content: userContentParts.join("\n"),

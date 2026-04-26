@@ -1,6 +1,7 @@
 ﻿// AI Assistant Edge Function: "The Five Emperors" (Ultimate Edition)
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { AI_CHARACTER_PREAMBLE } from "../_shared/ai_character_preamble.ts"
 
 const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
@@ -1238,8 +1239,8 @@ function getProviderStatus(): {
 }
 
 function buildAssistantVideoPrompt(userMessage: string): string {
-    return `
-あなたは「自分株式会社」のAIアシスタントです。
+    return `${AI_CHARACTER_PREAMBLE}
+
 ユーザーの依頼に対して、アバター動画がそのまま読み上げられる短い返答原稿を作成してください。
 
 必須ルール:
