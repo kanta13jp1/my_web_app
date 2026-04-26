@@ -2005,9 +2005,13 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
                 width: double.infinity,
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: isDark ? const Color(0xFF0C1A2A) : Colors.white,
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: const Color(0xFFBFDBFE)),
+                  border: Border.all(
+                    color: isDark
+                        ? const Color(0xFF1D3A6A)
+                        : const Color(0xFFBFDBFE),
+                  ),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,

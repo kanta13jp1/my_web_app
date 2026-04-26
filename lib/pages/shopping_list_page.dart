@@ -597,6 +597,7 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
   }
 
   Widget _buildItemCard(Map<String, dynamic> item) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final name = item['name']?.toString() ?? '';
     final cat = item['category']?.toString() ?? 'other';
     final qty = item['quantity'] as int? ?? 1;
@@ -616,7 +617,7 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
         alignment: Alignment.centerRight,
         padding: const EdgeInsets.only(right: 20),
         decoration: BoxDecoration(
-          color: const Color(0xFFFFCDD2),
+          color: isDark ? const Color(0xFF3A1010) : const Color(0xFFFFCDD2),
           borderRadius: BorderRadius.circular(14),
         ),
         child: const Icon(Icons.delete, color: Color(0xFFE53935)),

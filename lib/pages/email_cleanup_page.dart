@@ -548,12 +548,15 @@ class _EmailCleanupPageState extends State<EmailCleanupPage> {
   }
 
   Widget _buildReminderBanner(int count) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFF3E0),
+        color: isDark ? const Color(0xFF2A1A00) : const Color(0xFFFFF3E0),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFFFCC80)),
+        border: Border.all(
+          color: isDark ? const Color(0xFF3A2000) : const Color(0xFFFFCC80),
+        ),
       ),
       child: Row(
         children: [
@@ -561,7 +564,7 @@ class _EmailCleanupPageState extends State<EmailCleanupPage> {
             width: 44,
             height: 44,
             decoration: BoxDecoration(
-              color: const Color(0xFFFFE0B2),
+              color: isDark ? const Color(0xFF2A1500) : const Color(0xFFFFE0B2),
               borderRadius: BorderRadius.circular(12),
             ),
             child: const Icon(
@@ -600,6 +603,7 @@ class _EmailCleanupPageState extends State<EmailCleanupPage> {
   }
 
   Widget _buildAccountCard(Map<String, dynamic> account) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final provider = account['provider']?.toString() ?? 'other';
     final email = account['email_address']?.toString() ?? '';
     final label = account['label']?.toString();
@@ -685,7 +689,9 @@ class _EmailCleanupPageState extends State<EmailCleanupPage> {
                       vertical: 4,
                     ),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFFFE0B2),
+                      color: isDark
+                          ? const Color(0xFF2A1500)
+                          : const Color(0xFFFFE0B2),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: const Text(

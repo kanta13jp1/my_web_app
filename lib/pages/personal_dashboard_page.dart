@@ -989,6 +989,7 @@ class _PersonalDashboardPageState extends State<PersonalDashboardPage>
   }
 
   Widget _buildHabitsTab() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -1055,9 +1056,12 @@ class _PersonalDashboardPageState extends State<PersonalDashboardPage>
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: const Color(0xFFF0FDF4),
+              color: isDark ? const Color(0xFF0A1A0A) : const Color(0xFFF0FDF4),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: const Color(0xFFBBF7D0)),
+              border: Border.all(
+                color:
+                    isDark ? const Color(0xFF1A3A1A) : const Color(0xFFBBF7D0),
+              ),
             ),
             child: const Column(
               crossAxisAlignment: CrossAxisAlignment.start,
