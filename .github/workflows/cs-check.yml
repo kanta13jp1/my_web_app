@@ -184,6 +184,43 @@ jobs:
             echo "ERREOF" >> $GITHUB_OUTPUT
           fi
 
+      - name: Write flutter-analyze-cache.json (WEB版フォールバック用)
+        id: analyze_cache
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # 最新 CI run の結論を取得 (ci.yml / "Lint, Format, and Test")
+          LATEST=$(gh run list \
+            --workflow=ci.yml \
+            --branch=main \
+            --limit=1 \
+            --json conclusion,updatedAt,headSha,status \
+            2>/dev/null || echo "[]")
+
+          CONCLUSION=$(echo "$LATEST" | jq -r '.[0].conclusion // "unknown"')
+          STATUS=$(echo "$LATEST" | jq -r '.[0].status // "unknown"')
+          UPDATED_AT=$(echo "$LATEST" | jq -r '.[0].updatedAt // ""')
+          HEAD_SHA=$(echo "$LATEST" | jq -r '.[0].headSha // ""')
+          ANALYZE_OK=$([ "$CONCLUSION" = "success" ] && echo "true" || echo "false")
+
+          mkdir -p docs
+          jq -n \
+            --arg conclusion "$CONCLUSION" \
+            --arg status "$STATUS" \
+            --argjson analyze_ok "$ANALYZE_OK" \
+            --arg updated_at "$UPDATED_AT" \
+            --arg head_sha "$HEAD_SHA" \
+            '{
+              analyze_ok: $analyze_ok,
+              conclusion: $conclusion,
+              status: $status,
+              updated_at: $updated_at,
+              head_sha: $head_sha,
+              note: "ci.yml (Lint, Format, and Test) の最新 main ブランチ実行結果。cs-check.yml が毎時更新。"
+            }' > docs/flutter-analyze-cache.json
+
+          echo "✅ flutter-analyze-cache.json: conclusion=$CONCLUSION analyze_ok=$ANALYZE_OK"
+
       - name: Step 3/6 - CS ノート記録 & main直接push
         run: |
           TICKET_COUNT="${{ steps.tickets.outputs.ticket_count }}"
@@ -203,8 +240,12 @@ jobs:
           git checkout main
           git reset --hard origin/main
 
-          # ticket-cache.json は常に更新（WEB版フォールバック用）
+          # ticket-cache.json / flutter-analyze-cache.json は常に更新（WEB版フォールバック用）
           cp /tmp/ticket-cache.json docs/ticket-cache.json
+          # flutter-analyze-cache.json はワークスペースで生成済み (git reset後に再コピー)
+          if [ -f "$GITHUB_WORKSPACE/docs/flutter-analyze-cache.json" ]; then
+            cp "$GITHUB_WORKSPACE/docs/flutter-analyze-cache.json" docs/flutter-analyze-cache.json
+          fi
 
           # チケット0件かつインフラ正常なら CSノート記録のみスキップ
           if [ "$TICKET_COUNT" = "0" ] && [ "$HEALTHY" = "true" ] && [ "$HTTP_CODE" != "403" ]; then
@@ -239,7 +280,7 @@ jobs:
             git add docs/cs-notes/
           fi
 
-          git add docs/ticket-cache.json
+          git add docs/ticket-cache.json docs/flutter-analyze-cache.json
           if git diff --cached --quiet; then
             echo "📝 変更なし — スキップ"
             exit 0
