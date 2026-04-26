@@ -537,6 +537,24 @@ const NETKEIBA_NAR_VENUE_MAP: Record<string, string> = {
   "65": "帯広",
 };
 
+const NETKEIBA_NAR_ODDSPARK_TRACK_MAP: Record<string, string> = {
+  "30": "36", // 門別
+  "35": "10", // 盛岡
+  "36": "11", // 水沢
+  "42": "18", // 浦和
+  "43": "19", // 船橋
+  "44": "20", // 大井
+  "45": "21", // 川崎
+  "46": "22", // 金沢
+  "47": "23", // 笠松
+  "48": "24", // 名古屋
+  "50": "27", // 園田
+  "51": "28", // 姫路
+  "54": "31", // 高知
+  "55": "32", // 佐賀
+  "65": "03", // 帯広
+};
+
 const NETKEIBA_JRA_VENUE_MAP: Record<string, string> = {
   "01": "札幌",
   "02": "函館",
@@ -568,6 +586,127 @@ function normalizeHorseRaceVenue(race: Record<string, unknown>): string | null {
   const current = String(race.venue ?? "").trim();
   if (inferred) return inferred;
   return current || null;
+}
+
+function decodeHtmlEntities(value: string): string {
+  return value
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/&quot;/gi, "\"")
+    .replace(/&#39;/g, "'")
+    .replace(/&#x([0-9a-f]+);/gi, (_, hex: string) => String.fromCodePoint(parseInt(hex, 16)))
+    .replace(/&#(\d+);/g, (_, num: string) => String.fromCodePoint(parseInt(num, 10)));
+}
+
+function cleanHorseHtmlText(value: string): string {
+  return decodeHtmlEntities(value.replace(/<[^>]+>/g, " "))
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function isGenericHorseRaceName(value: unknown): boolean {
+  const name = String(value ?? "").trim();
+  if (!name) return true;
+  return /地方競馬レース情報|レース情報\(JRA\)|レース情報|第?\d+レース|^\d+R?$|^レース\s*\d+/i.test(name);
+}
+
+function oddsParkTrackCodeFromRace(race: Record<string, unknown>): string | null {
+  const raceId = String(race.race_id_ext ?? "");
+  if (String(race.source ?? "").toLowerCase() !== "nar" || !/^\d{12,}$/.test(raceId)) return null;
+  return NETKEIBA_NAR_ODDSPARK_TRACK_MAP[raceId.slice(4, 6)] ?? null;
+}
+
+function oddsParkRaceInfoUrl(race: Record<string, unknown>): string | null {
+  const trackCode = oddsParkTrackCodeFromRace(race);
+  const raceDate = String(race.race_date ?? "").replaceAll("-", "");
+  const raceNumber = Number(race.race_number ?? String(race.race_id_ext ?? "").slice(-2));
+  if (!trackCode || !/^\d{8}$/.test(raceDate) || !Number.isFinite(raceNumber) || raceNumber <= 0) return null;
+  return `https://www.oddspark.com/keiba/RaceList.do?opTrackCd=${trackCode}&raceDy=${raceDate}&raceNb=${raceNumber}&sponsorCd=04`;
+}
+
+function parseOddsParkRaceInfo(html: string, race: Record<string, unknown>) {
+  const titleMatch = html.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
+  const title = titleMatch ? cleanHorseHtmlText(titleMatch[1]) : "";
+  let raceName = title
+    .replace(/^【?出走表】?/, "")
+    .replace(/[｜|].*$/, "")
+    .trim();
+  if (raceName === title) {
+    const h1Match = html.match(/<h1[^>]*>([\s\S]*?)<\/h1>/i);
+    raceName = h1Match ? cleanHorseHtmlText(h1Match[1]).replace(/^【?出走表】?/, "").trim() : raceName;
+  }
+  const text = cleanHorseHtmlText(html);
+  const postTimeMatch = text.match(/発走(?:時間|時刻)?\s*(\d{1,2}:\d{2})/);
+  const distanceMatch = text.match(/(\d{3,4})m/);
+  const venue = normalizeHorseRaceVenue(race);
+  return {
+    race_name: raceName && !isGenericHorseRaceName(raceName) ? raceName : null,
+    post_time: postTimeMatch?.[1] ?? null,
+    distance: distanceMatch?.[1] ? Number(distanceMatch[1]) : null,
+    course_type: venue === "帯広" ? "ばんえい" : null,
+  };
+}
+
+async function fetchOddsParkRaceInfo(race: Record<string, unknown>) {
+  const url = oddsParkRaceInfoUrl(race);
+  if (!url) return null;
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 4500);
+  try {
+    const res = await fetch(url, {
+      headers: {
+        "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "accept-language": "ja,en;q=0.9",
+        "user-agent": "Mozilla/5.0 (compatible; my-web-app horse-racing/1.0)",
+      },
+      signal: controller.signal,
+    });
+    if (!res.ok) return null;
+    const html = await res.text();
+    return parseOddsParkRaceInfo(html, race);
+  } catch (error) {
+    console.warn(`[horse-racing] OddsPark enrichment failed: ${url}`, error);
+    return null;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+function shouldEnrichLocalRaceInfo(race: Record<string, unknown>): boolean {
+  return String(race.source ?? "").toLowerCase() === "nar" && oddsParkRaceInfoUrl(race) !== null &&
+    (isGenericHorseRaceName(race.race_name) || !race.post_time || !race.distance || normalizeHorseRaceVenue(race) === "帯広");
+}
+
+async function ensureLiveHorseRaceInfo(
+  admin: SupabaseClient,
+  race: Record<string, unknown>,
+): Promise<Record<string, unknown>> {
+  if (!shouldEnrichLocalRaceInfo(race)) {
+    return { ...race, venue: normalizeHorseRaceVenue(race) };
+  }
+  const live = await fetchOddsParkRaceInfo(race);
+  if (!live) return { ...race, venue: normalizeHorseRaceVenue(race) };
+
+  const update: Record<string, unknown> = {};
+  if (live.race_name && (isGenericHorseRaceName(race.race_name) || live.race_name !== race.race_name)) {
+    update.race_name = live.race_name;
+  }
+  if (live.post_time && live.post_time !== race.post_time) update.post_time = live.post_time;
+  if (live.distance && live.distance !== race.distance) update.distance = live.distance;
+  if (live.course_type && live.course_type !== race.course_type) update.course_type = live.course_type;
+
+  const enriched = {
+    ...race,
+    ...update,
+    venue: normalizeHorseRaceVenue(race),
+  };
+  if (Object.keys(update).length > 0 && race.id) {
+    const { error } = await admin.from("horse_races").update(update).eq("id", race.id);
+    if (error) console.warn(`[horse-racing] live race info update failed: ${error.message}`);
+  }
+  return enriched;
 }
 
 function horseProviderChain(includePremium = false): HorseProviderConfig[] {
@@ -1476,7 +1615,21 @@ serve(async (req) => {
             
           const { data: races, error: re } = await query.order("post_time", { ascending: true });
           if (re) throw new Error(re.message);
-          const enrichedRaces = (races ?? []).map((race: Record<string, unknown>) => enrichHorseRaceForClient(race));
+          const raceRows = (races ?? []) as Record<string, unknown>[];
+          const liveEnriched = new Map<string, Record<string, unknown>>();
+          await Promise.allSettled(
+            raceRows
+              .filter((race) => shouldEnrichLocalRaceInfo(race))
+              .slice(0, 48)
+              .map(async (race) => {
+                const enriched = await ensureLiveHorseRaceInfo(admin, race);
+                liveEnriched.set(String(race.id ?? race.race_id_ext ?? ""), enriched);
+              }),
+          );
+          const enrichedRaces = raceRows.map((race) => {
+            const key = String(race.id ?? race.race_id_ext ?? "");
+            return enrichHorseRaceForClient(liveEnriched.get(key) ?? race);
+          });
           return json({ success: true, races: enrichedRaces, date: targetDate });
         }
         case "horseracing.list_races": {
@@ -1528,10 +1681,12 @@ serve(async (req) => {
           }
           const exhaustedProviders = new Set<string>();
 
-          for (const race of unpredicted) {
+          for (const rawRace of unpredicted) {
+            const race = await ensureLiveHorseRaceInfo(admin, rawRace as Record<string, unknown>);
+            const currentRaceId = String(race.id ?? "");
             if (exhaustedProviders.size >= providerChain.length) {
               failures.push({
-                race_id: race.id,
+                race_id: currentRaceId,
                 race_name: race.race_name,
                 reason: "skipped: all providers exhausted (quota)",
               });
@@ -1541,7 +1696,7 @@ serve(async (req) => {
             const entries = (race.horse_entries as any[]) ?? [];
             if (entries.length < 3) {
               failures.push({
-                race_id: race.id,
+                race_id: currentRaceId,
                 race_name: race.race_name,
                 reason: `entries < 3 (${entries.length}頭)`,
               });
@@ -1578,7 +1733,7 @@ serve(async (req) => {
 
             if (!succeededCfg || !succeededResult || !succeededResult.prediction) {
               failures.push({
-                race_id: race.id,
+                race_id: currentRaceId,
                 race_name: race.race_name,
                 reason: "all providers failed",
                 provider_failures: perRaceFailures,
@@ -1587,13 +1742,13 @@ serve(async (req) => {
             }
 
             // 1) ensemble table に記録 (プロバイダー別蓄積)
-            await persistEnsemblePrediction(admin, race.id, succeededCfg, succeededResult, entries);
+            await persistEnsemblePrediction(admin, currentRaceId, succeededCfg, succeededResult, entries);
 
             // 2) 互換維持: horse_predictions (代表1件) に最初の成功プロバイダー結果を入れる
             const pred = sanitizeHorsePrediction(succeededResult.prediction, entries);
-            await admin.from("horse_predictions").delete().eq("race_id", race.id);
+            await admin.from("horse_predictions").delete().eq("race_id", currentRaceId);
             const { error: ie } = await admin.from("horse_predictions").insert({
-              race_id: race.id,
+              race_id: currentRaceId,
               first_pick: pred.first || entries[0].horse_name,
               second_pick: pred.second || entries[1].horse_name,
               third_pick: pred.third || entries[2].horse_name,
@@ -1603,13 +1758,13 @@ serve(async (req) => {
             });
             if (ie) {
               failures.push({
-                race_id: race.id,
+                race_id: currentRaceId,
                 race_name: race.race_name,
                 reason: `horse_predictions insert failed: ${ie.message}`,
               });
             } else {
               results.push({
-                race_id: race.id,
+                race_id: currentRaceId,
                 race_name: race.race_name,
                 provider: succeededCfg.provider,
                 model: succeededCfg.model,
@@ -1645,8 +1800,9 @@ serve(async (req) => {
             .maybeSingle();
           if (re) throw new Error(re.message);
           if (!race) return json({ error: "race not found" }, 404);
+          const liveRace = await ensureLiveHorseRaceInfo(admin, race as Record<string, unknown>);
           // deno-lint-ignore no-explicit-any
-          const entries = ((race as any).horse_entries as any[]) ?? [];
+          const entries = ((liveRace as any).horse_entries as any[]) ?? [];
           if (entries.length < 3) return json({ error: `entries < 3 (${entries.length})` }, 400);
 
           const targetCfgs = whitelist
@@ -1663,7 +1819,7 @@ serve(async (req) => {
             existing = new Set((ex ?? []).map((r: Record<string, unknown>) => `${r.provider}:${r.model}`));
           }
 
-          const prompt = buildHorseRacePrompt(race as Record<string, unknown>, entries);
+          const prompt = buildHorseRacePrompt(liveRace, entries);
           const jobs = targetCfgs
             .filter((cfg) => !existing.has(`${cfg.provider}:${cfg.model}`))
             .map(async (cfg) => {
