@@ -2,7 +2,8 @@
 -- Adds avg_learning_score and skip_accuracy_pct columns so the leaderboard reflects
 -- the full bet-type learning loop introduced in 20260426223000.
 
-CREATE OR REPLACE VIEW horse_provider_leaderboard AS
+DROP VIEW IF EXISTS horse_provider_leaderboard;
+CREATE VIEW horse_provider_leaderboard AS
 SELECT
   provider,
   model,
