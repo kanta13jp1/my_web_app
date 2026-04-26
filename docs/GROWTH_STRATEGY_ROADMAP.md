@@ -20879,3 +20879,23 @@ habit_tracker / time_tracker / reading_list / calendar_events
 7. B/S ✅ — 技術負債削減 (hardcoded light color)
 8. KPI ✅ — 13ページ / 82% compliance 達成
 9. IPO ✅ — デザイン品質基準確立
+### 2026-04-26 (PS版#4 EF availability probe 整備 — service_role 不要化)
+
+**問題**: scheduled-task `competitor-monitoring` 実行時 `SUPABASE_SERVICE_ROLE_KEY` が PS#4 ローカル env に未設定 → "EF availability check skipped" 警告で 172 社可用性チェックを断念していた。
+
+**解決**:
+- `scripts/probe_competitors.py` 新設 — Python stdlib のみ・依存ゼロ
+- anon key (lib/main.dart から regex 抽出) + REST `/rest/v1/competitors` (RLS public-read) で取得可能と判明
+- 169 サイトを並列 HTTP probe (10s timeout) → markdown table 出力
+- 結果を `docs/competitor-reports/2026-04-26.md` 末尾に追記 (160 healthy / 9 down / 3 skipped)
+- `.gitignore` に `.cache/` 追加 — 生成テーブル本体は worktree-local キャッシュ
+
+**今回の発見 9 down**:
+- Cloudflare 403: Perplexity (×2: dup) / Make / Mercari / Epic Games — bot 検知 (実害なし・false positive)
+- Connection 0-status: HRMOS / ITANDI BB / KING OF TIME — connection refused (継続監視)
+- Amazon 202: Accepted (リダイレクト処理中・false positive)
+
+**ボーナス発見**: WBS-DEDUP rule 該当 — competitors テーブルに Perplexity が 2 行 (high と medium で重複) → cross-instance-pr Win版 で dedup 対象 (既存 `20260425_wbs_dedup_fix.md` に追記推奨)。
+
+**Philosophy Alignment**: 9/9 (CEO 競合監視継続・mentor として bot ブロック false-positive を分離)
+**詳細**: `docs/competitor-reports/2026-04-26.md` 末尾「可用性チェック (PS#4 ローカル probe)」セクション
