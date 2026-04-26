@@ -20936,3 +20936,9 @@ habit_tracker / time_tracker / reading_list / calendar_events
 - **migration timestamp**: 重複なし (675+ files audit) ✓
 - **repair list**: 109 → 114件 (5件新規追加・全て対応ファイルあり / orphan = 20260426133000 --applied のみ = 意図的保持) ✓
 - **WBS rebalance**: Feature Request 5件 = PS#6対象外 → DYNAMIC-CLAIM なし
+
+### Rule 17 WF health check — PS#1 S53 (2026-04-26 12:47)
+- **全WF**: deploy-prod green (a8da11a8) / CS Check 1F→修正済
+- **失敗WF**: cs-check.yml Step3 — `cp: same file` (flutter-analyze-cache.json が a68425b0 でrepooに commit された後、$GITHUB_WORKSPACE/docs/ と docs/ が同一パスに解決) → `/tmp`退避パターンに修正 (a8da11a8)
+- **orphan**: 確認なし (S52時点0本)
+- **修正済み**: cs-check.yml Write step→`/tmp/flutter-analyze-cache.json` + Step3 cp元を`/tmp`に統一
