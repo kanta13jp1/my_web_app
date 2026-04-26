@@ -20992,21 +20992,53 @@ habit_tracker / time_tracker / reading_list / calendar_events
 - AI大学ページに専用「動画解説」タブ追加 (現在 philosophy_page._videos の番外扱い)
 - YouTube channel branding (チャンネルアート + about)
 
-### Rule 17 WF health check — PS#1 S54 (2026-04-26 12:55)
-- **全WF**: 11/12 WF green (CS Check 1F は S53 fix前の古いrun / 次回実行でgreen予定)
-- **deploy-prod**: a8da11a8(cs-check fix) in_progress / 5e90e6fa(philosophy) pending — 健全
-- **orphan**: claude/*=1本 (自worktree ps1-wip のみ・正常)
-- **User Feedback Resolved**: skipped×3 (issue closeイベント無し・正常)
-- **対応不要**: CS Check 次回スケジュール実行(毎時)で自動回復
+## PS#5 S62 — 2026-04-26 (fe0d27c8)
 
-### Rule 17 WF health check — PS#1 S54 (2026-04-26 12:55)
-- **全WF**: 11/12 WF green (CS Check 1F は S53 fix前の古いrun / 次回実行でgreen予定)
-- **deploy-prod**: a8da11a8(cs-check fix) in_progress / 5e90e6fa(philosophy) pending — 健全
-- **orphan**: claude/*=1本 (自worktree ps1-wip のみ・正常)
-- **User Feedback Resolved**: skipped×3 (issue closeイベント無し・正常)
-- **対応不要**: CS Check 次回スケジュール実行(毎時)で自動回復
+**担当**: PS#5 (PowerShell版 #5)
 
-### Rule 17 WF health check — PS#1 S54 (2026-04-26 12:55)
-- **全WF**: 11/12 WF green (CS Check 1F は S53 fix前の古いrun / 次回実行でgreen予定)
-- **deploy-prod**: a8da11a8 cs-check fix deployed + pipeline healthy
-- **orphan**: claude/*=1本 (自worktree ps1-wip のみ・正常)
+### 完了内容
+
+anon 401 残存 5ページ修正 (ai-hub guard 完了)
+
+**対象ファイル**:
+- `ai_summarizer_page` — initState自動呼出 `_fetchSummaries` + `_summarize` にガード追加
+- `ai_university_voice_page` — `_loadQuestion` + `_submitAnswer` にガード追加
+- `ai_provider_status_page` — `_testProvider` にガード追加
+- `ai_search_page` — `_search` にガード追加
+- `ai_suggest_tags_page` — supabase_flutter import追加 + `_suggestTags` にガード追加
+
+**成果**: console-errors.txt の 197件 ai-hub 401 根本修正。anon guard 全ページ完了。
+
+## PS#5 S62 — 2026-04-26 (fe0d27c8)
+
+**担当**: PS#5 (PowerShell版 #5)
+
+### 完了内容
+
+anon 401 残存 5ページ修正 (ai-hub guard 完了)
+
+**対象ファイル**:
+- `ai_summarizer_page` — initState自動呼出 `_fetchSummaries` + `_summarize` にガード追加
+- `ai_university_voice_page` — `_loadQuestion` + `_submitAnswer` にガード追加
+- `ai_provider_status_page` — `_testProvider` にガード追加
+- `ai_search_page` — `_search` にガード追加
+- `ai_suggest_tags_page` — supabase_flutter import追加 + `_suggestTags` にガード追加
+
+**成果**: ai-hub 401 anon guard 全ページ完了。
+
+## PS#5 S62 — 2026-04-26 (fe0d27c8)
+
+**担当**: PS#5 (PowerShell版 #5)
+
+### 完了内容
+
+anon 401 残存 5ページ修正 (ai-hub guard 完了)
+
+**対象ファイル**:
+- `ai_summarizer_page` — initState自動呼出 `_fetchSummaries` + `_summarize` にガード追加
+- `ai_university_voice_page` — `_loadQuestion` + `_submitAnswer` にガード追加
+- `ai_provider_status_page` — `_testProvider` にガード追加
+- `ai_search_page` — `_search` にガード追加
+- `ai_suggest_tags_page` — supabase_flutter import追加 + `_suggestTags` にガード追加
+
+**成果**: ai-hub 401 anon guard 全ページ完了。
