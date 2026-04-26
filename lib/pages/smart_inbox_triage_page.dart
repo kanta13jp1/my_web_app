@@ -23,6 +23,10 @@ class _SmartInboxTriagePageState extends State<SmartInboxTriagePage> {
   }
 
   Future<void> _fetchInbox() async {
+    if (_supabase.auth.currentUser == null) {
+      setState(() => _isLoading = false);
+      return;
+    }
     setState(() {
       _isLoading = true;
       _errorMessage = null;

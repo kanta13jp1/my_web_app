@@ -27,6 +27,10 @@ class _SubscriptionBillingPageState extends State<SubscriptionBillingPage> {
   }
 
   Future<void> _fetchBillingInfo() async {
+    if (_supabase.auth.currentUser == null) {
+      setState(() => _isLoading = false);
+      return;
+    }
     setState(() {
       _isLoading = true;
       _errorMessage = null;
