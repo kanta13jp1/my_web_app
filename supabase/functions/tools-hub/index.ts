@@ -2274,6 +2274,13 @@ serve(async (req) => {
           if (dailyLearningError) {
             console.warn("horse_learning_daily_accuracy unavailable", dailyLearningError.message);
           }
+          const { data: backfillStatus, error: backfillStatusError } = await admin.from("horse_learning_backfill_status")
+            .select("*")
+            .order("race_date", { ascending: false })
+            .limit(21);
+          if (backfillStatusError) {
+            console.warn("horse_learning_backfill_status unavailable", backfillStatusError.message);
+          }
           const activeChain = horseProviderChain(false);
           return json({
             success: true,
@@ -2284,6 +2291,7 @@ serve(async (req) => {
               best_low_risk_bet_type: rankedBetTypes[0]?.bet_type ?? null,
               best_purchase_decision: rankedBetTypes.find((row: Record<string, unknown>) => row.bet_type === "購入しない") ?? null,
               daily_accuracy: dailyLearning ?? [],
+              backfill_status: backfillStatus ?? [],
               evaluated_bet_types: rankedBetTypes.length,
               feedback_loop: "レース結果取得後に horseracing.evaluate_accuracy が券種別と購入見送り判断を照合し、horseracing.backfill_learning_data で過去レースも低リスク基準予想として蓄積します。",
               backfill_action: "horseracing.backfill_learning_data",

@@ -287,6 +287,47 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
     }
   }
 
+  Future<void> _runLearningBackfill() async {
+    setState(() {
+      _isPredicting = true;
+      _predictionStatus = '過去21日分のレースを低リスク基準で再予想し、結果と照合しています';
+    });
+    try {
+      final response = await _supabase.functions.invoke(
+        'tools-hub',
+        body: {
+          'action': 'horseracing.backfill_learning_data',
+          'date_to': _selectedDate,
+          'days': 21,
+          'limit': 160,
+        },
+      );
+      final data = response.data;
+      final backfilled =
+          data is Map ? (data['backfilled'] as num?)?.toInt() ?? 0 : 0;
+      final evaluation = data is Map && data['evaluation'] is Map
+          ? Map<String, dynamic>.from(data['evaluation'] as Map)
+          : const <String, dynamic>{};
+      final evaluated = (evaluation['evaluated'] as num?)?.toInt() ?? 0;
+      await _loadAll();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            '過去レース学習を更新しました: 予想$backfilled件 / 評価$evaluated件',
+          ),
+        ),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('過去レース学習に失敗しました。結果データ取得後に再試行してください')),
+      );
+    } finally {
+      if (mounted) setState(() => _isPredicting = false);
+    }
+  }
+
   void _pickDate() async {
     final picked = await showDatePicker(
       context: context,
@@ -331,6 +372,11 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
           .toList();
     }
     return const [];
+  }
+
+  num? _numValue(dynamic value) {
+    if (value is num) return value;
+    return num.tryParse(value?.toString() ?? '');
   }
 
   bool _hasPrediction(Map<String, dynamic> race) =>
@@ -3103,6 +3149,8 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
     List<Map<String, dynamic>> betTypeAccuracy,
     Map<String, dynamic> learning,
   ) {
+    final dailyAccuracy = _mapList(learning['daily_accuracy']);
+    final backfillStatus = _mapList(learning['backfill_status']);
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(14),
@@ -3127,10 +3175,21 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
                   ),
                 ),
               ),
+            ],
+          ),
+          Wrap(
+            spacing: 8,
+            runSpacing: 6,
+            children: [
               TextButton.icon(
                 onPressed: _isPredicting ? null : _refreshAccuracyLearning,
                 icon: const Icon(Icons.model_training, size: 16),
                 label: const Text('結果分析を更新'),
+              ),
+              TextButton.icon(
+                onPressed: _isPredicting ? null : _runLearningBackfill,
+                icon: const Icon(Icons.history, size: 16),
+                label: const Text('過去21日を学習'),
               ),
             ],
           ),
@@ -3163,7 +3222,176 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
                 height: 1.5,
               ),
             ),
+            if (dailyAccuracy.isNotEmpty) ...[
+              const SizedBox(height: 10),
+              _buildDailyLearningTrend(dailyAccuracy),
+            ],
+            if (backfillStatus.isNotEmpty) ...[
+              const SizedBox(height: 10),
+              _buildBackfillCoverage(backfillStatus),
+            ],
           ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDailyLearningTrend(List<Map<String, dynamic>> rows) {
+    final visibleRows = rows.take(10).toList();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          '日次学習推移',
+          style: TextStyle(
+            color: Colors.white70,
+            fontSize: 12,
+            fontWeight: FontWeight.bold,
+            height: 1.5,
+          ),
+        ),
+        const SizedBox(height: 6),
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: [
+              for (final row in visibleRows) ...[
+                _buildDailyLearningCard(row),
+                const SizedBox(width: 8),
+              ],
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDailyLearningCard(Map<String, dynamic> row) {
+    final date = row['race_date']?.toString() ?? '-';
+    final races = _numValue(row['evaluated_races'])?.toInt() ?? 0;
+    final score = _numValue(row['avg_learning_score'])?.toDouble() ?? 0;
+    final place = _numValue(row['place_hit_rate_pct'])?.toDouble();
+    final wide = _numValue(row['wide_hit_rate_pct'])?.toDouble();
+    final skip = _numValue(row['skip_accuracy_pct'])?.toDouble();
+    final placeLabel = place == null ? '-' : '${place.toStringAsFixed(0)}%';
+    final wideLabel = wide == null ? '-' : '${wide.toStringAsFixed(0)}%';
+    final skipLabel = skip == null ? '-' : '${skip.toStringAsFixed(0)}%';
+    return Container(
+      width: 154,
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: const Color(0xFF0B1220),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: const Color(0xFF2563EB).withValues(alpha: 0.3)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            date,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              height: 1.4,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            '学習スコア ${score.toStringAsFixed(2)}',
+            style: const TextStyle(
+              color: Color(0xFF93C5FD),
+              fontSize: 11,
+              height: 1.4,
+            ),
+          ),
+          Text(
+            '$racesレース評価',
+            style: const TextStyle(
+              color: Color(0xFF9CA3AF),
+              fontSize: 10,
+              height: 1.4,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            '複勝 $placeLabel / ワイド $wideLabel',
+            style: const TextStyle(
+              color: Color(0xFFCBD5E1),
+              fontSize: 10,
+              height: 1.4,
+            ),
+          ),
+          Text(
+            '見送り $skipLabel',
+            style: const TextStyle(
+              color: Color(0xFFCBD5E1),
+              fontSize: 10,
+              height: 1.4,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBackfillCoverage(List<Map<String, dynamic>> rows) {
+    final visibleRows = rows.take(6).toList();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          '過去レース学習データ',
+          style: TextStyle(
+            color: Colors.white70,
+            fontSize: 12,
+            fontWeight: FontWeight.bold,
+            height: 1.5,
+          ),
+        ),
+        const SizedBox(height: 6),
+        for (final row in visibleRows) _buildBackfillCoverageRow(row),
+      ],
+    );
+  }
+
+  Widget _buildBackfillCoverageRow(Map<String, dynamic> row) {
+    final date = row['race_date']?.toString() ?? '-';
+    final source = row['source']?.toString() ?? '-';
+    final races = _numValue(row['races'])?.toInt() ?? 0;
+    final results = _numValue(row['races_with_results'])?.toInt() ?? 0;
+    final predicted = _numValue(row['baseline_predictions'])?.toInt() ?? 0;
+    final evaluated = _numValue(row['baseline_evaluated_races'])?.toInt() ?? 0;
+    return Container(
+      margin: const EdgeInsets.only(bottom: 6),
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.04),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 130,
+            child: Text(
+              '$date / $source',
+              style: const TextStyle(
+                color: Colors.white70,
+                fontSize: 11,
+                height: 1.4,
+              ),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              '結果$result/$races  予想$predicted  評価$evaluated',
+              style: const TextStyle(
+                color: Color(0xFF9CA3AF),
+                fontSize: 11,
+                height: 1.4,
+              ),
+            ),
+          ),
         ],
       ),
     );
