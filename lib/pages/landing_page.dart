@@ -1662,7 +1662,9 @@ $input
                   width: 40,
                   height: 40,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFEEF2FF),
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? const Color(0xFF1A1A2E)
+                        : const Color(0xFFEEF2FF),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: const Icon(
@@ -2861,12 +2863,15 @@ $input
       const _CompetitorRow('自分株式会社', '完全無料', '21サービス分', true),
     ];
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFFBF0),
+        color: isDark ? const Color(0xFF2A1F0A) : const Color(0xFFFFFBF0),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFFDE68A)),
+        border: Border.all(
+          color: isDark ? const Color(0xFF3A2A00) : const Color(0xFFFDE68A),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -2993,12 +2998,16 @@ $input
       ),
     ];
 
+    final isDarkSteps = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDarkSteps ? const Color(0xFF1A1A1A) : Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(
+          color:
+              isDarkSteps ? const Color(0xFF2A2A2A) : const Color(0xFFE2E8F0),
+        ),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.04),
@@ -3813,12 +3822,15 @@ class _BenefitChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: const Color(0xFFEEF2FF),
+        color: isDark ? const Color(0xFF1A1A2E) : const Color(0xFFEEF2FF),
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: const Color(0xFFC7D2FE)),
+        border: Border.all(
+          color: isDark ? const Color(0xFF3D3A6E) : const Color(0xFFC7D2FE),
+        ),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
