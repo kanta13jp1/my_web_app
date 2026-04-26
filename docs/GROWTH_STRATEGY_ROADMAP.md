@@ -21492,3 +21492,14 @@ Google I/O 2026 競合脅威 事前ブリーフィング
 - **timestamp collision 修正**: 20260426215000 → 20260426222000 rename で PS#3 collision 解消
 - **commit chain**: e22a8ddf → 344176e7 → 7b8eba77 → 72b4877d → 51c6938f → a5d913d4 (1ac01db0)
 - **次回 PS#4**: Google I/O 2026-05-20 当日チェック + Notion Japan DC SCOREBOARD
+
+## PS#6 S56 (2026-04-26 15:1x JST)
+
+### 実施内容
+
+- **deploy failure 24950480564/24950843771 診断**: SQLSTATE 23505 on schema_migrations_pkey = timestamp collision 20260426215000
+  - 原因: phind (PS#3 S67) + competitors_batch2 (PS#4) が同一 timestamp
+  - PS#1 S57 が phind→215100 / competitors→222000 に rename 済み (5a4501ac)
+  - PS#6: repair list +3 (215000 applied + 215100/222000 reverted) → 96bb82fc
+- **Horse Racing Auto Update**: 3/3 ✓
+- **migration**: 700ファイル / collision 0 / orphan 0
