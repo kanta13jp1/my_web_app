@@ -20899,3 +20899,26 @@ habit_tracker / time_tracker / reading_list / calendar_events
 
 **Philosophy Alignment**: 9/9 (CEO 競合監視継続・mentor として bot ブロック false-positive を分離)
 **詳細**: `docs/competitor-reports/2026-04-26.md` 末尾「可用性チェック (PS#4 ローカル probe)」セクション
+
+### Rule 17 WF health check (2026-04-26 11:45 JST) — PS#1 S52
+
+**セッション概要**: deploy-prod 連続失敗チェーン (CI + migration) 修復
+
+**修正した問題 (6件)**:
+1. `2ac49278` — `cmo_page.dart` / `my_skills_page.dart` に未使用 import 追加 → S51 の誤修正
+   - `cf437e79` (PS#5) が既に `supabase` global に変更済みだったのに import を追加してしまった
+   - `b64f902a` (PS#6) が import 削除で修正
+2. `6f9c2b66` — achievements migration `180000→180100` rename + repair 180000-191500
+3. `a4d851d1` — WBS start migrations に `recovery_plan = coalesce(recovery_plan, '...')` 追加 (coalesce はNULL のみ対応)
+4. `b761bd7a` — WBS start 6本 `CASE WHEN COALESCE(recovery_plan, '') = ''` に更新 → empty string 対応
+   - `20260425113000/125000/141500/144500` の4本 CASE WHEN 修正で SQLSTATE 23514 解消
+   - **ROOT CAUSE**: wbs_tasks の `recovery_plan` デフォルト値が `''` (空文字) — coalesce が機能しなかった
+
+**WF health**:
+- deploy-prod: 5F (全て上記修正チェーン) / 1S (b761bd7a SUCCESS) — 修正完了
+- 全他 WF: success または in_progress (正常)
+- orphan branches: claude/* 1本 (threshold 以下)
+
+**教訓** (フィードバック):
+- `recovery_plan` カラムのデフォルト値は `''` (空文字) → `coalesce` ではなく `CASE WHEN COALESCE(col, '') = ''` が必須
+- migration で他インスタンスが既に修正していないか `git pull` 後に `git show HEAD:file` で確認
