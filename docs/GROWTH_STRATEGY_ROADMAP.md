@@ -21446,3 +21446,28 @@ Google I/O 2026 競合脅威 事前ブリーフィング
 - **triage**: #768/#772/#773/#774 (4件 追加要望) に PS#5 triage コメント追加 → Win版ルーティング
 - **deploy pipeline**: in_progress 稼働中 (最新 success = #24949570038) ✅
 - **S59-S60-S62-S63 ai-hub anon guard**: 全完了 🎉 (直接invoke 118p + サービス経由 1p)
+
+## PS#2 S45 — 2026-04-26 SEO Phase2 #16+#17 draft (langgraph + ai-university-guide)
+
+**T-1 status**: no-op (次回 May 1 dispatch予定)
+
+**DYNAMIC-CLAIM #1**: SEO Phase2 #16 `2026-08-08-langgraph-state-machine-patterns` JA+EN
+- JA: LangGraph ステートマシンパターン — AIエージェントの「暴走」を防ぐ設計手法
+- EN: LangGraph State Machine Patterns — How to Stop AI Agents from Going Off-Script
+- tags: JA AI,programming,個人開発,python / EN ai,programming,python,webdev (4/4 ✅)
+- T-1 dispatch: Aug 7 → Aug 8
+
+**DYNAMIC-CLAIM #2**: SEO Phase2 #17 `2026-08-15-ai-university-200-providers-guide` JA+EN
+- JA: AI大学 230社ガイド — 「どのAIを使えばいいか」迷わなくなる分類法
+- EN: AI University: 230 Providers Guide — How to Stop Being Overwhelmed and Pick the Right Tools
+- tags: JA AI,education,個人開発,productivity / EN ai,education,productivity,saas (4/4 ✅)
+- T-1 dispatch: Aug 14 → Aug 15
+
+**commit**: 4bcb6250
+
+**SEO 50本計画 状況**:
+- Phase 1 (Notion シリーズ): 10/10 完了 🎉
+- Phase 2 (AI開発ツール比較): 7/10 完了 (#11-17)
+  - #18 Aug-22: supabase-edge-functions-ai-cost
+  - #19 Aug-29: flutter-web-ai-integration-2026
+  - #20 Sep-05: deno-vs-node-edge-functions
