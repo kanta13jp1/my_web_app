@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import '../core/app_version.dart';
+
 class GlobalHeaderClockShell extends StatelessWidget {
   final Widget child;
 
@@ -74,6 +76,15 @@ class _GlobalHeaderClockBarState extends State<GlobalHeaderClockBar> {
         ? Colors.white70
         : const Color(0xFF607D8B).withValues(alpha: 0.85);
     final clockText = DateFormat('yyyy/MM/dd HH:mm:ss').format(_now);
+    final versionText = AppVersion.display;
+    final versionBadgeBg = isDark
+        ? Colors.white.withValues(alpha: 0.06)
+        : accent.withValues(alpha: 0.08);
+    final versionBadgeBorder = isDark
+        ? Colors.white.withValues(alpha: 0.18)
+        : accent.withValues(alpha: 0.24);
+    final versionBadgeFg =
+        isDark ? Colors.white.withValues(alpha: 0.85) : accent;
 
     return Container(
       key: const Key('global_header_clock_bar'),
@@ -101,13 +112,56 @@ class _GlobalHeaderClockBarState extends State<GlobalHeaderClockBar> {
               children: [
                 Icon(Icons.schedule, size: 16, color: accent),
                 const SizedBox(width: 8),
-                Text(
-                  '今日の日付と時刻',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    color: labelColor,
-                    height: 1.5,
+                Flexible(
+                  child: Text(
+                    '今日の日付と時刻',
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: labelColor,
+                      height: 1.5,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Tooltip(
+                  message: AppVersion.isDev ? 'アプリバージョン (開発ビルド)' : 'アプリバージョン',
+                  child: Semantics(
+                    label: 'アプリバージョン $versionText',
+                    button: true,
+                    child: InkWell(
+                      key: const Key('global_header_version_badge'),
+                      borderRadius: BorderRadius.circular(10),
+                      onTap: () => Navigator.of(context).pushNamed('/settings'),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: versionBadgeBg,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: versionBadgeBorder,
+                            width: 1,
+                          ),
+                        ),
+                        child: Text(
+                          versionText,
+                          key: const Key('global_header_version_text'),
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: versionBadgeFg,
+                            height: 1.4,
+                            fontFeatures: const [
+                              FontFeature.tabularFigures(),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
                   ),
                 ),
                 const Spacer(),
