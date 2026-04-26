@@ -5976,9 +5976,10 @@ abstinence_slip_details: $slipDetailsText
                         : const Color(0xFFECFDF5),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                        color: isDark
-                            ? const Color(0xFF1A5A3A)
-                            : const Color(0xFFA7F3D0)),
+                      color: isDark
+                          ? const Color(0xFF1A5A3A)
+                          : const Color(0xFFA7F3D0),
+                    ),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
