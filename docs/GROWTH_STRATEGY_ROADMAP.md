@@ -21503,3 +21503,10 @@ Google I/O 2026 競合脅威 事前ブリーフィング
   - PS#6: repair list +3 (215000 applied + 215100/222000 reverted) → 96bb82fc
 - **Horse Racing Auto Update**: 3/3 ✓
 - **migration**: 700ファイル / collision 0 / orphan 0
+
+### Rule 17 WF health check — PS#1 S58 (2026-04-26 14:40)
+- **deploy-prod failure**: 20260426215000 timestamp collision — seed_competitors_batch2 + seed_phind 同一timestamp → SQLSTATE 23505
+  - fix: phind → 20260426215100 rename (babae0c9) → deploy SUCCESS (5a4501ac) ✅
+- **repair list**: 20260426215000 は competitors_batch2 が適用済み・phind は215100で新規適用
+- **orphan**: claude/*=1本 (正常)
+- **全WF**: 修復後 green ✅
