@@ -217,7 +217,8 @@ jobs:
               updated_at: $updated_at,
               head_sha: $head_sha,
               note: "ci.yml (Lint, Format, and Test) の最新 main ブランチ実行結果。cs-check.yml が毎時更新。"
-            }' > docs/flutter-analyze-cache.json
+            }' > /tmp/flutter-analyze-cache.json
+          cp /tmp/flutter-analyze-cache.json docs/flutter-analyze-cache.json
 
           echo "✅ flutter-analyze-cache.json: conclusion=$CONCLUSION analyze_ok=$ANALYZE_OK"
 
@@ -242,9 +243,9 @@ jobs:
 
           # ticket-cache.json / flutter-analyze-cache.json は常に更新（WEB版フォールバック用）
           cp /tmp/ticket-cache.json docs/ticket-cache.json
-          # flutter-analyze-cache.json はワークスペースで生成済み (git reset後に再コピー)
-          if [ -f "$GITHUB_WORKSPACE/docs/flutter-analyze-cache.json" ]; then
-            cp "$GITHUB_WORKSPACE/docs/flutter-analyze-cache.json" docs/flutter-analyze-cache.json
+          # flutter-analyze-cache.json は /tmp に退避済み (git reset 後に復元)
+          if [ -f "/tmp/flutter-analyze-cache.json" ]; then
+            cp /tmp/flutter-analyze-cache.json docs/flutter-analyze-cache.json
           fi
 
           # チケット0件かつインフラ正常なら CSノート記録のみスキップ
