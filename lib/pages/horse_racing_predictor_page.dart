@@ -58,9 +58,9 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
   late final TabController _tabController;
 
   bool _isLoading = false;
-  // _isPredicting / _runAiPredictions は UI 契機の AI 予想実行を廃止したため削除
-  // AI 予想は .github/workflows/horse-racing-update.yml (毎時 cron) で自動実行
+  bool _isPredicting = false;
   String? _error;
+  String? _predictionStatus;
   ErrorType? _errorType;
   RaceType _selectedRaceType = RaceType.all;
   String _selectedDate = DateFormat('yyyy-MM-dd').format(DateTime.now());
@@ -83,10 +83,6 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
   }
 
   Future<void> _loadAll() async {
-    if (_supabase.auth.currentUser == null) {
-      setState(() => _isLoading = false);
-      return;
-    }
     setState(() {
       _isLoading = true;
       _error = null;
@@ -142,8 +138,50 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
     }
   }
 
-  // _runAiPredictions 削除: AI予想はバッチ (horse-racing-update.yml 毎時 cron) 専任
-  // ユーザー要望 2026-04-18: UI 契機の予想実行を廃止
+  Future<void> _runAiPredictions({Map<String, dynamic>? race}) async {
+    final raceId = race?['id'] as String?;
+    setState(() {
+      _isPredicting = true;
+      _predictionStatus = raceId == null
+          ? '$_selectedDate の未予想レースをAI予想中です'
+          : '${race?['venue'] ?? ''} ${race?['race_number'] ?? ''}RをAI予想中です';
+    });
+    try {
+      final response = await _supabase.functions.invoke(
+        'tools-hub',
+        body: {
+          'action': 'horseracing.predict_all',
+          'date': _selectedDate,
+          'type': _selectedRaceType.name,
+          'limit': raceId == null ? 80 : 1,
+          if (raceId != null) 'race_id': raceId,
+          if (raceId != null) 'force': true,
+        },
+      );
+      final data = response.data;
+      final count = data is Map ? (data['count'] as num?)?.toInt() ?? 0 : 0;
+      final failureCount =
+          data is Map ? (data['failure_count'] as num?)?.toInt() ?? 0 : 0;
+      final remaining =
+          data is Map ? (data['remaining'] as num?)?.toInt() ?? 0 : 0;
+      if (mounted) {
+        setState(() {
+          _predictionStatus = count > 0
+              ? 'AI予想を$count件生成しました。失敗$failureCount件 / 残り$remaining件'
+              : '新規AI予想は生成されませんでした。暫定指数予想を確認してください。';
+        });
+      }
+      await _loadAll();
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _predictionStatus = 'AI予想の即時生成に失敗しました。暫定指数予想を表示しています。';
+        });
+      }
+    } finally {
+      if (mounted) setState(() => _isPredicting = false);
+    }
+  }
 
   void _pickDate() async {
     final picked = await showDatePicker(
@@ -156,6 +194,101 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
       setState(() => _selectedDate = DateFormat('yyyy-MM-dd').format(picked));
       _loadAll();
     }
+  }
+
+  Map<String, dynamic>? _firstMap(dynamic value) {
+    if (value is Map<String, dynamic>) return value;
+    if (value is Map) return Map<String, dynamic>.from(value);
+    if (value is List && value.isNotEmpty) {
+      final first = value.first;
+      if (first is Map<String, dynamic>) return first;
+      if (first is Map) return Map<String, dynamic>.from(first);
+    }
+    return null;
+  }
+
+  List<Map<String, dynamic>> _entriesOf(Map<String, dynamic> race) {
+    final entriesRaw = race['horse_entries'];
+    if (entriesRaw is List) {
+      return entriesRaw
+          .whereType<Map>()
+          .map((entry) => Map<String, dynamic>.from(entry))
+          .toList();
+    }
+    if (entriesRaw is Map) return [Map<String, dynamic>.from(entriesRaw)];
+    return const [];
+  }
+
+  bool _hasPrediction(Map<String, dynamic> race) =>
+      _firstMap(race['horse_predictions']) != null;
+
+  int _postTimeMinutes(Map<String, dynamic> race) {
+    final time = race['post_time'] as String?;
+    if (time == null || !time.contains(':')) return 24 * 60 + 99;
+    final parts = time.split(':');
+    final hour = int.tryParse(parts.first) ?? 24;
+    final minute = int.tryParse(parts.length > 1 ? parts[1] : '') ?? 0;
+    return hour * 60 + minute;
+  }
+
+  Map<String, dynamic>? _nextRace() {
+    final today = DateFormat('yyyy-MM-dd').format(DateTime.now());
+    final now = DateTime.now();
+    final nowMinutes = now.hour * 60 + now.minute;
+    final races = _todayRaces
+        .where(
+          (race) =>
+              _selectedDate != today || _postTimeMinutes(race) >= nowMinutes,
+        )
+        .toList()
+      ..sort((a, b) => _postTimeMinutes(a).compareTo(_postTimeMinutes(b)));
+    return races.isEmpty ? null : races.first;
+  }
+
+  double _instantScore(Map<String, dynamic> entry) {
+    var score = 50.0;
+    final odds = (entry['win_odds'] as num?)?.toDouble();
+    if (odds != null && odds > 0) {
+      score += (32 / odds).clamp(0, 28);
+      if (odds <= 3) score += 6;
+      if (odds >= 30) score -= 8;
+    }
+    final popularity = (entry['popularity'] as num?)?.toInt();
+    if (popularity != null) {
+      score += (18 - popularity).clamp(-8, 18);
+    }
+    final prevFinish = (entry['prev_finish'] as num?)?.toInt();
+    if (prevFinish != null) {
+      if (prevFinish == 1) {
+        score += 18;
+      } else if (prevFinish <= 3) {
+        score += 12;
+      } else if (prevFinish <= 5) {
+        score += 6;
+      } else {
+        score -= (prevFinish - 5).clamp(0, 8);
+      }
+    }
+    final weightChange = (entry['horse_weight_change'] as num?)?.toInt();
+    if (weightChange != null) {
+      final absChange = weightChange.abs();
+      if (absChange <= 6) {
+        score += 3;
+      } else if (absChange >= 14) {
+        score -= 5;
+      }
+    }
+    final horseNumber = (entry['horse_number'] as num?)?.toInt();
+    if (horseNumber != null && horseNumber <= 3) score += 1.5;
+    return score;
+  }
+
+  List<Map<String, dynamic>> _rankInstantForecast(
+    List<Map<String, dynamic>> entries,
+  ) {
+    final ranked = List<Map<String, dynamic>>.from(entries)
+      ..sort((a, b) => _instantScore(b).compareTo(_instantScore(a)));
+    return ranked;
   }
 
   @override
@@ -322,6 +455,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
             ),
           ),
         ),
+        _buildTodayActionBar(),
         Expanded(
           child: _todayRaces.isEmpty
               ? Center(
@@ -369,11 +503,111 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
     );
   }
 
+  Widget _buildTodayActionBar() {
+    final total = _todayRaces.length;
+    final predicted = _todayRaces.where(_hasPrediction).length;
+    final entriesReady =
+        _todayRaces.where((race) => _entriesOf(race).length >= 3).length;
+    final next = _nextRace();
+    final nextLabel = next == null
+        ? '次走なし'
+        : '${next['venue'] ?? ''} ${next['race_number'] ?? '?'}R ${next['post_time'] ?? ''}';
+
+    return Container(
+      margin: const EdgeInsets.fromLTRB(12, 0, 12, 10),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFF141414),
+        borderRadius: BorderRadius.circular(14),
+        border:
+            Border.all(color: const Color(0xFFFF6B35).withValues(alpha: 0.3)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              _summaryChip('レース', '$total件', Icons.event_available),
+              _summaryChip('AI予想', '$predicted/$total', Icons.psychology),
+              _summaryChip('出走馬あり', '$entriesReady件', Icons.list_alt),
+              _summaryChip('次走', nextLabel, Icons.schedule),
+              FilledButton.icon(
+                onPressed: _isPredicting || total == 0
+                    ? null
+                    : () => _runAiPredictions(),
+                icon: _isPredicting
+                    ? const SizedBox(
+                        width: 14,
+                        height: 14,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.auto_awesome, size: 16),
+                label: Text(_isPredicting ? 'AI予想中' : '今日のAI予想を今すぐ生成'),
+                style: FilledButton.styleFrom(
+                  backgroundColor: const Color(0xFFFF6B35),
+                  foregroundColor: Colors.white,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                ),
+              ),
+            ],
+          ),
+          if (_predictionStatus != null) ...[
+            const SizedBox(height: 8),
+            Text(
+              _predictionStatus!,
+              style: const TextStyle(
+                color: Color(0xFFFFB199),
+                fontSize: 12,
+                height: 1.5,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _summaryChip(String label, String value, IconData icon) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, color: const Color(0xFFFF6B35), size: 14),
+          const SizedBox(width: 6),
+          Text(
+            '$label ',
+            style: const TextStyle(
+              color: Color(0xFF9CA3AF),
+              fontSize: 12,
+              height: 1.5,
+            ),
+          ),
+          Text(
+            value,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              height: 1.5,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildTodayRacesList() {
-    final hasPredictions = _todayRaces.any((r) {
-      final p = r['horse_predictions'];
-      return p != null && (p is List ? p.isNotEmpty : true);
-    });
+    final hasPredictions = _todayRaces.any(_hasPrediction);
 
     // Win版#112: netkeiba 風 開催地別カラム表示
     final Map<String, List<Map<String, dynamic>>> byVenue = {};
@@ -557,24 +791,9 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
     //   horse_entries: 1:M (List)
     //   horse_predictions / horse_results: 1:1 (Map or null)
     // 過去 (PS版#119) は Map だった時期もあり、List 戻りバージョンと両方対応する。
-    final entriesRaw = race['horse_entries'];
-    final entries = entriesRaw is List
-        ? entriesRaw
-        : (entriesRaw is Map ? [entriesRaw] : const []);
-
-    Map<String, dynamic>? firstMap(dynamic v) {
-      if (v is Map<String, dynamic>) return v;
-      if (v is Map) return Map<String, dynamic>.from(v);
-      if (v is List && v.isNotEmpty) {
-        final first = v.first;
-        if (first is Map<String, dynamic>) return first;
-        if (first is Map) return Map<String, dynamic>.from(first);
-      }
-      return null;
-    }
-
-    final pred = firstMap(race['horse_predictions']);
-    final result = firstMap(race['horse_results']);
+    final entries = _entriesOf(race);
+    final pred = _firstMap(race['horse_predictions']);
+    final result = _firstMap(race['horse_results']);
     final hasResult = result != null;
     final isCorrect = result?['is_prediction_correct'] as bool?;
     final trifectaPaid = (result?['trifecta_paid'] as num?)?.toInt();
@@ -686,31 +905,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
             if (pred != null)
               _buildPredictionSection(pred, result)
             else
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF9CA3AF).withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Row(
-                  children: [
-                    Icon(
-                      Icons.psychology_outlined,
-                      color: Color(0xFF9CA3AF),
-                      size: 18,
-                    ),
-                    SizedBox(width: 8),
-                    Text(
-                      'AI予想未生成',
-                      style: TextStyle(
-                        color: Color(0xFF9CA3AF),
-                        fontSize: 13,
-                        height: 1.5,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+              _buildInstantForecastSection(race, entries),
             if (entries.isNotEmpty) ...[
               const SizedBox(height: 8),
               const Text(
@@ -728,7 +923,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
                 runSpacing: 4,
                 children: [
                   ...entries.take(10).map((e) {
-                    final en = e as Map<String, dynamic>;
+                    final en = e;
                     final n = (en['horse_number'] as num?)?.toInt();
                     final nm = en['horse_name'] as String? ?? '?';
                     final od = (en['win_odds'] as num?)?.toStringAsFixed(1);
@@ -873,28 +1068,176 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
               ),
             ],
             const SizedBox(height: 8),
-            Align(
-              alignment: Alignment.centerRight,
-              child: TextButton.icon(
-                icon: const Icon(Icons.table_chart_outlined, size: 14),
-                label: const Text('詳細マトリックス'),
-                style: TextButton.styleFrom(
-                  foregroundColor: const Color(0xFF6366F1),
-                  textStyle: const TextStyle(
-                    fontSize: 12,
-                    height: 1.5,
+            Wrap(
+              alignment: WrapAlignment.end,
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                TextButton.icon(
+                  icon: const Icon(Icons.auto_awesome, size: 14),
+                  label: Text(pred == null ? 'このレースをAI予想' : 'AI再予想'),
+                  style: TextButton.styleFrom(
+                    foregroundColor: const Color(0xFFFF6B35),
+                    textStyle: const TextStyle(
+                      fontSize: 12,
+                      height: 1.5,
+                    ),
+                  ),
+                  onPressed: _isPredicting
+                      ? null
+                      : () => _runAiPredictions(race: race),
+                ),
+                TextButton.icon(
+                  icon: const Icon(Icons.table_chart_outlined, size: 14),
+                  label: const Text('詳細マトリックス'),
+                  style: TextButton.styleFrom(
+                    foregroundColor: const Color(0xFF6366F1),
+                    textStyle: const TextStyle(
+                      fontSize: 12,
+                      height: 1.5,
+                    ),
+                  ),
+                  onPressed: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => HorseracingRaceDetailPage(race: race),
+                    ),
                   ),
                 ),
-                onPressed: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => HorseracingRaceDetailPage(race: race),
-                  ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInstantForecastSection(
+    Map<String, dynamic> race,
+    List<Map<String, dynamic>> entries,
+  ) {
+    if (entries.length < 3) {
+      return Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: const Color(0xFF9CA3AF).withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: const Row(
+          children: [
+            Icon(
+              Icons.psychology_outlined,
+              color: Color(0xFF9CA3AF),
+              size: 18,
+            ),
+            SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                'AI予想未生成。出走馬データが3頭未満のため暫定指数も作れません。',
+                style: TextStyle(
+                  color: Color(0xFF9CA3AF),
+                  fontSize: 13,
+                  height: 1.5,
                 ),
               ),
             ),
           ],
         ),
+      );
+    }
+
+    final ranked = _rankInstantForecast(entries);
+    final top3 = ranked.take(3).toList();
+    final dataSignals = top3.fold<int>(0, (sum, entry) {
+      return sum +
+          (entry['win_odds'] != null ? 1 : 0) +
+          (entry['popularity'] != null ? 1 : 0) +
+          (entry['prev_finish'] != null ? 1 : 0) +
+          (entry['horse_weight_change'] != null ? 1 : 0);
+    });
+    final confidence = (0.48 + dataSignals * 0.025).clamp(0.48, 0.78);
+    final names = top3.map((entry) {
+      final number = (entry['horse_number'] as num?)?.toInt();
+      final name = entry['horse_name'] as String? ?? '?';
+      return number == null ? name : '$number.$name';
+    }).toList();
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            const Color(0xFF0D9488).withValues(alpha: 0.10),
+            const Color(0xFFFF6B35).withValues(alpha: 0.05),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(12),
+        border:
+            Border.all(color: const Color(0xFF0D9488).withValues(alpha: 0.3)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.speed, color: Color(0xFF0D9488), size: 16),
+              const SizedBox(width: 8),
+              const Expanded(
+                child: Text(
+                  '暫定指数予想',
+                  style: TextStyle(
+                    color: Color(0xFF0D9488),
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12,
+                    height: 1.5,
+                  ),
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF0D9488).withValues(alpha: 0.14),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  '目安 ${(confidence * 100).toStringAsFixed(0)}%',
+                  style: const TextStyle(
+                    color: Color(0xFF0D9488),
+                    fontSize: 11,
+                    height: 1.5,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              _placeLabel('1着候補', names[0], const Color(0xFFFFC107)),
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 6),
+                child:
+                    Icon(Icons.arrow_forward, color: Colors.white38, size: 14),
+              ),
+              _placeLabel('2着候補', names[1], const Color(0xFF9CA3AF)),
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 6),
+                child:
+                    Icon(Icons.arrow_forward, color: Colors.white38, size: 14),
+              ),
+              _placeLabel('3着候補', names[2], const Color(0xFFA1887F)),
+            ],
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'AI生成待ちでも使えるよう、単勝オッズ・人気・前走着順・馬体重変化から即時計算しています。投票前に「このレースをAI予想」で上書き確認してください。',
+            style: TextStyle(
+              color: Color(0xFF9CA3AF),
+              fontSize: 11,
+              height: 1.5,
+            ),
+          ),
+        ],
       ),
     );
   }

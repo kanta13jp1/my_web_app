@@ -786,12 +786,21 @@ serve(async (req) => {
           // 2) 成功した予想を horse_predictions (互換維持) + horse_race_predictions_ensemble に両方記録
           // 3) 全プロバイダーquota時のみ残りレースを早期skip
           const targetDate = String(body.date ?? new Date().toISOString().split("T")[0]);
-          const { data: races } = await admin.from("horse_races")
+          const type = String(body.type ?? body.source ?? "all");
+          const raceId = body.race_id ? String(body.race_id) : null;
+          const force = Boolean(body.force ?? false);
+          let raceQuery = admin.from("horse_races")
             .select("*, horse_entries(*), horse_predictions(id)")
             .eq("race_date", targetDate).eq("status", "scheduled");
+          if (type === "jra") raceQuery = raceQuery.eq("source", "jra");
+          else if (type === "nar") raceQuery = raceQuery.eq("source", "nar");
+          if (raceId) raceQuery = raceQuery.eq("id", raceId);
+          const { data: races } = await raceQuery;
           if (!races || races.length === 0) return json({ success: true, predictions: [], message: "本日のレースなし" });
           // deno-lint-ignore no-explicit-any
-          const allUnpredicted = races.filter((r: any) => !r.horse_predictions || r.horse_predictions.length === 0);
+          const allUnpredicted = force
+            ? races
+            : races.filter((r: any) => !r.horse_predictions || r.horse_predictions.length === 0);
           if (allUnpredicted.length === 0) return json({ success: true, predictions: [], message: "全レース予想済" });
           // Windows版#94b: EF 150s timeout 対策として 1 回あたり最大 limit 件まで処理
           // (4 providers × 長レースで 120s urllib timeout に到達するため)

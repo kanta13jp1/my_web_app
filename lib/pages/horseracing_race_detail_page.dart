@@ -26,10 +26,6 @@ class _HorseracingRaceDetailPageState extends State<HorseracingRaceDetailPage> {
   }
 
   Future<void> _load() async {
-    if (Supabase.instance.client.auth.currentUser == null) {
-      setState(() => _loading = false);
-      return;
-    }
     final raceId = widget.race['id'] as String?;
     if (raceId == null) return;
     setState(() => _loading = true);
