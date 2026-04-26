@@ -30,6 +30,10 @@ class _AddressBookPageState extends State<AddressBookPage> {
   }
 
   Future<void> _fetchContacts({String? query}) async {
+    if (_supabase.auth.currentUser == null) {
+      setState(() => _isLoading = false);
+      return;
+    }
     setState(() {
       _isLoading = true;
       _errorMessage = null;

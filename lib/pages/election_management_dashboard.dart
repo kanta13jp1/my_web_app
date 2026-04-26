@@ -29,6 +29,7 @@ class _ElectionManagementDashboardState
   }
 
   Future<void> _fetchElectionData() async {
+    if (Supabase.instance.client.auth.currentUser == null) return;
     try {
       // Edge Function経由でAI検索・整形された最新の実データを取得
       final response = await Supabase.instance.client.functions.invoke(

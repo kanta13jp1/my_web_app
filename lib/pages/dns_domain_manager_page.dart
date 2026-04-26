@@ -66,6 +66,10 @@ class _DnsDomainManagerPageState extends State<DnsDomainManagerPage>
   }
 
   Future<void> _fetchDomains() async {
+    if (_supabase.auth.currentUser == null) {
+      setState(() => _isLoadingDomains = false);
+      return;
+    }
     setState(() => _isLoadingDomains = true);
     try {
       final response = await _supabase.functions.invoke(

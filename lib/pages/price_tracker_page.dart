@@ -32,6 +32,10 @@ class _PriceTrackerPageState extends State<PriceTrackerPage> {
   }
 
   Future<void> _load() async {
+    if (_supabase.auth.currentUser == null) {
+      setState(() => _loading = false);
+      return;
+    }
     setState(() {
       _loading = true;
       _error = null;

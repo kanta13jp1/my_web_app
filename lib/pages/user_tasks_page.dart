@@ -31,6 +31,10 @@ class _UserTasksPageState extends State<UserTasksPage> {
   }
 
   Future<void> _loadTasks() async {
+    if (_supabase.auth.currentUser == null) {
+      setState(() => _loading = false);
+      return;
+    }
     setState(() {
       _loading = true;
       _error = null;

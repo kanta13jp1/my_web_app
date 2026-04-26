@@ -46,6 +46,10 @@ class _AiObservabilityPageState extends State<AiObservabilityPage>
   }
 
   Future<void> _loadHealth() async {
+    if (_supabase.auth.currentUser == null) {
+      setState(() => _loadingHealth = false);
+      return;
+    }
     setState(() => _loadingHealth = true);
     try {
       final resp = await _supabase.functions.invoke(

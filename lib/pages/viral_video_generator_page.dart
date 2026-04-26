@@ -35,6 +35,10 @@ class _ViralVideoGeneratorPageState extends State<ViralVideoGeneratorPage> {
   }
 
   Future<void> _loadHistory() async {
+    if (_supabase.auth.currentUser == null) {
+      setState(() => _loading = false);
+      return;
+    }
     setState(() {
       _loading = true;
       _errorMessage = null;
