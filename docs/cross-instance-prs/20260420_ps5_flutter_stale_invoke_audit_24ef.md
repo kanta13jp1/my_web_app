@@ -87,17 +87,31 @@ PS#6 は今 session で削除を見送った 13 件。**こちらも deploy 行�
 
 - `notify-feature-request` → lib/pages/admin/feedback_list_page.dart:79,84 → core-hub:notify.feature ✅ **PS#5 S22 完了 (6c03d816)**
 
-## 🟢 PS#5 進捗トラッカー (PS#5 S30 ab-testing-manager 完了反映)
+## 🟢 PS#5 進捗トラッカー (PS#5 S61 A11件完了反映)
 
 | セクション | 件数 | 完了 | 進捗率 |
 | --- | --- | --- | --- |
-| A. 削除済 stale | 11 | 0 | 0% |
+| A. 削除済 stale | 11 | 11 ✅ (S61 一括完了) | 100% |
 | B. 未削除 stale | 13 | 8 (calendar-events, reading-list, music-collaboration, habit-tracker, goal-tracker, time-tracker, chat-messaging, ab-testing-manager) | 61.5% |
 | C. notify-feature-request | 1 | 1 ✅ | 100% |
 | D. 未 migrate (Win/VSCode) | 2 | 0 | (PS#5 範囲外) |
-| **合計 (PS#5 範囲)** | **23** | **9** | **39.1%** |
+| **合計 (PS#5 範囲)** | **23** | **20** | **87.0%** |
 
-**残 14 件** — PS#5 S30 で ab-testing-manager 消化 (B 8 件目)。**CRITICAL 残 0 件**。B 残 5 件 (home 未登録) + A 11 件 (削除済・修正のみ・home 経路なし) = MEDIUM 優先度のみ残存。
+**残 3 件** (B セクション: competitor-feature-sync / invoice-generator / poll-survey) — poll-survey は既に tools-hub 対応済み確認。invoice-generator は app-hub:billing.invoice 使用中 (要確認)。competitor-feature-sync は enterprise-hub:competitor.sync 待ち。
+
+### A セクション完了詳細 (PS#5 S61 2026-04-26)
+- analyze_reality_page.dart: `analyze-reality` → `ai-hub:analyze.reality` ✅
+- reality_check_page.dart: `analyze-reality` → `ai-hub:analyze.reality` ✅
+- app_analytics_dashboard_page.dart: `app-analytics-dashboard` → `core-hub:analytics.summary` ✅
+- development_achievements_page.dart: `development-achievements` → `core-hub:achievements.list` ✅
+- growth_achievement_summary_page.dart: `growth-achievement-summary` → `growth-hub:achievement.list` ✅
+- growth_share_signal_page.dart: `growth-share-signal` → `growth-hub:share.list` ✅
+- personal_dashboard_page.dart: `personal-dashboard` → `core-hub:personal.dashboard` ✅
+- referral_program_page.dart: `referral-program` → `growth-hub:referral.create` ✅
+- thought_interrupt_diagnosis_page.dart: `daily-judgment` → `ai-hub:judgment.get` ✅
+- video_ad_generator_page.dart: `video-ad-generator` → `growth-hub:video_ad.list` ✅
+- viral_ad_generator_page.dart: `viral-growth-engine` → `growth-hub:engine.stats/engine.run` (3箇所) ✅
+- virtual_organization_page.dart: `virtual-organization` → `ai-hub:org.get` (3call→1call統合) ✅
 
 ## S20 audit 補正 (3 件)
 

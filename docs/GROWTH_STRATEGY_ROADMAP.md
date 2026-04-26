@@ -21556,3 +21556,20 @@ Google I/O 2026 競合脅威 事前ブリーフィング
   - horse-racing-update.yml: JST 23時台に evaluate ステップ追加 (日次 bet_type_hits/learning_score backfill)
 - **commit**: e4b55a53
 - **push**: SUCCESS ✅
+
+## PS#5 S61 — 2026-04-26 (stale EF invoke 一括移行 A11件)
+- **担当**: PS版#5 (on-call bug fix)
+- **対象**: 削除済 EF を参照していた Flutter 12ページ → hub actions に移行
+  - `analyze-reality` → `ai-hub:analyze.reality` (analyze_reality + reality_check)
+  - `app-analytics-dashboard` → `core-hub:analytics.summary`
+  - `development-achievements` → `core-hub:achievements.list`
+  - `growth-achievement-summary` → `growth-hub:achievement.list`
+  - `growth-share-signal` → `growth-hub:share.list`
+  - `personal-dashboard` → `core-hub:personal.dashboard`
+  - `referral-program` → `growth-hub:referral.create`
+  - `daily-judgment` → `ai-hub:judgment.get` (thought_interrupt_diagnosis)
+  - `video-ad-generator` → `growth-hub:video_ad.list`
+  - `viral-growth-engine` → `growth-hub:engine.stats/engine.run` (3箇所)
+  - `virtual-organization` → `ai-hub:org.get` (3call→1call統合)
+- **cross-instance-pr**: `20260420_ps5_flutter_stale_invoke_audit_24ef.md` A11件完了
+- **dart format**: 0 changed (already formatted)

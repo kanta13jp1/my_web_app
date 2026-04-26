@@ -65,9 +65,8 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
           queryParameters: {'view': 'history'},
         ),
         _supabase.functions.invoke(
-          'viral-growth-engine',
-          method: HttpMethod.get,
-          queryParameters: {'view': 'stats'},
+          'growth-hub',
+          body: {'action': 'engine.stats'},
         ),
       ]);
 
@@ -92,7 +91,8 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
       final statsData = results[2].data;
       if (statsData is Map<String, dynamic>) {
         setState(
-          () => _viralStats = statsData['stats'] as Map<String, dynamic>?,
+          () => _viralStats =
+              (statsData['stats'] ?? statsData) as Map<String, dynamic>?,
         );
       }
     } catch (e) {
@@ -214,8 +214,8 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
     if (user == null) return;
     try {
       final res = await _supabase.functions.invoke(
-        'viral-growth-engine',
-        body: {'action': 'generate_invite', 'userId': user.id},
+        'growth-hub',
+        body: {'action': 'engine.run', 'trigger': 'invite', 'target': user.id},
       );
       final data = res.data as Map<String, dynamic>?;
       if (data != null && mounted) {
@@ -1341,8 +1341,8 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
     setState(() => _loading = true);
     try {
       final res = await _supabase.functions.invoke(
-        'viral-growth-engine',
-        body: {'action': 'auto_post_now'},
+        'growth-hub',
+        body: {'action': 'engine.run', 'trigger': 'auto_post'},
       );
       final data = res.data as Map<String, dynamic>?;
       if (mounted) {

@@ -26,15 +26,15 @@ class _DevelopmentAchievementsPageState
     });
     try {
       final res = await Supabase.instance.client.functions.invoke(
-        'development-achievements',
-        method: HttpMethod.get,
+        'core-hub',
+        body: {'action': 'achievements.list'},
       );
       final data = res.data;
       setState(() {
-        if (data is List) {
-          _items = data;
-        } else if (data is Map && data['achievements'] is List) {
+        if (data is Map && data['achievements'] is List) {
           _items = data['achievements'] as List;
+        } else if (data is List) {
+          _items = data;
         } else {
           _items = [];
         }

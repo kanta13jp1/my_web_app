@@ -34,12 +34,12 @@ class _ReferralProgramPageState extends State<ReferralProgramPage> {
     });
     try {
       final codeRes = await _supabase.functions.invoke(
-        'referral-program',
-        queryParameters: {'view': 'my_code'},
+        'growth-hub',
+        body: {'action': 'referral.create'},
       );
       final refRes = await _supabase.functions.invoke(
-        'referral-program',
-        queryParameters: {'view': 'referrals'},
+        'growth-hub',
+        body: {'action': 'referral.create'},
       );
       final codeData = codeRes.data;
       final refData = refRes.data;

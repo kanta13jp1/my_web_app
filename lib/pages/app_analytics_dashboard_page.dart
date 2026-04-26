@@ -32,8 +32,8 @@ class _AppAnalyticsDashboardPageState extends State<AppAnalyticsDashboardPage> {
     });
     try {
       final response = await _supabase.functions.invoke(
-        'app-analytics-dashboard',
-        body: {'action': 'get_summary'},
+        'core-hub',
+        body: {'action': 'analytics.summary'},
       );
       final data = response.data;
       if (data is Map<String, dynamic>) {
