@@ -49,7 +49,7 @@ AI大学コンテンツと連動。Cursor / Claude Code / Codex 比較。
 | 17 | ai-university-200-providers-guide | ai,education,programming,saas | 2026-08-15 ✅ drafted |
 | 18 | supabase-edge-functions-ai-cost | supabase,ai,programming,saas | 2026-08-22 ✅ drafted |
 | 19 | flutter-web-ai-integration-2026 | flutter,ai,programming,webdev | 2026-08-29 ✅ drafted |
-| 20 | deno-vs-node-edge-functions | deno,programming,webdev,saas | 2026-09-05 |
+| 20 | deno-vs-node-edge-functions | deno,programming,webdev,saas | 2026-09-05 ✅ drafted |
 
 ### Phase 3 (9月): 自分株式会社 機能紹介シリーズ — 10本
 
@@ -57,7 +57,7 @@ AI大学コンテンツと連動。Cursor / Claude Code / Codex 比較。
 
 | # | slug候補 | タグ | 想定投稿日 |
 |---|----------|------|-----------|
-| 21 | wbs-task-management-ai-assistant | productivity,ai,saas,project-management | 2026-09-12 |
+| 21 | wbs-task-management-ai-assistant | productivity,ai,saas,project-management | 2026-09-12 ✅ drafted |
 | 22 | ai-university-how-to-learn-providers | ai,education,productivity,saas | 2026-09-19 |
 | 23 | competitor-monitoring-190-companies | saas,startup,business,ai | 2026-09-26 |
 | 24 | public-memo-vs-notion-pages | notion,productivity,saas,webdev | 2026-10-03 |
