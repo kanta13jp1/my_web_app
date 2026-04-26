@@ -33,6 +33,10 @@ class _PollSurveyPageState extends State<PollSurveyPage> {
   }
 
   Future<void> _fetchPolls() async {
+    if (_supabase.auth.currentUser == null) {
+      setState(() => _isLoading = false);
+      return;
+    }
     setState(() {
       _isLoading = true;
       _errorMessage = null;

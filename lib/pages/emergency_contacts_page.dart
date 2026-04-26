@@ -23,6 +23,10 @@ class _EmergencyContactsPageState extends State<EmergencyContactsPage> {
   }
 
   Future<void> _fetchContacts() async {
+    if (_supabase.auth.currentUser == null) {
+      setState(() => _isLoading = false);
+      return;
+    }
     setState(() {
       _isLoading = true;
       _errorMessage = null;

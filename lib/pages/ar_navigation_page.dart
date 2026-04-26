@@ -23,6 +23,10 @@ class _ArNavigationPageState extends State<ArNavigationPage> {
   }
 
   Future<void> _fetchLocations() async {
+    if (_supabase.auth.currentUser == null) {
+      setState(() => _isLoading = false);
+      return;
+    }
     setState(() {
       _isLoading = true;
       _errorMessage = null;

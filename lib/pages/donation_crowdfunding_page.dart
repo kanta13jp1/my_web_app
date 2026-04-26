@@ -24,6 +24,10 @@ class _DonationCrowdfundingPageState extends State<DonationCrowdfundingPage> {
   }
 
   Future<void> _fetchProjects() async {
+    if (_supabase.auth.currentUser == null) {
+      setState(() => _isLoading = false);
+      return;
+    }
     setState(() {
       _isLoading = true;
       _errorMessage = null;

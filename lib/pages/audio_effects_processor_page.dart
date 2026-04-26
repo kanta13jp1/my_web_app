@@ -24,6 +24,10 @@ class _AudioEffectsProcessorPageState extends State<AudioEffectsProcessorPage> {
   }
 
   Future<void> _fetchEffects() async {
+    if (_supabase.auth.currentUser == null) {
+      setState(() => _isLoading = false);
+      return;
+    }
     setState(() {
       _isLoading = true;
       _errorMessage = null;

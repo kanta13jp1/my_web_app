@@ -29,6 +29,10 @@ class _RealityCheckPageState extends State<RealityCheckPage> {
   }
 
   Future<void> _load() async {
+    if (Supabase.instance.client.auth.currentUser == null) {
+      setState(() => _isLoading = false);
+      return;
+    }
     setState(() {
       _isLoading = true;
     });
