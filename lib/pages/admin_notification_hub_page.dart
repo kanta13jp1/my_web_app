@@ -30,6 +30,10 @@ class _AdminNotificationHubPageState extends State<AdminNotificationHubPage> {
   }
 
   Future<void> _fetchNotifications() async {
+    if (_supabase.auth.currentUser == null) {
+      setState(() => _isLoading = false);
+      return;
+    }
     setState(() {
       _isLoading = true;
       _error = null;

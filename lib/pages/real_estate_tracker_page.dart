@@ -75,6 +75,10 @@ class _RealEstateTrackerPageState extends State<RealEstateTrackerPage>
   }
 
   Future<void> _fetchProperties() async {
+    if (_supabase.auth.currentUser == null) {
+      setState(() => _isLoading = false);
+      return;
+    }
     setState(() {
       _isLoading = true;
       _errorMessage = null;

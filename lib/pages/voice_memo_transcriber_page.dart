@@ -39,6 +39,10 @@ class _VoiceMemoTranscriberPageState extends State<VoiceMemoTranscriberPage> {
   }
 
   Future<void> _fetchMemos() async {
+    if (_supabase.auth.currentUser == null) {
+      setState(() => _isLoading = false);
+      return;
+    }
     setState(() {
       _isLoading = true;
       _errorMessage = null;

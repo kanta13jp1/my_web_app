@@ -24,6 +24,10 @@ class _WeatherWidgetPageState extends State<WeatherWidgetPage> {
   }
 
   Future<void> _fetchWeather() async {
+    if (_supabase.auth.currentUser == null) {
+      setState(() => _isLoading = false);
+      return;
+    }
     setState(() {
       _isLoading = true;
       _errorMessage = null;

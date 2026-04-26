@@ -38,6 +38,10 @@ class _VirtualOrganizationPageState extends State<VirtualOrganizationPage>
   }
 
   Future<void> _fetchOrganization() async {
+    if (_supabase.auth.currentUser == null) {
+      setState(() => _isLoading = false);
+      return;
+    }
     setState(() {
       _isLoading = true;
       _errorMessage = null;

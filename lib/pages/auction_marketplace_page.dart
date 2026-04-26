@@ -23,6 +23,10 @@ class _AuctionMarketplacePageState extends State<AuctionMarketplacePage> {
   }
 
   Future<void> _fetchItems() async {
+    if (_supabase.auth.currentUser == null) {
+      setState(() => _isLoading = false);
+      return;
+    }
     setState(() {
       _isLoading = true;
       _errorMessage = null;

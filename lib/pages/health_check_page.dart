@@ -24,6 +24,10 @@ class _HealthCheckPageState extends State<HealthCheckPage> {
   }
 
   Future<void> _fetchHealth() async {
+    if (_supabase.auth.currentUser == null) {
+      setState(() => _isLoading = false);
+      return;
+    }
     setState(() {
       _isLoading = true;
       _errorMessage = null;

@@ -77,6 +77,10 @@ class _CodePlaygroundPageState extends State<CodePlaygroundPage>
   }
 
   Future<void> _fetchSnippets() async {
+    if (_supabase.auth.currentUser == null) {
+      setState(() => _isLoading = false);
+      return;
+    }
     setState(() {
       _isLoading = true;
       _errorMessage = null;

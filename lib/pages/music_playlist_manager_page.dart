@@ -42,6 +42,10 @@ class _MusicPlaylistManagerPageState extends State<MusicPlaylistManagerPage> {
   }
 
   Future<void> _fetchPlaylists() async {
+    if (_supabase.auth.currentUser == null) {
+      setState(() => _isLoading = false);
+      return;
+    }
     setState(() {
       _isLoading = true;
       _errorMessage = null;

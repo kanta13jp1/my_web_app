@@ -33,6 +33,10 @@ class _AbTestingManagerPageState extends State<AbTestingManagerPage> {
   }
 
   Future<void> _fetchTests() async {
+    if (_supabase.auth.currentUser == null) {
+      setState(() => _isLoading = false);
+      return;
+    }
     setState(() {
       _isLoading = true;
       _errorMessage = null;

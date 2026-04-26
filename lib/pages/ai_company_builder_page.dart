@@ -66,6 +66,10 @@ class _AiCompanyBuilderPageState extends State<AiCompanyBuilderPage> {
   }
 
   Future<void> _loadCompanies() async {
+    if (Supabase.instance.client.auth.currentUser == null) {
+      setState(() => _isLoading = false);
+      return;
+    }
     setState(() {
       _isLoading = true;
       _errorMessage = null;
