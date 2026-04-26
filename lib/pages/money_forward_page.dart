@@ -41,6 +41,10 @@ class _MoneyForwardPageState extends State<MoneyForwardPage>
   }
 
   Future<void> _fetchStatus() async {
+    if (_supabase.auth.currentUser == null) {
+      setState(() => _isLoading = false);
+      return;
+    }
     setState(() {
       _isLoading = true;
       _errorMessage = null;

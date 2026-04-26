@@ -31,6 +31,10 @@ class _NewsRssAggregatorPageState extends State<NewsRssAggregatorPage> {
   }
 
   Future<void> _fetchFeeds() async {
+    if (_supabase.auth.currentUser == null) {
+      setState(() => _isLoading = false);
+      return;
+    }
     setState(() {
       _isLoading = true;
       _errorMessage = null;
