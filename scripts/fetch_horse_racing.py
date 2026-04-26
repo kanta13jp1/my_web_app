@@ -8,6 +8,7 @@ JRA / NAR (地方競馬) の出走表と結果を netkeiba.com からスクレ�
   python fetch_horse_racing.py --mode entries [--date YYYY-MM-DD]   # 出走表取得
   python fetch_horse_racing.py --mode results [--date YYYY-MM-DD]   # 結果取得
   python fetch_horse_racing.py --mode predict                        # AI予想実行 (EF呼び出し)
+  python fetch_horse_racing.py --mode evaluate [--limit N]          # 精度再評価バッチ (デフォルト50件)
   python fetch_horse_racing.py --mode all                            # 全て実行
 
 必須環境変数:
@@ -1070,14 +1071,20 @@ def main():
     parser = argparse.ArgumentParser(description="競馬情報自動取得スクリプト (JRA + NAR)")
     parser.add_argument(
         "--mode",
-        choices=["entries", "results", "predict", "history", "all"],
+        choices=["entries", "results", "predict", "history", "evaluate", "all"],
         required=True,
-        help="実行モード: entries=出走表, results=結果, predict=AI予想, history=前走情報, all=全て実行",
+        help="実行モード: entries=出走表, results=結果, predict=AI予想, history=前走情報, evaluate=精度再評価, all=全て実行",
     )
     parser.add_argument(
         "--date",
         default=None,
         help="対象日付 YYYY-MM-DD (省略時は今日)",
+    )
+    parser.add_argument(
+        "--limit",
+        type=int,
+        default=50,
+        help="evaluate モード時の処理件数 (デフォルト: 50)",
     )
     args = parser.parse_args()
 
@@ -1095,6 +1102,12 @@ def main():
         trigger_ai_predictions(target_date)
     elif args.mode == "history":
         fetch_horse_histories(target_date)
+    elif args.mode == "evaluate":
+        limit = getattr(args, "limit", 50) or 50
+        result = tools_hub_call("horseracing.evaluate_accuracy", {"limit": limit})
+        evaluated = result.get("evaluated", 0)
+        races = result.get("races_processed", 0)
+        print(f"[DONE] 精度再評価完了: {evaluated} 件 ({races} レース)")
     elif args.mode == "all":
         cleanup_stale_races()
         fetch_entries(target_date)
