@@ -60,8 +60,8 @@ AI大学コンテンツと連動。Cursor / Claude Code / Codex 比較。
 | 21 | wbs-task-management-ai-assistant | productivity,ai,saas,project-management | 2026-09-12 ✅ drafted |
 | 22 | ai-university-how-to-learn-providers | ai,education,productivity,saas | 2026-09-19 ✅ drafted |
 | 23 | competitor-monitoring-190-companies | saas,startup,business,ai | 2026-09-26 ✅ drafted |
-| 24 | public-memo-vs-notion-pages | notion,productivity,saas,webdev | 2026-10-03 |
-| 25 | kanban-board-ai-auto-sort | productivity,ai,project-management,saas | 2026-10-10 |
+| 24 | public-memo-vs-notion-pages | notion,productivity,saas,webdev | 2026-10-03 ✅ drafted |
+| 25 | kanban-board-ai-auto-sort | productivity,ai,project-management,saas | 2026-10-10 ✅ drafted |
 | 26 | crm-pipeline-for-solo-founder | startup,saas,business,productivity | 2026-10-17 |
 | 27 | horse-racing-ai-prediction | ai,programming,data-science,japan | 2026-10-24 |
 | 28 | guitar-tab-manager-ai | music,ai,programming,saas | 2026-10-31 |
