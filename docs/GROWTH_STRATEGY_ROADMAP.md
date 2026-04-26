@@ -21325,3 +21325,28 @@ Google I/O 2026 競合脅威 事前ブリーフィング
 - **CS Check**: 手動トリガーで SUCCESS ✅ — a8da11a8 fix (cp same-file) 検証完了
 - **orphan**: claude/*=1本 (自worktree のみ・正常)
 - **action**: 全WF健全確認完了
+
+## PS#2 S43 — 2026-04-26 SEO Phase2 #12+#13 draft (claude-code-best-practices + codex-vs-copilot)
+
+**T-1 status**: no-op (次回 May 1 dispatch予定)
+
+**DYNAMIC-CLAIM #1**: SEO Phase2 #12 `2026-07-11-claude-code-best-practices` JA+EN
+- JA: Claude Code ベストプラクティス 2026 — 個人開発者が半年使って学んだ10のルール
+- EN: Claude Code Best Practices in 2026 — 10 Rules from 6 Months of Solo Dev at Scale
+- tags: JA claude,AI,個人開発,buildinpublic / EN claude,ai,programming,productivity (4/4 ✅)
+- T-1 dispatch: Jul 10 → Jul 11
+
+**DYNAMIC-CLAIM #2**: SEO Phase2 #13 `2026-07-18-openai-codex-vs-github-copilot` JA+EN
+- JA: OpenAI Codex vs GitHub Copilot 2026 — 個人開発者が実際に使い分けている違い
+- EN: OpenAI Codex vs GitHub Copilot in 2026 — How a Solo Dev Actually Splits the Work
+- tags: JA AI,個人開発,buildinpublic,programming / EN ai,programming,productivity,webdev (4/4 ✅)
+- T-1 dispatch: Jul 17 → Jul 18
+
+**commits**: 2c9857f0 (#12) → acfb898b (#13)
+
+**SEO 50本計画 状況**:
+- Phase 1 (Notion シリーズ): 10/10 完了 🎉
+- Phase 2 (AI開発ツール比較): 3/10 完了 (#11-13)
+  - #14 Jul-25: multi-ai-workflow-real-costs
+  - #15 Aug-01: supabase-vs-firebase-2026
+  - #16 Aug-08: flutter-web-performance-tips
