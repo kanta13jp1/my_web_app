@@ -529,7 +529,59 @@ function buildHorseRacePrompt(race: Record<string, unknown>, entries: Record<str
   const entryText = entries.map((e) =>
     `馬番${e.horse_number} ${e.horse_name} (騎手:${e.jockey ?? "不明"}, 単勝${e.win_odds ?? "?"}倍, ${e.popularity ?? "?"}番人気)`
   ).join("\n");
-  return `競馬レース「${race.race_name}」(${race.venue ?? ""}/${race.course_type ?? "芝"}${race.distance ?? ""}m/${race.grade ?? ""}) の3連単予想をしてください。\n出走馬:\n${entryText}\n\nJSON形式のみで回答 (前後に説明文を入れない): {"first":"予想馬名1","second":"予想馬名2","third":"予想馬名3","confidence":0.0,"reasoning":"根拠"}`;
+  return `競馬レース「${race.race_name}」(${race.venue ?? ""}/${race.course_type ?? "芝"}${race.distance ?? ""}m/${race.grade ?? ""}) の低リスク予想をしてください。\n必ず下記の出走馬リストに存在する馬名だけを選び、取消・非出走・リスト外の馬名は絶対に入れないでください。\n最優先は的中確率です。単勝、複勝、枠連、馬連、ワイド、馬単、3連複、3連単のうち、低リスク順に買い方をreasoningに含めてください。\n出走馬:\n${entryText}\n\nJSON形式のみで回答 (前後に説明文を入れない): {"first":"予想馬名1","second":"予想馬名2","third":"予想馬名3","confidence":0.0,"reasoning":"根拠と券種別の低リスク買い目"}`;
+}
+
+function normalizeHorseNameForMatch(value: unknown): string {
+  return String(value ?? "").trim().replace(/\s+/g, "").toLowerCase();
+}
+
+function lowRiskBetGuide(first: string, second: string, third: string): string {
+  return [
+    `低リスク本線: 複勝 ${first}`,
+    `単勝: ${first}`,
+    `ワイド: ${first}-${second} / ${first}-${third}`,
+    `馬連: ${first}-${second}`,
+    `枠連: ${first}-${second}の枠`,
+    `馬単: ${first}→${second}`,
+    `3連複: ${first}-${second}-${third}`,
+    `3連単: ${first}→${second}→${third}は少額`,
+  ].join(" / ");
+}
+
+function sanitizeHorsePrediction(
+  pred: { first: string; second: string; third: string; confidence: number; reasoning: string },
+  entries: Record<string, unknown>[],
+) {
+  const names = entries
+    .map((entry) => String(entry.horse_name ?? "").trim())
+    .filter((name) => name.length > 0);
+  const nameByNormalized = new Map(names.map((name) => [normalizeHorseNameForMatch(name), name]));
+  const picked: string[] = [];
+  let corrected = false;
+  for (const raw of [pred.first, pred.second, pred.third]) {
+    const normalized = normalizeHorseNameForMatch(raw);
+    const validName = nameByNormalized.get(normalized);
+    if (validName && !picked.includes(validName)) {
+      picked.push(validName);
+    } else {
+      corrected = true;
+    }
+  }
+  for (const name of names) {
+    if (picked.length >= 3) break;
+    if (!picked.includes(name)) picked.push(name);
+    corrected = true;
+  }
+  const [first, second, third] = [picked[0] ?? names[0] ?? "", picked[1] ?? names[1] ?? "", picked[2] ?? names[2] ?? ""];
+  const guide = lowRiskBetGuide(first, second, third);
+  return {
+    first,
+    second,
+    third,
+    confidence: corrected ? Math.min(Number(pred.confidence ?? 0.5), 0.55) : Number(pred.confidence ?? 0.5),
+    reasoning: `${corrected ? "出走馬リスト外の候補を除外して補正済み。 " : "出走馬リスト照合済み。 "}${String(pred.reasoning ?? "")} ${guide}`,
+  };
 }
 
 type UrgentHorseEntrySeed = {
@@ -593,7 +645,7 @@ const URGENT_HORSE_RACES_20260426: UrgentHorseRaceSeed[] = [
       second_pick: "ファムクラジューズ",
       third_pick: "ラフターラインズ",
       confidence: 0.62,
-      ai_reasoning: "オークス権利取りの東京芝2000m。末脚と騎手配置を重視し、エンネを軸にファムクラジューズ、ラフターラインズを相手筆頭。取消馬を除外して即戦力の予想に補正。",
+      ai_reasoning: `出走馬リスト照合済み。オークス権利取りの東京芝2000m。末脚と騎手配置を重視し、エンネを軸にファムクラジューズ、ラフターラインズを相手筆頭。${lowRiskBetGuide("エンネ", "ファムクラジューズ", "ラフターラインズ")}`,
     },
   },
   {
@@ -632,7 +684,7 @@ const URGENT_HORSE_RACES_20260426: UrgentHorseRaceSeed[] = [
       second_pick: "アドマイヤズーム",
       third_pick: "エルトンバローズ",
       confidence: 0.66,
-      ai_reasoning: "京都外回りマイルは決め手と位置取りの両立を重視。シックスペンスの総合力を軸に、アドマイヤズームの成長力とエルトンバローズの重賞実績を上位評価。",
+      ai_reasoning: `出走馬リスト照合済み。京都外回りマイルは決め手と位置取りの両立を重視。シックスペンスの総合力を軸に、アドマイヤズームの成長力とエルトンバローズの重賞実績を上位評価。${lowRiskBetGuide("シックスペンス", "アドマイヤズーム", "エルトンバローズ")}`,
     },
   },
   {
@@ -648,19 +700,20 @@ const URGENT_HORSE_RACES_20260426: UrgentHorseRaceSeed[] = [
     grade: "G1",
     entries: [
       { horse_number: 1, horse_name: "Ka Ying Rising" },
-      { horse_number: 2, horse_name: "Lucky Sweynesse" },
-      { horse_number: 3, horse_name: "Satono Reve" },
-      { horse_number: 4, horse_name: "Helios Express" },
-      { horse_number: 5, horse_name: "Invincible Sage" },
-      { horse_number: 6, horse_name: "Victor The Winner" },
-      { horse_number: 7, horse_name: "Beauty Waves" },
+      { horse_number: 2, horse_name: "Satono Reve" },
+      { horse_number: 3, horse_name: "Helios Express" },
+      { horse_number: 4, horse_name: "Fast Network" },
+      { horse_number: 5, horse_name: "Raging Blizzard" },
+      { horse_number: 6, horse_name: "Comanche Brave" },
+      { horse_number: 7, horse_name: "Tomodachi Kokoroe" },
+      { horse_number: 8, horse_name: "Beauty Waves" },
     ],
     prediction: {
       first_pick: "Ka Ying Rising",
       second_pick: "Satono Reve",
-      third_pick: "Lucky Sweynesse",
+      third_pick: "Helios Express",
       confidence: 0.7,
-      ai_reasoning: "香港短距離路線の能力上位を素直に評価。Ka Ying Risingを本命、遠征馬Satono Reveを対抗、地元実績のLucky Sweynesseを3番手に置く。",
+      ai_reasoning: `出走馬リスト照合済み。香港短距離路線の能力上位を素直に評価。Ka Ying Risingを本命、遠征馬Satono Reveを対抗、地元実績と安定感のHelios Expressを3番手に置く。${lowRiskBetGuide("Ka Ying Rising", "Satono Reve", "Helios Express")}`,
     },
   },
   {
@@ -677,19 +730,25 @@ const URGENT_HORSE_RACES_20260426: UrgentHorseRaceSeed[] = [
     entries: [
       { horse_number: 1, horse_name: "Jantar Mantar" },
       { horse_number: 2, horse_name: "Voyage Bubble" },
-      { horse_number: 3, horse_name: "Soul Rush" },
-      { horse_number: 4, horse_name: "Mr Brightside" },
-      { horse_number: 5, horse_name: "Beauty Joy" },
-      { horse_number: 6, horse_name: "My Wish" },
-      { horse_number: 7, horse_name: "Royal Patronage" },
-      { horse_number: 8, horse_name: "Happy Together" },
+      { horse_number: 3, horse_name: "Docklands" },
+      { horse_number: 4, horse_name: "Lucky Sweynesse" },
+      { horse_number: 5, horse_name: "My Wish" },
+      { horse_number: 6, horse_name: "Red Lion" },
+      { horse_number: 7, horse_name: "Galaxy Patch" },
+      { horse_number: 8, horse_name: "Strauss" },
+      { horse_number: 9, horse_name: "Cap Ferrat" },
+      { horse_number: 10, horse_name: "Invincible Ibis" },
+      { horse_number: 11, horse_name: "Sunlight Power" },
+      { horse_number: 12, horse_name: "Chancheng Glory" },
+      { horse_number: 13, horse_name: "Copartner Prance" },
+      { horse_number: 14, horse_name: "Little Paradise" },
     ],
     prediction: {
       first_pick: "Jantar Mantar",
       second_pick: "Voyage Bubble",
-      third_pick: "Soul Rush",
+      third_pick: "My Wish",
       confidence: 0.64,
-      ai_reasoning: "マイルG1は完成度と瞬発力を重視。Jantar Mantarの地力を軸に、地元のVoyage Bubble、差し脚安定のSoul Rushを相手本線。",
+      ai_reasoning: `出走馬リスト照合済み。マイルG1は完成度と瞬発力を重視。Jantar Mantarの地力を軸に、香港マイル実績のVoyage Bubble、近況の安定感があるMy Wishを相手本線。${lowRiskBetGuide("Jantar Mantar", "Voyage Bubble", "My Wish")}`,
     },
   },
   {
@@ -704,22 +763,21 @@ const URGENT_HORSE_RACES_20260426: UrgentHorseRaceSeed[] = [
     distance: 2000,
     grade: "G1",
     entries: [
-      { horse_number: 1, horse_name: "Liberty Island" },
-      { horse_number: 2, horse_name: "Masquerade Ball" },
-      { horse_number: 3, horse_name: "Goliath" },
-      { horse_number: 4, horse_name: "Tastiera" },
-      { horse_number: 5, horse_name: "Dubai Honour" },
-      { horse_number: 6, horse_name: "Cap Ferrat" },
-      { horse_number: 7, horse_name: "Calif" },
-      { horse_number: 8, horse_name: "Ensued" },
-      { horse_number: 9, horse_name: "Moments In Time" },
+      { horse_number: 1, horse_name: "Masquerade Ball" },
+      { horse_number: 2, horse_name: "Romantic Warrior" },
+      { horse_number: 3, horse_name: "Royal Champion" },
+      { horse_number: 4, horse_name: "Sosie" },
+      { horse_number: 5, horse_name: "Giovanni" },
+      { horse_number: 6, horse_name: "June Take" },
+      { horse_number: 7, horse_name: "Rubylot" },
+      { horse_number: 8, horse_name: "Numbers" },
     ],
     prediction: {
-      first_pick: "Liberty Island",
+      first_pick: "Romantic Warrior",
       second_pick: "Masquerade Ball",
-      third_pick: "Goliath",
-      confidence: 0.63,
-      ai_reasoning: "2000mの総合力勝負。Liberty Islandの能力を最上位に、勢いあるMasquerade Ball、欧州型の持続力を持つGoliathを上位評価。TastieraとDubai Honourは押さえ。",
+      third_pick: "Sosie",
+      confidence: 0.67,
+      ai_reasoning: `出走馬リスト照合済み。2000mの総合力勝負。シャンティン実績と近走の安定感からRomantic Warriorを本命、能力上位のMasquerade Ball、欧州型の持続力があるSosieを上位評価。${lowRiskBetGuide("Romantic Warrior", "Masquerade Ball", "Sosie")}`,
     },
   },
 ];
@@ -765,7 +823,8 @@ async function upsertUrgentHorseRaces(admin: SupabaseClient, targetDate: string)
       console.warn("urgent horse entry upsert failed", seed.race_id_ext, entryError.message);
     }
 
-    const { error: predictionError } = await admin.from("horse_predictions").upsert({
+    await admin.from("horse_predictions").delete().eq("race_id", raceId);
+    const { error: predictionError } = await admin.from("horse_predictions").insert({
       race_id: raceId,
       first_pick: seed.prediction.first_pick,
       second_pick: seed.prediction.second_pick,
@@ -773,7 +832,7 @@ async function upsertUrgentHorseRaces(admin: SupabaseClient, targetDate: string)
       confidence: seed.prediction.confidence,
       ai_reasoning: seed.prediction.ai_reasoning,
       ai_model: "urgent-20260426-seed",
-    }, { onConflict: "race_id" });
+    });
     if (predictionError) {
       console.warn("urgent horse prediction upsert failed", seed.race_id_ext, predictionError.message);
     }
@@ -916,18 +975,20 @@ async function persistEnsemblePrediction(
   raceId: string,
   cfg: HorseProviderConfig,
   result: ProviderPredictionResult,
+  entries: Record<string, unknown>[],
 ): Promise<void> {
   if (!result.success || !result.prediction) return;
+  const pred = sanitizeHorsePrediction(result.prediction, entries);
   await admin.from("horse_race_predictions_ensemble").upsert({
     race_id: raceId,
     provider: cfg.provider,
     model: cfg.model,
-    first_pick: result.prediction.first,
-    second_pick: result.prediction.second,
-    third_pick: result.prediction.third,
-    confidence: result.prediction.confidence,
-    reasoning: result.prediction.reasoning,
-    prediction_json: result.prediction,
+    first_pick: pred.first,
+    second_pick: pred.second,
+    third_pick: pred.third,
+    confidence: pred.confidence,
+    reasoning: pred.reasoning,
+    prediction_json: pred,
     estimated_cost_usd: cfg.estimatedCostUsd,
     latency_ms: result.latency_ms,
   }, { onConflict: "race_id,provider,model" });
@@ -1128,11 +1189,12 @@ serve(async (req) => {
             }
 
             // 1) ensemble table に記録 (プロバイダー別蓄積)
-            await persistEnsemblePrediction(admin, race.id, succeededCfg, succeededResult);
+            await persistEnsemblePrediction(admin, race.id, succeededCfg, succeededResult, entries);
 
             // 2) 互換維持: horse_predictions (代表1件) に最初の成功プロバイダー結果を入れる
-            const pred = succeededResult.prediction;
-            const { error: ie } = await admin.from("horse_predictions").upsert({
+            const pred = sanitizeHorsePrediction(succeededResult.prediction, entries);
+            await admin.from("horse_predictions").delete().eq("race_id", race.id);
+            const { error: ie } = await admin.from("horse_predictions").insert({
               race_id: race.id,
               first_pick: pred.first || entries[0].horse_name,
               second_pick: pred.second || entries[1].horse_name,
@@ -1140,12 +1202,12 @@ serve(async (req) => {
               confidence: pred.confidence,
               ai_reasoning: pred.reasoning,
               ai_model: `${succeededCfg.provider}:${succeededCfg.model}`,
-            }, { onConflict: "race_id" });
+            });
             if (ie) {
               failures.push({
                 race_id: race.id,
                 race_name: race.race_name,
-                reason: `horse_predictions upsert failed: ${ie.message}`,
+                reason: `horse_predictions insert failed: ${ie.message}`,
               });
             } else {
               results.push({
@@ -1207,7 +1269,7 @@ serve(async (req) => {
             .map(async (cfg) => {
               const result = await callProviderForHorsePrediction(cfg, prompt);
               if (result.success) {
-                await persistEnsemblePrediction(admin, raceId, cfg, result);
+                await persistEnsemblePrediction(admin, raceId, cfg, result, entries);
               }
               return { cfg, result };
             });

@@ -935,7 +935,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
           ),
           children: [
             if (pred != null)
-              _buildPredictionSection(pred, result)
+              _buildPredictionSection(pred, result, entries)
             else
               _buildInstantForecastSection(race, entries),
             if (entries.isNotEmpty) ...[
@@ -1277,12 +1277,35 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
   Widget _buildPredictionSection(
     Map<String, dynamic> pred,
     Map<String, dynamic>? result,
+    List<Map<String, dynamic>> entries,
   ) {
-    final first = pred['first_pick'] as String? ?? '?';
-    final second = pred['second_pick'] as String? ?? '?';
-    final third = pred['third_pick'] as String? ?? '?';
+    final entryNames = entries
+        .map((entry) => (entry['horse_name'] as String? ?? '').trim())
+        .where((name) => name.isNotEmpty)
+        .toList();
+    final validNames = entryNames.toSet();
+    final rawPicks = [
+      pred['first_pick'] as String? ?? '',
+      pred['second_pick'] as String? ?? '',
+      pred['third_pick'] as String? ?? '',
+    ];
+    final picks = <String>[];
+    for (final raw in rawPicks) {
+      final pick = raw.trim();
+      if (validNames.contains(pick) && !picks.contains(pick)) picks.add(pick);
+    }
+    for (final name in entryNames) {
+      if (picks.length >= 3) break;
+      if (!picks.contains(name)) picks.add(name);
+    }
+    final first = picks.isNotEmpty ? picks[0] : '?';
+    final second = picks.length > 1 ? picks[1] : '?';
+    final third = picks.length > 2 ? picks[2] : '?';
     final confidence = (pred['confidence'] as num?)?.toDouble() ?? 0.5;
     final reasoning = pred['ai_reasoning'] as String?;
+    final wasCorrected = rawPicks.any(
+      (pick) => pick.trim().isNotEmpty && !validNames.contains(pick.trim()),
+    );
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -1304,7 +1327,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
               const Icon(Icons.psychology, color: Color(0xFFFF6B35), size: 16),
               const SizedBox(width: 8),
               const Text(
-                'AI 3連単予想',
+                '低リスクAI予想',
                 style: TextStyle(
                   color: Color(0xFFFF6B35),
                   fontWeight: FontWeight.bold,
@@ -1331,6 +1354,17 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
             ],
           ),
           const SizedBox(height: 8),
+          if (wasCorrected) ...[
+            const Text(
+              '出走馬リスト外の候補を除外して表示しています。',
+              style: TextStyle(
+                color: Color(0xFFFFC107),
+                fontSize: 11,
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 8),
+          ],
           Row(
             children: [
               _placeLabel('1着', first, const Color(0xFFFFC107)),
@@ -1361,8 +1395,46 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
               overflow: TextOverflow.ellipsis,
             ),
           ],
+          const SizedBox(height: 10),
+          _buildBetTypeGuide(first, second, third),
         ],
       ),
+    );
+  }
+
+  Widget _buildBetTypeGuide(String first, String second, String third) {
+    final bets = [
+      ('複勝', first, '最小リスク'),
+      ('単勝', first, '軸'),
+      ('ワイド', '$first-$second / $first-$third', '堅め'),
+      ('馬連', '$first-$second', '中リスク'),
+      ('枠連', '$first-$secondの枠', '中リスク'),
+      ('馬単', '$first→$second', '高め'),
+      ('3連複', '$first-$second-$third', '高め'),
+      ('3連単', '$first→$second→$third', '少額'),
+    ];
+    return Wrap(
+      spacing: 6,
+      runSpacing: 6,
+      children: [
+        for (final bet in bets)
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+            decoration: BoxDecoration(
+              color: const Color(0xFF111827),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+            ),
+            child: Text(
+              '${bet.$1}: ${bet.$2} (${bet.$3})',
+              style: const TextStyle(
+                color: Color(0xFFE5E7EB),
+                fontSize: 10,
+                height: 1.4,
+              ),
+            ),
+          ),
+      ],
     );
   }
 
