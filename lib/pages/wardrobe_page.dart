@@ -513,7 +513,9 @@ class _WardrobePageState extends State<WardrobePage>
                     padding:
                         const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFFFEBEE),
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? const Color(0xFF3A1010)
+                          : const Color(0xFFFFEBEE),
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: const Text(

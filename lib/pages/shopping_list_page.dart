@@ -573,7 +573,9 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFF3E0),
+        color: Theme.of(context).brightness == Brightness.dark
+            ? const Color(0xFF2A1F0A)
+            : const Color(0xFFFFF3E0),
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: const Color(0xFFFFCC80)),
       ),

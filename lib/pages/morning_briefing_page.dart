@@ -4528,7 +4528,9 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                     margin: const EdgeInsets.fromLTRB(12, 4, 12, 8),
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFEEF2FF),
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? const Color(0xFF1A1A2E)
+                          : const Color(0xFFEEF2FF),
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: Column(
@@ -4903,6 +4905,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
 
             final completedCount =
                 value.where((todo) => todo['is_completed'] == true).length;
+            final isDark = Theme.of(context).brightness == Brightness.dark;
 
             return Expanded(
               child: Column(
@@ -4912,7 +4915,9 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                     margin: const EdgeInsets.fromLTRB(12, 4, 12, 8),
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFEEF2FF),
+                      color: isDark
+                          ? const Color(0xFF1A1A2E)
+                          : const Color(0xFFEEF2FF),
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: Column(

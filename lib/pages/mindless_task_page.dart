@@ -3105,14 +3105,19 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
   }
 
   Widget _buildTimeboxPanel() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
-      decoration: const BoxDecoration(
-        color: Color(0xFFFFF8E1),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF2A1F0A) : const Color(0xFFFFF8E1),
         border: Border(
-          top: BorderSide(color: Color(0xFFFFE082)),
-          bottom: BorderSide(color: Color(0xFFFFE082)),
+          top: BorderSide(
+            color: isDark ? const Color(0xFF3A2A00) : const Color(0xFFFFE082),
+          ),
+          bottom: BorderSide(
+            color: isDark ? const Color(0xFF3A2A00) : const Color(0xFFFFE082),
+          ),
         ),
       ),
       child: Column(
