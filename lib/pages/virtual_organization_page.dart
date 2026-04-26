@@ -77,23 +77,12 @@ class _VirtualOrganizationPageState extends State<VirtualOrganizationPage>
   }
 
   Future<void> _assignTask(String goal) async {
-    try {
-      await _supabase.functions.invoke(
-        'ai-hub',
-        body: {'action': 'org.get', 'goal': goal},
+    // org.assign action は未実装 (org.get のみ利用可能)
+    // タスク割り振り機能は今後追加予定
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('タスク割り振り機能は準備中です')),
       );
-      await _fetchOrganization();
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('タスクを割り振りました')),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('エラー: $e')),
-        );
-      }
     }
   }
 
