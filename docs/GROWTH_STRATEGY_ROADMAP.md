@@ -20614,6 +20614,22 @@ habit_tracker / time_tracker / reading_list / calendar_events
 
 **Philosophy**: ✅ユーザー価値 (競合対抗戦略強化) ✅本質優先
 
+### PS#1 S50 (2026-04-26) — Rule17 WF health check all-green + deploy failure audit
+
+**WF status**: 17/17 WF全件 success (0 active failures)
+- 全 schedule WF (AI大学更新/CS Check/日次レポート/horse_racing/Notion sync/WBS AI Review 等) — 全件 success
+
+**Deploy failure audit** (過去10件):
+| Run | エラー | 修正済み |
+|-----|--------|----------|
+| `1814c392` | SQLSTATE 42703 arcee/nomic 非存在カラム | PS#1 S48 `1bd6b6c6` ✅ |
+| `f428a175` | SQLSTATE 23505 160000 collision | PS#5 S58 `614fb373` ✅ |
+| `1737652c` | esm.sh 522 CDN transient | 自己回復 `ba70d958` ✅ |
+
+**migration scan**: 674ファイル / collision 0
+**最新 deploy**: `ba70d958` SUCCESS — 全修正反映済み
+
+**Philosophy**: ✅KPI=昨日の自分 ✅資本=時間 (CI監視の習慣化)
 ---
 
 ### PS#3 S60 (2026-04-26) — AI大学 212→214社化: Adobe Firefly + Ideogram
