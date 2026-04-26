@@ -38,10 +38,12 @@ class UniversalAiShareRouteObserver extends NavigatorObserver {
 
 class UniversalAiShareShell extends StatelessWidget {
   final Widget child;
+  final GlobalKey<NavigatorState> navigatorKey;
 
   const UniversalAiShareShell({
     super.key,
     required this.child,
+    required this.navigatorKey,
   });
 
   @override
@@ -56,7 +58,10 @@ class UniversalAiShareShell extends StatelessWidget {
               right: 16,
               bottom: 20,
               child: SafeArea(
-                child: _UniversalAiShareFab(page: page),
+                child: _UniversalAiShareFab(
+                  page: page,
+                  navigatorKey: navigatorKey,
+                ),
               ),
             );
           },
@@ -68,27 +73,40 @@ class UniversalAiShareShell extends StatelessWidget {
 
 class _UniversalAiShareFab extends StatelessWidget {
   final UniversalSharePageContext page;
+  final GlobalKey<NavigatorState> navigatorKey;
 
-  const _UniversalAiShareFab({required this.page});
+  const _UniversalAiShareFab({
+    required this.page,
+    required this.navigatorKey,
+  });
+
+  void _openShareDialog() {
+    final overlayContext = navigatorKey.currentState?.overlay?.context;
+    if (overlayContext == null) return;
+    showDialog<void>(
+      context: overlayContext,
+      useRootNavigator: true,
+      builder: (_) => UniversalAiShareDialog(page: page),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     final isLoggedIn = Supabase.instance.client.auth.currentSession != null;
     final colorScheme = Theme.of(context).colorScheme;
-    return FloatingActionButton.extended(
-      heroTag: 'universal-ai-share-fab',
-      tooltip: 'AIでこのページをXシェア',
-      backgroundColor: isLoggedIn
-          ? colorScheme.primaryContainer
-          : colorScheme.surfaceContainerHighest,
-      foregroundColor:
-          isLoggedIn ? colorScheme.onPrimaryContainer : colorScheme.onSurface,
-      onPressed: () => showDialog<void>(
-        context: context,
-        builder: (_) => UniversalAiShareDialog(page: page),
+    return TooltipVisibility(
+      visible: false,
+      child: FloatingActionButton.extended(
+        heroTag: 'universal-ai-share-fab',
+        backgroundColor: isLoggedIn
+            ? colorScheme.primaryContainer
+            : colorScheme.surfaceContainerHighest,
+        foregroundColor:
+            isLoggedIn ? colorScheme.onPrimaryContainer : colorScheme.onSurface,
+        onPressed: _openShareDialog,
+        icon: const Icon(Icons.auto_awesome),
+        label: const Text('AIシェア'),
       ),
-      icon: const Icon(Icons.auto_awesome),
-      label: const Text('AIシェア'),
     );
   }
 }
