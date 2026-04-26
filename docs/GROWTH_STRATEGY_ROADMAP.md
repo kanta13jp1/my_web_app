@@ -21213,3 +21213,28 @@ bardeen/relevance-ai の registry 追加は Win版に cross-instance-pr 発行�
 **SEO 50本計画 進捗**: Phase 1 完了 10/10 / Phase 2 開始 1/10
 
 **Philosophy**: ✅ユーザー価値 ✅ミッション駆動
+### Win版#132 part 27 完了 (2026-04-26 13:55 JST)
+
+**🎬 NotebookLM 動画パイプライン #2 実行** — Google Gemini Tips 解説動画 (D variant) 制作 + サイト埋め込み
+
+**ソース**: NotebookLM notebook `579bd686-f17e-414a-894f-822f29b5c11e` (8 Gemini Tips for Organizing Your Space and Life)
+
+**Pipeline**: part 25 と完全同パターン (8-step 確立済み)
+
+| Step | 内容 | 成果物 |
+|------|------|--------|
+| 1 | `notebooklm download video -a 3ce9cab3` | `videos/gemini-organizing-tips.mp4` (44MB / 6m20s / 1280x720@24fps) |
+| 2 | ElevenLabs Scribe | JSON 467KB (2532 char-words) |
+| 3 | `videos/build_srt.py` (Gemini 用補正 16 件追加: ジェミニ→Gemini / ジーメール→Gmail / グーグル→Google など) | `master.srt` (126 cues / 377.2s) |
+| 4 | `make_cards.py` 更新 (タイトル: 8 Gemini Tips / 暮らしと空間の整理術 / シリーズ #2) | `intro.png` + `outro.png` |
+| 5 | ffmpeg encode 1280x720@24 | `intro.mp4` + `outro.mp4` |
+| 6 | concat + grade + afade (380.25s fade-out) → no_subs → cd+subs | `output_D.mp4` (19MB / 387.3s) |
+| 7 | YouTube unlisted upload | https://youtu.be/di5SbHouAVY |
+| 8 | `philosophy_page.dart` `_videos` 7 本目追加 + docstring 6→7 | embed 完了 |
+
+**Philosophy Alignment (9/9)**: 全項目 ✅ (part 25 と同パターンのため省略 / 詳細は memory)
+**AI-DEV Alignment (7/7)**: 全項目 ✅
+
+**Out of scope (next)**:
+- 残 7 artifact (Slide Deck / Audio / Mind Map / Quiz / Flashcards / Report / Infographic / Data Table) を AI大学コンテンツに転用
+- A/B/C variant (字幕版 / 3 分ハイライト / 60 秒 SNS) の自動 encode (パイプライン GHA 化候補)

@@ -5,7 +5,7 @@ import '../utils/platform_view.dart' as platform_view;
 
 /// 自分株式会社 — 基本理念ページ
 ///
-/// docs/PHILOSOPHY.md の 9 原則を可視化し、NotebookLM 動画 6 本を埋め込む。
+/// docs/PHILOSOPHY.md の 9 原則を可視化し、NotebookLM 動画 7 本を埋め込む。
 /// 全機能はこのページに記載された理念に照らして方向性を検証する (CLAUDE.md Rule 22)。
 class PhilosophyPage extends StatefulWidget {
   const PhilosophyPage({super.key});
@@ -557,6 +557,14 @@ const _videos = [
     description: 'NotebookLM Deep Research + intro/outro + カラーグレード + 字幕焼き込み。'
         'Anthropic Claude Apps の MCP オープン化戦略・市場シェア 18→29%・3500億ドル評価・'
         'ChatGPT との設計思想の違いを 7 分で解説。AI大学シリーズ #1。',
+  ),
+  _Video(
+    id: 'di5SbHouAVY',
+    label: '番外: Google Gemini で暮らしを整える 8 つのコツ (D variant)',
+    duration: '6:27',
+    description: 'NotebookLM Deep Research + intro/outro + カラーグレード + 字幕焼き込み。'
+        'Google Gemini の agentic AI で Gmail / Google Calendar / Photos / Lens / Keep を横断する'
+        '実践テクニック 8 つを解説。AI大学シリーズ #2。',
   ),
 ];
 
