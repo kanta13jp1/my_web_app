@@ -21247,7 +21247,6 @@ bardeen/relevance-ai の registry 追加は Win版に cross-instance-pr 発行�
 - **CS Check**: a8da11a8 fix済み / 次回スケジュール実行で回復予定
 - **orphan**: claude/*=1本 (自worktree のみ・正常)
 
-<<<<<<< Updated upstream
 ## PS#6 S54 (2026-04-26 13:xx JST)
 
 ### 実施内容
@@ -21260,7 +21259,6 @@ bardeen/relevance-ai の registry 追加は Win版に cross-instance-pr 発行�
   - repair list +2 (205000/205100 reverted)
 - **repair list**: 116→118件 (0 orphan reverted)
 - **commit**: a928ed8f
-=======
 ### PS#5 S63 — site-guide anon guard (2026-04-26)
 - **fix**: `site_guide_chat_page.dart` `_sendQuestion()` にanon guard追加
   - `Supabase.instance.client.auth.currentUser == null` チェック → assistant message 'ログインが必要です' 表示して return
@@ -21271,7 +21269,6 @@ bardeen/relevance-ai の registry 追加は Win版に cross-instance-pr 発行�
 - **S59-S60-S62-S63**: ai-hub anon guard 全ページ完了 🎉
   - 直接invoke: S59/S60(113p) + S62(5p) = 118p
   - サービス経由: S63 site_guide_chat = 1p (auto-call path via initialQuestion)
->>>>>>> Stashed changes
 
 ## PS#4 S64 — 2026-04-26 (763ae26c)
 
@@ -21350,3 +21347,28 @@ Google I/O 2026 競合脅威 事前ブリーフィング
   - #14 Jul-25: multi-ai-workflow-real-costs
   - #15 Aug-01: supabase-vs-firebase-2026
   - #16 Aug-08: flutter-web-performance-tips
+### Win版#132 part 28 完了 (2026-04-26 14:35 JST)
+
+**🎬 NotebookLM 動画パイプライン #3 実行** — Nomic Platform (建設・設計業界特化 AI) 解説動画 (D variant) 制作 + サイト埋め込み
+
+**ソース**: NotebookLM notebook `284ad4be-ffca-449a-9725-cab9337f3325` (Nomic Platform: Domain-Specific AI for Project Delivery)
+
+| Step | 内容 | 成果物 |
+|------|------|--------|
+| 1 | `notebooklm download video -a e87b05ba` | `videos/nomic-platform-aec.mp4` (41MB / 8m10s / 1280x720@24fps) |
+| 2 | ElevenLabs Scribe | JSON 641KB (3458 char-words) |
+| 3 | `videos/build_srt.py` (Nomic AEC 用 ASR 補正 17 件追加: ノミック→Nomic / リビット→Revit / オートデスク→Autodesk / プロコア→Procore など) | `master.srt` (172 cues / 487.2s) |
+| 4 | `make_cards.py` 更新 (タイトル: Nomic Platform / 建設・設計特化 AI / シリーズ #3) | `intro.png` + `outro.png` |
+| 5 | ffmpeg encode (1280x720@24) | `intro.mp4` + `outro.mp4` |
+| 6 | concat + grade + afade (490.08s fade-out) → no_subs (16MB) → cd+subs | `output_D.mp4` (18MB / 497.2s) |
+| 7 | YouTube unlisted upload | https://youtu.be/shdsy9qqcNM |
+| 8 | `philosophy_page.dart` `_videos` 8 本目追加 + docstring 7→8 | embed 完了 |
+
+**Philosophy 9/9 ✅ / AI-DEV 7/7 ✅** (part 25/27 と同パターン)
+
+**累積動画資産**: 8 本 (オリジナル理念 5 + AI大学シリーズ 3 = #1 Anthropic Claude Apps / #2 Gemini Tips / #3 Nomic AEC)
+
+**Out of scope (next session)**:
+- Master Brain 提案 #1 Gemini 3.1 Flash-Lite / #2 Claude Opus 4.7 / #3 Slack+Notion DB
+- 残 16 artifact (3 notebook × 8 件) を AI大学コンテンツ転用
+- パイプライン GHA 化 (NotebookLM URL → workflow_dispatch → 自動 encode + upload)

@@ -5,7 +5,7 @@ import '../utils/platform_view.dart' as platform_view;
 
 /// 自分株式会社 — 基本理念ページ
 ///
-/// docs/PHILOSOPHY.md の 9 原則を可視化し、NotebookLM 動画 7 本を埋め込む。
+/// docs/PHILOSOPHY.md の 9 原則を可視化し、NotebookLM 動画 8 本を埋め込む。
 /// 全機能はこのページに記載された理念に照らして方向性を検証する (CLAUDE.md Rule 22)。
 class PhilosophyPage extends StatefulWidget {
   const PhilosophyPage({super.key});
@@ -565,6 +565,15 @@ const _videos = [
     description: 'NotebookLM Deep Research + intro/outro + カラーグレード + 字幕焼き込み。'
         'Google Gemini の agentic AI で Gmail / Google Calendar / Photos / Lens / Keep を横断する'
         '実践テクニック 8 つを解説。AI大学シリーズ #2。',
+  ),
+  _Video(
+    id: 'shdsy9qqcNM',
+    label: '番外: Nomic Platform — 建設・設計業界特化 AI (D variant)',
+    duration: '8:17',
+    description: 'NotebookLM Deep Research + intro/outro + カラーグレード + 字幕焼き込み。'
+        'Nomic Platform (Nomic AEC) — 建築 / エンジニアリング / 建設 業界向け Domain-Specific AI。'
+        '3000 ページ規模の RFI / RFP / 仕様書を AI で横断検索・分析。BIM / Revit / Procore 統合。'
+        'AI大学シリーズ #3。',
   ),
 ];
 
