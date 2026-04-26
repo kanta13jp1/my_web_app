@@ -1,4 +1,6 @@
 // ignore_for_file: require_trailing_commas
+import 'dart:ui' show PointerDeviceKind;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -59,6 +61,7 @@ class _ElectionXPostComposerDialogState
 
   List<TextEditingController> _controllers = [];
   int _selectedIndex = 0;
+  final ScrollController _weekendScrollController = ScrollController();
 
   // Cached election counts per window
   late final List<int> _electionCounts;
@@ -85,6 +88,7 @@ class _ElectionXPostComposerDialogState
 
   @override
   void dispose() {
+    _weekendScrollController.dispose();
     for (final c in _controllers) {
       c.dispose();
     }
@@ -191,26 +195,36 @@ class _ElectionXPostComposerDialogState
               ),
             ),
           ),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: List.generate(windows.length, (i) {
-                final w = windows[i];
-                final count = _electionCounts[i];
-                final dateRange = widget.shareService
-                    .buildWindowDateRangeLabel(w)
-                    .replaceAll('/', '/');
-                return Padding(
-                  padding: const EdgeInsets.only(right: 6),
-                  child: _WeekendChip(
-                    label: w.label,
-                    dateRange: dateRange,
-                    count: count,
-                    isSelected: i == _selectedIndex,
-                    onTap: () => _selectWindow(i),
-                  ),
-                );
-              }),
+          Scrollbar(
+            controller: _weekendScrollController,
+            thumbVisibility: true,
+            interactive: true,
+            child: ScrollConfiguration(
+              behavior: const _ElectionDragScrollBehavior(),
+              child: SingleChildScrollView(
+                controller: _weekendScrollController,
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Row(
+                  children: List.generate(windows.length, (i) {
+                    final w = windows[i];
+                    final count = _electionCounts[i];
+                    final dateRange = widget.shareService
+                        .buildWindowDateRangeLabel(w)
+                        .replaceAll('/', '/');
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 6),
+                      child: _WeekendChip(
+                        label: w.label,
+                        dateRange: dateRange,
+                        count: count,
+                        isSelected: i == _selectedIndex,
+                        onTap: () => _selectWindow(i),
+                      ),
+                    );
+                  }),
+                ),
+              ),
             ),
           ),
         ],
@@ -412,6 +426,19 @@ class _ElectionXPostComposerDialogState
 }
 
 // ---------------------------------------------------------------------------
+
+class _ElectionDragScrollBehavior extends MaterialScrollBehavior {
+  const _ElectionDragScrollBehavior();
+
+  @override
+  Set<PointerDeviceKind> get dragDevices => const {
+        PointerDeviceKind.touch,
+        PointerDeviceKind.mouse,
+        PointerDeviceKind.stylus,
+        PointerDeviceKind.invertedStylus,
+        PointerDeviceKind.unknown,
+      };
+}
 
 class _WeekendChip extends StatelessWidget {
   final String label;
