@@ -95,3 +95,8 @@ UPDATE competitors SET
   jp_strength = 'AI 医療画像解析 / 脳卒中・肺塞栓 CT 自動診断 / ICU・ER 向け 即時アラート / 医師の診断支援',
   jp_weakness = '医療 AI 画像診断専用 / 個人ライフ OS・財務・タスク管理なし / 一般消費者向けでない'
 WHERE id = 'viz-ai';
+
+UPDATE competitors SET
+  jp_strength = 'リターゲティング広告の世界標準 / AI 商品レコメンド / EC・小売向け成果報酬型 / 3700+ 小売パートナー / Shopify 統合',
+  jp_weakness = 'デジタル広告特化 / 個人ライフ OS・AI・財務・健康管理なし'
+WHERE id = 'criteo';
