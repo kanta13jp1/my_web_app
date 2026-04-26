@@ -239,6 +239,7 @@ class _ElectionJapanMapState extends State<ElectionJapanMap> {
             LayoutBuilder(
               builder: (context, constraints) {
                 final wide = constraints.maxWidth >= 720;
+                final captureWide = constraints.maxWidth >= 1120;
                 final map = _buildMap(context);
                 final detail = _buildDetailPanel(context);
                 if (!wide) {
@@ -253,9 +254,9 @@ class _ElectionJapanMapState extends State<ElectionJapanMap> {
                 return Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(flex: 5, child: map),
-                    const SizedBox(width: 20),
-                    Expanded(flex: 4, child: detail),
+                    Expanded(flex: captureWide ? 7 : 5, child: map),
+                    SizedBox(width: captureWide ? 28 : 20),
+                    Expanded(flex: captureWide ? 5 : 4, child: detail),
                   ],
                 );
               },
@@ -284,13 +285,13 @@ class _ElectionJapanMapState extends State<ElectionJapanMap> {
       builder: (context, constraints) {
         final availableWidth =
             constraints.maxWidth.isFinite ? constraints.maxWidth : 360.0;
-        const horizontalPadding = 16.0;
-        const headerHeight = 44.0;
+        const horizontalPadding = 20.0;
+        const headerHeight = 52.0;
         final mapAvailableWidth = math.max(
           120.0,
           availableWidth - horizontalPadding * 2,
         );
-        final cell = math.min(34.0, math.max(12.0, mapAvailableWidth / 10.4));
+        final cell = math.min(48.0, math.max(16.0, mapAvailableWidth / 10.2));
         final width = cell * _mapColumns;
         final height = cell * _mapRows;
         final surfaceWidth = width + horizontalPadding * 2;
@@ -391,12 +392,16 @@ class _ElectionJapanMapState extends State<ElectionJapanMap> {
         : (plan?.endorsementConfirmed == true
             ? const Color(0xFF16A34A)
             : Colors.white.withValues(alpha: 0.90));
+    final tileGap = cell >= 42 ? 4.0 : 3.0;
+    final borderRadius = BorderRadius.circular(cell >= 42 ? 8 : 6);
+    final nameFontSize = math.min(16.0, math.max(11.0, cell * 0.34));
+    final valueFontSize = math.min(14.0, math.max(10.0, cell * 0.30));
 
     return Positioned(
       left: tile.col * cell,
       top: tile.row * cell,
-      width: cell * tile.width - 3,
-      height: cell - 3,
+      width: cell * tile.width - tileGap,
+      height: cell - tileGap,
       child: Tooltip(
         message: plan == null
             ? tile.name
@@ -409,16 +414,16 @@ class _ElectionJapanMapState extends State<ElectionJapanMap> {
               : '${tile.name} KGI${plan.kgiTargetLocalMembers} KPI${plan.kpiActualLocalMembers}',
           child: Material(
             color: color,
-            borderRadius: BorderRadius.circular(6),
+            borderRadius: borderRadius,
             child: InkWell(
-              borderRadius: BorderRadius.circular(6),
+              borderRadius: borderRadius,
               onTap: plan == null
                   ? null
                   : () => setState(() => _selectedIndex = tile.index),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 160),
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(6),
+                  borderRadius: borderRadius,
                   border: Border.all(
                     color: borderColor,
                     width: selected ? 2 : 1,
@@ -444,6 +449,7 @@ class _ElectionJapanMapState extends State<ElectionJapanMap> {
                         style: TextStyle(
                           color: foreground,
                           fontWeight: FontWeight.w700,
+                          fontSize: nameFontSize,
                           height: 1.2,
                         ),
                       ),
@@ -453,6 +459,7 @@ class _ElectionJapanMapState extends State<ElectionJapanMap> {
                           style: TextStyle(
                             color: foreground.withValues(alpha: 0.86),
                             fontWeight: FontWeight.w700,
+                            fontSize: valueFontSize,
                             height: 1.2,
                           ),
                         ),
