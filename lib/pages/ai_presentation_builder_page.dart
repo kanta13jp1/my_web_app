@@ -134,7 +134,9 @@ class _AiPresentationBuilderPageState extends State<AiPresentationBuilderPage> {
             if (_result != null) _buildResultCard(),
             if (_error != null)
               Card(
-                color: const Color(0xFFFFEBEE),
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? const Color(0xFF3A1010)
+                    : const Color(0xFFFFEBEE),
                 child: Padding(
                   padding: const EdgeInsets.all(12),
                   child: Text(
@@ -244,7 +246,9 @@ class _AiPresentationBuilderPageState extends State<AiPresentationBuilderPage> {
 
   Widget _buildResultCard() {
     return Card(
-      color: const Color(0xFFE8EAF6),
+      color: Theme.of(context).brightness == Brightness.dark
+          ? const Color(0xFF1A1A2E)
+          : const Color(0xFFE8EAF6),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(

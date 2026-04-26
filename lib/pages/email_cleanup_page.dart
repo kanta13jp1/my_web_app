@@ -705,7 +705,9 @@ class _EmailCleanupPageState extends State<EmailCleanupPage> {
                       vertical: 4,
                     ),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFE8F5E9),
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? const Color(0xFF0A1A0A)
+                          : const Color(0xFFE8F5E9),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: const Text(

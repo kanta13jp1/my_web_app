@@ -4908,7 +4908,10 @@ abstinence_slip_details: $slipDetailsText
                                   width: 40,
                                   height: 40,
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFFEDE7F6),
+                                    color: Theme.of(context).brightness ==
+                                            Brightness.dark
+                                        ? const Color(0xFF2D2040)
+                                        : const Color(0xFFEDE7F6),
                                     borderRadius: BorderRadius.circular(10),
                                   ),
                                   child: const Icon(

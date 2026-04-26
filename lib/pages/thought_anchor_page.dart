@@ -396,7 +396,9 @@ class _ThoughtAnchorPageState extends State<ThoughtAnchorPage> {
                 Duration(minutes: _selectedDuration).inSeconds);
 
     return Card(
-      color: const Color(0xFFE8EAF6),
+      color: Theme.of(context).brightness == Brightness.dark
+          ? const Color(0xFF1A1A2E)
+          : const Color(0xFFE8EAF6),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(

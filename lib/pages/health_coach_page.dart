@@ -324,7 +324,9 @@ class _AdviceTab extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       children: [
         Card(
-          color: const Color(0xFFE8F5E9),
+          color: Theme.of(context).brightness == Brightness.dark
+              ? const Color(0xFF0A1A0A)
+              : const Color(0xFFE8F5E9),
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
