@@ -1,0 +1,199 @@
+name: NotebookLM Video Pipeline
+
+# Win版#132 part 29 (2026-04-26) — Master Brain Task 3
+# NotebookLM URL → 8-step automated video pipeline → YouTube upload + philosophy_page.dart embed
+#
+# 使い方:
+#   gh workflow run notebooklm-video-pipeline.yml \
+#     -f notebook_id=579bd686 \
+#     -f artifact_id=3ce9cab3 \
+#     -f title="動画タイトル" \
+#     -f series_number=2
+#
+# 8-step (memory feedback_success_20260418_video_editing_workflow.md 完全踏襲):
+#   1. notebooklm download video
+#   2. ElevenLabs Scribe transcribe
+#   3. videos/build_srt.py で SRT 分割 (句読点+18字+4秒+28字 cap)
+#   4. videos/make_cards.py で intro/outro PNG 生成 (PIL + Noto Sans JP)
+#   5. ffmpeg で intro/outro mp4 (1280x720@24 / silent / 3-4s)
+#   6. ffmpeg concat+grade+afade → no_subs → cd+subs (2-step)
+#   7. scripts/upload_youtube.py upload --privacy unlisted
+#   8. lib/pages/philosophy_page.dart _videos に追加 + commit
+
+on:
+  workflow_dispatch:
+    inputs:
+      notebook_id:
+        description: NotebookLM notebook ID prefix (8 chars OK)
+        required: true
+        type: string
+      artifact_id:
+        description: Video artifact ID prefix (8 chars OK)
+        required: true
+        type: string
+      title:
+        description: Video title for YouTube + intro card
+        required: true
+        type: string
+      series_number:
+        description: AI大学 series number (e.g. 2 for #2)
+        required: true
+        type: number
+      asr_corrections_json:
+        description: 'Optional ASR corrections (JSON dict of {wrong: correct})'
+        required: false
+        default: '{}'
+        type: string
+      slug:
+        description: 'Output filename slug (e.g. gemini-organizing-tips)'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: notebooklm-video-pipeline
+  cancel-in-progress: false
+
+jobs:
+  pipeline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      NOTEBOOKLM_STORAGE_STATE: ${{ secrets.NOTEBOOKLM_STORAGE_STATE_JSON }}
+      ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
+      YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET_JSON }}
+      YOUTUBE_TOKEN: ${{ secrets.YOUTUBE_TOKEN_JSON }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_PAT }}
+
+      - name: Setup Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install ffmpeg + Noto Sans JP
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg fonts-noto-cjk
+          mkdir -p videos
+
+      - name: Install Python deps
+        run: |
+          pip install pillow notebooklm-py google-api-python-client \
+            google-auth-oauthlib google-auth-httplib2
+
+      - name: Restore NotebookLM auth
+        run: |
+          mkdir -p ~/.notebooklm
+          echo "$NOTEBOOKLM_STORAGE_STATE" > ~/.notebooklm/storage_state.json
+          chmod 600 ~/.notebooklm/storage_state.json
+
+      - name: Restore YouTube auth
+        run: |
+          mkdir -p ~/.youtube
+          echo "$YOUTUBE_CLIENT_SECRET" > ~/.youtube/client_secret.json
+          echo "$YOUTUBE_TOKEN" > ~/.youtube/token.json
+          chmod 600 ~/.youtube/*.json
+
+      - name: Step 1 — Download video from NotebookLM
+        run: |
+          notebooklm use ${{ inputs.notebook_id }}
+          notebooklm download video -a ${{ inputs.artifact_id }} \
+            videos/${{ inputs.slug }}.mp4
+          ls -lh videos/${{ inputs.slug }}.mp4
+          ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1 \
+            videos/${{ inputs.slug }}.mp4 | tee /tmp/duration.txt
+
+      - name: Step 2 — Transcribe via ElevenLabs Scribe
+        run: |
+          # TODO: clone https://github.com/browser-use/video-use OR vendor transcribe.py
+          python ~/.claude/skills/video-use/helpers/transcribe.py \
+            videos/${{ inputs.slug }}.mp4
+
+      - name: Step 3 — Build SRT (custom splitter)
+        env:
+          ASR_CORRECTIONS: ${{ inputs.asr_corrections_json }}
+        run: |
+          python videos/build_srt.py \
+            videos/edit/transcripts/${{ inputs.slug }}.json \
+            videos/master.srt
+          # TODO: pass ASR_CORRECTIONS env var into build_srt.py
+
+      - name: Step 4 — Generate intro/outro cards
+        env:
+          CARD_TITLE: ${{ inputs.title }}
+          CARD_SERIES: '#${{ inputs.series_number }}'
+        run: |
+          # TODO: parameterize make_cards.py via env vars (CARD_TITLE / CARD_SERIES)
+          python videos/make_cards.py
+
+      - name: Step 5 — Encode intro/outro mp4 (1280x720@24)
+        run: |
+          for asset in intro outro; do
+            duration=$([ "$asset" = "intro" ] && echo 3 || echo 4)
+            ffmpeg -y -loop 1 -i videos/${asset}.png \
+              -f lavfi -i anullsrc=r=44100:cl=stereo -t ${duration} \
+              -vf "scale=1280:720:force_original_aspect_ratio=decrease,pad=1280:720:(ow-iw)/2:(oh-ih)/2:color=0x0F111E" \
+              -r 24 -pix_fmt yuv420p -c:v libx264 -preset fast -crf 22 \
+              -c:a aac -b:a 128k -ar 44100 -shortest \
+              videos/${asset}.mp4
+          done
+
+      - name: Step 6a — Concat + grade + afade (no subs)
+        run: |
+          MAIN_DUR=$(cat /tmp/duration.txt)
+          FADE_OUT=$(python -c "print(round(${MAIN_DUR} - 0.05, 2))")
+          ffmpeg -y \
+            -i videos/intro.mp4 \
+            -i videos/${{ inputs.slug }}.mp4 \
+            -i videos/outro.mp4 \
+            -filter_complex "[1:a]aresample=44100,afade=t=in:st=0:d=0.05,afade=t=out:st=${FADE_OUT}:d=0.05[a1];[0:v:0][0:a:0][1:v:0][a1][2:v:0][2:a:0]concat=n=3:v=1:a=1[v][a];[v]eq=saturation=1.15:contrast=1.05:gamma=0.95[vout]" \
+            -map "[vout]" -map "[a]" -c:v libx264 -preset fast -crf 22 \
+            -c:a aac -b:a 128k -ar 44100 \
+            videos/output_D_no_subs.mp4
+
+      - name: Step 6b — Burn subtitles (cd to videos for relative path)
+        run: |
+          cd videos
+          ffmpeg -y -i output_D_no_subs.mp4 \
+            -vf "subtitles=master.srt:force_style='FontName=Noto Sans CJK JP,FontSize=18,Outline=2,Shadow=1,Alignment=2,MarginV=40'" \
+            -c:v libx264 -preset fast -crf 22 -c:a copy output_D.mp4
+          ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1 output_D.mp4
+
+      - name: Step 7 — Upload to YouTube (unlisted)
+        id: upload
+        run: |
+          OUT=$(python scripts/upload_youtube.py upload \
+            --file videos/output_D.mp4 \
+            --title "${{ inputs.title }} — 自分株式会社 AI大学解説 #${{ inputs.series_number }}" \
+            --description "NotebookLM Deep Research + 自分株式会社 AI大学 編集スタジオで生成。詳細は https://my-web-app-b67f4.web.app/ai-university" \
+            --privacy unlisted)
+          echo "$OUT"
+          VIDEO_ID=$(echo "$OUT" | grep -oE 'https://youtu.be/[A-Za-z0-9_-]+' | head -1 | sed 's|.*/||')
+          echo "video_id=$VIDEO_ID" >> $GITHUB_OUTPUT
+
+      - name: Step 8 — Embed in philosophy_page.dart + commit
+        env:
+          VIDEO_ID: ${{ steps.upload.outputs.video_id }}
+        run: |
+          # TODO: implement Python helper that finds _videos array tail
+          # and inserts new _Video entry with id=VIDEO_ID + label/duration/description.
+          # Then: git add lib/pages/philosophy_page.dart docs/GROWTH_STRATEGY_ROADMAP.md
+          # git commit -m "feat(philosophy): embed video #N (NotebookLM auto pipeline)"
+          # git push origin main
+          echo "TODO: auto-embed for VIDEO_ID=$VIDEO_ID"
+          echo "::warning::Step 8 manual until embed-helper script is implemented (Win版 part 30+)"
+
+# 残スコープ (Win版#132 part 30+ / cross-instance-pr 検討):
+# - transcribe.py を repo に vendor (現在は ~/.claude/skills/video-use 依存)
+# - build_srt.py の ASR 補正辞書を ENV var 化
+# - make_cards.py を CARD_TITLE / CARD_SERIES env で完全パラメータ化
+# - Step 8 自動 embed: lib/pages/philosophy_page.dart の _videos array 末尾に
+#   AST レベルで _Video entry を挿入する Python helper
+# - YouTube quota 監視 (10000 units/day / 1 upload = 1600 units = 6/day max)
+# - Slack 通知 (成功時 video URL / 失敗時 step + log link)

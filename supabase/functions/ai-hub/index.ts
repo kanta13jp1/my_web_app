@@ -216,6 +216,24 @@ const PROVIDER_CONFIGS: Record<string, ProviderConfig> = {
     parseResponse: (data) =>
       String(pick(data, "candidates", 0, "content", "parts", 0, "text") ?? ""),
   },
+  // Master Brain 提案 #1 (Win版#132 part 29 / 2026-04-26): バッチ処理向け軽量・低コスト Gemini
+  // 用途: competitor-monitoring / ai-university-update 等の大量バッチ推論
+  // コスト目安: gemini-2.5-flash-lite は通常 flash の 1/3 価格・1M tokens context
+  google_flash_lite: {
+    displayName: "Google Gemini Flash-Lite",
+    envKey: "GEMINI_API_KEY",
+    chatUrl:
+      "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent",
+    defaultModel: "gemini-2.5-flash-lite",
+    buildBody: (messages, _model) => ({
+      contents: (messages as { role: string; content: string }[]).map((m) => ({
+        role: m.role === "assistant" ? "model" : "user",
+        parts: [{ text: m.content }],
+      })),
+    }),
+    parseResponse: (data) =>
+      String(pick(data, "candidates", 0, "content", "parts", 0, "text") ?? ""),
+  },
   cerebras: {
     displayName: "Cerebras",
     envKey: "CEREBRAS_API_KEY",
@@ -3491,7 +3509,9 @@ serve(async (req: Request) => {
               "content-type": "application/json",
             },
             body: JSON.stringify({
-              model: "claude-sonnet-4-6",
+              // Master Brain 提案 #2 (Win版#132 part 29 / 2026-04-26):
+              // 高精度合成は claude-opus-4-7 にアップグレード (旧: sonnet-4-6)
+              model: "claude-opus-4-7",
               max_tokens: 512,
               messages: [{ role: "user", content: prompt }],
             }),
@@ -3605,7 +3625,9 @@ serve(async (req: Request) => {
               "content-type": "application/json",
             },
             body: JSON.stringify({
-              model: "claude-sonnet-4-6",
+              // Master Brain 提案 #2 (Win版#132 part 29 / 2026-04-26):
+              // 高精度合成は claude-opus-4-7 にアップグレード (旧: sonnet-4-6)
+              model: "claude-opus-4-7",
               max_tokens: 512,
               messages: [{ role: "user", content: prompt }],
             }),
