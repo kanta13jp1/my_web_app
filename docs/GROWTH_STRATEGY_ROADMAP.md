@@ -20695,3 +20695,33 @@ habit_tracker / time_tracker / reading_list / calendar_events
 
 **Philosophy Alignment**: 9/9 (CEO/ミッション/mentor/6部署/価値/時間/BS/KPI/IPO 全✅ — 競合監視は CEO 領域)
 **詳細**: `docs/competitor-reports/2026-04-26.md` (PM Update セクション)
+## 2026-04-26 daily-development scheduled task: 開発実績 backfill (Apr 20-26)
+
+**担当**: 自動 (scheduled-task / daily-development)
+
+**経緯**: CLAUDE.md「開発実績の記録方法」で `supabase/migrations/` への seed が義務付けられているが、4/19 を最後に未seed のまま 7 日経過。1 週間分の主要マイルストーン 7 件をまとめて backfill。
+
+**Seed 内容** (`20260426180000_seed_achievements_apr20_to_apr26.sql`):
+1. AI大学 188→214社化 (26社追加・コード補完→構造化出力→AIエージェント→音声/音楽/画像生成)
+2. 事業化 WBS + AI 自動レビュー基盤 (Win#132 / wbs_tasks 拡張 + 7 milestone + 54 task seed + Gemini Flash review cron)
+3. 競合 21→190社化 (PS#4 Phase 1+2+3 完遂)
+4. ページ別 X 共有 + AI 画像/動画自動生成 (page_shares + ogp-image-refresh.yml + post-x-with-media.yml)
+5. システム的 anon 認証ガード batch fix (FSRS / home / feature_request / 16 ページ + 120 ページ handoff)
+6. Migration timestamp 衝突解消 + repair list audit (deploy-prod 連続失敗チェーン根本解決)
+7. GHA workflow health + 自動修復 (Notion sync IDLE / soft-fail テンプレ / esm.sh transient 自己回復確認)
+
+**Philosophy Alignment**: ✅ 8/9
+- ✅ CEO感: 7 件粒度で機能別グルーピング判断
+- ✅ ミッション駆動: AI 統合ライフマネジメント拡充の 7 日分の進捗を可視化
+- ✅ 優しい mentor: 公開ページに反映され、新規ユーザーが「動いている感」を視認できる
+- ✅ 6 部署バランス: 各分野 (AI/事業/競合/共有/CS/CI/インフラ) を均等記録
+- ✅ 商品=ユーザー価値: 実績タイムラインで信頼形成
+- ✅ 資本=時間: 1 commit で 7 件 backfill (時間効率)
+- ✅ 資産負債: development_achievements に 7 行の永続資産追加
+- ✅ KPI=昨日の自分: 4/19 最終 seed → 4/26 で 7 日分追記
+- ⏭️ ゴール=IPO: 直接寄与なし (内部記録のみ)
+
+**Out of scope (next)**:
+- Achievement seed の自動化 (毎週金曜 GHA cron で前週分を seed)
+- development_achievements テーブルに `category` 列を活用した分類表示
+
