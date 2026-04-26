@@ -299,6 +299,7 @@ class ResultParser(html.parser.HTMLParser):
         super().__init__()
         self.results = {}       # place -> horse_name
         self.trifecta_paid = None
+        self.payouts = {}
         self._in_result_row = False   # data row (class-less <tr>)
         self._cur_place = None        # "1" / "2" / "3" within current row
         self._in_result_num_td = False
@@ -306,6 +307,7 @@ class ResultParser(html.parser.HTMLParser):
         self._in_horse_info_td = False
         self._in_horse_name_a = False
         self._in_tan3_row = False     # <tr class="Tan3">
+        self._payout_key = None
         self._in_payout_td = False
         self._in_payout_span = False
         self._buf = ""
@@ -317,7 +319,22 @@ class ResultParser(html.parser.HTMLParser):
         if tag == "tr":
             # Data rows have no class; header/payment rows have a class
             self._in_result_row = not cls.strip()
-            self._in_tan3_row = "Tan3" in cls
+            payout_class_map = {
+                "Tansho": "単勝",
+                "Fukusho": "複勝",
+                "Wakuren": "枠連",
+                "Umaren": "馬連",
+                "Wide": "ワイド",
+                "Umatan": "馬単",
+                "Fuku3": "3連複",
+                "Tan3": "3連単",
+            }
+            self._payout_key = None
+            for class_name, bet_type in payout_class_map.items():
+                if class_name in cls:
+                    self._payout_key = bet_type
+                    break
+            self._in_tan3_row = self._payout_key == "3連単"
             self._cur_place = None
             self._in_result_num_td = False
             self._in_horse_info_td = False
@@ -327,7 +344,7 @@ class ResultParser(html.parser.HTMLParser):
                 self._in_result_num_td = True
             if "Horse_Info" in cls and self._in_result_row:
                 self._in_horse_info_td = True
-            if "Payout" in cls and self._in_tan3_row:
+            if "Payout" in cls and self._payout_key:
                 self._in_payout_td = True
 
         if tag == "div" and attr_dict.get("class") == "Rank" and self._in_result_num_td:
@@ -346,6 +363,7 @@ class ResultParser(html.parser.HTMLParser):
         if tag == "tr":
             self._in_result_row = False
             self._in_tan3_row = False
+            self._payout_key = None
             self._cur_place = None
             self._in_result_num_td = False
             self._in_horse_info_td = False
@@ -370,6 +388,14 @@ class ResultParser(html.parser.HTMLParser):
         if tag == "span" and self._in_payout_span:
             self._in_payout_span = False
             self._in_payout_td = False
+            if self._payout_key:
+                m2 = re.search(r"([\d,]+)", self._buf)
+                if m2:
+                    paid = int(m2.group(1).replace(",", ""))
+                    self.payouts.setdefault(self._payout_key, paid)
+                    if self._payout_key == "3連単" and self.trifecta_paid is None:
+                        self.trifecta_paid = paid
+                return
             m = re.search(r"([\d,]+)円", self._buf)
             if m and self.trifecta_paid is None:
                 self.trifecta_paid = int(m.group(1).replace(",", ""))
@@ -812,9 +838,15 @@ def fetch_results(target_date: str):
             "second_place": parser.results.get("2"),
             "third_place": parser.results.get("3"),
             "trifecta_paid": parser.trifecta_paid,
+            "payouts": parser.payouts,
             "is_prediction_correct": is_correct,
         }
-        supabase_rest("POST", "horse_results", result_row)
+        stored_result = supabase_rest("POST", "horse_results", result_row)
+        if not stored_result and parser.payouts:
+            # Migration not applied yet: keep the legacy result write path alive.
+            legacy_result_row = dict(result_row)
+            legacy_result_row.pop("payouts", None)
+            supabase_rest("POST", "horse_results", legacy_result_row)
         supabase_rest("PATCH", f"horse_races?id=eq.{race_db_id}", {"status": "completed"})
         # ensemble 予想の精度をスコアリング → horse_provider_leaderboard に反映
         tools_hub_call("horseracing.evaluate_accuracy", {"race_id": race_db_id})
