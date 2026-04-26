@@ -32,6 +32,7 @@ class _PublicGuitarGalleryPageState extends State<PublicGuitarGalleryPage> {
   }
 
   Future<void> _fetchGallery({bool reset = false}) async {
+    if (_supabase.auth.currentUser == null) return;
     if (_isLoading) return;
     final nextOffset = reset ? 0 : _offset;
     setState(() {

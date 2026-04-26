@@ -126,6 +126,7 @@ class _LandingPageState extends State<LandingPage> {
   Future<void> _loadAchievementCount() async {
     final client = _supabaseClientOrNull;
     if (client == null) return;
+    if (client.auth.currentUser == null) return;
     try {
       final response = await client.functions.invoke(
         'core-hub',

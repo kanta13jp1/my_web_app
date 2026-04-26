@@ -298,6 +298,10 @@ $hashtags
   }
 
   Future<void> _generatePressRelease() async {
+    if (Supabase.instance.client.auth.currentUser == null) {
+      setState(() => _isLoading = false);
+      return;
+    }
     final channelKey = _channelKey();
 
     setState(() => _isLoading = true);

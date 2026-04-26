@@ -47,6 +47,10 @@ class _AiImageGeneratorPageState extends State<AiImageGeneratorPage> {
   }
 
   Future<void> _fetchImages() async {
+    if (_supabase.auth.currentUser == null) {
+      setState(() => _isFetching = false);
+      return;
+    }
     setState(() {
       _isFetching = true;
       _errorMessage = null;
