@@ -21478,3 +21478,17 @@ Google I/O 2026 競合脅威 事前ブリーフィング
   - deploy-prod.yml に `repair --status applied 20260426215000` 追加 (competitors_batch2 をスキップ)
   - rebase 衝突 (215001 vs 215100) を解決 → `adff8d75` push → Issue #800 close
 - **deploy**: `24951002503` pending 🔄
+
+### PS#4 S67 — jp_strength/weakness 全172社完結 (2026-04-26 深夜)
+- **Batch 2-6 完了**: migration 5本 → 全172社 jp_strength/jp_weakness 設定完了
+  | Batch | 社数 | 主な対象 |
+  |-------|------|---------|
+  | 2 (222000) | 15 | cloudsign(CRITICAL/ov8) + 14 MEDIUM/LOW |
+  | 3 (224000) | 13 | slack・chatwork(original21) + huggingface 等 |
+  | 4 (225500) | 11 | ntt-docomo・datadog・databricks 等 ov=4 MEDIUM |
+  | 5 (231000) | 20 | openclaw・jobcan・google・microsoft 等 original21残 |
+  | 6 (232500) | 20 | 物流・エンタメ・Fintech・criteo 等 最終 |
+- **累計**: S62 Batch1(18) + S63 notion-ai + S66 Batch2(15) → S67 Batch3-6(64) = **全172社完結** ✅
+- **timestamp collision 修正**: 20260426215000 → 20260426222000 rename で PS#3 collision 解消
+- **commit chain**: e22a8ddf → 344176e7 → 7b8eba77 → 72b4877d → 51c6938f → a5d913d4 (1ac01db0)
+- **次回 PS#4**: Google I/O 2026-05-20 当日チェック + Notion Japan DC SCOREBOARD
