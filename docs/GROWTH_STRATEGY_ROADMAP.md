@@ -20591,3 +20591,25 @@ habit_tracker / time_tracker / reading_list / calendar_events
 **Pattern**: `if (_supabase.auth.currentUser == null) { setState(() => _isLoading = false); return; }`
 
 **Philosophy**: ✅商品=ユーザー価値 (anon UX改善・エラー消去) ✅本質優先
+
+
+### WEB版 daily-report (2026-04-26) — 競合インテリジェンス更新
+
+**実施内容**: 日次レポート生成 + 競合モニタリング (WebSearch)
+
+**競合重大変化** (要対応):
+
+1. **Notion MCP Server GA**: Cursor等のAIツールからNotion操作が可能に。MCPエコシステムのハブ化戦略。
+   → 対抗: `schedule-hub` にMCPプロトコル準拠エンドポイント追加を検討
+
+2. **Slack CRM 日本GA** (2026-04-21): Business+でネイティブCRM機能 + Slackbot Desktop Agent (画面認識) が日本提供開始。
+   → 自分株式会社「個人×法人 統合ライフOS」差別化を明確化して訴求
+
+3. **GitHub Copilot Pro/Pro+新規登録停止** (2026-04-20): Opusモデル削除・エージェント型コスト増大。
+   → AI大学で「Claude Code vs GitHub Copilot」比較記事の投稿チャンス
+
+**AI大学健全性問題**: 60+プロバイダーのRSS取得が毎回失敗中。`ai-university-update` EF の URL/ロジック調査を VSCode版に依頼推奨。
+
+**GitHub Issues (auto-review)**: 0件 — 要対応なし
+
+**Philosophy**: ✅ユーザー価値 (競合対抗戦略強化) ✅本質優先
