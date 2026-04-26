@@ -31,6 +31,10 @@ class _CustomerFeedbackPageState extends State<CustomerFeedbackPage> {
   }
 
   Future<void> _fetchFeedbacks() async {
+    if (_supabase.auth.currentUser == null) {
+      setState(() => _isLoading = false);
+      return;
+    }
     setState(() {
       _isLoading = true;
       _errorMessage = null;

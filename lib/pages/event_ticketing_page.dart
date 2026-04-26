@@ -89,6 +89,10 @@ class _EventTicketingPageState extends State<EventTicketingPage> {
   }
 
   Future<void> _fetchEvents() async {
+    if (_supabase.auth.currentUser == null) {
+      setState(() => _isLoading = false);
+      return;
+    }
     setState(() {
       _isLoading = true;
       _errorMessage = null;

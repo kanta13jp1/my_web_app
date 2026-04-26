@@ -58,6 +58,10 @@ class _FitnessHealthTrackerPageState extends State<FitnessHealthTrackerPage>
   }
 
   Future<void> _fetchData() async {
+    if (_supabase.auth.currentUser == null) {
+      setState(() => _isLoading = false);
+      return;
+    }
     setState(() {
       _isLoading = true;
       _errorMessage = null;

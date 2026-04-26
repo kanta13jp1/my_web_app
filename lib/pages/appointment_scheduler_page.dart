@@ -24,6 +24,10 @@ class _AppointmentSchedulerPageState extends State<AppointmentSchedulerPage> {
   }
 
   Future<void> _fetchAppointments() async {
+    if (_supabase.auth.currentUser == null) {
+      setState(() => _isLoading = false);
+      return;
+    }
     setState(() {
       _isLoading = true;
       _errorMessage = null;
