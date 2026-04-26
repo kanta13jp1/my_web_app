@@ -38,6 +38,10 @@ class _GanttTimelinePageState extends State<GanttTimelinePage>
   }
 
   Future<void> _fetchProjects() async {
+    if (_supabase.auth.currentUser == null) {
+      setState(() => _isLoading = false);
+      return;
+    }
     setState(() {
       _isLoading = true;
       _errorMessage = null;

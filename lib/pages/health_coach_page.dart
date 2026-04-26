@@ -39,6 +39,10 @@ class _HealthCoachPageState extends State<HealthCoachPage>
   }
 
   Future<void> _fetchAll() async {
+    if (_supabase.auth.currentUser == null) {
+      setState(() => _isLoading = false);
+      return;
+    }
     setState(() {
       _isLoading = true;
       _errorMessage = null;
