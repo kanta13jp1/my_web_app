@@ -70,6 +70,7 @@ UIコンポーネントを新規作成・修正する際は、以下のファイ
 | `[INSTANCE]` | セッション冒頭で Win/PS/VSCode 確認 | — |
 | `[PHILOSOPHY-22]` | docs/PHILOSOPHY.md 9 原則チェック | Rule 17 (旧 22) |
 | `[AI-DEV-23]` | docs/AI_DEV_PRINCIPLES.md 7 原則チェック | Rule 18 (旧 23) |
+| `[AI-CHARACTER-24]` | docs/AI_CHARACTER_PRINCIPLES.md 8 原則 (AI 人格・倫理) チェック | Rule 24 (新規 2026-04-26) |
 | `[AUTO-REPLY]` | author == 自分 で必ず skip + cap | — |
 | `[DART-FORMAT]` | dart format → flutter analyze 0 → push | Rule 1 + 2 |
 | `[REBASE]` | git fetch + log 確認 → pull --rebase | — |
