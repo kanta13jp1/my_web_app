@@ -21471,3 +21471,25 @@ Google I/O 2026 競合脅威 事前ブリーフィング
   - #18 Aug-22: supabase-edge-functions-ai-cost
   - #19 Aug-29: flutter-web-ai-integration-2026
   - #20 Sep-05: deno-vs-node-edge-functions
+
+## PS#3 S68 — 2026-04-26
+
+**AI大学 230→232社化** (You.com + Aisera)
+
+### You.com (230→231)
+- AIパーソナル検索エンジン + Productivity Suite (YouCode/YouWrite/YouImagine)
+- プライバシーファースト設計 (検索履歴収集なし/セッション限定)
+- マルチLLM (Pro: GPT-4 Turbo / Claude 3.5 / Gemini 1.5 選択可)
+- RAG API: $1/1000クエリ (Perplexity API比50%コスト削減)
+- Salesforce Ventures / Marc Benioff / ~$45M
+- 評価: 8/9
+
+### Aisera (231→232)
+- エンタープライズAI Service Management (AISM) パイオニア (2017年設立)
+- AISM-LLM: 業務ドメイン特化独自LLM (社内チケット/HRポリシーでファインチューニング)
+- IT問い合わせ 80%+ 自動解決 / CSAT 25%向上 / ヘルプデスクコスト 40-60%削減
+- 信頼スコア3段階 (>0.85=自動実行 / 0.6-0.85=確認 / <0.6=エスカレーション)
+- Gladstone Investment / True Ventures / Menlo Ventures / Norwest / ~$90M
+- 評価: 8/9
+
+**commit**: 12b6ed38
