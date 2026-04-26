@@ -148,7 +148,6 @@ import '../pages/virtual_pet_page.dart';
 import '../pages/work_menu_page.dart';
 import '../pages/workflow_templates_page.dart';
 import '../pages/crm_sales_pipeline_page.dart';
-import '../pages/horse_racing_predictor_page.dart';
 import '../pages/travel_itinerary_page.dart';
 import '../pages/virtual_whiteboard_page.dart';
 import '../pages/recipe_meal_planner_page.dart';
@@ -2091,7 +2090,7 @@ List<HomeToolEntry> buildHomeToolCatalog({
         'G1',
         'スコアリング',
       ],
-      onOpen: (context) => _pushPage(context, const HorseRacingPredictorPage()),
+      onOpen: (context) => Navigator.of(context).pushNamed('/horse-racing'),
     ),
     HomeToolEntry(
       id: 'travel-planner',

@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+
+import '../widgets/home_back_button.dart';
 import 'horse_provider_leaderboard_page.dart';
 import 'horseracing_race_detail_page.dart';
 
@@ -409,6 +411,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
       backgroundColor: const Color(0xFF0A0A0A),
       appBar: AppBar(
         backgroundColor: const Color(0xFF1A1A1A),
+        leading: const HomeBackButton(),
         title: Row(
           children: [
             const Text(
