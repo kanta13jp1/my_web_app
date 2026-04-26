@@ -23,6 +23,42 @@ AI ツールで開発スピードが圧倒的に上がる一方、**目に見え
 
 ---
 
+## Responsible Vibe Coding 運用ルール (2026-04-27 追加)
+
+> **追加ソース**: NotebookLM Notebook [Vibe Coding: Responsible Engineering in the Era of AI Agents](https://notebooklm.google.com/notebook/ddde5a4b-ce1a-405d-8291-a334a9371454)
+> AI を「実装者」として使い、人間が「PM / アーキテクト / QA」として目的・分解・検証を握るための運用ルール。
+
+### 基本方針
+
+- **コーディング前に目標を定める**: 目的、成功条件、触る範囲、触らない範囲を先に書く。
+- **AI には leaf-node を任せる**: UI 部品、末端ロジック、テスト補助、データ整形など影響範囲が閉じた作業を優先する。
+- **コア領域は人間レビュー必須**: 認証、DB、課金、外部投稿、権限、Secrets、バッチ実行は AI 単独で完了扱いにしない。
+- **レビュー対象は挙動**: 生成コードの雰囲気ではなく、入力、出力、CI、E2E、業務プロセスへの影響を確認する。
+- **長い AI セッションは区切る**: 目的、変更点、未検証事項、残リスク、次の一手を記録してコンテキストを圧縮する。
+
+### 実装時チェックポイント
+
+```markdown
+### Responsible Vibe Coding Check
+
+- [ ] Goal: 何を達成すれば完了かを 1 文で書いたか?
+- [ ] Scope: 触るファイル / 触らないファイルを決めたか?
+- [ ] Leaf-node: AI に任せる作業は末端機能に閉じているか?
+- [ ] Impact map: 画面・API・DB・バッチ・外部連携の影響を説明できるか?
+- [ ] Tests: 入出力ベースのテスト、または手動検証手順を用意したか?
+- [ ] Human review: 認証・DB・課金・外部投稿・Secrets を人間レビュー対象にしたか?
+- [ ] Rollback: 失敗時の戻し方、停止方法、再実行方法を確認したか?
+```
+
+### 本プロジェクトへの適用
+
+- `docs/AI_DEV_PRINCIPLES.md` を AI 実装前の必読チェックリストとする。
+- `lib/pages/ai_dev_principles_page.dart` に Responsible Vibe Coding のカードを表示し、サイト上から確認できるようにする。
+- GitHub Actions / Supabase Edge Functions / 外部投稿機能は、必ず Quality Gate と rollback 観点をセットで実装する。
+- WBS / GitHub Issues の追加要望は、AI が着手する前に Goal / Scope / Tests を明確化する。
+
+---
+
 ## 7 原則
 
 ### 原則 1: 認証レイヤー管理 (Auth Layer Discipline)

@@ -71,6 +71,8 @@ class _AiDevPrinciplesPageState extends State<AiDevPrinciplesPage> {
                 children: [
                   _heroHeader(),
                   const SizedBox(height: 32),
+                  _responsibleVibeCodingSection(),
+                  const SizedBox(height: 32),
                   _videoSelector(),
                   const SizedBox(height: 16),
                   _videoEmbed(video),
@@ -94,6 +96,149 @@ class _AiDevPrinciplesPageState extends State<AiDevPrinciplesPage> {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  // ─── Responsible Vibe Coding ─────────────────────────────────────
+  Widget _responsibleVibeCodingSection() {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: const Color(0xFF111827),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFF334155), width: 1),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: const Color(0x3326A69A),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(
+                  Icons.account_tree_outlined,
+                  color: Color(0xFF26A69A),
+                  size: 22,
+                ),
+              ),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Responsible Vibe Coding',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFFFAFAFA),
+                        height: 1.4,
+                      ),
+                    ),
+                    Text(
+                      'NotebookLM: Vibe coding in prod | Code w/ Claude',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Color(0xFF94A3B8),
+                        height: 1.5,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          const Text(
+            'AI には leaf-node の実装を任せ、人間は目標・影響範囲・検証を握る。'
+            '設計前にコンテキストを渡し、コードレビューでは差分より入出力と業務影響を確認します。',
+            style: TextStyle(
+              fontSize: 14,
+              color: Color(0xFFCBD5E1),
+              height: 1.8,
+            ),
+          ),
+          const SizedBox(height: 20),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final isWide = constraints.maxWidth >= 760;
+              final cols = isWide ? 3 : 1;
+              final width = (constraints.maxWidth - (cols - 1) * 12) / cols;
+              return Wrap(
+                spacing: 12,
+                runSpacing: 12,
+                children: _vibeCodingGuardrails.map((guardrail) {
+                  return SizedBox(
+                    width: width,
+                    child: _vibeCodingGuardrailCard(guardrail),
+                  );
+                }).toList(),
+              );
+            },
+          ),
+          const SizedBox(height: 20),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: const Color(0x1AFACC15),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: const Color(0x55FACC15)),
+            ),
+            child: const Text(
+              '本番適用ルール: 認証・DB・課金・自動投稿・外部API連携は AI 単独で完了扱いにしない。'
+              '必ず人間レビュー、テスト、ロールバック観点をセットにします。',
+              style: TextStyle(
+                fontSize: 13,
+                color: Color(0xFFFDE68A),
+                height: 1.7,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _vibeCodingGuardrailCard(_VibeCodingGuardrail guardrail) {
+    return Container(
+      constraints: const BoxConstraints(minHeight: 144),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1E293B),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFF475569), width: 1),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(guardrail.icon, color: const Color(0xFF26A69A), size: 20),
+          const SizedBox(height: 10),
+          Text(
+            guardrail.title,
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+              color: Color(0xFFFAFAFA),
+              height: 1.4,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            guardrail.body,
+            style: const TextStyle(
+              fontSize: 12,
+              color: Color(0xFFCBD5E1),
+              height: 1.7,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -870,6 +1015,50 @@ class _AiDevPrinciplesPageState extends State<AiDevPrinciplesPage> {
 // ─────────────────────────────────────────────────────────────────────
 // データ
 // ─────────────────────────────────────────────────────────────────────
+
+class _VibeCodingGuardrail {
+  final IconData icon;
+  final String title;
+  final String body;
+  const _VibeCodingGuardrail({
+    required this.icon,
+    required this.title,
+    required this.body,
+  });
+}
+
+const _vibeCodingGuardrails = [
+  _VibeCodingGuardrail(
+    icon: Icons.flag_outlined,
+    title: 'Goal first',
+    body: 'コーディング前に目的、成功条件、触る範囲を明文化する。プロンプトは作業指示ではなく小さなPRDにする。',
+  ),
+  _VibeCodingGuardrail(
+    icon: Icons.call_split_outlined,
+    title: 'Leaf-node delegation',
+    body: 'AIには末端機能、UI部品、テスト補助を任せる。認証、DB、課金、公開投稿は人間レビューを必須にする。',
+  ),
+  _VibeCodingGuardrail(
+    icon: Icons.verified_outlined,
+    title: 'Behavior verification',
+    body: 'レビュー対象は生成コードそのものより、入出力、E2Eテスト、CI、業務プロセスへの影響に置く。',
+  ),
+  _VibeCodingGuardrail(
+    icon: Icons.schema_outlined,
+    title: 'Context map',
+    body: 'コード、API、DB、画面、バッチの対応関係を常に説明できる状態にして、変更影響を追跡する。',
+  ),
+  _VibeCodingGuardrail(
+    icon: Icons.restart_alt_outlined,
+    title: 'Session compaction',
+    body: '長いAIセッションは、目的、変更点、未検証事項、次の一手を残して区切る。同じ文脈で粘りすぎない。',
+  ),
+  _VibeCodingGuardrail(
+    icon: Icons.health_and_safety_outlined,
+    title: 'Safe sandbox',
+    body: '本番データ、秘密情報、外部投稿を直接触る前に、サンドボックスとロールバック手順を確認する。',
+  ),
+];
 
 class _Video {
   final String id;
