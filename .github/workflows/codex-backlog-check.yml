@@ -43,7 +43,7 @@ jobs:
             if [ -z "$existing" ]; then
               gh issue create \
                 --title "[ops] Codex worktree merge backlog (7+ days unmerged)" \
-                --label "ops,bot" \
+                --label "workflow-failure,powershell-instance" \
                 --body "$(printf 'Unmerged codex/* branches >= 7 days old:\n\n%s\n\nReview each branch and either merge or close.\n\n— codex-backlog-check.yml' "$unmerged")"
               echo "Issue created for $unmerged"
             else
