@@ -258,7 +258,9 @@ const MANUAL_2026_SCHEDULES: ManualScheduleSupplement[] = [
     electionName: "春日部市議会議員選挙",
     voteDate: "2026-04-19",
     electionCategory: "assembly",
-    candidates: [{ name: "えんどう彩生", xHandle: "Saiki_Endo" }],
+    candidates: [
+      { name: "えんどう 彩生", statusLabel: "当選", xHandle: "Saiki_Endo" },
+    ],
   },
   {
     prefecture: "福井県",

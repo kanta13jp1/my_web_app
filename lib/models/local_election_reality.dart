@@ -434,6 +434,11 @@ class LocalElectionScheduleEntry {
     required String voteDate,
     required List<String> names,
   }) {
+    if (_isKasukabeCityCouncil2026(prefecture, electionName, voteDate) &&
+        names.any((item) => _candidateKey(item).contains('えんどう'))) {
+      return const <String>['えんどう 彩生'];
+    }
+
     if (!_isKukiCityCouncil2026(prefecture, electionName, voteDate) ||
         names.length < 2) {
       return names;
@@ -453,6 +458,11 @@ class LocalElectionScheduleEntry {
     required List<String> names,
     required List<String> statuses,
   }) {
+    if (_isKasukabeCityCouncil2026(prefecture, electionName, voteDate) &&
+        names.any((item) => _candidateKey(item).contains('えんどう'))) {
+      return const <String>['当選'];
+    }
+
     if (!_isKukiCityCouncil2026(prefecture, electionName, voteDate) ||
         names.length < 2) {
       return statuses;
@@ -474,6 +484,18 @@ class LocalElectionScheduleEntry {
     final normalizedElection = electionName.trim();
     return (normalizedPrefecture == '埼玉' || normalizedPrefecture == '埼玉県') &&
         normalizedElection.contains('久喜市議会議員選挙') &&
+        voteDate.trim() == '2026-04-19';
+  }
+
+  static bool _isKasukabeCityCouncil2026(
+    String prefecture,
+    String electionName,
+    String voteDate,
+  ) {
+    final normalizedPrefecture = prefecture.trim();
+    final normalizedElection = electionName.trim();
+    return (normalizedPrefecture == '埼玉' || normalizedPrefecture == '埼玉県') &&
+        normalizedElection.contains('春日部市議会議員選挙') &&
         voteDate.trim() == '2026-04-19';
   }
 
