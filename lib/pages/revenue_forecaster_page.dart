@@ -23,6 +23,10 @@ class _RevenueForecasterPageState extends State<RevenueForecasterPage> {
   }
 
   Future<void> _fetchForecast() async {
+    if (_supabase.auth.currentUser == null) {
+      setState(() => _isLoading = false);
+      return;
+    }
     setState(() {
       _isLoading = true;
       _errorMessage = null;

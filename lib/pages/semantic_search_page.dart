@@ -26,6 +26,10 @@ class _SemanticSearchPageState extends State<SemanticSearchPage> {
   Future<void> _search() async {
     final query = _queryController.text.trim();
     if (query.isEmpty) return;
+    if (_supabase.auth.currentUser == null) {
+      setState(() => _isLoading = false);
+      return;
+    }
     setState(() {
       _isLoading = true;
       _errorMessage = null;

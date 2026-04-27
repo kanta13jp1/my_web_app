@@ -59,6 +59,10 @@ class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
   }
 
   Future<void> _analyzeImage(Uint8List bytes) async {
+    if (_supabase.auth.currentUser == null) {
+      setState(() => _isLoading = false);
+      return;
+    }
     setState(() {
       _isLoading = true;
     });

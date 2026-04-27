@@ -55,6 +55,10 @@ class _QuotaDashboardPageState extends State<QuotaDashboardPage> {
   }
 
   Future<void> _loadLatest() async {
+    if (_supabase.auth.currentUser == null) {
+      setState(() => _isLoading = false);
+      return;
+    }
     setState(() => _isLoading = true);
     try {
       final res = await _supabase.functions.invoke(
@@ -76,6 +80,10 @@ class _QuotaDashboardPageState extends State<QuotaDashboardPage> {
   }
 
   Future<void> _loadHistory() async {
+    if (_supabase.auth.currentUser == null) {
+      setState(() => _isLoading = false);
+      return;
+    }
     setState(() => _historyLoading = true);
     try {
       final res = await _supabase.functions.invoke(
