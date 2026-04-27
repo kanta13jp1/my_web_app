@@ -1749,8 +1749,7 @@ const List<AiProviderEntry> kAiProviderRegistry = [
     displayName: 'Framer AI',
     status: AiProviderStatus.notImplemented,
     entryPoint: 'https://www.framer.com/ai/',
-    note:
-        r'AI Web サイトビルダー — 自然言語でサイト生成 / React 出力 / デザイナー特化 / ノーコード / ★8/9',
+    note: r'AI Web サイトビルダー — 自然言語でサイト生成 / React 出力 / デザイナー特化 / ノーコード / ★8/9',
   ),
   AiProviderEntry(
     id: 'beautiful-ai',

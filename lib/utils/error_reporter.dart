@@ -208,13 +208,12 @@ class ErrorReporter {
     final hasDebugFocusTraversalStack =
         stack.contains('FocusTraversalPolicy') ||
             stack.contains('FocusTraversalGroup');
-    final hasReleaseFocusTraversalStack =
-        stack.contains('.gN') &&
-            stack.contains('.gn') &&
-            stack.contains('.ge') &&
-            stack.contains('Object.e') &&
-            stack.contains('Object.dy') &&
-            stack.contains('.ak');
+    final hasReleaseFocusTraversalStack = stack.contains('.gN') &&
+        stack.contains('.gn') &&
+        stack.contains('.ge') &&
+        stack.contains('Object.e') &&
+        stack.contains('Object.dy') &&
+        stack.contains('.ak');
 
     return hasDebugFocusTraversalStack || hasReleaseFocusTraversalStack;
   }

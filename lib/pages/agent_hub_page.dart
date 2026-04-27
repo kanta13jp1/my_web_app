@@ -39,11 +39,11 @@ class _AgentHubPageState extends State<AgentHubPage>
     try {
       final results = await Future.wait([
         _supabase.functions
-            .invoke('agent-hub', queryParameters: {'action': 'departments'}),
+            .invoke('enterprise-hub', body: {'action': 'agent.departments'}),
         _supabase.functions
-            .invoke('agent-hub', queryParameters: {'action': 'performance'}),
+            .invoke('enterprise-hub', body: {'action': 'agent.performance'}),
         _supabase.functions
-            .invoke('agent-hub', queryParameters: {'action': 'routing'}),
+            .invoke('enterprise-hub', body: {'action': 'agent.routing'}),
       ]);
       setState(() {
         final deptData = results[0].data;

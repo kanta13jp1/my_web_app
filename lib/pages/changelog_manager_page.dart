@@ -29,7 +29,7 @@ class _ChangelogManagerPageState extends State<ChangelogManagerPage> {
     });
     try {
       final res = await _supabase.functions
-          .invoke('changelog-manager', body: {'action': 'list'});
+          .invoke('app-hub', body: {'action': 'changelog.list'});
       if (res.data != null) {
         final data = res.data as Map<String, dynamic>;
         setState(() {
