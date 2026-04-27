@@ -21991,3 +21991,14 @@ Google I/O 2026 競合脅威 事前ブリーフィング
 - T-1 第41弾: Public memo vs Notion pages → https://dev.to/kanta13jp1/public-memos-vs-notion-pages-why-publish-anything-beats-publish-perfectly-5343
 - T-1 第42弾: Kanban AI auto-sort → https://dev.to/kanta13jp1/ai-sorted-kanban-delegating-priority-decisions-to-a-score-490f
 - **dev.to 累計 42本 / 全 draft 消化完結 🎉**
+
+## 2026-04-28 PS#6 S74 — GHA double-exec bug fix + force backfill 504 timeout fix
+
+- `eefc3b50` on main
+- `.github/workflows/horse-racing-update.yml`: "all mode" ステップに SKIP_MODES ガード追加
+  - history/evaluate/backfill/stats/dqs_recalc 専用モード dispatch 時の二重実行を解消
+  - 504 IDLE_TIMEOUT (run 25023003984) の root cause #1 修正
+- `supabase/functions/tools-hub/index.ts`: force=true 時の limit を max 60 に制限
+  - Supabase 150s idle timeout 内で完結するよう defaultLimit も 60 に設定
+  - 504 IDLE_TIMEOUT の root cause #2 修正 (30days×force=160 entries >> 150s)
+  - 通常 backfill (force=false) は max 500 / default 160 を維持
