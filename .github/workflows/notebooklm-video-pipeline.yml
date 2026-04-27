@@ -118,10 +118,9 @@ jobs:
         env:
           ASR_CORRECTIONS: ${{ inputs.asr_corrections_json }}
         run: |
-          python videos/build_srt.py \
+          python scripts/video/build_srt.py \
             videos/edit/transcripts/${{ inputs.slug }}.json \
             videos/master.srt
-          # TODO: pass ASR_CORRECTIONS env var into build_srt.py
 
       - name: Step 4 — Generate intro/outro cards
         env:
@@ -207,10 +206,8 @@ jobs:
             -m "VIDEO_ID=$VIDEO_ID  DURATION=$VIDEO_DURATION  TITLE=${{ inputs.title }}"
           git push origin HEAD:main
 
-# 残スコープ (Win版#132 part 31+ / cross-instance-pr 検討):
-# - videos/build_srt.py を repo に新規作成 (Step 3 で参照中・現在は不在)
-#   仕様: 句読点/字数(18)/duration(4s)/cap(28字) で SRT 分割 + ASR_CORRECTIONS env 適用
-# - videos/make_cards.py を repo に新規作成 (Step 4 で参照中・現在は不在)
+# 残スコープ (Win版#132 part 33+ / cross-instance-pr 検討):
+# - scripts/video/make_cards.py を repo に新規作成 (Step 4 で参照中・現在は不在)
 #   仕様: PIL + Noto Sans JP で intro/outro 1280x720 PNG 生成 (CARD_TITLE / CARD_SERIES env)
 # - YouTube quota 監視 (10000 units/day / 1 upload = 1600 units = 6/day max)
 # - Slack 通知 (成功時 video URL / 失敗時 step + log link)
@@ -220,3 +217,7 @@ jobs:
 #
 # 完了済 (Win版#132 part 31):
 # - Step 2 transcribe.py vendor → scripts/video/transcribe.py (ElevenLabs Scribe / requests dep 追加)
+#
+# 完了済 (Win版#132 part 32):
+# - Step 3 build_srt.py 新規 → scripts/video/build_srt.py
+#   (Scribe JSON → SRT / 句読点+18字+4秒+28字 cap / ASR_CORRECTIONS env / unit test 6 cue)
