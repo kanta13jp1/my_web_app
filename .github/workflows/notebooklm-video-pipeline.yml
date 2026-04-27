@@ -127,8 +127,8 @@ jobs:
           CARD_TITLE: ${{ inputs.title }}
           CARD_SERIES: '#${{ inputs.series_number }}'
         run: |
-          # TODO: parameterize make_cards.py via env vars (CARD_TITLE / CARD_SERIES)
-          python videos/make_cards.py
+          python scripts/video/make_cards.py --output-dir videos
+          ls -lh videos/intro.png videos/outro.png
 
       - name: Step 5 — Encode intro/outro mp4 (1280x720@24)
         run: |
@@ -206,11 +206,10 @@ jobs:
             -m "VIDEO_ID=$VIDEO_ID  DURATION=$VIDEO_DURATION  TITLE=${{ inputs.title }}"
           git push origin HEAD:main
 
-# 残スコープ (Win版#132 part 33+ / cross-instance-pr 検討):
-# - scripts/video/make_cards.py を repo に新規作成 (Step 4 で参照中・現在は不在)
-#   仕様: PIL + Noto Sans JP で intro/outro 1280x720 PNG 生成 (CARD_TITLE / CARD_SERIES env)
+# 残スコープ (Win版#132 part 34+ / cross-instance-pr 検討):
 # - YouTube quota 監視 (10000 units/day / 1 upload = 1600 units = 6/day max)
 # - Slack 通知 (成功時 video URL / 失敗時 step + log link)
+# - workflow E2E smoke test (実 dispatch / video #1 重複 ID で Step 8 dup-guard 発火確認)
 #
 # 完了済 (Win版#132 part 30):
 # - Step 8 自動 embed → scripts/embed_video_in_philosophy.py (regex insert + dup-guard)
@@ -221,3 +220,8 @@ jobs:
 # 完了済 (Win版#132 part 32):
 # - Step 3 build_srt.py 新規 → scripts/video/build_srt.py
 #   (Scribe JSON → SRT / 句読点+18字+4秒+28字 cap / ASR_CORRECTIONS env / unit test 6 cue)
+#
+# 完了済 (Win版#132 part 33):
+# - Step 4 make_cards.py 新規 → scripts/video/make_cards.py
+#   (PIL + Noto Sans CJK JP / 1280x720 PNG / Orange+Indigo dark theme / CARD_TITLE+CARD_SERIES env
+#   / 自動 wrap / fonts-noto-cjk apt 自動検出 / Windows local NotoSansJP-VF.ttf fallback)
