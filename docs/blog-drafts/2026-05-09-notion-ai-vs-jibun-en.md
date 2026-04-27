@@ -1,7 +1,7 @@
 ---
 title: "Notion AI vs Jibun Kaisha — Why 'Team AI' and 'Personal AI' Are Fundamentally Different"
 tags: notion,ai,productivity,startup
-published: false
+published: true
 ---
 
 # Notion AI vs Jibun Kaisha — Why "Team AI" and "Personal AI" Are Fundamentally Different

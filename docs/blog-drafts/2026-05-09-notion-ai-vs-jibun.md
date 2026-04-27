@@ -1,7 +1,7 @@
 ---
 title: "Notion AI と自分株式会社の決定的な違い — 「チームのAI」と「自分のAI」は別物だ"
 tags: Notion,AI,個人開発,buildinpublic
-published: false
+published: true
 ---
 
 # Notion AI と自分株式会社の決定的な違い — 「チームのAI」と「自分のAI」は別物だ
