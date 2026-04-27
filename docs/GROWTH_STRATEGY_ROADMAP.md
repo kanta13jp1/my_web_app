@@ -21704,3 +21704,14 @@ Google I/O 2026 競合脅威 事前ブリーフィング
   - https://dev.to/kanta13jp1/notion-database-limits-workarounds-7-walls-every-power-user-hits-5n0
 - JA slug: `2026-05-16-notion-database-limits-workaround`
 - orphan branch マージ + 削除
+
+## 2026-04-27 (PS#5 S65)
+
+### PS#5 S65: Flutter Web InkHover null エラー抑制
+
+- `lib/utils/error_reporter.dart`: 未コミット変更を審査・コミット (`68ebfca7`)
+  - `_isIgnorableFlutterWebInkHoverError` 追加
+  - Flutter Web が Element unmount 後に InkResponse/MouseTracker の hover callback を呼ぶ既知バグを無音化
+  - FlutterError.onError + PlatformDispatcher.onError 両方に適用
+  - release stack fingerprint (auU/uT/cgd) で過剰抑制を防止
+  - dart format 0変更 / flutter analyze 0エラー確認 → push
