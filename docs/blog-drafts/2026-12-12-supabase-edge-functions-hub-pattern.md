@@ -1,7 +1,7 @@
 ---
 title: "Supabase Edge Functions を50本以下に抑える — hub パターンとその実践"
 tags: supabase,AI,個人開発,postgresql
-published: false
+published: true
 ---
 
 # Supabase Edge Functions を50本以下に抑える — hub パターンとその実践

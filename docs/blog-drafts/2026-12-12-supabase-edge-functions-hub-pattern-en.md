@@ -1,7 +1,7 @@
 ---
 title: "The Hub Pattern: Keeping Supabase Edge Functions Under 50"
 tags: supabase,ai,postgresql,indiedev
-published: false
+published: true
 ---
 
 # The Hub Pattern: Keeping Supabase Edge Functions Under 50
