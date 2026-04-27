@@ -1,16 +1,30 @@
 {
-  "fetched_at": "2026-04-27T08:00:00Z",
-  "note": "health-monitor.yml (毎30分) が自動更新。WEB版 cs-check は curl の代わりにこのファイルを Read してください。",
+  "fetched_at": "2026-04-27T21:50:26Z",
   "tickets": {
-    "http_code": "000",
+    "http_code": "200",
     "count": 0,
-    "ok": false,
-    "data": {"tickets": []}
+    "ok": true,
+    "data": {
+      "success": true,
+      "tickets": []
+    }
   },
   "infra": {
-    "firebase": {"code": "000", "ok": false},
-    "get-home-dashboard": {"code": "000", "ok": false},
-    "guitar-recording-studio": {"code": "000", "ok": false},
-    "health-check": {"code": "000", "ok": false}
+    "firebase": {
+      "code": "200",
+      "ok": true
+    },
+    "get-home-dashboard": {
+      "code": "200",
+      "ok": true
+    },
+    "guitar-recording-studio": {
+      "code": "",
+      "ok": false
+    },
+    "health-check": {
+      "code": "",
+      "ok": false
+    }
   }
 }
