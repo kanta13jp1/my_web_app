@@ -30,6 +30,7 @@ jobs:
           # get-support-tickets は admin-hub に統合済み (support.list action)
           HTTP_CODE=$(curl -s -o /tmp/tickets.json -w "%{http_code}" \
             -X POST \
+            -H "apikey: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
             -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
             -H "Content-Type: application/json" \
             -d '{"action":"support.list"}' \
