@@ -119,6 +119,21 @@ jobs:
             echo "統計レポートはスキップ (時刻: ${HOUR}時)"
           fi
 
+      - name: データ品質スコア再計算 (日曜JST 1時台 or dqs_recalc モード時のみ)
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL_PROD }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          MODE="${{ inputs.mode }}"
+          HOUR=$(TZ=Asia/Tokyo date +%H)
+          DOW=$(TZ=Asia/Tokyo date +%u)
+          if [ "$MODE" = "dqs_recalc" ] || ([ "$DOW" = "7" ] && [ "$HOUR" = "01" ]); then
+            echo "データ品質スコア再計算を実行 (DOW=${DOW}, 時刻=${HOUR}時)"
+            python scripts/fetch_horse_racing.py --mode dqs_recalc
+          else
+            echo "dqs_recalcはスキップ (DOW=${DOW}, 時刻=${HOUR}時)"
+          fi
+
       - name: 完了サマリー
         run: |
           echo "### 競馬情報更新完了" >> "$GITHUB_STEP_SUMMARY"
