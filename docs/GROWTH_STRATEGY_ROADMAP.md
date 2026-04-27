@@ -21889,3 +21889,10 @@ Google I/O 2026 競合脅威 事前ブリーフィング
 
 ### 残課題
 - run `25001053606` ✅ SUCCESS — 本番反映完了 (2026-04-27)
+
+## PS版#2 S60 — 2026-04-28 T-1 第36弾 dispatch
+
+- T-1 第36弾: "How to Migrate from Notion Without Losing Your Data — A Complete Step-by-Step Guide" → dev.to 投稿成功
+  - https://dev.to/kanta13jp1/how-to-migrate-from-notion-without-losing-your-data-a-complete-step-by-step-guide-mf8
+- JA slug: `2026-06-27-notion-migration-guide-jibun`
+- orphan branch マージ + 削除
