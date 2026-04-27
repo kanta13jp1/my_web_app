@@ -969,12 +969,15 @@ def fetch_results(target_date: str):
     print(f"[DONE] 的中 {hits}件")
 
 
-def backfill_learning_data(target_date: str, days: int = 21, limit: int = 160):
+def backfill_learning_data(target_date: str, days: int = 21, limit: int = 160, force: bool = False):
     """Create historical baseline predictions and evaluate them against stored results."""
-    print(f"[INFO] 過去{days}日分の競馬AI学習データをバックフィル中...")
+    print(f"[INFO] 過去{days}日分の競馬AI学習データをバックフィル中... (force={force})")
+    payload: dict = {"date_to": target_date, "days": days, "limit": limit}
+    if force:
+        payload["force"] = True
     result = tools_hub_call(
         "horseracing.backfill_learning_data",
-        {"date_to": target_date, "days": days, "limit": limit},
+        payload,
         timeout=300,
     )
     if not result:
@@ -1226,6 +1229,12 @@ def main():
         default=21,
         help="backfill/stats モード時に遡る日数 (デフォルト: 21 / stats デフォルト推奨: 7)",
     )
+    parser.add_argument(
+        "--force",
+        action="store_true",
+        default=False,
+        help="backfill モード時: 既存のベースライン予想を上書き再生成する (ランキング算法変更後に使用)",
+    )
     args = parser.parse_args()
 
     if not SUPABASE_KEY:
@@ -1249,7 +1258,7 @@ def main():
         races = result.get("races_processed", 0)
         print(f"[DONE] 精度再評価完了: {evaluated} 件 ({races} レース)")
     elif args.mode == "backfill":
-        backfill_learning_data(target_date, getattr(args, "days", 21) or 21, getattr(args, "limit", 160) or 160)
+        backfill_learning_data(target_date, getattr(args, "days", 21) or 21, getattr(args, "limit", 160) or 160, force=bool(getattr(args, "force", False)))
     elif args.mode == "stats":
         print_learning_stats(days=getattr(args, "days", 7) or 7)
     elif args.mode == "dqs_recalc":
