@@ -22019,3 +22019,11 @@ Phase4 drafts 新規作成 (8ファイル):
 - T-1 第45弾: "Auto-Generating Video Content with AI" → https://dev.to/kanta13jp1/auto-generating-video-content-with-ai-notebooklm-elevenlabs-github-actions-pipeline-4578
 - T-1 第46弾: "260 AI Tools Catalogued" → https://dev.to/kanta13jp1/260-ai-tools-catalogued-why-i-built-a-personal-ai-university-51ol
 - **dev.to 累計 46本**
+
+## PS#5 S72 — 2026-04-28 (stale EF 参照修正)
+- **agent-hub EF 不在バグ修正**: enterprise-hub に agent.departments / agent.performance / agent.routing 追加
+- **changelog-manager EF 不在バグ修正**: app-hub に changelog.list / changelog.create 追加
+- **Flutter invoke 更新**: agent_hub_page.dart → enterprise-hub / changelog_manager_page.dart → app-hub
+- **EF 数**: 50 維持 (新 EF 追加なし)
+- **dart format**: ai_provider_registry.dart + error_reporter.dart 自動修正
+- commit: a4e12455 + dd178523

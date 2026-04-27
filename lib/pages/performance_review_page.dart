@@ -51,7 +51,7 @@ class _PerformanceReviewPageState extends State<PerformanceReviewPage>
     });
     try {
       final response = await _supabase.functions
-          .invoke('performance-review', body: {'action': 'list'});
+          .invoke('enterprise-hub', body: {'action': 'review.list'});
       final data = response.data;
       if (data is Map<String, dynamic> && data['reviews'] is List) {
         setState(
@@ -78,9 +78,9 @@ class _PerformanceReviewPageState extends State<PerformanceReviewPage>
     setState(() => _isLoading = true);
     try {
       await _supabase.functions.invoke(
-        'performance-review',
+        'enterprise-hub',
         body: {
-          'action': 'create',
+          'action': 'review.create',
           'period': _reviewPeriod,
           'goals': _goalCtrl.text,
           'self_feedback': _feedbackCtrl.text,
