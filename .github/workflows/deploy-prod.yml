@@ -96,6 +96,9 @@ jobs:
         run: |
           sed -i "s/^version: .*/version: ${{ steps.version.outputs.version }}+${{ github.run_number }}/" pubspec.yaml
 
+      - name: Check migration timestamp collisions
+        run: python scripts/check_migration_timestamps.py
+
       - name: Setup Supabase CLI
         uses: supabase/setup-cli@v2
         with:
