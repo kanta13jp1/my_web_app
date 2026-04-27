@@ -1764,6 +1764,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                             ? 'Magic Link送信はありますが、受信箱が開かれていません。送信後の次の行動をさらに明確にしてください。'
                             : '流れ込みはありますが登録が出ていません。登録完了直前での離脱が発生しています。';
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -1771,8 +1772,12 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: achieved
-              ? const [Color(0xFFE8F5E9), Color(0xFFF6FFF7)]
-              : const [Color(0xFFFFEBEE), Color(0xFFFFF8F8)],
+              ? (isDark
+                  ? const [Color(0xFF0D2E1A), Color(0xFF0A1F12)]
+                  : const [Color(0xFFE8F5E9), Color(0xFFF6FFF7)])
+              : (isDark
+                  ? const [Color(0xFF2E0A0A), Color(0xFF1F0808)]
+                  : const [Color(0xFFFFEBEE), Color(0xFFFFF8F8)]),
         ),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: accentColor.withValues(alpha: 0.35)),
@@ -3510,6 +3515,8 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                       } catch (_) {}
 
                       final isGoogle = provider.contains('google');
+                      final isDark =
+                          Theme.of(context).brightness == Brightness.dark;
 
                       Color profileColor;
                       if (!hasProfile || completionPct < 34) {
@@ -3528,8 +3535,12 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                             CircleAvatar(
                               radius: 18,
                               backgroundColor: isGoogle
-                                  ? const Color(0xFFE8F5E9)
-                                  : const Color(0xFFE8EAF6),
+                                  ? (isDark
+                                      ? const Color(0xFF0D2E1A)
+                                      : const Color(0xFFE8F5E9))
+                                  : (isDark
+                                      ? const Color(0xFF1A1E3A)
+                                      : const Color(0xFFE8EAF6)),
                               child: Text(
                                 email.isNotEmpty ? email[0].toUpperCase() : '?',
                                 style: TextStyle(
@@ -3569,8 +3580,12 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                                         ),
                                         decoration: BoxDecoration(
                                           color: isGoogle
-                                              ? const Color(0xFFE8F5E9)
-                                              : const Color(0xFFE8EAF6),
+                                              ? (isDark
+                                                  ? const Color(0xFF0D2E1A)
+                                                  : const Color(0xFFE8F5E9))
+                                              : (isDark
+                                                  ? const Color(0xFF1A1E3A)
+                                                  : const Color(0xFFE8EAF6)),
                                           borderRadius:
                                               BorderRadius.circular(6),
                                         ),
@@ -3791,6 +3806,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx2, setInner) {
+          final isDark = Theme.of(ctx2).brightness == Brightness.dark;
           Future<void> saveProfile() async {
             setInner(() => saving = true);
             try {
@@ -3839,8 +3855,12 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                   CircleAvatar(
                     radius: 20,
                     backgroundColor: isGoogle
-                        ? const Color(0xFFE8F5E9)
-                        : const Color(0xFFE8EAF6),
+                        ? (isDark
+                            ? const Color(0xFF0D2E1A)
+                            : const Color(0xFFE8F5E9))
+                        : (isDark
+                            ? const Color(0xFF1A1E3A)
+                            : const Color(0xFFE8EAF6)),
                     child: Text(
                       email.isNotEmpty ? email[0].toUpperCase() : '?',
                       style: TextStyle(
@@ -3896,15 +3916,17 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                   ),
                 ),
                 if (editMode)
-                  const Chip(
-                    label: Text(
+                  Chip(
+                    label: const Text(
                       '編集中',
                       style: TextStyle(
                         fontSize: 10,
                         height: 1.5,
                       ),
                     ),
-                    backgroundColor: Color(0xFFE3F2FD),
+                    backgroundColor: isDark
+                        ? const Color(0xFF0A1A2E)
+                        : const Color(0xFFE3F2FD),
                     visualDensity: VisualDensity.compact,
                   ),
               ],
@@ -4334,6 +4356,8 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                 itemCount: _featureRequests.length,
                 separatorBuilder: (_, __) => const Divider(height: 1),
                 itemBuilder: (context, index) {
+                  final isDarkFR =
+                      Theme.of(context).brightness == Brightness.dark;
                   final req = _featureRequests[index];
                   final id = req['id']?.toString() ?? '';
                   final title = req['title']?.toString() ?? '';
@@ -4374,7 +4398,9 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                         leading: CircleAvatar(
                           radius: 16,
                           backgroundColor: index < 3
-                              ? const Color(0xFFFEF3C7)
+                              ? (isDarkFR
+                                  ? const Color(0xFF2A1C06)
+                                  : const Color(0xFFFEF3C7))
                               : Theme.of(context)
                                   .colorScheme
                                   .surfaceContainerHighest,
@@ -4384,7 +4410,9 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                               fontSize: 12,
                               fontWeight: FontWeight.bold,
                               color: index < 3
-                                  ? const Color(0xFF92400E)
+                                  ? (isDarkFR
+                                      ? const Color(0xFFFDE68A)
+                                      : const Color(0xFF92400E))
                                   : Theme.of(context)
                                       .colorScheme
                                       .onSurfaceVariant,
