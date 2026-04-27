@@ -77,12 +77,12 @@ UIコンポーネントを新規作成・修正する際は、以下のファイ
 | `[AUTO-REPLY]` | author == 自分 で必ず skip + cap | — |
 | `[DART-FORMAT]` | dart format → flutter analyze 0 → push | Rule 1 + 2 |
 | `[REBASE]` | git fetch + log 確認 → pull --rebase | — |
-| `[WORKDIR-ISOLATION]` | 10 インスタンス別 worktree 必須 | — |
+| `[WORKDIR-ISOLATION]` | **10 Claude + 2 Codex = 12 スロット fleet** 別 worktree 必須 (canonical: docs/MULTI_INSTANCE_FLEET.md) | — |
 | `[STASH-SAFETY]` | git stash 危険・WIP commit 推奨 | — |
 | `[CAVEMAN]` | 通信 fragments OK・code は normal | — |
 | `[MEMORY-DECAY]` | memory/ タイムスタンプ + shadow + cleanup | — |
 | `[WBS-SYNC]` | 毎セッション wbs.priority_for_instance + update_progress | — |
-| `[INSTANCE-ROLES]` | 10 インスタンス役割分担 | — |
+| `[INSTANCE-ROLES]` | **12 スロット (10 Claude + 2 Codex) 役割分担** — Codex#1=SQL/algo, Codex#2=大規模 refactor (詳細 docs/MULTI_INSTANCE_FLEET.md) | — |
 | `[CONCURRENCY]` | deploy-prod cancel-in-progress: false | — |
 | `[ROADMAP-LOG]` | docs/GROWTH_STRATEGY_ROADMAP.md 毎セッション末尾追記 | Rule 3 |
 | `[REAL-DATA]` | ダミーデータ禁止・Supabase リアルデータ使用 | Rule 4 |
