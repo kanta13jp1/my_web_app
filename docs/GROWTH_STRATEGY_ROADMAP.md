@@ -21896,3 +21896,11 @@ Google I/O 2026 競合脅威 事前ブリーフィング
   - https://dev.to/kanta13jp1/how-to-migrate-from-notion-without-losing-your-data-a-complete-step-by-step-guide-mf8
 - JA slug: `2026-06-27-notion-migration-guide-jibun`
 - orphan branch マージ + 削除
+
+## Rule 17 WF health check (2026-04-28 朝) — PS#1 session
+
+- 全WF success率: 11/12 (GitHub Issues WBS Sync 1件 transient 失敗・以降正常)
+- 失敗詳細: WBS Sync run 25006214898 — "Refetch GitHub issues after dedupe" step で gh issue list が rate-limit/network blip → exit 1。後続 29/30 runs SUCCESS。コード修正不要。
+- deploy-prod: run 25001053606 + 25002528737 連続 SUCCESS ✅ — 前回 $$ fix 完全反映
+- orphan branch: claude/* 3本 (fix-dart / mobile-task / vscode-wip) — 未マージ作業あり、5本未満のため削除保留
+- 修正なし（全WF健全）
