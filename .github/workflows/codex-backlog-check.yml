@@ -1,0 +1,54 @@
+name: Codex Worktree Merge Backlog Check
+
+on:
+  schedule:
+    - cron: '0 0 * * *'  # daily 09:00 JST
+  workflow_dispatch:
+
+permissions:
+  issues: write
+  contents: read
+
+jobs:
+  check:
+    name: Check unmerged codex/* branches (7+ days)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: List unmerged codex/* branches
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git fetch origin '+refs/heads/codex/*:refs/remotes/origin/codex/*' --no-tags
+
+          unmerged=$(git for-each-ref --format='%(refname:short)' \
+            refs/remotes/origin/codex \
+            | while read b; do
+              count=$(git rev-list origin/main..$b --count 2>/dev/null || echo 0)
+              if [ "$count" -gt 0 ]; then
+                age_days=$(( ($(date +%s) - $(git log -1 --format=%ct $b)) / 86400 ))
+                if [ "$age_days" -ge 7 ]; then
+                  echo "$b ($count commits, ${age_days}d old)"
+                fi
+              fi
+            done)
+
+          if [ -n "$unmerged" ]; then
+            existing=$(gh issue list --search 'Codex backlog in:title state:open' \
+              --json number --jq '.[0].number' 2>/dev/null || echo '')
+            if [ -z "$existing" ]; then
+              gh issue create \
+                --title "[ops] Codex worktree merge backlog (7+ days unmerged)" \
+                --label "ops,bot" \
+                --body "$(printf 'Unmerged codex/* branches >= 7 days old:\n\n%s\n\nReview each branch and either merge or close.\n\n— codex-backlog-check.yml' "$unmerged")"
+              echo "Issue created for $unmerged"
+            else
+              echo "Issue #$existing already open — skipped"
+            fi
+          else
+            echo "No codex/* branches stale >= 7 days"
+          fi
