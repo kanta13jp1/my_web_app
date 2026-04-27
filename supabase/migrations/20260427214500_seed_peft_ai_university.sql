@@ -4,7 +4,7 @@ INSERT INTO ai_university_content (provider, category, title, content, source_ur
 VALUES (
   'peft', 'overview',
   'PEFT — Hugging Face公式パラメータ効率的ファインチューニングライブラリ (LoRA/QLoRA/Adapter/Prefix Tuning / GitHub 17k+ / 9/9)',
-  $## PEFT とは
+  $$## PEFT とは
 
 **PEFT (Parameter-Efficient Fine-Tuning)** は Hugging Face が開発する、LLM の全パラメータを更新せずに少数のパラメータだけを追加・更新してファインチューニングするライブラリ。
 
@@ -53,7 +53,7 @@ LoRA の重み更新: W_new = W_0 + B·A
 | **コスト最小ファインチューニング** | QLoRA (r=8) | Colab 無料GPU |
 | **高品質ファインチューニング** | LoRA (r=64) | RTX 4090 |
 | **マルチタスク対応** | 複数 LoRA アダプタ切り替え | 本番環境 |
-| **プロンプト最適化** | Prefix Tuning | GPT-4 APIコスト削減 |$,
+| **プロンプト最適化** | Prefix Tuning | GPT-4 APIコスト削減 |$$,
   NULL, NULL, 1
 )
 ON CONFLICT (provider, category) DO NOTHING;
@@ -62,7 +62,7 @@ INSERT INTO ai_university_content (provider, category, title, content, source_ur
 VALUES (
   'peft', 'api',
   'PEFT 実践 — LoRA/QLoRA実装・複数アダプタ管理・Hugging Face Hub保存・推論最適化',
-  $## インストール
+  $$## インストール
 
 ```bash
 pip install peft transformers accelerate
@@ -198,7 +198,7 @@ ia3_config = IA3Config(
 )
 model = get_peft_model(model, ia3_config)
 # 学習速度: LoRA の 3〜5x 高速
-```$,
+```$$,
   NULL, NULL, 2
 )
 ON CONFLICT (provider, category) DO NOTHING;
@@ -207,7 +207,7 @@ INSERT INTO ai_university_content (provider, category, title, content, source_ur
 VALUES (
   'peft', 'models',
   'PEFT 技術詳解 — LoRA数学・ランク選択理論・AdaLoRA・マルチモーダル対応・Stable Diffusion応用',
-  $## LoRA の数学的詳細
+  $$## LoRA の数学的詳細
 
 ### 行列分解の理解
 
@@ -320,7 +320,7 @@ vision_lora_config = LoraConfig(
 4. コスト: OpenAI API の 1/100 以下
 
 OpenAI API 月 $500 → ローカル PEFT 月 $10 (電気代のみ)
-```$,
+```$$,
   NULL, NULL, 3
 )
 ON CONFLICT (provider, category) DO NOTHING;

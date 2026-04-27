@@ -4,7 +4,7 @@ INSERT INTO ai_university_content (provider, category, title, content, source_ur
 VALUES (
   'lmdeploy', 'overview',
   'LMDeploy — OpenMMLab製高速LLM推論・サービングフレームワーク (TurboMind / KV Cache量子化 / GitHub 5k+ / 8/9)',
-  $## LMDeploy とは
+  $$## LMDeploy とは
 
 **LMDeploy** は 上海 AI Lab の OpenMMLab チームが開発する LLM の高速推論・本番サービング専用フレームワーク。独自の **TurboMind 推論エンジン** と **KV Cache 量子化** により、vLLM と同等以上のスループットを実現する。
 
@@ -56,7 +56,7 @@ VALUES (
 | **自社 LLM API サーバー** | TurboMind で Llama-3 を高速提供 | OpenAI API の 1/10 コスト |
 | **VRAM 節約** | KV Cache INT4 量子化 | 24GB → 12GB で同品質 |
 | **Qwen 特化** | OpenMMLab エコシステム活用 | 日中英 3 言語対応 |
-| **本番スケーリング** | Tensor Parallel + Kubernetes | 高トラフィック対応 |$,
+| **本番スケーリング** | Tensor Parallel + Kubernetes | 高トラフィック対応 |$$,
   NULL, NULL, 1
 )
 ON CONFLICT (provider, category) DO NOTHING;
@@ -65,7 +65,7 @@ INSERT INTO ai_university_content (provider, category, title, content, source_ur
 VALUES (
   'lmdeploy', 'api',
   'LMDeploy 実践 — TurboMind推論・OpenAI互換APIサーバー・KV Cache量子化・AWQ量子化デプロイ',
-  $## インストール
+  $$## インストール
 
 ```bash
 # pip インストール (CUDA 11.8+ 必須)
@@ -208,7 +208,7 @@ for output in pipe.stream_infer(
     gen_config=gen_config,
 ):
     print(output.text, end="", flush=True)
-```$,
+```$$,
   NULL, NULL, 2
 )
 ON CONFLICT (provider, category) DO NOTHING;
@@ -217,7 +217,7 @@ INSERT INTO ai_university_content (provider, category, title, content, source_ur
 VALUES (
   'lmdeploy', 'models',
   'LMDeploy 技術詳解 — TurboMindエンジン内部・Paged Attention・KV Cache量子化理論・vLLM比較ベンチマーク',
-  $## TurboMind エンジンの内部構造
+  $$## TurboMind エンジンの内部構造
 
 ```
 入力 tokens
@@ -333,7 +333,7 @@ services:
 月額コスト試算:
 - RTX 4090 × 1 台 (クラウドレンタル): $600/月
 - LMDeploy で Qwen2.5-7B サービング: 100万 req/日 対応
-- OpenAI API 同等品質での比較: $8,000/月 → 87% コスト削減$,
+- OpenAI API 同等品質での比較: $8,000/月 → 87% コスト削減$$,
   NULL, NULL, 3
 )
 ON CONFLICT (provider, category) DO NOTHING;

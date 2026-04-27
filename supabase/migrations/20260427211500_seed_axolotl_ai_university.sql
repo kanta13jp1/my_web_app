@@ -4,7 +4,7 @@ INSERT INTO ai_university_content (provider, category, title, content, source_ur
 VALUES (
   'axolotl', 'overview',
   'Axolotl — YAML設定でLLMファインチューニングを民主化するOSSフレームワーク (GitHub 9k+ / QLoRA+LoRA+FSDP / 8/9)',
-  $## Axolotl とは
+  $$## Axolotl とは
 
 **Axolotl** は YAML 設定ファイル 1つで大規模言語モデルのファインチューニングを完結させる OSS フレームワーク。複雑なトレーニングコードを書かずに、設定ファイルを書くだけで QLoRA / LoRA / Full Fine-tuning / FSDP / DeepSpeed を使い分けられる。
 
@@ -59,7 +59,7 @@ Axolotl は **「速度と柔軟性のバランス」** で最も評価される
 | **カスタム AI キャラ** | 自社ドキュメントで LLM をファインチューニング |
 | **日本語特化** | 日本語データで llama-3-8b を QLoRA 調整 |
 | **コスト削減** | OpenAI API 依存からローカル推論へ移行 |
-| **プライバシー** | 社内データを外部 API に送らず学習可能 |$,
+| **プライバシー** | 社内データを外部 API に送らず学習可能 |$$,
   NULL, NULL, 1
 )
 ON CONFLICT (provider, category) DO NOTHING;
@@ -68,7 +68,7 @@ INSERT INTO ai_university_content (provider, category, title, content, source_ur
 VALUES (
   'axolotl', 'api',
   'Axolotl 実践 — YAML設定ファイルでQLoRAファインチューニング完全ガイド',
-  $## インストール
+  $$## インストール
 
 ```bash
 # pip インストール (GPU環境必須)
@@ -222,7 +222,7 @@ micro_batch_size: 4
 gradient_accumulation_steps: 8
 bf16: true
 flash_attention: true
-```$,
+```$$,
   NULL, NULL, 2
 )
 ON CONFLICT (provider, category) DO NOTHING;
@@ -231,7 +231,7 @@ INSERT INTO ai_university_content (provider, category, title, content, source_ur
 VALUES (
   'axolotl', 'models',
   'Axolotl 技術詳解 — FSDP/DeepSpeed/Flash Attention2統合とファインチューニング手法比較',
-  $## サポートするファインチューニング手法
+  $$## サポートするファインチューニング手法
 
 | 手法 | VRAM目安 | 速度 | 品質 | 用途 |
 |------|----------|------|------|------|
@@ -331,7 +331,7 @@ Sample Packing:
 4. 変換: GGUF Q4_K_M
 5. デプロイ: Ollama or LM Studio (ローカル) or vLLM (API)
 6. 評価: LM-Eval-Harness で自動評価
-```$,
+```$$,
   NULL, NULL, 3
 )
 ON CONFLICT (provider, category) DO NOTHING;

@@ -4,7 +4,7 @@ INSERT INTO ai_university_content (provider, category, title, content, source_ur
 VALUES (
   'trl', 'overview',
   'TRL (Transformer Reinforcement Learning) — Hugging Face公式RLHF/DPOライブラリ (GitHub 10k+ / SFT→RLHF→DPO / 9/9)',
-  $## TRL とは
+  $$## TRL とは
 
 **TRL (Transformer Reinforcement Learning)** は Hugging Face が開発・メンテナンスする LLM の強化学習ファインチューニング専用ライブラリ。ChatGPT・Claude・Gemini の中核技術である **RLHF (Reinforcement Learning from Human Feedback)** と **DPO (Direct Preference Optimization)** を数十行のコードで実装できる。
 
@@ -58,7 +58,7 @@ DPO (現代):
 | **AI アシスタント品質向上** | DPO | ユーザー好みの回答スタイルに調整 |
 | **有害コンテンツ除去** | RLHF / Constitutional AI | 安全な出力の確保 |
 | **業務特化チューニング** | SFT → DPO | 社内用語・業務フロー対応 |
-| **競合差別化** | ORPO | 少ないデータで高品質化 |$,
+| **競合差別化** | ORPO | 少ないデータで高品質化 |$$,
   NULL, NULL, 1
 )
 ON CONFLICT (provider, category) DO NOTHING;
@@ -67,7 +67,7 @@ INSERT INTO ai_university_content (provider, category, title, content, source_ur
 VALUES (
   'trl', 'api',
   'TRL 実践 — SFTTrainer・DPOTrainer・GRPOTrainerの完全実装ガイド',
-  $## インストール
+  $$## インストール
 
 ```bash
 pip install trl
@@ -214,7 +214,7 @@ for item in company_qa_data:
 with open("company_dpo.jsonl", "w") as f:
     for d in dpo_data:
         f.write(json.dumps(d, ensure_ascii=False) + "\n")
-```$,
+```$$,
   NULL, NULL, 2
 )
 ON CONFLICT (provider, category) DO NOTHING;
@@ -223,7 +223,7 @@ INSERT INTO ai_university_content (provider, category, title, content, source_ur
 VALUES (
   'trl', 'models',
   'TRL 技術詳解 — RLHF/DPO数学・GRPO推論強化・PPO vs DPO比較・最新アルゴリズム動向',
-  $## DPO の数学的原理
+  $$## DPO の数学的原理
 
 **DPO の損失関数**:
 
@@ -324,7 +324,7 @@ Phase 4: 評価
 データ量目安:
 - SFT: 5,000〜50,000 件
 - DPO/KTO: 1,000〜20,000 ペア/件
-- GRPO: 500〜5,000 件 (報酬関数で自動生成可)$,
+- GRPO: 500〜5,000 件 (報酬関数で自動生成可)$$,
   NULL, NULL, 3
 )
 ON CONFLICT (provider, category) DO NOTHING;
