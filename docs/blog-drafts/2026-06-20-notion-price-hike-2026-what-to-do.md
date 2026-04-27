@@ -1,7 +1,7 @@
 ---
 title: "Notion の値上げ 2026 — 月額が上がったとき本当に取るべき選択肢"
 tags: Notion,productivity,個人開発,buildinpublic
-published: false
+published: true
 ---
 
 # Notion の値上げ 2026 — 月額が上がったとき本当に取るべき選択肢
