@@ -21715,3 +21715,15 @@ Google I/O 2026 競合脅威 事前ブリーフィング
   - FlutterError.onError + PlatformDispatcher.onError 両方に適用
   - release stack fingerprint (auU/uT/cgd) で過剰抑制を防止
   - dart format 0変更 / flutter analyze 0エラー確認 → push
+
+## 2026-04-27 (PS#6 S62)
+
+### PS#6 S62: 競馬ランキングアルゴリズム改善 — prev_last_3f タイブレーカー追加
+
+- `sortHorseEntriesForLearning`: popularity → win_odds → prev_finish → **prev_last_3f (NEW)** → data_quality → horse_number の順にタイブレーカー追加
+  - prev_finish 同着時に上り3Fタイム (prev_last_3f) が速い馬を優先
+  - `numericOrFallback(prev_last_3f, 99)` — データなし時は 99s (最遅) 扱いで安全
+- `horseRaceDataQualityScore`: prev_last_3f を 14番目フィールドとして追加 (13→14フィールド)
+  - 上りタイムの有無がデータ充足度スコアに反映されることで confidence 計算も改善
+- deno lint clean
+- migration: `20260427190000_seed_achievements_ps6_s62.sql`
