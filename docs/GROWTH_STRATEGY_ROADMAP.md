@@ -21796,3 +21796,14 @@ Google I/O 2026 競合脅威 事前ブリーフィング
   - GITHUB_STEP_SUMMARY Markdown も8カラム + サマリーブロック引用形式
 - トレンド計算: 最新2日の avg_learning_score 差分 (>0.002 = ↑, <-0.002 = ↓, else = 横ばい)
 - migration: `20260427200000_seed_achievements_ps6_s66.sql`
+
+## 2026-04-27 (PS#5 S67)
+
+### PS#5 S67: dark mode 3ページ + migration コミット
+
+- 未コミット変更 (VSCode S11 dark mode作業残り) を審査・コミット (`d6dafdac`)
+  - `admin_analytics_page.dart`: funnel insight / avatar / badge chip 背景ダーク化
+  - `analytics_export_page.dart`: Chip backgroundColor ダーク化
+  - `inventory_barcode_page.dart`: 在庫不足 Card ハイライト ダーク化
+  - `20260427200000_seed_achievements_vscode_s11_dark_mode.sql` migration 同梱
+  - dart format 0変更 / flutter analyze 0エラー確認 → push
