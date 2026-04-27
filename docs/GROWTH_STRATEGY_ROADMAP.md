@@ -21853,3 +21853,9 @@ Google I/O 2026 競合脅威 事前ブリーフィング
   - https://dev.to/kanta13jp1/why-notion-still-doesnt-work-offline-and-what-you-actually-need-instead-2ne1
 - JA slug: `2026-06-13-notion-offline-mode-frustrations`
 - orphan branch マージ + 削除
+## 2026-04-27 PS#6 S69 — GHA dqs_recalc 週次 + tools-hub dead code removal
+
+- **GHA**: `horse-racing-update.yml` に `dqs_recalc` ステップ追加 — 日曜 JST 01:00 自動実行、または `mode=dqs_recalc` dispatch で即時実行
+- **tools-hub 死コード削除**: `UrgentHorseRaceSeed` / `URGENT_HORSE_RACES_20260426` / `urgentHorseRacesForDate` / `upsertUrgentHorseRaces` を完全除去 (247行 + 呼び出し2箇所)
+  - `horseracing.today` / `horseracing.predict_all` のコードパスが簡潔化
+- **cross-instance-pr**: `20260427_ps6_place_consensus_aggregate_ui.md` — VSCode に `place_consensus` UI と 複勝/ワイド命中率サマリーカード実装を依頼
