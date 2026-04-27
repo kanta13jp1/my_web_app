@@ -206,9 +206,86 @@ jobs:
             -m "VIDEO_ID=$VIDEO_ID  DURATION=$VIDEO_DURATION  TITLE=${{ inputs.title }}"
           git push origin HEAD:main
 
-# 残スコープ (Win版#132 part 34+ / cross-instance-pr 検討):
+      - name: Notify Slack on success
+        if: success()
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          VIDEO_ID: ${{ steps.upload.outputs.video_id }}
+          VIDEO_DURATION: ${{ steps.upload.outputs.duration }}
+          RUN_URL: ${{ format('https://github.com/{0}/actions/runs/{1}', github.repository, github.run_id) }}
+        run: |
+          if [ -z "$SLACK_WEBHOOK_URL" ]; then
+            echo "::warning::SLACK_WEBHOOK_URL not set — skipping Slack notify"
+            exit 0
+          fi
+          cat <<EOF > payload.json
+          {
+            "text": "🎬 NotebookLM video pipeline complete: ${{ inputs.title }}",
+            "blocks": [
+              {
+                "type": "header",
+                "text": { "type": "plain_text", "text": "🎬 動画パイプライン完了 #${{ inputs.series_number }}", "emoji": true }
+              },
+              {
+                "type": "section",
+                "fields": [
+                  { "type": "mrkdwn", "text": "*Title:*\n${{ inputs.title }}" },
+                  { "type": "mrkdwn", "text": "*Duration:*\n$VIDEO_DURATION" },
+                  { "type": "mrkdwn", "text": "*Video:*\nhttps://youtu.be/$VIDEO_ID" },
+                  { "type": "mrkdwn", "text": "*Series:*\n#${{ inputs.series_number }}" }
+                ]
+              },
+              {
+                "type": "context",
+                "elements": [
+                  { "type": "mrkdwn", "text": "🤖 Auto-pipeline run: <$RUN_URL|view logs>  /  Step 8 embedded into philosophy_page.dart on main" }
+                ]
+              }
+            ]
+          }
+          EOF
+          curl -X POST -H 'Content-type: application/json' --data @payload.json "$SLACK_WEBHOOK_URL" --max-time 10 || true
+
+      - name: Notify Slack on failure
+        if: failure()
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          RUN_URL: ${{ format('https://github.com/{0}/actions/runs/{1}', github.repository, github.run_id) }}
+        run: |
+          if [ -z "$SLACK_WEBHOOK_URL" ]; then
+            echo "::warning::SLACK_WEBHOOK_URL not set — skipping Slack notify"
+            exit 0
+          fi
+          cat <<EOF > payload.json
+          {
+            "text": "❌ NotebookLM video pipeline FAILED: ${{ inputs.title }}",
+            "blocks": [
+              {
+                "type": "header",
+                "text": { "type": "plain_text", "text": "❌ 動画パイプライン失敗 #${{ inputs.series_number }}", "emoji": true }
+              },
+              {
+                "type": "section",
+                "fields": [
+                  { "type": "mrkdwn", "text": "*Title:*\n${{ inputs.title }}" },
+                  { "type": "mrkdwn", "text": "*Slug:*\n${{ inputs.slug }}" },
+                  { "type": "mrkdwn", "text": "*Notebook:*\n${{ inputs.notebook_id }}" },
+                  { "type": "mrkdwn", "text": "*Artifact:*\n${{ inputs.artifact_id }}" }
+                ]
+              },
+              {
+                "type": "actions",
+                "elements": [
+                  { "type": "button", "text": { "type": "plain_text", "text": "View failed run" }, "url": "$RUN_URL", "style": "danger" }
+                ]
+              }
+            ]
+          }
+          EOF
+          curl -X POST -H 'Content-type: application/json' --data @payload.json "$SLACK_WEBHOOK_URL" --max-time 10 || true
+
+# 残スコープ (Win版#132 part 35+ / cross-instance-pr 検討):
 # - YouTube quota 監視 (10000 units/day / 1 upload = 1600 units = 6/day max)
-# - Slack 通知 (成功時 video URL / 失敗時 step + log link)
 # - workflow E2E smoke test (実 dispatch / video #1 重複 ID で Step 8 dup-guard 発火確認)
 #
 # 完了済 (Win版#132 part 30):
@@ -225,3 +302,8 @@ jobs:
 # - Step 4 make_cards.py 新規 → scripts/video/make_cards.py
 #   (PIL + Noto Sans CJK JP / 1280x720 PNG / Orange+Indigo dark theme / CARD_TITLE+CARD_SERIES env
 #   / 自動 wrap / fonts-noto-cjk apt 自動検出 / Windows local NotoSansJP-VF.ttf fallback)
+#
+# 完了済 (Win版#132 part 34):
+# - Slack 通知 (success / failure 2 step / SLACK_WEBHOOK_URL env / fail も continue + warn for missing secret)
+#   成功時: video URL + duration + run URL を blocks payload で post
+#   失敗時: title + slug + notebook + artifact + 失敗 run へのアクションボタン
