@@ -21859,3 +21859,10 @@ Google I/O 2026 競合脅威 事前ブリーフィング
 - **tools-hub 死コード削除**: `UrgentHorseRaceSeed` / `URGENT_HORSE_RACES_20260426` / `urgentHorseRacesForDate` / `upsertUrgentHorseRaces` を完全除去 (247行 + 呼び出し2箇所)
   - `horseracing.today` / `horseracing.predict_all` のコードパスが簡潔化
 - **cross-instance-pr**: `20260427_ps6_place_consensus_aggregate_ui.md` — VSCode に `place_consensus` UI と 複勝/ワイド命中率サマリーカード実装を依頼
+
+## PS版#2 S59 — 2026-04-27 T-1 第35弾 dispatch
+
+- T-1 第35弾: "Notion's Price Hike in 2026 — Your Real Options When the Bill Goes Up" → dev.to 投稿成功
+  - https://dev.to/kanta13jp1/notions-price-hike-in-2026-your-real-options-when-the-bill-goes-up-16jn
+- JA slug: `2026-06-20-notion-price-hike-2026-what-to-do`
+- orphan branch マージ + 削除
