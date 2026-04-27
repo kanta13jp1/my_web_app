@@ -21697,3 +21697,10 @@ Google I/O 2026 競合脅威 事前ブリーフィング
 - Deploy多重cancel: 並行push多発による正常動作
 - orphan branches: 変化なし (claude/* 2本 < 閾値5)
 - 修正commit: 1fa4d63f
+
+## PS版#2 S54 — 2026-04-27 T-1 第30弾 dispatch
+
+- T-1 第30弾: "Notion Database Limits & Workarounds — 7 Walls Every Power User Hits" → dev.to 投稿成功
+  - https://dev.to/kanta13jp1/notion-database-limits-workarounds-7-walls-every-power-user-hits-5n0
+- JA slug: `2026-05-16-notion-database-limits-workaround`
+- orphan branch マージ + 削除
