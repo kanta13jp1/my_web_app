@@ -1,7 +1,7 @@
 ---
 title: "How a Solo Founder Monitors 190 Competitors Automatically"
 tags: saas,startup,business,ai
-published: false
+published: true
 ---
 
 # How a Solo Founder Monitors 190 Competitors Automatically
