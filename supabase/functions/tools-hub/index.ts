@@ -3128,11 +3128,37 @@ serve(async (req) => {
             }
 
             if (!keeper) {
+              const { data: existingByTitle, error: findByTitleError } = await admin.from("wbs_tasks")
+                .select("id")
+                .eq("title", String(payload.title ?? ""))
+                .eq("instance", String(payload.instance ?? ""))
+                .order("created_at", { ascending: true })
+                .limit(1);
+              if (findByTitleError) throw new Error(findByTitleError.message);
+              if ((existingByTitle ?? []).length > 0) {
+                const id = String(existingByTitle![0].id);
+                const { data: linked, error: linkError } = await admin.from("wbs_tasks")
+                  .update(payload)
+                  .eq("id", id)
+                  .select(taskSelect)
+                  .single();
+                if (linkError) throw new Error(linkError.message);
+                const linkedTask = linked as Record<string, unknown>;
+                tasksByIssue.set(issueNumber, [linkedTask]);
+                allTasks.push(linkedTask);
+                stats.updated += 1;
+                continue;
+              }
+
               const { data: created, error: createError } = await admin.from("wbs_tasks")
                 .insert(payload)
                 .select(taskSelect)
                 .single();
-              if (createError) throw new Error(createError.message);
+              if (createError) {
+                throw new Error(
+                  `Failed to create WBS row for GitHub Issue #${issueNumber} (${payload.title} / ${payload.instance}): ${createError.message}`,
+                );
+              }
               const createdTask = created as Record<string, unknown>;
               tasksByIssue.set(issueNumber, [createdTask]);
               allTasks.push(createdTask);
@@ -3140,9 +3166,24 @@ serve(async (req) => {
               continue;
             }
 
+            let updateTargetId = String(keeper.id);
+            const { data: existingCanonicalTitle, error: canonicalTitleError } = await admin.from("wbs_tasks")
+              .select("id")
+              .eq("title", String(payload.title ?? ""))
+              .eq("instance", String(payload.instance ?? ""))
+              .order("created_at", { ascending: true })
+              .limit(1);
+            if (canonicalTitleError) throw new Error(canonicalTitleError.message);
+            if (
+              (existingCanonicalTitle ?? []).length > 0 &&
+              String(existingCanonicalTitle![0].id) !== String(keeper.id)
+            ) {
+              updateTargetId = String(existingCanonicalTitle![0].id);
+            }
+
             const { data: updated, error: updateError } = await admin.from("wbs_tasks")
               .update(payload)
-              .eq("id", String(keeper.id))
+              .eq("id", updateTargetId)
               .select(taskSelect)
               .single();
             if (updateError) throw new Error(updateError.message);

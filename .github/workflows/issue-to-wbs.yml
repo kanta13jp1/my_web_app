@@ -92,34 +92,93 @@ jobs:
             exit 1
           fi
 
-          python3 <<'PY' > /tmp/wbs-sync-payload.json
+          python3 <<'PY' > /tmp/wbs-sync-response.json
           import json
           import os
+          import sys
+          import urllib.error
+          import urllib.request
 
           with open("/tmp/issues.json", encoding="utf-8") as fh:
               issues = json.load(fh)
 
-          payload = {
-              "action": "wbs.sync_github_issues",
-              "repo": os.environ["REPO"],
-              "issues": issues,
+          repo = os.environ["REPO"]
+          endpoint = f"{os.environ['SUPABASE_URL']}/functions/v1/tools-hub"
+          service_role_key = os.environ["SUPABASE_SERVICE_ROLE_KEY"]
+          chunk_size = int(os.environ.get("WBS_SYNC_CHUNK_SIZE", "75"))
+          combined = {
+              "success": True,
+              "repo": repo,
+              "issue_count": len(issues),
+              "created": 0,
+              "updated": 0,
+              "completed_from_closed_issues": 0,
+              "duplicate_wbs_closed": 0,
+              "skipped": 0,
+              "issues_to_close": [],
+              "duplicate_wbs_tasks": [],
+              "chunks": [],
           }
-          print(json.dumps(payload, ensure_ascii=False))
+
+          for index in range(0, len(issues), chunk_size):
+              chunk = issues[index:index + chunk_size]
+              payload = json.dumps({
+                  "action": "wbs.sync_github_issues",
+                  "repo": repo,
+                  "issues": chunk,
+              }, ensure_ascii=False).encode("utf-8")
+              req = urllib.request.Request(
+                  endpoint,
+                  data=payload,
+                  method="POST",
+                  headers={
+                      "Authorization": f"Bearer {service_role_key}",
+                      "apikey": service_role_key,
+                      "Content-Type": "application/json",
+                  },
+              )
+              try:
+                  with urllib.request.urlopen(req, timeout=140) as resp:
+                      response_text = resp.read().decode("utf-8")
+                      response = json.loads(response_text)
+              except urllib.error.HTTPError as exc:
+                  response_text = exc.read().decode("utf-8", errors="replace")
+                  combined["success"] = False
+                  combined["chunks"].append({
+                      "offset": index,
+                      "count": len(chunk),
+                      "http_code": exc.code,
+                      "error": response_text[:500],
+                  })
+                  print(
+                      f"::warning::wbs.sync_github_issues chunk offset={index} "
+                      f"returned HTTP {exc.code}: {response_text[:500]}",
+                      file=sys.stderr,
+                  )
+                  continue
+
+              for key in [
+                  "created",
+                  "updated",
+                  "completed_from_closed_issues",
+                  "duplicate_wbs_closed",
+                  "skipped",
+              ]:
+                  combined[key] += int(response.get(key, 0) or 0)
+              combined["issues_to_close"].extend(response.get("issues_to_close", []) or [])
+              combined["duplicate_wbs_tasks"].extend(response.get("duplicate_wbs_tasks", []) or [])
+              combined["chunks"].append({
+                  "offset": index,
+                  "count": len(chunk),
+                  "success": bool(response.get("success")),
+              })
+
+          print(json.dumps(combined, ensure_ascii=False))
+          if not combined["success"]:
+              sys.exit(1)
           PY
 
-          HTTP_CODE=$(curl -sS -o /tmp/wbs-sync-response.json -w "%{http_code}" \
-            -X POST "$SUPABASE_URL/functions/v1/tools-hub" \
-            -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \
-            -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
-            -H "Content-Type: application/json" \
-            --data-binary @/tmp/wbs-sync-payload.json)
-
           cat /tmp/wbs-sync-response.json
-
-          if [ "$HTTP_CODE" -ge 400 ]; then
-            echo "::warning::tools-hub wbs.sync_github_issues returned HTTP $HTTP_CODE. This can happen before the latest Edge Function deploy finishes; the next scheduled run will retry."
-            echo '{"success":false,"issues_to_close":[],"duplicate_wbs_tasks":[]}' > /tmp/wbs-sync-response.json
-          fi
 
       - name: Close GitHub issues completed in WBS
         env:
