@@ -1,7 +1,7 @@
 ---
 title: "Notion はなぜオフラインで使えないのか — オフライン対応が欲しい人が本当に必要なもの"
 tags: Notion,productivity,個人開発,buildinpublic
-published: false
+published: true
 ---
 
 # Notion はなぜオフラインで使えないのか — オフライン対応が欲しい人が本当に必要なもの

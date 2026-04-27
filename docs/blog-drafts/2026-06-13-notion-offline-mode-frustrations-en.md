@@ -1,7 +1,7 @@
 ---
 title: "Why Notion Still Doesn't Work Offline — And What You Actually Need Instead"
 tags: notion,productivity,ux,saas
-published: false
+published: true
 ---
 
 # Why Notion Still Doesn't Work Offline — And What You Actually Need Instead
