@@ -277,25 +277,13 @@ class _AiUniversityHomeCardState extends State<AiUniversityHomeCard> {
   }
 
   Widget _buildAiXPostButton() {
-    return OutlinedButton.icon(
-      onPressed: _xPostSubmitting ? null : _postAiGeneratedXUpdate,
-      icon: _xPostSubmitting
-          ? const SizedBox(
-              width: 16,
-              height: 16,
-              child: CircularProgressIndicator(strokeWidth: 2),
-            )
-          : const Icon(Icons.auto_awesome),
-      label: Text(_xPostSubmitting ? 'AI投稿中' : 'AIでX投稿'),
-      style: OutlinedButton.styleFrom(
-        foregroundColor: const Color(0xFFFFD54F),
-        disabledForegroundColor: Colors.white.withValues(alpha: 0.38),
-        side: const BorderSide(color: Color(0x66FFD54F)),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-      ),
+    return _AiCardActionButton(
+      label: _xPostSubmitting ? 'AI投稿中' : 'AIでX投稿',
+      icon: Icons.auto_awesome,
+      foregroundColor: const Color(0xFFFFD54F),
+      borderColor: const Color(0x66FFD54F),
+      onTap: _xPostSubmitting ? null : _postAiGeneratedXUpdate,
+      loading: _xPostSubmitting,
     );
   }
 
@@ -413,539 +401,605 @@ class _AiUniversityHomeCardState extends State<AiUniversityHomeCard> {
             ? (constraints.maxWidth - 8) / 2
             : (constraints.maxWidth - 24) / 4;
 
-        return Material(
-          color: Colors.transparent,
-          child: InkWell(
-            borderRadius: BorderRadius.circular(16),
-            onTap: _openUniversity,
-            child: Ink(
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    Color(0xFF1A1A2E),
-                    Color(0xFF16213E),
-                    Color(0xFF0A1A3E),
+        return Semantics(
+          button: true,
+          label: 'AI大学を開く',
+          child: MouseRegion(
+            cursor: SystemMouseCursors.click,
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: _openUniversity,
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      Color(0xFF1A1A2E),
+                      Color(0xFF16213E),
+                      Color(0xFF0A1A3E),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(16),
+                  border:
+                      Border.all(color: Colors.white.withValues(alpha: 0.08)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFFFF6B35).withValues(alpha: 0.10),
+                      blurRadius: 24,
+                      offset: const Offset(0, 12),
+                    ),
+                    BoxShadow(
+                      color: const Color(0xFF3D5AFE).withValues(alpha: 0.12),
+                      blurRadius: 32,
+                      offset: const Offset(0, 8),
+                    ),
                   ],
                 ),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color(0xFFFF6B35).withValues(alpha: 0.10),
-                    blurRadius: 24,
-                    offset: const Offset(0, 12),
-                  ),
-                  BoxShadow(
-                    color: const Color(0xFF3D5AFE).withValues(alpha: 0.12),
-                    blurRadius: 32,
-                    offset: const Offset(0, 8),
-                  ),
-                ],
-              ),
-              padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Container(
-                        width: 48,
-                        height: 48,
-                        decoration: BoxDecoration(
-                          color:
-                              const Color(0xFFFF6B35).withValues(alpha: 0.18),
-                          borderRadius: BorderRadius.circular(14),
-                          border: Border.all(
-                            color:
-                                const Color(0xFFFF6B35).withValues(alpha: 0.28),
-                          ),
-                        ),
-                        child: const Icon(
-                          Icons.school_rounded,
-                          color: Color(0xFFFF8C5A),
-                          size: 26,
-                        ),
-                      ),
-                      const SizedBox(width: 14),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Wrap(
-                              spacing: 8,
-                              runSpacing: 8,
-                              crossAxisAlignment: WrapCrossAlignment.center,
-                              children: [
-                                const Text(
-                                  'AI 大学',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 24,
-                                    fontWeight: FontWeight.w800,
-                                    letterSpacing: 0.96,
-                                    height: 1.4,
-                                  ),
-                                ),
-                                _buildStatusPill(
-                                  icon: Icons.auto_awesome,
-                                  label: _buildRefreshLabel(),
-                                  color: const Color(0xFFFFC107),
-                                ),
-                                if (_dueCardCount > 0)
-                                  _buildStatusPill(
-                                    icon: Icons.replay_rounded,
-                                    label: '復習 $_dueCardCount問',
-                                    color: const Color(0xFF3D5AFE),
-                                  ),
-                              ],
-                            ),
-                            const SizedBox(height: 6),
-                            Text(
-                              headline,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 18,
-                                fontWeight: FontWeight.w700,
-                                letterSpacing: 0.72,
-                                height: 1.4,
-                              ),
-                            ),
-                            const SizedBox(height: 6),
-                            Text(
-                              subcopy,
-                              style: const TextStyle(
-                                color: Color(0xFFB0B0B0),
-                                fontSize: 13,
-                                height: 1.7,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      if (!isCompact)
-                        IconButton(
-                          icon: Icon(
-                            Icons.share,
-                            color: Colors.white.withValues(alpha: 0.7),
-                          ),
-                          tooltip: '共有',
-                          onPressed: _share,
-                        ),
-                    ],
-                  ),
-                  if (isCompact)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 6),
-                      child: Align(
-                        alignment: Alignment.centerRight,
-                        child: IconButton(
-                          icon: Icon(
-                            Icons.share,
-                            color: Colors.white.withValues(alpha: 0.7),
-                          ),
-                          tooltip: '共有',
-                          onPressed: _share,
-                        ),
-                      ),
-                    ),
-                  const SizedBox(height: 14),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: [
-                      for (final provider in _featuredProviders)
-                        _buildProviderChip(provider),
-                      if (extraProviders > 0)
-                        _buildProviderChip('+$extraProviders'),
-                    ],
-                  ),
-                  const SizedBox(height: 14),
-                  Container(
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: kLegalAiGenre.accentColor.withValues(alpha: 0.16),
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(
-                        color: kLegalAiGenre.accentColor.withValues(
-                          alpha: 0.34,
-                        ),
-                      ),
-                    ),
-                    child: Column(
+                padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
-                          crossAxisAlignment: WrapCrossAlignment.center,
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 6,
+                        Container(
+                          width: 48,
+                          height: 48,
+                          decoration: BoxDecoration(
+                            color:
+                                const Color(0xFFFF6B35).withValues(alpha: 0.18),
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(
+                              color: const Color(0xFFFF6B35)
+                                  .withValues(alpha: 0.28),
+                            ),
+                          ),
+                          child: const Icon(
+                            Icons.school_rounded,
+                            color: Color(0xFFFF8C5A),
+                            size: 26,
+                          ),
+                        ),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Wrap(
+                                spacing: 8,
+                                runSpacing: 8,
+                                crossAxisAlignment: WrapCrossAlignment.center,
+                                children: [
+                                  const Text(
+                                    'AI 大学',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 24,
+                                      fontWeight: FontWeight.w800,
+                                      letterSpacing: 0.96,
+                                      height: 1.4,
+                                    ),
+                                  ),
+                                  _buildStatusPill(
+                                    icon: Icons.auto_awesome,
+                                    label: _buildRefreshLabel(),
+                                    color: const Color(0xFFFFC107),
+                                  ),
+                                  if (_dueCardCount > 0)
+                                    _buildStatusPill(
+                                      icon: Icons.replay_rounded,
+                                      label: '復習 $_dueCardCount問',
+                                      color: const Color(0xFF3D5AFE),
+                                    ),
+                                ],
                               ),
-                              decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.10),
-                                borderRadius: BorderRadius.circular(999),
-                              ),
-                              child: const Text(
-                                '新ジャンル',
-                                style: TextStyle(
+                              const SizedBox(height: 6),
+                              Text(
+                                headline,
+                                style: const TextStyle(
                                   color: Colors.white,
-                                  fontSize: 11,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: 0.72,
+                                  height: 1.4,
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                subcopy,
+                                style: const TextStyle(
+                                  color: Color(0xFFB0B0B0),
+                                  fontSize: 13,
+                                  height: 1.7,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        if (!isCompact)
+                          _AiIconAction(
+                            icon: Icons.share,
+                            color: Colors.white.withValues(alpha: 0.7),
+                            tooltip: '共有',
+                            onTap: _share,
+                          ),
+                      ],
+                    ),
+                    if (isCompact)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 6),
+                        child: Align(
+                          alignment: Alignment.centerRight,
+                          child: _AiIconAction(
+                            icon: Icons.share,
+                            color: Colors.white.withValues(alpha: 0.7),
+                            tooltip: '共有',
+                            onTap: _share,
+                          ),
+                        ),
+                      ),
+                    const SizedBox(height: 14),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        for (final provider in _featuredProviders)
+                          _buildProviderChip(provider),
+                        if (extraProviders > 0)
+                          _buildProviderChip('+$extraProviders'),
+                      ],
+                    ),
+                    const SizedBox(height: 14),
+                    Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color:
+                            kLegalAiGenre.accentColor.withValues(alpha: 0.16),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                          color: kLegalAiGenre.accentColor.withValues(
+                            alpha: 0.34,
+                          ),
+                        ),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            crossAxisAlignment: WrapCrossAlignment.center,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 6,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: 0.10),
+                                  borderRadius: BorderRadius.circular(999),
+                                ),
+                                child: const Text(
+                                  '新ジャンル',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w800,
+                                    height: 1.5,
+                                  ),
+                                ),
+                              ),
+                              Text(
+                                kLegalAiGenre.title,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 16,
                                   fontWeight: FontWeight.w800,
                                   height: 1.5,
                                 ),
                               ),
-                            ),
-                            Text(
-                              kLegalAiGenre.title,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 16,
-                                fontWeight: FontWeight.w800,
-                                height: 1.5,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          kLegalAiGenre.headline,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 13,
-                            fontWeight: FontWeight.w700,
-                            height: 1.6,
+                            ],
                           ),
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          kLegalAiGenre.description,
-                          style: const TextStyle(
-                            color: Color(0xFFD7DBE8),
-                            fontSize: 12,
-                            height: 1.7,
-                          ),
-                        ),
-                        const SizedBox(height: 10),
-                        Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
-                          children: [
-                            for (final area in kLegalAiGenre.focusAreas)
-                              _buildProviderChip(area),
-                          ],
-                        ),
-                        const SizedBox(height: 10),
-                        Align(
-                          alignment: Alignment.centerLeft,
-                          child: TextButton.icon(
-                            onPressed: () =>
-                                _openProvider(kLegalAiGenre.launchProviderId),
-                            icon: const Icon(
-                              Icons.gavel_rounded,
-                              size: 16,
+                          const SizedBox(height: 8),
+                          Text(
+                            kLegalAiGenre.headline,
+                            style: const TextStyle(
                               color: Colors.white,
-                            ),
-                            label: const Text(
-                              '法律AIから学ぶ',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 13,
-                                fontWeight: FontWeight.w700,
-                                height: 1.5,
-                              ),
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                              height: 1.6,
                             ),
                           ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 14),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: [
-                      SizedBox(
-                        width: metricWidth,
-                        child: _buildMetricTile(
-                          icon: Icons.hub_outlined,
-                          label: '掲載AI',
-                          value: providerCountText,
-                          accent: const Color(0xFF3D5AFE),
-                        ),
-                      ),
-                      SizedBox(
-                        width: metricWidth,
-                        child: _buildMetricTile(
-                          icon: Icons.check_circle_outline,
-                          label: '学習済み',
-                          value: '$_answeredCount社',
-                          accent: const Color(0xFF4CAF50),
-                        ),
-                      ),
-                      SizedBox(
-                        width: metricWidth,
-                        child: _buildMetricTile(
-                          icon: Icons.local_fire_department_outlined,
-                          label: '連続学習',
-                          value: '$_currentStreak日',
-                          accent: const Color(0xFFFF6B35),
-                        ),
-                      ),
-                      SizedBox(
-                        width: metricWidth,
-                        child: _buildMetricTile(
-                          icon: Icons.workspace_premium_outlined,
-                          label: 'バッジ',
-                          value: '$_badgeCount個',
-                          accent: const Color(0xFFFFD700),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 14),
-                  Container(
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.06),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.08),
+                          const SizedBox(height: 6),
+                          Text(
+                            kLegalAiGenre.description,
+                            style: const TextStyle(
+                              color: Color(0xFFD7DBE8),
+                              fontSize: 12,
+                              height: 1.7,
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: [
+                              for (final area in kLegalAiGenre.focusAreas)
+                                _buildProviderChip(area),
+                            ],
+                          ),
+                          const SizedBox(height: 10),
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: _AiCardActionButton(
+                              label: '法律AIから学ぶ',
+                              icon: Icons.gavel_rounded,
+                              foregroundColor: Colors.white,
+                              borderColor: Colors.white.withValues(alpha: 0.18),
+                              compact: true,
+                              onTap: () =>
+                                  _openProvider(kLegalAiGenre.launchProviderId),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                    const SizedBox(height: 14),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
                       children: [
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    goalLabel,
-                                    style: const TextStyle(
-                                      color: Color(0xFFB0B0B0),
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w600,
-                                      height: 1.5,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    goalValue,
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w700,
-                                      height: 1.7,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Text(
-                              '$progressPercent%',
-                              style: const TextStyle(
-                                color: Color(0xFFFFC107),
-                                fontSize: 22,
-                                fontWeight: FontWeight.w800,
-                                height: 1.5,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 10),
-                        Text(
-                          '学習済み: $_answeredCount / $learnedTotalLabel 社',
-                          style: const TextStyle(
-                            color: Color(0xFFB0B0B0),
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                            height: 1.6,
+                        SizedBox(
+                          width: metricWidth,
+                          child: _buildMetricTile(
+                            icon: Icons.hub_outlined,
+                            label: '掲載AI',
+                            value: providerCountText,
+                            accent: const Color(0xFF3D5AFE),
                           ),
                         ),
-                        const SizedBox(height: 6),
-                        LinearProgressIndicator(
-                          value: progress,
-                          backgroundColor: Colors.white.withValues(alpha: 0.14),
-                          valueColor: const AlwaysStoppedAnimation<Color>(
-                            Color(0xFFFFC107),
+                        SizedBox(
+                          width: metricWidth,
+                          child: _buildMetricTile(
+                            icon: Icons.check_circle_outline,
+                            label: '学習済み',
+                            value: '$_answeredCount社',
+                            accent: const Color(0xFF4CAF50),
                           ),
-                          minHeight: 8,
-                          borderRadius: BorderRadius.circular(999),
+                        ),
+                        SizedBox(
+                          width: metricWidth,
+                          child: _buildMetricTile(
+                            icon: Icons.local_fire_department_outlined,
+                            label: '連続学習',
+                            value: '$_currentStreak日',
+                            accent: const Color(0xFFFF6B35),
+                          ),
+                        ),
+                        SizedBox(
+                          width: metricWidth,
+                          child: _buildMetricTile(
+                            icon: Icons.workspace_premium_outlined,
+                            label: 'バッジ',
+                            value: '$_badgeCount個',
+                            accent: const Color(0xFFFFD700),
+                          ),
                         ),
                       ],
                     ),
-                  ),
-                  const SizedBox(height: 16),
-                  if (isCompact) ...[
-                    SizedBox(
-                      width: double.infinity,
-                      child: FilledButton.icon(
-                        onPressed: _openUniversity,
-                        icon: const Icon(Icons.play_arrow_rounded),
-                        label: Text(primaryCta),
-                        style: FilledButton.styleFrom(
-                          backgroundColor: const Color(0xFFFF6B35),
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
+                    const SizedBox(height: 14),
+                    Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.06),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.08),
                         ),
                       ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      goalLabel,
+                                      style: const TextStyle(
+                                        color: Color(0xFFB0B0B0),
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w600,
+                                        height: 1.5,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      goalValue,
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w700,
+                                        height: 1.7,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Text(
+                                '$progressPercent%',
+                                style: const TextStyle(
+                                  color: Color(0xFFFFC107),
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.w800,
+                                  height: 1.5,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 10),
+                          Text(
+                            '学習済み: $_answeredCount / $learnedTotalLabel 社',
+                            style: const TextStyle(
+                              color: Color(0xFFB0B0B0),
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                              height: 1.6,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          LinearProgressIndicator(
+                            value: progress,
+                            backgroundColor:
+                                Colors.white.withValues(alpha: 0.14),
+                            valueColor: const AlwaysStoppedAnimation<Color>(
+                              Color(0xFFFFC107),
+                            ),
+                            minHeight: 8,
+                            borderRadius: BorderRadius.circular(999),
+                          ),
+                        ],
+                      ),
                     ),
-                    if (_dueCardCount > 0) ...[
+                    const SizedBox(height: 16),
+                    if (isCompact) ...[
+                      SizedBox(
+                        width: double.infinity,
+                        child: _AiCardActionButton(
+                          label: primaryCta,
+                          icon: Icons.play_arrow_rounded,
+                          foregroundColor: Colors.white,
+                          backgroundColor: const Color(0xFFFF6B35),
+                          onTap: _openUniversity,
+                        ),
+                      ),
+                      if (_dueCardCount > 0) ...[
+                        const SizedBox(height: 10),
+                        SizedBox(
+                          width: double.infinity,
+                          child: _AiCardActionButton(
+                            label: '復習する ($_dueCardCount問)',
+                            icon: Icons.replay_rounded,
+                            foregroundColor: Colors.white,
+                            backgroundColor: const Color(0xFF3D5AFE),
+                            onTap: _openUniversity,
+                          ),
+                        ),
+                      ],
                       const SizedBox(height: 10),
                       SizedBox(
                         width: double.infinity,
-                        child: FilledButton.icon(
-                          onPressed: _openUniversity,
-                          icon: const Icon(Icons.replay_rounded),
-                          label: Text('復習する ($_dueCardCount問)'),
-                          style: FilledButton.styleFrom(
-                            backgroundColor: const Color(0xFF3D5AFE),
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                    const SizedBox(height: 10),
-                    SizedBox(
-                      width: double.infinity,
-                      child: OutlinedButton.icon(
-                        onPressed: _openRanking,
-                        icon: const Icon(Icons.leaderboard_outlined),
-                        label: const Text('ランキングを見る'),
-                        style: OutlinedButton.styleFrom(
+                        child: _AiCardActionButton(
+                          label: 'ランキングを見る',
+                          icon: Icons.leaderboard_outlined,
                           foregroundColor: Colors.white,
-                          side: BorderSide(
-                            color: Colors.white.withValues(alpha: 0.24),
-                          ),
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
+                          borderColor: Colors.white.withValues(alpha: 0.24),
+                          onTap: _openRanking,
                         ),
                       ),
-                    ),
-                    const SizedBox(height: 10),
-                    SizedBox(
-                      width: double.infinity,
-                      child: OutlinedButton.icon(
-                        onPressed: _openVideoLesson,
-                        icon: const Icon(Icons.videocam_outlined),
-                        label: const Text('動画で学ぶ'),
-                        style: OutlinedButton.styleFrom(
+                      const SizedBox(height: 10),
+                      SizedBox(
+                        width: double.infinity,
+                        child: _AiCardActionButton(
+                          label: '動画で学ぶ',
+                          icon: Icons.videocam_outlined,
                           foregroundColor: const Color(0xFF90CAF9),
-                          side: const BorderSide(color: Color(0x3390CAF9)),
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
+                          borderColor: const Color(0x3390CAF9),
+                          onTap: _openVideoLesson,
                         ),
                       ),
-                    ),
-                    const SizedBox(height: 10),
-                    SizedBox(
-                      width: double.infinity,
-                      child: _buildAiXPostButton(),
-                    ),
-                  ] else
-                    Wrap(
-                      spacing: 12,
-                      runSpacing: 8,
-                      crossAxisAlignment: WrapCrossAlignment.center,
-                      children: [
-                        FilledButton.icon(
-                          onPressed: _openUniversity,
-                          icon: const Icon(Icons.play_arrow_rounded),
-                          label: Text(primaryCta),
-                          style: FilledButton.styleFrom(
+                      const SizedBox(height: 10),
+                      SizedBox(
+                        width: double.infinity,
+                        child: _buildAiXPostButton(),
+                      ),
+                    ] else
+                      Wrap(
+                        spacing: 12,
+                        runSpacing: 8,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        children: [
+                          _AiCardActionButton(
+                            label: primaryCta,
+                            icon: Icons.play_arrow_rounded,
+                            foregroundColor: Colors.white,
                             backgroundColor: const Color(0xFFFF6B35),
+                            onTap: _openUniversity,
+                          ),
+                          _AiCardActionButton(
+                            label: 'ランキングを見る',
+                            icon: Icons.leaderboard_outlined,
                             foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 14,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
+                            borderColor: Colors.white.withValues(alpha: 0.24),
+                            onTap: _openRanking,
                           ),
-                        ),
-                        OutlinedButton.icon(
-                          onPressed: _openRanking,
-                          icon: const Icon(Icons.leaderboard_outlined),
-                          label: const Text('ランキングを見る'),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: Colors.white,
-                            side: BorderSide(
-                              color: Colors.white.withValues(alpha: 0.24),
-                            ),
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 14,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
+                          _AiCardActionButton(
+                            label: '動画で学ぶ',
+                            icon: Icons.videocam_outlined,
+                            foregroundColor: const Color(0xFF90CAF9),
+                            borderColor: const Color(0x3390CAF9),
+                            compact: true,
+                            onTap: _openVideoLesson,
+                          ),
+                          _buildAiXPostButton(),
+                          _AiCardActionButton(
+                            label: '音声で学ぶ',
+                            icon: Icons.mic,
+                            foregroundColor: const Color(0xFF3D5AFE),
+                            borderColor: const Color(0x333D5AFE),
+                            compact: true,
+                            onTap: () => Navigator.pushNamed(
+                              context,
+                              '/ai-university-voice',
                             ),
                           ),
-                        ),
-                        TextButton.icon(
-                          onPressed: _openVideoLesson,
-                          icon: const Icon(
-                            Icons.videocam_outlined,
-                            size: 16,
-                            color: Color(0xFF90CAF9),
-                          ),
-                          label: const Text(
-                            '動画で学ぶ',
-                            style: TextStyle(
-                              color: Color(0xFF90CAF9),
-                              fontSize: 13,
-                              height: 1.5,
-                            ),
-                          ),
-                        ),
-                        _buildAiXPostButton(),
-                        TextButton.icon(
-                          onPressed: () => Navigator.pushNamed(
-                            context,
-                            '/ai-university-voice',
-                          ),
-                          icon: const Icon(
-                            Icons.mic,
-                            size: 16,
-                            color: Color(0xFF3D5AFE),
-                          ),
-                          label: const Text(
-                            '音声で学ぶ',
-                            style: TextStyle(
-                              color: Color(0xFF3D5AFE),
-                              fontSize: 13,
-                              height: 1.5,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                ],
+                        ],
+                      ),
+                  ],
+                ),
               ),
             ),
           ),
         );
       },
+    );
+  }
+}
+
+class _AiCardActionButton extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final Color foregroundColor;
+  final Color? backgroundColor;
+  final Color? borderColor;
+  final VoidCallback? onTap;
+  final bool compact;
+  final bool loading;
+
+  const _AiCardActionButton({
+    required this.label,
+    required this.icon,
+    required this.foregroundColor,
+    this.backgroundColor,
+    this.borderColor,
+    this.onTap,
+    this.compact = false,
+    this.loading = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final enabled = onTap != null;
+    final effectiveForeground =
+        enabled ? foregroundColor : Colors.white.withValues(alpha: 0.38);
+    final horizontalPadding = compact ? 12.0 : 16.0;
+    final verticalPadding = compact ? 10.0 : 14.0;
+
+    return Semantics(
+      button: true,
+      enabled: enabled,
+      label: label,
+      child: MouseRegion(
+        cursor:
+            enabled ? SystemMouseCursors.click : SystemMouseCursors.forbidden,
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: onTap,
+          child: Container(
+            padding: EdgeInsets.symmetric(
+              horizontal: horizontalPadding,
+              vertical: verticalPadding,
+            ),
+            decoration: BoxDecoration(
+              color: backgroundColor ??
+                  effectiveForeground.withValues(alpha: enabled ? 0.08 : 0.04),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: borderColor ??
+                    effectiveForeground.withValues(
+                      alpha: enabled ? 0.28 : 0.12,
+                    ),
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                if (loading)
+                  SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor:
+                          AlwaysStoppedAnimation<Color>(effectiveForeground),
+                    ),
+                  )
+                else
+                  Icon(
+                    icon,
+                    size: compact ? 16 : 18,
+                    color: effectiveForeground,
+                  ),
+                const SizedBox(width: 8),
+                Flexible(
+                  child: Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: effectiveForeground,
+                      fontSize: compact ? 13 : 14,
+                      fontWeight: FontWeight.w800,
+                      height: 1.4,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _AiIconAction extends StatelessWidget {
+  final IconData icon;
+  final Color color;
+  final String tooltip;
+  final VoidCallback onTap;
+
+  const _AiIconAction({
+    required this.icon,
+    required this.color,
+    required this.tooltip,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: tooltip,
+      child: Semantics(
+        button: true,
+        label: tooltip,
+        child: MouseRegion(
+          cursor: SystemMouseCursors.click,
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: onTap,
+            child: SizedBox.square(
+              dimension: 40,
+              child: Center(child: Icon(icon, color: color, size: 22)),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
