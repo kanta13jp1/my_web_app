@@ -1,7 +1,7 @@
 ---
 title: "Notion Database Limits & Workarounds — 7 Walls Every Power User Hits"
 tags: notion,database,productivity,webdev
-published: false
+published: true
 ---
 
 # Notion Database Limits & Workarounds — 7 Walls Every Power User Hits
