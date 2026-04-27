@@ -1091,11 +1091,11 @@ def print_learning_stats(days: int = 7) -> None:
         print(f"{'日付':<12} {'評価数':>6} {'学習スコア':>10} {'1着率':>7} {'スキップ精度':>12} {'複勝率':>7}")
         print("-" * 60)
         for r in rows:
-            ls = f"{float(r.get('avg_learning_score', 0)) * 100:.1f}"
-            fh = f"{float(r.get('first_hit_rate_pct', 0)):.1f}%"
-            sk = f"{float(r.get('skip_accuracy_pct', 0)):.1f}%"
-            pl = f"{float(r.get('place_hit_rate_pct', 0)):.1f}%"
-            ev = r.get('evaluated_predictions', 0)
+            ls = f"{float(r.get('avg_learning_score') or 0) * 100:.1f}"
+            fh = f"{float(r.get('first_hit_rate_pct') or 0):.1f}%"
+            sk = f"{float(r.get('skip_accuracy_pct') or 0):.1f}%"
+            pl = f"{float(r.get('place_hit_rate_pct') or 0):.1f}%"
+            ev = r.get('evaluated_predictions') or 0
             print(f"{r.get('race_date',''):<12} {ev:>6} {ls:>10} {fh:>7} {sk:>12} {pl:>7}")
     else:
         print("  (データなし)")
@@ -1103,7 +1103,7 @@ def print_learning_stats(days: int = 7) -> None:
     if bet_rows:
         print("\n=== 券種別精度 TOP5 ===")
         for b in bet_rows:
-            print(f"  {b.get('bet_type',''):<10} {float(b.get('hit_rate_pct', 0)):.1f}% ({b.get('total_predictions',0)}件)")
+            print(f"  {b.get('bet_type',''):<10} {float(b.get('hit_rate_pct') or 0):.1f}% ({b.get('total_predictions') or 0}件)")
 
     # GitHub Step Summary
     summary_path = os.environ.get("GITHUB_STEP_SUMMARY")
