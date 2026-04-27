@@ -22002,3 +22002,11 @@ Google I/O 2026 競合脅威 事前ブリーフィング
   - Supabase 150s idle timeout 内で完結するよう defaultLimit も 60 に設定
   - 504 IDLE_TIMEOUT の root cause #2 修正 (30days×force=160 entries >> 150s)
   - 通常 backfill (force=false) は max 500 / default 160 を維持
+
+## 2026-04-28 PS#1 S55 — WF health 継続 + migration-collision-check.yml 新規
+
+- deploy 22:00:22 SUCCESS (S53 migration rename fix 確認)
+- deploy 22:29:55 FAIL: esm.sh 522 CDN transient error (ai-assistant bundling) — コード問題なし
+- health-monitor 22:49:48 SUCCESS (S53 ef_check fix 確認)
+- `migration-collision-check.yml` 新規 — PR/push-to-main で `supabase/migrations/**` 変更時に collision check (PR stage早期検出)
+- cross-instance-pr `20260428_migration_timestamp_collision_ci_ps1.md` close
