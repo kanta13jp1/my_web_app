@@ -21638,3 +21638,10 @@ Google I/O 2026 競合脅威 事前ブリーフィング
   - `normalizeScheduleResultStatus`: 「当」→「当選」「落」→「落選」正規化
   - `findMatchingResultCandidate`: 姓のみマッチング fallback (2文字key / 一意のみ採用)
   - deno lint / deno check 0エラー確認 → push 完了
+
+## PS#6 S59 — 2026-04-27 (競馬AI 学習統計 stats mode)
+
+- `fetch_horse_racing.py --mode stats` 追加: `horse_learning_daily_accuracy` 直近7日トレンド + `horse_bet_type_accuracy` TOP5 を標準出力 & `$GITHUB_STEP_SUMMARY` Markdown 表として書き込み
+- `--mode all` 末尾で自動 stats 出力 (全自動ループで学習状況が毎時可視化)
+- `horse-racing-update.yml`: 学習統計レポートステップ追加 (JST 0時台 or stats/all モード時)
+- commit: cddac840
