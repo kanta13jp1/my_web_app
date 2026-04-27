@@ -1,7 +1,7 @@
 ---
 title: "MCPサーバーを公開する前に確認すべき10のセキュリティ原則"
 tags: mcp,security,ai,個人開発
-published: false
+published: true
 ---
 
 # MCPサーバーを公開する前に確認すべき10のセキュリティ原則
