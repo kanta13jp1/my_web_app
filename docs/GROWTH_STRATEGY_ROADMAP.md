@@ -22063,3 +22063,17 @@ Phase4 drafts 新規作成 (8ファイル):
 - T-1 第50弾: Supabase hub パターン → https://dev.to/kanta13jp1/the-hub-pattern-keeping-supabase-edge-functions-under-50-hn6
 
 **dev.to 累計: 50本**
+
+## PS#1 S57 — 2026-04-28 (Rule 17 WF health check)
+
+### Rule 17 WF health check (2026-04-28)
+- 全 WF: 成功 migration-collision-check 4/4, blog-draft 3/3, blog-publish 3/3, deploy 1 success (最終 25023708129)
+- **失敗修正**: `codex-backlog-check.yml` — `--label "ops,bot"` 存在しないラベル → `workflow-failure,powershell-instance` に変更 / ef76c665
+- **Issue #862** 作成: `[ops] Codex worktree merge backlog (7+ days unmerged)` — codex/vscode-ui-rollout (3 commits, 18d old)
+- orphan branches: blog-publish 1本, claude/* 3本 (全て <5 — 削除不要); cs-check/ai-university/daily-report/youtube = 0
+- cross-instance PR 完了移動: `20260428_codex_merge_backlog_monitor_ps1.md` → done/
+- **codex-backlog-check.yml** 初回動作確認 SUCCESS (run 25024773100)
+
+### S57 完了サマリー
+- codex-backlog-check.yml ラベルバグ修正 → Issue #862 自動生成 動作確認
+- 3層 migration collision 防衛 (deploy-prod preflight + migration-collision-check.yml + 手動 rename) 全て正常稼働中
