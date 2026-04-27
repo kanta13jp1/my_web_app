@@ -1,7 +1,7 @@
 ---
 title: "Notion から自分株式会社への移行ガイド — データを失わずに乗り換える完全手順"
 tags: Notion,productivity,個人開発,buildinpublic
-published: false
+published: true
 ---
 
 # Notion から自分株式会社への移行ガイド — データを失わずに乗り換える完全手順
