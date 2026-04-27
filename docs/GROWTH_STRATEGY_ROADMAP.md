@@ -22101,3 +22101,23 @@ Phase4 drafts 新規作成 (8ファイル):
 - real_world_danshari: `supabase` (global) → `_supabase` (getter) 修正
 - dart format 20ファイル + flutter analyze: 0 issues
 - Commit: 611f11b5 on main
+
+## PS#4 S85 — 2026-04-28 (_CompetitorInfo 158社 + sitemap 157ルート)
+
+**追加20社**: anytype / calm / cerebras-systems / cohere / craft-docs / criteo / curon / descript / digi-smac / drata / ecforce / factory-ai / freee-insurance / go-taxi / graffer / itandi / kingoftime / klarna-ai / stores-jp / zoho-crm
+
+- `comparison_page.dart`: `_competitorInfo` map 138→158社
+- `sitemap.xml`: vs-* ルート 137→157本
+- dart format + flutter analyze: 0 issues
+- Commit: fa53cb27 on main
+- 残: 14社 (172-158=14)
+
+## PS#4 S86 — 2026-04-28 (_CompetitorInfo 174社完結 + sitemap 174ルート)
+
+**最終追加17社**: jules-google / kore-ai / lifenet-insurance / magic-ai / metamask / money-tree / paidy / pipedream / poshmark / roblox / sagawa-express / toyota-connected / ubereats-japan / xbox-cloud-gaming / yamato-transport / sakura-internet / viz-ai
+
+- `comparison_page.dart`: `_competitorInfo` map 158→174社 **PS#4全社完結**
+- `sitemap.xml`: vs-* ルート 157→174本
+- dart format + flutter analyze: 0 issues
+- Commit: f87a15e1d on main
+- **PS#4 _CompetitorInfo + sitemap 完全完結達成**
