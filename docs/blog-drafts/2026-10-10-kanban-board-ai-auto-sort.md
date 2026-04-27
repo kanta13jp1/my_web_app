@@ -1,7 +1,7 @@
 ---
 title: "カンバンボードを AI が自動ソートする — 「優先度の判断」を外注する設計"
 tags: productivity,AI,個人開発,saas
-published: false
+published: true
 ---
 
 # カンバンボードを AI が自動ソートする — 「優先度の判断」を外注する設計
