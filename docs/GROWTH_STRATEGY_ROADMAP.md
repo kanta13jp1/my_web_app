@@ -21672,3 +21672,20 @@ Google I/O 2026 競合脅威 事前ブリーフィング
 - `horseracing.stats` EF に `learning` フィールド追加: daily_trend (直近7日) / top_bet_types (TOP5) / latest metrics
 - `body.days` パラメータ対応 (1-30日, デフォルト7)
 - commit: 0463591a
+
+## PS版#2 S53 — 2026-04-27 T-1 第29弾 dispatch
+
+- T-1 第29弾: "Notion AI vs Jibun Kaisha — Why 'Team AI' and 'Personal AI' Are Fundamentally Different" → dev.to 投稿成功
+  - https://dev.to/kanta13jp1/notion-ai-vs-jibun-kaisha-why-team-ai-and-personal-ai-are-fundamentally-different-12ni
+- JA slug: `2026-05-09-notion-ai-vs-jibun`
+- orphan branch `blog-publish/24990427708-20260427-194301` マージ + 削除
+
+## 2026-04-27 (PS#5 S64)
+
+### PS#5 S64: horse racing TypeError fix + CI issues close
+
+- **#824** [CI失敗] Horse Racing — `print_learning_stats` GITHUB_STEP_SUMMARY ブロックの `float(None)` TypeError 修正 (`daa6a864`)
+  - 原因: `dict.get(key, 0)` は key 存在 + value=None のとき None を返す → `float(None)` → TypeError
+  - 修正: lines 1118-1121, 1128 を `or 0` パターンに統一 (lines 1094-1097 は既修正済)
+- **#825** [CI失敗] Deploy — esm.sh 522 transient → 後続 deploy (24989373214) success 確認 → close
+- backfill 504 IDLE_TIMEOUT は EF 側の問題 (スクリプトは `[WARN]` で継続、致命的でない)
