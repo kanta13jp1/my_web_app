@@ -21827,3 +21827,16 @@ Google I/O 2026 競合脅威 事前ブリーフィング
 - backward compatible: `stats` + `learning` フィールドは変更なし
 - deno lint clean
 - migration: `20260427201500_seed_achievements_ps6_s67.sql`
+
+## 2026-04-27 (PS#6 S68)
+
+### PS#6 S68: --mode dqs_recalc — data_quality_score 15フィールド再計算
+
+- S62/S63で data_quality_score の計算式を 13→15 フィールドに変更したが、既存 DB レコードは古い値のまま
+- `recalc_data_quality_scores(limit=500)` 関数を追加:
+  - `prev_history_fetched = true` の全エントリを対象
+  - `_data_quality_score(entry)` で 15 フィールド式を再計算
+  - 変化量 0.001 以上のエントリのみ PATCH (効率的)
+- `--mode dqs_recalc` CLI mode 追加 (--limit 引数対応)
+- GHA workflow_dispatch mode description に dqs_recalc 追記
+- migration: `20260427203000_seed_achievements_ps6_s68.sql`

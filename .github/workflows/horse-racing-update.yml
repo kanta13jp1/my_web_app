@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: "実行モード (entries / results / predict / history / evaluate / backfill / stats / all)"
+        description: "実行モード (entries / results / predict / history / evaluate / backfill / stats / dqs_recalc / all)"
         required: false
         default: "all"
       date:
