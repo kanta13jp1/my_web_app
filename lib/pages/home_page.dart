@@ -30,14 +30,11 @@ import '../models/feature_strategy_monitor.dart';
 import '../models/kgi_csf_kpi.dart';
 
 // Pages
-import 'notifications_page.dart';
 import 'abstinence_guard_page.dart';
 import 'emergency_meeting_page.dart';
-import 'landing_page.dart';
 import 'admin_analytics_page.dart';
 import 'cfo_office_page.dart';
 import 'asset_management_page.dart';
-import 'morning_briefing_page.dart';
 import 'election_strategy_page.dart';
 import 'election_victory_page.dart';
 import 'settings_page.dart';
@@ -228,10 +225,7 @@ class _HomePageState extends State<HomePage> {
   Future<void> _logout(BuildContext context) async {
     await Supabase.instance.client.auth.signOut();
     if (context.mounted) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const LandingPage()),
-      );
+      Navigator.of(context).pushReplacementNamed('/');
     }
   }
 
@@ -1746,6 +1740,7 @@ abstinence_slip_details: $slipDetailsText
     await Navigator.push(
       context,
       MaterialPageRoute(
+        settings: const RouteSettings(name: '/asset-management'),
         builder: (_) => const AssetManagementPage(
           initialFocus: AssetManagementInitialFocus.flow,
           emphasizeMonthlyFlow: true,
@@ -1766,12 +1761,7 @@ abstinence_slip_details: $slipDetailsText
       date: date,
     );
     if (!context.mounted) return;
-    await Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => const MorningBriefingPage(),
-      ),
-    );
+    await Navigator.of(context).pushNamed('/morning-briefing');
     if (mounted) {
       await _refreshKpis();
     }
@@ -1790,10 +1780,7 @@ abstinence_slip_details: $slipDetailsText
       date: date,
     );
     if (!context.mounted) return;
-    await Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => const CfoOfficePage()),
-    );
+    await Navigator.of(context).pushNamed('/cfo-office');
     if (mounted) {
       await _refreshKpis();
     }
@@ -1803,6 +1790,7 @@ abstinence_slip_details: $slipDetailsText
     await Navigator.push(
       context,
       MaterialPageRoute(
+        settings: const RouteSettings(name: '/abstinence-guard'),
         builder: (_) => AbstinenceGuardPage(
           nowProvider: widget.nowProvider,
         ),
@@ -1820,6 +1808,7 @@ abstinence_slip_details: $slipDetailsText
     await Navigator.push(
       context,
       MaterialPageRoute(
+        settings: const RouteSettings(name: '/abstinence-guard'),
         builder: (_) => AbstinenceGuardPage(
           nowProvider: widget.nowProvider,
           initialDate: date,
@@ -1932,6 +1921,7 @@ abstinence_slip_details: $slipDetailsText
     await Navigator.push(
       context,
       MaterialPageRoute(
+        settings: const RouteSettings(name: '/work-menu'),
         builder: (_) => WorkMenuPage(
           lockExploratoryTools: shouldLockExploratoryMenus,
           highlightedToolIds: highlightedToolIds,
@@ -4508,12 +4498,7 @@ abstinence_slip_details: $slipDetailsText
                 icon: const Icon(Icons.notifications_outlined),
                 tooltip: '通知',
                 onPressed: () async {
-                  await Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => const NotificationsPage(),
-                    ),
-                  );
+                  await Navigator.of(context).pushNamed('/notifications');
                   _fetchNotifUnreadCount();
                 },
               ),
@@ -4550,18 +4535,13 @@ abstinence_slip_details: $slipDetailsText
           ),
           IconButton(
             icon: const Icon(Icons.person_outline),
-            onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const ProfileSettingsPage()),
-            ),
+            onPressed: () =>
+                Navigator.of(context).pushNamed('/profile-settings'),
             tooltip: 'プロフィール設定',
           ),
           IconButton(
             icon: const Icon(Icons.settings),
-            onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const SettingsPage()),
-            ),
+            onPressed: () => Navigator.of(context).pushNamed('/settings'),
             tooltip: '設定',
           ),
           IconButton(
@@ -4818,9 +4798,11 @@ abstinence_slip_details: $slipDetailsText
                                 borderRadius: BorderRadius.circular(14),
                                 onTap: () => _runTrackedAction(
                                   'ai-secretary',
-                                  () => Navigator.push(
-                                    context,
+                                  () => Navigator.of(context).push(
                                     MaterialPageRoute<void>(
+                                      settings: const RouteSettings(
+                                        name: '/ai-secretary',
+                                      ),
                                       builder: (_) => const AISecretaryPage(
                                         autoRunOnOpen: true,
                                       ),
@@ -5073,13 +5055,8 @@ abstinence_slip_details: $slipDetailsText
                                   ),
                                   onTap: () => _runTrackedAction(
                                     'election-strategy',
-                                    () => Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) =>
-                                            const ElectionStrategyPage(),
-                                      ),
-                                    ),
+                                    () => Navigator.of(context)
+                                        .pushNamed('/election-strategy'),
                                   ),
                                 ),
                               ),
@@ -5149,13 +5126,8 @@ abstinence_slip_details: $slipDetailsText
                                   ),
                                   onTap: () => _runTrackedAction(
                                     'local-election-700',
-                                    () => Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) =>
-                                            const ElectionVictoryPage(),
-                                      ),
-                                    ),
+                                    () => Navigator.of(context)
+                                        .pushNamed('/local-election-700'),
                                   ),
                                 ),
                               ),
@@ -5219,7 +5191,23 @@ abstinence_slip_details: $slipDetailsText
   }
 
   void _nav(BuildContext context, Widget page) {
-    Navigator.push(context, MaterialPageRoute(builder: (context) => page));
+    final routeName = _homeRouteNameForPage(page);
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        settings: routeName == null ? null : RouteSettings(name: routeName),
+        builder: (context) => page,
+      ),
+    );
+  }
+
+  String? _homeRouteNameForPage(Widget page) {
+    if (page is ProfileSettingsPage) return '/profile-settings';
+    if (page is SettingsPage) return '/settings';
+    if (page is EmergencyMeetingPage) return '/emergency-meeting';
+    if (page is ElectionStrategyPage) return '/election-strategy';
+    if (page is ElectionVictoryPage) return '/local-election-700';
+    return null;
   }
 
   Widget _buildUiStatusButton(BuildContext context) {
@@ -5424,12 +5412,7 @@ abstinence_slip_details: $slipDetailsText
         ),
         subtitle: const Text('CEOとして全AI役員を招集し、直面している課題を解決します。'),
         trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-        onTap: () => Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => const EmergencyMeetingPage(),
-          ),
-        ),
+        onTap: () => Navigator.of(context).pushNamed('/emergency-meeting'),
       ),
     );
   }
