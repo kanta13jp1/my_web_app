@@ -217,6 +217,10 @@ void main() {
     expect(draft.content, contains('国民民主党 地方議員集計'));
     expect(draft.content, contains('公式地方議員数: 333人'));
     expect(draft.content, contains('700まで残り: 367人'));
+    expect(
+      draft.content,
+      contains('次回統一地方選(2027/04/11目安)まであと379日'),
+    );
     expect(draft.content, contains('AI要約'));
     expect(draft.content, contains('アラート'));
     expect(draft.content, contains('全都道府県内訳'));
@@ -226,6 +230,8 @@ void main() {
     expect(draft.content, contains('🟡 島根県'));
     expect(draft.metadata['type'], LocalElectionShareService.metadataType);
     expect(draft.metadata['officialCurrentLocalMembers'], 333);
+    expect(draft.metadata['daysUntilNextUnifiedLocalElection'], 379);
+    expect(draft.metadata['nextUnifiedLocalElectionTargetDate'], '2027/04/11');
     expect(draft.metadata['missingPrefectureCount'], greaterThanOrEqualTo(1));
   });
 
