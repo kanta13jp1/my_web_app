@@ -463,4 +463,38 @@ void main() {
     expect(candidate.status, '当選');
     expect(candidate.votes, 843);
   });
+
+  test('treats runner-up status as a resolved past election loss', () {
+    final snapshot = LocalElectionRealitySnapshot.fromJson(<String, dynamic>{
+      'fetchedAt': '2026-04-27T10:30:00.000Z',
+      'officialCurrentLocalMembers': 362,
+      'actualNetIncreaseRequired': 338,
+      'upcomingSchedules': <Map<String, dynamic>>[
+        <String, dynamic>{
+          'electionName': '松山市議会議員選挙',
+          'prefecture': '愛媛県',
+          'municipality': '松山市',
+          'electionCategory': 'assembly',
+          'voteDate': '2026-04-26',
+          'announcementDate': '2026-04-19',
+          'detailUrl': 'https://go2senkyo.com/local/senkyo/23307',
+          'officialCandidateSourceUrl': 'https://new-kokumin.jp/election',
+          'seatCount': 41,
+          'totalCandidateCount': 55,
+          'kokuminCandidateCount': 2,
+          'kokuminCandidateNames': <String>['十川 ゆういち', '伊藤 しゅん'],
+          'kokuminCandidateStatuses': <String>['当選', '次点'],
+          'kokuminCandidateVotes': <int>[2161, 2122],
+          'kokuminCandidateXHandles': <String>['sogawa123', 'itoh_syun0204'],
+          'isPast': true,
+        },
+      ],
+    });
+
+    final result = snapshot.resolvedPastElectionResults.single;
+    expect(result.winCount, 1);
+    expect(result.lossCount, 1);
+    expect(result.dppCandidates.last.status, '次点');
+    expect(result.dppCandidates.last.votes, 2122);
+  });
 }
