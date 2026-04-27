@@ -4461,6 +4461,9 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
         final japanMap = ElectionJapanMap(
           prefectures: plan.prefectures,
           schedules: snapshot?.targetElectionSchedules ?? const [],
+          pastElectionResults: snapshot == null
+              ? const <PastElectionResult>[]
+              : _displayPastElectionResults(snapshot),
         );
 
         if (stacked) {
