@@ -97,6 +97,70 @@ jobs:
             core.setOutput('issue_url', issue.html_url);
             core.info(`Created issue #${issue.number}`);
 
+      - name: Notify Slack on Failure
+        if: steps.check.outputs.exists == 'false'
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          WORKFLOW_NAME: ${{ github.event.workflow_run.name }}
+          WORKFLOW_URL: ${{ github.event.workflow_run.html_url }}
+          HEAD_BRANCH: ${{ github.event.workflow_run.head_branch }}
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+          ISSUE_NUMBER: ${{ steps.create.outputs.issue_number }}
+          ISSUE_URL: ${{ steps.create.outputs.issue_url }}
+        run: |
+          if [ -z "$SLACK_WEBHOOK_URL" ]; then
+            echo "⚠️ SLACK_WEBHOOK_URL が未設定のためスキップ"
+            exit 0
+          fi
+
+          JST=$(TZ=Asia/Tokyo date +'%Y-%m-%d %H:%M JST')
+          SHORT_SHA="${HEAD_SHA:0:7}"
+
+          # Issue リンクブロックの有無
+          if [ -n "$ISSUE_NUMBER" ]; then
+            ISSUE_BLOCK="{\"type\":\"button\",\"text\":{\"type\":\"plain_text\",\"text\":\"Issue #${ISSUE_NUMBER}\"},\"url\":\"${ISSUE_URL}\",\"style\":\"danger\"}"
+          else
+            ISSUE_BLOCK="{\"type\":\"button\",\"text\":{\"type\":\"plain_text\",\"text\":\"Workflow Logs\"},\"url\":\"${WORKFLOW_URL}\",\"style\":\"danger\"}"
+          fi
+
+          cat <<PAYLOAD > /tmp/slack_payload.json
+          {
+            "text": "❌ スケジュールタスク失敗: ${WORKFLOW_NAME}",
+            "blocks": [
+              {
+                "type": "header",
+                "text": { "type": "plain_text", "text": "❌ スケジュールタスク失敗" }
+              },
+              {
+                "type": "section",
+                "fields": [
+                  { "type": "mrkdwn", "text": "*ワークフロー:*\n\`${WORKFLOW_NAME}\`" },
+                  { "type": "mrkdwn", "text": "*ブランチ:*\n\`${HEAD_BRANCH}\`" },
+                  { "type": "mrkdwn", "text": "*コミット:*\n\`${SHORT_SHA}\`" },
+                  { "type": "mrkdwn", "text": "*失敗日時:*\n${JST}" }
+                ]
+              },
+              {
+                "type": "actions",
+                "elements": [
+                  {
+                    "type": "button",
+                    "text": { "type": "plain_text", "text": "Workflow Logs" },
+                    "url": "${WORKFLOW_URL}"
+                  },
+                  ${ISSUE_BLOCK}
+                ]
+              }
+            ]
+          }
+          PAYLOAD
+
+          curl -s -X POST -H 'Content-type: application/json' \
+            --data @/tmp/slack_payload.json \
+            "$SLACK_WEBHOOK_URL" \
+            --max-time 10 || true
+          echo "✅ Slack通知送信"
+
       - name: Job Summary
         if: always()
         env:
