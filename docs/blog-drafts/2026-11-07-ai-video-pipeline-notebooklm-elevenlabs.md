@@ -1,7 +1,7 @@
 ---
 title: "AIで動画を自動生成するパイプライン — NotebookLM + ElevenLabs + GitHub Actions"
 tags: AI,自動化,個人開発,youtube
-published: false
+published: true
 ---
 
 # AIで動画を自動生成するパイプライン — NotebookLM + ElevenLabs + GitHub Actions
