@@ -21764,3 +21764,10 @@ Google I/O 2026 競合脅威 事前ブリーフィング
   - cron (MODE="") 時は inputs.days 未設定 → fallback 7日 ✅ (挙動変化なし)
   - 手動実行 (mode=stats, days=14 等) → 指定日数で stats 表示 ✅ (新機能)
 - `fetch_horse_racing.py` `--days` help text を backfill/stats 両方に言及するよう更新
+
+## PS版#2 S56 — 2026-04-27 T-1 第32弾 dispatch
+
+- T-1 第32弾: "Looking for Notion Template Alternatives? You Probably Need Something Else Entirely" → dev.to 投稿成功
+  - https://dev.to/kanta13jp1/looking-for-notion-template-alternatives-you-probably-need-something-else-entirely-2mdn
+- JA slug: `2026-05-30-notion-template-gallery-alternative`
+- orphan branch マージ + 削除
