@@ -131,10 +131,11 @@ class _DiagnosticsBody extends StatelessWidget {
                 ],
               ),
             ),
-            IconButton(
-              onPressed: onRefresh,
+            _DiagnosticsIconAction(
               tooltip: '再診断',
-              icon: const Icon(Icons.refresh),
+              icon: Icons.refresh,
+              onTap: onRefresh,
+              color: colorScheme.onSurfaceVariant,
             ),
           ],
         ),
@@ -199,15 +200,15 @@ class _DiagnosticsBody extends StatelessWidget {
           spacing: 8,
           runSpacing: 8,
           children: [
-            OutlinedButton.icon(
-              onPressed: () => Navigator.pushNamed(context, '/project-gantt'),
-              icon: const Icon(Icons.timeline_outlined),
-              label: const Text('WBSを見る'),
+            _DiagnosticsActionButton(
+              icon: Icons.timeline_outlined,
+              label: 'WBSを見る',
+              onTap: () => Navigator.pushNamed(context, '/project-gantt'),
             ),
-            OutlinedButton.icon(
-              onPressed: () => Navigator.pushNamed(context, '/wbs-user-tasks'),
-              icon: const Icon(Icons.assignment_ind_outlined),
-              label: const Text('ユーザータスク'),
+            _DiagnosticsActionButton(
+              icon: Icons.assignment_ind_outlined,
+              label: 'ユーザータスク',
+              onTap: () => Navigator.pushNamed(context, '/wbs-user-tasks'),
             ),
           ],
         ),
@@ -433,10 +434,11 @@ class _DiagnosticsError extends StatelessWidget {
               ),
             ),
             const Spacer(),
-            IconButton(
-              onPressed: onRefresh,
+            _DiagnosticsIconAction(
               tooltip: '再診断',
-              icon: const Icon(Icons.refresh),
+              icon: Icons.refresh,
+              onTap: onRefresh,
+              color: theme.colorScheme.onSurfaceVariant,
             ),
           ],
         ),
@@ -449,6 +451,95 @@ class _DiagnosticsError extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _DiagnosticsActionButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  const _DiagnosticsActionButton({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    return Semantics(
+      button: true,
+      label: label,
+      child: MouseRegion(
+        cursor: SystemMouseCursors.click,
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: onTap,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: colorScheme.outlineVariant),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(icon, size: 18, color: colorScheme.onSurfaceVariant),
+                const SizedBox(width: 8),
+                Text(
+                  label,
+                  style: theme.textTheme.labelLarge?.copyWith(
+                    color: colorScheme.onSurface,
+                    fontWeight: FontWeight.w700,
+                    height: 1.4,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _DiagnosticsIconAction extends StatelessWidget {
+  final String tooltip;
+  final IconData icon;
+  final VoidCallback onTap;
+  final Color color;
+
+  const _DiagnosticsIconAction({
+    required this.tooltip,
+    required this.icon,
+    required this.onTap,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: tooltip,
+      child: Semantics(
+        button: true,
+        label: tooltip,
+        child: MouseRegion(
+          cursor: SystemMouseCursors.click,
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: onTap,
+            child: SizedBox.square(
+              dimension: 40,
+              child: Center(
+                child: Icon(icon, size: 22, color: color),
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
