@@ -3301,6 +3301,789 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  // PS#4 S82: 20社追加 2026-04-28
+  'asana': const _CompetitorInfo(
+    name: 'Asana',
+    emoji: '📋',
+    tagline: 'AsanaはチームPM標準ツール。自分株式会社は個人・チーム両対応のAI駆動タスク管理を1アプリで提供。',
+    searchKeyword: 'Asana代替 プロジェクト管理代替 タスク管理代替',
+    accentColor: Color(0xFFF06A6A),
+    painPoints: [
+      'Asana — チーム向けPMツールで個人利用には機能過多・月額費用がかさむ',
+      'AI機能はアドオン扱いで基本プランでは使えない。財務・習慣・学習管理は対象外',
+      '自分株式会社はAI駆動タスク管理＋財務＋習慣を1アプリで無料提供',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'チームプロジェクト管理',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI統合タスクアシスタント',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '個人財務・家計管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '習慣トラッキング',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'trello': const _CompetitorInfo(
+    name: 'Trello',
+    emoji: '📊',
+    tagline: 'Trelloはカンバン型タスク管理の定番。自分株式会社はカンバン＋AI判定＋財務を統合した次世代個人OS。',
+    searchKeyword: 'Trello代替 カンバン代替 ボード管理代替',
+    accentColor: Color(0xFF0052CC),
+    painPoints: [
+      'Trello — カンバンボードは直感的だが財務・習慣・AI活用は別アプリが必要',
+      'Atlassian傘下でエンタープライズ寄りになり個人プランの機能制限が増加',
+      '自分株式会社はタスク・財務・AI判定・習慣を1アプリで統合提供',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'カンバンボード',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI統合ライフアシスタント',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '個人財務管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '習慣・目標トラッキング',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'todoist': const _CompetitorInfo(
+    name: 'Todoist',
+    emoji: '✅',
+    tagline: 'TodoistはGTD実践者向けタスク管理の傑作。自分株式会社はAI自動優先付け＋財務を統合した個人OS。',
+    searchKeyword: 'Todoist代替 GTD代替 タスク管理アプリ代替',
+    accentColor: Color(0xFFDB4035),
+    painPoints: [
+      'Todoist Pro \$5/月 — タスク管理に特化し財務・習慣・AI学習管理は別アプリ依存',
+      'AI自動優先付けはPro以上。個人の全ライフ管理には複数サブスクが必要',
+      '自分株式会社はAI優先付け＋財務＋習慣管理を完全無料で統合提供',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'GTD対応タスク管理',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI統合ライフマネジメント',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '家計・財務管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '習慣トラッキング',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'n8n': const _CompetitorInfo(
+    name: 'n8n',
+    emoji: '🔀',
+    tagline: 'n8nはOSSワークフロー自動化ツール。自分株式会社はノーコード設定不要で個人ライフを自動化する完成済みOS。',
+    searchKeyword: 'n8n代替 ワークフロー自動化代替 Zapier代替',
+    accentColor: Color(0xFFEA5B26),
+    painPoints: [
+      'n8n — セルフホスト型OSSでエンジニアには強力だが一般ユーザーにはセットアップが高難易度',
+      'ワークフロー設計・ノード構築のスキルが必要で個人ユーザーが即使えるアプリではない',
+      '自分株式会社はAI自動化を設定ゼロで提供する完成済み個人OS',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'カスタムワークフロー自動化',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: '設定ゼロで即使えるAI',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '個人財務・家計管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: 'タスク・習慣管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'zapier': const _CompetitorInfo(
+    name: 'Zapier',
+    emoji: '⚡',
+    tagline: 'Zapierはノーコード自動化の定番。自分株式会社はZap設計不要でAI統合ライフ管理を即提供。',
+    searchKeyword: 'Zapier代替 自動化ツール代替 ノーコード自動化代替',
+    accentColor: Color(0xFFFF4A00),
+    painPoints: [
+      'Zapier Pro \$19.99/月〜 — 外部SaaS連携自動化に特化し個人ライフ管理アプリとしては設計外',
+      'Zap(自動化フロー)の設計が必要で財務・習慣・AI学習を1アプリで管理できない',
+      '自分株式会社はAI・財務・タスク・習慣を1アプリで統合・月額ゼロ',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '外部SaaS自動化連携',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI統合個人OS',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '家計・財務管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '習慣・目標管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'netflix': const _CompetitorInfo(
+    name: 'Netflix',
+    emoji: '🎬',
+    tagline: 'Netflixは世界No.1動画配信。自分株式会社はエンタメ管理＋学習推薦AIを搭載した個人OS。',
+    searchKeyword: 'Netflix代替 動画配信代替 エンタメ管理代替',
+    accentColor: Color(0xFFE50914),
+    painPoints: [
+      'Netflix ¥790〜/月 — 動画消費に特化し財務・タスク・習慣・AI学習管理は対象外',
+      '視聴時間が財務・健康・目標達成に与える影響を可視化・管理する機能がない',
+      '自分株式会社はAI大学での学習推薦＋時間・財務管理を統合した個人OS',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '動画コンテンツ配信',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI学習推薦・AI大学',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '個人財務・時間管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '習慣・目標トラッキング',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'signal': const _CompetitorInfo(
+    name: 'Signal',
+    emoji: '🔐',
+    tagline: 'Signalはプライバシー最優先の暗号化メッセージアプリ。自分株式会社はプライバシー重視のAI個人OSを提供。',
+    searchKeyword: 'Signal代替 暗号化メッセージ代替 プライバシーアプリ代替',
+    accentColor: Color(0xFF2592E9),
+    painPoints: [
+      'Signal — 暗号化通信に特化しタスク・財務・習慣・AI学習管理は別アプリが必要',
+      'メッセージング以外の個人ライフ管理機能はゼロ',
+      '自分株式会社はプライバシーを重視しながらAI・財務・タスク・習慣を統合管理',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'E2E暗号化メッセージング',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI統合ライフアシスタント',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '個人財務管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: 'タスク・習慣管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'twilio': const _CompetitorInfo(
+    name: 'Twilio',
+    emoji: '📞',
+    tagline: 'TwilioはコミュニケーションAPI最大手。自分株式会社はAPI知識不要でAI通知・リマインダーを提供する個人OS。',
+    searchKeyword: 'Twilio代替 通信API代替 SMS自動化代替',
+    accentColor: Color(0xFFF22F46),
+    painPoints: [
+      'Twilio — 開発者向けSMS/音声/メールAPIで一般個人ユーザーが直接使えるアプリではない',
+      '通知・リマインダー自動化には開発スキルとAPI費用が必要',
+      '自分株式会社はAI通知・デイリーリマインダーを設定ゼロで無料提供',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'SMS/音声/メールAPI',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI通知・リマインダー',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '個人財務・タスク管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '設定ゼロで即利用',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'snowflake': const _CompetitorInfo(
+    name: 'Snowflake',
+    emoji: '❄️',
+    tagline:
+        'Snowflakeはエンタープライズデータクラウドの王者。自分株式会社はデータ分析を個人レベルに democratize した個人OS。',
+    searchKeyword: 'Snowflake代替 データクラウド代替 データウェアハウス代替',
+    accentColor: Color(0xFF29B5E8),
+    painPoints: [
+      'Snowflake — エンタープライズ向けデータウェアハウスで個人ユーザーには複雑・高コスト',
+      'SQLスキルとクラウド知識が必要で財務・習慣・AI学習管理アプリとしては設計外',
+      '自分株式会社はAI大学にSnowflake学習コンテンツを収録し個人キャリアに活かせる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'エンタープライズデータ分析',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI大学 (Snowflake学習)',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '個人財務・家計管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: 'タスク・目標管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'vanta': const _CompetitorInfo(
+    name: 'Vanta',
+    emoji: '🛡️',
+    tagline:
+        'VantaはSOC2/ISO27001自動化のセキュリティコンプライアンスSaaS。自分株式会社は個人データを安全に管理するAI個人OS。',
+    searchKeyword: 'Vanta代替 セキュリティコンプライアンス代替 SOC2代替',
+    accentColor: Color(0xFF7C3AED),
+    painPoints: [
+      'Vanta — 企業向けセキュリティ認証自動化に特化し個人ユーザーの財務・タスク管理には不適',
+      'スタートアップがSOC2取得に使うBtoBツールで月額費用も企業向け水準',
+      '自分株式会社はAI大学でセキュリティ知識を学べる個人向けOS',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'セキュリティ認証自動化',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI大学 (セキュリティ学習)',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '個人財務・タスク管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '設定ゼロで即利用',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'progate': const _CompetitorInfo(
+    name: 'Progate',
+    emoji: '💻',
+    tagline: 'Progateはブラウザで学ぶプログラミング学習サービス。自分株式会社はAI大学で260社超のAIツールを学べる個人OS。',
+    searchKeyword: 'Progate代替 プログラミング学習代替 コーディング学習代替',
+    accentColor: Color(0xFF3CBC8D),
+    painPoints: [
+      'Progate Pro ¥1,078/月 — プログラミング学習に特化し財務・習慣・タスク管理は別アプリ依存',
+      'AI・最新テクノロジー学習コンテンツの更新が遅く実務レベルのAI活用に対応しにくい',
+      '自分株式会社のAI大学は260社超のAIツールを無料で学べ、財務・習慣管理も統合',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'プログラミング学習',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI大学 (AIツール学習)',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '個人財務・家計管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '習慣・目標管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'schoo': const _CompetitorInfo(
+    name: 'Schoo',
+    emoji: '🎓',
+    tagline: 'Schooは社会人向けオンライン学習の日本代表。自分株式会社はAI大学で最新AIスキルを無料で学べる個人OS。',
+    searchKeyword: 'Schoo代替 オンライン学習代替 社会人学習代替',
+    accentColor: Color(0xFFFF6B2B),
+    painPoints: [
+      'Schoo ¥980/月 — 動画学習に特化しAI・財務・習慣・タスク管理は対象外',
+      'AI最新動向のコンテンツ更新速度が追いつかない。260社超のAIツールを体系的に学べない',
+      '自分株式会社のAI大学は最新AI260社超を無料で学べ、実践ライフ管理も統合',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '動画オンライン学習',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI大学 (AIツール実践学習)',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '個人財務・家計管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '習慣・目標トラッキング',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'sansan': const _CompetitorInfo(
+    name: 'Sansan',
+    emoji: '📇',
+    tagline: 'Sansanは名刺管理・法人CRMの日本No.1。自分株式会社はAI人脈管理を個人ライフ全体に統合した個人OS。',
+    searchKeyword: 'Sansan代替 名刺管理代替 CRM代替',
+    accentColor: Color(0xFF003B8E),
+    painPoints: [
+      'Sansan — 法人向け名刺・CRM管理に特化し個人の財務・習慣・AI学習管理には未対応',
+      '個人向けEight (無料)はシンプルすぎ、エンタープライズSansanは高額で個人使用は非効率',
+      '自分株式会社はAI人脈管理＋財務＋タスク＋習慣を1アプリで統合提供',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '名刺・法人CRM管理',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI統合個人ライフ管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '個人財務・家計管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '習慣・目標管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'kincone': const _CompetitorInfo(
+    name: 'KINCONE',
+    emoji: '⏰',
+    tagline: 'KINCONEはSuicaで打刻できる交通費・勤怠管理SaaS。自分株式会社は勤怠＋財務＋AI管理を統合した個人OS。',
+    searchKeyword: 'KINCONE代替 交通費精算代替 勤怠管理代替',
+    accentColor: Color(0xFF00A55A),
+    painPoints: [
+      'KINCONE — Suica打刻・交通費精算に特化し個人の財務全体・習慣・AI学習は管理対象外',
+      '法人向けSaaSで個人フリーランスが使うには機能が限定的・コストが合わない場合も',
+      '自分株式会社は勤務時間・交通費を含む財務全体をAIで管理する個人OS',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Suica打刻・交通費管理',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI統合財務・家計管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '習慣・目標トラッキング',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: 'AI大学 (HR/労務学習)',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'synthesia': const _CompetitorInfo(
+    name: 'Synthesia',
+    emoji: '🎭',
+    tagline: 'SynthesiaはAIアバター動画生成の世界リーダー。自分株式会社はAI大学でSynthesia活用法を学べる個人OS。',
+    searchKeyword: 'Synthesia代替 AIアバター動画代替 AI動画生成代替',
+    accentColor: Color(0xFF1A6FFF),
+    painPoints: [
+      'Synthesia Starter \$29/月 — AIアバター動画生成に特化し財務・タスク・習慣管理は対象外',
+      '動画制作ツールであり個人ライフ全体をAIで管理するOSとしては設計されていない',
+      '自分株式会社のAI大学はSynthesia等のAI動画ツールを無料で学び実践できる個人OS',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AIアバター動画生成',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI大学 (Synthesia学習)',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '個人財務・家計管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: 'タスク・習慣管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'runway': const _CompetitorInfo(
+    name: 'Runway',
+    emoji: '🎨',
+    tagline: 'RunwayはGen-3搭載のAI動画・クリエイティブツール。自分株式会社はAI大学でRunway活用を学べる個人OS。',
+    searchKeyword: 'Runway代替 AI動画編集代替 AI動画生成代替',
+    accentColor: Color(0xFF8B5CF6),
+    painPoints: [
+      'Runway Standard \$15/月 — AI動画生成・編集に特化し財務・タスク・習慣管理は対象外',
+      'クリエイティブ制作ツールで個人の日常ライフ管理OSとしては機能しない',
+      '自分株式会社のAI大学はRunwayなどのAIクリエイティブツールを体系的に学べる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AI動画生成・編集',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI大学 (AI動画ツール学習)',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '個人財務・家計管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: 'タスク・目標管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'heygen': const _CompetitorInfo(
+    name: 'HeyGen',
+    emoji: '🤖',
+    tagline: 'HeyGenはAIアバターで多言語動画を自動生成。自分株式会社はAI大学でHeyGenの活用法を学べる個人OS。',
+    searchKeyword: 'HeyGen代替 AIアバター代替 多言語動画代替',
+    accentColor: Color(0xFF00C9A7),
+    painPoints: [
+      'HeyGen Creator \$29/月 — AIアバター動画生成に特化し個人ライフ管理は対象外',
+      'マーケティング・動画制作用途で財務・習慣・タスク管理OSとしては機能しない',
+      '自分株式会社はHeyGen等のAIツール活用知識をAI大学で無料提供し実践ライフ管理も統合',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AIアバター多言語動画',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI大学 (HeyGen学習)',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '個人財務・家計管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: 'タスク・習慣管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'devin': const _CompetitorInfo(
+    name: 'Devin (Cognition AI)',
+    emoji: '👨‍💻',
+    tagline: 'Devinは初のAIソフトウェアエンジニア。自分株式会社はAI大学でDevin等のAIコーディングエージェントを学べる個人OS。',
+    searchKeyword: 'Devin代替 AIソフトウェアエンジニア代替 AIコーディングエージェント代替',
+    accentColor: Color(0xFF0077FF),
+    painPoints: [
+      'Devin Teams \$500/月 — AIエンジニアリングに特化し個人の財務・習慣・日常ライフ管理は対象外',
+      'エンタープライズ向けAIコーディングエージェントで個人ユーザーには高額・高難易度',
+      '自分株式会社はAI大学でDevin活用を学べ財務・習慣・タスク管理も1アプリで提供',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AIソフトウェアエンジニア',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI大学 (Devin/AI coding学習)',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '個人財務・家計管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '習慣・目標管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'hugging-face': const _CompetitorInfo(
+    name: 'Hugging Face',
+    emoji: '🤗',
+    tagline: 'Hugging FaceはOSSモデルのGitHub。自分株式会社はAI大学でHugging Faceの活用を学べる個人OS。',
+    searchKeyword: 'Hugging Face代替 MLモデルハブ代替 AIモデル代替',
+    accentColor: Color(0xFFFFD21E),
+    painPoints: [
+      'Hugging Face Pro \$9/月 — MLモデルハブ・Spacesに特化し個人ライフ管理OSとしては設計外',
+      'エンジニア・研究者向けプラットフォームで一般ユーザーが財務・習慣・タスクを管理するツールではない',
+      '自分株式会社はAI大学でHugging Face活用を無料で学べ、実践ライフ管理も1アプリで提供',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AIモデルハブ・Spaces',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI大学 (Hugging Face学習)',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '個人財務・家計管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: 'タスク・習慣管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '設定ゼロで即利用',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'replicate': const _CompetitorInfo(
+    name: 'Replicate',
+    emoji: '🔄',
+    tagline: 'ReplicateはAPIでAIモデルを即呼び出せるクラウド。自分株式会社はAI大学でReplicate活用を学べる個人OS。',
+    searchKeyword: 'Replicate代替 AIモデルAPI代替 画像生成API代替',
+    accentColor: Color(0xFF6366F1),
+    painPoints: [
+      'Replicate — AIモデルAPI提供に特化し個人ライフ管理OSとしては設計されていない',
+      'API開発スキルが必要で財務・習慣・タスク管理を提供するアプリではない',
+      '自分株式会社はAI大学でReplicate等のAIAPIを学べ、財務・習慣・タスク管理も統合提供',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AIモデルAPI (画像/動画/音声)',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI大学 (AIモデルAPI学習)',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '個人財務・家計管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: 'タスク・習慣管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '設定ゼロで即利用',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
