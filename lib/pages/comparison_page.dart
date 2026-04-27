@@ -1734,6 +1734,399 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'clickup': const _CompetitorInfo(
+    name: 'ClickUp',
+    emoji: '📋',
+    tagline: 'ClickUpはオールインワンプロジェクト管理ツール。自分株式会社はタスク管理に加えAI・財務・健康を統合した個人OS。',
+    searchKeyword: 'ClickUp代替 タスク管理代替 プロジェクト管理代替 Asana代替',
+    accentColor: Color(0xFF7B68EE),
+    painPoints: [
+      'ClickUp Unlimited \$7/user/月 — チーム向け設計でタスク管理は優秀だが個人の財務・健康・AI学習との統合がない',
+      '機能が多すぎて個人用途には過剰 — 自分株式会社は個人CEO視点で設計された必要十分なUI',
+      'AI機能は別料金(\$5/月追加) — 自分株式会社はAI機能を無料で統合提供',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'タスク・プロジェクト管理',
+        competitorHas: true,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '個人財務・家計管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: 'AIアシスタント統合 (無料)',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '習慣・健康トラッキング',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: 'AI大学 (学習管理)',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'airtable': const _CompetitorInfo(
+    name: 'Airtable',
+    emoji: '📊',
+    tagline: 'Airtableはローコードデータベース。自分株式会社はデータベース構築不要で個人の全情報をAIが自動管理。',
+    searchKeyword: 'Airtable代替 データベース代替 スプレッドシート代替 ノーコード代替',
+    accentColor: Color(0xFF18BFFF),
+    painPoints: [
+      'Airtable Plus \$10/user/月 — 柔軟なデータベースだが設計・構築に時間がかかり個人での即時活用が難しい',
+      'スプレッドシート的な管理は手動入力が前提 — AIによる自動入力・提案は限定的',
+      '財務・健康・タスクを統合するには複数のベースを自分で設計する必要がある',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'カスタムデータベース構築',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'ゼロ設定でAIが自動管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '個人財務・資産管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: 'AIアシスタント統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '無料プランあり',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'miro': const _CompetitorInfo(
+    name: 'Miro',
+    emoji: '🎯',
+    tagline: 'Miroはビジュアルコラボレーションの王者。自分株式会社はビジョンボード・WBSを含む個人の計画全体をAIで管理。',
+    searchKeyword: 'Miro代替 ホワイトボード代替 マインドマップ代替 ビジュアル計画代替',
+    accentColor: Color(0xFFFFD02F),
+    painPoints: [
+      'Miro Starter \$10/month — チームコラボ向けホワイトボードで個人の財務・習慣・AI学習との統合がない',
+      'アイデア・計画の可視化は得意だが、実行管理・振り返り・データ蓄積が弱い',
+      '個人の長期ビジョンと日常タスクを繋ぐ「実行OS」としての機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ビジュアルボード・マインドマップ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'タスク実行・習慣トラッキング',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '個人財務・家計管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: 'AIアシスタント統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '無料プランあり',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'obsidian': const _CompetitorInfo(
+    name: 'Obsidian',
+    emoji: '🔮',
+    tagline: 'ObsidianはPKM(個人知識管理)の最高峰。自分株式会社はノートに留まらず財務・タスク・健康をAIで統合管理。',
+    searchKeyword: 'Obsidian代替 PKM代替 ノート代替 個人知識管理代替',
+    accentColor: Color(0xFF7E6AD2),
+    painPoints: [
+      'Obsidian無料 / Sync \$4/月 — MarkdownベースのPKMで財務管理・習慣トラッキング・AIアシスタントは別アプリが必要',
+      'プラグイン設定に時間がかかり、非エンジニアには敷居が高い',
+      'ローカルファイルベースのため、モバイル同期・チーム共有・AIクエリが標準では不十分',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'PKM・マークダウンノート',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AIアシスタント統合 (無料)',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '個人財務・資産管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: 'タスク・習慣管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '設定ゼロで即利用',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'grammarly': const _CompetitorInfo(
+    name: 'Grammarly',
+    emoji: '✍️',
+    tagline: 'GrammarlyはAI文章校正の王者。自分株式会社はライティング支援を含む個人の情報発信・学習・生活全体をAI化。',
+    searchKeyword: 'Grammarly代替 文章校正代替 AIライティング代替',
+    accentColor: Color(0xFF15C39A),
+    painPoints: [
+      'Grammarly Pro \$12/月 — 英文校正・文章改善に特化し、タスク・財務・習慣・AI大学学習との統合がない',
+      '文章を「書く」ことは支援するが、アイデアの「管理・実行・振り返り」のサポートがない',
+      '英語が主対象で、日本語での個人ライフ管理・目標設定には不向き',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AI文章校正・改善',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'タスク・目標管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '個人財務・家計管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: 'AI大学 (学習管理)',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '無料プランあり',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'duolingo': const _CompetitorInfo(
+    name: 'Duolingo',
+    emoji: '🦉',
+    tagline:
+        'Duolingoは語学学習のゲーミフィケーション先駆者。自分株式会社はAI大学で250+社のAIツール学習を同様の継続仕組みで提供。',
+    searchKeyword: 'Duolingo代替 語学学習代替 学習アプリ代替 eラーニング代替',
+    accentColor: Color(0xFF58CC02),
+    painPoints: [
+      'Duolingo Plus \$6.99/月 — 語学専門で、AIツール学習・キャリアスキル・財務・習慣管理との統合がない',
+      '学習の継続仕組みは優秀だが、学んだことを実務・財務・目標設定と繋げる機能がない',
+      '自分株式会社のAI大学は250+社のAIツールを体系的に学べ、実際の業務改善に直結する設計',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '語学・スキル学習ゲーミフィケーション',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI大学 (250+社AIツール学習)',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: 'タスク・目標管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '個人財務管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '無料プランあり',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'udemy': const _CompetitorInfo(
+    name: 'Udemy',
+    emoji: '🎓',
+    tagline: 'Udemyは世界最大のオンライン学習マーケット。自分株式会社のAI大学はAIツールに特化した無料・継続学習プラットフォーム。',
+    searchKeyword: 'Udemy代替 オンライン学習代替 eラーニング代替 スキルアップ代替',
+    accentColor: Color(0xFFA435F0),
+    painPoints: [
+      'Udemy講座 ¥1,500〜¥27,000/講座 — 体系的コースは優秀だが個人の財務・タスク・習慣管理との統合がない',
+      '学習記録が個人のWBS・目標設定・キャリア計画と連動しない',
+      '自分株式会社のAI大学は250+社を無料で学べ、学習ログが自動記録されてタスク・目標と紐付く',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '体系的オンラインコース',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI大学 (250+社AIツール・無料)',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '学習ログ×目標管理連携',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '個人財務・家計管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '無料で始められる',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'dropbox': const _CompetitorInfo(
+    name: 'Dropbox',
+    emoji: '📦',
+    tagline: 'Dropboxはファイルストレージの先駆者。自分株式会社はファイル管理を超えた個人の全情報・知識・計画をAIで統合管理。',
+    searchKeyword: 'Dropbox代替 クラウドストレージ代替 ファイル共有代替',
+    accentColor: Color(0xFF0061FE),
+    painPoints: [
+      'Dropbox Plus \$9.99/月 — クラウドストレージとして安定しているが財務・タスク・習慣・AI学習との統合がない',
+      'ファイルを「保存」するが、その内容を元にAIが行動提案・目標管理を行う機能がない',
+      '個人のライフOS的な役割は持たず、単なるバックアップ・同期ツールに留まる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'クラウドストレージ・同期',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'タスク・目標管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '個人財務・家計管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: 'AIアシスタント統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '無料プランあり',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'teams': const _CompetitorInfo(
+    name: 'Microsoft Teams',
+    emoji: '💼',
+    tagline:
+        'Microsoft Teamsは企業コラボの定番。自分株式会社はTeamsを含む全コミュニケーション・仕事・生活をAIで一元管理。',
+    searchKeyword: 'Microsoft Teams代替 ビジネスチャット代替 テレワーク代替',
+    accentColor: Color(0xFF6264A7),
+    painPoints: [
+      'Teams無料 / Microsoft 365 \$6/user/月〜 — 企業向けコラボで個人の財務・健康・習慣・AI学習との統合がない',
+      'ビジネスコミュニケーションに特化しており、個人CEO的な自律ライフ管理の概念がない',
+      'Microsoft 365との連携は強いが、個人のライフ全体を俯瞰する個人OS的機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ビジネスチャット・ビデオ会議',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: '個人タスク・習慣管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '個人財務・資産管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: 'AI大学 (学習管理)',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料プランあり',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'linear': const _CompetitorInfo(
+    name: 'Linear',
+    emoji: '📐',
+    tagline:
+        'LinearはエンジニアチームのためのモダンIssueトラッカー。自分株式会社は個人のすべての目標・タスクをAIで管理する個人OS。',
+    searchKeyword: 'Linear代替 Issue管理代替 プロジェクト管理代替 Jira代替',
+    accentColor: Color(0xFF5E6AD2),
+    painPoints: [
+      'Linear Plus \$8/user/月 — ソフトウェア開発チーム向けで個人の財務・健康・習慣管理の概念がない',
+      'スプリント・サイクル管理は優秀だが、個人の目標・家計・学習・健康との統合がない',
+      'エンジニアチーム専用設計 — 自分株式会社は全職種・個人ユーザーに対応',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ソフトウェア開発Issue管理',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: '個人WBS・目標管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '個人財務・家計管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: 'AIアシスタント統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
