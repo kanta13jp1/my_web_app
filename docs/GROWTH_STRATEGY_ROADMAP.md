@@ -21727,3 +21727,10 @@ Google I/O 2026 競合脅威 事前ブリーフィング
   - 上りタイムの有無がデータ充足度スコアに反映されることで confidence 計算も改善
 - deno lint clean
 - migration: `20260427190000_seed_achievements_ps6_s62.sql`
+
+## PS版#2 S55 — 2026-04-27 T-1 第31弾 dispatch
+
+- T-1 第31弾: "Why I Left Notion and Built My Own App with Flutter + Supabase" → dev.to 投稿成功
+  - https://dev.to/kanta13jp1/why-i-left-notion-and-built-my-own-app-with-flutter-supabase-3l5j
+- JA slug: `2026-05-23-why-i-left-notion-for-supabase-flutter`
+- orphan branch マージ + 削除
