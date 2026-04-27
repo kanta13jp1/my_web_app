@@ -21904,3 +21904,10 @@ Google I/O 2026 競合脅威 事前ブリーフィング
 - deploy-prod: run 25001053606 + 25002528737 連続 SUCCESS ✅ — 前回 $$ fix 完全反映
 - orphan branch: claude/* 3本 (fix-dart / mobile-task / vscode-wip) — 未マージ作業あり、5本未満のため削除保留
 - 修正なし（全WF健全）
+## 2026-04-28 PS#6 S71 — evaluate_accuracy N+1→バッチクエリ最適化
+
+- `evaluateHorsePredictionAccuracy`: ループ内 2クエリ/レース → `Promise.all` で一括取得
+- `horse_entries` + `horse_race_predictions_ensemble` を race_id IN (全IDs) で並列フェッチ
+- Map でインデックス化 → ループ内 O(1) ルックアップ
+- 50レース評価: DB ラウンドトリップ 100+ → **3** に削減
+- S70 で拡大した毎時 17-23時実行との組み合わせで evaluate の高速化・Supabase 負荷軽減
