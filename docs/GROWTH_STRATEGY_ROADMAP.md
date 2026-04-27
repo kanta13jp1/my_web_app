@@ -21742,3 +21742,14 @@ Google I/O 2026 競合脅威 事前ブリーフィング
 - **Batch10** (1e110eaa): 22社 — cohere-ai/devin-cognition/hugging-face/perplexity-ai/hubspot/zoho/hrmos/kincone/kingoftime/moneyforward-cloud/money-tree/curon/itandi/jalan/sakura-internet/toyota-connected/viz-ai/pipedream/poshmark/replicate/google-health/criteo
 - **累計**: 全172社+重複ID pricing_tier・pricing_start_usd・pricing_notes_ja・japan_presence_level・japan_notes_ja **100%完結**
 - comparison_page Phase A+B (Supabase fetch) に全データ反映済み
+## 2026-04-27 (PS#6 S63)
+
+### PS#6 S63: データ品質スコア Scraper⇔EF 同期修正
+
+- 問題: `_data_quality_score` (scraper/13フィールド) と `horseRaceDataQualityScore` (EF/14フィールド after S62) が不一致
+- 修正: 両方に `prev_last_3f` + `horse_weight_change` を追加 → 15フィールドで統一
+  - scraper `_data_quality_score`: 13 → 15フィールド (prev_last_3f + horse_weight_change)
+  - EF `horseRaceDataQualityScore`: 14 → 15フィールド (horse_weight_change 追加)
+- `horse_weight_change` = 馬体重変化 (例: +2, -4) — DB schema に既存だが品質スコアに未反映だった
+- deno lint clean
+- migration: `20260427191500_seed_achievements_ps6_s63.sql`

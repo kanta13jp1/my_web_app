@@ -864,6 +864,7 @@ function horseRaceDataQualityScore(entries: Record<string, unknown>[]): number {
     "prev_finish",
     "prev_time",
     "prev_last_3f",
+    "horse_weight_change",
     "sire",
     "dam",
     "damsire",

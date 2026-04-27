@@ -115,8 +115,8 @@ def _time_to_seconds(value: str) -> Optional[float]:
 def _data_quality_score(entry: dict) -> float:
     fields = [
         "jockey", "trainer", "stable", "age_sex", "weight_kg",
-        "horse_weight", "win_odds", "popularity", "sire", "dam",
-        "damsire", "prev_finish", "prev_time",
+        "horse_weight", "horse_weight_change", "win_odds", "popularity", "sire", "dam",
+        "damsire", "prev_finish", "prev_time", "prev_last_3f",
     ]
     filled = sum(1 for field in fields if entry.get(field) not in (None, ""))
     return round(filled / len(fields), 3)
