@@ -1,7 +1,7 @@
 ---
 title: "競馬AI予測パイプライン — PostgreSQL + Claude で馬券推奨を自動化する"
 tags: AI,個人開発,競馬,postgresql
-published: false
+published: true
 ---
 
 # 競馬AI予測パイプライン — PostgreSQL + Claude で馬券推奨を自動化する
