@@ -1,7 +1,7 @@
 ---
 title: "Notion テンプレートギャラリーの代替を探している人へ — 本当に必要なのはテンプレートじゃなかった"
 tags: Notion,productivity,個人開発,buildinpublic
-published: false
+published: true
 ---
 
 # Notion テンプレートギャラリーの代替を探している人へ — 本当に必要なのはテンプレートじゃなかった
