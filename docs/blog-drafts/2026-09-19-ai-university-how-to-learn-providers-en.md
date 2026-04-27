@@ -1,7 +1,7 @@
 ---
 title: "How to Learn 236 AI Tools Without Burning Out: The Three-Zone Method"
 tags: ai,education,productivity,saas
-published: false
+published: true
 ---
 
 # How to Learn 236 AI Tools Without Burning Out: The Three-Zone Method
