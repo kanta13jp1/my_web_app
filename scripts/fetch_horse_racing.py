@@ -1148,6 +1148,36 @@ def print_learning_stats(days: int = 7) -> None:
         f.write("\n".join(lines) + "\n")
 
 
+# ─── データ品質スコア再計算 ───────────────────────────────────────────────────
+def recalc_data_quality_scores(limit: int = 500) -> None:
+    """horse_entries の data_quality_score を最新の 15 フィールド定義で再計算する。
+    prev_history_fetched = true のエントリのみ対象 (データが揃っている前提)。
+    スコアが変化したエントリのみ PATCH するため DB 負荷は最小限。"""
+    print(f"[INFO] data_quality_score 再計算中 (limit={limit})...")
+    entries = supabase_rest("GET", "horse_entries", params={
+        "prev_history_fetched": "eq.true",
+        "select": "id,horse_name,jockey,trainer,stable,age_sex,weight_kg,horse_weight,"
+                  "horse_weight_change,win_odds,popularity,sire,dam,damsire,"
+                  "prev_finish,prev_time,prev_last_3f,data_quality_score",
+        "order": "id.asc",
+        "limit": str(limit),
+    }) or []
+
+    updated = 0
+    unchanged = 0
+    for entry in entries:
+        new_score = _data_quality_score(entry)
+        old_score = round(float(entry.get("data_quality_score") or 0), 3)
+        if abs(new_score - old_score) < 0.001:
+            unchanged += 1
+            continue
+        supabase_rest("PATCH", f"horse_entries?id=eq.{entry['id']}",
+                      {"data_quality_score": new_score})
+        updated += 1
+
+    print(f"[DONE] data_quality_score 再計算: {updated}件更新, {unchanged}件変化なし (対象{len(entries)}件)")
+
+
 # ─── 定期クリーンアップ ───────────────────────────────────────────────────────
 def cleanup_stale_races() -> None:
     """過去日付のまま status='scheduled' で残っているレースを 'cancelled' に更新する。
@@ -1172,9 +1202,9 @@ def main():
     parser = argparse.ArgumentParser(description="競馬情報自動取得スクリプト (JRA + NAR)")
     parser.add_argument(
         "--mode",
-        choices=["entries", "results", "predict", "history", "evaluate", "backfill", "stats", "all"],
+        choices=["entries", "results", "predict", "history", "evaluate", "backfill", "stats", "dqs_recalc", "all"],
         required=True,
-        help="実行モード: entries=出走表, results=結果, predict=AI予想, history=前走情報, evaluate=精度再評価, backfill=過去学習データ化, stats=学習統計レポート, all=全て実行",
+        help="実行モード: entries=出走表, results=結果, predict=AI予想, history=前走情報, evaluate=精度再評価, backfill=過去学習データ化, stats=学習統計レポート, dqs_recalc=データ品質スコア再計算, all=全て実行",
     )
     parser.add_argument(
         "--date",
@@ -1219,6 +1249,8 @@ def main():
         backfill_learning_data(target_date, getattr(args, "days", 21) or 21, getattr(args, "limit", 160) or 160)
     elif args.mode == "stats":
         print_learning_stats(days=getattr(args, "days", 7) or 7)
+    elif args.mode == "dqs_recalc":
+        recalc_data_quality_scores(limit=getattr(args, "limit", 500) or 500)
     elif args.mode == "all":
         cleanup_stale_races()
         fetch_entries(target_date)
