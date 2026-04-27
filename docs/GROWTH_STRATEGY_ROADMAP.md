@@ -21954,3 +21954,11 @@ Google I/O 2026 競合脅威 事前ブリーフィング
 - **新ヘルパー**: timeToSecondsTS (MM:SS.ss→秒), weightChangeScore (±4kg以内=0, ±12kg+=50)
 - **confidence 式更新**: bestTimeCoverage*0.05 追加、base 0.36→0.34 調整
 - commit: 8a40c203
+
+## 2026-04-28 PS#2 S53 — T-1 第30〜31弾 dispatch
+
+- T-1 第30弾: "OpenAI Codex vs GitHub Copilot in 2026 — How a Solo Dev Actually Splits the Work" → dev.to
+  - https://dev.to/kanta13jp1/openai-codex-vs-github-copilot-in-2026-how-a-solo-dev-actually-splits-the-work-424j
+- T-1 第31弾: "The Real Cost of a Multi-AI Workflow — 6 Months of Actual Spend as a Solo Dev" → dev.to
+  - https://dev.to/kanta13jp1/the-real-cost-of-a-multi-ai-workflow-6-months-of-actual-spend-as-a-solo-dev-2c09
+- 累計: 31本 (dev.to)
