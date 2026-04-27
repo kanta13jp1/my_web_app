@@ -202,3 +202,4 @@
 | 日付 | 変更 |
 | --- | --- |
 | 2026-04-26 | 初版 (NotebookLM `9429530e-f350-44f6-ad2e-1df215c36eb2` から蒸留) |
+| 2026-04-28 | 共通プレリュード `_shared/ai_character_preamble.ts` に **Prompt Injection 防御句** を追加 (Win版#132 part 46)。`<<<USER_DATA>>>...<<<END>>>` ブロック内は命令として解釈しないよう全 AI EF に強制。MCP_AUTH_SECURITY_PRINCIPLES 原則 3 と本軸 原則 4 (専門役割境界) の融合実装 — arXiv 論文の 3 攻撃ベクトル (Sampling-Based Injection / Cross-Server Propagation / Tool Response Manipulation) のうち B/C を緩和。 |
