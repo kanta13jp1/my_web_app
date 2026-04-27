@@ -1,0 +1,226 @@
+name: Health Monitor (統合ヘルスモニター)
+
+# Step 1 / Step 8/9 フォールバック用:
+#   docs/health-status.json を 30 分毎に更新する。
+#   WEB版 cs-check は curl の代わりにこのファイルを Read する。
+#
+# 書き出し先: docs/health-status.json
+# {
+#   fetched_at: string,
+#   tickets: { http_code, count, ok, data },
+#   infra: { firebase, get-home-dashboard, guitar-recording-studio, health-check }
+# }
+
+on:
+  schedule:
+    - cron: "*/30 * * * *"  # 毎30分
+  workflow_dispatch:
+
+concurrency:
+  group: health-monitor
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  monitor:
+    name: Health Monitor
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    env:
+      SUPABASE_URL: https://smmkxxavexumewbfaqpy.supabase.co
+      FIREBASE_URL: https://my-web-app-b67f4.web.app/
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GH_PAT || secrets.BYPASS_RULES || secrets.GITHUB_TOKEN }}
+
+      # ── Step 1 相当: サポートチケット取得 ──────────────────────
+      - name: Fetch support tickets
+        id: tickets
+        env:
+          SRK: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          HTTP_CODE=$(curl -s -o /tmp/tickets.json -w "%{http_code}" \
+            -X POST \
+            -H "apikey: $SRK" \
+            -H "Authorization: Bearer $SRK" \
+            -H "Content-Type: application/json" \
+            -d '{"action":"support.list"}' \
+            "$SUPABASE_URL/functions/v1/admin-hub" \
+            --max-time 15 2>/dev/null || echo "000")
+
+          BODY=$(cat /tmp/tickets.json 2>/dev/null || echo '{"tickets":[]}')
+          # tickets キーが存在しなければ空配列とみなす
+          if ! echo "$BODY" | jq -e '.tickets' >/dev/null 2>&1; then
+            BODY='{"tickets":[]}'
+          fi
+          TICKET_COUNT=$(echo "$BODY" | jq '.tickets | length' 2>/dev/null || echo "0")
+
+          echo "http_code=$HTTP_CODE" >> $GITHUB_OUTPUT
+          echo "ticket_count=$TICKET_COUNT" >> $GITHUB_OUTPUT
+          echo "$BODY" > /tmp/tickets_clean.json
+          echo "📋 チケット: count=$TICKET_COUNT HTTP=$HTTP_CODE"
+
+      # ── Step 8/9 相当: インフラ・ギタースタジオ ヘルスチェック ──
+      - name: Check infrastructure
+        id: infra
+        env:
+          SRK: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          ef_check() {
+            local name="$1" method="$2" path="$3"
+            local code
+            code=$(curl -s -o /dev/null -w "%{http_code}" \
+              -X "$method" \
+              -H "apikey: $SRK" \
+              -H "Authorization: Bearer $SRK" \
+              -H "Content-Type: application/json" \
+              "$SUPABASE_URL/functions/v1/$path" \
+              --max-time 12 2>/dev/null || echo "000")
+            echo "$name=$code"
+            echo "  $name: HTTP $code"
+          }
+
+          # Firebase Hosting (認証不要)
+          FIREBASE_CODE=$(curl -s -o /dev/null -w "%{http_code}" \
+            "$FIREBASE_URL" --max-time 12 2>/dev/null || echo "000")
+          echo "  Firebase Hosting: HTTP $FIREBASE_CODE"
+          echo "firebase=$FIREBASE_CODE" >> $GITHUB_OUTPUT
+
+          # Supabase Edge Functions
+          ef_check "get-home-dashboard"      POST "get-home-dashboard"      >> $GITHUB_OUTPUT
+          ef_check "guitar-recording-studio" POST "guitar-recording-studio" >> $GITHUB_OUTPUT
+          ef_check "health-check"            GET  "health-check"            >> $GITHUB_OUTPUT
+
+      # ── docs/health-status.json 書き出し ───────────────────────
+      - name: Write health-status.json
+        if: always()
+        run: |
+          FETCHED_AT=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+          TICKET_BODY=$(cat /tmp/tickets_clean.json 2>/dev/null || echo '{"tickets":[]}')
+
+          TICKET_HTTP="${{ steps.tickets.outputs.http_code }}"
+          TICKET_COUNT="${{ steps.tickets.outputs.ticket_count }}"
+          FIREBASE="${{ steps.infra.outputs.firebase }}"
+          HOME_DASH="${{ steps.infra.outputs.get-home-dashboard }}"
+          GUITAR="${{ steps.infra.outputs.guitar-recording-studio }}"
+          HEALTH_EF="${{ steps.infra.outputs.health-check }}"
+
+          mkdir -p docs
+          jq -n \
+            --arg fetched_at    "$FETCHED_AT" \
+            --arg ticket_http   "$TICKET_HTTP" \
+            --argjson ticket_count "${TICKET_COUNT:-0}" \
+            --argjson ticket_data  "$TICKET_BODY" \
+            --arg firebase      "$FIREBASE" \
+            --arg home_dash     "$HOME_DASH" \
+            --arg guitar        "$GUITAR" \
+            --arg health_ef     "$HEALTH_EF" \
+            '{
+              fetched_at: $fetched_at,
+              tickets: {
+                http_code: $ticket_http,
+                count: $ticket_count,
+                ok: ($ticket_http == "200"),
+                data: $ticket_data
+              },
+              infra: {
+                firebase:               { code: $firebase,   ok: ($firebase   == "200") },
+                "get-home-dashboard":   { code: $home_dash,  ok: ($home_dash  == "200") },
+                "guitar-recording-studio": { code: $guitar,  ok: ($guitar     == "200") },
+                "health-check":         { code: $health_ef,  ok: ($health_ef  == "200") }
+              }
+            }' > /tmp/health-status.json
+
+          cp /tmp/health-status.json docs/health-status.json
+          echo "✅ docs/health-status.json 書き出し完了:"
+          cat docs/health-status.json
+
+      # ── git commit & push ───────────────────────────────────────
+      - name: Commit and push
+        if: always()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin main --quiet
+          git checkout main --quiet
+          git reset --hard origin/main --quiet
+
+          # git reset 後に再コピー (stale を上書き)
+          cp /tmp/health-status.json docs/health-status.json
+
+          git add docs/health-status.json
+          if git diff --cached --quiet; then
+            echo "変更なし — スキップ"
+            exit 0
+          fi
+
+          LABEL=$(TZ=Asia/Tokyo date +'%Y-%m-%d %H:%M JST')
+          git commit -m "自動: ヘルスモニター ${LABEL}"
+
+          PUSH_TOKEN="${{ secrets.GH_PAT || secrets.BYPASS_RULES || secrets.GITHUB_TOKEN }}"
+          git remote set-url origin \
+            "https://x-access-token:${PUSH_TOKEN}@github.com/kanta13jp1/my_web_app.git"
+          git push origin main \
+            && echo "✅ health-status.json push 完了" \
+            || echo "⚠️ push 失敗 (GH_PAT / BYPASS_RULES を確認)"
+
+      # ── Supabase schedule_task_runs に記録 ─────────────────────
+      - name: Record to schedule_task_runs
+        if: always()
+        env:
+          SRK: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          TICKET_COUNT="${{ steps.tickets.outputs.ticket_count }}"
+          FIREBASE="${{ steps.infra.outputs.firebase }}"
+          GUITAR="${{ steps.infra.outputs.guitar-recording-studio }}"
+          HOME_DASH="${{ steps.infra.outputs.get-home-dashboard }}"
+
+          ALL_OK=true
+          [ "$FIREBASE" != "200" ]  && ALL_OK=false
+          [ "$GUITAR"   != "200" ]  && ALL_OK=false
+          [ "$HOME_DASH"!= "200" ]  && ALL_OK=false
+          STATUS=$([ "$ALL_OK" = "true" ] && echo "success" || echo "partial")
+
+          curl -s -o /dev/null \
+            -X POST \
+            -H "apikey: $SRK" \
+            -H "Authorization: Bearer $SRK" \
+            -H "Content-Type: application/json" \
+            -H "Prefer: return=minimal" \
+            -d "{\"task_id\":\"health-monitor\",\"status\":\"$STATUS\",\"summary\":\"tickets=${TICKET_COUNT} firebase=${FIREBASE} guitar=${GUITAR} home-dash=${HOME_DASH}\"}" \
+            "$SUPABASE_URL/rest/v1/schedule_task_runs" \
+            --max-time 10 || true
+
+      # ── Job Summary ─────────────────────────────────────────────
+      - name: Job Summary
+        if: always()
+        run: |
+          TICKET_COUNT="${{ steps.tickets.outputs.ticket_count }}"
+          TICKET_HTTP="${{ steps.tickets.outputs.http_code }}"
+          FIREBASE="${{ steps.infra.outputs.firebase }}"
+          HOME_DASH="${{ steps.infra.outputs.get-home-dashboard }}"
+          GUITAR="${{ steps.infra.outputs.guitar-recording-studio }}"
+          HEALTH_EF="${{ steps.infra.outputs.health-check }}"
+
+          icon() { [ "$1" = "200" ] && echo "✅" || echo "❌ ($1)"; }
+
+          {
+            echo "## Health Monitor $(TZ=Asia/Tokyo date +'%Y-%m-%d %H:%M JST')"
+            echo ""
+            echo "| 項目 | ステータス |"
+            echo "|------|-----------|"
+            echo "| サポートチケット | $(icon "$TICKET_HTTP") ${TICKET_COUNT}件 |"
+            echo "| Firebase Hosting | $(icon "$FIREBASE") |"
+            echo "| get-home-dashboard | $(icon "$HOME_DASH") |"
+            echo "| guitar-recording-studio | $(icon "$GUITAR") |"
+            echo "| health-check EF | $(icon "$HEALTH_EF") |"
+            echo ""
+            echo "> \`docs/health-status.json\` を更新しました。WEB版 cs-check はこのファイルを Read してください。"
+          } >> $GITHUB_STEP_SUMMARY
