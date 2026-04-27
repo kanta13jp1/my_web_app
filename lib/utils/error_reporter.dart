@@ -117,6 +117,12 @@ class ErrorReporter {
 
     _previousFlutterHandler = FlutterError.onError;
     FlutterError.onError = (FlutterErrorDetails details) {
+      if (_isIgnorableFlutterWebFocusTraversalLayoutError(
+        details.exceptionAsString(),
+        details.stack,
+      )) {
+        return;
+      }
       if (_isIgnorableFlutterWebInkHoverError(
         details.exceptionAsString(),
         details.stack,
@@ -135,6 +141,12 @@ class ErrorReporter {
 
     _previousPlatformHandler = PlatformDispatcher.instance.onError;
     PlatformDispatcher.instance.onError = (Object error, StackTrace stack) {
+      if (_isIgnorableFlutterWebFocusTraversalLayoutError(
+        error.toString(),
+        stack,
+      )) {
+        return true;
+      }
       if (_isIgnorableFlutterWebInkHoverError(error.toString(), stack)) {
         return true;
       }
@@ -180,6 +192,31 @@ class ErrorReporter {
         context.contains('MouseTracker') ||
         context.contains('mouse') ||
         hasReleaseInkStack && (details == null || library.contains('widgets'));
+  }
+
+  // Flutter Web can trigger focus traversal before every candidate RenderBox
+  // has completed layout. The framework path is minified in release builds, so
+  // match the traversal shape instead of one exact symbol suffix.
+  bool _isIgnorableFlutterWebFocusTraversalLayoutError(
+    String message,
+    StackTrace? stackTrace,
+  ) {
+    if (!kIsWeb) return false;
+    if (!message.contains('RenderBox was not laid out')) return false;
+
+    final stack = stackTrace?.toString() ?? '';
+    final hasDebugFocusTraversalStack =
+        stack.contains('FocusTraversalPolicy') ||
+            stack.contains('FocusTraversalGroup');
+    final hasReleaseFocusTraversalStack =
+        stack.contains('.gN') &&
+            stack.contains('.gn') &&
+            stack.contains('.ge') &&
+            stack.contains('Object.e') &&
+            stack.contains('Object.dy') &&
+            stack.contains('.ak');
+
+    return hasDebugFocusTraversalStack || hasReleaseFocusTraversalStack;
   }
 
   /// AppLogger.error から呼ばれる (caught errors)
