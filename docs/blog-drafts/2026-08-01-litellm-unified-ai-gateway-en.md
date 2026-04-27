@@ -1,7 +1,7 @@
 ---
 title: "LiteLLM: One API for Every AI Model — A Practical Guide to the OpenAI-Compatible Gateway"
 tags: ai,programming,api,webdev
-published: false
+published: true
 ---
 
 # LiteLLM: One API for Every AI Model — A Practical Guide to the OpenAI-Compatible Gateway
