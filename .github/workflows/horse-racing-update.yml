@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: "実行モード (entries / results / predict / all / backfill / stats)"
+        description: "実行モード (entries / results / predict / history / evaluate / backfill / stats / all)"
         required: false
         default: "all"
       date:
@@ -15,7 +15,7 @@ on:
         required: false
         default: ""
       days:
-        description: "backfill モード時に遡る日数 (デフォルト: 21)"
+        description: "backfill/stats モード時に遡る日数 (backfill デフォルト: 21 / stats デフォルト: 7)"
         required: false
         default: "21"
 
@@ -111,9 +111,10 @@ jobs:
         run: |
           MODE="${{ inputs.mode }}"
           HOUR=$(TZ=Asia/Tokyo date +%H)
+          STAT_DAYS="${{ inputs.days || '7' }}"
           if [ "$MODE" = "stats" ] || [ "$MODE" = "all" ] || [ "${MODE}" = "" ] && [ "$HOUR" = "00" ]; then
-            echo "学習統計レポートを出力 (時刻: ${HOUR}時, モード: ${MODE:-all})"
-            python scripts/fetch_horse_racing.py --mode stats --days 7
+            echo "学習統計レポートを出力 (時刻: ${HOUR}時, モード: ${MODE:-all}, days=${STAT_DAYS})"
+            python scripts/fetch_horse_racing.py --mode stats --days "$STAT_DAYS"
           else
             echo "統計レポートはスキップ (時刻: ${HOUR}時)"
           fi

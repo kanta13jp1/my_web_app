@@ -21753,3 +21753,14 @@ Google I/O 2026 競合脅威 事前ブリーフィング
 - `horse_weight_change` = 馬体重変化 (例: +2, -4) — DB schema に既存だが品質スコアに未反映だった
 - deno lint clean
 - migration: `20260427191500_seed_achievements_ps6_s63.sql`
+
+## 2026-04-27 (PS#6 S64)
+
+### PS#6 S64: 競馬GHAワークフロー UX改善
+
+- `horse-racing-update.yml` `workflow_dispatch.inputs.mode` description に history/evaluate を追記 → 全8モード明示
+- `workflow_dispatch.inputs.days` description を "backfill/stats モード時" に更新
+- stats ステップ: `--days 7` ハードコード → `${{ inputs.days || '7' }}` — ユーザーが stats 日数を制御可能に
+  - cron (MODE="") 時は inputs.days 未設定 → fallback 7日 ✅ (挙動変化なし)
+  - 手動実行 (mode=stats, days=14 等) → 指定日数で stats 表示 ✅ (新機能)
+- `fetch_horse_racing.py` `--days` help text を backfill/stats 両方に言及するよう更新
