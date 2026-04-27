@@ -1931,8 +1931,10 @@ serve(async (req) => {
           const days = Math.max(1, Math.min(180, Number(body.days ?? 21)));
           const dateFromMs = Date.parse(`${targetDate}T00:00:00.000Z`) - (days - 1) * 86_400_000;
           const dateFrom = String(body.date_from ?? new Date(dateFromMs).toISOString().split("T")[0]);
-          const limit = Math.max(1, Math.min(500, Number(body.limit ?? 160)));
           const force = Boolean(body.force ?? false);
+          // force=true 時は 150s EF タイムアウト内で完結するよう limit を 60 に制限
+          const defaultLimit = force ? 60 : 160;
+          const limit = Math.max(1, Math.min(force ? 60 : 500, Number(body.limit ?? defaultLimit)));
           const type = String(body.type ?? body.source ?? "all");
           const baselineCfg: HorseProviderConfig = {
             provider: "baseline",
