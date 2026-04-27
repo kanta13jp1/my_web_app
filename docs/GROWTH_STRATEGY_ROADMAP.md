@@ -21935,3 +21935,14 @@ Google I/O 2026 競合脅威 事前ブリーフィング
   - https://dev.to/kanta13jp1/claude-code-best-practices-in-2026-10-rules-from-6-months-of-solo-dev-at-scale-45ah
 - JA: "Claude Code ベストプラクティス 2026 — 個人開発者が半年使って学んだ10のルール" → published:true
 - 累計: 29本 (dev.to)
+
+## 2026-04-28 競合モニタリング (Claude curated) — scheduled-task `competitor-monitoring`
+
+- レポート: `docs/competitor-reports/2026-04-28-claude-curated.md` (14 競合 + 補欠)
+- 高優先 4 件:
+  - **Notion 3.4** (4/14): Workers (server-side JS/TS for AI agents) + AI Autofill — 我々の EF + AI 統合戦略と直接競合
+  - **Slack** (3/31): 30+ AI 機能 (Claude モデル搭載) — Anthropic 戦略提携深化、自分株式会社の AI 大学第1メディア化が一段重要に
+  - **OpenAI Codex** (4/16): Computer Use + 90+ plugins + Intelligent Automations — 12-instance fleet の Codex 役割を「半自律」へ昇格余地
+  - **Claude Code**: Routines + Ultraplan + Monitor + NO_FLICKER — GHA scheduled tasks → routines 移行検討
+- 中優先 5 件: MoneyForward アカデミア (¥980/月) / X Grok Custom Timelines / Evernote AI tasks / Amazon Anthropic +$5B / Cowork Dispatch
+- アクション提案 6 件 (担当割当: PS#4 / PS#5 / Win 版 / PS#1 / PS#3 / PS#2)
