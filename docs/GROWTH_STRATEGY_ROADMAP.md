@@ -21840,3 +21840,9 @@ Google I/O 2026 競合脅威 事前ブリーフィング
 - `--mode dqs_recalc` CLI mode 追加 (--limit 引数対応)
 - GHA workflow_dispatch mode description に dqs_recalc 追記
 - migration: `20260427203000_seed_achievements_ps6_s68.sql`
+
+## 2026-04-27 PS#4 S76 — wildcard /vs-* router + sitemap 15ルート追加
+
+- **360af9d7**: main.dart `default:` case に `/vs-*` wildcard handler 追加 → 全172社の comparison page が即時有効化
+- **aeaea1e3**: sitemap.xml に高脅威競合 15ルート追加 (cursor/openai/perplexity/shopify/figma/canva/anthropic/notion-ai/freee/smarthr/salesforce/mercari/rakuten/windsurf/zoom)
+- SEO 効果: 比較ページ 21ルート → 21+172 全社カバー可能に
