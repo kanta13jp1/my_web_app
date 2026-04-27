@@ -60,6 +60,15 @@ jobs:
           TOOLS_HUB_URL: ${{ secrets.SUPABASE_URL_PROD }}/functions/v1/tools-hub
         run: |
           MODE="${{ inputs.mode }}"
+          # 専用ステップがある mode は skip (二重実行 + 504 timeout 防止)
+          # history/evaluate/backfill/stats/dqs_recalc は各専用ステップで処理
+          SKIP_MODES="history evaluate backfill stats dqs_recalc"
+          for skip in $SKIP_MODES; do
+            if [ "$MODE" = "$skip" ]; then
+              echo "モード=${MODE} は専用ステップで処理するため all mode スキップ"
+              exit 0
+            fi
+          done
           python scripts/fetch_horse_racing.py --mode "${MODE:-all}" --date "$TARGET_DATE"
 
       - name: 前走情報取得 (JST 9時台 or history/all モード時のみ)
