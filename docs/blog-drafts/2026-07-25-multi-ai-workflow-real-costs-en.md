@@ -1,7 +1,7 @@
 ---
 title: "The Real Cost of a Multi-AI Workflow — 6 Months of Actual Spend as a Solo Dev"
 tags: ai,saas,productivity,startup
-published: false
+published: true
 ---
 
 # The Real Cost of a Multi-AI Workflow — 6 Months of Actual Spend as a Solo Dev
