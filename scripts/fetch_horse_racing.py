@@ -1068,6 +1068,69 @@ def trigger_ai_predictions(target_date: str):
         print(f"[WARN] quota 到達プロバイダー: {', '.join(exhausted)}", file=sys.stderr)
 
 
+# ─── 学習統計レポート ─────────────────────────────────────────────────────────
+def print_learning_stats(days: int = 7) -> None:
+    """horse_learning_daily_accuracy から直近 N 日の精度トレンドを表示し、
+    GITHUB_STEP_SUMMARY が設定されていれば Markdown 表を書き込む。"""
+    from_date = (datetime.date.today() - datetime.timedelta(days=days - 1)).isoformat()
+    rows = supabase_rest("GET", "horse_learning_daily_accuracy", params={
+        "race_date": f"gte.{from_date}",
+        "select": "race_date,evaluated_predictions,avg_learning_score,first_hit_rate_pct,skip_accuracy_pct,place_hit_rate_pct",
+        "order": "race_date.desc",
+    }) or []
+
+    bet_rows = supabase_rest("GET", "horse_bet_type_accuracy", params={
+        "select": "bet_type,total_predictions,hit_rate_pct",
+        "order": "hit_rate_pct.desc",
+        "limit": "5",
+    }) or []
+
+    # 標準出力
+    print(f"\n=== 直近{days}日 学習統計 ({from_date}〜) ===")
+    if rows:
+        print(f"{'日付':<12} {'評価数':>6} {'学習スコア':>10} {'1着率':>7} {'スキップ精度':>12} {'複勝率':>7}")
+        print("-" * 60)
+        for r in rows:
+            ls = f"{float(r.get('avg_learning_score', 0)) * 100:.1f}"
+            fh = f"{float(r.get('first_hit_rate_pct', 0)):.1f}%"
+            sk = f"{float(r.get('skip_accuracy_pct', 0)):.1f}%"
+            pl = f"{float(r.get('place_hit_rate_pct', 0)):.1f}%"
+            ev = r.get('evaluated_predictions', 0)
+            print(f"{r.get('race_date',''):<12} {ev:>6} {ls:>10} {fh:>7} {sk:>12} {pl:>7}")
+    else:
+        print("  (データなし)")
+
+    if bet_rows:
+        print("\n=== 券種別精度 TOP5 ===")
+        for b in bet_rows:
+            print(f"  {b.get('bet_type',''):<10} {float(b.get('hit_rate_pct', 0)):.1f}% ({b.get('total_predictions',0)}件)")
+
+    # GitHub Step Summary
+    summary_path = os.environ.get("GITHUB_STEP_SUMMARY")
+    if not summary_path:
+        return
+    lines = [
+        "### 🏇 競馬AI 学習統計レポート\n",
+        f"| 日付 | 評価数 | 学習スコア | 1着率 | スキップ精度 | 複勝率 |",
+        "| --- | --- | --- | --- | --- | --- |",
+    ]
+    for r in rows:
+        ls = f"{float(r.get('avg_learning_score', 0)) * 100:.1f}"
+        fh = f"{float(r.get('first_hit_rate_pct', 0)):.1f}%"
+        sk = f"{float(r.get('skip_accuracy_pct', 0)):.1f}%"
+        pl = f"{float(r.get('place_hit_rate_pct', 0)):.1f}%"
+        lines.append(f"| {r.get('race_date','')} | {r.get('evaluated_predictions',0)} | {ls} | {fh} | {sk} | {pl} |")
+    if not rows:
+        lines.append("| — | — | — | — | — | — |")
+
+    if bet_rows:
+        lines += ["", "**券種別精度 TOP5**", ""]
+        lines += [f"- {b.get('bet_type','')}: {float(b.get('hit_rate_pct',0)):.1f}% ({b.get('total_predictions',0)}件)" for b in bet_rows]
+
+    with open(summary_path, "a", encoding="utf-8") as f:
+        f.write("\n".join(lines) + "\n")
+
+
 # ─── 定期クリーンアップ ───────────────────────────────────────────────────────
 def cleanup_stale_races() -> None:
     """過去日付のまま status='scheduled' で残っているレースを 'cancelled' に更新する。
@@ -1092,9 +1155,9 @@ def main():
     parser = argparse.ArgumentParser(description="競馬情報自動取得スクリプト (JRA + NAR)")
     parser.add_argument(
         "--mode",
-        choices=["entries", "results", "predict", "history", "evaluate", "backfill", "all"],
+        choices=["entries", "results", "predict", "history", "evaluate", "backfill", "stats", "all"],
         required=True,
-        help="実行モード: entries=出走表, results=結果, predict=AI予想, history=前走情報, evaluate=精度再評価, backfill=過去学習データ化, all=全て実行",
+        help="実行モード: entries=出走表, results=結果, predict=AI予想, history=前走情報, evaluate=精度再評価, backfill=過去学習データ化, stats=学習統計レポート, all=全て実行",
     )
     parser.add_argument(
         "--date",
@@ -1137,6 +1200,8 @@ def main():
         print(f"[DONE] 精度再評価完了: {evaluated} 件 ({races} レース)")
     elif args.mode == "backfill":
         backfill_learning_data(target_date, getattr(args, "days", 21) or 21, getattr(args, "limit", 160) or 160)
+    elif args.mode == "stats":
+        print_learning_stats(days=getattr(args, "days", 7) or 7)
     elif args.mode == "all":
         cleanup_stale_races()
         fetch_entries(target_date)
@@ -1144,6 +1209,7 @@ def main():
         trigger_ai_predictions(target_date)
         fetch_results(target_date)
         backfill_learning_data(target_date, getattr(args, "days", 21) or 21, getattr(args, "limit", 160) or 160)
+        print_learning_stats(days=7)
 
 
 if __name__ == "__main__":

@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: "実行モード (entries / results / predict / all / backfill)"
+        description: "実行モード (entries / results / predict / all / backfill / stats)"
         required: false
         default: "all"
       date:
@@ -102,6 +102,20 @@ jobs:
             python scripts/fetch_horse_racing.py --mode backfill --date "$TARGET_DATE" --days "$DAYS"
           else
             echo "backfillはスキップ (DOW=${DOW}, 時刻=${HOUR}時)"
+          fi
+
+      - name: 学習統計レポート (JST 0時台 or stats/all モード時のみ)
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL_PROD }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          MODE="${{ inputs.mode }}"
+          HOUR=$(TZ=Asia/Tokyo date +%H)
+          if [ "$MODE" = "stats" ] || [ "$MODE" = "all" ] || [ "${MODE}" = "" ] && [ "$HOUR" = "00" ]; then
+            echo "学習統計レポートを出力 (時刻: ${HOUR}時, モード: ${MODE:-all})"
+            python scripts/fetch_horse_racing.py --mode stats --days 7
+          else
+            echo "統計レポートはスキップ (時刻: ${HOUR}時)"
           fi
 
       - name: 完了サマリー
