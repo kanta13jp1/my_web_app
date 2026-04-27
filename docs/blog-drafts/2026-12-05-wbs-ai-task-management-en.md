@@ -1,7 +1,7 @@
 ---
 title: "WBS + AI: How I Automated Task Management Across 12 Parallel AI Instances"
 tags: ai,postgresql,automation,indiedev
-published: false
+published: true
 ---
 
 # WBS + AI: How I Automated Task Management Across 12 Parallel AI Instances
