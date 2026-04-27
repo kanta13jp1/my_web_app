@@ -72,6 +72,7 @@ UIコンポーネントを新規作成・修正する際は、以下のファイ
 | `[AI-DEV-23]` | docs/AI_DEV_PRINCIPLES.md 7 原則チェック | Rule 18 (旧 23) |
 | `[AI-CHARACTER-24]` | docs/AI_CHARACTER_PRINCIPLES.md 8 原則 (AI 人格・倫理) チェック | Rule 24 (新規 2026-04-26) |
 | `[IMBUE-25]` | docs/IMBUE_PATTERNS.md 7 パターン (AI×UX 体験設計) チェック | Rule 25 (新規 2026-04-27) |
+| `[COLLAB-26]` | docs/COLLAB_AI_PATTERNS.md 7 パターン (Tinker / Co-Reasoning / Red-Team) チェック | Rule 26 (新規 2026-04-28) |
 | `[AUTO-REPLY]` | author == 自分 で必ず skip + cap | — |
 | `[DART-FORMAT]` | dart format → flutter analyze 0 → push | Rule 1 + 2 |
 | `[REBASE]` | git fetch + log 確認 → pull --rebase | — |
