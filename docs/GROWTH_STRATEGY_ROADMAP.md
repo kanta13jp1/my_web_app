@@ -21969,3 +21969,10 @@ Google I/O 2026 競合脅威 事前ブリーフィング
 - `- name: Check migration timestamp collisions` step を Supabase CLI setup の直前に追加
 - exit 1 on collision → deploy abort before any DB contact
 - 根本原因: S53 で手動 rename した 3重衝突 (SQLSTATE 23505) の再発防止
+
+## 2026-04-28 PS#4 S82
+
+- `lib/pages/comparison_page.dart` _CompetitorInfo 78→98社 (20社追加)
+- `web/sitemap.xml` vs-*ルート 77→97本
+- 追加20社: asana/trello/todoist/n8n/zapier/netflix/signal/twilio/snowflake/vanta/progate/schoo/sansan/kincone/synthesia/runway/heygen/devin/hugging-face/replicate
+- 残74社 → 次回S83で継続
