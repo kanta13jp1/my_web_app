@@ -278,6 +278,7 @@ class LocalElectionScheduleEntry {
   final int kokuminCandidateCount;
   final List<String> kokuminCandidateNames;
   final List<String> kokuminCandidateStatuses;
+  final List<int> kokuminCandidateVotes;
   final List<String> kokuminCandidateXHandles;
   final bool isPast;
 
@@ -295,6 +296,7 @@ class LocalElectionScheduleEntry {
     required this.kokuminCandidateCount,
     required this.kokuminCandidateNames,
     required this.kokuminCandidateStatuses,
+    this.kokuminCandidateVotes = const <int>[],
     required this.kokuminCandidateXHandles,
     this.isPast = false,
   });
@@ -332,6 +334,7 @@ class LocalElectionScheduleEntry {
       kokuminCandidateCount: _readInt(json['kokuminCandidateCount']),
       kokuminCandidateNames: candidateNames,
       kokuminCandidateStatuses: candidateStatuses,
+      kokuminCandidateVotes: _readIntList(json['kokuminCandidateVotes']),
       kokuminCandidateXHandles:
           _readStringList(json['kokuminCandidateXHandles']),
       isPast: (json['isPast'] as bool?) ?? false,
@@ -353,6 +356,7 @@ class LocalElectionScheduleEntry {
       'kokuminCandidateCount': kokuminCandidateCount,
       'kokuminCandidateNames': kokuminCandidateNames,
       'kokuminCandidateStatuses': kokuminCandidateStatuses,
+      'kokuminCandidateVotes': kokuminCandidateVotes,
       'kokuminCandidateXHandles': kokuminCandidateXHandles,
       'isPast': isPast,
     };
@@ -417,6 +421,13 @@ class LocalElectionScheduleEntry {
         .map((item) => item.toString().trim())
         .where((item) => item.isNotEmpty)
         .toList();
+  }
+
+  static List<int> _readIntList(Object? value) {
+    if (value is! List) {
+      return const <int>[];
+    }
+    return value.map(_readInt).where((item) => item > 0).toList();
   }
 
   static DateTime? _parseDate(String raw) {
@@ -1104,11 +1115,16 @@ class LocalElectionRealitySnapshot {
         final status = candidateIndex < schedule.kokuminCandidateStatuses.length
             ? schedule.kokuminCandidateStatuses[candidateIndex].trim()
             : '';
+        final votes = candidateIndex < schedule.kokuminCandidateVotes.length
+            ? schedule.kokuminCandidateVotes[candidateIndex]
+            : 0;
         if (name.isEmpty ||
             !PastElectionCandidate.hasResolvedOutcomeStatus(status)) {
           continue;
         }
-        candidates.add(PastElectionCandidate(name: name, status: status));
+        candidates.add(
+          PastElectionCandidate(name: name, status: status, votes: votes),
+        );
       }
 
       if (candidates.isEmpty) {

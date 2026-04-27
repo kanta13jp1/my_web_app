@@ -426,4 +426,41 @@ void main() {
     expect(snapshot.resolvedPastElectionResults, hasLength(1));
     expect(snapshot.resolvedPastElectionResults.single.winCount, 1);
   });
+
+  test('keeps automatically parsed past election votes on schedules', () {
+    final snapshot = LocalElectionRealitySnapshot.fromJson(<String, dynamic>{
+      'fetchedAt': '2026-04-27T08:10:00.000Z',
+      'officialCurrentLocalMembers': 362,
+      'actualNetIncreaseRequired': 338,
+      'upcomingSchedules': <Map<String, dynamic>>[
+        <String, dynamic>{
+          'electionName': '中野市議会議員選挙',
+          'prefecture': '長野県',
+          'municipality': '中野市',
+          'electionCategory': 'assembly',
+          'voteDate': '2026-04-26',
+          'announcementDate': '2026-04-19',
+          'detailUrl': 'https://go2senkyo.com/local/senkyo/26072',
+          'officialCandidateSourceUrl': 'https://new-kokumin.jp/election',
+          'seatCount': 20,
+          'totalCandidateCount': 22,
+          'kokuminCandidateCount': 1,
+          'kokuminCandidateNames': <String>['あべ 一真'],
+          'kokuminCandidateStatuses': <String>['当選'],
+          'kokuminCandidateVotes': <int>[843],
+          'kokuminCandidateXHandles': <String>['N3yKOgfAqH2619'],
+          'isPast': true,
+        },
+      ],
+    });
+
+    final schedule = snapshot.upcomingSchedules.single;
+    expect(schedule.kokuminCandidateVotes, <int>[843]);
+    expect(snapshot.resolvedPastElectionResults, hasLength(1));
+    final candidate =
+        snapshot.resolvedPastElectionResults.single.dppCandidates.single;
+    expect(candidate.name, 'あべ 一真');
+    expect(candidate.status, '当選');
+    expect(candidate.votes, 843);
+  });
 }

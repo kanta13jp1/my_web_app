@@ -709,6 +709,9 @@ class _ElectionJapanMapState extends State<ElectionJapanMap> {
         final status = index < schedule.kokuminCandidateStatuses.length
             ? schedule.kokuminCandidateStatuses[index].trim()
             : '';
+        final votes = index < schedule.kokuminCandidateVotes.length
+            ? schedule.kokuminCandidateVotes[index]
+            : 0;
         if (name.isEmpty ||
             !PastElectionCandidate.hasResolvedOutcomeStatus(status)) {
           continue;
@@ -722,6 +725,7 @@ class _ElectionJapanMapState extends State<ElectionJapanMap> {
             electionName: schedule.electionName,
             candidateName: name,
             status: status,
+            votes: votes,
             isWin: _isWinningStatus(status),
           ),
         );
