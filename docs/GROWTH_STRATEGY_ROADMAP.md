@@ -22121,3 +22121,23 @@ Phase4 drafts 新規作成 (8ファイル):
 - dart format + flutter analyze: 0 issues
 - Commit: f87a15e1d on main
 - **PS#4 _CompetitorInfo + sitemap 完全完結達成**
+
+## PS#1 S58 — 2026-04-28 (deploy-prod concurrency verification step)
+
+### 案 A 実装: post-deploy verification step (cross-instance PR from Win版#132 part 51)
+
+**追加 step** (`Verify deploy reflects current commit`):
+- Firebase deploy 直後に `https://my-web-app-b67f4.web.app/version.json` を最大 4×15s ポーリング
+- `commit` フィールドが `${{ github.sha }}` と一致 → "Deploy verified" ✅
+- 不一致 (後続 run が先に deploy された場合) → `::warning::` のみ (continue-on-error: true)
+- commit: e70718eba
+
+**手動 verification 結果 (2026-04-28 08:51 JST)**:
+- 本番: `cf5d52072c` (2026-04-27T23:29:44Z / PS#3 S86)
+- main HEAD: `ec74beedd` (S58 verification step 追加後)
+- deploy queue: in_progress `427f116` + pending `ec74bee` (GHA 正常稼働中)
+- 確認: cancelled 中間 commit は production に未反映だが、最終 HEAD は queue に入っている
+
+**OPS-28 整合**:
+- 改善トリガー #5 (形骸化) + #4 (正本ズレ) に対応
+- 案 B/C/D は需要確認後判断 (案 A 単独で verification trail 問題の主要部を解消)
