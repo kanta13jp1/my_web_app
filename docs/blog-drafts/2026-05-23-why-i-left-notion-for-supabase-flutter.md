@@ -1,7 +1,7 @@
 ---
 title: "Notionをやめて Flutter + Supabase で自作した話 — 個人開発者が全部入りアプリを作るまで"
 tags: Flutter,Supabase,個人開発,buildinpublic
-published: false
+published: true
 ---
 
 # Notionをやめて Flutter + Supabase で自作した話 — 個人開発者が全部入りアプリを作るまで
