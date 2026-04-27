@@ -3301,6 +3301,794 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  // PS#4 S84: 20社追加 2026-04-28
+  'ameba': const _CompetitorInfo(
+    name: 'Ameba (サイバーエージェント)',
+    emoji: '📝',
+    tagline: 'AmebaはCA運営の日本最大級ブログ・エンタメSNS。自分株式会社はAI大学でブログ学習×財務×習慣を統合した個人OS。',
+    searchKeyword: 'Ameba代替 ブログ代替 SNS代替',
+    accentColor: Color(0xFF00C851),
+    painPoints: [
+      'Amebaプレミアム ¥550/月 — ブログ・芸能エンタメ特化で財務管理・習慣トラッキング・AI学習は別アプリ依存',
+      'コンテンツ閲覧・発信は得意だが個人の生産性・目標管理・家計との統合機能がない',
+      '自分株式会社はAI大学での学習＋財務＋習慣管理を完全無料で統合提供',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ブログ・SNS',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI統合ライフアシスタント',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '個人財務・家計管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '習慣・目標管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'bluesky': const _CompetitorInfo(
+    name: 'Bluesky',
+    emoji: '🦋',
+    tagline: 'BlueSkyはAT Protocol採用の分散SNS。自分株式会社はAI大学でソーシャル×学習×財務を統合した個人OS。',
+    searchKeyword: 'Bluesky代替 分散SNS代替 Twitter代替',
+    accentColor: Color(0xFF0085FF),
+    painPoints: [
+      '無料SNSだがソーシャル投稿・フォロー特化で財務管理・習慣追跡・AI学習機能がない',
+      '分散型で検閲耐性は高いが個人ライフ管理との統合設計ではない',
+      '自分株式会社はソーシャル連携＋財務＋習慣＋AI大学学習を完全無料で統合提供',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '分散型SNS',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI統合ライフアシスタント',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '個人財務・家計管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '習慣・目標管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'calendly': const _CompetitorInfo(
+    name: 'Calendly',
+    emoji: '📅',
+    tagline: 'Calendlyはオンライン日程調整ツール。自分株式会社はAI大学で時間管理×財務×習慣を統合した個人OS。',
+    searchKeyword: 'Calendly代替 日程調整代替 スケジュール代替',
+    accentColor: Color(0xFF006BFF),
+    painPoints: [
+      'Calendly Basic無料 / Pro \$10/月 — 日程調整専門ツールで財務管理・習慣トラッキング・AI学習は別アプリ依存',
+      '予約・スケジュール調整は優秀だが個人の目標管理・家計・AI大学学習との統合がない',
+      '自分株式会社はスケジュール管理＋財務＋習慣＋AI大学を完全無料で統合提供',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'オンライン日程調整',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI統合ライフアシスタント',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '個人財務・家計管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '習慣・目標管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'carely': const _CompetitorInfo(
+    name: 'Carely',
+    emoji: '💼',
+    tagline: 'Carelyは健康経営・人事労務管理プラットフォーム。自分株式会社はAI大学で個人の健康×財務×習慣を統合した個人OS。',
+    searchKeyword: 'Carely代替 健康経営代替 人事労務代替',
+    accentColor: Color(0xFF00BCD4),
+    painPoints: [
+      'Carely法人プラン月額数万円〜 — 企業向け健康管理・人事労務特化で個人ユーザーには高コスト・複雑',
+      '社員の健康データ管理は得意だが個人の家計・目標・AI学習との統合はない',
+      '自分株式会社は個人の健康習慣＋財務管理＋AI大学学習を完全無料で統合提供',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '企業向け健康経営管理',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI統合ライフアシスタント',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '個人財務・家計管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '習慣・目標管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'cybozu-kintone': const _CompetitorInfo(
+    name: 'サイボウズ kintone',
+    emoji: '🏢',
+    tagline: 'kintoneはノーコード業務改善プラットフォーム。自分株式会社はAI大学で個人業務×財務×習慣を統合した個人OS。',
+    searchKeyword: 'kintone代替 業務改善代替 ノーコード代替',
+    accentColor: Color(0xFF0099DD),
+    painPoints: [
+      'kintone \$24/user/月〜 — 企業向け業務アプリ構築ツールで個人ユーザーには高コスト・オーバースペック',
+      'カスタマイズ自由度は高いが個人の財務・健康習慣・AI学習との統合が設計されていない',
+      '自分株式会社は個人ライフ全体の管理×AI大学を完全無料で統合提供',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ノーコード業務アプリ構築',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI統合ライフアシスタント',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '個人財務・家計管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '習慣・目標管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'datadog': const _CompetitorInfo(
+    name: 'Datadog',
+    emoji: '🐕',
+    tagline:
+        'DatadogはクラウドインフラのAI監視プラットフォーム。自分株式会社はAI大学でライフトラッキング×財務×習慣を統合した個人OS。',
+    searchKeyword: 'Datadog代替 クラウド監視代替 オブザーバビリティ代替',
+    accentColor: Color(0xFF774AA4),
+    painPoints: [
+      'Datadog Pro \$15/host/月〜 — エンジニア向けインフラ監視ツールで個人ライフ管理とは用途が完全に異なる',
+      'APM・ログ・メトリクス監視は最強クラスだが財務・健康・AI学習との統合設計はない',
+      '自分株式会社は個人の生活データを可視化・管理し完全無料でライフトラッキングを提供',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'クラウドインフラ監視',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI統合ライフアシスタント',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '個人財務・家計管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '習慣・目標管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'docusign': const _CompetitorInfo(
+    name: 'DocuSign',
+    emoji: '✍️',
+    tagline: 'DocuSignは電子署名・契約管理プラットフォーム。自分株式会社はAI大学で契約管理×財務×習慣を統合した個人OS。',
+    searchKeyword: 'DocuSign代替 電子署名代替 契約管理代替',
+    accentColor: Color(0xFF0061F2),
+    painPoints: [
+      'DocuSign Personal \$15/月〜 — 電子署名・契約締結専門ツールで個人財務管理・習慣トラッキング・AI学習は別アプリ依存',
+      '法的拘束力ある署名は最高水準だが日常のライフ管理・目標追跡との統合がない',
+      '自分株式会社は日常契約管理のヒントをAIで提供しつつ財務・習慣・AI大学を無料統合',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '電子署名・契約管理',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI統合ライフアシスタント',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '個人財務・家計管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '習慣・目標管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'epic-games': const _CompetitorInfo(
+    name: 'Epic Games (Fortnite)',
+    emoji: '🎮',
+    tagline:
+        'Epic GamesはFortnite・UE5のゲームプラットフォーム。自分株式会社はAI大学でゲーム×学習×財務を統合した個人OS。',
+    searchKeyword: 'Fortnite代替 ゲームプラットフォーム代替 Epic代替',
+    accentColor: Color(0xFF313131),
+    painPoints: [
+      'Epic Gamesストア無料〜 / V-Bucks課金 — エンタメ・ゲーム特化で財務管理・習慣トラッキング・AI学習は別アプリ依存',
+      'Fortniteは時間を消費しやすく個人の生産性・財務・目標管理との逆方向の性質',
+      '自分株式会社はゲーミフィケーションを活用して学習・習慣・財務を無料で楽しく管理',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ゲームプラットフォーム',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI統合ライフアシスタント',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '個人財務・家計管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '習慣・目標管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'google-ads': const _CompetitorInfo(
+    name: 'Google 広告',
+    emoji: '📢',
+    tagline: 'Google広告はAI最適化デジタル広告プラットフォーム。自分株式会社はAI大学でマーケ知識×財務×習慣を統合した個人OS。',
+    searchKeyword: 'Google広告代替 デジタル広告代替 検索広告代替',
+    accentColor: Color(0xFF4285F4),
+    painPoints: [
+      'Google広告は従量課金 — 広告出稿・マーケティング特化ツールで個人の財務管理・習慣・AI学習は別アプリ依存',
+      '広告ROI最大化には専門知識が必要で個人ライフ管理との統合設計はない',
+      '自分株式会社はAI大学でマーケ・広告知識を学びつつ財務・習慣管理を完全無料で提供',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'デジタル広告配信',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI統合ライフアシスタント',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '個人財務・家計管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '習慣・目標管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'harvey-ai': const _CompetitorInfo(
+    name: 'Harvey AI',
+    emoji: '⚖️',
+    tagline:
+        'Harvey AIは法律・リーガルテックに特化したAIプラットフォーム。自分株式会社はAI大学で法律知識×財務×習慣を統合した個人OS。',
+    searchKeyword: 'Harvey AI代替 リーガルテック代替 法律AI代替',
+    accentColor: Color(0xFF1A1A2E),
+    painPoints: [
+      'Harvey AI企業向け高額プラン — 法律事務所・法務チーム向けで個人ユーザーには高コスト・複雑すぎる',
+      '契約書レビュー・法的文書生成は最高水準だが財務・習慣・AI学習との統合はない',
+      '自分株式会社はAI大学で法律基礎知識を学びながら財務・習慣管理を完全無料で統合提供',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '法律AI・契約書レビュー',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI統合ライフアシスタント',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '個人財務・家計管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '習慣・目標管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'hrmos': const _CompetitorInfo(
+    name: 'HRMOS (ビズリーチ)',
+    emoji: '👥',
+    tagline: 'HRMOSはビズリーチ運営の採用・人材管理プラットフォーム。自分株式会社はAI大学でキャリア×財務×習慣を統合した個人OS。',
+    searchKeyword: 'HRMOS代替 採用管理代替 人材管理代替',
+    accentColor: Color(0xFF00A0E9),
+    painPoints: [
+      'HRMOS採用法人向け月額数万円〜 — 企業HR・採用管理特化で個人のキャリア管理・財務・AI学習は別アプリ依存',
+      '採用フロー・タレントプール管理は優秀だが個人の自己成長・習慣・家計管理との統合がない',
+      '自分株式会社はキャリア自己管理＋AI大学＋財務＋習慣を完全無料で個人向けに統合提供',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '採用・人材管理',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI統合ライフアシスタント',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '個人財務・家計管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '習慣・目標管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'hubspot-crm': const _CompetitorInfo(
+    name: 'HubSpot CRM',
+    emoji: '🎯',
+    tagline: 'HubSpot CRMは営業・マーケ統合プラットフォーム。自分株式会社はAI大学で個人関係管理×財務×習慣を統合した個人OS。',
+    searchKeyword: 'HubSpot代替 CRM代替 マーケ自動化代替',
+    accentColor: Color(0xFFFF7A59),
+    painPoints: [
+      'HubSpot Starter \$15/seat/月〜 — 企業向けCRM・マーケ自動化で個人ライフ管理・財務・AI学習は別アプリ依存',
+      '連絡先管理・パイプライン追跡は優秀だが個人の習慣・家計・目標管理との統合設計はない',
+      '自分株式会社は個人の人間関係管理ヒント＋財務＋習慣＋AI大学を完全無料で統合提供',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'CRM・マーケ自動化',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI統合ライフアシスタント',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '個人財務・家計管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '習慣・目標管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'ikyu': const _CompetitorInfo(
+    name: '一休.com',
+    emoji: '🏨',
+    tagline: '一休.comは高級宿泊・レストラン予約サービス。自分株式会社はAI大学で旅行×財務×習慣を統合した個人OS。',
+    searchKeyword: '一休代替 高級ホテル代替 旅行予約代替',
+    accentColor: Color(0xFFB8860B),
+    painPoints: [
+      '一休プレミアム会員 ¥3,300/年 — 高級宿泊・グルメ予約特化で財務管理・習慣トラッキング・AI学習は別アプリ依存',
+      '旅行・外食体験の予約は最高品質だが個人の家計全体管理・目標・学習との統合がない',
+      '自分株式会社は旅行費用の家計記録＋AI大学＋習慣管理を完全無料で統合提供',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '高級宿泊・グルメ予約',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI統合ライフアシスタント',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '個人財務・家計管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '習慣・目標管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'jalan': const _CompetitorInfo(
+    name: 'じゃらん',
+    emoji: '🚗',
+    tagline: 'じゃらんはリクルート運営の国内旅行予約サービス。自分株式会社はAI大学で旅行管理×財務×習慣を統合した個人OS。',
+    searchKeyword: 'じゃらん代替 国内旅行代替 宿泊予約代替',
+    accentColor: Color(0xFFE60012),
+    painPoints: [
+      'じゃらん旅行・宿泊予約に手数料 — 旅行予約特化で財務全体管理・習慣トラッキング・AI学習は別アプリ依存',
+      'ポイント・クーポン活用は得意だが個人の月次家計・目標管理・AI学習との統合がない',
+      '自分株式会社は旅行費用の家計記録＋AI大学＋習慣管理を完全無料で統合提供',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '国内旅行・宿泊予約',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI統合ライフアシスタント',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '個人財務・家計管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '習慣・目標管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'kddi-au': const _CompetitorInfo(
+    name: 'KDDI au',
+    emoji: '📱',
+    tagline:
+        'KDDI auは日本3大キャリアの通信・au PAY・証券統合サービス。自分株式会社はAI大学で通信費管理×財務×習慣を統合した個人OS。',
+    searchKeyword: 'au代替 KDDI代替 キャリア代替',
+    accentColor: Color(0xFFFF5500),
+    painPoints: [
+      'auスマホ月額 ¥2,000〜¥8,000/月 — 通信・金融サービス統合だが個人のAI学習・習慣管理・目標追跡との統合がない',
+      'au PAY・証券は便利だが家計全体のAI最適化アドバイスや学習機能がない',
+      '自分株式会社は通信費を含む家計全体管理＋AI大学＋習慣トラッキングを完全無料で統合提供',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '通信サービス・au PAY',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI統合ライフアシスタント',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '個人財務・家計管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '習慣・目標管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'langchain-inc': const _CompetitorInfo(
+    name: 'LangChain',
+    emoji: '🔗',
+    tagline:
+        'LangChainはLLMアプリ開発フレームワーク。自分株式会社はAI大学でLangChain知識×財務×習慣を統合した個人OS。',
+    searchKeyword: 'LangChain代替 LLM開発代替 AIフレームワーク代替',
+    accentColor: Color(0xFF1C3C3C),
+    painPoints: [
+      'LangChain OSS無料 / LangSmith \$39/月〜 — 開発者向けAIオーケストレーションで個人ライフ管理・財務・習慣は対象外',
+      'RAG・エージェント構築は強力だが一般ユーザーが直接使えるUIや財務管理機能はない',
+      '自分株式会社はAI大学でLangChainを学びつつ財務・習慣・目標管理を完全無料で統合提供',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'LLMアプリ開発フレームワーク',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI統合ライフアシスタント',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '個人財務・家計管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '習慣・目標管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'luup-micromobility': const _CompetitorInfo(
+    name: 'LUUP (電動キックボード)',
+    emoji: '🛴',
+    tagline: 'LUUPは日本発の電動キックボード・シェアサイクルサービス。自分株式会社はAI大学で移動費管理×財務×習慣を統合した個人OS。',
+    searchKeyword: 'LUUP代替 電動キックボード代替 マイクロモビリティ代替',
+    accentColor: Color(0xFF00D2AA),
+    painPoints: [
+      'LUUP ¥50/解除+¥15/分 — 短距離移動特化サービスで財務管理・習慣トラッキング・AI学習は別アプリ依存',
+      '移動手段の提供は便利だが個人の月次交通費管理・目標・AI学習との統合がない',
+      '自分株式会社はLUUP等の交通費を含む家計全体管理＋AI大学＋習慣を完全無料で統合提供',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '電動キックボードシェア',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI統合ライフアシスタント',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '個人財務・家計管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '習慣・目標管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'meta-ads': const _CompetitorInfo(
+    name: 'Meta広告 (Facebook/Instagram)',
+    emoji: '📣',
+    tagline:
+        'Meta広告はFacebook/Instagram統合デジタル広告プラットフォーム。自分株式会社はAI大学でSNS知識×財務×習慣を統合した個人OS。',
+    searchKeyword: 'Facebook広告代替 Instagram広告代替 Meta広告代替',
+    accentColor: Color(0xFF1877F2),
+    painPoints: [
+      'Meta広告は従量課金 / Meta Business Suite無料 — 広告・マーケ特化ツールで個人財務管理・習慣・AI学習は別アプリ依存',
+      'SNS広告配信・A/Bテストは強力だが個人の家計・習慣・目標管理との統合設計はない',
+      '自分株式会社はAI大学でSNSマーケ知識を学びつつ財務・習慣管理を完全無料で統合提供',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'SNS広告・マーケティング',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI統合ライフアシスタント',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '個人財務・家計管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '習慣・目標管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'nvidia-geforce-now': const _CompetitorInfo(
+    name: 'NVIDIA GeForce NOW',
+    emoji: '🖥️',
+    tagline: 'NVIDIA GeForce NOWはクラウドゲーミングサービス。自分株式会社はAI大学でゲーム×学習×財務を統合した個人OS。',
+    searchKeyword: 'GeForce NOW代替 クラウドゲーミング代替 NVIDIA代替',
+    accentColor: Color(0xFF76B900),
+    painPoints: [
+      'GeForce NOW Priority \$9.99/月〜 — クラウドゲーミング特化で財務管理・習慣トラッキング・AI学習は別アプリ依存',
+      'PCゲームをクラウドで動かす技術は最高水準だが個人の生産性・家計・目標管理との統合がない',
+      '自分株式会社はゲーム費用の家計管理＋AI大学＋習慣トラッキングを完全無料で統合提供',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'クラウドゲーミング',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI統合ライフアシスタント',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '個人財務・家計管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '習慣・目標管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'sony-playstation': const _CompetitorInfo(
+    name: 'Sony PlayStation',
+    emoji: '🎮',
+    tagline:
+        'PlayStation NetworkはソニーのゲームプラットフォームPC。自分株式会社はAI大学でゲーム×学習×財務を統合した個人OS。',
+    searchKeyword: 'PlayStation代替 PS5代替 ゲームコンソール代替',
+    accentColor: Color(0xFF003087),
+    painPoints: [
+      'PS Plus Essential ¥850/月〜 — ゲーム・エンタメ特化で財務管理・習慣トラッキング・AI学習は別アプリ依存',
+      'ゲーム体験は最高水準だが個人の生産性・家計・目標・AI学習との統合設計がない',
+      '自分株式会社はゲーム費用の家計管理＋AI大学＋習慣トラッキングを完全無料で統合提供',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ゲームコンソール・PSN',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI統合ライフアシスタント',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '個人財務・家計管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '習慣・目標管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
   // PS#4 S83: 20社追加 2026-04-28
   'niconico': const _CompetitorInfo(
     name: 'ニコニコ動画',
