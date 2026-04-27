@@ -1179,7 +1179,7 @@ def recalc_data_quality_scores(limit: int = 500) -> None:
 
 
 # ─── 定期クリーンアップ ───────────────────────────────────────────────────────
-def cleanup_stale_races() -> None:
+def cleanup_stale_races(limit: int = 200) -> None:
     """過去日付のまま status='scheduled' で残っているレースを 'cancelled' に更新する。
     前日以前のレースは結果取得の機会を逃しているため cancelled にマーク。"""
     yesterday = (datetime.date.today() - datetime.timedelta(days=1)).isoformat()
@@ -1187,9 +1187,12 @@ def cleanup_stale_races() -> None:
         "status": "eq.scheduled",
         "race_date": f"lt.{yesterday}",
         "select": "id",
+        "limit": str(limit),
     }) or []
     if not stale:
         return
+    if len(stale) >= limit:
+        print(f"[CLEANUP][WARN] stale レース数が limit={limit} に達しました。次回実行で残りを処理します。")
     ids = [r["id"] for r in stale]
     # Supabase REST: id=in.(uuid1,uuid2,...) で一括 PATCH
     ids_csv = ",".join(ids)
