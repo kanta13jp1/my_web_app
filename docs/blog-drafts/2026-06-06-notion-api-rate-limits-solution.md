@@ -1,7 +1,7 @@
 ---
 title: "Notion API レート制限の限界と解決策 — 毎秒3リクエストの壁を個人開発者が突破する方法"
 tags: Notion,API,個人開発,buildinpublic
-published: false
+published: true
 ---
 
 # Notion API レート制限の限界と解決策 — 毎秒3リクエストの壁を個人開発者が突破する方法

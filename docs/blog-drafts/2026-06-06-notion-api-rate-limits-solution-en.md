@@ -1,7 +1,7 @@
 ---
 title: "Notion API Rate Limits Are Breaking Your Automation — Here's the Real Fix"
 tags: notion,api,productivity,webdev
-published: false
+published: true
 ---
 
 # Notion API Rate Limits Are Breaking Your Automation — Here's the Real Fix
