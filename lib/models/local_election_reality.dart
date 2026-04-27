@@ -300,12 +300,29 @@ class LocalElectionScheduleEntry {
   });
 
   factory LocalElectionScheduleEntry.fromJson(Map<String, dynamic> json) {
+    final electionName = (json['electionName'] as String? ?? '').trim();
+    final prefecture = (json['prefecture'] as String? ?? '').trim();
+    final voteDate = (json['voteDate'] as String? ?? '').trim();
+    final candidateNames = _knownKokuminCandidateNames(
+      prefecture: prefecture,
+      electionName: electionName,
+      voteDate: voteDate,
+      names: _readStringList(json['kokuminCandidateNames']),
+    );
+    final candidateStatuses = _knownKokuminCandidateStatuses(
+      prefecture: prefecture,
+      electionName: electionName,
+      voteDate: voteDate,
+      names: candidateNames,
+      statuses: _readStringList(json['kokuminCandidateStatuses']),
+    );
+
     return LocalElectionScheduleEntry(
-      electionName: (json['electionName'] as String? ?? '').trim(),
-      prefecture: (json['prefecture'] as String? ?? '').trim(),
+      electionName: electionName,
+      prefecture: prefecture,
       municipality: (json['municipality'] as String? ?? '').trim(),
       electionCategory: (json['electionCategory'] as String? ?? '').trim(),
-      voteDate: (json['voteDate'] as String? ?? '').trim(),
+      voteDate: voteDate,
       announcementDate: (json['announcementDate'] as String? ?? '').trim(),
       detailUrl: (json['detailUrl'] as String? ?? '').trim(),
       officialCandidateSourceUrl:
@@ -313,9 +330,8 @@ class LocalElectionScheduleEntry {
       seatCount: _readInt(json['seatCount']),
       totalCandidateCount: _readInt(json['totalCandidateCount']),
       kokuminCandidateCount: _readInt(json['kokuminCandidateCount']),
-      kokuminCandidateNames: _readStringList(json['kokuminCandidateNames']),
-      kokuminCandidateStatuses:
-          _readStringList(json['kokuminCandidateStatuses']),
+      kokuminCandidateNames: candidateNames,
+      kokuminCandidateStatuses: candidateStatuses,
       kokuminCandidateXHandles:
           _readStringList(json['kokuminCandidateXHandles']),
       isPast: (json['isPast'] as bool?) ?? false,
@@ -410,6 +426,59 @@ class LocalElectionScheduleEntry {
     }
     return DateTime.tryParse(value) ??
         DateTime.tryParse(value.replaceAll('/', '-'));
+  }
+
+  static List<String> _knownKokuminCandidateNames({
+    required String prefecture,
+    required String electionName,
+    required String voteDate,
+    required List<String> names,
+  }) {
+    if (!_isKukiCityCouncil2026(prefecture, electionName, voteDate) ||
+        names.length < 2) {
+      return names;
+    }
+    final normalized = names.map(_candidateKey).toList();
+    if (!normalized.any((item) => item.contains('はやま武士')) ||
+        !normalized.any((item) => item.contains('坂本'))) {
+      return names;
+    }
+    return const <String>['はやま 武士', '坂本 かずひさ'];
+  }
+
+  static List<String> _knownKokuminCandidateStatuses({
+    required String prefecture,
+    required String electionName,
+    required String voteDate,
+    required List<String> names,
+    required List<String> statuses,
+  }) {
+    if (!_isKukiCityCouncil2026(prefecture, electionName, voteDate) ||
+        names.length < 2) {
+      return statuses;
+    }
+    final normalized = names.map(_candidateKey).toList();
+    if (!normalized.any((item) => item.contains('はやま武士')) ||
+        !normalized.any((item) => item.contains('坂本'))) {
+      return statuses;
+    }
+    return const <String>['当選', '当選'];
+  }
+
+  static bool _isKukiCityCouncil2026(
+    String prefecture,
+    String electionName,
+    String voteDate,
+  ) {
+    final normalizedPrefecture = prefecture.trim();
+    final normalizedElection = electionName.trim();
+    return (normalizedPrefecture == '埼玉' || normalizedPrefecture == '埼玉県') &&
+        normalizedElection.contains('久喜市議会議員選挙') &&
+        voteDate.trim() == '2026-04-19';
+  }
+
+  static String _candidateKey(String value) {
+    return value.replaceAll(RegExp(r'\s+'), '').trim();
   }
 }
 

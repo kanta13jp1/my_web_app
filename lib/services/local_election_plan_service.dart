@@ -785,6 +785,20 @@ class _AutoScheduleStatsBuilder {
     if (electionDate.isBefore(baselineDate) || !_isCompleted(item, now: now)) {
       return;
     }
+    final resolvedCandidateStatuses =
+        item.kokuminCandidateStatuses.where(_isResolvedOutcomeStatus).toList();
+    if (resolvedCandidateStatuses.isNotEmpty) {
+      for (final status in resolvedCandidateStatuses) {
+        postConventionBattleCount++;
+        if (_isWinningStatus(status)) {
+          postConventionWinCount++;
+        } else {
+          postConventionLossCount++;
+        }
+      }
+      return;
+    }
+
     postConventionBattleCount++;
     if (_hasKokuminWin(item)) {
       postConventionWinCount++;
@@ -808,6 +822,17 @@ class _AutoScheduleStatsBuilder {
 
   bool _hasKokuminWin(LocalElectionScheduleEntry item) {
     return item.kokuminCandidateStatuses.any(_isWinningStatus);
+  }
+
+  bool _isResolvedOutcomeStatus(String raw) {
+    final value = raw.trim();
+    if (value.isEmpty) {
+      return false;
+    }
+    return _isWinningStatus(value) ||
+        value.contains('落選') ||
+        value.contains('次点') ||
+        value.contains('敗');
   }
 
   bool _isWinningStatus(String raw) {

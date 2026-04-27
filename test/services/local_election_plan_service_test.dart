@@ -485,6 +485,65 @@ void main() {
     expect(updated.currentCandidateWinRatePercent, 33);
   });
 
+  test('auto update counts multiple winning candidates in one election',
+      () async {
+    const service = LocalElectionPlanService();
+    final prefs = await SharedPreferences.getInstance();
+    final plan = await service.loadPlan(prefs: prefs);
+    final saitama =
+        plan.prefectures.firstWhere((item) => item.prefecture == '埼玉');
+    final now = DateTime(2026, 4, 27, 14);
+
+    final updated = service.buildAutoUpdatedPlan(
+      plan,
+      LocalElectionRealitySnapshot.fromJson(<String, dynamic>{
+        'fetchedAt': now.toIso8601String(),
+        'officialCurrentLocalMembers': 361,
+        'actualNetIncreaseRequired': 339,
+        'prefectures': <Map<String, dynamic>>[
+          <String, dynamic>{
+            'prefecture': '埼玉県',
+            'sourceUrl': 'https://example.com/saitama',
+            'currentMembers': 16,
+            'prefecturalAssemblyMembers': 0,
+            'municipalAssemblyMembers': 16,
+          },
+        ],
+        'upcomingSchedules': <Map<String, dynamic>>[
+          <String, dynamic>{
+            'electionName': '久喜市議会議員選挙',
+            'prefecture': '埼玉県',
+            'municipality': '久喜市',
+            'electionCategory': 'assembly',
+            'voteDate': '2026-04-19',
+            'announcementDate': '2026-04-12',
+            'detailUrl': 'https://www.city.kuki.lg.jp/',
+            'officialCandidateSourceUrl': 'https://new-kokumin.jp/election',
+            'seatCount': 27,
+            'totalCandidateCount': 40,
+            'kokuminCandidateCount': 2,
+            'kokuminCandidateNames': <String>['はやま武士', '坂本和久'],
+            'kokuminCandidateStatuses': <String>[],
+            'kokuminCandidateXHandles': <String>[
+              'hymtks0601',
+              'Kazuhisa_SakaMT',
+            ],
+            'isPast': true,
+          },
+        ],
+      }),
+      now: now,
+    );
+
+    final updatedSaitama = updated.prefectures.firstWhere(
+      (item) => item.prefecture == saitama.prefecture,
+    );
+    expect(updatedSaitama.postConventionBattleCount, 2);
+    expect(updatedSaitama.postConventionWinCount, 2);
+    expect(updatedSaitama.postConventionLossCount, 0);
+    expect(updatedSaitama.currentCandidateWinRatePercent, 100);
+  });
+
   test('auto update preserves existing cdp benchmarks when snapshot omits them',
       () async {
     const service = LocalElectionPlanService();

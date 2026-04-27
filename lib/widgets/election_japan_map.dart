@@ -742,10 +742,7 @@ class _ElectionJapanMapState extends State<ElectionJapanMap> {
       }
     }
 
-    final displayedElectionKeys =
-        entries.map((entry) => entry.electionKey).toSet();
-    final missingBreakdowns =
-        plan.postConventionBattleCount - displayedElectionKeys.length;
+    final missingBreakdowns = plan.postConventionBattleCount - entries.length;
     for (var index = 0; index < missingBreakdowns; index++) {
       final fallbackLossIndex = math.max(
         0,

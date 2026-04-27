@@ -354,4 +354,43 @@ void main() {
     expect(history.single.officialCurrentLocalMembers, 347);
     expect(history.single.actualNetIncreaseRequired, 353);
   });
+
+  test('normalizes known Kuki city council result to two Kokumin wins', () {
+    final snapshot = LocalElectionRealitySnapshot.fromJson(<String, dynamic>{
+      'fetchedAt': '2026-04-27T05:30:00.000Z',
+      'officialCurrentLocalMembers': 361,
+      'actualNetIncreaseRequired': 339,
+      'upcomingSchedules': <Map<String, dynamic>>[
+        <String, dynamic>{
+          'electionName': '久喜市議会議員選挙',
+          'prefecture': '埼玉県',
+          'municipality': '久喜市',
+          'electionCategory': 'assembly',
+          'voteDate': '2026-04-19',
+          'announcementDate': '2026-04-12',
+          'detailUrl': 'https://www.city.kuki.lg.jp/',
+          'officialCandidateSourceUrl': 'https://new-kokumin.jp/election',
+          'seatCount': 27,
+          'totalCandidateCount': 40,
+          'kokuminCandidateCount': 2,
+          'kokuminCandidateNames': <String>['はやま武士', '坂本和久'],
+          'kokuminCandidateStatuses': <String>[],
+          'kokuminCandidateXHandles': <String>[
+            'hymtks0601',
+            'Kazuhisa_SakaMT',
+          ],
+          'isPast': true,
+        },
+      ],
+    });
+
+    final schedule = snapshot.upcomingSchedules.single;
+    expect(schedule.kokuminCandidateNames, <String>[
+      'はやま 武士',
+      '坂本 かずひさ',
+    ]);
+    expect(schedule.kokuminCandidateStatuses, <String>['当選', '当選']);
+    expect(snapshot.resolvedPastElectionResults, hasLength(1));
+    expect(snapshot.resolvedPastElectionResults.single.winCount, 2);
+  });
 }

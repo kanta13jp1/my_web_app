@@ -1,4 +1,4 @@
-﻿import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
+import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -244,8 +244,12 @@ const MANUAL_2026_SCHEDULES: ManualScheduleSupplement[] = [
     voteDate: "2026-04-19",
     electionCategory: "assembly",
     candidates: [
-      { name: "はやま武士", xHandle: "hymtks0601" },
-      { name: "坂本和久", xHandle: "Kazuhisa_SakaMT" },
+      { name: "はやま 武士", statusLabel: "当選", xHandle: "hymtks0601" },
+      {
+        name: "坂本 かずひさ",
+        statusLabel: "当選",
+        xHandle: "Kazuhisa_SakaMT",
+      },
     ],
   },
   {
