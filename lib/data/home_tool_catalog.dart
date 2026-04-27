@@ -191,9 +191,14 @@ class HomeToolEntry {
     required this.icon,
     required this.color,
     required this.keywords,
-    required this.onOpen,
+    required HomeToolOpenCallback onOpen,
+    String? routePath,
     this.requiresClearDeck = false,
-  });
+  })  : routePath = routePath ?? _homeToolRoutePathForId(id),
+        onOpen = _wrapRouteAwareHomeToolOpen(
+          onOpen,
+          routePath ?? _homeToolRoutePathForId(id),
+        );
 
   final String id;
   final String sectionId;
@@ -203,6 +208,7 @@ class HomeToolEntry {
   final Color color;
   final List<String> keywords;
   final HomeToolOpenCallback onOpen;
+  final String? routePath;
   final bool requiresClearDeck;
 }
 
@@ -251,10 +257,49 @@ const List<HomeToolSection> homeToolSections = <HomeToolSection>[
   ),
 ];
 
+String? _pendingHomeToolRoutePath;
+
+HomeToolOpenCallback _wrapRouteAwareHomeToolOpen(
+  HomeToolOpenCallback onOpen,
+  String? routePath,
+) {
+  return (context) async {
+    final previous = _pendingHomeToolRoutePath;
+    _pendingHomeToolRoutePath = routePath;
+    try {
+      await onOpen(context);
+    } finally {
+      _pendingHomeToolRoutePath = previous;
+    }
+  };
+}
+
 Future<void> _pushPage(BuildContext context, Widget page) {
-  return Navigator.of(
-    context,
-  ).push(MaterialPageRoute(builder: (_) => page));
+  final routePath = _pendingHomeToolRoutePath;
+  _pendingHomeToolRoutePath = null;
+  return Navigator.of(context).push(
+    MaterialPageRoute(
+      settings: routePath == null ? null : RouteSettings(name: routePath),
+      builder: (_) => page,
+    ),
+  );
+}
+
+String? _homeToolRoutePathForId(String id) {
+  switch (id) {
+    case 'digital-danshari':
+      return '/real-world-danshari';
+    case 'agent-org':
+      return '/agents';
+    case 'admin-analytics':
+      return '/admin';
+    case 'edge-function-status':
+      return '/edge-functions';
+    case 'public-profile':
+      return null;
+    default:
+      return '/$id';
+  }
 }
 
 List<HomeToolEntry> buildHomeToolCatalog({
@@ -924,7 +969,7 @@ List<HomeToolEntry> buildHomeToolCatalog({
           );
           return;
         }
-        await _pushPage(context, PublicProfilePage(userId: userId));
+        await Navigator.of(context).pushNamed('/u?id=$userId');
       },
     ),
     HomeToolEntry(

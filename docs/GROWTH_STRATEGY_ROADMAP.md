@@ -21645,3 +21645,10 @@ Google I/O 2026 競合脅威 事前ブリーフィング
 - `--mode all` 末尾で自動 stats 出力 (全自動ループで学習状況が毎時可視化)
 - `horse-racing-update.yml`: 学習統計レポートステップ追加 (JST 0時台 or stats/all モード時)
 - commit: cddac840
+
+## PS版#2 S51 — 2026-04-27 T-1 第27弾 dispatch
+
+- T-1 第27弾: "2 Days to Notion Paywall — Split Your Personal AI to a Free 6-Department Hub First" → dev.to 投稿成功
+  - https://dev.to/kanta13jp1/2-days-to-notion-paywall-split-your-personal-ai-to-a-free-6-department-hub-first-48h0
+- JA slug: `2026-05-02-notion-paywall-d2-parallel-6-departments`
+- orphan branch `blog-publish/24986378737-20260427-180909` マージ + 削除
