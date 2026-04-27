@@ -1,7 +1,7 @@
 ---
 title: "Deno vs Node.js — Edge Functions で使うならどちらか【2026年版】"
 tags: Deno,個人開発,webdev,saas
-published: false
+published: true
 ---
 
 # Deno vs Node.js — Edge Functions で使うならどちらか【2026年版】

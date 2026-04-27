@@ -1,7 +1,7 @@
 ---
 title: "Deno vs Node.js for Edge Functions: What I Learned Running Supabase in Production"
 tags: deno,programming,webdev,saas
-published: false
+published: true
 ---
 
 # Deno vs Node.js for Edge Functions: What I Learned Running Supabase in Production
