@@ -101,7 +101,7 @@ UPDATE public.competitors SET
   pricing_notes_ja   = 'ユーザー利用無料。不動産会社掲載課金モデル。SUUMO賃貸・マンション・注文住宅など多展開。AI物件提案機能開発中。',
   japan_presence_level = 'dominant',
   japan_launch_year  = 2009,
-  japan_notes_ja     = 'リクルート。日本最大の不動産ポータル。HOME'SとAtHomeが競合2位3位。住まい管理・引越し費用比較で生活OS不動産機能と競合。'
+  japan_notes_ja     = 'リクルート。日本最大の不動産ポータル。HOME''SとAtHomeが競合2位3位。住まい管理・引越し費用比較で生活OS不動産機能と競合。'
 WHERE id = 'suumo';
 
 -- 一休.com (freemium: 一休プレミアム ¥550/月)
