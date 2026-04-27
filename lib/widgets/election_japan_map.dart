@@ -10,11 +10,13 @@ import 'kgi_csf_kpi_panel.dart';
 class ElectionJapanMap extends StatefulWidget {
   final List<LocalElectionPrefecturePlan> prefectures;
   final List<LocalElectionScheduleEntry> schedules;
+  final List<PastElectionResult> pastElectionResults;
 
   const ElectionJapanMap({
     super.key,
     required this.prefectures,
     this.schedules = const <LocalElectionScheduleEntry>[],
+    this.pastElectionResults = const <PastElectionResult>[],
   });
 
   @override
@@ -501,6 +503,7 @@ class _ElectionJapanMapState extends State<ElectionJapanMap> {
     final plan = widget.prefectures[safeIndex];
     final tile = _tileForIndex(safeIndex, plan);
     final schedules = _schedulesForPlan(plan);
+    final postConventionResults = _postConventionBreakdownForPlan(plan);
     final scheduledElectionLabel = schedules.isEmpty
         ? '${plan.scheduledElectionCount}件'
         : '${schedules.length}件';
@@ -606,6 +609,14 @@ class _ElectionJapanMapState extends State<ElectionJapanMap> {
               style: theme.textTheme.bodySmall?.copyWith(height: 1.7),
             ),
           ],
+          if (postConventionResults.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            _buildPostConventionBreakdown(
+              context,
+              plan,
+              postConventionResults,
+            ),
+          ],
         ],
       ),
     );
@@ -641,6 +652,195 @@ class _ElectionJapanMapState extends State<ElectionJapanMap> {
     return schedules;
   }
 
+  List<_PostConventionBreakdownEntry> _postConventionBreakdownForPlan(
+    LocalElectionPrefecturePlan plan,
+  ) {
+    final entries = <_PostConventionBreakdownEntry>[];
+    final resultElectionKeys = <String>{};
+
+    for (final result in widget.pastElectionResults) {
+      if (!result.hasResolvedCandidates ||
+          !_isPostConventionDate(result.parsedDate) ||
+          !_pastResultMatchesPlan(plan, result)) {
+        continue;
+      }
+      final electionKey = _postConventionElectionKey(
+        result.parsedDate,
+        result.date,
+        result.electionName,
+      );
+      resultElectionKeys.add(electionKey);
+      for (final candidate in result.resolvedCandidates) {
+        entries.add(
+          _PostConventionBreakdownEntry(
+            electionKey: electionKey,
+            date: result.parsedDate,
+            rawDate: result.date,
+            electionName: result.electionName,
+            candidateName: candidate.name,
+            status: candidate.status,
+            votes: candidate.votes,
+            isWin: candidate.isWin || _isWinningStatus(candidate.status),
+          ),
+        );
+      }
+    }
+
+    for (final schedule in widget.schedules) {
+      if (!schedule.isTargetElection ||
+          !_scheduleMatchesPlan(plan, schedule) ||
+          !_isCompletedPostConventionSchedule(schedule)) {
+        continue;
+      }
+      final electionKey = _postConventionElectionKey(
+        schedule.parsedVoteDate,
+        schedule.voteDate,
+        schedule.electionName,
+      );
+      if (resultElectionKeys.contains(electionKey)) {
+        continue;
+      }
+
+      var hasResolvedCandidate = false;
+      for (var index = 0;
+          index < schedule.kokuminCandidateNames.length;
+          index++) {
+        final name = schedule.kokuminCandidateNames[index].trim();
+        final status = index < schedule.kokuminCandidateStatuses.length
+            ? schedule.kokuminCandidateStatuses[index].trim()
+            : '';
+        if (name.isEmpty ||
+            !PastElectionCandidate.hasResolvedOutcomeStatus(status)) {
+          continue;
+        }
+        hasResolvedCandidate = true;
+        entries.add(
+          _PostConventionBreakdownEntry(
+            electionKey: electionKey,
+            date: schedule.parsedVoteDate,
+            rawDate: schedule.voteDate,
+            electionName: schedule.electionName,
+            candidateName: name,
+            status: status,
+            isWin: _isWinningStatus(status),
+          ),
+        );
+      }
+
+      if (!hasResolvedCandidate) {
+        entries.add(
+          _PostConventionBreakdownEntry(
+            electionKey: electionKey,
+            date: schedule.parsedVoteDate,
+            rawDate: schedule.voteDate,
+            electionName: schedule.electionName,
+            fallbackText: schedule.kokuminCandidateCount <= 0
+                ? '国民候補なし（敗戦扱い）'
+                : '当落未確認（敗戦扱い）',
+          ),
+        );
+      }
+    }
+
+    entries.sort((left, right) {
+      final leftDate = left.date;
+      final rightDate = right.date;
+      if (leftDate != null && rightDate != null) {
+        final dateCompare = rightDate.compareTo(leftDate);
+        if (dateCompare != 0) {
+          return dateCompare;
+        }
+      } else if (rightDate != null) {
+        return 1;
+      } else if (leftDate != null) {
+        return -1;
+      }
+      return left.electionName.compareTo(right.electionName);
+    });
+
+    return entries;
+  }
+
+  bool _scheduleMatchesPlan(
+    LocalElectionPrefecturePlan plan,
+    LocalElectionScheduleEntry schedule,
+  ) {
+    return _prefectureKey(schedule.prefecture) ==
+        _prefectureKey(plan.prefecture);
+  }
+
+  bool _pastResultMatchesPlan(
+    LocalElectionPrefecturePlan plan,
+    PastElectionResult result,
+  ) {
+    final key = _prefectureKey(plan.prefecture);
+    final fullName = _fullPrefectureName(key);
+    for (final raw in <String>[result.location, result.electionName]) {
+      final value = raw.trim();
+      if (value.isEmpty) {
+        continue;
+      }
+      if (_prefectureKey(value) == key ||
+          value.startsWith(fullName) ||
+          value.contains(fullName)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  bool _isCompletedPostConventionSchedule(LocalElectionScheduleEntry schedule) {
+    final voteDate = schedule.parsedVoteDate;
+    if (!_isPostConventionDate(voteDate)) {
+      return false;
+    }
+    if (schedule.isPast) {
+      return true;
+    }
+    if (voteDate == null) {
+      return false;
+    }
+    final today = DateTime.now();
+    final todayDate = DateTime(today.year, today.month, today.day);
+    final electionDate = DateTime(voteDate.year, voteDate.month, voteDate.day);
+    return !electionDate.isAfter(todayDate);
+  }
+
+  bool _isPostConventionDate(DateTime? date) {
+    if (date == null) {
+      return false;
+    }
+    final baseline = LocalElectionPrefecturePlan.battleRecordBaselineDate;
+    final baselineDate = DateTime(baseline.year, baseline.month, baseline.day);
+    final electionDate = DateTime(date.year, date.month, date.day);
+    return !electionDate.isBefore(baselineDate);
+  }
+
+  bool _isWinningStatus(String raw) {
+    final value = raw.trim();
+    if (value.isEmpty) {
+      return false;
+    }
+    return value.contains('当選') ||
+        value.contains('蠖馴∈') ||
+        value.contains('トップ') ||
+        value.contains('再選') ||
+        value.contains('無投票');
+  }
+
+  String _postConventionElectionKey(
+    DateTime? parsedDate,
+    String rawDate,
+    String electionName,
+  ) {
+    final dateKey = parsedDate == null
+        ? rawDate.trim()
+        : '${parsedDate.year.toString().padLeft(4, '0')}-'
+            '${parsedDate.month.toString().padLeft(2, '0')}-'
+            '${parsedDate.day.toString().padLeft(2, '0')}';
+    return '$dateKey|${electionName.trim()}';
+  }
+
   Widget _buildScheduleBreakdown(
     BuildContext context,
     List<LocalElectionScheduleEntry> schedules,
@@ -664,6 +864,59 @@ class _ElectionJapanMapState extends State<ElectionJapanMap> {
               color: theme.colorScheme.outlineVariant,
             ),
           _ScheduleBreakdownRow(schedule: schedules[index]),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildPostConventionBreakdown(
+    BuildContext context,
+    LocalElectionPrefecturePlan plan,
+    List<_PostConventionBreakdownEntry> entries,
+  ) {
+    final theme = Theme.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                '党大会後成績内訳',
+                style: theme.textTheme.labelLarge?.copyWith(
+                  fontWeight: FontWeight.w800,
+                  height: 1.4,
+                ),
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.primary.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(999),
+                border: Border.all(
+                  color: theme.colorScheme.primary.withValues(alpha: 0.18),
+                ),
+              ),
+              child: Text(
+                plan.postConventionRecordLabel,
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: theme.colorScheme.primary,
+                  fontWeight: FontWeight.w800,
+                  height: 1.3,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        for (var index = 0; index < entries.length; index++) ...[
+          if (index > 0)
+            Divider(
+              height: 14,
+              color: theme.colorScheme.outlineVariant,
+            ),
+          _PostConventionBreakdownRow(entry: entries[index]),
         ],
       ],
     );
@@ -1139,6 +1392,88 @@ class _ScheduleBreakdownRow extends StatelessWidget {
   }
 }
 
+class _PostConventionBreakdownRow extends StatelessWidget {
+  final _PostConventionBreakdownEntry entry;
+
+  const _PostConventionBreakdownRow({required this.entry});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final color = entry.isWin
+        ? const Color(0xFF16A34A)
+        : entry.fallbackText == null
+            ? theme.colorScheme.error
+            : const Color(0xFFF59E0B);
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: 8,
+          height: 8,
+          margin: const EdgeInsets.only(top: 8),
+          decoration: BoxDecoration(
+            color: color,
+            shape: BoxShape.circle,
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            entry.description,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurface,
+              fontWeight: FontWeight.w600,
+              height: 1.6,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _PostConventionBreakdownEntry {
+  final String electionKey;
+  final DateTime? date;
+  final String rawDate;
+  final String electionName;
+  final String candidateName;
+  final String status;
+  final int votes;
+  final bool isWin;
+  final String? fallbackText;
+
+  const _PostConventionBreakdownEntry({
+    required this.electionKey,
+    required this.date,
+    required this.rawDate,
+    required this.electionName,
+    this.candidateName = '',
+    this.status = '',
+    this.votes = 0,
+    this.isWin = false,
+    this.fallbackText,
+  });
+
+  String get description {
+    final dateText = _formatShortElectionDate(date, rawDate);
+    final electionText = electionName.trim().isEmpty ? '選挙名未確認' : electionName;
+    final fallback = fallbackText;
+    if (fallback != null) {
+      return '$dateTextの$electionTextで$fallback';
+    }
+
+    final candidateText =
+        candidateName.trim().isEmpty ? '候補者名未確認' : candidateName.trim();
+    final statusText =
+        status.trim().isEmpty ? (isWin ? '当選' : '落選') : status.trim();
+    final voteText = votes > 0 ? '（${_formatCompactNumber(votes)}票）' : '';
+    return '$dateTextの$electionTextで$candidateTextが$statusText$voteText';
+  }
+}
+
 class _ScheduleDateLabel extends StatelessWidget {
   final String label;
   final String value;
@@ -1188,6 +1523,19 @@ String _prefectureKey(String value) {
   return trimmed;
 }
 
+String _fullPrefectureName(String key) {
+  if (key == '北海道') {
+    return key;
+  }
+  if (key == '東京') {
+    return '東京都';
+  }
+  if (key == '大阪' || key == '京都') {
+    return '$key府';
+  }
+  return '$key県';
+}
+
 String _formatScheduleDate(String raw) {
   final normalized = raw.trim();
   if (normalized.isEmpty) {
@@ -1201,6 +1549,22 @@ String _formatScheduleDate(String raw) {
   final local = parsed.toLocal();
   return '${local.year}年${local.month.toString().padLeft(2, '0')}月'
       '${local.day.toString().padLeft(2, '0')}日';
+}
+
+String _formatShortElectionDate(DateTime? date, String raw) {
+  if (date != null) {
+    final local = date.toLocal();
+    return '${local.month}月${local.day}日';
+  }
+  final normalized = raw.trim();
+  return normalized.isEmpty ? '日付未確認' : normalized;
+}
+
+String _formatCompactNumber(int value) {
+  return value.toString().replaceAllMapped(
+        RegExp(r'\B(?=(\d{3})+(?!\d))'),
+        (_) => ',',
+      );
 }
 
 class _JapanTile {

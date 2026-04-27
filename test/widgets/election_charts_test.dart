@@ -86,6 +86,7 @@ void main() {
             child: ElectionJapanMap(
               prefectures: _samplePrefecturePlans(),
               schedules: _sampleSchedules(),
+              pastElectionResults: _samplePastElectionResults(),
             ),
           ),
         ),
@@ -115,6 +116,12 @@ void main() {
     expect(find.text('東京区長選挙'), findsNothing);
     expect(find.textContaining('公示日 2026年05月17日'), findsOneWidget);
     expect(find.textContaining('投開票日 2026年05月24日'), findsOneWidget);
+    expect(find.text('党大会後成績内訳'), findsOneWidget);
+    expect(
+      find.textContaining('4月12日の東京都議会議員補欠選挙で東京 太郎が落選'),
+      findsOneWidget,
+    );
+    expect(find.textContaining('1,234票'), findsOneWidget);
     expect(find.text('公認期限'), findsOneWidget);
     expect(find.text('高負荷'), findsOneWidget);
   });
@@ -134,6 +141,9 @@ List<LocalElectionPrefecturePlan> _samplePrefecturePlans() {
       closeRaceSupportRounds: isTokyo ? 18 : (index % 5) + 2,
       currentMembers: isTokyo ? 14 : (index % 7),
       scheduledElectionCount: isTokyo ? 3 : (index % 4),
+      postConventionBattleCount: isTokyo ? 1 : 0,
+      postConventionWinCount: 0,
+      postConventionLossCount: isTokyo ? 1 : 0,
       cdpLocalMembers: isTokyo ? 82 : 0,
       cdpSourceUrl:
           isTokyo ? 'https://cdp-japan.jp/members/prefecture/tokyo' : '',
@@ -193,6 +203,41 @@ List<LocalElectionScheduleEntry> _sampleSchedules() {
       kokuminCandidateStatuses: <String>[],
       kokuminCandidateXHandles: <String>[],
       isPast: true,
+    ),
+    LocalElectionScheduleEntry(
+      electionName: '東京都議会議員補欠選挙',
+      prefecture: '東京都',
+      municipality: '中野区',
+      electionCategory: '都議会議員補欠選挙',
+      voteDate: '2026-04-12',
+      announcementDate: '2026-04-05',
+      detailUrl: 'https://example.com/tokyo-result',
+      officialCandidateSourceUrl: 'https://example.com/candidates',
+      seatCount: 1,
+      totalCandidateCount: 4,
+      kokuminCandidateCount: 1,
+      kokuminCandidateNames: <String>['東京 太郎'],
+      kokuminCandidateStatuses: <String>['落選'],
+      kokuminCandidateXHandles: <String>[],
+      isPast: true,
+    ),
+  ];
+}
+
+List<PastElectionResult> _samplePastElectionResults() {
+  return const <PastElectionResult>[
+    PastElectionResult(
+      id: 1,
+      electionName: '東京都議会議員補欠選挙',
+      date: '2026-04-12',
+      location: '東京都 中野区',
+      dppCandidates: <PastElectionCandidate>[
+        PastElectionCandidate(
+          name: '東京 太郎',
+          status: '落選',
+          votes: 1234,
+        ),
+      ],
     ),
   ];
 }
