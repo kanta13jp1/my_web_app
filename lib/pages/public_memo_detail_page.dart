@@ -28,8 +28,11 @@ class PublicMemoDetailPage extends StatefulWidget {
   State<PublicMemoDetailPage> createState() => _PublicMemoDetailPageState();
 }
 
-const _kReactionsUrl =
-    'https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/memo-reactions';
+// Win版#132 part 50: 旧 memo-reactions EF は core-hub に統合済 (b4c91bc2 2026-04-24)
+// だが action 完全実装が漏れていたため part 50 で `memo.react.list` /
+// `memo.react.toggle` を core-hub に追加 + Flutter 側を切り替え。
+const _kReactionsHubUrl =
+    'https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/core-hub';
 const _kAllReactions = ['👍', '❤️', '🔥', '💡', '🎉'];
 
 class _PublicMemoDetailPageState extends State<PublicMemoDetailPage> {
@@ -147,8 +150,13 @@ class _PublicMemoDetailPageState extends State<PublicMemoDetailPage> {
 
   Future<void> _loadReactions() async {
     try {
-      final res = await http.get(
-        Uri.parse('$_kReactionsUrl?memo_id=${widget.memoId}'),
+      final res = await http.post(
+        Uri.parse(_kReactionsHubUrl),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'action': 'memo.react.list',
+          'memo_id': widget.memoId,
+        }),
       );
       if (!mounted || res.statusCode != 200) {
         return;
@@ -175,9 +183,13 @@ class _PublicMemoDetailPageState extends State<PublicMemoDetailPage> {
     setState(() => _reactionsLoading = true);
     try {
       final res = await http.post(
-        Uri.parse(_kReactionsUrl),
+        Uri.parse(_kReactionsHubUrl),
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'memo_id': widget.memoId, 'reaction': reaction}),
+        body: jsonEncode({
+          'action': 'memo.react.toggle',
+          'memo_id': widget.memoId,
+          'reaction': reaction,
+        }),
       );
       if (!mounted || res.statusCode != 200) {
         return;

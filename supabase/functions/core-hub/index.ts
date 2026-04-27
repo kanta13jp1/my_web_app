@@ -656,6 +656,92 @@ serve(async (req: Request) => {
         return json({ success: true, item });
       }
 
+      // ---- Memo reactions (anonymous, IP-based — public_memos に対する emoji reaction) ----
+      // Win版#132 part 50: legacy `memo-reactions` EF が core-hub 移行で部分実装に
+      // とどまっていた問題を補完。元 EF と同じ contract:
+      //   request:  { action, memo_id }                 → counts + userReactions
+      //             { action, memo_id, reaction }       → toggle (insert or delete) + counts
+      //   response: { reactions: {emoji: count}, userReactions: [emoji, ...], (added) }
+      // ip_hash は server 側で `x-forwarded-for` を sha256 して生成する (clientは送らない)。
+      case "memo.react.list":
+      case "memo.react.toggle": {
+        const memoId = Number(body.memo_id);
+        if (!Number.isFinite(memoId) || memoId <= 0) {
+          return json({ error: "memo_id (positive integer) is required" }, 400);
+        }
+        const allReactions = ["👍", "❤️", "🔥", "💡", "🎉"] as const;
+        const ipHeader = req.headers.get("x-forwarded-for")
+          ?? req.headers.get("cf-connecting-ip")
+          ?? "";
+        const rawIp = ipHeader.split(",")[0]?.trim() || "anon";
+        const ipHashBytes = await crypto.subtle.digest(
+          "SHA-256",
+          new TextEncoder().encode(rawIp),
+        );
+        const ipHash = Array.from(new Uint8Array(ipHashBytes))
+          .map((b) => b.toString(16).padStart(2, "0"))
+          .join("");
+
+        let added: boolean | undefined;
+        if (action === "memo.react.toggle") {
+          const reaction = String(body.reaction ?? "");
+          if (!allReactions.includes(reaction as typeof allReactions[number])) {
+            return json(
+              { error: "reaction must be one of: 👍 ❤️ 🔥 💡 🎉" },
+              400,
+            );
+          }
+          const { data: existing } = await admin
+            .from("memo_reactions")
+            .select("id")
+            .eq("memo_id", memoId)
+            .eq("ip_hash", ipHash)
+            .eq("reaction", reaction)
+            .maybeSingle();
+          if (existing) {
+            await admin
+              .from("memo_reactions")
+              .delete()
+              .eq("id", existing.id);
+            added = false;
+          } else {
+            const { error: insertErr } = await admin
+              .from("memo_reactions")
+              .insert({ memo_id: memoId, ip_hash: ipHash, reaction });
+            if (insertErr) {
+              return json({ error: insertErr.message }, 500);
+            }
+            added = true;
+          }
+        }
+
+        const { data: rows } = await admin
+          .from("memo_reactions")
+          .select("reaction, ip_hash")
+          .eq("memo_id", memoId);
+        const reactions: Record<string, number> = {};
+        const userReactions: string[] = [];
+        for (const r of allReactions) reactions[r] = 0;
+        for (const row of rows ?? []) {
+          const r = row.reaction as string;
+          if (Object.prototype.hasOwnProperty.call(reactions, r)) {
+            reactions[r] = (reactions[r] ?? 0) + 1;
+          }
+          if (row.ip_hash === ipHash && !userReactions.includes(r)) {
+            userReactions.push(r);
+          }
+        }
+
+        // toggle 応答は元 EF が `counts` キーで返していたので互換維持のため両方返す
+        const payload: Record<string, unknown> = {
+          reactions,
+          counts: reactions,
+          userReactions,
+        };
+        if (added !== undefined) payload.added = added;
+        return json(payload);
+      }
+
       // ---- OGP (memo) ----
       case "memo.ogp": {
         const item = await addItem(admin, "memo_ogp", userId, {
