@@ -125,6 +125,25 @@ void main() {
     expect(find.text('公認期限'), findsOneWidget);
     expect(find.text('高負荷'), findsOneWidget);
   });
+
+  testWidgets('ElectionJapanMap shows a visible fallback for saved records', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SingleChildScrollView(
+            child: ElectionJapanMap(
+              prefectures: _samplePrefecturePlans(),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('党大会後成績内訳'), findsOneWidget);
+    expect(find.textContaining('明細未取得（敗戦1件）'), findsOneWidget);
+  });
 }
 
 List<LocalElectionPrefecturePlan> _samplePrefecturePlans() {

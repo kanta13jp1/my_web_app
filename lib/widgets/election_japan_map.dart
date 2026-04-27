@@ -598,6 +598,14 @@ class _ElectionJapanMapState extends State<ElectionJapanMap> {
               MapEntry('公認期限', formatMonthKey(plan.endorsementDeadlineMonth)),
             ],
           ),
+          if (postConventionResults.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            _buildPostConventionBreakdown(
+              context,
+              plan,
+              postConventionResults,
+            ),
+          ],
           if (schedules.isNotEmpty) ...[
             const SizedBox(height: 12),
             _buildScheduleBreakdown(context, schedules),
@@ -607,14 +615,6 @@ class _ElectionJapanMapState extends State<ElectionJapanMap> {
             Text(
               plan.notes,
               style: theme.textTheme.bodySmall?.copyWith(height: 1.7),
-            ),
-          ],
-          if (postConventionResults.isNotEmpty) ...[
-            const SizedBox(height: 12),
-            _buildPostConventionBreakdown(
-              context,
-              plan,
-              postConventionResults,
             ),
           ],
         ],
@@ -742,6 +742,27 @@ class _ElectionJapanMapState extends State<ElectionJapanMap> {
       }
     }
 
+    final displayedElectionKeys =
+        entries.map((entry) => entry.electionKey).toSet();
+    final missingBreakdowns =
+        plan.postConventionBattleCount - displayedElectionKeys.length;
+    for (var index = 0; index < missingBreakdowns; index++) {
+      final fallbackLossIndex = math.max(
+        0,
+        plan.postConventionLossCount - _fallbackLossCount(entries),
+      );
+      entries.add(
+        _PostConventionBreakdownEntry(
+          electionKey: 'missing-${plan.prefecture}-$index',
+          date: null,
+          rawDate: '',
+          electionName: '党大会後の完了選挙',
+          isWin: fallbackLossIndex <= 0,
+          fallbackText: fallbackLossIndex > 0 ? '明細未取得（敗戦1件）' : '明細未取得（勝利1件）',
+        ),
+      );
+    }
+
     entries.sort((left, right) {
       final leftDate = left.date;
       final rightDate = right.date;
@@ -759,6 +780,15 @@ class _ElectionJapanMapState extends State<ElectionJapanMap> {
     });
 
     return entries;
+  }
+
+  int _fallbackLossCount(List<_PostConventionBreakdownEntry> entries) {
+    return entries
+        .where(
+          (entry) =>
+              entry.fallbackText != null && !entry.isWin && entry.date == null,
+        )
+        .length;
   }
 
   bool _scheduleMatchesPlan(
