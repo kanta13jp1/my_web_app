@@ -869,6 +869,7 @@ function horseRaceDataQualityScore(entries: Record<string, unknown>[]): number {
     "dam",
     "damsire",
     "stable",
+    "prev_margin",
   ];
   let filled = 0;
   for (const entry of entries) {
@@ -980,7 +981,10 @@ function buildHistoricalBaselinePrediction(
   const bestTimeCoverage = entries.length > 0
     ? entries.filter((entry) => entry.best_time).length / entries.length
     : 0;
-  const confidence = clampConfidence(0.34 + dataQuality * 0.22 + oddsCoverage * 0.12 + historyCoverage * 0.07 + bestTimeCoverage * 0.05);
+  const prevMarginCoverage = entries.length > 0
+    ? entries.filter((entry) => entry.prev_margin !== null && entry.prev_margin !== undefined && String(entry.prev_margin).trim() !== "").length / entries.length
+    : 0;
+  const confidence = clampConfidence(0.31 + dataQuality * 0.22 + oddsCoverage * 0.12 + historyCoverage * 0.07 + bestTimeCoverage * 0.05 + prevMarginCoverage * 0.03);
   return {
     success: true,
     prediction: {
@@ -990,7 +994,7 @@ function buildHistoricalBaselinePrediction(
       confidence,
       reasoning: [
         "過去レース学習用の低リスク基準予想。",
-        "レース結果は参照せず、人気・単勝オッズ・前走・持ち時計・馬体重変動・馬体/騎手/調教師/血統など取得済み特徴量から順位付け。",
+        "レース結果は参照せず、人気・単勝オッズ・前走・着差・持ち時計・馬体重変動・馬体/騎手/調教師/血統など取得済み特徴量から順位付け。",
         `対象:${race.race_date ?? ""} ${race.venue ?? ""}${race.race_number ?? ""}R ${race.race_name ?? ""}`,
       ].join(" "),
     },

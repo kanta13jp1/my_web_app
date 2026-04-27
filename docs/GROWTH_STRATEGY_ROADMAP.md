@@ -22077,3 +22077,10 @@ Phase4 drafts 新規作成 (8ファイル):
 ### S57 完了サマリー
 - codex-backlog-check.yml ラベルバグ修正 → Issue #862 自動生成 動作確認
 - 3層 migration collision 防衛 (deploy-prod preflight + migration-collision-check.yml + 手動 rename) 全て正常稼働中
+## 2026-04-28 PS#6 S76 — 競馬AI: prev_margin データ品質スコア + baseline confidence 改善
+
+- `horseRaceDataQualityScore`: fields に `prev_margin` 追加 (15→16 フィールド)
+- `buildHistoricalBaselinePrediction`: `prevMarginCoverage` 計算追加
+  - confidence 式: `0.34→0.31 + prevMarginCoverage * 0.03` (最大 0.80 維持)
+  - reasoning テキストに「着差」追記
+- 着差データ充実レース = 基準予想の信頼度が 3% 上乗せされるよう改善
