@@ -81,5 +81,38 @@ void main() {
       expect(uri.queryParameters['utm_campaign'], 'growth_mission');
       expect(uri.queryParameters['v'], 'test2025');
     });
+
+    test('parses edge touchpoint report response shape', () {
+      final snapshot = GrowthAcquisitionSnapshot.fromJson(
+        <String, dynamic>{
+          'windowDays': 14,
+          'startDate': '2026-04-15',
+          'endDate': '2026-04-28',
+          'touchpoints': <Map<String, dynamic>>[
+            <String, dynamic>{
+              'id': 'landing',
+              'touchpoint': 'Landing',
+              'touches': 12,
+              'signups': 3,
+            },
+          ],
+          'importPreviews': <Map<String, dynamic>>[
+            <String, dynamic>{
+              'id': 'notion',
+              'label': 'Notion previews',
+              'previewCount': 5,
+            },
+          ],
+          'importSignupCtaCount': 2,
+          'publicMemoSignupCtaCount': 1,
+        },
+      );
+
+      expect(snapshot.windowDays, 14);
+      expect(snapshot.touchpoints.single.label, 'Landing');
+      expect(snapshot.touchpoints.single.touchCount, 12);
+      expect(snapshot.touchpoints.single.signupSubmitCount, 3);
+      expect(snapshot.importPreviews.single.previewCount, 5);
+    });
   });
 }

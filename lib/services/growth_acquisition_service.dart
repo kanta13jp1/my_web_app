@@ -181,10 +181,9 @@ class GrowthAcquisitionService {
       final response = await client.functions.invoke(
         'growth-hub',
         body: <String, dynamic>{
-          'action': 'acquisition.track',
-          'channel': signalKey,
-          'event': 'signal',
-          'value': 1,
+          'action': 'acquisition.signal',
+          'signalKey': signalKey,
+          'dateKey': dateKey,
         },
       );
       final payload = _asMap(response.data);

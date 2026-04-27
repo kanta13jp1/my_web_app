@@ -7,16 +7,26 @@
 //   seo-optimizer, send-waitlist-notification, viral-ad-generator, viral-growth-engine
 
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
-import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { getXAccountHandle, isXConfigured, postTweet, uploadMediaFromUrl } from "../_shared/x-client.ts";
+import {
+  createClient,
+  SupabaseClient,
+} from "https://esm.sh/@supabase/supabase-js@2";
+import {
+  getXAccountHandle,
+  isXConfigured,
+  postTweet,
+  uploadMediaFromUrl,
+} from "../_shared/x-client.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type",
 };
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
-const SERVICE_ROLE_KEY = Deno.env.get("SERVICE_ROLE_KEY") ?? "";
+const SERVICE_ROLE_KEY = Deno.env.get("SERVICE_ROLE_KEY") ??
+  Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 
 function json(data: unknown, status = 200): Response {
   return new Response(JSON.stringify(data), {
@@ -90,6 +100,231 @@ type ReferralRow = {
   completed_at: string | null;
   created_at: string;
 };
+
+const TOUCHPOINT_DEFS = [
+  {
+    id: "landing",
+    label: "Landing",
+    touchSignal: "touch_landing",
+    signupSignal: "signup_submit_landing",
+  },
+  {
+    id: "import",
+    label: "Import",
+    touchSignal: "touch_import",
+    signupSignal: "signup_submit_import",
+  },
+  {
+    id: "public_memo",
+    label: "Public memo",
+    touchSignal: "touch_public_memo",
+    signupSignal: "signup_submit_public_memo",
+  },
+  {
+    id: "referral",
+    label: "Referral",
+    touchSignal: "touch_referral",
+    signupSignal: "signup_submit_referral",
+  },
+  {
+    id: "comparison",
+    label: "Comparison",
+    touchSignal: "touch_comparison",
+    signupSignal: "signup_submit_comparison",
+  },
+  {
+    id: "guitar",
+    label: "Guitar",
+    touchSignal: "touch_guitar_gallery",
+    signupSignal: "signup_submit_guitar",
+  },
+];
+
+const IMPORT_PREVIEW_DEFS = [
+  {
+    id: "notion",
+    label: "Notion previews",
+    signalKey: "import_preview_notion",
+  },
+  {
+    id: "evernote",
+    label: "Evernote previews",
+    signalKey: "import_preview_evernote",
+  },
+  {
+    id: "markdown",
+    label: "Markdown previews",
+    signalKey: "import_preview_markdown",
+  },
+];
+
+const SUPPORTED_ACQUISITION_SIGNALS = new Set([
+  "touch_landing",
+  "touch_import",
+  "touch_public_memo",
+  "touch_referral",
+  "touch_comparison",
+  "touch_guitar_gallery",
+  "import_preview_notion",
+  "import_preview_evernote",
+  "import_preview_markdown",
+  "import_signup_cta",
+  "public_memo_signup_cta",
+  "signup_submit_landing",
+  "signup_submit_import",
+  "signup_submit_public_memo",
+  "signup_submit_referral",
+  "signup_submit_comparison",
+  "signup_submit_guitar",
+]);
+
+function formatDateKey(date: Date): string {
+  return `${date.getFullYear()}-${
+    String(date.getMonth() + 1).padStart(2, "0")
+  }-${String(date.getDate()).padStart(2, "0")}`;
+}
+
+function resolveDateKey(rawDateKey: unknown): string {
+  return typeof rawDateKey === "string" &&
+      /^\d{4}-\d{2}-\d{2}$/.test(rawDateKey)
+    ? rawDateKey
+    : formatDateKey(new Date());
+}
+
+function isSupportedAcquisitionSignal(signalKey: string): boolean {
+  return SUPPORTED_ACQUISITION_SIGNALS.has(signalKey) ||
+    /^touch_comparison_[a-z0-9_-]{1,64}$/i.test(signalKey);
+}
+
+async function recordAcquisitionSignal(
+  admin: SupabaseClient,
+  rawSignalKey: unknown,
+  rawDateKey?: unknown,
+) {
+  const signalKey = String(rawSignalKey ?? "").trim();
+  if (!signalKey || !isSupportedAcquisitionSignal(signalKey)) {
+    return {
+      success: false,
+      error: "signalKey required / unsupported",
+    };
+  }
+
+  const dateKey = resolveDateKey(rawDateKey);
+  const { data: existing, error: existingError } = await admin
+    .from("app_analytics")
+    .select("date, source_details")
+    .eq("date", dateKey)
+    .maybeSingle();
+  if (existingError) throw new Error(existingError.message);
+
+  if (!existing) {
+    const { error } = await admin.from("app_analytics").upsert({
+      date: dateKey,
+      landing_views: 0,
+      conversions: 0,
+      share_count: 0,
+      source_details: { [signalKey]: 1 },
+    });
+    if (error) throw new Error(error.message);
+    return { success: true, signalKey, dateKey };
+  }
+
+  const details = (existing.source_details ?? {}) as Record<string, unknown>;
+  const next: Record<string, number> = {};
+  for (const [key, value] of Object.entries(details)) {
+    const count = typeof value === "number" ? value : Number(value);
+    if (Number.isFinite(count) && count > 0) next[key] = count;
+  }
+  next[signalKey] = (next[signalKey] ?? 0) + 1;
+
+  const { error } = await admin
+    .from("app_analytics")
+    .update({ source_details: next })
+    .eq("date", dateKey);
+  if (error) throw new Error(error.message);
+  return { success: true, signalKey, dateKey };
+}
+
+async function buildAcquisitionTouchpointReport(
+  admin: SupabaseClient,
+  rawWindowDays: unknown,
+) {
+  const windowDaysRaw = typeof rawWindowDays === "number"
+    ? rawWindowDays
+    : Number(rawWindowDays ?? 30);
+  const windowDays = Number.isFinite(windowDaysRaw)
+    ? Math.max(7, Math.min(90, Math.trunc(windowDaysRaw)))
+    : 30;
+  const endDate = new Date();
+  endDate.setHours(0, 0, 0, 0);
+  const startDate = new Date(endDate);
+  startDate.setDate(startDate.getDate() - (windowDays - 1));
+  const startKey = formatDateKey(startDate);
+  const endKey = formatDateKey(endDate);
+  const { data, error } = await admin
+    .from("app_analytics")
+    .select("date, source_details")
+    .gte("date", startKey)
+    .lte("date", endKey)
+    .order("date", { ascending: true });
+  if (error) throw new Error(error.message);
+
+  const counts: Record<string, number> = {};
+  for (const row of data ?? []) {
+    const details = (row.source_details ?? {}) as Record<string, unknown>;
+    for (const [key, value] of Object.entries(details)) {
+      const count = typeof value === "number" ? value : Number(value);
+      if (Number.isFinite(count) && count > 0) {
+        counts[key] = (counts[key] ?? 0) + count;
+      }
+    }
+  }
+
+  const touchpoints = TOUCHPOINT_DEFS.map((def) => {
+    const touches = counts[def.touchSignal] ?? 0;
+    const signups = counts[def.signupSignal] ?? 0;
+    const rate = touches > 0 ? Math.round((signups / touches) * 1000) / 10 : 0;
+    return {
+      id: def.id,
+      label: def.label,
+      touchpoint: def.label,
+      touchCount: touches,
+      signupSubmitCount: signups,
+      signupSubmits: signups,
+      touches,
+      signups,
+      rate,
+    };
+  });
+  const totalTouches = touchpoints.reduce(
+    (total, item) => total + item.touches,
+    0,
+  );
+  const totalSignups = touchpoints.reduce(
+    (total, item) => total + item.signups,
+    0,
+  );
+  const conversionRate = totalTouches > 0
+    ? Math.round((totalSignups / totalTouches) * 1000) / 10
+    : 0;
+  const importPreviews = IMPORT_PREVIEW_DEFS.map((def) => ({
+    id: def.id,
+    label: def.label,
+    previewCount: counts[def.signalKey] ?? 0,
+  }));
+
+  return {
+    success: true,
+    windowDays,
+    startDate: startKey,
+    endDate: endKey,
+    summary: { totalTouches, totalSignups, conversionRate },
+    touchpoints,
+    importPreviews,
+    importSignupCtaCount: counts["import_signup_cta"] ?? 0,
+    publicMemoSignupCtaCount: counts["public_memo_signup_cta"] ?? 0,
+  };
+}
 
 function generateReferralCode(): string {
   const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -189,9 +424,12 @@ async function applyPendingReferral(
   if (countError) throw new Error(countError.message);
 
   const totalReferrals = (rows ?? []).length;
-  const successfulReferrals = (rows ?? []).filter((row) => row.status === "completed").length;
+  const successfulReferrals =
+    (rows ?? []).filter((row) => row.status === "completed").length;
   const bonusPointsEarned = (rows ?? []).reduce((sum, row) => {
-    return row.status === "completed" ? sum + (Number(row.bonus_points) || 0) : sum;
+    return row.status === "completed"
+      ? sum + (Number(row.bonus_points) || 0)
+      : sum;
   }, 0);
 
   const { error: updateError } = await admin
@@ -228,7 +466,8 @@ async function buildReferralPayload(
   if (error) throw new Error(error.message);
 
   const rows = (referrals ?? []) as ReferralRow[];
-  const successfulReferrals = rows.filter((row) => row.status === "completed").length;
+  const successfulReferrals =
+    rows.filter((row) => row.status === "completed").length;
   return {
     success: true,
     referralCode,
@@ -314,7 +553,9 @@ serve(async (req: Request) => {
     // Public actions that don't require auth
     const publicActions = [
       "waitlist.notify",
+      "acquisition.report",
       "acquisition.signal",
+      "acquisition.track",
       "acquisition.touchpoint_report",
     ];
     let userId: string | null = null;
@@ -331,207 +572,36 @@ serve(async (req: Request) => {
       }
 
       case "acquisition.track": {
-        const item = await addItem(admin, "growth_signal", userId!, {
-          channel: body.channel,
-          event: body.event,
-          value: body.value ?? 1,
-        });
-        return json({ success: true, item });
+        const result = await recordAcquisitionSignal(
+          admin,
+          body.signalKey ?? body.channel,
+          body.dateKey,
+        );
+        return json(result, result.success ? 200 : 400);
       }
 
       case "acquisition.report": {
-        const { data, error } = await admin
-          .from("hub_data")
-          .select("source, metadata")
-          .in("source", ["growth_signal", "referral_complete"])
-          .filter("metadata->>user_id", "eq", userId!);
-        if (error) throw new Error(error.message);
-        const summary: Record<string, number> = {};
-        for (const row of data ?? []) {
-          const channel = ((row.metadata as Record<string, unknown>)?.channel as string) ??
-            "unknown";
-          summary[channel] = (summary[channel] ?? 0) + 1;
-        }
-        return json({ success: true, summary });
+        const report = await buildAcquisitionTouchpointReport(
+          admin,
+          body.windowDays,
+        );
+        return json({ ...report, report });
       }
 
       // ─── Landing touchpoint signals (global / anonymous, app_analytics.source_details) ─
       case "acquisition.signal": {
-        const SUPPORTED_SIGNALS = new Set([
-          "touch_landing",
-          "touch_import",
-          "touch_public_memo",
-          "touch_referral",
-          "touch_comparison",
-          "touch_guitar_gallery",
-          "import_preview_notion",
-          "import_preview_evernote",
-          "import_preview_markdown",
-          "import_signup_cta",
-          "public_memo_signup_cta",
-          "signup_submit_landing",
-          "signup_submit_import",
-          "signup_submit_public_memo",
-          "signup_submit_referral",
-          "signup_submit_comparison",
-          "signup_submit_guitar",
-        ]);
-        const signalKey = String(body.signalKey ?? "").trim();
-        if (!signalKey || !SUPPORTED_SIGNALS.has(signalKey)) {
-          return json({
-            success: false,
-            error: "signalKey required / unsupported",
-          }, 400);
-        }
-        const dateKey = typeof body.dateKey === "string" &&
-            /^\d{4}-\d{2}-\d{2}$/.test(body.dateKey)
-          ? body.dateKey
-          : (() => {
-            const d = new Date();
-            return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-          })();
-        const { data: existing } = await admin
-          .from("app_analytics")
-          .select("date, source_details")
-          .eq("date", dateKey)
-          .maybeSingle();
-        if (!existing) {
-          await admin.from("app_analytics").upsert({
-            date: dateKey,
-            landing_views: 0,
-            conversions: 0,
-            share_count: 0,
-            source_details: { [signalKey]: 1 },
-          });
-        } else {
-          const details = (existing.source_details ?? {}) as Record<
-            string,
-            unknown
-          >;
-          const next: Record<string, number> = {};
-          for (const [k, v] of Object.entries(details)) {
-            const n = typeof v === "number" ? v : Number(v);
-            if (Number.isFinite(n) && n > 0) next[k] = n;
-          }
-          next[signalKey] = (next[signalKey] ?? 0) + 1;
-          await admin.from("app_analytics").update({ source_details: next }).eq(
-            "date",
-            dateKey,
-          );
-        }
-        return json({ success: true, signalKey, dateKey });
+        const result = await recordAcquisitionSignal(
+          admin,
+          body.signalKey,
+          body.dateKey,
+        );
+        return json(result, result.success ? 200 : 400);
       }
 
       case "acquisition.touchpoint_report": {
-        const TOUCHPOINT_DEFS = [
-          {
-            id: "landing",
-            label: "Landing",
-            touchSignal: "touch_landing",
-            signupSignal: "signup_submit_landing",
-          },
-          {
-            id: "import",
-            label: "Import",
-            touchSignal: "touch_import",
-            signupSignal: "signup_submit_import",
-          },
-          {
-            id: "public_memo",
-            label: "Public memo",
-            touchSignal: "touch_public_memo",
-            signupSignal: "signup_submit_public_memo",
-          },
-          {
-            id: "referral",
-            label: "Referral",
-            touchSignal: "touch_referral",
-            signupSignal: "signup_submit_referral",
-          },
-          {
-            id: "comparison",
-            label: "Comparison",
-            touchSignal: "touch_comparison",
-            signupSignal: "signup_submit_comparison",
-          },
-          {
-            id: "guitar",
-            label: "Guitar",
-            touchSignal: "touch_guitar_gallery",
-            signupSignal: "signup_submit_guitar",
-          },
-        ];
-        const IMPORT_PREVIEW_DEFS = [
-          {
-            id: "notion",
-            label: "Notion previews",
-            signalKey: "import_preview_notion",
-          },
-          {
-            id: "evernote",
-            label: "Evernote previews",
-            signalKey: "import_preview_evernote",
-          },
-          {
-            id: "markdown",
-            label: "Markdown previews",
-            signalKey: "import_preview_markdown",
-          },
-        ];
-        const windowDaysRaw = typeof body.windowDays === "number" ? body.windowDays : Number(body.windowDays ?? 30);
-        const windowDays = Number.isFinite(windowDaysRaw) ? Math.max(7, Math.min(90, Math.trunc(windowDaysRaw))) : 30;
-        const endDate = new Date();
-        endDate.setHours(0, 0, 0, 0);
-        const startDate = new Date(endDate);
-        startDate.setDate(startDate.getDate() - (windowDays - 1));
-        const fmt = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-        const startKey = fmt(startDate);
-        const endKey = fmt(endDate);
-        const { data } = await admin
-          .from("app_analytics")
-          .select("date, source_details")
-          .gte("date", startKey)
-          .lte("date", endKey)
-          .order("date", { ascending: true });
-        const counts: Record<string, number> = {};
-        for (const row of data ?? []) {
-          const details = (row.source_details ?? {}) as Record<string, unknown>;
-          for (const [k, v] of Object.entries(details)) {
-            const n = typeof v === "number" ? v : Number(v);
-            if (Number.isFinite(n) && n > 0) counts[k] = (counts[k] ?? 0) + n;
-          }
-        }
-        const touchpoints = TOUCHPOINT_DEFS.map((def) => {
-          const touches = counts[def.touchSignal] ?? 0;
-          const signups = counts[def.signupSignal] ?? 0;
-          const rate = touches > 0 ? Math.round((signups / touches) * 1000) / 10 : 0;
-          return {
-            id: def.id,
-            touchpoint: def.label,
-            touches,
-            signups,
-            rate,
-          };
-        });
-        const totalTouches = touchpoints.reduce((a, b) => a + b.touches, 0);
-        const totalSignups = touchpoints.reduce((a, b) => a + b.signups, 0);
-        const conversionRate = totalTouches > 0 ? Math.round((totalSignups / totalTouches) * 1000) / 10 : 0;
-        const importPreviews = IMPORT_PREVIEW_DEFS.map((def) => ({
-          id: def.id,
-          label: def.label,
-          previewCount: counts[def.signalKey] ?? 0,
-        }));
-        return json({
-          success: true,
-          windowDays,
-          startDate: startKey,
-          endDate: endKey,
-          summary: { totalTouches, totalSignups, conversionRate },
-          touchpoints,
-          importPreviews,
-          importSignupCtaCount: counts["import_signup_cta"] ?? 0,
-          publicMemoSignupCtaCount: counts["public_memo_signup_cta"] ?? 0,
-        });
+        return json(
+          await buildAcquisitionTouchpointReport(admin, body.windowDays),
+        );
       }
 
       // ─── Command Center ─────────────────────────────────────────────────────
@@ -542,7 +612,9 @@ serve(async (req: Request) => {
           ? (body.date as string)
           : (() => {
             const d = new Date();
-            return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+            return `${d.getFullYear()}-${
+              String(d.getMonth() + 1).padStart(2, "0")
+            }-${String(d.getDate()).padStart(2, "0")}`;
           })();
         const defaults = [
           {
@@ -598,8 +670,13 @@ serve(async (req: Request) => {
           });
         }
         const userCount = Number(body.totalUsers ?? 0);
-        const stage = userCount < 100 ? "Pre-PMF" : userCount < 1000 ? "Early traction" : "Scale-up";
-        const prompt = `あなたは自分株式会社のCGO（最高グロース責任者）です。ユーザー数: ${userCount}人, ステージ: ${stage}. 今週の最優先アクションを3つ提案してください。JSON形式: {"stage":"...","actions":["...","...","..."]}`;
+        const stage = userCount < 100
+          ? "Pre-PMF"
+          : userCount < 1000
+          ? "Early traction"
+          : "Scale-up";
+        const prompt =
+          `あなたは自分株式会社のCGO（最高グロース責任者）です。ユーザー数: ${userCount}人, ステージ: ${stage}. 今週の最優先アクションを3つ提案してください。JSON形式: {"stage":"...","actions":["...","...","..."]}`;
         const res = await fetch(
           `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiKey}`,
           {
@@ -743,7 +820,8 @@ serve(async (req: Request) => {
             .from("development_achievements")
             .select("id", { count: "exact", head: true }),
         ]);
-        const totalUsers = ((authListResult.data as { total?: number } | null)?.total) ?? 0;
+        const totalUsers =
+          ((authListResult.data as { total?: number } | null)?.total) ?? 0;
         const totalAchievements = achievementsCount ?? 0;
         const plans = _applyAchievements(
           (plansData ?? []) as Array<
@@ -802,7 +880,8 @@ serve(async (req: Request) => {
       case "x.post": {
         const text = String(body.text ?? "").trim();
         const mediaUrl = String(body.mediaUrl ?? body.media_url ?? "").trim();
-        const mediaType = String(body.mediaType ?? body.media_type ?? "").trim();
+        const mediaType = String(body.mediaType ?? body.media_type ?? "")
+          .trim();
         const dryRun = body.dryRun === true;
         if (!text) return json({ success: false, error: "text required" }, 400);
         if (text.length > 280) {
@@ -831,7 +910,9 @@ serve(async (req: Request) => {
             account: getXAccountHandle(),
             text,
             log,
-            warning: dryRun ? undefined : "X API credentials are not configured in Supabase secrets.",
+            warning: dryRun
+              ? undefined
+              : "X API credentials are not configured in Supabase secrets.",
           });
         }
 
@@ -866,7 +947,9 @@ serve(async (req: Request) => {
       case "automation.analyze": {
         const geminiKey2 = Deno.env.get("GEMINI_API_KEY") ?? "";
         if (!geminiKey2) return json({ success: true, recommendations: [] });
-        const p2 = `グロース自動化の推奨事項を3つ提案してください。現状: ${JSON.stringify(body)}. JSON: {"recommendations":[{"action":"...","priority":"high|medium|low","impact":"..."}]}`;
+        const p2 = `グロース自動化の推奨事項を3つ提案してください。現状: ${
+          JSON.stringify(body)
+        }. JSON: {"recommendations":[{"action":"...","priority":"high|medium|low","impact":"..."}]}`;
         const r2 = await fetch(
           `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiKey2}`,
           {
@@ -966,7 +1049,8 @@ serve(async (req: Request) => {
           .from("app_analytics")
           .select("metadata")
           .eq("source", "ab_test_conversion");
-        const ctaStats: Record<string, { views: number; conversions: number }> = {};
+        const ctaStats: Record<string, { views: number; conversions: number }> =
+          {};
         for (const a of assignments ?? []) {
           const cId = (a.metadata as Record<string, unknown>)
             .cta_variant as string;
@@ -982,7 +1066,9 @@ serve(async (req: Request) => {
         const variants = [
           ...CTA_VARIANTS.map((v) => {
             const s = ctaStats[v.id] ?? { views: 0, conversions: 0 };
-            const cvr = s.views > 0 ? Math.round((s.conversions / s.views) * 10000) / 100 : 0;
+            const cvr = s.views > 0
+              ? Math.round((s.conversions / s.views) * 10000) / 100
+              : 0;
             return {
               ...v,
               kind: "cta",
@@ -1031,7 +1117,8 @@ serve(async (req: Request) => {
       case "seo.optimize": {
         const geminiKey3 = Deno.env.get("GEMINI_API_KEY") ?? "";
         if (!geminiKey3) return json({ success: true, suggestions: [] });
-        const p3 = `次のページのSEOを最適化してください: タイトル="${body.title}", 説明="${body.description}", キーワード="${body.keywords}". JSON: {"title":"...","description":"...","keywords":[],"score":0}`;
+        const p3 =
+          `次のページのSEOを最適化してください: タイトル="${body.title}", 説明="${body.description}", キーワード="${body.keywords}". JSON: {"title":"...","description":"...","keywords":[],"score":0}`;
         const r3 = await fetch(
           `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiKey3}`,
           {
