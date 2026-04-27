@@ -505,14 +505,14 @@ type HorseProviderConfig = {
 const HORSE_BASE_PROVIDER_CHAIN: HorseProviderConfig[] = [
   { provider: "google", model: "gemini-2.5-flash", apiKeyEnv: "GEMINI_API_KEY", estimatedCostUsd: 0.0005, tier: "base", family: "Gemini" },
   { provider: "openai", model: "gpt-4o-mini", apiKeyEnv: "OPENAI_API_KEY", estimatedCostUsd: 0.002, tier: "base", family: "GPT" },
-  { provider: "anthropic", model: "claude-haiku-4-5", apiKeyEnv: "ANTHROPIC_API_KEY", estimatedCostUsd: 0.003, tier: "base", family: "Claude" },
+  { provider: "anthropic", model: "claude-haiku-4-5-20251001", apiKeyEnv: "ANTHROPIC_API_KEY", estimatedCostUsd: 0.003, tier: "base", family: "Claude" },
   { provider: "xai", model: "grok-4-1-fast-non-reasoning", apiKeyEnv: "XAI_API_KEY", estimatedCostUsd: 0.002, tier: "base", family: "grok/xAI" },
   { provider: "openrouter", model: "deepseek/deepseek-chat-v3.1", apiKeyEnv: "OPENROUTER_API_KEY", estimatedCostUsd: 0.0015, tier: "base", family: "DeepSeek" },
 ];
 
 const HORSE_PREMIUM_PROVIDER_CHAIN: HorseProviderConfig[] = [
-  { provider: "anthropic", model: Deno.env.get("HORSE_ANTHROPIC_SONNET_MODEL") ?? "claude-sonnet-4-5", apiKeyEnv: "ANTHROPIC_API_KEY", estimatedCostUsd: 0.012, tier: "premium", family: "Sonnet" },
-  { provider: "anthropic", model: Deno.env.get("HORSE_ANTHROPIC_OPUS_MODEL") ?? "claude-opus-4-1", apiKeyEnv: "ANTHROPIC_API_KEY", estimatedCostUsd: 0.03, tier: "premium", family: "Opus" },
+  { provider: "anthropic", model: Deno.env.get("HORSE_ANTHROPIC_SONNET_MODEL") ?? "claude-sonnet-4-6", apiKeyEnv: "ANTHROPIC_API_KEY", estimatedCostUsd: 0.012, tier: "premium", family: "Sonnet" },
+  { provider: "anthropic", model: Deno.env.get("HORSE_ANTHROPIC_OPUS_MODEL") ?? "claude-opus-4-7", apiKeyEnv: "ANTHROPIC_API_KEY", estimatedCostUsd: 0.03, tier: "premium", family: "Opus" },
   { provider: "openai", model: Deno.env.get("HORSE_OPENAI_PREMIUM_MODEL") ?? "gpt-4.1", apiKeyEnv: "OPENAI_API_KEY", estimatedCostUsd: 0.01, tier: "premium", family: "GPT" },
   { provider: "xai", model: Deno.env.get("HORSE_XAI_PREMIUM_MODEL") ?? "grok-4", apiKeyEnv: "XAI_API_KEY", estimatedCostUsd: 0.012, tier: "premium", family: "grok/xAI" },
   { provider: "openrouter", model: Deno.env.get("HORSE_DEEPSEEK_REASONER_MODEL") ?? "deepseek/deepseek-r1", apiKeyEnv: "OPENROUTER_API_KEY", estimatedCostUsd: 0.006, tier: "premium", family: "DeepSeek" },
@@ -893,18 +893,52 @@ function recentFinishScore(value: unknown): number {
   return Number.isFinite(place) ? place : 99;
 }
 
+function timeToSecondsTS(value: unknown): number | null {
+  const text = String(value ?? "").trim();
+  if (!text) return null;
+  const mmss = text.match(/^(\d+):(\d+(?:\.\d+)?)$/);
+  if (mmss) return parseInt(mmss[1]) * 60 + parseFloat(mmss[2]);
+  const ss = text.match(/^(\d+(?:\.\d+)?)$/);
+  if (ss) return parseFloat(ss[1]);
+  return null;
+}
+
+function weightChangeScore(value: unknown): number {
+  const change = numericOrFallback(value, 0);
+  // Stable range (-2 to +4 kg) = 0 penalty; large swings = proportional penalty
+  const abs = Math.abs(change);
+  if (abs <= 4) return 0;
+  if (abs >= 12) return 50;
+  return (abs - 4) * 5;
+}
+
 function sortHorseEntriesForLearning(entries: Record<string, unknown>[]): Record<string, unknown>[] {
   return [...entries].sort((a, b) => {
+    // 1. popularity (ascending — lower rank = more popular)
     const popularity = numericOrFallback(a.popularity, 999) - numericOrFallback(b.popularity, 999);
     if (popularity !== 0) return popularity;
+    // 2. win_odds (ascending — lower = cheaper = more likely per market)
     const odds = numericOrFallback(a.win_odds, 999) - numericOrFallback(b.win_odds, 999);
     if (odds !== 0) return odds;
+    // 3. prev_finish (ascending — lower place = better)
     const recent = recentFinishScore(a.prev_finish) - recentFinishScore(b.prev_finish);
     if (recent !== 0) return recent;
+    // 4. best_time (ascending — faster career record = better; null = unknown, sorted last)
+    const btA = timeToSecondsTS(a.best_time);
+    const btB = timeToSecondsTS(b.best_time);
+    if (btA !== null && btB !== null && btA !== btB) return btA - btB;
+    if (btA !== null && btB === null) return -1;
+    if (btA === null && btB !== null) return 1;
+    // 5. prev_last_3f (ascending — faster finish sprint)
     const last3f = numericOrFallback(a.prev_last_3f, 99) - numericOrFallback(b.prev_last_3f, 99);
     if (last3f !== 0) return last3f;
+    // 6. weight change penalty (ascending — large swings = higher penalty = ranked lower)
+    const wc = weightChangeScore(a.horse_weight_change) - weightChangeScore(b.horse_weight_change);
+    if (wc !== 0) return wc;
+    // 7. data_quality_score (descending — more data = more confidence)
     const quality = numericOrFallback(b.data_quality_score, 0) - numericOrFallback(a.data_quality_score, 0);
     if (quality !== 0) return quality;
+    // 8. horse_number (ascending — tiebreaker)
     return numericOrFallback(a.horse_number, 999) - numericOrFallback(b.horse_number, 999);
   });
 }
@@ -922,7 +956,10 @@ function buildHistoricalBaselinePrediction(
   const historyCoverage = entries.length > 0
     ? entries.filter((entry) => entry.prev_finish || entry.prev_time || entry.best_time).length / entries.length
     : 0;
-  const confidence = clampConfidence(0.36 + dataQuality * 0.22 + oddsCoverage * 0.12 + historyCoverage * 0.08);
+  const bestTimeCoverage = entries.length > 0
+    ? entries.filter((entry) => entry.best_time).length / entries.length
+    : 0;
+  const confidence = clampConfidence(0.34 + dataQuality * 0.22 + oddsCoverage * 0.12 + historyCoverage * 0.07 + bestTimeCoverage * 0.05);
   return {
     success: true,
     prediction: {
@@ -932,7 +969,7 @@ function buildHistoricalBaselinePrediction(
       confidence,
       reasoning: [
         "過去レース学習用の低リスク基準予想。",
-        "レース結果は参照せず、人気・単勝オッズ・前走・馬体/騎手/調教師/血統など取得済み特徴量から順位付け。",
+        "レース結果は参照せず、人気・単勝オッズ・前走・持ち時計・馬体重変動・馬体/騎手/調教師/血統など取得済み特徴量から順位付け。",
         `対象:${race.race_date ?? ""} ${race.venue ?? ""}${race.race_number ?? ""}R ${race.race_name ?? ""}`,
       ].join(" "),
     },
@@ -1258,7 +1295,7 @@ async function evaluateHorsePredictionAccuracy(
         evaluated_features: {
           data_quality_score: horseRaceDataQualityScore(entries),
           entry_count: entries.length,
-          features: ["血統", "前走", "馬体重", "騎手", "調教師", "厩舎", "タイム", "オッズ", "人気"],
+          features: ["血統", "前走", "馬体重", "騎手", "調教師", "厩舎", "タイム", "オッズ", "人気", "持ち時計", "馬体重変動"],
         },
         learning_score: Math.round(weightedScore * 1000) / 1000,
       };
