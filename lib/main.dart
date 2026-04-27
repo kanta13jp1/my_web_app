@@ -1607,6 +1607,14 @@ class _MyAppState extends State<MyApp> {
               builder: (_) => const HealthCheckPage(),
             );
           default:
+            if (uri.path.startsWith('/vs-')) {
+              return MaterialPageRoute(
+                builder: (_) => ComparisonPage(
+                  competitorKey: uri.path.replaceFirst('/vs-', ''),
+                ),
+                settings: settings,
+              );
+            }
             return MaterialPageRoute(builder: (_) => const LandingPage());
         }
       },
