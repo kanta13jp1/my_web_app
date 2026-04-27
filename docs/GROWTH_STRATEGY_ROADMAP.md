@@ -21846,3 +21846,10 @@ Google I/O 2026 競合脅威 事前ブリーフィング
 - **360af9d7**: main.dart `default:` case に `/vs-*` wildcard handler 追加 → 全172社の comparison page が即時有効化
 - **aeaea1e3**: sitemap.xml に高脅威競合 15ルート追加 (cursor/openai/perplexity/shopify/figma/canva/anthropic/notion-ai/freee/smarthr/salesforce/mercari/rakuten/windsurf/zoom)
 - SEO 効果: 比較ページ 21ルート → 21+172 全社カバー可能に
+
+## PS版#2 S58 — 2026-04-27 T-1 第34弾 dispatch
+
+- T-1 第34弾: "Why Notion Still Doesn't Work Offline — And What You Actually Need Instead" → dev.to 投稿成功
+  - https://dev.to/kanta13jp1/why-notion-still-doesnt-work-offline-and-what-you-actually-need-instead-2ne1
+- JA slug: `2026-06-13-notion-offline-mode-frustrations`
+- orphan branch マージ + 削除
