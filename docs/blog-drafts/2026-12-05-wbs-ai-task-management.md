@@ -1,7 +1,7 @@
 ---
 title: "WBS × AI: タスク管理をAIアシスタントで自動化する設計パターン"
 tags: AI,個人開発,postgresql,buildinpublic
-published: false
+published: true
 ---
 
 # WBS × AI: タスク管理をAIアシスタントで自動化する設計パターン
