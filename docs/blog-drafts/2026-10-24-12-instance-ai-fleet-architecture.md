@@ -1,7 +1,7 @@
 ---
 title: "12インスタンス並行開発の設計 — Claude Code 10台 + Codex 2台のフリート運用"
 tags: claude-code,AI,個人開発,architecture
-published: false
+published: true
 ---
 
 # 12インスタンス並行開発の設計 — Claude Code 10台 + Codex 2台のフリート運用

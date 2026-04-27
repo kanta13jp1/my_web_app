@@ -1,7 +1,7 @@
 ---
 title: "Running 12 AI Instances in Parallel: My Claude Code Fleet Architecture"
 tags: claude-code,ai,architecture,indiedev
-published: false
+published: true
 ---
 
 # Running 12 AI Instances in Parallel: My Claude Code Fleet Architecture
