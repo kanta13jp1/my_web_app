@@ -9,6 +9,7 @@
 > 旧 docs は段階的に本ドキュメントへ統合する (cross-instance-pr to PS#1)。
 >
 > **位置づけ**: CLAUDE.md `[WORKDIR-ISOLATION]` rule の運用台帳。
+> **運用憲章 (5 正本 + 6 AI 役割 + 監査)**: [`docs/OPERATIONS_CHARTER.md`](./OPERATIONS_CHARTER.md) を併せて参照。本ドキュメントは物理層 (worktree/branch 割当) / OPERATIONS_CHARTER は論理層 (運用ポリシー)。
 
 ---
 
