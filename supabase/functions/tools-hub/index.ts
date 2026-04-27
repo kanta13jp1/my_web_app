@@ -863,6 +863,7 @@ function horseRaceDataQualityScore(entries: Record<string, unknown>[]): number {
     "weight_kg",
     "prev_finish",
     "prev_time",
+    "prev_last_3f",
     "sire",
     "dam",
     "damsire",
@@ -899,6 +900,8 @@ function sortHorseEntriesForLearning(entries: Record<string, unknown>[]): Record
     if (odds !== 0) return odds;
     const recent = recentFinishScore(a.prev_finish) - recentFinishScore(b.prev_finish);
     if (recent !== 0) return recent;
+    const last3f = numericOrFallback(a.prev_last_3f, 99) - numericOrFallback(b.prev_last_3f, 99);
+    if (last3f !== 0) return last3f;
     const quality = numericOrFallback(b.data_quality_score, 0) - numericOrFallback(a.data_quality_score, 0);
     if (quality !== 0) return quality;
     return numericOrFallback(a.horse_number, 999) - numericOrFallback(b.horse_number, 999);
