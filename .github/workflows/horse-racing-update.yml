@@ -72,7 +72,7 @@ jobs:
             echo "前走情報取得はスキップ (時刻: ${HOUR}時)"
           fi
 
-      - name: 精度再評価バッチ (JST 23時台 or evaluate/all モード時のみ)
+      - name: 精度再評価バッチ (JST 17〜23時台 or evaluate/all モード時のみ)
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL_PROD }}
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
@@ -80,7 +80,9 @@ jobs:
         run: |
           MODE="${{ inputs.mode }}"
           HOUR=$(TZ=Asia/Tokyo date +%H)
-          if [ "$HOUR" = "23" ] || [ "$MODE" = "evaluate" ] || [ "$MODE" = "all" ]; then
+          # JST 17:00〜23:00 に実行 — 結果は通常17時以降に確定するため即時評価
+          # evaluate は冪等なので同一レースの二重実行はスキップされる
+          if [ "$HOUR" -ge 17 ] || [ "$MODE" = "evaluate" ] || [ "$MODE" = "all" ]; then
             echo "精度再評価バッチを実行 (時刻: ${HOUR}時, モード: ${MODE:-all})"
             python scripts/fetch_horse_racing.py --mode evaluate --limit 100
           else

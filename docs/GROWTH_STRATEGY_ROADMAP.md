@@ -21866,3 +21866,9 @@ Google I/O 2026 競合脅威 事前ブリーフィング
   - https://dev.to/kanta13jp1/notions-price-hike-in-2026-your-real-options-when-the-bill-goes-up-16jn
 - JA slug: `2026-06-20-notion-price-hike-2026-what-to-do`
 - orphan branch マージ + 削除
+## 2026-04-27 PS#6 S70 — 精度再評価即時化 + cleanup limit
+
+- **GHA**: 精度再評価バッチを JST 23:00 限定 → JST 17:00〜23:00 に拡張 (`HOUR -ge 17`)
+  - 結果は通常 17時以降に確定するため、最大 6h だった評価ラグが 0h に短縮
+  - evaluate 冪等設計: 既評価レースはスキップされるため多重実行無害
+- **scraper**: `cleanup_stale_races(limit=200)` — 大量 stale 時の一括 PATCH 防止 + WARN ログ追加
