@@ -1,7 +1,7 @@
 ---
 title: "AI University: 230 Providers Guide — How to Stop Being Overwhelmed and Pick the Right Tools"
 tags: ai,education,productivity,saas
-published: false
+published: true
 ---
 
 # AI University: 230 Providers Guide — How to Stop Being Overwhelmed and Pick the Right Tools

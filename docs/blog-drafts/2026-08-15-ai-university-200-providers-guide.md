@@ -1,7 +1,7 @@
 ---
 title: "AI大学 230社ガイド — 「どのAIを使えばいいか」迷わなくなる分類法"
 tags: AI,education,個人開発,productivity
-published: false
+published: true
 ---
 
 # AI大学 230社ガイド — 「どのAIを使えばいいか」迷わなくなる分類法
