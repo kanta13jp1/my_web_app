@@ -792,7 +792,7 @@ function formatHorseEntryForPrompt(e: Record<string, unknown>): string {
 function buildHorseRacePrompt(race: Record<string, unknown>, entries: Record<string, unknown>[]): string {
   const entryText = entries.map(formatHorseEntryForPrompt).join("\n");
   const dataQuality = horseRaceDataQualityScore(entries);
-  return `競馬レース「${race.race_name}」(${race.venue ?? ""}/${race.course_type ?? "芝"}${race.distance ?? ""}m/${race.grade ?? ""}) の低リスク予想をしてください。\n必ず下記の出走馬リストに存在する馬名だけを選び、取消・非出走・リスト外の馬名は絶対に入れないでください。\n最優先は的中確率と資金保全です。単勝、複勝、枠連、馬連、ワイド、馬単、3連複、3連単をすべて検討し、低リスク順の買い方をreasoningに含めてください。\n血統、前走、馬体重、騎手、調教師、厩舎、タイム、オッズ、人気を重視してください。データ不足または信頼度が低い場合は「購入しない」選択もreasoningに明記してください。\nデータ充足度:${Math.round(dataQuality * 100)}%\n出走馬:\n${entryText}\n\nJSON形式のみで回答 (前後に説明文を入れない): {"first":"予想馬名1","second":"予想馬名2","third":"予想馬名3","confidence":0.0,"reasoning":"根拠と券種別の低リスク買い目。購入しない判断が妥当ならその理由"}`;
+  return `競馬レース「${race.race_name}」(${race.venue ?? ""}/${race.course_type ?? "芝"}${race.distance ?? ""}m/${race.grade ?? ""}) の低リスク予想をしてください。\n必ず下記の出走馬リストに存在する馬名だけを選び、取消・非出走・リスト外の馬名は絶対に入れないでください。\n最優先は的中確率と資金保全です。単勝、複勝、枠連、馬連、ワイド、馬単、3連複、3連単をすべて検討し、低リスク順の買い方をreasoningに含めてください。\n血統、前走、持ち時計(best_time)、馬体重・馬体重変動(±kg)、騎手、調教師、厩舎、タイム、オッズ、人気を重視してください。特に「持ち時計」は過去ベストタイムで距離適性を示し、「馬体重変動」が大きい場合(±10kg超)は体調不良・過太りのリスク信号です。データ不足または信頼度が低い場合は「購入しない」選択もreasoningに明記してください。\nデータ充足度:${Math.round(dataQuality * 100)}%\n出走馬:\n${entryText}\n\nJSON形式のみで回答 (前後に説明文を入れない): {"first":"予想馬名1","second":"予想馬名2","third":"予想馬名3","confidence":0.0,"reasoning":"根拠と券種別の低リスク買い目。購入しない判断が妥当ならその理由"}`;
 }
 
 function normalizeHorseNameForMatch(value: unknown): string {

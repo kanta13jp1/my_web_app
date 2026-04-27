@@ -18,6 +18,10 @@ on:
         description: "backfill/stats モード時に遡る日数 (backfill デフォルト: 21 / stats デフォルト: 7)"
         required: false
         default: "21"
+      force:
+        description: "backfill モード: 既存ベースライン予想を上書き再生成 (ランキング算法変更後に true)"
+        required: false
+        default: "false"
 
 concurrency:
   group: horse-racing-update
@@ -99,9 +103,12 @@ jobs:
           HOUR=$(TZ=Asia/Tokyo date +%H)
           DOW=$(TZ=Asia/Tokyo date +%u)
           DAYS="${{ inputs.days || '21' }}"
+          FORCE="${{ inputs.force || 'false' }}"
           if [ "$MODE" = "backfill" ] || ([ "$DOW" = "7" ] && [ "$HOUR" = "23" ]); then
-            echo "過去学習データbackfillを実行 (DOW=${DOW}, 時刻=${HOUR}時, days=${DAYS})"
-            python scripts/fetch_horse_racing.py --mode backfill --date "$TARGET_DATE" --days "$DAYS"
+            echo "過去学習データbackfillを実行 (DOW=${DOW}, 時刻=${HOUR}時, days=${DAYS}, force=${FORCE})"
+            FORCE_FLAG=""
+            if [ "$FORCE" = "true" ]; then FORCE_FLAG="--force"; fi
+            python scripts/fetch_horse_racing.py --mode backfill --date "$TARGET_DATE" --days "$DAYS" $FORCE_FLAG
           else
             echo "backfillはスキップ (DOW=${DOW}, 時刻=${HOUR}時)"
           fi
