@@ -1,7 +1,7 @@
 ---
 title: "Cursor vs Claude Code in 2026 — A Solo Developer's Honest Comparison"
 tags: cursor,ai,programming,productivity
-published: false
+published: true
 ---
 
 # Cursor vs Claude Code in 2026 — A Solo Developer's Honest Comparison
