@@ -1,7 +1,7 @@
 ---
 title: "AI大学 236社の学び方 — 「全部触る」より「深さ優先」が正しい理由"
 tags: AI,education,productivity,saas
-published: false
+published: true
 ---
 
 # AI大学 236社の学び方 — 「全部触る」より「深さ優先」が正しい理由
