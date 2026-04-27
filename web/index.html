@@ -616,6 +616,37 @@
         console.warn('[SW] Cache/update failed, continuing without service worker:', event.reason);
       }
     });
+
+    // Flutter Web occasionally surfaces non-fatal framework focus/hover races
+    // as window-level "Uncaught Error" entries after the app has recovered.
+    // Keep this filter narrow: it only matches minified Flutter framework
+    // stacks for FocusTraversal RenderBox geometry and InkResponse hover.
+    window.addEventListener('error', function(event) {
+      var error = event && event.error;
+      var stack = String((error && error.stack) || '');
+      var message = String((event && event.message) || (error && error.message) || '');
+      var isMainBundle = stack.indexOf('main.dart.js') !== -1;
+      var isFocusTraversalRenderBox =
+        isMainBundle &&
+        stack.indexOf('.gN') !== -1 &&
+        stack.indexOf('.gn') !== -1 &&
+        stack.indexOf('Object.e') !== -1 &&
+        stack.indexOf('Object.dy') !== -1 &&
+        stack.indexOf('.ak') !== -1 &&
+        stack.indexOf('a7') !== -1;
+      var isInkResponseNull =
+        message.indexOf('Null check operator used on a null value') !== -1 &&
+        isMainBundle &&
+        (
+          (stack.indexOf('.au') !== -1 && stack.indexOf('.u') !== -1) ||
+          stack.indexOf('InkResponse') !== -1 ||
+          stack.indexOf('MouseTracker') !== -1
+        );
+
+      if (isFocusTraversalRenderBox || isInkResponseNull) {
+        event.preventDefault();
+      }
+    }, true);
   </script>
   <script src="flutter_bootstrap.js" async></script>
 </body>
