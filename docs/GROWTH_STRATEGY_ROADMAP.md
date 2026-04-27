@@ -21807,3 +21807,10 @@ Google I/O 2026 競合脅威 事前ブリーフィング
   - `inventory_barcode_page.dart`: 在庫不足 Card ハイライト ダーク化
   - `20260427200000_seed_achievements_vscode_s11_dark_mode.sql` migration 同梱
   - dart format 0変更 / flutter analyze 0エラー確認 → push
+
+## PS版#2 S57 — 2026-04-27 T-1 第33弾 dispatch
+
+- T-1 第33弾: "Notion API Rate Limits Are Breaking Your Automation — Here's the Real Fix" → dev.to 投稿成功
+  - https://dev.to/kanta13jp1/notion-api-rate-limits-are-breaking-your-automation-heres-the-real-fix-o5p
+- JA slug: `2026-06-06-notion-api-rate-limits-solution`
+- orphan branch マージ + 削除
