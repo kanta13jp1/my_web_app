@@ -2027,17 +2027,39 @@ serve(async (req) => {
           }
           // 1着票数 + 信頼度加重集計
           const firstVotes: Record<string, { votes: number; weighted: number; providers: string[] }> = {};
+          // 複勝コンセンサス: 1着(×1.0) + 2着(×0.7) + 3着(×0.5) の加重合算
+          const placeVotes: Record<string, { votes: number; weighted: number; as_first: number; providers: string[] }> = {};
           for (const p of rows) {
-            const horse = String(p.first_pick ?? "").trim();
-            if (!horse) continue;
-            if (!firstVotes[horse]) firstVotes[horse] = { votes: 0, weighted: 0, providers: [] };
-            firstVotes[horse].votes += 1;
-            firstVotes[horse].weighted += Number(p.confidence ?? 0.5);
-            firstVotes[horse].providers.push(`${p.provider}:${p.model}`);
+            const conf = Number(p.confidence ?? 0.5);
+            const provKey = `${p.provider}:${p.model}`;
+            // 1着集計
+            const first = String(p.first_pick ?? "").trim();
+            if (first) {
+              if (!firstVotes[first]) firstVotes[first] = { votes: 0, weighted: 0, providers: [] };
+              firstVotes[first].votes += 1;
+              firstVotes[first].weighted += conf;
+              firstVotes[first].providers.push(provKey);
+            }
+            // 複勝集計 (1着=1.0 / 2着=0.7 / 3着=0.5)
+            const picks: [unknown, number][] = [[p.first_pick, 1.0], [p.second_pick, 0.7], [p.third_pick, 0.5]];
+            const seen = new Set<string>();
+            for (const [pick, decay] of picks) {
+              const horse = String(pick ?? "").trim();
+              if (!horse || seen.has(horse)) continue;
+              seen.add(horse);
+              if (!placeVotes[horse]) placeVotes[horse] = { votes: 0, weighted: 0, as_first: 0, providers: [] };
+              placeVotes[horse].votes += 1;
+              placeVotes[horse].weighted += conf * decay;
+              if (pick === p.first_pick) placeVotes[horse].as_first += 1;
+              placeVotes[horse].providers.push(provKey);
+            }
           }
           const sortedFirst = Object.entries(firstVotes)
             .sort((a, b) => b[1].weighted - a[1].weighted);
+          const sortedPlace = Object.entries(placeVotes)
+            .sort((a, b) => b[1].weighted - a[1].weighted);
           const top = sortedFirst[0];
+          const topPlace = sortedPlace[0];
           const agreementRate = top ? top[1].votes / rows.length : 0;
           return json({
             success: true,
@@ -2051,10 +2073,25 @@ serve(async (req) => {
               providers: top[1].providers,
               agreement_rate: Math.round(agreementRate * 1000) / 1000,
             } : null,
+            place_consensus: topPlace ? {
+              horse: topPlace[0],
+              place_votes: topPlace[1].votes,
+              place_weighted_score: Math.round(topPlace[1].weighted * 1000) / 1000,
+              as_first_count: topPlace[1].as_first,
+              providers: topPlace[1].providers,
+              place_agreement_rate: Math.round(topPlace[1].votes / rows.length * 1000) / 1000,
+            } : null,
             first_pick_distribution: sortedFirst.map(([horse, v]) => ({
               horse,
               votes: v.votes,
               weighted: Math.round(v.weighted * 1000) / 1000,
+              providers: v.providers,
+            })),
+            place_distribution: sortedPlace.map(([horse, v]) => ({
+              horse,
+              place_votes: v.votes,
+              place_weighted: Math.round(v.weighted * 1000) / 1000,
+              as_first: v.as_first,
               providers: v.providers,
             })),
           });

@@ -21771,3 +21771,16 @@ Google I/O 2026 競合脅威 事前ブリーフィング
   - https://dev.to/kanta13jp1/looking-for-notion-template-alternatives-you-probably-need-something-else-entirely-2mdn
 - JA slug: `2026-05-30-notion-template-gallery-alternative`
 - orphan branch マージ + 削除
+
+## 2026-04-27 (PS#6 S65)
+
+### PS#6 S65: horseracing.consensus 複勝コンセンサス追加
+
+- `horseracing.consensus` EF action に `place_consensus` + `place_distribution` を追加
+  - 複勝コンセンサス: 1着(×1.0) / 2着(×0.7) / 3着(×0.5) の信頼度加重合算
+  - 同一プロバイダーが同じ馬を複数ポジションで推す重複は `seen Set` で防止
+  - `place_consensus.horse` = 最も多くのプロバイダーが複勝圏と推す馬
+  - `place_consensus.as_first_count` = うち1着予想の件数 (強さの補助指標)
+- backward compatible: 既存 `consensus` + `first_pick_distribution` フィールドは変更なし
+- deno lint clean
+- migration: `20260427195000_seed_achievements_ps6_s65.sql`
