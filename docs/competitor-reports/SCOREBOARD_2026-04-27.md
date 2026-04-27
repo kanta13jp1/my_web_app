@@ -111,3 +111,39 @@
 ---
 
 *次回 SCOREBOARD: Notion Japan DC 開設後 (予定: 2026-05-XX)*
+
+---
+
+## 🏆 UPDATE (PS#4 S74-S75 / 2026-04-27夜): pricing+japan_presence 全172社 100%完結
+
+### pricing enrichment 完了サマリー
+
+| Batch | 社数 | 主な対象 | commit |
+|-------|------|---------|--------|
+| Batch1 | 41社 | original 21 + 高脅威新規20 | 24fd20b4 |
+| Batch2 | 18社 | OpenAI/Anthropic/Perplexity等AI SaaS | a1fe4d26 |
+| Batch3 | 13社 | freee/SmartHR/kintone等日本SaaS | 2d5c4c9a |
+| Batch4 | 15社 | Jasper/Shopify/Vanta等高価値 | — |
+| Batch5 | 15社 | Rakuten/Nintendo/Netflix等EC/エンタメ | c9445bd2 |
+| Batch6 | 13社 | NTT/SoftBank/KDDI/Meta等通信 | 974eee3f |
+| Batch7 | 15社 | niconico/groq/yamato等日本メディア | e95c8be9 |
+| Batch8 | 15社 | Stripe/Salesforce/Mercari/GO等 | 795f2f37 |
+| Batch9 | 15社 | Roblox/PlayStation/SUUMO/Oura等 | 64075000 |
+| Batch10 | 22社 | 重複ID+日本HR/旅行/インフラ等残全社 | 1e110eaa |
+| **合計** | **172社+重複ID** | **pricing_tier/usd/notes/japan_presence 100%** | — |
+
+### comparison_page Phase C: cross-instance-pr 作成済み
+
+- **spec**: `docs/cross-instance-prs/20260427_competitor_browse_page_phase_c.md`
+- **宛先**: VSCode版
+- **内容**: `/competitors` ルートの競合ブラウズページ (172社グリッド + pricing/japan_presenceフィルタ)
+- **完了後**: SEO強化 (競合ランドスケープページで organic 流入増) + UX向上
+
+### pricing データを活用した次期アクション
+
+| アクション | 担当 | タイミング |
+|-----------|------|----------|
+| `/competitors` ブラウズページ実装 | VSCode版 | 今週中 |
+| pricing_tier フィルタで「freemium競合」ターゲット記事 | PS#2 | GW |
+| Notion Japan DC 開設後: dominant更新 | PS#4 | 5月上旬 |
+| Google I/O 翌日: google/gemini features更新 | PS#4 | 2026-05-21 |
