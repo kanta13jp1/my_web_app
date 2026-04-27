@@ -66,6 +66,7 @@ class _AnalyticsExportPageState extends State<AnalyticsExportPage> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
       appBar: AppBar(
         title: const Text('分析データエクスポート'),
@@ -121,7 +122,9 @@ class _AnalyticsExportPageState extends State<AnalyticsExportPage> {
                             .map(
                               (t) => Chip(
                                 label: Text(t),
-                                backgroundColor: const Color(0xFFE0F2F1),
+                                backgroundColor: isDark
+                                    ? const Color(0xFF0D2E2A)
+                                    : const Color(0xFFE0F2F1),
                               ),
                             )
                             .toList(),
@@ -145,7 +148,9 @@ class _AnalyticsExportPageState extends State<AnalyticsExportPage> {
                             .map(
                               (f) => Chip(
                                 label: Text(f.toUpperCase()),
-                                backgroundColor: const Color(0xFFB2DFDB),
+                                backgroundColor: isDark
+                                    ? const Color(0xFF0B2422)
+                                    : const Color(0xFFB2DFDB),
                               ),
                             )
                             .toList(),

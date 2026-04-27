@@ -143,9 +143,12 @@ class _InventoryBarcodePageState extends State<InventoryBarcodePage>
         final qty = item['quantity'] as int? ?? 0;
         final min = item['minQuantity'] as int? ?? 0;
         final low = qty <= min;
+        final isDark = Theme.of(ctx).brightness == Brightness.dark;
         return Card(
           margin: const EdgeInsets.only(bottom: 6),
-          color: low ? const Color(0xFFFFEBEE) : null,
+          color: low
+              ? (isDark ? const Color(0xFF3A1010) : const Color(0xFFFFEBEE))
+              : null,
           child: ListTile(
             leading: Icon(
               Icons.qr_code,
