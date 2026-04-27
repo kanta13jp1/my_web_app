@@ -634,6 +634,11 @@ class LocalElectionShareService {
       ..writeln('基準340との差分: ${snapshot.deltaFromBaseline}人')
       ..writeln('700まで残り: ${snapshot.actualNetIncreaseRequired}人')
       ..writeln(
+        buildNextUnifiedLocalElectionCountdownLine(
+          now: snapshot.fetchedAt.toLocal(),
+        ),
+      )
+      ..writeln(
         '2023年統一地方選実績: ${snapshot.official2023FirstHalfWins} + '
         '${snapshot.official2023SecondHalfWins} = ${snapshot.official2023TotalWins}',
       )
@@ -734,6 +739,10 @@ class LocalElectionShareService {
       'type': metadataType,
       'snapshotDate': _dateOnlyFormat.format(snapshot.fetchedAt.toLocal()),
       'fetchedAt': snapshot.fetchedAt.toIso8601String(),
+      'nextUnifiedLocalElectionTargetDate':
+          _dateOnlyFormat.format(nextUnifiedLocalElectionFirstHalfTargetDate),
+      'daysUntilNextUnifiedLocalElection':
+          daysUntilNextUnifiedLocalElection(now: snapshot.fetchedAt.toLocal()),
       'officialCurrentLocalMembers': snapshot.officialCurrentLocalMembers,
       'actualNetIncreaseRequired': snapshot.actualNetIncreaseRequired,
       'cdpLocalMembers': prefectures.fold<int>(

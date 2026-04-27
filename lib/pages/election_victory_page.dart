@@ -5318,6 +5318,11 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
         ..writeln('基準340との差分: ${snapshot.deltaFromBaseline}')
         ..writeln('700まで残り: ${snapshot.actualNetIncreaseRequired}')
         ..writeln(
+          _shareService.buildNextUnifiedLocalElectionCountdownLine(
+            now: snapshot.fetchedAt.toLocal(),
+          ),
+        )
+        ..writeln(
           '2023公式実績: ${snapshot.official2023FirstHalfWins} + '
           '${snapshot.official2023SecondHalfWins} = ${snapshot.official2023TotalWins}',
         );
