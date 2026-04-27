@@ -1,7 +1,7 @@
 ---
 title: "10 Security Principles Before You Ship an MCP Server"
 tags: mcp,security,ai,programming
-published: false
+published: true
 ---
 
 # 10 Security Principles Before You Ship an MCP Server
