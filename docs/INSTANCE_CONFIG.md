@@ -1,8 +1,11 @@
 # インスタンス設定・制約カタログ — 自分株式会社 マルチAI開発ガイド
 
 **作成**: 2026-04-16 (VSCode版#79)
-**最終更新**: 2026-04-17 (Windowsアプリ版 — WEB版廃止・3インスタンス制に統一)
+**最終更新**: 2026-04-28 (PS版#1 S53 — 12スロット fleet 統合・canonical 参照追加)
 **更新責任者**: 制約を発見したインスタンスが随時更新。構造変更は PowerShell版 が担当。
+
+> **⚠️ canonical はこちら**: インスタンス構成の正本は **[`docs/MULTI_INSTANCE_FLEET.md`](./MULTI_INSTANCE_FLEET.md)** (2026-04-28 / 12スロット fleet = 10 Claude + 2 Codex)。
+> 本ドキュメントはバージョン確認手順 + 制約カタログの詳細保管場所。構成の最新状態は MULTI_INSTANCE_FLEET.md を参照すること。
 
 > **このドキュメントの目的**: 各AIインスタンスの「できること・できないこと」を一元管理し、
 > セッション冒頭の自動確認と役割分担の最適化に使用する。
@@ -690,3 +693,4 @@ PowerShell版 が担当 (緊急時は任意インスタンスが cross-instance-
 | 2026-04-16 | v2.1.110 対応。/recap公式Learning Mode追加・新機能追跡ログ(v2.1.97-110)・全推奨プロンプトに/recap追加・Gemini Code Assist推奨プロンプト追加・制約KaizenループDoc追加・playwright MCP重複修正記録 | PowerShell版 |
 | 2026-04-17 | Opus 4.7 対応。全インスタンスモデル推奨を Opus 4.7 に更新。ultrathink = Sonnet 4.6 必須に明記。Haiku 3 廃止(2026-04-19)警告追加。EF grep でモデル参照なし確認済み | PowerShell版 |
 | 2026-04-17 | v2.1.111 対応。/ultrareview・/effort xhigh・/less-permission-prompts・PowerShell tool・Windows SessionStart hook修正 を新機能追跡ログに追記。全インスタンス推奨プロンプトに /ultrareview・/effort xhigh 追加。WEB版推奨プロンプト Step 3 に /ultrareview 追加。モデル設定に /effort xhigh ガイダンス追加 | PowerShell版 |
+| 2026-04-28 | **12スロット fleet 統合** (10 Claude + 2 Codex)。canonical を docs/MULTI_INSTANCE_FLEET.md に移管。本ドキュメントに canonical cross-reference 追加。旧「3インスタンス制」表記を更新。 | PS版#1 S53 |

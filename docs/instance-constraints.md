@@ -81,6 +81,30 @@
 | **制約 (不可)** | `notebooklm` CLI / `flutter analyze` / `deno lint` / ローカルCLI全般 / `git` 直接操作 |
 | **代替パターン** | notebooklm → WebSearch / analyze/lint → cross-instance-pr / git → GitHub MCP |
 
+### Codex#1 (OpenAI Codex CLI)
+
+> **canonical**: `docs/MULTI_INSTANCE_FLEET.md` 参照
+
+| 項目 | 値 |
+| --- | --- |
+| **モデル** | GPT-5.2-Codex |
+| **worktree** | `.claude/worktrees/instance-codex1` / branch: `codex/codex1-wip` |
+| **担当範囲** | SQL + algorithm 最適化 / migration tuning / 数値計算 (馬学習ループ / WBS 同期) |
+| **制約 (不可)** | session 持たない (1タスク = 1コマンド) / CLAUDE.md 全文 context 不可 / memory/ 書き込み禁止 (Claude 代行) |
+| **Claude Code 役割** | タスク指示文に要点を埋め込んで Codex に渡す / 結果を memory/ に記録 |
+
+### Codex#2 (OpenAI Codex CLI)
+
+> **canonical**: `docs/MULTI_INSTANCE_FLEET.md` 参照
+
+| 項目 | 値 |
+| --- | --- |
+| **モデル** | GPT-5.2-Codex |
+| **worktree** | `.claude/worktrees/instance-codex2` / branch: `codex/codex2-wip` |
+| **担当範囲** | 大規模 refactor (500+ 行) / CI cascade fix / UI badge 系 (trailing comma / header version / lint) |
+| **制約 (不可)** | session 持たない / CLAUDE.md 全文 context 不可 / memory/ 書き込み禁止 |
+| **Claude Code 役割** | タスク指示文に要点を埋め込んで Codex に渡す / 結果を memory/ に記録 |
+
 ---
 
 ## 外部AI 仕様・モード一覧 (2026-04-16 時点)
