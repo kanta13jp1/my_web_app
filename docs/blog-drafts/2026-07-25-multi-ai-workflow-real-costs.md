@@ -1,7 +1,7 @@
 ---
 title: "マルチAIワークフローの本当のコスト — 個人開発者が複数AIを使い分けた6ヶ月間の実費"
 tags: AI,個人開発,buildinpublic,startup
-published: false
+published: true
 ---
 
 # マルチAIワークフローの本当のコスト — 個人開発者が複数AIを使い分けた6ヶ月間の実費
