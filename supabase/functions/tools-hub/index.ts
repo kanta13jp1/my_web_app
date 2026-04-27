@@ -782,7 +782,7 @@ function formatHorseEntryForPrompt(e: Record<string, unknown>): string {
     e.popularity ? `${e.popularity}番人気` : null,
     e.sire || e.dam || e.damsire ? `血統:${[e.sire ? `父${e.sire}` : null, e.dam ? `母${e.dam}` : null, e.damsire ? `母父${e.damsire}` : null].filter(Boolean).join("/")}` : null,
     e.prev_race_name || e.prev_finish || e.prev_time
-      ? `前走:${[e.prev_race_date, e.prev_venue, e.prev_race_name, e.prev_finish ? `${e.prev_finish}着` : null, e.prev_distance ? `${e.prev_course_type ?? ""}${e.prev_distance}m` : null, e.prev_time ? `時計${e.prev_time}` : null, e.prev_last_3f ? `上り${e.prev_last_3f}` : null, e.prev_days_ago ? `${e.prev_days_ago}日前` : null].filter(Boolean).join(" ")}`
+      ? `前走:${[e.prev_race_date, e.prev_venue, e.prev_race_name, e.prev_finish ? `${e.prev_finish}着` : null, e.prev_margin ? `着差${e.prev_margin}` : null, e.prev_distance ? `${e.prev_course_type ?? ""}${e.prev_distance}m` : null, e.prev_time ? `時計${e.prev_time}` : null, e.prev_last_3f ? `上り${e.prev_last_3f}` : null, e.prev_days_ago ? `${e.prev_days_ago}日前` : null].filter(Boolean).join(" ")}`
       : null,
     e.best_time ? `持ち時計:${e.best_time}` : null,
   ].filter((part) => part !== null && String(part).trim().length > 0);
@@ -792,7 +792,7 @@ function formatHorseEntryForPrompt(e: Record<string, unknown>): string {
 function buildHorseRacePrompt(race: Record<string, unknown>, entries: Record<string, unknown>[]): string {
   const entryText = entries.map(formatHorseEntryForPrompt).join("\n");
   const dataQuality = horseRaceDataQualityScore(entries);
-  return `競馬レース「${race.race_name}」(${race.venue ?? ""}/${race.course_type ?? "芝"}${race.distance ?? ""}m/${race.grade ?? ""}) の低リスク予想をしてください。\n必ず下記の出走馬リストに存在する馬名だけを選び、取消・非出走・リスト外の馬名は絶対に入れないでください。\n最優先は的中確率と資金保全です。単勝、複勝、枠連、馬連、ワイド、馬単、3連複、3連単をすべて検討し、低リスク順の買い方をreasoningに含めてください。\n血統、前走、持ち時計(best_time)、馬体重・馬体重変動(±kg)、騎手、調教師、厩舎、タイム、オッズ、人気を重視してください。特に「持ち時計」は過去ベストタイムで距離適性を示し、「馬体重変動」が大きい場合(±10kg超)は体調不良・過太りのリスク信号です。データ不足または信頼度が低い場合は「購入しない」選択もreasoningに明記してください。\nデータ充足度:${Math.round(dataQuality * 100)}%\n出走馬:\n${entryText}\n\nJSON形式のみで回答 (前後に説明文を入れない): {"first":"予想馬名1","second":"予想馬名2","third":"予想馬名3","confidence":0.0,"reasoning":"根拠と券種別の低リスク買い目。購入しない判断が妥当ならその理由"}`;
+  return `競馬レース「${race.race_name}」(${race.venue ?? ""}/${race.course_type ?? "芝"}${race.distance ?? ""}m/${race.grade ?? ""}) の低リスク予想をしてください。\n必ず下記の出走馬リストに存在する馬名だけを選び、取消・非出走・リスト外の馬名は絶対に入れないでください。\n最優先は的中確率と資金保全です。単勝、複勝、枠連、馬連、ワイド、馬単、3連複、3連単をすべて検討し、低リスク順の買い方をreasoningに含めてください。\n血統、前走、持ち時計(best_time)、馬体重・馬体重変動(±kg)、騎手、調教師、厩舎、タイム、オッズ、人気を重視してください。特に「持ち時計」は過去ベストタイムで距離適性を示し、「馬体重変動」が大きい場合(±10kg超)は体調不良・過太りのリスク信号です。「前走着差(着差フィールド)」が大差の場合は大きな評価ダウン、ハナ/クビ差なら健闘(僅差)と評価してください。データ不足または信頼度が低い場合は「購入しない」選択もreasoningに明記してください。\nデータ充足度:${Math.round(dataQuality * 100)}%\n出走馬:\n${entryText}\n\nJSON形式のみで回答 (前後に説明文を入れない): {"first":"予想馬名1","second":"予想馬名2","third":"予想馬名3","confidence":0.0,"reasoning":"根拠と券種別の低リスク買い目。購入しない判断が妥当ならその理由"}`;
 }
 
 function normalizeHorseNameForMatch(value: unknown): string {
@@ -912,6 +912,24 @@ function weightChangeScore(value: unknown): number {
   return (abs - 4) * 5;
 }
 
+function marginPenaltyScore(value: unknown): number {
+  const text = String(value ?? "").trim();
+  if (!text) return 0;
+  if (text === "大差") return 30;
+  if (text === "ハナ" || text === "アタマ") return 1;
+  if (text === "クビ") return 2;
+  // Fractional: "1/2", "3/4" (horse lengths)
+  const frac = text.match(/^(\d+)\/(\d+)$/);
+  if (frac) {
+    return Math.min(Math.round((Number(frac[1]) / Number(frac[2])) * 4), 20);
+  }
+  const numeric = parseFloat(text);
+  if (Number.isFinite(numeric) && numeric >= 0) {
+    return Math.min(Math.round(numeric * 4), 30);
+  }
+  return 0;
+}
+
 function sortHorseEntriesForLearning(entries: Record<string, unknown>[]): Record<string, unknown>[] {
   return [...entries].sort((a, b) => {
     // 1. popularity (ascending — lower rank = more popular)
@@ -923,22 +941,25 @@ function sortHorseEntriesForLearning(entries: Record<string, unknown>[]): Record
     // 3. prev_finish (ascending — lower place = better)
     const recent = recentFinishScore(a.prev_finish) - recentFinishScore(b.prev_finish);
     if (recent !== 0) return recent;
-    // 4. best_time (ascending — faster career record = better; null = unknown, sorted last)
+    // 4. prev_margin penalty (ascending — larger loss margin = ranked lower)
+    const margin = marginPenaltyScore(a.prev_margin) - marginPenaltyScore(b.prev_margin);
+    if (margin !== 0) return margin;
+    // 5. best_time (ascending — faster career record = better; null = unknown, sorted last)
     const btA = timeToSecondsTS(a.best_time);
     const btB = timeToSecondsTS(b.best_time);
     if (btA !== null && btB !== null && btA !== btB) return btA - btB;
     if (btA !== null && btB === null) return -1;
     if (btA === null && btB !== null) return 1;
-    // 5. prev_last_3f (ascending — faster finish sprint)
+    // 6. prev_last_3f (ascending — faster finish sprint)
     const last3f = numericOrFallback(a.prev_last_3f, 99) - numericOrFallback(b.prev_last_3f, 99);
     if (last3f !== 0) return last3f;
-    // 6. weight change penalty (ascending — large swings = higher penalty = ranked lower)
+    // 7. weight change penalty (ascending — large swings = higher penalty = ranked lower)
     const wc = weightChangeScore(a.horse_weight_change) - weightChangeScore(b.horse_weight_change);
     if (wc !== 0) return wc;
-    // 7. data_quality_score (descending — more data = more confidence)
+    // 8. data_quality_score (descending — more data = more confidence)
     const quality = numericOrFallback(b.data_quality_score, 0) - numericOrFallback(a.data_quality_score, 0);
     if (quality !== 0) return quality;
-    // 8. horse_number (ascending — tiebreaker)
+    // 9. horse_number (ascending — tiebreaker)
     return numericOrFallback(a.horse_number, 999) - numericOrFallback(b.horse_number, 999);
   });
 }
@@ -1295,7 +1316,7 @@ async function evaluateHorsePredictionAccuracy(
         evaluated_features: {
           data_quality_score: horseRaceDataQualityScore(entries),
           entry_count: entries.length,
-          features: ["血統", "前走", "馬体重", "騎手", "調教師", "厩舎", "タイム", "オッズ", "人気", "持ち時計", "馬体重変動"],
+          features: ["血統", "前走", "馬体重", "騎手", "調教師", "厩舎", "タイム", "オッズ", "人気", "持ち時計", "馬体重変動", "前走着差"],
         },
         learning_score: Math.round(weightedScore * 1000) / 1000,
       };
