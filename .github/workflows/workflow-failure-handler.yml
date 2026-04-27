@@ -3,18 +3,39 @@ name: Workflow Failure Handler
 on:
   workflow_run:
     workflows:
-      - "CI Checks"
+      # NOTE: workflow_run は workflow `name:` の完全一致が必要。
+      # 名前を変更したらここも更新すること。
+      - "CI"
       - "Deploy to Production"
       - "Deploy to Staging"
-      - "Deploy to Dev"
-      - "Edge Function Audit"
-      - "CS Check"
-      - "Daily Report"
-      - "Cron Batch Analysis"
-      - "Dependency Audit"
-      - "Infrastructure Health Check"
+      - "Deploy to Development"
+      - "Edge Function UI Audit (UI導線チェック)"
+      - "CS Check (自動サポート対応)"
+      - "Daily Report (日次レポート + X投稿 + 競合モニタリング)"
+      - "Scheduled Analysis Batch"
+      - "Dependency Audit (依存パッケージ脆弱性チェック)"
+      - "Infra Health Check (インフラ監視)"
       - "YouTube Analysis (Real Value競合分析)"
       - "Horse Racing Auto Update"
+      # 追加: スケジュール系ワークフロー
+      - "AI Agent PR Review"
+      - "AI大学コンテンツ更新 (2時間毎)"
+      - "AI大学 学習リマインダー (毎日09:00 JST)"
+      - "Blog Draft (AI自動生成・毎日)"
+      - "Blog Publish (技術記事投稿)"
+      - "Blog Engagement (毎日・コメント返信/フォロー/重複削除)"
+      - "Blog Verify (過去記事の事実確認)"
+      - "CI Auto-Fix (CI失敗自動修復)"
+      - "Competitor Discovery (週次自動候補発掘)"
+      - "Competitor Monitoring (競合インテリジェンスレポート)"
+      - "NotebookLM Video Pipeline"
+      - "Notion Mirror Sync (hourly)"
+      - "OGP Image Refresh (週次)"
+      - "Self Devin Schedule"
+      - "User Feedback Resolved"
+      - "WBS Staleness Audit"
+      - "WBS User Tasks Notify (毎朝 + manual)"
+      - "Weekly SNS Draft (毎週月曜)"
     types: [completed]
 
 concurrency:
