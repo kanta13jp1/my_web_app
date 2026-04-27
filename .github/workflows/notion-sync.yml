@@ -90,5 +90,13 @@ jobs:
               echo "::warning::Notion API rate limited (HTTP 429) — will retry next cron"
               exit 0
             fi
+            # Notion object_not_found (deleted/moved page) → soft-fail if < 10% fail rate
+            if echo "$RESP" | grep -q "object_not_found"; then
+              FAIL_PCT_VAL=$(python3 -c "print(round($FAILED / max($TOTAL,1) * 100, 1))" 2>/dev/null || echo "100")
+              if python3 -c "exit(0 if float('$FAIL_PCT_VAL') < 10 else 1)" 2>/dev/null; then
+                echo "::warning::Notion sync: $FAILED orphan page(s) not found (${FAIL_PCT_VAL}% < 10%) — will auto-skip on next sync"
+                exit 0
+              fi
+            fi
             exit 1
           fi

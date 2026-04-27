@@ -21596,3 +21596,15 @@ Google I/O 2026 競合脅威 事前ブリーフィング
 - **EF count確認**: 50/50 (limit達成・新standalone EF追加不可)
 - **commit**: 1ca92e6e
 - **push**: SUCCESS ✅
+
+### Rule 17 WF health check (2026-04-27 12:55 JST)
+- 全WF success率: 19/21 (2失敗)
+- 失敗WF:
+  - `Notion Mirror Sync` — EF success=false / 1/30タスク object_not_found (削除済みNotionページ参照) / soft-fail条件が未対応で exit 1
+  - `Weekly SNS Draft` — Commit draft ステップ失敗 / 並行push衝突(non-fast-forward)が原因
+- orphan branches: claude/* 2本 (閾値5以下 → 削除不要)
+- cancel-in-progress: true=3(deploy系) / false=38(schedule系) — 正常
+- 修正済み:
+  - `notion-sync.yml`: object_not_found (<10%失敗率) soft-fail条件追加
+  - `weekly-sns-draft.yml`: Commit draft に `git pull --rebase` 追加 (並行push耐性)
+- Workflow Failure Handler: 全件 skipped — 正常動作
