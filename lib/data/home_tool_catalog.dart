@@ -43,7 +43,6 @@ import '../pages/note_list_page.dart';
 import '../pages/payment_reminder_page.dart';
 import '../pages/prison_mode_page.dart';
 import '../pages/public_memo_directory_page.dart';
-import '../pages/public_profile_page.dart';
 import '../pages/purchase_log_page.dart';
 import '../pages/reality_check_page.dart';
 import '../pages/real_world_danshari_page.dart';
