@@ -21734,3 +21734,11 @@ Google I/O 2026 競合脅威 事前ブリーフィング
   - https://dev.to/kanta13jp1/why-i-left-notion-and-built-my-own-app-with-flutter-supabase-3l5j
 - JA slug: `2026-05-23-why-i-left-notion-for-supabase-flutter`
 - orphan branch マージ + 削除
+
+## 2026-04-27 PS#4 S74 — pricing+japan_presence 全172社 100%完結
+
+- **Batch8** (795f2f37): 15社 — stripe/salesforce/miro/signal/whatsapp/threads/teams/langchain-inc/you-com/make-integromat/freee-hr/schoo/mercari/go-taxi/wordpress
+- **Batch9** (64075000): 15社 — roblox/epic-games/sony-playstation/snowflake/twilio/ubereats-japan/tabelog/suumo/ikyu/oura/sagawa-express/luup-micromobility/graffer/runway/pika
+- **Batch10** (1e110eaa): 22社 — cohere-ai/devin-cognition/hugging-face/perplexity-ai/hubspot/zoho/hrmos/kincone/kingoftime/moneyforward-cloud/money-tree/curon/itandi/jalan/sakura-internet/toyota-connected/viz-ai/pipedream/poshmark/replicate/google-health/criteo
+- **累計**: 全172社+重複ID pricing_tier・pricing_start_usd・pricing_notes_ja・japan_presence_level・japan_notes_ja **100%完結**
+- comparison_page Phase A+B (Supabase fetch) に全データ反映済み
