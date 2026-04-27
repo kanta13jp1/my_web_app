@@ -21872,3 +21872,20 @@ Google I/O 2026 競合脅威 事前ブリーフィング
   - 結果は通常 17時以降に確定するため、最大 6h だった評価ラグが 0h に短縮
   - evaluate 冪等設計: 既評価レースはスキップされるため多重実行無害
 - **scraper**: `cleanup_stale_races(limit=200)` — 大量 stale 時の一括 PATCH 防止 + WARN ログ追加
+
+## Rule 17 WF health check (2026-04-27 23:30 JST) — PS#1 session
+
+### 修正完了 (6件)
+1. **Notion Mirror Sync `object_not_found`** → soft-fail(<10%失敗率) 追加 → 2/2 runs SUCCESS
+2. **Weekly SNS Draft concurrent push** → `git pull --rebase` before push → 復旧
+3. **Horse Racing `float(None)` TypeError** → `.get(key) or 0` パターン → 修正 SUCCESS
+4. **Deploy SUUMO `HOME'S` SQL escape** → `HOME''S` → `f3655438` 修正
+5. **Deploy timestamp collision 201500/220000** → rename fix → `9bbae0b5`/`2b26aa4f`
+6. **Deploy SQLSTATE 42601 — 7本 AI大学 migration 単体ドル (`$`) → 二重ドル (`$$`)** (根本原因)
+   - 対象: axolotl / TRL / PEFT / LMDeploy / mergekit / deepeval / lm_eval_harness
+   - `2b145a78` で他インスタンスと同時修正確認
+   - timestamp collision 223000 (achievements vs deepeval) → `75add408`/`9680ff9a` で二段階解消
+   - 現在: run `25001053606` (9680ff9a) 稼働中 → 完全解消見込み
+
+### 残課題
+- run `25001053606` 完了確認 → 本番反映
