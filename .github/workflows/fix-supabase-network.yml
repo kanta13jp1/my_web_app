@@ -11,6 +11,11 @@ on:
         options:
           - check       # 現在の制限を確認するだけ
           - allow-all   # 制限を全解除 (0.0.0.0/0)
+  # WEB版からファイルコミットで自動トリガー (workflow_dispatch API 代替)
+  push:
+    branches: [main]
+    paths:
+      - 'docs/.supabase-network-allow'
 
 concurrency:
   group: supabase-network-fix
@@ -26,6 +31,18 @@ jobs:
     timeout-minutes: 5
 
     steps:
+      - name: Determine action
+        id: action
+        run: |
+          # push トリガー時は allow-all をデフォルト
+          if [ "${{ github.event_name }}" = "push" ]; then
+            echo "action=allow-all" >> $GITHUB_OUTPUT
+            echo "🔧 push トリガー検出 — allow-all で実行"
+          else
+            echo "action=${{ github.event.inputs.action }}" >> $GITHUB_OUTPUT
+            echo "🔧 workflow_dispatch — action=${{ github.event.inputs.action }}"
+          fi
+
       - name: Check current Network Restrictions
         id: check
         run: |
@@ -51,7 +68,7 @@ jobs:
           echo "dbAllowedCidrs: ${DB_CIDRS:-（空 = 全許可）}"
 
       - name: Allow all IPs (制限解除)
-        if: github.event.inputs.action == 'allow-all'
+        if: steps.action.outputs.action == 'allow-all'
         run: |
           PROJECT_REF="smmkxxavexumewbfaqpy"
           API_URL="https://api.supabase.com/v1/projects/${PROJECT_REF}/network-restrictions"
@@ -79,7 +96,7 @@ jobs:
           fi
 
       - name: Verify after update
-        if: github.event.inputs.action == 'allow-all'
+        if: steps.action.outputs.action == 'allow-all'
         run: |
           PROJECT_REF="smmkxxavexumewbfaqpy"
           API_URL="https://api.supabase.com/v1/projects/${PROJECT_REF}/network-restrictions"
@@ -119,9 +136,10 @@ jobs:
             echo ""
             echo "| 項目 | 値 |"
             echo "|-----|---|"
-            echo "| アクション | ${{ github.event.inputs.action }} |"
+            echo "| トリガー | ${{ github.event_name }} |"
+            echo "| アクション | ${{ steps.action.outputs.action }} |"
             echo "| Management API | HTTP ${{ steps.check.outputs.check_code }} |"
-            if [ "${{ github.event.inputs.action }}" = "allow-all" ]; then
+            if [ "${{ steps.action.outputs.action }}" = "allow-all" ]; then
               echo "| 結果 | Network Restrictions 全解除を試みました |"
             fi
             echo ""
