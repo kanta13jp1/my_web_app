@@ -3301,6 +3301,791 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  // PS#4 S83: 20社追加 2026-04-28
+  'niconico': const _CompetitorInfo(
+    name: 'ニコニコ動画',
+    emoji: '🎥',
+    tagline: 'ニコニコ動画は日本発のコメント付き動画プラットフォーム。自分株式会社はAI大学でエンタメ×学習を統合した個人OS。',
+    searchKeyword: 'ニコニコ動画代替 動画配信代替 コメント動画代替',
+    accentColor: Color(0xFFFF4B4B),
+    painPoints: [
+      'ニコニコプレミアム ¥550/月 — 動画・コメントエンタメに特化し財務・習慣・AI学習管理は別アプリ依存',
+      '2024年サイバー攻撃で長期停止を経験。エンタメ専用で個人ライフ全体管理は対象外',
+      '自分株式会社はAI大学での学習＋財務＋習慣管理を完全無料で統合提供',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'コメント付き動画配信',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI大学 (学習コンテンツ)',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '個人財務・家計管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '習慣・目標管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'nintendo': const _CompetitorInfo(
+    name: 'Nintendo',
+    emoji: '🎮',
+    tagline: 'Nintendoはゲームで世界を楽しませるIP帝国。自分株式会社はゲーミフィケーションで習慣・目標達成を楽しくする個人OS。',
+    searchKeyword: 'Nintendo代替 ゲーム代替 Switch代替',
+    accentColor: Color(0xFFE4000F),
+    painPoints: [
+      'Nintendo Switch — エンタメ・ゲームに特化し財務・習慣・AI学習・タスク管理は対象外',
+      'ゲームへの時間投資が財務・健康・目標達成に与える影響を可視化する機能がない',
+      '自分株式会社はゲーミフィケーション発想でAI習慣＋財務＋目標管理を楽しく提供',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ゲーム・エンタメ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI習慣ゲーミフィケーション',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '個人財務・時間管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: 'AI統合目標管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'ntt-docomo': const _CompetitorInfo(
+    name: 'NTTドコモ',
+    emoji: '📱',
+    tagline: 'NTTドコモは日本最大の通信キャリア。自分株式会社は通信費を含む家計全体をAIで最適化する個人OS。',
+    searchKeyword: 'NTTドコモ代替 スマホ代替 通信キャリア代替',
+    accentColor: Color(0xFFCC0000),
+    painPoints: [
+      'NTTドコモ — モバイル通信サービスに特化し個人の財務全体・習慣・AI学習管理は対象外',
+      '通信費の最適化提案や財務・タスク・習慣管理を1つのアプリで提供していない',
+      '自分株式会社は通信費を含む家計全体をAIで管理し財務最適化を支援する個人OS',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'モバイル通信サービス',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI家計・財務最適化',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: 'タスク・習慣管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: 'AI大学 (テクノロジー学習)',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'softbank-telecom': const _CompetitorInfo(
+    name: 'SoftBank',
+    emoji: '📶',
+    tagline: 'SoftBankは通信×AI投資で日本をリード。自分株式会社はAI活用を個人レベルで democratize した個人OS。',
+    searchKeyword: 'SoftBank代替 通信キャリア代替 スマホ代替',
+    accentColor: Color(0xFFFF6600),
+    painPoints: [
+      'SoftBank — モバイル通信・AI投資事業に特化し個人の財務・習慣・タスク管理アプリは提供していない',
+      '通信費節約・家計全体のAI最適化・習慣管理を1アプリで統合する機能がない',
+      '自分株式会社はSoftBankのようなAI先進企業の技術を個人ライフに応用した完成済みOS',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'モバイル通信・5G',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI統合個人ライフ管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '個人財務・家計管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '習慣・目標管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'tabelog': const _CompetitorInfo(
+    name: '食べログ',
+    emoji: '🍽️',
+    tagline: '食べログは日本No.1グルメ口コミサイト。自分株式会社は食費管理＋外食記録をAIで最適化する個人OS。',
+    searchKeyword: '食べログ代替 グルメ口コミ代替 レストラン検索代替',
+    accentColor: Color(0xFFFF5722),
+    painPoints: [
+      '食べログプレミアム ¥400/月 — グルメ情報に特化し食費管理・家計・習慣・AI学習は別アプリ依存',
+      '外食記録と家計簿の連携がなく食費が家計全体に与える影響を可視化できない',
+      '自分株式会社はAI食費管理＋家計全体の最適化＋習慣管理を1アプリで無料提供',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'グルメ口コミ・検索',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI食費・家計管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '習慣・健康トラッキング',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: 'タスク・目標管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'suumo': const _CompetitorInfo(
+    name: 'SUUMO',
+    emoji: '🏠',
+    tagline: 'SUUMOは日本No.1不動産情報サービス。自分株式会社は住居費を含む家計全体をAIで管理する個人OS。',
+    searchKeyword: 'SUUMO代替 不動産情報代替 賃貸物件代替',
+    accentColor: Color(0xFF55AA00),
+    painPoints: [
+      'SUUMO — 不動産情報提供に特化し家賃・住居費を含む家計全体管理や習慣管理は対象外',
+      '物件探し以外の財務計画・家計最適化・AI学習・習慣管理アプリとしては設計外',
+      '自分株式会社は住居費を含む家計全体をAIで最適化し財務・習慣・タスク管理を統合',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '不動産・物件情報',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI家計・住居費管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: 'タスク・習慣管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: 'AI統合目標管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'threads': const _CompetitorInfo(
+    name: 'Threads',
+    emoji: '🧵',
+    tagline: 'ThreadsはMetaのX対抗テキストSNS。自分株式会社はSNS時間管理＋AI習慣管理で自己成長を最大化する個人OS。',
+    searchKeyword: 'Threads代替 SNS代替 テキストSNS代替',
+    accentColor: Color(0xFF000000),
+    painPoints: [
+      'Threads — テキストSNSに特化し財務・習慣・AI学習・タスク管理は対象外',
+      'SNS利用時間が財務・健康・目標達成に与える影響を計測・管理する機能がない',
+      '自分株式会社はSNS時間を含む時間資産全体をAIで管理し自己成長を最大化する個人OS',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'テキストSNS投稿・交流',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI時間・習慣管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '個人財務・家計管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: 'AI統合目標管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'tiktok-shop': const _CompetitorInfo(
+    name: 'TikTok Shop',
+    emoji: '🛒',
+    tagline:
+        'TikTok Shopはショート動画×EC融合の次世代ショッピング。自分株式会社はAI衝動買い防止＋家計管理で財務を守る個人OS。',
+    searchKeyword: 'TikTok Shop代替 ライブコマース代替 動画EC代替',
+    accentColor: Color(0xFFFF0050),
+    painPoints: [
+      'TikTok Shop — ショート動画連動ECに特化し購買記録・家計管理・習慣管理は別アプリ依存',
+      'ライブコマースによる衝動買いを防止・記録し家計全体に与える影響を管理できない',
+      '自分株式会社はAI家計管理で支出を可視化しTikTok Shoppingの衝動買いを防ぐ個人OS',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ライブコマース・EC',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI家計・支出管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '習慣・消費行動管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: 'タスク・目標管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'hatena': const _CompetitorInfo(
+    name: 'はてな',
+    emoji: '❓',
+    tagline:
+        'はてなはブログ・ブックマーク・QAで知識を共有する日本発プラットフォーム。自分株式会社はAI大学で体系的知識学習を提供する個人OS。',
+    searchKeyword: 'はてな代替 はてなブログ代替 はてなブックマーク代替',
+    accentColor: Color(0xFF00A4DE),
+    painPoints: [
+      'はてなブログ — ブログ・情報共有に特化し財務・習慣・AI体系学習・タスク管理は別サービス依存',
+      'AI時代の最新テクノロジー学習を体系的にまとめたコンテンツ提供には限界がある',
+      '自分株式会社のAI大学は260社超のAIツールを体系学習できAI×財務×習慣を統合管理',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ブログ・ブックマーク・QA',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI大学 (260社超体系学習)',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '個人財務・家計管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '習慣・目標管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'yayoi': const _CompetitorInfo(
+    name: '弥生',
+    emoji: '📊',
+    tagline: '弥生は日本No.1会計ソフト。自分株式会社はAI家計管理を個人レベルで無料提供する個人OS。',
+    searchKeyword: '弥生代替 会計ソフト代替 確定申告ソフト代替',
+    accentColor: Color(0xFF0090D9),
+    painPoints: [
+      '弥生会計オンライン ¥26,000/年〜 — 法人・個人事業主向け会計に特化し個人家計・習慣・AI学習管理は対象外',
+      '会計処理・確定申告ツールで個人のライフスタイル全体をAIで管理する設計ではない',
+      '自分株式会社は家計管理＋AI学習＋習慣管理を完全無料で統合する個人OS',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '法人・事業主向け会計',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI個人家計管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '習慣・目標トラッキング',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: 'AI大学 (会計・FP学習)',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'you-com': const _CompetitorInfo(
+    name: 'You.com',
+    emoji: '🔍',
+    tagline: 'You.comはプライバシー重視のAI検索エンジン。自分株式会社はAI検索を超えた個人ライフ全体管理OSを提供。',
+    searchKeyword: 'You.com代替 AIサーチ代替 プライバシー検索代替',
+    accentColor: Color(0xFF7B00F0),
+    painPoints: [
+      'You.com Pro — AI検索・YouCode/Write/Imagineに特化し財務・習慣・タスク管理は対象外',
+      '検索・情報収集ツールで個人の財務・習慣・目標を統合管理するOSとしては設計外',
+      '自分株式会社はAI検索知識を超えた実践的財務＋習慣＋タスク管理を無料で統合提供',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AI検索・生成AI統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI統合ライフアシスタント',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '個人財務・家計管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '習慣・目標管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'mem-ai': const _CompetitorInfo(
+    name: 'Mem',
+    emoji: '🧠',
+    tagline: 'Mem AIはAI自動整理ノートの先駆者。自分株式会社はメモ管理を超えた財務＋習慣＋AI学習を統合した個人OS。',
+    searchKeyword: 'Mem AI代替 AIノート代替 自動整理ノート代替',
+    accentColor: Color(0xFF6366F1),
+    painPoints: [
+      'Mem Pro — AIノート自動整理に特化し財務・習慣・タスク・AI学習管理は対象外',
+      'ノート管理ツールで個人の財務・健康・目標を統合管理する個人OSとしては設計が違う',
+      '自分株式会社はAIノート知識管理＋財務＋習慣＋AI大学を1アプリで無料統合提供',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AI自動整理ノート',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI統合ライフ管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '個人財務・家計管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '習慣・目標トラッキング',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'together-ai': const _CompetitorInfo(
+    name: 'Together AI',
+    emoji: '🤝',
+    tagline:
+        'Together AIはOSSモデルの高速・低コストAI推論クラウド。自分株式会社はAI大学でTogether AI活用を学べる個人OS。',
+    searchKeyword: 'Together AI代替 AI推論API代替 OSSモデルAPI代替',
+    accentColor: Color(0xFF5B21B6),
+    painPoints: [
+      'Together AI — 開発者向けAI推論APIに特化し個人ユーザーの財務・習慣・ライフ管理は対象外',
+      'API利用にはプログラミングスキルが必要で個人ライフ管理OSとしては設計されていない',
+      '自分株式会社はAI大学でTogether AI等のAI推論を学び財務・習慣管理も1アプリで提供',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'OSS LLM 高速推論API',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI大学 (AI推論学習)',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '個人財務・家計管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '習慣・目標管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '設定ゼロで即利用',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'postman': const _CompetitorInfo(
+    name: 'Postman',
+    emoji: '📮',
+    tagline: 'PostmanはAPI開発・テストの世界標準ツール。自分株式会社はAI大学でAPI開発スキルを学べる個人OS。',
+    searchKeyword: 'Postman代替 APIテスト代替 API開発ツール代替',
+    accentColor: Color(0xFFFF6C37),
+    painPoints: [
+      'Postman Basic — APIテスト・開発に特化し個人の財務・習慣・ライフ管理は対象外',
+      'API開発者向けツールで財務・習慣・AI学習を1アプリで統合管理する個人OSではない',
+      '自分株式会社はAI大学でPostman等のAPIツールを学べ財務・習慣管理も統合提供',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'API開発・テスト・ドキュメント',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI大学 (API開発学習)',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '個人財務・家計管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '習慣・目標管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'sentry': const _CompetitorInfo(
+    name: 'Sentry',
+    emoji: '🔎',
+    tagline: 'Sentryはアプリエラー監視・パフォーマンス分析の定番。自分株式会社はAI大学でSentry活用を学べる個人OS。',
+    searchKeyword: 'Sentry代替 エラー監視代替 APM代替',
+    accentColor: Color(0xFF362D59),
+    painPoints: [
+      'Sentry Team — アプリエラー監視に特化し個人ユーザーの財務・習慣・ライフ管理は対象外',
+      '開発チーム向けObservabilityツールで個人ライフ全体管理OSとしては設計外',
+      '自分株式会社はAI大学でSentry等のエンジニアリングツールを学び財務・習慣も統合管理',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'エラー監視・パフォーマンス分析',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI大学 (エンジニアリング学習)',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '個人財務・家計管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '習慣・目標管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'pika': const _CompetitorInfo(
+    name: 'Pika',
+    emoji: '⚡',
+    tagline: 'Pikaはテキストから高品質AI動画を生成する次世代ツール。自分株式会社はAI大学でPika活用を学べる個人OS。',
+    searchKeyword: 'Pika代替 AI動画生成代替 テキスト動画変換代替',
+    accentColor: Color(0xFF7C3AED),
+    painPoints: [
+      'Pika — AI動画生成に特化し個人の財務・習慣・タスク・ライフ管理は対象外',
+      'クリエイティブ制作ツールで個人ライフ全体を管理するOSとしては機能しない',
+      '自分株式会社のAI大学はPika等のAI動画ツールを無料で学び財務・習慣管理も統合提供',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'テキスト→AI動画生成',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI大学 (AI動画学習)',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '個人財務・家計管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: 'タスク・習慣管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'wise': const _CompetitorInfo(
+    name: 'Wise',
+    emoji: '💸',
+    tagline: 'Wiseは銀行より安い国際送金・マルチカレンシー口座。自分株式会社はWiseを含む家計全体をAIで管理する個人OS。',
+    searchKeyword: 'Wise代替 国際送金代替 海外送金代替',
+    accentColor: Color(0xFF48BB78),
+    painPoints: [
+      'Wise — 国際送金・マルチカレンシー管理に特化し家計全体・習慣・AI学習管理は対象外',
+      '送金・外貨管理ツールで個人のライフスタイル全体をAIで管理するOSではない',
+      '自分株式会社はWise利用を含む家計全体をAIで最適化し財務・習慣・タスクを統合管理',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '国際送金・外貨管理',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI統合家計・財務管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '習慣・目標トラッキング',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: 'AI大学 (FinTech学習)',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'oura': const _CompetitorInfo(
+    name: 'Oura Ring',
+    emoji: '💍',
+    tagline:
+        'Oura Ringは睡眠・健康スコアを計測するスマートリング。自分株式会社はOuraデータを含むライフ全体をAIで管理する個人OS。',
+    searchKeyword: 'Oura Ring代替 スマートリング代替 睡眠トラッカー代替',
+    accentColor: Color(0xFF6C63FF),
+    painPoints: [
+      'Oura Ring — 睡眠・健康スコア計測に特化し財務・タスク・AI学習管理は対象外',
+      'ウェアラブルデバイスで個人の財務・習慣・目標を統合管理する個人OSではない',
+      '自分株式会社はOuraのような健康データを含むライフ全体をAIで統合管理する個人OS',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '睡眠・健康スコア計測',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI統合ライフ管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '個人財務・家計管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: 'タスク・目標管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'coincheck': const _CompetitorInfo(
+    name: 'Coincheck',
+    emoji: '🪙',
+    tagline: 'Coincheckは日本最大級の暗号資産取引所。自分株式会社は暗号資産を含む資産全体をAIで管理する個人OS。',
+    searchKeyword: 'Coincheck代替 暗号資産代替 仮想通貨取引所代替',
+    accentColor: Color(0xFF00AABB),
+    painPoints: [
+      'Coincheck — 暗号資産取引・NFTに特化し個人の家計全体・習慣・AI学習管理は対象外',
+      '投資・取引アプリで株式・普通預金・生活費を含む資産全体をAIで管理する設計ではない',
+      '自分株式会社は暗号資産を含む資産全体をAI家計管理で統合し財務・習慣・目標を一元化',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '暗号資産取引・NFT',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI統合資産・家計管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '習慣・目標トラッキング',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: 'AI大学 (FinTech/Web3学習)',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'perplexity-ai': const _CompetitorInfo(
+    name: 'Perplexity AI',
+    emoji: '🔮',
+    tagline: 'Perplexity AIはリアルタイム引用付きAI検索の新標準。自分株式会社はAI検索を超えた個人ライフ全体管理OSを提供。',
+    searchKeyword: 'Perplexity AI代替 AI検索代替 引用付き検索代替',
+    accentColor: Color(0xFF20808D),
+    painPoints: [
+      'Perplexity Pro — AI検索・Deep Researchに特化し財務・習慣・タスク管理は対象外',
+      '最新情報検索ツールで個人ライフ全体をAI管理するOSとしては設計されていない',
+      '自分株式会社はPerplexityのような最新AI知識を活用しながら財務・習慣・目標を統合管理',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'リアルタイムAI検索・引用',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI統合ライフアシスタント',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '個人財務・家計管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '習慣・目標管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
   // PS#4 S82: 20社追加 2026-04-28
   'asana': const _CompetitorInfo(
     name: 'Asana',
