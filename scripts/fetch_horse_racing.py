@@ -1075,7 +1075,7 @@ def print_learning_stats(days: int = 7) -> None:
     from_date = (datetime.date.today() - datetime.timedelta(days=days - 1)).isoformat()
     rows = supabase_rest("GET", "horse_learning_daily_accuracy", params={
         "race_date": f"gte.{from_date}",
-        "select": "race_date,evaluated_predictions,avg_learning_score,first_hit_rate_pct,skip_accuracy_pct,place_hit_rate_pct",
+        "select": "race_date,evaluated_predictions,evaluated_races,avg_learning_score,first_hit_rate_pct,skip_accuracy_pct,place_hit_rate_pct,wide_hit_rate_pct",
         "order": "race_date.desc",
     }) or []
 
@@ -1085,18 +1085,32 @@ def print_learning_stats(days: int = 7) -> None:
         "limit": "5",
     }) or []
 
+    # 期間サマリー計算
+    total_preds = sum(int(r.get("evaluated_predictions") or 0) for r in rows)
+    total_races = sum(int(r.get("evaluated_races") or 0) for r in rows)
+    scores = [float(r.get("avg_learning_score") or 0) for r in rows if r.get("avg_learning_score")]
+    period_avg = sum(scores) / len(scores) if scores else 0
+    # トレンド: 最新2日の比較 (新→古 順なので rows[0]=最新, rows[1]=前日)
+    trend = ""
+    if len(scores) >= 2:
+        diff = scores[0] - scores[1]
+        trend = f"↑ +{diff*100:.1f}pt" if diff > 0.002 else (f"↓ {diff*100:.1f}pt" if diff < -0.002 else "→ 横ばい")
+
     # 標準出力
     print(f"\n=== 直近{days}日 学習統計 ({from_date}〜) ===")
+    print(f"  期間合計: {total_preds}予想 / {total_races}レース | 期間平均スコア: {period_avg*100:.1f} {trend}")
     if rows:
-        print(f"{'日付':<12} {'評価数':>6} {'学習スコア':>10} {'1着率':>7} {'スキップ精度':>12} {'複勝率':>7}")
-        print("-" * 60)
+        print(f"{'日付':<12} {'評価数':>6} {'Rレース':>7} {'スコア':>7} {'1着率':>6} {'複勝率':>6} {'ワイド':>6} {'スキップ':>8}")
+        print("-" * 70)
         for r in rows:
             ls = f"{float(r.get('avg_learning_score') or 0) * 100:.1f}"
             fh = f"{float(r.get('first_hit_rate_pct') or 0):.1f}%"
             sk = f"{float(r.get('skip_accuracy_pct') or 0):.1f}%"
             pl = f"{float(r.get('place_hit_rate_pct') or 0):.1f}%"
+            wd = f"{float(r.get('wide_hit_rate_pct') or 0):.1f}%"
             ev = r.get('evaluated_predictions') or 0
-            print(f"{r.get('race_date',''):<12} {ev:>6} {ls:>10} {fh:>7} {sk:>12} {pl:>7}")
+            er = r.get('evaluated_races') or 0
+            print(f"{r.get('race_date',''):<12} {ev:>6} {er:>7} {ls:>7} {fh:>6} {pl:>6} {wd:>6} {sk:>8}")
     else:
         print("  (データなし)")
 
@@ -1111,17 +1125,20 @@ def print_learning_stats(days: int = 7) -> None:
         return
     lines = [
         "### 🏇 競馬AI 学習統計レポート\n",
-        f"| 日付 | 評価数 | 学習スコア | 1着率 | スキップ精度 | 複勝率 |",
-        "| --- | --- | --- | --- | --- | --- |",
+        f"> 期間: {from_date}〜 | 合計 **{total_preds}予想** / **{total_races}レース** | 期間平均スコア: **{period_avg*100:.1f}** {trend}\n",
+        f"| 日付 | 評価数 | レース数 | スコア | 1着率 | 複勝率 | ワイド率 | スキップ精度 |",
+        "| --- | --- | --- | --- | --- | --- | --- | --- |",
     ]
     for r in rows:
         ls = f"{float(r.get('avg_learning_score') or 0) * 100:.1f}"
         fh = f"{float(r.get('first_hit_rate_pct') or 0):.1f}%"
         sk = f"{float(r.get('skip_accuracy_pct') or 0):.1f}%"
         pl = f"{float(r.get('place_hit_rate_pct') or 0):.1f}%"
-        lines.append(f"| {r.get('race_date','')} | {r.get('evaluated_predictions',0)} | {ls} | {fh} | {sk} | {pl} |")
+        wd = f"{float(r.get('wide_hit_rate_pct') or 0):.1f}%"
+        er = r.get('evaluated_races') or 0
+        lines.append(f"| {r.get('race_date','')} | {r.get('evaluated_predictions',0)} | {er} | {ls} | {fh} | {pl} | {wd} | {sk} |")
     if not rows:
-        lines.append("| — | — | — | — | — | — |")
+        lines.append("| — | — | — | — | — | — | — | — |")
 
     if bet_rows:
         lines += ["", "**券種別精度 TOP5**", ""]
