@@ -1,7 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/user_profile.dart';
 import '../utils/app_logger.dart';
-import '../main.dart';
+import 'supabase_client_provider.dart';
 
 /// コミュニティ機能を提供するサービス
 /// NotionとEvernoteにはないソーシャル機能で差別化

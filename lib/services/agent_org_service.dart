@@ -2,12 +2,12 @@ import 'dart:convert';
 
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../main.dart';
 import '../models/agent_memory_entry.dart';
 import '../models/agent_message.dart';
 import '../models/agent_profile.dart';
 import '../models/agent_relationship.dart';
 import '../models/agent_task.dart';
+import 'supabase_client_provider.dart';
 
 class AgentOrgSnapshot {
   final List<AgentProfile> agents;

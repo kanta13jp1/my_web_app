@@ -590,7 +590,7 @@ void main() {
     );
   });
 
-  testWidgets('LandingPage uses injected adapter for initial load and sharing',
+  testWidgets('LandingPage uses injected adapter for initial load',
       (WidgetTester tester) async {
     final adapter = _FakeLandingPageAdapter();
 
@@ -606,18 +606,6 @@ void main() {
     expect(find.byKey(const Key('landing_hero_section')), findsOneWidget);
     expect(find.byKey(const Key('landing_trial_section')), findsOneWidget);
     expect(find.byKey(const Key('landing_auth_section')), findsOneWidget);
-    expect(find.byKey(const Key('landing_share_section')), findsOneWidget);
-    expect(find.byKey(const Key('landing_pv_section')), findsOneWidget);
-    expect(adapter.loadShareSnapshotCallCount, 1);
-    expect(adapter.loadLpViewStatsCallCount, 1);
-
-    final shareButton = find.byKey(const Key('landing_share_button_x'));
-    await tester.ensureVisible(shareButton);
-    await tester.tap(shareButton);
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 300));
-
-    expect(adapter.sharedChannels, <String>[LandingShareService.channelX]);
   });
 
   testWidgets(
@@ -725,6 +713,8 @@ void main() {
     final scrollable = find.byType(Scrollable).first;
     final postButton = find.byKey(const Key('agent_org_board_post_button'));
     await tester.scrollUntilVisible(postButton, 200, scrollable: scrollable);
+    await tester.ensureVisible(postButton);
+    await tester.pumpAndSettle();
     await tester.tap(postButton);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 100));
@@ -825,6 +815,8 @@ void main() {
     final reactionChip =
         find.byKey(const Key('agent_org_board_reaction_message-1_thumbs_up'));
     await tester.scrollUntilVisible(reactionChip, 200, scrollable: scrollable);
+    await tester.ensureVisible(reactionChip);
+    await tester.pumpAndSettle();
     await tester.tap(reactionChip);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 100));

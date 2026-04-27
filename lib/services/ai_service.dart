@@ -3,9 +3,9 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../utils/app_logger.dart';
-import '../main.dart';
 import 'dart:math';
 import 'magi_system_settings_service.dart';
+import 'supabase_client_provider.dart';
 
 class AIServiceException implements Exception {
   final String message;

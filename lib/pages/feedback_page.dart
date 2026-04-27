@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../main.dart';
+import '../services/supabase_client_provider.dart';
 import '../utils/app_logger.dart';
 
 class FeedbackPage extends StatefulWidget {

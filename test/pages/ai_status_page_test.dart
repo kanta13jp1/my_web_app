@@ -18,11 +18,14 @@ void main() {
 
   late MockSupabaseClient mockSupabaseClient;
   late MockFunctionsClient mockFunctionsClient;
+  late _FakeGoTrueClient fakeGoTrueClient;
 
   setUp(() {
     SharedPreferences.setMockInitialValues({});
     mockSupabaseClient = MockSupabaseClient();
     mockFunctionsClient = MockFunctionsClient();
+    fakeGoTrueClient = _FakeGoTrueClient();
+    when(mockSupabaseClient.auth).thenReturn(fakeGoTrueClient);
     when(mockSupabaseClient.functions).thenReturn(mockFunctionsClient);
   });
 
@@ -322,4 +325,15 @@ void main() {
     prefs = await SharedPreferences.getInstance();
     expect(prefs.getString('magi_system_melchior_model_v1'), 'gpt-5.4');
   });
+}
+
+class _FakeGoTrueClient extends Fake implements GoTrueClient {
+  @override
+  User? get currentUser => const User(
+        id: 'test-user-id',
+        appMetadata: <String, dynamic>{},
+        userMetadata: <String, dynamic>{},
+        aud: 'authenticated',
+        createdAt: '2024-01-01',
+      );
 }

@@ -302,13 +302,19 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byKey(const Key('continuation_pin_action_1')));
+    final pinAction = find.byKey(const Key('continuation_pin_action_1'));
+    await tester.ensureVisible(pinAction);
+    await tester.pumpAndSettle();
+    await tester.tap(pinAction);
     await tester.pumpAndSettle();
 
     expect(find.text('最重要: Bを進める'), findsOneWidget);
 
-    await tester
-        .tap(find.byKey(const Key('continuation_focus_sprint_25_button')));
+    final focusSprint =
+        find.byKey(const Key('continuation_focus_sprint_25_button'));
+    await tester.ensureVisible(focusSprint);
+    await tester.pumpAndSettle();
+    await tester.tap(focusSprint);
     await tester.pumpAndSettle();
 
     expect(find.textContaining('25分着手を開始しました: Bを進める'), findsOneWidget);

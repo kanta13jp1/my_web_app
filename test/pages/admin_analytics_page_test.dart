@@ -314,7 +314,7 @@ void main() {
         table: 'user_profiles',
       );
 
-    await tester.tap(find.byIcon(Icons.refresh));
+    await tester.tap(find.byKey(const Key('admin_analytics_refresh_button')));
     await tester.pumpAndSettle();
 
     expect(find.text('4.0'), findsOneWidget);

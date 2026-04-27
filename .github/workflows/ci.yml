@@ -145,14 +145,25 @@ jobs:
           fi
         continue-on-error: true  # warn-only (Win#131 part 18)
 
-      - name: Run tests
+      - name: Run VM tests
         id: flutter_test
-        run: flutter test --coverage
-        continue-on-error: true  # Tests can be flaky; acceptable soft failure if most pass
+        run: |
+          VM_TEST_FILES=$(find test -name '*_test.dart' \
+            ! -path 'test/main_test.dart' \
+            ! -path 'test/readme_features_test.dart' \
+            ! -path 'test/web_import_smoke_test.dart' \
+            -print)
+          flutter test --coverage $VM_TEST_FILES
+        continue-on-error: false
+
+      - name: Run web import smoke tests
+        id: flutter_web_test
+        run: flutter test --platform chrome test/web_import_smoke_test.dart
+        continue-on-error: false
 
       - name: Upload coverage to Codecov (optional)
         uses: codecov/codecov-action@v6
-        if: success()
+        if: success() && hashFiles('coverage/lcov.info') != ''
         with:
           files: ./coverage/lcov.info
           fail_ci_if_error: false
@@ -183,6 +194,7 @@ jobs:
         run: |
           BUILD_OK=$([ -d "build/web" ] && echo "✅" || echo "— (skipped: workflow_call)")
           FLUTTER_TEST="${{ steps.flutter_test.outcome }}"
+          FLUTTER_WEB_TEST="${{ steps.flutter_web_test.outcome }}"
           DENO_TEST="${{ steps.deno_test.outcome }}"
           FT_ICON=$([ "$FLUTTER_TEST" = "success" ] && echo "✅" || [ "$FLUTTER_TEST" = "skipped" ] && echo "—" || echo "⚠️")
           DT_ICON=$([ "$DENO_TEST" = "success" ] && echo "✅" || [ "$DENO_TEST" = "skipped" ] && echo "—" || echo "⚠️")
@@ -193,7 +205,8 @@ jobs:
             echo "|---------|------|"
             echo "| \`flutter analyze\` | ✅ 0エラー (強制) |"
             echo "| \`deno lint\` | ✅ 0エラー (強制) |"
-            echo "| \`flutter test\` | $FT_ICON $FLUTTER_TEST (continue-on-error) |"
+            echo "| \`flutter test --coverage\` | $FT_ICON $FLUTTER_TEST |"
+            echo "| \`flutter test --platform chrome\` | $FLUTTER_WEB_TEST |"
             echo "| \`deno test\` | $DT_ICON $DENO_TEST (continue-on-error) |"
             echo "| \`flutter build web --release\` | $BUILD_OK |"
             echo ""

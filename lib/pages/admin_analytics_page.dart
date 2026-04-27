@@ -1433,6 +1433,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
             tooltip: 'データをリセット',
           ),
           IconButton(
+            key: const Key('admin_analytics_refresh_button'),
             icon: const Icon(Icons.refresh),
             onPressed: () {
               setState(() => _isLoading = true);

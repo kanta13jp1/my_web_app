@@ -2,8 +2,8 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'dart:typed_data'; // 👈 Uint8Listのために必要
 import '../models/user_profile.dart';
-import '../main.dart';
 import '../utils/app_logger.dart';
+import 'supabase_client_provider.dart';
 
 /// ユーザープロフィール管理サービス
 class ProfileService {

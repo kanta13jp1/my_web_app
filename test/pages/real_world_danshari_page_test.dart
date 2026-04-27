@@ -44,6 +44,17 @@ class ErrorMockImagePickerPlatform extends ImagePickerPlatform {
   }
 }
 
+class _FakeGoTrueClient extends Fake implements GoTrueClient {
+  @override
+  User? get currentUser => const User(
+        id: 'test-user-id',
+        appMetadata: <String, dynamic>{},
+        userMetadata: <String, dynamic>{},
+        aud: 'authenticated',
+        createdAt: '2026-01-01T00:00:00.000Z',
+      );
+}
+
 void main() {
   late MockSupabaseClient mockSupabaseClient;
   late MockFunctionsClient mockFunctionsClient;
@@ -57,6 +68,7 @@ void main() {
     mockImagePickerPlatform = MockImagePickerPlatform();
 
     when(mockSupabaseClient.functions).thenReturn(mockFunctionsClient);
+    when(mockSupabaseClient.auth).thenReturn(_FakeGoTrueClient());
     when(mockThemeService.isDarkMode).thenReturn(false);
 
     ImagePickerPlatform.instance = mockImagePickerPlatform;

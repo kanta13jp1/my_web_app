@@ -12,12 +12,12 @@ void main() {
       );
     });
 
-    test('buildPublicMemoUrl returns the share endpoint', () {
+    test('buildPublicMemoUrl returns the app detail route', () {
       final url = PublicMemoService.buildPublicMemoUrl(42);
 
       expect(
         url,
-        'https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/public-memo-share?id=42',
+        'https://my-web-app-b67f4.web.app/public-memo?id=42&utm_source=public_memo&utm_medium=share&utm_campaign=growth_mission',
       );
     });
   });

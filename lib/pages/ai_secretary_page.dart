@@ -4,11 +4,11 @@ import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:share_plus/share_plus.dart';
-import '../main.dart';
 import '../models/note.dart';
 import '../services/magi_system_settings_service.dart';
 import '../services/attachment_service.dart';
 import '../services/agent_org_service.dart';
+import '../services/supabase_client_provider.dart';
 import '../utils/ai_secretary_content.dart';
 
 class AISecretaryPage extends StatefulWidget {

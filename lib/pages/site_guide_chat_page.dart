@@ -27,6 +27,7 @@ class SiteGuideChatPage extends StatefulWidget {
   final SiteGuideChatService? service;
   final List<SiteGuideActionEntry>? toolCatalog;
   final VoidCallback? onOpenUserManual;
+  final bool requireAuthenticatedUser;
 
   const SiteGuideChatPage({
     super.key,
@@ -34,6 +35,7 @@ class SiteGuideChatPage extends StatefulWidget {
     this.service,
     this.toolCatalog,
     this.onOpenUserManual,
+    this.requireAuthenticatedUser = true,
   });
 
   @override
@@ -93,7 +95,7 @@ class _SiteGuideChatPageState extends State<SiteGuideChatPage> {
   Future<void> _sendQuestion(String question) async {
     final normalized = question.trim();
     if (normalized.isEmpty || _isSending) return;
-    if (Supabase.instance.client.auth.currentUser == null) {
+    if (widget.requireAuthenticatedUser && !_hasCurrentUser()) {
       setState(() {
         _messages.add(
           _SiteGuideMessage.assistant('ログインが必要です', source: 'anon-guard'),
@@ -128,6 +130,16 @@ class _SiteGuideChatPageState extends State<SiteGuideChatPage> {
       _isSending = false;
     });
     _scrollToBottom();
+  }
+
+  bool _hasCurrentUser() {
+    try {
+      return Supabase.instance.client.auth.currentUser != null;
+    } on AssertionError {
+      return false;
+    } catch (_) {
+      return false;
+    }
   }
 
   void _scrollToBottom() {

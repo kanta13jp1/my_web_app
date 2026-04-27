@@ -273,19 +273,16 @@ import 'package:my_web_app/dev/claude_design/importer_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:my_web_app/services/notification_service.dart';
+import 'package:my_web_app/services/supabase_client_provider.dart';
 import 'package:my_web_app/services/theme_service.dart';
 import 'package:my_web_app/widgets/global_header_clock_bar.dart';
 import 'utils/error_reporter.dart';
 
-SupabaseClient? _testSupabaseClient;
+export 'services/supabase_client_provider.dart'
+    show clearSupabaseClientForTesting, supabase, supabaseClientForTesting;
+
 final GrowthPresenceNavigatorObserver _growthPresenceObserver =
     GrowthPresenceNavigatorObserver();
-
-@visibleForTesting
-set supabaseClientForTesting(SupabaseClient client) =>
-    _testSupabaseClient = client;
-
-SupabaseClient get supabase => _testSupabaseClient ?? Supabase.instance.client;
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();

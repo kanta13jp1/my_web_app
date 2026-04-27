@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../main.dart'; // supabase
+import '../services/supabase_client_provider.dart';
 import '../models/note.dart';
 
 class DanshariPage extends StatefulWidget {

@@ -54,9 +54,9 @@ class CompletionGoalService {
         return false;
       }
 
-      final completedAt = _parseDateTime(todo['completed_at']);
-      if (completedAt != null) {
-        return isSameDay(_startOfDay(completedAt), targetDay);
+      final completedAtDate = _parseDate(todo['completed_at']);
+      if (completedAtDate != null) {
+        return isSameDay(completedAtDate, targetDay);
       }
 
       final taskDate = _parseDate(todo['task_date']);
@@ -71,19 +71,6 @@ class CompletionGoalService {
   static DateTime _startOfDay(DateTime value) =>
       DateTime(value.year, value.month, value.day);
 
-  static DateTime? _parseDateTime(dynamic rawValue) {
-    final text = rawValue?.toString();
-    if (text == null || text.isEmpty) {
-      return null;
-    }
-
-    try {
-      return DateTime.parse(text).toLocal();
-    } catch (_) {
-      return null;
-    }
-  }
-
   static DateTime? _parseDate(dynamic rawValue) {
     final text = rawValue?.toString();
     if (text == null || text.isEmpty) {
@@ -91,7 +78,9 @@ class CompletionGoalService {
     }
 
     try {
-      final parsed = DateTime.parse(text);
+      final parsed = DateTime.parse(
+        text.length >= 10 ? text.substring(0, 10) : text,
+      );
       return DateTime(parsed.year, parsed.month, parsed.day);
     } catch (_) {
       return null;

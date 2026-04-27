@@ -62,7 +62,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
   }
 
   final ScrollController _scrollController = ScrollController();
-  final AgentOrgService _agentOrgService = AgentOrgService();
+  late final AgentOrgService _agentOrgService;
   final EmergencyMeetingBiReportService _meetingReportService =
       EmergencyMeetingBiReportService();
   BoardMeetingLog? _currentLog;
@@ -240,6 +240,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
   @override
   void initState() {
     super.initState();
+    _agentOrgService = AgentOrgService(supabaseClient: widget.supabaseClient);
     assert(_defaultPromptInstructions.isNotEmpty);
     assert(_focusLabel(MeetingFocus.balanced).isNotEmpty);
     assert(_focusShortLabel(MeetingFocus.balanced).isNotEmpty);

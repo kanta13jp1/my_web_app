@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../main.dart';
+import '../services/supabase_client_provider.dart';
 
 class RewardsPage extends StatefulWidget {
   const RewardsPage({super.key});

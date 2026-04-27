@@ -20,7 +20,7 @@ import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 
-import '../main.dart';
+import '../services/supabase_client_provider.dart';
 
 class ErrorReporter {
   ErrorReporter._();

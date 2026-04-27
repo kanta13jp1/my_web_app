@@ -125,7 +125,7 @@ class _GlobalHeaderClockBarState extends State<GlobalHeaderClockBar> {
                   ),
                 ),
                 const SizedBox(width: 8),
-                Tooltip(
+                _OverlayAwareTooltip(
                   message: AppVersion.isDev ? 'アプリバージョン (開発ビルド)' : 'アプリバージョン',
                   child: Semantics(
                     label: 'アプリバージョン $versionText',
@@ -185,6 +185,28 @@ class _GlobalHeaderClockBarState extends State<GlobalHeaderClockBar> {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _OverlayAwareTooltip extends StatelessWidget {
+  final String message;
+  final Widget child;
+
+  const _OverlayAwareTooltip({
+    required this.message,
+    required this.child,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (Overlay.maybeOf(context) == null) {
+      return child;
+    }
+
+    return Tooltip(
+      message: message,
+      child: child,
     );
   }
 }

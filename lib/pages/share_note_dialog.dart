@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
-import '../main.dart';
+import '../services/supabase_client_provider.dart';
 import '../models/note.dart';
 
 class ShareNoteDialog extends StatelessWidget {

@@ -79,6 +79,7 @@ void main() {
         home: SiteGuideChatPage(
           service: service,
           toolCatalog: toolCatalog,
+          requireAuthenticatedUser: false,
           onOpenUserManual: () {
             openedManual = true;
           },
@@ -127,6 +128,7 @@ void main() {
           initialQuestion: 'まずは何を使えばよいですか',
           service: service,
           toolCatalog: const <SiteGuideActionEntry>[],
+          requireAuthenticatedUser: false,
         ),
       ),
     );

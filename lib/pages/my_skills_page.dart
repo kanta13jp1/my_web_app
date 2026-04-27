@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../main.dart';
+import '../services/supabase_client_provider.dart';
 
 /// マイスキル管理ページ — Slack ワークフロー対抗
 /// ai-assistant EF の save_skill / list_skills / run_skill / delete_skill を利用

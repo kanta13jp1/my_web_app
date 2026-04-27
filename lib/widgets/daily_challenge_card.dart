@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../main.dart';
+import '../services/supabase_client_provider.dart';
 import '../models/daily_challenge.dart';
 import '../services/daily_challenge_service.dart';
 

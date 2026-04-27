@@ -4,8 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import '../main.dart';
 import '../services/magi_system_settings_service.dart';
+import '../services/supabase_client_provider.dart';
 
 class CmoPage extends StatefulWidget {
   final String? initialChannel;

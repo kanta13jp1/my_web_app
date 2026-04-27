@@ -1,7 +1,7 @@
 // lib/pages/admin/feedback_list_page.dart
 import 'package:flutter/material.dart';
 import 'package:timeago/timeago.dart' as timeago;
-import '../../main.dart';
+import '../../services/supabase_client_provider.dart';
 import '../../utils/app_logger.dart';
 
 class FeedbackListPage extends StatefulWidget {

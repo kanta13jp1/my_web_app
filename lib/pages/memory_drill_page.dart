@@ -8,10 +8,12 @@ class MemoryDrillPage extends StatefulWidget {
   const MemoryDrillPage({
     super.key,
     this.service,
+    this.supabaseClient,
     this.nowProvider,
   });
 
   final MemoryDrillService? service;
+  final SupabaseClient? supabaseClient;
   final DateTime Function()? nowProvider;
 
   @override
@@ -41,6 +43,18 @@ class _MemoryDrillPageState extends State<MemoryDrillPage> {
 
   DateTime _now() => widget.nowProvider?.call() ?? DateTime.now();
 
+  SupabaseClient? get _supabaseOrNull {
+    final injected = widget.supabaseClient;
+    if (injected != null) {
+      return injected;
+    }
+    try {
+      return Supabase.instance.client;
+    } catch (_) {
+      return null;
+    }
+  }
+
   Future<void> _loadStats() async {
     final stats = await _service.loadStats(now: _now());
     if (!mounted) {
@@ -53,10 +67,11 @@ class _MemoryDrillPageState extends State<MemoryDrillPage> {
   }
 
   Future<void> _loadCustomPacks() async {
-    final userId = Supabase.instance.client.auth.currentUser?.id;
+    final supabase = _supabaseOrNull;
+    final userId = supabase?.auth.currentUser?.id;
     if (userId == null) return;
     try {
-      final data = await Supabase.instance.client
+      final data = await supabase!
           .from('custom_memory_packs')
           .select()
           .eq('user_id', userId)
@@ -156,10 +171,11 @@ class _MemoryDrillPageState extends State<MemoryDrillPage> {
         itemCtrls.map((c) => c.text.trim()).where((s) => s.isNotEmpty).toList();
     if (title.isEmpty || items.isEmpty) return;
 
-    final userId = Supabase.instance.client.auth.currentUser?.id;
+    final supabase = _supabaseOrNull;
+    final userId = supabase?.auth.currentUser?.id;
     if (userId == null) return;
     try {
-      await Supabase.instance.client.from('custom_memory_packs').insert({
+      await supabase!.from('custom_memory_packs').insert({
         'user_id': userId,
         'title': title,
         'category': categoryCtrl.text.trim(),
