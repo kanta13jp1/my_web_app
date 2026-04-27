@@ -66,9 +66,11 @@ class GrowthAcquisitionTouchpointSnapshot {
   ) {
     return GrowthAcquisitionTouchpointSnapshot(
       id: json['id']?.toString() ?? 'touchpoint',
-      label: json['label']?.toString() ?? 'Touchpoint',
-      touchCount: _toInt(json['touchCount']),
-      signupSubmitCount: _toInt(json['signupSubmitCount']),
+      label: (json['label'] ?? json['touchpoint'])?.toString() ?? 'Touchpoint',
+      touchCount: _toInt(json['touchCount'] ?? json['touches']),
+      signupSubmitCount: _toInt(
+        json['signupSubmitCount'] ?? json['signups'],
+      ),
     );
   }
 
@@ -877,13 +879,16 @@ $inviteUrl
       final response = await client.functions.invoke(
         'growth-hub',
         body: <String, dynamic>{
-          'action': 'acquisition.report',
+          'action': 'acquisition.touchpoint_report',
           'windowDays': windowDays,
         },
       );
       final data = _toMapValue(response.data);
       if (data['success'] == true) {
-        return GrowthAcquisitionSnapshot.fromJson(_toMapValue(data['report']));
+        final report = _toMapValue(data['report']);
+        return GrowthAcquisitionSnapshot.fromJson(
+          report.isEmpty ? data : report,
+        );
       }
     } catch (error) {
       debugPrint('Acquisition snapshot edge function fallback: $error');
@@ -1404,12 +1409,21 @@ class GrowthPresenceNavigatorObserver extends NavigatorObserver
     _heartbeatTimer?.cancel();
     _metricsTimer?.cancel();
     if (!_service.isPresenceTrackingAvailable) return;
-    unawaited(_service.syncPresence(pagePath: _currentPagePath));
+    _runSafely(
+      _service.syncPresence(pagePath: _currentPagePath),
+      'syncPresence',
+    );
     _heartbeatTimer = Timer.periodic(const Duration(minutes: 2), (_) {
-      unawaited(_service.syncPresence(pagePath: _currentPagePath));
+      _runSafely(
+        _service.syncPresence(pagePath: _currentPagePath),
+        'syncPresence heartbeat',
+      );
     });
     _metricsTimer = Timer.periodic(const Duration(minutes: 5), (_) {
-      unawaited(_service.refreshAggregateMetrics());
+      _runSafely(
+        _service.refreshAggregateMetrics(),
+        'refreshAggregateMetrics',
+      );
     });
   }
 
@@ -1440,12 +1454,28 @@ class GrowthPresenceNavigatorObserver extends NavigatorObserver
 
   void _trackRoute(Route<dynamic> route) {
     _currentPagePath = _resolvePagePath(route);
-    unawaited(
+    _runSafely(
       _acquisitionService.recordTouchpointForPagePath(_currentPagePath),
+      'recordTouchpointForPagePath',
     );
-    unawaited(_service.capturePendingReferralFromUri());
-    unawaited(_service.applyPendingReferralIfPossible());
+    _runSafely(
+      _service.capturePendingReferralFromUri(),
+      'capturePendingReferralFromUri',
+    );
+    _runSafely(
+      _service.applyPendingReferralIfPossible(),
+      'applyPendingReferralIfPossible',
+    );
     _restartTimers();
+  }
+
+  void _runSafely(Future<void> future, String label) {
+    unawaited(
+      future.catchError((Object error, StackTrace stackTrace) {
+        debugPrint('Growth observer $label failed: $error');
+        debugPrintStack(stackTrace: stackTrace);
+      }),
+    );
   }
 
   String _resolvePagePath(Route<dynamic> route) {
