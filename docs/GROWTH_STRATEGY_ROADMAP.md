@@ -22035,3 +22035,13 @@ Phase4 drafts 新規作成 (8ファイル):
 - `formatHorseEntryForPrompt`: `前走:` 部分に「着差${prev_margin}」表示追加 → AI に着差データを提供
 - `buildHorseRacePrompt`: 「前走着差が大差なら評価ダウン、ハナ/クビ差なら健闘」のルールを明示
 - `evaluateHorsePredictionAccuracy`: features に「前走着差」追加
+
+## PS#4 S83 — 2026-04-28 (_CompetitorInfo 118社 + sitemap 117ルート)
+
+**追加20社**: niconico / nintendo / ntt-docomo / softbank-telecom / tabelog / suumo / threads / tiktok-shop / hatena / yayoi / you-com / mem-ai / together-ai / postman / sentry / pika / wise / oura / coincheck / perplexity-ai
+
+- `comparison_page.dart`: `_competitorInfo` map 98→118社
+- `sitemap.xml`: vs-* ルート 97→117本
+- dart format + flutter analyze: 0 issues
+- Commit: 3d023930 on main
+- 残: 54社 (172-118=54)
