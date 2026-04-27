@@ -1,7 +1,7 @@
 ---
 title: "OpenAI Codex vs GitHub Copilot in 2026 — How a Solo Dev Actually Splits the Work"
 tags: ai,programming,productivity,webdev
-published: false
+published: true
 ---
 
 # OpenAI Codex vs GitHub Copilot in 2026 — How a Solo Dev Actually Splits the Work
