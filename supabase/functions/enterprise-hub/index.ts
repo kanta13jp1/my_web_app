@@ -877,6 +877,21 @@ serve(async (req) => {
         return json({ success: true, check: item });
       }
 
+      // ── AI Agent Hub ────────────────────────────────────────────────────────────
+      case "agent.departments": {
+        const departments = await listItems(admin, "agent_department", userId);
+        return json({ success: true, departments });
+      }
+      case "agent.performance": {
+        const ranking = await listItems(admin, "agent_performance", userId);
+        return json({ success: true, ranking });
+      }
+      case "agent.routing": {
+        const items = await listItems(admin, "agent_routing", userId, 1);
+        const routing = items[0]?.metadata ?? { rules: [], default_agent: "general" };
+        return json({ success: true, ...routing });
+      }
+
       default:
         return json({ error: `Unknown action: ${action}` }, 400);
     }

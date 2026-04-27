@@ -551,6 +551,20 @@ serve(async (req: Request) => {
         return json({ success: true, join });
       }
 
+      // ── Changelog ───────────────────────────────────────────────────────────────
+      case "changelog.list": {
+        const entries = await listItems(admin, "changelog_entry", userId);
+        return json({ success: true, entries });
+      }
+      case "changelog.create": {
+        const entry = await addItem(admin, "changelog_entry", userId, {
+          title: body.title, type: body.type ?? "feature",
+          description: body.description ?? "",
+          created_at: new Date().toISOString(),
+        });
+        return json({ success: true, entry });
+      }
+
       default:
         return json({ error: `Unknown action: ${action}` }, 400);
     }
