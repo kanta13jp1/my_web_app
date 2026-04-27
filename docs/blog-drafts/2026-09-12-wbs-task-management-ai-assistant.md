@@ -1,7 +1,7 @@
 ---
 title: "AI がタスクを自動仕分け — 自分株式会社の WBS × AI アシスタント設計"
 tags: productivity,AI,saas,個人開発
-published: false
+published: true
 ---
 
 # AI がタスクを自動仕分け — 自分株式会社の WBS × AI アシスタント設計
