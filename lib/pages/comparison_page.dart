@@ -1539,6 +1539,201 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'canva': const _CompetitorInfo(
+    name: 'Canva',
+    emoji: '🖌️',
+    tagline: 'Canvaはデザイン民主化の先駆者。自分株式会社はデザイン以外の「人生全体」をAIで最適化する個人OS。',
+    searchKeyword: 'Canva代替 オンラインデザイン代替 グラフィックデザイン代替',
+    accentColor: Color(0xFF7D2AE8),
+    painPoints: [
+      'Canva Pro \$12.99/月 — グラフィック・プレゼン作成に特化し、個人の財務・タスク・健康管理との統合がない',
+      'クリエイター向けツールで、個人のライフスタイル管理・目標設定・AI学習との接続がない',
+      'チームコラボはできるが、個人のWBS・習慣・資産管理は別アプリが必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'グラフィック・プレゼン作成',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'タスク・目標管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '個人財務・家計管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: 'AIアシスタント統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '無料プランあり',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'mercari': const _CompetitorInfo(
+    name: 'メルカリ',
+    emoji: '🏪',
+    tagline: 'メルカリは日本最大のフリマアプリ。自分株式会社は不要品売却を含む個人の資産・収支全体をAIで管理。',
+    searchKeyword: 'メルカリ代替 フリマ代替 不用品売却代替',
+    accentColor: Color(0xFFFF0211),
+    painPoints: [
+      'メルカリは売買取引に特化 — 売上金の家計全体への統合・税務管理・資産トラッキングができない',
+      '不要品売却の記録が個人の財務ダッシュボードに自動反映されない',
+      '副収入としての売上をタスク・目標管理と紐付けられないため「副業CEO」的な管理が不可能',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'フリマ・中古品売買',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: '個人収支・資産管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: 'タスク・副業管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: 'AIアシスタント',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '無料で始められる',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'rakuten': const _CompetitorInfo(
+    name: '楽天グループ',
+    emoji: '🛒',
+    tagline: '楽天はEC・金融・通信の複合サービス群。自分株式会社は楽天サービスを含む個人の全取引・資産をAIで一元管理。',
+    searchKeyword: '楽天代替 楽天市場代替 楽天経済圏代替',
+    accentColor: Color(0xFFBF0000),
+    painPoints: [
+      '楽天は個別サービス(市場/銀行/カード/モバイル)の集合体 — 横断的な個人財務ダッシュボードが存在しない',
+      '楽天ポイント・銀行残高・カード明細が分散し、資産全体を俯瞰できない',
+      '楽天経済圏の最適化はできるが、タスク・習慣・健康・AI学習との統合がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'EC・金融・通信サービス群',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: '個人資産・収支一元管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: 'AIアシスタント統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: 'タスク・習慣管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: 'AI大学 (学習管理)',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'salesforce': const _CompetitorInfo(
+    name: 'Salesforce',
+    emoji: '☁️',
+    tagline: 'SalesforceはCRMの王者。自分株式会社は個人が「自分自身の顧客」として人生全体をCRM的にAI管理する個人OS。',
+    searchKeyword: 'Salesforce代替 CRM代替 顧客管理代替',
+    accentColor: Color(0xFF00A1E0),
+    painPoints: [
+      'Salesforce Starter \$25/user/月〜 — 企業向けCRMで個人ユーザーには高すぎ・複雑すぎる',
+      '営業・顧客管理に最適化されており、個人の家計・健康・習慣・AI学習との統合がない',
+      'Agentforce(AI)はエンタープライズ向け — 個人の「人生CEO」的なAI活用とは設計思想が異なる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '企業向けCRM・営業管理',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: '個人タスク・目標管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '個人財務・家計管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: 'AI大学 (学習管理)',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'windsurf': const _CompetitorInfo(
+    name: 'Windsurf (Codeium)',
+    emoji: '🏄',
+    tagline: 'Windsurfは次世代AI IDEの挑戦者。自分株式会社はコーディング以外の人生全体をAI化する個人OS。',
+    searchKeyword: 'Windsurf代替 Codeium代替 AI IDE代替 Cursor代替',
+    accentColor: Color(0xFF5C6BC0),
+    painPoints: [
+      'Windsurf Pro \$15/月 — AI IDEとして開発者に特化し、家計・健康・習慣・目標管理は対象外',
+      'Cursor同様、コーディング以外の日常タスク・財務管理・AI大学学習を一元管理できない',
+      '開発者専用ツール — 自分株式会社はノンエンジニアも含む全ライフカテゴリをカバー',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AIコード補完・エージェント',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'タスク・プロジェクト管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '個人財務・家計管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: 'AI学習ログ・AI大学',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '習慣・健康トラッキング',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
