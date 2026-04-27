@@ -40,9 +40,15 @@ Home画面の追加要望フォームから登録されました。
 4. If CI fails on mechanical issues, `ci-auto-fix.yml` attempts `dart fix --apply` and `deno fmt`.
 5. Merge only after CI is green and the issue scope is satisfied.
 
+## Codex #1 Update
+
+- Added explicit SDK readiness gates for the future AI coach flow.
+- Added a browser-side audio pipeline handoff from mic capture through Krisp filtering, VAD, STT, and coach response.
+- Kept external blockers visible: Krisp SDK contract/API key and model distribution terms are still user/vendor decisions.
+
 ## Checklist
 
-- [ ] Reproduction is clear
-- [ ] Smallest safe fix is implemented
-- [ ] Analyze/tests/CI are checked
-- [ ] PR notes explain the change and the remaining risk
+- [x] Reproduction is clear
+- [x] Smallest safe fix is implemented
+- [x] Analyze/tests are checked locally
+- [x] PR notes explain the change and the remaining risk
