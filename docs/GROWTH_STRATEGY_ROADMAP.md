@@ -21911,3 +21911,13 @@ Google I/O 2026 競合脅威 事前ブリーフィング
 - Map でインデックス化 → ループ内 O(1) ルックアップ
 - 50レース評価: DB ラウンドトリップ 100+ → **3** に削減
 - S70 で拡大した毎時 17-23時実行との組み合わせで evaluate の高速化・Supabase 負荷軽減
+
+## Rule 17 WF health check (2026-04-28 PS#1 S53)
+- 全 WF success率: 11/13 (deploy-prod + health-monitor が失敗中 → 修正済み)
+- **deploy-prod** FAIL: migration version 20260428000000 に 3 ファイル衝突 (SQLSTATE 23505)
+  → 000100/000200 にリネーム → push → 新デプロイ in_progress
+- **health-monitor** FAIL: ef_check() の echo "  name: HTTP code" が >> $GITHUB_OUTPUT に混入
+  → Invalid format error → echo "$name=$code" >> $GITHUB_OUTPUT を関数内に移動
+- Workflow Failure Handler: 23 runs = skipped(20)+success(3) — 正常動作
+- orphan branches: claude/*(3本) codex/*(3本) — 5本未満のため保留
+- 修正コミット: 76d45442 → main push 済み
