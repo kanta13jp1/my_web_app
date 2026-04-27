@@ -1,7 +1,7 @@
 ---
 title: "パブリックメモ vs Notion Pages — 「公開する」設計の違いが生産性を変える"
 tags: notion,productivity,saas,個人開発
-published: false
+published: true
 ---
 
 # パブリックメモ vs Notion Pages — 「公開する」設計の違いが生産性を変える

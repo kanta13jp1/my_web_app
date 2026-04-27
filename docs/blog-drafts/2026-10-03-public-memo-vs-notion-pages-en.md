@@ -1,7 +1,7 @@
 ---
 title: "Public Memos vs Notion Pages: Why 'Publish Anything' Beats 'Publish Perfectly'"
 tags: notion,productivity,saas,webdev
-published: false
+published: true
 ---
 
 # Public Memos vs Notion Pages: Why "Publish Anything" Beats "Publish Perfectly"
