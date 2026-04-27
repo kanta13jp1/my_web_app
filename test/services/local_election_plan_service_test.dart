@@ -599,6 +599,62 @@ void main() {
     expect(updatedSaitama.currentCandidateWinRatePercent, 100);
   });
 
+  test('auto update counts runner-up status as a loss', () async {
+    const service = LocalElectionPlanService();
+    final prefs = await SharedPreferences.getInstance();
+    final plan = await service.loadPlan(prefs: prefs);
+    final ehime =
+        plan.prefectures.firstWhere((item) => item.prefecture == '愛媛');
+    final now = DateTime(2026, 4, 27, 19);
+
+    final updated = service.buildAutoUpdatedPlan(
+      plan,
+      LocalElectionRealitySnapshot.fromJson(<String, dynamic>{
+        'fetchedAt': now.toIso8601String(),
+        'officialCurrentLocalMembers': 362,
+        'actualNetIncreaseRequired': 338,
+        'prefectures': <Map<String, dynamic>>[
+          <String, dynamic>{
+            'prefecture': '愛媛県',
+            'sourceUrl': 'https://example.com/ehime',
+            'currentMembers': 5,
+            'prefecturalAssemblyMembers': 2,
+            'municipalAssemblyMembers': 3,
+          },
+        ],
+        'upcomingSchedules': <Map<String, dynamic>>[
+          <String, dynamic>{
+            'electionName': '松山市議会議員選挙',
+            'prefecture': '愛媛県',
+            'municipality': '松山市',
+            'electionCategory': 'assembly',
+            'voteDate': '2026-04-26',
+            'announcementDate': '2026-04-19',
+            'detailUrl': 'https://go2senkyo.com/local/senkyo/23307',
+            'officialCandidateSourceUrl': 'https://new-kokumin.jp/election',
+            'seatCount': 41,
+            'totalCandidateCount': 55,
+            'kokuminCandidateCount': 2,
+            'kokuminCandidateNames': <String>['十川 ゆういち', '伊藤 しゅん'],
+            'kokuminCandidateStatuses': <String>['当選', '次点'],
+            'kokuminCandidateVotes': <int>[2161, 2122],
+            'kokuminCandidateXHandles': <String>['sogawa123', 'itoh_syun0204'],
+            'isPast': true,
+          },
+        ],
+      }),
+      now: now,
+    );
+
+    final updatedEhime = updated.prefectures.firstWhere(
+      (item) => item.prefecture == ehime.prefecture,
+    );
+    expect(updatedEhime.postConventionBattleCount, 2);
+    expect(updatedEhime.postConventionWinCount, 1);
+    expect(updatedEhime.postConventionLossCount, 1);
+    expect(updatedEhime.currentCandidateWinRatePercent, 50);
+  });
+
   test('auto update preserves existing cdp benchmarks when snapshot omits them',
       () async {
     const service = LocalElectionPlanService();

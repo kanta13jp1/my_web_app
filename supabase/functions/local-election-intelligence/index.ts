@@ -300,8 +300,9 @@ const MANUAL_2026_SCHEDULES: ManualScheduleSupplement[] = [
     electionName: "北名古屋市議会議員選挙",
     voteDate: "2026-04-19",
     electionCategory: "assembly",
+    resultSourceUrls: ["https://go2senkyo.com/local/senkyo/26520"],
     candidates: [
-      { name: "渡邉あきら", xHandle: "watanabeakira06" },
+      { name: "渡辺 あきら", xHandle: "watanabeakira06" },
       { name: "沢とおる", xHandle: "sawatoru2026" },
     ],
   },
@@ -312,6 +313,15 @@ const MANUAL_2026_SCHEDULES: ManualScheduleSupplement[] = [
     voteDate: "2026-04-19",
     electionCategory: "assembly",
     candidates: [{ name: "二口ゆたか", xHandle: "futakuchiyutaka" }],
+  },
+  {
+    prefecture: "高知県",
+    municipality: "土佐市",
+    electionName: "土佐市議会議員選挙",
+    voteDate: "2026-04-19",
+    electionCategory: "assembly",
+    resultSourceUrls: ["https://go2senkyo.com/local/senkyo/25823"],
+    candidates: [],
   },
   {
     prefecture: "香川県",
@@ -368,9 +378,10 @@ const MANUAL_2026_SCHEDULES: ManualScheduleSupplement[] = [
     electionName: "松山市議会議員選挙",
     voteDate: "2026-04-26",
     electionCategory: "assembly",
+    resultSourceUrls: ["https://go2senkyo.com/local/senkyo/23307"],
     candidates: [
-      { name: "伊藤しゅん", xHandle: "itoh_syun0204" },
-      { name: "十川ゆういち", xHandle: "sogawa123" },
+      { name: "伊藤 しゅん", xHandle: "itoh_syun0204" },
+      { name: "十川 ゆういち", xHandle: "sogawa123" },
     ],
   },
   {
@@ -1598,7 +1609,7 @@ async function applyScheduleResultSources(
   entry: LocalElectionScheduleEntry,
   supplement?: ManualScheduleSupplement,
 ): Promise<LocalElectionScheduleEntry> {
-  if (!entry.isPast || !hasUnresolvedScheduleCandidate(entry)) {
+  if (!entry.isPast || !needsScheduleResultRecovery(entry, supplement)) {
     return entry;
   }
   const urls = uniqueStrings([
@@ -1624,15 +1635,7 @@ async function applyScheduleResultSources(
     return entry;
   }
 
-  const candidateRows = applyScheduleResultCandidateRows(
-    entry.kokuminCandidateNames.map((name, index) => ({
-      name,
-      statusLabel: entry.kokuminCandidateStatuses[index] ?? "",
-      votes: entry.kokuminCandidateVotes[index] ?? 0,
-      xHandle: entry.kokuminCandidateXHandles[index] ?? "",
-    })),
-    candidateResults,
-  );
+  const candidateRows = recoverScheduleCandidateRows(entry, candidateResults);
 
   return {
     ...entry,
@@ -1644,6 +1647,20 @@ async function applyScheduleResultSources(
   };
 }
 
+function needsScheduleResultRecovery(
+  entry: LocalElectionScheduleEntry,
+  supplement?: ManualScheduleSupplement,
+) {
+  if (hasUnresolvedScheduleCandidate(entry)) {
+    return true;
+  }
+  const hasResultSource = entry.detailUrl.trim() !== "" ||
+    (supplement?.resultSourceUrls ?? []).length > 0;
+  return entry.kokuminCandidateNames.length === 0 &&
+    hasResultSource &&
+    isLocalElectionName(entry.electionName);
+}
+
 function hasUnresolvedScheduleCandidate(entry: LocalElectionScheduleEntry) {
   return entry.kokuminCandidateNames.some((name, index) =>
     name.trim() !== "" &&
@@ -1651,6 +1668,35 @@ function hasUnresolvedScheduleCandidate(entry: LocalElectionScheduleEntry) {
       entry.kokuminCandidateStatuses[index] ?? "",
     )
   );
+}
+
+function recoverScheduleCandidateRows(
+  entry: LocalElectionScheduleEntry,
+  resultCandidates: ScheduleResultCandidate[],
+): ScheduleCandidateRow[] {
+  const baseRows = entry.kokuminCandidateNames.map((name, index) => ({
+    name,
+    statusLabel: entry.kokuminCandidateStatuses[index] ?? "",
+    votes: entry.kokuminCandidateVotes[index] ?? 0,
+    xHandle: entry.kokuminCandidateXHandles[index] ?? "",
+  }));
+  if (baseRows.length > 0) {
+    return applyScheduleResultCandidateRows(baseRows, resultCandidates);
+  }
+  const recoveredRows = resultCandidates
+    .filter(isKokuminResultCandidate)
+    .map((candidate) => ({
+      name: candidate.name,
+      statusLabel: candidate.statusLabel,
+      votes: candidate.votes,
+      xHandle: "",
+    }));
+  return mergeScheduleCandidateRows([], recoveredRows);
+}
+
+function isKokuminResultCandidate(candidate: ScheduleResultCandidate): boolean {
+  const party = normalizeWhitespace(candidate.party).replace(/[ \u3000]/g, "");
+  return party.includes("国民民主党") || party === "国民民主";
 }
 
 function isResolvedScheduleOutcomeStatus(value: string): boolean {
@@ -1737,28 +1783,7 @@ function parseGo2SenkyoCandidateResults(
     candidates.push({ name, party, statusLabel, votes });
   }
 
-  if (seatCount <= 0 || candidates.length < seatCount) {
-    return candidates;
-  }
-
-  const winningKeys = new Set(
-    [...candidates]
-      .filter((candidate) => candidate.votes > 0)
-      .sort((left, right) => right.votes - left.votes)
-      .slice(0, seatCount)
-      .map((candidate) => normalizeCandidateNameForKey(candidate.name)),
-  );
-
-  return candidates.map((candidate) => {
-    if (candidate.statusLabel !== "" || candidate.votes <= 0) {
-      return candidate;
-    }
-    const key = normalizeCandidateNameForKey(candidate.name);
-    return {
-      ...candidate,
-      statusLabel: winningKeys.has(key) ? "当選" : "落選",
-    };
-  });
+  return inferMissingResultStatuses(candidates, seatCount);
 }
 
 function parseFlatScheduleResultRows(
@@ -1840,15 +1865,22 @@ function inferMissingResultStatuses(
   candidates: ScheduleResultCandidate[],
   seatCount: number,
 ): ScheduleResultCandidate[] {
-  if (seatCount <= 0 || candidates.length < seatCount) {
+  if (
+    seatCount <= 0 ||
+    candidates.filter((item) => item.votes > 0).length <= seatCount
+  ) {
     return candidates;
   }
+  const rankedCandidates = [...candidates]
+    .filter((candidate) => candidate.votes > 0)
+    .sort((left, right) => right.votes - left.votes);
   const winningKeys = new Set(
-    [...candidates]
-      .filter((candidate) => candidate.votes > 0)
-      .sort((left, right) => right.votes - left.votes)
+    rankedCandidates
       .slice(0, seatCount)
       .map((candidate) => normalizeCandidateNameForKey(candidate.name)),
+  );
+  const runnerUpKey = normalizeCandidateNameForKey(
+    rankedCandidates[seatCount]?.name ?? "",
   );
 
   return candidates.map((candidate) => {
@@ -1856,6 +1888,12 @@ function inferMissingResultStatuses(
       return candidate;
     }
     const key = normalizeCandidateNameForKey(candidate.name);
+    if (key === runnerUpKey) {
+      return {
+        ...candidate,
+        statusLabel: "次点",
+      };
+    }
     return {
       ...candidate,
       statusLabel: winningKeys.has(key) ? "当選" : "落選",
@@ -1929,6 +1967,9 @@ function normalizeScheduleResultStatus(value: string): string {
   if (normalized === "落") {
     return "落選";
   }
+  if (normalized === "次") {
+    return "次点";
+  }
   if (normalized.includes("無投票")) {
     return "無投票当選";
   }
@@ -1938,7 +1979,7 @@ function normalizeScheduleResultStatus(value: string): string {
   if (normalized.includes("次点")) {
     return "次点";
   }
-  if (normalized.includes("落選")) {
+  if (normalized.includes("落選") || normalized.includes("惜敗")) {
     return "落選";
   }
   return "";
