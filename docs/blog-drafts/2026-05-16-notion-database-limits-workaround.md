@@ -1,7 +1,7 @@
 ---
 title: "Notion データベースの限界と回避策 — 個人利用で詰まる7つの壁と解決法"
 tags: Notion,個人開発,productivity,buildinpublic
-published: false
+published: true
 ---
 
 # Notion データベースの限界と回避策 — 個人利用で詰まる7つの壁と解決法
