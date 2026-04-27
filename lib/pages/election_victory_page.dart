@@ -4464,6 +4464,8 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
           pastElectionResults: snapshot == null
               ? const <PastElectionResult>[]
               : _displayPastElectionResults(snapshot),
+          members:
+              snapshot?.members ?? const <LocalElectionLegislatorProfile>[],
         );
 
         if (stacked) {

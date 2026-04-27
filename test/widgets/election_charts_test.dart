@@ -87,6 +87,7 @@ void main() {
               prefectures: _samplePrefecturePlans(),
               schedules: _sampleSchedules(),
               pastElectionResults: _samplePastElectionResults(),
+              members: _sampleMembers(),
             ),
           ),
         ),
@@ -103,6 +104,9 @@ void main() {
     expect(find.text('KGI目標'), findsWidgets);
     expect(find.text('KPI実績'), findsWidgets);
     expect(find.text('現職人数'), findsOneWidget);
+    expect(find.text('現職議員名簿'), findsOneWidget);
+    expect(find.textContaining('東京 花子（中野区）'), findsOneWidget);
+    expect(find.textContaining('東京 次郎（東京都）'), findsOneWidget);
     expect(find.text('立憲地方議員'), findsOneWidget);
     expect(find.text('現職維持目標'), findsOneWidget);
     expect(find.text('現職維持数'), findsOneWidget);
@@ -257,6 +261,35 @@ List<PastElectionResult> _samplePastElectionResults() {
           votes: 1234,
         ),
       ],
+    ),
+  ];
+}
+
+List<LocalElectionLegislatorProfile> _sampleMembers() {
+  return const <LocalElectionLegislatorProfile>[
+    LocalElectionLegislatorProfile(
+      prefecture: '東京都',
+      sourceUrl: 'https://example.com/tokyo',
+      detailUrl: 'https://example.com/member/hanako',
+      name: '東京 花子',
+      kana: 'とうきょう はなこ',
+      constituency: '東京都中野区',
+      municipality: '中野区',
+      assemblyLabel: '中野区議会議員',
+      assemblyCategory: 'municipal',
+      electionCountLabel: '1期',
+    ),
+    LocalElectionLegislatorProfile(
+      prefecture: '東京都',
+      sourceUrl: 'https://example.com/tokyo',
+      detailUrl: 'https://example.com/member/jiro',
+      name: '東京 次郎',
+      kana: 'とうきょう じろう',
+      constituency: '東京都',
+      municipality: '東京都',
+      assemblyLabel: '東京都議会議員',
+      assemblyCategory: 'prefectural',
+      electionCountLabel: '2期',
     ),
   ];
 }
