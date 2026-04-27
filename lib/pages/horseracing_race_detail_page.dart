@@ -330,42 +330,107 @@ class _HorseracingRaceDetailPageState extends State<HorseracingRaceDetailPage> {
     final votes = _consensus!['votes'] as int? ?? 0;
     final agreementRate =
         ((_consensus!['agreement_rate'] as num?)?.toDouble() ?? 0) * 100;
+    final placePick = _consensus!['place_consensus'] as String?;
+    final placeDistribution = (_consensus!['place_distribution'] as List?)
+        ?.take(3)
+        .cast<Map<String, dynamic>>()
+        .toList();
 
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       color: const Color(0xFFDC2626).withValues(alpha: 0.08),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.group_work, color: Color(0xFFDC2626), size: 14),
-          const SizedBox(width: 6),
-          const Text(
-            'コンセンサス',
-            style: TextStyle(
-              color: Color(0xFF94A3B8),
-              fontSize: 12,
-              height: 1.6,
-            ),
+          Row(
+            children: [
+              const Icon(Icons.group_work, color: Color(0xFFDC2626), size: 14),
+              const SizedBox(width: 6),
+              const Text(
+                'コンセンサス',
+                style: TextStyle(
+                  color: Color(0xFF94A3B8),
+                  fontSize: 12,
+                  height: 1.6,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                '◎ $firstPick  ($votes社一致)',
+                style: const TextStyle(
+                  color: Color(0xFFDC2626),
+                  fontWeight: FontWeight.bold,
+                  fontSize: 13,
+                  height: 1.6,
+                ),
+              ),
+              const Spacer(),
+              Text(
+                '信頼度 ${agreementRate.toStringAsFixed(0)}%',
+                style: const TextStyle(
+                  color: Color(0xFF94A3B8),
+                  fontSize: 11,
+                  height: 1.5,
+                ),
+              ),
+            ],
           ),
-          const SizedBox(width: 8),
-          Text(
-            '◎ $firstPick  ($votes社一致)',
-            style: const TextStyle(
-              color: Color(0xFFDC2626),
-              fontWeight: FontWeight.bold,
-              fontSize: 13,
-              height: 1.6,
+          if (placePick != null) ...[
+            const SizedBox(height: 4),
+            Row(
+              children: [
+                const SizedBox(width: 20),
+                const Text(
+                  '複勝',
+                  style: TextStyle(
+                    color: Color(0xFF94A3B8),
+                    fontSize: 11,
+                    height: 1.5,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  placePick,
+                  style: const TextStyle(
+                    color: Color(0xFFF59E0B),
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12,
+                    height: 1.5,
+                  ),
+                ),
+                if (placeDistribution != null) ...[
+                  const SizedBox(width: 8),
+                  ...placeDistribution.map((h) {
+                    final name = h['horse_name'] as String? ?? '';
+                    final rank = h['rank'] as int? ?? 0;
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 4),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color:
+                              const Color(0xFFF59E0B).withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Text(
+                          '$rank位 $name',
+                          style: const TextStyle(
+                            color: Color(0xFFF59E0B),
+                            fontSize: 9,
+                            height: 1.4,
+                          ),
+                        ),
+                      ),
+                    );
+                  }),
+                ],
+              ],
             ),
-          ),
-          const Spacer(),
-          Text(
-            '信頼度 ${agreementRate.toStringAsFixed(0)}%',
-            style: const TextStyle(
-              color: Color(0xFF94A3B8),
-              fontSize: 11,
-              height: 1.5,
-            ),
-          ),
+          ],
         ],
       ),
     );

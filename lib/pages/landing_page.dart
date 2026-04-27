@@ -1743,6 +1743,22 @@ $input
                 );
               }).toList(),
             ),
+            const SizedBox(height: 12),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton.icon(
+                onPressed: () =>
+                    Navigator.of(context).pushNamed('/competitors'),
+                icon: const Icon(
+                  Icons.grid_view_rounded,
+                  size: 14,
+                ),
+                label: const Text(
+                  '全172社を見る →',
+                  style: TextStyle(fontSize: 13, height: 1.5),
+                ),
+              ),
+            ),
           ],
         ),
       ),

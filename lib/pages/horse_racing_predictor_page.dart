@@ -3178,6 +3178,10 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
   ) {
     final dailyAccuracy = _mapList(learning['daily_accuracy']);
     final backfillStatus = _mapList(learning['backfill_status']);
+    final placeRow =
+        betTypeAccuracy.where((r) => r['bet_type'] == '複勝').firstOrNull;
+    final wideRow =
+        betTypeAccuracy.where((r) => r['bet_type'] == 'ワイド').firstOrNull;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(14),
@@ -3230,7 +3234,34 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
                 height: 1.5,
               ),
             )
-          else
+          else ...[
+            if (placeRow != null || wideRow != null) ...[
+              Row(
+                children: [
+                  if (placeRow != null)
+                    Expanded(
+                      child: _statCard(
+                        '複勝命中率',
+                        '${(placeRow['hit_rate_pct'] as num?)?.toStringAsFixed(1) ?? '-'}%',
+                        Icons.trending_up,
+                        const Color(0xFF10B981),
+                      ),
+                    ),
+                  if (placeRow != null && wideRow != null)
+                    const SizedBox(width: 8),
+                  if (wideRow != null)
+                    Expanded(
+                      child: _statCard(
+                        'ワイド命中率',
+                        '${(wideRow['hit_rate_pct'] as num?)?.toStringAsFixed(1) ?? '-'}%',
+                        Icons.expand,
+                        const Color(0xFF8B5CF6),
+                      ),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 8),
+            ],
             Wrap(
               spacing: 8,
               runSpacing: 8,
@@ -3239,6 +3270,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
                   _buildBetTypeAccuracyCard(row),
               ],
             ),
+          ],
           if (learning.isNotEmpty) ...[
             const SizedBox(height: 10),
             Text(
