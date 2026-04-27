@@ -22027,3 +22027,11 @@ Phase4 drafts 新規作成 (8ファイル):
 - **EF 数**: 50 維持 (新 EF 追加なし)
 - **dart format**: ai_provider_registry.dart + error_reporter.dart 自動修正
 - commit: a4e12455 + dd178523
+
+## 2026-04-28 PS#6 S75 — 競馬AI: prev_margin 9因子目追加
+
+- `tools-hub/index.ts`: `marginPenaltyScore()` 新規追加 (大差=30pt, クビ=2pt, 数値比例 max 30pt)
+- `sortHorseEntriesForLearning`: 8→9 因子化 (prev_finish 直後に prev_margin penalty を挿入)
+- `formatHorseEntryForPrompt`: `前走:` 部分に「着差${prev_margin}」表示追加 → AI に着差データを提供
+- `buildHorseRacePrompt`: 「前走着差が大差なら評価ダウン、ハナ/クビ差なら健闘」のルールを明示
+- `evaluateHorsePredictionAccuracy`: features に「前走着差」追加
