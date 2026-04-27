@@ -1,7 +1,7 @@
 ---
 title: "Designing AI Personality: The What / How / Who Framework"
 tags: ai,design,programming,indiedev
-published: false
+published: true
 ---
 
 # Designing AI Personality: The What / How / Who Framework

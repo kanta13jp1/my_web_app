@@ -1,7 +1,7 @@
 ---
 title: "AIに「人格」を設計する — what/how/who 3軸フレームワーク"
 tags: AI,個人開発,設計,buildinpublic
-published: false
+published: true
 ---
 
 # AIに「人格」を設計する — what/how/who 3軸フレームワーク
