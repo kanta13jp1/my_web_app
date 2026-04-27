@@ -1,0 +1,58 @@
+name: Video Pipeline Smoke Test
+
+# Win版#132 part 37 — exercises scripts/video/build_srt.py +
+# scripts/video/make_cards.py + scripts/embed_video_in_philosophy.py
+# end-to-end without burning YouTube quota.
+#
+# Runs on PRs that touch the video-pipeline source so a regression there
+# is caught before the heavyweight notebooklm-video-pipeline.yml is
+# dispatched manually.
+
+on:
+  pull_request:
+    paths:
+      - 'scripts/video/**'
+      - 'scripts/embed_video_in_philosophy.py'
+      - '.github/workflows/notebooklm-video-pipeline.yml'
+      - '.github/workflows/video-pipeline-test.yml'
+  push:
+    branches:
+      - staging
+      - develop
+    paths:
+      - 'scripts/video/**'
+      - 'scripts/embed_video_in_philosophy.py'
+      - '.github/workflows/notebooklm-video-pipeline.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: video-pipeline-test-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  smoke:
+    name: scripts/video smoke test
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install fonts-noto-cjk + pillow
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y fonts-noto-cjk
+          pip install pillow
+
+      - name: Run scripts/video smoke tests
+        env:
+          PYTHONUTF8: '1'
+        run: python scripts/video/_smoke_test.py

@@ -331,8 +331,9 @@ jobs:
           EOF
           curl -X POST -H 'Content-type: application/json' --data @payload.json "$SLACK_WEBHOOK_URL" --max-time 10 || true
 
-# 残スコープ (Win版#132 part 37+ / cross-instance-pr 検討):
+# 残スコープ (Win版#132 part 38+ / cross-instance-pr 検討):
 # - workflow E2E smoke test (実 dispatch / video #1 重複 ID で Step 8 dup-guard 発火確認)
+#   ※ scripts/video の単体は part 37 で video-pipeline-test.yml に分離済
 #
 # 完了済 (Win版#132 part 30):
 # - Step 8 自動 embed → scripts/embed_video_in_philosophy.py (regex insert + dup-guard)
@@ -364,3 +365,8 @@ jobs:
 #   git log --grep="TITLE=$INPUT_TITLE" --author=bot --since="1 hour ago" で
 #   直近 1h の bot commit を検索 → match で abort (Step 8 で dup-guard 発火させる前に止める)
 #   Checkout fetch-depth=100 に変更 (default=1 では history が無くて grep がスキップされる)
+#
+# 完了済 (Win版#132 part 37):
+# - scripts/video smoke test (build_srt + make_cards + embed_video の単体検証 / synthetic fixture)
+#   .github/workflows/video-pipeline-test.yml で PR / push 時自動走行
+#   scripts/video/_smoke_test.py 単体ファイル / pytest 不要 / PIL+ffmpeg 以外の依存ゼロ
