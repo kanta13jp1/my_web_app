@@ -130,34 +130,39 @@ class _GlobalHeaderClockBarState extends State<GlobalHeaderClockBar> {
                   child: Semantics(
                     label: 'アプリバージョン $versionText',
                     button: true,
-                    child: InkWell(
-                      key: const Key('global_header_version_badge'),
+                    child: Material(
+                      color: Colors.transparent,
                       borderRadius: BorderRadius.circular(10),
-                      onTap: () => Navigator.of(context).pushNamed('/settings'),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 2,
-                        ),
-                        decoration: BoxDecoration(
-                          color: versionBadgeBg,
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(
-                            color: versionBadgeBorder,
-                            width: 1,
+                      child: InkWell(
+                        key: const Key('global_header_version_badge'),
+                        borderRadius: BorderRadius.circular(10),
+                        onTap: () =>
+                            Navigator.of(context).pushNamed('/settings'),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 2,
                           ),
-                        ),
-                        child: Text(
-                          versionText,
-                          key: const Key('global_header_version_text'),
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w700,
-                            color: versionBadgeFg,
-                            height: 1.4,
-                            fontFeatures: const [
-                              FontFeature.tabularFigures(),
-                            ],
+                          decoration: BoxDecoration(
+                            color: versionBadgeBg,
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(
+                              color: versionBadgeBorder,
+                              width: 1,
+                            ),
+                          ),
+                          child: Text(
+                            versionText,
+                            key: const Key('global_header_version_text'),
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              color: versionBadgeFg,
+                              height: 1.4,
+                              fontFeatures: const [
+                                FontFeature.tabularFigures(),
+                              ],
+                            ),
                           ),
                         ),
                       ),
