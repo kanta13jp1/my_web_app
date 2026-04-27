@@ -16,16 +16,16 @@
 | 行レベル補完 (< 10行) | GitHub Copilot | — | — | **不使用** |
 | 5分以内の修正 | Copilot Inline Chat | — | — | **不使用** |
 | 500行超リファクタリング | Gemini Code Assist | Copilot | Claude Code | 事前レビューのみ |
-| SQL / アルゴリズム最適化 | OpenAI Codex | Copilot | Claude Code | 仕様確認のみ |
-| Migration (DDL + seed SQL) | **Codex** (template ベース) | Copilot | Claude Code | 命名則チェック |
-| AI大学 provider 追加 (seed SQL) | **Codex** (既存 SQL コピー改変) | — | Claude Code | routing 判断のみ |
+| SQL / アルゴリズム最適化 | OpenAI Codex (`codex1`/`codex2`) | Copilot | Claude Code | 仕様確認のみ |
+| Migration (DDL + seed SQL) | **Codex#1** (template ベース) | Copilot | Claude Code | 命名則チェック |
+| AI大学 provider 追加 (seed SQL) | **Codex#1** (既存 SQL コピー改変) | — | Claude Code | routing 判断のみ |
 | ブログ・競合リサーチ | Claude Code WEB版 (WebSearch) | NotebookLM | Gemini Search | — |
 | NotebookLM Deep Research | Win版 CLI | Gemini Research | — | 統合・要約のみ |
 | UI/デザイン (新コンポーネント) | Claude Code VSCode版 + design-skills | Figma MCP | Copilot | 設計レビュー |
 | アーキテクチャ判断 | **Claude Code** | NotebookLM + Copilot Chat | — | **専任** |
 | Dart バグ修正 (< 50行) | Copilot Inline Chat | Claude Code PS#5 | — | 必要時のみ |
-| EF バグ修正 (Deno) | Copilot / Claude Code VSCode | Codex | — | 必要時のみ |
-| GHA Workflow 作成・修正 | Claude Code PS#1 | Copilot | gh CLI スクリプト | WF health 専任 |
+| EF バグ修正 (Deno) | **Codex#2** / Copilot | Claude Code PS#5 | — | deny-by-default確認 |
+| GHA Workflow 作成・修正 | **Codex#2** / Claude Code PS#1 | Copilot | gh CLI スクリプト | WF health 専任 |
 | PR review (自動) | claude-agent-review.yml | GitHub Copilot PR review | — | — |
 | quota監視・アラート | quota-monitor.yml (Python) | — | — | **不使用** |
 
@@ -66,6 +66,8 @@ curl -s -o /dev/null -w "%{http_code}" \
 | **PS#5** | on-call バグ修正 | GitHub Copilot + GitHub MCP |
 | **PS#6** | horse_racing / バッチ | cron-batch.yml (Claude不要) ✅ |
 | **WEB版** | Issue起票 | GitHub MCP のみ (元々Claude不要) ✅ |
+| **Codex#1** | SQL / migration / seed生成 | `.claude/worktrees/instance-codex1` で継続 ✅ |
+| **Codex#2** | EF(Deno) / algorithm / GHA補助 | `.claude/worktrees/instance-codex2` で継続 ✅ |
 
 **✅ = Claude quota枯渇でも自動継続**
 
@@ -483,6 +485,8 @@ case 'notion.sync_wbs': {
 | N5 | GHA cron 1h 毎 notion sync 起動 | 2026-05-10 | 🟢 | N2-N4 |
 
 **関連ドキュメント**:
+- `docs/MULTI_INSTANCE_FLEET.md` — 10 Claude + 2 Codex の canonical roster
+- `docs/CODEX_WORKFLOW.md` — Codex#1/#2 の起動・push・handoff 手順
 - `docs/AI_FALLBACK_RUNBOOK.md` (PS#6 S26) — 開発ワークフロー別 fallback 手順
 - `supabase/migrations/20260424210000_create_ai_circuit_breaker.sql` (PS#1 S26) — quota 状態集約テーブル
 | AI | 用途 | セットアップ状態 | アクセス方法 |

@@ -5,16 +5,17 @@
 # 例:
 #   bash .claude/scripts/setup-instance-worktree.sh vscode
 #   bash .claude/scripts/setup-instance-worktree.sh win
-#   bash .claude/scripts/setup-instance-worktree.sh ps
+#   bash .claude/scripts/setup-instance-worktree.sh ps1
+#   bash .claude/scripts/setup-instance-worktree.sh codex1
 #
 # 各インスタンスは必ず固定名 worktree で作業する (git stash/pull --rebase 干渉回避)。
 set -euo pipefail
 
 INSTANCE="${1:-}"
 if [[ -z "$INSTANCE" ]]; then
-  echo "Usage: $0 <vscode|win|ps1|ps2|ps3|ps4|ps5|ps6>" >&2
+  echo "Usage: $0 <vscode|win|ps1|ps2|ps3|ps4|ps5|ps6|codex1|codex2>" >&2
   echo "" >&2
-  echo "10 インスタンス制 役割:" >&2
+  echo "Claude Code 10 + Codex 2 並行制 役割:" >&2
   echo "  vscode → UI/design (Rule12,19) / DESIGN.md token" >&2
   echo "  win    → AI大学 / migration / EF cleanup / 動画編集" >&2
   echo "  ps1    → Rule17 WF health + CI 修復" >&2
@@ -23,15 +24,17 @@ if [[ -z "$INSTANCE" ]]; then
   echo "  ps4    → 競合モニタリング + 戦略レポート" >&2
   echo "  ps5    → on-call バグ修正 (WEB/📱 Issue → 即修正)" >&2
   echo "  ps6    → horse_racing scraper / バッチ処理" >&2
+  echo "  codex1 → SQL / migration / seed 生成 (PS#3 補助)" >&2
+  echo "  codex2 → EF(Deno) / algorithm 最適化 (PS#5/#6 補助)" >&2
   echo "" >&2
   echo "(WEB/📱 はファイル編集不要 — GitHub MCP で Issue 発行のみ)" >&2
   exit 1
 fi
 
 case "$INSTANCE" in
-  vscode|win|ps1|ps2|ps3|ps4|ps5|ps6) ;;
+  vscode|win|ps1|ps2|ps3|ps4|ps5|ps6|codex1|codex2) ;;
   ps) echo "Error: PS版は 6 つに分割されました。ps1|ps2|ps3|ps4|ps5|ps6 を指定してください" >&2; exit 1 ;;
-  *) echo "Error: instance must be one of: vscode, win, ps1..ps6 (got: $INSTANCE)" >&2; exit 1 ;;
+  *) echo "Error: instance must be one of: vscode, win, ps1..ps6, codex1, codex2 (got: $INSTANCE)" >&2; exit 1 ;;
 esac
 
 # main repo path 検出 (本スクリプトはどこから実行しても OK)
@@ -46,7 +49,11 @@ if [[ -z "$MAIN_REPO" || ! -d "$MAIN_REPO/.git" && ! -f "$MAIN_REPO/.git" ]]; th
 fi
 
 WORKTREE_DIR="$MAIN_REPO/.claude/worktrees/instance-$INSTANCE"
-BRANCH="claude/$INSTANCE-wip"
+if [[ "$INSTANCE" == codex* ]]; then
+  BRANCH="codex/$INSTANCE-wip"
+else
+  BRANCH="claude/$INSTANCE-wip"
+fi
 
 echo "==> Main repo: $MAIN_REPO"
 echo "==> Worktree:  $WORKTREE_DIR"
@@ -87,4 +94,5 @@ echo ""
 echo "✅ Setup complete. Use this directory:"
 echo "   cd $WORKTREE_DIR"
 echo ""
-echo "Push to main: git push origin HEAD:main"
+echo "Push branch: git push -u origin $BRANCH"
+echo "After review/integration only: git push origin HEAD:main"

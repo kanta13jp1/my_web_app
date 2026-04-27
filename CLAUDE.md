@@ -126,19 +126,22 @@ Anthropic API outage 時も他 AI で開発継続可能な体制を確立する�
 
 | インスタンス | 推奨モデル | 推奨モード | 作業ディレクトリ | 主な制約 |
 | --- | --- | --- | --- | --- |
-| **VSCode版** | `claude-haiku-4-5` (Auto Mode) | 通常 (重い設計は sonnet-4-6 に一時切替可) | `C:/Users/kanta/GitHub/my_web_app` (main repo) | なし |
-| **Windowsアプリ版** | `claude-haiku-4-5` (Auto Mode) | 通常 + CAVEMAN節約 | `C:/Users/kanta/GitHub/my_web_app_win` (win-main branch) | なし。`PYTHONUTF8=1` 必須 |
-| **PowerShell版** | ルーティン: `claude-haiku-4-5` / 設計: `claude-sonnet-4-6` | `/fast` (定型作業) | `C:/Users/kanta/GitHub/my_web_app_ps` (ps-main branch) | なし |
+| **VSCode版** | `claude-haiku-4-5` (Auto Mode) | 通常 (重い設計は sonnet-4-6 に一時切替可) | `.claude/worktrees/instance-vscode` | UI/design 専任 |
+| **Windowsアプリ版** | `claude-haiku-4-5` (Auto Mode) | 通常 + CAVEMAN節約 | `.claude/worktrees/instance-win` | `PYTHONUTF8=1` 必須 |
+| **PowerShell版 #1-6** | ルーティン: `claude-haiku-4-5` / 設計: `claude-sonnet-4-6` | `/fast` (定型作業) | `.claude/worktrees/instance-ps1` ... `instance-ps6` | 各PS固定担当 |
 | **WEB版** | `claude-sonnet-4-6` (変更不可の場合あり) | 通常 | GitHub MCP のみ | `notebooklm` / `flutter analyze` / `deno lint` / ローカルCLI **不可** |
 | **📱 スマホ版** | `claude-sonnet-4-6` | 通常 (画像分析重視) | GitHub MCP のみ | ローカルCLI **不可** / git/dart/flutter **不可** / **GitHub MCP のみ** で git 操作。**実機 UAT・モバイル不具合トリアージ専用** |
+| **Codex#1** | OpenAI Codex CLI | SQL生成・差分レビュー | `.claude/worktrees/instance-codex1` (`codex/codex1-wip`) | SQL / migration / seed 生成。PS#3 補助 |
+| **Codex#2** | OpenAI Codex CLI | Deno/algorithm 最適化 | `.claude/worktrees/instance-codex2` (`codex/codex2-wip`) | EF(Deno) / algorithm / バッチ改善。PS#5/#6 補助 |
 
-**Worktree 運用ルール (PS版・Win版 必須)**:
-- セッション開始時: `cd C:/Users/kanta/GitHub/my_web_app_ps` (PS版) or `my_web_app_win` (Win版) で作業開始
+**Worktree 運用ルール (ローカル編集インスタンス必須)**:
+- セッション開始時: `cd C:/Users/kanta/GitHub/my_web_app/.claude/worktrees/instance-<name>` で作業開始
+- 未作成なら `powershell -ExecutionPolicy Bypass -File .claude/scripts/setup-instance-worktree.ps1 <name>` (Git Bash 環境では `bash .claude/scripts/setup-instance-worktree.sh <name>`)
 - `git pull --rebase origin main` で最新を取得 (stash 不要 — uncommitted 変更なし前提)
-- commit 後: `git push origin ps-main:main` (PS版) / `git push origin win-main:main` (Win版) で origin/main に push
-- push 後: `git pull --rebase origin main` で ps-main/win-main を最新に同期
+- commit 後: 原則 `git push -u origin HEAD` で担当 branch へ push。統合確認後のみ `git push origin HEAD:main`
+- push 後: `git pull --rebase origin main` で自 worktree branch を最新に同期
 - **git stash 禁止**: uncommitted 変更は即 commit か WIP commit (`git commit -m "WIP"`) で退避
-- main repo (`C:/Users/kanta/GitHub/my_web_app`) は **VSCode版専任** — PS版・Win版は絶対に編集しない
+- main repo (`C:/Users/kanta/GitHub/my_web_app`) は **push target / 統合確認用** — 各インスタンスは直接編集しない
 
 **WEB版代替パターン**:
 - `notebooklm ask` → WebSearch で代替
@@ -162,13 +165,13 @@ Anthropic API outage 時も他 AI で開発継続可能な体制を確立する�
 | 行レベル補完 | **GitHub Copilot** | — | 不使用 |
 | 5分以内の修正 | **Copilot Inline Chat** | — | 不使用 |
 | 500行超リファクタリング | **Gemini Code Assist** | Copilot | 事前レビュー |
-| SQL/アルゴリズム最適化 | **OpenAI Codex** | Copilot | 仕様確認のみ |
-| Migration (SQL DDL + seed) | **Codex** | Copilot | 命名則チェック |
-| AI大学 provider 追加 (seed SQL) | **Codex** (template ベース) | — | routing 判断のみ |
+| SQL/アルゴリズム最適化 | **Codex#1/#2** | Copilot | 仕様確認のみ |
+| Migration (SQL DDL + seed) | **Codex#1** | Copilot | 命名則チェック |
+| AI大学 provider 追加 (seed SQL) | **Codex#1** (template ベース) | — | routing 判断のみ |
 | AI大学 provider UI 登録 | **Copilot** (pattern 補完) | Gemini | 整合性 review |
 | Flutter widget 新規 | **Gemini** (DESIGN.md 参照) | Copilot | design-skills gate |
-| EF (Deno) 新 action | **Codex** | Copilot | deny-by-default 原則確認 |
-| GHA workflow (yml) | **Codex** | Copilot | 不使用 |
+| EF (Deno) 新 action | **Codex#2** | Copilot | deny-by-default 原則確認 |
+| GHA workflow (yml) | **Codex#2** | Copilot | 不使用 |
 | 競合 21 社調査 | **NotebookLM Deep Research** | — | 統合レポート |
 | PR レビュー (GHA) | **Claude API** (claude-sonnet-4-6) | **Gemini 1.5 Flash** (自動 fallback) | 不使用 |
 | 設計・戦略・ルール遵守 | **Claude Code** 独占 | — | 主役 |
