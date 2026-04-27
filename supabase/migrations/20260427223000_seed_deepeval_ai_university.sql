@@ -4,7 +4,7 @@ INSERT INTO ai_university_content (provider, category, title, content, source_ur
 VALUES (
   'deepeval', 'overview',
   'DeepEval — LLM/RAGシステムのユニットテストフレームワーク (G-Eval/ハルシネーション検出/CI統合 / GitHub 5k+ / 8/9)',
-  $## DeepEval とは
+  $$## DeepEval とは
 
 **DeepEval** は Confident AI が開発する LLM・RAG システム専用のオープンソース評価フレームワーク。pytest と同じ感覚で LLM の出力品質をユニットテストし、CI/CD パイプラインに組み込める。
 
@@ -72,7 +72,7 @@ DeepEval が検出する問題:
 | **AI アシスタント品質保証** | G-Eval + Answer Relevancy | 回答品質の定量化 |
 | **RAG システム改善** | Faithfulness + Contextual | ハルシネーション除去 |
 | **プロンプト A/B テスト** | 全メトリクス比較 | プロンプト最適化 |
-| **リリース品質ゲート** | CI に統合 / スコア閾値設定 | 本番品質担保 |$,
+| **リリース品質ゲート** | CI に統合 / スコア閾値設定 | 本番品質担保 |$$,
   NULL, NULL, 1
 )
 ON CONFLICT (provider, category) DO NOTHING;
@@ -81,7 +81,7 @@ INSERT INTO ai_university_content (provider, category, title, content, source_ur
 VALUES (
   'deepeval', 'api',
   'DeepEval 実践 — pytest統合・RAG評価・G-Evalカスタム基準・CI/CDパイプライン組み込み',
-  $## インストール
+  $$## インストール
 
 ```bash
 pip install deepeval
@@ -252,7 +252,7 @@ results = evaluate(
 # 統計サマリー
 for metric_name, scores in results.items():
     print(f"{metric_name}: avg={sum(scores)/len(scores):.2f}")
-```$,
+```$$,
   NULL, NULL, 2
 )
 ON CONFLICT (provider, category) DO NOTHING;
@@ -261,7 +261,7 @@ INSERT INTO ai_university_content (provider, category, title, content, source_ur
 VALUES (
   'deepeval', 'models',
   'DeepEval 技術詳解 — G-Eval数学・RAGAS指標・LLM-as-Judge設計・Confident AIダッシュボード活用',
-  $## G-Eval の数学的基盤
+  $$## G-Eval の数学的基盤
 
 **Liu et al. (2023) "G-Eval: NLG Evaluation using GPT-4 with Better Human Alignment"**:
 
@@ -379,7 +379,7 @@ Stage 4: 本番監視 (非同期)
 コスト試算:
   GPT-4o-mini での評価: $0.15/1000 テストケース
   月 10,000 テスト: $1.5/月 ← ほぼ無コスト
-```$,
+```$$,
   NULL, NULL, 3
 )
 ON CONFLICT (provider, category) DO NOTHING;

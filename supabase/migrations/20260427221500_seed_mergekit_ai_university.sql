@@ -4,7 +4,7 @@ INSERT INTO ai_university_content (provider, category, title, content, source_ur
 VALUES (
   'mergekit', 'overview',
   'Mergekit — GPUなしでLLMモデルをマージするOSSツール (SLERP/TIES/DARE/Task Arithmetic / GitHub 5k+ / 8/9)',
-  $## Mergekit とは
+  $$## Mergekit とは
 
 **Mergekit** は Charles Goddard (Arcee AI) が開発する LLM モデルマージ専用ツール。複数のファインチューニング済みモデルを**GPUなし・CPU のみ**で合成し、単一の高品質モデルを作成できる。
 
@@ -61,7 +61,7 @@ TIES/DARE はこの干渉を除去する手法
 |--------|-----------|---------|
 | **日本語 AI アシスタント** | Llama-3-ja + llama-3-instruct (SLERP) | 日本語品質 + 汎用性 |
 | **業務特化モデル** | instruct + 社内FAQ学習モデル (TIES) | ゼロコストで業務対応 |
-| **マルチ言語** | EN + JA + ZH モデル (DARE) | 3言語同時対応 |$,
+| **マルチ言語** | EN + JA + ZH モデル (DARE) | 3言語同時対応 |$$,
   NULL, NULL, 1
 )
 ON CONFLICT (provider, category) DO NOTHING;
@@ -70,7 +70,7 @@ INSERT INTO ai_university_content (provider, category, title, content, source_ur
 VALUES (
   'mergekit', 'api',
   'Mergekit 実践 — YAML設定でSLERP/TIES/DAREマージ・Frankenmerge・Hugging Face Hub保存',
-  $## インストール
+  $$## インストール
 
 ```bash
 pip install mergekit
@@ -231,7 +231,7 @@ run_merge(
         allow_crimes=True,
     ),
 )
-```$,
+```$$,
   NULL, NULL, 2
 )
 ON CONFLICT (provider, category) DO NOTHING;
@@ -240,7 +240,7 @@ INSERT INTO ai_university_content (provider, category, title, content, source_ur
 VALUES (
   'mergekit', 'models',
   'Mergekit 技術詳解 — TIES/DARE数学・タスクベクトル理論・Frankenmerge実績・モデルソープオペラ現象',
-  $## タスクベクトル理論
+  $$## タスクベクトル理論
 
 **Ilharco et al. (2023)** が提唱した "タスクベクトル" が Mergekit の理論的基盤:
 
@@ -357,7 +357,7 @@ t (SLERP 補間):
   0.5: 完全な中間
   1.0: モデル B のみ
   レイヤー別に設定可 (attention/mlp で異なる t を指定)
-```$,
+```$$,
   NULL, NULL, 3
 )
 ON CONFLICT (provider, category) DO NOTHING;

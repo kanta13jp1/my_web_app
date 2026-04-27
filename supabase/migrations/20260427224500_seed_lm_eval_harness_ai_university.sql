@@ -4,7 +4,7 @@ INSERT INTO ai_university_content (provider, category, title, content, source_ur
 VALUES (
   'lm_eval_harness', 'overview',
   'LM Evaluation Harness — EleutherAI製LLMベンチマーク標準ツール (OpenLLM Leaderboard基盤 / MMLU/HumanEval/GSM8K / GitHub 7k+ / 9/9)',
-  $## LM Evaluation Harness とは
+  $$## LM Evaluation Harness とは
 
 **LM Evaluation Harness** は EleutherAI が開発する LLM の学術ベンチマーク評価フレームワーク。**Hugging Face OpenLLM Leaderboard** の評価基盤として使われており、業界標準の評価ツール。
 
@@ -67,7 +67,7 @@ few-shot: 例題を数問見せてから質問
 | **モデル選定** | MMLU + HumanEval | 候補モデルの客観比較 |
 | **ファインチューニング効果測定** | GSM8K + TruthfulQA | 学習前後の変化確認 |
 | **ローカル vs API 品質比較** | 全指標 | コスト最適化の判断材料 |
-| **日本語モデル評価** | JCommonsenseQA + JMMLU | 日本語 LLM 選定 |$,
+| **日本語モデル評価** | JCommonsenseQA + JMMLU | 日本語 LLM 選定 |$$,
   NULL, NULL, 1
 )
 ON CONFLICT (provider, category) DO NOTHING;
@@ -76,7 +76,7 @@ INSERT INTO ai_university_content (provider, category, title, content, source_ur
 VALUES (
   'lm_eval_harness', 'api',
   'LM Evaluation Harness 実践 — ローカルモデル評価・OpenAI API評価・カスタムタスク作成・日本語ベンチマーク',
-  $## インストール
+  $$## インストール
 
 ```bash
 pip install lm_eval
@@ -242,7 +242,7 @@ for task in tasks:
 
 df = pd.DataFrame(comparison)
 print(df.to_string(index=False))
-```$,
+```$$,
   NULL, NULL, 2
 )
 ON CONFLICT (provider, category) DO NOTHING;
@@ -251,7 +251,7 @@ INSERT INTO ai_university_content (provider, category, title, content, source_ur
 VALUES (
   'lm_eval_harness', 'models',
   'LM Evaluation Harness 技術詳解 — ベンチマーク設計思想・MMLU/GSM8K/HumanEval詳細・汚染問題・日本語LLM評価比較',
-  $## ベンチマーク設計の哲学
+  $$## ベンチマーク設計の哲学
 
 EleutherAI の評価原則:
 
@@ -386,7 +386,7 @@ Phase 3: ファインチューニング効果確認
 Phase 4: 本番投入判断
   全指標でベースモデル比 -3% 以内 → OK
   それ以上の低下 → LoRA rank 下げ or データ見直し
-```$,
+```$$,
   NULL, NULL, 3
 )
 ON CONFLICT (provider, category) DO NOTHING;
