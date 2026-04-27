@@ -195,9 +195,22 @@ ${metrics.url}$streakLine
             ? Map<String, dynamic>.from(data)
             : <String, dynamic>{'success': false, 'message': data?.toString()};
     if (map['success'] != true) {
-      throw Exception(map['error']?.toString() ?? 'X post failed');
+      throw Exception(_buildXPostFailureMessage(map));
     }
     return map;
+  }
+
+  static String _buildXPostFailureMessage(Map<String, dynamic> data) {
+    final error = data['error']?.toString().trim();
+    final actionRequired = data['actionRequired']?.toString().trim();
+    final registrationUrl = data['registrationUrl']?.toString().trim();
+    final parts = <String>[
+      if (error != null && error.isNotEmpty) error else 'X post failed',
+      if (actionRequired != null && actionRequired.isNotEmpty) actionRequired,
+      if (registrationUrl != null && registrationUrl.isNotEmpty)
+        'Developer Portal: $registrationUrl',
+    ];
+    return parts.join('\n');
   }
 
   static bool _isUsableTweet(String text, String url) {
