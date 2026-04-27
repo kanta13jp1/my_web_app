@@ -1,6 +1,14 @@
 {
+  "sandbox": {
+    "network": {
+      "allowedDomains": [
+        "smmkxxavexumewbfaqpy.supabase.co"
+      ]
+    }
+  },
   "permissions": {
     "allow": [
+      "Bash(curl * https://smmkxxavexumewbfaqpy.supabase.co*)",
       "Bash(notebooklm use *)",
       "Bash(PYTHONUTF8=1 notebooklm use *)",
       "Bash(notebooklm status)",
