@@ -1,7 +1,7 @@
 ---
 title: "Notion Custom Agents 本日課金開始 — 無料で人生 6 部署を回すオルタナティブ"
 tags: Notion,AI,個人開発,buildinpublic,SaaS
-published: false
+published: true
 ---
 
 # Notion Custom Agents 本日課金開始 — 無料で人生 6 部署を回すオルタナティブ
