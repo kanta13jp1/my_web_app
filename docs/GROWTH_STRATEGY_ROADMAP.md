@@ -21659,3 +21659,16 @@ Google I/O 2026 競合脅威 事前ブリーフィング
   - https://dev.to/kanta13jp1/notion-custom-agents-paywall-starts-today-a-free-alternative-that-runs-all-6-life-departments-3alm
 - JA slug: `2026-05-04-notion-paywall-d0-alternative-6-departments`
 - orphan branch `blog-publish/24990196597-20260427-193741` マージ + 削除
+
+## PS#6 S60 — 2026-04-27 (stale worktree クリーンアップ)
+
+- git worktree remove: gallant-lehmann / nervous-cray / sweet-blackwell / vibrant-cray (metadata削除)
+- orphan dir 削除: exciting-wu / frosty-hamilton / naughty-noether / blissful-nightingale
+- cross-instance-pr 20260420_ps6_worktree_prune.md 更新: 残留タスクをVSCode向けに整理
+- leaderboard UI cross-instance-pr → done/ 確認済 (VSCode ef12a60b 実装済)
+
+## PS#6 S61 — 2026-04-27 (horseracing.stats EF 強化)
+
+- `horseracing.stats` EF に `learning` フィールド追加: daily_trend (直近7日) / top_bet_types (TOP5) / latest metrics
+- `body.days` パラメータ対応 (1-30日, デフォルト7)
+- commit: 0463591a
