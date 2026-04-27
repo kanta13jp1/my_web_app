@@ -3770,11 +3770,36 @@ ${reportText ? `> ${reportText}` : ""}`,
         }
         case "horseracing.stats": {
           const { data: stats } = await admin.from("horse_accuracy_stats").select("*").maybeSingle();
-          return json({ success: true, stats: {
-            totalBets: stats?.total_predictions ?? 0, wins: stats?.correct_count ?? 0,
-            winRate: stats?.hit_rate_pct ?? 0, totalPayout: stats?.total_payout ?? 0,
-            maxPayout: stats?.max_payout ?? 0,
-          }});
+          // Enrich with new learning metrics from the learning loop views
+          const days = Math.max(1, Math.min(30, Number(body.days ?? 7)));
+          const fromDate = new Date(Date.now() - (days - 1) * 86_400_000).toISOString().split("T")[0];
+          const { data: dailyRows } = await admin.from("horse_learning_daily_accuracy")
+            .select("race_date,evaluated_predictions,avg_learning_score,first_hit_rate_pct,skip_accuracy_pct,place_hit_rate_pct")
+            .gte("race_date", fromDate)
+            .order("race_date", { ascending: false })
+            .limit(days);
+          const { data: betTypeRows } = await admin.from("horse_bet_type_accuracy")
+            .select("bet_type,total_predictions,hit_rate_pct")
+            .neq("bet_type", "購入しない")
+            .order("hit_rate_pct", { ascending: false })
+            .limit(5);
+          const latestDay = (dailyRows ?? [])[0] as Record<string, unknown> | undefined;
+          return json({
+            success: true,
+            stats: {
+              totalBets: stats?.total_predictions ?? 0, wins: stats?.correct_count ?? 0,
+              winRate: stats?.hit_rate_pct ?? 0, totalPayout: stats?.total_payout ?? 0,
+              maxPayout: stats?.max_payout ?? 0,
+            },
+            learning: {
+              days_queried: days,
+              latest_avg_learning_score: latestDay ? Number(latestDay.avg_learning_score ?? 0) : null,
+              latest_skip_accuracy_pct: latestDay ? Number(latestDay.skip_accuracy_pct ?? 0) : null,
+              latest_first_hit_rate_pct: latestDay ? Number(latestDay.first_hit_rate_pct ?? 0) : null,
+              daily_trend: dailyRows ?? [],
+              top_bet_types: betTypeRows ?? [],
+            },
+          });
         }
         default:
           return json({ error: `Unknown horseracing/wbs action: ${action}` }, 400);
