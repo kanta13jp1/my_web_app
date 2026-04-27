@@ -61,6 +61,13 @@
 
 - ノートコメント Notion風再利用Realtime: NotebookLM のコメントUI方針を既存のノート機能へ適用し、`NoteCommentsPanel` / `NoteCommentsSheet` を共通化しました。ノート編集画面と専用コメント画面で同じコメント面を使い、ドラッガブルな底面シート、Realtime での件数追従、投稿者表示、バッジ更新を一箇所で扱えるようにしています。migration `20260423233000_wbs_codex_note_comments_notion_surface.sql` で反映。
 
+## Codex 引き継ぎメモ (2026-04-27)
+
+- 実担当タスク: `全機能AI連携・ライフ浪費ゼロ運用ループ`
+- 担当変更: 実際に着手するこの1件のみ `instance='codex' / owner_instance='codex'` としてWBSに追加。
+- 対応内容: 既存の `FeatureStrategyMonitor` と `LifeWasteElimination` の抽象を再利用し、重複ダッシュボードを増やさず、ライフ浪費ゼロ司令塔に「今日の運用ループ」を追加。現状、KGI、CSF、数値KPI、毎日モニタリング、改善の1手、拡張しない条件を同じUIで確認できるようにしました。
+- WBS DB反映: migration `20260427004000_wbs_codex_life_ai_operating_loop.sql`
+
 ## 繝槭う繝ｫ繧ｹ繝医・繝ｳ讎りｦ・(繝ｦ繝ｼ繧ｶ繝ｼ蜿ｯ隕・
 
 | | ﾎｱ迚・| ﾎｲ迚・| 譛邨ら沿 v1.0 |
