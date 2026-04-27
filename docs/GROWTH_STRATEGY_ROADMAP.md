@@ -21814,3 +21814,16 @@ Google I/O 2026 競合脅威 事前ブリーフィング
   - https://dev.to/kanta13jp1/notion-api-rate-limits-are-breaking-your-automation-heres-the-real-fix-o5p
 - JA slug: `2026-06-06-notion-api-rate-limits-solution`
 - orphan branch マージ + 削除
+
+## 2026-04-27 (PS#6 S67)
+
+### PS#6 S67: horseracing.stats EF — aggregate 全期間集計 + daily_trend 同期
+
+- `horseracing.stats` EF action 改善:
+  - `daily_trend` select に `evaluated_races` + `wide_hit_rate_pct` 追加 (S66 scraper 統計と同期)
+  - `aggregate` フィールド新設: `horse_bet_type_accuracy` から全期間集計
+    - `total_evaluated` / `place_hit_rate_pct` / `tansho_hit_rate_pct` / `wide_hit_rate_pct` / `skip_accuracy_pct`
+  - 3 クエリを `Promise.all` で並列実行 (daily / bet_type_top5 / aggregate用4bet_type)
+- backward compatible: `stats` + `learning` フィールドは変更なし
+- deno lint clean
+- migration: `20260427201500_seed_achievements_ps6_s67.sql`
