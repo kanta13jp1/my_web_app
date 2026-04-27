@@ -1,7 +1,7 @@
 ---
 title: "Claude Code ベストプラクティス 2026 — 個人開発者が半年使って学んだ10のルール"
 tags: claude,AI,個人開発,buildinpublic
-published: false
+published: true
 ---
 
 # Claude Code ベストプラクティス 2026 — 個人開発者が半年使って学んだ10のルール
