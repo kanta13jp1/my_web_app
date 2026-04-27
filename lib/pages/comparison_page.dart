@@ -3301,6 +3301,676 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'yamato-transport': const _CompetitorInfo(
+    name: 'ヤマト運輸',
+    emoji: '🚚',
+    tagline: 'ヤマト運輸は日本最大の宅配・物流サービス。自分株式会社はAI大学で物流費管理×財務×習慣を統合した個人OS。',
+    searchKeyword: 'ヤマト運輸代替 クロネコヤマト代替 宅配代替',
+    accentColor: Color(0xFFFFD700),
+    painPoints: [
+      'ヤマト宅急便サイズ・重量従量 — 宅配・物流特化サービスで財務管理・習慣トラッキング・AI学習は別アプリ依存',
+      'クロネコメンバーズポイントは便利だが個人の物流費管理・家計全体・目標管理との統合がない',
+      '自分株式会社は配送費を含む家計全体管理+AI大学+習慣を完全無料で統合提供',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '宅急便・物流サービス',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI統合ライフアシスタント',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '個人財務・家計管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '習慣・目標管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'sakura-internet': const _CompetitorInfo(
+    name: 'さくらインターネット',
+    emoji: '🌸',
+    tagline:
+        'さくらインターネットは国産クラウド・レンタルサーバーサービス。自分株式会社はAI大学でクラウド知識×財務×習慣を統合した個人OS。',
+    searchKeyword: 'さくらインターネット代替 国産クラウド代替 レンタルサーバー代替',
+    accentColor: Color(0xFFFF69B4),
+    painPoints: [
+      'さくらVPS ¥882/月〜 — クラウド・サーバーインフラ特化で個人の財務管理・習慣トラッキング・AI学習は別アプリ依存',
+      '国産クラウドとして信頼性は高いが個人の家計・目標管理・AI大学学習との統合がない',
+      '自分株式会社はAI大学でさくらインターネット等のクラウド技術を学びつつ財務・習慣を無料統合',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '国産クラウド・サーバー',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI統合ライフアシスタント',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '個人財務・家計管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '習慣・目標管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'viz-ai': const _CompetitorInfo(
+    name: 'Viz.ai',
+    emoji: '🧠',
+    tagline: 'Viz.aiはAI医療画像診断・脳卒中検出プラットフォーム。自分株式会社はAI大学で医療AI知識×財務×習慣を統合した個人OS。',
+    searchKeyword: 'Viz.ai代替 医療AI代替 AI診断代替',
+    accentColor: Color(0xFF2C7BE5),
+    painPoints: [
+      'Viz.ai病院・医療機関向け高額プラン — 医療AI診断特化ツールで個人ライフ管理・財務・習慣は対象外',
+      'CT画像からの脳卒中検出は革新的だが個人の家計・目標・AI大学学習との統合設計はない',
+      '自分株式会社はAI大学でViz.aiなどの医療AI技術を学びつつ財務・習慣を無料統合',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AI医療画像診断',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI統合ライフアシスタント',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '個人財務・家計管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '習慣・目標管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  // PS#4 S86: 14社追加 2026-04-28 (172社完結)
+  'jules-google': const _CompetitorInfo(
+    name: 'Jules (Google)',
+    emoji: '🤖',
+    tagline:
+        'JulesはGoogleのAI自律コーディングエージェント。自分株式会社はAI大学でAIエージェント知識×財務×習慣を統合した個人OS。',
+    searchKeyword: 'Jules Google代替 AIコーディング代替 自律エージェント代替',
+    accentColor: Color(0xFF4285F4),
+    painPoints: [
+      'Jules Google Labs無料〜 — 開発者向けAI自律コーディングツールで個人ライフ管理・財務・習慣は対象外',
+      'GitHubとの統合・バグ修正自動化は革新的だが個人の家計・目標・AI大学学習との統合がない',
+      '自分株式会社はAI大学でJulesなど最新AIエージェントを学びつつ財務・習慣を無料統合',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AI自律コーディングエージェント',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI統合ライフアシスタント',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '個人財務・家計管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '習慣・目標管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'kore-ai': const _CompetitorInfo(
+    name: 'Kore.ai',
+    emoji: '💬',
+    tagline:
+        'Kore.aiはエンタープライズ向けAI会話プラットフォーム。自分株式会社はAI大学で会話AI知識×財務×習慣を統合した個人OS。',
+    searchKeyword: 'Kore.ai代替 会話AIプラットフォーム代替 チャットボット代替',
+    accentColor: Color(0xFF0066FF),
+    painPoints: [
+      'Kore.ai Enterprise高額プラン — 企業向けボット・XO Platform特化で個人ライフ管理・財務・習慣は対象外',
+      '会話AI設計・統合は強力だが個人の家計・目標管理・AI大学学習との統合設計はない',
+      '自分株式会社はAI大学でKore.aiなどの会話AI技術を学びつつ財務・習慣を無料統合',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'エンタープライズ会話AIプラットフォーム',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI統合ライフアシスタント',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '個人財務・家計管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '習慣・目標管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'lifenet-insurance': const _CompetitorInfo(
+    name: 'ライフネット生命',
+    emoji: '🏥',
+    tagline: 'ライフネット生命はネット完結型生命保険。自分株式会社はAI大学で保険管理×財務×習慣を統合した個人OS。',
+    searchKeyword: 'ライフネット生命代替 ネット生命保険代替 生命保険代替',
+    accentColor: Color(0xFF00A5C8),
+    painPoints: [
+      'ライフネット生命保険料月数千円〜 — 生命保険・死亡保障特化で個人の財務全体管理・習慣・AI学習は別アプリ依存',
+      'オンライン完結の保険申込は便利だが個人の家計最適化・目標管理・AI大学との統合がない',
+      '自分株式会社は保険費用を含む家計全体管理＋AI大学＋習慣を完全無料で統合提供',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ネット完結型生命保険',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI統合ライフアシスタント',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '個人財務・家計管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '習慣・目標管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'magic-ai': const _CompetitorInfo(
+    name: 'Magic AI',
+    emoji: '🪄',
+    tagline: 'Magic AIはAIコーディング・開発加速ツール。自分株式会社はAI大学でAI開発知識×財務×習慣を統合した個人OS。',
+    searchKeyword: 'Magic AI代替 AIコーディング代替 開発加速代替',
+    accentColor: Color(0xFF8B5CF6),
+    painPoints: [
+      'Magic AI Pro高額プラン — 開発者向けAIコーディングツールで個人ライフ管理・財務・習慣は対象外',
+      'コードベース理解・生成は強力だが個人の家計・目標・AI大学学習との統合設計はない',
+      '自分株式会社はAI大学でMagic AIなどの開発ツールを学びつつ財務・習慣を無料統合',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AIコーディング・開発加速',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI統合ライフアシスタント',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '個人財務・家計管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '習慣・目標管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'metamask': const _CompetitorInfo(
+    name: 'MetaMask',
+    emoji: '🦊',
+    tagline: 'MetaMaskはWeb3・暗号資産管理ウォレット。自分株式会社はAI大学で暗号資産×財務×習慣を統合した個人OS。',
+    searchKeyword: 'MetaMask代替 暗号資産ウォレット代替 Web3代替',
+    accentColor: Color(0xFFE2761B),
+    painPoints: [
+      'MetaMask無料 / Gas fee従量 — 暗号資産・DeFi特化ウォレットで個人の法定通貨財務管理・習慣・AI学習は別アプリ依存',
+      'Ethereum・DeFi操作は最高水準だが個人の日常家計・習慣・目標管理との統合がない',
+      '自分株式会社は暗号資産を含む個人財務全体管理＋AI大学＋習慣を完全無料で統合提供',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Web3・暗号資産ウォレット',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI統合ライフアシスタント',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '個人財務・家計管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '習慣・目標管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'money-tree': const _CompetitorInfo(
+    name: 'マネーツリー',
+    emoji: '💰',
+    tagline: 'マネーツリーは銀行・証券・ポイント一括管理の家計アプリ。自分株式会社はAI大学で資産管理×財務×習慣を統合した個人OS。',
+    searchKeyword: 'マネーツリー代替 家計管理代替 資産管理代替',
+    accentColor: Color(0xFF00C896),
+    painPoints: [
+      'マネーツリー無料 / Premium ¥400/月 — 口座・資産残高確認に特化しAI学習・習慣トラッキング・目標管理は別アプリ依存',
+      '金融機関連携数が多く残高確認は便利だが個人の行動変容・習慣改善・AI大学との統合がない',
+      '自分株式会社は資産管理＋AI大学＋習慣改善を完全無料で統合提供',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '銀行・証券一括管理',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI統合ライフアシスタント',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '個人財務・家計管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '習慣・目標管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'paidy': const _CompetitorInfo(
+    name: 'Paidy',
+    emoji: '💳',
+    tagline: 'Paidyは日本発の翌月後払い（BNPL）サービス。自分株式会社はAI大学でフィンテック知識×財務×習慣を統合した個人OS。',
+    searchKeyword: 'Paidy代替 後払い代替 BNPL代替',
+    accentColor: Color(0xFF1A1A5E),
+    painPoints: [
+      'Paidy無料〜 / Plus ¥398/月 — 後払い・分割払い特化で家計全体管理・習慣トラッキング・AI学習は別アプリ依存',
+      'Visaカード発行・3分割は便利だが個人の月次家計全体・目標管理・AI大学学習との統合がない',
+      '自分株式会社は後払い費用を含む家計全体管理＋AI大学＋習慣を完全無料で統合提供',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '後払い・BNPL',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI統合ライフアシスタント',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '個人財務・家計管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '習慣・目標管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'pipedream': const _CompetitorInfo(
+    name: 'Pipedream',
+    emoji: '⚡',
+    tagline:
+        'PipedreamはIPaaSとAIエージェントを統合する開発者向け自動化プラットフォーム。自分株式会社はAI大学で自動化知識×財務×習慣を統合した個人OS。',
+    searchKeyword: 'Pipedream代替 ワークフロー自動化代替 iPaaS代替',
+    accentColor: Color(0xFF2DAE58),
+    painPoints: [
+      'Pipedream無料〜 / Advanced \$49/月 — 開発者向けAPI連携・自動化ツールで個人ライフ管理・財務・習慣は対象外',
+      'コード駆動のワークフロー自動化は強力だが個人の家計・目標・AI大学学習との統合設計はない',
+      '自分株式会社はAI大学でPipedreamなどの自動化技術を学びつつ財務・習慣を無料統合',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '開発者向けワークフロー自動化',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI統合ライフアシスタント',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '個人財務・家計管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '習慣・目標管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'poshmark': const _CompetitorInfo(
+    name: 'Poshmark',
+    emoji: '👗',
+    tagline: 'Poshmarkはファッション特化のC2Cマーケットプレイス。自分株式会社はAI大学でフリマ知識×財務×習慣を統合した個人OS。',
+    searchKeyword: 'Poshmark代替 フリマアプリ代替 ファッション売買代替',
+    accentColor: Color(0xFFE21F1F),
+    painPoints: [
+      'Poshmark売上手数料20% — ファッション売買特化で個人の財務全体管理・習慣トラッキング・AI学習は別アプリ依存',
+      '衣類の売買コミュニティは活発だが個人の家計全体・目標管理・AI大学学習との統合がない',
+      '自分株式会社はフリマ収益を含む家計全体管理＋AI大学＋習慣を完全無料で統合提供',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ファッションC2Cマーケット',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI統合ライフアシスタント',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '個人財務・家計管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '習慣・目標管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'roblox': const _CompetitorInfo(
+    name: 'Roblox',
+    emoji: '🎯',
+    tagline: 'Robloxはユーザー生成コンテンツのゲームプラットフォーム。自分株式会社はAI大学でゲーム×学習×財務を統合した個人OS。',
+    searchKeyword: 'Roblox代替 ゲームプラットフォーム代替 UGCゲーム代替',
+    accentColor: Color(0xFFE8392F),
+    painPoints: [
+      'Roblox無料 / Robux課金 — ゲーム・UGC特化プラットフォームで財務管理・習慣トラッキング・AI学習は別アプリ依存',
+      'ゲーム制作・プレイ体験は豊富だが個人の生産性・家計・目標管理との統合がない',
+      '自分株式会社はAI大学での創作・ゲームデザイン学習＋財務＋習慣を完全無料で統合提供',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ユーザー生成ゲームプラットフォーム',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI統合ライフアシスタント',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '個人財務・家計管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '習慣・目標管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'sagawa-express': const _CompetitorInfo(
+    name: '佐川急便',
+    emoji: '📦',
+    tagline: '佐川急便は日本大手宅配・物流サービス。自分株式会社はAI大学で物流知識×財務×習慣を統合した個人OS。',
+    searchKeyword: '佐川急便代替 宅配代替 配送サービス代替',
+    accentColor: Color(0xFF006DB7),
+    painPoints: [
+      '佐川急便送料サイズ・重量従量 — 宅配・物流特化サービスで財務管理・習慣トラッキング・AI学習は別アプリ依存',
+      '荷物の迅速な配送は得意だが個人の物流費管理・家計全体・目標管理との統合がない',
+      '自分株式会社は配送費を含む家計全体管理＋AI大学＋習慣を完全無料で統合提供',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '宅配・物流サービス',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI統合ライフアシスタント',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '個人財務・家計管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '習慣・目標管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'toyota-connected': const _CompetitorInfo(
+    name: 'Toyota Connected',
+    emoji: '🚗',
+    tagline:
+        'Toyota Connectedは車両データ×AIの次世代モビリティサービス。自分株式会社はAI大学でモビリティ知識×財務×習慣を統合した個人OS。',
+    searchKeyword: 'Toyota Connected代替 コネクテッドカー代替 モビリティDX代替',
+    accentColor: Color(0xFFEB0A1E),
+    painPoints: [
+      'Toyota Connected法人/OEM向け — 車両データ・モビリティ特化で個人の財務管理・習慣・AI学習は対象外',
+      'コネクテッドカー技術は先進的だが個人の家計・目標管理・AI大学学習との統合設計はない',
+      '自分株式会社はAI大学でモビリティDX知識を学びつつ車両費含む財務・習慣を無料統合',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'コネクテッドカー・モビリティDX',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI統合ライフアシスタント',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '個人財務・家計管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '習慣・目標管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'ubereats-japan': const _CompetitorInfo(
+    name: 'Uber Eats',
+    emoji: '🍔',
+    tagline: 'Uber Eatsはフードデリバリーのグローバルリーダー。自分株式会社はAI大学で食費管理×財務×習慣を統合した個人OS。',
+    searchKeyword: 'Uber Eats代替 フードデリバリー代替 料理宅配代替',
+    accentColor: Color(0xFF06C167),
+    painPoints: [
+      'Uber Eats配送料＋サービス料 — フードデリバリー特化で財務管理・習慣トラッキング・AI学習は別アプリ依存',
+      '食事の配達は便利だが食費を含む家計全体管理・目標管理・AI大学学習との統合がない',
+      '自分株式会社は食費を含む家計全体管理＋AI大学＋習慣（食生活改善）を完全無料で統合提供',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'フードデリバリー',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI統合ライフアシスタント',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '個人財務・家計管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '習慣・目標管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'xbox-cloud-gaming': const _CompetitorInfo(
+    name: 'Xbox Cloud Gaming',
+    emoji: '🎮',
+    tagline:
+        'Xbox Cloud GamingはMicrosoftのゲームパス型クラウドゲーミング。自分株式会社はAI大学でゲーム×学習×財務を統合した個人OS。',
+    searchKeyword: 'Xbox Cloud Gaming代替 クラウドゲーム代替 Game Pass代替',
+    accentColor: Color(0xFF107C10),
+    painPoints: [
+      'Xbox Game Pass Ultimate ¥1,210/月〜 — クラウドゲーミング特化で財務管理・習慣トラッキング・AI学習は別アプリ依存',
+      '数百本のゲームをクラウドで遊べるが個人の生産性・家計全体・目標管理との統合がない',
+      '自分株式会社はゲーム費用の家計管理＋AI大学＋習慣トラッキングを完全無料で統合提供',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'クラウドゲーミング・Game Pass',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI統合ライフアシスタント',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '個人財務・家計管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '習慣・目標管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
   // PS#4 S85: 20社追加 2026-04-28
   'anytype': const _CompetitorInfo(
     name: 'Anytype',
