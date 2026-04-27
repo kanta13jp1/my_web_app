@@ -43,6 +43,7 @@ import 'package:my_web_app/pages/ai_university_video_page.dart';
 import 'package:my_web_app/pages/ai_university_voice_page.dart';
 import 'package:my_web_app/pages/reality_check_page.dart';
 import 'package:my_web_app/pages/comparison_page.dart';
+import 'package:my_web_app/pages/competitor_browse_page.dart';
 import 'package:my_web_app/pages/note_list_page.dart';
 import 'package:my_web_app/pages/philosophy_page.dart';
 import 'package:my_web_app/pages/ai_dev_principles_page.dart';
@@ -725,6 +726,11 @@ class _MyAppState extends State<MyApp> {
               builder: (_) => ComparisonPage(
                 competitorKey: uri.path.replaceFirst('/vs-', ''),
               ),
+            );
+          case '/competitors':
+            return MaterialPageRoute(
+              builder: (_) => const CompetitorBrowsePage(),
+              settings: const RouteSettings(name: '/competitors'),
             );
           case '/activity-feed':
             return MaterialPageRoute(
