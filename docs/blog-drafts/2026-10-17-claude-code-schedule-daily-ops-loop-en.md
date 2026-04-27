@@ -1,7 +1,7 @@
 ---
 title: "Putting Daily Indie Dev on Autopilot with Claude Code Schedule"
 tags: claude-code,automation,indiedev,scheduled-tasks
-published: false
+published: true
 ---
 
 # Putting Daily Indie Dev on Autopilot with Claude Code Schedule
