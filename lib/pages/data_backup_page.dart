@@ -76,6 +76,10 @@ class _DataBackupPageState extends State<DataBackupPage> {
   }
 
   Future<void> _runBackup() async {
+    if (_supabase.auth.currentUser == null) {
+      setState(() => _loading = false);
+      return;
+    }
     setState(() => _exporting = true);
     try {
       final resp = await _supabase.functions.invoke(

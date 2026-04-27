@@ -66,6 +66,10 @@ class _AiPresentationBuilderPageState extends State<AiPresentationBuilderPage> {
   }
 
   Future<void> _generate() async {
+    if (_supabase.auth.currentUser == null) {
+      setState(() => _loadingHistory = false);
+      return;
+    }
     if (_topicCtrl.text.trim().isEmpty) return;
     setState(() {
       _generating = true;

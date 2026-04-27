@@ -206,6 +206,7 @@ class _ThoughtInterruptDiagnosisPageState
   }
 
   Future<void> _submit() async {
+    if (_supabase.auth.currentUser == null) return;
     setState(() => _isSaving = true);
     try {
       final res = await _supabase.functions.invoke(

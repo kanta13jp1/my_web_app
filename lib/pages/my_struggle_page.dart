@@ -105,6 +105,10 @@ class _MyStrugglePageState extends State<MyStrugglePage> {
   }
 
   Future<void> _generate() async {
+    if (_supabase.auth.currentUser == null) {
+      setState(() => _loading = false);
+      return;
+    }
     setState(() {
       _loading = true;
       _error = null;

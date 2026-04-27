@@ -42,6 +42,10 @@ class _MemoReactionsPageState extends State<MemoReactionsPage> {
       return;
     }
 
+    if (_supabase.auth.currentUser == null) {
+      setState(() => _isLoading = false);
+      return;
+    }
     setState(() {
       _isLoading = true;
       _errorMessage = null;
@@ -70,6 +74,10 @@ class _MemoReactionsPageState extends State<MemoReactionsPage> {
   }
 
   Future<void> _toggle(String reaction) async {
+    if (_supabase.auth.currentUser == null) {
+      setState(() => _isLoading = false);
+      return;
+    }
     final memoId = int.tryParse(_memoIdController.text.trim());
     if (memoId == null) return;
 

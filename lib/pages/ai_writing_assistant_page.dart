@@ -59,6 +59,10 @@ class _AiWritingAssistantPageState extends State<AiWritingAssistantPage> {
       setState(() => _error = '文章を入力してください');
       return;
     }
+    if (_supabase.auth.currentUser == null) {
+      setState(() => _isLoading = false);
+      return;
+    }
     setState(() {
       _isLoading = true;
       _error = null;
