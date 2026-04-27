@@ -2714,6 +2714,593 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'make-integromat': const _CompetitorInfo(
+    name: 'Make (旧Integromat)',
+    emoji: '⚙️',
+    tagline: 'Makeはワークフロー自動化の革命児。自分株式会社はMake的な自動化を内包した個人CEO向け統合ライフOS。',
+    searchKeyword: 'Make代替 Integromat代替 ワークフロー自動化代替 Zapier代替',
+    accentColor: Color(0xFF6D00CC),
+    painPoints: [
+      'Make Core 無料〜\$9/月 — ワークフロー自動化は優秀だが設定・管理コストが高く個人の財務・習慣・AI学習との統合がない',
+      'ビジネスプロセス自動化に最適化されており、個人のライフスタイル最適化・目標達成支援とは設計が異なる',
+      '自分株式会社はMakeのような設定不要でAIが個人の全行動を自動記録・提案する統合OSを提供',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ビジュアルワークフロー自動化',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'タスク・目標管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '個人財務・家計管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: 'AIアシスタント統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '無料プランあり',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'whatsapp': const _CompetitorInfo(
+    name: 'WhatsApp',
+    emoji: '💬',
+    tagline: 'WhatsAppは世界最大のメッセンジャー。自分株式会社はコミュニケーションを含む個人の全ライフをAIで統合管理。',
+    searchKeyword: 'WhatsApp代替 メッセージアプリ代替 LINE代替',
+    accentColor: Color(0xFF25D366),
+    painPoints: [
+      'WhatsApp無料 — メッセージ送受信に特化し個人の財務・タスク・習慣・AI学習との統合がない',
+      'コミュニケーションツールであり、個人の目標設定・行動管理・ライフスタイル最適化はサポートしない',
+      '日本ではLINEが主流 — 自分株式会社は日本語に特化した個人CEO向け統合OSを提供',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'メッセージ・音声通話',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'タスク・目標管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '個人財務・家計管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: 'AIアシスタント統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '無料で始められる',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'telegram': const _CompetitorInfo(
+    name: 'Telegram',
+    emoji: '✈️',
+    tagline: 'Telegramはセキュアメッセージングの先駆者。自分株式会社はプライバシーを重視しながら個人の全ライフをAI管理。',
+    searchKeyword: 'Telegram代替 セキュアメッセージ代替 暗号化チャット代替',
+    accentColor: Color(0xFF2AABEE),
+    painPoints: [
+      'Telegram無料 — 暗号化メッセージ・チャンネルに特化し個人の財務・タスク・習慣・AI学習との統合がない',
+      'セキュリティ重視のコミュニケーションツールで個人のライフスタイル管理OSとしての機能はない',
+      'Bot機能で拡張可能だが個人の目標・財務・習慣を統合管理するには独自開発が必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '暗号化メッセージ・チャンネル',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'タスク・習慣管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '個人財務・資産管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: 'AIアシスタント統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '無料で始められる',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'wordpress': const _CompetitorInfo(
+    name: 'WordPress',
+    emoji: '📰',
+    tagline: 'WordPressはウェブサイト構築の王者。自分株式会社はブログ・サイト管理を含む個人のビジネス×生活全体をAIで最適化。',
+    searchKeyword: 'WordPress代替 ブログ代替 CMS代替 ウェブサイト代替',
+    accentColor: Color(0xFF21759B),
+    painPoints: [
+      'WordPress.com \$4/月〜 — ウェブサイト・ブログ構築に特化し個人の財務・タスク・習慣・AI学習との統合がない',
+      'コンテンツ発信ツールで個人のライフスタイル管理・目標設定・資産トラッキングには対応していない',
+      'プラグイン設定に時間がかかり非エンジニアには敷居が高い — 自分株式会社は即利用可能な統合OS',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ウェブサイト・ブログ構築',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'タスク・目標管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '個人財務・家計管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: 'AI大学 (学習管理)',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '無料プランあり',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'wix': const _CompetitorInfo(
+    name: 'Wix',
+    emoji: '🌟',
+    tagline: 'Wixはノーコードウェブサイトビルダーの雄。自分株式会社はサイト構築を超えた個人の全ライフをAIで管理する統合OS。',
+    searchKeyword: 'Wix代替 ウェブサイトビルダー代替 ノーコードサイト代替',
+    accentColor: Color(0xFF0C6EFC),
+    painPoints: [
+      'Wix Light \$17/月 — ウェブサイト構築・ECに特化し個人の財務・タスク・習慣・AI学習との統合がない',
+      'ビジュアルサイトビルダーで個人のライフスタイル管理・目標設定・資産トラッキングには対応していない',
+      'AI Wixが画像生成・コピー作成を支援するが個人の日常行動管理との連携はない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ノーコードウェブサイト構築',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'タスク・目標管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '個人財務・家計管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: 'AI大学 (学習管理)',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '無料プランあり',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'coursera': const _CompetitorInfo(
+    name: 'Coursera',
+    emoji: '🎓',
+    tagline: 'Courseraは世界最大のオンライン学習プラットフォーム。自分株式会社のAI大学はAIツールに特化した無料・実践学習を提供。',
+    searchKeyword: 'Coursera代替 オンライン学習代替 大学講座代替 スキルアップ代替',
+    accentColor: Color(0xFF0056D2),
+    painPoints: [
+      'Coursera Plus \$59/月 — 大学・企業提携コースは質が高いが個人の財務・タスク・習慣管理との統合がない',
+      '学習記録が個人のWBS・目標設定・キャリア計画と自動連動しない',
+      '自分株式会社のAI大学は260+社を無料で体系学習でき、学習ログがタスク・目標管理に直結する',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '大学・企業提携オンライン学習',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI大学 (260+社AIツール・無料)',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '学習ログ×目標管理連携',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '個人財務・家計管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '無料プランあり',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'elevenlabs': const _CompetitorInfo(
+    name: 'ElevenLabs',
+    emoji: '🔊',
+    tagline: 'ElevenLabsはAI音声生成の最先端。自分株式会社はAI音声を含む全AIツール活用を個人のライフOS内で統合管理。',
+    searchKeyword: 'ElevenLabs代替 AI音声生成代替 テキスト読み上げ代替',
+    accentColor: Color(0xFFFF4B4B),
+    painPoints: [
+      'ElevenLabs Creator \$22/月 — AI音声合成に特化し個人の財務・タスク・習慣・目標管理との統合がない',
+      '音声コンテンツ制作ツールで個人のライフスタイル最適化・行動管理には対応していない',
+      '自分株式会社のAI大学にElevenLabs活用法を収録し、音声AIを含む260+社のAI知識を体系的に学べる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AI音声生成・クローン',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI大学 (AIツール学習管理)',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: 'タスク・目標管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '個人財務・家計管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '無料プランあり',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'ollama': const _CompetitorInfo(
+    name: 'Ollama',
+    emoji: '🦙',
+    tagline: 'OllamaはローカルLLM実行の決定版。自分株式会社はOllamaのようなAI基盤を活用した個人向け統合ライフOSを提供。',
+    searchKeyword: 'Ollama代替 ローカルLLM代替 プライベートAI代替',
+    accentColor: Color(0xFF2D3748),
+    painPoints: [
+      'Ollama無料・オープンソース — ローカルLLM実行は優秀だが個人の財務・タスク・習慣管理アプリとしては設計されていない',
+      'CLIベースで非エンジニアには敷居が高い — 自分株式会社はノンエンジニアも即利用できるUIを提供',
+      'LLMを「動かす」ツールであり、個人の目標・家計・学習・健康を統合管理する「使うツール」ではない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ローカルLLM実行環境',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI統合ライフアシスタント',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '個人財務・家計管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: 'タスク・習慣管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '設定ゼロで即利用',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'vercel': const _CompetitorInfo(
+    name: 'Vercel',
+    emoji: '▲',
+    tagline: 'Vercelはフロントエンドデプロイの王者。自分株式会社はデプロイインフラを超えた個人のビジネス×生活全体をAIで管理。',
+    searchKeyword: 'Vercel代替 フロントエンドデプロイ代替 Next.js代替',
+    accentColor: Color(0xFF000000),
+    painPoints: [
+      'Vercel Pro \$20/month — Next.js/Reactのデプロイ最適化に特化し個人の財務・タスク・習慣・AI学習との統合がない',
+      '開発者向けインフラツールで個人のライフスタイル管理・目標設定には対応していない',
+      'v0によるAI UI生成は革新的だが個人の日常行動管理・健康・資産管理との連携はない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'フロントエンドデプロイ・CDN',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'タスク・目標管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '個人財務・家計管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: 'AI大学 (学習管理)',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '無料プランあり',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'v0': const _CompetitorInfo(
+    name: 'v0 (Vercel)',
+    emoji: '🎨',
+    tagline: 'v0はAI UIジェネレーターの革命。自分株式会社はUIを生成するだけでなく個人の全ライフをAIで管理する完成済みOS。',
+    searchKeyword: 'v0代替 AI UIジェネレーター代替 Vercel v0代替',
+    accentColor: Color(0xFF1a1a1a),
+    painPoints: [
+      'v0 \$20/月 — ReactコンポーネントをAI生成する開発者ツールで個人の財務・習慣・AI学習管理には対応しない',
+      'UIを「作る」ツールで個人の「生活を管理・最適化する」ツールではない',
+      '自分株式会社はv0で構築したようなUIを既に完成品として無料で提供している統合ライフOS',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AI UIコンポーネント生成',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'タスク・習慣管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '個人財務・家計管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: 'AI大学 (学習管理)',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '無料で始められる',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'paypal': const _CompetitorInfo(
+    name: 'PayPal',
+    emoji: '💰',
+    tagline: 'PayPalはグローバル決済の定番。自分株式会社はPayPal決済を含む個人の収入・支出・資産全体をAI財務部長が管理。',
+    searchKeyword: 'PayPal代替 オンライン決済代替 送金代替',
+    accentColor: Color(0xFF003087),
+    painPoints: [
+      'PayPal手数料型 — 決済・送金に特化し個人の家計全体・タスク・習慣・AI学習との統合がない',
+      'PayPal残高・取引記録が個人の財務ダッシュボードに自動連携されない',
+      '決済インフラであり、個人のライフスタイル最適化・目標達成支援という視点でのサポートがない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'オンライン決済・送金',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: '個人収支・資産一元管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: 'タスク・目標管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: 'AIアシスタント統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '無料で始められる',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'freee-hr': const _CompetitorInfo(
+    name: 'freee人事労務',
+    emoji: '👷',
+    tagline: 'freee人事労務は勤怠・給与管理のSaaS。自分株式会社は個人が自分自身のHR部長として働き方・スキル・目標を管理。',
+    searchKeyword: 'freee人事労務代替 勤怠管理代替 給与計算代替',
+    accentColor: Color(0xFF00B900),
+    painPoints: [
+      'freee人事労務 ¥1,980/月〜 — 企業向け勤怠・給与管理に特化し個人のキャリア・スキル・健康・AI学習との統合がない',
+      '会社の人事業務支援ツールで個人が「自分自身のHR部長」として管理する設計ではない',
+      '自分株式会社の人事部署AIは個人のスキル習得・副業管理・AI大学学習を一元管理できる唯一の設計',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '企業向け勤怠・給与計算',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: '個人スキル・キャリア管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: 'AI大学 (スキルアップ学習)',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: 'タスク・目標管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'cloudsign': const _CompetitorInfo(
+    name: 'クラウドサイン',
+    emoji: '✍️',
+    tagline: 'クラウドサインは電子契約の日本No.1。自分株式会社は契約管理を含む個人の法務・財務・タスクをAIで一元管理。',
+    searchKeyword: 'クラウドサイン代替 電子契約代替 電子署名代替',
+    accentColor: Color(0xFF0082CC),
+    painPoints: [
+      'クラウドサイン ¥11,000/月〜 — 電子契約に特化し個人の財務・タスク・習慣・AI学習との統合がない',
+      '企業間の契約業務DXに最適化されており個人の日常ライフ管理とは設計が異なる',
+      '自分株式会社の法務部署AIは個人の重要書類・契約・約束事を含む全ライフをAIで管理',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '電子契約・法的効力',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: '個人タスク・目標管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '個人財務・家計管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: 'AI大学 (学習管理)',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'groq-ai': const _CompetitorInfo(
+    name: 'Groq',
+    emoji: '⚡',
+    tagline:
+        'GroqはLPU搭載の超高速AI推論プラットフォーム。自分株式会社はGroqのような高速AIを内部活用した完成済み個人OSを提供。',
+    searchKeyword: 'Groq代替 高速AI推論代替 LLM API代替',
+    accentColor: Color(0xFFF54E42),
+    painPoints: [
+      'Groq API — 超高速LLM推論を提供するが個人ユーザーが直接使うにはAPI知識と開発スキルが必要',
+      'AIインフラプレイヤーであり、個人の財務・タスク・習慣・目標管理アプリとしては設計されていない',
+      '自分株式会社はGroqのような高速AIを内部活用した「完成した個人OS」を設定ゼロで無料提供',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '超高速AI推論API',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI統合ライフアシスタント',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '個人財務・家計管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: 'タスク・習慣管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '設定ゼロで即利用',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'databricks': const _CompetitorInfo(
+    name: 'Databricks',
+    emoji: '🔥',
+    tagline:
+        'DatabricksはAI/データLakehouseの王者。自分株式会社はデータ基盤を超えた個人のライフ全体をAIで最適化する個人OS。',
+    searchKeyword: 'Databricks代替 MLOps代替 データプラットフォーム代替',
+    accentColor: Color(0xFFFF3621),
+    painPoints: [
+      'Databricks Pay-per-use — エンタープライズAI/データ分析に特化し個人ユーザーには複雑すぎ・高コスト',
+      '大規模データ処理・ML基盤ツールで個人の財務・タスク・習慣・AI学習管理には設計が合わない',
+      'AI大学にDatabricks学習コンテンツを収録し、エンタープライズAIを個人のキャリアに活かす方法を提供',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'エンタープライズAI/データ基盤',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI大学 (Databricks学習)',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '個人財務・家計管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: 'タスク・目標管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
