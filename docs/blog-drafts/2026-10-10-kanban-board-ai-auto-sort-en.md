@@ -1,7 +1,7 @@
 ---
 title: "AI-Sorted Kanban: Delegating Priority Decisions to a Score"
 tags: productivity,ai,project-management,saas
-published: false
+published: true
 ---
 
 # AI-Sorted Kanban: Delegating Priority Decisions to a Score
