@@ -1,7 +1,7 @@
 ---
 title: "Claude Code Best Practices in 2026 — 10 Rules from 6 Months of Solo Dev at Scale"
 tags: claude,ai,programming,productivity
-published: false
+published: true
 ---
 
 # Claude Code Best Practices in 2026 — 10 Rules from 6 Months of Solo Dev at Scale
