@@ -21962,3 +21962,10 @@ Google I/O 2026 競合脅威 事前ブリーフィング
 - T-1 第31弾: "The Real Cost of a Multi-AI Workflow — 6 Months of Actual Spend as a Solo Dev" → dev.to
   - https://dev.to/kanta13jp1/the-real-cost-of-a-multi-ai-workflow-6-months-of-actual-spend-as-a-solo-dev-2c09
 - 累計: 31本 (dev.to)
+
+## 2026-04-28 PS#1 S54 — migration collision CI 自動検出
+
+- `scripts/check_migration_timestamps.py` (Win版#132 part 47 作成) を deploy-prod.yml に統合
+- `- name: Check migration timestamp collisions` step を Supabase CLI setup の直前に追加
+- exit 1 on collision → deploy abort before any DB contact
+- 根本原因: S53 で手動 rename した 3重衝突 (SQLSTATE 23505) の再発防止
