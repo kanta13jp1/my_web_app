@@ -192,6 +192,80 @@ class LifeWasteEliminationReport {
         for (final signal in signals)
           '${signal.resource.name}:${signal.actual}/${signal.target}',
       ].join('|');
+
+  LifeWasteOperatingDirective operatingDirective({
+    LifeWasteHabitGate? habitGate,
+  }) {
+    final topSignal = prioritySignals.first;
+    final focusLabel = habitGate?.focusLabel ?? topSignal.label;
+    final action = habitGate?.microHabit ?? topSignal.nextAction;
+    final streak = habitGate == null
+        ? '未開始'
+        : '${habitGate.currentStreakDays}/${habitGate.targetStreakDays}日';
+    final guardrail = habitGate == null
+        ? '新しい継続タスクを増やさず、最小行動を1つだけ選びます。'
+        : habitGate.habitized
+            ? '習慣化済みです。次の候補は${habitGate.nextUnlockLabel ?? '未設定'}です。'
+            : '${habitGate.focusLabel}が定着するまで、${habitGate.parkedLabel}は観察だけにします。';
+    final progress = habitGate?.progress ?? topSignal.progress;
+
+    return LifeWasteOperatingDirective(
+      title: '$focusLabelを今日の1手に固定',
+      currentState:
+          '${topSignal.currentLabel} / 生命資本スコア $wasteFreeScore点 / 継続 $streak',
+      lowHurdleAction: action,
+      guardrail: guardrail,
+      monitoringCadence: '毎日1回、KGI/CSF/KPIと習慣化ゲートを再計算',
+      plan: KgiCsfKpiPlan(
+        domain: 'ライフマネジメント / 今日の運用ループ',
+        kgi: '生命資本の浪費を今日1つ止め、翌日に改善をつなぐ',
+        actualLabel: '${(progress * 100).round()}%',
+        targetLabel: '100%',
+        progress: progress,
+        metrics: <KgiCsfKpiMetric>[
+          KgiCsfKpiMetric.number(
+            csf: topSignal.csf,
+            kpi: '${topSignal.label}: ${topSignal.kpi}',
+            actual: topSignal.actual,
+            target: topSignal.target,
+            unit: topSignal.unit,
+          ),
+          KgiCsfKpiMetric.number(
+            csf: '低ハードルから習慣化する',
+            kpi: '今日の1手を固定',
+            actual: habitGate == null ? 0 : habitGate.currentStreakDays,
+            target: habitGate?.targetStreakDays ?? 1,
+            unit: '日',
+          ),
+          KgiCsfKpiMetric.number(
+            csf: 'あれもこれも同時に始めない',
+            kpi: '待機中の生命資本',
+            actual: habitGate?.parkedResources.length ?? 0,
+            target: habitGate?.parkedResources.length ?? 0,
+            unit: '件',
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class LifeWasteOperatingDirective {
+  final String title;
+  final String currentState;
+  final String lowHurdleAction;
+  final String guardrail;
+  final String monitoringCadence;
+  final KgiCsfKpiPlan plan;
+
+  const LifeWasteOperatingDirective({
+    required this.title,
+    required this.currentState,
+    required this.lowHurdleAction,
+    required this.guardrail,
+    required this.monitoringCadence,
+    required this.plan,
+  });
 }
 
 class LifeWasteAiReview {

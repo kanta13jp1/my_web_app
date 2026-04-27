@@ -30,6 +30,13 @@ void main() {
     expect(report.plan.metrics, hasLength(6));
     expect(report.prioritySignals.first.label, isNotEmpty);
     expect(report.nextAction, isNotEmpty);
+
+    final directive = report.operatingDirective();
+
+    expect(directive.plan.kgi, contains('生命資本'));
+    expect(directive.lowHurdleAction, report.nextAction);
+    expect(directive.guardrail, contains('1つだけ'));
+    expect(directive.monitoringCadence, contains('毎日'));
   });
 
   test('LifeWasteAiReviewService returns provider review and fallback',
@@ -187,6 +194,15 @@ void main() {
       contains(LifeWasteResource.money),
     );
     expect(second.habitGate?.currentStreakDays, 1);
+
+    final directive = day2.operatingDirective(
+      habitGate: second.habitGate,
+    );
+
+    expect(directive.lowHurdleAction, second.habitGate?.microHabit);
+    expect(directive.currentState, contains('1/7日'));
+    expect(directive.guardrail, contains('観察だけ'));
+    expect(directive.plan.metrics, hasLength(3));
   });
 
   test('recordDailySnapshot keeps alerts when notification routing fails',

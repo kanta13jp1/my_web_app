@@ -29,6 +29,9 @@ class LifeWasteEliminationPanel extends StatelessWidget {
     final subColor =
         isDark ? Colors.white.withValues(alpha: 0.68) : const Color(0xFF475569);
     final accent = _scoreColor(report.wasteFreeScore);
+    final directive = report.operatingDirective(
+      habitGate: monitoringSummary?.habitGate,
+    );
 
     return Container(
       width: double.infinity,
@@ -100,6 +103,12 @@ class LifeWasteEliminationPanel extends StatelessWidget {
               accentColor: accent,
               initiallyExpanded: true,
               dark: isDark,
+            ),
+            const SizedBox(height: 14),
+            _OperatingDirectiveBox(
+              directive: directive,
+              accent: accent,
+              isDark: isDark,
             ),
             const SizedBox(height: 14),
             _AiReviewBox(
@@ -185,6 +194,197 @@ class LifeWasteEliminationPanel extends StatelessWidget {
     if (score >= 80) return const Color(0xFF0F766E);
     if (score >= 60) return const Color(0xFFF59E0B);
     return const Color(0xFFDC2626);
+  }
+}
+
+class _OperatingDirectiveBox extends StatelessWidget {
+  final LifeWasteOperatingDirective directive;
+  final Color accent;
+  final bool isDark;
+
+  const _OperatingDirectiveBox({
+    required this.directive,
+    required this.accent,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final border =
+        isDark ? Colors.white.withValues(alpha: 0.10) : const Color(0xFFE2E8F0);
+    final color = isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC);
+    final textColor = isDark ? Colors.white : const Color(0xFF0F172A);
+    final subColor =
+        isDark ? Colors.white.withValues(alpha: 0.68) : const Color(0xFF475569);
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(Icons.route_outlined, color: accent, size: 18),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  '今日の運用ループ',
+                  style: TextStyle(
+                    color: textColor,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w900,
+                    height: 1.5,
+                  ),
+                ),
+              ),
+              _MiniMetricPill(
+                label: directive.plan.actualLabel,
+                color: accent,
+                dark: isDark,
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            directive.title,
+            style: TextStyle(
+              color: textColor,
+              fontSize: 14,
+              fontWeight: FontWeight.w900,
+              height: 1.4,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            directive.currentState,
+            style: TextStyle(
+              color: subColor,
+              fontSize: 11,
+              height: 1.55,
+            ),
+          ),
+          const SizedBox(height: 10),
+          _DirectiveLine(
+            icon: Icons.play_arrow_rounded,
+            label: '今日の1手',
+            value: directive.lowHurdleAction,
+            color: accent,
+            textColor: textColor,
+            subColor: subColor,
+          ),
+          const SizedBox(height: 8),
+          _DirectiveLine(
+            icon: Icons.lock_outline,
+            label: '拡張しない条件',
+            value: directive.guardrail,
+            color: const Color(0xFFF59E0B),
+            textColor: textColor,
+            subColor: subColor,
+          ),
+          const SizedBox(height: 8),
+          _DirectiveLine(
+            icon: Icons.monitor_heart_outlined,
+            label: 'モニタリング',
+            value: directive.monitoringCadence,
+            color: const Color(0xFF0F766E),
+            textColor: textColor,
+            subColor: subColor,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DirectiveLine extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+  final Color color;
+  final Color textColor;
+  final Color subColor;
+
+  const _DirectiveLine({
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.color,
+    required this.textColor,
+    required this.subColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, color: color, size: 16),
+        const SizedBox(width: 8),
+        SizedBox(
+          width: 92,
+          child: Text(
+            label,
+            style: TextStyle(
+              color: subColor,
+              fontSize: 11,
+              fontWeight: FontWeight.w800,
+              height: 1.45,
+            ),
+          ),
+        ),
+        Expanded(
+          child: Text(
+            value,
+            style: TextStyle(
+              color: textColor,
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              height: 1.45,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _MiniMetricPill extends StatelessWidget {
+  final String label;
+  final Color color;
+  final bool dark;
+
+  const _MiniMetricPill({
+    required this.label,
+    required this.color,
+    required this.dark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: dark ? 0.18 : 0.12),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: color.withValues(alpha: 0.28)),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: color,
+          fontSize: 10,
+          fontWeight: FontWeight.w900,
+          height: 1.4,
+        ),
+      ),
+    );
   }
 }
 
