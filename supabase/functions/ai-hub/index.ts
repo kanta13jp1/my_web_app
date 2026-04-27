@@ -11,7 +11,7 @@ import {
   createClient,
   SupabaseClient,
 } from "https://esm.sh/@supabase/supabase-js@2";
-import { AI_CHARACTER_PREAMBLE } from "../_shared/ai_character_preamble.ts";
+import { AI_CHARACTER_PREAMBLE, prependCharacter } from "../_shared/ai_character_preamble.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -2567,13 +2567,13 @@ serve(async (req: Request) => {
           return json({ error: "GEMINI_API_KEY not configured" }, 503);
         }
         const today = new Date().toLocaleDateString("ja-JP");
-        const prompt = [
+        const prompt = prependCharacter([
           `今日は${today}です。`,
           "自分株式会社のCEOとして、今日の意思決定を日本語で判定してください。",
           "浪費を減らし、時間・お金・健康・体力・知能・集中力を守ることを最重要にしてください。",
           "必ずJSONのみで返してください。",
           '{"score":0-100,"judgment":"良好/注意/警戒","advice":"今日やるべき1-3個の具体行動","focus_area":"最優先領域","kgi":"今日のKGI","csf":["CSF1","CSF2"],"kpi":{"focus_minutes":90,"waste_interruptions":0,"review_count":1}}',
-        ].join("\n");
+        ].join("\n"));
         const text = await callGemini(prompt, geminiKey);
         const parsed = extractJsonObject(text);
         const payload = normalizeDailyJudgmentPayload(parsed, text);
@@ -2603,8 +2603,9 @@ serve(async (req: Request) => {
           return json({ error: "GEMINI_API_KEY not configured" }, 503);
         }
         const today = new Date().toLocaleDateString("ja-JP");
-        const prompt =
-          `今日${today}の自己成長・キャリア・健康に関するAI判定をしてください。JSON: {"score":0-100,"judgment":"良好/注意/警戒","advice":"...", "focus_area":"..."}`;
+        const prompt = prependCharacter(
+          `今日${today}の自己成長・キャリア・健康に関するAI判定をしてください。JSON: {"score":0-100,"judgment":"良好/注意/警戒","advice":"...", "focus_area":"..."}`,
+        );
         const text = await callGemini(prompt, geminiKey);
         try {
           return json({
