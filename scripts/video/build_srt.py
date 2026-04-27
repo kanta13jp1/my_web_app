@@ -54,32 +54,37 @@ def apply_corrections(text: str, corrections: dict[str, str]) -> str:
 
 
 def build_cues(words: list[dict]) -> list[dict]:
-    """Walk Scribe word entries and emit cue dicts {start, end, text}.
+    """Walk Scribe word entries and emit cue dicts {start, end, text, speaker_id}.
 
     Scribe `words` entries have type 'word', 'spacing', or 'audio_event'.
     `audio_event` text is wrapped in parens. `spacing` carries silence only —
     skip its text but use the gap for cue boundary decisions.
+
+    A speaker change forces a flush so each cue carries exactly one speaker_id
+    (used downstream by render_srt to optionally prefix multi-speaker cues).
     """
     cues: list[dict] = []
     cur_text: list[str] = []
     cur_start: float | None = None
     cur_end: float | None = None
+    cur_speaker: str | None = None
 
     def flush() -> None:
-        nonlocal cur_text, cur_start, cur_end
+        nonlocal cur_text, cur_start, cur_end, cur_speaker
         if not cur_text or cur_start is None or cur_end is None:
-            cur_text, cur_start, cur_end = [], None, None
+            cur_text, cur_start, cur_end, cur_speaker = [], None, None, None
             return
         text = "".join(cur_text).strip()
         if text:
-            cues.append({"start": cur_start, "end": cur_end, "text": text})
-        cur_text, cur_start, cur_end = [], None, None
+            cues.append({"start": cur_start, "end": cur_end, "text": text, "speaker_id": cur_speaker})
+        cur_text, cur_start, cur_end, cur_speaker = [], None, None, None
 
     for w in words:
         wtype = w.get("type", "word")
         raw = (w.get("text") or "")
         start = w.get("start")
         end = w.get("end", start)
+        speaker = w.get("speaker_id")
 
         if wtype == "spacing":
             continue
@@ -95,8 +100,12 @@ def build_cues(words: list[dict]) -> list[dict]:
         if start is None or end is None:
             continue
 
+        if cur_speaker is not None and speaker is not None and speaker != cur_speaker:
+            flush()
+
         if cur_start is None:
             cur_start = float(start)
+            cur_speaker = speaker
         cur_end = float(end)
         cur_text.append(piece)
 
@@ -129,7 +138,8 @@ def split_long_cues(cues: list[dict]) -> list[dict]:
     The build_cues loop already guards on HARD_LEN, but a single Scribe
     'word' entry can itself exceed the cap (e.g. a long compound proper
     noun). This pass slices such cues uniformly across their duration so
-    no cue ever overflows the on-screen budget.
+    no cue ever overflows the on-screen budget. speaker_id (if present)
+    is preserved across the split.
     """
     out: list[dict] = []
     for cue in cues:
@@ -147,17 +157,43 @@ def split_long_cues(cues: list[dict]) -> list[dict]:
                 "start": cue["start"] + i * seg_dur,
                 "end": cue["start"] + (i + 1) * seg_dur,
                 "text": piece,
+                "speaker_id": cue.get("speaker_id"),
             })
     return out
 
 
-def render_srt(cues: list[dict]) -> str:
+def speaker_label(speaker_id: str | None, speaker_index: dict[str, int]) -> str:
+    """Map a Scribe speaker_id to a stable human label like '話者A', '話者B'.
+
+    `speaker_index` is a {speaker_id: int} dict that retains insertion order so
+    the first speaker encountered is always 話者A regardless of Scribe's id format.
+    """
+    if speaker_id is None:
+        return ""
+    if speaker_id not in speaker_index:
+        speaker_index[speaker_id] = len(speaker_index)
+    idx = speaker_index[speaker_id]
+    if idx >= 26:
+        return f"話者{idx + 1}"
+    return f"話者{chr(ord('A') + idx)}"
+
+
+def render_srt(cues: list[dict], diarize: bool = True) -> str:
+    speaker_ids = {cue.get("speaker_id") for cue in cues if cue.get("speaker_id") is not None}
+    multi_speaker = diarize and len(speaker_ids) >= 2
+    speaker_index: dict[str, int] = {}
+
     blocks: list[str] = []
     for i, cue in enumerate(cues, start=1):
+        text = cue["text"]
+        if multi_speaker:
+            label = speaker_label(cue.get("speaker_id"), speaker_index)
+            if label:
+                text = f"{label}: {text}"
         blocks.append(
             f"{i}\n"
             f"{fmt_timestamp(cue['start'])} --> {fmt_timestamp(cue['end'])}\n"
-            f"{cue['text']}\n"
+            f"{text}\n"
         )
     return "\n".join(blocks)
 
@@ -179,6 +215,11 @@ def main() -> int:
     ap = argparse.ArgumentParser(description="Build an SRT subtitle file from a Scribe transcript")
     ap.add_argument("transcript", type=Path, help="Path to ElevenLabs Scribe JSON")
     ap.add_argument("output", type=Path, help="Path to write .srt file")
+    ap.add_argument(
+        "--no-diarize",
+        action="store_true",
+        help="Suppress '話者A:' / '話者B:' prefixes even on multi-speaker transcripts",
+    )
     args = ap.parse_args()
 
     if not args.transcript.exists():
@@ -200,7 +241,7 @@ def main() -> int:
             cue["text"] = apply_corrections(cue["text"], corrections)
 
     args.output.parent.mkdir(parents=True, exist_ok=True)
-    args.output.write_text(render_srt(cues), encoding="utf-8")
+    args.output.write_text(render_srt(cues, diarize=not args.no_diarize), encoding="utf-8")
     print(f"wrote {len(cues)} cues to {args.output}")
     return 0
 

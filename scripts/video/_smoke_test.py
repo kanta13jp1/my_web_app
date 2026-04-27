@@ -88,6 +88,52 @@ def test_build_srt() -> None:
         assert len(line) <= 28, f"cue exceeds 28-char hard cap: {line!r} (len={len(line)})"
 
 
+def test_build_srt_diarize() -> None:
+    """build_srt.py: speaker_id changes flush cues; --no-diarize suppresses prefixes."""
+    words = []
+
+    def w(text: str, start: float, end: float, speaker: str | None = None, t: str = "word") -> None:
+        entry = {"text": text, "start": start, "end": end, "type": t}
+        if speaker is not None:
+            entry["speaker_id"] = speaker
+        words.append(entry)
+
+    # Speaker A speaks, then B, then A again (3 cues expected from 1 sentence each).
+    w("こんにちは", 0.0, 0.4, speaker="speaker_0")
+    w("元気", 0.4, 0.6, speaker="speaker_0")
+    w("ですか", 0.6, 0.9, speaker="speaker_0")
+    w("。", 0.9, 1.0, speaker="speaker_0")
+    w("はい", 1.5, 1.7, speaker="speaker_1")
+    w("元気", 1.7, 1.9, speaker="speaker_1")
+    w("です", 1.9, 2.1, speaker="speaker_1")
+    w("。", 2.1, 2.2, speaker="speaker_1")
+    w("良かった", 2.5, 2.9, speaker="speaker_0")
+    w("。", 2.9, 3.0, speaker="speaker_0")
+
+    with tempfile.TemporaryDirectory() as tmp:
+        in_path = Path(tmp) / "scribe.json"
+        out_diarize = Path(tmp) / "master.srt"
+        out_plain = Path(tmp) / "master_plain.srt"
+        in_path.write_text(json.dumps({"words": words}, ensure_ascii=False), encoding="utf-8")
+
+        # Default (diarize ON) — multi-speaker → prefix appears.
+        run_subprocess([PYTHON, str(REPO_ROOT / "scripts" / "video" / "build_srt.py"),
+                        str(in_path), str(out_diarize)])
+        srt = out_diarize.read_text(encoding="utf-8")
+        assert "話者A:" in srt, f"diarize prefix 話者A missing\n{srt}"
+        assert "話者B:" in srt, f"diarize prefix 話者B missing\n{srt}"
+        # First Scribe speaker (speaker_0) maps to 話者A.
+        first_cue_text_line = srt.splitlines()[2]
+        assert first_cue_text_line.startswith("話者A:"), f"first cue should start with 話者A, got: {first_cue_text_line!r}"
+
+        # --no-diarize → no prefix even with speaker_id present.
+        run_subprocess([PYTHON, str(REPO_ROOT / "scripts" / "video" / "build_srt.py"),
+                        str(in_path), str(out_plain), "--no-diarize"])
+        srt_plain = out_plain.read_text(encoding="utf-8")
+        assert "話者A:" not in srt_plain and "話者B:" not in srt_plain, \
+            f"--no-diarize did not suppress prefixes\n{srt_plain}"
+
+
 def test_embed_video_dup_guard() -> None:
     """embed_video_in_philosophy.py: dry-run formatting + duplicate ID rejection."""
     target = REPO_ROOT / "lib" / "pages" / "philosophy_page.dart"
@@ -170,6 +216,7 @@ def test_make_cards() -> None:
 def main() -> int:
     cases = [
         ("build_srt", test_build_srt),
+        ("build_srt_diarize", test_build_srt_diarize),
         ("embed_video", test_embed_video_dup_guard),
         ("make_cards", test_make_cards),
     ]
