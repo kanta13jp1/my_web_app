@@ -85,7 +85,7 @@ jobs:
       - name: Install Python deps
         run: |
           pip install pillow notebooklm-py google-api-python-client \
-            google-auth-oauthlib google-auth-httplib2
+            google-auth-oauthlib google-auth-httplib2 requests
 
       - name: Restore NotebookLM auth
         run: |
@@ -111,8 +111,7 @@ jobs:
 
       - name: Step 2 — Transcribe via ElevenLabs Scribe
         run: |
-          # TODO: clone https://github.com/browser-use/video-use OR vendor transcribe.py
-          python ~/.claude/skills/video-use/helpers/transcribe.py \
+          python scripts/video/transcribe.py \
             videos/${{ inputs.slug }}.mp4
 
       - name: Step 3 — Build SRT (custom splitter)
@@ -208,12 +207,16 @@ jobs:
             -m "VIDEO_ID=$VIDEO_ID  DURATION=$VIDEO_DURATION  TITLE=${{ inputs.title }}"
           git push origin HEAD:main
 
-# 残スコープ (Win版#132 part 30+ / cross-instance-pr 検討):
-# - transcribe.py を repo に vendor (現在は ~/.claude/skills/video-use 依存)
-# - build_srt.py の ASR 補正辞書を ENV var 化
-# - make_cards.py を CARD_TITLE / CARD_SERIES env で完全パラメータ化
+# 残スコープ (Win版#132 part 31+ / cross-instance-pr 検討):
+# - videos/build_srt.py を repo に新規作成 (Step 3 で参照中・現在は不在)
+#   仕様: 句読点/字数(18)/duration(4s)/cap(28字) で SRT 分割 + ASR_CORRECTIONS env 適用
+# - videos/make_cards.py を repo に新規作成 (Step 4 で参照中・現在は不在)
+#   仕様: PIL + Noto Sans JP で intro/outro 1280x720 PNG 生成 (CARD_TITLE / CARD_SERIES env)
 # - YouTube quota 監視 (10000 units/day / 1 upload = 1600 units = 6/day max)
 # - Slack 通知 (成功時 video URL / 失敗時 step + log link)
 #
 # 完了済 (Win版#132 part 30):
 # - Step 8 自動 embed → scripts/embed_video_in_philosophy.py (regex insert + dup-guard)
+#
+# 完了済 (Win版#132 part 31):
+# - Step 2 transcribe.py vendor → scripts/video/transcribe.py (ElevenLabs Scribe / requests dep 追加)
