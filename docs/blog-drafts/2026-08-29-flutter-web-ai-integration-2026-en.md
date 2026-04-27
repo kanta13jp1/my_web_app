@@ -1,7 +1,7 @@
 ---
 title: "Flutter Web + AI Integration in 2026: Patterns That Work and Traps to Avoid"
 tags: flutter,ai,programming,webdev
-published: false
+published: true
 ---
 
 # Flutter Web + AI Integration in 2026: Patterns That Work and Traps to Avoid
