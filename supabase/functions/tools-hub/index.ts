@@ -1189,17 +1189,33 @@ async function evaluateHorsePredictionAccuracy(
     return { success: true, evaluated: 0, races_processed: 0, message: "no finalized results" };
   }
 
+  // Batch-fetch entries and predictions to avoid N+1 queries
+  const raceIds = (resultsRows as Array<Record<string, unknown>>).map((r) => String(r.race_id));
+  const [{ data: allEntriesRows }, { data: allPredsRows }] = await Promise.all([
+    admin.from("horse_entries").select("*").in("race_id", raceIds),
+    admin.from("horse_race_predictions_ensemble")
+      .select("race_id, provider, model, first_pick, second_pick, third_pick, confidence")
+      .in("race_id", raceIds),
+  ]);
+  const entriesByRace = new Map<string, Array<Record<string, unknown>>>();
+  for (const e of (allEntriesRows ?? []) as Array<Record<string, unknown>>) {
+    const k = String(e.race_id);
+    if (!entriesByRace.has(k)) entriesByRace.set(k, []);
+    entriesByRace.get(k)!.push(e);
+  }
+  const predsByRace = new Map<string, Array<Record<string, unknown>>>();
+  for (const p of (allPredsRows ?? []) as Array<Record<string, unknown>>) {
+    const k = String(p.race_id);
+    if (!predsByRace.has(k)) predsByRace.set(k, []);
+    predsByRace.get(k)!.push(p);
+  }
+
   let evaluated = 0;
   for (const r of resultsRows as Array<Record<string, unknown>>) {
     const rid = String(r.race_id);
-    const { data: entriesRows } = await admin.from("horse_entries")
-      .select("*")
-      .eq("race_id", rid);
-    const entries = (entriesRows ?? []) as Array<Record<string, unknown>>;
-    const { data: preds } = await admin.from("horse_race_predictions_ensemble")
-      .select("provider, model, first_pick, second_pick, third_pick, confidence")
-      .eq("race_id", rid);
-    for (const p of (preds ?? []) as Array<Record<string, unknown>>) {
+    const entries = entriesByRace.get(rid) ?? [];
+    const preds = predsByRace.get(rid) ?? [];
+    for (const p of preds as Array<Record<string, unknown>>) {
       const firstCorrect = String(p.first_pick ?? "").trim() === String(r.first_place ?? "").trim();
       const trifectaCorrect = firstCorrect
         && String(p.second_pick ?? "").trim() === String(r.second_place ?? "").trim()
