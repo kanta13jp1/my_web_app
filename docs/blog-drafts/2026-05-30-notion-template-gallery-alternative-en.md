@@ -1,7 +1,7 @@
 ---
 title: "Looking for Notion Template Alternatives? You Probably Need Something Else Entirely"
 tags: notion,productivity,saas,templates
-published: false
+published: true
 ---
 
 # Looking for Notion Template Alternatives? You Probably Need Something Else Entirely
