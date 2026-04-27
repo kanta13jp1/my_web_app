@@ -1115,17 +1115,17 @@ def print_learning_stats(days: int = 7) -> None:
         "| --- | --- | --- | --- | --- | --- |",
     ]
     for r in rows:
-        ls = f"{float(r.get('avg_learning_score', 0)) * 100:.1f}"
-        fh = f"{float(r.get('first_hit_rate_pct', 0)):.1f}%"
-        sk = f"{float(r.get('skip_accuracy_pct', 0)):.1f}%"
-        pl = f"{float(r.get('place_hit_rate_pct', 0)):.1f}%"
+        ls = f"{float(r.get('avg_learning_score') or 0) * 100:.1f}"
+        fh = f"{float(r.get('first_hit_rate_pct') or 0):.1f}%"
+        sk = f"{float(r.get('skip_accuracy_pct') or 0):.1f}%"
+        pl = f"{float(r.get('place_hit_rate_pct') or 0):.1f}%"
         lines.append(f"| {r.get('race_date','')} | {r.get('evaluated_predictions',0)} | {ls} | {fh} | {sk} | {pl} |")
     if not rows:
         lines.append("| — | — | — | — | — | — |")
 
     if bet_rows:
         lines += ["", "**券種別精度 TOP5**", ""]
-        lines += [f"- {b.get('bet_type','')}: {float(b.get('hit_rate_pct',0)):.1f}% ({b.get('total_predictions',0)}件)" for b in bet_rows]
+        lines += [f"- {b.get('bet_type','')}: {float(b.get('hit_rate_pct') or 0):.1f}% ({b.get('total_predictions',0)}件)" for b in bet_rows]
 
     with open(summary_path, "a", encoding="utf-8") as f:
         f.write("\n".join(lines) + "\n")
