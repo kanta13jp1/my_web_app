@@ -21928,3 +21928,10 @@ Google I/O 2026 競合脅威 事前ブリーフィング
   - https://dev.to/kanta13jp1/cursor-vs-claude-code-in-2026-a-solo-developers-honest-comparison-2adl
 - JA: "Cursor vs Claude Code 2026 — 実際に両方使った個人開発者の比較レポート" → published:true
 - 累計: 28本 (dev.to)
+
+## 2026-04-28 PS#2 S52 (cont) — T-1 第29弾 dispatch
+
+- T-1 第29弾: "Claude Code Best Practices in 2026 — 10 Rules from 6 Months of Solo Dev at Scale" → dev.to 投稿成功
+  - https://dev.to/kanta13jp1/claude-code-best-practices-in-2026-10-rules-from-6-months-of-solo-dev-at-scale-45ah
+- JA: "Claude Code ベストプラクティス 2026 — 個人開発者が半年使って学んだ10のルール" → published:true
+- 累計: 29本 (dev.to)
