@@ -2127,6 +2127,593 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'hubspot': const _CompetitorInfo(
+    name: 'HubSpot',
+    emoji: '🧲',
+    tagline: 'HubSpotはインバウンドマーケティングCRMの王者。自分株式会社は個人が「自分自身のマーケター」としてライフ全体をAI管理。',
+    searchKeyword: 'HubSpot代替 CRM代替 マーケティング自動化代替',
+    accentColor: Color(0xFFFF7A59),
+    painPoints: [
+      'HubSpot Starter \$15/user/月〜 — マーケティング・営業CRM特化で個人の財務・習慣・AI学習との統合がない',
+      '企業の顧客獲得に最適化されており、個人のライフスタイル管理・目標設定には不向き',
+      'フリープランはあるが機能制限が多く、個人CEOとしてフル活用するには有料プランが必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'CRM・マーケティング自動化',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: '個人タスク・目標管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '個人財務・家計管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: 'AI大学 (学習管理)',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '無料プランあり',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'coda': const _CompetitorInfo(
+    name: 'Coda',
+    emoji: '📄',
+    tagline:
+        'CodaはドキュメントとデータベースとアプリをひとつにするAll-in-One。自分株式会社はAI×生活全体の統合OSとして一歩先を行く。',
+    searchKeyword: 'Coda代替 ドキュメントDB代替 Notion代替 ノーコード代替',
+    accentColor: Color(0xFFE55A2B),
+    painPoints: [
+      'Coda Pro \$10/user/月 — 柔軟なDoc/DBだが設計に時間がかかり財務・健康・AI学習は別途構築が必要',
+      'AI機能(Coda AI)は有料プランのみ — 自分株式会社はAI機能を無料から統合提供',
+      '個人の全ライフカテゴリを統合管理するには複数のページを自分で設計する必要がある',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'カスタムDoc/DB/アプリ構築',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'ゼロ設定でAI管理開始',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '個人財務・家計管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: 'AIアシスタント (無料)',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '無料プランあり',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'atlassian': const _CompetitorInfo(
+    name: 'Atlassian (Jira / Confluence)',
+    emoji: '🗂️',
+    tagline:
+        'AtlassianはJira/Confluenceでソフトウェア開発の王者。自分株式会社は開発以外の「人生プロジェクト」を個人CEOとして管理。',
+    searchKeyword: 'Jira代替 Confluence代替 プロジェクト管理代替 Atlassian代替',
+    accentColor: Color(0xFF0052CC),
+    painPoints: [
+      'Jira Standard \$7.75/user/月 — ソフトウェア開発チーム向けで複雑すぎ、個人ユーザーには過剰',
+      '個人の財務・健康・習慣・AI学習の統合管理という概念がなく設定コストが高い',
+      'エンジニア以外には敷居が高い — 自分株式会社はノンエンジニア含む全ライフカテゴリをカバー',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ソフトウェア開発PM',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: '個人WBS・目標管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '個人財務・家計管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: 'AIアシスタント統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'replit': const _CompetitorInfo(
+    name: 'Replit',
+    emoji: '💻',
+    tagline: 'Replitはブラウザ完結型AI開発環境。自分株式会社はコーディング以外の「人生OS」として全カテゴリをAIで管理。',
+    searchKeyword: 'Replit代替 ブラウザIDE代替 AIコーディング代替',
+    accentColor: Color(0xFFF5821B),
+    painPoints: [
+      'Replit Core \$20/月 — AI開発環境として優秀だが個人の財務・習慣・目標・AI大学学習との統合がない',
+      'コーディング以外の日常タスク・家計・健康管理は対象外のツール',
+      '開発者専用 — 自分株式会社はノンエンジニアも含む全ライフカテゴリをカバー',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ブラウザAI開発環境',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'タスク・目標管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '個人財務・家計管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: 'AI大学 (学習管理)',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '無料プランあり',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'bolt-new': const _CompetitorInfo(
+    name: 'Bolt.new (StackBlitz)',
+    emoji: '⚡',
+    tagline: 'Bolt.newはAIフルスタックアプリビルダーの革命児。自分株式会社はアプリ構築を超えた個人の全ライフをAIで最適化。',
+    searchKeyword: 'Bolt.new代替 AIアプリビルダー代替 StackBlitz代替',
+    accentColor: Color(0xFF8B5CF6),
+    painPoints: [
+      'Bolt Pro \$20/月 — AIによる高速アプリ生成が売りだが、個人の財務・習慣・健康・AI学習管理機能がない',
+      'アプリを「作る」ツールであり、個人の「生活を管理・最適化する」ツールではない',
+      '開発者・起業家向け設計 — 自分株式会社は全ユーザーの日常ライフを直接サポート',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AIフルスタックアプリ生成',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'タスク・習慣管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '個人財務・家計管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: 'AIアシスタント統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '無料プランあり',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'lovable': const _CompetitorInfo(
+    name: 'Lovable',
+    emoji: '💜',
+    tagline: 'LovableはAIアプリビルダーの新星。自分株式会社はアプリ生成を超えた個人CEO向け統合ライフOSを無料提供。',
+    searchKeyword: 'Lovable代替 AIアプリ生成代替 Bolt.new代替',
+    accentColor: Color(0xFF7C3AED),
+    painPoints: [
+      'Lovable \$20/月〜 — React+SupabaseアプリをAIで即生成できるが個人の財務・習慣・健康管理は対象外',
+      'アプリを作る側のツールで、個人の日常生活を管理・最適化するツールではない',
+      '自分株式会社はLovableと同じSupabase+Flutter技術基盤を使いながら、作成済みの統合ライフOSを無料提供',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AIフルスタックアプリ生成',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'タスク・目標管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '個人財務・家計管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: 'AI大学 (学習管理)',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'mistral': const _CompetitorInfo(
+    name: 'Mistral AI',
+    emoji: '🌬️',
+    tagline: 'MistralはEU発の高性能オープンAIモデル。自分株式会社はAIモデルを内部活用しながら個人の生活OSとして完成系を提供。',
+    searchKeyword: 'Mistral代替 オープンソースAI代替 LLM代替',
+    accentColor: Color(0xFFFF7000),
+    painPoints: [
+      'Mistral API — 優秀なLLMモデルを提供するが個人ユーザーが直接使うにはAPI知識と開発スキルが必要',
+      'モデルを「使うツールを作る」レイヤーであり、個人の財務・タスク・健康管理は別途構築が必要',
+      '自分株式会社はMistralのようなAI APIを内部活用した「完成した個人OS」を無料で提供',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '高性能LLMモデル/API',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI統合ライフアシスタント',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '個人財務・家計管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: 'タスク・習慣管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '設定ゼロで即利用',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'jasper-ai': const _CompetitorInfo(
+    name: 'Jasper AI',
+    emoji: '✨',
+    tagline: 'JasperはAIコンテンツ生成の第一人者。自分株式会社はコンテンツ作成だけでなく個人の生活・学習・財務まで統合管理。',
+    searchKeyword: 'Jasper代替 AIライティング代替 AIコンテンツ生成代替',
+    accentColor: Color(0xFF4F46E5),
+    painPoints: [
+      'Jasper Creator \$39/月 — マーケティングコンテンツ生成に特化し個人の財務・タスク・習慣・AI学習との統合がない',
+      'コンテンツを「書く」ことに最適化されており、個人の目標設定・行動管理・振り返りはサポートしない',
+      '自分株式会社は日本語でのAI文章支援も含む統合ライフOSを無料から提供',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AIマーケティングコンテンツ生成',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'タスク・目標管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '個人財務・家計管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: 'AI大学 (学習管理)',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '無料で始められる',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'logseq': const _CompetitorInfo(
+    name: 'Logseq',
+    emoji: '🔗',
+    tagline: 'LogseqはオープンソースPKMの新星。自分株式会社はノート管理を超えた財務・タスク・健康の全統合ライフOSをAIで提供。',
+    searchKeyword: 'Logseq代替 PKM代替 Obsidian代替 ノート管理代替',
+    accentColor: Color(0xFF3B82F6),
+    painPoints: [
+      'Logseq無料/オープンソース — アウトライナーPKMとして優秀だが財務・習慣・AI大学学習の統合は別ツールが必要',
+      'バレットジャーナル的な手動管理が前提で、AIによる自動整理・提案機能が弱い',
+      '非エンジニアには設定コストが高く、個人CEOとして即利用するには準備が必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'アウトライナーPKM',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AIアシスタント統合 (無料)',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '個人財務・資産管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: 'タスク・習慣管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '設定ゼロで即利用',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'headspace': const _CompetitorInfo(
+    name: 'Headspace',
+    emoji: '🧘',
+    tagline: 'Headspaceはマインドフルネス瞑想アプリの王者。自分株式会社はメンタル健康を含む全ライフカテゴリをAIで統合管理。',
+    searchKeyword: 'Headspace代替 瞑想アプリ代替 マインドフルネス代替 Calm代替',
+    accentColor: Color(0xFFFF6B6B),
+    painPoints: [
+      'Headspace \$12.99/月 — 瞑想・マインドフルネス専門アプリで財務・タスク・習慣・AI学習との統合がない',
+      '心の健康に特化しており、身体・財務・仕事・学習の全体像を俯瞰できない',
+      '自分株式会社は健康トラッキングを含む6部署(人事/財務/IT/営業/開発/法務)をAIで統合管理',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '瞑想・マインドフルネスコンテンツ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: '習慣・健康トラッキング',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '個人財務・家計管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: 'タスク・目標管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '無料で始められる',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'spotify': const _CompetitorInfo(
+    name: 'Spotify',
+    emoji: '🎵',
+    tagline: 'Spotifyは音楽・ポッドキャストの王者。自分株式会社はエンタメを含む個人の全ライフをAIで最適化する統合OS。',
+    searchKeyword: 'Spotify代替 音楽ストリーミング代替 ポッドキャスト代替',
+    accentColor: Color(0xFF1DB954),
+    painPoints: [
+      'Spotify Premium ¥980/月 — 音楽・ポッドキャスト専門で個人の財務・タスク・習慣・AI学習との統合がない',
+      'エンタメ消費ツールであり、個人のライフスタイル最適化・目標達成支援とは設計が異なる',
+      'Spotify学習ポッドキャストは良質だが、学んだことをタスク・目標と繋げる機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '音楽・ポッドキャスト配信',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'タスク・目標管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '個人財務・家計管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: 'AI大学 (学習管理)',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '無料プランあり',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'moneyforward-cloud': const _CompetitorInfo(
+    name: 'マネーフォワードクラウド',
+    emoji: '📈',
+    tagline: 'マネーフォワードクラウドは法人向けバックオフィスDX。自分株式会社は個人・フリーランスのライフ全体をAIで最適化。',
+    searchKeyword: 'マネーフォワードクラウド代替 クラウド会計代替 バックオフィス代替',
+    accentColor: Color(0xFF0066CC),
+    painPoints: [
+      'MFクラウド会計 ¥2,980/月〜 — 中小企業・個人事業主の会計・給与・経費に特化し個人ライフ管理との統合がない',
+      '法人バックオフィスDXは優秀だが個人のタスク・習慣・AI学習・健康管理は別アプリが必要',
+      'フリーランスの確定申告支援はできるが「個人CEOとしての財務部長」的な視点での管理は自分株式会社',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '法人向けクラウド会計・給与',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: '個人家計・資産トラッキング',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: 'AIアシスタント (財務相談)',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: 'タスク・習慣管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '無料プランあり',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'zoho': const _CompetitorInfo(
+    name: 'Zoho',
+    emoji: '🌐',
+    tagline: 'ZohoはCRM・会計・HRの総合ビジネスSaaS。自分株式会社は個人版の統合ライフOSとして同等の機能を無料で提供。',
+    searchKeyword: 'Zoho代替 CRM代替 ビジネスSaaS代替 G Suite代替',
+    accentColor: Color(0xFFE44B23),
+    painPoints: [
+      'Zoho One \$37/user/月 — 40+アプリ統合は企業向けで個人ユーザーには複雑すぎ・高コスト',
+      '企業のCRM・HR・会計に最適化されており、個人の習慣・健康・AI大学学習との統合がない',
+      '個人版「自分株式会社」は財務・タスク・習慣・AI学習を無料から統合するZoho的な役割を果たす',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '企業向け統合ビジネスSaaS',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: '個人タスク・目標管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '個人財務・家計管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: 'AI大学 (学習管理)',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'stripe': const _CompetitorInfo(
+    name: 'Stripe',
+    emoji: '💳',
+    tagline: 'Stripeは決済インフラの覇者。自分株式会社はStripeを含む収入・支出・資産を統合した個人財務部長AIを提供。',
+    searchKeyword: 'Stripe代替 決済代替 サブスクリプション管理代替',
+    accentColor: Color(0xFF635BFF),
+    painPoints: [
+      'Stripe 2.9%+30¢/決済 — 決済処理に特化し個人の財務全体・タスク・習慣・AI学習との統合がない',
+      'EC・SaaS事業者向け決済ツールで個人の日常収支管理・目標設定には設計が合わない',
+      'Stripe収益データが個人の財務ダッシュボード・家計管理に自動連携されない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '決済処理・サブスク管理',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: '個人収支・資産管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: 'タスク・目標管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: 'AIアシスタント統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '無料で始められる',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'typeform': const _CompetitorInfo(
+    name: 'Typeform',
+    emoji: '📝',
+    tagline: 'Typeformは会話型フォームの先駆者。自分株式会社はフォーム収集を超えた個人の全情報をAIで管理・活用する統合OS。',
+    searchKeyword: 'Typeform代替 フォーム代替 アンケート代替 Google Forms代替',
+    accentColor: Color(0xFF262627),
+    painPoints: [
+      'Typeform Basic \$25/月 — 美しいフォーム・アンケート作成に特化し個人の財務・タスク・習慣・AI学習との統合がない',
+      'データ収集ツールであり、収集したデータを個人の目標・行動管理に繋げる機能がない',
+      '自分株式会社はTypeformで収集するようなセルフチェック・振り返りデータをAIが自動分析して行動提案',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '会話型フォーム・アンケート',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'タスク・目標管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '個人財務・家計管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: 'AIアシスタント統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '無料で始められる',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
