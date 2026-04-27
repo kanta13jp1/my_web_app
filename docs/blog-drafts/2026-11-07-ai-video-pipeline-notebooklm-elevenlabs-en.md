@@ -1,7 +1,7 @@
 ---
 title: "Auto-Generating Video Content with AI: NotebookLM + ElevenLabs + GitHub Actions Pipeline"
 tags: ai,automation,youtube,github-actions
-published: false
+published: true
 ---
 
 # Auto-Generating Video Content with AI: NotebookLM + ElevenLabs + GitHub Actions Pipeline
