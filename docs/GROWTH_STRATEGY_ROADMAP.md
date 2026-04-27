@@ -21652,3 +21652,10 @@ Google I/O 2026 競合脅威 事前ブリーフィング
   - https://dev.to/kanta13jp1/2-days-to-notion-paywall-split-your-personal-ai-to-a-free-6-department-hub-first-48h0
 - JA slug: `2026-05-02-notion-paywall-d2-parallel-6-departments`
 - orphan branch `blog-publish/24986378737-20260427-180909` マージ + 削除
+
+## PS版#2 S52 — 2026-04-27 T-1 第28弾 dispatch
+
+- T-1 第28弾: "Notion Custom Agents Paywall Starts Today — A Free Alternative That Runs All 6 Life Departments" → dev.to 投稿成功
+  - https://dev.to/kanta13jp1/notion-custom-agents-paywall-starts-today-a-free-alternative-that-runs-all-6-life-departments-3alm
+- JA slug: `2026-05-04-notion-paywall-d0-alternative-6-departments`
+- orphan branch `blog-publish/24990196597-20260427-193741` マージ + 削除
