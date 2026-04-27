@@ -21608,3 +21608,14 @@ Google I/O 2026 競合脅威 事前ブリーフィング
   - `notion-sync.yml`: object_not_found (<10%失敗率) soft-fail条件追加
   - `weekly-sns-draft.yml`: Commit draft に `git pull --rebase` 追加 (並行push耐性)
 - Workflow Failure Handler: 全件 skipped — 正常動作
+
+## daily-development scheduled task — 2026-04-27 自律実行
+
+- **trigger**: scheduled task `daily-development` 自動起動 (caveman mode active)
+- **instance**: scheduled-task (main repo / 通常 worktree 違反は scheduled-task のみ許容)
+- **migration**: `20260427005000_seed_achievements_daily_development_scheduled_task.sql` (timestamp +10 分採番で衝突回避)
+- **blog drafts**: `docs/blog-drafts/2026-10-17-claude-code-schedule-daily-ops-loop.md` (JA) + `-en.md` (EN)
+  - テーマ: Schedule タスクの設計 + timestamp 採番 + Bash parallel 禁止 + Anthropic outage fallback
+- **memory**: `memory/project_20260427_daily_dev_scheduled_task.md`
+- **commit**: 後続コミットで本ログ含めて 1 commit
+- **次回 daily-development**: ロードマップ末尾から次タスク (PS#3 AI 大学 240→242 社化 or PS#4 Google I/O 当日チェック準備) を拾う
