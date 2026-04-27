@@ -1,0 +1,4 @@
+triggered_at: 2026-04-27T23:44Z
+reason: WEB版 cs-check が Supabase Network Restrictions により 403 を受けていたため全解除
+action: allow-all (0.0.0.0/0)
+triggered_by: cs-check (WEB版 Claude Schedule)
