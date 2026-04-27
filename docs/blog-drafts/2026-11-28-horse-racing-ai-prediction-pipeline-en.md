@@ -1,7 +1,7 @@
 ---
 title: "Building a Horse Racing AI Pipeline: PostgreSQL + Claude for Automated Race Predictions"
 tags: ai,postgresql,automation,indiedev
-published: false
+published: true
 ---
 
 # Building a Horse Racing AI Pipeline: PostgreSQL + Claude for Automated Race Predictions
