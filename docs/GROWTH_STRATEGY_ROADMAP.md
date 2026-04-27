@@ -21946,3 +21946,11 @@ Google I/O 2026 競合脅威 事前ブリーフィング
   - **Claude Code**: Routines + Ultraplan + Monitor + NO_FLICKER — GHA scheduled tasks → routines 移行検討
 - 中優先 5 件: MoneyForward アカデミア (¥980/月) / X Grok Custom Timelines / Evernote AI tasks / Amazon Anthropic +$5B / Cowork Dispatch
 - アクション提案 6 件 (担当割当: PS#4 / PS#5 / Win 版 / PS#1 / PS#3 / PS#2)
+
+## 2026-04-28 PS#6 S72 — 競馬予想モデル強化
+
+- **Claude モデルID最新化**: haiku-4-5→4-5-20251001, sonnet→4-6, opus→4-7 (premium chain default)
+- **sortHorseEntriesForLearning 8因子化**: best_time (持ち時計/4位) + weightChangeScore (馬体重変動penalty/6位) 追加
+- **新ヘルパー**: timeToSecondsTS (MM:SS.ss→秒), weightChangeScore (±4kg以内=0, ±12kg+=50)
+- **confidence 式更新**: bestTimeCoverage*0.05 追加、base 0.36→0.34 調整
+- commit: 8a40c203
