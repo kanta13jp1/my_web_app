@@ -70,6 +70,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           token: ${{ secrets.GITHUB_PAT }}
+          fetch-depth: 100  # Step 0 dedup needs ≥1h of history (default depth=1 hides past bot commits)
 
       - name: Setup Python 3.12
         uses: actions/setup-python@v5
@@ -100,12 +101,13 @@ jobs:
           echo "$YOUTUBE_TOKEN" > ~/.youtube/token.json
           chmod 600 ~/.youtube/*.json
 
-      - name: Step 0 — YouTube quota pre-flight (max 6 uploads/24h)
+      - name: Step 0 — Pre-flight (YouTube quota + slug dedup)
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          INPUT_TITLE: ${{ inputs.title }}
         run: |
-          # YouTube Data API quota: 10000 units/day, 1 upload = 1600 units
-          # → at most 6 successful pipeline runs (uploads) per rolling 24h window.
+          # ───────── (a) YouTube quota pre-flight ─────────
+          # Quota: 10000 units/day, 1 upload = 1600 units → max 6 uploads / rolling 24h.
           LIMIT_PER_DAY=6
           DAY_AGO_ISO=$(date -u -d '24 hours ago' '+%Y-%m-%dT%H:%M:%SZ')
 
@@ -128,6 +130,22 @@ jobs:
           if [ "$count" -ge $((LIMIT_PER_DAY - 1)) ]; then
             echo "::warning::Approaching YouTube quota cap ($count/$LIMIT_PER_DAY). This will be the last upload of the day."
           fi
+
+          # ───────── (b) Slug dedup window (1h) ─────────
+          # Step 8 commits include "TITLE=<inputs.title>" in the body. If the same
+          # title was pushed in the last hour, refuse to re-run — the bot would just
+          # hit Step 8's dup-guard later anyway, but this aborts before quota burn.
+          DEDUP_WINDOW_HOURS=1
+          dup_sha=$(git log --since="${DEDUP_WINDOW_HOURS} hour ago" \
+            --fixed-strings --grep="TITLE=$INPUT_TITLE" \
+            --author='notebooklm-video-pipeline\[bot\]' \
+            --all --format=%H -1 2>/dev/null || true)
+
+          if [ -n "$dup_sha" ]; then
+            echo "::error::Duplicate dispatch — title \"$INPUT_TITLE\" already pushed within last ${DEDUP_WINDOW_HOURS}h (commit $dup_sha). Aborting."
+            exit 1
+          fi
+          echo "dedup_check=ok (no matching bot commit in last ${DEDUP_WINDOW_HOURS}h)"
 
       - name: Step 1 — Download video from NotebookLM
         run: |
@@ -313,9 +331,8 @@ jobs:
           EOF
           curl -X POST -H 'Content-type: application/json' --data @payload.json "$SLACK_WEBHOOK_URL" --max-time 10 || true
 
-# 残スコープ (Win版#132 part 36+ / cross-instance-pr 検討):
+# 残スコープ (Win版#132 part 37+ / cross-instance-pr 検討):
 # - workflow E2E smoke test (実 dispatch / video #1 重複 ID で Step 8 dup-guard 発火確認)
-# - Slack throttle (24h で同じ slug の通知が重複しないようにする / dedup window)
 #
 # 完了済 (Win版#132 part 30):
 # - Step 8 自動 embed → scripts/embed_video_in_philosophy.py (regex insert + dup-guard)
@@ -341,3 +358,9 @@ jobs:
 # - Step 0 YouTube quota pre-flight (gh run list で 24h 以内の successful run を集計)
 #   6/day cap 到達で download 前に exit 1 / 5/day で warning
 #   Supabase 不要・GITHUB_TOKEN のみ・jq + bash date 24h ago lexical compare
+#
+# 完了済 (Win版#132 part 36):
+# - Step 0 (b) slug dedup window (1h)
+#   git log --grep="TITLE=$INPUT_TITLE" --author=bot --since="1 hour ago" で
+#   直近 1h の bot commit を検索 → match で abort (Step 8 で dup-guard 発火させる前に止める)
+#   Checkout fetch-depth=100 に変更 (default=1 では history が無くて grep がスキップされる)
