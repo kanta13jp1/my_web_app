@@ -1,7 +1,7 @@
 ---
 title: "260 AI Tools Catalogued: Why I Built a Personal AI University"
 tags: ai,education,saas,indiedev
-published: false
+published: true
 ---
 
 # 260 AI Tools Catalogued: Why I Built a Personal AI University
