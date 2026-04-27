@@ -1,7 +1,7 @@
 ---
 title: "Notion 課金まであと 2 日 — 切替前に個人 AI 管理を無料 6 部署に分散しておこう"
 tags: Notion,AI,個人開発,buildinpublic,SaaS
-published: false
+published: true
 ---
 
 # Notion 課金まであと 2 日 — 切替前に個人 AI 管理を無料 6 部署に分散しておこう

@@ -1,7 +1,7 @@
 ---
 title: "2 Days to Notion Paywall — Split Your Personal AI to a Free 6-Department Hub First"
 tags: Notion,AI,SaaS,buildinpublic,webdev
-published: false
+published: true
 ---
 
 # 2 Days to Notion Paywall — Split Your Personal AI to a Free 6-Department Hub First
