@@ -651,6 +651,7 @@ class _GanttTimelinePageState extends State<GanttTimelinePage>
   }
 
   Widget _buildMilestoneRow(Map<String, dynamic> ms) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final name = ms['name'] as String? ?? '';
     final dueDate = ms['due_date'] as String?;
     final isPast = dueDate != null
@@ -659,7 +660,9 @@ class _GanttTimelinePageState extends State<GanttTimelinePage>
 
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
-      color: isPast ? const Color(0xFFFFEBEE) : const Color(0xFFFFF8E1),
+      color: isPast
+          ? (isDark ? const Color(0xFF3A1010) : const Color(0xFFFFEBEE))
+          : (isDark ? const Color(0xFF1A1400) : const Color(0xFFFFF8E1)),
       child: ListTile(
         dense: true,
         leading: Icon(
@@ -685,8 +688,13 @@ class _GanttTimelinePageState extends State<GanttTimelinePage>
                     height: 1.5,
                   ),
                 ),
-                backgroundColor:
-                    isPast ? const Color(0xFFFFCDD2) : const Color(0xFFFFECB3),
+                backgroundColor: isPast
+                    ? (isDark
+                        ? const Color(0xFF3A1010)
+                        : const Color(0xFFFFCDD2))
+                    : (isDark
+                        ? const Color(0xFF2A1800)
+                        : const Color(0xFFFFECB3)),
               )
             : null,
       ),

@@ -241,8 +241,13 @@ class _DiscordNotificationPageState extends State<DiscordNotificationPage> {
   }
 
   Widget _buildAlert(String message, {required bool isError}) {
-    final bg = isError ? const Color(0xFFFFEBEE) : const Color(0xFFE8F5E9);
-    final border = isError ? const Color(0xFFEF9A9A) : const Color(0xFFA5D6A7);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bg = isError
+        ? (isDark ? const Color(0xFF3A1010) : const Color(0xFFFFEBEE))
+        : (isDark ? const Color(0xFF0A1A0A) : const Color(0xFFE8F5E9));
+    final border = isError
+        ? (isDark ? const Color(0xFF8B2020) : const Color(0xFFEF9A9A))
+        : (isDark ? const Color(0xFF1A5A1A) : const Color(0xFFA5D6A7));
     final fg = isError ? const Color(0xFFC62828) : const Color(0xFF2E7D32);
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
