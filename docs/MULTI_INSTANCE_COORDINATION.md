@@ -1,7 +1,10 @@
-# 5インスタンス + マルチAI並行開発 — 競合防止ガイド
+# 12スロット fleet (10 Claude + 2 Codex) — 競合防止ガイド
+
+> **canonical**: [`docs/MULTI_INSTANCE_FLEET.md`](./MULTI_INSTANCE_FLEET.md) (2026-04-28 / 12スロット fleet = single source of truth)
+> 本ドキュメントは競合防止手順・モバイル特化ワークフロー・フォールバック AI の詳細保管場所。
 
 作成日: 2026-03-30
-最終更新: 2026-04-19 (Windowsアプリ版#104 — 📱スマホ版追加・5インスタンス制へ)
+最終更新: 2026-04-28 (PS版#1 S53 — 12スロット fleet 統合・Codex#1/#2 追加)
 管理: PowerShell インスタンス (全体管理)
 
 ---
@@ -11,10 +14,17 @@
 | インスタンス | 担当領域 (write) | 専任責務 |
 | --- | --- | --- |
 | **VSCode版** | `lib/` (Dart/Flutter UI) + `supabase/functions/` (EF) + `docs/DESIGN.md` | Rule 16 Web/モバイル表示修正 / Rule 19 UI改善ツールチェーン / `flutter analyze 0エラー` / `deno lint 0エラー` |
-| **Windowsアプリ版** | `docs/` (DESIGN.md除く) + `supabase/migrations/` (seed + schema 両方) | Rule 10 (docs全件分析) 主担当 / AI大学プロバイダー追加 / seed データ管理 / 動画編集 |
-| **PowerShell版** | `.github/workflows/` + `.mcp.json` + `docs/MULTI_INSTANCE_COORDINATION.md` | Rule 17 CI/CD最適化 / Schedule タスク owner / クォータ監視管理 / MCP設定管理 / 全ブランチ CI 監視 / GitHub PR・Issue管理 |
-| **WEB版** | (write 不可・GitHub MCP のみ) | ブログ・競合リサーチ (notebooklm/dart/flutter 不可) |
-| **📱 スマホ版 (新)** | (write 不可・GitHub MCP のみ) | **実機 UAT** (iOS Safari/PWA/touch gesture) / モバイル不具合トリアージ / GitHub Issue 自動作成 / 軽量 PR (1ファイル数行) / 重い修正は VSCode版/Win版に handoff |
+| **Windowsアプリ版** | `docs/` (DESIGN.md除く) + `supabase/migrations/` (schema) + 動画パイプライン | AI大学プロバイダー追加 / seed データ管理 / NotebookLM 動画パイプライン |
+| **PS版#1** | `.github/workflows/` + `.mcp.json` | Rule 17 WF健全性監視 / インスタンス config oversight / cross-instance-pr 管理 |
+| **PS版#2** | `docs/blog-drafts/` | T-1 ブログ dispatch (dev.to / Qiita) |
+| **PS版#3** | `supabase/migrations/` (AI大学 seed) | AI 大学コンテンツ追加 (260社運用) |
+| **PS版#4** | `supabase/migrations/` (競合 seed) | 競合モニタリング (172社 sitemap / pricing / japan_presence) |
+| **PS版#5** | `supabase/functions/` (移行系) + `lib/` (anon-guard) | EF stale 移行・anon-guard 等 bulk 修正 |
+| **PS版#6** | `supabase/migrations/` (horse seed) + `supabase/functions/` (horse EF) | 競馬予想モデル + worktree 整理 |
+| **WEB版** | (write 不可・GitHub MCP のみ) | PR / Issue 管理・競合リサーチ (ローカル CLI 不可) |
+| **📱 スマホ版** | (write 不可・GitHub MCP のみ) | **実機 UAT** (iOS Safari/PWA/touch gesture) / モバイル不具合トリアージ |
+| **Codex#1** | `supabase/migrations/` (SQL最適化) | SQL + algorithm 最適化 / migration tuning |
+| **Codex#2** | `lib/` + `.github/workflows/` (大規模 refactor) | 500+ 行 refactor / CI cascade fix / UI badge 系 |
 
 ### 📱 スマホ版 ワークフロー
 
@@ -49,9 +59,20 @@
 | Dark mode contrast 不足 | DESIGN.md token 違反 | VSCode版 (Rule 12) |
 | PWA install ボタン出ない | manifest.json 不備 | Win版 (web/) |
 
+### Codex 協働パターン (4 ルール)
+
+詳細は `docs/MULTI_INSTANCE_FLEET.md` 「Codex 特有の運用」セクション参照。
+
+| ルール | 内容 |
+| --- | --- |
+| **session 持たない** | Claude Code のように session 継続はない。1 タスク = 1 コマンド実行で完結 |
+| **CLAUDE.md 全文不可** | Codex は CLAUDE.md を context に持たない → Claude Code が task 指示文に要点を埋め込む |
+| **memory 書き込み禁止** | memory/ フォルダへの書き込みは Claude Code が代行 |
+| **worktree 分離** | instance-codex1 / instance-codex2 を専用スロットとして固定 |
+
 ### フォールバック AI ツール (Claude 制限時のみ)
 
-> 通常は Claude Code 3インスタンスのみ使用。Claude 429 / 月次 $50 超過時のみフォールバック発動。
+> 通常は Claude Code 10インスタンス + Codex 2インスタンス = 12スロット fleet。Claude 429 / 月次上限超過時のみフォールバック発動。
 
 | ツール | 発動条件 | ファイル種別 |
 | --- | --- | --- |
