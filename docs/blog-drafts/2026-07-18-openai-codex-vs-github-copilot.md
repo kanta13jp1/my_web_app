@@ -1,7 +1,7 @@
 ---
 title: "OpenAI Codex vs GitHub Copilot 2026 — 個人開発者が実際に使い分けている違い"
 tags: AI,個人開発,buildinpublic,programming
-published: false
+published: true
 ---
 
 # OpenAI Codex vs GitHub Copilot 2026 — 個人開発者が実際に使い分けている違い
