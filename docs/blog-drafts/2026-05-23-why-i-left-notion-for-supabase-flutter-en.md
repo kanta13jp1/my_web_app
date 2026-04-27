@@ -1,7 +1,7 @@
 ---
 title: "Why I Left Notion and Built My Own App with Flutter + Supabase"
 tags: notion,flutter,supabase,saas
-published: false
+published: true
 ---
 
 # Why I Left Notion and Built My Own App with Flutter + Supabase
