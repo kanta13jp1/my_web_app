@@ -1,7 +1,7 @@
 ---
 title: "AI-Powered Task Prioritization: How Jibun Kaisha's WBS System Works"
 tags: productivity,ai,saas,project-management
-published: false
+published: true
 ---
 
 # AI-Powered Task Prioritization: How Jibun Kaisha's WBS System Works
