@@ -11,12 +11,14 @@ class ElectionJapanMap extends StatefulWidget {
   final List<LocalElectionPrefecturePlan> prefectures;
   final List<LocalElectionScheduleEntry> schedules;
   final List<PastElectionResult> pastElectionResults;
+  final List<LocalElectionLegislatorProfile> members;
 
   const ElectionJapanMap({
     super.key,
     required this.prefectures,
     this.schedules = const <LocalElectionScheduleEntry>[],
     this.pastElectionResults = const <PastElectionResult>[],
+    this.members = const <LocalElectionLegislatorProfile>[],
   });
 
   @override
@@ -504,6 +506,7 @@ class _ElectionJapanMapState extends State<ElectionJapanMap> {
     final tile = _tileForIndex(safeIndex, plan);
     final schedules = _schedulesForPlan(plan);
     final postConventionResults = _postConventionBreakdownForPlan(plan);
+    final incumbentMembers = _incumbentMembersForPlan(plan);
     final scheduledElectionLabel = schedules.isEmpty
         ? '${plan.scheduledElectionCount}件'
         : '${schedules.length}件';
@@ -598,6 +601,10 @@ class _ElectionJapanMapState extends State<ElectionJapanMap> {
               MapEntry('公認期限', formatMonthKey(plan.endorsementDeadlineMonth)),
             ],
           ),
+          if (incumbentMembers.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            _buildIncumbentMembersSection(context, incumbentMembers),
+          ],
           if (postConventionResults.isNotEmpty) ...[
             const SizedBox(height: 12),
             _buildPostConventionBreakdown(
@@ -650,6 +657,35 @@ class _ElectionJapanMapState extends State<ElectionJapanMap> {
         return left.electionName.compareTo(right.electionName);
       });
     return schedules;
+  }
+
+  List<LocalElectionLegislatorProfile> _incumbentMembersForPlan(
+    LocalElectionPrefecturePlan plan,
+  ) {
+    final key = _prefectureKey(plan.prefecture);
+    final members = widget.members
+        .where(
+          (item) =>
+              item.name.trim().isNotEmpty &&
+              _prefectureKey(item.prefecture) == key,
+        )
+        .toList()
+      ..sort((left, right) {
+        final categoryCompare = _memberCategoryRank(
+          left.assemblyCategory,
+        ).compareTo(_memberCategoryRank(right.assemblyCategory));
+        if (categoryCompare != 0) {
+          return categoryCompare;
+        }
+        final municipalityCompare = left.municipality.compareTo(
+          right.municipality,
+        );
+        if (municipalityCompare != 0) {
+          return municipalityCompare;
+        }
+        return left.name.compareTo(right.name);
+      });
+    return members;
   }
 
   List<_PostConventionBreakdownEntry> _postConventionBreakdownForPlan(
@@ -951,6 +987,69 @@ class _ElectionJapanMapState extends State<ElectionJapanMap> {
         ],
       ],
     );
+  }
+
+  Widget _buildIncumbentMembersSection(
+    BuildContext context,
+    List<LocalElectionLegislatorProfile> members,
+  ) {
+    final theme = Theme.of(context);
+    final memberLabels = members.map(_incumbentMemberLabel).join(' / ');
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                '現職議員名簿',
+                style: theme.textTheme.labelLarge?.copyWith(
+                  fontWeight: FontWeight.w800,
+                  height: 1.4,
+                ),
+              ),
+            ),
+            Text(
+              '${members.length}人',
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: theme.colorScheme.primary,
+                fontWeight: FontWeight.w800,
+                height: 1.4,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 6),
+        Text(
+          memberLabels,
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+            height: 1.7,
+          ),
+        ),
+      ],
+    );
+  }
+
+  String _incumbentMemberLabel(LocalElectionLegislatorProfile member) {
+    final area = member.municipality.trim().isNotEmpty
+        ? member.municipality.trim()
+        : member.constituency.trim();
+    if (area.isEmpty) {
+      return member.name.trim();
+    }
+    return '${member.name.trim()}（$area）';
+  }
+
+  int _memberCategoryRank(String category) {
+    final normalized = category.trim();
+    if (normalized == 'prefectural') {
+      return 0;
+    }
+    if (normalized == 'municipal') {
+      return 1;
+    }
+    return 2;
   }
 
   _JapanTile _tileForIndex(int index, LocalElectionPrefecturePlan plan) {
