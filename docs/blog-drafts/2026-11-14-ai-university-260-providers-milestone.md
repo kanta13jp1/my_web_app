@@ -1,7 +1,7 @@
 ---
 title: "AI大学 260社突破 — 個人開発者がAIツール図鑑を作り続けた理由"
 tags: AI,個人開発,ai大学,saas
-published: false
+published: true
 ---
 
 # AI大学 260社突破 — 個人開発者がAIツール図鑑を作り続けた理由
