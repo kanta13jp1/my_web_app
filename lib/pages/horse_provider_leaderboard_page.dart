@@ -192,7 +192,19 @@ class _HorseProviderLeaderboardPageState
                                 ),
                               ),
                               SizedBox(
-                                width: 56,
+                                width: 52,
+                                child: Text(
+                                  '学習スコア',
+                                  style: TextStyle(
+                                    color: Color(0xFF94A3B8),
+                                    fontSize: 11,
+                                    height: 1.5,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
+                              SizedBox(
+                                width: 44,
                                 child: Text(
                                   '1着率',
                                   style: TextStyle(
@@ -204,9 +216,9 @@ class _HorseProviderLeaderboardPageState
                                 ),
                               ),
                               SizedBox(
-                                width: 56,
+                                width: 52,
                                 child: Text(
-                                  '3連単率',
+                                  'スキップ精度',
                                   style: TextStyle(
                                     color: Color(0xFF94A3B8),
                                     fontSize: 11,
@@ -216,9 +228,9 @@ class _HorseProviderLeaderboardPageState
                                 ),
                               ),
                               SizedBox(
-                                width: 40,
+                                width: 56,
                                 child: Text(
-                                  '予想数',
+                                  'ベスト券種',
                                   style: TextStyle(
                                     color: Color(0xFF94A3B8),
                                     fontSize: 11,
@@ -236,12 +248,17 @@ class _HorseProviderLeaderboardPageState
                           final row = entry.value;
                           final provider = row['provider'] as String? ?? '';
                           final model = row['model'] as String? ?? provider;
-                          final total =
-                              (row['total_predictions'] as num?)?.toInt() ?? 0;
                           final firstHitRate =
                               (row['first_hit_rate'] as num?)?.toDouble() ?? 0;
-                          final trifectaHitRate =
-                              (row['trifecta_hit_rate'] as num?)?.toDouble() ??
+                          final avgLearningScore =
+                              (row['avg_learning_score'] as num?)?.toDouble() ??
+                                  0;
+                          final skipAccuracyPct =
+                              (row['skip_accuracy_pct'] as num?)?.toDouble() ??
+                                  0;
+                          final bestBetType = row['best_bet_type'] as String?;
+                          final bestBetHitRate =
+                              (row['best_bet_hit_rate'] as num?)?.toDouble() ??
                                   0;
                           final color = _providerColor(provider);
 
@@ -295,7 +312,25 @@ class _HorseProviderLeaderboardPageState
                                   ),
                                 ),
                                 SizedBox(
-                                  width: 56,
+                                  width: 52,
+                                  child: Text(
+                                    avgLearningScore > 0
+                                        ? (avgLearningScore * 100)
+                                            .toStringAsFixed(1)
+                                        : '-',
+                                    style: TextStyle(
+                                      color: avgLearningScore > 0.5
+                                          ? const Color(0xFF4ADE80)
+                                          : Colors.white,
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.bold,
+                                      height: 1.5,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ),
+                                SizedBox(
+                                  width: 44,
                                   child: Text(
                                     '${(firstHitRate * 100).toStringAsFixed(1)}%',
                                     style: TextStyle(
@@ -310,28 +345,57 @@ class _HorseProviderLeaderboardPageState
                                   ),
                                 ),
                                 SizedBox(
-                                  width: 56,
+                                  width: 52,
                                   child: Text(
-                                    '${(trifectaHitRate * 100).toStringAsFixed(1)}%',
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 13,
+                                    skipAccuracyPct > 0
+                                        ? '${skipAccuracyPct.toStringAsFixed(1)}%'
+                                        : '-',
+                                    style: TextStyle(
+                                      color: skipAccuracyPct > 60
+                                          ? const Color(0xFF4ADE80)
+                                          : skipAccuracyPct > 40
+                                              ? const Color(0xFFFBBF24)
+                                              : Colors.white,
+                                      fontSize: 12,
                                       height: 1.5,
                                     ),
                                     textAlign: TextAlign.center,
                                   ),
                                 ),
                                 SizedBox(
-                                  width: 40,
-                                  child: Text(
-                                    '$total',
-                                    style: const TextStyle(
-                                      color: Color(0xFF94A3B8),
-                                      fontSize: 12,
-                                      height: 1.5,
-                                    ),
-                                    textAlign: TextAlign.center,
-                                  ),
+                                  width: 56,
+                                  child: bestBetType != null
+                                      ? Column(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Text(
+                                              bestBetType,
+                                              style: const TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 11,
+                                                height: 1.5,
+                                              ),
+                                              textAlign: TextAlign.center,
+                                            ),
+                                            Text(
+                                              '${bestBetHitRate.toStringAsFixed(1)}%',
+                                              style: const TextStyle(
+                                                color: Color(0xFF94A3B8),
+                                                fontSize: 10,
+                                                height: 1.5,
+                                              ),
+                                              textAlign: TextAlign.center,
+                                            ),
+                                          ],
+                                        )
+                                      : const Text(
+                                          '-',
+                                          style: TextStyle(
+                                            color: Color(0xFF64748B),
+                                            height: 1.5,
+                                          ),
+                                          textAlign: TextAlign.center,
+                                        ),
                                 ),
                               ],
                             ),
