@@ -21784,3 +21784,15 @@ Google I/O 2026 競合脅威 事前ブリーフィング
 - backward compatible: 既存 `consensus` + `first_pick_distribution` フィールドは変更なし
 - deno lint clean
 - migration: `20260427195000_seed_achievements_ps6_s65.sql`
+
+## 2026-04-27 (PS#6 S66)
+
+### PS#6 S66: 競馬学習統計レポート強化
+
+- `print_learning_stats` 改善:
+  - 期間サマリー行追加: 合計予想数 / レース数 / 期間平均スコア / トレンド矢印 (↑↓→)
+  - daily表に `evaluated_races` + `wide_hit_rate_pct` カラム追加 (6カラム→8カラム)
+  - `horse_learning_daily_accuracy.wide_hit_rate_pct` を初めて活用
+  - GITHUB_STEP_SUMMARY Markdown も8カラム + サマリーブロック引用形式
+- トレンド計算: 最新2日の avg_learning_score 差分 (>0.002 = ↑, <-0.002 = ↓, else = 横ばい)
+- migration: `20260427200000_seed_achievements_ps6_s66.sql`
