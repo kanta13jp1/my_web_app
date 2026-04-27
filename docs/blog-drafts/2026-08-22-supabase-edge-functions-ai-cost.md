@@ -1,7 +1,7 @@
 ---
 title: "Supabase Edge Functions × AI — 実際のコスト内訳と最適化パターン"
 tags: Supabase,AI,個人開発,saas
-published: false
+published: true
 ---
 
 # Supabase Edge Functions × AI — 実際のコスト内訳と最適化パターン

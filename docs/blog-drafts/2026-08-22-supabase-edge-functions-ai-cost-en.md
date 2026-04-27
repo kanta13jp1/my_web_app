@@ -1,7 +1,7 @@
 ---
 title: "Supabase Edge Functions + AI: Real Cost Breakdown and Optimization Patterns"
 tags: supabase,ai,programming,saas
-published: false
+published: true
 ---
 
 # Supabase Edge Functions + AI: Real Cost Breakdown and Optimization Patterns
