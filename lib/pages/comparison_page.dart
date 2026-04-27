@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../services/growth_acquisition_service.dart';
 
@@ -8,17 +9,61 @@ import '../services/growth_acquisition_service.dart';
 /// Each competitor gets a dedicated route (/vs-notion, /vs-evernote, …)
 /// so organic search traffic for "Notion代替", "Evernote代替", etc. lands on
 /// a page that speaks directly to that user's context.
-class ComparisonPage extends StatelessWidget {
+class ComparisonPage extends StatefulWidget {
   final String competitorKey;
 
   const ComparisonPage({super.key, required this.competitorKey});
 
   @override
+  State<ComparisonPage> createState() => _ComparisonPageState();
+}
+
+class _ComparisonPageState extends State<ComparisonPage> {
+  String? _pricingTier;
+  double? _pricingStartUsd;
+  String? _pricingNotesJa;
+  String? _japanPresenceLevel;
+
+  @override
+  void initState() {
+    super.initState();
+    unawaited(_fetchDbOverlay());
+  }
+
+  Future<void> _fetchDbOverlay() async {
+    try {
+      final data = await Supabase.instance.client
+          .from('competitors')
+          .select(
+            'pricing_tier, pricing_start_usd, pricing_notes_ja, japan_presence_level',
+          )
+          .eq('id', widget.competitorKey.toLowerCase())
+          .maybeSingle();
+      if (data != null && mounted) {
+        setState(() {
+          _pricingTier = data['pricing_tier'] as String?;
+          final rawUsd = data['pricing_start_usd'];
+          _pricingStartUsd = rawUsd != null ? (rawUsd as num).toDouble() : null;
+          _pricingNotesJa = data['pricing_notes_ja'] as String?;
+          _japanPresenceLevel = data['japan_presence_level'] as String?;
+        });
+      }
+    } catch (_) {
+      // フォールバック: const map のみで表示
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final info = _competitorInfo[competitorKey.toLowerCase()] ?? _defaultInfo;
+    final info =
+        _competitorInfo[widget.competitorKey.toLowerCase()] ?? _defaultInfo;
     return _ComparisonShell(
       info: info,
-      competitorKey: competitorKey.toLowerCase(),
+      competitorKey: widget.competitorKey.toLowerCase(),
+      pricingTier: _pricingTier,
+      pricingStartUsd: _pricingStartUsd,
+      pricingNotesJa: _pricingNotesJa,
+      japanPresenceLevel: _japanPresenceLevel,
     );
   }
 }
@@ -986,7 +1031,18 @@ final _competitorInfo = <String, _CompetitorInfo>{
 class _ComparisonShell extends StatefulWidget {
   final _CompetitorInfo info;
   final String competitorKey;
-  const _ComparisonShell({required this.info, required this.competitorKey});
+  final String? pricingTier;
+  final double? pricingStartUsd;
+  final String? pricingNotesJa;
+  final String? japanPresenceLevel;
+  const _ComparisonShell({
+    required this.info,
+    required this.competitorKey,
+    this.pricingTier,
+    this.pricingStartUsd,
+    this.pricingNotesJa,
+    this.japanPresenceLevel,
+  });
 
   @override
   State<_ComparisonShell> createState() => _ComparisonShellState();
@@ -1154,8 +1210,44 @@ class _ComparisonShellState extends State<_ComparisonShell> {
                             backgroundColor: _orange.withValues(alpha: 0.18),
                             foregroundColor: _textPrimary,
                           ),
+                        if (widget.pricingTier != null)
+                          _PricingBadge(tier: widget.pricingTier!),
+                        if (widget.japanPresenceLevel != null)
+                          _JapanPresenceBadge(
+                            level: widget.japanPresenceLevel!,
+                          ),
                       ],
                     ),
+                    if (widget.pricingStartUsd != null ||
+                        widget.pricingNotesJa != null)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 8),
+                        child: Row(
+                          children: [
+                            if (widget.pricingStartUsd != null)
+                              Text(
+                                '最安 \$${widget.pricingStartUsd?.toStringAsFixed(2)}/月',
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: _textSecondary,
+                                  height: 1.5,
+                                ),
+                              ),
+                            if (widget.pricingStartUsd != null &&
+                                widget.pricingNotesJa != null)
+                              const SizedBox(width: 6),
+                            if (widget.pricingNotesJa != null)
+                              Tooltip(
+                                message: widget.pricingNotesJa ?? '',
+                                child: const Icon(
+                                  Icons.info_outline,
+                                  size: 14,
+                                  color: _textMuted,
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
                     const SizedBox(height: 22),
                     Text(
                       '${_info.emoji} ${_info.name} の代わりに\n自分株式会社を使う',
@@ -2005,6 +2097,73 @@ class _ComparisonShellState extends State<_ComparisonShell> {
         foregroundColor: _textPrimary,
         side: const BorderSide(color: _borderColor),
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+      ),
+    );
+  }
+}
+
+class _PricingBadge extends StatelessWidget {
+  final String tier;
+  const _PricingBadge({required this.tier});
+
+  @override
+  Widget build(BuildContext context) {
+    final (label, color) = switch (tier) {
+      'free' => ('完全無料', const Color(0xFF4CAF50)),
+      'freemium' => ('無料プランあり', const Color(0xFF009688)),
+      'paid' => ('有料', const Color(0xFFFF9800)),
+      'enterprise' => ('要見積', const Color(0xFF607D8B)),
+      _ => ('?', const Color(0xFF9E9E9E)),
+    };
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.15),
+        border: Border.all(color: color.withValues(alpha: 0.4)),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: color,
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          height: 1.4,
+        ),
+      ),
+    );
+  }
+}
+
+class _JapanPresenceBadge extends StatelessWidget {
+  final String level;
+  const _JapanPresenceBadge({required this.level});
+
+  @override
+  Widget build(BuildContext context) {
+    final (emoji, label, color) = switch (level) {
+      'dominant' => ('🇯🇵', '日本No.1', const Color(0xFFE53935)),
+      'strong' => ('🇯🇵', '日本主要', const Color(0xFFFF6B35)),
+      'growing' => ('📈', '日本成長中', const Color(0xFFFFB300)),
+      'limited' => ('🌐', '日本限定的', const Color(0xFF607D8B)),
+      'not_present' => ('⚠️', '日本未展開', const Color(0xFF9E9E9E)),
+      _ => ('', '', const Color(0xFF9E9E9E)),
+    };
+    if (label.isEmpty) return const SizedBox.shrink();
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        border: Border.all(color: color.withValues(alpha: 0.35)),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Text(
+        '$emoji $label',
+        style: TextStyle(
+          color: color,
+          fontSize: 11,
+          height: 1.4,
+        ),
       ),
     );
   }
