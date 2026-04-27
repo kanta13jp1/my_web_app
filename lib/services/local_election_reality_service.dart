@@ -299,8 +299,48 @@ class LocalElectionRealityService {
     if (snapshot.hasSuspiciousEmptyOfficialPrefecture) {
       return false;
     }
+    if (_hasUnresolvedRecentPastCandidateElection(snapshot)) {
+      return false;
+    }
     return DateTime.now().difference(snapshot.fetchedAt) <=
         _freshSnapshotWindow;
+  }
+
+  bool _hasUnresolvedRecentPastCandidateElection(
+    LocalElectionRealitySnapshot snapshot,
+  ) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final cutoff = today.subtract(const Duration(days: 14));
+
+    for (final schedule in snapshot.targetElectionSchedules) {
+      final voteDate = schedule.parsedVoteDate;
+      if (voteDate == null || schedule.kokuminCandidateCount <= 0) {
+        continue;
+      }
+      final electionDate =
+          DateTime(voteDate.year, voteDate.month, voteDate.day);
+      if (electionDate.isAfter(today) || electionDate.isBefore(cutoff)) {
+        continue;
+      }
+
+      final candidateCount = schedule.kokuminCandidateNames.isNotEmpty
+          ? schedule.kokuminCandidateNames.length
+          : schedule.kokuminCandidateCount;
+      for (var index = 0; index < candidateCount; index++) {
+        final name = index < schedule.kokuminCandidateNames.length
+            ? schedule.kokuminCandidateNames[index].trim()
+            : '';
+        final status = index < schedule.kokuminCandidateStatuses.length
+            ? schedule.kokuminCandidateStatuses[index].trim()
+            : '';
+        if ((name.isNotEmpty || schedule.kokuminCandidateCount > 0) &&
+            !PastElectionCandidate.hasResolvedOutcomeStatus(status)) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   LocalElectionRealitySnapshot _rejectSuspiciousSnapshot(

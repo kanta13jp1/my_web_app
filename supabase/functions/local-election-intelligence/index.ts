@@ -174,8 +174,23 @@ interface LocalElectionScheduleEntry {
   kokuminCandidateCount: number;
   kokuminCandidateNames: string[];
   kokuminCandidateStatuses: string[];
+  kokuminCandidateVotes: number[];
   kokuminCandidateXHandles: string[];
   isPast: boolean;
+}
+
+interface ScheduleResultCandidate {
+  name: string;
+  party: string;
+  statusLabel: string;
+  votes: number;
+}
+
+interface ScheduleCandidateRow {
+  name: string;
+  statusLabel: string;
+  votes: number;
+  xHandle: string;
 }
 
 interface ScheduleOverviewEntry {
@@ -1412,6 +1427,7 @@ async function enrichScheduleEntry(
   let announcementDate = "";
   let seatCount = 0;
   let totalCandidateCount = 0;
+  let resultCandidates: ScheduleResultCandidate[] = [];
   if (includeDetail && entry.detailUrl !== "") {
     try {
       const html = await fetchText(entry.detailUrl);
@@ -1419,6 +1435,7 @@ async function enrichScheduleEntry(
       announcementDate = detail.announcementDate;
       seatCount = detail.seatCount;
       totalCandidateCount = detail.totalCandidateCount;
+      resultCandidates = detail.candidateResults;
     } catch (error) {
       console.error(
         `Failed to fetch schedule detail ${entry.detailUrl}:`,
@@ -1426,6 +1443,15 @@ async function enrichScheduleEntry(
       );
     }
   }
+  const candidateRows = applyScheduleResultCandidateRows(
+    matchedCandidates.map((item) => ({
+      name: item.name,
+      statusLabel: item.statusLabel,
+      votes: 0,
+      xHandle: item.xHandle,
+    })),
+    resultCandidates,
+  );
   const voteDateParsed = parseIsoDate(entry.voteDate);
   const isPast = voteDateParsed != null &&
     voteDateParsed.getTime() < startOfDay(new Date()).getTime();
@@ -1444,10 +1470,11 @@ async function enrichScheduleEntry(
       OFFICIAL_ELECTION_PAGE_URL,
     seatCount,
     totalCandidateCount,
-    kokuminCandidateCount: matchedCandidates.length,
-    kokuminCandidateNames: matchedCandidates.map((item) => item.name),
-    kokuminCandidateStatuses: matchedCandidates.map((item) => item.statusLabel),
-    kokuminCandidateXHandles: matchedCandidates.map((item) => item.xHandle),
+    kokuminCandidateCount: candidateRows.length,
+    kokuminCandidateNames: candidateRows.map((item) => item.name),
+    kokuminCandidateStatuses: candidateRows.map((item) => item.statusLabel),
+    kokuminCandidateVotes: candidateRows.map((item) => item.votes),
+    kokuminCandidateXHandles: candidateRows.map((item) => item.xHandle),
     isPast,
   };
 }
@@ -1479,11 +1506,13 @@ function applyManualScheduleSupplement(
     entry.kokuminCandidateNames.map((name, index) => ({
       name,
       statusLabel: entry.kokuminCandidateStatuses[index] ?? "",
+      votes: entry.kokuminCandidateVotes[index] ?? 0,
       xHandle: entry.kokuminCandidateXHandles[index] ?? "",
     })),
     supplement.candidates.map((candidate) => ({
       name: candidate.name,
       statusLabel: candidate.statusLabel?.trim() ?? "",
+      votes: 0,
       xHandle: normalizeXHandle(candidate.xHandle),
     })),
   );
@@ -1513,19 +1542,17 @@ function applyManualScheduleSupplement(
     kokuminCandidateCount: mergedCandidates.length,
     kokuminCandidateNames: mergedCandidates.map((item) => item.name),
     kokuminCandidateStatuses: mergedCandidates.map((item) => item.statusLabel),
+    kokuminCandidateVotes: mergedCandidates.map((item) => item.votes),
     kokuminCandidateXHandles: mergedCandidates.map((item) => item.xHandle),
     isPast: entry.isPast,
   };
 }
 
 function mergeScheduleCandidateRows(
-  base: Array<{ name: string; statusLabel: string; xHandle: string }>,
-  supplement: Array<{ name: string; statusLabel: string; xHandle: string }>,
-): Array<{ name: string; statusLabel: string; xHandle: string }> {
-  const merged = new Map<
-    string,
-    { name: string; statusLabel: string; xHandle: string }
-  >();
+  base: ScheduleCandidateRow[],
+  supplement: ScheduleCandidateRow[],
+): ScheduleCandidateRow[] {
+  const merged = new Map<string, ScheduleCandidateRow>();
   for (const candidate of [...base, ...supplement]) {
     const normalizedName = normalizeMemberName(candidate.name);
     if (normalizedName === "") {
@@ -1537,6 +1564,7 @@ function mergeScheduleCandidateRows(
       merged.set(key, {
         name: normalizedName,
         statusLabel: candidate.statusLabel.trim(),
+        votes: Math.max(0, Math.trunc(candidate.votes)),
         xHandle: normalizeXHandle(candidate.xHandle),
       });
       continue;
@@ -1546,6 +1574,9 @@ function mergeScheduleCandidateRows(
       statusLabel: existing.statusLabel !== ""
         ? existing.statusLabel
         : candidate.statusLabel.trim(),
+      votes: existing.votes > 0
+        ? existing.votes
+        : Math.max(0, Math.trunc(candidate.votes)),
       xHandle: existing.xHandle !== ""
         ? existing.xHandle
         : normalizeXHandle(candidate.xHandle),
@@ -1560,18 +1591,201 @@ function parseScheduleDetail(
   announcementDate: string;
   seatCount: number;
   totalCandidateCount: number;
+  candidateResults: ScheduleResultCandidate[];
 } {
   const fields = parseSimpleTable(html);
   const countsValue = fields.get(JP_FIELD_SEATS_AND_CANDIDATES) ??
     fields.get(JP_FIELD_SEATS_AND_CANDIDATES_ALT) ?? "";
   const countsMatch = toAsciiDigits(countsValue).match(/(\d+)\s*\/\s*(\d+)/);
+  const seatCount = countsMatch ? Number.parseInt(countsMatch[1], 10) : 0;
   return {
     announcementDate: normalizeJapaneseDate(
       fields.get(JP_FIELD_ANNOUNCEMENT_DATE) ?? "",
     ),
-    seatCount: countsMatch ? Number.parseInt(countsMatch[1], 10) : 0,
+    seatCount,
     totalCandidateCount: countsMatch ? Number.parseInt(countsMatch[2], 10) : 0,
+    candidateResults: parseGo2SenkyoCandidateResults(html, seatCount),
   };
+}
+
+function parseGo2SenkyoCandidateResults(
+  html: string,
+  seatCount: number,
+): ScheduleResultCandidate[] {
+  const headings = [...html.matchAll(/<h2\b[^>]*>([\s\S]*?)<\/h2>/gsi)].map((
+    match,
+  ) => ({
+    html: match[0] ?? "",
+    innerHtml: match[1] ?? "",
+    index: match.index ?? 0,
+  }));
+  const candidates: ScheduleResultCandidate[] = [];
+
+  for (let index = 0; index < headings.length; index += 1) {
+    const current = headings[index];
+    const next = headings[index + 1];
+    const previous = headings[index - 1];
+    const headingEnd = current.index + current.html.length;
+    const nextStart = next?.index ?? html.length;
+    const previousEnd = previous ? previous.index + previous.html.length : 0;
+    const rawName = normalizeWhitespace(
+      decodeHtml(stripTags(current.innerHtml)),
+    );
+    const name = extractGo2SenkyoCandidateName(rawName);
+    if (name === "") {
+      continue;
+    }
+
+    const bodyHtml = html.slice(headingEnd, nextStart);
+    const votes = extractGo2SenkyoCandidateVotes(bodyHtml);
+    const party = extractGo2SenkyoCandidateParty(bodyHtml);
+    const statusLabel = extractGo2SenkyoCandidateStatus(
+      html.slice(previousEnd, current.index),
+    );
+    if (votes <= 0 && party === "" && statusLabel === "") {
+      continue;
+    }
+    candidates.push({ name, party, statusLabel, votes });
+  }
+
+  if (seatCount <= 0 || candidates.length < seatCount) {
+    return candidates;
+  }
+
+  const winningKeys = new Set(
+    [...candidates]
+      .filter((candidate) => candidate.votes > 0)
+      .sort((left, right) => right.votes - left.votes)
+      .slice(0, seatCount)
+      .map((candidate) => normalizeCandidateNameForKey(candidate.name)),
+  );
+
+  return candidates.map((candidate) => {
+    if (candidate.statusLabel !== "" || candidate.votes <= 0) {
+      return candidate;
+    }
+    const key = normalizeCandidateNameForKey(candidate.name);
+    return {
+      ...candidate,
+      statusLabel: winningKeys.has(key) ? "当選" : "落選",
+    };
+  });
+}
+
+function extractGo2SenkyoCandidateName(raw: string): string {
+  const value = normalizeWhitespace(raw).replace(/\s+/g, " ").trim();
+  if (
+    value === "" ||
+    value.includes("選挙情報") ||
+    value.includes("候補者") ||
+    value.includes("掲載内容")
+  ) {
+    return "";
+  }
+  const kanaMatch = value.match(/^(.+?)\s+[ァ-ヴー・\s]+$/u);
+  return normalizeMemberName(kanaMatch?.[1] ?? value);
+}
+
+function extractGo2SenkyoCandidateStatus(prefixHtml: string): string {
+  const attrMatches = [
+    ...prefixHtml.matchAll(
+      /\b(?:alt|title)="([^"]*(?:当選|落選|次点|無投票)[^"]*)"/giu,
+    ),
+  ];
+  if (attrMatches.length > 0) {
+    return normalizeScheduleResultStatus(
+      attrMatches[attrMatches.length - 1]?.[1] ?? "",
+    );
+  }
+  const text = normalizeWhitespace(stripHtmlToText(prefixHtml));
+  const textMatches = [...text.matchAll(/(当選|落選|次点|無投票)/gu)];
+  if (textMatches.length === 0) {
+    return "";
+  }
+  return normalizeScheduleResultStatus(
+    textMatches[textMatches.length - 1]?.[1] ?? "",
+  );
+}
+
+function extractGo2SenkyoCandidateVotes(bodyHtml: string): number {
+  const text = normalizeWhitespace(stripHtmlToText(bodyHtml));
+  const match = text.match(/([0-9０-９,，.．]+)\s*票/u);
+  return match?.[1] ? parseVoteCount(match[1]) : 0;
+}
+
+function extractGo2SenkyoCandidateParty(bodyHtml: string): string {
+  const lines = stripHtmlToText(bodyHtml)
+    .split(/\n+/)
+    .map((line) => normalizeWhitespace(line).trim())
+    .filter((line) => line !== "");
+  return lines.find((line) => /党|会|無所属/u.test(line)) ?? "";
+}
+
+function parseVoteCount(value: string): number {
+  const normalized = toAsciiDigits(value)
+    .replace(/[,\uff0c]/g, "")
+    .replace(/\uff0e/g, ".")
+    .trim();
+  const parsed = Number.parseFloat(normalized);
+  return Number.isFinite(parsed) ? Math.max(0, Math.floor(parsed)) : 0;
+}
+
+function normalizeScheduleResultStatus(value: string): string {
+  const normalized = normalizeWhitespace(value);
+  if (normalized.includes("無投票")) {
+    return "無投票当選";
+  }
+  if (normalized.includes("当選")) {
+    return "当選";
+  }
+  if (normalized.includes("次点")) {
+    return "次点";
+  }
+  if (normalized.includes("落選")) {
+    return "落選";
+  }
+  return "";
+}
+
+function applyScheduleResultCandidateRows(
+  candidateRows: ScheduleCandidateRow[],
+  resultCandidates: ScheduleResultCandidate[],
+): ScheduleCandidateRow[] {
+  if (resultCandidates.length === 0) {
+    return candidateRows;
+  }
+  return candidateRows.map((candidate) => {
+    const result = findMatchingResultCandidate(
+      candidate.name,
+      resultCandidates,
+    );
+    if (!result) {
+      return candidate;
+    }
+    return {
+      ...candidate,
+      name: result.name || candidate.name,
+      statusLabel: result.statusLabel || candidate.statusLabel,
+      votes: result.votes > 0 ? result.votes : candidate.votes,
+    };
+  });
+}
+
+function findMatchingResultCandidate(
+  name: string,
+  resultCandidates: ScheduleResultCandidate[],
+): ScheduleResultCandidate | undefined {
+  const targetKey = normalizeCandidateNameForKey(name);
+  const exact = resultCandidates.find((candidate) =>
+    normalizeCandidateNameForKey(candidate.name) === targetKey
+  );
+  if (exact) {
+    return exact;
+  }
+  return resultCandidates.find((candidate) => {
+    const candidateKey = normalizeCandidateNameForKey(candidate.name);
+    return candidateKey.includes(targetKey) || targetKey.includes(candidateKey);
+  });
 }
 
 function matchOfficialCandidatesForSchedule(
