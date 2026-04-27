@@ -21626,3 +21626,15 @@ Google I/O 2026 競合脅威 事前ブリーフィング
   - https://dev.to/kanta13jp1/putting-daily-indie-dev-on-autopilot-with-claude-code-schedule-2779
 - JA slug: `2026-10-17-claude-code-schedule-daily-ops-loop`
 - orphan branch `blog-publish/24983363833-20260427-165857` マージ + 削除
+
+## 2026-04-27 (PS#5 S63)
+
+### PS#5 S63: election EF — resultSourceUrls + surname fallback
+
+- `local-election-intelligence` index.ts: 未コミット変更を発見・審査・コミット (`fbe89da7`)
+  - `resultSourceUrls` フィールド追加 (ManualScheduleSupplement) → 山口市議選URL登録
+  - `applyScheduleResultSources`: 投票日後に外部URLから選挙結果を自動フェッチ
+  - `parseScheduleResultDocument` / `parseFlatScheduleResultRows`: 結果HTMLパース
+  - `normalizeScheduleResultStatus`: 「当」→「当選」「落」→「落選」正規化
+  - `findMatchingResultCandidate`: 姓のみマッチング fallback (2文字key / 一意のみ採用)
+  - deno lint / deno check 0エラー確認 → push 完了

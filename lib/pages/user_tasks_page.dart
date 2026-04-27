@@ -101,18 +101,22 @@ class _UserTasksPageState extends State<UserTasksPage> {
     required int progress,
     String? status,
     String? note,
+    String? blockers,
+    String? nextAction,
   }) async {
     setState(() => _saving = true);
     try {
       final response = await _supabase.functions.invoke(
         'tools-hub',
         body: {
-          'action': 'wbs.update_user_task_report',
-          'id': task['id'],
-          'user_report_status': reportStatus,
+          'action': 'wbs.user_task_report',
+          'task_id': task['id'],
           'progress': progress,
-          if (status != null) 'status': status,
-          if (note != null) 'note': note,
+          'status': status ?? reportStatus,
+          if (note != null && note.isNotEmpty) 'report_text': note,
+          if (blockers != null && blockers.isNotEmpty) 'blockers': blockers,
+          if (nextAction != null && nextAction.isNotEmpty)
+            'next_action': nextAction,
         },
       );
       final data = response.data;
@@ -122,7 +126,7 @@ class _UserTasksPageState extends State<UserTasksPage> {
       await _loadTasks();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('ユーザータスクを更新しました')),
+          const SnackBar(content: Text('✅ 報告を記録しました')),
         );
       }
     } catch (e) {
@@ -137,11 +141,18 @@ class _UserTasksPageState extends State<UserTasksPage> {
   }
 
   Future<void> _openReportDialog(Map<String, dynamic> task) async {
+    final latestReport = task['latest_report'] as Map?;
     var reportStatus = '${task['user_report_status'] ?? 'in_progress'}';
     if (reportStatus == 'not_reported') reportStatus = 'in_progress';
     var progress = (task['progress'] as num?)?.round() ?? 0;
     final noteController = TextEditingController(
-      text: '${task['user_report_note'] ?? ''}',
+      text: '${latestReport?['report_text'] ?? task['user_report_note'] ?? ''}',
+    );
+    final blockersController = TextEditingController(
+      text: '${latestReport?['blockers'] ?? ''}',
+    );
+    final nextActionController = TextEditingController(
+      text: '${latestReport?['next_action'] ?? ''}',
     );
 
     final result = await showDialog<_ReportResult>(
@@ -151,69 +162,91 @@ class _UserTasksPageState extends State<UserTasksPage> {
           return AlertDialog(
             title: const Text('実施状況を報告'),
             content: SizedBox(
-              width: 420,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '${task['title'] ?? ''}',
-                    style: const TextStyle(fontWeight: FontWeight.w700),
-                  ),
-                  const SizedBox(height: 16),
-                  DropdownButtonFormField<String>(
-                    initialValue: reportStatus,
-                    decoration: const InputDecoration(labelText: '状況'),
-                    items: const [
-                      DropdownMenuItem(
-                        value: 'in_progress',
-                        child: Text('対応中'),
-                      ),
-                      DropdownMenuItem(
-                        value: 'waiting',
-                        child: Text('相手待ち'),
-                      ),
-                      DropdownMenuItem(
-                        value: 'blocked',
-                        child: Text('詰まりあり'),
-                      ),
-                      DropdownMenuItem(
-                        value: 'completed',
-                        child: Text('完了'),
-                      ),
-                    ],
-                    onChanged: (value) {
-                      if (value == null) return;
-                      setDialogState(() {
-                        reportStatus = value;
-                        if (value == 'completed') progress = 100;
-                      });
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  Text('進捗 $progress%'),
-                  Slider(
-                    value: progress.toDouble(),
-                    min: 0,
-                    max: 100,
-                    divisions: 20,
-                    label: '$progress%',
-                    onChanged: reportStatus == 'completed'
-                        ? null
-                        : (value) => setDialogState(
-                              () => progress = value.round(),
-                            ),
-                  ),
-                  TextField(
-                    controller: noteController,
-                    minLines: 3,
-                    maxLines: 5,
-                    decoration: const InputDecoration(
-                      labelText: '報告メモ',
-                      hintText: '実施内容、相手待ち、次に必要な操作など',
+              width: 480,
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '${task['title'] ?? ''}',
+                      style: const TextStyle(fontWeight: FontWeight.w700),
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 16),
+                    DropdownButtonFormField<String>(
+                      initialValue: reportStatus,
+                      decoration: const InputDecoration(labelText: '状況'),
+                      items: const [
+                        DropdownMenuItem(
+                          value: 'in_progress',
+                          child: Text('対応中'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'waiting',
+                          child: Text('相手待ち'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'blocked',
+                          child: Text('詰まりあり'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'completed',
+                          child: Text('完了'),
+                        ),
+                      ],
+                      onChanged: (value) {
+                        if (value == null) return;
+                        setDialogState(() {
+                          reportStatus = value;
+                          if (value == 'completed') progress = 100;
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    Text('進捗 $progress%'),
+                    Slider(
+                      value: progress.toDouble(),
+                      min: 0,
+                      max: 100,
+                      divisions: 20,
+                      label: '$progress%',
+                      onChanged: reportStatus == 'completed'
+                          ? null
+                          : (value) => setDialogState(
+                                () => progress = value.round(),
+                              ),
+                    ),
+                    TextField(
+                      controller: noteController,
+                      minLines: 3,
+                      maxLines: 5,
+                      decoration: const InputDecoration(
+                        labelText: '実施状況',
+                        hintText: '実施内容、進めた手順など',
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: blockersController,
+                      minLines: 2,
+                      maxLines: 3,
+                      decoration: const InputDecoration(
+                        labelText: '詰まり・ブロッカー',
+                        hintText: '困っていること、不明点など（省略可）',
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: nextActionController,
+                      minLines: 2,
+                      maxLines: 3,
+                      decoration: const InputDecoration(
+                        labelText: '次のアクション',
+                        hintText: '次に何をするか（省略可）',
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
             actions: [
@@ -228,6 +261,8 @@ class _UserTasksPageState extends State<UserTasksPage> {
                     reportStatus: reportStatus,
                     progress: progress,
                     note: noteController.text.trim(),
+                    blockers: blockersController.text.trim(),
+                    nextAction: nextActionController.text.trim(),
                   ),
                 ),
                 icon: const Icon(Icons.send_outlined),
@@ -240,13 +275,18 @@ class _UserTasksPageState extends State<UserTasksPage> {
     );
 
     noteController.dispose();
+    blockersController.dispose();
+    nextActionController.dispose();
     if (result == null) return;
 
     await _submitReport(
       task,
       reportStatus: result.reportStatus,
       progress: result.progress,
+      status: result.reportStatus,
       note: result.note,
+      blockers: result.blockers,
+      nextAction: result.nextAction,
     );
   }
 
@@ -415,7 +455,12 @@ class _UserTaskCard extends StatelessWidget {
     final reportStatus = '${task['user_report_status'] ?? 'not_reported'}';
     final progress = (task['progress'] as num?)?.round() ?? 0;
     final due = DateTime.tryParse('${task['end_date'] ?? ''}');
-    final note = '${task['user_report_note'] ?? ''}'.trim();
+    final latestReport = task['latest_report'] as Map?;
+    final note = (latestReport?['report_text'] as String? ??
+            task['user_report_note'] as String? ??
+            '')
+        .trim();
+    final nextAction = (latestReport?['next_action'] as String? ?? '').trim();
     final completed = status == 'completed';
 
     return Card(
@@ -479,6 +524,30 @@ class _UserTaskCard extends StatelessWidget {
                 style: TextStyle(
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
+              ),
+            ],
+            if (nextAction.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(
+                    Icons.arrow_forward_ios_rounded,
+                    size: 12,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                  const SizedBox(width: 4),
+                  Expanded(
+                    child: Text(
+                      nextAction,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Theme.of(context).colorScheme.primary,
+                        height: 1.5,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
             const SizedBox(height: 12),
@@ -597,10 +666,14 @@ class _ReportResult {
   final String reportStatus;
   final int progress;
   final String note;
+  final String blockers;
+  final String nextAction;
 
   const _ReportResult({
     required this.reportStatus,
     required this.progress,
     required this.note,
+    required this.blockers,
+    required this.nextAction,
   });
 }
