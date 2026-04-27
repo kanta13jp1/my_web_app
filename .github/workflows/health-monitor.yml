@@ -83,7 +83,7 @@ jobs:
               -H "Content-Type: application/json" \
               "$SUPABASE_URL/functions/v1/$path" \
               --max-time 12 2>/dev/null || echo "000")
-            echo "$name=$code"
+            echo "$name=$code" >> $GITHUB_OUTPUT
             echo "  $name: HTTP $code"
           }
 
@@ -94,9 +94,9 @@ jobs:
           echo "firebase=$FIREBASE_CODE" >> $GITHUB_OUTPUT
 
           # Supabase Edge Functions
-          ef_check "get-home-dashboard"      POST "get-home-dashboard"      >> $GITHUB_OUTPUT
-          ef_check "guitar-recording-studio" POST "guitar-recording-studio" >> $GITHUB_OUTPUT
-          ef_check "health-check"            GET  "health-check"            >> $GITHUB_OUTPUT
+          ef_check "get-home-dashboard"      POST "get-home-dashboard"
+          ef_check "guitar-recording-studio" POST "guitar-recording-studio"
+          ef_check "health-check"            GET  "health-check"
 
       # ── docs/health-status.json 書き出し ───────────────────────
       - name: Write health-status.json
