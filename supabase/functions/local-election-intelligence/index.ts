@@ -213,6 +213,7 @@ interface ManualScheduleSupplement {
   voteDate: string;
   electionCategory?: string;
   detailUrl?: string;
+  resultSourceUrls?: string[];
   officialCandidateSourceUrl?: string;
   announcementDate?: string;
   seatCount?: number;
@@ -353,6 +354,9 @@ const MANUAL_2026_SCHEDULES: ManualScheduleSupplement[] = [
     electionName: "山口市議会議員選挙",
     voteDate: "2026-04-26",
     electionCategory: "assembly",
+    resultSourceUrls: [
+      "https://yama.minato-yamaguchi.co.jp/election-results/2026/yamaguchi-shigi/",
+    ],
     candidates: [
       { name: "関谷拓馬", xHandle: "SekitaniTakuma" },
       { name: "野村ゆうたろう", statusLabel: "推薦", xHandle: "nomura_yutaro" },
@@ -1085,15 +1089,20 @@ async function fetchUpcomingLocalElectionSchedules(
       const voteDate = parseIsoDate(entry.voteDate);
       const shouldFetchDetail = voteDate != null &&
         voteDate.getTime() <= detailCutoffDate.getTime();
+      const supplement = findManualScheduleSupplement(
+        entry,
+        manualSupplements,
+      );
       const baseEntry = await enrichScheduleEntry(
         entry,
         officialCandidates,
         shouldFetchDetail,
       );
-      return applyManualScheduleSupplement(
+      const supplementedEntry = applyManualScheduleSupplement(
         baseEntry,
-        findManualScheduleSupplement(entry, manualSupplements),
+        supplement,
       );
+      return await applyScheduleResultSources(supplementedEntry, supplement);
     },
   );
   return detailed.sort((left, right) => {
@@ -1585,6 +1594,76 @@ function mergeScheduleCandidateRows(
   return [...merged.values()];
 }
 
+async function applyScheduleResultSources(
+  entry: LocalElectionScheduleEntry,
+  supplement?: ManualScheduleSupplement,
+): Promise<LocalElectionScheduleEntry> {
+  if (!entry.isPast || !hasUnresolvedScheduleCandidate(entry)) {
+    return entry;
+  }
+  const urls = uniqueStrings([
+    entry.detailUrl,
+    ...(supplement?.resultSourceUrls ?? []),
+  ]);
+  if (urls.length === 0) {
+    return entry;
+  }
+
+  const candidateResults = (
+    await mapWithConcurrency(urls, 4, async (url) => {
+      try {
+        const html = await fetchText(url);
+        return parseScheduleResultDocument(html, entry.seatCount);
+      } catch (error) {
+        console.error(`Failed to fetch schedule result ${url}:`, error);
+        return [] as ScheduleResultCandidate[];
+      }
+    })
+  ).flat();
+  if (candidateResults.length === 0) {
+    return entry;
+  }
+
+  const candidateRows = applyScheduleResultCandidateRows(
+    entry.kokuminCandidateNames.map((name, index) => ({
+      name,
+      statusLabel: entry.kokuminCandidateStatuses[index] ?? "",
+      votes: entry.kokuminCandidateVotes[index] ?? 0,
+      xHandle: entry.kokuminCandidateXHandles[index] ?? "",
+    })),
+    candidateResults,
+  );
+
+  return {
+    ...entry,
+    kokuminCandidateCount: candidateRows.length,
+    kokuminCandidateNames: candidateRows.map((item) => item.name),
+    kokuminCandidateStatuses: candidateRows.map((item) => item.statusLabel),
+    kokuminCandidateVotes: candidateRows.map((item) => item.votes),
+    kokuminCandidateXHandles: candidateRows.map((item) => item.xHandle),
+  };
+}
+
+function hasUnresolvedScheduleCandidate(entry: LocalElectionScheduleEntry) {
+  return entry.kokuminCandidateNames.some((name, index) =>
+    name.trim() !== "" &&
+    !isResolvedScheduleOutcomeStatus(
+      entry.kokuminCandidateStatuses[index] ?? "",
+    )
+  );
+}
+
+function isResolvedScheduleOutcomeStatus(value: string): boolean {
+  const normalized = normalizeWhitespace(value);
+  return normalized.includes("当選") ||
+    normalized.includes("トップ") ||
+    normalized.includes("再選") ||
+    normalized.includes("無投票") ||
+    normalized.includes("落選") ||
+    normalized.includes("次点") ||
+    normalized.includes("敗");
+}
+
 function parseScheduleDetail(
   html: string,
 ): {
@@ -1604,8 +1683,18 @@ function parseScheduleDetail(
     ),
     seatCount,
     totalCandidateCount: countsMatch ? Number.parseInt(countsMatch[2], 10) : 0,
-    candidateResults: parseGo2SenkyoCandidateResults(html, seatCount),
+    candidateResults: parseScheduleResultDocument(html, seatCount),
   };
+}
+
+function parseScheduleResultDocument(
+  html: string,
+  seatCount: number,
+): ScheduleResultCandidate[] {
+  return mergeScheduleResultCandidates([
+    ...parseGo2SenkyoCandidateResults(html, seatCount),
+    ...parseFlatScheduleResultRows(html, seatCount),
+  ], seatCount);
 }
 
 function parseGo2SenkyoCandidateResults(
@@ -1652,6 +1741,108 @@ function parseGo2SenkyoCandidateResults(
     return candidates;
   }
 
+  const winningKeys = new Set(
+    [...candidates]
+      .filter((candidate) => candidate.votes > 0)
+      .sort((left, right) => right.votes - left.votes)
+      .slice(0, seatCount)
+      .map((candidate) => normalizeCandidateNameForKey(candidate.name)),
+  );
+
+  return candidates.map((candidate) => {
+    if (candidate.statusLabel !== "" || candidate.votes <= 0) {
+      return candidate;
+    }
+    const key = normalizeCandidateNameForKey(candidate.name);
+    return {
+      ...candidate,
+      statusLabel: winningKeys.has(key) ? "当選" : "落選",
+    };
+  });
+}
+
+function parseFlatScheduleResultRows(
+  html: string,
+  seatCount: number,
+): ScheduleResultCandidate[] {
+  const rows = stripHtmlToText(html)
+    .split(/\n+/)
+    .map((line) => normalizeWhitespace(line).trim())
+    .filter((line) => line !== "");
+  const candidates = rows.flatMap(parseFlatScheduleResultRow);
+  return inferMissingResultStatuses(candidates, seatCount);
+}
+
+function parseFlatScheduleResultRow(line: string): ScheduleResultCandidate[] {
+  const normalized = toAsciiDigits(line)
+    .replace(/[,，]/g, "")
+    .replace(/．/g, ".")
+    .replace(/\s+/g, " ")
+    .trim();
+  const tokens = normalized.split(" ").filter((token) => token !== "");
+  if (tokens.length < 4 || !/[0-9]/.test(tokens[tokens.length - 1] ?? "")) {
+    return [];
+  }
+  const statusToken = normalizeScheduleResultStatus(tokens[0] ?? "");
+  const startIndex = statusToken === "" ? 0 : 1;
+  const ageIndex = tokens.findIndex((token, index) =>
+    index >= startIndex && /^(?:-|－|\d{1,3})$/.test(token)
+  );
+  if (ageIndex <= startIndex || ageIndex + 2 >= tokens.length) {
+    return [];
+  }
+  const name = normalizeMemberName(
+    tokens.slice(startIndex, ageIndex).join(" "),
+  );
+  const party = tokens[ageIndex + 1] ?? "";
+  const votes = parseVoteCount(tokens[tokens.length - 1] ?? "");
+  if (name === "" || votes <= 0) {
+    return [];
+  }
+  return [
+    {
+      name,
+      party,
+      statusLabel: statusToken,
+      votes,
+    },
+  ];
+}
+
+function mergeScheduleResultCandidates(
+  candidates: ScheduleResultCandidate[],
+  seatCount: number,
+): ScheduleResultCandidate[] {
+  const merged = new Map<string, ScheduleResultCandidate>();
+  for (const candidate of inferMissingResultStatuses(candidates, seatCount)) {
+    const key = normalizeCandidateNameForKey(candidate.name);
+    if (key === "") {
+      continue;
+    }
+    const existing = merged.get(key);
+    if (!existing) {
+      merged.set(key, candidate);
+      continue;
+    }
+    merged.set(key, {
+      name: existing.name,
+      party: existing.party !== "" ? existing.party : candidate.party,
+      statusLabel: existing.statusLabel !== ""
+        ? existing.statusLabel
+        : candidate.statusLabel,
+      votes: existing.votes > 0 ? existing.votes : candidate.votes,
+    });
+  }
+  return [...merged.values()];
+}
+
+function inferMissingResultStatuses(
+  candidates: ScheduleResultCandidate[],
+  seatCount: number,
+): ScheduleResultCandidate[] {
+  if (seatCount <= 0 || candidates.length < seatCount) {
+    return candidates;
+  }
   const winningKeys = new Set(
     [...candidates]
       .filter((candidate) => candidate.votes > 0)
@@ -1732,6 +1923,12 @@ function parseVoteCount(value: string): number {
 
 function normalizeScheduleResultStatus(value: string): string {
   const normalized = normalizeWhitespace(value);
+  if (normalized === "当") {
+    return "当選";
+  }
+  if (normalized === "落") {
+    return "落選";
+  }
   if (normalized.includes("無投票")) {
     return "無投票当選";
   }
@@ -1782,10 +1979,21 @@ function findMatchingResultCandidate(
   if (exact) {
     return exact;
   }
-  return resultCandidates.find((candidate) => {
+  const contains = resultCandidates.find((candidate) => {
     const candidateKey = normalizeCandidateNameForKey(candidate.name);
     return candidateKey.includes(targetKey) || targetKey.includes(candidateKey);
   });
+  if (contains) {
+    return contains;
+  }
+  const targetSurname = candidateSurnameKey(name);
+  if (targetSurname === "") {
+    return undefined;
+  }
+  const surnameMatches = resultCandidates.filter((candidate) =>
+    candidateSurnameKey(candidate.name) === targetSurname
+  );
+  return surnameMatches.length === 1 ? surnameMatches[0] : undefined;
 }
 
 function matchOfficialCandidatesForSchedule(
@@ -2299,8 +2507,17 @@ function normalizeMemberName(value: string): string {
 function normalizeCandidateNameForKey(value: string): string {
   return normalizeMemberName(value).replace(/[ \u3000]/g, "");
 }
+function candidateSurnameKey(value: string): string {
+  const normalized = normalizeMemberName(value);
+  const firstToken = normalized.split(/[ \u3000]+/)[0] ?? "";
+  const key = normalizeCandidateNameForKey(firstToken);
+  return key.length >= 2 ? key.slice(0, 2) : "";
+}
 function normalizeXHandle(value: string | undefined): string {
   return typeof value === "string" ? value.trim().replace(/^@+/, "") : "";
+}
+function uniqueStrings(values: string[]): string[] {
+  return [...new Set(values.map((value) => value.trim()).filter(Boolean))];
 }
 function scheduleMatchKey(
   prefecture: string,
