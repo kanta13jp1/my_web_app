@@ -45,11 +45,11 @@ class _LeaveManagementPageState extends State<LeaveManagementPage> {
     });
     try {
       final response = await _supabase.functions
-          .invoke('leave-management', body: {'action': 'list'});
+          .invoke('enterprise-hub', body: {'action': 'leave.list'});
       final data = response.data;
-      if (data is Map<String, dynamic> && data['leaves'] is List) {
+      if (data is Map<String, dynamic> && data['requests'] is List) {
         setState(
-          () => _leaves = (data['leaves'] as List).cast<Map<String, dynamic>>(),
+          () => _leaves = (data['requests'] as List).cast<Map<String, dynamic>>(),
         );
       } else {
         setState(() => _leaves = []);
@@ -71,10 +71,10 @@ class _LeaveManagementPageState extends State<LeaveManagementPage> {
     setState(() => _isLoading = true);
     try {
       await _supabase.functions.invoke(
-        'leave-management',
+        'enterprise-hub',
         body: {
-          'action': 'create',
-          'leave_type': _leaveType,
+          'action': 'leave.request',
+          'type': _leaveType,
           'start_date': _startDate!.toIso8601String().substring(0, 10),
           'end_date': _endDate!.toIso8601String().substring(0, 10),
           'reason': _reasonCtrl.text,
