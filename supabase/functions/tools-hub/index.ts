@@ -3814,17 +3814,30 @@ ${reportText ? `> ${reportText}` : ""}`,
           // Enrich with new learning metrics from the learning loop views
           const days = Math.max(1, Math.min(30, Number(body.days ?? 7)));
           const fromDate = new Date(Date.now() - (days - 1) * 86_400_000).toISOString().split("T")[0];
-          const { data: dailyRows } = await admin.from("horse_learning_daily_accuracy")
-            .select("race_date,evaluated_predictions,avg_learning_score,first_hit_rate_pct,skip_accuracy_pct,place_hit_rate_pct")
-            .gte("race_date", fromDate)
-            .order("race_date", { ascending: false })
-            .limit(days);
-          const { data: betTypeRows } = await admin.from("horse_bet_type_accuracy")
-            .select("bet_type,total_predictions,hit_rate_pct")
-            .neq("bet_type", "購入しない")
-            .order("hit_rate_pct", { ascending: false })
-            .limit(5);
-          const latestDay = (dailyRows ?? [])[0] as Record<string, unknown> | undefined;
+          const [dailyRes, betTypeRes, allBetTypeRes] = await Promise.all([
+            admin.from("horse_learning_daily_accuracy")
+              .select("race_date,evaluated_predictions,evaluated_races,avg_learning_score,first_hit_rate_pct,skip_accuracy_pct,place_hit_rate_pct,wide_hit_rate_pct")
+              .gte("race_date", fromDate)
+              .order("race_date", { ascending: false })
+              .limit(days),
+            admin.from("horse_bet_type_accuracy")
+              .select("bet_type,total_predictions,hit_rate_pct")
+              .neq("bet_type", "購入しない")
+              .order("hit_rate_pct", { ascending: false })
+              .limit(5),
+            admin.from("horse_bet_type_accuracy")
+              .select("bet_type,total_predictions,hits,hit_rate_pct")
+              .in("bet_type", ["複勝", "購入しない", "単勝", "ワイド"]),
+          ]);
+          const dailyRows = dailyRes.data ?? [];
+          const betTypeRows = betTypeRes.data ?? [];
+          const allBtRows = (allBetTypeRes.data ?? []) as Array<Record<string, unknown>>;
+          const latestDay = dailyRows[0] as Record<string, unknown> | undefined;
+          // all-time aggregate from horse_bet_type_accuracy (複勝 total_predictions ≒ total evaluated)
+          const placeBt = allBtRows.find((r) => r.bet_type === "複勝");
+          const skipBt = allBtRows.find((r) => r.bet_type === "購入しない");
+          const tansoBt = allBtRows.find((r) => r.bet_type === "単勝");
+          const wideBt = allBtRows.find((r) => r.bet_type === "ワイド");
           return json({
             success: true,
             stats: {
@@ -3832,13 +3845,20 @@ ${reportText ? `> ${reportText}` : ""}`,
               winRate: stats?.hit_rate_pct ?? 0, totalPayout: stats?.total_payout ?? 0,
               maxPayout: stats?.max_payout ?? 0,
             },
+            aggregate: {
+              total_evaluated: Number(placeBt?.total_predictions ?? 0),
+              place_hit_rate_pct: Number(placeBt?.hit_rate_pct ?? 0),
+              tansho_hit_rate_pct: Number(tansoBt?.hit_rate_pct ?? 0),
+              wide_hit_rate_pct: Number(wideBt?.hit_rate_pct ?? 0),
+              skip_accuracy_pct: Number(skipBt?.hit_rate_pct ?? 0),
+            },
             learning: {
               days_queried: days,
               latest_avg_learning_score: latestDay ? Number(latestDay.avg_learning_score ?? 0) : null,
               latest_skip_accuracy_pct: latestDay ? Number(latestDay.skip_accuracy_pct ?? 0) : null,
               latest_first_hit_rate_pct: latestDay ? Number(latestDay.first_hit_rate_pct ?? 0) : null,
-              daily_trend: dailyRows ?? [],
-              top_bet_types: betTypeRows ?? [],
+              daily_trend: dailyRows,
+              top_bet_types: betTypeRows,
             },
           });
         }
