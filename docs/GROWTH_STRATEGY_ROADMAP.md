@@ -22084,3 +22084,13 @@ Phase4 drafts 新規作成 (8ファイル):
   - confidence 式: `0.34→0.31 + prevMarginCoverage * 0.03` (最大 0.80 維持)
   - reasoning テキストに「着差」追記
 - 着差データ充実レース = 基準予想の信頼度が 3% 上乗せされるよう改善
+
+## PS#4 S84 — 2026-04-28 (_CompetitorInfo 138社 + sitemap 137ルート)
+
+**追加20社**: ameba / bluesky / calendly / carely / cybozu-kintone / datadog / docusign / epic-games / google-ads / harvey-ai / hrmos / hubspot-crm / ikyu / jalan / kddi-au / langchain-inc / luup-micromobility / meta-ads / nvidia-geforce-now / sony-playstation
+
+- `comparison_page.dart`: `_competitorInfo` map 118→138社
+- `sitemap.xml`: vs-* ルート 117→137本
+- dart format + flutter analyze: 0 issues
+- Commit: ce4a369a on main
+- 残: 34社 (172-138=34)
