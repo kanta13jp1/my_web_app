@@ -1,7 +1,7 @@
 ---
 title: "Notion's Price Hike in 2026 — Your Real Options When the Bill Goes Up"
 tags: notion,saas,pricing,productivity
-published: false
+published: true
 ---
 
 # Notion's Price Hike in 2026 — Your Real Options When the Bill Goes Up
