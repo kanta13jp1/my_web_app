@@ -22094,3 +22094,10 @@ Phase4 drafts 新規作成 (8ファイル):
 - dart format + flutter analyze: 0 issues
 - Commit: ce4a369a on main
 - 残: 34社 (172-138=34)
+
+## PS#5 S74 — anon guard 20 ページ一括追加 (2026-04-28)
+- 対象: EF invoke があるが auth チェックなし 20 ページ
+- guard: `if (_supabase.auth.currentUser == null) { setState(() => _isLoading = false); return; }`
+- real_world_danshari: `supabase` (global) → `_supabase` (getter) 修正
+- dart format 20ファイル + flutter analyze: 0 issues
+- Commit: 611f11b5 on main
