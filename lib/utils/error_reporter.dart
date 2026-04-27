@@ -117,6 +117,13 @@ class ErrorReporter {
 
     _previousFlutterHandler = FlutterError.onError;
     FlutterError.onError = (FlutterErrorDetails details) {
+      if (_isIgnorableFlutterWebInkHoverError(
+        details.exceptionAsString(),
+        details.stack,
+        details: details,
+      )) {
+        return;
+      }
       _syncSentryUser();
       _previousFlutterHandler?.call(details);
       report(
@@ -128,6 +135,9 @@ class ErrorReporter {
 
     _previousPlatformHandler = PlatformDispatcher.instance.onError;
     PlatformDispatcher.instance.onError = (Object error, StackTrace stack) {
+      if (_isIgnorableFlutterWebInkHoverError(error.toString(), stack)) {
+        return true;
+      }
       _syncSentryUser();
       _previousPlatformHandler?.call(error, stack);
       report(
@@ -138,6 +148,38 @@ class ErrorReporter {
       );
       return false; // 既存のクラッシュハンドラを妨げない
     };
+  }
+
+  bool _isIgnorableFlutterWebInkHoverError(
+    String message,
+    StackTrace? stackTrace, {
+    FlutterErrorDetails? details,
+  }) {
+    if (!kIsWeb) return false;
+    if (!message.contains('Null check operator used on a null value')) {
+      return false;
+    }
+
+    final stack = stackTrace?.toString() ?? '';
+    final context = details?.context?.toDescription() ?? '';
+    final library = details?.library ?? '';
+
+    // Flutter Web can dispatch a delayed hover/focus callback to an
+    // InkResponse after its Element has already been unmounted. In release,
+    // dart2js minifies the same framework path; keep the signatures narrow.
+    final hasReleaseInkStack = (stack.contains('.auU') &&
+            stack.contains('.uT') &&
+            stack.contains('.cgd')) ||
+        (stack.contains('.avQ') &&
+            stack.contains('.v_') &&
+            stack.contains('.chZ'));
+
+    return stack.contains('_InkResponseState') ||
+        stack.contains('InkResponse') ||
+        stack.contains('MouseTracker') ||
+        context.contains('MouseTracker') ||
+        context.contains('mouse') ||
+        hasReleaseInkStack && (details == null || library.contains('widgets'));
   }
 
   /// AppLogger.error から呼ばれる (caught errors)
