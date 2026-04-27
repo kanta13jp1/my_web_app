@@ -48,6 +48,10 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
   }
 
   Future<void> _loadData() async {
+    if (_supabase.auth.currentUser == null) {
+      setState(() => _loading = false);
+      return;
+    }
     setState(() {
       _loading = true;
       _errorMessage = null;
