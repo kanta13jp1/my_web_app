@@ -176,24 +176,44 @@ jobs:
           echo "$OUT"
           VIDEO_ID=$(echo "$OUT" | grep -oE 'https://youtu.be/[A-Za-z0-9_-]+' | head -1 | sed 's|.*/||')
           echo "video_id=$VIDEO_ID" >> $GITHUB_OUTPUT
+          # Round duration up to whole second, format M:SS for embed step.
+          DUR_SEC=$(printf '%.0f' "$(cat /tmp/duration.txt)")
+          DUR_FMT=$(printf '%d:%02d' $((DUR_SEC / 60)) $((DUR_SEC % 60)))
+          echo "duration=$DUR_FMT" >> $GITHUB_OUTPUT
 
       - name: Step 8 — Embed in philosophy_page.dart + commit
         env:
           VIDEO_ID: ${{ steps.upload.outputs.video_id }}
+          VIDEO_DURATION: ${{ steps.upload.outputs.duration }}
         run: |
-          # TODO: implement Python helper that finds _videos array tail
-          # and inserts new _Video entry with id=VIDEO_ID + label/duration/description.
-          # Then: git add lib/pages/philosophy_page.dart docs/GROWTH_STRATEGY_ROADMAP.md
-          # git commit -m "feat(philosophy): embed video #N (NotebookLM auto pipeline)"
-          # git push origin main
-          echo "TODO: auto-embed for VIDEO_ID=$VIDEO_ID"
-          echo "::warning::Step 8 manual until embed-helper script is implemented (Win版 part 30+)"
+          if [ -z "$VIDEO_ID" ]; then
+            echo "::error::Step 7 produced empty video_id — aborting embed"
+            exit 1
+          fi
+
+          LABEL="番外: ${{ inputs.title }} (D variant)"
+          DESCRIPTION="NotebookLM Deep Research + intro/outro + カラーグレード + 字幕焼き込み。AI大学シリーズ #${{ inputs.series_number }}。"
+
+          python scripts/embed_video_in_philosophy.py \
+            --video-id "$VIDEO_ID" \
+            --label "$LABEL" \
+            --duration "$VIDEO_DURATION" \
+            --description "$DESCRIPTION"
+
+          git config user.name 'notebooklm-video-pipeline[bot]'
+          git config user.email 'notebooklm-video-pipeline[bot]@users.noreply.github.com'
+          git add lib/pages/philosophy_page.dart
+          git commit \
+            -m "feat(philosophy): embed video #${{ inputs.series_number }} (NotebookLM auto pipeline)" \
+            -m "VIDEO_ID=$VIDEO_ID  DURATION=$VIDEO_DURATION  TITLE=${{ inputs.title }}"
+          git push origin HEAD:main
 
 # 残スコープ (Win版#132 part 30+ / cross-instance-pr 検討):
 # - transcribe.py を repo に vendor (現在は ~/.claude/skills/video-use 依存)
 # - build_srt.py の ASR 補正辞書を ENV var 化
 # - make_cards.py を CARD_TITLE / CARD_SERIES env で完全パラメータ化
-# - Step 8 自動 embed: lib/pages/philosophy_page.dart の _videos array 末尾に
-#   AST レベルで _Video entry を挿入する Python helper
 # - YouTube quota 監視 (10000 units/day / 1 upload = 1600 units = 6/day max)
 # - Slack 通知 (成功時 video URL / 失敗時 step + log link)
+#
+# 完了済 (Win版#132 part 30):
+# - Step 8 自動 embed → scripts/embed_video_in_philosophy.py (regex insert + dup-guard)
