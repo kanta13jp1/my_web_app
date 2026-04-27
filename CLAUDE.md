@@ -146,9 +146,14 @@ Anthropic API outage 時も他 AI で開発継続可能な体制を確立する�
 
 **WEB版代替パターン**:
 - `notebooklm ask` → WebSearch で代替
-- `flutter analyze` → 実行不可→ VSCode版に cross-instance-pr で検証依頼
+- `flutter analyze` → 実行不可→ `cat docs/flutter-analyze-cache.json` (GHA cs-check が毎時更新) で代替
 - `deno lint` → 実行不可 → EF変更は VSCode版に依頼
-- git commit → GitHub MCP (`mcp__plugin_github_github__create_or_update_file`) で代替
+- git commit → GitHub MCP (`mcp__github__create_or_update_file`) で代替
+- **Supabase EF/REST API 呼び出し** → sandbox が全外部HTTP をブロック (`host_not_allowed`) のため不可。代替:
+  - サポートチケット取得 → `cat docs/ticket-cache.json` (GHA cs-check が毎時更新)
+  - インフラヘルスチェック → `cat docs/flutter-analyze-cache.json` の `analyze_ok` を参照
+  - 実行ログ書き込み → `docs/schedule-logs/cs-YYYY-MM-DD-HH.json` ファイルに書いて git commit (GitHub MCP 経由)
+  - **根本修正**: `docs/.supabase-network-allow` を更新コミット → `fix-supabase-network.yml` が自動起動してSupabase制限解除 (SUPABASE_ACCESS_TOKEN 必要)
 
 **📱 スマホ版運用パターン**:
 - 本番モバイル (iPhone/Android) で実機検証 → screenshot 添付 → GitHub Issue 自動作成
