@@ -1174,7 +1174,7 @@ def main():
         "--days",
         type=int,
         default=21,
-        help="backfill モード時に遡る日数 (デフォルト: 21)",
+        help="backfill/stats モード時に遡る日数 (デフォルト: 21 / stats デフォルト推奨: 7)",
     )
     args = parser.parse_args()
 
