@@ -1,7 +1,7 @@
 ---
 title: "Cursor vs Claude Code 2026 — 実際に両方使った個人開発者の比較レポート"
 tags: cursor,AI,個人開発,buildinpublic
-published: false
+published: true
 ---
 
 # Cursor vs Claude Code 2026 — 実際に両方使った個人開発者の比較レポート
