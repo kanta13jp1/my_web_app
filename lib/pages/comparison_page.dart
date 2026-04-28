@@ -8029,6 +8029,109 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'runway': const _CompetitorInfo(
+    name: 'Runway',
+    emoji: '🎬',
+    tagline:
+        'RunwayをGen-3 Alpha AI映像生成専用ツールとして使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'Runway代替 AI映像生成代替 RunwayML代替',
+    accentColor: Color(0xFF0F766E),
+    painPoints: [
+      '動画生成に特化しており、メモ・財務・タスク管理は別ツールが必要',
+      'Gen-3クレジット消費が速く月額約\〜でコスト管理が難しい',
+      'GPU混雑時の生成待機が発生し、業務フローが止まることがある',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AI映像生成 (Gen-3 Alpha)',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'heygen': const _CompetitorInfo(
+    name: 'HeyGen',
+    emoji: '🎭',
+    tagline: 'HeyGenをAIアバター動画生成に使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'HeyGen代替 AIアバター動画代替 AI動画生成代替',
+    accentColor: Color(0xFF7C3AED),
+    painPoints: [
+      'AIアバター動画生成に特化しており、日常タスク・財務管理は対象外',
+      '月額約' + r'$' + '29〜のサブスクで個人用途にはコスト負担が大きい',
+      '生成した動画の用途が限定的で、ライフマネジメント全体には使えない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AIアバター動画生成',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'elevenlabs': const _CompetitorInfo(
+    name: 'ElevenLabs',
+    emoji: '🔊',
+    tagline: 'ElevenLabsをAI音声合成・TTSに使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'ElevenLabs代替 AI音声合成代替 TTS代替 音声生成AI代替',
+    accentColor: Color(0xFF2563EB),
+    painPoints: [
+      'AI音声合成・TTSに特化しており、タスク管理・財務・AI学習は別ツールが必要',
+      '月額約' + r'$' + '22〜のサブスクで音声生成のみのコスト対効果が低い',
+      'クリエイター向け機能が中心で、個人のライフマネジメントには対応していない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AI音声合成 (TTS)',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
@@ -8252,6 +8355,9 @@ class _ComparisonShellState extends State<_ComparisonShell> {
     'suno': 'ai-music',
     'udio': 'ai-music',
     'ideogram': 'ai-image',
+    'runway': 'ai-video',
+    'heygen': 'ai-video',
+    'elevenlabs': 'ai-voice',
   };
 
   @override
@@ -8452,7 +8558,7 @@ class _ComparisonShellState extends State<_ComparisonShell> {
                       children: [
                         _buildTag(
                           icon: Icons.compare_arrows_rounded,
-                          label: '195社比較',
+                          label: '198社比較',
                           backgroundColor:
                               _info.accentColor.withValues(alpha: 0.18),
                           foregroundColor: _textPrimary,
@@ -9060,7 +9166,7 @@ class _ComparisonShellState extends State<_ComparisonShell> {
                       ),
                       SizedBox(width: 8),
                       Text(
-                        '全195社の競合ランドスケープを見る →',
+                        '全198社の競合ランドスケープを見る →',
                         style: TextStyle(
                           fontSize: 14,
                           color: _textSecondary,
