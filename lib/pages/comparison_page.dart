@@ -7242,6 +7242,89 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'codeium': const _CompetitorInfo(
+    name: 'Codeium',
+    emoji: '🟢',
+    tagline: 'AIコード補完から始める、個人の知識・成長の統合OS。',
+    searchKeyword: 'Codeium代替 AIコード補完無料代替',
+    accentColor: Color(0xFF09B6A2),
+    painPoints: [
+      'CodiumはIDE向けAIコード補完特化で個人の知識管理・成長追跡がない',
+      '個人向けは無料だがチーム・Enterprise機能は有料プランが必要',
+      'コード生成の知見を体系的に蓄積・学習に活かす仕組みがない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AIコード補完 (無料)',
+        competitorHas: true,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: 'ノート・知識蓄積',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: 'AI大学 (290社+)',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '成長ミッション追跡',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務・習慣管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'gemini': const _CompetitorInfo(
+    name: 'Gemini',
+    emoji: '✨',
+    tagline: 'Geminiで得た知識を蓄積・活用できる、AIライフ統合OS。',
+    searchKeyword: 'Gemini代替 Google Gemini代替 AIアシスタント代替',
+    accentColor: Color(0xFF4285F4),
+    painPoints: [
+      'GeminiはAIチャット・検索特化で財務・習慣・タスク管理との統合がない',
+      'Google One AI Premium (\$19.99/月) が必要で無料版は機能制限が多い',
+      '会話履歴の構造化・長期的な知識蓄積が苦手',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AIチャット・マルチモーダル',
+        competitorHas: true,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '知識ベース構築',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: 'タスク・習慣管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: 'AI大学 (290社+)',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
@@ -7446,7 +7529,9 @@ class _ComparisonShellState extends State<_ComparisonShell> {
     'vanta': 'b2b',
     'github-copilot': 'ai-dev',
     'tabnine': 'ai-dev',
+    'codeium': 'ai-dev',
     'chatgpt': 'ai-platform',
+    'gemini': 'ai-platform',
   };
 
   @override
