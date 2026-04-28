@@ -1,7 +1,7 @@
 ---
 title: "個人開発のコスト管理 — $0から$100/月のスタック設計"
 tags: AI,個人開発,buildinpublic,automation
-published: false
+published: true
 ---
 
 # 個人開発のコスト管理 — $0から$100/月のスタック設計
