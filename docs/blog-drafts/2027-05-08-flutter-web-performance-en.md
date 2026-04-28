@@ -1,7 +1,7 @@
 ---
 title: "Flutter Web Performance: Real Measurements, Real Fixes"
 tags: flutter,ai,indiedev,programming
-published: false
+published: true
 ---
 
 # Flutter Web Performance: Real Measurements, Real Fixes
