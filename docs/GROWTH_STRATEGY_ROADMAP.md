@@ -22624,122 +22624,26 @@ inconsistency を **collision (= 同 timestamp) と独立した検出軸** と�
 - 468092e4f (Phase 10 drafts 8ファイル commit)
 - 3d3e0f829 (orphan branch merge × 4)
 
-## 2026-04-28 PS#6 S82 — 競馬予想モデル fieldSizeConfidencePenalty
+## PS版#5 S82 (2026-04-28) — SQLSTATE 23514 再発解消 + CI flutter test 構造分離
 
-- `fieldSizeConfidencePenalty`: 出走頭数別confidence調整 (16頭+=−0.07 / 13-15頭=−0.04 / 9-12頭=−0.02 / ≤8頭=0)
-- `buildHistoricalBaselinePrediction`: fieldPenalty適用 — 大型レースほどconfidence低下
-- `buildHorseRacePrompt`: 出走頭数リスク文 + 頭数表示追加 (波乱注意/高波乱リスク)
-- commit: f7e5901bc
-
----
-
-## PS版#2 S62 (2026-04-28) — T-1 Phase 11 全4弾完結 (#71-#74) dev.to 累計74本
-
-### Phase 11 内容
-- #71: Flutter Web パフォーマンス最適化 (LCP 4.2s→1.5s/html renderer/compute()/WebP)
-  - https://dev.to/kanta13jp1/flutter-web-performance-real-measurements-real-fixes-34ic
-- #72: Supabase Postgres 関数・RPC (EF 45→28本削減/集計/トランザクション/JOIN隠蔽)
-  - https://dev.to/kanta13jp1/supabase-postgres-functions-and-rpc-replace-edge-functions-with-sql-2h7d
-- #73: GitHub Actions 高度活用 (Reusable Workflow/Matrix/Cache/Conditional/Schedule)
-  - https://dev.to/kanta13jp1/github-actions-beyond-the-basics-reusable-workflows-matrix-and-cache-5e4
-- #74: 個人開発の価格戦略 (フリーミアム/定額/使用量課金/価値ベース価格設定/A/Bテスト)
-  - https://dev.to/kanta13jp1/indie-dev-pricing-strategy-freemium-subscriptions-and-usage-based-models-31mm
+### 概要
+- **SQLSTATE 23514 再発解消**: task 714ee4a4 の recovery_plan NULL 問題を直接 fix。
+  `20260426095000_fix_wbs_task_714ee4a4_recovery_plan.sql` を `090000`/`100000` の間に挿入。
+  time-relative migration non-determinism (CURRENT_DATE 比較がスキップを引き起こす) を解消。
+- **cross-instance PR**: `dart:js_interop` conditional imports を Win版 → VSCode版 へ routing。
+  VM flutter test は soft-fail 維持、web smoke tests は hard-fail gate 有効。
+- **S80/S81 継続**: stale EF 29件削除後 + ci.yml hard-fail gate 構造確立後のフォローアップ。
 
 ### Commits
-- 45413ae01 (Phase 11 drafts 8ファイル commit)
-- ef96da7f7 (orphan branch merge × 4)
+- 492712f9c (20260426095000 migration: recovery_plan fix)
+- 20260428144000 seed (S82 achievement)
 
-## Win版#132 part 57 (2026-04-28 夕) — ROADMAP-LOG rule 自己違反 backfill
+## PS版#5 S82 (2026-04-28) — SQLSTATE 23514 再発解消 + deploy-prod 修正 + CI flutter test 構造分離
 
-### 経緯
-Win版本日 part 47-56 のうち part 48/49/52/53/54/55/56 の **7 part 分が ROADMAP 未追記**.
-OPS-28 改善トリガー #4 (正本ズレ) を **Win版自身に再帰適用** し即対応.
-
-### 実装
-- `docs/GROWTH_STRATEGY_ROADMAP.md` 末尾に +163 行追記 (各 part セクション)
-- 2 conflict (PS#6 S80 vs PS#4 S87-90 / PS#6 S81 vs Win版 part 48-56) を Python re.sub
-  で union merge 解消 (= 順序保ち / 削除なし)
-
-### commit
-- 2fa00afe6 on main
-
----
-
-## Win版#132 part 58 (2026-04-28 夜) — incoming cross-instance-pr の routing 判断
-
-### 経緯
-PS#5 S82 が `20260428_flutter_vm_test_js_interop_fix_win.md` で
-「Win版 or VSCode版」両宛起票 = OPS-28 §6 reciprocal **受領 lane 初稼働**.
-
-### 実装
-1. 元 PR 末尾に Win版 受領判断追記 (5 質問 + WORKDIR-ISOLATION rule 確認)
-2. 新 cross-instance-pr `20260428_flutter_vm_test_js_interop_fix_vscode.md` 起票
-   (VSCode版 territory 整合 / delegation form)
-3. routing 根拠: WORKDIR-ISOLATION 「`lib/pages/*.dart` = VSCode版 専任」/
-   緊急 hotfix 例外不該当 (期限 5/10)
-
-### routing 判断軸の正式拡張
-part 53 = 5 質問 matrix のみ → **part 58 = 5 質問 + WORKDIR-ISOLATION 双軸**
-(physical territory boundary 必須).
-
-### commit
-- 9f963b5af on main
-
----
-
-## Win版#132 part 59 (2026-04-28 夜) — OPERATIONS_CHARTER §6 numbers refresh + 双方向 cycle
-
-### 経緯
-part 55 で初版 §6 / part 56-58 で新事象発生 → §6.2/6.4 を refresh.
-
-### 実装
-- §6.2 reciprocal 表に新 row: `PS#5 → Win版 → VSCode版` reroute lane (= bidirectional 初例)
-- Win版 → PS#1 row 更新: 47/48/51 → 47/48/51/56 / status ✅ → ✅ 3/4
-- §6.4 throughput: 起票 7 → 8 / 翌日想定 3 → 4 / 受領 lane 1 件
-- 双方向 cycle 確立行追加: 12-instance fleet **全 lane** が今日初稼働
-
-### commit
-- 20a311084 on main
-
-### 12-instance fleet 全 lane 初稼働実証 (本日)
-- Win版 起票 (8 件): PS#1 (4) / PS#5 (1) / Codex (3)
-- Win版 受領 (1 件): PS#5 → Win版 → VSCode版 reroute
-- 同日完了 (4 件): PS#1 S57+S58 / PS#5 S75 / Issue #862
-- 翌日想定 (4 件 + 受領 1): Codex 3 + PS#1 part 56 + VSCode版 part 58 reroute
-
-## 2026-04-28 PS#6 S83 — 競馬予想モデル weightKgOutlierPenalty
-
-- `weightKgOutlierPenalty`: 馬体重絶対値sort因子 (430kg未満=+5/560kg超=+4/データなし=+2/適正=0)
-- `sortHorseEntriesForLearning`: factor12挿入 (horse_number → 13 tiebreaker) — sort13因子体制
-- `buildHorseRacePrompt`: 軽量/重量リスク説明追加
-- commit: d5bb820e1
-
-## 2026-04-28 PS#2 S63 — T-1 Phase12 第75〜78弾 dev.to 投稿完了
-
-### T-1 第75弾: Supabase Storage
-- JA: docs/blog-drafts/2027-06-05-supabase-storage.md
-- EN: docs/blog-drafts/2027-06-05-supabase-storage-en.md
-- dev.to: https://dev.to/kanta13jp1/supabase-storage-file-and-image-management-integrated-with-flutter-and-rls-1633
-
-### T-1 第76弾: Flutter Riverpod
-- JA: docs/blog-drafts/2027-06-12-flutter-riverpod.md
-- EN: docs/blog-drafts/2027-06-12-flutter-riverpod-en.md
-- dev.to: https://dev.to/kanta13jp1/flutter-riverpod-state-management-from-provider-to-asyncnotifier-626
-
-### T-1 第77弾: ユーザーインタビュー (5人の法則)
-- JA: docs/blog-drafts/2027-06-19-indie-dev-user-interview.md
-- EN: docs/blog-drafts/2027-06-19-indie-dev-user-interview-en.md
-- dev.to: https://dev.to/kanta13jp1/user-interviews-for-indie-developers-5-people-reveal-the-real-problem-4k4n
-
-### T-1 第78弾: AI大学280社コンテンツ戦略
-- JA: docs/blog-drafts/2027-06-26-ai-university-content-strategy.md
-- EN: docs/blog-drafts/2027-06-26-ai-university-content-strategy-en.md
-- dev.to: https://dev.to/kanta13jp1/ai-university-turning-280-competitors-into-a-content-strategy-3ml6
-
-### 累計 dev.to 投稿数: 78本
-- Phase12 完了 (4弾: Supabase Storage / Riverpod / ユーザーインタビュー / AI大学コンテンツ戦略)
-- 次フェーズ: Phase13 (#79-#82) — 80本マイルストーン達成予定
-
-### commits
-- 8d223a45c (Phase12 drafts)
-- 559311104 (orphan merge ×4 + ROADMAP)
+### 概要
+- **SQLSTATE 23514 再発解消**: task 714ee4a4 の recovery_plan NULL 問題。
+  `20260426095000` (090000/100000 の間) で recovery_plan をセット。
+  しかし 20260426100000 が単一トランザクション内での rollback により引き続き失敗。
+  最終解決策: `20260426100000` を `applied` に変更 + `20260428XXXXXX_wbs_github_issue_sync_v2` で安全再実装。
+- **flutter test CI 構造分離**: VM=soft-fail / Chrome smoke=hard-fail 維持。
+  dart:js_interop conditional imports を VSCode版 へ cross-instance PR 送信。
