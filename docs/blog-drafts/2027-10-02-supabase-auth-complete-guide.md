@@ -1,7 +1,7 @@
 ---
 title: "Supabase Auth 完全ガイド — Magic Link / OAuth / MFA の実装"
 tags: supabase,flutter,個人開発,AI
-published: false
+published: true
 ---
 
 # Supabase Auth 完全ガイド — Magic Link / OAuth / MFA の実装
