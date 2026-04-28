@@ -22150,3 +22150,10 @@ Phase4 drafts 新規作成 (8ファイル):
 - audit 結果: clean (0 stale refs)
 - cross-instance-pr Win版#132 part 50 → done/
 - Commit: 10025c1e on main
+
+## PS#6 S77 (2026-04-28)
+- 競馬AIランキング: prev_days_ago 休み明けペナルティ (10因子目) 追加
+  - freshnessPenaltyScore: 0-60d=0, 61-89d=3, 90-179d=10, 180d+=20, unknown=5
+  - データ品質スコア: 16→17フィールド化 (prev_days_ago 追加)
+  - プロンプト: 90日超の場合「休み明けリスク(仕上がり未知・レース勘の鈍り)」を明示
+- Commit: 2570cec13 on main
