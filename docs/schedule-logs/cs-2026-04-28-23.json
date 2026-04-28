@@ -1,0 +1,34 @@
+{
+  "task": "blog-draft",
+  "executed_at": "2026-04-28T23:11:48Z",
+  "status": "completed",
+  "commits_found": 50,
+  "blog_post": {
+    "title": "AI大学320社突破！Flutter Web × Supabase で作るAI学習プラットフォームの全設計",
+    "draft_path": "docs/blog-drafts/2026-04-28.md",
+    "status": "draft",
+    "target_platforms": [
+      "zenn", "qiita", "note", "hatena", "medium",
+      "devto", "hashnode", "substack", "github-pages", "notion", "x-article"
+    ],
+    "created_at": "2026-04-28T09:00:00+09:00"
+  },
+  "files_created": [
+    "docs/blog-drafts/2026-04-28.md",
+    "docs/blog/zenn/2026-04-28.md",
+    "docs/blog/github-pages/2026-04-28.md",
+    "docs/blog/cross-post/2026-04-28.md"
+  ],
+  "supabase_write": {
+    "status": "skipped",
+    "reason": "host_not_allowed — WEB版 sandbox blocks external HTTP",
+    "fallback": "log written to docs/schedule-logs/cs-2026-04-28-23.json"
+  },
+  "key_themes": [
+    "AI大学320社突破 (AutoGen/DSPy/Haystack/CrewAI追加)",
+    "競合比較ページ240社対応",
+    "12インスタンス並行開発体制",
+    "T-1ブログ累計138本",
+    "競馬AI 19因子体制"
+  ]
+}
