@@ -62,6 +62,25 @@ jobs:
               ($pr.reviewDecision | if . == null or . == "" then "REVIEW_REQUIRED" else . end) as $reviewDecision |
               "- #\($pr.number) `\($pr.headRefName)` \($reviewDecision) - \($pr.title)\n  \($pr.url)"')
 
+          conflicted_prs=$(gh pr list --state open --limit 100 \
+            --json number,title,headRefName,isDraft,url \
+            --jq '.[] |
+              select(.headRefName | startswith("codex/")) |
+              select(.isDraft == false) |
+              [.number, .headRefName, .title, .url] |
+              @tsv' \
+            | while IFS=$'\t' read -r number head title url; do
+              branch="origin/$head"
+              if ! git show-ref --verify --quiet "refs/remotes/$branch"; then
+                continue
+              fi
+
+              if ! git merge-tree --write-tree origin/main "$branch" >/tmp/codex-merge-tree.out 2>&1; then
+                echo "- #$number \`$head\` CONFLICT - $title"
+                echo "  $url"
+              fi
+            done)
+
           open_pr_heads=$(gh pr list --state open --limit 100 \
             --json headRefName \
             --jq '.[].headRefName')
@@ -111,7 +130,7 @@ jobs:
               --json number --jq '.[0].number' 2>/dev/null || true)
           fi
 
-          if [ -z "$stale_branches" ] && [ -z "$ready_prs" ] && [ -z "$cleanup_branches" ]; then
+          if [ -z "$stale_branches" ] && [ -z "$ready_prs" ] && [ -z "$conflicted_prs" ] && [ -z "$cleanup_branches" ]; then
             if [ -n "$existing" ]; then
               gh issue close "$existing" \
                 --comment "No Codex backlog detected by codex-backlog-check.yml."
@@ -140,6 +159,13 @@ jobs:
               echo "None."
             fi
             echo
+            echo "## Codex PRs blocked by merge conflicts"
+            if [ -n "$conflicted_prs" ]; then
+              echo "$conflicted_prs"
+            else
+              echo "None."
+            fi
+            echo
             echo "## Closed or already-applied Codex branch cleanup"
             if [ -n "$cleanup_branches" ]; then
               echo "$cleanup_branches"
@@ -149,6 +175,7 @@ jobs:
             echo
             echo "## Operator action"
             echo "- Review each ready PR and merge or request changes."
+            echo "- Rebase or fresh-port conflicted PRs before review."
             echo "- Delete closed or already-applied branches only after owner confirmation."
             echo "- For stale branches without useful PRs, close, delete, or rebase them."
             echo
