@@ -23076,3 +23076,15 @@ CLAUDE.md hook table + ~/.claude/hooks/inject-rules.txt 注入. OPS-28 charter�
 - deepseek: DeepSeek R1/オープンソースAI推論/無料/ai-platform — DeepSeek代替超高ボリューム
 - competitorMeta+sitemap(+3URL)+_categoryOf+社数表記全更新
 - commit: 12d196d50
+
+## PS版#2 Session 71 (2026-04-29) — T-1 Phase20 全4弾完結 #107-#110
+
+**dev.to 累計110本**
+
+| # | タイトル | URL |
+|---|---------|-----|
+| #107 | Flutter Animation Deep Dive: AnimationController, Tween, and Hero | https://dev.to/kanta13jp1/flutter-animation-deep-dive-animationcontroller-tween-and-hero-3jj6 |
+| #108 | Supabase Realtime Advanced: Presence, Broadcast, and Channel Management | https://dev.to/kanta13jp1/supabase-realtime-advanced-presence-broadcast-and-channel-management-4fo5 |
+| #109 | Automate Code Review with GitHub Actions and Claude API | https://dev.to/kanta13jp1/automate-code-review-with-github-actions-and-claude-api-o6o |
+| #110 | Flutter PWA Optimization: Service Worker, Offline Support, and Install Prompts | https://dev.to/kanta13jp1/flutter-pwa-optimization-service-worker-offline-support-and-install-prompts-1mhl |
+
