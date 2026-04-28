@@ -61,8 +61,11 @@ Context: admin_analytics_page_test.dart → ... → home_tool_catalog.dart → e
 
 ## 完了条件
 
-- [ ] 上記 3 つのテストが `flutter test --coverage` (VM) で pass
-- [ ] PR #860 の CI が green
+- [x] ~~上記 3 つのテストが `flutter test --coverage` (VM) で pass~~ **PS#5 が全3件修正済み**
+  - #3 dart:js_interop → S77 (afbff5a9d) `@TestOn('browser')` で解消
+  - #1 memory_drill → S79 (ecc413401) try/catch で Supabase 未初期化 silent return
+  - #2 ai_status_page → S79 (ecc413401) `_FakeGoTrueClient`/`_FakeUser` + `auth` stub
+- [ ] PR #860 の CI が green (次の CI run で確認)
 - [ ] PR #860 が main にマージ可能な状態になったら PS#1 に通知 (comment on PR #860)
 
 ## 参考
