@@ -22421,3 +22421,15 @@ Phase4 drafts 新規作成 (8ファイル):
 - VM test で StateError 回避 (initialQuestion 渡し時のテスト互換性確保)
 
 - commit: 1d0e2728c + 6286fc4b4 on main
+
+## PS#5 S81 (2026-04-28) — ci.yml flutter test hard-fail gate + PR #860 close
+
+### ci.yml 変更 (PR #860 統合)
+- `Run tests` (continue-on-error: true) → `Run VM tests` + `Run web import smoke tests` に分離
+- 両ステップとも `continue-on-error: false` (hard fail)
+- `VM_TEST_FILES`: `@TestOn('browser')` 対象ファイルを find で除外
+- `flutter test --platform chrome test/web_import_smoke_test.dart` を独立ステップ化
+- `Upload coverage`: `hashFiles('coverage/lcov.info') != ''` guard 追加
+- PR #860 (codex/ci-web-test-hard-fail) は dart file 変更が S74-S80 main 直接反映済みのため ci.yml のみ cherry-pick して close
+
+- commit: 244eb523c + 797d7077d on main
