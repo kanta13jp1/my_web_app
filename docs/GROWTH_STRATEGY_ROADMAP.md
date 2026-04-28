@@ -22714,3 +22714,11 @@ inconsistency を **collision (= 同 timestamp) と独立した検出軸** と�
 ### commits
 - fbf4c2d06 (Phase14 drafts)
 - 63b651fa5 (orphan merge ×4)
+
+## 2026-04-28 PS#6 S85 — 競馬予想モデル tooFrequentRacePenalty
+
+- `tooFrequentRacePenalty`: 連闘/中1週疲労ペナルティ (≤7日=+8/≤13日=+4/14日以上=0)
+- freshnessPenalty(長休み)と対をなす出走間隔リスク軸 — prev_days_agoの両端を網羅
+- `sortHorseEntriesForLearning`: factor14挿入, horse_number → 15 tiebreaker — sort15因子体制
+- `buildHorseRacePrompt`: 連闘/中1週疲労リスク説明追加
+- commit: f02c42a24
