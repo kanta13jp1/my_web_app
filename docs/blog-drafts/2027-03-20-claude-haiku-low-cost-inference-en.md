@@ -1,7 +1,7 @@
 ---
 title: "Claude Haiku for Low-Cost AI Inference: Patterns from a Horse Racing Prediction System"
 tags: ai,automation,postgresql,indiedev
-published: false
+published: true
 ---
 
 # Claude Haiku for Low-Cost AI Inference: Patterns from a Horse Racing Prediction System

@@ -1,7 +1,7 @@
 ---
 title: "Claude haiku で低コスト AI 推論を設計する — 競馬AI で学ぶ実践パターン"
 tags: AI,個人開発,automation,postgresql
-published: false
+published: true
 ---
 
 # Claude haiku で低コスト AI 推論を設計する — 競馬AI で学ぶ実践パターン
