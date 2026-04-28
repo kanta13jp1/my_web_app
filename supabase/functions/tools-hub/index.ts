@@ -1032,6 +1032,15 @@ function courseDistancePenaltyScore(
   return penalty;
 }
 
+function prevLast3FSlowPenalty(value: unknown): number {
+  const t = numericOrFallback(value, 0);
+  if (t <= 0) return 2;   // データなし — やや不利
+  if (t >= 37.0) return 6; // 非常に遅いラスト3F
+  if (t >= 36.0) return 4;
+  if (t >= 35.0) return 2;
+  return 0; // 34秒台以下は速い
+}
+
 function sortHorseEntriesForLearning(
   entries: Record<string, unknown>[],
   raceContext?: { courseType?: string; distance?: number },
@@ -1082,7 +1091,10 @@ function sortHorseEntriesForLearning(
     // 14. too-frequent race penalty (ascending — 連闘/中1週 = 疲労リスク)
     const tfr = tooFrequentRacePenalty(a.prev_days_ago) - tooFrequentRacePenalty(b.prev_days_ago);
     if (tfr !== 0) return tfr;
-    // 15. horse_number (ascending — tiebreaker)
+    // 15. prev_last_3f slow penalty (ascending — ラスト3F遅い馬は末脚不足リスク)
+    const l3f = prevLast3FSlowPenalty(a.prev_last_3f) - prevLast3FSlowPenalty(b.prev_last_3f);
+    if (l3f !== 0) return l3f;
+    // 16. horse_number (ascending — tiebreaker)
     return numericOrFallback(a.horse_number, 999) - numericOrFallback(b.horse_number, 999);
   });
 }
