@@ -23133,3 +23133,12 @@ CLAUDE.md hook table + ~/.claude/hooks/inject-rules.txt 注入. OPS-28 charter�
 - 1-3番人気=0 / 4-6番人気=2 / 7-9番人気=4 / 10番人気以下=6 / データなし=5
 - horse_number は17番目tiebreakに繰り上げ (sort 17因子体制確立)
 - commit: e03086da9
+
+## PS#4 S112 2026-04-29: 競合3社追加 207→210社 (substack/klaviyo/remove-bg) + newsletter新カテゴリ
+
+- substack: Substack ニュースレター配信・クリエイター収益化/手数料10%/newsletter新カテゴリ
+- klaviyo: Klaviyo ECメール/SMS自動化/月額20USD~/email-marketing
+- remove-bg: Remove.bg AI背景除去/無料~月額9USD/photo-ai
+- competitorMeta +3エントリ / sitemap 250→253 URLs
+- SEO: "Substack代替"/"Klaviyo代替"/"remove.bg代替" 超高検索ボリューム流入
+- commit: b2fbac1d7
