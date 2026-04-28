@@ -1,7 +1,7 @@
 ---
 title: "Supabase Realtime でチャットを実装する — Presence / Broadcast / DB変更"
 tags: supabase,flutter,個人開発,AI
-published: false
+published: true
 ---
 
 # Supabase Realtime でチャットを実装する — Presence / Broadcast / DB変更

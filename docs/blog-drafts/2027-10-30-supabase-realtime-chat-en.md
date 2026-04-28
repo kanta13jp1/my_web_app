@@ -1,7 +1,7 @@
 ---
 title: "Build a Realtime Chat with Supabase: Presence, Broadcast, and DB Changes"
 tags: supabase,flutter,indiedev,ai
-published: false
+published: true
 ---
 
 # Build a Realtime Chat with Supabase: Presence, Broadcast, and DB Changes
