@@ -22254,3 +22254,17 @@ Phase4 drafts 新規作成 (8ファイル):
   - agePenaltyScore: 3-5歳=0(最盛期), 6歳=3, 7歳=8, 8歳+=15, 2歳以下/不明=5
   - sort因子: 8(age) → 9(weight) → 10(quality) → 11(horse_number)
 - Commit: 32cdf0422 on main
+
+## PS#2 S57-S58 (2026-04-28) — T-1 Phase7 全4弾 完結
+
+### Phase7 新規 draft (T-1 #55-#58)
+- T-1 第55弾: Claude Code hooks 設計 — UserPromptSubmitで毎ターンルール強制注入
+  - https://dev.to/kanta13jp1/claude-code-hooks-injecting-rules-every-turn-instead-of-hoping-ai-remembers-4bfm
+- T-1 第56弾: Supabase Edge Functions (Deno) 実装ガイド — hub パターンの中身
+  - https://dev.to/kanta13jp1/supabase-edge-functions-in-deno-a-production-guide-5d95
+- T-1 第57弾: 月$230のAIツールスタック — ソロ創業者が選んだ構成と理由
+  - https://dev.to/kanta13jp1/my-230month-ai-stack-every-tool-a-solo-founder-actually-uses-hjk
+- T-1 第58弾: PostgreSQL RLS 実践ガイド — auth.uid() で行レベルセキュリティを実装する
+  - https://dev.to/kanta13jp1/postgresql-row-level-security-the-right-way-to-lock-down-your-data-2pgb
+
+### 累計: dev.to 58本投稿
