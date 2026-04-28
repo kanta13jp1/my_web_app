@@ -1,7 +1,7 @@
 ---
 title: "AI大学 274社を体系化する設計思想 — なぜ「競合」ではなく「教材」として扱うか"
 tags: AI,個人開発,buildinpublic,postgresql
-published: false
+published: true
 ---
 
 # AI大学 274社を体系化する設計思想 — なぜ「競合」ではなく「教材」として扱うか

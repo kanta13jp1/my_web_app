@@ -1,7 +1,7 @@
 ---
 title: "274 AI Tools, One Database: Why I Treat Competitors as Curriculum"
 tags: ai,postgresql,indiedev,buildinpublic
-published: false
+published: true
 ---
 
 # 274 AI Tools, One Database: Why I Treat Competitors as Curriculum
