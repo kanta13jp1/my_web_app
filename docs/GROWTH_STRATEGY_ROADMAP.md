@@ -22713,3 +22713,33 @@ part 55 で初版 §6 / part 56-58 で新事象発生 → §6.2/6.4 を refresh.
 - `sortHorseEntriesForLearning`: factor12挿入 (horse_number → 13 tiebreaker) — sort13因子体制
 - `buildHorseRacePrompt`: 軽量/重量リスク説明追加
 - commit: d5bb820e1
+
+## 2026-04-28 PS#2 S63 — T-1 Phase12 第75〜78弾 dev.to 投稿完了
+
+### T-1 第75弾: Supabase Storage
+- JA: docs/blog-drafts/2027-06-05-supabase-storage.md
+- EN: docs/blog-drafts/2027-06-05-supabase-storage-en.md
+- dev.to: https://dev.to/kanta13jp1/supabase-storage-file-and-image-management-integrated-with-flutter-and-rls-1633
+
+### T-1 第76弾: Flutter Riverpod
+- JA: docs/blog-drafts/2027-06-12-flutter-riverpod.md
+- EN: docs/blog-drafts/2027-06-12-flutter-riverpod-en.md
+- dev.to: https://dev.to/kanta13jp1/flutter-riverpod-state-management-from-provider-to-asyncnotifier-626
+
+### T-1 第77弾: ユーザーインタビュー (5人の法則)
+- JA: docs/blog-drafts/2027-06-19-indie-dev-user-interview.md
+- EN: docs/blog-drafts/2027-06-19-indie-dev-user-interview-en.md
+- dev.to: https://dev.to/kanta13jp1/user-interviews-for-indie-developers-5-people-reveal-the-real-problem-4k4n
+
+### T-1 第78弾: AI大学280社コンテンツ戦略
+- JA: docs/blog-drafts/2027-06-26-ai-university-content-strategy.md
+- EN: docs/blog-drafts/2027-06-26-ai-university-content-strategy-en.md
+- dev.to: https://dev.to/kanta13jp1/ai-university-turning-280-competitors-into-a-content-strategy-3ml6
+
+### 累計 dev.to 投稿数: 78本
+- Phase12 完了 (4弾: Supabase Storage / Riverpod / ユーザーインタビュー / AI大学コンテンツ戦略)
+- 次フェーズ: Phase13 (#79-#82) — 80本マイルストーン達成予定
+
+### commits
+- 8d223a45c (Phase12 drafts)
+- 559311104 (orphan merge ×4 + ROADMAP)
