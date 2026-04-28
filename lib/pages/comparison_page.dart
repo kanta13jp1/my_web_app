@@ -8749,6 +8749,531 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'mailerlite': const _CompetitorInfo(
+    name: 'MailerLite',
+    emoji: '📧',
+    tagline:
+        'MailerLiteをシンプルなメールマーケティングに使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'MailerLite代替 メールマーケティング代替 メール配信代替 MailerLite日本語',
+    accentColor: Color(0xFF00B057),
+    painPoints: [
+      'メール配信・自動化に特化し、財務・タスク・AI大学は別ツールが必要',
+      '無料は月1,000読者まで、読者増加とともに月額費用が上昇',
+      '日本語テンプレートが少なく、ローカライズ対応が弱い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'メール配信・自動化',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'hotjar': const _CompetitorInfo(
+    name: 'Hotjar',
+    emoji: '🔥',
+    tagline:
+        'HotjarをUXヒートマップ・録画分析に使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'Hotjar代替 ヒートマップツール代替 UX分析代替 Hotjar日本語',
+    accentColor: Color(0xFFFF3C00),
+    painPoints: [
+      'ヒートマップ・セッション録画に特化し、個人ライフ管理機能がない',
+      'プロプランは月額32USD〜で中小企業・個人には高額',
+      'UX分析以外の財務・AI大学・習慣管理は別ツールが必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ヒートマップ・UX分析',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'amplitude': const _CompetitorInfo(
+    name: 'Amplitude',
+    emoji: '📊',
+    tagline:
+        'AmplitudeをプロダクトアナリティクスSaaSに使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'Amplitude代替 プロダクトアナリティクス代替 行動分析代替 Amplitude日本語',
+    accentColor: Color(0xFF1F5EFF),
+    painPoints: [
+      'プロダクトアナリティクスに特化し、財務・習慣・AI大学管理は別ツール',
+      'スケールアップでコストが急増するエンタープライズ向け設計',
+      'B2B SaaS用途が中心で個人利用・スモールビジネスには過剰',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'プロダクトアナリティクス',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'mixpanel': const _CompetitorInfo(
+    name: 'Mixpanel',
+    emoji: '🔮',
+    tagline:
+        'MixpanelをイベントベースのプロダクトアナリティクスSaaSに使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'Mixpanel代替 イベント分析代替 プロダクト分析代替 Mixpanel日本語',
+    accentColor: Color(0xFF7856FF),
+    painPoints: [
+      'イベントベース分析に特化し、個人ライフ全体のOS統合機能がない',
+      '無料は制限あり、月額24USD〜のプランでデータ量・機能が拡張',
+      'エンジニア・プロダクトマネージャー向けで一般ユーザーには複雑',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'イベントベース行動分析',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'brevo': const _CompetitorInfo(
+    name: 'Brevo (旧Sendinblue)',
+    emoji: '💌',
+    tagline:
+        'Brevoをメール+SMS統合マーケティングに使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'Brevo代替 Sendinblue代替 メール+SMS統合代替 Brevo日本語',
+    accentColor: Color(0xFF0092FF),
+    painPoints: [
+      'メール+SMSマーケティングに特化し、財務・タスク・AI大学は別ツール',
+      '無料は1日300通制限、大量配信には月額費用が発生',
+      'CRM機能はあるが個人ライフOS統合としての設計ではない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'メール+SMS配信',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'beehiiv': const _CompetitorInfo(
+    name: 'beehiiv',
+    emoji: '🐝',
+    tagline:
+        'beehiivをクリエイター向けニュースレタープラットフォームに使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'beehiiv代替 ニュースレター代替 クリエイターメディア代替 beehiiv日本語',
+    accentColor: Color(0xFFFFBD00),
+    painPoints: [
+      'ニュースレター配信・収益化に特化し、財務・習慣・AI大学管理は別ツール',
+      '無料は2,500読者まで、成長に伴い月額39USD〜のプランが必要',
+      '英語圏中心の設計で日本語クリエイターへのローカライズが弱い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ニュースレター配信・収益化',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'hubspot': const _CompetitorInfo(
+    name: 'HubSpot',
+    emoji: '🧲',
+    tagline:
+        'HubSpotをCRM+マーケティングオートメーションに使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'HubSpot代替 CRM代替 マーケティングオートメーション代替 HubSpot日本語',
+    accentColor: Color(0xFFFF7A59),
+    painPoints: [
+      'CRM+マーケティングに特化し、個人財務・習慣・AI大学は別ツールが必要',
+      '無料プランは機能制限あり、本格利用は月額約50USD〜のプランが必要',
+      '中小企業〜エンタープライズ向けで個人・フリーランスには過剰な機能',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'CRM・マーケティングオートメーション',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'miro': const _CompetitorInfo(
+    name: 'Miro',
+    emoji: '🗂️',
+    tagline:
+        'Miroをオンラインホワイトボード・チームコラボに使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'Miro代替 オンラインホワイトボード代替 チームコラボ代替 Miro日本語',
+    accentColor: Color(0xFFFFD02F),
+    painPoints: [
+      'ホワイトボード・ブレインストーミングに特化し、財務・AI大学・習慣管理は別ツール',
+      '無料は3ボード制限、チーム利用には月額10USD/人〜のプランが必要',
+      'リアルタイムコラボは優秀だが、個人ライフOS統合機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ホワイトボード・図解コラボ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'linear': const _CompetitorInfo(
+    name: 'Linear',
+    emoji: '⚡',
+    tagline:
+        'Linearを開発チーム向けプロジェクト管理に使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'Linear代替 プロジェクト管理代替 イシュートラッカー代替 Linear日本語',
+    accentColor: Color(0xFF5E6AD2),
+    painPoints: [
+      'ソフトウェア開発チームのイシュー管理に特化し、個人財務・AI大学は別ツール',
+      '無料は個人・小チームのみ、チーム利用は月額8USD/人〜のプランが必要',
+      '開発者向けツールで非エンジニアの個人ライフ管理には不向き',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '開発チーム向けイシュー管理',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'n8n': const _CompetitorInfo(
+    name: 'n8n',
+    emoji: '🔁',
+    tagline:
+        'n8nをオープンソースワークフロー自動化に使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'n8n代替 ワークフロー自動化代替 Zapier代替OSS n8n日本語',
+    accentColor: Color(0xFFEA4B71),
+    painPoints: [
+      'ワークフロー自動化に特化し、財務・習慣・AI大学管理は別ツールが必要',
+      'セルフホスト版は技術知識が必要、クラウド版は月額20EUR〜',
+      'ノーコード自動化は優秀だが個人ライフOS統合としての設計ではない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ワークフロー自動化・API連携',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'buffer': const _CompetitorInfo(
+    name: 'Buffer',
+    emoji: '📅',
+    tagline:
+        'BufferをSNSスケジューリング・管理ツールに使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'Buffer代替 SNSスケジュール代替 ソーシャルメディア管理代替 Buffer日本語',
+    accentColor: Color(0xFF2C4BFF),
+    painPoints: [
+      'SNS投稿スケジューリングに特化し、財務・AI大学・習慣管理は別ツール',
+      '無料は3チャンネル・10投稿/チャンネルまで、月額6USD〜のプランが必要',
+      'ソーシャルメディア管理以外の個人ライフOS統合機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'SNSスケジューリング・分析',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'hootsuite': const _CompetitorInfo(
+    name: 'Hootsuite',
+    emoji: '🦉',
+    tagline:
+        'HootsuiteをSNS統合管理・チームコラボに使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'Hootsuite代替 SNS管理代替 ソーシャルメディア一元管理代替 Hootsuite日本語',
+    accentColor: Color(0xFF000000),
+    painPoints: [
+      'SNS複数アカウント管理に特化し、個人財務・習慣・AI大学は別ツールが必要',
+      '無料プランは廃止、月額99USD〜と高額でスモールビジネスには負担',
+      'チームSNS運用が中心で個人ライフOS統合には過剰な機能',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'SNS複数アカウント統合管理',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'squarespace': const _CompetitorInfo(
+    name: 'Squarespace',
+    emoji: '🟫',
+    tagline:
+        'Squarespaceをデザイン重視のウェブサイトビルダーに使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'Squarespace代替 ウェブサイトビルダー代替 Wix代替 Squarespace日本語',
+    accentColor: Color(0xFF121212),
+    painPoints: [
+      'ウェブサイト作成・ECに特化し、財務・習慣・AI大学管理は別ツールが必要',
+      '月額16USD〜のサブスクで、デザイン性は高いが個人OSとしての機能がない',
+      'テンプレートが美しいが日本向けのローカライズ・決済対応が限定的',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ウェブサイト・ECサイト作成',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'bubble': const _CompetitorInfo(
+    name: 'Bubble',
+    emoji: '🫧',
+    tagline:
+        'Bubbleをノーコードウェブアプリ開発に使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'Bubble代替 ノーコード開発代替 ビジュアルプログラミング代替 Bubble日本語',
+    accentColor: Color(0xFF1A1A8C),
+    painPoints: [
+      'ノーコードアプリ開発に特化し、財務・習慣・AI大学管理は別ツールが必要',
+      '無料は機能制限あり、月額29USD〜の有料プランで本格運用可能',
+      'ビジュアル開発は優秀だが学習曲線が急で初心者には難しい',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ノーコードウェブアプリ開発',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'ghost': const _CompetitorInfo(
+    name: 'Ghost',
+    emoji: '👻',
+    tagline:
+        'Ghostをオープンソースブログ・ニュースレタープラットフォームに使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'Ghost代替 ブログプラットフォーム代替 WordPressより軽い代替 Ghost日本語',
+    accentColor: Color(0xFF15171A),
+    painPoints: [
+      'ブログ・ニュースレターに特化し、財務・習慣・AI大学管理は別ツールが必要',
+      'セルフホストは無料だがサーバー費用が別途必要、Ghostクラウドは月額9USD〜',
+      'コンテンツ配信以外の個人ライフOS統合機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ブログ・ニュースレター配信',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
@@ -8999,6 +9524,15 @@ class _ComparisonShellState extends State<_ComparisonShell> {
     'mixpanel': 'analytics',
     'brevo': 'email-marketing',
     'beehiiv': 'newsletter',
+    'hubspot': 'crm',
+    'miro': 'whiteboard',
+    'linear': 'project',
+    'n8n': 'automation',
+    'buffer': 'social-media',
+    'hootsuite': 'social-media',
+    'squarespace': 'website',
+    'bubble': 'no-code',
+    'ghost': 'newsletter',
   };
 
   @override
@@ -9199,7 +9733,7 @@ class _ComparisonShellState extends State<_ComparisonShell> {
                       children: [
                         _buildTag(
                           icon: Icons.compare_arrows_rounded,
-                          label: '222社比較',
+                          label: '231社比較',
                           backgroundColor:
                               _info.accentColor.withValues(alpha: 0.18),
                           foregroundColor: _textPrimary,
@@ -9807,7 +10341,7 @@ class _ComparisonShellState extends State<_ComparisonShell> {
                       ),
                       SizedBox(width: 8),
                       Text(
-                        '全222社の競合ランドスケープを見る →',
+                        '全231社の競合ランドスケープを見る →',
                         style: TextStyle(
                           fontSize: 14,
                           color: _textSecondary,
