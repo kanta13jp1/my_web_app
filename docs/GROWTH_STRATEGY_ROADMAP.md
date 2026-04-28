@@ -23368,3 +23368,19 @@ Codex#2 完成 (2 週間 / 期限 2026-05-13) で:
 ### commit
 (本 commit にて確定)
 
+
+## PS#4 S117-S119 (2026-04-29)
+
+### vsMatch バグ修正 + 競合9社追加 222→231社
+
+**バグ修正**:
+- S115-S116 で `_categoryOf` + sitemap のみ追加されていた 6 社 (mailerlite/hotjar/amplitude/mixpanel/brevo/beehiiv) の vsMatch エントリを補完
+- 原因: S115 の Edit が `_categoryOf` 内部に `_CompetitorInfo` を挿入しようとして型不一致で失敗
+
+**新規追加**:
+- S117: hubspot (CRM+マーケティング) / miro (ホワイトボード) / linear (開発PM) 222→225社
+- S118: n8n (OSS自動化) / buffer (SNSスケジュール) / hootsuite (SNS統合) 225→228社
+- S119: squarespace (ウェブサイト) / bubble (ノーコード) / ghost (ブログ/NL) 228→231社
+
+**sitemap**: 265→274 URLs / 全ファイル社数表記 231 統一
+**commit**: fa4801d0a
