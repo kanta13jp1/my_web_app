@@ -1,7 +1,7 @@
 ---
 title: "個人開発SaaSのKPI設計と計測 — MAU/ARR/NPS/チャーンを正しく追う"
 tags: AI,個人開発,buildinpublic,automation
-published: false
+published: true
 ---
 
 # 個人開発SaaSのKPI設計と計測 — MAU/ARR/NPS/チャーンを正しく追う
