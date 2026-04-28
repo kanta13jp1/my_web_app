@@ -22157,3 +22157,18 @@ Phase4 drafts 新規作成 (8ファイル):
   - データ品質スコア: 16→17フィールド化 (prev_days_ago 追加)
   - プロンプト: 90日超の場合「休み明けリスク(仕上がり未知・レース勘の鈍り)」を明示
 - Commit: 2570cec13 on main
+
+## PS#1 S59 — 2026-04-28 (Rule 17 WF health + migration collision batch 3)
+
+### Rule 17 WF health check (S59)
+- **migration-collision-check 3/3 failure**: 2 新衝突検出
+  - `20260428083500_seed_metaflow` → `083600` (rename)
+  - `20260428090000_seed_achievements_vscode_s14` → `090100` (rename)
+  - commit: b22cac292 / python3 check_migration_timestamps.py → OK
+- **CI failure (PR #860)**: `codex/ci-web-test-hard-fail` PR — `continue-on-error: false` に変更するも test 3件未修正でブロック
+  - memory_drill_page_test MissingStub
+  - ai_status_page_test MissingStub
+  - election_victory_page dart:js_interop VM 汚染
+  - PR #860 comment + cross-instance-pr `20260428_flutter_test_stub_fixes_vscode.md` 作成
+- **deploy failure**: 旧衝突 (b22cac292 で修正済み) が原因、以後 queue 正常
+- main CI: cancelled のみ (failure なし) — 正常
