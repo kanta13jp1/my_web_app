@@ -1,7 +1,7 @@
 ---
 title: "Flutter GoRouter Advanced — Nested Navigation, Auth Guards, and Deep Links"
 tags: flutter,ai,indiedev,programming
-published: false
+published: true
 ---
 
 # Flutter GoRouter Advanced — Nested Navigation, Auth Guards, and Deep Links
