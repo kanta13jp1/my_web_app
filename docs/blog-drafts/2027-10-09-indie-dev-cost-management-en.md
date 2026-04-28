@@ -1,7 +1,7 @@
 ---
 title: "Indie Dev Cost Management: Designing a $0→$100/Month Stack"
 tags: ai,indiedev,buildinpublic,automation
-published: false
+published: true
 ---
 
 # Indie Dev Cost Management: Designing a $0→$100/Month Stack
