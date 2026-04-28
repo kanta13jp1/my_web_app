@@ -22248,3 +22248,9 @@ Phase4 drafts 新規作成 (8ファイル):
 - 修正: return型不一致(Future<String>→return''/Future<bool>→return false)・_GanttTimelineTabState スコープ外参照修正
 - S74+S76 合計31ページ anon guard 完了
 - Commit: 9fac78e3f
+
+## PS#6 S78 (2026-04-28)
+- 競馬AIランキング: age_sex 馬齢ペナルティ (11因子目) 追加
+  - agePenaltyScore: 3-5歳=0(最盛期), 6歳=3, 7歳=8, 8歳+=15, 2歳以下/不明=5
+  - sort因子: 8(age) → 9(weight) → 10(quality) → 11(horse_number)
+- Commit: 32cdf0422 on main
