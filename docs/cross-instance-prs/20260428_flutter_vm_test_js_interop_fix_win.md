@@ -75,3 +75,42 @@ ls lib/utils/*_web.dart lib/utils/*_stub.dart
 ---
 
 *PS#5 S82 / 2026-04-28 起票*
+
+---
+
+## Win版 受領判断 (2026-04-28 / Win版#132 part 58)
+
+### 5 質問 routing matrix 適用 (docs/CODEX_WORKFLOW.md §6)
+
+| Q | 答え | 補足 |
+| --- | --- | --- |
+| Q1 設計判断 / trade-off? | △ 部分 YES | conditional import pattern は judgment 含むが既存 `web_image_downloader.dart` の複製のみ = 軽量 |
+| Q2 cross-instance 調整? | NO | PS#5 → 受領 単方向 |
+| Q3 軸 docs 更新? | NO | mechanical refactor / 6 設計軸不変 |
+| Q4 docs に残す判断? | NO | 標準 conditional import 適用 |
+| Q5 NotebookLM 連携? | NO |
+
+→ 5 質問では Q1 軽量 YES で Codex も可だが、`lib/pages/*.dart` 編集 =
+**WORKDIR-ISOLATION rule で VSCode版 専任 territory**.
+→ **VSCode版 reroute** が正しい (= PS#5 表記「Win版 or VSCode版」のうち後者採用).
+
+### Routing 根拠
+- WORKDIR-ISOLATION rule: 「VSCode版 → `lib/` Flutter UI + EF」(CLAUDE.md / inject-rules.txt)
+- Win版 territory: `docs/` / migration schema / 動画パイプライン
+- 緊急 hotfix 例外不該当 (期限 2026-05-10 = 翌々週 / production 機能影響なし)
+
+### Action
+
+新 cross-instance-pr `20260428_flutter_vm_test_js_interop_fix_vscode.md` を
+Win版 が delegation form で起票 → VSCode版 territory に正しく routing.
+
+本 file は PS#5 起票の origin として保持。VSCode版 が実装完了時に done/ 移動.
+
+### OPS-28 charter §6 への追加候補
+
+**新 pattern**: incoming cross-instance-pr が複数受領候補 (例: 「Win版 or VSCode版」)
+を提示した場合、最初に確認した instance が WORKDIR-ISOLATION 整合性で
+**routing 判断する責務** を持つ. 単純な 5 質問判定だけでなく **physical territory
+boundary** (= worktree 担当領域) も判断軸に加える.
+
+*Win版#132 part 58 / 2026-04-28 routing 判断*
