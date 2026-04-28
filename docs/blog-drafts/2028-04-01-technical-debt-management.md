@@ -1,7 +1,7 @@
 ---
 title: "個人開発の技術的負債管理 — 借りていい負債と返すべき負債"
 tags: AI,個人開発,buildinpublic,automation
-published: false
+published: true
 ---
 
 # 個人開発の技術的負債管理 — 借りていい負債と返すべき負債
