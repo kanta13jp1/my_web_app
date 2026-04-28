@@ -7684,9 +7684,7 @@ final _competitorInfo = <String, _CompetitorInfo>{
     searchKeyword: 'DALL-E代替 DALL-E3代替 OpenAI画像生成代替',
     accentColor: Color(0xFF10A37F),
     painPoints: [
-      'DALL-EはChatGPT Plus(月額
-$
-20)統合の画像生成で単体アプリでない',
+      r'DALL-EはChatGPT Plus(月額$20)統合の画像生成で単体アプリでない',
       '財務管理・習慣追跡・タスク管理・AI大学など個人OS機能がない',
       'ChatGPT有料プラン前提でコストがかかる',
     ],
