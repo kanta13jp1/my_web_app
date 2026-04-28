@@ -97,11 +97,11 @@ codex "supabase/functions/tools-hub/index.ts に action=habit.list を追加"
 | `ai-university-update.yml` | **なし** (RSS only) | 影響なし ✅ |
 | `quota-monitor.yml` | **なし** (監視のみ) | 影響なし ✅ |
 | `claude-agent-review.yml` | あり → Gemini fallback | Gemini でカバー ✅ |
-| `blog-engagement.yml` | optional | スキップ (コメント返信なし) ⚠️ |
+| `blog-engagement.yml` | Claude → Gemini → template | Gemini またはテンプレ返信で継続 ✅ |
 | `horse-racing-update.yml` | **なし** | 影響なし ✅ |
 | `wbs-staleness-audit.yml` | **なし** | 影響なし ✅ |
 
-**結論**: スケジュールタスクの大半はすでに Claude 非依存。`blog-engagement.yml` のコメント返信 AI 生成のみ停止するが、非クリティカル。
+**結論**: スケジュールタスクの大半はすでに Claude 非依存。`blog-engagement.yml` のコメント返信も Gemini / template fallback で継続する。
 
 ### Claude Code CLI ベースのタスク (手動代替手順)
 

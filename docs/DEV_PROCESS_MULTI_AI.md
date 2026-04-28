@@ -88,7 +88,7 @@ curl -s -o /dev/null -w "%{http_code}" \
 | `ai-university-update.yml` | なし (REST直接) | N/A | ✅ 問題なし |
 | `quota-monitor.yml` | なし (監視のみ) | N/A | ✅ 問題なし |
 | `cs-check.yml` | Claude Schedule | ❌ 未実装 | 要対応 |
-| `blog-engagement.yml` | Claude Haiku | ❌ 未実装 | 要対応 |
+| `blog-engagement.yml` | Claude Haiku | **Gemini → template** | ✅ 完了 (Codex#2 2026-04-28) |
 | `blog-backfill.yml` | Claude Haiku | ❌ 未実装 | 要対応 |
 | `claude-agent-review.yml` | Claude Sonnet | skip-on-quota 推奨 | 要対応 |
 | `blog-verify.yml` | Claude Haiku | ❌ 未実装 | 要対応 |
@@ -197,7 +197,7 @@ notebooklm ask "Edge Function設計方針の経緯"
 | 🔴 **P0** | blog-draft.yml Gemini fallback | ✅ PS#1 S26 | 2026-04-24 |
 | 🔴 **P0** | `GOOGLE_AI_API_KEY` + `GEMINI_API_KEY` + `SLACK_WEBHOOK_URL` secrets | ✅ **設定済 (2026-04-24)** | — |
 | 🟠 **P1** | ai-hub EF 自動quota routing | VSCode版 | 2026-04-26 |
-| 🟠 **P1** | blog-engagement.yml Gemini fallback | PS#2 | 2026-04-28 |
+| 🟠 **P1** | blog-engagement.yml Gemini fallback | ✅ Codex#2 | 2026-04-28 |
 | 🟠 **P1** | claude-agent-review.yml skip-on-quota | PS#1 | 2026-05-01 |
 | 🟡 **P2** | cs-check.yml Gemini fallback | PS#1 | 2026-05-05 |
 | 🟢 **P3** | Notion WBS mirror | Win版 | 2026-05-15 |
