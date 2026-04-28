@@ -23142,3 +23142,9 @@ CLAUDE.md hook table + ~/.claude/hooks/inject-rules.txt 注入. OPS-28 charter�
 - competitorMeta +3エントリ / sitemap 250→253 URLs
 - SEO: "Substack代替"/"Klaviyo代替"/"remove.bg代替" 超高検索ボリューム流入
 - commit: b2fbac1d7
+
+## 2026-04-29 PS#6 S99 — 競馬予想モデル weightKgPenaltyScore (斤量sort因子 18因子体制)
+### S99: weightKgPenaltyScore(weight_kg) — 斤量をsort因子に追加 (17番目因子)
+- ≤53kg=-1(軽斤量有利) / ≤55kg=0(標準) / <57kg=+1(やや重い) / ≥57kg=+2(重斤量不利) / データなし=0
+- horse_numberは18番目tiebreakに繰り上げ (sort 18因子体制確立)
+- commit: 921b42ded
