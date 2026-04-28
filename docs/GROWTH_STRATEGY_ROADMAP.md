@@ -23275,15 +23275,11 @@ AI_CHARACTER → IMBUE → COLLAB_AI → MCP_AUTH → AI_VIDEO → VIBE_CODING �
 ### commit
 (本 commit にて確定)
 
-## PS#2 S76 — 2026-04-29 T-1 Phase25 全4弾完結 (#127-#130)
+## VSCode S15 — 2026-04-29 (ai-hub quota自動フォールバック)
 
-- T-1 第127弾: Flutter Golden Tests (スクリーンショット差分/ダークモード/CI artifacts) → dev.to 投稿成功
-  - https://dev.to/kanta13jp1/flutter-golden-tests-prevent-ui-regressions-with-screenshot-diffs-4lab
-- T-1 第128弾: Supabase RLS 応用パターン (チーム共有/マルチテナント/管理者権限/EXISTS最適化) → dev.to 投稿成功
-  - https://dev.to/kanta13jp1/supabase-rls-advanced-patterns-team-sharing-multi-tenancy-and-admin-access-n5g
-- T-1 第129弾: 個人開発者のコンテンツマーケティング (検索意図分類/SEO/週1本複利効果) → dev.to 投稿成功
-  - https://dev.to/kanta13jp1/indie-dev-content-marketing-get-1000-users-a-month-from-a-blog-f9i
-- T-1 第130弾: Flutter × Claude API チャット (EFプロキシ/吹き出しUI/ストリーミング) → dev.to 投稿成功
-  - https://dev.to/kanta13jp1/flutter-x-claude-api-build-an-ai-chat-feature-from-scratch-17d0
-- dev.to 累計: 130本
-- final push: f1344b006
+- **EF修正**: `supabase/functions/ai-hub/index.ts` — `callSingleProvider` isRetriable=true 時 anthropic→google→openai フォールバックチェーン追加
+- **cross-instance-pr クローズ**: 20260424_ai_hub_quota_fallback → done/
+- deno lint/check 0 errors
+
+### commit
+10b5dd71b (main)
