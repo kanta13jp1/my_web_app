@@ -1,7 +1,7 @@
 ---
 title: "GitHub Actions Schedule で月$0の自動化インフラを作る"
 tags: AI,個人開発,automation,buildinpublic
-published: false
+published: true
 ---
 
 # GitHub Actions Schedule で月$0の自動化インフラを作る

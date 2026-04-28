@@ -1,7 +1,7 @@
 ---
 title: "GitHub Actions Schedule: $0/Month Automation Infrastructure for Solo Founders"
 tags: ai,automation,indiedev,programming
-published: false
+published: true
 ---
 
 # GitHub Actions Schedule: $0/Month Automation Infrastructure for Solo Founders
