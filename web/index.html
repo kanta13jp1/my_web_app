@@ -699,6 +699,39 @@
           ldScript.type = 'application/ld+json';
           ldScript.text = JSON.stringify(jsonLd);
           document.head.appendChild(ldScript);
+          // FAQPage JSON-LD for rich results on vs-* comparison pages
+          var compName = meta.title.replace('自分株式会社 vs ', '').split(' | ')[0];
+          var faqLd = {
+            "@context": "https://schema.org",
+            "@type": "FAQPage",
+            "mainEntity": [
+              {
+                "@type": "Question",
+                "name": compName + "と自分株式会社は何が違うの?",
+                "acceptedAnswer": {"@type": "Answer", "text": meta.desc}
+              },
+              {
+                "@type": "Question",
+                "name": "自分株式会社は完全無料で使えますか?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "はい、現在は完全無料です。登録なしでAI提案を1回体験でき、登録後は制限なくすべての機能を利用できます。"
+                }
+              },
+              {
+                "@type": "Question",
+                "name": compName + "から自分株式会社に乗り換えられますか?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "30秒でアカウント登録できます。既存データはMarkdown形式で取り込め、NotionとEvernoteはインポート機能もあります。完全無料でお試しいただけます。"
+                }
+              }
+            ]
+          };
+          var faqScript = document.createElement('script');
+          faqScript.type = 'application/ld+json';
+          faqScript.text = JSON.stringify(faqLd);
+          document.head.appendChild(faqScript);
         }
       }
 
