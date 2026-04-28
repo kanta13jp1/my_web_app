@@ -8336,6 +8336,108 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'loom': const _CompetitorInfo(
+    name: 'Loom',
+    emoji: '🎥',
+    tagline: 'Loomを非同期ビデオコミュニケーションに使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'Loom代替 画面録画コミュニケーション代替 Loom日本語代替',
+    accentColor: Color(0xFF625DF5),
+    painPoints: [
+      '画面録画・非同期動画メッセージに特化し、財務管理・タスク・AI学習は別ツール',
+      '月額約' + r'$' + '12.5〜のサブスクで動画録画のみのコスト対効果が限定的',
+      'チームコミュニケーションは優秀だが、個人のライフマネジメント統合機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '非同期ビデオ録画・共有',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'pipedrive': const _CompetitorInfo(
+    name: 'Pipedrive',
+    emoji: '📊',
+    tagline: 'PipedriveをセールスCRMに使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'Pipedrive代替 セールスCRM代替 Pipedrive日本語代替',
+    accentColor: Color(0xFF1A1A1A),
+    painPoints: [
+      'セールスパイプライン・CRMに特化しており、個人の財務・習慣・AI学習は対象外',
+      '月額約' + r'$' + '14.9〜で営業チーム向け機能が中心、個人利用には過剰',
+      'ディール管理・見込み客追跡は優秀だが、個人ライフOSとしての統合機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'セールスCRM・パイプライン管理',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'photoroom': const _CompetitorInfo(
+    name: 'PhotoRoom',
+    emoji: '📸',
+    tagline: 'PhotoRoomをAI写真編集・背景除去に使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'PhotoRoom代替 AI背景除去代替 AI写真編集代替',
+    accentColor: Color(0xFF6366F1),
+    painPoints: [
+      'AI写真編集・背景除去に特化しており、財務・タスク・AI大学は別ツールが必要',
+      '月額約' + r'$' + '9.99〜でEC向け商品画像編集が中心、個人ライフ管理はできない',
+      'ECサイト向け写真加工は優れるが、日常のライフマネジメント全体はサポート外',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AI写真編集・背景除去',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
@@ -8568,6 +8670,9 @@ class _ComparisonShellState extends State<_ComparisonShell> {
     'mailchimp': 'email-marketing',
     'monday-com': 'project',
     'freshdesk': 'support',
+    'loom': 'video-comm',
+    'pipedrive': 'crm',
+    'photoroom': 'photo-ai',
   };
 
   @override
@@ -8768,7 +8873,7 @@ class _ComparisonShellState extends State<_ComparisonShell> {
                       children: [
                         _buildTag(
                           icon: Icons.compare_arrows_rounded,
-                          label: '204社比較',
+                          label: '207社比較',
                           backgroundColor:
                               _info.accentColor.withValues(alpha: 0.18),
                           foregroundColor: _textPrimary,
@@ -9376,7 +9481,7 @@ class _ComparisonShellState extends State<_ComparisonShell> {
                       ),
                       SizedBox(width: 8),
                       Text(
-                        '全204社の競合ランドスケープを見る →',
+                        '全207社の競合ランドスケープを見る →',
                         style: TextStyle(
                           fontSize: 14,
                           color: _textSecondary,
