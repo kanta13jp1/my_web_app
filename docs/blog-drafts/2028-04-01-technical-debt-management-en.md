@@ -1,7 +1,7 @@
 ---
 title: "Managing Technical Debt in Indie Dev: Which Debt to Keep, Which to Pay"
 tags: ai,indiedev,buildinpublic,automation
-published: false
+published: true
 ---
 
 # Managing Technical Debt in Indie Dev: Which Debt to Keep, Which to Pay
