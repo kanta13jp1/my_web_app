@@ -1,7 +1,7 @@
 ---
 title: "Supabase RLS Advanced Patterns — Team Sharing, Multi-Tenancy, and Admin Access"
 tags: supabase,ai,indiedev,programming
-published: false
+published: true
 ---
 
 # Supabase RLS Advanced Patterns — Team Sharing, Multi-Tenancy, and Admin Access
