@@ -1384,9 +1384,16 @@ function weightKgPenaltyScore(value: unknown): number {
   return 2;               // 重斤量 (≥57kg 不利)
 }
 
+function prevVenueMatchScore(entry: Record<string, unknown>, raceVenue: string | undefined): number {
+  if (!raceVenue) return 0;
+  const prev = String(entry.prev_venue ?? "").trim();
+  if (!prev) return 0;
+  return prev === raceVenue ? -2 : 0; // 前走同会場 = 有利 (ascending, 低い方が上位)
+}
+
 function sortHorseEntriesForLearning(
   entries: Record<string, unknown>[],
-  raceContext?: { courseType?: string; distance?: number },
+  raceContext?: { courseType?: string; distance?: number; venue?: string },
 ): Record<string, unknown>[] {
   return [...entries].sort((a, b) => {
     // 1. popularity (ascending — lower rank = more popular)
@@ -1443,7 +1450,10 @@ function sortHorseEntriesForLearning(
     // 17. weight_kg penalty (ascending — 重斤量は不利)
     const wkgPenalty = weightKgPenaltyScore(a.weight_kg) - weightKgPenaltyScore(b.weight_kg);
     if (wkgPenalty !== 0) return wkgPenalty;
-    // 18. horse_number (ascending — tiebreaker)
+    // 19. prev venue match (ascending — 前走同会場は有利)
+    const venueMatch = prevVenueMatchScore(a, raceContext?.venue) - prevVenueMatchScore(b, raceContext?.venue);
+    if (venueMatch !== 0) return venueMatch;
+    // 20. horse_number (ascending — tiebreaker)
     return numericOrFallback(a.horse_number, 999) - numericOrFallback(b.horse_number, 999);
   });
 }
@@ -1455,6 +1465,7 @@ function buildHistoricalBaselinePrediction(
   const raceCtx = {
     courseType: String(race.course_type ?? "").trim() || undefined,
     distance: Number(race.distance ?? 0) || undefined,
+    venue: String(race.venue ?? "").trim() || undefined,
   };
   const ranked = sortHorseEntriesForLearning(entries, raceCtx);
   const [first, second, third] = ranked;
