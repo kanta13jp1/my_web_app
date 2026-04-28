@@ -7325,6 +7325,94 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'claude': const _CompetitorInfo(
+    name: 'Claude (Anthropic)',
+    emoji: '🧠',
+    tagline: 'Claude的なAI対話を、知識管理・財務・習慣と統合した個人OS。',
+    searchKeyword: 'Claude代替 Claude AI代替 Anthropic Claude代替',
+    accentColor: Color(0xFFCC785C),
+    painPoints: [
+      'Claude AIはチャット・文書生成特化で個人の知識管理・成長追跡が欠如',
+      'Pro (\$20/月) 以上で高性能モデルを使えるが無料版は制限あり',
+      '財務管理・習慣追跡・タスク統合が単体ではできない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AIチャット・文書生成',
+        competitorHas: true,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '知識ベース構築',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: 'タスク・習慣管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: 'AI大学 (290社+)',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'microsoft-copilot': const _CompetitorInfo(
+    name: 'Microsoft Copilot',
+    emoji: '🪟',
+    tagline: 'Microsoft Copilotを超えた、個人特化AIライフ統合OS。',
+    searchKeyword: 'Microsoft Copilot代替 Copilot代替 Bing AI代替',
+    accentColor: Color(0xFF0078D4),
+    painPoints: [
+      'Microsoft CopilotはOffice/Bing統合AIだが個人のライフ管理には不向き',
+      'Microsoft 365プランが前提で個人向け無料利用は機能が限定的',
+      '財務管理・習慣追跡・AI大学学習などの個人成長機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AI検索・文書補助',
+        competitorHas: true,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '知識ベース構築',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: 'タスク・習慣管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: 'AI大学 (290社+)',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
@@ -7532,6 +7620,8 @@ class _ComparisonShellState extends State<_ComparisonShell> {
     'codeium': 'ai-dev',
     'chatgpt': 'ai-platform',
     'gemini': 'ai-platform',
+    'claude': 'ai-platform',
+    'microsoft-copilot': 'ai-platform',
   };
 
   @override
@@ -7732,7 +7822,7 @@ class _ComparisonShellState extends State<_ComparisonShell> {
                       children: [
                         _buildTag(
                           icon: Icons.compare_arrows_rounded,
-                          label: '179社比較',
+                          label: '181社比較',
                           backgroundColor:
                               _info.accentColor.withValues(alpha: 0.18),
                           foregroundColor: _textPrimary,
@@ -8340,7 +8430,7 @@ class _ComparisonShellState extends State<_ComparisonShell> {
                       ),
                       SizedBox(width: 8),
                       Text(
-                        '全179社の競合ランドスケープを見る →',
+                        '全181社の競合ランドスケープを見る →',
                         style: TextStyle(
                           fontSize: 14,
                           color: _textSecondary,
