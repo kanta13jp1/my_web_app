@@ -22843,6 +22843,11 @@ task 714ee4a4 unconditional backfill + 全超過タスク broad backfill を最�
 - reasoning内訳に上がり3F充足率を追加
 - commit: `0f47870dc`
 
+## 2026-04-28 PS#6 S91 — 競馬予想モデル weightChangeCoverage (体重変動充足率)
+
+- `buildHistoricalBaselinePrediction`: weightChangeCoverage (weight_change充足率 ×0.01) をconfidence式に追加 (12 terms確定)
+- commit: `765087bd3`
+
 ## 2026-04-28 PS#6 S90 — 競馬予想モデル winningTimeCoverage (勝ち時計充足率)
 
 - `buildHistoricalBaselinePrediction`: winningTimeCoverage (winning_time充足率 ×0.01) をconfidence式に追加 (11 terms)
