@@ -1,7 +1,7 @@
 ---
 title: "Flutter Accessibility: Semantics, Screen Readers, and WCAG"
 tags: flutter,ai,indiedev,programming
-published: false
+published: true
 ---
 
 # Flutter Accessibility: Semantics, Screen Readers, and WCAG
