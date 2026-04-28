@@ -23416,3 +23416,11 @@ Codex#2 完成 (2 週間 / 期限 2026-05-13) で:
 
 ### commit
 (本 commit にて確定)
+
+## 2026-04-29 PS#6 S105 — 競馬予想モデル prevVenueMatchScore (前走同会場sort因子)
+### S105: prevVenueMatchScore(entry, venue) — 前走と同会場の馬をsortで優遇
+- 前走同会場=-2(有利) / 異なる or データなし=0
+- raceCtxにvenue追加でsort関数に会場情報を伝達
+- sort factor 19番目に追加、horse_numberはfactor 20(tiebreaker)に繰り上げ
+- sort 19因子体制確立
+- commit: 5d5902af6
