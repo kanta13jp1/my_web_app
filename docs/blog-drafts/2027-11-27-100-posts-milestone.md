@@ -1,7 +1,7 @@
 ---
 title: "dev.to 100本投稿記念 — 個人開発ブログを続けて学んだ10のこと"
 tags: AI,個人開発,buildinpublic,automation
-published: false
+published: true
 ---
 
 # dev.to 100本投稿記念 — 個人開発ブログを続けて学んだ10のこと

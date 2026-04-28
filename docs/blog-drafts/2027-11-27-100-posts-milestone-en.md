@@ -1,7 +1,7 @@
 ---
 title: "100 Posts on dev.to: 10 Things I Learned Writing About Indie Dev"
 tags: ai,indiedev,buildinpublic,automation
-published: false
+published: true
 ---
 
 # 100 Posts on dev.to: 10 Things I Learned Writing About Indie Dev
