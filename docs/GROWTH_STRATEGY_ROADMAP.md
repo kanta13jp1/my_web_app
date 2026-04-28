@@ -22647,3 +22647,10 @@ inconsistency を **collision (= 同 timestamp) と独立した検出軸** と�
   最終解決策: `20260426100000` を `applied` に変更 + `20260428XXXXXX_wbs_github_issue_sync_v2` で安全再実装。
 - **flutter test CI 構造分離**: VM=soft-fail / Chrome smoke=hard-fail 維持。
   dart:js_interop conditional imports を VSCode版 へ cross-instance PR 送信。
+
+## 2026-04-28 PS#6 S84 — 競馬予想モデル prevTimeGapPenalty
+
+- `prevTimeGapPenalty`: 前走タイムvsbest_time乖離sort因子 (3s+=+6/2s+=+4/1s+=+2/±1s=0)
+- `sortHorseEntriesForLearning`: factor13挿入, horse_number → 14 tiebreaker — sort14因子体制
+- `buildHorseRacePrompt`: 前走タイム乖離リスク説明追加(2秒以上遅い = 調子落ち可能性)
+- commit: 236d87e26
