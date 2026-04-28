@@ -23106,3 +23106,14 @@ CLAUDE.md hook table + ~/.claude/hooks/inject-rules.txt 注入. OPS-28 charter�
 - leonardo-ai: ゲームアート特化AI画像/月額$12~/ai-image — Leonardo AI代替高ボリューム
 - poe: QuoraマルチAIチャットアグリゲーター/月額$19.99/ai-platform — Poe代替中ボリューム
 - commit: de5d67f51
+
+## PS#5 S85 — 2026-04-28 (collision patrol)
+
+- **collision patrol**: 1 timestamp 衝突解消
+  - 20260428202000: seed_dataloop_ai_university → 202100
+- 882 migrations 全 unique (check_migration_timestamps.py: OK)
+- EF deploy gap: 全 EF deploy-prod.yml 記載済 (gap なし)
+- Achievement seed: 20260428204000_seed_achievements_ps5_s85.sql
+
+### commit
+(本 commit にて確定)
