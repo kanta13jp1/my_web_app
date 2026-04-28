@@ -1,7 +1,7 @@
 ---
 title: "GitHub Actions Advanced Patterns: Matrix, Cache, and Reusable Workflows"
 tags: ai,indiedev,automation,buildinpublic
-published: false
+published: true
 ---
 
 # GitHub Actions Advanced Patterns: Matrix, Cache, and Reusable Workflows
