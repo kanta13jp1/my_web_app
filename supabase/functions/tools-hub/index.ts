@@ -1427,10 +1427,16 @@ function buildHistoricalBaselinePrediction(
   const horseWeightCoverage = entries.length > 0
     ? entries.filter((entry) => entry.horse_weight !== null && entry.horse_weight !== undefined && String(entry.horse_weight).trim() !== "").length / entries.length
     : 0;
+  const stableCoverage = entries.length > 0
+    ? entries.filter((entry) => entry.stable && String(entry.stable).trim() !== "").length / entries.length
+    : 0;
+  const damCoverage = entries.length > 0
+    ? entries.filter((entry) => entry.dam && String(entry.dam).trim() !== "").length / entries.length
+    : 0;
   const maxConf = gradeMaxConfidence(race.grade);
   const fieldPenalty = fieldSizeConfidencePenalty(entries.length);
   const oddsGapBonus = topTwoOddsGapBonus(entries);
-  const confidence = Math.min(clampConfidence(0.31 + dataQuality * 0.22 + oddsCoverage * 0.12 + historyCoverage * 0.07 + bestTimeCoverage * 0.05 + prevMarginCoverage * 0.03 + jockeyCoverage * 0.02 + trainerCoverage * 0.01 + bloodlineCoverage * 0.01 + last3FCoverage * 0.01 + winningTimeCoverage * 0.01 + weightChangeCoverage * 0.01 + ageCoverage * 0.01 + sexCoverage * 0.01 + horseWeightCoverage * 0.01 - fieldPenalty + oddsGapBonus), maxConf);
+  const confidence = Math.min(clampConfidence(0.31 + dataQuality * 0.22 + oddsCoverage * 0.12 + historyCoverage * 0.07 + bestTimeCoverage * 0.05 + prevMarginCoverage * 0.03 + jockeyCoverage * 0.02 + trainerCoverage * 0.01 + bloodlineCoverage * 0.01 + last3FCoverage * 0.01 + winningTimeCoverage * 0.01 + weightChangeCoverage * 0.01 + ageCoverage * 0.01 + sexCoverage * 0.01 + horseWeightCoverage * 0.01 + stableCoverage * 0.01 + damCoverage * 0.01 - fieldPenalty + oddsGapBonus), maxConf);
   return {
     success: true,
     prediction: {
