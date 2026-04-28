@@ -7167,6 +7167,158 @@ class _ComparisonShellState extends State<_ComparisonShell> {
     'discord',
   ];
 
+  static const _categoryOf = <String, String>{
+    'notion': 'notes',
+    'evernote': 'notes',
+    'obsidian': 'notes',
+    'logseq': 'notes',
+    'coda': 'notes',
+    'craft-docs': 'notes',
+    'mem-ai': 'notes',
+    'anytype': 'notes',
+    'notion-ai': 'notes',
+    'slack': 'chat',
+    'chatwork': 'chat',
+    'discord': 'chat',
+    'line': 'chat',
+    'whatsapp': 'chat',
+    'telegram': 'chat',
+    'teams': 'chat',
+    'signal': 'chat',
+    'claude-code': 'ai-dev',
+    'codex': 'ai-dev',
+    'cursor': 'ai-dev',
+    'windsurf': 'ai-dev',
+    'replit': 'ai-dev',
+    'bolt-new': 'ai-dev',
+    'lovable': 'ai-dev',
+    'v0': 'ai-dev',
+    'devin': 'ai-dev',
+    'jules-google': 'ai-dev',
+    'factory-ai': 'ai-dev',
+    'openai': 'ai-platform',
+    'anthropic': 'ai-platform',
+    'mistral': 'ai-platform',
+    'cohere': 'ai-platform',
+    'groq-ai': 'ai-platform',
+    'together-ai': 'ai-platform',
+    'perplexity': 'ai-platform',
+    'perplexity-ai': 'ai-platform',
+    'ollama': 'ai-platform',
+    'cerebras-systems': 'ai-platform',
+    'hugging-face': 'ai-platform',
+    'replicate': 'ai-platform',
+    'moneyforward': 'finance',
+    'freee': 'finance',
+    'moneyforward-cloud': 'finance',
+    'money-tree': 'finance',
+    'yayoi': 'finance',
+    'stripe': 'finance',
+    'paypal': 'finance',
+    'paidy': 'finance',
+    'wise': 'finance',
+    'coincheck': 'finance',
+    'klarna-ai': 'finance',
+    'freee-insurance': 'finance',
+    'jobcan': 'hr',
+    'freee-hr': 'hr',
+    'smarthr': 'hr',
+    'kingoftime': 'hr',
+    'hrmos': 'hr',
+    'carely': 'hr',
+    'kincone': 'hr',
+    'clickup': 'project',
+    'linear': 'project',
+    'asana': 'project',
+    'trello': 'project',
+    'todoist': 'project',
+    'atlassian': 'project',
+    'figma': 'design',
+    'canva': 'design',
+    'miro': 'design',
+    'synthesia': 'video-ai',
+    'runway': 'video-ai',
+    'heygen': 'video-ai',
+    'descript': 'video-ai',
+    'elevenlabs': 'video-ai',
+    'pika': 'video-ai',
+    'udemy': 'learning',
+    'duolingo': 'learning',
+    'coursera': 'learning',
+    'progate': 'learning',
+    'schoo': 'learning',
+    'shopify': 'ecommerce',
+    'amazon': 'ecommerce',
+    'rakuten': 'ecommerce',
+    'mercari': 'ecommerce',
+    'poshmark': 'ecommerce',
+    'ecforce': 'ecommerce',
+    'stores-jp': 'ecommerce',
+    'tiktok-shop': 'ecommerce',
+    'make-integromat': 'automation',
+    'n8n': 'automation',
+    'zapier': 'automation',
+    'typeform': 'automation',
+    'pipedream': 'automation',
+    'netflix': 'entertainment',
+    'spotify': 'entertainment',
+    'roblox': 'entertainment',
+    'niconico': 'entertainment',
+    'nintendo': 'entertainment',
+    'epic-games': 'entertainment',
+    'xbox-cloud-gaming': 'entertainment',
+    'sony-playstation': 'entertainment',
+    'nvidia-geforce-now': 'entertainment',
+    'salesforce': 'crm',
+    'hubspot': 'crm',
+    'hubspot-crm': 'crm',
+    'zoho': 'crm',
+    'zoho-crm': 'crm',
+    'sansan': 'crm',
+    'x': 'social',
+    'facebook': 'social',
+    'bluesky': 'social',
+    'threads': 'social',
+    'ameba': 'social',
+    'hatena': 'social',
+    'github': 'dev',
+    'vercel': 'dev',
+    'postman': 'dev',
+    'sentry': 'dev',
+    'langchain-inc': 'dev',
+    'databricks': 'dev',
+    'dropbox': 'cloud',
+    'google': 'cloud',
+    'microsoft': 'cloud',
+    'sakura-internet': 'cloud',
+    'headspace': 'health',
+    'calm': 'health',
+    'oura': 'health',
+    'curon': 'health',
+    'ubereats-japan': 'transport',
+    'go-taxi': 'transport',
+    'luup-micromobility': 'transport',
+    'yamato-transport': 'transport',
+    'sagawa-express': 'transport',
+    'suumo': 'japan-svc',
+    'jalan': 'japan-svc',
+    'ikyu': 'japan-svc',
+    'tabelog': 'japan-svc',
+    'netkeiba': 'japan-svc',
+    'ntt-docomo': 'japan-svc',
+    'softbank-telecom': 'japan-svc',
+    'kddi-au': 'japan-svc',
+    'zoom': 'b2b',
+    'airtable': 'b2b',
+    'calendly': 'b2b',
+    'twilio': 'b2b',
+    'snowflake': 'b2b',
+    'datadog': 'b2b',
+    'docusign': 'b2b',
+    'drata': 'b2b',
+    'vanta': 'b2b',
+  };
+
   @override
   void initState() {
     super.initState();
@@ -7184,25 +7336,38 @@ class _ComparisonShellState extends State<_ComparisonShell> {
       .length;
 
   List<MapEntry<String, _CompetitorInfo>> get _relatedCompetitors {
+    final currentCategory = _categoryOf[widget.competitorKey];
     final seen = <String>{widget.competitorKey};
-    final orderedKeys = <String>[
-      ..._featuredCompetitorKeys,
-      ..._competitorInfo.keys,
-    ];
     final items = <MapEntry<String, _CompetitorInfo>>[];
 
-    for (final key in orderedKeys) {
-      if (!seen.add(key)) {
-        continue;
+    // 1. Same-category companies first (up to 3)
+    if (currentCategory != null) {
+      for (final key in _competitorInfo.keys) {
+        if (items.length >= 3) break;
+        if (_categoryOf[key] != currentCategory) continue;
+        if (!seen.add(key)) continue;
+        final info = _competitorInfo[key];
+        if (info == null) continue;
+        items.add(MapEntry(key, info));
       }
+    }
+
+    // 2. Featured companies to fill remaining slots
+    for (final key in _featuredCompetitorKeys) {
+      if (items.length >= 6) break;
+      if (!seen.add(key)) continue;
       final info = _competitorInfo[key];
-      if (info == null) {
-        continue;
-      }
+      if (info == null) continue;
       items.add(MapEntry(key, info));
-      if (items.length >= 6) {
-        break;
-      }
+    }
+
+    // 3. Any others to reach 6
+    for (final key in _competitorInfo.keys) {
+      if (items.length >= 6) break;
+      if (!seen.add(key)) continue;
+      final info = _competitorInfo[key];
+      if (info == null) continue;
+      items.add(MapEntry(key, info));
     }
 
     return items;
