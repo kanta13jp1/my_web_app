@@ -1,7 +1,7 @@
 ---
 title: "Indie Dev Growth Hacks: SEO, SNS, and Community to Reach 1,000 Users/Month"
 tags: ai,indiedev,buildinpublic,automation
-published: false
+published: true
 ---
 
 # Indie Dev Growth Hacks: SEO, SNS, and Community to Reach 1,000 Users/Month
