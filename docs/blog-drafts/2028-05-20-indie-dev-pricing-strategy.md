@@ -1,7 +1,7 @@
 ---
 title: "個人開発の価格戦略 2.0 — フリーミアム設計とアップセルの仕組み"
 tags: AI,個人開発,buildinpublic,automation
-published: false
+published: true
 ---
 
 # 個人開発の価格戦略 2.0 — フリーミアム設計とアップセルの仕組み
