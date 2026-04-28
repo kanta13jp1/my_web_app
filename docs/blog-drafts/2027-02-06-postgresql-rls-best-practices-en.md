@@ -1,7 +1,7 @@
 ---
 title: "PostgreSQL Row Level Security: The Right Way to Lock Down Your Data"
 tags: supabase,postgresql,ai,indiedev
-published: false
+published: true
 ---
 
 # PostgreSQL Row Level Security: The Right Way to Lock Down Your Data
