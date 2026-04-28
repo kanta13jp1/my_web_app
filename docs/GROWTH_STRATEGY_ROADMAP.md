@@ -22706,3 +22706,10 @@ part 55 で初版 §6 / part 56-58 で新事象発生 → §6.2/6.4 を refresh.
 - Win版 受領 (1 件): PS#5 → Win版 → VSCode版 reroute
 - 同日完了 (4 件): PS#1 S57+S58 / PS#5 S75 / Issue #862
 - 翌日想定 (4 件 + 受領 1): Codex 3 + PS#1 part 56 + VSCode版 part 58 reroute
+
+## 2026-04-28 PS#6 S83 — 競馬予想モデル weightKgOutlierPenalty
+
+- `weightKgOutlierPenalty`: 馬体重絶対値sort因子 (430kg未満=+5/560kg超=+4/データなし=+2/適正=0)
+- `sortHorseEntriesForLearning`: factor12挿入 (horse_number → 13 tiebreaker) — sort13因子体制
+- `buildHorseRacePrompt`: 軽量/重量リスク説明追加
+- commit: d5bb820e1
