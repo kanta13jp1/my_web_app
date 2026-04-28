@@ -1,7 +1,7 @@
 ---
 title: "ソロ創業者のKPI設計 — 「昨日の自分」との比較が唯一の正しい指標"
 tags: AI,個人開発,buildinpublic,automation
-published: false
+published: true
 ---
 
 # ソロ創業者のKPI設計 — 「昨日の自分」との比較が唯一の正しい指標
