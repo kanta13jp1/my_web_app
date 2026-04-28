@@ -61,6 +61,48 @@ jobs:
               select(($pr.reviewDecision // "") != "APPROVED") |
               "- #\($pr.number) `\($pr.headRefName)` \($pr.reviewDecision // "REVIEW_REQUIRED") - \($pr.title)\n  \($pr.url)"')
 
+          open_pr_heads=$(gh pr list --state open --limit 100 \
+            --json headRefName \
+            --jq '.[].headRefName')
+
+          cleanup_branches=$(git for-each-ref --format='%(refname:short)' \
+            refs/remotes/origin/codex \
+            | while IFS= read -r branch; do
+              head=${branch#origin/}
+              if printf '%s\n' "$open_pr_heads" | grep -Fxq "$head"; then
+                continue
+              fi
+
+              count=$(git rev-list origin/main.."$branch" --count 2>/dev/null || echo 0)
+              if [ "$count" -le 0 ]; then
+                continue
+              fi
+
+              cherry=$(git cherry -v origin/main "$branch" 2>/dev/null || true)
+              plus_count=$(printf '%s\n' "$cherry" | grep -c '^+' || true)
+              minus_count=$(printf '%s\n' "$cherry" | grep -c '^-' || true)
+              closed_pr=$(gh pr list --state closed --head "$head" --limit 1 \
+                --json number,title,url,mergedAt \
+                --jq '.[0] | if . then "#\(.number) \(.title) - \(.url)" else "" end' \
+                2>/dev/null || true)
+
+              reason=""
+              if [ "$plus_count" -eq 0 ] && [ "$minus_count" -gt 0 ]; then
+                reason="patch-equivalent to main"
+              elif [ -n "$closed_pr" ]; then
+                reason="closed PR branch still present"
+              fi
+
+              if [ -n "$reason" ]; then
+                age_days=$(( ($(date +%s) - $(git log -1 --format=%ct "$branch")) / 86400 ))
+                line="- \`$branch\` ($count commits, ${age_days}d old): $reason"
+                if [ -n "$closed_pr" ]; then
+                  line="$line; $closed_pr"
+                fi
+                echo "$line"
+              fi
+            done)
+
           existing=$(gh issue list --search '"Codex worktree/PR merge backlog" in:title state:open' \
             --json number --jq '.[0].number' 2>/dev/null || true)
           if [ -z "$existing" ]; then
@@ -68,7 +110,7 @@ jobs:
               --json number --jq '.[0].number' 2>/dev/null || true)
           fi
 
-          if [ -z "$stale_branches" ] && [ -z "$ready_prs" ]; then
+          if [ -z "$stale_branches" ] && [ -z "$ready_prs" ] && [ -z "$cleanup_branches" ]; then
             if [ -n "$existing" ]; then
               gh issue close "$existing" \
                 --comment "No Codex backlog detected by codex-backlog-check.yml."
@@ -97,8 +139,16 @@ jobs:
               echo "None."
             fi
             echo
+            echo "## Closed or already-applied Codex branch cleanup"
+            if [ -n "$cleanup_branches" ]; then
+              echo "$cleanup_branches"
+            else
+              echo "None."
+            fi
+            echo
             echo "## Operator action"
             echo "- Review each ready PR and merge or request changes."
+            echo "- Delete closed or already-applied branches only after owner confirmation."
             echo "- For stale branches without useful PRs, close, delete, or rebase them."
             echo
             echo "Run: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
