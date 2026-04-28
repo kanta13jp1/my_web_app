@@ -8029,21 +8029,20 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
-  'runway': const _CompetitorInfo(
-    name: 'Runway',
-    emoji: '🎬',
-    tagline:
-        'RunwayをGen-3 Alpha AI映像生成専用ツールとして使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
-    searchKeyword: 'Runway代替 AI映像生成代替 RunwayML代替',
-    accentColor: Color(0xFF0F766E),
+  'webflow': const _CompetitorInfo(
+    name: 'Webflow',
+    emoji: '🌐',
+    tagline: 'WebflowをノーコードWebサイト構築に使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'Webflow代替 ノーコードサイト代替 Webflow日本語代替',
+    accentColor: Color(0xFF4353FF),
     painPoints: [
-      '動画生成に特化しており、メモ・財務・タスク管理は別ツールが必要',
-      'Gen-3クレジット消費が速く月額約\〜でコスト管理が難しい',
-      'GPU混雑時の生成待機が発生し、業務フローが止まることがある',
+      'Webサイト構築に特化しており、財務管理・タスク・AI学習は別ツールが必要',
+      '月額約' + r'$' + '14〜のサブスクで、個人ライフ全体の管理には機能が偏っている',
+      'デザインのカスタマイズは高度だが、日常業務フローとの連携はない',
     ],
     features: [
       _FeatureComparison(
-        feature: 'AI映像生成 (Gen-3 Alpha)',
+        feature: 'ノーコードWebサイト構築',
         competitorHas: true,
         weHave: false,
       ),
@@ -8064,20 +8063,20 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
-  'heygen': const _CompetitorInfo(
-    name: 'HeyGen',
-    emoji: '🎭',
-    tagline: 'HeyGenをAIアバター動画生成に使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
-    searchKeyword: 'HeyGen代替 AIアバター動画代替 AI動画生成代替',
-    accentColor: Color(0xFF7C3AED),
+  'framer': const _CompetitorInfo(
+    name: 'Framer',
+    emoji: '✦',
+    tagline: 'FramerをAI駆動Webデザインに使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'Framer代替 AIサイトビルダー代替 Framer日本語代替',
+    accentColor: Color(0xFF0055FF),
     painPoints: [
-      'AIアバター動画生成に特化しており、日常タスク・財務管理は対象外',
-      '月額約' + r'$' + '29〜のサブスクで個人用途にはコスト負担が大きい',
-      '生成した動画の用途が限定的で、ライフマネジメント全体には使えない',
+      'AIサイトビルダーに特化しており、個人の財務・タスク・学習管理は対象外',
+      '月額約' + r'$' + '15〜のサブスクで、Webデザイン以外のライフ管理はできない',
+      'デザインプレビューやデプロイは優れるが、日常ライフOSとしての統合機能がない',
     ],
     features: [
       _FeatureComparison(
-        feature: 'AIアバター動画生成',
+        feature: 'AI駆動Webデザイン・ビルダー',
         competitorHas: true,
         weHave: false,
       ),
@@ -8098,20 +8097,20 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
-  'elevenlabs': const _CompetitorInfo(
-    name: 'ElevenLabs',
-    emoji: '🔊',
-    tagline: 'ElevenLabsをAI音声合成・TTSに使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
-    searchKeyword: 'ElevenLabs代替 AI音声合成代替 TTS代替 音声生成AI代替',
-    accentColor: Color(0xFF2563EB),
+  'copy-ai': const _CompetitorInfo(
+    name: 'Copy.ai',
+    emoji: '✍️',
+    tagline: 'Copy.aiをAIライティングに使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'Copy.ai代替 AIライティング代替 AIコピーライティング代替',
+    accentColor: Color(0xFF8B5CF6),
     painPoints: [
-      'AI音声合成・TTSに特化しており、タスク管理・財務・AI学習は別ツールが必要',
-      '月額約' + r'$' + '22〜のサブスクで音声生成のみのコスト対効果が低い',
-      'クリエイター向け機能が中心で、個人のライフマネジメントには対応していない',
+      'AIコピーライティングに特化しており、財務・タスク・AI学習は別ツールが必要',
+      '月額約' + r'$' + '49〜でマーケター向け機能が中心、個人ライフ管理には不向き',
+      'セールスコピー生成は優れるが、日常のライフマネジメント全体は対象外',
     ],
     features: [
       _FeatureComparison(
-        feature: 'AI音声合成 (TTS)',
+        feature: 'AIコピーライティング生成',
         competitorHas: true,
         weHave: false,
       ),
@@ -8355,9 +8354,9 @@ class _ComparisonShellState extends State<_ComparisonShell> {
     'suno': 'ai-music',
     'udio': 'ai-music',
     'ideogram': 'ai-image',
-    'runway': 'ai-video',
-    'heygen': 'ai-video',
-    'elevenlabs': 'ai-voice',
+    'webflow': 'no-code',
+    'framer': 'no-code',
+    'copy-ai': 'ai-writing',
   };
 
   @override
