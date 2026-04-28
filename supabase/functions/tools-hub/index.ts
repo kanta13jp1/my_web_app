@@ -1159,6 +1159,20 @@ function weightKgOutlierPenalty(value: unknown): number {
   return 0; // 適正範囲 430-560kg
 }
 
+function recentFormBonus(entries: Record<string, unknown>[]): number {
+  if (entries.length === 0) return 0;
+  const topHorse = entries.reduce((best, e) => {
+    const odds = numericOrFallback(e.win_odds, 999);
+    const bestOdds = numericOrFallback(best.win_odds, 999);
+    return odds < bestOdds ? e : best;
+  }, entries[0]);
+  const finish = numericOrFallback(topHorse.prev_finish, 99);
+  const days = numericOrFallback(topHorse.prev_days_ago, 999);
+  if (finish <= 3 && days > 0 && days <= 30) return 0.03; // 1強が直近好走
+  if (finish <= 3 && days > 0 && days <= 60) return 0.01;
+  return 0;
+}
+
 function topTwoOddsGapBonus(entries: Record<string, unknown>[]): number {
   const sortedOdds = entries
     .map((e) => numericOrFallback(e.win_odds, 0))
@@ -1466,7 +1480,8 @@ function buildHistoricalBaselinePrediction(
   const maxConf = gradeMaxConfidence(race.grade);
   const fieldPenalty = fieldSizeConfidencePenalty(entries.length);
   const oddsGapBonus = topTwoOddsGapBonus(entries);
-  const confidence = Math.min(clampConfidence(0.31 + dataQuality * 0.22 + oddsCoverage * 0.12 + historyCoverage * 0.07 + bestTimeCoverage * 0.05 + prevMarginCoverage * 0.03 + jockeyCoverage * 0.02 + trainerCoverage * 0.01 + bloodlineCoverage * 0.01 + last3FCoverage * 0.01 + winningTimeCoverage * 0.01 + weightChangeCoverage * 0.01 + ageCoverage * 0.01 + sexCoverage * 0.01 + horseWeightCoverage * 0.01 + stableCoverage * 0.01 + damCoverage * 0.01 + damsireCoverage * 0.01 + popularityCoverage * 0.01 - fieldPenalty + oddsGapBonus), maxConf);
+  const recentForm = recentFormBonus(entries);
+  const confidence = Math.min(clampConfidence(0.31 + dataQuality * 0.22 + oddsCoverage * 0.12 + historyCoverage * 0.07 + bestTimeCoverage * 0.05 + prevMarginCoverage * 0.03 + jockeyCoverage * 0.02 + trainerCoverage * 0.01 + bloodlineCoverage * 0.01 + last3FCoverage * 0.01 + winningTimeCoverage * 0.01 + weightChangeCoverage * 0.01 + ageCoverage * 0.01 + sexCoverage * 0.01 + horseWeightCoverage * 0.01 + stableCoverage * 0.01 + damCoverage * 0.01 + damsireCoverage * 0.01 + popularityCoverage * 0.01 - fieldPenalty + oddsGapBonus + recentForm), maxConf);
   return {
     success: true,
     prediction: {
