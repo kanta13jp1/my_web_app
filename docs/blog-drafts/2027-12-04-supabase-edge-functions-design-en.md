@@ -1,7 +1,7 @@
 ---
 title: "Supabase Edge Functions Design Patterns: Hub, RLS, and Error Handling"
 tags: supabase,ai,indiedev,programming
-published: false
+published: true
 ---
 
 # Supabase Edge Functions Design Patterns: Hub, RLS, and Error Handling
