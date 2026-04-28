@@ -23117,3 +23117,13 @@ CLAUDE.md hook table + ~/.claude/hooks/inject-rules.txt 注入. OPS-28 charter�
 
 ### commit
 (本 commit にて確定)
+
+## 2026-04-28 PS#6 S94 — 競馬予想モデル sexCoverage (性別充足率 confidence 14 terms)
+### S94: sexCoverage(sex×0.01) — 性別データ充足率をconfidence計算に追加
+- sexCoverage: sex フィールドが揃っている馬の割合 × 0.01
+- confidence最終式 (14 terms):
+  0.31+dataQuality*0.22+oddsCoverage*0.12+historyCoverage*0.07+bestTimeCoverage*0.05
+  +prevMarginCoverage*0.03+jockeyCoverage*0.02+trainerCoverage*0.01+bloodlineCoverage*0.01
+  +last3FCoverage*0.01+winningTimeCoverage*0.01+weightChangeCoverage*0.01+ageCoverage*0.01
+  +sexCoverage*0.01-fieldPenalty+oddsGapBonus
+- commit: 40536a28f
