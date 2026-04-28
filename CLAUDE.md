@@ -76,6 +76,7 @@ UIコンポーネントを新規作成・修正する際は、以下のファイ
 | `[MCP-AUTH-27]` | docs/MCP_AUTH_SECURITY_PRINCIPLES.md 10 原則 (DCR / Bearer / Inj-Defense / SHTTP / Scope / WorkOS / Audit / PKCE / .well-known / LeastPriv) チェック (MCP server 公開時 10/10 必須) | Rule 27 (新規 2026-04-28 / part 43 で 7→10 拡張) |
 | `[OPS-28]` | docs/OPERATIONS_CHARTER.md 運用憲章 — 5 正本 (Issues/PR / WBS-Notion / NotebookLM / Slack / worktree) + 6 AI 役割 + セッション開始 5 監査チェック + 5 改善トリガー + 1 日サイクル運用パターン (発見→提案→実装→完了確認 / 4 worker lane reciprocal) | Rule 28 (新規 2026-04-28 / part 55 で第 6 章 1 日サイクル追加) |
 | `[AI-VIDEO-29]` | docs/AI_VIDEO_PRINCIPLES.md 6 原則 (Dynamic Avatar / Defensive→Generative Pivot / Seamless Workflow / DID Verification / Ethical Provenance / Interactive Real-time) チェック (合成メディア・AI アバター生成・動画パイプライン関連 PR 時 6/6 必須) | Rule 29 (新規 2026-04-28 / NotebookLM da2a95d1 D-ID ソース蒸留) |
+| `[VIBE-30]` | docs/VIBE_CODING_PRINCIPLES.md 7 原則 (Trunk/Leaf 分離 / AI as PM / Provably Correct Sandbox / I/O Verification / Minimal E2E Test / Periodic Compaction / Embrace Exponentials) チェック (Production AI 開発責任 = 全 PR 7/7 推奨 / 4-✅は CEO レビュー強化) | Rule 30 (新規 2026-04-28 / NotebookLM ddde5a4b "Vibe coding in prod \| Code w/ Claude" ソース蒸留) |
 | `[AUTO-REPLY]` | author == 自分 で必ず skip + cap | — |
 | `[DART-FORMAT]` | dart format → flutter analyze 0 → push | Rule 1 + 2 |
 | `[REBASE]` | git fetch + log 確認 → pull --rebase | — |
