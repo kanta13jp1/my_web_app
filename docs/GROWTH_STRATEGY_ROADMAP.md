@@ -23201,3 +23201,12 @@ dev.to 累計: 114本
 - competitorMeta +3エントリ / sitemap 244→247 URLs (priority=0.8)
 - SEO: "Mailchimp代替"/"Monday.com代替"/"Freshdesk代替" 超高検索ボリュームキーワード流入
 - commit: 7be8fb935
+
+## PS#4 S111 2026-04-29: 競合3社追加 204→207社 (loom/pipedrive/photoroom) + video-comm/crm/photo-ai新カテゴリ
+
+- loom: Loom 非同期ビデオコミュニケーション/月額12.5USD~/video-comm新カテゴリ
+- pipedrive: Pipedrive セールスCRM/月額14.9USD~/crm新カテゴリ
+- photoroom: PhotoRoom AI写真編集背景除去/月額9.99USD~/photo-ai新カテゴリ
+- competitorMeta +3エントリ / sitemap 247→250 URLs (priority=0.8)
+- SEO: "Loom代替"/"Pipedrive代替"/"PhotoRoom代替" 超高検索ボリュームキーワード流入
+- commit: 8cc8cb840
