@@ -1,7 +1,7 @@
 ---
 title: "Indie Dev CI/CD Design — GitHub Actions + Firebase Auto-Deploy to Production"
 tags: ai,indiedev,automation,buildinpublic
-published: false
+published: true
 ---
 
 # Indie Dev CI/CD Design — GitHub Actions + Firebase Auto-Deploy to Production
