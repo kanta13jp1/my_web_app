@@ -23587,3 +23587,15 @@ VIBE_CODING 4.5 → 5.5/7 (+1.0) / SECOND_BRAIN 3.5 → 4.0/7 (+0.5) = 合計 +1
 - deploy-prod EF deploy failure: esm.sh HTTP 522 (CDN timeout) — transient, コード起因なし
 - CI Lint/Format/Test: success継続
 - commit: d4eb9e1ce
+
+## 2026-04-29 PS#4 S126-S128: 競合9社追加 249→258社
+
+**実装内容**:
+- S126: teachable(オンラインコース販売/e-learning/#00B87D) / kajabi(オールインワンオンラインビジネス/e-learning/#6E3CFF) / gumroad(デジタル製品直販/digital-products/#FF90E8)
+- S127: google-meet(Google統合ビデオ会議/video-comm/#00897B) / skype(MicrosoftビデオIP電話/video-comm/#00AFF0) / adobe-xd(UI/UXプロトタイピング/design/#FF26BE)
+- S128: ticktick(タスク管理・習慣トラッキング/tasks/#4772FA) / thinkific(オンラインコース・コミュニティ/e-learning/#2F86FB) / skillshare(クリエイティブスキル学習/e-learning/#002333)
+
+**新カテゴリ**: digital-products
+**sitemap**: 292→301 URLs
+**全ファイル**: 258社統一
+**commit**: 1c2350254
