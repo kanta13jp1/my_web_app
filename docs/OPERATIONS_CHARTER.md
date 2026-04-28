@@ -186,11 +186,12 @@ Win版が 1 日で起票した 7 件の cross-instance-pr が 4 worker lane
 
 | Lane | 起票 part | 受領者 | 内容 | 同日完了 |
 | --- | --- | --- | --- | --- |
-| Win版 → PS#1 | 47, 48, 51 | PS#1 S57+S58 | WF + 監視 | ✅ |
+| Win版 → PS#1 | 47, 48, 51, 56 | PS#1 S57+S58 (3 件) / part 56 待機 | WF + 監視 + migration time-drift detector | ✅ 3/4 |
 | Win版 → PS#5 | 50 | PS#5 S75 | EF + audit | ✅ |
 | Win版 → Codex#1 | 54 (1 件) | (待機 / 翌日想定) | SQL view | ⏳ |
 | Win版 → Codex#2 | 54 (1 件) | (待機 / 翌日想定) | TS test | ⏳ |
 | Win版 → Codex#1or#2 | 54 (1 件) | (待機 / 翌日想定) | TS impl | ⏳ |
+| **PS#5 → Win版 → VSCode版** | 58 (incoming + reroute) | (VSCode版 待機 / 5/10 期限) | conditional import refactor | ⏳ |
 
 = 12-instance fleet の **全 4 worker lane が初めて稼働**. PS lane は
 当日 reciprocal 完結, Codex lane は翌日 reciprocal 想定。
@@ -216,9 +217,11 @@ Win版が 1 日で起票した 7 件の cross-instance-pr が 4 worker lane
 
 | 指標 | 値 |
 | --- | --- |
-| 起票数 | 7 (Win版 part 47/48/50/51/54×3) |
-| 当日完了数 | 4 (PS#1/PS#5 lane) |
-| 翌日想定数 | 3 (Codex lane) |
+| 起票数 | 8 (Win版 part 47/48/50/51/54×3/56) |
+| 当日完了数 | 4 (PS#1 S57+S58 / PS#5 S75 / Issue #862 自動生成) |
+| 翌日想定数 | 4 (Codex 3 件 + PS#1 part 56 migration time-drift detector) |
+| 受領 lane (PS#5 → Win版) | 1 件 (part 58 / VSCode版 へ reroute / 期限 5/10) |
+| 双方向 cycle 確立 | ✅ Win版 起票 + 受領 + routing 全 lane 稼働 |
 | 完了率 (当日) | 4/7 = 57% |
 | 完了率 (24h 想定) | 7/7 = 100% (Codex 翌日反映前提) |
 
@@ -234,3 +237,4 @@ Win版が 1 日で起票した 7 件の cross-instance-pr が 4 worker lane
 | --- | --- |
 | 2026-04-28 | 初版 (User 直接指示「12 並行開発を前提に運用改善も常に見る方針」を canonical 化) |
 | 2026-04-28 | 第 6 章「1 日サイクル運用パターン」追加 (Win版#132 part 55) — 同日 part 47-54 で実証した「発見 → 提案 → 実装 → 完了確認」reciprocal cycle を charter 化。4 worker lane 並行稼働 + 同日 cycle 成立条件 5 項目チェックリスト。|
+| 2026-04-28 | §6.2 reciprocal 表 / §6.4 throughput 数値 update (Win版#132 part 59) — 同日 part 56 (PS#1 へ migration time-drift detector cross-instance-pr) + part 58 (PS#5 incoming → VSCode版 reroute) 追加. 起票 7 → 8 件 / 当日完了 4 件 / 翌日想定 3 → 4 件 / **受領 lane 初稼働** 1 件. **双方向 cycle 完全確立**. routing 判断 = 5 質問 + WORKDIR-ISOLATION 双軸. |
