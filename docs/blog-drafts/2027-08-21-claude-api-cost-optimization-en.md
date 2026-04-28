@@ -1,7 +1,7 @@
 ---
 title: "Claude API Cost Optimization: Haiku vs Sonnet and Prompt Caching Cut My Bill 70%"
 tags: ai,indiedev,automation,buildinpublic
-published: false
+published: true
 ---
 
 # Claude API Cost Optimization: Haiku vs Sonnet and Prompt Caching Cut My Bill 70%
