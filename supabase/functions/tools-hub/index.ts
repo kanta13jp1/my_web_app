@@ -1110,10 +1110,16 @@ function buildHistoricalBaselinePrediction(
   const prevMarginCoverage = entries.length > 0
     ? entries.filter((entry) => entry.prev_margin !== null && entry.prev_margin !== undefined && String(entry.prev_margin).trim() !== "").length / entries.length
     : 0;
+  const jockeyCoverage = entries.length > 0
+    ? entries.filter((entry) => entry.jockey && String(entry.jockey).trim() !== "").length / entries.length
+    : 0;
+  const trainerCoverage = entries.length > 0
+    ? entries.filter((entry) => entry.trainer && String(entry.trainer).trim() !== "").length / entries.length
+    : 0;
   const maxConf = gradeMaxConfidence(race.grade);
   const fieldPenalty = fieldSizeConfidencePenalty(entries.length);
   const oddsGapBonus = topTwoOddsGapBonus(entries);
-  const confidence = Math.min(clampConfidence(0.31 + dataQuality * 0.22 + oddsCoverage * 0.12 + historyCoverage * 0.07 + bestTimeCoverage * 0.05 + prevMarginCoverage * 0.03 - fieldPenalty + oddsGapBonus), maxConf);
+  const confidence = Math.min(clampConfidence(0.31 + dataQuality * 0.22 + oddsCoverage * 0.12 + historyCoverage * 0.07 + bestTimeCoverage * 0.05 + prevMarginCoverage * 0.03 + jockeyCoverage * 0.02 + trainerCoverage * 0.01 - fieldPenalty + oddsGapBonus), maxConf);
   return {
     success: true,
     prediction: {
