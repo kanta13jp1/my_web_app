@@ -1,7 +1,7 @@
 ---
 title: "GitHub Actions Beyond the Basics: Reusable Workflows, Matrix, and Cache"
 tags: ai,automation,indiedev,programming
-published: false
+published: true
 ---
 
 # GitHub Actions Beyond the Basics: Reusable Workflows, Matrix, and Cache
