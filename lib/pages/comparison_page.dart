@@ -7633,6 +7633,140 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'stable-diffusion': const _CompetitorInfo(
+    name: 'Stable Diffusion',
+    emoji: '🎨',
+    tagline: 'Stable Diffusionを超えた、OSS画像生成から個人ライフ全域を統合するAI OS。',
+    searchKeyword: 'Stable Diffusion代替 OSS画像生成代替 ローカルAI画像代替',
+    accentColor: Color(0xFF4A90E2),
+    painPoints: [
+      'Stable DiffusionはローカルGPU必須のOSS画像生成AIで、個人管理機能がない',
+      '財務管理・習慣追跡・タスク管理・AI大学など実務機能が皆無',
+      '技術的セットアップが複雑でノンテクユーザーには高いハードル',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AI画像生成',
+        competitorHas: true,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '知識ベース構築',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: 'タスク・習慣管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: 'AI大学 (300社+)',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'dalle': const _CompetitorInfo(
+    name: 'DALL-E (OpenAI)',
+    emoji: '🖼️',
+    tagline: 'DALL-Eを超えた、AI画像生成から個人ライフ全域を統合するAI OS。',
+    searchKeyword: 'DALL-E代替 DALL-E3代替 OpenAI画像生成代替',
+    accentColor: Color(0xFF10A37F),
+    painPoints: [
+      'DALL-EはChatGPT Plus(月額
+$
+20)統合の画像生成で単体アプリでない',
+      '財務管理・習慣追跡・タスク管理・AI大学など個人OS機能がない',
+      'ChatGPT有料プラン前提でコストがかかる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AI画像生成',
+        competitorHas: true,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '知識ベース構築',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: 'タスク・習慣管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: 'AI大学 (300社+)',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'llama': const _CompetitorInfo(
+    name: 'Meta Llama',
+    emoji: '🦙',
+    tagline: 'Meta Llamaを超えた、オープンソースAIから個人ライフ全域を統合するAI OS。',
+    searchKeyword: 'Llama代替 Meta Llama代替 オープンソースLLM代替',
+    accentColor: Color(0xFF0866FF),
+    painPoints: [
+      'Meta LlamaはOSS LLMモデルで、個人ライフ管理統合アプリでない',
+      '財務管理・習慣追跡・タスク管理・AI大学などの実用機能がない',
+      'ローカル実行には高性能GPU・技術知識が必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AIテキスト生成',
+        competitorHas: true,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '知識ベース構築',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: 'タスク・習慣管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: 'AI大学 (300社+)',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
@@ -7847,6 +7981,9 @@ class _ComparisonShellState extends State<_ComparisonShell> {
     'midjourney': 'ai-image',
     'character-ai': 'ai-chatbot',
     'deepseek': 'ai-platform',
+    'stable-diffusion': 'ai-image',
+    'dalle': 'ai-image',
+    'llama': 'ai-platform',
   };
 
   @override
@@ -8047,7 +8184,7 @@ class _ComparisonShellState extends State<_ComparisonShell> {
                       children: [
                         _buildTag(
                           icon: Icons.compare_arrows_rounded,
-                          label: '186社比較',
+                          label: '189社比較',
                           backgroundColor:
                               _info.accentColor.withValues(alpha: 0.18),
                           foregroundColor: _textPrimary,
@@ -8655,7 +8792,7 @@ class _ComparisonShellState extends State<_ComparisonShell> {
                       ),
                       SizedBox(width: 8),
                       Text(
-                        '全186社の競合ランドスケープを見る →',
+                        '全189社の競合ランドスケープを見る →',
                         style: TextStyle(
                           fontSize: 14,
                           color: _textSecondary,
