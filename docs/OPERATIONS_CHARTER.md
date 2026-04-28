@@ -45,7 +45,7 @@
 | ツール | 強み | 主な使いどころ | 入れない場所 |
 | --- | --- | --- | --- |
 | **Claude Code (10 枠)** | 大きめ実装・既存設計沿いの追加・並列ワーカー・設計判断 | 新機能 EF / Flutter UI / docs / memory consolidation / cross-instance-pr 起票 | 横断調査の最適化 (= NotebookLM が上) |
-| **Codex (2 枠)** | 横断調査・修正 PR・CI/同期/運用まわり・レビュー補助 | 大規模 refactor / SQL 最適化 / 馬学習ループ / WBS 同期ロジック | 設計判断 (= Claude が上) / memory 書込 |
+| **Codex (2 枠)** | 横断調査・修正 PR・CI/同期/運用まわり・レビュー補助 | Codex#1 = 横断調査 / 修正 PR / SQL・migration レビュー補助、Codex#2 = CI / 同期 / 運用 / EF(Deno)・GHA レビュー補助 | 設計判断 (= Claude が上) / memory 書込 / UI設計 |
 | **Gemini Code Assist** | Google / Flutter / Firebase 系・コード理解補助・別視点レビュー | Flutter API 更新 / Firebase Hosting 設定 / Anthropic API outage 時の Dart 実装 fallback | 戦略判断 / 競合調査 |
 | **GitHub Copilot** | IDE 内の短距離実装・補完・テスト追加 | コーディング中の関数補完 / 単体テスト雛形 / lint fix の suggestion | 設計 / 大規模 refactor |
 | **Manus AI** | ブラウザ操作・外部 SaaS 確認・長めの手順実行 | Notion / Slack / Stripe 等の外部 SaaS UI 操作 / 手作業の連続自動化 | コード生成 / 設計判断 |
@@ -62,10 +62,10 @@ Q1: 設計判断 / 戦略 / cross-instance 調整?
 Q2: 横断調査 / 過去判断の集約必要?
    YES → NotebookLM Deep Research
    NO ↓
-Q3: 500+ 行 refactor / SQL 最適化 / algorithm 改善?
-   YES → Codex (#1 SQL系 / #2 refactor系)
+Q3: 横断調査 / 修正 PR / CI・同期・運用 / レビュー補助?
+   YES → Codex (#1 横断調査・修正PR / #2 CI・同期・運用)
    NO ↓
-Q4: Flutter / Firebase 専門知識が決め手?
+Q4: 500+ 行 refactor / Flutter / Firebase 専門知識が決め手?
    YES → Gemini Code Assist
    NO ↓
 Q5: IDE 内補完で済む 50 行未満?

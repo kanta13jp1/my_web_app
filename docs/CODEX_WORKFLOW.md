@@ -1,15 +1,15 @@
 # Codex 並行開発ワークフロー
 
-> 目的: Claude Code 10 インスタンスに、Codex 2 インスタンスを固定 worktree で追加し、SQL / EF / algorithm 系の実装を衝突少なく並行処理する。
+> 目的: Claude Code 10 インスタンスに、Codex 2 インスタンスを固定 worktree で追加し、横断調査 / 修正PR / CI・同期・運用 / レビュー補助を衝突少なく並行処理する。
 
 ## 1. インスタンス割当
 
 | インスタンス | worktree | branch | 主担当 | 補助先 |
 | --- | --- | --- | --- | --- |
-| Codex#1 | `.claude/worktrees/instance-codex1` | `codex/codex1-wip` | SQL / migration / seed 生成 | PS#3 |
-| Codex#2 | `.claude/worktrees/instance-codex2` | `codex/codex2-wip` | EF(Deno) / algorithm / GHA補助 | PS#5 / PS#6 |
+| Codex#1 | `.claude/worktrees/instance-codex1` | `codex/codex1-wip` | 横断調査 / 修正PR / SQL・migration レビュー補助 | PS#3 / Win版 |
+| Codex#2 | `.claude/worktrees/instance-codex2` | `codex/codex2-wip` | CI / 同期 / 運用 / EF(Deno)・GHA レビュー補助 | PS#1 / PS#5 / PS#6 |
 
-Codex は Claude Code の代替司令塔ではなく、実装補助枠として扱う。設計判断、cross-instance-pr、memory consolidation、最終統合判断は Claude Code 側に残す。
+Codex は Claude Code の代替司令塔ではなく、横断調査・修正PR・レビュー補助・CI/同期/運用まわりの補助枠として扱う。設計判断、cross-instance-pr、memory consolidation、最終統合判断は Claude Code 側に残す。
 
 ## 2. 起動手順
 
@@ -61,6 +61,7 @@ Codex#1 が触る範囲:
 
 - `supabase/migrations/**/*.sql`
 - SQL seed / data backfill
+- 横断調査結果の最小限の docs / handoff
 - SQL生成に必要な最小限の docs / handoff
 
 Codex#2 が触る範囲:
@@ -68,6 +69,7 @@ Codex#2 が触る範囲:
 - `supabase/functions/**`
 - algorithm / batch / scraper 改善
 - `.github/workflows/**` の小規模補助
+- CI / 同期 / 運用まわりの修正PR
 
 共通して避ける範囲:
 
@@ -76,7 +78,17 @@ Codex#2 が触る範囲:
 - WBS / memory の直接大規模編集
 - 他インスタンスの担当ファイル
 
-## 5. WBS 連携
+## 5. 正本チェック
+
+Codex 作業開始時は、実装前に次を確認する。
+
+- GitHub Issue / PR が実行単位として存在するか。なければ handoff に明記する。
+- WBS / Notion の進捗・依存関係と矛盾していないか。
+- NotebookLM に残すべき判断履歴や設計意図があるか。
+- Slack に通知すべきブロッカー、handoff、緊急調整があるか。
+- 同一ファイル、同一 DB スキーマ、同一 Edge Function、同一 workflow を他インスタンスが触っていないか。
+
+## 6. WBS 連携
 
 Codex CLI から WBS MCP を直接使えない場合は、作業完了時に次のどちらかで連携する。
 
@@ -85,7 +97,7 @@ Codex CLI から WBS MCP を直接使えない場合は、作業完了時に次�
 
 handoff には最低限、目的、変更ファイル、実行した検証、残リスク、次に見るべきインスタンスを記録する。
 
-## 6. 推奨検証
+## 7. 推奨検証
 
 SQL / migration:
 
