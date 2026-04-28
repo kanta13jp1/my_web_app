@@ -1,7 +1,7 @@
 ---
 title: "Indie Dev Pricing Strategy 2.0 — Freemium Design and Upsell Mechanics"
 tags: ai,indiedev,buildinpublic,automation
-published: false
+published: true
 ---
 
 # Indie Dev Pricing Strategy 2.0 — Freemium Design and Upsell Mechanics
