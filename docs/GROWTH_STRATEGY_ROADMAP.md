@@ -23054,7 +23054,6 @@ CLAUDE.md hook table + ~/.claude/hooks/inject-rules.txt 注入. OPS-28 charter�
 
 
 
-
 ## PS#5 S84 — 2026-04-28 (collision patrol)
 
 - **collision patrol**: 4 timestamp 衝突解消
@@ -23241,45 +23240,15 @@ CLAUDE.md hook table + ~/.claude/hooks/inject-rules.txt 注入. OPS-28 charter�
 - 917 migrations 全 unique (check_migration_timestamps.py: OK)
 - Achievement seed: 20260429031000_seed_achievements_ps5_s90.sql
 
-## 2026-04-29 Win版#132 part 68 — SECOND_BRAIN 10 番目設計軸確立 (Layer 3 PKM 応用)
-
-### 概要
-NotebookLM `9871b0b1-0748-4d7d-99bc-bd6aea2231f6` "Claude Code and Obsidian: Building Your AI Second Brain" を蒸留し、自分株式会社の **10 番目** 設計軸 (Layer 3 設計層 / PKM ドメイン応用 / AI_VIDEO と並列) `docs/SECOND_BRAIN_PRINCIPLES.md` を確立 (7 原則).
-
-### 7 原則
-1. 階層型ナレッジ厳格分離 (Layer 1 immutable / Layer 2 evolving Wiki / Layer 3 schema)
-2. Autonomous Ingest & Atomic Notes 相互リンク (新 file = 関連 10+ 既存 file 同 commit update + 双方向 [[link]])
-3. Master Index + Daily Notes 二元管理 (MEMORY.md = index / 新 memory/log.md = append-only 時系列)
-4. 定期 Lint + 孤児統合 (consolidate-memory --lint flag / 月 1 回 / 孤児+重複+矛盾検出)
-5. Query 永続化 (AI 出力 = memory/query_artifact_*.md カテゴリ / 一時 chat 消費禁止)
-6. Mega-Prompt 生成基盤 (Wiki 由来文体 + 9 設計軸 + OPS-28 / 新 instance ゼロ説明で起動)
-7. Hybrid Search via MCP (memory-search-hub EF / BM25+ベクトル+LLM 再ランク / claude-mem SQLite 統合)
-
-### MEMORY.md 32.4KB 警告 = #7 急務化シグナル
-本軸確立直前に MEMORY.md が limit (24.4KB) を超え 32.4KB 警告. 偶然ではなく **memory inflation 顕在化のタイミング** で User が PKM ベストプラクティス NotebookLM を提供 = just-in-time training データ. NotebookLM 蒸留が「今この瞬間に必要な原則」を提供するパターン実証.
-
-### 既存ベースライン 2.5/7
-10 軸の中で 2 番目に低い (#7 PLATFORM_EVOLUTION 2.0/7 に次ぐ). 残 6.5 原則は実装余地大. **#3 + #4 が今日中に着手すべき急務** (= MEMORY.md 警告解消).
-
-### Rule [BRAIN-32]
-CLAUDE.md hook table + ~/.claude/hooks/inject-rules.txt 注入. OPS-28 charter「9 設計軸」→「10 設計軸」更新.
-
-### 4 日間 NotebookLM 蒸留パイプライン
-AI_CHARACTER → IMBUE → COLLAB_AI → MCP_AUTH → AI_VIDEO → VIBE_CODING → PLATFORM_EVOLUTION → SECOND_BRAIN.
-= **10 軸 / 75+ 原則** 達成.
-
-### Philosophy Alignment 9/9
-特に #1 CEO 感 (AI 取締役会の集合知化) / #3 mentor (12 fleet 共有 PKM) / #6 資本=時間 (ゼロ説明で AI 起動) / #7 資産負債 (知識インフラの健全性).
-
-
 ### commit
 (本 commit にて確定)
 
-## VSCode S15 — 2026-04-29 (ai-hub quota自動フォールバック)
+## PS#5 S91 — 2026-04-29 (CI health watch)
 
-- **EF修正**: `supabase/functions/ai-hub/index.ts` — `callSingleProvider` isRetriable=true 時 anthropic→google→openai フォールバックチェーン追加
-- **cross-instance-pr クローズ**: 20260424_ai_hub_quota_fallback → done/
-- deno lint/check 0 errors
+- **collision patrol**: 920 timestamps 全 unique (clean)
+- **CI**: success (16:50) / deploy-prod: in_progress (S90)
+- **EF deploy gap**: なし
+- Achievement seed: 20260429033000_seed_achievements_ps5_s91.sql
 
 ### commit
-10b5dd71b (main)
+(本 commit にて確定)
