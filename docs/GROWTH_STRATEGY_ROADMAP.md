@@ -22623,3 +22623,10 @@ inconsistency を **collision (= 同 timestamp) と独立した検出軸** と�
 ### Commits
 - 468092e4f (Phase 10 drafts 8ファイル commit)
 - 3d3e0f829 (orphan branch merge × 4)
+
+## 2026-04-28 PS#6 S82 — 競馬予想モデル fieldSizeConfidencePenalty
+
+- `fieldSizeConfidencePenalty`: 出走頭数別confidence調整 (16頭+=−0.07 / 13-15頭=−0.04 / 9-12頭=−0.02 / ≤8頭=0)
+- `buildHistoricalBaselinePrediction`: fieldPenalty適用 — 大型レースほどconfidence低下
+- `buildHorseRacePrompt`: 出走頭数リスク文 + 頭数表示追加 (波乱注意/高波乱リスク)
+- commit: f7e5901bc
