@@ -210,6 +210,284 @@ function compareWbsTasks(a: Record<string, unknown>, b: Record<string, unknown>)
   return String(a.title ?? "").localeCompare(String(b.title ?? ""));
 }
 
+type WbsUserTaskAssistMode = "breakdown" | "procedure";
+
+function cleanAiJsonText(text: string): string {
+  let cleaned = text.trim();
+  if (cleaned.startsWith("```")) {
+    cleaned = cleaned.replace(/^```(?:json)?\s*/i, "").replace(/```$/g, "").trim();
+  }
+  const firstBrace = cleaned.indexOf("{");
+  const lastBrace = cleaned.lastIndexOf("}");
+  if (firstBrace >= 0 && lastBrace > firstBrace) {
+    return cleaned.slice(firstBrace, lastBrace + 1);
+  }
+  return cleaned;
+}
+
+function stringArrayFromUnknown(value: unknown, fallback: string[] = []): string[] {
+  const values = Array.isArray(value) ? value : typeof value === "string" ? [value] : fallback;
+  return values
+    .map((item) => String(item ?? "").trim())
+    .filter((item) => item.length > 0)
+    .slice(0, 12);
+}
+
+function recordArrayFromUnknown(value: unknown): Record<string, unknown>[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((item) => asRecord(item))
+    .filter((item): item is Record<string, unknown> => item !== null);
+}
+
+function normalizeWbsUserTaskAssist(
+  rawValue: unknown,
+  fallback: Record<string, unknown>,
+  mode: WbsUserTaskAssistMode,
+  generatedBy: string,
+): Record<string, unknown> {
+  const raw = asRecord(rawValue) ?? {};
+  const fallbackSubtasks = recordArrayFromUnknown(fallback.subtasks);
+  const fallbackSteps = recordArrayFromUnknown(fallback.steps);
+  const subtasks = recordArrayFromUnknown(raw.subtasks).slice(0, 8).map((item, index) => ({
+    title: String(item.title ?? `小タスク ${index + 1}`).trim(),
+    goal: String(item.goal ?? "").trim(),
+    steps: stringArrayFromUnknown(item.steps).slice(0, 6),
+    estimated_minutes: Number.isFinite(Number(item.estimated_minutes)) ? Number(item.estimated_minutes) : null,
+    done_when: String(item.done_when ?? "").trim(),
+  })).filter((item) => item.title.length > 0);
+  const steps = recordArrayFromUnknown(raw.steps).slice(0, 10).map((item, index) => ({
+    title: String(item.title ?? `手順 ${index + 1}`).trim(),
+    detail: String(item.detail ?? "").trim(),
+    expected_result: String(item.expected_result ?? "").trim(),
+    caution: String(item.caution ?? "").trim(),
+  })).filter((item) => item.title.length > 0);
+
+  return {
+    summary: String(raw.summary ?? fallback.summary ?? "").trim().slice(0, 600),
+    prerequisites: stringArrayFromUnknown(raw.prerequisites, stringArrayFromUnknown(fallback.prerequisites)).slice(0, 8),
+    subtasks: mode === "breakdown" && subtasks.length > 0 ? subtasks : fallbackSubtasks,
+    steps: mode === "procedure" && steps.length > 0 ? steps : fallbackSteps,
+    blockers: stringArrayFromUnknown(raw.blockers, stringArrayFromUnknown(fallback.blockers)).slice(0, 6),
+    checklist: stringArrayFromUnknown(raw.checklist, stringArrayFromUnknown(fallback.checklist)).slice(0, 8),
+    generated_by: generatedBy,
+  };
+}
+
+function fallbackWbsUserTaskAssist(
+  task: Record<string, unknown>,
+  mode: WbsUserTaskAssistMode,
+  generatedBy: string,
+): Record<string, unknown> {
+  const title = String(task.title ?? "ユーザータスク").trim();
+  const due = String(task.end_date ?? "").trim();
+  const dueText = due ? `期限は ${due} です。` : "期限が未設定なら先に確認してください。";
+  const commonPrerequisites = [
+    "タスクの完了条件を1文で書き出す",
+    "提出先・確認相手・必要書類を確認する",
+    "不明点を1つに絞ってメモする",
+  ];
+  const commonChecklist = [
+    "完了条件を満たした証跡を保存した",
+    "次に待つ相手や期限が明確になっている",
+    "WBSユーザータスク画面で状況報告を更新した",
+  ];
+  const subtasks = [
+    {
+      title: "完了条件を決める",
+      goal: `${title}で何が終われば完了かを明確にする。${dueText}`,
+      steps: ["関連メモとWBS説明を読む", "成果物・提出先・期限を1行で書く"],
+      estimated_minutes: 10,
+      done_when: "次に何を作る/送る/確認するかが1文で言える",
+    },
+    {
+      title: "必要情報を集める",
+      goal: "作業に必要な情報や書類をそろえる",
+      steps: ["手元にある資料を確認する", "足りない情報をチェックリスト化する"],
+      estimated_minutes: 20,
+      done_when: "不足情報がゼロ、または問い合わせ先が決まっている",
+    },
+    {
+      title: "最初の外部確認を送る",
+      goal: "相手待ちで止まらないように確認依頼を出す",
+      steps: ["質問を3点以内に絞る", "メール/Slack/フォームで送信する"],
+      estimated_minutes: 15,
+      done_when: "送信履歴と返信期限が残っている",
+    },
+    {
+      title: "進捗をWBSに戻す",
+      goal: "作業状況を共有して次の判断をしやすくする",
+      steps: ["進捗率を更新する", "詰まり・次アクションを記録する"],
+      estimated_minutes: 5,
+      done_when: "WBSユーザータスクに最新状況が反映されている",
+    },
+  ];
+  const steps = [
+    {
+      title: "目的と期限を確認する",
+      detail: `${title}の説明、期限、関連メモを確認し、今日終える範囲を決めます。${dueText}`,
+      expected_result: "今日の到達点が1つに絞られている",
+      caution: "完璧な全体像を作る前に、最初の確認行動を決めてください",
+    },
+    {
+      title: "必要な相手・資料を洗い出す",
+      detail: "提出先、承認者、参考URL、必要書類を箇条書きにします。",
+      expected_result: "不足している情報と問い合わせ先が分かる",
+      caution: "個人情報や契約情報は公開チャネルに貼らないでください",
+    },
+    {
+      title: "最小の実行単位で進める",
+      detail: "15分で終わる確認、作成、送信のどれか1つを実施します。",
+      expected_result: "作業が着手済みになり、次の待ち状態が明確になる",
+      caution: "相手待ちが発生したら返信期限をメモしてください",
+    },
+    {
+      title: "WBSへ状況報告する",
+      detail: "進捗率、実施内容、詰まり、次アクションをユーザータスク画面から更新します。",
+      expected_result: "他インスタンスが現在地を把握できる",
+      caution: "完了していない場合は次アクションを必ず残してください",
+    },
+  ];
+
+  return {
+    summary: mode === "breakdown"
+      ? `「${title}」を止めないため、15〜20分単位の小さな作業に分けました。`
+      : `「${title}」を進めるための実施順です。迷ったら上から1つずつ処理してください。`,
+    prerequisites: commonPrerequisites,
+    subtasks,
+    steps,
+    blockers: [
+      "完了条件が曖昧なまま作業を始める",
+      "確認相手が決まらず相手待ちにできない",
+      "証跡を残さず、後で進捗報告できない",
+    ],
+    checklist: commonChecklist,
+    generated_by: generatedBy,
+  };
+}
+
+async function generateWbsUserTaskAssistWithOpenAi(
+  prompt: string,
+  fallback: Record<string, unknown>,
+  mode: WbsUserTaskAssistMode,
+  task: Record<string, unknown>,
+  fallbackReason: string,
+): Promise<Record<string, unknown>> {
+  const openAiKey = Deno.env.get("OPENAI_API_KEY") ?? "";
+  if (!openAiKey) {
+    return fallbackWbsUserTaskAssist(task, mode, `fallback:${fallbackReason}:no_openai_key`);
+  }
+
+  try {
+    const res = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${openAiKey}`,
+      },
+      body: JSON.stringify({
+        model: Deno.env.get("WBS_ASSIST_OPENAI_MODEL") ?? "gpt-4o-mini",
+        messages: [
+          { role: "system", content: "あなたはWBSユーザータスクの実務支援AIです。必ずJSONのみで回答してください。" },
+          { role: "user", content: prompt },
+        ],
+        response_format: { type: "json_object" },
+        temperature: 0.2,
+        max_tokens: 2200,
+      }),
+    });
+    if (!res.ok) {
+      return fallbackWbsUserTaskAssist(task, mode, `fallback:${fallbackReason}:openai_http_${res.status}`);
+    }
+    const data = await res.json() as {
+      choices?: Array<{ message?: { content?: string } }>;
+    };
+    const text = data.choices?.[0]?.message?.content ?? "";
+    if (!text.trim()) {
+      return fallbackWbsUserTaskAssist(task, mode, `fallback:${fallbackReason}:empty_openai_response`);
+    }
+    const parsed = JSON.parse(cleanAiJsonText(text));
+    return normalizeWbsUserTaskAssist(
+      parsed,
+      fallback,
+      mode,
+      Deno.env.get("WBS_ASSIST_OPENAI_MODEL") ?? "gpt-4o-mini",
+    );
+  } catch (err) {
+    console.warn(`wbs.user_task_ai_assist OpenAI fallback failed: ${String(err)}`);
+    return fallbackWbsUserTaskAssist(task, mode, `fallback:${fallbackReason}:openai_error`);
+  }
+}
+
+async function generateWbsUserTaskAssist(
+  task: Record<string, unknown>,
+  mode: WbsUserTaskAssistMode,
+): Promise<Record<string, unknown>> {
+  const fallback = fallbackWbsUserTaskAssist(task, mode, "fallback");
+  const geminiKey = Deno.env.get("GEMINI_API_KEY") ?? "";
+  const prompt = [
+    "あなたはWBSユーザータスクの実務支援AIです。",
+    "ユーザーが手を止めずに進められるよう、抽象的な助言ではなく、今日実行できる粒度で返してください。",
+    mode === "breakdown"
+      ? "目的: タスクを15〜30分で実行できる小さなサブタスクに分割する。"
+      : "目的: 初心者でも迷わない詳細な実施手順を作る。",
+    "必ずJSONのみで返してください。Markdownや説明文は不要です。",
+    "JSON schema:",
+    `{"summary":"string","prerequisites":["string"],"subtasks":[{"title":"string","goal":"string","steps":["string"],"estimated_minutes":15,"done_when":"string"}],"steps":[{"title":"string","detail":"string","expected_result":"string","caution":"string"}],"blockers":["string"],"checklist":["string"]}`,
+    "対象タスク:",
+    JSON.stringify({
+      id: task.id,
+      title: task.title,
+      description: task.description,
+      category: task.category,
+      status: task.status,
+      progress: task.progress,
+      priority: task.priority,
+      end_date: task.end_date,
+      user_report_status: task.user_report_status,
+      user_report_note: task.user_report_note,
+      latest_report: task.latest_report ?? null,
+    }),
+  ].join("\n");
+
+  if (!geminiKey) {
+    return generateWbsUserTaskAssistWithOpenAi(prompt, fallback, mode, task, "no_gemini_key");
+  }
+
+  try {
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiKey}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ role: "user", parts: [{ text: prompt }] }],
+          generationConfig: {
+            temperature: 0.25,
+            maxOutputTokens: 2200,
+            responseMimeType: "application/json",
+          },
+        }),
+      },
+    );
+    if (!res.ok) {
+      return generateWbsUserTaskAssistWithOpenAi(prompt, fallback, mode, task, `gemini_http_${res.status}`);
+    }
+    const data = await res.json() as {
+      candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
+    };
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
+    if (!text.trim()) {
+      return generateWbsUserTaskAssistWithOpenAi(prompt, fallback, mode, task, "empty_gemini_response");
+    }
+    const parsed = JSON.parse(cleanAiJsonText(text));
+    return normalizeWbsUserTaskAssist(parsed, fallback, mode, "gemini-2.5-flash");
+  } catch (err) {
+    console.warn(`wbs.user_task_ai_assist fallback: ${String(err)}`);
+    return generateWbsUserTaskAssistWithOpenAi(prompt, fallback, mode, task, "gemini_error");
+  }
+}
+
 const WBS_INSTANCE_VALUES = [
   "codex",     // OpenAI Codex CLI
   "gemini",    // Google Gemini Code Assist
@@ -3660,6 +3938,53 @@ serve(async (req) => {
             status: "in_progress",
           });
         }
+
+        // ── WBS User Task AI Assist (UI向け) ───────────────────────────────
+        // user instance task を、AIで「小タスク化」または「詳細手順化」する。
+        // body: {task_id, mode: "breakdown" | "procedure"}
+        case "wbs.user_task_ai_assist": {
+          const taskId = String(body.task_id ?? body.id ?? "").trim();
+          const requestedMode = String(body.mode ?? "breakdown").trim();
+          const mode: WbsUserTaskAssistMode = requestedMode === "procedure" ? "procedure" : "breakdown";
+          if (!taskId) return json({ error: "task_id required" }, 400);
+
+          const { data: task, error: taskErr } = await admin
+            .from("wbs_tasks")
+            .select("id, category, title, description, status, progress, priority, end_date, instance, owner_instance, user_report_status, user_report_note, user_reported_at, updated_at")
+            .eq("id", taskId)
+            .maybeSingle();
+          if (taskErr) throw new Error(taskErr.message);
+          if (!task) return json({ error: "user task not found" }, 404);
+          if (task.instance !== "user" && task.owner_instance !== "user") {
+            return json({ error: "instance != 'user' / AI assist 不可", reason: "non_user_task" }, 403);
+          }
+
+          const { data: reports, error: reportErr } = await admin
+            .from("wbs_user_task_reports")
+            .select("status, progress, report_text, blockers, next_action, created_at")
+            .eq("task_id", taskId)
+            .order("created_at", { ascending: false })
+            .limit(1);
+          if (reportErr) {
+            console.warn(`wbs_user_task_reports latest fetch skipped: ${reportErr.message}`);
+          }
+
+          const taskWithReport = {
+            ...(task as Record<string, unknown>),
+            latest_report: reports?.[0] ?? null,
+          };
+          const guidance = await generateWbsUserTaskAssist(taskWithReport, mode);
+
+          return json({
+            success: true,
+            mode,
+            task_id: taskId,
+            task_title: task.title,
+            generated_by: guidance.generated_by ?? null,
+            guidance,
+          });
+        }
+
         // ── WBS Get User Tasks (UI向け) ──────────────────────────────────────
         case "wbs.get_user_tasks": {
           // UI から呼ぶユーザータスク一覧 (pending/in_progress/blocked + completed 直近10件)
@@ -4383,6 +4708,7 @@ ${reportText ? `> ${reportText}` : ""}`,
             "wbs.update_user_task_report",
             "wbs.user_task_report",
             "wbs.export_user_tasks_md",
+            "wbs.user_task_ai_assist",
             "wbs.get_user_tasks",
             "wbs.submit_user_task_report",
             "legal.harvey.complete",
