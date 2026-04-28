@@ -1,7 +1,7 @@
 ---
 title: "Claude Code vs GitHub Copilot: How I Use Both and When"
 tags: ai,automation,indiedev,programming
-published: false
+published: true
 ---
 
 # Claude Code vs GitHub Copilot: How I Use Both and When

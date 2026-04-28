@@ -1,7 +1,7 @@
 ---
 title: "Claude Code vs GitHub Copilot — 実務で使い分ける判断基準"
 tags: AI,個人開発,automation,buildinpublic
-published: false
+published: true
 ---
 
 # Claude Code vs GitHub Copilot — 実務で使い分ける判断基準
