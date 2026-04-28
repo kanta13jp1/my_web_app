@@ -1,7 +1,7 @@
 ---
 title: "個人開発者の法人化判断 — 年収いくらから法人化すべきか"
 tags: AI,個人開発,buildinpublic,automation
-published: false
+published: true
 ---
 
 # 個人開発者の法人化判断 — 年収いくらから法人化すべき���

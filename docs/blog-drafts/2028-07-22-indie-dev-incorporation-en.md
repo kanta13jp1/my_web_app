@@ -1,7 +1,7 @@
 ---
 title: "Indie Dev Incorporation — When Should You Form a Company?"
 tags: ai,indiedev,buildinpublic,automation
-published: false
+published: true
 ---
 
 # Indie Dev Incorporation — When Should You Form a Company?
