@@ -109,6 +109,7 @@ jobs:
           supabase link --project-ref ${{ secrets.SUPABASE_PROJECT_ID_PROD }} --password ${{ secrets.SUPABASE_DB_PASSWORD_PROD }}
           # Repair known stuck migrations (duplicate key from aborted deploys).
           # All are idempotent (ON CONFLICT DO NOTHING / IF NOT EXISTS / UPDATE).
+          supabase migration repair --status reverted 20260424225000 2>/dev/null || true  # pre-push recovery_plan backfill — always runs first (idempotent COALESCE)
           supabase migration repair --status reverted 20260424234000 2>/dev/null || true
           supabase migration repair --status reverted 20260424235000 2>/dev/null || true
           supabase migration repair --status reverted 20260424240000 2>/dev/null || true
