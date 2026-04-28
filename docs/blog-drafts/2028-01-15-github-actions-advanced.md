@@ -1,7 +1,7 @@
 ---
 title: "GitHub Actions 高度活用パターン — Matrix / Cache / Reusable Workflows"
 tags: AI,個人開発,automation,buildinpublic
-published: false
+published: true
 ---
 
 # GitHub Actions 高度活用パターン — Matrix / Cache / Reusable Workflows
