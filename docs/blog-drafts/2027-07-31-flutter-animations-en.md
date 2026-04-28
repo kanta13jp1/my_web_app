@@ -1,7 +1,7 @@
 ---
 title: "Flutter Animations: AnimationController, Tween, and Hero Explained"
 tags: flutter,ai,indiedev,programming
-published: false
+published: true
 ---
 
 # Flutter Animations: AnimationController, Tween, and Hero Explained
