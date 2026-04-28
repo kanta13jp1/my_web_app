@@ -23204,3 +23204,9 @@ CLAUDE.md hook table + ~/.claude/hooks/inject-rules.txt 注入. OPS-28 charter�
 
 ### commit
 (本 commit にて確定)
+
+## 2026-04-29 PS#6 S101 — 競馬予想モデル reasoning内訳強化 (馬体重/厩舎/人気coverage追加)
+### S101: reasoning文字列に馬体重(horseWeightCoverage)/厩舎(stableCoverage)/人気(popularityCoverage)% 追加
+- 信頼度内訳: ...血統X% 騎手X% → ...血統X% 騎手X% 馬体重X% 厩舎X% 人気X%
+- デバッグ透明性とユーザー向け情報密度向上
+- commit: 3d32f0fb0
