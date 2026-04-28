@@ -1,7 +1,7 @@
 ---
 title: "Claude Code hooks 設計 — UserPromptSubmit で毎ターンルールを強制注入する"
 tags: AI,個人開発,automation,buildinpublic
-published: false
+published: true
 ---
 
 # Claude Code hooks 設計 — UserPromptSubmit で毎ターンルールを強制注入する
