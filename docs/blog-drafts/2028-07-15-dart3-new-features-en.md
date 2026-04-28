@@ -1,7 +1,7 @@
 ---
 title: "Dart 3 New Features — Sealed Classes, Pattern Matching, and Records"
 tags: flutter,ai,indiedev,programming
-published: false
+published: true
 ---
 
 # Dart 3 New Features — Sealed Classes, Pattern Matching, and Records
