@@ -1,7 +1,7 @@
 ---
 title: "Supabase Auth in Flutter: JWT, Magic Links, and OAuth from Scratch"
 tags: supabase,flutter,postgresql,indiedev
-published: false
+published: true
 ---
 
 # Supabase Auth in Flutter: JWT, Magic Links, and OAuth from Scratch

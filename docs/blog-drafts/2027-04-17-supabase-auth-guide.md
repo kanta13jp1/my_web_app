@@ -1,7 +1,7 @@
 ---
 title: "Supabase Auth 実装ガイド — JWT / Magic Link / OAuth を Flutter で使う"
 tags: supabase,flutter,個人開発,postgresql
-published: false
+published: true
 ---
 
 # Supabase Auth 実装ガイド — JWT / Magic Link / OAuth を Flutter で使う
