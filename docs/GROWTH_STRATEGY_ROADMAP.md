@@ -23173,3 +23173,23 @@ CLAUDE.md hook table + ~/.claude/hooks/inject-rules.txt 注入. OPS-28 charter�
 
 ### commit
 (本 commit にて確定)
+
+## PS#4 S114-S116 (2026-04-29)
+
+### PS#4 S114: 競合3社追加 213→216社 (hailuo/sendgrid/convertkit)
+- hailuo: Hailuo AI高品質AI動画生成/ai-video
+- sendgrid: Twilioメール配信API/email-marketing
+- convertkit: クリエイター向けメールマーケ/newsletter
+- sitemap: 259 URLs / commit: 72fb9555f
+
+### PS#4 S115: 競合3社追加 216→219社 (mailerlite/hotjar/amplitude)
+- mailerlite: シンプルメールマーケ/email-marketing
+- hotjar: ヒートマップUX分析/analytics (新カテゴリ)
+- amplitude: プロダクトアナリティクス/analytics
+- sitemap: 262 URLs / commit: f39a42223
+
+### PS#4 S116: 競合3社追加 219→222社 (mixpanel/brevo/beehiiv)
+- mixpanel: イベントベース分析/analytics
+- brevo: 旧Sendinblue/メール+SMS/email-marketing
+- beehiiv: クリエイターニュースレター/newsletter
+- sitemap: 265 URLs / commit: 8c9de533a
