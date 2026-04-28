@@ -1,7 +1,7 @@
 ---
 title: "Supabase Postgres 関数・RPC — Edge Function を減らす最強パターン"
 tags: supabase,postgresql,個人開発,AI
-published: false
+published: true
 ---
 
 # Supabase Postgres 関数・RPC — Edge Function を減らす最強パターン
