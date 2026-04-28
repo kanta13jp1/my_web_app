@@ -22768,3 +22768,33 @@ task 714ee4a4 unconditional backfill + 全超過タスク broad backfill を最�
 - confidence最終式: 0.31 + dataQuality*0.22 + oddsCoverage*0.12 + historyCoverage*0.07 + bestTimeCoverage*0.05 + prevMarginCoverage*0.03 - fieldPenalty + oddsGapBonus (grade cap適用)
 - `buildHorseRacePrompt`: 1強/混戦レース説明追加
 - commit: 0f0b9b7c6
+
+
+## PS#4 S93-S97 2026-04-28 (SEO強化フェーズ完結)
+
+### S93: vs-*全174社から/competitorsへハブリンク追加
+- 関連比較セクション末尾に「全174社の競合ランドスケープを見る→」ボタン追加
+- grid_view_rounded アイコン + _surfaceMuted カードデザイン
+- commit: eae29b082
+
+### S94: /competitors 全社クリック可能化バグ修正
+- バグ: 旧21社のみ/vs-*遷移・153社は「準備中」スナックバー
+- 修正: 全社 onTap: () => Navigator.pushNamed('/vs-$id') に単純化
+- _known21 const・known パラメータ削除
+- commit: fa34e7f78
+
+### S95: vs-*全174社ページにパンくずナビ追加
+- _buildBreadcrumb: 自分株式会社 / 競合比較 / {Company}
+- WrapCrossAlignment.center でレスポンシブ対応
+- commit: (S95 commit)
+
+### S96: vs-*全174社ページにFAQPage JSON-LD追加
+- web/index.html vsMatchブロックに3Q&A FAQPage JSON-LD自動注入
+- Google検索FAQリッチリザルト対象化 → CTR改善
+- commit: e4726a579
+
+### S97: _relatedCompetitors カテゴリ対応
+- _categoryOf map (21カテゴリ/95社) 追加
+- 同カテゴリ3社→featured→その他の順に関連会社表示改善
+- vs-cursor → windsurf/replit/bolt-new 等 AI dev 仲間を優先表示
+- commit: 4778775a5
