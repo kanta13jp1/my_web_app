@@ -1,7 +1,7 @@
 ---
 title: "AI Agent Design: Dify vs LangChain vs Raw API — How to Choose"
 tags: ai,automation,indiedev,programming
-published: false
+published: true
 ---
 
 # AI Agent Design: Dify vs LangChain vs Raw API — How to Choose
