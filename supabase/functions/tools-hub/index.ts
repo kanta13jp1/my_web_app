@@ -963,7 +963,32 @@ function marginPenaltyScore(value: unknown): number {
   return 0;
 }
 
-function sortHorseEntriesForLearning(entries: Record<string, unknown>[]): Record<string, unknown>[] {
+function courseDistancePenaltyScore(
+  entry: Record<string, unknown>,
+  raceContext?: { courseType?: string; distance?: number },
+): number {
+  let penalty = 0;
+  if (raceContext?.courseType) {
+    const prev = String(entry.prev_course_type ?? "").trim();
+    const cur = raceContext.courseType.trim();
+    if (prev && cur && prev !== cur) penalty += 10; // コース種別替わり (芝↔ダート)
+  }
+  if (raceContext?.distance) {
+    const prevDist = numericOrFallback(entry.prev_distance, 0);
+    const raceDist = raceContext.distance;
+    if (prevDist > 0 && raceDist > 0) {
+      const delta = Math.abs(prevDist - raceDist);
+      if (delta >= 400) penalty += 8; // 大幅距離変化
+      else if (delta >= 200) penalty += 4; // 中程度距離変化
+    }
+  }
+  return penalty;
+}
+
+function sortHorseEntriesForLearning(
+  entries: Record<string, unknown>[],
+  raceContext?: { courseType?: string; distance?: number },
+): Record<string, unknown>[] {
   return [...entries].sort((a, b) => {
     // 1. popularity (ascending — lower rank = more popular)
     const popularity = numericOrFallback(a.popularity, 999) - numericOrFallback(b.popularity, 999);
@@ -998,7 +1023,10 @@ function sortHorseEntriesForLearning(entries: Record<string, unknown>[]): Record
     // 10. data_quality_score (descending — more data = more confidence)
     const quality = numericOrFallback(b.data_quality_score, 0) - numericOrFallback(a.data_quality_score, 0);
     if (quality !== 0) return quality;
-    // 11. horse_number (ascending — tiebreaker)
+    // 11. course/distance fit (ascending — コース替わり/大幅距離変化 = higher penalty)
+    const cd = courseDistancePenaltyScore(a, raceContext) - courseDistancePenaltyScore(b, raceContext);
+    if (cd !== 0) return cd;
+    // 12. horse_number (ascending — tiebreaker)
     return numericOrFallback(a.horse_number, 999) - numericOrFallback(b.horse_number, 999);
   });
 }
@@ -1007,7 +1035,11 @@ function buildHistoricalBaselinePrediction(
   race: Record<string, unknown>,
   entries: Record<string, unknown>[],
 ): ProviderPredictionResult {
-  const ranked = sortHorseEntriesForLearning(entries);
+  const raceCtx = {
+    courseType: String(race.course_type ?? "").trim() || undefined,
+    distance: Number(race.distance ?? 0) || undefined,
+  };
+  const ranked = sortHorseEntriesForLearning(entries, raceCtx);
   const [first, second, third] = ranked;
   const dataQuality = horseRaceDataQualityScore(entries);
   const oddsCoverage = entries.length > 0
