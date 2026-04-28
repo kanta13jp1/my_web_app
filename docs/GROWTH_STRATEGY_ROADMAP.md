@@ -23556,3 +23556,11 @@ VIBE_CODING 4.5 → 5.5/7 (+1.0) / SECOND_BRAIN 3.5 → 4.0/7 (+0.5) = 合計 +1
 ### commit
 (本 commit にて確定)
 
+
+## 2026-04-29 PS#6 S107 — 競馬予想モデル bloodlineTopHorseBonus (血統充足confidenceボーナス)
+### S107: bloodlineTopHorseBonus(topEntry) — 予想1位馬の血統3項目充足でconfidence boost
+- sire+dam+damsire全充足=+0.02 / 父 or 母のみ=+0.01 / なし=0
+- ranked[0](予想1位馬)の個別血統充足でconfidence補正
+- confidence式: ...+smallField+bloodlineBonus (23 terms体制確立)
+- reasoning: 「血統充足:+X%」追加
+- commit: d8c2252d2
