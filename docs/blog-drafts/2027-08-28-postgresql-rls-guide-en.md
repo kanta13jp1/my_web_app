@@ -1,7 +1,7 @@
 ---
 title: "PostgreSQL RLS Guide: Multi-Tenant Security with Supabase"
 tags: supabase,postgresql,indiedev,ai
-published: false
+published: true
 ---
 
 # PostgreSQL RLS Guide: Multi-Tenant Security with Supabase
