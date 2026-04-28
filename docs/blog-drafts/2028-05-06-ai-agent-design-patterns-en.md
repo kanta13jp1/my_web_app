@@ -1,7 +1,7 @@
 ---
 title: "AI Agent Design Patterns: Tool Use, Memory, and the ReAct Loop"
 tags: ai,indiedev,automation,buildinpublic
-published: false
+published: true
 ---
 
 # AI Agent Design Patterns: Tool Use, Memory, and the ReAct Loop
