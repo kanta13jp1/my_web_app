@@ -23183,3 +23183,12 @@ dev.to 累計: 114本
 - competitorMeta +3エントリ / sitemap 238→241 URLs (priority=0.8)
 - SEO: "Webflow代替"/"Framer代替"/"Copy.ai代替" 超高検索ボリュームキーワード流入
 - commit: 686bf96d2
+
+## PS#4 S109 2026-04-29: 競合3社追加 198→201社 (writesonic/zendesk/intercom) + support新カテゴリ
+
+- writesonic: Writesonic AI長文コンテンツ/月額13USD~/ai-writing
+- zendesk: Zendesk カスタマーサポートCRM/月額55USD~/support新カテゴリ
+- intercom: Intercom AI顧客チャットサポート/月額74USD~/support
+- competitorMeta +3エントリ / sitemap 241→244 URLs (priority=0.8)
+- SEO: "Writesonic代替"/"Zendesk代替"/"Intercom代替" 超高検索ボリュームキーワード流入
+- commit: 1a6828c99
