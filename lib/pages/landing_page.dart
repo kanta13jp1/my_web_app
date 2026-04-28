@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -678,6 +678,18 @@ $input
   }
 
   Widget _buildHeroSection() {
+    return _WorkflowLandingHero(
+      achievementCount: _achievementCount,
+      onGetStarted: _scrollToAuthSection,
+      onWatchDemo: _scrollToTrialSection,
+      onOpenRoadmap: () => Navigator.of(context).pushNamed('/project-gantt'),
+      onOpenTasks: () => Navigator.of(context).pushNamed('/wbs-user-tasks'),
+      onOpenReports: () => Navigator.of(context).pushNamed('/admin'),
+    );
+  }
+
+  // ignore: unused_element
+  Widget _buildLegacyHeroSection() {
     final heroPanel = Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(24, 28, 24, 24),
@@ -3831,51 +3843,117 @@ $input
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.sizeOf(context).width;
-    final showFloatingRegisterCta = screenWidth >= 900;
+    final wideHeader = screenWidth >= 860;
 
     return Scaffold(
       key: const Key('landing_page_scaffold'),
       appBar: AppBar(
-        title: const Text(
-          '自分株式会社へようこそ',
-          key: Key('landing_page_title'),
+        toolbarHeight: 72,
+        elevation: 0,
+        scrolledUnderElevation: 1,
+        surfaceTintColor: Colors.transparent,
+        backgroundColor: Colors.white.withValues(alpha: 0.96),
+        titleSpacing: screenWidth >= 900 ? 72 : 16,
+        title: Row(
+          children: [
+            Container(
+              width: 28,
+              height: 28,
+              decoration: BoxDecoration(
+                color: const Color(0xFF1F7AE0),
+                borderRadius: BorderRadius.circular(7),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF1F7AE0).withValues(alpha: 0.18),
+                    blurRadius: 12,
+                    offset: const Offset(0, 5),
+                  ),
+                ],
+              ),
+              child: const Icon(
+                Icons.auto_awesome_rounded,
+                color: Colors.white,
+                size: 17,
+              ),
+            ),
+            const SizedBox(width: 10),
+            const Text(
+              'Home',
+              key: Key('landing_page_title'),
+              style: TextStyle(
+                color: Color(0xFF172033),
+                fontSize: 18,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            if (wideHeader) ...[
+              const SizedBox(width: 34),
+              _LandingNavButton(
+                label: 'Projects',
+                onPressed: () => Navigator.pushNamed(context, '/project-gantt'),
+              ),
+              _LandingNavButton(
+                label: 'Tasks',
+                onPressed: () =>
+                    Navigator.pushNamed(context, '/wbs-user-tasks'),
+              ),
+              _LandingNavButton(
+                label: 'Calendar',
+                onPressed: () =>
+                    Navigator.pushNamed(context, '/calendar-events'),
+              ),
+              _LandingNavButton(
+                label: 'Reports',
+                onPressed: () => Navigator.pushNamed(context, '/admin'),
+              ),
+            ],
+          ],
         ),
         actions: [
-          // Win版#131 part 11: WBS ガントチャート (公開・開発進捗の透明性)
-          IconButton(
-            icon: const Icon(Icons.timeline),
-            tooltip: '開発ロードマップ (WBS ガント)',
-            onPressed: () => Navigator.pushNamed(context, '/project-gantt'),
+          if (wideHeader)
+            TextButton(
+              onPressed: _scrollToAuthSection,
+              child: const Text(
+                'Sign In',
+                style: TextStyle(
+                  color: Color(0xFF344054),
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          Padding(
+            padding: EdgeInsets.only(
+              right: screenWidth >= 900 ? 72 : 12,
+              left: 8,
+            ),
+            child: FilledButton(
+              onPressed: _scrollToAuthSection,
+              style: FilledButton.styleFrom(
+                backgroundColor: const Color(0xFF1F7AE0),
+                foregroundColor: Colors.white,
+                minimumSize: const Size(132, 44),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(6),
+                ),
+              ),
+              child: const Text(
+                'Get Started',
+                style: TextStyle(fontWeight: FontWeight.w800),
+              ),
+            ),
           ),
         ],
       ),
-      floatingActionButton: showFloatingRegisterCta
-          ? FloatingActionButton.extended(
-              onPressed: () {
-                Scrollable.ensureVisible(
-                  _authSectionKey.currentContext ?? context,
-                  duration: const Duration(milliseconds: 600),
-                  curve: Curves.easeInOut,
-                );
-              },
-              backgroundColor: const Color(0xFF3949AB),
-              foregroundColor: Colors.white,
-              icon: const Icon(Icons.rocket_launch, size: 18),
-              label: const Text(
-                '無料で始める',
-                style: TextStyle(
-                  fontWeight: FontWeight.w700,
-                  height: 1.5,
-                ),
-              ),
-            )
-          : null,
+      backgroundColor: const Color(0xFFF8FBFF),
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
+            padding: EdgeInsets.symmetric(
+              horizontal: screenWidth < 640 ? 14 : 28,
+              vertical: 22,
+            ),
             child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 760),
+              constraints: const BoxConstraints(maxWidth: 1180),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
@@ -3942,6 +4020,889 @@ $input
       ),
     );
   }
+}
+
+class _LandingNavButton extends StatelessWidget {
+  final String label;
+  final VoidCallback onPressed;
+
+  const _LandingNavButton({
+    required this.label,
+    required this.onPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return TextButton(
+      onPressed: onPressed,
+      style: TextButton.styleFrom(
+        foregroundColor: const Color(0xFF536173),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        textStyle: const TextStyle(
+          fontSize: 15,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+      child: Text(label),
+    );
+  }
+}
+
+class _WorkflowLandingHero extends StatelessWidget {
+  final int achievementCount;
+  final VoidCallback onGetStarted;
+  final VoidCallback onWatchDemo;
+  final VoidCallback onOpenRoadmap;
+  final VoidCallback onOpenTasks;
+  final VoidCallback onOpenReports;
+
+  const _WorkflowLandingHero({
+    required this.achievementCount,
+    required this.onGetStarted,
+    required this.onWatchDemo,
+    required this.onOpenRoadmap,
+    required this.onOpenTasks,
+    required this.onOpenReports,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      key: const Key('landing_hero_section'),
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FBFF),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Stack(
+        children: [
+          const Positioned.fill(
+            child: CustomPaint(painter: _HeroWavePainter()),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(18, 58, 18, 0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const Center(
+                  child: Text(
+                    '自分株式会社',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: Color(0xFF172033),
+                      fontSize: 48,
+                      fontWeight: FontWeight.w800,
+                      height: 1.12,
+                      letterSpacing: 0,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 14),
+                Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 760),
+                    child: const Text(
+                      'Streamline Your Workflow. Notion・Slack・MoneyForward・WBSをひとつにまとめ、AIが今日の最優先アクションまで案内します。',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Color(0xFF334155),
+                        fontSize: 17,
+                        height: 1.7,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 28),
+                Wrap(
+                  alignment: WrapAlignment.center,
+                  spacing: 14,
+                  runSpacing: 12,
+                  children: [
+                    FilledButton(
+                      onPressed: onGetStarted,
+                      style: FilledButton.styleFrom(
+                        backgroundColor: const Color(0xFF1F7AE0),
+                        foregroundColor: Colors.white,
+                        minimumSize: const Size(170, 52),
+                        padding: const EdgeInsets.symmetric(horizontal: 26),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        textStyle: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      child: const Text('Get Started'),
+                    ),
+                    OutlinedButton.icon(
+                      onPressed: onWatchDemo,
+                      icon: Container(
+                        width: 24,
+                        height: 24,
+                        decoration: const BoxDecoration(
+                          color: Color(0xFF68B6E8),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.play_arrow_rounded,
+                          color: Colors.white,
+                          size: 18,
+                        ),
+                      ),
+                      label: const Text('Watch Demo'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: const Color(0xFF172033),
+                        minimumSize: const Size(170, 52),
+                        side: const BorderSide(color: Color(0xFFD8E2EE)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        textStyle: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 42),
+                _HeroFeatureGrid(
+                  children: [
+                    _WorkflowFeatureCard(
+                      title: 'Task Automations',
+                      subtitle: '迷ったタスクを、次の一手まで自動整理。',
+                      visual: const _AutomationPreview(),
+                      onTap: onOpenTasks,
+                    ),
+                    _WorkflowFeatureCard(
+                      title: 'Time Tracking',
+                      subtitle: '集中時間と習慣を、内蔵タイマーで記録。',
+                      visual: const _TimerPreview(),
+                      onTap: onWatchDemo,
+                    ),
+                    _WorkflowFeatureCard(
+                      title: 'Advanced Reporting',
+                      subtitle: 'WBS・成長・習慣をレポートで俯瞰。',
+                      visual: const _ReportPreview(),
+                      onTap: onOpenReports,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 34),
+                _WhatsNewPanel(
+                  achievementCount: achievementCount,
+                  onOpenRoadmap: onOpenRoadmap,
+                  onOpenTasks: onOpenTasks,
+                  onOpenReports: onOpenReports,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _HeroFeatureGrid extends StatelessWidget {
+  final List<Widget> children;
+
+  const _HeroFeatureGrid({required this.children});
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth < 820) {
+          return Column(
+            children: [
+              for (final child in children) ...[
+                child,
+                if (child != children.last) const SizedBox(height: 14),
+              ],
+            ],
+          );
+        }
+        return IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              for (final child in children) ...[
+                Expanded(child: child),
+                if (child != children.last) const SizedBox(width: 0),
+              ],
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _WorkflowFeatureCard extends StatelessWidget {
+  final String title;
+  final String subtitle;
+  final Widget visual;
+  final VoidCallback onTap;
+
+  const _WorkflowFeatureCard({
+    required this.title,
+    required this.subtitle,
+    required this.visual,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.white.withValues(alpha: 0.92),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(8),
+        side: const BorderSide(color: Color(0xFFDCE7F2)),
+      ),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(8),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(30, 30, 30, 22),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(
+                  color: Color(0xFF245078),
+                  fontSize: 21,
+                  fontWeight: FontWeight.w800,
+                  height: 1.25,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                subtitle,
+                style: const TextStyle(
+                  color: Color(0xFF4B5A6A),
+                  fontSize: 14,
+                  height: 1.55,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const SizedBox(height: 26),
+              SizedBox(
+                height: 172,
+                child: Align(
+                  alignment: Alignment.bottomCenter,
+                  child: visual,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _AutomationPreview extends StatelessWidget {
+  const _AutomationPreview();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      constraints: const BoxConstraints(minHeight: 142),
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: const Color(0xFFE3EAF4)),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF1E3A5F).withValues(alpha: 0.08),
+            blurRadius: 18,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const _RuleLine(prefix: 'When', text: 'WBS task is blocked'),
+          const Divider(height: 18, color: Color(0xFFEAEFF6)),
+          const _RuleLine(prefix: 'Then', text: 'Split into next actions'),
+          const Spacer(),
+          Row(
+            children: [
+              const Expanded(
+                child: Text(
+                  'Automation Rule Active',
+                  style: TextStyle(
+                    color: Color(0xFF7B8794),
+                    fontWeight: FontWeight.w600,
+                    fontSize: 12,
+                  ),
+                ),
+              ),
+              Container(
+                width: 42,
+                height: 22,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1F7AE0),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                alignment: Alignment.centerRight,
+                padding: const EdgeInsets.only(right: 3),
+                child: Container(
+                  width: 16,
+                  height: 16,
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RuleLine extends StatelessWidget {
+  final String prefix;
+  final String text;
+
+  const _RuleLine({
+    required this.prefix,
+    required this.text,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return RichText(
+      text: TextSpan(
+        style: const TextStyle(
+          color: Color(0xFF111827),
+          fontSize: 13,
+          height: 1.5,
+        ),
+        children: [
+          TextSpan(
+            text: '$prefix  ',
+            style: const TextStyle(fontWeight: FontWeight.w800),
+          ),
+          TextSpan(text: text),
+        ],
+      ),
+    );
+  }
+}
+
+class _TimerPreview extends StatelessWidget {
+  const _TimerPreview();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      constraints: const BoxConstraints(minHeight: 136),
+      padding: const EdgeInsets.fromLTRB(18, 18, 18, 20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: const Color(0xFFE3EAF4)),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF1E3A5F).withValues(alpha: 0.08),
+            blurRadius: 18,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: List.generate(
+              3,
+              (_) => Container(
+                width: 4,
+                height: 4,
+                margin: const EdgeInsets.only(left: 4),
+                decoration: const BoxDecoration(
+                  color: Color(0xFFB8C2CF),
+                  shape: BoxShape.circle,
+                ),
+              ),
+            ),
+          ),
+          const Text(
+            '02:17:45',
+            style: TextStyle(
+              color: Color(0xFF172033),
+              fontSize: 32,
+              fontWeight: FontWeight.w500,
+              letterSpacing: 1.2,
+            ),
+          ),
+          const SizedBox(height: 18),
+          Row(
+            children: [
+              Expanded(
+                child: FilledButton(
+                  onPressed: null,
+                  style: FilledButton.styleFrom(
+                    disabledBackgroundColor: const Color(0xFF2E9D37),
+                    disabledForegroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(5),
+                    ),
+                  ),
+                  child: const Text(
+                    'Stop',
+                    style: TextStyle(fontWeight: FontWeight.w800),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: null,
+                  style: OutlinedButton.styleFrom(
+                    disabledForegroundColor: const Color(0xFF344054),
+                    side: const BorderSide(color: Color(0xFFE6ECF3)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(5),
+                    ),
+                  ),
+                  child: const Text('Add Entry'),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ReportPreview extends StatelessWidget {
+  const _ReportPreview();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      constraints: const BoxConstraints(minHeight: 154),
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: const Color(0xFFE3EAF4)),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF1E3A5F).withValues(alpha: 0.08),
+            blurRadius: 18,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: const Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'Productivity Overview',
+                  style: TextStyle(
+                    color: Color(0xFF111827),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              Icon(Icons.more_horiz, size: 18, color: Color(0xFF9AA7B5)),
+            ],
+          ),
+          SizedBox(height: 14),
+          Expanded(
+            child: Row(
+              children: [
+                Expanded(
+                  flex: 3,
+                  child: SizedBox.expand(
+                    child: CustomPaint(painter: _MiniBarChartPainter()),
+                  ),
+                ),
+                SizedBox(width: 12),
+                Expanded(
+                  flex: 2,
+                  child: CustomPaint(
+                    painter: _MiniDonutPainter(),
+                    child: SizedBox.expand(),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          SizedBox(height: 8),
+          Wrap(
+            spacing: 10,
+            runSpacing: 4,
+            children: [
+              _LegendDot(color: Color(0xFF2F9DED), label: 'Projects'),
+              _LegendDot(color: Color(0xFFFFB547), label: 'Hours'),
+              _LegendDot(color: Color(0xFF43C77D), label: 'Progress'),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _LegendDot extends StatelessWidget {
+  final Color color;
+  final String label;
+
+  const _LegendDot({
+    required this.color,
+    required this.label,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 7,
+          height: 7,
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+        ),
+        const SizedBox(width: 4),
+        Text(
+          label,
+          style: const TextStyle(
+            color: Color(0xFF657386),
+            fontSize: 10,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _WhatsNewPanel extends StatelessWidget {
+  final int achievementCount;
+  final VoidCallback onOpenRoadmap;
+  final VoidCallback onOpenTasks;
+  final VoidCallback onOpenReports;
+
+  const _WhatsNewPanel({
+    required this.achievementCount,
+    required this.onOpenRoadmap,
+    required this.onOpenTasks,
+    required this.onOpenReports,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(22, 22, 22, 24),
+      color: Colors.white.withValues(alpha: 0.9),
+      child: Column(
+        children: [
+          const Row(
+            children: [
+              Expanded(child: Divider(color: Color(0xFFD9E2EC))),
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 18),
+                child: Column(
+                  children: [
+                    Text(
+                      "What's New?",
+                      style: TextStyle(
+                        color: Color(0xFF172033),
+                        fontSize: 28,
+                        fontWeight: FontWeight.w600,
+                        height: 1.2,
+                      ),
+                    ),
+                    SizedBox(height: 4),
+                    Text(
+                      'Discover the Latest Features',
+                      style: TextStyle(
+                        color: Color(0xFF536173),
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(child: Divider(color: Color(0xFFD9E2EC))),
+            ],
+          ),
+          const SizedBox(height: 28),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final items = [
+                _WhatsNewItem(
+                  icon: Icons.account_tree_outlined,
+                  color: const Color(0xFF276EF1),
+                  title: 'Smart Automations',
+                  text: 'Custom workflow automations',
+                  onTap: onOpenTasks,
+                ),
+                _WhatsNewItem(
+                  icon: Icons.schedule_outlined,
+                  color: const Color(0xFF1D74D8),
+                  title: 'Time Tracking',
+                  text: 'Built-in focus and habit timer',
+                  onTap: onOpenRoadmap,
+                ),
+                _WhatsNewItem(
+                  icon: Icons.pie_chart_outline,
+                  color: const Color(0xFF25A46A),
+                  title: 'Detailed Reports',
+                  text: achievementCount > 0
+                      ? '$achievementCount shipped features tracked'
+                      : 'Enhanced analytics and reports',
+                  onTap: onOpenReports,
+                ),
+              ];
+              if (constraints.maxWidth < 760) {
+                return Column(
+                  children: [
+                    for (final item in items) ...[
+                      item,
+                      if (item != items.last) const SizedBox(height: 14),
+                    ],
+                  ],
+                );
+              }
+              return Row(
+                children: [
+                  for (final item in items) ...[
+                    Expanded(child: item),
+                    if (item != items.last) const SizedBox(width: 18),
+                  ],
+                ],
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _WhatsNewItem extends StatelessWidget {
+  final IconData icon;
+  final Color color;
+  final String title;
+  final String text;
+  final VoidCallback onTap;
+
+  const _WhatsNewItem({
+    required this.icon,
+    required this.color,
+    required this.title,
+    required this.text,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        child: Row(
+          children: [
+            Container(
+              width: 52,
+              height: 52,
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.12),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, color: color, size: 30),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      color: Color(0xFF245078),
+                      fontSize: 17,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 5),
+                  Text(
+                    text,
+                    style: const TextStyle(
+                      color: Color(0xFF4B5A6A),
+                      fontSize: 13,
+                      height: 1.45,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _HeroWavePainter extends CustomPainter {
+  const _HeroWavePainter();
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = const Color(0xFFEAF4FF)
+      ..style = PaintingStyle.fill;
+    final path = Path()
+      ..moveTo(0, size.height * 0.45)
+      ..cubicTo(
+        size.width * 0.22,
+        size.height * 0.34,
+        size.width * 0.37,
+        size.height * 0.55,
+        size.width * 0.58,
+        size.height * 0.44,
+      )
+      ..cubicTo(
+        size.width * 0.78,
+        size.height * 0.34,
+        size.width * 0.84,
+        size.height * 0.30,
+        size.width,
+        size.height * 0.19,
+      )
+      ..lineTo(size.width, size.height)
+      ..lineTo(0, size.height)
+      ..close();
+    canvas.drawPath(path, paint);
+
+    final upperPaint = Paint()
+      ..color = const Color(0xFFF3F8FE).withValues(alpha: 0.86)
+      ..style = PaintingStyle.fill;
+    final upper = Path()
+      ..moveTo(0, size.height * 0.34)
+      ..cubicTo(
+        size.width * 0.16,
+        size.height * 0.28,
+        size.width * 0.28,
+        size.height * 0.42,
+        size.width * 0.46,
+        size.height * 0.35,
+      )
+      ..cubicTo(
+        size.width * 0.62,
+        size.height * 0.29,
+        size.width * 0.77,
+        size.height * 0.37,
+        size.width,
+        size.height * 0.22,
+      )
+      ..lineTo(size.width, size.height)
+      ..lineTo(0, size.height)
+      ..close();
+    canvas.drawPath(upper, upperPaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+class _MiniBarChartPainter extends CustomPainter {
+  const _MiniBarChartPainter();
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final gridPaint = Paint()
+      ..color = const Color(0xFFEAF0F6)
+      ..strokeWidth = 1;
+    for (var i = 0; i < 4; i++) {
+      final y = size.height * (i + 1) / 5;
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), gridPaint);
+    }
+
+    const values = [0.52, 0.74, 0.45, 0.64, 0.38, 0.82, 0.56, 0.72];
+    const colors = [
+      Color(0xFF2F9DED),
+      Color(0xFFFFB547),
+      Color(0xFF43C77D),
+    ];
+    final groupWidth = size.width / values.length;
+    for (var i = 0; i < values.length; i++) {
+      final barHeight = size.height * values[i];
+      final x = i * groupWidth + groupWidth * 0.22;
+      final rect = RRect.fromRectAndRadius(
+        Rect.fromLTWH(
+          x,
+          size.height - barHeight,
+          groupWidth * 0.42,
+          barHeight,
+        ),
+        const Radius.circular(2),
+      );
+      canvas.drawRRect(rect, Paint()..color = colors[i % colors.length]);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+class _MiniDonutPainter extends CustomPainter {
+  const _MiniDonutPainter();
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final side = size.shortestSide;
+    final center = Offset(size.width / 2, size.height / 2);
+    final rect = Rect.fromCenter(
+      center: center,
+      width: side * 0.78,
+      height: side * 0.78,
+    );
+    const segments = [
+      (Color(0xFF2F9DED), 0.34),
+      (Color(0xFF43C77D), 0.38),
+      (Color(0xFFFF7676), 0.28),
+    ];
+    var start = -1.5708;
+    final paint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = side * 0.18
+      ..strokeCap = StrokeCap.butt;
+    for (final segment in segments) {
+      paint.color = segment.$1;
+      final sweep = 6.28318 * segment.$2;
+      canvas.drawArc(rect, start, sweep, false, paint);
+      start += sweep;
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
 class _BenefitChip extends StatelessWidget {
