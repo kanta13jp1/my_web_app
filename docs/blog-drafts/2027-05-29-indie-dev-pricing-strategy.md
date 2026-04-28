@@ -1,7 +1,7 @@
 ---
 title: "個人開発の価格戦略 — フリーミアムから有料転換まで実践パターン"
 tags: AI,個人開発,buildinpublic,automation
-published: false
+published: true
 ---
 
 # 個人開発の価格戦略 — フリーミアムから有料転換まで実践パターン

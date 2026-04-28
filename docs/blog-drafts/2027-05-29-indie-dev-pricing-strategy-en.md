@@ -1,7 +1,7 @@
 ---
 title: "Indie Dev Pricing Strategy: Freemium, Subscriptions, and Usage-Based Models"
 tags: ai,indiedev,buildinpublic,automation
-published: false
+published: true
 ---
 
 # Indie Dev Pricing Strategy: Freemium, Subscriptions, and Usage-Based Models
