@@ -1,7 +1,7 @@
 ---
 title: "Flutter Performance Optimization — Reduce Widget Rebuilds, Lazy Loading, and Memoization"
 tags: flutter,ai,indiedev,programming
-published: false
+published: true
 ---
 
 # Flutter Performance Optimization — Reduce Widget Rebuilds, Lazy Loading, and Memoization
