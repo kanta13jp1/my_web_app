@@ -1,7 +1,7 @@
 ---
 title: "The Indie Dev 90-Day Plan: KPI Design to Milestone Management"
 tags: ai,indiedev,buildinpublic,automation
-published: false
+published: true
 ---
 
 # The Indie Dev 90-Day Plan: KPI Design to Milestone Management

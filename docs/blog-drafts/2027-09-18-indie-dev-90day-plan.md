@@ -1,7 +1,7 @@
 ---
 title: "個人開発の90日プラン — KPI設計からマイルストーン管理まで"
 tags: AI,個人開発,buildinpublic,automation
-published: false
+published: true
 ---
 
 # 個人開発の90日プラン — KPI設計からマイルストーン管理まで
