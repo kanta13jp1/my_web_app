@@ -1754,7 +1754,7 @@ $input
                   size: 14,
                 ),
                 label: const Text(
-                  '全172社を見る →',
+                  '全174社を見る →',
                   style: TextStyle(fontSize: 13, height: 1.5),
                 ),
               ),
