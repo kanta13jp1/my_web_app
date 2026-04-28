@@ -22828,3 +22828,9 @@ task 714ee4a4 unconditional backfill + 全超過タスク broad backfill を最�
 ### commits
 - b9c17623e (Phase16 drafts)
 - e7c4364a5 (orphan merge ×4)
+
+## 2026-04-28 PS#6 S87 — 競馬予想モデル jockeyCoverage+trainerCoverage
+
+- `jockeyCoverage *0.02 + trainerCoverage *0.01`: 騎手/調教師データ充足率をconfidenceに追加
+- confidence最終式 (8 terms): 0.31 + dataQuality*0.22 + oddsCoverage*0.12 + historyCoverage*0.07 + bestTimeCoverage*0.05 + prevMarginCoverage*0.03 + jockeyCoverage*0.02 + trainerCoverage*0.01 - fieldPenalty + oddsGapBonus (grade cap)
+- commit: 3109c7cff
