@@ -59,7 +59,8 @@ jobs:
                 )
               ] | length) == 0) |
               select(($pr.reviewDecision // "") != "APPROVED") |
-              "- #\($pr.number) `\($pr.headRefName)` \($pr.reviewDecision // "REVIEW_REQUIRED") - \($pr.title)\n  \($pr.url)"')
+              ($pr.reviewDecision | if . == null or . == "" then "REVIEW_REQUIRED" else . end) as $reviewDecision |
+              "- #\($pr.number) `\($pr.headRefName)` \($reviewDecision) - \($pr.title)\n  \($pr.url)"')
 
           open_pr_heads=$(gh pr list --state open --limit 100 \
             --json headRefName \
