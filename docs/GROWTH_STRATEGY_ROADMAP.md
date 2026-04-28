@@ -23424,3 +23424,17 @@ Codex#2 完成 (2 週間 / 期限 2026-05-13) で:
 - sort factor 19番目に追加、horse_numberはfactor 20(tiebreaker)に繰り上げ
 - sort 19因子体制確立
 - commit: 5d5902af6
+
+
+## PS#2 S78 Phase 27 (2026-04-29)
+
+### T-1 第27弾 #135-#138 — dev.to 投稿完結 / 累計138本
+
+**Phase 27 記事一覧**:
+- T-1 第135弾: Flutter Riverpod テスト戦略 — Provider のモック・統合テスト・CI
+- T-1 第136弾: Supabase PostgreSQL 関数 — RPC で複雑ロジックをサーバーサイドへ
+- T-1 第137弾: 個人開発SaaSの成長指標 — MRR・チャーン・LTV を毎週追う
+- T-1 第138弾: Flutter GoRouter 応用 — ネスト・認証ガード・ディープリンク
+
+**dev.to 投稿状況**: 全4本投稿成功 (run 25081916072 / 25081949846 / 25081981761 / 25082006055)
+**累計**: dev.to 138本
