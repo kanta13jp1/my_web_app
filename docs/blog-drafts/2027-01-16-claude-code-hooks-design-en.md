@@ -1,7 +1,7 @@
 ---
 title: "Claude Code Hooks: Injecting Rules Every Turn Instead of Hoping AI Remembers"
 tags: ai,automation,indiedev,programming
-published: false
+published: true
 ---
 
 # Claude Code Hooks: Injecting Rules Every Turn Instead of Hoping AI Remembers
