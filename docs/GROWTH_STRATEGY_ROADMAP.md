@@ -23097,3 +23097,12 @@ CLAUDE.md hook table + ~/.claude/hooks/inject-rules.txt 注入. OPS-28 charter�
 - dalle: DALL-E3 ChatGPT Plus統合/$20/ai-image — DALL-E代替超高ボリューム
 - llama: Meta Llama OSS LLM/ローカルGPU/無料/ai-platform — Meta Llama代替高ボリューム
 - commit: 2981863f8
+
+
+## PS#4 Session 105 (2026-04-29) — vs-*SEO強化 192社
+
+### S105: 競合3社追加 189→192社 (adobe-firefly/leonardo-ai/poe)
+- adobe-firefly: Creative Cloud AI画像生成/月額数千円/ai-image — Adobe Firefly代替高ボリューム
+- leonardo-ai: ゲームアート特化AI画像/月額$12~/ai-image — Leonardo AI代替高ボリューム
+- poe: QuoraマルチAIチャットアグリゲーター/月額$19.99/ai-platform — Poe代替中ボリューム
+- commit: de5d67f51
