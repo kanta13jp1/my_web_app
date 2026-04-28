@@ -792,7 +792,7 @@ function formatHorseEntryForPrompt(e: Record<string, unknown>): string {
 function buildHorseRacePrompt(race: Record<string, unknown>, entries: Record<string, unknown>[]): string {
   const entryText = entries.map(formatHorseEntryForPrompt).join("\n");
   const dataQuality = horseRaceDataQualityScore(entries);
-  return `競馬レース「${race.race_name}」(${race.venue ?? ""}/${race.course_type ?? "芝"}${race.distance ?? ""}m/${race.grade ?? ""}) の低リスク予想をしてください。\n必ず下記の出走馬リストに存在する馬名だけを選び、取消・非出走・リスト外の馬名は絶対に入れないでください。\n最優先は的中確率と資金保全です。単勝、複勝、枠連、馬連、ワイド、馬単、3連複、3連単をすべて検討し、低リスク順の買い方をreasoningに含めてください。\n血統、前走、持ち時計(best_time)、馬体重・馬体重変動(±kg)、騎手、調教師、厩舎、タイム、オッズ、人気を重視してください。特に「持ち時計」は過去ベストタイムで距離適性を示し、「馬体重変動」が大きい場合(±10kg超)は体調不良・過太りのリスク信号です。「馬体重(weight_kg)」が430kg未満の軽量馬はスタミナ/パワー不足リスク、560kg超の重量馬は機動力低下リスクがあります。「前走タイム(prev_time)」が「持ち時計(best_time)」より2秒以上遅い場合は調子落ちの可能性があります。「前走着差(着差フィールド)」が大差の場合は大きな評価ダウン、ハナ/クビ差なら健闘(僅差)と評価してください。「前走からの経過日数」が90日超の場合は休み明けリスク(仕上がり未知・レース勘の鈍り)を考慮してください。逆に前走から7日以内(連闘)または14日以内(中1週)の場合は疲労蓄積リスクがあります。「前走コース種別」が今回と異なる場合(例: 前走ダート→今回芝)はコース替わりリスクを評価してください。「前走距離」と今回距離の差が200m超の場合は距離適性リスク(短縮・延長)を考慮してください。「出走頭数」が13頭以上の場合は中型レース、16頭以上の大型レースは統計的に波乱率が高く予測精度が低下しやすいです。データ不足または信頼度が低い場合は「購入しない」選択もreasoningに明記してください。\nデータ充足度:${Math.round(dataQuality * 100)}%　出走頭数:${entries.length}頭${entries.length >= 16 ? "（大型レース・高波乱リスク）" : entries.length >= 13 ? "（中型レース・波乱注意）" : ""}\n出走馬:\n${entryText}\n\nJSON形式のみで回答 (前後に説明文を入れない): {"first":"予想馬名1","second":"予想馬名2","third":"予想馬名3","confidence":0.0,"reasoning":"根拠と券種別の低リスク買い目。購入しない判断が妥当ならその理由"}`;
+  return `競馬レース「${race.race_name}」(${race.venue ?? ""}/${race.course_type ?? "芝"}${race.distance ?? ""}m/${race.grade ?? ""}) の低リスク予想をしてください。\n必ず下記の出走馬リストに存在する馬名だけを選び、取消・非出走・リスト外の馬名は絶対に入れないでください。\n最優先は的中確率と資金保全です。単勝、複勝、枠連、馬連、ワイド、馬単、3連複、3連単をすべて検討し、低リスク順の買い方をreasoningに含めてください。\n血統、前走、持ち時計(best_time)、馬体重・馬体重変動(±kg)、騎手、調教師、厩舎、タイム、オッズ、人気を重視してください。特に「持ち時計」は過去ベストタイムで距離適性を示し、「馬体重変動」が大きい場合(±10kg超)は体調不良・過太りのリスク信号です。「馬体重(weight_kg)」が430kg未満の軽量馬はスタミナ/パワー不足リスク、560kg超の重量馬は機動力低下リスクがあります。「前走タイム(prev_time)」が「持ち時計(best_time)」より2秒以上遅い場合は調子落ちの可能性があります。「前走着差(着差フィールド)」が大差の場合は大きな評価ダウン、ハナ/クビ差なら健闘(僅差)と評価してください。「前走からの経過日数」が90日超の場合は休み明けリスク(仕上がり未知・レース勘の鈍り)を考慮してください。逆に前走から7日以内(連闘)または14日以内(中1週)の場合は疲労蓄積リスクがあります。「前走コース種別」が今回と異なる場合(例: 前走ダート→今回芝)はコース替わりリスクを評価してください。「前走距離」と今回距離の差が200m超の場合は距離適性リスク(短縮・延長)を考慮してください。「出走頭数」が13頭以上の場合は中型レース、16頭以上の大型レースは統計的に波乱率が高く予測精度が低下しやすいです。「1番人気と2番人気のオッズ差が5倍以上の場合は1強レースとして予測しやすく、差が小さい混戦レースは波乱リスクが高まります。」データ不足または信頼度が低い場合は「購入しない」選択もreasoningに明記してください。\nデータ充足度:${Math.round(dataQuality * 100)}%　出走頭数:${entries.length}頭${entries.length >= 16 ? "（大型レース・高波乱リスク）" : entries.length >= 13 ? "（中型レース・波乱注意）" : ""}\n出走馬:\n${entryText}\n\nJSON形式のみで回答 (前後に説明文を入れない): {"first":"予想馬名1","second":"予想馬名2","third":"予想馬名3","confidence":0.0,"reasoning":"根拠と券種別の低リスク買い目。購入しない判断が妥当ならその理由"}`;
 }
 
 function normalizeHorseNameForMatch(value: unknown): string {
@@ -879,6 +879,19 @@ function weightKgOutlierPenalty(value: unknown): number {
   if (kg < 430) return 5; // 軽量すぎ — スタミナ/パワー不足リスク
   if (kg > 560) return 4; // 重量すぎ — 機動力低下リスク
   return 0; // 適正範囲 430-560kg
+}
+
+function topTwoOddsGapBonus(entries: Record<string, unknown>[]): number {
+  const sortedOdds = entries
+    .map((e) => numericOrFallback(e.win_odds, 0))
+    .filter((o) => o > 0)
+    .sort((a, b) => a - b);
+  if (sortedOdds.length < 2) return 0;
+  const gap = sortedOdds[1] - sortedOdds[0];
+  if (gap >= 5.0) return 0.05; // 1強レース — 予測しやすい
+  if (gap >= 3.0) return 0.03;
+  if (gap >= 1.5) return 0.01;
+  return 0; // 混戦 — bonus なし
 }
 
 function fieldSizeConfidencePenalty(fieldSize: number): number {
@@ -1099,7 +1112,8 @@ function buildHistoricalBaselinePrediction(
     : 0;
   const maxConf = gradeMaxConfidence(race.grade);
   const fieldPenalty = fieldSizeConfidencePenalty(entries.length);
-  const confidence = Math.min(clampConfidence(0.31 + dataQuality * 0.22 + oddsCoverage * 0.12 + historyCoverage * 0.07 + bestTimeCoverage * 0.05 + prevMarginCoverage * 0.03 - fieldPenalty), maxConf);
+  const oddsGapBonus = topTwoOddsGapBonus(entries);
+  const confidence = Math.min(clampConfidence(0.31 + dataQuality * 0.22 + oddsCoverage * 0.12 + historyCoverage * 0.07 + bestTimeCoverage * 0.05 + prevMarginCoverage * 0.03 - fieldPenalty + oddsGapBonus), maxConf);
   return {
     success: true,
     prediction: {
