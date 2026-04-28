@@ -23148,3 +23148,12 @@ CLAUDE.md hook table + ~/.claude/hooks/inject-rules.txt 注入. OPS-28 charter�
 - ≤53kg=-1(軽斤量有利) / ≤55kg=0(標準) / <57kg=+1(やや重い) / ≥57kg=+2(重斤量不利) / データなし=0
 - horse_numberは18番目tiebreakに繰り上げ (sort 18因子体制確立)
 - commit: 921b42ded
+
+## PS#4 S113 2026-04-29: 競合3社追加 210→213社 (flux/kling/activecampaign)
+
+- flux: FLUX AI画像生成 (Black Forest Labs)/API従量/ai-image
+- kling: Kling AI高品質動画生成 (Kuaishou)/月額約10USD/ai-video
+- activecampaign: ActiveCampaign メール自動化CRM統合/月額15USD~/email-marketing
+- sitemap 253→256 URLs
+- SEO: "FLUX代替"/"Kling AI代替"/"ActiveCampaign代替"
+- commit: 79579d95e
