@@ -22831,6 +22831,24 @@ task 714ee4a4 unconditional backfill + 全超過タスク broad backfill を最�
 
 ## 2026-04-28 PS#6 S87 — 競馬予想モデル jockeyCoverage+trainerCoverage
 
+## 2026-04-28 PS#6 S88 — 競馬予想モデル bloodlineCoverage + reasoning詳細化
+
+- `buildHistoricalBaselinePrediction`: bloodlineCoverage (sire充足率 ×0.01) をconfidence式に追加 (9 terms)
+- reasoning文字列に信頼度内訳 (データ充足%/オッズ%/血統%/騎手%/頭数/グレード) を追記
+- commit: `c40219c4c`
+
+## 2026-04-28 PS#6 S89 — 競馬予想モデル last3FCoverage (上がり3F充足率)
+
+- `buildHistoricalBaselinePrediction`: last3FCoverage (prev_last_3f充足率 ×0.01) をconfidence式に追加 (10 terms)
+- reasoning内訳に上がり3F充足率を追加
+- commit: `0f47870dc`
+
+## 2026-04-28 PS#6 S90 — 競馬予想モデル winningTimeCoverage (勝ち時計充足率)
+
+- `buildHistoricalBaselinePrediction`: winningTimeCoverage (winning_time充足率 ×0.01) をconfidence式に追加 (11 terms)
+- confidence最終式: `0.31+dataQuality*0.22+oddsCoverage*0.12+historyCoverage*0.07+bestTimeCoverage*0.05+prevMarginCoverage*0.03+jockeyCoverage*0.02+trainerCoverage*0.01+bloodlineCoverage*0.01+last3FCoverage*0.01+winningTimeCoverage*0.01-fieldPenalty+oddsGapBonus`
+- commit: `b85509162`
+
 - `jockeyCoverage *0.02 + trainerCoverage *0.01`: 騎手/調教師データ充足率をconfidenceに追加
 - confidence最終式 (8 terms): 0.31 + dataQuality*0.22 + oddsCoverage*0.12 + historyCoverage*0.07 + bestTimeCoverage*0.05 + prevMarginCoverage*0.03 + jockeyCoverage*0.02 + trainerCoverage*0.01 - fieldPenalty + oddsGapBonus (grade cap)
 - commit: 3109c7cff
