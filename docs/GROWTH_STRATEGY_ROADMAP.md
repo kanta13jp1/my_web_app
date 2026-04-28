@@ -23505,3 +23505,14 @@ SECOND_BRAIN 3.0 → 3.5/7. 残:
 - confidence式: ...+favBonus+smallField (22 terms体制確立)
 - reasoning: 「少頭数補正:+X%」追加
 - commit: 4301a4227
+
+## PS#4 S123-S125 (2026-04-29)
+
+### 競合9社追加 240→249社
+
+- S123: sprout-social(SNS管理) / deel(グローバルHR) / smartsheet(スプレッドシートPM) 240→243社
+- S124: confluence(チームWiki) / freshworks(CRM+サポート) / pandadoc(電子署名) 243→246社
+- S125: invision(UIプロトタイプ) / zeplin(デザインハンドオフ) / helpscout(サポート) 246→249社
+- 新カテゴリ: documentation / documents
+- sitemap: 283→292 URLs
+- commit: f45496ebd
