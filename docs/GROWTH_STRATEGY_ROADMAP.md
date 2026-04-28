@@ -23118,95 +23118,12 @@ CLAUDE.md hook table + ~/.claude/hooks/inject-rules.txt 注入. OPS-28 charter�
 ### commit
 (本 commit にて確定)
 
-## 2026-04-28 PS#6 S94 — 競馬予想モデル sexCoverage (性別充足率 confidence 14 terms)
-### S94: sexCoverage(sex×0.01) — 性別データ充足率をconfidence計算に追加
-- sexCoverage: sex フィールドが揃っている馬の割合 × 0.01
-- confidence最終式 (14 terms):
-  0.31+dataQuality*0.22+oddsCoverage*0.12+historyCoverage*0.07+bestTimeCoverage*0.05
-  +prevMarginCoverage*0.03+jockeyCoverage*0.02+trainerCoverage*0.01+bloodlineCoverage*0.01
-  +last3FCoverage*0.01+winningTimeCoverage*0.01+weightChangeCoverage*0.01+ageCoverage*0.01
-  +sexCoverage*0.01-fieldPenalty+oddsGapBonus
-- commit: 40536a28f
+## VSCode S14 — 2026-04-29 (LP Notion Japan DC対抗 差別化強化)
 
-## PS版#2 S72 — T-1 Phase21 全4弾完結 (#111-#114) 2026-04-29
-
-- T-1 第111弾: Flutter Riverpod 深化 — Provider/StateNotifier/AsyncNotifier → dev.to 投稿成功
-  - https://dev.to/kanta13jp1/flutter-riverpod-deep-dive-provider-statenotifier-and-asyncnotifier-19po
-- T-1 第112弾: Supabase PostgreSQL 高度クエリ — JSON/Full-text/Window関数 → dev.to 投稿成功
-  - https://dev.to/kanta13jp1/supabase-postgresql-advanced-queries-json-full-text-search-and-window-functions-54cc
-- T-1 第113弾: 個人開発SaaS KPI設計と計測 — MAU/ARR/NPS/チャーン → dev.to 投稿成功
-  - https://dev.to/kanta13jp1/indie-saas-kpi-design-and-measurement-mau-arr-nps-and-churn-376o
-- T-1 第114弾: Claude API 活用パターン — ストリーミング/ツール使用/プロンプトキャッシュ → dev.to 投稿成功
-  - https://dev.to/kanta13jp1/claude-api-patterns-streaming-tool-use-and-prompt-caching-17eh
-
-dev.to 累計: 114本
-
-## 2026-04-28 PS#6 S95 — 競馬予想モデル horseWeightCoverage (馬体重充足率 confidence 15 terms)
-### S95: horseWeightCoverage(horse_weight×0.01) — 馬体重データ充足率をconfidence計算に追加
-- horseWeightCoverage: horse_weight フィールドが揃っている馬の割合 × 0.01
-- confidence最終式 (15 terms):
-  0.31+dataQuality*0.22+oddsCoverage*0.12+historyCoverage*0.07+bestTimeCoverage*0.05
-  +prevMarginCoverage*0.03+jockeyCoverage*0.02+trainerCoverage*0.01+bloodlineCoverage*0.01
-  +last3FCoverage*0.01+winningTimeCoverage*0.01+weightChangeCoverage*0.01+ageCoverage*0.01
-  +sexCoverage*0.01+horseWeightCoverage*0.01-fieldPenalty+oddsGapBonus
-- commit: 50c7c17aa
-
-## 2026-04-28 PS#6 S96 — 競馬予想モデル stableCoverage+damCoverage (厩舎・母系血統充足率 confidence 17 terms)
-### S96: stableCoverage+damCoverage — 厩舎・母系血統データ充足率をconfidence計算に追加
-- stableCoverage: stable フィールドが揃っている馬の割合 × 0.01
-- damCoverage: dam フィールドが揃っている馬の割合 × 0.01
-- confidence最終式 (17 terms):
-  0.31+dataQuality*0.22+oddsCoverage*0.12+historyCoverage*0.07+bestTimeCoverage*0.05
-  +prevMarginCoverage*0.03+jockeyCoverage*0.02+trainerCoverage*0.01+bloodlineCoverage*0.01
-  +last3FCoverage*0.01+winningTimeCoverage*0.01+weightChangeCoverage*0.01+ageCoverage*0.01
-  +sexCoverage*0.01+horseWeightCoverage*0.01+stableCoverage*0.01+damCoverage*0.01
-  -fieldPenalty+oddsGapBonus
-- commit: e7cf85de9
-
-## PS#5 S86 — 2026-04-29 (CI fix + collision patrol)
-
-- **Dart syntax fix**: comparison_page.dart L7689 DALL-E `$20` 多行分割 → `\$20` 1行化
-  - flutter analyze 37 errors → 0 errors (CI hard-fail 解消)
-- **collision patrol**: 3件解消 (204000 ps6_s94→204100 / 003000 segments→003100 / 202000 dataloop→202100)
-- 888 migrations 全 unique (check_migration_timestamps.py: OK)
-- Achievement seed: 20260429010000_seed_achievements_ps5_s86.sql
+- **LP 新セクション**: `_buildNotionVsSection()` — 5行対比表 (意思決定OS/CEO感/バランスシート/ゴール/コスト) + ヘッド "NotionでもSlackでもない、あなた自身のCEOオフィス"
+- **FAQ 2件追加**: "Notion+Slack使ってるが?" + "Notion Japan DC対抗"
+- **cross-instance-pr クローズ**: notion_agent_skills_counter / notion34_differentiation_lp / notion_japan_dc_counter_playbook (VSCode部分) 3件 → done/
+- dart format 0 changes / flutter analyze 0 issues
 
 ### commit
-(本 commit にて確定)
-
-## PS#4 S108 2026-04-29: 競合3社追加 195→198社 (webflow/framer/copy-ai) + S107重複修正
-
-- webflow: Webflow ノーコードWebサイト構築/月額14USD~/no-code新カテゴリ
-- framer: Framer AI駆動Webデザイン/月額15USD~/no-code
-- copy-ai: Copy.ai AIコピーライティング/月額49USD~/ai-writing新カテゴリ
-- S107 runway/heygen/elevenlabs重複_CompetitorInfo除去 (既存登録済みだった)
-- competitorMeta +3エントリ / sitemap 238→241 URLs (priority=0.8)
-- SEO: "Webflow代替"/"Framer代替"/"Copy.ai代替" 超高検索ボリュームキーワード流入
-- commit: 686bf96d2
-
-## PS#4 S109 2026-04-29: 競合3社追加 198→201社 (writesonic/zendesk/intercom) + support新カテゴリ
-
-- writesonic: Writesonic AI長文コンテンツ/月額13USD~/ai-writing
-- zendesk: Zendesk カスタマーサポートCRM/月額55USD~/support新カテゴリ
-- intercom: Intercom AI顧客チャットサポート/月額74USD~/support
-- competitorMeta +3エントリ / sitemap 241→244 URLs (priority=0.8)
-- SEO: "Writesonic代替"/"Zendesk代替"/"Intercom代替" 超高検索ボリュームキーワード流入
-- commit: 1a6828c99
-
-## PS#4 S110 2026-04-29: 競合3社追加 201→204社 (mailchimp/monday-com/freshdesk) + email-marketing新カテゴリ
-
-- mailchimp: Mailchimp Eメールマーケティング/無料~月額13USD/email-marketing新カテゴリ
-- monday-com: Monday.com チームプロジェクト管理/月額9USD~/project
-- freshdesk: Freshdesk AIヘルプデスク/無料~月額15USD/support
-- competitorMeta +3エントリ / sitemap 244→247 URLs (priority=0.8)
-- SEO: "Mailchimp代替"/"Monday.com代替"/"Freshdesk代替" 超高検索ボリュームキーワード流入
-- commit: 7be8fb935
-
-## PS#4 S111 2026-04-29: 競合3社追加 204→207社 (loom/pipedrive/photoroom) + video-comm/crm/photo-ai新カテゴリ
-
-- loom: Loom 非同期ビデオコミュニケーション/月額12.5USD~/video-comm新カテゴリ
-- pipedrive: Pipedrive セールスCRM/月額14.9USD~/crm新カテゴリ
-- photoroom: PhotoRoom AI写真編集背景除去/月額9.99USD~/photo-ai新カテゴリ
-- competitorMeta +3エントリ / sitemap 247→250 URLs (priority=0.8)
-- SEO: "Loom代替"/"Pipedrive代替"/"PhotoRoom代替" 超高検索ボリュームキーワード流入
-- commit: 8cc8cb840
+788e520fa (main)
