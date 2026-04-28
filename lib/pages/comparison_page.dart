@@ -7413,6 +7413,94 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'grok': const _CompetitorInfo(
+    name: 'Grok (xAI)',
+    emoji: '🤖',
+    tagline: 'Grokのリアルタイム情報を超えた、知識蓄積・習慣統合の個人OS。',
+    searchKeyword: 'Grok代替 xAI Grok代替 Grok AI代替',
+    accentColor: Color(0xFF1DA1F2),
+    painPoints: [
+      'GrokはX (Twitter) Premium専用で月額\$8+が必要なAIアシスタント',
+      'X/Twitter上のリアルタイム情報特化で個人の知識管理・成長追跡が弱い',
+      '財務管理・習慣追跡・タスク統合など生活全般の管理機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AIチャット・リアルタイム検索',
+        competitorHas: true,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '知識ベース構築',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: 'タスク・習慣管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: 'AI大学 (290社+)',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'meta-ai': const _CompetitorInfo(
+    name: 'Meta AI',
+    emoji: '🔵',
+    tagline: 'Meta AIを超えた、個人ライフ全域を統合するAI OS。',
+    searchKeyword: 'Meta AI代替 Meta AI代替 Llama代替',
+    accentColor: Color(0xFF0866FF),
+    painPoints: [
+      'Meta AIはInstagram/WhatsApp/Facebook統合AIだが独立した個人管理OSでない',
+      '財務管理・習慣追跡・タスク管理・AI大学など個人成長機能がない',
+      'Meta プラットフォーム依存で単体アプリとしての柔軟性が低い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AIチャット・画像生成',
+        competitorHas: true,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '知識ベース構築',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: 'タスク・習慣管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: 'AI大学 (290社+)',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
@@ -7622,6 +7710,8 @@ class _ComparisonShellState extends State<_ComparisonShell> {
     'gemini': 'ai-platform',
     'claude': 'ai-platform',
     'microsoft-copilot': 'ai-platform',
+    'grok': 'ai-platform',
+    'meta-ai': 'ai-platform',
   };
 
   @override
@@ -7822,7 +7912,7 @@ class _ComparisonShellState extends State<_ComparisonShell> {
                       children: [
                         _buildTag(
                           icon: Icons.compare_arrows_rounded,
-                          label: '181社比較',
+                          label: '183社比較',
                           backgroundColor:
                               _info.accentColor.withValues(alpha: 0.18),
                           foregroundColor: _textPrimary,
@@ -8430,7 +8520,7 @@ class _ComparisonShellState extends State<_ComparisonShell> {
                       ),
                       SizedBox(width: 8),
                       Text(
-                        '全181社の競合ランドスケープを見る →',
+                        '全183社の競合ランドスケープを見る →',
                         style: TextStyle(
                           fontSize: 14,
                           color: _textSecondary,
