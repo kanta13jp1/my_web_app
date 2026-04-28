@@ -1,7 +1,7 @@
 ---
 title: "Indie Dev Build in Public — X (Twitter) Posting Strategy to Grow Followers"
 tags: ai,indiedev,buildinpublic,automation
-published: false
+published: true
 ---
 
 # Indie Dev Build in Public — X (Twitter) Posting Strategy to Grow Followers
