@@ -1,7 +1,7 @@
 ---
 title: "Supabase PostgreSQL 関数 — RPC で複雑ロジックをサーバーサイドへ移す"
 tags: supabase,AI,個人開発,programming
-published: false
+published: true
 ---
 
 # Supabase PostgreSQL 関数 — RPC で複雑ロジックをサーバーサイドへ移す
