@@ -1,7 +1,7 @@
 ---
 title: "Supabase Postgres Functions and RPC: Replace Edge Functions with SQL"
 tags: supabase,postgresql,indiedev,ai
-published: false
+published: true
 ---
 
 # Supabase Postgres Functions and RPC: Replace Edge Functions with SQL
