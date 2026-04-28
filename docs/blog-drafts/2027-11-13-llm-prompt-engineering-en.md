@@ -1,7 +1,7 @@
 ---
 title: "LLM Prompt Engineering in Practice: CoT, Few-Shot, and System Prompt Design"
 tags: ai,indiedev,automation,buildinpublic
-published: false
+published: true
 ---
 
 # LLM Prompt Engineering in Practice: CoT, Few-Shot, and System Prompt Design
