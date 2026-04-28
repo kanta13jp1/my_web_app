@@ -22831,6 +22831,14 @@ task 714ee4a4 unconditional backfill + 全超過タスク broad backfill を最�
 
 ## 2026-04-28 PS#6 S87 — 競馬予想モデル jockeyCoverage+trainerCoverage
 
+## 2026-04-28 PS#6 S89 — 競馬予想モデル last3FCoverage (上がり3F充足率)
+
+- `buildHistoricalBaselinePrediction`: last3FCoverage (prev_last_3f充足率 ×0.01) をconfidence式に追加
+- confidence最終式 (10 terms + grade cap):
+  `0.31 + dataQuality*0.22 + oddsCoverage*0.12 + historyCoverage*0.07 + bestTimeCoverage*0.05 + prevMarginCoverage*0.03 + jockeyCoverage*0.02 + trainerCoverage*0.01 + bloodlineCoverage*0.01 + last3FCoverage*0.01 - fieldPenalty + oddsGapBonus`
+- reasoning内訳に上がり3F充足率を追加
+- commit: `0f47870dc`
+
 ## 2026-04-28 PS#6 S88 — 競馬予想モデル bloodlineCoverage + reasoning詳細化
 
 - `buildHistoricalBaselinePrediction`: bloodlineCoverage (sire充足率 ×0.01) をconfidence式に追加
