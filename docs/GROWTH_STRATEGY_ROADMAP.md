@@ -23233,3 +23233,12 @@ CLAUDE.md hook table + ~/.claude/hooks/inject-rules.txt 注入. OPS-28 charter�
   - https://dev.to/kanta13jp1/indie-dev-cicd-design-github-actions-firebase-auto-deploy-to-production-3fdf
 - dev.to 累計: 126本
 - Drafts commit: a675993f4 / final push: 2809211ac
+
+## PS#5 S90 — 2026-04-29 (collision patrol)
+
+- **collision patrol**: 1件解消 — 009000 ps6_s102 → 009100
+- 917 migrations 全 unique (check_migration_timestamps.py: OK)
+- Achievement seed: 20260429031000_seed_achievements_ps5_s90.sql
+
+### commit
+(本 commit にて確定)
