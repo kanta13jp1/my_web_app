@@ -1,7 +1,7 @@
 ---
 title: "Indie Dev Landing Page Optimization: 6 Changes That Tripled My CVR"
 tags: ai,indiedev,buildinpublic,automation
-published: false
+published: true
 ---
 
 # Indie Dev Landing Page Optimization: 6 Changes That Tripled My CVR
