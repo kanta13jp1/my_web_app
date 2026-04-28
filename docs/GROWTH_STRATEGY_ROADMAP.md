@@ -23192,3 +23192,12 @@ dev.to 累計: 114本
 - competitorMeta +3エントリ / sitemap 241→244 URLs (priority=0.8)
 - SEO: "Writesonic代替"/"Zendesk代替"/"Intercom代替" 超高検索ボリュームキーワード流入
 - commit: 1a6828c99
+
+## PS#4 S110 2026-04-29: 競合3社追加 201→204社 (mailchimp/monday-com/freshdesk) + email-marketing新カテゴリ
+
+- mailchimp: Mailchimp Eメールマーケティング/無料~月額13USD/email-marketing新カテゴリ
+- monday-com: Monday.com チームプロジェクト管理/月額9USD~/project
+- freshdesk: Freshdesk AIヘルプデスク/無料~月額15USD/support
+- competitorMeta +3エントリ / sitemap 244→247 URLs (priority=0.8)
+- SEO: "Mailchimp代替"/"Monday.com代替"/"Freshdesk代替" 超高検索ボリュームキーワード流入
+- commit: 7be8fb935
