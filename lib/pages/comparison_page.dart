@@ -7871,8 +7871,7 @@ class _ComparisonShellState extends State<_ComparisonShell> {
               ),
               const SizedBox(height: 20),
               InkWell(
-                onTap: () =>
-                    Navigator.of(context).pushNamed('/competitors'),
+                onTap: () => Navigator.of(context).pushNamed('/competitors'),
                 borderRadius: BorderRadius.circular(12),
                 child: Ink(
                   padding: const EdgeInsets.symmetric(
@@ -7884,16 +7883,16 @@ class _ComparisonShellState extends State<_ComparisonShell> {
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(color: _borderColor),
                   ),
-                  child: Row(
+                  child: const Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(
+                      Icon(
                         Icons.grid_view_rounded,
                         size: 16,
                         color: _textSecondary,
                       ),
-                      const SizedBox(width: 8),
-                      const Text(
+                      SizedBox(width: 8),
+                      Text(
                         '全174社の競合ランドスケープを見る →',
                         style: TextStyle(
                           fontSize: 14,
