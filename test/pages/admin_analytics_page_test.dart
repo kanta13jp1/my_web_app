@@ -1,3 +1,7 @@
+// admin_analytics_page.dart transitively imports dart:js_interop via
+// home_tool_catalog → election_victory_page → package:web — browser only.
+@TestOn('browser')
+
 import 'dart:async';
 
 import 'package:flutter/material.dart';
