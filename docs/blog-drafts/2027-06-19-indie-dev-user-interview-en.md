@@ -1,7 +1,7 @@
 ---
 title: "User Interviews for Indie Developers: 5 People Reveal the Real Problem"
 tags: ai,indiedev,buildinpublic,automation
-published: false
+published: true
 ---
 
 # User Interviews for Indie Developers: 5 People Reveal the Real Problem
