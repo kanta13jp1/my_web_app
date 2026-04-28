@@ -210,11 +210,24 @@ jobs:
             -c:v libx264 -preset fast -crf 22 -c:a copy output_D.mp4
           ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1 output_D.mp4
 
+      - name: Step 6c — Add provenance (watermark + metadata) [AI_VIDEO #5]
+        run: |
+          # AI_VIDEO_PRINCIPLES.md 原則 #5 Ethical Provenance & Transparency
+          # 可視ウォーターマーク + メタデータ (title/comment/creation_time/artist) を埋め込み.
+          # source SHA-256 は master.srt (= 字幕として焼き込まれた発話内容) のハッシュ.
+          python scripts/video/add_provenance.py \
+            --input videos/output_D.mp4 \
+            --output videos/output_D_provenanced.mp4 \
+            --title "${{ inputs.title }}" \
+            --series-number "${{ inputs.series_number }}" \
+            --source-file videos/master.srt \
+            --model "NotebookLM Deep Research + Claude Code Win版"
+
       - name: Step 7 — Upload to YouTube (unlisted)
         id: upload
         run: |
           OUT=$(python scripts/upload_youtube.py upload \
-            --file videos/output_D.mp4 \
+            --file videos/output_D_provenanced.mp4 \
             --title "${{ inputs.title }} — 自分株式会社 AI大学解説 #${{ inputs.series_number }}" \
             --description "NotebookLM Deep Research + 自分株式会社 AI大学 編集スタジオで生成。詳細は https://my-web-app-b67f4.web.app/ai-university" \
             --privacy unlisted)

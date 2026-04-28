@@ -169,4 +169,18 @@ D-ID の事例 = 顔認識「**防御**」技術から AI アバター「**生�
 
 ---
 
+## 実装履歴
+
+| 日付 | part | 実装 | 達成原則 | baseline |
+| --- | --- | --- | --- | --- |
+| 2026-04-28 | Win版#132 part 64 | 軸確立 (docs + Rule [AI-VIDEO-29]) | — | 1.5/6 (#1+#3 部分のみ) |
+| 2026-04-28 | Win版#132 part 65 | `scripts/video/add_provenance.py` 新規 + `notebooklm-video-pipeline.yml` Step 6c 追加 (ウォーターマーク + メタデータ 2 層) | #5 (UI バッジ層は未) | 2.0/6 |
+
+**次回ターゲット**:
+- #5 UI バッジ層 (`lib/pages/philosophy_page.dart` 動画 embed 欄に「AI 生成」バッジ) → VSCode版 cross-instance-pr 候補
+- #4 DID 署名 (W3C VC 仕様 + mcp_oauth_clients DID カラム) → Codex#1 候補
+- #1 `scripts/video/build_avatar.py` 新規 (TTS + 静止画 + lipsync) → Win版 or VSCode版
+
+---
+
 *Win版#132 / 2026-04-28 起票 / NotebookLM da2a95d1 (D-ID) ソース蒸留 / Rule [AI-VIDEO-29] / 7 番目の設計軸*
