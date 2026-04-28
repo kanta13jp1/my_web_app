@@ -22330,14 +22330,12 @@ Phase4 drafts 新規作成 (8ファイル):
 - S77: @TestOn('browser') PR #860 fix + 24EF audit done/移動
 - S78: SQLSTATE 23514 CI deploy ブロッカー解消
 
-<<<<<<< Updated upstream
 ## PS#6 S80 (2026-04-28)
 - 競馬AIモデル: best_time品質スコア18項目化 + グレード別confidence cap
   - horseRaceDataQualityScore: best_time フィールド追加 (17→18)
   - gradeMaxConfidence: G1=0.65 / G2=0.70 / G3=0.75 / その他=0.80
   - buildHistoricalBaselinePrediction: Math.min(confidence, gradeMaxConfidence) 適用
 - Commit: e2e9e692f on main
-=======
 ## PS#4 S87-S90 (2026-04-28) — vs-*ページ SEO 全施策完結
 
 ### S87: vs-*全174社 OGP メタタグ完結
@@ -22370,7 +22368,6 @@ Phase4 drafts 新規作成 (8ファイル):
 - S84: 118→138社
 - S85+S86: 158→174社完結 (sitemap 157→174)
 - S87-S90: SEO 全施策完結 (OGP/canonical/JSON-LD/seo-shell/routeMeta)
->>>>>>> Stashed changes
 
 ## PS#2 S60 (2026-04-28) — T-1 Phase9 全4弾 完結
 
@@ -22441,3 +22438,166 @@ Phase4 drafts 新規作成 (8ファイル):
   - buildHistoricalBaselinePrediction: race.course_type+race.distance を渡す
   - sort 12因子体制確立
 - Commit: 73f471252 on main
+## Win版#132 part 48 (2026-04-28 朝) — Codex worktree merge backlog monitor
+
+### 経緯
+production header version hover で `Null check operator used on a null value` エラー
+(Issue #857). 調査で **Codex#2 (codex/fix-header-version-badge / commit 151b9794)
+で既に修正済 (InkWell を Material でラップ) だが main 未マージ** だったと判明.
+
+### 実装
+1. cherry-pick 151b9794 → main (commit 1a8e6623) で即 hotfix
+2. Issue #857 起票 + 即 close
+3. 構造的弱点 (= Codex 完成 PR の hand-off lag で stale 化) を PS#1 に
+   cross-instance-pr (`docs/cross-instance-prs/20260428_codex_merge_backlog_monitor_ps1.md`)
+   - daily 09:00 JST cron で 7 日経過 codex/* branch を bot Issue 化提案
+
+### commit
+- 1a8e6623 (cherry-pick), c7098f72 (cross-instance-pr) on main
+
+### Philosophy alignment
+- 原則 1 (CEO 感) / 原則 6 (資本=時間) / AI-DEV 原則 7 (Quality gate)
+
+---
+
+## Win版#132 part 49 (2026-04-28 朝) — MCP server 基盤 skeleton
+
+### 経緯
+docs/MCP_AUTH_SECURITY_PRINCIPLES.md 10 原則 (part 42-43 確立) の **deny-by-default
+枠組み** を先行確立。後続 part が中身を埋めるだけで動く checkpoint design.
+
+### 実装
+1. `supabase/functions/_shared/mcp_auth_guard.ts` (134 行 / 新規)
+   - `validateBearer` / `requireScope` / `logMcpInvocation` シグネチャ
+   - dev bypass stub (`MCP_AUTH_BYPASS=1` AND `MCP_DEV_MODE=1` 両必須)
+   - TODO 6 項目を docstring 内に明示 (JWKS fetch+cache / RS256 verify /
+     iss 末尾スラッシュ両許容 / aud+scope+sub 抽出 / exp+nbf check / suspended check)
+2. migration `20260428073000_create_mcp_oauth_clients.sql` (RFC 7591 DCR / sha256 hash / suspended flag / 2 index / RLS service_role)
+3. migration `20260428074500_create_mcp_audit_log.sql` (3 index: client+invoked / tool+invoked / failure-burst / RLS service_role)
+
+### スコア更新
+MCP_AUTH 0/10 → **2/10** (原則 #2 deny-by-default + #7 audit log 枠組み)
+
+### commit
+- 26eb79e1 + aea75ab8 on main
+
+### Philosophy alignment
+- AI-DEV 原則 6 (Checkpoint): 段階実装で手戻り防止
+
+---
+
+## Win版#132 part 52 (2026-04-28 朝) — cross-instance-pr 4 件 cycle close 確認
+
+### 経緯
+Win版起票 4 cross-instance-pr (part 47/48/50/51) 全件 PS#1/PS#5 で **同日中 main merge 済**:
+
+| Part | 受領 | 実装 | 実装者 |
+| --- | --- | --- | --- |
+| 47 | PS#1 | migration-collision-check.yml | PS#1 |
+| 48 | PS#1 | codex-backlog-check + Issue #862 | PS#1 S57 |
+| 50 | PS#5 | audit_hub_migration_completeness.py + workflow | PS#5 S75 |
+| 51 | PS#1 | deploy-prod Verify step (version.json 4×15s) | PS#1 S58 |
+
+### 実装
+- root + done/ で重複 2 file 発見 (= 5 正本層 #1 崩壊) → `git rm` で root から削除
+- OPS-28 charter「発見→提案→実装→完了確認」1 日サイクル **完全実証**
+
+### commit
+- 3a814eb8d on main
+
+---
+
+## Win版#132 part 53 (2026-04-28 朝) — Codex routing matrix 明文化
+
+### 経緯
+Part 52 で発見「Win版起票 cross-instance-pr のうち Codex 担当 0 件」
+= 12 並行 fleet の構造的弱点 (= 4 worker lane うち Codex 2 lane 不稼働).
+
+### 実装
+- `docs/CODEX_WORKFLOW.md` §6 追加 — 5 質問判定 + 典型 Codex/Claude 案件 +
+  handoff template + 初回 3 候補
+- `inject-rules.txt` `[INSTANCE-ROLES]` に 5 質問 inline 注入 (毎ターン強制)
+- 5 質問: Q1 設計判断 / Q2 cross-instance 調整 / Q3 軸 docs 更新 / Q4 docs に残す
+  判断 / Q5 NotebookLM 連携 — **1 つでも YES = Claude / 全 NO = Codex**
+
+### commit
+- 830f8cdfe on main
+
+---
+
+## Win版#132 part 54 (2026-04-28 朝) — Codex routing matrix dogfood 起票
+
+### 経緯
+Part 53 で確立した 5 質問 matrix を即適用 → **3 cross-instance-pr 起票** (part 53
+に提示した「初回 3 候補」を自分で起票して charter 実証性確認).
+
+### 実装
+1. `20260428_stale_ef_audit_sql_view_codex1.md` → Codex#1 (SQL view)
+2. `20260428_memo_react_test_fixture_codex2.md` → Codex#2 (Deno test)
+3. `20260428_mcp_auth_guard_workos_jwks_codex.md` → Codex#1 or #2 (TS impl)
+
+全部 5 質問テーブル + handoff template 完備.
+
+### 4 worker lane 完成
+本日 1 日で起票:
+- Win版 → PS#1: part 47/48/51 (3 件)
+- Win版 → PS#5: part 50 (1 件)
+- Win版 → Codex#1: part 54 (1 件) **新規**
+- Win版 → Codex#2: part 54 (1 件) **新規**
+- Win版 → Codex 任意: part 54 (1 件) **新規**
+
+→ 12-instance fleet **全 4 worker lane 初稼働**
+
+### commit
+- 7314d1693 on main
+
+---
+
+## Win版#132 part 55 (2026-04-28 朝) — OPERATIONS_CHARTER §6 1 日サイクル運用パターン
+
+### 経緯
+Part 47-54 の 1 日 learning を charter に永続化 → 翌日以降の Win版 が
+session 0 から再発見せずに済む.
+
+### 実装
+docs/OPERATIONS_CHARTER.md §6 新章 (85 行追加):
+- §6.1 サイクル本体 ASCII 図 (発見 → 提案 → 実装 → 完了確認)
+- §6.2 4 worker lane reciprocal 実測表 (Win版 → PS#1/PS#5/Codex#1/#2)
+- §6.3 サイクル成立 6 項目チェックリスト
+- §6.4 スループット実測 (起票 7 / 当日完了 4 / 24h 100% 想定)
+
+### CLAUDE.md / inject-rules.txt 更新
+- `[OPS-28]` 行に「+ 1 日サイクル運用パターン」追記
+- inject-rules に成立条件 + スループット numbers inline
+
+### commit
+- e0c3f7198 on main
+
+---
+
+## Win版#132 part 56 (2026-04-28 夕) — migration time-relative non-determinism 検出提案
+
+### 経緯
+PS#5 S78 (commit c698681e9) で deploy SQLSTATE 23514 が 3 連続失敗.
+root cause = `wbs_tasks` の time-relative CHECK trigger:
+- migration 作成時 (2026-04-26) は deadline=2026-04-27 が **未来 → pass**
+- CI retry 時 (2026-04-28) は **過去化 → fail**
+- = 同 migration が deploy タイミングで挙動が変わる **non-determinism**
+
+これは Win版#132 part 47 で導入した collision detector の **盲点**.
+
+### 実装
+1. `memory/feedback_correction_20260428_migration_time_relative_check_drift.md`
+   (症状 + Why + 3 つの How to apply: defensive backfill / DEFERRABLE trigger /
+   reviewer check)
+2. `docs/cross-instance-prs/20260428_migration_time_relative_check_detector_ps1.md` —
+   PS#1 へ拡張提案 (案 A: 既存 collision-check 拡張 / 案 B: 新 workflow / 推奨 B)
+3. 5 質問 routing: Q1+Q2 YES → **Claude (PS#1) territory** (Codex 不適合)
+
+### commit
+- 7c7021976 on main
+
+### OPS-28 改善トリガー #4 sub-class
+「正本ズレ」の中で migration timestamp ↔ deploy 時刻ドリフトが生む data 状態
+inconsistency を **collision (= 同 timestamp) と独立した検出軸** として正式追加.
+
