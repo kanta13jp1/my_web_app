@@ -1,7 +1,7 @@
 ---
 title: "Supabase PostgreSQL Functions — Move Complex Logic Server-Side with RPC"
 tags: supabase,ai,indiedev,programming
-published: false
+published: true
 ---
 
 # Supabase PostgreSQL Functions — Move Complex Logic Server-Side with RPC
