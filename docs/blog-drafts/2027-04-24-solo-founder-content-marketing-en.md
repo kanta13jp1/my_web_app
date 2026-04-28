@@ -1,7 +1,7 @@
 ---
 title: "Content Marketing for Solo Founders: What 70 Dev.to Posts Taught Me"
 tags: ai,indiedev,buildinpublic,automation
-published: false
+published: true
 ---
 
 # Content Marketing for Solo Founders: What 70 Dev.to Posts Taught Me
