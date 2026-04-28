@@ -1,7 +1,7 @@
 ---
 title: "LLM プロンプトエンジニアリング実践 — CoT / Few-shot / System Prompt の設計"
 tags: AI,個人開発,automation,buildinpublic
-published: false
+published: true
 ---
 
 # LLM プロンプトエンジニアリング実践 — CoT / Few-shot / System Prompt の設計
