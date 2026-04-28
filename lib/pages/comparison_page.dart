@@ -8787,8 +8787,7 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'hotjar': const _CompetitorInfo(
     name: 'Hotjar',
     emoji: '🔥',
-    tagline:
-        'HotjarをUXヒートマップ・録画分析に使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    tagline: 'HotjarをUXヒートマップ・録画分析に使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
     searchKeyword: 'Hotjar代替 ヒートマップツール代替 UX分析代替 Hotjar日本語',
     accentColor: Color(0xFFFF3C00),
     painPoints: [
@@ -8892,8 +8891,7 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'brevo': const _CompetitorInfo(
     name: 'Brevo (旧Sendinblue)',
     emoji: '💌',
-    tagline:
-        'Brevoをメール+SMS統合マーケティングに使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    tagline: 'Brevoをメール+SMS統合マーケティングに使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
     searchKeyword: 'Brevo代替 Sendinblue代替 メール+SMS統合代替 Brevo日本語',
     accentColor: Color(0xFF0092FF),
     painPoints: [
@@ -9032,8 +9030,7 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'linear': const _CompetitorInfo(
     name: 'Linear',
     emoji: '⚡',
-    tagline:
-        'Linearを開発チーム向けプロジェクト管理に使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    tagline: 'Linearを開発チーム向けプロジェクト管理に使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
     searchKeyword: 'Linear代替 プロジェクト管理代替 イシュートラッカー代替 Linear日本語',
     accentColor: Color(0xFF5E6AD2),
     painPoints: [
@@ -9067,8 +9064,7 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'n8n': const _CompetitorInfo(
     name: 'n8n',
     emoji: '🔁',
-    tagline:
-        'n8nをオープンソースワークフロー自動化に使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    tagline: 'n8nをオープンソースワークフロー自動化に使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
     searchKeyword: 'n8n代替 ワークフロー自動化代替 Zapier代替OSS n8n日本語',
     accentColor: Color(0xFFEA4B71),
     painPoints: [
@@ -9207,8 +9203,7 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'bubble': const _CompetitorInfo(
     name: 'Bubble',
     emoji: '🫧',
-    tagline:
-        'Bubbleをノーコードウェブアプリ開発に使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    tagline: 'Bubbleをノーコードウェブアプリ開発に使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
     searchKeyword: 'Bubble代替 ノーコード開発代替 ビジュアルプログラミング代替 Bubble日本語',
     accentColor: Color(0xFF1A1A8C),
     painPoints: [
