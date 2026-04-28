@@ -23498,3 +23498,10 @@ SECOND_BRAIN 3.0 → 3.5/7. 残:
 ### commit
 (本 commit にて確定)
 
+## 2026-04-29 PS#6 S106 — 競馬予想モデル smallFieldBonus (少頭数レースconfidenceボーナス)
+### S106: smallFieldBonus(fieldSize) — 少頭数レースの予測容易性をconfidenceに反映
+- ≤4頭=+0.04(最小) / ≤6頭=+0.02 / ≤8頭=+0.01 / 9頭以上=0
+- fieldSizeConfidencePenalty(大型ペナルティ)の逆軸補完
+- confidence式: ...+favBonus+smallField (22 terms体制確立)
+- reasoning: 「少頭数補正:+X%」追加
+- commit: 4301a4227
