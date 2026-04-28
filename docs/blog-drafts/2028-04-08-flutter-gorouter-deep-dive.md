@@ -1,7 +1,7 @@
 ---
 title: "Flutter GoRouter 深化 — ネスト / リダイレクト / ディープリンク"
 tags: flutter,AI,個人開発,programming
-published: false
+published: true
 ---
 
 # Flutter GoRouter 深化 — ネスト / リダイレクト / ディープリンク
