@@ -23196,3 +23196,12 @@ dev.to 累計: 118本
 - competitorMeta +3エントリ / sitemap 235→238 URLs (priority=0.8)
 - SEO: "Suno代替"/"Udio代替"/"Ideogram代替" 超高検索ボリュームキーワード流入
 - commit: e145a4ec8
+
+## PS#4 S107 2026-04-29: 競合3社追加 195→198社 (runway/heygen/elevenlabs) + ai-video/ai-voice新カテゴリ
+
+- runway: RunwayML Gen-3 AI映像生成/月額$15~/ai-video新カテゴリ
+- heygen: HeyGen AIアバター動画/月額$29~/ai-video
+- elevenlabs: ElevenLabs AI音声合成TTS/月額$22~/ai-voice新カテゴリ
+- competitorMeta/sitemap: 既存登録済み確認
+- SEO: "Runway代替"/"HeyGen代替"/"ElevenLabs代替" 超高検索ボリュームキーワード流入
+- commit: c520cd9d2
