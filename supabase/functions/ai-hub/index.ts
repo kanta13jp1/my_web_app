@@ -3962,6 +3962,32 @@ serve(async (req: Request) => {
             usedTier = providerTier(providerId) ?? requestedTier ??
               "performance";
             usedModel = result.modelUsed;
+          } else if (result.isRetriable) {
+            // Quota/rate-limit: try fallback chain (anthropic → google → openai)
+            const fallbackChain = ["anthropic", "google", "openai"].filter(
+              (p) => p !== providerId && p in PROVIDER_CONFIGS,
+            );
+            for (const fbPid of fallbackChain) {
+              const fbResult = await callSingleProvider(
+                fbPid,
+                finalMessages,
+                undefined,
+              );
+              if (fbResult.ok && fbResult.text) {
+                console.warn(
+                  `[ai-hub] quota fallback: ${providerId} → ${fbPid}`,
+                );
+                resultText = fbResult.text;
+                usedProvider = fbPid;
+                usedTier = providerTier(fbPid) ?? "performance";
+                usedModel = fbResult.modelUsed;
+                break;
+              }
+            }
+            if (!resultText) {
+              failureDetail =
+                `${result.error ?? "quota exceeded"} (all fallbacks failed)`;
+            }
           } else {
             failureDetail = result.error ?? "provider failed";
           }
