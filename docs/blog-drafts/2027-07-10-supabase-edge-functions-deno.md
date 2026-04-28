@@ -1,7 +1,7 @@
 ---
 title: "Supabase Edge Functions + Deno 実践 — 本番で使える設計パターン"
 tags: supabase,AI,個人開発,postgresql
-published: false
+published: true
 ---
 
 # Supabase Edge Functions + Deno 実践 — 本番で使える設計パターン
