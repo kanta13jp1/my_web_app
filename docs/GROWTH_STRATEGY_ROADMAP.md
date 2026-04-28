@@ -23174,3 +23174,16 @@ dev.to 累計: 114本
   +damsireCoverage*0.01+popularityCoverage*0.01-fieldPenalty+oddsGapBonus
 - データ品質18フィールド全項目coverage化完結 (S87〜S97 11ステップ)
 - commit: f42adb8ae
+
+## PS版#2 S73 — T-1 Phase22 全4弾完結 (#115-#118) 2026-04-29
+
+- T-1 第115弾: Flutter テスト戦略 — Widget/Integration/Golden → dev.to 投稿成功
+  - https://dev.to/kanta13jp1/flutter-testing-strategy-widget-integration-and-golden-tests-41c1
+- T-1 第116弾: Supabase Auth 高度活用 — OAuth/Magic Link/MFA/RLS → dev.to 投稿成功
+  - https://dev.to/kanta13jp1/supabase-auth-advanced-oauth-magic-link-mfa-and-rls-23g5
+- T-1 第117弾: 個人開発の技術的負債管理 — 借りていい負債と返すべき負債 → dev.to 投稿成功
+  - https://dev.to/kanta13jp1/managing-technical-debt-in-indie-dev-which-debt-to-keep-which-to-pay-1eok
+- T-1 第118弾: Flutter GoRouter 深化 — ネスト/リダイレクト/ディープリンク → dev.to 投稿成功
+  - https://dev.to/kanta13jp1/flutter-gorouter-deep-dive-nested-routes-redirects-and-deep-links-4enb
+
+dev.to 累計: 118本
