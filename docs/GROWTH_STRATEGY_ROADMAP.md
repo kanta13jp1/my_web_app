@@ -22401,3 +22401,23 @@ Phase4 drafts 新規作成 (8ファイル):
 - → 3件全完了 / PR #860 CI green 見込み
 
 - commit: ecc413401 on main
+
+## PS#5 S80 (2026-04-28) — stale EF 29件削除 + site_guide_chat fix
+
+### stale EF 一括削除
+- 対象: deploy-prod.yml 未記載 + Flutter invoke なし の 29 EF ディレクトリ
+  - access-control, ai-image-generator, ai-workflow-automation, analytics-export, ar-navigation,
+    budget-financial-planner, customer-feedback, discord-notifications, dns-domain-manager,
+    document-esignature, elearning-course-manager, email-template-builder, family-sharing-manager,
+    feature-flags, fitness-health-tracker, github-pr-manager, home-iot-manager, knowledge-base,
+    language-learning, legal-compliance-manager, line-notifications, meeting-manager,
+    recruitment-job-board, semantic-search, smart-inbox-triage, two-factor-auth,
+    vehicle-fleet-manager, viral-video-generator, virtual-whiteboard
+- 除外: ai-writing-assistant (Win版#132 part 39), viral-video-ad-generator (feature work)
+- 5,211 行削除 / [EF-CAP-50] 規則遵守
+
+### site_guide_chat_page.dart fix
+- `_sendQuestion()` が addPostFrameCallback 経由で呼ばれる際の `Supabase.instance.client` を try/catch に変更
+- VM test で StateError 回避 (initialQuestion 渡し時のテスト互換性確保)
+
+- commit: 1d0e2728c + 6286fc4b4 on main
