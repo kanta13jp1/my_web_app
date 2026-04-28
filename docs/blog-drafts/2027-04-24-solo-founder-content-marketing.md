@@ -1,7 +1,7 @@
 ---
 title: "個人開発者のコンテンツマーケティング戦略 — dev.to 70本から学んだこと"
 tags: AI,個人開発,buildinpublic,automation
-published: false
+published: true
 ---
 
 # 個人開発者のコンテンツマーケティング戦略 — dev.to 70本から学んだこと
