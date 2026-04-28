@@ -215,6 +215,8 @@ Claude Code + Obsidian の PKM ベストプラクティス (Atomic Notes / Linki
 | --- | --- | --- | --- | --- |
 | 2026-04-29 | Win版#132 part 68 | 軸確立 (docs + Rule [BRAIN-32]) | — | 2.5/7 |
 | 2026-04-29 | Win版#132 part 69 | `memory/log.md` 新規 (#3 Daily Log) + PS#1 へ `consolidate-memory --lint` cross-instance-pr (#4 委譲) | #3 部分 (Daily Log 実装 / Master Index は既存 MEMORY.md) | 2.5 → **3.0/7** |
+| 2026-04-29 | Win版#132 part 70 | Codex#2 へ `memory-search-hub` EF cross-instance-pr (#7 委譲) | (#7 完成は Codex#2 受領後) | 3.0/7 (PR 受領で 4.0/7 想定) |
+| 2026-04-29 | Win版#132 part 71 | `query_artifact_TEMPLATE.md` 新規 + 第 1 実例 `query_artifact_20260429_hybrid_search_tradeoff.md` (#5 dogfood) | #5 (テンプレ + 1 実例 + 双方向 link) | 3.0 → **3.5/7** |
 
 **次回ターゲット**:
 - #2 `[[link]]` 慣習定着: 全 memory file の crosslink audit → Win版 territory
