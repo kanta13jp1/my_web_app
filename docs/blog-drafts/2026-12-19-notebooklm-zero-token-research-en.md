@@ -1,7 +1,7 @@
 ---
 title: "Zero-Token Research: Delegating Claude Code's Heaviest Work to NotebookLM"
 tags: ai,automation,indiedev,programming
-published: false
+published: true
 ---
 
 # Zero-Token Research: Delegating Claude Code's Heaviest Work to NotebookLM

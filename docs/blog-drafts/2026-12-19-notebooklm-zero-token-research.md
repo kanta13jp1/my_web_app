@@ -1,7 +1,7 @@
 ---
 title: "NotebookLM × Claude Code — ゼロトークンリサーチの実践"
 tags: AI,個人開発,buildinpublic,postgresql
-published: false
+published: true
 ---
 
 # NotebookLM × Claude Code — ゼロトークンリサーチの実践
