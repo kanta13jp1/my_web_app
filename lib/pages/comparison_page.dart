@@ -8234,6 +8234,108 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'mailchimp': const _CompetitorInfo(
+    name: 'Mailchimp',
+    emoji: '🐵',
+    tagline: 'MailchimpをEメールマーケティングに使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'Mailchimp代替 メールマーケティング代替 Mailchimp日本語代替',
+    accentColor: Color(0xFFFFE01B),
+    painPoints: [
+      'Eメールマーケティングに特化しており、財務管理・タスク・AI学習は別ツールが必要',
+      '無料プランは機能制限あり、月額約' + r'$' + '13〜で個人ブランドにはコスト負担が大きい',
+      'マーケティングキャンペーン管理は優秀だが、個人ライフOSとしての統合機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Eメールマーケティング',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'monday-com': const _CompetitorInfo(
+    name: 'Monday.com',
+    emoji: '📅',
+    tagline: 'Monday.comをチームプロジェクト管理に使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'Monday.com代替 プロジェクト管理代替 Monday代替',
+    accentColor: Color(0xFFFF3D57),
+    painPoints: [
+      'チームプロジェクト管理に特化しており、個人の財務・習慣・AI学習は対象外',
+      '月額約' + r'$' + '9〜のチーム向けプランで個人1人利用にはコスト最適化が難しい',
+      'ボード管理・自動化は充実しているが、個人ライフ全体のOS統合機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'チームプロジェクト管理',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'freshdesk': const _CompetitorInfo(
+    name: 'Freshdesk',
+    emoji: '🌿',
+    tagline: 'FreshdeskをAIカスタマーサポートに使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'Freshdesk代替 AIヘルプデスク代替 Zendesk代替 Freshdesk日本語',
+    accentColor: Color(0xFF25C16F),
+    painPoints: [
+      'AIサポートヘルプデスクに特化しており、財務・習慣・AI大学は別ツールが必要',
+      '無料プランは機能制限大、月額約' + r'$' + '15〜でチーム向け機能が中心',
+      'チケット管理・FAQ自動化は優秀だが、個人のライフマネジメント全体はサポート外',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AIヘルプデスク・チケット管理',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
@@ -8463,6 +8565,9 @@ class _ComparisonShellState extends State<_ComparisonShell> {
     'writesonic': 'ai-writing',
     'zendesk': 'support',
     'intercom': 'support',
+    'mailchimp': 'email-marketing',
+    'monday-com': 'project',
+    'freshdesk': 'support',
   };
 
   @override
@@ -8663,7 +8768,7 @@ class _ComparisonShellState extends State<_ComparisonShell> {
                       children: [
                         _buildTag(
                           icon: Icons.compare_arrows_rounded,
-                          label: '201社比較',
+                          label: '204社比較',
                           backgroundColor:
                               _info.accentColor.withValues(alpha: 0.18),
                           foregroundColor: _textPrimary,
@@ -9271,7 +9376,7 @@ class _ComparisonShellState extends State<_ComparisonShell> {
                       ),
                       SizedBox(width: 8),
                       Text(
-                        '全201社の競合ランドスケープを見る →',
+                        '全204社の競合ランドスケープを見る →',
                         style: TextStyle(
                           fontSize: 14,
                           color: _textSecondary,
