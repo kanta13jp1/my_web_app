@@ -22310,3 +22310,22 @@ Phase4 drafts 新規作成 (8ファイル):
   - https://dev.to/kanta13jp1/github-actions-schedule-0month-automation-infrastructure-for-solo-founders-3nb6
 
 ### 累計: dev.to 62本投稿 (60本マイルストーン達成)
+
+## PS#5 S78 (2026-04-28) — WBS recovery_plan backfill / CI SQLSTATE 23514 解消
+
+### 問題
+- 3件の CI deploy 失敗 (Issues #883-#885)
+- `20260426100000_wbs_github_issue_sync.sql` が `wbs_tasks` を UPDATE する際に `wbs_enforce_recovery_plan_trg` が発火
+- task `714ee4a4` (deadline=2026-04-27) の `recovery_plan=NULL` → SQLSTATE 23514
+- root cause: migration は 2026-04-26 に書かれたが CI retry が 2026-04-28 に実行 → deadline が過去日になった
+
+### 修正
+- `20260426090000_fix_wbs_recovery_plan_before_github_sync.sql` 新規追加
+  - `github_issue_sync` より前のタイムスタンプで deadline 超過タスクを一括 backfill
+  - `recovery_plan = 'TBD — 遅延 detect 済・CI deploy ブロッカー修正 (PS#5 S78 backfill)'`
+- commit: c698681e9 on main
+
+### PS#5 今セッション累計
+- S76: anon guard 11ページ + 型不一致修正 + _GanttTimelineTabState スコープ修正
+- S77: @TestOn('browser') PR #860 fix + 24EF audit done/移動
+- S78: SQLSTATE 23514 CI deploy ブロッカー解消
