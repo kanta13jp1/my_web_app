@@ -64,6 +64,7 @@ class _TomeDeckStudioPageState extends State<TomeDeckStudioPage> {
   }
 
   Future<void> _syncCompetitorSource() async {
+    if (Supabase.instance.client.auth.currentUser == null) return;
     setState(() {
       _isSyncingCompetitors = true;
       _syncStatus = 'Syncing competitor source...';

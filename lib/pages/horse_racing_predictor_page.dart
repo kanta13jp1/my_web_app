@@ -123,6 +123,10 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
   }
 
   Future<void> _loadAll() async {
+    if (_supabase.auth.currentUser == null) {
+      setState(() => _isLoading = false);
+      return;
+    }
     setState(() {
       _isLoading = true;
       _error = null;
@@ -213,6 +217,10 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
   }
 
   Future<void> _runAiPredictions({Map<String, dynamic>? race}) async {
+    if (_supabase.auth.currentUser == null) {
+      setState(() => _isLoading = false);
+      return;
+    }
     final raceId = race?['id'] as String?;
     setState(() {
       _isPredicting = true;
@@ -258,6 +266,10 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
   }
 
   Future<void> _refreshAccuracyLearning() async {
+    if (_supabase.auth.currentUser == null) {
+      setState(() => _isLoading = false);
+      return;
+    }
     setState(() {
       _isPredicting = true;
       _predictionStatus = 'レース結果と予想を照合し、券種別の学習データを更新しています';
@@ -283,6 +295,10 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
   }
 
   Future<void> _runLearningBackfill() async {
+    if (_supabase.auth.currentUser == null) {
+      setState(() => _isLoading = false);
+      return;
+    }
     setState(() {
       _isPredicting = true;
       _predictionStatus = '過去21日分のレースを低リスク基準で再予想し、結果と照合しています';
