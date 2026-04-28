@@ -1,7 +1,7 @@
 ---
 title: "Automate Code Review with GitHub Actions and Claude API"
 tags: ai,indiedev,automation,buildinpublic
-published: false
+published: true
 ---
 
 # Automate Code Review with GitHub Actions and Claude API

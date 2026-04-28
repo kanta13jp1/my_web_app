@@ -1,7 +1,7 @@
 ---
 title: "個人開発のコードレビュー自動化 — GHA + Claude API でPRを自動レビュー"
 tags: AI,個人開発,automation,buildinpublic
-published: false
+published: true
 ---
 
 # 個人開発のコードレビュー自動化 — GHA + Claude API でPRを自動レビュー
