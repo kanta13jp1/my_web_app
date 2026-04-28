@@ -846,6 +846,14 @@ function horseNumberLabel(entry?: Record<string, unknown>): string {
   return number ? String(number).padStart(2, "0") : String(entry?.horse_name ?? "");
 }
 
+function gradeMaxConfidence(grade: unknown): number {
+  const g = String(grade ?? "").trim();
+  if (/^(G1|GI|JpnI)$/i.test(g)) return 0.65; // top grade: hardest to predict
+  if (/^(G2|GII|JpnII)$/i.test(g)) return 0.70;
+  if (/^(G3|GIII|JpnIII)$/i.test(g)) return 0.75;
+  return 0.80;
+}
+
 function clampConfidence(value: number): number {
   if (!Number.isFinite(value)) return 0.5;
   return Math.max(0.05, Math.min(0.95, Math.round(value * 1000) / 1000));
@@ -871,6 +879,7 @@ function horseRaceDataQualityScore(entries: Record<string, unknown>[]): number {
     "stable",
     "prev_margin",
     "prev_days_ago",
+    "best_time",
   ];
   let filled = 0;
   for (const entry of entries) {
@@ -1013,7 +1022,8 @@ function buildHistoricalBaselinePrediction(
   const prevMarginCoverage = entries.length > 0
     ? entries.filter((entry) => entry.prev_margin !== null && entry.prev_margin !== undefined && String(entry.prev_margin).trim() !== "").length / entries.length
     : 0;
-  const confidence = clampConfidence(0.31 + dataQuality * 0.22 + oddsCoverage * 0.12 + historyCoverage * 0.07 + bestTimeCoverage * 0.05 + prevMarginCoverage * 0.03);
+  const maxConf = gradeMaxConfidence(race.grade);
+  const confidence = Math.min(clampConfidence(0.31 + dataQuality * 0.22 + oddsCoverage * 0.12 + historyCoverage * 0.07 + bestTimeCoverage * 0.05 + prevMarginCoverage * 0.03), maxConf);
   return {
     success: true,
     prediction: {
