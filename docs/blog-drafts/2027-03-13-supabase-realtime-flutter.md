@@ -1,7 +1,7 @@
 ---
 title: "Supabase Realtime × Flutter — ポーリングなしでリアルタイム UI を実装する"
 tags: supabase,flutter,個人開発,postgresql
-published: false
+published: true
 ---
 
 # Supabase Realtime × Flutter — ポーリングなしでリアルタイム UI を実装する

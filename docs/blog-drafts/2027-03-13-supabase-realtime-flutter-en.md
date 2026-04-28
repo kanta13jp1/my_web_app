@@ -1,7 +1,7 @@
 ---
 title: "Supabase Realtime + Flutter: Live UI Without Polling"
 tags: supabase,flutter,postgresql,indiedev
-published: false
+published: true
 ---
 
 # Supabase Realtime + Flutter: Live UI Without Polling
