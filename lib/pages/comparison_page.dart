@@ -9269,6 +9269,318 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'medium': const _CompetitorInfo(
+    name: 'Medium',
+    emoji: '📰',
+    tagline: 'Mediumをブログ・記事プラットフォームに使うか、AI支援+財務+習慣+AI大学を統合する個人 OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'Medium代替 ブログ代替 記事投稿プラットフォーム代替 Medium日本語',
+    accentColor: Color(0xFF000000),
+    painPoints: [
+      'ブログ・記事投稿に特化し、財務・習慣・AI大学管理は別ツールが必要',
+      '読者にペイウォールが表示され、無料読者層の確保が難しい',
+      'コンテンツ収益化以外の個人ライフOS統合機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ブログ・記事プラットフォーム',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'basecamp': const _CompetitorInfo(
+    name: 'Basecamp',
+    emoji: '⛺',
+    tagline:
+        'Basecampをシンプルなチームプロジェクト管理に使うか、AI支援+財務+習慣+AI大学を統合する個人 OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'Basecamp代替 プロジェクト管理代替 チーム管理代替 Basecamp日本語',
+    accentColor: Color(0xFF1D2D35),
+    painPoints: [
+      'チームプロジェクト管理に特化し、個人財務・AI大学・習慣管理は別ツール',
+      '月顆99USD固定(ユーザー無制限)でスモールチームには割高',
+      'シンプルさが強みだがAI支援・高度な個人最適化機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'チームプロジェクト管理',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'netlify': const _CompetitorInfo(
+    name: 'Netlify',
+    emoji: '🌐',
+    tagline:
+        'Netlifyをフロントエンドホスティング・CI/CDに使うか、AI支援+財務+習慣+AI大学を統合する個人 OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'Netlify代替 フロントエンドホスティング代替 静的サイトホスティング代替 Netlify日本語',
+    accentColor: Color(0xFF00C7B7),
+    painPoints: [
+      'フロントエンドホスティング・デプロイに特化し、個人財務・AI大学は別ツール',
+      '無料枠は帯域・ビルド時間に制限あり、スケールアップは月顆19USD～',
+      '開発者向けツールで非エンジニアの個人ライフ管理には不向き',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'フロントエンドホスティング・CI/CD',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'jira': const _CompetitorInfo(
+    name: 'Jira (Atlassian)',
+    emoji: '🔵',
+    tagline:
+        'Jiraをアジャイル開発チーム向けイシュートラッカーに使うか、AI支援+財務+習慣+AI大学を統合する個人 OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'Jira代替 イシュートラッカー代替 アジャイル管理代替 Jira日本語',
+    accentColor: Color(0xFF0052CC),
+    painPoints: [
+      '開発チームのイシュー・スプリント管理に特化し、個人財務・AI大学は別ツール',
+      '設定が複雑で導入・運用コストが高い、月题7.75USD/人～',
+      'ソフトウェア開発特化で非エンジニアの個人ライフ管理には不向き',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'アジャイル・スプリント管理',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'wrike': const _CompetitorInfo(
+    name: 'Wrike',
+    emoji: '🔧',
+    tagline:
+        'Wrikeをエンタープライズ向けプロジェクト管理に使うか、AI支援+財務+習慣+AI大学を統合する個人 OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'Wrike代替 プロジェクト管理代替 エンタープライズPM代替 Wrike日本語',
+    accentColor: Color(0xFF20B44B),
+    painPoints: [
+      'エンタープライズプロジェクト管理に特化し、個人財務・AI大学は別ツール',
+      '無料は5ユーザーまで、本格利用は月题9.80USD/人～のプランが必要',
+      '機能が豊富すぎて個人・スモールチームには複雑すぎる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'エンタープライズプロジェクト管理',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'sketch': const _CompetitorInfo(
+    name: 'Sketch',
+    emoji: '✏️',
+    tagline:
+        'SketchをMac向けUI/UXデザインツールに使うか、AI支援+財務+習慣+AI大学を統合する個人 OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'Sketch代替 UIデザインツール代替 Figma代替Mac専用 Sketch日本語',
+    accentColor: Color(0xFFFDB300),
+    painPoints: [
+      'UI/UXデザインに特化し、財務・習慣・AI大学管理は別ツールが必要',
+      'Mac専用でWindowsユーザーは利用不可、年顆99USD～のサブスク',
+      'デザインツール以外の個人ライフOS統合機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'UI/UXデザイン作成',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'later': const _CompetitorInfo(
+    name: 'Later',
+    emoji: '📆',
+    tagline:
+        'LaterをビジュアルSNSスケジューリングに使うか、AI支援+財務+習慣+AI大学を統合する個人 OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'Later代替 SNSスケジュール代替 Instagramスケジューラー代替 Later日本語',
+    accentColor: Color(0xFF5000E8),
+    painPoints: [
+      'Instagram・TikTok中心のSNSスケジューリングに特化し、個人財務管理は別ツール',
+      '無料は1ソーシャルプロファイルのみ、月顇16.67USD～のプランで複数管理',
+      'ビジュアルコンテンツ管理以外の個人ライフOS統合機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ビジュアルSNSスケジューリング',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'rytr': const _CompetitorInfo(
+    name: 'Rytr',
+    emoji: '✍️',
+    tagline: 'RytrをAIライティングアシスタントに使うか、AI支援+財務+習慣+AI大学を統合する個人 OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'Rytr代替 AIライティング代替 文章生成AI代替 Rytr日本語',
+    accentColor: Color(0xFF4557FF),
+    painPoints: [
+      'AI文章生成に特化し、財務・習慣・AI大学管理は別ツールが必要',
+      '無料は月１０，０００文字まで、月题9USD～のプランで制限解除',
+      'ライティング支援以外の個人ライフOS統合機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AIライティング・文章生成',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'gusto': const _CompetitorInfo(
+    name: 'Gusto',
+    emoji: '💼',
+    tagline: 'GustoをHR・給与計算・福利厉序管理に使うか、AI支援+財務+習慣+AI大学を統合する個人 OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'Gusto代替 給与計算代替 HR管理代替 Gusto日本語',
+    accentColor: Color(0xFF45C4B0),
+    painPoints: [
+      '給与計算・HR・福利厉序に特化し、個人財務・習慣・AI大学は別ツール',
+      '月顇40USD+6USD/人～と中小企業でもコストが積み上がる',
+      '米国向け設計で日本の労務法規・社会保険には対応していない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '給与計算・HR・福利厉序',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
@@ -9528,6 +9840,15 @@ class _ComparisonShellState extends State<_ComparisonShell> {
     'squarespace': 'website',
     'bubble': 'no-code',
     'ghost': 'newsletter',
+    'medium': 'newsletter',
+    'basecamp': 'project',
+    'netlify': 'hosting',
+    'jira': 'project',
+    'wrike': 'project',
+    'sketch': 'design',
+    'later': 'social-media',
+    'rytr': 'ai-writing',
+    'gusto': 'hr',
   };
 
   @override
@@ -9728,7 +10049,7 @@ class _ComparisonShellState extends State<_ComparisonShell> {
                       children: [
                         _buildTag(
                           icon: Icons.compare_arrows_rounded,
-                          label: '231社比較',
+                          label: '240社比較',
                           backgroundColor:
                               _info.accentColor.withValues(alpha: 0.18),
                           foregroundColor: _textPrimary,
@@ -10336,7 +10657,7 @@ class _ComparisonShellState extends State<_ComparisonShell> {
                       ),
                       SizedBox(width: 8),
                       Text(
-                        '全231社の競合ランドスケープを見る →',
+                        '全240社の競合ランドスケープを見る →',
                         style: TextStyle(
                           fontSize: 14,
                           color: _textSecondary,
