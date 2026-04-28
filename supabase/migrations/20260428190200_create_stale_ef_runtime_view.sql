@@ -92,10 +92,6 @@ CREATE POLICY "service_role write edge_function_runtime_invocations"
 
 DROP POLICY IF EXISTS "authenticated read edge_function_runtime_invocations"
   ON public.edge_function_runtime_invocations;
-CREATE POLICY "authenticated read edge_function_runtime_invocations"
-  ON public.edge_function_runtime_invocations
-  FOR SELECT
-  USING (auth.role() = 'authenticated');
 
 COMMENT ON TABLE public.edge_function_runtime_invocations IS
   'Runtime Edge Function call observations. Ingest from logs, hub middleware, or scheduled probes.';
@@ -147,5 +143,10 @@ COMMENT ON VIEW public.stale_ef_runtime_invocations IS
   'Edge Functions invoked in the last 24h but missing/inactive in deploy-prod.yml allowlist.';
 
 GRANT SELECT ON public.deploy_prod_function_list TO authenticated;
-GRANT SELECT ON public.edge_function_runtime_invocations TO authenticated;
-GRANT SELECT ON public.stale_ef_runtime_invocations TO authenticated;
+
+REVOKE ALL ON public.edge_function_runtime_invocations FROM anon, authenticated;
+REVOKE ALL ON public.stale_ef_runtime_invocations FROM anon, authenticated;
+
+GRANT ALL ON public.deploy_prod_function_list TO service_role;
+GRANT ALL ON public.edge_function_runtime_invocations TO service_role;
+GRANT SELECT ON public.stale_ef_runtime_invocations TO service_role;
