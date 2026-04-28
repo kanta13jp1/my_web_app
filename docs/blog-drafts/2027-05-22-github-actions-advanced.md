@@ -1,7 +1,7 @@
 ---
 title: "GitHub Actions 高度活用 — reusable workflow / matrix / cache で CI を賢くする"
 tags: AI,個人開発,automation,buildinpublic
-published: false
+published: true
 ---
 
 # GitHub Actions 高度活用 — reusable workflow / matrix / cache で CI を賢くする
