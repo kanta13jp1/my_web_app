@@ -1,7 +1,7 @@
 ---
 title: "Supabase Realtime × Flutter — Complete Guide to Real-Time Sync Patterns"
 tags: supabase,flutter,ai,indiedev
-published: false
+published: true
 ---
 
 # Supabase Realtime × Flutter — Complete Guide to Real-Time Sync Patterns
