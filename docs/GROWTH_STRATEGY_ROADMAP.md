@@ -22648,3 +22648,61 @@ inconsistency を **collision (= 同 timestamp) と独立した検出軸** と�
 ### Commits
 - 45413ae01 (Phase 11 drafts 8ファイル commit)
 - ef96da7f7 (orphan branch merge × 4)
+
+## Win版#132 part 57 (2026-04-28 夕) — ROADMAP-LOG rule 自己違反 backfill
+
+### 経緯
+Win版本日 part 47-56 のうち part 48/49/52/53/54/55/56 の **7 part 分が ROADMAP 未追記**.
+OPS-28 改善トリガー #4 (正本ズレ) を **Win版自身に再帰適用** し即対応.
+
+### 実装
+- `docs/GROWTH_STRATEGY_ROADMAP.md` 末尾に +163 行追記 (各 part セクション)
+- 2 conflict (PS#6 S80 vs PS#4 S87-90 / PS#6 S81 vs Win版 part 48-56) を Python re.sub
+  で union merge 解消 (= 順序保ち / 削除なし)
+
+### commit
+- 2fa00afe6 on main
+
+---
+
+## Win版#132 part 58 (2026-04-28 夜) — incoming cross-instance-pr の routing 判断
+
+### 経緯
+PS#5 S82 が `20260428_flutter_vm_test_js_interop_fix_win.md` で
+「Win版 or VSCode版」両宛起票 = OPS-28 §6 reciprocal **受領 lane 初稼働**.
+
+### 実装
+1. 元 PR 末尾に Win版 受領判断追記 (5 質問 + WORKDIR-ISOLATION rule 確認)
+2. 新 cross-instance-pr `20260428_flutter_vm_test_js_interop_fix_vscode.md` 起票
+   (VSCode版 territory 整合 / delegation form)
+3. routing 根拠: WORKDIR-ISOLATION 「`lib/pages/*.dart` = VSCode版 専任」/
+   緊急 hotfix 例外不該当 (期限 5/10)
+
+### routing 判断軸の正式拡張
+part 53 = 5 質問 matrix のみ → **part 58 = 5 質問 + WORKDIR-ISOLATION 双軸**
+(physical territory boundary 必須).
+
+### commit
+- 9f963b5af on main
+
+---
+
+## Win版#132 part 59 (2026-04-28 夜) — OPERATIONS_CHARTER §6 numbers refresh + 双方向 cycle
+
+### 経緯
+part 55 で初版 §6 / part 56-58 で新事象発生 → §6.2/6.4 を refresh.
+
+### 実装
+- §6.2 reciprocal 表に新 row: `PS#5 → Win版 → VSCode版` reroute lane (= bidirectional 初例)
+- Win版 → PS#1 row 更新: 47/48/51 → 47/48/51/56 / status ✅ → ✅ 3/4
+- §6.4 throughput: 起票 7 → 8 / 翌日想定 3 → 4 / 受領 lane 1 件
+- 双方向 cycle 確立行追加: 12-instance fleet **全 lane** が今日初稼働
+
+### commit
+- 20a311084 on main
+
+### 12-instance fleet 全 lane 初稼働実証 (本日)
+- Win版 起票 (8 件): PS#1 (4) / PS#5 (1) / Codex (3)
+- Win版 受領 (1 件): PS#5 → Win版 → VSCode版 reroute
+- 同日完了 (4 件): PS#1 S57+S58 / PS#5 S75 / Issue #862
+- 翌日想定 (4 件 + 受領 1): Codex 3 + PS#1 part 56 + VSCode版 part 58 reroute
