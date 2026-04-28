@@ -1,7 +1,7 @@
 ---
 title: "AI University: Turning 280 Competitors into a Content Strategy"
 tags: ai,indiedev,buildinpublic,postgresql
-published: false
+published: true
 ---
 
 # AI University: Turning 280 Competitors into a Content Strategy

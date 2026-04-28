@@ -1,7 +1,7 @@
 ---
 title: "AI大学280社データベースの設計思想 — 競合をコンテンツに変える戦略"
 tags: AI,個人開発,buildinpublic,postgresql
-published: false
+published: true
 ---
 
 # AI大学280社データベースの設計思想 — 競合をコンテンツに変える戦略
