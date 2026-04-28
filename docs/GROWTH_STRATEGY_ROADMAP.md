@@ -22769,32 +22769,62 @@ task 714ee4a4 unconditional backfill + 全超過タスク broad backfill を最�
 - `buildHorseRacePrompt`: 1強/混戦レース説明追加
 - commit: 0f0b9b7c6
 
+## 2026-04-28 PS#2 S67 — T-1 Phase16 (#91-#94) dev.to 投稿完了
 
-## PS#4 S93-S97 2026-04-28 (SEO強化フェーズ完結)
+### T-1 第91弾: Flutter 状態管理比較 (Provider / Riverpod / Bloc)
+- JA: docs/blog-drafts/2027-09-25-flutter-state-management-comparison.md
+- EN: docs/blog-drafts/2027-09-25-flutter-state-management-comparison-en.md
+- dev.to: https://dev.to/kanta13jp1/flutter-state-management-compared-provider-vs-riverpod-vs-bloc-5635
 
-### S93: vs-*全174社から/competitorsへハブリンク追加
-- 関連比較セクション末尾に「全174社の競合ランドスケープを見る→」ボタン追加
-- grid_view_rounded アイコン + _surfaceMuted カードデザイン
-- commit: eae29b082
+### T-1 第92弾: Supabase Auth 完全ガイド (Magic Link / OAuth / MFA)
+- JA: docs/blog-drafts/2027-10-02-supabase-auth-complete-guide.md
+- EN: docs/blog-drafts/2027-10-02-supabase-auth-complete-guide-en.md
+- dev.to: https://dev.to/kanta13jp1/supabase-auth-complete-guide-magic-link-oauth-and-mfa-2hk2
 
-### S94: /competitors 全社クリック可能化バグ修正
-- バグ: 旧21社のみ/vs-*遷移・153社は「準備中」スナックバー
-- 修正: 全社 onTap: () => Navigator.pushNamed('/vs-$id') に単純化
-- _known21 const・known パラメータ削除
-- commit: fa34e7f78
+### T-1 第93弾: 個人開発のコスト管理 ($0→$100/月スタック)
+- JA: docs/blog-drafts/2027-10-09-indie-dev-cost-management.md
+- EN: docs/blog-drafts/2027-10-09-indie-dev-cost-management-en.md
+- dev.to: https://dev.to/kanta13jp1/indie-dev-cost-management-designing-a-0-100month-stack-28ob
 
-### S95: vs-*全174社ページにパンくずナビ追加
-- _buildBreadcrumb: 自分株式会社 / 競合比較 / {Company}
-- WrapCrossAlignment.center でレスポンシブ対応
-- commit: (S95 commit)
+### T-1 第94弾: AI エージェント設計パターン (Tool Use / RAG / Memory)
+- JA: docs/blog-drafts/2027-10-16-ai-agent-design-patterns.md
+- EN: docs/blog-drafts/2027-10-16-ai-agent-design-patterns-en.md
+- dev.to: https://dev.to/kanta13jp1/ai-agent-design-patterns-tool-use-rag-and-memory-3bdf
 
-### S96: vs-*全174社ページにFAQPage JSON-LD追加
-- web/index.html vsMatchブロックに3Q&A FAQPage JSON-LD自動注入
-- Google検索FAQリッチリザルト対象化 → CTR改善
-- commit: e4726a579
+### 累計 dev.to 投稿数: 94本 (次マイルストーン: 100本)
+- Phase16 完了 (4弾: Flutter状態管理 / Supabase Auth / コスト管理 / AIエージェント設計)
+- 次フェーズ: Phase17 (#95-#98)
 
-### S97: _relatedCompetitors カテゴリ対応
-- _categoryOf map (21カテゴリ/95社) 追加
-- 同カテゴリ3社→featured→その他の順に関連会社表示改善
-- vs-cursor → windsurf/replit/bolt-new 等 AI dev 仲間を優先表示
-- commit: 4778775a5
+### commits
+- b9c17623e (Phase16 drafts)
+- e7c4364a5 (orphan merge ×4)
+
+## 2026-04-28 PS#2 S67 — T-1 Phase16 (#91-#94) dev.to 投稿完了
+
+### T-1 第91弾: Flutter 状態管理比較 (Provider / Riverpod / Bloc)
+- JA: docs/blog-drafts/2027-09-25-flutter-state-management-comparison.md
+- EN: docs/blog-drafts/2027-09-25-flutter-state-management-comparison-en.md
+- dev.to: https://dev.to/kanta13jp1/flutter-state-management-compared-provider-vs-riverpod-vs-bloc-5635
+
+### T-1 第92弾: Supabase Auth 完全ガイド (Magic Link / OAuth / MFA)
+- JA: docs/blog-drafts/2027-10-02-supabase-auth-complete-guide.md
+- EN: docs/blog-drafts/2027-10-02-supabase-auth-complete-guide-en.md
+- dev.to: https://dev.to/kanta13jp1/supabase-auth-complete-guide-magic-link-oauth-and-mfa-2hk2
+
+### T-1 第93弾: 個人開発のコスト管理 ($0→$100/月スタック)
+- JA: docs/blog-drafts/2027-10-09-indie-dev-cost-management.md
+- EN: docs/blog-drafts/2027-10-09-indie-dev-cost-management-en.md
+- dev.to: https://dev.to/kanta13jp1/indie-dev-cost-management-designing-a-0-100month-stack-28ob
+
+### T-1 第94弾: AI エージェント設計パターン (Tool Use / RAG / Memory)
+- JA: docs/blog-drafts/2027-10-16-ai-agent-design-patterns.md
+- EN: docs/blog-drafts/2027-10-16-ai-agent-design-patterns-en.md
+- dev.to: https://dev.to/kanta13jp1/ai-agent-design-patterns-tool-use-rag-and-memory-3bdf
+
+### 累計 dev.to 投稿数: 94本 (次マイルストーン: 100本)
+- Phase16 完了 (4弾: Flutter状態管理 / Supabase Auth / コスト管理 / AIエージェント設計)
+- 次フェーズ: Phase17 (#95-#98)
+
+### commits
+- b9c17623e (Phase16 drafts)
+- e7c4364a5 (orphan merge ×4)
