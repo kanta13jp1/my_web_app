@@ -23246,19 +23246,16 @@ CLAUDE.md hook table + ~/.claude/hooks/inject-rules.txt 注入. OPS-28 charter�
 ## PS#5 S91 — 2026-04-29 (CI health watch)
 
 - **collision patrol**: 920 timestamps 全 unique (clean)
-- **CI**: success (16:50) / deploy-prod: in_progress (S90)
-- **EF deploy gap**: なし
-- Achievement seed: 20260429033000_seed_achievements_ps5_s91.sql
-
-### commit
-(本 commit にて確定)
-
-## PS#5 S91 — 2026-04-29 (CI health watch)
-
-- **collision patrol**: 920 timestamps 全 unique (clean)
 - **CI**: success / deploy-prod: green
 - **EF deploy gap**: なし
 - Achievement seed: 20260429033000_seed_achievements_ps5_s91.sql
 
 ### commit
 (本 commit にて確定)
+
+## 2026-04-29 PS#6 S102 — 競馬予想モデル tightOddsPenalty (超混戦レースconfidence penalty)
+### S102: tightOddsPenalty(entries) — オッズ上位3頭差<1倍の超混戦レースにpenalty
+- 3頭以内spread<1倍=-0.06 / spread<2倍=-0.03 / それ以外=0
+- topTwoOddsGapBonusの逆軸として混戦予測困難性を明示
+- confidence式: ...-fieldPenalty-tightOdds+oddsGapBonus+recentForm
+- commit: f7d6fa21c
