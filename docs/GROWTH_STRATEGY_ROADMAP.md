@@ -22630,3 +22630,21 @@ inconsistency を **collision (= 同 timestamp) と独立した検出軸** と�
 - `buildHistoricalBaselinePrediction`: fieldPenalty適用 — 大型レースほどconfidence低下
 - `buildHorseRacePrompt`: 出走頭数リスク文 + 頭数表示追加 (波乱注意/高波乱リスク)
 - commit: f7e5901bc
+
+---
+
+## PS版#2 S62 (2026-04-28) — T-1 Phase 11 全4弾完結 (#71-#74) dev.to 累計74本
+
+### Phase 11 内容
+- #71: Flutter Web パフォーマンス最適化 (LCP 4.2s→1.5s/html renderer/compute()/WebP)
+  - https://dev.to/kanta13jp1/flutter-web-performance-real-measurements-real-fixes-34ic
+- #72: Supabase Postgres 関数・RPC (EF 45→28本削減/集計/トランザクション/JOIN隠蔽)
+  - https://dev.to/kanta13jp1/supabase-postgres-functions-and-rpc-replace-edge-functions-with-sql-2h7d
+- #73: GitHub Actions 高度活用 (Reusable Workflow/Matrix/Cache/Conditional/Schedule)
+  - https://dev.to/kanta13jp1/github-actions-beyond-the-basics-reusable-workflows-matrix-and-cache-5e4
+- #74: 個人開発の価格戦略 (フリーミアム/定額/使用量課金/価値ベース価格設定/A/Bテスト)
+  - https://dev.to/kanta13jp1/indie-dev-pricing-strategy-freemium-subscriptions-and-usage-based-models-31mm
+
+### Commits
+- 45413ae01 (Phase 11 drafts 8ファイル commit)
+- ef96da7f7 (orphan branch merge × 4)
