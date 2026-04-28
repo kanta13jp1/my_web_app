@@ -29,11 +29,66 @@ function json(data: unknown, status = 200): Response {
 async function getUserId(req: Request): Promise<string | null> {
   const authHeader = req.headers.get("Authorization") ?? "";
   if (!authHeader) return null;
+  const bearer = authHeader.replace(/^Bearer\s+/i, "").trim();
+  if (SERVICE_ROLE_KEY && bearer === SERVICE_ROLE_KEY) return "service_role";
   const userClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
     global: { headers: { Authorization: authHeader } },
   });
   const { data: { user } } = await userClient.auth.getUser();
   return user?.id ?? null;
+}
+
+type OpenAiImageData = {
+  url?: string;
+  b64_json?: string;
+  revised_prompt?: string;
+};
+
+type OpenAiImageResponse = {
+  data?: OpenAiImageData[];
+  error?: { message?: string };
+};
+
+const supportedImageModels = new Set([
+  "gpt-image-1.5",
+  "gpt-image-1",
+  "gpt-image-1-mini",
+  "dall-e-3",
+]);
+
+function normalizeImageModel(value: unknown): string | null {
+  const raw = typeof value === "string" ? value.trim().toLowerCase() : "";
+  if (!raw) return null;
+  if (raw === "image-gen-2" || raw === "gpt-image-2") return "gpt-image-1.5";
+  return supportedImageModels.has(raw) ? raw : null;
+}
+
+function imageModelCandidates(body: Record<string, unknown>): string[] {
+  const candidates = [
+    normalizeImageModel(body.preferredModel ?? body.model),
+    ...(
+      Array.isArray(body.creativePipeline)
+        ? body.creativePipeline.map((item) => normalizeImageModel(item))
+        : []
+    ),
+    "gpt-image-1.5",
+    "gpt-image-1",
+    "dall-e-3",
+  ].filter((item): item is string => Boolean(item));
+  return [...new Set(candidates)];
+}
+
+function imageSizeForModel(model: string, requested: string): string {
+  if (model.startsWith("gpt-image-")) {
+    if (requested === "1792x1024") return "1536x1024";
+    if (requested === "1024x1792") return "1024x1536";
+    return ["1024x1024", "1536x1024", "1024x1536", "auto"].includes(requested)
+      ? requested
+      : "1536x1024";
+  }
+  return ["1024x1024", "1024x1792", "1792x1024"].includes(requested)
+    ? requested
+    : "1792x1024";
 }
 
 async function listItems(admin: SupabaseClient, source: string, userId: string, limit = 50) {
@@ -245,53 +300,100 @@ serve(async (req) => {
         const prompt = String(body.prompt ?? "").trim();
         if (!prompt) return json({ error: "prompt required" }, 400);
 
-        const allowedSizes = ["1024x1024", "1024x1792", "1792x1024"];
         const requestedSize = String(body.size ?? "1024x1024");
-        const size = allowedSizes.includes(requestedSize) ? requestedSize : "1024x1024";
         const requestedStyle = String(body.style ?? "vivid");
         const style = requestedStyle === "natural" ? "natural" : "vivid";
+        const requestedQuality = String(body.quality ?? "medium");
+        const quality = ["low", "medium", "high", "auto"].includes(requestedQuality)
+          ? requestedQuality
+          : "medium";
+        const returnB64 = body.returnB64 === true;
+        const persist = body.persist !== false;
+        const errors: Array<{ model: string; status: number; error: string }> = [];
+        let generated: OpenAiImageData | undefined;
+        let usedModel = "";
+        let usedSize = "";
 
-        const res = await fetch("https://api.openai.com/v1/images/generations", {
-          method: "POST",
-          headers: { "Authorization": `Bearer ${openaiKey}`, "Content-Type": "application/json" },
-          body: JSON.stringify({
+        for (const model of imageModelCandidates(body)) {
+          const size = imageSizeForModel(model, requestedSize);
+          const payload: Record<string, unknown> = {
             prompt,
             n: 1,
             size,
-            style,
-            model: "dall-e-3",
-            response_format: "url",
-          }),
-        });
-        const raw = await res.text();
-        let result: { data?: Array<{ url?: string; revised_prompt?: string }>; error?: { message?: string } };
-        try {
-          result = JSON.parse(raw);
-        } catch {
-          return json({ success: false, error: "OpenAI image response was not JSON", detail: raw.slice(0, 500) }, 502);
+            model,
+          };
+          if (model.startsWith("gpt-image-")) {
+            payload.quality = quality;
+            payload.output_format = "png";
+          } else {
+            payload.style = style;
+            payload.response_format = "url";
+          }
+
+          const res = await fetch("https://api.openai.com/v1/images/generations", {
+            method: "POST",
+            headers: { "Authorization": `Bearer ${openaiKey}`, "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
+          const raw = await res.text();
+          let result: OpenAiImageResponse;
+          try {
+            result = JSON.parse(raw);
+          } catch {
+            errors.push({ model, status: res.status, error: raw.slice(0, 500) });
+            continue;
+          }
+          if (!res.ok) {
+            errors.push({
+              model,
+              status: res.status,
+              error: result.error?.message ?? raw.slice(0, 500),
+            });
+            continue;
+          }
+          generated = result.data?.[0];
+          usedModel = model;
+          usedSize = size;
+          break;
         }
-        if (!res.ok) {
+
+        const imageUrl = generated?.url ?? "";
+        const b64Json = generated?.b64_json ?? "";
+        const dataUrl = b64Json ? `data:image/png;base64,${b64Json}` : "";
+        if (!imageUrl && !b64Json) {
           return json({
             success: false,
-            error: result.error?.message ?? `OpenAI image generation failed (${res.status})`,
-            detail: raw.slice(0, 500),
+            error: "OpenAI image response did not include url or b64_json",
+            errors,
           }, 502);
         }
 
-        const generated = result.data?.[0];
-        const imageUrl = generated?.url ?? "";
-        if (!imageUrl) return json({ success: false, error: "OpenAI image URL was empty" }, 502);
-
-        const item = await addItem(admin, "ai_image", userId, {
+        const item = persist
+          ? await addItem(admin, "ai_image", userId, {
+            prompt,
+            url: imageUrl || dataUrl,
+            size: usedSize,
+            style,
+            quality,
+            provider: "openai",
+            model: usedModel,
+            requested_model: body.preferredModel ?? body.model ?? null,
+            revised_prompt: generated?.revised_prompt ?? null,
+          })
+          : null;
+        return json({
+          success: true,
+          image: item,
+          url: imageUrl || dataUrl,
+          b64Json: returnB64 ? b64Json : undefined,
           prompt,
-          url: imageUrl,
-          size,
+          size: usedSize,
           style,
-          provider: "openai",
-          model: "dall-e-3",
-          revised_prompt: generated?.revised_prompt ?? null,
+          quality,
+          model: usedModel,
+          requestedModel: body.preferredModel ?? body.model ?? null,
+          fallbackErrors: errors,
         });
-        return json({ success: true, image: item, url: imageUrl, prompt, size, style });
       }
       case "image.list": return json({ success: true, images: await listItems(admin, "ai_image", userId) });
 
