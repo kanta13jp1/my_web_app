@@ -8993,6 +8993,109 @@ class _ComparisonShellState extends State<_ComparisonShell> {
     'hailuo': 'ai-video',
     'sendgrid': 'email-marketing',
     'convertkit': 'newsletter',
+    'mailerlite': 'email-marketing',
+    'hotjar': 'analytics',
+    'amplitude': 'analytics',
+    'mailerlite': const _CompetitorInfo(
+      name: 'MailerLite',
+      emoji: '📧',
+      tagline:
+          'MailerLiteをシンプルで使いやすいメールマーケティングツールと比較。自分株式会社は日本語対応で直感的なメール配信・自動化を提供します。',
+      searchKeyword:
+          'MailerLite代替 メールマーケティング代替 メール配信代替 MailerLiteより安い MailerLite日本語',
+      accentColor: Color(0xFF00B057),
+      painPoints: [
+        'テンプレートが英語中心で日本語対応が弱い',
+        '月額費用がリスト拡大とともに上昇する',
+        '詳細なセグメント設定が複雑',
+      ],
+      features: [
+        _FeatureComparison(
+          feature: 'メール配信',
+          competitor: '直感的エディタ・月額9USD~',
+          ourApp: '統合メール配信機能',
+          ourAppWins: true,
+        ),
+        _FeatureComparison(
+          feature: '自動化ワークフロー',
+          competitor: 'ドラッグ&ドロップ式フロー',
+          ourApp: 'AIサポート付き自動化',
+          ourAppWins: true,
+        ),
+        _FeatureComparison(
+          feature: '日本語サポート',
+          competitor: '英語中心・日本語部分対応',
+          ourApp: '完全日本語対応',
+          ourAppWins: true,
+        ),
+      ],
+    ),
+    'hotjar': const _CompetitorInfo(
+      name: 'Hotjar',
+      emoji: '🔥',
+      tagline: 'HotjarをUXヒートマップ・録画ツールと比較。自分株式会社はAIによる行動分析とライフ最適化インサイトを一元提供します。',
+      searchKeyword: 'Hotjar代替 ヒートマップツール代替 UX分析代替 Hotjarより安い Hotjar日本語',
+      accentColor: Color(0xFFFF3C00),
+      painPoints: [
+        'プロプランが高額で中小企業には負担',
+        'ヒートマップ以外の分析機能が限定的',
+        '録画ストレージが有限でコスト増大',
+      ],
+      features: [
+        _FeatureComparison(
+          feature: 'ヒートマップ分析',
+          competitor: '専門ヒートマップ・無料~月額32USD',
+          ourApp: 'AI行動インサイト統合',
+          ourAppWins: true,
+        ),
+        _FeatureComparison(
+          feature: 'セッション録画',
+          competitor: 'セッション録画・フィルタリング',
+          ourApp: 'AIパターン抽出で効率化',
+          ourAppWins: true,
+        ),
+        _FeatureComparison(
+          feature: '統合分析',
+          competitor: 'UX特化・他ツール連携必須',
+          ourApp: 'ライフマネジメント統合分析',
+          ourAppWins: true,
+        ),
+      ],
+    ),
+    'amplitude': const _CompetitorInfo(
+      name: 'Amplitude',
+      emoji: '📊',
+      tagline:
+          'AmplitudeをプロダクトアナリティクスSaaSと比較。自分株式会社はAI統合でユーザー行動分析と個人最適化を同時実現します。',
+      searchKeyword:
+          'Amplitude代替 プロダクトアナリティクス代替 行動分析代替 Amplitudeより安い Amplitude日本語',
+      accentColor: Color(0xFF1F5EFF),
+      painPoints: [
+        'エンタープライズプランが高額',
+        'データ量増加による課金体系が複雑',
+        'B2B SaaS特化で個人利用には過剰',
+      ],
+      features: [
+        _FeatureComparison(
+          feature: 'プロダクト分析',
+          competitor: '深いファネル・コホート分析/無料~月額49USD',
+          ourApp: 'AI統合ライフ分析',
+          ourAppWins: true,
+        ),
+        _FeatureComparison(
+          feature: 'ユーザーセグメント',
+          competitor: '高精度セグメンテーション',
+          ourApp: 'AIパーソナライズセグメント',
+          ourAppWins: true,
+        ),
+        _FeatureComparison(
+          feature: '日本語サポート',
+          competitor: '英語中心',
+          ourApp: '完全日本語対応',
+          ourAppWins: true,
+        ),
+      ],
+    ),
   };
 
   @override
@@ -9193,7 +9296,7 @@ class _ComparisonShellState extends State<_ComparisonShell> {
                       children: [
                         _buildTag(
                           icon: Icons.compare_arrows_rounded,
-                          label: '216社比較',
+                          label: '219社比較',
                           backgroundColor:
                               _info.accentColor.withValues(alpha: 0.18),
                           foregroundColor: _textPrimary,
@@ -9801,7 +9904,7 @@ class _ComparisonShellState extends State<_ComparisonShell> {
                       ),
                       SizedBox(width: 8),
                       Text(
-                        '全216社の競合ランドスケープを見る →',
+                        '全219社の競合ランドスケープを見る →',
                         style: TextStyle(
                           fontSize: 14,
                           color: _textSecondary,
