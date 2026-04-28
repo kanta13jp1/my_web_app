@@ -23162,3 +23162,15 @@ dev.to 累計: 114本
   +sexCoverage*0.01+horseWeightCoverage*0.01+stableCoverage*0.01+damCoverage*0.01
   -fieldPenalty+oddsGapBonus
 - commit: e7cf85de9
+
+## 2026-04-28 PS#6 S97 — 競馬予想モデル damsireCoverage+popularityCoverage (母父血統・人気充足率 confidence 19 terms) データ品質18フィールドcoverage化完結
+### S97: damsireCoverage+popularityCoverage — 母父血統・人気データ充足率をconfidence計算に追加
+- damsireCoverage: damsire フィールドが揃っている馬の割合 × 0.01
+- popularityCoverage: popularity フィールドが揃っている馬の割合 × 0.01
+- confidence最終式 (19 terms): 0.31+dataQuality*0.22+oddsCoverage*0.12+historyCoverage*0.07
+  +bestTimeCoverage*0.05+prevMarginCoverage*0.03+jockeyCoverage*0.02+trainerCoverage*0.01
+  +bloodlineCoverage*0.01+last3FCoverage*0.01+winningTimeCoverage*0.01+weightChangeCoverage*0.01
+  +ageCoverage*0.01+sexCoverage*0.01+horseWeightCoverage*0.01+stableCoverage*0.01+damCoverage*0.01
+  +damsireCoverage*0.01+popularityCoverage*0.01-fieldPenalty+oddsGapBonus
+- データ品質18フィールド全項目coverage化完結 (S87〜S97 11ステップ)
+- commit: f42adb8ae
