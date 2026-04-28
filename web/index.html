@@ -182,32 +182,33 @@
 
     body {
       margin: 0;
-      background:
-        radial-gradient(circle at top right, rgba(79, 70, 229, 0.16), transparent 36%),
-        linear-gradient(180deg, #eef2ff 0%, #ffffff 72%);
+      background: linear-gradient(180deg, #f8fbff 0%, #ffffff 76%);
       color: #111827;
     }
 
     #seo-shell {
       min-height: 100vh;
       display: flex;
-      align-items: center;
+      align-items: flex-start;
       justify-content: center;
-      padding: 24px;
+      padding: 58px 24px 32px;
       box-sizing: border-box;
     }
 
     .seo-card {
-      width: min(880px, 100%);
-      padding: 28px;
-      border-radius: 24px;
-      background: rgba(255, 255, 255, 0.94);
-      border: 1px solid rgba(99, 102, 241, 0.14);
-      box-shadow: 0 20px 60px rgba(15, 23, 42, 0.10);
+      width: min(1180px, 100%);
+      padding: 0;
+      border-radius: 10px;
+      background:
+        linear-gradient(176deg, rgba(255, 255, 255, 0) 0 38%, rgba(234, 244, 255, 0.86) 39% 100%),
+        #f8fbff;
+      border: 0;
+      box-shadow: none;
+      text-align: center;
     }
 
     .seo-badge {
-      margin: 0 0 10px;
+      margin: 0 0 12px;
       display: inline-flex;
       align-items: center;
       gap: 8px;
@@ -223,13 +224,15 @@
 
     .seo-card h1 {
       margin: 0;
-      font-family: "Noto Serif JP", serif;
-      font-size: clamp(32px, 5vw, 54px);
-      line-height: 1.08;
+      font-family: "Noto Sans JP", "Noto Sans", sans-serif;
+      font-size: clamp(42px, 5vw, 56px);
+      line-height: 1.12;
+      letter-spacing: 0;
     }
 
     .seo-card p {
-      margin: 14px 0 0;
+      max-width: 760px;
+      margin: 16px auto 0;
       font-size: 16px;
       line-height: 1.75;
       color: #374151;
@@ -243,6 +246,7 @@
     .seo-tags {
       display: flex;
       flex-wrap: wrap;
+      justify-content: center;
       gap: 10px;
       margin-top: 18px;
     }
@@ -259,8 +263,9 @@
     .seo-links {
       display: flex;
       flex-wrap: wrap;
+      justify-content: center;
       gap: 12px;
-      margin-top: 22px;
+      margin-top: 24px;
     }
 
     .seo-links a {
@@ -269,20 +274,102 @@
       justify-content: center;
       min-height: 46px;
       padding: 0 16px;
-      border-radius: 14px;
+      border-radius: 6px;
       text-decoration: none;
       font-weight: 700;
       transition: background-color 120ms ease;
     }
 
     .seo-links a.primary {
-      background: #3949ab;
+      background: #1f7ae0;
       color: #ffffff;
+      min-width: 160px;
     }
 
     .seo-links a.secondary {
-      background: #eef2ff;
-      color: #3949ab;
+      background: #ffffff;
+      color: #172033;
+      border: 1px solid #d8e2ee;
+    }
+
+    .seo-product-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      margin-top: 42px;
+      border: 1px solid #dce7f2;
+      border-radius: 8px;
+      overflow: hidden;
+      text-align: left;
+      background: rgba(255, 255, 255, 0.92);
+    }
+
+    .seo-product-card {
+      min-height: 214px;
+      padding: 30px;
+      border-right: 1px solid #dce7f2;
+    }
+
+    .seo-product-card:last-child {
+      border-right: 0;
+    }
+
+    .seo-product-card h2 {
+      margin: 0;
+      color: #245078;
+      font-size: 21px;
+      line-height: 1.25;
+    }
+
+    .seo-product-card p {
+      margin: 12px 0 0;
+      color: #4b5a6a;
+      font-size: 14px;
+      line-height: 1.55;
+    }
+
+    .seo-mock {
+      margin-top: 24px;
+      min-height: 76px;
+      padding: 16px;
+      border: 1px solid #e3eaf4;
+      border-radius: 6px;
+      background: white;
+      box-shadow: 0 10px 18px rgba(30, 58, 95, 0.08);
+      color: #172033;
+      font-size: 13px;
+    }
+
+    .seo-bars {
+      display: flex;
+      align-items: end;
+      gap: 8px;
+      height: 72px;
+    }
+
+    .seo-bars span {
+      width: 14px;
+      border-radius: 3px 3px 0 0;
+      background: #2f9ded;
+    }
+
+    .seo-bars span:nth-child(2n) {
+      background: #ffb547;
+    }
+
+    .seo-bars span:nth-child(3n) {
+      background: #43c77d;
+    }
+
+    .seo-new {
+      margin-top: 34px;
+      padding: 24px;
+      background: rgba(255, 255, 255, 0.9);
+    }
+
+    .seo-new h2 {
+      margin: 0;
+      color: #172033;
+      font-size: 28px;
     }
 
     .seo-loading {
@@ -305,8 +392,7 @@
       }
 
       .seo-card {
-        padding: 22px;
-        border-radius: 20px;
+        border-radius: 0;
       }
 
       .seo-card p {
@@ -315,6 +401,19 @@
 
       .seo-links a {
         width: 100%;
+      }
+
+      .seo-product-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .seo-product-card {
+        border-right: 0;
+        border-bottom: 1px solid #dce7f2;
+      }
+
+      .seo-product-card:last-child {
+        border-bottom: 0;
       }
     }
   </style>
@@ -349,15 +448,39 @@
       </div>
       <nav class="seo-links" aria-label="公開ページ">
         <a class="primary" href="https://my-web-app-b67f4.web.app/">無料で始める</a>
-        <a class="secondary" href="https://my-web-app-b67f4.web.app/gemini-university">Gemini University</a>
-        <a class="secondary" href="https://my-web-app-b67f4.web.app/feature-requests">機能リクエスト</a>
-        <a class="secondary" href="https://my-web-app-b67f4.web.app/danshari">断捨離ツール</a>
+        <a class="secondary" href="https://my-web-app-b67f4.web.app/">Watch Demo</a>
         <a class="secondary" href="https://my-web-app-b67f4.web.app/project-gantt">WBSガントチャート</a>
-        <a class="secondary" href="https://my-web-app-b67f4.web.app/competitors">競合174社比較</a>
-        <a class="secondary" href="https://my-web-app-b67f4.web.app/ai-university">AI大学</a>
-        <a class="secondary" href="https://my-web-app-b67f4.web.app/ai-dev-principles">AI開発原則</a>
-        <a class="secondary" href="https://my-web-app-b67f4.web.app/public-guitar-gallery">公開ギャラリー</a>
       </nav>
+      <section class="seo-product-grid" aria-label="主要機能">
+        <article class="seo-product-card">
+          <h2>Task Automations</h2>
+          <p>迷ったタスクを、次の一手まで自動整理。</p>
+          <div class="seo-mock">
+            <strong>When</strong> WBS task is blocked<br>
+            <strong>Then</strong> Split into next actions
+          </div>
+        </article>
+        <article class="seo-product-card">
+          <h2>Time Tracking</h2>
+          <p>集中時間と習慣を、内蔵タイマーで記録。</p>
+          <div class="seo-mock" style="text-align:center;font-size:28px;letter-spacing:1px;">
+            02:17:45
+          </div>
+        </article>
+        <article class="seo-product-card">
+          <h2>Advanced Reporting</h2>
+          <p>WBS・成長・習慣をレポートで俯瞰。</p>
+          <div class="seo-mock seo-bars" aria-hidden="true">
+            <span style="height:45px"></span><span style="height:64px"></span><span style="height:38px"></span>
+            <span style="height:55px"></span><span style="height:32px"></span><span style="height:70px"></span>
+            <span style="height:48px"></span><span style="height:62px"></span>
+          </div>
+        </article>
+      </section>
+      <section class="seo-new" aria-label="新機能">
+        <h2>What's New?</h2>
+        <p>Smart Automations・Time Tracking・Detailed Reports を公開中。</p>
+      </section>
       <p class="seo-loading">Loading application...</p>
       <noscript>
         JavaScript is required to use the full app. Search engines and preview crawlers
