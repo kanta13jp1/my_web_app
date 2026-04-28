@@ -1,7 +1,7 @@
 ---
 title: "Indie Dev SaaS Monetization: How to Improve Free-to-Paid Conversion"
 tags: ai,indiedev,buildinpublic,automation
-published: false
+published: true
 ---
 
 # Indie Dev SaaS Monetization: How to Improve Free-to-Paid Conversion
