@@ -226,6 +226,7 @@ Anthropic engineer 視点では「Vibe Coding は不可避」だが、**Producti
 | 日付 | part | 実装 | 達成原則 | baseline |
 | --- | --- | --- | --- | --- |
 | 2026-04-28 | Win版#132 part 66 | 軸確立 (docs + Rule [VIBE-30]) | — | 4.5/7 |
+| 2026-04-29 | Win版#132 part 72 | `docs/CORE_LEAF_BOUNDARY.md` 新規 (4 Tier 統合表現 / Schema / Core / Leaf / Auto-Generated 明示) — SECOND_BRAIN #1 と同時 dogfood (1 doc 2 軸押上 第 1 例) | #1 Trunk/Leaf 厳格分離 | 4.5 → **5.5/7** |
 
 **次回ターゲット**:
 - #3 Sandbox 強化: `scripts/audit_supabase_rls.py` 新規 → Codex#1 cross-instance-pr 候補
