@@ -1219,6 +1219,16 @@ function favOddsBonus(entries: Record<string, unknown>[]): number {
   return 0; // 混戦 or データなし
 }
 
+function bloodlineTopHorseBonus(topEntry: Record<string, unknown> | undefined): number {
+  if (!topEntry) return 0;
+  const hasSire = topEntry.sire && String(topEntry.sire).trim() !== "";
+  const hasDam = topEntry.dam && String(topEntry.dam).trim() !== "";
+  const hasDamsire = topEntry.damsire && String(topEntry.damsire).trim() !== "";
+  if (hasSire && hasDam && hasDamsire) return 0.02; // 血統3項目完全充足
+  if (hasSire || hasDam) return 0.01;               // 父 or 母のみ
+  return 0;
+}
+
 function smallFieldBonus(fieldSize: number): number {
   if (fieldSize <= 4) return 0.04; // 最小頭数 — 候補絞られ予測容易
   if (fieldSize <= 6) return 0.02; // 小頭数
@@ -1536,7 +1546,8 @@ function buildHistoricalBaselinePrediction(
   const venueBonus = venueConfidenceBonus(race.venue);
   const favBonus = favOddsBonus(entries);
   const smallField = smallFieldBonus(entries.length);
-  const confidence = Math.min(clampConfidence(0.31 + dataQuality * 0.22 + oddsCoverage * 0.12 + historyCoverage * 0.07 + bestTimeCoverage * 0.05 + prevMarginCoverage * 0.03 + jockeyCoverage * 0.02 + trainerCoverage * 0.01 + bloodlineCoverage * 0.01 + last3FCoverage * 0.01 + winningTimeCoverage * 0.01 + weightChangeCoverage * 0.01 + ageCoverage * 0.01 + sexCoverage * 0.01 + horseWeightCoverage * 0.01 + stableCoverage * 0.01 + damCoverage * 0.01 + damsireCoverage * 0.01 + popularityCoverage * 0.01 - fieldPenalty - tightOdds + oddsGapBonus + recentForm + venueBonus + favBonus + smallField), maxConf);
+  const bloodlineBonus = bloodlineTopHorseBonus(first);
+  const confidence = Math.min(clampConfidence(0.31 + dataQuality * 0.22 + oddsCoverage * 0.12 + historyCoverage * 0.07 + bestTimeCoverage * 0.05 + prevMarginCoverage * 0.03 + jockeyCoverage * 0.02 + trainerCoverage * 0.01 + bloodlineCoverage * 0.01 + last3FCoverage * 0.01 + winningTimeCoverage * 0.01 + weightChangeCoverage * 0.01 + ageCoverage * 0.01 + sexCoverage * 0.01 + horseWeightCoverage * 0.01 + stableCoverage * 0.01 + damCoverage * 0.01 + damsireCoverage * 0.01 + popularityCoverage * 0.01 - fieldPenalty - tightOdds + oddsGapBonus + recentForm + venueBonus + favBonus + smallField + bloodlineBonus), maxConf);
   return {
     success: true,
     prediction: {
@@ -1548,7 +1559,7 @@ function buildHistoricalBaselinePrediction(
         "過去レース学習用の低リスク基準予想。",
         "レース結果は参照せず、人気・単勝オッズ・前走・着差・持ち時計・馬体重変動・馬体/騎手/調教師/血統など取得済み特徴量から順位付け。",
         `対象:${race.race_date ?? ""} ${race.venue ?? ""}${race.race_number ?? ""}R ${race.race_name ?? ""}`,
-        `信頼度:${Math.round(confidence * 100)}% (データ充足${Math.round(dataQuality * 100)}% オッズ${Math.round(oddsCoverage * 100)}% 上がり3F${Math.round(last3FCoverage * 100)}% 血統${Math.round(bloodlineCoverage * 100)}% 騎手${Math.round(jockeyCoverage * 100)}% 馬体重${Math.round(horseWeightCoverage * 100)}% 厩舎${Math.round(stableCoverage * 100)}% 人気${Math.round(popularityCoverage * 100)}% 頭数${entries.length}頭 グレード:${race.grade ?? "OP以下"} 会場補正:${venueBonus >= 0 ? "+" : ""}${Math.round(venueBonus * 100)}% 本命補正:+${Math.round(favBonus * 100)}% 少頭数補正:+${Math.round(smallField * 100)}%)`,
+        `信頼度:${Math.round(confidence * 100)}% (データ充足${Math.round(dataQuality * 100)}% オッズ${Math.round(oddsCoverage * 100)}% 上がり3F${Math.round(last3FCoverage * 100)}% 血統${Math.round(bloodlineCoverage * 100)}% 騎手${Math.round(jockeyCoverage * 100)}% 馬体重${Math.round(horseWeightCoverage * 100)}% 厩舎${Math.round(stableCoverage * 100)}% 人気${Math.round(popularityCoverage * 100)}% 頭数${entries.length}頭 グレード:${race.grade ?? "OP以下"} 会場補正:${venueBonus >= 0 ? "+" : ""}${Math.round(venueBonus * 100)}% 本命補正:+${Math.round(favBonus * 100)}% 少頭数補正:+${Math.round(smallField * 100)}% 血統充足:+${Math.round(bloodlineBonus * 100)}%)`,
       ].join(" "),
     },
     latency_ms: 0,
