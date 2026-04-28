@@ -1186,6 +1186,18 @@ function topTwoOddsGapBonus(entries: Record<string, unknown>[]): number {
   return 0; // 混戦 — bonus なし
 }
 
+function tightOddsPenalty(entries: Record<string, unknown>[]): number {
+  const sortedOdds = entries
+    .map((e) => numericOrFallback(e.win_odds, 0))
+    .filter((o) => o > 0)
+    .sort((a, b) => a - b);
+  if (sortedOdds.length < 3) return 0;
+  const spread = sortedOdds[2] - sortedOdds[0]; // 3番人気オッズ - 1番人気オッズ
+  if (spread < 1.0) return 0.06; // 超混戦 (3頭以内に1倍差) — 高ペナルティ
+  if (spread < 2.0) return 0.03; // 混戦
+  return 0;
+}
+
 function fieldSizeConfidencePenalty(fieldSize: number): number {
   if (fieldSize >= 16) return 0.07; // 大型レース — 高分散
   if (fieldSize >= 13) return 0.04;
@@ -1481,7 +1493,8 @@ function buildHistoricalBaselinePrediction(
   const fieldPenalty = fieldSizeConfidencePenalty(entries.length);
   const oddsGapBonus = topTwoOddsGapBonus(entries);
   const recentForm = recentFormBonus(entries);
-  const confidence = Math.min(clampConfidence(0.31 + dataQuality * 0.22 + oddsCoverage * 0.12 + historyCoverage * 0.07 + bestTimeCoverage * 0.05 + prevMarginCoverage * 0.03 + jockeyCoverage * 0.02 + trainerCoverage * 0.01 + bloodlineCoverage * 0.01 + last3FCoverage * 0.01 + winningTimeCoverage * 0.01 + weightChangeCoverage * 0.01 + ageCoverage * 0.01 + sexCoverage * 0.01 + horseWeightCoverage * 0.01 + stableCoverage * 0.01 + damCoverage * 0.01 + damsireCoverage * 0.01 + popularityCoverage * 0.01 - fieldPenalty + oddsGapBonus + recentForm), maxConf);
+  const tightOdds = tightOddsPenalty(entries);
+  const confidence = Math.min(clampConfidence(0.31 + dataQuality * 0.22 + oddsCoverage * 0.12 + historyCoverage * 0.07 + bestTimeCoverage * 0.05 + prevMarginCoverage * 0.03 + jockeyCoverage * 0.02 + trainerCoverage * 0.01 + bloodlineCoverage * 0.01 + last3FCoverage * 0.01 + winningTimeCoverage * 0.01 + weightChangeCoverage * 0.01 + ageCoverage * 0.01 + sexCoverage * 0.01 + horseWeightCoverage * 0.01 + stableCoverage * 0.01 + damCoverage * 0.01 + damsireCoverage * 0.01 + popularityCoverage * 0.01 - fieldPenalty - tightOdds + oddsGapBonus + recentForm), maxConf);
   return {
     success: true,
     prediction: {
