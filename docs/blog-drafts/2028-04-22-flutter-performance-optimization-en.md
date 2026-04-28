@@ -1,7 +1,7 @@
 ---
 title: "Flutter Performance Optimization: const, Lazy Loading, and Image Caching"
 tags: flutter,ai,indiedev,programming
-published: false
+published: true
 ---
 
 # Flutter Performance Optimization: const, Lazy Loading, and Image Caching
