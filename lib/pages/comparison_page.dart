@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -7897,6 +7897,138 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'suno': const _CompetitorInfo(
+    name: 'Suno AI',
+    emoji: '🎵',
+    tagline: 'Suno AIを超えた、AI音楽生成から個人ライフ全域を統合するAI OS。',
+    searchKeyword: 'Suno代替 AI音楽生成代替 Suno AI代替',
+    accentColor: Color(0xFF7C3AED),
+    painPoints: [
+      'Suno AIはAI音楽生成特化サービスで、個人のライフ管理・生産性機能がない',
+      '財務管理・習慣追跡・タスク管理・AI大学など実務機能が皆無',
+      '月額課金(Pro/Premier)が必要で無制限利用にはコストがかかる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AI音楽生成',
+        competitorHas: true,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '知識ベース構築',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: 'タスク・習慣管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: 'AI大学 (300社+)',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'udio': const _CompetitorInfo(
+    name: 'Udio',
+    emoji: '🎶',
+    tagline: 'Udioを超えた、AI音楽生成から個人ライフ全域を統合するAI OS。',
+    searchKeyword: 'Udio代替 AI作曲代替 Udio AI音楽代替',
+    accentColor: Color(0xFF2563EB),
+    painPoints: [
+      'UdioはAI作曲・音楽生成特化サービスで、個人の生産性管理機能がない',
+      '財務管理・習慣追跡・タスク管理・AI大学など生活全般OS機能が皆無',
+      'プロ品質利用には月額課金が必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AI作曲・音楽生成',
+        competitorHas: true,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '知識ベース構築',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: 'タスク・習慣管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: 'AI大学 (300社+)',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'ideogram': const _CompetitorInfo(
+    name: 'Ideogram AI',
+    emoji: '✏️',
+    tagline: 'Ideogram AIを超えた、テキスト入りAI画像生成から個人ライフ全域を統合するAI OS。',
+    searchKeyword: 'Ideogram代替 テキスト入りAI画像代替 Ideogram AI代替',
+    accentColor: Color(0xFF059669),
+    painPoints: [
+      'Ideogram AIはテキスト合成特化AI画像生成で個人ライフ管理機能がない',
+      '財務管理・習慣追跡・タスク管理・AI大学など実務・成長機能が皆無',
+      '無料枠制限があり高品質生成には月額課金が必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'テキスト入りAI画像生成',
+        competitorHas: true,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '知識ベース構築',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: 'タスク・習慣管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: 'AI大学 (300社+)',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
@@ -8117,6 +8249,9 @@ class _ComparisonShellState extends State<_ComparisonShell> {
     'leonardo-ai': 'ai-image',
     'poe': 'ai-platform',
     'llama': 'ai-platform',
+    'suno': 'ai-music',
+    'udio': 'ai-music',
+    'ideogram': 'ai-image',
   };
 
   @override
@@ -8317,7 +8452,7 @@ class _ComparisonShellState extends State<_ComparisonShell> {
                       children: [
                         _buildTag(
                           icon: Icons.compare_arrows_rounded,
-                          label: '192社比較',
+                          label: '195社比較',
                           backgroundColor:
                               _info.accentColor.withValues(alpha: 0.18),
                           foregroundColor: _textPrimary,
@@ -8925,7 +9060,7 @@ class _ComparisonShellState extends State<_ComparisonShell> {
                       ),
                       SizedBox(width: 8),
                       Text(
-                        '全192社の競合ランドスケープを見る →',
+                        '全195社の競合ランドスケープを見る →',
                         style: TextStyle(
                           fontSize: 14,
                           color: _textSecondary,
