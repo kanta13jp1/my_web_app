@@ -23557,6 +23557,7 @@ VIBE_CODING 4.5 → 5.5/7 (+1.0) / SECOND_BRAIN 3.5 → 4.0/7 (+0.5) = 合計 +1
 (本 commit にて確定)
 
 
+
 ## 2026-04-29 PS#6 S107 — 競馬予想モデル bloodlineTopHorseBonus (血統充足confidenceボーナス)
 ### S107: bloodlineTopHorseBonus(topEntry) — 予想1位馬の血統3項目充足でconfidence boost
 - sire+dam+damsire全充足=+0.02 / 父 or 母のみ=+0.01 / なし=0
@@ -23564,3 +23565,18 @@ VIBE_CODING 4.5 → 5.5/7 (+1.0) / SECOND_BRAIN 3.5 → 4.0/7 (+0.5) = 合計 +1
 - confidence式: ...+smallField+bloodlineBonus (23 terms体制確立)
 - reasoning: 「血統充足:+X%」追加
 - commit: d8c2252d2
+
+## 2026-04-29 Win版#132 part 73 — VIBE_CODING #7 (Embrace Exponentials) dogfood
+
+### 概要
+`docs/FLEET_SCALING_ROADMAP.md` 新規. VIBE_CODING #7 を 4 Phase milestone (12→18→24→50→100 / 3 年 8.3x) に数値化.
+
+### 4 Phase milestone
+- Phase 1 (2026-Q3 / 6 ヶ月): 12 → 18 fleet (Claude#11-12 / Codex#3-4 / PS#7)
+- Phase 2 (2027-Q1 / 1 年): 18 → 24 (orchestrator-hub + Client Zero + MCP server 公開)
+- Phase 3 (2027-Q4 / 2 年): 24 → 50 (機能領域別特化 26 instance)
+- Phase 4 (2028-Q3 / 3 年): 50 → 100 (IPO 期 / AI 駆動経営の世界先進事例)
+
+### CEO 作業時間配分目標
+コード読み 30
+
