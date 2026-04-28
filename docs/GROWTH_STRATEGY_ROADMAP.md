@@ -23163,45 +23163,13 @@ dev.to 累計: 114本
   -fieldPenalty+oddsGapBonus
 - commit: e7cf85de9
 
-## 2026-04-28 PS#6 S97 — 競馬予想モデル damsireCoverage+popularityCoverage (母父血統・人気充足率 confidence 19 terms) データ品質18フィールドcoverage化完結
-### S97: damsireCoverage+popularityCoverage — 母父血統・人気データ充足率をconfidence計算に追加
-- damsireCoverage: damsire フィールドが揃っている馬の割合 × 0.01
-- popularityCoverage: popularity フィールドが揃っている馬の割合 × 0.01
-- confidence最終式 (19 terms): 0.31+dataQuality*0.22+oddsCoverage*0.12+historyCoverage*0.07
-  +bestTimeCoverage*0.05+prevMarginCoverage*0.03+jockeyCoverage*0.02+trainerCoverage*0.01
-  +bloodlineCoverage*0.01+last3FCoverage*0.01+winningTimeCoverage*0.01+weightChangeCoverage*0.01
-  +ageCoverage*0.01+sexCoverage*0.01+horseWeightCoverage*0.01+stableCoverage*0.01+damCoverage*0.01
-  +damsireCoverage*0.01+popularityCoverage*0.01-fieldPenalty+oddsGapBonus
-- データ品質18フィールド全項目coverage化完結 (S87〜S97 11ステップ)
-- commit: f42adb8ae
+## PS#5 S86 — 2026-04-29 (CI fix + collision patrol)
 
-## PS版#2 S73 — T-1 Phase22 全4弾完結 (#115-#118) 2026-04-29
+- **Dart syntax fix**: comparison_page.dart L7689 DALL-E `$20` 多行分割 → `\$20` 1行化
+  - flutter analyze 37 errors → 0 errors (CI hard-fail 解消)
+- **collision patrol**: 3件解消 (204000 ps6_s94→204100 / 003000 segments→003100 / 202000 dataloop→202100)
+- 888 migrations 全 unique (check_migration_timestamps.py: OK)
+- Achievement seed: 20260429010000_seed_achievements_ps5_s86.sql
 
-- T-1 第115弾: Flutter テスト戦略 — Widget/Integration/Golden → dev.to 投稿成功
-  - https://dev.to/kanta13jp1/flutter-testing-strategy-widget-integration-and-golden-tests-41c1
-- T-1 第116弾: Supabase Auth 高度活用 — OAuth/Magic Link/MFA/RLS → dev.to 投稿成功
-  - https://dev.to/kanta13jp1/supabase-auth-advanced-oauth-magic-link-mfa-and-rls-23g5
-- T-1 第117弾: 個人開発の技術的負債管理 — 借りていい負債と返すべき負債 → dev.to 投稿成功
-  - https://dev.to/kanta13jp1/managing-technical-debt-in-indie-dev-which-debt-to-keep-which-to-pay-1eok
-- T-1 第118弾: Flutter GoRouter 深化 — ネスト/リダイレクト/ディープリンク → dev.to 投稿成功
-  - https://dev.to/kanta13jp1/flutter-gorouter-deep-dive-nested-routes-redirects-and-deep-links-4enb
-
-dev.to 累計: 118本
-
-## PS#4 S106 2026-04-29: 競合3社追加 192→195社 (suno/udio/ideogram) + ai-music新カテゴリ
-
-- suno: Suno AI音楽生成特化/月額約10USD/ai-music新カテゴリ
-- udio: Udio AI楽曲生成/月額約10USD/ai-music
-- ideogram: Ideogram AIテキスト埋め込み特化/月額約8USD/ai-image
-- competitorMeta +3エントリ / sitemap 235→238 URLs (priority=0.8)
-- SEO: "Suno代替"/"Udio代替"/"Ideogram代替" 超高検索ボリュームキーワード流入
-- commit: e145a4ec8
-
-## PS#4 S107 2026-04-29: 競合3社追加 195→198社 (runway/heygen/elevenlabs) + ai-video/ai-voice新カテゴリ
-
-- runway: RunwayML Gen-3 AI映像生成/月額$15~/ai-video新カテゴリ
-- heygen: HeyGen AIアバター動画/月額$29~/ai-video
-- elevenlabs: ElevenLabs AI音声合成TTS/月額$22~/ai-voice新カテゴリ
-- competitorMeta/sitemap: 既存登録済み確認
-- SEO: "Runway代替"/"HeyGen代替"/"ElevenLabs代替" 超高検索ボリュームキーワード流入
-- commit: c520cd9d2
+### commit
+(本 commit にて確定)
