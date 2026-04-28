@@ -44,7 +44,7 @@ jobs:
           PAYLOAD=$(jq -n \
             --arg action "x.post_with_media" \
             --arg text "${{ steps.tweet.outputs.text }}" \
-            --arg mediaUrl "https://my-web-app-b67f4.web.app/ogp-ai-university-20260428.png" \
+            --arg mediaUrl "https://my-web-app-b67f4.web.app/ogp-image-gen2-20260428.png" \
             --arg mediaType "image/png" \
             --arg mediaCategory "tweet_image" \
             --arg source "post-x-with-media.yml" \
