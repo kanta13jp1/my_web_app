@@ -8996,6 +8996,9 @@ class _ComparisonShellState extends State<_ComparisonShell> {
     'mailerlite': 'email-marketing',
     'hotjar': 'analytics',
     'amplitude': 'analytics',
+    'mixpanel': 'analytics',
+    'brevo': 'email-marketing',
+    'beehiiv': 'newsletter',
     'mailerlite': const _CompetitorInfo(
       name: 'MailerLite',
       emoji: '📧',
@@ -9092,6 +9095,106 @@ class _ComparisonShellState extends State<_ComparisonShell> {
           feature: '日本語サポート',
           competitor: '英語中心',
           ourApp: '完全日本語対応',
+          ourAppWins: true,
+        ),
+      ],
+    ),
+    'mixpanel': const _CompetitorInfo(
+      name: 'Mixpanel',
+      emoji: '📈',
+      tagline:
+          'Mixpanelをイベントベースプロダクトアナリティクスと比較。自分株式会社はAIによる行動分析とパーソナライズ提案を統合提供します。',
+      searchKeyword:
+          'Mixpanel代替 プロダクトアナリティクス代替 イベント分析代替 Mixpanelより安い Mixpanel日本語',
+      accentColor: Color(0xFFCE3F8E),
+      painPoints: [
+        'プロプランが高額でスタートアップには負担',
+        'イベント設計が複雑で導入コストが高い',
+        'データ保持期間が限定的',
+      ],
+      features: [
+        _FeatureComparison(
+          feature: 'イベント分析',
+          competitor: '深いファネル・リテンション/無料~月額24USD',
+          ourApp: 'AI統合行動インサイト',
+          ourAppWins: true,
+        ),
+        _FeatureComparison(
+          feature: 'ユーザーグループ分析',
+          competitor: 'コホート・セグメント分析',
+          ourApp: 'AIパーソナライズセグメント',
+          ourAppWins: true,
+        ),
+        _FeatureComparison(
+          feature: '日本語サポート',
+          competitor: '英語中心',
+          ourApp: '完全日本語対応',
+          ourAppWins: true,
+        ),
+      ],
+    ),
+    'brevo': const _CompetitorInfo(
+      name: 'Brevo (旧Sendinblue)',
+      emoji: '💌',
+      tagline:
+          'Brevo (旧Sendinblue)をメール・SMS・チャット統合プラットフォームと比較。自分株式会社はAI支援で全コミュニケーションを一元管理します。',
+      searchKeyword: 'Brevo代替 Sendinblue代替 メール配信代替 Brevoより安い Brevo日本語 SMS送信代替',
+      accentColor: Color(0xFF0092FF),
+      painPoints: [
+        'メール・SMS・チャットがバラバラで管理が煩雑',
+        'テンプレートが英語中心',
+        'トランザクションメールの設定が複雑',
+      ],
+      features: [
+        _FeatureComparison(
+          feature: 'マルチチャネル配信',
+          competitor: 'メール+SMS+チャット/無料~',
+          ourApp: 'AI統合コミュニケーション',
+          ourAppWins: true,
+        ),
+        _FeatureComparison(
+          feature: '自動化フロー',
+          competitor: 'マーケオートメーション',
+          ourApp: 'AIサポート付き自動化',
+          ourAppWins: true,
+        ),
+        _FeatureComparison(
+          feature: '日本語対応',
+          competitor: '部分対応',
+          ourApp: '完全日本語対応',
+          ourAppWins: true,
+        ),
+      ],
+    ),
+    'beehiiv': const _CompetitorInfo(
+      name: 'beehiiv',
+      emoji: '🐝',
+      tagline:
+          'beehiivをクリエイター向けニュースレタープラットフォームと比較。自分株式会社はAI支援でライフ管理・情報発信を統合します。',
+      searchKeyword: 'beehiiv代替 ニュースレター代替 メルマガ代替 beehiivより安い beehiiv日本語',
+      accentColor: Color(0xFFFFB800),
+      painPoints: [
+        '購読者増加で月額が急上昇する',
+        '日本語ユーザーへのサポートが限定的',
+        'ニュースレター特化で他ライフ管理機能がない',
+      ],
+      features: [
+        _FeatureComparison(
+          feature: 'ニュースレター配信',
+          competitor: 'メール・Web両対応/無料~月額39USD',
+          ourApp: 'AI支援コンテンツ配信',
+          ourAppWins: true,
+        ),
+        _FeatureComparison(
+          feature: '収益化機能',
+          competitor: '有料購読・スポンサー管理',
+          ourApp: 'AIライフ収益最適化',
+          ourAppWins: true,
+        ),
+        _FeatureComparison(
+          feature: '統合管理',
+          competitor: 'ニュースレター専用',
+          ourApp: 'ライフ全体を一元管理',
           ourAppWins: true,
         ),
       ],
@@ -9296,7 +9399,7 @@ class _ComparisonShellState extends State<_ComparisonShell> {
                       children: [
                         _buildTag(
                           icon: Icons.compare_arrows_rounded,
-                          label: '219社比較',
+                          label: '222社比較',
                           backgroundColor:
                               _info.accentColor.withValues(alpha: 0.18),
                           foregroundColor: _textPrimary,
@@ -9904,7 +10007,7 @@ class _ComparisonShellState extends State<_ComparisonShell> {
                       ),
                       SizedBox(width: 8),
                       Text(
-                        '全219社の競合ランドスケープを見る →',
+                        '全222社の競合ランドスケープを見る →',
                         style: TextStyle(
                           fontSize: 14,
                           color: _textSecondary,
