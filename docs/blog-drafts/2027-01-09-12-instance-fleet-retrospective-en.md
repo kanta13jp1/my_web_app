@@ -1,7 +1,7 @@
 ---
 title: "12 AI Instances in Parallel: A 3-Month Retrospective with Real Numbers"
 tags: ai,automation,indiedev,buildinpublic
-published: false
+published: true
 ---
 
 # 12 AI Instances in Parallel: A 3-Month Retrospective with Real Numbers

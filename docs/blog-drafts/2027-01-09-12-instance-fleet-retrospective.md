@@ -1,7 +1,7 @@
 ---
 title: "12インスタンスAIフリート 3ヶ月の振り返り — コストと効果の実測値"
 tags: AI,個人開発,buildinpublic,automation
-published: false
+published: true
 ---
 
 # 12インスタンスAIフリート 3ヶ月の振り返り — コストと効果の実測値
