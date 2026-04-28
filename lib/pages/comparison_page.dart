@@ -8131,6 +8131,109 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'writesonic': const _CompetitorInfo(
+    name: 'Writesonic',
+    emoji: '✒️',
+    tagline:
+        'WritersonicをAI長文コンテンツ生成に使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'Writesonic代替 AIライティング代替 AIコンテンツ生成代替',
+    accentColor: Color(0xFF7C3AED),
+    painPoints: [
+      'AI長文コンテンツ生成に特化しており、財務・タスク・日常管理は別ツールが必要',
+      '月額約' + r'$' + '13〜のサブスクで、ライティング以外のライフ管理はできない',
+      'ブログ・SNS・広告コピー生成は優れるが、個人のライフOS統合機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AI長文コンテンツ・ブログ生成',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'zendesk': const _CompetitorInfo(
+    name: 'Zendesk',
+    emoji: '🎫',
+    tagline: 'ZendeskをカスタマーサポートCRMに使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'Zendesk代替 カスタマーサポート代替 ヘルプデスク代替',
+    accentColor: Color(0xFF03363D),
+    painPoints: [
+      'カスタマーサポート・ヘルプデスクに特化しており、個人の財務・習慣管理は対象外',
+      '月額約' + r'$' + '55〜のビジネス向けプランで個人利用にはコストが高すぎる',
+      'チケット管理・サポートワークフローは優秀だが、個人ライフOSとしての機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'カスタマーサポートCRM',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'intercom': const _CompetitorInfo(
+    name: 'Intercom',
+    emoji: '💬',
+    tagline: 'IntercomをAI顧客コミュニケーションに使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'Intercom代替 顧客チャットサポート代替 Intercom日本語代替',
+    accentColor: Color(0xFF1F8DD6),
+    painPoints: [
+      '顧客チャット・サポートに特化しており、個人の財務・習慣・学習管理は対象外',
+      '月額約' + r'$' + '74〜のビジネス向けで、個人ライフマネジメントには不向き',
+      'チャットウィジェット・AIボットは優秀だが、日常ライフOSとしての統合機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AI顧客チャットサポート',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
@@ -8357,6 +8460,9 @@ class _ComparisonShellState extends State<_ComparisonShell> {
     'webflow': 'no-code',
     'framer': 'no-code',
     'copy-ai': 'ai-writing',
+    'writesonic': 'ai-writing',
+    'zendesk': 'support',
+    'intercom': 'support',
   };
 
   @override
@@ -8557,7 +8663,7 @@ class _ComparisonShellState extends State<_ComparisonShell> {
                       children: [
                         _buildTag(
                           icon: Icons.compare_arrows_rounded,
-                          label: '198社比較',
+                          label: '201社比較',
                           backgroundColor:
                               _info.accentColor.withValues(alpha: 0.18),
                           foregroundColor: _textPrimary,
@@ -9165,7 +9271,7 @@ class _ComparisonShellState extends State<_ComparisonShell> {
                       ),
                       SizedBox(width: 8),
                       Text(
-                        '全198社の競合ランドスケープを見る →',
+                        '全201社の競合ランドスケープを見る →',
                         style: TextStyle(
                           fontSize: 14,
                           color: _textSecondary,
