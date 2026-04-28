@@ -1,7 +1,7 @@
 ---
 title: "Supabase × Stripe — サブスクリプション決済を Edge Function で実装する"
 tags: supabase,AI,個人開発,automation
-published: false
+published: true
 ---
 
 # Supabase × Stripe — サブスクリプション決済を Edge Function で実装する

@@ -1,7 +1,7 @@
 ---
 title: "Supabase × Stripe — Implement Subscription Billing with Edge Functions"
 tags: supabase,ai,indiedev,automation
-published: false
+published: true
 ---
 
 # Supabase × Stripe — Implement Subscription Billing with Edge Functions
