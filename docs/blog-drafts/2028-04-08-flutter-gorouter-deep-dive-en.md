@@ -1,7 +1,7 @@
 ---
 title: "Flutter GoRouter Deep Dive: Nested Routes, Redirects, and Deep Links"
 tags: flutter,ai,indiedev,programming
-published: false
+published: true
 ---
 
 # Flutter GoRouter Deep Dive: Nested Routes, Redirects, and Deep Links
