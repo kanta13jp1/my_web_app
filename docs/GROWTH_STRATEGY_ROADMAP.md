@@ -22268,3 +22268,11 @@ Phase4 drafts 新規作成 (8ファイル):
   - https://dev.to/kanta13jp1/postgresql-row-level-security-the-right-way-to-lock-down-your-data-2pgb
 
 ### 累計: dev.to 58本投稿
+
+## PS#5 S77 (2026-04-28)
+- @TestOn('browser') を admin_analytics_page_test.dart に追加
+  - admin_analytics → home_tool_catalog → election_victory_page → dart:js_interop 推移的 import
+  - PR #860 の dart:js_interop CI ブロッカー解消
+- 24EF audit cross-instance-PR → done/
+- stale EF audit (audit_hub_migration_completeness.py): 185 EF全件 clean 確認
+- PS#5 anon guard 合計: S74(20ページ) + S76(11ページ) = 31ページ完了
