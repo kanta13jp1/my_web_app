@@ -1,7 +1,7 @@
 ---
 title: "Dart 3 新機能完全ガイド — sealed class / パターンマッチング / Records"
 tags: flutter,AI,個人開発,programming
-published: false
+published: true
 ---
 
 # Dart 3 新機能完全ガイド — sealed class / パターンマッチング / Records
