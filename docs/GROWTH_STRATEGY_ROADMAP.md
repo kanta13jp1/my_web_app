@@ -23210,3 +23210,13 @@ CLAUDE.md hook table + ~/.claude/hooks/inject-rules.txt 注入. OPS-28 charter�
 - 信頼度内訳: ...血統X% 騎手X% → ...血統X% 騎手X% 馬体重X% 厩舎X% 人気X%
 - デバッグ透明性とユーザー向け情報密度向上
 - commit: 3d32f0fb0
+
+## PS#5 S89 — 2026-04-29 (collision patrol)
+
+- **collision patrol**: 1件解消 — 026000 lmstudio_ai_university → 026100
+- 915 migrations 全 unique (check_migration_timestamps.py: OK)
+- CI: success / deploy-prod: pending (S89 fix)
+- Achievement seed: 20260429029000_seed_achievements_ps5_s89.sql
+
+### commit
+(本 commit にて確定)
