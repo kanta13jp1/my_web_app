@@ -1,7 +1,7 @@
 ---
 title: "Supabase Edge Functions (Deno) 実装ガイド — hub パターンの中身"
 tags: supabase,AI,個人開発,postgresql
-published: false
+published: true
 ---
 
 # Supabase Edge Functions (Deno) 実装ガイド — hub パターンの中身

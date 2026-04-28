@@ -1,7 +1,7 @@
 ---
 title: "Supabase Edge Functions in Deno: A Production Guide"
 tags: supabase,ai,postgresql,indiedev
-published: false
+published: true
 ---
 
 # Supabase Edge Functions in Deno: A Production Guide
