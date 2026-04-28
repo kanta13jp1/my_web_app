@@ -1,7 +1,7 @@
 ---
 title: "Claude API Patterns: Streaming, Tool Use, and Prompt Caching"
 tags: ai,indiedev,automation,buildinpublic
-published: false
+published: true
 ---
 
 # Claude API Patterns: Streaming, Tool Use, and Prompt Caching

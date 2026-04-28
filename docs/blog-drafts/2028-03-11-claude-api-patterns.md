@@ -1,7 +1,7 @@
 ---
 title: "Claude API 活用パターン — ストリーミング / ツール使用 / プロンプトキャッシュ"
 tags: AI,個人開発,automation,buildinpublic
-published: false
+published: true
 ---
 
 # Claude API 活用パターン — ストリーミング / ツール使用 / プロンプトキャッシュ
