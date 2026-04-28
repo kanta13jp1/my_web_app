@@ -1,7 +1,7 @@
 ---
 title: "月$230のAIツールスタック — ソロ創業者が選んだ構成と理由"
 tags: AI,個人開発,buildinpublic,automation
-published: false
+published: true
 ---
 
 # 月$230のAIツールスタック — ソロ創業者が選んだ構成と理由
