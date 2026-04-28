@@ -1,7 +1,7 @@
 # 自分株式会社 — User Tasks Snapshot
 
-_Generated: 2026/4/27 (JST)_
-_Active user tasks: 16_
+_Generated: 2026/4/28 (JST)_
+_Active user tasks: 18_
 
 ## 概要
 
@@ -11,6 +11,36 @@ NotebookLM に source として追加し、「具体的手順」「詰まりポ�
 カテゴリ別の手動タスクが含まれます: 法人登記 / 商標 / Notion 設定 / Slack Webhook / 監査法人選定 / 上場審査 等。
 
 ## タスク一覧
+
+### 🟡 ⏳ [Issue #846] [追加要望] AI役員ツール実行の権限スコープと承認ゲート
+
+- **id**: `ec630420-e8fd-40f1-9c66-3dd4c8c6e746`
+- **category**: GitHub Issue / Feature Request
+- **progress**: 0%
+- **status**: pending
+- **priority**: medium
+- **deadline**: 2026-04-30
+
+**説明**:
+
+GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/846 / Author: kanta13jp1 / Labels: enhancement, 追加要望 / GitHub updated: 2026-04-27T16:10:51Z
+
+---
+
+### 🟡 ⏳ [Issue #845] [追加要望] AI役員向けMCP外部ツール連携のOAuth/DCR認証ハブ
+
+- **id**: `5f8e41cf-81d2-4f2e-9788-a7a686fc5ac0`
+- **category**: GitHub Issue / Feature Request
+- **progress**: 0%
+- **status**: pending
+- **priority**: medium
+- **deadline**: 2026-04-30
+
+**説明**:
+
+GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/845 / Author: kanta13jp1 / Labels: enhancement, 追加要望 / GitHub updated: 2026-04-27T16:10:50Z
+
+---
 
 ### 🟡 ⏳ バーチャルオフィス契約
 
