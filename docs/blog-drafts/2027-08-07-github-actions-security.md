@@ -1,7 +1,7 @@
 ---
 title: "GitHub Actions セキュリティ強化 — secrets / OIDC / 最小権限の実践ガイド"
 tags: AI,個人開発,automation,buildinpublic
-published: false
+published: true
 ---
 
 # GitHub Actions セキュリティ強化 — secrets / OIDC / 最小権限の実践ガイド

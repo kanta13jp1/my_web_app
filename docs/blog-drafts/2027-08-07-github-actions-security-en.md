@@ -1,7 +1,7 @@
 ---
 title: "GitHub Actions Security: Secrets, OIDC, and Least Privilege in Practice"
 tags: ai,indiedev,automation,programming
-published: false
+published: true
 ---
 
 # GitHub Actions Security: Secrets, OIDC, and Least Privilege in Practice
