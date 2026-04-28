@@ -22969,7 +22969,6 @@ CLAUDE.md hook table + ~/.claude/hooks/inject-rules.txt 注入. OPS-28 charter�
 | #101 | Supabase Edge Functions Design Patterns: Hub, RLS, and Error Handling | https://dev.to/kanta13jp1/supabase-edge-functions-design-patterns-hub-rls-and-error-handling-33j8 |
 | #102 | Indie Dev Marketing Strategy: Product Hunt, X, and dev.to | https://dev.to/kanta13jp1/indie-dev-marketing-strategy-product-hunt-x-and-devto-2i60 |
 
-
 ## PS版#2 Session 70 (2026-04-28) — T-1 Phase19 全4弾完結 #103-#106
 
 **dev.to 累計106本**
@@ -22981,3 +22980,26 @@ CLAUDE.md hook table + ~/.claude/hooks/inject-rules.txt 注入. OPS-28 charter�
 | #105 | Indie Dev SaaS Monetization: How to Improve Free-to-Paid Conversion | https://dev.to/kanta13jp1/indie-dev-saas-monetization-how-to-improve-free-to-paid-conversion-5dhk |
 | #106 | GitHub Actions Advanced Patterns: Matrix, Cache, and Reusable Workflows | https://dev.to/kanta13jp1/github-actions-advanced-patterns-matrix-cache-and-reusable-workflows-1j68 |
 
+
+## PS#4 Session 96-102 (2026-04-28) — vs-*SEO強化 183社完結
+
+### S96: FAQPage JSON-LD全社対応
+- index.html vsMatch ブロックに FAQPage JSON-LD (3Q&A/社) 挿入
+- Google FAQ リッチリザルト対応 — 全 vs-* ページ適用
+- commit: e4726a579+4778775a5
+
+### S97: _categoryOf 21カテゴリ対応 + _relatedCompetitors カテゴリ優先
+- _categoryOf static const map 新規 (21カテゴリ)
+- _relatedCompetitors を同カテゴリ優先ロジックに更新
+- commit: 4778775a5
+
+### S98-S101: 競合7社追加 174→181社
+- github-copilot/chatgpt/tabnine/codeium/gemini/claude/microsoft-copilot 追加
+- ai-assistant/ai-coding カテゴリ新規
+- competitorMeta+sitemap+社数表記 全更新
+
+### S102: 競合2社追加 181→183社 (grok/meta-ai)
+- grok(xAI Grok)/meta-ai(Meta AI) 追加 — 超高検索ボリュームキーワード
+- Grok代替・Meta AI代替 SEO 流入獲得
+- $8 エスケープ修正(\$8)
+- commit: 30366ae7b
