@@ -1,7 +1,7 @@
 ---
 title: "Supabase Auth 高度活用 — OAuth / Magic Link / MFA / RLS 連携"
 tags: supabase,AI,個人開発,programming
-published: false
+published: true
 ---
 
 # Supabase Auth 高度活用 — OAuth / Magic Link / MFA / RLS 連携

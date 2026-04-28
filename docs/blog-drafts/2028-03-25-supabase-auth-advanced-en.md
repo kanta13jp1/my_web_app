@@ -1,7 +1,7 @@
 ---
 title: "Supabase Auth Advanced: OAuth, Magic Link, MFA, and RLS"
 tags: supabase,ai,indiedev,programming
-published: false
+published: true
 ---
 
 # Supabase Auth Advanced: OAuth, Magic Link, MFA, and RLS
