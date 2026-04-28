@@ -1,7 +1,7 @@
 ---
 title: "Indie Dev Content Marketing — Get 1,000 Users a Month from a Blog"
 tags: ai,indiedev,buildinpublic,automation
-published: false
+published: true
 ---
 
 # Indie Dev Content Marketing — Get 1,000 Users a Month from a Blog
