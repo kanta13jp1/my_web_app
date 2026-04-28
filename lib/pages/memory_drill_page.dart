@@ -53,7 +53,12 @@ class _MemoryDrillPageState extends State<MemoryDrillPage> {
   }
 
   Future<void> _loadCustomPacks() async {
-    final userId = Supabase.instance.client.auth.currentUser?.id;
+    final String? userId;
+    try {
+      userId = Supabase.instance.client.auth.currentUser?.id;
+    } catch (_) {
+      return;
+    }
     if (userId == null) return;
     try {
       final data = await Supabase.instance.client
