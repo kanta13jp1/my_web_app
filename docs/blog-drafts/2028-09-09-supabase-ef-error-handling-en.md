@@ -1,7 +1,7 @@
 ---
 title: "Supabase Edge Function Error Handling — Retries, Logging, and Idempotency"
 tags: supabase,ai,indiedev,automation
-published: false
+published: true
 ---
 
 # Supabase Edge Function Error Handling — Retries, Logging, and Idempotency
