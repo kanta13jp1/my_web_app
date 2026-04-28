@@ -1,7 +1,7 @@
 ---
 title: "Flutter Web パフォーマンス最適化 — Deferred Loading / Tree Shaking / WASM"
 tags: flutter,AI,個人開発,programming
-published: false
+published: true
 ---
 
 # Flutter Web パフォーマンス最適化 — Deferred Loading / Tree Shaking / WASM

@@ -1,7 +1,7 @@
 ---
 title: "Flutter Web Performance: Deferred Loading, Tree Shaking, and WASM"
 tags: flutter,ai,indiedev,programming
-published: false
+published: true
 ---
 
 # Flutter Web Performance: Deferred Loading, Tree Shaking, and WASM
