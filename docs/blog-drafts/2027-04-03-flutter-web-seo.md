@@ -1,7 +1,7 @@
 ---
 title: "Flutter Web の SEO 対策 — SPA の canonical / OGP / JSON-LD 完全実装"
 tags: flutter,AI,個人開発,postgresql
-published: false
+published: true
 ---
 
 # Flutter Web の SEO 対策 — SPA の canonical / OGP / JSON-LD 完全実装
