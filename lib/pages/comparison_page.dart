@@ -9756,6 +9756,321 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'teachable': const _CompetitorInfo(
+    name: 'Teachable',
+    emoji: '🎓',
+    tagline:
+        'Teachableをオンラインコース作成・販売に使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'Teachable代替 オンラインコース販売代替 e-Learning代替 Teachable日本語',
+    accentColor: Color(0xFF00B87D),
+    painPoints: [
+      'オンラインコース作成・販売に特化し、個人財務・習慣・AI大学管理は別ツール',
+      '無料プランは手数料10%、月額39USD～で本格販売が可能',
+      'コンテンツ収益化以外の個人ライフOS統合機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'オンラインコース作成・販売',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'kajabi': const _CompetitorInfo(
+    name: 'Kajabi',
+    emoji: '🚀',
+    tagline:
+        'Kajabiをオールインワンオンラインビジネスプラットフォームに使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'Kajabi代替 オンラインコース+コミュニティ代替 クリエイターOS代替 Kajabi日本語',
+    accentColor: Color(0xFF6E3CFF),
+    painPoints: [
+      'コース+コミュニティ+メールマーケを統合するが、個人財務・AI大学は別ツール',
+      '月額149USD～と最も高価なe-learningプラットフォームの一つ',
+      'クリエイター収益化特化で個人ライフ全体のOS統合設計ではない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'コース+コミュニティ+マーケ統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'gumroad': const _CompetitorInfo(
+    name: 'Gumroad',
+    emoji: '🛒',
+    tagline:
+        'Gumroadをデジタルコンテンツ・製品の直販プラットフォームに使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'Gumroad代替 デジタル製品販売代替 クリエイター直販代替 Gumroad日本語',
+    accentColor: Color(0xFFFF90E8),
+    painPoints: [
+      'デジタル製品・コンテンツ直販に特化し、個人財務・習慣・AI大学管理は別ツール',
+      '手数料10%が売上から引かれ、規模拡大とともにコスト増加',
+      '決済・配信以外の個人ライフOS統合機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'デジタル製品・コンテンツ直販',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'google-meet': const _CompetitorInfo(
+    name: 'Google Meet',
+    emoji: '📹',
+    tagline:
+        'Google MeetをGoogle統合ビデオ会議に使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'Google Meet代替 ビデオ会議代替 Zoom代替Google Meet日本語',
+    accentColor: Color(0xFF00897B),
+    painPoints: [
+      'ビデオ会議・オンライン通話に特化し、個人財務・AI大学・習慣管理は別ツール',
+      'Googleアカウント依存で外部参加者の操作が煩雑な場合がある',
+      '会議ツール以外の個人ライフOS統合機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Google統合ビデオ会議',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'skype': const _CompetitorInfo(
+    name: 'Skype (Microsoft)',
+    emoji: '📞',
+    tagline:
+        'SkypeをMicrosoft製ビデオ通話・チャットに使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'Skype代替 ビデオ通話代替 Microsoft通話代替 Skype日本語',
+    accentColor: Color(0xFF00AFF0),
+    painPoints: [
+      'ビデオ通話・チャットに特化し、個人財務・AI大学・習慣管理は別ツール',
+      'Teams移行によりMicrosoftの優先度が下がり機能更新が停滞',
+      '通話以外の個人ライフOS統合機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ビデオ通話・チャット',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'adobe-xd': const _CompetitorInfo(
+    name: 'Adobe XD',
+    emoji: '🎨',
+    tagline:
+        'Adobe XDをUI/UXプロトタイピング・デザインに使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'Adobe XD代替 プロトタイピング代替 Adobe XD終了代替 Figma移行',
+    accentColor: Color(0xFFFF26BE),
+    painPoints: [
+      'UI/UXプロトタイピングに特化し、財務・習慣・AI大学管理は別ツールが必要',
+      '2023年末で新規ライセンス提供終了、Figmaへの移行が推奨される',
+      'デザインツール以外の個人ライフOS統合機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'UI/UXプロトタイピング',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'ticktick': const _CompetitorInfo(
+    name: 'TickTick',
+    emoji: '✅',
+    tagline:
+        'TickTickをタスク管理・習慣トラッキングアプリに使うか、AI支援+財務+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'TickTick代替 タスク管理代替 習慣トラッカー代替 TickTick日本語',
+    accentColor: Color(0xFF4772FA),
+    painPoints: [
+      'タスク管理・習慣トラッキングに特化し、財務・AI大学管理は別ツールが必要',
+      '無料プランは機能制限あり、プレミアムは年额27.99USD',
+      'タスク・習慣管理以外の個人ライフOS統合機能が弱い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'タスク管理・習慣トラッキング',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'thinkific': const _CompetitorInfo(
+    name: 'Thinkific',
+    emoji: '📚',
+    tagline:
+        'Thinkificをオンラインコース・コミュニティ構築に使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'Thinkific代替 オンラインコース代替 Teachable代替 Thinkific日本語',
+    accentColor: Color(0xFF2F86FB),
+    painPoints: [
+      'オンラインコース・コミュニティ構築に特化し、個人財務・AI大学管理は別ツール',
+      '無料プランは1コースのみ、月額36USD～で機能フル開放',
+      'e-learning以外の個人ライフOS統合機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'オンラインコース・コミュニティ構築',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'skillshare': const _CompetitorInfo(
+    name: 'Skillshare',
+    emoji: '🎯',
+    tagline:
+        'Skillshareをクリエイティブスキル学習プラットフォームに使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'Skillshare代替 クリエイタースキル学習代替 Udemy代替 Skillshare日本語',
+    accentColor: Color(0xFF002333),
+    painPoints: [
+      'クリエイティブ・デザイン系スキル学習に特化し、個人財務・習慣・AI大学管理は別ツール',
+      '月額14USD～のサブスクで英語コンテンツ中心、日本語コースが少ない',
+      'e-learning以外の個人ライフOS統合機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'クリエイティブスキル学習・動画コース',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
@@ -10029,6 +10344,15 @@ class _ComparisonShellState extends State<_ComparisonShell> {
     'invision': 'design',
     'zeplin': 'design',
     'helpscout': 'support',
+    'teachable': 'e-learning',
+    'kajabi': 'e-learning',
+    'gumroad': 'digital-products',
+    'google-meet': 'video-comm',
+    'skype': 'video-comm',
+    'adobe-xd': 'design',
+    'ticktick': 'tasks',
+    'thinkific': 'e-learning',
+    'skillshare': 'e-learning',
   };
 
   @override
@@ -10229,7 +10553,7 @@ class _ComparisonShellState extends State<_ComparisonShell> {
                       children: [
                         _buildTag(
                           icon: Icons.compare_arrows_rounded,
-                          label: '249社比較',
+                          label: '258社比較',
                           backgroundColor:
                               _info.accentColor.withValues(alpha: 0.18),
                           foregroundColor: _textPrimary,
@@ -10837,7 +11161,7 @@ class _ComparisonShellState extends State<_ComparisonShell> {
                       ),
                       SizedBox(width: 8),
                       Text(
-                        '全249社の競合ランドスケープを見る →',
+                        '全258社の競合ランドスケープを見る →',
                         style: TextStyle(
                           fontSize: 14,
                           color: _textSecondary,
