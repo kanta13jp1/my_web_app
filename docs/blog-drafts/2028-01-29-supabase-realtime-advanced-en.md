@@ -1,7 +1,7 @@
 ---
 title: "Supabase Realtime Advanced: Presence, Broadcast, and Channel Management"
 tags: supabase,flutter,indiedev,ai
-published: false
+published: true
 ---
 
 # Supabase Realtime Advanced: Presence, Broadcast, and Channel Management
