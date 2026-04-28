@@ -8482,7 +8482,7 @@ final _competitorInfo = <String, _CompetitorInfo>{
     accentColor: Color(0xFF3D3D3D),
     painPoints: [
       'EC向けメール/SMS自動化に特化しており、個人の財務・習慣・AI学習は対象外',
-      '月額約' + r'$' + '20〜でECショップ向け機能が中心、個人ライフ管理には不向き',
+      '月額約' r'$' '20〜でECショップ向け機能が中心、個人ライフ管理には不向き',
       'セグメントメール・フロー構築は優秀だが、個人ライフOSとしての統合機能がない',
     ],
     features: [
@@ -8516,7 +8516,7 @@ final _competitorInfo = <String, _CompetitorInfo>{
     accentColor: Color(0xFF00C4CC),
     painPoints: [
       '背景除去1機能のみに特化しており、財務・タスク・AI大学は完全に別ツールが必要',
-      '無料は月50枚の低解像度のみ、月額約' + r'$' + '9〜で1機能への支出は非効率',
+      '無料は月50枚の低解像度のみ、月額約' r'$' '9〜で1機能への支出は非効率',
       '背景除去精度は高いが、個人ライフ全体のOS統合機能はゼロ',
     ],
     features: [
@@ -8584,7 +8584,7 @@ final _competitorInfo = <String, _CompetitorInfo>{
     accentColor: Color(0xFF7C3AED),
     painPoints: [
       'AI動画生成に特化しており、財務管理・タスク・AI大学は別ツールが必要',
-      '無料クレジット消費が速く、月額約' + r'$' + '10〜で動画生成のみのコスト負担',
+      '無料クレジット消費が速く、月額約' r'$' '10〜で動画生成のみのコスト負担',
       '高品質動画生成は優秀だが、個人ライフ全体のOS統合機能がない',
     ],
     features: [
@@ -8619,7 +8619,7 @@ final _competitorInfo = <String, _CompetitorInfo>{
     accentColor: Color(0xFF356AE6),
     painPoints: [
       'メール自動化・CRMに特化しており、個人の財務・習慣・AI学習は対象外',
-      '月額約' + r'$' + '15〜でビジネス向け機能が中心、個人ライフ管理には過剰',
+      '月額約' r'$' '15〜でビジネス向け機能が中心、個人ライフ管理には過剰',
       'メール配信フロー・スコアリングは優秀だが、個人ライフOSとしての統合機能がない',
     ],
     features: [
@@ -8688,7 +8688,7 @@ final _competitorInfo = <String, _CompetitorInfo>{
     accentColor: Color(0xFF1A82E2),
     painPoints: [
       'トランザクションメール配信APIに特化し、財務・タスク・AI大学は別ツールが必要',
-      '無料は月100通まで、大量配信は月額約' + r'$' + '19.95〜のプランが必要',
+      '無料は月100通まで、大量配信は月額約' r'$' '19.95〜のプランが必要',
       'メール到達率・分析は優秀だが、個人ライフ全体のOS統合機能がない',
     ],
     features: [
@@ -8723,7 +8723,7 @@ final _competitorInfo = <String, _CompetitorInfo>{
     accentColor: Color(0xFFFB6970),
     painPoints: [
       'クリエイター向けメール配信・ランディングページに特化し、財務・習慣管理は別ツール',
-      '無料は1,000読者まで、月額約' + r'$' + '29〜で読者増加に伴いコストが上昇',
+      '無料は1,000読者まで、月額約' r'$' '29〜で読者増加に伴いコストが上昇',
       'メールシーケンス・自動化は優秀だが、個人ライフ全体のOS統合機能がない',
     ],
     features: [
@@ -8999,206 +8999,6 @@ class _ComparisonShellState extends State<_ComparisonShell> {
     'mixpanel': 'analytics',
     'brevo': 'email-marketing',
     'beehiiv': 'newsletter',
-    'mailerlite': const _CompetitorInfo(
-      name: 'MailerLite',
-      emoji: '📧',
-      tagline:
-          'MailerLiteをシンプルで使いやすいメールマーケティングツールと比較。自分株式会社は日本語対応で直感的なメール配信・自動化を提供します。',
-      searchKeyword:
-          'MailerLite代替 メールマーケティング代替 メール配信代替 MailerLiteより安い MailerLite日本語',
-      accentColor: Color(0xFF00B057),
-      painPoints: [
-        'テンプレートが英語中心で日本語対応が弱い',
-        '月額費用がリスト拡大とともに上昇する',
-        '詳細なセグメント設定が複雑',
-      ],
-      features: [
-        _FeatureComparison(
-          feature: 'メール配信',
-          competitor: '直感的エディタ・月額9USD~',
-          ourApp: '統合メール配信機能',
-          ourAppWins: true,
-        ),
-        _FeatureComparison(
-          feature: '自動化ワークフロー',
-          competitor: 'ドラッグ&ドロップ式フロー',
-          ourApp: 'AIサポート付き自動化',
-          ourAppWins: true,
-        ),
-        _FeatureComparison(
-          feature: '日本語サポート',
-          competitor: '英語中心・日本語部分対応',
-          ourApp: '完全日本語対応',
-          ourAppWins: true,
-        ),
-      ],
-    ),
-    'hotjar': const _CompetitorInfo(
-      name: 'Hotjar',
-      emoji: '🔥',
-      tagline: 'HotjarをUXヒートマップ・録画ツールと比較。自分株式会社はAIによる行動分析とライフ最適化インサイトを一元提供します。',
-      searchKeyword: 'Hotjar代替 ヒートマップツール代替 UX分析代替 Hotjarより安い Hotjar日本語',
-      accentColor: Color(0xFFFF3C00),
-      painPoints: [
-        'プロプランが高額で中小企業には負担',
-        'ヒートマップ以外の分析機能が限定的',
-        '録画ストレージが有限でコスト増大',
-      ],
-      features: [
-        _FeatureComparison(
-          feature: 'ヒートマップ分析',
-          competitor: '専門ヒートマップ・無料~月額32USD',
-          ourApp: 'AI行動インサイト統合',
-          ourAppWins: true,
-        ),
-        _FeatureComparison(
-          feature: 'セッション録画',
-          competitor: 'セッション録画・フィルタリング',
-          ourApp: 'AIパターン抽出で効率化',
-          ourAppWins: true,
-        ),
-        _FeatureComparison(
-          feature: '統合分析',
-          competitor: 'UX特化・他ツール連携必須',
-          ourApp: 'ライフマネジメント統合分析',
-          ourAppWins: true,
-        ),
-      ],
-    ),
-    'amplitude': const _CompetitorInfo(
-      name: 'Amplitude',
-      emoji: '📊',
-      tagline:
-          'AmplitudeをプロダクトアナリティクスSaaSと比較。自分株式会社はAI統合でユーザー行動分析と個人最適化を同時実現します。',
-      searchKeyword:
-          'Amplitude代替 プロダクトアナリティクス代替 行動分析代替 Amplitudeより安い Amplitude日本語',
-      accentColor: Color(0xFF1F5EFF),
-      painPoints: [
-        'エンタープライズプランが高額',
-        'データ量増加による課金体系が複雑',
-        'B2B SaaS特化で個人利用には過剰',
-      ],
-      features: [
-        _FeatureComparison(
-          feature: 'プロダクト分析',
-          competitor: '深いファネル・コホート分析/無料~月額49USD',
-          ourApp: 'AI統合ライフ分析',
-          ourAppWins: true,
-        ),
-        _FeatureComparison(
-          feature: 'ユーザーセグメント',
-          competitor: '高精度セグメンテーション',
-          ourApp: 'AIパーソナライズセグメント',
-          ourAppWins: true,
-        ),
-        _FeatureComparison(
-          feature: '日本語サポート',
-          competitor: '英語中心',
-          ourApp: '完全日本語対応',
-          ourAppWins: true,
-        ),
-      ],
-    ),
-    'mixpanel': const _CompetitorInfo(
-      name: 'Mixpanel',
-      emoji: '📈',
-      tagline:
-          'Mixpanelをイベントベースプロダクトアナリティクスと比較。自分株式会社はAIによる行動分析とパーソナライズ提案を統合提供します。',
-      searchKeyword:
-          'Mixpanel代替 プロダクトアナリティクス代替 イベント分析代替 Mixpanelより安い Mixpanel日本語',
-      accentColor: Color(0xFFCE3F8E),
-      painPoints: [
-        'プロプランが高額でスタートアップには負担',
-        'イベント設計が複雑で導入コストが高い',
-        'データ保持期間が限定的',
-      ],
-      features: [
-        _FeatureComparison(
-          feature: 'イベント分析',
-          competitor: '深いファネル・リテンション/無料~月額24USD',
-          ourApp: 'AI統合行動インサイト',
-          ourAppWins: true,
-        ),
-        _FeatureComparison(
-          feature: 'ユーザーグループ分析',
-          competitor: 'コホート・セグメント分析',
-          ourApp: 'AIパーソナライズセグメント',
-          ourAppWins: true,
-        ),
-        _FeatureComparison(
-          feature: '日本語サポート',
-          competitor: '英語中心',
-          ourApp: '完全日本語対応',
-          ourAppWins: true,
-        ),
-      ],
-    ),
-    'brevo': const _CompetitorInfo(
-      name: 'Brevo (旧Sendinblue)',
-      emoji: '💌',
-      tagline:
-          'Brevo (旧Sendinblue)をメール・SMS・チャット統合プラットフォームと比較。自分株式会社はAI支援で全コミュニケーションを一元管理します。',
-      searchKeyword: 'Brevo代替 Sendinblue代替 メール配信代替 Brevoより安い Brevo日本語 SMS送信代替',
-      accentColor: Color(0xFF0092FF),
-      painPoints: [
-        'メール・SMS・チャットがバラバラで管理が煩雑',
-        'テンプレートが英語中心',
-        'トランザクションメールの設定が複雑',
-      ],
-      features: [
-        _FeatureComparison(
-          feature: 'マルチチャネル配信',
-          competitor: 'メール+SMS+チャット/無料~',
-          ourApp: 'AI統合コミュニケーション',
-          ourAppWins: true,
-        ),
-        _FeatureComparison(
-          feature: '自動化フロー',
-          competitor: 'マーケオートメーション',
-          ourApp: 'AIサポート付き自動化',
-          ourAppWins: true,
-        ),
-        _FeatureComparison(
-          feature: '日本語対応',
-          competitor: '部分対応',
-          ourApp: '完全日本語対応',
-          ourAppWins: true,
-        ),
-      ],
-    ),
-    'beehiiv': const _CompetitorInfo(
-      name: 'beehiiv',
-      emoji: '🐝',
-      tagline:
-          'beehiivをクリエイター向けニュースレタープラットフォームと比較。自分株式会社はAI支援でライフ管理・情報発信を統合します。',
-      searchKeyword: 'beehiiv代替 ニュースレター代替 メルマガ代替 beehiivより安い beehiiv日本語',
-      accentColor: Color(0xFFFFB800),
-      painPoints: [
-        '購読者増加で月額が急上昇する',
-        '日本語ユーザーへのサポートが限定的',
-        'ニュースレター特化で他ライフ管理機能がない',
-      ],
-      features: [
-        _FeatureComparison(
-          feature: 'ニュースレター配信',
-          competitor: 'メール・Web両対応/無料~月額39USD',
-          ourApp: 'AI支援コンテンツ配信',
-          ourAppWins: true,
-        ),
-        _FeatureComparison(
-          feature: '収益化機能',
-          competitor: '有料購読・スポンサー管理',
-          ourApp: 'AIライフ収益最適化',
-          ourAppWins: true,
-        ),
-        _FeatureComparison(
-          feature: '統合管理',
-          competitor: 'ニュースレター専用',
-          ourApp: 'ライフ全体を一元管理',
-          ourAppWins: true,
-        ),
-      ],
-    ),
   };
 
   @override
