@@ -22843,6 +22843,11 @@ task 714ee4a4 unconditional backfill + 全超過タスク broad backfill を最�
 - reasoning内訳に上がり3F充足率を追加
 - commit: `0f47870dc`
 
+## 2026-04-28 PS#6 S93 — 競馬予想モデル ageCoverage (馬齢充足率 confidence 13 terms)
+
+- `buildHistoricalBaselinePrediction`: ageCoverage (horse_age充足率 ×0.01) をconfidence式に追加 (13 terms)
+- commit: `b2a93ac63`
+
 ## 2026-04-28 PS#6 S92 — 競馬予想モデル prevLast3FSlowPenalty (sort 16因子体制)
 
 - `sortHorseEntriesForLearning`: prevLast3FSlowPenalty を15番目因子として追加 (≥37s=+6/≥36s=+4/≥35s=+2/データなし=+2)
