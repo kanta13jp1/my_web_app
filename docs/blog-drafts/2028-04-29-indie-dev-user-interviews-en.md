@@ -1,7 +1,7 @@
 ---
 title: "User Interview Techniques for Indie Dev: 5 Questions to Find PMF"
 tags: ai,indiedev,buildinpublic,automation
-published: false
+published: true
 ---
 
 # User Interview Techniques for Indie Dev: 5 Questions to Find PMF

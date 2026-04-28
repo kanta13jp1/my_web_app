@@ -1,7 +1,7 @@
 ---
 title: "個人開発のユーザーインタビュー技法 — PMF 探索のための5つの質問"
 tags: AI,個人開発,buildinpublic,automation
-published: false
+published: true
 ---
 
 # 個人開発のユーザーインタビュー技法 — PMF 探索のための5つの質問
