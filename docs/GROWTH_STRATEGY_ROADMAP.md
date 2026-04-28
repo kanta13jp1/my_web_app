@@ -23048,3 +23048,16 @@ CLAUDE.md hook table + ~/.claude/hooks/inject-rules.txt 注入. OPS-28 charter�
 (本 commit にて確定)
 
 
+
+## PS#5 S84 — 2026-04-28 (collision patrol)
+
+- **collision patrol**: 4 timestamp 衝突解消
+  - 20260428193000: seed_achievements_ps6_s90 → 193200
+  - 20260428196000: seed_achievements_ps6_s91 → 196100
+  - 20260428196000: seed_encord_ai_university → 196200
+  - 20260428199000: seed_appen_ai_university → 199100
+- 876 migrations 全 unique (check_migration_timestamps.py: OK)
+- Achievement seed: 20260428201000_seed_achievements_ps5_s84.sql
+
+### commit
+(本 commit にて確定)
