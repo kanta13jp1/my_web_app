@@ -7767,6 +7767,138 @@ $
       ),
     ],
   ),
+  'adobe-firefly': const _CompetitorInfo(
+    name: 'Adobe Firefly',
+    emoji: '🔥',
+    tagline: 'Adobe Fireflyを超えた、Creative Cloud AI画像生成から個人ライフ全域を統合するAI OS。',
+    searchKeyword: 'Adobe Firefly代替 Creative Cloud AI代替 Adobe AI画像代替',
+    accentColor: Color(0xFFFF0000),
+    painPoints: [
+      'Adobe FireflyはCreative Cloud専用AI画像生成でAdobe製品依存・高額サブスク必要',
+      '財務管理・習慣追跡・タスク管理・AI大学など個人管理OS機能がない',
+      'Adobe Creative Cloud月額数千円前提で個人利用にはコストが高い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AI画像生成',
+        competitorHas: true,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '知識ベース構築',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: 'タスク・習慣管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: 'AI大学 (300社+)',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'leonardo-ai': const _CompetitorInfo(
+    name: 'Leonardo.AI',
+    emoji: '🎭',
+    tagline: 'Leonardo AIを超えた、AI画像・ゲームアート生成から個人ライフ全域を統合するAI OS。',
+    searchKeyword: 'Leonardo AI代替 Leonardo.AI代替 ゲームAI画像代替',
+    accentColor: Color(0xFFE91E63),
+    painPoints: [
+      'Leonardo AIはゲームアート特化AI画像生成で個人ライフ管理機能がない',
+      '財務管理・習慣追跡・タスク管理・AI大学など実務・成長機能が皆無',
+      '月額課金でトークン制限があり無制限利用にはコストがかかる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AI画像・ゲームアート生成',
+        competitorHas: true,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '知識ベース構築',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: 'タスク・習慣管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: 'AI大学 (300社+)',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'poe': const _CompetitorInfo(
+    name: 'Poe (Quora)',
+    emoji: '🤖',
+    tagline: 'Poeを超えた、マルチAIチャットから個人ライフ全域を統合するAI OS。',
+    searchKeyword: 'Poe代替 Quora Poe代替 マルチAIチャット代替',
+    accentColor: Color(0xFF8B5CF6),
+    painPoints: [
+      'PoeはQuoraのAIチャットアグリゲーターで個人ライフ管理・生産性機能がない',
+      '財務管理・習慣追跡・タスク管理・AI大学など実務機能が皆無',
+      '高機能利用は月額課金(19.99USD)が必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'マルチAIチャット',
+        competitorHas: true,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '知識ベース構築',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: 'タスク・習慣管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: 'AI大学 (300社+)',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
@@ -7983,6 +8115,9 @@ class _ComparisonShellState extends State<_ComparisonShell> {
     'deepseek': 'ai-platform',
     'stable-diffusion': 'ai-image',
     'dalle': 'ai-image',
+    'adobe-firefly': 'ai-image',
+    'leonardo-ai': 'ai-image',
+    'poe': 'ai-platform',
     'llama': 'ai-platform',
   };
 
@@ -8184,7 +8319,7 @@ class _ComparisonShellState extends State<_ComparisonShell> {
                       children: [
                         _buildTag(
                           icon: Icons.compare_arrows_rounded,
-                          label: '189社比較',
+                          label: '192社比較',
                           backgroundColor:
                               _info.accentColor.withValues(alpha: 0.18),
                           foregroundColor: _textPrimary,
@@ -8792,7 +8927,7 @@ class _ComparisonShellState extends State<_ComparisonShell> {
                       ),
                       SizedBox(width: 8),
                       Text(
-                        '全189社の競合ランドスケープを見る →',
+                        '全192社の競合ランドスケープを見る →',
                         style: TextStyle(
                           fontSize: 14,
                           color: _textSecondary,
