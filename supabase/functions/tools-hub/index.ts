@@ -1328,6 +1328,15 @@ function popularitySortScore(value: unknown): number {
   return 6;              // 10番人気以下
 }
 
+function weightKgPenaltyScore(value: unknown): number {
+  const w = numericOrFallback(value, 0);
+  if (w <= 0) return 0;   // データなし — neutral
+  if (w <= 53) return -1; // 軽斤量 (≤53kg 有利)
+  if (w <= 55) return 0;  // 標準
+  if (w < 57) return 1;   // やや重い斤量
+  return 2;               // 重斤量 (≥57kg 不利)
+}
+
 function sortHorseEntriesForLearning(
   entries: Record<string, unknown>[],
   raceContext?: { courseType?: string; distance?: number },
@@ -1384,7 +1393,10 @@ function sortHorseEntriesForLearning(
     // 16. popularity sort score (ascending — 人気上位馬を優先)
     const pop = popularitySortScore(a.popularity) - popularitySortScore(b.popularity);
     if (pop !== 0) return pop;
-    // 17. horse_number (ascending — tiebreaker)
+    // 17. weight_kg penalty (ascending — 重斤量は不利)
+    const wkg = weightKgPenaltyScore(a.weight_kg) - weightKgPenaltyScore(b.weight_kg);
+    if (wkg !== 0) return wkg;
+    // 18. horse_number (ascending — tiebreaker)
     return numericOrFallback(a.horse_number, 999) - numericOrFallback(b.horse_number, 999);
   });
 }
