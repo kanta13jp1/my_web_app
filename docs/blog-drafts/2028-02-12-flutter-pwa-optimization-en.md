@@ -1,7 +1,7 @@
 ---
 title: "Flutter PWA Optimization: Service Worker, Offline Support, and Install Prompts"
 tags: flutter,ai,indiedev,programming
-published: false
+published: true
 ---
 
 # Flutter PWA Optimization: Service Worker, Offline Support, and Install Prompts
