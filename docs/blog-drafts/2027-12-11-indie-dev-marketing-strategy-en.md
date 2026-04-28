@@ -1,7 +1,7 @@
 ---
 title: "Indie Dev Marketing Strategy: Product Hunt, X, and dev.to"
 tags: ai,indiedev,buildinpublic,automation
-published: false
+published: true
 ---
 
 # Indie Dev Marketing Strategy: Product Hunt, X, and dev.to

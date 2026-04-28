@@ -1,7 +1,7 @@
 ---
 title: "個人開発者のマーケティング戦略 — Product Hunt / X / dev.to"
 tags: AI,個人開発,buildinpublic,automation
-published: false
+published: true
 ---
 
 # 個人開発者のマーケティング戦略 — Product Hunt / X / dev.to
