@@ -23187,3 +23187,12 @@ dev.to 累計: 114本
   - https://dev.to/kanta13jp1/flutter-gorouter-deep-dive-nested-routes-redirects-and-deep-links-4enb
 
 dev.to 累計: 118本
+
+## PS#4 S106 2026-04-29: 競合3社追加 192→195社 (suno/udio/ideogram) + ai-music新カテゴリ
+
+- suno: Suno AI音楽生成特化/月額約10USD/ai-music新カテゴリ
+- udio: Udio AI楽曲生成/月額約10USD/ai-music
+- ideogram: Ideogram AIテキスト埋め込み特化/月額約8USD/ai-image
+- competitorMeta +3エントリ / sitemap 235→238 URLs (priority=0.8)
+- SEO: "Suno代替"/"Udio代替"/"Ideogram代替" 超高検索ボリュームキーワード流入
+- commit: e145a4ec8
