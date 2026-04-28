@@ -1,7 +1,7 @@
 ---
 title: "GitHub Actions Automation Pipeline: From Blog Posts to AI Video Generation"
 tags: ai,automation,indiedev,programming
-published: false
+published: true
 ---
 
 # GitHub Actions Automation Pipeline: From Blog Posts to AI Video Generation

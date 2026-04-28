@@ -1,7 +1,7 @@
 ---
 title: "GitHub Actions 自動化パイプライン設計 — ブログ投稿から動画生成まで"
 tags: AI,個人開発,automation,buildinpublic
-published: false
+published: true
 ---
 
 # GitHub Actions 自動化パイプライン設計 — ブログ投稿から動画生成まで
