@@ -1,7 +1,7 @@
 ---
 title: "Flutter Web + Supabase リアルタイム — チャンネル購読から楽観的更新まで"
 tags: supabase,AI,個人開発,postgresql
-published: false
+published: true
 ---
 
 # Flutter Web + Supabase リアルタイム — チャンネル購読から楽観的更新まで
