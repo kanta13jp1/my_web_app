@@ -1,7 +1,7 @@
 ---
 title: "個人開発のランディングページ最適化 — CVR を上げた6つの施策"
 tags: AI,個人開発,buildinpublic,automation
-published: false
+published: true
 ---
 
 # 個人開発のランディングページ最適化 — CVR を上げた6つの施策
