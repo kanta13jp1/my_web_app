@@ -23127,3 +23127,16 @@ CLAUDE.md hook table + ~/.claude/hooks/inject-rules.txt 注入. OPS-28 charter�
   +last3FCoverage*0.01+winningTimeCoverage*0.01+weightChangeCoverage*0.01+ageCoverage*0.01
   +sexCoverage*0.01-fieldPenalty+oddsGapBonus
 - commit: 40536a28f
+
+## PS版#2 S72 — T-1 Phase21 全4弾完結 (#111-#114) 2026-04-29
+
+- T-1 第111弾: Flutter Riverpod 深化 — Provider/StateNotifier/AsyncNotifier → dev.to 投稿成功
+  - https://dev.to/kanta13jp1/flutter-riverpod-deep-dive-provider-statenotifier-and-asyncnotifier-19po
+- T-1 第112弾: Supabase PostgreSQL 高度クエリ — JSON/Full-text/Window関数 → dev.to 投稿成功
+  - https://dev.to/kanta13jp1/supabase-postgresql-advanced-queries-json-full-text-search-and-window-functions-54cc
+- T-1 第113弾: 個人開発SaaS KPI設計と計測 — MAU/ARR/NPS/チャーン → dev.to 投稿成功
+  - https://dev.to/kanta13jp1/indie-saas-kpi-design-and-measurement-mau-arr-nps-and-churn-376o
+- T-1 第114弾: Claude API 活用パターン — ストリーミング/ツール使用/プロンプトキャッシュ → dev.to 投稿成功
+  - https://dev.to/kanta13jp1/claude-api-patterns-streaming-tool-use-and-prompt-caching-17eh
+
+dev.to 累計: 114本
