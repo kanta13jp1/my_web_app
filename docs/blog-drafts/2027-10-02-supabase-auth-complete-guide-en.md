@@ -1,7 +1,7 @@
 ---
 title: "Supabase Auth Complete Guide: Magic Link, OAuth, and MFA"
 tags: supabase,flutter,indiedev,ai
-published: false
+published: true
 ---
 
 # Supabase Auth Complete Guide: Magic Link, OAuth, and MFA
