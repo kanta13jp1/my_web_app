@@ -22242,3 +22242,9 @@ Phase4 drafts 新規作成 (8ファイル):
 | JSON-LD BreadcrumbList | S88 |
 | vsMatch regex underscore対応 | S88b |
 | landing_page "全174社を見る →" | S86後 |
+
+## PS#5 S76 (2026-04-28)
+- anon guard 11ページ追加: ai_secretary/edge_llm_playground/election_strategy/election_victory/gemini_university_v2/guitar_recording_studio/horse_racing_predictor/morning_briefing/personal_dashboard/project_gantt/tome_deck_studio
+- 修正: return型不一致(Future<String>→return''/Future<bool>→return false)・_GanttTimelineTabState スコープ外参照修正
+- S74+S76 合計31ページ anon guard 完了
+- Commit: 9fac78e3f
