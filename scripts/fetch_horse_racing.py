@@ -837,6 +837,51 @@ def _clean_garbled_races(target_date: str, source: str) -> int:
     return deleted
 
 
+def _first_embedded_record(value: object) -> Optional[dict]:
+    """PostgREST embed の 1:1/1:M 差を吸収して最初の dict を返す。"""
+    if isinstance(value, dict):
+        return value
+    if isinstance(value, list) and value and isinstance(value[0], dict):
+        return value[0]
+    return None
+
+
+def _result_looks_garbled(result: object) -> bool:
+    row = _first_embedded_record(result)
+    if not row:
+        return False
+    return any(
+        _looks_garbled(row.get(field))
+        for field in ("first_place", "second_place", "third_place")
+    )
+
+
+def _recent_completed_races_with_garbled_results(from_date: str, target_date: str) -> list[dict]:
+    """過去に壊れた文字コードで保存された完了済み結果を再取得対象に戻す。"""
+    races = supabase_rest("GET", "horse_races", params=[
+        ("race_date", f"lte.{target_date}"),
+        ("race_date", f"gte.{from_date}"),
+        ("status", "eq.completed"),
+        ("race_id_ext", "not.is.null"),
+        (
+            "select",
+            "id,race_id_ext,race_name,source,race_date,horse_results(first_place,second_place,third_place)",
+        ),
+        ("order", "race_date.asc"),
+    ]) or []
+    retry_races: list[dict] = []
+    for race in races:
+        if not isinstance(race, dict) or not _result_looks_garbled(race.get("horse_results")):
+            continue
+        retry = {
+            key: race.get(key)
+            for key in ("id", "race_id_ext", "race_name", "source", "race_date")
+        }
+        retry["_repair_reason"] = "garbled_result"
+        retry_races.append(retry)
+    return retry_races
+
+
 # ─── 出走表取得 (JRA / NAR 共通ロジック) ──────────────────────────────────────
 def _fetch_entries_for_source(
     target_date: str,
@@ -981,14 +1026,29 @@ def fetch_results(target_date: str):
     ).isoformat()
     print(f"[INFO] {from_date}〜{target_date} のレース結果を取得中...")
     # supabase_rest に list of tuples を渡すことで同一カラムへの複数条件を実現
-    races = supabase_rest("GET", "horse_races", params=[
+    scheduled_races = supabase_rest("GET", "horse_races", params=[
         ("race_date", f"lte.{target_date}"),
         ("race_date", f"gte.{from_date}"),
         ("status", "eq.scheduled"),
         ("race_id_ext", "not.is.null"),
         ("select", "id,race_id_ext,race_name,source,race_date"),
         ("order", "race_date.asc"),
-    ])
+    ]) or []
+    garbled_result_races = _recent_completed_races_with_garbled_results(from_date, target_date)
+    if garbled_result_races:
+        print(f"[INFO] 文字化け済み horse_results {len(garbled_result_races)}件を再取得対象に追加")
+
+    races = []
+    seen_race_ids: set[str] = set()
+    for race in [*scheduled_races, *garbled_result_races]:
+        if not isinstance(race, dict):
+            continue
+        race_db_id = str(race.get("id") or "")
+        if not race_db_id or race_db_id in seen_race_ids:
+            continue
+        seen_race_ids.add(race_db_id)
+        races.append(race)
+
     if not races:
         print("[INFO] 対象レースなし")
         return
@@ -998,6 +1058,7 @@ def fetch_results(target_date: str):
         race_id_ext = race["race_id_ext"]
         race_db_id = race["id"]
         source = race.get("source", "jra")
+        repair_reason = race.get("_repair_reason")
 
         # ソースに応じて正しいURLを選択
         result_url_template = NAR_RESULT_URL if source == "nar" else JRA_RESULT_URL
@@ -1036,6 +1097,8 @@ def fetch_results(target_date: str):
             "payouts": parser.payouts,
             "is_prediction_correct": is_correct,
         }
+        if repair_reason == "garbled_result":
+            supabase_rest("DELETE", f"horse_results?race_id=eq.{race_db_id}")
         stored_result = supabase_rest("POST", "horse_results", result_row)
         if not stored_result and parser.payouts:
             # Migration not applied yet: keep the legacy result write path alive.

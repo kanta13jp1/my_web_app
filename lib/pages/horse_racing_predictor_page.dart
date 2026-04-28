@@ -390,6 +390,36 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
     return value.map((key, val) => MapEntry(key.toString(), val));
   }
 
+  bool _looksGarbledHorseText(dynamic value) {
+    final text = value?.toString() ?? '';
+    if (text.isEmpty) return false;
+    if (text.contains('\uFFFD')) return true;
+    const markers = [
+      '\u00ef\u00bf\u00bd',
+      '\u00c3',
+      '\u00c2',
+      '\u7e3a',
+      '\u7e67',
+      '\u8b41',
+      '\u8373',
+      '\u9b25',
+    ];
+    if (markers.any(text.contains)) return true;
+    return text.runes.any((code) => code >= 0x3400 && code <= 0x4DBF);
+  }
+
+  bool _isGarbledHorseResult(Map<String, dynamic>? result) {
+    if (result == null) return false;
+    return ['first_place', 'second_place', 'third_place']
+        .any((field) => _looksGarbledHorseText(result[field]));
+  }
+
+  String _horseResultName(Map<String, dynamic> result, String field) {
+    final raw = result[field]?.toString().trim() ?? '';
+    if (raw.isEmpty || _looksGarbledHorseText(raw)) return '?';
+    return raw;
+  }
+
   List<dynamic> _objectList(dynamic value) {
     if (value is! List) return const [];
     return List<dynamic>.from(value);
@@ -1008,14 +1038,19 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
     // 過去 (PS版#119) は Map だった時期もあり、List 戻りバージョンと両方対応する。
     final entries = _entriesOf(race);
     final pred = _firstMap(race['horse_predictions']);
-    final result = _firstMap(race['horse_results']);
+    final rawResult = _firstMap(race['horse_results']);
+    final result = _isGarbledHorseResult(rawResult) ? null : rawResult;
+    final resultNeedsRepair = rawResult != null && result == null;
     final hasResult = result != null;
     final isCorrect = result?['is_prediction_correct'] as bool?;
     final trifectaPaid = (result?['trifecta_paid'] as num?)?.toInt();
 
     Color statusColor;
     String statusLabel;
-    if (hasResult) {
+    if (resultNeedsRepair) {
+      statusColor = const Color(0xFFF59E0B);
+      statusLabel = '再取得待ち';
+    } else if (hasResult) {
       statusColor =
           isCorrect == true ? const Color(0xFF4CAF50) : const Color(0xFFE53935);
       statusLabel = isCorrect == true ? '的中' : '外れ';
@@ -1222,7 +1257,28 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
                 ],
               ),
             ],
-            if (result != null) ...[
+            if (resultNeedsRepair) ...[
+              const SizedBox(height: 8),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF59E0B).withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: const Color(0xFFF59E0B).withValues(alpha: 0.3),
+                  ),
+                ),
+                child: const Text(
+                  '結果の文字コードが壊れているため、次回の結果取得で再取得します。',
+                  style: TextStyle(
+                    color: Color(0xFFFBBF24),
+                    fontSize: 12,
+                    height: 1.5,
+                  ),
+                ),
+              ),
+            ] else if (result != null) ...[
               const SizedBox(height: 8),
               Container(
                 padding: const EdgeInsets.all(10),
@@ -1278,9 +1334,9 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      '実際: ${result['first_place'] ?? '?'} - '
-                      '${result['second_place'] ?? '?'} - '
-                      '${result['third_place'] ?? '?'}',
+                      '実際: ${_horseResultName(result, 'first_place')} - '
+                      '${_horseResultName(result, 'second_place')} - '
+                      '${_horseResultName(result, 'third_place')}',
                       style: const TextStyle(
                         color: Colors.white70,
                         fontSize: 12,
@@ -2090,6 +2146,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
     Map<String, dynamic>? result,
   ) {
     if (result == null) return null;
+    if (_isGarbledHorseResult(result)) return null;
     final first = (result['first_place'] ?? '').toString().trim();
     final second = (result['second_place'] ?? '').toString().trim();
     final third = (result['third_place'] ?? '').toString().trim();
@@ -2946,7 +3003,9 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
       itemBuilder: (ctx, i) {
         final p = _predictionHistory[i];
         final race = p['horse_races'] as Map<String, dynamic>?;
-        final result = p['horse_results'] as Map<String, dynamic>?;
+        final rawResult = p['horse_results'] as Map<String, dynamic>?;
+        final result = _isGarbledHorseResult(rawResult) ? null : rawResult;
+        final resultNeedsRepair = rawResult != null && result == null;
         final raceName = race?['race_name'] as String? ?? 'レース';
         final raceDate = race?['race_date'] as String? ?? '';
         final venue = race?['venue'] as String?;
@@ -2959,7 +3018,18 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
         final hasResult = result != null;
         Color cardBg;
         Widget trailing;
-        if (!hasResult) {
+        if (resultNeedsRepair) {
+          cardBg = const Color(0xFFF59E0B).withValues(alpha: 0.04);
+          trailing = const Chip(
+            label: Text(
+              '再取得待ち',
+              style: TextStyle(
+                fontSize: 11,
+                height: 1.5,
+              ),
+            ),
+          );
+        } else if (!hasResult) {
           cardBg = const Color(0xFF1E1E1E);
           trailing = const Chip(
             label: Text(
@@ -3042,9 +3112,9 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
                 ),
                 if (hasResult)
                   Text(
-                    '実際: ${result['first_place'] ?? '?'} - '
-                    '${result['second_place'] ?? '?'} - '
-                    '${result['third_place'] ?? '?'}',
+                    '実際: ${_horseResultName(result, 'first_place')} - '
+                    '${_horseResultName(result, 'second_place')} - '
+                    '${_horseResultName(result, 'third_place')}',
                     style: const TextStyle(
                       color: Color(0xFF4B5563),
                       fontSize: 11,
