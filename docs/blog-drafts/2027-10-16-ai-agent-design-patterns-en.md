@@ -1,7 +1,7 @@
 ---
 title: "AI Agent Design Patterns: Tool Use, RAG, and Memory"
 tags: ai,indiedev,automation,buildinpublic
-published: false
+published: true
 ---
 
 # AI Agent Design Patterns: Tool Use, RAG, and Memory
