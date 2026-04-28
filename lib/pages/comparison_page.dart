@@ -7115,6 +7115,133 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'github-copilot': const _CompetitorInfo(
+    name: 'GitHub Copilot',
+    emoji: '🤖',
+    tagline: 'コード補完を超えた、知識・成長・AI大学の統合プラットフォーム。',
+    searchKeyword: 'GitHub Copilot代替 Copilot代替 AIコード補完代替',
+    accentColor: Color(0xFF0D1117),
+    painPoints: [
+      'GitHub Copilotはコード補完専用で個人の知識管理・成長追跡ができない',
+      'サブスクリプション料金が月額\$10以上かかる',
+      '生成したコードや知見を体系的に蓄積・振り返る手段がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AIコード補完・生成',
+        competitorHas: true,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: 'ノート・知識蓄積',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: 'AI大学 (290社+学習)',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '成長ミッション追跡',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務・習慣管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'chatgpt': const _CompetitorInfo(
+    name: 'ChatGPT',
+    emoji: '💬',
+    tagline: 'ChatGPTの会話をすべて記録・活用できる、AIライフ統合OS。',
+    searchKeyword: 'ChatGPT代替 ChatGPT無料代替 AIチャット代替',
+    accentColor: Color(0xFF10A37F),
+    painPoints: [
+      'ChatGPTは会話ログが蓄積されるだけで構造化・検索がしにくい',
+      'Plus (\$20/月) 以上のプランで真価を発揮するが無料プランは制限が多い',
+      '財務管理・習慣追跡・タスク管理との統合ができない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AIチャット・質問応答',
+        competitorHas: true,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '知識ベース構築',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: 'タスク・習慣管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: 'AI大学 (290社+学習)',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'tabnine': const _CompetitorInfo(
+    name: 'Tabnine',
+    emoji: '⌨️',
+    tagline: 'AIコード補完を学習の出発点に。290社のAI知識も無料で。',
+    searchKeyword: 'Tabnine代替 AIコード補完代替 IDE AI補完代替',
+    accentColor: Color(0xFF5B4FE9),
+    painPoints: [
+      'TabnineはIDEのAIコード補完専用で個人の学習・成長管理に対応しない',
+      'Enterprise向けプランはチームが主対象で個人開発者には高コスト',
+      'AI技術の最新動向をキャッチアップする機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AIコード補完 (IDE統合)',
+        competitorHas: true,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: 'AI技術ラーニング (290社+)',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: 'ノート・コード蓄積',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '成長ミッション追跡',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
@@ -7317,6 +7444,9 @@ class _ComparisonShellState extends State<_ComparisonShell> {
     'docusign': 'b2b',
     'drata': 'b2b',
     'vanta': 'b2b',
+    'github-copilot': 'ai-dev',
+    'tabnine': 'ai-dev',
+    'chatgpt': 'ai-platform',
   };
 
   @override
