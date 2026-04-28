@@ -1,7 +1,7 @@
 ---
 title: "Solo Founder KPI Design: The Only Metric That Matters Is Yesterday's You"
 tags: ai,indiedev,buildinpublic,automation
-published: false
+published: true
 ---
 
 # Solo Founder KPI Design: The Only Metric That Matters Is Yesterday's You
