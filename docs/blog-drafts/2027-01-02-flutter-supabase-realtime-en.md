@@ -1,7 +1,7 @@
 ---
 title: "Flutter Web + Supabase Realtime: From Channel Subscriptions to Optimistic Updates"
 tags: supabase,ai,postgresql,indiedev
-published: false
+published: true
 ---
 
 # Flutter Web + Supabase Realtime: From Channel Subscriptions to Optimistic Updates
