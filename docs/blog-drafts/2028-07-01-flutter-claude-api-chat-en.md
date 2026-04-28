@@ -1,7 +1,7 @@
 ---
 title: "Flutter × Claude API — Build an AI Chat Feature from Scratch"
 tags: flutter,ai,indiedev,automation
-published: false
+published: true
 ---
 
 # Flutter × Claude API — Build an AI Chat Feature from Scratch

@@ -1,7 +1,7 @@
 ---
 title: "Flutter × Claude API — AI チャット機能をゼロから実装する"
 tags: flutter,AI,個人開発,automation
-published: false
+published: true
 ---
 
 # Flutter × Claude API — AI チャット機能をゼロから実装する
