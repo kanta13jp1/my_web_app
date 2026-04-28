@@ -1,7 +1,7 @@
 ---
 title: "Indie Dev SEO Strategy: /vs-* Pages, Structured Data, and Core Web Vitals"
 tags: ai,indiedev,buildinpublic,automation
-published: false
+published: true
 ---
 
 # Indie Dev SEO Strategy: /vs-* Pages, Structured Data, and Core Web Vitals
