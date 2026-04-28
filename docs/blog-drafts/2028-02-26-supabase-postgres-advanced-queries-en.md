@@ -1,7 +1,7 @@
 ---
 title: "Supabase PostgreSQL Advanced Queries: JSON, Full-Text Search, and Window Functions"
 tags: supabase,ai,indiedev,programming
-published: false
+published: true
 ---
 
 # Supabase PostgreSQL Advanced Queries: JSON, Full-Text Search, and Window Functions
