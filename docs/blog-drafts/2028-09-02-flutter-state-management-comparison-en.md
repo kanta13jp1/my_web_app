@@ -1,7 +1,7 @@
 ---
 title: "Flutter State Management Comparison 2028 — Riverpod vs Bloc vs Provider"
 tags: flutter,ai,indiedev,programming
-published: false
+published: true
 ---
 
 # Flutter State Management Comparison 2028 — Riverpod vs Bloc vs Provider
