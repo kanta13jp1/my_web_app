@@ -1,7 +1,7 @@
 ---
 title: "Flutter Web SEO: canonical, OGP, and JSON-LD for a 175-Route SPA"
 tags: flutter,ai,indiedev,programming
-published: false
+published: true
 ---
 
 # Flutter Web SEO: canonical, OGP, and JSON-LD for a 175-Route SPA
