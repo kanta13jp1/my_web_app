@@ -152,8 +152,8 @@ jobs:
             ! -path 'test/main_test.dart' \
             ! -path 'test/readme_features_test.dart' \
             ! -path 'test/web_import_smoke_test.dart' \
-            -print)
-          flutter test --coverage $VM_TEST_FILES
+            -print0 | xargs -0 grep -L "@TestOn('browser')" 2>/dev/null || true)
+          flutter test $VM_TEST_FILES
         continue-on-error: false
 
       - name: Run web import smoke tests
