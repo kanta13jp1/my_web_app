@@ -643,7 +643,7 @@
         'hugging-face': { title: '自分株式会社 vs Hugging Face | Hugging Face代替アプリ比較', desc: 'Hugging FaceはOSSモデルのGitHub。自分株式会社はAI大学でHugging Faceの活用を学べる個人OS。完全無料のAI統合ライフマネジメントアプリ。' },
         'replicate': { title: '自分株式会社 vs Replicate | Replicate代替アプリ比較', desc: 'ReplicateはAPIでAIモデルを即呼び出せるクラウド。自分株式会社はAI大学でReplicate活用を学べる個人OS。完全無料のAI統合ライフマネジメントアプリ。' }
       };
-      var vsMatch = path.match(/\/vs-([a-z0-9\-]+)$/);
+      var vsMatch = path.match(/\/vs-([a-z0-9\-_]+)$/);
       if (vsMatch) {
         var competitor = vsMatch[1];
         var meta = competitorMeta[competitor];
