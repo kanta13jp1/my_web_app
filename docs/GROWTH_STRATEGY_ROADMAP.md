@@ -23140,3 +23140,13 @@ CLAUDE.md hook table + ~/.claude/hooks/inject-rules.txt 注入. OPS-28 charter�
   - https://dev.to/kanta13jp1/claude-api-patterns-streaming-tool-use-and-prompt-caching-17eh
 
 dev.to 累計: 114本
+
+## 2026-04-28 PS#6 S95 — 競馬予想モデル horseWeightCoverage (馬体重充足率 confidence 15 terms)
+### S95: horseWeightCoverage(horse_weight×0.01) — 馬体重データ充足率をconfidence計算に追加
+- horseWeightCoverage: horse_weight フィールドが揃っている馬の割合 × 0.01
+- confidence最終式 (15 terms):
+  0.31+dataQuality*0.22+oddsCoverage*0.12+historyCoverage*0.07+bestTimeCoverage*0.05
+  +prevMarginCoverage*0.03+jockeyCoverage*0.02+trainerCoverage*0.01+bloodlineCoverage*0.01
+  +last3FCoverage*0.01+winningTimeCoverage*0.01+weightChangeCoverage*0.01+ageCoverage*0.01
+  +sexCoverage*0.01+horseWeightCoverage*0.01-fieldPenalty+oddsGapBonus
+- commit: 50c7c17aa
