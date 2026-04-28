@@ -1,7 +1,7 @@
 ---
 title: "Flutter Web PWA Setup: Installable SPA in 10 Minutes"
 tags: flutter,ai,indiedev,programming
-published: false
+published: true
 ---
 
 # Flutter Web PWA Setup: Installable SPA in 10 Minutes

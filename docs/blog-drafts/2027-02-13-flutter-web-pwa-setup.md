@@ -1,7 +1,7 @@
 ---
 title: "Flutter Web を PWA 化する — インストール可能な SPA を10分で作る"
 tags: flutter,AI,個人開発,buildinpublic
-published: false
+published: true
 ---
 
 # Flutter Web を PWA 化する — インストール可能な SPA を10分で作る
