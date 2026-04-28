@@ -23158,10 +23158,18 @@ CLAUDE.md hook table + ~/.claude/hooks/inject-rules.txt 注入. OPS-28 charter�
 - SEO: "FLUX代替"/"Kling AI代替"/"ActiveCampaign代替"
 - commit: 79579d95e
 
-## 2026-04-29 PS#6 S100 — 競馬予想モデル recentFormBonus (1強直近好走 confidence boost)
-### S100: recentFormBonus(entries) — 最低オッズ馬の直近好走をconfidence boostに追加
-- 最低オッズ馬(1番人気)が30日以内に3着以内 = +0.03
-- 最低オッズ馬が60日以内に3着以内 = +0.01
-- それ以外 = 0
-- confidence式: ...+oddsGapBonus+recentForm (grade cap適用)
-- commit: f58b817c6
+## PS#5 S87 — 2026-04-29 (lint fix + collision patrol)
+
+- **collision patrol**: 4件解消
+  - 010000: vscode_s14 → 010100
+  - 003000: ps6_s99 → 003200 (003100 取得済みのため)
+  - 018000: ollama_ai_university → 018100
+  - 019500: llamacpp_ai_university → 019600
+- **Dart lint fix**: comparison_page.dart prefer_adjacent_string_concatenation 12件
+  - `'前' + r'$' + '後'` → `'前' r'$' '後'` (隣接文字列リテラル)
+  - flutter analyze 0 issues confirmed
+- 906 migrations 全 unique (check_migration_timestamps.py: OK)
+- Achievement seed: 20260429021000_seed_achievements_ps5_s87.sql
+
+### commit
+(本 commit にて確定)
