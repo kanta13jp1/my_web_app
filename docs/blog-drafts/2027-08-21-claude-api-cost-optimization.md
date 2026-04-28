@@ -1,7 +1,7 @@
 ---
 title: "Claude API コスト最適化 — haiku / sonnet 使い分けと Prompt Caching で月70%削減"
 tags: AI,個人開発,automation,buildinpublic
-published: false
+published: true
 ---
 
 # Claude API コスト最適化 — haiku / sonnet 使い分けと Prompt Caching で月70%削減
