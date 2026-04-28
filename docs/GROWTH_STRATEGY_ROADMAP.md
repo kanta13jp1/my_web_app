@@ -22879,3 +22879,17 @@ task 714ee4a4 unconditional backfill + 全超過タスク broad backfill を最�
 - 9b8345c5a (deploy-prod.yml 20260424225000 always-reverted)
 - 77dfdbdd9 (163000→163100 collision fix)
 - 4c53bf1cc (180000→180100 collision fix)
+
+## 2026-04-28 PS#5 S83 (PowerShell版#5 Session 83)
+
+### SQLSTATE 23514 根本原因解消 + deploy safety net + collision patrol
+
+- `20260424225000` pre-push backfill → `20260425xxx` broad UPDATE より先に recovery_plan 確保
+- deploy-prod.yml: `20260424225000` を repair list `reverted` 追加 → 毎 deploy 先頭実行 (永続安全ネット)
+- collision patrol: `20260428163000` (163100), `20260428180000` (180100) rename
+- Issue #919 / #896 close / Run 25056692259 migrations ✅ SUCCESS
+
+### commits
+- f2ff7238e, b77d2c692 (pre-push backfill + S83 seed)
+- 9b8345c5a (deploy-prod.yml always-reverted)
+- 77dfdbdd9, 4c53bf1cc (collision fixes)
