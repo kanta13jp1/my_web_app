@@ -23127,3 +23127,9 @@ CLAUDE.md hook table + ~/.claude/hooks/inject-rules.txt 注入. OPS-28 charter�
 
 ### commit
 788e520fa (main)
+
+## 2026-04-29 PS#6 S98 — 競馬予想モデル popularitySortScore (人気順sort因子 17因子体制)
+### S98: popularitySortScore(popularity) — 人気順をsort因子に追加 (16番目因子)
+- 1-3番人気=0 / 4-6番人気=2 / 7-9番人気=4 / 10番人気以下=6 / データなし=5
+- horse_number は17番目tiebreakに繰り上げ (sort 17因子体制確立)
+- commit: e03086da9
