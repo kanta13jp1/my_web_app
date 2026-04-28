@@ -93,7 +93,13 @@ class _SiteGuideChatPageState extends State<SiteGuideChatPage> {
   Future<void> _sendQuestion(String question) async {
     final normalized = question.trim();
     if (normalized.isEmpty || _isSending) return;
-    if (Supabase.instance.client.auth.currentUser == null) {
+    final bool isAnon;
+    try {
+      isAnon = Supabase.instance.client.auth.currentUser == null;
+    } catch (_) {
+      return;
+    }
+    if (isAnon) {
       setState(() {
         _messages.add(
           _SiteGuideMessage.assistant('ログインが必要です', source: 'anon-guard'),
