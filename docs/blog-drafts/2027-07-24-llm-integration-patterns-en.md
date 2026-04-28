@@ -1,7 +1,7 @@
 ---
 title: "LLM Integration Patterns: Function Calling, RAG, or Agent — How to Choose"
 tags: ai,indiedev,automation,buildinpublic
-published: false
+published: true
 ---
 
 # LLM Integration Patterns: Function Calling, RAG, or Agent — How to Choose
