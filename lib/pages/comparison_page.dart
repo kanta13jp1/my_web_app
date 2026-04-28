@@ -8037,7 +8037,7 @@ final _competitorInfo = <String, _CompetitorInfo>{
     accentColor: Color(0xFF4353FF),
     painPoints: [
       'Webサイト構築に特化しており、財務管理・タスク・AI学習は別ツールが必要',
-      '月額約' + r'$' + '14〜のサブスクで、個人ライフ全体の管理には機能が偏っている',
+      '月額約' r'$' '14〜のサブスクで、個人ライフ全体の管理には機能が偏っている',
       'デザインのカスタマイズは高度だが、日常業務フローとの連携はない',
     ],
     features: [
@@ -8071,7 +8071,7 @@ final _competitorInfo = <String, _CompetitorInfo>{
     accentColor: Color(0xFF0055FF),
     painPoints: [
       'AIサイトビルダーに特化しており、個人の財務・タスク・学習管理は対象外',
-      '月額約' + r'$' + '15〜のサブスクで、Webデザイン以外のライフ管理はできない',
+      '月額約' r'$' '15〜のサブスクで、Webデザイン以外のライフ管理はできない',
       'デザインプレビューやデプロイは優れるが、日常ライフOSとしての統合機能がない',
     ],
     features: [
@@ -8105,7 +8105,7 @@ final _competitorInfo = <String, _CompetitorInfo>{
     accentColor: Color(0xFF8B5CF6),
     painPoints: [
       'AIコピーライティングに特化しており、財務・タスク・AI学習は別ツールが必要',
-      '月額約' + r'$' + '49〜でマーケター向け機能が中心、個人ライフ管理には不向き',
+      '月額約' r'$' '49〜でマーケター向け機能が中心、個人ライフ管理には不向き',
       'セールスコピー生成は優れるが、日常のライフマネジメント全体は対象外',
     ],
     features: [
@@ -8140,7 +8140,7 @@ final _competitorInfo = <String, _CompetitorInfo>{
     accentColor: Color(0xFF7C3AED),
     painPoints: [
       'AI長文コンテンツ生成に特化しており、財務・タスク・日常管理は別ツールが必要',
-      '月額約' + r'$' + '13〜のサブスクで、ライティング以外のライフ管理はできない',
+      '月額約' r'$' '13〜のサブスクで、ライティング以外のライフ管理はできない',
       'ブログ・SNS・広告コピー生成は優れるが、個人のライフOS統合機能がない',
     ],
     features: [
@@ -8174,7 +8174,7 @@ final _competitorInfo = <String, _CompetitorInfo>{
     accentColor: Color(0xFF03363D),
     painPoints: [
       'カスタマーサポート・ヘルプデスクに特化しており、個人の財務・習慣管理は対象外',
-      '月額約' + r'$' + '55〜のビジネス向けプランで個人利用にはコストが高すぎる',
+      '月額約' r'$' '55〜のビジネス向けプランで個人利用にはコストが高すぎる',
       'チケット管理・サポートワークフローは優秀だが、個人ライフOSとしての機能がない',
     ],
     features: [
@@ -8208,7 +8208,7 @@ final _competitorInfo = <String, _CompetitorInfo>{
     accentColor: Color(0xFF1F8DD6),
     painPoints: [
       '顧客チャット・サポートに特化しており、個人の財務・習慣・学習管理は対象外',
-      '月額約' + r'$' + '74〜のビジネス向けで、個人ライフマネジメントには不向き',
+      '月額約' r'$' '74〜のビジネス向けで、個人ライフマネジメントには不向き',
       'チャットウィジェット・AIボットは優秀だが、日常ライフOSとしての統合機能がない',
     ],
     features: [
@@ -8242,7 +8242,7 @@ final _competitorInfo = <String, _CompetitorInfo>{
     accentColor: Color(0xFFFFE01B),
     painPoints: [
       'Eメールマーケティングに特化しており、財務管理・タスク・AI学習は別ツールが必要',
-      '無料プランは機能制限あり、月額約' + r'$' + '13〜で個人ブランドにはコスト負担が大きい',
+      '無料プランは機能制限あり、月額約' r'$' '13〜で個人ブランドにはコスト負担が大きい',
       'マーケティングキャンペーン管理は優秀だが、個人ライフOSとしての統合機能がない',
     ],
     features: [
@@ -8276,7 +8276,7 @@ final _competitorInfo = <String, _CompetitorInfo>{
     accentColor: Color(0xFFFF3D57),
     painPoints: [
       'チームプロジェクト管理に特化しており、個人の財務・習慣・AI学習は対象外',
-      '月額約' + r'$' + '9〜のチーム向けプランで個人1人利用にはコスト最適化が難しい',
+      '月額約' r'$' '9〜のチーム向けプランで個人1人利用にはコスト最適化が難しい',
       'ボード管理・自動化は充実しているが、個人ライフ全体のOS統合機能がない',
     ],
     features: [
@@ -8310,7 +8310,7 @@ final _competitorInfo = <String, _CompetitorInfo>{
     accentColor: Color(0xFF25C16F),
     painPoints: [
       'AIサポートヘルプデスクに特化しており、財務・習慣・AI大学は別ツールが必要',
-      '無料プランは機能制限大、月額約' + r'$' + '15〜でチーム向け機能が中心',
+      '無料プランは機能制限大、月額約' r'$' '15〜でチーム向け機能が中心',
       'チケット管理・FAQ自動化は優秀だが、個人のライフマネジメント全体はサポート外',
     ],
     features: [
@@ -8344,7 +8344,7 @@ final _competitorInfo = <String, _CompetitorInfo>{
     accentColor: Color(0xFF625DF5),
     painPoints: [
       '画面録画・非同期動画メッセージに特化し、財務管理・タスク・AI学習は別ツール',
-      '月額約' + r'$' + '12.5〜のサブスクで動画録画のみのコスト対効果が限定的',
+      '月額約' r'$' '12.5〜のサブスクで動画録画のみのコスト対効果が限定的',
       'チームコミュニケーションは優秀だが、個人のライフマネジメント統合機能がない',
     ],
     features: [
@@ -8378,7 +8378,7 @@ final _competitorInfo = <String, _CompetitorInfo>{
     accentColor: Color(0xFF1A1A1A),
     painPoints: [
       'セールスパイプライン・CRMに特化しており、個人の財務・習慣・AI学習は対象外',
-      '月額約' + r'$' + '14.9〜で営業チーム向け機能が中心、個人利用には過剰',
+      '月額約' r'$' '14.9〜で営業チーム向け機能が中心、個人利用には過剰',
       'ディール管理・見込み客追跡は優秀だが、個人ライフOSとしての統合機能がない',
     ],
     features: [
@@ -8412,7 +8412,7 @@ final _competitorInfo = <String, _CompetitorInfo>{
     accentColor: Color(0xFF6366F1),
     painPoints: [
       'AI写真編集・背景除去に特化しており、財務・タスク・AI大学は別ツールが必要',
-      '月額約' + r'$' + '9.99〜でEC向け商品画像編集が中心、個人ライフ管理はできない',
+      '月額約' r'$' '9.99〜でEC向け商品画像編集が中心、個人ライフ管理はできない',
       'ECサイト向け写真加工は優れるが、日常のライフマネジメント全体はサポート外',
     ],
     features: [
