@@ -1577,6 +1577,10 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
       if (_geminiApiKey == null) return;
     }
 
+    if (Supabase.instance.client.auth.currentUser == null) {
+      setState(() => _isLoading = false);
+      return;
+    }
     setState(() => _isLoading = true);
 
     try {

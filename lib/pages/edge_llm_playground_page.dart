@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 
 import '../models/ai_provider_registry.dart';
@@ -90,6 +91,7 @@ class _EdgeLlmPlaygroundPageState extends State<EdgeLlmPlaygroundPage> {
   }
 
   Future<void> _send() async {
+    if (Supabase.instance.client.auth.currentUser == null) return;
     final prompt = _promptController.text.trim();
     if (prompt.isEmpty || _isSending) return;
 

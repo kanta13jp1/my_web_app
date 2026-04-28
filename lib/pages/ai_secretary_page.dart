@@ -109,6 +109,10 @@ class _AISecretaryPageState extends State<AISecretaryPage> {
   }
 
   Future<String?> _translateText(String text) async {
+    if (supabase.auth.currentUser == null) {
+      setState(() => _isLoading = false);
+      return null;
+    }
     try {
       final payload = await _magiSettingsService.buildAiAssistantPayload(
         baseBody: {
@@ -162,6 +166,10 @@ class _AISecretaryPageState extends State<AISecretaryPage> {
   }
 
   Future<void> _consultSecretary(String strategyType) async {
+    if (supabase.auth.currentUser == null) {
+      setState(() => _isLoading = false);
+      return;
+    }
     setState(() {
       _isLoading = true;
       _currentStrategyType = strategyType;
@@ -248,6 +256,10 @@ class _AISecretaryPageState extends State<AISecretaryPage> {
       imageQuality: 80,
     );
     if (image == null) return;
+    if (supabase.auth.currentUser == null) {
+      setState(() => _isLoading = false);
+      return;
+    }
     setState(() => _isLoading = true);
     try {
       final bytes = await image.readAsBytes();

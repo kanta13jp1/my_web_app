@@ -74,6 +74,7 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
     String? imageBase64,
     String? mimeType,
   }) async {
+    if (_supabase.auth.currentUser == null) return '';
     final body = <String, dynamic>{
       'action': 'generate',
       'model': model,
@@ -152,6 +153,7 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
 
   // ★ GitHub Actionsを手動トリガー (Edge Function経由)
   Future<void> _triggerBatchAnalysis() async {
+    if (_supabase.auth.currentUser == null) return;
     setState(() => _isBusy = true);
     try {
       final response = await _supabase.functions

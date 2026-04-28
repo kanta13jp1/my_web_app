@@ -5289,6 +5289,10 @@ class _AiUniversityPageState extends State<AiUniversityPage>
   }
 
   Future<bool> _recordQuizScoreToSupabase(String providerId) async {
+    if (_supabase.auth.currentUser == null) {
+      setState(() => _loading = false);
+      return false;
+    }
     final user = _supabase.auth.currentUser;
     if (user == null) return false;
 

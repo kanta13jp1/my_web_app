@@ -595,6 +595,10 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
   }
 
   Future<void> _runGeminiAnalysis() async {
+    if (Supabase.instance.client.auth.currentUser == null) {
+      setState(() => _isLoading = false);
+      return;
+    }
     if (_isGeminiLoading) return;
     setState(() {
       _isGeminiLoading = true;

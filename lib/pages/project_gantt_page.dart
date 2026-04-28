@@ -2008,6 +2008,7 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
 
   // Win版#131 part 20: AI 概観 + 依存関係自動修復
   Future<void> _showAiReport() async {
+    if (Supabase.instance.client.auth.currentUser == null) return;
     showDialog<void>(
       context: context,
       barrierDismissible: false,
@@ -2088,6 +2089,7 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
   }
 
   Future<void> _autoRepairDependencies() async {
+    if (Supabase.instance.client.auth.currentUser == null) return;
     try {
       final resp = await Supabase.instance.client.functions.invoke(
         'tools-hub',
@@ -2730,6 +2732,7 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
 
   // Win版#131 part 23: 担当 instance に直接指示送信 (cross-instance-pr 自動生成)
   Future<void> _sendInstructionToInstance(WbsTask task, String field) async {
+    if (Supabase.instance.client.auth.currentUser == null) return;
     final fieldLabel = field == 'remaining_work' ? '残作業' : 'リカバリー案 / 状態';
     final controller = TextEditingController();
     final result = await showDialog<String>(
