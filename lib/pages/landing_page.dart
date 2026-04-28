@@ -3375,6 +3375,14 @@ $input
         q: 'スマホやタブレットでも使えますか?',
         a: 'Flutter Web製のためブラウザがあればどのデバイスでも動作します。スマホのホーム画面に追加(PWA)すると、アプリのように快適に使えます。',
       ),
+      (
+        q: 'すでに Notion + Slack を使っています。なぜ自分株式会社が必要ですか?',
+        a: 'Notionはチームのナレッジを整理します。Slackはチームとのコミュニケーションを支えます。しかし「あなた自身の意思決定」「昨日の自分との比較」「資産・負債のバランスシート」を管理するツールはどこにも存在しません。自分株式会社はその空白を埋める個人向けライフOSです。Notionが仕事を整理するなら、自分株式会社はあなた自身を経営します。しかも完全無料です。',
+      ),
+      (
+        q: 'Notion Japan DC開設で日本市場が変わりますが、自分株式会社との違いは？',
+        a: 'Notion Japan DCはエンタープライズ向けデータ居住要件への対応です。自分株式会社はすでにSupabase東京リージョンでデータを管理しており、Japan DC相当の対応は完了しています。本質的な差別化は、財務管理・AI大学(300社+の学習コンテンツ)・WBS・12インスタンスAI組織という個人CEO向け機能群です。Notionはチーム・企業向けナレッジOS、自分株式会社はあなた1人のライフOSという目的の違いがあります。',
+      ),
     ];
 
     return Card(
@@ -3405,6 +3413,112 @@ $input
             for (final faq in faqs) ...[
               _FaqItem(question: faq.q, answer: faq.a),
             ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNotionVsSection() {
+    const rows = [
+      ('自分株式会社', 'Notion'),
+      ('「昨日の自分」をKPIにする意思決定OS', 'ナレッジ管理 + タスク管理'),
+      ('CEO感 — 最終決定権を自分に返す設計', 'チームコラボレーション中心'),
+      ('資産/負債バランスシート（時間・お金）', 'プロジェクト管理'),
+      ('IPO/ウェルビーイングという個人ゴール', 'ゴール設定なし'),
+      ('6部署バランス（人事最優先の自己経営）', '業務効率化のみ'),
+      ('完全無料', '¥1,100〜/月 + AI従量課金'),
+    ];
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Card(
+      key: const Key('landing_notion_vs_section'),
+      elevation: 1,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'NotionでもSlackでもない、あなた自身のCEOオフィス',
+              style: TextStyle(
+                fontSize: 17,
+                fontWeight: FontWeight.w800,
+                height: 1.4,
+              ),
+            ),
+            const SizedBox(height: 4),
+            const Text(
+              'Notionは仕事を整理します。自分株式会社はあなた自身を経営します。',
+              style: TextStyle(
+                color: Color(0xFF64748B),
+                height: 1.6,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Table(
+              columnWidths: const {
+                0: FlexColumnWidth(1),
+                1: FlexColumnWidth(1),
+              },
+              border: TableBorder.all(
+                color:
+                    isDark ? const Color(0xFF374151) : const Color(0xFFE5E7EB),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              children: [
+                for (var i = 0; i < rows.length; i++)
+                  TableRow(
+                    decoration: BoxDecoration(
+                      color: i == 0
+                          ? (isDark
+                              ? const Color(0xFF1E293B)
+                              : const Color(0xFFEEF2FF))
+                          : (i.isEven
+                              ? (isDark
+                                  ? const Color(0xFF111827)
+                                  : const Color(0xFFF9FAFB))
+                              : null),
+                    ),
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 10,
+                        ),
+                        child: Text(
+                          rows[i].$1,
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight:
+                                i == 0 ? FontWeight.w700 : FontWeight.w500,
+                            color: i == 0 ? const Color(0xFF3949AB) : null,
+                            height: 1.5,
+                          ),
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 10,
+                        ),
+                        child: Text(
+                          rows[i].$2,
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight:
+                                i == 0 ? FontWeight.w700 : FontWeight.w400,
+                            color: i == 0
+                                ? const Color(0xFF6B7280)
+                                : const Color(0xFF9CA3AF),
+                            height: 1.5,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+              ],
+            ),
           ],
         ),
       ),
@@ -3797,10 +3911,13 @@ $input
                   // 6. 移行しやすさ（Notion/Evernote ユーザー向け）
                   _buildMigrationGuideSection(),
                   const SizedBox(height: 20),
-                  // 7. 価格比較（無料を強調）
+                  // 7. Notion vs 自分株式会社 差別化
+                  _buildNotionVsSection(),
+                  const SizedBox(height: 20),
+                  // 8. 価格比較（無料を強調）
                   _buildPricingComparisonSection(),
                   const SizedBox(height: 20),
-                  // 8. 登録なしでまず試す
+                  // 9. 登録なしでまず試す
                   _buildTrialSection(),
                   const SizedBox(height: 20),
                   // 9. FAQ で不安を解消
