@@ -353,6 +353,8 @@
         <a class="secondary" href="https://my-web-app-b67f4.web.app/feature-requests">機能リクエスト</a>
         <a class="secondary" href="https://my-web-app-b67f4.web.app/danshari">断捨離ツール</a>
         <a class="secondary" href="https://my-web-app-b67f4.web.app/project-gantt">WBSガントチャート</a>
+        <a class="secondary" href="https://my-web-app-b67f4.web.app/competitors">競合174社比較</a>
+        <a class="secondary" href="https://my-web-app-b67f4.web.app/ai-university">AI大学</a>
         <a class="secondary" href="https://my-web-app-b67f4.web.app/ai-dev-principles">AI開発原則</a>
         <a class="secondary" href="https://my-web-app-b67f4.web.app/public-guitar-gallery">公開ギャラリー</a>
       </nav>
@@ -670,6 +672,11 @@
           setMeta('twitter:url', window.location.href);
           setMeta('og:type', 'article');
           setCanonical(window.location.href);
+          // Update seo-shell for non-JS crawlers
+          var _h1 = document.getElementById('seo-title');
+          if (_h1) _h1.textContent = meta.title;
+          var _desc = document.querySelector('.seo-card p[lang="ja"]');
+          if (_desc) _desc.textContent = meta.desc;
           // JSON-LD structured data for vs-* comparison pages
           var jsonLd = {
             "@context": "https://schema.org",
