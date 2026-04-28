@@ -1,7 +1,7 @@
 ---
 title: "個人開発の Build in Public — X でフォロワーを増やす投稿戦略"
 tags: AI,個人開発,buildinpublic,automation
-published: false
+published: true
 ---
 
 # 個人開発の Build in Public — X でフォロワーを増やす投稿戦略
