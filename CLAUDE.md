@@ -84,7 +84,7 @@ UIコンポーネントを新規作成・修正する際は、以下のファイ
 | `[CAVEMAN]` | 通信 fragments OK・code は normal | — |
 | `[MEMORY-DECAY]` | memory/ タイムスタンプ + shadow + cleanup | — |
 | `[WBS-SYNC]` | 毎セッション wbs.priority_for_instance + update_progress | — |
-| `[INSTANCE-ROLES]` | **12 スロット (10 Claude + 2 Codex) 役割分担** — Codex#1=SQL/algo, Codex#2=大規模 refactor (詳細 docs/MULTI_INSTANCE_FLEET.md) | — |
+| `[INSTANCE-ROLES]` | **12 スロット (10 Claude + 2 Codex) 役割分担** — Codex#1=横断調査/修正PR, Codex#2=CI/同期/運用 (詳細 docs/MULTI_INSTANCE_FLEET.md) | — |
 | `[CONCURRENCY]` | deploy-prod cancel-in-progress: false | — |
 | `[ROADMAP-LOG]` | docs/GROWTH_STRATEGY_ROADMAP.md 毎セッション末尾追記 | Rule 3 |
 | `[REAL-DATA]` | ダミーデータ禁止・Supabase リアルデータ使用 | Rule 4 |
@@ -119,10 +119,19 @@ UIコンポーネントを新規作成・修正する際は、以下のファイ
 
 > **⚠️ 重要 (2026-04-24 Win版#132 part 3 改訂)**: Claude Code 単独依存リスク顕在化 (Max プラン limit hit / context compaction ループ / Anthropic API outage) を受けて、**強制 task routing matrix** + **fallback plan** を `docs/DEV_PROCESS_MULTI_AI.md` に策定。新機能開発 / 新 AI 追加 / Migration 作成時は必ず同ドキュメントの routing matrix を参照。
 
-**設計思想**: Claude Code = CEO / アーキテクト専任 (判断・統合・memory 管理のみ)。
-実装タスクは Codex (SQL / algorithm) / Gemini Code Assist (長文 refactor) / GitHub Copilot (inline) / NotebookLM (リサーチ) に分散。
+**設計思想**: Claude Code = 設計判断・大きめの実装・既存設計に沿った機能追加・並列ワーカー・統合 / memory 管理。
+実装タスクと運用補助は Codex (横断調査 / 修正PR / CI・同期・レビュー補助) / Gemini Code Assist (Google・Flutter・Firebase系 / 長文 refactor) / GitHub Copilot (inline / テスト追加) / Manus AI (ブラウザ操作・外部SaaS確認) / NotebookLM (リサーチ / Master Brain) に分散。
 目標: Claude Code token 消費量を月 50% 削減 / 他 AI で代替可能率 70%+ (`docs/DEV_PROCESS_MULTI_AI.md` Phase 3 KPI)。
 Anthropic API outage 時も他 AI で開発継続可能な体制を確立する。
+
+**12インスタンス運用の正本**:
+- GitHub Issues / PR = 実行単位、担当、レビュー、完了判定
+- WBS / Notion = 進捗、依存関係、ロードマップ、管理ビュー
+- NotebookLM = 外部メモリー兼 Master Brain。判断履歴、設計意図、衝突回避ルール、学びの集約
+- Slack = 進行中の通知、ブロッカー、handoff、緊急調整
+- 各 worktree / branch = 実作業の隔離領域
+
+作業開始時は、担当領域の重複、同一ファイル / DBスキーマ / Edge Function / workflow の競合、Issue / WBS / Notion / PR / NotebookLM の状態不一致、Slack / Notion の形骸化、Gemini Code Assist / Copilot / Manus AI の活用余地を確認する。作業中も運用改善提案を範囲内として扱う。
 
 ### インスタンス別 推奨モデル / 制約表
 
@@ -133,8 +142,8 @@ Anthropic API outage 時も他 AI で開発継続可能な体制を確立する�
 | **PowerShell版 #1-6** | ルーティン: `claude-haiku-4-5` / 設計: `claude-sonnet-4-6` | `/fast` (定型作業) | `.claude/worktrees/instance-ps1` ... `instance-ps6` | 各PS固定担当 |
 | **WEB版** | `claude-sonnet-4-6` (変更不可の場合あり) | 通常 | GitHub MCP のみ | `notebooklm` / `flutter analyze` / `deno lint` / ローカルCLI **不可** |
 | **📱 スマホ版** | `claude-sonnet-4-6` | 通常 (画像分析重視) | GitHub MCP のみ | ローカルCLI **不可** / git/dart/flutter **不可** / **GitHub MCP のみ** で git 操作。**実機 UAT・モバイル不具合トリアージ専用** |
-| **Codex#1** | OpenAI Codex CLI | SQL生成・差分レビュー | `.claude/worktrees/instance-codex1` (`codex/codex1-wip`) | SQL / migration / seed 生成。PS#3 補助 |
-| **Codex#2** | OpenAI Codex CLI | Deno/algorithm 最適化 | `.claude/worktrees/instance-codex2` (`codex/codex2-wip`) | EF(Deno) / algorithm / バッチ改善。PS#5/#6 補助 |
+| **Codex#1** | OpenAI Codex CLI | 横断調査・修正PR・レビュー補助 | `.claude/worktrees/instance-codex1` (`codex/codex1-wip`) | SQL / migration レビュー補助。PS#3 / Win版 補助 |
+| **Codex#2** | OpenAI Codex CLI | CI・同期・運用・EF/GHA補助 | `.claude/worktrees/instance-codex2` (`codex/codex2-wip`) | EF(Deno) / algorithm / GHA補助。PS#1/#5/#6 補助 |
 
 **Worktree 運用ルール (ローカル編集インスタンス必須)**:
 - セッション開始時: `cd C:/Users/kanta/GitHub/my_web_app/.claude/worktrees/instance-<name>` で作業開始
@@ -172,6 +181,7 @@ Anthropic API outage 時も他 AI で開発継続可能な体制を確立する�
 | 行レベル補完 | **GitHub Copilot** | — | 不使用 |
 | 5分以内の修正 | **Copilot Inline Chat** | — | 不使用 |
 | 500行超リファクタリング | **Gemini Code Assist** | Copilot | 事前レビュー |
+| 横断調査 / 修正PR / レビュー補助 | **Codex#1** | Codex#2 | 仕様確認のみ |
 | SQL/アルゴリズム最適化 | **Codex#1/#2** | Copilot | 仕様確認のみ |
 | Migration (SQL DDL + seed) | **Codex#1** | Copilot | 命名則チェック |
 | AI大学 provider 追加 (seed SQL) | **Codex#1** (template ベース) | — | routing 判断のみ |
@@ -179,6 +189,7 @@ Anthropic API outage 時も他 AI で開発継続可能な体制を確立する�
 | Flutter widget 新規 | **Gemini** (DESIGN.md 参照) | Copilot | design-skills gate |
 | EF (Deno) 新 action | **Codex#2** | Copilot | deny-by-default 原則確認 |
 | GHA workflow (yml) | **Codex#2** | Copilot | 不使用 |
+| ブラウザ操作 / 外部SaaS確認 / 長手順実行 | **Manus AI** | Claude Code | 結果確認 |
 | 競合 21 社調査 | **NotebookLM Deep Research** | — | 統合レポート |
 | PR レビュー (GHA) | **Claude API** (claude-sonnet-4-6) | **Gemini 1.5 Flash** (自動 fallback) | 不使用 |
 | 設計・戦略・ルール遵守 | **Claude Code** 独占 | — | 主役 |
@@ -201,7 +212,7 @@ Anthropic API outage 時も他 AI で開発継続可能な体制を確立する�
 | --- | --- | --- |
 | **Generator-Verifier** | 品質が最重要。評価基準を明文化できる | `claude-agent-review.yml` (PR生成→Claudeレビュー) / `ci-auto-fix.yml` (修正→CI再実行) / `/deep-research` (NotebookLM生成→Claude統合) |
 | **Orchestrator-Subagent** | タスク分解が明確。サブタスクが短時間で完結 | `cs-check.yml` (FAQ返信/バグ修正/エスカレーション) / `github-issue-fix.yml` (Issue一覧→1件ずつ処理) / Claude Code Schedule (計画→実行→コミット) |
-| **Agent Teams** | 並行独立した長時間タスク。成果物が互いに干渉しない | **4インスタンス並行開発** (VSCode/Windowsアプリ/PowerShell/WEB版) + Gemini Code Assist / CODEX / GitHub Copilot 補完 / `ai-university-update.yml` (60プロバイダー 2時間毎 RSS) + Claude Schedule (4時間毎 NotebookLM Deep Research) |
+| **Agent Teams** | 並行独立した長時間タスク。成果物が互いに干渉しない | **12インスタンス並行開発** (Claude Code 10 + Codex 2) + Gemini Code Assist / GitHub Copilot / Manus AI 補完 / `ai-university-update.yml` + NotebookLM Master Brain |
 | **Message Bus** | イベント駆動。エコシステムが成長する | `workflow-failure-handler.yml` (失敗イベント→Issue→`cs-check`) / `feedback-issue-resolved.yml` (Issueクローズ→通知メール) / `edge-function-audit.yml` (EF未接続→Issue→`github-issue-fix`) |
 | **Shared State** | エージェントが互いの発見を活用。単一障害点を避けたい | `memory/` + NotebookLM Master Brain (セッション横断知識) / Supabase DB (全EFが読み書き) / `COMPRESSED_PROMPT_V3.md` (全インスタンス共有状態) |
 

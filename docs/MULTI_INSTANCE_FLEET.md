@@ -34,8 +34,8 @@
 
 | スロット | worktree path | branch | モデル | 主担当領域 |
 | --- | --- | --- | --- | --- |
-| **Codex#1** | `.claude/worktrees/instance-codex1` (要作成) | `codex/codex1-wip` | GPT-5.2-Codex | SQL + algorithm 最適化 + 数値計算 (馬学習ループ / WBS 同期 / migration tuning) |
-| **Codex#2** | `.claude/worktrees/instance-codex2` (要作成) | `codex/codex2-wip` | GPT-5.2-Codex | 大規模 refactor + CI fix + UI badge 系 (500+ 行 trailing comma / header version / lint cascade) |
+| **Codex#1** | `.claude/worktrees/instance-codex1` | `codex/codex1-wip` | GPT-5.2-Codex | 横断調査 / 修正 PR / SQL・migration レビュー補助 |
+| **Codex#2** | `.claude/worktrees/instance-codex2` | `codex/codex2-wip` | GPT-5.2-Codex | CI / 同期 / 運用まわり / EF(Deno)・GHA レビュー補助 |
 
 > **既存 Codex worktree の扱い**: 現在 `C:/Users/kanta/GitHub/my_web_app_ci_fix` /
 > `_horse_fix` / `_version_fix` / `_wbs_sync` の 4 本が ad-hoc に存在する。
@@ -47,7 +47,7 @@
 
 | 領域 | 主担当 | 副 (overflow 時) | 完全禁止 |
 | --- | --- | --- | --- |
-| `lib/` Flutter UI | VSCode版 | (なし) | Win版 / 全 PS版 / Codex#1 |
+| `lib/` Flutter UI | VSCode版 | Gemini Code Assist / Copilot (補助) | Win版 / 全 PS版 / Codex#1 / Codex#2 |
 | `supabase/functions/` EF | VSCode版 | Win版 (動画スクリプト系のみ) | 全 PS版 (workflow/seed/AI 大学経由のみ) |
 | `supabase/migrations/` | Win版 (schema) / PS#3-#5 (seed) | VSCode版 (新機能伴う schema) | — |
 | `.github/workflows/` | PS#1 | PS#5 (緊急時) | VSCode版 / Win版 / Codex |
@@ -58,9 +58,9 @@
 | AI 大学コンテンツ | PS#3 | Win版 (NotebookLM 由来のみ) | — |
 | 競合 172 社 (`competitors` table 系) | PS#4 | (なし) | — |
 | EF stale 移行 / anon-guard | PS#5 | (なし) | — |
-| 競馬モデル (`horse_*` table 系 / fetch スクリプト) | PS#6 | Codex#1 (アルゴリズム最適化のみ) | — |
-| **SQL アルゴリズム最適化** | **Codex#1** | Win版 (review のみ) | — |
-| **大規模 refactor (500+ 行)** | **Codex#2** | (なし) | — |
+| 競馬モデル (`horse_*` table 系 / fetch スクリプト) | PS#6 | Codex#2 (アルゴリズム / レビュー補助) | — |
+| **横断調査 / 修正 PR / レビュー補助** | **Codex#1** | Codex#2 | — |
+| **CI / 同期 / 運用まわり** | **Codex#2** | Codex#1 | — |
 | GitHub Issue / PR (リモート) | WEB版 / スマホ版 | 全インスタンス | — |
 
 ---
@@ -72,15 +72,17 @@
 各スロットは上表の **主担当領域のみ** を write する。副担当領域に踏み込むときは
 事前に `docs/cross-instance-prs/YYYYMMDD_<title>.md` を起票して主担当に通知。
 
-### 2. main ブランチへの push
+### 2. branch push と main 統合
 
-全スロットが `origin/main` を push target として共有 → push 前に必ず以下:
+全スロットはまず担当 branch に push する。`origin/main` への直 push は、競合確認・検証・統合判断が終わった場合のみ行う。
 
 ```bash
 git fetch origin main
 git log HEAD..origin/main --oneline   # 並行 push を検知
 git pull --rebase origin main          # 衝突時は手動 resolve
-git push origin HEAD:main              # bypass admin 権限で main 直 push
+git push -u origin HEAD                # まず担当 branch を更新
+# 統合確認後のみ:
+git push origin HEAD:main
 ```
 
 ### 3. Codex 特有の運用
@@ -100,15 +102,20 @@ Codex はユーザーが手動で起動する CLI / IDE プラグインのため
 | タスク種別 | 推奨スロット |
 | --- | --- |
 | 設計判断 / 戦略 / cross-instance-pr 起票 / memory consolidation | **Win版 / VSCode版** (Claude 専任) |
-| Flutter UI 実装 (新規 / 中規模) | VSCode版 |
-| Flutter UI 大規模 refactor (500+ 行) | **Codex#2** |
+| 大きめの実装 / 既存設計に沿った機能追加 | **Claude Code** 各担当 worktree |
+| Flutter UI 実装 (新規 / 中規模) | VSCode版 + Gemini Code Assist / Copilot |
+| Flutter UI 大規模 refactor (500+ 行) | VSCode版 + Gemini Code Assist |
 | EF 新規実装 | VSCode版 |
-| EF アルゴリズム最適化 (N+1 / 集計ロジック) | **Codex#1** |
+| EF アルゴリズム最適化 (N+1 / 集計ロジック) | VSCode版 / Codex#2 レビュー補助 |
 | Migration 新規 (schema) | Win版 |
 | Migration seed (AI 大学 / 競合) | PS#3 / PS#4 |
-| GHA workflow 修正 | PS#1 |
+| 修正 PR / 横断調査 / レビュー補助 | **Codex#1** |
+| GHA workflow 修正 / CI fix / 同期運用 | PS#1 / **Codex#2** |
 | ブログ dispatch | PS#2 |
-| 競馬モデル | PS#6 / Codex#1 (協働) |
+| IDE 内の短距離実装 / テスト追加 | GitHub Copilot |
+| 外部 SaaS 確認 / ブラウザ操作 / 長めの手順実行 | Manus AI |
+| 判断履歴 / 設計意図 / 学びの集約 | NotebookLM |
+| 競馬モデル | PS#6 / Codex#2 (協働) |
 | リモート PR レビュー / 緊急 hotfix (1 行) | WEB版 / スマホ版 |
 
 ---
@@ -125,8 +132,8 @@ C:/Users/kanta/GitHub/my_web_app                      [main]              ← pu
 ├── .claude/worktrees/instance-ps4                    [claude/ps4-wip]
 ├── .claude/worktrees/instance-ps5                    [claude/ps5-wip]
 ├── .claude/worktrees/instance-ps6                    [claude/ps6-wip]
-├── .claude/worktrees/instance-codex1                 [codex/codex1-wip]   ← 要作成
-└── .claude/worktrees/instance-codex2                 [codex/codex2-wip]   ← 要作成
+├── .claude/worktrees/instance-codex1                 [codex/codex1-wip]
+└── .claude/worktrees/instance-codex2                 [codex/codex2-wip]
 
 C:/Users/kanta/GitHub/my_web_app_ps                   [ps-main]            ← レガシー (PS版#1 が定常使用 - 検証中)
 C:/Users/kanta/GitHub/my_web_app_win                  [win-main]           ← レガシー (Win版が定常使用 - 検証中)
@@ -161,14 +168,15 @@ git worktree remove --force C:/Users/kanta/GitHub/my_web_app_version_fix
 git worktree remove --force C:/Users/kanta/GitHub/my_web_app_wbs_sync
 
 # Step 3: 標準 codex slot を作成
-git worktree add -b codex/codex1-wip .claude/worktrees/instance-codex1 main
-git worktree add -b codex/codex2-wip .claude/worktrees/instance-codex2 main
+powershell -ExecutionPolicy Bypass -File .claude/scripts/setup-instance-worktree.ps1 codex1
+powershell -ExecutionPolicy Bypass -File .claude/scripts/setup-instance-worktree.ps1 codex2
 ```
 
 ### 移行後の運用
 
 - Codex#1 タスク開始時 → `cd .claude/worktrees/instance-codex1 && git pull --rebase origin main`
-- 完了時 → `git push origin HEAD:main`
+- Codex#2 タスク開始時 → `cd .claude/worktrees/instance-codex2 && git pull --rebase origin main`
+- 完了時 → `git push -u origin codex/codex1-wip` / `git push -u origin codex/codex2-wip`
 - Claude Code (Win版) が memory/ + cross-instance-pr で結果を記録
 
 ---
