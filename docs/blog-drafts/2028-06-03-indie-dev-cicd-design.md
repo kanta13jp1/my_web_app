@@ -1,7 +1,7 @@
 ---
 title: "個人開発者の CI/CD 設計 — GitHub Actions + Firebase で本番自動デプロイ"
 tags: AI,個人開発,automation,buildinpublic
-published: false
+published: true
 ---
 
 # 個人開発者の CI/CD 設計 — GitHub Actions + Firebase で本番自動デプロイ
