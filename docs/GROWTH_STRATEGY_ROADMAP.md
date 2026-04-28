@@ -22212,3 +22212,15 @@ Phase4 drafts 新規作成 (8ファイル):
 1. Notion Workers for Agents 対抗 — AI アシスタント EF でコード実行フロー (中期)
 2. Google I/O 2026-05-20 対策 — 翌日 SCOREBOARD 緊急レポート (PS#4)
 3. GitHub App token ghs_APPID_JWT 互換確認 (PS#1)
+
+## 2026-04-28 PS#4 S87 — vs-*全174社 OGPメタタグ完結
+
+### 実施内容
+- index.html competitorMeta に S82-S86追加153社のOGP title/desc を一括追加
+- 旧来: 21社のみ個別OGP → 新: 全174社が /vs-* でSNSシェア時に会社名入りメタタグ表示
+- commit: 7f1d100f4 on main
+
+### 次回タスク候補
+- Google I/O 2026-05-20 対策レポート (PS#4)
+- vs-*ページUI改善: comparison_page.dart のデザイン品質向上
+- sitemap lastmod 更新 (全174 vs-* ルートに最終更新日付加)
