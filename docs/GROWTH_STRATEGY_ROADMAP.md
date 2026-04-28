@@ -22141,3 +22141,12 @@ Phase4 drafts 新規作成 (8ファイル):
 **OPS-28 整合**:
 - 改善トリガー #5 (形骸化) + #4 (正本ズレ) に対応
 - 案 B/C/D は需要確認後判断 (案 A 単独で verification trail 問題の主要部を解消)
+
+## PS#5 S75 — stale EF completeness audit + CI + 3 URL ref 修正 (2026-04-28)
+- scripts/audit_hub_migration_completeness.py 新規 (185 retired EF / exit 0/1/2)
+- .github/workflows/stale-ef-completeness-check.yml 新規 (PR/push/weekly)
+- share-quote / generate-quote-image URL → app URL (daily_motivation_card)
+- get-public-memo-ogp URL → buildPublicMemoAppUrl (public_memo_service)
+- audit 結果: clean (0 stale refs)
+- cross-instance-pr Win版#132 part 50 → done/
+- Commit: 10025c1e on main
