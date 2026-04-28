@@ -23173,3 +23173,13 @@ dev.to 累計: 114本
 
 ### commit
 (本 commit にて確定)
+
+## PS#4 S108 2026-04-29: 競合3社追加 195→198社 (webflow/framer/copy-ai) + S107重複修正
+
+- webflow: Webflow ノーコードWebサイト構築/月額14USD~/no-code新カテゴリ
+- framer: Framer AI駆動Webデザイン/月額15USD~/no-code
+- copy-ai: Copy.ai AIコピーライティング/月額49USD~/ai-writing新カテゴリ
+- S107 runway/heygen/elevenlabs重複_CompetitorInfo除去 (既存登録済みだった)
+- competitorMeta +3エントリ / sitemap 238→241 URLs (priority=0.8)
+- SEO: "Webflow代替"/"Framer代替"/"Copy.ai代替" 超高検索ボリュームキーワード流入
+- commit: 686bf96d2
