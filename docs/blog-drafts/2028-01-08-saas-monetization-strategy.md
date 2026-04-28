@@ -1,7 +1,7 @@
 ---
 title: "個人開発 SaaS 収益化戦略 — Free→Paid 転換率を上げる設計"
 tags: AI,個人開発,buildinpublic,automation
-published: false
+published: true
 ---
 
 # 個人開発 SaaS 収益化戦略 — Free→Paid 転換率を上げる設計
