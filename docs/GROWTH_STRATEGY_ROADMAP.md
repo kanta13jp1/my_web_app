@@ -22893,3 +22893,44 @@ task 714ee4a4 unconditional backfill + 全超過タスク broad backfill を最�
 - f2ff7238e, b77d2c692 (pre-push backfill + S83 seed)
 - 9b8345c5a (deploy-prod.yml always-reverted)
 - 77dfdbdd9, 4c53bf1cc (collision fixes)
+
+## 2026-04-28 Win版#132 part 66 — VIBE_CODING 8 番目設計軸確立 (メタレイヤー)
+
+### 概要
+NotebookLM `ddde5a4b-ce1a-405d-8291-a334a9371454` "Vibe coding in prod | Code w/ Claude" (Anthropic engineer 解説) を蒸留し、自分株式会社の **8 番目** = **メタレイヤー** 設計軸 `docs/VIBE_CODING_PRINCIPLES.md` を確立 (7 原則).
+
+### 7 原則
+1. Trunk/Leaf 厳格分離 (コア = schema / _shared / main.dart / 設計 docs = 人間 / リーフ = widget / EF action 単発 / seed = AI 全委任)
+2. AI as PM (Plan アーティファクト先行 / 15-20 分 context 探索)
+3. Provably Correct Sandbox (RLS deny-by-default + mcp_auth_guard + Flutter に secret 埋込禁止)
+4. Black-Box I/O Verification (CEO は出口だけ見る / コードを読まない)
+5. Minimal E2E Tests (単体テスト不要 / Integration Test 1 機能 = 1 シナリオ / 24h soak)
+6. Periodic Session Compaction (600K+ tokens / 10+ part / 機能区切りで session_summary)
+7. Embrace Exponentials (CEO 作業時間配分 30/30/20/10/10 / fleet 拡大 12→24→100)
+
+### 軸の階層概念
+これまで 7 設計軸は横並びだったが、Vibe Coding は **メタレイヤー** として既存軸を supervises:
+```
+[Layer 1] VIBE_CODING (運用責任 / 取締役会規範)
+        ↓ supervises
+[Layer 2] PHILOSOPHY/AI_DEV/AI_CHARACTER/IMBUE/COLLAB_AI/MCP_AUTH/AI_VIDEO (設計軸 / 施設)
+```
+
+= 設計軸 = 「施設」/ Vibe Coding = 「ガバナンス」/ 自分株式会社 = AI fleet 持株会社の取締役会規範.
+
+### 既存ベースライン 4.5/7
+残 gap: コア/リーフ明示 + RLS audit + E2E カバレッジ + fleet 拡大 + compaction 基準明示.
+
+### 3 日間 6 軸蒸留パイプライン (2026-04-26 → 2026-04-28)
+AI_CHARACTER (9429530e) → IMBUE (2fc6d86f) → COLLAB_AI (491f57bc) → MCP_AUTH (1b808a60) → AI_VIDEO (da2a95d1) → VIBE_CODING (ddde5a4b)
+= 自分株式会社の設計軸数: 5 legacy + 6 蒸留 = 8 軸 / 60+ 原則.
+
+### Rule [VIBE-30]
+CLAUDE.md hook table + ~/.claude/hooks/inject-rules.txt 注入. OPS-28 charter「既存 7 設計軸」→「8 設計軸」更新.
+
+### Philosophy Alignment 9/9
+特に #1 CEO 感 (AI 取締役会規範化) / #3 mentor (AI fleet を「下請会社」化) / #6 資本=時間 (コードを読まない宣言) / #9 ゴール (24 fleet 拡大基盤).
+
+### commit
+(本 commit にて確定)
+
