@@ -507,6 +507,8 @@ jobs:
 
           # --- Public health-check (認証不要・スケジュールタスクからの死活監視用) ---
           supabase functions deploy health-check --no-verify-jwt
+          supabase functions deploy ai-writing-assistant --no-verify-jwt
+          supabase functions deploy viral-video-ad-generator --no-verify-jwt
 
           # Total: 17 functions deployed (ハードキャップ50本に対し17本 — 余裕33本)
           # memo-reactions → core-hub に統合済み (b4c91bc2 2026-04-24)
