@@ -1,7 +1,7 @@
 ---
 title: "個人開発者の SEO 完全戦略 — /vs-* ページ / 構造化データ / Core Web Vitals"
 tags: AI,個人開発,buildinpublic,automation
-published: false
+published: true
 ---
 
 # 個人開発者の SEO 完全戦略 — /vs-* ページ / 構造化データ / Core Web Vitals
