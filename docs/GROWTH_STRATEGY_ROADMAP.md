@@ -23498,6 +23498,7 @@ SECOND_BRAIN 3.0 → 3.5/7. 残:
 ### commit
 (本 commit にて確定)
 
+
 ## 2026-04-29 PS#6 S106 — 競馬予想モデル smallFieldBonus (少頭数レースconfidenceボーナス)
 ### S106: smallFieldBonus(fieldSize) — 少頭数レースの予測容易性をconfidenceに反映
 - ≤4頭=+0.04(最小) / ≤6頭=+0.02 / ≤8頭=+0.01 / 9頭以上=0
@@ -23523,3 +23524,35 @@ SECOND_BRAIN 3.0 → 3.5/7. 残:
 - flutter analyze No issues found (59s) — comparison_page clean 継続確認
 - CI Lint/Format/Test: success
 - commit: ae4288667
+
+
+## 2026-04-29 Win版#132 part 72 — VIBE_CODING #1 + SECOND_BRAIN #1 同時 dogfood (Core/Leaf 境界)
+
+### 概要
+2 軸の概念重複を発見し、`docs/CORE_LEAF_BOUNDARY.md` で **1 doc 2 軸同時押上** を実現. dogfood pattern 第 5 例 (= 軸間統合).
+
+### 4 Tier 統合表現
+- **Tier 0** (Schema = AI 動作ルール): inject-rules.txt / CLAUDE.md / 9 設計軸 docs / DESIGN.md → CEO 専任
+- **Tier 1** (Core = 他が依存): schema migrations / `_shared/*.ts` / hub `index.ts` / `lib/main.dart` / immutable memory → レビュー必須
+- **Tier 2** (Leaf = 単独機能): hub action / seed migration / 単独 widget / blog drafts / project_*.md → AI 全委任 OK
+- **Tier 3** (Auto-Generated = 自動生成): sitemap / *-cache.json / videos/*.mp4 / claude-mem db → 編集禁止
+
+### memory/ 内部 Tier マッピング
+memory/ 全 file が「Layer 2」だが内部で更に分かれる. file 種別 (MEMORY.md / log.md / project_* / query_artifact_* / feedback_correction_* / session_summary*) ごとの編集ポリシーを初めて明示.
+
+### 1 doc で 2 軸押上 第 1 例
+VIBE_CODING 4.5 → 5.5/7 (+1.0) / SECOND_BRAIN 3.5 → 4.0/7 (+0.5) = 合計 +1.5/14.
+成立条件: 複数軸が同概念をカバー. 軸間概念重複の発見が再現性鍵.
+
+### dogfood pattern 第 5 例 (= 軸間統合)
+第 1-4 例 = 1 軸 dogfood / 第 5 例 = 軸間統合 dogfood の新パターン.
+
+### 構造的観察
+軸が増えると概念重複が出てくる → 統合 docs として独立化することで baseline 同時前進 + 概念混乱解消 + 将来 audit の基盤化.
+
+### Philosophy Alignment 9/9
+#1 CEO 感 (軸間統合の発見) / #6 資本=時間 (1 doc 2 軸 = 効率最大) / #7 資産負債 (概念重複 = 資源化)
+
+### commit
+(本 commit にて確定)
+
