@@ -8438,6 +8438,110 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'substack': const _CompetitorInfo(
+    name: 'Substack',
+    emoji: '📰',
+    tagline:
+        'Substackをニュースレター配信・クリエイター収益化に使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'Substack代替 ニュースレター代替 クリエイター収益化代替',
+    accentColor: Color(0xFFFF6719),
+    painPoints: [
+      'ニュースレター配信に特化しており、財務管理・タスク・AI学習は別ツールが必要',
+      '有料読者10%手数料+Stripe手数料でクリエイター収益が目減りする',
+      'コンテンツ発信は優秀だが、個人ライフ全体のOS統合機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ニュースレター配信・課金',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'klaviyo': const _CompetitorInfo(
+    name: 'Klaviyo',
+    emoji: '📧',
+    tagline:
+        'KlaviyoをECサイト向けメールマーケティングに使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'Klaviyo代替 ECメールマーケティング代替 Klaviyo日本語代替',
+    accentColor: Color(0xFF3D3D3D),
+    painPoints: [
+      'EC向けメール/SMS自動化に特化しており、個人の財務・習慣・AI学習は対象外',
+      '月額約' + r'$' + '20〜でECショップ向け機能が中心、個人ライフ管理には不向き',
+      'セグメントメール・フロー構築は優秀だが、個人ライフOSとしての統合機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ECメール・SMS自動化',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'remove-bg': const _CompetitorInfo(
+    name: 'Remove.bg',
+    emoji: '✂️',
+    tagline: 'Remove.bgをAI背景除去に使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'remove.bg代替 AI背景除去代替 背景透過AI代替',
+    accentColor: Color(0xFF00C4CC),
+    painPoints: [
+      '背景除去1機能のみに特化しており、財務・タスク・AI大学は完全に別ツールが必要',
+      '無料は月50枚の低解像度のみ、月額約' + r'$' + '9〜で1機能への支出は非効率',
+      '背景除去精度は高いが、個人ライフ全体のOS統合機能はゼロ',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AI背景除去 (ワンクリック)',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
@@ -8673,6 +8777,9 @@ class _ComparisonShellState extends State<_ComparisonShell> {
     'loom': 'video-comm',
     'pipedrive': 'crm',
     'photoroom': 'photo-ai',
+    'substack': 'newsletter',
+    'klaviyo': 'email-marketing',
+    'remove-bg': 'photo-ai',
   };
 
   @override
@@ -8873,7 +8980,7 @@ class _ComparisonShellState extends State<_ComparisonShell> {
                       children: [
                         _buildTag(
                           icon: Icons.compare_arrows_rounded,
-                          label: '207社比較',
+                          label: '210社比較',
                           backgroundColor:
                               _info.accentColor.withValues(alpha: 0.18),
                           foregroundColor: _textPrimary,
@@ -9481,7 +9588,7 @@ class _ComparisonShellState extends State<_ComparisonShell> {
                       ),
                       SizedBox(width: 8),
                       Text(
-                        '全207社の競合ランドスケープを見る →',
+                        '全210社の競合ランドスケープを見る →',
                         style: TextStyle(
                           fontSize: 14,
                           color: _textSecondary,
