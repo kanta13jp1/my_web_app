@@ -923,6 +923,19 @@ function freshnessPenaltyScore(value: unknown): number {
   return 20; // 超長期休養明け (180日+)
 }
 
+function agePenaltyScore(value: unknown): number {
+  const text = String(value ?? "").trim();
+  if (!text) return 5; // unknown age = slight uncertainty
+  const match = text.match(/(\d+)/);
+  if (!match) return 5;
+  const age = parseInt(match[1]);
+  if (age <= 2) return 5; // still developing, higher variance
+  if (age <= 5) return 0; // prime years (3–5 years)
+  if (age === 6) return 3;
+  if (age === 7) return 8;
+  return 15; // 8+ years: significant decline risk
+}
+
 function marginPenaltyScore(value: unknown): number {
   const text = String(value ?? "").trim();
   if (!text) return 0;
@@ -967,13 +980,16 @@ function sortHorseEntriesForLearning(entries: Record<string, unknown>[]): Record
     // 7. freshness penalty (ascending — long absence / 休み明け = higher penalty)
     const freshness = freshnessPenaltyScore(a.prev_days_ago) - freshnessPenaltyScore(b.prev_days_ago);
     if (freshness !== 0) return freshness;
-    // 8. weight change penalty (ascending — large swings = higher penalty = ranked lower)
+    // 8. age penalty (ascending — older horse beyond prime = higher penalty)
+    const age = agePenaltyScore(a.age_sex) - agePenaltyScore(b.age_sex);
+    if (age !== 0) return age;
+    // 9. weight change penalty (ascending — large swings = higher penalty = ranked lower)
     const wc = weightChangeScore(a.horse_weight_change) - weightChangeScore(b.horse_weight_change);
     if (wc !== 0) return wc;
-    // 9. data_quality_score (descending — more data = more confidence)
+    // 10. data_quality_score (descending — more data = more confidence)
     const quality = numericOrFallback(b.data_quality_score, 0) - numericOrFallback(a.data_quality_score, 0);
     if (quality !== 0) return quality;
-    // 10. horse_number (ascending — tiebreaker)
+    // 11. horse_number (ascending — tiebreaker)
     return numericOrFallback(a.horse_number, 999) - numericOrFallback(b.horse_number, 999);
   });
 }
