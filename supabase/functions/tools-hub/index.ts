@@ -1408,8 +1408,8 @@ function sortHorseEntriesForLearning(
     const pop = popularitySortScore(a.popularity) - popularitySortScore(b.popularity);
     if (pop !== 0) return pop;
     // 17. weight_kg penalty (ascending — 重斤量は不利)
-    const wkg = weightKgPenaltyScore(a.weight_kg) - weightKgPenaltyScore(b.weight_kg);
-    if (wkg !== 0) return wkg;
+    const wkgPenalty = weightKgPenaltyScore(a.weight_kg) - weightKgPenaltyScore(b.weight_kg);
+    if (wkgPenalty !== 0) return wkgPenalty;
     // 18. horse_number (ascending — tiebreaker)
     return numericOrFallback(a.horse_number, 999) - numericOrFallback(b.horse_number, 999);
   });
