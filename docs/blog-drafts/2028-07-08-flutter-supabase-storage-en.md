@@ -1,7 +1,7 @@
 ---
 title: "Flutter × Supabase Storage — Complete File Upload Guide"
 tags: flutter,supabase,ai,indiedev
-published: false
+published: true
 ---
 
 # Flutter × Supabase Storage — Complete File Upload Guide
