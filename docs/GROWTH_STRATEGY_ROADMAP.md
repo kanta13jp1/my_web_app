@@ -22330,9 +22330,44 @@ Phase4 drafts 新規作成 (8ファイル):
 - S77: @TestOn('browser') PR #860 fix + 24EF audit done/移動
 - S78: SQLSTATE 23514 CI deploy ブロッカー解消
 
+<<<<<<< Updated upstream
 ## PS#6 S80 (2026-04-28)
 - 競馬AIモデル: best_time品質スコア18項目化 + グレード別confidence cap
   - horseRaceDataQualityScore: best_time フィールド追加 (17→18)
   - gradeMaxConfidence: G1=0.65 / G2=0.70 / G3=0.75 / その他=0.80
   - buildHistoricalBaselinePrediction: Math.min(confidence, gradeMaxConfidence) 適用
 - Commit: e2e9e692f on main
+=======
+## PS#4 S87-S90 (2026-04-28) — vs-*ページ SEO 全施策完結
+
+### S87: vs-*全174社 OGP メタタグ完結
+- Python スクリプト (C:/tmp/add_ogp_entries.py) で comparison_page.dart をパースして 153 社分の OGP エントリを index.html に追加
+- competitorMeta: 21社 → 174社 (全 _CompetitorInfo エントリ網羅)
+- vsMatch regex:  →  (google_agent_builder 対応)
+- commit: 7f1d100f4
+
+### S88: JSON-LD BreadcrumbList + sitemap google_agent_builder
+- vsMatch ブロックに BreadcrumbList JSON-LD 動的挿入追加
+- sitemap.xml に /vs-google_agent_builder (欠落していた175社目) 追加
+- sitemap /real-world-danshari 追加
+- commit: 7f99334cc
+
+### S89: canonical URL 修正 + routeMeta 完結
+- vsMatch ブロックに  追加 (全 vs-* 重大 SEO バグ修正)
+- routeMeta に /competitors /tech-blog-tracker /real-world-danshari を初登録
+- sitemap /competitors priority 0.7 → 0.9
+- commit: 95543a209
+
+### S90: seo-shell 動的更新 + og:image:alt 改善
+- vsMatch で seo-shell h1/desc を company 名に書き換え (非 JS クローラー対応)
+- og:image:alt / twitter:image:alt を company 名入りに更新
+- seo-shell nav に /competitors /ai-university リンク追加
+- commit: (S90 commit on main)
+
+### PS#4 今セッション累計
+- S82: sitemap + _CompetitorInfo 最終完結 (62社)
+- S83: 98→118社
+- S84: 118→138社
+- S85+S86: 158→174社完結 (sitemap 157→174)
+- S87-S90: SEO 全施策完結 (OGP/canonical/JSON-LD/seo-shell/routeMeta)
+>>>>>>> Stashed changes
