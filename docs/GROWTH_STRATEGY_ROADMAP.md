@@ -22282,3 +22282,17 @@ Phase4 drafts 新規作成 (8ファイル):
   - 前走コース種別が今回と異なる場合 (芝↔ダート) はコース替わりリスク評価
   - 前走距離と今回距離の差が200m超の場合は距離適性リスク考慮
 - Commit: 1df024434 on main
+
+## 2026-04-28 PS#4 S89-S90 — SEO品質最終整備
+
+### 実施内容
+- S89a: vs-*ページに setCanonical 追加 (重大SEOバグ修正)
+- S89b: routeMeta に /competitors /tech-blog-tracker /real-world-danshari 追加
+- S89c: /competitors sitemap priority 0.7→0.9
+- S90a: vsMatch で seo-shell h1/desc を company名に動的書き換え
+- S90b: vs-*ページの og:image:alt を company名入りに更新
+- S90c: seo-shell nav に /competitors /ai-university リンク追加
+- commits: 95543a209, 7f99334cc, d88e59f72, 8217941ed, 15f21a45d on main
+
+### PS#4 SEO 完全完結
+全175 vs-*ページ: canonical ✅ / OGP ✅ / JSON-LD ✅ / seo-shell動的 ✅
