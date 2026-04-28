@@ -23157,3 +23157,11 @@ CLAUDE.md hook table + ~/.claude/hooks/inject-rules.txt 注入. OPS-28 charter�
 - sitemap 253→256 URLs
 - SEO: "FLUX代替"/"Kling AI代替"/"ActiveCampaign代替"
 - commit: 79579d95e
+
+## 2026-04-29 PS#6 S100 — 競馬予想モデル recentFormBonus (1強直近好走 confidence boost)
+### S100: recentFormBonus(entries) — 最低オッズ馬の直近好走をconfidence boostに追加
+- 最低オッズ馬(1番人気)が30日以内に3着以内 = +0.03
+- 最低オッズ馬が60日以内に3着以内 = +0.01
+- それ以外 = 0
+- confidence式: ...+oddsGapBonus+recentForm (grade cap適用)
+- commit: f58b817c6
