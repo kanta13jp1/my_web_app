@@ -23088,3 +23088,12 @@ CLAUDE.md hook table + ~/.claude/hooks/inject-rules.txt 注入. OPS-28 charter�
 | #109 | Automate Code Review with GitHub Actions and Claude API | https://dev.to/kanta13jp1/automate-code-review-with-github-actions-and-claude-api-o6o |
 | #110 | Flutter PWA Optimization: Service Worker, Offline Support, and Install Prompts | https://dev.to/kanta13jp1/flutter-pwa-optimization-service-worker-offline-support-and-install-prompts-1mhl |
 
+
+
+## PS#4 Session 104 (2026-04-29) — vs-*SEO強化 189社
+
+### S104: 競合3社追加 186→189社 (stable-diffusion/dalle/llama)
+- stable-diffusion: OSSローカル画像生成/GPU必須/無料/ai-image — Stable Diffusion代替超高ボリューム
+- dalle: DALL-E3 ChatGPT Plus統合/$20/ai-image — DALL-E代替超高ボリューム
+- llama: Meta Llama OSS LLM/ローカルGPU/無料/ai-platform — Meta Llama代替高ボリューム
+- commit: 2981863f8
