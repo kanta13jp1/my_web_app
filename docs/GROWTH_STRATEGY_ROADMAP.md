@@ -23220,3 +23220,16 @@ CLAUDE.md hook table + ~/.claude/hooks/inject-rules.txt 注入. OPS-28 charter�
 
 ### commit
 (本 commit にて確定)
+
+## PS#2 S75 — 2026-04-29 T-1 Phase24 全4弾完結 (#123-#126)
+
+- T-1 第123弾: Flutter アクセシビリティ対応 (Semantics/FocusNode/WCAG/48dp) → dev.to 投稿成功
+  - https://dev.to/kanta13jp1/flutter-accessibility-semantics-screen-readers-and-wcag-168m
+- T-1 第124弾: 個人開発の価格戦略 2.0 (フリーミアム壁設計/A-Bテスト/チャーン対策) → dev.to 投稿成功
+  - https://dev.to/kanta13jp1/indie-dev-pricing-strategy-20-freemium-design-and-upsell-mechanics-7ic
+- T-1 第125弾: Supabase Realtime × Flutter (Broadcast/Presence/Postgres Changes/Optimistic UI) → dev.to 投稿成功
+  - https://dev.to/kanta13jp1/supabase-realtime-x-flutter-complete-guide-to-real-time-sync-patterns-4abd
+- T-1 第126弾: 個人開発者の CI/CD 設計 (GHA/Firebase/Preview Deploy/deploy verify) → dev.to 投稿成功
+  - https://dev.to/kanta13jp1/indie-dev-cicd-design-github-actions-firebase-auto-deploy-to-production-3fdf
+- dev.to 累計: 126本
+- Drafts commit: a675993f4 / final push: 2809211ac
