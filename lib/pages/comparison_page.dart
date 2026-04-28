@@ -7869,6 +7869,42 @@ class _ComparisonShellState extends State<_ComparisonShell> {
                   );
                 }).toList(),
               ),
+              const SizedBox(height: 20),
+              InkWell(
+                onTap: () =>
+                    Navigator.of(context).pushNamed('/competitors'),
+                borderRadius: BorderRadius.circular(12),
+                child: Ink(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 12,
+                  ),
+                  decoration: BoxDecoration(
+                    color: _surfaceMuted,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: _borderColor),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        Icons.grid_view_rounded,
+                        size: 16,
+                        color: _textSecondary,
+                      ),
+                      const SizedBox(width: 8),
+                      const Text(
+                        '全174社の競合ランドスケープを見る →',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: _textSecondary,
+                          height: 1.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             ],
           ),
         ),
