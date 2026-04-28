@@ -18,30 +18,6 @@ class _CompetitorBrowsePageState extends State<CompetitorBrowsePage> {
   String? _selectedJapanPresence;
   String _sortBy = 'overlap'; // 'overlap' | 'name' | 'threat'
 
-  static const _known21 = {
-    'notion',
-    'evernote',
-    'moneyforward',
-    'slack',
-    'chatwork',
-    'x',
-    'animaworks',
-    'claude-code',
-    'codex',
-    'netkeiba',
-    'openclaw',
-    'claude-cowork',
-    'jobcan',
-    'amazon',
-    'google',
-    'microsoft',
-    'discord',
-    'line',
-    'facebook',
-    'liven',
-    'github',
-  };
-
   @override
   void initState() {
     super.initState();
@@ -164,7 +140,6 @@ class _CompetitorBrowsePageState extends State<CompetitorBrowsePage> {
                         itemCount: filtered.length,
                         itemBuilder: (context, i) => _CompetitorCard(
                           data: filtered[i],
-                          known: _known21.contains(filtered[i]['id']),
                         ),
                       ),
           ),
@@ -345,9 +320,8 @@ class _CompetitorBrowsePageState extends State<CompetitorBrowsePage> {
 
 class _CompetitorCard extends StatelessWidget {
   final Map<String, dynamic> data;
-  final bool known;
 
-  const _CompetitorCard({required this.data, required this.known});
+  const _CompetitorCard({required this.data});
 
   @override
   Widget build(BuildContext context) {
@@ -367,18 +341,7 @@ class _CompetitorCard extends StatelessWidget {
     };
 
     return InkWell(
-      onTap: () {
-        if (known) {
-          Navigator.of(context).pushNamed('/vs-$id');
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('詳細ページは準備中です'),
-              duration: Duration(seconds: 2),
-            ),
-          );
-        }
-      },
+      onTap: () => Navigator.of(context).pushNamed('/vs-$id'),
       borderRadius: BorderRadius.circular(12),
       child: Container(
         padding: const EdgeInsets.all(10),
