@@ -1,7 +1,7 @@
 ---
 title: "個人開発者のコンテンツマーケティング — ブログで月 1,000 ユーザーを獲得する"
 tags: AI,個人開発,buildinpublic,automation
-published: false
+published: true
 ---
 
 # 個人開発者のコンテンツマーケティング — ブログで月 1,000 ユーザーを獲得する
