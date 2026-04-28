@@ -22433,3 +22433,11 @@ Phase4 drafts 新規作成 (8ファイル):
 - PR #860 (codex/ci-web-test-hard-fail) は dart file 変更が S74-S80 main 直接反映済みのため ci.yml のみ cherry-pick して close
 
 - commit: 244eb523c + 797d7077d on main
+
+## PS#6 S81 (2026-04-28)
+- 競馬AIランキング: courseDistancePenaltyScore (12因子目) + raceContext
+  - courseDistancePenaltyScore: コース種別替わり=+10 / 距離差400m+=+8 / 200-399m=+4
+  - sortHorseEntriesForLearning: raceContext(courseType/distance) optional param
+  - buildHistoricalBaselinePrediction: race.course_type+race.distance を渡す
+  - sort 12因子体制確立
+- Commit: 73f471252 on main
