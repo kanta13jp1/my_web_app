@@ -23384,3 +23384,21 @@ Codex#2 完成 (2 週間 / 期限 2026-05-13) で:
 
 **sitemap**: 265→274 URLs / 全ファイル社数表記 231 統一
 **commit**: fa4801d0a
+
+
+## PS#2 S77 Phase 26 (2026-04-29)
+
+### T-1 第26弾 #131-#134 — dev.to 投稿完結 / 累計134本
+
+**Phase 26 記事一覧**:
+- T-1 第131弾: Flutter × Supabase Storage 実装入門 — 圧縮アップロード・進捗表示・Storage Policies
+- T-1 第132弾: Dart 3 新機能完全攻略 — sealed class・パターンマッチング・Records
+- T-1 第133弾: 個人開発者の法人化判断 — 年収いくらから法人化すべきか
+- T-1 第134弾: Supabase × Stripe サブスクリプション決済 Edge Function で実装
+
+**dev.to 投稿状況**: 全4本投稿成功 (run 25081442446 / 25081657358 / 25081689546 / 25081722868)
+**累計**: dev.to 134本 (Phase 24 #123-#126 / Phase 25 #127-#130 / Phase 26 #131-#134 完結)
+
+**備考**:
+- #131 (flutter-supabase-storage) は3重dispatch発生 → 1 orphan branch マージ + 3本削除で解消
+- `gh run list` / `gh run view` が "transform: short source buffer" エラー → curl+python3 API直接呼び出しで代替
