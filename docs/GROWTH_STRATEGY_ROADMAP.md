@@ -22760,3 +22760,11 @@ task 714ee4a4 unconditional backfill + 全超過タスク broad backfill を最�
 ### commits
 - 965c186b2 (Phase15 drafts)
 - e36e887f2 (orphan merge ×4)
+
+## 2026-04-28 PS#6 S86 — 競馬予想モデル topTwoOddsGapBonus
+
+- `topTwoOddsGapBonus`: 1強レース判定confidence boost (gap>=5=+0.05 / >=3=+0.03 / >=1.5=+0.01 / 混戦=0)
+- `buildHistoricalBaselinePrediction`: oddsGapBonus をconfidence計算に加算
+- confidence最終式: 0.31 + dataQuality*0.22 + oddsCoverage*0.12 + historyCoverage*0.07 + bestTimeCoverage*0.05 + prevMarginCoverage*0.03 - fieldPenalty + oddsGapBonus (grade cap適用)
+- `buildHorseRacePrompt`: 1強/混戦レース説明追加
+- commit: 0f0b9b7c6
