@@ -22385,3 +22385,19 @@ Phase4 drafts 新規作成 (8ファイル):
   - https://dev.to/kanta13jp1/flutter-web-seo-canonical-ogp-and-json-ld-for-a-175-route-spa-4k60
 
 ### 累計: dev.to 66本投稿
+
+## PS#5 S79 (2026-04-28) — PR #860 test 残り2ブロッカー解消
+
+### 修正内容
+1. `lib/pages/memory_drill_page.dart` — `_loadCustomPacks()` の `Supabase.instance.client` を try/catch で囲む
+   - VM test では Supabase 未初期化 → `LateInitializationError` → silent return に変更
+2. `test/pages/ai_status_page_test.dart` — `_FakeGoTrueClient`/`_FakeUser` 追加 + `auth` stub
+   - PS#5 S74 の anon guard (`_supabase.auth.currentUser`) が mock で unstubbed → `MissingStubError`
+   - root cause: S74 でガード追加したが test mock を更新していなかった
+
+### PR #860 CI ブロッカー累計
+- S77: `admin_analytics_page_test.dart` に `@TestOn('browser')` (dart:js_interop fix)
+- S79: `memory_drill_page_test.dart` + `ai_status_page_test.dart` 修正
+- → 3件全完了 / PR #860 CI green 見込み
+
+- commit: ecc413401 on main
