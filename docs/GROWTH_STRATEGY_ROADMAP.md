@@ -22715,10 +22715,18 @@ inconsistency を **collision (= 同 timestamp) と独立した検出軸** と�
 - fbf4c2d06 (Phase14 drafts)
 - 63b651fa5 (orphan merge ×4)
 
-## 2026-04-28 PS#6 S85 — 競馬予想モデル tooFrequentRacePenalty
+## 2026-04-28 PS#5 S83 (PowerShell版#5 Session 83)
 
-- `tooFrequentRacePenalty`: 連闘/中1週疲労ペナルティ (≤7日=+8/≤13日=+4/14日以上=0)
-- freshnessPenalty(長休み)と対をなす出走間隔リスク軸 — prev_days_agoの両端を網羅
-- `sortHorseEntriesForLearning`: factor14挿入, horse_number → 15 tiebreaker — sort15因子体制
-- `buildHorseRacePrompt`: 連闘/中1週疲労リスク説明追加
-- commit: f02c42a24
+### SQLSTATE 23514 根本原因解消 — timestamp ordering fix
+
+**根本原因**: `20260425xxx` migrations (broad UPDATE wbs_tasks for instance rebalance) が
+`20260426090000_fix_wbs_recovery_plan_before_github_sync.sql` より早いタイムスタンプで実行され
+task 714ee4a4 (deadline=2026-04-27, recovery_plan=NULL) の trigger を発火。
+
+**修正**: `20260424225000_pre_push_recovery_plan_backfill.sql` を pending queue 先頭に配置。
+task 714ee4a4 unconditional backfill + 全超過タスク broad backfill を最初に実行。
+
+**S82 の補完**: bypass+v2 pattern (`20260426100000` skip → `20260428146000` v2) も維持。
+
+### commits
+- f2ff7238e (20260424225000 pre-push backfill)
