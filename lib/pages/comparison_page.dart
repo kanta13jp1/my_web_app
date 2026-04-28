@@ -8542,6 +8542,109 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'flux': const _CompetitorInfo(
+    name: 'FLUX (Black Forest Labs)',
+    emoji: '🌊',
+    tagline: 'FLUX AI画像生成モデルを使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'FLUX代替 FLUX AI代替 FLUX画像生成代替 Black Forest Labs代替',
+    accentColor: Color(0xFF1A56DB),
+    painPoints: [
+      'AI画像生成モデルに特化しており、財務・タスク・AI学習管理は別ツールが必要',
+      'FLUX.1 ProはAPI従量課金で大量生成時コストが読みにくい',
+      '高品質画像生成は優秀だが、個人ライフ全体のOS統合機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'FLUX AI高品質画像生成',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'kling': const _CompetitorInfo(
+    name: 'Kling AI',
+    emoji: '🎞️',
+    tagline: 'Kling AIをAI動画生成に使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'Kling AI代替 AI動画生成代替 Kuaishou AI代替',
+    accentColor: Color(0xFF7C3AED),
+    painPoints: [
+      'AI動画生成に特化しており、財務管理・タスク・AI大学は別ツールが必要',
+      '無料クレジット消費が速く、月額約' + r'$' + '10〜で動画生成のみのコスト負担',
+      '高品質動画生成は優秀だが、個人ライフ全体のOS統合機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AI高品質動画生成',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'activecampaign': const _CompetitorInfo(
+    name: 'ActiveCampaign',
+    emoji: '⚡',
+    tagline:
+        'ActiveCampaignをメール自動化・CRMに使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'ActiveCampaign代替 メール自動化代替 CRM代替 ActiveCampaign日本語',
+    accentColor: Color(0xFF356AE6),
+    painPoints: [
+      'メール自動化・CRMに特化しており、個人の財務・習慣・AI学習は対象外',
+      '月額約' + r'$' + '15〜でビジネス向け機能が中心、個人ライフ管理には過剰',
+      'メール配信フロー・スコアリングは優秀だが、個人ライフOSとしての統合機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'メール自動化・CRM統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
@@ -8780,6 +8883,9 @@ class _ComparisonShellState extends State<_ComparisonShell> {
     'substack': 'newsletter',
     'klaviyo': 'email-marketing',
     'remove-bg': 'photo-ai',
+    'flux': 'ai-image',
+    'kling': 'ai-video',
+    'activecampaign': 'email-marketing',
   };
 
   @override
@@ -8980,7 +9086,7 @@ class _ComparisonShellState extends State<_ComparisonShell> {
                       children: [
                         _buildTag(
                           icon: Icons.compare_arrows_rounded,
-                          label: '210社比較',
+                          label: '213社比較',
                           backgroundColor:
                               _info.accentColor.withValues(alpha: 0.18),
                           foregroundColor: _textPrimary,
@@ -9588,7 +9694,7 @@ class _ComparisonShellState extends State<_ComparisonShell> {
                       ),
                       SizedBox(width: 8),
                       Text(
-                        '全210社の競合ランドスケープを見る →',
+                        '全213社の競合ランドスケープを見る →',
                         style: TextStyle(
                           fontSize: 14,
                           color: _textSecondary,
