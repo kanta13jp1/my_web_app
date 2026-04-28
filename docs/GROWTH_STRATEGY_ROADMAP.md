@@ -23305,6 +23305,7 @@ Part 68 で確立した SECOND_BRAIN 軸を即 dogfood. 原則 #3 (Daily Log) �
 (本 commit にて確定)
 
 
+
 ## PS#5 S92 — 2026-04-29 (collision patrol)
 
 - **collision patrol**: 1件解消 — 015000 vscode_s15 → 015100
@@ -23322,3 +23323,48 @@ Part 68 で確立した SECOND_BRAIN 軸を即 dogfood. 原則 #3 (Daily Log) �
 - confidence式: ...+venueBonus+favBonus (21 terms体制確立)
 - reasoning文字列に「本命補正:+X%」追加
 - commit: d14367829
+
+## 2026-04-29 Win版#132 part 70 — SECOND_BRAIN #7 Codex#2 委譲 (memory-search-hub EF)
+
+### 概要
+SECOND_BRAIN 原則 #7 (Hybrid Search via MCP) を Codex#2 cross-instance-pr で委譲. MEMORY.md 32.4KB 警告解消の **本命** 解決策. 1 PR で SECOND_BRAIN + MCP_AUTH 2 軸同時押上.
+
+### 仕様
+3 段 hybrid search: BM25 (~10ms) → ベクトル (~50ms / claude-mem SQLite reuse) → Haiku 4.5 LLM 再ランク (~500ms / top_k=5). 合計 ~600ms.
+
+4 アクション: memory.search / memory.rank / memory.related / memory.stats.
+
+claude-mem SQLite 統合 3 案提示:
+- 案 A: 定期 sync (1h cron / GHA)
+- 案 B: ローカル MCP server (Python / per-instance)
+- 案 C (推奨): 両方実装 (= ローカル高速 + cloud cross-instance)
+
+MCP_AUTH 10/10 準拠 (= mcp_auth_guard.ts reuse).
+
+### 1 軸内 3 territory 分散委譲 第 1 例
+| territory | 担当原則 | 状態 |
+| --- | --- | --- |
+| Win | #3 Daily Log | ✅ 完了 (part 69) |
+| PS#1 | #4 Lint | ⏳ 委譲中 (part 69) |
+| **Codex#2** | **#7 Hybrid Search** | **⏳ 委譲中 (本 part)** |
+
+= **協調設計の限界** を試す軸. Win + PS#1 + Codex#2 の 3 territory 分散は SECOND_BRAIN 初.
+
+### co-implementation pattern 第 3 例
+第 1 例 (part 65 / AI_VIDEO #5): Win script + VSCode UI バッジ.
+第 2 例 (part 69 / SECOND_BRAIN #3+#4): Win Daily Log + PS#1 Lint.
+第 3 例 (本 part 70 / SECOND_BRAIN #7): Win 設計 + Codex#2 実装.
+= **意図的水平分業** が axis pattern として 3 度成立.
+
+### Philosophy Alignment 9/9
+#1 CEO 感 (設計+実装の役割分担) / #6 資本=時間 (既存 claude-mem 資産 reuse) / #7 資産負債 (MEMORY.md 警告 = 負債 → search EF = 資産).
+
+### 受領完了想定
+Codex#2 完成 (2 週間 / 期限 2026-05-13) で:
+- SECOND_BRAIN baseline: 3.0/7 → 4.0/7
+- MCP_AUTH baseline: 0.5/10 → 5/10 (= 一気に半分達成)
+- 1 PR で 2 軸同時押上 = 効率最大
+
+### commit
+(本 commit にて確定)
+
