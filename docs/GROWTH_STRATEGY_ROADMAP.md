@@ -22730,3 +22730,33 @@ task 714ee4a4 unconditional backfill + 全超過タスク broad backfill を最�
 
 ### commits
 - f2ff7238e (20260424225000 pre-push backfill)
+
+## 2026-04-28 PS#2 S66 — T-1 Phase15 第87〜90弾 dev.to 投稿完了 (90本マイルストーン)
+
+### T-1 第87弾: PostgreSQL RLS 完全ガイド
+- JA: docs/blog-drafts/2027-08-28-postgresql-rls-guide.md
+- EN: docs/blog-drafts/2027-08-28-postgresql-rls-guide-en.md
+- dev.to: https://dev.to/kanta13jp1/postgresql-rls-guide-multi-tenant-security-with-supabase-43a9
+
+### T-1 第88弾: 個人開発グロースハック (月1000人)
+- JA: docs/blog-drafts/2027-09-04-indie-dev-growth-hacks.md
+- EN: docs/blog-drafts/2027-09-04-indie-dev-growth-hacks-en.md
+- dev.to: https://dev.to/kanta13jp1/indie-dev-growth-hacks-seo-sns-and-community-to-reach-1000-usersmonth-4155
+
+### T-1 第89弾: Dart 非同期処理入門
+- JA: docs/blog-drafts/2027-09-11-dart-async-guide.md
+- EN: docs/blog-drafts/2027-09-11-dart-async-guide-en.md
+- dev.to: https://dev.to/kanta13jp1/dart-async-guide-future-stream-and-isolate-when-to-use-each-3f5m
+
+### T-1 第90弾: 個人開発の90日プラン 🏆 90本マイルストーン
+- JA: docs/blog-drafts/2027-09-18-indie-dev-90day-plan.md
+- EN: docs/blog-drafts/2027-09-18-indie-dev-90day-plan-en.md
+- dev.to: https://dev.to/kanta13jp1/the-indie-dev-90-day-plan-kpi-design-to-milestone-management-bg7
+
+### 累計 dev.to 投稿数: 90本 (🏆 90本マイルストーン達成)
+- Phase15 完了 (4弾: PostgreSQL RLS / グロースハック / Dart非同期 / 90日プラン)
+- 次フェーズ: Phase16 (#91-#94)
+
+### commits
+- 965c186b2 (Phase15 drafts)
+- e36e887f2 (orphan merge ×4)
