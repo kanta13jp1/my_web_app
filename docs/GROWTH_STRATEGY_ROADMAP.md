@@ -22834,3 +22834,33 @@ task 714ee4a4 unconditional backfill + 全超過タスク broad backfill を最�
 - `jockeyCoverage *0.02 + trainerCoverage *0.01`: 騎手/調教師データ充足率をconfidenceに追加
 - confidence最終式 (8 terms): 0.31 + dataQuality*0.22 + oddsCoverage*0.12 + historyCoverage*0.07 + bestTimeCoverage*0.05 + prevMarginCoverage*0.03 + jockeyCoverage*0.02 + trainerCoverage*0.01 - fieldPenalty + oddsGapBonus (grade cap)
 - commit: 3109c7cff
+
+## 2026-04-28 PS#2 S68 — T-1 Phase17 (#95-#98) dev.to 投稿完了
+
+### T-1 第95弾: Flutter Web パフォーマンス最適化 (Deferred Loading / Tree Shaking / WASM)
+- JA: docs/blog-drafts/2027-10-23-flutter-web-performance.md
+- EN: docs/blog-drafts/2027-10-23-flutter-web-performance-en.md
+- dev.to: https://dev.to/kanta13jp1/flutter-web-performance-deferred-loading-tree-shaking-and-wasm-3i8a
+
+### T-1 第96弾: Supabase Realtime チャット実装 (Presence / Broadcast / DB変更)
+- JA: docs/blog-drafts/2027-10-30-supabase-realtime-chat.md
+- EN: docs/blog-drafts/2027-10-30-supabase-realtime-chat-en.md
+- dev.to: https://dev.to/kanta13jp1/build-a-realtime-chat-with-supabase-presence-broadcast-and-db-changes-2028
+
+### T-1 第97弾: 個人開発者の SEO 完全戦略 (/vs-* / 構造化データ / Core Web Vitals)
+- JA: docs/blog-drafts/2027-11-06-indie-dev-seo-strategy.md
+- EN: docs/blog-drafts/2027-11-06-indie-dev-seo-strategy-en.md
+- dev.to: https://dev.to/kanta13jp1/indie-dev-seo-strategy-vs-pages-structured-data-and-core-web-vitals-3aml
+
+### T-1 第98弾: LLM プロンプトエンジニアリング実践 (CoT / Few-shot / System Prompt)
+- JA: docs/blog-drafts/2027-11-13-llm-prompt-engineering.md
+- EN: docs/blog-drafts/2027-11-13-llm-prompt-engineering-en.md
+- dev.to: https://dev.to/kanta13jp1/llm-prompt-engineering-in-practice-cot-few-shot-and-system-prompt-design-26hf
+
+### 累計 dev.to 投稿数: 98本 (🎯 100本マイルストーン目前: あと2本!)
+- Phase17 完了 (4弾: Flutter Web性能 / Supabase Realtime / SEO / プロンプトエンジニアリング)
+- 次フェーズ: Phase18 (#99-#102) → 100本マイルストーン達成
+
+### commits
+- a77a08bff (Phase17 drafts)
+- 6e3e78a8a (orphan merge ×4)
