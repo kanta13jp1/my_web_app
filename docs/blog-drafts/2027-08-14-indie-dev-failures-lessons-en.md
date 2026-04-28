@@ -1,7 +1,7 @@
 ---
 title: "10 Things I Learned from Failing at Indie Dev — What 3 Products Taught Me"
 tags: ai,indiedev,buildinpublic,automation
-published: false
+published: true
 ---
 
 # 10 Things I Learned from Failing at Indie Dev — What 3 Products Taught Me
