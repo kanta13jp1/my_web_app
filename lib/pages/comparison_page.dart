@@ -9443,6 +9443,319 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'sprout-social': const _CompetitorInfo(
+    name: 'Sprout Social',
+    emoji: '🌿',
+    tagline:
+        'Sprout SocialをエンタープライズSNS管理・分析に使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'Sprout Social代替 SNS管理代替 ソーシャルメディア分析代替 Sprout Social日本語',
+    accentColor: Color(0xFF59CB59),
+    painPoints: [
+      'エンタープライズSNS管理・詳細分析に特化し、個人財務・AI大学管理は別ツール',
+      '月额249USD～と高額でスモールビジネス・個人には負担が大きい',
+      'チームSNS運用が中心で個人ライフOS統合には過剰な機能',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'エンタープライズSNS管理・分析',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'deel': const _CompetitorInfo(
+    name: 'Deel',
+    emoji: '🌍',
+    tagline:
+        'Deelをグローバル雇用・給与計算プラットフォームに使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'Deel代替 グローバル雇用代替 リモートチーム給与代替 Deel日本語',
+    accentColor: Color(0xFF5A45FF),
+    painPoints: [
+      'グローバル契約・給与計算に特化し、個人財務・習慣・AI大学管理は別ツール',
+      '月额49USD/人～と海外チーム管理に特化した高額プラン設計',
+      '国際雇用以外の個人ライフOS統合機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'グローバル雇用・給与・契約管理',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'smartsheet': const _CompetitorInfo(
+    name: 'Smartsheet',
+    emoji: '📊',
+    tagline:
+        'Smartsheetをスプレッドシート型プロジェクト管理に使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'Smartsheet代替 スプレッドシートPM代替 プロジェクト管理代替 Smartsheet日本語',
+    accentColor: Color(0xFF0073E6),
+    painPoints: [
+      'スプレッドシート型プロジェクト管理に特化し、個人財務・AI大学は別ツール',
+      '月額7USD/人～と機能に対してコスト感が高め',
+      'Excelライクな操作に慣れた人向けで、AI支援・個人OS統合機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'スプレッドシート型プロジェクト管理',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'confluence': const _CompetitorInfo(
+    name: 'Confluence (Atlassian)',
+    emoji: '📝',
+    tagline:
+        'ConfluenceをAtlassian製チームWikiに使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'Confluence代替 チームWiki代替 ドキュメント管理代替 Confluence日本語',
+    accentColor: Color(0xFF0052CC),
+    painPoints: [
+      'チームWiki・ドキュメント管理に特化し、個人財務・AI大学・習慣管理は別ツール',
+      '無料は10ユーザーまで、月額5.75USD/人～でJira連携前提の設計',
+      'Atlassianエコシステム依存で個人ライフOS統合機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'チームWiki・ドキュメント管理',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'freshworks': const _CompetitorInfo(
+    name: 'Freshworks',
+    emoji: '🍋',
+    tagline:
+        'FreshworksをCRM+カスタマーサポートSaaSに使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'Freshworks代替 CRM代替 カスタマーサポート代替 Freshworks日本語',
+    accentColor: Color(0xFF00A2FF),
+    painPoints: [
+      'CRM+サポートSaaSに特化し、個人財務・習慣・AI大学管理は別ツール',
+      '無料プランは機能制限あり、本格利用は月額15USD/人～',
+      'Freshdesk/Freshsales等複数製品分散でコスト・管理が複雑化',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'CRM・カスタマーサポートSaaS',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'pandadoc': const _CompetitorInfo(
+    name: 'PandaDoc',
+    emoji: '🐼',
+    tagline: 'PandaDocを電子署名・契約書自動化に使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'PandaDoc代替 電子署名代替 契約書自動化代替 PandaDoc日本語',
+    accentColor: Color(0xFF30C454),
+    painPoints: [
+      '電子署名・契約書作成に特化し、個人財務・習慣・AI大学管理は別ツール',
+      '無料プランは電子署名のみ、本格利用は月額19USD～のプランが必要',
+      '契約・法務文書以外の個人ライフOS統合機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '電子署名・契約書自動化',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'invision': const _CompetitorInfo(
+    name: 'InVision',
+    emoji: '💫',
+    tagline:
+        'InVisionをUIプロトタイピング・デザインコラボに使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'InVision代替 プロトタイピング代替 デザインコラボ代替 InVision日本語',
+    accentColor: Color(0xFFFF3366),
+    painPoints: [
+      'UIプロトタイピングに特化し、財務・習慣・AI大学管理は別ツールが必要',
+      'FigmaやAdobe XDの台頭でシェアが低下、月額15USD/人～',
+      'デザインコラボ以外の個人ライフOS統合機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'UIプロトタイピング・デザインコラボ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'zeplin': const _CompetitorInfo(
+    name: 'Zeplin',
+    emoji: '📦',
+    tagline: 'Zeplinをデザイン→開発ハンドオフツールに使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'Zeplin代替 デザインハンドオフ代替 デザイン仕様書代替 Zeplin日本語',
+    accentColor: Color(0xFFFFBD00),
+    painPoints: [
+      'デザイン→開発ハンドオフに特化し、財務・習慣・AI大学管理は別ツール',
+      '無料は1プロジェクトのみ、月額6USD/人～のプランが必要',
+      'デザイン仕様書共有以外の個人ライフOS統合機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'デザイン→開発ハンドオフ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'helpscout': const _CompetitorInfo(
+    name: 'Help Scout',
+    emoji: '🧭',
+    tagline:
+        'Help Scoutをカスタマーサポート・メールヘルプデスクに使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'Help Scout代替 カスタマーサポート代替 ヘルプデスク代替 Help Scout日本語',
+    accentColor: Color(0xFF1292EE),
+    painPoints: [
+      'メールベースのカスタマーサポートに特化し、個人財務・AI大学は別ツール',
+      '月額20USD/人～でスモールチームでもコストが積み上がる',
+      'カスタマーサポート以外の個人ライフOS統合機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'カスタマーサポート・ヘルプデスク',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
@@ -9707,6 +10020,15 @@ class _ComparisonShellState extends State<_ComparisonShell> {
     'later': 'social-media',
     'rytr': 'ai-writing',
     'gusto': 'hr',
+    'sprout-social': 'social-media',
+    'deel': 'hr',
+    'smartsheet': 'project',
+    'confluence': 'documentation',
+    'freshworks': 'crm',
+    'pandadoc': 'documents',
+    'invision': 'design',
+    'zeplin': 'design',
+    'helpscout': 'support',
   };
 
   @override
@@ -9907,7 +10229,7 @@ class _ComparisonShellState extends State<_ComparisonShell> {
                       children: [
                         _buildTag(
                           icon: Icons.compare_arrows_rounded,
-                          label: '240社比較',
+                          label: '249社比較',
                           backgroundColor:
                               _info.accentColor.withValues(alpha: 0.18),
                           foregroundColor: _textPrimary,
@@ -10515,7 +10837,7 @@ class _ComparisonShellState extends State<_ComparisonShell> {
                       ),
                       SizedBox(width: 8),
                       Text(
-                        '全240社の競合ランドスケープを見る →',
+                        '全249社の競合ランドスケープを見る →',
                         style: TextStyle(
                           fontSize: 14,
                           color: _textSecondary,
