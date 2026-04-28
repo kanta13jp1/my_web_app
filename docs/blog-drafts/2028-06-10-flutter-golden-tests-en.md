@@ -1,7 +1,7 @@
 ---
 title: "Flutter Golden Tests — Prevent UI Regressions with Screenshot Diffs"
 tags: flutter,ai,indiedev,programming
-published: false
+published: true
 ---
 
 # Flutter Golden Tests — Prevent UI Regressions with Screenshot Diffs

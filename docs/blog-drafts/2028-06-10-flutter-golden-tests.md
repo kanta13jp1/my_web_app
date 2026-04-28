@@ -1,7 +1,7 @@
 ---
 title: "Flutter Golden Tests — スクリーンショットで UI リグレッションを防ぐ"
 tags: flutter,AI,個人開発,programming
-published: false
+published: true
 ---
 
 # Flutter Golden Tests — スクリーンショットで UI リグレッションを防ぐ
