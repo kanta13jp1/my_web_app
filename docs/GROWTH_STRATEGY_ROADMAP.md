@@ -22224,3 +22224,21 @@ Phase4 drafts 新規作成 (8ファイル):
 - Google I/O 2026-05-20 対策レポート (PS#4)
 - vs-*ページUI改善: comparison_page.dart のデザイン品質向上
 - sitemap lastmod 更新 (全174 vs-* ルートに最終更新日付加)
+
+## 2026-04-28 PS#4 S88 — vs-*ページ JSON-LD + vsMatch regex修正
+
+### 実施内容
+- index.html vsMatch ブロックに WebPage + BreadcrumbList JSON-LD structured data を追加
+- vsMatch regex を [a-z0-9\-_]+ に拡張 (google_agent_builder 対応)
+- sitemap.xml に /vs-google_agent_builder 追加 → 175 vs-* ルート
+- commits: 23b58e9c6, 60544abf2 on main
+
+### PS#4 完結サマリー (全タスク)
+| 施策 | セッション |
+|------|-----------|
+| 174社 _CompetitorInfo | S82-S86 |
+| 175 vs-* sitemap ルート | S80+S82-S88b |
+| 全174社 個別OGP title/desc | S87 |
+| JSON-LD BreadcrumbList | S88 |
+| vsMatch regex underscore対応 | S88b |
+| landing_page "全174社を見る →" | S86後 |
