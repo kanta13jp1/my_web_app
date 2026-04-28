@@ -23259,3 +23259,14 @@ CLAUDE.md hook table + ~/.claude/hooks/inject-rules.txt 注入. OPS-28 charter�
 - topTwoOddsGapBonusの逆軸として混戦予測困難性を明示
 - confidence式: ...-fieldPenalty-tightOdds+oddsGapBonus+recentForm
 - commit: f7d6fa21c
+
+## 2026-04-29 PS#6 S103 — 競馬予想モデル venueConfidenceBonus (JRA/NAR会場別confidence調整)
+### S103: venueConfidenceBonus(venue) — 会場種別によるconfidence調整
+- JRA主要4場(東京/中山/京都/阪神)=+0.03: G1開催・投票量最大・データ最充実
+- その他JRA(札幌/函館/福島/新潟/中京/小倉)=+0.01
+- NAR地方競馬(門別/盛岡/水沢/浦和/船橋/大井/川崎/金沢/笠松/名古屋/園田/姫路/高知/佐賀)=-0.02
+- ばんえい(帯広)=-0.04: 完全別ルール・オッズ構造異なる
+- 会場不明=0
+- confidence式: ...+recentForm+venueBonus (20 terms体制確立)
+- reasoning文字列に「会場補正:+X%」明示
+- commit: 0c0c876c5
