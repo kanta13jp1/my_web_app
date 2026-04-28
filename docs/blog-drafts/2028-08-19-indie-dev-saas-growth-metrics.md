@@ -1,7 +1,7 @@
 ---
 title: "個人開発SaaSの成長指標 — MRR・チャーン・LTV を毎週追う"
 tags: AI,個人開発,buildinpublic,automation
-published: false
+published: true
 ---
 
 # 個人開発SaaSの成長指標 — MRR・チャーン・LTV を毎週追う

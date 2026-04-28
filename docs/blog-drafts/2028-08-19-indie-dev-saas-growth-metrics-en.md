@@ -1,7 +1,7 @@
 ---
 title: "Indie Dev SaaS Growth Metrics — Track MRR, Churn, and LTV Every Week"
 tags: ai,indiedev,buildinpublic,automation
-published: false
+published: true
 ---
 
 # Indie Dev SaaS Growth Metrics — Track MRR, Churn, and LTV Every Week
