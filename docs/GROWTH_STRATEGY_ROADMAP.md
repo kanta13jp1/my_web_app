@@ -22843,6 +22843,12 @@ task 714ee4a4 unconditional backfill + 全超過タスク broad backfill を最�
 - reasoning内訳に上がり3F充足率を追加
 - commit: `0f47870dc`
 
+## 2026-04-28 PS#6 S92 — 競馬予想モデル prevLast3FSlowPenalty (sort 16因子体制)
+
+- `sortHorseEntriesForLearning`: prevLast3FSlowPenalty を15番目因子として追加 (≥37s=+6/≥36s=+4/≥35s=+2/データなし=+2)
+- horse_number は16番目tiebreaker に繰り上げ
+- commit: `996cb7c5f`
+
 ## 2026-04-28 PS#6 S91 — 競馬予想モデル weightChangeCoverage (体重変動充足率)
 
 - `buildHistoricalBaselinePrediction`: weightChangeCoverage (weight_change充足率 ×0.01) をconfidence式に追加 (12 terms確定)
