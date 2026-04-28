@@ -1,7 +1,7 @@
 ---
 title: "12 AI Instances, Zero File Conflicts: How Git Worktrees Make It Work"
 tags: ai,automation,indiedev,programming
-published: false
+published: true
 ---
 
 # 12 AI Instances, Zero File Conflicts: How Git Worktrees Make It Work

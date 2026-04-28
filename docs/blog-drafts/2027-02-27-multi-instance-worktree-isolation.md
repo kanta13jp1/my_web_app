@@ -1,7 +1,7 @@
 ---
 title: "12インスタンス並行開発で衝突しない仕組み — git worktree 完全ガイド"
 tags: AI,個人開発,automation,buildinpublic
-published: false
+published: true
 ---
 
 # 12インスタンス並行開発で衝突しない仕組み — git worktree 完全ガイド
