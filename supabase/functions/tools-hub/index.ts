@@ -1319,6 +1319,15 @@ function prevLast3FSlowPenalty(value: unknown): number {
   return 0; // 34秒台以下は速い
 }
 
+function popularitySortScore(value: unknown): number {
+  const p = numericOrFallback(value, 99);
+  if (p <= 0) return 5;  // データなし
+  if (p <= 3) return 0;  // 1-3番人気
+  if (p <= 6) return 2;  // 4-6番人気
+  if (p <= 9) return 4;  // 7-9番人気
+  return 6;              // 10番人気以下
+}
+
 function sortHorseEntriesForLearning(
   entries: Record<string, unknown>[],
   raceContext?: { courseType?: string; distance?: number },
@@ -1372,7 +1381,10 @@ function sortHorseEntriesForLearning(
     // 15. prev_last_3f slow penalty (ascending — ラスト3F遅い馬は末脚不足リスク)
     const l3f = prevLast3FSlowPenalty(a.prev_last_3f) - prevLast3FSlowPenalty(b.prev_last_3f);
     if (l3f !== 0) return l3f;
-    // 16. horse_number (ascending — tiebreaker)
+    // 16. popularity sort score (ascending — 人気上位馬を優先)
+    const pop = popularitySortScore(a.popularity) - popularitySortScore(b.popularity);
+    if (pop !== 0) return pop;
+    // 17. horse_number (ascending — tiebreaker)
     return numericOrFallback(a.horse_number, 999) - numericOrFallback(b.horse_number, 999);
   });
 }
