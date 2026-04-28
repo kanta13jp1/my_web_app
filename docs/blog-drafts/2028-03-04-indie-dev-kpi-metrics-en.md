@@ -1,7 +1,7 @@
 ---
 title: "Indie SaaS KPI Design and Measurement: MAU, ARR, NPS, and Churn"
 tags: ai,indiedev,buildinpublic,automation
-published: false
+published: true
 ---
 
 # Indie SaaS KPI Design and Measurement: MAU, ARR, NPS, and Churn
