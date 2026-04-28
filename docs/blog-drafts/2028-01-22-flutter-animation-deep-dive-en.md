@@ -1,7 +1,7 @@
 ---
 title: "Flutter Animation Deep Dive: AnimationController, Tween, and Hero"
 tags: flutter,ai,indiedev,programming
-published: false
+published: true
 ---
 
 # Flutter Animation Deep Dive: AnimationController, Tween, and Hero
