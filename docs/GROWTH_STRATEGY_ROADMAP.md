@@ -23449,3 +23449,15 @@ Codex#2 完成 (2 週間 / 期限 2026-05-13) で:
 - 新カテゴリ: hosting / design / hr
 - sitemap: 274→283 URLs
 - commit: aabf2d645
+
+## PS#5 S94 (2026-04-29)
+- equal_keys_in_map/const_map CI 失敗根本解消: comparison_page.dart 重複マップキー8件削除
+  - hubspot/miro/linear/n8n が _competitorData + categoryOf const map の両方で2重登録
+  - _CompetitorInfo 4ブロック (lines 8960-9097) + const map 4行 (lines 9384-9387) 削除
+  - flutter analyze No issues found (29.5s)
+- collision patrol 3件解消
+  - 042500: autogen_ai_university → 042600
+  - 033000: ps5_s91 → 033100
+  - 030000: ps6_s103 → 030100
+- 939 timestamps 全 unique
+- commit: 7552068f1 (equal_keys fix) + collision renames pending
