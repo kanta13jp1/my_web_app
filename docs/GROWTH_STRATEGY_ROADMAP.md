@@ -22329,3 +22329,10 @@ Phase4 drafts 新規作成 (8ファイル):
 - S76: anon guard 11ページ + 型不一致修正 + _GanttTimelineTabState スコープ修正
 - S77: @TestOn('browser') PR #860 fix + 24EF audit done/移動
 - S78: SQLSTATE 23514 CI deploy ブロッカー解消
+
+## PS#6 S80 (2026-04-28)
+- 競馬AIモデル: best_time品質スコア18項目化 + グレード別confidence cap
+  - horseRaceDataQualityScore: best_time フィールド追加 (17→18)
+  - gradeMaxConfidence: G1=0.65 / G2=0.70 / G3=0.75 / その他=0.80
+  - buildHistoricalBaselinePrediction: Math.min(confidence, gradeMaxConfidence) 適用
+- Commit: e2e9e692f on main
