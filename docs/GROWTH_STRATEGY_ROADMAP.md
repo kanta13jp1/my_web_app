@@ -22276,3 +22276,9 @@ Phase4 drafts 新規作成 (8ファイル):
 - 24EF audit cross-instance-PR → done/
 - stale EF audit (audit_hub_migration_completeness.py): 185 EF全件 clean 確認
 - PS#5 anon guard 合計: S74(20ページ) + S76(11ページ) = 31ページ完了
+
+## PS#6 S79 (2026-04-28)
+- 競馬AIプロンプト: コース替わり・距離適性リスクを明示追加
+  - 前走コース種別が今回と異なる場合 (芝↔ダート) はコース替わりリスク評価
+  - 前走距離と今回距離の差が200m超の場合は距離適性リスク考慮
+- Commit: 1df024434 on main
