@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -7501,6 +7501,138 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'midjourney': const _CompetitorInfo(
+    name: 'Midjourney',
+    emoji: '🎨',
+    tagline: 'Midjourneyを超えた、AI画像生成から個人ライフ全域を統合するAI OS。',
+    searchKeyword: 'Midjourney代替 画像生成AI代替 AIアート代替',
+    accentColor: Color(0xFF7B2FBE),
+    painPoints: [
+      'MidjourneyはDiscord専用画像生成AIで、個人の生産性・管理機能がない',
+      '財務管理・習慣追跡・タスク管理・AI大学など実務機能が皆無',
+      'Discord依存で単体アプリとしての独立性がなく、個人データ管理に不向き',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AI画像生成',
+        competitorHas: true,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '知識ベース構築',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: 'タスク・習慣管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: 'AI大学 (300社+)',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'character-ai': const _CompetitorInfo(
+    name: 'Character.AI',
+    emoji: '🤖',
+    tagline: 'Character AIを超えた、AIキャラクターから個人ライフ全域を統合するAI OS。',
+    searchKeyword: 'Character AI代替 キャラクターAI代替 AIロールプレイ代替',
+    accentColor: Color(0xFF9C27B0),
+    painPoints: [
+      'Character AIはロールプレイ特化AIで、実務的な個人管理機能がない',
+      '財務管理・習慣追跡・タスク管理・AI大学など生産性機能が皆無',
+      '会話履歴・個人データの自己管理が難しく、プライバシー懸念もある',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AIキャラクターチャット',
+        competitorHas: true,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '知識ベース構築',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: 'タスク・習慣管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: 'AI大学 (300社+)',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'deepseek': const _CompetitorInfo(
+    name: 'DeepSeek',
+    emoji: '🐋',
+    tagline: 'DeepSeekを超えた、AI推論から個人ライフ全域を統合するAI OS。',
+    searchKeyword: 'DeepSeek代替 DeepSeek R1代替 中国AI代替 オープンソースAI代替',
+    accentColor: Color(0xFF0078FF),
+    painPoints: [
+      'DeepSeekはAI推論モデルだが、個人の生産性・ライフ管理統合アプリでない',
+      '財務管理・習慣追跡・タスク管理・学習機能が存在しない',
+      '中国サーバーへのデータ保存によるプライバシー懸念がある',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AIチャット・高度推論',
+        competitorHas: true,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '知識ベース構築',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: 'タスク・習慣管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: 'AI大学 (300社+)',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
@@ -7712,6 +7844,9 @@ class _ComparisonShellState extends State<_ComparisonShell> {
     'microsoft-copilot': 'ai-platform',
     'grok': 'ai-platform',
     'meta-ai': 'ai-platform',
+    'midjourney': 'ai-image',
+    'character-ai': 'ai-chatbot',
+    'deepseek': 'ai-platform',
   };
 
   @override
@@ -7912,7 +8047,7 @@ class _ComparisonShellState extends State<_ComparisonShell> {
                       children: [
                         _buildTag(
                           icon: Icons.compare_arrows_rounded,
-                          label: '183社比較',
+                          label: '186社比較',
                           backgroundColor:
                               _info.accentColor.withValues(alpha: 0.18),
                           foregroundColor: _textPrimary,
@@ -8520,7 +8655,7 @@ class _ComparisonShellState extends State<_ComparisonShell> {
                       ),
                       SizedBox(width: 8),
                       Text(
-                        '全183社の競合ランドスケープを見る →',
+                        '全186社の競合ランドスケープを見る →',
                         style: TextStyle(
                           fontSize: 14,
                           color: _textSecondary,
