@@ -22831,22 +22831,6 @@ task 714ee4a4 unconditional backfill + 全超過タスク broad backfill を最�
 
 ## 2026-04-28 PS#6 S87 — 競馬予想モデル jockeyCoverage+trainerCoverage
 
-## 2026-04-28 PS#6 S89 — 競馬予想モデル last3FCoverage (上がり3F充足率)
-
-- `buildHistoricalBaselinePrediction`: last3FCoverage (prev_last_3f充足率 ×0.01) をconfidence式に追加
-- confidence最終式 (10 terms + grade cap):
-  `0.31 + dataQuality*0.22 + oddsCoverage*0.12 + historyCoverage*0.07 + bestTimeCoverage*0.05 + prevMarginCoverage*0.03 + jockeyCoverage*0.02 + trainerCoverage*0.01 + bloodlineCoverage*0.01 + last3FCoverage*0.01 - fieldPenalty + oddsGapBonus`
-- reasoning内訳に上がり3F充足率を追加
-- commit: `0f47870dc`
-
-## 2026-04-28 PS#6 S88 — 競馬予想モデル bloodlineCoverage + reasoning詳細化
-
-- `buildHistoricalBaselinePrediction`: bloodlineCoverage (sire充足率 ×0.01) をconfidence式に追加
-- confidence最終式 (9 terms + grade cap):
-  `0.31 + dataQuality*0.22 + oddsCoverage*0.12 + historyCoverage*0.07 + bestTimeCoverage*0.05 + prevMarginCoverage*0.03 + jockeyCoverage*0.02 + trainerCoverage*0.01 + bloodlineCoverage*0.01 - fieldPenalty + oddsGapBonus`
-- reasoning文字列に信頼度内訳 (データ充足%/オッズ%/血統%/騎手%/頭数/グレード) を追記
-- commit: `c40219c4c`
-
 - `jockeyCoverage *0.02 + trainerCoverage *0.01`: 騎手/調教師データ充足率をconfidenceに追加
 - confidence最終式 (8 terms): 0.31 + dataQuality*0.22 + oddsCoverage*0.12 + historyCoverage*0.07 + bestTimeCoverage*0.05 + prevMarginCoverage*0.03 + jockeyCoverage*0.02 + trainerCoverage*0.01 - fieldPenalty + oddsGapBonus (grade cap)
 - commit: 3109c7cff
@@ -22881,51 +22865,17 @@ task 714ee4a4 unconditional backfill + 全超過タスク broad backfill を最�
 - a77a08bff (Phase17 drafts)
 - 6e3e78a8a (orphan merge ×4)
 
-## 2026-04-28 Win版#132 part 64 — AI_VIDEO 7 番目設計軸確立 (D-ID 蒸留)
+## 2026-04-28 PS#5 S83 continued (PowerShell版#5 Session 83 continuation)
 
-### 概要
-NotebookLM `da2a95d1-2db3-4677-9e67-52fae69fb8e9` "D-ID: Comprehensive Guide to AI Video Creation and Business Strategy" を蒸留し、自分株式会社の **7 番目** の設計軸 `docs/AI_VIDEO_PRINCIPLES.md` を確立 (6 原則).
+### deploy-prod.yml 永続安全ネット + collision patrol
 
-### 6 原則
-1. Dynamic Avatar Embodiment (テキスト→Lifelike avatar 自動生成)
-2. Defensive→Generative Pivot (顔認識防御の知見を素材許可制御に転用)
-3. Seamless Workflow Integration (GHA でゼロタッチ統合)
-4. Decentralized Identity (DID) Verification (W3C VC 仕様 DID 署名)
-5. Ethical Provenance & Transparency (ウォーターマーク + メタデータ + UI バッジ 3 層)
-6. Interactive Real-time Presence (WebRTC avatar 対話 UI / RTT < 2 秒)
+- `20260424225000` を repair list に `reverted` 追加 → 毎 deploy 先頭で recovery_plan backfill 実行
+- `20260428163000` collision (seed_achievements_ps6_s85 vs seed_evidently_ai_university) → 163100 rename
+- `20260428180000` collision (seed_achievements_ps4_s98 vs seed_nannyml_ai_university) → 180100 rename
+- Issue #919 / #896 close (SQLSTATE 23514 + collision 解消確認)
+- Run 25056692259 — `Run Supabase migrations` ✅ SUCCESS
 
-### 既存 6 設計軸との関係
-全 6 原則が既存 6 軸 (PHILOSOPHY/AI_DEV/AI_CHARACTER/IMBUE/COLLAB_AI/MCP_AUTH) に対して 1 原則ずつ augmentation を提供. 既存軸を置換しない.
-
-### Rule [AI-VIDEO-29]
-CLAUDE.md hook table + ~/.claude/hooks/inject-rules.txt に新 Rule 注入. OPS-28 charter の「既存 6 設計軸」→「7 設計軸」更新.
-
-### Philosophy Alignment 9/9
-特に #2 ミッション (倫理的 AI 動画) / #3 mentor (透明性) / #5 商品=価値 (信頼担保) / #6 資本=時間 (パイプライン高速化).
-
-### commit
-b6f4ac0a7 (instance-win → main)
-
-## 2026-04-28 Win版#132 part 65 — AI_VIDEO #5 Ethical Provenance dogfood (watermark + metadata)
-
-### 概要
-Part 64 で確立した AI_VIDEO 軸を **同セッション内で dogfood**. 原則 #5 (Ethical Provenance & Transparency) の **3 層中 2 層** を Win版 territory で実装.
-
-### 実装
-- `scripts/video/add_provenance.py` 新規 (~150 行 / argparse + ffmpeg drawtext + 5 metadata fields)
-- `.github/workflows/notebooklm-video-pipeline.yml` Step 6c 追加 (Step 6b ↔ 7 の間)
-- `scripts/video/_smoke_test.py` 拡張 (`test_add_provenance_cmd_construction` / 5/5 pass)
-- `docs/AI_VIDEO_PRINCIPLES.md` 実装履歴セクション追加 (1.5/6 → 2.0/6)
-- `docs/cross-instance-prs/20260428_ai_video_provenance_ui_badge_vscode.md` 起票 (3 層目 = UI バッジ層を VSCode版 territory に委譲)
-
-### OPS-28 charter §6 受領 lane 第 4 例
-Win → VSCode の **意図的水平分業** = 設計者が「自分でやる範囲」と「他 territory に委ねる範囲」を 1 原則の中で分割 (= co-implementation pattern 第 1 例).
-
-### Philosophy Alignment 9/9
-- #1 CEO 感: 設計 → 実装の自己一致 (起案者が即実装)
-- #6 資本=時間: 1 セッション内 part 64→65 で軸確立 → dogfood 完結
-- #7 資産負債: 設計負債 (#5 未実装) を実装資産に交換
-
-### commit
-d63f531db (instance-win → main)
-
+### commits
+- 9b8345c5a (deploy-prod.yml 20260424225000 always-reverted)
+- 77dfdbdd9 (163000→163100 collision fix)
+- 4c53bf1cc (180000→180100 collision fix)
