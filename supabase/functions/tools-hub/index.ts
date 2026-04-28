@@ -1421,10 +1421,13 @@ function buildHistoricalBaselinePrediction(
   const ageCoverage = entries.length > 0
     ? entries.filter((entry) => entry.horse_age !== null && entry.horse_age !== undefined && String(entry.horse_age).trim() !== "").length / entries.length
     : 0;
+  const sexCoverage = entries.length > 0
+    ? entries.filter((entry) => entry.sex && String(entry.sex).trim() !== "").length / entries.length
+    : 0;
   const maxConf = gradeMaxConfidence(race.grade);
   const fieldPenalty = fieldSizeConfidencePenalty(entries.length);
   const oddsGapBonus = topTwoOddsGapBonus(entries);
-  const confidence = Math.min(clampConfidence(0.31 + dataQuality * 0.22 + oddsCoverage * 0.12 + historyCoverage * 0.07 + bestTimeCoverage * 0.05 + prevMarginCoverage * 0.03 + jockeyCoverage * 0.02 + trainerCoverage * 0.01 + bloodlineCoverage * 0.01 + last3FCoverage * 0.01 + winningTimeCoverage * 0.01 + weightChangeCoverage * 0.01 + ageCoverage * 0.01 - fieldPenalty + oddsGapBonus), maxConf);
+  const confidence = Math.min(clampConfidence(0.31 + dataQuality * 0.22 + oddsCoverage * 0.12 + historyCoverage * 0.07 + bestTimeCoverage * 0.05 + prevMarginCoverage * 0.03 + jockeyCoverage * 0.02 + trainerCoverage * 0.01 + bloodlineCoverage * 0.01 + last3FCoverage * 0.01 + winningTimeCoverage * 0.01 + weightChangeCoverage * 0.01 + ageCoverage * 0.01 + sexCoverage * 0.01 - fieldPenalty + oddsGapBonus), maxConf);
   return {
     success: true,
     prediction: {
