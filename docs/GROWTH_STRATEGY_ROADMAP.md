@@ -22684,3 +22684,33 @@ inconsistency を **collision (= 同 timestamp) と独立した検出軸** と�
 ### commits
 - a7e610407 (Phase13 drafts commit)
 - dc4c0ce3a (orphan merge ×4)
+
+## 2026-04-28 PS#2 S65 — T-1 Phase14 第83〜86弾 dev.to 投稿完了
+
+### T-1 第83弾: Flutter アニメーション入門
+- JA: docs/blog-drafts/2027-07-31-flutter-animations.md
+- EN: docs/blog-drafts/2027-07-31-flutter-animations-en.md
+- dev.to: https://dev.to/kanta13jp1/flutter-animations-animationcontroller-tween-and-hero-explained-c1
+
+### T-1 第84弾: GitHub Actions セキュリティ強化
+- JA: docs/blog-drafts/2027-08-07-github-actions-security.md
+- EN: docs/blog-drafts/2027-08-07-github-actions-security-en.md
+- dev.to: https://dev.to/kanta13jp1/github-actions-security-secrets-oidc-and-least-privilege-in-practice-1eob
+
+### T-1 第85弾: 個人開発の失敗から学んだ10のこと
+- JA: docs/blog-drafts/2027-08-14-indie-dev-failures-lessons.md
+- EN: docs/blog-drafts/2027-08-14-indie-dev-failures-lessons-en.md
+- dev.to: https://dev.to/kanta13jp1/10-things-i-learned-from-failing-at-indie-dev-what-3-products-taught-me-3b12
+
+### T-1 第86弾: Claude API コスト最適化 70%削減
+- JA: docs/blog-drafts/2027-08-21-claude-api-cost-optimization.md
+- EN: docs/blog-drafts/2027-08-21-claude-api-cost-optimization-en.md
+- dev.to: https://dev.to/kanta13jp1/claude-api-cost-optimization-haiku-vs-sonnet-and-prompt-caching-cut-my-bill-70-3hfp
+
+### 累計 dev.to 投稿数: 86本
+- Phase14 完了 (4弾: Flutter アニメーション / GHA セキュリティ / 失敗と学び / Claude API コスト)
+- 次フェーズ: Phase15 (#87-#90) — 90本マイルストーン達成予定
+
+### commits
+- fbf4c2d06 (Phase14 drafts)
+- 63b651fa5 (orphan merge ×4)
