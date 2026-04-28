@@ -1,7 +1,7 @@
 ---
 title: "Supabase Edge Functions with Deno: Production-Ready Design Patterns"
 tags: supabase,ai,indiedev,postgresql
-published: false
+published: true
 ---
 
 # Supabase Edge Functions with Deno: Production-Ready Design Patterns
