@@ -23369,6 +23369,7 @@ Codex#2 完成 (2 週間 / 期限 2026-05-13) で:
 (本 commit にて確定)
 
 
+
 ## PS#4 S117-S119 (2026-04-29)
 
 ### vsMatch バグ修正 + 競合9社追加 222→231社
@@ -23461,3 +23462,39 @@ Codex#2 完成 (2 週間 / 期限 2026-05-13) で:
   - 030000: ps6_s103 → 030100
 - 939 timestamps 全 unique
 - commit: 7552068f1 (equal_keys fix) + collision renames pending
+
+## 2026-04-29 Win版#132 part 71 — SECOND_BRAIN #5 (Query 永続化) Win dogfood
+
+### 概要
+SECOND_BRAIN 原則 #5 (Query 永続化) を Win territory で軽量 dogfood. memory/query_artifact_TEMPLATE.md (5 セクション形式) + 第 1 実例 memory/query_artifact_20260429_hybrid_search_tradeoff.md (= part 70 hybrid search trade-off 比較表 永続化) + 双方向 link 5 件 (= 原則 #2 同時 dogfood).
+
+### 実装
+- `memory/query_artifact_TEMPLATE.md` 新規 (5 セクション: Query/Context/Artifact/Reuse/連携軸 / アンチパターン / 命名規則 / ベスト Practice)
+- `memory/query_artifact_20260429_hybrid_search_tradeoff.md` 第 1 実例 (= part 70 で生成した 3 段 hybrid search trade-off 表 を永続化)
+- 双方向 link 5 件 (= 原則 #2 同時 dogfood)
+- `docs/SECOND_BRAIN_PRINCIPLES.md` 実装履歴行追加 (3.0 → 3.5/7)
+
+### MEMORY.md ローテーション発生 (= MEMORY-DECAY rule 自動適用)
+本 part 中に MEMORY.md (200+ entries / 127KB) が `MEMORY_202604.md` に archive 自動分割. 新 MEMORY.md は空. = SECOND_BRAIN 軸の必要性が **緊急 dogfood validation** された (= ちょうど log.md + query_artifact + #7 search が必要なタイミング).
+
+### dogfood pattern 第 4 例 (軽量実装)
+第 1 例 (part 65 / AI_VIDEO #5): 中規模
+第 2 例 (part 69 / SECOND_BRAIN #3+#4): 中規模
+第 3 例 (part 70 / SECOND_BRAIN #7 cross-instance-pr): 大規模
+第 4 例 (本 part / SECOND_BRAIN #5): **軽量** (= 30 分以内 / 1 セッションで 2 原則前進)
+
+### dogfood 連鎖第 1 例
+part 70 で生成した AI 出力 (= hybrid search trade-off) を part 71 で query_artifact 化. **dogfood が dogfood を呼ぶ** 連鎖.
+
+### Philosophy Alignment 9/9
+#1 CEO 感 (即 dogfood) / #6 資本=時間 (1 セッション 軽量) / #7 資産負債 (AI 出力 = 一時資産 → 永続資産化)
+
+### ベースライン推移
+SECOND_BRAIN 3.0 → 3.5/7. 残:
+- ⏳ PS#1 #4 (1 週間期限) → 4.0/7
+- ⏳ Codex#2 #7 (2 週間期限) → 5.0/7
+- 残 #1 / #2 (大規模 audit) / #6 (12 fleet 共通) → 後続 part
+
+### commit
+(本 commit にて確定)
+
