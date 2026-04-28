@@ -22654,3 +22654,33 @@ inconsistency を **collision (= 同 timestamp) と独立した検出軸** と�
 - `sortHorseEntriesForLearning`: factor13挿入, horse_number → 14 tiebreaker — sort14因子体制
 - `buildHorseRacePrompt`: 前走タイム乖離リスク説明追加(2秒以上遅い = 調子落ち可能性)
 - commit: 236d87e26
+
+## 2026-04-28 PS#2 S64 — T-1 Phase13 第79〜82弾 dev.to 投稿完了 (80本マイルストーン)
+
+### T-1 第79弾: Flutter テスト完全ガイド
+- JA: docs/blog-drafts/2027-07-03-flutter-testing-guide.md
+- EN: docs/blog-drafts/2027-07-03-flutter-testing-guide-en.md
+- dev.to: https://dev.to/kanta13jp1/flutter-testing-guide-unit-widget-and-integration-when-to-use-each-50nh
+
+### T-1 第80弾: Supabase Edge Functions + Deno 実践 🏆 80本マイルストーン
+- JA: docs/blog-drafts/2027-07-10-supabase-edge-functions-deno.md
+- EN: docs/blog-drafts/2027-07-10-supabase-edge-functions-deno-en.md
+- dev.to: https://dev.to/kanta13jp1/supabase-edge-functions-with-deno-production-ready-design-patterns-2lp5
+
+### T-1 第81弾: 個人開発LP最適化 CVR 3.2倍
+- JA: docs/blog-drafts/2027-07-17-indie-dev-landing-page-cvr.md
+- EN: docs/blog-drafts/2027-07-17-indie-dev-landing-page-cvr-en.md
+- dev.to: https://dev.to/kanta13jp1/indie-dev-landing-page-optimization-6-changes-that-tripled-my-cvr-3omc
+
+### T-1 第82弾: LLM統合パターン (Function Calling / RAG / Agent)
+- JA: docs/blog-drafts/2027-07-24-llm-integration-patterns.md
+- EN: docs/blog-drafts/2027-07-24-llm-integration-patterns-en.md
+- dev.to: https://dev.to/kanta13jp1/llm-integration-patterns-function-calling-rag-or-agent-how-to-choose-1n6
+
+### 累計 dev.to 投稿数: 82本 (🏆 80本マイルストーン達成)
+- Phase13 完了 (4弾: Flutter テスト / EF Deno / LP CVR / LLM統合パターン)
+- 次フェーズ: Phase14 (#83-#86)
+
+### commits
+- a7e610407 (Phase13 drafts commit)
+- dc4c0ce3a (orphan merge ×4)
