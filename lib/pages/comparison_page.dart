@@ -8645,6 +8645,110 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'hailuo': const _CompetitorInfo(
+    name: 'Hailuo AI',
+    emoji: '🌊',
+    tagline:
+        'Hailuo AIをトレンドAI動画・音楽生成に使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'Hailuo AI代替 AI動画生成代替 MiniMax AI代替',
+    accentColor: Color(0xFF2DD4BF),
+    painPoints: [
+      'AI動画・音楽生成に特化しており、財務・タスク・AI大学学習は別ツールが必要',
+      '無料クレジットが少なく追加生成は月額課金が必要',
+      '短尺動画生成は優秀だが、個人ライフ全体のOS統合機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AI短尺動画・音楽生成',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'sendgrid': const _CompetitorInfo(
+    name: 'SendGrid (Twilio)',
+    emoji: '📨',
+    tagline: 'SendGridをメール配信インフラに使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'SendGrid代替 メール配信API代替 Twilio SendGrid代替',
+    accentColor: Color(0xFF1A82E2),
+    painPoints: [
+      'トランザクションメール配信APIに特化し、財務・タスク・AI大学は別ツールが必要',
+      '無料は月100通まで、大量配信は月額約' + r'$' + '19.95〜のプランが必要',
+      'メール到達率・分析は優秀だが、個人ライフ全体のOS統合機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'メール配信API・SMTP',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'convertkit': const _CompetitorInfo(
+    name: 'ConvertKit (Kit)',
+    emoji: '📬',
+    tagline:
+        'ConvertKit (Kit)をクリエイター向けメール配信に使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'ConvertKit代替 Kit代替 クリエイターメール配信代替',
+    accentColor: Color(0xFFFB6970),
+    painPoints: [
+      'クリエイター向けメール配信・ランディングページに特化し、財務・習慣管理は別ツール',
+      '無料は1,000読者まで、月額約' + r'$' + '29〜で読者増加に伴いコストが上昇',
+      'メールシーケンス・自動化は優秀だが、個人ライフ全体のOS統合機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'クリエイターメール配信・自動化',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
@@ -8886,6 +8990,9 @@ class _ComparisonShellState extends State<_ComparisonShell> {
     'flux': 'ai-image',
     'kling': 'ai-video',
     'activecampaign': 'email-marketing',
+    'hailuo': 'ai-video',
+    'sendgrid': 'email-marketing',
+    'convertkit': 'newsletter',
   };
 
   @override
@@ -9086,7 +9193,7 @@ class _ComparisonShellState extends State<_ComparisonShell> {
                       children: [
                         _buildTag(
                           icon: Icons.compare_arrows_rounded,
-                          label: '213社比較',
+                          label: '216社比較',
                           backgroundColor:
                               _info.accentColor.withValues(alpha: 0.18),
                           foregroundColor: _textPrimary,
@@ -9694,7 +9801,7 @@ class _ComparisonShellState extends State<_ComparisonShell> {
                       ),
                       SizedBox(width: 8),
                       Text(
-                        '全213社の競合ランドスケープを見る →',
+                        '全216社の競合ランドスケープを見る →',
                         style: TextStyle(
                           fontSize: 14,
                           color: _textSecondary,
