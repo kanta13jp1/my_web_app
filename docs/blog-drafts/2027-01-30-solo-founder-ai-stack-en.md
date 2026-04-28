@@ -1,7 +1,7 @@
 ---
 title: "My $230/Month AI Stack: Every Tool a Solo Founder Actually Uses"
 tags: ai,indiedev,automation,buildinpublic
-published: false
+published: true
 ---
 
 # My $230/Month AI Stack: Every Tool a Solo Founder Actually Uses
