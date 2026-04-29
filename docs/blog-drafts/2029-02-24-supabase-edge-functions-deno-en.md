@@ -1,7 +1,7 @@
 ---
 title: "Supabase Edge Functions Complete Guide — Serverless APIs with Deno & TypeScript"
 tags: supabase,ai,indiedev,flutter
-published: false
+published: true
 ---
 
 # Supabase Edge Functions Complete Guide — Serverless APIs with Deno & TypeScript

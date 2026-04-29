@@ -1,7 +1,7 @@
 ---
 title: "Supabase Edge Functions 完全ガイド — Deno × TypeScript でサーバーレス API を作る"
 tags: supabase,dart,AI,個人開発
-published: false
+published: true
 ---
 
 # Supabase Edge Functions 完全ガイド — Deno × TypeScript でサーバーレス API を作る
