@@ -54,6 +54,7 @@ class _SitemapAnalyticsPageState extends State<SitemapAnalyticsPage>
         if (ovData is Map<String, dynamic>) _overview = ovData;
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() => _errorMessage = '$e');
     } finally {
       if (mounted) setState(() => _isLoading = false);

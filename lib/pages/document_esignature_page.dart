@@ -57,6 +57,7 @@ class _DocumentEsignaturePageState extends State<DocumentEsignaturePage>
         _completed = _toList(completedRes.data, 'documents');
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() => _errorMessage = '$e');
     } finally {
       if (mounted) setState(() => _isLoading = false);

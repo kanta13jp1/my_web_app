@@ -53,6 +53,7 @@ class _InventoryBarcodePageState extends State<InventoryBarcodePage>
         _movements = [];
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() => _errorMessage = '$e');
     } finally {
       if (mounted) setState(() => _isLoading = false);

@@ -65,6 +65,7 @@ class _ElearningCourseManagerPageState extends State<ElearningCourseManagerPage>
         _certificates = _extractList(certRes.data, 'certificates');
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() => _errorMessage = '$e');
     } finally {
       if (mounted) setState(() => _isLoading = false);

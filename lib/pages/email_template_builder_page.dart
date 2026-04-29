@@ -51,6 +51,7 @@ class _EmailTemplateBuilderPageState extends State<EmailTemplateBuilderPage> {
         }
       }
     } catch (e) {
+      if (!mounted) return;
       setState(() => _errorMessage = '$e');
     } finally {
       if (mounted) setState(() => _isLoading = false);

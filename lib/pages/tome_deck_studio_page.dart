@@ -92,6 +92,7 @@ class _TomeDeckStudioPageState extends State<TomeDeckStudioPage> {
             : 'Loaded $rowCount rows from $source.';
       });
     } catch (error) {
+      if (!mounted) return;
       setState(() => _syncStatus = 'Sync failed: $error');
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(

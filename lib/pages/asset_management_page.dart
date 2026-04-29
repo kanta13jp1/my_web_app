@@ -3337,6 +3337,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           .update({'is_completed': !currentStatus}).eq('id', id);
       _fetchMustTasks();
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         final index = _mustTasks.indexWhere((t) => t['id'] == id);
         if (index != -1) _mustTasks[index]['is_completed'] = !currentStatus;

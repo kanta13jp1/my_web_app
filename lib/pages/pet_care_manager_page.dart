@@ -74,6 +74,7 @@ class _PetCareManagerPageState extends State<PetCareManagerPage>
         _vaccinations = [];
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() => _errorMessage = '$e');
     } finally {
       if (mounted) setState(() => _isLoading = false);

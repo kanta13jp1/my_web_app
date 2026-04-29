@@ -40,6 +40,7 @@ class _HealthCheckPageState extends State<HealthCheckPage> {
       );
       setState(() => _result = res.data as Map<String, dynamic>?);
     } catch (e) {
+      if (!mounted) return;
       setState(() => _errorMessage = '$e');
     } finally {
       if (mounted) setState(() => _isLoading = false);
