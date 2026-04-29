@@ -58439,6 +58439,330 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'chef': const _CompetitorInfo(
+    name: 'Chef',
+    emoji: '👨‍🍳',
+    tagline:
+        'Chef・構成管理・Ruby DSL・Infrastructure as Code・コンプライアンス自動化・Progress Software・エンタープライズで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Chef代替 構成管理 Ruby DSL IaC コンプライアンス自動化 Progress Software エンタープライズ Ansible代替 Puppet代替',
+    accentColor: Color(0xFFF09820),
+    painPoints: [
+      '有料(Enterprise)/無料(OSS)・構成管理特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Ansible/Puppet との比較でRuby知識要件・クラウドネイティブ対応・モダンIaCへの移行が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '構成管理・Ruby DSL・IaC・コンプライアンス自動化・Progress Software',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'cloudformation': const _CompetitorInfo(
+    name: 'AWS CloudFormation',
+    emoji: '☁️',
+    tagline:
+        'AWS CloudFormation・AWS IaC・スタック管理・ドリフト検出・変更セット・ネスト・SAM・AWS CDK基盤で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'AWS CloudFormation代替 AWS IaC スタック管理 ドリフト検出 変更セット SAM CDK Terraform代替 Pulumi代替',
+    accentColor: Color(0xFFFF9900),
+    painPoints: [
+      '無料・AWS特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Terraform/Pulumi との比較でAWS以外環境・マルチクラウド・DSL柔軟性が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AWS IaC・スタック管理・ドリフト検出・変更セット・SAM・CDK基盤',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'bicep': const _CompetitorInfo(
+    name: 'Azure Bicep',
+    emoji: '💪',
+    tagline:
+        'Azure Bicep・Azure IaC・ARMテンプレート代替・宣言型・モジュール・型安全・IntelliSense・Microsoft公式で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Azure Bicep代替 Azure IaC ARM代替 宣言型 モジュール 型安全 Microsoft Terraform代替 CloudFormation代替',
+    accentColor: Color(0xFF0078D4),
+    painPoints: [
+      '無料・Azure特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Terraform/Pulumi との比較でAzure以外環境・マルチクラウド・コミュニティ規模が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Azure IaC・ARM代替・宣言型・モジュール・型安全・IntelliSense',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'spacelift': const _CompetitorInfo(
+    name: 'Spacelift',
+    emoji: '🛸',
+    tagline:
+        'Spacelift・Terraform/Pulumi/Ansible管理プラットフォーム・ポリシーゲート・ドリフト検出・GitOps・セルフサービスインフラで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Spacelift代替 Terraform管理 Pulumi Ansible ポリシーゲート ドリフト検出 GitOps セルフサービス Atlantis代替 env0代替',
+    accentColor: Color(0xFF1B5EFF),
+    painPoints: [
+      '有料・IaC管理特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Atlantis/env0 との比較でコスト・OSS選択肢・スモールチームへの適合が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Terraform/Pulumi/Ansible管理・ポリシーゲート・ドリフト検出・GitOps',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'env0': const _CompetitorInfo(
+    name: 'env0',
+    emoji: '🌿',
+    tagline:
+        'env0・セルフサービスクラウドインフラ・Terraform/OpenTofu管理・コスト可視化・RBAC・ガバナンス・IaC自動化で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'env0代替 セルフサービスクラウド Terraform OpenTofu管理 コスト可視化 RBAC ガバナンス Spacelift代替 Atlantis代替',
+    accentColor: Color(0xFF00C9A7),
+    painPoints: [
+      '有料・IaC管理特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Spacelift/Atlantis との比較でコスト・OSS代替・シンプルワークフローが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'セルフサービスクラウド・Terraform/OpenTofu管理・コスト可視化・RBAC・ガバナンス',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'atlantis': const _CompetitorInfo(
+    name: 'Atlantis',
+    emoji: '🌊',
+    tagline:
+        'Atlantis・Terraform Pull Request自動化・GitOps・セルフホスト・OSS・PR承認フロー・コラボレーションで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Atlantis代替 Terraform PR自動化 GitOps セルフホスト OSS PR承認フロー コラボレーション Spacelift代替 env0代替',
+    accentColor: Color(0xFF3C82F6),
+    painPoints: [
+      '無料(OSS)・Terraform PR特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Spacelift/env0 との比較でガバナンス機能・RBAC・コスト管理・UIが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Terraform PR自動化・GitOps・セルフホスト・OSS・PR承認フロー',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'terragrunt': const _CompetitorInfo(
+    name: 'Terragrunt',
+    emoji: '🌱',
+    tagline:
+        'Terragrunt・Terraformラッパー・DRY設定・リモートステート管理・モジュール管理・依存解決・Gruntworkで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Terragrunt代替 Terraformラッパー DRY設定 リモートステート管理 モジュール 依存解決 Gruntwork Terraform代替',
+    accentColor: Color(0xFF7B42BC),
+    painPoints: [
+      '無料(OSS)・Terraform拡張特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Spacelift/env0 との比較でUI/ガバナンス・チームコラボレーション・コスト管理が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Terraformラッパー・DRY設定・リモートステート管理・モジュール・依存解決',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'aws-cdk': const _CompetitorInfo(
+    name: 'AWS CDK',
+    emoji: '⚗️',
+    tagline:
+        'AWS CDK・クラウド開発キット・Python/TypeScript/Java/Go・高レベル抽象・CloudFormation生成・L2/L3コンストラクトで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'AWS CDK代替 クラウド開発キット Python TypeScript Java Go 高レベル抽象 CloudFormation Pulumi代替 Terraform代替',
+    accentColor: Color(0xFFFF9900),
+    painPoints: [
+      '無料・AWS特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Terraform/Pulumi との比較でAWS以外環境・マルチクラウド・宣言型IaCとの差が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AWS CDK・Python/TypeScript・高レベル抽象・CloudFormation生成・コンストラクト',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'cdktf': const _CompetitorInfo(
+    name: 'CDK for Terraform',
+    emoji: '🔨',
+    tagline:
+        'CDK for Terraform (CDKTF)・プログラミング言語でTerraform・Python/TypeScript/Java/Go・HCL不要・HashiCorp公式で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'CDKTF代替 CDK for Terraform プログラミング言語 Python TypeScript Java HCL不要 HashiCorp Pulumi代替 AWS CDK代替',
+    accentColor: Color(0xFF844FBA),
+    painPoints: [
+      '無料・Terraform特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Pulumi/AWS CDK との比較でコミュニティ規模・成熟度・ドキュメントが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'プログラミング言語でTerraform・Python/TypeScript・HCL不要・HashiCorp',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
