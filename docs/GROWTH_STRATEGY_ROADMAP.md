@@ -24675,3 +24675,54 @@ SECOND_BRAIN 4.5/7 + VIBE 7.0/7 + PLATFORM 4.0/7 = 14.5/21 維持 + column resiz
   - 110000: ps2_s83 + ps4_s171 → ps4_s171を110100にリネーム
   - 114500: ps2_s84 + ps4_s174 → ps4_s174を114600にリネーム
 - push: 2c32abbf0 — CI + deploy-prod 次回から success 期待
+
+## 2026-04-29 Win版#132 part 87 — AI タスク分割→実 WBS 登録 VSCode 委譲
+
+### 概要
+User 要望「タスク分割ボタンで分割した内容が表示されるだけでなく実登録まで」を VSCode版 cross-instance-pr で起票. 「AI 出力の実行可能化」UX pattern 第 1 例.
+
+### 該当ファイル
+lib/pages/user_tasks_page.dart の _AiAssistDialog (= line ~760+).
+
+現状: subtask カード表示のみ + 「閉じる」ボタンのみ.
+
+### 仕様
+- modal actions に「全部登録 (N 件)」FilledButton 追加
+- `_registerAllSubtasks` 関数: 全 subtask を順次 `tools-hub:wbs.add_task` (= 既存) で invoke
+  - title: `親 :: subtask` 形式
+  - description: subtask description + 完了条件 + 目安 + 親 task + timestamp
+  - instance / owner_instance / category / priority / milestone_code: 親継承
+- SnackBar 結果表示 (= 全成功 3s / 部分失敗 8s + error 詳細)
+- 成功時: modal close + WBS list reload
+- `_isRegistering` state で multi-click 防止
+
+### EF 改修不要
+既存 `tools-hub:wbs.add_task` (= line 3240+) で全フィールドカバー.
+= **VSCode 単独 territory** で完結.
+
+### 受入基準 9 項目 + integration_test 1 シナリオ
+- ボタン追加 / 関数実装 / 親継承 / 結果表示 / state 管理 / VIBE_CODING #5 準拠
+
+### Phase 2 候補
+- 個別登録ボタン
+- parent_task_id カラム + 親子 visualization (= schema 変更)
+- AI 再生成 + 登録
+- subtask dependency 自動設定
+
+### 連携軸
+IMBUE / VIBE #4+#5 / PHILOSOPHY #5+#6.
+
+### OPS-28 §6 Win → VSCode lane 6 件目
+5 件 ✅ + 1 件 ⏳ 起票. 推奨実装 3 時間.
+
+### Philosophy Alignment 9/9
+#1 CEO 感 (= User 要望即対応) / #5 商品=価値 (= AI 出力即実行可能化) / #6 資本=時間 (= 1 click 自動化)
+
+### 「AI 出力の実行可能化」UX pattern 第 1 例
+これまで AI 出力 = 表示のみだった機能 (タスク分割 / 機能リクエスト分析 / レビュー結果) の **実行可能化** standard pattern.
+
+### 17 part 連続 dogfood (part 68-87)
+SECOND_BRAIN 4.5/7 + VIBE 7.0/7 + PLATFORM 4.0/7 = 14.5/21 + cross-instance-pr 増殖.
+
+### commit
+(本 commit にて確定)
