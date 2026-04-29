@@ -25465,6 +25465,312 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'meltwater': const _CompetitorInfo(
+    name: 'Meltwater',
+    emoji: '📰',
+    tagline: 'メディア監視・PRインサイト・ソーシャルリスニングで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Meltwater代替 メディア監視 PRインサイト ソーシャルリスニング ニュース分析',
+    accentColor: Color(0xFF0066FF),
+    painPoints: [
+      '年間2,000ドル〜・PR/メディア特化・個人のライフ管理は別途必要',
+      'PR/メディア監視特化でマーケ向け設計・個人のAI管理は別途必要',
+      'Brandwatchと比較してソーシャルメディア分析の深さが劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ニュース監視・ソーシャル分析・記者DB・PR配信・競合比較',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'brandwatch': const _CompetitorInfo(
+    name: 'Brandwatch',
+    emoji: '👁️',
+    tagline: 'ディープソーシャルリスニング・消費者インテリジェンスで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Brandwatch代替 ソーシャルリスニング 消費者インサイト ブランド監視 SNS分析',
+    accentColor: Color(0xFF512DA8),
+    painPoints: [
+      '年間1,000ドル〜・ソーシャル監視特化・個人のライフ管理は別途必要',
+      'ソーシャルリスニング特化でマーケ向け設計・個人のAI管理は別途必要',
+      'Meltwaterと比較してメディア監視・PR配信機能が弱い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '1.7T+データポイント・AI感情分析・トレンド・競合監視・ダッシュボード',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'sprinklr': const _CompetitorInfo(
+    name: 'Sprinklr',
+    emoji: '🌊',
+    tagline: 'エンタープライズ統合CXM・ソーシャルメディア管理で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Sprinklr代替 CXM ソーシャルメディア管理 カスタマーサービス エンタープライズ',
+    accentColor: Color(0xFF00B4E5),
+    painPoints: [
+      '価格非公開(大企業向け高額)・CXM特化・個人のライフ管理は別途必要',
+      'エンタープライズCXM特化でビジネス向け設計・個人のAI管理は別途必要',
+      'Hootsuite/Buffer比較でSMBや中規模企業には過剰',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'SNS管理・カスタマーサービス・マーケ・リサーチ・AI・大規模統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'impact-com': const _CompetitorInfo(
+    name: 'Impact.com',
+    emoji: '🤝',
+    tagline: 'パートナーシップ管理・アフィリエイト・インフルエンサーマーケで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Impact.com代替 アフィリエイト インフルエンサー パートナー管理 収益化 マーケ',
+    accentColor: Color(0xFF00C7B1),
+    painPoints: [
+      '月額500ドル〜・パートナーシップ特化・個人のライフ管理は別途必要',
+      'アフィリエイト/パートナー特化でビジネス向け設計・個人のAI管理は別途必要',
+      'Partnerstack/Refersionと比較して中小企業への導入コストが高い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'パートナー管理・トラッキング・支払い・アフィリエイト・インフルエンサー統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'partnerstack': const _CompetitorInfo(
+    name: 'PartnerStack',
+    emoji: '🔗',
+    tagline: 'SaaS向けパートナー・アフィリエイトプログラム管理で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'PartnerStack代替 SaaS アフィリエイト パートナープログラム チャネル販売',
+    accentColor: Color(0xFF36B37E),
+    painPoints: [
+      '月額500ドル〜・SaaSパートナー特化・個人のライフ管理は別途必要',
+      'パートナー管理特化でビジネス向け設計・個人のAI管理は別途必要',
+      'Impact.comと比較してアフィリエイト規模・インフルエンサー機能が弱い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'パートナー採用・トレーニング・コミッション・マーケットプレース統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'grin': const _CompetitorInfo(
+    name: 'GRIN',
+    emoji: '😁',
+    tagline: 'eコマース特化インフルエンサーマーケティング管理で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'GRIN代替 インフルエンサーマーケティング eコマース クリエイター管理 Shopify',
+    accentColor: Color(0xFF5044E4),
+    painPoints: [
+      '月額999ドル〜・インフルエンサー特化・個人のライフ管理は別途必要',
+      'インフルエンサーマーケ特化でEC向け設計・個人のAI管理は別途必要',
+      'Aspire/Creator.iqと比較してクリエイター発見・非EC業種への対応が弱い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'クリエイター発見・関係管理・コンテンツ・支払い・ROI分析・Shopify統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'talkwalker': const _CompetitorInfo(
+    name: 'Talkwalker',
+    emoji: '🗣️',
+    tagline: 'AIソーシャルリスニング・コンシューマーインテリジェンスで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Talkwalker代替 ソーシャルリスニング AI分析 ブランド監視 消費者インサイト',
+    accentColor: Color(0xFFF53D3D),
+    painPoints: [
+      '年間1,500ドル〜・ソーシャル監視特化・個人のライフ管理は別途必要',
+      'PR/ソーシャル分析特化でマーケ向け設計・個人のAI管理は別途必要',
+      'Brandwatchと比較してデータ量・カスタムダッシュボード機能が劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Blue Silk AI・ビジュアル認識・150M+ソース・リアルタイム・API',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'cision': const _CompetitorInfo(
+    name: 'Cision',
+    emoji: '📡',
+    tagline: 'PR配信・メディア監視・インフルエンサー特定ツールで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Cision代替 PR配信 メディア監視 プレスリリース ジャーナリスト データベース',
+    accentColor: Color(0xFFE4002B),
+    painPoints: [
+      '年間7,200ドル〜・PR特化・個人のライフ管理は別途必要',
+      'PR/メディア特化でコミュニケーション向け設計・個人のAI管理は別途必要',
+      'Meltwaterと比較してUIデザイン・使いやすさが劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'PRWire配信・メディアDB75万+・監視・分析・クリッピング・レポート',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'upfluence': const _CompetitorInfo(
+    name: 'Upfluence',
+    emoji: '📈',
+    tagline: 'データ駆動インフルエンサーマーケティング・クリエイター発見で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Upfluence代替 インフルエンサー発見 クリエイター マーケティング データ分析 ROI',
+    accentColor: Color(0xFF34A853),
+    painPoints: [
+      '月額478ドル〜・インフルエンサー特化・個人のライフ管理は別途必要',
+      'インフルエンサーマーケ特化でビジネス向け設計・個人のAI管理は別途必要',
+      'GRINと比較してeコマース統合・在庫連携機能が弱い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '700万+クリエイターDB・AI検索・キャンペーン・支払い・分析',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
