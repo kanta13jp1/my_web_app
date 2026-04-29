@@ -1,7 +1,7 @@
 ---
 title: "Indie Dev Launch Checklist — Product Hunt, HN, and SNS Simultaneous Rollout"
 tags: ai,indiedev,buildinpublic,automation
-published: false
+published: true
 ---
 
 # Indie Dev Launch Checklist — Product Hunt, HN, and SNS Simultaneous Rollout
