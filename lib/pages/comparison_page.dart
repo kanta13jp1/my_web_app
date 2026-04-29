@@ -60311,6 +60311,312 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'pnpm': const _CompetitorInfo(
+    name: 'pnpm',
+    emoji: '📦',
+    tagline: 'pnpm・高速ディスク効率パッケージマネージャー・シンボリックリンク・モノレポ・ワークスペース・npm互換・OSS・省スペースで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'pnpm代替 高速ディスク効率 パッケージマネージャー シンボリックリンク モノレポ ワークスペース npm yarn代替',
+    accentColor: Color(0xFFF69220),
+    painPoints: [
+      '無料(OSS)・パッケージ管理特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'npm/yarn との比較でエコシステム互換性・ファントム依存・学習コストが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '高速ディスク効率パッケージ管理・シンボリックリンク・モノレポ・ワークスペース',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'yarn-berry': const _CompetitorInfo(
+    name: 'Yarn Berry',
+    emoji: '🧶',
+    tagline: 'Yarn Berry (v2+)・プラグインPnP・ゼロインストール・制約エンジン・モノレポ・TypeScript製・OSS・Plug'n'Playで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Yarn Berry代替 PnP プラグイン ゼロインストール 制約エンジン モノレポ TypeScript pnpm代替 npm代替',
+    accentColor: Color(0xFF2C8EBB),
+    painPoints: [
+      '無料(OSS)・パッケージ管理特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'pnpm/npm との比較でPnP互換性問題・設定複雑さ・移行コストが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'PnP・ゼロインストール・制約エンジン・モノレポ・プラグイン・TypeScript製',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'cargo': const _CompetitorInfo(
+    name: 'Cargo',
+    emoji: '⚓',
+    tagline: 'Cargo・Rust公式パッケージマネージャー・ビルドツール・依存解決・crates.io・ワークスペース・テスト統合・ドキュメント生成で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Cargo代替 Rust パッケージマネージャー ビルドツール crates.io ワークスペース テスト統合 Bazel代替',
+    accentColor: Color(0xFFDEA584),
+    painPoints: [
+      '無料(Rust標準)・Rustビルド特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Bazel との比較でリモートキャッシュ・大規模モノレポ・言語横断ビルドが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Rust公式パッケージ管理・ビルド・crates.io・ワークスペース・テスト/doc統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'poetry': const _CompetitorInfo(
+    name: 'Poetry',
+    emoji: '📜',
+    tagline: 'Poetry・Python依存関係管理・pyproject.toml・仮想環境・ロックファイル・パッケージング・公開・OSS・シンプルUIで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Poetry代替 Python 依存関係管理 pyproject.toml 仮想環境 ロックファイル パッケージング pip代替 uv代替',
+    accentColor: Color(0xFF60A5FA),
+    painPoints: [
+      '無料(OSS)・Python依存管理特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'uv/pip-tools との比較でインストール速度・Rust製高速化・シンプルさが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Python依存管理・pyproject.toml・仮想環境・ロックファイル・パッケージング',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'uv': const _CompetitorInfo(
+    name: 'uv',
+    emoji: '⚡',
+    tagline: 'uv・超高速Pythonパッケージマネージャー・Rust製・Astral製・pip/venv/pyenv代替・10-100倍高速・単一ツール・OSS・プロジェクト管理で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'uv代替 超高速 Python パッケージマネージャー Rust Astral pip venv pyenv代替 100倍高速 Poetry代替',
+    accentColor: Color(0xFFFB6B26),
+    painPoints: [
+      '無料(OSS)・Pythonパッケージ管理特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Poetry との比較でロックファイル互換性・エコシステム成熟度・プラグインが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '超高速PythonパッケージRust製・pip/venv/pyenv代替・10-100倍高速・単一',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'gradle': const _CompetitorInfo(
+    name: 'Gradle',
+    emoji: '🐘',
+    tagline: 'Gradle・Java/Kotlin/Android向けビルドツール・インクリメンタルビルド・Groovy/Kotlin DSL・プラグイン・CI/CD・Android標準で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Gradle代替 Java Kotlin Android ビルドツール インクリメンタル Groovy Kotlin DSL Maven代替 Bazel代替',
+    accentColor: Color(0xFF02303A),
+    painPoints: [
+      '無料(OSS)/有料・Javaビルド特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Maven/Bazel との比較でビルド設定の複雑さ・デバッグの難しさ・遅いクリーンビルドが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Java/Kotlin/Androidビルド・インクリメンタル・Groovy/Kotlin DSL・プラグイン',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'maven': const _CompetitorInfo(
+    name: 'Apache Maven',
+    emoji: '🦅',
+    tagline: 'Apache Maven・Java標準ビルドツール・POM.xml・依存管理・ライフサイクル・Central Repository・プラグイン・企業で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Apache Maven代替 Java ビルドツール POM.xml 依存管理 ライフサイクル Central Repository Gradle代替 Ant代替',
+    accentColor: Color(0xFFC71A36),
+    painPoints: [
+      '無料(OSS)・Javaビルド特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Gradle との比較でビルド速度・DSL柔軟性・インクリメンタルビルドが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Java標準ビルドツール・POM.xml・依存管理・ライフサイクル・Central Repository',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'bazel': const _CompetitorInfo(
+    name: 'Bazel',
+    emoji: '🏗️',
+    tagline: 'Bazel・Google製ビルドツール・リモートキャッシュ・多言語対応・大規模モノレポ・再現可能ビルド・OSS・エンタープライズで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Bazel代替 Google ビルドツール リモートキャッシュ 多言語 大規模モノレポ 再現可能ビルド Buck代替 Gradle代替',
+    accentColor: Color(0xFF43A047),
+    painPoints: [
+      '無料(OSS)・ビルドツール特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Gradle/Maven との比較でBUILD設定の複雑さ・学習コスト・小規模プロジェクト向けでないが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Google製ビルドツール・リモートキャッシュ・多言語・大規模モノレポ・再現可能',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'lerna': const _CompetitorInfo(
+    name: 'Lerna',
+    emoji: '🌳',
+    tagline: 'Lerna・JavaScriptモノレポ管理・バージョン管理・パブリッシュ・Nx統合・Nrwl製・changeset・ワークスペース・OSS・企業でも使用で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Lerna代替 JavaScript モノレポ バージョン管理 パブリッシュ Nx統合 changeset Turborepo代替 Rush代替',
+    accentColor: Color(0xFF9333EA),
+    painPoints: [
+      '無料(OSS)・モノレポ管理特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Turborepo/Nx との比較でビルドキャッシュ・タスクパイプライン・パフォーマンスが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'JSモノレポ管理・バージョン管理・パブリッシュ・Nx統合・changeset',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
