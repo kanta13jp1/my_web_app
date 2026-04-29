@@ -50087,6 +50087,323 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'tldraw': const _CompetitorInfo(
+    name: 'tldraw',
+    emoji: '✏️',
+    tagline: 'OSS無限キャンバス・React埋め込み可・ブラウザ完結・シンプルホワイトボードで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'tldraw代替 OSS無限キャンバス React埋め込み ブラウザ完結 ホワイトボード Excalidraw代替 Miro代替',
+    accentColor: Color(0xFF1C1C1E),
+    painPoints: [
+      '無料OSS・ホワイトボード特化・個人のライフ管理は別途必要',
+      'コラボレーション特化・個人のAI管理は別途必要',
+      'Excalidraw/Miro/FigJam との比較でチーム機能・AI・エンタープライズが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'OSS無限キャンバス・React埋め込み・ブラウザ完結・ローカルファースト・軽量',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'lucidspark': const _CompetitorInfo(
+    name: 'Lucidspark',
+    emoji: '💡',
+    tagline:
+        'Lucidworks傘下バーチャルホワイトボード・ブレスト・投票・タイマー・Zoom/Teams統合で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Lucidspark代替 バーチャルホワイトボード ブレスト 投票 タイマー Zoom Teams Miro代替 Mural代替',
+    accentColor: Color(0xFFFF8C00),
+    painPoints: [
+      '無料/有料月9ドル~・ホワイトボード特化・個人のライフ管理は別途必要',
+      'コラボレーション特化・個人のAI管理は別途必要',
+      'Miro/Mural/FigJam との比較でテンプレート数・AI・高度な図形作成が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'バーチャルホワイトボード・ブレスト・投票・タイマー・Zoom/Teams・LucidChart連携',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'milanote': const _CompetitorInfo(
+    name: 'Milanote',
+    emoji: '🎨',
+    tagline: 'クリエイティブ向けビジュアルボード・ムードボード・ストーリーボード・チーム共有・無料プランで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Milanote代替 クリエイティブ ビジュアルボード ムードボード ストーリーボード チーム共有 Miro代替 Notion代替',
+    accentColor: Color(0xFFE8D5C4),
+    painPoints: [
+      '無料/有料月9.99ドル~・クリエイティブ特化・個人のライフ管理は別途必要',
+      'ビジュアル整理特化・個人のAI管理は別途必要',
+      'Miro/Notion/Pinterest との比較でビジネス機能・AI・データベース機能が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'クリエイティブビジュアルボード・ムードボード・ストーリーボード・チーム共有',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'coggle': const _CompetitorInfo(
+    name: 'Coggle',
+    emoji: '🌿',
+    tagline: 'マインドマップ・フローチャート・シンプルコラボ・無制限共有・無料・Googleログインで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Coggle代替 マインドマップ フローチャート シンプル コラボ 無料 MindMeister代替 XMind代替',
+    accentColor: Color(0xFF00BCD4),
+    painPoints: [
+      '無料3図/有料月5ドル~・マインドマップ特化・個人のライフ管理は別途必要',
+      '思考整理特化・個人のAI管理は別途必要',
+      'MindMeister/XMind/Miro との比較でAI生成・複雑図形・プレゼン機能が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'マインドマップ・フローチャート・シンプルコラボ・無制限共有・Googleログイン無料',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'mindnode': const _CompetitorInfo(
+    name: 'MindNode',
+    emoji: '🧠',
+    tagline:
+        'Apple向けマインドマップ・macOS/iOS/iPadOS・ショートカット統合・美麗UI・iCloud同期で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'MindNode代替 Apple マインドマップ macOS iOS iPadOS ショートカット iCloud MindMeister代替 Coggle代替',
+    accentColor: Color(0xFF30B0C7),
+    painPoints: [
+      '有料買い切り/サブ・Apple専用・個人のライフ管理は別途必要',
+      'マインドマップ特化・個人のAI管理は別途必要',
+      'MindMeister/XMind/Coggle との比較でAndroid/Web非対応・コラボ機能・AI生成が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Apple向けマインドマップ・macOS/iOS/iPadOS・ショートカット統合・iCloud同期',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'ayoa': const _CompetitorInfo(
+    name: 'Ayoa',
+    emoji: '🌟',
+    tagline: '有機的マインドマップ+タスク+ホワイトボード統合・AI機能・視覚的プロジェクト管理で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Ayoa代替 有機的マインドマップ タスク ホワイトボード統合 AI 視覚的プロジェクト管理 iMindMap代替 MindMeister代替',
+    accentColor: Color(0xFFF5A623),
+    painPoints: [
+      '有料月10ドル~・マインドマップ+PM特化・個人のライフ管理は別途必要',
+      'ビジュアル管理特化・個人のAI管理は別途必要',
+      'MindMeister/Miro/Asana との比較でエコシステム・統合数・学習曲線が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '有機的マインドマップ+タスク+ホワイトボード統合・AI機能・視覚的PM',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'moqups': const _CompetitorInfo(
+    name: 'Moqups',
+    emoji: '🖼️',
+    tagline: 'ブラウザUI設計・ワイヤーフレーム・モックアップ・フローチャート・チーム共有で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Moqups代替 ワイヤーフレーム モックアップ フローチャート UI設計 ブラウザ Figma代替 Balsamiq代替',
+    accentColor: Color(0xFFE74C3C),
+    painPoints: [
+      '無料/有料月13ドル~・UIデザイン特化・個人のライフ管理は別途必要',
+      'プロトタイプ特化・個人のAI管理は別途必要',
+      'Figma/Balsamiq/Wireframe.cc との比較でAIアシスト・コンポーネント・エンタープライズが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ブラウザUI設計・ワイヤーフレーム・モックアップ・フローチャート・チーム共有',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'overflow-io': const _CompetitorInfo(
+    name: 'Overflow',
+    emoji: '🌊',
+    tagline:
+        'ユーザーフロー図・Figma/Sketch/XD連携・インタラクティブプレゼン・ストーリーテリングで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Overflow代替 ユーザーフロー Figma Sketch XD連携 インタラクティブプレゼン UXドキュメント Whimsical代替',
+    accentColor: Color(0xFF17C3B2),
+    painPoints: [
+      '有料月12ドル~・フロー図特化・個人のライフ管理は別途必要',
+      'UXドキュメント特化・個人のAI管理は別途必要',
+      'Whimsical/Lucidchart/Miro との比較でデザインツール非依存・AI・汎用性が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ユーザーフロー図・Figma/Sketch/XD連携・インタラクティブプレゼン・ストーリー',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'stormboard': const _CompetitorInfo(
+    name: 'Stormboard',
+    emoji: '⛈️',
+    tagline: 'デジタルホワイトボード・付箋・投票・テンプレート・ビジネスミーティング効率化で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Stormboard代替 デジタルホワイトボード 付箋 投票 テンプレート ビジネスミーティング Miro代替 Mural代替',
+    accentColor: Color(0xFF2196F3),
+    painPoints: [
+      '無料5ユーザー/有料月10ドル~・ホワイトボード特化・個人のライフ管理は別途必要',
+      'コラボレーション特化・個人のAI管理は別途必要',
+      'Miro/Mural/Lucidspark との比較でAI機能・テンプレート豊富さ・統合が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'デジタルホワイトボード・付箋・投票・テンプレート・エクスポート・ビジネス向け',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
