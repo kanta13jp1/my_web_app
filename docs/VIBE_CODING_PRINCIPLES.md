@@ -282,6 +282,45 @@ PHILOSOPHY 原則 #6 (資本=時間) との直結:
 
 = VIBE #4 は **CEO 時間配分の根本原則**. 単なる効率化ではなく、自分株式会社の **存在意義**.
 
+### 4.6 ターミナル監視からの解放 (= Claude Code mobile push 採用 / Win版#132 part 85 / 2026-04-29)
+
+「コード読み」と並ぶ **第 2 の old habit** = **ターミナル監視**. AI fleet が実行中、ずっと CLI を見ていることは、コード 1 行ずつ読むのと同等の戦略時間消費.
+
+#### 解放手段: Claude Code mobile push notification (= 2026-04 公式機能)
+
+```
+1. Claude モバイルアプリ install
+2. 各 instance で /remote-control (= デバイスペアリング)
+3. /config で「Push when Claude decides」有効化
+```
+
+= **長時間タスク完了 / Claude が入力待ち** で **スマホ push 通知**. ターミナルから離れて OK.
+
+#### CEO 視点での価値
+
+| 観点 | Before (= ターミナル監視) | After (= push 通知) |
+| --- | --- | --- |
+| monitoring time | 月 20-40h | **0h** |
+| fleet 拡大限界 | 12 instance (= 物理監視 限界) | 24-100 instance (= push 通知のみ) |
+| 戦略時間 | 30% | **+10-15%** (= 月 16-24h 上振れ) |
+| 場所制約 | デスク常駐 | スマホ持参で OK |
+
+= **VIBE #4 の Phase 2 完成形** (= コード読み 0% + ターミナル監視 0%).
+
+#### 12 fleet 全展開 (= cross-instance-pr 起票 / Win版#132 part 85)
+
+- 全 11 instance (= Win 以外 / VSCode + PS#1-6 + WEB + 📱モバイル + Codex#1-2) で同設定 routine 実施
+- 各 instance log に「mobile push 設定済」記録
+- 詳細: `docs/cross-instance-prs/20260429_mobile_push_fleet_rollout.md`
+
+#### FLEET_SCALING_ROADMAP Phase 2 への接続
+
+「コード読み 0%」目標 (= 1 年以内達成計画) の **必須インフラ**:
+- 12 → 24 fleet (Phase 2): monitoring 物理不可能 → push 必須
+- 24 → 100 fleet (Phase 4 IPO 期): push なしでは fleet 運用崩壊
+
+= mobile push **採用は Phase 2 ブロッカー第 6 件目** (= 既存 5 件 + 1 = 6 件).
+
 ---
 
 ## 実装履歴
@@ -292,6 +331,7 @@ PHILOSOPHY 原則 #6 (資本=時間) との直結:
 | 2026-04-29 | Win版#132 part 72 | `docs/CORE_LEAF_BOUNDARY.md` 新規 (4 Tier 統合表現 / Schema / Core / Leaf / Auto-Generated 明示) — SECOND_BRAIN #1 と同時 dogfood (1 doc 2 軸押上 第 1 例) | #1 Trunk/Leaf 厳格分離 | 4.5 → **5.5/7** |
 | 2026-04-29 | Win版#132 part 73 | `docs/FLEET_SCALING_ROADMAP.md` 新規 (4 Phase milestone 12→18→24→50→100 / CEO 作業時間配分目標 / bottleneck 5 件分析 / scaling 哲学) | #7 Embrace Exponentials | 5.5 → **6.5/7** |
 | 2026-04-29 | Win版#132 part 81 | 原則 #4 強化セクション追加 (= 4.1 アンチパターン早期検出 / 4.2 PR merge 4 質問判定フロー / 4.3 月次セルフチェック / 4.4 12 fleet 共通展開 / 4.5 PHILOSOPHY 接続) | #4 Black-Box I/O Verification | 6.5 → **7.0/7** |
+| 2026-04-29 | Win版#132 part 85 | 4.6 セクション追加 (= ターミナル監視解放 / Claude Code mobile push 採用 / 12 fleet 全展開 cross-instance-pr 起票) | #4 拡張 (= Phase 2 完成形 への接続) | 7.0/7 維持 |
 
 **🎉 第 1 軸 完全達成 (= 7/7)**: VIBE_CODING が 10 設計軸の中で **最初に baseline 7/7 完成** に到達.
 

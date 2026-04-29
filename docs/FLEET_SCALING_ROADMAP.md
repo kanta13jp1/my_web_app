@@ -177,6 +177,7 @@ VIBE_CODING #7 は概念のみで「**いつ何を増やすか**」が未定義�
 | memory/ inflation | 100+ files 検索が遅い | memory-search-hub (BRAIN #7) | Codex#2 | ⏳ 委譲中 |
 | 孤児ノート増殖 | 知識が眠る | consolidate-memory --lint (BRAIN #4) | PS#1 | ⏳ 委譲中 |
 | Slack 形骸化 | 通知が機能しない | Slack workspace 接続 | Manus AI | 未着手 |
+| ターミナル監視 (= Win版#132 part 85 追加) | CEO の monitoring time 月 20-40h / fleet 拡大時 物理不可能 | Claude Code mobile push 採用 (= /remote-control + /config) | 全 12 fleet (= part 85 cross-instance-pr) | ⏳ 委譲中 |
 
 ### Phase 2 ブロッカー
 
@@ -252,4 +253,4 @@ VIBE_CODING #7 は概念のみで「**いつ何を増やすか**」が未定義�
 
 ---
 
-*Win版#132 part 73 / 2026-04-29 起票 / VIBE_CODING #7 (Embrace Exponentials) dogfood / 4 Phase milestone (12→18→24→50→100) / 3 年で 8.3x 拡大計画 / CEO「コード読まない」目標 1 年以内 / Phase 1 ブロッカー 5 件明示*
+*Win版#132 part 73 / 2026-04-29 起票 / VIBE_CODING #7 (Embrace Exponentials) dogfood / 4 Phase milestone (12→18→24→50→100) / 3 年で 8.3x 拡大計画 / CEO「コード読まない」目標 1 年以内 / Phase 1 ブロッカー 5 件明示 → part 85 で 6 件目 (mobile push) 追加*
