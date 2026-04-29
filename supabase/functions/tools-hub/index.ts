@@ -1581,8 +1581,8 @@ function horseNumberFieldRatioBonus(
 
 function multipleTopSignalBonus(
   topEntry: Record<string, unknown> | undefined,
-  entries: Record<string, unknown>[],
-  raceCourseType: unknown,
+  _entries: Record<string, unknown>[],
+  _raceCourseType: unknown,
 ): number {
   if (!topEntry) return 0;
   let positiveCount = 0;
