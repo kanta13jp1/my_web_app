@@ -23687,3 +23687,17 @@ Win territory 直接実装: SECOND_BRAIN +4.0 + VIBE +2.0 = +6.0/14.
 **sitemap**: 301→310 URLs
 **全ファイル**: 267社統一
 **commit**: adbc84475
+
+
+## PS#2 S80 Phase 29 (2026-04-29)
+
+### T-1 第29弾 #143-#146 — dev.to 投稿完結 / 累計146本
+
+**Phase 29 記事一覧**:
+- T-1 第143弾: Flutter ローカル通知 — flutter_local_notifications でスケジュール・リッチ通知
+- T-1 第144弾: Supabase 全文検索 — PostgreSQL tsvector・日本語対応・インデックス最適化
+- T-1 第145弾: 個人開発のカスタマーサポート自動化 — FAQ Bot・チケット管理・エスカレーション
+- T-1 第146弾: Flutter アニメーション応用 — Hero・Staggered・CustomPainter
+
+**dev.to 投稿状況**: 全4本投稿成功 (run 25084652292 / 25084675301 / 25084702014 / 25084723367)
+**累計**: dev.to 146本
