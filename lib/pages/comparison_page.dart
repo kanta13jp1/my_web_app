@@ -57794,8 +57794,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'elastic-apm': const _CompetitorInfo(
     name: 'Elastic APM',
     emoji: '🔍',
-    tagline: 'Elastic APM・アプリケーションパフォーマンス監視・分散トレーシング・エラー追跡・Elastic Stack統合・OSS/Cloudで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Elastic APM代替 APM 分散トレーシング エラー追跡 Elastic Stack OSS Datadog代替 New Relic代替',
+    tagline:
+        'Elastic APM・アプリケーションパフォーマンス監視・分散トレーシング・エラー追跡・Elastic Stack統合・OSS/Cloudで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Elastic APM代替 APM 分散トレーシング エラー追跡 Elastic Stack OSS Datadog代替 New Relic代替',
     accentColor: Color(0xFF00BFB3),
     painPoints: [
       '無料(OSS)/有料(Cloud)・APM特化・個人のライフ管理は別途必要',
@@ -57828,8 +57830,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'lightstep': const _CompetitorInfo(
     name: 'Lightstep',
     emoji: '💡',
-    tagline: 'Lightstep (ServiceNow)・分散トレーシング・マイクロサービス・OpenTelemetry・変更インテリジェンス・インシデント相関で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Lightstep代替 分散トレーシング マイクロサービス OpenTelemetry 変更インテリジェンス ServiceNow Honeycomb代替 Jaeger代替',
+    tagline:
+        'Lightstep (ServiceNow)・分散トレーシング・マイクロサービス・OpenTelemetry・変更インテリジェンス・インシデント相関で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Lightstep代替 分散トレーシング マイクロサービス OpenTelemetry 変更インテリジェンス ServiceNow Honeycomb代替 Jaeger代替',
     accentColor: Color(0xFF0059FF),
     painPoints: [
       '有料・トレーシング特化・個人のライフ管理は別途必要',
@@ -57862,8 +57866,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'uptrace': const _CompetitorInfo(
     name: 'Uptrace',
     emoji: '📡',
-    tagline: 'Uptrace・OpenTelemetry APM・分散トレーシング・メトリクス・ログ・OSS・自己ホスト可能・低コストで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Uptrace代替 OpenTelemetry APM 分散トレーシング メトリクス ログ OSS 自己ホスト 低コスト SigNoz代替',
+    tagline:
+        'Uptrace・OpenTelemetry APM・分散トレーシング・メトリクス・ログ・OSS・自己ホスト可能・低コストで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Uptrace代替 OpenTelemetry APM 分散トレーシング メトリクス ログ OSS 自己ホスト 低コスト SigNoz代替',
     accentColor: Color(0xFF6366F1),
     painPoints: [
       '無料(OSS)/有料・APM特化・個人のライフ管理は別途必要',
@@ -57896,8 +57902,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'coralogix': const _CompetitorInfo(
     name: 'Coralogix',
     emoji: '🌌',
-    tagline: 'Coralogix・ログ管理・APM・セキュリティ・静的分析・機械学習異常検知・コスト最適化・クラウドネイティブで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Coralogix代替 ログ管理 APM セキュリティ 機械学習 異常検知 コスト最適化 Datadog代替 Splunk代替',
+    tagline:
+        'Coralogix・ログ管理・APM・セキュリティ・静的分析・機械学習異常検知・コスト最適化・クラウドネイティブで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Coralogix代替 ログ管理 APM セキュリティ 機械学習 異常検知 コスト最適化 Datadog代替 Splunk代替',
     accentColor: Color(0xFFFF6B6B),
     painPoints: [
       '有料・ログ/APM特化・個人のライフ管理は別途必要',
@@ -57930,8 +57938,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'logz-io': const _CompetitorInfo(
     name: 'Logz.io',
     emoji: '📋',
-    tagline: 'Logz.io・マネージドELK・ログ管理・Kibana互換・OpenSearch・AI自動異常検知・コンプライアンスで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Logz.io代替 マネージドELK ログ管理 Kibana互換 OpenSearch AI異常検知 コンプライアンス Datadog代替 Splunk代替',
+    tagline:
+        'Logz.io・マネージドELK・ログ管理・Kibana互換・OpenSearch・AI自動異常検知・コンプライアンスで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Logz.io代替 マネージドELK ログ管理 Kibana互換 OpenSearch AI異常検知 コンプライアンス Datadog代替 Splunk代替',
     accentColor: Color(0xFF004C97),
     painPoints: [
       '有料・ログ管理特化・個人のライフ管理は別途必要',
@@ -57964,8 +57974,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'mezmo': const _CompetitorInfo(
     name: 'Mezmo (旧LogDNA)',
     emoji: '🔭',
-    tagline: 'Mezmo・パイプライン型ログ管理・ストリーミングETL・データ制御・コスト最適化・旧LogDNA・クラウドネイティブで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Mezmo代替 ログ管理 パイプライン ストリーミングETL データ制御 コスト最適化 LogDNA Datadog代替 Splunk代替',
+    tagline:
+        'Mezmo・パイプライン型ログ管理・ストリーミングETL・データ制御・コスト最適化・旧LogDNA・クラウドネイティブで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Mezmo代替 ログ管理 パイプライン ストリーミングETL データ制御 コスト最適化 LogDNA Datadog代替 Splunk代替',
     accentColor: Color(0xFF0F62FE),
     painPoints: [
       '有料・ログ/パイプライン特化・個人のライフ管理は別途必要',
@@ -57998,8 +58010,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'axiom': const _CompetitorInfo(
     name: 'Axiom',
     emoji: '🚀',
-    tagline: 'Axiom・サーバーレスログ・エベントデータ・低コスト・リアルタイム・APL・エッジコンピューティング対応で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Axiom代替 サーバーレスログ イベントデータ 低コスト リアルタイム APL エッジ Datadog代替 Grafana Loki代替',
+    tagline:
+        'Axiom・サーバーレスログ・エベントデータ・低コスト・リアルタイム・APL・エッジコンピューティング対応で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Axiom代替 サーバーレスログ イベントデータ 低コスト リアルタイム APL エッジ Datadog代替 Grafana Loki代替',
     accentColor: Color(0xFF7C3AED),
     painPoints: [
       '無料(開発)/有料・ログ/イベント特化・個人のライフ管理は別途必要',
@@ -58032,8 +58046,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'highlight': const _CompetitorInfo(
     name: 'Highlight.io',
     emoji: '🖊️',
-    tagline: 'Highlight.io・フルスタック監視・セッションリプレイ・エラー監視・ログ・トレーシング・OSS・開発者向けで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Highlight.io代替 フルスタック監視 セッションリプレイ エラー監視 ログ トレーシング OSS 開発者 Sentry代替 LogRocket代替',
+    tagline:
+        'Highlight.io・フルスタック監視・セッションリプレイ・エラー監視・ログ・トレーシング・OSS・開発者向けで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Highlight.io代替 フルスタック監視 セッションリプレイ エラー監視 ログ トレーシング OSS 開発者 Sentry代替 LogRocket代替',
     accentColor: Color(0xFF6C37F4),
     painPoints: [
       '無料(OSS)/有料・開発者監視特化・個人のライフ管理は別途必要',
@@ -58066,8 +58082,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'groundcover': const _CompetitorInfo(
     name: 'groundcover',
     emoji: '🌱',
-    tagline: 'groundcover・クラウドネイティブAPM・eBPF・エージェントレス・Kubernetes・低オーバーヘッド・統合監視で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'groundcover代替 クラウドネイティブAPM eBPF エージェントレス Kubernetes 低オーバーヘッド Datadog代替 Dynatrace代替',
+    tagline:
+        'groundcover・クラウドネイティブAPM・eBPF・エージェントレス・Kubernetes・低オーバーヘッド・統合監視で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'groundcover代替 クラウドネイティブAPM eBPF エージェントレス Kubernetes 低オーバーヘッド Datadog代替 Dynatrace代替',
     accentColor: Color(0xFF00B894),
     painPoints: [
       '有料・APM特化・個人のライフ管理は別途必要',
@@ -58093,6 +58111,330 @@ final _competitorInfo = <String, _CompetitorInfo>{
       _FeatureComparison(
         feature: '完全無料',
         competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'gitlab-ci': const _CompetitorInfo(
+    name: 'GitLab CI/CD',
+    emoji: '🦊',
+    tagline:
+        'GitLab CI/CD・統合DevOpsプラットフォーム・パイプライン・Docker/K8s対応・Auto DevOps・セルフホスト可能で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'GitLab CI/CD代替 統合DevOps パイプライン Docker Kubernetes Auto DevOps セルフホスト GitHub Actions代替 Jenkins代替',
+    accentColor: Color(0xFFFC6D26),
+    painPoints: [
+      '無料(OSS)/有料・CI/CD特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'GitHub Actions/Jenkins との比較でGitHub統合・マーケットプレイス・シンプル設定が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '統合DevOps・パイプライン・Docker/K8s対応・Auto DevOps・セルフホスト',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'bamboo': const _CompetitorInfo(
+    name: 'Bamboo',
+    emoji: '🎋',
+    tagline:
+        'Bamboo・Atlassian CI/CD・Jira/Bitbucket統合・デプロイメント管理・エージェント・エンタープライズで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Bamboo代替 Atlassian CI/CD Jira Bitbucket統合 デプロイメント エージェント エンタープライズ Jenkins代替 TeamCity代替',
+    accentColor: Color(0xFF0052CC),
+    painPoints: [
+      '有料・CI/CD特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Jenkins/GitHub Actions との比較でコスト・クラウドネイティブ・モダンUI/UXが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Atlassian CI/CD・Jira/Bitbucket統合・デプロイ管理・エージェント・エンタープライズ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'drone': const _CompetitorInfo(
+    name: 'Drone CI',
+    emoji: '🚁',
+    tagline:
+        'Drone CI・コンテナネイティブCI/CD・Docker・YAML設定・セルフホスト・OSS・シンプル設計で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Drone CI代替 コンテナネイティブ CI/CD Docker YAML設定 セルフホスト OSS シンプル Jenkins代替 GitLab CI代替',
+    accentColor: Color(0xFF212121),
+    painPoints: [
+      '無料(OSS)/有料・CI/CD特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'GitHub Actions/GitLab CI との比較でマーケットプレイス・統合・コミュニティ規模が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'コンテナネイティブCI/CD・Docker・YAML設定・セルフホスト・OSS・シンプル',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'codefresh': const _CompetitorInfo(
+    name: 'Codefresh',
+    emoji: '🐳',
+    tagline:
+        'Codefresh・GitOps CI/CD・ArgoCD統合・Kubernetes・Docker・高速パイプライン・クラウドネイティブで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Codefresh代替 GitOps CI/CD ArgoCD統合 Kubernetes Docker 高速パイプライン クラウドネイティブ GitHub Actions代替',
+    accentColor: Color(0xFF1CC0C0),
+    painPoints: [
+      '有料・CI/CD特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'GitHub Actions/GitLab CI との比較でコスト・マーケットプレイス・統合エコシステムが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'GitOps CI/CD・ArgoCD統合・Kubernetes・Docker・高速パイプライン',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'semaphore': const _CompetitorInfo(
+    name: 'Semaphore CI',
+    emoji: '🚦',
+    tagline:
+        'Semaphore CI・高速CI/CD・並列実行・Dockerキャッシュ・クラウドネイティブ・GitHub/Bitbucket統合で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Semaphore CI代替 高速CI/CD 並列実行 Dockerキャッシュ クラウドネイティブ GitHub Bitbucket統合 CircleCI代替',
+    accentColor: Color(0xFF19A974),
+    painPoints: [
+      '有料・CI/CD特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'CircleCI/GitHub Actions との比較でコスト・エコシステム・統合数が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '高速CI/CD・並列実行・Dockerキャッシュ・クラウドネイティブ・GitHub統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'buddy': const _CompetitorInfo(
+    name: 'Buddy',
+    emoji: '👊',
+    tagline:
+        'Buddy・ビジュアルCI/CD・ドラッグ&ドロップ・250+アクション・Docker・AWS/GCP/Azure・ノーコードデプロイで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Buddy代替 ビジュアルCI/CD ドラッグドロップ 250+アクション Docker AWS GCP Azure ノーコード CircleCI代替',
+    accentColor: Color(0xFF1A82FB),
+    painPoints: [
+      '有料・CI/CD特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'GitHub Actions/CircleCI との比較でコスト・大規模チーム・エンタープライズ機能が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ビジュアルCI/CD・ドラッグ&ドロップ・250+アクション・マルチクラウド',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'woodpecker': const _CompetitorInfo(
+    name: 'Woodpecker CI',
+    emoji: '🪵',
+    tagline:
+        'Woodpecker CI・OSS CI/CD・Drone CIフォーク・セルフホスト・Gitea/GitHub/Gitea対応・軽量シンプルで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Woodpecker CI代替 OSS CI/CD Drone CIフォーク セルフホスト Gitea GitHub 軽量シンプル Jenkins代替',
+    accentColor: Color(0xFFC83C3C),
+    painPoints: [
+      '無料(OSS)・CI/CD特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Jenkins/GitLab CI との比較でコミュニティ規模・プラグイン数・エンタープライズ機能が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'OSS CI/CD・Drone CIフォーク・セルフホスト・Gitea/GitHub対応・軽量',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'tekton': const _CompetitorInfo(
+    name: 'Tekton',
+    emoji: '⚙️',
+    tagline:
+        'Tekton・Kubernetes ネイティブCI/CD・クラウドネイティブ・再利用可能パイプライン・CD Foundation・OSS/Google製で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Tekton代替 Kubernetes ネイティブCI/CD クラウドネイティブ 再利用パイプライン CD Foundation Google Argo Workflows代替',
+    accentColor: Color(0xFF326CE5),
+    painPoints: [
+      '無料(OSS)・CI/CD特化・個人のライフ管理は別途必要',
+      '高度なK8s知識必須・個人のAI管理は別途必要',
+      'Jenkins/GitHub Actions との比較で学習コスト・UIなし・設定の複雑さが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Kubernetesネイティブ CI/CD・クラウドネイティブ・再利用パイプライン・Google製',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'argo-workflows': const _CompetitorInfo(
+    name: 'Argo Workflows',
+    emoji: '🌀',
+    tagline:
+        'Argo Workflows・Kubernetes ワークフローエンジン・有向非巡回グラフ・並列実行・GitOps・Argo CD/Rollouts統合で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Argo Workflows代替 Kubernetes ワークフロー DAG 並列実行 GitOps Argo CD Rollouts Tekton代替 Airflow代替',
+    accentColor: Color(0xFFEF7B4D),
+    painPoints: [
+      '無料(OSS)・ワークフロー特化・個人のライフ管理は別途必要',
+      '高度なK8s知識必須・個人のAI管理は別途必要',
+      'Tekton/Airflow との比較で非K8s環境・データパイプライン特化・UIが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Kubernetes ワークフロー・DAG・並列実行・GitOps・Argo CD統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
         weHave: true,
       ),
     ],
