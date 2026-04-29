@@ -1,7 +1,7 @@
 ---
 title: "Supabase Database Functions 完全ガイド — RPC・PL/pgSQL でサーバーレスロジックを実装する"
 tags: flutter,supabase,個人開発,AI
-published: false
+published: true
 ---
 
 # Supabase Database Functions 完全ガイド — RPC・PL/pgSQL でサーバーレスロジックを実装する
