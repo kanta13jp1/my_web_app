@@ -29,6 +29,10 @@ class _ApiKeyStatusBannerState extends State<ApiKeyStatusBanner> {
   }
 
   Future<void> _load() async {
+    if (Supabase.instance.client.auth.currentUser == null) {
+      setState(() => _loading = false);
+      return;
+    }
     try {
       final res = await Supabase.instance.client.functions.invoke(
         'ai-assistant',
