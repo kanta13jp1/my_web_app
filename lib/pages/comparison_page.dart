@@ -32846,6 +32846,312 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'close-crm': const _CompetitorInfo(
+    name: 'Close',
+    emoji: '📞',
+    tagline: '営業特化CRM・コールトラッキング・自動化シーケンスで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Close CRM代替 営業CRM コールトラッキング シーケンス 見込み客管理 インサイドセールス',
+    accentColor: Color(0xFF6C47FF),
+    painPoints: [
+      '月額49ドル〜・インサイドセールス特化・個人のライフ管理は別途必要',
+      '電話/メール営業特化・個人のAI管理は別途必要',
+      'Salesforce/HubSpotと比較してマーケティング・サポート機能が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '内蔵通話/SMS・メールシーケンス・パワーダイヤル・パイプライン・レポート',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'apollo-io': const _CompetitorInfo(
+    name: 'Apollo.io',
+    emoji: '🚀',
+    tagline: '営業インテリジェンス・見込み客データベース・アウトリーチ自動化で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Apollo.io代替 営業インテリジェンス 見込み客データ アウトリーチ B2B リードジェネレーション',
+    accentColor: Color(0xFF0A66C2),
+    painPoints: [
+      '無料/月額49ドル〜・B2B営業特化・個人のライフ管理は別途必要',
+      '営業インテリジェンス特化・個人のAI管理は別途必要',
+      'ZoomInfo/Outreachと比較してデータ精度・エンタープライズ機能が劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '2.75億+連絡先DB・メールシーケンス・ダイヤラー・LinkedIn統合・AI文章生成',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'agile-crm': const _CompetitorInfo(
+    name: 'Agile CRM',
+    emoji: '⚡',
+    tagline: '中小企業向けオールインワンCRM・マーケティング・サポート統合で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Agile CRM代替 中小企業 CRM マーケティング自動化 サポート統合 メール 無料',
+    accentColor: Color(0xFFFF6900),
+    painPoints: [
+      '無料/月額8.99ドル〜・オールインワン特化・個人のライフ管理は別途必要',
+      'SMB向けCRM特化・個人のAI管理は別途必要',
+      'HubSpot/Salesforceと比較してUI・統合連携・AI機能が劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'CRM+マーケティング+サポート・メールキャンペーン・ランディングページ・Web分析',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'nimble': const _CompetitorInfo(
+    name: 'Nimble',
+    emoji: '🌟',
+    tagline: 'ソーシャルCRM・コンテキスト連絡先管理・関係構築で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Nimble代替 ソーシャルCRM 連絡先管理 LinkedIn統合 関係構築 中小企業',
+    accentColor: Color(0xFF00BCD4),
+    painPoints: [
+      '月額24.90ドル〜・コンタクト管理特化・個人のライフ管理は別途必要',
+      'ソーシャルCRM特化・個人のAI管理は別途必要',
+      'HubSpot/Salesforceと比較してパイプライン・自動化機能が弱い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ソーシャルプロフィール収集・コンテキストリマインダー・グループメッセージ・ブラウザ拡張',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'keap': const _CompetitorInfo(
+    name: 'Keap',
+    emoji: '💼',
+    tagline: '小規模ビジネス向けCRM・自動化・請求書管理(旧Infusionsoft)で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Keap代替 Infusionsoft CRM 中小企業 自動化 請求書 決済 マーケティング',
+    accentColor: Color(0xFF34A853),
+    painPoints: [
+      '月額159ドル〜・小規模ビジネス特化・個人のライフ管理は別途必要',
+      '営業+マーケティング自動化特化・個人のAI管理は別途必要',
+      'HubSpot/ActiveCampaignと比較して学習コスト高・UIが複雑',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'CRM・自動化・メールマーケティング・予約・決済・請求書・ランディングページ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'deputy': const _CompetitorInfo(
+    name: 'Deputy',
+    emoji: '👮',
+    tagline: '従業員スケジュール管理・シフト計画・タイムトラッキングで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Deputy代替 シフト管理 従業員スケジュール タイムトラッキング 勤怠管理 チームシフト',
+    accentColor: Color(0xFF8B2FC9),
+    painPoints: [
+      '月額3.5ドル/人〜・シフト管理特化・個人のライフ管理は別途必要',
+      '従業員スケジュール特化・個人のAI管理は別途必要',
+      'WhenIWork/Homebaseと比較して価格が高め・小規模向けに過剰機能',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AIシフト生成・タイムクロック・給与連携・コンプライアンス・タスク管理',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'when-i-work': const _CompetitorInfo(
+    name: 'When I Work',
+    emoji: '📅',
+    tagline: '中小企業向けシフトスケジュール・出勤管理・チームメッセージで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'When I Work代替 シフト管理 スケジュール 出勤管理 チームメッセージ パートタイム 小規模',
+    accentColor: Color(0xFF1AA7EC),
+    painPoints: [
+      '月額1.5ドル/人〜・シフト管理特化・個人のライフ管理は別途必要',
+      'パートタイム従業員管理特化・個人のAI管理は別途必要',
+      'Deputyと比較してエンタープライズ向け機能が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'シフト作成・シフト交換申請・タイムクロック・給与連携・チーム内メッセージ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'homebase': const _CompetitorInfo(
+    name: 'Homebase',
+    emoji: '🏠',
+    tagline: '小規模ビジネス向け無料シフト・HR・採用・給与管理で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Homebase代替 シフト管理 HR 採用 給与 小規模ビジネス 飲食店 無料',
+    accentColor: Color(0xFFFF5454),
+    painPoints: [
+      '無料/月額24.95ドル〜・小規模ビジネス特化・個人のライフ管理は別途必要',
+      '飲食/小売シフト管理特化・個人のAI管理は別途必要',
+      'Deputyと比較してエンタープライズ向け機能・コンプライアンス管理が弱い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'シフト/タイムクロック/給与/採用/HR/健康チェック全機能・無料プラン',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  '7shifts': const _CompetitorInfo(
+    name: '7shifts',
+    emoji: '🍔',
+    tagline: 'レストラン向け従業員スケジュール・労務管理・売上予測で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: '7shifts代替 レストラン シフト管理 飲食店 労務管理 売上予測 スケジュール',
+    accentColor: Color(0xFFEA5F1C),
+    painPoints: [
+      '月額29.99ドル〜・飲食業界特化・個人のライフ管理は別途必要',
+      'レストラン労務管理特化・個人のAI管理は別途必要',
+      'Homebase/Deputyと比較して飲食業界外での汎用性が低い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AIシフト提案・売上予測連動・人件費管理・チップ管理・TOSト記録',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
