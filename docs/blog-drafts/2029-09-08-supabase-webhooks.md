@@ -1,7 +1,7 @@
 ---
 title: "Supabase Webhooks 実践 — データベース変更をリアルタイムでトリガーする"
 tags: flutter,dart,個人開発,AI
-published: false
+published: true
 ---
 
 # Supabase Webhooks 実践 — データベース変更をリアルタイムでトリガーする

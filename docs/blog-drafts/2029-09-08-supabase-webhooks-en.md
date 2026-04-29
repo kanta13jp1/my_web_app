@@ -1,7 +1,7 @@
 ---
 title: "Supabase Webhooks — Event-driven Backend With pg_net"
 tags: supabase,webdev,indiedev,flutter
-published: false
+published: true
 ---
 
 # Supabase Webhooks — Event-driven Backend With pg_net
