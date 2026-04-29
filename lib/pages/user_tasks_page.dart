@@ -337,6 +337,8 @@ class _UserTasksPageState extends State<UserTasksPage> {
           guidance: guidance,
           generatedBy:
               '${payload['generated_by'] ?? guidance['generated_by'] ?? ''}',
+          parentTask: task,
+          onTasksRegistered: _loadTasks,
         ),
       );
     } catch (e) {
@@ -747,31 +749,121 @@ class _MessagePanel extends StatelessWidget {
   }
 }
 
-class _AiAssistDialog extends StatelessWidget {
+class _AiAssistDialog extends StatefulWidget {
   final String taskTitle;
   final String mode;
   final Map<String, dynamic> guidance;
   final String generatedBy;
+  final Map<String, dynamic> parentTask;
+  final VoidCallback onTasksRegistered;
 
   const _AiAssistDialog({
     required this.taskTitle,
     required this.mode,
     required this.guidance,
     required this.generatedBy,
+    required this.parentTask,
+    required this.onTasksRegistered,
   });
 
   @override
+  State<_AiAssistDialog> createState() => _AiAssistDialogState();
+}
+
+class _AiAssistDialogState extends State<_AiAssistDialog> {
+  bool _isRegistering = false;
+  int _registerProgress = 0;
+
+  Future<void> _registerAllSubtasks(
+    List<Map<String, dynamic>> subtasks,
+  ) async {
+    setState(() {
+      _isRegistering = true;
+      _registerProgress = 0;
+    });
+    int success = 0;
+    int failed = 0;
+    final errors = <String>[];
+    final supabase = Supabase.instance.client;
+    final parent = widget.parentTask;
+
+    for (var i = 0; i < subtasks.length; i++) {
+      final s = subtasks[i];
+      try {
+        await supabase.functions.invoke('tools-hub', body: {
+          'action': 'wbs.add_task',
+          'category': parent['category'],
+          'category_icon': parent['category_icon'],
+          'category_order': parent['category_order'],
+          'title':
+              '${parent['title'] ?? widget.taskTitle} :: ${_aiText(s['title']).isEmpty ? '小タスク${i + 1}' : _aiText(s['title'])}',
+          'description': _buildSubtaskDescription(s),
+          'instance': parent['instance'],
+          'owner_instance': parent['owner_instance'],
+          'priority': parent['priority'] ?? 'medium',
+          'status': 'pending',
+          'progress': 0,
+          'milestone_code': parent['milestone_code'],
+        });
+        success++;
+      } catch (e) {
+        failed++;
+        errors.add('${i + 1}. ${_aiText(s['title'])}: $e');
+      }
+      if (mounted) setState(() => _registerProgress = i + 1);
+    }
+
+    if (!mounted) return;
+    setState(() => _isRegistering = false);
+
+    final messenger = ScaffoldMessenger.of(context);
+    if (failed == 0) {
+      messenger.showSnackBar(SnackBar(
+        content: Text('✅ $success 件のサブタスクを登録しました'),
+        duration: const Duration(seconds: 3),
+      ));
+      Navigator.pop(context);
+      widget.onTasksRegistered();
+    } else {
+      messenger.showSnackBar(SnackBar(
+        content: Text(
+          '⚠ $success 件成功 / $failed 件失敗\n${errors.join('\n')}',
+        ),
+        duration: const Duration(seconds: 8),
+      ));
+    }
+  }
+
+  String _buildSubtaskDescription(Map<String, dynamic> s) {
+    final parts = <String>[];
+    final rawDesc = _aiText(s['description']);
+    final desc = rawDesc.isNotEmpty ? rawDesc : _aiText(s['goal']);
+    final criteria = _aiText(s['done_when'] ?? s['completion_criteria'] ?? '');
+    final minutes = s['estimated_minutes'];
+
+    if (desc.isNotEmpty) parts.add(desc);
+    if (criteria.isNotEmpty) parts.add('完了条件: $criteria');
+    if (minutes != null) parts.add('目安: $minutes 分');
+    parts.add('---');
+    parts.add('親タスク: ${widget.parentTask['title'] ?? widget.taskTitle}');
+    parts.add(
+      'AI分割で自動登録 (${DateTime.now().toIso8601String().substring(0, 16)})',
+    );
+    return parts.join('\n\n');
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final isBreakdown = mode == 'breakdown';
-    final summary = _aiText(guidance['summary']);
-    final subtasks = _aiMapList(guidance['subtasks']);
-    final steps = _aiMapList(guidance['steps']);
-    final prerequisites = _aiStringList(guidance['prerequisites']);
-    final blockers = _aiStringList(guidance['blockers']);
-    final checklist = _aiStringList(guidance['checklist']);
-    final source = generatedBy.trim().isNotEmpty
-        ? generatedBy.trim()
-        : _aiText(guidance['generated_by']);
+    final isBreakdown = widget.mode == 'breakdown';
+    final summary = _aiText(widget.guidance['summary']);
+    final subtasks = _aiMapList(widget.guidance['subtasks']);
+    final steps = _aiMapList(widget.guidance['steps']);
+    final prerequisites = _aiStringList(widget.guidance['prerequisites']);
+    final blockers = _aiStringList(widget.guidance['blockers']);
+    final checklist = _aiStringList(widget.guidance['checklist']);
+    final source = widget.generatedBy.trim().isNotEmpty
+        ? widget.generatedBy.trim()
+        : _aiText(widget.guidance['generated_by']);
 
     return AlertDialog(
       title: Text(isBreakdown ? 'AIタスク分割' : 'AI実施手順'),
@@ -784,7 +876,7 @@ class _AiAssistDialog extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  taskTitle,
+                  widget.taskTitle,
                   style: const TextStyle(fontWeight: FontWeight.w800),
                 ),
                 if (summary.isNotEmpty) ...[
@@ -836,9 +928,29 @@ class _AiAssistDialog extends StatelessWidget {
       ),
       actions: [
         TextButton(
-          onPressed: () => Navigator.pop(context),
+          onPressed: _isRegistering ? null : () => Navigator.pop(context),
           child: const Text('閉じる'),
         ),
+        if (isBreakdown && subtasks.isNotEmpty)
+          FilledButton.icon(
+            icon: _isRegistering
+                ? const SizedBox(
+                    width: 14,
+                    height: 14,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
+                  )
+                : const Icon(Icons.add_task, size: 16),
+            label: Text(
+              _isRegistering
+                  ? '登録中... ($_registerProgress/${subtasks.length})'
+                  : '全部登録 (${subtasks.length} 件)',
+            ),
+            onPressed:
+                _isRegistering ? null : () => _registerAllSubtasks(subtasks),
+          ),
       ],
     );
   }
