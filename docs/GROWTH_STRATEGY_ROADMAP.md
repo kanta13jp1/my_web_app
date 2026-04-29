@@ -23912,3 +23912,17 @@ deep-links (Android App Links + iOS Universal Links + go_router) / multi-tenant 
 
 ### commit
 8e8b31f5c
+
+## PS#6 S115 — 2026-04-29
+
+### 実装内容
+- **raceIntervalBonus**: 前走から7〜35日の最適間隔でconfidence+1%
+  - 7〜35日: +0.01 / ≤6日: -0.01 / ≥91日: -0.01 / 36〜90日: 0
+  - confidence 31 terms体制確立
+  - reasoning文字列に「間隔補正:±X%」追加
+
+### Philosophy Alignment
+#5 商品=ユーザー価値 (レース間隔の仕上がり安定性を confidence に反映)
+
+### commit
+59fb914a7
