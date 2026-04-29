@@ -1,7 +1,7 @@
 ---
 title: "Indie SaaS Pricing Strategy — Freemium, Trials, and Pricing Psychology"
 tags: indiedev,webdev,buildinpublic,flutter
-published: false
+published: true
 ---
 
 # Indie SaaS Pricing Strategy — Freemium, Trials, and Pricing Psychology

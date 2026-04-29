@@ -1,7 +1,7 @@
 ---
 title: "インディー SaaS の価格設計 — フリーミアム・トライアル・心理的価格の選び方"
 tags: flutter,dart,個人開発,AI
-published: false
+published: true
 ---
 
 # インディー SaaS の価格設計 — フリーミアム・トライアル・心理的価格の選び方
