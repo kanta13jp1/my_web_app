@@ -93,7 +93,7 @@ class _HabitGamificationPageState extends State<HabitGamificationPage>
       if (!mounted) return;
       setState(() => _errorMessage = '$e');
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
