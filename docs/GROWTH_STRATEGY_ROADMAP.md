@@ -24833,6 +24833,7 @@ SECOND_BRAIN 4.5/7 + VIBE 7.0/7 + PLATFORM 4.0/7 = 14.5/21 + cross-instance-pr �
 - CI equal_keys_in_map → fix → push (31ee4bda7)
 - PS#4 向け cross-instance-pr: 追加前に既存 key チェック必須化を依頼
 
+
 ## 2026-04-29 PS#2 S93 — T-1 Phase42全4弾完結 (#195-#198)
 
 - #195 Flutter GoRouter Deep Dive → https://dev.to/kanta13jp1/flutter-gorouter-deep-dive-type-safe-navigation-nested-routes-and-redirects-27lb
@@ -24848,3 +24849,34 @@ SECOND_BRAIN 4.5/7 + VIBE 7.0/7 + PLATFORM 4.0/7 = 14.5/21 + cross-instance-pr �
 - dataQuality(フィールド全体平均)と差別化したpredicted winner個別のデータ完全性評価
 - confidence formula: 47 terms体制確立
 - migration: 20260429101000_seed_achievements_ps6_s131.sql
+
+## 2026-04-29 Win版#132 part 88 — 期限切迫 task 一括 audit + CI 失敗 batch triage
+
+### 概要
+User 要望「期限がせまっているタスクがたくさんあります。進めて行ってください」を受けて /project-gantt 上 04/27-04/30 期限切迫 20+ 件を audit + 4 分類:
+- ✅ 既 fix 済 (= 100% completed): 2 件 (#911 / #912 = e87e3fd1d で VSCode merge 済)
+- 🔄 cross-instance-pr 進行中 (= 50-70%): 4 件 (#793-795 = PLATFORM #1+#5+#6 + #931 = part 87)
+- ⏳ CI 失敗系 (= 20%): 6 件 (#932 / #933 / #938 / #1001 / #1003 / #1009)
+- 👤 User 手動: 1 件 (#696 Slack + Notion セットアップ)
+
+### 実施
+- migration `20260429170000_update_wbs_progress_win132_part88.sql` 新規 (= 11 task UPDATE + development_achievements insert)
+- cross-instance-pr `20260429_ci_failure_batch_triage_ps1.md` 起票 (= PS#1 territory / 6 Issue audit / 期限 1 週間 / 個別 fix は分類後 PS#1 が再委譲)
+
+### WBS audit responsibility pattern 第 1 例
+これまで cross-instance-pr 起票後の WBS task progress 反映 が非同期だった (= VSCode が #911/#912 fix → WBS 0% のまま放置).
+
+本 part 88 で「Win territory が定期 audit + WBS 一括 update」pattern を初実装. future の月次 routine 候補.
+
+### OPS-28 charter §6 提案 (= future)
+新 routine: 「期限切迫 task audit」を Win territory の月次 routine に追加.
+
+### 18 part 連続 dogfood (part 68-88)
+SECOND_BRAIN 4.5/7 + VIBE 7.0/7 + PLATFORM 4.0/7 = 14.5/21 + WBS audit pattern 確立.
+
+### Philosophy Alignment 9/9
+#1 CEO 感 (= 期限切迫即対応) / #5 商品=ユーザー価値 (= WBS 整合性復活) / #6 資本=時間 (= batch triage 6 件まとめ) / #8 KPI=昨日の自分 (= 0% → 50-100% 反映)
+
+### commit
+(本 commit にて確定)
+
