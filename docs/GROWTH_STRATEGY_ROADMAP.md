@@ -24797,3 +24797,11 @@ SECOND_BRAIN 4.5/7 + VIBE 7.0/7 + PLATFORM 4.0/7 = 14.5/21 + cross-instance-pr �
 - winning_timeフィールド初活用。best_timeのみ(入着止まり)との差別化
 - confidence formula: 45 terms体制確立
 - migration: 20260429098000_seed_achievements_ps6_s129.sql
+
+## 2026-04-29 PS#1 S11 — migration collision 構造的防止 cross-instance-pr 全インスタンス向け
+- 1セッション中に 7件 collision 発生 (S7-S10) → deploy-prod 連続 FAIL の構造的原因分析
+- 根本原因: YYYYMMDDHHMMSS ベースの命名で複数インスタンスが同秒に collision
+- cross-instance-pr 作成: docs/cross-instance-prs/20260429_migration_collision_prevention_ps1.md
+  - 対象: PS#2/3/4/5/6 / VSCode / Win 全インスタンス
+  - 3方式提案: MAX+1 increment / instance-fixed offset / push前 check
+- WF health 最終確認: Collision Check 4/4 success / CI success / deploy-prod in_progress (healthy)
