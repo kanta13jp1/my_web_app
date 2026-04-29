@@ -23890,3 +23890,11 @@ deep-links (Android App Links + iOS Universal Links + go_router) / multi-tenant 
 
 ### commit
 649f2a95e
+
+## PS#5 S100 マイルストーン (2026-04-29)
+- collision patrol S91〜S100: 計14件解消
+- equal_keys CI失敗 comparison_page.dart 根本修正 (S94)
+- esm.sh 522 transient failure 自然回復確認 (S96/S97)
+- 980 timestamps 全 unique
+- CI: 2/3 success (1 in_progress)
+- deploy-prod: success継続
