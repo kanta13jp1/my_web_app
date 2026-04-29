@@ -37751,6 +37751,312 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'zenbusiness': const _CompetitorInfo(
+    name: 'ZenBusiness',
+    emoji: '🏛️',
+    tagline: 'LLC設立・法人設立代行・コンプライアンス管理で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'ZenBusiness代替 LLC設立 法人設立 法人登記代行 Incfile代替 LegalZoom代替',
+    accentColor: Color(0xFF8B6FFF),
+    painPoints: [
+      '月額0〜・法人設立特化・個人のライフ管理は別途必要',
+      '法人登記特化・個人のAI管理は別途必要',
+      'LegalZoom/Incfileと比較してワンストップ法務サービスの深さが限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'LLC/Corp設立・登記住所・RA・コンプライアンスアラート・ダッシュボード',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'incfile': const _CompetitorInfo(
+    name: 'Incfile',
+    emoji: '📜',
+    tagline: '格安LLC/Corp設立・法人登記代行・法務テンプレートで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Incfile代替 LLC設立 格安 法人登記 Corp設立 ZenBusiness代替 LegalZoom代替',
+    accentColor: Color(0xFF00875A),
+    painPoints: [
+      '0ドル〜・法人設立特化・個人のライフ管理は別途必要',
+      '法人登記特化・個人のAI管理は別途必要',
+      'ZenBusiness/LegalZoomと比較してコンプライアンスサポートの継続性が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'LLC/Corp設立・EIN取得・RA・Operating Agreement・コンプライアンス',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'clerky': const _CompetitorInfo(
+    name: 'Clerky',
+    emoji: '⚖️',
+    tagline: 'スタートアップ向け法務書類自動化・Delaware C-Corp設立で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Clerky代替 スタートアップ法務 Delaware C-Corp設立 株式 SAFE 書類自動化',
+    accentColor: Color(0xFF2D4A8A),
+    painPoints: [
+      '499ドル〜・スタートアップ法務特化・個人のライフ管理は別途必要',
+      'VC投資対応法務特化・個人のAI管理は別途必要',
+      'LegalZoom/ZenBusinessと比較してスタートアップ特化すぎて一般法人向けでない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Delaware設立・株式発行・SAFE・409A・株主総会・Carta連携',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'carta': const _CompetitorInfo(
+    name: 'Carta',
+    emoji: '📈',
+    tagline: 'キャップテーブル管理・株式報酬・ベンチャーファンド管理で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Carta代替 キャップテーブル 株式報酬 エクイティ VC スタートアップ 持株管理',
+    accentColor: Color(0xFF0073E6),
+    painPoints: [
+      '月額高価格・エクイティ管理特化・個人のライフ管理は別途必要',
+      '株主管理特化・個人のAI管理は別途必要',
+      'Pulley/Angellistと比較して中小スタートアップには高コスト',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'キャップテーブル・409A評価・ESOP・IPO準備・ファンド管理',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'angellist': const _CompetitorInfo(
+    name: 'AngelList',
+    emoji: '😇',
+    tagline: 'スタートアップ投資家マッチング・採用・Rolling Fundsで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'AngelList代替 スタートアップ投資 Rolling Funds エンジェル投資家 採用 シードラウンド',
+    accentColor: Color(0xFF000000),
+    painPoints: [
+      '無料〜・投資マッチング特化・個人のライフ管理は別途必要',
+      'VC/Angel投資特化・個人のAI管理は別途必要',
+      'Cartaと比較してキャップテーブル・株主管理機能が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '投資家マッチング・Rolling Funds・Syndicates・採用・SAFE',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'donotpay': const _CompetitorInfo(
+    name: 'DoNotPay',
+    emoji: '🤖',
+    tagline: 'AIロボット弁護士・法的書類自動化・消費者権利保護で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'DoNotPay代替 AI弁護士 法的書類 消費者権利 解約代行 返金請求 自動化',
+    accentColor: Color(0xFFFF0000),
+    painPoints: [
+      '月額36ドル〜・法的AIツール特化・個人のライフ管理は別途必要',
+      '消費者権利特化・個人のAI管理は別途必要',
+      'Harvey AI/Clioと比較してプロの法律事務所レベルの精度が保証されない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'チャーネル解約・反論文書・小額訴訟・プライバシー設定・解約',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'mycase': const _CompetitorInfo(
+    name: 'MyCase',
+    emoji: '⚖️',
+    tagline: '法律事務所向けケース管理・クライアントポータル・請求で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'MyCase代替 法律事務所 ケース管理 クライアントポータル 法務請求 Clio代替',
+    accentColor: Color(0xFF1565C0),
+    painPoints: [
+      '月額49ドル〜・法律事務所特化・個人のライフ管理は別途必要',
+      '弁護士業務特化・個人のAI管理は別途必要',
+      'Clio/PracticePantherと比較してAI文書作成・高度な自動化が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ケース管理・クライアントポータル・請求・文書・カレンダー・eSign',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'concord': const _CompetitorInfo(
+    name: 'Concord',
+    emoji: '📋',
+    tagline: 'クラウド契約管理・ライフサイクル・電子署名統合で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Concord代替 契約管理 CLM ライフサイクル 電子署名 Ironclad代替 ContractPodai代替',
+    accentColor: Color(0xFF3D7EFF),
+    painPoints: [
+      '月額39ドル〜・CLM特化・個人のライフ管理は別途必要',
+      '契約ライフサイクル特化・個人のAI管理は別途必要',
+      'Ironclad/ContractPodaiと比較してAI契約分析・エンタープライズ連携が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '契約作成・交渉・eSign・リポジトリ・アラート・Salesforce連携',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'practicepanther': const _CompetitorInfo(
+    name: 'PracticePanther',
+    emoji: '🐆',
+    tagline: '法律事務所向けクラウドソフト・タイムトラッキング・請求自動化で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'PracticePanther代替 法律事務所 タイムトラッキング 請求自動化 Clio代替 MyCase代替',
+    accentColor: Color(0xFFFF6B00),
+    painPoints: [
+      '月額49ドル〜・弁護士業務特化・個人のライフ管理は別途必要',
+      '法務タイム管理特化・個人のAI管理は別途必要',
+      'Clio/MyCaseと比較してモバイルアプリ・クライアントコミュニケーション機能が弱い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ケース管理・タイム追跡・請求・QuickBooks連携・eSign・モバイル',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
