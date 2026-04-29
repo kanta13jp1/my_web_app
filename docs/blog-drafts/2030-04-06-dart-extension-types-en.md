@@ -1,7 +1,7 @@
 ---
 title: "Dart Extension Types — Zero-Cost Wrappers and Type-Safe Domain Modeling"
 tags: dart,flutter,webdev,indiedev
-published: false
+published: true
 ---
 
 # Dart Extension Types — Zero-Cost Wrappers and Type-Safe Domain Modeling

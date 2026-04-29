@@ -1,7 +1,7 @@
 ---
 title: "Dart Extension Types 完全ガイド — 型安全なラッパーとゼロコストドメインモデリング"
 tags: dart,flutter,個人開発,AI
-published: false
+published: true
 ---
 
 # Dart Extension Types 完全ガイド — 型安全なラッパーとゼロコストドメインモデリング
