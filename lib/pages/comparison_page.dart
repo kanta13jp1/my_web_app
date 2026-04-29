@@ -10699,6 +10699,319 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'microsoft-onenote': const _CompetitorInfo(
+    name: 'Microsoft OneNote',
+    emoji: '📓',
+    tagline:
+        'Microsoft OneNoteをデジタルノート・情報整理に使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'OneNote代替 Microsoft ノート代替 デジタルノート代替 OneNote日本語',
+    accentColor: Color(0xFF7719AA),
+    painPoints: [
+      'デジタルノート・情報整理に特化し、個人財務・AI大学・習慣管理は別ツール',
+      'Microsoft 365サブスク依存で独立使用には制限あり、他OSとの互換性に難がある',
+      'ノート管理以外の個人ライフOS統合機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'デジタルノート・情報整理',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'apple-notes': const _CompetitorInfo(
+    name: 'Apple Notes',
+    emoji: '🍏',
+    tagline:
+        'Apple NotesをAppleデバイス専用シンプルノートに使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'Apple Notes代替 iPhoneノート代替 Appleメモ代替 メモアプリ日本語',
+    accentColor: Color(0xFFFFCC00),
+    painPoints: [
+      'Apple製品専用のシンプルノートに特化し、個人財務・AI大学・習慣管理は別ツール',
+      'Apple エコシステム外(Windows/Android)での利用が事実上不可能',
+      'ノート管理以外の個人ライフOS統合機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Apple デバイス専用シンプルノート',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'google-keep': const _CompetitorInfo(
+    name: 'Google Keep',
+    emoji: '📌',
+    tagline:
+        'Google KeepをGoogle統合シンプルメモに使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'Google Keep代替 Googleメモ代替 付箋アプリ代替 Keep日本語',
+    accentColor: Color(0xFFFBBC04),
+    painPoints: [
+      'Google統合のシンプルメモ・付箋に特化し、個人財務・AI大学・習慣管理は別ツール',
+      '高度なノート管理や階層構造に弱く、ドキュメント整理には不向き',
+      'メモ管理以外の個人ライフOS統合機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Google統合シンプルメモ・付箋',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'affinity-designer': const _CompetitorInfo(
+    name: 'Affinity Designer',
+    emoji: '🖌',
+    tagline:
+        'Affinity DesignerをAdobe Illustrator代替ベクターデザインに使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'Affinity Designer代替 Illustrator代替 ベクターデザイン代替 Affinity日本語',
+    accentColor: Color(0xFF1B2E4E),
+    painPoints: [
+      'ベクターグラフィック・ロゴデザインに特化し、個人財務・AI大学・習慣管理は別ツール',
+      'Adobe CC脱却の選択肢だが、デザインツール以外の用途には対応しない',
+      'デザイン作業以外の個人ライフOS統合機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ベクターグラフィック・ロゴデザイン',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'procreate': const _CompetitorInfo(
+    name: 'Procreate',
+    emoji: '🎨',
+    tagline:
+        'ProcreateをiPad専用デジタルイラスト・ペイントに使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'Procreate代替 iPad イラスト代替 デジタルイラスト代替 Procreate日本語',
+    accentColor: Color(0xFF2D2D2D),
+    painPoints: [
+      'iPad専用デジタルイラスト・ペイントに特化し、個人財務・AI大学・習慣管理は別ツール',
+      'iPad必須で非Apple環境では使用不可、買い切り1,900円だがAppleペンシル費用が追加',
+      'イラスト制作以外の個人ライフOS統合機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'iPad専用デジタルイラスト・ペイント',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'clip-studio': const _CompetitorInfo(
+    name: 'CLIP STUDIO PAINT',
+    emoji: '📝',
+    tagline:
+        'CLIP STUDIO PAINTをマンガ・イラスト制作ツールに使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'CLIP STUDIO代替 マンガ作成代替 イラスト制作代替 クリスタ日本語',
+    accentColor: Color(0xFF0099D6),
+    painPoints: [
+      'マンガ・コミック・イラスト制作に特化し、個人財務・AI大学・習慣管理は別ツール',
+      '月額480円〜のサブスクか買い切り5,000円〜で、クリエイター専用ソフト',
+      'イラスト・マンガ制作以外の個人ライフOS統合機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'マンガ・イラスト・コミック制作',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'gimp': const _CompetitorInfo(
+    name: 'GIMP',
+    emoji: '🖌',
+    tagline: 'GIMPを無料オープンソース画像編集に使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'GIMP代替 無料画像編集代替 Photoshop代替無料 GIMP日本語',
+    accentColor: Color(0xFF918A6E),
+    painPoints: [
+      '無料のオープンソース画像編集に特化し、個人財務・AI大学・習慣管理は別ツール',
+      'UIが古くPhotoshopと異なる操作感で習得コストが高い',
+      '画像編集以外の個人ライフOS統合機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '無料オープンソース画像編集',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'krita': const _CompetitorInfo(
+    name: 'Krita',
+    emoji: '🖌',
+    tagline:
+        'KritaをOSSデジタルペインティング・イラストに使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'Krita代替 無料イラスト代替 デジタルペインティング代替 Krita日本語',
+    accentColor: Color(0xFF3DAEE9),
+    painPoints: [
+      'デジタルペインティング・コンセプトアートに特化し、個人財務・AI大学・習慣管理は別ツール',
+      'GIMPより描画特化だがWebデザインや写真編集には不向き',
+      'イラスト制作以外の個人ライフOS統合機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'OSSデジタルペインティング・イラスト',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'inkscape': const _CompetitorInfo(
+    name: 'Inkscape',
+    emoji: '🖌',
+    tagline: 'InkscapeをOSSベクター画像編集に使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'Inkscape代替 無料ベクター編集代替 Illustrator代替無料 Inkscape日本語',
+    accentColor: Color(0xFF000000),
+    painPoints: [
+      '無料オープンソースのSVG・ベクター編集に特化し、個人財務・AI大学・習慣管理は別ツール',
+      'Illustratorと比べてUI・レンダリング品質に差があり商業プロジェクトに難',
+      'デザイン以外の個人ライフOS統合機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '無料OSSベクター画像編集',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
@@ -10999,6 +11312,15 @@ class _ComparisonShellState extends State<_ComparisonShell> {
     'whereby': 'video-comm',
     'obs-studio': 'video-editing',
     'camtasia': 'video-editing',
+    'microsoft-onenote': 'notes',
+    'apple-notes': 'notes',
+    'google-keep': 'notes',
+    'affinity-designer': 'design',
+    'procreate': 'design',
+    'clip-studio': 'design',
+    'gimp': 'design',
+    'krita': 'design',
+    'inkscape': 'design',
   };
 
   @override
@@ -11199,7 +11521,7 @@ class _ComparisonShellState extends State<_ComparisonShell> {
                       children: [
                         _buildTag(
                           icon: Icons.compare_arrows_rounded,
-                          label: '276社比較',
+                          label: '285社比較',
                           backgroundColor:
                               _info.accentColor.withValues(alpha: 0.18),
                           foregroundColor: _textPrimary,
@@ -11807,7 +12129,7 @@ class _ComparisonShellState extends State<_ComparisonShell> {
                       ),
                       SizedBox(width: 8),
                       Text(
-                        '全276社の競合ランドスケープを見る →',
+                        '全285社の競合ランドスケープを見る →',
                         style: TextStyle(
                           fontSize: 14,
                           color: _textSecondary,
