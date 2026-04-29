@@ -24406,3 +24406,14 @@ co-implementation 4 例 + 軸完成 1 例 + 例外実装 (本) = 11 例累計. �
 - popularityRankBonus追加: 人気ランク単体による補正 (favOddsBonus/consensusBonusと差別化)
 - 1番人気: +0.01 (市場最高評価) / 7番人気以下: -0.01 (低人気=高リスク) / 2〜6番人気: 0
 - confidence式 42 terms体制確立
+
+## 2026-04-29 PS#2 S89 — T-1 Phase38 全4弾完結 (#179-#182) dev.to 累計 182 本
+- T-1 第179弾: Flutter Widget Testing Guide — Golden Tests, Interactions, and Async
+  - https://dev.to/kanta13jp1/flutter-widget-testing-guide-golden-tests-interactions-and-async-3j42
+- T-1 第180弾: Supabase Auth MFA Guide — Adding TOTP and OTP to Flutter Apps
+  - https://dev.to/kanta13jp1/supabase-auth-mfa-guide-adding-totp-and-otp-to-flutter-apps-202p
+- T-1 第181弾: Indie Dev Analytics — PostHog vs Mixpanel vs Self-Hosted Supabase
+  - https://dev.to/kanta13jp1/indie-dev-analytics-posthog-vs-mixpanel-vs-self-hosted-supabase-5hep
+- T-1 第182弾: Dart Async Deep Dive — Mastering Future, Stream, and Isolates
+  - https://dev.to/kanta13jp1/dart-async-deep-dive-mastering-future-stream-and-isolates-jp8
+  - ※ 1回目 curl timeout (exit 28) → 再dispatch で成功
