@@ -46013,6 +46013,312 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'salesflare': const _CompetitorInfo(
+    name: 'Salesflare',
+    emoji: '🔥',
+    tagline: '自動データ入力CRM・LinkedInデータ取込・メール追跡・スタートアップ/SMB向けで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Salesflare代替 CRM 自動データ入力 LinkedIn メール追跡 スタートアップ Pipedrive代替',
+    accentColor: Color(0xFFFF5722),
+    painPoints: [
+      '有料月29ドル~・CRM特化・個人のライフ管理は別途必要',
+      'B2B営業CRM特化・個人のAI管理は別途必要',
+      'Pipedrive/HubSpot/Close との比較で価格・機能範囲・中小企業以上対応が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '自動データ入力・LinkedIn取込・メール追跡・パイプライン管理・リマインダー',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'apptivo': const _CompetitorInfo(
+    name: 'Apptivo',
+    emoji: '🏢',
+    tagline: 'CRM+請求+プロジェクト統合・50+ビジネスアプリ・低コスト・中小企業向けオールインワンで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Apptivo代替 CRM 請求 プロジェクト管理 統合 中小企業 オールインワン Zoho代替',
+    accentColor: Color(0xFF0D47A1),
+    painPoints: [
+      '無料(3ユーザー)/有料月10ドル~・ビジネス統合特化・個人のライフ管理は別途必要',
+      'ビジネス管理特化・個人のAI管理は別途必要',
+      'Zoho/Salesforce/HubSpotとの比較でUI複雑・ブランド認知・AI機能が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'CRM+請求+PM+50+ビジネスアプリ統合・低コスト・中小企業向け',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'bigin': const _CompetitorInfo(
+    name: 'Bigin by Zoho',
+    emoji: '📱',
+    tagline: 'Zoho製小規模ビジネス向けシンプルCRM・パイプライン・モバイルファースト・月7ドル~で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Bigin代替 シンプルCRM 小規模ビジネス Zoho パイプライン モバイル HubSpot代替 Pipedrive代替',
+    accentColor: Color(0xFFE64A19),
+    painPoints: [
+      '無料/Pro月7ドル~・CRM特化・個人のライフ管理は別途必要',
+      'SMB営業特化・個人のAI管理は別途必要',
+      'HubSpot無料/Pipedrive/Freshsalesとの比較で機能拡張性・大規模移行・AI不足が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'シンプルCRM・パイプライン・モバイルファースト・Zohoエコ連携・低価格',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'salesmate': const _CompetitorInfo(
+    name: 'Salesmate',
+    emoji: '🤝',
+    tagline: 'AI搭載CRM・Sandy AIアシスト・通話/SMS内蔵・自動化・中小企業向けで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Salesmate代替 AI CRM Sandy 通話 SMS 自動化 中小企業 Pipedrive代替 HubSpot代替',
+    accentColor: Color(0xFF1565C0),
+    painPoints: [
+      '有料月23ドル~・CRM特化・個人のライフ管理は別途必要',
+      '営業CRM特化・個人のAI管理は別途必要',
+      'Pipedrive/HubSpot/Closeとの比較でブランド認知・エコシステム規模・価格が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Sandy AI・通話/SMS内蔵・自動化・パイプライン・メール追跡',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'zendesk-sell': const _CompetitorInfo(
+    name: 'Zendesk Sell',
+    emoji: '🎯',
+    tagline: 'Zendesk統合セールスCRM・パイプライン・メール/通話追跡・AIセールスアシスタントで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Zendesk Sell代替 セールスCRM Zendesk統合 パイプライン メール追跡 Salesforce代替',
+    accentColor: Color(0xFF03363D),
+    painPoints: [
+      '有料月19ドル~・セールスCRM特化・個人のライフ管理は別途必要',
+      '営業管理特化・個人のAI管理は別途必要',
+      'Salesforce/HubSpot/Pipedriveとの比較で価格・UI学習コスト・機能深度が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Zendesk統合・パイプライン・メール/通話追跡・AIセールスアシスタント',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'sugar-crm': const _CompetitorInfo(
+    name: 'SugarCRM',
+    emoji: '🍬',
+    tagline: 'エンタープライズCRM・AI予測・オンプレ/クラウド・カスタマイズ自由・オープンソース起源で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'SugarCRM代替 エンタープライズCRM AI予測 オンプレミス カスタマイズ Salesforce代替 OSS',
+    accentColor: Color(0xFFE91E63),
+    painPoints: [
+      '有料月52ドル~・エンタープライズCRM特化・個人のライフ管理は別途必要',
+      '大規模営業管理特化・個人のAI管理は別途必要',
+      'Salesforce/Microsoft Dynamics/SAP との比較でコスト・エコシステム・採用実績が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AI予測・オンプレ/クラウド・カスタマイズ自由・モジュール型・エンタープライズ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'less-annoying': const _CompetitorInfo(
+    name: 'Less Annoying CRM',
+    emoji: '😊',
+    tagline: '月15ドル均一・シンプルCRM・中小企業向け・複雑さゼロ・無料トライアル30日で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Less Annoying CRM代替 シンプルCRM 月15ドル 中小企業 低価格 HubSpot代替 Zoho代替',
+    accentColor: Color(0xFF66BB6A),
+    painPoints: [
+      '均一月15ドル/ユーザー・シンプルCRM特化・個人のライフ管理は別途必要',
+      'SMB CRM特化・個人のAI管理は別途必要',
+      'HubSpot無料/Pipedrive/Freshsalesとの比較でAI機能・拡張性・integrations数が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '月15ドル均一・シンプルUI・パイプライン・コンタクト管理・30日無料トライアル',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'vcita': const _CompetitorInfo(
+    name: 'vcita',
+    emoji: '📅',
+    tagline: '中小ビジネス向けCRM+スケジューリング+請求統合・オンライン予約・クライアントポータルで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'vcita代替 CRM スケジューリング 請求 オンライン予約 中小企業 サービス業 Acuity代替',
+    accentColor: Color(0xFF8E24AA),
+    painPoints: [
+      '有料月29ドル~・サービス業CRM特化・個人のライフ管理は別途必要',
+      'スモールビジネス運営特化・個人のAI管理は別途必要',
+      'HubSpot/Zoho/Acuity Schedulingとの比較でAI機能・大規模対応・エコシステムが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'CRM+スケジューリング+請求統合・オンライン予約・クライアントポータル',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'act-crm': const _CompetitorInfo(
+    name: 'Act! CRM',
+    emoji: '📇',
+    tagline: '1987年創業老舗CRM・コンタクト管理・マーケティングオートメーション・SMB向けで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Act! CRM代替 老舗CRM コンタクト管理 マーケティング 中小企業 Goldmine代替 Salesforce代替',
+    accentColor: Color(0xFFBF360C),
+    painPoints: [
+      '有料月30ドル~・CRM特化・個人のライフ管理は別途必要',
+      '従来型CRM特化・個人のAI管理は別途必要',
+      'HubSpot/Salesforce/Zohoとの比較でUI老化・クラウド移行遅れ・AI機能が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '老舗CRM・コンタクト管理・マーケティングオートメーション・デスクトップ版',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
