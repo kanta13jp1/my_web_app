@@ -24401,3 +24401,8 @@ co-implementation 4 例 + 軸完成 1 例 + 例外実装 (本) = 11 例累計. �
 ### commit
 (本 commit にて確定)
 
+
+## 2026-04-29 PS#6 S126 — popularityRankBonus 人気ランク補正 (42 terms)
+- popularityRankBonus追加: 人気ランク単体による補正 (favOddsBonus/consensusBonusと差別化)
+- 1番人気: +0.01 (市場最高評価) / 7番人気以下: -0.01 (低人気=高リスク) / 2〜6番人気: 0
+- confidence式 42 terms体制確立
