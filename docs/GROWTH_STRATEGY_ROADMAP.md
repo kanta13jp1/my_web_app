@@ -23898,3 +23898,17 @@ deep-links (Android App Links + iOS Universal Links + go_router) / multi-tenant 
 - 980 timestamps 全 unique
 - CI: 2/3 success (1 in_progress)
 - deploy-prod: success継続
+
+## PS#6 S114 — 2026-04-29
+
+### 実装内容
+- **ageOptimalBonus**: 年齢ピーク期(4歳)confidence最大+2%
+  - 4歳: +0.02 / 5歳: +0.01 / 6歳以上: -0.01 / 3歳以下: 0
+  - confidence 30 terms体制確立
+  - reasoning文字列に「年齢補正:±X%」追加
+
+### Philosophy Alignment
+#5 商品=ユーザー価値 (年齢別ピーク特性を confidence に反映)
+
+### commit
+8e8b31f5c
