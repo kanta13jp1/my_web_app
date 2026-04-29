@@ -33152,6 +33152,312 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'sage': const _CompetitorInfo(
+    name: 'Sage',
+    emoji: '📊',
+    tagline: '中小企業向け会計・在庫・給与ERPソフトウェアで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Sage代替 会計 在庫管理 給与 ERP 中小企業 財務管理 クラウド会計',
+    accentColor: Color(0xFF00DC82),
+    painPoints: [
+      '月額10ドル〜・会計/ERP特化・個人のライフ管理は別途必要',
+      '中小企業財務特化・個人のAI管理は別途必要',
+      'QuickBooks/Xeroと比較してUI・モバイルアプリが劣る地域がある',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '会計・在庫・給与・プロジェクト・請求書・キャッシュフロー予測・API',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'clio': const _CompetitorInfo(
+    name: 'Clio',
+    emoji: '⚖️',
+    tagline: '法律事務所向けケース管理・請求・クライアントポータルで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Clio代替 法律事務所 ケース管理 弁護士 請求 クライアントポータル リーガルテック',
+    accentColor: Color(0xFF004BFF),
+    painPoints: [
+      '月額39ドル〜・法律事務所特化・個人のライフ管理は別途必要',
+      'リーガルPM特化・個人のAI管理は別途必要',
+      'MyCase/PracticeEvolvedと比較して価格が高め',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ケース管理・タイム追跡・請求・クライアントポータル・eSignature・AI書類',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'booksy': const _CompetitorInfo(
+    name: 'Booksy',
+    emoji: '💇',
+    tagline: '美容・ウェルネス向け予約管理・クライアント獲得プラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Booksy代替 美容院 予約管理 サロン スパ ウェルネス クライアント獲得 オンライン予約',
+    accentColor: Color(0xFF6D00CC),
+    painPoints: [
+      '月額29.99ドル〜・美容業界特化・個人のライフ管理は別途必要',
+      'サロン予約特化・個人のAI管理は別途必要',
+      'Vagaro/Fresha比較でマーケットプレイス流入量・手数料が劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'マーケットプレイス掲載・オンライン予約・POS・マーケティング・スタッフ管理',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'secureframe': const _CompetitorInfo(
+    name: 'Secureframe',
+    emoji: '🔒',
+    tagline: 'SOC2/ISO27001コンプライアンス自動化・セキュリティ証明書取得で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Secureframe代替 SOC2 ISO27001 コンプライアンス自動化 セキュリティ証明 GRC',
+    accentColor: Color(0xFF3B1DDB),
+    painPoints: [
+      '月額不明・コンプライアンス特化・個人のライフ管理は別途必要',
+      'セキュリティ証明特化・個人のAI管理は別途必要',
+      'Vanta/Drataと比較して統合連携数・AI機能が劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '自動エビデンス収集・リスク管理・ベンダーチェック・訓練・100+統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'signalwire': const _CompetitorInfo(
+    name: 'SignalWire',
+    emoji: '📡',
+    tagline: '音声・ビデオ・メッセージングAPIクラウド通信プラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'SignalWire代替 通信API 音声API ビデオAPI CPaaS Twilio代替 クラウド通信',
+    accentColor: Color(0xFF0080FF),
+    painPoints: [
+      '従量課金・通信API特化・個人のライフ管理は別途必要',
+      'CPaaS特化・個人のAI管理は別途必要',
+      'Twilio比較でエコシステム・ドキュメント量・デベロッパー数が劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '音声/ビデオ/SMS/SIPトランキング・FreeSWITCH互換・低遅延・RELAY SDK',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'bandwidth': const _CompetitorInfo(
+    name: 'Bandwidth',
+    emoji: '📶',
+    tagline: 'エンタープライズ音声・メッセージング通信APIで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Bandwidth代替 通信API 音声 SMS エンタープライズ CPaaS Twilio代替 キャリア直接接続',
+    accentColor: Color(0xFF005DA0),
+    painPoints: [
+      '従量課金・エンタープライズ通信特化・個人のライフ管理は別途必要',
+      'キャリアAPIネットワーク特化・個人のAI管理は別途必要',
+      'Twilio比較でスタートアップ/小規模向けドキュメント・無料枠が劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '直接キャリア接続・音声/SMS/MMS/緊急通話・99.99%SLA・ナンバーポーティング',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'practice-panther': const _CompetitorInfo(
+    name: 'PracticePanther',
+    emoji: '🐾',
+    tagline: '弁護士向けリーガルPM・ケース管理・クライアント請求で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'PracticePanther代替 弁護士 法律事務所 ケース管理 リーガルPM 請求 タイム追跡',
+    accentColor: Color(0xFF111827),
+    painPoints: [
+      '月額49ドル〜・リーガルPM特化・個人のライフ管理は別途必要',
+      '法律事務所管理特化・個人のAI管理は別途必要',
+      'Clioと比較してマーケットプレイス・統合連携数が劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ケース管理・タイムトラッキング・請求・クライアントポータル・Zapier統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'appointy': const _CompetitorInfo(
+    name: 'Appointy',
+    emoji: '📆',
+    tagline: 'オンライン予約スケジュール管理・スタッフ割り当てで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Appointy代替 オンライン予約 スケジュール管理 予約システム スタッフ管理 小規模サロン',
+    accentColor: Color(0xFF009688),
+    painPoints: [
+      '無料/月額19.99ドル〜・予約管理特化・個人のライフ管理は別途必要',
+      'オンライン予約特化・個人のAI管理は別途必要',
+      'Calendly/Acuityと比較して知名度・統合連携が劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '24/7オンライン予約・スタッフ割り当て・Google/FB予約・SMS通知・POS',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'timely': const _CompetitorInfo(
+    name: 'Timely',
+    emoji: '⏱️',
+    tagline: 'AI自動タイムトラッキング・プロジェクト別工数記録で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Timely代替 AI タイムトラッキング 自動記録 工数管理 プロジェクト時間追跡 フリーランス',
+    accentColor: Color(0xFF5A67D8),
+    painPoints: [
+      '月額9ドル〜・タイムトラッキング特化・個人のライフ管理は別途必要',
+      '時間記録特化・個人のAI管理は別途必要',
+      'Toggl/Harvestと比較してレポート・請求機能が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AI自動タイムログ・アプリ活動記録・プロジェクト別集計・チームダッシュボード',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
