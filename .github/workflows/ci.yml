@@ -148,8 +148,7 @@ jobs:
       - name: Run VM tests
         id: flutter_test
         run: flutter test --coverage
-        continue-on-error: true  # dart:js_interop pages (election_victory/guitar_recording/ai_assistant_chat)
-                                  # compile via main.dart binding — requires conditional imports refactor (future)
+        continue-on-error: false  # js_interop conditional imports fixed (VSCode S15)
 
       - name: Run web import smoke tests
         id: flutter_web_test

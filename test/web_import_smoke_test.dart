@@ -1,3 +1,6 @@
+@TestOn('browser')
+library;
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/main.dart' as app;
 import 'package:my_web_app/pages/ai_assistant_chat_page.dart';

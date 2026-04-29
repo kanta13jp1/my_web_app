@@ -1,7 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
-import 'dart:js_interop';
-import 'package:web/web.dart' as web;
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -14,6 +11,7 @@ import '../models/local_election_plan.dart';
 import '../models/local_election_reality.dart';
 import '../models/public_memo.dart';
 import '../services/local_election_plan_service.dart';
+import '../utils/web_image_downloader.dart';
 import '../services/local_election_reality_service.dart';
 import '../services/local_election_share_service.dart';
 import '../services/public_memo_service.dart';
@@ -2196,18 +2194,10 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
     }
 
     final csvData = buffer.toString();
-    final csvBytes = Uint8List.fromList(utf8.encode('\uFEFF$csvData'));
-    final blob = web.Blob(
-      [csvBytes.toJS].toJS,
-      web.BlobPropertyBag(type: 'text/csv;charset=utf-8'),
+    downloadCsvFile(
+      csvData,
+      'election_data_${DateFormat('yyyyMMdd').format(DateTime.now())}.csv',
     );
-    final url = web.URL.createObjectURL(blob);
-    web.HTMLAnchorElement()
-      ..href = url
-      ..download =
-          'election_data_${DateFormat('yyyyMMdd').format(DateTime.now())}.csv'
-      ..click();
-    web.URL.revokeObjectURL(url);
 
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
