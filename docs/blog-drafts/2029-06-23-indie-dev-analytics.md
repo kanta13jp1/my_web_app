@@ -1,7 +1,7 @@
 ---
 title: "個人開発アプリのアナリティクス設計 — PostHog・Mixpanel・自前実装の使い分け"
 tags: flutter,supabase,個人開発,AI
-published: false
+published: true
 ---
 
 # 個人開発アプリのアナリティクス設計 — PostHog・Mixpanel・自前実装の使い分け

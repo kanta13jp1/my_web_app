@@ -1,7 +1,7 @@
 ---
 title: "Indie Dev Analytics — PostHog vs Mixpanel vs Self-Hosted Supabase"
 tags: supabase,flutter,webdev,indiedev
-published: false
+published: true
 ---
 
 # Indie Dev Analytics — PostHog vs Mixpanel vs Self-Hosted Supabase
