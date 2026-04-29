@@ -24653,3 +24653,15 @@ SECOND_BRAIN 4.5/7 + VIBE 7.0/7 + PLATFORM 4.0/7 = 14.5/21 維持 + column resiz
 - weightChangeScore(ソート用ペナルティ)と差別化した信頼度専用評価
 - confidence formula: 43 terms体制確立
 - migration: 20260429095000_seed_achievements_ps6_s127.sql
+
+## 2026-04-29 PS#2 S90 — T-1 Phase39 第183-186弾 dev.to投稿成功
+
+- T-1 第183弾: Flutter Animations Guide — AnimationController, Hero, Implicit and Rive → dev.to 投稿成功
+  - https://dev.to/kanta13jp1/flutter-animations-guide-animationcontroller-hero-implicit-and-rive-5e4p
+- T-1 第184弾: Supabase pgvector Guide — Semantic Search, RAG, and Recommendations in PostgreSQL → dev.to 投稿成功
+  - https://dev.to/kanta13jp1/supabase-pgvector-guide-semantic-search-rag-and-recommendations-in-postgresql-2dpc
+- T-1 第185弾: Indie SaaS SEO — Flutter Web Meta Tags, Tech Blogging, and Structured Data → dev.to 投稿成功
+  - https://dev.to/kanta13jp1/indie-saas-seo-flutter-web-meta-tags-tech-blogging-and-structured-data-19lh
+- T-1 第186弾: Dart FFI Guide — Calling C/C++ Libraries from Flutter → dev.to 投稿成功
+  - https://dev.to/kanta13jp1/dart-ffi-guide-calling-cc-libraries-from-flutter-2j8j
+- dev.to 累計: 186本 (Phase39完結)
