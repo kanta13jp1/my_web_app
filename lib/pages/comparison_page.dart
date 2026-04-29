@@ -41044,6 +41044,312 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'proofpoint': const _CompetitorInfo(
+    name: 'Proofpoint',
+    emoji: '🛡️',
+    tagline: 'エンタープライズメールセキュリティ・TAP脅威分析・BEC防御・コンプライアンスで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Proofpoint代替 メールセキュリティ TAP BEC フィッシング Mimecast代替 エンタープライズ',
+    accentColor: Color(0xFF00B0EA),
+    painPoints: [
+      '年間契約制・メールセキュリティ特化・個人のライフ管理は別途必要',
+      'セキュリティ特化・個人のAI管理は別途必要',
+      'Mimecast/Microsoft Defenderと比較してコスト・SMB展開の複雑さが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'TAP・BEC防御・情報漏洩防止・コンプライアンス・脅威インテリジェンス',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'knowbe4': const _CompetitorInfo(
+    name: 'KnowBe4',
+    emoji: '🎯',
+    tagline: 'セキュリティ意識向上トレーニング・フィッシングシミュレーション・コンプライアンスで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'KnowBe4代替 セキュリティトレーニング フィッシングシミュレーション 社員教育 サイバー意識向上',
+    accentColor: Color(0xFFFF6600),
+    painPoints: [
+      '年間契約制・セキュリティトレーニング特化・個人のライフ管理は別途必要',
+      'セキュリティ教育特化・個人のAI管理は別途必要',
+      'Proofpoint/Cofense/Terranovaと比較してコンテンツの深さ・LMS統合が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'フィッシング模擬・トレーニングモジュール・レポート・コンプライアンス',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'crowdstrike': const _CompetitorInfo(
+    name: 'CrowdStrike',
+    emoji: '🦅',
+    tagline: 'クラウドネイティブEDR・Falcon Platform・AI脅威検出・ゼロトラストで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'CrowdStrike代替 EDR エンドポイントセキュリティ Falcon AIセキュリティ SentinelOne代替',
+    accentColor: Color(0xFFFF0000),
+    painPoints: [
+      '年間契約制・エンドポイントセキュリティ特化・個人のライフ管理は別途必要',
+      'セキュリティ特化・個人のAI管理は別途必要',
+      'SentinelOne/Microsoft Defenderと比較してコスト・中小企業向け価格設定が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Falcon Platform・AI脅威検出・EDR・XDR・脅威インテリジェンス',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'sentinelone': const _CompetitorInfo(
+    name: 'SentinelOne',
+    emoji: '🤖',
+    tagline: 'AI駆動EPP/EDR/XDR・自律型応答・Singularity Platform・クラウドで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'SentinelOne代替 AIセキュリティ EDR XDR エンドポイント CrowdStrike代替 自律応答',
+    accentColor: Color(0xFF6700FF),
+    painPoints: [
+      '年間契約制・エンドポイントセキュリティ特化・個人のライフ管理は別途必要',
+      'セキュリティ特化・個人のAI管理は別途必要',
+      'CrowdStrike/Microsoft Defenderと比較してブランド認知・統合エコシステムが限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AI自律応答・Singularity Platform・CWPP・CNAPP・Purple AI',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'cyberark': const _CompetitorInfo(
+    name: 'CyberArk',
+    emoji: '🔐',
+    tagline: '特権アクセス管理・PAM・シークレット管理・ゼロトラスト・エンタープライズで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'CyberArk代替 PAM 特権アクセス管理 シークレット管理 ゼロトラスト Okta代替 IDセキュリティ',
+    accentColor: Color(0xFF0078D4),
+    painPoints: [
+      '年間契約制・PAM特化・個人のライフ管理は別途必要',
+      'IDセキュリティ特化・個人のAI管理は別途必要',
+      'Okta/BeyondTrust/Delinea/HashiCorp Vaultと比較してコスト・実装複雑さが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'PAM・シークレット管理・特権セッション・ゼロトラスト・コンプライアンス',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'onelogin': const _CompetitorInfo(
+    name: 'OneLogin',
+    emoji: '🔑',
+    tagline: 'クラウドIDaaS・SSO・MFA・アクセス管理・HR統合・Okta代替で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'OneLogin代替 SSO MFA IDaaS アクセス管理 Okta代替 シングルサインオン',
+    accentColor: Color(0xFF00A1E0),
+    painPoints: [
+      '月額制・IDaaS特化・個人のライフ管理は別途必要',
+      'ID管理特化・個人のAI管理は別途必要',
+      'Okta/Azure AD/Ping Identityと比較してマーケットシェア・統合数が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'SSO・MFA・プロビジョニング・HR統合・アクセス管理・コンプライアンス',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'ping-identity': const _CompetitorInfo(
+    name: 'Ping Identity',
+    emoji: '🏓',
+    tagline: 'エンタープライズIDセキュリティ・PingOne・SSO/MFA/PAM・ハイブリッドクラウドで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Ping Identity代替 エンタープライズSSO IDセキュリティ PingOne Okta代替 ハイブリッドクラウド',
+    accentColor: Color(0xFF00BFB3),
+    painPoints: [
+      '年間契約制・IDセキュリティ特化・個人のライフ管理は別途必要',
+      'ID管理特化・個人のAI管理は別途必要',
+      'Okta/Microsoft Entra/OneLoginと比較してSMB向け複雑さ・コストが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'PingOne・SSO/MFA/PAM・ハイブリッド・リスクベース認証・APIセキュリティ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'duo-security': const _CompetitorInfo(
+    name: 'Duo Security',
+    emoji: '🔒',
+    tagline: 'Cisco・MFA・ゼロトラストアクセス・デバイストラスト・リモートアクセスで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Duo Security代替 MFA 多要素認証 ゼロトラスト Cisco リモートアクセス Okta代替',
+    accentColor: Color(0xFF6CC04A),
+    painPoints: [
+      '月額制・MFA特化・個人のライフ管理は別途必要',
+      'MFA/ゼロトラスト特化・個人のAI管理は別途必要',
+      'Okta/Microsoft Authenticator/OneLoginと比較して全機能のIDaaS・HR統合が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'MFA・ゼロトラスト・デバイストラスト・VPNレス・Cisco統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'bitdefender': const _CompetitorInfo(
+    name: 'Bitdefender',
+    emoji: '🐉',
+    tagline: 'ルーマニア発・受賞歴多数アンチウイルス・GravityZone EDR・脅威インテリジェンスで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Bitdefender代替 アンチウイルス EDR GravityZone マルウェア保護 Norton代替 Kaspersky代替',
+    accentColor: Color(0xFFED1C24),
+    painPoints: [
+      '年間制・セキュリティ特化・個人のライフ管理は別途必要',
+      'セキュリティ特化・個人のAI管理は別途必要',
+      'CrowdStrike/SentinelOne/Nortonと比較してブランド認知・エンタープライズ統合が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'GravityZone・EDR/XDR・AI脅威検出・VPN・マネージドサービス',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
