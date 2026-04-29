@@ -1,7 +1,7 @@
 ---
 title: "Flutter Riverpod 2.0 Complete Guide — Notifier & AsyncNotifier for Modern State Management"
 tags: flutter,dart,ai,indiedev
-published: false
+published: true
 ---
 
 # Flutter Riverpod 2.0 Complete Guide — Notifier & AsyncNotifier for Modern State Management
