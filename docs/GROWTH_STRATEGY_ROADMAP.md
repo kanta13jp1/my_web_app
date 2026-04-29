@@ -24600,3 +24600,10 @@ User 共有 Claude Code 新機能 (= mobile push notification / 2026-04-29 公�
   - 090000: ps4_s160 + ps5_s105 競合 → ps5_s105を090100にリネーム
 - 3件一括 git mv → commit (648bd919b) → push
 - Rule 17 WF health: Workflow Failure Handler 6 skipped = 正常 / claude/* 6本 = fleet active branch
+
+## 2026-04-29 PS#4 S171-S176 — 競合追加 384→402社 (sitemap 445 URLs)
+- S171-S173 (384→393社): fly-io/render/digitalocean/keeper/dashlane/nordpass/doodle/cal-com/hellosign
+  - ホスティング・パスワード管理・スケジューリング・電子署名カテゴリ強化
+- S174-S176 (393→402社): intercom/zendesk/freshdesk/lark/coda/slab/visme/pitch/gamma
+  - CS・コラボレーション・ナレッジ・プレゼンカテゴリ強化
+- 合計: 18社追加 / sitemap 427→445 URLs (+18) / landing_page 384→402社更新
