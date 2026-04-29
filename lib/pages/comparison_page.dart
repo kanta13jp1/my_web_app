@@ -39901,6 +39901,317 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'fusion-360': const _CompetitorInfo(
+    name: 'Fusion 360',
+    emoji: '⚙️',
+    tagline: 'Autodesk・3D CAD/CAM/CAE・クラウドベース・製品設計・スタートアップ無料で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Fusion 360代替 3D CAD CAM 製品設計 Autodesk SolidWorks代替 ものづくり 製造',
+    accentColor: Color(0xFF0696D7),
+    painPoints: [
+      '有料/スタートアップ無料・3D設計特化・個人のライフ管理は別途必要',
+      '3D CAD特化・個人のAI管理は別途必要',
+      'SolidWorks/CATIA/FreeCADと比較してオフライン機能・ハイエンド製造への対応が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '3D CAD/CAM/CAE・クラウド協業・シミュレーション・CNC加工',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'sketchup': const _CompetitorInfo(
+    name: 'SketchUp',
+    emoji: '🏗️',
+    tagline:
+        'Trimble・建築/インテリア3Dモデリング・3D Warehouse・Go/Pro/Studio版で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'SketchUp代替 3Dモデリング 建築 インテリアデザイン Trimble AutoCAD代替 建設BIM',
+    accentColor: Color(0xFF19B2C6),
+    painPoints: [
+      '有料/無料(Web)・建築3D特化・個人のライフ管理は別途必要',
+      '3D建築特化・個人のAI管理は別途必要',
+      'Revit/ArchiCAD/Rhinoと比較してBIM機能・エンジニアリング精度が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '3D Warehouse・LayOut・V-Ray対応・Web版・建築BIM拡張',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'gotowebinar': const _CompetitorInfo(
+    name: 'GoToWebinar',
+    emoji: '📡',
+    tagline: 'LogMeIn・大規模ウェビナー・3000参加者・自動メール・分析レポートで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'GoToWebinar代替 ウェビナー オンラインセミナー 大規模 Zoom代替 Webex代替 マーケティング',
+    accentColor: Color(0xFF7B4FA8),
+    painPoints: [
+      '月額制・ウェビナー特化・個人のライフ管理は別途必要',
+      'ウェビナー特化・個人のAI管理は別途必要',
+      'Zoom Webinar/Demio/BigMarkerと比較してコスト・インタラクティブ機能が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '3000参加者・自動メール・録画・分析レポート・ハンドアウト配布',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'tidal': const _CompetitorInfo(
+    name: 'Tidal',
+    emoji: '🌊',
+    tagline: 'Jay-Z設立・HiFi/Master音質・アーティスト収益還元・独占コンテンツで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Tidal代替 HiFiロスレス 音楽ストリーミング 高音質 Spotify代替 アーティスト支援 独占',
+    accentColor: Color(0xFF000000),
+    painPoints: [
+      '月額制・HiFi特化・個人のライフ管理は別途必要',
+      '音楽ストリーミング特化・個人のAI管理は別途必要',
+      'Spotify/Apple Musicと比較してカタログ数・ポッドキャスト・ユーザー基盤が小さい',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'HiFi/Master音質・独占・アーティスト直接支援・360 Reality Audio',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'deezer': const _CompetitorInfo(
+    name: 'Deezer',
+    emoji: '🎶',
+    tagline: 'フランス発・9000万曲・Flow AI推薦・HiFi音質・180+ ヶ国展開で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Deezer代替 音楽ストリーミング フランス Flow AI推薦 Spotify代替 HiFi 歌詞',
+    accentColor: Color(0xFFA238FF),
+    painPoints: [
+      '無料(広告)/有料・音楽特化・個人のライフ管理は別途必要',
+      '音楽ストリーミング特化・個人のAI管理は別途必要',
+      'Spotify/Apple Musicと比較してポッドキャスト・ユーザー数・アルゴリズム品質が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '9000万曲・Flow AI・HiFi・180+ヶ国・歌詞・オフライン再生',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'soundcloud': const _CompetitorInfo(
+    name: 'SoundCloud',
+    emoji: '☁️',
+    tagline: '音楽クリエイター・インディーアーティスト・ポッドキャスト・Go+サブスクで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'SoundCloud代替 インディー音楽 クリエイター 音楽配信 Bandcamp代替 ポッドキャスト アーティスト',
+    accentColor: Color(0xFFFF5500),
+    painPoints: [
+      '無料/有料・音楽クリエイター特化・個人のライフ管理は別途必要',
+      '音楽配信特化・個人のAI管理は別途必要',
+      'Spotify/Bandcampと比較してアーティスト収益・音質・発見性が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'クリエイター配信・コメント機能・埋め込み・Go+・Repost',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'bandcamp': const _CompetitorInfo(
+    name: 'Bandcamp',
+    emoji: '🎸',
+    tagline: 'アーティスト直接支援・DRMフリー音楽販売・ファンデータ所有・収益最大化で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Bandcamp代替 インディー音楽 アーティスト直接 DRMフリー SoundCloud代替 音楽販売 フェア',
+    accentColor: Color(0xFF1DA0C3),
+    painPoints: [
+      '販売手数料あり・音楽販売特化・個人のライフ管理は別途必要',
+      '音楽販売特化・個人のAI管理は別途必要',
+      'Spotify/SoundCloudと比較してストリーミング・発見アルゴリズムが大幅に限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'DRMフリー・アーティスト収益最大化・ファンDB所有・Bandcamp Friday',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'nintendo-switch-online': const _CompetitorInfo(
+    name: 'Nintendo Switch Online',
+    emoji: '🎮',
+    tagline:
+        'Nintendo・Switch専用サブスク・NES/SNES/N64クラシック・オンラインプレイで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Nintendo Switch Online代替 ゲームサブスク Nintendo Switch PS Plus代替 Xbox代替 クラシックゲーム',
+    accentColor: Color(0xFFE60012),
+    painPoints: [
+      '年額制・Nintendo Switch特化・個人のライフ管理は別途必要',
+      'ゲームサブスク特化・個人のAI管理は別途必要',
+      'PlayStation Plus/Xbox Game Passと比較して新作ゲーム提供・クラウドゲーミングが限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'NES/SNES/N64/GBA・オンライン対戦・クラウドセーブ・Expansion Pack',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'apple-arcade': const _CompetitorInfo(
+    name: 'Apple Arcade',
+    emoji: '🍎',
+    tagline: 'Apple・モバイル/Mac/TV/PC統合ゲームサブスク・広告/課金なし・200+タイトルで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Apple Arcade代替 ゲームサブスク モバイルゲーム iOS Mac TV Google Play Pass代替',
+    accentColor: Color(0xFF555555),
+    painPoints: [
+      '月額制・Apple エコシステム特化・個人のライフ管理は別途必要',
+      'ゲームサブスク特化・個人のAI管理は別途必要',
+      'Xbox Game Pass/PS Plus/Steamと比較してPC対応・AAA タイトル数が大幅に限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '200+タイトル・広告/課金なし・iOS/Mac/tvOS/visionOS対応',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
