@@ -1,7 +1,7 @@
 ---
 title: "インディー SaaS の必須メトリクス — MRR・Churn・LTV を Supabase で可視化する"
 tags: 個人開発,AI,flutter,indiedev
-published: false
+published: true
 ---
 
 # インディー SaaS の必須メトリクス — MRR・Churn・LTV を Supabase で可視化する
