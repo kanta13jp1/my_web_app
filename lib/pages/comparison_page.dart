@@ -42268,6 +42268,312 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'plex': const _CompetitorInfo(
+    name: 'Plex',
+    emoji: '🎬',
+    tagline: '個人メディアサーバー・ライブラリ管理・Plex Pass・ストリーミング・無料映画/TVで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Plex代替 メディアサーバー 自宅ストリーミング Jellyfin代替 Kodi代替 個人映画管理',
+    accentColor: Color(0xFFE5A00D),
+    painPoints: [
+      '無料/Plex Pass有料・メディア管理特化・個人のライフ管理は別途必要',
+      'エンタメ特化・個人のAI管理は別途必要',
+      'Jellyfin/Emby/Kodiと比較してサブスク依存・クラウド収集・プライバシーが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'メディアライブラリ・ライブTV・DVR・Plex Pass・無料映画/TV・Cast',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'jellyfin': const _CompetitorInfo(
+    name: 'Jellyfin',
+    emoji: '🐋',
+    tagline: 'OSSメディアサーバー・完全無料・サブスク不要・プライバシー重視・自己ホスティングで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Jellyfin代替 OSSメディアサーバー 自己ホスティング Plex代替 Emby代替 プライバシー',
+    accentColor: Color(0xFF00A4DC),
+    painPoints: [
+      '完全無料・OSS・メディア管理特化・個人のライフ管理は別途必要',
+      'エンタメ特化・個人のAI管理は別途必要',
+      'Plex/Embyと比較してモバイルアプリ品質・ライブTV機能・クラウドサービスが限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'OSS・完全無料・自己ホスティング・メタデータ・マルチデバイス・プラグイン',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'monzo': const _CompetitorInfo(
+    name: 'Monzo',
+    emoji: '🌸',
+    tagline: 'UK発ネオバンク・Pots仕切り口座・Trends家計分析・ローン・海外手数料ゼロで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Monzo代替 UKネオバンク Pots 家計管理 Starling代替 Revolut代替 海外送金',
+    accentColor: Color(0xFFFF4A6D),
+    painPoints: [
+      '無料/Plus/Premium・英国金融特化・個人のライフ管理は別途必要',
+      'バンキング特化・個人のAI管理は別途必要',
+      'Starling/Revolut/N26と比較して投資機能・EU対応・暗号資産が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Pots・Trends・海外手数料ゼロ・ローン・共同口座・サブスク管理',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'quora': const _CompetitorInfo(
+    name: 'Quora',
+    emoji: '❓',
+    tagline: 'Q&Aナレッジ共有プラットフォーム・Spaces・Poe AI・専門家回答で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Quora代替 Q&A ナレッジ共有 専門家 Reddit代替 Stack Overflow代替 Poe AI',
+    accentColor: Color(0xFFB92B27),
+    painPoints: [
+      '無料・Q&A特化・個人のライフ管理は別途必要',
+      '情報検索特化・個人のAI管理は別途必要',
+      'Reddit/Stack Overflow/Wikipedia/Poeと比較して専門深度・コミュニティ文化・信頼性が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Q&A・Spaces・Poe AIチャット・専門家フォロー・多言語対応',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'snapchat': const _CompetitorInfo(
+    name: 'Snapchat',
+    emoji: '👻',
+    tagline: '消えるメッセージ・Stories・ARレンズ・Snap Map・Spotlight・Spectaclesで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Snapchat代替 消えるメッセージ ARレンズ Stories Instagram代替 BeReal代替 若者SNS',
+    accentColor: Color(0xFFFFFC00),
+    painPoints: [
+      '無料・SNS特化・個人のライフ管理は別途必要',
+      'エンタメ/コミュニケーション特化・個人のAI管理は別途必要',
+      'Instagram/BeReal/TikTokと比較して成人ユーザー層・ブランド活用・発見性が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '消えるメッセージ・ARレンズ・Snap Map・Spotlight・Spectacles',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'arc': const _CompetitorInfo(
+    name: 'Arc',
+    emoji: '🌐',
+    tagline: 'The Browser Company・Spaces分離・コマンドバー・Note・Boosts・Max AI統合で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Arc代替 ブラウザ Spaces コマンドバー Brave代替 Firefox代替 生産性ブラウザ',
+    accentColor: Color(0xFFFF4F00),
+    painPoints: [
+      '無料(Mac/iOS)・ブラウザ特化・個人のライフ管理は別途必要',
+      'ブラウジング特化・個人のAI管理は別途必要',
+      'Chrome/Brave/Firefoxと比較してWindows完全対応・拡張機能互換・Android版が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Spaces・コマンドバー・Note・Boosts・Max AI・Easels・Arc Search',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'firefox': const _CompetitorInfo(
+    name: 'Firefox',
+    emoji: '🦊',
+    tagline: 'Mozilla・OSS・プライバシー強化・Enhanced Tracking Protection・拡張機能エコシステムで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Firefox代替 Mozillaブラウザ プライバシー OSS Chrome代替 拡張機能 トラッキング防止',
+    accentColor: Color(0xFFFF9400),
+    painPoints: [
+      '完全無料・OSS・ブラウザ特化・個人のライフ管理は別途必要',
+      'ブラウジング特化・個人のAI管理は別途必要',
+      'Chrome/Edge/Braveと比較してブラウザシェア・Google統合・パフォーマンスが劣る場合あり',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ETP・コンテナタブ・Multi-Account Containers・Pocket・拡張機能',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'opera': const _CompetitorInfo(
+    name: 'Opera',
+    emoji: '🎭',
+    tagline: '内蔵VPN・Ad Blocker・サイドバーSNS統合・Opera GX ゲーマー版・Ariaでリラックスで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Opera代替 内蔵VPN Ad Blocker ゲーマーブラウザ Opera GX Chrome代替 Brave代替',
+    accentColor: Color(0xFFFF1B2D),
+    painPoints: [
+      '無料・ブラウザ特化・個人のライフ管理は別途必要',
+      'ブラウジング特化・個人のAI管理は別途必要',
+      'Chrome/Firefox/Braveと比較して市場シェア・プライバシー透明性・企業所有者(中国)が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '内蔵VPN・Ad Blocker・サイドバー・Opera GX・Flow・Aria AI',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'vivaldi': const _CompetitorInfo(
+    name: 'Vivaldi',
+    emoji: '🎻',
+    tagline: '高カスタマイズブラウザ・タブスタック・分割ビュー・ノート・メール統合・プライバシー重視で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Vivaldi代替 カスタマイズブラウザ タブスタック プライバシー Opera元創業者 Arc代替',
+    accentColor: Color(0xFFEF3939),
+    painPoints: [
+      '無料・ブラウザ特化・個人のライフ管理は別途必要',
+      'ブラウジング特化・個人のAI管理は別途必要',
+      'Chrome/Firefox/Operaと比較してモバイル版完成度・シンプルさ・市場シェアが限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'タブスタック・分割ビュー・ノート・メール・カレンダー・RSS・コマンド',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
