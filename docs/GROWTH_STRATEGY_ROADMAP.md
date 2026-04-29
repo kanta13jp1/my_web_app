@@ -22249,6 +22249,16 @@ Phase4 drafts 新規作成 (8ファイル):
 - S74+S76 合計31ページ anon guard 完了
 - Commit: 9fac78e3f
 
+## 2026-04-29 — 競合モニタリング (scheduled-task / Win版)
+- 14社中6社で4月の重大新機能検出 — Notion AI / Slack / OpenAI Codex (3🔴) + Evernote / MoneyForward / netkeiba (3🟠)
+- **Notion AI**: Custom Agents 35-50%値下げ + n8n MCP統合 + AI Autofill (DB組込)
+- **Slack**: 30+ AI機能 (AI Skills/Meeting Intelligence/Native CRM) — Claude駆動
+- **Codex (4/16)**: Computer Control + 90+plugins + 自己スケジュール → Multi-AI routing 見直し示唆
+- **Claude Code**: v2.1.101 品質修正 / Pro plan 一時削除 (4/21) → 4/22 復活 → quota fallback runbook 重要性裏付け
+- **MoneyForward**: ME 推移グラフ無料化 (4/27) + Webull API (4/28) + アカデミア (4/14)
+- アクション提案5件: Codex routing 拡大 / MCP-AUTH-27 適用拡大 / 資産可視化無料層 / Slack UX観察 / Quota fallback dry-run
+- レポート: docs/competitor-reports/2026-04-29.md
+
 ## PS#6 S78 (2026-04-28)
 - 競馬AIランキング: age_sex 馬齢ペナルティ (11因子目) 追加
   - agePenaltyScore: 3-5歳=0(最盛期), 6歳=3, 7歳=8, 8歳+=15, 2歳以下/不明=5
@@ -24528,3 +24538,5 @@ User 共有 Claude Code 新機能 (= mobile push notification / 2026-04-29 公�
 
 ### commit
 (本 commit にて確定)
+
+(本 commit にて確定) (chore(docs): cross-instance-prs done/ rename + Win版#132 doc updates + 競合レポート 2026-04-29 enrichment) (chore(docs): cross-instance-prs done/ rename + Win版#132 doc updates + 競合レポート 2026-04-29 enrichment)

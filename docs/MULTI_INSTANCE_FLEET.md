@@ -13,6 +13,30 @@
 
 ---
 
+## 正本と運用監査
+
+12 インスタンス並行開発では、作業そのものと同時に運用改善も常に見る。
+
+| 正本 | 役割 |
+| --- | --- |
+| GitHub Issues / PR | 実行単位、担当、レビュー、完了判定 |
+| WBS / Notion | 進捗、依存関係、ロードマップ、管理ビュー |
+| NotebookLM | 外部メモリー兼 Master Brain。判断履歴、設計意図、衝突回避ルール、学びの集約 |
+| Slack | 進行中の通知、ブロッカー、handoff、緊急調整 |
+| 各 worktree / branch | 実作業の隔離領域 |
+
+作業開始時は次を確認する。
+
+- Claude Code 10 枠 + Codex 2 枠の担当領域が重なっていないか。
+- 同一ファイル、同一 DB スキーマ、同一 Edge Function、同一 workflow を複数枠が触っていないか。
+- Issue / WBS / Notion / PR / NotebookLM の状態が食い違っていないか。
+- Slack 通知や Notion 運用が形骸化していないか。
+- Gemini Code Assist、GitHub Copilot、Manus AI をどこに入れると衝突を減らせるか。
+
+運用改善の提案は作業範囲に含める。例: 「この割り振りは衝突しそう」「NotebookLM に判断根拠を残すべき」「Slack 通知に逃がすべき」「Notion/WBS の正本がズレている」。
+
+---
+
 ## 12 スロット (固定 worktree 名)
 
 ### 10 Claude Code インスタンス
