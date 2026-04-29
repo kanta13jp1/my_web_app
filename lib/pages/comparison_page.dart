@@ -49773,6 +49773,320 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'nolt': const _CompetitorInfo(
+    name: 'Nolt',
+    emoji: '🗳️',
+    tagline: 'シンプル機能投票ボード・公開ロードマップ・チェンジログ・ブランドカスタム・Zapier連携で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Nolt代替 機能投票 ロードマップ チェンジログ ブランドカスタム Canny代替 Frill代替 Sleekplan代替',
+    accentColor: Color(0xFF4A90E2),
+    painPoints: [
+      '有料月29ドル~・フィードバック特化・個人のライフ管理は別途必要',
+      'プロダクト管理特化・個人のAI管理は別途必要',
+      'Canny/Frill/Sleekplan との比較でAI優先付け・エンタープライズ・カスタムドメインが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '機能投票ボード・公開ロードマップ・チェンジログ・ブランドカスタム・Zapier連携',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'featurebase': const _CompetitorInfo(
+    name: 'Featurebase',
+    emoji: '🏗️',
+    tagline: 'プロダクトフィードバックハブ・投票・ロードマップ・チェンジログ・NPS・インタビューで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Featurebase代替 フィードバックハブ 投票 ロードマップ チェンジログ NPS Canny代替 Productboard代替',
+    accentColor: Color(0xFF5856D6),
+    painPoints: [
+      '無料/有料月49ドル~・フィードバック特化・個人のライフ管理は別途必要',
+      'プロダクト管理特化・個人のAI管理は別途必要',
+      'Canny/ProductBoard/Nolt との比較でエンタープライズ・AI分析・他ツール統合が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'フィードバックハブ・投票・ロードマップ・チェンジログ・NPS・インタビュー統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'supahub': const _CompetitorInfo(
+    name: 'Supahub',
+    emoji: '🌐',
+    tagline: 'カスタマーフィードバックポータル・公開ロードマップ・チェンジログ・ウィジェット・低価格で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Supahub代替 フィードバックポータル ロードマップ チェンジログ ウィジェット 低価格 Canny代替 Nolt代替',
+    accentColor: Color(0xFFFF5A5F),
+    painPoints: [
+      '有料月19ドル~・フィードバック特化・個人のライフ管理は別途必要',
+      'プロダクト管理特化・個人のAI管理は別途必要',
+      'Canny/Nolt/Featurebase との比較でスケール・AI・エンタープライズが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'フィードバックポータル・公開ロードマップ・チェンジログ・ウィジェット・低価格',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'upvoty': const _CompetitorInfo(
+    name: 'Upvoty',
+    emoji: '👍',
+    tagline: '機能リクエスト投票ボード・ホワイトラベル・ウィジェット・Jira/Slack・低価格プランで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Upvoty代替 機能リクエスト投票 ホワイトラベル ウィジェット Jira Slack Canny代替 Nolt代替',
+    accentColor: Color(0xFF6C63FF),
+    painPoints: [
+      '有料月15ドル~・投票ボード特化・個人のライフ管理は別途必要',
+      'プロダクト管理特化・個人のAI管理は別途必要',
+      'Canny/Nolt/Frill との比較でAI機能・ロードマップ深さ・エンタープライズが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '機能リクエスト投票・ホワイトラベル・ウィジェット・Jira/Slack・ロードマップ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'wishkit': const _CompetitorInfo(
+    name: 'Wishkit',
+    emoji: '🎁',
+    tagline: 'iOSアプリ向け機能リクエスト・SwiftUI SDKで数行実装・投票・ロードマップ内蔵で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Wishkit代替 iOSアプリ機能リクエスト SwiftUI SDK 投票 ロードマップ AppStore Flutter Canny代替',
+    accentColor: Color(0xFFFF2D55),
+    painPoints: [
+      '有料月19ドル~・iOS特化・個人のライフ管理は別途必要',
+      'モバイルフィードバック特化・個人のAI管理は別途必要',
+      'Instabug/Gleap/Canny との比較でAndroid対応・Web統合・エンタープライズが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'iOSアプリ機能リクエスト・SwiftUI SDK数行実装・投票・ロードマップ内蔵',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'productplan': const _CompetitorInfo(
+    name: 'ProductPlan',
+    emoji: '🗺️',
+    tagline: 'プロダクトロードマップソフト・戦略整合・ビジュアル・ステークホルダー共有・Jira連携で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'ProductPlan代替 プロダクトロードマップ 戦略整合 ビジュアル ステークホルダー Jira Aha代替 Roadmunk代替',
+    accentColor: Color(0xFF00BFA5),
+    painPoints: [
+      '有料月39ドル~・ロードマップ特化・個人のライフ管理は別途必要',
+      'プロダクト管理特化・個人のAI管理は別途必要',
+      'Aha!/Roadmunk/Airfocus との比較でバックログ管理・AI・価格が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'プロダクトロードマップ・戦略整合・ビジュアル・ステークホルダー共有・Jira連携',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'craft-io': const _CompetitorInfo(
+    name: 'Craft.io',
+    emoji: '⚗️',
+    tagline: 'プロダクト管理プラットフォーム・北極星・OKR・ロードマップ・バックログ・AI機能で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Craft.io代替 プロダクト管理 北極星 OKR ロードマップ バックログ AI Aha代替 ProductBoard代替',
+    accentColor: Color(0xFF3F51B5),
+    painPoints: [
+      '有料月39ドル~・プロダクト管理特化・個人のライフ管理は別途必要',
+      'PM特化・個人のAI管理は別途必要',
+      'Aha!/ProductBoard/Airfocus との比較でコスト・エコシステム・ツール統合が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '北極星・OKR・ロードマップ・バックログ・AI機能・戦略~タクティクス整合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'airfocus': const _CompetitorInfo(
+    name: 'Airfocus',
+    emoji: '🎯',
+    tagline: 'プロダクト優先付け・スコアリングモデル・ロードマップ・モジュラー設計・AIアシストで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Airfocus代替 プロダクト優先付け スコアリング ロードマップ モジュラー AIアシスト Aha代替 ProductPlan代替',
+    accentColor: Color(0xFFF97316),
+    painPoints: [
+      '有料月59ドル~・優先付け特化・個人のライフ管理は別途必要',
+      'プロダクト管理特化・個人のAI管理は別途必要',
+      'Aha!/ProductBoard/Craft.io との比較でコスト・バックログ・エンタープライズが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '優先付けスコアリング・ロードマップ・モジュラー設計・AIアシスト・RICE/ICEモデル',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'padlet': const _CompetitorInfo(
+    name: 'Padlet',
+    emoji: '📌',
+    tagline: '仮想ピンボード・教育/チーム向け・マルチメディア・リアルタイム共同編集・無料プランで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Padlet代替 仮想ピンボード 教育 チーム マルチメディア リアルタイム共同編集 Miro代替 Mural代替',
+    accentColor: Color(0xFF48C774),
+    painPoints: [
+      '無料3ボード/有料月8ドル~・ビジュアルコラボ特化・個人のライフ管理は別途必要',
+      'コラボレーション特化・個人のAI管理は別途必要',
+      'Miro/Mural/FigJam との比較でビジネス機能・AI・高度なフレームワークが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '仮想ピンボード・教育/チーム・マルチメディア・リアルタイム共同編集・無料あり',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
