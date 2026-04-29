@@ -47237,6 +47237,312 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'chef-io': const _CompetitorInfo(
+    name: 'Chef (Progress)',
+    emoji: '🍳',
+    tagline: '構成管理・インフラ自動化・CookBook・Compliance・DevOps基盤で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Chef代替 構成管理 インフラ自動化 CookBook DevOps Ansible代替 Puppet代替',
+    accentColor: Color(0xFFF05032),
+    painPoints: [
+      '有料/OSS・構成管理特化・個人のライフ管理は別途必要',
+      'DevOps基盤特化・個人のAI管理は別途必要',
+      'Ansible/Puppet/Saltと比較してRuby学習コスト・エージェント型複雑性・クラウドネイティブ移行が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'CookBook・構成管理・Compliance・InSpec・DevOpsパイプライン統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'puppet': const _CompetitorInfo(
+    name: 'Puppet',
+    emoji: '🎭',
+    tagline: '宣言的構成管理・エージェント型・Puppet Forge・大規模インフラ・コンプライアンスで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Puppet代替 宣言的構成管理 エージェント型 大規模インフラ Ansible代替 Chef代替 DevOps',
+    accentColor: Color(0xFFFFBB33),
+    painPoints: [
+      '有料/OSS・構成管理特化・個人のライフ管理は別途必要',
+      '大規模インフラ管理特化・個人のAI管理は別途必要',
+      'Ansible/Chef/Saltと比較して学習曲線・エージェント管理・クラウドネイティブ適応が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '宣言的構成管理・Puppet Forge・エージェント型・コンプライアンス・大規模対応',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'saltstack': const _CompetitorInfo(
+    name: 'SaltStack (Salt)',
+    emoji: '🧂',
+    tagline: 'イベント駆動自動化・並列実行・リモート実行・状態管理・VMware傘下で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'SaltStack代替 Salt イベント駆動 並列実行 構成管理 Ansible代替 Chef代替 VMware',
+    accentColor: Color(0xFF00695C),
+    painPoints: [
+      '有料(VMware傘下)/OSS・インフラ自動化特化・個人のライフ管理は別途必要',
+      'インフラ管理特化・個人のAI管理は別途必要',
+      'Ansible/Chef/Puppetと比較してドキュメント量・コミュニティ規模・VMware依存が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'イベント駆動・並列実行・リモート実行・状態管理・Python拡張',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'vagrant': const _CompetitorInfo(
+    name: 'Vagrant',
+    emoji: '📦',
+    tagline: 'HashiCorp製開発環境仮想化・VagrantBox・プロビジョニング自動化・チーム統一環境で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Vagrant代替 開発環境 仮想化 VagrantBox HashiCorp Docker代替 Dev Container代替',
+    accentColor: Color(0xFF1563FF),
+    painPoints: [
+      '無料OSS・仮想環境特化・個人のライフ管理は別途必要',
+      '開発環境管理特化・個人のAI管理は別途必要',
+      'Docker/Dev Containers/Nixとの比較でコンテナ移行・パフォーマンス・クラウド統合が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'VagrantBox・仮想環境自動化・プロビジョニング・チーム統一環境・多プロバイダ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'packer': const _CompetitorInfo(
+    name: 'Packer (HashiCorp)',
+    emoji: '🏗️',
+    tagline: 'マシンイメージ自動構築・マルチプラットフォーム・CI統合・AMI/VMware/Docker対応で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Packer代替 マシンイメージ AMI VMware Docker HashiCorp CI統合 イミュータブルインフラ',
+    accentColor: Color(0xFF02A8EF),
+    painPoints: [
+      '無料OSS・イメージ構築特化・個人のライフ管理は別途必要',
+      'インフラ自動化特化・個人のAI管理は別途必要',
+      'Docker/Ansible/Terraformとの比較でイメージ管理との重複・複雑さが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'マシンイメージ自動構築・AMI/VMware/Docker・マルチプラットフォーム・CI統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'nomad': const _CompetitorInfo(
+    name: 'Nomad (HashiCorp)',
+    emoji: '🏕️',
+    tagline: 'シンプルコンテナオーケストレーション・Kubernetes代替・コンテナ/VM/バイナリ対応で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Nomad代替 コンテナオーケストレーション Kubernetes代替 HashiCorp シンプル VM対応',
+    accentColor: Color(0xFF00CA8E),
+    painPoints: [
+      '無料OSS/HashiCorp有料・オーケストレーション特化・個人のライフ管理は別途必要',
+      'インフラ管理特化・個人のAI管理は別途必要',
+      'Kubernetes/Docker Swarm/ECSとの比較でエコシステム規模・ドキュメント・採用率が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'シンプルオーケストレーション・コンテナ/VM/バイナリ・Consul統合・マルチクラウド',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'vault-hashicorp': const _CompetitorInfo(
+    name: 'Vault (HashiCorp)',
+    emoji: '🔑',
+    tagline: 'シークレット管理・動的認証情報・PKI・暗号化サービス・ゼロトラスト基盤で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'HashiCorp Vault代替 シークレット管理 動的認証情報 PKI 暗号化 ゼロトラスト AWS Secrets代替',
+    accentColor: Color(0xFFFFD814),
+    painPoints: [
+      '無料OSS/HCP有料・シークレット管理特化・個人のライフ管理は別途必要',
+      'セキュリティ基盤特化・個人のAI管理は別途必要',
+      'AWS Secrets Manager/Azure Key Vault/CyberArkとの比較でクラウド統合・コスト・管理複雑度が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'シークレット管理・動的認証情報・PKI・暗号化サービス・監査ログ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'crossplane': const _CompetitorInfo(
+    name: 'Crossplane',
+    emoji: '✂️',
+    tagline: 'Kubernetes上クラウドリソース管理・Control Plane・マルチクラウドIaC・OSS・CNCF承認で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Crossplane代替 Kubernetes クラウドリソース IaC マルチクラウド OSS CNCF Terraform代替',
+    accentColor: Color(0xFF326CE5),
+    painPoints: [
+      '完全無料OSS・K8s上IaC特化・個人のライフ管理は別途必要',
+      'クラウドインフラ特化・個人のAI管理は別途必要',
+      'Terraform/Pulumi/ACKとの比較でKubernetes依存・学習曲線・エコシステムが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'K8s上クラウドリソース管理・Control Plane・マルチクラウドIaC・CNCF',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'opentofu': const _CompetitorInfo(
+    name: 'OpenTofu',
+    emoji: '🫘',
+    tagline: 'Terraformオープンフォーク・CNCF承認・BSL変更後のOSS代替・完全互換・Linux Foundation管理で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'OpenTofu代替 Terraform OSS フォーク CNCF BSL変更 IaC インフラ Pulumi代替',
+    accentColor: Color(0xFF7B42BC),
+    painPoints: [
+      '完全無料OSS・IaC特化・個人のライフ管理は別途必要',
+      'インフラ管理特化・個人のAI管理は別途必要',
+      'Terraform/Pulumi/Crossplaneとの比較でエコシステム成熟度・エンタープライズサポートが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Terraform互換OSS・CNCF承認・Linux Foundation管理・BSL回避・完全互換',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
