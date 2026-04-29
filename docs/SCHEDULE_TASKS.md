@@ -746,3 +746,78 @@ git commit -m "自動: AI大学コンテンツ更新 YYYY-MM-DD"
 git push origin main
 ```
 
+
+---
+
+### Task: feature-review (毎週火曜 03:00 JST に実行)
+
+**起源**: Win版#132 part 77 / 2026-04-29 / Handoff Bundle 第 1 適用例
+**Bundle**: `docs/handoff-bundles/20260429_feature_review_scheduled_task/` (= 完成後 `done/` 移動)
+**親軸**: COLLAB_AI #5 Verifier-Generator / OPS-28 改善トリガー / VIBE_CODING #4 Black-Box I/O Verification
+
+#### 概要
+
+各機能 (page + Edge Function) を **週次で AI レビュー** し、**修正すべき問題を GitHub Issue 自動起票** する.
+
+#### Step 1: 対象機能リスト読込
+
+`scripts/feature_review_config.json` から `review_targets.pages` + `review_targets.edge_functions` を読込.
+
+各 target は `slug` / `path` / `source` / `priority` / `review_categories` を持つ.
+
+#### Step 2: シグナル収集 (機能ごと)
+
+- **Page (Flutter)**:
+  - Playwright で本番 URL screenshot (= 1280×720 / 将来 2576px)
+  - console messages 取得 (= error / warning)
+  - DOM accessibility tree 取得 (= a11y チェック用)
+- **Edge Function (Deno)**:
+  - source の TODO/FIXME 検索
+  - 直近 git log (= 最近の変更履歴)
+  - deno lint 結果 (= cache or 即時実行)
+
+#### Step 3: Claude API レビュー
+
+Haiku 4.5 + effort=medium で signals を bundle → JSON 形式 findings 出力 (= max 3 件 / feature).
+
+```json
+{
+  "findings": [
+    {
+      "feature_slug": "horse_racing",
+      "category": "ui_bug",
+      "severity": "medium",
+      "summary": "オッズ列のテキストが幅 320px で折り返し",
+      "review_text": "Playwright screenshot で...",
+      "recommendation": "FittedBox or AutoSizeText の適用"
+    }
+  ]
+}
+```
+
+#### Step 4: de-dupe + Issue 起票
+
+- title hash 計算 (= `feature_slug | category | summary[:80]` の SHA-256 先頭 8 文字)
+- 既存 open issue が同 hash なら skip
+- 新 finding → `gh issue create` で起票:
+  - Title: `[review:<hash>] /<path> <category> <summary>`
+  - Labels: `auto-review`, `severity:<level>`, `feature:<slug>`, `category:<cat>`
+  - Body: signals + Claude review + recommendation
+
+#### Step 5: Slack 通知 + 記録
+
+- `SLACK_WEBHOOK_URL` 経由で集計通知 (= `🔍 feature-review run complete: N new / M skipped / E errors`)
+- `docs/feature-review-logs/<YYYY-MM-DD>.md` に詳細ログ保存
+
+#### 制約
+
+- max 30 issues per run (= ノイズ抑制)
+- max 3 findings per feature (= 同一機能で大量起票を防ぐ)
+- Playwright timeout 30s / Claude API max retry 3 / GitHub API quota 監視
+
+#### 成功条件
+
+- 初回 cron run: 3-10 件 issue 起票 (= 真の問題発見)
+- 翌週 cron run: 0-3 件 issue 起票 (= de-dupe 機能確認)
+- 4 週後: 既存 issue が closed/開発反映されていれば cycle 健全
+
