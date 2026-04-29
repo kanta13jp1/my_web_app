@@ -24260,8 +24260,43 @@ VIBE_CODING 原則 #4 (Black-Box I/O Verification) 強化セクション追加. 
 (本 commit にて確定)
 
 
+
 ## 2026-04-29 PS#6 S122 — prevMarginBonus 前走着差補正 (38 terms)
 - prevMarginBonus追加: 前走の着差による信頼度補正
 - ハナ/アタマ/クビ・≤半馬身: +0.01 (健闘・能力実証) / ≥5馬身: -0.01 / 大差: -0.02 (大敗)
 - marginPenaltyScoreの文字列解析(ハナ/クビ/分数/数値)をconfidence式に統合
 - confidence式 38 terms体制確立
+
+## 2026-04-29 Win版#132 part 82 — Notion 風 column resize VSCode 委譲
+
+### 概要
+User 要望「各列の幅をドラッグして広げたり狭めたり (NOTION 風)」を VSCode版 cross-instance-pr で起票. /project-gantt timeline 9 列の動的 resize 化.
+
+### 該当ファイル
+lib/pages/project_gantt_page.dart (3482 行) — line 1704 (_leftPanelWidth) / 1840-1842 (左パネル) / 2126-2130 (列定義) / 2403-2416 (header) / 2466+ (各列セル).
+
+### 仕様
+- _ColumnConfig schema: 9 列 / id / label / minWidth / defaultWidth / maxWidth / align / resizable
+- _ResizeHandle widget: 5px 幅 / MouseRegion + GestureDetector / cursor ↔ / clamp(min, max)
+- 視覚: Hover で背景 accent 30% / Drag で列 highlight / 終了で永続化
+- Persistence: shared_preferences (= localStorage / 案 A 推奨) → Phase 2 で Supabase user_preferences (= 案 B / cross-device 同期)
+- auto-fit: 列境界 double tap で TextPainter.layout() max width (任意 / Phase 1 スキップ可)
+- Mobile: handle 非表示 or bottom sheet 経由
+
+### 連携軸
+IMBUE (UX) / VIBE #4+#5 (I/O verify + E2E) / PLATFORM #5 (High-Res Vision) / PHILOSOPHY #5 (商品=価値)
+
+### Phase 2 候補
+列 drag-drop 並び替え / show/hide toggle / column header sort / preset 切替 (狭/標準/広)
+
+### Win 受領処理時間
+screenshot 受領 → 5 質問判定 → ファイル特定 → cross-instance-pr 起票 → log/memory/commit/push = **約 11 分**.
+
+= Win版 = on-call routing hub として安定稼働継続.
+
+### Philosophy Alignment 9/9
+#1 CEO 感 (即対応) / #5 商品=ユーザー価値 (599 タスク表苦痛解消) / #6 資本=時間 (11 分 routing)
+
+### commit
+(本 commit にて確定)
+
