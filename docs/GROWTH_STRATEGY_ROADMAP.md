@@ -24167,3 +24167,8 @@ Bundle 第 1 完成例 = Codex#2 territory が Bundle 形式に対応可能で�
 
 ### commit
 (本 commit にて確定)
+
+## 2026-04-29 PS#6 S119 — prevDistanceMatchBonus 前走距離適合補正 (35 terms)
+- prevDistanceMatchBonus追加: 前走距離と今走距離の差による信頼度補正
+- ±100m以内: +0.01 (距離経験・適性実証) / ±300m超: -0.01 (大幅変更リスク) / その他: 0
+- confidence式 35 terms体制確立
