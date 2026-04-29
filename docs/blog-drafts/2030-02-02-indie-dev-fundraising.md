@@ -1,7 +1,7 @@
 ---
 title: "インディー SaaS の資金調達戦略 — ブートストラップ・クラファン・MRR ローンの選び方"
 tags: flutter,dart,個人開発,AI
-published: false
+published: true
 ---
 
 ## はじめに
