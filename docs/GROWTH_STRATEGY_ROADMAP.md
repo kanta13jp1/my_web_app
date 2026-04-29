@@ -24259,3 +24259,9 @@ VIBE_CODING 原則 #4 (Black-Box I/O Verification) 強化セクション追加. 
 ### commit
 (本 commit にて確定)
 
+
+## 2026-04-29 PS#6 S122 — prevMarginBonus 前走着差補正 (38 terms)
+- prevMarginBonus追加: 前走の着差による信頼度補正
+- ハナ/アタマ/クビ・≤半馬身: +0.01 (健闘・能力実証) / ≥5馬身: -0.01 / 大差: -0.02 (大敗)
+- marginPenaltyScoreの文字列解析(ハナ/クビ/分数/数値)をconfidence式に統合
+- confidence式 38 terms体制確立
