@@ -41656,6 +41656,312 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'smartthings': const _CompetitorInfo(
+    name: 'SmartThings',
+    emoji: '🔗',
+    tagline: 'Samsung・スマートホームハブ・Matter/Zigbee/Z-Wave・200+ブランド連携で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'SmartThings代替 スマートホーム Samsung Matter Zigbee IoT Home Assistant代替 Google Home代替',
+    accentColor: Color(0xFF1428A0),
+    painPoints: [
+      '無料・IoT管理特化・個人のライフ管理は別途必要',
+      'スマートホーム特化・個人のAI管理は別途必要',
+      'Home Assistant/Google Home/Apple Homeと比較してローカル処理・プライバシー機能が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Matter/Zigbee/Z-Wave・200+ブランド・Samsung統合・ルーティン自動化',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'ring': const _CompetitorInfo(
+    name: 'Ring',
+    emoji: '🔔',
+    tagline: 'Amazon傘下・スマートドアベル・セキュリティカメラ・Ring Protect・Neighbor共有で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Ring代替 スマートドアベル セキュリティカメラ Amazon Alexa連携 Arlo代替 Wyze代替',
+    accentColor: Color(0xFF0077C8),
+    painPoints: [
+      '有料(Protect)/無料・スマートセキュリティ特化・個人のライフ管理は別途必要',
+      'ホームセキュリティ特化・個人のAI管理は別途必要',
+      'Arlo/Wyze/Nestと比較してプライバシー懸念・サブスク依存が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ドアベル/カメラ・Ring Protect・Alexa統合・Neighbor共有・警報',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'philips-hue': const _CompetitorInfo(
+    name: 'Philips Hue',
+    emoji: '💡',
+    tagline: 'Signify・スマート照明・1600万色・Matter対応・Hue Bridge・シーン自動化で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Philips Hue代替 スマート照明 IoT照明 1600万色 LIFX代替 Matter Alexa Google',
+    accentColor: Color(0xFF0062FF),
+    painPoints: [
+      '高価格・照明特化・個人のライフ管理は別途必要',
+      'スマート照明特化・個人のAI管理は別途必要',
+      'LIFX/Nanoleaf/Goveeと比較してコスト・ブリッジ依存が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '1600万色・Hue Bridge・Matter・シーン・地理フェンス・エネルギー',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'wyze': const _CompetitorInfo(
+    name: 'Wyze',
+    emoji: '📹',
+    tagline: '低価格スマートホームカメラ・Wyze Cam・スマートプラグ・センサー・月額不要で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Wyze代替 格安スマートカメラ IoT Ring代替 Arlo代替 スマートプラグ ホームセキュリティ',
+    accentColor: Color(0xFF00C2E0),
+    painPoints: [
+      '低価格/月額不要・ホームセキュリティ特化・個人のライフ管理は別途必要',
+      'IoTデバイス特化・個人のAI管理は別途必要',
+      'Ring/Arlo/Nestと比較してクラウド依存・プライバシーリスク・品質が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Wyze Cam・スマートプラグ/電球/ロック・センサー・低価格・AI検知',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'trezor': const _CompetitorInfo(
+    name: 'Trezor',
+    emoji: '🔑',
+    tagline: 'OSSハードウェアウォレット・Trezor Model T・8000+仮想通貨・プライバシー重視で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Trezor代替 ハードウェアウォレット 仮想通貨 コールドウォレット Ledger代替 Bitcoin セキュリティ',
+    accentColor: Color(0xFF1DC22D),
+    painPoints: [
+      '購入制・ハードウェアウォレット特化・個人のライフ管理は別途必要',
+      '仮想通貨保管特化・個人のAI管理は別途必要',
+      'Ledger/COLDCARDと比較してBluetoothなし・モバイル連携が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'OSS・Model T/Safe 5・8000+通貨・Shamir Backup・Trezor Suite',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'trust-wallet': const _CompetitorInfo(
+    name: 'Trust Wallet',
+    emoji: '🛡️',
+    tagline: 'Binance傘下・モバイル暗号通貨ウォレット・100+ブロックチェーン・DeFi/NFT統合で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Trust Wallet代替 モバイルウォレット 仮想通貨 DeFi NFT MetaMask代替 Binance',
+    accentColor: Color(0xFF3375BB),
+    painPoints: [
+      '無料・仮想通貨ウォレット特化・個人のライフ管理は別途必要',
+      'DeFi/NFT特化・個人のAI管理は別途必要',
+      'MetaMask/Ledger/Phantomと比較してEVM以外のチェーン対応・ハードウェア連携が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '100+チェーン・DeFi/NFT統合・Web3ブラウザ・ステーキング・スワップ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'exodus-wallet': const _CompetitorInfo(
+    name: 'Exodus',
+    emoji: '🔮',
+    tagline: 'デスクトップ/モバイル暗号ウォレット・美しいUI・300+資産・DeFi統合で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Exodus代替 暗号通貨ウォレット デスクトップ モバイル DeFi Trust Wallet代替 MetaMask代替',
+    accentColor: Color(0xFF0B47EF),
+    painPoints: [
+      '無料・暗号ウォレット特化・個人のライフ管理は別途必要',
+      '仮想通貨特化・個人のAI管理は別途必要',
+      'MetaMask/Trust Walletと比較してハードウェアウォレット連携・オープンソースでない点が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '300+資産・デスクトップ/モバイル・DeFi・Trezor連携・美しいUI',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'kraken': const _CompetitorInfo(
+    name: 'Kraken',
+    emoji: '🦑',
+    tagline: 'セキュリティ重視暗号取引所・Kraken Pro・先物・ステーキング・規制対応で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Kraken代替 仮想通貨取引所 セキュリティ 先物 ステーキング Binance代替 Coinbase代替',
+    accentColor: Color(0xFF5741D9),
+    painPoints: [
+      '手数料あり・暗号取引所特化・個人のライフ管理は別途必要',
+      '暗号資産特化・個人のAI管理は別途必要',
+      'Binance/Coinbase/Bybitと比較してアルトコイン数・デリバティブ機能が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'スポット/先物取引・ステーキング・NFT・Kraken Pro・規制準拠',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'kucoin': const _CompetitorInfo(
+    name: 'KuCoin',
+    emoji: '🌐',
+    tagline: '「People Exchange」・700+仮想通貨・レンディング・ボット取引・KCS保有優遇で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'KuCoin代替 仮想通貨取引所 アルトコイン ボット取引 レンディング Binance代替 グローバル',
+    accentColor: Color(0xFF24AE8F),
+    painPoints: [
+      '手数料あり・暗号取引所特化・個人のライフ管理は別途必要',
+      '暗号資産特化・個人のAI管理は別途必要',
+      'Binance/Bybitと比較して規制対応・日本語サポート・流動性が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '700+通貨・レンディング/ステーキング・ボット・KCS優遇・P2P',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
