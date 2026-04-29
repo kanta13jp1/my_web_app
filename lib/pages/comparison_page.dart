@@ -56820,6 +56820,330 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'pinecone': const _CompetitorInfo(
+    name: 'Pinecone',
+    emoji: '🌲',
+    tagline:
+        'Pinecone・マネージドベクターDB・高速類似度検索・スケーラブル・AIアプリ基盤・セマンティック検索・RAGで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Pinecone代替 マネージドベクターDB 類似度検索 スケーラブル AIアプリ RAG セマンティック Weaviate代替 Qdrant代替',
+    accentColor: Color(0xFF24B36B),
+    painPoints: [
+      '有料・ベクターDB特化・個人のライフ管理は別途必要',
+      'MLエンジニア特化・個人のAI管理は別途必要',
+      'Weaviate/Qdrant/Milvus との比較でコスト・ベンダーロックイン・OSS代替が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'マネージドベクターDB・高速類似度検索・スケーラブル・RAG・セマンティック検索',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'opensearch-vector': const _CompetitorInfo(
+    name: 'OpenSearch (Vector)',
+    emoji: '🔍',
+    tagline:
+        'OpenSearch・ベクター検索・k-NN・ハイブリッド検索・Elasticsearch互換・OSS・AWS管理サービスで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'OpenSearch Vector代替 ベクター検索 k-NN ハイブリッド検索 Elasticsearch互換 OSS AWS Pinecone代替',
+    accentColor: Color(0xFF005EB8),
+    painPoints: [
+      '無料(OSS)・検索DB特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Pinecone/Weaviate/Qdrant との比較でベクター専用最適化・スケーラビリティが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ベクター検索・k-NN・ハイブリッド検索・Elasticsearch互換・OSS・AWS管理',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'faiss': const _CompetitorInfo(
+    name: 'FAISS',
+    emoji: '⚡',
+    tagline:
+        'FAISS・Facebook AI・高速類似度検索・クラスタリング・OSS・ライブラリ・GPU対応・大規模ベクター処理で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'FAISS代替 Facebook AI 類似度検索 クラスタリング OSS GPU 大規模ベクター Annoy代替 ScaNN代替',
+    accentColor: Color(0xFF1877F2),
+    painPoints: [
+      '無料(OSS)・ライブラリ特化・個人のライフ管理は別途必要',
+      '技術者向け(ライブラリ)・個人のAI管理は別途必要',
+      'Pinecone/Weaviate との比較でマネージドサービス・スケーリング・クエリAPIが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '高速類似度検索・クラスタリング・GPU対応・大規模ベクター・Facebook AI製',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'elasticsearch-vector': const _CompetitorInfo(
+    name: 'Elasticsearch (Vector)',
+    emoji: '🔎',
+    tagline:
+        'Elasticsearch・ベクター検索・kNN・ハイブリッド検索・全文検索・リアルタイム・Elastic Stack統合で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Elasticsearch Vector代替 ベクター検索 kNN ハイブリッド 全文検索 リアルタイム Elastic Stack Pinecone代替 OpenSearch代替',
+    accentColor: Color(0xFFF04E98),
+    painPoints: [
+      '有料(Cloud)/無料(OSS)・検索DB特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Pinecone/Weaviate との比較でベクター専用最適化・クラスタ管理・コストが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ベクター検索・kNN・ハイブリッド検索・全文検索・リアルタイム・Elastic Stack',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'turbopuffer': const _CompetitorInfo(
+    name: 'Turbopuffer',
+    emoji: '🐡',
+    tagline:
+        'Turbopuffer・高速サーバーレスベクターDB・低コスト・メタデータフィルタ・スケーラブル・次世代ベクター検索で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Turbopuffer代替 サーバーレスベクターDB 低コスト メタデータフィルタ スケーラブル 次世代 Pinecone代替 Qdrant代替',
+    accentColor: Color(0xFF00C8FF),
+    painPoints: [
+      '有料・ベクターDB特化・個人のライフ管理は別途必要',
+      'MLエンジニア特化・個人のAI管理は別途必要',
+      'Pinecone/Qdrant との比較でエコシステム規模・実績・統合コネクタが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'サーバーレスベクターDB・低コスト・メタデータフィルタ・スケーラブル',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'deeplake': const _CompetitorInfo(
+    name: 'Deep Lake',
+    emoji: '🏞️',
+    tagline:
+        'Deep Lake・AI向けデータレイク・ベクターDB・マルチモーダル・PyTorch/TF統合・バージョン管理・Activeloopで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Deep Lake代替 AI データレイク ベクターDB マルチモーダル PyTorch TF バージョン管理 Activeloop Pinecone代替',
+    accentColor: Color(0xFF0D47A1),
+    painPoints: [
+      '有料/無料(OSS)・AIデータ管理特化・個人のライフ管理は別途必要',
+      'MLエンジニア特化・個人のAI管理は別途必要',
+      'Pinecone/Weaviate との比較でシンプルベクター検索・マネージドサービス・エコシステムが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AI向けデータレイク・ベクターDB・マルチモーダル・PyTorch/TF統合・バージョン管理',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'vald': const _CompetitorInfo(
+    name: 'Vald',
+    emoji: '🛡️',
+    tagline:
+        'Vald・分散ベクター検索エンジン・Yahoo! JAPAN製・NGT・高可用性・Kubernetes・クラウドネイティブで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Vald代替 分散ベクター検索 Yahoo JAPAN NGT 高可用性 Kubernetes クラウドネイティブ Milvus代替 Weaviate代替',
+    accentColor: Color(0xFFFF0033),
+    painPoints: [
+      '無料(OSS)・ベクター検索特化・個人のライフ管理は別途必要',
+      '技術者/K8s特化・個人のAI管理は別途必要',
+      'Milvus/Weaviate との比較でエコシステム規模・管理ツール・コミュニティが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '分散ベクター検索・Yahoo JAPAN製・NGT・高可用性・Kubernetes・クラウドネイティブ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'mongodb-atlas-vector': const _CompetitorInfo(
+    name: 'MongoDB Atlas Vector Search',
+    emoji: '🍃',
+    tagline:
+        'MongoDB Atlas Vector Search・ドキュメントDB統合ベクター検索・Atlas AI・ハイブリッド検索・セマンティックRAGで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'MongoDB Atlas Vector Search代替 ドキュメントDB ベクター検索 Atlas AI ハイブリッド RAG セマンティック Pinecone代替',
+    accentColor: Color(0xFF00ED64),
+    painPoints: [
+      '有料・MongoDB特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Pinecone/Qdrant との比較でベクター専用最適化・スケール・純粋ベクターDBパフォーマンスが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ドキュメントDB統合ベクター・Atlas AI・ハイブリッド検索・セマンティックRAG',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'singlestore': const _CompetitorInfo(
+    name: 'SingleStore',
+    emoji: '💎',
+    tagline:
+        'SingleStore・分散SQLデータベース・ベクター検索・リアルタイム分析・FullText・HTAP・AIアプリ統合で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'SingleStore代替 分散SQL ベクター検索 リアルタイム分析 HTAP AIアプリ SnappyData代替 TiDB代替',
+    accentColor: Color(0xFFAA00FF),
+    painPoints: [
+      '有料・分散DB特化・個人のライフ管理は別途必要',
+      'データエンジニア特化・個人のAI管理は別途必要',
+      'Snowflake/BigQuery/TiDB との比較でコスト・エコシステム規模・クラウドネイティブが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '分散SQLデータベース・ベクター検索・リアルタイム分析・HTAP・AIアプリ統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
