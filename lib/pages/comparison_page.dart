@@ -54179,6 +54179,312 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'bmc-helix': const _CompetitorInfo(
+    name: 'BMC Helix ITSM',
+    emoji: '🏗️',
+    tagline: 'BMC Helix ITSM・AIops・クラウドネイティブITSM・CMDB・ITSM自動化・コグニティブサービス管理で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'BMC Helix代替 ITSM AIops クラウドネイティブ CMDB 自動化 ServiceNow代替 Cherwell代替',
+    accentColor: Color(0xFFE31837),
+    painPoints: [
+      '有料・ITSM特化・個人のライフ管理は別途必要',
+      'エンタープライズ特化・個人のAI管理は別途必要',
+      'ServiceNow/Freshservice/Cherwell との比較でコスト・実装速度・UIが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Helix ITSM・AIops・CMDB・クラウドネイティブ・コグニティブサービス管理・自動化',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'cherwell': const _CompetitorInfo(
+    name: 'Cherwell (Ivanti)',
+    emoji: '🍒',
+    tagline: 'Cherwell Service Management・ノーコードITSM・柔軟カスタマイズ・ITSM/ITOM統合・Ivanti統合で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Cherwell代替 Ivanti ITSM ノーコード カスタマイズ ITOM ServiceNow代替 BMC代替',
+    accentColor: Color(0xFFD01F34),
+    painPoints: [
+      '有料・ITSM特化・個人のライフ管理は別途必要',
+      'エンタープライズ特化・個人のAI管理は別途必要',
+      'ServiceNow/BMC Helix/Freshservice との比較でコスト・クラウドネイティブ・AI機能が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ノーコードITSM・柔軟カスタマイズ・ITSM/ITOM統合・Ivanti統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'topdesk': const _CompetitorInfo(
+    name: 'TOPdesk',
+    emoji: '🟩',
+    tagline: 'TOPdesk・ITSM/CAFM/SSP・ヨーロッパ発・使いやすいITSM・中規模組織向け・セルフサービスポータルで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'TOPdesk代替 ITSM CAFM セルフサービス 中規模 ヨーロッパ ServiceNow代替 Freshservice代替',
+    accentColor: Color(0xFF0C8E4F),
+    painPoints: [
+      '有料・ITSM特化・個人のライフ管理は別途必要',
+      'IT/施設管理特化・個人のAI管理は別途必要',
+      'ServiceNow/Freshservice/BMC との比較でコスト・AI機能・グローバル展開が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ITSM/CAFM/SSP・セルフサービスポータル・中規模向け・使いやすさ重視',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'manageengine': const _CompetitorInfo(
+    name: 'ManageEngine ServiceDesk Plus',
+    emoji: '🔩',
+    tagline: 'ManageEngine ServiceDesk Plus・IT資産管理・パッチ・コスト効率・中小〜エンタープライズITSM・Zoho系で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'ManageEngine代替 ServiceDesk Plus ITSM IT資産管理 パッチ コスト効率 Zoho ServiceNow代替 Freshservice代替',
+    accentColor: Color(0xFFF05A28),
+    painPoints: [
+      '有料・ITSM/IT資産管理特化・個人のライフ管理は別途必要',
+      'IT管理特化・個人のAI管理は別途必要',
+      'ServiceNow/Freshservice/Jira Service との比較でUI/UX・AI機能・クラウドネイティブが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ServiceDesk Plus・IT資産管理・パッチ・コスト効率・ITSM/ITOM統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'sysaid': const _CompetitorInfo(
+    name: 'SysAid',
+    emoji: '🔧',
+    tagline: 'SysAid ITSM・AI自動化・ワークフロー・ヘルプデスク・資産管理・中規模IT向け・コスト効率型で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'SysAid代替 ITSM AI自動化 ヘルプデスク 資産管理 中規模 コスト効率 Freshservice代替 ManageEngine代替',
+    accentColor: Color(0xFF0057A8),
+    painPoints: [
+      '有料・ITSM特化・個人のライフ管理は別途必要',
+      'IT管理特化・個人のAI管理は別途必要',
+      'Freshservice/ManageEngine/ServiceNow との比較でコスト・AI機能・統合幅が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ITSM・AI自動化・ワークフロー・ヘルプデスク・資産管理・中規模IT',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'spiceworks': const _CompetitorInfo(
+    name: 'Spiceworks',
+    emoji: '🌶️',
+    tagline: '無料ヘルプデスク・IT管理ツール・スモールビジネス向け・クラウド/オンプレ・コミュニティ・広告モデルで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Spiceworks代替 無料ヘルプデスク IT管理 スモールビジネス クラウド コミュニティ Freshdesk代替 ManageEngine代替',
+    accentColor: Color(0xFFE05C00),
+    painPoints: [
+      '無料(広告モデル)・スモールビジネス特化・個人のライフ管理は別途必要',
+      'IT特化・個人のAI管理は別途必要',
+      'Freshdesk/ManageEngine/SysAid との比較でAI機能・スケール・エンタープライズ対応が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '無料ヘルプデスク・IT管理・クラウド/オンプレ・コミュニティ・スモールビジネス',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'easyvista': const _CompetitorInfo(
+    name: 'EasyVista',
+    emoji: '🟦',
+    tagline: 'EasyVista ITSM・ノーコード・ESM・AI自動化・ナレッジ管理・中規模組織向けサービス管理で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'EasyVista代替 ITSM ノーコード ESM AI自動化 ナレッジ管理 ServiceNow代替 TOPdesk代替',
+    accentColor: Color(0xFF0070CC),
+    painPoints: [
+      '有料・ITSM特化・個人のライフ管理は別途必要',
+      'IT管理特化・個人のAI管理は別途必要',
+      'ServiceNow/TOPdesk/BMC との比較でコスト・大規模対応・AI精度が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ITSM・ノーコード・ESM・AI自動化・ナレッジ管理・中規模サービス管理',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'invgate': const _CompetitorInfo(
+    name: 'InvGate',
+    emoji: '🎯',
+    tagline: 'InvGate Service Desk・Asset Management・ITSM・ITAMソリューション・ラテンアメリカ発・中規模向けで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'InvGate代替 ITSM ITAM IT資産管理 Service Desk 中規模 Freshservice代替 ManageEngine代替',
+    accentColor: Color(0xFF7C3AED),
+    painPoints: [
+      '有料・ITSM/ITAM特化・個人のライフ管理は別途必要',
+      'IT管理特化・個人のAI管理は別途必要',
+      'ServiceNow/Freshservice/ManageEngine との比較でコスト・AI機能・エコシステムが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ITSM・ITAM・IT資産管理・Service Desk・中規模向け統合IT管理',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'happyfox': const _CompetitorInfo(
+    name: 'HappyFox',
+    emoji: '🦊',
+    tagline: 'HappyFox・ヘルプデスク・AI自動化・ワークフロー・多チャネル・ITSM・カスタマーサポートとITサポート統合で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'HappyFox代替 ヘルプデスク AI自動化 ワークフロー 多チャネル ITSM Freshdesk代替 Zendesk代替',
+    accentColor: Color(0xFFFF6B35),
+    painPoints: [
+      '有料・ヘルプデスク特化・個人のライフ管理は別途必要',
+      'カスタマーサポート特化・個人のAI管理は別途必要',
+      'Freshdesk/Zendesk/SysAid との比較でコスト・AI精度・エンタープライズ機能が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ヘルプデスク・AI自動化・多チャネル・ITSM・カスタマー/ITサポート統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
