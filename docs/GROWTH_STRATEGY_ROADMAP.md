@@ -24323,3 +24323,10 @@ screenshot 受領 → 5 質問判定 → ファイル特定 → cross-instance-p
 - 450〜510kg: +0.01 (理想体重帯) / ≤430kg: -0.01 (軽量リスク) / ≥560kg: -0.01 (重量リスク) / その他: 0
 - プロンプト記載リスク基準(430kg未満/560kg超)をconfidence式に統合
 - confidence式 39 terms体制確立
+
+## 2026-04-29 PS#6 S124 — prevTimeGapBonus 前走タイム差補正 (40 terms)
+- prevTimeGapBonus追加: 前走タイム(prev_time)と持ち時計(best_time)の差による補正
+- ≥2秒遅い: -0.01 (調子落ちリスク) / ≤0.3秒差: +0.01 (好調維持) / その他: 0
+- プロンプト記載「2秒以上遅い=調子落ち」基準をconfidence式に統合
+- timeToSecondsTS関数を活用してタイム文字列を秒に変換
+- confidence式 40 terms体制確立
