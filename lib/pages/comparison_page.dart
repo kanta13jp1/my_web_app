@@ -63371,6 +63371,312 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'kafka': const _CompetitorInfo(
+    name: 'Apache Kafka',
+    emoji: '📨',
+    tagline: 'Apache Kafka・分散イベントストリーミング・高スループット・耐障害性・リアルタイム・ログ集約・ストリーム処理・LinkedIn発・OSS・業界標準・RabbitMQ代替で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Apache Kafka代替 分散イベントストリーミング 高スループット リアルタイム ログ集約 RabbitMQ代替 Pulsar代替',
+    accentColor: Color(0xFF231F20),
+    painPoints: [
+      '無料(OSS)/有料(Confluent)・ストリーミング特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'RabbitMQ/Pulsar との比較で運用複雑さ・Zookeeper依存・学習コストが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '分散イベントストリーミング・高スループット・耐障害性・リアルタイム',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'pulsar': const _CompetitorInfo(
+    name: 'Apache Pulsar',
+    emoji: '⭐',
+    tagline: 'Apache Pulsar・マルチテナントメッセージング・ストリーミング・地理分散・階層型ストレージ・Kafka代替・Yahoo発・OSS・Functions・Connectors・低レイテンシで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Apache Pulsar代替 マルチテナント メッセージング ストリーミング 地理分散 Kafka代替 RabbitMQ代替',
+    accentColor: Color(0xFF188FFF),
+    painPoints: [
+      '無料(OSS)/有料(StreamNative)・メッセージング特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Kafka との比較でエコシステム規模・ツール数・採用実績・ドキュメントが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'マルチテナントメッセージング・地理分散・階層型ストレージ・Functions',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'activemq': const _CompetitorInfo(
+    name: 'ActiveMQ',
+    emoji: '📬',
+    tagline: 'ActiveMQ・Apache JMSブローカー・AMQP/STOMP/MQTT/OpenWire・Java/Spring統合・エンタープライズ・クラスタリング・OSS・RabbitMQ代替・Artemis後継で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'ActiveMQ代替 Apache JMS AMQP STOMP MQTT Java Spring エンタープライズ RabbitMQ代替 Kafka代替',
+    accentColor: Color(0xFF8A2BE2),
+    painPoints: [
+      '無料(OSS)・JMSブローカー特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'RabbitMQ/Kafka との比較でパフォーマンス・クラウドネイティブ対応・開発速度が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'JMSブローカー・AMQP/STOMP/MQTT・Java/Spring統合・エンタープライズ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'celery': const _CompetitorInfo(
+    name: 'Celery',
+    emoji: '🥬',
+    tagline: 'Celery・Python分散タスクキュー・非同期処理・スケジューラー・Redis/RabbitMQブローカー・リトライ・モニタリング・OSS・Django/Flask統合・バックグラウンドジョブで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Celery代替 Python 分散タスクキュー 非同期処理 スケジューラー Django Flask Redis バックグラウンドジョブ',
+    accentColor: Color(0xFF37814A),
+    painPoints: [
+      '無料(OSS)・Python タスクキュー特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Dramatiq/Rq との比較でデバッグ難易度・設定複雑さ・メモリ使用量が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Python分散タスクキュー・非同期処理・スケジューラー・リトライ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'bullmq': const _CompetitorInfo(
+    name: 'BullMQ',
+    emoji: '🐂',
+    tagline: 'BullMQ・Node.js Redisジョブキュー・優先度・遅延・リトライ・並行処理・スケジュール・フロー・Bull後継・TypeScript・OSS・Agenda代替で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'BullMQ代替 Node.js Redis ジョブキュー 優先度 遅延 リトライ TypeScript Bull後継 Agenda代替',
+    accentColor: Color(0xFFFF6B6B),
+    painPoints: [
+      '無料(OSS)・Node.jsジョブキュー特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Agenda/Bee-Queue との比較でRedis必須・スケーリング・クラスタリング設定が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Node.js Redisジョブキュー・優先度・遅延・リトライ・フロー・TypeScript',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'sqs': const _CompetitorInfo(
+    name: 'Amazon SQS',
+    emoji: '📩',
+    tagline: 'Amazon SQS・AWS マネージドメッセージキュー・フルマネージド・スケーラブル・標準/FIFOキュー・デッドレターキュー・SNS統合・サーバーレス対応・従量課金で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Amazon SQS代替 AWS マネージドメッセージキュー スケーラブル FIFO デッドレターキュー RabbitMQ代替 Kafka代替',
+    accentColor: Color(0xFFFF9900),
+    painPoints: [
+      '従量課金・AWSエコシステム依存・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Kafka/RabbitMQ との比較でベンダーロックイン・コスト・ストリーミング機能が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AWSマネージドMQ・フルマネージド・スケーラブル・FIFO・デッドレター',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'zeromq': const _CompetitorInfo(
+    name: 'ZeroMQ',
+    emoji: '⚡',
+    tagline: 'ZeroMQ・高性能非同期メッセージングライブラリ・ブローカーレス・多パターン(pub-sub/push-pull/req-rep)・多言語・低レイテンシ・OSS・分散システム基盤で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'ZeroMQ代替 高性能 非同期メッセージング ブローカーレス pub-sub push-pull 分散システム RabbitMQ代替',
+    accentColor: Color(0xFFDF0000),
+    painPoints: [
+      '無料(OSS)・低レベルメッセージングライブラリ特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'RabbitMQ/Kafka との比較で永続化なし・管理UI不在・運用複雑さが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '高性能非同期メッセージング・ブローカーレス・多パターン・低レイテンシ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'redis-streams': const _CompetitorInfo(
+    name: 'Redis Streams',
+    emoji: '🌊',
+    tagline: 'Redis Streams・Redisネイティブストリーミング・消費者グループ・永続化・低レイテンシ・Kafka代替・インメモリ・AOF/RDB永続化・OSS・Redis Stack一部で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Redis Streams代替 Redisストリーミング 消費者グループ 低レイテンシ Kafka代替 インメモリ Pub/Sub代替',
+    accentColor: Color(0xFFDC382D),
+    painPoints: [
+      '無料(OSS)/有料(Redis Cloud)・Redisストリーミング特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Kafka/Pulsar との比較でスケール限界・エコシステム・専用ストリーミング機能が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Redisネイティブストリーミング・消費者グループ・低レイテンシ・永続化',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'temporal': const _CompetitorInfo(
+    name: 'Temporal',
+    emoji: '⏱️',
+    tagline: 'Temporal・耐障害性ワークフローエンジン・Cadence後継・コードファーストワークフロー・長期実行・リトライ・タイムアウト・可視性・多言語SDK・OSS・Airflow代替で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Temporal代替 耐障害性ワークフロー コードファースト 長期実行 リトライ Cadence後継 Airflow代替 Conductor代替',
+    accentColor: Color(0xFF141414),
+    painPoints: [
+      '無料(OSS)/有料(Temporal Cloud)・ワークフローエンジン特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Airflow/Conductor との比較でインフラ複雑さ・学習コスト・エコシステム規模が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '耐障害性ワークフローエンジン・コードファースト・長期実行・リトライ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------

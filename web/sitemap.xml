@@ -4210,4 +4210,13 @@
   <url><loc>https://my-web-app-b67f4.web.app/vs-apisix</loc><lastmod>2026-04-29</lastmod></url>
   <url><loc>https://my-web-app-b67f4.web.app/vs-nginx-unit</loc><lastmod>2026-04-29</lastmod></url>
   <url><loc>https://my-web-app-b67f4.web.app/vs-swagger</loc><lastmod>2026-04-29</lastmod></url>
+  <url><loc>https://my-web-app-b67f4.web.app/vs-kafka</loc><lastmod>2026-04-29</lastmod></url>
+  <url><loc>https://my-web-app-b67f4.web.app/vs-pulsar</loc><lastmod>2026-04-29</lastmod></url>
+  <url><loc>https://my-web-app-b67f4.web.app/vs-activemq</loc><lastmod>2026-04-29</lastmod></url>
+  <url><loc>https://my-web-app-b67f4.web.app/vs-celery</loc><lastmod>2026-04-29</lastmod></url>
+  <url><loc>https://my-web-app-b67f4.web.app/vs-bullmq</loc><lastmod>2026-04-29</lastmod></url>
+  <url><loc>https://my-web-app-b67f4.web.app/vs-sqs</loc><lastmod>2026-04-29</lastmod></url>
+  <url><loc>https://my-web-app-b67f4.web.app/vs-zeromq</loc><lastmod>2026-04-29</lastmod></url>
+  <url><loc>https://my-web-app-b67f4.web.app/vs-redis-streams</loc><lastmod>2026-04-29</lastmod></url>
+  <url><loc>https://my-web-app-b67f4.web.app/vs-temporal</loc><lastmod>2026-04-29</lastmod></url>
 </urlset>
