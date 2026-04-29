@@ -14109,6 +14109,312 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'posthog': const _CompetitorInfo(
+    name: 'PostHog',
+    emoji: '🦔',
+    tagline: 'オープンソースプロダクト分析で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'PostHog代替 プロダクト分析 オープンソース アナリティクス',
+    accentColor: Color(0xFFF54E00),
+    painPoints: [
+      'セルフホストは無料だがインフラ管理・運用コストが発生する',
+      'プロダクト分析特化で個人ライフ管理・財務・タスクは別途必要',
+      '技術者向けで非エンジニアにはセットアップ障壁が高い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'セッション録画・ヒートマップ・A/Bテスト・フィーチャーフラグ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'jotform': const _CompetitorInfo(
+    name: 'Jotform',
+    emoji: '📋',
+    tagline: 'ドラッグ&ドロップフォーム作成で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Jotform代替 フォーム作成 アンケート ノーコード',
+    accentColor: Color(0xFFFF6B00),
+    painPoints: [
+      '月額34ドル〜・無料プランは月100件の送信制限',
+      'フォーム作成に特化し財務・タスク・AI管理は別途必要',
+      '高度な条件分岐やPDFは上位プラン限定',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '10000+テンプレ・電子署名・決済統合・条件分岐フォーム',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'shortcut': const _CompetitorInfo(
+    name: 'Shortcut',
+    emoji: '⚡',
+    tagline: 'ソフトウェア開発プロジェクト管理で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Shortcut代替 プロジェクト管理 スプリント管理 Clubhouse',
+    accentColor: Color(0xFF7C3AED),
+    painPoints: [
+      '月額8.50ドル/人〜・Jira代替として人気だがチーム向け価格設定',
+      'スプリント・ストーリー管理特化で個人利用には機能過多',
+      '財務・習慣・メモ管理は別アプリが必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'スプリント・ストーリー・エピック・バックログ管理',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'contentful': const _CompetitorInfo(
+    name: 'Contentful',
+    emoji: '📦',
+    tagline: 'ヘッドレスCMSコンテンツ管理で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Contentful代替 ヘッドレスCMS コンテンツ管理',
+    accentColor: Color(0xFF2478CC),
+    painPoints: [
+      '月額300ドル〜(本番)・エンタープライズ価格で個人・小規模には高すぎる',
+      'コンテンツ管理特化で個人ライフ管理・AI機能は別途必要',
+      'APIベース設計で非エンジニアには導入ハードルが高い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'コンテンツモデリング・マルチロケール・富なAPIエコシステム',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'strapi': const _CompetitorInfo(
+    name: 'Strapi',
+    emoji: '🎯',
+    tagline: 'オープンソースヘッドレスCMSで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Strapi代替 ヘッドレスCMS オープンソース Node.js',
+    accentColor: Color(0xFF2F2BD6),
+    painPoints: [
+      'セルフホストは無料だがホスティング・メンテナンスコストが発生',
+      'CMS特化で個人の財務・習慣・目標管理は別アプリが必要',
+      'Node.js知識が前提で非エンジニアには設定が難しい',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'REST/GraphQL API自動生成・カスタムプラグイン・マルチDB',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'sanity': const _CompetitorInfo(
+    name: 'Sanity',
+    emoji: '🟢',
+    tagline: 'リアルタイム共同編集CMSで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Sanity代替 ヘッドレスCMS リアルタイム共同編集',
+    accentColor: Color(0xFFF03E2F),
+    painPoints: [
+      '月額15ドル〜・無料プランはシート数・APIコール数に制限あり',
+      'コンテンツ管理特化で個人ライフ管理・AI機能は別途必要',
+      'GROQ独自クエリ言語の学習コストが必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'リアルタイム共同編集・Portable Text・柔軟スキーマ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'pocketbase': const _CompetitorInfo(
+    name: 'PocketBase',
+    emoji: '🗂️',
+    tagline: 'SQLite一体型オープンソースBaaSで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'PocketBase代替 Firebase代替 オープンソース BaaS バックエンド',
+    accentColor: Color(0xFFB8C0FF),
+    painPoints: [
+      'セルフホスト必須でインフラ管理・スケーリングは自己責任',
+      'バックエンド機能特化で個人ライフ管理・AI機能は別途必要',
+      'エコシステムが発展途上でドキュメント・サポートが限定的',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'リアルタイムDB・Auth・ファイル管理をシングルバイナリで提供',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'appwrite': const _CompetitorInfo(
+    name: 'Appwrite',
+    emoji: '✏️',
+    tagline: 'オープンソース統合BaaSで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Appwrite代替 Firebase代替 オープンソース バックエンドサービス',
+    accentColor: Color(0xFFFD366E),
+    painPoints: [
+      'セルフホストは無料だがDockerセットアップ・運用コストが発生',
+      'バックエンドサービス特化で個人ライフ管理・AI機能は別途必要',
+      '大規模スケーリングの実績がSupabase・Firebaseより少ない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Auth・DB・Storage・Functions・Realtime・Messaging統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'directus': const _CompetitorInfo(
+    name: 'Directus',
+    emoji: '🔷',
+    tagline: 'ノーコードデータプラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Directus代替 ヘッドレスCMS ノーコード データ管理',
+    accentColor: Color(0xFF6644FF),
+    painPoints: [
+      'クラウド版月額15ドル〜・セルフホストは無料だが運用負担が大きい',
+      'データ管理特化で個人ライフ管理・AI機能は別途必要',
+      '柔軟すぎる設計で小規模プロジェクトには設定が過多',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '既存DBをノーコードで包む・動的API生成・ロールベース権限',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
