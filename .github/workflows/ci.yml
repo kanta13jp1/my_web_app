@@ -147,7 +147,18 @@ jobs:
 
       - name: Run VM tests
         id: flutter_test
-        run: flutter test --coverage
+        run: |
+          mapfile -t VM_TESTS < <(
+            find test -name "*_test.dart" -print \
+              | sort \
+              | xargs grep -L "@TestOn('browser')" || true
+          )
+          if [ "${#VM_TESTS[@]}" -eq 0 ]; then
+            echo "No VM-compatible Flutter tests found."
+            exit 0
+          fi
+          printf 'Running %s VM-compatible Flutter test files.\n' "${#VM_TESTS[@]}"
+          flutter test --coverage "${VM_TESTS[@]}"
         continue-on-error: false  # VSCode S21: 9 test files @TestOn('browser') 追加で VM contamination 完全解消
 
       - name: Run web import smoke tests
