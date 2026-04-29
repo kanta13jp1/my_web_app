@@ -57144,6 +57144,330 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'neo4j': const _CompetitorInfo(
+    name: 'Neo4j',
+    emoji: '🕸️',
+    tagline:
+        'Neo4j・グラフデータベース・Cypher・知識グラフ・関係性分析・フォローフォロワー・推薦エンジンで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Neo4j代替 グラフDB Cypher 知識グラフ 関係性分析 推薦エンジン ArangoDB代替 TigerGraph代替',
+    accentColor: Color(0xFF018BFF),
+    painPoints: [
+      '有料(Enterprise)/無料(Community)・グラフDB特化・個人のライフ管理は別途必要',
+      'グラフデータ特化・個人のAI管理は別途必要',
+      'ArangoDB/TigerGraph/Amazon Neptune との比較でコスト・マルチモデル・クラウド対応が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'グラフDB・Cypher・知識グラフ・関係性分析・推薦エンジン',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'amazon-neptune': const _CompetitorInfo(
+    name: 'Amazon Neptune',
+    emoji: '🔵',
+    tagline:
+        'Amazon Neptune・マネージドグラフDB・Gremlin/SPARQL/openCypher・高可用性・AWS統合・知識グラフで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Amazon Neptune代替 マネージドグラフDB Gremlin SPARQL openCypher AWS 知識グラフ Neo4j代替 TigerGraph代替',
+    accentColor: Color(0xFF527FFF),
+    painPoints: [
+      '有料(従量課金)・AWS特化・個人のライフ管理は別途必要',
+      'グラフデータ特化・個人のAI管理は別途必要',
+      'Neo4j/TigerGraph/ArangoDB との比較でAWS以外環境・コスト予測・グラフ専用機能が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'マネージドグラフDB・Gremlin/SPARQL/openCypher・高可用性・AWS統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'tigergraph': const _CompetitorInfo(
+    name: 'TigerGraph',
+    emoji: '🐯',
+    tagline:
+        'TigerGraph・エンタープライズグラフDB・GSQL・リアルタイム分析・AI/ML統合・詐欺検知・推薦システムで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'TigerGraph代替 エンタープライズグラフDB GSQL リアルタイム AI ML 詐欺検知 推薦システム Neo4j代替',
+    accentColor: Color(0xFFFF6600),
+    painPoints: [
+      '高額・エンタープライズグラフDB特化・個人のライフ管理は別途必要',
+      'データエンジニア特化・個人のAI管理は別途必要',
+      'Neo4j/Neptune との比較でコスト・OSS選択肢・コミュニティ規模が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'エンタープライズグラフDB・GSQL・リアルタイム分析・AI/ML統合・詐欺検知',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'arangodb': const _CompetitorInfo(
+    name: 'ArangoDB',
+    emoji: '🗃️',
+    tagline:
+        'ArangoDB・マルチモデルDB・グラフ/ドキュメント/キーバリュー・AQL・OSS・GeoJSON・フルテキスト検索で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'ArangoDB代替 マルチモデルDB グラフ ドキュメント キーバリュー AQL OSS GeoJSON Neo4j代替 MongoDB代替',
+    accentColor: Color(0xFF68BC43),
+    painPoints: [
+      '無料(OSS)/有料・マルチモデルDB特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Neo4j/MongoDB との比較でグラフ専用最適化・エコシステム規模・採用実績が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'マルチモデルDB・グラフ/ドキュメント/KV・AQL・OSS・GeoJSON',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'cassandra': const _CompetitorInfo(
+    name: 'Apache Cassandra',
+    emoji: '💽',
+    tagline:
+        'Apache Cassandra・分散NoSQL・高可用性・線形スケール・時系列・ワイドカラム・Facebook/Netflix採用で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Apache Cassandra代替 分散NoSQL 高可用性 線形スケール 時系列 ワイドカラム DynamoDB代替 HBase代替',
+    accentColor: Color(0xFF1287B1),
+    painPoints: [
+      '無料(OSS)・分散DB特化・個人のライフ管理は別途必要',
+      '高度な技術知識必須・個人のAI管理は別途必要',
+      'DynamoDB/MongoDB との比較でクエリ柔軟性・管理負荷・結合処理が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '分散NoSQL・高可用性・線形スケール・時系列・ワイドカラム・Facebook/Netflix',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'couchdb': const _CompetitorInfo(
+    name: 'Apache CouchDB',
+    emoji: '🛋️',
+    tagline:
+        'Apache CouchDB・ドキュメントDB・MapReduce・HTTP API・オフライン同期・PouchDB・Erlang製で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Apache CouchDB代替 ドキュメントDB MapReduce HTTP API オフライン同期 PouchDB Erlang MongoDB代替',
+    accentColor: Color(0xFFE42528),
+    painPoints: [
+      '無料(OSS)・ドキュメントDB特化・個人のライフ管理は別途必要',
+      '技術者特化・個人のAI管理は別途必要',
+      'MongoDB/Firestore との比較でエコシステム規模・クエリ機能・インデックスが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ドキュメントDB・MapReduce・HTTP API・オフライン同期・PouchDB・Erlang',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'couchbase': const _CompetitorInfo(
+    name: 'Couchbase',
+    emoji: '🪣',
+    tagline:
+        'Couchbase・マルチモデルNoSQL・N1QL・メモリファースト・分散・モバイル同期・エンタープライズで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Couchbase代替 マルチモデルNoSQL N1QL メモリファースト 分散 モバイル同期 エンタープライズ MongoDB代替 DynamoDB代替',
+    accentColor: Color(0xFFED2226),
+    painPoints: [
+      '有料・エンタープライズNoSQL特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'MongoDB/DynamoDB との比較でコスト・マネージドサービス・エコシステムが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'マルチモデルNoSQL・N1QL・メモリファースト・分散・モバイル同期・エンタープライズ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'janusgraph': const _CompetitorInfo(
+    name: 'JanusGraph',
+    emoji: '🏛️',
+    tagline:
+        'JanusGraph・OSSスケーラブルグラフDB・Gremlin・Cassandra/HBase/BerkeleyDB対応・OLAP/OLTP統合で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'JanusGraph代替 OSS スケーラブルグラフDB Gremlin Cassandra HBase BerkeleyDB OLAP OLTP Neo4j代替',
+    accentColor: Color(0xFF4A4A8A),
+    painPoints: [
+      '無料(OSS)・グラフDB特化・個人のライフ管理は別途必要',
+      '高度なグラフ/分散技術必須・個人のAI管理は別途必要',
+      'Neo4j/Neptune との比較で管理負荷・UI/ツール・エコシステム成熟度が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'OSSスケーラブルグラフDB・Gremlin・Cassandra/HBase対応・OLAP/OLTP統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'dgraph': const _CompetitorInfo(
+    name: 'Dgraph',
+    emoji: '🔗',
+    tagline:
+        'Dgraph・ネイティブグラフDB・GraphQL・DQL・分散・高パフォーマンス・低レイテンシ・OSS/Hyperで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Dgraph代替 ネイティブグラフDB GraphQL DQL 分散 高パフォーマンス 低レイテンシ OSS Neo4j代替 ArangoDB代替',
+    accentColor: Color(0xFF00C8FF),
+    painPoints: [
+      '無料(OSS)/有料(Hyper)・グラフDB特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Neo4j/ArangoDB との比較でコミュニティ規模・ツール成熟度・エコシステムが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ネイティブグラフDB・GraphQL・DQL・分散・高パフォーマンス・低レイテンシ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
