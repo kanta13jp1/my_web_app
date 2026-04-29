@@ -37139,6 +37139,312 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  '15five': const _CompetitorInfo(
+    name: '15Five',
+    emoji: '📊',
+    tagline: '従業員エンゲージメント・パフォーマンス管理・OKR追跡で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: '15Five代替 従業員エンゲージメント パフォーマンス管理 OKR 1on1 フィードバック',
+    accentColor: Color(0xFF6BA5FF),
+    painPoints: [
+      '月額4ドル/人〜・HR特化・個人のライフ管理は別途必要',
+      'マネージャー/従業員評価特化・個人のAI管理は別途必要',
+      'Lattice/Culture Ampと比較して採用・オンボーディング機能が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '週次チェックイン・パルスサーベイ・OKR・1on1・パフォーマンスレビュー',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  '360learning': const _CompetitorInfo(
+    name: '360Learning',
+    emoji: '🎓',
+    tagline: 'コラボレイティブラーニング・LMS・企業内ナレッジ共有で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: '360Learning代替 コラボレイティブラーニング LMS 企業学習 社内研修 コース作成',
+    accentColor: Color(0xFF00D2FF),
+    painPoints: [
+      '月額8ドル/人〜・LMS特化・個人のライフ管理は別途必要',
+      '企業学習特化・個人のAI管理は別途必要',
+      'Docebo/Cornerstoneと比較して高度なコンプライアンス・認証管理が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'コース作成・P2P学習・AIガイドコース・分析・LXP機能',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'absorblms': const _CompetitorInfo(
+    name: 'Absorb LMS',
+    emoji: '📚',
+    tagline: 'エンタープライズLMS・外部研修・eラーニングプラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Absorb LMS代替 LMS eラーニング 企業研修 コンプライアンス 外部学習',
+    accentColor: Color(0xFF0054A6),
+    painPoints: [
+      '月額高価格・LMS特化・個人のライフ管理は別途必要',
+      'エンタープライズ研修特化・個人のAI管理は別途必要',
+      '360Learning/TalentLMSと比較して中小企業には高コスト',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'コース管理・AI検索・eコマース・認証管理・高度なレポート',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'skillsoft': const _CompetitorInfo(
+    name: 'Skillsoft',
+    emoji: '🏅',
+    tagline: 'AI駆動企業学習・コンプライアンス・リーダーシップ開発プラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Skillsoft代替 AI企業学習 コンプライアンス リーダーシップ Percipio eラーニング',
+    accentColor: Color(0xFF1E3A5F),
+    painPoints: [
+      '月額高価格・エンタープライズ研修特化・個人のライフ管理は別途必要',
+      'コンプライアンス学習特化・個人のAI管理は別途必要',
+      'Pluralsight/360Learningと比較して技術者向けスキル評価が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AI学習プラットフォーム・コンプライアンス・コーチング・認定取得',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'buymeacoffee': const _CompetitorInfo(
+    name: 'Buy Me a Coffee',
+    emoji: '☕',
+    tagline: 'クリエイター支援・メンバーシップ・デジタルコンテンツ販売で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Buy Me a Coffee代替 クリエイター支援 メンバーシップ Ko-fi代替 Patreon代替 投げ銭',
+    accentColor: Color(0xFFFFDD00),
+    painPoints: [
+      '手数料5%・クリエイター収益化特化・個人のライフ管理は別途必要',
+      'コンテンツ販売特化・個人のAI管理は別途必要',
+      'Patreon/Ko-fiと比較してサブスクリプション管理・コミュニティ機能が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '一回払い・メンバーシップ・デジタル商品・Extras・ショップ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'memberful': const _CompetitorInfo(
+    name: 'Memberful',
+    emoji: '🎫',
+    tagline: 'Stripe統合メンバーシップ収益化・サブスクリプション管理で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Memberful代替 メンバーシップ Stripe サブスクリプション 収益化 Patreon代替 コミュニティ',
+    accentColor: Color(0xFF8A4FFF),
+    painPoints: [
+      '月額25ドル〜・メンバーシップ特化・個人のライフ管理は別途必要',
+      'コンテンツ会員制特化・個人のAI管理は別途必要',
+      'Patreon/Circle.soと比較してコミュニティ機能・ライブストリームが限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Stripe連携・メンバーポータル・ポッドキャスト・WordPress統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'kickstarter': const _CompetitorInfo(
+    name: 'Kickstarter',
+    emoji: '🚀',
+    tagline: 'クラウドファンディング・プロジェクト資金調達・バッカーコミュニティで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Kickstarter代替 クラウドファンディング 資金調達 プロジェクト Indiegogo代替 バッカー',
+    accentColor: Color(0xFF05CE78),
+    painPoints: [
+      '手数料5%・目標達成型特化・個人のライフ管理は別途必要',
+      'プロジェクト資金特化・個人のAI管理は別途必要',
+      'Indiegogo/GoFundMeと比較してプロジェクト失敗時に全額返金で継続収益が難しい',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'プロジェクト掲載・バッカー管理・リワード設定・コミュニティ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'indiegogo': const _CompetitorInfo(
+    name: 'Indiegogo',
+    emoji: '💡',
+    tagline: '柔軟なクラウドファンディング・InDemand継続販売・グローバル展開で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Indiegogo代替 クラウドファンディング 継続販売 グローバル Kickstarter代替 製品資金調達',
+    accentColor: Color(0xFFEB1478),
+    painPoints: [
+      '手数料5%・クラウドファンディング特化・個人のライフ管理は別途必要',
+      '製品資金特化・個人のAI管理は別途必要',
+      'Kickstarterと比較してクリエイティブ系・知名度・バッカー数が少ない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'フレキシブル資金・InDemand・アクセラレータープログラム・マーケットプレイス',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'mercury': const _CompetitorInfo(
+    name: 'Mercury',
+    emoji: '🏦',
+    tagline: 'スタートアップ向けビジネスバンキング・API・財務インフラで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Mercury代替 スタートアップ銀行 ビジネスバンキング API Brex代替 Ramp代替 財務管理',
+    accentColor: Color(0xFF0D0D0D),
+    painPoints: [
+      '無料〜・ビジネス銀行特化・個人のライフ管理は別途必要',
+      'スタートアップ財務特化・個人のAI管理は別途必要',
+      'Brex/Rampと比較して支出管理・コーポレートカード機能が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'チェッキング/セービング・API・Venmo/Stripe連携・IO Card',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
