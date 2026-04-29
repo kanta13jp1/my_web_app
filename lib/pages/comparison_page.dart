@@ -18257,6 +18257,312 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'new-relic': const _CompetitorInfo(
+    name: 'New Relic',
+    emoji: '📡',
+    tagline: 'フルスタック可観測性・APM・ログ分析で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'New Relic代替 APM 可観測性 ログ分析 パフォーマンス監視',
+    accentColor: Color(0xFF1CE783),
+    painPoints: [
+      '月額25ドル〜・データ量に応じた従量課金で大量ログ時にコスト急増',
+      '技術系APM特化で個人のライフ管理・AI管理・財務は別途必要',
+      'Datadogと比較してAPM以外のインフラ監視・クラウド統合が弱い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'APM・ログ・インフラ・ブラウザ・モバイル・合成監視統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'splunk': const _CompetitorInfo(
+    name: 'Splunk',
+    emoji: '🔍',
+    tagline: '機械データ・セキュリティインテリジェンスプラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Splunk代替 ログ分析 SIEM セキュリティ監視 機械データ',
+    accentColor: Color(0xFFFF6666),
+    painPoints: [
+      '年間ライセンス数百万円〜・エンタープライズ向けで個人や小規模には高額',
+      'ログ・セキュリティ特化でエンジニア向け・個人のライフ管理は別途必要',
+      'Elasticと比較してクラウドネイティブ移行が遅くインフラコストが高い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ログ集約・SIEM・SOAR・AI異常検知・コンプライアンス',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'pagerduty': const _CompetitorInfo(
+    name: 'PagerDuty',
+    emoji: '🚨',
+    tagline: 'インシデント管理・アラート自動化・オンコールで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'PagerDuty代替 インシデント管理 オンコール アラート DevOps',
+    accentColor: Color(0xFF25C151),
+    painPoints: [
+      '月額21ドル/人〜・高度な自動化はBusiness以上のプランが必要',
+      'インシデント管理特化でエンジニア向け・個人のライフ管理は別途必要',
+      'Opsgenieと比較して価格が高くスタートアップには割高',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'アラート集約・エスカレーション・AIOps・ポストモーテム・API',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'hootsuite': const _CompetitorInfo(
+    name: 'Hootsuite',
+    emoji: '🦉',
+    tagline: 'ソーシャルメディア一括管理・スケジュール投稿で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Hootsuite代替 ソーシャルメディア管理 SNS予約投稿 X Instagram',
+    accentColor: Color(0xFF000000),
+    painPoints: [
+      '月額99ドル〜・個人ブロガーには機能過剰・コストが高い',
+      'SNS管理特化で個人の財務・AI管理・習慣は別途必要',
+      'BufferやSprout Socialと比較してUIが古く操作性が悪い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'マルチプラットフォーム投稿・分析・ソーシャルリスニング・AI',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'buffer': const _CompetitorInfo(
+    name: 'Buffer',
+    emoji: '📱',
+    tagline: 'シンプルなSNS予約投稿・分析ツールで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Buffer代替 SNS予約投稿 ソーシャルメディア管理 X Instagram スケジュール',
+    accentColor: Color(0xFF2C4BFF),
+    painPoints: [
+      '月額6ドル/チャンネル〜・チャンネル数が増えると費用が増大',
+      'SNS予約投稿特化で個人の財務・AI会話・習慣は別途必要',
+      'Hootsuiteと比較してソーシャルリスニング・詳細分析機能が弱い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '予約投稿・分析・エンゲージメント・AIアシスタント・チーム',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'sprout-social': const _CompetitorInfo(
+    name: 'Sprout Social',
+    emoji: '🌱',
+    tagline: 'エンタープライズSNS管理・ソーシャルリスニングで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Sprout Social代替 ソーシャルメディア管理 エンタープライズ ブランド監視',
+    accentColor: Color(0xFF59CB59),
+    painPoints: [
+      '月額249ドル〜・エンタープライズ向けで個人や小規模には高額すぎ',
+      'エンタープライズSNS管理特化で個人のライフ管理・財務は別途必要',
+      'HootsuiteやBufferと比較してコストパフォーマンスが低い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'パブリッシュ・リスニング・分析・エンゲージメント・CRM連携',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'later': const _CompetitorInfo(
+    name: 'Later',
+    emoji: '📸',
+    tagline: 'Instagram特化ビジュアルSNSプランナーで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Later代替 Instagram予約投稿 ビジュアルプランナー TikTok SNS管理',
+    accentColor: Color(0xFFEE5D99),
+    painPoints: [
+      '月額18ドル〜・Instagram/TikTok特化で汎用SNS管理には機能が限定的',
+      'SNS予約特化で個人の財務・AI管理・目標は別途必要',
+      'Bufferと比較してTwitter/X対応が弱い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ビジュアルカレンダー・ハッシュタグ提案・リンクinバイオ・分析',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'planoly': const _CompetitorInfo(
+    name: 'Planoly',
+    emoji: '🎨',
+    tagline: 'ビジュアルInstagram・Pinterestプランニングで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Planoly代替 Instagram Pinterest ビジュアル投稿計画 SNS管理',
+    accentColor: Color(0xFF8673C0),
+    painPoints: [
+      '月額17ドル〜・Instagram/Pinterest特化で他SNS対応が限定的',
+      'SNSビジュアル管理特化で個人の財務・AI管理は別途必要',
+      'Laterと比較して分析・エンゲージメント機能が弱い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ビジュアルグリッドプランナー・自動投稿・コンテンツカレンダー',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'socialbee': const _CompetitorInfo(
+    name: 'SocialBee',
+    emoji: '🐝',
+    tagline: 'カテゴリベースSNS予約投稿・コンテンツリサイクルで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'SocialBee代替 SNS予約投稿 コンテンツリサイクル ソーシャルメディア',
+    accentColor: Color(0xFFFFCD00),
+    painPoints: [
+      '月額29ドル〜・コンテンツカテゴリ管理に慣れるまで学習コストがかかる',
+      'SNS投稿管理特化で個人のライフ管理・財務・AI管理は別途必要',
+      'Bufferと比較して分析・レポート機能が弱い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'カテゴリ投稿・リサイクル・AIコンテンツ生成・Canva統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
