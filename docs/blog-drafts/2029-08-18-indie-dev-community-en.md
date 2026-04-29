@@ -1,7 +1,7 @@
 ---
 title: "Indie Dev Community Building — Turning Users Into Champions"
 tags: indiedev,webdev,flutter,buildinpublic
-published: false
+published: true
 ---
 
 # Indie Dev Community Building — Turning Users Into Champions
