@@ -4129,4 +4129,13 @@
   <url><loc>https://my-web-app-b67f4.web.app/vs-maven</loc><lastmod>2026-04-29</lastmod></url>
   <url><loc>https://my-web-app-b67f4.web.app/vs-bazel</loc><lastmod>2026-04-29</lastmod></url>
   <url><loc>https://my-web-app-b67f4.web.app/vs-lerna</loc><lastmod>2026-04-29</lastmod></url>
+  <url><loc>https://my-web-app-b67f4.web.app/vs-jest</loc><lastmod>2026-04-29</lastmod></url>
+  <url><loc>https://my-web-app-b67f4.web.app/vs-vitest</loc><lastmod>2026-04-29</lastmod></url>
+  <url><loc>https://my-web-app-b67f4.web.app/vs-selenium</loc><lastmod>2026-04-29</lastmod></url>
+  <url><loc>https://my-web-app-b67f4.web.app/vs-storybook</loc><lastmod>2026-04-29</lastmod></url>
+  <url><loc>https://my-web-app-b67f4.web.app/vs-chromatic</loc><lastmod>2026-04-29</lastmod></url>
+  <url><loc>https://my-web-app-b67f4.web.app/vs-percy</loc><lastmod>2026-04-29</lastmod></url>
+  <url><loc>https://my-web-app-b67f4.web.app/vs-browserstack</loc><lastmod>2026-04-29</lastmod></url>
+  <url><loc>https://my-web-app-b67f4.web.app/vs-lambdatest</loc><lastmod>2026-04-29</lastmod></url>
+  <url><loc>https://my-web-app-b67f4.web.app/vs-testcontainers</loc><lastmod>2026-04-29</lastmod></url>
 </urlset>

@@ -60617,6 +60617,312 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'jest': const _CompetitorInfo(
+    name: 'Jest',
+    emoji: '🃏',
+    tagline: 'Jest・JavaScript/TypeScriptテストフレームワーク・Facebook製・スナップショット・モック・カバレッジ・並行実行・OSS・業界標準で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Jest代替 JavaScript TypeScript テストフレームワーク スナップショット モック カバレッジ Facebook Vitest代替 Mocha代替',
+    accentColor: Color(0xFFC21325),
+    painPoints: [
+      '無料(OSS)・テスト特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Vitest との比較でESM対応・Vite統合・設定シンプルさ・実行速度が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'JS/TSテスト・スナップショット・モック・カバレッジ・並行実行・業界標準',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'vitest': const _CompetitorInfo(
+    name: 'Vitest',
+    emoji: '⚡',
+    tagline: 'Vitest・Vite統合テストフレームワーク・Jest互換API・ESM・高速・TypeScript・In-source・UI・コンポーネントテストで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Vitest代替 Vite テストフレームワーク Jest互換 ESM 高速 TypeScript コンポーネントテスト Jest代替',
+    accentColor: Color(0xFF6E9F18),
+    painPoints: [
+      '無料(OSS)・テスト特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Jest との比較でエコシステム成熟度・非Viteプロジェクト適用・大規模採用実績が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Vite統合・Jest互換API・ESM・高速・TypeScript・In-source・UI',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'selenium': const _CompetitorInfo(
+    name: 'Selenium',
+    emoji: '🌐',
+    tagline: 'Selenium・ブラウザ自動化・E2Eテスト・多言語対応・WebDriver・Grid・OSS・業界標準・クロスブラウザで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Selenium代替 ブラウザ自動化 E2Eテスト WebDriver Grid クロスブラウザ Playwright代替 Cypress代替',
+    accentColor: Color(0xFF43B02A),
+    painPoints: [
+      '無料(OSS)・ブラウザ自動化特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Playwright/Cypress との比較で設定の複雑さ・フレークテスト・モダンAPIが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ブラウザ自動化・E2Eテスト・多言語対応・WebDriver・Grid・クロスブラウザ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'storybook': const _CompetitorInfo(
+    name: 'Storybook',
+    emoji: '📖',
+    tagline: 'Storybook・UIコンポーネント開発環境・ビジュアルテスト・ドキュメント自動生成・React/Vue/Angular・OSS・業界標準で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Storybook代替 UIコンポーネント開発 ビジュアルテスト ドキュメント React Vue Angular Chromatic代替',
+    accentColor: Color(0xFFFF4785),
+    painPoints: [
+      '無料(OSS)/有料(Chromatic)・UIコンポーネント特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Histoire/Ladle との比較でバンドルサイズ・ビルド速度・Vite統合が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'UIコンポーネント開発・ビジュアルテスト・ドキュメント自動生成・React/Vue/Angular',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'chromatic': const _CompetitorInfo(
+    name: 'Chromatic',
+    emoji: '🎨',
+    tagline: 'Chromatic・ビジュアルリグレッションテスト・Storybook連携・UI変更レビュー・スナップショット・自動PR確認・Storybook製で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Chromatic代替 ビジュアルリグレッション Storybook UIレビュー スナップショット PR自動確認 Percy代替 AppliTools代替',
+    accentColor: Color(0xFFFC521F),
+    painPoints: [
+      '有料・ビジュアルテスト特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Percy/Applitools との比較でコスト・非Storybook環境・AIベース検出が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ビジュアルリグレッション・Storybook連携・UI変更レビュー・PR自動確認',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'percy': const _CompetitorInfo(
+    name: 'Percy',
+    emoji: '👁️',
+    tagline: 'Percy・ビジュアルテスト・BrowserStack傘下・スクリーンショット比較・クロスブラウザ・CI/CD統合・自動UIレビューで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Percy代替 ビジュアルテスト BrowserStack スクリーンショット クロスブラウザ CI/CD Chromatic代替 Applitools代替',
+    accentColor: Color(0xFF512DA8),
+    painPoints: [
+      '有料・ビジュアルテスト特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Chromatic/Applitools との比較でコスト・Storybook統合・AI差分検出が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ビジュアルテスト・BrowserStack傘下・スクリーンショット比較・クロスブラウザ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'browserstack': const _CompetitorInfo(
+    name: 'BrowserStack',
+    emoji: '🌍',
+    tagline: 'BrowserStack・クロスブラウザ/デバイステスト・実機テスト・Selenium/Playwright統合・3000+環境・CI/CD・企業向けで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'BrowserStack代替 クロスブラウザ デバイステスト 実機 Selenium Playwright 3000+環境 Sauce Labs代替 LambdaTest代替',
+    accentColor: Color(0xFFFF6C37),
+    painPoints: [
+      '高額・クロスブラウザテスト特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Sauce Labs/LambdaTest との比較でコスト・並行実行数・ローカルテストが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'クロスブラウザ/実機テスト・3000+環境・Selenium/Playwright統合・CI/CD',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'lambdatest': const _CompetitorInfo(
+    name: 'LambdaTest',
+    emoji: '🔬',
+    tagline: 'LambdaTest・クロスブラウザテスト・3000+環境・HyperExecute・スマートビジュアルテスト・AI・BrowserStack代替・低コストで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'LambdaTest代替 クロスブラウザテスト 3000+環境 HyperExecute スマートビジュアル AI BrowserStack代替 Sauce Labs代替',
+    accentColor: Color(0xFF1789FC),
+    painPoints: [
+      '有料・クロスブラウザテスト特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'BrowserStack との比較でブランド認知度・エンタープライズサポート・ドキュメントが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'クロスブラウザテスト・3000+環境・HyperExecute・AIビジュアルテスト・低コスト',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'testcontainers': const _CompetitorInfo(
+    name: 'Testcontainers',
+    emoji: '🐋',
+    tagline: 'Testcontainers・Dockerコンテナを使った統合テスト・データベース/Redis/Kafka・本番同等環境・多言語・OSS・モックレスで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Testcontainers代替 Docker 統合テスト データベース Redis Kafka 本番同等環境 多言語 OSS モックレス',
+    accentColor: Color(0xFF2496ED),
+    painPoints: [
+      '無料(OSS)・統合テスト特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'モック/スタブ との比較でテスト速度・Docker依存・CI環境構築が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Dockerコンテナ統合テスト・DB/Redis/Kafka・本番同等環境・多言語・OSS',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
