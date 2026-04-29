@@ -11327,6 +11327,318 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'reclaim-ai': const _CompetitorInfo(
+    name: 'Reclaim.ai',
+    emoji: '🔄',
+    tagline:
+        'Reclaim.aiをAIカレンダー・スマートスケジューリングに使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'Reclaim.ai代替 AIスケジューラー代替 スマートカレンダー代替 自動スケジュール',
+    accentColor: Color(0xFF6B4EFF),
+    painPoints: [
+      'Googleカレンダー連携のAIスケジューリングに特化し、個人財務・AI大学・習慣管理は別ツール',
+      '月額10USD〜の有料サービスで、個人OS統合機能がない',
+      'タスク自動スケジューリング以外のライフマネジメント機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AIスマートスケジューリング',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'sunsama': const _CompetitorInfo(
+    name: 'Sunsama',
+    emoji: '🌅',
+    tagline:
+        'Sunsamaをデイリープランナー・集中力管理に使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'Sunsama代替 デイリープランナー代替 集中力管理代替 日次計画ツール',
+    accentColor: Color(0xFF5C7CFA),
+    painPoints: [
+      '日次タスク整理・集中力管理に特化し、個人財務・AI大学・習慣追跡は別ツール',
+      '月額20USDと有料サービスで、個人OS統合機能がない',
+      'デイリープランニング以外のライフマネジメント機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'デイリープランナー',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'motion': const _CompetitorInfo(
+    name: 'Motion',
+    emoji: '⚡',
+    tagline:
+        'MotionをAIプロジェクト・タスク自動スケジュールに使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'Motion代替 AIタスク管理代替 自動スケジュール代替 プロジェクト管理AI',
+    accentColor: Color(0xFF7C3AED),
+    painPoints: [
+      'AIによるタスク・会議の自動スケジューリングに特化し、個人財務・AI大学は別ツール',
+      '月額34USD〜と高額で、個人OS統合機能がない',
+      'プロジェクト管理以外のライフマネジメント機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AIタスク自動スケジュール',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'day-one': const _CompetitorInfo(
+    name: 'Day One',
+    emoji: '📔',
+    tagline: 'Day Oneをジャーナル・日記アプリに使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'Day One代替 ジャーナルアプリ代替 日記アプリ代替 プレミアムジャーナル',
+    accentColor: Color(0xFF1A73E8),
+    painPoints: [
+      '高品質なジャーナル・日記作成に特化し、個人財務・AI大学・習慣管理は別ツール',
+      '月額3.99USD〜のサブスクで、個人OS統合機能がない',
+      'ジャーナル以外のライフマネジメント機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'プレミアムジャーナル・日記',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'toggl-track': const _CompetitorInfo(
+    name: 'Toggl Track',
+    emoji: '⏱️',
+    tagline: 'Toggl Trackを時間追跡・工数管理に使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'Toggl Track代替 時間追跡代替 工数管理代替 タイムトラッキング',
+    accentColor: Color(0xFFE05EBB),
+    painPoints: [
+      '時間追跡・プロジェクト工数管理に特化し、個人財務・AI大学・習慣管理は別ツール',
+      '無料プランはプロジェクト数制限あり、Pro月額9USD〜',
+      'タイムトラッキング以外のライフマネジメント機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '時間追跡・工数管理',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'rescuetime': const _CompetitorInfo(
+    name: 'RescueTime',
+    emoji: '🛡️',
+    tagline:
+        'RescueTimeを自動時間追跡・集中力分析に使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'RescueTime代替 自動時間追跡代替 集中力分析代替 デジタルウェルビーイング',
+    accentColor: Color(0xFF2196F3),
+    painPoints: [
+      '自動PC時間追跡・集中力分析に特化し、個人財務・AI大学・習慣管理は別ツール',
+      'Premium月額12USD〜のサブスクで、個人OS統合機能がない',
+      'デジタル時間分析以外のライフマネジメント機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '自動時間追跡・集中力分析',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'linkedin': const _CompetitorInfo(
+    name: 'LinkedIn',
+    emoji: '💼',
+    tagline:
+        'LinkedInをプロフェッショナルネットワーク・転職活動に使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'LinkedIn代替 プロフェッショナルSNS代替 転職活動代替 キャリア管理',
+    accentColor: Color(0xFF0077B5),
+    painPoints: [
+      'プロフェッショナルネットワーキング・転職に特化し、個人財務・AI大学・習慣管理は別ツール',
+      'Premium月額4,700円〜と有料、個人ライフOS統合機能がない',
+      'キャリア管理以外のライフマネジメント機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'プロフェッショナルネットワーク',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'glassdoor': const _CompetitorInfo(
+    name: 'Glassdoor',
+    emoji: '🏢',
+    tagline: 'Glassdoorを企業口コミ・求人情報収集に使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'Glassdoor代替 企業口コミ代替 求人情報代替 転職サイト代替',
+    accentColor: Color(0xFF0CAA41),
+    painPoints: [
+      '企業口コミ・給与情報・求人検索に特化し、個人財務・AI大学・習慣管理は別ツール',
+      '広告多め・口コミ信頼性に課題があり、個人OS統合機能がない',
+      '転職活動サポート以外のライフマネジメント機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '企業口コミ・求人情報',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'wantedly': const _CompetitorInfo(
+    name: 'Wantedly',
+    emoji: '🤝',
+    tagline:
+        'Wantedlyをカジュアル面談・スタートアップ転職に使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'Wantedly代替 カジュアル面談代替 スタートアップ転職代替 ビジネスSNS',
+    accentColor: Color(0xFF21CEFF),
+    painPoints: [
+      'カジュアル面談・スタートアップ求人に特化し、個人財務・AI大学・習慣管理は別ツール',
+      '求人企業側は月額課金制、個人ライフOS統合機能がない',
+      '転職・採用以外のライフマネジメント機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'カジュアル面談・求人検索',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
@@ -11645,6 +11957,15 @@ class _ComparisonShellState extends State<_ComparisonShell> {
     'spline': '3d',
     'google-forms': 'forms',
     'surveymonkey': 'forms',
+    'reclaim-ai': 'ai-scheduler',
+    'sunsama': 'ai-scheduler',
+    'motion': 'ai-scheduler',
+    'day-one': 'journaling',
+    'toggl-track': 'time-tracking',
+    'rescuetime': 'time-tracking',
+    'linkedin': 'career',
+    'glassdoor': 'career',
+    'wantedly': 'career',
   };
 
   @override
