@@ -22099,6 +22099,312 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'fivetran': const _CompetitorInfo(
+    name: 'Fivetran',
+    emoji: '🔌',
+    tagline: 'マネージドETL・データパイプライン自動化で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Fivetran代替 ETL データパイプライン データウェアハウス 自動化 コネクタ',
+    accentColor: Color(0xFF0073E6),
+    painPoints: [
+      'MAR課金・使用量増大で高額・500+コネクタだがカスタムコネクタは有料',
+      'ETL/データ統合特化でエンジニア/データ向け設計・個人のライフ管理は別途必要',
+      'AirbyteやStitchと比較してコストが高くセルフホストオプションがない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '500+コネクタ・自動スキーマ管理・変換・データリネージ・SOC2',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'dbt-labs': const _CompetitorInfo(
+    name: 'dbt (dbt Labs)',
+    emoji: '🔧',
+    tagline: 'SQLデータ変換・ELT・データモデリングツールで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'dbt代替 データ変換 ELT データモデリング SQL BI データウェアハウス',
+    accentColor: Color(0xFFFF694A),
+    painPoints: [
+      'dbt Cloud Developer無料/Team月額50ドル〜・データ変換以外の個人管理は別途',
+      'ELT/変換特化でデータエンジニア向け設計・個人のライフ管理は別途必要',
+      'SQLalphaと比較してGUIが限定的でコードファーストアプローチが必須',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'SQL変換・テスト・ドキュメント・リネージ・OSS・BI統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'prefect': const _CompetitorInfo(
+    name: 'Prefect',
+    emoji: '🌊',
+    tagline: 'Pythonワークフローオーケストレーション・データパイプラインで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Prefect代替 ワークフロー Python データパイプライン オーケストレーション Airflow代替',
+    accentColor: Color(0xFF24FF9B),
+    painPoints: [
+      '無料プランあり/Pro月額500ドル〜・ワークフロー管理以外の個人ライフ管理は別途',
+      'ワークフロー特化でデータエンジニア向け設計・個人のライフ管理は別途必要',
+      'Airflowと比較してエンタープライズ機能・巨大コミュニティが弱い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Pythonデコレーター・スケジュール・リトライ・監視・クラウド実行',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'dagster': const _CompetitorInfo(
+    name: 'Dagster',
+    emoji: '⚙️',
+    tagline: 'データオーケストレーション・アセットベースパイプラインで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Dagster代替 データオーケストレーション アセット パイプライン Airflow代替 OSS',
+    accentColor: Color(0xFF4F5BD5),
+    painPoints: [
+      'Dagster Cloud月額25ドル〜/セルフホスト必須・パイプライン以外の個人管理は別途',
+      'データオーケストレーション特化でデータエンジニア向け設計・個人管理は別途必要',
+      'Prefectと比較して学習曲線が急でアセット概念の習得に時間が必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'アセットグラフ・スケジュール・センサー・Launchpad・OSS・型安全',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'fullstory': const _CompetitorInfo(
+    name: 'FullStory',
+    emoji: '🎬',
+    tagline: 'セッション録画・UXデータ分析・デジタル体験インテリジェンスで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'FullStory代替 セッション録画 UX分析 ヒートマップ 行動分析 Hotjar代替',
+    accentColor: Color(0xFF1B1B1B),
+    painPoints: [
+      'Enterprise価格非公開・中小企業には高額・大量データ収集のプライバシー懸念',
+      'UX分析特化でエンジニア/UX向け設計・個人のライフ管理は別途必要',
+      'HotjarやMicrosoft Clarityと比較してコストが高い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'セッション録画・レイジクリック・DX Data・AI分析・GDPR準拠',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'gainsight': const _CompetitorInfo(
+    name: 'Gainsight',
+    emoji: '📣',
+    tagline: 'B2B顧客サクセスプラットフォーム・チャーン防止で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Gainsight代替 顧客サクセス CS SaaS チャーン防止 NPS B2B',
+    accentColor: Color(0xFF0070D2),
+    painPoints: [
+      'Enterprise価格非公開・SMBには高額・実装・カスタマイズに時間がかかる',
+      'B2B顧客サクセス特化でCS/セールス向け設計・個人のライフ管理は別途必要',
+      'ChurnZeroやTotangoと比較して導入コストと期間が長い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '顧客ヘルススコア・プレイブック・NPS・リニューアル追跡・CS360',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'help-scout': const _CompetitorInfo(
+    name: 'Help Scout',
+    emoji: '🔭',
+    tagline: 'シンプルなカスタマーサポートプラットフォーム・共有受信トレイで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Help Scout代替 カスタマーサポート 共有受信トレイ ヘルプデスク ナレッジベース',
+    accentColor: Color(0xFF1292EE),
+    painPoints: [
+      '月額50ドル/3ユーザー〜・サポート以外の個人ライフ管理・AI機能は別途必要',
+      'カスタマーサポート特化でCS向け設計・個人のライフ管理は別途必要',
+      'Zendeskと比較してワークフロー自動化・レポート機能が弱い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '共有受信トレイ・ナレッジベース・チャット・AIドラフト・レポート',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'statsig': const _CompetitorInfo(
+    name: 'Statsig',
+    emoji: '📊',
+    tagline: 'フィーチャーゲート・A/Bテスト・製品メトリクス統合プラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Statsig代替 フィーチャーフラグ A/Bテスト 製品分析 LaunchDarkly代替 実験管理',
+    accentColor: Color(0xFF194BFB),
+    painPoints: [
+      '無料プランあり/Pro月額150ドル〜・実験管理以外の個人ライフ管理は別途必要',
+      '実験・フィーチャー管理特化でエンジニア向け設計・個人管理は別途必要',
+      'LaunchDarklyと比較してエンタープライズ機能・SLA保証が弱い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'フィーチャーゲート・A/Bテスト・製品分析・Pulse統計・Warehouse統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'vwo': const _CompetitorInfo(
+    name: 'VWO (Visual Website Optimizer)',
+    emoji: '🎯',
+    tagline: 'ビジュアルA/Bテスト・CVR最適化プラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'VWO代替 A/Bテスト CVR最適化 ヒートマップ セッション録画 コンバージョン',
+    accentColor: Color(0xFF0DA4CE),
+    painPoints: [
+      '月額199ドル〜・大規模テストは高額・実装にエンジニアリソースが必要',
+      'A/Bテスト/CVR特化でマーケ向け設計・個人のライフ管理は別途必要',
+      'Optimizelyと比較して高度な多変量テストと統計分析が弱い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ビジュアルエディタ・A/B/MVT・ヒートマップ・録画・セグメント',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
