@@ -28969,40 +28969,6 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
-  'novu': const _CompetitorInfo(
-    name: 'Novu',
-    emoji: '🔔',
-    tagline: 'オープンソース通知インフラ・マルチチャネル通知管理で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Novu代替 通知インフラ OSS マルチチャネル プッシュ メール SMS In-App',
-    accentColor: Color(0xFF7B61FF),
-    painPoints: [
-      '無料/月額250ドル〜・通知特化・個人のライフ管理は別途必要',
-      '通知インフラ特化・個人のAI管理は別途必要',
-      'Customer.io/Brazeと比較してマーケティングオートメーション機能が限られる',
-    ],
-    features: [
-      _FeatureComparison(
-        feature: 'マルチチャネル通知・テンプレート・ワークフロー・ダイジェスト・OSS',
-        competitorHas: true,
-        weHave: false,
-      ),
-      _FeatureComparison(
-        feature: 'AI支援個人管理',
-        competitorHas: false,
-        weHave: true,
-      ),
-      _FeatureComparison(
-        feature: '財務管理統合',
-        competitorHas: false,
-        weHave: true,
-      ),
-      _FeatureComparison(
-        feature: '完全無料',
-        competitorHas: false,
-        weHave: true,
-      ),
-    ],
-  ),
   'knock-app': const _CompetitorInfo(
     name: 'Knock',
     emoji: '🚪',
@@ -29017,40 +28983,6 @@ final _competitorInfo = <String, _CompetitorInfo>{
     features: [
       _FeatureComparison(
         feature: 'ワークフロー・好み管理・テナントサポート・In-App・メール・プッシュ',
-        competitorHas: true,
-        weHave: false,
-      ),
-      _FeatureComparison(
-        feature: 'AI支援個人管理',
-        competitorHas: false,
-        weHave: true,
-      ),
-      _FeatureComparison(
-        feature: '財務管理統合',
-        competitorHas: false,
-        weHave: true,
-      ),
-      _FeatureComparison(
-        feature: '完全無料',
-        competitorHas: false,
-        weHave: true,
-      ),
-    ],
-  ),
-  'courier': const _CompetitorInfo(
-    name: 'Courier',
-    emoji: '📦',
-    tagline: 'マルチチャネル通知APIとデザイナーツールで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Courier代替 通知API マルチチャネル メール プッシュ SMS デザイナー',
-    accentColor: Color(0xFF9F55FF),
-    painPoints: [
-      '月額0〜・通知API特化・個人のライフ管理は別途必要',
-      '通知配信特化・個人のAI管理は別途必要',
-      'Novu/Knockと比較してOSS・セルフホスト・コミュニティが限られる',
-    ],
-    features: [
-      _FeatureComparison(
-        feature: 'ビジュアルエディター・メール/SMS/プッシュ・オートメーション・分析',
         competitorHas: true,
         weHave: false,
       ),
@@ -30193,40 +30125,6 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
-  'together-ai': const _CompetitorInfo(
-    name: 'Together AI',
-    emoji: '🤝',
-    tagline: '高速・安価なOSSモデル推論API・クラウドGPUプラットフォームで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Together AI代替 OSSモデル推論 LLM API Llama Mistral GPU クラウド 安価',
-    accentColor: Color(0xFF7C5CBF),
-    painPoints: [
-      '使用量課金・LLM推論特化・個人のライフ管理は別途必要',
-      'OSSモデルAPI特化・個人のAI管理は別途必要',
-      'Anyscale/Replicateと比較してAPIエコシステム・モデル数が劣る',
-    ],
-    features: [
-      _FeatureComparison(
-        feature: 'Llama/Mistral/Mixtral推論・ファインチューニング・Embeddings・高速',
-        competitorHas: true,
-        weHave: false,
-      ),
-      _FeatureComparison(
-        feature: 'AI支援個人管理',
-        competitorHas: false,
-        weHave: true,
-      ),
-      _FeatureComparison(
-        feature: '財務管理統合',
-        competitorHas: false,
-        weHave: true,
-      ),
-      _FeatureComparison(
-        feature: '完全無料',
-        competitorHas: false,
-        weHave: true,
-      ),
-    ],
-  ),
   'anyscale': const _CompetitorInfo(
     name: 'Anyscale',
     emoji: '🌐',
@@ -30241,40 +30139,6 @@ final _competitorInfo = <String, _CompetitorInfo>{
     features: [
       _FeatureComparison(
         feature: 'Rayフルマネージド・LLM推論・ファインチューニング・RLHFトレーニング',
-        competitorHas: true,
-        weHave: false,
-      ),
-      _FeatureComparison(
-        feature: 'AI支援個人管理',
-        competitorHas: false,
-        weHave: true,
-      ),
-      _FeatureComparison(
-        feature: '財務管理統合',
-        competitorHas: false,
-        weHave: true,
-      ),
-      _FeatureComparison(
-        feature: '完全無料',
-        competitorHas: false,
-        weHave: true,
-      ),
-    ],
-  ),
-  'replicate': const _CompetitorInfo(
-    name: 'Replicate',
-    emoji: '🔄',
-    tagline: 'AIモデルAPIマーケットプレイス・クラウド機械学習実行で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Replicate代替 AIモデルAPI Stable Diffusion Llama LLM クラウド実行 API',
-    accentColor: Color(0xFF0E131F),
-    painPoints: [
-      '使用量課金・AIモデル実行特化・個人のライフ管理は別途必要',
-      'モデルAPI特化・個人のAI管理は別途必要',
-      'HuggingFace/Together AIと比較して本番スケール・コストが課題',
-    ],
-    features: [
-      _FeatureComparison(
-        feature: '数千モデル・1行API・スケーラブル・オープンソースモデル・Webhook',
         competitorHas: true,
         weHave: false,
       ),
