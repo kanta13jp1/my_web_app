@@ -41350,6 +41350,312 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'norton': const _CompetitorInfo(
+    name: 'Norton',
+    emoji: '🟡',
+    tagline: 'Gen Digital・コンシューマーセキュリティ・LifeLock・VPN・パスワード管理統合で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Norton代替 アンチウイルス コンシューマーセキュリティ LifeLock 個人情報保護 McAfee代替',
+    accentColor: Color(0xFFFFCC00),
+    painPoints: [
+      '年間制・セキュリティ特化・個人のライフ管理は別途必要',
+      'セキュリティ特化・個人のAI管理は別途必要',
+      'Bitdefender/Kaspersky/McAfeeと比較してパフォーマンス影響・コストが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ウイルス対策・LifeLock・VPN・パスワード管理・ダークウェブ監視',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'malwarebytes': const _CompetitorInfo(
+    name: 'Malwarebytes',
+    emoji: '🦠',
+    tagline: 'マルウェア除去の定番・ThreatDown・リアルタイム保護・家庭/企業向けで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Malwarebytes代替 マルウェア除去 アンチウイルス ThreatDown Norton代替 Bitdefender代替',
+    accentColor: Color(0xFF0082F5),
+    painPoints: [
+      '無料/有料・マルウェア対策特化・個人のライフ管理は別途必要',
+      'セキュリティ特化・個人のAI管理は別途必要',
+      'Norton/Bitdefender/ESETと比較してフル機能セキュリティスイートが限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'マルウェア除去・ThreatDown・リアルタイム保護・VPN・プライバシー',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'sophos': const _CompetitorInfo(
+    name: 'Sophos',
+    emoji: '🏢',
+    tagline: 'ビジネスサイバーセキュリティ・Intercept X EDR・XDR・ゼロトラスト・MDRで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Sophos代替 ビジネスセキュリティ Intercept X EDR XDR MDR CrowdStrike代替',
+    accentColor: Color(0xFF007AC9),
+    painPoints: [
+      '年間契約制・企業セキュリティ特化・個人のライフ管理は別途必要',
+      'セキュリティ特化・個人のAI管理は別途必要',
+      'CrowdStrike/SentinelOne/Bitdefenderと比較してブランド認知・エンタープライズ機能が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Intercept X・EDR/XDR・ファイアウォール・MDR・ゼロトラスト',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'wiz': const _CompetitorInfo(
+    name: 'Wiz',
+    emoji: '🧙',
+    tagline: 'クラウドセキュリティポスチャ管理・CNAPP・マルチクラウド・エージェントレスで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Wiz代替 クラウドセキュリティ CNAPP CSPM マルチクラウド Lacework代替 Orca代替',
+    accentColor: Color(0xFF3B82F6),
+    painPoints: [
+      '年間契約制・クラウドセキュリティ特化・個人のライフ管理は別途必要',
+      'クラウドセキュリティ特化・個人のAI管理は別途必要',
+      'Lacework/Orca Security/Prisma Cloudと比較してコスト・実装学習コストが高い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'CNAPP・CSPM・エージェントレス・脆弱性優先順位・マルチクラウド',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'onetrust': const _CompetitorInfo(
+    name: 'OneTrust',
+    emoji: '🔏',
+    tagline: 'データプライバシー管理・GDPR/CCPA対応・同意管理・プライバシープログラムで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'OneTrust代替 GDPR CCPA プライバシー管理 同意管理 TrustArc代替 コンプライアンス',
+    accentColor: Color(0xFF00875A),
+    painPoints: [
+      '年間契約制・プライバシーコンプライアンス特化・個人のライフ管理は別途必要',
+      'データプライバシー特化・個人のAI管理は別途必要',
+      'TrustArc/Securiti/BigIDと比較してSMB向け価格設定・実装複雑さが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'GDPR/CCPA同意・DSARハンドリング・データマッピング・リスク評価',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'opensea': const _CompetitorInfo(
+    name: 'OpenSea',
+    emoji: '🌊',
+    tagline: '最大NFTマーケットプレイス・Ethereum/Polygon・デジタルアート・クリエイターロイヤリティで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'OpenSea代替 NFT マーケットプレイス デジタルアート Ethereum Blur代替 クリエイター Web3',
+    accentColor: Color(0xFF2081E2),
+    painPoints: [
+      '手数料あり・NFT特化・個人のライフ管理は別途必要',
+      'デジタル資産特化・個人のAI管理は別途必要',
+      'Blur/Rarible/Magic Edenと比較してクリエイターロイヤリティ強制・取引コストが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'NFT売買・デジタルアート・収集品・ゲームアイテム・マルチチェーン',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'uniswap': const _CompetitorInfo(
+    name: 'Uniswap',
+    emoji: '🦄',
+    tagline: 'DeFi最大DEX・AMM・Ethereum・流動性プール・許可不要トークン交換で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Uniswap代替 DeFi DEX 分散型取引所 Ethereum AMM Curve代替 Sushiswap代替',
+    accentColor: Color(0xFFFF007A),
+    painPoints: [
+      'ガス代あり・DeFi/DEX特化・個人のライフ管理は別途必要',
+      'DeFi特化・個人のAI管理は別途必要',
+      'Curve/SushiSwap/中央集権取引所と比較してガスコスト・UI複雑さが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AMM・流動性プール・許可不要・多チェーン・UNIガバナンストークン',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'ledger-wallet': const _CompetitorInfo(
+    name: 'Ledger',
+    emoji: '💳',
+    tagline: 'ハードウェアウォレット・Ledger Nano・Ledger Live・コールドストレージ・5500+仮想通貨で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Ledger代替 ハードウェアウォレット コールドウォレット 仮想通貨 Trezor代替 セキュリティ',
+    accentColor: Color(0xFF000000),
+    painPoints: [
+      '購入制・ハードウェアウォレット特化・個人のライフ管理は別途必要',
+      '仮想通貨保管特化・個人のAI管理は別途必要',
+      'Trezor/COLDCARD/ソフトウォレットと比較してコスト・物理デバイス依存が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Nano X/S Plus・Ledger Live・5500+通貨・DeFi/NFT・コールドストレージ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'home-assistant': const _CompetitorInfo(
+    name: 'Home Assistant',
+    emoji: '🏠',
+    tagline: 'オープンソーススマートホーム・ローカル優先・2000+統合・プライバシー重視で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Home Assistant代替 スマートホーム IoT OSS ローカル処理 SmartThings代替 Matter Zigbee',
+    accentColor: Color(0xFF18BCF2),
+    painPoints: [
+      '無料/有料(Cloud)・スマートホーム特化・個人のライフ管理は別途必要',
+      'IoT管理特化・個人のAI管理は別途必要',
+      'SmartThings/Apple Home/Google Homeと比較して学習曲線・初期セットアップが複雑',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'OSS・2000+統合・ローカル処理・Matter/Zigbee/Z-Wave・Nabu Casa',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
