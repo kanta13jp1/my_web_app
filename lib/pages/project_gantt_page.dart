@@ -2551,9 +2551,7 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
       ],
     );
     return Tooltip(
-      message: active
-          ? (_sortAscending ? '昇順でソート中' : '降順でソート中')
-          : 'クリックしてソート',
+      message: active ? (_sortAscending ? '昇順でソート中' : '降順でソート中') : 'クリックしてソート',
       waitDuration: const Duration(milliseconds: 350),
       child: Material(
         color: Colors.transparent,
@@ -2595,7 +2593,9 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
         labelStyle,
         align: align,
       );
-      if (expanded) return Expanded(child: t);
+      // Win版#132 part 86: expanded 引数を ignore (= 全列 fixed-width 化 / タスク名列も resize 対応)
+      // ignore: unused_local_variable_for_now (= expanded は API 互換性のため残置)
+      // if (expanded) return Expanded(child: t);  // = 旧動作: タスク名列が flex で resize 不可だった
       // resize handle を右端に併設 (= _colNonResizable は SizedBox.shrink 返却)
       return Row(
         mainAxisSize: MainAxisSize.min,
@@ -2632,32 +2632,28 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
     final isEven = index % 2 == 0;
     final isDelayedNoPlan = task.isDelayedNoPlan;
     final isDelayed = task.delayDays > 0;
-    return Tooltip(
-      message: isDelayedNoPlan
-          ? '⚠ ${task.delayDays}日遅延・リカバリー案未記入 (要対処)'
-          : isDelayed
-              ? '${task.delayDays}日遅延 — リカバリー案: ${task.recoveryPlan}'
-              : task.recoveryPlan.isNotEmpty
-                  ? 'リカバリー案: ${task.recoveryPlan}'
-                  : task.title,
-      child: Container(
-        decoration: BoxDecoration(
-          color: isEven ? const Color(0xFF14141C) : const Color(0xFF1A1A24),
-          border: Border(
-            bottom: const BorderSide(color: _gridLine, width: 0.5),
-            left: isDelayedNoPlan
-                ? const BorderSide(color: Color(0xFFEF4444), width: 3)
-                : isDelayed
-                    ? const BorderSide(color: Color(0xFFF97316), width: 3)
-                    : BorderSide.none,
-          ),
+    // Win版#132 part 86: 行全体 Tooltip 削除 (= recovery 固定だったバグ) → 各セル個別 Tooltip 化
+    return Container(
+      decoration: BoxDecoration(
+        color: isEven ? const Color(0xFF14141C) : const Color(0xFF1A1A24),
+        border: Border(
+          bottom: const BorderSide(color: _gridLine, width: 0.5),
+          left: isDelayedNoPlan
+              ? const BorderSide(color: Color(0xFFEF4444), width: 3)
+              : isDelayed
+                  ? const BorderSide(color: Color(0xFFF97316), width: 3)
+                  : BorderSide.none,
         ),
-        padding: const EdgeInsets.symmetric(horizontal: 8),
-        child: Row(
-          children: [
-            // # 列
-            if (_colVisible['#'] ?? true)
-              SizedBox(
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 8),
+      child: Row(
+        children: [
+          // # 列
+          if (_colVisible['#'] ?? true)
+            Tooltip(
+              message: '#${index + 1}',
+              waitDuration: const Duration(milliseconds: 350),
+              child: SizedBox(
                 width: 32,
                 child: Text(
                   '${index + 1}',
@@ -2669,88 +2665,105 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
                   textAlign: TextAlign.center,
                 ),
               ),
-            // タスク名 (完了 checkbox + emoji + 名前 + inline delay flag)
-            if (_colVisible['task'] ?? true) ...[
-              Icon(
-                task.status == 'completed'
-                    ? Icons.check_box
-                    : Icons.check_box_outline_blank,
-                size: 14,
-                color: task.status == 'completed'
-                    ? const Color(0xFF4CAF50)
-                    : const Color(0xFF606070),
-              ),
-              const SizedBox(width: 6),
-              Text(
-                task.categoryIcon,
-                style: const TextStyle(fontSize: 12, height: 1.5),
-              ),
-              const SizedBox(width: 6),
-              Expanded(
+            ),
+          // タスク名 (完了 checkbox + emoji + 名前 + inline delay flag)
+          // Win版#132 part 86: spread → fixed-width SizedBox 化 (= タスク名列 resize 対応)
+          // + 列別 Tooltip wrap (= タスク名 hover で task.title 表示)
+          if (_colVisible['task'] ?? true)
+            Tooltip(
+              message: 'タスク名: ${task.title}',
+              waitDuration: const Duration(milliseconds: 350),
+              child: SizedBox(
+                width: _colWidths['task'] ?? 200,
                 child: Row(
                   children: [
-                    Flexible(
-                      child: Text(
-                        task.title,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 12,
-                          height: 1.5,
-                        ),
-                        overflow: TextOverflow.ellipsis,
+                    Icon(
+                      task.status == 'completed'
+                          ? Icons.check_box
+                          : Icons.check_box_outline_blank,
+                      size: 14,
+                      color: task.status == 'completed'
+                          ? const Color(0xFF4CAF50)
+                          : const Color(0xFF606070),
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      task.categoryIcon,
+                      style: const TextStyle(fontSize: 12, height: 1.5),
+                    ),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              task.title,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                                height: 1.5,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          if (isDelayedNoPlan) ...[
+                            const SizedBox(width: 4),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 4,
+                                vertical: 1,
+                              ),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFEF4444),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                '⚠${task.delayDays}d',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.w700,
+                                  height: 1.2,
+                                ),
+                              ),
+                            ),
+                          ] else if (isDelayed) ...[
+                            const SizedBox(width: 4),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 4,
+                                vertical: 1,
+                              ),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFF97316),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                '${task.delayDays}d',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.w700,
+                                  height: 1.2,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
                       ),
                     ),
-                    if (isDelayedNoPlan) ...[
-                      const SizedBox(width: 4),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 4,
-                          vertical: 1,
-                        ),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFEF4444),
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Text(
-                          '⚠${task.delayDays}d',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 9,
-                            fontWeight: FontWeight.w700,
-                            height: 1.2,
-                          ),
-                        ),
-                      ),
-                    ] else if (isDelayed) ...[
-                      const SizedBox(width: 4),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 4,
-                          vertical: 1,
-                        ),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF97316),
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Text(
-                          '${task.delayDays}d',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 9,
-                            fontWeight: FontWeight.w700,
-                            height: 1.2,
-                          ),
-                        ),
-                      ),
-                    ],
                   ],
                 ),
               ),
-            ],
-            // Win版#131 part 12: 開始/完了予定/担当/リカバリー (条件レンダリング)
-            // Win版#132 part 83: width を _colWidths から動的取得 (= drag resize 反映)
-            if (_colVisible['startDate'] ?? true)
-              SizedBox(
+            ),
+          // Win版#131 part 12: 開始/完了予定/担当/リカバリー (条件レンダリング)
+          // Win版#132 part 83: width を _colWidths から動的取得 (= drag resize 反映)
+          // Win版#132 part 86: 各 cell を Tooltip で wrap (= 列別 hover content 表示 / recovery 固定 bug 修正)
+          if (_colVisible['startDate'] ?? true)
+            Tooltip(
+              message: '開始予定: ${_formatDate(task.startDate)}',
+              waitDuration: const Duration(milliseconds: 350),
+              child: SizedBox(
                 width: _colWidths['startDate'] ?? 80,
                 child: Text(
                   _formatDate(task.startDate),
@@ -2762,8 +2775,14 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
                   textAlign: TextAlign.center,
                 ),
               ),
-            if (_colVisible['endDate'] ?? true)
-              SizedBox(
+            ),
+          if (_colVisible['endDate'] ?? true)
+            Tooltip(
+              message: task.delayDays > 0
+                  ? '完了予定: ${_formatDate(task.endDate)} (${task.delayDays}日遅延)'
+                  : '完了予定: ${_formatDate(task.endDate)}',
+              waitDuration: const Duration(milliseconds: 350),
+              child: SizedBox(
                 width: _colWidths['endDate'] ?? 80,
                 child: Text(
                   _formatDate(task.endDate),
@@ -2780,13 +2799,21 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
                   textAlign: TextAlign.center,
                 ),
               ),
-            if (_colVisible['instance'] ?? true)
-              SizedBox(
+            ),
+          if (_colVisible['instance'] ?? true)
+            Tooltip(
+              message: '担当: ${task.ownerLabel}',
+              waitDuration: const Duration(milliseconds: 350),
+              child: SizedBox(
                 width: _colWidths['instance'] ?? 70,
                 child: _instanceBadge(task),
               ),
-            if (_colVisible['progress'] ?? true)
-              SizedBox(
+            ),
+          if (_colVisible['progress'] ?? true)
+            Tooltip(
+              message: '進捗: ${task.progress}%',
+              waitDuration: const Duration(milliseconds: 350),
+              child: SizedBox(
                 width: _colWidths['progress'] ?? 50,
                 child: Text(
                   '${task.progress}%',
@@ -2803,8 +2830,14 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
                   textAlign: TextAlign.center,
                 ),
               ),
-            if (_colVisible['remaining'] ?? true)
-              SizedBox(
+            ),
+          if (_colVisible['remaining'] ?? true)
+            Tooltip(
+              message: task.remainingWork.isNotEmpty
+                  ? '残作業: ${task.remainingWork}'
+                  : '残作業: (未記入 / クリックで指示送信)',
+              waitDuration: const Duration(milliseconds: 350),
+              child: SizedBox(
                 width: _colWidths['remaining'] ?? 200,
                 child: _emptyOrText(
                   text: task.remainingWork,
@@ -2813,8 +2846,14 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
                   color: const Color(0xFF9CA3AF),
                 ),
               ),
-            if (_colVisible['depends'] ?? true)
-              SizedBox(
+            ),
+          if (_colVisible['depends'] ?? true)
+            Tooltip(
+              message: task.dependsOnTitles.isEmpty
+                  ? '依存: なし'
+                  : '依存: ${task.dependsOnTitles.join(", ")}',
+              waitDuration: const Duration(milliseconds: 350),
+              child: SizedBox(
                 width: _colWidths['depends'] ?? 150,
                 child: Padding(
                   padding: const EdgeInsets.only(left: 4, right: 4),
@@ -2832,21 +2871,35 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
                   ),
                 ),
               ),
-            if (_colVisible['recovery'] ?? true)
-              SizedBox(
+            ),
+          if (_colVisible['recovery'] ?? true)
+            Tooltip(
+              message: task.recoveryPlan.isNotEmpty
+                  ? 'リカバリー案: ${task.recoveryPlan}'
+                  : 'リカバリー案: (未記入 / クリックで指示送信)',
+              waitDuration: const Duration(milliseconds: 350),
+              child: SizedBox(
                 width: _colWidths['recovery'] ?? 180,
                 child: _recoveryCell(task),
               ),
-            // Win版#131 part 22: 遅延 ⚠ flag column (大きめ視覚マーカー)
-            if (_colVisible['flags'] ?? true)
-              SizedBox(
+            ),
+          // Win版#131 part 22: 遅延 ⚠ flag column (大きめ視覚マーカー)
+          if (_colVisible['flags'] ?? true)
+            Tooltip(
+              message: isDelayedNoPlan
+                  ? '⚠ ${task.delayDays}日遅延・リカバリー案未記入 (要対処)'
+                  : isDelayed
+                      ? '${task.delayDays}日遅延'
+                      : '遅延なし',
+              waitDuration: const Duration(milliseconds: 350),
+              child: SizedBox(
                 width: _colWidths['flags'] ?? 36,
                 child: _delayFlagCell(task),
               ),
-          ],
-        ),
+            ),
+        ],
       ),
-    );
+    ); // Win版#132 part 86: Tooltip 削除 — Container + Row 構造のみ (閉じ括弧 1 つ減)
   }
 
   // Win版#131 part 23: 空セルを「指示送信」ボタンに変換

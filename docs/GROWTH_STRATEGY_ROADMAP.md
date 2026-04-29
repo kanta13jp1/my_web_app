@@ -24593,6 +24593,7 @@ User 共有 Claude Code 新機能 (= mobile push notification / 2026-04-29 公�
 
 (本 commit にて確定) (chore(docs): cross-instance-prs done/ rename + Win版#132 doc updates + 競合レポート 2026-04-29 enrichment) (chore(docs): cross-instance-prs done/ rename + Win版#132 doc updates + 競合レポート 2026-04-29 enrichment) (docs(vscode-s15): cross-instance-pr triage + ROADMAP更新)
 
+
 ## 2026-04-29 PS#1 S8 — migration timestamp collision 追加3件修正 (075000/080000/090000)
 - deploy-prod Check migration timestamp collisions 失敗 (run 25091716827) 検知
   - 075000: ps4_s150 + ps5_s101 競合 → ps5_s101を075100にリネーム
@@ -24607,3 +24608,41 @@ User 共有 Claude Code 新機能 (= mobile push notification / 2026-04-29 公�
 - S174-S176 (393→402社): intercom/zendesk/freshdesk/lark/coda/slab/visme/pitch/gamma
   - CS・コラボレーション・ナレッジ・プレゼンカテゴリ強化
 - 合計: 18社追加 / sitemap 427→445 URLs (+18) / landing_page 384→402社更新
+
+## 2026-04-29 Win版#132 part 86 — column resize + Tooltip 2 件 bug fix
+
+### 概要
+User production 確認で 2 件 bug 報告:
+1. タスク名列が拡げられない (= part 83 で Expanded のまま残った flex 列 / handle なし)
+2. マウスオーバー時にリカバリー案固定 (= 行全体 Tooltip / 列別ではない)
+
+### Fix 1: タスク名列 resize 対応
+header() 関数の `if (expanded) return Expanded(child: t)` 削除. 全列 fixed-width + handle 化. タスク名列も _colWidths['task'] = 200 (default) で drag resize 可能に.
+
+### Fix 2: 列別 Tooltip
+行全体 Tooltip 削除 → 各 cell 個別 Tooltip wrap (= 10 cell):
+- # / タスク名 / 開始予定 / 完了予定 / 担当 / 進捗 / 残作業 / 依存 / リカバリー案 / flags
+- 形式: `'<列名>: <セル内容>'`
+- waitDuration: 350ms
+
+### 検証
+- flutter analyze: **No issues found! (19.9s)** = 0 errors
+- dart format: 1 changed
+- main push: (本 commit)
+
+### 追加受入基準
+- ✅ 列別 Tooltip 機能 (= part 82 cross-instance-pr 範囲外 / bonus 機能)
+
+### user feedback driven hotfix cycle = 当日内完結
+part 83 直接実装 → User production 確認 → 規定外動作 2 件報告 → part 86 即修正.
+WORKDIR-ISOLATION 例外 (= part 83) で生まれた直接実装責任を Win territory が完遂.
+
+### Philosophy Alignment 9/9
+#1 CEO 感 (= User feedback 即対応) / #5 商品=ユーザー価値 (= production UX 完成) / #8 KPI=昨日の自分 (= bug 解消で前進)
+
+### 16 part 連続 dogfood (part 68-86)
+SECOND_BRAIN 4.5/7 + VIBE 7.0/7 + PLATFORM 4.0/7 = 14.5/21 維持 + column resize Phase 1 完全完成.
+
+### commit
+(本 commit にて確定)
+
