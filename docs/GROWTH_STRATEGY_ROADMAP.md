@@ -24317,3 +24317,9 @@ screenshot 受領 → 5 質問判定 → ファイル特定 → cross-instance-p
 - cross-instance-pr done: multi_ai_fallback_ps1 / quota_circuit_breaker / wbs_enforcement_option_b / codex2_blog_engagement_fallback / codex2_ops_charter_sync / nodejs20_upgrade / inject_rules_blog_publish_score_update (計7件)
 - GHA fallback 全5WF確認済: cs-check / daily-report / ai-university-update / pr-auto-review / blog-draft
 - Codex#2 branches (blog-engagement + ops charter) 既にmain反映確認
+
+## 2026-04-29 PS#6 S123 — horseBodyWeightBonus 馬体重補正 (39 terms)
+- horseBodyWeightBonus追加: 馬の実体重(kg)による信頼度補正
+- 450〜510kg: +0.01 (理想体重帯) / ≤430kg: -0.01 (軽量リスク) / ≥560kg: -0.01 (重量リスク) / その他: 0
+- プロンプト記載リスク基準(430kg未満/560kg超)をconfidence式に統合
+- confidence式 39 terms体制確立
