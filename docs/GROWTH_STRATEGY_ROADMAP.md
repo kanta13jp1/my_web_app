@@ -24355,3 +24355,9 @@ screenshot 受領 → 5 質問判定 → ファイル特定 → cross-instance-p
 - S168-S170 (375→384社): posthog/jotform/shortcut/contentful/strapi/sanity/pocketbase/appwrite/directus
   - 分析・フォーム・プロジェクト管理・CMS・BaaSカテゴリ強化
 - 合計: 36社追加 / sitemap 391→427 URLs (+36) / landing_page 357→384社更新
+
+## 2026-04-29 PS#6 S125 — sexCategoryBonus 性別補正 (41 terms)
+- sexCategoryBonus追加: 馬の性別(age_sexフィールド)による補正
+- セン馬(去勢): +0.01 (気性安定/安定走) / 牝馬: -0.01 (牡馬混合では不利) / 牡馬: 0 (基準)
+- age_sexフィールド(「4牡」「5牝」「3セン」形式)からincludes検索で判定
+- confidence式 41 terms体制確立
