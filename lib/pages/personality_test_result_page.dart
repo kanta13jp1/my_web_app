@@ -38,6 +38,7 @@ class _PersonalityTestResultPageState extends State<PersonalityTestResultPage> {
       final personalityType =
           _service.getPersonalityTypeDetails(test.personalityType!);
 
+      if (!mounted) return;
       setState(() {
         _test = test;
         _scores = scores;
@@ -45,14 +46,13 @@ class _PersonalityTestResultPageState extends State<PersonalityTestResultPage> {
         _isLoading = false;
       });
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('結果の読み込みに失敗しました: $e'),
-            backgroundColor: const Color(0xFFE53935),
-          ),
-        );
-      }
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('結果の読み込みに失敗しました: $e'),
+          backgroundColor: const Color(0xFFE53935),
+        ),
+      );
       setState(() {
         _isLoading = false;
       });

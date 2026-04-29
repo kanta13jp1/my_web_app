@@ -35,19 +35,19 @@ class _PersonalityTestQuestionsPageState
   Future<void> _loadQuestions() async {
     try {
       final questions = await _service.getQuestions();
+      if (!mounted) return;
       setState(() {
         _questions = questions;
         _isLoading = false;
       });
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('質問の読み込みに失敗しました: $e'),
-            backgroundColor: const Color(0xFFE53935),
-          ),
-        );
-      }
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('質問の読み込みに失敗しました: $e'),
+          backgroundColor: const Color(0xFFE53935),
+        ),
+      );
       setState(() {
         _isLoading = false;
       });
@@ -76,6 +76,7 @@ class _PersonalityTestQuestionsPageState
 
       // 次の質問へ進む、または結果ページへ
       if (_currentQuestionIndex < _questions.length - 1) {
+        if (!mounted) return;
         setState(() {
           _currentQuestionIndex++;
           _isSubmitting = false;
@@ -85,14 +86,13 @@ class _PersonalityTestQuestionsPageState
         await _completeTest();
       }
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('回答の保存に失敗しました: $e'),
-            backgroundColor: const Color(0xFFE53935),
-          ),
-        );
-      }
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('回答の保存に失敗しました: $e'),
+          backgroundColor: const Color(0xFFE53935),
+        ),
+      );
       setState(() {
         _isSubmitting = false;
       });
@@ -121,14 +121,13 @@ class _PersonalityTestQuestionsPageState
         );
       }
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('診断の完了に失敗しました: $e'),
-            backgroundColor: const Color(0xFFE53935),
-          ),
-        );
-      }
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('診断の完了に失敗しました: $e'),
+          backgroundColor: const Color(0xFFE53935),
+        ),
+      );
       setState(() {
         _isSubmitting = false;
       });
