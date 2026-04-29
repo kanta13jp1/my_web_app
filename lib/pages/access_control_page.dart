@@ -45,12 +45,12 @@ class _AccessControlPageState extends State<AccessControlPage>
     });
     try {
       final rolesRes = await _supabase.functions.invoke(
-        'access-control',
-        queryParameters: {'view': 'roles'},
+        'lifestyle-hub',
+        body: {'action': 'access.list_roles'},
       );
       final logsRes = await _supabase.functions.invoke(
-        'access-control',
-        queryParameters: {'view': 'access_logs'},
+        'lifestyle-hub',
+        body: {'action': 'access.list_access_logs'},
       );
       setState(() {
         _roles = _toList(rolesRes.data, 'roles');

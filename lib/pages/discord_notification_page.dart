@@ -65,8 +65,8 @@ class _DiscordNotificationPageState extends State<DiscordNotificationPage> {
     });
     try {
       final res = await _supabase.functions.invoke(
-        'discord-notifications',
-        body: {'action': 'get_config'},
+        'lifestyle-hub',
+        body: {'action': 'discord.get_config'},
       );
       final data = res.data;
       if (data is Map<String, dynamic>) {
@@ -109,9 +109,9 @@ class _DiscordNotificationPageState extends State<DiscordNotificationPage> {
     });
     try {
       await _supabase.functions.invoke(
-        'discord-notifications',
+        'lifestyle-hub',
         body: {
-          'action': 'configure',
+          'action': 'discord.configure',
           'webhook_url': url,
           'triggers': _triggers,
         },
@@ -132,8 +132,8 @@ class _DiscordNotificationPageState extends State<DiscordNotificationPage> {
     });
     try {
       final res = await _supabase.functions.invoke(
-        'discord-notifications',
-        body: {'action': 'test'},
+        'lifestyle-hub',
+        body: {'action': 'discord.test'},
       );
       final data = res.data;
       if (mounted) {
