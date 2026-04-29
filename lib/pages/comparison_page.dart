@@ -35908,6 +35908,312 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'optimizely': const _CompetitorInfo(
+    name: 'Optimizely',
+    emoji: '🧪',
+    tagline: 'A/Bテスト・フィーチャーフラグ・実験プラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Optimizely代替 A/Bテスト 実験プラットフォーム フィーチャーフラグ CDN CMS',
+    accentColor: Color(0xFF006BFF),
+    painPoints: [
+      '月額高価格・実験特化・個人のライフ管理は別途必要',
+      'エンタープライズ向けA/B・個人のAI管理は別途必要',
+      'LaunchDarkly/VWOと比較して価格が非常に高く中小企業向けでない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'A/Bテスト・多変量テスト・フィーチャーフラグ・CMS・データプラットフォーム',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'launchdarkly': const _CompetitorInfo(
+    name: 'LaunchDarkly',
+    emoji: '🚀',
+    tagline: 'フィーチャーフラグ管理・段階ロールアウト・実験プラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'LaunchDarkly代替 フィーチャーフラグ 段階ロールアウト A/Bテスト feature flag 実験',
+    accentColor: Color(0xFF405BFF),
+    painPoints: [
+      '月額20ドル〜・フィーチャーフラグ特化・個人のライフ管理は別途必要',
+      'デプロイ管理特化・個人のAI管理は別途必要',
+      'Optimizely/Split.ioと比較して実験分析・統計的有意性が弱い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'フィーチャーフラグ・ターゲティング・段階ロールアウト・実験・監査ログ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'split-io': const _CompetitorInfo(
+    name: 'Split.io',
+    emoji: '✂️',
+    tagline: 'フィーチャーフラグ×実験統合・インパクト測定で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Split.io代替 フィーチャーフラグ 実験 A/Bテスト インパクト測定 LaunchDarkly代替',
+    accentColor: Color(0xFF1C1C1E),
+    painPoints: [
+      '月額高価格・フラグ×実験特化・個人のライフ管理は別途必要',
+      'デプロイ安全特化・個人のAI管理は別途必要',
+      'LaunchDarklyと比較して小規模チームへの導入コストが高い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'フラグ+実験統合・CUPED統計・インパクト測定・データハブ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'rewardful': const _CompetitorInfo(
+    name: 'Rewardful',
+    emoji: '🎁',
+    tagline: 'SaaS向けアフィリエイト・リファラルプログラム管理で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Rewardful代替 アフィリエイト リファラル SaaS Stripe連携 紹介プログラム',
+    accentColor: Color(0xFF7C3AED),
+    painPoints: [
+      '月額49ドル〜・アフィリエイト特化・個人のライフ管理は別途必要',
+      'SaaSリファラル特化・個人のAI管理は別途必要',
+      'PartnerStack/Tapfiliateと比較して分析ダッシュボードが限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Stripe/Paddle連携・コミッション管理・クーポン・リファラル追跡',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'tolt': const _CompetitorInfo(
+    name: 'Tolt',
+    emoji: '🤝',
+    tagline: 'スタートアップ向けシンプルアフィリエイトプログラムで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Tolt代替 アフィリエイトプログラム スタートアップ Rewardful代替 紹介 Paddle Stripe',
+    accentColor: Color(0xFF10B981),
+    painPoints: [
+      '月額29ドル〜・アフィリエイト特化・個人のライフ管理は別途必要',
+      '紹介プログラム特化・個人のAI管理は別途必要',
+      'Rewardfulと比較してエンタープライズ向け機能・API深度が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'アフィリエイトリンク・ダッシュボード・Stripe/Paddle統合・自動支払い',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'typefully': const _CompetitorInfo(
+    name: 'Typefully',
+    emoji: '✍️',
+    tagline: 'Twitter/Xスレッド作成・スケジュール・分析ツールで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Typefully代替 Twitterスレッド X投稿 スケジュール SNS分析 ライター',
+    accentColor: Color(0xFF1DA1F2),
+    painPoints: [
+      '月額12.5ドル〜・Twitter/X特化・個人のライフ管理は別途必要',
+      'SNS投稿特化・個人のAI管理は別途必要',
+      'Buffer/Hypefuryと比較してマルチプラットフォーム対応が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'スレッド作成・スケジュール・分析・AIライティング・コラボ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'publer': const _CompetitorInfo(
+    name: 'Publer',
+    emoji: '📢',
+    tagline: 'SNSスケジュール・分析・AIアシスト投稿管理で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Publer代替 SNSスケジュール 投稿管理 AI分析 Buffer代替 Hootsuite代替',
+    accentColor: Color(0xFF006AFF),
+    painPoints: [
+      '月額12ドル〜・SNS投稿特化・個人のライフ管理は別途必要',
+      'ソーシャル特化・個人のAI管理は別途必要',
+      'Hootsuite/Bufferと比較してエンタープライズレポーティングが限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AI投稿生成・リサイクル・カレンダー・UTM・分析・チームコラボ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'metricool': const _CompetitorInfo(
+    name: 'Metricool',
+    emoji: '📊',
+    tagline: 'SNS管理・広告分析・コンテンツスケジュールオールインワンで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Metricool代替 SNS管理 広告分析 コンテンツスケジュール ソーシャルメディア分析',
+    accentColor: Color(0xFF00C6A7),
+    painPoints: [
+      '月額22ドル〜・SNS×広告分析特化・個人のライフ管理は別途必要',
+      'ソーシャル分析特化・個人のAI管理は別途必要',
+      'Sprout Social/Agora Pulseと比較してCRM連携が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'SNS+広告分析・スケジュール・競合分析・AIキャプション・リンクツリー',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'hypefury': const _CompetitorInfo(
+    name: 'Hypefury',
+    emoji: '🔥',
+    tagline: 'Twitter/X自動リツイート・スレッド・収益化支援ツールで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Hypefury代替 Twitter X 自動投稿 リツイート スレッド 収益化 SNSグロース',
+    accentColor: Color(0xFFFF4500),
+    painPoints: [
+      '月額19ドル〜・Twitter/X特化・個人のライフ管理は別途必要',
+      'Xグロース特化・個人のAI管理は別途必要',
+      'Typefully/Bufferと比較してマルチプラットフォーム対応が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '自動リツイート・スレッド・ニュースレター・Gumroad販売促進',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
