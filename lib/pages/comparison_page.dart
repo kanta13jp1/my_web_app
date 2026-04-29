@@ -62453,6 +62453,312 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'express': const _CompetitorInfo(
+    name: 'Express.js',
+    emoji: '🚂',
+    tagline: 'Express.js・Node.js Webフレームワーク・ミニマリスト・ミドルウェア・REST API・TypeScript・業界標準・OSS・最多採用で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Express.js代替 Node.js Webフレームワーク ミニマリスト ミドルウェア REST API TypeScript Fastify代替 Koa代替',
+    accentColor: Color(0xFF000000),
+    painPoints: [
+      '無料(OSS)・Webフレームワーク特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Fastify/Hono との比較でパフォーマンス・型安全性・モダン化が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Node.js Webフレームワーク・ミニマリスト・ミドルウェア・REST API・業界標準',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'fastify': const _CompetitorInfo(
+    name: 'Fastify',
+    emoji: '⚡',
+    tagline: 'Fastify・高速Node.js Webフレームワーク・プラグイン・スキーマバリデーション・TypeScript・低オーバーヘッド・Express代替・OSS・Hono競合で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Fastify代替 高速 Node.js Webフレームワーク プラグイン スキーマバリデーション TypeScript Express代替 Hono代替',
+    accentColor: Color(0xFF2C8EBB),
+    painPoints: [
+      '無料(OSS)・Webフレームワーク特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Express/Hono との比較でエコシステム規模・エッジランタイム対応・学習コストが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '高速Node.js Webフレームワーク・プラグイン・スキーマバリデーション・TypeScript',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'hono': const _CompetitorInfo(
+    name: 'Hono',
+    emoji: '🔥',
+    tagline: 'Hono・超高速エッジWebフレームワーク・Cloudflare Workers/Deno/Bun対応・TypeScript・軽量・JSXサポート・OSS・日本製で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Hono代替 超高速 エッジ Webフレームワーク Cloudflare Workers Deno Bun TypeScript 軽量 Express代替 Fastify代替',
+    accentColor: Color(0xFFE86A1E),
+    painPoints: [
+      '無料(OSS)・Webフレームワーク特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Express/Fastify との比較でエコシステム成熟度・プラグイン数・ドキュメント充実度が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '超高速エッジWebフレームワーク・CF Workers/Deno/Bun対応・TypeScript・軽量',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'nestjs': const _CompetitorInfo(
+    name: 'NestJS',
+    emoji: '🐈',
+    tagline: 'NestJS・TypeScript Node.jsフレームワーク・Angular風DI・デコレータ・モジュール・マイクロサービス・GraphQL・企業向けで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'NestJS代替 TypeScript Node.js フレームワーク Angular DI デコレータ モジュール マイクロサービス GraphQL Express代替',
+    accentColor: Color(0xFFE0234E),
+    painPoints: [
+      '無料(OSS)/有料(Platform)・Webフレームワーク特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Express/Fastify との比較でボイラープレート・学習コスト・オーバーエンジニアリングが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'TypeScript Node.js・Angular風DI・デコレータ・モジュール・マイクロサービス',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'django': const _CompetitorInfo(
+    name: 'Django',
+    emoji: '🎸',
+    tagline: 'Django・Python Webフレームワーク・バッテリー同梱・ORM・管理画面・セキュリティ・REST API・業界標準・OSS・急速開発で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Django代替 Python Webフレームワーク バッテリー同梱 ORM 管理画面 セキュリティ REST API FastAPI代替 Flask代替',
+    accentColor: Color(0xFF092E20),
+    painPoints: [
+      '無料(OSS)・Webフレームワーク特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'FastAPI/Flask との比較で非同期対応・パフォーマンス・マイクロサービス向けが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Python Webフレームワーク・バッテリー同梱・ORM・管理画面・セキュリティ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'flask': const _CompetitorInfo(
+    name: 'Flask',
+    emoji: '🍶',
+    tagline: 'Flask・Python マイクロWebフレームワーク・シンプル・拡張可能・Jinja2・Werkzeug・REST API・OSS・Django代替・学習コスト低で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Flask代替 Python マイクロWebフレームワーク シンプル 拡張可能 Jinja2 REST API Django代替 FastAPI代替',
+    accentColor: Color(0xFF000000),
+    painPoints: [
+      '無料(OSS)・Webフレームワーク特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'FastAPI/Django との比較でAsync対応・型安全・バッテリー同梱が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Python マイクロWebFW・シンプル・拡張可能・Jinja2・Werkzeug・REST API',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'rails': const _CompetitorInfo(
+    name: 'Ruby on Rails',
+    emoji: '💎',
+    tagline: 'Ruby on Rails・フルスタックWebフレームワーク・CoC・DRY・ActiveRecord・Generator・高速開発・OSS・スタートアップで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Ruby on Rails代替 フルスタック CoC DRY ActiveRecord 高速開発 スタートアップ Django代替 Laravel代替',
+    accentColor: Color(0xFFCC0000),
+    painPoints: [
+      '無料(OSS)・Webフレームワーク特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Django/Laravel との比較でRuby採用市場・パフォーマンス・マイクロサービス対応が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Ruby フルスタックWebFW・CoC・DRY・ActiveRecord・Generator・高速開発',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'laravel': const _CompetitorInfo(
+    name: 'Laravel',
+    emoji: '🎭',
+    tagline: 'Laravel・PHP Webフレームワーク・Eloquent ORM・Blade・Queue・スケジューラー・エコシステム・OSS・業界標準・Fortifyで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Laravel代替 PHP Webフレームワーク Eloquent ORM Blade Queue スケジューラー Rails代替 Symfony代替',
+    accentColor: Color(0xFFFF2D20),
+    painPoints: [
+      '無料(OSS)/有料(Vapor/Forge)・Webフレームワーク特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Rails/Django との比較でPHP型システム・パフォーマンス・非同期対応が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'PHP Webフレームワーク・Eloquent ORM・Blade・Queue・スケジューラー',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'spring-boot': const _CompetitorInfo(
+    name: 'Spring Boot',
+    emoji: '🍃',
+    tagline: 'Spring Boot・Java/Kotlin Webフレームワーク・自動設定・組み込みサーバー・エンタープライズ・マイクロサービス・Cloud Native・OSS・業界標準で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Spring Boot代替 Java Kotlin Webフレームワーク 自動設定 組み込みサーバー エンタープライズ マイクロサービス Quarkus代替 Micronaut代替',
+    accentColor: Color(0xFF6DB33F),
+    painPoints: [
+      '無料(OSS)/有料(Commercial)・Java Webフレームワーク特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Quarkus/Micronaut との比較で起動時間・メモリ使用量・GraalVMネイティブが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Java/Kotlin Webフレームワーク・自動設定・エンタープライズ・マイクロサービス',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
