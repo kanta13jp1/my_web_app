@@ -53567,6 +53567,312 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'tanium': const _CompetitorInfo(
+    name: 'Tanium',
+    emoji: '⚡',
+    tagline: 'Tanium・リアルタイムエンドポイント管理・パッチ・脅威インテリジェンス・15秒可視化・エンタープライズXEMで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Tanium代替 エンドポイント管理 パッチ 脅威インテリジェンス リアルタイム XEM エンタープライズ CrowdStrike代替 Ivanti代替',
+    accentColor: Color(0xFF00A0DC),
+    painPoints: [
+      '有料・エンドポイント特化・個人のライフ管理は別途必要',
+      'エンタープライズ特化・個人のAI管理は別途必要',
+      'Microsoft/CrowdStrike/Ivanti との比較でコスト・中小企業向け・実装複雑さが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'リアルタイムXEM・15秒可視化・パッチ・脅威インテリジェンス・エンドポイント統合管理',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'automox': const _CompetitorInfo(
+    name: 'Automox',
+    emoji: '🤖',
+    tagline: 'クラウドパッチ管理・自動化・Windows/Mac/Linux・エージェントベース・コンプライアンス・ITHygiene確保で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Automox代替 パッチ管理 自動化 クラウド Windows Mac Linux コンプライアンス Ivanti代替 Tanium代替',
+    accentColor: Color(0xFF0D6EFD),
+    painPoints: [
+      '有料・パッチ管理特化・個人のライフ管理は別途必要',
+      'IT管理特化・個人のAI管理は別途必要',
+      'Microsoft/Ivanti/Tanium との比較でコスト・エンタープライズ機能・ITSM統合が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'クラウドパッチ自動化・Windows/Mac/Linux・コンプライアンス・ITHygiene',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'ninjaone': const _CompetitorInfo(
+    name: 'NinjaOne (NinjaRMM)',
+    emoji: '🥷',
+    tagline: 'クラウドRMM・NinjaOne・MSP/IT向け・パッチ・リモートアクセス・バックアップ・ドキュメント・統合IT管理で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'NinjaOne代替 RMM MSP クラウド パッチ管理 リモートアクセス バックアップ ConnectWise代替 Kaseya代替',
+    accentColor: Color(0xFF00A3FF),
+    painPoints: [
+      '有料・RMM特化・個人のライフ管理は別途必要',
+      'MSP/IT特化・個人のAI管理は別途必要',
+      'ConnectWise/Kaseya/N-able との比較でコスト・機能深度・PSA統合が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'クラウドRMM・パッチ・リモートアクセス・バックアップ・ドキュメント・MSP/IT統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'kaseya': const _CompetitorInfo(
+    name: 'Kaseya VSA',
+    emoji: '🔑',
+    tagline: 'Kaseya VSA・RMM・IT管理・パッチ・リモート監視・MSP向け・統合プラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Kaseya代替 VSA RMM MSP IT管理 パッチ リモート監視 ConnectWise代替 NinjaOne代替',
+    accentColor: Color(0xFF0066CC),
+    painPoints: [
+      '有料・RMM/MSP特化・個人のライフ管理は別途必要',
+      'IT管理特化・個人のAI管理は別途必要',
+      'ConnectWise/NinjaOne/N-able との比較でコスト・UI/UX・クラウドネイティブが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'VSA RMM・パッチ管理・リモート監視・MSP向け・IT管理統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'connectwise': const _CompetitorInfo(
+    name: 'ConnectWise',
+    emoji: '🔗',
+    tagline: 'ConnectWise RMM/PSA・MSP統合・自動化・ヘルプデスク・プロジェクト管理・BVoIP・セキュリティで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'ConnectWise代替 RMM PSA MSP 自動化 ヘルプデスク プロジェクト管理 Kaseya代替 NinjaOne代替',
+    accentColor: Color(0xFF003087),
+    painPoints: [
+      '有料・MSP/RMM特化・個人のライフ管理は別途必要',
+      'IT管理特化・個人のAI管理は別途必要',
+      'Kaseya/NinjaOne/N-able との比較でコスト・学習コスト・実装時間が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'RMM/PSA・MSP統合・自動化・ヘルプデスク・プロジェクト管理・BVoIP統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'n-able': const _CompetitorInfo(
+    name: 'N-able (SolarWinds MSP)',
+    emoji: '🌟',
+    tagline: 'N-able RMM・N-central・MSP向け・セキュリティ・バックアップ・EDR・リモート管理・旧SolarWinds MSPで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'N-able代替 SolarWinds MSP RMM N-central セキュリティ バックアップ EDR ConnectWise代替 Kaseya代替',
+    accentColor: Color(0xFF00AEF3),
+    painPoints: [
+      '有料・RMM/MSP特化・個人のライフ管理は別途必要',
+      'IT管理特化・個人のAI管理は別途必要',
+      'ConnectWise/Kaseya/NinjaOne との比較でコスト・UI/UX・クラウドネイティブが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'RMM・N-central・MSP向けセキュリティ・バックアップ・EDR・リモート管理統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'atera': const _CompetitorInfo(
+    name: 'Atera',
+    emoji: '🎯',
+    tagline: 'オールインワンRMM/PSA・定額制・Atera・MSP/IT向け・AI自動化・パッチ・リモートアクセス・コスト効率で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Atera代替 RMM PSA 定額制 MSP IT AI自動化 パッチ NinjaOne代替 ConnectWise代替',
+    accentColor: Color(0xFF6366F1),
+    painPoints: [
+      '有料(定額制)・RMM特化・個人のライフ管理は別途必要',
+      'MSP/IT特化・個人のAI管理は別途必要',
+      'ConnectWise/Kaseya/NinjaOne との比較でエンタープライズ機能・スケール・統合が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'オールインワンRMM/PSA・定額制・AI自動化・パッチ・リモートアクセス・MSP/IT',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'datto': const _CompetitorInfo(
+    name: 'Datto (Kaseya)',
+    emoji: '💾',
+    tagline: 'Datto・MSP向けBCDR・バックアップ/DR・クラウドバックアップ・ランサムウェア復旧・RMM・Kaseya買収で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Datto代替 BCDR バックアップ DR クラウド ランサムウェア復旧 MSP Kaseya N-able代替 Veeam代替',
+    accentColor: Color(0xFF009BDE),
+    painPoints: [
+      '有料・BCDR/バックアップ特化・個人のライフ管理は別途必要',
+      'MSP特化・個人のAI管理は別途必要',
+      'Veeam/Acronis/Axcient との比較でコスト・非MSP向け・クラウドネイティブが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'BCDR・バックアップ/DR・クラウドバックアップ・ランサムウェア復旧・MSP向けRMM',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'pulseway': const _CompetitorInfo(
+    name: 'Pulseway',
+    emoji: '📡',
+    tagline: 'モバイルファーストRMM・Pulseway・スマホからIT管理・MSP/IT・パッチ・リモートアクセス・スクリプト自動化で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Pulseway代替 RMM モバイル IT管理 パッチ リモートアクセス MSP NinjaOne代替 Atera代替',
+    accentColor: Color(0xFF0062CC),
+    painPoints: [
+      '有料・RMM特化・個人のライフ管理は別途必要',
+      'IT管理特化・個人のAI管理は別途必要',
+      'NinjaOne/Atera/ConnectWise との比較でコスト・エンタープライズ機能・PSA統合が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'モバイルファーストRMM・パッチ・リモートアクセス・スクリプト自動化・MSP/IT',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
