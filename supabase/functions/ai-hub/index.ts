@@ -12,6 +12,12 @@ import {
   SupabaseClient,
 } from "https://esm.sh/@supabase/supabase-js@2";
 import { AI_CHARACTER_PREAMBLE, prependCharacter } from "../_shared/ai_character_preamble.ts";
+import { selectEffort } from "../_shared/effort_router.ts";
+import {
+  calculateApiCost,
+  checkBudget,
+  recordSpend,
+} from "../_shared/task_budget.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -479,14 +485,24 @@ const TIER_PROVIDERS: Record<Tier, string[]> = {
   premium: ["anthropic", "openai", "google"],
 };
 
-const TIER_COST_USD_PER_1K: Record<Tier, number> = {
-  free: 0.0001,
-  budget: 0.001,
-  performance: 0.01,
-  premium: 0.05,
-};
-
 const TIER_ORDER: Tier[] = ["free", "budget", "performance", "premium"];
+
+function effortToTier(effort: "low" | "medium" | "high" | "xhigh"): Tier {
+  switch (effort) {
+    case "low":
+      return "free";
+    case "medium":
+      return "budget";
+    case "high":
+      return "performance";
+    case "xhigh":
+      return "premium";
+  }
+}
+
+function estimateTokensFromChars(chars: number): number {
+  return Math.max(1, Math.ceil(Math.max(0, chars) / 4));
+}
 
 async function callSingleProvider(
   providerId: string,
@@ -3760,6 +3776,18 @@ serve(async (req: Request) => {
       }
 
       case "provider.chat_auto": {
+        const effortSelection = await selectEffort("provider.chat_auto", body);
+        const budget = await checkBudget("ef", "ai-hub");
+        if (!budget.ok) {
+          return json({
+            success: false,
+            status: "budgetExceeded",
+            remaining_usd: budget.remaining_usd,
+            exceeded_scope: budget.exceeded_scope,
+            exceeded_scope_id: budget.exceeded_scope_id,
+          }, 429);
+        }
+
         const requestedTier = body.tier as Tier | undefined;
         const messages = Array.isArray(body.messages) ? body.messages : null;
         const userMsg = String(body.message ?? "");
@@ -3767,9 +3795,8 @@ serve(async (req: Request) => {
           return json({ error: "messages or message required" }, 400);
         }
         const finalMessages = messages ?? [{ role: "user", content: userMsg }];
-        const startTierIndex = requestedTier
-          ? TIER_ORDER.indexOf(requestedTier)
-          : 0;
+        const routedTier = requestedTier ?? effortToTier(effortSelection.effort);
+        const startTierIndex = TIER_ORDER.indexOf(routedTier);
         if (startTierIndex === -1) return json({ error: "invalid tier" }, 400);
 
         // Win版#131 part 4: Observability — trace_id / session_id / latency 計測
@@ -3842,8 +3869,11 @@ serve(async (req: Request) => {
             .map((m) => typeof m.content === "string" ? m.content.length : 0)
             .reduce((a, b) => a + b, 0);
           const outputChars = resultText?.length ?? 0;
-          const estimatedCost = TIER_COST_USD_PER_1K[usedTier] *
-            (inputChars / 1000);
+          const estimatedCost = calculateApiCost(
+            usedModel ?? usedProvider,
+            estimateTokensFromChars(inputChars),
+            estimateTokensFromChars(outputChars),
+          );
           await admin.from("ai_hub_chat_logs").insert({
             provider: usedProvider,
             tier: usedTier,
@@ -3858,6 +3888,7 @@ serve(async (req: Request) => {
             action: "provider.chat_auto",
             status_code: 200,
           });
+          await recordSpend("ef", "ai-hub", estimatedCost);
         } catch { /* ignore logging errors */ }
 
         return json({
@@ -3865,12 +3896,26 @@ serve(async (req: Request) => {
           provider: usedProvider,
           tier: usedTier,
           model: usedModel ?? PROVIDER_CONFIGS[usedProvider]?.defaultModel,
+          effort: effortSelection.effort,
+          effort_source: effortSelection.source,
           status: "implemented",
           text: resultText,
         });
       }
 
       case "edge_llm.invoke": {
+        const effortSelection = await selectEffort("edge_llm.invoke", body);
+        const budget = await checkBudget("ef", "ai-hub");
+        if (!budget.ok) {
+          return json({
+            success: false,
+            status: "budgetExceeded",
+            remaining_usd: budget.remaining_usd,
+            exceeded_scope: budget.exceeded_scope,
+            exceeded_scope_id: budget.exceeded_scope_id,
+          }, 429);
+        }
+
         const requestedTier = body.tier as Tier | undefined;
         const providerId = asString(body.provider) || undefined;
         const systemPrompt = asString(body.system_prompt);
@@ -3992,9 +4037,8 @@ serve(async (req: Request) => {
             failureDetail = result.error ?? "provider failed";
           }
         } else {
-          const startTierIndex = requestedTier
-            ? TIER_ORDER.indexOf(requestedTier)
-            : 0;
+          const routedTier = requestedTier ?? effortToTier(effortSelection.effort);
+          const startTierIndex = TIER_ORDER.indexOf(routedTier);
           if (startTierIndex === -1) {
             return json({ error: "invalid tier" }, 400);
           }
@@ -4058,8 +4102,11 @@ serve(async (req: Request) => {
         }
 
         const outputChars = resultText.length;
-        const estimatedCost = TIER_COST_USD_PER_1K[usedTier] *
-          (inputChars / 1000);
+        const estimatedCost = calculateApiCost(
+          usedModel ?? usedProvider,
+          estimateTokensFromChars(inputChars),
+          estimateTokensFromChars(outputChars),
+        );
         let parsedJson: unknown = null;
         let parseError: string | undefined;
         if (responseFormat === "json") {
@@ -4086,6 +4133,7 @@ serve(async (req: Request) => {
             action: "edge_llm.invoke",
             status_code: 200,
           });
+          await recordSpend("ef", "ai-hub", estimatedCost);
         } catch {
           // ignore logging errors
         }
@@ -4096,6 +4144,8 @@ serve(async (req: Request) => {
           provider: usedProvider,
           tier: usedTier,
           model: usedModel ?? PROVIDER_CONFIGS[usedProvider]?.defaultModel,
+          effort: effortSelection.effort,
+          effort_source: effortSelection.source,
           text: resultText,
           response_format: responseFormat,
           parsed_json: parsedJson,
@@ -4105,6 +4155,7 @@ serve(async (req: Request) => {
             model: usedModel ?? PROVIDER_CONFIGS[usedProvider]?.defaultModel,
             latency_ms: latencyMs,
             estimated_cost_usd: estimatedCost,
+            effort: effortSelection.effort,
             trace_id: traceId,
             session_id: sessionId,
             input_chars: inputChars,
