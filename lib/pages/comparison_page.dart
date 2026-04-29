@@ -54485,6 +54485,312 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'gorgias': const _CompetitorInfo(
+    name: 'Gorgias',
+    emoji: '🛍️',
+    tagline: 'Eコマース特化カスタマーサポート・Shopify/BigCommerce統合・AI自動化・マルチチャネル・収益増加型CSで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Gorgias代替 Eコマース Shopify BigCommerce カスタマーサポート AI自動化 マルチチャネル Zendesk代替 Freshdesk代替',
+    accentColor: Color(0xFF6366F1),
+    painPoints: [
+      '有料・Eコマース特化・個人のライフ管理は別途必要',
+      'ECカスタマーサポート特化・個人のAI管理は別途必要',
+      'Zendesk/Freshdesk/Re:amaze との比較でコスト・非EC向け・AI精度が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Eコマース特化CS・Shopify統合・AI自動化・マルチチャネル・収益増加型',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  're-amaze': const _CompetitorInfo(
+    name: 'Re:amaze',
+    emoji: '💌',
+    tagline: 'Re:amaze・Eコマース統合カスタマーサポート・ライブチャット・FAQ・Shopify/WooCommerce・共有受信箱で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Re:amaze代替 Eコマース カスタマーサポート ライブチャット FAQ Shopify WooCommerce 共有受信箱 Gorgias代替',
+    accentColor: Color(0xFF2196F3),
+    painPoints: [
+      '有料・Eコマース特化・個人のライフ管理は別途必要',
+      'カスタマーサポート特化・個人のAI管理は別途必要',
+      'Gorgias/Zendesk/Freshdesk との比較でコスト・AI機能・エンタープライズが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Eコマース統合CS・ライブチャット・FAQ・Shopify/WooCommerce・共有受信箱',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'groove': const _CompetitorInfo(
+    name: 'Groove',
+    emoji: '🎶',
+    tagline: 'Groove・SMB向け共有受信箱・シンプルヘルプデスク・Gmail統合・ライブチャット・ナレッジベースで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Groove代替 SMB ヘルプデスク 共有受信箱 Gmail統合 ライブチャット ナレッジベース Freshdesk代替 HelpScout代替',
+    accentColor: Color(0xFF0A3E6E),
+    painPoints: [
+      '有料・カスタマーサポート特化・個人のライフ管理は別途必要',
+      'SMB特化・個人のAI管理は別途必要',
+      'Freshdesk/HelpScout/Zendesk との比較でコスト・AI機能・エンタープライズスケールが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'SMB共有受信箱・シンプルヘルプデスク・Gmail統合・ライブチャット・ナレッジベース',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'kayako': const _CompetitorInfo(
+    name: 'Kayako',
+    emoji: '⚓',
+    tagline: 'Kayako・顧客コンテキスト型CS・SingleView・ライブチャット・メール/ソーシャル統合・エンタープライズCSで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Kayako代替 カスタマーサポート SingleView ライブチャット ソーシャル統合 Zendesk代替 Freshdesk代替',
+    accentColor: Color(0xFF363B64),
+    painPoints: [
+      '有料・CS特化・個人のライフ管理は別途必要',
+      'カスタマーサポート特化・個人のAI管理は別途必要',
+      'Zendesk/Freshdesk/Intercom との比較でコスト・AI精度・モダンUIが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '顧客コンテキスト型CS・SingleView・ライブチャット・メール/ソーシャル統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'deskpro': const _CompetitorInfo(
+    name: 'Deskpro',
+    emoji: '🖥️',
+    tagline: 'Deskpro・オンプレ/クラウドCSP・ITSM・マルチチャネル・ライブチャット・SLA管理・セルフホスト可で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Deskpro代替 CSP ITSM オンプレ セルフホスト ライブチャット SLA Freshdesk代替 Zendesk代替',
+    accentColor: Color(0xFF0062FF),
+    painPoints: [
+      '有料・CS/ITSM特化・個人のライフ管理は別途必要',
+      'カスタマーサポート特化・個人のAI管理は別途必要',
+      'Zendesk/Freshdesk/ServiceNow との比較でコスト・AI機能・エコシステムが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'オンプレ/クラウドCSP・ITSM・マルチチャネル・ライブチャット・SLA・セルフホスト可',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'dixa': const _CompetitorInfo(
+    name: 'Dixa',
+    emoji: '💎',
+    tagline: 'Dixa・カンバセーショナルCS・コーディングレス・AIエージェント・オムニチャネル・エンタープライズCXで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Dixa代替 カンバセーショナルCS AIエージェント オムニチャネル CX コーディングレス Zendesk代替 Genesys代替',
+    accentColor: Color(0xFF5B21B6),
+    painPoints: [
+      '有料・CX特化・個人のライフ管理は別途必要',
+      'エンタープライズCS特化・個人のAI管理は別途必要',
+      'Zendesk/Freshdesk/Genesys との比較でコスト・中小規模対応・統合数が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'カンバセーショナルCS・コーディングレス・AIエージェント・オムニチャネル・エンタープライズCX',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'helpcrunch': const _CompetitorInfo(
+    name: 'HelpCrunch',
+    emoji: '💬',
+    tagline: 'HelpCrunch・オールインワンCS・ライブチャット・メール・ポップアップ・ナレッジベース・SaaS/ECで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'HelpCrunch代替 CS ライブチャット メール ポップアップ ナレッジベース SaaS EC Intercom代替 Crisp代替',
+    accentColor: Color(0xFFF65314),
+    painPoints: [
+      '有料・CS特化・個人のライフ管理は別途必要',
+      'カスタマーサポート特化・個人のAI管理は別途必要',
+      'Intercom/Crisp/Freshchat との比較でコスト・AI機能・エンタープライズが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'オールインワンCS・ライブチャット・メール・ポップアップ・ナレッジベース・SaaS/EC',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'tawk': const _CompetitorInfo(
+    name: 'tawk.to',
+    emoji: '🗣️',
+    tagline: '完全無料ライブチャット・tawk.to・カスタマーサポート・チャットウィジェット・エージェントアプリ・無制限使用で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'tawk.to代替 無料ライブチャット カスタマーサポート チャットウィジェット Crisp代替 Tidio代替',
+    accentColor: Color(0xFF03A84E),
+    painPoints: [
+      '無料・ライブチャット特化・個人のライフ管理は別途必要',
+      'CSサポート特化・個人のAI管理は別途必要',
+      'Crisp/Tidio/LiveChat との比較でAI機能・自動化・統合数が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '完全無料ライブチャット・無制限使用・エージェントアプリ・チャットウィジェット',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'useresponse': const _CompetitorInfo(
+    name: 'UseResponse',
+    emoji: '💡',
+    tagline: 'UseResponse・フィードバック管理+CS統合・アイデア管理・コミュニティフォーラム・ナレッジベース・セルフホストで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'UseResponse代替 フィードバック管理 CS アイデア管理 コミュニティ ナレッジベース セルフホスト UserVoice代替 Aha代替',
+    accentColor: Color(0xFF1A73E8),
+    painPoints: [
+      '有料・フィードバック/CS特化・個人のライフ管理は別途必要',
+      'プロダクト特化・個人のAI管理は別途必要',
+      'UserVoice/Aha/Freshdesk との比較でコスト・AI機能・エンタープライズが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'フィードバック管理+CS統合・アイデア管理・コミュニティ・ナレッジベース・セルフホスト',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
