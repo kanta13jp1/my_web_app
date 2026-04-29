@@ -21317,6 +21317,312 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'nordvpn': const _CompetitorInfo(
+    name: 'NordVPN',
+    emoji: '🔒',
+    tagline: 'プレミアムVPNサービス・プライバシー保護で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'NordVPN代替 VPN プライバシー 匿名 セキュリティ 暗号化',
+    accentColor: Color(0xFF4687FF),
+    painPoints: [
+      '月額3.99ドル〜(年間契約)/単月11.99ドル・プライバシー以外の個人管理は別途必要',
+      'VPN特化でセキュリティ向け・AI支援ライフ管理・財務管理は別途必要',
+      'ExpressVPNと比較して一部地域でのサーバー速度が劣る場合がある',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '6100+サーバー60国・NordLynx・ダブルVPN・Meshnet・OSS',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'expressvpn': const _CompetitorInfo(
+    name: 'ExpressVPN',
+    emoji: '🚀',
+    tagline: '高速・高信頼VPN・プライバシー特化で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'ExpressVPN代替 高速VPN プライバシー セキュリティ 暗号化 匿名',
+    accentColor: Color(0xFFDA3940),
+    painPoints: [
+      '月額6.67ドル〜(年間契約)/単月12.95ドル・VPN以外の個人管理は別途必要',
+      'VPN特化でセキュリティ向け・AI支援ライフ管理・財務管理は別途必要',
+      'NordVPNと比較して同時接続デバイス数(5台)が少ない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '105国3000+サーバー・Lightway・スプリットトンネリング・TrustedServer',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'protonvpn': const _CompetitorInfo(
+    name: 'Proton VPN',
+    emoji: '⚛️',
+    tagline: 'スイス拠点プライバシー最重視VPN・無料プランありで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Proton VPN代替 プライバシーVPN スイス 無料VPN オープンソース',
+    accentColor: Color(0xFF6D4AFF),
+    painPoints: [
+      '無料プラン有/有料月額4.99ドル〜・ProtonスイートはVPN+Mail+Drive統合だが個人OS機能は別途',
+      'プライバシー/セキュリティ特化でAI支援ライフ管理・財務管理は別途必要',
+      'NordVPNと比較してサーバー数が少なく一部地域でのサービスが限定的',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '無料プラン・OSS・スイス管轄・ダブルVPN・Tor・NetShield',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'protonmail': const _CompetitorInfo(
+    name: 'Proton Mail',
+    emoji: '✉️',
+    tagline: 'エンドツーエンド暗号化メール・スイス管轄プライバシーで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Proton Mail代替 暗号化メール プライバシー E2E スイス セキュアメール',
+    accentColor: Color(0xFF8B5CF6),
+    painPoints: [
+      '無料1GB/有料月額3.99ドル〜・暗号化メール以外の個人ライフ管理機能は別途必要',
+      '暗号化メール特化でセキュリティ向け・AI支援管理・財務管理は別途必要',
+      'Gmailと比較してサードパーティ連携・AIアシスト機能が少ない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'E2E暗号化・ゼロアクセス・PGP・エイリアス・カレンダー統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'tutanota': const _CompetitorInfo(
+    name: 'Tuta (旧Tutanota)',
+    emoji: '🔐',
+    tagline: 'ドイツ発E2E暗号化メール・カレンダー・プライバシー重視で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Tutanota代替 暗号化メール プライバシー ドイツ セキュアメール カレンダー',
+    accentColor: Color(0xFFC62828),
+    painPoints: [
+      '無料1GB/有料月額3ユーロ〜・暗号化メール以外の個人ライフ管理は別途必要',
+      '暗号化メール特化でセキュリティ向け・AI支援管理・財務管理は別途必要',
+      'ProtonMailと比較してビジネス機能・サードパーティ連携が少ない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'E2E暗号化・カレンダー・連絡先・OSS・ドイツGDPR・広告なし',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'hey-email': const _CompetitorInfo(
+    name: 'HEY Email',
+    emoji: '📬',
+    tagline: 'Basecampのメール体験再発明・スクリーナー/imbox機能で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'HEY Email代替 メール代替 Basecamp メール体験 imbox スパム遮断',
+    accentColor: Color(0xFFFF2600),
+    painPoints: [
+      '個人月額12ドル〜/年間99ドル〜・メール以外の個人ライフ管理は別途必要',
+      'メール再設計特化でアプリ向け・AI支援管理・財務管理は別途必要',
+      'Superhumanと比較して自動化・AI機能が少ない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'スクリーナー・imbox・クリップボード・PDF・返信後追跡なし',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'beautiful-ai': const _CompetitorInfo(
+    name: 'Beautiful.ai',
+    emoji: '✨',
+    tagline: 'AI自動レイアウトプレゼンテーションツールで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Beautiful.ai代替 AIプレゼン スライド自動作成 プレゼン作成 デザイン自動化',
+    accentColor: Color(0xFF8B008B),
+    painPoints: [
+      '月額12ドル〜・プレゼン以外の個人ライフ管理・財務管理は別途必要',
+      'プレゼン特化でビジネス向け設計・AI支援個人管理は別途必要',
+      'Gammaと比較してAI生成文章機能が弱い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'スマートスライド自動整列・テンプレート・チームコラボ・アニメ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'tome': const _CompetitorInfo(
+    name: 'Tome',
+    emoji: '📖',
+    tagline: 'AIプレゼン・ストーリーテリングツールで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Tome代替 AIプレゼン ストーリー スライド AI生成 プレゼン作成',
+    accentColor: Color(0xFF7C3AED),
+    painPoints: [
+      '月額16ドル〜・プレゼン/ストーリー以外の個人ライフ管理は別途必要',
+      'AIプレゼン特化でビジネス向け設計・AI支援個人管理は別途必要',
+      'Gammaと比較して細かいカスタマイズが難しい',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AI生成スライド・ライブウェブページ・動画埋め込み・分析',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'fastmail': const _CompetitorInfo(
+    name: 'Fastmail',
+    emoji: '📮',
+    tagline: '高速・プライバシー重視メール・カレンダー・連絡先で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Fastmail代替 高速メール プライバシーメール カレンダー 連絡先統合',
+    accentColor: Color(0xFF007BFF),
+    painPoints: [
+      '月額3ドル〜・メール以外の個人ライフ管理・AI機能は別途必要',
+      '高品質メール特化でプロ向け設計・AI支援個人管理は別途必要',
+      'Gmailと比較してAI支援機能・サードパーティ連携が少ない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'IMAP/JMAP・カレンダー・連絡先・エイリアス・マスクメール',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
