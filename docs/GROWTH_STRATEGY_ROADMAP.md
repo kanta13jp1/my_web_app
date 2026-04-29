@@ -24111,3 +24111,9 @@ SECOND_BRAIN 4.0 + VIBE 6.5 + PLATFORM 4.0 = 14.5/21 (Win territory 直接実装
 - 残: cranky-chaplygin-f003b4 (プロセスビジー → 次回再起動後削除)
 - 残: my_web_app_wbs_sync (PR #848 open — REVIEW_REQUIRED ブロック)
 - worktree list: 12インスタンス正規 + wbs_sync のみ ✅
+
+## 2026-04-29 PS#6 S118 — prevVenueMatchBonus 前走同会場補正 (34 terms)
+- prevVenueMatchBonus追加: 前走と今走が同一会場の場合+1% confidence補正
+- 同会場: +0.01 (コース経験・適性実証あり) / 異会場: 0
+- prevVenueMatchScoreの知識をconfidence式に統合
+- confidence式 34 terms体制確立
