@@ -22405,6 +22405,312 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'greenhouse': const _CompetitorInfo(
+    name: 'Greenhouse',
+    emoji: '🌱',
+    tagline: 'B2B採用管理・ATS・スケーラブル採用プロセスで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Greenhouse代替 採用管理 ATS 求人管理 採用プロセス エンタープライズ採用',
+    accentColor: Color(0xFF24A148),
+    painPoints: [
+      'Enterprise価格非公開・SMBには高額・カスタマイズに時間がかかる',
+      '採用管理特化でHR/リクルーター向け設計・個人のライフ管理は別途必要',
+      'Leverと比較してUIの使いやすさとCRM機能が弱い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '構造化採用・スコアカード・面接官調整・レポート・600+統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'lever': const _CompetitorInfo(
+    name: 'Lever',
+    emoji: '🎛️',
+    tagline: 'ATS+CRM統合採用プラットフォーム・タレントナーチャリングで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Lever代替 ATS CRM 採用管理 タレントナーチャリング 候補者管理',
+    accentColor: Color(0xFF00B3E3),
+    painPoints: [
+      'Enterprise価格非公開・SMBには高額・導入に時間がかかる',
+      '採用管理特化でHR向け設計・個人のライフ管理は別途必要',
+      'Greenhouseと比較してレポート・分析機能が弱い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ATS+CRM統合・ソーシング・パイプライン・ニュートリング・分析',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'ashby': const _CompetitorInfo(
+    name: 'Ashby',
+    emoji: '🏋️',
+    tagline: '次世代オールインワン採用プラットフォーム・分析特化で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Ashby代替 採用管理 ATS 採用分析 スケーリング ハイグロース採用',
+    accentColor: Color(0xFF6B21A8),
+    painPoints: [
+      '月額500ドル〜・スタートアップ/スケールアップ向けで大企業・SMBは不向きな場合も',
+      '採用管理特化でHR/オペレーション向け設計・個人のライフ管理は別途必要',
+      'Greenhouseと比較してエンタープライズ機能・統合数が少ない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ATS+スケジューリング+分析+CRM+オファー管理 一体型・カスタムレポート',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'meilisearch': const _CompetitorInfo(
+    name: 'Meilisearch',
+    emoji: '🔍',
+    tagline: 'OSS高速全文検索エンジン・タイポ耐性・日本語対応で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Meilisearch代替 OSS全文検索 高速検索 タイポ耐性 Algolia代替 日本語検索',
+    accentColor: Color(0xFFFF5CAA),
+    painPoints: [
+      'クラウド版月額30ドル〜・セルフホストは運用コスト・インデックス管理が必要',
+      '全文検索エンジン特化でエンジニア向け設計・個人のライフ管理は別途必要',
+      'Algoliaと比較してUIウィジェット・SLA・サポートが弱い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'OSS・タイポ耐性・フィルタ・ファセット・マルチ言語・REST API',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'rabbitmq': const _CompetitorInfo(
+    name: 'RabbitMQ',
+    emoji: '🐇',
+    tagline: 'AMQP対応OSS メッセージブローカー・キューイングで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'RabbitMQ代替 メッセージキュー AMQP メッセージブローカー マイクロサービス',
+    accentColor: Color(0xFFFF6600),
+    painPoints: [
+      'セルフホスト必須・CloudAMQP月額19ドル〜・クラスタ管理が複雑',
+      'メッセージキュー特化でエンジニア向け設計・個人のライフ管理は別途必要',
+      'Kafkaと比較して大量スループット・イベントソーシングに不向き',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AMQP/MQTT/STOMP・交換機・キュー・DLX・管理UI・OSS',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'hightouch': const _CompetitorInfo(
+    name: 'Hightouch',
+    emoji: '🔄',
+    tagline: 'リバースETL・データウェアハウスからCRM/広告同期で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Hightouch代替 リバースETL データ同期 CRM 広告同期 ウェアハウス活用',
+    accentColor: Color(0xFF7B61FF),
+    painPoints: [
+      '無料プランあり/Pro月額350ドル〜・大規模同期で高額',
+      'リバースETL特化でデータ/マーケ向け設計・個人のライフ管理は別途必要',
+      'Censusと比較してモデリング・変換機能が弱い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '200+同期先・SQL/dbt/コードなし・オーディエンス・AIエージェント',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'ironclad': const _CompetitorInfo(
+    name: 'Ironclad',
+    emoji: '⚖️',
+    tagline: 'AIデジタル契約管理・ワークフロー自動化プラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Ironclad代替 契約管理 電子署名 CLM 法務自動化 契約ワークフロー',
+    accentColor: Color(0xFF0E1E3C),
+    painPoints: [
+      'Enterprise価格非公開・法務/調達向けで個人には不要・導入に専任担当が必要',
+      '契約管理特化でリーガル向け設計・個人のライフ管理は別途必要',
+      'DocuSignやPandaDocと比較して中小企業向けプランが少ない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AI契約分析・ワークフロー・電子署名・リポジトリ・コンプライアンス',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'trustpilot': const _CompetitorInfo(
+    name: 'Trustpilot',
+    emoji: '⭐',
+    tagline: 'オンライン顧客レビュープラットフォーム・信頼性向上で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Trustpilot代替 顧客レビュー 口コミ管理 評判管理 ブランド信頼性 G2代替',
+    accentColor: Color(0xFF00B67A),
+    painPoints: [
+      '無料プランあり/Pro月額259ドル〜・レビュー以外の個人ライフ管理は別途必要',
+      'レビュープラットフォーム特化でBtoC向け設計・個人管理は別途必要',
+      'G2やCapterraと比較してB2Bソフトウェアレビューへの特化が弱い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'レビュー収集・返信・ウィジェット・SEO強化・インサイト・通知',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'yotpo': const _CompetitorInfo(
+    name: 'Yotpo',
+    emoji: '💬',
+    tagline: 'eコマースレビュー・ロイヤルティ・SMS統合プラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Yotpo代替 eコマースレビュー ロイヤルティ SMS Shopify レビュー管理',
+    accentColor: Color(0xFF0E4FFF),
+    painPoints: [
+      '月額79ドル〜・eコマース/Shopify以外の用途に不向き・機能ごとの個別課金',
+      'eコマースレビュー特化でEC向け設計・個人のライフ管理は別途必要',
+      'TrustpilotやStampedと比較してエンタープライズ機能が多く中小には高額',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'レビュー/評価・SMS/メール・ロイヤルティ・UGC・サブスク・Shopify統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
