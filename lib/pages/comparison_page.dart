@@ -25159,6 +25159,312 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'teamtailor': const _CompetitorInfo(
+    name: 'Teamtailor',
+    emoji: '🧵',
+    tagline: 'スウェーデン発雇用主ブランディング・採用プラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Teamtailor代替 採用 雇用主ブランド ATS キャリアページ スウェーデン HR',
+    accentColor: Color(0xFF3FE0D0),
+    painPoints: [
+      '月額179ドル〜・採用特化・個人のライフ管理は別途必要',
+      '採用/雇用主ブランド特化でHR向け設計・個人のAI管理は別途必要',
+      'Workable/Greenhouseと比較してATSの深さ・統合数が劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'キャリアサイト・スマート求人・候補者管理・GDPR・ビデオ面接',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'phenom': const _CompetitorInfo(
+    name: 'Phenom',
+    emoji: '🌟',
+    tagline: 'AI採用マーケティング・候補者体験プラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Phenom代替 採用マーケティング AI候補者体験 キャリアサイト タレント CRM',
+    accentColor: Color(0xFF8B3DFF),
+    painPoints: [
+      '価格非公開(エンタープライズ向け)・採用特化・個人のライフ管理は別途必要',
+      'AI採用マーケ特化でHR向け設計・個人のAI管理は別途必要',
+      'iCIMS/Beameryと比較して従業員体験・リテンション機能が限定的',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AIキャリアサイト・チャットボット・CRM・採用マーケ・分析',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'checkr': const _CompetitorInfo(
+    name: 'Checkr',
+    emoji: '🔍',
+    tagline: 'AI採用バックグラウンドチェック・コンプライアンスで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Checkr代替 バックグラウンドチェック 採用審査 犯歴 AI自動化 コンプライアンス',
+    accentColor: Color(0xFF0055FF),
+    painPoints: [
+      '1件3〜50ドル〜・採用審査特化・個人のライフ管理は別途必要',
+      'バックグラウンドチェック特化でビジネス向け設計・個人のAI管理は別途必要',
+      'Sterling/HireRightと比較してグローバル対応・詳細レポートが弱い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AI審査自動化・犯歴/雇用歴/学歴確認・コンプライアンス・API',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'novu': const _CompetitorInfo(
+    name: 'Novu',
+    emoji: '🔔',
+    tagline: 'OSSプッシュ通知インフラ・マルチチャネル通知管理で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Novu代替 通知インフラ プッシュ通知 メール SMS OSS マルチチャネル',
+    accentColor: Color(0xFF30CF80),
+    painPoints: [
+      '無料(OSS)/Proは月額250ドル〜・通知インフラ特化・個人のライフ管理は別途',
+      '開発者向け通知特化・個人のAIライフ管理は別途必要',
+      'Courier/Knockと比較して既存エコシステム・プリビルドテンプレートが少ない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'プッシュ/Email/SMS/Slack統合・テンプレート・Digest・ワークフロー',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'courier': const _CompetitorInfo(
+    name: 'Courier',
+    emoji: '📨',
+    tagline: 'マルチチャネル通知APIプラットフォーム・プロダクト通知で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Courier代替 通知API マルチチャネル プロダクト通知 メール SMS プッシュ',
+    accentColor: Color(0xFF5C42F5),
+    painPoints: [
+      '無料枠あり/Proは月額250ドル〜・通知特化・個人のライフ管理は別途必要',
+      '開発者向け通知特化・個人のAIライフ管理は別途必要',
+      'Novuと比較してOSS自由度・セルフホスト選択肢が少ない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Email/SMS/プッシュ/Slack/Teams統合・デザイナー・A/Bテスト',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'sendbird': const _CompetitorInfo(
+    name: 'Sendbird',
+    emoji: '💬',
+    tagline: 'アプリ内チャット・通話・AI会話APIプラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Sendbird代替 チャットAPI 通話 アプリ内メッセージ リアルタイム カスタマーサポート',
+    accentColor: Color(0xFF742DDD),
+    painPoints: [
+      '月額399ドル〜・チャットAPI特化・個人のライフ管理は別途必要',
+      'アプリ内コミュニケーション特化でビジネス向け設計・個人のAI管理は別途必要',
+      'Stream/TwilioConversationsと比較してコスト対効果が劣ることがある',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'チャット/通話API・AIチャットボット・コーチング・カスタマー対応',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'litmos': const _CompetitorInfo(
+    name: 'SAP Litmos',
+    emoji: '📘',
+    tagline: 'SAP製クラウドLMS・コンテンツライブラリ付き企業研修で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Litmos代替 SAP LMS 企業研修 コンテンツライブラリ クラウド コンプライアンス',
+    accentColor: Color(0xFF0870C1),
+    painPoints: [
+      '価格非公開(中〜大規模企業向け)・研修特化・個人のライフ管理は別途必要',
+      '企業研修特化でHR向け設計・個人のAIライフ管理は別途必要',
+      'TalentLMS/Moodleと比較して価格・カスタマイズ性で劣ることがある',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'LMS・コンプライアンス・コンテンツライブラリ・API・SCORM・SAP統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'ispring': const _CompetitorInfo(
+    name: 'iSpring',
+    emoji: '🌱',
+    tagline: 'eラーニングオーサリング・PowerPoint統合コース制作で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'iSpring代替 eラーニング オーサリングツール PowerPoint SCORM コース制作',
+    accentColor: Color(0xFF00B451),
+    painPoints: [
+      '年間770ドル〜・eラーニング制作特化・個人のライフ管理は別途必要',
+      'コース制作/LMS特化でHR向け設計・個人のAIライフ管理は別途必要',
+      'Articulate/Adobe Captivateと比較してデザイン自由度・AI機能が弱い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'PowerPoint統合・インタラクティブ・クイズ・ビデオ・LMS・SCORM',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'articulate': const _CompetitorInfo(
+    name: 'Articulate 360',
+    emoji: '✏️',
+    tagline: 'Storyline/Riseを含むeラーニングオーサリングスイートで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Articulate代替 Storyline Rise eラーニング オーサリング インタラクティブ研修',
+    accentColor: Color(0xFFD84040),
+    painPoints: [
+      '年間1,499ドル〜・eラーニング制作特化・個人のライフ管理は別途必要',
+      'オーサリング特化でインストラクショナルデザイナー向け・個人のAI管理は別途',
+      'iSpringと比較して学習コスト・価格が高い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Storyline/Rise/Peek/AI機能・テンプレート・カスタムインタラクション',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
