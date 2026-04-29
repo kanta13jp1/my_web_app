@@ -1,7 +1,7 @@
 ---
 title: "Indie SaaS Retention — Churn Analysis, Email Automation, and Habit-Forming UX"
 tags: dart,flutter,webdev,indiedev
-published: false
+published: true
 ---
 
 # Indie SaaS Retention — Churn Analysis, Email Automation, and Habit-Forming UX
