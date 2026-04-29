@@ -221,6 +221,69 @@ Anthropic engineer 視点では「Vibe Coding は不可避」だが、**Producti
 
 ---
 
+## 原則 #4 強化: Black-Box I/O Verification セルフチェック (Win版#132 part 81 / 2026-04-29)
+
+VIBE #4 (Black-Box I/O Verification) の **dogfood セルフチェック** を確立する. CEO が「コードを読まない宣言」を破る兆候を **常時検出** + **自動修正圧力** をかける.
+
+### 4.1 「コード読み」アンチパターン早期検出
+
+| アンチパターン | 検出方法 | 修正圧力 |
+| --- | --- | --- |
+| **AI 生成 PR を 1 行ずつ読む** | session log で `Read` tool が同 file 5+ 回 | → integration_test を AI に書かせて test 内容のみ読む (= 原則 #5) |
+| **diff を全部読む** | session log で `git diff` が 100+ 行 stdout | → 本番 UI 操作で要件確認 (= UI-VERIFY rule) |
+| **「念のため」の関数追跡** | session log で symbol 検索が 10+ 回 | → 関数追跡せず I/O テストで代替 |
+| **未使用コード探索** | session log で grep `unused` 多発 | → COLLAB_AI Verifier-Generator (= feature-review.yml) に委譲 |
+
+= AI session log 自体が **#4 違反の証跡**. 自己 audit 可能.
+
+### 4.2 PR merge 判断フロー (= コード読まない決定木)
+
+```
+[AI 生成 PR 提示]
+        ↓
+[Q1: integration_test 1 シナリオ含むか?]
+   NO → reject (= 原則 #5 違反 / 受入禁止)
+   YES ↓
+[Q2: 本番 UI で機能動作確認できるか?]
+   NO → 動作確認できる feature flag + manual UAT 経由
+   YES ↓
+[Q3: schema / RLS 変更を含むか?]
+   YES → CEO レビュー必須 (= Tier 1 = CORE_LEAF_BOUNDARY 参照)
+   NO ↓
+[Q4: 24h soak で CI green 維持?]
+   NO → wait 24h
+   YES ↓
+[merge OK]
+```
+
+= **コードを 1 行も読まずに 4 質問で判定**. 全質問が I/O 観測のみ.
+
+### 4.3 月次セルフチェック (= future automation)
+
+`scripts/check_vibe4_compliance.py` (= 将来 PS#1 month-end skill 統合):
+- 直近 30 日の Win版 セッション log から:
+  - `Read` tool 呼出回数 / 同 file 重複読
+  - `git diff` 出力行数 (累計)
+  - integration_test を読まずに merge した PR 件数
+- 集計値が閾値超過 = GitHub Issue 自動起票 (= 「Win版 #4 違反検出 / コード読み復活兆候」)
+
+### 4.4 12 fleet 共通展開
+
+Win版以外の 11 fleet にも本セルフチェックを展開. 各 instance の inject-rules.txt に [VIBE-30] block 経由で 4.1-4.2 の判断フロー注入済 = 自動的に伝播.
+
+= **CEO 1 人ではなく 12 fleet 全体が「コード読まない」習慣** を維持.
+
+### 4.5 PHILOSOPHY 接続
+
+PHILOSOPHY 原則 #6 (資本=時間) との直結:
+- コード読み 1h = CEO の戦略時間 1h を消費
+- I/O 検証 5 分 = 同等品質判定 + 残 55 分を戦略に投資
+- 月 100h 戦略時間捻出 = 設計軸 docs / NotebookLM 蒸留 / E2E 設計に再配分
+
+= VIBE #4 は **CEO 時間配分の根本原則**. 単なる効率化ではなく、自分株式会社の **存在意義**.
+
+---
+
 ## 実装履歴
 
 | 日付 | part | 実装 | 達成原則 | baseline |
@@ -228,6 +291,9 @@ Anthropic engineer 視点では「Vibe Coding は不可避」だが、**Producti
 | 2026-04-28 | Win版#132 part 66 | 軸確立 (docs + Rule [VIBE-30]) | — | 4.5/7 |
 | 2026-04-29 | Win版#132 part 72 | `docs/CORE_LEAF_BOUNDARY.md` 新規 (4 Tier 統合表現 / Schema / Core / Leaf / Auto-Generated 明示) — SECOND_BRAIN #1 と同時 dogfood (1 doc 2 軸押上 第 1 例) | #1 Trunk/Leaf 厳格分離 | 4.5 → **5.5/7** |
 | 2026-04-29 | Win版#132 part 73 | `docs/FLEET_SCALING_ROADMAP.md` 新規 (4 Phase milestone 12→18→24→50→100 / CEO 作業時間配分目標 / bottleneck 5 件分析 / scaling 哲学) | #7 Embrace Exponentials | 5.5 → **6.5/7** |
+| 2026-04-29 | Win版#132 part 81 | 原則 #4 強化セクション追加 (= 4.1 アンチパターン早期検出 / 4.2 PR merge 4 質問判定フロー / 4.3 月次セルフチェック / 4.4 12 fleet 共通展開 / 4.5 PHILOSOPHY 接続) | #4 Black-Box I/O Verification | 6.5 → **7.0/7** |
+
+**🎉 第 1 軸 完全達成 (= 7/7)**: VIBE_CODING が 10 設計軸の中で **最初に baseline 7/7 完成** に到達.
 
 **次回ターゲット**:
 - #3 Sandbox 強化: `scripts/audit_supabase_rls.py` 新規 → Codex#1 cross-instance-pr 候補
