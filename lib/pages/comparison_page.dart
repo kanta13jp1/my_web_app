@@ -20399,6 +20399,312 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'openai-api': const _CompetitorInfo(
+    name: 'OpenAI API',
+    emoji: '🤖',
+    tagline: 'GPT-4/GPT-4o API・AIアシスタント開発基盤で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'OpenAI API代替 GPT-4 ChatGPT API AI開発 LLM',
+    accentColor: Color(0xFF10A37F),
+    painPoints: [
+      '従量課金制・GPT-4o 1Mトークン5ドル〜・大量利用で高額',
+      'AI API特化でエンジニア向け設計・個人のライフ管理は別途必要',
+      'Anthropic Claude APIやGoogle Gemini APIと比較してレート制限が厳しい',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'GPT-4/o1/DALL-E/Whisper/TTS/Embeddings・Assistants API',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'anthropic-api': const _CompetitorInfo(
+    name: 'Anthropic Claude API',
+    emoji: '🧠',
+    tagline: 'Claude 3シリーズ・AIアシスタントAPI開発で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Anthropic API代替 Claude API AI開発 LLM GPT代替 安全AI',
+    accentColor: Color(0xFFCC785C),
+    painPoints: [
+      '従量課金制・Claude Sonnet 3.5 1M入力3ドル〜・大量利用で高額',
+      'AI API特化でエンジニア向け設計・個人のライフ管理は別途必要',
+      'OpenAI GPTと比較してファインチューニングが限定的',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Claude 3 Opus/Sonnet/Haiku・長コンテキスト・Vision・Tool Use',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'google-gemini-api': const _CompetitorInfo(
+    name: 'Google Gemini API',
+    emoji: '♊',
+    tagline: 'Google DeepMindのGeminiマルチモーダルAPI開発で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Gemini API代替 Google AI LLM マルチモーダル GPT代替',
+    accentColor: Color(0xFF4285F4),
+    painPoints: [
+      '従量課金制・Gemini 1.5 Pro 1M入力3.50ドル〜・大量利用で高額',
+      'AI API特化でエンジニア向け設計・個人のライフ管理は別途必要',
+      'OpenAI GPT-4と比較してエコシステム・サードパーティツール統合が少ない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Gemini 1.5/2.0・長コンテキスト1M・Google検索・マルチモーダル',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'cohere': const _CompetitorInfo(
+    name: 'Cohere',
+    emoji: '🔮',
+    tagline: 'エンタープライズLLM・RAG・埋め込みAPIで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Cohere代替 エンタープライズLLM RAG 埋め込み Command R',
+    accentColor: Color(0xFF39594D),
+    painPoints: [
+      '従量課金制・Command R+ 1Mトークン3ドル〜・エンタープライズ向け価格',
+      'エンタープライズAI特化でエンジニア向け設計・個人のライフ管理は別途必要',
+      'OpenAIと比較してコンシューマー向けプロダクトがなくエコシステムが限定的',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Command R+・RAG・Embed・Rerank・ファインチューニング',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'mistral-api': const _CompetitorInfo(
+    name: 'Mistral AI API',
+    emoji: '🌪️',
+    tagline: 'フランス発高効率OSSベースLLMAPIで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Mistral API代替 オープンLLM 効率的AI フランスAI GPT代替',
+    accentColor: Color(0xFFFF7000),
+    painPoints: [
+      '従量課金制・Mistral Large 1Mトークン3ドル〜・エコシステムがまだ成熟途上',
+      'LLM API特化でエンジニア向け設計・個人のライフ管理は別途必要',
+      'OpenAIと比較してツール統合・エコシステムが少ない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Mistral Large/Small・Codestral・Function Calling・OSS公開',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'groq': const _CompetitorInfo(
+    name: 'Groq',
+    emoji: '⚡',
+    tagline: 'LPU超高速LLM推論APIで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Groq代替 高速LLM推論 API LLama Mixtral レイテンシ',
+    accentColor: Color(0xFFF54E4E),
+    painPoints: [
+      '従量課金制・モデルによっては高コスト・独自LPUへのベンダーロックイン',
+      '高速LLM推論特化でエンジニア向け設計・個人のライフ管理は別途必要',
+      'OpenAIと比較してモデルの選択肢・エコシステムが少ない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'LPU推論・Llama 3/Mixtral/Gemma・超低レイテンシ・OpenAI互換API',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'together-ai': const _CompetitorInfo(
+    name: 'Together AI',
+    emoji: '🤝',
+    tagline: 'オープンソースLLMクラウド推論・ファインチューニングで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Together AI代替 オープンLLM クラウド推論 ファインチューニング',
+    accentColor: Color(0xFF4A6FA5),
+    painPoints: [
+      '従量課金制・大量推論では費用が増大・独自インフラでのロック懸念',
+      'AI推論特化でエンジニア向け設計・個人のライフ管理は別途必要',
+      'GroqやReplicateと比較して推論速度で差がある場合も',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '100+OSS LLM・ファインチューニング・画像生成・埋め込み・API',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'replicate': const _CompetitorInfo(
+    name: 'Replicate',
+    emoji: '🔁',
+    tagline: 'AIモデルAPIマーケットプレイス・カスタムデプロイで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Replicate代替 AIモデルAPI 画像生成 LLM デプロイ マーケットプレイス',
+    accentColor: Color(0xFF000000),
+    painPoints: [
+      '従量課金制・人気モデルはコスト増・独自モデルのデプロイは複雑',
+      'AIモデル実行特化でエンジニア向け設計・個人のライフ管理は別途必要',
+      'Together AIと比較してファインチューニング・バッチ処理が弱い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '豊富なモデル・コールドスタート最適化・Webhook・カスタムモデル',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'fireworks-ai': const _CompetitorInfo(
+    name: 'Fireworks AI',
+    emoji: '🎆',
+    tagline: '高速・低コストLLM推論APIインフラで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Fireworks AI代替 高速LLM推論 低コストAI API Llama 画像生成',
+    accentColor: Color(0xFFFF6B35),
+    painPoints: [
+      '従量課金制・モデルごとに価格が異なり予算管理が複雑',
+      'AI推論特化でエンジニア向け設計・個人のライフ管理は別途必要',
+      'GroqのLPUと比較して超低レイテンシでは劣る場合がある',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '最適化推論・Llama/Mixtral/SDXL・Function Calling・バッチAPI',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
