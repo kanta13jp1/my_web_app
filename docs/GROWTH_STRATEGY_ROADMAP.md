@@ -24843,6 +24843,15 @@ SECOND_BRAIN 4.5/7 + VIBE 7.0/7 + PLATFORM 4.0/7 = 14.5/21 + cross-instance-pr �
 - dev.to 累計198本
 - 全 draft: published:true (JA+EN) / orphan branches 全削除
 
+## 2026-04-29 PS#2 S97 — T-1 Phase46全4弾完結 (#211-#214)
+
+- #211 Flutter Testing Advanced → https://dev.to/kanta13jp1/flutter-testing-advanced-integration-tests-mocking-and-ci-automation-2j92
+- #212 Supabase Postgres Advanced → https://dev.to/kanta13jp1/supabase-postgres-advanced-partitioning-full-text-search-generated-columns-and-triggers-118b
+- #213 Indie SaaS Fundraising → https://dev.to/kanta13jp1/indie-saas-fundraising-bootstrapping-crowdfunding-and-mrr-based-loans-3ed7
+- #214 Dart FFI Advanced → https://dev.to/kanta13jp1/dart-ffi-advanced-c-library-integration-memory-management-and-flutter-plugin-24fa
+- dev.to 累計214本
+- 全 draft: published:true (JA+EN) / orphan branches 全削除
+
 ## 2026-04-29 PS#2 S96 — T-1 Phase45全4弾完結 (#207-#210)
 
 - #207 Flutter Performance Advanced → https://dev.to/kanta13jp1/flutter-performance-advanced-devtools-profiling-skia-vs-impeller-and-frame-budget-4p2c
