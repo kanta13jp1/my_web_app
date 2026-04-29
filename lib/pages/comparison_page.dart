@@ -42574,6 +42574,312 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'box': const _CompetitorInfo(
+    name: 'Box',
+    emoji: '📦',
+    tagline: 'エンタープライズクラウドストレージ・Box Shield・コラボレーション・eSign・AIコンテンツ管理で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Box代替 クラウドストレージ エンタープライズ コラボレーション Dropbox代替 OneDrive代替 セキュリティ',
+    accentColor: Color(0xFF0061D5),
+    painPoints: [
+      '有料(月10-20ドル)・ファイル管理特化・個人のライフ管理は別途必要',
+      'コンテンツ管理特化・個人のAI管理は別途必要',
+      'Dropbox/SharePoint/Google Driveと比較してコスト・個人ユーザー向け機能・速度が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Box Shield・eSign・AI抽出・コンプライアンス・外部コラボ・Box Notes',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'pcloud': const _CompetitorInfo(
+    name: 'pCloud',
+    emoji: '☁️',
+    tagline: 'スイス製暗号化クラウドストレージ・生涯プラン・pCloud Drive仮想ドライブ・pCloud Cryptoで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'pCloud代替 暗号化クラウドストレージ 生涯プラン スイス Google Drive代替 プライバシー',
+    accentColor: Color(0xFF20B2EB),
+    painPoints: [
+      '有料(生涯399ドル~/月5ドル~)・ストレージ特化・個人のライフ管理は別途必要',
+      'ファイル管理特化・個人のAI管理は別途必要',
+      'Google Drive/Dropbox/IDriveと比較してコラボ機能・Office統合・モバイル速度が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '生涯プラン・pCloud Crypto・仮想ドライブ・ファミリープラン・自動バックアップ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'mega': const _CompetitorInfo(
+    name: 'MEGA',
+    emoji: '🔒',
+    tagline: 'エンドツーエンド暗号化クラウドストレージ・無料20GB・MEGA Chat・ゼロ知識プライバシーで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'MEGA代替 暗号化クラウド プライバシー E2E 無料20GB Dropbox代替 pCloud代替',
+    accentColor: Color(0xFFD90007),
+    painPoints: [
+      '無料20GB/有料・ストレージ特化・個人のライフ管理は別途必要',
+      'ファイル保存特化・個人のAI管理は別途必要',
+      'pCloud/Proton Drive/Tutanotaと比較して速度・デスクトップアプリ・オフライン機能が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'E2E暗号化・無料20GB・MEGA Chat・MEGA Sync・ゼロ知識設計',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'samsung-health': const _CompetitorInfo(
+    name: 'Samsung Health',
+    emoji: '⌚',
+    tagline: 'Samsung Galaxy Watch連携・歩数/睡眠/心拍数・ストレス計測・社会的チャレンジで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Samsung Health代替 Galaxy Watch スマートウォッチ 健康管理 Apple Health代替 Fitbit代替',
+    accentColor: Color(0xFF1428A0),
+    painPoints: [
+      '無料・Samsung/Android特化・個人のライフ管理は別途必要',
+      'ヘルス計測特化・個人のAI管理は別途必要',
+      'Apple Health/Fitbit/Garminと比較してiOS対応・サードパーティ統合・分析深度が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Galaxy Watch連携・歩数/睡眠/心拍・ストレス・体組成・チャレンジ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'google-fit': const _CompetitorInfo(
+    name: 'Google Fit',
+    emoji: '🏃',
+    tagline: 'Google健康管理・Heart Points・Wear OS連携・WHO推奨アクティブ分計測で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Google Fit代替 健康管理 Wear OS Heart Points アクティビティ Apple Health代替 Samsung Health代替',
+    accentColor: Color(0xFF4285F4),
+    painPoints: [
+      '無料・健康計測特化・個人のライフ管理は別途必要',
+      'アクティビティ特化・個人のAI管理は別途必要',
+      'Apple Health/Fitbit/Garminと比較して栄養・詳細分析・睡眠追跡機能が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Heart Points・Wear OS・WHO基準・歩数/距離・Google統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'withings': const _CompetitorInfo(
+    name: 'Withings',
+    emoji: '⚖️',
+    tagline: 'フランス・スマートヘルスデバイス・体組成計・睡眠マット・血圧計・Health Mate AIで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Withings代替 スマート体組成計 睡眠計測 血圧計 Health Mate Fitbit代替 Garmin代替',
+    accentColor: Color(0xFF00B5E2),
+    painPoints: [
+      '機器購入必要・ヘルスデバイス特化・個人のライフ管理は別途必要',
+      '計測/モニタリング特化・個人のAI管理は別途必要',
+      'Fitbit/Garmin/Omronと比較してスマートウォッチ機能・リアルタイム通知・価格が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '体組成計・睡眠マット・血圧計・心電図・Health Mate AI・医師共有',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'jetbrains': const _CompetitorInfo(
+    name: 'JetBrains',
+    emoji: '🧠',
+    tagline: 'IntelliJ IDEA・PyCharm・WebStorm・DataGrip・AIコード補完・リファクタリングで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'JetBrains代替 IntelliJ PyCharm IDE 開発環境 VSCode代替 AI補完 リファクタリング',
+    accentColor: Color(0xFFFF318C),
+    painPoints: [
+      '有料(月8-25ドル)/コミュニティ無料・IDE特化・個人のライフ管理は別途必要',
+      '開発ツール特化・個人のAI管理は別途必要',
+      'VSCode/Cursor/Zedと比較してコスト・軽量性・AI統合の深度が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'IntelliJ/PyCharm/WebStorm/DataGrip・AI Assistant・スマートリファクタリング',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'tidycal': const _CompetitorInfo(
+    name: 'TidyCal',
+    emoji: '📅',
+    tagline: '手頃なCalendly代替・生涯29ドル・無制限予約・Zoom/Google Meet統合・グループ予約で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'TidyCal代替 スケジュール予約 Calendly代替 格安 生涯プラン Doodle代替 面談予約',
+    accentColor: Color(0xFF4B5EFC),
+    painPoints: [
+      '買い切り29ドル・予約管理特化・個人のライフ管理は別途必要',
+      'スケジューリング特化・個人のAI管理は別途必要',
+      'Calendly/Cal.com/Acuity Schedulingと比較して機能数・カスタマイズ・Workflow自動化が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '無制限予約・Zoom/Google Meet・グループ予約・支払い統合・生涯プラン',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'google-workspace': const _CompetitorInfo(
+    name: 'Google Workspace',
+    emoji: '🔷',
+    tagline: 'Gmail・Docs・Sheets・Drive・Meet・Chat・Gemini AI統合の企業向けスイートで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Google Workspace代替 Gmail Docs Sheets Drive 企業メール Microsoft 365代替 グループウェア',
+    accentColor: Color(0xFF4285F4),
+    painPoints: [
+      '有料(月6-18ドル/ユーザー)・業務套件特化・個人のライフ管理は別途必要',
+      'コラボレーション特化・個人のAI管理は別途必要',
+      'Microsoft 365/Zoho Workplace/Fastmailと比較してオフライン機能・エンタープライズコンプライアンス・価格が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Gmail・Docs・Sheets・Drive・Meet・Chat・Gemini AI・管理コンソール',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
