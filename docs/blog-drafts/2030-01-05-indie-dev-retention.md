@@ -1,7 +1,7 @@
 ---
 title: "インディー SaaS のリテンション戦略 — チャーン分析・メール自動化・習慣化 UX の実装"
 tags: flutter,dart,個人開発,AI
-published: false
+published: true
 ---
 
 # インディー SaaS のリテンション戦略 — チャーン分析・メール自動化・習慣化 UX の実装
