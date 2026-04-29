@@ -39,6 +39,7 @@ class _ApiKeyStatusBannerState extends State<ApiKeyStatusBanner> {
         body: {'action': 'get_provider_status'},
       );
       final data = res.data;
+      if (!mounted) return;
       if (data is Map<String, dynamic>) {
         setState(() {
           _configured = List<String>.from(data['configured'] ?? const []);
@@ -50,6 +51,7 @@ class _ApiKeyStatusBannerState extends State<ApiKeyStatusBanner> {
         setState(() => _loading = false);
       }
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _error = e.toString();
         _loading = false;
