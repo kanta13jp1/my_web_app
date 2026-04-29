@@ -63677,6 +63677,312 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'cdk': const _CompetitorInfo(
+    name: 'AWS CDK',
+    emoji: '🏗️',
+    tagline: 'AWS CDK・クラウド開発キット・TypeScript/Python/Java/Go でインフラ定義・CloudFormation生成・コンストラクトライブラリ・テスト可能・OSS・Pulumi代替で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'AWS CDK代替 クラウド開発キット TypeScript Python インフラ定義 CloudFormation Pulumi代替 Terraform代替',
+    accentColor: Color(0xFFFF9900),
+    painPoints: [
+      '無料(OSS)・AWSインフラツール特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Pulumi/Terraform との比較でAWS専用縛り・CloudFormation制限・デバッグ難易度が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'クラウド開発キット・TypeScript/Python でインフラ定義・CloudFormation生成',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'helm': const _CompetitorInfo(
+    name: 'Helm',
+    emoji: '⛵',
+    tagline: 'Helm・Kubernetes パッケージマネージャー・チャート・テンプレート・バージョン管理・ロールバック・Chart.yaml・OSS・CNCF・Kustomize代替・k8sアプリデプロイ標準で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Helm代替 Kubernetes パッケージマネージャー チャート テンプレート Kustomize代替 ArgoCD統合',
+    accentColor: Color(0xFF0F1689),
+    painPoints: [
+      '無料(OSS)・Kubernetesパッケージ特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Kustomize との比較でテンプレート複雑さ・Goテンプレート学習コスト・デバッグが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Kubernetes パッケージマネージャー・チャート・テンプレート・バージョン管理',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'kustomize': const _CompetitorInfo(
+    name: 'Kustomize',
+    emoji: '🔧',
+    tagline: 'Kustomize・Kubernetes設定カスタマイズ・オーバーレイ・テンプレートなし・kubectl統合・パッチ・bases/overlays・OSS・CNCF・Helm代替・GitOpsで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Kustomize代替 Kubernetes設定カスタマイズ オーバーレイ テンプレートなし kubectl GitOps Helm代替',
+    accentColor: Color(0xFF326CE5),
+    painPoints: [
+      '無料(OSS)・Kubernetes設定管理特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Helm との比較でパッケージ配布・変数管理・チャートハブ不在が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Kubernetes設定カスタマイズ・オーバーレイ・テンプレートなし・kubectl統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'argo-cd': const _CompetitorInfo(
+    name: 'Argo CD',
+    emoji: '🚀',
+    tagline: 'Argo CD・Kubernetes GitOps CDツール・宣言的・Git-as-a-source-of-truth・自動同期・UIダッシュボード・RBAC・CNCF・OSS・Flux代替で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Argo CD代替 Kubernetes GitOps CD 宣言的 Git自動同期 UIダッシュボード Flux代替 Spinnaker代替',
+    accentColor: Color(0xFFEF7B4D),
+    painPoints: [
+      '無料(OSS)・Kubernetes CDツール特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Flux との比較でリソース消費・CRD数・シンプルさ・マルチテナントが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Kubernetes GitOps CD・宣言的・Git自動同期・UIダッシュボード・RBAC',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'packer': const _CompetitorInfo(
+    name: 'Packer',
+    emoji: '📦',
+    tagline: 'Packer・HashiCorp マシンイメージビルダー・AMI/Docker/VMware/GCE・コードでイメージ定義・マルチプロバイダー・並行ビルド・OSS・Vagrant連携・Terraform統合で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Packer代替 HashiCorp マシンイメージビルダー AMI Docker VMware マルチプロバイダー Vagrant Terraform統合',
+    accentColor: Color(0xFF1DAEFF),
+    painPoints: [
+      '無料(OSS)・イメージビルド特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Docker/Buildah との比較でコンテナ特化ツールとの使い分け・学習コストが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'マシンイメージビルダー・AMI/Docker/VMware・コードでイメージ定義',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'vagrant': const _CompetitorInfo(
+    name: 'Vagrant',
+    emoji: '🏠',
+    tagline: 'Vagrant・HashiCorp 仮想マシン管理・Vagrantfile・開発環境再現・VirtualBox/VMware対応・プロビジョニング・OSS・Docker代替・チーム間環境統一で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Vagrant代替 HashiCorp 仮想マシン管理 開発環境再現 VirtualBox Docker代替 devcontainer代替',
+    accentColor: Color(0xFF1563FF),
+    painPoints: [
+      '無料(OSS)・仮想マシン管理特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Docker/devcontainer との比較でコンテナ効率・起動速度・リソース使用量が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '仮想マシン管理・Vagrantfile・開発環境再現・VirtualBox/VMware',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'skaffold': const _CompetitorInfo(
+    name: 'Skaffold',
+    emoji: '🔄',
+    tagline: 'Skaffold・Google製Kubernetes継続開発ツール・ビルド/デプロイ自動化・ホットリロード・CI/CD統合・Helm/Kustomize対応・OSS・Tilt代替・内部ループ最適化で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Skaffold代替 Google Kubernetes 継続開発 ビルドデプロイ自動化 ホットリロード Helm Kustomize Tilt代替',
+    accentColor: Color(0xFF4285F4),
+    painPoints: [
+      '無料(OSS)・Kubernetes開発ツール特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Tilt/DevSpace との比較でUI・設定シンプルさ・ライブアップデートが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Kubernetes継続開発・ビルド/デプロイ自動化・ホットリロード・CI/CD統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'tilt': const _CompetitorInfo(
+    name: 'Tilt',
+    emoji: '🎮',
+    tagline: 'Tilt・ローカルKubernetes開発環境・Starlark設定・ライブアップデート・UIダッシュボード・マイクロサービス開発・OSS・Skaffold代替・快速内部ループで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Tilt代替 ローカルKubernetes開発 Starlark ライブアップデート UIダッシュボード マイクロサービス Skaffold代替',
+    accentColor: Color(0xFF20BA31),
+    painPoints: [
+      '無料(OSS)・ローカルKubernetes開発特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Skaffold/DevSpace との比較でStarlark学習コスト・エコシステム規模が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ローカルKubernetes開発・Starlark設定・ライブアップデート・UIダッシュボード',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'terragrunt': const _CompetitorInfo(
+    name: 'Terragrunt',
+    emoji: '🌍',
+    tagline: 'Terragrunt・Terraform薄いラッパー・DRY・モジュール管理・リモートステート・依存関係・マルチアカウント・OSS・大規模Terraform管理・Gruntwork製で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Terragrunt代替 Terraform ラッパー DRY モジュール管理 リモートステート マルチアカウント Pulumi代替',
+    accentColor: Color(0xFF7B42BC),
+    painPoints: [
+      '無料(OSS)・Terraformラッパー特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Terraform/Pulumi との比較で追加レイヤー複雑さ・HCL制限・デバッグ難易度が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Terraform薄いラッパー・DRY・モジュール管理・リモートステート・依存関係',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
