@@ -1,7 +1,7 @@
 ---
 title: "Indie SaaS SEO — Flutter Web Meta Tags, Tech Blogging, and Structured Data"
 tags: flutter,supabase,webdev,indiedev
-published: false
+published: true
 ---
 
 # Indie SaaS SEO — Flutter Web Meta Tags, Tech Blogging, and Structured Data
