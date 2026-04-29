@@ -1,7 +1,7 @@
 ---
 title: "Flutter Performance Advanced — DevTools Profiling, Skia vs Impeller, and Frame Budget"
 tags: flutter,dart,webdev,indiedev
-published: false
+published: true
 ---
 
 # Flutter Performance Advanced — DevTools Profiling, Skia vs Impeller, and Frame Budget
