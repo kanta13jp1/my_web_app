@@ -19175,6 +19175,312 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'magento': const _CompetitorInfo(
+    name: 'Adobe Commerce (Magento)',
+    emoji: '🛍️',
+    tagline: 'AdobeのエンタープライズECプラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Magento代替 Adobe Commerce ECサイト 大規模EC オープンソース',
+    accentColor: Color(0xFFEE672F),
+    painPoints: [
+      '年間数百万円〜・エンタープライズ向けで構築・運用に専門エンジニアが必要',
+      '大規模EC特化でB2B/D2C向け設計・個人のライフ管理・AI管理は別途必要',
+      'ShopifyやWooCommerceと比較してセットアップコストと管理負荷が極めて高い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'B2B/B2C・マルチストア・カスタム注文管理・AI推薦・拡張性',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'prestashop': const _CompetitorInfo(
+    name: 'PrestaShop',
+    emoji: '🎁',
+    tagline: 'オープンソース中小向けECプラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'PrestaShop代替 オープンソースEC 中小EC WooCommerce代替',
+    accentColor: Color(0xFFDF0067),
+    painPoints: [
+      'OSS版は無料だがモジュール・テーマ購入で費用がかさむ',
+      'EC構築特化で個人のAI管理・財務管理・習慣は別途必要',
+      'Shopifyと比較してサポートと使いやすさが劣り学習コストが高い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'カタログ管理・決済統合・1,500+モジュール・多通貨・多言語',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'ecwid': const _CompetitorInfo(
+    name: 'Ecwid',
+    emoji: '🏪',
+    tagline: '既存サイトに追加できる軽量ECウィジェットで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Ecwid代替 ECウィジェット 既存サイト EC追加 WordPress Shopify代替',
+    accentColor: Color(0xFF4CB4A0),
+    painPoints: [
+      '月額19ドル〜・商品数上限があり成長時に価格が急増',
+      'EC購入機能特化で個人のライフ管理・AI管理・財務は別途必要',
+      'Shopifyと比較してアプリ統合数・機能拡張が限定的',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'サイト埋め込み・SNS販売・POS・多通貨・在庫管理',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'sendgrid': const _CompetitorInfo(
+    name: 'SendGrid',
+    emoji: '📧',
+    tagline: 'Twilioのトランザクションメール・メール配信APIで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'SendGrid代替 メール配信 SMTP API トランザクションメール メールマーケティング',
+    accentColor: Color(0xFF1A82E2),
+    painPoints: [
+      '月額19.95ドル〜・送信数超過で従量課金・大量送信時にコスト急増',
+      'メール配信特化でエンジニア向け設計・個人のライフ管理は別途必要',
+      'MailgunやPostmarkと比較してサポート品質と配信到達率が劣る場合がある',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'SMTP・テンプレートエンジン・メール分析・バウンス管理・API',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'mailgun': const _CompetitorInfo(
+    name: 'Mailgun',
+    emoji: '🔫',
+    tagline: 'Sinchのメール送受信API・メール検証サービスで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Mailgun代替 メール送信API メール検証 SMTP トランザクションメール',
+    accentColor: Color(0xFFCA2F27),
+    painPoints: [
+      '月額35ドル〜・無料プランは3ヶ月のみ・基本機能も有料プランが必要',
+      'メール配信特化でエンジニア向け設計・個人のライフ管理は別途必要',
+      'SendGridと比較してメールマーケティング機能が弱い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'メール送受信・検証API・ルーティング・高度な分析・DMARC',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'postmark': const _CompetitorInfo(
+    name: 'Postmark',
+    emoji: '📬',
+    tagline: '高配信到達率トランザクションメールサービスで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Postmark代替 トランザクションメール 高配信率 SMTP メール配信',
+    accentColor: Color(0xFFFFCC00),
+    painPoints: [
+      '月額15ドル〜・送信数に応じた従量課金で大量送信時に高額',
+      'トランザクションメール特化でエンジニア向け設計・個人管理は別途必要',
+      'SendGridと比較してメールマーケティング・ニュースレター機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '高配信到達率・即時配信・詳細ログ・テンプレート・DKIM/SPF',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'acuity': const _CompetitorInfo(
+    name: 'Acuity Scheduling',
+    emoji: '📅',
+    tagline: 'Squarespaceの予約管理・クライアントセルフ予約で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Acuity Scheduling代替 予約管理 オンライン予約 Calendly代替 スケジュール',
+    accentColor: Color(0xFF3D8FE0),
+    painPoints: [
+      '月額16ドル〜・Squarespace傘下でSquarespace連携が前提',
+      '予約管理特化でサービスビジネス向け設計・個人のAI管理は別途必要',
+      'Calendlyと比較してUI・UXが古く操作性が劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '自動リマインダー・支払い統合・フォーム・カスタムブランド',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'setmore': const _CompetitorInfo(
+    name: 'Setmore',
+    emoji: '🗓️',
+    tagline: '無料プランが充実したオンライン予約・スケジュール管理で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Setmore代替 オンライン予約 無料予約システム スケジュール管理',
+    accentColor: Color(0xFF4A90D9),
+    painPoints: [
+      '月額12ドル〜・無料版はスタッフ2名まで・SMS通知は有料',
+      '予約管理特化で個人のAI管理・財務・習慣は別途必要',
+      'Calendlyと比較してUI・統合数・自動化機能が劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '予約ページ・スタッフ管理・支払い・リマインダー・Zoom統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'simplybook': const _CompetitorInfo(
+    name: 'SimplyBook.me',
+    emoji: '📆',
+    tagline: '多機能オンライン予約システム・各業種向けで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'SimplyBook代替 オンライン予約 サロン予約 クリニック予約 スケジュール',
+    accentColor: Color(0xFF1CB289),
+    painPoints: [
+      '月額9.9ドル〜・機能追加ごとにアドオン費用が発生',
+      '特定業種向け予約特化で個人のライフ管理・AI管理は別途必要',
+      'Calendlyと比較して設定が複雑で学習コストが高い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '業種別テンプレート・決済・アドオン・マーケットプレイス掲載',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
