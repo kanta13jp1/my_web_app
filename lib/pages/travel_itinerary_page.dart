@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// 旅行プランナーページ
-/// travel-itinerary-planner Edge Function と連携
+/// lifestyle-hub (travel.*) 連携
 /// Google Travel / TripAdvisor / Amazon Travel 競合
 class TravelItineraryPage extends StatefulWidget {
   const TravelItineraryPage({super.key});

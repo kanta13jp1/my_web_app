@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// ヘルスコーチ — Liven 対抗
-/// fitness-health-tracker + recipe-meal-planner Edge Function 連携
+/// lifestyle-hub (fitness.* / meal.* / recipe.*) 連携
 class HealthCoachPage extends StatefulWidget {
   const HealthCoachPage({super.key});
 
