@@ -1229,6 +1229,19 @@ function bloodlineTopHorseBonus(topEntry: Record<string, unknown> | undefined): 
   return 0;
 }
 
+function consensusBonus(topEntry: Record<string, unknown> | undefined): number {
+  if (!topEntry) return 0;
+  const popularity = numericOrFallback(topEntry.popularity, 99);
+  const odds = numericOrFallback(topEntry.win_odds, 99);
+  const prevFinish = numericOrFallback(topEntry.prev_finish, 99);
+  const isTopPopularity = popularity === 1;
+  const hasLowOdds = odds > 0 && odds <= 3.0;
+  const hasGoodPrev = prevFinish >= 1 && prevFinish <= 3;
+  if (isTopPopularity && hasLowOdds && hasGoodPrev) return 0.04; // 3指標全一致: 最強consensus
+  if (isTopPopularity && (hasLowOdds || hasGoodPrev)) return 0.02; // 2指標一致
+  return 0;
+}
+
 function distanceSpecificBonus(distance: unknown): number {
   const d = numericOrFallback(distance, 0);
   if (d <= 0) return 0;           // データなし
@@ -1558,7 +1571,8 @@ function buildHistoricalBaselinePrediction(
   const smallField = smallFieldBonus(entries.length);
   const bloodlineBonus = bloodlineTopHorseBonus(first);
   const distanceBonus = distanceSpecificBonus(race.distance);
-  const confidence = Math.min(clampConfidence(0.31 + dataQuality * 0.22 + oddsCoverage * 0.12 + historyCoverage * 0.07 + bestTimeCoverage * 0.05 + prevMarginCoverage * 0.03 + jockeyCoverage * 0.02 + trainerCoverage * 0.01 + bloodlineCoverage * 0.01 + last3FCoverage * 0.01 + winningTimeCoverage * 0.01 + weightChangeCoverage * 0.01 + ageCoverage * 0.01 + sexCoverage * 0.01 + horseWeightCoverage * 0.01 + stableCoverage * 0.01 + damCoverage * 0.01 + damsireCoverage * 0.01 + popularityCoverage * 0.01 - fieldPenalty - tightOdds + oddsGapBonus + recentForm + venueBonus + favBonus + smallField + bloodlineBonus + distanceBonus), maxConf);
+  const consensus = consensusBonus(first);
+  const confidence = Math.min(clampConfidence(0.31 + dataQuality * 0.22 + oddsCoverage * 0.12 + historyCoverage * 0.07 + bestTimeCoverage * 0.05 + prevMarginCoverage * 0.03 + jockeyCoverage * 0.02 + trainerCoverage * 0.01 + bloodlineCoverage * 0.01 + last3FCoverage * 0.01 + winningTimeCoverage * 0.01 + weightChangeCoverage * 0.01 + ageCoverage * 0.01 + sexCoverage * 0.01 + horseWeightCoverage * 0.01 + stableCoverage * 0.01 + damCoverage * 0.01 + damsireCoverage * 0.01 + popularityCoverage * 0.01 - fieldPenalty - tightOdds + oddsGapBonus + recentForm + venueBonus + favBonus + smallField + bloodlineBonus + distanceBonus + consensus), maxConf);
   return {
     success: true,
     prediction: {
@@ -1570,7 +1584,7 @@ function buildHistoricalBaselinePrediction(
         "過去レース学習用の低リスク基準予想。",
         "レース結果は参照せず、人気・単勝オッズ・前走・着差・持ち時計・馬体重変動・馬体/騎手/調教師/血統など取得済み特徴量から順位付け。",
         `対象:${race.race_date ?? ""} ${race.venue ?? ""}${race.race_number ?? ""}R ${race.race_name ?? ""}`,
-        `信頼度:${Math.round(confidence * 100)}% (データ充足${Math.round(dataQuality * 100)}% オッズ${Math.round(oddsCoverage * 100)}% 上がり3F${Math.round(last3FCoverage * 100)}% 血統${Math.round(bloodlineCoverage * 100)}% 騎手${Math.round(jockeyCoverage * 100)}% 馬体重${Math.round(horseWeightCoverage * 100)}% 厩舎${Math.round(stableCoverage * 100)}% 人気${Math.round(popularityCoverage * 100)}% 頭数${entries.length}頭 グレード:${race.grade ?? "OP以下"} 会場補正:${venueBonus >= 0 ? "+" : ""}${Math.round(venueBonus * 100)}% 本命補正:+${Math.round(favBonus * 100)}% 少頭数補正:+${Math.round(smallField * 100)}% 血統充足:+${Math.round(bloodlineBonus * 100)}% 距離補正:${distanceBonus >= 0 ? "+" : ""}${Math.round(distanceBonus * 100)}%)`,
+        `信頼度:${Math.round(confidence * 100)}% (データ充足${Math.round(dataQuality * 100)}% オッズ${Math.round(oddsCoverage * 100)}% 上がり3F${Math.round(last3FCoverage * 100)}% 血統${Math.round(bloodlineCoverage * 100)}% 騎手${Math.round(jockeyCoverage * 100)}% 馬体重${Math.round(horseWeightCoverage * 100)}% 厩舎${Math.round(stableCoverage * 100)}% 人気${Math.round(popularityCoverage * 100)}% 頭数${entries.length}頭 グレード:${race.grade ?? "OP以下"} 会場補正:${venueBonus >= 0 ? "+" : ""}${Math.round(venueBonus * 100)}% 本命補正:+${Math.round(favBonus * 100)}% 少頭数補正:+${Math.round(smallField * 100)}% 血統充足:+${Math.round(bloodlineBonus * 100)}% 距離補正:${distanceBonus >= 0 ? "+" : ""}${Math.round(distanceBonus * 100)}% 合意補正:+${Math.round(consensus * 100)}%)`,
       ].join(" "),
     },
     latency_ms: 0,
