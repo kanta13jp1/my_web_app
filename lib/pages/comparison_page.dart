@@ -12574,6 +12574,321 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'pocket': const _CompetitorInfo(
+    name: 'Pocket',
+    emoji: '🗂️',
+    tagline:
+        'PocketをMozillaの後で読む管理に使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'Pocket代替 後で読む代替 Mozilla Pocket代替 ブックマーク管理代替',
+    accentColor: Color(0xFFEF4056),
+    painPoints: [
+      'Mozilla提供の後で読むコンテンツ保存に特化し、財務・AI大学・習慣管理は別ツール',
+      '月額4.99USD〜のPremiumで、コンテンツ保存以外のライフマネジメント統合機能がない',
+      '保存・閲覧以外の統合ライフOS機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Mozilla後で読む・コンテンツ保存',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'instapaper': const _CompetitorInfo(
+    name: 'Instapaper',
+    emoji: '📰',
+    tagline:
+        'Instapaperをシンプル後で読みアプリに使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'Instapaper代替 後で読む代替 記事保存代替 オフライン読書代替',
+    accentColor: Color(0xFF262626),
+    painPoints: [
+      'シンプルな記事保存・オフライン読書に特化し、財務・AI大学・習慣管理は別ツール',
+      '月額2.99USD〜のPremiumで、記事保存以外のライフマネジメント統合機能がない',
+      '読書体験以外の統合ライフOS機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'シンプル記事保存・オフライン読書',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'feedly': const _CompetitorInfo(
+    name: 'Feedly',
+    emoji: '📡',
+    tagline:
+        'FeedlyをAI搭載RSSリーダーに使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'Feedly代替 RSSリーダー代替 AI情報収集代替 ニュース管理代替',
+    accentColor: Color(0xFF2BB24C),
+    painPoints: [
+      'AI搭載RSSフィード・ニュース収集に特化し、財務・AI大学・習慣管理は別ツール',
+      '月額6USD〜のProで、情報収集以外のライフマネジメント統合機能がない',
+      'RSSリーダー以外の統合ライフOS機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AI搭載RSSリーダー・ニュース収集',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'notion-calendar': const _CompetitorInfo(
+    name: 'Notion Calendar',
+    emoji: '📅',
+    tagline:
+        'Notion CalendarをNotion統合スマートカレンダーに使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'Notion Calendar代替 Notion統合カレンダー代替 Googleカレンダー代替 スケジュール管理代替',
+    accentColor: Color(0xFF222222),
+    painPoints: [
+      'Notion統合のスマートカレンダーに特化し、財務・AI大学・習慣管理は別ツール',
+      'Notion有料プラン前提で、カレンダー以外の統合ライフOS機能がない',
+      'スケジュール管理以外のライフマネジメント統合機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Notion統合スマートカレンダー',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'apple-health': const _CompetitorInfo(
+    name: 'Apple ヘルスケア',
+    emoji: '❤️',
+    tagline:
+        'Apple ヘルスケアをiOS統合健康ダッシュボードに使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'Apple ヘルスケア代替 iOSヘルスケア代替 健康管理アプリ代替 Apple Watch連携代替',
+    accentColor: Color(0xFFFF2D55),
+    painPoints: [
+      'iOS・Apple Watch統合の健康データ集約に特化し、財務・AI大学・習慣管理は別ツール',
+      'Apple端末専用で、健康管理以外のライフマネジメント統合機能がない',
+      '健康データ以外の統合ライフOS機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'iOS/Apple Watch統合健康ダッシュボード',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'peloton': const _CompetitorInfo(
+    name: 'Peloton',
+    emoji: '🚴',
+    tagline:
+        'Pelotonをライブフィットネスストリーミングに使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'Peloton代替 フィットネスストリーミング代替 ライブワークアウト代替 インタラクティブフィットネス代替',
+    accentColor: Color(0xFFEF0028),
+    painPoints: [
+      'ライブフィットネスクラス・インタラクティブワークアウトに特化し、財務・AI大学・習慣管理は別ツール',
+      '機器1,445USD〜+月額44USD〜で、フィットネス以外のライフマネジメント統合機能がない',
+      'フィットネス以外の統合ライフOS機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ライブフィットネスストリーミング',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'whoop': const _CompetitorInfo(
+    name: 'WHOOP',
+    emoji: '⌚',
+    tagline:
+        'WHOOPをAI回復・ストレイン分析ウェアラブルに使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'WHOOP代替 回復スコア代替 ストレイン分析代替 スポーツウェアラブル代替',
+    accentColor: Color(0xFF1A1A2E),
+    painPoints: [
+      'AI回復スコア・ストレイン最適化ウェアラブルに特化し、財務・AI大学・習慣管理は別ツール',
+      '月額30USD〜のサブスク（端末込み）で、フィットネス以外のライフマネジメント統合機能がない',
+      'フィットネス以外の統合ライフOS機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AI回復スコア・ストレイン最適化',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'ten-percent-happier': const _CompetitorInfo(
+    name: 'Ten Percent Happier',
+    emoji: '😊',
+    tagline:
+        'Ten Percent Happierを懐疑論者向け瞑想アプリに使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'Ten Percent Happier代替 瞑想アプリ代替 マインドフルネス代替 Dan Harris瞑想代替',
+    accentColor: Color(0xFF0066CC),
+    painPoints: [
+      '懐疑論者向け科学的根拠の瞑想・マインドフルネスに特化し、財務・AI大学・習慣管理は別ツール',
+      '月額14.99USD〜のサブスクで、瞑想以外のライフマネジメント統合機能がない',
+      '瞑想以外の統合ライフOS機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '科学的根拠の瞑想・マインドフルネス',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'fabulous': const _CompetitorInfo(
+    name: 'Fabulous',
+    emoji: '✨',
+    tagline:
+        'Fabulousを行動科学ベース習慣形成アプリに使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'Fabulous代替 習慣形成アプリ代替 行動科学習慣代替 デューク大学習慣代替',
+    accentColor: Color(0xFF4C3CEB),
+    painPoints: [
+      'デューク大学行動科学研究に基づく習慣形成・ルーティン設計に特化し、財務・AI大学管理は別ツール',
+      '月額4.99USD〜のサブスクで、習慣管理以外のライフマネジメント統合機能がない',
+      '習慣以外の統合ライフOS機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '行動科学ベース習慣形成・ルーティン設計',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
@@ -12928,6 +13243,15 @@ class _ComparisonShellState extends State<_ComparisonShell> {
     'fitbit': 'fitness',
     'garmin': 'fitness',
     'insight-timer': 'health',
+    'pocket': 'reading',
+    'instapaper': 'reading',
+    'feedly': 'reading',
+    'notion-calendar': 'calendar',
+    'apple-health': 'health',
+    'peloton': 'fitness',
+    'whoop': 'fitness',
+    'ten-percent-happier': 'health',
+    'fabulous': 'habit',
   };
 
   @override
