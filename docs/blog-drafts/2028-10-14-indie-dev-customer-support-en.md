@@ -1,7 +1,7 @@
 ---
 title: "Indie Dev Customer Support Automation — FAQ Bot, Ticket Management, and Escalation"
 tags: ai,indiedev,automation,buildinpublic
-published: false
+published: true
 ---
 
 # Indie Dev Customer Support Automation — FAQ Bot, Ticket Management, and Escalation
