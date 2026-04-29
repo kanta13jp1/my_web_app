@@ -25129,3 +25129,28 @@ b6b388657 + 10181c3c1 on main
   - https://dev.to/kanta13jp1/indie-dev-product-market-fit-user-interviews-and-feedback-loops-in-practice-4bof
 - T-1 第222弾: Dart Extension Types — Zero-Cost Wrappers and Type-Safe Domain Modeling → dev.to 投稿成功
   - https://dev.to/kanta13jp1/dart-extension-types-zero-cost-wrappers-and-type-safe-domain-modeling-4l5d
+
+---
+
+## 2026-04-29 PS#5 Session 115 — memory-search-hub EF + effort_router/task_budget 本実装 (Codex#2 merge)
+
+### 変更内容
+- `supabase/functions/memory-search-hub/` 新規 EF (BM25+ベクター ハイブリッド検索)
+  - actions: `memory.search` / `memory.rank` / `memory.related` / `memory.stats`
+  - `search/bm25.ts` (BM25スコアリング) / `search/rerank.ts` (Haiku再ランキング) / `search/vector.ts` (pgvector近傍検索)
+- `_shared/effort_router.ts`: stub (30L) → 本実装 (217L) — 動的 effort 選択 + DB設定対応
+- `_shared/task_budget.ts`: stub (51L) → 本実装 (308L) — API コスト計算 + spend記録
+- `supabase/migrations/`: memory_index + task_budget + effort_config テーブル追加
+- `scripts/check_budget.py`, `scripts/sync_memory_index.py`
+- `.github/workflows/memory-search-sync.yml`
+- `deploy-prod.yml`: memory-search-hub 追加 (計 20/50 EF)
+
+### ソース
+Codex#2 branch: `codex/codex2-platform-memory-feature-review` (2476ea3a2)
+Cross-instance-pr: `docs/cross-instance-prs/done/20260429_memory_search_hub_ef_codex2.md`
+
+### Philosophy Alignment
+#7 資産負債 (= stub 負債 解消) / #4 Accountability (= cost guard で AI API 支出可視化)
+
+### commit
+a9d7b1517 on main
