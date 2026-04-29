@@ -15503,6 +15503,312 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'getresponse': const _CompetitorInfo(
+    name: 'GetResponse',
+    emoji: '📨',
+    tagline: 'フルスタックメールマーケティング＋ファネルで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'GetResponse代替 メールマーケティング LP ウェビナー 自動化',
+    accentColor: Color(0xFF00BAFF),
+    painPoints: [
+      '月額15ドル〜・登録者数増加で急速にコストが上がる',
+      'メール・LP・ウェビナー特化で個人財務・習慣管理は別途必要',
+      'UIが古く使いこなすまでの学習コストが高い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'メール・LP・ウェビナー・自動化フロー・EC連携',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'aweber': const _CompetitorInfo(
+    name: 'AWeber',
+    emoji: '📮',
+    tagline: '中小企業向けパイオニアメールマーケティングで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'AWeber代替 メールマーケティング 自動返信 ニュースレター 小規模',
+    accentColor: Color(0xFFFFA500),
+    painPoints: [
+      '月額15ドル〜・無料プランは500件/月のメール数制限あり',
+      'メール自動化特化で個人の財務・目標・AI対話は別途必要',
+      'Mailchimpと比較してUI・テンプレートデザインが見劣りする',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '自動返信・ドラッグ&ドロップ・AMP for Email・Canva統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'drip': const _CompetitorInfo(
+    name: 'Drip',
+    emoji: '💧',
+    tagline: 'EC特化ビヘイビアーメールCRMで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Drip代替 ECメール CRM 行動ベースメール Shopify',
+    accentColor: Color(0xFF8B31B4),
+    painPoints: [
+      '月額39ドル〜・EC・Shopify利用者以外には機能過多',
+      'EC特化設計で個人ライフ管理・財務・AI会話は別途必要',
+      'Klaviyoと比較して機能・テンプレートが少ない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'EC購買行動追跡・セグメント・フロー・A/Bテスト',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'customerio': const _CompetitorInfo(
+    name: 'Customer.io',
+    emoji: '🎯',
+    tagline: 'ビヘイビアー駆動マルチチャネルメッセージングで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Customer.io代替 行動メール プッシュ通知 SMS マーケティング自動化',
+    accentColor: Color(0xFFFD7B2F),
+    painPoints: [
+      '月額150ドル〜・スタートアップ初期フェーズには高額すぎる',
+      'エンジニア向け設計で初期セットアップに技術知識が必要',
+      'マーケ自動化特化で個人財務・習慣・AI対話は別途必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ビヘイビアートリガー・メール/プッシュ/SMS/in-app統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'omnisend': const _CompetitorInfo(
+    name: 'Omnisend',
+    emoji: '🛒',
+    tagline: 'EC向けメール＋SMS自動化オールインワンで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Omnisend代替 ECメール SMS自動化 Shopify 購買後フォロー',
+    accentColor: Color(0xFF0B3D91),
+    painPoints: [
+      '月額16ドル〜・SMS機能はクレジット追加購入が必要',
+      'EC・Shopify特化設計で個人ライフ管理・AI会話は別途必要',
+      '国際SMS送信はコストと規制が国によって異なり複雑',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'メール/SMS/プッシュ統合・カート回収・セグメント',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'moosend': const _CompetitorInfo(
+    name: 'Moosend',
+    emoji: '🦌',
+    tagline: '手頃なメールマーケティング自動化で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Moosend代替 格安メール自動化 ニュースレター LP 安い',
+    accentColor: Color(0xFF2EB8E6),
+    painPoints: [
+      '月額7ドル〜・無料プランが廃止され試用のみ30日間',
+      'メール・LP特化で個人の財務・習慣・AI対話は別途必要',
+      'Mailchimp・ActiveCampaignと比較してサードパーティ統合が少ない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '自動化フロー・LP・サブスクフォーム・AIサブジェクト最適化',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'carrd': const _CompetitorInfo(
+    name: 'Carrd',
+    emoji: '🃏',
+    tagline: '超シンプルな1ページサイトビルダーで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Carrd代替 1ページサイト ランディングページ 格安 ポートフォリオ',
+    accentColor: Color(0xFF00AAFF),
+    painPoints: [
+      '年額9ドル〜・複数ページや高度な機能には有料プランが必要',
+      '1ページサイト特化で個人の財務・タスク・AI管理は別途必要',
+      'Webflowや Squarespaceと比較してデザインの自由度が低い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '1ページサイト・フォーム・カスタムドメイン・アナリティクス',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'unbounce': const _CompetitorInfo(
+    name: 'Unbounce',
+    emoji: '🎪',
+    tagline: 'AI最適化ランディングページビルダーで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Unbounce代替 ランディングページ A/Bテスト コンバージョン最適化',
+    accentColor: Color(0xFFFFD140),
+    painPoints: [
+      '月額74ドル〜・中小規模広告主には高額すぎる',
+      'LP・コンバージョン特化で個人ライフ管理・AI対話は別途必要',
+      'WordPressや他CMSとの統合に追加設定コストがかかる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AIトラフィック最適化・A/Bテスト・スティッキーバー・ポップアップ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'instapage': const _CompetitorInfo(
+    name: 'Instapage',
+    emoji: '⚡',
+    tagline: '高コンバージョンLP最適化プラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Instapage代替 ランディングページ 広告最適化 パーソナライゼーション',
+    accentColor: Color(0xFFFF6B35),
+    painPoints: [
+      '月額79ドル〜・エンタープライズプランは数百ドルと高額',
+      'LP・広告特化で個人の財務・習慣・AI管理は別途必要',
+      '高度なA/Bテスト・ヒートマップは上位プランが必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'パーソナライズLP・AI実験・AdMap・チームコラボ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
