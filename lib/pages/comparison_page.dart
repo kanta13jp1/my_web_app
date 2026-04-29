@@ -53264,8 +53264,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'jamf': const _CompetitorInfo(
     name: 'Jamf',
     emoji: '🍎',
-    tagline: 'Apple特化MDM・Jamf Pro/Jamf Now・Appleデバイス管理・学校/企業・ゼロタッチ展開・セキュリティで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Jamf代替 Apple MDM デバイス管理 iPhone iPad Mac ゼロタッチ展開 Kandji代替 Microsoft Intune代替',
+    tagline:
+        'Apple特化MDM・Jamf Pro/Jamf Now・Appleデバイス管理・学校/企業・ゼロタッチ展開・セキュリティで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Jamf代替 Apple MDM デバイス管理 iPhone iPad Mac ゼロタッチ展開 Kandji代替 Microsoft Intune代替',
     accentColor: Color(0xFF0075D3),
     painPoints: [
       '有料・Appleデバイス管理特化・個人のライフ管理は別途必要',
@@ -53298,8 +53300,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'kandji': const _CompetitorInfo(
     name: 'Kandji',
     emoji: '🔮',
-    tagline: 'Apple MDM・自動化・コンプライアンス・セキュリティ・BlueprintでMac/iPhone/iPad管理・Jamf代替で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Kandji代替 Apple MDM 自動化 コンプライアンス Blueprint Mac iPhone iPad Jamf代替 Mosyle代替',
+    tagline:
+        'Apple MDM・自動化・コンプライアンス・セキュリティ・BlueprintでMac/iPhone/iPad管理・Jamf代替で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Kandji代替 Apple MDM 自動化 コンプライアンス Blueprint Mac iPhone iPad Jamf代替 Mosyle代替',
     accentColor: Color(0xFF7C3AED),
     painPoints: [
       '有料・Apple MDM特化・個人のライフ管理は別途必要',
@@ -53332,8 +53336,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'microsoft-intune': const _CompetitorInfo(
     name: 'Microsoft Intune',
     emoji: '🪟',
-    tagline: 'Microsoft UEM・マルチプラットフォームMDM/MAM・Windows/iOS/Android・条件付きアクセス・エンタープライズで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Microsoft Intune代替 UEM MDM MAM マルチプラットフォーム Windows iOS Android 条件付きアクセス Jamf代替 Workspace ONE代替',
+    tagline:
+        'Microsoft UEM・マルチプラットフォームMDM/MAM・Windows/iOS/Android・条件付きアクセス・エンタープライズで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Microsoft Intune代替 UEM MDM MAM マルチプラットフォーム Windows iOS Android 条件付きアクセス Jamf代替 Workspace ONE代替',
     accentColor: Color(0xFF0078D4),
     painPoints: [
       '有料(M365 E3等)・Microsoft環境特化・個人のライフ管理は別途必要',
@@ -53366,8 +53372,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'workspace-one': const _CompetitorInfo(
     name: 'VMware Workspace ONE',
     emoji: '🖥️',
-    tagline: 'VMware UEM・Workspace ONE・マルチプラットフォーム・ゼロトラスト・デジタルワークスペース・AIops管理で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Workspace ONE代替 VMware UEM マルチプラットフォーム ゼロトラスト デジタルワークスペース Microsoft Intune代替 SOTI代替',
+    tagline:
+        'VMware UEM・Workspace ONE・マルチプラットフォーム・ゼロトラスト・デジタルワークスペース・AIops管理で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Workspace ONE代替 VMware UEM マルチプラットフォーム ゼロトラスト デジタルワークスペース Microsoft Intune代替 SOTI代替',
     accentColor: Color(0xFF607078),
     painPoints: [
       '有料・UEM特化・個人のライフ管理は別途必要',
@@ -53400,8 +53408,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'ivanti': const _CompetitorInfo(
     name: 'Ivanti',
     emoji: '🔧',
-    tagline: 'Ivanti UEM・ITSM・ゼロトラスト・パッチ管理・エンドポイント管理・セキュリティ・旧MobileIron/Landesk統合で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Ivanti代替 UEM ITSM ゼロトラスト パッチ管理 MobileIron LanDesk エンドポイント管理 Microsoft Intune代替',
+    tagline:
+        'Ivanti UEM・ITSM・ゼロトラスト・パッチ管理・エンドポイント管理・セキュリティ・旧MobileIron/Landesk統合で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Ivanti代替 UEM ITSM ゼロトラスト パッチ管理 MobileIron LanDesk エンドポイント管理 Microsoft Intune代替',
     accentColor: Color(0xFF00A3E0),
     painPoints: [
       '有料・UEM/ITSM特化・個人のライフ管理は別途必要',
@@ -53434,8 +53444,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'soti': const _CompetitorInfo(
     name: 'SOTI MobiControl',
     emoji: '📱',
-    tagline: 'SOTI MobiControl・エンタープライズMDM・IoT/ルーギッド・Android/iOS/Windows・BYOD・完全デバイスライフサイクル管理で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'SOTI代替 MobiControl MDM IoT ルーギッド Android iOS BYOD Microsoft Intune代替 Jamf代替',
+    tagline:
+        'SOTI MobiControl・エンタープライズMDM・IoT/ルーギッド・Android/iOS/Windows・BYOD・完全デバイスライフサイクル管理で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'SOTI代替 MobiControl MDM IoT ルーギッド Android iOS BYOD Microsoft Intune代替 Jamf代替',
     accentColor: Color(0xFF001F5B),
     painPoints: [
       '有料・MDM特化・個人のライフ管理は別途必要',
@@ -53468,8 +53480,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'hexnode': const _CompetitorInfo(
     name: 'Hexnode UEM',
     emoji: '⬡',
-    tagline: 'クラウドUEM・Hexnode・マルチプラットフォームMDM・キオスクモード・BYOD・コスト効率型エンタープライズ管理で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Hexnode代替 UEM MDM キオスクモード BYOD マルチプラットフォーム クラウド Jamf代替 Microsoft Intune代替',
+    tagline:
+        'クラウドUEM・Hexnode・マルチプラットフォームMDM・キオスクモード・BYOD・コスト効率型エンタープライズ管理で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Hexnode代替 UEM MDM キオスクモード BYOD マルチプラットフォーム クラウド Jamf代替 Microsoft Intune代替',
     accentColor: Color(0xFF4A154B),
     painPoints: [
       '有料・UEM特化・個人のライフ管理は別途必要',
@@ -53502,7 +53516,8 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'mosyle': const _CompetitorInfo(
     name: 'Mosyle',
     emoji: '🍃',
-    tagline: 'Apple特化MDM・Mosyle Business/Manager・学校向け・ゼロタッチ・セキュリティ・アプリ配布・コスト効率で、なぜ「自分株式会社」を選ぶか。',
+    tagline:
+        'Apple特化MDM・Mosyle Business/Manager・学校向け・ゼロタッチ・セキュリティ・アプリ配布・コスト効率で、なぜ「自分株式会社」を選ぶか。',
     searchKeyword: 'Mosyle代替 Apple MDM 学校 ゼロタッチ アプリ配布 コスト効率 Jamf代替 Kandji代替',
     accentColor: Color(0xFF2E8B57),
     painPoints: [
@@ -53536,8 +53551,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'citrix-endpoint': const _CompetitorInfo(
     name: 'Citrix Endpoint Management',
     emoji: '🖱️',
-    tagline: 'Citrix UEM・エンドポイント管理・MAM・VDI統合・セキュアアクセス・BYOD・エンタープライズモビリティで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Citrix Endpoint代替 UEM MAM VDI BYOD セキュアアクセス エンタープライズモビリティ Microsoft Intune代替 VMware代替',
+    tagline:
+        'Citrix UEM・エンドポイント管理・MAM・VDI統合・セキュアアクセス・BYOD・エンタープライズモビリティで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Citrix Endpoint代替 UEM MAM VDI BYOD セキュアアクセス エンタープライズモビリティ Microsoft Intune代替 VMware代替',
     accentColor: Color(0xFF452170),
     painPoints: [
       '有料・Citrix VDI環境特化・個人のライフ管理は別途必要',
@@ -53570,8 +53587,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'tanium': const _CompetitorInfo(
     name: 'Tanium',
     emoji: '⚡',
-    tagline: 'Tanium・リアルタイムエンドポイント管理・パッチ・脅威インテリジェンス・15秒可視化・エンタープライズXEMで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Tanium代替 エンドポイント管理 パッチ 脅威インテリジェンス リアルタイム XEM エンタープライズ CrowdStrike代替 Ivanti代替',
+    tagline:
+        'Tanium・リアルタイムエンドポイント管理・パッチ・脅威インテリジェンス・15秒可視化・エンタープライズXEMで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Tanium代替 エンドポイント管理 パッチ 脅威インテリジェンス リアルタイム XEM エンタープライズ CrowdStrike代替 Ivanti代替',
     accentColor: Color(0xFF00A0DC),
     painPoints: [
       '有料・エンドポイント特化・個人のライフ管理は別途必要',
@@ -53604,8 +53623,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'automox': const _CompetitorInfo(
     name: 'Automox',
     emoji: '🤖',
-    tagline: 'クラウドパッチ管理・自動化・Windows/Mac/Linux・エージェントベース・コンプライアンス・ITHygiene確保で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Automox代替 パッチ管理 自動化 クラウド Windows Mac Linux コンプライアンス Ivanti代替 Tanium代替',
+    tagline:
+        'クラウドパッチ管理・自動化・Windows/Mac/Linux・エージェントベース・コンプライアンス・ITHygiene確保で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Automox代替 パッチ管理 自動化 クラウド Windows Mac Linux コンプライアンス Ivanti代替 Tanium代替',
     accentColor: Color(0xFF0D6EFD),
     painPoints: [
       '有料・パッチ管理特化・個人のライフ管理は別途必要',
@@ -53638,8 +53659,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'ninjaone': const _CompetitorInfo(
     name: 'NinjaOne (NinjaRMM)',
     emoji: '🥷',
-    tagline: 'クラウドRMM・NinjaOne・MSP/IT向け・パッチ・リモートアクセス・バックアップ・ドキュメント・統合IT管理で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'NinjaOne代替 RMM MSP クラウド パッチ管理 リモートアクセス バックアップ ConnectWise代替 Kaseya代替',
+    tagline:
+        'クラウドRMM・NinjaOne・MSP/IT向け・パッチ・リモートアクセス・バックアップ・ドキュメント・統合IT管理で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'NinjaOne代替 RMM MSP クラウド パッチ管理 リモートアクセス バックアップ ConnectWise代替 Kaseya代替',
     accentColor: Color(0xFF00A3FF),
     painPoints: [
       '有料・RMM特化・個人のライフ管理は別途必要',
@@ -53673,7 +53696,8 @@ final _competitorInfo = <String, _CompetitorInfo>{
     name: 'Kaseya VSA',
     emoji: '🔑',
     tagline: 'Kaseya VSA・RMM・IT管理・パッチ・リモート監視・MSP向け・統合プラットフォームで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Kaseya代替 VSA RMM MSP IT管理 パッチ リモート監視 ConnectWise代替 NinjaOne代替',
+    searchKeyword:
+        'Kaseya代替 VSA RMM MSP IT管理 パッチ リモート監視 ConnectWise代替 NinjaOne代替',
     accentColor: Color(0xFF0066CC),
     painPoints: [
       '有料・RMM/MSP特化・個人のライフ管理は別途必要',
@@ -53706,8 +53730,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'connectwise': const _CompetitorInfo(
     name: 'ConnectWise',
     emoji: '🔗',
-    tagline: 'ConnectWise RMM/PSA・MSP統合・自動化・ヘルプデスク・プロジェクト管理・BVoIP・セキュリティで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'ConnectWise代替 RMM PSA MSP 自動化 ヘルプデスク プロジェクト管理 Kaseya代替 NinjaOne代替',
+    tagline:
+        'ConnectWise RMM/PSA・MSP統合・自動化・ヘルプデスク・プロジェクト管理・BVoIP・セキュリティで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'ConnectWise代替 RMM PSA MSP 自動化 ヘルプデスク プロジェクト管理 Kaseya代替 NinjaOne代替',
     accentColor: Color(0xFF003087),
     painPoints: [
       '有料・MSP/RMM特化・個人のライフ管理は別途必要',
@@ -53740,8 +53766,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'n-able': const _CompetitorInfo(
     name: 'N-able (SolarWinds MSP)',
     emoji: '🌟',
-    tagline: 'N-able RMM・N-central・MSP向け・セキュリティ・バックアップ・EDR・リモート管理・旧SolarWinds MSPで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'N-able代替 SolarWinds MSP RMM N-central セキュリティ バックアップ EDR ConnectWise代替 Kaseya代替',
+    tagline:
+        'N-able RMM・N-central・MSP向け・セキュリティ・バックアップ・EDR・リモート管理・旧SolarWinds MSPで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'N-able代替 SolarWinds MSP RMM N-central セキュリティ バックアップ EDR ConnectWise代替 Kaseya代替',
     accentColor: Color(0xFF00AEF3),
     painPoints: [
       '有料・RMM/MSP特化・個人のライフ管理は別途必要',
@@ -53774,8 +53802,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'atera': const _CompetitorInfo(
     name: 'Atera',
     emoji: '🎯',
-    tagline: 'オールインワンRMM/PSA・定額制・Atera・MSP/IT向け・AI自動化・パッチ・リモートアクセス・コスト効率で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Atera代替 RMM PSA 定額制 MSP IT AI自動化 パッチ NinjaOne代替 ConnectWise代替',
+    tagline:
+        'オールインワンRMM/PSA・定額制・Atera・MSP/IT向け・AI自動化・パッチ・リモートアクセス・コスト効率で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Atera代替 RMM PSA 定額制 MSP IT AI自動化 パッチ NinjaOne代替 ConnectWise代替',
     accentColor: Color(0xFF6366F1),
     painPoints: [
       '有料(定額制)・RMM特化・個人のライフ管理は別途必要',
@@ -53808,8 +53838,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'datto': const _CompetitorInfo(
     name: 'Datto (Kaseya)',
     emoji: '💾',
-    tagline: 'Datto・MSP向けBCDR・バックアップ/DR・クラウドバックアップ・ランサムウェア復旧・RMM・Kaseya買収で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Datto代替 BCDR バックアップ DR クラウド ランサムウェア復旧 MSP Kaseya N-able代替 Veeam代替',
+    tagline:
+        'Datto・MSP向けBCDR・バックアップ/DR・クラウドバックアップ・ランサムウェア復旧・RMM・Kaseya買収で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Datto代替 BCDR バックアップ DR クラウド ランサムウェア復旧 MSP Kaseya N-able代替 Veeam代替',
     accentColor: Color(0xFF009BDE),
     painPoints: [
       '有料・BCDR/バックアップ特化・個人のライフ管理は別途必要',
@@ -53842,8 +53874,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'pulseway': const _CompetitorInfo(
     name: 'Pulseway',
     emoji: '📡',
-    tagline: 'モバイルファーストRMM・Pulseway・スマホからIT管理・MSP/IT・パッチ・リモートアクセス・スクリプト自動化で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Pulseway代替 RMM モバイル IT管理 パッチ リモートアクセス MSP NinjaOne代替 Atera代替',
+    tagline:
+        'モバイルファーストRMM・Pulseway・スマホからIT管理・MSP/IT・パッチ・リモートアクセス・スクリプト自動化で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Pulseway代替 RMM モバイル IT管理 パッチ リモートアクセス MSP NinjaOne代替 Atera代替',
     accentColor: Color(0xFF0062CC),
     painPoints: [
       '有料・RMM特化・個人のライフ管理は別途必要',
@@ -53876,8 +53910,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'veeam': const _CompetitorInfo(
     name: 'Veeam',
     emoji: '💿',
-    tagline: 'Veeam Backup & Replication・ランサムウェア対策・マルチクラウド・オンプレ・データ保護・BCDRで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Veeam代替 バックアップ ランサムウェア対策 マルチクラウド オンプレ データ保護 Acronis代替 Commvault代替',
+    tagline:
+        'Veeam Backup & Replication・ランサムウェア対策・マルチクラウド・オンプレ・データ保護・BCDRで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Veeam代替 バックアップ ランサムウェア対策 マルチクラウド オンプレ データ保護 Acronis代替 Commvault代替',
     accentColor: Color(0xFF00B336),
     painPoints: [
       '有料・バックアップ特化・個人のライフ管理は別途必要',
@@ -53910,8 +53946,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'acronis': const _CompetitorInfo(
     name: 'Acronis',
     emoji: '🛡️',
-    tagline: 'Acronis Cyber Protect・バックアップ+セキュリティ統合・ランサムウェア対策・クラウド・エンドポイントで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Acronis代替 Cyber Protect バックアップ セキュリティ統合 ランサムウェア対策 クラウド Veeam代替 Carbonite代替',
+    tagline:
+        'Acronis Cyber Protect・バックアップ+セキュリティ統合・ランサムウェア対策・クラウド・エンドポイントで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Acronis代替 Cyber Protect バックアップ セキュリティ統合 ランサムウェア対策 クラウド Veeam代替 Carbonite代替',
     accentColor: Color(0xFFE61B23),
     painPoints: [
       '有料・バックアップ/セキュリティ特化・個人のライフ管理は別途必要',
@@ -53944,8 +53982,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'commvault': const _CompetitorInfo(
     name: 'Commvault',
     emoji: '🗄️',
-    tagline: 'Commvault Complete Data Protection・エンタープライズバックアップ・DR・クラウド・ハイブリッドデータ管理で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Commvault代替 Complete Data Protection エンタープライズバックアップ DR クラウド ハイブリッド Veeam代替 Veritas代替',
+    tagline:
+        'Commvault Complete Data Protection・エンタープライズバックアップ・DR・クラウド・ハイブリッドデータ管理で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Commvault代替 Complete Data Protection エンタープライズバックアップ DR クラウド ハイブリッド Veeam代替 Veritas代替',
     accentColor: Color(0xFF003DA5),
     painPoints: [
       '有料・エンタープライズバックアップ特化・個人のライフ管理は別途必要',
@@ -53978,8 +54018,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'veritas': const _CompetitorInfo(
     name: 'Veritas',
     emoji: '📦',
-    tagline: 'Veritas NetBackup・データ保護・ストレージ管理・eDiscovery・コンプライアンス・クラウドデータ管理で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Veritas代替 NetBackup データ保護 ストレージ管理 eDiscovery コンプライアンス Commvault代替 Veeam代替',
+    tagline:
+        'Veritas NetBackup・データ保護・ストレージ管理・eDiscovery・コンプライアンス・クラウドデータ管理で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Veritas代替 NetBackup データ保護 ストレージ管理 eDiscovery コンプライアンス Commvault代替 Veeam代替',
     accentColor: Color(0xFF003DA5),
     painPoints: [
       '有料・エンタープライズストレージ特化・個人のライフ管理は別途必要',
@@ -54012,8 +54054,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'cohesity': const _CompetitorInfo(
     name: 'Cohesity',
     emoji: '🌀',
-    tagline: 'Cohesity DataProtect・クラウドネイティブバックアップ・AI駆動データ管理・ランサムウェア復旧・データセキュリティで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Cohesity代替 DataProtect クラウドバックアップ AI データ管理 ランサムウェア復旧 Rubrik代替 Veeam代替',
+    tagline:
+        'Cohesity DataProtect・クラウドネイティブバックアップ・AI駆動データ管理・ランサムウェア復旧・データセキュリティで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Cohesity代替 DataProtect クラウドバックアップ AI データ管理 ランサムウェア復旧 Rubrik代替 Veeam代替',
     accentColor: Color(0xFF0070C0),
     painPoints: [
       '有料・データ保護特化・個人のライフ管理は別途必要',
@@ -54046,8 +54090,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'rubrik': const _CompetitorInfo(
     name: 'Rubrik',
     emoji: '💎',
-    tagline: 'Rubrik Security Cloud・クラウドデータセキュリティ・ランサムウェア防御・バックアップ・データ可観測性で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Rubrik代替 Security Cloud クラウドデータセキュリティ ランサムウェア バックアップ Cohesity代替 Veeam代替',
+    tagline:
+        'Rubrik Security Cloud・クラウドデータセキュリティ・ランサムウェア防御・バックアップ・データ可観測性で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Rubrik代替 Security Cloud クラウドデータセキュリティ ランサムウェア バックアップ Cohesity代替 Veeam代替',
     accentColor: Color(0xFFFF6B35),
     painPoints: [
       '有料・データセキュリティ特化・個人のライフ管理は別途必要',
@@ -54080,8 +54126,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'druva': const _CompetitorInfo(
     name: 'Druva',
     emoji: '☁️',
-    tagline: 'クラウドネイティブデータ保護・Druva・SaaS型バックアップ・エンドポイント/クラウド/SaaS・ランサムウェア対策で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Druva代替 クラウドバックアップ SaaS型 エンドポイント保護 ランサムウェア対策 Veeam代替 Acronis代替',
+    tagline:
+        'クラウドネイティブデータ保護・Druva・SaaS型バックアップ・エンドポイント/クラウド/SaaS・ランサムウェア対策で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Druva代替 クラウドバックアップ SaaS型 エンドポイント保護 ランサムウェア対策 Veeam代替 Acronis代替',
     accentColor: Color(0xFF0082CB),
     painPoints: [
       '有料・クラウドバックアップ特化・個人のライフ管理は別途必要',
@@ -54114,8 +54162,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'carbonite': const _CompetitorInfo(
     name: 'Carbonite (OpenText)',
     emoji: '🗃️',
-    tagline: 'Carbonite・クラウドバックアップ・PC/サーバー自動バックアップ・SMB向け・OpenText・ランサムウェア復旧で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Carbonite代替 クラウドバックアップ PC サーバー SMB ランサムウェア復旧 Acronis代替 Backblaze代替',
+    tagline:
+        'Carbonite・クラウドバックアップ・PC/サーバー自動バックアップ・SMB向け・OpenText・ランサムウェア復旧で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Carbonite代替 クラウドバックアップ PC サーバー SMB ランサムウェア復旧 Acronis代替 Backblaze代替',
     accentColor: Color(0xFF009C3B),
     painPoints: [
       '有料・バックアップ特化・個人のライフ管理は別途必要',
@@ -54148,8 +54198,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'zerto': const _CompetitorInfo(
     name: 'Zerto',
     emoji: '♾️',
-    tagline: 'Zerto・クラウドDR/BC・リアルタイムレプリケーション・ランサムウェア復旧・マルチクラウド移行・Hewlett Packardで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Zerto代替 クラウドDR BC リアルタイムレプリケーション ランサムウェア復旧 マルチクラウド移行 Veeam代替 Druva代替',
+    tagline:
+        'Zerto・クラウドDR/BC・リアルタイムレプリケーション・ランサムウェア復旧・マルチクラウド移行・Hewlett Packardで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Zerto代替 クラウドDR BC リアルタイムレプリケーション ランサムウェア復旧 マルチクラウド移行 Veeam代替 Druva代替',
     accentColor: Color(0xFF0063B1),
     painPoints: [
       '有料・DR/BC特化・個人のライフ管理は別途必要',
@@ -54182,8 +54234,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'bmc-helix': const _CompetitorInfo(
     name: 'BMC Helix ITSM',
     emoji: '🏗️',
-    tagline: 'BMC Helix ITSM・AIops・クラウドネイティブITSM・CMDB・ITSM自動化・コグニティブサービス管理で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'BMC Helix代替 ITSM AIops クラウドネイティブ CMDB 自動化 ServiceNow代替 Cherwell代替',
+    tagline:
+        'BMC Helix ITSM・AIops・クラウドネイティブITSM・CMDB・ITSM自動化・コグニティブサービス管理で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'BMC Helix代替 ITSM AIops クラウドネイティブ CMDB 自動化 ServiceNow代替 Cherwell代替',
     accentColor: Color(0xFFE31837),
     painPoints: [
       '有料・ITSM特化・個人のライフ管理は別途必要',
@@ -54216,8 +54270,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'cherwell': const _CompetitorInfo(
     name: 'Cherwell (Ivanti)',
     emoji: '🍒',
-    tagline: 'Cherwell Service Management・ノーコードITSM・柔軟カスタマイズ・ITSM/ITOM統合・Ivanti統合で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Cherwell代替 Ivanti ITSM ノーコード カスタマイズ ITOM ServiceNow代替 BMC代替',
+    tagline:
+        'Cherwell Service Management・ノーコードITSM・柔軟カスタマイズ・ITSM/ITOM統合・Ivanti統合で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Cherwell代替 Ivanti ITSM ノーコード カスタマイズ ITOM ServiceNow代替 BMC代替',
     accentColor: Color(0xFFD01F34),
     painPoints: [
       '有料・ITSM特化・個人のライフ管理は別途必要',
@@ -54250,8 +54306,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'topdesk': const _CompetitorInfo(
     name: 'TOPdesk',
     emoji: '🟩',
-    tagline: 'TOPdesk・ITSM/CAFM/SSP・ヨーロッパ発・使いやすいITSM・中規模組織向け・セルフサービスポータルで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'TOPdesk代替 ITSM CAFM セルフサービス 中規模 ヨーロッパ ServiceNow代替 Freshservice代替',
+    tagline:
+        'TOPdesk・ITSM/CAFM/SSP・ヨーロッパ発・使いやすいITSM・中規模組織向け・セルフサービスポータルで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'TOPdesk代替 ITSM CAFM セルフサービス 中規模 ヨーロッパ ServiceNow代替 Freshservice代替',
     accentColor: Color(0xFF0C8E4F),
     painPoints: [
       '有料・ITSM特化・個人のライフ管理は別途必要',
@@ -54284,8 +54342,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'manageengine': const _CompetitorInfo(
     name: 'ManageEngine ServiceDesk Plus',
     emoji: '🔩',
-    tagline: 'ManageEngine ServiceDesk Plus・IT資産管理・パッチ・コスト効率・中小〜エンタープライズITSM・Zoho系で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'ManageEngine代替 ServiceDesk Plus ITSM IT資産管理 パッチ コスト効率 Zoho ServiceNow代替 Freshservice代替',
+    tagline:
+        'ManageEngine ServiceDesk Plus・IT資産管理・パッチ・コスト効率・中小〜エンタープライズITSM・Zoho系で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'ManageEngine代替 ServiceDesk Plus ITSM IT資産管理 パッチ コスト効率 Zoho ServiceNow代替 Freshservice代替',
     accentColor: Color(0xFFF05A28),
     painPoints: [
       '有料・ITSM/IT資産管理特化・個人のライフ管理は別途必要',
@@ -54318,8 +54378,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'sysaid': const _CompetitorInfo(
     name: 'SysAid',
     emoji: '🔧',
-    tagline: 'SysAid ITSM・AI自動化・ワークフロー・ヘルプデスク・資産管理・中規模IT向け・コスト効率型で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'SysAid代替 ITSM AI自動化 ヘルプデスク 資産管理 中規模 コスト効率 Freshservice代替 ManageEngine代替',
+    tagline:
+        'SysAid ITSM・AI自動化・ワークフロー・ヘルプデスク・資産管理・中規模IT向け・コスト効率型で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'SysAid代替 ITSM AI自動化 ヘルプデスク 資産管理 中規模 コスト効率 Freshservice代替 ManageEngine代替',
     accentColor: Color(0xFF0057A8),
     painPoints: [
       '有料・ITSM特化・個人のライフ管理は別途必要',
@@ -54352,8 +54414,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'spiceworks': const _CompetitorInfo(
     name: 'Spiceworks',
     emoji: '🌶️',
-    tagline: '無料ヘルプデスク・IT管理ツール・スモールビジネス向け・クラウド/オンプレ・コミュニティ・広告モデルで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Spiceworks代替 無料ヘルプデスク IT管理 スモールビジネス クラウド コミュニティ Freshdesk代替 ManageEngine代替',
+    tagline:
+        '無料ヘルプデスク・IT管理ツール・スモールビジネス向け・クラウド/オンプレ・コミュニティ・広告モデルで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Spiceworks代替 無料ヘルプデスク IT管理 スモールビジネス クラウド コミュニティ Freshdesk代替 ManageEngine代替',
     accentColor: Color(0xFFE05C00),
     painPoints: [
       '無料(広告モデル)・スモールビジネス特化・個人のライフ管理は別途必要',
@@ -54386,8 +54450,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'easyvista': const _CompetitorInfo(
     name: 'EasyVista',
     emoji: '🟦',
-    tagline: 'EasyVista ITSM・ノーコード・ESM・AI自動化・ナレッジ管理・中規模組織向けサービス管理で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'EasyVista代替 ITSM ノーコード ESM AI自動化 ナレッジ管理 ServiceNow代替 TOPdesk代替',
+    tagline:
+        'EasyVista ITSM・ノーコード・ESM・AI自動化・ナレッジ管理・中規模組織向けサービス管理で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'EasyVista代替 ITSM ノーコード ESM AI自動化 ナレッジ管理 ServiceNow代替 TOPdesk代替',
     accentColor: Color(0xFF0070CC),
     painPoints: [
       '有料・ITSM特化・個人のライフ管理は別途必要',
@@ -54420,8 +54486,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'invgate': const _CompetitorInfo(
     name: 'InvGate',
     emoji: '🎯',
-    tagline: 'InvGate Service Desk・Asset Management・ITSM・ITAMソリューション・ラテンアメリカ発・中規模向けで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'InvGate代替 ITSM ITAM IT資産管理 Service Desk 中規模 Freshservice代替 ManageEngine代替',
+    tagline:
+        'InvGate Service Desk・Asset Management・ITSM・ITAMソリューション・ラテンアメリカ発・中規模向けで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'InvGate代替 ITSM ITAM IT資産管理 Service Desk 中規模 Freshservice代替 ManageEngine代替',
     accentColor: Color(0xFF7C3AED),
     painPoints: [
       '有料・ITSM/ITAM特化・個人のライフ管理は別途必要',
@@ -54454,8 +54522,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'happyfox': const _CompetitorInfo(
     name: 'HappyFox',
     emoji: '🦊',
-    tagline: 'HappyFox・ヘルプデスク・AI自動化・ワークフロー・多チャネル・ITSM・カスタマーサポートとITサポート統合で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'HappyFox代替 ヘルプデスク AI自動化 ワークフロー 多チャネル ITSM Freshdesk代替 Zendesk代替',
+    tagline:
+        'HappyFox・ヘルプデスク・AI自動化・ワークフロー・多チャネル・ITSM・カスタマーサポートとITサポート統合で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'HappyFox代替 ヘルプデスク AI自動化 ワークフロー 多チャネル ITSM Freshdesk代替 Zendesk代替',
     accentColor: Color(0xFFFF6B35),
     painPoints: [
       '有料・ヘルプデスク特化・個人のライフ管理は別途必要',
@@ -54488,8 +54558,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'gorgias': const _CompetitorInfo(
     name: 'Gorgias',
     emoji: '🛍️',
-    tagline: 'Eコマース特化カスタマーサポート・Shopify/BigCommerce統合・AI自動化・マルチチャネル・収益増加型CSで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Gorgias代替 Eコマース Shopify BigCommerce カスタマーサポート AI自動化 マルチチャネル Zendesk代替 Freshdesk代替',
+    tagline:
+        'Eコマース特化カスタマーサポート・Shopify/BigCommerce統合・AI自動化・マルチチャネル・収益増加型CSで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Gorgias代替 Eコマース Shopify BigCommerce カスタマーサポート AI自動化 マルチチャネル Zendesk代替 Freshdesk代替',
     accentColor: Color(0xFF6366F1),
     painPoints: [
       '有料・Eコマース特化・個人のライフ管理は別途必要',
@@ -54522,8 +54594,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   're-amaze': const _CompetitorInfo(
     name: 'Re:amaze',
     emoji: '💌',
-    tagline: 'Re:amaze・Eコマース統合カスタマーサポート・ライブチャット・FAQ・Shopify/WooCommerce・共有受信箱で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Re:amaze代替 Eコマース カスタマーサポート ライブチャット FAQ Shopify WooCommerce 共有受信箱 Gorgias代替',
+    tagline:
+        'Re:amaze・Eコマース統合カスタマーサポート・ライブチャット・FAQ・Shopify/WooCommerce・共有受信箱で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Re:amaze代替 Eコマース カスタマーサポート ライブチャット FAQ Shopify WooCommerce 共有受信箱 Gorgias代替',
     accentColor: Color(0xFF2196F3),
     painPoints: [
       '有料・Eコマース特化・個人のライフ管理は別途必要',
@@ -54556,8 +54630,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'groove': const _CompetitorInfo(
     name: 'Groove',
     emoji: '🎶',
-    tagline: 'Groove・SMB向け共有受信箱・シンプルヘルプデスク・Gmail統合・ライブチャット・ナレッジベースで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Groove代替 SMB ヘルプデスク 共有受信箱 Gmail統合 ライブチャット ナレッジベース Freshdesk代替 HelpScout代替',
+    tagline:
+        'Groove・SMB向け共有受信箱・シンプルヘルプデスク・Gmail統合・ライブチャット・ナレッジベースで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Groove代替 SMB ヘルプデスク 共有受信箱 Gmail統合 ライブチャット ナレッジベース Freshdesk代替 HelpScout代替',
     accentColor: Color(0xFF0A3E6E),
     painPoints: [
       '有料・カスタマーサポート特化・個人のライフ管理は別途必要',
@@ -54590,8 +54666,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'kayako': const _CompetitorInfo(
     name: 'Kayako',
     emoji: '⚓',
-    tagline: 'Kayako・顧客コンテキスト型CS・SingleView・ライブチャット・メール/ソーシャル統合・エンタープライズCSで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Kayako代替 カスタマーサポート SingleView ライブチャット ソーシャル統合 Zendesk代替 Freshdesk代替',
+    tagline:
+        'Kayako・顧客コンテキスト型CS・SingleView・ライブチャット・メール/ソーシャル統合・エンタープライズCSで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Kayako代替 カスタマーサポート SingleView ライブチャット ソーシャル統合 Zendesk代替 Freshdesk代替',
     accentColor: Color(0xFF363B64),
     painPoints: [
       '有料・CS特化・個人のライフ管理は別途必要',
@@ -54624,8 +54702,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'deskpro': const _CompetitorInfo(
     name: 'Deskpro',
     emoji: '🖥️',
-    tagline: 'Deskpro・オンプレ/クラウドCSP・ITSM・マルチチャネル・ライブチャット・SLA管理・セルフホスト可で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Deskpro代替 CSP ITSM オンプレ セルフホスト ライブチャット SLA Freshdesk代替 Zendesk代替',
+    tagline:
+        'Deskpro・オンプレ/クラウドCSP・ITSM・マルチチャネル・ライブチャット・SLA管理・セルフホスト可で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Deskpro代替 CSP ITSM オンプレ セルフホスト ライブチャット SLA Freshdesk代替 Zendesk代替',
     accentColor: Color(0xFF0062FF),
     painPoints: [
       '有料・CS/ITSM特化・個人のライフ管理は別途必要',
@@ -54658,8 +54738,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'dixa': const _CompetitorInfo(
     name: 'Dixa',
     emoji: '💎',
-    tagline: 'Dixa・カンバセーショナルCS・コーディングレス・AIエージェント・オムニチャネル・エンタープライズCXで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Dixa代替 カンバセーショナルCS AIエージェント オムニチャネル CX コーディングレス Zendesk代替 Genesys代替',
+    tagline:
+        'Dixa・カンバセーショナルCS・コーディングレス・AIエージェント・オムニチャネル・エンタープライズCXで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Dixa代替 カンバセーショナルCS AIエージェント オムニチャネル CX コーディングレス Zendesk代替 Genesys代替',
     accentColor: Color(0xFF5B21B6),
     painPoints: [
       '有料・CX特化・個人のライフ管理は別途必要',
@@ -54692,8 +54774,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'helpcrunch': const _CompetitorInfo(
     name: 'HelpCrunch',
     emoji: '💬',
-    tagline: 'HelpCrunch・オールインワンCS・ライブチャット・メール・ポップアップ・ナレッジベース・SaaS/ECで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'HelpCrunch代替 CS ライブチャット メール ポップアップ ナレッジベース SaaS EC Intercom代替 Crisp代替',
+    tagline:
+        'HelpCrunch・オールインワンCS・ライブチャット・メール・ポップアップ・ナレッジベース・SaaS/ECで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'HelpCrunch代替 CS ライブチャット メール ポップアップ ナレッジベース SaaS EC Intercom代替 Crisp代替',
     accentColor: Color(0xFFF65314),
     painPoints: [
       '有料・CS特化・個人のライフ管理は別途必要',
@@ -54726,7 +54810,8 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'tawk': const _CompetitorInfo(
     name: 'tawk.to',
     emoji: '🗣️',
-    tagline: '完全無料ライブチャット・tawk.to・カスタマーサポート・チャットウィジェット・エージェントアプリ・無制限使用で、なぜ「自分株式会社」を選ぶか。',
+    tagline:
+        '完全無料ライブチャット・tawk.to・カスタマーサポート・チャットウィジェット・エージェントアプリ・無制限使用で、なぜ「自分株式会社」を選ぶか。',
     searchKeyword: 'tawk.to代替 無料ライブチャット カスタマーサポート チャットウィジェット Crisp代替 Tidio代替',
     accentColor: Color(0xFF03A84E),
     painPoints: [
@@ -54760,8 +54845,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'useresponse': const _CompetitorInfo(
     name: 'UseResponse',
     emoji: '💡',
-    tagline: 'UseResponse・フィードバック管理+CS統合・アイデア管理・コミュニティフォーラム・ナレッジベース・セルフホストで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'UseResponse代替 フィードバック管理 CS アイデア管理 コミュニティ ナレッジベース セルフホスト UserVoice代替 Aha代替',
+    tagline:
+        'UseResponse・フィードバック管理+CS統合・アイデア管理・コミュニティフォーラム・ナレッジベース・セルフホストで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'UseResponse代替 フィードバック管理 CS アイデア管理 コミュニティ ナレッジベース セルフホスト UserVoice代替 Aha代替',
     accentColor: Color(0xFF1A73E8),
     painPoints: [
       '有料・フィードバック/CS特化・個人のライフ管理は別途必要',
@@ -54794,7 +54881,8 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'genesys': const _CompetitorInfo(
     name: 'Genesys Cloud CX',
     emoji: '📞',
-    tagline: 'Genesys Cloud CX・AIコンタクトセンター・オムニチャネル・音声/チャット/メール・顧客体験プラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    tagline:
+        'Genesys Cloud CX・AIコンタクトセンター・オムニチャネル・音声/チャット/メール・顧客体験プラットフォームで、なぜ「自分株式会社」を選ぶか。',
     searchKeyword: 'Genesys代替 Cloud CX コンタクトセンター オムニチャネル AI 音声 Avaya代替 NICE代替',
     accentColor: Color(0xFFFF4F1B),
     painPoints: [
@@ -54828,8 +54916,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'avaya': const _CompetitorInfo(
     name: 'Avaya',
     emoji: '📟',
-    tagline: 'Avaya Experience Platform・UCaaS/CCaaS・ハイブリッドクラウド・AIコンタクトセンター・統合コミュニケーションで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Avaya代替 UCaaS CCaaS ハイブリッドクラウド AI コンタクトセンター 統合コミュニケーション Genesys代替 Cisco代替',
+    tagline:
+        'Avaya Experience Platform・UCaaS/CCaaS・ハイブリッドクラウド・AIコンタクトセンター・統合コミュニケーションで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Avaya代替 UCaaS CCaaS ハイブリッドクラウド AI コンタクトセンター 統合コミュニケーション Genesys代替 Cisco代替',
     accentColor: Color(0xFFDA291C),
     painPoints: [
       '有料・UCaaS/CCaaS特化・個人のライフ管理は別途必要',
@@ -54862,8 +54952,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'nice-incontact': const _CompetitorInfo(
     name: 'NICE CXone',
     emoji: '🌸',
-    tagline: 'NICE CXone・クラウドコンタクトセンター・AIオートメーション・WFM・分析・オムニチャネルCXプラットフォームで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'NICE CXone代替 クラウドコンタクトセンター AI WFM 分析 オムニチャネル Genesys代替 Avaya代替',
+    tagline:
+        'NICE CXone・クラウドコンタクトセンター・AIオートメーション・WFM・分析・オムニチャネルCXプラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'NICE CXone代替 クラウドコンタクトセンター AI WFM 分析 オムニチャネル Genesys代替 Avaya代替',
     accentColor: Color(0xFF003DA5),
     painPoints: [
       '有料・CCaaS特化・個人のライフ管理は別途必要',
@@ -54896,8 +54988,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'five9': const _CompetitorInfo(
     name: 'Five9',
     emoji: '5️⃣',
-    tagline: 'Five9 CCaaS・AIエージェント・インテリジェントクラウドコンタクトセンター・WFO・オムニチャネル・CRM統合で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Five9代替 CCaaS AIエージェント インテリジェントコンタクトセンター WFO オムニチャネル Genesys代替 Talkdesk代替',
+    tagline:
+        'Five9 CCaaS・AIエージェント・インテリジェントクラウドコンタクトセンター・WFO・オムニチャネル・CRM統合で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Five9代替 CCaaS AIエージェント インテリジェントコンタクトセンター WFO オムニチャネル Genesys代替 Talkdesk代替',
     accentColor: Color(0xFF003580),
     painPoints: [
       '有料・CCaaS特化・個人のライフ管理は別途必要',
@@ -54930,8 +55024,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'talkdesk': const _CompetitorInfo(
     name: 'Talkdesk',
     emoji: '📲',
-    tagline: 'Talkdesk・AIクラウドコンタクトセンター・CX Cloud・リアルタイムAI・WFM・金融/医療特化ソリューションで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Talkdesk代替 AI CCaaS CX Cloud リアルタイム WFM 金融 医療 Genesys代替 Five9代替',
+    tagline:
+        'Talkdesk・AIクラウドコンタクトセンター・CX Cloud・リアルタイムAI・WFM・金融/医療特化ソリューションで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Talkdesk代替 AI CCaaS CX Cloud リアルタイム WFM 金融 医療 Genesys代替 Five9代替',
     accentColor: Color(0xFFFF3366),
     painPoints: [
       '有料・CCaaS特化・個人のライフ管理は別途必要',
@@ -54964,8 +55060,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'twilio-flex': const _CompetitorInfo(
     name: 'Twilio Flex',
     emoji: '🔀',
-    tagline: 'Twilio Flex・プログラマブルコンタクトセンター・カスタマイズ可能CCaaS・API・デベロッパーファーストで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Twilio Flex代替 CCaaS プログラマブル コンタクトセンター API カスタマイズ デベロッパー Genesys代替 Five9代替',
+    tagline:
+        'Twilio Flex・プログラマブルコンタクトセンター・カスタマイズ可能CCaaS・API・デベロッパーファーストで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Twilio Flex代替 CCaaS プログラマブル コンタクトセンター API カスタマイズ デベロッパー Genesys代替 Five9代替',
     accentColor: Color(0xFFE31837),
     painPoints: [
       '有料(使用量課金)・CCaaS特化・個人のライフ管理は別途必要',
@@ -54998,8 +55096,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'amazon-connect': const _CompetitorInfo(
     name: 'Amazon Connect',
     emoji: '📡',
-    tagline: 'Amazon Connect・クラウドCCaaS・AWS統合・AIコンタクトセンター・従量課金・Contact Lens分析で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Amazon Connect代替 AWS CCaaS クラウド AI Contact Lens 従量課金 Genesys代替 Twilio代替',
+    tagline:
+        'Amazon Connect・クラウドCCaaS・AWS統合・AIコンタクトセンター・従量課金・Contact Lens分析で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Amazon Connect代替 AWS CCaaS クラウド AI Contact Lens 従量課金 Genesys代替 Twilio代替',
     accentColor: Color(0xFFFF9900),
     painPoints: [
       '有料(従量課金)・AWS/CCaaS特化・個人のライフ管理は別途必要',
@@ -55032,8 +55132,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'mitel': const _CompetitorInfo(
     name: 'Mitel',
     emoji: '📠',
-    tagline: 'Mitel・UCaaS/CCaaS・ハイブリッド/オンプレ電話・ビジネスコミュニケーション・中規模企業向け・移行支援で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Mitel代替 UCaaS CCaaS ビジネス電話 ハイブリッド オンプレ 中規模企業 Avaya代替 RingCentral代替',
+    tagline:
+        'Mitel・UCaaS/CCaaS・ハイブリッド/オンプレ電話・ビジネスコミュニケーション・中規模企業向け・移行支援で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Mitel代替 UCaaS CCaaS ビジネス電話 ハイブリッド オンプレ 中規模企業 Avaya代替 RingCentral代替',
     accentColor: Color(0xFF00529B),
     painPoints: [
       '有料・UCaaS/CCaaS特化・個人のライフ管理は別途必要',
@@ -55066,8 +55168,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'liveagent': const _CompetitorInfo(
     name: 'LiveAgent',
     emoji: '🎯',
-    tagline: 'LiveAgent・マルチチャネルCS・ライブチャット+ヘルプデスク統合・コールセンター・ゲーミフィケーション・コスト効率で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'LiveAgent代替 マルチチャネル ライブチャット ヘルプデスク コールセンター ゲーミフィケーション Freshdesk代替 Zendesk代替',
+    tagline:
+        'LiveAgent・マルチチャネルCS・ライブチャット+ヘルプデスク統合・コールセンター・ゲーミフィケーション・コスト効率で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'LiveAgent代替 マルチチャネル ライブチャット ヘルプデスク コールセンター ゲーミフィケーション Freshdesk代替 Zendesk代替',
     accentColor: Color(0xFFFF5722),
     painPoints: [
       '有料・CS特化・個人のライフ管理は別途必要',
@@ -55100,8 +55204,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'powerbi': const _CompetitorInfo(
     name: 'Microsoft Power BI',
     emoji: '📊',
-    tagline: 'Microsoft Power BI・ビジネスインテリジェンス・DAX・自然言語クエリ・Teams統合・Microsoft 365エコシステムで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Power BI代替 BI ビジネスインテリジェンス DAX 自然言語 Teams Microsoft 365 Tableau代替 Looker代替',
+    tagline:
+        'Microsoft Power BI・ビジネスインテリジェンス・DAX・自然言語クエリ・Teams統合・Microsoft 365エコシステムで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Power BI代替 BI ビジネスインテリジェンス DAX 自然言語 Teams Microsoft 365 Tableau代替 Looker代替',
     accentColor: Color(0xFFF2C811),
     painPoints: [
       '有料(Pro/Premium)・BI特化・個人のライフ管理は別途必要',
@@ -55134,8 +55240,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'klipfolio': const _CompetitorInfo(
     name: 'Klipfolio',
     emoji: '📈',
-    tagline: 'Klipfolio・KPIダッシュボード・リアルタイムBI・Klips/PowerMetrics・中小企業向け・多数コネクターで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Klipfolio代替 KPIダッシュボード リアルタイムBI Klips PowerMetrics 中小企業 Databox代替 Geckoboard代替',
+    tagline:
+        'Klipfolio・KPIダッシュボード・リアルタイムBI・Klips/PowerMetrics・中小企業向け・多数コネクターで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Klipfolio代替 KPIダッシュボード リアルタイムBI Klips PowerMetrics 中小企業 Databox代替 Geckoboard代替',
     accentColor: Color(0xFF009ACD),
     painPoints: [
       '有料・BI特化・個人のライフ管理は別途必要',
@@ -55168,8 +55276,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'zoho-analytics': const _CompetitorInfo(
     name: 'Zoho Analytics',
     emoji: '🔢',
-    tagline: 'Zoho Analytics・セルフサービスBI・AI/ML分析・Zia AI・Zohoエコシステム統合・コスト効率で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Zoho Analytics代替 BI AI ML Zia セルフサービス Zohoエコシステム Tableau代替 Power BI代替',
+    tagline:
+        'Zoho Analytics・セルフサービスBI・AI/ML分析・Zia AI・Zohoエコシステム統合・コスト効率で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Zoho Analytics代替 BI AI ML Zia セルフサービス Zohoエコシステム Tableau代替 Power BI代替',
     accentColor: Color(0xFFE42527),
     painPoints: [
       '有料・BI特化・個人のライフ管理は別途必要',
@@ -55202,8 +55312,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'amazon-quicksight': const _CompetitorInfo(
     name: 'Amazon QuickSight',
     emoji: '⚡',
-    tagline: 'Amazon QuickSight・クラウドBI・SPICE・機械学習インサイト・スケーラブル・AWSネイティブ・コスト効率で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Amazon QuickSight代替 AWS BI SPICE 機械学習 スケーラブル クラウド Tableau代替 Power BI代替',
+    tagline:
+        'Amazon QuickSight・クラウドBI・SPICE・機械学習インサイト・スケーラブル・AWSネイティブ・コスト効率で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Amazon QuickSight代替 AWS BI SPICE 機械学習 スケーラブル クラウド Tableau代替 Power BI代替',
     accentColor: Color(0xFFFF9900),
     painPoints: [
       '有料(従量課金)・AWS特化・個人のライフ管理は別途必要',
@@ -55236,8 +55348,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'google-looker-studio': const _CompetitorInfo(
     name: 'Google Looker Studio',
     emoji: '📉',
-    tagline: 'Google Looker Studio・無料BI・Google Analytics/Ads統合・データポータル・クラウドネイティブ・共有ダッシュボードで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Google Looker Studio代替 無料BI Google Analytics Ads データポータル クラウド 共有 Tableau代替 Power BI代替',
+    tagline:
+        'Google Looker Studio・無料BI・Google Analytics/Ads統合・データポータル・クラウドネイティブ・共有ダッシュボードで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Google Looker Studio代替 無料BI Google Analytics Ads データポータル クラウド 共有 Tableau代替 Power BI代替',
     accentColor: Color(0xFF4285F4),
     painPoints: [
       '無料(基本)・Google系データ特化・個人のライフ管理は別途必要',
@@ -55270,8 +55384,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'mode': const _CompetitorInfo(
     name: 'Mode Analytics',
     emoji: '📋',
-    tagline: 'Mode Analytics・SQLベースBI・データアナリスト向け・Python/R統合・共同探索・Thoughtspot買収で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Mode代替 BI SQL Python R データアナリスト 共同探索 Thoughtspot Metabase代替 Looker代替',
+    tagline:
+        'Mode Analytics・SQLベースBI・データアナリスト向け・Python/R統合・共同探索・Thoughtspot買収で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Mode代替 BI SQL Python R データアナリスト 共同探索 Thoughtspot Metabase代替 Looker代替',
     accentColor: Color(0xFF6E2FFA),
     painPoints: [
       '有料・データアナリスト特化・個人のライフ管理は別途必要',
@@ -55304,8 +55420,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'matillion': const _CompetitorInfo(
     name: 'Matillion',
     emoji: '🏭',
-    tagline: 'Matillion ETL・クラウドデータ統合・ノーコード/コード・Snowflake/Databricks/Redshift対応・データ変換で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Matillion代替 ETL クラウドデータ統合 ノーコード Snowflake Databricks Redshift Fivetran代替 dbt代替',
+    tagline:
+        'Matillion ETL・クラウドデータ統合・ノーコード/コード・Snowflake/Databricks/Redshift対応・データ変換で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Matillion代替 ETL クラウドデータ統合 ノーコード Snowflake Databricks Redshift Fivetran代替 dbt代替',
     accentColor: Color(0xFF00A98F),
     painPoints: [
       '有料・ETL特化・個人のライフ管理は別途必要',
@@ -55338,8 +55456,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'azure-data-factory': const _CompetitorInfo(
     name: 'Azure Data Factory',
     emoji: '🏗️',
-    tagline: 'Azure Data Factory・クラウドETL/ELT・ハイブリッド統合・100+コネクター・Synapse統合・マイクロソフトで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Azure Data Factory代替 ETL ELT クラウド統合 Synapse Microsoft コネクター Fivetran代替 Matillion代替',
+    tagline:
+        'Azure Data Factory・クラウドETL/ELT・ハイブリッド統合・100+コネクター・Synapse統合・マイクロソフトで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Azure Data Factory代替 ETL ELT クラウド統合 Synapse Microsoft コネクター Fivetran代替 Matillion代替',
     accentColor: Color(0xFF0078D4),
     painPoints: [
       '有料(従量課金)・Azure特化・個人のライフ管理は別途必要',
@@ -55372,8 +55492,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'aws-glue': const _CompetitorInfo(
     name: 'AWS Glue',
     emoji: '🔗',
-    tagline: 'AWS Glue・サーバーレスETL・データカタログ・Spark統合・AWS Data Lake・スキーマ自動検出で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'AWS Glue代替 サーバーレスETL データカタログ Spark AWS Data Lake スキーマ検出 Azure Data Factory代替 Matillion代替',
+    tagline:
+        'AWS Glue・サーバーレスETL・データカタログ・Spark統合・AWS Data Lake・スキーマ自動検出で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'AWS Glue代替 サーバーレスETL データカタログ Spark AWS Data Lake スキーマ検出 Azure Data Factory代替 Matillion代替',
     accentColor: Color(0xFFFF9900),
     painPoints: [
       '有料(従量課金)・AWS特化・個人のライフ管理は別途必要',
@@ -55406,8 +55528,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'alation': const _CompetitorInfo(
     name: 'Alation',
     emoji: '📚',
-    tagline: 'Alation・データカタログ・データリテラシー・コラボレーション・機械学習推奨・エンタープライズで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Alation代替 データカタログ データリテラシー コラボレーション 機械学習 エンタープライズ Collibra代替 Atlan代替',
+    tagline:
+        'Alation・データカタログ・データリテラシー・コラボレーション・機械学習推奨・エンタープライズで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Alation代替 データカタログ データリテラシー コラボレーション 機械学習 エンタープライズ Collibra代替 Atlan代替',
     accentColor: Color(0xFF0078D4),
     painPoints: [
       '有料・データカタログ特化・個人のライフ管理は別途必要',
@@ -55440,8 +55564,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'collibra': const _CompetitorInfo(
     name: 'Collibra',
     emoji: '🗂️',
-    tagline: 'Collibra・データガバナンス・データカタログ・ビジネス用語集・ポリシー管理・コンプライアンスで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Collibra代替 データガバナンス データカタログ ビジネス用語集 コンプライアンス Alation代替 Atlan代替',
+    tagline:
+        'Collibra・データガバナンス・データカタログ・ビジネス用語集・ポリシー管理・コンプライアンスで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Collibra代替 データガバナンス データカタログ ビジネス用語集 コンプライアンス Alation代替 Atlan代替',
     accentColor: Color(0xFF5A1FBE),
     painPoints: [
       '高額・データガバナンス特化・個人のライフ管理は別途必要',
@@ -55475,7 +55601,8 @@ final _competitorInfo = <String, _CompetitorInfo>{
     name: 'Atlan',
     emoji: '🔎',
     tagline: 'Atlan・モダンデータカタログ・データメッシュ・コラボレーション・AI自動化・Slack統合で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Atlan代替 モダンデータカタログ データメッシュ コラボレーション AI自動化 Slack統合 Alation代替 Collibra代替',
+    searchKeyword:
+        'Atlan代替 モダンデータカタログ データメッシュ コラボレーション AI自動化 Slack統合 Alation代替 Collibra代替',
     accentColor: Color(0xFF5865F2),
     painPoints: [
       '有料・データカタログ特化・個人のライフ管理は別途必要',
@@ -55508,8 +55635,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'monte-carlo': const _CompetitorInfo(
     name: 'Monte Carlo',
     emoji: '🎰',
-    tagline: 'Monte Carlo・データオブザーバビリティ・データ品質モニタリング・異常検知・データパイプライン・インシデント管理で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Monte Carlo代替 データオブザーバビリティ データ品質 異常検知 パイプライン インシデント管理 Great Expectations代替',
+    tagline:
+        'Monte Carlo・データオブザーバビリティ・データ品質モニタリング・異常検知・データパイプライン・インシデント管理で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Monte Carlo代替 データオブザーバビリティ データ品質 異常検知 パイプライン インシデント管理 Great Expectations代替',
     accentColor: Color(0xFF00BCD4),
     painPoints: [
       '有料・データオブザーバビリティ特化・個人のライフ管理は別途必要',
@@ -55542,8 +55671,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'dbt-cloud': const _CompetitorInfo(
     name: 'dbt Cloud',
     emoji: '🔧',
-    tagline: 'dbt Cloud・データ変換・SQLベース・ELT・データモデリング・バージョン管理・データリネージで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'dbt Cloud代替 データ変換 SQL ELT データモデリング バージョン管理 リネージ Matillion代替 Dataform代替',
+    tagline:
+        'dbt Cloud・データ変換・SQLベース・ELT・データモデリング・バージョン管理・データリネージで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'dbt Cloud代替 データ変換 SQL ELT データモデリング バージョン管理 リネージ Matillion代替 Dataform代替',
     accentColor: Color(0xFFFF694A),
     painPoints: [
       '有料(Cloud版)・データ変換特化・個人のライフ管理は別途必要',
@@ -55576,8 +55707,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'apache-atlas': const _CompetitorInfo(
     name: 'Apache Atlas',
     emoji: '🦅',
-    tagline: 'Apache Atlas・OSSデータガバナンス・メタデータ管理・Hadoopエコシステム・タグベース分類・データリネージで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Apache Atlas代替 OSS データガバナンス メタデータ Hadoop タグ分類 リネージ Collibra代替 Alation代替',
+    tagline:
+        'Apache Atlas・OSSデータガバナンス・メタデータ管理・Hadoopエコシステム・タグベース分類・データリネージで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Apache Atlas代替 OSS データガバナンス メタデータ Hadoop タグ分類 リネージ Collibra代替 Alation代替',
     accentColor: Color(0xFFE84393),
     painPoints: [
       '無料(OSS)・Hadoopエコシステム特化・個人のライフ管理は別途必要',
@@ -55610,8 +55743,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'octopai': const _CompetitorInfo(
     name: 'Octopai',
     emoji: '🐙',
-    tagline: 'Octopai・自動データリネージ・クロスBI検索・メタデータ管理・データディクショナリ・Microsoft Fabric対応で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Octopai代替 自動データリネージ クロスBI メタデータ データディクショナリ Microsoft Fabric Atlan代替',
+    tagline:
+        'Octopai・自動データリネージ・クロスBI検索・メタデータ管理・データディクショナリ・Microsoft Fabric対応で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Octopai代替 自動データリネージ クロスBI メタデータ データディクショナリ Microsoft Fabric Atlan代替',
     accentColor: Color(0xFF2196F3),
     painPoints: [
       '有料・データリネージ特化・個人のライフ管理は別途必要',
@@ -55644,8 +55779,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'erwin': const _CompetitorInfo(
     name: 'erwin Data Intelligence',
     emoji: '🏛️',
-    tagline: 'erwin Data Intelligence・データカタログ・データガバナンス・データモデリング・エンタープライズ・Quest Software傘下で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'erwin代替 データカタログ データガバナンス データモデリング エンタープライズ Quest Software Collibra代替',
+    tagline:
+        'erwin Data Intelligence・データカタログ・データガバナンス・データモデリング・エンタープライズ・Quest Software傘下で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'erwin代替 データカタログ データガバナンス データモデリング エンタープライズ Quest Software Collibra代替',
     accentColor: Color(0xFF0F4C81),
     painPoints: [
       '高額・エンタープライズ特化・個人のライフ管理は別途必要',
@@ -55678,8 +55815,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'data-world': const _CompetitorInfo(
     name: 'data.world',
     emoji: '🌐',
-    tagline: 'data.world・クラウドデータカタログ・データコラボレーション・SPARQLクエリ・知識グラフ・データファブリックで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'data.world代替 クラウドデータカタログ コラボレーション SPARQL 知識グラフ データファブリック Alation代替',
+    tagline:
+        'data.world・クラウドデータカタログ・データコラボレーション・SPARQLクエリ・知識グラフ・データファブリックで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'data.world代替 クラウドデータカタログ コラボレーション SPARQL 知識グラフ データファブリック Alation代替',
     accentColor: Color(0xFF00BFA5),
     painPoints: [
       '有料・データカタログ特化・個人のライフ管理は別途必要',
@@ -55705,6 +55844,312 @@ final _competitorInfo = <String, _CompetitorInfo>{
       _FeatureComparison(
         feature: '完全無料',
         competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'apache-kafka': const _CompetitorInfo(
+    name: 'Apache Kafka',
+    emoji: '⚡',
+    tagline: 'Apache Kafka・分散ストリーミング・リアルタイムデータパイプライン・高スループット・OSS・イベント駆動アーキテクチャで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Apache Kafka代替 分散ストリーミング リアルタイム パイプライン 高スループット OSS イベント駆動 Confluent代替 Pulsar代替',
+    accentColor: Color(0xFF231F20),
+    painPoints: [
+      '無料(OSS)・ストリーミング特化・個人のライフ管理は別途必要',
+      '高度な技術知識必須・個人のAI管理は別途必要',
+      'Pulsar/Kinesis/RabbitMQ との比較で運用複雑さ・マルチテナント・管理UIが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '分散ストリーミング・リアルタイムパイプライン・高スループット・イベント駆動',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'confluent': const _CompetitorInfo(
+    name: 'Confluent',
+    emoji: '🌊',
+    tagline: 'Confluent・マネージドKafka・ストリーム処理・クラウドネイティブ・Schema Registry・ksqlDB・エンタープライズで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Confluent代替 マネージドKafka ストリーム処理 クラウド Schema Registry ksqlDB エンタープライズ Apache Kafka代替',
+    accentColor: Color(0xFF2A2EBC),
+    painPoints: [
+      '高額・ストリーミング特化・個人のライフ管理は別途必要',
+      'データエンジニア特化・個人のAI管理は別途必要',
+      'Apache Kafka/AWS Kinesis/Redpanda との比較でコスト・ベンダーロックイン・複雑さが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'マネージドKafka・ストリーム処理・Schema Registry・ksqlDB・クラウドネイティブ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'apache-flink': const _CompetitorInfo(
+    name: 'Apache Flink',
+    emoji: '🔄',
+    tagline: 'Apache Flink・ストリーム/バッチ処理・ステートフル計算・イベント時間・低レイテンシ・大規模分散で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Apache Flink代替 ストリーム処理 バッチ ステートフル イベント時間 低レイテンシ 分散 Spark Streaming代替 Storm代替',
+    accentColor: Color(0xFFE84393),
+    painPoints: [
+      '無料(OSS)・ストリーム処理特化・個人のライフ管理は別途必要',
+      '高度な技術知識必須・個人のAI管理は別途必要',
+      'Spark Streaming/Storm/Beam との比較で学習コスト・デバッグ難易度・Python対応が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ストリーム/バッチ処理・ステートフル計算・イベント時間・低レイテンシ・大規模分散',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'apache-pulsar': const _CompetitorInfo(
+    name: 'Apache Pulsar',
+    emoji: '💫',
+    tagline: 'Apache Pulsar・マルチテナントメッセージング・ジオレプリケーション・サーバーレス関数・ストリーミング/キューイング統合で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Apache Pulsar代替 マルチテナント メッセージング ジオレプリケーション サーバーレス ストリーミング Kafka代替 RabbitMQ代替',
+    accentColor: Color(0xFF188EFF),
+    painPoints: [
+      '無料(OSS)・メッセージング特化・個人のライフ管理は別途必要',
+      '技術者特化・個人のAI管理は別途必要',
+      'Kafka/Confluent/RabbitMQ との比較でエコシステム規模・ツール成熟度・コミュニティが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'マルチテナント・ジオレプリケーション・サーバーレス関数・ストリーミング/キュー統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'redpanda': const _CompetitorInfo(
+    name: 'Redpanda',
+    emoji: '🐼',
+    tagline: 'Redpanda・Kafka互換・C++実装・JVM不要・高パフォーマンス・低レイテンシ・シンプル運用で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Redpanda代替 Kafka互換 C++ JVM不要 高パフォーマンス 低レイテンシ シンプル Confluent代替 Apache Kafka代替',
+    accentColor: Color(0xFFFF2B4B),
+    painPoints: [
+      '有料(Cloud)/無料(OSS)・ストリーミング特化・個人のライフ管理は別途必要',
+      'データエンジニア特化・個人のAI管理は別途必要',
+      'Kafka/Confluent との比較でエコシステム規模・コネクタ数・長期実績が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Kafka互換・C++実装・JVM不要・高パフォーマンス・低レイテンシ・シンプル運用',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'starburst': const _CompetitorInfo(
+    name: 'Starburst',
+    emoji: '✨',
+    tagline: 'Starburst・マネージドTrino・分散SQLエンジン・データレイクハウス・フェデレーテッドクエリ・エンタープライズで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Starburst代替 マネージドTrino 分散SQL データレイクハウス フェデレーテッドクエリ エンタープライズ Trino代替 Presto代替',
+    accentColor: Color(0xFF1E3A5F),
+    painPoints: [
+      '高額・分析クエリ特化・個人のライフ管理は別途必要',
+      'データアナリスト/エンジニア特化・個人のAI管理は別途必要',
+      'Trino/Presto/BigQuery との比較でコスト・クラウドネイティブ統合・シンプル管理が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'マネージドTrino・分散SQL・データレイクハウス・フェデレーテッドクエリ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'trino': const _CompetitorInfo(
+    name: 'Trino',
+    emoji: '🔍',
+    tagline: 'Trino・OSSフェデレーテッドSQL・高速分散クエリ・データレイク・マルチデータソース・旧PrestoDBで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Trino代替 OSS フェデレーテッドSQL 分散クエリ データレイク マルチデータソース Presto Starburst代替',
+    accentColor: Color(0xFFDD00A1),
+    painPoints: [
+      '無料(OSS)・クエリエンジン特化・個人のライフ管理は別途必要',
+      '高度な技術知識必須・個人のAI管理は別途必要',
+      'Starburst/BigQuery/Spark との比較で運用負荷・スケーリング・サポートが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'OSSフェデレーテッドSQL・高速分散クエリ・データレイク・マルチソース',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'apache-beam': const _CompetitorInfo(
+    name: 'Apache Beam',
+    emoji: '🌟',
+    tagline: 'Apache Beam・統合バッチ/ストリームモデル・ポータブルパイプライン・Dataflow/Flink/Spark対応・Python/Java/Goで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Apache Beam代替 統合バッチ ストリーム ポータブルパイプライン Dataflow Flink Spark Python Java Go',
+    accentColor: Color(0xFF4A90D9),
+    painPoints: [
+      '無料(OSS)・バッチ/ストリーム処理特化・個人のライフ管理は別途必要',
+      '技術者特化・個人のAI管理は別途必要',
+      'Flink/Spark/Dataflow との比較で実行ランタイム別管理・デバッグ難易度・最適化が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '統合バッチ/ストリームモデル・ポータブルパイプライン・Dataflow/Flink/Spark対応',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'apache-hive': const _CompetitorInfo(
+    name: 'Apache Hive',
+    emoji: '🐝',
+    tagline: 'Apache Hive・HiveQL・Hadoopデータウェアハウス・大規模バッチ処理・HDFS・メタストア・ETL処理で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Apache Hive代替 HiveQL Hadoop データウェアハウス バッチ処理 HDFS メタストア ETL Presto代替 Spark SQL代替',
+    accentColor: Color(0xFFFDBE00),
+    painPoints: [
+      '無料(OSS)・Hadoop特化・個人のライフ管理は別途必要',
+      '技術者特化・個人のAI管理は別途必要',
+      'Spark/Presto/BigQuery との比較でクエリ速度・クラウドネイティブ・インタラクティブ性が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'HiveQL・Hadoopデータウェアハウス・大規模バッチ・HDFS・メタストア',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
         weHave: true,
       ),
     ],
