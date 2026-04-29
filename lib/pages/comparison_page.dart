@@ -36831,6 +36831,314 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'census': const _CompetitorInfo(
+    name: 'Census',
+    emoji: '🔄',
+    tagline: 'リバースETL・データウェアハウス→SaaS同期・オペレーショナルアナリティクスで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Census代替 リバースETL データウェアハウス SaaS同期 Hightouch代替 オペレーショナルアナリティクス',
+    accentColor: Color(0xFF7B2FBE),
+    painPoints: [
+      '月額800ドル〜・リバースETL特化・個人のライフ管理は別途必要',
+      'データ同期特化・個人のAI管理は別途必要',
+      'Hightouch/Hevoと比較して小規模チームには高コスト',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ウェアハウス→CRM/広告/Slack同期・セグメント・オーディエンス活性化',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'bubble-io': const _CompetitorInfo(
+    name: 'Bubble',
+    emoji: '🫧',
+    tagline: 'ノーコードWebアプリケーションビルダー・フルスタック開発プラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Bubble代替 ノーコード Webアプリ フルスタック ビルダー プログラミング不要 SaaS構築',
+    accentColor: Color(0xFF1D4ED8),
+    painPoints: [
+      '月額29ドル〜・Webアプリ構築特化・個人のライフ管理は別途必要',
+      'ノーコード開発特化・個人のAI管理は別途必要',
+      'Webflow/Adaloと比較して学習曲線が急でモバイルアプリ対応が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'フルスタックノーコード・DB・API連携・プラグイン・カスタムコード',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'glide-apps': const _CompetitorInfo(
+    name: 'Glide',
+    emoji: '✨',
+    tagline: 'スプレッドシートからノーコードモバイルアプリ作成ツールで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Glide代替 ノーコード モバイルアプリ スプレッドシート アプリ作成 Bubble代替 Adalo代替',
+    accentColor: Color(0xFF6D28D9),
+    painPoints: [
+      '月額49ドル〜・アプリ作成特化・個人のライフ管理は別途必要',
+      'スプレッドシートアプリ特化・個人のAI管理は別途必要',
+      'Bubble/Adaloと比較してカスタムロジック・複雑なDB構造が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Sheets/Airtable→アプリ変換・コンポーネント・AI機能・公開/Teams',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'plasmic': const _CompetitorInfo(
+    name: 'Plasmic',
+    emoji: '🎨',
+    tagline: 'ビジュアルページビルダー・開発者向けノーコードCMSで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Plasmic代替 ビジュアルページビルダー ノーコードCMS 開発者向け Webflow代替 Framer代替',
+    accentColor: Color(0xFF5755FF),
+    painPoints: [
+      '月額0〜・ビジュアルビルダー特化・個人のライフ管理は別途必要',
+      'Webコンテンツ管理特化・個人のAI管理は別途必要',
+      'Webflow/Framerと比較してeコマース・アニメーション機能が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ビジュアルビルダー・React/Next.js統合・CMS・コンポーネント同期',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'dropbox-sign': const _CompetitorInfo(
+    name: 'Dropbox Sign',
+    emoji: '✍️',
+    tagline: '電子署名・文書ワークフロー・API統合で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Dropbox Sign代替 電子署名 Hellosign 文書ワークフロー API eSign DocuSign代替',
+    accentColor: Color(0xFF0061FF),
+    painPoints: [
+      '月額20ドル〜・電子署名特化・個人のライフ管理は別途必要',
+      '署名ワークフロー特化・個人のAI管理は別途必要',
+      'DocuSign/PandaDocと比較して高度なCRM連携・提案書作成が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '電子署名・テンプレート・API・Dropbox/Salesforce/HubSpot連携',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'eversign': const _CompetitorInfo(
+    name: 'eversign',
+    emoji: '📝',
+    tagline: 'クラウド電子署名・文書管理・APIで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'eversign代替 電子署名 クラウド文書管理 API DocuSign代替 PandaDoc代替',
+    accentColor: Color(0xFF00C2B2),
+    painPoints: [
+      '月額9.99ドル〜・電子署名特化・個人のライフ管理は別途必要',
+      '文書署名特化・個人のAI管理は別途必要',
+      'DocuSign/Dropbox Signと比較してブランドカスタマイズ・高度なAPI機能が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '電子署名・テンプレート・監査証跡・API・チームコラボ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'signwell': const _CompetitorInfo(
+    name: 'SignWell',
+    emoji: '🖊️',
+    tagline: 'シンプル電子署名・無料プラン充実・中小企業向けで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'SignWell代替 電子署名 無料 中小企業 シンプル DocuSign代替 Dropbox Sign代替',
+    accentColor: Color(0xFF059669),
+    painPoints: [
+      '月額10ドル〜・電子署名特化・個人のライフ管理は別途必要',
+      'シンプル署名特化・個人のAI管理は別途必要',
+      'DocuSign/eversignと比較してエンタープライズ向けAPI・高度なワークフローが限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '電子署名・テンプレート・一括送信・Zapier連携・監査証跡',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'zoho-sign': const _CompetitorInfo(
+    name: 'Zoho Sign',
+    emoji: '🔏',
+    tagline: 'Zohoスイート統合電子署名・文書自動化で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Zoho Sign代替 電子署名 Zoho統合 文書自動化 DocuSign代替 eSign',
+    accentColor: Color(0xFFD9232D),
+    painPoints: [
+      '月額10ドル〜・Zohoエコシステム特化・個人のライフ管理は別途必要',
+      'Zoho統合電子署名特化・個人のAI管理は別途必要',
+      'DocuSign/PandaDocと比較してZoho外での汎用性・サードパーティ連携が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '電子署名・テンプレート・Zoho CRM/Books連携・一括署名・監査',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'duda': const _CompetitorInfo(
+    name: 'Duda',
+    emoji: '🌐',
+    tagline: '代理店・SaaS向けホワイトラベルWebサイトビルダーで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Duda代替 Webサイトビルダー 代理店 ホワイトラベル SaaS Wix代替 Squarespace代替',
+    accentColor: Color(0xFF1B8EF8),
+    painPoints: [
+      '月額19ドル〜・代理店向けビルダー特化・個人のライフ管理は別途必要',
+      'ホワイトラベルWeb特化・個人のAI管理は別途必要',
+      'Webflow/Wixと比較してデザイン自由度・eコマース機能が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ホワイトラベル・マルチサイト管理・チームコラボ・API・SEO最適化',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
