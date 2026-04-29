@@ -1,7 +1,7 @@
 ---
 title: "Dart Isolates in Depth — Background Processing, Worker Pools, and compute()"
 tags: flutter,dart,webdev,indiedev
-published: false
+published: true
 ---
 
 # Dart Isolates in Depth — Background Processing, Worker Pools, and compute()
