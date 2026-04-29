@@ -4075,4 +4075,13 @@
   <url><loc>https://my-web-app-b67f4.web.app/vs-terragrunt</loc><lastmod>2026-04-29</lastmod></url>
   <url><loc>https://my-web-app-b67f4.web.app/vs-aws-cdk</loc><lastmod>2026-04-29</lastmod></url>
   <url><loc>https://my-web-app-b67f4.web.app/vs-cdktf</loc><lastmod>2026-04-29</lastmod></url>
+  <url><loc>https://my-web-app-b67f4.web.app/vs-docker-swarm</loc><lastmod>2026-04-29</lastmod></url>
+  <url><loc>https://my-web-app-b67f4.web.app/vs-rancher</loc><lastmod>2026-04-29</lastmod></url>
+  <url><loc>https://my-web-app-b67f4.web.app/vs-openshift</loc><lastmod>2026-04-29</lastmod></url>
+  <url><loc>https://my-web-app-b67f4.web.app/vs-k3s</loc><lastmod>2026-04-29</lastmod></url>
+  <url><loc>https://my-web-app-b67f4.web.app/vs-k0s</loc><lastmod>2026-04-29</lastmod></url>
+  <url><loc>https://my-web-app-b67f4.web.app/vs-microk8s</loc><lastmod>2026-04-29</lastmod></url>
+  <url><loc>https://my-web-app-b67f4.web.app/vs-eks</loc><lastmod>2026-04-29</lastmod></url>
+  <url><loc>https://my-web-app-b67f4.web.app/vs-gke</loc><lastmod>2026-04-29</lastmod></url>
+  <url><loc>https://my-web-app-b67f4.web.app/vs-aks</loc><lastmod>2026-04-29</lastmod></url>
 </urlset>

@@ -58763,6 +58763,330 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'docker-swarm': const _CompetitorInfo(
+    name: 'Docker Swarm',
+    emoji: '🐳',
+    tagline:
+        'Docker Swarm・Docker組み込みオーケストレーション・シンプル・YAMLベース・スモールクラスタ・学習コスト低いで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Docker Swarm代替 Docker オーケストレーション シンプル YAML スモールクラスタ Kubernetes代替 Nomad代替',
+    accentColor: Color(0xFF2496ED),
+    painPoints: [
+      '無料・シンプルオーケストレーション特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Kubernetes/Nomad との比較でスケール・エコシステム・高度な機能が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Docker組み込みオーケストレーション・シンプル・YAML・スモールクラスタ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'rancher': const _CompetitorInfo(
+    name: 'Rancher',
+    emoji: '🤠',
+    tagline:
+        'Rancher・マルチクラスタKubernetes管理・SUSE傘下・企業向け・セキュリティポリシー・Fleet・RKE2で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Rancher代替 マルチクラスタ Kubernetes管理 SUSE 企業向け Fleet RKE2 OpenShift代替 Lens代替',
+    accentColor: Color(0xFF0075A8),
+    painPoints: [
+      '無料(OSS)/有料・K8s管理特化・個人のライフ管理は別途必要',
+      'エンジニア/K8s管理者特化・個人のAI管理は別途必要',
+      'OpenShift/EKS との比較でエンタープライズサポート・規制対応・クラウドネイティブ統合が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'マルチクラスタK8s管理・SUSE・セキュリティポリシー・Fleet・RKE2',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'openshift': const _CompetitorInfo(
+    name: 'Red Hat OpenShift',
+    emoji: '🔴',
+    tagline:
+        'Red Hat OpenShift・エンタープライズK8s・CI/CD統合・セキュリティ強化・IBM傘下・ハイブリッドクラウド・規制対応で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'OpenShift代替 エンタープライズK8s Red Hat CI/CD セキュリティ IBM ハイブリッドクラウド 規制対応 Rancher代替 EKS代替',
+    accentColor: Color(0xFFEE0000),
+    painPoints: [
+      '高額・エンタープライズK8s特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Kubernetes/Rancher との比較でコスト・柔軟性・OSS選択肢が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'エンタープライズK8s・CI/CD統合・セキュリティ強化・ハイブリッドクラウド',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'k3s': const _CompetitorInfo(
+    name: 'K3s',
+    emoji: '🪶',
+    tagline:
+        'K3s・軽量Kubernetes・エッジ/IoT/ARM・単一バイナリ・低リソース・Rancher Labs製・OSS・シンプルインストールで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'K3s代替 軽量Kubernetes エッジ IoT ARM 単一バイナリ 低リソース Rancher Labs OSS MicroK8s代替 K0s代替',
+    accentColor: Color(0xFF326CE5),
+    painPoints: [
+      '無料(OSS)・軽量K8s特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'フルK8s/MicroK8s との比較でエンタープライズ機能・エコシステム・大規模対応が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '軽量Kubernetes・エッジ/IoT/ARM・単一バイナリ・低リソース・シンプル',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'k0s': const _CompetitorInfo(
+    name: 'k0s',
+    emoji: '🪐',
+    tagline:
+        'k0s・ゼロフリクションKubernetes・単一バイナリ・Mirantis製・エッジ/マルチクラウド・シンプル管理・OSS/Enterpriseで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'k0s代替 ゼロフリクションKubernetes 単一バイナリ Mirantis エッジ マルチクラウド K3s代替 MicroK8s代替',
+    accentColor: Color(0xFF0D2137),
+    painPoints: [
+      '無料(OSS)/有料・K8s特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'K3s/MicroK8s との比較でコミュニティ規模・生態系・採用実績が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ゼロフリクションKubernetes・単一バイナリ・エッジ/マルチクラウド・OSS',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'microk8s': const _CompetitorInfo(
+    name: 'MicroK8s',
+    emoji: '🔬',
+    tagline:
+        'MicroK8s・Ubuntu/Canonical製・シングルノードK8s・snap・アドオン方式・開発/エッジ/CI向け・OSS/Proで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'MicroK8s代替 Ubuntu Canonical K8s snap アドオン 開発 エッジ CI K3s代替 K0s代替',
+    accentColor: Color(0xFFE95420),
+    painPoints: [
+      '無料(OSS)/有料(Pro)・K8s特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'K3s/k0s との比較でsnap依存・マルチクラウド・非Ubuntuサポートが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Ubuntu/Canonical製K8s・snap・アドオン方式・開発/エッジ/CI向け',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'eks': const _CompetitorInfo(
+    name: 'Amazon EKS',
+    emoji: '🟠',
+    tagline:
+        'Amazon EKS・マネージドKubernetes・AWS統合・Fargate・EKS Anywhere・セキュリティ・エンタープライズで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Amazon EKS代替 マネージドKubernetes AWS Fargate EKS Anywhere セキュリティ GKE代替 AKS代替',
+    accentColor: Color(0xFFFF9900),
+    painPoints: [
+      '有料・AWS特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'GKE/AKS との比較でAWS以外環境・マルチクラウド・コスト予測が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'マネージドKubernetes・AWS統合・Fargate・EKS Anywhere・エンタープライズ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'gke': const _CompetitorInfo(
+    name: 'Google Kubernetes Engine',
+    emoji: '🟢',
+    tagline:
+        'Google Kubernetes Engine・マネージドK8s・Autopilot・Anthos・GKE Enterprise・Google Cloud統合で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Google GKE代替 マネージドK8s Autopilot Anthos GKE Enterprise Google Cloud EKS代替 AKS代替',
+    accentColor: Color(0xFF4285F4),
+    painPoints: [
+      '有料・GCP特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'EKS/AKS との比較でGCP以外環境・マルチクラウド・コスト予測が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'マネージドK8s・Autopilot・Anthos・GKE Enterprise・Google Cloud統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'aks': const _CompetitorInfo(
+    name: 'Azure Kubernetes Service',
+    emoji: '🔵',
+    tagline:
+        'Azure Kubernetes Service・マネージドK8s・Azure統合・KEDA・Workload Identity・Microsoft・ハイブリッドで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Azure AKS代替 マネージドK8s Azure KEDA Workload Identity Microsoft ハイブリッド EKS代替 GKE代替',
+    accentColor: Color(0xFF0078D4),
+    painPoints: [
+      '有料・Azure特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'EKS/GKE との比較でAzure以外環境・マルチクラウド・成熟度が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'マネージドK8s・Azure統合・KEDA・Workload Identity・ハイブリッド',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
