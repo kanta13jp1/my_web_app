@@ -47543,6 +47543,312 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'newrelic': const _CompetitorInfo(
+    name: 'New Relic',
+    emoji: '📡',
+    tagline: 'フルスタックオブザーバビリティ・APM・ログ/メトリクス/トレース統合・無料100GBで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'New Relic代替 APM オブザーバビリティ ログ メトリクス トレース Datadog代替 Dynatrace代替',
+    accentColor: Color(0xFF1CE783),
+    painPoints: [
+      '無料100GB/有料(GBベース)・APM特化・個人のライフ管理は別途必要',
+      'システム監視特化・個人のAI管理は別途必要',
+      'Datadog/Dynatrace/AppDynamicsとの比較で価格モデル・エンタープライズ機能・AI AIOpsが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'APM・ログ/メトリクス/トレース統合・無料100GB・全スタックオブザーバビリティ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'victoria-metrics': const _CompetitorInfo(
+    name: 'VictoriaMetrics',
+    emoji: '⚡',
+    tagline: 'Prometheus互換高性能TSDB・低メモリ・高圧縮・長期保存・OSS/クラウドで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'VictoriaMetrics代替 Prometheus互換 TSDB 高性能 低メモリ 長期保存 Thanos代替 Cortex代替',
+    accentColor: Color(0xFF0063F7),
+    painPoints: [
+      'OSS無料/クラウド有料・メトリクス特化・個人のライフ管理は別途必要',
+      'TSDB特化・個人のAI管理は別途必要',
+      'Prometheus/Thanos/Cortexとの比較でエコシステム成熟度・可視化・アラートが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Prometheus互換・高性能TSDB・低メモリ・高圧縮・長期保存・クラスタリング',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'thanos': const _CompetitorInfo(
+    name: 'Thanos',
+    emoji: '🌌',
+    tagline: 'Prometheus長期保存・グローバルクエリ・高可用性・OSS・CNCF承認プロジェクトで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Thanos代替 Prometheus長期保存 グローバルクエリ 高可用性 OSS CNCF Cortex代替',
+    accentColor: Color(0xFF6929C4),
+    painPoints: [
+      '完全無料OSS・メトリクス長期保存特化・個人のライフ管理は別途必要',
+      'オブザーバビリティ基盤特化・個人のAI管理は別途必要',
+      'Cortex/VictoriaMetrics/Mimirとの比較で設定複雑性・管理コスト・クエリ遅延が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Prometheus長期保存・グローバルクエリ・HA・OSS・CNCF承認',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'loki': const _CompetitorInfo(
+    name: 'Loki (Grafana)',
+    emoji: '📜',
+    tagline: 'Grafana製ログ集約・Prometheus like・低コスト・インデックスなし・Kubernetes統合で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Grafana Loki代替 ログ集約 Elasticsearch代替 低コスト インデックスなし Kubernetes ログ管理',
+    accentColor: Color(0xFFF46800),
+    painPoints: [
+      'OSS無料/クラウド有料・ログ収集特化・個人のライフ管理は別途必要',
+      'ログ基盤特化・個人のAI管理は別途必要',
+      'Elasticsearch/Splunk/Cloudwatchとの比較でクエリ表現力・全文検索・インデックス機能が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Prometheus likeログ収集・低コスト・インデックスなし・Grafana統合・K8s対応',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'tempo': const _CompetitorInfo(
+    name: 'Tempo (Grafana)',
+    emoji: '🎵',
+    tagline: 'Grafana製分散トレーシング・低コスト・オブジェクトストレージ・Jaeger/Zipkin互換で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Grafana Tempo代替 分散トレーシング 低コスト Jaeger代替 Zipkin代替 OpenTelemetry Grafana統合',
+    accentColor: Color(0xFF9B59B6),
+    painPoints: [
+      'OSS無料/クラウド有料・トレーシング特化・個人のライフ管理は別途必要',
+      'トレース基盤特化・個人のAI管理は別途必要',
+      'Jaeger/Zipkin/Datadogとの比較でUI機能・クエリ表現力・エコシステムが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '分散トレーシング・低コスト・オブジェクトストレージ・Jaeger/Zipkin互換・Grafana統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'fluentd': const _CompetitorInfo(
+    name: 'Fluentd',
+    emoji: '🌊',
+    tagline: 'CNCF承認ログ収集・500+プラグイン・統合ログレイヤー・Ruby・クロスプラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Fluentd代替 ログ収集 統合 500プラグイン CNCF Logstash代替 Fluentbit代替',
+    accentColor: Color(0xFF0E83CD),
+    painPoints: [
+      '完全無料OSS・ログ収集特化・個人のライフ管理は別途必要',
+      'ログ転送特化・個人のAI管理は別途必要',
+      'Logstash/Fluentbit/Vectorとの比較でメモリ使用量・設定複雑性・パフォーマンスが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'CNCF承認・500+プラグイン・統合ログレイヤー・クロスプラットフォーム',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'fluentbit': const _CompetitorInfo(
+    name: 'Fluent Bit',
+    emoji: '⚡',
+    tagline: '超軽量ログ/メトリクスプロセッサ・組み込み/コンテナ向け・C実装・Fluentd補完で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Fluent Bit代替 軽量ログ収集 コンテナ Kubernetes エッジ Fluentd代替 Vector代替',
+    accentColor: Color(0xFF49BEDA),
+    painPoints: [
+      '完全無料OSS・ログ収集特化・個人のライフ管理は別途必要',
+      '軽量ログ転送特化・個人のAI管理は別途必要',
+      'Fluentd/Vector/Telegrafとの比較でプラグイン数・複雑変換・設定表現が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '超軽量・C実装・組み込み/コンテナ向け・ログ/メトリクス・Kubernetes DaemonSet',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'vector-dev': const _CompetitorInfo(
+    name: 'Vector',
+    emoji: '🔄',
+    tagline: 'DataDog製高性能オブザーバビリティパイプライン・ログ/メトリクス/トレース・Rust実装・OSS で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Vector代替 オブザーバビリティパイプライン ログ メトリクス トレース DataDog Rust Fluentd代替 Logstash代替',
+    accentColor: Color(0xFF10E7FF),
+    painPoints: [
+      '完全無料OSS・データパイプライン特化・個人のライフ管理は別途必要',
+      'オブザーバビリティ基盤特化・個人のAI管理は別途必要',
+      'Fluentd/Logstash/Telegrafとの比較でコミュニティ規模・プラグインエコが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Rust高性能・ログ/メトリクス/トレース統合・変換・DataDog製・OSS',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'telegraf': const _CompetitorInfo(
+    name: 'Telegraf',
+    emoji: '📊',
+    tagline: 'InfluxDB製メトリクス収集エージェント・300+プラグイン・システム/IoT/クラウド対応・OSS で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Telegraf代替 メトリクス収集 300プラグイン InfluxDB IoT クラウド Prometheus代替 Collectd代替',
+    accentColor: Color(0xFF22ADF6),
+    painPoints: [
+      '完全無料OSS・メトリクス収集特化・個人のライフ管理は別途必要',
+      'テレメトリ収集特化・個人のAI管理は別途必要',
+      'Prometheus/Vector/Fluentdとの比較でメトリクス以外の対応・クエリ言語・可視化が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'メトリクス収集・300+プラグイン・InfluxDB統合・システム/IoT/クラウド対応',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------

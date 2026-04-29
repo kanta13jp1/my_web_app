@@ -3760,4 +3760,13 @@
   <url><loc>https://my-web-app-b67f4.web.app/vs-vault-hashicorp</loc><lastmod>2026-04-29</lastmod></url>
   <url><loc>https://my-web-app-b67f4.web.app/vs-crossplane</loc><lastmod>2026-04-29</lastmod></url>
   <url><loc>https://my-web-app-b67f4.web.app/vs-opentofu</loc><lastmod>2026-04-29</lastmod></url>
+  <url><loc>https://my-web-app-b67f4.web.app/vs-newrelic</loc><lastmod>2026-04-29</lastmod></url>
+  <url><loc>https://my-web-app-b67f4.web.app/vs-victoria-metrics</loc><lastmod>2026-04-29</lastmod></url>
+  <url><loc>https://my-web-app-b67f4.web.app/vs-thanos</loc><lastmod>2026-04-29</lastmod></url>
+  <url><loc>https://my-web-app-b67f4.web.app/vs-loki</loc><lastmod>2026-04-29</lastmod></url>
+  <url><loc>https://my-web-app-b67f4.web.app/vs-tempo</loc><lastmod>2026-04-29</lastmod></url>
+  <url><loc>https://my-web-app-b67f4.web.app/vs-fluentd</loc><lastmod>2026-04-29</lastmod></url>
+  <url><loc>https://my-web-app-b67f4.web.app/vs-fluentbit</loc><lastmod>2026-04-29</lastmod></url>
+  <url><loc>https://my-web-app-b67f4.web.app/vs-vector-dev</loc><lastmod>2026-04-29</lastmod></url>
+  <url><loc>https://my-web-app-b67f4.web.app/vs-telegraf</loc><lastmod>2026-04-29</lastmod></url>
 </urlset>
