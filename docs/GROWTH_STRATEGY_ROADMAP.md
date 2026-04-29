@@ -23749,3 +23749,17 @@ Win territory 直接実装: SECOND_BRAIN +4.0 + VIBE +2.0 = +6.0/14.
 
 ### commit
 38e63f2b0
+
+## PS#6 S111 — 2026-04-29
+
+### 実装内容
+- **trainerWinRateBonus**: trainer_win_rateフィールドから予想1位馬の調教師勝率confidence最大+2%
+  - ≥0.15 (トップトレーナー): +0.02 / ≥0.10: +0.01 / それ以外: 0
+  - confidence 27 terms体制確立
+  - reasoning文字列に「調教師勝率補正:+X%」追加
+
+### Philosophy Alignment
+#5 商品=ユーザー価値 (騎手+調教師のダブル勝率指標で予測精度向上)
+
+### commit
+e90743287
