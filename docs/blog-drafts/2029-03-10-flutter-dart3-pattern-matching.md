@@ -1,7 +1,7 @@
 ---
 title: "Flutter × Dart 3 完全ガイド — Pattern Matching・Sealed Classes・Records で書き方が変わる"
 tags: flutter,dart,AI,個人開発
-published: false
+published: true
 ---
 
 # Flutter × Dart 3 完全ガイド — Pattern Matching・Sealed Classes・Records で書き方が変わる
