@@ -24832,3 +24832,12 @@ SECOND_BRAIN 4.5/7 + VIBE 7.0/7 + PLATFORM 4.0/7 = 14.5/21 + cross-instance-pr �
 - Python script で 2 回目出現 (各 34 行, 合計 918 行) を一括削除 → 556 keys 重複ゼロ
 - CI equal_keys_in_map → fix → push (31ee4bda7)
 - PS#4 向け cross-instance-pr: 追加前に既存 key チェック必須化を依頼
+
+## 2026-04-29 PS#2 S93 — T-1 Phase42全4弾完結 (#195-#198)
+
+- #195 Flutter GoRouter Deep Dive → https://dev.to/kanta13jp1/flutter-gorouter-deep-dive-type-safe-navigation-nested-routes-and-redirects-27lb
+- #196 Supabase Storage Guide → https://dev.to/kanta13jp1/supabase-storage-guide-file-uploads-cdn-delivery-and-storage-rls-53ne
+- #197 Indie Dev Launch Strategy → https://dev.to/kanta13jp1/indie-dev-launch-strategy-getting-traction-on-producthunt-hackernews-and-reddit-18g6
+- #198 Dart Isolates in Depth → https://dev.to/kanta13jp1/dart-isolates-in-depth-background-processing-worker-pools-and-compute-5bgn
+- dev.to 累計198本
+- 全 draft: published:true (JA+EN) / orphan branches 全削除
