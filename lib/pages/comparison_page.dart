@@ -19481,6 +19481,312 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'twilio': const _CompetitorInfo(
+    name: 'Twilio',
+    emoji: '📞',
+    tagline: 'クラウドコミュニケーションAPI(SMS/音声/ビデオ)で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Twilio代替 SMS API 音声API コミュニケーションAPI メッセージ',
+    accentColor: Color(0xFFF22F46),
+    painPoints: [
+      '従量課金制・SMS送信1件0.0075ドル〜・大量送信で急速にコスト増',
+      'コミュニケーションAPI特化でエンジニア向け設計・個人管理は別途必要',
+      'Vonageと比較してドキュメント量が多く習熟に時間がかかる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'SMS/音声/ビデオ/Email API・Verify・Flex・Segment統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'vonage': const _CompetitorInfo(
+    name: 'Vonage (Ericsson)',
+    emoji: '📡',
+    tagline: 'EricssonのクラウドコミュニケーションAPIプラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Vonage代替 Nexmo コミュニケーションAPI SMS 音声 ビデオ',
+    accentColor: Color(0xFF00003B),
+    painPoints: [
+      '従量課金制・SMS1件0.0065ドル〜・Ericsson傘下で価格方針が不透明',
+      'コミュニケーションAPI特化でエンジニア向け設計・個人管理は別途必要',
+      'Twilioと比較してエコシステム・コミュニティが小さい',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'SMS/音声/ビデオ/AI・Verify・Conversations API・低遅延',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'plivo': const _CompetitorInfo(
+    name: 'Plivo',
+    emoji: '📲',
+    tagline: 'コスト効率の高いSMS・音声APIプラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Plivo代替 SMS API 音声API Twilio代替 コスト削減 コミュニケーション',
+    accentColor: Color(0xFF0B6BFB),
+    painPoints: [
+      '従量課金制・Twilioより低価格だが日本の番号取得に制限がある',
+      'SMS/音声API特化でエンジニア向け設計・個人のライフ管理は別途必要',
+      'Twilioと比較してドキュメント・SDKの充実度が劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'SMS/音声/MMS API・番号管理・SIP・カンファレンス・分析',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'auth0': const _CompetitorInfo(
+    name: 'Auth0 (Okta)',
+    emoji: '🔐',
+    tagline: 'OktaのIDaaS・認証プラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Auth0代替 認証 IDaaS ログイン SSO OAuth OIDC',
+    accentColor: Color(0xFFEB5424),
+    painPoints: [
+      '月額23ドル〜・MAU超過で急速にコスト増・エンタープライズは高額',
+      '認証・認可特化でエンジニア向け設計・個人のライフ管理は別途必要',
+      'Firebase AuthやSupabase Authと比較してセットアップコストが高い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '認証・MFA・SSO・ソーシャルログイン・RBAC・Actions',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'okta': const _CompetitorInfo(
+    name: 'Okta',
+    emoji: '🏛️',
+    tagline: 'エンタープライズIDおよびアクセス管理プラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Okta代替 IDaaS SSO MFA エンタープライズ 認証 アクセス管理',
+    accentColor: Color(0xFF007DC1),
+    painPoints: [
+      '月額2ドル/人〜・エンタープライズ機能は高額・全機能は年間数百万円',
+      'エンタープライズIAM特化でIT管理者向け設計・個人管理は別途必要',
+      'Auth0と比較してセットアップが複雑で中小チームには過剰',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'SSO・MFA・ライフサイクル管理・RBAC・ゼロトラスト・API',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'clerk': const _CompetitorInfo(
+    name: 'Clerk',
+    emoji: '👤',
+    tagline: '開発者向け高速ユーザー認証・管理UIコンポーネントで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Clerk代替 認証 ユーザー管理 Next.js React Auth0代替',
+    accentColor: Color(0xFF6C47FF),
+    painPoints: [
+      '月額25ドル〜・MAU超過で従量課金・大規模サービスは高額になる',
+      '認証UIコンポーネント特化でフロントエンド向け設計・個人管理は別途必要',
+      'Auth0と比較して高度な企業向けIAM機能が不足',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'UIコンポーネント・ソーシャルログイン・MFA・組織管理・Webhook',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'vercel': const _CompetitorInfo(
+    name: 'Vercel',
+    emoji: '▲',
+    tagline: 'フロントエンド・フルスタックWebアプリホスティングで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Vercel代替 フロントエンドホスティング Next.js デプロイ CI/CD',
+    accentColor: Color(0xFF000000),
+    painPoints: [
+      '月額20ドル〜・商用利用はProプラン必須・チーム・帯域超過で高額',
+      'フロントエンドホスティング特化でエンジニア向け設計・個人管理は別途必要',
+      'Firebase HostingやNetlifyと比較してバックエンド機能が限定的',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'エッジネットワーク・プレビューデプロイ・Analytics・AI SDK',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'netlify': const _CompetitorInfo(
+    name: 'Netlify',
+    emoji: '🌐',
+    tagline: 'Jamstack・サーバーレスWebアプリプラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Netlify代替 Jamstack ホスティング CI/CD サーバーレス フロントエンド',
+    accentColor: Color(0xFF00AD9F),
+    painPoints: [
+      '月額19ドル〜・帯域・ビルド時間超過で課金・大規模利用は高額',
+      'フロントエンドホスティング特化でエンジニア向け設計・個人管理は別途必要',
+      'Vercelと比較してNext.js最適化・エッジ機能が劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'CDN・CI/CD・サーバーレス関数・Forms・Identity・Analytics',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'render': const _CompetitorInfo(
+    name: 'Render',
+    emoji: '🖥️',
+    tagline: 'シンプルなフルスタッククラウドホスティングで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Render代替 クラウドホスティング Heroku代替 サーバーレス Docker',
+    accentColor: Color(0xFF46E3B7),
+    painPoints: [
+      '月額7ドル〜・無料プランはスリープあり・商用はプロプランが必要',
+      'クラウドホスティング特化でエンジニア向け設計・個人管理は別途必要',
+      'AWS/GCPと比較してグローバルリージョン数が少ない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Webサービス・DB・Cron・Docker・静的サイト・プレビュー環境',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
