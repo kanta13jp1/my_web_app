@@ -1,7 +1,7 @@
 ---
 title: "Flutter × Dart 3 Complete Guide — Pattern Matching, Sealed Classes & Records"
 tags: flutter,dart,ai,indiedev
-published: false
+published: true
 ---
 
 # Flutter × Dart 3 Complete Guide — Pattern Matching, Sealed Classes & Records
