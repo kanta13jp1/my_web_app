@@ -1,7 +1,7 @@
 ---
 title: "Indie Dev Product-Market Fit — User Interviews and Feedback Loops in Practice"
 tags: indiedev,webdev,flutter,productivity
-published: false
+published: true
 ---
 
 # Indie Dev Product-Market Fit — User Interviews and Feedback Loops in Practice
