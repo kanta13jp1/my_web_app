@@ -1,7 +1,7 @@
 ---
 title: "Dart FFI Advanced — C Library Integration, Memory Management, and Flutter Plugin"
 tags: dart,flutter,webdev,indiedev
-published: false
+published: true
 ---
 
 ## Introduction
