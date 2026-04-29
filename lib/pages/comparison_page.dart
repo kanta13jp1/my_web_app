@@ -15197,6 +15197,312 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'tally': const _CompetitorInfo(
+    name: 'Tally',
+    emoji: '📋',
+    tagline: 'Typeform代替・無料スマートフォームビルダーで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Tally代替 無料フォーム Typeform代替 アンケート 問い合わせ',
+    accentColor: Color(0xFFFF6B6B),
+    painPoints: [
+      'プロ機能は月額29ドル〜・ブランディング除去に有料プラン必要',
+      'フォーム作成特化で個人の財務・タスク・AI管理は別途必要',
+      'Notionと似た操作感だが機能はフォームのみに限定される',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '無制限フォーム・ロジック分岐・Notion統合・計算フィールド',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'paperform': const _CompetitorInfo(
+    name: 'Paperform',
+    emoji: '📄',
+    tagline: 'ドキュメント感覚のスマートフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Paperform代替 フォームビルダー 決済フォーム アンケート',
+    accentColor: Color(0xFF4A90D9),
+    painPoints: [
+      '月額24ドル〜・機能が豊富だが個人ユーザーには割高',
+      'フォーム・決済特化で個人ライフ管理・AI対話は別途必要',
+      'デザインカスタマイズが細かく設定に時間がかかる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'スマートフォーム・決済統合・アポイント・クイズ・商品販売',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'formstack': const _CompetitorInfo(
+    name: 'Formstack',
+    emoji: '🏗️',
+    tagline: 'エンタープライズ向けフォーム・ワークフロー自動化で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Formstack代替 エンタープライズフォーム ワークフロー 電子署名',
+    accentColor: Color(0xFFF15A29),
+    painPoints: [
+      '月額50ドル〜・SMB・個人には機能過多で高額',
+      'フォーム・電子署名特化で個人の財務・目標・AI管理は別途必要',
+      '学習コストが高くセットアップに時間がかかる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'フォーム・電子署名・文書自動化・HIPAA準拠・Salesforce統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'height': const _CompetitorInfo(
+    name: 'Height',
+    emoji: '📐',
+    tagline: 'AIネイティブプロジェクト管理ツールで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Height代替 AIプロジェクト管理 タスク管理 スタートアップ',
+    accentColor: Color(0xFF7B68EE),
+    painPoints: [
+      '月額6.99ドル/人〜・無料プランは機能制限あり',
+      'エンジニアチーム向け設計で個人の財務・日常管理は別途必要',
+      'LinearやJiraと比較して知名度が低くエコシステムが小さい',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AI Issue整理・スプリント・ドキュメント・チャット統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'plane': const _CompetitorInfo(
+    name: 'Plane',
+    emoji: '✈️',
+    tagline: 'オープンソースJira代替プロジェクト管理で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Plane代替 OSS Jira代替 プロジェクト管理 Issue追跡',
+    accentColor: Color(0xFF3F76FF),
+    painPoints: [
+      'クラウド版は月額6ドル/人〜・セルフホストは運用コストが発生',
+      'ソフトウェア開発PJ特化で個人ライフ管理・財務は別途必要',
+      'まだ開発途上でJiraほどの成熟した機能セットに達していない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Issue追跡・サイクル・モジュール・ページ・アナリティクス',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'paymo': const _CompetitorInfo(
+    name: 'Paymo',
+    emoji: '💼',
+    tagline: 'フリーランス向けプロジェクト管理＋時間追跡で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Paymo代替 フリーランス プロジェクト管理 時間追跡 請求書',
+    accentColor: Color(0xFFE1554C),
+    painPoints: [
+      '月額9.90ドル/人〜・高度な機能には上位プランが必要',
+      'PJ管理・請求特化で個人ライフ管理・AI対話は別途必要',
+      '英語UIが中心で日本語対応が限定的',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'タスク・時間追跡・ガントチャート・チームスケジュール・請求書',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'flodesk': const _CompetitorInfo(
+    name: 'Flodesk',
+    emoji: '🌸',
+    tagline: 'クリエイター向け美しいメールマーケティングで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Flodesk代替 メールマーケティング ニュースレター クリエイター',
+    accentColor: Color(0xFFE96F4A),
+    painPoints: [
+      '月額38ドル固定(登録者数無制限)・無料プランなし',
+      'メールマーケティング特化で個人財務・タスク・AI管理は別途必要',
+      'A/Bテスト・高度な分析機能がMailchimpほど充実していない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ビジュアルテンプレート・ワークフロー・フォーム・リンクページ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'constant-contact': const _CompetitorInfo(
+    name: 'Constant Contact',
+    emoji: '📧',
+    tagline: 'SMB向けメール＋SNSマーケティングオールインワンで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Constant Contact代替 SMBマーケティング メール SNS広告',
+    accentColor: Color(0xFF0065A3),
+    painPoints: [
+      '月額12ドル〜・登録者増加で急速に値上がりする価格体系',
+      'マーケティング特化で個人の財務・習慣・AI対話は別途必要',
+      'テンプレートデザインが古くMailchimpより見劣りする',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'メール・SMS・SNS広告・LP・イベント管理',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'campaign-monitor': const _CompetitorInfo(
+    name: 'Campaign Monitor',
+    emoji: '📬',
+    tagline: 'シンプルなメール自動化・デザインで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Campaign Monitor代替 メール自動化 ニュースレター エンゲージメント',
+    accentColor: Color(0xFF6DB33F),
+    painPoints: [
+      '月額9ドル〜・高度な自動化は上位プラン(月額29ドル〜)が必要',
+      'メールマーケ特化で個人の財務・目標・AI管理は別途必要',
+      'MailchimpやKlaviyoと比較してEC・Shopify連携が弱い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ドラッグ&ドロップ・セグメント・ジャーニー・A/Bテスト',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
