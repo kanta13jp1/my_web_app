@@ -1,7 +1,7 @@
 ---
 title: "Indie SaaS Community Building — Discord, Slack, and GitHub Discussions for Power Users"
 tags: dart,flutter,webdev,indiedev
-published: false
+published: true
 ---
 
 # Indie SaaS Community Building — Discord, Slack, and GitHub Discussions for Power Users
