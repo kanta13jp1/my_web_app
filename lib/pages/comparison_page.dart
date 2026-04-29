@@ -32540,6 +32540,312 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'marvel': const _CompetitorInfo(
+    name: 'Marvel',
+    emoji: '🎨',
+    tagline: 'プロトタイプ・デザインコラボレーション・アニメーションツールで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Marvel代替 プロトタイプ デザインコラボ アニメーション Figma代替 クリッカブルデモ',
+    accentColor: Color(0xFFE52E34),
+    painPoints: [
+      '無料/月額12ドル〜・プロトタイプ特化・個人のライフ管理は別途必要',
+      'モバイルプロトタイプ特化・個人のAI管理は別途必要',
+      'Figma/InVisionと比較してデザインシステム・ハンドオフ機能が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'クリッカブルプロト・モバイルプレビュー・ユーザーテスト・コラボ・Sketch/Figma連携',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'proto-io': const _CompetitorInfo(
+    name: 'Proto.io',
+    emoji: '🔷',
+    tagline: '高度なインタラクティブプロトタイプ・アニメーション設計で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Proto.io代替 プロトタイプ インタラクティブ アニメーション デザインツール UX設計',
+    accentColor: Color(0xFF6B48C8),
+    painPoints: [
+      '月額24ドル〜・プロトタイプ特化・個人のライフ管理は別途必要',
+      '高品質アニメーション特化・個人のAI管理は別途必要',
+      'Figma/Adobe XDと比較してデザイン→コード連携が弱い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '高度アニメーション・ジェスチャー・コンポーネント・ユーザーテスト・Storybook連携',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'axure': const _CompetitorInfo(
+    name: 'Axure RP',
+    emoji: '📋',
+    tagline: '高機能ワイヤフレーム・条件分岐プロトタイプ・ドキュメント生成で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Axure代替 ワイヤフレーム プロトタイプ 条件分岐 UX仕様書 エンタープライズ',
+    accentColor: Color(0xFFFF4B00),
+    painPoints: [
+      '月額25ドル〜・ワイヤフレーム特化・個人のライフ管理は別途必要',
+      '高機能プロトタイプ特化・個人のAI管理は別途必要',
+      'Figmaと比較して学習コスト高・デザイン品質が劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '条件ロジック・変数・動的パネル・仕様書自動生成・チームプロジェクト',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'balsamiq': const _CompetitorInfo(
+    name: 'Balsamiq',
+    emoji: '✏️',
+    tagline: 'ローファイワイヤフレーム・素早いUI設計スケッチで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Balsamiq代替 ワイヤフレーム ローファイ UI設計 スケッチ 手描き風プロトタイプ',
+    accentColor: Color(0xFFCC2900),
+    painPoints: [
+      '月額9ドル〜・ワイヤフレーム特化・個人のライフ管理は別途必要',
+      'ローファイデザイン特化・個人のAI管理は別途必要',
+      'FigmaやSketchと比較してビジュアル品質・プロトタイプ精度が低い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ドラッグ&ドロップUI部品・手描き風・Confluence/Jira連携・クラウド/デスクトップ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'proofhub': const _CompetitorInfo(
+    name: 'ProofHub',
+    emoji: '🗂️',
+    tagline: 'オールインワンプロジェクト管理・チームコラボレーションで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'ProofHub代替 プロジェクト管理 タスク チームコラボ ガントチャート Basecamp代替',
+    accentColor: Color(0xFFF25628),
+    painPoints: [
+      '月額45ドル固定・プロジェクト管理特化・個人のライフ管理は別途必要',
+      'チーム作業管理特化・個人のAI管理は別途必要',
+      'Asana/Mondayと比較してAI機能・自動化が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ガントチャート・カンバン・タイムライン・プルーフ/承認・チャット統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'nifty': const _CompetitorInfo(
+    name: 'Nifty',
+    emoji: '🚀',
+    tagline: 'マイルストーン連動プロジェクト管理・チームワークスペースで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Nifty代替 プロジェクト管理 マイルストーン チームワークスペース タスク 進捗管理',
+    accentColor: Color(0xFF5469D4),
+    painPoints: [
+      '月額39ドル〜・プロジェクト管理特化・個人のライフ管理は別途必要',
+      'チームコラボ特化・個人のAI管理は別途必要',
+      'ClickUp/Linearと比較してエンジニアリング向け機能が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'マイルストーン・ロードマップ・スプリント・ドキュメント・チャット・時間追跡',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'copper': const _CompetitorInfo(
+    name: 'Copper',
+    emoji: '🔶',
+    tagline: 'Google Workspace統合CRM・営業パイプライン管理で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Copper代替 CRM Google Workspace Gmail統合 営業パイプライン 顧客管理',
+    accentColor: Color(0xFFD97706),
+    painPoints: [
+      '月額29ドル〜・Google Workspace CRM特化・個人のライフ管理は別途必要',
+      'B2B営業特化・個人のAI管理は別途必要',
+      'Salesforce/HubSpotと比較してカスタマイズ・マーケティング機能が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Gmail内でCRM・自動データ入力・パイプライン・レポート・Google連携',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'insightly': const _CompetitorInfo(
+    name: 'Insightly',
+    emoji: '🔍',
+    tagline: 'CRM＋プロジェクト管理統合・中小企業向け営業管理で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Insightly代替 CRM プロジェクト管理 中小企業 営業 顧客管理 統合ツール',
+    accentColor: Color(0xFF00A2D4),
+    painPoints: [
+      '月額29ドル〜・CRM+PM統合特化・個人のライフ管理は別途必要',
+      '中小企業営業特化・個人のAI管理は別途必要',
+      'Salesforce/HubSpotと比較してAI機能・マーケティング自動化が弱い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'CRM+プロジェクト管理+マーケティング自動化・AppConnect統合・レポート',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'nutshell-crm': const _CompetitorInfo(
+    name: 'Nutshell',
+    emoji: '🥜',
+    tagline: 'シンプルCRM・メールマーケティング統合・営業自動化で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Nutshell代替 CRM 営業管理 メールマーケティング 自動化 パイプライン 中小企業',
+    accentColor: Color(0xFF72B01D),
+    painPoints: [
+      '月額16ドル〜・CRM特化・個人のライフ管理は別途必要',
+      '営業チーム管理特化・個人のAI管理は別途必要',
+      'HubSpot/Pipedriveと比較してECOMM・高度マーケティング機能が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'パイプライン管理・メールシーケンス・Web Forms・レポート・チームコラボ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
