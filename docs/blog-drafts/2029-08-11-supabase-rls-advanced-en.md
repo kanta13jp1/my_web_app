@@ -1,7 +1,7 @@
 ---
 title: "Supabase RLS Deep Dive — Multi-tenant Access Control"
 tags: supabase,webdev,indiedev,flutter
-published: false
+published: true
 ---
 
 # Supabase RLS Deep Dive — Multi-tenant Access Control
