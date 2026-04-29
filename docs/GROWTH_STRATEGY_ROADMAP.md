@@ -24088,24 +24088,26 @@ SECOND_BRAIN 4.0 + VIBE 6.5 + PLATFORM 4.0 = 14.5/21 (Win territory 直接実装
 ### commit
 (本 commit にて確定)
 
-## 2026-04-29 PS#6 S116 — courseTypeMatchBonus (32 terms)
-- courseTypeMatchBonus追加: 前走コース種別(芝/ダート)と今走の一致で±2% confidence補正
-- 同コース種別: +0.02 / コース替わり: -0.02 / データなし: 0
-- confidence式 32 terms体制確立
+### PS#1 S2 Worktree Cleanup (2026-04-29 11:30 JST)
+- 削除: my_web_app_ci_fix (codex/ci-final-field-fix — main済)
+- 削除: my_web_app_horse_fix (codex/horse-learning-loop — main済)
+- 削除: my_web_app_version_fix (codex/fix-header-version-badge — main済)
+- 削除: my_web_app_ps (ps-main — 旧external worktree)
+- 削除: my_web_app_win (win-main — 旧external worktree)
+- 削除: sweet-blackwell-226190 orphan dir
+- cherry-pick: fix-dart-exceptions (16976c218) → main (unhandled Stream<void>修正)
+- 残: cranky-chaplygin-f003b4 (プロセスビジー → 次回再起動後削除)
+- 残: my_web_app_wbs_sync (PR #848 open — REVIEW_REQUIRED ブロック)
+- worktree list: 12インスタンス正規 + wbs_sync のみ ✅
 
-## 2026-04-29 PS#6 S117 — barrierPositionBonus 枠番補正 (33 terms)
-- barrierPositionBonus追加: 枠番(内枠/外枠)による信頼度補正
-- 内枠(1〜2枠): +0.01 / 外枠(7〜8枠): -0.01 / 中枠(3〜6枠): 0
-- frameForHorseNumber関数と統合 (fieldSizeから枠番を算出)
-- 信頼度デバッグ文字列に「枠番補正」追加
-- confidence式 33 terms体制確立
-
-### PS版#2 S84 T-1 Phase33 全4弾完結 (2026-04-29) — dev.to 累計162本
-- T-1 第159弾: Flutter Web を PWA 化する完全ガイド — オフライン対応・インストール・Push 通知
-  - https://dev.to/kanta13jp1/flutter-web-pwa-complete-guide-offline-support-install-prompt-push-notifications-9f7
-- T-1 第160弾: Supabase Storage 完全ガイド — Flutter でファイル・画像管理を実装する
-  - https://dev.to/kanta13jp1/supabase-storage-complete-guide-file-image-management-in-flutter-dmb
-- T-1 第161弾: インディー SaaS の必須メトリクス — MRR・Churn・LTV を Supabase で可視化する
-  - https://dev.to/kanta13jp1/indie-saas-metrics-that-matter-tracking-mrr-churn-ltv-with-supabase-174g
-- T-1 第162弾: Flutter テスト完全ガイド — Widget テスト・Integration テストで品質を担保する
-  - https://dev.to/kanta13jp1/flutter-testing-complete-guide-widget-integration-tests-for-quality-assurance-5blf
+### PS#1 S2 Worktree Cleanup (2026-04-29 11:30 JST)
+- 削除: my_web_app_ci_fix (codex/ci-final-field-fix — main済)
+- 削除: my_web_app_horse_fix (codex/horse-learning-loop — main済)
+- 削除: my_web_app_version_fix (codex/fix-header-version-badge — main済)
+- 削除: my_web_app_ps (ps-main — 旧external worktree)
+- 削除: my_web_app_win (win-main — 旧external worktree)
+- 削除: sweet-blackwell-226190 orphan dir
+- cherry-pick: fix-dart-exceptions (16976c218) → main (unhandled Stream<void>修正)
+- 残: cranky-chaplygin-f003b4 (プロセスビジー → 次回再起動後削除)
+- 残: my_web_app_wbs_sync (PR #848 open — REVIEW_REQUIRED ブロック)
+- worktree list: 12インスタンス正規 + wbs_sync のみ ✅
