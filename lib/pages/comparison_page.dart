@@ -38669,6 +38669,312 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'doordash': const _CompetitorInfo(
+    name: 'DoorDash',
+    emoji: '🍔',
+    tagline: '食事デリバリー・DashPass・Wolt買収・フードテックプラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'DoorDash代替 食事デリバリー フードデリバリー DashPass UberEats代替 食品配達',
+    accentColor: Color(0xFFFF3008),
+    painPoints: [
+      '配達手数料あり・フードデリバリー特化・個人のライフ管理は別途必要',
+      '食事注文特化・個人のAI管理は別途必要',
+      'UberEats/Instacartと比較して食料品・日用品デリバリーが限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'レストラン注文・DashPass・食料品・酒類・処方箋配達・DashMart',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'instacart': const _CompetitorInfo(
+    name: 'Instacart',
+    emoji: '🛒',
+    tagline: 'スーパー即時配達・Caper Cart・AI広告プラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Instacart代替 スーパー配達 食料品即時 DoorDash代替 AmazonFresh代替 食品デリバリー',
+    accentColor: Color(0xFF43B02A),
+    painPoints: [
+      '配達手数料あり・食料品特化・個人のライフ管理は別途必要',
+      'スーパー宅配特化・個人のAI管理は別途必要',
+      'AmazonFresh/DoorDashと比較してレストラン注文・ダッシュマート機能が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '即時配達・100+小売店・Express・広告プラットフォーム・Caper Cart',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'deliveroo': const _CompetitorInfo(
+    name: 'Deliveroo',
+    emoji: '🦘',
+    tagline: '欧州・アジア食事デリバリー・Deliveroo Plusサブスクで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Deliveroo代替 食事デリバリー 欧州 アジア UberEats代替 Wolt代替 フードデリバリー',
+    accentColor: Color(0xFF00CCBC),
+    painPoints: [
+      '配達手数料あり・食事デリバリー特化・個人のライフ管理は別途必要',
+      '欧州フードデリバリー特化・個人のAI管理は別途必要',
+      'Wolt/UberEatsと比較して北米・日本市場での展開が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'レストラン注文・Deliveroo Plus・食料品・リアルタイム追跡',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'navan': const _CompetitorInfo(
+    name: 'Navan',
+    emoji: '✈️',
+    tagline: '企業出張管理・経費・出張ポリシー自動化プラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Navan代替 企業出張 出張管理 経費管理 TripActions代替 SAP Concur代替',
+    accentColor: Color(0xFF0C27FE),
+    painPoints: [
+      '無料〜・出張管理特化・個人のライフ管理は別途必要',
+      '企業出張特化・個人のAI管理は別途必要',
+      'SAP Concur/Spotnanaと比較して大企業向けのGDS統合・グローバル対応が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '出張予約・経費管理・ポリシー自動化・Amex統合・リアルタイム分析',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'tripadvisor': const _CompetitorInfo(
+    name: 'Tripadvisor',
+    emoji: '🦉',
+    tagline: '旅行レビュー・ホテル比較・観光スポット発見プラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Tripadvisor代替 旅行レビュー ホテル比較 観光 レストラン口コミ Yelp代替',
+    accentColor: Color(0xFF34E0A1),
+    painPoints: [
+      '無料〜・旅行特化・個人のライフ管理は別途必要',
+      '旅行口コミ特化・個人のAI管理は別途必要',
+      'Expedia/Booking.comと比較して直接予約機能・フライト比較が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '旅行レビュー・ホテル/ツアー予約・AI旅行アドバイス・フォーラム',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'expedia': const _CompetitorInfo(
+    name: 'Expedia',
+    emoji: '🌍',
+    tagline: 'ホテル・フライト・レンタカー・パッケージ旅行予約で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Expedia代替 ホテル予約 フライト レンタカー パッケージ旅行 Booking.com代替',
+    accentColor: Color(0xFF1B3C87),
+    painPoints: [
+      '予約手数料あり・旅行予約特化・個人のライフ管理は別途必要',
+      '旅行OTA特化・個人のAI管理は別途必要',
+      'Booking.com/Kayakと比較してホテル選択肢・価格比較精度が劣る場合あり',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'フライト・ホテル・カー・クルーズ・One Key・パッケージ・バンドル',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'booking-com': const _CompetitorInfo(
+    name: 'Booking.com',
+    emoji: '🏨',
+    tagline: '世界最大ホテル・宿泊予約サイト・Genius割引プログラムで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Booking.com代替 ホテル予約 宿泊 Expedia代替 Agoda代替 旅行 民泊 Genius',
+    accentColor: Color(0xFF003580),
+    painPoints: [
+      '無料〜・宿泊予約特化・個人のライフ管理は別途必要',
+      '旅行OTA特化・個人のAI管理は別途必要',
+      'Airbnb/Expediaと比較して体験型ツアー・独自宿泊体験が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ホテル・民泊・フライト・レンタカー・Genius・無料キャンセル',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'airbnb': const _CompetitorInfo(
+    name: 'Airbnb',
+    emoji: '🏠',
+    tagline: '民泊・体験予約・ホストコミュニティ・旅行体験プラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Airbnb代替 民泊 体験予約 ホスト Booking.com代替 Vrbo代替 旅行宿泊',
+    accentColor: Color(0xFFFF5A5F),
+    painPoints: [
+      'サービス料3〜20%・宿泊特化・個人のライフ管理は別途必要',
+      '旅行体験特化・個人のAI管理は別途必要',
+      'Booking.com/Vrboと比較してホテル予約・ポイントプログラムが限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '民泊・体験・Airbnb Rooms・ホスト管理・長期滞在・Airbnb Plus',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'hopper': const _CompetitorInfo(
+    name: 'Hopper',
+    emoji: '🐰',
+    tagline: 'AIフライト価格予測・ホテル・レンタカー・最安値通知で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Hopper代替 フライト価格予測 最安値 ホテル予約 AI旅行 Kayak代替 スカイスキャナー代替',
+    accentColor: Color(0xFF800080),
+    painPoints: [
+      '無料〜・旅行予測特化・個人のライフ管理は別途必要',
+      'フライト予測特化・個人のAI管理は別途必要',
+      'Expedia/Kayakと比較して価格予測精度のブレ・成熟したロイヤルティプログラムが限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AI価格予測・最安値通知・フライト/ホテル/レンタカー・Carrot Cash',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
