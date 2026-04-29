@@ -25030,4 +25030,27 @@ SECOND_BRAIN 4.5/7 + VIBE 7.0/7 + PLATFORM 4.0/7 = 14.5/21 + 多角 audit patter
 
 ### commit
 (本 commit にて確定)
->>>>>>> 230f44deb (feat(ef-migration): stale EF batch 2 — 16 pages hub移行完了 + DEAD_LIST 32件追加 (PS#5 S110))
+
+---
+
+## 2026-04-29 PS#5 Session 111 — flutter analyze 14 issues修正
+
+### 修正内容
+| ファイル | 問題 | 修正 |
+|---|---|---|
+| comparison_page.dart | $0.50/$0.35/$0.04 → Dart interpolation error (4件) | $0.50/$0.35/$0.04 にエスケープ |
+| comparison_page.dart | duplicate 'descript' map key (equal_keys_in_map) | 重複エントリ削除 |
+| philosophy_page.dart | prefer_const_constructors (Semantics) | const Semantics に変更 |
+
+### 結果
+flutter analyze: 14 issues → 0
+
+### audit確認
+- stale EF audit: PASS (217 retired EFs, 0 stale references)
+- 有効 EF 数: 19 (上限50以下)
+
+### Philosophy Alignment
+#5 商品=ユーザー価値 (= CI 失敗なし) / #6 資本=時間 (= 自動修正 < 手動調査)
+
+### commit
+c2f8626d9 + fa6a34f43 on main
