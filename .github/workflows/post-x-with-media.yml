@@ -15,9 +15,14 @@ on:
         type: string
         default: ""
 
+concurrency:
+  group: post-x-with-media
+  cancel-in-progress: false
+
 jobs:
   post:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - name: Build tweet text
         id: tweet

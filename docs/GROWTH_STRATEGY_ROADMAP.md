@@ -24022,3 +24022,16 @@ SECOND_BRAIN 4.0 + VIBE 6.5 + PLATFORM 4.0 = 14.5/21 (Win territory 直接実装
 ### commit
 (本 commit にて確定)
 
+
+### Rule 17 WF health check (2026-04-29 11:00 JST) — PS#1 S1
+- 全 WF success率: 12/12 (failed=0) ✅
+- WF Failure Handler: 14 runs — 1 success + 13 skipped (正常: 失敗なし)
+- CI: in_progress (正常)
+- orphan branches: blog-publish=1, claude/*=3 ⚠️
+  - claude/fix-dart-exceptions-osjRb (2026-04-26, 1 commit) — PR 未作成
+  - claude/mobile-version-task-hQxcq (2026-04-27, 5 commits) — PR 未作成
+  - claude/vscode-wip = instance-vscode worktree branch (4afefe679)
+- concurrency/timeout 鮮度: 全 deploy 系 cancel-in-progress: false ✅
+- 修正済み: post-x-with-media.yml に concurrency + timeout-minutes: 10 追加
+- 要対応: claude/fix-dart-exceptions-osjRb と claude/mobile-version-task-hQxcq は
+  PR 作成 or main merge を次回 PS#1 セッションで実施予定
