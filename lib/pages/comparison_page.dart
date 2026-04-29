@@ -15809,6 +15809,312 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'crazy-egg': const _CompetitorInfo(
+    name: 'Crazy Egg',
+    emoji: '🥚',
+    tagline: 'ヒートマップ＋A/Bテスト・CROツールで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Crazy Egg代替 ヒートマップ 行動分析 A/Bテスト コンバージョン',
+    accentColor: Color(0xFFFF4136),
+    painPoints: [
+      '月額49ドル〜・ページビュー上限超過で追加料金が発生',
+      'サイト分析特化で個人の財務・習慣・AI管理は別途必要',
+      'Hotjarと比較してセッション録画の品質・機能が劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ヒートマップ・スクロールマップ・A/Bテスト・セッション録画',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'mouseflow': const _CompetitorInfo(
+    name: 'Mouseflow',
+    emoji: '🖱️',
+    tagline: 'セッション録画＋ファネル分析・UX最適化で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Mouseflow代替 セッション録画 UX分析 ヒートマップ ファネル',
+    accentColor: Color(0xFFFFAB40),
+    painPoints: [
+      '月額31ドル〜・録画セッション数上限が低く超過すると追加費用',
+      'UX分析特化で個人ライフ管理・財務・AI対話は別途必要',
+      'セットアップに技術知識が必要で非エンジニアには難しい',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'セッション録画・ヒートマップ・フォーム分析・ファネル・NPS',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'logrocket': const _CompetitorInfo(
+    name: 'LogRocket',
+    emoji: '🚀',
+    tagline: 'セッションリプレイ＋エラー追跡・フロントエンド監視で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'LogRocket代替 セッションリプレイ エラー追跡 フロントエンド監視',
+    accentColor: Color(0xFF764BC2),
+    painPoints: [
+      '月額99ドル〜・エンタープライズは数百ドル・個人には高額',
+      'デバッグ・エラー監視特化で個人財務・習慣・AI管理は別途必要',
+      'セッションデータのストレージが増えると急速にコスト増',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'セッションリプレイ・コンソールログ・パフォーマンス・アラート',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'heap': const _CompetitorInfo(
+    name: 'Heap',
+    emoji: '📦',
+    tagline: '自動キャプチャプロダクトアナリティクスで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Heap代替 自動分析 プロダクト分析 ユーザー行動 ノーコード分析',
+    accentColor: Color(0xFFFF6B81),
+    painPoints: [
+      '無料プランは月10,000セッション上限・有料は高額',
+      'プロダクト分析特化で個人の財務・目標・AI対話は別途必要',
+      'データ量が増えるとクエリが遅くなりエンジニア依存が増す',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '全イベント自動キャプチャ・ファネル・リテンション・ジャーニー',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'segment': const _CompetitorInfo(
+    name: 'Segment',
+    emoji: '🔀',
+    tagline: 'Twilio顧客データプラットフォーム(CDP)で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Segment代替 CDP 顧客データ統合 データパイプライン',
+    accentColor: Color(0xFF52BD94),
+    painPoints: [
+      '月額120ドル〜・無料プランは1,000 MTU上限で実運用が困難',
+      'データ基盤特化でビジネス向け設計・個人ライフ管理は別途必要',
+      'データエンジニアがいないと真価を発揮しにくい',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'イベント収集・300+連携・Identity解決・Personas',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'rudderstack': const _CompetitorInfo(
+    name: 'RudderStack',
+    emoji: '🛳️',
+    tagline: 'オープンソースSegment代替CDPで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'RudderStack代替 OSS CDP Segment代替 データパイプライン',
+    accentColor: Color(0xFF1D232D),
+    painPoints: [
+      'クラウド版は月120ドル〜・セルフホストは運用・インフラコストが発生',
+      'CDP特化でデータエンジニア前提設計・個人管理は別途必要',
+      'セットアップと設定が複雑で小規模チームには過剰',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'データパイプライン・200+連携・Data Plane・Profiles',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'chartmogul': const _CompetitorInfo(
+    name: 'ChartMogul',
+    emoji: '📊',
+    tagline: 'SaaSサブスクリプション収益分析で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'ChartMogul代替 SaaS収益分析 MRR ARR チャーン Stripe分析',
+    accentColor: Color(0xFF41B3F9),
+    painPoints: [
+      '無料プランは月100MRR上限・成長後は月数百ドルに',
+      'SaaS収益KPI特化で個人の財務・目標・AI管理は別途必要',
+      'Stripe以外の決済基盤からのデータ取り込みに追加設定が必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'MRR/ARR/チャーン/LTV・コホート・セグメント分析',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'baremetrics': const _CompetitorInfo(
+    name: 'Baremetrics',
+    emoji: '📈',
+    tagline: 'Stripeリアルタイム収益ダッシュボードで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Baremetrics代替 Stripe収益分析 MRR チャーン 売上ダッシュボード',
+    accentColor: Color(0xFFF5A623),
+    painPoints: [
+      '月額58ドル〜・Stripe/Braintree特化で他決済との統合が限定的',
+      '収益分析特化で個人の財務全般・習慣・AI管理は別途必要',
+      'ChartMogulと比較してコホート分析・セグメント機能が少ない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Stripeリアルタイム連携・予測・Trial Insights・Recover',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'profitwell': const _CompetitorInfo(
+    name: 'ProfitWell',
+    emoji: '💹',
+    tagline: 'Paddle無料SaaS収益インテリジェンスで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'ProfitWell代替 無料SaaS分析 チャーン削減 収益最適化',
+    accentColor: Color(0xFF3DDC97),
+    painPoints: [
+      '基本無料だがRetainやRecognize(収益最適化)は有料・高額',
+      'SaaSビジネス特化で個人の財務・目標・AI管理は別途必要',
+      'PaddleへのMRR%手数料制度に移行し予測しにくいコスト構造',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '無料収益分析・Retain(チャーン対策)・Recognize(会計)',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
