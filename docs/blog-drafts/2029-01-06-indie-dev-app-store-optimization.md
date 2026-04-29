@@ -1,7 +1,7 @@
 ---
 title: "インディー開発者のためのASO完全ガイド — App Store 最適化で検索上位を狙う"
 tags: 個人開発,AI,flutter,indiedev
-published: false
+published: true
 ---
 
 # インディー開発者のためのASO完全ガイド — App Store 最適化で検索上位を狙う
