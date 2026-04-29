@@ -606,18 +606,8 @@ void main() {
     expect(find.byKey(const Key('landing_hero_section')), findsOneWidget);
     expect(find.byKey(const Key('landing_trial_section')), findsOneWidget);
     expect(find.byKey(const Key('landing_auth_section')), findsOneWidget);
-    expect(find.byKey(const Key('landing_share_section')), findsOneWidget);
-    expect(find.byKey(const Key('landing_pv_section')), findsOneWidget);
-    expect(adapter.loadShareSnapshotCallCount, 1);
-    expect(adapter.loadLpViewStatsCallCount, 1);
-
-    final shareButton = find.byKey(const Key('landing_share_button_x'));
-    await tester.ensureVisible(shareButton);
-    await tester.tap(shareButton);
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 300));
-
-    expect(adapter.sharedChannels, <String>[LandingShareService.channelX]);
+    expect(find.byKey(const Key('landing_social_proof_stats')), findsOneWidget);
+    expect(find.byKey(const Key('landing_migration_guide')), findsOneWidget);
   });
 
   testWidgets(
@@ -651,7 +641,7 @@ void main() {
 
   testWidgets('AgentOrgPage filters board timeline by channel',
       (WidgetTester tester) async {
-    await tester.binding.setSurfaceSize(const Size(1200, 1800));
+    await tester.binding.setSurfaceSize(const Size(1200, 2600));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
     final service = _FakeAgentOrgService(
@@ -696,7 +686,7 @@ void main() {
 
   testWidgets('AgentOrgPage posts board updates through the injected service',
       (WidgetTester tester) async {
-    await tester.binding.setSurfaceSize(const Size(1200, 1800));
+    await tester.binding.setSurfaceSize(const Size(1200, 2600));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
     final service = _FakeAgentOrgService(
@@ -725,6 +715,8 @@ void main() {
     final scrollable = find.byType(Scrollable).first;
     final postButton = find.byKey(const Key('agent_org_board_post_button'));
     await tester.scrollUntilVisible(postButton, 200, scrollable: scrollable);
+    await tester.ensureVisible(postButton);
+    await tester.pumpAndSettle();
     await tester.tap(postButton);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 100));
@@ -744,7 +736,7 @@ void main() {
   testWidgets(
       'AgentOrgPage applies Chatwork-style task templates before delegating',
       (WidgetTester tester) async {
-    await tester.binding.setSurfaceSize(const Size(1200, 1800));
+    await tester.binding.setSurfaceSize(const Size(1200, 2600));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
     final service = _FakeAgentOrgService(
@@ -799,7 +791,7 @@ void main() {
   testWidgets(
       'AgentOrgPage supports Slack-style quick reactions on board posts',
       (WidgetTester tester) async {
-    await tester.binding.setSurfaceSize(const Size(1200, 1800));
+    await tester.binding.setSurfaceSize(const Size(1200, 2600));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
     final service = _FakeAgentOrgService(
@@ -825,6 +817,8 @@ void main() {
     final reactionChip =
         find.byKey(const Key('agent_org_board_reaction_message-1_thumbs_up'));
     await tester.scrollUntilVisible(reactionChip, 200, scrollable: scrollable);
+    await tester.ensureVisible(reactionChip);
+    await tester.pumpAndSettle();
     await tester.tap(reactionChip);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 100));

@@ -2,7 +2,6 @@ import 'dart:convert';
 
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../main.dart';
 import '../models/agent_memory_entry.dart';
 import '../models/agent_message.dart';
 import '../models/agent_profile.dart';
@@ -68,7 +67,7 @@ class AgentOrgService {
   final SupabaseClient _supabase;
 
   AgentOrgService({SupabaseClient? supabaseClient})
-      : _supabase = supabaseClient ?? supabase;
+      : _supabase = supabaseClient ?? Supabase.instance.client;
 
   static const List<String> memoryLayerOrder = <String>[
     'state',
