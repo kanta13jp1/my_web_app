@@ -24646,3 +24646,10 @@ SECOND_BRAIN 4.5/7 + VIBE 7.0/7 + PLATFORM 4.0/7 = 14.5/21 維持 + column resiz
 ### commit
 (本 commit にて確定)
 
+
+## 2026-04-29 PS#6 S127 — weightChangeBonus (体重変動補正) confidence 43 terms
+
+- weightChangeBonus(horse_weight_change): 微増(+2〜+6kg)=+1%/大変動(±8kg超)=-1%/小幅変動=0
+- weightChangeScore(ソート用ペナルティ)と差別化した信頼度専用評価
+- confidence formula: 43 terms体制確立
+- migration: 20260429095000_seed_achievements_ps6_s127.sql
