@@ -1,7 +1,7 @@
 ---
 title: "Dart Macros — Compile-time Code Generation Without Build Runner"
 tags: dart,flutter,webdev,indiedev
-published: false
+published: true
 ---
 
 # Dart Macros — Compile-time Code Generation Without Build Runner
