@@ -11642,8 +11642,7 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'habitica': const _CompetitorInfo(
     name: 'Habitica',
     emoji: '⚔️',
-    tagline:
-        'HabiticaをRPG式習慣・タスク管理に使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    tagline: 'HabiticaをRPG式習慣・タスク管理に使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
     searchKeyword: 'Habitica代替 ゲーミフィケーション習慣管理代替 RPGタスク管理代替 habit tracker',
     accentColor: Color(0xFF7F4EAD),
     painPoints: [
@@ -11677,8 +11676,7 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'noom': const _CompetitorInfo(
     name: 'Noom',
     emoji: '🥗',
-    tagline:
-        'Noomを行動変容・体重管理コーチングに使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    tagline: 'Noomを行動変容・体重管理コーチングに使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
     searchKeyword: 'Noom代替 ダイエットアプリ代替 行動変容コーチング代替 体重管理AI',
     accentColor: Color(0xFF6DB33F),
     painPoints: [
@@ -11712,8 +11710,7 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'strava': const _CompetitorInfo(
     name: 'Strava',
     emoji: '🏃',
-    tagline:
-        'Stravaをランニング・サイクリング記録に使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    tagline: 'Stravaをランニング・サイクリング記録に使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
     searchKeyword: 'Strava代替 ランニングアプリ代替 フィットネス記録代替 サイクリングトラッキング',
     accentColor: Color(0xFFFC4C02),
     painPoints: [
@@ -11782,8 +11779,7 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'reddit': const _CompetitorInfo(
     name: 'Reddit',
     emoji: '🤖',
-    tagline:
-        'Redditをコミュニティ・情報収集に使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    tagline: 'Redditをコミュニティ・情報収集に使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
     searchKeyword: 'Reddit代替 掲示板代替 コミュニティSNS代替 情報収集ツール代替',
     accentColor: Color(0xFFFF4500),
     painPoints: [
@@ -11817,8 +11813,7 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'twitch': const _CompetitorInfo(
     name: 'Twitch',
     emoji: '🎮',
-    tagline:
-        'Twitchをゲーム配信・ライブ視聴に使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    tagline: 'Twitchをゲーム配信・ライブ視聴に使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
     searchKeyword: 'Twitch代替 ゲーム配信代替 ライブストリーミング代替 配信プラットフォーム',
     accentColor: Color(0xFF9146FF),
     painPoints: [
@@ -11922,8 +11917,7 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'anki': const _CompetitorInfo(
     name: 'Anki',
     emoji: '🃏',
-    tagline:
-        'Ankiを間隔反復フラッシュカード学習に使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    tagline: 'Ankiを間隔反復フラッシュカード学習に使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
     searchKeyword: 'Anki代替 フラッシュカード代替 間隔反復学習代替 暗記アプリ代替',
     accentColor: Color(0xFF1F7399),
     painPoints: [
@@ -11934,6 +11928,317 @@ final _competitorInfo = <String, _CompetitorInfo>{
     features: [
       _FeatureComparison(
         feature: '間隔反復フラッシュカード学習',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'zaim': const _CompetitorInfo(
+    name: 'Zaim',
+    emoji: '💴',
+    tagline: 'Zaimを家計簿・資産管理に使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'Zaim代替 家計簿アプリ代替 資産管理代替 日本語家計管理',
+    accentColor: Color(0xFF00B5AD),
+    painPoints: [
+      'レシート撮影・家計簿管理に特化し、AI大学・習慣管理・PKMは別ツール',
+      '無料プランは広告あり、Premium月額480円〜のサブスク',
+      '家計簿以外のライフマネジメント機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'レシート撮影・家計簿管理',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'myfitnesspal': const _CompetitorInfo(
+    name: 'MyFitnessPal',
+    emoji: '🥦',
+    tagline:
+        'MyFitnessPalをカロリー計算・栄養管理に使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'MyFitnessPal代替 カロリー計算代替 栄養管理代替 ダイエットアプリ代替',
+    accentColor: Color(0xFF0043B5),
+    painPoints: [
+      'カロリー・栄養素管理に特化し、財務・AI大学・習慣管理は別ツール',
+      'Premium月額9.99USD〜のサブスクで、個人ライフOS統合機能がない',
+      '食事管理以外のライフマネジメント機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'カロリー・栄養素追跡',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'khan-academy': const _CompetitorInfo(
+    name: 'Khan Academy',
+    emoji: '🎓',
+    tagline: 'Khan Academyを無料オンライン学習に使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'Khan Academy代替 無料オンライン学習代替 eラーニング代替 自己学習プラットフォーム',
+    accentColor: Color(0xFF14BF96),
+    painPoints: [
+      '無料教育コンテンツ・動画学習に特化し、財務・AI大学・習慣管理は別ツール',
+      '学習以外の個人ライフOS統合機能がない',
+      '汎用的な個人管理・財務管理機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '無料教育コンテンツ・動画学習',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'bear': const _CompetitorInfo(
+    name: 'Bear',
+    emoji: '🐻',
+    tagline:
+        'BearをMarkdownノート・ライティングに使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'Bear代替 Markdownノート代替 Appleメモ代替 シンプルノートアプリ',
+    accentColor: Color(0xFFF7665B),
+    painPoints: [
+      'Apple向けMarkdownノートに特化し、財務・AI大学・習慣管理は別ツール',
+      'Pro月額1.49USD〜のサブスクで、iOS/Mac専用・個人ライフOS統合機能がない',
+      'ライティング以外のライフマネジメント機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Markdownノート・タグ管理',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'tana': const _CompetitorInfo(
+    name: 'Tana',
+    emoji: '🌿',
+    tagline: 'TanaをスーパータグPKM・アウトライナーに使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'Tana代替 スーパータグPKM代替 アウトライナーPKM代替 ノーコードデータベースノート',
+    accentColor: Color(0xFF6B4EFF),
+    painPoints: [
+      'スーパータグ・構造化PKMに特化し、財務・AI大学・習慣管理は別ツール',
+      '招待制ベータ・月額課金予定で、個人ライフOS統合機能がない',
+      'PKM・知識構造化以外のライフマネジメント機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'スーパータグ・構造化PKM',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'nuclino': const _CompetitorInfo(
+    name: 'Nuclino',
+    emoji: '⚡',
+    tagline:
+        'Nuclinoをチームwiki・ナレッジベースに使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'Nuclino代替 チームwiki代替 ナレッジベース代替 シンプルドキュメント管理',
+    accentColor: Color(0xFFC5003E),
+    painPoints: [
+      'チームwiki・ドキュメント管理に特化し、財務・AI大学・習慣管理は別ツール',
+      '月額5USD/人〜のサブスクで、個人ライフOS統合機能がない',
+      'チームコラボレーション以外のライフマネジメント機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'チームwiki・ナレッジベース',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'slite': const _CompetitorInfo(
+    name: 'Slite',
+    emoji: '📖',
+    tagline: 'Sliteを社内wiki・ドキュメント管理に使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'Slite代替 社内wiki代替 ドキュメント管理代替 チームノート代替',
+    accentColor: Color(0xFF3772FF),
+    painPoints: [
+      '社内wiki・チームドキュメント管理に特化し、財務・AI大学・習慣管理は別ツール',
+      '月額8USD/人〜のサブスクで、個人ライフOS統合機能がない',
+      'チームナレッジ管理以外のライフマネジメント機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '社内wiki・ドキュメント管理',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'gitbook': const _CompetitorInfo(
+    name: 'GitBook',
+    emoji: '📚',
+    tagline:
+        'GitBookを技術ドキュメント・開発者向けwikiに使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'GitBook代替 技術ドキュメント代替 開発者wiki代替 APIドキュメント代替',
+    accentColor: Color(0xFF3884FF),
+    painPoints: [
+      '技術ドキュメント・開発者向けwikiに特化し、財務・AI大学・習慣管理は別ツール',
+      '月額6.7USD/人〜のサブスクで、個人ライフOS統合機能がない',
+      '技術文書管理以外のライフマネジメント機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '技術ドキュメント・開発者wiki',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'fibery': const _CompetitorInfo(
+    name: 'Fibery',
+    emoji: '🔗',
+    tagline:
+        'Fiberyをコネクテッドワークスペース・ノーコードDBに使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'Fibery代替 コネクテッドワークスペース代替 ノーコードDB代替 カスタムアプリビルダー',
+    accentColor: Color(0xFF7A28CB),
+    painPoints: [
+      'コネクテッドワークスペース・カスタムアプリ構築に特化し、財務・AI大学・習慣管理は別ツール',
+      '月額10USD/人〜のサブスクで、個人ライフOS統合機能がない',
+      'ワークスペース構築以外のライフマネジメント機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'コネクテッドワークスペース・ノーコードDB',
         competitorHas: true,
         weHave: false,
       ),
@@ -12290,6 +12595,15 @@ class _ComparisonShellState extends State<_ComparisonShell> {
     'roam-research': 'notes',
     'heptabase': 'notes',
     'anki': 'learning',
+    'zaim': 'fintech-jp',
+    'myfitnesspal': 'fitness',
+    'khan-academy': 'learning',
+    'bear': 'notes',
+    'tana': 'notes',
+    'nuclino': 'notes',
+    'slite': 'notes',
+    'gitbook': 'notes',
+    'fibery': 'notes',
   };
 
   @override
