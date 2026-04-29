@@ -1,7 +1,7 @@
 ---
 title: "Indie SaaS Metrics That Matter — Tracking MRR, Churn & LTV with Supabase"
 tags: indiedev,ai,flutter,buildinpublic
-published: false
+published: true
 ---
 
 # Indie SaaS Metrics That Matter — Tracking MRR, Churn & LTV with Supabase
