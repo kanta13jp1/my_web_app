@@ -40735,6 +40735,315 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'missive': const _CompetitorInfo(
+    name: 'Missive',
+    emoji: '📬',
+    tagline: 'チームメール＋チャット統合受信箱・コラボ返信・ルール自動化・マルチアカウントで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Missive代替 チームメール チャット統合 Slack代替 Front代替 コラボ受信箱 メール管理',
+    accentColor: Color(0xFF3A49E0),
+    painPoints: [
+      '月額制・チームメール特化・個人のライフ管理は別途必要',
+      'チームコミュニケーション特化・個人のAI管理は別途必要',
+      'Front/Helpscout/Slackと比較してユーザー数・エンタープライズ機能が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'メール+チャット統合・コラボ返信・ルール・マルチアカウント・モバイル',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'mattermost': const _CompetitorInfo(
+    name: 'Mattermost',
+    emoji: '🔷',
+    tagline: 'オープンソースSlack代替・セルフホスト・エンタープライズ・DevOps統合で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Mattermost代替 オープンソース チームチャット Slack代替 セルフホスト DevOps エンタープライズ',
+    accentColor: Color(0xFF1B5FB3),
+    painPoints: [
+      '無料(OSS)/有料・DevOps特化・個人のライフ管理は別途必要',
+      'チームコミュニケーション特化・個人のAI管理は別途必要',
+      'Slack/Teamsと比較してUI洗練度・サードパーティ統合数が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'OSS・セルフホスト・E2E暗号化・DevOps統合・コンプライアンス',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'rocketchat': const _CompetitorInfo(
+    name: 'Rocket.Chat',
+    emoji: '🚀',
+    tagline: 'オープンソースチームメッセージング・セルフホスト・Omnichannel・AI統合で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Rocket.Chat代替 オープンソース チームチャット セルフホスト Slack代替 Mattermost代替 プライバシー',
+    accentColor: Color(0xFFF5455C),
+    painPoints: [
+      '無料(OSS)/有料・チャット特化・個人のライフ管理は別途必要',
+      'チームコミュニケーション特化・個人のAI管理は別途必要',
+      'Mattermost/Slackと比較してスケーラビリティ・UI品質が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'OSS・セルフホスト・Omnichannel・AI統合・暗号化・コンプライアンス',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'zulip': const _CompetitorInfo(
+    name: 'Zulip',
+    emoji: '💬',
+    tagline: 'スレッド型チームチャット・OSS・非同期重視・大規模コミュニティで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Zulip代替 スレッド チームチャット OSS Slack代替 非同期 コミュニティ セルフホスト',
+    accentColor: Color(0xFF6492FE),
+    painPoints: [
+      '無料(OSS)/有料・チャット特化・個人のライフ管理は別途必要',
+      'スレッドチャット特化・個人のAI管理は別途必要',
+      'Slack/Teamsと比較してUI直感性・ビデオ通話統合が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'スレッド型・OSS・非同期・セルフホスト・検索・大規模コミュニティ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'chanty': const _CompetitorInfo(
+    name: 'Chanty',
+    emoji: '🎵',
+    tagline: 'シンプルチームチャット・タスク管理統合・無制限メッセージ履歴・音声ビデオ通話で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Chanty代替 チームチャット タスク管理 Slack代替 無制限 音声通話 ビデオ通話',
+    accentColor: Color(0xFFF85E00),
+    painPoints: [
+      '無料/有料・チームチャット特化・個人のライフ管理は別途必要',
+      'チームコミュニケーション特化・個人のAI管理は別途必要',
+      'Slack/Mattermost/Teamsと比較してアプリ連携数・高度な機能が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '無制限メッセージ・タスク管理・音声/ビデオ通話・スクリーン共有',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'flock-app': const _CompetitorInfo(
+    name: 'Flock',
+    emoji: '🐦',
+    tagline: 'インド発チームメッセージング・チャンネル・タスク管理・ビデオ会議で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Flock代替 チームチャット インド Slack代替 タスク管理 ビデオ会議 コラボ',
+    accentColor: Color(0xFF6F42C1),
+    painPoints: [
+      '無料/有料・チームチャット特化・個人のライフ管理は別途必要',
+      'チームコミュニケーション特化・個人のAI管理は別途必要',
+      'Slack/Google Chat/Teamsと比較してアプリ連携・グローバル普及が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'チャンネル・ToDo/リマインダー・ビデオ会議・ファイル共有・投票',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'twist-app': const _CompetitorInfo(
+    name: 'Twist',
+    emoji: '🌀',
+    tagline: 'Doist・非同期チームコミュニケーション・スレッド重視・集中力維持・Todoist連携で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Twist代替 非同期コミュニケーション チームチャット Slack代替 集中力 Doist Todoist連携',
+    accentColor: Color(0xFFEF4444),
+    painPoints: [
+      '無料/有料・非同期チャット特化・個人のライフ管理は別途必要',
+      '非同期コミュニケーション特化・個人のAI管理は別途必要',
+      'Slackと比較してリアルタイム通知・ビデオ通話・広範な統合が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '非同期スレッド・集中モード・Todoist連携・チャンネル整理・無制限履歴',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'pumble': const _CompetitorInfo(
+    name: 'Pumble',
+    emoji: '🟣',
+    tagline: '完全無料Slack代替・無制限メッセージ履歴・ゲスト招待・音声ビデオ通話で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Pumble代替 無料チームチャット Slack代替 無制限メッセージ ゲスト招待 CAKE.com',
+    accentColor: Color(0xFF7C3AED),
+    painPoints: [
+      '完全無料(基本)/有料・チームチャット特化・個人のライフ管理は別途必要',
+      'チームコミュニケーション特化・個人のAI管理は別途必要',
+      'Slack/Teamsと比較してサードパーティ連携・AI機能が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '無制限メッセージ・ゲスト招待・音声/ビデオ・スクリーン共有・無料',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'mimecast': const _CompetitorInfo(
+    name: 'Mimecast',
+    emoji: '🛡️',
+    tagline: 'メールセキュリティ・フィッシング対策・アーカイブ・BEC防御・クラウドで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Mimecast代替 メールセキュリティ フィッシング対策 BEC スパム Proofpoint代替 エンタープライズ',
+    accentColor: Color(0xFF002855),
+    painPoints: [
+      '年間契約制・メールセキュリティ特化・個人のライフ管理は別途必要',
+      'メールセキュリティ特化・個人のAI管理は別途必要',
+      'Proofpoint/Barracuda/Microsoft Defenderと比較してコスト・SMB向け使いやすさが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'フィッシング対策・BEC防御・アーカイブ・継続性・URL保護',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
