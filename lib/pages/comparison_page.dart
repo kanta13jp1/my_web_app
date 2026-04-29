@@ -16115,6 +16115,312 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'pendo': const _CompetitorInfo(
+    name: 'Pendo',
+    emoji: '🧭',
+    tagline: 'プロダクト分析＋In-Appガイド・ユーザーオンボーディングで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Pendo代替 プロダクト分析 ユーザーオンボーディング NPS ガイド',
+    accentColor: Color(0xFFFF4785),
+    painPoints: [
+      '年間7,000ドル〜のエンタープライズ価格・スタートアップには高額',
+      'プロダクト分析特化でエンジニアチーム向け・個人管理は別途必要',
+      '設定・タグ付けに専任チームが必要で導入コストが高い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'In-Appガイド・NPS・ロードマップ・データ分析・セグメント',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'appcues': const _CompetitorInfo(
+    name: 'Appcues',
+    emoji: '🎬',
+    tagline: 'ノーコードユーザーオンボーディング・プロダクトツアーで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Appcues代替 ユーザーオンボーディング プロダクトツアー In-App NPS',
+    accentColor: Color(0xFF5A30DB),
+    painPoints: [
+      '月額249ドル〜・SMBには高額でROI測定が難しい',
+      'オンボーディング特化でプロダクト外の財務・AI管理は別途必要',
+      'ノーコードだがデザイン・UXの質を上げるには専任担当が必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'プロダクトツアー・チェックリスト・NPS・アナリティクス',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'userpilot': const _CompetitorInfo(
+    name: 'Userpilot',
+    emoji: '✈️',
+    tagline: 'プロダクト成長プラットフォーム・ユーザーエクスペリエンスで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Userpilot代替 プロダクト成長 オンボーディング アダプション 分析',
+    accentColor: Color(0xFF0B5CFF),
+    painPoints: [
+      '月額249ドル〜・小規模プロダクトには機能過多で高額',
+      'プロダクト分析・オンボーディング特化で個人管理は別途必要',
+      'PendoやAppcuesと比較して認知度・統合パートナーが少ない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'オンボーディング・マイクロサーベイ・分析・セグメント・A/Bテスト',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'wistia': const _CompetitorInfo(
+    name: 'Wistia',
+    emoji: '🎥',
+    tagline: 'ビジネス動画ホスティング＋マーケティング分析で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Wistia代替 ビジネス動画 動画ホスティング 動画SEO 動画分析',
+    accentColor: Color(0xFF54BBFF),
+    painPoints: [
+      '月額19ドル〜・大容量動画は追加課金・個人クリエイターには割高',
+      '動画ホスティング特化で個人の財務・タスク・AI管理は別途必要',
+      'YouTubeと比較してオーガニック流入が少なく集客には不向き',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '動画SEO・ヒートマップ・CTA・メールキャプチャ・A/Bテスト',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'vidyard': const _CompetitorInfo(
+    name: 'Vidyard',
+    emoji: '📹',
+    tagline: 'セールス・マーケティング向けビデオプラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Vidyard代替 セールス動画 ビデオメッセージ 動画マーケティング',
+    accentColor: Color(0xFFF36A31),
+    painPoints: [
+      '月額19ドル〜・AIビデオ機能はビジネスプラン以上が必要',
+      'セールス・マーケティング特化で個人ライフ管理・財務は別途必要',
+      'BtoBセールス前提設計で個人クリエイターには機能の大半が不要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'スクリーン録画・個別動画メッセージ・視聴分析・CRM連携',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'screenpal': const _CompetitorInfo(
+    name: 'ScreenPal',
+    emoji: '🖥️',
+    tagline: '画面録画＋動画編集・共有ツールで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'ScreenPal代替 画面録画 スクリーンキャスト 動画作成 チュートリアル',
+    accentColor: Color(0xFF00CA9A),
+    painPoints: [
+      '月額4ドル〜・無料版は15分制限・ウォーターマーク付き',
+      '画面録画特化で個人の財務・タスク・AI対話は別途必要',
+      'Loomと比較してUI・共有機能・AI機能が見劣りする',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '画面録画・Webカメラ・字幕・編集・クラウド共有',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'buzzsprout': const _CompetitorInfo(
+    name: 'Buzzsprout',
+    emoji: '🎙️',
+    tagline: 'ポッドキャストホスティング初心者向けツールで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Buzzsprout代替 ポッドキャスト ホスティング 配信 RSS',
+    accentColor: Color(0xFFF14E3B),
+    painPoints: [
+      '月額12ドル〜・無料プランは90日後に古いエピソードが削除される',
+      'ポッドキャスト配信特化で個人の財務・習慣・AI管理は別途必要',
+      'アップロード時間上限があり長尺コンテンツには上位プランが必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ポッドキャスト配信・統計・自動最適化・マジックマスタリング',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'riverside-fm': const _CompetitorInfo(
+    name: 'Riverside.fm',
+    emoji: '🎤',
+    tagline: 'リモートポッドキャスト・動画収録スタジオで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Riverside.fm代替 リモート収録 ポッドキャスト 動画インタビュー 高音質',
+    accentColor: Color(0xFF5B21B6),
+    painPoints: [
+      '月額15ドル〜・4K録画・AI編集は上位プランが必要',
+      'ポッドキャスト・動画収録特化で個人管理・財務は別途必要',
+      'オーディエンス向けLIVE配信機能はZoomと比較して機能が少ない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'リモート高品質録画・AI文字起こし・クリップ作成・エフェクト',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'transistor-fm': const _CompetitorInfo(
+    name: 'Transistor',
+    emoji: '📻',
+    tagline: 'チーム向けポッドキャストホスティングプラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Transistor代替 ポッドキャスト ホスティング 複数番組 チーム',
+    accentColor: Color(0xFF6B3CEA),
+    painPoints: [
+      '月額19ドル〜・無制限ポッドキャスト作成は魅力だが個人には過剰',
+      'ポッドキャスト配信特化で個人の財務・AI管理・習慣は別途必要',
+      'BuzzsproutやAnchorと比較してマーケティング機能が少ない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '複数番組・分析・プライベートポッドキャスト・Webサイト自動生成',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
