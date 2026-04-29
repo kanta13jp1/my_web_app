@@ -41116,7 +41116,8 @@ final _competitorInfo = <String, _CompetitorInfo>{
     name: 'CrowdStrike',
     emoji: '🦅',
     tagline: 'クラウドネイティブEDR・Falcon Platform・AI脅威検出・ゼロトラストで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'CrowdStrike代替 EDR エンドポイントセキュリティ Falcon AIセキュリティ SentinelOne代替',
+    searchKeyword:
+        'CrowdStrike代替 EDR エンドポイントセキュリティ Falcon AIセキュリティ SentinelOne代替',
     accentColor: Color(0xFFFF0000),
     painPoints: [
       '年間契約制・エンドポイントセキュリティ特化・個人のライフ管理は別途必要',
@@ -41252,7 +41253,8 @@ final _competitorInfo = <String, _CompetitorInfo>{
     name: 'Ping Identity',
     emoji: '🏓',
     tagline: 'エンタープライズIDセキュリティ・PingOne・SSO/MFA/PAM・ハイブリッドクラウドで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Ping Identity代替 エンタープライズSSO IDセキュリティ PingOne Okta代替 ハイブリッドクラウド',
+    searchKeyword:
+        'Ping Identity代替 エンタープライズSSO IDセキュリティ PingOne Okta代替 ハイブリッドクラウド',
     accentColor: Color(0xFF00BFB3),
     painPoints: [
       '年間契約制・IDセキュリティ特化・個人のライフ管理は別途必要',
@@ -41320,7 +41322,8 @@ final _competitorInfo = <String, _CompetitorInfo>{
     name: 'Bitdefender',
     emoji: '🐉',
     tagline: 'ルーマニア発・受賞歴多数アンチウイルス・GravityZone EDR・脅威インテリジェンスで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Bitdefender代替 アンチウイルス EDR GravityZone マルウェア保護 Norton代替 Kaspersky代替',
+    searchKeyword:
+        'Bitdefender代替 アンチウイルス EDR GravityZone マルウェア保護 Norton代替 Kaspersky代替',
     accentColor: Color(0xFFED1C24),
     painPoints: [
       '年間制・セキュリティ特化・個人のライフ管理は別途必要',
@@ -41353,7 +41356,8 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'norton': const _CompetitorInfo(
     name: 'Norton',
     emoji: '🟡',
-    tagline: 'Gen Digital・コンシューマーセキュリティ・LifeLock・VPN・パスワード管理統合で、なぜ「自分株式会社」を選ぶか。',
+    tagline:
+        'Gen Digital・コンシューマーセキュリティ・LifeLock・VPN・パスワード管理統合で、なぜ「自分株式会社」を選ぶか。',
     searchKeyword: 'Norton代替 アンチウイルス コンシューマーセキュリティ LifeLock 個人情報保護 McAfee代替',
     accentColor: Color(0xFFFFCC00),
     painPoints: [
@@ -41388,7 +41392,8 @@ final _competitorInfo = <String, _CompetitorInfo>{
     name: 'Malwarebytes',
     emoji: '🦠',
     tagline: 'マルウェア除去の定番・ThreatDown・リアルタイム保護・家庭/企業向けで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Malwarebytes代替 マルウェア除去 アンチウイルス ThreatDown Norton代替 Bitdefender代替',
+    searchKeyword:
+        'Malwarebytes代替 マルウェア除去 アンチウイルス ThreatDown Norton代替 Bitdefender代替',
     accentColor: Color(0xFF0082F5),
     painPoints: [
       '無料/有料・マルウェア対策特化・個人のライフ管理は別途必要',
@@ -41523,8 +41528,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'opensea': const _CompetitorInfo(
     name: 'OpenSea',
     emoji: '🌊',
-    tagline: '最大NFTマーケットプレイス・Ethereum/Polygon・デジタルアート・クリエイターロイヤリティで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'OpenSea代替 NFT マーケットプレイス デジタルアート Ethereum Blur代替 クリエイター Web3',
+    tagline:
+        '最大NFTマーケットプレイス・Ethereum/Polygon・デジタルアート・クリエイターロイヤリティで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'OpenSea代替 NFT マーケットプレイス デジタルアート Ethereum Blur代替 クリエイター Web3',
     accentColor: Color(0xFF2081E2),
     painPoints: [
       '手数料あり・NFT特化・個人のライフ管理は別途必要',
@@ -41591,7 +41598,8 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'ledger-wallet': const _CompetitorInfo(
     name: 'Ledger',
     emoji: '💳',
-    tagline: 'ハードウェアウォレット・Ledger Nano・Ledger Live・コールドストレージ・5500+仮想通貨で、なぜ「自分株式会社」を選ぶか。',
+    tagline:
+        'ハードウェアウォレット・Ledger Nano・Ledger Live・コールドストレージ・5500+仮想通貨で、なぜ「自分株式会社」を選ぶか。',
     searchKeyword: 'Ledger代替 ハードウェアウォレット コールドウォレット 仮想通貨 Trezor代替 セキュリティ',
     accentColor: Color(0xFF000000),
     painPoints: [
@@ -41626,7 +41634,8 @@ final _competitorInfo = <String, _CompetitorInfo>{
     name: 'Home Assistant',
     emoji: '🏠',
     tagline: 'オープンソーススマートホーム・ローカル優先・2000+統合・プライバシー重視で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Home Assistant代替 スマートホーム IoT OSS ローカル処理 SmartThings代替 Matter Zigbee',
+    searchKeyword:
+        'Home Assistant代替 スマートホーム IoT OSS ローカル処理 SmartThings代替 Matter Zigbee',
     accentColor: Color(0xFF18BCF2),
     painPoints: [
       '無料/有料(Cloud)・スマートホーム特化・個人のライフ管理は別途必要',
@@ -41659,8 +41668,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'smartthings': const _CompetitorInfo(
     name: 'SmartThings',
     emoji: '🔗',
-    tagline: 'Samsung・スマートホームハブ・Matter/Zigbee/Z-Wave・200+ブランド連携で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'SmartThings代替 スマートホーム Samsung Matter Zigbee IoT Home Assistant代替 Google Home代替',
+    tagline:
+        'Samsung・スマートホームハブ・Matter/Zigbee/Z-Wave・200+ブランド連携で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'SmartThings代替 スマートホーム Samsung Matter Zigbee IoT Home Assistant代替 Google Home代替',
     accentColor: Color(0xFF1428A0),
     painPoints: [
       '無料・IoT管理特化・個人のライフ管理は別途必要',
@@ -41693,7 +41704,8 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'ring': const _CompetitorInfo(
     name: 'Ring',
     emoji: '🔔',
-    tagline: 'Amazon傘下・スマートドアベル・セキュリティカメラ・Ring Protect・Neighbor共有で、なぜ「自分株式会社」を選ぶか。',
+    tagline:
+        'Amazon傘下・スマートドアベル・セキュリティカメラ・Ring Protect・Neighbor共有で、なぜ「自分株式会社」を選ぶか。',
     searchKeyword: 'Ring代替 スマートドアベル セキュリティカメラ Amazon Alexa連携 Arlo代替 Wyze代替',
     accentColor: Color(0xFF0077C8),
     painPoints: [
@@ -41727,8 +41739,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'philips-hue': const _CompetitorInfo(
     name: 'Philips Hue',
     emoji: '💡',
-    tagline: 'Signify・スマート照明・1600万色・Matter対応・Hue Bridge・シーン自動化で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Philips Hue代替 スマート照明 IoT照明 1600万色 LIFX代替 Matter Alexa Google',
+    tagline:
+        'Signify・スマート照明・1600万色・Matter対応・Hue Bridge・シーン自動化で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Philips Hue代替 スマート照明 IoT照明 1600万色 LIFX代替 Matter Alexa Google',
     accentColor: Color(0xFF0062FF),
     painPoints: [
       '高価格・照明特化・個人のライフ管理は別途必要',
@@ -41795,8 +41809,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'trezor': const _CompetitorInfo(
     name: 'Trezor',
     emoji: '🔑',
-    tagline: 'OSSハードウェアウォレット・Trezor Model T・8000+仮想通貨・プライバシー重視で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Trezor代替 ハードウェアウォレット 仮想通貨 コールドウォレット Ledger代替 Bitcoin セキュリティ',
+    tagline:
+        'OSSハードウェアウォレット・Trezor Model T・8000+仮想通貨・プライバシー重視で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Trezor代替 ハードウェアウォレット 仮想通貨 コールドウォレット Ledger代替 Bitcoin セキュリティ',
     accentColor: Color(0xFF1DC22D),
     painPoints: [
       '購入制・ハードウェアウォレット特化・個人のライフ管理は別途必要',
@@ -41864,7 +41880,8 @@ final _competitorInfo = <String, _CompetitorInfo>{
     name: 'Exodus',
     emoji: '🔮',
     tagline: 'デスクトップ/モバイル暗号ウォレット・美しいUI・300+資産・DeFi統合で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Exodus代替 暗号通貨ウォレット デスクトップ モバイル DeFi Trust Wallet代替 MetaMask代替',
+    searchKeyword:
+        'Exodus代替 暗号通貨ウォレット デスクトップ モバイル DeFi Trust Wallet代替 MetaMask代替',
     accentColor: Color(0xFF0B47EF),
     painPoints: [
       '無料・暗号ウォレット特化・個人のライフ管理は別途必要',
@@ -42101,7 +42118,8 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'wealthfront': const _CompetitorInfo(
     name: 'Wealthfront',
     emoji: '💹',
-    tagline: '米国ロボアドバイザー・自動ETFポートフォリオ・Path Financial Planning・直接インデックスで、なぜ「自分株式会社」を選ぶか。',
+    tagline:
+        '米国ロボアドバイザー・自動ETFポートフォリオ・Path Financial Planning・直接インデックスで、なぜ「自分株式会社」を選ぶか。',
     searchKeyword: 'Wealthfront代替 ロボアドバイザー 資産運用 ETF Path Betterment代替 FIRE計画',
     accentColor: Color(0xFF5BC07D),
     painPoints: [
@@ -42203,7 +42221,8 @@ final _competitorInfo = <String, _CompetitorInfo>{
   '1password': const _CompetitorInfo(
     name: '1Password',
     emoji: '🔐',
-    tagline: 'パスワードマネージャー・ファミリー/チームプラン・Travel Mode・Watchtower脆弱性検知で、なぜ「自分株式会社」を選ぶか。',
+    tagline:
+        'パスワードマネージャー・ファミリー/チームプラン・Travel Mode・Watchtower脆弱性検知で、なぜ「自分株式会社」を選ぶか。',
     searchKeyword: '1Password代替 パスワードマネージャー セキュリティ Bitwarden代替 LastPass代替 チーム',
     accentColor: Color(0xFF1A8CFF),
     painPoints: [
@@ -42237,8 +42256,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'surfshark': const _CompetitorInfo(
     name: 'Surfshark',
     emoji: '🦈',
-    tagline: 'VPN・無制限デバイス・CleanWeb広告ブロック・Nexus IPローテーション・Alert漏洩検知で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Surfshark代替 VPN 無制限デバイス プライバシー NordVPN代替 ExpressVPN代替 CleanWeb',
+    tagline:
+        'VPN・無制限デバイス・CleanWeb広告ブロック・Nexus IPローテーション・Alert漏洩検知で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Surfshark代替 VPN 無制限デバイス プライバシー NordVPN代替 ExpressVPN代替 CleanWeb',
     accentColor: Color(0xFF1DBAB9),
     painPoints: [
       '有料(年約3ドル/月)・VPN特化・個人のライフ管理は別途必要',
@@ -42407,8 +42428,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'snapchat': const _CompetitorInfo(
     name: 'Snapchat',
     emoji: '👻',
-    tagline: '消えるメッセージ・Stories・ARレンズ・Snap Map・Spotlight・Spectaclesで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Snapchat代替 消えるメッセージ ARレンズ Stories Instagram代替 BeReal代替 若者SNS',
+    tagline:
+        '消えるメッセージ・Stories・ARレンズ・Snap Map・Spotlight・Spectaclesで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Snapchat代替 消えるメッセージ ARレンズ Stories Instagram代替 BeReal代替 若者SNS',
     accentColor: Color(0xFFFFFC00),
     painPoints: [
       '無料・SNS特化・個人のライフ管理は別途必要',
@@ -42441,7 +42464,8 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'arc': const _CompetitorInfo(
     name: 'Arc',
     emoji: '🌐',
-    tagline: 'The Browser Company・Spaces分離・コマンドバー・Note・Boosts・Max AI統合で、なぜ「自分株式会社」を選ぶか。',
+    tagline:
+        'The Browser Company・Spaces分離・コマンドバー・Note・Boosts・Max AI統合で、なぜ「自分株式会社」を選ぶか。',
     searchKeyword: 'Arc代替 ブラウザ Spaces コマンドバー Brave代替 Firefox代替 生産性ブラウザ',
     accentColor: Color(0xFFFF4F00),
     painPoints: [
@@ -42475,7 +42499,8 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'firefox': const _CompetitorInfo(
     name: 'Firefox',
     emoji: '🦊',
-    tagline: 'Mozilla・OSS・プライバシー強化・Enhanced Tracking Protection・拡張機能エコシステムで、なぜ「自分株式会社」を選ぶか。',
+    tagline:
+        'Mozilla・OSS・プライバシー強化・Enhanced Tracking Protection・拡張機能エコシステムで、なぜ「自分株式会社」を選ぶか。',
     searchKeyword: 'Firefox代替 Mozillaブラウザ プライバシー OSS Chrome代替 拡張機能 トラッキング防止',
     accentColor: Color(0xFFFF9400),
     painPoints: [
@@ -42509,8 +42534,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'opera': const _CompetitorInfo(
     name: 'Opera',
     emoji: '🎭',
-    tagline: '内蔵VPN・Ad Blocker・サイドバーSNS統合・Opera GX ゲーマー版・Ariaでリラックスで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Opera代替 内蔵VPN Ad Blocker ゲーマーブラウザ Opera GX Chrome代替 Brave代替',
+    tagline:
+        '内蔵VPN・Ad Blocker・サイドバーSNS統合・Opera GX ゲーマー版・Ariaでリラックスで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Opera代替 内蔵VPN Ad Blocker ゲーマーブラウザ Opera GX Chrome代替 Brave代替',
     accentColor: Color(0xFFFF1B2D),
     painPoints: [
       '無料・ブラウザ特化・個人のライフ管理は別途必要',
@@ -42577,8 +42604,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'box': const _CompetitorInfo(
     name: 'Box',
     emoji: '📦',
-    tagline: 'エンタープライズクラウドストレージ・Box Shield・コラボレーション・eSign・AIコンテンツ管理で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Box代替 クラウドストレージ エンタープライズ コラボレーション Dropbox代替 OneDrive代替 セキュリティ',
+    tagline:
+        'エンタープライズクラウドストレージ・Box Shield・コラボレーション・eSign・AIコンテンツ管理で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Box代替 クラウドストレージ エンタープライズ コラボレーション Dropbox代替 OneDrive代替 セキュリティ',
     accentColor: Color(0xFF0061D5),
     painPoints: [
       '有料(月10-20ドル)・ファイル管理特化・個人のライフ管理は別途必要',
@@ -42611,7 +42640,8 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'pcloud': const _CompetitorInfo(
     name: 'pCloud',
     emoji: '☁️',
-    tagline: 'スイス製暗号化クラウドストレージ・生涯プラン・pCloud Drive仮想ドライブ・pCloud Cryptoで、なぜ「自分株式会社」を選ぶか。',
+    tagline:
+        'スイス製暗号化クラウドストレージ・生涯プラン・pCloud Drive仮想ドライブ・pCloud Cryptoで、なぜ「自分株式会社」を選ぶか。',
     searchKeyword: 'pCloud代替 暗号化クラウドストレージ 生涯プラン スイス Google Drive代替 プライバシー',
     accentColor: Color(0xFF20B2EB),
     painPoints: [
@@ -42645,7 +42675,8 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'mega': const _CompetitorInfo(
     name: 'MEGA',
     emoji: '🔒',
-    tagline: 'エンドツーエンド暗号化クラウドストレージ・無料20GB・MEGA Chat・ゼロ知識プライバシーで、なぜ「自分株式会社」を選ぶか。',
+    tagline:
+        'エンドツーエンド暗号化クラウドストレージ・無料20GB・MEGA Chat・ゼロ知識プライバシーで、なぜ「自分株式会社」を選ぶか。',
     searchKeyword: 'MEGA代替 暗号化クラウド プライバシー E2E 無料20GB Dropbox代替 pCloud代替',
     accentColor: Color(0xFFD90007),
     painPoints: [
@@ -42679,8 +42710,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'samsung-health': const _CompetitorInfo(
     name: 'Samsung Health',
     emoji: '⌚',
-    tagline: 'Samsung Galaxy Watch連携・歩数/睡眠/心拍数・ストレス計測・社会的チャレンジで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Samsung Health代替 Galaxy Watch スマートウォッチ 健康管理 Apple Health代替 Fitbit代替',
+    tagline:
+        'Samsung Galaxy Watch連携・歩数/睡眠/心拍数・ストレス計測・社会的チャレンジで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Samsung Health代替 Galaxy Watch スマートウォッチ 健康管理 Apple Health代替 Fitbit代替',
     accentColor: Color(0xFF1428A0),
     painPoints: [
       '無料・Samsung/Android特化・個人のライフ管理は別途必要',
@@ -42714,7 +42747,8 @@ final _competitorInfo = <String, _CompetitorInfo>{
     name: 'Google Fit',
     emoji: '🏃',
     tagline: 'Google健康管理・Heart Points・Wear OS連携・WHO推奨アクティブ分計測で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Google Fit代替 健康管理 Wear OS Heart Points アクティビティ Apple Health代替 Samsung Health代替',
+    searchKeyword:
+        'Google Fit代替 健康管理 Wear OS Heart Points アクティビティ Apple Health代替 Samsung Health代替',
     accentColor: Color(0xFF4285F4),
     painPoints: [
       '無料・健康計測特化・個人のライフ管理は別途必要',
@@ -42781,8 +42815,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'jetbrains': const _CompetitorInfo(
     name: 'JetBrains',
     emoji: '🧠',
-    tagline: 'IntelliJ IDEA・PyCharm・WebStorm・DataGrip・AIコード補完・リファクタリングで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'JetBrains代替 IntelliJ PyCharm IDE 開発環境 VSCode代替 AI補完 リファクタリング',
+    tagline:
+        'IntelliJ IDEA・PyCharm・WebStorm・DataGrip・AIコード補完・リファクタリングで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'JetBrains代替 IntelliJ PyCharm IDE 開発環境 VSCode代替 AI補完 リファクタリング',
     accentColor: Color(0xFFFF318C),
     painPoints: [
       '有料(月8-25ドル)/コミュニティ無料・IDE特化・個人のライフ管理は別途必要',
@@ -42815,7 +42851,8 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'tidycal': const _CompetitorInfo(
     name: 'TidyCal',
     emoji: '📅',
-    tagline: '手頃なCalendly代替・生涯29ドル・無制限予約・Zoom/Google Meet統合・グループ予約で、なぜ「自分株式会社」を選ぶか。',
+    tagline:
+        '手頃なCalendly代替・生涯29ドル・無制限予約・Zoom/Google Meet統合・グループ予約で、なぜ「自分株式会社」を選ぶか。',
     searchKeyword: 'TidyCal代替 スケジュール予約 Calendly代替 格安 生涯プラン Doodle代替 面談予約',
     accentColor: Color(0xFF4B5EFC),
     painPoints: [
@@ -42849,8 +42886,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'google-workspace': const _CompetitorInfo(
     name: 'Google Workspace',
     emoji: '🔷',
-    tagline: 'Gmail・Docs・Sheets・Drive・Meet・Chat・Gemini AI統合の企業向けスイートで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Google Workspace代替 Gmail Docs Sheets Drive 企業メール Microsoft 365代替 グループウェア',
+    tagline:
+        'Gmail・Docs・Sheets・Drive・Meet・Chat・Gemini AI統合の企業向けスイートで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Google Workspace代替 Gmail Docs Sheets Drive 企業メール Microsoft 365代替 グループウェア',
     accentColor: Color(0xFF4285F4),
     painPoints: [
       '有料(月6-18ドル/ユーザー)・業務套件特化・個人のライフ管理は別途必要',
@@ -42860,6 +42899,320 @@ final _competitorInfo = <String, _CompetitorInfo>{
     features: [
       _FeatureComparison(
         feature: 'Gmail・Docs・Sheets・Drive・Meet・Chat・Gemini AI・管理コンソール',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'disney-plus': const _CompetitorInfo(
+    name: 'Disney+',
+    emoji: '🏰',
+    tagline:
+        'Disney・Marvel・Star Wars・Pixar・National Geographic・Hulu統合で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Disney+代替 動画配信 Marvel Star Wars Pixar Netflix代替 Amazon Prime代替 アニメ',
+    accentColor: Color(0xFF113CCF),
+    painPoints: [
+      '有料(月8-14ドル)・動画視聴特化・個人のライフ管理は別途必要',
+      'エンタメ特化・個人のAI管理は別途必要',
+      'Netflix/Amazon Prime/Apple TV+と比較してコンテンツ多様性・成人向け・ライブスポーツが限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Disney/Marvel/Star Wars/Pixar/NatGeo・4K HDR・同時視聴4画面',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'apple-tv-plus': const _CompetitorInfo(
+    name: 'Apple TV+',
+    emoji: '🍏',
+    tagline:
+        'Appleオリジナルコンテンツ・Ted Lasso・The Morning Show・Severance・4K HDRで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Apple TV+代替 動画配信 オリジナルコンテンツ Netflix代替 Disney+代替 Ted Lasso',
+    accentColor: Color(0xFF555555),
+    painPoints: [
+      '有料(月10ドル)/Apple One・オリジナル限定・個人のライフ管理は別途必要',
+      'エンタメ特化・個人のAI管理は別途必要',
+      'Netflix/Disney+/HBO Maxと比較してカタログ数・サードパーティ対応・スポーツが限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Appleオリジナル・4K HDR・オフライン・全デバイス・AirPlay',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'crunchyroll': const _CompetitorInfo(
+    name: 'Crunchyroll',
+    emoji: '🍜',
+    tagline: 'アニメ専門ストリーミング・1000+タイトル・同時放送・マンガ・グッズショップで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Crunchyroll代替 アニメストリーミング 同時放送 マンガ Funimation代替 HIDIVE代替 Netflix代替',
+    accentColor: Color(0xFFF47521),
+    painPoints: [
+      '無料(広告)/有料(月8ドル~)・アニメ特化・個人のライフ管理は別途必要',
+      'エンタメ特化・個人のAI管理は別途必要',
+      'HIDIVE/Funimation/Netflix アニメと比較して吹き替え品質・独占契約・UI/UXが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '1000+アニメ・同時放送・マンガ・グッズ・多言語字幕・4K',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'matomo': const _CompetitorInfo(
+    name: 'Matomo',
+    emoji: '📊',
+    tagline:
+        'OSSウェブ分析・クッキーフリー・GDPR準拠・自己ホスティング・Google Analytics代替で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Matomo代替 プライバシーアナリティクス OSS GDPR Google Analytics代替 Plausible代替 自己ホスティング',
+    accentColor: Color(0xFF3152A0),
+    painPoints: [
+      '自己ホスト無料/クラウド有料・分析特化・個人のライフ管理は別途必要',
+      'ウェブ計測特化・個人のAI管理は別途必要',
+      'Google Analytics/Plausible/Fatheomと比較してセットアップ複雑さ・UI現代性が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'クッキーフリー・GDPR準拠・自己ホスト・ヒートマップ・A/B・セッション記録',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'moz': const _CompetitorInfo(
+    name: 'Moz',
+    emoji: '🔎',
+    tagline: 'Moz Pro・DA/PA指標発明・キーワード難易度・リンク分析・SEOオーディットで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Moz代替 SEOツール DA PA ドメイン権威 キーワード調査 Ahrefs代替 Semrush代替',
+    accentColor: Color(0xFF0078D4),
+    painPoints: [
+      '有料(月100-180ドル)・SEO特化・個人のライフ管理は別途必要',
+      'マーケティング分析特化・個人のAI管理は別途必要',
+      'Ahrefs/Semrush/Majesticと比較してデータ鮮度・バックリンク数・価格競争力が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'DA/PA・キーワード調査・リンク分析・サイトクロール・ローカルSEO',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'screaming-frog': const _CompetitorInfo(
+    name: 'Screaming Frog',
+    emoji: '🐸',
+    tagline: 'SEO Spider・サイトクロール・壊れたリンク検出・重複コンテンツ・技術的SEO監査で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Screaming Frog代替 SEO Spider クロール 技術SEO監査 壊れたリンク Sitebulb代替 Ahrefs代替',
+    accentColor: Color(0xFF7ED321),
+    painPoints: [
+      '無料(500URL)/有料(年£149)・技術SEO特化・個人のライフ管理は別途必要',
+      'クロール分析特化・個人のAI管理は別途必要',
+      'Sitebulb/DeepCrawl/Ahefsと比較してビジュアライゼーション・クラウド化・レポートが限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'SEO Spider・壊れたリンク・重複コンテンツ・構造化データ・ログ解析',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'figjam': const _CompetitorInfo(
+    name: 'FigJam',
+    emoji: '🎨',
+    tagline: 'Figma製オンラインホワイトボード・ブレスト・ダイアグラム・投票・AI整理で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'FigJam代替 オンラインホワイトボード ブレスト Miro代替 Mural代替 Figma ダイアグラム',
+    accentColor: Color(0xFFFF7262),
+    painPoints: [
+      '無料(3ファイル)/有料・ホワイトボード特化・個人のライフ管理は別途必要',
+      'コラボ可視化特化・個人のAI管理は別途必要',
+      'Miro/Mural/Whimsicalと比較してテンプレート数・高度なデータビジュアライゼーションが限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Figma統合・ブレスト・投票・AI整理・ダイアグラム・スタンプ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'kik': const _CompetitorInfo(
+    name: 'Kik',
+    emoji: '💬',
+    tagline: '電話番号不要・ユーザーネームでつながるメッセージアプリ・グループ・Bot APIで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Kik代替 匿名メッセージ 電話番号不要 グループチャット Telegram代替 Signal代替 若者SNS',
+    accentColor: Color(0xFF82BC23),
+    painPoints: [
+      '無料・メッセージ特化・個人のライフ管理は別途必要',
+      'チャット特化・個人のAI管理は別途必要',
+      'WhatsApp/Telegram/Signalと比較してセキュリティ・E2E暗号化・プライバシーが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '電話番号不要・Bot API・グループ・GIFs・スティッカー・ビデオ通話',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'fathom': const _CompetitorInfo(
+    name: 'Fathom Analytics',
+    emoji: '📈',
+    tagline: 'プライバシーファースト・クッキーフリー分析・GDPR/CCPA準拠・シンプルダッシュボードで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Fathom Analytics代替 プライバシー分析 クッキーフリー GDPR Google Analytics代替 Plausible代替',
+    accentColor: Color(0xFF9B59B6),
+    painPoints: [
+      '有料(月14ドル~)・分析特化・個人のライフ管理は別途必要',
+      'ウェブ計測特化・個人のAI管理は別途必要',
+      'Plausible/Simple Analytics/Matomoと比較してコスト・自己ホスティング不可・詳細機能が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'クッキーフリー・GDPR準拠・シンプルUI・バイパス不可計測・カナダサーバー',
         competitorHas: true,
         weHave: false,
       ),
