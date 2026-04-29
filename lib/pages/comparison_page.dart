@@ -27607,6 +27607,312 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'totango': const _CompetitorInfo(
+    name: 'Totango',
+    emoji: '🎯',
+    tagline: 'カスタマーサクセス・チャーン防止プラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Totango代替 カスタマーサクセス チャーン防止 SaaS 顧客健全性 NPS',
+    accentColor: Color(0xFF6366F1),
+    painPoints: [
+      '月額249ドル〜・CS特化・個人のライフ管理は別途必要',
+      'カスタマーサクセス特化・個人のAI管理は別途必要',
+      'Gainsight/ChurnZeroと比較してAI機能・エンタープライズ拡張が劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '顧客健全性スコア・セグメント・ジャーニー・NPS・CSM自動化',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'churnzero': const _CompetitorInfo(
+    name: 'ChurnZero',
+    emoji: '📉',
+    tagline: 'リアルタイムカスタマーサクセス・チャーン削減プラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'ChurnZero代替 カスタマーサクセス チャーン削減 SaaS 顧客維持 リアルタイム',
+    accentColor: Color(0xFF06B6D4),
+    painPoints: [
+      '価格非公開・CS特化・個人のライフ管理は別途必要',
+      'SaaS CS特化・個人のAI管理は別途必要',
+      'Gainsight比較でエンタープライズ機能・Salesforce統合が劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'リアルタイム使用データ・アラート・プレイブック・NPS・CRM同期',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'vitally': const _CompetitorInfo(
+    name: 'Vitally',
+    emoji: '💚',
+    tagline: 'B2B SaaS向けカスタマーサクセスプラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Vitally代替 カスタマーサクセス B2B SaaS NPS 顧客健全性 ダッシュボード',
+    accentColor: Color(0xFF10B981),
+    painPoints: [
+      '月額149ドル〜・CS特化・個人のライフ管理は別途必要',
+      'B2B SaaS CS特化・個人のAI管理は別途必要',
+      'Gainsight/Totangoと比較してブランド認知・エンタープライズが劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '顧客ダッシュボード・ドキュメント・プロジェクト・NPS・統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'storyblok': const _CompetitorInfo(
+    name: 'Storyblok',
+    emoji: '📦',
+    tagline: 'ヘッドレスCMS・ビジュアルエディター統合コンテンツ管理で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Storyblok代替 ヘッドレスCMS コンテンツ管理 ビジュアルエディター API Next.js',
+    accentColor: Color(0xFF00B3A0),
+    painPoints: [
+      '月額99ドル〜・CMS特化・個人のライフ管理は別途必要',
+      'ヘッドレスCMS特化・個人のAI管理は別途必要',
+      'Contentful/Sanityと比較してエコシステム・開発者採用が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ビジュアルエディター・コンポーネント・多言語・CDN・API first',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'dato-cms': const _CompetitorInfo(
+    name: 'DatoCMS',
+    emoji: '🗃️',
+    tagline: 'API ファーストヘッドレスCMS・構造化コンテンツ管理で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'DatoCMS代替 ヘッドレスCMS API コンテンツ管理 GraphQL JAMstack Next.js',
+    accentColor: Color(0xFFFF793F),
+    painPoints: [
+      '月額99ドル〜・CMS特化・個人のライフ管理は別途必要',
+      'APIファーストCMS特化・個人のAI管理は別途必要',
+      'Contentful/Storyblokと比較してブランド認知・エコシステムが劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'GraphQL/REST・モデル駆動・メディア管理・多言語・CDN・多環境',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'kustomer': const _CompetitorInfo(
+    name: 'Kustomer',
+    emoji: '🤝',
+    tagline: 'AIファーストオムニチャネルCRMカスタマーサービスで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Kustomer代替 AIカスタマーサービス オムニチャネル CRM サポート 顧客履歴',
+    accentColor: Color(0xFF5B2D8E),
+    painPoints: [
+      '月額89ドル/エージェント〜・カスタマーサービス特化・個人のライフ管理は別途',
+      'オムニチャネルCS特化・個人のAI管理は別途必要',
+      'Zendesk/Salesforce比較でエコシステム・統合数が劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AI会話・顧客タイムライン・オムニチャネル・自動化・分析',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'gladly': const _CompetitorInfo(
+    name: 'Gladly',
+    emoji: '😊',
+    tagline: '人中心のカスタマーサービスプラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Gladly代替 カスタマーサービス 人中心 オムニチャネル 会話 サポート',
+    accentColor: Color(0xFFFF6B35),
+    painPoints: [
+      '月額150ドル/エージェント〜・カスタマーサービス特化・個人のライフ管理は別途',
+      'カスタマーサービス特化・個人のAI管理は別途必要',
+      'Zendesk/Kustomerと比較してAI機能・統合数が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '人中心設計・タスク管理・会話ログ・AI提案・ボイス/メール統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'ziprecruiter': const _CompetitorInfo(
+    name: 'ZipRecruiter',
+    emoji: '⚡',
+    tagline: 'AI採用マッチング・求人掲載プラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'ZipRecruiter代替 求人掲載 AI採用マッチング 求人検索 中小企業 採用',
+    accentColor: Color(0xFF167AFF),
+    painPoints: [
+      '月額299ドル〜・採用/求人特化・個人のライフ管理は別途必要',
+      '求人掲載特化・個人のAI管理は別途必要',
+      'Indeed/Glassdoorと比較して求職者数・ブランド認知が劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AI一致スコア・多サイト配信・モバイルアプリ・1クリック応募',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'sendible': const _CompetitorInfo(
+    name: 'Sendible',
+    emoji: '📨',
+    tagline: 'エージェンシー向けソーシャルメディア管理・スケジュールツールで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Sendible代替 ソーシャルメディア管理 エージェンシー スケジュール 投稿 分析',
+    accentColor: Color(0xFFE8323C),
+    painPoints: [
+      '月額29ドル〜・SNS管理特化・個人のライフ管理は別途必要',
+      'エージェンシーSNS特化・個人のAI管理は別途必要',
+      'Sprout Social/Hootsuiteと比較してAI機能・統合数が劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'スケジュール・コンテンツカレンダー・承認ワーフロー・レポート・API',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
