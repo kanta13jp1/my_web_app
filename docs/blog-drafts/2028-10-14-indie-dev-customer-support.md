@@ -1,7 +1,7 @@
 ---
 title: "個人開発のカスタマーサポート自動化 — FAQ Bot・チケット管理・エスカレーション"
 tags: AI,個人開発,automation,buildinpublic
-published: false
+published: true
 ---
 
 # 個人開発のカスタマーサポート自動化 — FAQ Bot・チケット管理・エスカレーション
