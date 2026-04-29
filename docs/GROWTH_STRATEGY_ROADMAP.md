@@ -24172,3 +24172,13 @@ Bundle 第 1 完成例 = Codex#2 territory が Bundle 形式に対応可能で�
 - prevDistanceMatchBonus追加: 前走距離と今走距離の差による信頼度補正
 - ±100m以内: +0.01 (距離経験・適性実証) / ±300m超: -0.01 (大幅変更リスク) / その他: 0
 - confidence式 35 terms体制確立
+
+### PS版#2 S85 T-1 Phase34 全4弾完結 (2026-04-29) — dev.to 累計166本
+- T-1 第163弾: Flutter Riverpod 2.0 完全ガイド — Notifier・AsyncNotifier で状態管理を刷新する
+  - https://dev.to/kanta13jp1/flutter-riverpod-20-complete-guide-notifier-asyncnotifier-for-modern-state-management-2o5m
+- T-1 第164弾: Supabase Edge Functions 完全ガイド — Deno × TypeScript でサーバーレス API を作る
+  - https://dev.to/kanta13jp1/supabase-edge-functions-complete-guide-serverless-apis-with-deno-typescript-537l
+- T-1 第165弾: Product Hunt ローンチ完全ガイド — インディー開発者が初日 TOP10 に入るための戦略
+  - https://dev.to/kanta13jp1/product-hunt-launch-complete-guide-indie-dev-strategy-for-day-1-top-10-gk7
+- T-1 第166弾: Flutter × Dart 3 完全ガイド — Pattern Matching・Sealed Classes・Records
+  - https://dev.to/kanta13jp1/flutter-x-dart-3-complete-guide-pattern-matching-sealed-classes-records-50bp
