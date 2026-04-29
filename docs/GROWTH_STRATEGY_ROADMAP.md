@@ -23835,6 +23835,7 @@ SECOND_BRAIN 0→4.0 + VIBE 4.5→6.5 + PLATFORM 2.0→4.0 = +8.0/21 (Win 直接
 (本 commit にて確定)
 
 
+
 ## 2026-04-29 PS#4 S135-S137: 競合9社追加 276→285社
 
 **実装内容**:
@@ -23926,3 +23927,41 @@ deep-links (Android App Links + iOS Universal Links + go_router) / multi-tenant 
 
 ### commit
 59fb914a7
+
+## 2026-04-29 Win版#132 part 77 — 機能レビュー schedule task (Handoff Bundle 第 1 実適用)
+
+### 概要
+User 要望「各機能を AI レビュー → GitHub Issue 自動起票」を Handoff Bundle 形式で起票. part 76 で定義した Bundle 形式の **第 1 実適用** = 形式 → 即運用.
+
+### Bundle ディレクトリ作成
+docs/handoff-bundles/20260429_feature_review_scheduled_task/
+  ├── README.md (Plan + 受け入れ基準)
+  ├── routing.md (territory 割り振り)
+  ├── feature-review.yml.skeleton (Codex#2 用 GHA workflow skeleton)
+  └── feature_review.py.skeleton (Codex#2 用 Python skeleton)
+
+### Win territory done
+- scripts/feature_review_config.json: 9 page + 4 EF + 7 findings カテゴリ + 3 severity + de-dupe + throttle 設計
+- docs/SCHEDULE_TASKS.md: 「feature-review (毎週火曜 03:00 JST)」セクション追加
+
+### Codex#2 territory pending (= 2 週間期限)
+- .github/workflows/feature-review.yml 実装
+- scripts/feature_review.py 実装 (= Playwright + Anthropic SDK + gh issue create)
+- integration_test/feature_review_dry_run.py
+- GitHub labels (auto-review / severity:* / feature:* / category:*) 設定
+
+### 想定 findings 7 カテゴリ
+ui_bug / a11y / stale_todo / dead_code / outdated_docs / lint_warning / performance.
+
+### dogfood pattern 第 7 例 = 形式定義 → 即適用
+part 76 (Bundle 形式定義) → part 77 (第 1 実適用) を **同セッション内** で連鎖. Bundle 形式が空理論ではなく即運用可能であることを実証.
+
+### Philosophy Alignment 9/9
+#1 CEO 感 (User 要望即対応) / #2 ミッション (自社品質改善自動化) / #6 資本=時間 (週次自動 audit) / #8 KPI=昨日の自分 (findings 解消で改善ループ)
+
+### 10 part 連続 dogfood (part 68-77) 累積
+SECOND_BRAIN 0→4.0 + VIBE 4.5→6.5 + PLATFORM 2.0→4.0 + Bundle 1 件起票 = +8.0/21 (Win 直接実装) + 機能追加.
+
+### commit
+(本 commit にて確定)
+
