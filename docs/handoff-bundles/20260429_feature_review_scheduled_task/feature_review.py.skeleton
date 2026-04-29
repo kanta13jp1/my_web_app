@@ -1,14 +1,18 @@
 """SKELETON for scripts/feature_review.py
 
 Codex#2 が本 skeleton を実装 + scripts/ に移動.
-Win版#132 part 77 / 2026-04-29 / Handoff Bundle 第 1 適用
+Win版#132 part 77 → part 78 (= 毎時 round-robin 化) / 2026-04-29 / Handoff Bundle 第 1 適用
 
-機能: 各機能 (= page + EF) を AI レビュー → GitHub Issue 自動起票.
+機能: 13 機能 (= page + EF) を毎時 1 機能 round-robin で AI レビュー → GitHub Issue 自動起票.
 
 Usage:
     python scripts/feature_review.py --config scripts/feature_review_config.json
-    python scripts/feature_review.py --dry-run         # = log のみ / Issue 起票せず
-    python scripts/feature_review.py --targets home,horse_racing  # = 特定機能のみ
+    python scripts/feature_review.py --dry-run                # = log のみ / Issue 起票せず
+    python scripts/feature_review.py --targets home           # = 特定機能のみ (rotation 上書き)
+    python scripts/feature_review.py --force-full-scan        # = 全機能巡回 (= 緊急 audit)
+
+Rotation:
+    UTC_HOUR_NOW % len(feature_order) でインデックス計算 → 1 機能のみ巡回.
 
 Exit codes:
     0  success
@@ -35,6 +39,24 @@ def load_config(path: Path) -> dict:
     """feature_review_config.json を読み込み"""
     with path.open(encoding="utf-8") as f:
         return json.load(f)
+
+
+def select_feature_for_this_hour(config: dict) -> str | None:
+    """UTC 時刻 % len(feature_order) で本時刻の対象機能を選択.
+
+    毎時 cron 用 rotation logic. force_full_scan / --targets 上書き時は呼ばない.
+
+    Returns:
+        feature slug (= rotation で選ばれた 1 機能) or None (= 不正設定)
+    """
+    from datetime import datetime, timezone
+    rotation = config.get("rotation", {})
+    feature_order = rotation.get("feature_order", [])
+    if not feature_order:
+        return None
+    utc_hour = datetime.now(timezone.utc).hour
+    idx = utc_hour % len(feature_order)
+    return feature_order[idx]
 
 
 def issue_title_hash(feature_slug: str, category: str, summary: str) -> str:
@@ -116,7 +138,8 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--config", required=True, type=Path, help="config JSON path")
     parser.add_argument("--dry-run", action="store_true", help="Issue 起票せず log のみ")
-    parser.add_argument("--targets", default="", help="対象機能 slug カンマ区切り (省略時 = 全)")
+    parser.add_argument("--targets", default="", help="対象機能 slug カンマ区切り (= rotation 上書き)")
+    parser.add_argument("--force-full-scan", action="store_true", help="全機能巡回 (= 緊急 audit / rotation 無視)")
     args = parser.parse_args(argv)
 
     if not args.config.exists():
@@ -126,7 +149,21 @@ def main(argv: list[str] | None = None) -> int:
     config = load_config(args.config)
     repo_root = Path(__file__).resolve().parent.parent
 
-    target_filter = set(s.strip() for s in args.targets.split(",") if s.strip())
+    # = 対象機能決定 logic
+    # 1. --targets 明示 → それのみ
+    # 2. --force-full-scan → 全機能
+    # 3. それ以外 (= 通常 cron) → rotation で 1 機能のみ
+    if args.targets:
+        target_filter = set(s.strip() for s in args.targets.split(",") if s.strip())
+    elif args.force_full_scan:
+        target_filter = None  # = 全機能
+    else:
+        rotation_target = select_feature_for_this_hour(config)
+        if rotation_target is None:
+            print("[FAIL] rotation.feature_order 未設定", file=sys.stderr)
+            return 2
+        target_filter = {rotation_target}
+        print(f"[INFO] rotation: this hour = {rotation_target}")
 
     # = 既存 open issue hash 取得 (de-dupe 用)
     # existing_hashes = existing_open_issue_hashes()

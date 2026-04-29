@@ -16,26 +16,34 @@
 
 ## 2. Plan (= 設計判断)
 
-### 2.1 採用案: 週次 GHA cron + Python script + Claude API レビュー
+### 2.1 採用案: 毎時 GHA cron + ローテーション + Python script + Claude API レビュー
 
 ```
-[週次 cron / 火曜 JST 03:00 (= UTC 月 18:00)]
+[毎時 cron / 0 分 / 13 機能を round-robin 巡回]
    ↓
-[scripts/feature_review.py 実行]
+[scripts/feature_review.py 実行 (= UTC 時刻 % 13 で対象機能選択)]
    ↓
-[各機能ごとに以下シグナル取得]
+[1 機能のみシグナル取得]
   - 本番 URL Playwright screenshot (= UI 状態)
   - flutter analyze cache (= lint 警告)
   - 直近 git log (= 最近触られたが test なし?)
   - source TODO/FIXME 検索
   - a11y ヒューリスティック
    ↓
-[Claude API (Haiku 4.5 / effort=medium) で bundle 評価]
+[Claude API (Haiku 4.5 / effort=medium) で bundle 評価 / max 3 findings]
    ↓
-[findings JSON → GitHub Issue 化 (de-dupe + label + assign)]
+[findings JSON → GitHub Issue 化 (de-dupe + label / max 1 issue/run)]
    ↓
-[Slack 通知 (= 既存 webhook 流用)]
+[Slack 通知 (= 既存 webhook 流用 / 起票時のみ)]
 ```
+
+### 2.1.1 毎時運用の意義
+
+- **ノイズ抑制**: 毎時 1 機能 max 1 issue = 24h で max 24 issue (= 週次 30 issue よりも分散)
+- **応答速度**: 1 機能変更 → 数時間以内にレビュー (= 週次 7 日待ちなし)
+- **リソース効率**: 1 run timeout 15 分 (= GHA actions usage 抑制)
+- **1.8 周/日**: 13 機能 / 24 時間 ≈ 1.8 周 → high priority 機能は 1 日 2 回見られる
+- **dispatch 緊急 audit**: `force_full_scan=true` で全機能即時 audit 可能
 
 ### 2.2 不採用案
 
@@ -56,15 +64,17 @@
 
 ## 3. 受け入れ基準
 
-- [ ] feature-review.yml 週次 cron 動作 (= 火曜 JST 03:00)
-- [ ] feature_review.py が config の全機能を巡回
-- [ ] Playwright + Claude API で findings JSON 生成
+- [ ] feature-review.yml 毎時 cron 動作 (= 0 分 / 13 機能 round-robin)
+- [ ] feature_review.py が UTC 時刻 % 13 で対象機能選択
+- [ ] 1 run = 1 機能のみ (= max 1 issue 起票)
+- [ ] Playwright + Claude API で findings JSON 生成 (= max 3 findings/run)
 - [ ] de-dupe: 既存 open issue (= title hash 一致) を skip
-- [ ] new findings → GitHub Issue 起票 (= label 付き / assign 自動)
-- [ ] Slack 通知 (= 既存 SLACK_WEBHOOK_URL 流用)
-- [ ] 24h soak: 初回 cron run で 3-10 件 issue 起票 + 翌週 0-3 件 (= de-dupe 機能確認)
+- [ ] new findings → GitHub Issue 起票 (= label 付き)
+- [ ] Slack 通知 (= 起票時のみ / SLACK_WEBHOOK_URL)
+- [ ] 24h soak: 初日 = 13 機能 1.8 周 = 0-13 件 issue 起票 + 翌日 = de-dupe で 0-3 件
 - [ ] docs/SCHEDULE_TASKS.md に新 task 行追加
-- [ ] integration_test/feature_review_test.py (= dry-run mode)
+- [ ] integration_test/feature_review_test.py (= dry-run mode + rotation 検証)
+- [ ] workflow_dispatch で `force_full_scan=true` 動作 (= 緊急時全機能即時 audit)
 - [ ] flutter analyze / deno lint / 0 エラー
 
 ## 4. Routing (= 割り振り)

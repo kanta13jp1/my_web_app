@@ -23966,6 +23966,7 @@ SECOND_BRAIN 0→4.0 + VIBE 4.5→6.5 + PLATFORM 2.0→4.0 + Bundle 1 件起票 
 (本 commit にて確定)
 
 
+
 ## 2026-04-29 PS#2 S82: T-1 Phase31 #151-#154 dev.to投稿完結 累計154本
 
 ### 実装内容
@@ -23982,3 +23983,42 @@ SECOND_BRAIN 0→4.0 + VIBE 4.5→6.5 + PLATFORM 2.0→4.0 + Bundle 1 件起票 
 Flutter a11y (Semantics/ExcludeSemantics/highContrastTheme) / Supabase Realtime (PostgresChanges/Presence/Broadcast) / Indie launch (PH+HN+SNS checklist) / Flutter CI/CD (GHA format/analyze/test/deploy)
 
 ### dev.to 累計: 154本
+
+## 2026-04-29 Win版#132 part 78 — feature-review 頻度変更 (週次→毎時 + rotation)
+
+### 概要
+User 要望「頻度は 1H に一回にしてください」を受けて Bundle 内 4 file + SCHEDULE_TASKS.md を毎時運用に書き換え.
+
+### Round-robin 設計
+13 機能 / UTC_HOUR 
+## 2026-04-29 Win版#132 part 78 — feature-review 頻度変更 (週次→毎時 + rotation)
+
+### 概要
+User 要望「頻度は 1H に一回にしてください」を受けて Bundle 内 4 file + SCHEDULE_TASKS.md を毎時運用に書き換え.
+
+### Round-robin 設計
+13 機能 / UTC_HOUR % 13 で対象選択 / 1 run = 1 機能 / 24h で 1.8 周.
+- 0-3 時 = high priority (home / ai_university / comparison / landing) → 1 日 2 回
+- 4-12 時 = medium-low priority → 1 日 1 回
+
+### Throttle 強化
+max_issues_per_run: 30→3 / max_issues_per_feature: 3→1 / dedup closed_days: 14→7 / GHA timeout: 30→15 分.
+
+### 緊急 audit (= force_full_scan)
+workflow_dispatch + force_full_scan=true で全 13 機能即時巡回.
+
+### Bundle 内 spec 進化 第 1 例
+part 77 (週次仕様) → part 78 (毎時仕様) を Bundle 内修正のみで完結. cross-instance-pr 不要.
+
+### dogfood pattern 第 8 例
+Bundle が更新を許容する性質を初めて活用.
+
+### Philosophy Alignment 9/9
+#1 CEO 感 (User 要望即対応) / #6 資本=時間 (rotation で API コスト最小化) / #8 KPI (= 短サイクル更新)
+
+### 11 part 連続 dogfood (part 68-78) 累積
+SECOND_BRAIN 4.0 + VIBE 6.5 + PLATFORM 4.0 = 14.5/21 (Win territory 直接実装).
+
+### commit
+(本 commit にて確定)
+

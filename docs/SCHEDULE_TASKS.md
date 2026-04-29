@@ -749,21 +749,25 @@ git push origin main
 
 ---
 
-### Task: feature-review (毎週火曜 03:00 JST に実行)
+### Task: feature-review (毎時 0 分に実行 / 13 機能 round-robin)
 
-**起源**: Win版#132 part 77 / 2026-04-29 / Handoff Bundle 第 1 適用例
+**起源**: Win版#132 part 77 → part 78 (= 頻度週次 → 毎時に変更) / 2026-04-29 / Handoff Bundle 第 1 適用例
 **Bundle**: `docs/handoff-bundles/20260429_feature_review_scheduled_task/` (= 完成後 `done/` 移動)
 **親軸**: COLLAB_AI #5 Verifier-Generator / OPS-28 改善トリガー / VIBE_CODING #4 Black-Box I/O Verification
 
 #### 概要
 
-各機能 (page + Edge Function) を **週次で AI レビュー** し、**修正すべき問題を GitHub Issue 自動起票** する.
+13 機能 (= 9 page + 4 Edge Function) を **毎時 0 分に 1 機能ずつ round-robin** で AI レビューし、**修正すべき問題を GitHub Issue 自動起票** する. 24 時間で 1.8 周 = high priority 機能は 1 日 2 回見られる.
 
-#### Step 1: 対象機能リスト読込
+#### Step 1: 対象機能選択 (= rotation)
 
-`scripts/feature_review_config.json` から `review_targets.pages` + `review_targets.edge_functions` を読込.
+`scripts/feature_review_config.json` から `rotation.feature_order` (= 13 機能優先度順リスト) を読込.
 
-各 target は `slug` / `path` / `source` / `priority` / `review_categories` を持つ.
+`UTC_HOUR_NOW % 13` でインデックス計算 → 1 機能を選択 (= 毎時 1 機能のみ).
+
+例: UTC 0 時 → home / UTC 1 時 → ai_university / ... / UTC 12 時 → admin_analytics / UTC 13 時 → home (= 2 周目).
+
+`workflow_dispatch` で `force_full_scan=true` の場合のみ全機能巡回 (= 緊急時 audit).
 
 #### Step 2: シグナル収集 (機能ごと)
 
@@ -811,13 +815,16 @@ Haiku 4.5 + effort=medium で signals を bundle → JSON 形式 findings 出力
 
 #### 制約
 
-- max 30 issues per run (= ノイズ抑制)
-- max 3 findings per feature (= 同一機能で大量起票を防ぐ)
+- max 3 issues per run (= 1 機能のみだが余裕枠 / ノイズ抑制)
+- max 1 issue per feature (= 同一 feature で連発防止)
+- max 3 findings per feature (= Claude が出す候補は 3 件まで)
 - Playwright timeout 30s / Claude API max retry 3 / GitHub API quota 監視
+- de-dupe: 既存 open issue + 7 日以内 closed を skip
 
 #### 成功条件
 
-- 初回 cron run: 3-10 件 issue 起票 (= 真の問題発見)
-- 翌週 cron run: 0-3 件 issue 起票 (= de-dupe 機能確認)
-- 4 週後: 既存 issue が closed/開発反映されていれば cycle 健全
+- 初日 (= 24 cron run): 13 機能 × 1.8 周 = 0-13 件 issue 起票 (= 真の問題発見)
+- 翌日: de-dupe 効いて 0-3 件 (= 既存問題は再起票せず)
+- 1 週後: 既存 issue 半数 closed (= 開発反映 cycle 健全)
+- 緊急時: `workflow_dispatch` + `force_full_scan=true` で 13 機能即時 audit
 
