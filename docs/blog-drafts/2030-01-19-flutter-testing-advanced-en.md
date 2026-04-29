@@ -1,7 +1,7 @@
 ---
 title: "Flutter Testing Advanced — Integration Tests, Mocking, and CI Automation"
 tags: flutter,dart,webdev,indiedev
-published: false
+published: true
 ---
 
 ## Introduction
