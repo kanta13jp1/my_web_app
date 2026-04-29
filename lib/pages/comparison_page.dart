@@ -11639,6 +11639,321 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'habitica': const _CompetitorInfo(
+    name: 'Habitica',
+    emoji: '⚔️',
+    tagline:
+        'HabiticaをRPG式習慣・タスク管理に使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'Habitica代替 ゲーミフィケーション習慣管理代替 RPGタスク管理代替 habit tracker',
+    accentColor: Color(0xFF7F4EAD),
+    painPoints: [
+      'RPGゲーミフィケーションで習慣・タスク管理に特化し、個人財務・AI大学・PKMは別ツール',
+      '無料プランは機能制限あり、月額4.99USD〜のサブスク',
+      '習慣ゲーミフィケーション以外のライフマネジメント機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'RPGゲーミフィケーション習慣管理',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'noom': const _CompetitorInfo(
+    name: 'Noom',
+    emoji: '🥗',
+    tagline:
+        'Noomを行動変容・体重管理コーチングに使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'Noom代替 ダイエットアプリ代替 行動変容コーチング代替 体重管理AI',
+    accentColor: Color(0xFF6DB33F),
+    painPoints: [
+      '心理学ベースの体重管理・行動変容コーチングに特化し、財務・AI大学・PKMは別ツール',
+      '月額70USD〜と高額で、個人ライフOS統合機能がない',
+      'ダイエット・健康管理以外のライフマネジメント機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '行動変容・体重管理コーチング',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'strava': const _CompetitorInfo(
+    name: 'Strava',
+    emoji: '🏃',
+    tagline:
+        'Stravaをランニング・サイクリング記録に使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'Strava代替 ランニングアプリ代替 フィットネス記録代替 サイクリングトラッキング',
+    accentColor: Color(0xFFFC4C02),
+    painPoints: [
+      'ランニング・サイクリング・フィットネス追跡に特化し、財務・AI大学・習慣管理は別ツール',
+      '月額8USD〜のサブスクで、個人ライフOS統合機能がない',
+      '運動追跡以外のライフマネジメント機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ランニング・フィットネス追跡',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'pinterest': const _CompetitorInfo(
+    name: 'Pinterest',
+    emoji: '📌',
+    tagline:
+        'Pinterestをビジュアルインスピレーション・アイデア収集に使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'Pinterest代替 ビジュアルブックマーク代替 アイデアボード代替 インスピレーション収集',
+    accentColor: Color(0xFFE60023),
+    painPoints: [
+      'ビジュアルインスピレーション収集・ピン管理に特化し、財務・AI大学・習慣管理は別ツール',
+      '広告主向けビジネスモデルで、個人ライフOS統合機能がない',
+      'アイデアボード以外のライフマネジメント機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ビジュアルインスピレーション収集',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'reddit': const _CompetitorInfo(
+    name: 'Reddit',
+    emoji: '🤖',
+    tagline:
+        'Redditをコミュニティ・情報収集に使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'Reddit代替 掲示板代替 コミュニティSNS代替 情報収集ツール代替',
+    accentColor: Color(0xFFFF4500),
+    painPoints: [
+      'コミュニティ掲示板・情報収集に特化し、個人財務・AI大学・習慣管理は別ツール',
+      '広告・時間浪費リスクがあり、個人ライフOS統合機能がない',
+      '情報収集以外のライフマネジメント機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'コミュニティ・情報収集',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'twitch': const _CompetitorInfo(
+    name: 'Twitch',
+    emoji: '🎮',
+    tagline:
+        'Twitchをゲーム配信・ライブ視聴に使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'Twitch代替 ゲーム配信代替 ライブストリーミング代替 配信プラットフォーム',
+    accentColor: Color(0xFF9146FF),
+    painPoints: [
+      'ゲーム・クリエイターライブ配信に特化し、個人財務・AI大学・習慣管理は別ツール',
+      '広告・サブスク依存モデルで、個人ライフOS統合機能がない',
+      'エンターテインメント以外のライフマネジメント機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ゲーム・ライブ配信',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'roam-research': const _CompetitorInfo(
+    name: 'Roam Research',
+    emoji: '🧠',
+    tagline:
+        'Roam Researchをネットワーク思考ノート・アウトライナーに使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'Roam Research代替 ネットワークノート代替 アウトライナー代替 双方向リンクノート',
+    accentColor: Color(0xFF0D2B3E),
+    painPoints: [
+      '双方向リンク・ネットワーク思考ノートに特化し、個人財務・AI大学・習慣管理は別ツール',
+      '月額15USD〜と高額で、個人ライフOS統合機能がない',
+      'PKM・ネットワークノート以外のライフマネジメント機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '双方向リンク・ネットワークノート',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'heptabase': const _CompetitorInfo(
+    name: 'Heptabase',
+    emoji: '🗂️',
+    tagline:
+        'Heptabaseをビジュアル知識管理・ホワイトボードノートに使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'Heptabase代替 ビジュアル知識管理代替 ホワイトボードノート代替 カード型PKM',
+    accentColor: Color(0xFF4F46E5),
+    painPoints: [
+      'ビジュアルホワイトボード・カード型知識管理に特化し、財務・AI大学・習慣管理は別ツール',
+      '月額9.99USD〜のサブスクで、個人ライフOS統合機能がない',
+      'PKM・知識マップ以外のライフマネジメント機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ビジュアルホワイトボード知識管理',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'anki': const _CompetitorInfo(
+    name: 'Anki',
+    emoji: '🃏',
+    tagline:
+        'Ankiを間隔反復フラッシュカード学習に使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'Anki代替 フラッシュカード代替 間隔反復学習代替 暗記アプリ代替',
+    accentColor: Color(0xFF1F7399),
+    painPoints: [
+      '間隔反復・フラッシュカード記憶学習に特化し、財務・AI大学・習慣管理は別ツール',
+      'PC版無料・iOS版3,900円の買い切り、個人ライフOS統合機能がない',
+      '暗記・記憶学習以外のライフマネジメント機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '間隔反復フラッシュカード学習',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
@@ -11966,6 +12281,15 @@ class _ComparisonShellState extends State<_ComparisonShell> {
     'linkedin': 'career',
     'glassdoor': 'career',
     'wantedly': 'career',
+    'habitica': 'habit',
+    'noom': 'wellness',
+    'strava': 'fitness',
+    'pinterest': 'social',
+    'reddit': 'social',
+    'twitch': 'entertainment',
+    'roam-research': 'notes',
+    'heptabase': 'notes',
+    'anki': 'learning',
   };
 
   @override
