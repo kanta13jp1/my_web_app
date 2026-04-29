@@ -53873,6 +53873,312 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'veeam': const _CompetitorInfo(
+    name: 'Veeam',
+    emoji: '💿',
+    tagline: 'Veeam Backup & Replication・ランサムウェア対策・マルチクラウド・オンプレ・データ保護・BCDRで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Veeam代替 バックアップ ランサムウェア対策 マルチクラウド オンプレ データ保護 Acronis代替 Commvault代替',
+    accentColor: Color(0xFF00B336),
+    painPoints: [
+      '有料・バックアップ特化・個人のライフ管理は別途必要',
+      'IT管理特化・個人のAI管理は別途必要',
+      'Acronis/Commvault/Rubrik との比較でコスト・クラウドネイティブ・SaaS対応が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Backup & Replication・ランサムウェア対策・マルチクラウド・オンプレ・BCDR統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'acronis': const _CompetitorInfo(
+    name: 'Acronis',
+    emoji: '🛡️',
+    tagline: 'Acronis Cyber Protect・バックアップ+セキュリティ統合・ランサムウェア対策・クラウド・エンドポイントで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Acronis代替 Cyber Protect バックアップ セキュリティ統合 ランサムウェア対策 クラウド Veeam代替 Carbonite代替',
+    accentColor: Color(0xFFE61B23),
+    painPoints: [
+      '有料・バックアップ/セキュリティ特化・個人のライフ管理は別途必要',
+      'IT管理特化・個人のAI管理は別途必要',
+      'Veeam/Commvault/Druva との比較でコスト・エンタープライズ機能・スケールが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Cyber Protect・バックアップ+セキュリティ統合・ランサムウェア対策・クラウド/エンドポイント',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'commvault': const _CompetitorInfo(
+    name: 'Commvault',
+    emoji: '🗄️',
+    tagline: 'Commvault Complete Data Protection・エンタープライズバックアップ・DR・クラウド・ハイブリッドデータ管理で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Commvault代替 Complete Data Protection エンタープライズバックアップ DR クラウド ハイブリッド Veeam代替 Veritas代替',
+    accentColor: Color(0xFF003DA5),
+    painPoints: [
+      '有料・エンタープライズバックアップ特化・個人のライフ管理は別途必要',
+      'IT管理特化・個人のAI管理は別途必要',
+      'Veeam/Veritas/Cohesity との比較でコスト・複雑さ・クラウドネイティブが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Complete Data Protection・DR・クラウド・ハイブリッドデータ管理・エンタープライズ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'veritas': const _CompetitorInfo(
+    name: 'Veritas',
+    emoji: '📦',
+    tagline: 'Veritas NetBackup・データ保護・ストレージ管理・eDiscovery・コンプライアンス・クラウドデータ管理で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Veritas代替 NetBackup データ保護 ストレージ管理 eDiscovery コンプライアンス Commvault代替 Veeam代替',
+    accentColor: Color(0xFF003DA5),
+    painPoints: [
+      '有料・エンタープライズストレージ特化・個人のライフ管理は別途必要',
+      'IT管理特化・個人のAI管理は別途必要',
+      'Commvault/Veeam/Cohesity との比較でコスト・クラウドネイティブ・モダンUIが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'NetBackup・データ保護・ストレージ管理・eDiscovery・コンプライアンス',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'cohesity': const _CompetitorInfo(
+    name: 'Cohesity',
+    emoji: '🌀',
+    tagline: 'Cohesity DataProtect・クラウドネイティブバックアップ・AI駆動データ管理・ランサムウェア復旧・データセキュリティで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Cohesity代替 DataProtect クラウドバックアップ AI データ管理 ランサムウェア復旧 Rubrik代替 Veeam代替',
+    accentColor: Color(0xFF0070C0),
+    painPoints: [
+      '有料・データ保護特化・個人のライフ管理は別途必要',
+      'エンタープライズ特化・個人のAI管理は別途必要',
+      'Rubrik/Veeam/Commvault との比較でコスト・中小規模対応・エコシステムが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'DataProtect・AI駆動データ管理・ランサムウェア復旧・クラウドネイティブ・データセキュリティ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'rubrik': const _CompetitorInfo(
+    name: 'Rubrik',
+    emoji: '💎',
+    tagline: 'Rubrik Security Cloud・クラウドデータセキュリティ・ランサムウェア防御・バックアップ・データ可観測性で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Rubrik代替 Security Cloud クラウドデータセキュリティ ランサムウェア バックアップ Cohesity代替 Veeam代替',
+    accentColor: Color(0xFFFF6B35),
+    painPoints: [
+      '有料・データセキュリティ特化・個人のライフ管理は別途必要',
+      'エンタープライズ特化・個人のAI管理は別途必要',
+      'Cohesity/Veeam/Commvault との比較でコスト・SMB向け・統合幅が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Security Cloud・ランサムウェア防御・バックアップ・データ可観測性・クラウドネイティブ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'druva': const _CompetitorInfo(
+    name: 'Druva',
+    emoji: '☁️',
+    tagline: 'クラウドネイティブデータ保護・Druva・SaaS型バックアップ・エンドポイント/クラウド/SaaS・ランサムウェア対策で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Druva代替 クラウドバックアップ SaaS型 エンドポイント保護 ランサムウェア対策 Veeam代替 Acronis代替',
+    accentColor: Color(0xFF0082CB),
+    painPoints: [
+      '有料・クラウドバックアップ特化・個人のライフ管理は別途必要',
+      'IT管理特化・個人のAI管理は別途必要',
+      'Veeam/Acronis/Cohesity との比較でコスト・オンプレ対応・エンタープライズ機能が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'SaaS型クラウドバックアップ・エンドポイント/クラウド/SaaS保護・ランサムウェア対策',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'carbonite': const _CompetitorInfo(
+    name: 'Carbonite (OpenText)',
+    emoji: '🗃️',
+    tagline: 'Carbonite・クラウドバックアップ・PC/サーバー自動バックアップ・SMB向け・OpenText・ランサムウェア復旧で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Carbonite代替 クラウドバックアップ PC サーバー SMB ランサムウェア復旧 Acronis代替 Backblaze代替',
+    accentColor: Color(0xFF009C3B),
+    painPoints: [
+      '有料・バックアップ特化・個人のライフ管理は別途必要',
+      'SMB特化・個人のAI管理は別途必要',
+      'Acronis/Veeam/Druva との比較でエンタープライズ機能・スケール・AIが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'クラウドバックアップ・PC/サーバー自動・SMB向け・ランサムウェア復旧・OpenText',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'zerto': const _CompetitorInfo(
+    name: 'Zerto',
+    emoji: '♾️',
+    tagline: 'Zerto・クラウドDR/BC・リアルタイムレプリケーション・ランサムウェア復旧・マルチクラウド移行・Hewlett Packardで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Zerto代替 クラウドDR BC リアルタイムレプリケーション ランサムウェア復旧 マルチクラウド移行 Veeam代替 Druva代替',
+    accentColor: Color(0xFF0063B1),
+    painPoints: [
+      '有料・DR/BC特化・個人のライフ管理は別途必要',
+      'エンタープライズ特化・個人のAI管理は別途必要',
+      'Veeam/Commvault/Druva との比較でコスト・バックアップ機能・UI/UXが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'クラウドDR/BC・リアルタイムレプリケーション・ランサムウェア復旧・マルチクラウド移行',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
