@@ -20,6 +20,9 @@ class _ProactiveDiagnosticsCardState extends State<ProactiveDiagnosticsCard> {
   }
 
   Future<Map<String, dynamic>> _load() async {
+    if (Supabase.instance.client.auth.currentUser == null) {
+      throw Exception('Not authenticated');
+    }
     final response = await Supabase.instance.client.functions.invoke(
       'core-hub',
       body: {'action': 'system.proactive_diagnostics'},

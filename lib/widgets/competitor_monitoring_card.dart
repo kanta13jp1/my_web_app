@@ -25,6 +25,10 @@ class _CompetitorMonitoringCardState extends State<CompetitorMonitoringCard> {
   }
 
   Future<void> _runCheck() async {
+    if (Supabase.instance.client.auth.currentUser == null) {
+      setState(() => _checking = false);
+      return;
+    }
     setState(() => _checking = true);
     try {
       await Supabase.instance.client.functions.invoke(
@@ -37,6 +41,10 @@ class _CompetitorMonitoringCardState extends State<CompetitorMonitoringCard> {
   }
 
   Future<void> _load() async {
+    if (Supabase.instance.client.auth.currentUser == null) {
+      setState(() => _loading = false);
+      return;
+    }
     setState(() {
       _loading = true;
       _error = null;
