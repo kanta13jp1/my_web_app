@@ -27,6 +27,9 @@ jobs:
       - name: Run stale EF audit
         run: python3 scripts/audit_hub_migration_completeness.py
 
+      - name: Check EF coverage (phantom EF detection)
+        run: python3 scripts/check_ef_coverage.py
+
       - name: Create Issue on failure
         if: failure()
         uses: actions/github-script@v7
