@@ -16727,6 +16727,312 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'expensify': const _CompetitorInfo(
+    name: 'Expensify',
+    emoji: '🧾',
+    tagline: 'スマート経費精算・法人カード管理で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Expensify代替 経費精算 領収書 経費管理 法人カード',
+    accentColor: Color(0xFF0185FF),
+    painPoints: [
+      '月額5ドル/人〜・無料プランは月25件のスキャン上限',
+      '経費管理特化で個人の財務全般・AI管理・習慣は別途必要',
+      'SmartScanはOCR精度にムラがあり手動修正が発生する',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '領収書スキャン・承認フロー・法人カード統合・ACH振込',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'ramp': const _CompetitorInfo(
+    name: 'Ramp',
+    emoji: '💳',
+    tagline: '法人向け無料コーポレートカード＋経費自動化で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Ramp代替 コーポレートカード 経費管理 法人向け 自動化',
+    accentColor: Color(0xFF2B2B2B),
+    painPoints: [
+      '米国法人向け・日本の個人事業主には利用不可',
+      'BtoBコーポレートカード特化で個人の財務・AI管理は別途必要',
+      'BrexやDivvyと競合しUS市場限定のため国際展開が遅い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '無料コーポレートカード・自動分類・経費承認・節約インサイト',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'brex': const _CompetitorInfo(
+    name: 'Brex',
+    emoji: '🦄',
+    tagline: 'スタートアップ向け法人カード＋財務ツールで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Brex代替 スタートアップ 法人カード 経費管理 ベンチャー',
+    accentColor: Color(0xFF6C3AB8),
+    painPoints: [
+      '米国・特定市場向け・日本法人は利用が困難',
+      'VCバック企業向け設計で個人事業主・フリーランスには不向き',
+      '利用限度額は資金調達額に基づくため資本が少ないと低い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '法人カード・経費管理・旅費・現金管理・AI财務インサイト',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'lattice': const _CompetitorInfo(
+    name: 'Lattice',
+    emoji: '🔷',
+    tagline: 'パフォーマンス管理＋OKR・人材エンゲージメントで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Lattice代替 パフォーマンス管理 OKR 1on1 人事評価',
+    accentColor: Color(0xFF6D3A9C),
+    painPoints: [
+      '月額11ドル/人〜・エンタープライズ機能は高額',
+      '人事評価・OKR特化でチーム向け設計・個人管理は別途必要',
+      'セットアップに数週間かかり即効性が出にくい',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'OKR/ゴール・パフォーマンスレビュー・エンゲージメント・採用',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  '15five': const _CompetitorInfo(
+    name: '15Five',
+    emoji: '✋',
+    tagline: 'ウィークリーチェックイン＋OKR・パフォーマンス管理で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: '15Five代替 チェックイン OKR パフォーマンス管理 エンゲージメント',
+    accentColor: Color(0xFF3DA352),
+    painPoints: [
+      '月額4ドル/人〜・高度なマネジメント機能は上位プランが必要',
+      'チームマネジメント特化で個人ライフ管理・財務は別途必要',
+      'Latticeやculture ampと比較してAI機能・分析が弱い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '週次チェックイン・OKR・1on1・360°フィードバック・パルス',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'culture-amp': const _CompetitorInfo(
+    name: 'Culture Amp',
+    emoji: '🎯',
+    tagline: '従業員エンゲージメント＋パフォーマンス分析で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Culture Amp代替 従業員エンゲージメント 組織サーベイ 人材育成',
+    accentColor: Color(0xFFE5A32F),
+    painPoints: [
+      '月額5ドル/人〜・中小企業には導入ハードルが高い',
+      '組織・HR特化でチーム向け設計・個人ライフ管理は別途必要',
+      'サーベイ設計・データ解釈にHRの専門知識が必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'エンゲージメントサーベイ・パフォーマンス・分析・AI予測',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'okta': const _CompetitorInfo(
+    name: 'Okta',
+    emoji: '🔐',
+    tagline: 'アイデンティティ管理・シングルサインオンで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Okta代替 SSO シングルサインオン アイデンティティ管理 MFA',
+    accentColor: Color(0xFF007DC1),
+    painPoints: [
+      '月額2ドル/人〜・MAU課金で成長フェーズのコスト管理が難しい',
+      'エンタープライズID管理特化でIT管理者向け・個人管理は別途必要',
+      'Auth0統合後も製品ラインが複雑で選択に迷う',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'SSO・MFA・ライフサイクル管理・API Access Management',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'auth0': const _CompetitorInfo(
+    name: 'Auth0',
+    emoji: '🔑',
+    tagline: '開発者向け認証・認可プラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Auth0代替 認証 認可 OAuth JWT ソーシャルログイン',
+    accentColor: Color(0xFFEB5424),
+    painPoints: [
+      'Essentialsは月額23ドル〜・MAU増加で急速にコスト増加',
+      '認証基盤特化で個人のライフ管理・財務・習慣は別途必要',
+      'Okta統合後に価格改定・機能変更が続き予測しにくい',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ソーシャルログイン・MFA・ロール管理・カスタムドメイン',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'jumpcloud': const _CompetitorInfo(
+    name: 'JumpCloud',
+    emoji: '🖥️',
+    tagline: 'クラウドディレクトリ＋デバイス・ID統合管理で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'JumpCloud代替 クラウドディレクトリ Active Directory代替 デバイス管理',
+    accentColor: Color(0xFF00A4E4),
+    painPoints: [
+      '月額11ドル/人〜・無料プランは10ユーザー上限',
+      'IT管理・デバイス管理特化で個人のライフ管理・財務は別途必要',
+      'Okta/Azure ADと比較してエコシステム・統合数が少ない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ディレクトリ・SSO・MDM・MFA・RADIUS・LDAP',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
