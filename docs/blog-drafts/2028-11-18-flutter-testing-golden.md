@@ -1,7 +1,7 @@
 ---
 title: "Flutter ゴールデンテスト — UI スナップショットで回帰を防ぐ"
 tags: flutter,AI,個人開発,programming
-published: false
+published: true
 ---
 
 # Flutter ゴールデンテスト — UI スナップショットで回帰を防ぐ

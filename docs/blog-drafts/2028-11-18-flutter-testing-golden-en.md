@@ -1,7 +1,7 @@
 ---
 title: "Flutter Golden Tests — Catch UI Regressions with Snapshot Testing"
 tags: flutter,ai,indiedev,programming
-published: false
+published: true
 ---
 
 # Flutter Golden Tests — Catch UI Regressions with Snapshot Testing
