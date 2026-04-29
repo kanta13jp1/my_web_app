@@ -1,7 +1,7 @@
 ---
 title: "Dart Sealed Classes Guide — Type-Safe State Management with Pattern Matching"
 tags: flutter,dart,webdev,indiedev
-published: false
+published: true
 ---
 
 # Dart Sealed Classes Guide — Type-Safe State Management with Pattern Matching

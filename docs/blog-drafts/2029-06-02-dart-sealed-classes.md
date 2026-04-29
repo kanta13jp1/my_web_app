@@ -1,7 +1,7 @@
 ---
 title: "Dart Sealed Classes 完全ガイド — 型安全な状態管理とパターンマッチング"
 tags: flutter,dart,個人開発,AI
-published: false
+published: true
 ---
 
 # Dart Sealed Classes 完全ガイド — 型安全な状態管理とパターンマッチング
