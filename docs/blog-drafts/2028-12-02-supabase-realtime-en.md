@@ -1,7 +1,7 @@
 ---
 title: "Supabase Realtime — Postgres Changes, Presence, and Broadcast"
 tags: supabase,ai,indiedev,programming
-published: false
+published: true
 ---
 
 # Supabase Realtime — Postgres Changes, Presence, and Broadcast

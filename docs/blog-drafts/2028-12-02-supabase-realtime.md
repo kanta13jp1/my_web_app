@@ -1,7 +1,7 @@
 ---
 title: "Supabase Realtime — リアルタイム購読・Presence・Broadcast"
 tags: supabase,AI,個人開発,programming
-published: false
+published: true
 ---
 
 # Supabase Realtime — リアルタイム購読・Presence・Broadcast
