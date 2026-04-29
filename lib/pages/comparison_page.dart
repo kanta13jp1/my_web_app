@@ -26689,6 +26689,312 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'legalzoom': const _CompetitorInfo(
+    name: 'LegalZoom',
+    emoji: '⚖️',
+    tagline: 'オンライン法的書類作成・法人設立サービスで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'LegalZoom代替 法人設立 オンライン法務 契約書 会社設立 リーガルサービス',
+    accentColor: Color(0xFF1D4ED8),
+    painPoints: [
+      '月額7.99ドル〜・法務書類特化・個人のライフ管理は別途必要',
+      '法的書類特化でビジネス向け設計・個人のAIライフ管理は別途必要',
+      'Rocket Lawyer比較でカスタマイズ性・弁護士相談コストが問題になることがある',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'LLC/Inc設立・登録代理人・商標・遺言・契約書テンプレート',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'contractpodai': const _CompetitorInfo(
+    name: 'ContractPodAi',
+    emoji: '📄',
+    tagline: 'AI契約ライフサイクル管理・CLMプラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'ContractPodAi代替 CLM 契約管理 AI 自動化 コンプライアンス エンタープライズ',
+    accentColor: Color(0xFF6D28D9),
+    painPoints: [
+      '価格非公開(エンタープライズ向け)・CLM特化・個人のライフ管理は別途',
+      'エンタープライズCLM特化・個人のAI管理は別途必要',
+      'Ironclad/Icertisと比較してAI精度・インテグレーション数が劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AI契約レビュー・リスク分析・CLM・自動交渉・コンプライアンス',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'rocket-lawyer': const _CompetitorInfo(
+    name: 'Rocket Lawyer',
+    emoji: '🚀',
+    tagline: 'オンライン法的サービス・中小企業向け法律アドバイスで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Rocket Lawyer代替 オンライン法務 中小企業 契約書 法律相談 会社設立',
+    accentColor: Color(0xFFDC2626),
+    painPoints: [
+      '月額39.99ドル〜・法務サービス特化・個人のライフ管理は別途必要',
+      '法的サービス特化でビジネス向け設計・個人のAI管理は別途必要',
+      'LegalZoomと比較してブランド認知・書類テンプレート数が劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '法律相談・契約書・法人設立・弁護士ネットワーク・e-Sign',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'gather': const _CompetitorInfo(
+    name: 'Gather',
+    emoji: '🏙️',
+    tagline: 'バーチャルオフィス・2Dメタバース型リモートワークで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Gather代替 バーチャルオフィス メタバース リモートワーク 2D オンライン空間',
+    accentColor: Color(0xFF7C3AED),
+    painPoints: [
+      '月額7ドル/ユーザー〜・バーチャルオフィス特化・個人のライフ管理は別途必要',
+      'メタバースオフィス特化・個人のAIライフ管理は別途必要',
+      'Teamflow/Oviceと比較してモバイル対応・エンタープライズ機能が弱い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '2Dバーチャル空間・近接ビデオ・ゲーム感覚オフィス・イベント',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'kumospace': const _CompetitorInfo(
+    name: 'Kumospace',
+    emoji: '🌐',
+    tagline: 'バーチャルイベント・オフィス空間プラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Kumospace代替 バーチャルイベント オンライン空間 リモートワーク ネットワーキング',
+    accentColor: Color(0xFF0EA5E9),
+    painPoints: [
+      '月額16ドル〜・バーチャル空間特化・個人のライフ管理は別途必要',
+      'バーチャルイベント/オフィス特化・個人のAI管理は別途必要',
+      'Gather/Wonder比較でカスタマイズ性・大規模イベント対応が劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '空間型ビデオ・バーチャルオフィス・イベント・ネットワーキング',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'wonder': const _CompetitorInfo(
+    name: 'Wonder',
+    emoji: '✨',
+    tagline: 'バーチャルイベント・ネットワーキングプラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Wonder代替 バーチャルイベント ネットワーキング オンライン会議 空間型ビデオ',
+    accentColor: Color(0xFFEC4899),
+    painPoints: [
+      '月額150ドル〜(100名)・バーチャルイベント特化・個人のライフ管理は別途',
+      'バーチャルネットワーキング特化・個人のAI管理は別途必要',
+      'Gather/Kumospaceと比較して操作性・定着率が劣る場合がある',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'バーチャル会議室・サークル・ウォークアラウンド・ブレイクアウト',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'streamyard': const _CompetitorInfo(
+    name: 'StreamYard',
+    emoji: '🎬',
+    tagline: 'ブラウザベースライブ配信・ポッドキャスト録画スタジオで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'StreamYard代替 ライブ配信 ポッドキャスト YouTube Facebook 録画 ブロードキャスト',
+    accentColor: Color(0xFF8B5CF6),
+    painPoints: [
+      '月額49ドル〜・ライブ配信特化・個人のライフ管理は別途必要',
+      'ライブ配信/録画特化・個人のAIライフ管理は別途必要',
+      'Restream/Riverside比較でマルチ配信数・AI編集機能が劣ることがある',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'マルチ配信・ゲスト招待・ブランディング・録画・ポッドキャスト',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'riverside': const _CompetitorInfo(
+    name: 'Riverside.fm',
+    emoji: '🎙️',
+    tagline: 'ポッドキャスト・動画インタビュー高品質録画スタジオで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Riverside代替 ポッドキャスト録画 動画インタビュー 高品質 AI編集 マルチトラック',
+    accentColor: Color(0xFF0891B2),
+    painPoints: [
+      '月額19ドル〜・ポッドキャスト/動画録画特化・個人のライフ管理は別途必要',
+      '録画スタジオ特化・個人のAIライフ管理は別途必要',
+      'Descript/Squadcastと比較してAI編集深度・コラボ機能が劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'マルチトラック録画・AI文字起こし・クリップ・ゲスト招待・4K',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'descript': const _CompetitorInfo(
+    name: 'Descript',
+    emoji: '✏️',
+    tagline: 'AI動画・ポッドキャスト編集・文字起こし統合ツールで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Descript代替 AI動画編集 ポッドキャスト 文字起こし テキスト編集 音声クローン',
+    accentColor: Color(0xFF4F46E5),
+    painPoints: [
+      '月額24ドル〜・動画/ポッドキャスト編集特化・個人のライフ管理は別途必要',
+      'AI動画編集特化・個人のAIライフ管理は別途必要',
+      'Riverside/Squadcastと比較してリモート録画品質・コラボが弱い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'テキスト動画編集・AI音声クローン・文字起こし・Screen/Overdub',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
