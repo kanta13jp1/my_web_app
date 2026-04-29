@@ -14415,6 +14415,312 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'fly-io': const _CompetitorInfo(
+    name: 'Fly.io',
+    emoji: '🪁',
+    tagline: 'エッジコンピューティングホスティングで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Fly.io代替 エッジデプロイ Docker ホスティング Heroku代替',
+    accentColor: Color(0xFF7B2FBE),
+    painPoints: [
+      '無料枠はリソース制限あり・プロダクション利用は月額課金が必要',
+      'ホスティング特化で個人ライフ管理・財務・AI機能は別途必要',
+      'Docker前提設計で非エンジニアには設定ハードルが高い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'グローバルエッジデプロイ・Machines API・GPU対応',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'render': const _CompetitorInfo(
+    name: 'Render',
+    emoji: '🖥️',
+    tagline: 'Heroku代替クラウドプラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Render代替 Heroku代替 クラウドホスティング PaaS',
+    accentColor: Color(0xFF46E3B7),
+    painPoints: [
+      '無料プランはスリープあり・本番利用は月額7ドル〜必要',
+      'ホスティング特化で個人ライフ管理・AI機能は別途必要',
+      '大規模スケーリングは自動化設定が複雑',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Web・API・DB・Cron Job・Static Siteを統合管理',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'digitalocean': const _CompetitorInfo(
+    name: 'DigitalOcean',
+    emoji: '🌊',
+    tagline: '開発者向けクラウドインフラで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'DigitalOcean代替 VPS クラウドサーバー 開発者インフラ',
+    accentColor: Color(0xFF0080FF),
+    painPoints: [
+      '月額4ドル〜・インフラ管理の技術知識が必要',
+      'IaaS/PaaS提供で個人ライフ管理・財務・AI機能は別途必要',
+      'AWSに比べエンタープライズ機能・グローバルリージョンが少ない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Droplets・Managed DB・Kubernetes・App Platform',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'keeper': const _CompetitorInfo(
+    name: 'Keeper',
+    emoji: '🛡️',
+    tagline: 'エンタープライズパスワード管理で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Keeper代替 パスワードマネージャー 企業向けセキュリティ',
+    accentColor: Color(0xFF0070F3),
+    painPoints: [
+      '月額2.91ドル〜・ゼロ知識設計だが価格設定が高め',
+      'パスワード管理特化で財務・タスク・AIアシスタントは別途必要',
+      'ファミリープランは5人分の合算で個人利用はコスト過多',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ゼロ知識暗号化・パスワード共有・侵害監視',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'dashlane': const _CompetitorInfo(
+    name: 'Dashlane',
+    emoji: '🔐',
+    tagline: 'VPN内蔵パスワードマネージャーで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Dashlane代替 パスワード管理 VPN セキュリティ',
+    accentColor: Color(0xFF006CFF),
+    painPoints: [
+      '月額4.99ドル〜・VPN込みでも1Passwordより高額',
+      'パスワード・VPN特化で財務・タスク・AI機能は別途必要',
+      '無料プランはデバイス1台・パスワード50件の制限あり',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'パスワード管理・VPN・ダークウェブモニタリング',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'nordpass': const _CompetitorInfo(
+    name: 'NordPass',
+    emoji: '🔑',
+    tagline: 'Nord製ゼロ知識パスワードマネージャーで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'NordPass代替 パスワードマネージャー Nord セキュリティ',
+    accentColor: Color(0xFF4687FF),
+    painPoints: [
+      '月額1.49ドル〜(年払い)・NordVPNバンドルは魅力だが単体では割高感',
+      'パスワード管理特化で財務・タスク・AIアシスタントは別途必要',
+      'NordVPN連携が前提でセキュリティエコシステム依存が生じる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'XChaCha20暗号化・パスキー・メールマスキング',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'doodle': const _CompetitorInfo(
+    name: 'Doodle',
+    emoji: '📅',
+    tagline: '日程調整ツールで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Doodle代替 日程調整 スケジュール調整 グループ予定',
+    accentColor: Color(0xFF00A67E),
+    painPoints: [
+      '月額6.95ドル〜・無料版は広告あり・ブランディングなし',
+      '日程調整特化で財務・タスク・AI機能は別アプリが必要',
+      '投票機能は便利だが自動確定・カレンダー連携は有料限定',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '複数候補日投票・自動最適日時選択・カレンダー連携',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'cal-com': const _CompetitorInfo(
+    name: 'Cal.com',
+    emoji: '📆',
+    tagline: 'オープンソース予約管理で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Cal.com代替 Calendly代替 オープンソース予約 スケジューリング',
+    accentColor: Color(0xFF111827),
+    painPoints: [
+      'セルフホストは無料だがインフラ管理が必要・クラウド版は月額12ドル〜',
+      'スケジューリング特化で財務・タスク・AI管理は別途必要',
+      'Calendlyほど知名度がなく外部との調整で説明が必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'OSS・無限カレンダー統合・支払い受付・チーム管理',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'hellosign': const _CompetitorInfo(
+    name: 'HelloSign (Dropbox Sign)',
+    emoji: '✍️',
+    tagline: 'Dropbox電子署名サービスで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'HelloSign代替 Dropbox Sign代替 電子署名 契約書',
+    accentColor: Color(0xFF0061FF),
+    painPoints: [
+      '月額15ドル〜・無料プランは月3件の署名制限',
+      '電子署名特化で財務・タスク・日常ライフ管理は別途必要',
+      'Dropbox統合前提でDropbox非利用者には連携メリットが薄い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '法的拘束力のある電子署名・テンプレート・API連携',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
