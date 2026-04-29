@@ -56496,6 +56496,330 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'kubeflow': const _CompetitorInfo(
+    name: 'Kubeflow',
+    emoji: '☸️',
+    tagline:
+        'Kubeflow・Kubernetes ML・パイプライン・モデルサービング・実験管理・Jupyter・マルチフレームワーク対応で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Kubeflow代替 Kubernetes ML パイプライン モデルサービング 実験管理 Jupyter マルチフレームワーク MLflow代替',
+    accentColor: Color(0xFF326CE5),
+    painPoints: [
+      '無料(OSS)・MLOps特化・個人のライフ管理は別途必要',
+      '高度なK8s知識必須・個人のAI管理は別途必要',
+      'MLflow/ZenML/Metaflow との比較で運用複雑さ・学習コスト・非K8s環境対応が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Kubernetes ML・パイプライン・モデルサービング・実験管理・Jupyter統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'seldon': const _CompetitorInfo(
+    name: 'Seldon Core',
+    emoji: '🤖',
+    tagline:
+        'Seldon Core・MLモデルサービング・Kubernetes・A/Bテスト・シャドウデプロイ・説明可能AI・ドリフト検出で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Seldon代替 MLモデルサービング Kubernetes A/Bテスト シャドウデプロイ 説明可能AI ドリフト検出 KServe代替',
+    accentColor: Color(0xFF7B2FBE),
+    painPoints: [
+      '無料(OSS)/有料(Seldon Deploy)・MLサービング特化・個人のライフ管理は別途必要',
+      'MLエンジニア特化・個人のAI管理は別途必要',
+      'KServe/BentoML との比較で管理コスト・非K8s環境・シンプルデプロイが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'MLモデルサービング・K8s・A/Bテスト・シャドウデプロイ・説明可能AI・ドリフト検出',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'kserve': const _CompetitorInfo(
+    name: 'KServe',
+    emoji: '📡',
+    tagline:
+        'KServe・標準化MLサービング・Kubernetes・Knative・マルチモデルサービング・自動スケーリング・Kubeflow後継で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'KServe代替 標準化MLサービング Kubernetes Knative マルチモデル 自動スケーリング Kubeflow Seldon代替',
+    accentColor: Color(0xFF00BCD4),
+    painPoints: [
+      '無料(OSS)・MLサービング特化・個人のライフ管理は別途必要',
+      'MLエンジニア/K8s専門知識必須・個人のAI管理は別途必要',
+      'Seldon/BentoML との比較で非K8s環境・管理負荷・デプロイ手順の複雑さが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '標準化MLサービング・Kubernetes・Knative・マルチモデル・自動スケーリング',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'onnx': const _CompetitorInfo(
+    name: 'ONNX',
+    emoji: '🔩',
+    tagline:
+        'ONNX・オープンMLモデル交換フォーマット・フレームワーク間移植・ランタイム最適化・エッジAI・ハードウェアアクセラレーションで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'ONNX代替 オープンMLフォーマット フレームワーク間移植 ランタイム最適化 エッジAI ハードウェアアクセラレーション TensorRT代替',
+    accentColor: Color(0xFF005CED),
+    painPoints: [
+      '無料(OSS)・MLフォーマット特化・個人のライフ管理は別途必要',
+      'MLエンジニア特化・個人のAI管理は別途必要',
+      'TensorRT/CoreML との比較でフレームワーク固有最適化・最新OP対応・ツールが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'オープンMLフォーマット・フレームワーク間移植・ランタイム最適化・エッジAI',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'triton-inference': const _CompetitorInfo(
+    name: 'Triton Inference Server',
+    emoji: '🔱',
+    tagline:
+        'Triton Inference Server・NVIDIA・高性能MLサービング・マルチフレームワーク・GPU最適化・動的バッチング・アンサンブルで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Triton Inference Server代替 NVIDIA MLサービング GPU最適化 動的バッチング アンサンブル TorchServe代替 TFServing代替',
+    accentColor: Color(0xFF76B900),
+    painPoints: [
+      '無料(OSS)・MLサービング特化・個人のライフ管理は別途必要',
+      'NVIDIA GPU環境特化・個人のAI管理は別途必要',
+      'TorchServe/TFServing/BentoML との比較でCPU環境・設定複雑さ・デバッグが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '高性能MLサービング・NVIDIA・GPU最適化・動的バッチング・アンサンブル',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'zenml': const _CompetitorInfo(
+    name: 'ZenML',
+    emoji: '🧘',
+    tagline:
+        'ZenML・MLOpsフレームワーク・パイプライン抽象化・マルチスタック・再現性・実験追跡・MLflow/Kubeflow統合で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'ZenML代替 MLOps パイプライン抽象化 マルチスタック 再現性 実験追跡 MLflow Kubeflow統合 Metaflow代替',
+    accentColor: Color(0xFF6B4FBB),
+    painPoints: [
+      '無料(OSS)/有料(Pro)・MLOps特化・個人のライフ管理は別途必要',
+      'MLエンジニア特化・個人のAI管理は別途必要',
+      'MLflow/Metaflow/Kubeflow との比較でエコシステム規模・既存採用率・学習コストが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'MLOpsフレームワーク・パイプライン抽象化・マルチスタック・再現性・実験追跡',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'metaflow': const _CompetitorInfo(
+    name: 'Metaflow',
+    emoji: '🌊',
+    tagline:
+        'Metaflow・Netflix製MLフレームワーク・Pythonファースト・バージョン管理・スケール・AWS統合・データサイエンティスト向けで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Metaflow代替 Netflix ML Pythonファースト バージョン管理 スケール AWS統合 データサイエンティスト ZenML代替 MLflow代替',
+    accentColor: Color(0xFFE50914),
+    painPoints: [
+      '無料(OSS)・MLフレームワーク特化・個人のライフ管理は別途必要',
+      'データサイエンティスト特化・個人のAI管理は別途必要',
+      'MLflow/ZenML/Kubeflow との比較でAWS以外環境・BI/ダッシュボード統合・UI/UXが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Netflix製ML・Pythonファースト・バージョン管理・スケール・AWS統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'clearml': const _CompetitorInfo(
+    name: 'ClearML',
+    emoji: '🔬',
+    tagline:
+        'ClearML・ML実験管理・データセット管理・パイプライン・自動オーケストレーション・OSS・エンタープライズで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'ClearML代替 ML実験管理 データセット管理 パイプライン オーケストレーション OSS エンタープライズ MLflow代替 WandB代替',
+    accentColor: Color(0xFF00C4CC),
+    painPoints: [
+      '無料(OSS)/有料(Cloud)・MLOps特化・個人のライフ管理は別途必要',
+      'MLエンジニア特化・個人のAI管理は別途必要',
+      'MLflow/W&B/Comet との比較でエコシステム規模・統合数・ブランド認知が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ML実験管理・データセット管理・パイプライン・自動オーケストレーション・OSS',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'valohai': const _CompetitorInfo(
+    name: 'Valohai',
+    emoji: '🏋️',
+    tagline:
+        'Valohai・MLOpsプラットフォーム・パイプライン自動化・GPU管理・再現性・マルチクラウド・フィンランド発で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Valohai代替 MLOps パイプライン自動化 GPU管理 再現性 マルチクラウド フィンランド MLflow代替 ZenML代替',
+    accentColor: Color(0xFF1B1464),
+    painPoints: [
+      '有料・MLOps特化・個人のライフ管理は別途必要',
+      'MLエンジニア特化・個人のAI管理は別途必要',
+      'MLflow/Kubeflow/ZenML との比較でOSS代替・コスト・エコシステム規模が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'MLOpsプラットフォーム・パイプライン自動化・GPU管理・再現性・マルチクラウド',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
