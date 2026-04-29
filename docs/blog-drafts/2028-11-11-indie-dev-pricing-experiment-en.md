@@ -1,7 +1,7 @@
 ---
 title: "Indie Dev SaaS Pricing Experiments — A/B Testing, Anchoring, and Freemium Strategy"
 tags: ai,indiedev,buildinpublic,automation
-published: false
+published: true
 ---
 
 # Indie Dev SaaS Pricing Experiments — A/B Testing, Anchoring, and Freemium Strategy
