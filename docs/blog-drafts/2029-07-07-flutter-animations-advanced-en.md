@@ -1,7 +1,7 @@
 ---
 title: "Flutter Animations Guide — AnimationController, Hero, Implicit, and Rive"
 tags: flutter,dart,webdev,indiedev
-published: false
+published: true
 ---
 
 # Flutter Animations Guide — AnimationController, Hero, Implicit, and Rive
