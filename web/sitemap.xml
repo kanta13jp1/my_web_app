@@ -3220,4 +3220,13 @@
   <url><loc>https://my-web-app-b67f4.web.app/vs-clear-ml</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
   <url><loc>https://my-web-app-b67f4.web.app/vs-comet-ml</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
   <url><loc>https://my-web-app-b67f4.web.app/vs-dvc</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://my-web-app-b67f4.web.app/vs/mlflow</loc></url>
+  <url><loc>https://my-web-app-b67f4.web.app/vs/bentoml</loc></url>
+  <url><loc>https://my-web-app-b67f4.web.app/vs/ray-serve</loc></url>
+  <url><loc>https://my-web-app-b67f4.web.app/vs/feast</loc></url>
+  <url><loc>https://my-web-app-b67f4.web.app/vs/tecton</loc></url>
+  <url><loc>https://my-web-app-b67f4.web.app/vs/hopsworks</loc></url>
+  <url><loc>https://my-web-app-b67f4.web.app/vs/great-expectations</loc></url>
+  <url><loc>https://my-web-app-b67f4.web.app/vs/evidently</loc></url>
+  <url><loc>https://my-web-app-b67f4.web.app/vs/whylabs</loc></url>
 </urlset>
