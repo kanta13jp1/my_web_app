@@ -4039,4 +4039,13 @@
   <url><loc>https://my-web-app-b67f4.web.app/vs-couchbase</loc><lastmod>2026-04-29</lastmod></url>
   <url><loc>https://my-web-app-b67f4.web.app/vs-janusgraph</loc><lastmod>2026-04-29</lastmod></url>
   <url><loc>https://my-web-app-b67f4.web.app/vs-dgraph</loc><lastmod>2026-04-29</lastmod></url>
+  <url><loc>https://my-web-app-b67f4.web.app/vs-influxdb</loc><lastmod>2026-04-29</lastmod></url>
+  <url><loc>https://my-web-app-b67f4.web.app/vs-timescaledb</loc><lastmod>2026-04-29</lastmod></url>
+  <url><loc>https://my-web-app-b67f4.web.app/vs-grafana-loki</loc><lastmod>2026-04-29</lastmod></url>
+  <url><loc>https://my-web-app-b67f4.web.app/vs-victoriametrics</loc><lastmod>2026-04-29</lastmod></url>
+  <url><loc>https://my-web-app-b67f4.web.app/vs-questdb</loc><lastmod>2026-04-29</lastmod></url>
+  <url><loc>https://my-web-app-b67f4.web.app/vs-tdengine</loc><lastmod>2026-04-29</lastmod></url>
+  <url><loc>https://my-web-app-b67f4.web.app/vs-druid</loc><lastmod>2026-04-29</lastmod></url>
+  <url><loc>https://my-web-app-b67f4.web.app/vs-kdb</loc><lastmod>2026-04-29</lastmod></url>
+  <url><loc>https://my-web-app-b67f4.web.app/vs-opentsdb</loc><lastmod>2026-04-29</lastmod></url>
 </urlset>
