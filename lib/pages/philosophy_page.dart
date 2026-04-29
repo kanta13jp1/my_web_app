@@ -182,28 +182,51 @@ class _PhilosophyPageState extends State<PhilosophyPage> {
   }
 
   Widget _videoMeta(_Video v) {
-    return Row(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Expanded(
-          child: Text(
-            v.description,
-            style: const TextStyle(
-              fontSize: 13,
-              color: Color(0xFF94A3B8),
-              height: 1.7,
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                v.description,
+                style: const TextStyle(
+                  fontSize: 13,
+                  color: Color(0xFF94A3B8),
+                  height: 1.7,
+                ),
+              ),
             ),
-          ),
+            const SizedBox(width: 12),
+            TextButton.icon(
+              onPressed: () => launchUrl(
+                Uri.parse('https://youtu.be/${v.id}'),
+                mode: LaunchMode.externalApplication,
+              ),
+              icon: const Icon(Icons.open_in_new, size: 16),
+              label: const Text('YouTube で見る'),
+              style: TextButton.styleFrom(
+                foregroundColor: const Color(0xFFFF6B35),
+              ),
+            ),
+          ],
         ),
-        const SizedBox(width: 12),
-        TextButton.icon(
-          onPressed: () => launchUrl(
-            Uri.parse('https://youtu.be/${v.id}'),
-            mode: LaunchMode.externalApplication,
-          ),
-          icon: const Icon(Icons.open_in_new, size: 16),
-          label: const Text('YouTube で見る'),
-          style: TextButton.styleFrom(
-            foregroundColor: const Color(0xFFFF6B35),
+        const SizedBox(height: 6),
+        Semantics(
+          label: 'AI で生成された動画',
+          child: Row(
+            children: const [
+              Icon(Icons.auto_awesome, size: 12, color: Color(0xFF94A3B8)),
+              SizedBox(width: 4),
+              Text(
+                'AI 生成',
+                style: TextStyle(
+                  fontSize: 11,
+                  color: Color(0xFF94A3B8),
+                  letterSpacing: 0,
+                ),
+              ),
+            ],
           ),
         ),
       ],
