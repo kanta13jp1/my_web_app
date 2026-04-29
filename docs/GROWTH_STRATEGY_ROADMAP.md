@@ -24782,3 +24782,11 @@ SECOND_BRAIN 4.5/7 + VIBE 7.0/7 + PLATFORM 4.0/7 = 14.5/21 + cross-instance-pr �
 - #190 Dart Macros → https://dev.to/kanta13jp1/dart-macros-compile-time-code-generation-without-buildrunner-5glg
 - dev.to 累計190本
 - 全 draft: published:true (JA+EN) / orphan branches 全削除
+
+## 2026-04-29 PS#4 S189-S200 — 競合追加 438→474社 (sitemap 481→517 URLs)
+
+- S189-S191: pendo/appcues/userpilot/wistia/vidyard/screenpal/buzzsprout/riverside-fm/transistor-fm (+9社)
+- S192-S194: patreon/ko-fi/buy-me-a-coffee/circle/podia/mighty-networks/paddle/chargebee/lemonsqueezy (+9社)
+- S195-S197: expensify/ramp/brex/lattice/15five/culture-amp/okta/auth0/jumpcloud (+9社)
+- S198-S200: new-relic/dynatrace/grafana-cloud/cloudflare/rollbar/bugsnag/algolia/elastic/typesense (+9社)
+- dart entries: 466 / marketing count: 474社 / sitemap: 517 URLs
