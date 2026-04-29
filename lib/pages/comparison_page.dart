@@ -52004,6 +52004,330 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'jfrog': const _CompetitorInfo(
+    name: 'JFrog Artifactory',
+    emoji: '🐸',
+    tagline:
+        'ソフトウェアサプライチェーン・Artifactory・Xray・バイナリ管理・DevSecOpsプラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'JFrog代替 Artifactory バイナリ管理 サプライチェーン Xray DevSecOps Nexus代替 パッケージ管理',
+    accentColor: Color(0xFF40BE46),
+    painPoints: [
+      '有料・DevOpsツールチェーン特化・個人のライフ管理は別途必要',
+      'ソフトウェア開発特化・個人のAI管理は別途必要',
+      'Nexus/GitHub Packages/GitLab との比較でコスト・スケール・マルチクラウド対応が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Artifactory・Xray・バイナリ管理・サプライチェーン・DevSecOps・全言語対応',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'sonatype': const _CompetitorInfo(
+    name: 'Sonatype Nexus',
+    emoji: '🔗',
+    tagline:
+        'OSS脆弱性管理・Nexus IQ・SBOM・サプライチェーンセキュリティ・ライセンスコンプライアンスで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Sonatype代替 Nexus IQ SBOM サプライチェーンセキュリティ OSS脆弱性 ライセンスコンプライアンス JFrog代替',
+    accentColor: Color(0xFF1B4D7E),
+    painPoints: [
+      '有料・OSS管理特化・個人のライフ管理は別途必要',
+      'セキュリティ特化・個人のAI管理は別途必要',
+      'JFrog/Snyk/FOSSA との比較でコスト・開発者体験・CI/CD統合が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Nexus IQ・SBOM・OSS脆弱性・サプライチェーンセキュリティ・ライセンスコンプライアンス',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'black-duck': const _CompetitorInfo(
+    name: 'Black Duck (Synopsys)',
+    emoji: '🦆',
+    tagline:
+        'OSSセキュリティ・ライセンスコンプライアンス・SCAスキャン・SBOM・Synopsys Software Integrityで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Black Duck代替 Synopsys OSS SCA SBOM ライセンスコンプライアンス Snyk代替 FOSSA代替',
+    accentColor: Color(0xFF2D2D2D),
+    painPoints: [
+      '有料・OSSコンプライアンス特化・個人のライフ管理は別途必要',
+      'エンタープライズ特化・個人のAI管理は別途必要',
+      'Snyk/FOSSA/Sonatype との比較でコスト・スピード・開発者向けUIが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'OSSセキュリティ・SCAスキャン・ライセンスコンプライアンス・SBOM・エンタープライズ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'coverity': const _CompetitorInfo(
+    name: 'Coverity (Synopsys)',
+    emoji: '🔍',
+    tagline:
+        '静的解析SAST・コード品質・C/C++/Java/Python・企業級・CI/CD統合・ゼロFPで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Coverity代替 Synopsys SAST 静的解析 コード品質 C++ Java CI/CD Checkmarx代替 Fortify代替',
+    accentColor: Color(0xFF5B2D8E),
+    painPoints: [
+      '有料・SAST特化・個人のライフ管理は別途必要',
+      'エンタープライズ特化・個人のAI管理は別途必要',
+      'Checkmarx/Fortify/SonarQube との比較でコスト・スキャン速度・クラウドネイティブが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '静的解析SAST・ゼロFP・C/C++/Java/Python・CI/CD統合・エンタープライズ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'prisma-cloud': const _CompetitorInfo(
+    name: 'Prisma Cloud (Palo Alto)',
+    emoji: '🌈',
+    tagline:
+        'Palo Alto Networks CNAPP・クラウドネイティブセキュリティ・CSPM/CWPP/CIEM・コンテナ/K8s/サーバーレスで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Prisma Cloud代替 Palo Alto CNAPP クラウドネイティブ CSPM CWPP CIEM コンテナ Kubernetes Wiz代替 Orca代替',
+    accentColor: Color(0xFFFA4616),
+    painPoints: [
+      '有料・クラウドセキュリティ特化・個人のライフ管理は別途必要',
+      'エンタープライズ特化・個人のAI管理は別途必要',
+      'Wiz/Orca/Lacework との比較でコスト・複雑さ・統合数が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'CNAPP・CSPM/CWPP/CIEM・コンテナ/K8s・サーバーレス・マルチクラウド',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'cylance': const _CompetitorInfo(
+    name: 'Cylance (BlackBerry)',
+    emoji: '🛡️',
+    tagline:
+        'AI予測型エンドポイントセキュリティ・マルウェア予防・機械学習・軽量エージェント・BlackBerry Cylanceで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Cylance代替 BlackBerry AI予測 エンドポイントセキュリティ マルウェア予防 機械学習 CrowdStrike代替 SentinelOne代替',
+    accentColor: Color(0xFF000000),
+    painPoints: [
+      '有料・EDR特化・個人のライフ管理は別途必要',
+      'セキュリティ特化・個人のAI管理は別途必要',
+      'CrowdStrike/SentinelOne/Carbon Black との比較でEDR機能・脅威ハンティング・クラウドが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AI予測型マルウェア予防・軽量エージェント・機械学習・エンドポイント保護',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'carbon-black': const _CompetitorInfo(
+    name: 'VMware Carbon Black',
+    emoji: '⚫',
+    tagline:
+        'VMware EDR・Carbon Black Cloud・ワークロード保護・脅威ハンティング・ランサムウェア対策で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Carbon Black代替 VMware EDR ワークロード保護 脅威ハンティング ランサムウェア CrowdStrike代替 SentinelOne代替',
+    accentColor: Color(0xFF1A1A1A),
+    painPoints: [
+      '有料・EDR特化・個人のライフ管理は別途必要',
+      'エンタープライズ特化・個人のAI管理は別途必要',
+      'CrowdStrike/SentinelOne/Cylance との比較でAI/ML・クラウドネイティブ・コストが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'EDR・Carbon Black Cloud・ワークロード保護・脅威ハンティング・ランサムウェア対策',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'trend-micro': const _CompetitorInfo(
+    name: 'Trend Micro',
+    emoji: '🌊',
+    tagline:
+        'ハイブリッドクラウドセキュリティ・XDR・ランサムウェア対策・ネットワーク/エンドポイント/クラウド一体保護で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Trend Micro代替 ハイブリッドクラウド XDR ランサムウェア対策 エンドポイント クラウドセキュリティ CrowdStrike代替',
+    accentColor: Color(0xFFE60012),
+    painPoints: [
+      '有料・セキュリティ特化・個人のライフ管理は別途必要',
+      'エンタープライズ特化・個人のAI管理は別途必要',
+      'CrowdStrike/SentinelOne/Palo Alto との比較でEDR・クラウドネイティブ・AIが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'XDR・ランサムウェア対策・ハイブリッドクラウド・エンドポイント/ネットワーク/クラウド統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'darktrace': const _CompetitorInfo(
+    name: 'Darktrace',
+    emoji: '🌐',
+    tagline:
+        'AI自律型サイバーセキュリティ・自己学習AI・異常検知・RESPOND/PREVENT/HEAL・英国AI企業で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Darktrace代替 AI自律型 サイバーセキュリティ 自己学習AI 異常検知 RESPOND PREVENT ゼロトラスト CrowdStrike代替',
+    accentColor: Color(0xFF7B2D8B),
+    painPoints: [
+      '有料・AI自律型セキュリティ特化・個人のライフ管理は別途必要',
+      'エンタープライズ特化・個人のAI管理は別途必要',
+      'CrowdStrike/SentinelOne/Vectra との比較でコスト・誤検知・統合数が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AI自律型・自己学習・RESPOND/PREVENT/HEAL・NTA/EDR/Email統合・異常検知',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
