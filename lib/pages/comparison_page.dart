@@ -26995,6 +26995,312 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'restream': const _CompetitorInfo(
+    name: 'Restream',
+    emoji: '📡',
+    tagline: 'マルチプラットフォーム同時ライブ配信・スケジュール配信で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Restream代替 マルチ配信 ライブ配信 YouTube Twitch Facebook 同時配信',
+    accentColor: Color(0xFF7C3AED),
+    painPoints: [
+      '月額19ドル〜・ライブ配信特化・個人のライフ管理は別途必要',
+      'マルチ配信特化・個人のAIライフ管理は別途必要',
+      'StreamYard比較でスタジオ機能・ゲスト招待が劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '30+プラットフォーム同時配信・スケジュール・録画・チャット統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'mmhmm': const _CompetitorInfo(
+    name: 'mmhmm',
+    emoji: '🎭',
+    tagline: 'バーチャル背景・プレゼンテーション演出ビデオツールで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'mmhmm代替 バーチャル背景 プレゼン ビデオ通話 演出 録画 ストリーミング',
+    accentColor: Color(0xFFFF6B6B),
+    painPoints: [
+      '月額13ドル〜・ビデオ演出特化・個人のライフ管理は別途必要',
+      'ビデオプレゼン特化・個人のAIライフ管理は別途必要',
+      'Loom/Descriptと比較して録画編集・共有機能が劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'バーチャル背景・スライド重ね・ライブ/録画・Zoom統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'airmeet': const _CompetitorInfo(
+    name: 'Airmeet',
+    emoji: '✈️',
+    tagline: 'バーチャルイベント・コミュニティ会議プラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Airmeet代替 バーチャルイベント コミュニティ ウェビナー ネットワーキング オンライン会議',
+    accentColor: Color(0xFF0EA5E9),
+    painPoints: [
+      '月額99ドル〜・バーチャルイベント特化・個人のライフ管理は別途必要',
+      'イベント/コミュニティ特化・個人のAI管理は別途必要',
+      'Hopin/Whova比較でスケーラビリティ・ブランド認知が劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ウェビナー・ネットワーキング・ラウンドテーブル・ステージ・展示',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'zillow': const _CompetitorInfo(
+    name: 'Zillow',
+    emoji: '🏠',
+    tagline: '米国不動産検索・売買賃貸マーケットプレースで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Zillow代替 不動産 物件検索 売買 賃貸 住宅ローン 米国',
+    accentColor: Color(0xFF006AFF),
+    painPoints: [
+      '物件掲載無料/プレミアム有料・不動産特化・個人のライフ管理は別途必要',
+      '不動産マーケットプレース特化・個人のAI管理は別途必要',
+      'Redfin/Realtor.comと比較してエージェント品質・価格推定精度が劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '物件検索・Zestimate推定・住宅ローン・エージェント・3Dツアー',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'redfin': const _CompetitorInfo(
+    name: 'Redfin',
+    emoji: '🏡',
+    tagline: '低手数料・テクノロジー不動産エージェントサービスで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Redfin代替 不動産エージェント 低手数料 物件検索 売買 住宅 テック',
+    accentColor: Color(0xFFCC1F00),
+    painPoints: [
+      '手数料1.5%〜・不動産売買特化・個人のライフ管理は別途必要',
+      '不動産エージェント特化・個人のAI管理は別途必要',
+      'Zillow/Compassと比較してエージェント数・全国カバー率が劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '低手数料売買・AI物件推薦・スケジュール内覧・住宅ローン',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'compass': const _CompetitorInfo(
+    name: 'Compass',
+    emoji: '🧭',
+    tagline: 'テクノロジー活用プレミアム不動産ブローカーで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Compass代替 不動産ブローカー プレミアム テクノロジー 売買 エージェント',
+    accentColor: Color(0xFF1A1A1A),
+    painPoints: [
+      '標準手数料・プレミアム不動産特化・個人のライフ管理は別途必要',
+      'ラグジュアリー不動産特化・個人のAI管理は別途必要',
+      'Redfin/Zillowと比較してコスト・デジタルツール充実度が劣る場合がある',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AI物件マッチング・プレミアムエージェント・3Dツアー・CRM',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'opendoor': const _CompetitorInfo(
+    name: 'Opendoor',
+    emoji: '🚪',
+    tagline: 'iBuying・即時住宅売買プラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Opendoor代替 iBuying 即時売却 住宅売買 オンライン不動産 キャッシュオファー',
+    accentColor: Color(0xFF00B4A0),
+    painPoints: [
+      '手数料5%〜・iBuying特化・個人のライフ管理は別途必要',
+      '即時売買特化・個人のAI管理は別途必要',
+      'Offerpad/Zillowと比較してオファー価格・対応エリアが限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '即時キャッシュオファー・24h売却・修繕不要・フレキシブル引渡し',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'yardi': const _CompetitorInfo(
+    name: 'Yardi',
+    emoji: '🏢',
+    tagline: '不動産管理・賃貸物件オペレーションソフトウェアで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Yardi代替 不動産管理 賃貸管理 プロパティマネジメント テナント 会計',
+    accentColor: Color(0xFF2D5F8A),
+    painPoints: [
+      '価格非公開(大規模向け)・プロパティマネジメント特化・個人のライフ管理は別途',
+      '不動産管理特化でエンタープライズ向け設計・個人のAI管理は別途必要',
+      'AppFolio/Buildiumと比較して導入コスト・学習曲線が高い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '賃貸管理・会計・テナントスクリーニング・メンテナンス・レポート',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'costar': const _CompetitorInfo(
+    name: 'CoStar',
+    emoji: '🌟',
+    tagline: '商業不動産データ・調査プラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'CoStar代替 商業不動産 CRE データ分析 物件調査 市場分析 賃料',
+    accentColor: Color(0xFF003D73),
+    painPoints: [
+      '月額数百〜数千ドル・商業不動産特化・個人のライフ管理は別途必要',
+      'CREデータ特化でプロ向け設計・個人のAI管理は別途必要',
+      'CBRE/JLLと比較して情報鮮度・国際データカバレッジが劣ることがある',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '商業不動産DB・賃料分析・競合調査・LoopNet統合・GIS',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
