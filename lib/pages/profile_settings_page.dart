@@ -69,6 +69,7 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
       final profile = await _profileService.getProfile(userId);
 
       if (profile != null && mounted) {
+        if (!mounted) return;
         setState(() {
           _currentProfile = profile;
           _displayNameController.text = profile.displayName ?? '';

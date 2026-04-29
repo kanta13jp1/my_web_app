@@ -1380,6 +1380,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     if (noteId == null) return;
     try {
       final count = await _noteCommentsService.getCommentCount(noteId: noteId);
+      if (!mounted) return;
       if (mounted) setState(() => _commentCount = count);
     } catch (_) {
       // silently ignore
@@ -1525,6 +1526,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
                               );
                               if (confirmed == true && mounted) {
                                 await _saveVersionSnapshot();
+                                if (!mounted) return;
                                 setState(() {
                                   _titleController.text =
                                       v['title'] as String? ?? '';
@@ -2434,6 +2436,7 @@ class _NoteCommentsSheetState extends State<_NoteCommentsSheet> {
     final token = await _getToken();
     if (token == null) return;
 
+    if (!mounted) return;
     setState(() => _submitting = true);
     try {
       final response = await widget.supabase

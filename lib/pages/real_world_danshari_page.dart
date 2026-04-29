@@ -42,6 +42,7 @@ class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
 
       if (image != null) {
         final bytes = await image.readAsBytes();
+        if (!mounted) return;
         setState(() {
           _imageBytes = bytes;
           _result = null;

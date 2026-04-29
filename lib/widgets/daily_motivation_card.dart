@@ -48,6 +48,7 @@ class _DailyMotivationCardState extends State<DailyMotivationCard> {
     if (!mounted) return;
     setState(() => _sharing = true);
     await Future<void>.delayed(const Duration(seconds: 2));
+    if (!mounted) return;
     if (mounted) setState(() => _sharing = false);
   }
 

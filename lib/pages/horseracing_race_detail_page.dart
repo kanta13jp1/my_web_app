@@ -67,6 +67,7 @@ class _HorseracingRaceDetailPageState extends State<HorseracingRaceDetailPage> {
       );
       await _load();
     } catch (_) {
+      if (!mounted) return;
       if (mounted) setState(() => _running = false);
     }
   }

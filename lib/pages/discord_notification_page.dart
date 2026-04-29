@@ -145,6 +145,7 @@ class _DiscordNotificationPageState extends State<DiscordNotificationPage> {
       }
       await _fetchConfig();
     } catch (e) {
+      if (!mounted) return;
       if (mounted) setState(() => _errorMessage = 'テスト送信に失敗しました: $e');
     } finally {
       if (mounted) setState(() => _isTesting = false);

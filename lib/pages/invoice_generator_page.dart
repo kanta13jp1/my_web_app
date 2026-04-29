@@ -98,6 +98,7 @@ class _InvoiceGeneratorPageState extends State<InvoiceGeneratorPage> {
       _descriptionController.clear();
       await _fetchInvoices();
     } catch (e) {
+      if (!mounted) return;
       if (mounted) setState(() => _errorMessage = '請求書の作成に失敗しました: $e');
     } finally {
       if (mounted) setState(() => _isLoading = false);

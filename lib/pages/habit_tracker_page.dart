@@ -74,6 +74,7 @@ class _HabitTrackerPageState extends State<HabitTrackerPage> {
       _habitController.clear();
       await _fetchHabits();
     } catch (e) {
+      if (!mounted) return;
       if (mounted) setState(() => _errorMessage = '習慣の作成に失敗しました: $e');
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -88,6 +89,7 @@ class _HabitTrackerPageState extends State<HabitTrackerPage> {
       );
       await _fetchHabits();
     } catch (e) {
+      if (!mounted) return;
       if (mounted) setState(() => _errorMessage = 'チェックインに失敗しました: $e');
     }
   }

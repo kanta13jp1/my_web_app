@@ -109,6 +109,7 @@ class _TeamChatPageState extends State<TeamChatPage> {
       _messageController.clear();
       await _fetchMessages(_selectedChannelId!);
     } catch (e) {
+      if (!mounted) return;
       if (mounted) setState(() => _errorMessage = '送信に失敗しました: $e');
     } finally {
       if (mounted) setState(() => _isSending = false);

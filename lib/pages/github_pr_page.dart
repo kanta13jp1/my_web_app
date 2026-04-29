@@ -108,6 +108,7 @@ class _GithubPrPageState extends State<GithubPrPage> {
       }
       await _fetchData();
     } catch (e) {
+      if (!mounted) return;
       if (mounted) setState(() => _errorMessage = '保存に失敗しました: $e');
     } finally {
       if (mounted) setState(() => _isSaving = false);

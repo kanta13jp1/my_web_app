@@ -207,6 +207,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
   Future<void> _reloadBetTickets() async {
     try {
       final tickets = await _fetchBetTickets();
+      if (!mounted) return;
       if (mounted) setState(() => _betTickets = tickets);
     } catch (_) {
       if (!mounted) return;
