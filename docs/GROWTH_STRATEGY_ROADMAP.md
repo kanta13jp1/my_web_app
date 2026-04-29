@@ -24196,3 +24196,9 @@ Bundle 第 1 完成例 = Codex#2 territory が Bundle 形式に対応可能で�
 - ≤34.0秒: +0.02 (優秀な末脚) / ≤35.5秒: +0.01 (良好) / ≥37.0秒: -0.01 (末脚不足) / データなし: 0
 - prevLast3FSlowPenaltyのソートロジックをconfidence式に統合
 - confidence式 36 terms体制確立
+
+## 2026-04-29 PS#6 S121 — weightKgBonus 斤量補正 (37 terms)
+- weightKgBonus追加: 斤量(assigned weight)による信頼度補正
+- ≤53kg: +0.01 (軽斤量有利) / 54〜56kg: 0 (標準) / ≥57kg: -0.01 (重斤量不利)
+- weightKgPenaltyScoreのソートロジックをconfidence式に統合
+- confidence式 37 terms体制確立
