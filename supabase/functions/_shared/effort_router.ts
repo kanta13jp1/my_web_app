@@ -19,6 +19,7 @@ export interface EffortSelection {
   source: string;
 }
 
+// deno-lint-ignore require-await
 export async function selectEffort(
   _action: string,
   _body: unknown,
