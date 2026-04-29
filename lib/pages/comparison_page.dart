@@ -28189,7 +28189,8 @@ final _competitorInfo = <String, _CompetitorInfo>{
     name: 'Astro',
     emoji: '🚀',
     tagline: 'Islands Architecture・高速コンテンツサイト構築フレームワークで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Astro代替 Islands Architecture SSG コンテンツサイト パフォーマンス React Vue',
+    searchKeyword:
+        'Astro代替 Islands Architecture SSG コンテンツサイト パフォーマンス React Vue',
     accentColor: Color(0xFFFF5D01),
     painPoints: [
       '無料OSS・コンテンツサイト特化・個人のライフ管理は別途必要',
@@ -28937,7 +28938,8 @@ final _competitorInfo = <String, _CompetitorInfo>{
     name: 'Zero To Mastery',
     emoji: '🚀',
     tagline: 'エンジニア就職・スキルアップ特化オンライン学習プラットフォームで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Zero To Mastery代替 Web開発学習 エンジニア就職 Python React Machine Learning',
+    searchKeyword:
+        'Zero To Mastery代替 Web開発学習 エンジニア就職 Python React Machine Learning',
     accentColor: Color(0xFF5D5DFF),
     painPoints: [
       '月額39ドル〜・エンジニア学習特化・個人のライフ管理は別途必要',
@@ -29967,6 +29969,312 @@ final _competitorInfo = <String, _CompetitorInfo>{
     features: [
       _FeatureComparison(
         feature: 'ベクター+テンソルDB・LLMアプリRAG・ストリーミング・バージョン管理',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'vectara': const _CompetitorInfo(
+    name: 'Vectara',
+    emoji: '🔦',
+    tagline: 'エンタープライズ向けRAG・信頼性の高いベクター検索APIで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Vectara代替 RAG エンタープライズ ベクター検索 APIサービス ハルシネーション削減',
+    accentColor: Color(0xFF4A90E2),
+    painPoints: [
+      '無料/月額不明・RAG特化・個人のライフ管理は別途必要',
+      'エンタープライズRAG特化・個人のAI管理は別途必要',
+      'Pinecone/Weaviateと比較してベクターDB機能・カスタマイズ性が劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Boomerang埋め込み・RAG-as-API・ハルシネーション削減・マルチ言語',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'zilliz': const _CompetitorInfo(
+    name: 'Zilliz (Milvus Cloud)',
+    emoji: '☁️',
+    tagline: 'Milvusのフルマネージドクラウドベクターデータベースで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Zilliz代替 Milvus クラウド ベクターDB フルマネージド AI検索 エンタープライズ',
+    accentColor: Color(0xFF00A1EA),
+    painPoints: [
+      '無料/月額不明・ベクターDB特化・個人のライフ管理は別途必要',
+      'ベクター検索特化・個人のAI管理は別途必要',
+      'OSS Milvusより管理が楽だがPineconeと比較してエコシステムが小さい',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'フルマネージドMilvus・GPU加速・ハイブリッド検索・スケーラブル',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'marqo': const _CompetitorInfo(
+    name: 'Marqo',
+    emoji: '🔎',
+    tagline: 'テンソル検索・マルチモーダルベクターDB・AIネイティブ検索で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Marqo代替 テンソル検索 マルチモーダル ベクターDB AI検索 画像テキスト統合',
+    accentColor: Color(0xFF8B5CF6),
+    painPoints: [
+      '無料OSS/有料クラウド・テンソル検索特化・個人のライフ管理は別途必要',
+      'マルチモーダル検索特化・個人のAI管理は別途必要',
+      'Weaviate/Qdrantと比較してコミュニティ・統合エコシステムが小さい',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '画像+テキスト統合・自動埋め込み・ハイブリッド検索・ドキュメント指向',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'modal': const _CompetitorInfo(
+    name: 'Modal',
+    emoji: '🖥️',
+    tagline: 'Pythonコードをクラウドで即時実行・GPU推論インフラで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Modal代替 クラウド実行 GPU推論 Pythonクラウド サーバーレス LLMデプロイ',
+    accentColor: Color(0xFF1F2937),
+    painPoints: [
+      '無料/使用量課金・クラウド実行特化・個人のライフ管理は別途必要',
+      'GPU推論特化・個人のAI管理は別途必要',
+      'RunPod/Lambda Labsと比較してGPUコスト・インスタンス選択肢が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'サーバーレスGPU・コンテナ不要・ゼロコールドスタート・スケジュール',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'runpod': const _CompetitorInfo(
+    name: 'RunPod',
+    emoji: '🚀',
+    tagline: 'GPUクラウドコンピューティング・AI推論ホスティングで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'RunPod代替 GPUクラウド AI推論 LLMホスティング 安価GPU Stable Diffusion',
+    accentColor: Color(0xFF673AB7),
+    painPoints: [
+      '月額0〜・GPU計算特化・個人のライフ管理は別途必要',
+      'GPUクラウド特化・個人のAI管理は別途必要',
+      'Lambda Labs/CoreWeaveと比較してエンタープライズSLA・信頼性が劣ることがある',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'GPU Pod・サーバーレス推論・テンプレート・ストレージ・コミュニティGPU',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'lambda-labs': const _CompetitorInfo(
+    name: 'Lambda Labs',
+    emoji: '🧮',
+    tagline: 'AI/ML研究者向けGPUクラウド・深層学習インフラで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Lambda Labs代替 GPUクラウド 深層学習 AI研究 NVIDIA H100 A100 安価',
+    accentColor: Color(0xFFDC2626),
+    painPoints: [
+      '月額不明・GPU計算特化・個人のライフ管理は別途必要',
+      '深層学習インフラ特化・個人のAI管理は別途必要',
+      'AWS/GCPと比較してエコシステム・管理ツールが限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'H100/A100クラスタ・オンデマンド/予約・Jupyter・オブジェクトストレージ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'together-ai': const _CompetitorInfo(
+    name: 'Together AI',
+    emoji: '🤝',
+    tagline: '高速・安価なOSSモデル推論API・クラウドGPUプラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Together AI代替 OSSモデル推論 LLM API Llama Mistral GPU クラウド 安価',
+    accentColor: Color(0xFF7C5CBF),
+    painPoints: [
+      '使用量課金・LLM推論特化・個人のライフ管理は別途必要',
+      'OSSモデルAPI特化・個人のAI管理は別途必要',
+      'Anyscale/Replicateと比較してAPIエコシステム・モデル数が劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Llama/Mistral/Mixtral推論・ファインチューニング・Embeddings・高速',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'anyscale': const _CompetitorInfo(
+    name: 'Anyscale',
+    emoji: '🌐',
+    tagline: 'Rayベース分散AIアプリケーション・スケーラブルLLMサービスで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Anyscale代替 Ray 分散AI LLMサービング Llama スケーラブル クラウド',
+    accentColor: Color(0xFF028CF7),
+    painPoints: [
+      '月額不明・分散AI特化・個人のライフ管理は別途必要',
+      'Rayクラウド特化・個人のAI管理は別途必要',
+      'Together AI/Replicateと比較してコスト・シンプルさが課題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Rayフルマネージド・LLM推論・ファインチューニング・RLHFトレーニング',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'replicate': const _CompetitorInfo(
+    name: 'Replicate',
+    emoji: '🔄',
+    tagline: 'AIモデルAPIマーケットプレイス・クラウド機械学習実行で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Replicate代替 AIモデルAPI Stable Diffusion Llama LLM クラウド実行 API',
+    accentColor: Color(0xFF0E131F),
+    painPoints: [
+      '使用量課金・AIモデル実行特化・個人のライフ管理は別途必要',
+      'モデルAPI特化・個人のAI管理は別途必要',
+      'HuggingFace/Together AIと比較して本番スケール・コストが課題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '数千モデル・1行API・スケーラブル・オープンソースモデル・Webhook',
         competitorHas: true,
         weHave: false,
       ),
