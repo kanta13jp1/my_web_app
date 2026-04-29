@@ -51045,6 +51045,328 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'github-codespaces': const _CompetitorInfo(
+    name: 'GitHub Codespaces',
+    emoji: '☁️',
+    tagline:
+        'GitHubクラウド開発環境・ブラウザVSCode・dev container・60時間無料/月で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'GitHub Codespaces代替 クラウド開発環境 ブラウザVSCode dev container 60時間無料 Gitpod代替 CodeSandbox代替',
+    accentColor: Color(0xFF24292F),
+    painPoints: [
+      '60h無料/有料月0.18ドル/h~・開発環境特化・個人のライフ管理は別途必要',
+      'コーディング特化・個人のAI管理は別途必要',
+      'Gitpod/CodeSandbox/StackBlitz との比較でコスト・ストレージ・オフラインが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'クラウドVSCode・dev container・GitHub統合・60時間無料・GPUオプション',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'stackblitz': const _CompetitorInfo(
+    name: 'StackBlitz',
+    emoji: '⚡',
+    tagline:
+        'ブラウザ完結Node.js・WebContainers・即時起動・npm完全対応・ゼロインストールで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'StackBlitz代替 ブラウザNode.js WebContainers 即時起動 npm ゼロインストール CodeSandbox代替 Replit代替',
+    accentColor: Color(0xFF1389FD),
+    painPoints: [
+      '無料/有料月7ドル~・開発環境特化・個人のライフ管理は別途必要',
+      'コーディング特化・個人のAI管理は別途必要',
+      'CodeSandbox/Gitpod/GitHub Codespaces との比較でバックエンド・永続化・AI機能が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ブラウザNode.js・WebContainers・即時起動・npm完全対応・ゼロインストール',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'glitch': const _CompetitorInfo(
+    name: 'Glitch',
+    emoji: '✨',
+    tagline: 'コミュニティコーディングプラットフォーム・即時公開・リミックス・Node.js・学習者向けで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Glitch代替 コミュニティコーディング 即時公開 リミックス Node.js 学習者向け CodePen代替 Replit代替',
+    accentColor: Color(0xFF3333FF),
+    painPoints: [
+      '無料/有料月8ドル~・コーディング特化・個人のライフ管理は別途必要',
+      '学習・プロトタイプ特化・個人のAI管理は別途必要',
+      'Replit/CodePen/StackBlitz との比較でスケール・バックエンド・AI機能が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'コミュニティコーディング・即時公開・リミックス・Node.js・学習者向け',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'codepen': const _CompetitorInfo(
+    name: 'CodePen',
+    emoji: '🖊️',
+    tagline:
+        'フロントエンドソーシャルコーディング・HTML/CSS/JS Pen・インスピレーション・スニペット共有で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'CodePen代替 フロントエンド HTML CSS JS Pen インスピレーション スニペット共有 JSFiddle代替 Glitch代替',
+    accentColor: Color(0xFF47CF73),
+    painPoints: [
+      '無料/有料月12ドル~・フロントエンド特化・個人のライフ管理は別途必要',
+      'UI試作特化・個人のAI管理は別途必要',
+      'JSFiddle/StackBlitz/Glitch との比較でバックエンド・Node.js・チームコラボが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'フロントエンドPen・HTML/CSS/JS・インスピレーション・コミュニティ・無料',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'jsfiddle': const _CompetitorInfo(
+    name: 'JSFiddle',
+    emoji: '🎻',
+    tagline: 'オンラインJS/CSS/HTMLテスト・コラボ・ライブラリインクルード・バグ再現・シェアで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'JSFiddle代替 JS CSS HTML テスト コラボ ライブラリ バグ再現 シェア CodePen代替 Plunker代替',
+    accentColor: Color(0xFF0084FF),
+    painPoints: [
+      '無料/有料・テスト特化・個人のライフ管理は別途必要',
+      'コーディング特化・個人のAI管理は別途必要',
+      'CodePen/StackBlitz/Playcode との比較でモダン機能・Node.js・AI補完が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'オンラインJS/CSS/HTMLテスト・コラボ・ライブラリ・バグ再現・シェア',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'dagger-io': const _CompetitorInfo(
+    name: 'Dagger',
+    emoji: '🗡️',
+    tagline:
+        'ポータブルDevOpsパイプライン・コンテナファースト・任意CI互換・GraphQL API・Golang/Pythonで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Dagger代替 ポータブルDevOps パイプライン コンテナ CI互換 GraphQL API GitHub Actions代替 CircleCI代替',
+    accentColor: Color(0xFF1A1A2E),
+    painPoints: [
+      '無料OSS/有料Cloud・CI/CD特化・個人のライフ管理は別途必要',
+      'DevOps特化・個人のAI管理は別途必要',
+      'GitHub Actions/CircleCI/ArgoCD との比較でエコシステム・学習曲線・サポートが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ポータブルパイプライン・コンテナファースト・任意CI互換・GraphQL API・OSS',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'earthly': const _CompetitorInfo(
+    name: 'Earthly',
+    emoji: '🌍',
+    tagline:
+        '再現可能ビルドシステム・Makefile+Docker統合・モノレポ対応・CI高速化・OSS無料で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Earthly代替 再現可能ビルド Makefile Docker モノレポ CI高速化 OSS Bazel代替 Dagger代替',
+    accentColor: Color(0xFF2C5F2E),
+    painPoints: [
+      '無料OSS/有料Cloud・ビルド特化・個人のライフ管理は別途必要',
+      'DevOps特化・個人のAI管理は別途必要',
+      'Bazel/Dagger/Gradle との比較でエコシステム・既存CI統合・学習コストが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '再現可能ビルド・Makefile+Docker統合・モノレポ・CI高速化・OSS無料',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'turborepo': const _CompetitorInfo(
+    name: 'Turborepo',
+    emoji: '🏎️',
+    tagline:
+        'Vercel製高速モノレポビルドシステム・インクリメンタルビルド・リモートキャッシュ・Vercel統合で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Turborepo代替 モノレポ ビルドシステム インクリメンタルビルド リモートキャッシュ Vercel Nx代替 Lerna代替',
+    accentColor: Color(0xFF000000),
+    painPoints: [
+      '無料OSS・モノレポ特化・個人のライフ管理は別途必要',
+      'ビルドシステム特化・個人のAI管理は別途必要',
+      'Nx/Lerna/Bazel との比較でプラグインエコシステム・高度なツリー管理・Nx機能が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '高速モノレポビルド・インクリメンタル・リモートキャッシュ・Vercel統合・OSS',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'nx': const _CompetitorInfo(
+    name: 'Nx (Nrwl)',
+    emoji: '🏗️',
+    tagline:
+        'モノレポビルドシステム・スマートキャッシュ・Angular/React/Node対応・Nx Cloud・Code Generatorで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Nx代替 モノレポ Angular React Node スマートキャッシュ Nx Cloud Code Generator Turborepo代替 Lerna代替',
+    accentColor: Color(0xFF143055),
+    painPoints: [
+      '無料OSS/有料Nx Cloud・モノレポ特化・個人のライフ管理は別途必要',
+      'ビルドシステム特化・個人のAI管理は別途必要',
+      'Turborepo/Lerna/Bazel との比較でコスト・Nx Cloud依存・学習曲線が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'モノレポビルド・スマートキャッシュ・Angular/React/Node・Code Generator・Nx Cloud',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
