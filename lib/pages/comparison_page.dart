@@ -26383,6 +26383,312 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'piktochart': const _CompetitorInfo(
+    name: 'Piktochart',
+    emoji: '📊',
+    tagline: 'インフォグラフィック・プレゼン・レポート作成ツールで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Piktochart代替 インフォグラフィック プレゼン レポート デザイン テンプレート',
+    accentColor: Color(0xFF00B4D8),
+    painPoints: [
+      '月額14ドル〜・インフォグラフィック特化・個人のライフ管理は別途必要',
+      'ビジュアルコンテンツ特化でマーケ向け設計・個人のAI管理は別途必要',
+      'Canva/Venngage比較でAI機能・テンプレート量が劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'インフォグラフィック・プレゼン・チラシ・レポート・データビジュアル',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'infogram': const _CompetitorInfo(
+    name: 'Infogram',
+    emoji: '📈',
+    tagline: 'データビジュアライゼーション・インタラクティブチャートで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Infogram代替 データビジュアライゼーション インタラクティブ チャート インフォグラフィック',
+    accentColor: Color(0xFF7B2D8B),
+    painPoints: [
+      '月額19ドル〜・データビジュアル特化・個人のライフ管理は別途必要',
+      'インタラクティブチャート特化でビジネス向け設計・個人のAI管理は別途必要',
+      'Tableau/Power BIと比較してデータ分析深度・企業統合が劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'インタラクティブチャート・地図・ダッシュボード・データ取込・埋込',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'datawrapper': const _CompetitorInfo(
+    name: 'Datawrapper',
+    emoji: '📉',
+    tagline: 'ジャーナリスト・メディア向けデータビジュアライゼーションで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Datawrapper代替 データビジュアライゼーション ジャーナリスト チャート 地図 メディア',
+    accentColor: Color(0xFF3B55E6),
+    painPoints: [
+      '月額599ドル〜(チーム) / 無料版制限あり・メディア向け設計・個人のライフ管理は別途',
+      'ニュースルーム・ジャーナリスト特化・個人のAIライフ管理は別途必要',
+      'Flourish/Infogramと比較して一般ユーザーへの訴求力が弱い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'チャート・地図・テーブル・コード不要・GDPR準拠・埋込',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'flourish': const _CompetitorInfo(
+    name: 'Flourish',
+    emoji: '🌸',
+    tagline: 'ノーコードインタラクティブデータストーリーテリングで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Flourish代替 データストーリーテリング インタラクティブ ビジュアライゼーション ノーコード',
+    accentColor: Color(0xFFE84C89),
+    painPoints: [
+      '月額149ドル〜・データストーリー特化・個人のライフ管理は別途必要',
+      'データビジュアル特化でビジネス/メディア向け設計・個人のAI管理は別途必要',
+      'Datawrapper比較でデータ接続・パフォーマンスが劣る場合がある',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'レースチャート・ネットワーク・3Dマップ・スライドショー・API',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'venngage': const _CompetitorInfo(
+    name: 'Venngage',
+    emoji: '🎨',
+    tagline: 'インフォグラフィック・レポート・プレゼン向けデザインツールで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Venngage代替 インフォグラフィック デザイン レポート プレゼン テンプレート',
+    accentColor: Color(0xFF45B649),
+    painPoints: [
+      '月額19ドル〜・インフォグラフィック特化・個人のライフ管理は別途必要',
+      'ビジュアルコンテンツ特化でビジネス向け設計・個人のAI管理は別途必要',
+      'Canva/Piktochartと比較してテンプレート汎用性・AI機能が劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'インフォグラフィック・レポート・プレゼン・ポスター・ブランドキット',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'mavrck': const _CompetitorInfo(
+    name: 'Mavrck',
+    emoji: '🦅',
+    tagline: 'エンタープライズインフルエンサーマーケティングプラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Mavrck代替 インフルエンサーマーケティング エンタープライズ クリエイター ROI分析',
+    accentColor: Color(0xFF6B21A8),
+    painPoints: [
+      '価格非公開(大企業向け)・インフルエンサー特化・個人のライフ管理は別途必要',
+      'エンタープライズインフルエンサー特化・個人のAI管理は別途必要',
+      'Creatoriq/GRINと比較してeコマース統合・中小企業対応が弱い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '大規模クリエイター発見・キャンペーン・UGC・測定・コンプライアンス',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'affise': const _CompetitorInfo(
+    name: 'Affise',
+    emoji: '💼',
+    tagline: 'パフォーマンスマーケティング・アフィリエイト追跡プラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Affise代替 パフォーマンスマーケティング アフィリエイト追跡 CPA CPL ネットワーク',
+    accentColor: Color(0xFF1E40AF),
+    painPoints: [
+      '月額299ドル〜・アフィリエイトネットワーク特化・個人のライフ管理は別途必要',
+      'パフォーマンスマーケ特化でビジネス向け設計・個人のAI管理は別途必要',
+      'Impact/Partnerizeと比較してブランド認知・グローバル展開が劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'アフィリエイト追跡・リアルタイム分析・コンバージョン・API・不正検出',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  '8x8': const _CompetitorInfo(
+    name: '8x8',
+    emoji: '📞',
+    tagline: 'クラウドUCaaS・コンタクトセンター統合プラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: '8x8代替 UCaaS コンタクトセンター VoIP ビデオ会議 クラウド通信',
+    accentColor: Color(0xFFFF6B35),
+    painPoints: [
+      '月額15ドル/ユーザー〜・ビジネス通信特化・個人のライフ管理は別途必要',
+      'UCaaS特化でエンタープライズ向け設計・個人のAI管理は別途必要',
+      'RingCentral/Nextiva比較でUI/UX・モバイルアプリが劣ることがある',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'VoIP・ビデオ・チャット・コンタクトセンター・分析・AI',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'cloudtalk': const _CompetitorInfo(
+    name: 'CloudTalk',
+    emoji: '☁️',
+    tagline: 'スマートビジネス電話・コールセンターソフトウェアで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'CloudTalk代替 クラウド電話 コールセンター VoIP 自動ダイヤル 分析',
+    accentColor: Color(0xFF00D2FF),
+    painPoints: [
+      '月額25ドル/ユーザー〜・コールセンター特化・個人のライフ管理は別途必要',
+      'クラウドコールセンター特化でビジネス向け設計・個人のAI管理は別途必要',
+      'Aircall/JustCallと比較してAI機能・ブランド認知が劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '自動ダイヤル・通話録音・IVR・CRM統合・国際番号160+カ国',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
