@@ -3193,4 +3193,13 @@
   <url><loc>https://my-web-app-b67f4.web.app/vs-appsmith</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
   <url><loc>https://my-web-app-b67f4.web.app/vs-thunkable</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
   <url><loc>https://my-web-app-b67f4.web.app/vs-fauna</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://my-web-app-b67f4.web.app/vs-back4app</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://my-web-app-b67f4.web.app/vs-ionic-framework</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://my-web-app-b67f4.web.app/vs-tauri</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://my-web-app-b67f4.web.app/vs-scrimba</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://my-web-app-b67f4.web.app/vs-domestika</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://my-web-app-b67f4.web.app/vs-treehouse</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://my-web-app-b67f4.web.app/vs-codesignal</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://my-web-app-b67f4.web.app/vs-codewars</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://my-web-app-b67f4.web.app/vs-frontendmasters</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
 </urlset>

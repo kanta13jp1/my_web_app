@@ -28525,6 +28525,312 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'back4app': const _CompetitorInfo(
+    name: 'Back4App',
+    emoji: '🔙',
+    tagline: 'Parse Platform OSS BaaS・AWS上のバックエンドインフラで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Back4App代替 BaaS Parse バックエンド GraphQL REST API サーバーレス',
+    accentColor: Color(0xFF0052CD),
+    painPoints: [
+      '無料/月額25ドル〜・BaaS特化・個人のライフ管理は別途必要',
+      'Parse BaaS特化・個人のAI管理は別途必要',
+      'Supabase/Firebaseと比較してモダン性・エコシステムが劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Parse API・GraphQL・REST・リアルタイム・ファイル・プッシュ通知',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'ionic-framework': const _CompetitorInfo(
+    name: 'Ionic Framework',
+    emoji: '⚡',
+    tagline: 'Web技術でネイティブiOS/Androidアプリ開発するハイブリッドフレームワークで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Ionic代替 ハイブリッドアプリ iOS Android Web React Angular Vue',
+    accentColor: Color(0xFF3880FF),
+    painPoints: [
+      '無料/月額99ドル〜・ハイブリッドアプリ特化・個人のライフ管理は別途必要',
+      'モバイルフレームワーク特化・個人のAI管理は別途必要',
+      'Flutter/React Native比較でパフォーマンス・ネイティブ感が劣ることがある',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'HTML/CSS/JS・Capacitor・UI部品・Angular/React/Vue対応',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'tauri': const _CompetitorInfo(
+    name: 'Tauri',
+    emoji: '🦀',
+    tagline: 'Rust製軽量クロスプラットフォームデスクトップアプリフレームワークで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Tauri代替 デスクトップアプリ Rust 軽量 クロスプラットフォーム Electron代替',
+    accentColor: Color(0xFFFFC131),
+    painPoints: [
+      '無料OSS・デスクトップアプリ特化・個人のライフ管理は別途必要',
+      'デスクトップフレームワーク特化・個人のAI管理は別途必要',
+      'Electronと比較してエコシステム・npm統合・設定容易性が劣ることがある',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Rust/WebView・Electron比5-20MB軽量・クロスOS・セキュリティ重視',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'scrimba': const _CompetitorInfo(
+    name: 'Scrimba',
+    emoji: '🎥',
+    tagline: 'インタラクティブなコーディング学習・スクリーンキャスト型教育で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Scrimba代替 コーディング学習 インタラクティブ フロントエンド React JavaScript',
+    accentColor: Color(0xFF5C62FF),
+    painPoints: [
+      '月額18ドル〜・コーディング学習特化・個人のライフ管理は別途必要',
+      'フロントエンド学習特化・個人のAI管理は別途必要',
+      'Codecademy/freeCodeCampと比較してコース数・バックエンド内容が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'インタラクティブスクリーンキャスト・AI Tutor・コード編集・Discord',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'domestika': const _CompetitorInfo(
+    name: 'Domestika',
+    emoji: '🎨',
+    tagline: 'クリエイター向けスペイン語/英語オンラインコースプラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Domestika代替 クリエイター学習 デザイン イラスト 動画 写真 オンラインコース',
+    accentColor: Color(0xFFFF5C6A),
+    painPoints: [
+      '1コース9〜15ドル〜・クリエイター学習特化・個人のライフ管理は別途必要',
+      'クリエイティブ教育特化・個人のAI管理は別途必要',
+      'Skillshare/Udemyと比較して英語圏認知度・コース種類の幅が劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ビジュアルデザイン・イラスト・写真・3D・ファッション・音楽コース',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'treehouse': const _CompetitorInfo(
+    name: 'Treehouse',
+    emoji: '🌳',
+    tagline: 'Web開発・デザイン・ビジネス向けオンライン学習プラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Treehouse代替 Web開発学習 オンライン プログラミング デザイン 動画',
+    accentColor: Color(0xFF5FCF80),
+    painPoints: [
+      '月額25ドル〜・Tech学習特化・個人のライフ管理は別途必要',
+      'Web/Tech教育特化・個人のAI管理は別途必要',
+      'Codecademy/Udemyと比較してコース数・最新技術カバーが劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'HTML/CSS/JS/Python・学習パス・クイズ・プロジェクト・コミュニティ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'codesignal': const _CompetitorInfo(
+    name: 'CodeSignal',
+    emoji: '🎯',
+    tagline: 'AI技術スキル評価・コーディングテストプラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'CodeSignal代替 技術スキル評価 コーディングテスト 採用 AI HackerRank',
+    accentColor: Color(0xFF4C84FF),
+    painPoints: [
+      '価格非公開・技術評価特化・個人のライフ管理は別途必要',
+      'コーディング採用評価特化・個人のAI管理は別途必要',
+      'HackerRank/LeetCodeと比較して問題数・コミュニティが劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AIコーチング・スキル認定・採用評価・コーディング問題・詳細レポート',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'codewars': const _CompetitorInfo(
+    name: 'Codewars',
+    emoji: '⚔️',
+    tagline: 'コーディング道場・Kata形式プログラミング練習プラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Codewars代替 コーディング練習 Kata アルゴリズム プログラミング道場',
+    accentColor: Color(0xFFB01313),
+    painPoints: [
+      '無料・コーディング練習特化・個人のライフ管理は別途必要',
+      'アルゴリズム練習特化・個人のAI管理は別途必要',
+      'LeetCode/HackerRankと比較して就活向けコンテンツ・難易度分類が劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Kata・8段階難易度・55+言語・コミュニティ・自作Kata・ランキング',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'frontendmasters': const _CompetitorInfo(
+    name: 'Frontend Masters',
+    emoji: '🎓',
+    tagline: 'エキスパートによるフロントエンド/フルスタック深堀りコースで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Frontend Masters代替 フロントエンド学習 エキスパート JavaScript React CSS',
+    accentColor: Color(0xFFC02D28),
+    painPoints: [
+      '月額39ドル〜・フロントエンド特化・個人のライフ管理は別途必要',
+      'フロントエンド/フルスタック教育特化・個人のAI管理は別途必要',
+      'Pluralsight/Udemyと比較してコース数・モバイル体験が劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'エキスパート講師・JavaScript/CSS/React/Node・学習パス・字幕',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
