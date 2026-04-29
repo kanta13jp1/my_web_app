@@ -55851,8 +55851,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'apache-kafka': const _CompetitorInfo(
     name: 'Apache Kafka',
     emoji: '⚡',
-    tagline: 'Apache Kafka・分散ストリーミング・リアルタイムデータパイプライン・高スループット・OSS・イベント駆動アーキテクチャで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Apache Kafka代替 分散ストリーミング リアルタイム パイプライン 高スループット OSS イベント駆動 Confluent代替 Pulsar代替',
+    tagline:
+        'Apache Kafka・分散ストリーミング・リアルタイムデータパイプライン・高スループット・OSS・イベント駆動アーキテクチャで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Apache Kafka代替 分散ストリーミング リアルタイム パイプライン 高スループット OSS イベント駆動 Confluent代替 Pulsar代替',
     accentColor: Color(0xFF231F20),
     painPoints: [
       '無料(OSS)・ストリーミング特化・個人のライフ管理は別途必要',
@@ -55885,8 +55887,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'confluent': const _CompetitorInfo(
     name: 'Confluent',
     emoji: '🌊',
-    tagline: 'Confluent・マネージドKafka・ストリーム処理・クラウドネイティブ・Schema Registry・ksqlDB・エンタープライズで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Confluent代替 マネージドKafka ストリーム処理 クラウド Schema Registry ksqlDB エンタープライズ Apache Kafka代替',
+    tagline:
+        'Confluent・マネージドKafka・ストリーム処理・クラウドネイティブ・Schema Registry・ksqlDB・エンタープライズで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Confluent代替 マネージドKafka ストリーム処理 クラウド Schema Registry ksqlDB エンタープライズ Apache Kafka代替',
     accentColor: Color(0xFF2A2EBC),
     painPoints: [
       '高額・ストリーミング特化・個人のライフ管理は別途必要',
@@ -55919,8 +55923,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'apache-flink': const _CompetitorInfo(
     name: 'Apache Flink',
     emoji: '🔄',
-    tagline: 'Apache Flink・ストリーム/バッチ処理・ステートフル計算・イベント時間・低レイテンシ・大規模分散で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Apache Flink代替 ストリーム処理 バッチ ステートフル イベント時間 低レイテンシ 分散 Spark Streaming代替 Storm代替',
+    tagline:
+        'Apache Flink・ストリーム/バッチ処理・ステートフル計算・イベント時間・低レイテンシ・大規模分散で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Apache Flink代替 ストリーム処理 バッチ ステートフル イベント時間 低レイテンシ 分散 Spark Streaming代替 Storm代替',
     accentColor: Color(0xFFE84393),
     painPoints: [
       '無料(OSS)・ストリーム処理特化・個人のライフ管理は別途必要',
@@ -55953,8 +55959,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'apache-pulsar': const _CompetitorInfo(
     name: 'Apache Pulsar',
     emoji: '💫',
-    tagline: 'Apache Pulsar・マルチテナントメッセージング・ジオレプリケーション・サーバーレス関数・ストリーミング/キューイング統合で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Apache Pulsar代替 マルチテナント メッセージング ジオレプリケーション サーバーレス ストリーミング Kafka代替 RabbitMQ代替',
+    tagline:
+        'Apache Pulsar・マルチテナントメッセージング・ジオレプリケーション・サーバーレス関数・ストリーミング/キューイング統合で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Apache Pulsar代替 マルチテナント メッセージング ジオレプリケーション サーバーレス ストリーミング Kafka代替 RabbitMQ代替',
     accentColor: Color(0xFF188EFF),
     painPoints: [
       '無料(OSS)・メッセージング特化・個人のライフ管理は別途必要',
@@ -55987,8 +55995,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'redpanda': const _CompetitorInfo(
     name: 'Redpanda',
     emoji: '🐼',
-    tagline: 'Redpanda・Kafka互換・C++実装・JVM不要・高パフォーマンス・低レイテンシ・シンプル運用で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Redpanda代替 Kafka互換 C++ JVM不要 高パフォーマンス 低レイテンシ シンプル Confluent代替 Apache Kafka代替',
+    tagline:
+        'Redpanda・Kafka互換・C++実装・JVM不要・高パフォーマンス・低レイテンシ・シンプル運用で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Redpanda代替 Kafka互換 C++ JVM不要 高パフォーマンス 低レイテンシ シンプル Confluent代替 Apache Kafka代替',
     accentColor: Color(0xFFFF2B4B),
     painPoints: [
       '有料(Cloud)/無料(OSS)・ストリーミング特化・個人のライフ管理は別途必要',
@@ -56021,8 +56031,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'starburst': const _CompetitorInfo(
     name: 'Starburst',
     emoji: '✨',
-    tagline: 'Starburst・マネージドTrino・分散SQLエンジン・データレイクハウス・フェデレーテッドクエリ・エンタープライズで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Starburst代替 マネージドTrino 分散SQL データレイクハウス フェデレーテッドクエリ エンタープライズ Trino代替 Presto代替',
+    tagline:
+        'Starburst・マネージドTrino・分散SQLエンジン・データレイクハウス・フェデレーテッドクエリ・エンタープライズで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Starburst代替 マネージドTrino 分散SQL データレイクハウス フェデレーテッドクエリ エンタープライズ Trino代替 Presto代替',
     accentColor: Color(0xFF1E3A5F),
     painPoints: [
       '高額・分析クエリ特化・個人のライフ管理は別途必要',
@@ -56055,8 +56067,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'trino': const _CompetitorInfo(
     name: 'Trino',
     emoji: '🔍',
-    tagline: 'Trino・OSSフェデレーテッドSQL・高速分散クエリ・データレイク・マルチデータソース・旧PrestoDBで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Trino代替 OSS フェデレーテッドSQL 分散クエリ データレイク マルチデータソース Presto Starburst代替',
+    tagline:
+        'Trino・OSSフェデレーテッドSQL・高速分散クエリ・データレイク・マルチデータソース・旧PrestoDBで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Trino代替 OSS フェデレーテッドSQL 分散クエリ データレイク マルチデータソース Presto Starburst代替',
     accentColor: Color(0xFFDD00A1),
     painPoints: [
       '無料(OSS)・クエリエンジン特化・個人のライフ管理は別途必要',
@@ -56089,8 +56103,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'apache-beam': const _CompetitorInfo(
     name: 'Apache Beam',
     emoji: '🌟',
-    tagline: 'Apache Beam・統合バッチ/ストリームモデル・ポータブルパイプライン・Dataflow/Flink/Spark対応・Python/Java/Goで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Apache Beam代替 統合バッチ ストリーム ポータブルパイプライン Dataflow Flink Spark Python Java Go',
+    tagline:
+        'Apache Beam・統合バッチ/ストリームモデル・ポータブルパイプライン・Dataflow/Flink/Spark対応・Python/Java/Goで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Apache Beam代替 統合バッチ ストリーム ポータブルパイプライン Dataflow Flink Spark Python Java Go',
     accentColor: Color(0xFF4A90D9),
     painPoints: [
       '無料(OSS)・バッチ/ストリーム処理特化・個人のライフ管理は別途必要',
@@ -56123,8 +56139,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'apache-hive': const _CompetitorInfo(
     name: 'Apache Hive',
     emoji: '🐝',
-    tagline: 'Apache Hive・HiveQL・Hadoopデータウェアハウス・大規模バッチ処理・HDFS・メタストア・ETL処理で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Apache Hive代替 HiveQL Hadoop データウェアハウス バッチ処理 HDFS メタストア ETL Presto代替 Spark SQL代替',
+    tagline:
+        'Apache Hive・HiveQL・Hadoopデータウェアハウス・大規模バッチ処理・HDFS・メタストア・ETL処理で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Apache Hive代替 HiveQL Hadoop データウェアハウス バッチ処理 HDFS メタストア ETL Presto代替 Spark SQL代替',
     accentColor: Color(0xFFFDBE00),
     painPoints: [
       '無料(OSS)・Hadoop特化・個人のライフ管理は別途必要',
@@ -56150,6 +56168,330 @@ final _competitorInfo = <String, _CompetitorInfo>{
       _FeatureComparison(
         feature: '完全無料',
         competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'google-bigquery': const _CompetitorInfo(
+    name: 'Google BigQuery',
+    emoji: '🔢',
+    tagline:
+        'Google BigQuery・サーバーレスデータウェアハウス・BQML・ペタバイト規模・SQL分析・Google Cloud統合で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Google BigQuery代替 サーバーレス データウェアハウス BQML ペタバイト SQL分析 Google Cloud Snowflake代替 Redshift代替',
+    accentColor: Color(0xFF4285F4),
+    painPoints: [
+      '有料(従量課金)・データウェアハウス特化・個人のライフ管理は別途必要',
+      'Google Cloud特化・個人のAI管理は別途必要',
+      'Snowflake/Redshift/Synapse との比較でGCP以外環境・コスト予測・リアルタイム処理が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'サーバーレスDWH・BQML・ペタバイト規模・SQL分析・Google Cloud統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'amazon-redshift': const _CompetitorInfo(
+    name: 'Amazon Redshift',
+    emoji: '🔴',
+    tagline:
+        'Amazon Redshift・クラウドデータウェアハウス・列指向・RA3・Spectrum・AWS統合・大規模分析で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Amazon Redshift代替 クラウドDWH 列指向 RA3 Spectrum AWS統合 大規模分析 Snowflake代替 BigQuery代替',
+    accentColor: Color(0xFFFF4B00),
+    painPoints: [
+      '有料・AWS特化・個人のライフ管理は別途必要',
+      'データアナリスト特化・個人のAI管理は別途必要',
+      'Snowflake/BigQuery/Synapse との比較でAWS以外環境・マルチクラウド・管理複雑さが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'クラウドDWH・列指向・RA3・Spectrum・AWS統合・大規模分析',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'azure-synapse': const _CompetitorInfo(
+    name: 'Azure Synapse Analytics',
+    emoji: '🔷',
+    tagline:
+        'Azure Synapse Analytics・統合分析サービス・Spark・SQLプール・パイプライン・Power BI統合・Microsoft Fabricで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Azure Synapse代替 統合分析 Spark SQLプール パイプライン Power BI Microsoft Fabric Snowflake代替 BigQuery代替',
+    accentColor: Color(0xFF0078D4),
+    painPoints: [
+      '有料・Azure特化・個人のライフ管理は別途必要',
+      'データエンジニア特化・個人のAI管理は別途必要',
+      'Snowflake/BigQuery/Databricks との比較でAzure以外環境・コスト予測・学習コストが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '統合分析・Spark・SQLプール・パイプライン・Power BI統合・Microsoft Fabric',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'delta-lake': const _CompetitorInfo(
+    name: 'Delta Lake',
+    emoji: '🏔️',
+    tagline:
+        'Delta Lake・OSSレイクハウス・ACID準拠・Time Travel・スキーマエンフォース・Databricks・Apache Sparkで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Delta Lake代替 OSS レイクハウス ACID Time Travel スキーマ Databricks Apache Spark Iceberg代替 Hudi代替',
+    accentColor: Color(0xFF00ADD8),
+    painPoints: [
+      '無料(OSS)・レイクハウス特化・個人のライフ管理は別途必要',
+      'データエンジニア特化・個人のAI管理は別途必要',
+      'Apache Iceberg/Hudi との比較でエコシステム多様性・マルチエンジン対応・標準化が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'OSSレイクハウス・ACID準拠・Time Travel・スキーマエンフォース・Spark統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'apache-iceberg': const _CompetitorInfo(
+    name: 'Apache Iceberg',
+    emoji: '🧊',
+    tagline:
+        'Apache Iceberg・オープンテーブルフォーマット・マルチエンジン対応・Time Travel・スキーマ進化・大規模テーブル管理で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Apache Iceberg代替 オープンテーブル マルチエンジン Time Travel スキーマ進化 大規模テーブル Delta Lake代替 Hudi代替',
+    accentColor: Color(0xFF37474F),
+    painPoints: [
+      '無料(OSS)・テーブルフォーマット特化・個人のライフ管理は別途必要',
+      'データエンジニア特化・個人のAI管理は別途必要',
+      'Delta Lake/Hudi との比較でDatabricksエコシステム・リアルタイム更新・ストリーミングが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'オープンテーブルフォーマット・マルチエンジン・Time Travel・スキーマ進化',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'apache-hudi': const _CompetitorInfo(
+    name: 'Apache Hudi',
+    emoji: '🌀',
+    tagline:
+        'Apache Hudi・増分処理・ACID・Upsert/Delete・ストリーミング取り込み・インクリメンタル処理・Uber発のOSSで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Apache Hudi代替 増分処理 ACID Upsert Delete ストリーミング取り込み インクリメンタル Uber OSS Delta Lake代替',
+    accentColor: Color(0xFFF57C00),
+    painPoints: [
+      '無料(OSS)・増分処理特化・個人のライフ管理は別途必要',
+      'データエンジニア特化・個人のAI管理は別途必要',
+      'Delta Lake/Iceberg との比較でエコシステム規模・クラウド統合・ツール成熟度が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '増分処理・ACID・Upsert/Delete・ストリーミング取り込み・インクリメンタル',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'firebolt': const _CompetitorInfo(
+    name: 'Firebolt',
+    emoji: '🔥',
+    tagline:
+        'Firebolt・次世代クラウドDWH・超高速分析・インデックス最適化・コスト効率・ゲーム/アドテク特化で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Firebolt代替 次世代クラウドDWH 超高速分析 インデックス最適化 コスト効率 ゲーム アドテク Snowflake代替 BigQuery代替',
+    accentColor: Color(0xFFFF6B35),
+    painPoints: [
+      '有料・分析DWH特化・個人のライフ管理は別途必要',
+      'データアナリスト特化・個人のAI管理は別途必要',
+      'Snowflake/BigQuery/ClickHouse との比較でエコシステム規模・汎用性・コネクタが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '次世代クラウドDWH・超高速分析・インデックス最適化・コスト効率',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'duckdb': const _CompetitorInfo(
+    name: 'DuckDB',
+    emoji: '🦆',
+    tagline:
+        'DuckDB・インプロセス分析DB・列指向・SQL・無料OSS・Parquet/CSV対応・Python/R統合・高速ローカル分析で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'DuckDB代替 インプロセス 分析DB 列指向 SQL OSS Parquet CSV Python R 高速分析 SQLite代替',
+    accentColor: Color(0xFFFFB600),
+    painPoints: [
+      '無料(OSS)・分析DB特化・個人のライフ管理は別途必要',
+      '技術者向け・個人のAI管理は別途必要',
+      'SQLite/PostgreSQL/BigQuery との比較で分散処理・大規模クラスタ・永続ストレージが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'インプロセス分析DB・列指向・SQL・Parquet/CSV・Python/R・高速ローカル分析',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'clickhouse': const _CompetitorInfo(
+    name: 'ClickHouse',
+    emoji: '🖱️',
+    tagline:
+        'ClickHouse・超高速OLAP・列指向DB・リアルタイム分析・OSS・スケーラブル・観測性ユースケースで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'ClickHouse代替 OLAP 列指向 リアルタイム分析 OSS スケーラブル 観測性 BigQuery代替 Druid代替',
+    accentColor: Color(0xFFFFCC00),
+    painPoints: [
+      '無料(OSS)/有料(Cloud)・OLAP特化・個人のライフ管理は別途必要',
+      'データエンジニア特化・個人のAI管理は別途必要',
+      'BigQuery/Snowflake/Druid との比較でDML対応・結合処理・マネージドサービスが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '超高速OLAP・列指向DB・リアルタイム分析・OSS・スケーラブル',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
         weHave: true,
       ),
     ],
