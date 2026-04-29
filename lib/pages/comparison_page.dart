@@ -21623,6 +21623,312 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'warp-terminal': const _CompetitorInfo(
+    name: 'Warp Terminal',
+    emoji: '⚡',
+    tagline: 'AI搭載次世代ターミナル・コマンド補完・チームコラボで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Warp Terminal代替 AIターミナル コマンドライン AI補完 開発者ツール',
+    accentColor: Color(0xFF01F2C0),
+    painPoints: [
+      '無料プランあり/チーム月額20ドル〜・ターミナル以外の個人ライフ管理は別途必要',
+      'AI搭載ターミナル特化でデベロッパー向け設計・個人管理は別途必要',
+      'iTerm2やzshと比較してLinux/Windowsの完全サポートがない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AIコマンド補完・Warp Drive・ブロックUI・チームコラボ・タイムトラベル',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'prismic': const _CompetitorInfo(
+    name: 'Prismic',
+    emoji: '📐',
+    tagline: 'ヘッドレスCMS・スライスベースコンテンツ管理で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Prismic代替 ヘッドレスCMS コンテンツ管理 スライス Next.js JAMstack',
+    accentColor: Color(0xFF5163BA),
+    painPoints: [
+      '無料プランあり/有料月額7ドル〜・CMS以外の個人ライフ管理は別途必要',
+      'ヘッドレスCMS特化でエンジニア向け設計・個人管理は別途必要',
+      'ContentfulやSanityと比較してAPIクエリの柔軟性が低い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'スライスマシン・ビジュアルビルダー・型安全・Next.js/Nuxt統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'webiny': const _CompetitorInfo(
+    name: 'Webiny',
+    emoji: '🌐',
+    tagline: 'サーバーレスOSSヘッドレスCMS・自己ホスト可能で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Webiny代替 サーバーレスCMS OSS ヘッドレス AWS セルフホスト',
+    accentColor: Color(0xFFFA5A28),
+    painPoints: [
+      'クラウド版月額9ドル〜/セルフホストはAWS環境構築が必要',
+      'ヘッドレスCMS特化でエンジニア向け設計・個人のライフ管理は別途必要',
+      'PrismicやContentfulと比較してサードパーティプラグインが少ない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'サーバーレス・GraphQL・ページビルダー・ファイルマネージャ・OSS',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'backblaze': const _CompetitorInfo(
+    name: 'Backblaze',
+    emoji: '☁️',
+    tagline: '低コストクラウドバックアップ・B2ストレージで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Backblaze代替 クラウドバックアップ 低コスト B2ストレージ PC自動バックアップ',
+    accentColor: Color(0xFFE5232A),
+    painPoints: [
+      '個人PC無制限バックアップ月額9ドル〜・バックアップ以外の個人管理は別途必要',
+      'クラウドバックアップ特化でストレージ向け設計・AI支援管理は別途必要',
+      'AWSと比較して法人向けSLA・コンプライアンス機能が弱い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '無制限PC/Macバックアップ・B2 S3互換・バージョン管理・30日保持',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'tableplus': const _CompetitorInfo(
+    name: 'TablePlus',
+    emoji: '🗄️',
+    tagline: 'モダンなデータベースGUI・マルチDB対応・Mac/Windowsで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'TablePlus代替 データベースGUI SQLクライアント PostgreSQL MySQL Mac',
+    accentColor: Color(0xFF007AFF),
+    painPoints: [
+      '買い切り69ドル〜/サブスク月額6ドル〜・DB管理以外の個人ライフ管理は別途必要',
+      'DB GUI特化でデベロッパー向け設計・個人のライフ管理は別途必要',
+      'DataGripと比較してIDEとの統合やコード補完が弱い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'マルチDB対応・ネイティブUI・SSH/TLS・フィルタ・クエリ履歴',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'dbeaver': const _CompetitorInfo(
+    name: 'DBeaver',
+    emoji: '🦫',
+    tagline: 'OSS万能データベースGUI・100+ DB対応・Java製で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'DBeaver代替 OSS データベースGUI SQLクライアント 万能 無料 Java',
+    accentColor: Color(0xFF5B6ABF),
+    painPoints: [
+      'コミュニティ版無料/Pro版月額20ドル〜・Java依存でUIが重い',
+      'DB GUI特化でデベロッパー向け設計・個人のライフ管理は別途必要',
+      'TablePlusと比較してUIの応答速度とモダン感が劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '100+DB対応・ERダイアグラム・データ転送・プラグイン・OSS',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'insomnia': const _CompetitorInfo(
+    name: 'Insomnia',
+    emoji: '😴',
+    tagline: 'REST/GraphQL/gRPC APIクライアント・Kong製OSSで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Insomnia代替 APIクライアント REST GraphQL gRPC テスト OSS Postman代替',
+    accentColor: Color(0xFF7400E0),
+    painPoints: [
+      '無料版あり/Enterprise月額19ドル〜・API管理以外の個人ライフ管理は別途必要',
+      'APIクライアント特化でデベロッパー向け設計・個人管理は別途必要',
+      'Postmanと比較してチームコラボ・ドキュメント生成機能が弱い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'REST/GraphQL/gRPC/WebSocket・環境変数・テスト・SSO・OSS',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'cypress': const _CompetitorInfo(
+    name: 'Cypress',
+    emoji: '🌲',
+    tagline: 'JavaScriptフロントエンドE2Eテストフレームワークで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Cypress代替 E2Eテスト JavaScript フロントエンドテスト ブラウザ自動化',
+    accentColor: Color(0xFF00BF88),
+    painPoints: [
+      '無料版あり/Cloud月額75ドル〜・E2Eテスト以外の個人ライフ管理は別途必要',
+      'E2Eテスト特化でエンジニア向け設計・個人のライフ管理は別途必要',
+      'Playwrightと比較してマルチブラウザ並列実行サポートが弱い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'リアルタイムリロード・タイムトラベルデバッグ・コンポーネントテスト',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'k6': const _CompetitorInfo(
+    name: 'k6 (Grafana k6)',
+    emoji: '🔬',
+    tagline: 'Grafana製OSSロードテスト・パフォーマンス検証ツールで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'k6代替 ロードテスト パフォーマンステスト 負荷テスト Grafana JavaScript',
+    accentColor: Color(0xFF7D64FF),
+    painPoints: [
+      '無料版あり/Grafana Cloud月額49ドル〜・テスト以外の個人ライフ管理は別途必要',
+      'ロードテスト特化でエンジニア向け設計・個人のライフ管理は別途必要',
+      'JMeterと比較してGUIがなくコードベースアプローチのみ',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'JavaScript/TypeScript・分散実行・Grafana統合・CI/CD統合・OSS',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
