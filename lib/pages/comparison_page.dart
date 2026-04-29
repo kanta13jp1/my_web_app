@@ -17339,6 +17339,312 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'backlog': const _CompetitorInfo(
+    name: 'Backlog',
+    emoji: '📋',
+    tagline: 'ヌーラボ製日本語プロジェクト管理＋Gitで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Backlog代替 プロジェクト管理 課題管理 Git Wiki 日本語',
+    accentColor: Color(0xFF54C5C6),
+    painPoints: [
+      '月額2,970円〜・ユーザー数上限が低く成長時にコスト増',
+      'プロジェクト管理特化で個人の財務・AI会話・習慣管理は別途必要',
+      'JiraやAsanaと比較してグローバル連携・英語UI設計が弱い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '課題管理・ガントチャート・Wiki・Git・バーンダウン',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'kintone': const _CompetitorInfo(
+    name: 'kintone',
+    emoji: '🔧',
+    tagline: 'サイボウズのノーコード業務アプリ構築で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'kintone代替 ノーコード 業務アプリ サイボウズ 日本語',
+    accentColor: Color(0xFFE03E2D),
+    painPoints: [
+      '月額1,500円/人〜・業務システム構築に担当者の学習コストが高い',
+      '業務アプリ特化で個人のライフ管理・財務・AI対話は別途必要',
+      'カスタマイズはJavaScriptが必要で非エンジニアには限界がある',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ノーコードDB・ワークフロー・プラグイン・API・外部連携',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'eight': const _CompetitorInfo(
+    name: 'Eight',
+    emoji: '💼',
+    tagline: 'Sansanの個人向け名刺管理アプリで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Eight代替 名刺管理 人脈管理 ネットワーキング 連絡先',
+    accentColor: Color(0xFFFF7043),
+    painPoints: [
+      'プレミアムは月額800円〜・無料版はAI読み取り回数制限あり',
+      '名刺・人脈管理特化で個人の財務・習慣・AI管理は別途必要',
+      'Sansan連携はビジネス版が必要で個人用途との統合が複雑',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AI名刺読取・タイムライン・メッセージ・経歴確認・繋がり',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'quickbooks': const _CompetitorInfo(
+    name: 'QuickBooks',
+    emoji: '📒',
+    tagline: 'Intuit中小企業向けクラウド会計ソフトで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'QuickBooks代替 会計ソフト 確定申告 中小企業 フリーランス',
+    accentColor: Color(0xFF2CA01C),
+    painPoints: [
+      '月額30ドル〜・日本語/日本税制に非対応で国内利用に制限',
+      '会計・帳簿特化で個人のAI管理・習慣・目標設定は別途必要',
+      'Xeroと比較して価格が高く学習コストも高め',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '帳簿・請求書・給与・税務レポート・銀行自動同期',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'xero': const _CompetitorInfo(
+    name: 'Xero',
+    emoji: '📊',
+    tagline: 'クラウド会計・帳簿管理(中小企業向け)で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Xero代替 クラウド会計 中小企業 帳簿 銀行連携',
+    accentColor: Color(0xFF13B5EA),
+    painPoints: [
+      '月額13ドル〜・日本語非対応・日本税制への対応が限定的',
+      '会計特化で個人のライフ管理・AI対話・習慣管理は別途必要',
+      'QuickBooksと比較してモバイルアプリの機能が弱い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '帳簿・請求書・給与・在庫・プロジェクト・1,000+統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'freshbooks': const _CompetitorInfo(
+    name: 'FreshBooks',
+    emoji: '📗',
+    tagline: 'フリーランス・自営業向けクラウド会計で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'FreshBooks代替 フリーランス会計 請求書 時間追跡 経費管理',
+    accentColor: Color(0xFFFF4B5C),
+    painPoints: [
+      '月額17ドル〜・クライアント数上限があり成長時に価格が急増',
+      '会計・請求書特化で個人の目標・習慣・AI会話は別途必要',
+      '日本語非対応・日本の消費税・インボイス制度に非対応',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '請求書・経費追跡・時間計測・プロジェクト・レポート',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'cloud-sign': const _CompetitorInfo(
+    name: 'クラウドサイン',
+    emoji: '✍️',
+    tagline: '弁護士ドットコムの日本発電子署名サービスで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'クラウドサイン代替 電子署名 契約書 電子契約 日本語 法的効力',
+    accentColor: Color(0xFF003C7E),
+    painPoints: [
+      '月額10,000円〜・送信件数超過で従量課金が発生',
+      '電子署名特化で個人の財務・AI管理・習慣は別途必要',
+      'DocuSignと比較して海外企業との署名に対応しにくい',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '電子署名・契約書管理・タイムスタンプ・IP認証・Slack連携',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'adobe-sign': const _CompetitorInfo(
+    name: 'Adobe Acrobat Sign',
+    emoji: '📝',
+    tagline: 'AdobeのエンタープライズPDF電子署名で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Adobe Sign代替 Acrobat Sign 電子署名 PDF 契約書',
+    accentColor: Color(0xFFFF0000),
+    painPoints: [
+      '月額23ドル〜・Acrobat Pro必須のため実質コストが高い',
+      '電子署名・PDF特化で個人のライフ管理・AI管理は別途必要',
+      'DocuSignと比較して操作が複雑でAPIカスタマイズが難しい',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'PDF署名・一括送信・ワークフロー自動化・コンプライアンス',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'signnow': const _CompetitorInfo(
+    name: 'SignNow',
+    emoji: '🖊️',
+    tagline: 'airSlate電子署名・ドキュメントワークフローで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'SignNow代替 電子署名 ドキュメント自動化 DocuSign代替 安い',
+    accentColor: Color(0xFF00A651),
+    painPoints: [
+      '月額8ドル〜・高度な自動化はairSlateプランが必要・割高になる',
+      '電子署名特化で個人の財務・AI管理・習慣は別途必要',
+      'DocuSignと比較してテンプレート数・統合数が少ない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '電子署名・テンプレート・チームコラボ・API・ワークフロー',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
