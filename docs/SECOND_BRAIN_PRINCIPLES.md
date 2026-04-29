@@ -178,7 +178,7 @@ Claude Code + Obsidian の PKM ベストプラクティス (Atomic Notes / Linki
 | #1 階層型分離 | 部分 ✅ (memory/Layer2 + CLAUDE.md/Layer3) | Layer1 (immutable source) 明示なし |
 | #2 Autonomous Ingest & Linking | ❌ (新 file 単体追加 / 双方向リンクなし) | `[[file]]` link 慣習未定着 |
 | #3 Master Index + Daily Log | 部分 ✅ (MEMORY.md = index あり / log なし) | `memory/log.md` 未作成 |
-| #4 定期 Lint + 孤児統合 | △ (consolidate-memory skill ある / 自動 lint なし) | `--lint` flag 未実装 |
+| #4 定期 Lint + 孤児統合 | ✅ Done | `consolidate-memory --lint` PS#1 実装済 — orphan/duplicate/contradiction 3 検出器 + `lint_report_YYYY_MM.md` 自動生成 |
 | #5 Query 永続化 | △ (cross-instance-pr / project memory ある / query artifact 未分類) | `memory/query_artifact_*` カテゴリなし |
 | #6 Mega-Prompt 生成 | △ (CLAUDE.md + inject-rules で context あり) | megaprompt artifact 未保存 |
 | #7 Hybrid Search via MCP | △ (claude-mem SQLite ベクトルあり / MCP 未公開) | memory-search-hub EF 未実装 |
@@ -218,11 +218,11 @@ Claude Code + Obsidian の PKM ベストプラクティス (Atomic Notes / Linki
 | 2026-04-29 | Win版#132 part 70 | Codex#2 へ `memory-search-hub` EF cross-instance-pr (#7 委譲) | (#7 完成は Codex#2 受領後) | 3.0/7 (PR 受領で 4.0/7 想定) |
 | 2026-04-29 | Win版#132 part 71 | `query_artifact_TEMPLATE.md` 新規 + 第 1 実例 `query_artifact_20260429_hybrid_search_tradeoff.md` (#5 dogfood) | #5 (テンプレ + 1 実例 + 双方向 link) | 3.0 → **3.5/7** |
 | 2026-04-29 | Win版#132 part 72 | `docs/CORE_LEAF_BOUNDARY.md` 新規 (4 Tier 統合表現 + memory/ 内部 Tier マッピング) — VIBE_CODING #1 + SECOND_BRAIN #1 同時 dogfood (1 doc 2 軸押上 第 1 例) | #1 階層型分離 | 3.5 → **4.0/7** |
+| 2026-04-29 | PS#1 S4 | `~/.claude/skills/consolidate-memory/lint.py` + `SKILL.md` 実装 — orphan (MEMORY.md 未参照) / duplicate (同 prefix 3+件/90日) / contradiction (keyword 3-10件) 3 検出器 + `memory/lint_report_YYYY_MM.md` 自動生成。テスト実行: 928 files / orphan 881 / duplicate 62 groups | #4 定期 Lint + 孤児統合 | 4.0 → **4.5/7** |
 
-**次回ターゲット**:
+**次回ターゲット** (baseline 4.5/7):
 - #2 `[[link]]` 慣習定着: 全 memory file の crosslink audit → Win版 territory
-- #3 `memory/log.md` 新規作成 + 既存 part 47-67 を時系列で append → Win版 territory
-- #4 `consolidate-memory --lint` 実装 → PS#1 cross-instance-pr 候補
+- #3 `memory/log.md` 運用強化 (既存 part 47-67 backfill) → Win版 territory
 - #5 `memory/query_artifact_*` カテゴリ + テンプレ → Win版 territory
 - #6 megaprompt artifact 保存 (= 各 instance 起動時) → 12 fleet 共通 routine
 - #7 `memory-search-hub` EF skeleton → Codex#2 cross-instance-pr 候補
