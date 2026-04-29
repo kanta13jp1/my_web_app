@@ -24819,3 +24819,10 @@ SECOND_BRAIN 4.5/7 + VIBE 7.0/7 + PLATFORM 4.0/7 = 14.5/21 + cross-instance-pr �
 - Collision Check 3 failed 検知 (ps4 vs vscode_s16/ps5_s107/ps5_s108)
 - 160000: vscode_s16を160100 / 161500: ps5_s107を161600 / 163000: ps5_s108を163100
 - 1119 migration files / 1119 unique timestamps — clean (c457fc21a)
+
+## 2026-04-29 PS#6 S130 — jockeyTrainerComboBonus (騎手×調教師コンビ補正) confidence 46 terms
+
+- jockeyTrainerComboBonus: 両者≥15%=+2%(エリートコンビ)/両者≥10%=+1%(好コンビ)/片方のみ=0
+- jockeyWinRateBonus/trainerWinRateBonusと差別化した同時好成績シナジー評価
+- confidence formula: 46 terms体制確立
+- migration: 20260429099500_seed_achievements_ps6_s130.sql
