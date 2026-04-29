@@ -43233,6 +43233,312 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'adyen': const _CompetitorInfo(
+    name: 'Adyen',
+    emoji: '💳',
+    tagline: 'エンタープライズ決済プラットフォーム・オムニチャネル・100+決済方法・リアルタイム分析で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Adyen代替 決済処理 オムニチャネル エンタープライズ Stripe代替 Braintree代替 グローバル決済',
+    accentColor: Color(0xFF0ABF53),
+    painPoints: [
+      '手数料あり・決済処理特化・個人のライフ管理は別途必要',
+      'フィンテックインフラ特化・個人のAI管理は別途必要',
+      'Stripe/Braintree/Squareと比較して中小企業向け設定複雑さ・最低取引量要件が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '100+決済方法・オムニチャネル・リスク管理・リアルタイム分析・Issuing',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'braintree': const _CompetitorInfo(
+    name: 'Braintree',
+    emoji: '🌿',
+    tagline: 'PayPal傘下・開発者向け決済API・Venmo/PayPal統合・Vault・不正検知で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Braintree代替 決済API PayPal Venmo統合 Stripe代替 開発者向け 決済処理',
+    accentColor: Color(0xFF22A7F0),
+    painPoints: [
+      '手数料あり(2.59%+0.49ドル)・決済特化・個人のライフ管理は別途必要',
+      '決済インフラ特化・個人のAI管理は別途必要',
+      'Stripe/Adyen/Square Paymentsと比較してUI/UX・ドキュメント品質・Webhook設計が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Venmo/PayPal・Vault・不正検知・サブスク・Marketplace分割払い',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'razorpay': const _CompetitorInfo(
+    name: 'Razorpay',
+    emoji: '🪓',
+    tagline: 'インド決済ゲートウェイ・100+決済方法・UPI/ネットバンキング・Payroll・RazorpayXで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Razorpay代替 インド決済 UPI ネットバンキング Paytm代替 PayU代替 スタートアップ',
+    accentColor: Color(0xFF072654),
+    painPoints: [
+      '手数料あり・インド市場特化・個人のライフ管理は別途必要',
+      '決済/フィンテック特化・個人のAI管理は別途必要',
+      'Paytm/PayU/CCAvenueと比較して国際展開・コンシューマー向けアプリが限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '100+決済方法・UPI・Payroll・RazorpayX口座・サブスク・不正検知',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'klarna': const _CompetitorInfo(
+    name: 'Klarna',
+    emoji: '🛍️',
+    tagline: 'スウェーデンBNPL・4回分割払い・スムーズショッピング・Klarna Card・AI価格比較で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Klarna代替 後払い BNPL 4回払い Afterpay代替 Affirm代替 Paidy代替 ショッピング',
+    accentColor: Color(0xFFFFB3C7),
+    painPoints: [
+      '無料(延滞料あり)・BNPL/ショッピング特化・個人のライフ管理は別途必要',
+      '購買/信用特化・個人のAI管理は別途必要',
+      'Afterpay/Affirm/Sezzleと比較して信用影響・延滞料・ユーザー過剰支出リスクが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '4回無利子・30日後払い・Klarna Card・AI価格比較・返品サポート',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'afterpay': const _CompetitorInfo(
+    name: 'Afterpay',
+    emoji: '🛒',
+    tagline: 'Block傘下・4回無利子分割・即承認・ファッション/美容特化・Clearpayで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Afterpay代替 後払い BNPL 4回払い Klarna代替 Sezzle代替 Block Square 分割払い',
+    accentColor: Color(0xFFB2FCE4),
+    painPoints: [
+      '無料(延滞料あり)・ショッピング特化・個人のライフ管理は別途必要',
+      'BNPL特化・個人のAI管理は別途必要',
+      'Klarna/Affirm/Zipと比較して店舗数・金融アドバイス・信用評価報告が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '4回無利子・即承認・Clearpay(欧州)・250k+加盟店・ファッション特化',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'affirm': const _CompetitorInfo(
+    name: 'Affirm',
+    emoji: '✅',
+    tagline: '透明な分割ローン・隠れ手数料なし・0%APR選択可・Amazon/Shopify統合で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Affirm代替 BNPL ローン 0%金利 透明 Klarna代替 Afterpay代替 Amazon分割払い',
+    accentColor: Color(0xFF060809),
+    painPoints: [
+      '無料/金利あり(0-36% APR)・BNPL特化・個人のライフ管理は別途必要',
+      'ショッピング信用特化・個人のAI管理は別途必要',
+      'Klarna/Afterpay/Zipと比較して承認率・高額購入向け・金利の透明度が問題な場合あり',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '隠れ手数料なし・0%-36% APR・Amazon統合・Debit+・Savings口座',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'venmo': const _CompetitorInfo(
+    name: 'Venmo',
+    emoji: '💙',
+    tagline: 'P2P送金・ソーシャルフィード・Venmoカード・ビジネス決済・PayPal統合で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Venmo代替 送金 割り勘 PayPal Cash App代替 Zelle代替 P2P スプリット',
+    accentColor: Color(0xFF008CFF),
+    painPoints: [
+      '無料(カード手数料あり)・送金特化・個人のライフ管理は別途必要',
+      'P2P送金特化・個人のAI管理は別途必要',
+      'Cash App/Zelle/PayPalと比較して国際送金・暗号資産・銀行統合の深度が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'P2P送金・ソーシャルフィード・Venmoカード・ビジネス・暗号資産・BNPL',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'cash-app': const _CompetitorInfo(
+    name: 'Cash App',
+    emoji: '💵',
+    tagline: 'Block製P2P送金・Bitcoin売買・株投資・Cashカード・Boosts割引で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Cash App代替 送金 Bitcoin株 Boosts Venmo代替 Zelle代替 Block Square 若者金融',
+    accentColor: Color(0xFF00D632),
+    painPoints: [
+      '無料(即時送金手数料あり)・P2P+投資特化・個人のライフ管理は別途必要',
+      '送金/投資特化・個人のAI管理は別途必要',
+      'Venmo/Zelle/PayPalと比較して社会的機能・中高年層への普及・国際対応が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'P2P送金・Bitcoin・株投資・Cashカード・Boosts・Business・税金書類',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'zelle': const _CompetitorInfo(
+    name: 'Zelle',
+    emoji: '⚡',
+    tagline: '銀行間P2P送金・数分で着金・主要銀行アプリ統合・無料・米国限定で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Zelle代替 銀行間送金 即時送金 無料 Venmo代替 Cash App代替 アメリカ 割り勘',
+    accentColor: Color(0xFF6D1ED4),
+    painPoints: [
+      '完全無料・銀行送金特化・個人のライフ管理は別途必要',
+      '送金特化・個人のAI管理は別途必要',
+      'Venmo/Cash App/PayPalと比較して詐欺保護・ソーシャル機能・投資機能が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '数分着金・銀行アプリ統合・無料・1500+金融機関対応・中小企業対応',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
