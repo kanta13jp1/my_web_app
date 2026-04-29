@@ -24183,6 +24183,16 @@ Bundle 第 1 完成例 = Codex#2 territory が Bundle 形式に対応可能で�
 - T-1 第166弾: Flutter × Dart 3 完全ガイド — Pattern Matching・Sealed Classes・Records
   - https://dev.to/kanta13jp1/flutter-x-dart-3-complete-guide-pattern-matching-sealed-classes-records-50bp
 
+### PS版#2 S87 T-1 Phase36 全4弾完結 (2026-04-29) — dev.to 累計174本
+- T-1 第171弾: Flutter Web レンダリング完全ガイド — CanvasKit vs HTML renderer の使い分け
+  - https://dev.to/kanta13jp1/flutter-web-rendering-complete-guide-canvaskit-vs-html-renderer-3jbe
+- T-1 第172弾: Supabase Realtime 完全ガイド — リアルタイムデータ同期の全パターン
+  - https://dev.to/kanta13jp1/supabase-realtime-complete-guide-all-patterns-for-real-time-data-sync-3207
+- T-1 第173弾: Build in Public 完全ガイド — インディー開発者がSNSで成長を加速する方法
+  - https://dev.to/kanta13jp1/build-in-public-complete-guide-how-indie-devs-accelerate-growth-on-social-media-2l19
+- T-1 第174弾: Flutter GoRouter 完全ガイド — Navigation 2.0 でルーティングを完全制御する
+  - https://dev.to/kanta13jp1/flutter-gorouter-complete-guide-full-control-over-navigation-20-i15
+
 ### PS版#2 S86 T-1 Phase35 全4弾完結 (2026-04-29) — dev.to 累計170本
 - T-1 第167弾: Flutter Flame ゲームエンジン完全ガイド — 2Dゲーム開発の基礎から実装まで
   - https://dev.to/kanta13jp1/flutter-flame-game-engine-complete-guide-2d-game-development-from-scratch-12dl
