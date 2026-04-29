@@ -14891,6 +14891,312 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'hey': const _CompetitorInfo(
+    name: 'Hey',
+    emoji: '📬',
+    tagline: 'Basecampの革命的メールクライアントで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Hey代替 メールクライアント 受信トレイ管理 Basecamp',
+    accentColor: Color(0xFFE63946),
+    painPoints: [
+      '年額99ドル固定・無料プランなし・試用14日のみ',
+      'メール管理特化で個人の財務・タスク・AI会話は別途必要',
+      'GmailやOutlookからの移行に独自思想への適応コストが高い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Imbox/スクリーナー/スレッド/スパイトラッカーブロック',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'spark': const _CompetitorInfo(
+    name: 'Spark',
+    emoji: '⚡',
+    tagline: 'Readdleのスマートチームメールで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Spark代替 スマートメール チームメール AI受信トレイ',
+    accentColor: Color(0xFFE2462C),
+    painPoints: [
+      'チーム機能は月額14ドル/人〜・個人無料版は機能制限あり',
+      'メール管理ツール特化で財務・習慣・目標管理は別途必要',
+      'Android版機能がiOS版より少なくクロスプラットフォームに難がある',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AIメール優先・スマート通知・共有下書き・スヌーズ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'front': const _CompetitorInfo(
+    name: 'Front',
+    emoji: '🗂️',
+    tagline: 'チーム共有受信トレイ・顧客コミュニケーションHubで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Front代替 共有受信トレイ チームメール カスタマーサポート',
+    accentColor: Color(0xFFF25F4C),
+    painPoints: [
+      '月額19ドル/人〜・小規模チームには割高',
+      'チーム受信トレイ特化で個人の財務・習慣・AI対話は別途必要',
+      'IntercomやZendeskと機能重複しエコシステム選定が複雑',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '共有受信トレイ・チームチャット・AI下書き・SLA管理',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'softr': const _CompetitorInfo(
+    name: 'Softr',
+    emoji: '🧱',
+    tagline: 'Airtable/スプレッドシートからノーコードアプリ構築で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Softr代替 ノーコード Airtable アプリ構築 社内ツール',
+    accentColor: Color(0xFF6C63FF),
+    painPoints: [
+      '月額59ドル〜・無料プランはブランディング制限・ユーザー上限あり',
+      'Airtable/Googleシート依存設計でデータ移行コストが高い',
+      'デザインカスタマイズが限られWebflowほどの表現力はない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ノーコードApp構築・メンバーポータル・リストビュー・フォーム',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'glide': const _CompetitorInfo(
+    name: 'Glide',
+    emoji: '📲',
+    tagline: 'スプレッドシートからノーコードモバイルAppで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Glide代替 ノーコード スプレッドシート モバイルアプリ',
+    accentColor: Color(0xFF7C4DFF),
+    painPoints: [
+      '月額49ドル〜・無料プランは500行/アプリ上限で実用が難しい',
+      'Googleシート/Excel依存で大量データ処理に限界がある',
+      '個人ライフ管理・財務・AI対話機能は含まれない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'スプレッドシートApp化・PWA・AI列・ユーザー認証',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'adalo': const _CompetitorInfo(
+    name: 'Adalo',
+    emoji: '🔧',
+    tagline: 'ノーコードモバイル+Webアプリビルダーで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Adalo代替 ノーコード モバイルアプリ ネイティブアプリ',
+    accentColor: Color(0xFFFF5733),
+    painPoints: [
+      '月額50ドル〜・ネイティブアプリ公開には上位プランが必要',
+      'パフォーマンスが重いリストや複雑なロジックで低下しがち',
+      '個人の財務管理・AIアシスタント・習慣追跡は別途必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ドラッグ&ドロップ構築・iOS/Android公開・カスタムアクション',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'wave': const _CompetitorInfo(
+    name: 'Wave',
+    emoji: '🌊',
+    tagline: '小規模事業者向け無料会計ソフトで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Wave代替 無料会計 請求書 小規模事業 フリーランス',
+    accentColor: Color(0xFF1B998B),
+    painPoints: [
+      'ペイロールや決済機能は有料・日本語/日本円対応が限定的',
+      '会計・請求書特化で個人の目標・習慣・AI会話は別途必要',
+      'エンタープライズ機能が少なく成長フェーズで乗り換えが発生',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '無料会計・請求書・領収書スキャン・銀行同期',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'harvest': const _CompetitorInfo(
+    name: 'Harvest',
+    emoji: '🌾',
+    tagline: '時間追跡＋請求書自動化ツールで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Harvest代替 時間管理 工数管理 請求書 フリーランス',
+    accentColor: Color(0xFFFA6321),
+    painPoints: [
+      '月額12ドル/人〜・無料プランは1ユーザー/2プロジェクト限定',
+      '時間追跡・請求書特化で財務全般・習慣・AI管理は別途必要',
+      'レポートが基本的でBI連携には別途ツールが必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '時間追跡・請求書生成・予算管理・Slack統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'bonsai': const _CompetitorInfo(
+    name: 'Bonsai',
+    emoji: '🌿',
+    tagline: 'フリーランス向けオールインワン業務管理で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Bonsai代替 フリーランス 契約書 請求書 時間管理',
+    accentColor: Color(0xFF00BFA5),
+    painPoints: [
+      '月額25ドル〜・フリーランス特化でサラリーマン・学生には過剰',
+      '契約書・提案書・請求書特化で個人ライフ管理・AI会話は別途必要',
+      '日本語対応なし・日本の法律・税制に非対応',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '契約書・提案書・請求書・時間追跡・税務レポート',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
