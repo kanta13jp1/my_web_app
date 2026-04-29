@@ -34070,6 +34070,313 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'cloudinary': const _CompetitorInfo(
+    name: 'Cloudinary',
+    emoji: '☁️',
+    tagline: 'クラウドメディア管理・画像/動画変換・CDN配信で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Cloudinary代替 画像管理 動画管理 CDN 画像変換 最適化 クラウドストレージ',
+    accentColor: Color(0xFF0075A4),
+    painPoints: [
+      '無料/月額89ドル〜・メディア管理特化・個人のライフ管理は別途必要',
+      '画像/動画CDN特化・個人のAI管理は別途必要',
+      'imgix/Imagekitと比較して価格帯が高め・小規模プロジェクトに過剰',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '画像/動画アップロード・自動変換・AI背景除去・CDN・DAM・SDK',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'imgix': const _CompetitorInfo(
+    name: 'imgix',
+    emoji: '🖼️',
+    tagline: 'リアルタイム画像処理・高速CDN配信・WebP自動変換で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'imgix代替 画像処理 CDN WebP変換 リアルタイム 画像最適化 Cloudinary代替',
+    accentColor: Color(0xFF00A4D4),
+    painPoints: [
+      '月額25ドル〜・画像CDN特化・個人のライフ管理は別途必要',
+      '画像変換/配信特化・個人のAI管理は別途必要',
+      'Cloudinaryと比較して動画・DAM機能が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'URL変換API・フォーマット自動選択・遅延読込・CDN・セキュリティ署名',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'imagekit': const _CompetitorInfo(
+    name: 'ImageKit',
+    emoji: '📷',
+    tagline: '画像/動画最適化CDN・リアルタイム変換・DAMで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'ImageKit代替 画像最適化 動画 CDN DAM リアルタイム変換 Cloudinary代替 imgix代替',
+    accentColor: Color(0xFF5D5DFF),
+    painPoints: [
+      '無料/月額49ドル〜・メディア最適化特化・個人のライフ管理は別途必要',
+      '画像/動画CDN特化・個人のAI管理は別途必要',
+      'Cloudinaryと比較してAI機能・エコシステムが限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '画像/動画変換・WebP/AVIF・AI背景除去・スマートトリミング・CDN・API',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'vultr': const _CompetitorInfo(
+    name: 'Vultr',
+    emoji: '⚡',
+    tagline: 'グローバルクラウドインフラ・高パフォーマンスVPS・ベアメタルで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Vultr代替 VPS クラウド インフラ ベアメタル DigitalOcean代替 高速SSD',
+    accentColor: Color(0xFF009BDE),
+    painPoints: [
+      '月額2.5ドル〜・クラウドインフラ特化・個人のライフ管理は別途必要',
+      'VPS/クラウド特化・個人のAI管理は別途必要',
+      'DigitalOcean/Linodeと比較してマネージドサービス・エコシステムが少ない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'VPS/ベアメタル/GPU/Kubernetes/ブロックストレージ・32リージョン・API',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'hetzner': const _CompetitorInfo(
+    name: 'Hetzner',
+    emoji: '🔧',
+    tagline: 'ヨーロッパ発の高コスパクラウドサーバー・専用サーバーで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Hetzner代替 クラウドサーバー VPS 専用サーバー ヨーロッパ コスパ DigitalOcean代替',
+    accentColor: Color(0xFFD50C2D),
+    painPoints: [
+      '月額3.29ユーロ〜・ヨーロッパ特化インフラ・個人のライフ管理は別途必要',
+      'クラウドサーバー特化・個人のAI管理は別途必要',
+      'AWS/GCPと比較してリージョン数・マネージドサービスが少ない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'VPS/専用サーバー/ロードバランサー/ストレージ・高コスパ・API',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'neon-db': const _CompetitorInfo(
+    name: 'Neon',
+    emoji: '💡',
+    tagline: 'サーバーレスPostgres・ブランチ機能・スケール・コールドスタートなしで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Neon代替 サーバーレスPostgres データベース ブランチ 分岐 Supabase代替 PlanetScale代替',
+    accentColor: Color(0xFF00E5A0),
+    painPoints: [
+      '無料/月額19ドル〜・サーバーレスDB特化・個人のライフ管理は別途必要',
+      'Postgres専用特化・個人のAI管理は別途必要',
+      'Supabase/PlanetScaleと比較してBaaS機能・認証・リアルタイムが別途必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'サーバーレスPostgres・DBブランチ・自動スケール・接続プール・REST API',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'opensearch': const _CompetitorInfo(
+    name: 'OpenSearch',
+    emoji: '🔍',
+    tagline: 'OSS分散検索・ログ分析・Elasticsearch互換フォークで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'OpenSearch代替 Elasticsearch 検索エンジン OSS ログ分析 AWS 全文検索',
+    accentColor: Color(0xFF005EB8),
+    painPoints: [
+      '無料OSS・セルフホスト特化・個人のライフ管理は別途必要',
+      '検索/分析インフラ特化・個人のAI管理は別途必要',
+      'Algolia/Typesenseと比較してセットアップ/運用コストが高い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '全文検索・集計・ベクター検索・ダッシュボード・セキュリティ・AWS統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'fusionauth': const _CompetitorInfo(
+    name: 'FusionAuth',
+    emoji: '🔑',
+    tagline: 'デベロッパー向け認証/認可・セルフホスト可能IDプロバイダーで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'FusionAuth代替 認証 認可 Auth0代替 セルフホスト MFA SSO OAuth SAML',
+    accentColor: Color(0xFFE87722),
+    painPoints: [
+      '無料/月額22ドル〜・認証インフラ特化・個人のライフ管理は別途必要',
+      'ID管理特化・個人のAI管理は別途必要',
+      'Auth0/Oktaと比較してUI・エンタープライズ向け管理機能が劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'MFA・SSO・SAML/OIDC・テナント管理・パスキー・セルフホスト/クラウド',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'stytch': const _CompetitorInfo(
+    name: 'Stytch',
+    emoji: '🔐',
+    tagline: 'パスワードレス認証・B2BアイデンティティプラットフォームAPIで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Stytch代替 パスワードレス認証 B2B Auth0代替 マジックリンク OTP WebAuthn',
+    accentColor: Color(0xFF19A974),
+    painPoints: [
+      '無料/月額99ドル〜・認証API特化・個人のライフ管理は別途必要',
+      'パスワードレス認証特化・個人のAI管理は別途必要',
+      'Auth0/Clerkと比較してUIコンポーネント・ドキュメントが少ない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'マジックリンク・OTP・WebAuthn・B2Bテナント・RBAC・セッション管理',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
