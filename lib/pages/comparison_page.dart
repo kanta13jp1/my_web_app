@@ -19787,6 +19787,312 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'planetscale': const _CompetitorInfo(
+    name: 'PlanetScale',
+    emoji: '🌍',
+    tagline: 'サーバーレスMySQL・ブランチングDB管理で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'PlanetScale代替 サーバーレスMySQL DBブランチング クラウドDB',
+    accentColor: Color(0xFF000000),
+    painPoints: [
+      '月額29ドル〜・無料プランが廃止され個人開発者には割高',
+      'MySQLホスティング特化でエンジニア向け設計・個人のライフ管理は別途必要',
+      'Supabase/NeonとはPostgreSQL vs MySQLでエコシステムが異なる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'DBブランチング・シャーディング・Connection Pool・監視・バックアップ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'neon': const _CompetitorInfo(
+    name: 'Neon',
+    emoji: '💫',
+    tagline: 'サーバーレスPostgreSQL・ブランチング対応で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Neon代替 サーバーレスPostgreSQL DBブランチング Supabase代替',
+    accentColor: Color(0xFF00E5BF),
+    painPoints: [
+      '月額19ドル〜・コールドスタートのレイテンシがある・本番用途は有料必須',
+      'PostgreSQLホスティング特化でエンジニア向け設計・個人管理は別途必要',
+      'Supabaseと比較してリアルタイム機能・Auth・Storage等の周辺機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ブランチング・オートスケール・接続プーリング・時点復元・API',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'turso': const _CompetitorInfo(
+    name: 'Turso',
+    emoji: '⚡',
+    tagline: 'エッジネイティブSQLite・分散DB管理で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Turso代替 エッジDB SQLite 分散データベース libSQL',
+    accentColor: Color(0xFF4FF8D2),
+    painPoints: [
+      '月額29ドル〜・無料プランはDB数に制限・エッジ用途に特化',
+      'エッジDB特化でエンジニア向け設計・個人のライフ管理は別途必要',
+      'Supabase/PostgreSQLと比較してエコシステムと機能が限定的',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'libSQL・マルチリージョン・エッジレプリカ・組み込みDB・API',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'upstash': const _CompetitorInfo(
+    name: 'Upstash',
+    emoji: '🔴',
+    tagline: 'サーバーレスRedis/Kafka・エッジキャッシュで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Upstash代替 サーバーレスRedis Kafka エッジキャッシュ セッション管理',
+    accentColor: Color(0xFF00E9A3),
+    painPoints: [
+      '従量課金制・コマンド実行10万回/日まで無料・大量アクセスで高額',
+      'Redis/Kafka特化でエンジニア向け設計・個人のライフ管理は別途必要',
+      'Redis Cloudと比較してエンタープライズサポートが弱い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'サーバーレスRedis・Kafka・QStash(ジョブキュー)・エッジ対応',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'xata': const _CompetitorInfo(
+    name: 'Xata',
+    emoji: '🐱',
+    tagline: 'サーバーレスDB・全文検索・AI統合プラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Xata代替 サーバーレスDB 全文検索 AI統合 PostgreSQL',
+    accentColor: Color(0xFF9F2DEC),
+    painPoints: [
+      '月額20ドル〜・無料プランは容量制限あり・本格利用は有料',
+      'DB+検索特化でエンジニア向け設計・個人のライフ管理は別途必要',
+      'Supabaseと比較して周辺機能(Auth/Storage/Functions)がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'PostgreSQL・全文検索・AI векторDB・ブランチング・API',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'appwrite': const _CompetitorInfo(
+    name: 'Appwrite',
+    emoji: '✍️',
+    tagline: 'オープンソースBaaSプラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Appwrite代替 BaaS オープンソース Firebase代替 Supabase代替',
+    accentColor: Color(0xFFF02E65),
+    painPoints: [
+      'クラウド版月額15ドル〜・セルフホスト版は運用管理コストがかかる',
+      'BaaS特化でエンジニア向け設計・個人のライフ管理・財務は別途必要',
+      'Supabaseと比較してエコシステム・コミュニティが小さい',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '認証・DB・Storage・Functions・Realtime・Messaging・AI',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'convex': const _CompetitorInfo(
+    name: 'Convex',
+    emoji: '🔷',
+    tagline: 'リアクティブバックエンドDB・TypeScript統合で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Convex代替 リアクティブDB BaaS TypeScript リアルタイム',
+    accentColor: Color(0xFFEE342F),
+    painPoints: [
+      '月額25ドル〜・Convex独自のAPI・クエリ言語への移行コストがかかる',
+      'リアクティブDB特化でエンジニア向け設計・個人のライフ管理は別途必要',
+      'Supabaseと比較して周辺エコシステム・Auth機能が限定的',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'TypeScript統合・リアクティブクエリ・Functions・Cron・ベクターDB',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'pocketbase': const _CompetitorInfo(
+    name: 'PocketBase',
+    emoji: '🗄️',
+    tagline: 'オープンソース1バイナリBaaS・セルフホストで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'PocketBase代替 セルフホストBaaS Firebase代替 SQLite バックエンド',
+    accentColor: Color(0xFF16161E),
+    painPoints: [
+      'セルフホスト必須・クラウド版なし・サーバー管理コストが発生',
+      'BaaS特化でエンジニア向け設計・個人のライフ管理・財務は別途必要',
+      'Supabaseと比較してスケーラビリティ・エンタープライズ機能が限定的',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '認証・リアルタイムDB・Storage・Admin UI・Go SDK・1バイナリ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'hasura': const _CompetitorInfo(
+    name: 'Hasura',
+    emoji: '⚡',
+    tagline: 'GraphQL自動生成・即時APIエンジンで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Hasura代替 GraphQL API自動生成 PostgreSQL リアルタイム',
+    accentColor: Color(0xFF1EB4D4),
+    painPoints: [
+      '月額99ドル〜・GraphQL学習コストがあり個人開発者には過剰な場合も',
+      'GraphQL/API特化でエンジニア向け設計・個人のライフ管理は別途必要',
+      'Supabaseと比較してAuth・Storage・Edge Functions等の機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'GraphQL自動生成・権限管理・リアルタイム・アクション・リモートスキーマ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
