@@ -20399,6 +20399,312 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'circleci': const _CompetitorInfo(
+    name: 'CircleCI',
+    emoji: '🔄',
+    tagline: 'クラウドCI/CDパイプライン・自動テスト・デプロイで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'CircleCI代替 CI/CD パイプライン 自動テスト デプロイ自動化',
+    accentColor: Color(0xFF343434),
+    painPoints: [
+      '月額30ドル〜・ビルド時間に応じた従量課金・大規模チームは高額',
+      'CI/CD特化でエンジニア向け設計・個人のライフ管理は別途必要',
+      'GitHub Actionsの普及でコスト優位性・差別化が低下している',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ワークフロー・キャッシュ・Docker・テスト並列化・Orbs',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'travis-ci': const _CompetitorInfo(
+    name: 'Travis CI',
+    emoji: '🚂',
+    tagline: 'オープンソース向け老舗CI/CDサービスで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Travis CI代替 CI/CD オープンソース 自動テスト GitHub',
+    accentColor: Color(0xFF3EAAAF),
+    painPoints: [
+      '月額69ドル〜・オープンソース向け無料プランが廃止され価格が大幅上昇',
+      'CI/CD特化でエンジニア向け設計・個人のライフ管理は別途必要',
+      'GitHub ActionsやCircleCIと比較して機能・エコシステムが縮小している',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'YAML設定・並列ビルド・GitHub統合・多言語対応・キャッシュ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'jenkins': const _CompetitorInfo(
+    name: 'Jenkins',
+    emoji: '🤖',
+    tagline: 'OSSセルフホストCI/CD・プラグインエコシステムで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Jenkins代替 CI/CD セルフホスト オープンソース DevOps パイプライン',
+    accentColor: Color(0xFFD33833),
+    painPoints: [
+      'セルフホスト必須・インフラ管理コストが高い・プラグイン管理が複雑',
+      'CI/CD特化でエンジニア向け設計・個人のライフ管理は別途必要',
+      'GitHub ActionsやCircleCIと比較してセットアップと保守の負担が大きい',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '1,800+プラグイン・パイプライン・分散ビルド・Blue Ocean UI',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'bitbucket': const _CompetitorInfo(
+    name: 'Bitbucket',
+    emoji: '🪣',
+    tagline: 'AtlassianのGitリポジトリ・CI/CDパイプラインで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Bitbucket代替 Gitリポジトリ CI/CD Jira連携 コードレビュー',
+    accentColor: Color(0xFF0052CC),
+    painPoints: [
+      '月額3ドル/人〜・Jira/Confluenceとのセット利用前提で単独は非効率',
+      'Gitリポジトリ特化でエンジニア向け設計・個人のライフ管理は別途必要',
+      'GitHubと比較してOSSコミュニティ・エコシステムが圧倒的に小さい',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Git・Pipelines・コードレビュー・Jira統合・Deployments',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'gitlab': const _CompetitorInfo(
+    name: 'GitLab',
+    emoji: '🦊',
+    tagline: 'DevSecOps統合プラットフォーム・CI/CDオールインワンで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'GitLab代替 Git CI/CD DevSecOps セルフホスト GitHub代替',
+    accentColor: Color(0xFFE24329),
+    painPoints: [
+      '月額19ドル/人〜・フル機能はUltimateプランで高額',
+      'DevSecOps特化でエンジニア向け設計・個人のライフ管理は別途必要',
+      'GitHubと比較してAI機能・マーケットプレイスが弱い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Git・CI/CD・セキュリティ・コンテナRegistry・Wiki・Issues',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'gitea': const _CompetitorInfo(
+    name: 'Gitea',
+    emoji: '☕',
+    tagline: 'セルフホスト軽量Gitサービスで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Gitea代替 セルフホストGit GitHub代替 オープンソース 軽量',
+    accentColor: Color(0xFF609926),
+    painPoints: [
+      'セルフホスト必須・クラウド版なし・サーバー管理コストが発生',
+      'Gitリポジトリ特化でエンジニア向け設計・個人のライフ管理は別途必要',
+      'GitHubと比較してCI/CD・AI機能・コミュニティが大幅に劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Git・Issues・PR・Wiki・Actions・パッケージレジストリ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'sonarqube': const _CompetitorInfo(
+    name: 'SonarQube',
+    emoji: '🔬',
+    tagline: '継続的コード品質・セキュリティ静的解析で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'SonarQube代替 静的解析 コード品質 セキュリティ SAST',
+    accentColor: Color(0xFF4E9BCD),
+    painPoints: [
+      'Developerプラン月額150ドル〜・エンタープライズは高額',
+      'コード品質特化でエンジニア向け設計・個人のライフ管理は別途必要',
+      'GitHub Advanced SecurityやCodeQLと比較してGitHub統合が弱い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '30+言語・コードスメル・バグ・脆弱性・カバレッジ・DevSecOps',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'snyk': const _CompetitorInfo(
+    name: 'Snyk',
+    emoji: '🐍',
+    tagline: '開発者向けセキュリティプラットフォーム・脆弱性検知で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Snyk代替 脆弱性スキャン 依存関係チェック DevSecOps SCA',
+    accentColor: Color(0xFF4C4ABE),
+    painPoints: [
+      '月額25ドル/人〜・高度なSAST/IAC機能はTeam以上のプランが必要',
+      'セキュリティ特化でエンジニア向け設計・個人のライフ管理は別途必要',
+      'GitHub Advanced SecurityやDependabotと比較してGitHub統合で差別化が難しい',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'SCA・SAST・コンテナ・IaCスキャン・AI修正提案・IDE統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'checkmarx': const _CompetitorInfo(
+    name: 'Checkmarx',
+    emoji: '✅',
+    tagline: 'エンタープライズAST・アプリケーションセキュリティテストで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Checkmarx代替 SAST DAST セキュリティテスト AST エンタープライズ',
+    accentColor: Color(0xFF6CD64A),
+    painPoints: [
+      '年間数十万ドル〜・エンタープライズ専用で個人や小規模には非現実的',
+      'セキュリティテスト特化でエンジニア向け設計・個人のライフ管理は別途必要',
+      'Snykと比較してDX・開発者向けの使いやすさが劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'SAST・DAST・SCA・API Security・IaC・AI脆弱性修正',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
