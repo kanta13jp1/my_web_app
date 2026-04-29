@@ -23845,3 +23845,17 @@ SECOND_BRAIN 0→4.0 + VIBE 4.5→6.5 + PLATFORM 2.0→4.0 = +8.0/21 (Win 直接
 **sitemap**: 319→328 URLs
 **全ファイル**: 285社統一
 **commit**: 1489d9438
+
+## PS#6 S112 — 2026-04-29
+
+### 実装内容
+- **gradeDifficultyPenalty**: G1/G2/G3レースの予測難易度confidenceペナルティ
+  - G1: -0.03 / G2: -0.02 / G3: -0.01 / OP以下: 0
+  - confidence 28 terms体制確立
+  - reasoning文字列に「グレード補正:±X%」追加
+
+### Philosophy Alignment
+#5 商品=ユーザー価値 (重賞難易度を confidence に正直に反映)
+
+### commit
+8fd2b6c6c
