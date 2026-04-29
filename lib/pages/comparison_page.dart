@@ -28219,6 +28219,312 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'hashnode': const _CompetitorInfo(
+    name: 'Hashnode',
+    emoji: '📝',
+    tagline: '開発者向けブログ・テックコミュニティプラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Hashnode代替 開発者ブログ テックブログ コミュニティ Dev.to Medium',
+    accentColor: Color(0xFF2962FF),
+    painPoints: [
+      '無料/月額19ドル〜・開発者ブログ特化・個人のライフ管理は別途必要',
+      '技術コンテンツ特化・個人のAI管理は別途必要',
+      'Dev.to/Mediumと比較してUIカスタマイズ・カスタムドメイン対応で差別化',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'カスタムドメイン・AI生成・コミュニティ・ニュースレター・Markdown',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'astro-build': const _CompetitorInfo(
+    name: 'Astro',
+    emoji: '🚀',
+    tagline: 'Islands Architecture・高速コンテンツサイト構築フレームワークで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Astro代替 Islands Architecture SSG コンテンツサイト パフォーマンス React Vue',
+    accentColor: Color(0xFFFF5D01),
+    painPoints: [
+      '無料OSS・コンテンツサイト特化・個人のライフ管理は別途必要',
+      'Webフレームワーク特化・個人のAI管理は別途必要',
+      'Next.js/Remixと比較してサーバーサイド機能・エコシステムが限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ゼロJS・Islands・マルチフレームワーク・SSG/SSR・コンテンツコレクション',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'render-com': const _CompetitorInfo(
+    name: 'Render',
+    emoji: '☁️',
+    tagline: 'フルスタッククラウドホスティング・自動デプロイプラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Render代替 クラウドホスティング 自動デプロイ Web サービス PostgreSQL バックエンド',
+    accentColor: Color(0xFF46E3B7),
+    painPoints: [
+      '無料/月額7ドル〜・ホスティング特化・個人のライフ管理は別途必要',
+      'クラウドホスティング特化・個人のAI管理は別途必要',
+      'Vercel/Herokuと比較してフロントエンド最適化・CI速度が劣ることがある',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '自動デプロイ・PostgreSQL・Redis・ゼロダウンタイム・プライベートネット',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'cockroachdb': const _CompetitorInfo(
+    name: 'CockroachDB',
+    emoji: '🪲',
+    tagline: 'グローバル分散型NewSQLデータベースで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'CockroachDB代替 分散データベース NewSQL PostgreSQL互換 グローバル サーバーレス',
+    accentColor: Color(0xFF6933FF),
+    painPoints: [
+      '無料/月額0〜・分散DB特化・個人のライフ管理は別途必要',
+      '分散NewSQL特化・個人のAI管理は別途必要',
+      'Supabase/PlanetScaleと比較してエコシステム・日本語ドキュメントが劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'PostgreSQL互換・グローバル分散・サーバーレス・ACID・マルチリージョン',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'tidb-cloud': const _CompetitorInfo(
+    name: 'TiDB Cloud',
+    emoji: '🐻',
+    tagline: '分散型HTAPデータベース・MySQLトランザクション+分析一体型で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'TiDB代替 HTAP データベース MySQL互換 分散 OLTP OLAP リアルタイム分析',
+    accentColor: Color(0xFFE05D44),
+    painPoints: [
+      '月額0〜・HTAP DB特化・個人のライフ管理は別途必要',
+      'HTAPデータベース特化・個人のAI管理は別途必要',
+      'CockroachDB/PlanetScaleと比較して日本でのブランド認知が劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'MySQL互換・OLTP+OLAP統合・サーバーレス・スケールアウト・AI',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'nhost': const _CompetitorInfo(
+    name: 'Nhost',
+    emoji: '🏠',
+    tagline: 'オープンソースFirebase代替・GraphQL BaaSプラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Nhost代替 BaaS Firebase代替 GraphQL Hasura PostgreSQL 認証 ストレージ',
+    accentColor: Color(0xFF0052CD),
+    painPoints: [
+      '無料/月額25ドル〜・BaaS特化・個人のライフ管理は別途必要',
+      'GraphQL BaaS特化・個人のAI管理は別途必要',
+      'Supabase/Firebase比較でエコシステム・認知度が劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'GraphQL(Hasura)・PostgreSQL・Auth・Storage・Functions・セルフホスト',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'appsmith': const _CompetitorInfo(
+    name: 'Appsmith',
+    emoji: '🔨',
+    tagline: 'オープンソース内部ツール・管理画面構築プラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Appsmith代替 内部ツール 管理画面 ローコード ダッシュボード オープンソース',
+    accentColor: Color(0xFFFF6D2A),
+    painPoints: [
+      '無料/月額40ドル〜・内部ツール特化・個人のライフ管理は別途必要',
+      'ローコード内部ツール特化・個人のAI管理は別途必要',
+      'Retool/ToolJetと比較してエンタープライズ機能・UI品質が劣る場合がある',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ドラッグ&ドロップ・JS/Python・DB接続・APIコネクタ・セルフホスト',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'thunkable': const _CompetitorInfo(
+    name: 'Thunkable',
+    emoji: '📲',
+    tagline: 'ノーコードモバイルアプリ構築・iOS/Android向けで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Thunkable代替 ノーコード モバイルアプリ iOS Android ビジュアル開発',
+    accentColor: Color(0xFF5B21B6),
+    painPoints: [
+      '月額21ドル〜・モバイルアプリ特化・個人のライフ管理は別途必要',
+      'ノーコードモバイル特化・個人のAI管理は別途必要',
+      'Adalo/Glideと比較してデザイン自由度・データベース統合が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ビジュアルUI・データベース・API・Firebase・iOS/Android同時',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'fauna': const _CompetitorInfo(
+    name: 'Fauna',
+    emoji: '🦙',
+    tagline: 'グローバル分散型ドキュメントリレーショナルデータベースで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Fauna代替 サーバーレスDB GraphQL 分散 ドキュメント NoSQL グローバル',
+    accentColor: Color(0xFF3A1A9A),
+    painPoints: [
+      '無料/月額23ドル〜・DB特化・個人のライフ管理は別途必要',
+      'サーバーレスDB特化・個人のAI管理は別途必要',
+      'Supabase/Convexと比較してエコシステム・スタートアップ採用が減少傾向',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'GraphQL・FQL・グローバル分散・マルチテナント・ACID・低レイテンシ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
