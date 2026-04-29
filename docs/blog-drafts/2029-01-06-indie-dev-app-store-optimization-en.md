@@ -1,7 +1,7 @@
 ---
 title: "Indie Dev ASO Complete Guide — Climbing App Store Rankings with Optimization"
 tags: indiedev,ai,flutter,buildinpublic
-published: false
+published: true
 ---
 
 # Indie Dev ASO Complete Guide — Climbing App Store Rankings with Optimization
