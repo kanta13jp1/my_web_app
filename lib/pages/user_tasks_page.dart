@@ -809,7 +809,8 @@ class _AiAssistDialogState extends State<_AiAssistDialog> {
     }
     if (checklist.isNotEmpty) {
       buf.writeln(
-          '## 完了前チェック\n${checklist.map((e) => '- [ ] $e').join('\n')}\n');
+        '## 完了前チェック\n${checklist.map((e) => '- [ ] $e').join('\n')}\n',
+      );
     }
 
     try {
