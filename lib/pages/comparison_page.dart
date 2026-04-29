@@ -46625,6 +46625,312 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'adobe-express': const _CompetitorInfo(
+    name: 'Adobe Express',
+    emoji: '🎨',
+    tagline: 'Adobe製無料グラフィックデザイン・テンプレート・動画・PDF・AI生成アシストで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Adobe Express代替 Adobeデザイン 無料テンプレート グラフィック 動画 PDF Canva代替',
+    accentColor: Color(0xFFFF0000),
+    painPoints: [
+      '無料/Premium月10ドル~・グラフィックデザイン特化・個人のライフ管理は別途必要',
+      'クリエイティブ特化・個人のAI管理は別途必要',
+      'Canva/Desygner/Vistacreateとの比較でテンプレート量・コラボ機能・価格が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Adobeテンプレート・動画・PDF・AI生成・Adobeエコシステム統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'crello': const _CompetitorInfo(
+    name: 'VistaCreate (旧Crello)',
+    emoji: '🖼️',
+    tagline: 'Canva対抗アニメーションデザイン・50K+テンプレート・動画・SNS最適化・無料で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'VistaCreate Crello代替 アニメーションデザイン テンプレート SNS動画 Canva代替 Adobe Express代替',
+    accentColor: Color(0xFF00ACC1),
+    painPoints: [
+      '無料/Pro月13ドル~・グラフィック特化・個人のライフ管理は別途必要',
+      'ビジュアルデザイン特化・個人のAI管理は別途必要',
+      'Canva/Adobe Express/Desygnerとの比較でプラグイン数・AI機能・ブランド認知が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'アニメーションデザイン・50K+テンプレート・動画・SNS最適化・背景除去',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'desygner': const _CompetitorInfo(
+    name: 'Desygner',
+    emoji: '✏️',
+    tagline: 'ブランドテンプレート管理・チームデザイン統一・PDF編集・マーケター向けで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Desygner代替 ブランドデザイン チームテンプレート PDF編集 マーケター Canva代替 Adobe代替',
+    accentColor: Color(0xFF3F51B5),
+    painPoints: [
+      '無料/Pro月10ドル~・ブランドデザイン特化・個人のライフ管理は別途必要',
+      'マーケティングデザイン特化・個人のAI管理は別途必要',
+      'Canva/Adobe Express/Figmaとの比較でテンプレート量・AI機能・ブランドがまだ成長中',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ブランドテンプレート・PDF編集・チームデザイン統一・API連携',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'placeit': const _CompetitorInfo(
+    name: 'Placeit',
+    emoji: '📱',
+    tagline: 'モックアップ/ロゴ/動画テンプレート・50K+デザイン・Envato製・サブスクで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Placeit代替 モックアップ ロゴ 動画テンプレート Envato スマホモックアップ Canva代替',
+    accentColor: Color(0xFF7B1FA2),
+    painPoints: [
+      '有料月15ドル~・モックアップ/テンプレ特化・個人のライフ管理は別途必要',
+      'クリエイティブ素材特化・個人のAI管理は別途必要',
+      'Canva/Smartmockups/Envato Elementsとの比較でカスタマイズ・コスト・用途制限が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'モックアップ・ロゴ・動画テンプレート・50K+デザイン・Envato統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'snappa': const _CompetitorInfo(
+    name: 'Snappa',
+    emoji: '⚡',
+    tagline: '30秒グラフィック作成・6000テンプレート・写真3M枚・SNS自動投稿でマーケター向けで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Snappa代替 高速グラフィック SNSデザイン テンプレート マーケター Canva代替 Adobe Express代替',
+    accentColor: Color(0xFF00BCD4),
+    painPoints: [
+      '無料/Pro月10ドル~・グラフィック作成特化・個人のライフ管理は別途必要',
+      'マーケティングデザイン特化・個人のAI管理は別途必要',
+      'Canva/Adobe Express/VistaCreateとの比較でテンプレート量・AI機能・動画編集が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '高速グラフィック・6000テンプレート・フリー写真3M枚・SNS自動投稿',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'pixlr': const _CompetitorInfo(
+    name: 'Pixlr',
+    emoji: '🖌️',
+    tagline: 'ブラウザ/アプリ写真編集・Photoshopライク・AI背景除去・無料フィルター・モバイル対応で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Pixlr代替 写真編集 ブラウザ Photoshop代替 AI背景除去 フィルター 無料 Photopea代替',
+    accentColor: Color(0xFF1565C0),
+    painPoints: [
+      '無料/Premium月7ドル~・写真編集特化・個人のライフ管理は別途必要',
+      '画像編集特化・個人のAI管理は別途必要',
+      'Canva/BeFunky/Photopea との比較でオフライン非対応・AI機能・ブランド認知が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ブラウザ写真編集・AI背景除去・フィルター・レイヤー・Photoshopライク',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'darktable': const _CompetitorInfo(
+    name: 'Darktable',
+    emoji: '📷',
+    tagline: 'OSS RAW現像・Lightroom代替・非破壊編集・プロ向け色管理・Linux/Mac/Win対応で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Darktable代替 OSS RAW現像 Lightroom代替 非破壊編集 プロ写真 Linux 色管理 無料',
+    accentColor: Color(0xFF212121),
+    painPoints: [
+      '完全無料OSS・RAW現像特化・個人のライフ管理は別途必要',
+      'プロ写真編集特化・個人のAI管理は別途必要',
+      'Lightroom/Capture One/RawTherapeeとの比較でUI急峻・AI機能・サポートが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'OSS・RAW現像・非破壊編集・プロ色管理・Linux/Mac/Win対応・Lightroomライク',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'rawtherapee': const _CompetitorInfo(
+    name: 'RawTherapee',
+    emoji: '🔬',
+    tagline: 'OSS高機能RAW現像・詳細色制御・バッチ処理・Lightroom代替・上級者向けで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'RawTherapee代替 OSS RAW現像 高機能 バッチ処理 色制御 Lightroom代替 Darktable代替',
+    accentColor: Color(0xFF795548),
+    painPoints: [
+      '完全無料OSS・RAW現像特化・個人のライフ管理は別途必要',
+      'プロ写真現像特化・個人のAI管理は別途必要',
+      'Darktable/Lightroom/Capture Oneとの比較でUI複雑・AI機能・初心者敷居が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'OSS高機能RAW現像・詳細色制御・バッチ処理・クロスプラットフォーム',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'stencil': const _CompetitorInfo(
+    name: 'Stencil',
+    emoji: '🖼️',
+    tagline: 'ソーシャルメディアグラフィック高速作成・2M写真・1000フォント・スケジュール投稿で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Stencil代替 ソーシャルメディア グラフィック 高速 SNS投稿 テンプレート Canva代替 Snappa代替',
+    accentColor: Color(0xFFFF5722),
+    painPoints: [
+      '無料(10画像/月)/Pro月9ドル~・SNSグラフィック特化・個人のライフ管理は別途必要',
+      'マーケティングデザイン特化・個人のAI管理は別途必要',
+      'Canva/Snappa/Adobe Expressとの比較でテンプレート多様性・AI・動画機能が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'SNSグラフィック高速作成・2M写真・1000フォント・スケジュール投稿',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
