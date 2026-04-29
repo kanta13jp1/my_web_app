@@ -24087,3 +24087,8 @@ SECOND_BRAIN 4.0 + VIBE 6.5 + PLATFORM 4.0 = 14.5/21 (Win territory 直接実装
 
 ### commit
 (本 commit にて確定)
+
+## 2026-04-29 PS#6 S116 — courseTypeMatchBonus (32 terms)
+- courseTypeMatchBonus追加: 前走コース種別(芝/ダート)と今走の一致で±2% confidence補正
+- 同コース種別: +0.02 / コース替わり: -0.02 / データなし: 0
+- confidence式 32 terms体制確立
