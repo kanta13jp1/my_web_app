@@ -38363,6 +38363,312 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'busuu': const _CompetitorInfo(
+    name: 'Busuu',
+    emoji: '🌐',
+    tagline: 'AI言語学習・ネイティブとの練習・修了証書発行で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Busuu代替 言語学習 AI Duolingo代替 Babbel代替 ネイティブ練習 語学 英語',
+    accentColor: Color(0xFF3DB549),
+    painPoints: [
+      '月額10ドル〜・語学特化・個人のライフ管理は別途必要',
+      '言語学習特化・個人のAI管理は別途必要',
+      'Duolingo/Babbelと比較してゲーミフィケーション・無料コンテンツ量が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AIレッスン・ネイティブ添削・修了証・オフライン・12言語対応',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'memrise': const _CompetitorInfo(
+    name: 'Memrise',
+    emoji: '🧩',
+    tagline: 'スペースドリピテーション・動画で語学・AIロールプレイ学習で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Memrise代替 語学学習 スペースドリピテーション 動画 Duolingo代替 Anki代替',
+    accentColor: Color(0xFF56B366),
+    painPoints: [
+      '月額9ドル〜・語学特化・個人のライフ管理は別途必要',
+      '言語暗記特化・個人のAI管理は別途必要',
+      'Duolingo/Busuu/Ankiと比較してコースの深さ・文法説明が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '動画ネイティブ・AIロールプレイ・記憶科学・オフライン・24言語',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'preply': const _CompetitorInfo(
+    name: 'Preply',
+    emoji: '👩‍🏫',
+    tagline: 'オンライン語学チューター・1対1レッスン・ビジネス英語で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Preply代替 オンライン語学 チューター 1対1 英語 ビジネス英語 italki代替',
+    accentColor: Color(0xFF6A5ACD),
+    painPoints: [
+      '1時間15〜30ドル・チューター特化・個人のライフ管理は別途必要',
+      'オンラインレッスン特化・個人のAI管理は別途必要',
+      'italki/Camblyと比較して無料体験・チューター数・価格競争が激しい',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '1対1レッスン・専任チューター・グループクラス・AIレッスン',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'hinge': const _CompetitorInfo(
+    name: 'Hinge',
+    emoji: '💕',
+    tagline: '削除されるよう設計されたマッチングアプリ・真剣な出会いで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Hinge代替 マッチングアプリ 真剣な出会い Tinder代替 Bumble代替 恋愛 パートナー',
+    accentColor: Color(0xFFE5264A),
+    painPoints: [
+      '月額32ドル〜・マッチング特化・個人のライフ管理は別途必要',
+      'デーティング特化・個人のAI管理は別途必要',
+      'Tinder/Bumbleと比較してユーザー数・地方エリアでのマッチ率が低い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'プロンプト回答・音声ノート・VideoDate・AIデート推薦・ローズ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'bumble': const _CompetitorInfo(
+    name: 'Bumble',
+    emoji: '🐝',
+    tagline: '女性主導マッチングアプリ・友達・ビジネスネットワークで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Bumble代替 マッチングアプリ 女性主導 Tinder代替 Hinge代替 友達 BFF ビジネス',
+    accentColor: Color(0xFFFFD521),
+    painPoints: [
+      '月額22ドル〜・マッチング特化・個人のライフ管理は別途必要',
+      'デーティング特化・個人のAI管理は別途必要',
+      'Tinder/Hingeと比較して男性からメッセージできない制限で成立率が下がる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '女性先攻・BFF友達探し・Bizネットワーク・VideoChat・Opening Moves',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'coinbase': const _CompetitorInfo(
+    name: 'Coinbase',
+    emoji: '₿',
+    tagline: '暗号資産取引所・ステーキング・ウォレット・Web3オンランプで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Coinbase代替 暗号資産取引所 Bitcoin Ethereum ステーキング ウォレット Binance代替',
+    accentColor: Color(0xFF0052FF),
+    painPoints: [
+      '取引手数料0.5%〜・暗号資産特化・個人のライフ管理は別途必要',
+      '仮想通貨取引特化・個人のAI管理は別途必要',
+      'Binance/Krakenと比較して取引手数料・銘柄数・高度な取引機能が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '現物取引・ステーキング・ウォレット・DeFi・NFT・Coinbase One',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'binance': const _CompetitorInfo(
+    name: 'Binance',
+    emoji: '🟡',
+    tagline: '世界最大暗号資産取引所・先物・DeFi・Web3エコシステムで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Binance代替 暗号資産取引所 先物 DeFi 最大取引量 Coinbase代替 Kraken代替',
+    accentColor: Color(0xFFF0B90B),
+    painPoints: [
+      '取引手数料0.1%〜・暗号資産特化・個人のライフ管理は別途必要',
+      '仮想通貨取引特化・個人のAI管理は別途必要',
+      '規制問題・コンプライアンスリスクが多国でのサービス継続に影響',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '現物/先物/マージン・1000+銘柄・NFT・DeFi・BNBエコシステム',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'robinhood': const _CompetitorInfo(
+    name: 'Robinhood',
+    emoji: '🏹',
+    tagline: '手数料無料株式・暗号資産・オプション取引・若者向けで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Robinhood代替 手数料無料 株式投資 暗号資産 オプション Webull代替 eToro代替',
+    accentColor: Color(0xFF00C805),
+    painPoints: [
+      '無料〜・米株投資特化・個人のライフ管理は別途必要',
+      '投資取引特化・個人のAI管理は別途必要',
+      'Webull/eToroと比較してリサーチツール・社会的投資機能が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '手数料ゼロ・24h取引・Gold・IRA・暗号資産・オプション',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'etoro': const _CompetitorInfo(
+    name: 'eToro',
+    emoji: '🌿',
+    tagline: 'ソーシャルトレーディング・コピートレード・株/暗号資産投資で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'eToro代替 ソーシャルトレーディング コピートレード 株式 暗号資産 CFD Robinhood代替',
+    accentColor: Color(0xFF179A54),
+    painPoints: [
+      '無料〜・ソーシャル投資特化・個人のライフ管理は別途必要',
+      'トレーディング特化・個人のAI管理は別途必要',
+      'Robinhood/Webullと比較して米国以外のユーザーへの規制制限が多い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'コピートレード・CopyPortfolio・スマートポートフォリオ・暗号資産',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
