@@ -1,7 +1,7 @@
 ---
 title: "Supabase Full-Text Search — PostgreSQL tsvector, Multilingual Support, and Index Optimization"
 tags: supabase,ai,indiedev,programming
-published: false
+published: true
 ---
 
 # Supabase Full-Text Search — PostgreSQL tsvector, Multilingual Support, and Index Optimization
