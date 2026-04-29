@@ -427,6 +427,37 @@ function defaultVoiceForLang(lang: "ja" | "en"): string {
   return lang === "en" ? "en-US" : "ja-JP";
 }
 
+function hedraLanguageForLang(_lang: "ja" | "en"): string {
+  // Hedra TTS currently rejects "ja" / "Japanese"; use a supported enum value.
+  return "English";
+}
+
+function scriptForHedraVoice(
+  script: string[],
+  lang: "ja" | "en",
+  title?: string,
+): string[] {
+  if (lang === "en") return script;
+  const englishTitle = hedraEnglishTitle(title);
+  const url = script.find((line) => /^https?:\/\//.test(line));
+  return [
+    `${englishTitle} has been updated.`,
+    "This short video introduces the newest improvement in the app.",
+    "The creative workflow combines GPT image two, GPT five point five, and Seedance two point zero.",
+    url == null
+      ? "Open the app to try the latest experience."
+      : `Open ${url.replace(/^https?:\/\//, "")} to try it.`,
+  ];
+}
+
+function hedraEnglishTitle(title?: string): string {
+  const trimmed = title?.trim();
+  if (!trimmed) return "This app";
+  if (trimmed === "マイファイナンス") return "My Finance";
+  const isAscii = [...trimmed].every((char) => char.charCodeAt(0) <= 127);
+  return isAscii ? trimmed : "This app";
+}
+
 type HedraVideoResult = {
   id: string | null;
   status: string;
@@ -457,6 +488,13 @@ async function createHedraPresenterVideo(params: {
     params.voice,
     params.lang,
   );
+  const hedraLanguage = hedraLanguageForLang(params.lang);
+  const ttsScript = scriptForHedraVoice(
+    params.script,
+    params.lang,
+    params.title,
+  )
+    .join("\n");
   const payload = await hedraJsonRequest(params.apiKey, "/generations", {
     method: "POST",
     body: {
@@ -466,8 +504,8 @@ async function createHedraPresenterVideo(params: {
       audio_generation: {
         type: "text_to_speech",
         voice_id: voiceId,
-        text: params.script.join("\n").slice(0, 1800),
-        language: params.lang,
+        text: ttsScript.slice(0, 1800),
+        language: hedraLanguage,
       },
       generated_video_inputs: {
         text_prompt: `${params.title ?? "Share update"}\n${params.prompt}`,
@@ -533,9 +571,10 @@ async function resolveHedraVoiceId(
     : Array.isArray(asRecord(payload)?.["data"])
     ? asRecord(payload)?.["data"] as unknown[]
     : [];
-  const languageMarkers = lang === "ja"
-    ? ["ja", "japanese", "日本"]
-    : ["en", "english"];
+  const hedraLanguage = hedraLanguageForLang(lang).toLowerCase();
+  const languageMarkers = hedraLanguage === "english"
+    ? ["en", "english"]
+    : [hedraLanguage];
   const languageMatch = voices
     .map((voice) => asRecord(voice))
     .find((voice) => {
