@@ -17951,6 +17951,312 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'smarthr': const _CompetitorInfo(
+    name: 'SmartHR',
+    emoji: '👥',
+    tagline: '日本発クラウド人事労務管理で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'SmartHR代替 人事労務 給与計算 勤怠管理 クラウド 日本語',
+    accentColor: Color(0xFF0077C7),
+    painPoints: [
+      '月額数万円〜・従業員数に応じた価格で個人や小規模事業者には高額',
+      '人事労務特化で個人のライフ管理・AI管理・財務は別途必要',
+      '年末調整・社会保険等の企業向け機能が中心で個人利用には過剰',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '労務管理・給与明細・年末調整・社会保険・マイナンバー',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'freee-hr': const _CompetitorInfo(
+    name: 'freee人事労務',
+    emoji: '📑',
+    tagline: 'freeeのクラウド給与・勤怠・人事管理で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'freee人事労務代替 給与計算 勤怠管理 freee 日本語 確定申告',
+    accentColor: Color(0xFF2864F0),
+    painPoints: [
+      '月額2,400円〜・freee会計との連携前提で単体利用には割高',
+      '給与・勤怠特化で個人のAI管理・目標・習慣は別途必要',
+      'マネーフォワードと比較して会計連携以外の機能拡張が少ない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '給与計算・勤怠打刻・有給管理・マイナンバー・年末調整',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'workday': const _CompetitorInfo(
+    name: 'Workday',
+    emoji: '🏢',
+    tagline: 'エンタープライズHR・財務管理クラウドで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Workday代替 エンタープライズHR 人事管理 給与 財務クラウド',
+    accentColor: Color(0xFFF1742E),
+    painPoints: [
+      '年間ライセンス数百万円〜・大企業向けで中小・個人には非現実的',
+      '企業向けHR・財務特化で個人のライフ管理・AI会話は別途必要',
+      '実装に専門コンサルが必要でTCOが極めて高い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'HCM・給与・財務・調達・計画・アナリティクス統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'concur': const _CompetitorInfo(
+    name: 'SAP Concur',
+    emoji: '🧾',
+    tagline: 'SAP経費・出張管理エンタープライズで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Concur代替 経費精算 出張管理 SAP 企業向け 経費管理',
+    accentColor: Color(0xFF0070AD),
+    painPoints: [
+      '月額8ドル/人〜・最低契約人数がありスタートアップには高額',
+      '経費・出張特化でチーム向け設計・個人のライフ管理は別途必要',
+      'Expensifyと比較してモバイルUXが古く操作が複雑',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '経費精算・出張予約・請求書・コンプライアンス・SAP連携',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'expensify': const _CompetitorInfo(
+    name: 'Expensify',
+    emoji: '💳',
+    tagline: 'スマートスキャン経費精算・コーポレートカードで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Expensify代替 経費精算 レシートスキャン コーポレートカード 出張',
+    accentColor: Color(0xFF00B2E3),
+    painPoints: [
+      '月額5ドル/人〜・高度な機能はビジネスプランのみ',
+      '経費精算特化で個人の目標・AI管理・習慣は別途必要',
+      '日本語UIが不完全で日本語レシートのOCR精度が低い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'スマートスキャン・自動カテゴリ・旅行予約・カード発行',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'ramp': const _CompetitorInfo(
+    name: 'Ramp',
+    emoji: '🚀',
+    tagline: 'AI経費削減コーポレートカード・財務自動化で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Ramp代替 コーポレートカード 経費管理 財務自動化 スタートアップ',
+    accentColor: Color(0xFF000000),
+    painPoints: [
+      '米国法人限定・日本では利用不可',
+      'コーポレートカード・経費特化でチーム向け・個人管理は別途必要',
+      'BrexやDivvyと比較してサードパーティ統合数が少ない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AIコスト削減提案・コーポレートカード・AP自動化・会計連携',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'basecamp': const _CompetitorInfo(
+    name: 'Basecamp',
+    emoji: '⛺',
+    tagline: 'シンプルなオールインワンプロジェクト管理で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Basecamp代替 プロジェクト管理 チームコラボ タスク管理 Asana代替',
+    accentColor: Color(0xFF1D2D35),
+    painPoints: [
+      '月額99ドル定額・少人数チームにはコストパフォーマンスが低い',
+      'プロジェクト管理特化で個人の財務・AI管理・習慣は別途必要',
+      'JiraやAsanaと比較してアジャイル・スプリント管理機能が弱い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'To-do・メッセージボード・スケジュール・ドック・チャット',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'wrike': const _CompetitorInfo(
+    name: 'Wrike',
+    emoji: '⚡',
+    tagline: 'エンタープライズワークマネジメント・AI自動化で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Wrike代替 プロジェクト管理 ワークマネジメント ガントチャート エンタープライズ',
+    accentColor: Color(0xFF0C9E5A),
+    painPoints: [
+      '月額9.80ドル/人〜・フル機能はEnterprise限定で高額',
+      'ワークマネジメント特化で個人の財務・AI会話・習慣は別途必要',
+      'AsanaやMonday.comと比較してUIが複雑で学習コストが高い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ガントチャート・ダッシュボード・AI自動化・タイムトラッキング',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'smartsheet': const _CompetitorInfo(
+    name: 'Smartsheet',
+    emoji: '📋',
+    tagline: 'スプレッドシート型プロジェクト管理・ワークオートメーションで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Smartsheet代替 スプレッドシート プロジェクト管理 ワークフロー自動化',
+    accentColor: Color(0xFF0C7C59),
+    painPoints: [
+      '月額9ドル/人〜・高度な自動化はBusiness以上のプランが必要',
+      'スプレッドシート型PM特化で個人のAI管理・財務・習慣は別途必要',
+      'Excelと比較して慣れ親しんだ操作感と異なり移行コストがかかる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'グリッド/カード/ガントチャート・自動化・フォーム・レポート',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
