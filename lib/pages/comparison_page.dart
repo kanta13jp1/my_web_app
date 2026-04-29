@@ -50404,6 +50404,325 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'marvel-app': const _CompetitorInfo(
+    name: 'Marvel App',
+    emoji: '✨',
+    tagline: 'シンプルプロトタイピング・ユーザーテスト・ハンドオフ・Sketch/Figma取込・無料プランで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Marvel App代替 プロトタイピング ユーザーテスト ハンドオフ Sketch Figma取込 InVision代替 Proto.io代替',
+    accentColor: Color(0xFFFF4D5B),
+    painPoints: [
+      '無料1プロジェクト/有料月12ドル~・プロトタイプ特化・個人のライフ管理は別途必要',
+      'UXデザイン特化・個人のAI管理は別途必要',
+      'InVision/Figma/Framer との比較でアニメーション・AI・高度インタラクションが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'シンプルプロトタイピング・ユーザーテスト・ハンドオフ・Sketch/Figma取込',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'principle-app': const _CompetitorInfo(
+    name: 'Principle',
+    emoji: '⚡',
+    tagline:
+        'macOS高精度アニメーションプロトタイピング・タイムライン・ドライバー・Sketch/Figma連携で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Principle代替 macOS アニメーション プロトタイピング タイムライン ドライバー Sketch Figma連携 Flinto代替',
+    accentColor: Color(0xFF007AFF),
+    painPoints: [
+      '有料買い切り129ドル・macOS専用・個人のライフ管理は別途必要',
+      'アニメーションプロトタイプ特化・個人のAI管理は別途必要',
+      'Flinto/ProtoPie/Origami との比較でクロスプラットフォーム・コラボ・Web共有が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'macOS高精度アニメーション・タイムライン・ドライバー・Sketch/Figma連携',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'origami-studio': const _CompetitorInfo(
+    name: 'Origami Studio (Meta)',
+    emoji: '🦊',
+    tagline:
+        'Meta製無料プロトタイピングツール・macOS・Patchエディタ・React Native出力・高精度で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Origami Studio代替 Meta プロトタイピング macOS Patchエディタ React Native 高精度 Principle代替 ProtoPie代替',
+    accentColor: Color(0xFFF25B2A),
+    painPoints: [
+      '完全無料・macOS専用・個人のライフ管理は別途必要',
+      'プロトタイプ特化・個人のAI管理は別途必要',
+      'Principle/ProtoPie/Framer との比較でクロスプラットフォーム・コラボ・学習曲線が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Meta製無料・Patchエディタ・React Native出力・高精度インタラクション',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'justinmind': const _CompetitorInfo(
+    name: 'Justinmind',
+    emoji: '🧩',
+    tagline: '高機能プロトタイピング・インタラクション・データ駆動モック・HTML出力・エンタープライズで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Justinmind代替 高機能プロトタイピング インタラクション データ駆動 HTML出力 エンタープライズ Axure代替 Proto.io代替',
+    accentColor: Color(0xFFE63946),
+    painPoints: [
+      '有料月19ドル~/無料版あり・プロトタイプ特化・個人のライフ管理は別途必要',
+      'UXデザイン特化・個人のAI管理は別途必要',
+      'Axure/Proto.io/InVision との比較でAI機能・コラボ・モダンUIが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '高機能プロトタイピング・複雑インタラクション・データ駆動・HTML出力・エンタープライズ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'avocode': const _CompetitorInfo(
+    name: 'Avocode',
+    emoji: '🥑',
+    tagline:
+        'デザインハンドオフツール・CSS/Swift/Androidコード生成・Sketch/Figma/PSD対応・チームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Avocode代替 デザインハンドオフ CSSコード生成 Sketch Figma PSD Zeplin代替 Sympli代替',
+    accentColor: Color(0xFF7B2FBE),
+    painPoints: [
+      '有料月7ドル~・ハンドオフ特化・個人のライフ管理は別途必要',
+      'デザイン→開発特化・個人のAI管理は別途必要',
+      'Zeplin/Sympli/Abstract との比較でFigma統合・AI提案・リアルタイム更新が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'デザインハンドオフ・CSS/Swift/Androidコード生成・Sketch/Figma/PSD対応',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'supernova': const _CompetitorInfo(
+    name: 'Supernova',
+    emoji: '💥',
+    tagline:
+        'デザイン→コード自動変換・デザインシステム管理・Figma連携・React/Flutter/SwiftUI出力で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Supernova代替 デザインコード変換 デザインシステム Figma連携 React Flutter SwiftUI出力 Anima代替',
+    accentColor: Color(0xFF9B59B6),
+    painPoints: [
+      '有料月19ドル~・デザイン→コード特化・個人のライフ管理は別途必要',
+      'フロントエンド特化・個人のAI管理は別途必要',
+      'Anima/Locofy/Builder.io との比較でコード品質・AI・フレームワーク対応が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'デザイン→コード自動変換・デザインシステム管理・Figma連携・React/Flutter/SwiftUI',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'anima': const _CompetitorInfo(
+    name: 'Anima',
+    emoji: '🎞️',
+    tagline: 'Figma→React/HTML変換・プロトタイプ・コラボ・デザイナー→開発者ブリッジで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Anima代替 Figma React HTML変換 プロトタイプ コラボ デザイナー開発者ブリッジ Supernova代替 Locofy代替',
+    accentColor: Color(0xFFFF3B7F),
+    painPoints: [
+      '無料/有料月31ドル~・デザイン→コード特化・個人のライフ管理は別途必要',
+      'フロントエンド特化・個人のAI管理は別途必要',
+      'Supernova/Locofy/Builder.io との比較でコード品質・フレームワーク数・AI最適化が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Figma→React/HTML変換・プロトタイプ・コラボ・デザイナー→開発者ブリッジ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'frontify': const _CompetitorInfo(
+    name: 'Frontify',
+    emoji: '🏷️',
+    tagline: 'ブランド管理プラットフォーム・ブランドガイドライン・アセット管理・コンポーネントライブラリで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Frontify代替 ブランド管理 ブランドガイドライン アセット管理 コンポーネントライブラリ DAM Brandfolder代替',
+    accentColor: Color(0xFF003655),
+    painPoints: [
+      '有料月59ドル~/無料スタータ・ブランド管理特化・個人のライフ管理は別途必要',
+      'デザインシステム特化・個人のAI管理は別途必要',
+      'Brandfolder/Bynder/Widen との比較でコスト・AI検索・グローバル対応が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ブランドガイドライン・アセット管理・コンポーネントライブラリ・DAM・コラボ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'sympli': const _CompetitorInfo(
+    name: 'Sympli',
+    emoji: '🤝',
+    tagline: 'デザインハンドオフ・バージョン管理・Sketch/Figma/XD・CSS出力・開発者向けで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Sympli代替 デザインハンドオフ バージョン管理 Sketch Figma XD CSS出力 Zeplin代替 Avocode代替',
+    accentColor: Color(0xFF3D9BE9),
+    painPoints: [
+      '有料月6ドル~・ハンドオフ特化・個人のライフ管理は別途必要',
+      'デザイン→開発特化・個人のAI管理は別途必要',
+      'Zeplin/Avocode/Abstract との比較でAI機能・統合幅・リアルタイムコラボが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'デザインハンドオフ・バージョン管理・Sketch/Figma/XD・CSS出力・開発者向け',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
