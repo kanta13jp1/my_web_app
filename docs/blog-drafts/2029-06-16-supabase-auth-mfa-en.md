@@ -1,7 +1,7 @@
 ---
 title: "Supabase Auth MFA Guide — Adding TOTP and OTP to Flutter Apps"
 tags: supabase,flutter,webdev,indiedev
-published: false
+published: true
 ---
 
 # Supabase Auth MFA Guide — Adding TOTP and OTP to Flutter Apps

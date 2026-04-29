@@ -1,7 +1,7 @@
 ---
 title: "Supabase Auth MFA 実装ガイド — TOTP・SMS・メール OTP で多要素認証を追加する"
 tags: flutter,supabase,個人開発,AI
-published: false
+published: true
 ---
 
 # Supabase Auth MFA 実装ガイド — TOTP・SMS・メール OTP で多要素認証を追加する
