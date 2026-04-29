@@ -1,7 +1,7 @@
 ---
 title: "Supabase Migrations 上級編 — 本番環境でのゼロダウンタイム・スキーマ変更"
 tags: supabase,個人開発,flutter,AI
-published: false
+published: true
 ---
 
 # Supabase Migrations 上級編 — 本番環境でのゼロダウンタイム・スキーマ変更
