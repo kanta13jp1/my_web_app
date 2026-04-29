@@ -45707,6 +45707,312 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'zoho-projects': const _CompetitorInfo(
+    name: 'Zoho Projects',
+    emoji: '📋',
+    tagline: 'Zohoエコシステム統合プロジェクト管理・Gantt・タイムシート・課題追跡・無料プランで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Zoho Projects代替 プロジェクト管理 Zoho Gantt タイムシート Asana代替 Monday代替',
+    accentColor: Color(0xFFE84D1C),
+    painPoints: [
+      '無料(3ユーザー)/有料月5ドル~・プロジェクト管理特化・個人のライフ管理は別途必要',
+      'チームPM特化・個人のAI管理は別途必要',
+      'Asana/ClickUp/Mondayとの比較でUI複雑・モバイル操作・Zoho以外との統合が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Zohoエコシステム・Gantt・タイムシート・課題追跡・カスタムワークフロー',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'ntask': const _CompetitorInfo(
+    name: 'nTask',
+    emoji: '✅',
+    tagline: 'タスク/会議/リスク管理・タイムシート・フリーランス向け低価格PMツールで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'nTask代替 タスク管理 会議管理 リスク管理 タイムシート フリーランス Asana代替 低価格',
+    accentColor: Color(0xFF00897B),
+    painPoints: [
+      '無料/Pro月3ドル~・PM特化・個人のライフ管理は別途必要',
+      'チームタスク特化・個人のAI管理は別途必要',
+      'ClickUp/Asana/Todoistとの比較で機能の深さ・エコシステム・AIがまだ発展途上',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'タスク/会議/リスク管理・タイムシート・Gantt・バグ追跡・低価格',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'hive-pm': const _CompetitorInfo(
+    name: 'Hive',
+    emoji: '🐝',
+    tagline: 'AIプロジェクト管理・HiveMind AI・柔軟なビュー・Forms・アクションカードで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Hive代替 AIプロジェクト管理 HiveMind チームPM ClickUp代替 Asana代替 AI PM',
+    accentColor: Color(0xFFFF6D00),
+    painPoints: [
+      '無料/有料月12ドル~・PM特化・個人のライフ管理は別途必要',
+      'チームPM特化・個人のAI管理は別途必要',
+      'ClickUp/Asana/Mondayとの比較でブランド認知・プラグイン数・価格競争が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'HiveMind AI・柔軟ビュー・アクションカード・Forms・チームPM',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'flow-app': const _CompetitorInfo(
+    name: 'Flow',
+    emoji: '🌊',
+    tagline: 'シンプルチームタスク管理・プロジェクト・Slack統合・カレンダービュー・スタートアップ向けで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Flow代替 チームタスク管理 シンプルPM プロジェクト Slack統合 Asana代替 Basecamp代替',
+    accentColor: Color(0xFF5E35B1),
+    painPoints: [
+      '有料月8ドル~・チームPM特化・個人のライフ管理は別途必要',
+      'タスク管理特化・個人のAI管理は別途必要',
+      'Asana/Basecamp/Todoist との比較でAI機能・無料プラン・大規模対応が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'シンプルチームタスク・プロジェクト・カレンダービュー・Slack統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'activecollab': const _CompetitorInfo(
+    name: 'ActiveCollab',
+    emoji: '⚡',
+    tagline: 'セルフホスト可能PMツール・タイムシート・請求・タスク・チームコラボで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'ActiveCollab代替 セルフホスト PM タイムシート 請求 フリーランス エージェンシー Basecamp代替',
+    accentColor: Color(0xFFD32F2F),
+    painPoints: [
+      '有料月7ドル~/セルフホスト可・PM+請求特化・個人のライフ管理は別途必要',
+      'エージェンシー向けPM特化・個人のAI管理は別途必要',
+      'Basecamp/ClickUp/Harvest との比較でモダンUI・AI機能・マーケットプレイスが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'セルフホスト可・タイムシート・請求・タスク・チームコラボ・エージェンシー向け',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'freedcamp': const _CompetitorInfo(
+    name: 'Freedcamp',
+    emoji: '🏕️',
+    tagline: '無料プロジェクト管理・タスク/Gantt/カレンダー/Discussions・小チーム向け・シンプルで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Freedcamp代替 無料プロジェクト管理 小チーム Gantt タスク管理 Asana代替 Basecamp代替',
+    accentColor: Color(0xFF388E3C),
+    painPoints: [
+      '無料/Pro月1.49ドル~・PM特化・個人のライフ管理は別途必要',
+      'チームタスク特化・個人のAI管理は別途必要',
+      'ClickUp/Asana/Todoistとの比較でAI機能・UI洗練度・integrations数が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '無料プロジェクト・タスク/Gantt/カレンダー/Discussions・シンプルPM',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'teamgantt': const _CompetitorInfo(
+    name: 'TeamGantt',
+    emoji: '📊',
+    tagline: 'Ganttチャート専門PM・ドラッグ&ドロップ・依存関係・リソース管理・無料プランで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'TeamGantt代替 Ganttチャート プロジェクト管理 依存関係 リソース管理 Microsoft Project代替',
+    accentColor: Color(0xFF1976D2),
+    painPoints: [
+      '無料(1ユーザー)/有料月19ドル~・Gantt特化・個人のライフ管理は別途必要',
+      'Ganttチャート特化・個人のAI管理は別途必要',
+      'Microsoft Project/Smartsheet/ClickUpとの比較でビュー多様性・AI機能・価格が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Ganttチャート専門・ドラッグ&ドロップ・依存関係・リソース管理・チームコラボ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'meistertask': const _CompetitorInfo(
+    name: 'MeisterTask',
+    emoji: '⭐',
+    tagline: 'Kanban特化PM・MindMeister統合・自動化・タイムラインビュー・ドイツ系プライバシーで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'MeisterTask代替 Kanban プロジェクト管理 MindMeister 自動化 Trello代替 Asana代替',
+    accentColor: Color(0xFF27AE60),
+    painPoints: [
+      '無料/Pro月7ドル~・Kanban PM特化・個人のライフ管理は別途必要',
+      'チームKanban特化・個人のAI管理は別途必要',
+      'Trello/Asana/ClickUpとの比較でecoシステム・AI機能・Free制限が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Kanban特化・MindMeister統合・自動化・タイムラインビュー・GDPR準拠',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'taskworld': const _CompetitorInfo(
+    name: 'Taskworld',
+    emoji: '🌐',
+    tagline: 'タスク管理×分析×チャット統合・プロジェクト進捗自動分析・中小企業向けで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Taskworld代替 タスク管理 分析 チャット統合 中小企業 PM Asana代替 Basecamp代替',
+    accentColor: Color(0xFF00BCD4),
+    painPoints: [
+      '有料月8ドル~・PM+分析特化・個人のライフ管理は別途必要',
+      'チームPM特化・個人のAI管理は別途必要',
+      'Asana/ClickUp/Mondayとの比較でブランド認知・プラグイン数・無料プランが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'タスク管理×分析×チャット統合・プロジェクト進捗自動分析・中小企業向け',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
