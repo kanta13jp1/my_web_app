@@ -27,6 +27,17 @@ screenshot: /project-gantt timeline / 606 タスク中 04/29-04/30 期限切迫�
 
 = 6 件の **GHA workflow / Schedule task 失敗** が同時発生中.
 
+### 1.1 Phase 2 追加 (= Win版#132 part 89 / 2026-04-29)
+
+User 再要望 + /project-gantt 再 audit で追加発見:
+
+| # | Issue | Title | 期限 | 状態 |
+| --- | --- | --- | --- | --- |
+| 7 | #1020 | [CI失敗] CI codex/codex1-fix-migration-110000-collision | 04/29 | GHA |
+| 8 | #1026 | [CI失敗] Deploy to Production (main) | 04/30 | GHA |
+
+= 合計 **8 件**. #1051 は既に closed (= deploy success / 100% mirrored).
+
 ## 2. Win版 routing 判断 (5 質問 + WORKDIR-ISOLATION)
 
 | Q | 答え | 補足 |
@@ -81,11 +92,14 @@ PS#1 が分類後:
 
 ## 4. 受入基準
 
-- [ ] 6 Issue 個別 audit 完了 + 根本原因分類
-- [ ] PS#1 直接 fix 可能なものは即実施 (= 想定 4 件中 2-3 件)
-- [ ] 残り (= 2-4 件) は再委譲 cross-instance-pr 起票 (VSCode / Codex#1 / Codex#2 / User)
-- [ ] 6 Issue 全 close で `done/` 移動
-- [ ] WBS update (= migration `20260429170000_update_wbs_progress_win132_part88.sql` で part 88 が status update 済 / 100% は close 後反映)
+- [ ] **8 Issue** 個別 audit 完了 + 根本原因分類 (= part 88 の 6 件 + part 89 追加 2 件)
+- [ ] PS#1 直接 fix 可能なものは即実施 (= 想定 8 件中 4-5 件)
+- [ ] 残り (= 3-4 件) は再委譲 cross-instance-pr 起票 (VSCode / Codex#1 / Codex#2 / User)
+- [ ] 8 Issue 全 close で `done/` 移動
+- [ ] WBS update:
+  - migration `20260429170000_update_wbs_progress_win132_part88.sql` (= part 88 / 6 件 status)
+  - migration `20260429180000_update_wbs_progress_win132_part89.sql` (= part 89 / +2 件追加 + #1051 既 closed 反映)
+  - 100% は Issue close 後 issue-to-wbs.yml で auto 反映
 
 ## 5. 連携 docs
 
