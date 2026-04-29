@@ -41962,6 +41962,312 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'revolut': const _CompetitorInfo(
+    name: 'Revolut',
+    emoji: '💳',
+    tagline: '欧州発スーパーアプリ・マルチ通貨口座・暗号資産・株取引・旅行保険一体型で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Revolut代替 ネオバンク マルチ通貨 海外送金 N26代替 Wise代替 仮想通貨',
+    accentColor: Color(0xFF0075EB),
+    painPoints: [
+      '有料プランあり・金融特化・個人のライフ管理は別途必要',
+      'フィンテック特化・個人のAI管理は別途必要',
+      'N26/Wiseと比較してEU圏外サポート・保険内容・手数料体系が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'マルチ通貨・仮想通貨・株取引・旅行保険・Vaultス',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'n26': const _CompetitorInfo(
+    name: 'N26',
+    emoji: '🏦',
+    tagline: 'ドイツ発ネオバンク・IBAN対応・Spaces貯金・旅行保険・リアルタイム通知で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'N26代替 ネオバンク ドイツ IBAN 海外口座 Revolut代替 Monzo代替',
+    accentColor: Color(0xFF00C48C),
+    painPoints: [
+      '無料プランあり・銀行特化・個人のライフ管理は別途必要',
+      '金融特化・個人のAI管理は別途必要',
+      'Revolut/Monzoと比較して機能数・暗号資産・投資機能が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'IBAN口座・Spaces・旅行保険・リアルタイム通知・カード管理',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'chime': const _CompetitorInfo(
+    name: 'Chime',
+    emoji: '🔔',
+    tagline: '米国ネオバンク・SpotMe当座貸越・給料2日早払い・手数料ゼロで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Chime代替 ネオバンク アメリカ SpotMe 手数料なし 早期給与 Current代替',
+    accentColor: Color(0xFF00D4AA),
+    painPoints: [
+      '無料・米国金融特化・個人のライフ管理は別途必要',
+      'チェッキング/セービング特化・個人のAI管理は別途必要',
+      'Current/Dave/Varo Bankと比較して投資機能・国際送金・クレジット構築が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'SpotMe・給与2日早払い・手数料ゼロ・Credit Builder・自動貯蓄',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'betterment': const _CompetitorInfo(
+    name: 'Betterment',
+    emoji: '📈',
+    tagline: '米国ロボアドバイザー・税損失収穫・ゴール別投資・自動リバランスで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Betterment代替 ロボアドバイザー 投資自動化 税損失収穫 Wealthfront代替 資産運用',
+    accentColor: Color(0xFF0A2540),
+    painPoints: [
+      '手数料あり(0.25%)/プレミアム(0.4%)・投資特化・個人のライフ管理は別途必要',
+      '資産運用特化・個人のAI管理は別途必要',
+      'Wealthfront/Ellevest/M1と比較してカスタマイズ・直接インデックス・セルフディレクト機能が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '税損失収穫・ゴール別ポートフォリオ・自動リバランス・ESG・退職口座',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'wealthfront': const _CompetitorInfo(
+    name: 'Wealthfront',
+    emoji: '💹',
+    tagline: '米国ロボアドバイザー・自動ETFポートフォリオ・Path Financial Planning・直接インデックスで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Wealthfront代替 ロボアドバイザー 資産運用 ETF Path Betterment代替 FIRE計画',
+    accentColor: Color(0xFF5BC07D),
+    painPoints: [
+      '手数料あり(0.25%)・投資特化・個人のライフ管理は別途必要',
+      '資産運用特化・個人のAI管理は別途必要',
+      'Betterment/Schwab Intelligent/Vanguard Digitalと比較してプレミアムプラン・人間アドバイザーが限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '自動ETF・Pathプランニング・直接インデックス・529カレッジプラン・ローン',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'acorns': const _CompetitorInfo(
+    name: 'Acorns',
+    emoji: '🌰',
+    tagline: 'マイクロ投資・おつり自動投資・Found Money・Later IRA・Early子ども口座で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Acorns代替 マイクロ投資 おつり投資 自動積立 Stash代替 投資初心者',
+    accentColor: Color(0xFF6A8A2F),
+    painPoints: [
+      '有料(月3-9ドル)・マイクロ投資特化・個人のライフ管理は別途必要',
+      '少額投資特化・個人のAI管理は別途必要',
+      'Stash/Robinhood/Public.comと比較して株式選択・手数料対資産比率が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'おつり自動投資・Found Money・IRA・子ども口座・チェッキング',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'brave': const _CompetitorInfo(
+    name: 'Brave',
+    emoji: '🦁',
+    tagline: 'プライバシー重視ブラウザ・内蔵広告ブロッカー・BATトークン報酬・Tor統合で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Brave代替 プライバシーブラウザ 広告ブロック Firefox代替 Arc代替 暗号資産ブラウザ',
+    accentColor: Color(0xFFFF6000),
+    painPoints: [
+      '無料・ブラウザ特化・個人のライフ管理は別途必要',
+      'ブラウジング特化・個人のAI管理は別途必要',
+      'Firefox/Arc/Operaと比較して拡張機能互換性・企業エコシステム統合が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '広告ブロック・BAT報酬・Tor・Brave Search・Leo AI・Shields',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  '1password': const _CompetitorInfo(
+    name: '1Password',
+    emoji: '🔐',
+    tagline: 'パスワードマネージャー・ファミリー/チームプラン・Travel Mode・Watchtower脆弱性検知で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: '1Password代替 パスワードマネージャー セキュリティ Bitwarden代替 LastPass代替 チーム',
+    accentColor: Color(0xFF1A8CFF),
+    painPoints: [
+      '有料(月3-8ドル)・パスワード管理特化・個人のライフ管理は別途必要',
+      'セキュリティ特化・個人のAI管理は別途必要',
+      'Bitwarden/Keeper/Dashlaneと比較してOSSでない・月額コスト・自己ホスティング不可が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Travel Mode・Watchtower・パスキー・チーム管理・クロスプラットフォーム',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'surfshark': const _CompetitorInfo(
+    name: 'Surfshark',
+    emoji: '🦈',
+    tagline: 'VPN・無制限デバイス・CleanWeb広告ブロック・Nexus IPローテーション・Alert漏洩検知で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Surfshark代替 VPN 無制限デバイス プライバシー NordVPN代替 ExpressVPN代替 CleanWeb',
+    accentColor: Color(0xFF1DBAB9),
+    painPoints: [
+      '有料(年約3ドル/月)・VPN特化・個人のライフ管理は別途必要',
+      'プライバシー/ネットワーク特化・個人のAI管理は別途必要',
+      'NordVPN/ExpressVPNと比較してサーバー数・速度・監査実績が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '無制限デバイス・CleanWeb・Nexus・Alert・Antivirus・GPSスプーフィング',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
