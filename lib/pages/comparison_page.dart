@@ -49455,6 +49455,324 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'bugherd': const _CompetitorInfo(
+    name: 'BugHerd',
+    emoji: '🐝',
+    tagline:
+        'ウェブサイトバグ報告・ピンポイントフィードバック・Kanban管理・クライアント対応・デザインレビューで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'BugHerd代替 ウェブバグ報告 ピンポイントフィードバック Kanban クライアント対応 デザインレビュー marker-io代替',
+    accentColor: Color(0xFFFFC107),
+    painPoints: [
+      '有料月39ドル~・バグ報告特化・個人のライフ管理は別途必要',
+      'フィードバック収集特化・個人のAI管理は別途必要',
+      'marker.io/Usersnap/Gleap との比較でモバイル対応・AI自動分類・統合深度が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ウェブサイトバグ報告・ピンポイントフィードバック・Kanban・クライアント対応',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'marker-io': const _CompetitorInfo(
+    name: 'Marker.io',
+    emoji: '📍',
+    tagline: 'ビジュアルバグ報告・スクリーンショット自動添付・Jira/Trello連携・開発チーム向けで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'marker.io代替 ビジュアルバグ報告 スクリーンショット Jira Trello連携 開発チーム BugHerd代替 Usersnap代替',
+    accentColor: Color(0xFF4834D4),
+    painPoints: [
+      '有料月49ドル~・バグ報告特化・個人のライフ管理は別途必要',
+      'フィードバック収集特化・個人のAI管理は別途必要',
+      'BugHerd/Usersnap/Gleap との比較でユーザー向け機能・AI・価格が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ビジュアルバグ報告・スクリーンショット自動添付・Jira/Trello/GitHub連携',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'gleap': const _CompetitorInfo(
+    name: 'Gleap',
+    emoji: '✨',
+    tagline: 'インアップフィードバック・バグ報告・AI Kai チャットボット・ロードマップ・SDK統合で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Gleap代替 インアップフィードバック バグ報告 AIチャットボット ロードマップ SDK Usersnap代替 Instabug代替',
+    accentColor: Color(0xFF7C4DFF),
+    painPoints: [
+      '有料月31ドル~・フィードバック特化・個人のライフ管理は別途必要',
+      'プロダクトフィードバック特化・個人のAI管理は別途必要',
+      'Instabug/Usersnap/marker.io との比較でエンタープライズ機能・バンドル価格が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'インアップフィードバック・AI Kaiチャットボット・ロードマップ・バグ報告・SDK',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'opsgenie': const _CompetitorInfo(
+    name: 'Opsgenie (Atlassian)',
+    emoji: '🚨',
+    tagline:
+        'Atlassian傘下インシデント管理・オンコールスケジュール・アラートルーティング・Jira連携で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Opsgenie代替 インシデント管理 オンコール アラートルーティング Atlassian Jira PagerDuty代替 VictorOps代替',
+    accentColor: Color(0xFF0052CC),
+    painPoints: [
+      '有料月9ドル~/無料14日・インシデント管理特化・個人のライフ管理は別途必要',
+      'ITオペレーション特化・個人のAI管理は別途必要',
+      'PagerDuty/VictorOps/BetterStack との比較でAI自動分類・コスト・通知カスタムが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'インシデント管理・オンコールスケジュール・アラートルーティング・Jira/Slack連携',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'victorops': const _CompetitorInfo(
+    name: 'Splunk On-Call (旧VictorOps)',
+    emoji: '📟',
+    tagline: 'Splunk傘下DevOpsインシデント管理・チャットOps・タイムライン・オンコール自動化で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'VictorOps代替 Splunk On-Call インシデント管理 DevOps ChatOps タイムライン PagerDuty代替 Opsgenie代替',
+    accentColor: Color(0xFF65A637),
+    painPoints: [
+      '有料月27ドル~/ユーザー・インシデント管理特化・個人のライフ管理は別途必要',
+      'DevOpsオペレーション特化・個人のAI管理は別途必要',
+      'PagerDuty/Opsgenie/BetterStack との比較でコスト・機能深さ・Splunk依存が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'DevOpsインシデント管理・ChatOps・タイムライン・オンコール自動化・Splunk統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'betterstack': const _CompetitorInfo(
+    name: 'Better Stack',
+    emoji: '⬆️',
+    tagline: '死活監視+インシデントログ+オンコール+ステータスページ統合・開発者向け・無料プランで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Better Stack代替 死活監視 インシデントログ オンコール ステータスページ 開発者向け PagerDuty代替 UptimeRobot代替',
+    accentColor: Color(0xFF22C55E),
+    painPoints: [
+      '無料/有料月24ドル~・インシデント管理特化・個人のライフ管理は別途必要',
+      'ITオペレーション特化・個人のAI管理は別途必要',
+      'PagerDuty/Opsgenie/Statuspage との比較でエンタープライズ機能・SLA・AI自動化が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '死活監視+インシデントログ+オンコール+ステータスページ・開発者向け・無料あり',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'sleekplan': const _CompetitorInfo(
+    name: 'Sleekplan',
+    emoji: '💤',
+    tagline: 'プロダクトフィードバック・機能リクエスト投票・ロードマップ公開・チェンジログ・無料プランで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Sleekplan代替 フィードバック 機能リクエスト投票 ロードマップ チェンジログ 無料 Canny代替 Frill代替',
+    accentColor: Color(0xFF6B48FF),
+    painPoints: [
+      '無料/有料月19ドル~・フィードバック特化・個人のライフ管理は別途必要',
+      'プロダクト管理特化・個人のAI管理は別途必要',
+      'Canny/Frill/ProductBoard との比較でエンタープライズ・AI優先付け・ロードマップ深さが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'フィードバック・投票・ロードマップ公開・チェンジログ・無料プラン・SSO',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'frill': const _CompetitorInfo(
+    name: 'Frill',
+    emoji: '🎀',
+    tagline: '機能リクエスト収集・投票ボード・ロードマップ・チェンジログ・ウィジェット埋め込みで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Frill代替 機能リクエスト 投票ボード ロードマップ チェンジログ ウィジェット Canny代替 Sleekplan代替',
+    accentColor: Color(0xFFF59E0B),
+    painPoints: [
+      '無料/有料月25ドル~・フィードバック特化・個人のライフ管理は別途必要',
+      'プロダクト管理特化・個人のAI管理は別途必要',
+      'Canny/Sleekplan/Nolt との比較でカスタマイズ・API・AI機能が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '機能リクエスト・投票ボード・ロードマップ・チェンジログ・ウィジェット埋め込み',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'userback': const _CompetitorInfo(
+    name: 'Userback',
+    emoji: '↩️',
+    tagline:
+        'ウェブサイトフィードバックウィジェット・ビデオ録画・注釈・Jira/Trello・アジャイルチームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Userback代替 フィードバックウィジェット ビデオ録画 注釈 Jira Trello アジャイル Usersnap代替 Gleap代替',
+    accentColor: Color(0xFF0EA5E9),
+    painPoints: [
+      '有料月49ドル~・フィードバック特化・個人のライフ管理は別途必要',
+      'プロダクトフィードバック特化・個人のAI管理は別途必要',
+      'Usersnap/Gleap/marker.io との比較でモバイル・AI分類・統合数が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'フィードバックウィジェット・ビデオ録画・注釈・Jira/Trello・スクリーンショット',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
