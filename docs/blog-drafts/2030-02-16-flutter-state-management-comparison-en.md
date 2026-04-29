@@ -1,7 +1,7 @@
 ---
 title: "Flutter State Management Comparison 2024 — Riverpod vs Bloc vs Provider vs GetX"
 tags: flutter,dart,webdev,indiedev
-published: false
+published: true
 ---
 
 # Flutter State Management Comparison 2024 — Riverpod vs Bloc vs Provider vs GetX
