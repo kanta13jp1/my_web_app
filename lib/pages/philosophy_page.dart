@@ -212,7 +212,7 @@ class _PhilosophyPageState extends State<PhilosophyPage> {
           ],
         ),
         const SizedBox(height: 6),
-        const Semantics(
+        Semantics(
           label: 'AI で生成された動画',
           child: const Row(
             children: [
