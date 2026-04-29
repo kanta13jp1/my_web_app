@@ -3211,4 +3211,13 @@
   <url><loc>https://my-web-app-b67f4.web.app/vs-novu</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
   <url><loc>https://my-web-app-b67f4.web.app/vs-knock-app</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
   <url><loc>https://my-web-app-b67f4.web.app/vs-courier</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://my-web-app-b67f4.web.app/vs-magicbell</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://my-web-app-b67f4.web.app/vs-helicone</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://my-web-app-b67f4.web.app/vs-langfuse</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://my-web-app-b67f4.web.app/vs-portkey-ai</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://my-web-app-b67f4.web.app/vs-lunary</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://my-web-app-b67f4.web.app/vs-neptune-ai</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://my-web-app-b67f4.web.app/vs-clear-ml</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://my-web-app-b67f4.web.app/vs-comet-ml</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://my-web-app-b67f4.web.app/vs-dvc</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
 </urlset>
