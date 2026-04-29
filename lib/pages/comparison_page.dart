@@ -30465,6 +30465,312 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'mubert': const _CompetitorInfo(
+    name: 'Mubert',
+    emoji: '🎵',
+    tagline: 'AIジェネラティブ音楽・ロイヤリティフリーBGM生成で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Mubert代替 AI音楽生成 BGM ロイヤリティフリー ジェネラティブ音楽 API',
+    accentColor: Color(0xFF00B4D8),
+    painPoints: [
+      '無料/月額14ドル〜・AI音楽特化・個人のライフ管理は別途必要',
+      'BGM生成特化・個人のAI管理は別途必要',
+      'Suno/Udioと比較して音楽クリエイティブ幅・完成度が劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ジャンル指定BGM・API統合・ロイヤリティフリー・ストリーミング生成',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'play-ht': const _CompetitorInfo(
+    name: 'Play.ht',
+    emoji: '🔊',
+    tagline: 'AIテキストto音声・リアルなポッドキャスト・音声コンテンツ制作で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Play.ht代替 テキストto音声 TTS AI音声 ポッドキャスト 音声合成 クローン',
+    accentColor: Color(0xFF6366F1),
+    painPoints: [
+      '月額31ドル〜・音声合成特化・個人のライフ管理は別途必要',
+      'TTS特化・個人のAI管理は別途必要',
+      'ElevenLabs/Murf比較でリアリズム・声のバリエーションが劣ることがある',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '900+声・60言語・クローン・ポッドキャスト・ウィジェット・API',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'murf': const _CompetitorInfo(
+    name: 'Murf AI',
+    emoji: '🎙️',
+    tagline: 'AIボイスオーバー・プロフェッショナル音声合成スタジオで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Murf代替 ボイスオーバー AI音声合成 TTS 音声ナレーション プレゼン動画',
+    accentColor: Color(0xFFE11D48),
+    painPoints: [
+      '月額23ドル〜・ボイスオーバー特化・個人のライフ管理は別途必要',
+      '音声ナレーション特化・個人のAI管理は別途必要',
+      'ElevenLabs/Play.htと比較して声のリアリズム・クローン機能が劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '120+声・20言語・スタジオUI・スライド音声付け・チーム共有',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'resemble-ai': const _CompetitorInfo(
+    name: 'Resemble AI',
+    emoji: '🗣️',
+    tagline: 'AIボイスクローン・リアルタイム音声変換・音声セキュリティで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Resemble AI代替 ボイスクローン リアルタイム音声変換 音声AI ディープフェイク検出',
+    accentColor: Color(0xFF0F766E),
+    painPoints: [
+      '月額不明・音声クローン特化・個人のライフ管理は別途必要',
+      'ボイスAI特化・個人のAI管理は別途必要',
+      'ElevenLabs/Speechifyと比較してエコシステム・認知度が劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ボイスクローン・リアルタイム変換・ディープフェイク検出・感情制御・API',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'krisp': const _CompetitorInfo(
+    name: 'Krisp',
+    emoji: '🔇',
+    tagline: 'AIノイズキャンセリング・会議音声クリア化ツールで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Krisp代替 AIノイズキャンセリング 会議 音声クリア バックグラウンドノイズ除去',
+    accentColor: Color(0xFF7C3AED),
+    painPoints: [
+      '無料/月額8ドル〜・音声ノイズ除去特化・個人のライフ管理は別途必要',
+      '会議音声特化・個人のAI管理は別途必要',
+      'NVIDIA RTX Voice/Cleamicと比較してGPU非依存の強みはあるがUIが限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AIノイズ除去・エコー除去・音声クリア・Zoom/Meet対応・会議文字起こし',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'wellsaid': const _CompetitorInfo(
+    name: 'WellSaid Labs',
+    emoji: '📻',
+    tagline: 'エンタープライズAI音声合成・高品質ナレーション生成で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'WellSaid代替 エンタープライズTTS 音声合成 ナレーション eLearning 高品質',
+    accentColor: Color(0xFF1D4ED8),
+    painPoints: [
+      '月額44ドル〜・エンタープライズTTS特化・個人のライフ管理は別途必要',
+      'ナレーション特化・個人のAI管理は別途必要',
+      'ElevenLabs/Murfy比較でコスト・声のカスタマイズ性が課題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'プロ品質TTS・カスタムアバター・チームコラボ・eLearning向け・API',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'boomy': const _CompetitorInfo(
+    name: 'Boomy',
+    emoji: '🎶',
+    tagline: 'AI音楽生成・1クリック楽曲作成・収益化プラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Boomy代替 AI音楽生成 楽曲作成 収益化 ロイヤリティ Spotify 初心者',
+    accentColor: Color(0xFFF59E0B),
+    painPoints: [
+      '無料/月額2.99ドル〜・AI音楽収益化特化・個人のライフ管理は別途必要',
+      '音楽生成特化・個人のAI管理は別途必要',
+      'Suno/Udioと比較して楽曲品質・音楽スタイルの幅が劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '1クリック楽曲・Spotify/Apple配信・収益化・曲の所有権・10M+楽曲',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'aiva': const _CompetitorInfo(
+    name: 'AIVA',
+    emoji: '🎼',
+    tagline: 'AI作曲・映画/ゲーム向けサウンドトラック生成で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'AIVA代替 AI作曲 サウンドトラック 映画音楽 ゲーム BGM クラシック',
+    accentColor: Color(0xFF4338CA),
+    painPoints: [
+      '無料/月額11ドル〜・AI作曲特化・個人のライフ管理は別途必要',
+      'サウンドトラック作曲特化・個人のAI管理は別途必要',
+      'Suno/Boomy比較でポップ系・歌詞付き楽曲は苦手',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'クラシック/映画/ゲーム作曲・スタイル学習・著作権登録・無制限生成',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'loudly': const _CompetitorInfo(
+    name: 'Loudly',
+    emoji: '📢',
+    tagline: 'AIテキストto音楽・ロイヤリティフリー楽曲生成プラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Loudly代替 AIテキストto音楽 ロイヤリティフリー BGM 楽曲生成 商用利用',
+    accentColor: Color(0xFF059669),
+    painPoints: [
+      '無料/月額不明・AI音楽特化・個人のライフ管理は別途必要',
+      'テキストto音楽特化・個人のAI管理は別途必要',
+      'Mubert/AIVA比較でカスタマイズ性・音楽スタイルが限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'テキストto音楽・ジャンル指定・ロイヤリティフリー・プロジェクト管理',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
