@@ -16632,7 +16632,7 @@ final _competitorInfo = <String, _CompetitorInfo>{
     searchKeyword: 'Paddle代替 SaaS決済 税務処理 サブスクリプション 国際展開',
     accentColor: Color(0xFF1A56DB),
     painPoints: [
-      '取引額の5%+$0.50の手数料・高収益製品では大きなコスト',
+      '取引額の5%+\/usr/bin/bash.50の手数料・高収益製品では大きなコスト',
       'SaaS決済・税務代行特化で個人ライフ管理・AI機能は別途必要',
       'Stripeと比較してカスタマイズ性が低くエンジニア向け機能が少ない',
     ],
@@ -16700,7 +16700,7 @@ final _competitorInfo = <String, _CompetitorInfo>{
     searchKeyword: 'Lemon Squeezy代替 デジタル商品 SaaS決済 Gumroad代替 Paddle代替',
     accentColor: Color(0xFFFFCE37),
     painPoints: [
-      '取引額の5%+$0.50の手数料・Gumroadより高い場合がある',
+      '取引額の5%+\/usr/bin/bash.50の手数料・Gumroadより高い場合がある',
       'デジタル商品決済特化で個人ライフ管理・AI対話は別途必要',
       '機能追加ペースが速く設定方法が頻繁に変わる',
     ],
@@ -17040,7 +17040,7 @@ final _competitorInfo = <String, _CompetitorInfo>{
     searchKeyword: 'New Relic代替 APM アプリ監視 オブザーバビリティ パフォーマンス',
     accentColor: Color(0xFF008C99),
     painPoints: [
-      '無料100GBまで・超過は$0.35/GBと大量データで高額化',
+      '無料100GBまで・超過は\/usr/bin/bash.35/GBと大量データで高額化',
       'インフラ監視特化でエンジニア向け・個人ライフ管理は別途必要',
       'Datadogと比較してUI学習コストが高くオンボーディングに時間がかかる',
     ],
@@ -17074,7 +17074,7 @@ final _competitorInfo = <String, _CompetitorInfo>{
     searchKeyword: 'Dynatrace代替 AI監視 APM クラウド監視 自動化',
     accentColor: Color(0xFF1496FF),
     painPoints: [
-      '時間あたり$0.04〜・エンタープライズは年間数十万ドルに',
+      '時間あたり\/usr/bin/bash.04〜・エンタープライズは年間数十万ドルに',
       'エンタープライズIT監視特化でエンジニア/運用チーム向け',
       'New RelicやDatadogと比較してSMBには価格・機能が過剰',
     ],
@@ -20685,6 +20685,312 @@ final _competitorInfo = <String, _CompetitorInfo>{
     features: [
       _FeatureComparison(
         feature: '最適化推論・Llama/Mixtral/SDXL・Function Calling・バッチAPI',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'pinecone': const _CompetitorInfo(
+    name: 'Pinecone',
+    emoji: '🌲',
+    tagline: 'マネージドベクターデータベース・RAGインフラで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Pinecone代替 ベクターDB RAG 埋め込み 類似検索 AI検索',
+    accentColor: Color(0xFF00B4D8),
+    painPoints: [
+      'スターター無料だが本番月額70ドル〜・大量ベクターで高額',
+      'ベクターDB特化でエンジニア向け設計・個人のライフ管理は別途必要',
+      'WeaviateやQdrantと比較してセルフホスト不可・ベンダーロックイン',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'サーバーレスベクターDB・ハイブリッド検索・メタデータフィルタ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'weaviate': const _CompetitorInfo(
+    name: 'Weaviate',
+    emoji: '🔮',
+    tagline: 'OSSベクターデータベース・ハイブリッド検索・GraphQL APIで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Weaviate代替 ベクターDB OSS ハイブリッド検索 GraphQL RAG',
+    accentColor: Color(0xFF3EC9A7),
+    painPoints: [
+      'クラウド版月額25ドル〜・セルフホストは運用とスケールが複雑',
+      'ベクターDB特化でエンジニア向け設計・個人のライフ管理は別途必要',
+      'Pineconeと比較してマネージドサービスのSLAが弱い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ベクター+キーワードハイブリッド・GraphQL・マルチモーダル・OSS',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'qdrant': const _CompetitorInfo(
+    name: 'Qdrant',
+    emoji: '⚡',
+    tagline: 'Rust製高性能ベクター検索エンジン・OSS・クラウドで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Qdrant代替 ベクター検索 OSS Rust 高速 埋め込み検索',
+    accentColor: Color(0xFFDC143C),
+    painPoints: [
+      'セルフホスト必須 or クラウド月額20ドル〜・エンジニア向け設定が必要',
+      'ベクター検索特化でエンジニア向け設計・個人のライフ管理は別途必要',
+      'PineconeやWeaviateと比較してマネージドSLAが弱い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Rust製高速検索・ペイロードフィルタ・マルチベクター・スパース',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'chroma': const _CompetitorInfo(
+    name: 'Chroma',
+    emoji: '🎨',
+    tagline: 'Python/JS対応OSS埋め込みDB・LangChain標準で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Chroma代替 埋め込みDB LangChain RAG Python ベクター OSS',
+    accentColor: Color(0xFFFF6B2B),
+    painPoints: [
+      'プロダクション利用は自己ホスト必須・水平スケールが複雑',
+      'ベクターDB特化でエンジニア向け設計・個人のライフ管理は別途必要',
+      'PineconeやQdrantと比較してエンタープライズ機能が少ない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Python/JS API・自動埋め込み・メタデータ・LangChain/LlamaIndex統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'milvus': const _CompetitorInfo(
+    name: 'Milvus',
+    emoji: '🐘',
+    tagline: 'OSSスケーラブルベクターDB・Zillizクラウドで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Milvus代替 ベクターDB OSS スケーラブル AI検索 Zilliz',
+    accentColor: Color(0xFF00B4F0),
+    painPoints: [
+      'セルフホストはKubernetes運用が複雑・Zillizクラウドは高額',
+      'ベクターDB特化でエンジニア向け設計・個人のライフ管理は別途必要',
+      'Qdrantと比較してリソース消費が多くスモールスタートに不向き',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '10億+ベクター・ANNS・IVF/HNSW・マルチモーダル・Kubernetes',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'lancedb': const _CompetitorInfo(
+    name: 'LanceDB',
+    emoji: '🏹',
+    tagline: 'サーバーレスOSSベクターDB・Lance列形式・Pandas統合で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'LanceDB代替 ベクターDB サーバーレス OSS Pandas 組み込み',
+    accentColor: Color(0xFF8B5CF6),
+    painPoints: [
+      'プロダクション管理版は有料・大規模クラスター運用は別途必要',
+      'ベクターDB特化でエンジニア向け設計・個人のライフ管理は別途必要',
+      'WeaviateやQdrantと比較してエコシステムがまだ成熟途上',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Lance形式・ゼロコピー・FTS+ベクターハイブリッド・組み込み可能',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'redis-vector': const _CompetitorInfo(
+    name: 'Redis Vector Search',
+    emoji: '🔴',
+    tagline: 'Redis VSS・インメモリベクター類似検索・低レイテンシで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Redis Vector Search代替 VSS インメモリ 類似検索 RedisSearch',
+    accentColor: Color(0xFFFF4438),
+    painPoints: [
+      'Redis Cloudは月額7ドル〜・大規模ベクターはメモリコストが高い',
+      'ベクター検索特化でエンジニア向け設計・個人のライフ管理は別途必要',
+      'Pineconeと比較してベクター専用機能が少なくRedisの汎用用途が主',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'インメモリ高速検索・FLAT/HNSW・ハイブリッドKNN・JSON統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'pgvector': const _CompetitorInfo(
+    name: 'pgvector',
+    emoji: '🐘',
+    tagline: 'PostgreSQL OSS ベクター拡張・Supabase Vector統合で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'pgvector代替 PostgreSQL ベクター拡張 OSS Supabase 埋め込み検索',
+    accentColor: Color(0xFF336791),
+    painPoints: [
+      'セルフホスト必須・大規模ベクターではPineconeより検索性能が低い',
+      'ベクター拡張特化でエンジニア向け設計・個人のライフ管理は別途必要',
+      '専用ベクターDBと比較してスケーラビリティと近似検索精度が劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'PG拡張・L2/コサイン/内積・IVFFLAT/HNSW・Supabase統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'vespa': const _CompetitorInfo(
+    name: 'Vespa',
+    emoji: '🦉',
+    tagline: 'Yahoo OSSリアルタイムMLランキング・ベクター+キーワードハイブリッドで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Vespa代替 リアルタイム検索 MLランキング ベクター Yahoo OSS',
+    accentColor: Color(0xFF0A6EBD),
+    painPoints: [
+      'Vespa Cloud月額120ドル〜・セルフホストは運用が複雑',
+      '検索・ランキング特化でエンジニア向け設計・個人のライフ管理は別途必要',
+      'Pineconeと比較して学習コストが高くエコシステムが小さい',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ANN+BM25ハイブリッド・YQL・テンソル計算・分散推論',
         competitorHas: true,
         weHave: false,
       ),
