@@ -24773,3 +24773,12 @@ SECOND_BRAIN 4.5/7 + VIBE 7.0/7 + PLATFORM 4.0/7 = 14.5/21 + cross-instance-pr �
 - S186-S188: crazy-egg/mouseflow/logrocket/heap/segment/rudderstack/chartmogul/baremetrics/profitwell (+9社)
 - 累計本日PS#4: S159-S188 = 90社追加 (402→438社+本日累計)
 - dart entries: 430 / marketing count: 438社 / sitemap: 481 URLs
+
+## 2026-04-29 PS#2 S91 — T-1 Phase40全4弾完結 (#187-#190)
+
+- #187 Flutter PlatformViews → https://dev.to/kanta13jp1/flutter-platformview-guide-embedding-native-ui-in-flutter-1d2d
+- #188 Supabase RLS Advanced → https://dev.to/kanta13jp1/supabase-rls-deep-dive-multi-tenant-access-control-11ig
+- #189 Indie Community Building → https://dev.to/kanta13jp1/indie-dev-community-building-turning-users-into-champions-168a
+- #190 Dart Macros → https://dev.to/kanta13jp1/dart-macros-compile-time-code-generation-without-buildrunner-5glg
+- dev.to 累計190本
+- 全 draft: published:true (JA+EN) / orphan branches 全削除
