@@ -24751,3 +24751,10 @@ SECOND_BRAIN 4.5/7 + VIBE 7.0/7 + PLATFORM 4.0/7 = 14.5/21 + cross-instance-pr �
 
 ### commit: 958a61659 (cherry-pick: 0fde70ec1 on main)
 ### migration: 20260429095000_seed_achievements_ps5_s106.sql
+
+## 2026-04-29 PS#1 S10 — collision 2件追加修正 (095000/122000) → 1058 files clean
+- deploy-prod 失敗 (run 25092667741): 095000 collision (ps5_s106+ps6_s127)
+  - 最新 pull 時すでに解消済み (他インスタンスが修正済)
+- 122000 collision (ps2_s85+ps4_s179): ps4_s179を122100にリネーム → f4ff62ed6 push
+- ローカル確認: 1058 migration files / 1058 unique timestamps / OK
+- deploy-prod 次回 run: collision gate pass → 本番デプロイ再開見込み
