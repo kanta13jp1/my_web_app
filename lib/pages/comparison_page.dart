@@ -57468,6 +57468,329 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'influxdb': const _CompetitorInfo(
+    name: 'InfluxDB',
+    emoji: '📈',
+    tagline:
+        'InfluxDB・時系列DB・Flux・InfluxQL・IoT・リアルタイム監視・高書き込みパフォーマンス・無料(OSS)/Cloudで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'InfluxDB代替 時系列DB Flux InfluxQL IoT リアルタイム監視 高書き込み TimescaleDB代替 Prometheus代替',
+    accentColor: Color(0xFF22ADF6),
+    painPoints: [
+      '無料(OSS)/有料(Cloud)・時系列DB特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'TimescaleDB/Prometheus/VictoriaMetrics との比較でSQL非対応・スケーリングコストが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '時系列DB・Flux・IoT・リアルタイム監視・高書き込みパフォーマンス',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'timescaledb': const _CompetitorInfo(
+    name: 'TimescaleDB',
+    emoji: '⏱️',
+    tagline:
+        'TimescaleDB・PostgreSQL拡張時系列DB・SQL・自動パーティショニング・連続集計・圧縮・IoTで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'TimescaleDB代替 PostgreSQL拡張 時系列DB SQL パーティション 連続集計 圧縮 IoT InfluxDB代替 QuestDB代替',
+    accentColor: Color(0xFFFFA500),
+    painPoints: [
+      '無料(OSS)/有料(Cloud)・時系列DB特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'InfluxDB/QuestDB との比較でPostgres依存・書き込みパフォーマンス・スケーリングが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'PostgreSQL拡張時系列DB・SQL・自動パーティション・連続集計・圧縮',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'grafana-loki': const _CompetitorInfo(
+    name: 'Grafana Loki',
+    emoji: '📜',
+    tagline:
+        'Grafana Loki・ログ集約システム・Prometheus風・低コスト・LogQL・Grafana統合・水平スケールで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Grafana Loki代替 ログ集約 Prometheus風 低コスト LogQL Grafana統合 水平スケール Elasticsearch代替 Splunk代替',
+    accentColor: Color(0xFFF05A28),
+    painPoints: [
+      '無料(OSS)/有料(Grafana Cloud)・ログ集約特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Elasticsearch/Splunk との比較でフルテキスト検索・高度なクエリ・分析機能が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ログ集約・Prometheus風・低コスト・LogQL・Grafana統合・水平スケール',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'victoriametrics': const _CompetitorInfo(
+    name: 'VictoriaMetrics',
+    emoji: '🏃',
+    tagline:
+        'VictoriaMetrics・高性能時系列DB・Prometheus互換・低コスト・高圧縮・MetricsQL・スケーラブルで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'VictoriaMetrics代替 時系列DB Prometheus互換 低コスト 高圧縮 MetricsQL スケーラブル InfluxDB代替 Thanos代替',
+    accentColor: Color(0xFF621FE6),
+    painPoints: [
+      '無料(OSS)/有料・時系列DB特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Prometheus/InfluxDB/Thanos との比較でエコシステム・アラート機能・ダッシュボードが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '高性能時系列DB・Prometheus互換・低コスト・高圧縮・MetricsQL・スケーラブル',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'questdb': const _CompetitorInfo(
+    name: 'QuestDB',
+    emoji: '⚡',
+    tagline:
+        'QuestDB・高速時系列DB・SQL・PostgreSQLワイヤ互換・ゼロコピー取り込み・金融/IoT・OSS/Cloudで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'QuestDB代替 高速時系列DB SQL PostgreSQL互換 ゼロコピー 金融 IoT OSS InfluxDB代替 TimescaleDB代替',
+    accentColor: Color(0xFF9DB7D9),
+    painPoints: [
+      '無料(OSS)/有料(Cloud)・時系列DB特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'InfluxDB/TimescaleDB との比較でエコシステム規模・コネクタ・成熟度が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '高速時系列DB・SQL・PostgreSQLワイヤ互換・ゼロコピー取り込み・金融/IoT',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'tdengine': const _CompetitorInfo(
+    name: 'TDengine',
+    emoji: '🌊',
+    tagline:
+        'TDengine・IoT時系列DB・超高書き込み性能・SQL・組み込みキャッシュ・ストリーミング・中国発OSS/Cloudで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'TDengine代替 IoT時系列DB 超高書き込み SQL 組み込みキャッシュ ストリーミング OSS InfluxDB代替 QuestDB代替',
+    accentColor: Color(0xFF3B7DD8),
+    painPoints: [
+      '無料(OSS)/有料(Cloud)・IoT/時系列特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'InfluxDB/TimescaleDB との比較でグローバルコミュニティ・統合数・成熟度が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'IoT時系列DB・超高書き込み・SQL・組み込みキャッシュ・ストリーミング',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'druid': const _CompetitorInfo(
+    name: 'Apache Druid',
+    emoji: '🐉',
+    tagline:
+        'Apache Druid・リアルタイム分析DB・OLAP・高速集計・事前集計・大規模インタラクティブ・Kafka統合で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Apache Druid代替 リアルタイム分析DB OLAP 高速集計 事前集計 Kafka統合 ClickHouse代替 Pinot代替',
+    accentColor: Color(0xFF29ABE2),
+    painPoints: [
+      '無料(OSS)・OLAP特化・個人のライフ管理は別途必要',
+      'データエンジニア特化・個人のAI管理は別途必要',
+      'ClickHouse/Pinot との比較で管理複雑さ・学習コスト・クラスタ運用が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'リアルタイム分析DB・OLAP・高速集計・事前集計・Kafka統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'kdb': const _CompetitorInfo(
+    name: 'kdb+',
+    emoji: '📊',
+    tagline: 'kdb+・金融時系列DB・q言語・超高速・インメモリ分析・高頻度取引・ウォールストリート標準で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'kdb+代替 金融時系列DB q言語 超高速 インメモリ 高頻度取引 ウォールストリート InfluxDB代替 TimescaleDB代替',
+    accentColor: Color(0xFF003087),
+    painPoints: [
+      '高額・金融特化・個人のライフ管理は別途必要',
+      '金融エンジニア特化・個人のAI管理は別途必要',
+      'InfluxDB/TimescaleDB との比較でコスト・学習コスト・非金融用途・OSS選択肢が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '金融時系列DB・q言語・超高速・インメモリ分析・高頻度取引・ウォールストリート',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'opentsdb': const _CompetitorInfo(
+    name: 'OpenTSDB',
+    emoji: '📉',
+    tagline:
+        'OpenTSDB・OSSスケーラブル時系列DB・HBase・Graphite互換・HTTP API・タグベース・監視用途で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'OpenTSDB代替 OSS スケーラブル時系列DB HBase Graphite互換 HTTP API タグベース 監視 InfluxDB代替',
+    accentColor: Color(0xFF607D8B),
+    painPoints: [
+      '無料(OSS)・時系列DB特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'InfluxDB/Prometheus との比較でHBase依存・モダンUI・開発活動の停滞が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'OSSスケーラブル時系列DB・HBase・Graphite互換・HTTP API・タグベース',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
