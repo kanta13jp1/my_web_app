@@ -13497,6 +13497,312 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'sleep-cycle': const _CompetitorInfo(
+    name: 'Sleep Cycle',
+    emoji: '🌙',
+    tagline: 'スマート目覚ましで睡眠最適化、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Sleep Cycle代替 スマート目覚まし 睡眠分析アプリ',
+    accentColor: Color(0xFF7B68EE),
+    painPoints: [
+      '月額9.99ドルのプレミアムで睡眠分析・統計が制限される',
+      '財務・タスク・日常管理は別アプリが必要',
+      'スマートフォン単体使用で精度に限界がある',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'スマートアラーム・睡眠フェーズ分析・睡眠スコア',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'ynab': const _CompetitorInfo(
+    name: 'YNAB',
+    emoji: '💰',
+    tagline: 'ゼロベース予算管理で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'YNAB代替 家計管理アプリ ゼロベース予算',
+    accentColor: Color(0xFF84BD41),
+    painPoints: [
+      '月額14.99ドル・年払いでも99ドルの高額サブスク',
+      '予算管理に特化しており投資・資産管理は別途必要',
+      '学習コストが高く日本語サポートが弱い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ゼロベース予算・負債返済プランナー・銀行連携',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: 'タスク・メモ統合管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'monarch-money': const _CompetitorInfo(
+    name: 'Monarch Money',
+    emoji: '👑',
+    tagline: '資産・予算・投資の一元管理で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Monarch Money代替 資産管理アプリ 投資ポートフォリオ',
+    accentColor: Color(0xFF00B894),
+    painPoints: [
+      '月額14.99ドル・Mint終了後の移行先として人気だが高額',
+      '米国金融機関特化で日本の銀行・証券との連携が困難',
+      '財務管理に特化しタスク・目標管理は別アプリが必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '純資産追跡・投資ポートフォリオ・予算管理',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: 'タスク・メモ統合管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'clockwise': const _CompetitorInfo(
+    name: 'Clockwise',
+    emoji: '🕐',
+    tagline: 'AIカレンダー最適化で集中時間確保、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Clockwise代替 AIスケジュール最適化 集中時間ブロック',
+    accentColor: Color(0xFF6C5CE7),
+    painPoints: [
+      '月額6.75ドル〜・チーム連携前提でソロ利用はコスト過多',
+      'Google Calendar専用でOutlook・Apple Calendar連携が弱い',
+      'スケジュール管理に特化し財務・メモ管理は別アプリが必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AI会議クラスタリング・フォーカスタイム自動確保',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'akiflow': const _CompetitorInfo(
+    name: 'Akiflow',
+    emoji: '⚡',
+    tagline: 'タスク・カレンダー統合で生産性最大化、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Akiflow代替 タスク管理 タイムブロッキング',
+    accentColor: Color(0xFFFF4757),
+    painPoints: [
+      '月額19ドル・年払い228ドルの高額プラン',
+      '多数のツール統合が前提で設定が複雑',
+      '財務管理・メモ・AIチャットは別アプリが必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'タスク統合・カレンダー・タイムブロッキング',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'classpass': const _CompetitorInfo(
+    name: 'ClassPass',
+    emoji: '🏋️',
+    tagline: 'フィットネスクラス予約で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'ClassPass代替 フィットネスクラス予約 ジム通い放題',
+    accentColor: Color(0xFF1DB7AC),
+    painPoints: [
+      'クレジット制で使いすぎると追加料金・月最低39ドル〜',
+      'フィットネスクラス予約に特化し日常管理は別アプリが必要',
+      '日本での対応スタジオ数がまだ限定的',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '世界中のジム・スタジオクラス予約・クレジット制',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'superhuman': const _CompetitorInfo(
+    name: 'Superhuman',
+    emoji: '✉️',
+    tagline: '最速メール体験で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Superhuman代替 高速メールアプリ AIメールトリアージ',
+    accentColor: Color(0xFFE44C65),
+    painPoints: [
+      '月額30ドルの最高額メールアプリ・招待制',
+      'メール管理に特化し財務・タスク・メモは別アプリが必要',
+      'GmailまたはOutlookが必須・独自メールサーバー非対応',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AI優先受信・Split Inbox・既読確認・キーボードショートカット',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'planoly': const _CompetitorInfo(
+    name: 'Planoly',
+    emoji: '📸',
+    tagline: 'Instagram・Pinterest自動投稿で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Planoly代替 Instagram自動投稿 ソーシャルメディアプランナー',
+    accentColor: Color(0xFFFF5A5F),
+    painPoints: [
+      '月額13ドル〜・無料プランは30件/月の投稿制限',
+      'ソーシャルメディア管理に特化し財務・タスク管理は別途必要',
+      'Instagram・Pinterest中心でX・LinkedInの機能が弱い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ビジュアルグリッド計画・自動投稿・ハッシュタグ提案',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'flomo': const _CompetitorInfo(
+    name: 'flomo',
+    emoji: '🌿',
+    tagline: '軽量メモで思考を記録、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'flomo代替 メモアプリ 軽量ノート タグ管理',
+    accentColor: Color(0xFF00B96B),
+    painPoints: [
+      '年額128人民元〜・日本語サポートが限定的',
+      'メモ記録に特化し財務・タスク・AIアシスタントは別途必要',
+      'タグベース管理でフォルダ・階層構造が苦手',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'クイックメモ・タグ整理・日次レビュー・API連携',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
