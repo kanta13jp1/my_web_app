@@ -233,7 +233,7 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
     } catch (e) {
       debugPrint('AI Logistics Error: $e');
     } finally {
-      setState(() => _isBusy = false);
+      if (mounted) setState(() => _isBusy = false);
     }
   }
 
@@ -278,7 +278,7 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
     } catch (e) {
       debugPrint('Error: $e');
     } finally {
-      setState(() => _isBusy = false);
+      if (mounted) setState(() => _isBusy = false);
     }
   }
 
@@ -305,7 +305,7 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
             .showSnackBar(SnackBar(content: Text('エラー: $e')));
       }
     } finally {
-      setState(() => _isBusy = false);
+      if (mounted) setState(() => _isBusy = false);
     }
   }
 
@@ -346,7 +346,7 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
             .showSnackBar(SnackBar(content: Text('エラー: $e')));
       }
     } finally {
-      setState(() => _isBusy = false);
+      if (mounted) setState(() => _isBusy = false);
     }
   }
 
@@ -398,7 +398,7 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
             .showSnackBar(SnackBar(content: Text('画像分析エラー: $e')));
       }
     } finally {
-      setState(() => _isBusy = false);
+      if (mounted) setState(() => _isBusy = false);
     }
   }
 

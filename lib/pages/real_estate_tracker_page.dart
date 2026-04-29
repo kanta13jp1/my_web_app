@@ -96,9 +96,10 @@ class _RealEstateTrackerPageState extends State<RealEstateTrackerPage>
         }
       }
     } catch (e) {
+      if (!mounted) return;
       setState(() => _errorMessage = '$e');
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 

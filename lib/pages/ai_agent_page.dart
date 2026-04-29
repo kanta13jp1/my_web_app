@@ -45,6 +45,7 @@ class _AiAgentPageState extends State<AiAgentPage> {
         _loading = false;
       });
     } catch (_) {
+      if (!mounted) return;
       setState(() {
         _flows = [];
         _loading = false;

@@ -29,6 +29,7 @@ class _AiUniversityContentPageState extends State<AiUniversityContentPage> {
         body: {'action': 'university.content_all', 'limit': 200},
       );
       final data = res.data;
+      if (!mounted) return;
       setState(() {
         if (data is List) {
           _items = data;
@@ -39,9 +40,10 @@ class _AiUniversityContentPageState extends State<AiUniversityContentPage> {
         }
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() => _error = e.toString());
     } finally {
-      setState(() => _loading = false);
+      if (mounted) setState(() => _loading = false);
     }
   }
 

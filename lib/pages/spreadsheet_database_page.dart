@@ -41,15 +41,17 @@ class _SpreadsheetDatabasePageState extends State<SpreadsheetDatabasePage> {
       );
       if (res.data != null) {
         final data = res.data as Map<String, dynamic>;
+        if (!mounted) return;
         setState(() {
           _sheets =
               List<Map<String, dynamic>>.from(data['sheets'] as List? ?? []);
         });
       }
     } catch (e) {
+      if (!mounted) return;
       setState(() => _errorMessage = e.toString());
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -66,14 +68,16 @@ class _SpreadsheetDatabasePageState extends State<SpreadsheetDatabasePage> {
       );
       if (res.data != null) {
         final data = res.data as Map<String, dynamic>;
+        if (!mounted) return;
         setState(() {
           _rows = List<Map<String, dynamic>>.from(data['rows'] as List? ?? []);
         });
       }
     } catch (e) {
+      if (!mounted) return;
       setState(() => _errorMessage = e.toString());
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 

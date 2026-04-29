@@ -174,6 +174,7 @@ class _AiStatusPageState extends State<AiStatusPage> {
         _error = null;
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _error = e.toString();
         _isLoading = false;
@@ -257,6 +258,7 @@ class _AiStatusPageState extends State<AiStatusPage> {
         }
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _testResults[modelName] = 'error';
         _testErrors[modelName] = e.toString().replaceFirst('Exception: ', '');

@@ -38,6 +38,7 @@ class _TravelItineraryPlannerPageState
           .invoke('lifestyle-hub', body: {'action': 'travel.list'});
       if (res.data != null) {
         final data = res.data as Map<String, dynamic>;
+        if (!mounted) return;
         setState(() {
           _itineraries = List<Map<String, dynamic>>.from(
             (data['trips'] ?? data['itineraries']) as List? ?? [],
@@ -45,9 +46,10 @@ class _TravelItineraryPlannerPageState
         });
       }
     } catch (e) {
+      if (!mounted) return;
       setState(() => _errorMessage = e.toString());
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
