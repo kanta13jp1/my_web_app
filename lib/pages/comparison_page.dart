@@ -35602,6 +35602,312 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'walkme': const _CompetitorInfo(
+    name: 'WalkMe',
+    emoji: '🚶',
+    tagline: 'デジタルアダプションプラットフォーム・アプリ内ガイダンス・オンボーディングで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'WalkMe代替 デジタルアダプション アプリ内ガイダンス オンボーディング 操作手順 DAP',
+    accentColor: Color(0xFF008EAA),
+    painPoints: [
+      '月額高価格・DAP特化・個人のライフ管理は別途必要',
+      'エンタープライズ向けDAP特化・個人のAI管理は別途必要',
+      'Pendo/Appcuesと比較して中小企業向けに複雑・コスト高',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'アプリ内ガイド・分析・自動化・AIナレッジ・Enterprise IT・変更管理',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'chameleon': const _CompetitorInfo(
+    name: 'Chameleon',
+    emoji: '🦎',
+    tagline: 'プロダクトツアー・ユーザーオンボーディング・インアプリサーベイで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Chameleon代替 プロダクトツアー オンボーディング インアプリサーベイ Appcues代替 ガイド',
+    accentColor: Color(0xFFFF5722),
+    painPoints: [
+      '月額279ドル〜・プロダクトアダプション特化・個人のライフ管理は別途必要',
+      'UXガイダンス特化・個人のAI管理は別途必要',
+      'WalkMe/Pendoと比較してエンタープライズ向け分析・ROI測定が弱い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ツアー/チェックリスト/ツールチップ/モーダル・Segmentセグメント・A/Bテスト',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'userguiding': const _CompetitorInfo(
+    name: 'UserGuiding',
+    emoji: '🗺️',
+    tagline: 'ノーコードユーザーオンボーディング・プロダクトツアーで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'UserGuiding代替 ユーザーオンボーディング プロダクトツアー ノーコード Appcues代替',
+    accentColor: Color(0xFF7C4DFF),
+    painPoints: [
+      '月額89ドル〜・オンボーディング特化・個人のライフ管理は別途必要',
+      'プロダクトツアー特化・個人のAI管理は別途必要',
+      'Pendo/Chameleonと比較して分析深度・マルチ製品サポートが限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ノーコードツアー/チェックリスト/ホットスポット・セグメント・分析',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'drift': const _CompetitorInfo(
+    name: 'Drift',
+    emoji: '💬',
+    tagline: 'AI会話型マーケティング・セールスチャット・リード育成で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Drift代替 会話型マーケティング チャットボット リード育成 B2B Intercom代替',
+    accentColor: Color(0xFF0063E0),
+    painPoints: [
+      '月額2500ドル〜・会話型マーケティング特化・個人のライフ管理は別途必要',
+      'B2Bセールス特化・個人のAI管理は別途必要',
+      'Intercom/Hubspotと比較して価格が非常に高く・SMB向けでない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AIチャットボット・ABM・ルーティング・カレンダー統合・ビデオ・分析',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'qualified': const _CompetitorInfo(
+    name: 'Qualified',
+    emoji: '✅',
+    tagline: 'Salesforceネイティブ会話型マーケティング・パイプライン管理で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Qualified代替 会話型マーケティング Salesforce パイプライン チャット ABM B2B',
+    accentColor: Color(0xFF0B2267),
+    painPoints: [
+      '月額高価格・Salesforce統合特化・個人のライフ管理は別途必要',
+      'B2Bパイプライン特化・個人のAI管理は別途必要',
+      'Drift比較でSalesforce外での汎用性が低い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Salesforceネイティブ・AIエージェント・ABMターゲット・ルーティング・分析',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'chili-piper': const _CompetitorInfo(
+    name: 'Chili Piper',
+    emoji: '🌶️',
+    tagline: 'インバウンドリード即時予約・会議スケジュール自動化で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Chili Piper代替 リード予約 会議スケジュール 即時ルーティング B2B Calendly代替',
+    accentColor: Color(0xFFFF4040),
+    painPoints: [
+      '月額22.5ドル〜・B2Bスケジュール特化・個人のライフ管理は別途必要',
+      'セールス予約特化・個人のAI管理は別途必要',
+      'Calendly/HubSpotと比較して個人・中小企業向けに高コスト',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '即時会議予約・ルーティング・分散・フォーム→カレンダー自動化・Salesforce',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'excalidraw': const _CompetitorInfo(
+    name: 'Excalidraw',
+    emoji: '✏️',
+    tagline: 'オープンソース手描き風ホワイトボード・図解ツールで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Excalidraw代替 ホワイトボード 手描き 図解 OSS Miro代替 ダイアグラム コラボ',
+    accentColor: Color(0xFF6965DB),
+    painPoints: [
+      '無料OSS・ホワイトボード特化・個人のライフ管理は別途必要',
+      '視覚的図解特化・個人のAI管理は別途必要',
+      'Miro/Figmaと比較してリアルタイムコラボ・プレゼン機能が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '手描き風スタイル・リアルタイム共有・エンドツーエンド暗号化・埋め込み',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'penpot': const _CompetitorInfo(
+    name: 'Penpot',
+    emoji: '🎨',
+    tagline: 'オープンソースデザイン・プロトタイプツール・Figma代替で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Penpot代替 OSS デザインツール プロトタイプ Figma代替 セルフホスト SVGネイティブ',
+    accentColor: Color(0xFF7B61FF),
+    painPoints: [
+      '無料OSS・デザインツール特化・個人のライフ管理は別途必要',
+      'OSS UIデザイン特化・個人のAI管理は別途必要',
+      'Figmaと比較してプラグインエコシステム・AI機能が大幅に限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'SVGネイティブ・コンポーネント・プロトタイプ・CSS生成・セルフホスト',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'finmark': const _CompetitorInfo(
+    name: 'Finmark',
+    emoji: '📊',
+    tagline: 'スタートアップ向け財務計画・モデリング・予算管理クラウドで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Finmark代替 財務計画 スタートアップ モデリング 予算管理 キャッシュフロー予測',
+    accentColor: Color(0xFF6B48FF),
+    painPoints: [
+      '月額75ドル〜・財務計画特化・個人のライフ管理は別途必要',
+      'スタートアップ財務特化・個人のAI管理は別途必要',
+      'Mosaic/Runwayと比較して大規模組織向けの機能が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'P/L・キャッシュフロー・シナリオモデル・チーム共有・QuickBooks連携',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
