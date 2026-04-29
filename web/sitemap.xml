@@ -3229,4 +3229,13 @@
   <url><loc>https://my-web-app-b67f4.web.app/vs/great-expectations</loc></url>
   <url><loc>https://my-web-app-b67f4.web.app/vs/evidently</loc></url>
   <url><loc>https://my-web-app-b67f4.web.app/vs/whylabs</loc></url>
+  <url><loc>https://my-web-app-b67f4.web.app/vs/arize</loc></url>
+  <url><loc>https://my-web-app-b67f4.web.app/vs/datarobot</loc></url>
+  <url><loc>https://my-web-app-b67f4.web.app/vs/h2o-ai</loc></url>
+  <url><loc>https://my-web-app-b67f4.web.app/vs/pycaret</loc></url>
+  <url><loc>https://my-web-app-b67f4.web.app/vs/optuna</loc></url>
+  <url><loc>https://my-web-app-b67f4.web.app/vs/labelstudio</loc></url>
+  <url><loc>https://my-web-app-b67f4.web.app/vs/scale-ai</loc></url>
+  <url><loc>https://my-web-app-b67f4.web.app/vs/snorkel-ai</loc></url>
+  <url><loc>https://my-web-app-b67f4.web.app/vs/activeloop</loc></url>
 </urlset>

@@ -29681,6 +29681,312 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'arize': const _CompetitorInfo(
+    name: 'Arize AI',
+    emoji: '🌅',
+    tagline: 'MLオブザーバビリティ・AIモデルモニタリングプラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Arize代替 MLオブザーバビリティ AIモニタリング ドリフト検出 LLM評価 トレース',
+    accentColor: Color(0xFFFF6900),
+    painPoints: [
+      '無料/月額不明・AIモニタリング特化・個人のライフ管理は別途必要',
+      'MLオブザーバビリティ特化・個人のAI管理は別途必要',
+      'WhyLabs/Evidently比較でOSS・セルフホスト選択肢が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'LLMトレース・ドリフト監視・Explainability・アラート・Embedding分析',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'datarobot': const _CompetitorInfo(
+    name: 'DataRobot',
+    emoji: '🤖',
+    tagline: 'エンタープライズAI/AutoMLプラットフォーム・モデル自動化で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'DataRobot代替 AutoML エンタープライズAI モデル自動化 MLops ノーコードAI',
+    accentColor: Color(0xFF005AE0),
+    painPoints: [
+      '月額不明・エンタープライズAI特化・個人のライフ管理は別途必要',
+      'AutoML特化・個人のAI管理は別途必要',
+      'H2O.ai/Google AutoMLと比較してコスト・オープン性が劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '自動特徴量エンジニアリング・モデル選択・デプロイ・モニタリング・説明性',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'h2o-ai': const _CompetitorInfo(
+    name: 'H2O.ai',
+    emoji: '💧',
+    tagline: 'オープンソースAI・AutoML・責任あるAIプラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'H2O.ai代替 AutoML OSS 機械学習 AutoML 責任あるAI エンタープライズ',
+    accentColor: Color(0xFFFFD600),
+    painPoints: [
+      '無料OSS/エンタープライズ有料・AutoML特化・個人のライフ管理は別途必要',
+      'ML自動化特化・個人のAI管理は別途必要',
+      'DataRobot/Databricksと比較してUIの使いやすさが劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'H2O AutoML・Driverless AI・LLM Studio・Wave UI・説明性',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'pycaret': const _CompetitorInfo(
+    name: 'PyCaret',
+    emoji: '🐍',
+    tagline: 'ローコードPython機械学習ライブラリ・AutoML自動化で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'PyCaret代替 ローコードML Python AutoML 機械学習自動化 scikit-learn',
+    accentColor: Color(0xFF3776AB),
+    painPoints: [
+      '無料OSS・Python ML特化・個人のライフ管理は別途必要',
+      'ML実験自動化特化・個人のAI管理は別途必要',
+      'AutoSklearn/TPOTと比較して本番デプロイ・監視機能が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '複数モデル比較・前処理・チューニング・デプロイ・説明性・ローコード',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'optuna': const _CompetitorInfo(
+    name: 'Optuna',
+    emoji: '🎯',
+    tagline: 'ハイパーパラメータ最適化フレームワーク・自動チューニングで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Optuna代替 ハイパーパラメータ最適化 AutoML チューニング OSS Preferred Networks',
+    accentColor: Color(0xFF00B4D8),
+    painPoints: [
+      '無料OSS・HPO特化・個人のライフ管理は別途必要',
+      'ハイパーパラメータ特化・個人のAI管理は別途必要',
+      'Ray Tune/Hyperoptと比較して分散コンピューティングが限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Bayesian最適化・プルーニング・可視化・並列化・フレームワーク非依存',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'labelstudio': const _CompetitorInfo(
+    name: 'Label Studio',
+    emoji: '🏷️',
+    tagline: 'オープンソースデータラベリング・アノテーションツールで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Label Studio代替 データラベリング アノテーション OSS 機械学習データ準備',
+    accentColor: Color(0xFFFF3D71),
+    painPoints: [
+      '無料OSS/月額150ドル〜・データラベリング特化・個人のライフ管理は別途必要',
+      'アノテーション特化・個人のAI管理は別途必要',
+      'Scale AI/Datasaurと比較してエンタープライズ品質管理が劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '画像/テキスト/音声/動画アノテーション・ML支援・品質管理・SDK',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'scale-ai': const _CompetitorInfo(
+    name: 'Scale AI',
+    emoji: '⚖️',
+    tagline: 'AIデータエンジニアリング・アノテーション・RLHF評価プラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Scale AI代替 データアノテーション RLHF AI評価 エンタープライズ 高品質データ',
+    accentColor: Color(0xFF7C3AED),
+    painPoints: [
+      '月額高額・エンタープライズアノテーション特化・個人のライフ管理は別途必要',
+      'AI訓練データ特化・個人のAI管理は別途必要',
+      'Label Studio(OSS)と比較してコスト・セルフサービスが課題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '高品質アノテーション・RLHF・評価・ジェネラティブAIデータ・エンタープライズ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'snorkel-ai': const _CompetitorInfo(
+    name: 'Snorkel AI',
+    emoji: '🤿',
+    tagline: 'プログラマティックデータラベリング・弱教師あり学習プラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Snorkel AI代替 弱教師あり学習 データラベリング プログラマティック FoundationModel',
+    accentColor: Color(0xFF0369A1),
+    painPoints: [
+      '月額不明・データラベリング特化・個人のライフ管理は別途必要',
+      'プログラマティックラベリング特化・個人のAI管理は別途必要',
+      'Scale AI/Label Studioと比較してラベラーコスト・実績が劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ラベリング関数・弱教師・ファウンデーションモデル活用・データパイプライン',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'activeloop': const _CompetitorInfo(
+    name: 'Activeloop (Deep Lake)',
+    emoji: '🏔️',
+    tagline: 'AI向けベクター+テンソルデータベース・Deep Lakeで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Activeloop Deep Lake代替 AIデータベース ベクター テンソル LLM RAG データセット',
+    accentColor: Color(0xFFFF4F00),
+    painPoints: [
+      '無料OSS/月額不明・AIデータ管理特化・個人のライフ管理は別途必要',
+      'Deep Lake特化・個人のAI管理は別途必要',
+      'Weaviate/Pineconeと比較してベクター検索機能・コミュニティが劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ベクター+テンソルDB・LLMアプリRAG・ストリーミング・バージョン管理',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
