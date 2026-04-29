@@ -115,7 +115,7 @@
   },
   "issue_template": {
     "title_prefix": "[review:{hash}]",
-    "body_format": "## 概要\n{summary}\n\n## 該当機能\n- slug: {feature_slug}\n- source: {source}\n- priority: {priority}\n- severity: {severity}\n- category: {category}\n\n## Claude review\n{review_text}\n\n## 推奨対応\n{recommendation}\n\n---\n_自動生成 (= feature-review.yml weekly cron / Win版#132 part 77 起票)_",
+    "body_format": "## 概要\n{summary}\n\n## 該当機能\n- slug: {feature_slug}\n- source: {source}\n- priority: {priority}\n- severity: {severity}\n- category: {category}\n\n## Review\n{review_text}\n\n## 推奨対応\n{recommendation}\n\n## 収集シグナル\n{signals_summary}\n\n---\n_自動生成 (= feature-review.yml hourly cron / Win版#132 part 78)_",
     "labels": ["auto-review"],
     "severity_label_format": "severity:{severity}",
     "feature_label_format": "feature:{feature_slug}",
@@ -125,7 +125,7 @@
     "model": "claude-haiku-4-5",
     "effort": "medium",
     "max_findings_per_feature": 3,
-    "system_prompt_addition": "あなたは自分株式会社の品質監査担当 AI. 提供された screenshot + DOM + console + source signals から、ユーザー影響の高い問題のみを 3 件以内で抽出. 軽微な lint や好みは除外."
+    "system_prompt_addition": "あなたは自分株式会社の品質監査担当AIです。提供されたscreen/DOM/source/console/lint/git signalsから、ユーザー影響の高い問題だけを3件以内で抽出してください。好みの問題や軽微すぎる指摘は除外してください。"
   },
   "dedup": {
     "title_hash_length": 8,
