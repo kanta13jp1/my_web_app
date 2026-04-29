@@ -1467,6 +1467,52 @@ function popularityPrevFinishConsistencyBonus(topEntry: Record<string, unknown> 
   return 0;
 }
 
+function damSireLineBonus(
+  topEntry: Record<string, unknown> | undefined,
+  raceCourseType: unknown,
+): number {
+  if (!topEntry) return 0;
+  const ds = String(topEntry.damsire ?? "").trim();
+  const course = String(raceCourseType ?? "").trim();
+  if (!ds || !course) return 0;
+  const turfDamsires = ["サンデーサイレンス", "ダンスインザダーク", "フジキセキ", "スペシャルウィーク", "ネオユニヴァース", "マーベラスサンデー", "ノーザンダンサー", "ニジンスキー", "サドラーズウェルズ"];
+  const dirtDamsires = ["ブライアンズタイム", "フォーティーナイナー", "エンドスウィープ", "クロフネ", "ティンバーカントリー", "アフリート", "シェフリー"];
+  const isTurf = course.includes("芝") || course.toLowerCase() === "turf";
+  const isDirt = course.includes("ダート") || course.toLowerCase() === "dirt";
+  if (isTurf && turfDamsires.some((s) => ds.includes(s))) return 0.01;  // 芝系母父×芝: 母系適性一致
+  if (isDirt && dirtDamsires.some((s) => ds.includes(s))) return 0.01;  // ダート系母父×ダート: 母系適性一致
+  if (isDirt && turfDamsires.some((s) => ds.includes(s))) return -0.01; // 芝系母父×ダート: 逆適性懸念
+  return 0;
+}
+
+function popularityOddsAlignBonus(topEntry: Record<string, unknown> | undefined): number {
+  if (!topEntry) return 0;
+  const pop = numericOrFallback(topEntry.popularity, 0);
+  const odds = numericOrFallback(topEntry.win_odds, 0);
+  if (pop <= 0 || odds <= 0) return 0;
+  if (pop === 1 && odds <= 2.0) return 0.01;  // 1番人気×単勝2倍以下: 市場の強い合意/予測容易
+  if (pop === 1 && odds > 5.0) return -0.01;  // 1番人気×単勝5倍超: 人気と市場の乖離/不確実
+  if (pop <= 3 && odds > 8.0) return -0.01;   // 上位3番人気×単勝8倍超: 市場の過大評価懸念
+  return 0;
+}
+
+function ageDistanceAffinityBonus(
+  topEntry: Record<string, unknown> | undefined,
+  raceDistance: unknown,
+): number {
+  if (!topEntry) return 0;
+  const text = String(topEntry.age_sex ?? "").trim();
+  const dist = numericOrFallback(raceDistance, 0);
+  if (!text || dist <= 0) return 0;
+  const match = text.match(/(\d+)/);
+  if (!match) return 0;
+  const age = parseInt(match[1]);
+  if (age === 3 && dist >= 2400) return -0.01; // 3歳×長距離: 体力未成熟/スタミナ不確実
+  if (age === 3 && dist <= 1200) return 0.01;  // 3歳×スプリント: 若い脚力/距離負担軽/安定
+  if (age >= 5 && dist >= 2000) return 0.01;   // 古馬×中長距離: 経験豊富/スタミナ実証済み
+  return 0;
+}
+
 function prevTimeGapBonus(topEntry: Record<string, unknown> | undefined): number {
   if (!topEntry) return 0;
   const prev = timeToSecondsTS(topEntry.prev_time);
@@ -1904,7 +1950,10 @@ function buildHistoricalBaselinePrediction(
   const bloodlineCourseType = bloodlineCourseTypeBonus(first, race.course_type);
   const bestTimeRank = bestTimeFieldRankBonus(first, entries);
   const popPrevFinishConsist = popularityPrevFinishConsistencyBonus(first);
-  const confidence = Math.min(clampConfidence(0.31 + dataQuality * 0.22 + oddsCoverage * 0.12 + historyCoverage * 0.07 + bestTimeCoverage * 0.05 + prevMarginCoverage * 0.03 + jockeyCoverage * 0.02 + trainerCoverage * 0.01 + bloodlineCoverage * 0.01 + last3FCoverage * 0.01 + winningTimeCoverage * 0.01 + weightChangeCoverage * 0.01 + ageCoverage * 0.01 + sexCoverage * 0.01 + horseWeightCoverage * 0.01 + stableCoverage * 0.01 + damCoverage * 0.01 + damsireCoverage * 0.01 + popularityCoverage * 0.01 - fieldPenalty - tightOdds + oddsGapBonus + recentForm + venueBonus + favBonus + smallField + bloodlineBonus + distanceBonus + consensus + jockeyWinRate + trainerWinRate + gradePenalty + weightStability + ageOptimal + intervalBonus + courseTypeMatch + barrierPosition + prevVenueMatch + prevDistanceMatch + last3fBonus + weightKg + prevMargin + bodyWeight + prevTimeGap + sexCategory + popularityRank + weightChange + prevFinish + winExp + jtCombo + dataComplete + trifecta + bloodlineCourseType + bestTimeRank + popPrevFinishConsist), maxConf);
+  const damSireLine = damSireLineBonus(first, race.course_type);
+  const popOddsAlign = popularityOddsAlignBonus(first);
+  const ageDistAffinity = ageDistanceAffinityBonus(first, race.distance);
+  const confidence = Math.min(clampConfidence(0.31 + dataQuality * 0.22 + oddsCoverage * 0.12 + historyCoverage * 0.07 + bestTimeCoverage * 0.05 + prevMarginCoverage * 0.03 + jockeyCoverage * 0.02 + trainerCoverage * 0.01 + bloodlineCoverage * 0.01 + last3FCoverage * 0.01 + winningTimeCoverage * 0.01 + weightChangeCoverage * 0.01 + ageCoverage * 0.01 + sexCoverage * 0.01 + horseWeightCoverage * 0.01 + stableCoverage * 0.01 + damCoverage * 0.01 + damsireCoverage * 0.01 + popularityCoverage * 0.01 - fieldPenalty - tightOdds + oddsGapBonus + recentForm + venueBonus + favBonus + smallField + bloodlineBonus + distanceBonus + consensus + jockeyWinRate + trainerWinRate + gradePenalty + weightStability + ageOptimal + intervalBonus + courseTypeMatch + barrierPosition + prevVenueMatch + prevDistanceMatch + last3fBonus + weightKg + prevMargin + bodyWeight + prevTimeGap + sexCategory + popularityRank + weightChange + prevFinish + winExp + jtCombo + dataComplete + trifecta + bloodlineCourseType + bestTimeRank + popPrevFinishConsist + damSireLine + popOddsAlign + ageDistAffinity), maxConf);
   return {
     success: true,
     prediction: {
@@ -1916,7 +1965,7 @@ function buildHistoricalBaselinePrediction(
         "過去レース学習用の低リスク基準予想。",
         "レース結果は参照せず、人気・単勝オッズ・前走・着差・持ち時計・馬体重変動・馬体/騎手/調教師/血統など取得済み特徴量から順位付け。",
         `対象:${race.race_date ?? ""} ${race.venue ?? ""}${race.race_number ?? ""}R ${race.race_name ?? ""}`,
-        `信頼度:${Math.round(confidence * 100)}% (データ充足${Math.round(dataQuality * 100)}% オッズ${Math.round(oddsCoverage * 100)}% 上がり3F${Math.round(last3FCoverage * 100)}% 血統${Math.round(bloodlineCoverage * 100)}% 騎手${Math.round(jockeyCoverage * 100)}% 馬体重${Math.round(horseWeightCoverage * 100)}% 厩舎${Math.round(stableCoverage * 100)}% 人気${Math.round(popularityCoverage * 100)}% 頭数${entries.length}頭 グレード:${race.grade ?? "OP以下"} 会場補正:${venueBonus >= 0 ? "+" : ""}${Math.round(venueBonus * 100)}% 本命補正:+${Math.round(favBonus * 100)}% 少頭数補正:+${Math.round(smallField * 100)}% 血統充足:+${Math.round(bloodlineBonus * 100)}% 距離補正:${distanceBonus >= 0 ? "+" : ""}${Math.round(distanceBonus * 100)}% 合意補正:+${Math.round(consensus * 100)}% 騎手勝率補正:+${Math.round(jockeyWinRate * 100)}% 調教師勝率補正:+${Math.round(trainerWinRate * 100)}% グレード補正:${gradePenalty >= 0 ? "+" : ""}${Math.round(gradePenalty * 100)}% 体重安定:${weightStability >= 0 ? "+" : ""}${Math.round(weightStability * 100)}% 年齢補正:${ageOptimal >= 0 ? "+" : ""}${Math.round(ageOptimal * 100)}% 間隔補正:${intervalBonus >= 0 ? "+" : ""}${Math.round(intervalBonus * 100)}% コース種別補正:${courseTypeMatch >= 0 ? "+" : ""}${Math.round(courseTypeMatch * 100)}% 枠番補正:${barrierPosition >= 0 ? "+" : ""}${Math.round(barrierPosition * 100)}% 前走同会場:${prevVenueMatch >= 0 ? "+" : ""}${Math.round(prevVenueMatch * 100)}% 前走距離適合:${prevDistanceMatch >= 0 ? "+" : ""}${Math.round(prevDistanceMatch * 100)}% 上り3F:${last3fBonus >= 0 ? "+" : ""}${Math.round(last3fBonus * 100)}% 斤量:${weightKg >= 0 ? "+" : ""}${Math.round(weightKg * 100)}% 前走着差:${prevMargin >= 0 ? "+" : ""}${Math.round(prevMargin * 100)}% 馬体重:${bodyWeight >= 0 ? "+" : ""}${Math.round(bodyWeight * 100)}% 前走タイム差:${prevTimeGap >= 0 ? "+" : ""}${Math.round(prevTimeGap * 100)}% 性別:${sexCategory >= 0 ? "+" : ""}${Math.round(sexCategory * 100)}% 人気ランク:${popularityRank >= 0 ? "+" : ""}${Math.round(popularityRank * 100)}% 体重変動:${weightChange >= 0 ? "+" : ""}${Math.round(weightChange * 100)}% 前走着順:${prevFinish >= 0 ? "+" : ""}${Math.round(prevFinish * 100)}% 勝利実績:+${Math.round(winExp * 100)}% JTコンビ:+${Math.round(jtCombo * 100)}% データ完全:${dataComplete >= 0 ? "+" : ""}${Math.round(dataComplete * 100)}% 三一致:+${Math.round(trifecta * 100)}% 血統コース:${bloodlineCourseType >= 0 ? "+" : ""}${Math.round(bloodlineCourseType * 100)}% ベストタイム順位:${bestTimeRank >= 0 ? "+" : ""}${Math.round(bestTimeRank * 100)}% 人気前走整合:${popPrevFinishConsist >= 0 ? "+" : ""}${Math.round(popPrevFinishConsist * 100)}%)`,
+        `信頼度:${Math.round(confidence * 100)}% (データ充足${Math.round(dataQuality * 100)}% オッズ${Math.round(oddsCoverage * 100)}% 上がり3F${Math.round(last3FCoverage * 100)}% 血統${Math.round(bloodlineCoverage * 100)}% 騎手${Math.round(jockeyCoverage * 100)}% 馬体重${Math.round(horseWeightCoverage * 100)}% 厩舎${Math.round(stableCoverage * 100)}% 人気${Math.round(popularityCoverage * 100)}% 頭数${entries.length}頭 グレード:${race.grade ?? "OP以下"} 会場補正:${venueBonus >= 0 ? "+" : ""}${Math.round(venueBonus * 100)}% 本命補正:+${Math.round(favBonus * 100)}% 少頭数補正:+${Math.round(smallField * 100)}% 血統充足:+${Math.round(bloodlineBonus * 100)}% 距離補正:${distanceBonus >= 0 ? "+" : ""}${Math.round(distanceBonus * 100)}% 合意補正:+${Math.round(consensus * 100)}% 騎手勝率補正:+${Math.round(jockeyWinRate * 100)}% 調教師勝率補正:+${Math.round(trainerWinRate * 100)}% グレード補正:${gradePenalty >= 0 ? "+" : ""}${Math.round(gradePenalty * 100)}% 体重安定:${weightStability >= 0 ? "+" : ""}${Math.round(weightStability * 100)}% 年齢補正:${ageOptimal >= 0 ? "+" : ""}${Math.round(ageOptimal * 100)}% 間隔補正:${intervalBonus >= 0 ? "+" : ""}${Math.round(intervalBonus * 100)}% コース種別補正:${courseTypeMatch >= 0 ? "+" : ""}${Math.round(courseTypeMatch * 100)}% 枠番補正:${barrierPosition >= 0 ? "+" : ""}${Math.round(barrierPosition * 100)}% 前走同会場:${prevVenueMatch >= 0 ? "+" : ""}${Math.round(prevVenueMatch * 100)}% 前走距離適合:${prevDistanceMatch >= 0 ? "+" : ""}${Math.round(prevDistanceMatch * 100)}% 上り3F:${last3fBonus >= 0 ? "+" : ""}${Math.round(last3fBonus * 100)}% 斤量:${weightKg >= 0 ? "+" : ""}${Math.round(weightKg * 100)}% 前走着差:${prevMargin >= 0 ? "+" : ""}${Math.round(prevMargin * 100)}% 馬体重:${bodyWeight >= 0 ? "+" : ""}${Math.round(bodyWeight * 100)}% 前走タイム差:${prevTimeGap >= 0 ? "+" : ""}${Math.round(prevTimeGap * 100)}% 性別:${sexCategory >= 0 ? "+" : ""}${Math.round(sexCategory * 100)}% 人気ランク:${popularityRank >= 0 ? "+" : ""}${Math.round(popularityRank * 100)}% 体重変動:${weightChange >= 0 ? "+" : ""}${Math.round(weightChange * 100)}% 前走着順:${prevFinish >= 0 ? "+" : ""}${Math.round(prevFinish * 100)}% 勝利実績:+${Math.round(winExp * 100)}% JTコンビ:+${Math.round(jtCombo * 100)}% データ完全:${dataComplete >= 0 ? "+" : ""}${Math.round(dataComplete * 100)}% 三一致:+${Math.round(trifecta * 100)}% 血統コース:${bloodlineCourseType >= 0 ? "+" : ""}${Math.round(bloodlineCourseType * 100)}% ベストタイム順位:${bestTimeRank >= 0 ? "+" : ""}${Math.round(bestTimeRank * 100)}% 人気前走整合:${popPrevFinishConsist >= 0 ? "+" : ""}${Math.round(popPrevFinishConsist * 100)}% 母父系統:${damSireLine >= 0 ? "+" : ""}${Math.round(damSireLine * 100)}% 人気オッズ整合:${popOddsAlign >= 0 ? "+" : ""}${Math.round(popOddsAlign * 100)}% 年齢距離親和:${ageDistAffinity >= 0 ? "+" : ""}${Math.round(ageDistAffinity * 100)}%)`,
       ].join(" "),
     },
     latency_ms: 0,
