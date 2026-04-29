@@ -1,7 +1,7 @@
 ---
 title: "Supabase Database Functions Guide — Serverless Logic with RPC and PL/pgSQL"
 tags: supabase,flutter,webdev,indiedev
-published: false
+published: true
 ---
 
 # Supabase Database Functions Guide — Serverless Logic with RPC and PL/pgSQL
