@@ -770,6 +770,73 @@ class _AiAssistDialog extends StatefulWidget {
 class _AiAssistDialogState extends State<_AiAssistDialog> {
   bool _isRegistering = false;
   int _registerProgress = 0;
+  bool _isSavingNote = false;
+
+  Future<void> _saveToNote(
+    String summary,
+    List<Map<String, dynamic>> subtasks,
+    List<Map<String, dynamic>> steps,
+    List<String> prerequisites,
+    List<String> blockers,
+    List<String> checklist,
+  ) async {
+    setState(() => _isSavingNote = true);
+    final buf = StringBuffer();
+    if (summary.isNotEmpty) buf.writeln('## AIの見立て\n$summary\n');
+    final isBreakdown = widget.mode == 'breakdown';
+    if (isBreakdown && subtasks.isNotEmpty) {
+      buf.writeln('## サブタスク');
+      for (var i = 0; i < subtasks.length; i++) {
+        final t = _aiText(subtasks[i]['title']);
+        final d =
+            _aiText(subtasks[i]['description'] ?? subtasks[i]['goal'] ?? '');
+        buf.writeln('${i + 1}. **$t**${d.isNotEmpty ? '\n   $d' : ''}');
+      }
+      buf.writeln();
+    } else if (!isBreakdown && steps.isNotEmpty) {
+      buf.writeln('## 手順');
+      for (var i = 0; i < steps.length; i++) {
+        final t = _aiText(steps[i]['step'] ?? steps[i]['title'] ?? '');
+        buf.writeln('${i + 1}. $t');
+      }
+      buf.writeln();
+    }
+    if (prerequisites.isNotEmpty) {
+      buf.writeln('## 事前確認\n${prerequisites.map((e) => '- $e').join('\n')}\n');
+    }
+    if (blockers.isNotEmpty) {
+      buf.writeln('## 詰まりやすい点\n${blockers.map((e) => '- $e').join('\n')}\n');
+    }
+    if (checklist.isNotEmpty) {
+      buf.writeln(
+          '## 完了前チェック\n${checklist.map((e) => '- [ ] $e').join('\n')}\n');
+    }
+
+    try {
+      await Supabase.instance.client.functions.invoke(
+        'tools-hub',
+        body: {
+          'action': 'note.add',
+          'title': 'AIアシスト: ${widget.taskTitle}',
+          'content': buf.toString().trim(),
+          'tags': ['ai-assist', isBreakdown ? 'breakdown' : 'procedure'],
+        },
+      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('✅ ノートに保存しました')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('⚠ 保存に失敗しました: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isSavingNote = false);
+    }
+  }
 
   Future<void> _registerAllSubtasks(
     List<Map<String, dynamic>> subtasks,
@@ -934,6 +1001,26 @@ class _AiAssistDialogState extends State<_AiAssistDialog> {
         TextButton(
           onPressed: _isRegistering ? null : () => Navigator.pop(context),
           child: const Text('閉じる'),
+        ),
+        OutlinedButton.icon(
+          icon: _isSavingNote
+              ? const SizedBox(
+                  width: 14,
+                  height: 14,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Icon(Icons.bookmark_add_outlined, size: 16),
+          label: const Text('ノートに保存'),
+          onPressed: (_isRegistering || _isSavingNote)
+              ? null
+              : () => _saveToNote(
+                    summary,
+                    subtasks,
+                    steps,
+                    prerequisites,
+                    blockers,
+                    checklist,
+                  ),
         ),
         if (isBreakdown && subtasks.isNotEmpty)
           FilledButton.icon(
