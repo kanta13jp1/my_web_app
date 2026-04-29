@@ -62147,6 +62147,312 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'prisma': const _CompetitorInfo(
+    name: 'Prisma',
+    emoji: '🔷',
+    tagline: 'Prisma・次世代Node.js ORM・型安全・自動生成クライアント・マイグレーション・PostgreSQL/MySQL/SQLite・TypeScript・業界標準で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Prisma代替 Node.js ORM 型安全 自動生成 マイグレーション PostgreSQL MySQL TypeScript Drizzle代替 TypeORM代替',
+    accentColor: Color(0xFF2D3748),
+    painPoints: [
+      '無料(OSS)/有料(Platform)・ORM特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Drizzle/TypeORM との比較でバンドルサイズ・エッジランタイム・生SQLが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '次世代Node.js ORM・型安全・自動生成クライアント・マイグレーション・TypeScript',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'drizzle': const _CompetitorInfo(
+    name: 'Drizzle ORM',
+    emoji: '💧',
+    tagline: 'Drizzle ORM・TypeScript SQLクエリビルダー・型安全・軽量・エッジランタイム対応・Prisma代替・PostgreSQL/MySQL/SQLite・OSS・高速で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Drizzle ORM代替 TypeScript SQLクエリビルダー 型安全 軽量 エッジランタイム PostgreSQL MySQL Prisma代替 Kysely代替',
+    accentColor: Color(0xFFC5F74F),
+    painPoints: [
+      '無料(OSS)・ORM特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Prisma との比較で成熟度・Studio・エコシステム・ドキュメント充実度が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'TypeScript SQLクエリビルダー・型安全・軽量・エッジランタイム対応・高速',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'typeorm': const _CompetitorInfo(
+    name: 'TypeORM',
+    emoji: '🔗',
+    tagline: 'TypeORM・TypeScript ORM・デコレータ・アクティブレコード/データマッパー・リレーション・マイグレーション・多DB対応・OSS・Node.jsで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'TypeORM代替 TypeScript ORM デコレータ アクティブレコード データマッパー マイグレーション 多DB Prisma代替 Sequelize代替',
+    accentColor: Color(0xFFE83E8C),
+    painPoints: [
+      '無料(OSS)・ORM特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Prisma/Drizzle との比較でメンテナンス状態・型安全性・エッジランタイムが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'TypeScript ORM・デコレータ・アクティブレコード/データマッパー・多DB対応',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'sequelize': const _CompetitorInfo(
+    name: 'Sequelize',
+    emoji: '🔄',
+    tagline: 'Sequelize・Node.js ORM・多DB対応・マイグレーション・アソシエーション・バリデーション・TypeScript・OSS・長年の実績で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Sequelize代替 Node.js ORM 多DB マイグレーション アソシエーション TypeScript Prisma代替 TypeORM代替',
+    accentColor: Color(0xFF03AFEF),
+    painPoints: [
+      '無料(OSS)・ORM特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Prisma/TypeORM との比較でTypeScript型推論・現代的API・パフォーマンスが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Node.js ORM・多DB対応・マイグレーション・アソシエーション・バリデーション',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'mongoose': const _CompetitorInfo(
+    name: 'Mongoose',
+    emoji: '🐍',
+    tagline: 'Mongoose・MongoDB Node.js ODM・スキーマ定義・バリデーション・ミドルウェア・クエリビルダー・TypeScript・業界標準で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Mongoose代替 MongoDB Node.js ODM スキーマ定義 バリデーション ミドルウェア TypeScript Prisma代替 Typegoose代替',
+    accentColor: Color(0xFF800000),
+    painPoints: [
+      '無料(OSS)・MongoDB ODM特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Prisma (with MongoDB)/Typegoose との比較でTypeScript型推論・スキーマ管理が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'MongoDB ODM・スキーマ定義・バリデーション・ミドルウェア・クエリビルダー',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'kysely': const _CompetitorInfo(
+    name: 'Kysely',
+    emoji: '🔑',
+    tagline: 'Kysely・型安全SQL クエリビルダー・TypeScript・零依存・多DB・エッジランタイム・マイグレーション・OSS・Drizzle競合で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Kysely代替 型安全 SQL クエリビルダー TypeScript 零依存 多DB エッジランタイム Drizzle代替 Knex代替',
+    accentColor: Color(0xFF3B82F6),
+    painPoints: [
+      '無料(OSS)・SQLクエリビルダー特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Drizzle との比較でスキーマファーストか否か・マイグレーション・DX優先度が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '型安全SQLクエリビルダー・TypeScript・零依存・多DB・エッジランタイム',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'sqlalchemy': const _CompetitorInfo(
+    name: 'SQLAlchemy',
+    emoji: '🧪',
+    tagline: 'SQLAlchemy・Python ORM/SQL toolkit・宣言的マッピング・Core/ORM両モード・非同期・多DB・OSS・業界標準・Django ORM並で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'SQLAlchemy代替 Python ORM SQL toolkit 宣言的マッピング 非同期 多DB Alembic マイグレーション Django ORM代替',
+    accentColor: Color(0xFFD4380D),
+    painPoints: [
+      '無料(OSS)・Python ORM特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Django ORM/Tortoise との比較でDjango統合・設定シンプルさ・AsyncIO対応が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Python ORM/SQL toolkit・宣言的マッピング・Core/ORM両モード・非同期・多DB',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'hibernate': const _CompetitorInfo(
+    name: 'Hibernate',
+    emoji: '☕',
+    tagline: 'Hibernate・Java ORM・JPA実装・HQL/JPQL・キャッシュ・Spring統合・エンタープライズ・RedHat・OSS・業界標準で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Hibernate代替 Java ORM JPA HQL JPQL Spring統合 エンタープライズ RedHat MyBatis代替 JOOQ代替',
+    accentColor: Color(0xFF59666C),
+    painPoints: [
+      '無料(OSS)・Java ORM特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'JOOQ/MyBatis との比較でN+1問題・SQLコントロール・リアクティブ対応が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Java ORM・JPA実装・HQL/JPQL・キャッシュ・Spring統合・エンタープライズ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'mikro-orm': const _CompetitorInfo(
+    name: 'MikroORM',
+    emoji: '🔬',
+    tagline: 'MikroORM・TypeScript ORM・DataMapper・Unit of Work・マイグレーション・PostgreSQL/MySQL/SQLite/MongoDB・OSS・Nestjs統合で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'MikroORM代替 TypeScript ORM DataMapper Unit of Work マイグレーション PostgreSQL MongoDB NestJS Prisma代替 TypeORM代替',
+    accentColor: Color(0xFF5B21B6),
+    painPoints: [
+      '無料(OSS)・ORM特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Prisma/TypeORM との比較で認知度・ドキュメント充実度・コミュニティ規模が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'TypeScript ORM・DataMapper・Unit of Work・マイグレーション・NestJS統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
