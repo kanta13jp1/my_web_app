@@ -1,7 +1,7 @@
 ---
 title: "Flutter Platform Channels Advanced — Type-Safe Dart-Native Communication"
 tags: flutter,dart,webdev,indiedev
-published: false
+published: true
 ---
 
 # Flutter Platform Channels Advanced — Type-Safe Dart-Native Communication

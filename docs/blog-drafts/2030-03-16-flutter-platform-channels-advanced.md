@@ -1,7 +1,7 @@
 ---
 title: "Flutter Platform Channels 上級編 — 型安全なDart-Native通信の実践"
 tags: flutter,dart,個人開発,AI
-published: false
+published: true
 ---
 
 # Flutter Platform Channels 上級編 — 型安全なDart-Native通信の実践
