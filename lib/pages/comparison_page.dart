@@ -47849,6 +47849,312 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'huggingface': const _CompetitorInfo(
+    name: 'Hugging Face',
+    emoji: '🤗',
+    tagline: 'AIモデルHub・Spaces・Datasets・Transformers・OSS AI生態系の中心で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Hugging Face代替 AIモデル Hub Spaces Transformers OSS GitHub for AI Replicate代替',
+    accentColor: Color(0xFFFFD21E),
+    painPoints: [
+      '無料/Pro月9ドル~・AIモデル共有特化・個人のライフ管理は別途必要',
+      'ML開発特化・個人のAI管理は別途必要',
+      'Replicate/Github/Kaggleとの比較でエンタープライズ機能・UI・モデル評価が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'モデルHub・Spaces・Datasets・Transformers・OSS AI生態系・コミュニティ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'cohere-api': const _CompetitorInfo(
+    name: 'Cohere',
+    emoji: '🔗',
+    tagline: 'エンタープライズLLM・Command/Embed/Rerank・RAG特化・プライベートデプロイで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Cohere代替 エンタープライズLLM Command Embed Rerank RAG OpenAI代替 Anthropic代替',
+    accentColor: Color(0xFF39594A),
+    painPoints: [
+      '有料(APIベース)・エンタープライズLLM特化・個人のライフ管理は別途必要',
+      'B2B AI特化・個人のAI管理は別途必要',
+      'OpenAI/Anthropic/AI21とのエンタープライズ競合 — コンシューマ向け不在が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Command/Embed/Rerank・RAG特化・プライベートデプロイ・エンタープライズLLM',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'groq-api': const _CompetitorInfo(
+    name: 'Groq',
+    emoji: '⚡',
+    tagline: 'LPU超高速推論・低レイテンシ・Llama/Mixtral/Gemma・開発者API・無料枠で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Groq代替 LPU超高速推論 低レイテンシ Llama Mixtral 高速API OpenAI代替 Together AI代替',
+    accentColor: Color(0xFFF55036),
+    painPoints: [
+      '無料枠/有料・推論API特化・個人のライフ管理は別途必要',
+      '高速推論特化・個人のAI管理は別途必要',
+      'Together AI/Fireworks/OpenAIとのAPI競合 — モデル種類制限が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'LPU超高速推論・低レイテンシ・Llama/Mixtral/Gemma・無料枠・シンプルAPI',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'deepseek-api': const _CompetitorInfo(
+    name: 'DeepSeek',
+    emoji: '🔭',
+    tagline: '中国発高コスパLLM・DeepSeek-V3/R1・OpenAI互換API・OSS・超低コスト推論で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'DeepSeek代替 高コスパLLM OpenAI互換 R1 V3 OSS 低コスト推論 Qwen代替 中国AI',
+    accentColor: Color(0xFF006EFF),
+    painPoints: [
+      '超低価格(ChatGPTの10分の1以下)/OSS・LLM特化・個人のライフ管理は別途必要',
+      'AI推論特化・個人のAI管理は別途必要',
+      'OpenAI/Anthropic/Qwenとのコスト競合 — データプライバシー懸念・規制リスクが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'DeepSeek-V3/R1・OpenAI互換API・OSS・超低コスト・多言語対応',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'perplexity-api': const _CompetitorInfo(
+    name: 'Perplexity AI',
+    emoji: '🔎',
+    tagline: 'AI検索エンジン・リアルタイムWeb・引用付き回答・Pro検索・APIで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Perplexity代替 AI検索 リアルタイムWeb 引用 Pro検索 ChatGPT代替 Bing Chat代替 Google代替',
+    accentColor: Color(0xFF20B2AA),
+    painPoints: [
+      '無料/Pro月20ドル~・AI検索特化・個人のライフ管理は別途必要',
+      'Web検索/リサーチ特化・個人のAI管理は別途必要',
+      'ChatGPT/Bing/Googleとのリアルタイム検索競合 — 汎用アシスタント機能が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'リアルタイムWeb検索・引用付き回答・Pro検索・API・ファイルアップロード',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'nvidia-nim': const _CompetitorInfo(
+    name: 'NVIDIA NIM',
+    emoji: '🟢',
+    tagline: 'NVIDIA推論マイクロサービス・最適化コンテナ・GPUアクセラレーション・エンタープライズAI展開で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'NVIDIA NIM代替 推論マイクロサービス GPU AI展開 エンタープライズ Ollama代替 vLLM代替',
+    accentColor: Color(0xFF76B900),
+    painPoints: [
+      '有料(NVIDIA依存)・AI推論展開特化・個人のライフ管理は別途必要',
+      'エンタープライズAI展開特化・個人のAI管理は別途必要',
+      'Ollama/vLLM/TGIとのローカル推論競合 — NVIDIA GPU必要・コスト・一般開発者不向きが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'NVIDIA最適化・GPU推論・エンタープライズコンテナ・レイテンシ最小化',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'vast-ai': const _CompetitorInfo(
+    name: 'Vast.ai',
+    emoji: '🖥️',
+    tagline: '格安GPU クラウドマーケット・個人GPU売買・分散GPU・AI/ML安価推論学習で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Vast.ai代替 格安GPU クラウド AI学習 ML推論 個人GPU市場 RunPod代替 Lambda Labs代替',
+    accentColor: Color(0xFF6C3483),
+    painPoints: [
+      '有料(従量制安価)・GPU計算特化・個人のライフ管理は別途必要',
+      'ML計算特化・個人のAI管理は別途必要',
+      'RunPod/Lambda Labs/CoreWeaveとの比較で安定性・サポート・SLAが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '格安GPU市場・個人GPU売買・分散GPU・AI/ML安価学習推論・多GPU種類',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'coreweave': const _CompetitorInfo(
+    name: 'CoreWeave',
+    emoji: '⚙️',
+    tagline: 'GPU特化クラウド・Kubernetes・エンタープライズAI/HPC・NVIDIAパートナー・大規模学習で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'CoreWeave代替 GPU特化クラウド Kubernetes AI HPC エンタープライズ AWS代替 Azure代替',
+    accentColor: Color(0xFF1B4F72),
+    painPoints: [
+      '有料(高価格)・GPU特化クラウド特化・個人のライフ管理は別途必要',
+      'HPC/AIインフラ特化・個人のAI管理は別途必要',
+      'AWS/Azure/GCPとのエンタープライズ競合 — 非GPU汎用性・サービス幅・グローバルが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'GPU特化K8s・エンタープライズAI/HPC・NVIDIAパートナー・大規模学習・低レイテンシ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'salad-com': const _CompetitorInfo(
+    name: 'Salad.com',
+    emoji: '🥗',
+    tagline: '分散GPU推論・遊休GPU活用・低コストAI推論・コンテナマーケット・グリーンコンピューティングで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Salad.com代替 分散GPU 遊休GPU活用 低コスト AI推論 コンテナ グリーン Vast.ai代替',
+    accentColor: Color(0xFF2ECC71),
+    painPoints: [
+      '有料(格安GPU)・分散推論特化・個人のライフ管理は別途必要',
+      'AI推論特化・個人のAI管理は別途必要',
+      'Vast.ai/RunPod/Modalとの比較で安定性・レイテンシ予測・SLAが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '分散GPU・遊休GPU活用・低コスト推論・コンテナ・グリーンコンピューティング',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
