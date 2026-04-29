@@ -33458,6 +33458,312 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'canny': const _CompetitorInfo(
+    name: 'Canny',
+    emoji: '💡',
+    tagline: 'ユーザーフィードバック収集・製品ロードマップ投票管理で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Canny代替 フィードバック管理 機能要望 ロードマップ 投票 ユーザー声 製品管理',
+    accentColor: Color(0xFF1D6FF8),
+    painPoints: [
+      '無料/月額99ドル〜・フィードバック管理特化・個人のライフ管理は別途必要',
+      'プロダクトフィードバック特化・個人のAI管理は別途必要',
+      'UserVoice/Productboardと比較してAI分析・インサイト機能が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'フィードバックボード・投票・ロードマップ・変更ログ・ユーザーセグメント・Jira連携',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'productboard': const _CompetitorInfo(
+    name: 'Productboard',
+    emoji: '🗺️',
+    tagline: '製品戦略・顧客インサイト・ロードマップ計画ツールで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Productboard代替 プロダクト管理 ロードマップ 顧客インサイト 製品戦略 優先順位 PM',
+    accentColor: Color(0xFFFF6340),
+    painPoints: [
+      '月額20ドル〜・製品管理特化・個人のライフ管理は別途必要',
+      'プロダクトロードマップ特化・個人のAI管理は別途必要',
+      'Aha!/Lineaと比較してエンジニアリング連携・アジャイル機能が弱い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '顧客フィードバック統合・AI優先順位スコア・ロードマップ・Jira/Slack連携',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'uservoice': const _CompetitorInfo(
+    name: 'UserVoice',
+    emoji: '🎤',
+    tagline: 'エンタープライズ製品フィードバック・VOC（顧客の声）管理で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'UserVoice代替 製品フィードバック 顧客の声 VOC エンタープライズ 機能要望管理',
+    accentColor: Color(0xFFFA6900),
+    painPoints: [
+      '月額799ドル〜・エンタープライズフィードバック特化・個人のライフ管理は別途必要',
+      '大企業VOC管理特化・個人のAI管理は別途必要',
+      'Canny/Productboardと比較して価格が非常に高く中小企業向けでない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '多チャネルFB収集・AI分析・ロードマップ統合・CRM連携・管理者ポータル',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'toast-pos': const _CompetitorInfo(
+    name: 'Toast POS',
+    emoji: '🍞',
+    tagline: 'レストラン特化POSシステム・注文管理・デリバリー統合で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Toast POS代替 飲食店 POS システム レストラン 注文管理 デリバリー テイクアウト',
+    accentColor: Color(0xFFFF4C00),
+    painPoints: [
+      '月額0〜165ドル+ハード費用・飲食業界特化・個人のライフ管理は別途必要',
+      'レストランPOS特化・個人のAI管理は別途必要',
+      'Square/Cloverと比較してハードウェアロックイン・解約手数料がある',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'テーブル管理・オンライン注文・ロイヤルティ・給与・在庫・デリバリー連携',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'lightspeed': const _CompetitorInfo(
+    name: 'Lightspeed',
+    emoji: '⚡',
+    tagline: '小売・飲食向けクラウドPOS・在庫・eコマース統合で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Lightspeed代替 POS 小売 飲食 在庫管理 eコマース クラウドPOS 多拠点',
+    accentColor: Color(0xFFE01E5A),
+    painPoints: [
+      '月額69ドル〜・小売/飲食POS特化・個人のライフ管理は別途必要',
+      'クラウドPOS特化・個人のAI管理は別途必要',
+      'Square/Shopify POSと比較して設定の複雑さ・コストが高い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'POS・在庫管理・eコマース・ロイヤルティ・レポート・多通貨・API',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'clover': const _CompetitorInfo(
+    name: 'Clover',
+    emoji: '🍀',
+    tagline: '中小企業向けカスタマイズ可能POSシステム・決済統合で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Clover代替 POS カスタマイズ 決済端末 中小企業 小売 飲食 クレジットカード決済',
+    accentColor: Color(0xFF09A85E),
+    painPoints: [
+      '月額14.95ドル〜+ハード費用・POS決済特化・個人のライフ管理は別途必要',
+      'カスタマイズPOS特化・個人のAI管理は別途必要',
+      'Square比較でハードウェアロックイン・処理手数料が高め',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'カスタムアプリ市場・テーブル管理・在庫・従業員管理・ロイヤルティ・決済',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'cin7': const _CompetitorInfo(
+    name: 'Cin7',
+    emoji: '📦',
+    tagline: 'クラウド在庫管理・受発注・倉庫管理・EC連携で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Cin7代替 在庫管理 受発注 倉庫管理 EC連携 クラウド 製造 小売 在庫追跡',
+    accentColor: Color(0xFF0099FF),
+    painPoints: [
+      '月額349ドル〜・在庫/POS特化・個人のライフ管理は別途必要',
+      '製造・小売在庫特化・個人のAI管理は別途必要',
+      'Katana/DEARと比較して製造業特化・BOM機能が弱い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'リアルタイム在庫・自動発注・WMS・EC/POS統合・B2Bポータル・EDI',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'katana': const _CompetitorInfo(
+    name: 'Katana MRP',
+    emoji: '⚔️',
+    tagline: '製造業向けクラウドMRP・製造オーダー・BOM管理で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Katana代替 MRP 製造管理 BOM 製造オーダー 在庫 製造業 クラウドERP',
+    accentColor: Color(0xFF7C3AED),
+    painPoints: [
+      '月額199ドル〜・製造業MRP特化・個人のライフ管理は別途必要',
+      '製造オーダー管理特化・個人のAI管理は別途必要',
+      'Cin7/Fishbowlと比較して大規模製造・ERPへの拡張性が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'BOM・製造オーダー・在庫追跡・作業床管理・Shopify/QuickBooks連携',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'inflow-inventory': const _CompetitorInfo(
+    name: 'inFlow Inventory',
+    emoji: '🏭',
+    tagline: '中小企業向けオフライン/クラウド在庫管理・バーコードスキャンで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'inFlow代替 在庫管理 バーコード 中小企業 オフライン 受発注 製品追跡 倉庫',
+    accentColor: Color(0xFF2563EB),
+    painPoints: [
+      '月額89ドル〜・在庫管理特化・個人のライフ管理は別途必要',
+      '製品追跡特化・個人のAI管理は別途必要',
+      'Cin7/Katanaと比較して製造・EC連携・API機能が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '在庫追跡・バーコード/QR・発注管理・レポート・オフラインモード・マルチ拠点',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
