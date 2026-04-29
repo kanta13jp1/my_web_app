@@ -43818,6 +43818,312 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'garageband': const _CompetitorInfo(
+    name: 'GarageBand',
+    emoji: '🎸',
+    tagline: 'Apple無料DAW・MIDI・ループ・ギターアンプ・Drummer・Live Loops・Logic Proへの道で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'GarageBand代替 無料DAW 音楽制作 MIDI ループ Logic Pro代替 Audacity代替 iPhone Mac',
+    accentColor: Color(0xFF555555),
+    painPoints: [
+      '完全無料・Apple専用・音楽制作特化・個人のライフ管理は別途必要',
+      'DAW特化・個人のAI管理は別途必要',
+      'Logic Pro/Ableton/FL Studioと比較してプロ機能・プラグイン・Windows非対応が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'MIDI・ループ・ギターアンプ・Drummer・Live Loops・完全無料',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'logic-pro': const _CompetitorInfo(
+    name: 'Logic Pro',
+    emoji: '🎹',
+    tagline: 'Appleプロ向けDAW・200GB+サウンド・空間オーディオ・Stem Splitter・Sessionミュージシャンで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Logic Pro代替 DAW 音楽制作 Mac 空間オーディオ Ableton代替 Pro Tools代替 プロ',
+    accentColor: Color(0xFF1B1B1B),
+    painPoints: [
+      '買い切り250ドル・Mac専用・プロDAW特化・個人のライフ管理は別途必要',
+      '音楽制作特化・個人のAI管理は別途必要',
+      'Ableton/Pro Tools/Cubaseと比較してLive Performance・業界標準・Windows対応が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '200GB+サウンド・空間オーディオ・Stem Splitter・Session Musician・AI',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'pro-tools': const _CompetitorInfo(
+    name: 'Pro Tools',
+    emoji: '🎙️',
+    tagline: 'Avid・業界標準DAW・映画/TV/音楽レコーディング・128トラック・HDX DSPで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Pro Tools代替 DAW 業界標準 レコーディング スタジオ Logic代替 Ableton代替 映画音楽',
+    accentColor: Color(0xFF333333),
+    painPoints: [
+      '有料(月10-100ドル)・プロスタジオ特化・個人のライフ管理は別途必要',
+      'プロ音楽制作特化・個人のAI管理は別途必要',
+      'Logic/Ableton/Nuendoと比較して価格・学習コスト・MIDI機能・個人向けが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '業界標準・128トラック・HDX DSP・Elastic Audio・Dolby Atmos対応',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'hostinger': const _CompetitorInfo(
+    name: 'Hostinger',
+    emoji: '🌐',
+    tagline: '格安ウェブホスティング・1クリックWordPress・AI Websiteビルダー・月2ドル~で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Hostinger代替 格安ホスティング WordPress Bluehost代替 SiteGround代替 AI Websiteビルダー',
+    accentColor: Color(0xFF673DE6),
+    painPoints: [
+      '有料(月2-10ドル)・ホスティング特化・個人のライフ管理は別途必要',
+      'インフラ/CMS特化・個人のAI管理は別途必要',
+      'Bluehost/SiteGround/Kinstaと比較してサポート品質・高負荷時パフォーマンスが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AI Websiteビルダー・WordPress最適化・月2ドル~・無料SSL・Email',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'bluehost': const _CompetitorInfo(
+    name: 'Bluehost',
+    emoji: '🔵',
+    tagline: 'WordPress公式推奨ホスティング・無料ドメイン・自動インストール・月3ドル~で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Bluehost代替 WordPressホスティング 公式推奨 Hostinger代替 SiteGround代替 ウェブホスト',
+    accentColor: Color(0xFF0073FF),
+    painPoints: [
+      '有料(月3-14ドル)・WordPress特化・個人のライフ管理は別途必要',
+      'ホスティング特化・個人のAI管理は別途必要',
+      'SiteGround/Kinsta/WP Engineと比較して更新後のパフォーマンス低下・サポートが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'WordPress公式推奨・無料ドメイン・1クリックインストール・cPanel・SSL',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'siteground': const _CompetitorInfo(
+    name: 'SiteGround',
+    emoji: '🌱',
+    tagline: 'プレミアムWordPressホスティング・SuperCacher・AI Bot・WP-CLI・Googleクラウドで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'SiteGround代替 WordPressホスティング プレミアム SuperCacher Bluehost代替 Hostinger代替',
+    accentColor: Color(0xFF FC5139),
+    painPoints: [
+      '有料(月4-15ドル)・ホスティング特化・個人のライフ管理は別途必要',
+      'CMS/インフラ特化・個人のAI管理は別途必要',
+      'Kinsta/WP Engine/Cloudwaysと比較して価格上昇・ストレージ制限・スケールが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'SuperCacher・AI Bot・WP-CLI・Git・ステージング・Googleクラウド・SSL',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'nocodb': const _CompetitorInfo(
+    name: 'NocoDB',
+    emoji: '🗃️',
+    tagline: 'OSSノーコードデータベース・Airtable代替・既存DBをスプレッドシート化・自己ホストで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'NocoDB代替 OSSデータベース Airtable代替 ノーコード 自己ホスティング Baserow代替 スプレッドシート',
+    accentColor: Color(0xFF4F46E5),
+    painPoints: [
+      'OSS無料/クラウド有料・データベース管理特化・個人のライフ管理は別途必要',
+      'データ整理特化・個人のAI管理は別途必要',
+      'Airtable/Baserow/Seatable/Apitable比較してUI完成度・テンプレート・統合が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'OSS・既存DB連携・Grid/Kanban/Gallery/Form・API・自己ホスト',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'baserow': const _CompetitorInfo(
+    name: 'Baserow',
+    emoji: '📊',
+    tagline: 'OSSノーコードデータベース・Airtable代替・自己ホスト・プラグインAPI・GDPR準拠で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Baserow代替 OSSデータベース Airtable代替 自己ホスティング NocoDB代替 GDPR ノーコード',
+    accentColor: Color(0xFF3DAAE9),
+    painPoints: [
+      'OSS無料/クラウド有料・データベース管理特化・個人のライフ管理は別途必要',
+      'データ整理特化・個人のAI管理は別途必要',
+      'Airtable/NocoDB/Apiatable比較してAI機能・テンプレート数・モバイルアプリが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'OSS・GDPR・プラグインAPI・Grid/Kanban/Calendar・自己ホスト・AI',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'prowritingaid': const _CompetitorInfo(
+    name: 'ProWritingAid',
+    emoji: '✍️',
+    tagline: 'ライティングアシスタント・文法+スタイル+可読性チェック・作家向け・Google Docs統合で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'ProWritingAid代替 ライティングアシスタント 文法チェック スタイル Grammarly代替 作家 小説',
+    accentColor: Color(0xFF7BB5E5),
+    painPoints: [
+      '有料(月20ドル~/買い切り399ドル)・ライティング特化・個人のライフ管理は別途必要',
+      '文章改善特化・個人のAI管理は別途必要',
+      'Grammarly/Hemingway/Wordtune比較してリアルタイム修正・モバイル・AI生成が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '25種類レポート・スタイル/構造/可読性・20+統合・作家向け・買い切り',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
