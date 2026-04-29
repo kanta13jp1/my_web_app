@@ -40212,6 +40212,319 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'demio': const _CompetitorInfo(
+    name: 'Demio',
+    emoji: '🎬',
+    tagline: 'マーケター向けウェビナープラットフォーム・インタラクティブ・CRM統合・自動化で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Demio代替 ウェビナー マーケティング インタラクティブ GoToWebinar代替 Zoom Webinar代替',
+    accentColor: Color(0xFF6C5CE7),
+    painPoints: [
+      '月額制・ウェビナー特化・個人のライフ管理は別途必要',
+      'ウェビナー特化・個人のAI管理は別途必要',
+      'GoToWebinar/Zoom Webinarと比較して参加者数上限・録画容量が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'インタラクティブウェビナー・自動化・CRM統合・分析・ランディングページ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'bigmarker': const _CompetitorInfo(
+    name: 'BigMarker',
+    emoji: '📺',
+    tagline: '大規模ウェビナー・仮想イベント・ハイブリッドイベント・10000+参加者で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'BigMarker代替 大規模ウェビナー 仮想イベント ハイブリッドイベント GoToWebinar代替 Hopin代替',
+    accentColor: Color(0xFF0066CC),
+    painPoints: [
+      '月額制・大規模イベント特化・個人のライフ管理は別途必要',
+      'イベント特化・個人のAI管理は別途必要',
+      'Hopin/GoToWebinarと比較してコスト・中小規模向け使いやすさが限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '10000+参加者・仮想/ハイブリッド・スポンサーブース・Webinar Series',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'ghost-cms': const _CompetitorInfo(
+    name: 'Ghost',
+    emoji: '👻',
+    tagline: 'オープンソースパブリッシング・ニュースレター・会員制・クリエイターエコノミーで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Ghost代替 ニュースレター パブリッシング 会員制 Substack代替 WordPress代替 クリエイター',
+    accentColor: Color(0xFF15171A),
+    painPoints: [
+      '有料/セルフホスト・パブリッシング特化・個人のライフ管理は別途必要',
+      'コンテンツ発行特化・個人のAI管理は別途必要',
+      'Substack/WordPress/Beehiivと比較してエコシステム・プラグイン数が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'OSS・ニュースレター・有料会員・SEO最適化・API・セルフホスト',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'pixelmator': const _CompetitorInfo(
+    name: 'Pixelmator Pro',
+    emoji: '🖼️',
+    tagline: 'Mac専用AI画像編集・機械学習強化・Photoshop互換・Apple設計賞受賞で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Pixelmator Pro代替 Mac画像編集 AI画像処理 Photoshop代替 Affinity Photo代替 Apple',
+    accentColor: Color(0xFF0088CC),
+    painPoints: [
+      '買い切り制・Mac専用・個人のライフ管理は別途必要',
+      '画像編集特化・個人のAI管理は別途必要',
+      'Photoshop/Affinity Photoと比較してWindows対応・プロ向けプラグインが限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AI画像編集・ML強化・PSD互換・カラーマッチング・背景除去',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'clockify': const _CompetitorInfo(
+    name: 'Clockify',
+    emoji: '⏰',
+    tagline: '完全無料時間追跡・チームタイムシート・プロジェクト別管理・請求書発行で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Clockify代替 時間管理 タイムトラッキング 無料 Toggl代替 RescueTime代替 工数管理',
+    accentColor: Color(0xFF2970FF),
+    painPoints: [
+      '無料/有料・時間追跡特化・個人のライフ管理は別途必要',
+      '工数管理特化・個人のAI管理は別途必要',
+      'Toggl/Harvest/HarvesticAと比較してAI自動追跡・ビジネスインサイトが限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '完全無料・チームタイムシート・プロジェクト管理・請求書・GPS追跡',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'kibana': const _CompetitorInfo(
+    name: 'Kibana',
+    emoji: '📊',
+    tagline: 'Elastic・ログ分析ダッシュボード・APM・セキュリティ分析・オープンソースで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Kibana代替 ログ分析 ダッシュボード Elasticsearch Grafana代替 Splunk代替 可観測性',
+    accentColor: Color(0xFF005571),
+    painPoints: [
+      '無料(OSS)/有料(Elastic Cloud)・ログ分析特化・個人のライフ管理は別途必要',
+      'DevOps/分析特化・個人のAI管理は別途必要',
+      'Grafana/Datadog/Splunkと比較してビジュアライゼーションの柔軟性・学習コストが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ログ分析・APM・セキュリティSIEM・ML異常検知・OSS',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'mixmax': const _CompetitorInfo(
+    name: 'Mixmax',
+    emoji: '📧',
+    tagline: 'Gmail生産性向上・メール追跡・シーケンス・スケジューリング・CRM統合で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Mixmax代替 Gmail拡張 メール追跡 シーケンス メール自動化 Outreach代替 Yesware代替',
+    accentColor: Color(0xFFFF6B2B),
+    painPoints: [
+      '有料・Gmail特化・個人のライフ管理は別途必要',
+      'メール営業特化・個人のAI管理は別途必要',
+      'Outreach/SalesLoft/Yeswareと比較してエンタープライズ機能・Outlook対応が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Gmail追跡・メールシーケンス・スケジューリング・CRM同期・テンプレート',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'copper-crm': const _CompetitorInfo(
+    name: 'Copper CRM',
+    emoji: '🔶',
+    tagline:
+        'Google Workspace専用CRM・自動データ入力・Gmail完全統合・パイプライン管理で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Copper CRM代替 Google Workspace CRM Gmail統合 Salesforce代替 HubSpot代替 自動入力',
+    accentColor: Color(0xFFFF6D00),
+    painPoints: [
+      '月額制・Google Workspace特化・個人のライフ管理は別途必要',
+      'CRM特化・個人のAI管理は別途必要',
+      'Salesforce/HubSpot/Pipedriverと比較してカスタマイズ性・レポート機能が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Gmail統合・自動データ入力・パイプライン・Google カレンダー同期',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'streak-crm': const _CompetitorInfo(
+    name: 'Streak CRM',
+    emoji: '⚡',
+    tagline: 'Gmail内蔵CRM・パイプライン・受信箱でディール管理・スタートアップ無料プランで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Streak代替 Gmail CRM パイプライン Copper CRM代替 HubSpot代替 メール追跡 受信箱管理',
+    accentColor: Color(0xFFFF6600),
+    painPoints: [
+      '無料/有料・Gmail専用・個人のライフ管理は別途必要',
+      'CRM特化・個人のAI管理は別途必要',
+      'Copper/Salesforce/HubSpotと比較してモバイルアプリ・レポーティングが限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Gmail内蔵・パイプライン・メール追跡・スニペット・mail merge',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
