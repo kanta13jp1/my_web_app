@@ -8,7 +8,7 @@
 
 - `supabase/functions/_shared/task_budget.ts`
 - `supabase/functions/_shared/effort_router.ts`
-- `supabase/migrations/20260429110000_create_task_budget.sql`
+- `supabase/migrations/20260429110500_create_task_budget.sql`
 - `supabase/migrations/20260429120000_create_effort_config.sql`
 - `scripts/check_budget.py`
 - `docs/cost_control_architecture.md`

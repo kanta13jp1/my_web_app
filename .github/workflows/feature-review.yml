@@ -66,12 +66,13 @@ jobs:
           python -m playwright install --with-deps chromium
 
       - name: Run feature review
+        shell: bash
         run: |
-          ARGS="--config scripts/feature_review_config.json"
-          if [ "$DRY_RUN" = "true" ]; then ARGS="$ARGS --dry-run"; fi
-          if [ -n "$TARGET_FEATURES" ]; then ARGS="$ARGS --targets $TARGET_FEATURES"; fi
-          if [ "$FORCE_FULL_SCAN" = "true" ]; then ARGS="$ARGS --force-full-scan"; fi
-          PYTHONUTF8=1 python scripts/feature_review.py $ARGS
+          args=(--config scripts/feature_review_config.json)
+          if [ "$DRY_RUN" = "true" ]; then args+=(--dry-run); fi
+          if [ -n "$TARGET_FEATURES" ]; then args+=(--targets "$TARGET_FEATURES"); fi
+          if [ "$FORCE_FULL_SCAN" = "true" ]; then args+=(--force-full-scan); fi
+          PYTHONUTF8=1 python scripts/feature_review.py "${args[@]}"
 
       - name: Upload review artifacts
         if: always()
@@ -86,6 +87,7 @@ jobs:
 
       - name: Slack notify
         if: always()
+        shell: bash
         run: |
           if [ -z "$SLACK_WEBHOOK_URL" ]; then
             echo "::notice::SLACK_WEBHOOK_URL not set"
@@ -100,7 +102,16 @@ jobs:
             echo "::notice::No new issues; Slack notification skipped"
             exit 0
           fi
-          SUMMARY=$(python -c "import json; data=json.load(open('/tmp/feature-review-summary.json', encoding='utf-8')); print(f\"feature-review run complete: {data.get('new_count', 0)} new issues, {data.get('skipped_count', 0)} skipped, {data.get('error_count', 0)} errors\")")
+          python - <<'PY' > /tmp/feature-review-slack.json
+          import json
+          data = json.load(open('/tmp/feature-review-summary.json', encoding='utf-8'))
+          summary = (
+              f"feature-review run complete: {data.get('new_count', 0)} new issues, "
+              f"{data.get('skipped_count', 0)} skipped, "
+              f"{data.get('error_count', 0)} errors"
+          )
+          print(json.dumps({"text": f"[feature-review] {summary}"}))
+          PY
           curl -X POST -H 'Content-Type: application/json' \
-            --data "{\"text\":\"🔍 ${SUMMARY}\"}" \
+            --data @/tmp/feature-review-slack.json \
             "$SLACK_WEBHOOK_URL"

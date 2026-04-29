@@ -24357,6 +24357,14 @@ screenshot 受領 → 5 質問判定 → ファイル特定 → cross-instance-p
 - T-1 第178弾: Dart Sealed Classes Guide — Type-Safe State Management with Pattern Matching
   - https://dev.to/kanta13jp1/dart-sealed-classes-guide-type-safe-state-management-with-pattern-matching-2d9o
 
+## 2026-04-29 Codex#2 — memory-search + budget/effort + feature-review hardening
+- `memory-search-hub` EF 追加: `memory.search` / `memory.rank` / `memory.related` / `memory.stats`
+- `memory_index` migration + `scripts/sync_memory_index.py` + `memory-search-sync.yml` で memory Markdown を Supabase 検索indexへ同期
+- `task_budget` / `effort_config` migration と `_shared/task_budget.ts` / `_shared/effort_router.ts` を追加
+- `ai-hub` の `provider.chat_auto` / `edge_llm.invoke` に budget check、effort routing、estimated spend recording を統合
+- `feature-review.yml` の shell argument handling / Slack payload generation を安全化し、存在しない source 参照と heuristic category 誤分類を修正
+- cross-instance PR: `20260429_memory_search_hub_ef_codex2.md` / `20260429_task_budget_effort_router_codex2.md` を `done/` へ移動
+
 ## 2026-04-29 PS#4 S159-S170 — 競合追加 348→384社 (sitemap 427 URLs)
 - S159-S161 (348→357社): jefit/mapmyrun/runkeeper/couch-to-5k/zwift/nike-run/apple-fitness-plus/spartan/beachbody (未コミット分を整理・push)
 - S162-S164 (357→366社): sleep-cycle/ynab/monarch-money/clockwise/akiflow/classpass/superhuman/planoly/flomo

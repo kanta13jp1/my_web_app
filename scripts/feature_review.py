@@ -394,10 +394,11 @@ def heuristic_findings(
     feature_config: dict[str, Any],
 ) -> list[dict[str, Any]]:
     findings: list[dict[str, Any]] = []
+    allowed_categories = set(feature_config.get("review_categories", []))
     source = signals.get("source", {})
     if isinstance(source, dict):
         todos = source.get("todos", [])
-        if todos:
+        if todos and (not allowed_categories or "stale_todo" in allowed_categories):
             first = todos[0]
             findings.append({
                 "category": "stale_todo",
@@ -461,7 +462,7 @@ def normalize_findings(
     for item in findings:
         category = str(item.get("category") or "ui_bug")
         if allowed_categories and category not in allowed_categories:
-            category = next(iter(allowed_categories))
+            continue
         severity = str(item.get("severity") or "medium")
         if severity not in {"low", "medium", "high"}:
             severity = "medium"

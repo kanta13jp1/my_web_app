@@ -42,6 +42,20 @@ X への自動投稿先: **@kanta13jp1**
 
 ---
 
+### Task: memory-search-sync (毎時 12 分 / memory index 同期)
+
+**Workflow**: `.github/workflows/memory-search-sync.yml`
+**Script**: `scripts/sync_memory_index.py`
+
+`memory/**/*.md` を Supabase `memory_index` に同期し、`memory-search-hub` の `memory.search` / `memory.related` / `memory.stats` で検索できる状態を保つ。
+
+- 通常 cron: 毎時 12 分
+- 事前チェック: `scripts/check_budget.py --scope gha --scope-id memory-search-sync`
+- `GEMINI_API_KEY` がある場合のみ `gemini-embedding-001` の retrieval-document embedding を保存
+- `SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY` が未設定の場合は同期を停止
+
+---
+
 ### Task: daily-report (毎朝 09:00 JST に実行)
 
 > **アーキテクチャ**: GitHub Actions `daily-report.yml` が 07:30 JST に先行実行し、
