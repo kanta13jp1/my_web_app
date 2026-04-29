@@ -33,8 +33,8 @@ class _FeatureFlagsPageState extends State<FeatureFlagsPage> {
     });
     try {
       final response = await _supabase.functions.invoke(
-        'feature-flags',
-        body: {'action': 'list'},
+        'enterprise-hub',
+        body: {'action': 'flags.list'},
       );
       final data = response.data;
       if (data is Map<String, dynamic> && data['flags'] is List) {

@@ -178,8 +178,27 @@ serve(async (req) => {
         const item = await addItem(admin, "trip_item", userId, {
           trip_id: body.trip_id, type: body.type ?? "activity",
           title: body.title, date: body.date, notes: body.notes, booked: body.booked ?? false,
+          name: body.name, time: body.time, day: body.day, cost: body.cost,
         });
         return json({ success: true, item });
+      }
+      case "travel.get_items": {
+        const items = await listItems(admin, "trip_item", userId, 200);
+        const filtered = body.trip_id
+          ? items.filter((i) => (i.metadata as Record<string, unknown>)?.trip_id === body.trip_id)
+          : items;
+        const byType = body.type
+          ? filtered.filter((i) => (i.metadata as Record<string, unknown>)?.type === body.type)
+          : filtered;
+        return json({ success: true, items: byType, bookings: byType, itinerary: byType });
+      }
+      case "travel.get_budget": {
+        const items = await listItems(admin, "trip_item", userId, 200);
+        const tripItems = body.trip_id
+          ? items.filter((i) => (i.metadata as Record<string, unknown>)?.trip_id === body.trip_id)
+          : items;
+        const total = tripItems.reduce((s, i) => s + Number((i.metadata as Record<string, unknown>)?.cost ?? 0), 0);
+        return json({ success: true, total_cost: total, currency: "JPY", items: tripItems });
       }
 
       // ── Vehicle & Fleet ────────────────────────────────────────────────────────
