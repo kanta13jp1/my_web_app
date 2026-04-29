@@ -24241,6 +24241,312 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'feishu': const _CompetitorInfo(
+    name: 'Feishu / Lark',
+    emoji: '🪶',
+    tagline: 'ByteDance製統合コラボ・メッセージ/会議/ドキュメント一体型で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Feishu代替 Lark ByteDance コラボ ビデオ会議 ドキュメント アジア企業',
+    accentColor: Color(0xFF1456F0),
+    painPoints: [
+      '無料あり/Proは月額12ドル〜・ByteDance製でデータプライバシー懸念がある',
+      'コミュニケーション特化でチーム向け設計・個人のAIライフ管理は別途必要',
+      'Slackと比較して海外企業との連携・英語UI品質で劣ることがある',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'メッセージ・ビデオ会議・ドキュメント・OKR・プロジェクト・AI翻訳',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'dingtalk': const _CompetitorInfo(
+    name: 'DingTalk (釘釘)',
+    emoji: '🔔',
+    tagline: 'Alibaba製中国企業向けビジネスコミュニケーションで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'DingTalk代替 釘釘 Alibaba 中国 ビジネスチャット 勤怠 ビデオ会議',
+    accentColor: Color(0xFF1677FF),
+    painPoints: [
+      '中国企業向けに特化・海外企業との連携に制限・データ所在が中国サーバー',
+      'コミュニケーション特化でチーム向け設計・個人のAIライフ管理は別途必要',
+      'WeChat Workと比較して消費者向けエコシステム統合が弱い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ビデオ会議・勤怠・OA・スマートHR・ライブ配信・ミニアプリ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'height-app': const _CompetitorInfo(
+    name: 'Height',
+    emoji: '📏',
+    tagline: 'AI統合プロジェクト管理・チームコラボツールで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Height代替 プロジェクト管理 AI タスク管理 チームコラボ Linear代替',
+    accentColor: Color(0xFF6C5CE7),
+    painPoints: [
+      '無料あり/Proは月額8.99ドル〜・プロジェクト特化・個人のライフ管理は別途',
+      'プロジェクト管理特化でチーム向け設計・個人のAI管理は別途必要',
+      'Linearと比較してエンジニアリング特化機能・UIが劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AIタスク自動化・スプリント・ガント・チャット統合・テンプレート',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'plane-so': const _CompetitorInfo(
+    name: 'Plane',
+    emoji: '✈️',
+    tagline: 'OSS Jira代替・プロジェクト管理ツールで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Plane代替 OSS Jira代替 プロジェクト管理 イシュートラッカー セルフホスト',
+    accentColor: Color(0xFF3E63DD),
+    painPoints: [
+      '無料(OSS)/Proは月額7ドル〜・セルフホスト環境が必要・個人管理は別途',
+      'プロジェクト管理特化でエンジニア向け設計・個人のAI管理は別途必要',
+      'LinearやGitHub Issuesと比較してAI機能・スピードが劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'イシュー・スプリント・モジュール・ビュー・GitHub統合・OSS',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'teamwork': const _CompetitorInfo(
+    name: 'Teamwork',
+    emoji: '🤝',
+    tagline: 'クライアントワーク特化プロジェクト管理・エージェンシー向けで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Teamwork代替 プロジェクト管理 クライアントワーク エージェンシー タスク 請求',
+    accentColor: Color(0xFF01B8EF),
+    painPoints: [
+      '月額19.99ドル〜・クライアントワーク特化・個人のライフ管理は別途必要',
+      'エージェンシー/クライアント向け設計・個人のAI管理は別途必要',
+      'Asana/Monday.comと比較してUIデザイン・AI機能が劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'プロジェクト・タスク・ガント・請求・時間追跡・クライアントポータル',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'talent-lms': const _CompetitorInfo(
+    name: 'TalentLMS',
+    emoji: '🏅',
+    tagline: 'クラウドLMS・中小企業向け社員研修・オンボーディングで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'TalentLMS代替 LMS 社員研修 オンボーディング 中小企業 eラーニング クラウド',
+    accentColor: Color(0xFF11A9E2),
+    painPoints: [
+      '月額89ドル〜(最大40ユーザー)・企業研修特化・個人のライフ管理は別途必要',
+      '社員研修/LMS特化でHR向け設計・個人のAIライフ管理は別途必要',
+      'Moodle/Canvasと比較してカスタマイズ性・コンテンツ制作機能が弱い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'SCORM/xAPI・コース構築・ゲーミフィケーション・ブランディング',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'highspot': const _CompetitorInfo(
+    name: 'Highspot',
+    emoji: '🎯',
+    tagline: 'セールスイネーブルメント・コンテンツ管理・コーチングで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Highspot代替 セールスイネーブルメント コンテンツ管理 営業支援 コーチング',
+    accentColor: Color(0xFF2DB5AD),
+    painPoints: [
+      '価格非公開(年間数万ドル〜)・大規模営業チーム向け・個人利用は不向き',
+      'セールスイネーブルメント特化でビジネス向け設計・個人のAI管理は別途必要',
+      'Showpadと比較してコンテンツ分析・統合の深さが劣ることがある',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'コンテンツAI・ガイダンス・コーチング・分析・CRM統合・トレーニング',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'showpad': const _CompetitorInfo(
+    name: 'Showpad',
+    emoji: '📱',
+    tagline: 'セールスコンテンツ管理・バイヤーエンゲージメントで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Showpad代替 セールスコンテンツ 営業支援 バイヤーエンゲージメント プレゼン',
+    accentColor: Color(0xFF5033B5),
+    painPoints: [
+      '価格非公開(エンタープライズ向け)・セールス特化・個人のライフ管理は別途',
+      'セールスコンテンツ特化でビジネス向け設計・個人のAI管理は別途必要',
+      'Highspotと比較してコーチング機能・分析の深さが劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'コンテンツ管理・共有スペース・デジタルセールスルーム・分析',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'seismic': const _CompetitorInfo(
+    name: 'Seismic',
+    emoji: '📋',
+    tagline: 'エンタープライズセールスイネーブルメント・コンテンツオートメーションで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Seismic代替 セールスイネーブルメント コンテンツオートメーション 大企業 営業支援',
+    accentColor: Color(0xFF1483C4),
+    painPoints: [
+      '価格非公開(大企業向け・高額)・エンタープライズ特化・個人利用は不向き',
+      'セールスイネーブルメント特化でビジネス向け設計・個人のAI管理は別途必要',
+      'Highspot/Showpadと比較して中規模企業への対応・価格競争力が低い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'コンテンツAI・LiveSend・スコアカード・コーチング・大規模統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
