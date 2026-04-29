@@ -21011,6 +21011,312 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'autogpt': const _CompetitorInfo(
+    name: 'AutoGPT',
+    emoji: '🤖',
+    tagline: 'GPT-4自律AIエージェント・タスク自動実行OSSで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'AutoGPT代替 自律AIエージェント タスク自動化 GPT-4 OSS AIワークフロー',
+    accentColor: Color(0xFF00D26A),
+    painPoints: [
+      'セルフホスト必須・OpenAI API費用が自律実行で急増・ループ制御が難しい',
+      'タスク自動実行特化でエンジニア向け設計・個人のライフ管理は別途必要',
+      'CrewAIやLangGraphと比較して複数エージェント協調が弱い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'GPT-4自律実行・Webアクセス・ファイル読書き・プラグイン・OSS',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'crewai': const _CompetitorInfo(
+    name: 'CrewAI',
+    emoji: '🚢',
+    tagline: 'マルチAIエージェントチームオーケストレーションで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'CrewAI代替 マルチエージェント AIチーム自動化 LangChain エージェント協調',
+    accentColor: Color(0xFFE63946),
+    painPoints: [
+      'クラウド版月額99ドル〜・セルフホストはLLM API費用が別途必要',
+      'AIエージェント協調特化でエンジニア向け設計・個人のライフ管理は別途必要',
+      'AutoGenと比較してMicrosoft製品との統合が弱い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ロール定義・タスク割当・エージェント間協調・ツール統合・OSS',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'autogen': const _CompetitorInfo(
+    name: 'AutoGen (Microsoft)',
+    emoji: '🏭',
+    tagline: 'Microsoft マルチエージェント会話フレームワークで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'AutoGen代替 Microsoft マルチエージェント 会話型AI 自動化 コーディングエージェント',
+    accentColor: Color(0xFF0078D4),
+    painPoints: [
+      'セルフホスト必須・LLM API費用が別途発生・複雑な設定が必要',
+      'マルチエージェント特化でエンジニア向け設計・個人のライフ管理は別途必要',
+      'CrewAIと比較してノーコードGUIがなく習得コストが高い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '会話型エージェント・コード実行・ヒューマンインザループ・OSS',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'langgraph': const _CompetitorInfo(
+    name: 'LangGraph',
+    emoji: '🕸️',
+    tagline: 'LangChain製ステートフルAIエージェントグラフで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'LangGraph代替 ステートフルエージェント LangChain グラフ型AI 循環ロジック',
+    accentColor: Color(0xFF1C7ED6),
+    painPoints: [
+      'LangSmith月額39ドル〜・LangChain依存でロックイン・学習コストが高い',
+      'AIエージェント構築特化でエンジニア向け設計・個人のライフ管理は別途必要',
+      'CrewAIと比較して習得と設定が複雑',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ステートマシン・循環グラフ・ヒューマンインザループ・チェックポイント',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'metagpt': const _CompetitorInfo(
+    name: 'MetaGPT',
+    emoji: '🏢',
+    tagline: 'ソフトウェア会社模倣マルチエージェントで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'MetaGPT代替 マルチエージェント ソフトウェア開発自動化 AI開発チーム',
+    accentColor: Color(0xFF6C3483),
+    painPoints: [
+      'セルフホスト必須・大規模LLM API費用が必要・出力品質がバラつく',
+      'AIソフトウェア開発特化でエンジニア向け設計・個人管理は別途必要',
+      'AutoGPTやCrewAIと比較してソフトウェア開発以外の用途に不向き',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'PM/設計/QA役割分担・SRS/設計書自動生成・OSS・19k+',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'superagi': const _CompetitorInfo(
+    name: 'SuperAGI',
+    emoji: '🦸',
+    tagline: 'OSS自律AIエージェントインフラ・ツール拡張可能で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'SuperAGI代替 自律AIエージェント OSS エージェントインフラ ツール統合',
+    accentColor: Color(0xFF7B2FBE),
+    painPoints: [
+      'セルフホスト必須・クラウドは有料・LLM API費用が別途発生',
+      'AIエージェントインフラ特化でエンジニア向け設計・個人管理は別途必要',
+      'AutoGPTと比較してコミュニティが小さくサポートが限定的',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'エージェント管理・ツールキット・ベクターDB・マルチモデル対応',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'agentgpt': const _CompetitorInfo(
+    name: 'AgentGPT',
+    emoji: '🌐',
+    tagline: 'ブラウザ完結自律AIエージェント・ノーコードで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'AgentGPT代替 ブラウザAIエージェント ノーコード自動化 GPT-4 タスク実行',
+    accentColor: Color(0xFF6366F1),
+    painPoints: [
+      '月額40ドル〜・タスクごとにLLM API費用が積み重なる',
+      'ブラウザ自律エージェント特化でエンジニア向け・個人のライフ管理は別途必要',
+      'AutoGPTと比較して高度なカスタマイズとプラグイン統合が弱い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ブラウザGUI・自律タスク実行・目標分解・進捗可視化',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'babyagi': const _CompetitorInfo(
+    name: 'BabyAGI',
+    emoji: '👶',
+    tagline: 'タスク駆動型自律AIエージェント・Python OSSで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'BabyAGI代替 タスク駆動エージェント Python OSS 自律AI 目標管理',
+    accentColor: Color(0xFFFF6B6B),
+    painPoints: [
+      'セルフホスト必須・LLM API費用が別途発生・タスクループが無限になりやすい',
+      'タスク自律実行特化でエンジニア向け設計・個人のライフ管理は別途必要',
+      'AutoGPTやCrewAIと比較して機能・エコシステムが限定的',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'タスク生成/優先付/実行ループ・ベクターDB記憶・Python OSS',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'phidata': const _CompetitorInfo(
+    name: 'Phidata',
+    emoji: '🔬',
+    tagline: 'Python AIエージェント構築フレームワーク・マルチモーダルで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Phidata代替 AIエージェント Python フレームワーク RAG ツール統合',
+    accentColor: Color(0xFF059669),
+    painPoints: [
+      'セルフホスト必須・LLM API費用が別途発生・エンタープライズは有料',
+      'AIエージェント構築特化でエンジニア向け設計・個人管理は別途必要',
+      'LangChainやLlamaIndexと比較してエコシステム・サードパーティ統合が少ない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Agentクラス・ツール・知識ベース・メモリ・マルチモーダル・OSS',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
