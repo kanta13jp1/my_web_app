@@ -24182,3 +24182,11 @@ Bundle 第 1 完成例 = Codex#2 territory が Bundle 形式に対応可能で�
   - https://dev.to/kanta13jp1/product-hunt-launch-complete-guide-indie-dev-strategy-for-day-1-top-10-gk7
 - T-1 第166弾: Flutter × Dart 3 完全ガイド — Pattern Matching・Sealed Classes・Records
   - https://dev.to/kanta13jp1/flutter-x-dart-3-complete-guide-pattern-matching-sealed-classes-records-50bp
+
+## 2026-04-29 PS#1 S4 — consolidate-memory --lint 完成 + SECOND_BRAIN #4 実装
+- `~/.claude/skills/consolidate-memory/lint.py` 実装 — orphan/duplicate/contradiction 3 検出器
+- `~/.claude/skills/consolidate-memory/SKILL.md` 仕様追記 (`--lint` + `--issue` flag)
+- テスト実行: 928 files / orphan 881 (94.9%) / duplicate 62 groups / contradiction 20 keywords
+- `memory/lint_report_2026_04.md` 自動生成確認
+- `docs/SECOND_BRAIN_PRINCIPLES.md` #4 baseline 4.0→4.5/7 更新
+- cross-instance-pr done: `20260429_consolidate_memory_lint_ps1.md` + `20260428_migration_time_relative_check_detector_ps1.md`
