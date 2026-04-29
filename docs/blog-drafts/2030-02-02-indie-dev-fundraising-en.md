@@ -1,7 +1,7 @@
 ---
 title: "Indie SaaS Fundraising — Bootstrapping, Crowdfunding, and MRR-Based Loans"
 tags: dart,flutter,webdev,indiedev
-published: false
+published: true
 ---
 
 ## Introduction
