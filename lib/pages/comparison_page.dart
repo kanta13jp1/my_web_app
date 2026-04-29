@@ -34989,6 +34989,313 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'linkerd': const _CompetitorInfo(
+    name: 'Linkerd',
+    emoji: '🔗',
+    tagline: 'オープンソースサービスメッシュ・相互TLS・可観測性・負荷分散で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Linkerd代替 サービスメッシュ mTLS 可観測性 Istio代替 マイクロサービス k8s',
+    accentColor: Color(0xFF2BEDA7),
+    painPoints: [
+      '無料OSS/月額不明・サービスメッシュ特化・個人のライフ管理は別途必要',
+      'マイクロサービス通信特化・個人のAI管理は別途必要',
+      'Istioと比較して高度なトラフィック管理・ポリシー機能が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'mTLS・プロキシインジェクション・サーキットブレーカー・観測・Rust実装',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'zipkin': const _CompetitorInfo(
+    name: 'Zipkin',
+    emoji: '🔍',
+    tagline: '分散トレーシング・マイクロサービス遅延分析・オープンソースで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Zipkin代替 分散トレーシング マイクロサービス 遅延分析 Jaeger代替 OSS トレース',
+    accentColor: Color(0xFFF27F25),
+    painPoints: [
+      '無料OSS・分散トレーシング特化・個人のライフ管理は別途必要',
+      'マイクロサービス追跡特化・個人のAI管理は別途必要',
+      'Jaeger/DataDogと比較してUI・分析機能・統合数が劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'トレース収集・依存関係マップ・レイテンシ分析・多言語クライアント・Storage選択',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'lambdatest': const _CompetitorInfo(
+    name: 'LambdaTest',
+    emoji: '🧪',
+    tagline: 'クロスブラウザ・モバイルテスト・クラウドテストインフラで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'LambdaTest代替 クロスブラウザテスト モバイルテスト BrowserStack代替 Selenium クラウド',
+    accentColor: Color(0xFF792EE5),
+    painPoints: [
+      '無料/月額15ドル〜・テストインフラ特化・個人のライフ管理は別途必要',
+      'クロスブラウザテスト特化・個人のAI管理は別途必要',
+      'BrowserStack/Sauceと比較してエンタープライズサポート・デバイス数が劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '3000+ブラウザ/OS・Selenium/Cypress/Playwright・スクリーンショット・AI視覚テスト',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'sauce-labs': const _CompetitorInfo(
+    name: 'Sauce Labs',
+    emoji: '🍳',
+    tagline: 'クラウドテスト・エンタープライズブラウザ/モバイルテストで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Sauce Labs代替 クラウドテスト エンタープライズ モバイルテスト BrowserStack代替',
+    accentColor: Color(0xFFE2231A),
+    painPoints: [
+      '月額高価格・テストインフラ特化・個人のライフ管理は別途必要',
+      'エンタープライズQA特化・個人のAI管理は別途必要',
+      'BrowserStack/LambdaTestと比較してコスト高・価格透明性が低い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'デバイス/ブラウザ1600+・セキュリティコンプライアンス・仮想デバイス・AI分析',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'configcat': const _CompetitorInfo(
+    name: 'ConfigCat',
+    emoji: '🐱',
+    tagline: 'フィーチャーフラグ・ターゲティング・A/Bテスト・設定管理で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'ConfigCat代替 フィーチャーフラグ 機能フラグ ターゲティング LaunchDarkly代替 A/Bテスト',
+    accentColor: Color(0xFFFF5400),
+    painPoints: [
+      '無料/月額9ドル〜・フィーチャーフラグ特化・個人のライフ管理は別途必要',
+      '設定管理特化・個人のAI管理は別途必要',
+      'LaunchDarkly/Splitと比較して高度な分析・実験機能が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'フラグ管理・ルールターゲット・多言語SDK・Webhook・CI/CD統合・監査ログ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'unleash': const _CompetitorInfo(
+    name: 'Unleash',
+    emoji: '🚀',
+    tagline: 'オープンソースフィーチャーフラグ管理・プログレッシブデリバリーで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Unleash代替 フィーチャーフラグ OSS セルフホスト プログレッシブデリバリー LaunchDarkly代替',
+    accentColor: Color(0xFF6C45DA),
+    painPoints: [
+      '無料OSS/月額80ドル〜・機能フラグ特化・個人のライフ管理は別途必要',
+      'フィーチャー管理特化・個人のAI管理は別途必要',
+      'LaunchDarklyと比較してエンタープライズ向けサポート・分析が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'トグル管理・マルチ環境・ターゲット・メトリクス・API/SDK・セルフホスト',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'archbee': const _CompetitorInfo(
+    name: 'Archbee',
+    emoji: '🐝',
+    tagline: '開発者向けドキュメント・APIリファレンス・ナレッジベースで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Archbee代替 開発者ドキュメント APIリファレンス ナレッジベース Notion代替 GitBook代替',
+    accentColor: Color(0xFF5B4FE9),
+    painPoints: [
+      '月額25ドル〜・ドキュメント特化・個人のライフ管理は別途必要',
+      'テックドキュメント特化・個人のAI管理は別途必要',
+      'GitBook/Slabと比較してコミュニティ・テンプレート数が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'MDX/Markdown・API Block・AI検索・バージョン管理・カスタムドメイン・Slack統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'swimm': const _CompetitorInfo(
+    name: 'Swimm',
+    emoji: '🏊',
+    tagline: 'AIコードドキュメント・コードとドキュメントの自動同期で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Swimm代替 コードドキュメント AIドキュメント 自動同期 IDE統合 コード説明 オンボーディング',
+    accentColor: Color(0xFF0052CC),
+    painPoints: [
+      '無料/月額不明・コードドキュメント特化・個人のライフ管理は別途必要',
+      'コード説明特化・個人のAI管理は別途必要',
+      'Confluence/GitHubと比較してスタンドアロン性・非開発者向け機能が弱い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'コードリンクDoc・自動最新化・IDE拡張・AIドキュメント生成・PR統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'contractbook': const _CompetitorInfo(
+    name: 'Contractbook',
+    emoji: '📝',
+    tagline: 'デジタル契約管理・eSignature・契約ライフサイクル自動化で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Contractbook代替 契約管理 電子署名 eSignature CLM DocuSign代替 契約自動化',
+    accentColor: Color(0xFF1B1464),
+    painPoints: [
+      '月額不明・契約管理特化・個人のライフ管理は別途必要',
+      'CLM特化・個人のAI管理は別途必要',
+      'DocuSign/PandaDocと比較してエコシステム・統合数が劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '契約作成・電子署名・ワークフロー自動化・テンプレート・監査・更新アラート',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
