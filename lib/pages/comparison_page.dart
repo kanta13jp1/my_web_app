@@ -36522,6 +36522,315 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'crisp': const _CompetitorInfo(
+    name: 'Crisp',
+    emoji: '💬',
+    tagline: 'スタートアップ向けライブチャット・チャットボット・カスタマーサポートハブで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Crisp代替 ライブチャット チャットボット カスタマーサポート Intercom代替 スタートアップ',
+    accentColor: Color(0xFF1972F5),
+    painPoints: [
+      '月額25ドル〜・サポートチャット特化・個人のライフ管理は別途必要',
+      'カスタマーサポート特化・個人のAI管理は別途必要',
+      'Intercom/Freshchatと比較して高度なCRM連携・AI機能が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ライブチャット・ボット・共有インボックス・CRM・ナレッジベース',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'tawk-to': const _CompetitorInfo(
+    name: 'tawk.to',
+    emoji: '🗨️',
+    tagline: '完全無料ライブチャット・チケット管理・CRMで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'tawk.to代替 無料ライブチャット チケット管理 CRM Crisp代替 カスタマーサポート',
+    accentColor: Color(0xFF03A84E),
+    painPoints: [
+      '無料・ライブチャット特化・個人のライフ管理は別途必要',
+      'サポートチャット特化・個人のAI管理は別途必要',
+      'Crisp/Intercomと比較してAI機能・自動化が大幅に限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '無制限チャット・エージェント・チケット・ナレッジベース・ビデオ通話',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'tidio': const _CompetitorInfo(
+    name: 'Tidio',
+    emoji: '🤖',
+    tagline: 'AIチャットボット・ライブチャット・eコマース向けサポートで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Tidio代替 AIチャットボット ライブチャット eコマース サポート Shopify Crisp代替',
+    accentColor: Color(0xFF5C6BC0),
+    painPoints: [
+      '月額29ドル〜・eコマースチャット特化・個人のライフ管理は別途必要',
+      'Shopify/ECチャットボット特化・個人のAI管理は別途必要',
+      'Crisp/Freshchatと比較してエンタープライズCRM連携が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AIボット(Lyro)・ライブチャット・Shopify連携・メール・分析',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'chatfuel': const _CompetitorInfo(
+    name: 'Chatfuel',
+    emoji: '⚙️',
+    tagline: 'Facebook/Instagram向けAIチャットボット・マーケティング自動化で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Chatfuel代替 Facebook チャットボット Instagram DM自動化 ManyChat代替 メッセンジャー',
+    accentColor: Color(0xFF00B0FF),
+    painPoints: [
+      '月額14.99ドル〜・FB/IG特化・個人のライフ管理は別途必要',
+      'ソーシャルチャットボット特化・個人のAI管理は別途必要',
+      'ManyChatと比較してWhatsApp/SMS対応・マルチチャネル機能が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'FB/IG/WhatsApp AI・フロービルダー・放棄カート・LTV向上',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'manychat': const _CompetitorInfo(
+    name: 'ManyChat',
+    emoji: '📱',
+    tagline: 'Instagram/Facebook/WhatsApp DM自動化・チャットマーケティングで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'ManyChat代替 Instagram DM自動化 Facebook チャットマーケティング WhatsApp SMS',
+    accentColor: Color(0xFF7B68EE),
+    painPoints: [
+      '月額15ドル〜・DM自動化特化・個人のライフ管理は別途必要',
+      'ソーシャルDM特化・個人のAI管理は別途必要',
+      'Chatfuel/Tidioと比較してライブチャット・カスタマーサポート機能が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'IG/FB/WhatsApp/SMS・フロービルダー・成長ツール・Shopify連携・A/B',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'voiceflow': const _CompetitorInfo(
+    name: 'Voiceflow',
+    emoji: '🎙️',
+    tagline: 'ノーコードAIエージェント・会話型AIビルダーで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Voiceflow代替 ノーコードAI 会話型AIビルダー チャットボット AIエージェント Dialogflow代替',
+    accentColor: Color(0xFF6B46C1),
+    painPoints: [
+      '月額50ドル〜・会話AIビルダー特化・個人のライフ管理は別途必要',
+      'AIエージェント構築特化・個人のAI管理は別途必要',
+      'Dialogflow/Botpressと比較してエンタープライズデプロイ・LLM統合が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ビジュアルフロービルダー・LLM統合・マルチチャネル・ナレッジベース',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'delighted': const _CompetitorInfo(
+    name: 'Delighted',
+    emoji: '😊',
+    tagline: 'NPS・CSAT・CES顧客フィードバック収集・分析ツールで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Delighted代替 NPS CSAT CES 顧客満足度 フィードバック調査 Qualtrics代替',
+    accentColor: Color(0xFF2AC769),
+    painPoints: [
+      '月額17ドル〜・フィードバック特化・個人のライフ管理は別途必要',
+      '顧客満足度調査特化・個人のAI管理は別途必要',
+      'Qualtrics/Medalliaと比較して高度な分析・エンタープライズ機能が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'NPS/CSAT/CES/eNPS・多チャネル配信・Slack通知・Salesforce連携',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'clearbit': const _CompetitorInfo(
+    name: 'Clearbit',
+    emoji: '🔎',
+    tagline: 'B2Bデータエンリッチメント・リードインテリジェンス・リバースIPで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Clearbit代替 データエンリッチメント B2Bリード リバースIP 企業データ ZoomInfo代替',
+    accentColor: Color(0xFF6563FF),
+    painPoints: [
+      '月額高価格・B2Bデータ特化・個人のライフ管理は別途必要',
+      'リードエンリッチメント特化・個人のAI管理は別途必要',
+      'ZoomInfo/Lushと比較して中小企業には高コストで複雑',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'エンリッチメント・リバースIP・フォーム短縮・Intent・HubSpot連携',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'lusha': const _CompetitorInfo(
+    name: 'Lusha',
+    emoji: '📋',
+    tagline: 'B2Bコンタクトデータ・メール/電話番号取得・見込み客データベースで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Lusha代替 B2Bコンタクト メール電話取得 見込み客 ZoomInfo代替 Apollo代替 リード',
+    accentColor: Color(0xFF00A4EF),
+    painPoints: [
+      '月額36ドル〜・コンタクトデータ特化・個人のライフ管理は別途必要',
+      'B2Bリード取得特化・個人のAI管理は別途必要',
+      'ZoomInfo/Apolloと比較してシーケンス・エンゲージメント機能が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'メール/電話取得・LinkedIn拡張・ターゲットリスト・Salesforce/HubSpot',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
