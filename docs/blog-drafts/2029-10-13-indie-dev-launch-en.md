@@ -1,7 +1,7 @@
 ---
 title: "Indie Dev Launch Strategy — Getting Traction on ProductHunt, HackerNews, and Reddit"
 tags: indiedev,webdev,buildinpublic,flutter
-published: false
+published: true
 ---
 
 # Indie Dev Launch Strategy — Getting Traction on ProductHunt, HackerNews, and Reddit
