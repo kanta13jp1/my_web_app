@@ -48184,6 +48184,323 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'stitch-data': const _CompetitorInfo(
+    name: 'Stitch Data',
+    emoji: '🧵',
+    tagline: 'Talend傘下クラウドETL・130+コネクタ・ELTパイプライン・デベロッパー向けシンプルで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Stitch Data代替 クラウドETL コネクタ ELTパイプライン Talend Fivetran代替 Airbyte代替',
+    accentColor: Color(0xFF4169E1),
+    painPoints: [
+      '有料月100ドル~・データ統合特化・個人のライフ管理は別途必要',
+      'ETL/ELT特化・個人のAI管理は別途必要',
+      'Fivetran/Airbyte/Kebolaとの比較でコネクタ数・変換機能・カスタマイズが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '130+コネクタ・ELTパイプライン・スケジュール・増分同期・デベロッパー向け',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'informatica': const _CompetitorInfo(
+    name: 'Informatica',
+    emoji: '🏭',
+    tagline: 'エンタープライズデータ統合・IDMC・AI PowerCenter・データ品質・ガバナンスで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Informatica代替 エンタープライズデータ統合 IDMC PowerCenter データ品質 ガバナンス MuleSoft代替',
+    accentColor: Color(0xFFFF6600),
+    painPoints: [
+      '高価格有料・エンタープライズ特化・個人のライフ管理は別途必要',
+      'エンタープライズデータ管理特化・個人のAI管理は別途必要',
+      'MuleSoft/Boomi/IBM DataStageとの比較でコスト・クラウドネイティブ・設定複雑性が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'IDMC・AI PowerCenter・データ品質・ガバナンス・エンタープライズ統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'mulesoft': const _CompetitorInfo(
+    name: 'MuleSoft (Salesforce)',
+    emoji: '🔌',
+    tagline:
+        'Salesforce傘下API統合プラットフォーム・Anypoint・1000+コネクタ・iPaaSでエンタープライズ接続で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'MuleSoft代替 API統合 iPaaS Anypoint Salesforce エンタープライズ統合 Boomi代替 Informatica代替',
+    accentColor: Color(0xFF00A1E0),
+    painPoints: [
+      '高価格/Salesforceバンドル・API統合特化・個人のライフ管理は別途必要',
+      'エンタープライズ統合特化・個人のAI管理は別途必要',
+      'Boomi/Informatica/Azure Logic Appsとの比較でコスト・複雑性・Salesforce依存が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Anypoint Platform・1000+コネクタ・API管理・iPaaS・エンタープライズ統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'boomi': const _CompetitorInfo(
+    name: 'Boomi',
+    emoji: '🌀',
+    tagline:
+        'クラウドネイティブiPaaS・2000+コネクタ・AI Suggest・Dell Technologies分離・ローコードで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Boomi代替 iPaaS クラウドネイティブ 2000コネクタ ローコード MuleSoft代替 Informatica代替',
+    accentColor: Color(0xFF009BDE),
+    painPoints: [
+      '有料(月数百ドル~)・iPaaS特化・個人のライフ管理は別途必要',
+      'データ統合特化・個人のAI管理は別途必要',
+      'MuleSoft/Informatica/Workato との比較でコスト・エコシステム・AI機能が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '2000+コネクタ・AI Suggest・ローコード・クラウドネイティブ・iPaaS',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'hevo-data': const _CompetitorInfo(
+    name: 'Hevo Data',
+    emoji: '🔀',
+    tagline: 'ノーコードETL・150+コネクタ・リアルタイム同期・自動スキーマ管理・SMB向けで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Hevo Data代替 ノーコードETL リアルタイム同期 150コネクタ SMB Fivetran代替 Stitch代替',
+    accentColor: Color(0xFF8B5CF6),
+    painPoints: [
+      '無料(100K/月)/有料月249ドル~・ETL特化・個人のライフ管理は別途必要',
+      'データパイプライン特化・個人のAI管理は別途必要',
+      'Fivetran/Airbyte/Stitch との比較でコネクタ数・変換の深さ・エンタープライズ対応が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ノーコードETL・150+コネクタ・リアルタイム同期・自動スキーマ管理',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'supermetrics': const _CompetitorInfo(
+    name: 'Supermetrics',
+    emoji: '📈',
+    tagline:
+        'マーケティングデータ統合・BigQuery/Sheets/Looker・100+ソース・広告データ自動化で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Supermetrics代替 マーケティングデータ BigQuery Sheets Looker 広告データ Fivetran代替',
+    accentColor: Color(0xFF3B82F6),
+    painPoints: [
+      '有料月99ドル~・マーケティング分析特化・個人のライフ管理は別途必要',
+      'マーケティングデータ特化・個人のAI管理は別途必要',
+      'Fivetran/Airbyte/Funnel.io との比較でコスト・汎用性・技術的柔軟性が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'マーケティングデータ統合・100+ソース・BigQuery/Sheets/Looker・広告API',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'nifi': const _CompetitorInfo(
+    name: 'Apache NiFi',
+    emoji: '🌊',
+    tagline: 'OSS データフロー・ビジュアルパイプライン・300+プロセッサ・NSA開発・エンタープライズで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Apache NiFi代替 データフロー ビジュアルパイプライン OSS NSA エンタープライズ Kafka代替',
+    accentColor: Color(0xFF728E45),
+    painPoints: [
+      '完全無料OSS・データフロー特化・個人のライフ管理は別途必要',
+      'データパイプライン特化・個人のAI管理は別途必要',
+      'Kafka/Airflow/Prefectとの比較で学習曲線・クラウドネイティブ・スケーリングが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ビジュアルパイプライン・300+プロセッサ・NSA開発・リアルタイムデータフロー',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'flink': const _CompetitorInfo(
+    name: 'Apache Flink',
+    emoji: '⚡',
+    tagline: 'リアルタイムストリーム処理・状態管理・CEP・SQL・Kafka統合・大規模ストリーミングで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Apache Flink代替 ストリーム処理 リアルタイム 状態管理 CEP SQL Kafka統合 Spark Streaming代替',
+    accentColor: Color(0xFFE6522C),
+    painPoints: [
+      '完全無料OSS・ストリーム処理特化・個人のライフ管理は別途必要',
+      'データエンジニアリング特化・個人のAI管理は別途必要',
+      'Spark Streaming/Kafka Streams/Pulsar との比較で学習曲線・ローカル開発・設定が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'リアルタイムストリーム処理・状態管理・CEP・SQL・Kafka統合・大規模',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'singer': const _CompetitorInfo(
+    name: 'Singer',
+    emoji: '🎤',
+    tagline:
+        'Stitch発OSS ETL標準・Tap/Target仕様・100+コネクタ・コミュニティ駆動・任意組み合わせで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Singer代替 OSS ETL 標準 Tap Target Stitch Airbyte コネクタ オープンソース',
+    accentColor: Color(0xFF17A589),
+    painPoints: [
+      '完全無料OSS・ETL標準特化・個人のライフ管理は別途必要',
+      'データ統合特化・個人のAI管理は別途必要',
+      'Airbyte/Fivetran/Hevo との比較でUI・管理ツール・エンタープライズサポートが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Tap/Target OSS標準・100+コネクタ・コミュニティ駆動・任意組み合わせ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
