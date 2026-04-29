@@ -60005,6 +60005,312 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'eslint': const _CompetitorInfo(
+    name: 'ESLint',
+    emoji: '🔷',
+    tagline: 'ESLint・JavaScript/TypeScript静的解析・カスタムルール・プラグイン・自動修正・VSCode統合・CI/CD・OSS・業界標準で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'ESLint代替 JavaScript TypeScript 静的解析 カスタムルール 自動修正 VSCode CI/CD Biome代替 Prettier代替',
+    accentColor: Color(0xFF4B32C3),
+    painPoints: [
+      '無料(OSS)・JS/TSリンティング特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Biome/Rome との比較でパフォーマンス・設定複雑さ・Rust製高速ツール移行が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'JS/TS静的解析・カスタムルール・プラグイン・自動修正・VSCode統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'prettier': const _CompetitorInfo(
+    name: 'Prettier',
+    emoji: '✨',
+    tagline: 'Prettier・コードフォーマッター・意見あり・JS/TS/CSS/HTML・自動整形・エディタ統合・CI/CD・OSS・業界標準で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Prettier代替 コードフォーマット JS TS CSS HTML 自動整形 エディタ統合 Biome代替 dprint代替',
+    accentColor: Color(0xFFF7B93E),
+    painPoints: [
+      '無料(OSS)・コードフォーマット特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Biome/dprint との比較でパフォーマンス・設定オプション・モノレポ対応が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'コードフォーマット・意見あり・JS/TS/CSS/HTML・エディタ統合・CI/CD',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'husky': const _CompetitorInfo(
+    name: 'Husky',
+    emoji: '🐕',
+    tagline: 'Husky・Gitフック管理・pre-commit・commit-msg・push・Node.js・lint-staged統合・OSS・シンプル設定で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Husky代替 Gitフック pre-commit commit-msg Node.js lint-staged Lefthook代替 simple-git-hooks代替',
+    accentColor: Color(0xFF000000),
+    painPoints: [
+      '無料(OSS)・Gitフック特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Lefthook/simple-git-hooks との比較でNode.js依存・パフォーマンス・言語非依存が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Gitフック管理・pre-commit/commit-msg/push・lint-staged統合・シンプル',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'lefthook': const _CompetitorInfo(
+    name: 'Lefthook',
+    emoji: '🪝',
+    tagline: 'Lefthook・高速Gitフック・Go製・言語非依存・並行実行・YAML設定・lint-staged不要・mono repo対応で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Lefthook代替 高速Gitフック Go言語非依存 並行実行 YAML設定 monorepo Husky代替 pre-commit代替',
+    accentColor: Color(0xFFFF5400),
+    painPoints: [
+      '無料(OSS)・Gitフック特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Husky との比較でNode.js不要・パフォーマンス優位があるが認知度・ドキュメントが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '高速Gitフック・Go製・言語非依存・並行実行・YAML設定・monorepo',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'biome': const _CompetitorInfo(
+    name: 'Biome',
+    emoji: '🌍',
+    tagline: 'Biome・高速JS/TSリンター+フォーマッター・Rust製・ESLint/Prettier代替・単一ツール・OSS・CNCF・Zero configで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Biome代替 高速 JS TS リンター フォーマッター Rust ESLint Prettier代替 単一ツール Zero config',
+    accentColor: Color(0xFF60A5FA),
+    painPoints: [
+      '無料(OSS)・JS/TSリント+フォーマット特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'ESLint/Prettier との比較でルール数・プラグインエコシステム・成熟度が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '高速JS/TSリンター+フォーマッター・Rust製・単一ツール・Zero config',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'pylint': const _CompetitorInfo(
+    name: 'Pylint',
+    emoji: '🐍',
+    tagline: 'Pylint・Python静的解析・コードスタイル・エラー検出・複雑度分析・プラグイン・CI/CD・OSS・業界標準で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Pylint代替 Python 静的解析 コードスタイル エラー検出 複雑度 CI/CD Ruff代替 Flake8代替',
+    accentColor: Color(0xFF3776AB),
+    painPoints: [
+      '無料(OSS)・Python解析特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Ruff/Flake8 との比較でスキャン速度・Rust製高速化・設定シンプルさが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Python静的解析・コードスタイル・エラー検出・複雑度分析・プラグイン',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'ruff': const _CompetitorInfo(
+    name: 'Ruff',
+    emoji: '⚡',
+    tagline: 'Ruff・高速PythonリンターフォーマッターRust製・Flake8/Black/isort代替・100倍高速・OSS・Astral製・単一ツールで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Ruff代替 高速Pythonリンター Rust Flake8 Black isort代替 100倍高速 Astral Pylint代替',
+    accentColor: Color(0xFFD7522E),
+    painPoints: [
+      '無料(OSS)・Pythonリント+フォーマット特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Pylint との比較でルール数・型チェック・mypy統合が問題 (Ruff優位な面多い)',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '高速PythonリンターRust製・Flake8/Black/isort代替・100倍高速・単一',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'oxlint': const _CompetitorInfo(
+    name: 'oxlint',
+    emoji: '🦊',
+    tagline: 'oxlint・超高速JavaScriptリンター・Rust製・Oxc Toolchainの一部・ESLint互換・50-100倍高速・OSS・TypeScript対応で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'oxlint代替 超高速 JavaScript リンター Rust ESLint互換 50倍高速 Oxc TypeScript Biome代替',
+    accentColor: Color(0xFFFF6B00),
+    painPoints: [
+      '無料(OSS)・JSリンティング特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'ESLint/Biome との比較でプラグインエコシステム・成熟度・IDE統合の広さが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '超高速JSリンター・Rust製・ESLint互換・50-100倍高速・TypeScript対応',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'rubocop': const _CompetitorInfo(
+    name: 'RuboCop',
+    emoji: '💎',
+    tagline: 'RuboCop・Ruby静的コード解析・スタイルガイド準拠・自動修正・Cops設定・Gemインストール・CI/CD・OSS・Rails対応で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'RuboCop代替 Ruby 静的コード解析 スタイルガイド 自動修正 Cops Rails CI/CD standardrb代替',
+    accentColor: Color(0xFFCC342D),
+    painPoints: [
+      '無料(OSS)・Ruby解析特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'standardrb/Reek との比較で設定量・デフォルト厳格さ・チーム合意が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Ruby静的解析・スタイルガイド準拠・自動修正・Cops設定・Rails対応',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
