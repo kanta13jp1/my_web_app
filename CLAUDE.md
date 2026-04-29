@@ -74,11 +74,7 @@ UIコンポーネントを新規作成・修正する際は、以下のファイ
 | `[IMBUE-25]` | docs/IMBUE_PATTERNS.md 7 パターン (AI×UX 体験設計) チェック | Rule 25 (新規 2026-04-27) |
 | `[COLLAB-26]` | docs/COLLAB_AI_PATTERNS.md 7 パターン (Tinker / Co-Reasoning / Red-Team) チェック | Rule 26 (新規 2026-04-28) |
 | `[MCP-AUTH-27]` | docs/MCP_AUTH_SECURITY_PRINCIPLES.md 10 原則 (DCR / Bearer / Inj-Defense / SHTTP / Scope / WorkOS / Audit / PKCE / .well-known / LeastPriv) チェック (MCP server 公開時 10/10 必須) | Rule 27 (新規 2026-04-28 / part 43 で 7→10 拡張) |
-| `[OPS-28]` | docs/OPERATIONS_CHARTER.md 運用憲章 — 5 正本 (Issues/PR / WBS-Notion / NotebookLM / Slack / worktree) + 6 AI 役割 + セッション開始 5 監査チェック + 5 改善トリガー + 1 日サイクル運用パターン (発見→提案→実装→完了確認 / 4 worker lane reciprocal) | Rule 28 (新規 2026-04-28 / part 55 で第 6 章 1 日サイクル追加) |
-| `[AI-VIDEO-29]` | docs/AI_VIDEO_PRINCIPLES.md 6 原則 (Dynamic Avatar / Defensive→Generative Pivot / Seamless Workflow / DID Verification / Ethical Provenance / Interactive Real-time) チェック (合成メディア・AI アバター生成・動画パイプライン関連 PR 時 6/6 必須) | Rule 29 (新規 2026-04-28 / NotebookLM da2a95d1 D-ID ソース蒸留) |
-| `[VIBE-30]` | docs/VIBE_CODING_PRINCIPLES.md 7 原則 (Trunk/Leaf 分離 / AI as PM / Provably Correct Sandbox / I/O Verification / Minimal E2E Test / Periodic Compaction / Embrace Exponentials) チェック (Production AI 開発責任 = 全 PR 7/7 推奨 / 4-✅は CEO レビュー強化) | Rule 30 (新規 2026-04-28 / NotebookLM ddde5a4b "Vibe coding in prod \| Code w/ Claude" ソース蒸留) |
-| `[PLATFORM-31]` | docs/PLATFORM_EVOLUTION_PRINCIPLES.md 7 原則 (Interactive UI / Workplace OS / Client Zero / Handoff Bundle / High-Res Vision / Budget Control / Effort Tuning) チェック (戦略+技術ミックス / Anthropic playbook / Opus 4.7 機能活用 / 21 競合 → AI OS 進化) | Rule 31 (新規 2026-04-28 / NotebookLM e89d2ca7 "Anthropic Evolution: Claude Apps, Opus 4.7, Enterprise Expansion" ソース蒸留) |
-| `[BRAIN-32]` | docs/SECOND_BRAIN_PRINCIPLES.md 7 原則 (階層型分離 / Autonomous Ingest & Linking / Master Index + Daily Log / 定期 Lint + 孤児統合 / Query 永続化 / Mega-Prompt 生成 / Hybrid Search via MCP) チェック (memory/ + claude-mem + NotebookLM の 3 層メモリ健全性 = PKM file 追加時 7/7 推奨) | Rule 32 (新規 2026-04-29 / NotebookLM 9871b0b1 "Claude Code and Obsidian: Building Your AI Second Brain" ソース蒸留) |
+| `[OPS-28]` | docs/OPERATIONS_CHARTER.md 運用憲章 — 5 正本 (Issues/PR / WBS-Notion / NotebookLM / Slack / worktree) + 6 AI 役割 + セッション開始 5 監査チェック + 5 改善トリガー | Rule 28 (新規 2026-04-28) |
 | `[AUTO-REPLY]` | author == 自分 で必ず skip + cap | — |
 | `[DART-FORMAT]` | dart format → flutter analyze 0 → push | Rule 1 + 2 |
 | `[REBASE]` | git fetch + log 確認 → pull --rebase | — |
@@ -122,7 +118,7 @@ UIコンポーネントを新規作成・修正する際は、以下のファイ
 
 > **⚠️ 重要 (2026-04-24 Win版#132 part 3 改訂)**: Claude Code 単独依存リスク顕在化 (Max プラン limit hit / context compaction ループ / Anthropic API outage) を受けて、**強制 task routing matrix** + **fallback plan** を `docs/DEV_PROCESS_MULTI_AI.md` に策定。新機能開発 / 新 AI 追加 / Migration 作成時は必ず同ドキュメントの routing matrix を参照。
 
-**設計思想**: Claude Code = 設計判断・大きめの実装・既存設計に沿った機能追加・並列ワーカー・統合 / memory 管理。
+**設計思想**: Claude Code = CEO / アーキテクト専任 (判断・統合・memory 管理のみ)。
 実装タスクと運用補助は Codex (横断調査 / 修正PR / CI・同期・レビュー補助) / Gemini Code Assist (Google・Flutter・Firebase系 / 長文 refactor) / GitHub Copilot (inline / テスト追加) / Manus AI (ブラウザ操作・外部SaaS確認) / NotebookLM (リサーチ / Master Brain) に分散。
 目標: Claude Code token 消費量を月 50% 削減 / 他 AI で代替可能率 70%+ (`docs/DEV_PROCESS_MULTI_AI.md` Phase 3 KPI)。
 Anthropic API outage 時も他 AI で開発継続可能な体制を確立する。

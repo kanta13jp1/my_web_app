@@ -13,6 +13,8 @@
 
 12 インスタンス並行開発では、作業そのものと同時に運用改善も見る。正本は GitHub Issues / PR、WBS / Notion、NotebookLM、Slack、各 worktree / branch に分散しているため、作業開始時に状態の食い違いと担当領域の衝突を確認する。
 
+12 インスタンス並行開発では、作業そのものと同時に運用改善も見る。正本は GitHub Issues / PR、WBS / Notion、NotebookLM、Slack、各 worktree / branch に分散しているため、作業開始時に状態の食い違いと担当領域の衝突を確認する。
+
 | タスク種別 | **Primary** | **Secondary** | **Tertiary** | Claude Code 役割 |
 | --- | --- | --- | --- | --- |
 | 行レベル補完 (< 10行) | GitHub Copilot | — | — | **不使用** |
