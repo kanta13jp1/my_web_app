@@ -14721,6 +14721,312 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'intercom': const _CompetitorInfo(
+    name: 'Intercom',
+    emoji: '💬',
+    tagline: 'AIカスタマーメッセージングで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Intercom代替 カスタマーサポート チャットサポート',
+    accentColor: Color(0xFF1F8DED),
+    painPoints: [
+      '月額74ドル〜・スタートアップには高額すぎる価格設定',
+      'CS・マーケティング特化で個人ライフ管理・財務は別途必要',
+      'AIを使いこなすには設定・学習コストが高い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AI Copilot・共有受信トレイ・プロダクトツアー・アナリティクス',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'zendesk': const _CompetitorInfo(
+    name: 'Zendesk',
+    emoji: '🎫',
+    tagline: 'エンタープライズカスタマーサービスで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Zendesk代替 ヘルプデスク チケット管理 カスタマーサポート',
+    accentColor: Color(0xFF03363D),
+    painPoints: [
+      '月額55ドル〜・SMBには高額で複雑な機能が多すぎる',
+      'CSツール特化で個人の財務・目標・習慣管理は別途必要',
+      'カスタマイズが複雑で導入・維持に専任担当が必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'チケット管理・AIエージェント・レポート・多言語サポート',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'freshdesk': const _CompetitorInfo(
+    name: 'Freshdesk',
+    emoji: '🌱',
+    tagline: 'Zendesk代替カスタマーサポートで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Freshdesk代替 ヘルプデスク チケット 無料プラン',
+    accentColor: Color(0xFF25C16F),
+    painPoints: [
+      '高度なAI・自動化は月額35ドル〜の上位プランが必要',
+      'CSツール特化で個人の財務・目標・習慣管理は別途必要',
+      'Freshworks製品との連携前提でエコシステム依存が発生',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'マルチチャネルサポート・AI Freddy・SLA管理・無料プランあり',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'lark': const _CompetitorInfo(
+    name: 'Lark (飞书)',
+    emoji: '🐦',
+    tagline: 'ByteDance製オールインワン業務ツールで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Lark代替 飞书代替 オールインワン業務 チャット ドキュメント',
+    accentColor: Color(0xFF1456F0),
+    painPoints: [
+      '月額12ドル〜・無料プランはストレージ・機能制限あり',
+      '組織・チーム前提設計で個人ライフ管理には過剰機能',
+      'ByteDance製でデータプライバシー懸念がある',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'メッセージ・ドキュメント・カレンダー・ビデオ・OKR統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'coda': const _CompetitorInfo(
+    name: 'Coda',
+    emoji: '📖',
+    tagline: 'ドキュメント×スプレッドシート融合ツールで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Coda代替 Notion代替 ドキュメント データベース',
+    accentColor: Color(0xFFFF4F00),
+    painPoints: [
+      '月額10ドル〜・ドキュメントエディタにしては高額',
+      'ドキュメント管理特化で財務・習慣・AI会話は別途必要',
+      'Notionと比較して日本語コミュニティ・事例が少ない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ドキュメント+DB融合・自動化・AIアシスタント・Packs',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'slab': const _CompetitorInfo(
+    name: 'Slab',
+    emoji: '📚',
+    tagline: 'チームWiki・ナレッジベースで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Slab代替 チームWiki ナレッジ管理 社内ドキュメント',
+    accentColor: Color(0xFF1A56DB),
+    painPoints: [
+      '月額8ドル/人〜・小規模チームには高額',
+      'ナレッジ管理特化で個人の財務・習慣・目標管理は別途必要',
+      'Confluenceより機能が少なくエンタープライズ対応が弱い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ナレッジ検索・Slack/GitHub/Jira統合・アクセス権管理',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'visme': const _CompetitorInfo(
+    name: 'Visme',
+    emoji: '🎨',
+    tagline: 'AIプレゼンテーション・インフォグラフィック作成で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Visme代替 プレゼン作成 インフォグラフィック ビジュアルコンテンツ',
+    accentColor: Color(0xFF6C2EB9),
+    painPoints: [
+      '月額12.25ドル〜・無料版はダウンロード・ブランディング制限あり',
+      'ビジュアルコンテンツ特化で財務・タスク・AI管理は別途必要',
+      'Canvaと比べると知名度・テンプレート数が少ない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AIプレゼン・インフォグラフィック・動画・フォーム作成',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'pitch': const _CompetitorInfo(
+    name: 'Pitch',
+    emoji: '📊',
+    tagline: 'チーム共同プレゼン作成で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Pitch代替 プレゼンテーション 共同編集 スライド',
+    accentColor: Color(0xFF3D3D8C),
+    painPoints: [
+      '月額8ドル〜・チームプラン前提でソロは割高',
+      'プレゼン特化で財務・タスク・日常管理は別アプリが必要',
+      'PowerPoint/Google Slidesからの移行コストが高い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '共同編集・AIデザイン提案・テンプレート・動画埋込',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'gamma': const _CompetitorInfo(
+    name: 'Gamma',
+    emoji: '⚡',
+    tagline: 'AI自動生成プレゼンで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Gamma代替 AI自動プレゼン 資料作成 スライド生成',
+    accentColor: Color(0xFF7C3AED),
+    painPoints: [
+      '月額10ドル〜・AIクレジット消費で思わぬコスト増',
+      'プレゼン・ドキュメント特化で財務・習慣管理は別途必要',
+      'AI生成品質にムラがあり細かい調整に時間がかかる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'テキスト→プレゼン自動生成・AI画像・インタラクティブ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
