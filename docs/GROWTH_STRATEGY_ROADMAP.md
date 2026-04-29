@@ -23859,3 +23859,20 @@ SECOND_BRAIN 0→4.0 + VIBE 4.5→6.5 + PLATFORM 2.0→4.0 = +8.0/21 (Win 直接
 
 ### commit
 8fd2b6c6c
+
+## 2026-04-29 PS#2 S81: T-1 Phase30 #147-#150 dev.to投稿完結 累計150本
+
+### 実装内容
+- **T-1 第47弾 (#147)**: Flutter ディープリンク — App Links・Universal Links・go_router 連携
+  - https://dev.to/kanta13jp1/flutter-deep-links-app-links-universal-links-and-gorouter-integration-36i
+- **T-1 第48弾 (#148)**: Supabase マルチテナント設計 — RLS でテナント分離・管理者権限・招待フロー
+  - https://dev.to/kanta13jp1/supabase-multi-tenant-design-rls-tenant-isolation-admin-roles-and-invite-flow-3g07
+- **T-1 第49弾 (#149)**: 個人開発SaaSの価格設定実験 — A/Bテスト・アンカリング・Freemium戦略
+  - https://dev.to/kanta13jp1/indie-dev-saas-pricing-experiments-ab-testing-anchoring-and-freemium-strategy-33l9
+- **T-1 第50弾 (#150)**: Flutter ゴールデンテスト — UI スナップショットで回帰を防ぐ
+  - https://dev.to/kanta13jp1/flutter-golden-tests-catch-ui-regressions-with-snapshot-testing-2c15
+
+### Phase 30 topics
+deep-links (Android App Links + iOS Universal Links + go_router) / multi-tenant RLS (org_id isolation + invite token) / SaaS pricing experiments (anchoring + freemium triggers) / Flutter golden tests (snapshot CI regression detection)
+
+### dev.to 累計: 150本
