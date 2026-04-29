@@ -12367,8 +12367,7 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'omnifocus': const _CompetitorInfo(
     name: 'OmniFocus',
     emoji: '🎯',
-    tagline:
-        'OmniFocusをプロ向けGTDシステムに使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    tagline: 'OmniFocusをプロ向けGTDシステムに使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
     searchKeyword: 'OmniFocus代替 プロGTD代替 OmniGroup代替 プロジェクト管理Mac代替',
     accentColor: Color(0xFF7B2D8B),
     painPoints: [
@@ -12577,8 +12576,7 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'pocket': const _CompetitorInfo(
     name: 'Pocket',
     emoji: '🗂️',
-    tagline:
-        'PocketをMozillaの後で読む管理に使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    tagline: 'PocketをMozillaの後で読む管理に使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
     searchKeyword: 'Pocket代替 後で読む代替 Mozilla Pocket代替 ブックマーク管理代替',
     accentColor: Color(0xFFEF4056),
     painPoints: [
@@ -12612,8 +12610,7 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'instapaper': const _CompetitorInfo(
     name: 'Instapaper',
     emoji: '📰',
-    tagline:
-        'Instapaperをシンプル後で読みアプリに使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    tagline: 'Instapaperをシンプル後で読みアプリに使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
     searchKeyword: 'Instapaper代替 後で読む代替 記事保存代替 オフライン読書代替',
     accentColor: Color(0xFF262626),
     painPoints: [
@@ -12647,8 +12644,7 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'feedly': const _CompetitorInfo(
     name: 'Feedly',
     emoji: '📡',
-    tagline:
-        'FeedlyをAI搭載RSSリーダーに使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    tagline: 'FeedlyをAI搭載RSSリーダーに使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
     searchKeyword: 'Feedly代替 RSSリーダー代替 AI情報収集代替 ニュース管理代替',
     accentColor: Color(0xFF2BB24C),
     painPoints: [
@@ -12869,6 +12865,321 @@ final _competitorInfo = <String, _CompetitorInfo>{
     features: [
       _FeatureComparison(
         feature: '行動科学ベース習慣形成・ルーティン設計',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'streaks': const _CompetitorInfo(
+    name: 'Streaks',
+    emoji: '🔥',
+    tagline:
+        'Streaksを12習慣連続達成トラッカーに使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'Streaks代替 習慣トラッカー代替 Apple Design Award習慣代替 12習慣管理代替',
+    accentColor: Color(0xFFFF3B30),
+    painPoints: [
+      'Apple Design Award受賞の12習慣連続記録に特化し、財務・AI大学・学習管理は別ツール',
+      '買い切り4.99USDでApple専用、習慣以外のライフマネジメント統合機能がない',
+      '習慣トラッキング以外の統合ライフOS機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Apple Design Award受賞12習慣連続トラッカー',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'productive': const _CompetitorInfo(
+    name: 'Productive',
+    emoji: '📊',
+    tagline:
+        'ProductiveをAI習慣スコア分析に使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'Productive代替 習慣スコア代替 AI習慣分析代替 習慣管理アプリ代替',
+    accentColor: Color(0xFF5856D6),
+    painPoints: [
+      'AI搭載習慣スコア・詳細統計分析に特化し、財務・AI大学・学習管理は別ツール',
+      '月額3.99USD〜のサブスクで、習慣以外のライフマネジメント統合機能がない',
+      '習慣分析以外の統合ライフOS機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AI搭載習慣スコア・詳細統計分析',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'daylio': const _CompetitorInfo(
+    name: 'Daylio',
+    emoji: '😊',
+    tagline:
+        'Daylioを絵文字気分日記・習慣トラッカーに使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'Daylio代替 気分日記代替 絵文字日記代替 マイクロジャーナル代替',
+    accentColor: Color(0xFF9C27B0),
+    painPoints: [
+      '絵文字気分・マイクロジャーナル習慣トラッキングに特化し、財務・AI大学・学習管理は別ツール',
+      '月額3.99USD〜のPremiumで、日記以外のライフマネジメント統合機能がない',
+      '気分トラッキング以外の統合ライフOS機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '絵文字気分日記・マイクロジャーナル',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'brain-fm': const _CompetitorInfo(
+    name: 'Brain.fm',
+    emoji: '🧠',
+    tagline:
+        'Brain.fmをAI生成集中音楽に使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'Brain.fm代替 集中音楽代替 AI集中BGM代替 ディープフォーカス音楽代替',
+    accentColor: Color(0xFF2196F3),
+    painPoints: [
+      'AI生成の集中・睡眠・瞑想用神経音楽に特化し、財務・AI大学・習慣管理は別ツール',
+      '月額6.99USD〜のサブスクで、集中音楽以外のライフマネジメント統合機能がない',
+      '集中支援以外の統合ライフOS機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AI生成集中・睡眠・瞑想用神経音楽',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'focus-at-will': const _CompetitorInfo(
+    name: 'Focus@Will',
+    emoji: '🎵',
+    tagline:
+        'Focus@WillをAI集中力最適化BGMに使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'Focus@Will代替 集中音楽代替 AI集中力BGM代替 作業用BGM代替',
+    accentColor: Color(0xFFFF5722),
+    painPoints: [
+      '神経科学ベースのAI集中力最適化音楽チャンネルに特化し、財務・AI大学・習慣管理は別ツール',
+      '月額7.49USD〜のサブスクで、集中音楽以外のライフマネジメント統合機能がない',
+      '集中支援以外の統合ライフOS機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '神経科学ベースAI集中力最適化音楽',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'forest': const _CompetitorInfo(
+    name: 'Forest',
+    emoji: '🌳',
+    tagline:
+        'Forestをスマホ離れ集中ポモドーロに使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'Forest代替 ポモドーロアプリ代替 スマホ離れアプリ代替 集中タイマー代替',
+    accentColor: Color(0xFF4CAF50),
+    painPoints: [
+      'スマホ離れ・集中ポモドーロ仮想森林育成に特化し、財務・AI大学・習慣管理は別ツール',
+      '買い切り3.99USDで、集中タイマー以外のライフマネジメント統合機能がない',
+      '集中支援以外の統合ライフOS機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'スマホ離れ集中ポモドーロ仮想森林',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'lose-it': const _CompetitorInfo(
+    name: 'Lose It!',
+    emoji: '🥗',
+    tagline:
+        'Lose It!をAIカロリー・栄養管理に使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'Lose It代替 カロリー管理代替 栄養管理アプリ代替 ダイエットアプリ代替',
+    accentColor: Color(0xFF00BCD4),
+    painPoints: [
+      'AIバーコードスキャン・カロリー・栄養管理に特化し、財務・AI大学・習慣管理は別ツール',
+      '月額39.99USD/年のPremiumで、食事管理以外のライフマネジメント統合機能がない',
+      '食事管理以外の統合ライフOS機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AIバーコードスキャン・カロリー栄養管理',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'cronometer': const _CompetitorInfo(
+    name: 'Cronometer',
+    emoji: '🧪',
+    tagline:
+        'Cronometerを精密栄養素トラッキングに使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'Cronometer代替 栄養素トラッキング代替 マイクロ栄養素代替 精密栄養管理代替',
+    accentColor: Color(0xFFFF9800),
+    painPoints: [
+      'マイクロ栄養素・ビタミン・ミネラル精密トラッキングに特化し、財務・AI大学・習慣管理は別ツール',
+      '月額8.99USD〜のGoldで、栄養管理以外のライフマネジメント統合機能がない',
+      '栄養分析以外の統合ライフOS機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'マイクロ栄養素・ビタミン精密トラッキング',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'strong': const _CompetitorInfo(
+    name: 'Strong',
+    emoji: '💪',
+    tagline:
+        'StrongをAIワークアウトトラッカーに使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'Strong代替 筋トレトラッカー代替 ワークアウト記録代替 ウェイトトレーニング代替',
+    accentColor: Color(0xFFC62828),
+    painPoints: [
+      'AI搭載筋トレ・ウェイトトレーニング記録・プログレッシブオーバーロードに特化し、財務・AI大学管理は別ツール',
+      '月額9.99USD〜のPlusで、筋トレ以外のライフマネジメント統合機能がない',
+      'フィットネス以外の統合ライフOS機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AI搭載筋トレ記録・プログレッシブオーバーロード',
         competitorHas: true,
         weHave: false,
       ),
@@ -13252,6 +13563,15 @@ class _ComparisonShellState extends State<_ComparisonShell> {
     'whoop': 'fitness',
     'ten-percent-happier': 'health',
     'fabulous': 'habit',
+    'streaks': 'habit',
+    'productive': 'habit',
+    'daylio': 'habit',
+    'brain-fm': 'focus',
+    'focus-at-will': 'focus',
+    'forest': 'focus',
+    'lose-it': 'fitness',
+    'cronometer': 'fitness',
+    'strong': 'fitness',
   };
 
   @override
