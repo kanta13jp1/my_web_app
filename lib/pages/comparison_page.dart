@@ -12888,8 +12888,7 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'streaks': const _CompetitorInfo(
     name: 'Streaks',
     emoji: '🔥',
-    tagline:
-        'Streaksを12習慣連続達成トラッカーに使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    tagline: 'Streaksを12習慣連続達成トラッカーに使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
     searchKeyword: 'Streaks代替 習慣トラッカー代替 Apple Design Award習慣代替 12習慣管理代替',
     accentColor: Color(0xFFFF3B30),
     painPoints: [
@@ -12923,8 +12922,7 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'productive': const _CompetitorInfo(
     name: 'Productive',
     emoji: '📊',
-    tagline:
-        'ProductiveをAI習慣スコア分析に使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    tagline: 'ProductiveをAI習慣スコア分析に使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
     searchKeyword: 'Productive代替 習慣スコア代替 AI習慣分析代替 習慣管理アプリ代替',
     accentColor: Color(0xFF5856D6),
     painPoints: [
@@ -12958,8 +12956,7 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'daylio': const _CompetitorInfo(
     name: 'Daylio',
     emoji: '😊',
-    tagline:
-        'Daylioを絵文字気分日記・習慣トラッカーに使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    tagline: 'Daylioを絵文字気分日記・習慣トラッカーに使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
     searchKeyword: 'Daylio代替 気分日記代替 絵文字日記代替 マイクロジャーナル代替',
     accentColor: Color(0xFF9C27B0),
     painPoints: [
@@ -12993,8 +12990,7 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'brain-fm': const _CompetitorInfo(
     name: 'Brain.fm',
     emoji: '🧠',
-    tagline:
-        'Brain.fmをAI生成集中音楽に使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    tagline: 'Brain.fmをAI生成集中音楽に使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
     searchKeyword: 'Brain.fm代替 集中音楽代替 AI集中BGM代替 ディープフォーカス音楽代替',
     accentColor: Color(0xFF2196F3),
     painPoints: [
@@ -13028,8 +13024,7 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'focus-at-will': const _CompetitorInfo(
     name: 'Focus@Will',
     emoji: '🎵',
-    tagline:
-        'Focus@WillをAI集中力最適化BGMに使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    tagline: 'Focus@WillをAI集中力最適化BGMに使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
     searchKeyword: 'Focus@Will代替 集中音楽代替 AI集中力BGM代替 作業用BGM代替',
     accentColor: Color(0xFFFF5722),
     painPoints: [
@@ -13063,8 +13058,7 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'forest': const _CompetitorInfo(
     name: 'Forest',
     emoji: '🌳',
-    tagline:
-        'Forestをスマホ離れ集中ポモドーロに使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    tagline: 'Forestをスマホ離れ集中ポモドーロに使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
     searchKeyword: 'Forest代替 ポモドーロアプリ代替 スマホ離れアプリ代替 集中タイマー代替',
     accentColor: Color(0xFF4CAF50),
     painPoints: [
@@ -13098,8 +13092,7 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'lose-it': const _CompetitorInfo(
     name: 'Lose It!',
     emoji: '🥗',
-    tagline:
-        'Lose It!をAIカロリー・栄養管理に使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    tagline: 'Lose It!をAIカロリー・栄養管理に使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
     searchKeyword: 'Lose It代替 カロリー管理代替 栄養管理アプリ代替 ダイエットアプリ代替',
     accentColor: Color(0xFF00BCD4),
     painPoints: [
@@ -13133,8 +13126,7 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'cronometer': const _CompetitorInfo(
     name: 'Cronometer',
     emoji: '🧪',
-    tagline:
-        'Cronometerを精密栄養素トラッキングに使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    tagline: 'Cronometerを精密栄養素トラッキングに使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
     searchKeyword: 'Cronometer代替 栄養素トラッキング代替 マイクロ栄養素代替 精密栄養管理代替',
     accentColor: Color(0xFFFF9800),
     painPoints: [
@@ -13168,8 +13160,7 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'strong': const _CompetitorInfo(
     name: 'Strong',
     emoji: '💪',
-    tagline:
-        'StrongをAIワークアウトトラッカーに使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    tagline: 'StrongをAIワークアウトトラッカーに使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
     searchKeyword: 'Strong代替 筋トレトラッカー代替 ワークアウト記録代替 ウェイトトレーニング代替',
     accentColor: Color(0xFFC62828),
     painPoints: [
@@ -13180,6 +13171,312 @@ final _competitorInfo = <String, _CompetitorInfo>{
     features: [
       _FeatureComparison(
         feature: 'AI搭載筋トレ記録・プログレッシブオーバーロード',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'jefit': const _CompetitorInfo(
+    name: 'JEFIT',
+    emoji: '🏋️',
+    tagline: 'AI筋トレ計画で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'JEFIT代替 ジムワークアウト記録 AI筋トレプランナー',
+    accentColor: Color(0xFFE63722),
+    painPoints: [
+      'ソーシャルジム機能・詳細分析が有料プランのみ',
+      '栄養・財務・タスク管理は別アプリが必要',
+      'Web版とモバイル版の機能差が大きい',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ソーシャルジムコミュニティ・記録共有',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'mapmyrun': const _CompetitorInfo(
+    name: 'MapMyRun',
+    emoji: '🗺️',
+    tagline: 'GPSランニング記録で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'MapMyRun代替 GPSランニング記録 ルートトラッキング',
+    accentColor: Color(0xFF004F9F),
+    painPoints: [
+      'Under Armour広告・プレミアム機能が月額課金制',
+      'フィットネス以外の生活管理は別アプリが必要',
+      'ルート詳細分析・コーチング機能が有料限定',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'GPS精密ランニングルートトラッキング',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'runkeeper': const _CompetitorInfo(
+    name: 'Runkeeper',
+    emoji: '🏃',
+    tagline: 'AIランニングコーチで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Runkeeper代替 ランニングトラッキング AIコーチ GPS',
+    accentColor: Color(0xFF2D90E8),
+    painPoints: [
+      'AIコーチ機能・高度なトレーニングプランが有料のみ',
+      '健康・財務・タスク管理は別アプリが必要',
+      'ウェアラブル連携やルート分析に制限がある',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AIランニングコーチ・ペース分析',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'couch-to-5k': const _CompetitorInfo(
+    name: 'Couch to 5K',
+    emoji: '👟',
+    tagline: '初心者向けランニングプログラムで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Couch to 5K代替 初心者ランニング 走れるようになる',
+    accentColor: Color(0xFFFF6B35),
+    painPoints: [
+      'ランニング特化で他の健康・生活管理は別アプリが必要',
+      '9週間プログラム完走後の継続プランが限定的',
+      '音楽・栄養・財務管理との統合ができない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '9週間初心者ランニング段階プログラム',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'zwift': const _CompetitorInfo(
+    name: 'Zwift',
+    emoji: '🚴',
+    tagline: 'バーチャルサイクリングで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Zwift代替 バーチャルサイクリング 室内トレーニング',
+    accentColor: Color(0xFFFC6719),
+    painPoints: [
+      '月額課金14.99ドルで高コスト・専用機材が必要',
+      'サイクリング以外の生活・財務管理は別アプリが必要',
+      'スマートトレーナー等ハードウェア投資が必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'バーチャル世界でのリアルタイムサイクリング',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'nike-run': const _CompetitorInfo(
+    name: 'Nike Run Club',
+    emoji: '✔️',
+    tagline: 'Nikeランニングコーチで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Nike Run Club代替 ナイキランニング AIコーチ',
+    accentColor: Color(0xFF111111),
+    painPoints: [
+      'Nike製品・Apple Watch連携に最適化されており汎用性が低い',
+      '健康・財務・タスク管理は別アプリが必要',
+      'Android版はiOS版より機能が限定的',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Nike専属コーチによるAIガイド付きランニング',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'apple-fitness-plus': const _CompetitorInfo(
+    name: 'Apple Fitness+',
+    emoji: '🍎',
+    tagline: 'Apple Watch統合フィットネスで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Apple Fitness Plus代替 Apple Watchフィットネス',
+    accentColor: Color(0xFFFF2D55),
+    painPoints: [
+      'Apple Watch必須・月額9.99ドルのサブスクが必要',
+      'Appleエコシステム外のデバイスでは利用不可',
+      '財務管理・タスク管理は別アプリが必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Apple Watch心拍・リング連動フィットネス動画',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'spartan': const _CompetitorInfo(
+    name: 'Spartan Race',
+    emoji: '🛡️',
+    tagline: '障害物レース挑戦で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Spartan Race代替 障害物レース スパルタントレーニング',
+    accentColor: Color(0xFFC41230),
+    painPoints: [
+      'レース参加費が高額・トレーニング管理が別途必要',
+      '財務・タスク・日常生活管理は別アプリが必要',
+      '大会参加が前提で日常的フィットネス管理に特化していない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '障害物レース・スパルタントレーニングプログラム',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'beachbody': const _CompetitorInfo(
+    name: 'Beachbody',
+    emoji: '🏖️',
+    tagline: '自宅フィットネスコーチングで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Beachbody代替 自宅フィットネス動画 オンラインコーチング',
+    accentColor: Color(0xFF009FDA),
+    painPoints: [
+      'Beachbody On Demand月額課金・コーチ制度が複雑',
+      '財務・タスク・メモ管理は別アプリが必要',
+      'MLM型コーチ紹介ビジネスモデルが不透明',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '自宅フィットネス動画ライブラリ・栄養ガイド',
         competitorHas: true,
         weHave: false,
       ),
@@ -13572,6 +13869,15 @@ class _ComparisonShellState extends State<_ComparisonShell> {
     'lose-it': 'fitness',
     'cronometer': 'fitness',
     'strong': 'fitness',
+    'jefit': 'fitness',
+    'mapmyrun': 'fitness',
+    'runkeeper': 'fitness',
+    'couch-to-5k': 'fitness',
+    'zwift': 'fitness',
+    'nike-run': 'fitness',
+    'apple-fitness-plus': 'fitness',
+    'spartan': 'wellness',
+    'beachbody': 'fitness',
   };
 
   @override
