@@ -36214,6 +36214,314 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'aha-io': const _CompetitorInfo(
+    name: 'Aha!',
+    emoji: '💡',
+    tagline: 'プロダクトロードマップ・戦略・アイデア管理プラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Aha!代替 プロダクトロードマップ 戦略 アイデア管理 製品管理 ProductBoard代替',
+    accentColor: Color(0xFFCC3333),
+    painPoints: [
+      '月額59ドル〜・プロダクト戦略特化・個人のライフ管理は別途必要',
+      'ロードマップ管理特化・個人のAI管理は別途必要',
+      'Productboard/Roadmunkと比較して中小企業・スタートアップには機能過多',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ロードマップ・戦略・アイデアポータル・スコアカード・OKR・リリース管理',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'roadmunk': const _CompetitorInfo(
+    name: 'Roadmunk',
+    emoji: '🗺️',
+    tagline: 'ビジュアルプロダクトロードマップ・タイムライン共有ツールで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Roadmunk代替 プロダクトロードマップ タイムライン ビジュアル Aha!代替 ProductBoard代替',
+    accentColor: Color(0xFF2B6CB0),
+    painPoints: [
+      '月額19ドル〜・ロードマップ特化・個人のライフ管理は別途必要',
+      'プロダクト計画特化・個人のAI管理は別途必要',
+      'Aha!/Productboardと比較してバックログ管理・工数追跡が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ビジュアルロードマップ・タイムライン・Jira連携・ステークホルダー共有',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'dovetail': const _CompetitorInfo(
+    name: 'Dovetail',
+    emoji: '🔬',
+    tagline: 'ユーザーリサーチ・インサイト管理・UXリポジトリで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Dovetail代替 ユーザーリサーチ インサイト UXリポジトリ 定性分析 カスタマーインサイト',
+    accentColor: Color(0xFFFF3366),
+    painPoints: [
+      '月額39ドル〜・UXリサーチ特化・個人のライフ管理は別途必要',
+      'ユーザー調査特化・個人のAI管理は別途必要',
+      'Userinterviews/Dscoutと比較してリクルートメント機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'インタビュー録画・タグ付け・インサイト・AIテーマ生成・チームリポジトリ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'grain': const _CompetitorInfo(
+    name: 'Grain',
+    emoji: '🌾',
+    tagline: 'ビデオ通話自動記録・AI要約・セールスコーチングツールで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Grain代替 ビデオ会議録画 AI要約 セールスコーチング Gong代替 Chorus代替',
+    accentColor: Color(0xFF6C3CD1),
+    painPoints: [
+      '月額19ドル〜・会議録画特化・個人のライフ管理は別途必要',
+      'ミーティングインサイト特化・個人のAI管理は別途必要',
+      'Gong/Chorusと比較してエンタープライズ分析・CRM連携が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '自動録画・AI要約・ハイライト・HubSpot/Salesforce連携・コーチング',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'lemlist': const _CompetitorInfo(
+    name: 'lemlist',
+    emoji: '📧',
+    tagline: 'パーソナライズコールドメール・マルチチャネルセールスエンゲージメントで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'lemlist代替 コールドメール パーソナライズ セールスエンゲージメント Outreach代替 SalesLoft代替',
+    accentColor: Color(0xFF4BADE8),
+    painPoints: [
+      '月額59ドル〜・コールドメール特化・個人のライフ管理は別途必要',
+      'セールス開拓特化・個人のAI管理は別途必要',
+      'Instantly/Smartleadと比較して大量送信・デリバラビリティ最適化が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'パーソナライズ画像・マルチチャネル(Email+LinkedIn)・シーケンス・分析',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'instantly': const _CompetitorInfo(
+    name: 'Instantly',
+    emoji: '⚡',
+    tagline: '大量コールドメール送信・ウォームアップ・デリバラビリティ最適化で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Instantly代替 コールドメール 大量送信 ウォームアップ デリバラビリティ セールス',
+    accentColor: Color(0xFF6366F1),
+    painPoints: [
+      '月額37ドル〜・コールドメール特化・個人のライフ管理は別途必要',
+      'メール大量送信特化・個人のAI管理は別途必要',
+      'lemlist/Smartleadと比較してマルチチャネル(LinkedIn等)対応が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '無制限メールアカウント・ウォームアップ・シーケンス・AIライティング・分析',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'smartlead': const _CompetitorInfo(
+    name: 'Smartlead',
+    emoji: '🎯',
+    tagline: 'マルチチャネルコールドアウトリーチ・メールウォームアップ自動化で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Smartlead代替 コールドアウトリーチ マルチチャネル メールウォームアップ Instantly代替',
+    accentColor: Color(0xFF0EA5E9),
+    painPoints: [
+      '月額39ドル〜・コールドアウトリーチ特化・個人のライフ管理は別途必要',
+      'セールス開拓特化・個人のAI管理は別途必要',
+      'Instantlyと比較してホワイトラベル・代理店向け機能重視で個人向けでない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '無制限ウォームアップ・マルチチャネル・AIパーソナライズ・ホワイトラベル',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'userinterviews': const _CompetitorInfo(
+    name: 'User Interviews',
+    emoji: '🎤',
+    tagline: 'ユーザーリサーチ参加者リクルートメント・UXリサーチパネルで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'User Interviews代替 ユーザーリサーチ リクルートメント UXリサーチ パネル 定性調査',
+    accentColor: Color(0xFF2DD4BF),
+    painPoints: [
+      '月額150ドル〜・リクルートメント特化・個人のライフ管理は別途必要',
+      'UXリサーチ参加者管理特化・個人のAI管理は別途必要',
+      'Respondent/Dscoutと比較してBtoBターゲットの専門性が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'パネルリクルート・スケジュール・インセンティブ・CRM連携・チームHubspot',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'respondent': const _CompetitorInfo(
+    name: 'Respondent',
+    emoji: '🧑‍💼',
+    tagline: 'B2BプロフェッショナルUXリサーチ参加者マーケットプレイスで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Respondent代替 B2B UXリサーチ プロフェッショナルパネル 定性調査 User Interviews代替',
+    accentColor: Color(0xFFFF6B35),
+    painPoints: [
+      '従量制・B2Bリサーチ特化・個人のライフ管理は別途必要',
+      '高品質パネル特化・個人のAI管理は別途必要',
+      'User Interviewsと比較して大規模一般消費者調査には高コスト',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'B2B専門家パネル・ビデオ通話統合・NDA・インセンティブ・スクリーニング',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
