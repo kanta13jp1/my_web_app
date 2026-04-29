@@ -57791,6 +57791,312 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'elastic-apm': const _CompetitorInfo(
+    name: 'Elastic APM',
+    emoji: '🔍',
+    tagline: 'Elastic APM・アプリケーションパフォーマンス監視・分散トレーシング・エラー追跡・Elastic Stack統合・OSS/Cloudで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Elastic APM代替 APM 分散トレーシング エラー追跡 Elastic Stack OSS Datadog代替 New Relic代替',
+    accentColor: Color(0xFF00BFB3),
+    painPoints: [
+      '無料(OSS)/有料(Cloud)・APM特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Datadog/New Relic/Dynatrace との比較でAI自動化・インフラ広域監視・ダッシュボードが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'APM・分散トレーシング・エラー追跡・Elastic Stack統合・OSS/Cloud',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'lightstep': const _CompetitorInfo(
+    name: 'Lightstep',
+    emoji: '💡',
+    tagline: 'Lightstep (ServiceNow)・分散トレーシング・マイクロサービス・OpenTelemetry・変更インテリジェンス・インシデント相関で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Lightstep代替 分散トレーシング マイクロサービス OpenTelemetry 変更インテリジェンス ServiceNow Honeycomb代替 Jaeger代替',
+    accentColor: Color(0xFF0059FF),
+    painPoints: [
+      '有料・トレーシング特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Honeycomb/Datadog との比較でコスト・広域監視機能・ログ統合が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '分散トレーシング・マイクロサービス・OpenTelemetry・変更インテリジェンス',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'uptrace': const _CompetitorInfo(
+    name: 'Uptrace',
+    emoji: '📡',
+    tagline: 'Uptrace・OpenTelemetry APM・分散トレーシング・メトリクス・ログ・OSS・自己ホスト可能・低コストで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Uptrace代替 OpenTelemetry APM 分散トレーシング メトリクス ログ OSS 自己ホスト 低コスト SigNoz代替',
+    accentColor: Color(0xFF6366F1),
+    painPoints: [
+      '無料(OSS)/有料・APM特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'SigNoz/Jaeger との比較でコミュニティ規模・エンタープライズ機能・統合数が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'OpenTelemetry APM・分散トレーシング・メトリクス・ログ・OSS・自己ホスト',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'coralogix': const _CompetitorInfo(
+    name: 'Coralogix',
+    emoji: '🌌',
+    tagline: 'Coralogix・ログ管理・APM・セキュリティ・静的分析・機械学習異常検知・コスト最適化・クラウドネイティブで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Coralogix代替 ログ管理 APM セキュリティ 機械学習 異常検知 コスト最適化 Datadog代替 Splunk代替',
+    accentColor: Color(0xFFFF6B6B),
+    painPoints: [
+      '有料・ログ/APM特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Datadog/Splunk との比較でエコシステム規模・統合数・ブランド認知が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ログ管理・APM・セキュリティ・ML異常検知・コスト最適化・クラウドネイティブ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'logz-io': const _CompetitorInfo(
+    name: 'Logz.io',
+    emoji: '📋',
+    tagline: 'Logz.io・マネージドELK・ログ管理・Kibana互換・OpenSearch・AI自動異常検知・コンプライアンスで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Logz.io代替 マネージドELK ログ管理 Kibana互換 OpenSearch AI異常検知 コンプライアンス Datadog代替 Splunk代替',
+    accentColor: Color(0xFF004C97),
+    painPoints: [
+      '有料・ログ管理特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Datadog/Splunk との比較でELK以外の自由度・コスト・AIネイティブ機能が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'マネージドELK・ログ管理・Kibana互換・OpenSearch・AI異常検知',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'mezmo': const _CompetitorInfo(
+    name: 'Mezmo (旧LogDNA)',
+    emoji: '🔭',
+    tagline: 'Mezmo・パイプライン型ログ管理・ストリーミングETL・データ制御・コスト最適化・旧LogDNA・クラウドネイティブで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Mezmo代替 ログ管理 パイプライン ストリーミングETL データ制御 コスト最適化 LogDNA Datadog代替 Splunk代替',
+    accentColor: Color(0xFF0F62FE),
+    painPoints: [
+      '有料・ログ/パイプライン特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Datadog/Splunk との比較でAPM・メトリクス・広域監視統合が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'パイプライン型ログ管理・ストリーミングETL・データ制御・コスト最適化',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'axiom': const _CompetitorInfo(
+    name: 'Axiom',
+    emoji: '🚀',
+    tagline: 'Axiom・サーバーレスログ・エベントデータ・低コスト・リアルタイム・APL・エッジコンピューティング対応で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Axiom代替 サーバーレスログ イベントデータ 低コスト リアルタイム APL エッジ Datadog代替 Grafana Loki代替',
+    accentColor: Color(0xFF7C3AED),
+    painPoints: [
+      '無料(開発)/有料・ログ/イベント特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Datadog/Splunk との比較でフル監視スタック・APM・ビジネスインテリジェンスが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'サーバーレスログ・イベントデータ・低コスト・リアルタイム・APL・エッジ対応',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'highlight': const _CompetitorInfo(
+    name: 'Highlight.io',
+    emoji: '🖊️',
+    tagline: 'Highlight.io・フルスタック監視・セッションリプレイ・エラー監視・ログ・トレーシング・OSS・開発者向けで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Highlight.io代替 フルスタック監視 セッションリプレイ エラー監視 ログ トレーシング OSS 開発者 Sentry代替 LogRocket代替',
+    accentColor: Color(0xFF6C37F4),
+    painPoints: [
+      '無料(OSS)/有料・開発者監視特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Sentry/Datadog との比較でエンタープライズ機能・統合数・AIインサイトが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'フルスタック監視・セッションリプレイ・エラー監視・ログ・トレーシング・OSS',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'groundcover': const _CompetitorInfo(
+    name: 'groundcover',
+    emoji: '🌱',
+    tagline: 'groundcover・クラウドネイティブAPM・eBPF・エージェントレス・Kubernetes・低オーバーヘッド・統合監視で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'groundcover代替 クラウドネイティブAPM eBPF エージェントレス Kubernetes 低オーバーヘッド Datadog代替 Dynatrace代替',
+    accentColor: Color(0xFF00B894),
+    painPoints: [
+      '有料・APM特化・個人のライフ管理は別途必要',
+      'Kubernetes/エンジニア特化・個人のAI管理は別途必要',
+      'Datadog/Dynatrace との比較でエコシステム規模・成熟度・長期実績が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'クラウドネイティブAPM・eBPF・エージェントレス・Kubernetes・低オーバーヘッド',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
