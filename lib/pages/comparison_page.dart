@@ -21929,6 +21929,312 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'codesandbox': const _CompetitorInfo(
+    name: 'CodeSandbox',
+    emoji: '📦',
+    tagline: 'ブラウザ完結クラウドIDE・即時プレビュー・コラボで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'CodeSandbox代替 クラウドIDE ブラウザ開発 プロトタイプ React Vue 共有',
+    accentColor: Color(0xFF151515),
+    painPoints: [
+      '無料プランあり/Pro月額12ドル〜・コーディング以外の個人ライフ管理は別途必要',
+      'クラウドIDE特化でエンジニア向け設計・個人のライフ管理は別途必要',
+      'StackBlitzと比較してNode.jsサポートとパフォーマンスが劣る場合がある',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ブラウザIDE・即時プレビュー・テンプレート・PR統合・チームコラボ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'gitpod': const _CompetitorInfo(
+    name: 'Gitpod',
+    emoji: '🏠',
+    tagline: 'クラウドネイティブIDE・Gitから即時開発環境で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Gitpod代替 クラウド開発環境 IaC IDE GitHub Codespaces代替 DevX',
+    accentColor: Color(0xFFFF8A00),
+    painPoints: [
+      '無料50h/月/Pro月額9ドル〜・開発環境以外の個人ライフ管理は別途必要',
+      'クラウドIDE特化でデベロッパー向け設計・個人のライフ管理は別途必要',
+      'GitHub Codespacesと比較してGitHub統合が弱くセットアップが必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Gitから1クリック起動・devcontainer・プリビルド・VS Code/JetBrains',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'mintlify': const _CompetitorInfo(
+    name: 'Mintlify',
+    emoji: '🌿',
+    tagline: 'AIドキュメントプラットフォーム・美しいAPIドキュメントで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Mintlify代替 APIドキュメント 開発者ドキュメント 美しいDocs MDX',
+    accentColor: Color(0xFF00C4A0),
+    painPoints: [
+      '無料プランあり/Pro月額150ドル〜・ドキュメント以外の個人ライフ管理は別途必要',
+      'ドキュメント特化でエンジニア向け設計・個人のライフ管理は別途必要',
+      'Docusaurusと比較してセルフホスト・カスタマイズ性が低い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'MDX・OpenAPI・AI検索・GitHub連携・コンポーネント・アナリティクス',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'docusaurus': const _CompetitorInfo(
+    name: 'Docusaurus',
+    emoji: '🦕',
+    tagline: 'Meta製OSSドキュメントサイトジェネレーターで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Docusaurus代替 ドキュメント静的サイト React OSS MDX GitHub Pages',
+    accentColor: Color(0xFF3ECC5F),
+    painPoints: [
+      'セルフホスト必須・React/Node.js知識が必要・大規模サイトのビルドが遅い',
+      'ドキュメント特化でエンジニア向け設計・個人のライフ管理は別途必要',
+      'Mintlifyと比較してAI検索・分析ダッシュボードがない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'React+MDX・プラグイン・バージョニング・i18n・Algolia検索',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'signoz': const _CompetitorInfo(
+    name: 'SigNoz',
+    emoji: '📊',
+    tagline: 'OSSフルスタックオブザーバビリティ・Datadog代替で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'SigNoz代替 OSS オブザーバビリティ APM ログ トレース Datadog代替',
+    accentColor: Color(0xFFE75480),
+    painPoints: [
+      'セルフホスト必須/クラウド月額199ドル〜・オブザーバビリティ以外の管理は別途',
+      'オブザーバビリティ特化でエンジニア向け設計・個人管理は別途必要',
+      'Datadogと比較してエンタープライズ機能とAI/ML分析が弱い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'メトリクス/トレース/ログ統合・OpenTelemetry・ClickHouse・OSS',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'honeycomb': const _CompetitorInfo(
+    name: 'Honeycomb',
+    emoji: '🍯',
+    tagline: 'イベント駆動オブザーバビリティ・高カーディナリティ分析で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Honeycomb代替 オブザーバビリティ 高カーディナリティ 分散トレース イベント分析',
+    accentColor: Color(0xFFF3B500),
+    painPoints: [
+      '無料プランあり/Pro月額130ドル〜・オブザーバビリティ以外の個人管理は別途',
+      'オブザーバビリティ特化でエンジニア向け設計・個人のライフ管理は別途必要',
+      'Datadogと比較してインフラ監視・APMの統合機能が弱い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '高カーディナリティ・BubbleUp・トレース/スパン・クエリ・バブルダウン',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'flagsmith': const _CompetitorInfo(
+    name: 'Flagsmith',
+    emoji: '🚩',
+    tagline: 'OSSフィーチャーフラグ・リモートコンフィグ管理ツールで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Flagsmith代替 フィーチャーフラグ OSS リモートコンフィグ A/Bテスト LaunchDarkly代替',
+    accentColor: Color(0xFF0E5FEC),
+    painPoints: [
+      '無料版あり/クラウドStarter月額45ドル〜・フラグ管理以外の個人ライフ管理は別途',
+      'フィーチャーフラグ特化でエンジニア向け設計・個人のライフ管理は別途必要',
+      'LaunchDarklyと比較してエンタープライズ機能が少なく大規模チームに不向き',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'OSS・フラグ管理・セグメント・A/Bテスト・SDK多言語・監査',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'growthbook': const _CompetitorInfo(
+    name: 'GrowthBook',
+    emoji: '📈',
+    tagline: 'OSSフィーチャーフラグ・A/Bテスト・実験管理プラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'GrowthBook代替 OSS A/Bテスト フィーチャーフラグ 実験管理 LaunchDarkly代替',
+    accentColor: Color(0xFF9B59B6),
+    painPoints: [
+      '無料版あり/Pro月額20ドル〜・A/Bテスト以外の個人ライフ管理は別途必要',
+      'フィーチャーフラグ+実験管理特化でエンジニア向け設計・個人管理は別途必要',
+      'Optimizelyと比較してデータ分析・多変量テスト機能が弱い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'OSS・統計的A/Bテスト・フィーチャーフラグ・Bayesian/Frequentist',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'doppler': const _CompetitorInfo(
+    name: 'Doppler',
+    emoji: '🔑',
+    tagline: 'シークレット管理・環境変数中央集権化ツールで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Doppler代替 シークレット管理 環境変数 APIキー セキュリティ 秘密情報管理',
+    accentColor: Color(0xFF4F46E5),
+    painPoints: [
+      '無料プランあり/Team月額6.99ドル/人〜・秘密情報管理以外の個人ライフ管理は別途',
+      'シークレット管理特化でエンジニア向け設計・個人のライフ管理は別途必要',
+      'HashiCorp Vaultと比較してエンタープライズの高度な秘密管理機能が少ない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '中央集権シークレット管理・環境別・自動同期・CLI/SDK・監査ログ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
