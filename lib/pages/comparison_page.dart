@@ -52974,6 +52974,329 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'delinea': const _CompetitorInfo(
+    name: 'Delinea (旧Thycotic+Centrify)',
+    emoji: '🗝️',
+    tagline:
+        'PAM・Secret Server・Privilege Manager・クラウドPAM・ゼロスタンディング特権・アイデンティティセキュリティで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Delinea代替 Thycotic PAM Secret Server Privilege Manager クラウドPAM ゼロスタンディング CyberArk代替 BeyondTrust代替',
+    accentColor: Color(0xFF5C2D8B),
+    painPoints: [
+      '有料・PAM特化・個人のライフ管理は別途必要',
+      'エンタープライズ特化・個人のAI管理は別途必要',
+      'CyberArk/BeyondTrust/HashiCorp との比較でコスト・クラウドネイティブ・DevOps統合が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'PAM・Secret Server・Privilege Manager・クラウドPAM・ゼロスタンディング特権',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'saviynt': const _CompetitorInfo(
+    name: 'Saviynt',
+    emoji: '🌟',
+    tagline:
+        'クラウドアイデンティティガバナンス・IGA・CPAM・アプリケーションアクセス管理・SaaS対応IDGで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Saviynt代替 IGA アイデンティティガバナンス CPAM SaaS クラウドIDG SailPoint代替 One Identity代替',
+    accentColor: Color(0xFF7B3FE4),
+    painPoints: [
+      '有料・IGA特化・個人のライフ管理は別途必要',
+      'エンタープライズ特化・個人のAI管理は別途必要',
+      'SailPoint/One Identity/Saviynt との比較でコスト・クラウドネイティブ・実装速度が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'IGA・CPAM・クラウドアイデンティティ・SaaS対応・アクセスガバナンス',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'sailpoint': const _CompetitorInfo(
+    name: 'SailPoint',
+    emoji: '⛵',
+    tagline:
+        'アイデンティティセキュリティ・IGA・IdentityIQ/IdentityNow・AIガバナンス・アクセス認証・コンプライアンスで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'SailPoint代替 IGA IdentityIQ IdentityNow アイデンティティセキュリティ AIガバナンス コンプライアンス Saviynt代替',
+    accentColor: Color(0xFF003DA5),
+    painPoints: [
+      '有料・IGA特化・個人のライフ管理は別途必要',
+      'エンタープライズ特化・個人のAI管理は別途必要',
+      'Saviynt/One Identity/IBM IGI との比較でコスト・実装期間・クラウドネイティブが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'IGA・IdentityIQ/IdentityNow・AIガバナンス・アクセス認証・コンプライアンス',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'azure-ad': const _CompetitorInfo(
+    name: 'Microsoft Entra ID (旧Azure AD)',
+    emoji: '🟦',
+    tagline:
+        'Microsoft Entra ID・SSO・条件付きアクセス・MFA・ゼロトラスト・Microsoft 365統合アイデンティティで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Azure AD代替 Microsoft Entra SSO MFA 条件付きアクセス ゼロトラスト Microsoft 365 Okta代替',
+    accentColor: Color(0xFF0078D4),
+    painPoints: [
+      '有料(M365 P1/P2等)・Microsoft環境特化・個人のライフ管理は別途必要',
+      'エンタープライズ特化・個人のAI管理は別途必要',
+      'Okta/Ping Identity/Duo との比較でMicrosoft以外環境・柔軟性・カスタマイズが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Entra ID・SSO・MFA・条件付きアクセス・ゼロトラスト・Microsoft 365統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'duo': const _CompetitorInfo(
+    name: 'Duo Security (Cisco)',
+    emoji: '🔐',
+    tagline:
+        'Cisco Duo・MFA・ゼロトラストアクセス・デバイストラスト・VPNレス・エンタープライズ認証で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Duo Security代替 Cisco MFA ゼロトラスト デバイストラスト VPNレス 多要素認証 Okta代替 Microsoft Authenticator代替',
+    accentColor: Color(0xFF6DBE45),
+    painPoints: [
+      '有料・MFA/ゼロトラスト特化・個人のライフ管理は別途必要',
+      'セキュリティ特化・個人のAI管理は別途必要',
+      'Okta/Microsoft/Google との比較でコスト・SSO統合・アイデンティティガバナンスが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'MFA・ゼロトラストアクセス・デバイストラスト・VPNレス・エンタープライズ認証',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'one-identity': const _CompetitorInfo(
+    name: 'One Identity',
+    emoji: '🔷',
+    tagline:
+        'アイデンティティセキュリティ・IAM/IGA/PAM統合・One Identity Manager・クラウド対応・Quest Software製で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'One Identity代替 IAM IGA PAM One Identity Manager Quest Software アイデンティティセキュリティ SailPoint代替 Saviynt代替',
+    accentColor: Color(0xFF1C3E6B),
+    painPoints: [
+      '有料・IAM/IGA/PAM特化・個人のライフ管理は別途必要',
+      'エンタープライズ特化・個人のAI管理は別途必要',
+      'SailPoint/Saviynt/CyberArk との比較でコスト・クラウドネイティブ・AI精度が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'IAM/IGA/PAM統合・One Identity Manager・クラウド対応・コンプライアンス',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'cisco-ise': const _CompetitorInfo(
+    name: 'Cisco ISE',
+    emoji: '🔌',
+    tagline:
+        'Cisco Identity Services Engine・ネットワークアクセス制御・NAC・ゼロトラスト・802.1X認証・ネットワーク可視化で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Cisco ISE代替 NAC ネットワークアクセス制御 ゼロトラスト 802.1X 認証 Aruba ClearPass代替 Forescout代替',
+    accentColor: Color(0xFF00BCEB),
+    painPoints: [
+      '有料・NAC/ネットワークセキュリティ特化・個人のライフ管理は別途必要',
+      'エンタープライズ特化・個人のAI管理は別途必要',
+      'Aruba ClearPass/Forescout との比較でコスト・導入複雑さ・クラウドネイティブが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'NAC・802.1X認証・ゼロトラスト・ネットワーク可視化・デバイス管理',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'forescout': const _CompetitorInfo(
+    name: 'Forescout',
+    emoji: '👁️',
+    tagline: 'IoT/OTデバイス可視化・NAC・ゼロトラスト・エージェントレス・デバイスインテリジェンスで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Forescout代替 IoT OT NAC デバイス可視化 エージェントレス ゼロトラスト Cisco ISE代替 Aruba代替',
+    accentColor: Color(0xFF007DC1),
+    painPoints: [
+      '有料・NAC/IoT特化・個人のライフ管理は別途必要',
+      'エンタープライズ特化・個人のAI管理は別途必要',
+      'Cisco ISE/Aruba ClearPass との比較でコスト・管理複雑さ・クラウド移行が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'IoT/OTデバイス可視化・NAC・エージェントレス・ゼロトラスト・デバイスインテリジェンス',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'aruba-clearpass': const _CompetitorInfo(
+    name: 'Aruba ClearPass',
+    emoji: '🟢',
+    tagline:
+        'Aruba NAC・ClearPass・ゲストアクセス・デバイスオンボーディング・ポリシー管理・802.1X・RADIUS・HPEで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Aruba ClearPass代替 NAC ゲストアクセス デバイスオンボーディング 802.1X RADIUS HPE Cisco ISE代替 Forescout代替',
+    accentColor: Color(0xFF00A14B),
+    painPoints: [
+      '有料・NAC特化・個人のライフ管理は別途必要',
+      'ネットワーク特化・個人のAI管理は別途必要',
+      'Cisco ISE/Forescout/Jamf との比較でコスト・AIポリシー・クラウドネイティブが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ClearPass NAC・ゲストアクセス・デバイスオンボーディング・ポリシー管理・802.1X/RADIUS',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
