@@ -51686,6 +51686,324 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'orca-security': const _CompetitorInfo(
+    name: 'Orca Security',
+    emoji: '🐳',
+    tagline:
+        'エージェントレスクラウドセキュリティ・CSPM/CWPP/CIEM・AWS/Azure/GCP・AIリスク優先で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Orca Security代替 エージェントレス クラウドセキュリティ CSPM CWPP CIEM AWS Azure GCP Wiz代替',
+    accentColor: Color(0xFF0066FF),
+    painPoints: [
+      '有料・クラウドセキュリティ特化・個人のライフ管理は別途必要',
+      'DevSecOps特化・個人のAI管理は別途必要',
+      'Wiz/Lacework/Prisma Cloud との比較でコスト・統合幅・AI精度が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'エージェントレスCSPM/CWPP/CIEM・AI優先リスク・AWS/Azure/GCP・サイドスキャン',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'lacework': const _CompetitorInfo(
+    name: 'Lacework',
+    emoji: '🕸️',
+    tagline: 'クラウドセキュリティ+異常検知・機械学習・Polygraph・CSPM/CWPP・コンテナで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Lacework代替 クラウドセキュリティ 異常検知 機械学習 Polygraph CSPM CWPP コンテナ Wiz代替 Orca代替',
+    accentColor: Color(0xFF4A90D9),
+    painPoints: [
+      '有料・セキュリティ特化・個人のライフ管理は別途必要',
+      'DevSecOps特化・個人のAI管理は別途必要',
+      'Wiz/Orca/Sysdig との比較でコスト・ポリシー深さ・統合幅が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ML異常検知・Polygraph可視化・CSPM/CWPP・コンテナ・クラウドセキュリティ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'tenable': const _CompetitorInfo(
+    name: 'Tenable (Nessus)',
+    emoji: '🔬',
+    tagline: '脆弱性管理・Nessus・クラウド/オンプレ・OT/IoT対応・リスクベーススコアリングで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Tenable代替 Nessus 脆弱性管理 クラウド オンプレ OT IoT リスクスコア Qualys代替 Rapid7代替',
+    accentColor: Color(0xFF003087),
+    painPoints: [
+      '有料・脆弱性管理特化・個人のライフ管理は別途必要',
+      'セキュリティ特化・個人のAI管理は別途必要',
+      'Qualys/Rapid7/Wiz との比較でクラウドネイティブ・コスト・開発者体験が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Nessus脆弱性スキャン・クラウド/オンプレ・OT/IoT・リスクベーススコアリング',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'qualys': const _CompetitorInfo(
+    name: 'Qualys VMDR',
+    emoji: '🔭',
+    tagline: 'クラウド脆弱性管理・Asset管理・パッチ管理・TruRisk・ゼロトラスト統合で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Qualys代替 VMDR クラウド脆弱性管理 Asset管理 パッチ管理 TruRisk ゼロトラスト Tenable代替 Rapid7代替',
+    accentColor: Color(0xFF0078D4),
+    painPoints: [
+      '有料・脆弱性管理特化・個人のライフ管理は別途必要',
+      'セキュリティ特化・個人のAI管理は別途必要',
+      'Tenable/Rapid7/Crowdstrike との比較でUI・自動化・クラウドネイティブ対応が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'VMDR・Asset管理・パッチ管理・TruRiskスコア・ゼロトラスト・クラウドセキュリティ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'rapid7': const _CompetitorInfo(
+    name: 'Rapid7 InsightVM',
+    emoji: '⚡',
+    tagline:
+        'Rapid7 脆弱性管理・InsightVM・LiveBoard・リアルタイムリスク・Attack Surface Mgmtで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Rapid7代替 InsightVM 脆弱性管理 LiveBoard リアルタイムリスク Attack Surface Tenable代替 Qualys代替',
+    accentColor: Color(0xFFE8002D),
+    painPoints: [
+      '有料・セキュリティ特化・個人のライフ管理は別途必要',
+      'セキュリティ特化・個人のAI管理は別途必要',
+      'Tenable/Qualys/Wiz との比較でクラウドネイティブ・自動修正・AIが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'InsightVM・LiveBoard・リアルタイムリスク・Attack Surface・SIEM連携',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'burpsuite': const _CompetitorInfo(
+    name: 'Burp Suite (PortSwigger)',
+    emoji: '🕷️',
+    tagline: 'Webアプリセキュリティテスト・プロキシ・スキャナー・DAST・ペネトレーションテストで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Burp Suite代替 Webアプリセキュリティ プロキシ DAST スキャナー ペネトレーションテスト OWASP ZAP代替 Invicti代替',
+    accentColor: Color(0xFFFF6633),
+    painPoints: [
+      '無料Community/有料Pro年399ドル~・Webセキュリティ特化・個人のライフ管理は別途必要',
+      'セキュリティ特化・個人のAI管理は別途必要',
+      'OWASP ZAP/Invicti/Acunetix との比較でコスト・自動化・AI脆弱性発見が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Webアプリセキュリティ・プロキシ・DAST・スキャナー・ペネトレーションテスト',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'owasp-zap': const _CompetitorInfo(
+    name: 'OWASP ZAP',
+    emoji: '🔓',
+    tagline: 'OSS Webアプリスキャナー・DAST・自動化・CI/CD統合・OWASP公式ツールで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'OWASP ZAP代替 OSS Webスキャナー DAST 自動化 CI/CD統合 OWASP Burp Suite代替 Nikto代替',
+    accentColor: Color(0xFF339900),
+    painPoints: [
+      '完全無料OSS・Webセキュリティ特化・個人のライフ管理は別途必要',
+      'セキュリティ特化・個人のAI管理は別途必要',
+      'Burp Suite/Invicti/Acunetix との比較でUI・商用サポート・精度が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'OSS WebアプリDASTスキャナー・自動化・CI/CD統合・OWASP公式・無料',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'metasploit': const _CompetitorInfo(
+    name: 'Metasploit (Rapid7)',
+    emoji: '🎯',
+    tagline: 'ペネトレーションテスト・エクスプロイトフレームワーク・OSS・セキュリティリサーチで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Metasploit代替 ペネトレーションテスト エクスプロイト OSS セキュリティリサーチ 認定テスト Cobalt Strike代替',
+    accentColor: Color(0xFF004BA0),
+    painPoints: [
+      '無料OSS/有料Pro・ペンテスト特化・個人のライフ管理は別途必要',
+      'セキュリティリサーチ特化・個人のAI管理は別途必要',
+      'Cobalt Strike/Core Impact/Core Security との比較でエンタープライズ・AIアシスト・レポートが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ペネトレーションテスト・エクスプロイトフレームワーク・OSS・認定セキュリティリサーチ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'invicti': const _CompetitorInfo(
+    name: 'Invicti (旧Netsparker)',
+    emoji: '🕸️',
+    tagline:
+        '証拠ベースDASTスキャナー・Proof-Based Scanning・自動化・エンタープライズWebセキュリティで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Invicti代替 Netsparker DAST Proof-Based Scanning 自動化 エンタープライズWebセキュリティ Burp Suite代替 Acunetix代替',
+    accentColor: Color(0xFF2196F3),
+    painPoints: [
+      '有料・WebDASTスキャン特化・個人のライフ管理は別途必要',
+      'セキュリティ特化・個人のAI管理は別途必要',
+      'Burp Suite/Acunetix/ZAP との比較でコスト・開発者向けCI/CD・誤検知率が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '証拠ベースDASTスキャン・誤検知0保証・自動化・エンタープライズ・CI/CD統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
