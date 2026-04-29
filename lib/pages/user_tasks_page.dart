@@ -787,21 +787,24 @@ class _AiAssistDialogState extends State<_AiAssistDialog> {
     for (var i = 0; i < subtasks.length; i++) {
       final s = subtasks[i];
       try {
-        await supabase.functions.invoke('tools-hub', body: {
-          'action': 'wbs.add_task',
-          'category': parent['category'],
-          'category_icon': parent['category_icon'],
-          'category_order': parent['category_order'],
-          'title':
-              '${parent['title'] ?? widget.taskTitle} :: ${_aiText(s['title']).isEmpty ? '小タスク${i + 1}' : _aiText(s['title'])}',
-          'description': _buildSubtaskDescription(s),
-          'instance': parent['instance'],
-          'owner_instance': parent['owner_instance'],
-          'priority': parent['priority'] ?? 'medium',
-          'status': 'pending',
-          'progress': 0,
-          'milestone_code': parent['milestone_code'],
-        },);
+        await supabase.functions.invoke(
+          'tools-hub',
+          body: {
+            'action': 'wbs.add_task',
+            'category': parent['category'],
+            'category_icon': parent['category_icon'],
+            'category_order': parent['category_order'],
+            'title':
+                '${parent['title'] ?? widget.taskTitle} :: ${_aiText(s['title']).isEmpty ? '小タスク${i + 1}' : _aiText(s['title'])}',
+            'description': _buildSubtaskDescription(s),
+            'instance': parent['instance'],
+            'owner_instance': parent['owner_instance'],
+            'priority': parent['priority'] ?? 'medium',
+            'status': 'pending',
+            'progress': 0,
+            'milestone_code': parent['milestone_code'],
+          },
+        );
         success++;
       } catch (e) {
         failed++;
@@ -815,19 +818,23 @@ class _AiAssistDialogState extends State<_AiAssistDialog> {
 
     final messenger = ScaffoldMessenger.of(context);
     if (failed == 0) {
-      messenger.showSnackBar(SnackBar(
-        content: Text('✅ $success 件のサブタスクを登録しました'),
-        duration: const Duration(seconds: 3),
-      ),);
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text('✅ $success 件のサブタスクを登録しました'),
+          duration: const Duration(seconds: 3),
+        ),
+      );
       Navigator.pop(context);
       widget.onTasksRegistered();
     } else {
-      messenger.showSnackBar(SnackBar(
-        content: Text(
-          '⚠ $success 件成功 / $failed 件失敗\n${errors.join('\n')}',
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            '⚠ $success 件成功 / $failed 件失敗\n${errors.join('\n')}',
+          ),
+          duration: const Duration(seconds: 8),
         ),
-        duration: const Duration(seconds: 8),
-      ),);
+      );
     }
   }
 
