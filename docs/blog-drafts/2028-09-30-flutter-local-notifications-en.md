@@ -1,7 +1,7 @@
 ---
 title: "Flutter Local Notifications — Scheduled and Rich Notifications with flutter_local_notifications"
 tags: flutter,ai,indiedev,automation
-published: false
+published: true
 ---
 
 # Flutter Local Notifications — Scheduled and Rich Notifications with flutter_local_notifications
