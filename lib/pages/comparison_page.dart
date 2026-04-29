@@ -23323,6 +23323,312 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'babbel': const _CompetitorInfo(
+    name: 'Babbel',
+    emoji: '🗣️',
+    tagline: 'サブスク型語学学習アプリ・ネイティブ監修カリキュラムで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Babbel代替 語学学習 英語 スペイン語 アプリ サブスク ネイティブ',
+    accentColor: Color(0xFF82BD41),
+    painPoints: [
+      '月額13.99ドル〜・語学学習特化で個人のライフ管理・財務管理は別途必要',
+      '語学コース固定でカスタマイズ性が低い・AIパーソナライズは限定的',
+      'Duolingoと比較してゲーミフィケーション・無料コンテンツが少ない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '14言語対応・ネイティブ監修・会話練習・復習システム・オフライン',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'rosetta-stone': const _CompetitorInfo(
+    name: 'Rosetta Stone',
+    emoji: '🪨',
+    tagline: '世界最古の語学学習ソフト・没入型メソッドで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Rosetta Stone代替 語学学習 英語 没入法 発音練習 老舗 オンライン',
+    accentColor: Color(0xFFF4821F),
+    painPoints: [
+      '年間299ドル〜(全言語プラン)・語学特化で個人のライフ管理は別途必要',
+      '没入型メソッドは初心者向け・中上級者のカスタマイズが難しい',
+      'Babbel/Duolingoと比較してモバイルUX・ゲーミフィケーションが古い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '25言語・没入型・ライブレッスン・TrueAccent発音AI・オフライン',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'italki': const _CompetitorInfo(
+    name: 'italki',
+    emoji: '👨‍🏫',
+    tagline: 'ネイティブ講師とのオンライン1対1語学レッスンで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'italki代替 オンライン語学 ネイティブ講師 1対1レッスン 英会話 言語交換',
+    accentColor: Color(0xFF3B5998),
+    painPoints: [
+      '1レッスン約10〜60ドル・講師の質にバラつき・スケジュール調整が必要',
+      '語学レッスン特化でHRマーケット型・個人のAIライフ管理は別途必要',
+      'Preply/Camblyと比較してプラットフォーム品質管理が弱い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '150言語・ネイティブ/プロ講師マーケット・言語交換・コミュニティ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'workato': const _CompetitorInfo(
+    name: 'Workato',
+    emoji: '⚙️',
+    tagline: 'エンタープライズ向けインテリジェント自動化・iPaaSで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Workato代替 自動化 iPaaS エンタープライズ ワークフロー統合 API連携',
+    accentColor: Color(0xFF00C2A2),
+    painPoints: [
+      '年間1万ドル〜(エンタープライズ価格)・中小企業には過剰・個人利用は不向き',
+      'ビジネス自動化特化でエンタープライズ向け設計・個人のAI管理は別途必要',
+      'Zapier/Make.comと比較してUI・習得コストが高い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '1000+コネクタ・RecipeIQ AI・オンプレ統合・SOC2/GDPR準拠',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'tray-io': const _CompetitorInfo(
+    name: 'Tray.ai',
+    emoji: '🔗',
+    tagline: '低コード統合・ワークフロー自動化プラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Tray.io代替 低コード 自動化 ワークフロー統合 API連携 iPaaS',
+    accentColor: Color(0xFF6200EA),
+    painPoints: [
+      '月額595ドル〜・技術者向け設計・個人のライフ管理は別途必要',
+      'iPaaS特化でビジネス統合向け設計・個人のAI管理は別途必要',
+      'Workatoと比較してエンタープライズサポート・コネクタ数が少ない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '低コード・視覚的ビルダー・クラウドネイティブ・カスタム連携',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'pabbly': const _CompetitorInfo(
+    name: 'Pabbly Connect',
+    emoji: '🔄',
+    tagline: 'Zapier代替・低コストワークフロー自動化ツールで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Pabbly代替 自動化 ワークフロー Zapier代替 安価 API連携 ノーコード',
+    accentColor: Color(0xFFE91E63),
+    painPoints: [
+      '月額19ドル〜(無制限タスク)・Zapier代替として安価だが機能が限定的',
+      'ワークフロー自動化特化・個人のAIライフ管理は別途必要',
+      'Zapier/Make.comと比較してコネクタ数・UIデザインが劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '1000+アプリ連携・無制限タスク・マルチステップ・即時実行',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'apollo': const _CompetitorInfo(
+    name: 'Apollo.io',
+    emoji: '🎯',
+    tagline: 'セールスインテリジェンス・見込み客発掘自動化で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Apollo.io代替 セールスインテリジェンス リード生成 B2B営業 見込み客 アウトリーチ',
+    accentColor: Color(0xFF7B2FBE),
+    painPoints: [
+      '月額49ドル〜・B2B営業特化で個人のライフ管理は別途必要',
+      'セールス/リード生成特化でビジネス向け設計・個人のAI管理は別途必要',
+      'ZoomInfo/LinkedInと比較してデータ精度・網羅性が劣ることがある',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '275M+連絡先DB・シーケンス自動化・AI執筆・CRM統合・意図データ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'outreach': const _CompetitorInfo(
+    name: 'Outreach',
+    emoji: '📤',
+    tagline: 'セールスエンゲージメント・パイプライン管理プラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Outreach代替 セールスエンゲージメント パイプライン 営業自動化 シーケンス',
+    accentColor: Color(0xFF5522FA),
+    painPoints: [
+      '月額100ドル/ユーザー〜・エンタープライズ営業チーム向け・個人利用は不向き',
+      'セールスエンゲージメント特化でビジネス向け設計・個人のAI管理は別途必要',
+      'SalesLoftと比較してUI複雑性・習得コストが高い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'セールスシーケンス・AI会議分析・Kaia AI・パイプライン予測・コーチング',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'salesloft': const _CompetitorInfo(
+    name: 'Salesloft',
+    emoji: '📈',
+    tagline: 'セールスオーケストレーション・収益ワークフロープラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Salesloft代替 セールスオーケストレーション 収益管理 営業自動化 コーチング',
+    accentColor: Color(0xFF00A0D1),
+    painPoints: [
+      '月額125ドル/ユーザー〜・大規模営業チーム向け・個人のライフ管理は別途必要',
+      'セールス/収益特化でビジネス向け設計・個人のAI管理は別途必要',
+      'Outreachと比較してシーケンス機能のカスタマイズ性が低い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Cadence・Conversations AI・Forecast・Deal管理・コーチング',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
