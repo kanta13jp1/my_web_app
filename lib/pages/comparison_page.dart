@@ -59087,6 +59087,312 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'traefik': const _CompetitorInfo(
+    name: 'Traefik',
+    emoji: '🔀',
+    tagline: 'Traefik・クラウドネイティブリバースプロキシ・自動設定・Let's Encrypt・Docker/K8s統合・OSS・エッジルーターで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Traefik代替 クラウドネイティブ リバースプロキシ 自動設定 Let's Encrypt Docker Kubernetes エッジルーター nginx代替 HAProxy代替',
+    accentColor: Color(0xFF24A1C1),
+    painPoints: [
+      '無料(OSS)/有料・インフラ特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'nginx/HAProxy との比較で動的設定・サービスディスカバリー・K8s統合が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'クラウドネイティブ・自動設定・Let's Encrypt・Docker/K8s統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'haproxy': const _CompetitorInfo(
+    name: 'HAProxy',
+    emoji: '⚖️',
+    tagline: 'HAProxy・高可用性ロードバランサー・TCP/HTTP対応・セッション維持・ヘルスチェック・OSS/Enterprise・高パフォーマンスで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'HAProxy代替 高可用性 ロードバランサー TCP HTTP セッション維持 ヘルスチェック nginx代替 Traefik代替',
+    accentColor: Color(0xFF0C3B60),
+    painPoints: [
+      '無料(OSS)/有料・LB特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'nginx/Traefik との比較で動的設定・クラウドネイティブ・UI管理が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '高可用性LB・TCP/HTTP・セッション維持・ヘルスチェック・高パフォーマンス',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'nginx-ingress': const _CompetitorInfo(
+    name: 'NGINX Ingress Controller',
+    emoji: '🌐',
+    tagline: 'NGINX Ingress Controller・K8s標準イングレス・高パフォーマンス・SSL終端・WebSocket・F5傘下・OSS/Plusで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'NGINX Ingress代替 Kubernetes イングレス 高パフォーマンス SSL WebSocket F5 Traefik代替 Contour代替',
+    accentColor: Color(0xFF009639),
+    painPoints: [
+      '無料(OSS)/有料(Plus)・K8sイングレス特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Traefik/Contour との比較で動的設定・サービスメッシュ統合・設定複雑さが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'K8s標準イングレス・高パフォーマンス・SSL終端・WebSocket・F5傘下',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'cilium': const _CompetitorInfo(
+    name: 'Cilium',
+    emoji: '🛡️',
+    tagline: 'Cilium・eBPFベースK8sネットワーキング・セキュリティ・可観測性・Hubble・CNCF卒業・高パフォーマンスで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Cilium代替 eBPF Kubernetes ネットワーキング セキュリティ 可観測性 Hubble CNCF Calico代替 Flannel代替',
+    accentColor: Color(0xFFF8C517),
+    painPoints: [
+      '無料(OSS)/有料・K8sネットワーク特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Calico/Flannel との比較でeBPF学習コスト・設定複雑さ・運用負荷が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'eBPFベースK8sネットワーク・セキュリティ・Hubble可観測性・CNCF',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'calico': const _CompetitorInfo(
+    name: 'Calico',
+    emoji: '🐱',
+    tagline: 'Calico・K8sネットワークポリシー・BGPルーティング・ゼロトラスト・Tigera製・CNCF・OSS/Enterprise・高スケーラビリティで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Calico代替 Kubernetes ネットワークポリシー BGP ゼロトラスト Tigera CNCF Cilium代替 Flannel代替',
+    accentColor: Color(0xFFFC8100),
+    painPoints: [
+      '無料(OSS)/有料・K8sネットワーク特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Cilium/Flannel との比較でeBPF対応・パフォーマンス・可観測性が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'K8sネットワークポリシー・BGPルーティング・ゼロトラスト・高スケーラビリティ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'envoy': const _CompetitorInfo(
+    name: 'Envoy Proxy',
+    emoji: '📨',
+    tagline: 'Envoy Proxy・クラウドネイティブプロキシ・サービスメッシュ基盤・Lyft製・CNCF卒業・gRPC・可観測性・Istio/Contour基盤で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Envoy Proxy代替 クラウドネイティブ プロキシ サービスメッシュ Lyft CNCF gRPC 可観測性 Istio基盤 nginx代替',
+    accentColor: Color(0xFF9B51E0),
+    painPoints: [
+      '無料(OSS)・プロキシ/サービスメッシュ特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'nginx/HAProxy との比較で設定複雑さ・直接利用時の学習コスト・ドキュメントが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'クラウドネイティブプロキシ・gRPC・可観測性・Istio/Contour基盤・CNCF',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'aws-api-gateway': const _CompetitorInfo(
+    name: 'AWS API Gateway',
+    emoji: '🔶',
+    tagline: 'AWS API Gateway・マネージドAPI管理・REST/WebSocket/HTTP API・Lambda統合・認証・スロットリング・AWS統合で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'AWS API Gateway代替 マネージドAPI REST WebSocket Lambda統合 認証 スロットリング Kong代替 Apigee代替',
+    accentColor: Color(0xFFFF9900),
+    painPoints: [
+      '有料(従量課金)・AWS API管理特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Kong/Apigee との比較でAWS依存・コスト予測・マルチクラウドが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'マネージドAPI・REST/WebSocket/HTTP・Lambda統合・認証・スロットリング',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'azure-api-management': const _CompetitorInfo(
+    name: 'Azure API Management',
+    emoji: '🔵',
+    tagline: 'Azure API Management・マネージドAPI管理・ポリシーエンジン・開発者ポータル・Azure統合・ハイブリッド・Microsoft・企業向けで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Azure API Management代替 マネージドAPI ポリシーエンジン 開発者ポータル Microsoft ハイブリッド Kong代替 AWS API Gateway代替',
+    accentColor: Color(0xFF0078D4),
+    painPoints: [
+      '有料・Azure API管理特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Kong/AWS API Gateway との比較でAzure依存・コスト・マルチクラウドが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'マネージドAPI・ポリシーエンジン・開発者ポータル・Azure統合・ハイブリッド',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'gravitee': const _CompetitorInfo(
+    name: 'Gravitee.io',
+    emoji: '🪐',
+    tagline: 'Gravitee.io・OSS APIゲートウェイ・アクセス管理・イベントネイティブ・開発者ポータル・Kafka対応・オンプレ/クラウドで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Gravitee.io代替 OSS APIゲートウェイ アクセス管理 イベントネイティブ Kafka 開発者ポータル Kong代替 Tyk代替',
+    accentColor: Color(0xFF6D1FDB),
+    painPoints: [
+      '無料(OSS)/有料・APIゲートウェイ特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Kong/Tyk との比較でコミュニティ規模・エコシステム・サポート品質が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'OSS APIゲートウェイ・アクセス管理・イベントネイティブ・Kafka対応',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
