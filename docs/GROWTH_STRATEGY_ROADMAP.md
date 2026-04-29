@@ -24924,3 +24924,10 @@ SECOND_BRAIN 4.5/7 + VIBE 7.0/7 + PLATFORM 4.0/7 = 14.5/21 + WBS audit 第 2 例
 
 ### commit
 (本 commit にて確定)
+
+## 2026-04-29 PS#6 S132 — prevRaceContextTrifectaBonus (前走三一致補正) confidence 48 terms
+
+- prevRaceContextTrifectaBonus: 同会場×同距離×同コース種別の三一致=+2%/部分一致=0
+- 個別3補正(prevVenueMatch/prevDistanceMatch/courseTypeMatch)との差別化シナジー
+- confidence formula: 48 terms体制確立
+- migration: 20260429102500_seed_achievements_ps6_s132.sql
