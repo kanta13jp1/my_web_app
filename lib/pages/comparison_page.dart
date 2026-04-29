@@ -32302,6 +32302,312 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'castr': const _CompetitorInfo(
+    name: 'Castr',
+    emoji: '📡',
+    tagline: 'マルチストリーミング・クラウドビデオホスティング配信で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Castr代替 マルチストリーミング ライブ配信 複数プラットフォーム同時配信 RTMP',
+    accentColor: Color(0xFFE91E8C),
+    painPoints: [
+      '月額20ドル〜・ライブ配信特化・個人のライフ管理は別途必要',
+      'マルチ配信特化・個人のAI管理は別途必要',
+      'Restream/Streamlabs比較で分析・エコシステムが劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'マルチ同時配信・VOD・ペイウォール・埋め込み・分析・低遅延',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'dacast': const _CompetitorInfo(
+    name: 'Dacast',
+    emoji: '🎙️',
+    tagline: 'プロライブストリーミング・OTTプラットフォーム・動画マネタイズで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Dacast代替 ライブストリーミング OTT 動画マネタイズ プロ配信 ペイウォール',
+    accentColor: Color(0xFF0B5394),
+    painPoints: [
+      '月額39ドル〜・プロ配信特化・個人のライフ管理は別途必要',
+      'OTT動画特化・個人のAI管理は別途必要',
+      'Brightcove/Wowza比較でエンタープライズ向け機能・CDNが劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ライブ/VOD・ペイウォール・白ラベル・OTT・DVR・API',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'uscreen': const _CompetitorInfo(
+    name: 'Uscreen',
+    emoji: '📺',
+    tagline: 'OTT動画ビジネス・会員制サービス・定期課金動画プラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Uscreen代替 OTT 動画会員制 定期課金 Netflix代替 クリエイター マネタイズ',
+    accentColor: Color(0xFF8B5CF6),
+    painPoints: [
+      '月額79ドル〜・動画会員制特化・個人のライフ管理は別途必要',
+      'OTTビジネス特化・個人のAI管理は別途必要',
+      'Vimeo OTT/MightyNetworksと比較してコミュニティ・学習機能が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'OTTアプリ・定期課金・ライブ配信・コース・アナリティクス・白ラベル',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'circle-so': const _CompetitorInfo(
+    name: 'Circle',
+    emoji: '⭕',
+    tagline: 'クリエイターコミュニティ・会員制プラットフォーム・コース販売で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Circle代替 コミュニティプラットフォーム クリエイター 会員制 コース Discord代替',
+    accentColor: Color(0xFF1F2937),
+    painPoints: [
+      '月額39ドル〜・コミュニティ特化・個人のライフ管理は別途必要',
+      'クリエイターコミュニティ特化・個人のAI管理は別途必要',
+      'MightyNetworks/Discordと比較してリアルタイム性・ゲーム向け機能が劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'スペース・ライブ/録画・コース・イベント・AI要約・Zapier連携',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'bettermode': const _CompetitorInfo(
+    name: 'Bettermode',
+    emoji: '🌐',
+    tagline: '顧客コミュニティ・ブランドコミュニティSaaSプラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Bettermode代替 顧客コミュニティ ブランドコミュニティ SaaS Tribe 会員制 エンゲージメント',
+    accentColor: Color(0xFF6D28D9),
+    painPoints: [
+      '月額49ドル〜・コミュニティ特化・個人のライフ管理は別途必要',
+      'ブランドコミュニティ特化・個人のAI管理は別途必要',
+      'Circle/MightyNetworksと比較してコース・動画機能が弱い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'カスタムUI・ポイント・バッジ・API・白ラベル・SSO・Zapier',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'discourse': const _CompetitorInfo(
+    name: 'Discourse',
+    emoji: '💬',
+    tagline: 'オープンソースコミュニティフォーラム・討議プラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Discourse代替 フォーラム コミュニティ OSS 討議 サポート Slack代替',
+    accentColor: Color(0xFF5C7CFA),
+    painPoints: [
+      '無料OSS/月額100ドル〜・フォーラム特化・個人のライフ管理は別途必要',
+      'コミュニティ討議特化・個人のAI管理は別途必要',
+      'Circle/MightyNetworksと比較してリッチメディア・コース機能が劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'スレッド討議・AIカテゴリ・バッジ・プラグイン・セルフホスト・API',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'invision': const _CompetitorInfo(
+    name: 'InVision',
+    emoji: '🎯',
+    tagline: 'プロトタイプ・デザインコラボレーション・フィードバックツールで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'InVision代替 プロトタイプ デザインコラボ フィードバック Figma代替 ワイヤフレーム',
+    accentColor: Color(0xFFFF3366),
+    painPoints: [
+      '無料/月額15ドル〜・プロトタイプ特化・個人のライフ管理は別途必要',
+      'デザインコラボ特化・個人のAI管理は別途必要',
+      'Figma/Sketchと比較して実装連携・デザインシステム機能が劣り縮小傾向',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'クリッカブルプロト・フィードバック・デザインシステム・スペック・Jira連携',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'zeplin': const _CompetitorInfo(
+    name: 'Zeplin',
+    emoji: '🎈',
+    tagline: 'デザイナー-開発者連携・デザインスペック・ハンドオフツールで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Zeplin代替 デザインスペック ハンドオフ デザイナー開発者連携 Figma代替 CSS出力',
+    accentColor: Color(0xFFFFBD45),
+    painPoints: [
+      '無料/月額17ドル〜・ハンドオフ特化・個人のライフ管理は別途必要',
+      'デザイン→コード連携特化・個人のAI管理は別途必要',
+      'Figma Dev Mode登場後は必要性が低下した',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'デザインスペック・CSS/Swift/Android出力・コメント・Jira/Slack連携',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'abstract': const _CompetitorInfo(
+    name: 'Abstract',
+    emoji: '📐',
+    tagline: 'デザインバージョン管理・コラボレーション・Sketchワークフローで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Abstract代替 デザインバージョン管理 Sketch git デザインコラボ ブランチ',
+    accentColor: Color(0xFF191919),
+    painPoints: [
+      '月額不明・デザインVCS特化・個人のライフ管理は別途必要',
+      'デザインバージョン管理特化・個人のAI管理は別途必要',
+      'Figma/Sketchのバージョン管理内蔵で需要が低下した',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Sketchブランチ・コミット・フィードバック・Jira連携・組織管理',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
