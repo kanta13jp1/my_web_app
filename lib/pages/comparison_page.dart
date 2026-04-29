@@ -30295,6 +30295,312 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'deepinfra': const _CompetitorInfo(
+    name: 'DeepInfra',
+    emoji: '🧠',
+    tagline: '高速・安価LLM/Diffusion推論APIサービスで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'DeepInfra代替 LLM推論API 安価 高速 Llama Mistral Stable Diffusion',
+    accentColor: Color(0xFF6366F1),
+    painPoints: [
+      '使用量課金・推論API特化・個人のライフ管理は別途必要',
+      'LLM/画像推論特化・個人のAI管理は別途必要',
+      'Together AI/Replicateと比較してコミュニティ・機能幅が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Llama/Mistral/Stable Diffusion推論・低レイテンシ・OpenAI互換API',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'lepton-ai': const _CompetitorInfo(
+    name: 'Lepton AI',
+    emoji: '⚛️',
+    tagline: 'AIクラウドプラットフォーム・LLMサービングインフラで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Lepton AI代替 AIクラウド LLMサービング GPU Python AI推論',
+    accentColor: Color(0xFF0EA5E9),
+    painPoints: [
+      '無料/使用量課金・AI推論特化・個人のライフ管理は別途必要',
+      'AIクラウド特化・個人のAI管理は別途必要',
+      'Modal/Anyscaleと比較してエコシステム・ドキュメントが限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Pythonネイティブ・GPU自動プロビジョン・LLM推論・ファインチューニング',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'mistral-ai': const _CompetitorInfo(
+    name: 'Mistral AI',
+    emoji: '🌬️',
+    tagline: 'ヨーロッパ発OSSフロンティアLLM・高効率言語モデルAPIで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Mistral AI代替 LLM API Mistral 7B Mixtral OSS ヨーロッパ AI 高効率',
+    accentColor: Color(0xFFFF7000),
+    painPoints: [
+      '無料OSS/使用量課金・LLM API特化・個人のライフ管理は別途必要',
+      'LLM特化・個人のAI管理は別途必要',
+      'OpenAI/Claudeと比較してエコシステム・多言語能力が劣ることがある',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Mistral/Mixtral/Codestral・OCR・Function Calling・ヨーロッパデータ主権',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'ai21': const _CompetitorInfo(
+    name: 'AI21 Labs',
+    emoji: '🔬',
+    tagline: 'エンタープライズLLM・Jamba・RAG特化AIプラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'AI21代替 Jamba LLM エンタープライズ RAG Jurassic API テキスト生成',
+    accentColor: Color(0xFF2D3748),
+    painPoints: [
+      '使用量課金・LLM API特化・個人のライフ管理は別途必要',
+      'エンタープライズLLM特化・個人のAI管理は別途必要',
+      'Cohere/Mistralと比較してモデル数・コミュニティが劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Jamba(SSM+Transformer)・長コンテキスト・RAG強化・グラウンディング',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'stability-ai': const _CompetitorInfo(
+    name: 'Stability AI',
+    emoji: '🎨',
+    tagline: 'Stable Diffusion・オープンソース画像生成AIの先駆けで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Stability AI代替 Stable Diffusion 画像生成 OSS テキストtoイメージ AI画像',
+    accentColor: Color(0xFF1A1A2E),
+    painPoints: [
+      '無料OSS/API有料・画像生成特化・個人のライフ管理は別途必要',
+      '生成AI特化・個人のAI管理は別途必要',
+      'Midjourney/DALL-Eと比較してUIの使いやすさ・品質が課題なことがある',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Stable Diffusion 3/XL・動画生成・3D・音楽・OSS・API',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'runway-ml': const _CompetitorInfo(
+    name: 'Runway',
+    emoji: '🎬',
+    tagline: 'AI動画生成・クリエイティブ映像ツールプラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Runway代替 AI動画生成 Gen-2 Gen-3 テキストto動画 映像編集 クリエイティブ',
+    accentColor: Color(0xFF0F172A),
+    painPoints: [
+      '月額15ドル〜・動画生成特化・個人のライフ管理は別途必要',
+      'AI映像特化・個人のAI管理は別途必要',
+      'Pika Labs/Kling AIと比較してコスト・生成速度が課題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Gen-3 Alpha・テキスト/画像to動画・インペイント・モーショントラッキング',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'pika-labs': const _CompetitorInfo(
+    name: 'Pika',
+    emoji: '⚡',
+    tagline: 'AIテキスト・画像から動画生成ツールで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Pika代替 AI動画生成 テキストto動画 画像to動画 アニメーション クリエイティブ',
+    accentColor: Color(0xFF7C3AED),
+    painPoints: [
+      '無料/月額8ドル〜・動画生成特化・個人のライフ管理は別途必要',
+      'AI動画特化・個人のAI管理は別途必要',
+      'Runway/Kling AIと比較してプロクオリティ・長尺動画が劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'テキスト/画像to動画・Pika 2.0・エフェクト・音声同期・API',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'luma-ai': const _CompetitorInfo(
+    name: 'Luma AI',
+    emoji: '✨',
+    tagline: 'AIビデオ生成・Dream Machine・3Dキャプチャプラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Luma AI代替 Dream Machine AI動画 3Dキャプチャ NeRF テキストto動画',
+    accentColor: Color(0xFF6D28D9),
+    painPoints: [
+      '無料/月額30ドル〜・AI動画/3D特化・個人のライフ管理は別途必要',
+      '映像3D生成特化・個人のAI管理は別途必要',
+      'Runway/Pika比較でリアリズム特化ながら操作自由度が劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Dream Machine 1.6・超リアル映像・長尺5秒・NeRF・3Dレンダリング',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'kling-ai': const _CompetitorInfo(
+    name: 'Kling AI',
+    emoji: '🎥',
+    tagline: '快手発の高品質AI動画生成・テキストto映像ツールで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Kling AI代替 AI動画生成 快手 テキストto動画 高品質 映像 中国AI',
+    accentColor: Color(0xFF0EA5E9),
+    painPoints: [
+      '無料/月額不明・AI動画特化・個人のライフ管理は別途必要',
+      '動画生成特化・個人のAI管理は別途必要',
+      'Runway/Pika比較で海外サービスのため利用条件・レイテンシが課題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '高品質動画・テキスト/画像to動画・長尺・物理シミュレーション',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
