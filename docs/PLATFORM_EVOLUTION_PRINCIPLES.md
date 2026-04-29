@@ -216,6 +216,7 @@
 | 日付 | part | 実装 | 達成原則 | baseline |
 | --- | --- | --- | --- | --- |
 | 2026-04-28 | Win版#132 part 67 | 軸確立 (docs + Rule [PLATFORM-31]) | — | 2.0/7 |
+| 2026-04-29 | Win版#132 part 74 | Codex#2 へ `task_budget` + `effort_router` 同時 cross-instance-pr (= 1 PR 2 原則 第 1 例) | (#6 + #7 完成は Codex#2 受領後 4.0/7) | 2.0/7 (PR 受領で **4.0/7** 想定) |
 
 **次回ターゲット**:
 - #6 task_budget 統合: `_shared/task_budget.ts` → Codex#2 cross-instance-pr 候補
