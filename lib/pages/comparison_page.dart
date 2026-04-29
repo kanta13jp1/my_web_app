@@ -59393,6 +59393,312 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'logzio': const _CompetitorInfo(
+    name: 'Logz.io',
+    emoji: '📊',
+    tagline: 'Logz.io・クラウドネイティブ可観測性・ELKスタックSaaS・AIアラート・OpenSearch・セキュリティ分析・企業向けで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Logz.io代替 クラウドネイティブ 可観測性 ELK SaaS AIアラート OpenSearch セキュリティ分析 Datadog代替 Splunk代替',
+    accentColor: Color(0xFF1F6BFF),
+    painPoints: [
+      '有料・ログ管理特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Datadog/Splunk との比較でコスト・フルスタック可観測性・統合の深さが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ELKスタックSaaS・AIアラート・OpenSearch・セキュリティ分析・クラウドネイティブ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'sumologic': const _CompetitorInfo(
+    name: 'Sumo Logic',
+    emoji: '🔮',
+    tagline: 'Sumo Logic・クラウドネイティブSIEM・ログ分析・脅威インテリジェンス・コンプライアンス・CSE・AWS統合で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Sumo Logic代替 クラウドネイティブ SIEM ログ分析 脅威インテリジェンス コンプライアンス CSE AWS統合 Splunk代替 Datadog代替',
+    accentColor: Color(0xFF000099),
+    painPoints: [
+      '有料・SIEM/ログ管理特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Splunk/Datadog との比較でコスト・UIの学習曲線・エージェント管理が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'クラウドネイティブSIEM・ログ分析・脅威インテリジェンス・コンプライアンス',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'statuspage': const _CompetitorInfo(
+    name: 'Atlassian Statuspage',
+    emoji: '📋',
+    tagline: 'Atlassian Statuspage・インシデント管理・ステータスページ・購読者通知・メンテナンス予告・コンポーネント管理・Jira統合で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Atlassian Statuspage代替 インシデント管理 ステータスページ 購読者通知 メンテナンス Jira統合 Freshstatus代替 Better Uptime代替',
+    accentColor: Color(0xFF0052CC),
+    painPoints: [
+      '有料・ステータスページ特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Freshstatus/Instatus との比較でコスト・シンプルさ・中小企業向け機能が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'インシデント管理・ステータスページ・購読通知・メンテナンス・Jira統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'freshstatus': const _CompetitorInfo(
+    name: 'Freshstatus',
+    emoji: '🌿',
+    tagline: 'Freshstatus・無料ステータスページ・インシデント管理・Freshdesk統合・購読者通知・カスタムドメイン・シンプルで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Freshstatus代替 無料ステータスページ インシデント管理 Freshdesk統合 購読通知 カスタムドメイン Statuspage代替 Instatus代替',
+    accentColor: Color(0xFF25B75E),
+    painPoints: [
+      '無料/有料・ステータスページ特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Statuspage/Instatus との比較でアドバンスド機能・API・カスタマイズが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '無料ステータスページ・インシデント管理・Freshdesk統合・カスタムドメイン',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'betteruptime': const _CompetitorInfo(
+    name: 'Better Uptime',
+    emoji: '⏱️',
+    tagline: 'Better Uptime・死活監視・インシデントタイムライン・オンコール管理・スクリーンショット・ステータスページ・Slack統合で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Better Uptime代替 死活監視 インシデント オンコール スクリーンショット ステータスページ Slack統合 Pingdom代替 UptimeRobot代替',
+    accentColor: Color(0xFF3ECF8E),
+    painPoints: [
+      '有料・死活監視/インシデント特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Pingdom/UptimeRobot との比較でコスト・高頻度チェック・エンタープライズ機能が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '死活監視・インシデントタイムライン・オンコール・スクリーンショット・Slack統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'checkly': const _CompetitorInfo(
+    name: 'Checkly',
+    emoji: '✅',
+    tagline: 'Checkly・API監視・E2Eテスト・Playwright統合・コードファーストモニタリング・アラート・デベロッパー向け・GHAで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Checkly代替 API監視 E2Eテスト Playwright コードファースト モニタリング アラート GitHub Actions Pingdom代替 Runscope代替',
+    accentColor: Color(0xFF45C8B4),
+    painPoints: [
+      '有料・API/E2E監視特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Pingdom/Uptime Robot との比較でE2E統合・コードファースト・価格帯が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'API監視・E2Eテスト・Playwright統合・コードファースト・GHA統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'pingdom': const _CompetitorInfo(
+    name: 'Pingdom',
+    emoji: '🏓',
+    tagline: 'Pingdom・Webパフォーマンス監視・死活監視・ページスピード・トランザクション監視・SolarWinds傘下・企業向けで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Pingdom代替 Webパフォーマンス 死活監視 ページスピード トランザクション SolarWinds UptimeRobot代替 Better Uptime代替',
+    accentColor: Color(0xFFFF7200),
+    painPoints: [
+      '有料・Web監視特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'UptimeRobot/Better Uptime との比較でコスト・無料プラン・UI使いやすさが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Webパフォーマンス監視・死活監視・ページスピード・トランザクション監視',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'uptimerobot': const _CompetitorInfo(
+    name: 'UptimeRobot',
+    emoji: '🤖',
+    tagline: 'UptimeRobot・無料死活監視・50モニター無料・5分間隔・ステータスページ・Slack/メール通知・シンプルUIで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'UptimeRobot代替 無料死活監視 50モニター ステータスページ Slack メール通知 Pingdom代替 Better Uptime代替',
+    accentColor: Color(0xFF3DBD6E),
+    painPoints: [
+      '無料(50モニター)/有料・死活監視特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Pingdom/Checkly との比較でページスピード・E2E・アドバンスドレポートが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '無料死活監視50モニター・ステータスページ・Slack/メール通知・シンプルUI',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'instatus': const _CompetitorInfo(
+    name: 'Instatus',
+    emoji: '📡',
+    tagline: 'Instatus・モダンステータスページ・高速・無料プラン・カスタムドメイン・Slack/Datadog統合・インシデント更新・SEO最適化で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Instatus代替 モダンステータスページ 高速 カスタムドメイン Slack Datadog統合 インシデント Statuspage代替 Freshstatus代替',
+    accentColor: Color(0xFF6C47FF),
+    painPoints: [
+      '無料/有料・ステータスページ特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Statuspage/Freshstatus との比較でエンタープライズ機能・Jira統合・サポートが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'モダンステータスページ・高速・カスタムドメイン・Slack/Datadog統合・SEO',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
