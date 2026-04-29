@@ -37445,6 +37445,312 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'wave-financial': const _CompetitorInfo(
+    name: 'Wave',
+    emoji: '🌊',
+    tagline: '無料会計・請求書・給与管理・中小企業向けクラウド財務で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Wave代替 無料会計 請求書 給与管理 中小企業 FreshBooks代替 Xero代替',
+    accentColor: Color(0xFF0097B2),
+    painPoints: [
+      '無料〜・会計特化・個人のライフ管理は別途必要',
+      '中小企業財務特化・個人のAI管理は別途必要',
+      'Xero/FreshBooksと比較して高度な在庫管理・多通貨対応が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '無料会計・請求書・レシートスキャン・給与・支払い処理',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'zoho-books': const _CompetitorInfo(
+    name: 'Zoho Books',
+    emoji: '📒',
+    tagline: 'Zohoエコシステム統合クラウド会計・税務・財務管理で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Zoho Books代替 クラウド会計 Zoho統合 税務 財務管理 Xero代替 QuickBooks代替',
+    accentColor: Color(0xFFE42527),
+    painPoints: [
+      '月額15ドル〜・Zohoエコ会計特化・個人のライフ管理は別途必要',
+      '中小企業財務特化・個人のAI管理は別途必要',
+      'Xero/QuickBooksと比較してZoho外では汎用性・サードパーティ連携が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '仕訳・請求書・費用追跡・銀行照合・Zoho CRM連携・税務',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'netsuite': const _CompetitorInfo(
+    name: 'NetSuite',
+    emoji: '🏢',
+    tagline: 'Oracle ERPクラウド・財務/CRM/eコマース統合プラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'NetSuite代替 ERP Oracle クラウドERP 財務管理 CRM Sage代替 SAP代替',
+    accentColor: Color(0xFF00578A),
+    painPoints: [
+      '月額高価格(数十万円)・大企業ERP特化・個人のライフ管理は別途必要',
+      'エンタープライズ統合特化・個人のAI管理は別途必要',
+      'SAP/Sageと比較してスタートアップ・中小企業への導入コストが過大',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ERP・財務・CRM・在庫・HR・eコマース・BI統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'paylocity': const _CompetitorInfo(
+    name: 'Paylocity',
+    emoji: '💼',
+    tagline: 'クラウド給与・HCM・従業員エンゲージメント統合プラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Paylocity代替 給与 HCM 従業員管理 Gusto代替 Rippling代替 ADP代替',
+    accentColor: Color(0xFF005D8E),
+    painPoints: [
+      '月額従業員数課金・HR特化・個人のライフ管理は別途必要',
+      '給与/HCM特化・個人のAI管理は別途必要',
+      'Rippling/Gustoと比較して中小企業向けのセルフサービス・価格透明性が低い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '給与・時間管理・ベネフィット・採用・パフォーマンス・エンゲージメント',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'justworks': const _CompetitorInfo(
+    name: 'Justworks',
+    emoji: '🔧',
+    tagline: 'スタートアップ向けPEO・給与・ベネフィット・HR一元管理で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Justworks代替 PEO 給与 ベネフィット HR Gusto代替 Rippling代替 スタートアップ',
+    accentColor: Color(0xFF2453FF),
+    painPoints: [
+      '月額59ドル/人〜・PEO特化・個人のライフ管理は別途必要',
+      '小規模チームHR特化・個人のAI管理は別途必要',
+      'Rippling/Gustoと比較してグローバル雇用・ITデバイス管理が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'PEO・給与・健康保険・コンプライアンス・退職金・HR',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'remofirst': const _CompetitorInfo(
+    name: 'RemoteFirst',
+    emoji: '🌍',
+    tagline: 'グローバル採用EOR・給与・コンプライアンス低価格代替で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'RemoteFirst代替 EOR グローバル採用 海外給与 コンプライアンス Remote代替 Deel代替',
+    accentColor: Color(0xFF4CAF50),
+    painPoints: [
+      '月額199ドル/人〜・グローバルHR特化・個人のライフ管理は別途必要',
+      'EOR海外雇用特化・個人のAI管理は別途必要',
+      'Deel/Remoteと比較してネットワークカバレッジ・機能の深さが限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'EOR・グローバル給与・コントラクター管理・ビザサポート',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'pleo': const _CompetitorInfo(
+    name: 'Pleo',
+    emoji: '💳',
+    tagline: '企業カード・経費管理・請求書自動処理ヨーロッパ向けで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Pleo代替 企業カード 経費管理 請求書 ヨーロッパ Spendesk代替 Brex代替',
+    accentColor: Color(0xFF00D4AA),
+    painPoints: [
+      '月額45ユーロ〜・欧州経費特化・個人のライフ管理は別途必要',
+      '企業支出管理特化・個人のAI管理は別途必要',
+      'Brex/Rampと比較して北米市場への展開・統合エコシステムが限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '企業カード・リアルタイム支出・請求書処理・会計連携・ウォレット',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'spendesk': const _CompetitorInfo(
+    name: 'Spendesk',
+    emoji: '🧾',
+    tagline: '企業支出管理・仮想カード・請求書・予算管理オールインワンで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Spendesk代替 企業支出管理 仮想カード 請求書 予算管理 Pleo代替 Brex代替',
+    accentColor: Color(0xFF6200EA),
+    painPoints: [
+      '月額高価格・支出管理特化・個人のライフ管理は別途必要',
+      '企業財務ガバナンス特化・個人のAI管理は別途必要',
+      'Pleo/Rampと比較して北米向け機能・リアルタイム分析が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '仮想/物理カード・請求書承認・経費精算・予算設定・会計連携',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'bench-co': const _CompetitorInfo(
+    name: 'Bench',
+    emoji: '📊',
+    tagline: 'スモールビジネス向け月次ブックキーピング代行サービスで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Bench代替 ブックキーピング 記帳代行 中小企業 税務 Wave代替 QuickBooks代替',
+    accentColor: Color(0xFF1E4D3B),
+    painPoints: [
+      '月額249ドル〜・記帳代行特化・個人のライフ管理は別途必要',
+      'ブックキーピング特化・個人のAI管理は別途必要',
+      'Wave/Xeroと比較してセルフサービス・DIY経営には不適',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '月次帳簿・財務レポート・税務準備・専任会計士・Catchup',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
