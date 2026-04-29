@@ -1,7 +1,7 @@
 ---
 title: "Supabase AI・Vector 上級編 — pgvector・Embedding・RAG・Semantic Caching の実装"
 tags: flutter,dart,個人開発,AI
-published: false
+published: true
 ---
 
 # Supabase AI・Vector 上級編 — pgvector・Embedding・RAG・Semantic Caching の実装
