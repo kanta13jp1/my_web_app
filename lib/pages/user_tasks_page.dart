@@ -320,9 +320,8 @@ class _UserTasksPageState extends State<UserTasksPage> {
       if (data is Map && data['error'] != null) {
         throw Exception(data['error']);
       }
-      final payload = data is Map
-          ? Map<String, dynamic>.from(data)
-          : <String, dynamic>{};
+      final payload =
+          data is Map ? Map<String, dynamic>.from(data) : <String, dynamic>{};
       final guidanceRaw = payload['guidance'];
       final guidance = guidanceRaw is Map
           ? Map<String, dynamic>.from(guidanceRaw)
@@ -636,14 +635,12 @@ class _UserTaskCard extends StatelessWidget {
                   label: const Text('着手'),
                 ),
                 OutlinedButton.icon(
-                  onPressed:
-                      saving || completed || aiBusy ? null : onBreakdown,
+                  onPressed: saving || completed || aiBusy ? null : onBreakdown,
                   icon: const Icon(Icons.account_tree_outlined),
                   label: const Text('タスク分割'),
                 ),
                 OutlinedButton.icon(
-                  onPressed:
-                      saving || completed || aiBusy ? null : onProcedure,
+                  onPressed: saving || completed || aiBusy ? null : onProcedure,
                   icon: const Icon(Icons.menu_book_outlined),
                   label: const Text('手順を見る'),
                 ),
@@ -804,7 +801,7 @@ class _AiAssistDialogState extends State<_AiAssistDialog> {
           'status': 'pending',
           'progress': 0,
           'milestone_code': parent['milestone_code'],
-        });
+        },);
         success++;
       } catch (e) {
         failed++;
@@ -821,7 +818,7 @@ class _AiAssistDialogState extends State<_AiAssistDialog> {
       messenger.showSnackBar(SnackBar(
         content: Text('✅ $success 件のサブタスクを登録しました'),
         duration: const Duration(seconds: 3),
-      ));
+      ),);
       Navigator.pop(context);
       widget.onTasksRegistered();
     } else {
@@ -830,7 +827,7 @@ class _AiAssistDialogState extends State<_AiAssistDialog> {
           '⚠ $success 件成功 / $failed 件失敗\n${errors.join('\n')}',
         ),
         duration: const Duration(seconds: 8),
-      ));
+      ),);
     }
   }
 
@@ -1086,7 +1083,9 @@ class _AiAssistDialogState extends State<_AiAssistDialog> {
           color: Theme.of(context).colorScheme.outlineVariant,
         ),
         borderRadius: BorderRadius.circular(8),
-        color: Theme.of(context).colorScheme.surfaceContainerHighest
+        color: Theme.of(context)
+            .colorScheme
+            .surfaceContainerHighest
             .withValues(alpha: 0.45),
       ),
       child: Padding(
