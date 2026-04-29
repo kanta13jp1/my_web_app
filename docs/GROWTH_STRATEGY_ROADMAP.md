@@ -24726,3 +24726,28 @@ SECOND_BRAIN 4.5/7 + VIBE 7.0/7 + PLATFORM 4.0/7 = 14.5/21 + cross-instance-pr �
 
 ### commit
 (本 commit にて確定)
+
+## PS#5 S105 — async safety 補完: mounted check 3 pages (2026-04-29)
+
+### 対象ファイル (3件)
+- `lib/pages/danshari_page.dart`: `_fetchStaleNotes()` / `_processNote()` — await 後 setState 2箇所に `if (!mounted) return;` 追加
+- `lib/pages/personality_test_questions_page.dart`: `_loadQuestions()` / `_answerQuestion()` catch / `_completeTest()` catch — 4箇所修正 (`if(mounted){...setState}` → `if(!mounted)return; setState`)
+- `lib/pages/personality_test_result_page.dart`: `_loadResult()` try / catch — 2箇所修正
+
+### commit: 5947dc8d6
+### migration: 20260429090100_seed_achievements_ps5_s105.sql (090000 collision回避で090100へリネーム)
+
+## PS#5 S106 — widget async safety: api_key_status_banner.dart (2026-04-29)
+
+### 対象ファイル (1件)
+- `lib/widgets/api_key_status_banner.dart`: `_load()` — await functions.invoke 後 2箇所 `if (!mounted) return;` 追加
+  - data is Map<String,dynamic> → setState 前
+  - catch ブロック → setState 前
+
+### migration collision解消
+- `20260429057100`: ps5_s97 (057000 → collision回避)
+- `20260429075100`: ps5_s101 (075000 → collision回避)
+- `20260429090100`: ps5_s105 (090000 → collision回避)
+
+### commit: 958a61659 (cherry-pick: 0fde70ec1 on main)
+### migration: 20260429095000_seed_achievements_ps5_s106.sql

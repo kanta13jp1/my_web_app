@@ -69,6 +69,7 @@ class _DataBackupPageState extends State<DataBackupPage> {
         _lastBackup = list.isNotEmpty ? list.first : null;
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() => _error = e.toString());
     } finally {
       if (mounted) setState(() => _loading = false);

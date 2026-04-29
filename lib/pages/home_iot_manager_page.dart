@@ -57,6 +57,7 @@ class _HomeIotManagerPageState extends State<HomeIotManagerPage>
         _automations = _toList(autoRes.data, 'automations');
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() => _errorMessage = '$e');
     } finally {
       if (mounted) setState(() => _isLoading = false);

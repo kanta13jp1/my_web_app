@@ -840,6 +840,7 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
         });
       }
     } catch (_) {
+      if (!mounted) return;
       setState(() {
         _presets = [
           'acoustic_fingerpicking',

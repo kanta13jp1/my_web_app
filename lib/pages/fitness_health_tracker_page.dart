@@ -102,6 +102,7 @@ class _FitnessHealthTrackerPageState extends State<FitnessHealthTrackerPage>
         }
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() => _errorMessage = '$e');
     } finally {
       if (mounted) setState(() => _isLoading = false);

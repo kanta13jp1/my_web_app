@@ -75,6 +75,7 @@ class _LegalComplianceManagerPageState extends State<LegalComplianceManagerPage>
         _checklist = _toList(chRes.data, 'items');
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() => _errorMessage = '$e');
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -159,6 +160,7 @@ class _LegalComplianceManagerPageState extends State<LegalComplianceManagerPage>
         _harveySources = sources;
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _harveyError = '$e';
         _harveyResponse = null;

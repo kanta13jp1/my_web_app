@@ -74,6 +74,7 @@ class _RecipeMealPlannerPageState extends State<RecipeMealPlannerPage>
         _shoppingList = [];
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() => _errorMessage = '$e');
     } finally {
       if (mounted) setState(() => _isLoading = false);

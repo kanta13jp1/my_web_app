@@ -116,6 +116,7 @@ class _AiPresentationBuilderPageState extends State<AiPresentationBuilderPage> {
         }
       }
     } catch (e) {
+      if (!mounted) return;
       setState(() => _error = 'AI生成に失敗しました: $e');
     } finally {
       if (mounted) setState(() => _generating = false);

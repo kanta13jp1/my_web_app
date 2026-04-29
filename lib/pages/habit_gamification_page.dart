@@ -90,6 +90,7 @@ class _HabitGamificationPageState extends State<HabitGamificationPage>
         }
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() => _errorMessage = '$e');
     } finally {
       setState(() => _isLoading = false);

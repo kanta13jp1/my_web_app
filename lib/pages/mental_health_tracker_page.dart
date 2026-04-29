@@ -57,6 +57,7 @@ class _MentalHealthTrackerPageState extends State<MentalHealthTrackerPage> {
           .limit(30);
       setState(() => _records = (data as List).cast<Map<String, dynamic>>());
     } catch (e) {
+      if (!mounted) return;
       setState(() => _error = e.toString());
     } finally {
       if (mounted) setState(() => _loading = false);

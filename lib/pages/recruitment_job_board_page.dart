@@ -58,6 +58,7 @@ class _RecruitmentJobBoardPageState extends State<RecruitmentJobBoardPage>
         _applicants = _toList(appRes.data, 'applicants');
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() => _errorMessage = '$e');
     } finally {
       if (mounted) setState(() => _isLoading = false);

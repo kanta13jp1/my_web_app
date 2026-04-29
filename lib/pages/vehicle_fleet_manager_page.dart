@@ -64,6 +64,7 @@ class _VehicleFleetManagerPageState extends State<VehicleFleetManagerPage>
         _maintenance = _toList(mRes.data, 'maintenance');
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() => _errorMessage = '$e');
     } finally {
       if (mounted) setState(() => _isLoading = false);

@@ -36,6 +36,7 @@ class _DailyJudgmentPageState extends State<DailyJudgmentPage> {
         _result = data is Map<String, dynamic> ? data : null;
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() => _error = e.toString());
     } finally {
       if (mounted) setState(() => _loading = false);
