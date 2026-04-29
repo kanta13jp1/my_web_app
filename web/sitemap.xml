@@ -3031,4 +3031,13 @@
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
+  <url><loc>https://my-web-app-b67f4.web.app/vs-rakuraku-seisan</loc></url>
+  <url><loc>https://my-web-app-b67f4.web.app/vs-talentpalette</loc></url>
+  <url><loc>https://my-web-app-b67f4.web.app/vs-techacademy</loc></url>
+  <url><loc>https://my-web-app-b67f4.web.app/vs-mindmeister</loc></url>
+  <url><loc>https://my-web-app-b67f4.web.app/vs-xmind</loc></url>
+  <url><loc>https://my-web-app-b67f4.web.app/vs-omnivore</loc></url>
+  <url><loc>https://my-web-app-b67f4.web.app/vs-raindrop-io</loc></url>
+  <url><loc>https://my-web-app-b67f4.web.app/vs-habitify</loc></url>
+  <url><loc>https://my-web-app-b67f4.web.app/vs-structured-app</loc></url>
 </urlset>
