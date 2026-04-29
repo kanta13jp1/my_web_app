@@ -45355,40 +45355,6 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
-  'anki': const _CompetitorInfo(
-    name: 'Anki',
-    emoji: '🃏',
-    tagline: 'OSS間隔反復フラッシュカード・100万デッキ共有・AnkiWeb同期・医学/語学/資格で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Anki代替 フラッシュカード SRS 間隔反復 OSS 医学勉強 語学学習 Quizlet代替',
-    accentColor: Color(0xFF0055CC),
-    painPoints: [
-      'PC無料/iOS25ドル・フラッシュカード特化・個人のライフ管理は別途必要',
-      '暗記特化・個人のAI管理は別途必要',
-      'Quizlet/Brainscape/RemNoteと比較してUI古い・モバイルコスト・カード作成手間が問題',
-    ],
-    features: [
-      _FeatureComparison(
-        feature: 'OSS・100万デッキ・AnkiWeb同期・カスタムアドオン・医学/語学/資格対応',
-        competitorHas: true,
-        weHave: false,
-      ),
-      _FeatureComparison(
-        feature: 'AI支援個人管理',
-        competitorHas: false,
-        weHave: true,
-      ),
-      _FeatureComparison(
-        feature: '財務管理統合',
-        competitorHas: false,
-        weHave: true,
-      ),
-      _FeatureComparison(
-        feature: '完全無料',
-        competitorHas: false,
-        weHave: true,
-      ),
-    ],
-  ),
   'ulysses': const _CompetitorInfo(
     name: 'Ulysses',
     emoji: '✍️',
@@ -45711,7 +45677,8 @@ final _competitorInfo = <String, _CompetitorInfo>{
     name: 'Zoho Projects',
     emoji: '📋',
     tagline: 'Zohoエコシステム統合プロジェクト管理・Gantt・タイムシート・課題追跡・無料プランで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Zoho Projects代替 プロジェクト管理 Zoho Gantt タイムシート Asana代替 Monday代替',
+    searchKeyword:
+        'Zoho Projects代替 プロジェクト管理 Zoho Gantt タイムシート Asana代替 Monday代替',
     accentColor: Color(0xFFE84D1C),
     painPoints: [
       '無料(3ユーザー)/有料月5ドル~・プロジェクト管理特化・個人のライフ管理は別途必要',
@@ -45847,7 +45814,8 @@ final _competitorInfo = <String, _CompetitorInfo>{
     name: 'ActiveCollab',
     emoji: '⚡',
     tagline: 'セルフホスト可能PMツール・タイムシート・請求・タスク・チームコラボで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'ActiveCollab代替 セルフホスト PM タイムシート 請求 フリーランス エージェンシー Basecamp代替',
+    searchKeyword:
+        'ActiveCollab代替 セルフホスト PM タイムシート 請求 フリーランス エージェンシー Basecamp代替',
     accentColor: Color(0xFFD32F2F),
     painPoints: [
       '有料月7ドル~/セルフホスト可・PM+請求特化・個人のライフ管理は別途必要',
@@ -45880,7 +45848,8 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'freedcamp': const _CompetitorInfo(
     name: 'Freedcamp',
     emoji: '🏕️',
-    tagline: '無料プロジェクト管理・タスク/Gantt/カレンダー/Discussions・小チーム向け・シンプルで、なぜ「自分株式会社」を選ぶか。',
+    tagline:
+        '無料プロジェクト管理・タスク/Gantt/カレンダー/Discussions・小チーム向け・シンプルで、なぜ「自分株式会社」を選ぶか。',
     searchKeyword: 'Freedcamp代替 無料プロジェクト管理 小チーム Gantt タスク管理 Asana代替 Basecamp代替',
     accentColor: Color(0xFF388E3C),
     painPoints: [
@@ -45915,7 +45884,8 @@ final _competitorInfo = <String, _CompetitorInfo>{
     name: 'TeamGantt',
     emoji: '📊',
     tagline: 'Ganttチャート専門PM・ドラッグ&ドロップ・依存関係・リソース管理・無料プランで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'TeamGantt代替 Ganttチャート プロジェクト管理 依存関係 リソース管理 Microsoft Project代替',
+    searchKeyword:
+        'TeamGantt代替 Ganttチャート プロジェクト管理 依存関係 リソース管理 Microsoft Project代替',
     accentColor: Color(0xFF1976D2),
     painPoints: [
       '無料(1ユーザー)/有料月19ドル~・Gantt特化・個人のライフ管理は別途必要',
@@ -45948,8 +45918,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'meistertask': const _CompetitorInfo(
     name: 'MeisterTask',
     emoji: '⭐',
-    tagline: 'Kanban特化PM・MindMeister統合・自動化・タイムラインビュー・ドイツ系プライバシーで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'MeisterTask代替 Kanban プロジェクト管理 MindMeister 自動化 Trello代替 Asana代替',
+    tagline:
+        'Kanban特化PM・MindMeister統合・自動化・タイムラインビュー・ドイツ系プライバシーで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'MeisterTask代替 Kanban プロジェクト管理 MindMeister 自動化 Trello代替 Asana代替',
     accentColor: Color(0xFF27AE60),
     painPoints: [
       '無料/Pro月7ドル~・Kanban PM特化・個人のライフ管理は別途必要',
@@ -46017,7 +45989,8 @@ final _competitorInfo = <String, _CompetitorInfo>{
     name: 'Salesflare',
     emoji: '🔥',
     tagline: '自動データ入力CRM・LinkedInデータ取込・メール追跡・スタートアップ/SMB向けで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Salesflare代替 CRM 自動データ入力 LinkedIn メール追跡 スタートアップ Pipedrive代替',
+    searchKeyword:
+        'Salesflare代替 CRM 自動データ入力 LinkedIn メール追跡 スタートアップ Pipedrive代替',
     accentColor: Color(0xFFFF5722),
     painPoints: [
       '有料月29ドル~・CRM特化・個人のライフ管理は別途必要',
@@ -46085,7 +46058,8 @@ final _competitorInfo = <String, _CompetitorInfo>{
     name: 'Bigin by Zoho',
     emoji: '📱',
     tagline: 'Zoho製小規模ビジネス向けシンプルCRM・パイプライン・モバイルファースト・月7ドル~で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Bigin代替 シンプルCRM 小規模ビジネス Zoho パイプライン モバイル HubSpot代替 Pipedrive代替',
+    searchKeyword:
+        'Bigin代替 シンプルCRM 小規模ビジネス Zoho パイプライン モバイル HubSpot代替 Pipedrive代替',
     accentColor: Color(0xFFE64A19),
     painPoints: [
       '無料/Pro月7ドル~・CRM特化・個人のライフ管理は別途必要',
@@ -46119,7 +46093,8 @@ final _competitorInfo = <String, _CompetitorInfo>{
     name: 'Salesmate',
     emoji: '🤝',
     tagline: 'AI搭載CRM・Sandy AIアシスト・通話/SMS内蔵・自動化・中小企業向けで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Salesmate代替 AI CRM Sandy 通話 SMS 自動化 中小企業 Pipedrive代替 HubSpot代替',
+    searchKeyword:
+        'Salesmate代替 AI CRM Sandy 通話 SMS 自動化 中小企業 Pipedrive代替 HubSpot代替',
     accentColor: Color(0xFF1565C0),
     painPoints: [
       '有料月23ドル~・CRM特化・個人のライフ管理は別途必要',
@@ -46221,7 +46196,8 @@ final _competitorInfo = <String, _CompetitorInfo>{
     name: 'Less Annoying CRM',
     emoji: '😊',
     tagline: '月15ドル均一・シンプルCRM・中小企業向け・複雑さゼロ・無料トライアル30日で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Less Annoying CRM代替 シンプルCRM 月15ドル 中小企業 低価格 HubSpot代替 Zoho代替',
+    searchKeyword:
+        'Less Annoying CRM代替 シンプルCRM 月15ドル 中小企業 低価格 HubSpot代替 Zoho代替',
     accentColor: Color(0xFF66BB6A),
     painPoints: [
       '均一月15ドル/ユーザー・シンプルCRM特化・個人のライフ管理は別途必要',
@@ -46289,7 +46265,8 @@ final _competitorInfo = <String, _CompetitorInfo>{
     name: 'Act! CRM',
     emoji: '📇',
     tagline: '1987年創業老舗CRM・コンタクト管理・マーケティングオートメーション・SMB向けで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Act! CRM代替 老舗CRM コンタクト管理 マーケティング 中小企業 Goldmine代替 Salesforce代替',
+    searchKeyword:
+        'Act! CRM代替 老舗CRM コンタクト管理 マーケティング 中小企業 Goldmine代替 Salesforce代替',
     accentColor: Color(0xFFBF360C),
     painPoints: [
       '有料月30ドル~・CRM特化・個人のライフ管理は別途必要',
@@ -46356,8 +46333,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'lifesum': const _CompetitorInfo(
     name: 'Lifesum',
     emoji: '🍏',
-    tagline: 'スウェーデン発ダイエットアプリ・食事計画・マクロ/ビタミン・レシピ・Apple Health統合で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Lifesum代替 ダイエット 食事計画 マクロ ビタミン レシピ Apple Health MyFitnessPal代替',
+    tagline:
+        'スウェーデン発ダイエットアプリ・食事計画・マクロ/ビタミン・レシピ・Apple Health統合で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Lifesum代替 ダイエット 食事計画 マクロ ビタミン レシピ Apple Health MyFitnessPal代替',
     accentColor: Color(0xFF4CAF50),
     painPoints: [
       '無料/Premium月7ドル~・食事/健康特化・個人のライフ管理は別途必要',
@@ -46425,7 +46404,8 @@ final _competitorInfo = <String, _CompetitorInfo>{
     name: 'MacroFactor',
     emoji: '📊',
     tagline: 'AIコーチ付きマクロ追跡・適応型カロリー計算・進捗分析・科学的栄養管理で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'MacroFactor代替 マクロ追跡 AIコーチ カロリー計算 科学的栄養管理 MyFitnessPal代替 Cronometer代替',
+    searchKeyword:
+        'MacroFactor代替 マクロ追跡 AIコーチ カロリー計算 科学的栄養管理 MyFitnessPal代替 Cronometer代替',
     accentColor: Color(0xFF512DA8),
     painPoints: [
       '有料月12ドル~・栄養AIコーチ特化・個人のライフ管理は別途必要',
@@ -46459,7 +46439,8 @@ final _competitorInfo = <String, _CompetitorInfo>{
     name: 'Carb Manager',
     emoji: '🥑',
     tagline: 'ケトジェニック/低炭水化物追跡・ケトカリキュレーター・レシピ・コミュニティで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Carb Manager代替 ケトジェニック 低炭水化物 カーボ追跡 ケト計算 Cronometer代替 MyFitnessPal代替',
+    searchKeyword:
+        'Carb Manager代替 ケトジェニック 低炭水化物 カーボ追跡 ケト計算 Cronometer代替 MyFitnessPal代替',
     accentColor: Color(0xFF00796B),
     painPoints: [
       '無料/Premium月9ドル~・ケト食事特化・個人のライフ管理は別途必要',
@@ -46492,8 +46473,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'garmin-connect': const _CompetitorInfo(
     name: 'Garmin Connect',
     emoji: '⌚',
-    tagline: 'Garminウォッチ専用・GPS・VO2Max・Body Battery・トレーニング負荷・無料プラットフォームで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Garmin Connect代替 Garmin GPS トレーニング VO2Max Body Battery スポーツ追跡 Strava代替',
+    tagline:
+        'Garminウォッチ専用・GPS・VO2Max・Body Battery・トレーニング負荷・無料プラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Garmin Connect代替 Garmin GPS トレーニング VO2Max Body Battery スポーツ追跡 Strava代替',
     accentColor: Color(0xFF007DC3),
     painPoints: [
       '無料(Garmin端末必要)・Garminエコ特化・個人のライフ管理は別途必要',
@@ -46526,8 +46509,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'polar-flow': const _CompetitorInfo(
     name: 'Polar Flow',
     emoji: '🏃',
-    tagline: 'Polar製スポーツ/フィットネス追跡・Training Load Pro・Nightly Recharge・心拍ゾーンで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Polar Flow代替 Polar スポーツ 心拍 Training Load フィットネス Garmin代替 Wahoo代替',
+    tagline:
+        'Polar製スポーツ/フィットネス追跡・Training Load Pro・Nightly Recharge・心拍ゾーンで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Polar Flow代替 Polar スポーツ 心拍 Training Load フィットネス Garmin代替 Wahoo代替',
     accentColor: Color(0xFFD50000),
     painPoints: [
       '無料(Polar端末必要)・Polarエコ特化・個人のライフ管理は別途必要',
@@ -46594,8 +46579,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'wahoo': const _CompetitorInfo(
     name: 'Wahoo Fitness',
     emoji: '🚵',
-    tagline: 'サイクリング/ランニングスマートデバイス・SYSTM AIトレーニング・Kickrスマートトレーナーで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Wahoo代替 サイクリング スマートトレーナー SYSTM AIトレーニング ランニング Garmin代替 Zwift代替',
+    tagline:
+        'サイクリング/ランニングスマートデバイス・SYSTM AIトレーニング・Kickrスマートトレーナーで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Wahoo代替 サイクリング スマートトレーナー SYSTM AIトレーニング ランニング Garmin代替 Zwift代替',
     accentColor: Color(0xFFE53935),
     painPoints: [
       '有料(デバイス+SYSTM月15ドル)・サイクリング特化・個人のライフ管理は別途必要',
@@ -46663,7 +46650,8 @@ final _competitorInfo = <String, _CompetitorInfo>{
     name: 'VistaCreate (旧Crello)',
     emoji: '🖼️',
     tagline: 'Canva対抗アニメーションデザイン・50K+テンプレート・動画・SNS最適化・無料で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'VistaCreate Crello代替 アニメーションデザイン テンプレート SNS動画 Canva代替 Adobe Express代替',
+    searchKeyword:
+        'VistaCreate Crello代替 アニメーションデザイン テンプレート SNS動画 Canva代替 Adobe Express代替',
     accentColor: Color(0xFF00ACC1),
     painPoints: [
       '無料/Pro月13ドル~・グラフィック特化・個人のライフ管理は別途必要',
@@ -46765,7 +46753,8 @@ final _competitorInfo = <String, _CompetitorInfo>{
     name: 'Snappa',
     emoji: '⚡',
     tagline: '30秒グラフィック作成・6000テンプレート・写真3M枚・SNS自動投稿でマーケター向けで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Snappa代替 高速グラフィック SNSデザイン テンプレート マーケター Canva代替 Adobe Express代替',
+    searchKeyword:
+        'Snappa代替 高速グラフィック SNSデザイン テンプレート マーケター Canva代替 Adobe Express代替',
     accentColor: Color(0xFF00BCD4),
     painPoints: [
       '無料/Pro月10ドル~・グラフィック作成特化・個人のライフ管理は別途必要',
@@ -46832,7 +46821,8 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'darktable': const _CompetitorInfo(
     name: 'Darktable',
     emoji: '📷',
-    tagline: 'OSS RAW現像・Lightroom代替・非破壊編集・プロ向け色管理・Linux/Mac/Win対応で、なぜ「自分株式会社」を選ぶか。',
+    tagline:
+        'OSS RAW現像・Lightroom代替・非破壊編集・プロ向け色管理・Linux/Mac/Win対応で、なぜ「自分株式会社」を選ぶか。',
     searchKeyword: 'Darktable代替 OSS RAW現像 Lightroom代替 非破壊編集 プロ写真 Linux 色管理 無料',
     accentColor: Color(0xFF212121),
     painPoints: [
@@ -46867,7 +46857,8 @@ final _competitorInfo = <String, _CompetitorInfo>{
     name: 'RawTherapee',
     emoji: '🔬',
     tagline: 'OSS高機能RAW現像・詳細色制御・バッチ処理・Lightroom代替・上級者向けで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'RawTherapee代替 OSS RAW現像 高機能 バッチ処理 色制御 Lightroom代替 Darktable代替',
+    searchKeyword:
+        'RawTherapee代替 OSS RAW現像 高機能 バッチ処理 色制御 Lightroom代替 Darktable代替',
     accentColor: Color(0xFF795548),
     painPoints: [
       '完全無料OSS・RAW現像特化・個人のライフ管理は別途必要',
@@ -46901,7 +46892,8 @@ final _competitorInfo = <String, _CompetitorInfo>{
     name: 'Stencil',
     emoji: '🖼️',
     tagline: 'ソーシャルメディアグラフィック高速作成・2M写真・1000フォント・スケジュール投稿で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Stencil代替 ソーシャルメディア グラフィック 高速 SNS投稿 テンプレート Canva代替 Snappa代替',
+    searchKeyword:
+        'Stencil代替 ソーシャルメディア グラフィック 高速 SNS投稿 テンプレート Canva代替 Snappa代替',
     accentColor: Color(0xFFFF5722),
     painPoints: [
       '無料(10画像/月)/Pro月9ドル~・SNSグラフィック特化・個人のライフ管理は別途必要',
@@ -46969,7 +46961,8 @@ final _competitorInfo = <String, _CompetitorInfo>{
     name: 'Code Climate',
     emoji: '🌡️',
     tagline: 'コード品質・テストカバレッジ・技術的負債・エンジニア生産性分析・Velocityで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Code Climate代替 コード品質 テストカバレッジ 生産性 Velocity SonarQube代替 静的解析',
+    searchKeyword:
+        'Code Climate代替 コード品質 テストカバレッジ 生産性 Velocity SonarQube代替 静的解析',
     accentColor: Color(0xFF48A860),
     painPoints: [
       'OSS無料/有料月900ドル~・コード品質特化・個人のライフ管理は別途必要',
@@ -47071,7 +47064,8 @@ final _competitorInfo = <String, _CompetitorInfo>{
     name: 'Coveralls',
     emoji: '🧪',
     tagline: 'テストカバレッジ追跡・GitHub/GitLab統合・Badge・PR差分・OSS無料で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Coveralls代替 テストカバレッジ GitHub GitLab Badge OSS Codecov代替 テスト品質',
+    searchKeyword:
+        'Coveralls代替 テストカバレッジ GitHub GitLab Badge OSS Codecov代替 テスト品質',
     accentColor: Color(0xFF00BFA5),
     painPoints: [
       'OSS無料/有料月10ドル~/月・テストカバレッジ特化・個人のライフ管理は別途必要',
@@ -47104,8 +47098,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'veracode': const _CompetitorInfo(
     name: 'Veracode',
     emoji: '🔒',
-    tagline: 'エンタープライズAST・SAST/DAST/SCA/IAST統合・コンプライアンス対応・FortifyとSCA競合で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Veracode代替 SAST DAST SCA エンタープライズ セキュリティ コンプライアンス Fortify代替 Checkmarx代替',
+    tagline:
+        'エンタープライズAST・SAST/DAST/SCA/IAST統合・コンプライアンス対応・FortifyとSCA競合で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Veracode代替 SAST DAST SCA エンタープライズ セキュリティ コンプライアンス Fortify代替 Checkmarx代替',
     accentColor: Color(0xFF1A237E),
     painPoints: [
       '有料(高価格)・エンタープライズセキュリティ特化・個人のライフ管理は別途必要',
@@ -47138,8 +47134,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'fortify': const _CompetitorInfo(
     name: 'Fortify (OpenText)',
     emoji: '🛡️',
-    tagline: 'OpenText製エンタープライズSAST・27言語・CI/CD統合・AIアシスト・金融/政府対応で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Fortify代替 SAST エンタープライズ OpenText 27言語 金融 政府 セキュリティ Veracode代替',
+    tagline:
+        'OpenText製エンタープライズSAST・27言語・CI/CD統合・AIアシスト・金融/政府対応で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Fortify代替 SAST エンタープライズ OpenText 27言語 金融 政府 セキュリティ Veracode代替',
     accentColor: Color(0xFF0277BD),
     painPoints: [
       '有料(高価格)・SAST特化・個人のライフ管理は別途必要',
@@ -47173,7 +47171,8 @@ final _competitorInfo = <String, _CompetitorInfo>{
     name: 'Contrast Security',
     emoji: '⚔️',
     tagline: 'IAST/RASP・ランタイムセキュリティ・エージェント型・リアルタイム脆弱性検出で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Contrast Security代替 IAST RASP ランタイムセキュリティ エージェント型 脆弱性 Snyk代替 Veracode代替',
+    searchKeyword:
+        'Contrast Security代替 IAST RASP ランタイムセキュリティ エージェント型 脆弱性 Snyk代替 Veracode代替',
     accentColor: Color(0xFF880E4F),
     painPoints: [
       '有料・ランタイムAST特化・個人のライフ管理は別途必要',
@@ -47342,8 +47341,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'vagrant': const _CompetitorInfo(
     name: 'Vagrant',
     emoji: '📦',
-    tagline: 'HashiCorp製開発環境仮想化・VagrantBox・プロビジョニング自動化・チーム統一環境で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Vagrant代替 開発環境 仮想化 VagrantBox HashiCorp Docker代替 Dev Container代替',
+    tagline:
+        'HashiCorp製開発環境仮想化・VagrantBox・プロビジョニング自動化・チーム統一環境で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Vagrant代替 開発環境 仮想化 VagrantBox HashiCorp Docker代替 Dev Container代替',
     accentColor: Color(0xFF1563FF),
     painPoints: [
       '無料OSS・仮想環境特化・個人のライフ管理は別途必要',
@@ -47376,8 +47377,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'packer': const _CompetitorInfo(
     name: 'Packer (HashiCorp)',
     emoji: '🏗️',
-    tagline: 'マシンイメージ自動構築・マルチプラットフォーム・CI統合・AMI/VMware/Docker対応で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Packer代替 マシンイメージ AMI VMware Docker HashiCorp CI統合 イミュータブルインフラ',
+    tagline:
+        'マシンイメージ自動構築・マルチプラットフォーム・CI統合・AMI/VMware/Docker対応で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Packer代替 マシンイメージ AMI VMware Docker HashiCorp CI統合 イミュータブルインフラ',
     accentColor: Color(0xFF02A8EF),
     painPoints: [
       '無料OSS・イメージ構築特化・個人のライフ管理は別途必要',
@@ -47445,7 +47448,8 @@ final _competitorInfo = <String, _CompetitorInfo>{
     name: 'Vault (HashiCorp)',
     emoji: '🔑',
     tagline: 'シークレット管理・動的認証情報・PKI・暗号化サービス・ゼロトラスト基盤で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'HashiCorp Vault代替 シークレット管理 動的認証情報 PKI 暗号化 ゼロトラスト AWS Secrets代替',
+    searchKeyword:
+        'HashiCorp Vault代替 シークレット管理 動的認証情報 PKI 暗号化 ゼロトラスト AWS Secrets代替',
     accentColor: Color(0xFFFFD814),
     painPoints: [
       '無料OSS/HCP有料・シークレット管理特化・個人のライフ管理は別途必要',
@@ -47478,8 +47482,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'crossplane': const _CompetitorInfo(
     name: 'Crossplane',
     emoji: '✂️',
-    tagline: 'Kubernetes上クラウドリソース管理・Control Plane・マルチクラウドIaC・OSS・CNCF承認で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Crossplane代替 Kubernetes クラウドリソース IaC マルチクラウド OSS CNCF Terraform代替',
+    tagline:
+        'Kubernetes上クラウドリソース管理・Control Plane・マルチクラウドIaC・OSS・CNCF承認で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Crossplane代替 Kubernetes クラウドリソース IaC マルチクラウド OSS CNCF Terraform代替',
     accentColor: Color(0xFF326CE5),
     painPoints: [
       '完全無料OSS・K8s上IaC特化・個人のライフ管理は別途必要',
@@ -47512,7 +47518,8 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'opentofu': const _CompetitorInfo(
     name: 'OpenTofu',
     emoji: '🫘',
-    tagline: 'Terraformオープンフォーク・CNCF承認・BSL変更後のOSS代替・完全互換・Linux Foundation管理で、なぜ「自分株式会社」を選ぶか。',
+    tagline:
+        'Terraformオープンフォーク・CNCF承認・BSL変更後のOSS代替・完全互換・Linux Foundation管理で、なぜ「自分株式会社」を選ぶか。',
     searchKeyword: 'OpenTofu代替 Terraform OSS フォーク CNCF BSL変更 IaC インフラ Pulumi代替',
     accentColor: Color(0xFF7B42BC),
     painPoints: [
@@ -47547,7 +47554,8 @@ final _competitorInfo = <String, _CompetitorInfo>{
     name: 'New Relic',
     emoji: '📡',
     tagline: 'フルスタックオブザーバビリティ・APM・ログ/メトリクス/トレース統合・無料100GBで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'New Relic代替 APM オブザーバビリティ ログ メトリクス トレース Datadog代替 Dynatrace代替',
+    searchKeyword:
+        'New Relic代替 APM オブザーバビリティ ログ メトリクス トレース Datadog代替 Dynatrace代替',
     accentColor: Color(0xFF1CE783),
     painPoints: [
       '無料100GB/有料(GBベース)・APM特化・個人のライフ管理は別途必要',
@@ -47581,7 +47589,8 @@ final _competitorInfo = <String, _CompetitorInfo>{
     name: 'VictoriaMetrics',
     emoji: '⚡',
     tagline: 'Prometheus互換高性能TSDB・低メモリ・高圧縮・長期保存・OSS/クラウドで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'VictoriaMetrics代替 Prometheus互換 TSDB 高性能 低メモリ 長期保存 Thanos代替 Cortex代替',
+    searchKeyword:
+        'VictoriaMetrics代替 Prometheus互換 TSDB 高性能 低メモリ 長期保存 Thanos代替 Cortex代替',
     accentColor: Color(0xFF0063F7),
     painPoints: [
       'OSS無料/クラウド有料・メトリクス特化・個人のライフ管理は別途必要',
@@ -47648,8 +47657,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'loki': const _CompetitorInfo(
     name: 'Loki (Grafana)',
     emoji: '📜',
-    tagline: 'Grafana製ログ集約・Prometheus like・低コスト・インデックスなし・Kubernetes統合で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Grafana Loki代替 ログ集約 Elasticsearch代替 低コスト インデックスなし Kubernetes ログ管理',
+    tagline:
+        'Grafana製ログ集約・Prometheus like・低コスト・インデックスなし・Kubernetes統合で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Grafana Loki代替 ログ集約 Elasticsearch代替 低コスト インデックスなし Kubernetes ログ管理',
     accentColor: Color(0xFFF46800),
     painPoints: [
       'OSS無料/クラウド有料・ログ収集特化・個人のライフ管理は別途必要',
@@ -47682,8 +47693,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'tempo': const _CompetitorInfo(
     name: 'Tempo (Grafana)',
     emoji: '🎵',
-    tagline: 'Grafana製分散トレーシング・低コスト・オブジェクトストレージ・Jaeger/Zipkin互換で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Grafana Tempo代替 分散トレーシング 低コスト Jaeger代替 Zipkin代替 OpenTelemetry Grafana統合',
+    tagline:
+        'Grafana製分散トレーシング・低コスト・オブジェクトストレージ・Jaeger/Zipkin互換で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Grafana Tempo代替 分散トレーシング 低コスト Jaeger代替 Zipkin代替 OpenTelemetry Grafana統合',
     accentColor: Color(0xFF9B59B6),
     painPoints: [
       'OSS無料/クラウド有料・トレーシング特化・個人のライフ管理は別途必要',
@@ -47784,8 +47797,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'vector-dev': const _CompetitorInfo(
     name: 'Vector',
     emoji: '🔄',
-    tagline: 'DataDog製高性能オブザーバビリティパイプライン・ログ/メトリクス/トレース・Rust実装・OSS で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Vector代替 オブザーバビリティパイプライン ログ メトリクス トレース DataDog Rust Fluentd代替 Logstash代替',
+    tagline:
+        'DataDog製高性能オブザーバビリティパイプライン・ログ/メトリクス/トレース・Rust実装・OSS で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Vector代替 オブザーバビリティパイプライン ログ メトリクス トレース DataDog Rust Fluentd代替 Logstash代替',
     accentColor: Color(0xFF10E7FF),
     painPoints: [
       '完全無料OSS・データパイプライン特化・個人のライフ管理は別途必要',
@@ -47818,8 +47833,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'telegraf': const _CompetitorInfo(
     name: 'Telegraf',
     emoji: '📊',
-    tagline: 'InfluxDB製メトリクス収集エージェント・300+プラグイン・システム/IoT/クラウド対応・OSS で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Telegraf代替 メトリクス収集 300プラグイン InfluxDB IoT クラウド Prometheus代替 Collectd代替',
+    tagline:
+        'InfluxDB製メトリクス収集エージェント・300+プラグイン・システム/IoT/クラウド対応・OSS で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Telegraf代替 メトリクス収集 300プラグイン InfluxDB IoT クラウド Prometheus代替 Collectd代替',
     accentColor: Color(0xFF22ADF6),
     painPoints: [
       '完全無料OSS・メトリクス収集特化・個人のライフ管理は別途必要',
@@ -47852,8 +47869,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'huggingface': const _CompetitorInfo(
     name: 'Hugging Face',
     emoji: '🤗',
-    tagline: 'AIモデルHub・Spaces・Datasets・Transformers・OSS AI生態系の中心で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Hugging Face代替 AIモデル Hub Spaces Transformers OSS GitHub for AI Replicate代替',
+    tagline:
+        'AIモデルHub・Spaces・Datasets・Transformers・OSS AI生態系の中心で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Hugging Face代替 AIモデル Hub Spaces Transformers OSS GitHub for AI Replicate代替',
     accentColor: Color(0xFFFFD21E),
     painPoints: [
       '無料/Pro月9ドル~・AIモデル共有特化・個人のライフ管理は別途必要',
@@ -47886,8 +47905,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'cohere-api': const _CompetitorInfo(
     name: 'Cohere',
     emoji: '🔗',
-    tagline: 'エンタープライズLLM・Command/Embed/Rerank・RAG特化・プライベートデプロイで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Cohere代替 エンタープライズLLM Command Embed Rerank RAG OpenAI代替 Anthropic代替',
+    tagline:
+        'エンタープライズLLM・Command/Embed/Rerank・RAG特化・プライベートデプロイで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Cohere代替 エンタープライズLLM Command Embed Rerank RAG OpenAI代替 Anthropic代替',
     accentColor: Color(0xFF39594A),
     painPoints: [
       '有料(APIベース)・エンタープライズLLM特化・個人のライフ管理は別途必要',
@@ -47921,7 +47942,8 @@ final _competitorInfo = <String, _CompetitorInfo>{
     name: 'Groq',
     emoji: '⚡',
     tagline: 'LPU超高速推論・低レイテンシ・Llama/Mixtral/Gemma・開発者API・無料枠で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Groq代替 LPU超高速推論 低レイテンシ Llama Mixtral 高速API OpenAI代替 Together AI代替',
+    searchKeyword:
+        'Groq代替 LPU超高速推論 低レイテンシ Llama Mixtral 高速API OpenAI代替 Together AI代替',
     accentColor: Color(0xFFF55036),
     painPoints: [
       '無料枠/有料・推論API特化・個人のライフ管理は別途必要',
@@ -47954,7 +47976,8 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'deepseek-api': const _CompetitorInfo(
     name: 'DeepSeek',
     emoji: '🔭',
-    tagline: '中国発高コスパLLM・DeepSeek-V3/R1・OpenAI互換API・OSS・超低コスト推論で、なぜ「自分株式会社」を選ぶか。',
+    tagline:
+        '中国発高コスパLLM・DeepSeek-V3/R1・OpenAI互換API・OSS・超低コスト推論で、なぜ「自分株式会社」を選ぶか。',
     searchKeyword: 'DeepSeek代替 高コスパLLM OpenAI互換 R1 V3 OSS 低コスト推論 Qwen代替 中国AI',
     accentColor: Color(0xFF006EFF),
     painPoints: [
@@ -47989,7 +48012,8 @@ final _competitorInfo = <String, _CompetitorInfo>{
     name: 'Perplexity AI',
     emoji: '🔎',
     tagline: 'AI検索エンジン・リアルタイムWeb・引用付き回答・Pro検索・APIで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Perplexity代替 AI検索 リアルタイムWeb 引用 Pro検索 ChatGPT代替 Bing Chat代替 Google代替',
+    searchKeyword:
+        'Perplexity代替 AI検索 リアルタイムWeb 引用 Pro検索 ChatGPT代替 Bing Chat代替 Google代替',
     accentColor: Color(0xFF20B2AA),
     painPoints: [
       '無料/Pro月20ドル~・AI検索特化・個人のライフ管理は別途必要',
@@ -48022,7 +48046,8 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'nvidia-nim': const _CompetitorInfo(
     name: 'NVIDIA NIM',
     emoji: '🟢',
-    tagline: 'NVIDIA推論マイクロサービス・最適化コンテナ・GPUアクセラレーション・エンタープライズAI展開で、なぜ「自分株式会社」を選ぶか。',
+    tagline:
+        'NVIDIA推論マイクロサービス・最適化コンテナ・GPUアクセラレーション・エンタープライズAI展開で、なぜ「自分株式会社」を選ぶか。',
     searchKeyword: 'NVIDIA NIM代替 推論マイクロサービス GPU AI展開 エンタープライズ Ollama代替 vLLM代替',
     accentColor: Color(0xFF76B900),
     painPoints: [
@@ -48057,7 +48082,8 @@ final _competitorInfo = <String, _CompetitorInfo>{
     name: 'Vast.ai',
     emoji: '🖥️',
     tagline: '格安GPU クラウドマーケット・個人GPU売買・分散GPU・AI/ML安価推論学習で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Vast.ai代替 格安GPU クラウド AI学習 ML推論 個人GPU市場 RunPod代替 Lambda Labs代替',
+    searchKeyword:
+        'Vast.ai代替 格安GPU クラウド AI学習 ML推論 個人GPU市場 RunPod代替 Lambda Labs代替',
     accentColor: Color(0xFF6C3483),
     painPoints: [
       '有料(従量制安価)・GPU計算特化・個人のライフ管理は別途必要',
@@ -48090,8 +48116,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'coreweave': const _CompetitorInfo(
     name: 'CoreWeave',
     emoji: '⚙️',
-    tagline: 'GPU特化クラウド・Kubernetes・エンタープライズAI/HPC・NVIDIAパートナー・大規模学習で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'CoreWeave代替 GPU特化クラウド Kubernetes AI HPC エンタープライズ AWS代替 Azure代替',
+    tagline:
+        'GPU特化クラウド・Kubernetes・エンタープライズAI/HPC・NVIDIAパートナー・大規模学習で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'CoreWeave代替 GPU特化クラウド Kubernetes AI HPC エンタープライズ AWS代替 Azure代替',
     accentColor: Color(0xFF1B4F72),
     painPoints: [
       '有料(高価格)・GPU特化クラウド特化・個人のライフ管理は別途必要',
@@ -48124,7 +48152,8 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'salad-com': const _CompetitorInfo(
     name: 'Salad.com',
     emoji: '🥗',
-    tagline: '分散GPU推論・遊休GPU活用・低コストAI推論・コンテナマーケット・グリーンコンピューティングで、なぜ「自分株式会社」を選ぶか。',
+    tagline:
+        '分散GPU推論・遊休GPU活用・低コストAI推論・コンテナマーケット・グリーンコンピューティングで、なぜ「自分株式会社」を選ぶか。',
     searchKeyword: 'Salad.com代替 分散GPU 遊休GPU活用 低コスト AI推論 コンテナ グリーン Vast.ai代替',
     accentColor: Color(0xFF2ECC71),
     painPoints: [
