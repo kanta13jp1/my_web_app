@@ -50723,6 +50723,328 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'locofy': const _CompetitorInfo(
+    name: 'Locofy.ai',
+    emoji: '🚀',
+    tagline:
+        'AI Figma→React/Next/Vue/Flutter変換・本番品質コード・デザイン→コード最速で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Locofy代替 AI Figma React Next Vue Flutter変換 本番品質コード Anima代替 Supernova代替',
+    accentColor: Color(0xFF5B21B6),
+    painPoints: [
+      '有料月49ドル~/無料・デザイン→コード特化・個人のライフ管理は別途必要',
+      'フロントエンド特化・個人のAI管理は別途必要',
+      'Anima/Supernova/Builder.io との比較でカスタマイズ深度・CSS品質・複雑UIが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AI Figma→React/Next/Vue/Flutter・本番品質コード・ワンクリック変換・TypeScript',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'builder-io': const _CompetitorInfo(
+    name: 'Builder.io',
+    emoji: '🏗️',
+    tagline:
+        'ビジュアルヘッドレスCMS・Figma Plugin・AIコード生成・React/Next/Astro・ノーコードで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Builder.io代替 ビジュアルCMS ヘッドレス Figma Plugin AIコード生成 React Next ノーコード Contentful代替',
+    accentColor: Color(0xFF1A56DB),
+    painPoints: [
+      '無料/有料月149ドル~・CMS+ビジュアル特化・個人のライフ管理は別途必要',
+      'フロントエンド特化・個人のAI管理は別途必要',
+      'Contentful/Webflow/Framer との比較でAIコード品質・複雑ロジック・価格が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ビジュアルヘッドレスCMS・Figma Plugin・AIコード生成・React/Next・ノーコード',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'teleporthq': const _CompetitorInfo(
+    name: 'TeleportHQ',
+    emoji: '🔭',
+    tagline:
+        'ローコードフロントエンドビルダー・AIコード生成・React/Vue/Angular出力・チームコラボで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'TeleportHQ代替 ローコード フロントエンド AIコード生成 React Vue Angular Webflow代替 Builder.io代替',
+    accentColor: Color(0xFF6C3483),
+    painPoints: [
+      '無料/有料月19ドル~・フロントエンド特化・個人のライフ管理は別途必要',
+      'コード生成特化・個人のAI管理は別途必要',
+      'Webflow/Builder.io/Framer との比較でバックエンド・AI深度・エコシステムが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ローコードビルダー・AIコード生成・React/Vue/Angular・チームコラボ・OSS',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'draftbit': const _CompetitorInfo(
+    name: 'Draftbit',
+    emoji: '📱',
+    tagline:
+        'React Nativeノーコードビルダー・ネイティブアプリ・Figma連携・カスタムコード混在で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Draftbit代替 React Native ノーコード ネイティブアプリ Figma連携 カスタムコード Adalo代替 Thunkable代替',
+    accentColor: Color(0xFF0EA5E9),
+    painPoints: [
+      '有料月19ドル~・モバイルアプリ特化・個人のライフ管理は別途必要',
+      'アプリ開発特化・個人のAI管理は別途必要',
+      'Adalo/Glide/FlutterFlow との比較でAI機能・バックエンド・エコシステムが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'React Nativeノーコード・ネイティブアプリ・Figma連携・カスタムコード混在',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'bravo-studio': const _CompetitorInfo(
+    name: 'Bravo Studio',
+    emoji: '👏',
+    tagline:
+        'Figma/AdobeXD→ネイティブiOS/Androidアプリ変換・ノーコード・API接続・即リリースで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Bravo Studio代替 Figma AdobeXD ネイティブiOS Android変換 ノーコード API接続 Draftbit代替 Adalo代替',
+    accentColor: Color(0xFF4CAF50),
+    painPoints: [
+      '有料月25ドル~/無料限定・デザイン→アプリ特化・個人のライフ管理は別途必要',
+      'モバイル特化・個人のAI管理は別途必要',
+      'Draftbit/Adalo/FlutterFlow との比較でカスタマイズ・AI・Webアプリ対応が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Figma/XD→ネイティブiOS/Android・ノーコード・API接続・Supabase/Airtable連携',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'appgyver': const _CompetitorInfo(
+    name: 'SAP Build Apps (旧AppGyver)',
+    emoji: '🏢',
+    tagline: 'SAP傘下エンタープライズローコード・ノーコード・モバイル/Web・SAP BTP統合・無料枠で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'AppGyver代替 SAP Build Apps ローコード エンタープライズ ノーコード SAP BTP統合 Mendix代替 OutSystems代替',
+    accentColor: Color(0xFF0070F2),
+    painPoints: [
+      'SAP契約必要/無料枠・エンタープライズ特化・個人のライフ管理は別途必要',
+      'ローコード開発特化・個人のAI管理は別途必要',
+      'Mendix/OutSystems/Appian との比較でSAP依存・学習曲線・コミュニティが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'エンタープライズローコード・SAP BTP統合・モバイル/Web・ノーコード・無料枠',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'noodl': const _CompetitorInfo(
+    name: 'Noodl',
+    emoji: '🍜',
+    tagline:
+        'ビジュアルフルスタックビルダー・JavaScriptノード・データベース・API・Reactベースで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Noodl代替 ビジュアルフルスタック JavaScriptノード データベース API React Webflow代替 Bubble代替',
+    accentColor: Color(0xFFFFA500),
+    painPoints: [
+      '無料OSS/有料SaaS・開発者向け特化・個人のライフ管理は別途必要',
+      'フルスタック開発特化・個人のAI管理は別途必要',
+      'Bubble/Webflow/Framer との比較でコミュニティ・マーケットプレース・AI機能が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ビジュアルフルスタック・JavaScriptノード・データベース・API・Reactベース',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'webstudio': const _CompetitorInfo(
+    name: 'Webstudio',
+    emoji: '🌐',
+    tagline:
+        'OSS Webflow代替・ビジュアルWebビルダー・セルフホスト/Cloud・RadixUI・TypeScriptで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Webstudio代替 OSS Webflow代替 ビジュアルWebビルダー セルフホスト RadixUI TypeScript Framer代替',
+    accentColor: Color(0xFF7C3AED),
+    painPoints: [
+      '無料OSS/有料SaaS・Webサイト特化・個人のライフ管理は別途必要',
+      'フロントエンド特化・個人のAI管理は別途必要',
+      'Webflow/Framer/Builder.io との比較でプラグイン・AI機能・エコシステムが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'OSS Webflow代替・セルフホスト・RadixUI・TypeScript・Cloudflare Workers対応',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'umso': const _CompetitorInfo(
+    name: 'Umso',
+    emoji: '🚀',
+    tagline: 'スタートアップ向けランディングページビルダー・AI LP生成・テンプレート・高速公開で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Umso代替 スタートアップ ランディングページ AI LP生成 テンプレート 高速公開 Unbounce代替 Carrd代替',
+    accentColor: Color(0xFF10B981),
+    painPoints: [
+      '有料月29ドル~・LP特化・個人のライフ管理は別途必要',
+      'マーケティング特化・個人のAI管理は別途必要',
+      'Carrd/Webflow/Unbounce との比較でカスタマイズ・SEO・A/B テストが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'スタートアップLP・AI生成・テンプレート・高速公開・Google Analytics・メール収集',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
