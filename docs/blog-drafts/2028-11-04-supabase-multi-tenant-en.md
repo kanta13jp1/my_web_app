@@ -1,7 +1,7 @@
 ---
 title: "Supabase Multi-Tenant Design — RLS Tenant Isolation, Admin Roles, and Invite Flow"
 tags: supabase,ai,indiedev,programming
-published: false
+published: true
 ---
 
 # Supabase Multi-Tenant Design — RLS Tenant Isolation, Admin Roles, and Invite Flow
