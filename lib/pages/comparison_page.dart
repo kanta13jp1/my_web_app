@@ -31689,6 +31689,312 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'befunky': const _CompetitorInfo(
+    name: 'BeFunky',
+    emoji: '🎭',
+    tagline: 'AI写真編集・コラージュ・グラフィックデザインオールインワンで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'BeFunky代替 写真編集 コラージュ グラフィックデザイン AI効果 テンプレート',
+    accentColor: Color(0xFFE11D48),
+    painPoints: [
+      '無料/月額6.99ドル〜・写真編集特化・個人のライフ管理は別途必要',
+      'フォト/デザイン特化・個人のAI管理は別途必要',
+      'Canva/Fotor比較でAI機能・デザイン深度が劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AI強化・コラージュ・グラフィックデザイナー・カートゥーン効果・テンプレート',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'photopea': const _CompetitorInfo(
+    name: 'Photopea',
+    emoji: '🖌️',
+    tagline: 'ブラウザ版無料Photoshop代替・PSD/XD/Sketch対応オンラインエディタで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Photopea代替 Photoshop代替 無料 ブラウザ PSD XD Sketch オンライン編集',
+    accentColor: Color(0xFF0F766E),
+    painPoints: [
+      '無料（広告）/有料・写真編集特化・個人のライフ管理は別途必要',
+      'フォト編集特化・個人のAI管理は別途必要',
+      'Adobe Photoshopと比較してAI機能・プラグインエコシステムが劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'PSD/XD/Sketch完全互換・レイヤー・フィルター・スマートオブジェクト・無料',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'luminar-ai': const _CompetitorInfo(
+    name: 'Luminar Neo',
+    emoji: '🌄',
+    tagline: 'AIクリエイティブ写真編集ソフト・スカイリプレイスメントで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Luminar Neo代替 AI写真編集 空替え 被写体分離 Lightroom代替 Mac Windows',
+    accentColor: Color(0xFF2563EB),
+    painPoints: [
+      '月額9.95ドル〜・写真編集特化・個人のライフ管理は別途必要',
+      'AIフォト編集特化・個人のAI管理は別途必要',
+      'Adobe/Capture Oneと比較してプロフォトグラファー向け色調整が劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AI空替え・ポートレート強化・被写体分離・ノイズ除去・Lightroom連携',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'topaz-labs': const _CompetitorInfo(
+    name: 'Topaz Labs',
+    emoji: '💎',
+    tagline: 'AI画像解像度アップスケール・ノイズ除去・シャープネスツールで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Topaz Labs代替 AIアップスケール 解像度向上 ノイズ除去 Video Enhance 超解像',
+    accentColor: Color(0xFF7C3AED),
+    painPoints: [
+      '月額99ドル/年・AI画像強化特化・個人のライフ管理は別途必要',
+      '画像強化特化・個人のAI管理は別途必要',
+      'Adobe/Lightroom比較でAll-in-One編集は別途必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Photo AI/Video AI/Gigapixel・超解像・ノイズ除去・モーションブラー修正',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'facetune': const _CompetitorInfo(
+    name: 'Facetune',
+    emoji: '🤳',
+    tagline: 'AIポートレート編集・美顔加工・自撮り強化アプリで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Facetune代替 AIポートレート 美顔加工 自撮り 肌補正 スマートフォン Instagram',
+    accentColor: Color(0xFF6366F1),
+    painPoints: [
+      '月額5.99ドル〜・美顔アプリ特化・個人のライフ管理は別途必要',
+      'ポートレート加工特化・個人のAI管理は別途必要',
+      'Snapseed/VSCOと比較してフォトグラフィ全般・フィルタが限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '肌補正・歯のホワイト・背景ぼかし・AIスタイル・リアルタイム加工',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'vsco': const _CompetitorInfo(
+    name: 'VSCO',
+    emoji: '📷',
+    tagline: 'フォトグラファー向けAIフィルター・写真コミュニティアプリで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'VSCO代替 写真フィルター カメラアプリ フォトグラファー コミュニティ Instagram代替',
+    accentColor: Color(0xFF1C1C1C),
+    painPoints: [
+      '無料/月額19.99ドル〜・写真アプリ特化・個人のライフ管理は別途必要',
+      'フォトフィルター特化・個人のAI管理は別途必要',
+      'Lightroom Mobile/Snapseedと比較してAI機能・編集ツールが限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'フィルター200+・AI強化・RAW現像・コミュニティ・動画・プリセット',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'pictory': const _CompetitorInfo(
+    name: 'Pictory',
+    emoji: '🎞️',
+    tagline: 'AIテキストto動画・ブログ記事からビデオ自動生成で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Pictory代替 テキストto動画 ブログ記事 動画自動生成 YouTube コンテンツ AI',
+    accentColor: Color(0xFF7C3AED),
+    painPoints: [
+      '月額19ドル〜・動画生成特化・個人のライフ管理は別途必要',
+      'コンテンツ動画特化・個人のAI管理は別途必要',
+      'InVideo/Fliki比較でAI品質・テンプレート多様性が課題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'テキスト/URL to動画・AIナレーション・字幕・B-Roll自動・ブランド',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'fliki': const _CompetitorInfo(
+    name: 'Fliki',
+    emoji: '🎬',
+    tagline: 'AIテキストto音声/動画変換コンテンツ生成プラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Fliki代替 テキストto動画 AI音声 コンテンツ生成 TikTok YouTube ショート動画',
+    accentColor: Color(0xFF0EA5E9),
+    painPoints: [
+      '無料/月額21ドル〜・動画生成特化・個人のライフ管理は別途必要',
+      'ショート動画特化・個人のAI管理は別途必要',
+      'Pictory/InVideo比較でカスタマイズ深度・映像素材が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'テキスト/ブログto動画・1000+声・75言語・AI画像・ストック映像',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'invideo': const _CompetitorInfo(
+    name: 'InVideo',
+    emoji: '🎥',
+    tagline: 'AIテキストto動画・YouTubeコンテンツ自動生成ツールで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'InVideo代替 テキストto動画 YouTube AI動画 テンプレート マーケター コンテンツ',
+    accentColor: Color(0xFF0F172A),
+    painPoints: [
+      '無料/月額20ドル〜・動画コンテンツ特化・個人のライフ管理は別途必要',
+      'マーケティング動画特化・個人のAI管理は別途必要',
+      'Pictory/Synthesia比較でAIアバター・本格映像が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AI Script・テキストto動画・6000テンプレート・音楽・ブランドキット',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
