@@ -33764,6 +33764,312 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'papertrail': const _CompetitorInfo(
+    name: 'Papertrail',
+    emoji: '📜',
+    tagline: 'クラウドログ管理・リアルタイムログ検索・アラートで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Papertrail代替 ログ管理 ログ検索 リアルタイム アラート クラウド SaaS Splunk代替',
+    accentColor: Color(0xFF1A9FD6),
+    painPoints: [
+      '月額7ドル〜・ログ管理特化・個人のライフ管理は別途必要',
+      'ログ集約・検索特化・個人のAI管理は別途必要',
+      'Loggly/DataDogと比較してAI分析・ダッシュボード機能が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'リアルタイムログ集約・全文検索・アラート・ルーティング・アーカイブ・API',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'loggly': const _CompetitorInfo(
+    name: 'Loggly',
+    emoji: '🪵',
+    tagline: 'SaaS向けクラウドログ管理・分析・インサイト可視化で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Loggly代替 ログ管理 クラウドログ 分析 インサイト SaaS DevOps 可視化',
+    accentColor: Color(0xFF38A169),
+    painPoints: [
+      '月額79ドル〜・ログ分析特化・個人のライフ管理は別途必要',
+      'ログインサイト特化・個人のAI管理は別途必要',
+      'Splunk/DataDogと比較して機械学習・SIEM機能が劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ログ集約・機械学習異常検知・ダッシュボード・アラート・SolarWinds統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'sumo-logic': const _CompetitorInfo(
+    name: 'Sumo Logic',
+    emoji: '🔎',
+    tagline: 'クラウドネイティブSIEM・ログ分析・セキュリティ分析で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Sumo Logic代替 SIEM ログ分析 セキュリティ分析 クラウドネイティブ Splunk代替 SOC',
+    accentColor: Color(0xFF0073CF),
+    painPoints: [
+      '月額不明・ログ/SIEM特化・個人のライフ管理は別途必要',
+      'セキュリティ分析特化・個人のAI管理は別途必要',
+      'Splunk/Datadogと比較して機能統合・エコシステムが劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ログ集約・ML異常検知・SIEM・コンプライアンス・AWS/GCP/Azure統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'appdynamics': const _CompetitorInfo(
+    name: 'AppDynamics',
+    emoji: '📈',
+    tagline: 'エンタープライズAPM・ビジネストランザクション追跡・フルスタック監視で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'AppDynamics代替 APM アプリケーション監視 エンタープライズ トランザクション追跡 Datadog代替',
+    accentColor: Color(0xFF00B4D8),
+    painPoints: [
+      '月額高価格・エンタープライズAPM特化・個人のライフ管理は別途必要',
+      '大企業アプリ監視特化・個人のAI管理は別途必要',
+      'New Relic/Datadogと比較してセットアップ複雑・コスト高',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ビジネストランザクション・コード診断・AIプロアクティブ・フルスタック可視性',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'instana': const _CompetitorInfo(
+    name: 'Instana',
+    emoji: '🔬',
+    tagline: 'AIベースのリアルタイムAPM・コンテナ/マイクロサービス自動観測で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Instana代替 APM AIベース リアルタイム 観測 コンテナ マイクロサービス IBM',
+    accentColor: Color(0xFF054ADA),
+    painPoints: [
+      '月額高価格・エンタープライズAPM特化・個人のライフ管理は別途必要',
+      'マイクロサービス監視特化・個人のAI管理は別途必要',
+      'Datadog/New Relicと比較してコミュニティ・統合数が少ない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AI自動検出・1秒粒度・k8s/コンテナ・コード変更追跡・根本原因分析',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'raygun': const _CompetitorInfo(
+    name: 'Raygun',
+    emoji: '💥',
+    tagline: 'エラートラッキング・クラッシュレポート・APM開発者監視で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Raygun代替 エラートラッキング クラッシュレポート APM 開発者ツール Sentry代替 バグ追跡',
+    accentColor: Color(0xFFFF6B6B),
+    painPoints: [
+      '月額9ドル〜・エラー追跡特化・個人のライフ管理は別途必要',
+      'クラッシュ分析特化・個人のAI管理は別途必要',
+      'Sentry/Rollbarと比較してエコシステム・統合数が少ない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'エラーグループ化・RUM・APM・デプロイ追跡・スマートダッシュボード',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'airbrake': const _CompetitorInfo(
+    name: 'Airbrake',
+    emoji: '🛑',
+    tagline: 'エラー監視・デプロイ追跡・パフォーマンス監視で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Airbrake代替 エラー監視 エラートラッキング デプロイ追跡 Sentry代替 例外処理',
+    accentColor: Color(0xFFFF6B35),
+    painPoints: [
+      '月額19ドル〜・エラー監視特化・個人のライフ管理は別途必要',
+      'エラートラッキング特化・個人のAI管理は別途必要',
+      'Sentry/Raygunと比較してパフォーマンス機能・UI更新が遅い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'エラーグループ・コンテキスト収集・デプロイ統合・スローSQL・バックトレース',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'contentsquare': const _CompetitorInfo(
+    name: 'Contentsquare',
+    emoji: '🖥️',
+    tagline: 'デジタル体験分析・ゾーンAI・セッションリプレイで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Contentsquare代替 デジタル体験分析 セッションリプレイ ヒートマップ UX分析 Hotjar代替',
+    accentColor: Color(0xFF6543C0),
+    painPoints: [
+      '月額高価格・エンタープライズUX分析特化・個人のライフ管理は別途必要',
+      '大企業デジタル体験特化・個人のAI管理は別途必要',
+      'Hotjar/FullStoryと比較してコスト・セットアップ複雑',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ゾーンAI・フラストレーションスコア・CS Insights・セッションリプレイ・API',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'ab-tasty': const _CompetitorInfo(
+    name: 'AB Tasty',
+    emoji: '🧪',
+    tagline: 'A/Bテスト・パーソナライゼーション・体験最適化プラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'AB Tasty代替 A/Bテスト パーソナライゼーション 体験最適化 コンバージョン改善 VWO代替',
+    accentColor: Color(0xFFFF5733),
+    painPoints: [
+      '月額高価格・A/Bテスト特化・個人のライフ管理は別途必要',
+      'CRO/パーソナライゼーション特化・個人のAI管理は別途必要',
+      'Optimizely/VWOと比較してエンタープライズ向け機能・サポートが限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'A/B/MVTテスト・AIパーソナライズ・プログレッシブロールアウト・Flags・API',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
