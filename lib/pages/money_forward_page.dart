@@ -51,8 +51,8 @@ class _MoneyForwardPageState extends State<MoneyForwardPage>
     });
     try {
       final res = await _supabase.functions.invoke(
-        'moneyforward-sync',
-        body: {'action': 'status'},
+        'social-commerce-hub',
+        body: {'action': 'mf.status'},
       );
       final data = res.data;
       if (data is Map<String, dynamic>) {
@@ -86,8 +86,8 @@ class _MoneyForwardPageState extends State<MoneyForwardPage>
     });
     try {
       final res = await _supabase.functions.invoke(
-        'moneyforward-sync',
-        body: {'action': 'sync'},
+        'social-commerce-hub',
+        body: {'action': 'mf.sync'},
       );
       final data = res.data;
       if (mounted) {
@@ -118,8 +118,8 @@ class _MoneyForwardPageState extends State<MoneyForwardPage>
     });
     try {
       await _supabase.functions.invoke(
-        'moneyforward-sync',
-        body: {'action': 'connect_url'},
+        'social-commerce-hub',
+        body: {'action': 'mf.connect_url'},
       );
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

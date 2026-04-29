@@ -38,8 +38,8 @@ class _GoogleCalendarSyncPageState extends State<GoogleCalendarSyncPage> {
     });
     try {
       final res = await _supabase.functions.invoke(
-        'google-calendar-sync',
-        body: {'action': 'status'},
+        'enterprise-hub',
+        body: {'action': 'calendar.status'},
       );
       final data = res.data;
       if (data is Map<String, dynamic>) {
@@ -68,8 +68,8 @@ class _GoogleCalendarSyncPageState extends State<GoogleCalendarSyncPage> {
     });
     try {
       final res = await _supabase.functions.invoke(
-        'google-calendar-sync',
-        body: {'action': 'sync'},
+        'enterprise-hub',
+        body: {'action': 'calendar.sync'},
       );
       final data = res.data;
       if (mounted) {
@@ -100,8 +100,8 @@ class _GoogleCalendarSyncPageState extends State<GoogleCalendarSyncPage> {
     });
     try {
       await _supabase.functions.invoke(
-        'google-calendar-sync',
-        body: {'action': 'connect_url'},
+        'enterprise-hub',
+        body: {'action': 'calendar.connect_url'},
       );
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

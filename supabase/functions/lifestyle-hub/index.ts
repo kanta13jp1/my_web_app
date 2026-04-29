@@ -218,6 +218,9 @@ serve(async (req) => {
         return json({ success: true, service: item });
       }
 
+      case "vehicle.list_trips": return json({ success: true, trips: await listItems(admin, "vehicle_trip", userId) });
+      case "vehicle.maintenance": return json({ success: true, services: await listItems(admin, "vehicle_service", userId) });
+
       // ── Parking Reservation ────────────────────────────────────────────────────
       case "parking.list": return json({ success: true, reservations: await listItems(admin, "parking_reservation", userId) });
       case "parking.reserve": {

@@ -45,9 +45,8 @@ class _ViralVideoGeneratorPageState extends State<ViralVideoGeneratorPage> {
     });
     try {
       final res = await _supabase.functions.invoke(
-        'viral-video-generator',
-        method: HttpMethod.get,
-        queryParameters: {'view': 'recent_briefs'},
+        'media-hub',
+        body: {'action': 'viral_video.list_briefs'},
       );
       final data = res.data;
       if (data is Map<String, dynamic> && data['briefs'] is List) {
@@ -73,9 +72,9 @@ class _ViralVideoGeneratorPageState extends State<ViralVideoGeneratorPage> {
     });
     try {
       final res = await _supabase.functions.invoke(
-        'viral-video-generator',
+        'media-hub',
         body: {
-          'action': 'generate_brief',
+          'action': 'viral_video.create',
           'productSummary': prompt,
           'adStyle': _selectedStyle,
         },

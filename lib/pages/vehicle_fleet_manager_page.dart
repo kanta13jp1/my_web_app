@@ -47,16 +47,16 @@ class _VehicleFleetManagerPageState extends State<VehicleFleetManagerPage>
     });
     try {
       final vRes = await _supabase.functions.invoke(
-        'vehicle-fleet-manager',
-        queryParameters: {'view': 'vehicles'},
+        'lifestyle-hub',
+        body: {'action': 'vehicle.list'},
       );
       final tRes = await _supabase.functions.invoke(
-        'vehicle-fleet-manager',
-        queryParameters: {'view': 'trips'},
+        'lifestyle-hub',
+        body: {'action': 'vehicle.list_trips'},
       );
       final mRes = await _supabase.functions.invoke(
-        'vehicle-fleet-manager',
-        queryParameters: {'view': 'maintenance'},
+        'lifestyle-hub',
+        body: {'action': 'vehicle.maintenance'},
       );
       setState(() {
         _vehicles = _toList(vRes.data, 'vehicles');
