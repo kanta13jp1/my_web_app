@@ -51367,6 +51367,325 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'renovate': const _CompetitorInfo(
+    name: 'Renovate (Mend)',
+    emoji: '🔄',
+    tagline: 'OSS自動依存関係更新・PR自動生成・スケジュール制御・全言語対応・Dependabot代替で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Renovate代替 自動依存関係更新 PR自動生成 スケジュール 全言語 Dependabot代替 WhiteSource代替',
+    accentColor: Color(0xFF21BCCC),
+    painPoints: [
+      '無料OSS/有料・依存更新特化・個人のライフ管理は別途必要',
+      'DevOps特化・個人のAI管理は別途必要',
+      'Dependabot/Snyk との比較でカスタマイズ・モノレポ対応・ルール複雑性が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '自動依存関係更新・PR自動生成・スケジュール制御・全言語・モノレポ対応',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'mend': const _CompetitorInfo(
+    name: 'Mend.io (旧WhiteSource)',
+    emoji: '🛡️',
+    tagline: 'OSS脆弱性・ライセンスリスク・AppSec自動修正・SBOM生成・SAST/SCAで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Mend代替 WhiteSource OSS脆弱性 ライセンスリスク AppSec SBOM SAST SCA Snyk代替',
+    accentColor: Color(0xFF00529B),
+    painPoints: [
+      '有料・セキュリティ特化・個人のライフ管理は別途必要',
+      'DevSecOps特化・個人のAI管理は別途必要',
+      'Snyk/FOSSA/Black Duck との比較でコスト・CI統合・開発者体験が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'OSS脆弱性・ライセンス管理・AppSec自動修正・SBOM生成・SAST/SCA統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'fossa': const _CompetitorInfo(
+    name: 'FOSSA',
+    emoji: '⚖️',
+    tagline:
+        'OSSライセンスコンプライアンス・脆弱性管理・SBOM・Legal承認ワークフロー・エンタープライズで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'FOSSA代替 OSSライセンス コンプライアンス 脆弱性 SBOM Legal承認 エンタープライズ Mend代替 Black Duck代替',
+    accentColor: Color(0xFF6633CC),
+    painPoints: [
+      '有料・ライセンス管理特化・個人のライフ管理は別途必要',
+      'コンプライアンス特化・個人のAI管理は別途必要',
+      'Mend/Black Duck/Snyk との比較でコスト・CI速度・開発者フリクションが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'OSSライセンス管理・脆弱性管理・SBOM・Legal承認ワークフロー・エンタープライズ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'checkov': const _CompetitorInfo(
+    name: 'Checkov (Prisma Cloud)',
+    emoji: '✅',
+    tagline:
+        'OSS IaCセキュリティスキャナー・Terraform/K8s/Helm/CF・500+ポリシー・CICDで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Checkov代替 IaC セキュリティスキャン Terraform Kubernetes Helm CloudFormation 500ポリシー tfsec代替',
+    accentColor: Color(0xFF0070FF),
+    painPoints: [
+      '無料OSS/有料Prisma・IaC特化・個人のライフ管理は別途必要',
+      'DevSecOps特化・個人のAI管理は別途必要',
+      'tfsec/Trivy/KICS との比較でIDE統合・自動修正・クラウド接続が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'OSS IaCスキャン・Terraform/K8s/Helm・500+ポリシー・CI統合・自動修正',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'trivy': const _CompetitorInfo(
+    name: 'Trivy (Aqua Security)',
+    emoji: '🔍',
+    tagline: 'OSS包括的脆弱性スキャナー・コンテナ/IaC/SBOM・Kubernetes・最速スキャンで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Trivy代替 脆弱性スキャン コンテナ IaC SBOM Kubernetes 最速 Clair代替 Anchore代替 Grype代替',
+    accentColor: Color(0xFF00B4D8),
+    painPoints: [
+      '無料OSS/有料Aqua・スキャン特化・個人のライフ管理は別途必要',
+      'セキュリティ特化・個人のAI管理は別途必要',
+      'Clair/Grype/Anchore との比較でエンタープライズ・ポリシー管理・RBAC が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '包括的脆弱性スキャン・コンテナ/IaC/SBOM・Kubernetes・最速・OSS',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'falco': const _CompetitorInfo(
+    name: 'Falco (CNCF)',
+    emoji: '🦅',
+    tagline:
+        'CNCFクラウドネイティブランタイムセキュリティ・Kubernetes脅威検知・OSS・eBPFで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Falco代替 CNCF ランタイムセキュリティ Kubernetes 脅威検知 OSS eBPF Sysdig代替 Aqua代替',
+    accentColor: Color(0xFF009BDE),
+    painPoints: [
+      '無料OSS/有料Sysdig・ランタイム特化・個人のライフ管理は別途必要',
+      'セキュリティ特化・個人のAI管理は別途必要',
+      'Sysdig/Aqua/Prisma Cloud との比較でエンタープライズ・管理UI・ML検出が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ランタイムセキュリティ・Kubernetes脅威検知・eBPF・OSS・CNCFプロジェクト',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'aqua-security': const _CompetitorInfo(
+    name: 'Aqua Security',
+    emoji: '🌊',
+    tagline: 'クラウドネイティブセキュリティプラットフォーム・コンテナ/K8s/VM・フルライフサイクルで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Aqua Security代替 クラウドネイティブセキュリティ コンテナ Kubernetes VM フルライフサイクル Sysdig代替 Prisma代替',
+    accentColor: Color(0xFF05B4C6),
+    painPoints: [
+      '有料・DevSecOps特化・個人のライフ管理は別途必要',
+      'セキュリティ特化・個人のAI管理は別途必要',
+      'Sysdig/Prisma Cloud/Wiz との比較でコスト・クラウド統合・AI自動化が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'コンテナ/K8s/Serverlessセキュリティ・CI統合・ランタイム保護・コンプライアンス',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'anchore': const _CompetitorInfo(
+    name: 'Anchore Enterprise',
+    emoji: '⚓',
+    tagline: 'コンテナイメージ詳細分析・CVE/ライセンス/設定・ポリシー強制・SBOMで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Anchore代替 コンテナイメージ分析 CVE ライセンス ポリシー SBOM Trivy代替 Clair代替 Grype代替',
+    accentColor: Color(0xFF2E4057),
+    painPoints: [
+      'OSS/有料Enterprise・コンテナ特化・個人のライフ管理は別途必要',
+      'セキュリティ特化・個人のAI管理は別途必要',
+      'Trivy/Clair/Grype との比較でUI・エンタープライズ機能・Falco統合が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'コンテナ詳細分析・CVE/ライセンス・ポリシー強制・SBOM・CI/CDゲート',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'sigstore': const _CompetitorInfo(
+    name: 'Sigstore (Linux Foundation)',
+    emoji: '🔏',
+    tagline:
+        'OSSコード署名・サプライチェーンセキュリティ・Cosign/Fulcio/Rekor・無料透明性ログで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Sigstore代替 コード署名 サプライチェーンセキュリティ Cosign Fulcio Rekor 透明性ログ SLSA代替',
+    accentColor: Color(0xFF4B0082),
+    painPoints: [
+      '完全無料OSS・署名特化・個人のライフ管理は別途必要',
+      'DevSecOps特化・個人のAI管理は別途必要',
+      'PGP/Notary/SLSA との比較でエコシステム・ツール成熟度・エンタープライズが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'コード署名・Cosign/Fulcio/Rekor・透明性ログ・サプライチェーン保護・無料',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
