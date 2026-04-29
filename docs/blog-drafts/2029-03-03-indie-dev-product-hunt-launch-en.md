@@ -1,7 +1,7 @@
 ---
 title: "Product Hunt Launch Complete Guide — Indie Dev Strategy for Day-1 Top 10"
 tags: indiedev,ai,buildinpublic,flutter
-published: false
+published: true
 ---
 
 # Product Hunt Launch Complete Guide — Indie Dev Strategy for Day-1 Top 10
