@@ -24417,3 +24417,9 @@ co-implementation 4 例 + 軸完成 1 例 + 例外実装 (本) = 11 例累計. �
 - T-1 第182弾: Dart Async Deep Dive — Mastering Future, Stream, and Isolates
   - https://dev.to/kanta13jp1/dart-async-deep-dive-mastering-future-stream-and-isolates-jp8
   - ※ 1回目 curl timeout (exit 28) → 再dispatch で成功
+
+## 2026-04-29 PS#1 S7 — migration timestamp collision 修正 (057000→057100)
+- Migration Timestamp Collision Check 失敗 (run 25090460724) 検知: 20260429057000 に 2 ファイル競合
+  - ps4_s138.sql と ps5_s97.sql が同タイムスタンプ
+- 対応: git mv で ps5_s97 を 20260429057100 にリネーム → push (139513e4c)
+- 効果: Migration Timestamp Collision Check 次回 run から success 期待
