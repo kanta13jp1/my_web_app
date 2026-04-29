@@ -24345,3 +24345,13 @@ screenshot 受領 → 5 質問判定 → ファイル特定 → cross-instance-p
   - https://dev.to/kanta13jp1/indie-saas-monetization-hard-paywall-vs-freemium-vs-usage-based-pricing-48c3
 - T-1 第178弾: Dart Sealed Classes Guide — Type-Safe State Management with Pattern Matching
   - https://dev.to/kanta13jp1/dart-sealed-classes-guide-type-safe-state-management-with-pattern-matching-2d9o
+
+## 2026-04-29 PS#4 S159-S170 — 競合追加 348→384社 (sitemap 427 URLs)
+- S159-S161 (348→357社): jefit/mapmyrun/runkeeper/couch-to-5k/zwift/nike-run/apple-fitness-plus/spartan/beachbody (未コミット分を整理・push)
+- S162-S164 (357→366社): sleep-cycle/ynab/monarch-money/clockwise/akiflow/classpass/superhuman/planoly/flomo
+  - 睡眠・財務・AIカレンダー・メール・SNS管理カテゴリ強化
+- S165-S167 (366→375社): brilliant/masterclass/make-com/bamboohr/rippling/retool/woocommerce/bigcommerce/railway
+  - 学習・自動化・HR・EC・クラウドホスティングカテゴリ強化
+- S168-S170 (375→384社): posthog/jotform/shortcut/contentful/strapi/sanity/pocketbase/appwrite/directus
+  - 分析・フォーム・プロジェクト管理・CMS・BaaSカテゴリ強化
+- 合計: 36社追加 / sitemap 391→427 URLs (+36) / landing_page 357→384社更新
