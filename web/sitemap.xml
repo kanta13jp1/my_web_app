@@ -3184,4 +3184,13 @@
   <url><loc>https://my-web-app-b67f4.web.app/vs-customer-io</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
   <url><loc>https://my-web-app-b67f4.web.app/vs-neon-tech</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
   <url><loc>https://my-web-app-b67f4.web.app/vs-convex-dev</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://my-web-app-b67f4.web.app/vs-hashnode</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://my-web-app-b67f4.web.app/vs-astro-build</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://my-web-app-b67f4.web.app/vs-render-com</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://my-web-app-b67f4.web.app/vs-cockroachdb</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://my-web-app-b67f4.web.app/vs-tidb-cloud</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://my-web-app-b67f4.web.app/vs-nhost</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://my-web-app-b67f4.web.app/vs-appsmith</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://my-web-app-b67f4.web.app/vs-thunkable</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://my-web-app-b67f4.web.app/vs-fauna</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
 </urlset>
