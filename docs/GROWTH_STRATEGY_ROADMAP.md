@@ -23876,3 +23876,17 @@ SECOND_BRAIN 0→4.0 + VIBE 4.5→6.5 + PLATFORM 2.0→4.0 = +8.0/21 (Win 直接
 deep-links (Android App Links + iOS Universal Links + go_router) / multi-tenant RLS (org_id isolation + invite token) / SaaS pricing experiments (anchoring + freemium triggers) / Flutter golden tests (snapshot CI regression detection)
 
 ### dev.to 累計: 150本
+
+## PS#6 S113 — 2026-04-29
+
+### 実装内容
+- **horseWeightStabilityBonus**: 前走からの馬体重変動による confidence 微調整
+  - ±2kg以内: +0.01 / ±8kg以上: -0.01 / 3〜7kg: 0
+  - confidence 29 terms体制確立
+  - reasoning文字列に「体重安定:±X%」追加
+
+### Philosophy Alignment
+#5 商品=ユーザー価値 (馬体重安定性を confidence に反映)
+
+### commit
+649f2a95e
