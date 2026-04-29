@@ -24499,6 +24499,58 @@ Part 83 flutter analyze exit 0 検証 pass 確認 → 受領 lane 2 件 同時 c
 - setState after dispose バグを排除
 
 ### commit
+(本 commit にて確定) (chore(docs): cross-instance-prs done/ rename + Win版#132 doc updates + 競合レポート 2026-04-29 enrichment)
+
+## 2026-04-29 Codex#2 — memory-search-hub + cost-control pair
+
+### 実装内容
+- `memory-search-hub` EF 追加: `memory.search` / `memory.rank` / `memory.related` / `memory.stats`
+- `memory_index` migration 追加: BM25 + pgvector + sync script のクラウド検索基盤
+- `task_budget` + `effort_config` migration 追加: month / instance / EF / GHA の budget と effort matrix
+- `_shared/task_budget.ts` / `_shared/effort_router.ts` 追加
+- `ai-hub` の `provider.chat_auto` / `edge_llm.invoke` に budget check + effort routing + spend record を参照実装
+- GHA: `memory-search-sync.yml` + `scripts/check_budget.py` + `scripts/sync_memory_index.py`
+
+### cross-instance-pr
+- `20260429_memory_search_hub_ef_codex2.md` → done/
+- `20260429_task_budget_effort_router_codex2.md` → done/
+
+## 2026-04-29 Codex#2 — feature-review 毎時 scheduled task 実装
+
+### 実装内容
+- `.github/workflows/feature-review.yml` 追加: 毎時 0 分 cron + workflow_dispatch (`target_features` / `force_full_scan`)
+- `scripts/feature_review.py` 追加: 13 機能 round-robin、Playwright/source/lint/git signals 収集、Claude review、GitHub Issue de-dupe 起票
+- `scripts/feature_review_config.json` 追加: 9 page + 4 EF、カテゴリ、severity、throttle、rotation 定義
+- `integration_test/feature_review_dry_run.py` 追加: rotation/hash/dry-run smoke
+- `docs/handoff-bundles/done/20260429_feature_review_scheduled_task/` に完了記録
+
+### 運用
+- 通常 run は 1 時間 1 機能、24h で約 1.8 周
+- Issue labels: `auto-review` / `severity:*` / `feature:*` / `category:*` をスクリプトが自動補完
+
+## 2026-04-29 VSCode版 S15 — dart:js_interop VM test contamination 解消
+
+### 背景
+PS版#1 から cross-instance-pr: `20260428_flutter_test_stub_fixes_vscode.md`
+PR #860 (Codex#2) が closed without merge → 根本原因を VSCode版で解決
+
+### 実装内容 (commit 166de112c → PR #1012)
+- `ai_assistant_chat_page.dart` / `guitar_recording_studio_page.dart`: `dart:js_interop` を conditional import に変更 (VM = stub, web = 本物)
+- `election_victory_page.dart`: 直接 `dart:js_interop` import を除去 → `downloadCsvFile` を `web_image_downloader` に抽出
+- `lib/utils/js_interop_vm_stub.dart` 新規: JSObject/JSString/JSArray/JSFunction/JSAny の VM stub
+- `lib/utils/web_speech_helper.dart` 新規: conditional export (web/stub)
+- `test/web_import_smoke_test.dart`: `@TestOn('browser')` 追加
+- `ci.yml`: `continue-on-error: false` 化 (finally safe)
+
+### テスト結果
+- `memory_drill_page_test.dart` ✅ pass
+- `ai_status_page_test.dart` ✅ 6/6 pass (normalizes providers and hides xai entries 含む)
+- `flutter analyze` 6 ファイル → exit 0
+
+### cross-instance-pr
+- `20260428_flutter_test_stub_fixes_vscode.md` → done/
+- PR #1012 作成: claude/vscode-wip → main (docs(vscode-s15): cross-instance-pr triage + ROADMAP更新)
+
 (本 commit にて確定)
 
 ## 2026-04-29 Win版#132 part 85 — Claude Code mobile push 12 fleet 全展開
@@ -24539,4 +24591,4 @@ User 共有 Claude Code 新機能 (= mobile push notification / 2026-04-29 公�
 ### commit
 (本 commit にて確定)
 
-(本 commit にて確定) (chore(docs): cross-instance-prs done/ rename + Win版#132 doc updates + 競合レポート 2026-04-29 enrichment) (chore(docs): cross-instance-prs done/ rename + Win版#132 doc updates + 競合レポート 2026-04-29 enrichment)
+(本 commit にて確定) (chore(docs): cross-instance-prs done/ rename + Win版#132 doc updates + 競合レポート 2026-04-29 enrichment) (chore(docs): cross-instance-prs done/ rename + Win版#132 doc updates + 競合レポート 2026-04-29 enrichment) (docs(vscode-s15): cross-instance-pr triage + ROADMAP更新)
