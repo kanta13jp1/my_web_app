@@ -137,6 +137,7 @@ class _UniversalAiShareDialogState extends State<UniversalAiShareDialog> {
   bool _generatingImage = false;
   bool _generatingVideo = false;
   bool _posting = false;
+  bool _disposed = false;
 
   @override
   void initState() {
@@ -148,6 +149,7 @@ class _UniversalAiShareDialogState extends State<UniversalAiShareDialog> {
 
   @override
   void dispose() {
+    _disposed = true;
     _textController.dispose();
     super.dispose();
   }
@@ -157,14 +159,23 @@ class _UniversalAiShareDialogState extends State<UniversalAiShareDialog> {
       _loadingDraft = true;
       _statusMessage = null;
     });
-    final draft = await _service.generateDraft(widget.page);
-    if (!mounted) return;
-    setState(() {
-      _draft = draft;
-      _textController.text = draft.text;
-      _loadingDraft = false;
-      _statusMessage = draft.fallbackUsed ? 'AI生成が不安定なため、安全な定型文を使っています' : null;
-    });
+    try {
+      final draft = await _service.generateDraft(widget.page);
+      if (_disposed || !mounted) return;
+      setState(() {
+        _draft = draft;
+        _textController.text = draft.text;
+        _loadingDraft = false;
+        _statusMessage =
+            draft.fallbackUsed ? 'AI生成が不安定なため、安全な定型文を使っています' : null;
+      });
+    } catch (error) {
+      if (_disposed || !mounted) return;
+      setState(() {
+        _loadingDraft = false;
+        _statusMessage = 'ドラフト生成に失敗しました。手動で入力してください。';
+      });
+    }
   }
 
   Future<void> _generateImage() async {
@@ -179,17 +190,17 @@ class _UniversalAiShareDialogState extends State<UniversalAiShareDialog> {
         context: widget.page,
         draft: draft,
       );
-      if (!mounted) return;
+      if (_disposed || !mounted) return;
       setState(() {
         _imageUrl = result.url;
         _statusMessage =
             result.url == null ? '画像生成URLを取得できませんでした' : 'シェア画像を生成しました';
       });
     } catch (error) {
-      if (!mounted) return;
+      if (_disposed || !mounted) return;
       setState(() => _statusMessage = '画像生成に失敗しました: $error');
     } finally {
-      if (mounted) setState(() => _generatingImage = false);
+      if (!_disposed && mounted) setState(() => _generatingImage = false);
     }
   }
 
@@ -207,7 +218,7 @@ class _UniversalAiShareDialogState extends State<UniversalAiShareDialog> {
         imageUrl: _imageUrl,
         hedraGenerationId: _hedraGenerationId,
       );
-      if (!mounted) return;
+      if (_disposed || !mounted) return;
       setState(() {
         _videoUrl = result.url;
         _hedraGenerationId = result.url == null
@@ -216,10 +227,10 @@ class _UniversalAiShareDialogState extends State<UniversalAiShareDialog> {
         _statusMessage = _videoStatusMessage(result);
       });
     } catch (error) {
-      if (!mounted) return;
+      if (_disposed || !mounted) return;
       setState(() => _statusMessage = '動画生成に失敗しました: $error');
     } finally {
-      if (mounted) setState(() => _generatingVideo = false);
+      if (!_disposed && mounted) setState(() => _generatingVideo = false);
     }
   }
 
@@ -236,17 +247,17 @@ class _UniversalAiShareDialogState extends State<UniversalAiShareDialog> {
         text: _textController.text,
         mediaUrl: mediaUrl,
       );
-      if (!mounted) return;
+      if (_disposed || !mounted) return;
       setState(() {
         _statusMessage = result.posted
             ? '${result.account ?? '@kanta13jp1'} に投稿しました'
             : '投稿文を保存しました。X API secret設定を確認してください';
       });
     } catch (error) {
-      if (!mounted) return;
+      if (_disposed || !mounted) return;
       setState(() => _statusMessage = 'X投稿に失敗しました: $error');
     } finally {
-      if (mounted) setState(() => _posting = false);
+      if (!_disposed && mounted) setState(() => _posting = false);
     }
   }
 
