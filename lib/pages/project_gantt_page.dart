@@ -2688,8 +2688,9 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
               ),
             if (_colVisible['instance'] ?? true)
               SizedBox(
-                  width: _colWidths['instance'] ?? 70,
-                  child: _instanceBadge(task)),
+                width: _colWidths['instance'] ?? 70,
+                child: _instanceBadge(task),
+              ),
             if (_colVisible['progress'] ?? true)
               SizedBox(
                 width: _colWidths['progress'] ?? 50,
@@ -2739,13 +2740,15 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
               ),
             if (_colVisible['recovery'] ?? true)
               SizedBox(
-                  width: _colWidths['recovery'] ?? 180,
-                  child: _recoveryCell(task)),
+                width: _colWidths['recovery'] ?? 180,
+                child: _recoveryCell(task),
+              ),
             // Win版#131 part 22: 遅延 ⚠ flag column (大きめ視覚マーカー)
             if (_colVisible['flags'] ?? true)
               SizedBox(
-                  width: _colWidths['flags'] ?? 36,
-                  child: _delayFlagCell(task)),
+                width: _colWidths['flags'] ?? 36,
+                child: _delayFlagCell(task),
+              ),
           ],
         ),
       ),
