@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 // ── データモデル ──────────────────────────────────────────────────────────────
@@ -1668,8 +1669,9 @@ class _GanttTimelineTab extends StatefulWidget {
 class _GanttTimelineTabState extends State<_GanttTimelineTab> {
   // Win版#131 part 12: 開始/完了/リカバリー列追加で 340 → 700 に拡張
   // Win版#131 part 22: 列表示制御 (左パネル幅は表示列の合計から動的算出)
-  // 列幅 lookup table
-  static const Map<String, double> _colWidths = {
+  // Win版#132 part 83: Notion 風 column resize 化 — static const → final + min/max + persistence
+  // 列幅 (state / drag で変更可能 + shared_preferences で永続化)
+  final Map<String, double> _colWidths = {
     '#': 32,
     'task': 200,
     'startDate': 80,
@@ -1681,6 +1683,35 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
     'recovery': 180,
     'flags': 36, // Win#131 part 22: 遅延 ⚠ flag column
   };
+
+  // 列幅 min/max constraints (= drag 時の clamp 値)
+  static const Map<String, double> _colMinWidths = {
+    '#': 32,
+    'task': 120,
+    'startDate': 60,
+    'endDate': 60,
+    'instance': 50,
+    'progress': 40,
+    'remaining': 120,
+    'depends': 100,
+    'recovery': 120,
+    'flags': 36,
+  };
+  static const Map<String, double> _colMaxWidths = {
+    '#': 80,
+    'task': 800,
+    'startDate': 200,
+    'endDate': 200,
+    'instance': 200,
+    'progress': 200,
+    'remaining': 600,
+    'depends': 400,
+    'recovery': 600,
+    'flags': 36, // = 固定 (resize 不要)
+  };
+  // resizable=false の列 (= drag handle 非表示)
+  static const Set<String> _colNonResizable = {'#', 'flags'};
+  static const String _colWidthPrefsPrefix = 'gantt_col_';
 
   // 列表示状態 (state)
   final Map<String, bool> _colVisible = {
@@ -1718,9 +1749,81 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
   final _rightScroll = ScrollController();
   final _timelineHScroll = ScrollController();
 
+  // Win版#132 part 83: column resize — drag 中の hover key (= handle 強調表示用)
+  String? _hoveredResizeColKey;
+
+  // Win版#132 part 83: shared_preferences から保存済み列幅を load
+  Future<void> _loadColumnWidths() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      bool changed = false;
+      for (final key in _colWidths.keys) {
+        if (_colNonResizable.contains(key)) continue;
+        final saved = prefs.getDouble('$_colWidthPrefsPrefix$key');
+        if (saved != null) {
+          final min = _colMinWidths[key] ?? 40;
+          final max = _colMaxWidths[key] ?? 600;
+          _colWidths[key] = saved.clamp(min, max);
+          changed = true;
+        }
+      }
+      if (changed && mounted) setState(() {});
+    } catch (_) {
+      // shared_preferences 失敗時は default 値 fallback (= サイレント)
+    }
+  }
+
+  // Win版#132 part 83: drag 終了で列幅永続化
+  Future<void> _saveColumnWidth(String key, double width) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setDouble('$_colWidthPrefsPrefix$key', width);
+    } catch (_) {
+      // サイレント (= 保存失敗で UX を邪魔しない)
+    }
+  }
+
+  // Win版#132 part 83: drag handle / 5px 幅 / cursor ↔ / clamp(min, max)
+  Widget _buildResizeHandle(String key) {
+    if (_colNonResizable.contains(key)) {
+      return const SizedBox.shrink();
+    }
+    final isHovered = _hoveredResizeColKey == key;
+    return MouseRegion(
+      cursor: SystemMouseCursors.resizeColumn,
+      onEnter: (_) => setState(() => _hoveredResizeColKey = key),
+      onExit: (_) => setState(() => _hoveredResizeColKey = null),
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onHorizontalDragUpdate: (details) {
+          final current = _colWidths[key] ?? 80;
+          final min = _colMinWidths[key] ?? 40;
+          final max = _colMaxWidths[key] ?? 600;
+          final next = (current + details.delta.dx).clamp(min, max);
+          if (next != current) {
+            setState(() => _colWidths[key] = next);
+          }
+        },
+        onHorizontalDragEnd: (_) {
+          final w = _colWidths[key];
+          if (w != null) _saveColumnWidth(key, w);
+        },
+        child: Container(
+          width: 5,
+          height: double.infinity,
+          color: isHovered
+              ? _todayColor.withValues(alpha: 0.5)
+              : Colors.transparent,
+        ),
+      ),
+    );
+  }
+
   @override
   void initState() {
     super.initState();
+    // Win版#132 part 83: 保存済み列幅を非同期 load
+    _loadColumnWidths();
     // 左右の垂直スクロールを同期
     _leftScroll.addListener(() {
       if (_rightScroll.hasClients &&
@@ -2374,6 +2477,8 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
       fontWeight: FontWeight.w600,
       height: 1.5,
     );
+    // Win版#132 part 83: header に resize handle を併設.
+    // task 列のみ Expanded (= 元動作維持) / handle なし (= flex 列は drag 不可).
     Widget header(
       String key,
       String label, {
@@ -2386,7 +2491,14 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
       final t =
           Text(label, style: labelStyle, textAlign: align ?? TextAlign.left);
       if (expanded) return Expanded(child: t);
-      return SizedBox(width: w, child: align == null ? t : Center(child: t));
+      // resize handle を右端に併設 (= _colNonResizable は SizedBox.shrink 返却)
+      return Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SizedBox(width: w, child: align == null ? t : Center(child: t)),
+          _buildResizeHandle(key),
+        ],
+      );
     }
 
     return Container(
@@ -2542,9 +2654,10 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
               ),
             ],
             // Win版#131 part 12: 開始/完了予定/担当/リカバリー (条件レンダリング)
+            // Win版#132 part 83: width を _colWidths から動的取得 (= drag resize 反映)
             if (_colVisible['startDate'] ?? true)
               SizedBox(
-                width: 80,
+                width: _colWidths['startDate'] ?? 80,
                 child: Text(
                   _formatDate(task.startDate),
                   style: const TextStyle(
@@ -2557,7 +2670,7 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
               ),
             if (_colVisible['endDate'] ?? true)
               SizedBox(
-                width: 80,
+                width: _colWidths['endDate'] ?? 80,
                 child: Text(
                   _formatDate(task.endDate),
                   style: TextStyle(
@@ -2574,10 +2687,12 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
                 ),
               ),
             if (_colVisible['instance'] ?? true)
-              SizedBox(width: 70, child: _instanceBadge(task)),
+              SizedBox(
+                  width: _colWidths['instance'] ?? 70,
+                  child: _instanceBadge(task)),
             if (_colVisible['progress'] ?? true)
               SizedBox(
-                width: 50,
+                width: _colWidths['progress'] ?? 50,
                 child: Text(
                   '${task.progress}%',
                   style: TextStyle(
@@ -2595,7 +2710,7 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
               ),
             if (_colVisible['remaining'] ?? true)
               SizedBox(
-                width: 200,
+                width: _colWidths['remaining'] ?? 200,
                 child: _emptyOrText(
                   text: task.remainingWork,
                   task: task,
@@ -2605,7 +2720,7 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
               ),
             if (_colVisible['depends'] ?? true)
               SizedBox(
-                width: 150,
+                width: _colWidths['depends'] ?? 150,
                 child: Padding(
                   padding: const EdgeInsets.only(left: 4, right: 4),
                   child: Text(
@@ -2623,10 +2738,14 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
                 ),
               ),
             if (_colVisible['recovery'] ?? true)
-              SizedBox(width: 180, child: _recoveryCell(task)),
+              SizedBox(
+                  width: _colWidths['recovery'] ?? 180,
+                  child: _recoveryCell(task)),
             // Win版#131 part 22: 遅延 ⚠ flag column (大きめ視覚マーカー)
             if (_colVisible['flags'] ?? true)
-              SizedBox(width: 36, child: _delayFlagCell(task)),
+              SizedBox(
+                  width: _colWidths['flags'] ?? 36,
+                  child: _delayFlagCell(task)),
           ],
         ),
       ),

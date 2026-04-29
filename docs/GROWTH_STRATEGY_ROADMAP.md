@@ -24311,6 +24311,7 @@ screenshot 受領 → 5 質問判定 → ファイル特定 → cross-instance-p
 (本 commit にて確定)
 
 
+
 ## 2026-04-29 PS#1 S5 — consolidate-memory --lint 月次実行 + cross-instance-pr triage
 - lint 実行: 940 files / orphan 881 (93.7%, rotation 後の予測値) / duplicate 62 groups
 - 詳細: `memory/lint_report_2026_04.md` 保存済
@@ -24361,3 +24362,42 @@ screenshot 受領 → 5 質問判定 → ファイル特定 → cross-instance-p
 - セン馬(去勢): +0.01 (気性安定/安定走) / 牝馬: -0.01 (牡馬混合では不利) / 牡馬: 0 (基準)
 - age_sexフィールド(「4牡」「5牝」「3セン」形式)からincludes検索で判定
 - confidence式 41 terms体制確立
+
+## 2026-04-29 Win版#132 part 83 — Notion 風 column resize 直接実装 (WORKDIR-ISOLATION 例外)
+
+### 概要
+User 再要望 + VSCode lane 23 分詰まり + 1 file 完結 = 3 条件成立で WORKDIR-ISOLATION 例外適用. Win版が lib/pages/project_gantt_page.dart に Notion 風 column resize を直接実装.
+
+### 実装内容
+- shared_preferences import 追加
+- _colWidths: static const → final (= drag で変更可能)
+- _colMinWidths / _colMaxWidths / _colNonResizable schema 追加 (10 列)
+- _loadColumnWidths / _saveColumnWidth (= initState load + drag end save)
+- _buildResizeHandle widget (= 5px / MouseRegion + GestureDetector / cursor ↔ / clamp)
+- header() に handle 併設 (#列・flags列除く)
+- 7 セル width 動的化 (= startDate/endDate/instance/progress/remaining/depends/recovery/flags)
+
+= 130+ 行追加.
+
+### WORKDIR-ISOLATION 例外 3 条件
+1. User 緊急要望 (= 同一要望の再送 / 23 分以内)
+2. 1 file 完結 (= project_gantt_page.dart のみ / 副作用最小)
+3. 受領 lane 詰まり (= VSCode 23 分進捗 0)
+
+= 3 ALL 成立 → 例外適用. Transparency のため log + memory + ROADMAP + commit message に明記.
+
+### dogfood pattern 第 11 例
+co-implementation 4 例 + 軸完成 1 例 + 例外実装 (本) = 11 例累計. 「委譲 → 起票者直接実装切替」fallback path 初実証.
+
+### Phase 2 残タスク
+- auto-fit (= ダブルクリック)
+- integration_test 1 シナリオ
+- mobile UX 確認 (= touch handle)
+- _ColumnConfig class 化 (= Map → struct)
+
+### Philosophy Alignment 9/9
+#1 CEO 感 (= 例外判断の明示) / #5 商品=ユーザー価値 (= 即実装で UX 改善) / #6 資本=時間 (= lane 詰まり打破)
+
+### commit
+(本 commit にて確定)
+
