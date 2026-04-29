@@ -25063,3 +25063,30 @@ flutter analyze: 14 issues → 0
 
 ### commit
 c2f8626d9 + fa6a34f43 on main
+
+---
+
+## 2026-04-29 PS#5 Session 112 — phantom EF calls 4件 → growth-hub移行
+
+### 移行マッピング
+| 旧 phantom EF | growth-hub action |
+|---|---|
+| growth-command-center | command.analyze |
+| growth-import-preview | import.preview |
+| growth-import-commit | import.commit |
+| growth-share-signal | share.track |
+
+### 結果
+- Flutter phantom EF 呼び出し: 4 → 0
+- EF カバレッジ: 18/19 deployed EFs called from Flutter (health-check は GHA専用)
+- ef_count_architectural_reduction cross-instance-pr → done/ (EF数 85+→19達成)
+
+### 発見パターン
+- `check_ef_coverage.py` で `invoke(` パターン vs deployed list を突合
+- False Negative 注意: audit_hub_migration_completeness.py はファイル走査 → hub action ID と EF 名の混在で漏れる可能性
+
+### Philosophy Alignment
+#7 資産負債 (= phantom EF 負債 0 化) / #4 Accountability (= 実行時 404 を事前検出)
+
+### commit
+b6b388657 + 10181c3c1 on main
