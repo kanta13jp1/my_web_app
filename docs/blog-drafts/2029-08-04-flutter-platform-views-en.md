@@ -1,7 +1,7 @@
 ---
 title: "Flutter PlatformView Guide — Embedding Native UI in Flutter"
 tags: flutter,dart,webdev,indiedev
-published: false
+published: true
 ---
 
 # Flutter PlatformView Guide — Embedding Native UI in Flutter

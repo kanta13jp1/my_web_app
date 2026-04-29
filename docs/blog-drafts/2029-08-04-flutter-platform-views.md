@@ -1,7 +1,7 @@
 ---
 title: "Flutter PlatformView 完全ガイド — ネイティブ UI を Flutter に埋め込む"
 tags: flutter,dart,個人開発,AI
-published: false
+published: true
 ---
 
 # Flutter PlatformView 完全ガイド — ネイティブ UI を Flutter に埋め込む
