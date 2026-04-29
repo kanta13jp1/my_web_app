@@ -24300,3 +24300,10 @@ screenshot 受領 → 5 質問判定 → ファイル特定 → cross-instance-p
 ### commit
 (本 commit にて確定)
 
+
+## 2026-04-29 PS#1 S5 — consolidate-memory --lint 月次実行 + cross-instance-pr triage
+- lint 実行: 940 files / orphan 881 (93.7%, rotation 後の予測値) / duplicate 62 groups
+- 詳細: `memory/lint_report_2026_04.md` 保存済
+- cross-instance-pr done: multi_ai_fallback_ps1 / quota_circuit_breaker / wbs_enforcement_option_b / codex2_blog_engagement_fallback / codex2_ops_charter_sync / nodejs20_upgrade / inject_rules_blog_publish_score_update (計7件)
+- GHA fallback 全5WF確認済: cs-check / daily-report / ai-university-update / pr-auto-review / blog-draft
+- Codex#2 branches (blog-engagement + ops charter) 既にmain反映確認
