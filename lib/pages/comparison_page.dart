@@ -52328,6 +52328,331 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'vectra': const _CompetitorInfo(
+    name: 'Vectra AI',
+    emoji: '🔺',
+    tagline:
+        'AI NDR/XDR・ネットワーク脅威検知・ハイブリッドクラウド・Active Directory攻撃検知・自動トリアージで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Vectra AI代替 NDR XDR ネットワーク脅威検知 ハイブリッドクラウド Active Directory Darktrace代替 Corelight代替',
+    accentColor: Color(0xFF0080FF),
+    painPoints: [
+      '有料・NDR/XDR特化・個人のライフ管理は別途必要',
+      'エンタープライズ特化・個人のAI管理は別途必要',
+      'Darktrace/Corelight/ExtraHop との比較でコスト・可視性・SOC統合が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AI NDR/XDR・ネットワーク脅威検知・自動トリアージ・Active Directory・ハイブリッドクラウド',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'exabeam': const _CompetitorInfo(
+    name: 'Exabeam',
+    emoji: '📊',
+    tagline:
+        'SIEM+UEBA・ユーザー行動分析・New-Scale SIEM・セキュリティオペレーション・脅威インテリジェンスで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Exabeam代替 SIEM UEBA ユーザー行動分析 セキュリティオペレーション 脅威インテリジェンス Splunk代替 LogRhythm代替',
+    accentColor: Color(0xFF003DA5),
+    painPoints: [
+      '有料・SIEM/UEBA特化・個人のライフ管理は別途必要',
+      'セキュリティオペレーション特化・個人のAI管理は別途必要',
+      'Splunk/IBM QRadar/LogRhythm との比較でコスト・AI精度・クラウドネイティブが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'New-Scale SIEM・UEBA・ユーザー行動分析・脅威インテリジェンス・SOC自動化',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'secureworks': const _CompetitorInfo(
+    name: 'Secureworks (Dell)',
+    emoji: '🔐',
+    tagline:
+        'マネージドセキュリティ・MDR/XDR・Taegis・脅威インテリジェンス・SOCサービス・Dell子会社で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Secureworks代替 MDR XDR Taegis 脅威インテリジェンス SOC マネージドセキュリティ CrowdStrike代替 Trustwave代替',
+    accentColor: Color(0xFFE31837),
+    painPoints: [
+      '有料・マネージドセキュリティ特化・個人のライフ管理は別途必要',
+      'SOC/MDR特化・個人のAI管理は別途必要',
+      'CrowdStrike/SentinelOne/Palo Alto MSSP との比較でプラットフォーム統合・コスト・柔軟性が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'MDR/XDR・Taegis・脅威インテリジェンス・SOC 24/7・マネージドセキュリティ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'ibm-security': const _CompetitorInfo(
+    name: 'IBM Security QRadar',
+    emoji: '🔵',
+    tagline:
+        'IBM SIEM・QRadar・脅威インテリジェンス・SOC・AI駆動セキュリティオペレーション・エンタープライズで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'IBM Security代替 QRadar SIEM 脅威インテリジェンス SOC AI駆動 エンタープライズセキュリティ Splunk代替 Exabeam代替',
+    accentColor: Color(0xFF0530AD),
+    painPoints: [
+      '有料・エンタープライズSIEM特化・個人のライフ管理は別途必要',
+      'SOC特化・個人のAI管理は別途必要',
+      'Splunk/Microsoft Sentinel/Exabeam との比較でコスト・クラウドネイティブ・導入速度が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'QRadar SIEM・脅威インテリジェンス・AI駆動SOC・コンプライアンス・エンタープライズ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'microsoft-defender': const _CompetitorInfo(
+    name: 'Microsoft Defender XDR',
+    emoji: '🪟',
+    tagline:
+        'Microsoft XDR・Defender for Endpoint/Identity/Office・Microsoft 365統合・SIEM統合・ゼロトラストで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Microsoft Defender代替 XDR Defender for Endpoint Identity Office 365 ゼロトラスト CrowdStrike代替 SentinelOne代替',
+    accentColor: Color(0xFF00A1F1),
+    painPoints: [
+      '有料(Microsoft 365 E5等)・Microsoft環境特化・個人のライフ管理は別途必要',
+      'エンタープライズ特化・個人のAI管理は別途必要',
+      'CrowdStrike/SentinelOne との比較でMicrosoft以外環境・クロスプラットフォーム・AI精度が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature:
+            'XDR統合・Defender for Endpoint/Identity/Office・Microsoft 365・ゼロトラスト',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'azure-sentinel': const _CompetitorInfo(
+    name: 'Microsoft Sentinel',
+    emoji: '🛡️',
+    tagline:
+        'クラウドネイティブSIEM・Microsoft Sentinel・AI駆動・Azure統合・自動化・SOARで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Microsoft Sentinel代替 クラウドSIEM Azure SOAR AI駆動 自動化 Splunk代替 IBM QRadar代替',
+    accentColor: Color(0xFF0078D4),
+    painPoints: [
+      '有料(従量課金)・Azure特化・個人のライフ管理は別途必要',
+      'SOC/SIEM特化・個人のAI管理は別途必要',
+      'Splunk/IBM QRadar/Exabeam との比較でAzure以外環境・コスト予測・オンプレミスが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'クラウドSIEM・AI駆動・Azure統合・SOAR自動化・スケーラブル',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'logrhythm': const _CompetitorInfo(
+    name: 'LogRhythm SIEM',
+    emoji: '📈',
+    tagline:
+        'LogRhythm NextGen SIEM・UEBA・NDR・LogRhythm Axon・SOC自動化・コンプライアンスで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'LogRhythm代替 NextGen SIEM UEBA NDR Axon SOC自動化 コンプライアンス Splunk代替 Exabeam代替',
+    accentColor: Color(0xFF00529B),
+    painPoints: [
+      '有料・SIEM特化・個人のライフ管理は別途必要',
+      'SOC特化・個人のAI管理は別途必要',
+      'Splunk/Microsoft Sentinel/Exabeam との比較でクラウドネイティブ・コスト・スケールが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'NextGen SIEM・UEBA・NDR・SOC自動化・コンプライアンス・LogRhythm Axon',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'alienvault': const _CompetitorInfo(
+    name: 'AT&T AlienVault USM',
+    emoji: '👾',
+    tagline:
+        'AT&T Cybersecurity・USM Anywhere・脅威インテリジェンス・SIEM/IDS/EDR統合・OSSIMで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'AlienVault代替 AT&T USM SIEM IDS EDR 脅威インテリジェンス OSSIM Splunk代替 LogRhythm代替',
+    accentColor: Color(0xFF00A8E0),
+    painPoints: [
+      '有料・SIEM/USM特化・個人のライフ管理は別途必要',
+      'セキュリティ特化・個人のAI管理は別途必要',
+      'Splunk/Microsoft Sentinel/IBM QRadar との比較でスケール・AI精度・クラウドネイティブが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'USM・SIEM/IDS/EDR統合・脅威インテリジェンス・OSSIM OSS・AT&T',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'palo-alto': const _CompetitorInfo(
+    name: 'Palo Alto Networks NGFW',
+    emoji: '🔒',
+    tagline:
+        'Palo Alto Networks NGFW・次世代ファイアウォール・Panorama・クラウドネイティブ・ゼロトラストで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Palo Alto代替 NGFW 次世代ファイアウォール Panorama ゼロトラスト SD-WAN Fortinet代替 Check Point代替',
+    accentColor: Color(0xFFFA4616),
+    painPoints: [
+      '有料・NGFW特化・個人のライフ管理は別途必要',
+      'ネットワークセキュリティ特化・個人のAI管理は別途必要',
+      'Fortinet/Cisco/Check Point との比較でコスト・複雑さ・中小企業向けが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'NGFW・Panorama・クラウドネイティブ・ゼロトラスト・SSL復号・App-ID',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
