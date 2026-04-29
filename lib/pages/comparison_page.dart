@@ -59699,6 +59699,312 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'aquasec': const _CompetitorInfo(
+    name: 'Aqua Security',
+    emoji: '🐟',
+    tagline: 'Aqua Security・コンテナセキュリティ・クラウドネイティブ・CSPM・脆弱性スキャン・実行時保護・CI/CD統合・企業向けで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Aqua Security代替 コンテナセキュリティ クラウドネイティブ CSPM 脆弱性スキャン 実行時保護 Prisma Cloud代替 Wiz代替',
+    accentColor: Color(0xFF00ADEF),
+    painPoints: [
+      '有料・コンテナ/クラウドセキュリティ特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Prisma Cloud/Wiz との比較でコスト・クラウド統合の広さ・設定複雑さが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'コンテナセキュリティ・CSPM・脆弱性スキャン・実行時保護・CI/CD統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'grype': const _CompetitorInfo(
+    name: 'Grype',
+    emoji: '🔍',
+    tagline: 'Grype・OSS脆弱性スキャナー・コンテナ/ファイルシステム対応・Anchore製・Syft統合・CI/CD・軽量・無料で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Grype代替 OSS脆弱性スキャン コンテナ ファイルシステム Anchore Syft CI/CD 軽量 Trivy代替 Snyk代替',
+    accentColor: Color(0xFF2D5BFF),
+    painPoints: [
+      '無料(OSS)・脆弱性スキャン特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Trivy/Snyk との比較でSaaSダッシュボード・修正提案・CI統合の深さが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'OSS脆弱性スキャン・コンテナ/ファイルシステム・Anchore製・Syft統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'gitleaks': const _CompetitorInfo(
+    name: 'Gitleaks',
+    emoji: '🔐',
+    tagline: 'Gitleaks・gitシークレット検出・OSS・CI/CD統合・パターンマッチング・履歴スキャン・軽量・Go製で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Gitleaks代替 gitシークレット検出 OSS CI/CD パターンマッチング 履歴スキャン TruffleHog代替 detect-secrets代替',
+    accentColor: Color(0xFFE44A52),
+    painPoints: [
+      '無料(OSS)・シークレット検出特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'TruffleHog/GitGuardian との比較でSaaS機能・誤検知率・修正ワークフローが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'gitシークレット検出・OSS・CI/CD統合・履歴スキャン・軽量Go製',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'trufflehog': const _CompetitorInfo(
+    name: 'TruffleHog',
+    emoji: '🐷',
+    tagline: 'TruffleHog・gitシークレット検出・エントロピー解析・700+検出器・Trufflesecurity製・OSS・Enterprise版で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'TruffleHog代替 gitシークレット検出 エントロピー解析 Trufflesecurity OSS Enterprise Gitleaks代替 GitGuardian代替',
+    accentColor: Color(0xFFFF6B35),
+    painPoints: [
+      '無料(OSS)/有料・シークレット検出特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Gitleaks/GitGuardian との比較でUIダッシュボード・チーム機能・優先度管理が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'gitシークレット検出・エントロピー解析・700+検出器・OSS',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'codeql': const _CompetitorInfo(
+    name: 'CodeQL',
+    emoji: '🔬',
+    tagline: 'CodeQL・GitHub製SAST・コードクエリ言語・脆弱性パターン分析・GitHub Advanced Security・OSS/無料・10言語対応で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'CodeQL代替 GitHub SAST コードクエリ 脆弱性分析 GitHub Advanced Security Semgrep代替 SonarQube代替',
+    accentColor: Color(0xFF2DA44E),
+    painPoints: [
+      '無料(OSS)/有料・SAST特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Semgrep/SonarQube との比較でスキャン速度・カスタムルール・ブランド中立性が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'GitHub製SAST・コードクエリ・脆弱性パターン分析・10言語対応',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'blackduck': const _CompetitorInfo(
+    name: 'Black Duck',
+    emoji: '🦆',
+    tagline: 'Black Duck・SCAソフトウェア構成分析・OSS脆弱性・ライセンスコンプライアンス・Synopsys傘下・企業向け・CI/CD統合で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Black Duck代替 SCA ソフトウェア構成分析 OSS脆弱性 ライセンスコンプライアンス Synopsys Snyk代替 Mend代替',
+    accentColor: Color(0xFF1E3050),
+    painPoints: [
+      '高額・SCA特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Snyk/Mend との比較でコスト・デベロッパー体験・スキャン速度が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'SCA・OSS脆弱性・ライセンスコンプライアンス・Synopsys傘下・CI/CD',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'gitguardian': const _CompetitorInfo(
+    name: 'GitGuardian',
+    emoji: '💂',
+    tagline: 'GitGuardian・シークレット検出SaaS・リアルタイム監視・パブリック/プライベートリポジトリ・350+検出器・インシデント管理・企業向けで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'GitGuardian代替 シークレット検出 リアルタイム監視 パブリックリポジトリ 350+検出器 インシデント管理 Gitleaks代替 TruffleHog代替',
+    accentColor: Color(0xFF4A90D9),
+    painPoints: [
+      '有料・シークレット検出特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Gitleaks/TruffleHog との比較でSaaS依存・コスト・オフラインスキャンが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'シークレット検出SaaS・リアルタイム監視・350+検出器・インシデント管理',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'dependabot': const _CompetitorInfo(
+    name: 'Dependabot',
+    emoji: '🤖',
+    tagline: 'Dependabot・GitHub自動依存関係更新・セキュリティアラート・PR自動作成・無料・GitHubネイティブ・40言語対応で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Dependabot代替 GitHub 自動依存関係更新 セキュリティアラート PR自動作成 無料 Renovate代替 Snyk代替',
+    accentColor: Color(0xFF0D6EFD),
+    painPoints: [
+      '無料(GitHub統合)・依存関係管理特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Renovate/Mend との比較でカスタマイズ性・グループ化・スケジュール管理が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'GitHub自動依存関係更新・セキュリティアラート・PR自動作成・40言語',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'renovate': const _CompetitorInfo(
+    name: 'Renovate',
+    emoji: '🔄',
+    tagline: 'Renovate・自動依存関係更新・高カスタマイズ・グループ更新・Mend製・OSS・GitHub/GitLab/Bitbucket・セルフホスト可で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Renovate代替 自動依存関係更新 高カスタマイズ グループ更新 Mend OSS セルフホスト Dependabot代替 Snyk代替',
+    accentColor: Color(0xFF009CA6),
+    painPoints: [
+      '無料(OSS)/有料・依存関係管理特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Dependabot との比較で設定学習コスト・初期設定の手間・GitHub統合の深さが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '自動依存関係更新・高カスタマイズ・グループ更新・Mend製・セルフホスト可',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
