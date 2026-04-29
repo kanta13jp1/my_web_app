@@ -62759,6 +62759,312 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'gin': const _CompetitorInfo(
+    name: 'Gin',
+    emoji: '🍸',
+    tagline: 'Gin・Go言語Webフレームワーク・高速・軽量・ミドルウェア・ルーター・REST API・JSON・HTTPルーター最速級・OSS・Martini風で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Gin代替 Go言語 Webフレームワーク 高速 軽量 ミドルウェア REST API Fiber代替 Echo代替',
+    accentColor: Color(0xFF00ADD8),
+    painPoints: [
+      '無料(OSS)・Webフレームワーク特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Fiber/Echo との比較でメモリ使用量・ゼロアロケーション・非同期対応が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Go言語Webフレームワーク・高速・軽量・ミドルウェア・REST API・JSON',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'fiber': const _CompetitorInfo(
+    name: 'Fiber',
+    emoji: '🔗',
+    tagline: 'Fiber・Go言語Webフレームワーク・Express風・fasthttp・超高速・低メモリ・ゼロアロケーション・REST API・OSS・Gin代替で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Fiber代替 Go言語 Webフレームワーク Express風 fasthttp 超高速 低メモリ REST API Gin代替 Echo代替',
+    accentColor: Color(0xFF00ACD7),
+    painPoints: [
+      '無料(OSS)・Webフレームワーク特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Gin/Echo との比較でエコシステム規模・ドキュメント充実度・安定性が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Go言語Webフレームワーク・Express風・fasthttp・超高速・低メモリ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'echo': const _CompetitorInfo(
+    name: 'Echo',
+    emoji: '📣',
+    tagline: 'Echo・Go言語Webフレームワーク・高パフォーマンス・ミニマリスト・ミドルウェア・WebSocket・HTTP/2・TLS・REST API・OSS・Gin代替で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Echo代替 Go言語 Webフレームワーク 高パフォーマンス ミニマリスト WebSocket REST API Gin代替 Fiber代替',
+    accentColor: Color(0xFF5463FF),
+    painPoints: [
+      '無料(OSS)・Webフレームワーク特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Gin/Fiber との比較でコミュニティサイズ・プラグイン数・採用実績が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Go言語Webフレームワーク・高パフォーマンス・WebSocket・HTTP/2・TLS',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'actix': const _CompetitorInfo(
+    name: 'Actix Web',
+    emoji: '🦀',
+    tagline: 'Actix Web・Rust Webフレームワーク・アクターモデル・型安全・超高速・TechEmpower上位・OSS・メモリ安全・Axum代替で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Actix Web代替 Rust Webフレームワーク アクターモデル 型安全 超高速 メモリ安全 Axum代替 Warp代替',
+    accentColor: Color(0xFFDEA584),
+    painPoints: [
+      '無料(OSS)・Webフレームワーク特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Axum との比較で学習コスト・ライフタイム・非同期エコシステム統合が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Rust Webフレームワーク・アクターモデル・型安全・超高速・メモリ安全',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'axum': const _CompetitorInfo(
+    name: 'Axum',
+    emoji: '⚙️',
+    tagline: 'Axum・Rust Webフレームワーク・Tokio/Tower統合・型安全・非同期・モジュラー・ミドルウェア・OSS・Actix代替・Hyper基盤で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Axum代替 Rust Webフレームワーク Tokio Tower 型安全 非同期 モジュラー Actix代替 Warp代替',
+    accentColor: Color(0xFFCE422A),
+    painPoints: [
+      '無料(OSS)・Webフレームワーク特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Actix との比較でパフォーマンス上限・アクターモデル不在・エラー型複雑さが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Rust Webフレームワーク・Tokio/Tower統合・型安全・非同期・モジュラー',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'quarkus': const _CompetitorInfo(
+    name: 'Quarkus',
+    emoji: '⚛️',
+    tagline: 'Quarkus・Kubernetes Native Java・GraalVMネイティブ・超高速起動・低メモリ・Red Hat・CDI・RESTEasy・MicroProfile・Cloud Nativeで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Quarkus代替 Kubernetes Native Java GraalVM 超高速起動 低メモリ Cloud Native Spring Boot代替 Micronaut代替',
+    accentColor: Color(0xFF4695EB),
+    painPoints: [
+      '無料(OSS)/有料(Red Hat)・Javaフレームワーク特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Spring Boot との比較でエコシステム規模・学習リソース・エンタープライズ実績が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Kubernetes Native Java・GraalVMネイティブ・超高速起動・低メモリ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'micronaut': const _CompetitorInfo(
+    name: 'Micronaut',
+    emoji: '🔬',
+    tagline: 'Micronaut・JVM マイクロサービスフレームワーク・コンパイル時DI・GraalVM対応・低メモリ・高速起動・Kotlin/Java/Groovy・Cloud Native・OSS・Spring代替で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Micronaut代替 JVM マイクロサービス コンパイル時DI GraalVM Cloud Native Kotlin Spring Boot代替 Quarkus代替',
+    accentColor: Color(0xFF2DA44E),
+    painPoints: [
+      '無料(OSS)・マイクロサービスフレームワーク特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Spring Boot/Quarkus との比較でエコシステム・採用実績・学習リソースが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'JVM マイクロサービスFW・コンパイル時DI・GraalVM・Cloud Native',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'ktor': const _CompetitorInfo(
+    name: 'Ktor',
+    emoji: '🎯',
+    tagline: 'Ktor・Kotlin非同期Webフレームワーク・JetBrains製・コルーチン・軽量・マルチプラットフォーム・クライアント/サーバー統合・OSS・Spring代替で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Ktor代替 Kotlin 非同期 Webフレームワーク JetBrains コルーチン 軽量 マルチプラットフォーム Spring Boot代替',
+    accentColor: Color(0xFF7F52FF),
+    painPoints: [
+      '無料(OSS)・Kotlinフレームワーク特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Spring Boot との比較でエコシステム規模・ライブラリ数・エンタープライズ実績が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Kotlin非同期Webフレームワーク・JetBrains製・コルーチン・軽量',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'vertx': const _CompetitorInfo(
+    name: 'Vert.x',
+    emoji: '🔄',
+    tagline: 'Vert.x・Eclipse JVM リアクティブツールキット・イベントループ・非同期・マルチ言語(Java/Kotlin/JS/Python)・高スループット・マイクロサービス・OSS・Spring代替で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Vert.x代替 Eclipse JVM リアクティブ イベントループ 非同期 マイクロサービス 高スループット Spring Boot代替 Quarkus代替',
+    accentColor: Color(0xFF7B2FBE),
+    painPoints: [
+      '無料(OSS)・JVMツールキット特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Spring Boot/Quarkus との比較でフルスタック機能・DI・設定容易さが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'JVM リアクティブツールキット・イベントループ・マルチ言語・高スループット',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
