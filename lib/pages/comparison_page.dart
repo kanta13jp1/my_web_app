@@ -18563,6 +18563,312 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'docebo': const _CompetitorInfo(
+    name: 'Docebo',
+    emoji: '🎓',
+    tagline: 'AIエンタープライズLMS・eラーニング管理で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Docebo代替 LMS eラーニング 企業研修 学習管理システム',
+    accentColor: Color(0xFF43A8E8),
+    painPoints: [
+      '年間数百万円〜・エンタープライズ向けで個人や小規模には高額',
+      '企業向けLMS特化でチーム研修向け設計・個人のライフ管理は別途必要',
+      'Moodleと比較してカスタマイズ性が低くオープンソースの柔軟性がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AI学習パス・コンテンツ管理・認定証・分析・SSO',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'talentlms': const _CompetitorInfo(
+    name: 'TalentLMS',
+    emoji: '📚',
+    tagline: 'シンプルクラウドLMS・従業員研修プラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'TalentLMS代替 LMS 企業研修 eラーニング 学習管理',
+    accentColor: Color(0xFF407BFF),
+    painPoints: [
+      '月額89ドル〜・ユーザー数が増えると急速にコスト増',
+      '企業向けLMS特化で個人の財務・AI会話・習慣管理は別途必要',
+      'DoceboやCornerstoneと比較してAI機能・高度な分析が弱い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'コース作成・クイズ・認定証・ゲーミフィケーション・SCORM',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'absorb-lms': const _CompetitorInfo(
+    name: 'Absorb LMS',
+    emoji: '🧠',
+    tagline: '直感的UIのエンタープライズLMSで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Absorb LMS代替 学習管理 企業研修 eラーニング SCORM',
+    accentColor: Color(0xFF5B21B6),
+    painPoints: [
+      '月額800ドル〜・最低契約があり中小には高額',
+      '企業向けLMS特化で個人のライフ管理・AI管理は別途必要',
+      'TalentLMSと比較して価格が高くコストパフォーマンスが低い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'コース作成・AI推薦・eコマース・詳細レポート・API',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'tettra': const _CompetitorInfo(
+    name: 'Tettra',
+    emoji: '📖',
+    tagline: 'AIナレッジベース・社内Wiki・質問応答で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Tettra代替 ナレッジベース 社内Wiki 情報共有 チームナレッジ',
+    accentColor: Color(0xFF7C4DFF),
+    painPoints: [
+      '月額4ドル/人〜・Slack/Google連携がないと機能が限定的',
+      'チーム向けナレッジ管理特化で個人の財務・AI管理は別途必要',
+      'Confluenceと比較して機能が少なく大規模組織には不十分',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AI検索・Q&A・検証ワークフロー・Slack連携・テンプレート',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'guru': const _CompetitorInfo(
+    name: 'Guru',
+    emoji: '💡',
+    tagline: 'AIナレッジ管理・ワークフロー内カード配信で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Guru代替 ナレッジ管理 社内情報 AIサーチ セールスナレッジ',
+    accentColor: Color(0xFF6464FF),
+    painPoints: [
+      '月額10ドル/人〜・AI機能はBusinessプラン以上が必要',
+      'チームナレッジ特化でチーム向け設計・個人のライフ管理は別途必要',
+      'Tettraと比較してシンプルさが欠けUI学習コストが高め',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AIカード配信・検証フロー・Chrome拡張・Slack統合・分析',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'document360': const _CompetitorInfo(
+    name: 'Document360',
+    emoji: '📄',
+    tagline: 'セルフサービスナレッジベース・APIドキュメントで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Document360代替 ナレッジベース ヘルプセンター APIドキュメント サポート',
+    accentColor: Color(0xFF0060FF),
+    painPoints: [
+      '月額149ドル〜・高度な機能はプレミアム以上のプランが必要',
+      'ドキュメント管理特化で個人の財務・AI管理・習慣は別途必要',
+      'Conflueceと比較して内部Wiki用途には機能と価格のバランスが悪い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ナレッジベース・バージョン管理・AI検索・分析・多言語対応',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'helpjuice': const _CompetitorInfo(
+    name: 'Helpjuice',
+    emoji: '🍋',
+    tagline: 'シンプルなクラウドナレッジベース・FAQ構築で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Helpjuice代替 ナレッジベース FAQ ヘルプセンター カスタマーサポート',
+    accentColor: Color(0xFFFFC107),
+    painPoints: [
+      '月額120ドル〜・最低4ユーザーからの価格設定で少人数には割高',
+      'FAQ・ナレッジ管理特化でチーム向け・個人のライフ管理は別途必要',
+      'Document360と比較してAI機能・多言語対応が弱い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'カスタムデザイン・AI検索・分析・Slack/Salesforce連携',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'zendesk-guide': const _CompetitorInfo(
+    name: 'Zendesk Guide',
+    emoji: '🧭',
+    tagline: 'ZendeskのセルフサービスヘルプセンターAIで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Zendesk Guide代替 ヘルプセンター ナレッジ管理 カスタマーサポート',
+    accentColor: Color(0xFF03363D),
+    painPoints: [
+      'Zendesk Suite月額55ドル/人〜・単独利用不可でZendesk全体が必要',
+      'カスタマーサポート向け設計で個人のライフ管理・財務は別途必要',
+      'Document360と比較してスタンドアローンのナレッジ管理には非効率',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ヘルプセンター・AIアンサーボット・コンテンツキュー・分析',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'confluence-cloud': const _CompetitorInfo(
+    name: 'Confluence Cloud',
+    emoji: '🌩️',
+    tagline: 'AtlassianクラウドWiki・チームコラボレーションで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Confluence Cloud代替 Wiki ドキュメント管理 Jira連携 チームナレッジ',
+    accentColor: Color(0xFF0052CC),
+    painPoints: [
+      '月額5.75ドル/人〜・Jiraとセットで使うことが前提で単独利用には割高',
+      'チームドキュメント特化でチーム向け設計・個人のAI管理は別途必要',
+      'Notionと比較してUIが古くフリーランサーや個人には使いにくい',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Wiki・テンプレート・AIアシスト・Jira統合・分析・ページ階層',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
