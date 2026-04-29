@@ -1,7 +1,7 @@
 ---
 title: "Flutter Advanced Animation — Hero, Staggered, and CustomPainter for Rich UIs"
 tags: flutter,ai,indiedev,programming
-published: false
+published: true
 ---
 
 # Flutter Advanced Animation — Hero, Staggered, and CustomPainter for Rich UIs
