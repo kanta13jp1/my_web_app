@@ -24886,3 +24886,41 @@ SECOND_BRAIN 4.5/7 + VIBE 7.0/7 + PLATFORM 4.0/7 = 14.5/21 + WBS audit pattern �
 - Stale EF Migration Completeness Check 失敗 (run 25097681763):
   - recipe-meal-planner (health_coach_page.dart) + travel-itinerary-planner (travel_itinerary_page.dart 7箇所)
   - VSCode版へ cross-instance-pr: 20260429_stale_ef_health_travel_vscode.md
+
+## 2026-04-29 Win版#132 part 89 — 期限切迫 task audit 第 2 弾 + stale done stub 整理
+
+### 概要
+User 再要望. /project-gantt 再 audit で part 88 漏れ task 7 件検出.
+
+### 4 分類追加
+- ✅ 既 closed: #1051 Deploy to Production (issue-to-wbs.yml で auto-mirror) → 100%
+- ⏳ CI 失敗系 第 2 弾: #1020 codex1-fix-migration / #1026 Deploy to Production → PS#1 PR 6→8 件拡張
+- 📅 [追加要望] CX 系 Phase 2: #768 / #772 / #773 / #774 → 0% → 10% pending (= 軸 dogfood で対応中)
+- BYPASS_RULES (90%): User 操作待ち / 維持
+
+### 実施
+1. migration `20260429180000_update_wbs_progress_win132_part89.sql` 新規 (= 7 task UPDATE + development_achievements)
+2. cross-instance-pr `20260429_ci_failure_batch_triage_ps1.md` 拡張 (= 6→8 件 / §1.1 Phase 2 セクション追加 / §4 受入基準更新)
+3. stale done stub 2 件 root 削除 (= memory_search_hub / task_budget)
+   - done/ には PS#1 summary stub 残存
+   - 重要 caveat: 実 file は Codex#2 worktree 待ち = 嘘の状態 → 後続 part で feedback_correction 候補
+
+### 「定期 audit pattern」第 2 例
+- part 88 の 20 分後に再 audit → 漏れ task 7 件追加発見
+- = 同 list で短期間 2 回 audit する効果実証
+- future の月次 routine 候補
+
+### OPS-28 charter §6 提案 (= 累積)
+1. WBS audit responsibility (= part 88 提案 / 月次 routine)
+2. stale done stub 検知 (= 本 part 提案 / done/ 移動 rule 強化)
+   - 「PS#1 が done/ stub 作る前に実 file main 反映を確認必須」
+   - = `consolidate-memory --lint` 拡張 / GHA cron check
+
+### 19 part 連続 dogfood (part 68-89)
+SECOND_BRAIN 4.5/7 + VIBE 7.0/7 + PLATFORM 4.0/7 = 14.5/21 + WBS audit 第 2 例 + stale stub 整理.
+
+### Philosophy Alignment 9/9
+#1 CEO 感 (= 継続即対応) / #6 資本=時間 (= 既存 PR 拡張) / #7 資産負債 (= stale stub 解消) / #8 KPI (= part 88 → 89 で更前進)
+
+### commit
+(本 commit にて確定)
