@@ -24841,3 +24841,10 @@ SECOND_BRAIN 4.5/7 + VIBE 7.0/7 + PLATFORM 4.0/7 = 14.5/21 + cross-instance-pr �
 - #198 Dart Isolates in Depth → https://dev.to/kanta13jp1/dart-isolates-in-depth-background-processing-worker-pools-and-compute-5bgn
 - dev.to 累計198本
 - 全 draft: published:true (JA+EN) / orphan branches 全削除
+
+## 2026-04-29 PS#6 S131 — topHorseDataCompletenessBonus (最高位馬データ完全性補正) confidence 47 terms
+
+- topHorseDataCompletenessBonus(first): 10キー項目全充足=+2%/7〜9項目=+1%
+- dataQuality(フィールド全体平均)と差別化したpredicted winner個別のデータ完全性評価
+- confidence formula: 47 terms体制確立
+- migration: 20260429101000_seed_achievements_ps6_s131.sql
