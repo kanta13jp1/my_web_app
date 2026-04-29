@@ -23675,3 +23675,15 @@ Win territory 直接実装: SECOND_BRAIN +4.0 + VIBE +2.0 = +6.0/14.
 ### commit
 (本 commit にて確定)
 
+
+## 2026-04-29 PS#4 S129-S131: 競合9社追加 258→267社
+
+**実装内容**:
+- S129: webex(エンタープライズビデオ会議/video-comm/#00BCEB) / capcut(AI搭載ショート動画編集/video-editing/#1C1C1E) / davinci-resolve(プロ動画編集/video-editing/#8B1A1A)
+- S130: semrush(SEO競合分析/seo/#FF642D) / ahrefs(SEOバックリンク分析/seo/#2356FF) / 1password(パスワード管理/security/#1A8CFF)
+- S131: crowdworks(クラウドソーシング/freelance/#0099CC) / lancers(フリーランス案件/freelance/#FF7F00) / coconala(スキル販売/marketplace/#F5B800)
+
+**新カテゴリ**: video-editing / seo / security / freelance / marketplace
+**sitemap**: 301→310 URLs
+**全ファイル**: 267社統一
+**commit**: adbc84475
