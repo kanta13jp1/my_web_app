@@ -215,7 +215,7 @@ class _PhilosophyPageState extends State<PhilosophyPage> {
         Semantics(
           label: 'AI で生成された動画',
           child: const Row(
-            children: const [
+            children: [
               Icon(Icons.auto_awesome, size: 12, color: Color(0xFF94A3B8)),
               SizedBox(width: 4),
               Text(

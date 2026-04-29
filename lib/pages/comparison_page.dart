@@ -27578,7 +27578,7 @@ final _competitorInfo = <String, _CompetitorInfo>{
     emoji: '📢',
     tagline: '人材派遣・スタッフィング業界向けCRM・ATSで、なぜ「自分株式会社」を選ぶか。',
     searchKeyword: 'Bullhorn代替 人材派遣 スタッフィング CRM ATS リクルーティング 採用管理',
-    accentColor: Color(0xFF E8480C),
+    accentColor: const Color(0xFFE8480C),
     painPoints: [
       '価格非公開・人材派遣特化・個人のライフ管理は別途必要',
       'スタッフィング/派遣特化・個人のAI管理は別途必要',
