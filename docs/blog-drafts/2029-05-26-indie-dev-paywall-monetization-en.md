@@ -1,7 +1,7 @@
 ---
 title: "Indie SaaS Monetization — Hard Paywall vs Freemium vs Usage-Based Pricing"
 tags: supabase,flutter,webdev,indiedev
-published: false
+published: true
 ---
 
 # Indie SaaS Monetization — Hard Paywall vs Freemium vs Usage-Based Pricing

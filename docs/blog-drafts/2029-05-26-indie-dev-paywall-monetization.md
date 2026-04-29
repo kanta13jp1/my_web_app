@@ -1,7 +1,7 @@
 ---
 title: "個人開発 SaaS の課金設計 — Paywall・フリーミアム・使用量課金 3 つのパターン"
 tags: flutter,supabase,個人開発,AI
-published: false
+published: true
 ---
 
 # 個人開発 SaaS の課金設計 — Paywall・フリーミアム・使用量課金 3 つのパターン
