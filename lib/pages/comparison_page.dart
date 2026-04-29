@@ -52902,42 +52902,6 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
-  'cyberark': const _CompetitorInfo(
-    name: 'CyberArk',
-    emoji: '🔑',
-    tagline:
-        '特権アクセス管理・PAM・Vault・シークレット管理・ゼロトラスト・アイデンティティセキュリティで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword:
-        'CyberArk代替 PAM 特権アクセス管理 Vault シークレット管理 ゼロトラスト BeyondTrust代替 Thycotic代替',
-    accentColor: Color(0xFF003DA5),
-    painPoints: [
-      '有料・PAM/アイデンティティ特化・個人のライフ管理は別途必要',
-      'エンタープライズ特化・個人のAI管理は別途必要',
-      'BeyondTrust/Thycotic/HashiCorp との比較でコスト・複雑さ・DevOps統合が問題',
-    ],
-    features: [
-      _FeatureComparison(
-        feature: 'PAM・Vault・シークレット管理・ゼロトラスト・特権アクセス・アイデンティティセキュリティ',
-        competitorHas: true,
-        weHave: false,
-      ),
-      _FeatureComparison(
-        feature: 'AI支援個人管理',
-        competitorHas: false,
-        weHave: true,
-      ),
-      _FeatureComparison(
-        feature: '財務管理統合',
-        competitorHas: false,
-        weHave: true,
-      ),
-      _FeatureComparison(
-        feature: '完全無料',
-        competitorHas: false,
-        weHave: true,
-      ),
-    ],
-  ),
   'beyondtrust': const _CompetitorInfo(
     name: 'BeyondTrust',
     emoji: '🏛️',
