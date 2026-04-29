@@ -24765,3 +24765,11 @@ SECOND_BRAIN 4.5/7 + VIBE 7.0/7 + PLATFORM 4.0/7 = 14.5/21 + cross-instance-pr �
 - recentFormBonus(着順×日数複合)/consensusBonus(3指標複合)と差別化した純粋単体補正
 - confidence formula: 44 terms体制確立
 - migration: 20260429096500_seed_achievements_ps6_s128.sql
+## 2026-04-29 PS#4 S177-S188 — 競合追加 402→438社 (sitemap 445→481 URLs)
+
+- S177-S179: hey/spark/front/softr/glide/adalo/wave/harvest/bonsai (+9社)
+- S180-S182: tally/paperform/formstack/height/plane/paymo/flodesk/constant-contact/campaign-monitor (+9社)
+- S183-S185: getresponse/aweber/drip/customerio/omnisend/moosend/carrd/unbounce/instapage (+9社)
+- S186-S188: crazy-egg/mouseflow/logrocket/heap/segment/rudderstack/chartmogul/baremetrics/profitwell (+9社)
+- 累計本日PS#4: S159-S188 = 90社追加 (402→438社+本日累計)
+- dart entries: 430 / marketing count: 438社 / sitemap: 481 URLs
