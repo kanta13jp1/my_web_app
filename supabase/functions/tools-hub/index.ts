@@ -5032,6 +5032,37 @@ ${reportText ? `> ${reportText}` : ""}`,
         }));
         return json({ success: true, total: msgData?.total ?? 0, messages });
       }
+      case "slack.get_config": {
+        const { data } = await admin.from("hub_data")
+          .select("metadata").eq("source", "slack_config").eq("user_id", userId)
+          .order("created_at", { ascending: false }).limit(1).maybeSingle();
+        const cfg = (data?.metadata ?? {}) as Record<string, unknown>;
+        return json({ success: true, webhook_url: cfg.webhook_url ?? "", triggers: cfg.triggers ?? [] });
+      }
+      case "slack.configure": {
+        const existing = await admin.from("hub_data")
+          .select("id").eq("source", "slack_config").eq("user_id", userId).limit(1).maybeSingle();
+        const meta = { webhook_url: body.webhook_url, triggers: body.triggers ?? [], updated_at: new Date().toISOString() };
+        if (existing.data?.id) {
+          await admin.from("hub_data").update({ metadata: meta }).eq("id", existing.data.id);
+        } else {
+          await addItem(admin, "slack_config", userId, meta);
+        }
+        return json({ success: true });
+      }
+      case "slack.test": {
+        const { data } = await admin.from("hub_data")
+          .select("metadata").eq("source", "slack_config").eq("user_id", userId)
+          .order("created_at", { ascending: false }).limit(1).maybeSingle();
+        const webhookUrl = String((data?.metadata as Record<string, unknown>)?.webhook_url ?? body.webhook_url ?? "");
+        if (!webhookUrl) return json({ success: false, message: "Webhook URL が設定されていません" });
+        const res = await fetch(webhookUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text: "🔔 自分株式会社 Slack通知テスト" }),
+        });
+        return json({ success: res.status < 400, message: res.status < 400 ? "テスト通知を送信しました" : "送信に失敗しました" });
+      }
 
       // ── Legal / Harvey Integration ───────────────────────────────────────────
       case "legal.harvey.complete":

@@ -80,12 +80,19 @@ serve(async (req) => {
         });
         return json({ success: true, log: item });
       }
-      case "fitness.list": return json({ success: true, logs: await listItems(admin, "fitness_log", userId) });
+      case "fitness.list": return json({ success: true, logs: await listItems(admin, "fitness_log", userId), workouts: await listItems(admin, "fitness_log", userId) });
       case "fitness.stats": {
         const logs = await listItems(admin, "fitness_log", userId, 200);
         const totalCal = logs.reduce((s, l) => s + Number((l.metadata as Record<string, unknown>)?.calories ?? 0), 0);
         return json({ success: true, total_sessions: logs.length, total_calories: totalCal });
       }
+      case "fitness.log_weight": {
+        const item = await addItem(admin, "weight_log", userId, {
+          weight: body.weight, unit: body.unit ?? "kg", logged_at: new Date().toISOString(),
+        });
+        return json({ success: true, log: item });
+      }
+      case "fitness.list_weight": return json({ success: true, weights: await listItems(admin, "weight_log", userId) });
 
       // ── Recipe & Meal Planner ─────────────────────────────────────────────────
       case "recipe.list": return json({ success: true, recipes: await listItems(admin, "recipe", userId) });
@@ -244,6 +251,7 @@ serve(async (req) => {
         });
         return json({ success: true, automation: item });
       }
+      case "smarthome.list_automations": return json({ success: true, automations: await listItems(admin, "iot_automation", userId) });
 
       // ── 2FA ───────────────────────────────────────────────────────────────────
       case "2fa.setup": {
@@ -253,6 +261,15 @@ serve(async (req) => {
           enabled: false,
         });
         return json({ success: true, setup: item, secret });
+      }
+      case "2fa.enable": {
+        const backupCodes = Array.from({ length: 8 }, () => Math.random().toString(36).slice(2, 10).toUpperCase());
+        await addItem(admin, "2fa_setup", userId, { method: body.method ?? "totp", enabled: true, backup_codes: backupCodes });
+        return json({ success: true, backupCodes });
+      }
+      case "2fa.disable": {
+        await admin.from("hub_data").delete().eq("source", "2fa_setup").eq("user_id", userId);
+        return json({ success: true });
       }
       case "2fa.verify": {
         const item = await addItem(admin, "2fa_attempt", userId, {
@@ -264,6 +281,12 @@ serve(async (req) => {
       case "2fa.status": {
         const setups = await listItems(admin, "2fa_setup", userId, 1);
         return json({ success: true, enabled: setups.length > 0, method: (setups[0]?.metadata as Record<string, unknown>)?.method });
+      }
+      case "2fa.list_devices": return json({ success: true, devices: await listItems(admin, "trusted_device", userId) });
+      case "2fa.revoke_device": {
+        if (!body.deviceId) return json({ error: "deviceId required" }, 400);
+        await admin.from("hub_data").delete().eq("id", String(body.deviceId)).eq("user_id", userId);
+        return json({ success: true });
       }
 
       // ── Encrypted Messaging ────────────────────────────────────────────────────
@@ -413,6 +436,37 @@ serve(async (req) => {
         return json({ success: ok, http_status: res.status });
       }
       case "discord.history": return json({ success: true, history: await listItems(admin, "discord_send", userId) });
+      case "discord.get_config": {
+        const { data } = await admin.from("hub_data")
+          .select("metadata").eq("source", "discord_config").eq("user_id", userId)
+          .order("created_at", { ascending: false }).limit(1).maybeSingle();
+        const cfg = (data?.metadata ?? {}) as Record<string, unknown>;
+        return json({ success: true, webhook_url: cfg.webhook_url ?? "", triggers: cfg.triggers ?? [] });
+      }
+      case "discord.configure": {
+        const existing = await admin.from("hub_data")
+          .select("id").eq("source", "discord_config").eq("user_id", userId).limit(1).maybeSingle();
+        const meta = { webhook_url: body.webhook_url, triggers: body.triggers ?? [], updated_at: new Date().toISOString() };
+        if (existing.data?.id) {
+          await admin.from("hub_data").update({ metadata: meta }).eq("id", existing.data.id);
+        } else {
+          await addItem(admin, "discord_config", userId, meta);
+        }
+        return json({ success: true });
+      }
+      case "discord.test": {
+        const { data } = await admin.from("hub_data")
+          .select("metadata").eq("source", "discord_config").eq("user_id", userId)
+          .order("created_at", { ascending: false }).limit(1).maybeSingle();
+        const webhookUrl = String((data?.metadata as Record<string, unknown>)?.webhook_url ?? body.webhook_url ?? "");
+        if (!webhookUrl) return json({ success: false, message: "Webhook URL が設定されていません" });
+        const res = await fetch(webhookUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ content: "🔔 自分株式会社 Discord通知テスト", username: "自分株式会社" }),
+        });
+        return json({ success: res.status < 400, message: res.status < 400 ? "テスト通知を送信しました" : "送信に失敗しました" });
+      }
 
       // ── LINE Notifications ────────────────────────────────────────────────────
       case "line.send": {
@@ -427,6 +481,37 @@ serve(async (req) => {
         });
         const ok = res.status < 400;
         return json({ success: ok, http_status: res.status });
+      }
+      case "line.get_config": {
+        const { data } = await admin.from("hub_data")
+          .select("metadata").eq("source", "line_config").eq("user_id", userId)
+          .order("created_at", { ascending: false }).limit(1).maybeSingle();
+        const cfg = (data?.metadata ?? {}) as Record<string, unknown>;
+        return json({ success: true, token: cfg.token ?? "", triggers: cfg.triggers ?? [] });
+      }
+      case "line.configure": {
+        const existing = await admin.from("hub_data")
+          .select("id").eq("source", "line_config").eq("user_id", userId).limit(1).maybeSingle();
+        const meta = { token: body.token, triggers: body.triggers ?? [], updated_at: new Date().toISOString() };
+        if (existing.data?.id) {
+          await admin.from("hub_data").update({ metadata: meta }).eq("id", existing.data.id);
+        } else {
+          await addItem(admin, "line_config", userId, meta);
+        }
+        return json({ success: true });
+      }
+      case "line.test": {
+        const { data } = await admin.from("hub_data")
+          .select("metadata").eq("source", "line_config").eq("user_id", userId)
+          .order("created_at", { ascending: false }).limit(1).maybeSingle();
+        const token = String((data?.metadata as Record<string, unknown>)?.token ?? body.token ?? "");
+        if (!token) return json({ success: false, message: "LINE Notify トークンが設定されていません" });
+        const formData = new FormData();
+        formData.append("message", "\n🔔 自分株式会社 LINE通知テスト");
+        const res = await fetch("https://notify-api.line.me/api/notify", {
+          method: "POST", headers: { Authorization: `Bearer ${token}` }, body: formData,
+        });
+        return json({ success: res.status < 400, message: res.status < 400 ? "テスト通知を送信しました" : "送信に失敗しました" });
       }
 
       // ── Status Page ───────────────────────────────────────────────────────────
@@ -556,6 +641,14 @@ serve(async (req) => {
           return perms.includes(String(body.permission ?? ""));
         });
         return json({ success: true, allowed: hasPermission, permission: body.permission });
+      }
+      case "access.list_access_logs": return json({ success: true, logs: await listItems(admin, "access_log", userId) });
+      case "access.log_event": {
+        const item = await addItem(admin, "access_log", userId, {
+          resource: body.resource, action: body.event_action, allowed: body.allowed ?? true,
+          ip: body.ip, logged_at: new Date().toISOString(),
+        });
+        return json({ success: true, log: item });
       }
 
       // ── Rate Limiter Enhanced ──────────────────────────────────────────────────

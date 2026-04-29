@@ -25,6 +25,23 @@ X への自動投稿先: **@kanta13jp1**
 
 ---
 
+### Task: feature-review (毎時 0 分 / 13 機能 round-robin)
+
+**起源**: Win版#132 part 77-78 / Handoff Bundle 第 1 適用例
+**Workflow**: `.github/workflows/feature-review.yml`
+**Script**: `scripts/feature_review.py`
+**Config**: `scripts/feature_review_config.json`
+
+13 機能 (= 9 page + 4 Edge Function) を毎時 1 機能ずつレビューし、修正すべき問題を `auto-review` GitHub Issue として自動起票する。
+
+- 通常 cron: `UTC hour % 13` で対象機能を 1 件選択
+- 手動実行: `target_features` で対象指定、または `force_full_scan=true` で全件 audit
+- throttle: max 3 issues/run、max 1 issue/feature
+- de-dupe: `[review:<hash>]` title hash で open issue と直近 closed issue を skip
+- Slack: 新規 issue がある run のみ `SLACK_WEBHOOK_URL` に集計通知
+
+---
+
 ### Task: daily-report (毎朝 09:00 JST に実行)
 
 > **アーキテクチャ**: GitHub Actions `daily-report.yml` が 07:30 JST に先行実行し、

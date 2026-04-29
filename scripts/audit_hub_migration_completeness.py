@@ -26,7 +26,11 @@ def load_dead_list(workflow_path: str) -> list[str]:
 
 
 def scan_stale_refs(dead_list: list[str], search_dirs: list[str]) -> dict[str, list[str]]:
+    # Multi-line regex: .invoke( optionally followed by whitespace/newline then 'ef-name'
+    _invoke_re = re.compile(r"""\.invoke\(\s*['"]([^'"]+)['"]\s*[,)]""", re.DOTALL)
+    _url_re_tmpl = "/functions/v1/{ef}"
     stale: dict[str, list[str]] = {}
+    dead_set = set(dead_list)
     for d in search_dirs:
         for root, _dirs, files in os.walk(d):
             for fname in files:
@@ -37,18 +41,18 @@ def scan_stale_refs(dead_list: list[str], search_dirs: list[str]) -> dict[str, l
                     fc = open(path, encoding="utf-8").read()
                 except Exception:
                     continue
-                for ef in dead_list:
-                    patterns = [
-                        f"invoke('{ef}'",
-                        f'invoke("{ef}"',
-                        f"/functions/v1/{ef}",
-                        f"/{ef}?",
-                    ]
-                    for p in patterns:
-                        if p in fc:
+                # Multi-line invoke() scan
+                for m in _invoke_re.finditer(fc):
+                    ef = m.group(1)
+                    if ef in dead_set:
+                        stale.setdefault(ef, []).append(path)
+                # URL-pattern scan (single-line, fast)
+                for ef in dead_set:
+                    if f"/functions/v1/{ef}" in fc:
+                        if path not in stale.get(ef, []):
                             stale.setdefault(ef, []).append(path)
-                            break
-    return stale
+    # Deduplicate file lists
+    return {k: sorted(set(v)) for k, v in stale.items()}
 
 
 def main() -> int:

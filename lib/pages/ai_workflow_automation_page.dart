@@ -25,8 +25,8 @@ class _AiWorkflowAutomationPageState extends State<AiWorkflowAutomationPage> {
     });
     try {
       final res = await Supabase.instance.client.functions.invoke(
-        'ai-workflow-automation',
-        method: HttpMethod.get,
+        'enterprise-hub',
+        body: {'action': 'ai_workflow.list'},
       );
       final data = res.data;
       if (!mounted) return;
