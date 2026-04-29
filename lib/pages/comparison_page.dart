@@ -24853,6 +24853,312 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'eventbrite': const _CompetitorInfo(
+    name: 'Eventbrite',
+    emoji: '🎟️',
+    tagline: 'イベント作成・チケット販売・集客プラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Eventbrite代替 イベント チケット販売 集客 オンラインイベント 無料イベント',
+    accentColor: Color(0xFFFF6C02),
+    painPoints: [
+      'チケット販売手数料3.7%+1.79ドル/枚・個人のライフ管理は別途必要',
+      'イベント/チケット特化でビジネス向け設計・個人のAIライフ管理は別途必要',
+      'Cvent/Hopinと比較してエンタープライズ機能・バーチャルイベントが弱い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'イベント作成・チケット・決済・プロモーション・アプリ・Analytics',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'cvent': const _CompetitorInfo(
+    name: 'Cvent',
+    emoji: '🎭',
+    tagline: 'エンタープライズイベント管理・会場調達・参加者管理で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Cvent代替 イベント管理 エンタープライズ 会場調達 会議 MICE 大規模',
+    accentColor: Color(0xFF0070C0),
+    painPoints: [
+      '価格非公開(エンタープライズ向け高額)・イベント特化・個人のライフ管理は別途',
+      'MICEイベント特化でビジネス向け設計・個人のAI管理は別途必要',
+      'Eventbriteと比較してSMBや小規模イベントには過剰',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '会場調達・登録・モバイルアプリ・ダイアグラム・サプライヤー管理',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'workable': const _CompetitorInfo(
+    name: 'Workable',
+    emoji: '👔',
+    tagline: 'AI採用管理システム(ATS)・中小企業向け採用自動化で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Workable代替 ATS 採用管理 求人掲載 面接 AI採用 中小企業',
+    accentColor: Color(0xFF3ABFE0),
+    painPoints: [
+      '月額149ドル〜・採用管理特化・個人のライフ管理は別途必要',
+      'ATS特化でHR向け設計・個人のAIライフ管理は別途必要',
+      'Greenhouse/Leverと比較してエンタープライズカスタマイズが弱い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AI求人票・200+求人サイト自動掲載・面接・オファー・HR機能',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'icims': const _CompetitorInfo(
+    name: 'iCIMS',
+    emoji: '🏢',
+    tagline: 'エンタープライズ採用プラットフォーム・タレントクラウドで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'iCIMS代替 ATS 採用プラットフォーム エンタープライズ タレント管理 大企業',
+    accentColor: Color(0xFF0065A3),
+    painPoints: [
+      '価格非公開(エンタープライズ向け高額)・採用特化・個人のライフ管理は別途',
+      'ATS/採用特化で大企業向け設計・個人のAIライフ管理は別途必要',
+      'Greenhouse/Workableと比較してUIが古く習得コストが高い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '採用CRM・マーケティング・オンボーディング・動画面接・Analytics',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'beamery': const _CompetitorInfo(
+    name: 'Beamery',
+    emoji: '💫',
+    tagline: 'AIタレントライフサイクル管理・採用CRMで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Beamery代替 タレント管理 採用CRM AI HR エンタープライズ 候補者関係',
+    accentColor: Color(0xFF7B2D8B),
+    painPoints: [
+      '価格非公開(大企業向け高額)・タレント管理特化・個人のライフ管理は別途',
+      'タレントライフサイクル特化でHR向け設計・個人のAI管理は別途必要',
+      'iCIMS/Greenhouseと比較してATSとしての機能が弱い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AI採用CRM・タレントグラフ・スキル分析・DEI・採用マーケ統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'cornerstone': const _CompetitorInfo(
+    name: 'Cornerstone OnDemand',
+    emoji: '🏛️',
+    tagline: 'エンタープライズ向けタレント管理・学習・パフォーマンス管理で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Cornerstone代替 タレント管理 学習管理 パフォーマンス 大企業 HCM',
+    accentColor: Color(0xFF0D2240),
+    painPoints: [
+      '価格非公開(大企業向け高額)・HCM特化・個人のライフ管理は別途必要',
+      'エンタープライズHCM特化でHR向け設計・個人のAI管理は別途必要',
+      'SuccessFactors/WorkdayLearningと比較してUIが古く習得コストが高い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'LMS・パフォーマンス・採用・承継計画・Analytics・コンテンツ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'successfactors': const _CompetitorInfo(
+    name: 'SAP SuccessFactors',
+    emoji: '🏗️',
+    tagline: 'SAP製エンタープライズHCMクラウドスイートで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'SAP SuccessFactors代替 HCM 人事管理 エンタープライズ SAP 給与 採用',
+    accentColor: Color(0xFF009DE0),
+    painPoints: [
+      '価格非公開(大企業向け年間数百万円〜)・SAP依存・導入に数ヶ月かかる',
+      'エンタープライズHCM特化でSAP向け設計・個人のAI管理は別途必要',
+      'Workday/Oracleと比較してUIデザイン・ユーザー体験が古い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '採用・オンボード・学習・パフォーマンス・報酬・HR分析・SAP統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'oracle-hcm': const _CompetitorInfo(
+    name: 'Oracle HCM Cloud',
+    emoji: '🔴',
+    tagline: 'Oracle製エンタープライズ統合HCMクラウドで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Oracle HCM代替 人事管理 エンタープライズ Oracle 給与 タレント管理',
+    accentColor: Color(0xFFF80000),
+    painPoints: [
+      '価格非公開(大企業向け年間数百万〜数千万円)・Oracle依存・導入に年単位',
+      'エンタープライズHCM特化でOracle向け設計・個人のAI管理は別途必要',
+      'WorkdayとSAP SuccessFactorsと比較してUX改善が遅い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Core HR・給与・タレント・採用・学習・Oracle AI・Fusion統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'ceridian': const _CompetitorInfo(
+    name: 'Ceridian Dayforce',
+    emoji: '📊',
+    tagline: 'クラウド統合HCM・リアルタイム給与計算で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Ceridian代替 Dayforce HCM 給与計算 リアルタイム 勤怠 福利厚生',
+    accentColor: Color(0xFF0066CC),
+    painPoints: [
+      '価格非公開(大企業向け)・HCM特化・個人のライフ管理は別途必要',
+      'エンタープライズHCM特化でHR向け設計・個人のAI管理は別途必要',
+      'ADP/Workdayと比較してエコシステム・パートナーが少ない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'リアルタイム給与・勤怠・HR・採用・学習・AI Dayforce Copilot',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
