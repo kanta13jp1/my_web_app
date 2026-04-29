@@ -24330,3 +24330,8 @@ screenshot 受領 → 5 質問判定 → ファイル特定 → cross-instance-p
 - プロンプト記載「2秒以上遅い=調子落ち」基準をconfidence式に統合
 - timeToSecondsTS関数を活用してタイム文字列を秒に変換
 - confidence式 40 terms体制確立
+
+## 2026-04-29 PS#1 S6 — migration-time-check false positive 修正
+- 問題: push mode が --since=14 days で既存 migration を誤検出 (2 failures)
+- 修正: github.event.before SHA を GITHUB_BASE_SHA として設定 → push 単位で正確に diff
+- blog-publish 1 failure: `2029-05-12-flutter-local-storage.md` missing (PS#2 cross-instance-pr 起票)
