@@ -55097,6 +55097,312 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'powerbi': const _CompetitorInfo(
+    name: 'Microsoft Power BI',
+    emoji: '📊',
+    tagline: 'Microsoft Power BI・ビジネスインテリジェンス・DAX・自然言語クエリ・Teams統合・Microsoft 365エコシステムで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Power BI代替 BI ビジネスインテリジェンス DAX 自然言語 Teams Microsoft 365 Tableau代替 Looker代替',
+    accentColor: Color(0xFFF2C811),
+    painPoints: [
+      '有料(Pro/Premium)・BI特化・個人のライフ管理は別途必要',
+      'Microsoft環境特化・個人のAI管理は別途必要',
+      'Tableau/Looker/Qlik との比較でMicrosoft以外環境・カスタマイズ・高度分析が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Power BI・DAX・自然言語クエリ・Teams統合・Microsoft 365エコシステム・BI',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'klipfolio': const _CompetitorInfo(
+    name: 'Klipfolio',
+    emoji: '📈',
+    tagline: 'Klipfolio・KPIダッシュボード・リアルタイムBI・Klips/PowerMetrics・中小企業向け・多数コネクターで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Klipfolio代替 KPIダッシュボード リアルタイムBI Klips PowerMetrics 中小企業 Databox代替 Geckoboard代替',
+    accentColor: Color(0xFF009ACD),
+    painPoints: [
+      '有料・BI特化・個人のライフ管理は別途必要',
+      'KPI/メトリクス特化・個人のAI管理は別途必要',
+      'Tableau/Power BI/Databox との比較でコスト・エンタープライズ機能・高度分析が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'KPIダッシュボード・リアルタイムBI・Klips/PowerMetrics・多数コネクター・中小企業',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'zoho-analytics': const _CompetitorInfo(
+    name: 'Zoho Analytics',
+    emoji: '🔢',
+    tagline: 'Zoho Analytics・セルフサービスBI・AI/ML分析・Zia AI・Zohoエコシステム統合・コスト効率で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Zoho Analytics代替 BI AI ML Zia セルフサービス Zohoエコシステム Tableau代替 Power BI代替',
+    accentColor: Color(0xFFE42527),
+    painPoints: [
+      '有料・BI特化・個人のライフ管理は別途必要',
+      'BI特化・個人のAI管理は別途必要',
+      'Tableau/Power BI/Metabase との比較でコスト・AI精度・エンタープライズが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'セルフサービスBI・Zia AI・ML分析・Zohoエコシステム統合・コスト効率',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'amazon-quicksight': const _CompetitorInfo(
+    name: 'Amazon QuickSight',
+    emoji: '⚡',
+    tagline: 'Amazon QuickSight・クラウドBI・SPICE・機械学習インサイト・スケーラブル・AWSネイティブ・コスト効率で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Amazon QuickSight代替 AWS BI SPICE 機械学習 スケーラブル クラウド Tableau代替 Power BI代替',
+    accentColor: Color(0xFFFF9900),
+    painPoints: [
+      '有料(従量課金)・AWS特化・個人のライフ管理は別途必要',
+      'BI特化・個人のAI管理は別途必要',
+      'Tableau/Power BI/Looker との比較でAWS以外環境・カスタマイズ・高度分析が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'クラウドBI・SPICE・機械学習インサイト・AWSネイティブ・スケーラブル',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'google-looker-studio': const _CompetitorInfo(
+    name: 'Google Looker Studio',
+    emoji: '📉',
+    tagline: 'Google Looker Studio・無料BI・Google Analytics/Ads統合・データポータル・クラウドネイティブ・共有ダッシュボードで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Google Looker Studio代替 無料BI Google Analytics Ads データポータル クラウド 共有 Tableau代替 Power BI代替',
+    accentColor: Color(0xFF4285F4),
+    painPoints: [
+      '無料(基本)・Google系データ特化・個人のライフ管理は別途必要',
+      'BI特化・個人のAI管理は別途必要',
+      'Tableau/Power BI/Metabase との比較でGoogle以外データ・高度分析・オフライン対応が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '無料BI・Google Analytics/Ads統合・クラウドネイティブ・共有ダッシュボード',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'mode': const _CompetitorInfo(
+    name: 'Mode Analytics',
+    emoji: '📋',
+    tagline: 'Mode Analytics・SQLベースBI・データアナリスト向け・Python/R統合・共同探索・Thoughtspot買収で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Mode代替 BI SQL Python R データアナリスト 共同探索 Thoughtspot Metabase代替 Looker代替',
+    accentColor: Color(0xFF6E2FFA),
+    painPoints: [
+      '有料・データアナリスト特化・個人のライフ管理は別途必要',
+      'BI特化・個人のAI管理は別途必要',
+      'Looker/Metabase/Redash との比較でコスト・ビジネスユーザー対応・統合が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'SQLベースBI・Python/R統合・データアナリスト向け・共同探索',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'matillion': const _CompetitorInfo(
+    name: 'Matillion',
+    emoji: '🏭',
+    tagline: 'Matillion ETL・クラウドデータ統合・ノーコード/コード・Snowflake/Databricks/Redshift対応・データ変換で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Matillion代替 ETL クラウドデータ統合 ノーコード Snowflake Databricks Redshift Fivetran代替 dbt代替',
+    accentColor: Color(0xFF00A98F),
+    painPoints: [
+      '有料・ETL特化・個人のライフ管理は別途必要',
+      'データエンジニア特化・個人のAI管理は別途必要',
+      'Fivetran/dbt/Airbyte との比較でコスト・軽量ETL・コードファーストが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'クラウドETL・ノーコード/コード・Snowflake/Databricks/Redshift対応・データ変換',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'azure-data-factory': const _CompetitorInfo(
+    name: 'Azure Data Factory',
+    emoji: '🏗️',
+    tagline: 'Azure Data Factory・クラウドETL/ELT・ハイブリッド統合・100+コネクター・Synapse統合・マイクロソフトで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Azure Data Factory代替 ETL ELT クラウド統合 Synapse Microsoft コネクター Fivetran代替 Matillion代替',
+    accentColor: Color(0xFF0078D4),
+    painPoints: [
+      '有料(従量課金)・Azure特化・個人のライフ管理は別途必要',
+      'データエンジニア特化・個人のAI管理は別途必要',
+      'Fivetran/Airbyte/Matillion との比較でAzure以外環境・コスト予測・学習コストが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'クラウドETL/ELT・ハイブリッド統合・100+コネクター・Synapse統合・Azure',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'aws-glue': const _CompetitorInfo(
+    name: 'AWS Glue',
+    emoji: '🔗',
+    tagline: 'AWS Glue・サーバーレスETL・データカタログ・Spark統合・AWS Data Lake・スキーマ自動検出で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'AWS Glue代替 サーバーレスETL データカタログ Spark AWS Data Lake スキーマ検出 Azure Data Factory代替 Matillion代替',
+    accentColor: Color(0xFFFF9900),
+    painPoints: [
+      '有料(従量課金)・AWS特化・個人のライフ管理は別途必要',
+      'データエンジニア特化・個人のAI管理は別途必要',
+      'Azure Data Factory/Matillion/Fivetran との比較でAWS以外・コスト予測・UI/UXが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'サーバーレスETL・データカタログ・Spark統合・AWS Data Lake・スキーマ自動検出',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
