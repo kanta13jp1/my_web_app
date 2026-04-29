@@ -23676,7 +23676,6 @@ Win territory 直接実装: SECOND_BRAIN +4.0 + VIBE +2.0 = +6.0/14.
 (本 commit にて確定)
 
 
-
 ## 2026-04-29 PS#4 S129-S131: 競合9社追加 258→267社
 
 **実装内容**:
@@ -23712,41 +23711,12 @@ Win territory 直接実装: SECOND_BRAIN +4.0 + VIBE +2.0 = +6.0/14.
 - CI: 2/3 success (1 in_progress)
 - commit: 32bcb5d5c
 
-## 2026-04-29 Win版#132 part 75 — PLATFORM #3 (Client Zero) dogfood
+## 2026-04-29 PS#4 S132-S134: 競合9社追加 267→276社
 
-### 概要
-`docs/CLIENT_ZERO_CASE_STUDY.md` 新規 (10 セクション営業資料形式). NEC 30,000 人 Claude 導入 → エンタープライズ営業転換 pattern を模倣して、自分株式会社の自社実証を対外発信基盤化.
-
-### 10 セクション
-1. エグゼクティブサマリ (= 30 秒で読める要旨 + 主要数値表)
-2. なぜ Client Zero として機能するか (= NEC pattern + 自社実証 = 最強信頼資料)
-3. 12 Instance Fleet 構成
-4. 実測スループット (14 part / 4 日 8 軸 / 9 件起票 / 4 件当日完了)
-5. 10 設計軸 / 75+ 原則 (= 軸の階層 3 層 + 軸の生成エンジン)
-6. dogfood Pattern 5 例 (= 軸間統合含む)
-7. OPS-28 charter §6 1 日サイクル
-8. エンタープライズ顧客への提供価値 (6 成果物 + 3 Use Case)
-9. 実証期間 timeline (2025-Q3 → 2028-Q3 IPO)
-10. お問い合わせ / 導入相談 (= future)
-
-### 6 提供成果物
-OPS-28 charter / 10 設計軸 docs / NotebookLM 蒸留パイプライン / CORE_LEAF_BOUNDARY / FLEET_SCALING_ROADMAP / dogfood pattern 5 例.
-
-### 3 Use Case
-A: 大企業 (10,000+) / B: 中堅 (100-1000) / C: スタートアップ.
-
-### dogfood pattern 第 6 例
-第 1-5 例 = 自社内ループ. **第 6 例 (本 part) = 自社実証 → 対外提供への進化**. dogfood の最終形態.
-
-### 8 part 連続 dogfood (part 68-75) 累積
-SECOND_BRAIN 0→4.0/7 + VIBE 4.5→6.5/7 + PLATFORM 2.0→3.0/7 = +7.0/21 (Win territory 直接実装).
-委譲完了後想定: + BRAIN #4 +0.5 + BRAIN #7 +1.0 + PLATFORM #6+#7 +2.0 = **+10.5/21** (3 軸合計).
-
-### Philosophy Alignment 9/9
-#1 CEO 感 (自社実証 → 営業資料 = CEO 商品化) / #2 ミッション (エンタープライズ AI 駆動経営支援) / #5 商品=ユーザー価値 (1-2 年試行錯誤の圧縮提供) / #9 ゴール (IPO 期 Phase 4 接続)
-
-### commit
-(本 commit にて確定)
+**実装内容**:
+- S132: lastpass(パスワード管理/security/#CC0000) / bitwarden(OSSパスワード管理/security/#175DDC) / premiere-pro(Adobe動画編集/video-editing/#9999FF)
+- S133: final-cut-pro(Mac専用動画編集/video-editing/#2D2D2D) / google-analytics(Webアクセス解析/analytics/#E37400) / microsoft-clarity(ヒートマップUX分析/analytics/#0078D7)
+- S134: whereby(ブラウザビデオ会議/video-comm/#1D2D44) / obs-studio(OSSライブ配信/video-editing/#362D6E) / camtasia(画面録画/video-editing/#78D14B)
 
 
 ## PS#6 S109 — 2026-04-29
@@ -23762,3 +23732,6 @@ SECOND_BRAIN 0→4.0/7 + VIBE 4.5→6.5/7 + PLATFORM 2.0→3.0/7 = +7.0/21 (Win 
 
 ### commit
 4750b435b
+**sitemap**: 310→319 URLs
+**全ファイル**: 276社統一
+**commit**: e31566e2b
