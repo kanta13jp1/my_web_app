@@ -49139,6 +49139,322 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'openreplay': const _CompetitorInfo(
+    name: 'OpenReplay',
+    emoji: '🎬',
+    tagline: 'OSS セッションリプレイ・自社ホスト・GDPR・DevToolsパネル・パフォーマンス追跡で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'OpenReplay代替 OSS セッションリプレイ 自社ホスト GDPR DevTools FullStory代替 LogRocket代替',
+    accentColor: Color(0xFFE01F5A),
+    painPoints: [
+      '無料OSS/有料Cloud混在・セッション分析特化・個人のライフ管理は別途必要',
+      'UXデバッグ特化・個人のAI管理は別途必要',
+      'FullStory/LogRocket/Smartlook との比較でエンタープライズ機能・AI分析・サポートが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'OSS セッションリプレイ・自社ホスト・DevTools統合・パフォーマンス追跡・GDPR',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'lucky-orange': const _CompetitorInfo(
+    name: 'Lucky Orange',
+    emoji: '🍊',
+    tagline: 'ヒートマップ+ライブチャット+セッション録画+フォーム分析・中小企業向け低価格で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Lucky Orange代替 ヒートマップ ライブチャット セッション録画 フォーム分析 中小企業 Hotjar代替 Crazy Egg代替',
+    accentColor: Color(0xFFFF7F00),
+    painPoints: [
+      '有料月18ドル~・UX分析+チャット特化・個人のライフ管理は別途必要',
+      'CRO/UX特化・個人のAI管理は別途必要',
+      'Hotjar/Crazy Egg/Mouseflow との比較でリアルタイムチャット統合・AI提案・高度分析が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ヒートマップ・ライブチャット・セッション録画・フォーム分析・オールインワン',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'yandex-metrica': const _CompetitorInfo(
+    name: 'Yandex Metrica',
+    emoji: '🇷🇺',
+    tagline: 'Yandex無料ウェブ分析・ヒートマップ・セッションリプレイ・無制限データ保存・ロシア発で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Yandex Metrica代替 無料ウェブ分析 ヒートマップ セッションリプレイ 無制限 Google Analytics代替 Plausible代替',
+    accentColor: Color(0xFFFF0000),
+    painPoints: [
+      '完全無料・ウェブ分析特化・個人のライフ管理は別途必要',
+      'アクセス解析特化・個人のAI管理は別途必要',
+      'Google Analytics/Matomo/Plausible との比較でプライバシー懸念・ロシア法・グローバル対応が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '完全無料・ヒートマップ・セッションリプレイ・無制限データ保存・Webvisor',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'clicky': const _CompetitorInfo(
+    name: 'Clicky',
+    emoji: '👆',
+    tagline: 'リアルタイムウェブ分析・訪問者単位追跡・ヒートマップ・スパムフィルター・軽量でシンプルで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Clicky代替 リアルタイム分析 訪問者追跡 ヒートマップ スパムフィルター 軽量 Google Analytics代替 Matomo代替',
+    accentColor: Color(0xFF00A651),
+    painPoints: [
+      '無料/有料月9.99ドル~・ウェブ分析特化・個人のライフ管理は別途必要',
+      'アクセス解析特化・個人のAI管理は別途必要',
+      'Google Analytics/Matomo/Plausible との比較で機能深さ・API・複数サイト管理が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'リアルタイム分析・訪問者単位追跡・ヒートマップ・スパムフィルター・軽量シンプル',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'piwik-pro': const _CompetitorInfo(
+    name: 'Piwik PRO',
+    emoji: '🔒',
+    tagline: 'プライバシー重視分析スイート・GDPR/HIPAA・Cookie不要モード・CDPで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Piwik PRO代替 プライバシー分析 GDPR HIPAA Cookie不要 CDP コンプライアンス Matomo代替 GA4代替',
+    accentColor: Color(0xFF1A6496),
+    painPoints: [
+      '無料Core/有料Growth~・コンプライアンス特化・個人のライフ管理は別途必要',
+      'エンタープライズ分析特化・個人のAI管理は別途必要',
+      'Matomo/GA4/Plausible との比較でコスト・設定複雑性・AI機能が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'GDPR/HIPAA準拠・Cookie不要モード・CDP・コンセントマネージャー・エンタープライズ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'usertesting': const _CompetitorInfo(
+    name: 'UserTesting',
+    emoji: '🧑‍💻',
+    tagline: 'ユーザーリサーチプラットフォーム・モデレート/非モデレート・パネル20万人・動画UXで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'UserTesting代替 ユーザーリサーチ モデレート UXリサーチ パネル 動画フィードバック Lookback代替 Maze代替',
+    accentColor: Color(0xFFFF6320),
+    painPoints: [
+      '高価格有料・UXリサーチ特化・個人のライフ管理は別途必要',
+      'ユーザーテスト特化・個人のAI管理は別途必要',
+      'Lookback/Maze/Optimal Workshop との比較でコスト・自動化・AI分析が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ユーザーリサーチ・モデレート/非モデレート・20万人パネル・動画UX・AIインサイト',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'sprig': const _CompetitorInfo(
+    name: 'Sprig (旧UserLeap)',
+    emoji: '🌱',
+    tagline:
+        'プロダクト調査プラットフォーム・マイクロサーベイ・AIインサイト・インプロダクト・スタートアップ向けで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Sprig代替 UserLeap プロダクト調査 マイクロサーベイ AIインサイト インプロダクト Typeform代替 Pendo代替',
+    accentColor: Color(0xFF1DB954),
+    painPoints: [
+      '有料/無料限定・プロダクト調査特化・個人のライフ管理は別途必要',
+      'UXリサーチ特化・個人のAI管理は別途必要',
+      'Typeform/Pendo/Gainsight との比較でコスト・汎用性・非デジタル調査が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'マイクロサーベイ・AIインサイト・インプロダクト調査・リプレイ連携・スタートアップ向け',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'instabug': const _CompetitorInfo(
+    name: 'Instabug',
+    emoji: '🐛',
+    tagline: 'モバイルアプリバグ報告・クラッシュレポート・セッションリプレイ・ユーザーフィードバックSDKで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Instabug代替 モバイルバグ報告 クラッシュレポート セッションリプレイ フィードバックSDK Bugsnag代替 Sentry代替',
+    accentColor: Color(0xFFFF6600),
+    painPoints: [
+      '有料月149ドル~・モバイル品質特化・個人のライフ管理は別途必要',
+      'アプリ開発特化・個人のAI管理は別途必要',
+      'Bugsnag/Sentry/Firebase Crashlytics との比較でコスト・Web対応・AI自動分類が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'モバイルバグ報告・クラッシュレポート・セッションリプレイ・フィードバックSDK・APM',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'usersnap': const _CompetitorInfo(
+    name: 'Usersnap',
+    emoji: '📸',
+    tagline: 'ビジュアルバグ報告・スクリーンショット注釈・プロダクトフィードバック・Jira/Slack連携で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Usersnap代替 ビジュアルバグ報告 スクリーンショット注釈 フィードバック Jira Slack連携 marker-io代替 BugHerd代替',
+    accentColor: Color(0xFF5B4FBE),
+    painPoints: [
+      '有料月69ドル~・フィードバック特化・個人のライフ管理は別途必要',
+      'バグトラッキング特化・個人のAI管理は別途必要',
+      'marker.io/BugHerd/Instabug との比較でモバイル対応・AI分析・価格が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ビジュアルバグ報告・スクリーンショット注釈・プロダクトフィードバック・Jira/Slack連携',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
