@@ -218,6 +218,8 @@ Claude Code + Obsidian の PKM ベストプラクティス (Atomic Notes / Linki
 | 2026-04-29 | Win版#132 part 70 | Codex#2 へ `memory-search-hub` EF cross-instance-pr (#7 委譲) | (#7 完成は Codex#2 受領後) | 3.0/7 (PR 受領で 4.0/7 想定) |
 | 2026-04-29 | Win版#132 part 71 | `query_artifact_TEMPLATE.md` 新規 + 第 1 実例 `query_artifact_20260429_hybrid_search_tradeoff.md` (#5 dogfood) | #5 (テンプレ + 1 実例 + 双方向 link) | 3.0 → **3.5/7** |
 | 2026-04-29 | Win版#132 part 72 | `docs/CORE_LEAF_BOUNDARY.md` 新規 (4 Tier 統合表現 + memory/ 内部 Tier マッピング) — VIBE_CODING #1 + SECOND_BRAIN #1 同時 dogfood (1 doc 2 軸押上 第 1 例) | #1 階層型分離 | 3.5 → **4.0/7** |
+| 2026-04-29 | PS#1 S5 受領完成 | `consolidate-memory --lint` 実装完了 (= part 69 Win 起票 / 孤児ノート/重複候補/矛盾検出 + lint_report 生成 + GHA Issue 化) | #4 定期 Lint + 孤児統合 | 4.0 → **4.5/7** |
+| 2026-04-29 | Win版#132 part 84 | PS#1 #4 受領 close 確認 + `cross-instance-prs/done/` 移動済 (= PS#1 S5 で実施) + baseline 反映 | (= reciprocal close) | 4.5/7 維持 |
 | 2026-04-29 | PS#1 S4 | `~/.claude/skills/consolidate-memory/lint.py` + `SKILL.md` 実装 — orphan (MEMORY.md 未参照) / duplicate (同 prefix 3+件/90日) / contradiction (keyword 3-10件) 3 検出器 + `memory/lint_report_YYYY_MM.md` 自動生成。テスト実行: 928 files / orphan 881 / duplicate 62 groups | #4 定期 Lint + 孤児統合 | 4.0 → **4.5/7** |
 
 **次回ターゲット** (baseline 4.5/7):
