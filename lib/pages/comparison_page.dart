@@ -44764,6 +44764,323 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'inshot': const _CompetitorInfo(
+    name: 'InShot',
+    emoji: '🎬',
+    tagline: 'モバイル動画編集・SNS最適化・BGM・フィルター・テキスト・縦横比変換で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'InShot代替 モバイル動画編集 SNS CapCut代替 TikTok動画 YouTube Shorts Reels編集',
+    accentColor: Color(0xFF00C4CC),
+    painPoints: [
+      '無料/Pro月4ドル~・モバイル動画特化・個人のライフ管理は別途必要',
+      '動画クリエイティブ特化・個人のAI管理は別途必要',
+      'CapCut/Adobe Premiere Rush/KineMasterと比較してAI機能・テンプレート・PC版が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'BGM・テキスト・フィルター・縦横比・スローモーション・SNS最適化',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'snapseed': const _CompetitorInfo(
+    name: 'Snapseed',
+    emoji: '📸',
+    tagline: 'Google製無料写真編集・29ツール・非破壊編集・SELECTIVEフィルター・RAW対応で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Snapseed代替 無料写真編集 Google スマホ Lightroom代替 VSCO代替 非破壊編集',
+    accentColor: Color(0xFF52B5F7),
+    painPoints: [
+      '完全無料・写真編集特化・個人のライフ管理は別途必要',
+      'クリエイティブ特化・個人のAI管理は別途必要',
+      'Lightroom/VSCO/Adobe Expressと比較してプリセット管理・クラウド同期・SNS統合が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '29ツール・非破壊編集・SELECTIVEフィルター・RAW・スタック・Looks',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'google-photos': const _CompetitorInfo(
+    name: 'Google Photos',
+    emoji: '🖼️',
+    tagline:
+        'Google写真バックアップ・AI整理・顔認識・メモリー・Googleレンズ・Pixel限定無制限で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Google Photos代替 写真バックアップ AI整理 顔認識 iCloud代替 Amazon Photos代替',
+    accentColor: Color(0xFF4285F4),
+    painPoints: [
+      '無料15GB/有料・写真バックアップ特化・個人のライフ管理は別途必要',
+      '写真管理特化・個人のAI管理は別途必要',
+      'iCloud Photos/Amazon Photos/Flickrと比較してストレージ制限・プライバシー・Apple統合が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AI整理・顔認識・メモリー・Googleレンズ・共有アルバム・Pixel無制限',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'flipboard': const _CompetitorInfo(
+    name: 'Flipboard',
+    emoji: '📰',
+    tagline:
+        'ニュースキュレーション・ソーシャルマガジン・FlipFed分散型・Storyboard・自分のFeedで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Flipboard代替 ニュースアプリ キュレーション ソーシャルマガジン Feedly代替 Apple News代替',
+    accentColor: Color(0xFFE12828),
+    painPoints: [
+      '無料・ニュース閲覧特化・個人のライフ管理は別途必要',
+      '情報消費特化・個人のAI管理は別途必要',
+      'Feedly/Apple News/Instapaper比較してAlgorithmコントロール・オフライン・カテゴリ精度が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'キュレーション・ソーシャルマガジン・FlipFed分散型・Storyboard・マガジン作成',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'reeder': const _CompetitorInfo(
+    name: 'Reeder',
+    emoji: '📖',
+    tagline:
+        'Apple向けプレミアムRSSリーダー・iCloud同期・Readability・オフライン・Mac/iPhone統合で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Reeder代替 RSSリーダー Apple Mac iPhone Feedly代替 NetNewsWire代替 ニュース管理',
+    accentColor: Color(0xFF6CB33F),
+    painPoints: [
+      '買い切り(10ドル~)・Apple専用・RSS特化・個人のライフ管理は別途必要',
+      '情報収集特化・個人のAI管理は別途必要',
+      'Feedly/Inoreader/NetNewsWireと比較してAndroid/Web版なし・AI要約・共有機能が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'プレミアムUI・iCloud同期・Readability・オフライン・Safari/Shortcuts統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'proton-pass': const _CompetitorInfo(
+    name: 'Proton Pass',
+    emoji: '🔑',
+    tagline:
+        'E2E暗号化パスワードマネージャー・Protonエコシステム・alias.com統合・OSS・無料で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Proton Pass代替 パスワードマネージャー E2E暗号化 プライバシー Bitwarden代替 1Password代替 OSS',
+    accentColor: Color(0xFF6D4AFF),
+    painPoints: [
+      '無料/有料(月4ドル)・パスワード管理特化・個人のライフ管理は別途必要',
+      'セキュリティ特化・個人のAI管理は別途必要',
+      'Bitwarden/1Password/Dashlaneと比較してauto-fill安定性・エンタープライズ機能・モバイル完成度が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'E2E暗号化・メールエイリアス・OSS・Protonエコシステム・パスキー対応',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'pillow': const _CompetitorInfo(
+    name: 'Pillow',
+    emoji: '💤',
+    tagline: 'AI睡眠分析・Apple Watch連携・音声録音・スマートアラーム・睡眠スコアで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Pillow代替 睡眠追跡 Apple Watch iPhone AI分析 Sleep Cycle代替 Oura代替 スマートアラーム',
+    accentColor: Color(0xFF5B5EA6),
+    painPoints: [
+      '無料/Pro有料・睡眠特化・個人のライフ管理は別途必要',
+      '睡眠モニタリング特化・個人のAI管理は別途必要',
+      'Sleep Cycle/Oura Ring/Autosleepと比較してAndroid非対応・ハードウェア不要が強みでもあり限界',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AI睡眠分析・Apple Watch・音声録音・スマートアラーム・心拍・睡眠スコア',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'rise-science': const _CompetitorInfo(
+    name: 'Rise Science',
+    emoji: '⚡',
+    tagline:
+        '睡眠負債計測・エネルギーグラフ・Peak Hours・Sleep Coach・Circadian科学で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Rise Science代替 睡眠負債 エネルギー管理 Circadian睡眠アプリ Sleep Cycle代替 Pillow代替',
+    accentColor: Color(0xFFFF6B35),
+    painPoints: [
+      '有料(年100ドル)・睡眠/エネルギー特化・個人のライフ管理は別途必要',
+      '睡眠科学特化・個人のAI管理は別途必要',
+      'Sleep Cycle/Pillow/Ourと比較してコスト・ハードウェア統合・詳細な睡眠ステージ分析が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '睡眠負債計測・エネルギーグラフ・Peak Hours・Circadian科学・Sleep Coach',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'replika': const _CompetitorInfo(
+    name: 'Replika',
+    emoji: '🤖',
+    tagline: 'AIコンパニオン・感情サポート・3Dアバター・Proメンタルウェルネス・日記で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Replika代替 AIコンパニオン 感情サポート アバター Character.AI代替 AI友人 メンタルヘルス',
+    accentColor: Color(0xFF5B4FE0),
+    painPoints: [
+      '無料/Pro月20ドル・AI会話特化・個人のライフ管理は別途必要',
+      'AI感情サポート特化・個人のAI管理は別途必要',
+      'Character.AI/Pi/Kindroidと比較してRP機能変更・価格上昇・依存リスクが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '感情サポート・3Dアバター・日記・AR・Proメンタルウェルネス・コーチング',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
