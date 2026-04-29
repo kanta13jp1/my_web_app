@@ -53261,6 +53261,312 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'jamf': const _CompetitorInfo(
+    name: 'Jamf',
+    emoji: '🍎',
+    tagline: 'Apple特化MDM・Jamf Pro/Jamf Now・Appleデバイス管理・学校/企業・ゼロタッチ展開・セキュリティで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Jamf代替 Apple MDM デバイス管理 iPhone iPad Mac ゼロタッチ展開 Kandji代替 Microsoft Intune代替',
+    accentColor: Color(0xFF0075D3),
+    painPoints: [
+      '有料・Appleデバイス管理特化・個人のライフ管理は別途必要',
+      'IT管理特化・個人のAI管理は別途必要',
+      'Kandji/Microsoft Intune/Mosyle との比較でコスト・セキュリティ深度・クロスプラットフォームが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Apple特化MDM・Jamf Pro/Now・ゼロタッチ展開・セキュリティ・学校/企業対応',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'kandji': const _CompetitorInfo(
+    name: 'Kandji',
+    emoji: '🔮',
+    tagline: 'Apple MDM・自動化・コンプライアンス・セキュリティ・BlueprintでMac/iPhone/iPad管理・Jamf代替で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Kandji代替 Apple MDM 自動化 コンプライアンス Blueprint Mac iPhone iPad Jamf代替 Mosyle代替',
+    accentColor: Color(0xFF7C3AED),
+    painPoints: [
+      '有料・Apple MDM特化・個人のライフ管理は別途必要',
+      'IT管理特化・個人のAI管理は別途必要',
+      'Jamf/Microsoft Intune/Mosyle との比較でApple以外・企業規模・コストが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Apple MDM・Blueprint自動化・コンプライアンス・セキュリティ・ゼロタッチ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'microsoft-intune': const _CompetitorInfo(
+    name: 'Microsoft Intune',
+    emoji: '🪟',
+    tagline: 'Microsoft UEM・マルチプラットフォームMDM/MAM・Windows/iOS/Android・条件付きアクセス・エンタープライズで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Microsoft Intune代替 UEM MDM MAM マルチプラットフォーム Windows iOS Android 条件付きアクセス Jamf代替 Workspace ONE代替',
+    accentColor: Color(0xFF0078D4),
+    painPoints: [
+      '有料(M365 E3等)・Microsoft環境特化・個人のライフ管理は別途必要',
+      'IT管理特化・個人のAI管理は別途必要',
+      'Jamf/VMware Workspace ONE/SOTI との比較でApple管理深度・コスト・非Microsoft環境が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'UEM・MDM/MAM・Windows/iOS/Android・条件付きアクセス・Microsoft 365統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'workspace-one': const _CompetitorInfo(
+    name: 'VMware Workspace ONE',
+    emoji: '🖥️',
+    tagline: 'VMware UEM・Workspace ONE・マルチプラットフォーム・ゼロトラスト・デジタルワークスペース・AIops管理で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Workspace ONE代替 VMware UEM マルチプラットフォーム ゼロトラスト デジタルワークスペース Microsoft Intune代替 SOTI代替',
+    accentColor: Color(0xFF607078),
+    painPoints: [
+      '有料・UEM特化・個人のライフ管理は別途必要',
+      'エンタープライズ特化・個人のAI管理は別途必要',
+      'Microsoft Intune/Jamf/SOTI との比較でコスト・複雑さ・クラウドネイティブが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'UEM・マルチプラットフォーム・ゼロトラスト・デジタルワークスペース・AIops管理',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'ivanti': const _CompetitorInfo(
+    name: 'Ivanti',
+    emoji: '🔧',
+    tagline: 'Ivanti UEM・ITSM・ゼロトラスト・パッチ管理・エンドポイント管理・セキュリティ・旧MobileIron/Landesk統合で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Ivanti代替 UEM ITSM ゼロトラスト パッチ管理 MobileIron LanDesk エンドポイント管理 Microsoft Intune代替',
+    accentColor: Color(0xFF00A3E0),
+    painPoints: [
+      '有料・UEM/ITSM特化・個人のライフ管理は別途必要',
+      'エンタープライズ特化・個人のAI管理は別途必要',
+      'Microsoft Intune/Jamf/ServiceNow との比較でコスト・複雑さ・クラウドネイティブが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'UEM・ITSM・ゼロトラスト・パッチ管理・セキュリティ・エンドポイント管理統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'soti': const _CompetitorInfo(
+    name: 'SOTI MobiControl',
+    emoji: '📱',
+    tagline: 'SOTI MobiControl・エンタープライズMDM・IoT/ルーギッド・Android/iOS/Windows・BYOD・完全デバイスライフサイクル管理で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'SOTI代替 MobiControl MDM IoT ルーギッド Android iOS BYOD Microsoft Intune代替 Jamf代替',
+    accentColor: Color(0xFF001F5B),
+    painPoints: [
+      '有料・MDM特化・個人のライフ管理は別途必要',
+      'IT管理特化・個人のAI管理は別途必要',
+      'Microsoft Intune/Jamf/Ivanti との比較でコスト・クラウドネイティブ・UI/UXが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'MobiControl・IoT/ルーギッド・Android/iOS/Windows・BYOD・デバイスライフサイクル',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'hexnode': const _CompetitorInfo(
+    name: 'Hexnode UEM',
+    emoji: '⬡',
+    tagline: 'クラウドUEM・Hexnode・マルチプラットフォームMDM・キオスクモード・BYOD・コスト効率型エンタープライズ管理で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Hexnode代替 UEM MDM キオスクモード BYOD マルチプラットフォーム クラウド Jamf代替 Microsoft Intune代替',
+    accentColor: Color(0xFF4A154B),
+    painPoints: [
+      '有料・UEM特化・個人のライフ管理は別途必要',
+      'IT管理特化・個人のAI管理は別途必要',
+      'Jamf/Microsoft Intune/SOTI との比較でApple専用機能・大規模運用・高度セキュリティが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'クラウドUEM・マルチプラットフォーム・キオスクモード・BYOD・コスト効率',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'mosyle': const _CompetitorInfo(
+    name: 'Mosyle',
+    emoji: '🍃',
+    tagline: 'Apple特化MDM・Mosyle Business/Manager・学校向け・ゼロタッチ・セキュリティ・アプリ配布・コスト効率で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Mosyle代替 Apple MDM 学校 ゼロタッチ アプリ配布 コスト効率 Jamf代替 Kandji代替',
+    accentColor: Color(0xFF2E8B57),
+    painPoints: [
+      '有料・Apple MDM特化・個人のライフ管理は別途必要',
+      'IT管理特化・個人のAI管理は別途必要',
+      'Jamf/Kandji との比較でエンタープライズ機能・セキュリティ深度・スケールが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Apple MDM・ゼロタッチ・セキュリティ・アプリ配布・学校/企業・コスト効率',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'citrix-endpoint': const _CompetitorInfo(
+    name: 'Citrix Endpoint Management',
+    emoji: '🖱️',
+    tagline: 'Citrix UEM・エンドポイント管理・MAM・VDI統合・セキュアアクセス・BYOD・エンタープライズモビリティで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Citrix Endpoint代替 UEM MAM VDI BYOD セキュアアクセス エンタープライズモビリティ Microsoft Intune代替 VMware代替',
+    accentColor: Color(0xFF452170),
+    painPoints: [
+      '有料・Citrix VDI環境特化・個人のライフ管理は別途必要',
+      'エンタープライズ特化・個人のAI管理は別途必要',
+      'Microsoft Intune/VMware Workspace ONE/Jamf との比較でコスト・VDI以外環境・モダンAPIが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'UEM・MAM・VDI統合・セキュアアクセス・BYOD・エンタープライズモビリティ管理',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
