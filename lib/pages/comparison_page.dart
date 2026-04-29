@@ -16632,7 +16632,7 @@ final _competitorInfo = <String, _CompetitorInfo>{
     searchKeyword: 'Paddle代替 SaaS決済 税務処理 サブスクリプション 国際展開',
     accentColor: Color(0xFF1A56DB),
     painPoints: [
-      '取引額の5%+$0.50の手数料・高収益製品では大きなコスト',
+      '取引額の5%+\$0.50の手数料・高収益製品では大きなコスト',
       'SaaS決済・税務代行特化で個人ライフ管理・AI機能は別途必要',
       'Stripeと比較してカスタマイズ性が低くエンジニア向け機能が少ない',
     ],
@@ -16700,7 +16700,7 @@ final _competitorInfo = <String, _CompetitorInfo>{
     searchKeyword: 'Lemon Squeezy代替 デジタル商品 SaaS決済 Gumroad代替 Paddle代替',
     accentColor: Color(0xFFFFCE37),
     painPoints: [
-      '取引額の5%+$0.50の手数料・Gumroadより高い場合がある',
+      '取引額の5%+\$0.50の手数料・Gumroadより高い場合がある',
       'デジタル商品決済特化で個人ライフ管理・AI対話は別途必要',
       '機能追加ペースが速く設定方法が頻繁に変わる',
     ],
@@ -17040,7 +17040,7 @@ final _competitorInfo = <String, _CompetitorInfo>{
     searchKeyword: 'New Relic代替 APM アプリ監視 オブザーバビリティ パフォーマンス',
     accentColor: Color(0xFF008C99),
     painPoints: [
-      '無料100GBまで・超過は$0.35/GBと大量データで高額化',
+      '無料100GBまで・超過は\$0.35/GBと大量データで高額化',
       'インフラ監視特化でエンジニア向け・個人ライフ管理は別途必要',
       'Datadogと比較してUI学習コストが高くオンボーディングに時間がかかる',
     ],
@@ -17074,7 +17074,7 @@ final _competitorInfo = <String, _CompetitorInfo>{
     searchKeyword: 'Dynatrace代替 AI監視 APM クラウド監視 自動化',
     accentColor: Color(0xFF1496FF),
     painPoints: [
-      '時間あたり$0.04〜・エンタープライズは年間数十万ドルに',
+      '時間あたり\$0.04〜・エンタープライズは年間数十万ドルに',
       'エンタープライズIT監視特化でエンジニア/運用チーム向け',
       'New RelicやDatadogと比較してSMBには価格・機能が過剰',
     ],
