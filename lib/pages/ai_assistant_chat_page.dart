@@ -314,6 +314,7 @@ class _AiAssistantChatPageState extends State<AiAssistantChatPage>
       try {
         _recognition!.start();
       } catch (e) {
+        if (!mounted) return;
         setState(() => _isListening = false);
         _pulseCtrl.stop();
         _pulseCtrl.reset();

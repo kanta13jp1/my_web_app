@@ -29,6 +29,7 @@ class _AiWorkflowAutomationPageState extends State<AiWorkflowAutomationPage> {
         method: HttpMethod.get,
       );
       final data = res.data;
+      if (!mounted) return;
       setState(() {
         if (data is Map && data['workflows'] is List) {
           _workflows = data['workflows'] as List;
@@ -39,9 +40,10 @@ class _AiWorkflowAutomationPageState extends State<AiWorkflowAutomationPage> {
         }
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() => _error = e.toString());
     } finally {
-      setState(() => _loading = false);
+      if (mounted) setState(() => _loading = false);
     }
   }
 

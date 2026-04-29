@@ -56,9 +56,10 @@ class _ViralVideoGeneratorPageState extends State<ViralVideoGeneratorPage> {
         });
       }
     } catch (e) {
+      if (!mounted) return;
       setState(() => _errorMessage = e.toString());
     } finally {
-      setState(() => _loading = false);
+      if (mounted) setState(() => _loading = false);
     }
   }
 
@@ -80,9 +81,11 @@ class _ViralVideoGeneratorPageState extends State<ViralVideoGeneratorPage> {
         },
       );
       final data = res.data as Map<String, dynamic>?;
+      if (!mounted) return;
       setState(() => _result = data?['brief'] as Map<String, dynamic>?);
       await _loadHistory();
     } catch (e) {
+      if (!mounted) return;
       setState(() => _errorMessage = e.toString());
       setState(() => _loading = false);
     }

@@ -100,9 +100,10 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
         );
       }
     } catch (e) {
+      if (!mounted) return;
       setState(() => _errorMessage = 'データ取得エラー: $e');
     } finally {
-      setState(() => _loading = false);
+      if (mounted) setState(() => _loading = false);
     }
   }
 
@@ -127,9 +128,10 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
         _tabController.animateTo(0);
       }
     } catch (e) {
+      if (!mounted) return;
       setState(() => _errorMessage = '生成エラー: $e');
     } finally {
-      setState(() => _loading = false);
+      if (mounted) setState(() => _loading = false);
     }
   }
 

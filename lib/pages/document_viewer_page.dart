@@ -57,6 +57,7 @@ class _DocumentViewerPageState extends State<DocumentViewerPage> {
           '✅ [DocumentViewerPage] Document content loaded successfully',
         );
       }
+      if (!mounted) return;
       setState(() {
         _content = content;
         _isLoading = false;
@@ -69,6 +70,7 @@ class _DocumentViewerPageState extends State<DocumentViewerPage> {
         debugPrint('❌ [DocumentViewerPage] Stack trace: $stackTrace');
       }
 
+      if (!mounted) return;
       setState(() {
         _error = 'ドキュメントの読み込みに失敗しました: $e';
         _isLoading = false;
