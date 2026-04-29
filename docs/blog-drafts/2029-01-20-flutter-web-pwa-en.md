@@ -1,7 +1,7 @@
 ---
 title: "Flutter Web PWA Complete Guide — Offline Support, Install Prompt & Push Notifications"
 tags: flutter,dart,ai,indiedev
-published: false
+published: true
 ---
 
 # Flutter Web PWA Complete Guide — Offline Support, Install Prompt & Push Notifications
