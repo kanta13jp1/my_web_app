@@ -46319,6 +46319,312 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'loseit': const _CompetitorInfo(
+    name: 'Lose It!',
+    emoji: '🥗',
+    tagline: 'カロリーカウント・食品スキャン・マクロ追跡・Snap It AI食事認識・体重管理で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Lose It代替 カロリー管理 食事記録 体重管理 Snap It AI MyFitnessPal代替 ダイエット',
+    accentColor: Color(0xFF00BFA5),
+    painPoints: [
+      '無料/Premium月4ドル~・食事/体重特化・個人のライフ管理は別途必要',
+      'ダイエット追跡特化・個人のAI管理は別途必要',
+      'MyFitnessPal/Noom/Lifesumとの比較でコーチング機能・コミュニティ・モチベーションが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'カロリー追跡・食品スキャン・Snap It AI・マクロ管理・体重グラフ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'lifesum': const _CompetitorInfo(
+    name: 'Lifesum',
+    emoji: '🍏',
+    tagline: 'スウェーデン発ダイエットアプリ・食事計画・マクロ/ビタミン・レシピ・Apple Health統合で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Lifesum代替 ダイエット 食事計画 マクロ ビタミン レシピ Apple Health MyFitnessPal代替',
+    accentColor: Color(0xFF4CAF50),
+    painPoints: [
+      '無料/Premium月7ドル~・食事/健康特化・個人のライフ管理は別途必要',
+      '栄養追跡特化・個人のAI管理は別途必要',
+      'MyFitnessPal/Cronometer/Noomとの比較でデータベース規模・カスタマイズ・コーチングが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '食事計画・マクロ/ビタミン追跡・レシピ・Apple Health統合・健康スコア',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'yazio': const _CompetitorInfo(
+    name: 'YAZIO',
+    emoji: '🍽️',
+    tagline: 'カロリーカウンター/断食アプリ・断食タイマー・50M食品DB・欧州発・フリーミアムで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'YAZIO代替 カロリーカウント 断食 間欠的断食 食事記録 欧州 MyFitnessPal代替 Zero代替',
+    accentColor: Color(0xFFF57C00),
+    painPoints: [
+      '無料/Pro月5ドル~・食事/断食特化・個人のライフ管理は別途必要',
+      '栄養管理特化・個人のAI管理は別途必要',
+      'MyFitnessPal/Lose It!/Zeroとの比較でAI機能・コーチング・地域外DB精度が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'カロリー追跡・断食タイマー・50M食品DB・レシピ・体重グラフ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'macrofactor': const _CompetitorInfo(
+    name: 'MacroFactor',
+    emoji: '📊',
+    tagline: 'AIコーチ付きマクロ追跡・適応型カロリー計算・進捗分析・科学的栄養管理で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'MacroFactor代替 マクロ追跡 AIコーチ カロリー計算 科学的栄養管理 MyFitnessPal代替 Cronometer代替',
+    accentColor: Color(0xFF512DA8),
+    painPoints: [
+      '有料月12ドル~・栄養AIコーチ特化・個人のライフ管理は別途必要',
+      '栄養科学特化・個人のAI管理は別途必要',
+      'MyFitnessPal/Cronometer/Carbon Dietとの比較でコスト・食品DB規模・コミュニティが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AIコーチ・適応型カロリー計算・マクロ追跡・進捗分析・科学的アルゴリズム',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'carb-manager': const _CompetitorInfo(
+    name: 'Carb Manager',
+    emoji: '🥑',
+    tagline: 'ケトジェニック/低炭水化物追跡・ケトカリキュレーター・レシピ・コミュニティで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Carb Manager代替 ケトジェニック 低炭水化物 カーボ追跡 ケト計算 Cronometer代替 MyFitnessPal代替',
+    accentColor: Color(0xFF00796B),
+    painPoints: [
+      '無料/Premium月9ドル~・ケト食事特化・個人のライフ管理は別途必要',
+      '炭水化物管理特化・個人のAI管理は別途必要',
+      'MyFitnessPal/Cronometer/Lifesumとの比較で汎用性・食品DB広さ・一般ダイエットが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ケト/低炭水化物追跡・ケトカリキュレーター・レシピ・コミュニティ・断食',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'garmin-connect': const _CompetitorInfo(
+    name: 'Garmin Connect',
+    emoji: '⌚',
+    tagline: 'Garminウォッチ専用・GPS・VO2Max・Body Battery・トレーニング負荷・無料プラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Garmin Connect代替 Garmin GPS トレーニング VO2Max Body Battery スポーツ追跡 Strava代替',
+    accentColor: Color(0xFF007DC3),
+    painPoints: [
+      '無料(Garmin端末必要)・Garminエコ特化・個人のライフ管理は別途必要',
+      'スポーツデータ特化・個人のAI管理は別途必要',
+      'Strava/Polar/WHOOPとの比較でGarmin端末外の利用不可・SNS機能・コミュニティが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'GPS・VO2Max・Body Battery・トレーニング負荷・Garminエコシステム',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'polar-flow': const _CompetitorInfo(
+    name: 'Polar Flow',
+    emoji: '🏃',
+    tagline: 'Polar製スポーツ/フィットネス追跡・Training Load Pro・Nightly Recharge・心拍ゾーンで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Polar Flow代替 Polar スポーツ 心拍 Training Load フィットネス Garmin代替 Wahoo代替',
+    accentColor: Color(0xFFD50000),
+    painPoints: [
+      '無料(Polar端末必要)・Polarエコ特化・個人のライフ管理は別途必要',
+      'スポーツ追跡特化・個人のAI管理は別途必要',
+      'Garmin/Suunto/WHOOPとの比較でスマートウォッチ機能・SNS・アプリ数が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Training Load Pro・Nightly Recharge・心拍ゾーン・GPS・Polar端末統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'trainingpeaks': const _CompetitorInfo(
+    name: 'TrainingPeaks',
+    emoji: '🚴',
+    tagline: 'アスリート向けトレーニング計画・TSS/CTL/ATL・コーチ連携・ゴール設定・パワー分析で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'TrainingPeaks代替 トレーニング計画 TSS CTL アスリート コーチ 持久力 Strava代替',
+    accentColor: Color(0xFF1B5E20),
+    painPoints: [
+      '無料/Premium月20ドル~・スポーツ特化・個人のライフ管理は別途必要',
+      'アスリートPM特化・個人のAI管理は別途必要',
+      'Strava/Garmin/Final Surgeとの比較で非アスリートには複雑・コスト・UI学習曲線が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'TSS/CTL/ATL・コーチ連携・ゴール設定・パワー分析・持久力スポーツ特化',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'wahoo': const _CompetitorInfo(
+    name: 'Wahoo Fitness',
+    emoji: '🚵',
+    tagline: 'サイクリング/ランニングスマートデバイス・SYSTM AIトレーニング・Kickrスマートトレーナーで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Wahoo代替 サイクリング スマートトレーナー SYSTM AIトレーニング ランニング Garmin代替 Zwift代替',
+    accentColor: Color(0xFFE53935),
+    painPoints: [
+      '有料(デバイス+SYSTM月15ドル)・サイクリング特化・個人のライフ管理は別途必要',
+      'サイクリング/ランニング特化・個人のAI管理は別途必要',
+      'Garmin/Zwift/Traineroadとの比較でエコシステム幅・SNS機能・非サイクリストが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Kickrスマートトレーナー・SYSTM AIトレーニング・GPS・パワー計測・Systm統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
