@@ -21,11 +21,10 @@ export interface BudgetCheckResult {
   exceeded_scope_id?: string | null;
 }
 
-// deno-lint-ignore require-await
-export async function checkBudget(
+export function checkBudget(
   _scope: BudgetScope,
   _key: string,
-): Promise<BudgetCheckResult> {
+): BudgetCheckResult {
   return {
     ok: true,
     remaining_usd: 999999,
@@ -34,13 +33,12 @@ export async function checkBudget(
   };
 }
 
-export async function recordSpend(
+export function recordSpend(
   _scope: BudgetScope,
   _key: string,
   _costUsd: number,
-): Promise<void> {
+): void {
   // no-op stub
-  await Promise.resolve();
 }
 
 export function calculateApiCost(

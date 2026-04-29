@@ -19,11 +19,10 @@ export interface EffortSelection {
   source: string;
 }
 
-// deno-lint-ignore require-await
-export async function selectEffort(
+export function selectEffort(
   _action: string,
   _body: unknown,
-): Promise<EffortSelection> {
+): EffortSelection {
   return {
     effort: "medium",
     source: "stub_default",
