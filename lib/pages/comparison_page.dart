@@ -11012,6 +11012,321 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'photoshop': const _CompetitorInfo(
+    name: 'Adobe Photoshop',
+    emoji: '🖼',
+    tagline:
+        'Adobe PhotoshopをプロフェッショナルRGB画像編集に使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'Photoshop代替 Adobe画像編集代替 プロ画像編集代替 Photoshop日本語',
+    accentColor: Color(0xFF31A8FF),
+    painPoints: [
+      'プロ画像編集・合成・レタッチに特化し、個人財務・AI大学・習慣管理は別ツール',
+      'Adobe CC月額3,280円〜必須で、プロ用機能は個人・副業ユースには過剰',
+      '画像編集以外の個人ライフOS統合機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'プロ画像編集・合成・レタッチ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'lightroom': const _CompetitorInfo(
+    name: 'Adobe Lightroom',
+    emoji: '🌄',
+    tagline:
+        'Adobe LightroomをRAW現像・写真管理に使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'Lightroom代替 RAW現像代替 写真管理代替 Adobe Lightroom日本語',
+    accentColor: Color(0xFF27AAE1),
+    painPoints: [
+      'RAW現像・写真管理・カラーグレーディングに特化し、個人財務・AI大学・習慣管理は別ツール',
+      'クラウドストレージ容量が月額プランに連動し、写真枚数増加でコスト増',
+      '写真編集以外の個人ライフOS統合機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'RAW現像・写真管理・カラーグレーディング',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'adobe-illustrator': const _CompetitorInfo(
+    name: 'Adobe Illustrator',
+    emoji: '🖌',
+    tagline:
+        'Adobe IllustratorをプロベクターグラフィックDesignに使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'Illustrator代替 Adobeベクター代替 ロゴデザイン代替 Illustrator日本語',
+    accentColor: Color(0xFFFF9A00),
+    painPoints: [
+      'プロベクターグラフィック・ロゴ・印刷物制作に特化し、個人財務・AI大学・習慣管理は別ツール',
+      'Adobe CC月額3,280円〜必須で業界標準だが個人利用には高コスト',
+      'デザイン作業以外の個人ライフOS統合機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'プロベクターグラフィック・ロゴ制作',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'blender': const _CompetitorInfo(
+    name: 'Blender',
+    emoji: '🧊',
+    tagline:
+        'Blenderを無料3DCG・アニメーション制作に使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'Blender代替 3DCG代替 3Dモデリング代替 Blender日本語',
+    accentColor: Color(0xFFE87D0D),
+    painPoints: [
+      '3DCGモデリング・アニメーション・レンダリングに特化し、個人財務・AI大学・習慣管理は別ツール',
+      '完全無料で高機能だが習得曲線が急峻で、3D専門知識が必要',
+      '3DCG制作以外の個人ライフOS統合機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '無料3DCG・アニメーション・レンダリング',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'paint-net': const _CompetitorInfo(
+    name: 'Paint.NET',
+    emoji: '🖼',
+    tagline:
+        'Paint.NETをWindows向け無料画像編集に使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'Paint.NET代替 Windows画像編集代替 無料画像編集代替 ペイントネット',
+    accentColor: Color(0xFF0078D7),
+    painPoints: [
+      'Windowsユーザー向け無料画像編集に特化し、個人財務・AI大学・習慣管理は別ツール',
+      'Windows専用でMac/Linuxユーザーは利用不可、プロ用途には機能不足',
+      '画像編集以外の個人ライフOS統合機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Windows専用無料画像編集',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'coreldraw': const _CompetitorInfo(
+    name: 'CorelDRAW',
+    emoji: '🖌',
+    tagline:
+        'CorelDRAWをプロベクターグラフィック・印刷デザインに使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'CorelDRAW代替 Illustrator代替 印刷デザイン代替 CorelDRAW日本語',
+    accentColor: Color(0xFF009A44),
+    painPoints: [
+      'プロ印刷・サイン・ロゴデザインに特化し、個人財務・AI大学・習慣管理は別ツール',
+      '年間サブスク約60,000円と高額で、Windows中心のデザイン業界向け製品',
+      'デザイン作業以外の個人ライフOS統合機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'プロベクターグラフィック・印刷デザイン',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'spline': const _CompetitorInfo(
+    name: 'Spline',
+    emoji: '🔮',
+    tagline:
+        'Splineをブラウザベースのリアルタイム3Dデザインに使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'Spline代替 ブラウザ3D代替 Web3Dデザイン代替 Spline日本語',
+    accentColor: Color(0xFF0D6EFD),
+    painPoints: [
+      'ブラウザベースの3Dデザイン・インタラクティブコンテンツ制作に特化し、個人財務・AI大学・習慣管理は別ツール',
+      '無料プランは制限あり、プロは月額7USD〜で主にWeb開発者・デザイナー向け',
+      '3Dデザイン以外の個人ライフOS統合機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ブラウザベースリアルタイム3Dデザイン',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'google-forms': const _CompetitorInfo(
+    name: 'Google Forms',
+    emoji: '📋',
+    tagline:
+        'Google FormsをGoogleアンケート・フォーム作成に使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'Google Forms代替 アンケート作成代替 フォーム作成代替 Googleフォーム',
+    accentColor: Color(0xFF7248B9),
+    painPoints: [
+      'アンケート・フォーム作成・回答収集に特化し、個人財務・AI大学・習慣管理は別ツール',
+      'デザインカスタマイズが限定的で、ブランディングや高度な条件分岐に弱い',
+      'フォーム作成以外の個人ライフOS統合機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Googleアンケート・フォーム作成',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'surveymonkey': const _CompetitorInfo(
+    name: 'SurveyMonkey',
+    emoji: '🐒',
+    tagline:
+        'SurveyMonkeyをオンラインアンケート・市場調査に使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'SurveyMonkey代替 アンケートツール代替 市場調査ツール代替 SurveyMonkey日本語',
+    accentColor: Color(0xFF00BF6F),
+    painPoints: [
+      'オンラインアンケート・調査・フォーム作成に特化し、個人財務・AI大学・習慣管理は別ツール',
+      '無料プランは回答10件上限、月額39USD〜と有料プランが高額',
+      'アンケート調査以外の個人ライフOS統合機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'オンラインアンケート・市場調査',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
@@ -11321,6 +11636,15 @@ class _ComparisonShellState extends State<_ComparisonShell> {
     'gimp': 'design',
     'krita': 'design',
     'inkscape': 'design',
+    'photoshop': 'design',
+    'lightroom': 'design',
+    'adobe-illustrator': 'design',
+    'blender': '3d',
+    'paint-net': 'design',
+    'coreldraw': 'design',
+    'spline': '3d',
+    'google-forms': 'forms',
+    'surveymonkey': 'forms',
   };
 
   @override
@@ -11521,7 +11845,7 @@ class _ComparisonShellState extends State<_ComparisonShell> {
                       children: [
                         _buildTag(
                           icon: Icons.compare_arrows_rounded,
-                          label: '285社比較',
+                          label: '294社比較',
                           backgroundColor:
                               _info.accentColor.withValues(alpha: 0.18),
                           foregroundColor: _textPrimary,
@@ -12129,7 +12453,7 @@ class _ComparisonShellState extends State<_ComparisonShell> {
                       ),
                       SizedBox(width: 8),
                       Text(
-                        '全285社の競合ランドスケープを見る →',
+                        '全294社の競合ランドスケープを見る →',
                         style: TextStyle(
                           fontSize: 14,
                           color: _textSecondary,
