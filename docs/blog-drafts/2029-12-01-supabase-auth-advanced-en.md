@@ -1,7 +1,7 @@
 ---
 title: "Supabase Auth Advanced — Custom Claims, Row Level Security, and Session Management"
 tags: dart,flutter,webdev,indiedev
-published: false
+published: true
 ---
 
 # Supabase Auth Advanced — Custom Claims, Row Level Security, and Session Management
