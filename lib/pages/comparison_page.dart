@@ -20501,40 +20501,6 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
-  'cohere': const _CompetitorInfo(
-    name: 'Cohere',
-    emoji: '🔮',
-    tagline: 'エンタープライズLLM・RAG・埋め込みAPIで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Cohere代替 エンタープライズLLM RAG 埋め込み Command R',
-    accentColor: Color(0xFF39594D),
-    painPoints: [
-      '従量課金制・Command R+ 1Mトークン3ドル〜・エンタープライズ向け価格',
-      'エンタープライズAI特化でエンジニア向け設計・個人のライフ管理は別途必要',
-      'OpenAIと比較してコンシューマー向けプロダクトがなくエコシステムが限定的',
-    ],
-    features: [
-      _FeatureComparison(
-        feature: 'Command R+・RAG・Embed・Rerank・ファインチューニング',
-        competitorHas: true,
-        weHave: false,
-      ),
-      _FeatureComparison(
-        feature: 'AI支援個人管理',
-        competitorHas: false,
-        weHave: true,
-      ),
-      _FeatureComparison(
-        feature: '財務管理統合',
-        competitorHas: false,
-        weHave: true,
-      ),
-      _FeatureComparison(
-        feature: '完全無料',
-        competitorHas: false,
-        weHave: true,
-      ),
-    ],
-  ),
   'mistral-api': const _CompetitorInfo(
     name: 'Mistral AI API',
     emoji: '🌪️',
@@ -20603,74 +20569,6 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
-  'together-ai': const _CompetitorInfo(
-    name: 'Together AI',
-    emoji: '🤝',
-    tagline: 'オープンソースLLMクラウド推論・ファインチューニングで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Together AI代替 オープンLLM クラウド推論 ファインチューニング',
-    accentColor: Color(0xFF4A6FA5),
-    painPoints: [
-      '従量課金制・大量推論では費用が増大・独自インフラでのロック懸念',
-      'AI推論特化でエンジニア向け設計・個人のライフ管理は別途必要',
-      'GroqやReplicateと比較して推論速度で差がある場合も',
-    ],
-    features: [
-      _FeatureComparison(
-        feature: '100+OSS LLM・ファインチューニング・画像生成・埋め込み・API',
-        competitorHas: true,
-        weHave: false,
-      ),
-      _FeatureComparison(
-        feature: 'AI支援個人管理',
-        competitorHas: false,
-        weHave: true,
-      ),
-      _FeatureComparison(
-        feature: '財務管理統合',
-        competitorHas: false,
-        weHave: true,
-      ),
-      _FeatureComparison(
-        feature: '完全無料',
-        competitorHas: false,
-        weHave: true,
-      ),
-    ],
-  ),
-  'replicate': const _CompetitorInfo(
-    name: 'Replicate',
-    emoji: '🔁',
-    tagline: 'AIモデルAPIマーケットプレイス・カスタムデプロイで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Replicate代替 AIモデルAPI 画像生成 LLM デプロイ マーケットプレイス',
-    accentColor: Color(0xFF000000),
-    painPoints: [
-      '従量課金制・人気モデルはコスト増・独自モデルのデプロイは複雑',
-      'AIモデル実行特化でエンジニア向け設計・個人のライフ管理は別途必要',
-      'Together AIと比較してファインチューニング・バッチ処理が弱い',
-    ],
-    features: [
-      _FeatureComparison(
-        feature: '豊富なモデル・コールドスタート最適化・Webhook・カスタムモデル',
-        competitorHas: true,
-        weHave: false,
-      ),
-      _FeatureComparison(
-        feature: 'AI支援個人管理',
-        competitorHas: false,
-        weHave: true,
-      ),
-      _FeatureComparison(
-        feature: '財務管理統合',
-        competitorHas: false,
-        weHave: true,
-      ),
-      _FeatureComparison(
-        feature: '完全無料',
-        competitorHas: false,
-        weHave: true,
-      ),
-    ],
-  ),
   'fireworks-ai': const _CompetitorInfo(
     name: 'Fireworks AI',
     emoji: '🎆',
@@ -20685,40 +20583,6 @@ final _competitorInfo = <String, _CompetitorInfo>{
     features: [
       _FeatureComparison(
         feature: '最適化推論・Llama/Mixtral/SDXL・Function Calling・バッチAPI',
-        competitorHas: true,
-        weHave: false,
-      ),
-      _FeatureComparison(
-        feature: 'AI支援個人管理',
-        competitorHas: false,
-        weHave: true,
-      ),
-      _FeatureComparison(
-        feature: '財務管理統合',
-        competitorHas: false,
-        weHave: true,
-      ),
-      _FeatureComparison(
-        feature: '完全無料',
-        competitorHas: false,
-        weHave: true,
-      ),
-    ],
-  ),
-  'pinecone': const _CompetitorInfo(
-    name: 'Pinecone',
-    emoji: '🌲',
-    tagline: 'マネージドベクターデータベース・RAGインフラで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Pinecone代替 ベクターDB RAG 埋め込み 類似検索 AI検索',
-    accentColor: Color(0xFF00B4D8),
-    painPoints: [
-      'スターター無料だが本番月額70ドル〜・大量ベクターで高額',
-      'ベクターDB特化でエンジニア向け設計・個人のライフ管理は別途必要',
-      'WeaviateやQdrantと比較してセルフホスト不可・ベンダーロックイン',
-    ],
-    features: [
-      _FeatureComparison(
-        feature: 'サーバーレスベクターDB・ハイブリッド検索・メタデータフィルタ',
         competitorHas: true,
         weHave: false,
       ),
