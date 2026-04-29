@@ -1,7 +1,7 @@
 ---
 title: "Dart Concurrency Complete Guide — Isolates, compute, Streams, and Mutex Patterns"
 tags: dart,flutter,webdev,indiedev
-published: false
+published: true
 ---
 
 # Dart Concurrency Complete Guide — Isolates, compute, Streams, and Mutex Patterns
