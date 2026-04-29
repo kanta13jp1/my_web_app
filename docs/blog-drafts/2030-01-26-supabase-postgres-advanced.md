@@ -1,7 +1,7 @@
 ---
 title: "Supabase Postgres 上級編 — Partitioning・Full-Text Search・Generated Columns・Triggers"
 tags: flutter,dart,個人開発,AI
-published: false
+published: true
 ---
 
 ## はじめに
