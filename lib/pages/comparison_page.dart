@@ -31077,6 +31077,312 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'trint': const _CompetitorInfo(
+    name: 'Trint',
+    emoji: '✏️',
+    tagline: 'AIジャーナリスト・コンテンツチーム向け文字起こし・編集ツールで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Trint代替 文字起こし ジャーナリスト メディア 動画編集 字幕 コンテンツ制作',
+    accentColor: Color(0xFF0EA5E9),
+    painPoints: [
+      '月額48ドル〜・メディア向け文字起こし特化・個人のライフ管理は別途必要',
+      'コンテンツ制作特化・個人のAI管理は別途必要',
+      'Sonix/Descript比較でコスト高・非メディア用途では割高',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '音声/動画文字起こし・インタラクティブ編集・字幕・チームコラボ・API',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'happy-scribe': const _CompetitorInfo(
+    name: 'Happy Scribe',
+    emoji: '😊',
+    tagline: 'AI自動文字起こし・翻訳・字幕生成サービスで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Happy Scribe代替 自動文字起こし 翻訳 字幕 119言語 研究者 動画制作',
+    accentColor: Color(0xFFF59E0B),
+    painPoints: [
+      '月額17ドル〜・文字起こし特化・個人のライフ管理は別途必要',
+      '字幕/文字起こし特化・個人のAI管理は別途必要',
+      'Sonix/Rev比較でブランド認知・統合数が劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '119言語・自動/手動翻訳・字幕エクスポート・研究向け・ホワイトラベル',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'lalal-ai': const _CompetitorInfo(
+    name: 'LALAL.AI',
+    emoji: '🎛️',
+    tagline: 'AIステムセパレーター・ボーカル/楽器分離ツールで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'LALAL.AI代替 ステムセパレーター ボーカル分離 楽器分離 AIオーディオ Karaoke',
+    accentColor: Color(0xFF7C3AED),
+    painPoints: [
+      '使用量課金・ステム分離特化・個人のライフ管理は別途必要',
+      'オーディオ分離特化・個人のAI管理は別途必要',
+      'Moises/Spleeterと比較してリアルタイム処理・モバイルアプリが限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ボーカル/ドラム/ベース/ギター/ピアノ分離・高品質・バッチ処理',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'moises': const _CompetitorInfo(
+    name: 'Moises',
+    emoji: '🎸',
+    tagline: 'AIミュージシャン向け練習・ステム分離・リミックスアプリで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Moises代替 ステム分離 ミュージシャン 練習 リミックス AI音楽ツール モバイル',
+    accentColor: Color(0xFF10B981),
+    painPoints: [
+      '無料/月額3.99ドル〜・音楽ツール特化・個人のライフ管理は別途必要',
+      'ミュージシャン向け特化・個人のAI管理は別途必要',
+      'LALAL.AI比較で音質最高精度・バッチ量が劣ることがある',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ステム分離・キー検出・テンポ変更・コード認識・練習ループ・スマートメトロノーム',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'soundraw': const _CompetitorInfo(
+    name: 'Soundraw',
+    emoji: '🎵',
+    tagline: 'AI音楽生成・ロイヤリティフリーBGMカスタマイズで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Soundraw代替 AI音楽生成 BGM カスタマイズ ロイヤリティフリー 動画 コンテンツ',
+    accentColor: Color(0xFF1F2937),
+    painPoints: [
+      '月額16.99ドル〜・AI音楽特化・個人のライフ管理は別途必要',
+      'BGM生成特化・個人のAI管理は別途必要',
+      'Mubert/AIVA比較でリアルタイム生成速度・スタイル多様性が劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ジャンル/ムード指定・長さ調整・カスタマイズ・著作権フリー・YouTube対応',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'beatoven-ai': const _CompetitorInfo(
+    name: 'Beatoven.ai',
+    emoji: '🎹',
+    tagline: 'AIテキストto音楽・感情・ムード駆動楽曲生成で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Beatoven代替 テキストto音楽 感情ムード BGM生成 動画音楽 ロイヤリティフリー',
+    accentColor: Color(0xFF7C3AED),
+    painPoints: [
+      '無料/月額不明・AI音楽特化・個人のライフ管理は別途必要',
+      'ムード音楽特化・個人のAI管理は別途必要',
+      'Soundraw/Mubert比較で音楽スタイル・カスタマイズ深度が劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'テキスト/ムード指定・感情駆動・長さ調整・商用利用・API',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'endel': const _CompetitorInfo(
+    name: 'Endel',
+    emoji: '🧘',
+    tagline: 'AIパーソナライズ環境音・集中/睡眠/リラックスサウンドで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Endel代替 AI環境音 集中 睡眠 リラックス パーソナライズ 科学的サウンド',
+    accentColor: Color(0xFF1E3A5F),
+    painPoints: [
+      '月額5.99ドル〜・環境音特化・個人のライフ管理は別途必要',
+      '科学的サウンド特化・個人のAI管理は別途必要',
+      'Brain.fm/Focusatworkと比較して音楽スタイルの多様性・コンテンツが限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '心拍/天気/位置情報適応・集中/睡眠/リラックス・Apple Watch連携',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'cleanvoice': const _CompetitorInfo(
+    name: 'Cleanvoice',
+    emoji: '🎤',
+    tagline: 'AIポッドキャスト音声ノイズ除去・クリーニング自動化で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Cleanvoice代替 ポッドキャスト音声クリーニング ノイズ除去 息づかい除去 編集自動化',
+    accentColor: Color(0xFF0F172A),
+    painPoints: [
+      '使用量課金・音声クリーニング特化・個人のライフ管理は別途必要',
+      'ポッドキャスト編集特化・個人のAI管理は別途必要',
+      'Auphonic/Adobe Podcastと比較して機能幅・統合が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'フィラー除去・息づかい・長い沈黙・多言語・自動クリーニング',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'auphonic': const _CompetitorInfo(
+    name: 'Auphonic',
+    emoji: '🔈',
+    tagline: 'AI音声後処理・ポッドキャスト音量均一化・ノイズ削減で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Auphonic代替 音声後処理 ポッドキャスト ラウドネス正規化 ノイズ削減 音量均一化',
+    accentColor: Color(0xFF0369A1),
+    painPoints: [
+      '無料/月額11ドル〜・音声後処理特化・個人のライフ管理は別途必要',
+      'ポッドキャスト音質特化・個人のAI管理は別途必要',
+      'Adobe Podcast比較で機能多様性・UI洗練度が劣ることがある',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ラウドネス正規化・ノイズ削減・マルチトラック・文字起こし・自動公開',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
