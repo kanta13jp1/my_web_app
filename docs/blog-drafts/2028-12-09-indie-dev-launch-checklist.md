@@ -1,7 +1,7 @@
 ---
 title: "個人開発ローンチチェックリスト — Product Hunt・HN・SNS 同時展開"
 tags: AI,個人開発,buildinpublic,automation
-published: false
+published: true
 ---
 
 # 個人開発ローンチチェックリスト — Product Hunt・HN・SNS 同時展開
