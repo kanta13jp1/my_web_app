@@ -29069,6 +29069,312 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'magicbell': const _CompetitorInfo(
+    name: 'MagicBell',
+    emoji: '🔔',
+    tagline: 'In-App通知センター・リアルタイム通知インフラAPIで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'MagicBell代替 In-App通知 通知センター API リアルタイム React',
+    accentColor: Color(0xFFFF3366),
+    painPoints: [
+      '月額100ドル〜・通知センター特化・個人のライフ管理は別途必要',
+      'In-App通知特化・個人のAI管理は別途必要',
+      'Novu/Knockと比較してマルチチャネル幅・セルフホストが限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'In-App通知UI・メール/Push/Slack・好み管理・ReactコンポーネントSDK',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'helicone': const _CompetitorInfo(
+    name: 'Helicone',
+    emoji: '🚁',
+    tagline: 'LLMオブザーバビリティ・AIアプリコスト最適化プラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Helicone代替 LLM監視 オブザーバビリティ GPTコスト ログ 分析 最適化',
+    accentColor: Color(0xFFFF7E33),
+    painPoints: [
+      '無料/月額20ドル〜・LLM監視特化・個人のライフ管理は別途必要',
+      'AIオブザーバビリティ特化・個人のAI管理は別途必要',
+      'Langfuse/Langsmithと比較してOSS・セルフホスト・機能深度が劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'LLMログ・コスト分析・キャッシュ・レート制限・評価・プロキシ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'langfuse': const _CompetitorInfo(
+    name: 'Langfuse',
+    emoji: '🔭',
+    tagline: 'オープンソースLLMエンジニアリング・オブザーバビリティプラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Langfuse代替 LLMオブザーバビリティ トレース 評価 プロンプト管理 OSS',
+    accentColor: Color(0xFF5B21B6),
+    painPoints: [
+      '無料OSS/月額59ドル〜・LLMエンジニアリング特化・個人のライフ管理は別途必要',
+      'LLMデバッグ特化・個人のAI管理は別途必要',
+      'Langsmith/Heliconeと比較してブランド認知・エンタープライズが劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'トレース・評価・プロンプト管理・データセット・OSS・セルフホスト',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'portkey-ai': const _CompetitorInfo(
+    name: 'Portkey',
+    emoji: '🗝️',
+    tagline: 'AI Gateway・LLMルーター・プロダクションAIオブザーバビリティで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Portkey代替 AI Gateway LLMルーター オブザーバビリティ フォールバック キャッシュ',
+    accentColor: Color(0xFF5B6AD4),
+    painPoints: [
+      '無料/月額49ドル〜・AI Gateway特化・個人のライフ管理は別途必要',
+      'LLMルーティング特化・個人のAI管理は別途必要',
+      'Helicone/Langfuseと比較して評価機能・プロンプト管理が劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '200+ LLM統合・フォールバック・キャッシュ・フィルター・オブザーバビリティ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'lunary': const _CompetitorInfo(
+    name: 'Lunary',
+    emoji: '🌙',
+    tagline: 'オープンソースLLMテレメトリー・AI評価ツールキットで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Lunary代替 LLMテレメトリー AI評価 OSS プロンプト 監視 ログ',
+    accentColor: Color(0xFF6366F1),
+    painPoints: [
+      '無料OSS/月額20ドル〜・LLM評価特化・個人のライフ管理は別途必要',
+      'LLMモニタリング特化・個人のAI管理は別途必要',
+      'Langfuse/Heliconeと比較してエコシステム・認知度が劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'トレース・ユーザー追跡・評価・エラー監視・プロンプト・OSS',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'neptune-ai': const _CompetitorInfo(
+    name: 'Neptune.ai',
+    emoji: '🔵',
+    tagline: 'MLメタデータ管理・実験追跡・モデルレジストリで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Neptune.ai代替 MLops 実験追跡 メタデータ管理 モデルレジストリ W&B',
+    accentColor: Color(0xFF5C62FF),
+    painPoints: [
+      '月額0〜・ML実験追跡特化・個人のライフ管理は別途必要',
+      'MLops特化・個人のAI管理は別途必要',
+      'W&B/MLflowと比較してビジュアライゼーション・エコシステムが劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '実験追跡・モデルレジストリ・メタデータ・比較・チームコラボ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'clear-ml': const _CompetitorInfo(
+    name: 'ClearML',
+    emoji: '🔬',
+    tagline: 'オープンソースMLOps・実験管理・データバージョニングで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'ClearML代替 MLops 実験管理 データバージョニング OSS パイプライン 自動化',
+    accentColor: Color(0xFF1EBF9B),
+    painPoints: [
+      '無料OSS/月額23ドル〜・MLops特化・個人のライフ管理は別途必要',
+      'ML実験管理特化・個人のAI管理は別途必要',
+      'W&B/MLflowと比較してブランド認知・コミュニティが劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '実験追跡・タスクスケジューラ・データセット・パイプライン・エージェント',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'comet-ml': const _CompetitorInfo(
+    name: 'Comet',
+    emoji: '☄️',
+    tagline: 'AI/MLモデル開発・実験追跡・デプロイ管理プラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Comet ML代替 実験追跡 AIモデル管理 デプロイ MLops モニタリング',
+    accentColor: Color(0xFFFF6B2B),
+    painPoints: [
+      '月額0〜・AI/ML管理特化・個人のライフ管理は別途必要',
+      'ML実験/モデル特化・個人のAI管理は別途必要',
+      'W&B/Neptune比較でビジュアライゼーション・Jupyter統合が劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '実験追跡・モデルレジストリ・プロンプト管理・LLM評価・CI/CD統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'dvc': const _CompetitorInfo(
+    name: 'DVC (Data Version Control)',
+    emoji: '📊',
+    tagline: 'オープンソースMLデータ・モデルバージョン管理ツールで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'DVC代替 データバージョン管理 MLops git大容量ファイル パイプライン 実験',
+    accentColor: Color(0xFF945DD6),
+    painPoints: [
+      '無料OSS・データバージョン管理特化・個人のライフ管理は別途必要',
+      'ML/データパイプライン特化・個人のAI管理は別途必要',
+      'W&B/ClearMLと比較してUIダッシュボード・チームコラボが限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'git拡張・大容量データ追跡・パイプライン・実験・リモートストレージ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
