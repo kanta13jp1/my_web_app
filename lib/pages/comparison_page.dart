@@ -35296,6 +35296,312 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'recurly': const _CompetitorInfo(
+    name: 'Recurly',
+    emoji: '🔄',
+    tagline: 'サブスクリプション管理・請求自動化・収益最大化プラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Recurly代替 サブスクリプション管理 請求自動化 定期課金 Chargebee代替 収益',
+    accentColor: Color(0xFF8B17FF),
+    painPoints: [
+      '月額299ドル〜・サブスク管理特化・個人のライフ管理は別途必要',
+      'サブスクリプション請求特化・個人のAI管理は別途必要',
+      'Chargebee/Stripeと比較してUI・開発者体験が劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'サブスク管理・自動失敗課金リトライ・dunning・分析・100+決済統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'zuora': const _CompetitorInfo(
+    name: 'Zuora',
+    emoji: '💰',
+    tagline: 'エンタープライズサブスクリプション請求・収益認識・CLMで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Zuora代替 サブスクリプション請求 エンタープライズ 収益認識 CLM Recurly代替',
+    accentColor: Color(0xFF00A8E0),
+    painPoints: [
+      '月額高価格・エンタープライズサブスク特化・個人のライフ管理は別途必要',
+      '大企業収益管理特化・個人のAI管理は別途必要',
+      'Chargebee/Recurlyと比較してSMB向けに複雑・コスト高',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '柔軟価格モデル・収益認識ASC606/IFRS15・分析・Salesforce統合・ERP連携',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'fastspring': const _CompetitorInfo(
+    name: 'FastSpring',
+    emoji: '🌱',
+    tagline: 'ソフトウェア/SaaS向けeコマース・決済・サブスク管理で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'FastSpring代替 ソフトウェア販売 eコマース サブスク 決済 税務 Gumroad代替',
+    accentColor: Color(0xFF2BAC76),
+    painPoints: [
+      '販売手数料型・ソフトウェア販売特化・個人のライフ管理は別途必要',
+      'SaaSマネタイズ特化・個人のAI管理は別途必要',
+      'Paddle/Gumroadと比較してUI・開発者体験・モバイル最適化が劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '全税務処理代行・30言語・60通貨・サブスク・割引・アフィリエイト',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'oyster': const _CompetitorInfo(
+    name: 'Oyster HR',
+    emoji: '🦪',
+    tagline: 'グローバル雇用プラットフォーム・海外給与・コンプライアンスで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Oyster代替 グローバル雇用 海外給与 EOR コンプライアンス Deel代替 リモートワーク',
+    accentColor: Color(0xFF1E66F5),
+    painPoints: [
+      '月額499ドル〜・グローバル雇用特化・個人のライフ管理は別途必要',
+      '海外従業員管理特化・個人のAI管理は別途必要',
+      'Deel/Remote.comと比較してカバレッジ国数・機能開発速度が劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'EOR/コントラクター/グローバル給与・180+カ国・コンプライアンス・福利厚生',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'papaya-global': const _CompetitorInfo(
+    name: 'Papaya Global',
+    emoji: '🌴',
+    tagline: 'グローバル給与・雇用主代行(EOR)・ワークフォース管理で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Papaya Global代替 グローバル給与 EOR 海外雇用 Deel代替 コンプライアンス 給与代行',
+    accentColor: Color(0xFF00C7B7),
+    painPoints: [
+      '月額25ドル/人〜・グローバル給与特化・個人のライフ管理は別途必要',
+      'ワークフォース管理特化・個人のAI管理は別途必要',
+      'Deel/Oysterと比較して中小企業向けUIが複雑',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'グローバル給与・EOR・コントラクター・コンプライアンス・HRIS・140+カ国',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'mparticle': const _CompetitorInfo(
+    name: 'mParticle',
+    emoji: '⚛️',
+    tagline: 'カスタマーデータプラットフォーム・データ統合・オーディエンス管理で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'mParticle代替 CDP カスタマーデータ データ統合 オーディエンス Segment代替',
+    accentColor: Color(0xFF4B3FF7),
+    painPoints: [
+      '月額高価格・CDP特化・個人のライフ管理は別途必要',
+      'データパイプライン特化・個人のAI管理は別途必要',
+      'Segment/Rudderstack比較でUIの複雑さ・価格が劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'データ収集・変換・オーディエンス構築・250+統合・ID解決・コンプライアンス',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'tealium': const _CompetitorInfo(
+    name: 'Tealium',
+    emoji: '🔷',
+    tagline: 'エンタープライズCDP・タグ管理・リアルタイムデータ接続で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Tealium代替 CDP タグ管理 データ統合 エンタープライズ Google Tag Manager代替',
+    accentColor: Color(0xFF0033A0),
+    painPoints: [
+      '月額高価格・エンタープライズCDP特化・個人のライフ管理は別途必要',
+      'タグ管理/データ統合特化・個人のAI管理は別途必要',
+      'Segment/Rudderstack比較でコスト高・中小企業向けでない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'タグ管理・API Hub・AudienceStream・DataAccess・1300+統合・予測',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'attentive': const _CompetitorInfo(
+    name: 'Attentive',
+    emoji: '📱',
+    tagline: 'SMS/MMSマーケティング・eコマース向け会話型自動化で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Attentive代替 SMSマーケティング テキスト配信 eコマース 自動化 Klaviyo代替',
+    accentColor: Color(0xFF8A2BE2),
+    painPoints: [
+      '月額高価格・SMSマーケティング特化・個人のライフ管理は別途必要',
+      'eコマースSMS特化・個人のAI管理は別途必要',
+      'Klaviyo/Postscriptと比較してメール統合・価格が劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'SMS/MMS・会話型AI・セグメント・フロー・A/Bテスト・Shopify/Klaviyo連携',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'clevertap': const _CompetitorInfo(
+    name: 'CleverTap',
+    emoji: '🎯',
+    tagline: 'モバイルアプリ向け顧客エンゲージメント・プッシュ通知・分析で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'CleverTap代替 モバイルエンゲージメント プッシュ通知 アプリ分析 OneSignal代替',
+    accentColor: Color(0xFFE63950),
+    painPoints: [
+      '月額高価格・モバイルエンゲージメント特化・個人のライフ管理は別途必要',
+      'アプリマーケティング特化・個人のAI管理は別途必要',
+      'Mixpanel/Amplitudeと比較してプロダクト分析の深さが劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'プッシュ/SMS/メール/アプリ内・AI予測・セグメント・自動化フロー・分析',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
