@@ -23735,3 +23735,17 @@ Win territory 直接実装: SECOND_BRAIN +4.0 + VIBE +2.0 = +6.0/14.
 **sitemap**: 310→319 URLs
 **全ファイル**: 276社統一
 **commit**: e31566e2b
+
+## PS#6 S110 — 2026-04-29
+
+### 実装内容
+- **jockeyWinRateBonus**: jockey_win_rateフィールドから予想1位馬の騎手勝率confidence最大+3%
+  - ≥0.20 (トップジョッキー): +0.03 / ≥0.15: +0.02 / ≥0.10: +0.01 / それ以外: 0
+  - confidence 26 terms体制確立
+  - reasoning文字列に「騎手勝率補正:+X%」追加
+
+### Philosophy Alignment
+#5 商品=ユーザー価値 (騎手勝率による予測精度向上)
+
+### commit
+38e63f2b0
