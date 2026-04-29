@@ -1321,6 +1321,16 @@ function courseTypeMatchBonus(topEntry: Record<string, unknown> | undefined, cur
   return -0.02;                      // コース替わり(芝↔ダート): 適性未知/不確実
 }
 
+function horseBodyWeightBonus(topEntry: Record<string, unknown> | undefined): number {
+  if (!topEntry) return 0;
+  const w = numericOrFallback(topEntry.horse_weight, 0);
+  if (w <= 0) return 0;        // データなし
+  if (w <= 430) return -0.01;  // 軽量馬: スタミナ/パワー不足リスク
+  if (w >= 560) return -0.01;  // 重量馬: 機動力低下リスク
+  if (w >= 450 && w <= 510) return 0.01; // 理想体重帯: 均整取れた馬体
+  return 0;
+}
+
 function prevMarginBonus(topEntry: Record<string, unknown> | undefined): number {
   if (!topEntry) return 0;
   const text = String(topEntry.prev_margin ?? "").trim();
@@ -1724,7 +1734,8 @@ function buildHistoricalBaselinePrediction(
   const last3fBonus = prevLast3fBonus(first);
   const weightKg = weightKgBonus(first);
   const prevMargin = prevMarginBonus(first);
-  const confidence = Math.min(clampConfidence(0.31 + dataQuality * 0.22 + oddsCoverage * 0.12 + historyCoverage * 0.07 + bestTimeCoverage * 0.05 + prevMarginCoverage * 0.03 + jockeyCoverage * 0.02 + trainerCoverage * 0.01 + bloodlineCoverage * 0.01 + last3FCoverage * 0.01 + winningTimeCoverage * 0.01 + weightChangeCoverage * 0.01 + ageCoverage * 0.01 + sexCoverage * 0.01 + horseWeightCoverage * 0.01 + stableCoverage * 0.01 + damCoverage * 0.01 + damsireCoverage * 0.01 + popularityCoverage * 0.01 - fieldPenalty - tightOdds + oddsGapBonus + recentForm + venueBonus + favBonus + smallField + bloodlineBonus + distanceBonus + consensus + jockeyWinRate + trainerWinRate + gradePenalty + weightStability + ageOptimal + intervalBonus + courseTypeMatch + barrierPosition + prevVenueMatch + prevDistanceMatch + last3fBonus + weightKg + prevMargin), maxConf);
+  const bodyWeight = horseBodyWeightBonus(first);
+  const confidence = Math.min(clampConfidence(0.31 + dataQuality * 0.22 + oddsCoverage * 0.12 + historyCoverage * 0.07 + bestTimeCoverage * 0.05 + prevMarginCoverage * 0.03 + jockeyCoverage * 0.02 + trainerCoverage * 0.01 + bloodlineCoverage * 0.01 + last3FCoverage * 0.01 + winningTimeCoverage * 0.01 + weightChangeCoverage * 0.01 + ageCoverage * 0.01 + sexCoverage * 0.01 + horseWeightCoverage * 0.01 + stableCoverage * 0.01 + damCoverage * 0.01 + damsireCoverage * 0.01 + popularityCoverage * 0.01 - fieldPenalty - tightOdds + oddsGapBonus + recentForm + venueBonus + favBonus + smallField + bloodlineBonus + distanceBonus + consensus + jockeyWinRate + trainerWinRate + gradePenalty + weightStability + ageOptimal + intervalBonus + courseTypeMatch + barrierPosition + prevVenueMatch + prevDistanceMatch + last3fBonus + weightKg + prevMargin + bodyWeight), maxConf);
   return {
     success: true,
     prediction: {
@@ -1736,7 +1747,7 @@ function buildHistoricalBaselinePrediction(
         "過去レース学習用の低リスク基準予想。",
         "レース結果は参照せず、人気・単勝オッズ・前走・着差・持ち時計・馬体重変動・馬体/騎手/調教師/血統など取得済み特徴量から順位付け。",
         `対象:${race.race_date ?? ""} ${race.venue ?? ""}${race.race_number ?? ""}R ${race.race_name ?? ""}`,
-        `信頼度:${Math.round(confidence * 100)}% (データ充足${Math.round(dataQuality * 100)}% オッズ${Math.round(oddsCoverage * 100)}% 上がり3F${Math.round(last3FCoverage * 100)}% 血統${Math.round(bloodlineCoverage * 100)}% 騎手${Math.round(jockeyCoverage * 100)}% 馬体重${Math.round(horseWeightCoverage * 100)}% 厩舎${Math.round(stableCoverage * 100)}% 人気${Math.round(popularityCoverage * 100)}% 頭数${entries.length}頭 グレード:${race.grade ?? "OP以下"} 会場補正:${venueBonus >= 0 ? "+" : ""}${Math.round(venueBonus * 100)}% 本命補正:+${Math.round(favBonus * 100)}% 少頭数補正:+${Math.round(smallField * 100)}% 血統充足:+${Math.round(bloodlineBonus * 100)}% 距離補正:${distanceBonus >= 0 ? "+" : ""}${Math.round(distanceBonus * 100)}% 合意補正:+${Math.round(consensus * 100)}% 騎手勝率補正:+${Math.round(jockeyWinRate * 100)}% 調教師勝率補正:+${Math.round(trainerWinRate * 100)}% グレード補正:${gradePenalty >= 0 ? "+" : ""}${Math.round(gradePenalty * 100)}% 体重安定:${weightStability >= 0 ? "+" : ""}${Math.round(weightStability * 100)}% 年齢補正:${ageOptimal >= 0 ? "+" : ""}${Math.round(ageOptimal * 100)}% 間隔補正:${intervalBonus >= 0 ? "+" : ""}${Math.round(intervalBonus * 100)}% コース種別補正:${courseTypeMatch >= 0 ? "+" : ""}${Math.round(courseTypeMatch * 100)}% 枠番補正:${barrierPosition >= 0 ? "+" : ""}${Math.round(barrierPosition * 100)}% 前走同会場:${prevVenueMatch >= 0 ? "+" : ""}${Math.round(prevVenueMatch * 100)}% 前走距離適合:${prevDistanceMatch >= 0 ? "+" : ""}${Math.round(prevDistanceMatch * 100)}% 上り3F:${last3fBonus >= 0 ? "+" : ""}${Math.round(last3fBonus * 100)}% 斤量:${weightKg >= 0 ? "+" : ""}${Math.round(weightKg * 100)}% 前走着差:${prevMargin >= 0 ? "+" : ""}${Math.round(prevMargin * 100)}%)`,
+        `信頼度:${Math.round(confidence * 100)}% (データ充足${Math.round(dataQuality * 100)}% オッズ${Math.round(oddsCoverage * 100)}% 上がり3F${Math.round(last3FCoverage * 100)}% 血統${Math.round(bloodlineCoverage * 100)}% 騎手${Math.round(jockeyCoverage * 100)}% 馬体重${Math.round(horseWeightCoverage * 100)}% 厩舎${Math.round(stableCoverage * 100)}% 人気${Math.round(popularityCoverage * 100)}% 頭数${entries.length}頭 グレード:${race.grade ?? "OP以下"} 会場補正:${venueBonus >= 0 ? "+" : ""}${Math.round(venueBonus * 100)}% 本命補正:+${Math.round(favBonus * 100)}% 少頭数補正:+${Math.round(smallField * 100)}% 血統充足:+${Math.round(bloodlineBonus * 100)}% 距離補正:${distanceBonus >= 0 ? "+" : ""}${Math.round(distanceBonus * 100)}% 合意補正:+${Math.round(consensus * 100)}% 騎手勝率補正:+${Math.round(jockeyWinRate * 100)}% 調教師勝率補正:+${Math.round(trainerWinRate * 100)}% グレード補正:${gradePenalty >= 0 ? "+" : ""}${Math.round(gradePenalty * 100)}% 体重安定:${weightStability >= 0 ? "+" : ""}${Math.round(weightStability * 100)}% 年齢補正:${ageOptimal >= 0 ? "+" : ""}${Math.round(ageOptimal * 100)}% 間隔補正:${intervalBonus >= 0 ? "+" : ""}${Math.round(intervalBonus * 100)}% コース種別補正:${courseTypeMatch >= 0 ? "+" : ""}${Math.round(courseTypeMatch * 100)}% 枠番補正:${barrierPosition >= 0 ? "+" : ""}${Math.round(barrierPosition * 100)}% 前走同会場:${prevVenueMatch >= 0 ? "+" : ""}${Math.round(prevVenueMatch * 100)}% 前走距離適合:${prevDistanceMatch >= 0 ? "+" : ""}${Math.round(prevDistanceMatch * 100)}% 上り3F:${last3fBonus >= 0 ? "+" : ""}${Math.round(last3fBonus * 100)}% 斤量:${weightKg >= 0 ? "+" : ""}${Math.round(weightKg * 100)}% 前走着差:${prevMargin >= 0 ? "+" : ""}${Math.round(prevMargin * 100)}% 馬体重:${bodyWeight >= 0 ? "+" : ""}${Math.round(bodyWeight * 100)}%)`,
       ].join(" "),
     },
     latency_ms: 0,
