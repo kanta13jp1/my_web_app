@@ -14,3 +14,7 @@ void openWebUrl(String url) {
 Future<void> shareWebContent(String title, String text, String url) async {
   debugPrint('Web以外: シェア機能はサポートされていません');
 }
+
+void downloadCsvFile(String csvData, String fileName) {
+  debugPrint('Web以外: CSVダウンロード機能はサポートされていません');
+}

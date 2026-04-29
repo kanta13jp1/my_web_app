@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:js_interop';
+import 'dart:js_interop'
+    // ignore: uri_does_not_exist
+    if (dart.library.io) 'package:my_web_app/utils/js_interop_vm_stub.dart';
 import 'dart:math' as math;
 import 'dart:typed_data';
 
