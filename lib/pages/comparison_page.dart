@@ -45084,7 +45084,8 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'mondly': const _CompetitorInfo(
     name: 'Mondly',
     emoji: '🌍',
-    tagline: '41言語AR/VR会話練習・ネイティブ音声・毎日レッスン・AIチャットボット・ゲーミフィケーションで、なぜ「自分株式会社」を選ぶか。',
+    tagline:
+        '41言語AR/VR会話練習・ネイティブ音声・毎日レッスン・AIチャットボット・ゲーミフィケーションで、なぜ「自分株式会社」を選ぶか。',
     searchKeyword: 'Mondly代替 言語学習 41言語 AR VR 会話練習 Duolingo代替 Babbel代替',
     accentColor: Color(0xFF7B2FBE),
     painPoints: [
@@ -45220,7 +45221,8 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'tandem': const _CompetitorInfo(
     name: 'Tandem',
     emoji: '🤝',
-    tagline: '言語交換マッチング・プロフィール検索・テキスト/音声/ビデオ・ProチューターとHelloTalk対比で、なぜ「自分株式会社」を選ぶか。',
+    tagline:
+        '言語交換マッチング・プロフィール検索・テキスト/音声/ビデオ・ProチューターとHelloTalk対比で、なぜ「自分株式会社」を選ぶか。',
     searchKeyword: 'Tandem代替 言語交換 マッチング 会話練習 HelloTalk代替 Speaky代替 英会話 無料',
     accentColor: Color(0xFF1565C0),
     painPoints: [
@@ -45367,6 +45369,324 @@ final _competitorInfo = <String, _CompetitorInfo>{
     features: [
       _FeatureComparison(
         feature: 'OSS・100万デッキ・AnkiWeb同期・カスタムアドオン・医学/語学/資格対応',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'ulysses': const _CompetitorInfo(
+    name: 'Ulysses',
+    emoji: '✍️',
+    tagline:
+        'Mac/iPhone向けプレミアム執筆アプリ・iCloud同期・Markdown・出版直結・ライター向けで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Ulysses代替 執筆アプリ Mac iPhone Markdown プレミアム ライター iCloud同期 Scrivener代替',
+    accentColor: Color(0xFFFF6F00),
+    painPoints: [
+      '有料(月6ドル)・執筆特化・個人のライフ管理は別途必要',
+      'ライティング特化・個人のAI管理は別途必要',
+      'Scrivener/iA Writer/Beardとの比較でプラットフォーム限定・AI補助・無料版なしが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Mac/iPhone執筆・iCloud同期・Markdown・テーマ・出版直結',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'ia-writer': const _CompetitorInfo(
+    name: 'iA Writer',
+    emoji: '📝',
+    tagline:
+        'フォーカスライティング・Markdown・シンプルUI・Typeface font・全プラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'iA Writer代替 Markdown執筆 フォーカス シンプル ライティング Ulysses代替 Typora代替 全プラットフォーム',
+    accentColor: Color(0xFF212121),
+    painPoints: [
+      '買い切り(30ドル)・執筆特化・個人のライフ管理は別途必要',
+      'Markdown執筆特化・個人のAI管理は別途必要',
+      'Ulysses/Typora/Bear とのシンプル執筆競合 — AI機能・コラボ・データ統合が欠如',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'フォーカスライティング・カスタムfont・Markdown・全プラットフォーム・シンプルUI',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'scrivener': const _CompetitorInfo(
+    name: 'Scrivener',
+    emoji: '📖',
+    tagline: '長編執筆アウトライナー・コルクボード・コンパイル出版・研究資料管理・脚本/小説向けで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Scrivener代替 長編執筆 小説 脚本 アウトライナー Mac Windows Ulysses代替 FinalDraft代替',
+    accentColor: Color(0xFFBF360C),
+    painPoints: [
+      '買い切り(49ドル)・長編執筆特化・個人のライフ管理は別途必要',
+      '執筆プロジェクト管理特化・個人のAI管理は別途必要',
+      'Ulysses/iA Writer/Novelistとの比較で学習曲線が急・クラウド同期弱・モバイル制限が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'アウトライナー・コルクボード・コンパイル出版・研究資料管理・脚本/小説',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'remnote': const _CompetitorInfo(
+    name: 'RemNote',
+    emoji: '🧠',
+    tagline: 'ノート×SRSフラッシュカード統合・PDF注釈・知識グラフ・学習特化PKMで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'RemNote代替 PKM ノート SRS フラッシュカード 知識管理 学習 Roam代替 Obsidian代替',
+    accentColor: Color(0xFF3F51B5),
+    painPoints: [
+      '無料/Pro月8ドル~・学習PKM特化・個人のライフ管理は別途必要',
+      '知識管理特化・個人のAI管理は別途必要',
+      'Anki/Obsidian/Notionとの比較でUI複雑・コラボ機能・モバイル操作性が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ノート×SRS統合・PDF注釈・知識グラフ・ポータル・双方向リンク',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'supernotes': const _CompetitorInfo(
+    name: 'Supernotes',
+    emoji: '🗃️',
+    tagline: 'カード型ノートコラボ・双方向リンク・リアルタイム共有・Markdown・軽量PKMで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Supernotes代替 カード型ノート コラボ 双方向リンク PKM リアルタイム共有 Notion代替',
+    accentColor: Color(0xFFFF6B6B),
+    painPoints: [
+      '無料(50カード)/Pro月5ドル~・ノートコラボ特化・個人のライフ管理は別途必要',
+      'ノート管理特化・個人のAI管理は別途必要',
+      'Notion/Obsidian/Roamとの比較でカード制限・データ量・オフライン機能が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'カード型ノート・コラボ・双方向リンク・リアルタイム共有・軽量Markdown',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'capacities': const _CompetitorInfo(
+    name: 'Capacities',
+    emoji: '🔷',
+    tagline: 'オブジェクト型PKM・タイプ別管理・双方向リンク・AI統合・Notionの次世代代替で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Capacities代替 PKM オブジェクト型 双方向リンク AI ノート管理 Notion代替 Obsidian代替',
+    accentColor: Color(0xFF7C4DFF),
+    painPoints: [
+      '無料/Pro月9ドル~・PKM特化・個人のライフ管理は別途必要',
+      'オブジェクト型ノート特化・個人のAI管理は別途必要',
+      'Notion/Obsidian/Tanaとの比較でコラボ機能・モバイル操作・学習曲線が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'オブジェクト型PKM・タイプ別管理・双方向リンク・AI統合・ビジュアルグラフ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'affine': const _CompetitorInfo(
+    name: 'AFFiNE',
+    emoji: '♾️',
+    tagline:
+        'OSS次世代PKM・ホワイトボード×ドキュメント×データベース統合・ローカルファースト・Notion/Miro代替で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'AFFiNE代替 OSS PKM ホワイトボード ドキュメント ローカルファースト Notion代替 Miro代替 オープンソース',
+    accentColor: Color(0xFF1971C2),
+    painPoints: [
+      'OSS無料/クラウド有料・多機能統合特化・個人のライフ管理は別途必要',
+      'PKM統合特化・個人のAI管理は別途必要',
+      'Notion/Obsidian/Miroとの比較で安定性・エコシステム・プラグイン数が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'OSS・ホワイトボード×ドキュメント×DB統合・ローカルファースト・自己ホスト可',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'zettlr': const _CompetitorInfo(
+    name: 'Zettlr',
+    emoji: '🗒️',
+    tagline:
+        'OSS学術向けMarkdownエディタ・Zettelkasten・文献管理Zotero連携・研究者向けで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Zettlr代替 OSS Markdown 学術 Zettelkasten 文献管理 Zotero 研究者 iA Writer代替',
+    accentColor: Color(0xFF43A047),
+    painPoints: [
+      '完全無料OSS・学術執筆特化・個人のライフ管理は別途必要',
+      'Zettelkasten特化・個人のAI管理は別途必要',
+      'Obsidian/iA Writer/Typoraとの比較でUI古さ・プラグイン数・非学術ユーザーへの壁が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'OSS・Zettelkasten・Zotero連携・LaTeX・文献管理・学術執筆',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'journey-app': const _CompetitorInfo(
+    name: 'Journey',
+    emoji: '🌅',
+    tagline:
+        'クロスプラットフォーム日記アプリ・写真/地図/ムード追跡・Google Drive同期・AI反省で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Journey代替 日記アプリ 日記 クロスプラットフォーム Google Drive同期 Day One代替 ムード追跡',
+    accentColor: Color(0xFF00897B),
+    painPoints: [
+      '無料/Premium月5ドル~・日記特化・個人のライフ管理は別途必要',
+      '日記/ジャーナル特化・個人のAI管理は別途必要',
+      'Day One/Diarium/Penzu との比較でオフライン制限・価格・エントリーUI が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'クロスプラットフォーム日記・写真/地図・ムード追跡・Google Drive・AI反省',
         competitorHas: true,
         weHave: false,
       ),
