@@ -43821,8 +43821,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'garageband': const _CompetitorInfo(
     name: 'GarageBand',
     emoji: '🎸',
-    tagline: 'Apple無料DAW・MIDI・ループ・ギターアンプ・Drummer・Live Loops・Logic Proへの道で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'GarageBand代替 無料DAW 音楽制作 MIDI ループ Logic Pro代替 Audacity代替 iPhone Mac',
+    tagline:
+        'Apple無料DAW・MIDI・ループ・ギターアンプ・Drummer・Live Loops・Logic Proへの道で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'GarageBand代替 無料DAW 音楽制作 MIDI ループ Logic Pro代替 Audacity代替 iPhone Mac',
     accentColor: Color(0xFF555555),
     painPoints: [
       '完全無料・Apple専用・音楽制作特化・個人のライフ管理は別途必要',
@@ -43855,7 +43857,8 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'logic-pro': const _CompetitorInfo(
     name: 'Logic Pro',
     emoji: '🎹',
-    tagline: 'Appleプロ向けDAW・200GB+サウンド・空間オーディオ・Stem Splitter・Sessionミュージシャンで、なぜ「自分株式会社」を選ぶか。',
+    tagline:
+        'Appleプロ向けDAW・200GB+サウンド・空間オーディオ・Stem Splitter・Sessionミュージシャンで、なぜ「自分株式会社」を選ぶか。',
     searchKeyword: 'Logic Pro代替 DAW 音楽制作 Mac 空間オーディオ Ableton代替 Pro Tools代替 プロ',
     accentColor: Color(0xFF1B1B1B),
     painPoints: [
@@ -43924,7 +43927,8 @@ final _competitorInfo = <String, _CompetitorInfo>{
     name: 'Hostinger',
     emoji: '🌐',
     tagline: '格安ウェブホスティング・1クリックWordPress・AI Websiteビルダー・月2ドル~で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Hostinger代替 格安ホスティング WordPress Bluehost代替 SiteGround代替 AI Websiteビルダー',
+    searchKeyword:
+        'Hostinger代替 格安ホスティング WordPress Bluehost代替 SiteGround代替 AI Websiteビルダー',
     accentColor: Color(0xFF673DE6),
     painPoints: [
       '有料(月2-10ドル)・ホスティング特化・個人のライフ管理は別途必要',
@@ -43958,7 +43962,8 @@ final _competitorInfo = <String, _CompetitorInfo>{
     name: 'Bluehost',
     emoji: '🔵',
     tagline: 'WordPress公式推奨ホスティング・無料ドメイン・自動インストール・月3ドル~で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Bluehost代替 WordPressホスティング 公式推奨 Hostinger代替 SiteGround代替 ウェブホスト',
+    searchKeyword:
+        'Bluehost代替 WordPressホスティング 公式推奨 Hostinger代替 SiteGround代替 ウェブホスト',
     accentColor: Color(0xFF0073FF),
     painPoints: [
       '有料(月3-14ドル)・WordPress特化・個人のライフ管理は別途必要',
@@ -43991,8 +43996,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'siteground': const _CompetitorInfo(
     name: 'SiteGround',
     emoji: '🌱',
-    tagline: 'プレミアムWordPressホスティング・SuperCacher・AI Bot・WP-CLI・Googleクラウドで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'SiteGround代替 WordPressホスティング プレミアム SuperCacher Bluehost代替 Hostinger代替',
+    tagline:
+        'プレミアムWordPressホスティング・SuperCacher・AI Bot・WP-CLI・Googleクラウドで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'SiteGround代替 WordPressホスティング プレミアム SuperCacher Bluehost代替 Hostinger代替',
     accentColor: Color(0xFFFC5139),
     painPoints: [
       '有料(月4-15ドル)・ホスティング特化・個人のライフ管理は別途必要',
@@ -44026,7 +44033,8 @@ final _competitorInfo = <String, _CompetitorInfo>{
     name: 'NocoDB',
     emoji: '🗃️',
     tagline: 'OSSノーコードデータベース・Airtable代替・既存DBをスプレッドシート化・自己ホストで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'NocoDB代替 OSSデータベース Airtable代替 ノーコード 自己ホスティング Baserow代替 スプレッドシート',
+    searchKeyword:
+        'NocoDB代替 OSSデータベース Airtable代替 ノーコード 自己ホスティング Baserow代替 スプレッドシート',
     accentColor: Color(0xFF4F46E5),
     painPoints: [
       'OSS無料/クラウド有料・データベース管理特化・個人のライフ管理は別途必要',
@@ -44060,7 +44068,8 @@ final _competitorInfo = <String, _CompetitorInfo>{
     name: 'Baserow',
     emoji: '📊',
     tagline: 'OSSノーコードデータベース・Airtable代替・自己ホスト・プラグインAPI・GDPR準拠で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Baserow代替 OSSデータベース Airtable代替 自己ホスティング NocoDB代替 GDPR ノーコード',
+    searchKeyword:
+        'Baserow代替 OSSデータベース Airtable代替 自己ホスティング NocoDB代替 GDPR ノーコード',
     accentColor: Color(0xFF3DAAE9),
     painPoints: [
       'OSS無料/クラウド有料・データベース管理特化・個人のライフ管理は別途必要',
@@ -44127,7 +44136,8 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'tinder': const _CompetitorInfo(
     name: 'Tinder',
     emoji: '🔥',
-    tagline: 'マッチングアプリ元祖・スワイプ発明・Super Like・Boost・Tinder Gold・70+国で、なぜ「自分株式会社」を選ぶか。',
+    tagline:
+        'マッチングアプリ元祖・スワイプ発明・Super Like・Boost・Tinder Gold・70+国で、なぜ「自分株式会社」を選ぶか。',
     searchKeyword: 'Tinder代替 マッチングアプリ スワイプ 恋愛 Bumble代替 Hinge代替 Pairs代替',
     accentColor: Color(0xFFFF6B6B),
     painPoints: [
@@ -44161,7 +44171,8 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'ebay': const _CompetitorInfo(
     name: 'eBay',
     emoji: '🛒',
-    tagline: 'オークション&固定価格EC・中古品/希少品・180+国・バイヤー保護・eBay Motors/Fashionで、なぜ「自分株式会社」を選ぶか。',
+    tagline:
+        'オークション&固定価格EC・中古品/希少品・180+国・バイヤー保護・eBay Motors/Fashionで、なぜ「自分株式会社」を選ぶか。',
     searchKeyword: 'eBay代替 オークション ECサイト 中古品 Amazon代替 Mercari代替 希少品 180か国',
     accentColor: Color(0xFFE53238),
     painPoints: [
@@ -44196,7 +44207,8 @@ final _competitorInfo = <String, _CompetitorInfo>{
     name: 'Etsy',
     emoji: '🎨',
     tagline: 'ハンドメイド・ビンテージ・クラフト素材マーケット・96M+購入者・クリエイター経済で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Etsy代替 ハンドメイド クラフト ビンテージ マーケットプレイス Amazon Handmade代替 クリエイター',
+    searchKeyword:
+        'Etsy代替 ハンドメイド クラフト ビンテージ マーケットプレイス Amazon Handmade代替 クリエイター',
     accentColor: Color(0xFFF16521),
     painPoints: [
       '販売手数料(6.5%)・ハンドメイド/クリエイター特化・個人のライフ管理は別途必要',
@@ -44229,7 +44241,8 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'goodnotes': const _CompetitorInfo(
     name: 'GoodNotes',
     emoji: '📝',
-    tagline: 'iPadノートアプリ・Apple Pencil手書き認識・PDFアノテーション・AI数式・フラッシュカードで、なぜ「自分株式会社」を選ぶか。',
+    tagline:
+        'iPadノートアプリ・Apple Pencil手書き認識・PDFアノテーション・AI数式・フラッシュカードで、なぜ「自分株式会社」を選ぶか。',
     searchKeyword: 'GoodNotes代替 iPad ノート Apple Pencil 手書き PDF Notability代替 勉強',
     accentColor: Color(0xFFFC766A),
     painPoints: [
@@ -44264,7 +44277,8 @@ final _competitorInfo = <String, _CompetitorInfo>{
     name: 'Notability',
     emoji: '🖊️',
     tagline: 'iPadノート&録音同期・音声リプレイ・PDF編集・iCloud同期・Apple Watchで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Notability代替 iPad ノート 音声録音 Apple Pencil GoodNotes代替 授業ノート PDF',
+    searchKeyword:
+        'Notability代替 iPad ノート 音声録音 Apple Pencil GoodNotes代替 授業ノート PDF',
     accentColor: Color(0xFF4CAF50),
     painPoints: [
       '年2.99ドル~・iPad/Mac特化・ノート管理特化・個人のライフ管理は別途必要',
@@ -44332,7 +44346,8 @@ final _competitorInfo = <String, _CompetitorInfo>{
     name: 'Nike Run Club',
     emoji: '👟',
     tagline: 'Nike公式ランニングアプリ・ガイドランニング・GPS・Apple Watch・コーチで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Nike Run Club代替 ランニング GPS Strava代替 Runkeeper代替 ガイドラン Apple Watch',
+    searchKeyword:
+        'Nike Run Club代替 ランニング GPS Strava代替 Runkeeper代替 ガイドラン Apple Watch',
     accentColor: Color(0xFF111111),
     painPoints: [
       '無料・ランニング特化・個人のライフ管理は別途必要',
@@ -44365,8 +44380,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'grubhub': const _CompetitorInfo(
     name: 'Grubhub',
     emoji: '🍔',
-    tagline: '米国フードデリバリー・Grubhub+無料配送・Amazon Primeバンドル・大学キャンパスで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Grubhub代替 フードデリバリー アメリカ DoorDash代替 Uber Eats代替 Amazon Prime 食事',
+    tagline:
+        '米国フードデリバリー・Grubhub+無料配送・Amazon Primeバンドル・大学キャンパスで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Grubhub代替 フードデリバリー アメリカ DoorDash代替 Uber Eats代替 Amazon Prime 食事',
     accentColor: Color(0xFFF63440),
     painPoints: [
       '有料(Grubhub+月10ドル)/無料・フードデリバリー特化・個人のライフ管理は別途必要',
@@ -44399,8 +44416,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'waking-up': const _CompetitorInfo(
     name: 'Waking Up',
     emoji: '🧘',
-    tagline: 'Sam Harris・科学的マインドフルネス・瞑想理論・哲学・Daily Meditation・無料アクセスで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Waking Up代替 瞑想 マインドフルネス Sam Harris 科学的 Headspace代替 Calm代替 哲学',
+    tagline:
+        'Sam Harris・科学的マインドフルネス・瞑想理論・哲学・Daily Meditation・無料アクセスで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Waking Up代替 瞑想 マインドフルネス Sam Harris 科学的 Headspace代替 Calm代替 哲学',
     accentColor: Color(0xFF2C2C2E),
     painPoints: [
       '有料(月15ドル)/無料アクセス制度あり・瞑想/哲学特化・個人のライフ管理は別途必要',
@@ -44410,6 +44429,321 @@ final _competitorInfo = <String, _CompetitorInfo>{
     features: [
       _FeatureComparison(
         feature: '科学的瞑想・Sam Harris・哲学・理論・Daily Meditation・無料アクセス制度',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'aliexpress': const _CompetitorInfo(
+    name: 'AliExpress',
+    emoji: '📦',
+    tagline:
+        'Alibaba傘下・中国直送・超低価格・220+国・バイヤー保護・AliExpress Choice配送で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'AliExpress代替 格安通販 中国 海外直送 Amazon代替 Temu代替 220か国 バイヤー保護',
+    accentColor: Color(0xFFE62F2E),
+    painPoints: [
+      '無料・EC特化・個人のライフ管理は別途必要',
+      'ショッピング特化・個人のAI管理は別途必要',
+      'Temu/Wish/Sheinと比較して配送速度・品質保証・返品対応・偽造品リスクが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '220+国・超低価格・バイヤー保護・Choice配送・フラッシュセール・ドロップシッピング',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'temu': const _CompetitorInfo(
+    name: 'Temu',
+    emoji: '🛍️',
+    tagline:
+        'PDD Holdings超低価格EC・Shop Like a Billionaire・直接メーカー・ゲーミフィケーションで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Temu代替 格安通販 超低価格 AliExpress代替 Shein代替 Wish代替 中国EC',
+    accentColor: Color(0xFFFB4F3B),
+    painPoints: [
+      '無料・EC特化・個人のライフ管理は別途必要',
+      'ショッピング特化・個人のAI管理は別途必要',
+      'AliExpress/Shein/Wishと比較してプライバシー懸念・品質保証・配送追跡・返品対応が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '超低価格・ゲーミフィケーション・直接メーカー・無料返品・高頻度セール',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'wish': const _CompetitorInfo(
+    name: 'Wish',
+    emoji: '✨',
+    tagline: 'モバイルファーストEC・スマートフィード・超低価格・Wish Local・WishPost配送で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Wish代替 格安ショッピング モバイル AliExpress代替 Temu代替 スマートフィード Android',
+    accentColor: Color(0xFF1779F7),
+    painPoints: [
+      '無料・EC特化・個人のライフ管理は別途必要',
+      'ショッピング特化・個人のAI管理は別途必要',
+      'AliExpress/Temu/Sheinと比較して品質・配送速度・売上回復・プラットフォーム信頼が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'スマートフィード・超低価格・Wish Local・WishPost・ゲーミフィケーション',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'credit-karma': const _CompetitorInfo(
+    name: 'Credit Karma',
+    emoji: '📊',
+    tagline:
+        'Intuit傘下・無料クレジットスコア・TransUnion/Equifax・ローン比較・ID保護で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Credit Karma代替 クレジットスコア 無料 信用情報 Experian代替 NerdWallet代替 ローン比較',
+    accentColor: Color(0xFF3DBA5E),
+    painPoints: [
+      '無料(広告収入)・信用管理特化・個人のライフ管理は別途必要',
+      'クレジット/金融特化・個人のAI管理は別途必要',
+      'Experian/NerdWallet/WalletHubと比較してVantageスコア(FICO非準拠)・広告の偏りが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '無料スコア・TransUnion/Equifax・ローン比較・ID保護・税務申告・Intuit統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'copilot-money': const _CompetitorInfo(
+    name: 'Copilot Money',
+    emoji: '🧑‍✈️',
+    tagline: 'iOS向けプレミアム家計管理・AI分類・投資追跡・予算設定・Mint難民向けで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Copilot Money代替 家計管理 iOS iPhone AI分類 Mint代替 YNAB代替 投資追跡',
+    accentColor: Color(0xFF2E6BE5),
+    painPoints: [
+      '有料(月13ドル~)・iOS専用・資産管理特化・個人のライフ管理は別途必要',
+      '金融特化・個人のAI管理は別途必要',
+      'YNAB/Quicken Simplifi/Monarch Moneyと比較してAndroid非対応・コスト・連携数が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AI自動分類・投資追跡・予算・固定費分析・Apple Design Award受賞',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'empower': const _CompetitorInfo(
+    name: 'Empower (Personal Capital)',
+    emoji: '💼',
+    tagline:
+        '旧Personal Capital・資産管理・401k分析・投資手数料チェッカー・ウェルスマネジメントで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Empower代替 Personal Capital代替 資産管理 投資分析 手数料チェック ウェルスマネジメント',
+    accentColor: Color(0xFF00B09C),
+    painPoints: [
+      '無料(基本)/有料(ウェルス管理)・投資/資産管理特化・個人のライフ管理は別途必要',
+      '資産運用特化・個人のAI管理は別途必要',
+      'YNAB/Mint/Bettermentと比較して予算管理機能・学習曲線・sales call強引さが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '資産集計・401k分析・投資手数料チェッカー・ネットワース・ウェルスマネジメント',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'dall-e': const _CompetitorInfo(
+    name: 'DALL-E',
+    emoji: '🎨',
+    tagline:
+        'OpenAI画像生成・DALL-E 3・ChatGPT統合・テキスト→画像・アウトペインティングで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'DALL-E代替 AI画像生成 OpenAI テキスト画像 Midjourney代替 Stable Diffusion代替',
+    accentColor: Color(0xFF10A37F),
+    painPoints: [
+      '有料(ChatGPT Plus/API)・画像生成特化・個人のライフ管理は別途必要',
+      'AIクリエイティブ特化・個人のAI管理は別途必要',
+      'Midjourney/Stable Diffusion/Adobe Fireflyと比較してアーティスティック品質・詳細制御が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'DALL-E 3・ChatGPT統合・アウトペインティング・インペインティング・API',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'albert': const _CompetitorInfo(
+    name: 'Albert',
+    emoji: '🤖',
+    tagline:
+        'AI金融アドバイザーアプリ・自動貯蓄・Genius人間アドバイザー・投資・Instantキャッシュアドバンスで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Albert代替 AIファイナンシャルアドバイザー 自動貯蓄 投資 Chime代替 Dave代替 キャッシュアドバンス',
+    accentColor: Color(0xFF8B63FF),
+    painPoints: [
+      '有料(月12ドル~/Genius)・個人金融特化・個人のライフ管理は別途必要',
+      'AI金融特化・個人のAI管理は別途必要',
+      'Chime/Dave/Cleo比較してGeniusアドバイザーコスト・ツール深度・投資選択肢が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AI自動貯蓄・Genius人間アドバイザー・投資・Instantアドバンス・予算',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'simplifi': const _CompetitorInfo(
+    name: 'Quicken Simplifi',
+    emoji: '💰',
+    tagline: 'Quicken製モダン家計管理・支出計画・ウォッチリスト・リポート・Mint難民向け月4ドルで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Quicken Simplifi代替 家計管理 Mint代替 YNAB代替 Quicken 支出計画 予算',
+    accentColor: Color(0xFF7459C5),
+    painPoints: [
+      '有料(年48ドル)・家計管理特化・個人のライフ管理は別途必要',
+      '予算/支出管理特化・個人のAI管理は別途必要',
+      'YNAB/Copilot/Monarch Moneyと比較してモバイル体験・自動化・投資機能が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '支出計画・ウォッチリスト・リポート・サブスク管理・Plaid接続',
         competitorHas: true,
         weHave: false,
       ),
