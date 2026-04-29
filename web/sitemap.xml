@@ -3121,4 +3121,13 @@
   <url><loc>https://my-web-app-b67f4.web.app/vs-whova</loc></url>
   <url><loc>https://my-web-app-b67f4.web.app/vs-creator-iq</loc></url>
   <url><loc>https://my-web-app-b67f4.web.app/vs-aspire-io</loc></url>
+  <url><loc>https://my-web-app-b67f4.web.app/vs-lucidchart</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://my-web-app-b67f4.web.app/vs-draw-io</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://my-web-app-b67f4.web.app/vs-creately</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://my-web-app-b67f4.web.app/vs-refersion</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://my-web-app-b67f4.web.app/vs-shareasale</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://my-web-app-b67f4.web.app/vs-tapfiliate</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://my-web-app-b67f4.web.app/vs-openphone</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://my-web-app-b67f4.web.app/vs-nextiva</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://my-web-app-b67f4.web.app/vs-justcall</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
 </urlset>
