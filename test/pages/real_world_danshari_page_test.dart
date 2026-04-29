@@ -1,4 +1,5 @@
 // ignore_for_file: argument_type_not_assignable
+@TestOn('browser')
 
 import 'dart:convert';
 import 'package:flutter/material.dart';
