@@ -8,7 +8,7 @@
 | `scripts/feature_review.py` | Codex#2 | ✅ done | `e593a5492` | 13 機能 rotation / Playwright / Claude / lint / dedupe / Issue 起票 |
 | `integration_test/feature_review_dry_run.py` | Codex#2 | ✅ done | `e593a5492` | dry-run smoke test |
 | GitHub labels (`auto-review`, `severity:*`, `category:*`, `feature:*`) | Codex#2 | ✅ done | — | 24 件 repo 直接設定済 (= Codex#2 確認済) |
-| `docs/handoff-bundles/done/20260429_feature_review_scheduled_task/` 移動 | Codex#2 | ⏳ pending | — | 全 push 後の最終 commit |
+| `docs/handoff-bundles/done/20260429_feature_review_scheduled_task/` 移動 | Win | ✅ done | (part 80) | 全 file main 反映確認 + done/ 移動 (= Win版#132 part 80 / 2026-04-29) |
 
 ## Codex#2 の現状 (= 2026-04-29 push 対応時点)
 
