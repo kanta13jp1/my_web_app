@@ -21011,6 +21011,312 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'datadog-apm': const _CompetitorInfo(
+    name: 'Datadog APM',
+    emoji: '🐕',
+    tagline: 'DatadogのAPM・分散トレース・プロファイリングで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Datadog APM代替 分散トレース プロファイリング マイクロサービス 可観測性',
+    accentColor: Color(0xFF632CA6),
+    painPoints: [
+      '月額31ドル/ホスト〜・APM/インフラ/ログ全機能で高額・コスト予測が難しい',
+      'APM特化でエンジニア向け設計・個人のライフ管理は別途必要',
+      'New RelicやGrafana Tempoと比較してコストが高い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '分散トレース・サービスマップ・プロファイラー・AI異常検知',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'jaeger': const _CompetitorInfo(
+    name: 'Jaeger',
+    emoji: '🦅',
+    tagline: 'OSSマイクロサービス分散トレースシステムで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Jaeger代替 分散トレース マイクロサービス OSS Kubernetes オープントレース',
+    accentColor: Color(0xFF00B7F3),
+    painPoints: [
+      'セルフホスト必須・スケーリングにCassandra/Elasticsearchの運用が必要',
+      '分散トレース特化でエンジニア向け設計・個人のライフ管理は別途必要',
+      'Datadog/New Relicと比較してUIと分析機能が基本的',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '分散トレース・サービスグラフ・OpenTelemetry・Badger Storage',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'opentelemetry': const _CompetitorInfo(
+    name: 'OpenTelemetry',
+    emoji: '📡',
+    tagline: 'オープンソース可観測性フレームワーク・データ収集標準で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'OpenTelemetry代替 可観測性 トレース メトリクス ログ OTEL',
+    accentColor: Color(0xFF425CC7),
+    painPoints: [
+      'セルフホスト・コレクター管理が必要・バックエンドストレージは別途必要',
+      '可観測性データ収集特化でエンジニア向け設計・個人管理は別途必要',
+      '設定が複雑で習得に時間がかかる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'SDK多言語・OTLP・Collector・Tracing/Metrics/Logs統合標準',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'aws-cloudwatch': const _CompetitorInfo(
+    name: 'AWS CloudWatch',
+    emoji: '☁️',
+    tagline: 'AWSネイティブ監視・ログ・アラームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'AWS CloudWatch代替 AWSログ監視 メトリクス アラーム Lambda',
+    accentColor: Color(0xFFFF9900),
+    painPoints: [
+      '従量課金制・ログ取り込み1GB 0.50ドル〜・大量ログ/メトリクスで高額',
+      'AWS特化でエンジニア向け設計・個人のライフ管理は別途必要',
+      'Datadogと比較してマルチクラウド環境での統合可観測性が弱い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'メトリクス・ログ・アラーム・ダッシュボード・Insights・X-Ray',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'gcp-cloud-logging': const _CompetitorInfo(
+    name: 'Google Cloud Logging',
+    emoji: '☁️',
+    tagline: 'GCPネイティブログ収集・分析・エクスポートで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Google Cloud Logging代替 GCPログ Cloud Monitoring Stackdriver',
+    accentColor: Color(0xFF4285F4),
+    painPoints: [
+      '従量課金制・ログ取り込み1GB 0.50ドル〜・大量ログで高額',
+      'GCP特化でエンジニア向け設計・個人のライフ管理は別途必要',
+      'Datadogと比較してマルチクラウド統合と高度なAI分析が弱い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ログ収集・クエリ・エクスポート・Cloud Monitoring・トレース',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'azure-monitor': const _CompetitorInfo(
+    name: 'Azure Monitor',
+    emoji: '☁️',
+    tagline: 'Azureネイティブ監視・Application Insightsで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Azure Monitor代替 Application Insights Azureログ監視 メトリクス',
+    accentColor: Color(0xFF0078D4),
+    painPoints: [
+      '従量課金制・ログ取り込み1GB 2.30ドル〜・大規模で高額',
+      'Azure特化でエンジニア向け設計・個人のライフ管理は別途必要',
+      'Datadogと比較してマルチクラウド環境での統合可観測性が弱い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Application Insights・Log Analytics・アラート・ダッシュボード',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'nagios': const _CompetitorInfo(
+    name: 'Nagios',
+    emoji: '👁️',
+    tagline: 'OSSインフラ・ネットワーク監視ツールで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Nagios代替 インフラ監視 ネットワーク監視 OSS サーバー監視',
+    accentColor: Color(0xFF333333),
+    painPoints: [
+      'セルフホスト必須・Nagios XI月額2,495ドル〜・設定が複雑で導入コストが高い',
+      'インフラ監視特化でエンジニア向け設計・個人のライフ管理は別途必要',
+      'DatadogやPrometheusと比較してモダンなクラウドネイティブ環境への対応が弱い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ホスト/サービス監視・アラート・レポート・プラグイン・SNMP',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'zabbix': const _CompetitorInfo(
+    name: 'Zabbix',
+    emoji: '📊',
+    tagline: 'OSSエンタープライズ監視プラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Zabbix代替 インフラ監視 エンタープライズ OSS サーバー監視 ネットワーク',
+    accentColor: Color(0xFFD40000),
+    painPoints: [
+      'セルフホスト必須・UIが古くKubernetesなどモダン環境への対応が遅い',
+      'インフラ監視特化でエンジニア向け設計・個人のライフ管理は別途必要',
+      'DatadogやPrometheusと比較してクラウドネイティブ統合が弱い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'エージェント/エージェントレス・トリガー・テンプレート・マップ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'elastic-stack': const _CompetitorInfo(
+    name: 'Elastic Stack (ELK)',
+    emoji: '🐘',
+    tagline: 'Elasticsearch・Kibana・Logstashログ分析基盤で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Elastic Stack代替 ELK Elasticsearch Kibana ログ分析 全文検索',
+    accentColor: Color(0xFF005571),
+    painPoints: [
+      'クラウド版月額95ドル〜・セルフホストは運用と水平スケールが複雑',
+      'ログ分析・検索特化でエンジニア向け設計・個人管理は別途必要',
+      'Splunkと比較してSIEM・コンプライアンス機能が弱い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '全文検索・ログ分析・Kibanaビジュアル・SIEM・APM・Fleet',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
