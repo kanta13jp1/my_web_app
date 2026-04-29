@@ -28,6 +28,7 @@ const HEDRA_API_BASE = "https://api.hedra.com/web-app/public";
 const HEDRA_AVATAR_MODEL_ID = Deno.env.get("HEDRA_AVATAR_MODEL_ID") ??
   "26f0fc66-152b-40ab-abed-76c43df99bc8";
 const HEDRA_VOICE_ID = Deno.env.get("HEDRA_VOICE_ID") ?? "";
+const HEDRA_TTS_MODEL_ID = Deno.env.get("HEDRA_TTS_MODEL_ID") ?? "";
 
 // Dark War風 広告テンプレート定義
 const AD_TEMPLATES = {
@@ -488,6 +489,7 @@ async function createHedraPresenterVideo(params: {
     params.voice,
     params.lang,
   );
+  const ttsModelId = await resolveHedraTextToSpeechModelId(params.apiKey);
   const hedraLanguage = hedraLanguageForLang(params.lang);
   const ttsScript = scriptForHedraVoice(
     params.script,
@@ -504,7 +506,10 @@ async function createHedraPresenterVideo(params: {
       audio_generation: {
         type: "text_to_speech",
         voice_id: voiceId,
+        model_id: ttsModelId,
         text: ttsScript.slice(0, 1800),
+        stability: 0.5,
+        speed: 1.0,
         language: hedraLanguage,
       },
       generated_video_inputs: {
@@ -596,6 +601,72 @@ async function resolveHedraVoiceId(
     throw new Error("Hedra voice_id could not be resolved");
   }
   return voiceId;
+}
+
+async function resolveHedraTextToSpeechModelId(
+  apiKey: string,
+): Promise<string> {
+  const configured = firstNonEmptyString(HEDRA_TTS_MODEL_ID);
+  if (configured) {
+    if (!isUuid(configured)) {
+      throw new Error("HEDRA_TTS_MODEL_ID must be a UUID");
+    }
+    return configured;
+  }
+
+  const targetedModels = await listHedraModels(apiKey, "text_to_speech");
+  const allModels = targetedModels.length > 0
+    ? targetedModels
+    : await listHedraModels(apiKey);
+  const ttsModel = allModels
+    .map((model) => asRecord(model))
+    .find((model) => isHedraTextToSpeechModel(model));
+  const modelId = firstNonEmptyString(ttsModel?.["id"]);
+  if (!modelId) {
+    throw new Error(
+      "Hedra text_to_speech model_id could not be resolved; set HEDRA_TTS_MODEL_ID",
+    );
+  }
+  return modelId;
+}
+
+async function listHedraModels(
+  apiKey: string,
+  type?: string,
+): Promise<unknown[]> {
+  const query = type == null ? "" : `?types=${encodeURIComponent(type)}`;
+  const payload = await hedraJsonRequest(apiKey, `/models${query}`, {
+    method: "GET",
+  });
+  if (Array.isArray(payload)) return payload;
+  const data = asRecord(payload)?.["data"];
+  return Array.isArray(data) ? data : [];
+}
+
+function isHedraTextToSpeechModel(
+  model: Record<string, unknown> | null,
+): boolean {
+  const id = firstNonEmptyString(model?.["id"]);
+  if (!id) return false;
+  const type = normalizeHedraModelType(model?.["type"]);
+  if (type === "text_to_speech" || type === "tts") return true;
+  const haystack = `${model?.["name"] ?? ""} ${model?.["description"] ?? ""}`
+    .toLowerCase();
+  return [
+    "text to speech",
+    "text-to-speech",
+    "tts",
+    "elevenlabs",
+    "minimax",
+    "voice",
+    "speech",
+  ].some((marker) => haystack.includes(marker));
+}
+
+function normalizeHedraModelType(value: unknown): string {
+  return typeof value === "string"
+    ? value.trim().toLowerCase().replaceAll("-", "_").replaceAll(" ", "_")
+    : "";
 }
 
 async function hedraJsonRequest(
