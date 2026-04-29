@@ -46931,6 +46931,312 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'sonarcloud': const _CompetitorInfo(
+    name: 'SonarCloud',
+    emoji: '☁️',
+    tagline: 'クラウドコード品質分析・CI/CD統合・15言語・OSS無料・技術的負債可視化で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'SonarCloud代替 コード品質 クラウド CI/CD 技術的負債 静的解析 SonarQube代替',
+    accentColor: Color(0xFF4E9BCD),
+    painPoints: [
+      'OSS無料/有料・コード品質特化・個人のライフ管理は別途必要',
+      '静的解析特化・個人のAI管理は別途必要',
+      'CodeClimate/Deepsource/SonarQubeとの比較でオンプレ不可・プライベート価格・設定が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'クラウド静的解析・15言語・CI/CD統合・技術的負債・セキュリティホットスポット',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'codeclimate': const _CompetitorInfo(
+    name: 'Code Climate',
+    emoji: '🌡️',
+    tagline: 'コード品質・テストカバレッジ・技術的負債・エンジニア生産性分析・Velocityで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Code Climate代替 コード品質 テストカバレッジ 生産性 Velocity SonarQube代替 静的解析',
+    accentColor: Color(0xFF48A860),
+    painPoints: [
+      'OSS無料/有料月900ドル~・コード品質特化・個人のライフ管理は別途必要',
+      '開発品質特化・個人のAI管理は別途必要',
+      'SonarCloud/Deepsource/Codecovとの比較でコスト・規模感・言語サポートが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'コード品質・テストカバレッジ・技術的負債・Velocity・エンジニア生産性',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'deepsource': const _CompetitorInfo(
+    name: 'DeepSource',
+    emoji: '🔍',
+    tagline: 'AI静的解析・自動コード修正・25言語・セキュリティ/パフォーマンス・OSS無料で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'DeepSource代替 AI静的解析 自動修正 コード品質 25言語 SonarQube代替 Semgrep代替',
+    accentColor: Color(0xFF6200EA),
+    painPoints: [
+      'OSS無料/有料月12ドル~/シート・静的解析特化・個人のライフ管理は別途必要',
+      'コード品質特化・個人のAI管理は別途必要',
+      'SonarCloud/Semgrep/Snykとの比較でエコシステム規模・エンタープライズ対応が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AI静的解析・自動コード修正・25言語・セキュリティ/パフォーマンス分析',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'codecov': const _CompetitorInfo(
+    name: 'Codecov',
+    emoji: '📊',
+    tagline: 'テストカバレッジレポート・CI/CD統合・PR差分・Sentry傘下・OSS無料で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Codecov代替 テストカバレッジ CI/CD PR差分 Sentry コードカバレッジ Coveralls代替',
+    accentColor: Color(0xFFF05025),
+    painPoints: [
+      'OSS無料/有料月29ドル~・テストカバレッジ特化・個人のライフ管理は別途必要',
+      'テスト品質特化・個人のAI管理は別途必要',
+      'Coveralls/Codacy/CodeClimateとの比較でビジュアル・AIインサイト・複数言語対応が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'テストカバレッジ・CI/CD統合・PR差分・グラフ・OSS無料',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'coveralls': const _CompetitorInfo(
+    name: 'Coveralls',
+    emoji: '🧪',
+    tagline: 'テストカバレッジ追跡・GitHub/GitLab統合・Badge・PR差分・OSS無料で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Coveralls代替 テストカバレッジ GitHub GitLab Badge OSS Codecov代替 テスト品質',
+    accentColor: Color(0xFF00BFA5),
+    painPoints: [
+      'OSS無料/有料月10ドル~/月・テストカバレッジ特化・個人のライフ管理は別途必要',
+      'テスト追跡特化・個人のAI管理は別途必要',
+      'Codecov/Codacy/CodeClimateとの比較でUIシンプルすぎ・AI機能・分析深度が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'テストカバレッジ追跡・GitHub/GitLab統合・Badge・PR差分表示',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'veracode': const _CompetitorInfo(
+    name: 'Veracode',
+    emoji: '🔒',
+    tagline: 'エンタープライズAST・SAST/DAST/SCA/IAST統合・コンプライアンス対応・FortifyとSCA競合で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Veracode代替 SAST DAST SCA エンタープライズ セキュリティ コンプライアンス Fortify代替 Checkmarx代替',
+    accentColor: Color(0xFF1A237E),
+    painPoints: [
+      '有料(高価格)・エンタープライズセキュリティ特化・個人のライフ管理は別途必要',
+      'AST/DevSecOps特化・個人のAI管理は別途必要',
+      'Checkmarx/Fortify/Snykとの比較でコスト・オープンソース対応・設定容易性が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'SAST/DAST/SCA/IAST統合・エンタープライズAST・コンプライアンス・誤検知低減',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'fortify': const _CompetitorInfo(
+    name: 'Fortify (OpenText)',
+    emoji: '🛡️',
+    tagline: 'OpenText製エンタープライズSAST・27言語・CI/CD統合・AIアシスト・金融/政府対応で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Fortify代替 SAST エンタープライズ OpenText 27言語 金融 政府 セキュリティ Veracode代替',
+    accentColor: Color(0xFF0277BD),
+    painPoints: [
+      '有料(高価格)・SAST特化・個人のライフ管理は別途必要',
+      'エンタープライズセキュリティ特化・個人のAI管理は別途必要',
+      'Veracode/Checkmarx/Semgrepとの比較でコスト・複雑設定・中小企業不向きが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'エンタープライズSAST・27言語・CI/CD統合・AI補助・金融/政府コンプライアンス',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'contrast-security': const _CompetitorInfo(
+    name: 'Contrast Security',
+    emoji: '⚔️',
+    tagline: 'IAST/RASP・ランタイムセキュリティ・エージェント型・リアルタイム脆弱性検出で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Contrast Security代替 IAST RASP ランタイムセキュリティ エージェント型 脆弱性 Snyk代替 Veracode代替',
+    accentColor: Color(0xFF880E4F),
+    painPoints: [
+      '有料・ランタイムAST特化・個人のライフ管理は別途必要',
+      'リアルタイムセキュリティ特化・個人のAI管理は別途必要',
+      'Snyk/Veracode/Checkmarxとの比較でエージェント導入コスト・対応言語・エコシステムが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'IAST/RASP・ランタイム検出・エージェント型・リアルタイム脆弱性・誤検知最小',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'dependabot': const _CompetitorInfo(
+    name: 'Dependabot',
+    emoji: '🤖',
+    tagline: 'GitHub公式依存関係自動更新・セキュリティアラート・PR自動作成・無料で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Dependabot代替 依存関係更新 GitHub セキュリティ PR自動化 Renovate代替 脆弱性スキャン',
+    accentColor: Color(0xFF24292F),
+    painPoints: [
+      'GitHub内無料・依存関係更新特化・個人のライフ管理は別途必要',
+      '脆弱性管理特化・個人のAI管理は別途必要',
+      'Renovate/WhiteSource/Snykとの比較でカスタマイズ柔軟性・グループ化・設定が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'GitHub公式・依存関係自動更新・セキュリティアラート・PR自動作成・無料',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
