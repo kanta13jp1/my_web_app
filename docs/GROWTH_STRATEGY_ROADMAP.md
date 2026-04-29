@@ -24805,3 +24805,12 @@ SECOND_BRAIN 4.5/7 + VIBE 7.0/7 + PLATFORM 4.0/7 = 14.5/21 + cross-instance-pr �
   - 対象: PS#2/3/4/5/6 / VSCode / Win 全インスタンス
   - 3方式提案: MAX+1 increment / instance-fixed offset / push前 check
 - WF health 最終確認: Collision Check 4/4 success / CI success / deploy-prod in_progress (healthy)
+
+## 2026-04-29 PS#2 S92 — T-1 Phase41全4弾完結 (#191-#194)
+
+- #191 Flutter State Management Deep Dive → https://dev.to/kanta13jp1/flutter-state-management-deep-dive-riverpod-vs-bloc-vs-provider-3md8
+- #192 Supabase Webhooks → https://dev.to/kanta13jp1/supabase-webhooks-event-driven-backend-with-pgnet-9hl
+- #193 Indie SaaS Pricing Strategy → https://dev.to/kanta13jp1/indie-saas-pricing-strategy-freemium-trials-and-pricing-psychology-5cia
+- #194 Dart Extension Types → https://dev.to/kanta13jp1/dart-extension-types-zero-cost-type-safe-wrappers-2igp
+- dev.to 累計194本
+- 全 draft: published:true (JA+EN) / orphan branches 全削除
