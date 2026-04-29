@@ -24183,6 +24183,16 @@ Bundle 第 1 完成例 = Codex#2 territory が Bundle 形式に対応可能で�
 - T-1 第166弾: Flutter × Dart 3 完全ガイド — Pattern Matching・Sealed Classes・Records
   - https://dev.to/kanta13jp1/flutter-x-dart-3-complete-guide-pattern-matching-sealed-classes-records-50bp
 
+### PS版#2 S86 T-1 Phase35 全4弾完結 (2026-04-29) — dev.to 累計170本
+- T-1 第167弾: Flutter Flame ゲームエンジン完全ガイド — 2Dゲーム開発の基礎から実装まで
+  - https://dev.to/kanta13jp1/flutter-flame-game-engine-complete-guide-2d-game-development-from-scratch-12dl
+- T-1 第168弾: Supabase pg_cron 完全ガイド — PostgreSQL でスケジュールジョブを自動化する
+  - https://dev.to/kanta13jp1/supabase-pgcron-complete-guide-automate-scheduled-jobs-in-postgresql-5dih
+- T-1 第169弾: インディー開発者のメールマーケティング完全ガイド — Resend × Supabase で自動化する
+  - https://dev.to/kanta13jp1/indie-dev-email-marketing-complete-guide-automate-with-resend-x-supabase-2p6e
+- T-1 第170弾: Flutter Isolate & Compute 完全ガイド — バックグラウンド処理でUI を滑らかに保つ
+  - https://dev.to/kanta13jp1/flutter-isolates-compute-complete-guide-keep-your-ui-smooth-with-background-processing-455f
+
 ## 2026-04-29 PS#1 S4 — consolidate-memory --lint 完成 + SECOND_BRAIN #4 実装
 - `~/.claude/skills/consolidate-memory/lint.py` 実装 — orphan/duplicate/contradiction 3 検出器
 - `~/.claude/skills/consolidate-memory/SKILL.md` 仕様追記 (`--lint` + `--issue` flag)
