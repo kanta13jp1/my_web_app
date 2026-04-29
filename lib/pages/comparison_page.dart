@@ -16421,6 +16421,312 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'patreon': const _CompetitorInfo(
+    name: 'Patreon',
+    emoji: '🎨',
+    tagline: 'クリエイター向けメンバーシップ・サブスクで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Patreon代替 クリエイター メンバーシップ サポート 月額支援',
+    accentColor: Color(0xFFFF424D),
+    painPoints: [
+      '収益の5〜12%の手数料・人気クリエイター以外は収入が不安定',
+      'クリエイター支援特化で個人ライフ管理・AI対話は別途必要',
+      '日本の銀行への出金手数料が高く受け取りに時間がかかる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'メンバーシップ・限定コンテンツ・コミュニティ・アプリ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'ko-fi': const _CompetitorInfo(
+    name: 'Ko-fi',
+    emoji: '☕',
+    tagline: 'クリエイター投げ銭＋メンバーシップ無料プラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Ko-fi代替 投げ銭 クリエイター支援 無料 Patreon代替',
+    accentColor: Color(0xFFFF5E5B),
+    painPoints: [
+      '無料版はKo-fi Gold(月額6ドル)なしで機能制限・手数料無しが魅力だが収益化は限定的',
+      'クリエイター支援特化で個人財務管理・AI習慣管理は別途必要',
+      'PayPal依存度が高く日本での利用に制限が生じる場合あり',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'チップ/メンバーシップ/ショップ/コミッション/ライブ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'buy-me-a-coffee': const _CompetitorInfo(
+    name: 'Buy Me a Coffee',
+    emoji: '☕',
+    tagline: 'シンプルなクリエイター支援＋メンバーシップで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Buy Me a Coffee代替 投げ銭 クリエイター 月額支援 ファン',
+    accentColor: Color(0xFFFFDD00),
+    painPoints: [
+      '収益の5%手数料・Ko-fiの無料版より手数料が高い',
+      'クリエイター支援特化で個人の財務・習慣・AI管理は別途必要',
+      '日本ではPatreonやFantiaと比較して認知度が低い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ワンタイム支援・メンバーシップ・ショップ・エクストラ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'circle': const _CompetitorInfo(
+    name: 'Circle',
+    emoji: '⭕',
+    tagline: 'クリエイター向けオンラインコミュニティプラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Circle代替 オンラインコミュニティ メンバーシップ コース Discord代替',
+    accentColor: Color(0xFF6B4FBB),
+    painPoints: [
+      '月額49ドル〜・コミュニティ規模が小さい段階ではコスト回収が難しい',
+      'コミュニティ特化で個人の財務・AI対話・習慣管理は別途必要',
+      'Discordと比較して会話機能のリアルタイム性が低い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'スペース・コース・イベント・メンバーシップ・Discord連携',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'podia': const _CompetitorInfo(
+    name: 'Podia',
+    emoji: '🏛️',
+    tagline: 'クリエイターオールインワン(コース・デジタル商品・コミュニティ)で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Podia代替 オンラインコース デジタル商品 コミュニティ クリエイター',
+    accentColor: Color(0xFF6EBD44),
+    painPoints: [
+      '月額39ドル〜・メール機能は上位プランが必要',
+      'クリエイタービジネス特化で個人のAI管理・財務追跡は別途必要',
+      'TeachableやKajabiと比較してマーケティング自動化が弱い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'コース・デジタルダウンロード・コミュニティ・メール・ウェビナー',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'mighty-networks': const _CompetitorInfo(
+    name: 'Mighty Networks',
+    emoji: '🌐',
+    tagline: 'コース＋コミュニティ統合プラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Mighty Networks代替 オンラインコミュニティ コース メンバーシップ',
+    accentColor: Color(0xFF3B0764),
+    painPoints: [
+      '月額33ドル〜・コース機能は上位プランが必要・価格上昇中',
+      'コミュニティ・コース特化で個人財務・AI対話は別途必要',
+      'CircleやDiscordと比較してUI/UXが古い印象',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'コミュニティ・コース・イベント・ライブストリーム・アプリ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'paddle': const _CompetitorInfo(
+    name: 'Paddle',
+    emoji: '🏓',
+    tagline: 'SaaS向けメルチャント・オブ・レコード決済で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Paddle代替 SaaS決済 税務処理 サブスクリプション 国際展開',
+    accentColor: Color(0xFF1A56DB),
+    painPoints: [
+      '取引額の5%+$0.50の手数料・高収益製品では大きなコスト',
+      'SaaS決済・税務代行特化で個人ライフ管理・AI機能は別途必要',
+      'Stripeと比較してカスタマイズ性が低くエンジニア向け機能が少ない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'MoR・VAT自動計算・サブスク管理・チャーン対策・グローバル',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'chargebee': const _CompetitorInfo(
+    name: 'Chargebee',
+    emoji: '🏦',
+    tagline: 'SaaSサブスクリプション請求・収益管理で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Chargebee代替 サブスクリプション請求 収益管理 SaaS課金',
+    accentColor: Color(0xFFFF5A00),
+    painPoints: [
+      '月額299ドル〜・スタートアップには高額なエンタープライズ価格',
+      'SaaS課金・請求特化でエンジニア/経理前提設計・個人管理は別途必要',
+      '設定が複雑でカスタマーサクセスの支援が必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'サブスク管理・請求・税務・メトリクス・Salesforce連携',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'lemonsqueezy': const _CompetitorInfo(
+    name: 'Lemon Squeezy',
+    emoji: '🍋',
+    tagline: 'デジタル商品・SaaS向け決済プラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Lemon Squeezy代替 デジタル商品 SaaS決済 Gumroad代替 Paddle代替',
+    accentColor: Color(0xFFFFCE37),
+    painPoints: [
+      '取引額の5%+$0.50の手数料・Gumroadより高い場合がある',
+      'デジタル商品決済特化で個人ライフ管理・AI対話は別途必要',
+      '機能追加ペースが速く設定方法が頻繁に変わる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'MoR・ライセンス管理・アフィリエイト・SaaS向け決済',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
