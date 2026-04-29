@@ -1751,6 +1751,8 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
 
   // Win版#132 part 83: column resize — drag 中の hover key (= handle 強調表示用)
   String? _hoveredResizeColKey;
+  String _sortColumnKey = '#';
+  bool _sortAscending = true;
 
   // Win版#132 part 83: shared_preferences から保存済み列幅を load
   Future<void> _loadColumnWidths() async {
@@ -1817,6 +1819,51 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
         ),
       ),
     );
+  }
+
+  void _toggleSortColumn(String key) {
+    setState(() {
+      if (_sortColumnKey == key) {
+        _sortAscending = !_sortAscending;
+      } else {
+        _sortColumnKey = key;
+        _sortAscending = true;
+      }
+    });
+  }
+
+  int _compareTasksForCurrentSort(WbsTask a, WbsTask b) {
+    final result = switch (_sortColumnKey) {
+      '#' => _compareWbsTasks(a, b),
+      'task' => _compareText(a.title, b.title),
+      'startDate' => _compareOptionalDate(a.startDate, b.startDate),
+      'endDate' => _compareOptionalDate(a.endDate, b.endDate),
+      'instance' => _compareText(
+          _instanceBadgeLabel(a),
+          _instanceBadgeLabel(b),
+        ),
+      'progress' => a.progress.compareTo(b.progress),
+      'remaining' => _compareText(a.remainingWork, b.remainingWork),
+      'depends' => _compareText(
+          a.dependsOnTitles.join(' '),
+          b.dependsOnTitles.join(' '),
+        ),
+      'recovery' => _compareText(a.recoveryPlan, b.recoveryPlan),
+      'flags' => a.delayDays.compareTo(b.delayDays),
+      _ => _compareWbsTasks(a, b),
+    };
+    final directed = _sortAscending ? result : -result;
+    if (directed != 0) return directed;
+    return _compareWbsTasks(a, b);
+  }
+
+  int _compareText(String a, String b) {
+    final left = a.trim().toLowerCase();
+    final right = b.trim().toLowerCase();
+    if (left.isEmpty && right.isEmpty) return 0;
+    if (left.isEmpty) return 1;
+    if (right.isEmpty) return -1;
+    return left.compareTo(right);
   }
 
   @override
@@ -1909,7 +1956,7 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
     if (widget.filterInstance != null) {
       list = list.where((t) => t.instance == widget.filterInstance).toList();
     }
-    list.sort(_compareWbsTasks);
+    list.sort(_compareTasksForCurrentSort);
     return list;
   }
 
@@ -2469,6 +2516,60 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
     );
   }
 
+  Widget _buildSortableHeaderLabel(
+    String key,
+    String label,
+    TextStyle baseStyle, {
+    TextAlign? align,
+  }) {
+    final active = _sortColumnKey == key;
+    final directionIcon = _sortAscending
+        ? Icons.arrow_upward_rounded
+        : Icons.arrow_downward_rounded;
+    final icon = active ? directionIcon : Icons.unfold_more_rounded;
+    final color = active ? Colors.white : const Color(0xFFB0B0C0);
+    final row = Row(
+      mainAxisSize: MainAxisSize.min,
+      mainAxisAlignment: align == TextAlign.center
+          ? MainAxisAlignment.center
+          : MainAxisAlignment.start,
+      children: [
+        Flexible(
+          child: Text(
+            label,
+            style: baseStyle.copyWith(color: color),
+            textAlign: align ?? TextAlign.left,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+        const SizedBox(width: 3),
+        Icon(
+          icon,
+          size: active ? 13 : 12,
+          color: active ? _todayColor : const Color(0xFF707080),
+        ),
+      ],
+    );
+    return Tooltip(
+      message: active
+          ? (_sortAscending ? '昇順でソート中' : '降順でソート中')
+          : 'クリックしてソート',
+      waitDuration: const Duration(milliseconds: 350),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(4),
+          hoverColor: _todayColor.withValues(alpha: 0.10),
+          onTap: () => _toggleSortColumn(key),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 4),
+            child: row,
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildLeftColumnHeader() {
     // Win版#131 part 23: _colVisible に応じて列を条件レンダリング
     const labelStyle = TextStyle(
@@ -2488,8 +2589,12 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
     }) {
       if (!(_colVisible[key] ?? true)) return const SizedBox.shrink();
       final w = width ?? _colWidths[key] ?? 80;
-      final t =
-          Text(label, style: labelStyle, textAlign: align ?? TextAlign.left);
+      final t = _buildSortableHeaderLabel(
+        key,
+        label,
+        labelStyle,
+        align: align,
+      );
       if (expanded) return Expanded(child: t);
       // resize handle を右端に併設 (= _colNonResizable は SizedBox.shrink 返却)
       return Row(
@@ -2509,18 +2614,7 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
         children: [
           header('#', '#', align: TextAlign.center),
           // task 名のみ Expanded
-          if (_colVisible['task'] ?? true)
-            const Expanded(
-              child: Text(
-                'タスク名',
-                style: TextStyle(
-                  color: Color(0xFFB0B0C0),
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                  height: 1.5,
-                ),
-              ),
-            ),
+          header('task', 'タスク名', expanded: true),
           header('startDate', '開始予定', align: TextAlign.center),
           header('endDate', '完了予定', align: TextAlign.center),
           header('instance', '担当', align: TextAlign.center),
