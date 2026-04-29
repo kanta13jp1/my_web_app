@@ -18869,6 +18869,312 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'tableau': const _CompetitorInfo(
+    name: 'Tableau',
+    emoji: '📊',
+    tagline: 'Salesforceのビジュアルデータ分析・BIツールで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Tableau代替 BI データ可視化 ダッシュボード データ分析',
+    accentColor: Color(0xFF1F77B4),
+    painPoints: [
+      '年間1,900ドル〜・Salesforce傘下で価格上昇・エンタープライズ向けに特化',
+      'データ分析・可視化特化でデータサイエンティスト向け・個人管理は別途必要',
+      'Power BIやLookerと比較してクラウドネイティブ対応が遅く移行コストが高い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'インタラクティブ可視化・ダッシュボード・Prep・Server・Cloud',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'power-bi': const _CompetitorInfo(
+    name: 'Power BI',
+    emoji: '📈',
+    tagline: 'MicrosoftのクラウドBI・データ可視化プラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Power BI代替 Microsoft BI ダッシュボード データ分析 Excel連携',
+    accentColor: Color(0xFFF2C811),
+    painPoints: [
+      '月額10ドル/人〜・高度な機能はPremiumプラン・Fabric必須で高額',
+      'データ可視化特化でビジネス向け設計・個人のライフ管理は別途必要',
+      'Tableauと比較してデータモデリングの複雑なケースで限界がある',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ダッシュボード・データフロー・AIインサイト・Microsoft365統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'looker': const _CompetitorInfo(
+    name: 'Looker',
+    emoji: '🔭',
+    tagline: 'Google CloudのエンタープライズBI・データプラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Looker代替 Google BI データ分析 SQL LookML エンタープライズ',
+    accentColor: Color(0xFF4285F4),
+    painPoints: [
+      '年間数百万円〜・Google Cloud傘下でエンタープライズ専用・個人には非現実的',
+      'データプラットフォーム特化でエンジニア向け設計・個人管理は別途必要',
+      'LookMLの学習コストが高く導入に専門エンジニアが必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'LookML・ダッシュボード・BigQuery統合・API・埋め込み',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'metabase': const _CompetitorInfo(
+    name: 'Metabase',
+    emoji: '🗃️',
+    tagline: 'オープンソースセルフサービスBIツールで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Metabase代替 オープンソース BI セルフサービス SQL ダッシュボード',
+    accentColor: Color(0xFF509EE3),
+    painPoints: [
+      'クラウド版月額500ドル〜・OSS版はサーバー管理コストと技術知識が必要',
+      'データ可視化特化でエンジニア・アナリスト向け設計・個人管理は別途必要',
+      'Tableauと比較して高度な可視化・エンタープライズ機能が弱い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'SQLエディタ・ドラッグ&ドロップ・ダッシュボード・アラート・API',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'domo': const _CompetitorInfo(
+    name: 'Domo',
+    emoji: '🌐',
+    tagline: 'クラウドBI・ビジネスデータプラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Domo代替 クラウドBI データプラットフォーム ダッシュボード モバイルBI',
+    accentColor: Color(0xFFE01E5A),
+    painPoints: [
+      '年間数十万円〜・エンタープライズ向けで個人や小規模には非現実的',
+      'クラウドBI特化でビジネス向け設計・個人のライフ管理は別途必要',
+      'Tableauと比較して可視化の柔軟性が低くデザイン品質が劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'コネクタ1,000+・AI予測・アラート・モバイル・ETL',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'qlik': const _CompetitorInfo(
+    name: 'Qlik Sense',
+    emoji: '🔮',
+    tagline: 'アソシエイティブAI分析・クラウドBIで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Qlik代替 QlikSense BI データ分析 アソシエイティブ AI',
+    accentColor: Color(0xFF009845),
+    painPoints: [
+      '月額30ドル/人〜・高度なアソシエイティブ機能習得に専門トレーニングが必要',
+      'BI・データ分析特化でアナリスト向け設計・個人のライフ管理は別途必要',
+      'Tableauと比較してデータ可視化の直感的操作性が劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'アソシエイティブエンジン・AI推薦・自動インサイト・API統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'qualtrics': const _CompetitorInfo(
+    name: 'Qualtrics',
+    emoji: '📋',
+    tagline: 'エンタープライズエクスペリエンス管理プラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Qualtrics代替 エンタープライズアンケート 従業員エクスペリエンス CX調査',
+    accentColor: Color(0xFF1A1A2E),
+    painPoints: [
+      '年間数十万円〜・SAP傘下でエンタープライズ専用・個人には非現実的',
+      'エクスペリエンス管理特化でチーム向け設計・個人のライフ管理は別途必要',
+      'SurveyMonkeyと比較して価格が10倍以上で中小企業には過剰',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'CX・EX・ブランド・製品体験管理・予測分析・AI',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'survio': const _CompetitorInfo(
+    name: 'Survio',
+    emoji: '📝',
+    tagline: 'オンラインアンケート作成・データ収集ツールで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Survio代替 オンラインアンケート 調査 フォーム SurveyMonkey代替',
+    accentColor: Color(0xFF00BFA5),
+    painPoints: [
+      '月額25ドル〜・高度な分析・ブランディングはビジネスプランが必要',
+      'アンケート特化で個人のAI管理・財務・習慣は別途必要',
+      'Typeformと比較してUIデザインと使いやすさが劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '100+テンプレート・結果分析・カスタムブランド・多言語',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'alchemer': const _CompetitorInfo(
+    name: 'Alchemer',
+    emoji: '🎯',
+    tagline: '高機能フレキシブルサーベイ・フィードバック管理で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Alchemer代替 SurveyGizmo アンケート フィードバック管理 顧客調査',
+    accentColor: Color(0xFF1E88E5),
+    painPoints: [
+      '月額49ドル〜・高度なカスタマイズにはビジネスプランが必要',
+      'アンケート・フィードバック特化で個人の財務・AI管理は別途必要',
+      'Qualtricsと比較してエンタープライズ向け統合・分析機能が弱い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '高度なロジック・API統合・カスタムスクリプト・ブランディング',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
