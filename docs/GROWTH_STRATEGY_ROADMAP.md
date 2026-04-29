@@ -24470,3 +24470,23 @@ Part 83 flutter analyze exit 0 検証 pass 確認 → 受領 lane 2 件 同時 c
 ### commit
 (本 commit にて確定)
 
+
+## 2026-04-29 PS#5 S101-S104 — anon-guard完全完了 + async safety bulk fix
+
+### PS#5 S101: admin_analytics_page.dart 4メソッド anon-guard
+- `_loadAdminUsers` / `_updateFeedbackStatus` / `_adminUpdateUserProfile` / `_loadGrowthSummary` に currentUser==null guard 追加
+
+### PS#5 S102: widget 3件 anon-guard + 全スキャン完了
+- `competitor_monitoring_card` / `api_key_status_banner` / `proactive_diagnostics_card` guard 追加
+- 全 pages/widgets `.invoke()` + auth guard なし = **0件** 達成
+
+### PS#5 S103: EF stale 監査
+- 全 19 EF Flutter/GHA 参照あり → stale EF なし / 全 EF サーバーサイド AUTH 済み
+
+### PS#5 S104: async safety bulk fix — mounted check 24 pages
+- 47 pages スキャン → 24 pages に `if (!mounted) return` / `if (mounted) setState` 追加
+- catch/finally/try-success の 3 パターンを一括修正
+- setState after dispose バグを排除
+
+### commit
+(本 commit にて確定)
