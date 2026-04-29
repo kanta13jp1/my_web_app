@@ -27913,6 +27913,312 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'loomly': const _CompetitorInfo(
+    name: 'Loomly',
+    emoji: '📅',
+    tagline: 'コンテンツカレンダー・ソーシャルメディア管理ツールで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Loomly代替 コンテンツカレンダー ソーシャルメディア 投稿スケジュール チーム管理',
+    accentColor: Color(0xFF4F46E5),
+    painPoints: [
+      '月額32ドル〜・SNS管理特化・個人のライフ管理は別途必要',
+      'コンテンツカレンダー特化・個人のAI管理は別途必要',
+      'Sprout Social/Bufferと比較してAI機能・分析深度が劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'コンテンツカレンダー・投稿作成・承認・分析・広告統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'planhat': const _CompetitorInfo(
+    name: 'Planhat',
+    emoji: '🏗️',
+    tagline: 'データ駆動カスタマーサクセス・収益最大化プラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Planhat代替 カスタマーサクセス 収益最大化 NRR チャーン 顧客ヘルス',
+    accentColor: Color(0xFF2563EB),
+    painPoints: [
+      '価格非公開・CS/収益特化・個人のライフ管理は別途必要',
+      'カスタマーサクセス特化・個人のAI管理は別途必要',
+      'Gainsight/Totangoと比較してブランド認知・北米採用が劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '顧客ヘルス・プレイブック・NPS・レポート・API・Slack統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'tooljet': const _CompetitorInfo(
+    name: 'ToolJet',
+    emoji: '🛠️',
+    tagline: 'オープンソース内部ツール構築プラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'ToolJet代替 内部ツール ローコード ダッシュボード 管理画面 オープンソース',
+    accentColor: Color(0xFF5A67D8),
+    painPoints: [
+      '無料/月額50ドル〜・内部ツール特化・個人のライフ管理は別途必要',
+      'ローコード内部ツール特化・個人のAI管理は別途必要',
+      'Retool/Appsmithと比較してコンポーネント数・エンタープライズ機能が劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ドラッグ&ドロップ・50+統合・クエリビルダー・JS・セルフホスト',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'budibase': const _CompetitorInfo(
+    name: 'Budibase',
+    emoji: '🌿',
+    tagline: 'オープンソースローコード内部ツール・ワークフロー構築で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Budibase代替 ローコード 内部ツール ワークフロー 管理画面 オープンソース',
+    accentColor: Color(0xFF6B21A8),
+    painPoints: [
+      '無料/月額50ドル〜・ローコード特化・個人のライフ管理は別途必要',
+      'ローコード/内部ツール特化・個人のAI管理は別途必要',
+      'Retool/ToolJetと比較してコンポーネント豊富さ・サポートが劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ローコードUI・自動化・データソース接続・REST API・セルフホスト',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'flutterflow': const _CompetitorInfo(
+    name: 'FlutterFlow',
+    emoji: '🦋',
+    tagline: 'ビジュアルFlutterアプリ構築・ローコードモバイル/Web開発で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'FlutterFlow代替 ローコード Flutter モバイルアプリ ビジュアル開発 Firebase',
+    accentColor: Color(0xFF54C5F8),
+    painPoints: [
+      '月額30ドル〜・ビジュアルFlutter特化・個人のライフ管理は別途必要',
+      'Flutter/Dart開発特化・個人のAI管理は別途必要',
+      'Adalo/Glideと比較してFlutter知識が必要・学習コストが高い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ビジュアルUI・Firebase統合・コード出力・Supabase・カスタムコード',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'iterable': const _CompetitorInfo(
+    name: 'Iterable',
+    emoji: '🔄',
+    tagline: 'クロスチャネルマーケティングオートメーション・顧客エンゲージメントで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Iterable代替 マーケティングオートメーション クロスチャネル メール プッシュ SMS',
+    accentColor: Color(0xFF7C3AED),
+    painPoints: [
+      '価格非公開(中〜大規模向け)・マーケ特化・個人のライフ管理は別途必要',
+      'マーケティングオートメーション特化・個人のAI管理は別途必要',
+      'Braze/Klaviyoと比較してeコマース統合・テンプレートが劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'メール/SMS/プッシュ/アプリ内通知・ジャーニー・AI・A/Bテスト',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'customer-io': const _CompetitorInfo(
+    name: 'Customer.io',
+    emoji: '📬',
+    tagline: 'データ駆動オートメーションメール・SMS・プッシュ通知で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Customer.io代替 マーケティングオートメーション メール SMS プッシュ データ駆動',
+    accentColor: Color(0xFF16A34A),
+    painPoints: [
+      '月額100ドル〜・オートメーション特化・個人のライフ管理は別途必要',
+      'データ駆動マーケ特化・個人のAI管理は別途必要',
+      'Iterable/Brazeと比較してビジュアルビルダー・テンプレートが限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'セグメント・トリガー・フロー・API・JSONデータ・マルチチャネル',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'neon-tech': const _CompetitorInfo(
+    name: 'Neon',
+    emoji: '💡',
+    tagline: 'サーバーレスPostgreSQL・ブランチング機能付きクラウドDBで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Neon代替 サーバーレスPostgreSQL ブランチング クラウドDB Vercel統合 無料枠',
+    accentColor: Color(0xFF00E5BF),
+    painPoints: [
+      '無料/月額19ドル〜・サーバーレスDB特化・個人のライフ管理は別途必要',
+      'PostgreSQL特化・個人のAI管理は別途必要',
+      'PlanetScale/Supabaseと比較して全機能・ベクター対応が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'PostgreSQL・DBブランチング・コールドスタート・自動スケール・API',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'convex-dev': const _CompetitorInfo(
+    name: 'Convex',
+    emoji: '⚡',
+    tagline: 'フルスタックTypeScript BaaS・リアルタイムデータベースで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Convex代替 BaaS TypeScript リアルタイム データベース フルスタック',
+    accentColor: Color(0xFFEF4444),
+    painPoints: [
+      '無料/月額25ドル〜・フルスタックTS特化・個人のライフ管理は別途必要',
+      'TypeScript BaaS特化・個人のAI管理は別途必要',
+      'Supabase/Firebaseと比較してエコシステム・メジャー度が劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'TypeScript DB・リアルタイム・関数・検索・スケジューリング・ゼロインフラ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
