@@ -20705,6 +20705,312 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'terraform': const _CompetitorInfo(
+    name: 'Terraform (HashiCorp)',
+    emoji: '🏗️',
+    tagline: 'IaC・マルチクラウドインフラ自動化で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Terraform代替 IaC インフラコード マルチクラウド 自動化',
+    accentColor: Color(0xFF7B42BC),
+    painPoints: [
+      'HashiCorp Cloud月額20ドル〜・エンタープライズはAgreementが必要',
+      'IaC特化でエンジニア向け設計・個人のライフ管理は別途必要',
+      '2023年にBSL変更・OSSコミュニティがOpenTofuにフォーク',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'マルチクラウドIaC・モジュール・State管理・Sentinel・Vault統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'ansible': const _CompetitorInfo(
+    name: 'Ansible (Red Hat)',
+    emoji: '🔧',
+    tagline: 'エージェントレス構成管理・自動化ツールで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Ansible代替 構成管理 自動化 DevOps IaC エージェントレス',
+    accentColor: Color(0xFFEE0000),
+    painPoints: [
+      'Ansible Automation Platform月額14,000ドル〜・エンタープライズ向けで高額',
+      '構成管理・自動化特化でエンジニア向け設計・個人のライフ管理は別途必要',
+      'TerraformやPulumi と比較して宣言的IaCではなく手続き的で規模拡大時に複雑化',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Playbook・エージェントレス・AWX・Galaxy・コンテナ管理',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'pulumi': const _CompetitorInfo(
+    name: 'Pulumi',
+    emoji: '🌬️',
+    tagline: '汎用言語でIaC・クラウド自動化で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Pulumi代替 IaC TypeScript Python クラウド自動化 Terraform代替',
+    accentColor: Color(0xFF8A3391),
+    painPoints: [
+      '月額10ドル〜・Terraformに比べてコミュニティ・ドキュメントが少ない',
+      'IaC特化でエンジニア向け設計・個人のライフ管理は別途必要',
+      'Terraformからの移行コストがあり既存エコシステムとの互換性要確認',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'TypeScript/Python/Go IaC・Pulumi Cloud・AI コンポーネント',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'docker-hub': const _CompetitorInfo(
+    name: 'Docker Hub',
+    emoji: '🐳',
+    tagline: 'コンテナイメージレジストリ・Docker Desktopで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Docker Hub代替 コンテナレジストリ Docker イメージ管理 Kubernetes',
+    accentColor: Color(0xFF2496ED),
+    painPoints: [
+      '月額11ドル〜・無料プランのrate limitが厳しくCIで問題になる場合がある',
+      'コンテナレジストリ特化でエンジニア向け設計・個人管理は別途必要',
+      'GitHub Container RegistryやGCRと比較してコスト面で不利な場合も',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'コンテナレジストリ・自動ビルド・Scan・Docker Desktop',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'kubernetes': const _CompetitorInfo(
+    name: 'Kubernetes (K8s)',
+    emoji: '⚓',
+    tagline: 'コンテナオーケストレーション・自動デプロイで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Kubernetes代替 K8s コンテナオーケストレーション Docker マイクロサービス',
+    accentColor: Color(0xFF326CE5),
+    painPoints: [
+      'マネージドK8s月額72ドル〜(EKS等)・セルフホストは運用コストが非常に高い',
+      'コンテナオーケストレーション特化でエンジニア向け設計・個人管理は別途必要',
+      '学習曲線が急峻でCKA取得に300+時間の学習が必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '自動スケール・ローリングデプロイ・Service Mesh・Helm・Operator',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'argocd': const _CompetitorInfo(
+    name: 'Argo CD',
+    emoji: '🎯',
+    tagline: 'Kubernetes GitOps継続的デリバリーで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Argo CD代替 GitOps CD Kubernetes デプロイ自動化',
+    accentColor: Color(0xFFEF7B4D),
+    painPoints: [
+      'セルフホスト必須・Kubernetes前提で導入コストが高い',
+      'GitOps・CD特化でエンジニア向け設計・個人のライフ管理は別途必要',
+      'FluxCDと比較してリソース消費が多くUI学習コストがある',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'GitOps・マルチクラスター・ロールバック・Health確認・Argo Rollouts',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'istio': const _CompetitorInfo(
+    name: 'Istio',
+    emoji: '🕸️',
+    tagline: 'Kubernetesサービスメッシュ・トラフィック管理で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Istio代替 サービスメッシュ Kubernetes mTLS トラフィック管理',
+    accentColor: Color(0xFF466BB0),
+    painPoints: [
+      'セルフホスト・高度な設定が必要でKubernetesの専門知識が前提',
+      'サービスメッシュ特化でエンジニア向け設計・個人のライフ管理は別途必要',
+      'Linkerd/Consulと比較して複雑性が高くリソース消費が多い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'mTLS・トラフィックルーティング・可観測性・ゼロトラスト・Envoy',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'vault': const _CompetitorInfo(
+    name: 'HashiCorp Vault',
+    emoji: '🔐',
+    tagline: 'シークレット管理・暗号化プラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'HashiCorp Vault代替 シークレット管理 暗号化 鍵管理 セキュリティ',
+    accentColor: Color(0xFF000000),
+    painPoints: [
+      'HCP Vault月額0.03ドル/時〜・セルフホスト版は管理・HA構成が複雑',
+      'シークレット管理特化でエンジニア向け設計・個人のライフ管理は別途必要',
+      'AWS KMS/SecretsManagerと比較してマルチクラウドを使わないならオーバースペック',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'シークレット・KV・PKI・SSH・動的シークレット・監査ログ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'consul': const _CompetitorInfo(
+    name: 'HashiCorp Consul',
+    emoji: '🌐',
+    tagline: 'サービスディスカバリ・サービスメッシュ・設定管理で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Consul代替 サービスディスカバリ サービスメッシュ 設定管理 Kubernetes',
+    accentColor: Color(0xFFCA2171),
+    painPoints: [
+      'HCP Consul月額0.025ドル/時〜・セルフホストはHA構成と運用が複雑',
+      'サービスディスカバリ特化でエンジニア向け設計・個人管理は別途必要',
+      'Istio/Linkerdと比較してサービスメッシュ機能では後発',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'サービスディスカバリ・ヘルスチェック・K/Vストア・mTLS・マルチクラスター',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
