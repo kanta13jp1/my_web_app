@@ -25771,6 +25771,312 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'dialpad': const _CompetitorInfo(
+    name: 'Dialpad',
+    emoji: '📞',
+    tagline: 'AIビジネス通話・ビデオ会議・コンタクトセンターで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Dialpad代替 AIビジネス通話 VoIP ビデオ会議 コンタクトセンター クラウド電話',
+    accentColor: Color(0xFF7C3AED),
+    painPoints: [
+      '月額23ドル/ユーザー〜・ビジネス通話特化・個人のライフ管理は別途必要',
+      'クラウドVoIP特化でビジネス向け設計・個人のAIライフ管理は別途必要',
+      'RingCentral/8x8と比較してコンタクトセンター高度機能が弱い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AI通話要約・感情分析・VoIP・ビデオ・SMS・コンタクトセンター',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'aircall': const _CompetitorInfo(
+    name: 'Aircall',
+    emoji: '☁️',
+    tagline: 'クラウドビジネス電話システム・CRM統合型VoIPで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Aircall代替 クラウド電話 VoIP ビジネス電話 CRM統合 コールセンター',
+    accentColor: Color(0xFF00BEA4),
+    painPoints: [
+      '月額30ドル/ユーザー〜・ビジネス電話特化・個人のライフ管理は別途必要',
+      'クラウド電話特化でビジネス向け設計・個人のAI管理は別途必要',
+      'Dialpad/RingCentralと比較してビデオ会議機能が弱い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'クラウドPBX・CRM統合・通話録音・分析・IVR・国際番号',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'ringcentral': const _CompetitorInfo(
+    name: 'RingCentral',
+    emoji: '🔔',
+    tagline: 'UCaaS・ビジネス通話/メッセージ/ビデオ統合で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'RingCentral代替 UCaaS VoIP ビデオ会議 メッセージング クラウド電話 統合',
+    accentColor: Color(0xFFFF7D00),
+    painPoints: [
+      '月額20ドル/ユーザー〜・ビジネス通信特化・個人のライフ管理は別途必要',
+      'UCaaS特化でエンタープライズ向け設計・個人のAI管理は別途必要',
+      'Zoomと比較してビデオ品質・UI・エコシステムが劣ることがある',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '電話/SMS/ビデオ統合・AI・コンタクトセンター・Salesforce統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'chorus-ai': const _CompetitorInfo(
+    name: 'Chorus.ai (ZoomInfo)',
+    emoji: '🎵',
+    tagline: 'ZoomInfo製会話インテリジェンス・セールス通話分析で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Chorus代替 会話インテリジェンス セールス通話分析 ZoomInfo AI録音',
+    accentColor: Color(0xFF036EC4),
+    painPoints: [
+      '価格非公開(エンタープライズ向け)・セールス通話分析特化・個人のライフ管理は別途',
+      '会話インテリジェンス特化でビジネス向け設計・個人のAI管理は別途必要',
+      'Gongと比較してUI・機能の革新スピードが遅い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '通話録音/文字起こし・AI分析・コーチング・ZoomInfo統合・CRM同期',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'agorapulse': const _CompetitorInfo(
+    name: 'Agorapulse',
+    emoji: '🚀',
+    tagline: 'ソーシャルメディア管理・スケジュール・受信トレイ統合で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Agorapulse代替 ソーシャルメディア管理 スケジュール 投稿 受信トレイ 分析',
+    accentColor: Color(0xFF4C5AE8),
+    painPoints: [
+      '月額49ドル〜・SNS管理特化・個人のライフ管理は別途必要',
+      'ソーシャルメディア特化でマーケ向け設計・個人のAI管理は別途必要',
+      'Hootsuite/Bufferと比較してテンプレート・AI機能が劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'SNS投稿・スケジュール・統合受信トレイ・レポート・チームコラボ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'eclincher': const _CompetitorInfo(
+    name: 'eClincher',
+    emoji: '📱',
+    tagline: 'ソーシャルメディア管理・自動投稿・エンゲージメントで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'eClincher代替 ソーシャルメディア 自動投稿 エンゲージメント 分析 スケジュール',
+    accentColor: Color(0xFF2DD4BF),
+    painPoints: [
+      '月額65ドル〜・SNS管理特化・個人のライフ管理は別途必要',
+      'ソーシャルメディア特化でマーケ向け設計・個人のAI管理は別途必要',
+      'AgorapulseとHootsuiteと比較してUI・テンプレートが古い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'スケジュール・自動リポスト・RSS・受信トレイ・分析・チーム',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'whova': const _CompetitorInfo(
+    name: 'Whova',
+    emoji: '🎪',
+    tagline: '受賞歴イベント管理アプリ・ネットワーキング促進で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Whova代替 イベント管理 アプリ ネットワーキング 学会 カンファレンス',
+    accentColor: Color(0xFF3E7EE8),
+    painPoints: [
+      '価格非公開・イベント特化・個人のライフ管理は別途必要',
+      'イベント/ネットワーキング特化でビジネス向け設計・個人のAI管理は別途必要',
+      'Eventbrite/Cventと比較してチケット販売・大規模MICE対応が弱い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'イベントアプリ・ネットワーキング・AI名刺交換・アジェンダ・ポスター',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'creator-iq': const _CompetitorInfo(
+    name: 'Creator.IQ',
+    emoji: '🎬',
+    tagline: 'エンタープライズインフルエンサーマーケティングクラウドで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Creator.IQ代替 インフルエンサー マーケティング エンタープライズ クリエイター ROI',
+    accentColor: Color(0xFF6B48FF),
+    painPoints: [
+      '価格非公開(大企業向け高額)・インフルエンサー特化・個人のライフ管理は別途',
+      'インフルエンサーマーケ特化でビジネス向け設計・個人のAI管理は別途必要',
+      'GRINと比較してeコマース統合・中小企業への対応が弱い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'クリエイターDB・キャンペーン・コンテンツ権利・測定・大規模統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'aspire-io': const _CompetitorInfo(
+    name: 'Aspire.io',
+    emoji: '✨',
+    tagline: 'クリエイターマーケットプレース・インフルエンサー管理で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Aspire代替 クリエイターマーケットプレース インフルエンサー管理 ブランドコラボ',
+    accentColor: Color(0xFFFF5F5F),
+    painPoints: [
+      '月額1,000ドル〜・インフルエンサー特化・個人のライフ管理は別途必要',
+      'クリエイター/インフルエンサー特化でビジネス向け設計・個人のAI管理は別途',
+      'GRINと比較してeコマース統合・Shopify連携が弱い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'マーケットプレース・クリエイター発見・CRM・コンテンツ・ROI',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
