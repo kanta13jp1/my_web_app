@@ -24035,3 +24035,13 @@ SECOND_BRAIN 4.0 + VIBE 6.5 + PLATFORM 4.0 = 14.5/21 (Win territory 直接実装
 - 修正済み: post-x-with-media.yml に concurrency + timeout-minutes: 10 追加
 - 要対応: claude/fix-dart-exceptions-osjRb と claude/mobile-version-task-hQxcq は
   PR 作成 or main merge を次回 PS#1 セッションで実施予定
+
+### PS版#2 S83 T-1 Phase32 全4弾完結 (2026-04-29) — dev.to 累計158本
+- T-1 第155弾: Flutter ローカライズ完全ガイド — i18n で多言語対応アプリを作る
+  - https://dev.to/kanta13jp1/flutter-localization-complete-guide-building-multi-language-apps-with-i18n-253j
+- T-1 第156弾: Supabase Auth 完全ガイド — OAuth・Magic Link・Row Level Security
+  - https://dev.to/kanta13jp1/supabase-auth-complete-guide-oauth-magic-link-row-level-security-4kjc
+- T-1 第157弾: インディー開発者のためのASO完全ガイド — App Store 最適化で検索上位を狙う
+  - https://dev.to/kanta13jp1/indie-dev-aso-complete-guide-climbing-app-store-rankings-with-optimization-3089
+- T-1 第158弾: Flutter プラグイン開発入門 — ネイティブ機能を Dart から呼び出す
+  - https://dev.to/kanta13jp1/flutter-plugin-development-calling-native-features-from-dart-949
