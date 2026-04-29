@@ -1,7 +1,7 @@
 ---
 title: "Flutter Deep Links — App Links, Universal Links, and go_router Integration"
 tags: flutter,ai,indiedev,programming
-published: false
+published: true
 ---
 
 # Flutter Deep Links — App Links, Universal Links, and go_router Integration
