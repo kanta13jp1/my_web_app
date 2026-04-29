@@ -1,7 +1,7 @@
 ---
 title: "インディー開発者のローンチ戦略 — ProductHunt・HackerNews・Redditで注目を集める方法"
 tags: flutter,dart,個人開発,AI
-published: false
+published: true
 ---
 
 # インディー開発者のローンチ戦略 — ProductHunt・HackerNews・Redditで注目を集める方法
