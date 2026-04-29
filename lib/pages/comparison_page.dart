@@ -61229,6 +61229,312 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'nextjs': const _CompetitorInfo(
+    name: 'Next.js',
+    emoji: '⬛',
+    tagline: 'Next.js・Reactメタフレームワーク・SSR/SSG/ISR・App Router・Vercel製・フルスタック・Edge Runtime・TypeScript・業界標準で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Next.js代替 React メタフレームワーク SSR SSG ISR App Router Vercel フルスタック Remix代替 Nuxt代替',
+    accentColor: Color(0xFF000000),
+    painPoints: [
+      '無料(OSS)/Vercel有料・Webフレームワーク特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Remix/Astro との比較でバンドルサイズ・学習コスト・Vercel依存が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'React SSR/SSG/ISR・App Router・Vercel製・フルスタック・Edge Runtime',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'nuxt': const _CompetitorInfo(
+    name: 'Nuxt',
+    emoji: '💚',
+    tagline: 'Nuxt・Vueメタフレームワーク・SSR/SSG/ISR・Nitro・自動インポート・TypeScript・OSS・フルスタック・モジュールエコシステムで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Nuxt代替 Vue メタフレームワーク SSR SSG Nitro 自動インポート TypeScript Next.js代替 SvelteKit代替',
+    accentColor: Color(0xFF00DC82),
+    painPoints: [
+      '無料(OSS)・Vueフレームワーク特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Next.js/Remix との比較でReactエコシステム・採用市場・SSRパフォーマンスが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Vue SSR/SSG/ISR・Nitro・自動インポート・TypeScript・モジュールエコシステム',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'remix': const _CompetitorInfo(
+    name: 'Remix',
+    emoji: '💿',
+    tagline: 'Remix・React Routerベースフルスタック・Web標準重視・ネストレイアウト・ローダー/アクション・Shopify傘下・SSRで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Remix代替 React Router フルスタック Web標準 ネストレイアウト ローダー Shopify SSR Next.js代替 SvelteKit代替',
+    accentColor: Color(0xFFE8F2FF),
+    painPoints: [
+      '無料(OSS)・Webフレームワーク特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Next.js との比較でSSG対応・静的ホスティング・エコシステム規模が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'React Routerベース・Web標準重視・ネストレイアウト・ローダー/アクション・SSR',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'astro': const _CompetitorInfo(
+    name: 'Astro',
+    emoji: '🚀',
+    tagline: 'Astro・コンテンツ重視静的サイト・Islands Architecture・マルチフレームワーク・ゼロJS・高パフォーマンス・OSS・Contentで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Astro代替 コンテンツ 静的サイト Islands Architecture マルチフレームワーク ゼロJS 高パフォーマンス Gatsby代替 Hugo代替',
+    accentColor: Color(0xFFFF5D01),
+    painPoints: [
+      '無料(OSS)/有料(Astro Cloud)・静的サイト特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Next.js/Remix との比較でフルSSR・APIルート・大規模アプリ対応が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'コンテンツ重視静的サイト・Islands Architecture・マルチFW・ゼロJS',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'sveltekit': const _CompetitorInfo(
+    name: 'SvelteKit',
+    emoji: '🧡',
+    tagline: 'SvelteKit・Svelteフルスタックフレームワーク・SSR/SSG・ファイルルーティング・Vite統合・アダプター・TypeScript・OSS・高パフォーマンスで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'SvelteKit代替 Svelte フルスタック SSR SSG ファイルルーティング Vite アダプター TypeScript Next.js代替 Nuxt代替',
+    accentColor: Color(0xFFFF3E00),
+    painPoints: [
+      '無料(OSS)・Svelteフレームワーク特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Next.js/Nuxt との比較でエコシステム規模・ライブラリ数・採用市場が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Svelteフルスタック・SSR/SSG・ファイルルーティング・Vite統合・アダプター',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'gatsby': const _CompetitorInfo(
+    name: 'Gatsby',
+    emoji: '💜',
+    tagline: 'Gatsby・React静的サイト生成・GraphQL・プラグイン・CMS統合・高パフォーマンス・Netlify傘下・OSS・コンテンツサイトで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Gatsby代替 React 静的サイト GraphQL プラグイン CMS Netlify 高パフォーマンス Astro代替 Next.js代替',
+    accentColor: Color(0xFF663399),
+    painPoints: [
+      '無料(OSS)/有料(Gatsby Cloud)・静的サイト特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Astro/Next.js との比較でビルド時間・GraphQL学習コスト・Astro移行トレンドが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'React静的サイト・GraphQL・プラグイン・CMS統合・高パフォーマンス',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'hugo': const _CompetitorInfo(
+    name: 'Hugo',
+    emoji: '🏃',
+    tagline: 'Hugo・超高速静的サイト生成・Go製・テンプレート・Markdown・多言語・テーマ・GitHub Pages・Netlify・OSS・ブログで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Hugo代替 超高速 静的サイト Go製 テンプレート Markdown 多言語 GitHub Pages Gatsby代替 Jekyll代替',
+    accentColor: Color(0xFFFF4088),
+    painPoints: [
+      '無料(OSS)・静的サイト特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Gatsby/Astro との比較でJSエコシステム・Reactコンポーネント・CMS統合が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '超高速静的サイト・Go製・テンプレート・Markdown・多言語・テーマ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'jekyll': const _CompetitorInfo(
+    name: 'Jekyll',
+    emoji: '💎',
+    tagline: 'Jekyll・Ruby製静的サイト生成・GitHub Pages標準・Markdown/Liquid・ブログ・テーマ・OSS・シンプルで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Jekyll代替 Ruby 静的サイト GitHub Pages Markdown Liquid ブログ テーマ Hugo代替 Gatsby代替',
+    accentColor: Color(0xFFCC0000),
+    painPoints: [
+      '無料(OSS)・静的サイト特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Hugo/Gatsby との比較でビルド速度・JSエコシステム・開発活発さが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Ruby製静的サイト・GitHub Pages標準・Markdown/Liquid・ブログ・テーマ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'eleventy': const _CompetitorInfo(
+    name: 'Eleventy (11ty)',
+    emoji: '🦔',
+    tagline: 'Eleventy・シンプル静的サイト生成・11ty・多テンプレート対応・JavaScript・高速・独断なし・OSS・柔軟・ブログで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Eleventy 11ty代替 シンプル 静的サイト 多テンプレート JavaScript 高速 独断なし Hugo代替 Jekyll代替',
+    accentColor: Color(0xFF222222),
+    painPoints: [
+      '無料(OSS)・静的サイト特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Hugo/Jekyll との比較でコミュニティ規模・テーマ数・認知度が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'シンプル静的サイト・多テンプレート対応・高速・独断なし・柔軟',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
