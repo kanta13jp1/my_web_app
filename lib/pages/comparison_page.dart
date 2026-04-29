@@ -13803,6 +13803,312 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'brilliant': const _CompetitorInfo(
+    name: 'Brilliant',
+    emoji: '🔬',
+    tagline: 'インタラクティブ理数学習で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Brilliant代替 数学学習アプリ 科学インタラクティブ',
+    accentColor: Color(0xFFFF6B35),
+    painPoints: [
+      '月額24.99ドル・理数系特化で語学・ビジネス学習は別アプリが必要',
+      '財務管理・タスク管理・日常記録は別途必要',
+      '英語コンテンツ中心で日本語対応が限定的',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'インタラクティブ数学・科学・コンピューターサイエンス学習',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'masterclass': const _CompetitorInfo(
+    name: 'MasterClass',
+    emoji: '🎬',
+    tagline: '著名人直伝プレミアム学習で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'MasterClass代替 オンライン学習 プレミアム動画講座',
+    accentColor: Color(0xFF1A1A1A),
+    painPoints: [
+      '年額180ドル〜・受講修了証なくキャリア証明に使えない',
+      '視聴専用で双方向学習・フィードバック機能が弱い',
+      '財務・タスク管理は別アプリが必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '著名人（スポーツ選手・作家・シェフ等）の動画レッスン',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'make-com': const _CompetitorInfo(
+    name: 'Make (旧Integromat)',
+    emoji: '🔗',
+    tagline: 'ノーコード自動化プラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Make代替 Integromat代替 ノーコード自動化 ワークフロー',
+    accentColor: Color(0xFF6D00CC),
+    painPoints: [
+      '月額9ドル〜・操作数課金で複雑なワークフロー構築はコスト増',
+      '自動化ツールに特化し個人ライフ管理・AI機能は別途必要',
+      '学習コストが高くエラーデバッグが困難',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ビジュアルワークフロー・1500+アプリ連携・スケジュール実行',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'bamboohr': const _CompetitorInfo(
+    name: 'BambooHR',
+    emoji: '🎋',
+    tagline: '中小企業向けHRプラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'BambooHR代替 人事管理ソフト 中小企業HR',
+    accentColor: Color(0xFF73C41D),
+    painPoints: [
+      '月額6〜9ドル/人・中小企業向けだが個人利用にはオーバースペック',
+      'HR管理に特化し個人の財務・習慣・目標管理は別アプリが必要',
+      'セルフサービス機能が組織前提設計で個人では活用困難',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '従業員管理・タイムシート・採用・給与連携',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'rippling': const _CompetitorInfo(
+    name: 'Rippling',
+    emoji: '🌊',
+    tagline: 'HR・IT・Finance統合プラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Rippling代替 HR IT統合管理 人事ソフト',
+    accentColor: Color(0xFFFFB800),
+    painPoints: [
+      '月額8ドル/人〜・エンタープライズ向けで個人・フリーランスには高額すぎる',
+      '組織運用前提設計で個人ライフ管理・習慣追跡は別途必要',
+      '設定・導入に専門知識が必要で学習コストが高い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'HR・給与・デバイス管理・財務の統合ワークフロー',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '個人財務管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'retool': const _CompetitorInfo(
+    name: 'Retool',
+    emoji: '🔧',
+    tagline: '社内ツール高速構築プラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Retool代替 社内ツール ローコード開発',
+    accentColor: Color(0xFF3C6EE6),
+    painPoints: [
+      '月額10ドル/人〜・開発者向けで非エンジニアには学習コストが高い',
+      '業務システム構築特化で個人ライフ管理・AI機能は別途必要',
+      'ネット接続必須・オフライン利用不可',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ドラッグ&ドロップUI・DB/API連携・社内ダッシュボード',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'woocommerce': const _CompetitorInfo(
+    name: 'WooCommerce',
+    emoji: '🛒',
+    tagline: 'WordPressネイティブECで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'WooCommerce代替 WordPress EC プラグイン ネットショップ',
+    accentColor: Color(0xFF96588A),
+    painPoints: [
+      'プラグイン・ホスティング・決済手数料で総コストが膨らむ',
+      'WordPress知識前提で技術的負担が大きい',
+      'EC管理に特化し個人の財務・習慣・目標管理は別途必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'WordPress統合EC・無制限商品・決済多様対応',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'bigcommerce': const _CompetitorInfo(
+    name: 'BigCommerce',
+    emoji: '🏪',
+    tagline: 'エンタープライズEC基盤で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'BigCommerce代替 大規模EC SaaS ネットショップ',
+    accentColor: Color(0xFF34313F),
+    painPoints: [
+      '月額29ドル〜・売上連動でスケールすると費用が急増',
+      'EC運営に特化し個人ライフ管理・AI機能は別途必要',
+      '年間売上上限制で成長時にプランアップグレードが強制される',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'マルチチャネル販売・B2B機能・ヘッドレスコマース対応',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'railway': const _CompetitorInfo(
+    name: 'Railway',
+    emoji: '🚂',
+    tagline: '次世代クラウドホスティングで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Railway代替 クラウドホスティング デプロイ Heroku代替',
+    accentColor: Color(0xFF0B0D0E),
+    painPoints: [
+      '月額5ドル〜・無料枠が小さくプロダクション利用には追加費用が必要',
+      'ホスティング特化で個人ライフ管理・財務・習慣追跡は別途必要',
+      'Herokuからの移行先として人気だがドキュメントが発展途上',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Git連携ワンクリックデプロイ・DBプロビジョニング・スケーリング',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
