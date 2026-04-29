@@ -38975,6 +38975,312 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'yelp': const _CompetitorInfo(
+    name: 'Yelp',
+    emoji: '⭐',
+    tagline: '地元ビジネス口コミ・レストラン予約・サービス探しプラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Yelp代替 地元口コミ レストラン評価 サービス探し Google Maps代替 ローカル検索',
+    accentColor: Color(0xFFAF0606),
+    painPoints: [
+      '無料〜・地元口コミ特化・個人のライフ管理は別途必要',
+      'ローカルレビュー特化・個人のAI管理は別途必要',
+      'Google Maps/Foursquareと比較してグローバル展開・地図統合が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '口コミ・評価・予約・広告・写真・ビジネスオーナーツール',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'foursquare': const _CompetitorInfo(
+    name: 'Foursquare',
+    emoji: '📍',
+    tagline: '位置情報データ・ロケーションインテリジェンス・場所発見で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Foursquare代替 位置情報 ロケーションデータ チェックイン 場所発見 Google Maps代替',
+    accentColor: Color(0xFFF94877),
+    painPoints: [
+      '無料〜・位置情報特化・個人のライフ管理は別途必要',
+      'ロケーションデータ特化・個人のAI管理は別途必要',
+      'Google Maps/Yelpと比較してSNS機能・口コミシステムが大幅に限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ロケーションAPI・Place Intelligence・City Guide・Studio',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'waze': const _CompetitorInfo(
+    name: 'Waze',
+    emoji: '🚗',
+    tagline: 'コミュニティ渋滞情報・ナビゲーション・リアルタイム道路情報で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Waze代替 ナビ 渋滞情報 リアルタイム 道路 Google Maps代替 Apple Maps代替',
+    accentColor: Color(0xFF00D4FF),
+    painPoints: [
+      '無料・ナビ特化・個人のライフ管理は別途必要',
+      '運転ナビ特化・個人のAI管理は別途必要',
+      'Google Maps/Apple Mapsと比較して公共交通機関・徒歩ナビが限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'リアルタイム渋滞・コミュニティ報告・EV充電・カープール・広告',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'zomato': const _CompetitorInfo(
+    name: 'Zomato',
+    emoji: '🍕',
+    tagline: 'インド・南アジアフードデリバリー・レストラン発見・Blinkit食料品で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Zomato代替 インドフードデリバリー レストラン発見 Blinkit食料品 Swiggy代替',
+    accentColor: Color(0xFFE23744),
+    painPoints: [
+      '手数料あり・インド市場特化・個人のライフ管理は別途必要',
+      '食事デリバリー特化・個人のAI管理は別途必要',
+      'Swiggy/DoorDashと比較してインド以外の国際展開が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'レストラン発見・フードデリバリー・Blinkit食料品・Zomato Gold',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'swiggy': const _CompetitorInfo(
+    name: 'Swiggy',
+    emoji: '🛵',
+    tagline: 'インドフードデリバリー・Instamart即時食料品・Dineout予約で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Swiggy代替 インドデリバリー Instamart 食料品配達 Zomato代替 外食予約',
+    accentColor: Color(0xFFFC8019),
+    painPoints: [
+      '手数料あり・インド市場特化・個人のライフ管理は別途必要',
+      '食事/食料品特化・個人のAI管理は別途必要',
+      'Zomato/DoorDashと比較してインド以外の国際展開が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'フードデリバリー・Instamart・Dineout・Swiggy One・Minis',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'grab': const _CompetitorInfo(
+    name: 'Grab',
+    emoji: '🟢',
+    tagline: '東南アジアのスーパーアプリ・配車・フードデリバリー・フィンテックで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Grab代替 東南アジア スーパーアプリ 配車 フードデリバリー フィンテック GrabPay',
+    accentColor: Color(0xFF00B14F),
+    painPoints: [
+      '手数料あり・東南アジア特化・個人のライフ管理は別途必要',
+      'スーパーアプリ特化・個人のAI管理は別途必要',
+      'Gojek/LINE Manと比較して中国・インド市場への展開が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '配車・食事/食料品配達・GrabPay・保険・ローン・予約',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'gojek': const _CompetitorInfo(
+    name: 'Gojek',
+    emoji: '🏍️',
+    tagline: 'インドネシアスーパーアプリ・配車・GoFood・GoPay・20+サービスで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Gojek代替 インドネシア スーパーアプリ 配車 GoFood GoPay Grab代替',
+    accentColor: Color(0xFF00880A),
+    painPoints: [
+      '手数料あり・インドネシア/東南アジア特化・個人のライフ管理は別途必要',
+      'スーパーアプリ特化・個人のAI管理は別途必要',
+      'Grabと比較してシンガポール・マレーシア市場でのシェアが限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'GoRide/GoCar・GoFood・GoSend・GoPay・GoMart・GoMed',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'rappi': const _CompetitorInfo(
+    name: 'Rappi',
+    emoji: '🦝',
+    tagline: 'ラテンアメリカスーパーアプリ・食事/食料品配達・RappiPay・金融で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Rappi代替 ラテンアメリカ スーパーアプリ 食事配達 食料品 RappiPay コロンビア',
+    accentColor: Color(0xFFFF441F),
+    painPoints: [
+      '手数料あり・ラテンアメリカ特化・個人のライフ管理は別途必要',
+      '南米デリバリー特化・個人のAI管理は別途必要',
+      'iFood/DoorDashと比較してブラジル市場・グローバル展開が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '食事/食料品/薬・RappiPay・Prime・Turbo配達・金融サービス',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'wolt': const _CompetitorInfo(
+    name: 'Wolt',
+    emoji: '🔵',
+    tagline: '北欧・欧州フードデリバリー・DoorDash傘下・Wolt Driveで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Wolt代替 北欧フードデリバリー 欧州 Deliveroo代替 UberEats代替 フィンランド',
+    accentColor: Color(0xFF009DE0),
+    painPoints: [
+      '手数料あり・欧州市場特化・個人のライフ管理は別途必要',
+      '食事デリバリー特化・個人のAI管理は別途必要',
+      'Deliveroo/UberEatsと比較して英国・南欧市場でのシェアが限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'フードデリバリー・Wolt Market・Wolt Drive・DoorDash統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
