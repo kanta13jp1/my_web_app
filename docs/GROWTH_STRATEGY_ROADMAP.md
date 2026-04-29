@@ -24758,3 +24758,10 @@ SECOND_BRAIN 4.5/7 + VIBE 7.0/7 + PLATFORM 4.0/7 = 14.5/21 + cross-instance-pr �
 - 122000 collision (ps2_s85+ps4_s179): ps4_s179を122100にリネーム → f4ff62ed6 push
 - ローカル確認: 1058 migration files / 1058 unique timestamps / OK
 - deploy-prod 次回 run: collision gate pass → 本番デプロイ再開見込み
+
+## 2026-04-29 PS#6 S128 — prevFinishBonus (前走着順補正) confidence 44 terms
+
+- prevFinishBonus(prev_finish): 1着=+2%/2〜3着=+1%/7着以下=-1%/4〜6着=0
+- recentFormBonus(着順×日数複合)/consensusBonus(3指標複合)と差別化した純粋単体補正
+- confidence formula: 44 terms体制確立
+- migration: 20260429096500_seed_achievements_ps6_s128.sql
