@@ -23017,6 +23017,312 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'rakuraku-seisan': const _CompetitorInfo(
+    name: '楽楽精算',
+    emoji: '🧾',
+    tagline: '日本企業向けクラウド経費精算システムで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: '楽楽精算代替 経費精算 クラウド 日本企業 交通費申請 領収書管理',
+    accentColor: Color(0xFF0082CC),
+    painPoints: [
+      '月額30,000円〜(企業単位)・中小企業には高額・導入・設定にサポートが必要',
+      '経費精算特化で企業経理向け設計・個人のAIライフ管理は別途必要',
+      'freee会計と比較してビジネスフロー以外のAI機能・財務分析が弱い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'モバイル領収書OCR・交通費精算・承認ワークフロー・会計連携',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'talentpalette': const _CompetitorInfo(
+    name: 'タレントパレット',
+    emoji: '🎨',
+    tagline: '日本企業向け人材データ活用・HRアナリティクスで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'タレントパレット代替 人材管理 HR分析 スキル可視化 タレントマネジメント',
+    accentColor: Color(0xFF008000),
+    painPoints: [
+      '月額500,000円〜(大企業向け)・中小企業には過剰・AI分析は別途オプション',
+      '人材データ分析特化で大企業HR向け設計・個人のライフ管理は別途必要',
+      'SmartHRと比較してカスタマイズ・UI・操作性が複雑',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'スキルマップ・適性検査・採用AI・退職予測・360度評価・研修',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'techacademy': const _CompetitorInfo(
+    name: 'テックアカデミー',
+    emoji: '🎓',
+    tagline: '日本最大規模オンラインITスクール・メンター付きで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'テックアカデミー代替 プログラミングスクール オンライン学習 メンター Python Flutter',
+    accentColor: Color(0xFF00B4AC),
+    painPoints: [
+      '受講料16週間コース30万円〜・オンデマンドのみでメンター質が担当者次第',
+      'ITスキル習得特化でオンライン教育向け設計・個人のAI生活管理は別途必要',
+      'Progateと比較して初心者が独学で始めにくく費用が高い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'メンターサポート・実績評価・転職支援・Python/Flutter/Webなど',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'mindmeister': const _CompetitorInfo(
+    name: 'MindMeister',
+    emoji: '🧠',
+    tagline: 'オンラインマインドマップ・コラボレーションツールで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'MindMeister代替 マインドマップ オンライン コラボ ブレスト アイデア整理',
+    accentColor: Color(0xFF3D9BE9),
+    painPoints: [
+      '月額5.99ドル〜・マインドマップ以外の個人ライフ管理・AI機能は別途必要',
+      'マインドマップ特化で思考整理向け設計・個人のライフ管理は別途必要',
+      'MiroやFigJamと比較してホワイトボード・デザイン機能が弱い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'リアルタイムコラボ・テンプレート・プレゼンモード・Google統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'xmind': const _CompetitorInfo(
+    name: 'XMind',
+    emoji: '🔷',
+    tagline: 'デスクトップ×クラウドマインドマップ・作図ツールで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'XMind代替 マインドマップ デスクトップ 作図 アイデア整理 思考整理',
+    accentColor: Color(0xFF0052CC),
+    painPoints: [
+      '年間59.99ドル〜・デスクトップアプリ主体・クラウドは追加費用',
+      'マインドマップ特化で思考整理向け設計・個人のライフ管理は別途必要',
+      'MindMeisterと比較してリアルタイムコラボ機能が弱い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'マインドマップ/ガント/ロジックチャート/マトリクス・エクスポート多様',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'omnivore': const _CompetitorInfo(
+    name: 'Omnivore',
+    emoji: '📚',
+    tagline: 'OSSリーダービリティ後で読む・ニュースレター管理で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Omnivore代替 後で読む リーダー OSS ニュースレター Pocket代替',
+    accentColor: Color(0xFF59A608),
+    painPoints: [
+      'セルフホスト必須(無料)/クラウドは条件付き・開発が停滞気味',
+      'リーディング特化で読書向け設計・個人のAIライフ管理・財務は別途必要',
+      'ReadwiseやMatterと比較してハイライト同期・AI分析が弱い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'OSS・PDF/Web/ニュースレター・ハイライト・オフライン・API',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'raindrop-io': const _CompetitorInfo(
+    name: 'Raindrop.io',
+    emoji: '💧',
+    tagline: 'スマートブックマーク・コレクション管理ツールで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Raindrop代替 ブックマーク管理 コレクション 後で読む リンク整理 タグ管理',
+    accentColor: Color(0xFF2196F3),
+    painPoints: [
+      '無料版あり/Pro月額3ドル〜・ブックマーク以外の個人ライフ管理は別途必要',
+      'ブックマーク管理特化でコンテンツ整理向け設計・個人管理は別途必要',
+      'Notionと比較してタスク管理・AI機能が弱い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'スマートコレクション・全文検索・タグ・ハイライト・コラボ・PWA',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'habitify': const _CompetitorInfo(
+    name: 'Habitify',
+    emoji: '✅',
+    tagline: 'データドリブン習慣追跡・iOS/Mac/Androidで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Habitify代替 習慣追跡 ハビット データ分析 ストリーク iOS Android',
+    accentColor: Color(0xFF5B4CF5),
+    painPoints: [
+      '年間47.99ドル〜・習慣追跡以外の個人ライフ管理・財務管理は別途必要',
+      '習慣追跡特化でウェルネス向け設計・AI支援の個人管理は別途必要',
+      'Habiticaと比較してゲーミフィケーション・コミュニティ要素が弱い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '習慣トラッキング・統計グラフ・ウィジェット・リマインダー・メモ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'structured-app': const _CompetitorInfo(
+    name: 'Structured',
+    emoji: '🗓️',
+    tagline: 'ビジュアル1日タイムブロッキング・タスク/予定管理で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Structured代替 タイムブロック 1日計画 スケジュール管理 iOS タスク管理',
+    accentColor: Color(0xFFFF6B35),
+    painPoints: [
+      '年間29.99ドル〜/月額4.17ドル〜・タイムブロック以外の財務・AI管理は別途',
+      'タイムブロック特化でウェルネス/生産性向け設計・個人のAI管理は別途必要',
+      'Fantasticalと比較してカレンダー統合・リマインダー機能が弱い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'タイムライン表示・タスク/予定統合・繰り返し・カレンダー同期',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
