@@ -60923,6 +60923,312 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'readme-io': const _CompetitorInfo(
+    name: 'ReadMe',
+    emoji: '📚',
+    tagline: 'ReadMe・開発者向けドキュメントSaaS・APIリファレンス・インタラクティブ・バージョニング・カスタムドメイン・GitHub連携で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'ReadMe代替 開発者ドキュメント SaaS APIリファレンス インタラクティブ バージョニング GitBook代替 Mintlify代替',
+    accentColor: Color(0xFF018EF5),
+    painPoints: [
+      '有料・API/開発者ドキュメント特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'GitBook/Mintlify との比較でコスト・カスタマイズ性・ブランディングが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '開発者ドキュメントSaaS・APIリファレンス・インタラクティブ・バージョニング',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'swagger-ui': const _CompetitorInfo(
+    name: 'Swagger UI',
+    emoji: '🔍',
+    tagline: 'Swagger UI・OpenAPI仕様可視化・インタラクティブドキュメント・APIテスト・OSS・SmartBear製・業界標準・多言語で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Swagger UI代替 OpenAPI 可視化 インタラクティブドキュメント APIテスト SmartBear Redoc代替 Stoplight代替',
+    accentColor: Color(0xFF85EA2D),
+    painPoints: [
+      '無料(OSS)/有料・APIドキュメント特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Redoc/Stoplight との比較でデザイン品質・カスタマイズ・エンタープライズ機能が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'OpenAPI可視化・インタラクティブドキュメント・APIテスト・OSS・業界標準',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'redoc': const _CompetitorInfo(
+    name: 'ReDoc',
+    emoji: '📋',
+    tagline: 'ReDoc・OpenAPIドキュメント・3パネルレイアウト・レスポンシブ・OSS・埋め込み可・カスタマイズ・Redocly製・無料で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'ReDoc代替 OpenAPI ドキュメント 3パネル レスポンシブ OSS 埋め込み Redocly Swagger UI代替 Stoplight代替',
+    accentColor: Color(0xFFE53935),
+    painPoints: [
+      '無料(OSS)/有料・APIドキュメント特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Swagger UI/Stoplight との比較でインタラクティブAPIテスト・モック・コラボ機能が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'OpenAPIドキュメント・3パネルレイアウト・レスポンシブ・埋め込み可・カスタマイズ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'mkdocs': const _CompetitorInfo(
+    name: 'MkDocs',
+    emoji: '📝',
+    tagline: 'MkDocs・Markdownベースドキュメントサイト生成・Python製・Material for MkDocs・テーマ・静的サイト・GitHub Pages対応で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'MkDocs代替 Markdown ドキュメント Python Material for MkDocs 静的サイト GitHub Pages Docusaurus代替 VitePress代替',
+    accentColor: Color(0xFF526CFE),
+    painPoints: [
+      '無料(OSS)・ドキュメントサイト特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Docusaurus/VitePress との比較でJavaScriptエコシステム統合・Reactコンポーネントが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Markdownドキュメントサイト・Python製・Material for MkDocs・GitHub Pages',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'vitepress': const _CompetitorInfo(
+    name: 'VitePress',
+    emoji: '⚡',
+    tagline: 'VitePress・Vite+Vue静的サイト生成・高速・Markdownドキュメント・Vue SFCサポート・カスタムテーマ・OSS・Vue公式ドキュメントで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'VitePress代替 Vite Vue 静的サイト 高速 Markdown カスタムテーマ OSS Docusaurus代替 MkDocs代替',
+    accentColor: Color(0xFF646CFF),
+    painPoints: [
+      '無料(OSS)・Vue/Viteドキュメント特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Docusaurus/Nextra との比較でReact非対応・プラグインエコシステム・採用事例が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Vite+Vue静的サイト・高速・Markdownドキュメント・Vue SFC・カスタムテーマ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'nextra': const _CompetitorInfo(
+    name: 'Nextra',
+    emoji: '📖',
+    tagline: 'Nextra・Next.js製ドキュメント/Blogフレームワーク・MDX・テーマ・検索・Vercel統合・OSS・シンプルで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Nextra代替 Next.js ドキュメント MDX テーマ 検索 Vercel統合 OSS Docusaurus代替 VitePress代替',
+    accentColor: Color(0xFF000000),
+    painPoints: [
+      '無料(OSS)・Next.jsドキュメント特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Docusaurus/VitePress との比較でNext.js依存・バンドルサイズ・カスタマイズが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Next.js製ドキュメント・MDX・テーマ・検索・Vercel統合・OSS・シンプル',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'docsify': const _CompetitorInfo(
+    name: 'Docsify',
+    emoji: '🪄',
+    tagline: 'Docsify・ビルドレスドキュメントサイト・SPA・Markdownレンダリング・プラグイン・テーマ・GitHub Pages・軽量で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Docsify代替 ビルドレス ドキュメントサイト SPA Markdown プラグイン テーマ GitHub Pages MkDocs代替 VitePress代替',
+    accentColor: Color(0xFF42B983),
+    painPoints: [
+      '無料(OSS)・ドキュメントサイト特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'MkDocs/Docusaurus との比較でSEO・SSR・ビルド最適化が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ビルドレスドキュメント・SPA・Markdownレンダリング・プラグイン・軽量',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'doxygen': const _CompetitorInfo(
+    name: 'Doxygen',
+    emoji: '📐',
+    tagline: 'Doxygen・ソースコードからドキュメント生成・C++/C/Java・クラス図・UML・HTML/PDF出力・OSS・レガシー対応で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Doxygen代替 ソースコード ドキュメント生成 C++ Java クラス図 UML HTML PDF出力 Javadoc代替',
+    accentColor: Color(0xFF2C5F8A),
+    painPoints: [
+      '無料(OSS)・ドキュメント生成特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Javadoc/Sphinx との比較でモダンテーマ・Web統合・インクリメンタル更新が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ソースコードからドキュメント生成・C++/C/Java・クラス図・UML・HTML/PDF',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'sphinx': const _CompetitorInfo(
+    name: 'Sphinx',
+    emoji: '🏛️',
+    tagline: 'Sphinx・Python標準ドキュメントツール・reStructuredText/Markdown・ReadTheDocs統合・拡張可能・多言語・OSS・業界標準で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Sphinx代替 Python ドキュメント reStructuredText ReadTheDocs 拡張可能 多言語 OSS MkDocs代替',
+    accentColor: Color(0xFF3B4252),
+    painPoints: [
+      '無料(OSS)・Python/技術ドキュメント特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'MkDocs/Docusaurus との比較でMarkdown優先・テーマの美しさ・セットアップが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Python標準ドキュメント・reStructuredText/Markdown・ReadTheDocs統合・拡張',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
