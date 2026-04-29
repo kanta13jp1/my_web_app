@@ -52653,6 +52653,327 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'fortinet': const _CompetitorInfo(
+    name: 'Fortinet FortiGate',
+    emoji: '🏰',
+    tagline:
+        'Fortinet Security Fabric・FortiGate NGFW・SD-WAN・ZTNA・SASE・中小〜エンタープライズ統合ネットワークセキュリティで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Fortinet代替 FortiGate NGFW SD-WAN ZTNA SASE Security Fabric Palo Alto代替 Check Point代替',
+    accentColor: Color(0xFFEE3124),
+    painPoints: [
+      '有料・ネットワークセキュリティ特化・個人のライフ管理は別途必要',
+      'インフラ特化・個人のAI管理は別途必要',
+      'Palo Alto/Cisco/Check Point との比較でクラウドネイティブ・AI/ML・SaaS統合が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'FortiGate NGFW・SD-WAN・ZTNA・SASE・Security Fabric・FortiOS統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'check-point': const _CompetitorInfo(
+    name: 'Check Point Software',
+    emoji: '✅',
+    tagline:
+        'Check Point NGFW・Quantum・Infinity アーキテクチャ・脅威インテリジェンス・クラウドセキュリティ・ゼロデイ防御で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Check Point代替 NGFW Quantum Infinity 脅威インテリジェンス クラウドセキュリティ ゼロデイ Palo Alto代替 Fortinet代替',
+    accentColor: Color(0xFF003087),
+    painPoints: [
+      '有料・ネットワークセキュリティ特化・個人のライフ管理は別途必要',
+      'エンタープライズ特化・個人のAI管理は別途必要',
+      'Palo Alto/Fortinet/Cisco との比較でコスト・クラウドネイティブ・スループットが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Quantum NGFW・Infinity・脅威インテリジェンス・ゼロデイ防御・クラウドセキュリティ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'zscaler': const _CompetitorInfo(
+    name: 'Zscaler',
+    emoji: '☁️',
+    tagline:
+        'クラウドネイティブゼロトラスト・ZIA/ZPA・SASE・SSE・インターネットアクセスセキュリティ・ゼロトラストアーキテクチャで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Zscaler代替 ZIA ZPA SASE SSE ゼロトラスト クラウドセキュリティ Netskope代替 Palo Alto Prisma代替',
+    accentColor: Color(0xFF009BDE),
+    painPoints: [
+      '有料・ゼロトラスト特化・個人のライフ管理は別途必要',
+      'エンタープライズ特化・個人のAI管理は別途必要',
+      'Netskope/Palo Alto Prisma/Cloudflare One との比較でコスト・レイテンシ・統合が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ZIA/ZPA・SASE・SSE・ゼロトラスト・クラウドネイティブ・インターネットセキュリティ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'netskope': const _CompetitorInfo(
+    name: 'Netskope',
+    emoji: '🌐',
+    tagline:
+        'SASE・SSE・CASB・DLP・クラウドアクセス制御・SaaS/IaaS可視化・ゼロトラストネットワークで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Netskope代替 SASE SSE CASB DLP SaaS可視化 クラウドアクセス ゼロトラスト Zscaler代替 Palo Alto代替',
+    accentColor: Color(0xFF005B96),
+    painPoints: [
+      '有料・SASE/CASB特化・個人のライフ管理は別途必要',
+      'エンタープライズ特化・個人のAI管理は別途必要',
+      'Zscaler/Palo Alto/Cisco Umbrella との比較でコスト・統合・エージェント要件が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'SASE・SSE・CASB・DLP・SaaS/IaaS可視化・ゼロトラスト・クラウドネイティブ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'imperva': const _CompetitorInfo(
+    name: 'Imperva',
+    emoji: '🛡️',
+    tagline:
+        'WAF・DDoS対策・データセキュリティ・API保護・クラウドWAF・データベースファイアウォールで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Imperva代替 WAF DDoS対策 データセキュリティ API保護 クラウドWAF Akamai代替 Cloudflare代替',
+    accentColor: Color(0xFF003580),
+    painPoints: [
+      '有料・WAF/データセキュリティ特化・個人のライフ管理は別途必要',
+      'エンタープライズ特化・個人のAI管理は別途必要',
+      'Akamai/Cloudflare/F5 との比較でコスト・クラウドネイティブ・統合が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'WAF・DDoS対策・データセキュリティ・API保護・データベースファイアウォール',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'f5': const _CompetitorInfo(
+    name: 'F5 Networks (BIG-IP)',
+    emoji: '🖧',
+    tagline: 'F5 BIG-IP・ADC・WAF・負荷分散・アプリデリバリー・マルチクラウドネットワーキングで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'F5代替 BIG-IP ADC WAF 負荷分散 アプリデリバリー マルチクラウド Citrix代替 Nginx代替',
+    accentColor: Color(0xFFE4002B),
+    painPoints: [
+      '有料・ADC/WAF特化・個人のライフ管理は別途必要',
+      'インフラ特化・個人のAI管理は別途必要',
+      'Citrix/Nginx/HAProxy との比較でコスト・クラウドネイティブ・オープンソース代替が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'BIG-IP・ADC・WAF・負荷分散・SSL/TLS処理・マルチクラウド',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'forcepoint': const _CompetitorInfo(
+    name: 'Forcepoint',
+    emoji: '🔴',
+    tagline: 'データ中心型セキュリティ・DLP・CASB・SASE・インサイダー脅威・ユーザー行動分析で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Forcepoint代替 DLP CASB SASE インサイダー脅威 ユーザー行動分析 データ中心セキュリティ Netskope代替 Symantec代替',
+    accentColor: Color(0xFFCC0000),
+    painPoints: [
+      '有料・DLP/CASB特化・個人のライフ管理は別途必要',
+      'エンタープライズ特化・個人のAI管理は別途必要',
+      'Netskope/Zscaler/Symantec との比較でコスト・クラウドネイティブ・AI精度が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'DLP・CASB・SASE・インサイダー脅威・ユーザー行動分析・データ中心型',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'cyberark': const _CompetitorInfo(
+    name: 'CyberArk',
+    emoji: '🔑',
+    tagline:
+        '特権アクセス管理・PAM・Vault・シークレット管理・ゼロトラスト・アイデンティティセキュリティで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'CyberArk代替 PAM 特権アクセス管理 Vault シークレット管理 ゼロトラスト BeyondTrust代替 Thycotic代替',
+    accentColor: Color(0xFF003DA5),
+    painPoints: [
+      '有料・PAM/アイデンティティ特化・個人のライフ管理は別途必要',
+      'エンタープライズ特化・個人のAI管理は別途必要',
+      'BeyondTrust/Thycotic/HashiCorp との比較でコスト・複雑さ・DevOps統合が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'PAM・Vault・シークレット管理・ゼロトラスト・特権アクセス・アイデンティティセキュリティ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'beyondtrust': const _CompetitorInfo(
+    name: 'BeyondTrust',
+    emoji: '🏛️',
+    tagline:
+        '特権アクセス管理・PAM・リモートアクセスセキュリティ・Secure Remote Access・ゼロトラストアイデンティティで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'BeyondTrust代替 PAM リモートアクセス セキュリティ ゼロトラスト アイデンティティ CyberArk代替 Thycotic代替',
+    accentColor: Color(0xFF1B365D),
+    painPoints: [
+      '有料・PAM特化・個人のライフ管理は別途必要',
+      'エンタープライズ特化・個人のAI管理は別途必要',
+      'CyberArk/Thycotic/HashiCorp との比較でコスト・クラウドネイティブ・開発者向けが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'PAM・Secure Remote Access・ゼロトラスト・アイデンティティ・特権アカウント管理',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
