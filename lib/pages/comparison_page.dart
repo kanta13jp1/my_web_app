@@ -48501,6 +48501,326 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'pentaho': const _CompetitorInfo(
+    name: 'Pentaho (Hitachi)',
+    emoji: '🔧',
+    tagline:
+        'Hitachi Vantara傘下ETL/BI・PDI・Kettle・オープンソース・エンタープライズデータ統合で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Pentaho代替 ETL BI PDI Kettle Hitachi Vantara データ統合 Talend代替 Informatica代替',
+    accentColor: Color(0xFF2E6DA4),
+    painPoints: [
+      '有料(エンタープライズ)/OSS版限定・ETL/BI特化・個人のライフ管理は別途必要',
+      'データ統合特化・個人のAI管理は別途必要',
+      'Talend/Informatica/KNIME との比較でUI・クラウドネイティブ・モダン化が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'PDI/Kettle・ETLパイプライン・BI・エンタープライズデータ統合・レポーティング',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'jaspersoft': const _CompetitorInfo(
+    name: 'JasperReports (TIBCO)',
+    emoji: '📋',
+    tagline:
+        'TIBCO傘下OSS BIプラットフォーム・JasperReports・PixelPerfectレポーティング・埋め込みBIで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'JasperReports代替 TIBCO BI OSS レポーティング PixelPerfect 埋め込みBI Pentaho代替',
+    accentColor: Color(0xFF005F87),
+    painPoints: [
+      '有料商用/OSS混在・レポーティング特化・個人のライフ管理は別途必要',
+      'BI/レポーティング特化・個人のAI管理は別途必要',
+      'Pentaho/Metabase/Redash との比較でモダンUI・クラウドネイティブ・速度が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'JasperReports・PixelPerfect・埋め込みBI・スケジュールレポート・エンタープライズ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'alteryx': const _CompetitorInfo(
+    name: 'Alteryx',
+    emoji: '🔬',
+    tagline: 'セルフサービスデータ分析・AutoML・コードレス・RPA統合・ビジネスアナリスト向けで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Alteryx代替 セルフサービス分析 AutoML コードレス RPA データ準備 KNIME代替 RapidMiner代替',
+    accentColor: Color(0xFF0078C8),
+    painPoints: [
+      '高価格有料・データ分析特化・個人のライフ管理は別途必要',
+      'データサイエンス特化・個人のAI管理は別途必要',
+      'KNIME/RapidMiner/Dataiku との比較でコスト・OSS互換性・Python統合が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'セルフサービス分析・AutoML・コードレスデータ準備・RPA・ビジネスアナリスト向け',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'knime': const _CompetitorInfo(
+    name: 'KNIME',
+    emoji: '🧩',
+    tagline:
+        'OSS データサイエンス・ビジュアルMLワークフロー・1000+ノード・企業向け無料から・チームコラボで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'KNIME代替 OSS データサイエンス MLワークフロー ビジュアル 1000ノード Alteryx代替 RapidMiner代替',
+    accentColor: Color(0xFFFFD700),
+    painPoints: [
+      '無料OSS/商用あり・データサイエンス特化・個人のライフ管理は別途必要',
+      'ML/分析特化・個人のAI管理は別途必要',
+      'Alteryx/RapidMiner/Orange との比較でスケール・クラウド・Python統合が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ビジュアルMLワークフロー・1000+ノード・Python/R統合・無料OSS・チームコラボ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'rapidminer': const _CompetitorInfo(
+    name: 'RapidMiner',
+    emoji: '⚙️',
+    tagline: 'データサイエンスプラットフォーム・AutoML・コードレス・エンタープライズ・MLOpsで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'RapidMiner代替 データサイエンス AutoML コードレス MLOps エンタープライズ KNIME代替 Alteryx代替',
+    accentColor: Color(0xFFE31837),
+    painPoints: [
+      '有料商用・データサイエンス特化・個人のライフ管理は別途必要',
+      'ML/分析特化・個人のAI管理は別途必要',
+      'KNIME/Alteryx/DataRobot との比較でコスト・OSS互換・最新AIモデル統合が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AutoML・コードレスDS・MLOps・エンタープライズセキュリティ・チーム協業',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'dbt': const _CompetitorInfo(
+    name: 'dbt (dbt Labs)',
+    emoji: '🗄️',
+    tagline: 'データ変換・SQL-first・Git版管理・テスト・ドキュメント自動化・ELTのT担当で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'dbt代替 データ変換 SQL Git ELT テスト ドキュメント データエンジニア Fivetran代替',
+    accentColor: Color(0xFFFF694A),
+    painPoints: [
+      '無料OSS/Cloud有料・SQL変換特化・個人のライフ管理は別途必要',
+      'データ変換特化・個人のAI管理は別途必要',
+      'Fivetran/Airbyte/Spark との比較でUIの複雑さ・Pythonモデル制限・MLライン統合が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'SQL変換・Gitバージョン管理・テスト・ドキュメント自動化・ELT変換層',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'looker-studio': const _CompetitorInfo(
+    name: 'Looker Studio (Google)',
+    emoji: '📊',
+    tagline:
+        'Google無料BIツール・旧Data Studio・BigQuery統合・ダッシュボード・Google Workspace連携で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Looker Studio代替 Google Data Studio BI ダッシュボード BigQuery 無料 Tableau代替 Metabase代替',
+    accentColor: Color(0xFF4285F4),
+    painPoints: [
+      '無料/Looker別有料・BIダッシュボード特化・個人のライフ管理は別途必要',
+      'データビジュアライゼーション特化・個人のAI管理は別途必要',
+      'Tableau/PowerBI/Metabase との比較でカスタマイズ・パフォーマンス・オフライン利用が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '無料BIダッシュボード・BigQuery統合・Google Workspace連携・ライブデータ接続',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'sisense': const _CompetitorInfo(
+    name: 'Sisense',
+    emoji: '💎',
+    tagline:
+        '埋め込みBI・ホワイトラベル・AI InsightBot・In-ChipエンジンでSaaS製品組み込みで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Sisense代替 埋め込みBI ホワイトラベル AI InsightBot In-Chip SaaS組み込み Looker代替',
+    accentColor: Color(0xFF673AB7),
+    painPoints: [
+      '高価格有料・組み込みBI特化・個人のライフ管理は別途必要',
+      'BI特化・個人のAI管理は別途必要',
+      'Looker/GoodData/Microstrategy との比較でコスト・セットアップ複雑性・最新AI統合が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '埋め込みBI・ホワイトラベル・AI InsightBot・In-Chipエンジン・SaaS組み込み',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'sigma-computing': const _CompetitorInfo(
+    name: 'Sigma Computing',
+    emoji: '📐',
+    tagline:
+        'クラウドBIスプレッドシートUI・Snowflake/BigQuery直接クエリ・ノーコードSQLで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Sigma Computing代替 クラウドBI スプレッドシートUI Snowflake BigQuery ノーコードSQL Looker代替',
+    accentColor: Color(0xFF00BCD4),
+    painPoints: [
+      '有料月25ドル~・クラウドBI特化・個人のライフ管理は別途必要',
+      'データ分析特化・個人のAI管理は別途必要',
+      'Looker/Tableau/Mode との比較でコスト・機能深さ・既存ワークフロー互換が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'スプレッドシートUI・Snowflake/BQ直接クエリ・ノーコードSQL・リアルタイム分析',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
