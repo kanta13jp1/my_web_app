@@ -12259,6 +12259,321 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'craft': const _CompetitorInfo(
+    name: 'Craft',
+    emoji: '📝',
+    tagline:
+        'CraftをApple Design Award受賞のプレミアムノートに使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'Craft代替 Craftノートアプリ代替 Apple美しいノートアプリ代替 Markdown代替',
+    accentColor: Color(0xFF0A73E8),
+    painPoints: [
+      'Apple Design Award受賞の高品質UIだが、財務・AI大学・習慣管理は別ツール',
+      '月額5USD〜のサブスクで、MacとiOSに最適化されておりクロスプラットフォームが弱い',
+      'ノート作成以外のライフマネジメント統合機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Apple Design Award受賞プレミアムノート',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'things3': const _CompetitorInfo(
+    name: 'Things 3',
+    emoji: '✅',
+    tagline:
+        'Things 3をApple最高のGTDタスク管理に使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'Things3代替 GTDタスク管理代替 Mac最高タスクアプリ代替 OmniFocus代替',
+    accentColor: Color(0xFF2778E9),
+    painPoints: [
+      'AppleプラットフォームのGTDタスク管理に特化し、財務・AI大学・習慣管理は別ツール',
+      '買い切り50USD/アプリ(Mac/iPhone/iPad別売)で、Androidと Webに非対応',
+      'タスク管理以外のライフマネジメント統合機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Apple最高評価GTDタスク管理',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'readwise': const _CompetitorInfo(
+    name: 'Readwise',
+    emoji: '📚',
+    tagline:
+        'ReadwiseをKindleハイライト管理・読書振り返りに使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'Readwise代替 読書ハイライト管理代替 Kindleハイライト代替 Reader代替',
+    accentColor: Color(0xFFFF6B35),
+    painPoints: [
+      'Kindleハイライト集約・間隔反復復習に特化し、財務・AI大学・習慣管理は別ツール',
+      '月額7.99USD〜のサブスクで、読書以外のライフマネジメント機能がない',
+      '読書管理以外の統合ライフOS機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Kindleハイライト間隔反復復習',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'omnifocus': const _CompetitorInfo(
+    name: 'OmniFocus',
+    emoji: '🎯',
+    tagline:
+        'OmniFocusをプロ向けGTDシステムに使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'OmniFocus代替 プロGTD代替 OmniGroup代替 プロジェクト管理Mac代替',
+    accentColor: Color(0xFF7B2D8B),
+    painPoints: [
+      'プロ向けGTDとプロジェクト管理に特化し、財務・AI大学・習慣管理は別ツール',
+      '月額9.99USD〜または買い切り99.99USDで、Appleプラットフォーム専用',
+      'GTD以外のライフマネジメント統合機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'プロ向けGTD・カスタム視点管理',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'fantastical': const _CompetitorInfo(
+    name: 'Fantastical',
+    emoji: '📅',
+    tagline:
+        'FantasticalをAI搭載スマートカレンダーに使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'Fantastical代替 スマートカレンダー代替 自然言語カレンダー代替 Googleカレンダー代替',
+    accentColor: Color(0xFFE63946),
+    painPoints: [
+      '自然言語入力・AI解析カレンダーに特化し、財務・AI大学・習慣管理は別ツール',
+      '月額4.99USD〜のサブスクで、カレンダー以外の統合ライフOS機能がない',
+      'スケジュール管理以外のライフマネジメント統合機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '自然言語AI搭載スマートカレンダー',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'workflowy': const _CompetitorInfo(
+    name: 'WorkFlowy',
+    emoji: '📋',
+    tagline:
+        'WorkFlowyをシンプル無限アウトライナーに使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'WorkFlowy代替 アウトライナー代替 シンプルノート代替 無限リスト代替',
+    accentColor: Color(0xFF4183C4),
+    painPoints: [
+      '無限ネストのシンプルアウトライナーに特化し、財務・AI大学・習慣管理は別ツール',
+      '月額4.99USD〜のサブスクで、アウトライン以外のライフマネジメント統合機能がない',
+      'テキストアウトライン以外の統合ライフOS機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '無限ネストシンプルアウトライナー',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'fitbit': const _CompetitorInfo(
+    name: 'Fitbit',
+    emoji: '⌚',
+    tagline:
+        'FitbitをGoogleフィットネストラッカーに使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'Fitbit代替 フィットネストラッカー代替 Google健康管理代替 活動量計代替',
+    accentColor: Color(0xFF00B0B9),
+    painPoints: [
+      'Googleによる活動量・睡眠・心拍トラッキングに特化し、財務・AI大学・習慣管理は別ツール',
+      '月額9.99USD〜のPremiumサブスクで、フィットネス以外のライフマネジメント統合機能がない',
+      'フィットネス以外の統合ライフOS機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Google統合フィットネス・睡眠トラッキング',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'garmin': const _CompetitorInfo(
+    name: 'Garmin',
+    emoji: '🏃',
+    tagline:
+        'GarminをGPSスポーツウォッチ・アドバンストトレーニングに使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'Garmin代替 GPSスポーツウォッチ代替 ガーミン代替 アドバンストトレーニング代替',
+    accentColor: Color(0xFF007CC3),
+    painPoints: [
+      'GPSスポーツウォッチとアドバンストトレーニング分析に特化し、財務・AI大学・習慣管理は別ツール',
+      '端末249USD〜の高価格で、スポーツ以外のライフマネジメント統合機能がない',
+      'フィットネス以外の統合ライフOS機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'GPSスポーツウォッチ・アドバンストトレーニング分析',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'insight-timer': const _CompetitorInfo(
+    name: 'Insight Timer',
+    emoji: '🧘',
+    tagline:
+        'Insight Timerを世界最大の瞑想コミュニティに使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'Insight Timer代替 瞑想アプリ代替 マインドフルネス代替 無料瞑想代替',
+    accentColor: Color(0xFF6B8F71),
+    painPoints: [
+      '世界最大の無料瞑想・マインドフルネスコミュニティに特化し、財務・AI大学・習慣管理は別ツール',
+      'Plus月額9.99USDで、瞑想以外のライフマネジメント統合機能がない',
+      '瞑想以外の統合ライフOS機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '世界最大無料瞑想・マインドフルネスコミュニティ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
@@ -12604,6 +12919,15 @@ class _ComparisonShellState extends State<_ComparisonShell> {
     'slite': 'notes',
     'gitbook': 'notes',
     'fibery': 'notes',
+    'craft': 'notes',
+    'things3': 'tasks',
+    'readwise': 'reading',
+    'omnifocus': 'tasks',
+    'fantastical': 'calendar',
+    'workflowy': 'notes',
+    'fitbit': 'fitness',
+    'garmin': 'fitness',
+    'insight-timer': 'health',
   };
 
   @override
