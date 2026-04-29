@@ -24790,3 +24790,10 @@ SECOND_BRAIN 4.5/7 + VIBE 7.0/7 + PLATFORM 4.0/7 = 14.5/21 + cross-instance-pr �
 - S195-S197: expensify/ramp/brex/lattice/15five/culture-amp/okta/auth0/jumpcloud (+9社)
 - S198-S200: new-relic/dynatrace/grafana-cloud/cloudflare/rollbar/bugsnag/algolia/elastic/typesense (+9社)
 - dart entries: 466 / marketing count: 474社 / sitemap: 517 URLs
+
+## 2026-04-29 PS#6 S129 — winningExperienceBonus (勝利実績補正) confidence 45 terms
+
+- winningExperienceBonus(winning_time): 存在=+1%(勝利実績あり/勝ち方を知っている)/なし=0
+- winning_timeフィールド初活用。best_timeのみ(入着止まり)との差別化
+- confidence formula: 45 terms体制確立
+- migration: 20260429098000_seed_achievements_ps6_s129.sql
