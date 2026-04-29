@@ -24190,3 +24190,9 @@ Bundle 第 1 完成例 = Codex#2 territory が Bundle 形式に対応可能で�
 - `memory/lint_report_2026_04.md` 自動生成確認
 - `docs/SECOND_BRAIN_PRINCIPLES.md` #4 baseline 4.0→4.5/7 更新
 - cross-instance-pr done: `20260429_consolidate_memory_lint_ps1.md` + `20260428_migration_time_relative_check_detector_ps1.md`
+
+## 2026-04-29 PS#6 S120 — prevLast3fBonus 前走上り3F補正 (36 terms)
+- prevLast3fBonus追加: 前走上り3Fタイムによる末脚能力補正
+- ≤34.0秒: +0.02 (優秀な末脚) / ≤35.5秒: +0.01 (良好) / ≥37.0秒: -0.01 (末脚不足) / データなし: 0
+- prevLast3FSlowPenaltyのソートロジックをconfidence式に統合
+- confidence式 36 terms体制確立
