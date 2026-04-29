@@ -26077,6 +26077,312 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'lucidchart': const _CompetitorInfo(
+    name: 'Lucidchart',
+    emoji: '🔷',
+    tagline: 'クラウドフローチャート・ダイアグラム・組織図作成で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Lucidchart代替 フローチャート ダイアグラム 組織図 クラウド 図形作成',
+    accentColor: Color(0xFFE8A623),
+    painPoints: [
+      '月額9ドル〜・ダイアグラム特化・個人のライフ管理は別途必要',
+      '図形作成特化でチーム向け設計・個人のAIライフ管理は別途必要',
+      'Whimsical/draw.ioと比較してコスト・手軽さが劣ることがある',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'フローチャート・ER図・組織図・UML・ワイヤーフレーム・Google統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'draw-io': const _CompetitorInfo(
+    name: 'draw.io (diagrams.net)',
+    emoji: '🖊️',
+    tagline: '無料OSSダイアグラム作成ツール・Visio代替で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'draw.io代替 diagrams.net ダイアグラム 無料 OSS Visio代替 フローチャート',
+    accentColor: Color(0xFFDAA025),
+    painPoints: [
+      '完全無料だがデザイン品質・UX・AIアシスト機能が弱い',
+      'ダイアグラム特化・個人のAIライフ管理・財務管理は別途必要',
+      'LucidchartとWhimsicalと比較してコラボ・クラウド同期が限定的',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'フローチャート・UML・ネットワーク図・Confluence統合・無料',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'creately': const _CompetitorInfo(
+    name: 'Creately',
+    emoji: '🎨',
+    tagline: 'ビジュアルコラボプラットフォーム・ダイアグラム+プロジェクトで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Creately代替 ダイアグラム ビジュアルコラボ プロジェクト管理 フローチャート',
+    accentColor: Color(0xFF9B42F5),
+    painPoints: [
+      '月額8ドル〜・ダイアグラム特化・個人のライフ管理は別途必要',
+      'ビジュアルコラボ特化・個人のAIライフ管理は別途必要',
+      'Miro/Lucidchartと比較してテンプレート量・AI機能が少ない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ダイアグラム・プロジェクト・タイムライン・マインドマップ・DB設計',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'refersion': const _CompetitorInfo(
+    name: 'Refersion',
+    emoji: '🎁',
+    tagline: 'アフィリエイト・インフルエンサー管理プラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Refersion代替 アフィリエイト管理 インフルエンサー Shopify 紹介プログラム',
+    accentColor: Color(0xFF5D3EDB),
+    painPoints: [
+      '月額119ドル〜・アフィリエイト特化・個人のライフ管理は別途必要',
+      'アフィリエイト/紹介特化でEC向け設計・個人のAI管理は別途必要',
+      'Impact.comと比較してエンタープライズ機能・データ分析が劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'アフィリエイト追跡・コミッション・Shopify統合・API・レポート',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'shareasale': const _CompetitorInfo(
+    name: 'ShareASale',
+    emoji: '🤑',
+    tagline: 'Awin傘下中規模アフィリエイトネットワークで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'ShareASale代替 アフィリエイトネットワーク パブリッシャー マーチャント 報酬',
+    accentColor: Color(0xFF00AAED),
+    painPoints: [
+      '加盟店登録550ドル+月額費用・アフィリエイト特化・個人のライフ管理は別途',
+      'アフィリエイトネットワーク特化でビジネス向け設計・個人のAI管理は別途',
+      'CJ AffiliateとRakuten比較でプレミアムブランドへのアクセスが限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '25,000+マーチャント・リアルタイム追跡・支払い・クリエイティブ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'tapfiliate': const _CompetitorInfo(
+    name: 'Tapfiliate',
+    emoji: '🔗',
+    tagline: 'SaaS向けアフィリエイト・紹介プログラム管理ツールで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Tapfiliate代替 アフィリエイト管理 紹介プログラム SaaS Shopify連携',
+    accentColor: Color(0xFF00B3FF),
+    painPoints: [
+      '月額89ドル〜・アフィリエイト特化・個人のライフ管理は別途必要',
+      'アフィリエイト特化でビジネス向け設計・個人のAI管理は別途必要',
+      'Refersion/PartnerStackと比較してエンタープライズ機能・統合数が少ない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'アフィリエイト追跡・カスタムブランディング・API・Shopify・報酬',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'openphone': const _CompetitorInfo(
+    name: 'OpenPhone',
+    emoji: '📱',
+    tagline: 'スタートアップ向けビジネス電話番号・チームVoIPで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'OpenPhone代替 ビジネス電話 スタートアップ VoIP チーム 番号 SMS',
+    accentColor: Color(0xFFA957F5),
+    painPoints: [
+      '月額13ドル/ユーザー〜・ビジネス電話特化・個人のライフ管理は別途必要',
+      'ビジネスVoIP特化・個人のAIライフ管理は別途必要',
+      'Dialpad/Aircallと比較してコンタクトセンター・大規模機能が弱い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ビジネス番号・SMS・AI通話要約・共有受信トレイ・CRM統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'nextiva': const _CompetitorInfo(
+    name: 'Nextiva',
+    emoji: '📡',
+    tagline: '中小企業向けUCaaS・ビジネス通信プラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Nextiva代替 UCaaS VoIP ビジネス通信 中小企業 電話 ビデオ会議',
+    accentColor: Color(0xFF0099E6),
+    painPoints: [
+      '月額20ドル/ユーザー〜・ビジネス通信特化・個人のライフ管理は別途必要',
+      'UCaaS特化・個人のAIライフ管理は別途必要',
+      'RingCentral/Dialpadと比較してAI機能・モバイルアプリが劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'VoIP・ビデオ・SMS・チャット・CRM内蔵・自動応答・分析',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'justcall': const _CompetitorInfo(
+    name: 'JustCall',
+    emoji: '☎️',
+    tagline: 'セールス/サポートチーム向けAIクラウド電話ツールで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'JustCall代替 クラウド電話 AI セールス サポート VoIP SMS 自動ダイヤル',
+    accentColor: Color(0xFF0EA5E9),
+    painPoints: [
+      '月額19ドル/ユーザー〜・セールス電話特化・個人のライフ管理は別途必要',
+      'セールス/サポートVoIP特化・個人のAIライフ管理は別途必要',
+      'Aircall/Dialpadと比較してエンタープライズ機能・ブランド認知が劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AI通話コーチング・自動ダイヤル・SMS・CRM統合・通話分析',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
