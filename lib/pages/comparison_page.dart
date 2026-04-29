@@ -38057,6 +38057,312 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'buildium': const _CompetitorInfo(
+    name: 'Buildium',
+    emoji: '🏢',
+    tagline: '不動産管理・テナント管理・家賃収集・メンテナンス追跡で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Buildium代替 不動産管理 テナント管理 家賃収集 プロパティ管理 AppFolio代替',
+    accentColor: Color(0xFF006534),
+    painPoints: [
+      '月額55ドル〜・不動産管理特化・個人のライフ管理は別途必要',
+      'テナント/物件管理特化・個人のAI管理は別途必要',
+      'AppFolio/Yardi Breezeと比較してAI機能・大規模ポートフォリオ管理が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'テナント管理・家賃収集・メンテナンス・会計・リーシング・ポータル',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'appfolio': const _CompetitorInfo(
+    name: 'AppFolio',
+    emoji: '🏘️',
+    tagline: 'AI不動産管理・大規模ポートフォリオ・投資家レポーティングで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'AppFolio代替 AI不動産管理 大規模ポートフォリオ 投資家 賃貸管理 Buildium代替',
+    accentColor: Color(0xFF0063BE),
+    painPoints: [
+      '月額280ドル〜・AI不動産特化・個人のライフ管理は別途必要',
+      '大規模物件管理特化・個人のAI管理は別途必要',
+      'Buildiumと比較して中小規模不動産オーナーには高コスト過多',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AIスクリーニング・スマートメンテナンス・投資家DB・AI自動化',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'guesty': const _CompetitorInfo(
+    name: 'Guesty',
+    emoji: '🏨',
+    tagline: '民泊・短期賃貸管理・チャンネルマネージャー・収益最適化で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Guesty代替 民泊管理 Airbnb Vrbo チャンネルマネージャー 短期賃貸 収益最適化',
+    accentColor: Color(0xFF4B3CFF),
+    painPoints: [
+      '月額高価格・民泊/STR管理特化・個人のライフ管理は別途必要',
+      '短期賃貸特化・個人のAI管理は別途必要',
+      'Hostaway/Lodgifyと比較して小規模ホストには高コスト',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'チャンネル管理・予約自動化・収益最適化・ゲストコミュニケーション',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'hostaway': const _CompetitorInfo(
+    name: 'Hostaway',
+    emoji: '🗝️',
+    tagline: 'Airbnb/Vrbo短期賃貸管理・自動化・チャンネルマネージャーで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Hostaway代替 Airbnb管理 Vrbo チャンネルマネージャー 短期賃貸 自動化 Guesty代替',
+    accentColor: Color(0xFF26A17B),
+    painPoints: [
+      '月額99ドル〜・STR特化・個人のライフ管理は別途必要',
+      '民泊チャンネル管理特化・個人のAI管理は別途必要',
+      'Guesty/Lodgifyと比較してダイレクト予約ウェブサイト構築機能が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'マルチチャンネル同期・自動メッセージ・動的価格・メンテナンス',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'lodgify': const _CompetitorInfo(
+    name: 'Lodgify',
+    emoji: '🏡',
+    tagline: '民泊向けウェブサイトビルダー・予約システム・チャンネル管理で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Lodgify代替 民泊ウェブサイト 予約システム チャンネル管理 Airbnb代替 ダイレクト予約',
+    accentColor: Color(0xFF36B37E),
+    painPoints: [
+      '月額13ドル〜・民泊Website特化・個人のライフ管理は別途必要',
+      '短期賃貸Website特化・個人のAI管理は別途必要',
+      'Guesty/Hostawayと比較してチャンネルマネージャーの深さ・自動化が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '予約エンジン・Websiteビルダー・チャンネル・決済・ゲストコミュニケーション',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'teladoc': const _CompetitorInfo(
+    name: 'Teladoc',
+    emoji: '🩺',
+    tagline: 'バーチャル医療・遠隔診療・メンタルヘルスケアで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Teladoc代替 テレメディシン 遠隔診療 バーチャル医療 メンタルヘルス Hims代替',
+    accentColor: Color(0xFF00A3E0),
+    painPoints: [
+      '月額0〜・テレヘルス特化・個人のライフ管理は別途必要',
+      '遠隔医療特化・個人のAI管理は別途必要',
+      'Hims/Amazon Clinicと比較してスペシャリスト・処方箋管理が複雑',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '24h診療・メンタルヘルス・慢性疾患管理・処方箋・専門医紹介',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'hims-hers': const _CompetitorInfo(
+    name: 'Hims & Hers',
+    emoji: '💊',
+    tagline: 'ダイレクトtoコンシューマー処方箋・ウェルネス・オンライン診療で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Hims Hers代替 処方箋 ウェルネス オンライン診療 薄毛 肌ケア DtoC ヘルスケア',
+    accentColor: Color(0xFF1A1A2E),
+    painPoints: [
+      '月額20ドル〜・DtoCヘルス特化・個人のライフ管理は別途必要',
+      'ウェルネス処方特化・個人のAI管理は別途必要',
+      'Teladoc/Amazon Clinicと比較して保険適用・専門科医療が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '処方薬配送・オンライン診察・肌ケア・メンタルヘルス・栄養サプリ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'noom': const _CompetitorInfo(
+    name: 'Noom',
+    emoji: '🥗',
+    tagline: 'AIと人間コーチング組み合わせ体重管理・行動変容プログラムで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Noom代替 体重管理 ダイエット 行動変容 AIコーチング 食事記録 心理学ベース',
+    accentColor: Color(0xFF88C057),
+    painPoints: [
+      '月額70ドル〜・体重管理特化・個人のライフ管理は別途必要',
+      '食事/体重特化・個人のAI管理は別途必要',
+      'MyFitnessPal/Looseitと比較してコスト高でフィットネストラッキングが限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '食事記録・行動変容・心理学教育・人間コーチ・グループ・ログ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'betterhelp': const _CompetitorInfo(
+    name: 'BetterHelp',
+    emoji: '🧠',
+    tagline: 'オンラインセラピー・メンタルヘルスカウンセリング・テレセラピーで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'BetterHelp代替 オンラインセラピー メンタルヘルス カウンセリング テレセラピー 心理療法',
+    accentColor: Color(0xFF4CAF84),
+    painPoints: [
+      '月額240〜360ドル・オンラインセラピー特化・個人のライフ管理は別途必要',
+      'メンタルヘルス特化・個人のAI管理は別途必要',
+      'Talkspace/Zocdocと比較して保険適用・精神科医処方箋対応が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'テキスト/音声/ビデオセラピー・グループセッション・日記・ワークシート',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
