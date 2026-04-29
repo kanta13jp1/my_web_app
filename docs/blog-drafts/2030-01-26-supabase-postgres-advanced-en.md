@@ -1,7 +1,7 @@
 ---
 title: "Supabase Postgres Advanced — Partitioning, Full-Text Search, Generated Columns, and Triggers"
 tags: dart,flutter,webdev,indiedev
-published: false
+published: true
 ---
 
 ## Introduction
