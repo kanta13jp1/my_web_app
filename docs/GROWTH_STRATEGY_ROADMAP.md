@@ -24592,3 +24592,11 @@ User 共有 Claude Code 新機能 (= mobile push notification / 2026-04-29 公�
 (本 commit にて確定)
 
 (本 commit にて確定) (chore(docs): cross-instance-prs done/ rename + Win版#132 doc updates + 競合レポート 2026-04-29 enrichment) (chore(docs): cross-instance-prs done/ rename + Win版#132 doc updates + 競合レポート 2026-04-29 enrichment) (docs(vscode-s15): cross-instance-pr triage + ROADMAP更新)
+
+## 2026-04-29 PS#1 S8 — migration timestamp collision 追加3件修正 (075000/080000/090000)
+- deploy-prod Check migration timestamp collisions 失敗 (run 25091716827) 検知
+  - 075000: ps4_s150 + ps5_s101 競合 → ps5_s101を075100にリネーム
+  - 080000: ps5_s104 + ps6_s117 競合 → ps6_s117を080100にリネーム
+  - 090000: ps4_s160 + ps5_s105 競合 → ps5_s105を090100にリネーム
+- 3件一括 git mv → commit (648bd919b) → push
+- Rule 17 WF health: Workflow Failure Handler 6 skipped = 正常 / claude/* 6本 = fleet active branch
