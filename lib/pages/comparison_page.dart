@@ -34683,6 +34683,312 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'teamcity': const _CompetitorInfo(
+    name: 'TeamCity',
+    emoji: '🏗️',
+    tagline: 'JetBrains製CI/CDサーバー・ビルド自動化・テスト自動化で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'TeamCity代替 CI/CD ビルド自動化 JetBrains テスト自動化 Jenkins代替',
+    accentColor: Color(0xFF21D789),
+    painPoints: [
+      '無料/月額46ドル〜・CI/CD特化・個人のライフ管理は別途必要',
+      'ビルド自動化特化・個人のAI管理は別途必要',
+      'GitHub Actions/CircleCIと比較してオンプレ運用コスト・設定複雑さがある',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ビルドチェーン・テストパラレル・DSL・Kotlin設定・クラウド/オンプレ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'buildkite': const _CompetitorInfo(
+    name: 'Buildkite',
+    emoji: '🔨',
+    tagline: '高速スケーラブルCI/CDパイプライン・自前エージェントで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Buildkite代替 CI/CD パイプライン スケーラブル エージェント GitHub Actions代替',
+    accentColor: Color(0xFF14CC80),
+    painPoints: [
+      '月額25ドル/ユーザー〜・CI/CD特化・個人のライフ管理は別途必要',
+      '大規模CI特化・個人のAI管理は別途必要',
+      'GitHub Actions/CircleCIと比較して価格高め・エコシステムが限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '自前エージェント・無制限並列・YAML/SDK・モノレポ対応・テスト分析',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'better-uptime': const _CompetitorInfo(
+    name: 'Better Uptime',
+    emoji: '📡',
+    tagline: 'インシデントアラート・ステータスページ・稼働率監視で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Better Uptime代替 稼働率監視 アラート ステータスページ インシデント UptimeRobot代替',
+    accentColor: Color(0xFF1B6BFF),
+    painPoints: [
+      '無料/月額24ドル〜・稼働監視特化・個人のライフ管理は別途必要',
+      'インシデント管理特化・個人のAI管理は別途必要',
+      'PagerDuty/DataDogと比較してAI分析・高度なアラート機能が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '稼働率監視・電話/SMS/Slack通知・ステータスページ・インシデント時系列',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'uptimerobot': const _CompetitorInfo(
+    name: 'UptimeRobot',
+    emoji: '🤖',
+    tagline: '無料稼働率監視・HTTP/PINGチェック・アラートで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'UptimeRobot代替 稼働率監視 HTTP監視 PING 無料 アラート ダウン通知',
+    accentColor: Color(0xFF3D9BE9),
+    painPoints: [
+      '無料/月額7ドル〜・稼働監視特化・個人のライフ管理は別途必要',
+      'HTTP監視特化・個人のAI管理は別途必要',
+      'Better Uptime/DataDogと比較してステータスページ・詳細分析が弱い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '50モニター無料・5分間隔・HTTP/PING/Port・ステータスページ・メール通知',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'incident-io': const _CompetitorInfo(
+    name: 'incident.io',
+    emoji: '🚨',
+    tagline: 'Slack統合インシデント管理・ポストモーテム・オンコール自動化で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'incident.io代替 インシデント管理 Slack PagerDuty代替 ポストモーテム オンコール',
+    accentColor: Color(0xFFFF4B00),
+    painPoints: [
+      '月額不明・インシデント管理特化・個人のライフ管理は別途必要',
+      'Slack中心インシデント特化・個人のAI管理は別途必要',
+      'PagerDuty/FireHydrantと比較して大企業向けオンコール管理が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Slackネイティブ・ロールアサイン・ポストモーテム・スケジュール・AI要約',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'infisical': const _CompetitorInfo(
+    name: 'Infisical',
+    emoji: '🔏',
+    tagline: 'オープンソースシークレット管理・環境変数・PKI/証明書管理で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Infisical代替 シークレット管理 環境変数 OSS Doppler代替 Vault代替 PKI',
+    accentColor: Color(0xFFA855F7),
+    painPoints: [
+      '無料/月額6ドル〜・シークレット管理特化・個人のライフ管理は別途必要',
+      '機密情報管理特化・個人のAI管理は別途必要',
+      'Doppler/HashiCorp Vaultと比較してエンタープライズ向けアクセス管理が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'シークレット同期・キーローテーション・PKI・監査ログ・CLI/API・セルフホスト',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'hoppscotch': const _CompetitorInfo(
+    name: 'Hoppscotch',
+    emoji: '🦗',
+    tagline: 'オープンソースAPI開発ツール・REST/GraphQL/WebSocketテストで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Hoppscotch代替 APIテスト REST GraphQL WebSocket Postman代替 OSS',
+    accentColor: Color(0xFF00E9A3),
+    painPoints: [
+      '無料OSS/月額12ドル〜・APIテスト特化・個人のライフ管理は別途必要',
+      'API開発テスト特化・個人のAI管理は別途必要',
+      'Postman/Insomniaと比較してコレクション管理・チーム機能が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'REST/GraphQL/WS/gRPC・PWA・セルフホスト・チームワークスペース・API設計',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'semgrep': const _CompetitorInfo(
+    name: 'Semgrep',
+    emoji: '🛡️',
+    tagline: 'オープンソースSAST・静的コード解析・セキュリティルールエンジンで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Semgrep代替 SAST 静的解析 セキュリティ コード品質 Snyk代替 SonarQube代替 OSS',
+    accentColor: Color(0xFF10B981),
+    painPoints: [
+      '無料OSS/月額不明・SAST特化・個人のライフ管理は別途必要',
+      '静的コード解析特化・個人のAI管理は別途必要',
+      'Snyk/SonarQubeと比較してSCA・依存関係スキャンが限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'カスタムルール・30+言語・自動修正・CI統合・シークレット検出・OSS脆弱性',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'stoplight': const _CompetitorInfo(
+    name: 'Stoplight',
+    emoji: '🚦',
+    tagline: 'APIデザイン・ドキュメント・モック・ガバナンスプラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Stoplight代替 APIデザイン OpenAPI ドキュメント モック Swagger代替 API設計',
+    accentColor: Color(0xFFF66A0A),
+    painPoints: [
+      '無料/月額119ドル〜・API設計特化・個人のライフ管理は別途必要',
+      'APIデザイン/ドキュメント特化・個人のAI管理は別途必要',
+      'Postman/SwaggerHubと比較してコラボレーション・統合数が劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'OpenAPI/JSON Schema設計・モックサーバー・StyleGuide・ドキュメント・Gitサポート',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
