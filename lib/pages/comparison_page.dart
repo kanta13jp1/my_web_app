@@ -61535,6 +61535,312 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'tailwind': const _CompetitorInfo(
+    name: 'Tailwind CSS',
+    emoji: '🌊',
+    tagline: 'Tailwind CSS・ユーティリティファーストCSS・JIT・クラスベース・高速プロトタイプ・カスタマイズ・OSS・業界標準・レスポンシブで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Tailwind CSS代替 ユーティリティファースト JIT クラスベース 高速プロトタイプ カスタマイズ Bootstrap代替 UnoCSS代替',
+    accentColor: Color(0xFF06B6D4),
+    painPoints: [
+      '無料(OSS)/有料(UI Kit)・CSSフレームワーク特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'UnoCSS/Bootstrap との比較でHTMLクラス汚染・デザイン一貫性・学習コストが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ユーティリティファーストCSS・JIT・クラスベース・カスタマイズ・レスポンシブ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'bootstrap': const _CompetitorInfo(
+    name: 'Bootstrap',
+    emoji: '🅱️',
+    tagline: 'Bootstrap・CSS/JSフレームワーク・コンポーネント・グリッドシステム・テーマ・jQuery非依存・Twitter製・業界標準・OSS・v5で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Bootstrap代替 CSS JS コンポーネント グリッドシステム テーマ Twitter OSS Tailwind代替 Foundation代替',
+    accentColor: Color(0xFF7952B3),
+    painPoints: [
+      '無料(OSS)/有料テーマ・UIフレームワーク特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Tailwind/Material UI との比較でコンポーネントスタイル・カスタマイズ・バンドルサイズが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'CSS/JSコンポーネント・グリッドシステム・テーマ・jQuery非依存・業界標準',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'material-ui': const _CompetitorInfo(
+    name: 'Material UI (MUI)',
+    emoji: '🎨',
+    tagline: 'Material UI (MUI)・Google Material Design・Reactコンポーネント・テーマ・アクセシビリティ・TypeScript・OSS・カスタマイズで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Material UI MUI代替 Google Material Design React コンポーネント テーマ アクセシビリティ TypeScript shadcn代替 Chakra UI代替',
+    accentColor: Color(0xFF0081CB),
+    painPoints: [
+      '無料(OSS)/有料(X)・ReactUIコンポーネント特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'shadcn/Chakra UI との比較でバンドルサイズ・デザイン自由度・カスタマイズが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Google Material Design・Reactコンポーネント・テーマ・アクセシビリティ・TypeScript',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'shadcn': const _CompetitorInfo(
+    name: 'shadcn/ui',
+    emoji: '🔲',
+    tagline: 'shadcn/ui・コピペReactコンポーネント・Radix UI基盤・Tailwind CSS・アクセシビリティ・無料・カスタマイズ・TypeScript・CLI追加で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'shadcn/ui代替 コピペ React Radix UI Tailwind CSS アクセシビリティ カスタマイズ TypeScript CLI Material UI代替',
+    accentColor: Color(0xFF09090B),
+    painPoints: [
+      '無料(コピペ)・Reactコンポーネント特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Material UI/Chakra UI との比較で非Reactフレームワーク・バンドル管理・バージョンが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'コピペReactコンポーネント・Radix UI基盤・Tailwind CSS・アクセシビリティ・CLI',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'chakra-ui': const _CompetitorInfo(
+    name: 'Chakra UI',
+    emoji: '⚡',
+    tagline: 'Chakra UI・アクセシブルReactコンポーネント・テーマ・ダークモード・Emotion基盤・TypeScript・カスタマイズ・OSS・シンプルAPIで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Chakra UI代替 アクセシブル React コンポーネント テーマ ダークモード Emotion TypeScript shadcn代替 Material UI代替',
+    accentColor: Color(0xFF319795),
+    painPoints: [
+      '無料(OSS)/有料(Pro)・ReactUIコンポーネント特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'shadcn/Material UI との比較でバンドルサイズ・Emotion依存・ヘッドレス移行が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'アクセシブルReactコンポーネント・テーマ・ダークモード・Emotion・TypeScript',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'mantine': const _CompetitorInfo(
+    name: 'Mantine',
+    emoji: '🔵',
+    tagline: 'Mantine・Reactコンポーネント・120+コンポーネント・フック・フォーム・通知・100%TypeScript・無料・テーマ・ダークモードで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Mantine代替 React 120+コンポーネント フック フォーム 通知 TypeScript 無料 Chakra UI代替 Material UI代替',
+    accentColor: Color(0xFF339AF0),
+    painPoints: [
+      '無料(OSS)・ReactUIコンポーネント特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'shadcn/Chakra UI との比較でヘッドレス対応・デザイン自由度・バンドルサイズが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Reactコンポーネント・120+・フック・フォーム・通知・100%TypeScript・テーマ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'ant-design': const _CompetitorInfo(
+    name: 'Ant Design',
+    emoji: '🐜',
+    tagline: 'Ant Design・エンタープライズReactUIコンポーネント・60+・Alibaba製・デザインシステム・TypeScript・多言語・OSS・大規模で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Ant Design代替 エンタープライズ React UIコンポーネント 60+ Alibaba デザインシステム TypeScript 多言語 Material UI代替',
+    accentColor: Color(0xFF1677FF),
+    painPoints: [
+      '無料(OSS)/有料・UIコンポーネント特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Material UI/shadcn との比較でバンドルサイズ・中国語ドキュメント主体・カスタマイズが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'エンタープライズReact・60+コンポーネント・Alibaba製・デザインシステム・多言語',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'daisyui': const _CompetitorInfo(
+    name: 'daisyUI',
+    emoji: '🌼',
+    tagline: 'daisyUI・TailwindCSS向けコンポーネント・クラスベース・テーマ35+・無料・軽量・フレームワーク非依存・カスタマイズ・OSS・シンプルで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'daisyUI代替 TailwindCSS コンポーネント クラスベース テーマ35+ 無料 軽量 フレームワーク非依存 Bootstrap代替',
+    accentColor: Color(0xFF570DF8),
+    painPoints: [
+      '無料(OSS)/有料(Pro)・TailwindCSSコンポーネント特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Flowbite/Bootstrap との比較でTailwind依存・JSインタラクション・コンポーネント数が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'TailwindCSSコンポーネント・クラスベース・テーマ35+・軽量・フレームワーク非依存',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'unocss': const _CompetitorInfo(
+    name: 'UnoCSS',
+    emoji: '⚡',
+    tagline: 'UnoCSS・超高速原子CSSエンジン・オンデマンド・Tailwind互換・プリセット・アイコン統合・Vite・OSS・Anthony Fu製で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'UnoCSS代替 超高速 原子CSS オンデマンド Tailwind互換 プリセット アイコン統合 Vite Tailwind代替 Windi CSS代替',
+    accentColor: Color(0xFF333333),
+    painPoints: [
+      '無料(OSS)・CSSエンジン特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Tailwind との比較でエコシステム規模・公式サポート・サードパーティ統合が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '超高速原子CSSエンジン・オンデマンド・Tailwind互換・プリセット・アイコン統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
