@@ -39590,6 +39590,317 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'steam': const _CompetitorInfo(
+    name: 'Steam',
+    emoji: '🎮',
+    tagline:
+        'Valve・PC最大ゲームプラットフォーム・50000+タイトル・Steam Deck・Workshopで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Steam代替 PCゲーム Valve ゲームストア Steam Deck Epic Games代替 ゲームランチャー',
+    accentColor: Color(0xFF1B2838),
+    painPoints: [
+      'ゲーム購入制・PCゲーム特化・個人のライフ管理は別途必要',
+      'PCゲーム特化・個人のAI管理は別途必要',
+      'Epic Games Store/GOGと比較してDRM・プラットフォーム手数料30%の問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '50000+タイトル・Steam Deck・Workshop・Community・Steam Cloud',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'gog': const _CompetitorInfo(
+    name: 'GOG',
+    emoji: '🔓',
+    tagline: 'CD Projekt・DRMフリーPCゲーム・Galaxy クライアント・クラシックゲーム復元で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'GOG代替 DRMフリー PCゲーム CD Projekt クラシックゲーム Steam代替 ゲームストア',
+    accentColor: Color(0xFF6440B2),
+    painPoints: [
+      'ゲーム購入制・PCゲーム特化・個人のライフ管理は別途必要',
+      'DRMフリーゲーム特化・個人のAI管理は別途必要',
+      'Steam/Epic Gamesと比較してタイトル数・マルチプレイヤー対応が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'DRMフリー・Galaxy クライアント・クラシック復元・14日返金保証',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'mastodon': const _CompetitorInfo(
+    name: 'Mastodon',
+    emoji: '🐘',
+    tagline: '分散型SNS・ActivityPub・広告なし・自己ホスティング・フェディバースで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Mastodon代替 分散型SNS フェディバース ActivityPub X代替 Twitter代替 オープンソース',
+    accentColor: Color(0xFF6364FF),
+    painPoints: [
+      '無料/自己ホスト・分散型特化・個人のライフ管理は別途必要',
+      'SNS特化・個人のAI管理は別途必要',
+      'X/Blueskyと比較してアルゴリズム推薦・大規模ネットワーク効果が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '分散型・広告なし・ActivityPub・自己ホスト・カスタムルール',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'bereal': const _CompetitorInfo(
+    name: 'BeReal',
+    emoji: '📸',
+    tagline: 'リアルな瞬間を前後カメラで同時撮影・広告なし・フィルターなし・Gen Z SNSで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'BeReal代替 リアルSNS 前後カメラ 広告なし フィルターなし Instagram代替 Gen Z',
+    accentColor: Color(0xFF000000),
+    painPoints: [
+      '無料・ランダム通知特化・個人のライフ管理は別途必要',
+      'SNS特化・個人のAI管理は別途必要',
+      'Instagram/TikTokと比較してコンテンツ発見性・フォロワー拡大が大幅に限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '前後同時撮影・ランダム通知・リアクション・フレンドフィード',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'monster-job': const _CompetitorInfo(
+    name: 'Monster',
+    emoji: '👾',
+    tagline: '老舗求人サイト・Resume Builder・キャリアアドバイス・グローバル雇用で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Monster代替 求人 転職 Resume Builder キャリア Indeed代替 就職活動 グローバル',
+    accentColor: Color(0xFF6900C7),
+    painPoints: [
+      '無料/有料・求人特化・個人のライフ管理は別途必要',
+      '求人特化・個人のAI管理は別途必要',
+      'Indeed/LinkedInと比較してSNS機能・コネクション構築が大幅に限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Resume Builder・キャリアアドバイス・給与計算・グローバル求人',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'fl-studio': const _CompetitorInfo(
+    name: 'FL Studio',
+    emoji: '🎹',
+    tagline: 'Image-Line・プロDTM/DAW・ステップシーケンサー・生涯無料アップデートで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'FL Studio代替 DAW DTM 音楽制作 ビートメーカー Ableton代替 GarageBand代替',
+    accentColor: Color(0xFFFF7A00),
+    painPoints: [
+      '買い切り制・音楽制作特化・個人のライフ管理は別途必要',
+      'DAW特化・個人のAI管理は別途必要',
+      'Ableton/Logic Proと比較してライブパフォーマンス機能が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ステップシーケンサー・Mixer・生涯無料アップデート・Fruity Loops',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'ableton': const _CompetitorInfo(
+    name: 'Ableton Live',
+    emoji: '🎛️',
+    tagline: 'プロ音楽制作DAW・ライブパフォーマンス・Sessionビュー・Max for Liveで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Ableton代替 DAW 音楽制作 ライブパフォーマンス FL Studio代替 Logic Pro代替 DJ',
+    accentColor: Color(0xFF4C4C4C),
+    painPoints: [
+      '高価格・音楽制作特化・個人のライフ管理は別途必要',
+      'DAW特化・個人のAI管理は別途必要',
+      'Logic Pro/FL Studioと比較してコスト・学習曲線が大幅に高い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Sessionビュー・Max for Live・Push・クリップ起動・MIDI',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'hemingway': const _CompetitorInfo(
+    name: 'Hemingway Editor',
+    emoji: '✍️',
+    tagline: '文章明瞭化ツール・読みやすさスコア・受動態検出・ウェブ無料/デスクトップ版で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Hemingway Editor代替 文章校正 ライティング 読みやすさ Grammarly代替 英語ライティング',
+    accentColor: Color(0xFFF5A623),
+    painPoints: [
+      '無料(ウェブ)/有料(デスクトップ)・文章校正特化・個人のライフ管理は別途必要',
+      '英語ライティング特化・個人のAI管理は別途必要',
+      'Grammarly/ProWritingAidと比較して文法チェック・多言語対応が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '読みやすさスコア・受動態/副詞検出・文長分析・デスクトップ版',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'ps-plus': const _CompetitorInfo(
+    name: 'PlayStation Plus',
+    emoji: '🎮',
+    tagline:
+        'Sony・PS4/PS5ゲームサブスク・Essential/Extra/Premium・クラウドストリーミングで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'PlayStation Plus代替 ゲームサブスク Sony PS5 PS4 Xbox Game Pass代替 クラウドゲーミング',
+    accentColor: Color(0xFF003087),
+    painPoints: [
+      '月額制・PlayStation特化・個人のライフ管理は別途必要',
+      'ゲームサブスク特化・個人のAI管理は別途必要',
+      'Xbox Game Pass/Nintendo Switch Onlineと比較してPC対応・コスパが限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Essential/Extra/Premium・PS5バックカタログ・クラウドストリーミング',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
