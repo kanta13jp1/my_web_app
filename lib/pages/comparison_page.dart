@@ -40525,6 +40525,318 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'signal-app': const _CompetitorInfo(
+    name: 'Signal',
+    emoji: '🔒',
+    tagline: '最強暗号化メッセージング・オープンソース・メタデータ最小化・WhatsApp代替で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Signal代替 暗号化メッセージ プライバシー WhatsApp代替 Telegram代替 セキュリティ エンドツーエンド',
+    accentColor: Color(0xFF2592E9),
+    painPoints: [
+      '完全無料・メッセージング特化・個人のライフ管理は別途必要',
+      'プライベートメッセージング特化・個人のAI管理は別途必要',
+      'WhatsApp/Telegramと比較してグループ機能・ファイル共有・SNS機能が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'E2E暗号化・メッセージ消去・OSS・メタデータ最小化・グループ通話',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'viber': const _CompetitorInfo(
+    name: 'Viber',
+    emoji: '💜',
+    tagline:
+        'Rakuten傘下・無料通話/メッセージ・Communities・Viber Out格安国際通話で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Viber代替 無料通話 メッセージ Rakuten WhatsApp代替 国際通話 Communities',
+    accentColor: Color(0xFF7360F2),
+    painPoints: [
+      '無料・メッセージング特化・個人のライフ管理は別途必要',
+      'メッセージング特化・個人のAI管理は別途必要',
+      'WhatsApp/Signal/Telegramと比較してユーザー数・グローバル普及が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '無料通話/SMS・Viber Out・Communities・ステッカー・暗号化',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'kakao': const _CompetitorInfo(
+    name: 'KakaoTalk',
+    emoji: '💛',
+    tagline:
+        '韓国最大スーパーアプリ・KakaoPay・KakaoMap・KakaoTaxi・オープンチャットで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'KakaoTalk代替 韓国メッセージ KakaoPay スーパーアプリ LINE代替 韓国SNS',
+    accentColor: Color(0xFFFFE300),
+    painPoints: [
+      '無料・韓国特化・個人のライフ管理は別途必要',
+      'スーパーアプリ特化・個人のAI管理は別途必要',
+      'LINE/WeChat/WhatsAppと比較して韓国以外のグローバル普及が大幅に限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'KakaoPay・KakaoMap・KakaoTaxi・オープンチャット・礼金振込',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'front-app': const _CompetitorInfo(
+    name: 'Front',
+    emoji: '📨',
+    tagline: '共有受信箱・チームメール・カスタマーサービス・CRM統合・コラボレーションで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Front代替 共有受信箱 チームメール カスタマーサービス Zendesk代替 Helpscout代替',
+    accentColor: Color(0xFFFA5300),
+    painPoints: [
+      '月額制・チームメール特化・個人のライフ管理は別途必要',
+      'カスタマーサービス特化・個人のAI管理は別途必要',
+      'Zendesk/Intercom/Helpscoutと比較してチケット管理・大規模サポートセンター機能が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '共有受信箱・チームコラボ・CRM統合・ルーティング・SLA管理',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'yesware': const _CompetitorInfo(
+    name: 'Yesware',
+    emoji: '📈',
+    tagline: 'Gmail/Outlook営業メール追跡・テンプレート・シーケンス・Salesforce同期で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Yesware代替 メール追跡 営業メール Gmail Outlook Salesforce Mixmax代替 開封確認',
+    accentColor: Color(0xFF2BAD78),
+    painPoints: [
+      '有料/無料・メール営業特化・個人のライフ管理は別途必要',
+      '営業メール特化・個人のAI管理は別途必要',
+      'Outreach/SalesLoft/Mixmaxと比較してシーケンス機能・AI機能が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'メール追跡・テンプレート・シーケンス・Salesforce同期・レポート',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'nimble-crm': const _CompetitorInfo(
+    name: 'Nimble CRM',
+    emoji: '🤝',
+    tagline: 'ソーシャルCRM・SNSプロフィール統合・コンタクト充実化・リレーション管理で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Nimble CRM代替 ソーシャルCRM SNS統合 コンタクト管理 HubSpot代替 LinkedIn CRM',
+    accentColor: Color(0xFF13A5E7),
+    painPoints: [
+      '月額制・ソーシャルCRM特化・個人のライフ管理は別途必要',
+      'CRM特化・個人のAI管理は別途必要',
+      'Salesforce/HubSpot/Pipedriverと比較してパイプライン管理・自動化が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'SNS統合・コンタクト充実化・リレーション管理・メール追跡・Deal Pipeline',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'capsule-crm': const _CompetitorInfo(
+    name: 'Capsule CRM',
+    emoji: '💊',
+    tagline:
+        'シンプル中小企業CRM・コンタクト管理・Sales Pipeline・Google/Microsoft統合で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Capsule CRM代替 中小企業CRM シンプルCRM HubSpot代替 パイプライン管理 Google Workspace',
+    accentColor: Color(0xFF5EC5F0),
+    painPoints: [
+      '月額制・CRM特化・個人のライフ管理は別途必要',
+      'CRM特化・個人のAI管理は別途必要',
+      'HubSpot/Salesforce/Pipedriveと比較してマーケティング自動化・レポートが限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'コンタクト管理・Sales Pipeline・タグ・メモ・Google/Microsoft統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'spike-email': const _CompetitorInfo(
+    name: 'Spike',
+    emoji: '⚡',
+    tagline: 'メールをチャット化・会話型受信箱・リアルタイムコラボ・ビデオ通話内蔵で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Spike代替 会話型メール メールチャット Gmail代替 Superhuman代替 コラボ メール',
+    accentColor: Color(0xFF8B5CF6),
+    painPoints: [
+      '無料/有料・メールクライアント特化・個人のライフ管理は別途必要',
+      'メールクライアント特化・個人のAI管理は別途必要',
+      'Gmail/Superhuman/HEY Emailと比較して統合性・プラグインエコシステムが限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'チャット型メール・リアルタイム・Notes・ビデオ通話・コラボ受信箱',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'hiver': const _CompetitorInfo(
+    name: 'Hiver',
+    emoji: '🐝',
+    tagline: 'Gmail共有受信箱・チームメールサポート・チケット不要・SLA追跡で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Hiver代替 Gmail共有受信箱 チームサポート Zendesk代替 Helpscout代替 メールサポート',
+    accentColor: Color(0xFFF5A800),
+    painPoints: [
+      '月額制・Gmailサポート特化・個人のライフ管理は別途必要',
+      'カスタマーサポート特化・個人のAI管理は別途必要',
+      'Zendesk/Front/Helpscoutと比較して非Gmail環境・大規模サポートセンターへの対応が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Gmail共有受信箱・チケット不要・SLA・衝突回避・自動化',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
