@@ -86,6 +86,7 @@ class _GoogleCalendarSyncPageState extends State<GoogleCalendarSyncPage> {
       }
       await _fetchStatus();
     } catch (e) {
+      if (!mounted) return;
       if (mounted) setState(() => _errorMessage = '同期に失敗しました: $e');
     } finally {
       if (mounted) setState(() => _isSyncing = false);

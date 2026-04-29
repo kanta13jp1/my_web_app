@@ -60,6 +60,7 @@ class _NotificationDigestPageState extends State<NotificationDigestPage> {
       );
       await _fetchDigest();
     } catch (e) {
+      if (!mounted) return;
       if (mounted) setState(() => _errorMessage = 'ダイジェスト送信に失敗しました: $e');
     } finally {
       if (mounted) setState(() => _isLoading = false);

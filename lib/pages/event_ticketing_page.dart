@@ -82,6 +82,7 @@ class _EventTicketingPageState extends State<EventTicketingPage> {
       );
       await _fetchEvents();
     } catch (e) {
+      if (!mounted) return;
       if (mounted) setState(() => _errorMessage = 'イベントの作成に失敗しました: $e');
     } finally {
       if (mounted) setState(() => _isLoading = false);

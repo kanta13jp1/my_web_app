@@ -91,6 +91,7 @@ class _ThoughtAnchorPageState extends State<ThoughtAnchorPage> {
         await _completeSession(autoCompleted: true);
         return;
       }
+      if (!mounted) return;
       setState(() {
         _remaining -= const Duration(seconds: 1);
       });

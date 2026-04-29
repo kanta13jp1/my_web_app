@@ -137,6 +137,7 @@ class _TimeWasteGuardWidgetState extends State<TimeWasteGuardWidget> {
   Future<void> _activateGuard(String itemId) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('twg_active_${_todayKey}_$itemId', true);
+    if (!mounted) return;
     if (mounted) setState(() => _activeGuards[itemId] = true);
 
     final item = _items.firstWhere((i) => i.id == itemId);
@@ -156,6 +157,7 @@ class _TimeWasteGuardWidgetState extends State<TimeWasteGuardWidget> {
     final current = _todaySlips[itemId] ?? 0;
     final newCount = current + 1;
     await prefs.setInt('twg_slips_${_todayKey}_$itemId', newCount);
+    if (!mounted) return;
     if (mounted) setState(() => _todaySlips[itemId] = newCount);
 
     final item = _items.firstWhere((i) => i.id == itemId);

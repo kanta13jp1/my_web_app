@@ -242,6 +242,7 @@ class _AISecretaryPageState extends State<AISecretaryPage> {
     setState(() => _isTranslating = true);
     final translated = await _translateText(_strategyResult!);
     if (mounted && translated != null) {
+      if (!mounted) return;
       setState(() {
         _strategyResult = translated;
       });

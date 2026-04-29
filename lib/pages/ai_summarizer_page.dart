@@ -82,6 +82,7 @@ class _AiSummarizerPageState extends State<AiSummarizerPage> {
         await _fetchSummaries();
       }
     } catch (e) {
+      if (!mounted) return;
       if (mounted) setState(() => _errorMessage = '要約に失敗しました: $e');
     } finally {
       if (mounted) setState(() => _isSummarizing = false);

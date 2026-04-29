@@ -559,6 +559,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
   Future<void> _loadWeeklyDigest() async {
     try {
       final digest = await _growthService.loadWeeklyDigest();
+      if (!mounted) return;
       if (mounted) setState(() => _weeklyDigest = digest);
     } catch (e) {
       debugPrint('weekly digest load error: $e');

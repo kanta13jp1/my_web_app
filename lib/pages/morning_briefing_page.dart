@@ -543,6 +543,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
     try {
       await Supabase.instance.client.from(tableName).insert(data);
       _todoController.clear();
+      if (!mounted) return;
       setState(() {
         _selectedDate = null;
         _selectedRecurrence = 'none';

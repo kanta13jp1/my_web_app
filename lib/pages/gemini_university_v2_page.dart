@@ -5202,6 +5202,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
   Future<void> _loadRlhfSnapshot() async {
     final snapshot = await _rlhfService.loadSnapshot();
     if (mounted && snapshot != null) {
+      if (!mounted) return;
       setState(() => _rlhfSnapshot = snapshot);
     }
   }
@@ -5209,6 +5210,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
   Future<void> _loadFineTuneReadiness() async {
     final snapshot = await _fineTuneReadinessService.loadSnapshot();
     if (mounted && snapshot != null) {
+      if (!mounted) return;
       setState(() => _fineTuneReadiness = snapshot);
     }
   }

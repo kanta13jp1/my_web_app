@@ -143,6 +143,7 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
   Future<void> _fetchCandidates() async {
     try {
       final data = await _supabase.from('candidates').select();
+      if (!mounted) return;
       setState(() {
         _candidates = List<Map<String, dynamic>>.from(data);
       });
@@ -356,6 +357,7 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
     final XFile? image =
         await picker.pickImage(source: ImageSource.gallery, maxWidth: 800);
     if (image == null) return;
+    if (!mounted) return;
     setState(() => _isBusy = true);
     try {
       final bytes = await image.readAsBytes();

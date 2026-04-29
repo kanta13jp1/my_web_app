@@ -70,6 +70,7 @@ class _DailyChallengeCardState extends State<DailyChallengeCard> {
       );
       await _loadChallenges();
     } catch (_) {
+      if (!mounted) return;
       if (mounted) setState(() => _generating = false);
     }
   }

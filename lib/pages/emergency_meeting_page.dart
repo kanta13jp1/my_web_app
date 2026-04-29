@@ -1156,6 +1156,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
     final notificationService = context.read<NotificationService>();
     await _flushExpiredRecoveryWindowIfNeeded();
     final dueAt = DateTime.now().add(const Duration(minutes: 10));
+    if (!mounted) return;
     setState(() {
       _abstinenceViolationCount += 1;
       _abstinenceNoViolationDays = 0;
@@ -1171,6 +1172,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
       await notificationService.scheduleAbstinenceRecoveryReminder(
         dueAt: dueAt,
       );
+      if (!mounted) return;
       setState(() {
         _abstinenceRecoveryReminderScheduledCount += 1;
       });
@@ -1183,6 +1185,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
   Future<void> _recordAbstinenceCleanDay() async {
     await _flushExpiredRecoveryWindowIfNeeded();
     if (_hasPendingRecoveryWindow()) {
+      if (!mounted) return;
       setState(() {
         _deterrenceStrictModeBlockCount += 1;
       });
@@ -2196,6 +2199,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
 
     await _ensureSelectedModelIsAvailable();
 
+    if (!mounted) return;
     setState(() {
       _isLoading = true;
       _loadingStatus = '継続と禁欲に関するデータを収集中...';
@@ -2509,6 +2513,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
   Future<void> _runBoardMeetingBiReport() async {
     await _ensureSelectedModelIsAvailable();
 
+    if (!mounted) return;
     setState(() {
       _isLoading = true;
       _loadingStatus = '役員会議のデータを集計中...';
