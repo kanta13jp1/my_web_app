@@ -39281,6 +39281,315 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'lyft': const _CompetitorInfo(
+    name: 'Lyft',
+    emoji: '🩷',
+    tagline: '米国配車サービス・ライドシェア・LyftPink・自転車シェアで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Lyft代替 配車 ライドシェア アメリカ Uber代替 タクシー 自転車シェア',
+    accentColor: Color(0xFFFF00BF),
+    painPoints: [
+      '手数料あり・北米特化・個人のライフ管理は別途必要',
+      '配車特化・個人のAI管理は別途必要',
+      'Uber/DiDiと比較して国際展開・食事デリバリーが大幅に限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '配車・LyftPink・自転車/スクーターシェア・空港ライド',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'didi': const _CompetitorInfo(
+    name: 'DiDi',
+    emoji: '🚕',
+    tagline: '中国・グローバル配車サービス・DiDi Express・99/Brazil・Bolt中東で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'DiDi代替 中国配車 ライドシェア グローバル Uber代替 ブラジル タクシー',
+    accentColor: Color(0xFFFF6600),
+    painPoints: [
+      '手数料あり・アジア/ラテンアメリカ特化・個人のライフ管理は別途必要',
+      '配車特化・個人のAI管理は別途必要',
+      'Uber/Grabと比較して欧米市場での展開が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'DiDi Express/Premier/eBike・99/Bolt統合・D-Chat',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'ola': const _CompetitorInfo(
+    name: 'Ola',
+    emoji: '🛺',
+    tagline: 'インド最大配車サービス・Ola Electric・オートリクシャ・ハイパーローカルで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Ola代替 インド配車 ライドシェア Uber代替 オートリクシャ Ola Electric EV',
+    accentColor: Color(0xFF27AE60),
+    painPoints: [
+      '手数料あり・インド特化・個人のライフ管理は別途必要',
+      '配車/EV特化・個人のAI管理は別途必要',
+      'Uber/DiDiと比較してインド以外の国際展開が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Ola Cabs・Ola Electric EV・オートリクシャ・Ola Money',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'vinted': const _CompetitorInfo(
+    name: 'Vinted',
+    emoji: '👗',
+    tagline: '欧州最大中古ファッション・C2Cマーケットプレイス・送料保護・エコ消費で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Vinted代替 中古ファッション フリマ 欧州 Depop代替 CtoCファッション サステナブル',
+    accentColor: Color(0xFF09B1BA),
+    painPoints: [
+      '販売手数料あり・欧州特化・個人のライフ管理は別途必要',
+      '中古ファッション特化・個人のAI管理は別途必要',
+      'Depop/Poshmark/メルカリと比較して日本・アジア市場が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'C2C中古ファッション・Vinted Go・バンドル販売・本人確認',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'depop': const _CompetitorInfo(
+    name: 'Depop',
+    emoji: '🧢',
+    tagline: 'Gen Zファッションリセールアプリ・Etsy傘下・ヴィンテージ古着・クリエイター経済で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Depop代替 GenZ ファッション リセール 古着 ヴィンテージ Vinted代替 フリマ',
+    accentColor: Color(0xFFFF4040),
+    painPoints: [
+      '販売手数料あり・英語圏特化・個人のライフ管理は別途必要',
+      'ファッションリセール特化・個人のAI管理は別途必要',
+      'Vinted/Poshmarkと比較してヨーロッパ・アジア市場での普及が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ヴィンテージ/古着・ショップ開設・SNS連携・Etsy決済統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'apple-music': const _CompetitorInfo(
+    name: 'Apple Music',
+    emoji: '🎵',
+    tagline: '1億曲以上・ロスレス/空間オーディオ・Apple One・MusicKit APIで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Apple Music代替 音楽ストリーミング ロスレス 空間オーディオ Spotify代替 月額',
+    accentColor: Color(0xFFFC3C44),
+    painPoints: [
+      '月額制・Apple エコシステム特化・個人のライフ管理は別途必要',
+      '音楽ストリーミング特化・個人のAI管理は別途必要',
+      'Spotify/YouTube Musicと比較してアルゴリズムプレイリスト・Podcast機能が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '1億曲・ロスレス/空間オーディオ・歌詞・Radio・MusicKit',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'youtube-music': const _CompetitorInfo(
+    name: 'YouTube Music',
+    emoji: '▶️',
+    tagline: 'YouTube動画統合・8000万曲・オフライン再生・YouTube Premium同梱で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'YouTube Music代替 音楽ストリーミング YouTube Premium Spotify代替 Google 無料',
+    accentColor: Color(0xFFFF0000),
+    painPoints: [
+      '無料(広告あり)/有料・Google エコシステム特化・個人のライフ管理は別途必要',
+      '音楽ストリーミング特化・個人のAI管理は別途必要',
+      'Spotify/Apple Musicと比較して音楽キュレーション・Podcast専用機能が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '8000万曲・YouTube動画統合・オフライン・YouTube Premium同梱',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'pocket-casts': const _CompetitorInfo(
+    name: 'Pocket Casts',
+    emoji: '🎙️',
+    tagline: 'ポッドキャストアプリ・クロスプラットフォーム・スマートスピード・トリム無音で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Pocket Casts代替 ポッドキャスト アプリ Android iOS Apple Podcasts代替 Overcast代替',
+    accentColor: Color(0xFFF43E37),
+    painPoints: [
+      '有料/無料・ポッドキャスト特化・個人のライフ管理は別途必要',
+      'ポッドキャスト特化・個人のAI管理は別途必要',
+      'Spotify/Apple Podcastsと比較して音楽・動画コンテンツとの統合が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'スマートスピード・無音トリム・チャプター・クロスプラットフォーム同期',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'audible': const _CompetitorInfo(
+    name: 'Audible',
+    emoji: '📚',
+    tagline:
+        'Amazon傘下・オーディオブック・Whispersync・月1クレジット制・Podcast無料で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Audible代替 オーディオブック Amazon 月額 Kindle連携 ナレーション 読書',
+    accentColor: Color(0xFFF8991D),
+    painPoints: [
+      '月額制・クレジット制・Amazon特化・個人のライフ管理は別途必要',
+      'オーディオブック特化・個人のAI管理は別途必要',
+      'Google Play Books/Apple Books/Storytelと比較して月額コストが高い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'オーディオブック・Whispersync・Podcast・月1クレジット・Kindle連携',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
