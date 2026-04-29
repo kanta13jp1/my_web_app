@@ -45081,6 +45081,312 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'mondly': const _CompetitorInfo(
+    name: 'Mondly',
+    emoji: '🌍',
+    tagline: '41言語AR/VR会話練習・ネイティブ音声・毎日レッスン・AIチャットボット・ゲーミフィケーションで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Mondly代替 言語学習 41言語 AR VR 会話練習 Duolingo代替 Babbel代替',
+    accentColor: Color(0xFF7B2FBE),
+    painPoints: [
+      '無料/Pro月10ドル~・語学特化・個人のライフ管理は別途必要',
+      '言語学習特化・個人のAI管理は別途必要',
+      'Duolingo/Babbel/Busuuと比較してコンテンツ量・コミュニティ・試験対策が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '41言語AR/VR会話練習・ネイティブ音声・AIチャットボット・毎日レッスン',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'cambly': const _CompetitorInfo(
+    name: 'Cambly',
+    emoji: '🎤',
+    tagline: 'ネイティブ英語講師と即時接続・24時間・従量課金・録画・子供向けKidsで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Cambly代替 英会話 ネイティブ講師 オンライン即時接続 italki代替 Preply代替 24時間',
+    accentColor: Color(0xFFFFAB40),
+    painPoints: [
+      '有料(週15分〜月16ドル)・英会話特化・個人のライフ管理は別途必要',
+      '英語学習特化・個人のAI管理は別途必要',
+      'italki/Preply/DMM英会話と比較してコスト・言語の幅・テキスト補完が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ネイティブ講師即時接続・24時間・録画・Kids・従量課金',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'lingodeer': const _CompetitorInfo(
+    name: 'LingoDeer',
+    emoji: '🦌',
+    tagline: 'アジア言語特化・日韓中文法重視・ネイティブ音声・JLPT/HSK対応・体系的カリキュラムで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'LingoDeer代替 アジア言語 日本語学習 韓国語 中国語 JLPT HSK Duolingo代替 文法',
+    accentColor: Color(0xFF4CAF50),
+    painPoints: [
+      '無料/Pro月9ドル~・アジア語学特化・個人のライフ管理は別途必要',
+      '語学学習特化・個人のAI管理は別途必要',
+      'Duolingo/Babbel/WaniKaniと比較してコンテンツ幅・コミュニティ・スピーキング機能が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'アジア言語特化・文法重視・JLPT/HSK対応・ネイティブ音声・体系的カリキュラム',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'hellotalk': const _CompetitorInfo(
+    name: 'HelloTalk',
+    emoji: '💬',
+    tagline: '言語交換SNS・ネイティブと無料チャット・翻訳添削・音声通話・150言語で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'HelloTalk代替 言語交換 ネイティブ 無料チャット SNS 150言語 Tandem代替 Speaky代替',
+    accentColor: Color(0xFF00C853),
+    painPoints: [
+      '無料/VIP月6ドル~・言語交換SNS特化・個人のライフ管理は別途必要',
+      'コミュニケーション特化・個人のAI管理は別途必要',
+      'Tandem/Speaky/Hellopalと比較してネイティブの質・マッチング精度・プレミアム機能が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '言語交換SNS・150言語・翻訳添削・音声通話・Moments投稿',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'tandem': const _CompetitorInfo(
+    name: 'Tandem',
+    emoji: '🤝',
+    tagline: '言語交換マッチング・プロフィール検索・テキスト/音声/ビデオ・ProチューターとHelloTalk対比で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Tandem代替 言語交換 マッチング 会話練習 HelloTalk代替 Speaky代替 英会話 無料',
+    accentColor: Color(0xFF1565C0),
+    painPoints: [
+      '無料/Pro月5ドル~・言語交換特化・個人のライフ管理は別途必要',
+      '会話練習特化・個人のAI管理は別途必要',
+      'HelloTalk/Speaky/Hilocoと比較してマッチング速度・コミュニティ規模・UI洗練度が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'プロフィールマッチング・テキスト/音声/ビデオ・添削機能・Proチューター',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'fluentu': const _CompetitorInfo(
+    name: 'FluentU',
+    emoji: '🎬',
+    tagline: '実際の動画でビデオイマージョン学習・10言語・インタラクティブ字幕・スマートフラッシュカードで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'FluentU代替 動画 イマージョン学習 10言語 インタラクティブ字幕 YouTube学習 Yabla代替',
+    accentColor: Color(0xFF0288D1),
+    painPoints: [
+      '有料(月30ドル~)・動画学習特化・個人のライフ管理は別途必要',
+      '語学特化・個人のAI管理は別途必要',
+      'Yabla/Language Transfer/YouTubeと比較してコスト・コンテンツ更新頻度・AI機能が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '実際の動画・インタラクティブ字幕・スマートフラッシュカード・10言語・ビデオイマージョン',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'wanikan': const _CompetitorInfo(
+    name: 'WaniKani',
+    emoji: '🦀',
+    tagline: '漢字・語彙SRS学習・6000単語・60レベル・ラジカル分解法・JLPT N5-N1で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'WaniKani代替 漢字学習 SRS 日本語 JLPT 語彙 Anki代替 6000単語 ラジカル',
+    accentColor: Color(0xFFFF69B4),
+    painPoints: [
+      '無料(3レベル)/有料月9ドル~・漢字学習特化・個人のライフ管理は別途必要',
+      '日本語特化・個人のAI管理は別途必要',
+      'Anki/Clozemaster/LingoDeerと比較してコスト・口語表現・スピーキングが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '漢字SRS・ラジカル分解・6000語彙・60レベル・JLPT N5-N1対応',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'clozemaster': const _CompetitorInfo(
+    name: 'Clozemaster',
+    emoji: '📝',
+    tagline: '50言語50,000文穴埋めゲーム・CLIL統計的習熟・B2-C2上級者向けで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Clozemaster代替 上級語学 穴埋め 50言語 文脈学習 Duolingo卒業後 Anki代替',
+    accentColor: Color(0xFF6200EA),
+    painPoints: [
+      '無料/Pro月8ドル~・語学上級者特化・個人のライフ管理は別途必要',
+      '文脈学習特化・個人のAI管理は別途必要',
+      'Anki/WaniKani/Busuuと比較して初心者不向き・スピーキング・体系的文法説明が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '50言語50,000文・穴埋めゲーム・統計習熟・B2-C2上級者向け',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'anki': const _CompetitorInfo(
+    name: 'Anki',
+    emoji: '🃏',
+    tagline: 'OSS間隔反復フラッシュカード・100万デッキ共有・AnkiWeb同期・医学/語学/資格で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Anki代替 フラッシュカード SRS 間隔反復 OSS 医学勉強 語学学習 Quizlet代替',
+    accentColor: Color(0xFF0055CC),
+    painPoints: [
+      'PC無料/iOS25ドル・フラッシュカード特化・個人のライフ管理は別途必要',
+      '暗記特化・個人のAI管理は別途必要',
+      'Quizlet/Brainscape/RemNoteと比較してUI古い・モバイルコスト・カード作成手間が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'OSS・100万デッキ・AnkiWeb同期・カスタムアドオン・医学/語学/資格対応',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
