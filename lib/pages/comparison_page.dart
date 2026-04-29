@@ -17645,6 +17645,312 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'jasper': const _CompetitorInfo(
+    name: 'Jasper',
+    emoji: '✍️',
+    tagline: 'AI長文コンテンツ生成・マーケティングコピーで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Jasper代替 AIライティング コピーライティング ブログ記事 マーケティング',
+    accentColor: Color(0xFFFF6B00),
+    painPoints: [
+      '月額49ドル〜・個人ブロガーには高額すぎる',
+      'コンテンツ生成特化で個人の財務・習慣・AI対話は別途必要',
+      'ChatGPTの普及でコスト優位性・差別化が急速に低下',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '長文コンテンツ・Brand Voice・SEO分析・テンプレート50+',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'wordtune': const _CompetitorInfo(
+    name: 'Wordtune',
+    emoji: '🎵',
+    tagline: 'AI文章リライト・要約・翻訳補助で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Wordtune代替 文章リライト 言い換え AI校正 要約',
+    accentColor: Color(0xFF5D5CDD),
+    painPoints: [
+      '月額9.99ドル〜・無料プランは1日10回の書き換え上限',
+      '文章リライト特化で個人の財務・目標・AI管理は別途必要',
+      'GrammarlyやQuillBotと比較してネイティブ以外の言語対応が弱い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'リライト・要約・翻訳・スペル修正・トーン調整',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'quillbot': const _CompetitorInfo(
+    name: 'QuillBot',
+    emoji: '🦆',
+    tagline: 'AIパラフレーズ・文法チェック・要約ツールで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'QuillBot代替 パラフレーズ 言い換え 文法チェック AI校正 論文',
+    accentColor: Color(0xFF00B7A8),
+    painPoints: [
+      '月額9.95ドル〜・無料版は文字数制限・プレミアムモード使用不可',
+      '文章ツール特化で個人の財務・習慣・AIアシスタントは別途必要',
+      'Grammarlyと比較してIDEや各種プラットフォームの統合が少ない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'パラフレーズ7モード・要約・文法チェック・引用・翻訳',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'deepl': const _CompetitorInfo(
+    name: 'DeepL',
+    emoji: '🌐',
+    tagline: 'ニューラル機械翻訳(高精度日本語)で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'DeepL代替 翻訳 機械翻訳 Google翻訳代替 日本語翻訳 高精度',
+    accentColor: Color(0xFF0F2B46),
+    painPoints: [
+      'Pro月額8.74ドル〜・文字数超過・API利用は有料',
+      '翻訳特化で個人の財務・タスク・AI管理は別途必要',
+      'GPT-4等の汎用AIの翻訳品質向上でDeepLの優位性が縮小',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '高精度翻訳31言語・PDF変換・用語集・ブラウザ拡張',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'weglot': const _CompetitorInfo(
+    name: 'Weglot',
+    emoji: '🗺️',
+    tagline: 'Webサイト自動多言語化ツールで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Weglot代替 Webサイト多言語化 翻訳 i18n 国際化',
+    accentColor: Color(0xFF2BD4C7),
+    painPoints: [
+      '月額17ドル〜・コンテンツ量・言語数で急速にコスト増',
+      'Webサイト翻訳特化で個人のライフ管理・AI管理は別途必要',
+      '自動翻訳品質のバラつきがありプロの後編集が必要な場合も',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '自動翻訳・SEO対応・言語スイッチャー・人間翻訳注文',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'lokalise': const _CompetitorInfo(
+    name: 'Lokalise',
+    emoji: '🔤',
+    tagline: 'ローカライゼーション管理プラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Lokalise代替 ローカリゼーション 翻訳管理 i18n 多言語開発',
+    accentColor: Color(0xFFFF4D70),
+    painPoints: [
+      '月額120ドル〜・開発チームには高額・個人開発者には過剰',
+      '翻訳管理特化でエンジニア向け・個人のライフ管理は別途必要',
+      'CrowdinやPhraseと比較してモバイルSDK対応が弱い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'TM・AI翻訳・GitHub統合・スクリーンショット・チームワーク',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'freshsales': const _CompetitorInfo(
+    name: 'Freshsales',
+    emoji: '💰',
+    tagline: 'Freshworks AI搭載CRM・セールス自動化で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Freshsales代替 CRM セールス自動化 リード管理 パイプライン',
+    accentColor: Color(0xFF1DAE5F),
+    painPoints: [
+      '月額15ドル/人〜・上位機能はEnterprise限定',
+      'セールスCRM特化でチーム向け設計・個人管理は別途必要',
+      'Salesforceやhubspotと比較してエコシステム・統合数が少ない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AI Freddy・リード管理・パイプライン・シーケンス・分析',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'close': const _CompetitorInfo(
+    name: 'Close',
+    emoji: '📞',
+    tagline: 'アウトバウンド特化セールスCRMで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Close CRM代替 アウトバウンド 電話 メール セールス',
+    accentColor: Color(0xFFFD5750),
+    painPoints: [
+      '月額49ドル/人〜・通話量が多くないとコストパフォーマンスが低い',
+      'アウトバウンドセールス特化で個人ライフ管理・財務は別途必要',
+      '日本の電話環境・法規制への対応が限定的',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '組込電話・メール自動化・SMS・Zoom統合・レポート',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'attio': const _CompetitorInfo(
+    name: 'Attio',
+    emoji: '🔮',
+    tagline: '次世代AI CRM・リレーションシップ管理で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Attio代替 次世代CRM AI スタートアップ VC 人脈管理',
+    accentColor: Color(0xFF3D3D3D),
+    painPoints: [
+      '月額34ドル/人〜・スタートアップ/VCターゲットでSMBには過剰',
+      'CRM特化でチーム向け設計・個人のライフ管理・財務は別途必要',
+      'まだ成熟途上でSalesforceほどのエコシステムがない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AIエンリッチ・ワークフロー・自動同期・リポート・API',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
