@@ -1,7 +1,7 @@
 ---
 title: "Supabase Auth Complete Guide — OAuth, Magic Link & Row Level Security"
 tags: supabase,flutter,ai,indiedev
-published: false
+published: true
 ---
 
 # Supabase Auth Complete Guide — OAuth, Magic Link & Row Level Security
