@@ -1,7 +1,7 @@
 ---
 title: "Supabase Migrations Advanced — Zero-Downtime Schema Changes in Production"
 tags: supabase,postgresql,webdev,indiedev
-published: false
+published: true
 ---
 
 # Supabase Migrations Advanced — Zero-Downtime Schema Changes in Production
