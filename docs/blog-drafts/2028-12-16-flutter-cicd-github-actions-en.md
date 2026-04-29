@@ -1,7 +1,7 @@
 ---
 title: "Flutter CI/CD — Automating Tests, Builds, and Deploys with GitHub Actions"
 tags: flutter,ai,indiedev,automation
-published: false
+published: true
 ---
 
 # Flutter CI/CD — Automating Tests, Builds, and Deploys with GitHub Actions
