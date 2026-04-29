@@ -4449,6 +4449,685 @@ abstinence_slip_details: $slipDetailsText
     }
   }
 
+  Widget _buildHopsonInspiredHomeHero(
+    BuildContext context, {
+    required bool isDark,
+    required bool isCompact,
+    required _HomeOpsSnapshot snapshot,
+    required _HomeActionCommand nextAction,
+  }) {
+    final goal = snapshot.completionGoalSnapshot;
+    final targetCount = math.max(goal.targetCount, 1);
+    final completionRatio =
+        math.min(1.0, goal.todayCompletedCount / targetCount);
+    final shellColor =
+        isDark ? const Color(0xFFF4EFE2) : const Color(0xFFFFFBF1);
+    final boardColor =
+        isDark ? const Color(0xFFFBF3E6) : const Color(0xFFFFFCF2);
+    final navy = isDark ? const Color(0xFF0B1D2E) : const Color(0xFF102B43);
+    const ink = Color(0xFF17212D);
+    const mutedInk = Color(0xFF52606E);
+    const blue = Color(0xFF9EC1CF);
+    const peach = Color(0xFFD7A091);
+    const teal = Color(0xFF1A7C75);
+
+    return Container(
+      key: const Key('home_hopson_inspired_hero'),
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: shellColor,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.10)
+              : const Color(0xFFC8D7DD),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF2B4E66).withValues(alpha: 0.18),
+            blurRadius: 28,
+            offset: const Offset(0, 18),
+          ),
+        ],
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _buildHopsonChromeBar(
+            isCompact: isCompact,
+            navy: navy,
+            peach: peach,
+            blue: blue,
+          ),
+          Padding(
+            padding: EdgeInsets.all(isCompact ? 16 : 24),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final stacked = constraints.maxWidth < 760;
+                final intro = Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 7,
+                      ),
+                      decoration: BoxDecoration(
+                        color: blue.withValues(alpha: 0.28),
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: const Text(
+                        'AI OPERATING BOARD',
+                        style: TextStyle(
+                          color: Color(0xFF263747),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 0.6,
+                          height: 1.2,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 18),
+                    const Text(
+                      '自分株式会社',
+                      style: TextStyle(
+                        color: Color(0xFF121A25),
+                        fontSize: 38,
+                        fontWeight: FontWeight.w900,
+                        height: 1.05,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      nextAction.title,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: Color(0xFF233346),
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                        height: 1.35,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      nextAction.detail,
+                      maxLines: stacked ? 3 : 4,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: mutedInk,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        height: 1.55,
+                      ),
+                    ),
+                    const SizedBox(height: 18),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        _buildHopsonMetricPill(
+                          label: '今日',
+                          value:
+                              '${goal.todayCompletedCount}/$targetCount',
+                          color: navy,
+                        ),
+                        _buildHopsonMetricPill(
+                          label: '必須残',
+                          value: '${snapshot.pendingCriticalTaskCount}',
+                          color: const Color(0xFFC75B39),
+                        ),
+                        _buildHopsonMetricPill(
+                          label: '週末',
+                          value: '${snapshot.pendingStockTaskCount}',
+                          color: teal,
+                        ),
+                        _buildHopsonMetricPill(
+                          label: '逸脱',
+                          value: '${snapshot.abstinenceSlipCount}',
+                          color: peach,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 18),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(999),
+                      child: LinearProgressIndicator(
+                        value: completionRatio,
+                        minHeight: 8,
+                        backgroundColor: const Color(0xFFD9E5EB),
+                        color: teal,
+                      ),
+                    ),
+                    const SizedBox(height: 18),
+                    Wrap(
+                      spacing: 10,
+                      runSpacing: 10,
+                      children: [
+                        _buildHopsonActionButton(
+                          icon: Icons.wb_sunny_outlined,
+                          label: '朝の判断',
+                          color: navy,
+                          onPressed: () => _runTrackedAction(
+                            'morning-briefing',
+                            () => _openMorningBriefing(context),
+                          ),
+                        ),
+                        _buildHopsonActionButton(
+                          icon: Icons.school_outlined,
+                          label: 'AI大学',
+                          color: const Color(0xFF2E6F8E),
+                          onPressed: () => _runTrackedAction(
+                            'gemini-university',
+                            () => Navigator.of(context)
+                                .pushNamed('/gemini-university'),
+                          ),
+                        ),
+                        _buildHopsonActionButton(
+                          icon: Icons.account_tree_outlined,
+                          label: 'WBS',
+                          color: const Color(0xFFC77D54),
+                          onPressed: () => _runTrackedAction(
+                            'wbs-user-tasks',
+                            () => Navigator.of(context)
+                                .pushNamed('/wbs-user-tasks'),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                );
+                final board = _buildHopsonAbstractBoard(
+                  boardColor: boardColor,
+                  navy: navy,
+                  ink: ink,
+                  blue: blue,
+                  peach: peach,
+                  teal: teal,
+                  snapshot: snapshot,
+                );
+
+                if (stacked) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      intro,
+                      const SizedBox(height: 24),
+                      SizedBox(height: 300, child: board),
+                    ],
+                  );
+                }
+
+                return Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Expanded(flex: 9, child: intro),
+                    const SizedBox(width: 28),
+                    Expanded(
+                      flex: 11,
+                      child: SizedBox(height: 360, child: board),
+                    ),
+                  ],
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHopsonChromeBar({
+    required bool isCompact,
+    required Color navy,
+    required Color peach,
+    required Color blue,
+  }) {
+    return Container(
+      height: 42,
+      color: navy,
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Row(
+        children: [
+          _buildHopsonChromeDot(blue),
+          _buildHopsonChromeDot(peach),
+          _buildHopsonChromeDot(const Color(0xFFF1D6C7)),
+          _buildHopsonChromeDot(const Color(0xFFFFF8E7)),
+          const SizedBox(width: 18),
+          if (!isCompact) ...[
+            _buildHopsonNavText('Home', true),
+            _buildHopsonNavText('Today', false),
+            _buildHopsonNavText('Tasks', false),
+            _buildHopsonNavText('Reports', false),
+          ],
+          const Spacer(),
+          Icon(
+            Icons.search,
+            size: 18,
+            color: const Color(0xFFEFD9C8).withValues(alpha: 0.9),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHopsonChromeDot(Color color) {
+    return Container(
+      width: 10,
+      height: 10,
+      margin: const EdgeInsets.only(right: 7),
+      decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+    );
+  }
+
+  Widget _buildHopsonNavText(String label, bool selected) {
+    return Padding(
+      padding: const EdgeInsets.only(right: 18),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: selected
+              ? const Color(0xFFFFF8E7)
+              : const Color(0xFFFFF8E7).withValues(alpha: 0.66),
+          fontSize: 12,
+          fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+          height: 1.2,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHopsonMetricPill({
+    required String label,
+    required String value,
+    required Color color,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: color.withValues(alpha: 0.22)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              color: color.withValues(alpha: 0.78),
+              fontSize: 12,
+              fontWeight: FontWeight.w800,
+              height: 1.2,
+            ),
+          ),
+          const SizedBox(width: 6),
+          Text(
+            value,
+            style: TextStyle(
+              color: color,
+              fontSize: 14,
+              fontWeight: FontWeight.w900,
+              height: 1.2,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHopsonActionButton({
+    required IconData icon,
+    required String label,
+    required Color color,
+    required VoidCallback onPressed,
+  }) {
+    return FilledButton.icon(
+      onPressed: onPressed,
+      style: FilledButton.styleFrom(
+        backgroundColor: color,
+        foregroundColor: Colors.white,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(13)),
+        textStyle: const TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.w800,
+          height: 1.2,
+        ),
+      ),
+      icon: Icon(icon, size: 18),
+      label: Text(label),
+    );
+  }
+
+  Widget _buildHopsonAbstractBoard({
+    required Color boardColor,
+    required Color navy,
+    required Color ink,
+    required Color blue,
+    required Color peach,
+    required Color teal,
+    required _HomeOpsSnapshot snapshot,
+  }) {
+    final goal = snapshot.completionGoalSnapshot;
+    return Container(
+      decoration: BoxDecoration(
+        color: boardColor,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFF17324A).withValues(alpha: 0.18)),
+        boxShadow: [
+          BoxShadow(
+            color: navy.withValues(alpha: 0.18),
+            blurRadius: 22,
+            offset: const Offset(0, 14),
+          ),
+        ],
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final w = constraints.maxWidth;
+          final h = constraints.maxHeight;
+          final bigOrb = math.min(w * 0.24, 92.0);
+          final midOrb = math.min(w * 0.18, 74.0);
+          return Stack(
+            children: [
+              Positioned.fill(
+                child: CustomPaint(
+                  painter: _HopsonHomePainter(
+                    ink: ink,
+                    navy: navy,
+                    blue: blue,
+                    peach: peach,
+                    teal: teal,
+                  ),
+                ),
+              ),
+              Positioned(
+                left: w * 0.07,
+                top: h * 0.13,
+                child: Text(
+                  'JibunOS',
+                  style: TextStyle(
+                    color: ink,
+                    fontSize: math.min(30.0, w * 0.08),
+                    fontWeight: FontWeight.w900,
+                    height: 1.0,
+                  ),
+                ),
+              ),
+              Positioned(
+                right: w * 0.46,
+                top: h * 0.08,
+                child: _HopsonOrb(
+                  size: bigOrb,
+                  baseColor: blue,
+                  shadowColor: navy,
+                ),
+              ),
+              Positioned(
+                right: w * 0.17,
+                top: h * 0.16,
+                child: _HopsonOrb(
+                  size: midOrb,
+                  baseColor: const Color(0xFFB9D4DD),
+                  shadowColor: navy,
+                ),
+              ),
+              Positioned(
+                right: w * 0.40,
+                top: h * 0.36,
+                child: _HopsonOrb(
+                  size: math.min(w * 0.08, 34.0),
+                  baseColor: const Color(0xFF6D93A7),
+                  shadowColor: navy,
+                ),
+              ),
+              Positioned(
+                left: w * 0.07,
+                top: h * 0.38,
+                width: math.min(220.0, w * 0.45),
+                child: _buildHopsonInputStack(navy: navy, blue: blue),
+              ),
+              Positioned(
+                left: w * 0.36,
+                bottom: h * 0.16,
+                width: math.min(170.0, w * 0.36),
+                child: _buildHopsonToggleDeck(navy: navy, blue: blue),
+              ),
+              Positioned(
+                right: w * 0.06,
+                bottom: h * 0.13,
+                width: math.min(190.0, w * 0.34),
+                child: _buildHopsonRightControls(
+                  navy: navy,
+                  blue: blue,
+                  peach: peach,
+                  completed: goal.todayCompletedCount,
+                ),
+              ),
+              Positioned(
+                left: w * 0.41,
+                top: h * 0.44,
+                right: w * 0.10,
+                height: h * 0.22,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF9E7D9).withValues(alpha: 0.78),
+                    border: Border.all(
+                      color: ink.withValues(alpha: 0.26),
+                    ),
+                  ),
+                  alignment: Alignment.center,
+                  child: Wrap(
+                    alignment: WrapAlignment.center,
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      _buildHopsonSegment('Daily', navy, true),
+                      _buildHopsonSegment('AI', peach, false),
+                      _buildHopsonSegment('KPI', blue, false),
+                    ],
+                  ),
+                ),
+              ),
+              Positioned(
+                left: w * 0.48,
+                bottom: h * 0.08,
+                width: math.min(200.0, w * 0.34),
+                child: Container(
+                  height: 42,
+                  padding: const EdgeInsets.symmetric(horizontal: 14),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFFBF1),
+                    borderRadius: BorderRadius.circular(999),
+                    border: Border.all(color: ink.withValues(alpha: 0.24)),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.search, size: 17, color: ink),
+                      const Spacer(),
+                      Container(
+                        width: 5,
+                        height: 5,
+                        decoration: BoxDecoration(
+                          color: peach,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              Positioned(
+                left: 0,
+                bottom: 0,
+                width: w * 0.22,
+                height: h * 0.20,
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: peach.withValues(alpha: 0.58),
+                    borderRadius: const BorderRadius.only(
+                      topRight: Radius.circular(28),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildHopsonInputStack({
+    required Color navy,
+    required Color blue,
+  }) {
+    return Column(
+      children: [
+        _buildHopsonInputLine('Decision', navy, filled: false),
+        const SizedBox(height: 8),
+        _buildHopsonInputLine('Focus', blue, filled: true),
+        const SizedBox(height: 8),
+        _buildHopsonInputLine('Next', navy, filled: false),
+      ],
+    );
+  }
+
+  Widget _buildHopsonInputLine(
+    String label,
+    Color color, {
+    required bool filled,
+  }) {
+    return Container(
+      height: 36,
+      padding: const EdgeInsets.symmetric(horizontal: 13),
+      decoration: BoxDecoration(
+        color: filled ? color.withValues(alpha: 0.22) : const Color(0xFFFFFBF1),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: color.withValues(alpha: 0.55)),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: color,
+                fontSize: 12,
+                fontWeight: FontWeight.w800,
+                height: 1.2,
+              ),
+            ),
+          ),
+          Icon(Icons.close, size: 14, color: color.withValues(alpha: 0.72)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHopsonToggleDeck({
+    required Color navy,
+    required Color blue,
+  }) {
+    return Column(
+      children: [
+        for (final active in const [true, false, true])
+          Container(
+            height: 34,
+            margin: const EdgeInsets.only(bottom: 8),
+            decoration: BoxDecoration(
+              color: active ? const Color(0xFFFFFBF1) : blue.withValues(alpha: 0.35),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: navy.withValues(alpha: 0.32)),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                _buildHopsonMiniDot(navy),
+                Icon(Icons.auto_awesome, size: 13, color: navy),
+                _buildHopsonMiniDot(navy),
+              ],
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildHopsonRightControls({
+    required Color navy,
+    required Color blue,
+    required Color peach,
+    required int completed,
+  }) {
+    final bars = <Color>[navy, peach, blue];
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        for (var i = 0; i < bars.length; i++)
+          Container(
+            height: 22,
+            margin: const EdgeInsets.only(bottom: 8),
+            decoration: BoxDecoration(
+              color: i == 0 ? const Color(0xFFFFFBF1) : bars[i].withValues(alpha: 0.18),
+              borderRadius: BorderRadius.circular(999),
+              border: Border.all(color: bars[i].withValues(alpha: 0.78)),
+            ),
+          ),
+        const SizedBox(height: 4),
+        Row(
+          children: [
+            for (var i = 0; i < 5; i++)
+              Container(
+                width: 5,
+                height: 5,
+                margin: const EdgeInsets.only(right: 6),
+                decoration: BoxDecoration(
+                  color: i <= completed % 5 ? navy : navy.withValues(alpha: 0.22),
+                  shape: BoxShape.circle,
+                ),
+              ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildHopsonSegment(String label, Color color, bool selected) {
+    return Container(
+      width: 76,
+      padding: const EdgeInsets.symmetric(vertical: 9),
+      decoration: BoxDecoration(
+        color: selected ? color : color.withValues(alpha: 0.28),
+        border: Border.all(color: color.withValues(alpha: 0.4)),
+      ),
+      alignment: Alignment.center,
+      child: Text(
+        label,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: TextStyle(
+          color: selected ? Colors.white : const Color(0xFF1B2430),
+          fontSize: 11,
+          fontWeight: FontWeight.w800,
+          height: 1.2,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHopsonMiniDot(Color color) {
+    return Container(
+      width: 4,
+      height: 4,
+      decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final themeService = Provider.of<ThemeService>(context);
@@ -4462,7 +5141,7 @@ abstinence_slip_details: $slipDetailsText
     return Scaffold(
       key: const Key('home_page_scaffold'),
       backgroundColor:
-          isDark ? const Color(0xFF0A0A0A) : const Color(0xFFF3F7FF),
+          isDark ? const Color(0xFF08111F) : const Color(0xFFE8F2F5),
       appBar: AppBar(
         toolbarHeight: 74,
         title: const Column(
@@ -4479,18 +5158,16 @@ abstinence_slip_details: $slipDetailsText
               end: Alignment.bottomRight,
               colors: [
                 Color.alphaBlend(
-                  Colors.white.withValues(alpha: 0.08),
-                  primaryColor,
+                  primaryColor.withValues(alpha: 0.10),
+                  const Color(0xFF102B43),
                 ),
-                Color.alphaBlend(
-                  Colors.black.withValues(alpha: 0.2),
-                  primaryColor,
-                ),
+                const Color(0xFF183C5A),
+                const Color(0xFF0A1828),
               ],
             ),
           ),
         ),
-        backgroundColor: primaryColor,
+        backgroundColor: const Color(0xFF102B43),
         foregroundColor: Colors.white,
         centerTitle: true,
         actions: [
@@ -4569,14 +5246,14 @@ abstinence_slip_details: $slipDetailsText
             end: Alignment.bottomCenter,
             colors: isDark
                 ? const [
-                    Color(0xFF0A0A0A),
-                    Color(0xFF121212),
-                    Color(0xFF0A0A0A),
+                    Color(0xFF08111F),
+                    Color(0xFF0D1C2A),
+                    Color(0xFF102A35),
                   ]
                 : const [
-                    Color(0xFFF8FAFF),
-                    Color(0xFFF1F5F9),
-                    Color(0xFFE8EFF8),
+                    Color(0xFFE8F2F5),
+                    Color(0xFFFAF5EA),
+                    Color(0xFFDCEAF0),
                   ],
           ),
         ),
@@ -4643,6 +5320,14 @@ abstinence_slip_details: $slipDetailsText
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
+                            _buildHopsonInspiredHomeHero(
+                              context,
+                              isDark: isDark,
+                              isCompact: isCompact,
+                              snapshot: opsSnapshot,
+                              nextAction: nextAction,
+                            ),
+                            const SizedBox(height: 12),
                             // AI プロバイダー API キー未設定バナー (Windows版#94)
                             const ApiKeyStatusBanner(),
                             const ProactiveDiagnosticsCard(),
@@ -8417,6 +9102,222 @@ class _LpSeriesEntry {
   final int count;
 
   const _LpSeriesEntry({required this.date, required this.count});
+}
+
+class _HopsonOrb extends StatelessWidget {
+  final double size;
+  final Color baseColor;
+  final Color shadowColor;
+
+  const _HopsonOrb({
+    required this.size,
+    required this.baseColor,
+    required this.shadowColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: RadialGradient(
+          center: const Alignment(-0.42, -0.48),
+          radius: 0.94,
+          colors: [
+            Colors.white.withValues(alpha: 0.92),
+            baseColor,
+            shadowColor.withValues(alpha: 0.92),
+          ],
+          stops: const [0.0, 0.48, 1.0],
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: shadowColor.withValues(alpha: 0.28),
+            blurRadius: 18,
+            offset: const Offset(0, 12),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _HopsonHomePainter extends CustomPainter {
+  final Color ink;
+  final Color navy;
+  final Color blue;
+  final Color peach;
+  final Color teal;
+
+  const _HopsonHomePainter({
+    required this.ink,
+    required this.navy,
+    required this.blue,
+    required this.peach,
+    required this.teal,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final panel = Offset.zero & size;
+    final outlinePaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1
+      ..color = ink.withValues(alpha: 0.16);
+    final finePaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 0.8
+      ..color = ink.withValues(alpha: 0.23);
+    final dotPaint = Paint()..color = ink.withValues(alpha: 0.72);
+
+    final blueDiscPaint = Paint()..color = blue.withValues(alpha: 0.36);
+    canvas.drawCircle(
+      Offset(size.width * 0.20, size.height * 0.86),
+      size.width * 0.20,
+      blueDiscPaint,
+    );
+    canvas.drawCircle(
+      Offset(size.width * 0.92, size.height * 0.50),
+      size.width * 0.18,
+      Paint()..color = blue.withValues(alpha: 0.30),
+    );
+
+    canvas.drawLine(
+      Offset(size.width * 0.36, panel.top),
+      Offset(size.width * 0.36, panel.bottom),
+      outlinePaint,
+    );
+    canvas.drawLine(
+      Offset(size.width * 0.64, panel.top),
+      Offset(size.width * 0.64, panel.bottom),
+      outlinePaint,
+    );
+    canvas.drawLine(
+      Offset(panel.left, size.height * 0.46),
+      Offset(panel.right, size.height * 0.46),
+      outlinePaint,
+    );
+
+    for (var i = 0; i < 7; i++) {
+      final x = size.width * (0.30 + i * 0.025);
+      canvas.drawLine(
+        Offset(x, size.height * 0.32),
+        Offset(x, size.height * 0.70),
+        finePaint,
+      );
+    }
+
+    final chartRect = Rect.fromLTWH(
+      size.width * 0.48,
+      size.height * 0.08,
+      size.width * 0.16,
+      size.height * 0.25,
+    );
+    canvas.drawRect(chartRect, outlinePaint);
+    for (var i = 1; i < 4; i++) {
+      final x = chartRect.left + chartRect.width * i / 4;
+      canvas.drawLine(
+        Offset(x, chartRect.top),
+        Offset(x, chartRect.bottom),
+        finePaint,
+      );
+    }
+    for (var i = 1; i < 4; i++) {
+      final y = chartRect.top + chartRect.height * i / 4;
+      canvas.drawLine(
+        Offset(chartRect.left, y),
+        Offset(chartRect.right, y),
+        finePaint,
+      );
+    }
+    final path = Path()
+      ..moveTo(chartRect.left + chartRect.width * 0.10, chartRect.bottom)
+      ..lineTo(chartRect.left + chartRect.width * 0.35, chartRect.center.dy)
+      ..lineTo(chartRect.left + chartRect.width * 0.56, chartRect.top + 12)
+      ..lineTo(chartRect.right - 8, chartRect.top + chartRect.height * 0.34);
+    canvas.drawPath(
+      path,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.2
+        ..color = navy.withValues(alpha: 0.78),
+    );
+    for (final point in [
+      Offset(chartRect.left + chartRect.width * 0.10, chartRect.bottom),
+      Offset(chartRect.left + chartRect.width * 0.35, chartRect.center.dy),
+      Offset(chartRect.left + chartRect.width * 0.56, chartRect.top + 12),
+      Offset(chartRect.right - 8, chartRect.top + chartRect.height * 0.34),
+    ]) {
+      canvas.drawCircle(point, 2.5, Paint()..color = navy);
+    }
+
+    final dotStart = Offset(size.width * 0.70, size.height * 0.16);
+    for (var row = 0; row < 5; row++) {
+      for (var col = 0; col < 6; col++) {
+        canvas.drawCircle(
+          Offset(dotStart.dx + col * 20, dotStart.dy + row * 18),
+          row == 2 && col == 3 ? 2.6 : 1.9,
+          dotPaint,
+        );
+      }
+    }
+
+    final sunCenter = Offset(size.width * 0.88, size.height * 0.19);
+    for (var i = 0; i < 24; i++) {
+      final angle = (math.pi * 2 * i) / 24;
+      final inner = Offset(
+        sunCenter.dx + math.cos(angle) * 22,
+        sunCenter.dy + math.sin(angle) * 22,
+      );
+      final outer = Offset(
+        sunCenter.dx + math.cos(angle) * 48,
+        sunCenter.dy + math.sin(angle) * 48,
+      );
+      canvas.drawLine(inner, outer, finePaint);
+    }
+    canvas.drawCircle(sunCenter, 16, Paint()..color = navy);
+
+    final plantPaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.2
+      ..strokeCap = StrokeCap.round
+      ..color = teal.withValues(alpha: 0.85);
+    for (var i = 0; i < 7; i++) {
+      final baseX = size.width * (0.58 + i * 0.035);
+      final baseY = size.height * 0.73;
+      canvas.drawLine(
+        Offset(baseX, baseY),
+        Offset(baseX + (i.isEven ? -12 : 10), baseY - 52 - i * 4),
+        plantPaint,
+      );
+    }
+
+    canvas.drawCircle(
+      Offset(size.width * 0.68, size.height * 0.73),
+      size.width * 0.08,
+      Paint()..color = blue.withValues(alpha: 0.92),
+    );
+    canvas.drawCircle(
+      Offset(size.width * 0.73, size.height * 0.75),
+      size.width * 0.07,
+      Paint()..color = peach.withValues(alpha: 0.86),
+    );
+    canvas.drawRect(
+      Rect.fromLTWH(0, size.height * 0.80, size.width * 0.22, size.height * 0.2),
+      Paint()..color = peach.withValues(alpha: 0.18),
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant _HopsonHomePainter oldDelegate) {
+    return oldDelegate.ink != ink ||
+        oldDelegate.navy != navy ||
+        oldDelegate.blue != blue ||
+        oldDelegate.peach != peach ||
+        oldDelegate.teal != teal;
+  }
 }
 
 class _HomeMonthlyCashflowSummary {
