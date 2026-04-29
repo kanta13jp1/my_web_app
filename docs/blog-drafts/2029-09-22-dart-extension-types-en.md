@@ -1,7 +1,7 @@
 ---
 title: "Dart Extension Types — Zero-cost Type-safe Wrappers"
 tags: dart,flutter,webdev,indiedev
-published: false
+published: true
 ---
 
 # Dart Extension Types — Zero-cost Type-safe Wrappers

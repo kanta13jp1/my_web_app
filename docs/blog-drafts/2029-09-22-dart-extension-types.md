@@ -1,7 +1,7 @@
 ---
 title: "Dart Extension Types — ゼロコスト型安全ラッパーの使いかた"
 tags: flutter,dart,個人開発,AI
-published: false
+published: true
 ---
 
 # Dart Extension Types — ゼロコスト型安全ラッパーの使いかた
