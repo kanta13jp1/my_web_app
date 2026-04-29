@@ -37139,74 +37139,6 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
-  '15five': const _CompetitorInfo(
-    name: '15Five',
-    emoji: '📊',
-    tagline: '従業員エンゲージメント・パフォーマンス管理・OKR追跡で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: '15Five代替 従業員エンゲージメント パフォーマンス管理 OKR 1on1 フィードバック',
-    accentColor: Color(0xFF6BA5FF),
-    painPoints: [
-      '月額4ドル/人〜・HR特化・個人のライフ管理は別途必要',
-      'マネージャー/従業員評価特化・個人のAI管理は別途必要',
-      'Lattice/Culture Ampと比較して採用・オンボーディング機能が限られる',
-    ],
-    features: [
-      _FeatureComparison(
-        feature: '週次チェックイン・パルスサーベイ・OKR・1on1・パフォーマンスレビュー',
-        competitorHas: true,
-        weHave: false,
-      ),
-      _FeatureComparison(
-        feature: 'AI支援個人管理',
-        competitorHas: false,
-        weHave: true,
-      ),
-      _FeatureComparison(
-        feature: '財務管理統合',
-        competitorHas: false,
-        weHave: true,
-      ),
-      _FeatureComparison(
-        feature: '完全無料',
-        competitorHas: false,
-        weHave: true,
-      ),
-    ],
-  ),
-  '360learning': const _CompetitorInfo(
-    name: '360Learning',
-    emoji: '🎓',
-    tagline: 'コラボレイティブラーニング・LMS・企業内ナレッジ共有で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: '360Learning代替 コラボレイティブラーニング LMS 企業学習 社内研修 コース作成',
-    accentColor: Color(0xFF00D2FF),
-    painPoints: [
-      '月額8ドル/人〜・LMS特化・個人のライフ管理は別途必要',
-      '企業学習特化・個人のAI管理は別途必要',
-      'Docebo/Cornerstoneと比較して高度なコンプライアンス・認証管理が限られる',
-    ],
-    features: [
-      _FeatureComparison(
-        feature: 'コース作成・P2P学習・AIガイドコース・分析・LXP機能',
-        competitorHas: true,
-        weHave: false,
-      ),
-      _FeatureComparison(
-        feature: 'AI支援個人管理',
-        competitorHas: false,
-        weHave: true,
-      ),
-      _FeatureComparison(
-        feature: '財務管理統合',
-        competitorHas: false,
-        weHave: true,
-      ),
-      _FeatureComparison(
-        feature: '完全無料',
-        competitorHas: false,
-        weHave: true,
-      ),
-    ],
-  ),
   'absorblms': const _CompetitorInfo(
     name: 'Absorb LMS',
     emoji: '📚',
@@ -38275,40 +38207,6 @@ final _competitorInfo = <String, _CompetitorInfo>{
     features: [
       _FeatureComparison(
         feature: '処方薬配送・オンライン診察・肌ケア・メンタルヘルス・栄養サプリ',
-        competitorHas: true,
-        weHave: false,
-      ),
-      _FeatureComparison(
-        feature: 'AI支援個人管理',
-        competitorHas: false,
-        weHave: true,
-      ),
-      _FeatureComparison(
-        feature: '財務管理統合',
-        competitorHas: false,
-        weHave: true,
-      ),
-      _FeatureComparison(
-        feature: '完全無料',
-        competitorHas: false,
-        weHave: true,
-      ),
-    ],
-  ),
-  'noom': const _CompetitorInfo(
-    name: 'Noom',
-    emoji: '🥗',
-    tagline: 'AIと人間コーチング組み合わせ体重管理・行動変容プログラムで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Noom代替 体重管理 ダイエット 行動変容 AIコーチング 食事記録 心理学ベース',
-    accentColor: Color(0xFF88C057),
-    painPoints: [
-      '月額70ドル〜・体重管理特化・個人のライフ管理は別途必要',
-      '食事/体重特化・個人のAI管理は別途必要',
-      'MyFitnessPal/Looseitと比較してコスト高でフィットネストラッキングが限られる',
-    ],
-    features: [
-      _FeatureComparison(
-        feature: '食事記録・行動変容・心理学教育・人間コーチ・グループ・ログ',
         competitorHas: true,
         weHave: false,
       ),
