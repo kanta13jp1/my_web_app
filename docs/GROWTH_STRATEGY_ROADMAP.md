@@ -23748,3 +23748,17 @@ SECOND_BRAIN 0→4.0/7 + VIBE 4.5→6.5/7 + PLATFORM 2.0→3.0/7 = +7.0/21 (Win 
 ### commit
 (本 commit にて確定)
 
+
+## PS#6 S109 — 2026-04-29
+
+### 実装内容
+- **consensusBonus**: 1番人気+低オッズ(≤3.0)+前走好走(≤3着)の3指標合意confidence最大+4%
+  - 3指標全一致: +0.04 / 2指標一致: +0.02 / それ以外: 0
+  - confidence 25 terms体制確立
+  - reasoning文字列に「合意補正:+X%」追加
+
+### Philosophy Alignment
+#1 CEO感 (競馬予想モデル品質向上 = 実証価値) / #5 商品=ユーザー価値 (多指標合意で予測精度向上)
+
+### commit
+4750b435b
