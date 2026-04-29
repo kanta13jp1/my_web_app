@@ -43993,7 +43993,7 @@ final _competitorInfo = <String, _CompetitorInfo>{
     emoji: '🌱',
     tagline: 'プレミアムWordPressホスティング・SuperCacher・AI Bot・WP-CLI・Googleクラウドで、なぜ「自分株式会社」を選ぶか。',
     searchKeyword: 'SiteGround代替 WordPressホスティング プレミアム SuperCacher Bluehost代替 Hostinger代替',
-    accentColor: Color(0xFF FC5139),
+    accentColor: Color(0xFFFC5139),
     painPoints: [
       '有料(月4-15ドル)・ホスティング特化・個人のライフ管理は別途必要',
       'CMS/インフラ特化・個人のAI管理は別途必要',
@@ -44104,6 +44104,312 @@ final _competitorInfo = <String, _CompetitorInfo>{
     features: [
       _FeatureComparison(
         feature: '25種類レポート・スタイル/構造/可読性・20+統合・作家向け・買い切り',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'tinder': const _CompetitorInfo(
+    name: 'Tinder',
+    emoji: '🔥',
+    tagline: 'マッチングアプリ元祖・スワイプ発明・Super Like・Boost・Tinder Gold・70+国で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Tinder代替 マッチングアプリ スワイプ 恋愛 Bumble代替 Hinge代替 Pairs代替',
+    accentColor: Color(0xFFFF6B6B),
+    painPoints: [
+      '無料/Gold有料・恋愛特化・個人のライフ管理は別途必要',
+      'マッチング特化・個人のAI管理は別途必要',
+      'Bumble/Hinge/Coffeeと比較してBot/偽アカ・長期関係志向・サブスクコストが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'スワイプ・Super Like・Boost・70+国・ビデオ通話・AI写真最適化',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'ebay': const _CompetitorInfo(
+    name: 'eBay',
+    emoji: '🛒',
+    tagline: 'オークション&固定価格EC・中古品/希少品・180+国・バイヤー保護・eBay Motors/Fashionで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'eBay代替 オークション ECサイト 中古品 Amazon代替 Mercari代替 希少品 180か国',
+    accentColor: Color(0xFFE53238),
+    painPoints: [
+      '手数料(販売時12-15%)・EC/オークション特化・個人のライフ管理は別途必要',
+      'ショッピング特化・個人のAI管理は別途必要',
+      'Amazon/Mercari/Vinted比較してUI/UX・即購入体験・配送速度・詐欺リスクが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'オークション・固定価格・180+国・eBay Motors・Fashion・バイヤー保護',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'etsy': const _CompetitorInfo(
+    name: 'Etsy',
+    emoji: '🎨',
+    tagline: 'ハンドメイド・ビンテージ・クラフト素材マーケット・96M+購入者・クリエイター経済で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Etsy代替 ハンドメイド クラフト ビンテージ マーケットプレイス Amazon Handmade代替 クリエイター',
+    accentColor: Color(0xFFF16521),
+    painPoints: [
+      '販売手数料(6.5%)・ハンドメイド/クリエイター特化・個人のライフ管理は別途必要',
+      'EC特化・個人のAI管理は別途必要',
+      'Amazon Handmade/Shopify/Redbubble比較して手数料上昇・値下げ圧力・コピー品問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ハンドメイド・ビンテージ・96M+購入者・Etsy Ads・Pattern・Payments',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'goodnotes': const _CompetitorInfo(
+    name: 'GoodNotes',
+    emoji: '📝',
+    tagline: 'iPadノートアプリ・Apple Pencil手書き認識・PDFアノテーション・AI数式・フラッシュカードで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'GoodNotes代替 iPad ノート Apple Pencil 手書き PDF Notability代替 勉強',
+    accentColor: Color(0xFFFC766A),
+    painPoints: [
+      '有料(年10-15ドル)・iPad特化・ノート管理特化・個人のライフ管理は別途必要',
+      'ノート取り特化・個人のAI管理は別途必要',
+      'Notability/Noteshelf/Apple Notesと比較してAndroid対応・クラウド同期速度・価格が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Apple Pencil・手書き認識・PDFアノテーション・AI数式・フラッシュカード',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'notability': const _CompetitorInfo(
+    name: 'Notability',
+    emoji: '🖊️',
+    tagline: 'iPadノート&録音同期・音声リプレイ・PDF編集・iCloud同期・Apple Watchで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Notability代替 iPad ノート 音声録音 Apple Pencil GoodNotes代替 授業ノート PDF',
+    accentColor: Color(0xFF4CAF50),
+    painPoints: [
+      '年2.99ドル~・iPad/Mac特化・ノート管理特化・個人のライフ管理は別途必要',
+      'ノート/録音特化・個人のAI管理は別途必要',
+      'GoodNotes/Noteshelfと比較してサブスク価格変更・Windows/Android非対応が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '録音同期・音声リプレイ・PDF編集・Apple Pencil・iCloud・Watch',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'quizlet': const _CompetitorInfo(
+    name: 'Quizlet',
+    emoji: '🃏',
+    tagline: 'AI学習フラッシュカード・テストモード・Quizlet+・750M+学習セット・教師向けで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Quizlet代替 フラッシュカード 暗記 AI学習 Anki代替 Brainscape代替 試験勉強',
+    accentColor: Color(0xFF4257B2),
+    painPoints: [
+      '無料/Plus月8ドル・暗記学習特化・個人のライフ管理は別途必要',
+      '学習ツール特化・個人のAI管理は別途必要',
+      'Anki/Brainscape/Kahootと比較してオフライン・間隔反復精度・広告表示が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AIフラッシュカード・テスト・マッチ・750M+セット・教師ダッシュボード',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'nike-run-club': const _CompetitorInfo(
+    name: 'Nike Run Club',
+    emoji: '👟',
+    tagline: 'Nike公式ランニングアプリ・ガイドランニング・GPS・Apple Watch・コーチで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Nike Run Club代替 ランニング GPS Strava代替 Runkeeper代替 ガイドラン Apple Watch',
+    accentColor: Color(0xFF111111),
+    painPoints: [
+      '無料・ランニング特化・個人のライフ管理は別途必要',
+      'フィットネス特化・個人のAI管理は別途必要',
+      'Strava/Runkeeper/Garminと比較してソーシャル機能・自転車/水泳対応・詳細分析が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ガイドランニング・GPS・Apple Watch・パーソナルコーチ・挑戦・シェア',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'grubhub': const _CompetitorInfo(
+    name: 'Grubhub',
+    emoji: '🍔',
+    tagline: '米国フードデリバリー・Grubhub+無料配送・Amazon Primeバンドル・大学キャンパスで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Grubhub代替 フードデリバリー アメリカ DoorDash代替 Uber Eats代替 Amazon Prime 食事',
+    accentColor: Color(0xFFF63440),
+    painPoints: [
+      '有料(Grubhub+月10ドル)/無料・フードデリバリー特化・個人のライフ管理は別途必要',
+      '食事注文特化・個人のAI管理は別途必要',
+      'DoorDash/Uber Eatsと比較してカバレッジエリア・配達速度・ドライバー数が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Grubhub+・Amazon Primeバンドル・大学・レストランポイント・ダイニング',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'waking-up': const _CompetitorInfo(
+    name: 'Waking Up',
+    emoji: '🧘',
+    tagline: 'Sam Harris・科学的マインドフルネス・瞑想理論・哲学・Daily Meditation・無料アクセスで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Waking Up代替 瞑想 マインドフルネス Sam Harris 科学的 Headspace代替 Calm代替 哲学',
+    accentColor: Color(0xFF2C2C2E),
+    painPoints: [
+      '有料(月15ドル)/無料アクセス制度あり・瞑想/哲学特化・個人のライフ管理は別途必要',
+      'メンタルウェルネス特化・個人のAI管理は別途必要',
+      'Headspace/Calm/Insight Timerと比較してコンテンツの重さ・初心者向けガイド・子ども向けが限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '科学的瞑想・Sam Harris・哲学・理論・Daily Meditation・無料アクセス制度',
         competitorHas: true,
         weHave: false,
       ),
