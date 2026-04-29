@@ -30771,6 +30771,312 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'speechify': const _CompetitorInfo(
+    name: 'Speechify',
+    emoji: '📖',
+    tagline: 'AI音声読み上げ・テキストto音声・学習ツールで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Speechify代替 テキスト読み上げ TTS 音声学習 PDF読み上げ 速読 音声',
+    accentColor: Color(0xFF7C3AED),
+    painPoints: [
+      '月額11.58ドル〜・音声読み上げ特化・個人のライフ管理は別途必要',
+      '読み上げ学習特化・個人のAI管理は別途必要',
+      'ElevenLabs/Play.htと比較してAPIアクセス・カスタマイズが限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'PDF/Web/ドキュメント読み上げ・2倍速・AI音声・多言語・Chrome拡張',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'otter-ai': const _CompetitorInfo(
+    name: 'Otter.ai',
+    emoji: '🦦',
+    tagline: 'AI会議文字起こし・リアルタイム議事録・共有プラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Otter.ai代替 会議文字起こし AI議事録 リアルタイム Zoom Google Meet Teams',
+    accentColor: Color(0xFF0EA5E9),
+    painPoints: [
+      '無料/月額10ドル〜・会議文字起こし特化・個人のライフ管理は別途必要',
+      '議事録特化・個人のAI管理は別途必要',
+      'Fireflies/Notta比較で要約精度・多言語対応が課題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'リアルタイム文字起こし・AI要約・アクションアイテム・Zoom/Meet連携',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'fireflies': const _CompetitorInfo(
+    name: 'Fireflies.ai',
+    emoji: '🔥',
+    tagline: 'AI会議録音・文字起こし・知識グラフ管理ツールで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Fireflies代替 会議録音 文字起こし AI要約 知識管理 CRM連携 Salesforce',
+    accentColor: Color(0xFFEF4444),
+    painPoints: [
+      '無料/月額10ドル〜・会議記録特化・個人のライフ管理は別途必要',
+      '会議インサイト特化・個人のAI管理は別途必要',
+      'Otter.ai/Notta比較でリアルタイム表示・多言語精度が劣ることがある',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '会議録音・AI要約・トピック検索・CRM連携・感情分析・テーマ抽出',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'notta': const _CompetitorInfo(
+    name: 'Notta',
+    emoji: '📝',
+    tagline: 'AI音声文字起こし・多言語会議記録ツールで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Notta代替 音声文字起こし 多言語 会議録音 日本語 AI要約 議事録',
+    accentColor: Color(0xFF4F46E5),
+    painPoints: [
+      '無料/月額13.99ドル〜・文字起こし特化・個人のライフ管理は別途必要',
+      '多言語文字起こし特化・個人のAI管理は別途必要',
+      'Otter.ai/Fireflies比較で日本語精度は強いが他統合が少ない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '104言語・AI要約・Zoom/Teams/Meet・ファイル変換・テンプレート',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'deepgram': const _CompetitorInfo(
+    name: 'Deepgram',
+    emoji: '🌊',
+    tagline: 'エンタープライズ音声AI・高速文字起こしAPIで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Deepgram代替 音声API 文字起こし エンタープライズ リアルタイム STT 高精度',
+    accentColor: Color(0xFF13EF93),
+    painPoints: [
+      '使用量課金・音声API特化・個人のライフ管理は別途必要',
+      'STT API特化・個人のAI管理は別途必要',
+      'AssemblyAI/Whisperと比較してエコシステム・LLM統合が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Nova-2モデル・リアルタイム/バッチ・30+言語・Speaker分離・感情',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'assembly-ai': const _CompetitorInfo(
+    name: 'AssemblyAI',
+    emoji: '🏗️',
+    tagline: 'AIオーディオインテリジェンス・文字起こし+LLMプラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'AssemblyAI代替 音声文字起こし AI分析 LLM音声 要約 センチメント PII',
+    accentColor: Color(0xFF6366F1),
+    painPoints: [
+      '使用量課金・音声AI特化・個人のライフ管理は別途必要',
+      'オーディオインテリジェンス特化・個人のAI管理は別途必要',
+      'Deepgram比較でリアルタイム精度・速度が課題なことがある',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '文字起こし・要約・センチメント・トピック検出・PII除去・LeMUR LLM',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'rev': const _CompetitorInfo(
+    name: 'Rev',
+    emoji: '📄',
+    tagline: 'プロ品質文字起こし・字幕・AI+人間ハイブリッドサービスで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Rev代替 文字起こし 字幕 キャプション AI+人間 プロ品質 YouTube 訴訟',
+    accentColor: Color(0xFF047857),
+    painPoints: [
+      '月額9.99ドル〜・文字起こし特化・個人のライフ管理は別途必要',
+      '字幕/文字起こし特化・個人のAI管理は別途必要',
+      'AI専用サービスと比較してコスト高・ターンアラウンドが遅いことがある',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AI+人間文字起こし・字幕・99%精度保証・法律/医療対応・40+言語',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'speak-ai': const _CompetitorInfo(
+    name: 'Speak AI',
+    emoji: '🗺️',
+    tagline: '音声・動画・テキストデータ分析・リサーチインサイトAIで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Speak AI代替 音声分析 動画分析 リサーチ インサイト 文字起こし 感情分析',
+    accentColor: Color(0xFF7C3AED),
+    painPoints: [
+      '月額不明・音声/動画分析特化・個人のライフ管理は別途必要',
+      'リサーチ分析特化・個人のAI管理は別途必要',
+      'NVivo/Dedooseと比較して質的研究向け機能が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '音声/動画/テキスト分析・テーマ抽出・感情・ビジュアライズ・API',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'sonix': const _CompetitorInfo(
+    name: 'Sonix',
+    emoji: '🎧',
+    tagline: 'AI自動文字起こし・翻訳・字幕生成プラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Sonix代替 自動文字起こし 翻訳 字幕生成 多言語 ジャーナリスト 動画',
+    accentColor: Color(0xFFDB2777),
+    painPoints: [
+      '月額22ドル〜・文字起こし特化・個人のライフ管理は別途必要',
+      '自動文字起こし特化・個人のAI管理は別途必要',
+      'Rev/Otter.aiと比較してAI音声認識精度・統合が劣ることがある',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '38+言語・自動翻訳・字幕エクスポート・検索・チームコラボ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
