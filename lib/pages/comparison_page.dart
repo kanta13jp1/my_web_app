@@ -22711,6 +22711,312 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'adp': const _CompetitorInfo(
+    name: 'ADP',
+    emoji: '💼',
+    tagline: '米国最大規模給与計算・HRアウトソーシングで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'ADP代替 給与計算 HR アウトソーシング 人事管理 米国 ペイロール',
+    accentColor: Color(0xFFCC0000),
+    painPoints: [
+      'Enterprise価格非公開・中小企業でも月額数万円〜・追加機能ごとに課金',
+      '給与/HR特化でエンタープライズ向け設計・個人のライフ管理は別途必要',
+      'GustoやPaychexと比較してUIが古くユーザー体験が劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '給与計算・税務・HR管理・勤怠・福利厚生・ATS・HCM統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'paychex': const _CompetitorInfo(
+    name: 'Paychex',
+    emoji: '💰',
+    tagline: '中小企業向け給与計算・HR・福利厚生サービスで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Paychex代替 給与計算 中小企業 HR 福利厚生 ペイロール ADP代替',
+    accentColor: Color(0xFF003087),
+    painPoints: [
+      '月額約39ドル+4ドル/人〜・機能追加ごとに費用増大・サポート品質が不均一',
+      '給与/HR特化でビジネス向け設計・個人のライフ管理は別途必要',
+      'Gustoと比較してUIが古くユーザー体験が劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '給与計算・税務・HR・退職金・ヘルスケア・時間追跡・ATS',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'zenefits': const _CompetitorInfo(
+    name: 'Zenefits (TriNet HR Platform)',
+    emoji: '🏢',
+    tagline: 'クラウドHRプラットフォーム・給与・福利厚生統合で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Zenefits代替 HR プラットフォーム 給与計算 福利厚生 中小企業 TriNet',
+    accentColor: Color(0xFF00D4AA),
+    painPoints: [
+      '月額10ドル/人〜・米国のみ対応・追加機能ごとに費用が発生',
+      'HR/給与特化でビジネス向け設計・個人のライフ管理は別途必要',
+      'Gustoと比較して最近TriNet傘下で機能更新が停滞気味',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'HR管理・給与・時間・PTO・福利厚生・コンプライアンス・採用',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'indeed': const _CompetitorInfo(
+    name: 'Indeed',
+    emoji: '🔎',
+    tagline: '世界最大求人検索エンジン・求人掲載・採用ツールで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Indeed代替 求人検索 求人サイト 採用 求人掲載 就活 転職',
+    accentColor: Color(0xFF003A9B),
+    painPoints: [
+      '求人掲載スポンサー課金・クリック課金で費用が予測しにくい',
+      '求人検索/掲載特化・採用管理以外の個人ライフ管理は別途必要',
+      'LinkedInと比較してプロフェッショナルネットワーク・スキル表示が弱い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '世界最大求人DB・スポンサー掲載・履歴書検索・評価・ATS統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'bizreach': const _CompetitorInfo(
+    name: 'ビズリーチ',
+    emoji: '🎯',
+    tagline: '即戦力人材プレミアムスカウト型転職サービスで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'ビズリーチ代替 ハイクラス転職 スカウト 即戦力 転職サイト 日本',
+    accentColor: Color(0xFFE8003D),
+    painPoints: [
+      '求職者月額5,478円〜・プレミアム会員費が必要・採用担当者も高額',
+      '転職/採用特化でHR向け設計・個人のライフ管理は別途必要',
+      'リクルートと比較してマス採用・若手採用には不向き',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'スカウト型・ハイクラス求人・ヘッドハンター・企業検索・年収UP',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'mynavi': const _CompetitorInfo(
+    name: 'マイナビ転職',
+    emoji: '🌟',
+    tagline: '日本大手転職情報サイト・新卒就活でも有名で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'マイナビ代替 転職サイト 就活 新卒 日本 求人 転職活動',
+    accentColor: Color(0xFF003087),
+    painPoints: [
+      '求人掲載企業側は高額・求職者は無料だが情報が多く比較に時間がかかる',
+      '転職/就活特化でHR向け設計・個人のAIライフ管理は別途必要',
+      'リクナビと比較して中途採用・キャリアアップ系でやや弱い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '大量求人DB・スカウト・エージェント・適性検査・キャリアアドバイス',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'teamspirit': const _CompetitorInfo(
+    name: 'TeamSpirit',
+    emoji: '⏱️',
+    tagline: '日本企業向け勤怠・工数・経費管理クラウドで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'TeamSpirit代替 勤怠管理 工数管理 経費精算 日本 クラウド Salesforce連携',
+    accentColor: Color(0xFF00A0E9),
+    painPoints: [
+      '月額600円/ユーザー〜・Salesforce基盤で追加費用が発生しやすい',
+      '勤怠/工数特化で企業向け設計・個人のライフ管理は別途必要',
+      'ジンジャーや楽楽勤怠と比較して中小企業への対応が弱い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '勤怠・工数・経費・有休・マイナンバー・Salesforce統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'jinjer': const _CompetitorInfo(
+    name: 'ジンジャー (jinjer)',
+    emoji: '🧑‍💼',
+    tagline: '日本中小企業向けHRMクラウド・勤怠/給与/採用一体型で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'ジンジャー代替 HRM 勤怠管理 給与計算 採用管理 日本 中小企業',
+    accentColor: Color(0xFFFF6B35),
+    painPoints: [
+      '月額400円/ユーザー〜・機能追加ごとに費用が上がる・カスタマイズが限定的',
+      '勤怠/給与/HR特化で企業向け設計・個人のAIライフ管理は別途必要',
+      'freee人事労務と比較してUIデザインとモバイル対応が弱い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '勤怠・給与・採用・人事管理・経費・電子契約・労務申請一体型',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'doda': const _CompetitorInfo(
+    name: 'doda (デューダ)',
+    emoji: '🚀',
+    tagline: 'パーソルキャリア運営日本転職サイト・エージェントで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'doda代替 転職サイト 転職エージェント 日本 キャリアアップ 求人',
+    accentColor: Color(0xFF00ABE6),
+    painPoints: [
+      'エージェント利用は無料だが採用側高額・応募後のフォロー品質が担当者次第',
+      '転職/就活特化でHR向け設計・個人のAIライフ管理は別途必要',
+      'ビズリーチと比較してハイクラス・スカウト特化の機能が弱い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '転職エージェント・求人DB・スカウト・年収診断・キャリアコーチ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
