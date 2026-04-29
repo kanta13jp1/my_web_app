@@ -17033,6 +17033,312 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'new-relic': const _CompetitorInfo(
+    name: 'New Relic',
+    emoji: '📡',
+    tagline: 'フルスタックオブザーバビリティ・監視プラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'New Relic代替 APM アプリ監視 オブザーバビリティ パフォーマンス',
+    accentColor: Color(0xFF008C99),
+    painPoints: [
+      '無料100GBまで・超過は$0.35/GBと大量データで高額化',
+      'インフラ監視特化でエンジニア向け・個人ライフ管理は別途必要',
+      'Datadogと比較してUI学習コストが高くオンボーディングに時間がかかる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'APM・インフラ・ログ・ブラウザ・モバイル・AIアシスト',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'dynatrace': const _CompetitorInfo(
+    name: 'Dynatrace',
+    emoji: '🔭',
+    tagline: 'AIオブザーバビリティ＋自動根本原因分析で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Dynatrace代替 AI監視 APM クラウド監視 自動化',
+    accentColor: Color(0xFF1496FF),
+    painPoints: [
+      '時間あたり$0.04〜・エンタープライズは年間数十万ドルに',
+      'エンタープライズIT監視特化でエンジニア/運用チーム向け',
+      'New RelicやDatadogと比較してSMBには価格・機能が過剰',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AI根本原因分析・自動化・フルスタック・クラウドネイティブ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'grafana-cloud': const _CompetitorInfo(
+    name: 'Grafana Cloud',
+    emoji: '📈',
+    tagline: 'オープンソース統合監視・可視化プラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Grafana代替 ダッシュボード 監視 Prometheus メトリクス',
+    accentColor: Color(0xFFF46800),
+    painPoints: [
+      '無料枠超過は高額・セルフホストはインフラ運用コストが発生',
+      '監視・可視化特化でDevOps向け・個人ライフ管理は別途必要',
+      '設定が複雑でGrafanaを使いこなすにはOps知識が必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Prometheus/Loki統合・ダッシュボード・アラート・トレーシング',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'cloudflare': const _CompetitorInfo(
+    name: 'Cloudflare',
+    emoji: '☁️',
+    tagline: 'CDN＋Zero Trust・Web セキュリティ基盤で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Cloudflare代替 CDN DDoS防御 Zero Trust DNS セキュリティ',
+    accentColor: Color(0xFFF38020),
+    painPoints: [
+      'Pro月額20ドル〜・エンタープライズは別途見積り',
+      'インフラ・セキュリティ特化でWeb開発者向け・個人ライフ管理は別途必要',
+      '設定ミスがサイトダウンにつながるリスクがある',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'CDN・DDoS保護・WAF・DNS・Pages・Workers・R2',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'rollbar': const _CompetitorInfo(
+    name: 'Rollbar',
+    emoji: '🛡️',
+    tagline: 'リアルタイムエラー監視＆ワークフロー自動化で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Rollbar代替 エラー監視 例外追跡 バグ通知 開発者ツール',
+    accentColor: Color(0xFFFF6B6B),
+    painPoints: [
+      '月額19ドル〜・無料プランは5,000エラーイベント/月上限',
+      'エラー追跡特化でエンジニア向け・個人ライフ管理は別途必要',
+      'Sentryと比較してコミュニティ・インテグレーション数が少ない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'エラーグルーピング・デプロイ追跡・自動アサイン・RQL',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'bugsnag': const _CompetitorInfo(
+    name: 'Bugsnag',
+    emoji: '🐛',
+    tagline: 'アプリ安定性監視＋エラー追跡で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Bugsnag代替 クラッシュ報告 安定性監視 モバイルエラー アプリ品質',
+    accentColor: Color(0xFF4F46E5),
+    painPoints: [
+      '月額47ドル〜・モバイルアプリ保有チームには高額',
+      'エラー監視特化でエンジニア向け・個人管理は別途必要',
+      'Sentryと比較してOSS版がなくカスタマイズ性が低い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'クラッシュ報告・影響範囲分析・リリース追跡・モバイル対応',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'algolia': const _CompetitorInfo(
+    name: 'Algolia',
+    emoji: '🔍',
+    tagline: 'ホステッド検索API＋レコメンドエンジンで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Algolia代替 検索API サイト内検索 全文検索 パーソナライズ',
+    accentColor: Color(0xFF003DFF),
+    painPoints: [
+      '月額50ドル〜・レコード・検索操作数増加で急速にコスト増',
+      '検索基盤特化でエンジニア向け・個人ライフ管理は別途必要',
+      'Typesense等のOSS代替登場でコスト優位性が低下',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ホステッド検索・AI Recommendations・インスタント検索・パーソナライズ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'elastic': const _CompetitorInfo(
+    name: 'Elastic',
+    emoji: '🔎',
+    tagline: 'Elasticsearch＋観測・セキュリティ統合基盤で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Elastic代替 Elasticsearch 全文検索 ログ分析 SIEM',
+    accentColor: Color(0xFF00BFB3),
+    painPoints: [
+      'クラウド版は月95ドル〜・大規模データは高額・運用も複雑',
+      '検索・ログ・SIEM特化でエンジニア/SecOps向け・個人管理は別途必要',
+      'セルフホストはクラスター管理・チューニングに専門知識が必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Elasticsearch・Kibana・Logstash・Beats・ELSER AI検索',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'typesense': const _CompetitorInfo(
+    name: 'Typesense',
+    emoji: '⚡',
+    tagline: 'OSSホステッド高速検索エンジン(Algolia代替)で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Typesense代替 OSS検索 Algolia代替 高速全文検索 セルフホスト',
+    accentColor: Color(0xFFD64242),
+    painPoints: [
+      'クラウド版は月25ドル〜・セルフホストは運用コストが発生',
+      '検索特化でエンジニア向け・個人のライフ管理・財務は別途必要',
+      'Algoliaと比較してマネージドサービスの機能・サポートが少ない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'インスタント検索・ファセット・ベクター検索・マルチテナント',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
