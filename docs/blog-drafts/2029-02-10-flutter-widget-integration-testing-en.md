@@ -1,7 +1,7 @@
 ---
 title: "Flutter Testing Complete Guide — Widget & Integration Tests for Quality Assurance"
 tags: flutter,dart,ai,indiedev
-published: false
+published: true
 ---
 
 # Flutter Testing Complete Guide — Widget & Integration Tests for Quality Assurance
