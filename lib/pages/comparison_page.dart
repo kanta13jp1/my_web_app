@@ -34377,6 +34377,312 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'kong': const _CompetitorInfo(
+    name: 'Kong',
+    emoji: '🦍',
+    tagline: 'クラウドネイティブAPIゲートウェイ・サービスメッシュ・プラグインエコシステムで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Kong代替 APIゲートウェイ サービスメッシュ マイクロサービス プラグイン Nginx',
+    accentColor: Color(0xFF003459),
+    painPoints: [
+      '無料OSS/月額250ドル〜・APIゲートウェイ特化・個人のライフ管理は別途必要',
+      'API管理/マイクロサービス特化・個人のAI管理は別途必要',
+      'Apigee/AWS API Gatewayと比較してエンタープライズサポートが限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'レートリミット・認証・ルーティング・プラグイン300+・k8s Ingress・WebSocket',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'tyk': const _CompetitorInfo(
+    name: 'Tyk',
+    emoji: '🔒',
+    tagline: 'オープンソースAPIゲートウェイ・デベロッパーポータル・APIライフサイクル管理で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Tyk代替 APIゲートウェイ APIライフサイクル デベロッパーポータル Kong代替 OSS',
+    accentColor: Color(0xFF34B6C6),
+    painPoints: [
+      '無料OSS/月額高価格・API管理特化・個人のライフ管理は別途必要',
+      'APIゲートウェイ特化・個人のAI管理は別途必要',
+      'Kong/Apigeeと比較してコミュニティ・プラグイン数が劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'APIゲートウェイ・デベロッパーポータル・ダッシュボード・GraphQL・gRPC・MQTT',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'apigee': const _CompetitorInfo(
+    name: 'Apigee',
+    emoji: '🔮',
+    tagline: 'Google Cloud APIマネジメント・エンタープライズAPIライフサイクルで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Apigee代替 Google API管理 エンタープライズ APIライフサイクル セキュリティ分析',
+    accentColor: Color(0xFF1A73E8),
+    painPoints: [
+      '月額高価格・エンタープライズAPI管理特化・個人のライフ管理は別途必要',
+      'Google Cloud API特化・個人のAI管理は別途必要',
+      'Kong/MuleSoftと比較してGoogle Cloud外での複雑さ・コスト高',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'APIゲートウェイ・ML検出・デベロッパーポータル・マネタイズ・分析・ハイブリッド',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'airbyte': const _CompetitorInfo(
+    name: 'Airbyte',
+    emoji: '🌊',
+    tagline: 'オープンソースデータ統合・ELTパイプライン・300+コネクタで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Airbyte代替 データ統合 ELT パイプライン コネクタ Fivetran代替 OSS データ移行',
+    accentColor: Color(0xFF615EF0),
+    painPoints: [
+      '無料OSS/月額499ドル〜・データパイプライン特化・個人のライフ管理は別途必要',
+      'ELT統合特化・個人のAI管理は別途必要',
+      'Fivetranと比較してマネージドサービス品質・エンタープライズサポートが劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '300+コネクタ・カスタムコネクタ・変換・CDC・k8s・クラウド/セルフホスト',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'stitch': const _CompetitorInfo(
+    name: 'Stitch',
+    emoji: '🧵',
+    tagline: 'シンプルなクラウドデータパイプライン・ETLサービスで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Stitch代替 ETL データパイプライン クラウド データウェアハウス Fivetran代替 Singer',
+    accentColor: Color(0xFF3D99F5),
+    painPoints: [
+      '月額100ドル〜・ETLパイプライン特化・個人のライフ管理は別途必要',
+      'データ移動特化・個人のAI管理は別途必要',
+      'Fivetran/Airyteと比較して変換機能・コネクタ数が劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Singer互換・70+統合・スケジュール実行・Snowflake/BigQuery連携・完全管理',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'talend': const _CompetitorInfo(
+    name: 'Talend',
+    emoji: '🔗',
+    tagline: 'エンタープライズデータ統合・ETL・データ品質管理で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Talend代替 データ統合 ETL エンタープライズ データ品質 Informatica代替 クラウド',
+    accentColor: Color(0xFF003B6F),
+    painPoints: [
+      '月額高価格・エンタープライズETL特化・個人のライフ管理は別途必要',
+      'データ統合/品質特化・個人のAI管理は別途必要',
+      'Informtica/MuleSoftと比較して価格が非常に高い・中小企業向けでない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ETL/ELT・データ品質・ガバナンス・クラウド/オンプレ・1000+コネクタ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'plausible': const _CompetitorInfo(
+    name: 'Plausible',
+    emoji: '📊',
+    tagline: 'プライバシーファーストWeb分析・クッキー不要・GDPR準拠で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Plausible代替 Web分析 プライバシー クッキー不要 GDPR Google Analytics代替 軽量',
+    accentColor: Color(0xFF5850EC),
+    painPoints: [
+      '月額9ドル〜・Web分析特化・個人のライフ管理は別途必要',
+      'プライバシー重視サイト分析特化・個人のAI管理は別途必要',
+      'Google Analytics比較でイベント追跡・ファネル・広告統合が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'クッキーレス・軽量1KB・GDPR/CCPA準拠・リアルタイム・カスタムイベント・API',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'unity': const _CompetitorInfo(
+    name: 'Unity',
+    emoji: '🎮',
+    tagline: 'ゲームエンジン・インタラクティブ体験・3Dリアルタイムコンテンツ制作で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Unity代替 ゲームエンジン 3D ゲーム開発 インタラクティブ AR/VR モバイルゲーム',
+    accentColor: Color(0xFF222222),
+    painPoints: [
+      '無料/月額185ドル〜・ゲーム開発特化・個人のライフ管理は別途必要',
+      'ゲームエンジン特化・個人のAI管理は別途必要',
+      'Unreal Engineと比較してグラフィックス品質が劣る(モバイルは優位)',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'クロスプラットフォーム・C#・Asset Store・UIToolkit・AR/VR・ML-Agents',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'nats': const _CompetitorInfo(
+    name: 'NATS',
+    emoji: '📨',
+    tagline: 'クラウドネイティブメッセージングシステム・超軽量・高スループットで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'NATS代替 メッセージング 軽量 高スループット Kafka代替 RabbitMQ代替 pub-sub',
+    accentColor: Color(0xFF27AAE1),
+    painPoints: [
+      '無料OSS・メッセージング特化・個人のライフ管理は別途必要',
+      'pub/sub・キュー特化・個人のAI管理は別途必要',
+      'Kafkaと比較してデータ永続化・複雑なストリーミング処理が弱い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'pub/sub・キュー・JetStream永続化・マルチテナント・地理分散・セキュリティ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
