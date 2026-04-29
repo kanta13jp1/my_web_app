@@ -131,6 +131,7 @@ class _UniversalAiShareDialogState extends State<UniversalAiShareDialog> {
   UniversalXShareDraft? _draft;
   String? _imageUrl;
   String? _videoUrl;
+  String? _hedraGenerationId;
   String? _statusMessage;
   bool _loadingDraft = true;
   bool _generatingImage = false;
@@ -203,13 +204,16 @@ class _UniversalAiShareDialogState extends State<UniversalAiShareDialog> {
       final result = await _service.generateVideo(
         context: widget.page,
         draft: draft,
+        imageUrl: _imageUrl,
+        hedraGenerationId: _hedraGenerationId,
       );
       if (!mounted) return;
       setState(() {
         _videoUrl = result.url;
-        _statusMessage = result.url == null
-            ? '動画生成は準備中です。HEDRA_API_KEYや生成結果を確認してください'
-            : 'シェア動画を生成しました';
+        _hedraGenerationId = result.url == null
+            ? _extractString(result.raw, 'hedraGenerationId')
+            : null;
+        _statusMessage = _videoStatusMessage(result);
       });
     } catch (error) {
       if (!mounted) return;
@@ -258,6 +262,29 @@ class _UniversalAiShareDialogState extends State<UniversalAiShareDialog> {
       'text': _textController.text,
     });
     await launchUrl(uri, mode: LaunchMode.externalApplication);
+  }
+
+  static String? _extractString(Map<String, dynamic> raw, String key) {
+    final value = raw[key]?.toString().trim();
+    return value == null || value.isEmpty || value == 'null' ? null : value;
+  }
+
+  static String _videoStatusMessage(UniversalXMediaResult result) {
+    if (result.url != null) return 'シェア動画を生成しました';
+    final reason = _extractString(result.raw, 'videoReason');
+    if (reason == 'Hedra avatar video requires imageUrl') {
+      return '先に画像生成を実行してから、動画生成を開始してください';
+    }
+    final status = _extractString(result.raw, 'videoStatus') ?? result.status;
+    final generationId = _extractString(result.raw, 'hedraGenerationId');
+    final eta = _extractString(result.raw, 'hedraEtaSec');
+    if (generationId != null &&
+        const {'queued', 'processing', 'submitted'}.contains(status)) {
+      final etaText = eta == null ? '' : ' 目安: 約$eta秒';
+      return 'Hedra動画生成ジョブを開始しました。少し待ってからもう一度「動画生成」を押すと結果を確認します。$etaText';
+    }
+    if (reason != null) return '動画生成結果を確認してください: $reason';
+    return '動画生成は完了待ちです。少し待ってからもう一度確認してください';
   }
 
   @override
@@ -323,7 +350,13 @@ class _UniversalAiShareDialogState extends State<UniversalAiShareDialog> {
                     icon: _generatingVideo
                         ? const _TinyProgress()
                         : const Icon(Icons.movie_creation_outlined),
-                    label: Text(_generatingVideo ? '動画生成中' : '動画生成'),
+                    label: Text(
+                      _generatingVideo
+                          ? '動画生成中'
+                          : _hedraGenerationId == null
+                              ? '動画生成'
+                              : '動画確認',
+                    ),
                   ),
                 ],
               ),
