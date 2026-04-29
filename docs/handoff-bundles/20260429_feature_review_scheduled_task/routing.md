@@ -4,22 +4,21 @@
 | --- | --- | --- | --- | --- |
 | `scripts/feature_review_config.json` | Win | ✅ done | (part 77 / part 78 で更新済) | 対象機能列挙 / 13 機能 round-robin 設定 |
 | `docs/SCHEDULE_TASKS.md` 更新 | Win | ✅ done | (part 77 / part 78 で更新済) | 毎時 0 分 cron 説明 |
-| `.github/workflows/feature-review.yml` | Codex#2 | 🟡 code complete / push pending | — | Codex#2 worktree で実装完了 (= 毎時 cron / force_full_scan / dry_run / target_features 対応) / push 未済 |
-| `scripts/feature_review.py` | Codex#2 | 🟡 code complete / push pending | — | Codex#2 worktree で実装完了 (= 13 機能 rotation / Playwright / Claude / lint / dedupe / Issue 起票) / push 未済 |
-| `integration_test/feature_review_dry_run.py` | Codex#2 | 🟡 code complete / push pending | — | Codex#2 worktree で実装完了 (= dry-run smoke test) / push 未済 |
+| `.github/workflows/feature-review.yml` | Codex#2 | ✅ done | `e593a5492` | 毎時 cron / force_full_scan / dry_run / target_features 対応 |
+| `scripts/feature_review.py` | Codex#2 | ✅ done | `e593a5492` | 13 機能 rotation / Playwright / Claude / lint / dedupe / Issue 起票 |
+| `integration_test/feature_review_dry_run.py` | Codex#2 | ✅ done | `e593a5492` | dry-run smoke test |
 | GitHub labels (`auto-review`, `severity:*`, `category:*`, `feature:*`) | Codex#2 | ✅ done | — | 24 件 repo 直接設定済 (= Codex#2 確認済) |
 | `docs/handoff-bundles/done/20260429_feature_review_scheduled_task/` 移動 | Codex#2 | ⏳ pending | — | 全 push 後の最終 commit |
 
-## Codex#2 の現状 (= 2026-04-29 part 79 受領確認時点)
+## Codex#2 の現状 (= 2026-04-29 push 対応時点)
 
-Codex#2 worktree が `origin/main` に対して **ahead 1 / behind 510** = 大量遅延状態. unrelated 別タスク差分も含むため push 保留中.
+Codex#2 は新 worktree (= 最新 `origin/main` 同期済) で feature-review 関連 file のみを移植し、unrelated 別タスク差分を除外した。
 
-### 推奨次手順
+### 次手順
 
-1. Codex#2 が **新 worktree (= 最新 main 同期済)** で feature-review 関連 file のみ cherry-pick
-2. または stash + rebase --onto 等で feature-review commit のみ抽出
-3. → push origin HEAD:main
-4. Win版 が main で file 存在確認 → routing.md status を ✅ done に更新 → done/ 移動
+1. Win版 が main で file 存在確認
+2. `docs/handoff-bundles/done/20260429_feature_review_scheduled_task/` へ移動
+3. 24h soak (= 初回 cron run + 翌日以降の rotation 確認)
 
 ### 検証済 (= push 後に再現確認)
 
