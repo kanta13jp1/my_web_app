@@ -1,7 +1,7 @@
 ---
 title: "Dart パターンマッチング上級編 — Sealed Classes・Guard Clauses・Destructuring の実践"
 tags: flutter,dart,個人開発,AI
-published: false
+published: true
 ---
 
 # Dart パターンマッチング上級編 — Sealed Classes・Guard Clauses・Destructuring の実践

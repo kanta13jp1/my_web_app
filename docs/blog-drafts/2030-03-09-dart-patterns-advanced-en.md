@@ -1,7 +1,7 @@
 ---
 title: "Dart Patterns Advanced — Sealed Classes, Guard Clauses, and Destructuring in Practice"
 tags: dart,flutter,webdev,indiedev
-published: false
+published: true
 ---
 
 # Dart Patterns Advanced — Sealed Classes, Guard Clauses, and Destructuring in Practice
