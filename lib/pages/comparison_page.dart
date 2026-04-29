@@ -63065,6 +63065,312 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'grpc': const _CompetitorInfo(
+    name: 'gRPC',
+    emoji: '🔌',
+    tagline: 'gRPC・Google製高性能RPC・Protocol Buffers・HTTP/2・双方向ストリーミング・多言語・マイクロサービス・型安全・OSS・REST代替で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'gRPC代替 Google RPC Protocol Buffers HTTP/2 ストリーミング マイクロサービス 型安全 REST代替 tRPC代替',
+    accentColor: Color(0xFF244C5A),
+    painPoints: [
+      '無料(OSS)・RPC/通信プロトコル特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'REST/GraphQL との比較でブラウザ対応・デバッグ容易さ・スキーマ進化が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '高性能RPC・Protocol Buffers・HTTP/2・双方向ストリーミング・多言語',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'graphql': const _CompetitorInfo(
+    name: 'GraphQL',
+    emoji: '🕸️',
+    tagline: 'GraphQL・Facebook製クエリ言語・型安全・スキーマファースト・オーバーフェッチ解消・単一エンドポイント・リアルタイムSubscription・REST代替・OSS・多言語対応で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'GraphQL代替 Facebook クエリ言語 型安全 スキーマファースト REST代替 Apollo Relay tRPC代替',
+    accentColor: Color(0xFFE10098),
+    painPoints: [
+      '無料(OSS)・クエリ言語/プロトコル特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'REST/gRPC との比較でN+1問題・キャッシュ・学習コスト・クエリ複雑化が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'クエリ言語・型安全・スキーマファースト・単一エンドポイント・Subscription',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'trpc': const _CompetitorInfo(
+    name: 'tRPC',
+    emoji: '🔐',
+    tagline: 'tRPC・TypeScript型安全RPC・ゼロスキーマ・コード生成不要・Next.js統合・React Query・エンドツーエンド型安全・OSS・GraphQL代替・REST代替で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'tRPC代替 TypeScript 型安全 RPC ゼロスキーマ Next.js React Query エンドツーエンド GraphQL代替 REST代替',
+    accentColor: Color(0xFF398CCB),
+    painPoints: [
+      '無料(OSS)・TypeScript RPC特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'GraphQL/REST との比較でTypeScript専用縛り・非Node.js互換・エコシステム規模が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'TypeScript型安全RPC・ゼロスキーマ・Next.js統合・エンドツーエンド型安全',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'openapi': const _CompetitorInfo(
+    name: 'OpenAPI',
+    emoji: '📋',
+    tagline: 'OpenAPI・REST API仕様標準・Swagger・YAML/JSON定義・コード生成・ドキュメント自動生成・バリデーション・契約ファースト・OSS・業界標準で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'OpenAPI代替 REST API仕様 Swagger YAML JSON コード生成 ドキュメント自動生成 契約ファースト GraphQL代替',
+    accentColor: Color(0xFF85EA2D),
+    painPoints: [
+      '無料(OSS)・API仕様標準特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'GraphQL/gRPC との比較でリアルタイム・型安全な自動生成・スキーマ進化管理が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'REST API仕様標準・Swagger・コード生成・ドキュメント自動生成・業界標準',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'caddy': const _CompetitorInfo(
+    name: 'Caddy',
+    emoji: '🌐',
+    tagline: 'Caddy・自動HTTPS Webサーバー・Let's Encrypt自動取得・HTTP/3・リバースプロキシ・静的ファイル・設定簡単・Go製・OSS・nginx代替・Apache代替で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Caddy代替 自動HTTPS Webサーバー Let's Encrypt HTTP/3 リバースプロキシ nginx代替 Apache代替',
+    accentColor: Color(0xFF00ADD8),
+    painPoints: [
+      '無料(OSS)/有料(Caddy商用)・Webサーバー特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'nginx/Apache との比較でパフォーマンス上限・モジュールエコシステム・エンタープライズ実績が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '自動HTTPS・Let's Encrypt自動取得・HTTP/3・リバースプロキシ・設定簡単',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'varnish': const _CompetitorInfo(
+    name: 'Varnish Cache',
+    emoji: '🚀',
+    tagline: 'Varnish Cache・高速HTTPキャッシュ・リバースプロキシ・VCL設定言語・CDN代替・ESI・メモリキャッシュ・Webアクセラレーター・OSS・大規模サイト向けで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Varnish代替 HTTPキャッシュ リバースプロキシ VCL CDN代替 Webアクセラレーター nginx代替',
+    accentColor: Color(0xFF009BDE),
+    painPoints: [
+      '無料(OSS)/有料(Enterprise)・HTTPキャッシュ特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'nginx/Traefik との比較でTLS終端・設定言語難度・クラウドネイティブ対応が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '高速HTTPキャッシュ・リバースプロキシ・VCL・Webアクセラレーター',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'apisix': const _CompetitorInfo(
+    name: 'Apache APISIX',
+    emoji: '🛤️',
+    tagline: 'Apache APISIX・クラウドネイティブAPIゲートウェイ・動的ルーティング・プラグイン・認証・レートリミット・WebSocket・gRPC・Etcd・OSS・Kong代替で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'APISIX代替 クラウドネイティブ APIゲートウェイ 動的ルーティング プラグイン 認証 Kong代替 Traefik代替',
+    accentColor: Color(0xFFE8512A),
+    painPoints: [
+      '無料(OSS)・APIゲートウェイ特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Kong/Traefik との比較でエコシステム規模・ドキュメント・エンタープライズサポートが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'クラウドネイティブAPIゲートウェイ・動的ルーティング・プラグイン・認証',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'nginx-unit': const _CompetitorInfo(
+    name: 'NGINX Unit',
+    emoji: '⚡',
+    tagline: 'NGINX Unit・動的アプリケーションサーバー・多言語(Go/PHP/Python/Ruby/Node.js/Java)・動的設定・REST API制御・OSS・nginx製・モノリスからマイクロサービスへで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'NGINX Unit代替 動的アプリケーションサーバー 多言語 動的設定 REST API制御 nginx Apache代替',
+    accentColor: Color(0xFF009639),
+    painPoints: [
+      '無料(OSS)・アプリケーションサーバー特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Gunicorn/uWSGI との比較でエコシステム・ドキュメント・採用実績が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '動的アプリケーションサーバー・多言語・動的設定・REST API制御',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'swagger': const _CompetitorInfo(
+    name: 'Swagger',
+    emoji: '📖',
+    tagline: 'Swagger・OpenAPI UIツール・REST API可視化・Swagger UI/Editor/Codegen・インタラクティブドキュメント・モックサーバー・OSS・SmartBear・OpenAPI前身で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Swagger代替 OpenAPI UIツール REST API可視化 インタラクティブドキュメント Swagger UI Editor Codegen Postman代替',
+    accentColor: Color(0xFF85EA2D),
+    painPoints: [
+      '無料(OSS)/有料(SwaggerHub)・API文書化ツール特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Postman/Insomnia との比較でテスト機能・コラボレーション・モニタリングが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'REST API可視化・インタラクティブドキュメント・Codegen・モックサーバー',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
