@@ -10384,6 +10384,321 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'lastpass': const _CompetitorInfo(
+    name: 'LastPass',
+    emoji: '🔒',
+    tagline:
+        'LastPassをパスワード管理・認証セキュリティに使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'LastPass代替 パスワード管理代替 1Password代替 LastPass日本語',
+    accentColor: Color(0xFFCC0000),
+    painPoints: [
+      'パスワード・認証情報管理に特化し、個人財務・AI大学・習慣管理は別ツール',
+      '2022年大規模データ漏洩事件で信頼性に疑問、競合への移行が相次いだ',
+      'セキュリティ管理以外の個人ライフOS統合機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'パスワード・認証情報管理',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'bitwarden': const _CompetitorInfo(
+    name: 'Bitwarden',
+    emoji: '🛡',
+    tagline:
+        'Bitwardenをオープンソースパスワード管理に使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'Bitwarden代替 オープンソースパスワード管理代替 LastPass代替 Bitwarden日本語',
+    accentColor: Color(0xFF175DDC),
+    painPoints: [
+      'オープンソースのパスワード管理に特化し、個人財務・AI大学・習慣管理は別ツール',
+      '自己ホスティングで高いカスタマイズ性があるが、セットアップに技術知識が必要',
+      'セキュリティ管理以外の個人ライフOS統合機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'オープンソースパスワード管理',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'premiere-pro': const _CompetitorInfo(
+    name: 'Adobe Premiere Pro',
+    emoji: '🎦',
+    tagline:
+        'Adobe Premiere Proをプロ動画編集・映像制作に使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'Premiere Pro代替 Adobe動画編集代替 プロ動画編集代替 Premiere Pro日本語',
+    accentColor: Color(0xFF9999FF),
+    painPoints: [
+      'プロ映像制作・動画編集に特化し、個人財務・AI大学・習慣管理は別ツール',
+      '月額3,280円〜のサブスク必須で、Adobe CCバンドルでコスト増加',
+      '動画編集以外の個人ライフOS統合機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'プロ動画編集・映像制作',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'final-cut-pro': const _CompetitorInfo(
+    name: 'Final Cut Pro',
+    emoji: '🍏',
+    tagline:
+        'Final Cut ProをApple Mac専用プロ動画編集に使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'Final Cut Pro代替 Mac動画編集代替 Apple動画編集代替 Final Cut Pro日本語',
+    accentColor: Color(0xFF2D2D2D),
+    painPoints: [
+      'Mac専用プロ動画編集に特化し、個人財務・AI大学・習慣管理は別ツール',
+      '買い切り45,000円と高額かつMac専用で、Windows・Linuxユーザーは利用不可',
+      '動画編集以外の個人ライフOS統合機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Mac専用プロ動画編集',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'google-analytics': const _CompetitorInfo(
+    name: 'Google Analytics',
+    emoji: '📊',
+    tagline:
+        'Google AnalyticsをWebサイトアクセス解析に使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'Google Analytics代替 アクセス解析代替 GA4代替 Googleアナリティクス日本語',
+    accentColor: Color(0xFFE37400),
+    painPoints: [
+      'Webサイトアクセス解析・マーケティング計測に特化し、個人財務・AI大学・習慣管理は別ツール',
+      'GA4への強制移行でUIが大幅変更、プライバシー規制によるCookie制限で計測精度が低下',
+      'Web解析以外の個人ライフOS統合機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Webサイトアクセス解析',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'microsoft-clarity': const _CompetitorInfo(
+    name: 'Microsoft Clarity',
+    emoji: '📹',
+    tagline:
+        'Microsoft ClarityをUX分析・ヒートマップツールに使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'Microsoft Clarity代替 ヒートマップ代替 UX分析代替 Clarity日本語',
+    accentColor: Color(0xFF0078D7),
+    painPoints: [
+      'ヒートマップ・セッション録画・UX分析に特化し、個人財務・AI大学・習慣管理は別ツール',
+      'Microsoftのデータ収集ポリシーへの懸念と、GDPR対応の複雑さがある',
+      'Web解析以外の個人ライフOS統合機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ヒートマップ・セッション録画・UX分析',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'whereby': const _CompetitorInfo(
+    name: 'Whereby',
+    emoji: '📹',
+    tagline:
+        'Wherebyをブラウザだけで使えるシンプルビデオ会議に使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'Whereby代替 ビデオ会議代替 Zoom代替 Whereby日本語',
+    accentColor: Color(0xFF1D2D44),
+    painPoints: [
+      'インストール不要のブラウザビデオ会議に特化し、個人財務・AI大学・習慣管理は別ツール',
+      'フリープランは1ルーム・最大100分、月額6.99USD～で制限解除',
+      'ビデオ会議以外の個人ライフOS統合機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ブラウザ専用シンプルビデオ会議',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'obs-studio': const _CompetitorInfo(
+    name: 'OBS Studio',
+    emoji: '🎤',
+    tagline:
+        'OBS StudioをオープンソースライブストリーミングToolに使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'OBS Studio代替 ライブ配信代替 ストリーミング代替 OBS日本語',
+    accentColor: Color(0xFF362D6E),
+    painPoints: [
+      'ライブ配信・画面録画・ストリーミングに特化し、個人財務・AI大学・習慣管理は別ツール',
+      '設定の複雑さから初心者には習得コストが高く、配信開始まで時間がかかる',
+      '配信ツール以外の個人ライフOS統合機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ライブ配信・画面録画・ストリーミング',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'camtasia': const _CompetitorInfo(
+    name: 'Camtasia',
+    emoji: '📹',
+    tagline:
+        'Camtasiaを画面録画・チュートリアル動画作成に使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'Camtasia代替 画面録画代替 チュートリアル動画代替 Camtasia日本語',
+    accentColor: Color(0xFF78D14B),
+    painPoints: [
+      '画面録画・チュートリアル動画作成に特化し、個人財務・AI大学・習慣管理は別ツール',
+      '買い切り35,880円と高価で、Windows/Macの2プラットフォーム対応だが割高感がある',
+      '動画制作以外の個人ライフOS統合機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '画面録画・チュートリアル動画作成',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
@@ -10675,6 +10990,15 @@ class _ComparisonShellState extends State<_ComparisonShell> {
     'crowdworks': 'freelance',
     'lancers': 'freelance',
     'coconala': 'marketplace',
+    'lastpass': 'security',
+    'bitwarden': 'security',
+    'premiere-pro': 'video-editing',
+    'final-cut-pro': 'video-editing',
+    'google-analytics': 'analytics',
+    'microsoft-clarity': 'analytics',
+    'whereby': 'video-comm',
+    'obs-studio': 'video-editing',
+    'camtasia': 'video-editing',
   };
 
   @override
@@ -10875,7 +11199,7 @@ class _ComparisonShellState extends State<_ComparisonShell> {
                       children: [
                         _buildTag(
                           icon: Icons.compare_arrows_rounded,
-                          label: '267社比較',
+                          label: '276社比較',
                           backgroundColor:
                               _info.accentColor.withValues(alpha: 0.18),
                           foregroundColor: _textPrimary,
@@ -11483,7 +11807,7 @@ class _ComparisonShellState extends State<_ComparisonShell> {
                       ),
                       SizedBox(width: 8),
                       Text(
-                        '全267社の競合ランドスケープを見る →',
+                        '全276社の競合ランドスケープを見る →',
                         style: TextStyle(
                           fontSize: 14,
                           color: _textSecondary,
