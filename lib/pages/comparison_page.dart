@@ -42218,41 +42218,6 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
-  '1password': const _CompetitorInfo(
-    name: '1Password',
-    emoji: '🔐',
-    tagline:
-        'パスワードマネージャー・ファミリー/チームプラン・Travel Mode・Watchtower脆弱性検知で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: '1Password代替 パスワードマネージャー セキュリティ Bitwarden代替 LastPass代替 チーム',
-    accentColor: Color(0xFF1A8CFF),
-    painPoints: [
-      '有料(月3-8ドル)・パスワード管理特化・個人のライフ管理は別途必要',
-      'セキュリティ特化・個人のAI管理は別途必要',
-      'Bitwarden/Keeper/Dashlaneと比較してOSSでない・月額コスト・自己ホスティング不可が問題',
-    ],
-    features: [
-      _FeatureComparison(
-        feature: 'Travel Mode・Watchtower・パスキー・チーム管理・クロスプラットフォーム',
-        competitorHas: true,
-        weHave: false,
-      ),
-      _FeatureComparison(
-        feature: 'AI支援個人管理',
-        competitorHas: false,
-        weHave: true,
-      ),
-      _FeatureComparison(
-        feature: '財務管理統合',
-        competitorHas: false,
-        weHave: true,
-      ),
-      _FeatureComparison(
-        feature: '完全無料',
-        competitorHas: false,
-        weHave: true,
-      ),
-    ],
-  ),
   'surfshark': const _CompetitorInfo(
     name: 'Surfshark',
     emoji: '🦈',
