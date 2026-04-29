@@ -828,6 +828,14 @@ class _EdgeFunctionSummaryCardState extends State<EdgeFunctionSummaryCard> {
       '/health-check',
       'インフラ健全性ページ > DB接続・テーブルアクセス・EFランタイム状態確認',
     ),
+    // 追加 (cs-check 自動連携 2026-04-29)
+    _FnDef(
+      'memory-search-hub',
+      'メモリー検索ハブ (BM25 + ベクター検索 + Haiku リランキング)',
+      true,
+      '/memory-search',
+      'メモリー検索ページ > キーワード入力でBM25+ベクター混合検索',
+    ),
   ];
 
   int get _withUiCount => _functions.where((f) => f.hasUi).length;

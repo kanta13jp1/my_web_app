@@ -32,6 +32,7 @@ import 'package:my_web_app/pages/home_page.dart';
 import 'package:my_web_app/pages/import_page.dart';
 import 'package:my_web_app/pages/landing_page.dart';
 import 'package:my_web_app/pages/memory_drill_page.dart';
+import 'package:my_web_app/pages/memory_search_hub_page.dart';
 import 'package:my_web_app/pages/morning_briefing_page.dart';
 import 'package:my_web_app/pages/note_editor_page.dart';
 import 'package:my_web_app/pages/onboarding_page.dart';
@@ -1611,6 +1612,10 @@ class _MyAppState extends State<MyApp> {
           case '/health-check':
             return MaterialPageRoute(
               builder: (_) => const HealthCheckPage(),
+            );
+          case '/memory-search':
+            return MaterialPageRoute(
+              builder: (_) => const MemorySearchHubPage(),
             );
           default:
             if (uri.path.startsWith('/vs-')) {
