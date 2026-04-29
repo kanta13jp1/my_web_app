@@ -79,8 +79,9 @@ class PublicMemoService {
 
     try {
       final response = await _supabase.functions.invoke(
-        'growth-share-signal',
+        'growth-hub',
         body: <String, dynamic>{
+          'action': 'share.track',
           'memoId': memoId,
           'signalKey': signalKey,
           'dateKey': dateKey,

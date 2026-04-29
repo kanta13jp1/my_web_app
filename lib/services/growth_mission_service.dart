@@ -1016,8 +1016,9 @@ $inviteUrl
 
     try {
       final response = await client.functions.invoke(
-        'growth-command-center',
+        'growth-hub',
         body: <String, dynamic>{
+          'action': 'command.analyze',
           'totalRegisteredUsers': dashboard.totalRegisteredUsers,
           'todayRegistrations': dashboard.todayRegistrations,
           'activeUsersToday': dashboard.activeUsersToday,
