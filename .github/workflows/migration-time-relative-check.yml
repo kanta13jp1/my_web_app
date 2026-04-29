@@ -28,9 +28,13 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Set base SHA for PR mode
-        if: github.event_name == 'pull_request'
-        run: echo "GITHUB_BASE_SHA=${{ github.event.pull_request.base.sha }}" >> $GITHUB_ENV
+      - name: Set base SHA (PR = base commit / push = before SHA)
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            echo "GITHUB_BASE_SHA=${{ github.event.pull_request.base.sha }}" >> $GITHUB_ENV
+          else
+            echo "GITHUB_BASE_SHA=${{ github.event.before }}" >> $GITHUB_ENV
+          fi
 
       - name: Detect time-relative drift risk
         run: python3 scripts/check_migration_time_relative_check.py
