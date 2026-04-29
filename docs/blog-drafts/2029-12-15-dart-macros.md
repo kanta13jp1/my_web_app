@@ -1,7 +1,7 @@
 ---
 title: "Dart Macros 入門 — コード生成を静的解析レベルで自動化する"
 tags: flutter,dart,個人開発,AI
-published: false
+published: true
 ---
 
 # Dart Macros 入門 — コード生成を静的解析レベルで自動化する
