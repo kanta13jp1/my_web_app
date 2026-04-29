@@ -23736,7 +23736,6 @@ Win territory 直接実装: SECOND_BRAIN +4.0 + VIBE +2.0 = +6.0/14.
 **全ファイル**: 276社統一
 **commit**: e31566e2b
 
-
 ## PS#6 S110 — 2026-04-29
 
 ### 実装内容
@@ -23765,57 +23764,11 @@ Win territory 直接実装: SECOND_BRAIN +4.0 + VIBE +2.0 = +6.0/14.
 ### commit
 e90743287
 
-
-## 2026-04-29 Win版#132 part 76 — PLATFORM #4 (Handoff Bundle) dogfood
-
-### 概要
-`docs/HANDOFF_BUNDLE_SPEC.md` 新規. PLATFORM #4 (Handoff Bundle Driven) を Win territory dogfood. 全 stack (Flutter + Supabase + EF + Test) を 1 PR atomic merge する形式定義. cross-instance-pr 進化形態.
-
-### Bundle ディレクトリ構造
-```
-docs/handoff-bundles/<YYYYMMDD>_<slug>/
-  ├── README.md          # 必須
-  ├── design.json        # UI 機能のみ
-  ├── flutter_widgets/   # UI 機能のみ
-  ├── supabase/{schema,migrations,functions}/
-  ├── integration_test/  # 必須
-  ├── docs_diff/
-  └── routing.md         # 必須
-```
-
-### 6 Step flow
-1. User 要望 → Plan アーティファクト
-2. 各 stack skeleton 配置
-3. routing.md で territory 割り振り
-4. 1 PR で bundle 提出
-5. 各 territory が並行実装 (= 同 PR 内 commit)
-6. 全 section ✅ で完成 → done/ 移動
-
-### cross-instance-pr 進化形態
-| 観点 | cross-instance-pr | Bundle |
-| --- | --- | --- |
-| 単位 | 1 territory | N territory |
-| atomic merge | × | ✅ |
-| review 文脈 | 分散 | 集約 |
-
-cross-instance-pr は単一 territory 用に継続. Bundle は全 stack 機能専用.
-
-### 3 Use Case
-A: 新規ページ (UI+EF+schema 5 territory)
-B: 動画パイプライン拡張 (scripts+GHA+UI+test 4 stack)
-C: MCP server 公開 (大規模 migration+EF+test+docs)
-
-### Win territory PLATFORM 部分完成
-#3 (Client Zero) + #4 (Handoff Bundle) = Win territory 完結原則は本 part で完了.
-残 #1/#2/#5/#6/#7 は全て他 territory (= 既に Codex#2 委譲中の #6+#7 含む).
-
-### 9 part 連続 dogfood (part 68-76) 累積
-SECOND_BRAIN 0→4.0 + VIBE 4.5→6.5 + PLATFORM 2.0→4.0 = +8.0/21 (Win 直接実装).
-委譲完了後想定: + BRAIN #4 +0.5 + BRAIN #7 +1.0 + PLATFORM #6+#7 +2.0 = **+11.5/21**.
-
-### Philosophy Alignment 9/9
-#1 CEO 感 (1 PR atomic merge 設計判断) / #6 資本=時間 (N territory 並行実装) / #7 資産負債 (機能宙吊りリスク = 負債 → bundle = 資産)
-
-### commit
-(本 commit にて確定)
-
+## PS#5 S99 (2026-04-29)
+- collision patrol 3件解消
+  - 048000: instructor_ai_university → 048100
+  - 058000: flowise_ai_university → 058100
+  - 061000: langflow_ai_university → 061100
+- 970 timestamps 全 unique
+- CI: 3/3 success
+- commit: f84bcc259
