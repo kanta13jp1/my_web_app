@@ -43304,7 +43304,8 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'razorpay': const _CompetitorInfo(
     name: 'Razorpay',
     emoji: '🪓',
-    tagline: 'インド決済ゲートウェイ・100+決済方法・UPI/ネットバンキング・Payroll・RazorpayXで、なぜ「自分株式会社」を選ぶか。',
+    tagline:
+        'インド決済ゲートウェイ・100+決済方法・UPI/ネットバンキング・Payroll・RazorpayXで、なぜ「自分株式会社」を選ぶか。',
     searchKeyword: 'Razorpay代替 インド決済 UPI ネットバンキング Paytm代替 PayU代替 スタートアップ',
     accentColor: Color(0xFF072654),
     painPoints: [
@@ -43373,7 +43374,8 @@ final _competitorInfo = <String, _CompetitorInfo>{
     name: 'Afterpay',
     emoji: '🛒',
     tagline: 'Block傘下・4回無利子分割・即承認・ファッション/美容特化・Clearpayで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Afterpay代替 後払い BNPL 4回払い Klarna代替 Sezzle代替 Block Square 分割払い',
+    searchKeyword:
+        'Afterpay代替 後払い BNPL 4回払い Klarna代替 Sezzle代替 Block Square 分割払い',
     accentColor: Color(0xFFB2FCE4),
     painPoints: [
       '無料(延滞料あり)・ショッピング特化・個人のライフ管理は別途必要',
@@ -43475,7 +43477,8 @@ final _competitorInfo = <String, _CompetitorInfo>{
     name: 'Cash App',
     emoji: '💵',
     tagline: 'Block製P2P送金・Bitcoin売買・株投資・Cashカード・Boosts割引で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Cash App代替 送金 Bitcoin株 Boosts Venmo代替 Zelle代替 Block Square 若者金融',
+    searchKeyword:
+        'Cash App代替 送金 Bitcoin株 Boosts Venmo代替 Zelle代替 Block Square 若者金融',
     accentColor: Color(0xFF00D632),
     painPoints: [
       '無料(即時送金手数料あり)・P2P+投資特化・個人のライフ管理は別途必要',
@@ -43535,6 +43538,317 @@ final _competitorInfo = <String, _CompetitorInfo>{
       _FeatureComparison(
         feature: '完全無料',
         competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'pimsleur': const _CompetitorInfo(
+    name: 'Pimsleur',
+    emoji: '🗣️',
+    tagline: '音声メソッド語学学習・30分レッスン・50+言語・間隔反復・会話重視で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Pimsleur代替 語学学習 音声 会話 Duolingo代替 Babbel代替 Rosetta Stone代替 リスニング',
+    accentColor: Color(0xFF003087),
+    painPoints: [
+      '有料(月21ドル~)/買い切り・音声語学特化・個人のライフ管理は別途必要',
+      '語学習得特化・個人のAI管理は別途必要',
+      'Duolingo/Babbel/Rosetta Stoneと比較してゲーミフィケーション・読み書き・ビジュアル学習が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '30分音声レッスン・50+言語・間隔反復・ネイティブ音声・通勤学習',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'goodreads': const _CompetitorInfo(
+    name: 'Goodreads',
+    emoji: '📚',
+    tagline: 'Amazon傘下・読書記録・レビュー共有・読書チャレンジ・著者フォローで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Goodreads代替 読書管理 レビュー 本 StoryGraph代替 Libby代替 読書記録',
+    accentColor: Color(0xFF372213),
+    painPoints: [
+      '無料・読書ログ特化・個人のライフ管理は別途必要',
+      '本管理特化・個人のAI管理は別途必要',
+      'StoryGraph/LibraryThingと比較してUI刷新停止・多様性分析・レコメンド品質が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '読書記録・レビュー・チャレンジ・著者・友達棚・Kindleシンク',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'storygraph': const _CompetitorInfo(
+    name: 'StoryGraph',
+    emoji: '📖',
+    tagline:
+        'Goodreads代替・多様性重視・気分/ペース/テーマ分析・AI推薦・Black-owned企業で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'StoryGraph代替 Goodreads代替 読書管理 多様性 気分分析 AI推薦 本 Black-owned',
+    accentColor: Color(0xFF1A1A2E),
+    painPoints: [
+      '無料/Plus有料・読書ログ特化・個人のライフ管理は別途必要',
+      '本管理特化・個人のAI管理は別途必要',
+      'Goodreads/Libbyと比較してコミュニティ規模・Amazon統合・モバイルアプリ成熟度が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '多様性分析・気分/ペース・AI推薦・DNFログ・読書課題・チャレンジ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'skyscanner': const _CompetitorInfo(
+    name: 'Skyscanner',
+    emoji: '✈️',
+    tagline: 'フライト比較検索・最安値アラート・旅行日程比較・ホテル・レンタカーで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Skyscanner代替 格安航空券 フライト比較 旅行 Google Flights代替 Kayak代替 Expedia代替',
+    accentColor: Color(0xFF0770E3),
+    painPoints: [
+      '無料・旅行検索特化・個人のライフ管理は別途必要',
+      '旅行計画特化・個人のAI管理は別途必要',
+      'Google Flights/Kayak/Expediaと比較してブッキング直接性・AI旅程提案・日本語対応が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '最安値アラート・柔軟な日程検索・ホテル・レンタカー・Price Alert',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'citymapper': const _CompetitorInfo(
+    name: 'Citymapper',
+    emoji: '🚇',
+    tagline: '都市交通ナビ・リアルタイム遅延・乗り換え最適化・シェアモビリティ統合で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Citymapper代替 都市交通 乗り換え 電車 バス Google Maps代替 シェアサイクル 遅延情報',
+    accentColor: Color(0xFF00C852),
+    painPoints: [
+      '無料・都市ナビ特化・個人のライフ管理は別途必要',
+      '交通ルート特化・個人のAI管理は別途必要',
+      'Google Maps/Apple Maps/Transitと比較して対応都市数・地方交通・オフラインが限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'リアルタイム遅延・最適乗換・シェアモビリティ・自転車/スクーター・Co-pilot',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'here-maps': const _CompetitorInfo(
+    name: 'HERE Maps',
+    emoji: '🗺️',
+    tagline: 'HERE Technologies・高精度地図・オフライン・B2Bマッピング・自動車向けナビで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'HERE Maps代替 地図 ナビ オフライン Google Maps代替 自動車 B2B 高精度マップ',
+    accentColor: Color(0xFF00AFAA),
+    painPoints: [
+      '無料(個人)/B2B有料・地図/ナビ特化・個人のライフ管理は別途必要',
+      '位置情報特化・個人のAI管理は別途必要',
+      'Google Maps/Apple Maps/Wazと比較して一般認知度・ユーザー基盤・ローカル情報が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '高精度地図・オフライン・EV充電・交通渋滞・SDK・自動車OEM統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'things-3': const _CompetitorInfo(
+    name: 'Things 3',
+    emoji: '✅',
+    tagline:
+        'Apple専用プレミアムToDo・自然言語入力・Areas/Projects・Magic Plus・デザイン賞受賞で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Things 3代替 ToDo Apple タスク管理 OmniFocus代替 TickTick代替 プレミアム iPhone Mac',
+    accentColor: Color(0xFF3F79F3),
+    painPoints: [
+      '買い切り(iPhone49ドル~/Mac50ドル~)・Apple専用・個人のライフ管理は別途必要',
+      'タスク管理特化・個人のAI管理は別途必要',
+      'OmniFocus/TickTick/TodoistととApple以外対応なし・チームコラボ・Web版なしが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Areas/Projects・自然言語・Siri統合・ウィジェット・カレンダー・見出し',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'any-do': const _CompetitorInfo(
+    name: 'Any.do',
+    emoji: '📋',
+    tagline: 'AIタスクアシスタント・カレンダー統合・デイリープランナー・レシピ・習慣トラッカーで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Any.do代替 タスク管理 AI アシスタント カレンダー TickTick代替 Todoist代替 習慣',
+    accentColor: Color(0xFFE03131),
+    painPoints: [
+      '無料/Premium月3ドル~・タスク管理特化・個人のライフ管理は別途必要',
+      'ToDo特化・個人のAI管理は別途必要',
+      'TickTick/Todoist/Things 3と比較して高度フィルタ・プロジェクト管理・オフライン機能が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AI計画・カレンダー・デイリープランナー・レシピ・習慣・共有',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'paprika': const _CompetitorInfo(
+    name: 'Paprika Recipe Manager',
+    emoji: '🌶️',
+    tagline: 'レシピ管理・Webクリッパー・食材リスト・ミールプランナー・カロリー追跡で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Paprika代替 レシピ管理 Webクリッパー 食材リスト ミールプラン Yummly代替 料理 栄養',
+    accentColor: Color(0xFFEA4C3A),
+    painPoints: [
+      '買い切り(5-10ドル)・レシピ管理特化・個人のライフ管理は別途必要',
+      '料理/食事特化・個人のAI管理は別途必要',
+      'Yummly/Mealime/Cookpadと比較してレシピ探索・コミュニティ・ソーシャル機能が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Webクリッパー・食材リスト・ミールプランナー・カロリー・クラウド同期',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
         weHave: true,
       ),
     ],
