@@ -1,7 +1,7 @@
 ---
 title: "Supabase 全文検索 — PostgreSQL tsvector・日本語対応・インデックス最適化"
 tags: supabase,AI,個人開発,programming
-published: false
+published: true
 ---
 
 # Supabase 全文検索 — PostgreSQL tsvector・日本語対応・インデックス最適化
