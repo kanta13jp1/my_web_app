@@ -48821,6 +48821,324 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'mode-analytics': const _CompetitorInfo(
+    name: 'Mode Analytics',
+    emoji: '📉',
+    tagline: 'SQL+Python+R+BI統合・データチーム向け・協働ノートブック・自動レポートで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Mode Analytics代替 SQL Python R BI統合 データチーム 協働ノートブック Looker代替 Sigma代替',
+    accentColor: Color(0xFF3D5AFE),
+    painPoints: [
+      '有料月・データアナリスト特化・個人のライフ管理は別途必要',
+      'BI/データ分析特化・個人のAI管理は別途必要',
+      'Looker/Sigma/Hex との比較でコスト・セルフサービス・非技術者向けが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'SQL+Python+R+BI統合・協働ノートブック・自動レポート・データチーム向け',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'hex-tech': const _CompetitorInfo(
+    name: 'Hex',
+    emoji: '🔷',
+    tagline:
+        'モダン協働データノートブック・SQL+Python+AI・インタラクティブアプリ化・チームデータ分析で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Hex代替 協働ノートブック SQL Python AI インタラクティブアプリ データ分析 Mode代替 Observable代替',
+    accentColor: Color(0xFF6C5CE7),
+    painPoints: [
+      '無料/有料月24ドル~・ノートブック特化・個人のライフ管理は別途必要',
+      'データ分析特化・個人のAI管理は別途必要',
+      'Mode/Observable/Deepnote との比較でエコシステム・スケール・カスタムチャートが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'SQL+Python AI強化・協働ノートブック・インタラクティブアプリ化・リアルタイム共有',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'lightdash': const _CompetitorInfo(
+    name: 'Lightdash',
+    emoji: '💡',
+    tagline: 'OSS BIツール・dbt連携・LookML不要・Gitバージョン管理・セルフホストで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Lightdash代替 OSS BI dbt連携 LookML不要 Gitバージョン管理 セルフホスト Looker代替 Metabase代替',
+    accentColor: Color(0xFF7262FF),
+    painPoints: [
+      '無料OSS/Cloud有料・BI特化・個人のライフ管理は別途必要',
+      'データビジュアライゼーション特化・個人のAI管理は別途必要',
+      'Metabase/Looker/Superset との比較でdbt依存度・機能成熟度・サポートが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'OSS BI・dbt完全連携・LookML不要・Git管理・セルフホスト・Snowflake/BigQuery',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'evidence': const _CompetitorInfo(
+    name: 'Evidence.dev',
+    emoji: '📑',
+    tagline:
+        'コードファーストBIツール・Markdownレポート・SQL+Svelte・静的サイト生成・Git-firstで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Evidence代替 コードファーストBI Markdown SQL Svelte 静的サイト Git Lightdash代替 Observable代替',
+    accentColor: Color(0xFF2ECC71),
+    painPoints: [
+      '無料OSS・開発者向け特化・個人のライフ管理は別途必要',
+      'BIレポーティング特化・個人のAI管理は別途必要',
+      'Lightdash/Observable/Rill との比較でエコシステム・インタラクティブ性・非技術者が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Markdownレポート・SQL+Svelte・静的サイト生成・Git-first・OSS無料',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'preset': const _CompetitorInfo(
+    name: 'Preset (Apache Superset)',
+    emoji: '🎨',
+    tagline:
+        'Apache SupersetのマネージドSaaS・OSS BIクラウド版・豊富なチャート・SQLLabで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Preset代替 Apache Superset マネージドSaaS BI クラウド SQLLab Metabase代替 Lightdash代替',
+    accentColor: Color(0xFF20A7C9),
+    painPoints: [
+      '無料/有料月50ドル~・BI特化・個人のライフ管理は別途必要',
+      'データビジュアライゼーション特化・個人のAI管理は別途必要',
+      'Metabase/Lightdash/Redash との比較でセットアップ複雑性・パフォーマンス・SQLLab制限が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Apache Superset マネージドSaaS・50+チャート・SQLLab・RLS・クラウドホスト',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'snowplow': const _CompetitorInfo(
+    name: 'Snowplow Analytics',
+    emoji: '❄️',
+    tagline: 'OSS行動データプラットフォーム・高品質イベントデータ・データウェアハウス直送・自社管理で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Snowplow代替 OSS行動データ イベントデータ データウェアハウス Segment代替 RudderStack代替 CDP',
+    accentColor: Color(0xFF00ADEF),
+    painPoints: [
+      'OSS無料/商用有料・データ収集特化・個人のライフ管理は別途必要',
+      'イベントトラッキング特化・個人のAI管理は別途必要',
+      'Segment/RudderStack/mParticle との比較でセットアップ複雑性・リアルタイム・AI活用が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'OSS行動データ・高品質イベント・DWH直送・自社データ管理・スキーマ検証',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'countly': const _CompetitorInfo(
+    name: 'Countly',
+    emoji: '📱',
+    tagline: 'OSS モバイル/ウェブ分析・自社ホスト・GDPR準拠・プッシュ通知・リモートコンフィグで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Countly代替 OSS モバイル分析 自社ホスト GDPR プッシュ通知 Firebase代替 Mixpanel代替 プライバシー',
+    accentColor: Color(0xFF3C3C3C),
+    painPoints: [
+      '無料OSS/有料SaaS混在・分析特化・個人のライフ管理は別途必要',
+      'モバイル分析特化・個人のAI管理は別途必要',
+      'Firebase/Mixpanel/Amplitude との比較でUI・機械学習・サポートが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'OSS分析・自社ホスト・GDPR・プッシュ通知・リモートコンフィグ・モバイル/Web',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'smartlook': const _CompetitorInfo(
+    name: 'Smartlook',
+    emoji: '🎥',
+    tagline: 'セッションレコーディング・ヒートマップ・ファネル分析・モバイルアプリ対応・無料プランで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Smartlook代替 セッションレコーディング ヒートマップ ファネル モバイル 無料 Hotjar代替 FullStory代替',
+    accentColor: Color(0xFFE91E63),
+    painPoints: [
+      '無料/有料月55ドル~・UX分析特化・個人のライフ管理は別途必要',
+      'セッション分析特化・個人のAI管理は別途必要',
+      'Hotjar/FullStory/LogRocket との比較でAI自動分析・エンタープライズ機能・連携が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'セッションレコーディング・ヒートマップ・ファネル・モバイルアプリ・無料プラン',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'crazyegg': const _CompetitorInfo(
+    name: 'Crazy Egg',
+    emoji: '🥚',
+    tagline: 'ヒートマップ・スクロールマップ・A/Bテスト・セッション録画・LP最適化ツールで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Crazy Egg代替 ヒートマップ スクロールマップ ABテスト セッション録画 LP最適化 Hotjar代替 VWO代替',
+    accentColor: Color(0xFFFF4500),
+    painPoints: [
+      '有料月29ドル~・CRO特化・個人のライフ管理は別途必要',
+      'LP最適化特化・個人のAI管理は別途必要',
+      'Hotjar/VWO/Optimizely との比較でユーザー行動分析の深さ・AI提案・統合が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ヒートマップ・スクロールマップ・A/Bテスト・セッション録画・LP最適化',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
