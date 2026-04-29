@@ -27301,6 +27301,312 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'taleo': const _CompetitorInfo(
+    name: 'Oracle Taleo',
+    emoji: '🔶',
+    tagline: 'Oracle製エンタープライズ採用管理・タレントスイートで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Oracle Taleo代替 採用管理 ATS エンタープライズ HCM タレント管理',
+    accentColor: Color(0xFFF80000),
+    painPoints: [
+      '価格非公開(大企業向け高額)・採用/HCM特化・個人のライフ管理は別途必要',
+      'エンタープライズHCM特化・個人のAI管理は別途必要',
+      'Greenhouse/Leverと比較してUI・候補者体験・実装スピードが劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ATS・オンボーディング・パフォーマンス・Learning・Oracle統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'smartrecruiters': const _CompetitorInfo(
+    name: 'SmartRecruiters',
+    emoji: '🎯',
+    tagline: 'タレントアクイジションスイート・採用コラボレーションで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'SmartRecruiters代替 採用管理 タレントアクイジション ATS コラボ 採用プロセス',
+    accentColor: Color(0xFF2563EB),
+    painPoints: [
+      '月額10,000ドル〜(年間)・採用特化・個人のライフ管理は別途必要',
+      '採用管理特化・個人のAI管理は別途必要',
+      'Greenhouse比較でインテグレーション数・分析深度が劣る場合がある',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ATS・採用マーケティング・コラボ・AI面接・CRM・500+連携',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'jobvite': const _CompetitorInfo(
+    name: 'Jobvite',
+    emoji: '💼',
+    tagline: 'AIパワード採用・オンボーディング統合プラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Jobvite代替 採用管理 AI ATS オンボーディング 採用マーケティング 候補者体験',
+    accentColor: Color(0xFF16A34A),
+    painPoints: [
+      '価格非公開・採用/オンボーディング特化・個人のライフ管理は別途必要',
+      'AI採用特化・個人のAI管理は別途必要',
+      'Greenhouse/SmartRecruitersと比較してUI更新・AI機能が遅れている',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AI採用マーケティング・ATS・CRM・オンボーディング・分析',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'personio': const _CompetitorInfo(
+    name: 'Personio',
+    emoji: '🇩🇪',
+    tagline: '欧州中小企業向けHR管理・採用・給与プラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Personio代替 HR管理 欧州 中小企業 採用 給与 従業員管理',
+    accentColor: Color(0xFF5C4EFF),
+    painPoints: [
+      '月額6ユーロ/員〜・HR管理特化・個人のライフ管理は別途必要',
+      '欧州SMB HR特化・個人のAI管理は別途必要',
+      'BambooHR/Hibobと比較してグローバル展開・AI機能が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '採用・オンボーディング・勤怠・給与・パフォーマンス・GDPR対応',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'hibob': const _CompetitorInfo(
+    name: 'HiBob',
+    emoji: '👋',
+    tagline: 'モダン中規模企業向けHRIS・人材管理プラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'HiBob代替 HRIS 人材管理 中規模企業 従業員体験 人事管理 モダン',
+    accentColor: Color(0xFFFF6B35),
+    painPoints: [
+      '価格非公開・HRIS特化・個人のライフ管理は別途必要',
+      '人材管理特化・個人のAI管理は別途必要',
+      'BambooHR/Personioと比較してグローバル給与・エンタープライズが弱い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '従業員データ・勤怠・パフォーマンス・報酬・DEI・Slack統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'remote-com': const _CompetitorInfo(
+    name: 'Remote.com',
+    emoji: '🌍',
+    tagline: 'グローバルリモート雇用・EOR・給与管理プラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Remote代替 グローバル雇用 EOR 海外採用 給与管理 コンプライアンス リモートワーク',
+    accentColor: Color(0xFF0F766E),
+    painPoints: [
+      '月額599ドル〜(EOR)・グローバル雇用特化・個人のライフ管理は別途必要',
+      'EOR/グローバル給与特化・個人のAI管理は別途必要',
+      'Deel/Velocityと比較してカバー国数・オンボーディングスピードが劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'EOR・給与・税務・コンプライアンス・福利厚生・180+カ国',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'betterworks': const _CompetitorInfo(
+    name: 'BetterWorks',
+    emoji: '🎯',
+    tagline: 'OKR・目標管理・継続的パフォーマンス管理で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'BetterWorks代替 OKR 目標管理 パフォーマンス管理 1on1 フィードバック',
+    accentColor: Color(0xFF0369A1),
+    painPoints: [
+      '価格非公開・OKR/パフォーマンス特化・個人のライフ管理は別途必要',
+      'パフォーマンス管理特化・個人のAI管理は別途必要',
+      'Lattice/15fiveと比較してUI・エンゲージメント機能が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'OKR・継続フィードバック・会話・チェックイン・分析・HRIS連携',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'leapsome': const _CompetitorInfo(
+    name: 'Leapsome',
+    emoji: '🦘',
+    tagline: 'AIパワードパフォーマンス管理・学習・エンゲージメントで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Leapsome代替 パフォーマンス管理 AI 学習 OKR エンゲージメント 1on1',
+    accentColor: Color(0xFF7C3AED),
+    painPoints: [
+      '月額8ドル/員〜・パフォーマンス/学習特化・個人のライフ管理は別途必要',
+      'HRパフォーマンス特化・個人のAI管理は別途必要',
+      'Lattice/BetterWorksと比較してブランド認知・北米展開が弱い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'OKR・レビュー・1on1・エンゲージメント・学習・AIコーチング',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'bullhorn': const _CompetitorInfo(
+    name: 'Bullhorn',
+    emoji: '📢',
+    tagline: '人材派遣・スタッフィング業界向けCRM・ATSで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Bullhorn代替 人材派遣 スタッフィング CRM ATS リクルーティング 採用管理',
+    accentColor: Color(0xFF E8480C),
+    painPoints: [
+      '価格非公開・人材派遣特化・個人のライフ管理は別途必要',
+      'スタッフィング/派遣特化・個人のAI管理は別途必要',
+      'Vincere/Aviontéと比較してモダン性・AI機能が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'CRM・ATS・請求管理・タイムシート・コンプライアンス・統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
