@@ -10071,6 +10071,319 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'webex': const _CompetitorInfo(
+    name: 'Webex (Cisco)',
+    emoji: '📹',
+    tagline:
+        'WebexをCiscoエンタープライズビデオ会議に使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'Webex代替 Cisco会議代替 エンタープライズビデオ会議代替 Webex日本語',
+    accentColor: Color(0xFF00BCEB),
+    painPoints: [
+      'エンタープライズ向けビデオ会議・コラボに特化し、個人財務・AI大学・習慣管理は別ツール',
+      '企業導入前提の価格設定で個人利用には過剰な機能と複雑な管理',
+      '会議ツール以外の個人ライフOS統合機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'エンタープライズビデオ会議',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'capcut': const _CompetitorInfo(
+    name: 'CapCut',
+    emoji: '🎬',
+    tagline: 'CapCutをAI搭載ショート動画編集アプリに使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'CapCut代替 動画編集代替 TikTok動画編集代替 CapCut日本語',
+    accentColor: Color(0xFF1C1C1E),
+    painPoints: [
+      'ショート動画編集・AI自動生成に特化し、個人財務・AI大学・習慣管理は別ツール',
+      'ByteDance傘下でデータプライバシーへの懸念がある',
+      '動画編集以外の個人ライフOS統合機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AI搭載ショート動画編集',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'davinci-resolve': const _CompetitorInfo(
+    name: 'DaVinci Resolve',
+    emoji: '🎥',
+    tagline:
+        'DaVinci Resolveをプロ向け動画編集・カラーグレーディングに使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'DaVinci Resolve代替 動画編集代替 Premiere Pro代替 DaVinci Resolve日本語',
+    accentColor: Color(0xFF8B1A1A),
+    painPoints: [
+      'プロ動画編集・カラーグレーディングに特化し、個人財務・AI大学・習慣管理は別ツール',
+      '学習曲線が急で初心者には機能過多、マシンスペックも要求が高い',
+      '動画編集以外の個人ライフOS統合機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'プロ動画編集・カラーグレーディング',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'semrush': const _CompetitorInfo(
+    name: 'SEMrush',
+    emoji: '📊',
+    tagline:
+        'SEMrushをSEO・競合分析・マーケティングツールに使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'SEMrush代替 SEOツール代替 競合分析代替 SEMrush日本語',
+    accentColor: Color(0xFFFF642D),
+    painPoints: [
+      'SEO・競合分析・広告リサーチに特化し、個人財務・AI大学・習慣管理は別ツール',
+      '月額119USD～と高額で中小個人事業主には負担が大きい',
+      'SEOマーケティング以外の個人ライフOS統合機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'SEO・競合分析・キーワードリサーチ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'ahrefs': const _CompetitorInfo(
+    name: 'Ahrefs',
+    emoji: '🔗',
+    tagline: 'AhrefsをSEO・バックリンク分析ツールに使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'Ahrefs代替 SEOツール代替 バックリンク分析代替 Ahrefs日本語',
+    accentColor: Color(0xFF2356FF),
+    painPoints: [
+      'SEO・バックリンク・コンテンツ分析に特化し、個人財務・AI大学・習慣管理は別ツール',
+      '月額99USD～でキーワード調査・競合分析専門ツールとして運用',
+      'SEO分析以外の個人ライフOS統合機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'SEO・バックリンク・コンテンツ分析',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  '1password': const _CompetitorInfo(
+    name: '1Password',
+    emoji: '🔑',
+    tagline:
+        '1Passwordをパスワード管理・セキュリティツールに使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: '1Password代替 パスワード管理代替 LastPass代替 1Password日本語',
+    accentColor: Color(0xFF1A8CFF),
+    painPoints: [
+      'パスワード・機密情報管理に特化し、個人財務・AI大学・習慣管理は別ツール',
+      '月額3USD～のサブスクで、長期利用コストが積み上がる',
+      'セキュリティ管理以外の個人ライフOS統合機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'パスワード・機密情報管理',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'crowdworks': const _CompetitorInfo(
+    name: 'CrowdWorks',
+    emoji: '🤝',
+    tagline:
+        'CrowdWorksをクラウドソーシング・仕事受発注プラットフォームに使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'CrowdWorks代替 クラウドソーシング代替 フリーランス仕事代替 クラウドワークス',
+    accentColor: Color(0xFF0099CC),
+    painPoints: [
+      '仕事受発注・フリーランスマッチングに特化し、個人財務・AI大学・習慣管理は別ツール',
+      '手数料5〜20%と成約額に応じたコストがかかり、報酬が目減りする',
+      'クラウドソーシング以外の個人ライフOS統合機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'クラウドソーシング・仕事マッチング',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'lancers': const _CompetitorInfo(
+    name: 'Lancers',
+    emoji: '💼',
+    tagline:
+        'Lancersをフリーランス仕事受発注プラットフォームに使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'Lancers代替 フリーランス代替 クラウドソーシング代替 ランサーズ',
+    accentColor: Color(0xFFFF7F00),
+    painPoints: [
+      'フリーランス案件マッチングに特化し、個人財務・AI大学・習慣管理は別ツール',
+      '成約手数料16.5%〜と高く、フリーランス収入が減少する',
+      'フリーランス案件以外の個人ライフOS統合機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'フリーランス案件マッチング',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'coconala': const _CompetitorInfo(
+    name: 'coconala',
+    emoji: '🌺',
+    tagline:
+        'coconalaをスキル販売・個人スキルシェアマーケットに使うか、AI支援+財務+習慣+AI大学を統合する個人OS「自分株式会社」を選ぶか。',
+    searchKeyword: 'coconala代替 スキル販売代替 スキルシェア代替 ココナラ',
+    accentColor: Color(0xFFF5B800),
+    painPoints: [
+      'スキル販売・ノウハウ提供マーケットに特化し、個人財務・AI大学・習慣管理は別ツール',
+      '手数料25%と高く、スキル販売収入が大幅に目減りする',
+      'スキルマーケット以外の個人ライフOS統合機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'スキル販売・個人スキルシェア',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
@@ -10353,6 +10666,15 @@ class _ComparisonShellState extends State<_ComparisonShell> {
     'ticktick': 'tasks',
     'thinkific': 'e-learning',
     'skillshare': 'e-learning',
+    'webex': 'video-comm',
+    'capcut': 'video-editing',
+    'davinci-resolve': 'video-editing',
+    'semrush': 'seo',
+    'ahrefs': 'seo',
+    '1password': 'security',
+    'crowdworks': 'freelance',
+    'lancers': 'freelance',
+    'coconala': 'marketplace',
   };
 
   @override
@@ -10553,7 +10875,7 @@ class _ComparisonShellState extends State<_ComparisonShell> {
                       children: [
                         _buildTag(
                           icon: Icons.compare_arrows_rounded,
-                          label: '258社比較',
+                          label: '267社比較',
                           backgroundColor:
                               _info.accentColor.withValues(alpha: 0.18),
                           foregroundColor: _textPrimary,
@@ -11161,7 +11483,7 @@ class _ComparisonShellState extends State<_ComparisonShell> {
                       ),
                       SizedBox(width: 8),
                       Text(
-                        '全258社の競合ランドスケープを見る →',
+                        '全267社の競合ランドスケープを見る →',
                         style: TextStyle(
                           fontSize: 14,
                           color: _textSecondary,
