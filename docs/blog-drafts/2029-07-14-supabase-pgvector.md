@@ -1,7 +1,7 @@
 ---
 title: "Supabase pgvector 完全ガイド — セマンティック検索・RAG・レコメンド を PostgreSQL で実装する"
 tags: flutter,supabase,個人開発,AI
-published: false
+published: true
 ---
 
 # Supabase pgvector 完全ガイド — セマンティック検索・RAG・レコメンド を PostgreSQL で実装する

@@ -1,7 +1,7 @@
 ---
 title: "Supabase pgvector Guide — Semantic Search, RAG, and Recommendations in PostgreSQL"
 tags: supabase,flutter,webdev,indiedev
-published: false
+published: true
 ---
 
 # Supabase pgvector Guide — Semantic Search, RAG, and Recommendations in PostgreSQL
