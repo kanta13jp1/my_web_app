@@ -217,6 +217,7 @@
 | --- | --- | --- | --- | --- |
 | 2026-04-28 | Win版#132 part 67 | 軸確立 (docs + Rule [PLATFORM-31]) | — | 2.0/7 |
 | 2026-04-29 | Win版#132 part 74 | Codex#2 へ `task_budget` + `effort_router` 同時 cross-instance-pr (= 1 PR 2 原則 第 1 例) | (#6 + #7 完成は Codex#2 受領後 4.0/7) | 2.0/7 (PR 受領で **4.0/7** 想定) |
+| 2026-04-29 | Win版#132 part 75 | `docs/CLIENT_ZERO_CASE_STUDY.md` 新規 (10 セクション / 12 fleet 構成 / 4 日 8 軸 / dogfood 5 例 / Phase 計画 / Use Case 3 種 / NEC pattern 模倣) | #3 Client Zero dogfood | 2.0 → **3.0/7** |
 
 **次回ターゲット**:
 - #6 task_budget 統合: `_shared/task_budget.ts` → Codex#2 cross-instance-pr 候補
