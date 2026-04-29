@@ -54791,6 +54791,312 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'genesys': const _CompetitorInfo(
+    name: 'Genesys Cloud CX',
+    emoji: '📞',
+    tagline: 'Genesys Cloud CX・AIコンタクトセンター・オムニチャネル・音声/チャット/メール・顧客体験プラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Genesys代替 Cloud CX コンタクトセンター オムニチャネル AI 音声 Avaya代替 NICE代替',
+    accentColor: Color(0xFFFF4F1B),
+    painPoints: [
+      '有料・コンタクトセンター特化・個人のライフ管理は別途必要',
+      'エンタープライズ特化・個人のAI管理は別途必要',
+      'Avaya/NICE/Five9 との比較でコスト・中小規模対応・実装速度が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AIコンタクトセンター・オムニチャネル・音声/チャット/メール・CX統合プラットフォーム',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'avaya': const _CompetitorInfo(
+    name: 'Avaya',
+    emoji: '📟',
+    tagline: 'Avaya Experience Platform・UCaaS/CCaaS・ハイブリッドクラウド・AIコンタクトセンター・統合コミュニケーションで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Avaya代替 UCaaS CCaaS ハイブリッドクラウド AI コンタクトセンター 統合コミュニケーション Genesys代替 Cisco代替',
+    accentColor: Color(0xFFDA291C),
+    painPoints: [
+      '有料・UCaaS/CCaaS特化・個人のライフ管理は別途必要',
+      'エンタープライズ特化・個人のAI管理は別途必要',
+      'Genesys/Cisco/Microsoft Teams との比較でコスト・クラウドネイティブ・財務状況が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Experience Platform・UCaaS/CCaaS・ハイブリッドクラウド・AIコンタクトセンター',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'nice-incontact': const _CompetitorInfo(
+    name: 'NICE CXone',
+    emoji: '🌸',
+    tagline: 'NICE CXone・クラウドコンタクトセンター・AIオートメーション・WFM・分析・オムニチャネルCXプラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'NICE CXone代替 クラウドコンタクトセンター AI WFM 分析 オムニチャネル Genesys代替 Avaya代替',
+    accentColor: Color(0xFF003DA5),
+    painPoints: [
+      '有料・CCaaS特化・個人のライフ管理は別途必要',
+      'エンタープライズ特化・個人のAI管理は別途必要',
+      'Genesys/Avaya/Talkdesk との比較でコスト・SMB対応・UI/UXが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'クラウドCCaaS・AIオートメーション・WFM・分析・オムニチャネルCX',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'five9': const _CompetitorInfo(
+    name: 'Five9',
+    emoji: '5️⃣',
+    tagline: 'Five9 CCaaS・AIエージェント・インテリジェントクラウドコンタクトセンター・WFO・オムニチャネル・CRM統合で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Five9代替 CCaaS AIエージェント インテリジェントコンタクトセンター WFO オムニチャネル Genesys代替 Talkdesk代替',
+    accentColor: Color(0xFF003580),
+    painPoints: [
+      '有料・CCaaS特化・個人のライフ管理は別途必要',
+      'エンタープライズ特化・個人のAI管理は別途必要',
+      'Genesys/NICE/Talkdesk との比較でコスト・UI/UX・スモールビジネス対応が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AIエージェント・CCaaS・WFO・オムニチャネル・CRM統合・インテリジェントCC',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'talkdesk': const _CompetitorInfo(
+    name: 'Talkdesk',
+    emoji: '📲',
+    tagline: 'Talkdesk・AIクラウドコンタクトセンター・CX Cloud・リアルタイムAI・WFM・金融/医療特化ソリューションで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Talkdesk代替 AI CCaaS CX Cloud リアルタイム WFM 金融 医療 Genesys代替 Five9代替',
+    accentColor: Color(0xFFFF3366),
+    painPoints: [
+      '有料・CCaaS特化・個人のライフ管理は別途必要',
+      'エンタープライズ特化・個人のAI管理は別途必要',
+      'Genesys/Five9/NICE との比較でコスト・統合数・エンタープライズ機能が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AIクラウドCC・CX Cloud・リアルタイムAI・WFM・金融/医療特化',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'twilio-flex': const _CompetitorInfo(
+    name: 'Twilio Flex',
+    emoji: '🔀',
+    tagline: 'Twilio Flex・プログラマブルコンタクトセンター・カスタマイズ可能CCaaS・API・デベロッパーファーストで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Twilio Flex代替 CCaaS プログラマブル コンタクトセンター API カスタマイズ デベロッパー Genesys代替 Five9代替',
+    accentColor: Color(0xFFE31837),
+    painPoints: [
+      '有料(使用量課金)・CCaaS特化・個人のライフ管理は別途必要',
+      '開発者向け特化・個人のAI管理は別途必要',
+      'Genesys/Five9/NICE との比較でコスト・開発工数・既成機能が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'プログラマブルCCaaS・API・カスタマイズ可能・デベロッパーファースト',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'amazon-connect': const _CompetitorInfo(
+    name: 'Amazon Connect',
+    emoji: '📡',
+    tagline: 'Amazon Connect・クラウドCCaaS・AWS統合・AIコンタクトセンター・従量課金・Contact Lens分析で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Amazon Connect代替 AWS CCaaS クラウド AI Contact Lens 従量課金 Genesys代替 Twilio代替',
+    accentColor: Color(0xFFFF9900),
+    painPoints: [
+      '有料(従量課金)・AWS/CCaaS特化・個人のライフ管理は別途必要',
+      'エンタープライズ特化・個人のAI管理は別途必要',
+      'Genesys/Five9/Talkdesk との比較でコスト予測・UI/UX・専門知識要求が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'クラウドCCaaS・AWS統合・AI・Contact Lens分析・従量課金・スケーラブル',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'mitel': const _CompetitorInfo(
+    name: 'Mitel',
+    emoji: '📠',
+    tagline: 'Mitel・UCaaS/CCaaS・ハイブリッド/オンプレ電話・ビジネスコミュニケーション・中規模企業向け・移行支援で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Mitel代替 UCaaS CCaaS ビジネス電話 ハイブリッド オンプレ 中規模企業 Avaya代替 RingCentral代替',
+    accentColor: Color(0xFF00529B),
+    painPoints: [
+      '有料・UCaaS/CCaaS特化・個人のライフ管理は別途必要',
+      'ビジネスコミュニケーション特化・個人のAI管理は別途必要',
+      'Avaya/RingCentral/Microsoft Teams との比較でクラウドネイティブ・AI機能・コストが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'UCaaS/CCaaS・ハイブリッド/オンプレ・ビジネスコミュニケーション・中規模向け',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'liveagent': const _CompetitorInfo(
+    name: 'LiveAgent',
+    emoji: '🎯',
+    tagline: 'LiveAgent・マルチチャネルCS・ライブチャット+ヘルプデスク統合・コールセンター・ゲーミフィケーション・コスト効率で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'LiveAgent代替 マルチチャネル ライブチャット ヘルプデスク コールセンター ゲーミフィケーション Freshdesk代替 Zendesk代替',
+    accentColor: Color(0xFFFF5722),
+    painPoints: [
+      '有料・CS特化・個人のライフ管理は別途必要',
+      'カスタマーサポート特化・個人のAI管理は別途必要',
+      'Freshdesk/Zendesk/HelpScout との比較でコスト・AI精度・エンタープライズ機能が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'マルチチャネルCS・ライブチャット+ヘルプデスク・コールセンター・ゲーミフィケーション',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
