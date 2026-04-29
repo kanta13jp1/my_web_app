@@ -25090,3 +25090,23 @@ c2f8626d9 + fa6a34f43 on main
 
 ### commit
 b6b388657 + 10181c3c1 on main
+
+---
+
+## 2026-04-29 PS#5 Session 114 — CI統合: stale-ef-completeness-check に phantom EF 検出追加
+
+### 変更内容
+- `.github/workflows/stale-ef-completeness-check.yml` に `check_ef_coverage.py` ステップ追加
+- push/PR 時に stale EF (DEAD_LIST 参照) + phantom EF (未デプロイ EF 呼び出し) を自動検出
+
+### 検出範囲 (両スクリプト合算)
+| スクリプト | 検出内容 |
+|---|---|
+| `audit_hub_migration_completeness.py` | Flutter/lib/ が DEAD_LIST の旧 EF を invoke() している |
+| `check_ef_coverage.py` | Flutter/lib/ が deploy-prod.yml 未登録 EF を invoke() している |
+
+### Philosophy Alignment
+#5 商品=ユーザー価値 (= 404 エラー事前防止) / #6 資本=時間 (= CI 自動検出で手動 audit 不要)
+
+### commit
+8a80c91ae on main
