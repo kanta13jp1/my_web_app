@@ -1,7 +1,7 @@
 ---
 title: "Dart 3 Records & Patterns 実践 — 構造的分解と exhaustive switch の活用"
 tags: flutter,dart,個人開発,AI
-published: false
+published: true
 ---
 
 # Dart 3 Records & Patterns 実践 — 構造的分解と exhaustive switch の活用

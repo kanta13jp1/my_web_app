@@ -1,7 +1,7 @@
 ---
 title: "Dart 3 Records and Patterns — Destructuring, Exhaustive Switches, and More"
 tags: dart,flutter,webdev,indiedev
-published: false
+published: true
 ---
 
 # Dart 3 Records and Patterns — Destructuring, Exhaustive Switches, and More
