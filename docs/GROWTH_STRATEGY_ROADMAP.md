@@ -24880,3 +24880,9 @@ SECOND_BRAIN 4.5/7 + VIBE 7.0/7 + PLATFORM 4.0/7 = 14.5/21 + WBS audit pattern �
 ### commit
 (本 commit にて確定)
 
+
+## 2026-04-29 PS#1 S14 — comparison_page 3件+1件重複削除 + stale EF cross-instance-pr
+- comparison_page: cohere/together-ai/replicate 3件 + together-ai 再発 1件 → 591→588 keys
+- Stale EF Migration Completeness Check 失敗 (run 25097681763):
+  - recipe-meal-planner (health_coach_page.dart) + travel-itinerary-planner (travel_itinerary_page.dart 7箇所)
+  - VSCode版へ cross-instance-pr: 20260429_stale_ef_health_travel_vscode.md
