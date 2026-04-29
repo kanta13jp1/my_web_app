@@ -1,7 +1,7 @@
 ---
 title: "Supabase Edge Functions Advanced — Deno, Webhooks, Scheduled Jobs, and Multi-tenant Patterns"
 tags: dart,flutter,webdev,indiedev
-published: false
+published: true
 ---
 
 # Supabase Edge Functions Advanced — Deno, Webhooks, Scheduled Jobs, and Multi-tenant Patterns
