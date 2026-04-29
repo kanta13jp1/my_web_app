@@ -24547,6 +24547,312 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'hopin': const _CompetitorInfo(
+    name: 'Hopin',
+    emoji: '🎪',
+    tagline: 'バーチャル・ハイブリッドイベントプラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Hopin代替 バーチャルイベント ハイブリッドイベント オンラインカンファレンス ウェビナー',
+    accentColor: Color(0xFF7B4FD0),
+    painPoints: [
+      '月額99ドル〜・イベント特化・個人のライフ管理は別途必要',
+      'イベントプラットフォーム特化でビジネス向け設計・個人のAI管理は別途必要',
+      'Zoom Webinars/Teams Live Eventsと比較してエコシステム統合が弱い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ステージ・セッション・ネットワーキング・展示ブース・録画・分析',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'bizzabo': const _CompetitorInfo(
+    name: 'Bizzabo',
+    emoji: '📅',
+    tagline: 'エンタープライズイベント管理・マーケティングプラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Bizzabo代替 イベント管理 エンタープライズ カンファレンス マーケティング 登録',
+    accentColor: Color(0xFF1A3B5C),
+    painPoints: [
+      '価格非公開(大企業向け高額)・イベント特化・個人のライフ管理は別途必要',
+      'イベントマーケ特化でエンタープライズ向け設計・個人のAI管理は別途必要',
+      'Hopinと比較してバーチャルイベント機能の革新性が低い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'イベント登録・アプリ・スピーカー管理・スポンサー・Analytics・CRM統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'gather-town': const _CompetitorInfo(
+    name: 'Gather',
+    emoji: '🏘️',
+    tagline: 'ピクセルアート風バーチャルオフィス・リモートチームコラボで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Gather代替 バーチャルオフィス リモートワーク ピクセルアート オンラインコラボ',
+    accentColor: Color(0xFF7742FF),
+    painPoints: [
+      '月額3ドル/ユーザー〜・バーチャルオフィス特化・個人のライフ管理は別途必要',
+      'バーチャル空間特化でチーム向け設計・個人のAIライフ管理は別途必要',
+      'Zoomと比較して音質・映像品質・モバイル対応が限定的',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ピクセルマップ・近接通話・ゲームエリア・カスタム空間・イベント',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'freshservice': const _CompetitorInfo(
+    name: 'Freshservice',
+    emoji: '🛠️',
+    tagline: 'クラウドITSM・サービスデスク・IT資産管理で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Freshservice代替 ITSM サービスデスク IT資産管理 インシデント管理 Jira Service代替',
+    accentColor: Color(0xFF1CC85A),
+    painPoints: [
+      '月額19ドル/エージェント〜・ITSM特化・個人のライフ管理は別途必要',
+      'IT管理特化でIT部門向け設計・個人のAIライフ管理は別途必要',
+      'ServiceNowと比較してエンタープライズカスタマイズ・統合の深さが劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'インシデント・問題・変更・資産・CMDB・AI・SLA・FSM',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'servicenow': const _CompetitorInfo(
+    name: 'ServiceNow',
+    emoji: '⚙️',
+    tagline: 'エンタープライズITSM・ワークフロー自動化プラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'ServiceNow代替 ITSM エンタープライズ ワークフロー自動化 IT管理 大企業',
+    accentColor: Color(0xFF81B5A1),
+    painPoints: [
+      '価格非公開(年間数十万ドル〜)・大企業専用・中小企業には過剰',
+      'エンタープライズITSM特化でIT部門向け設計・個人のAI管理は別途必要',
+      'Freshservice/Jira Serviceと比較して導入コスト・習得時間が膨大',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ITSM・ITOM・HRSD・CSM・Now Platform・AI・ローコード・大規模',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'degreed': const _CompetitorInfo(
+    name: 'Degreed',
+    emoji: '📖',
+    tagline: '企業向けスキル構築・学習エクスペリエンスプラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Degreed代替 スキル構築 学習体験 企業研修 LXP エンタープライズ 学習プラットフォーム',
+    accentColor: Color(0xFF004B87),
+    painPoints: [
+      '価格非公開(エンタープライズ向け)・スキル管理特化・個人のライフ管理は別途',
+      'LXP/スキル特化でエンタープライズ向け設計・個人のAI管理は別途必要',
+      'Cornerstone/Absorb LMSと比較してコース制作・評価機能が弱い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'スキルグラフ・学習パス・コンテンツ統合・コーチング・Analytics',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'mindtickle': const _CompetitorInfo(
+    name: 'Mindtickle',
+    emoji: '🧠',
+    tagline: '営業準備・コーチング・AI分析セールスイネーブルメントで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Mindtickle代替 セールストレーニング コーチング AI分析 営業準備 スキル',
+    accentColor: Color(0xFF5C30C2),
+    painPoints: [
+      '価格非公開(エンタープライズ向け)・営業トレーニング特化・個人のライフ管理は別途',
+      'セールスコーチング特化でビジネス向け設計・個人のAI管理は別途必要',
+      'Gong/Outlookと比較して会話インテリジェンス機能が限定的',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '営業準備スコア・コーチング・ロールプレイAI・コンテンツ管理・分析',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  '360learning': const _CompetitorInfo(
+    name: '360Learning',
+    emoji: '🔄',
+    tagline: 'コラボレーティブLMS・社員が作る学習コミュニティで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: '360Learning代替 LMS コラボレーション 社員学習 ピアラーニング オンボーディング',
+    accentColor: Color(0xFF00C4D4),
+    painPoints: [
+      '月額8ドル/ユーザー〜・コラボLMS特化・個人のライフ管理は別途必要',
+      '企業学習特化でHR向け設計・個人のAIライフ管理は別途必要',
+      'TalentLMS/Moodleと比較してコンテンツ素材・統合機能が限定的',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ピアラーニング・AIコース生成・パス・コーチング・フィードバック',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'learnupon': const _CompetitorInfo(
+    name: 'LearnUpon',
+    emoji: '🎯',
+    tagline: '多ポータル対応LMS・パートナー・社員・顧客研修で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'LearnUpon代替 LMS マルチポータル 社員研修 顧客教育 パートナー学習',
+    accentColor: Color(0xFF0065BD),
+    painPoints: [
+      '月額699ドル〜(最大150ユーザー)・研修特化・個人のライフ管理は別途必要',
+      '企業研修特化でHR向け設計・個人のAIライフ管理は別途必要',
+      'TalentLMS/Absorb LMSと比較して価格対効果がやや高い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '複数ポータル・SCORM・コース・認定証・API・Salesforce/Teams統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
