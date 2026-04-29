@@ -20093,6 +20093,312 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'cloudflare': const _CompetitorInfo(
+    name: 'Cloudflare',
+    emoji: '🔶',
+    tagline: 'グローバルCDN・DDoS対策・エッジコンピューティングで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Cloudflare代替 CDN DDoS対策 DNS WAF エッジコンピューティング',
+    accentColor: Color(0xFFF38020),
+    painPoints: [
+      '月額20ドル〜・Workers/R2/D1等の高度機能は有料プランが必要',
+      'インフラ・ネットワーク特化でエンジニア向け設計・個人管理は別途必要',
+      'AkamaiやFastlyと比較してエンタープライズSLAが弱い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'CDN・DNS・WAF・Workers・R2・D1・Pages・Zero Trust',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'fastly': const _CompetitorInfo(
+    name: 'Fastly',
+    emoji: '⚡',
+    tagline: 'リアルタイムCDN・エッジクラウドプラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Fastly代替 CDN エッジクラウド リアルタイム配信 DDoS対策',
+    accentColor: Color(0xFFFF282D),
+    painPoints: [
+      '従量課金制・エンタープライズ向け価格で個人や小規模には高額',
+      'CDN・エッジ特化でエンジニア向け設計・個人のライフ管理は別途必要',
+      'Cloudflareと比較して無料プランがなく小規模利用には敷居が高い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'エッジCDN・画像最適化・串刺しロジック・WAF・オブザーバビリティ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'bunny-net': const _CompetitorInfo(
+    name: 'Bunny.net',
+    emoji: '🐰',
+    tagline: 'コスト効率の高いCDN・ストリーミング・ストレージで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Bunny.net代替 CDN 安いCDN ストリーミング 動画配信 ストレージ',
+    accentColor: Color(0xFFF0641E),
+    painPoints: [
+      '従量課金制・帯域1GBあたり0.01ドル〜・転送量が多い場合でも低コスト',
+      'CDN・ストレージ特化でエンジニア向け設計・個人のライフ管理は別途必要',
+      'CloudflareやFastlyと比較してエッジコンピューティング機能が少ない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'グローバルCDN・動画ストリーミング・ストレージ・画像処理・DNS',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'grafana': const _CompetitorInfo(
+    name: 'Grafana',
+    emoji: '📊',
+    tagline: 'オープンソース可観測性・メトリクス可視化ダッシュボードで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Grafana代替 メトリクス可視化 ダッシュボード Prometheus 監視',
+    accentColor: Color(0xFFFF6D00),
+    painPoints: [
+      'クラウド版月額14ドル〜・セルフホスト版は管理・運用コストが発生',
+      'メトリクス可視化特化でエンジニア向け設計・個人のライフ管理は別途必要',
+      'Datadogと比較してAIopsや自動異常検知が弱い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ダッシュボード・Loki・Tempo・Mimir・アラート・プラグイン',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'prometheus': const _CompetitorInfo(
+    name: 'Prometheus',
+    emoji: '🔥',
+    tagline: 'OSSメトリクス収集・アラートシステムで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Prometheus代替 メトリクス収集 アラート 監視 Kubernetes',
+    accentColor: Color(0xFFE75225),
+    painPoints: [
+      'セルフホスト必須・クラウド版なし・スケーリングに専門知識が必要',
+      'メトリクス収集特化でエンジニア向け設計・個人のライフ管理は別途必要',
+      'Datadogと比較してUIが古くダッシュボード機能はGrafana等が別途必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Pull型収集・PromQL・アラートマネージャー・Kubernetes統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'sentry': const _CompetitorInfo(
+    name: 'Sentry',
+    emoji: '🛡️',
+    tagline: 'アプリケーションエラー監視・パフォーマンストレースで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Sentry代替 エラー監視 クラッシュレポート パフォーマンス APM',
+    accentColor: Color(0xFF362D59),
+    painPoints: [
+      '月額26ドル〜・エラー数上限を超えると従量課金・大規模アプリは高額',
+      'エラー監視特化でエンジニア向け設計・個人のライフ管理は別途必要',
+      'Datadogと比較してインフラ監視・ログ収集機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'エラートラッキング・セッションリプレイ・パフォーマンス・Crons',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'bugsnag': const _CompetitorInfo(
+    name: 'Bugsnag',
+    emoji: '🐛',
+    tagline: 'アプリケーション安定性・エラーモニタリングで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Bugsnag代替 エラー監視 クラッシュ報告 アプリ安定性 Sentry代替',
+    accentColor: Color(0xFF4C4C96),
+    painPoints: [
+      '月額47ドル〜・小規模チームにはSentryより高価格',
+      'エラー監視特化でエンジニア向け設計・個人のライフ管理は別途必要',
+      'Sentryと比較してオープンソース版がなくセルフホストが不可',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'エラーグループ化・リリース安定性・ダッシュボード・Slack連携',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'rollbar': const _CompetitorInfo(
+    name: 'Rollbar',
+    emoji: '🔄',
+    tagline: 'リアルタイムエラー監視・デプロイ追跡で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Rollbar代替 エラー監視 リアルタイム デプロイ追跡 Sentry代替',
+    accentColor: Color(0xFF33CCFF),
+    painPoints: [
+      '月額17ドル〜・無料プランは5,000エラー/月まで',
+      'エラー監視特化でエンジニア向け設計・個人のライフ管理は別途必要',
+      'Sentryと比較してセッションリプレイ・パフォーマンス機能がない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'リアルタイムエラー・デプロイ追跡・RQL・テスト自動化連携',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'logrocket': const _CompetitorInfo(
+    name: 'LogRocket',
+    emoji: '🚀',
+    tagline: 'フロントエンドセッションリプレイ・エラー監視で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'LogRocket代替 セッションリプレイ フロントエンド監視 UX分析 エラー',
+    accentColor: Color(0xFF764ABC),
+    painPoints: [
+      '月額69ドル〜・セッション数上限があり大規模サービスでは高額',
+      'フロントエンド監視特化でエンジニア向け設計・個人管理は別途必要',
+      'Fullstoryと比較してバックエンド連携・AI機能が弱い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'セッションリプレイ・エラー監視・パフォーマンス・AI分析・Redux',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
