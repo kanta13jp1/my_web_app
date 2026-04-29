@@ -29375,6 +29375,312 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'mlflow': const _CompetitorInfo(
+    name: 'MLflow',
+    emoji: '🌊',
+    tagline: 'オープンソースML実験追跡・モデルレジストリ・デプロイメント管理で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'MLflow代替 ML実験追跡 モデルレジストリ Databricks OSS MLops パイプライン',
+    accentColor: Color(0xFF0194E2),
+    painPoints: [
+      '無料OSS・ML実験特化・個人のライフ管理は別途必要',
+      'Databricks基盤MLops特化・個人のAI管理は別途必要',
+      'W&B/Neptune.aiと比較してUIの洗練度・クラウド統合が劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '実験追跡・プロジェクト管理・モデルレジストリ・デプロイAPI・複数言語対応',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'bentoml': const _CompetitorInfo(
+    name: 'BentoML',
+    emoji: '🍱',
+    tagline: 'MLモデルサービング・AI推論インフラOSSで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'BentoML代替 MLモデルサービング AI推論 OSS デプロイ Kubernetes Docker',
+    accentColor: Color(0xFFFD5C63),
+    painPoints: [
+      '無料OSS/エンタープライズ有料・MLサービング特化・個人のライフ管理は別途必要',
+      'AI推論特化・個人のAI管理は別途必要',
+      'Torchserve/Tritonと比較してGPU最適化・大規模推論が劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'APIサービング・Dockerize・複数フレームワーク・Kubernetes・OpenAPI',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'ray-serve': const _CompetitorInfo(
+    name: 'Ray Serve',
+    emoji: '⚡',
+    tagline: '分散AIサービング・スケーラブル推論フレームワークで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Ray Serve代替 分散AI サービング 推論 スケーラブル Python Kubernetes',
+    accentColor: Color(0xFF028CF7),
+    painPoints: [
+      '無料OSS・分散推論特化・個人のライフ管理は別途必要',
+      'Ray エコシステム特化・個人のAI管理は別途必要',
+      'BentoML/Seldonと比較してMLライフサイクル管理が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'バッチ推論・A/Bテスト・オートスケーリング・マルチモデル・Python-first',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'feast': const _CompetitorInfo(
+    name: 'Feast',
+    emoji: '🍽️',
+    tagline: 'オープンソース機械学習フィーチャーストアで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Feast代替 フィーチャーストア MLops 特徴量管理 Redis BigQuery リアルタイム',
+    accentColor: Color(0xFFE65C00),
+    painPoints: [
+      '無料OSS・特徴量管理特化・個人のライフ管理は別途必要',
+      'MLフィーチャー特化・個人のAI管理は別途必要',
+      'Tecton/Hopsworksと比較してエンタープライズサポート・UI が劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '特徴量登録・オンライン/オフラインストア・ポイントインタイム・SDK',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'tecton': const _CompetitorInfo(
+    name: 'Tecton',
+    emoji: '🏗️',
+    tagline: 'エンタープライズ機械学習フィーチャープラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Tecton代替 フィーチャーストア エンタープライズ MLops リアルタイム特徴量 Uber起源',
+    accentColor: Color(0xFF5A2D82),
+    painPoints: [
+      '月額不明・エンタープライズ特徴量特化・個人のライフ管理は別途必要',
+      'ML特徴量基盤特化・個人のAI管理は別途必要',
+      'Feast(OSS)と比較してコスト・ベンダーロックインが課題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '特徴量パイプライン・リアルタイム/バッチ・データ品質・ガバナンス・Databricks統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'hopsworks': const _CompetitorInfo(
+    name: 'Hopsworks',
+    emoji: '🔧',
+    tagline: 'データ中心MLOpsプラットフォーム・フィーチャーストアで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Hopsworks代替 MLOps フィーチャーストア データ管理 OSS セルフホスト Kubernetes',
+    accentColor: Color(0xFF2C7DA0),
+    painPoints: [
+      '無料OSS/有料クラウド・MLOps特化・個人のライフ管理は別途必要',
+      'フィーチャーストア+MLOps特化・個人のAI管理は別途必要',
+      'Databricks/Vertexと比較してエコシステム・ブランド認知が劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'フィーチャーストア・実験追跡・モデルレジストリ・パイプライン・OSS',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'great-expectations': const _CompetitorInfo(
+    name: 'Great Expectations',
+    emoji: '✅',
+    tagline: 'データ品質検証・テスト自動化フレームワークで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Great Expectations代替 データ品質 バリデーション テスト自動化 dbt Spark Pandas',
+    accentColor: Color(0xFFFF6B35),
+    painPoints: [
+      '無料OSS/有料クラウド・データ品質特化・個人のライフ管理は別途必要',
+      'データバリデーション特化・個人のAI管理は別途必要',
+      'dbt test/Sodasと比較してセットアップ複雑度・学習コストが高い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Expectation定義・自動プロファイリング・データドキュメント・CI統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'evidently': const _CompetitorInfo(
+    name: 'Evidently AI',
+    emoji: '📉',
+    tagline: 'MLモデル評価・モニタリング・データドリフト検出OSSで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Evidently代替 MLモニタリング データドリフト モデル劣化 検出 OSS レポート',
+    accentColor: Color(0xFF9B5DE5),
+    painPoints: [
+      '無料OSS/有料クラウド・MLモニタリング特化・個人のライフ管理は別途必要',
+      'ドリフト検出特化・個人のAI管理は別途必要',
+      'WhyLabs/Arizeと比較してクラウドサービス・リアルタイム監視が劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'データドリフト・モデル品質・ターゲットドリフト・レポート・テストスイート',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'whylabs': const _CompetitorInfo(
+    name: 'WhyLabs',
+    emoji: '🔍',
+    tagline: 'AIオブザーバビリティ・MLモデル監視プラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'WhyLabs代替 AIオブザーバビリティ MLモニタリング データ品質 ドリフト LLM監視',
+    accentColor: Color(0xFF2563EB),
+    painPoints: [
+      '無料/月額1000ドル〜・AIモニタリング特化・個人のライフ管理は別途必要',
+      'モデル監視特化・個人のAI管理は別途必要',
+      'Arize/Evidently比較でOSS・セルフホスト選択肢が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'データ品質・ドリフト検出・LLM監視・Explainability・アラート',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
