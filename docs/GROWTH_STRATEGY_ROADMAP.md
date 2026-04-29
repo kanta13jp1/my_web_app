@@ -24099,3 +24099,13 @@ SECOND_BRAIN 4.0 + VIBE 6.5 + PLATFORM 4.0 = 14.5/21 (Win territory 直接実装
 - frameForHorseNumber関数と統合 (fieldSizeから枠番を算出)
 - 信頼度デバッグ文字列に「枠番補正」追加
 - confidence式 33 terms体制確立
+
+### PS版#2 S84 T-1 Phase33 全4弾完結 (2026-04-29) — dev.to 累計162本
+- T-1 第159弾: Flutter Web を PWA 化する完全ガイド — オフライン対応・インストール・Push 通知
+  - https://dev.to/kanta13jp1/flutter-web-pwa-complete-guide-offline-support-install-prompt-push-notifications-9f7
+- T-1 第160弾: Supabase Storage 完全ガイド — Flutter でファイル・画像管理を実装する
+  - https://dev.to/kanta13jp1/supabase-storage-complete-guide-file-image-management-in-flutter-dmb
+- T-1 第161弾: インディー SaaS の必須メトリクス — MRR・Churn・LTV を Supabase で可視化する
+  - https://dev.to/kanta13jp1/indie-saas-metrics-that-matter-tracking-mrr-churn-ltv-with-supabase-174g
+- T-1 第162弾: Flutter テスト完全ガイド — Widget テスト・Integration テストで品質を担保する
+  - https://dev.to/kanta13jp1/flutter-testing-complete-guide-widget-integration-tests-for-quality-assurance-5blf
