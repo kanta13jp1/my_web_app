@@ -31383,6 +31383,312 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'leonardoai': const _CompetitorInfo(
+    name: 'Leonardo.Ai',
+    emoji: '🎨',
+    tagline: 'AI画像生成・ゲームアセット・クリエイティブコンテンツ制作で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Leonardo.Ai代替 AI画像生成 ゲームアセット キャラクター アート テクスチャ',
+    accentColor: Color(0xFFF59E0B),
+    painPoints: [
+      '無料/月額10ドル〜・AI画像特化・個人のライフ管理は別途必要',
+      'ゲームアセット生成特化・個人のAI管理は別途必要',
+      'Midjourney/Stable Diffusionと比較してプロクオリティ写実系が弱い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ゲームアセット/キャラクター/テクスチャ・ファインチューニング・Realtime画像',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'playgroundai': const _CompetitorInfo(
+    name: 'Playground AI',
+    emoji: '🛝',
+    tagline: 'AIフォトリアリスティック画像生成・グラフィックデザインツールで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Playground AI代替 AI画像生成 フォトリアリスティック グラフィックデザイン Canva代替',
+    accentColor: Color(0xFF6D28D9),
+    painPoints: [
+      '無料/月額15ドル〜・AI画像特化・個人のライフ管理は別途必要',
+      'グラフィックデザイン特化・個人のAI管理は別途必要',
+      'Canva/Adobeと比較してテンプレート数・デザインエコシステムが限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Playground v3・テキスト合成・写実画像・スタイル転送・無料1000枚/日',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'krea-ai': const _CompetitorInfo(
+    name: 'Krea AI',
+    emoji: '✨',
+    tagline: 'AIリアルタイム画像生成・強化・クリエイティブツールで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Krea AI代替 リアルタイム画像生成 AI強化 クリエイティブ テキストtoアート',
+    accentColor: Color(0xFFEC4899),
+    painPoints: [
+      '無料/月額24ドル〜・リアルタイム画像特化・個人のライフ管理は別途必要',
+      'クリエイティブAI特化・個人のAI管理は別途必要',
+      'Midjourney/Leonardo比較でモデル多様性・コミュニティが限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'リアルタイム生成・AI強化・動画生成・ロゴ強化・背景削除・スタイル',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'getimg-ai': const _CompetitorInfo(
+    name: 'getimg.ai',
+    emoji: '🖼️',
+    tagline: 'AI画像生成・編集・ファインチューニングAll-in-Oneプラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'getimg.ai代替 AI画像生成 編集 ファインチューニング Stable Diffusion ControlNet',
+    accentColor: Color(0xFF7C3AED),
+    painPoints: [
+      '無料/月額12ドル〜・AI画像特化・個人のライフ管理は別途必要',
+      '画像生成特化・個人のAI管理は別途必要',
+      'Midjourney/Leonardo比較でプロ用途・コミュニティが劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'SD/ControlNet/Inpaint/LoRAファインチューン・API・60+モデル',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'nightcafe': const _CompetitorInfo(
+    name: 'NightCafe',
+    emoji: '🌙',
+    tagline: 'AIアート生成・クリエイターコミュニティプラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'NightCafe代替 AIアート生成 コミュニティ Stable Diffusion DALL-E コンテスト',
+    accentColor: Color(0xFF1E1B4B),
+    painPoints: [
+      '無料/クレジット制・AIアート特化・個人のライフ管理は別途必要',
+      'アートコミュニティ特化・個人のAI管理は別途必要',
+      'Midjourney/Leonardo比較でAPIアクセス・プロ用途が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AIアート生成・コンテスト・コミュニティ・複数AIモデル・印刷注文',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'starryai': const _CompetitorInfo(
+    name: 'Starryai',
+    emoji: '⭐',
+    tagline: 'AIアート生成・NFT向けモバイルアートアプリで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Starryai代替 AIアート生成 モバイル NFT アート 無料 iOS Android',
+    accentColor: Color(0xFF4F46E5),
+    painPoints: [
+      '無料・AIアート特化・個人のライフ管理は別途必要',
+      'モバイルアート生成特化・個人のAI管理は別途必要',
+      'NightCafe/DreamStudioと比較して生成品質・多様性が劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'モバイルファースト・NFTエクスポート・商用利用・完全著作権・無料クレジット',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'artbreeder': const _CompetitorInfo(
+    name: 'Artbreeder',
+    emoji: '🧬',
+    tagline: 'AI画像ブレンド・キャラクター生成・コラボアートツールで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Artbreeder代替 AI画像ブレンド キャラクター生成 コラボ GANアート 顔生成',
+    accentColor: Color(0xFF059669),
+    painPoints: [
+      '無料/月額8.99ドル〜・AIアートブレンド特化・個人のライフ管理は別途必要',
+      'コラボアート特化・個人のAI管理は別途必要',
+      '他画像生成AIと比較してリアリズム・プロンプト制御が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '画像ブレンド・キャラクター/風景生成・コラボ・アニメ・ポートレート',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'magic-eraser': const _CompetitorInfo(
+    name: 'Magic Eraser',
+    emoji: '🪄',
+    tagline: 'AI画像消去・オブジェクト削除ツールで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Magic Eraser代替 AI画像消去 オブジェクト削除 背景修正 不要物除去 写真編集',
+    accentColor: Color(0xFFDB2777),
+    painPoints: [
+      '無料/月額5ドル〜・画像消去特化・個人のライフ管理は別途必要',
+      '写真編集特化・個人のAI管理は別途必要',
+      'Adobe/Canvaと比較して高度な編集機能・スイートが限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ブラシ塗りで消去・ワンクリック削除・背景補完・一括処理',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'fotor': const _CompetitorInfo(
+    name: 'Fotor',
+    emoji: '📸',
+    tagline: 'AI写真編集・画像生成・デザイン作成オールインワンで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Fotor代替 AI写真編集 画像生成 デザイン テンプレート コラージュ 背景削除',
+    accentColor: Color(0xFF0EA5E9),
+    painPoints: [
+      '無料/月額8.99ドル〜・写真編集特化・個人のライフ管理は別途必要',
+      'AI写真/デザイン特化・個人のAI管理は別途必要',
+      'Canva/Adobeと比較してデザインエコシステム・テンプレートが劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AI強化・背景削除・美顔加工・テンプレート・コラージュ・HDR',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
