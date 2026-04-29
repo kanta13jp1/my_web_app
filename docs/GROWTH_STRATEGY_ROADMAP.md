@@ -24092,3 +24092,10 @@ SECOND_BRAIN 4.0 + VIBE 6.5 + PLATFORM 4.0 = 14.5/21 (Win territory 直接実装
 - courseTypeMatchBonus追加: 前走コース種別(芝/ダート)と今走の一致で±2% confidence補正
 - 同コース種別: +0.02 / コース替わり: -0.02 / データなし: 0
 - confidence式 32 terms体制確立
+
+## 2026-04-29 PS#6 S117 — barrierPositionBonus 枠番補正 (33 terms)
+- barrierPositionBonus追加: 枠番(内枠/外枠)による信頼度補正
+- 内枠(1〜2枠): +0.01 / 外枠(7〜8枠): -0.01 / 中枠(3〜6枠): 0
+- frameForHorseNumber関数と統合 (fieldSizeから枠番を算出)
+- 信頼度デバッグ文字列に「枠番補正」追加
+- confidence式 33 terms体制確立
