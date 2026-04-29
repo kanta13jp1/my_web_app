@@ -24335,3 +24335,13 @@ screenshot 受領 → 5 質問判定 → ファイル特定 → cross-instance-p
 - 問題: push mode が --since=14 days で既存 migration を誤検出 (2 failures)
 - 修正: github.event.before SHA を GITHUB_BASE_SHA として設定 → push 単位で正確に diff
 - blog-publish 1 failure: `2029-05-12-flutter-local-storage.md` missing (PS#2 cross-instance-pr 起票)
+
+## 2026-04-29 PS#2 S88 — T-1 Phase37 全4弾完結 (#175-#178) dev.to 累計 178 本
+- T-1 第175弾: Flutter Local Storage Guide — SharedPreferences vs Hive vs SQLite
+  - https://dev.to/kanta13jp1/flutter-local-storage-guide-sharedpreferences-vs-hive-vs-sqlite-1n76
+- T-1 第176弾: Supabase Database Functions Guide — Serverless Logic with RPC and PL/pgSQL
+  - https://dev.to/kanta13jp1/supabase-database-functions-guide-serverless-logic-with-rpc-and-plpgsql-2mh
+- T-1 第177弾: Indie SaaS Monetization — Hard Paywall vs Freemium vs Usage-Based Pricing
+  - https://dev.to/kanta13jp1/indie-saas-monetization-hard-paywall-vs-freemium-vs-usage-based-pricing-48c3
+- T-1 第178弾: Dart Sealed Classes Guide — Type-Safe State Management with Pattern Matching
+  - https://dev.to/kanta13jp1/dart-sealed-classes-guide-type-safe-state-management-with-pattern-matching-2d9o
