@@ -176,8 +176,10 @@ class UniversalXShareService {
   Future<UniversalXMediaResult> generateVideo({
     required UniversalSharePageContext context,
     required UniversalXShareDraft draft,
+    String? imageUrl,
+    String? hedraGenerationId,
   }) async {
-    final data = await _invoke('viral-video-ad-generator', {
+    final requestBody = <String, dynamic>{
       'type': 'presenter_video',
       'template': _videoTemplateFor(context),
       'lang': 'ja',
@@ -189,13 +191,27 @@ class UniversalXShareService {
       'creativePipeline': _creativePipeline,
       'source': 'universal_x_share',
       'route': context.routePath,
-    });
+    };
+    final normalizedImageUrl = _emptyToNull(imageUrl);
+    if (normalizedImageUrl != null) {
+      requestBody['imageUrl'] = normalizedImageUrl;
+    }
+    final normalizedGenerationId = _emptyToNull(hedraGenerationId);
+    if (normalizedGenerationId != null) {
+      requestBody['hedraGenerationId'] = normalizedGenerationId;
+    }
+    final data = await _invoke('viral-video-ad-generator', requestBody);
     final url = data['generatedVideoUrl']?.toString() ??
         data['generatedDownloadUrl']?.toString() ??
-        data['generatedPreviewUrl']?.toString();
+        data['generatedPreviewUrl']?.toString() ??
+        data['videoUrl']?.toString() ??
+        data['downloadUrl']?.toString() ??
+        data['url']?.toString();
     return UniversalXMediaResult(
       url: _emptyToNull(url),
-      status: data['status']?.toString() ?? 'unknown',
+      status: data['videoStatus']?.toString() ??
+          data['status']?.toString() ??
+          'unknown',
       raw: data,
     );
   }

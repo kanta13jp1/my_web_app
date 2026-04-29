@@ -97,12 +97,14 @@ void main() {
     await service.generateVideo(
       context: financePage,
       draft: draft,
+      imageUrl: 'https://example.com/share.png',
     );
 
     expect(capturedFunction, 'viral-video-ad-generator');
     expect(capturedBody?['template'], 'mobile_ux_validation');
     expect(capturedBody?['title'], 'マイファイナンス');
     expect(capturedBody?['preferredModel'], 'seedance-2.0');
+    expect(capturedBody?['imageUrl'], 'https://example.com/share.png');
     expect(
       capturedBody?['creativePipeline'],
       const ['gpt-image-2', 'gpt-5.5', 'seedance-2.0'],
@@ -110,6 +112,36 @@ void main() {
     expect(
       capturedBody?['customPrompt'],
       contains('Moving smartphone app UX validation video'),
+    );
+  });
+
+  test(
+      'generateVideo can poll an existing Hedra generation and use download URL',
+      () async {
+    Map<String, dynamic>? capturedBody;
+    final service = UniversalXShareService(
+      functionInvoker: (functionName, body) async {
+        capturedBody = body;
+        return {
+          'success': true,
+          'videoStatus': 'complete',
+          'generatedDownloadUrl': 'https://example.com/video.mp4',
+        };
+      },
+    );
+
+    final draft = UniversalXShareService.buildFallbackDraft(page);
+    final result = await service.generateVideo(
+      context: page,
+      draft: draft,
+      hedraGenerationId: '123e4567-e89b-12d3-a456-426614174000',
+    );
+
+    expect(result.url, 'https://example.com/video.mp4');
+    expect(result.status, 'complete');
+    expect(
+      capturedBody?['hedraGenerationId'],
+      '123e4567-e89b-12d3-a456-426614174000',
     );
   });
 }
