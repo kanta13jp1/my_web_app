@@ -55403,6 +55403,312 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'alation': const _CompetitorInfo(
+    name: 'Alation',
+    emoji: '📚',
+    tagline: 'Alation・データカタログ・データリテラシー・コラボレーション・機械学習推奨・エンタープライズで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Alation代替 データカタログ データリテラシー コラボレーション 機械学習 エンタープライズ Collibra代替 Atlan代替',
+    accentColor: Color(0xFF0078D4),
+    painPoints: [
+      '有料・データカタログ特化・個人のライフ管理は別途必要',
+      'エンタープライズ特化・個人のAI管理は別途必要',
+      'Collibra/Atlan/IBM との比較でコスト・実装複雑さ・SMB対応が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'データカタログ・データリテラシー・コラボレーション・ML推奨・エンタープライズ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'collibra': const _CompetitorInfo(
+    name: 'Collibra',
+    emoji: '🗂️',
+    tagline: 'Collibra・データガバナンス・データカタログ・ビジネス用語集・ポリシー管理・コンプライアンスで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Collibra代替 データガバナンス データカタログ ビジネス用語集 コンプライアンス Alation代替 Atlan代替',
+    accentColor: Color(0xFF5A1FBE),
+    painPoints: [
+      '高額・データガバナンス特化・個人のライフ管理は別途必要',
+      'エンタープライズ特化・個人のAI管理は別途必要',
+      'Alation/Atlan/Microsoft Purview との比較でコスト・導入期間・SMB非対応が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'データガバナンス・カタログ・ビジネス用語集・ポリシー管理・コンプライアンス',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'atlan': const _CompetitorInfo(
+    name: 'Atlan',
+    emoji: '🔎',
+    tagline: 'Atlan・モダンデータカタログ・データメッシュ・コラボレーション・AI自動化・Slack統合で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Atlan代替 モダンデータカタログ データメッシュ コラボレーション AI自動化 Slack統合 Alation代替 Collibra代替',
+    accentColor: Color(0xFF5865F2),
+    painPoints: [
+      '有料・データカタログ特化・個人のライフ管理は別途必要',
+      'データチーム特化・個人のAI管理は別途必要',
+      'Alation/Collibra との比較でエンタープライズ機能・規制対応・成熟度が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'モダンデータカタログ・データメッシュ・コラボレーション・AI自動化・Slack統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'monte-carlo': const _CompetitorInfo(
+    name: 'Monte Carlo',
+    emoji: '🎰',
+    tagline: 'Monte Carlo・データオブザーバビリティ・データ品質モニタリング・異常検知・データパイプライン・インシデント管理で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Monte Carlo代替 データオブザーバビリティ データ品質 異常検知 パイプライン インシデント管理 Great Expectations代替',
+    accentColor: Color(0xFF00BCD4),
+    painPoints: [
+      '有料・データオブザーバビリティ特化・個人のライフ管理は別途必要',
+      'データエンジニア特化・個人のAI管理は別途必要',
+      'Great Expectations/dbt/Soda との比較でコスト・OSS代替・シンプルユースが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'データオブザーバビリティ・品質モニタリング・異常検知・パイプライン・インシデント',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'dbt-cloud': const _CompetitorInfo(
+    name: 'dbt Cloud',
+    emoji: '🔧',
+    tagline: 'dbt Cloud・データ変換・SQLベース・ELT・データモデリング・バージョン管理・データリネージで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'dbt Cloud代替 データ変換 SQL ELT データモデリング バージョン管理 リネージ Matillion代替 Dataform代替',
+    accentColor: Color(0xFFFF694A),
+    painPoints: [
+      '有料(Cloud版)・データ変換特化・個人のライフ管理は別途必要',
+      'データエンジニア/アナリスト特化・個人のAI管理は別途必要',
+      'Matillion/Dataform/Spark との比較でPython/複雑変換・ストリーミング・非SQL対応が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'データ変換・SQLベース・ELT・データモデリング・バージョン管理・リネージ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'apache-atlas': const _CompetitorInfo(
+    name: 'Apache Atlas',
+    emoji: '🦅',
+    tagline: 'Apache Atlas・OSSデータガバナンス・メタデータ管理・Hadoopエコシステム・タグベース分類・データリネージで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Apache Atlas代替 OSS データガバナンス メタデータ Hadoop タグ分類 リネージ Collibra代替 Alation代替',
+    accentColor: Color(0xFFE84393),
+    painPoints: [
+      '無料(OSS)・Hadoopエコシステム特化・個人のライフ管理は別途必要',
+      '技術者特化・個人のAI管理は別途必要',
+      'Collibra/Alation との比較でUI/UX・クラウドネイティブ・サポートが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'OSSデータガバナンス・メタデータ管理・Hadoop・タグ分類・リネージ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'octopai': const _CompetitorInfo(
+    name: 'Octopai',
+    emoji: '🐙',
+    tagline: 'Octopai・自動データリネージ・クロスBI検索・メタデータ管理・データディクショナリ・Microsoft Fabric対応で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Octopai代替 自動データリネージ クロスBI メタデータ データディクショナリ Microsoft Fabric Atlan代替',
+    accentColor: Color(0xFF2196F3),
+    painPoints: [
+      '有料・データリネージ特化・個人のライフ管理は別途必要',
+      'BIチーム特化・個人のAI管理は別途必要',
+      'Atlan/Collibra との比較でカタログ機能・ガバナンス深度・エコシステムが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '自動データリネージ・クロスBI検索・メタデータ・データディクショナリ・MS Fabric',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'erwin': const _CompetitorInfo(
+    name: 'erwin Data Intelligence',
+    emoji: '🏛️',
+    tagline: 'erwin Data Intelligence・データカタログ・データガバナンス・データモデリング・エンタープライズ・Quest Software傘下で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'erwin代替 データカタログ データガバナンス データモデリング エンタープライズ Quest Software Collibra代替',
+    accentColor: Color(0xFF0F4C81),
+    painPoints: [
+      '高額・エンタープライズ特化・個人のライフ管理は別途必要',
+      'データガバナンス特化・個人のAI管理は別途必要',
+      'Collibra/Alation/Atlan との比較でUI/UX・クラウドネイティブ・アジリティが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'データカタログ・ガバナンス・モデリング・エンタープライズ・Quest Software',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'data-world': const _CompetitorInfo(
+    name: 'data.world',
+    emoji: '🌐',
+    tagline: 'data.world・クラウドデータカタログ・データコラボレーション・SPARQLクエリ・知識グラフ・データファブリックで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'data.world代替 クラウドデータカタログ コラボレーション SPARQL 知識グラフ データファブリック Alation代替',
+    accentColor: Color(0xFF00BFA5),
+    painPoints: [
+      '有料・データカタログ特化・個人のライフ管理は別途必要',
+      'データチーム特化・個人のAI管理は別途必要',
+      'Alation/Collibra/Atlan との比較でエンタープライズ規模・ガバナンス深度・統合数が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'クラウドデータカタログ・コラボレーション・SPARQL・知識グラフ・データファブリック',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
