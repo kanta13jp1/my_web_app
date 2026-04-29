@@ -1,7 +1,7 @@
 ---
 title: "Supabase AI and Vector Advanced — pgvector, Embeddings, RAG, and Semantic Caching"
 tags: dart,flutter,webdev,indiedev
-published: false
+published: true
 ---
 
 # Supabase AI and Vector Advanced — pgvector, Embeddings, RAG, and Semantic Caching
