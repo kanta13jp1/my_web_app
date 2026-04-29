@@ -1,7 +1,7 @@
 ---
 title: "Indie Dev Analytics — The Metrics That Matter and Privacy-first Implementation"
 tags: indiedev,webdev,buildinpublic,flutter
-published: false
+published: true
 ---
 
 # Indie Dev Analytics — The Metrics That Matter and Privacy-first Implementation
