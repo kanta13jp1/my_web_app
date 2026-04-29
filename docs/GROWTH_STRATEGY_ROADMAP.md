@@ -24940,3 +24940,39 @@ SECOND_BRAIN 4.5/7 + VIBE 7.0/7 + PLATFORM 4.0/7 = 14.5/21 + WBS audit 第 2 例
 - 個別3補正(prevVenueMatch/prevDistanceMatch/courseTypeMatch)との差別化シナジー
 - confidence formula: 48 terms体制確立
 - migration: 20260429102500_seed_achievements_ps6_s132.sql
+
+## 2026-04-29 Win版#132 part 90 — deploy-prod 連続 failure hotfix
+
+### 概要
+User 3 度目の同一要望「期限切迫 task 進めて」を契機に gh run list audit. **deploy-prod が 6 回連続 failure** (= 8:14-8:27 JST) を発見. 期限切迫 task の進捗反映 (= part 88-89 migration) も deploy 通らず未反映状態だった.
+
+### 原因 2 件並列即 fix
+1. **Migration Timestamp Collision**: 20260429241000 で PS#4 s258 + PS#5 s109 衝突 → ps5_s109 を 241100 rename (commit 5f0f1eeab)
+2. **Analyze code failure**: lib/utils/web_speech_helper.dart が未存在 stub を import → 未使用 conditional export 削除 (commit fd5045311)
+
+### 検証
+- `python scripts/check_migration_timestamps.py`: scanned 1163 / 1163 unique / OK no collisions
+- web_speech_helper usage grep: ai_university_voice_page は package:web 直接使用 / 未使用 file 確定
+
+### 構造的観察 — 「User 要望の真意解読」
+- Surface (= part 88-89): WBS audit + migration UPDATE
+- Deep (= part 90): production deploy 復旧 = 真の prerequisite
+- = User が同一要望 3 回繰返した = 表面対応では不足 signal
+
+### OPS-28 charter §X 提案 (= 累積)
+- WBS audit responsibility (part 88)
+- stale done stub 検知 (part 89)
+- **「User 要望 3 回 = 表面対応疑え」alarm pattern** (本 part)
+
+### VIBE_CODING #4 (Black-Box I/O Verification) dogfood
+Win 内部 audit (part 88-89) では production 反映状態を確認していなかった.
+gh run list = production の実 I/O 観測 で fix prerequisite 発見.
+
+### 20 part 連続 dogfood (part 68-90)
+SECOND_BRAIN 4.5/7 + VIBE 7.0/7 + PLATFORM 4.0/7 = 14.5/21 + 多角 audit pattern + production hotfix.
+
+### Philosophy Alignment 9/9
+#1 CEO 感 (= 実 fix prioritize) / #6 資本=時間 (= 即 hotfix) / #7 資産負債 (= deploy 不全 = 巨額負債 → 即解消で資産化)
+
+### commit
+5f0f1eeab + fd5045311 on main
