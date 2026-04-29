@@ -16632,7 +16632,7 @@ final _competitorInfo = <String, _CompetitorInfo>{
     searchKeyword: 'Paddle代替 SaaS決済 税務処理 サブスクリプション 国際展開',
     accentColor: Color(0xFF1A56DB),
     painPoints: [
-      '取引額の5%+\$0.50の手数料・高収益製品では大きなコスト',
+      '取引額の5%+$0.50の手数料・高収益製品では大きなコスト',
       'SaaS決済・税務代行特化で個人ライフ管理・AI機能は別途必要',
       'Stripeと比較してカスタマイズ性が低くエンジニア向け機能が少ない',
     ],
@@ -16700,7 +16700,7 @@ final _competitorInfo = <String, _CompetitorInfo>{
     searchKeyword: 'Lemon Squeezy代替 デジタル商品 SaaS決済 Gumroad代替 Paddle代替',
     accentColor: Color(0xFFFFCE37),
     painPoints: [
-      '取引額の5%+\$0.50の手数料・Gumroadより高い場合がある',
+      '取引額の5%+$0.50の手数料・Gumroadより高い場合がある',
       'デジタル商品決済特化で個人ライフ管理・AI対話は別途必要',
       '機能追加ペースが速く設定方法が頻繁に変わる',
     ],
@@ -17040,7 +17040,7 @@ final _competitorInfo = <String, _CompetitorInfo>{
     searchKeyword: 'New Relic代替 APM アプリ監視 オブザーバビリティ パフォーマンス',
     accentColor: Color(0xFF008C99),
     painPoints: [
-      '無料100GBまで・超過は\$0.35/GBと大量データで高額化',
+      '無料100GBまで・超過は$0.35/GBと大量データで高額化',
       'インフラ監視特化でエンジニア向け・個人ライフ管理は別途必要',
       'Datadogと比較してUI学習コストが高くオンボーディングに時間がかかる',
     ],
@@ -17074,7 +17074,7 @@ final _competitorInfo = <String, _CompetitorInfo>{
     searchKeyword: 'Dynatrace代替 AI監視 APM クラウド監視 自動化',
     accentColor: Color(0xFF1496FF),
     painPoints: [
-      '時間あたり\$0.04〜・エンタープライズは年間数十万ドルに',
+      '時間あたり$0.04〜・エンタープライズは年間数十万ドルに',
       'エンタープライズIT監視特化でエンジニア/運用チーム向け',
       'New RelicやDatadogと比較してSMBには価格・機能が過剰',
     ],
@@ -26961,40 +26961,6 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
-  'descript': const _CompetitorInfo(
-    name: 'Descript',
-    emoji: '✏️',
-    tagline: 'AI動画・ポッドキャスト編集・文字起こし統合ツールで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Descript代替 AI動画編集 ポッドキャスト 文字起こし テキスト編集 音声クローン',
-    accentColor: Color(0xFF4F46E5),
-    painPoints: [
-      '月額24ドル〜・動画/ポッドキャスト編集特化・個人のライフ管理は別途必要',
-      'AI動画編集特化・個人のAIライフ管理は別途必要',
-      'Riverside/Squadcastと比較してリモート録画品質・コラボが弱い',
-    ],
-    features: [
-      _FeatureComparison(
-        feature: 'テキスト動画編集・AI音声クローン・文字起こし・Screen/Overdub',
-        competitorHas: true,
-        weHave: false,
-      ),
-      _FeatureComparison(
-        feature: 'AI支援個人管理',
-        competitorHas: false,
-        weHave: true,
-      ),
-      _FeatureComparison(
-        feature: '財務管理統合',
-        competitorHas: false,
-        weHave: true,
-      ),
-      _FeatureComparison(
-        feature: '完全無料',
-        competitorHas: false,
-        weHave: true,
-      ),
-    ],
-  ),
   'restream': const _CompetitorInfo(
     name: 'Restream',
     emoji: '📡',
@@ -27451,40 +27417,6 @@ final _competitorInfo = <String, _CompetitorInfo>{
     features: [
       _FeatureComparison(
         feature: '従業員データ・勤怠・パフォーマンス・報酬・DEI・Slack統合',
-        competitorHas: true,
-        weHave: false,
-      ),
-      _FeatureComparison(
-        feature: 'AI支援個人管理',
-        competitorHas: false,
-        weHave: true,
-      ),
-      _FeatureComparison(
-        feature: '財務管理統合',
-        competitorHas: false,
-        weHave: true,
-      ),
-      _FeatureComparison(
-        feature: '完全無料',
-        competitorHas: false,
-        weHave: true,
-      ),
-    ],
-  ),
-  'remote-com': const _CompetitorInfo(
-    name: 'Remote.com',
-    emoji: '🌍',
-    tagline: 'グローバルリモート雇用・EOR・給与管理プラットフォームで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Remote代替 グローバル雇用 EOR 海外採用 給与管理 コンプライアンス リモートワーク',
-    accentColor: Color(0xFF0F766E),
-    painPoints: [
-      '月額599ドル〜(EOR)・グローバル雇用特化・個人のライフ管理は別途必要',
-      'EOR/グローバル給与特化・個人のAI管理は別途必要',
-      'Deel/Velocityと比較してカバー国数・オンボーディングスピードが劣る',
-    ],
-    features: [
-      _FeatureComparison(
-        feature: 'EOR・給与・税務・コンプライアンス・福利厚生・180+カ国',
         competitorHas: true,
         weHave: false,
       ),
