@@ -23629,6 +23629,312 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'gong': const _CompetitorInfo(
+    name: 'Gong.io',
+    emoji: '🔔',
+    tagline: '会話インテリジェンス・セールスAI分析プラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Gong代替 会話インテリジェンス セールス分析 通話録音 AI営業コーチング',
+    accentColor: Color(0xFF5D2D91),
+    painPoints: [
+      '月額1,600ドル/ユーザー〜・大規模営業チーム向け・個人のライフ管理は別途必要',
+      '会話インテリジェンス特化でビジネス向け設計・個人のAI管理は別途必要',
+      'Chorus/Wingmanと比較してコスト対効果が低い中小企業では採用しにくい',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '通話録音・AI分析・パイプライン予測・コーチング・Salesforce統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'moodle': const _CompetitorInfo(
+    name: 'Moodle',
+    emoji: '🏫',
+    tagline: 'OSSラーニングマネジメントシステム(LMS)・教育機関世界標準で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Moodle代替 LMS 学習管理 教育機関 OSS eラーニング コース管理',
+    accentColor: Color(0xFFF98012),
+    painPoints: [
+      '無料(セルフホスト)/クラウドは月額・設定・管理に技術知識が必要',
+      'LMS特化で教育機関向け設計・個人のAIライフ管理は別途必要',
+      'Canvas/Blackboardと比較してUIが古くユーザー体験が劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'コース・クイズ・フォーラム・SCORM・プラグイン・多言語・大規模',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'canvas-lms': const _CompetitorInfo(
+    name: 'Canvas LMS',
+    emoji: '🎨',
+    tagline: 'Instructure製クラウドLMS・K-12〜大学の世界標準で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Canvas LMS代替 学習管理 大学 K-12 クラウドLMS eラーニング 教育',
+    accentColor: Color(0xFFE66000),
+    painPoints: [
+      '年間数万ドル〜(機関向け契約)・個人・中小組織には過剰',
+      'LMS特化で教育機関向け設計・個人のAIライフ管理は別途必要',
+      'Moodleと比較してカスタマイズ性・OSS自由度が低い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'コース・課題・グレード・ビデオ・モバイル・LTI統合・分析',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'pluralsight': const _CompetitorInfo(
+    name: 'Pluralsight',
+    emoji: '💡',
+    tagline: 'IT・テクノロジー専門家向けスキル開発プラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Pluralsight代替 ITスキル テクノロジー 技術者向け オンライン学習 クラウド',
+    accentColor: Color(0xFFEF3D59),
+    painPoints: [
+      '月額29ドル〜・IT/技術者特化で個人のライフ管理は別途必要',
+      'テクノロジースキル特化・ビジネス/個人管理機能は別途必要',
+      'Udemyと比較してコース多様性・価格が高い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'スキル評価・ラーニングパス・ハンズオンラボ・Cloud Sandboxes',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'linkedin-learning': const _CompetitorInfo(
+    name: 'LinkedIn Learning',
+    emoji: '📚',
+    tagline: 'LinkedIn統合プロフェッショナルスキル動画学習で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'LinkedIn Learning代替 ビジネス スキル 動画学習 プロフェッショナル キャリア',
+    accentColor: Color(0xFF0A66C2),
+    painPoints: [
+      '月額39.99ドル〜・LinkedIn Premium含む・プロフェッショナル特化で個人管理は別途',
+      'ビジネス/キャリアスキル特化・技術的深さが浅い傾向がある',
+      'Udemy/Coursera比較でコース購入制がなくサブスク依存',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '21000+コース・LinkedIn証明・推奨機能・オフライン・英語字幕',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'udacity': const _CompetitorInfo(
+    name: 'Udacity',
+    emoji: '🎓',
+    tagline: 'ナノディグリー取得・AI/データサイエンス・就職保証型学習で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Udacity代替 ナノディグリー AI学習 データサイエンス 就職保証 プログラミング',
+    accentColor: Color(0xFF02B3E4),
+    painPoints: [
+      'ナノディグリー約1,200ドル〜・高額・個人のライフ管理は別途必要',
+      'テクノロジー特化でキャリアシフト向け設計・個人のAI管理は別途必要',
+      'Courseraと比較してコース多様性が少なく高コスト',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ナノディグリー・プロジェクトレビュー・メンタリング・キャリアサポート',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'leetcode': const _CompetitorInfo(
+    name: 'LeetCode',
+    emoji: '⌨️',
+    tagline: 'コーディング面接対策・アルゴリズム練習プラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'LeetCode代替 コーディング面接 アルゴリズム データ構造 プログラミング練習',
+    accentColor: Color(0xFFFFA116),
+    painPoints: [
+      '月額35ドル〜(Premium)・コーディング面接特化・個人のライフ管理は別途必要',
+      'アルゴリズム/面接対策特化・ソフトスキル・個人管理機能は別途必要',
+      'HackerRankと比較して課題の解説・学習パスが弱い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '3000+問題・コンテスト・模擬面接・Discussion・企業別問題',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'hackerrank': const _CompetitorInfo(
+    name: 'HackerRank',
+    emoji: '💻',
+    tagline: 'コーディングテスト・採用技術評価プラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'HackerRank代替 コーディングテスト 採用評価 技術面接 プログラミング テクニカル',
+    accentColor: Color(0xFF00EA64),
+    painPoints: [
+      '採用側は月額数百ドル〜・個人は無料だが練習特化・個人管理は別途必要',
+      'コーディング評価特化でHR向け設計・個人のAIライフ管理は別途必要',
+      'LeetCodeと比較して実務向け問題・解説の質が劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'コーディングテスト・採用AT評価・証明書・チャレンジ・コンテスト',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'datacamp': const _CompetitorInfo(
+    name: 'DataCamp',
+    emoji: '📊',
+    tagline: 'データサイエンス・AI/ML特化オンライン学習プラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'DataCamp代替 データサイエンス Python R SQL AI学習 機械学習 分析',
+    accentColor: Color(0xFF03EF62),
+    painPoints: [
+      '月額25ドル〜・データサイエンス特化・個人のライフ管理は別途必要',
+      'データ/AI学習特化・ソフトスキル・個人管理機能は別途必要',
+      'Courseraと比較して認定証の認知度が低い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '480+コース・プロジェクト・データラボ・AI Assistant・認定証',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
