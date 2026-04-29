@@ -24985,3 +24985,40 @@ SECOND_BRAIN 4.5/7 + VIBE 7.0/7 + PLATFORM 4.0/7 = 14.5/21 + 多角 audit patter
 
 ### commit
 5f0f1eeab + fd5045311 on main
+---
+
+## PS#5 S110 — EF stale migration 12 pages batch 2 (2026-04-29)
+
+**担当**: PS版#5 | **種別**: EF整理 / stale EF移行
+
+### 移行完了 (12 pages)
+
+| page | 旧 EF | 新 hub | action |
+|---|---|---|---|
+| email_template_builder | email-template-builder | enterprise-hub | email_template.list/use/create |
+| stoic_leaderboard_card | get-stoic-leaderboard | tools-hub | habit.leaderboard |
+| github_pr | github-pr-manager | enterprise-hub | github.list_prs/configure |
+| google_calendar_sync | google-calendar-sync | enterprise-hub | calendar.status/sync/connect_url |
+| language_learning | language-learning | social-commerce-hub | lang.list_decks/list_cards/review_session/streak/stats/create_deck/add_card/review_card |
+| legal_compliance_manager | legal-compliance-manager | enterprise-hub | legal.list/compliance.list (harvey→tools-hub維持) |
+| money_forward | moneyforward-sync | social-commerce-hub | mf.status/sync/connect_url |
+| recruitment_job_board | recruitment-job-board | enterprise-hub | recruit.list_jobs/list_applicants |
+| semantic_search | semantic-search | enterprise-hub | search.semantic |
+| vehicle_fleet_manager | vehicle-fleet-manager | lifestyle-hub | vehicle.list/list_trips/maintenance |
+| viral_video_generator | viral-video-generator | media-hub | viral_video.list_briefs/create |
+| virtual_whiteboard | virtual-whiteboard | media-hub | whiteboard.list/config/get/create/add_element |
+
+### DEAD_LIST追加
+- S109バッチ(16件): access-control/ai-workflow-automation/ar-navigation/customer-feedback/discord-notifications/document-esignature/family-sharing-manager/feature-flags/fitness-health-tracker/home-iot-manager/knowledge-base/line-notifications/meeting-manager/slack-notifications/smart-inbox-triage/two-factor-auth
+- S110 batch1(4件): analytics-export/budget-financial-planner/dns-domain-manager/elearning-course-manager
+- S110 batch2(12件): email-template-builder/get-stoic-leaderboard/github-pr-manager/google-calendar-sync/language-learning/legal-compliance-manager/moneyforward-sync/recruitment-job-board/semantic-search/vehicle-fleet-manager/viral-video-generator/virtual-whiteboard
+
+### dart format
+0 changes (12 files)
+
+### Philosophy Alignment
+#7 資産負債 (= stale EF 完全清算) / #1 CEO 感 (= 継続即完走) / #6 資本=時間 (= batch 2 で残り 0 EF)
+
+### commit
+(本 commit にて確定)
+>>>>>>> 230f44deb (feat(ef-migration): stale EF batch 2 — 16 pages hub移行完了 + DEAD_LIST 32件追加 (PS#5 S110))

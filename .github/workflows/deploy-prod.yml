@@ -452,6 +452,38 @@ jobs:
             form-builder
             sitemap-analytics
             memo-reactions
+            access-control
+            ai-workflow-automation
+            ar-navigation
+            customer-feedback
+            discord-notifications
+            document-esignature
+            family-sharing-manager
+            feature-flags
+            fitness-health-tracker
+            home-iot-manager
+            knowledge-base
+            line-notifications
+            meeting-manager
+            slack-notifications
+            smart-inbox-triage
+            two-factor-auth
+            analytics-export
+            budget-financial-planner
+            dns-domain-manager
+            elearning-course-manager
+            email-template-builder
+            get-stoic-leaderboard
+            github-pr-manager
+            google-calendar-sync
+            language-learning
+            legal-compliance-manager
+            moneyforward-sync
+            recruitment-job-board
+            semantic-search
+            vehicle-fleet-manager
+            viral-video-generator
+            virtual-whiteboard
             schedule-daily-digest
           )
           EXISTING=$(supabase functions list --output json 2>/dev/null | jq -r '.[] | (.slug // .name // empty)' 2>/dev/null || echo "")

@@ -46,18 +46,9 @@ class _ElearningCourseManagerPageState extends State<ElearningCourseManagerPage>
       _errorMessage = null;
     });
     try {
-      final coursesRes = await _supabase.functions.invoke(
-        'elearning-course-manager',
-        queryParameters: {'view': 'courses'},
-      );
-      final progressRes = await _supabase.functions.invoke(
-        'elearning-course-manager',
-        queryParameters: {'view': 'in_progress'},
-      );
-      final certRes = await _supabase.functions.invoke(
-        'elearning-course-manager',
-        queryParameters: {'view': 'certificates'},
-      );
+      final coursesRes = await _supabase.functions.invoke('social-commerce-hub', body: {'action': 'course.list'});
+      final progressRes = await _supabase.functions.invoke('social-commerce-hub', body: {'action': 'course.progress'});
+      final certRes = await _supabase.functions.invoke('social-commerce-hub', body: {'action': 'course.certificates'});
 
       setState(() {
         _courses = _extractList(coursesRes.data, 'courses');
@@ -252,9 +243,9 @@ class _ElearningCourseManagerPageState extends State<ElearningCourseManagerPage>
                           onPressed: () async {
                             try {
                               await _supabase.functions.invoke(
-                                'elearning-course-manager',
+                                'social-commerce-hub',
                                 body: {
-                                  'action': 'enroll',
+                                  'action': 'course.enroll',
                                   'courseId': c['id'],
                                 },
                               );

@@ -304,6 +304,7 @@ serve(async (req) => {
         return json({ success: true, video: item });
       }
       case "viral_video.list": return json({ success: true, videos: await listItems(admin, "viral_video", userId) });
+      case "viral_video.list_briefs": return json({ success: true, briefs: await listItems(admin, "viral_video", userId) });
 
       // ── OCR Document Scanner ─────────────────────────────────────────────────
       case "ocr.scan": {
@@ -334,6 +335,24 @@ serve(async (req) => {
       }
       case "whiteboard.delete": {
         await deleteItem(admin, "whiteboard", userId, String(body.id ?? ""));
+        return json({ success: true });
+      }
+      case "whiteboard.get": {
+        const boards = await listItems(admin, "whiteboard", userId);
+        const board = boards.find((b: Record<string,unknown>) => b.board_id === body.board_id || b.id === body.board_id);
+        return json({ success: true, board: board ?? null });
+      }
+      case "whiteboard.config": {
+        const config = await listItems(admin, "whiteboard_config", userId);
+        return json({ success: true, config: config[0] ?? {} });
+      }
+      case "whiteboard.add_element": {
+        const board = (await listItems(admin, "whiteboard", userId)).find((b: Record<string,unknown>) => b.board_id === body.board_id);
+        if (!board) return json({ error: "Board not found" }, 404);
+        const elements = Array.isArray((board as Record<string,unknown>).elements) ? (board as Record<string,unknown>).elements as unknown[] : [];
+        elements.push({ ...body.element, id: crypto.randomUUID() });
+        await admin.from("hub_data").update({ metadata: { ...(board as Record<string,unknown>), elements, updated_at: new Date().toISOString() } })
+          .eq("id", String((board as Record<string,unknown>).id ?? "")).eq("source", "whiteboard");
         return json({ success: true });
       }
 

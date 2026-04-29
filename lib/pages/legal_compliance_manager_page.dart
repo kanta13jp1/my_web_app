@@ -63,12 +63,12 @@ class _LegalComplianceManagerPageState extends State<LegalComplianceManagerPage>
     });
     try {
       final cRes = await _supabase.functions.invoke(
-        'legal-compliance-manager',
-        queryParameters: {'view': 'contracts'},
+        'enterprise-hub',
+        body: {'action': 'legal.list'},
       );
       final chRes = await _supabase.functions.invoke(
-        'legal-compliance-manager',
-        queryParameters: {'view': 'checklist'},
+        'enterprise-hub',
+        body: {'action': 'compliance.list'},
       );
       setState(() {
         _contracts = _toList(cRes.data, 'contracts');

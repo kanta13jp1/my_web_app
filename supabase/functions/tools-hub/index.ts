@@ -4849,6 +4849,7 @@ ${reportText ? `> ${reportText}` : ""}`,
         const challenges = await listItems(admin, "habit_challenge", userId, 10);
         return json({ success: true, challenges });
       }
+      case "habit.leaderboard":
       case "habit.gamification.leaderboard": {
         const { data, error: lbErr } = await admin.from("hub_data")
           .select("metadata")

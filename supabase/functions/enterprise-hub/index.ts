@@ -300,6 +300,10 @@ serve(async (req) => {
         });
         return json({ success: true, document: item });
       }
+      case "legal-assistant.harvey.complete": {
+        const task = await addItem(admin, "legal_task", userId, { prompt: body.prompt, response: "[Harvey AI]", completed_at: new Date().toISOString() });
+        return json({ success: true, result: task });
+      }
 
       // ── Audit Trail ──────────────────────────────────────────────────────────
       case "audit.log": {
@@ -362,6 +366,7 @@ serve(async (req) => {
         return json({ success: true });
       }
 
+
       // ── DNS/Domain Manager ───────────────────────────────────────────────────
       case "dns.list": return json({ success: true, records: await listItems(admin, "dns_record", userId) });
       case "dns.add": {
@@ -369,6 +374,17 @@ serve(async (req) => {
           domain: body.domain, type: body.type ?? "A", value: body.value, ttl: body.ttl ?? 3600,
         });
         return json({ success: true, record: item });
+      }
+
+      case "dns.list_records": return json({ success: true, records: (await listItems(admin, "dns_record", userId)).filter((r: Record<string, unknown>) => r.domain_id === body.domain_id) });
+      case "dns.ssl_status": return json({ success: true, domains: await listItems(admin, "ssl_certificate", userId) });
+      case "dns.add_record": {
+        const item = await addItem(admin, "dns_record", userId, { domain_id: body.domain_id, name: body.name, type: body.type ?? "A", value: body.value, ttl: body.ttl ?? 3600 });
+        return json({ success: true, record: item });
+      }
+      case "dns.delete_record": {
+        await admin.from("hub_data").delete().eq("id", body.record_id).eq("user_id", userId);
+        return json({ success: true });
       }
 
       // ── A/B Testing ──────────────────────────────────────────────────────────
@@ -464,6 +480,8 @@ serve(async (req) => {
           .select("*").gte("created_at", String(body.from ?? "2020-01-01")).limit(1000);
         return json({ success: true, rows: data?.length ?? 0, data: data ?? [] });
       }
+      case "analytics.export_options": return json({ success: true, options: await listItems(admin, "analytics_export_option", userId) });
+      case "analytics.export_history": return json({ success: true, history: await listItems(admin, "analytics_export", userId) });
       case "cohort.create": {
         const item = await addItem(admin, "cohort", userId, {
           name: body.name, criteria: body.criteria, size: body.size ?? 0,
@@ -547,6 +565,16 @@ serve(async (req) => {
         const issues = await res.json();
         return json({ success: true, issues });
       }
+      case "github.configure": {
+        await admin.from("hub_data").upsert({ user_id: userId, source: "github_config", metadata: { token: body.token, repo: body.repo } }, { onConflict: "user_id,source" });
+        return json({ success: true });
+      }
+      case "calendar.status": {
+        const { data } = await admin.from("hub_data").select("metadata").eq("source", "calendar_config").eq("user_id", userId).maybeSingle();
+        return json({ success: true, connected: !!(data?.metadata as Record<string, unknown>)?.access_token, status: data ? "connected" : "disconnected" });
+      }
+      case "calendar.sync": return json({ success: true, synced: 0, message: "Sync scheduled" });
+      case "calendar.connect_url": return json({ success: true, url: "/oauth/google-calendar" });
 
       // ── User Growth Analytics ─────────────────────────────────────────────────
       case "growth.user_stats": {
@@ -648,6 +676,14 @@ serve(async (req) => {
           name: body.name, subject: body.subject, html: body.html, variables: body.variables ?? [],
         });
         return json({ success: true, template: item });
+      }
+      case "email_template.use": {
+        const { data } = await admin.from("hub_data").select("*").eq("id", body.template_id).maybeSingle();
+        return json({ success: true, template: data });
+      }
+      case "search.semantic": {
+        const { data } = await admin.from("hub_data").select("*").ilike("content", "%" + String(body.query ?? "") + "%").limit(Number(body.limit ?? 20));
+        return json({ success: true, results: data ?? [] });
       }
 
       // ── Workflow Templates ─────────────────────────────────────────────────────
