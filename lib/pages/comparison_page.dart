@@ -61841,6 +61841,312 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'redux': const _CompetitorInfo(
+    name: 'Redux',
+    emoji: '🔵',
+    tagline: 'Redux・JavaScript状態管理・Flux パターン・予測可能・DevTools・Redux Toolkit・TypeScript・React連携・業界標準で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Redux代替 JavaScript 状態管理 Flux パターン DevTools Redux Toolkit TypeScript React Zustand代替 Jotai代替',
+    accentColor: Color(0xFF764ABC),
+    painPoints: [
+      '無料(OSS)・状態管理特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Zustand/Jotai との比較でボイラープレート量・学習コスト・バンドルサイズが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'JavaScript状態管理・Fluxパターン・予測可能・DevTools・Redux Toolkit',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'zustand': const _CompetitorInfo(
+    name: 'Zustand',
+    emoji: '🐻',
+    tagline: 'Zustand・軽量React状態管理・シンプルAPI・ボイラープレートなし・TypeScript・永続化・DevTools・OSS・Jotai同作者で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Zustand代替 軽量 React 状態管理 シンプルAPI ボイラープレートなし TypeScript 永続化 Redux代替 Jotai代替',
+    accentColor: Color(0xFFFF9F00),
+    painPoints: [
+      '無料(OSS)・状態管理特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Redux/Jotai との比較でSSRサポート・大規模app・開発者ツール統合が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '軽量React状態管理・シンプルAPI・ボイラープレートなし・TypeScript・DevTools',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'jotai': const _CompetitorInfo(
+    name: 'Jotai',
+    emoji: '⚛️',
+    tagline: 'Jotai・アトムベースReact状態管理・Recoil互換・TypeScript・最小限API・SSR・永続化・Zustand同作者・OSS・Reactに馴染むで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Jotai代替 アトムベース React 状態管理 Recoil互換 TypeScript 最小限API SSR Zustand代替 Redux代替',
+    accentColor: Color(0xFF282C34),
+    painPoints: [
+      '無料(OSS)・状態管理特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Zustand/Redux との比較でSSR対応・DevTools・大規模実績が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'アトムベースReact状態管理・Recoil互換・TypeScript・最小限API・SSR',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'tanstack-query': const _CompetitorInfo(
+    name: 'TanStack Query',
+    emoji: '🔄',
+    tagline: 'TanStack Query・非同期状態管理・サーバー状態・キャッシュ・バックグラウンド更新・React/Vue/Solid対応・OSS・SWR代替で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'TanStack Query代替 非同期状態管理 サーバー状態 キャッシュ バックグラウンド更新 React Vue SWR代替 React Query',
+    accentColor: Color(0xFFEF4444),
+    painPoints: [
+      '無料(OSS)・サーバー状態管理特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'SWR/Apollo との比較でGraphQL対応・リアルタイム・サブスクリプションが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '非同期状態管理・サーバー状態・キャッシュ・バックグラウンド更新・多FW対応',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'swr': const _CompetitorInfo(
+    name: 'SWR',
+    emoji: '🔃',
+    tagline: 'SWR・React Hooksデータフェッチ・キャッシュ・再検証・Vercel製・リアルタイム・TypeScript・OSS・シンプルAPIで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'SWR代替 React Hooks データフェッチ キャッシュ 再検証 Vercel リアルタイム TypeScript TanStack Query代替',
+    accentColor: Color(0xFF000000),
+    painPoints: [
+      '無料(OSS)・データフェッチ特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'TanStack Query との比較でミューテーション・楽観的更新・機能の豊富さが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'React Hooksデータフェッチ・キャッシュ・再検証・Vercel製・リアルタイム',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'mobx': const _CompetitorInfo(
+    name: 'MobX',
+    emoji: '🎭',
+    tagline: 'MobX・リアクティブ状態管理・オブザーバブル・自動追跡・React/Angular/Vue・TypeScript・OSS・シンプルメンタルモデルで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'MobX代替 リアクティブ 状態管理 オブザーバブル 自動追跡 React Angular Vue TypeScript Redux代替 Zustand代替',
+    accentColor: Color(0xFFFF7102),
+    painPoints: [
+      '無料(OSS)・状態管理特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Redux/Zustand との比較でデバッグ・予測可能性・マジック的挙動が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'リアクティブ状態管理・オブザーバブル・自動追跡・React/Angular/Vue対応',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'pinia': const _CompetitorInfo(
+    name: 'Pinia',
+    emoji: '🍍',
+    tagline: 'Pinia・Vue公式状態管理・Vuex後継・Vue 3対応・TypeScript・Devtools・モジュール分割・SSR・コンポジションAPIで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Pinia代替 Vue 状態管理 Vuex後継 Vue 3 TypeScript Devtools SSR コンポジションAPI Zustand代替',
+    accentColor: Color(0xFFFFD859),
+    painPoints: [
+      '無料(OSS)・Vue状態管理特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Vuex との比較でVue 3専用・TypeScript型推論・リアクティブシステムが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Vue公式状態管理・Vuex後継・Vue 3対応・TypeScript・Devtools・SSR',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'xstate': const _CompetitorInfo(
+    name: 'XState',
+    emoji: '🤖',
+    tagline: 'XState・有限状態機械・ステートチャート・ビジュアライザー・JS/TS・React/Vue/Svelte・予測可能・OSS・複雑UIロジックで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'XState代替 有限状態機械 ステートチャート ビジュアライザー JavaScript TypeScript React Vue 予測可能 Redux代替',
+    accentColor: Color(0xFF2B1B67),
+    painPoints: [
+      '無料(OSS)/有料(Cloud)・状態機械特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Redux/Zustand との比較で学習コスト・ボイラープレート・シンプルなケースの複雑さが問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '有限状態機械・ステートチャート・ビジュアライザー・React/Vue/Svelte・予測可能',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'nanostores': const _CompetitorInfo(
+    name: 'Nano Stores',
+    emoji: '🔬',
+    tagline: 'Nano Stores・超軽量状態管理・フレームワーク非依存・React/Vue/Svelte/Solid・TypeScript・0依存・OSS・スケーラブルで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Nano Stores代替 超軽量 状態管理 フレームワーク非依存 React Vue Svelte Solid TypeScript Zustand代替 Jotai代替',
+    accentColor: Color(0xFF44B4A6),
+    painPoints: [
+      '無料(OSS)・状態管理特化・個人のライフ管理は別途必要',
+      'エンジニア特化・個人のAI管理は別途必要',
+      'Zustand/Jotai との比較でエコシステム規模・DevTools・採用事例が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '超軽量状態管理・フレームワーク非依存・React/Vue/Svelte/Solid・0依存',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
