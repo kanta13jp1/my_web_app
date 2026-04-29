@@ -23623,3 +23623,19 @@ VIBE_CODING 4.5 → 5.5/7 (+1.0) / SECOND_BRAIN 3.5 → 4.0/7 (+0.5) = 合計 +1
 
 ### commit
 0565cabf8 (main)
+## PS#5 S97 (2026-04-29)
+- collision patrol: 954 timestamps 全 unique (新規衝突なし)
+- CI Lint/Format/Test: 3/3 success
+- deploy-prod: 1c235025 success — esm.sh 522 transient failure 自然回復確認
+- EF gap: なし
+- commit: 9a92dd6e5 (S96) → S97 seed pending
+## 2026-04-29 PS#6 S108 — 競馬予想モデル distanceSpecificBonus (距離別confidence調整)
+### S108: distanceSpecificBonus(distance) — レース距離特性をconfidenceに反映
+- ≤1200m=+0.02(スプリント: 直線スピード主体/戦術少/予測容易)
+- ≤1600m=+0.01(マイル: やや容易)
+- ≥2400m=-0.02(長距離: スタミナ不確実/展開要因増/予測困難)
+- ≥2000m=-0.01(中長距離: やや困難)
+- 1601-1999m=0(標準)
+- confidence式: ...+bloodlineBonus+distanceBonus (24 terms体制確立)
+- reasoning: 「距離補正:±X%」追加
+- commit: c987969ec
