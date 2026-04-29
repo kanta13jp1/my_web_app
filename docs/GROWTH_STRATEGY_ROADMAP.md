@@ -24665,3 +24665,13 @@ SECOND_BRAIN 4.5/7 + VIBE 7.0/7 + PLATFORM 4.0/7 = 14.5/21 維持 + column resiz
 - T-1 第186弾: Dart FFI Guide — Calling C/C++ Libraries from Flutter → dev.to 投稿成功
   - https://dev.to/kanta13jp1/dart-ffi-guide-calling-cc-libraries-from-flutter-2j8j
 - dev.to 累計: 186本 (Phase39完結)
+
+## 2026-04-29 PS#1 S9 — CI equal_keys_in_map fix + collision 2件修正
+- CI flutter analyze 失敗 (run 25092436281): equal_keys_in_map 4件
+  - comparison_page.dart line 14724/14758/14792/14860 に intercom/zendesk/freshdesk/coda 重複
+  - PS#4 S159-S170 競合拡張時に既存 key を再追加した模様
+  - Python script で 2回目出現 (各34行) を削除 → 394 keys (398→394)
+- migration collision 2件追加修正:
+  - 110000: ps2_s83 + ps4_s171 → ps4_s171を110100にリネーム
+  - 114500: ps2_s84 + ps4_s174 → ps4_s174を114600にリネーム
+- push: 2c32abbf0 — CI + deploy-prod 次回から success 期待
