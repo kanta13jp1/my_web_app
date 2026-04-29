@@ -31489,7 +31489,8 @@ final _competitorInfo = <String, _CompetitorInfo>{
     name: 'getimg.ai',
     emoji: '🖼️',
     tagline: 'AI画像生成・編集・ファインチューニングAll-in-Oneプラットフォームで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'getimg.ai代替 AI画像生成 編集 ファインチューニング Stable Diffusion ControlNet',
+    searchKeyword:
+        'getimg.ai代替 AI画像生成 編集 ファインチューニング Stable Diffusion ControlNet',
     accentColor: Color(0xFF7C3AED),
     painPoints: [
       '無料/月額12ドル〜・AI画像特化・個人のライフ管理は別途必要',
@@ -31975,6 +31976,312 @@ final _competitorInfo = <String, _CompetitorInfo>{
     features: [
       _FeatureComparison(
         feature: 'AI Script・テキストto動画・6000テンプレート・音楽・ブランドキット',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'vimeo': const _CompetitorInfo(
+    name: 'Vimeo',
+    emoji: '🎬',
+    tagline: 'プロ向け動画ホスティング・共有・AIビデオプラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Vimeo代替 動画ホスティング プロ YouTube代替 動画共有 ビジネス動画',
+    accentColor: Color(0xFF1AB7EA),
+    painPoints: [
+      '月額7ドル〜・動画ホスティング特化・個人のライフ管理は別途必要',
+      'プロ動画特化・個人のAI管理は別途必要',
+      'YouTubeと比較してオーガニックリーチ・収益化機能が劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'プロ動画ホスト・カスタマイズプレーヤー・AIキャプション・分析・パスワード保護',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'brightcove': const _CompetitorInfo(
+    name: 'Brightcove',
+    emoji: '🌟',
+    tagline: 'エンタープライズ動画プラットフォーム・ライブストリーミングで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Brightcove代替 エンタープライズ動画 ライブストリーミング OTT 動画管理 CDN',
+    accentColor: Color(0xFF0099CC),
+    painPoints: [
+      '月額高額・エンタープライズ動画特化・個人のライフ管理は別途必要',
+      '大規模動画配信特化・個人のAI管理は別途必要',
+      'Vimeo/YouTubeと比較してコスト・SMB向けシンプルさが課題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '動画CMS・ライブ/VOD・マルチCDN・OTT・分析・マネタイズ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'dailymotion': const _CompetitorInfo(
+    name: 'Dailymotion',
+    emoji: '📺',
+    tagline: '動画ホスティング・配信プラットフォーム・メディア向けAPIで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Dailymotion代替 動画ホスティング 動画共有 YouTube代替 メディア API 収益化',
+    accentColor: Color(0xFF003366),
+    painPoints: [
+      '無料/有料・動画配信特化・個人のライフ管理は別途必要',
+      '動画ホスティング特化・個人のAI管理は別途必要',
+      'YouTube/Vimeoと比較してトラフィック・マネタイズ機会が劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '動画ホスト・プレーヤー埋め込み・収益化・メディアAPI・プライバシー設定',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'screencastify': const _CompetitorInfo(
+    name: 'Screencastify',
+    emoji: '🖥️',
+    tagline: 'ブラウザ拡張画面録画・動画作成・教育向けツールで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Screencastify代替 画面録画 Chrome拡張 教育動画 スクリーンキャスト 授業',
+    accentColor: Color(0xFF4CAF50),
+    painPoints: [
+      '無料/月額10ドル〜・画面録画特化・個人のライフ管理は別途必要',
+      '教育動画特化・個人のAI管理は別途必要',
+      'Loom/Vidyardと比較してビジネス向け分析・統合が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '画面/カメラ録画・AI文字起こし・共有・LMS連携・教育向け',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'elgato': const _CompetitorInfo(
+    name: 'Elgato',
+    emoji: '🎮',
+    tagline: 'ストリーマー向けキャプチャカード・ストリームデッキ・配信機材で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Elgato代替 キャプチャカード ストリームデッキ 配信機材 ゲーム配信 OBS',
+    accentColor: Color(0xFF101010),
+    painPoints: [
+      '機材購入・ゲーム配信特化・個人のライフ管理は別途必要',
+      'ストリーミング機材特化・個人のAI管理は別途必要',
+      'AVerMedia/Blackmagic比較で業務レベルは劣るがコスパは高い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'HD60・Stream Deck・Wave・Key Light・4KX・OBS/Streamlabs統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'streamlabs': const _CompetitorInfo(
+    name: 'Streamlabs',
+    emoji: '📡',
+    tagline: 'ゲーム配信・ライブストリーミングソフト・アラートシステムで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Streamlabs代替 OBS代替 ゲーム配信 ライブストリーミング アラート 寄付管理 Twitch',
+    accentColor: Color(0xFF31C3A2),
+    painPoints: [
+      '無料/月額19ドル〜・配信特化・個人のライフ管理は別途必要',
+      'ゲーム配信特化・個人のAI管理は別途必要',
+      'OBS Studio比較で軽量・プロ向け高度設定が劣ることがある',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Streamlabs OBS・アラート・オーバーレイ・投げ銭・クリップ・マルチストリーム',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'ecamm-live': const _CompetitorInfo(
+    name: 'Ecamm Live',
+    emoji: '🍎',
+    tagline: 'Mac向けライブストリーミング・動画制作プロアプリで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Ecamm Live代替 Mac ライブストリーミング 動画制作 Zoom Facebook YouTube OBS',
+    accentColor: Color(0xFF0071E3),
+    painPoints: [
+      '月額16ドル〜・Macライブ配信特化・個人のライフ管理は別途必要',
+      'Mac配信特化・個人のAI管理は別途必要',
+      'OBS/Streamlabs比較でMac専用・クロスプラットフォームが劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'マルチプラットフォーム配信・シーン切替・ゲスト管理・テロップ・Mac最適化',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'switcher-studio': const _CompetitorInfo(
+    name: 'Switcher Studio',
+    emoji: '📱',
+    tagline: 'iPhoneマルチカメラライブストリーミング・動画制作で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Switcher Studio代替 iPhoneライブ マルチカメラ 動画制作 ライブストリーミング iOS',
+    accentColor: Color(0xFF7C3AED),
+    painPoints: [
+      '月額49ドル〜・iOS配信特化・個人のライフ管理は別途必要',
+      'モバイルライブ特化・個人のAI管理は別途必要',
+      'Ecamm/OBS比較でiOS限定・機能の深さが劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'iPhoneマルチカメラ・テロップ・RTMP・インタビュー形式・リモートゲスト',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'wirecast': const _CompetitorInfo(
+    name: 'Wirecast',
+    emoji: '📻',
+    tagline: 'プロ向けライブストリーミング・プロダクション配信ソフトで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Wirecast代替 プロライブストリーミング プロダクション 配信 vMix代替 放送局',
+    accentColor: Color(0xFF1A1A2E),
+    painPoints: [
+      '月額0〜・プロ配信特化・個人のライフ管理は別途必要',
+      'プロ放送特化・個人のAI管理は別途必要',
+      'vMix/OBS比較で価格・学習コストが高い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'マルチソース・グラフィックス・インスタントリプレイ・Rendezvous・ISO記録',
         competitorHas: true,
         weHave: false,
       ),
