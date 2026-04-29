@@ -1,7 +1,7 @@
 ---
 title: "Flutter Riverpod 2.0 Advanced — Notifier, AsyncNotifier, Family, and AutoDispose"
 tags: flutter,dart,webdev,indiedev
-published: false
+published: true
 ---
 
 # Flutter Riverpod 2.0 Advanced — Notifier, AsyncNotifier, Family, and AutoDispose
