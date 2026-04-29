@@ -14,8 +14,9 @@ Strategy:
      find any that UPDATE one of those tables.
   3. Warn; exit 1 if any found.
 
-In push mode (no GITHUB_BASE_SHA): scan all migrations and warn only
-about files younger than MAX_AGE_DAYS (default 14).
+In PR mode: GITHUB_BASE_SHA = PR base commit → git diff base..HEAD.
+In push mode: GITHUB_BASE_SHA = github.event.before → git diff before..HEAD.
+Fallback (initial/force push with 0000... SHA): check only HEAD~1..HEAD.
 
 Exit codes: 0 = clean, 1 = risky migrations found
 """
@@ -26,7 +27,6 @@ import sys
 from pathlib import Path
 
 MIGRATIONS_DIR = Path("supabase/migrations")
-MAX_AGE_DAYS = 14  # warn window when running outside PR context
 
 FUNC_DEF_RE = re.compile(
     r"CREATE\s+(?:OR\s+REPLACE\s+)?FUNCTION\s+(\w+)\s*\([^)]*\)"
@@ -73,8 +73,8 @@ def get_new_migration_files() -> list[Path]:
     """Return migration files that are new/changed in this push vs base."""
     base_sha = os.environ.get("GITHUB_BASE_SHA") or os.environ.get("BASE_SHA")
 
-    if base_sha:
-        # PR mode: diff against base commit
+    # Ignore all-zeros SHA (initial push / force push with no history)
+    if base_sha and not base_sha.startswith("0000000"):
         result = subprocess.run(
             ["git", "diff", "--name-only", "--diff-filter=A", base_sha, "HEAD"],
             capture_output=True, text=True,
@@ -86,10 +86,10 @@ def get_new_migration_files() -> list[Path]:
         ]
         return [f for f in changed if f.exists()]
 
-    # Push mode: files added to git in the last MAX_AGE_DAYS (git-based, not mtime)
+    # Fallback: check only the last commit (HEAD~1..HEAD)
     result = subprocess.run(
-        ["git", "log", f"--since={MAX_AGE_DAYS} days ago",
-         "--diff-filter=A", "--name-only", "--format=", "--", "supabase/migrations/*.sql"],
+        ["git", "diff", "--name-only", "--diff-filter=A", "HEAD~1", "HEAD",
+         "--", "supabase/migrations/*.sql"],
         capture_output=True, text=True,
     )
     added = [
