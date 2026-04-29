@@ -23935,6 +23935,312 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'codecademy': const _CompetitorInfo(
+    name: 'Codecademy',
+    emoji: '🖥️',
+    tagline: 'インタラクティブ・コーディング学習プラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Codecademy代替 プログラミング学習 インタラクティブ Python HTML CSS JavaScript',
+    accentColor: Color(0xFF1F4056),
+    painPoints: [
+      '月額19.99ドル〜・コーディング特化・個人のライフ管理は別途必要',
+      'プログラミング学習特化・AIライフ管理・財務管理は別途必要',
+      'FreeCodeCampと比較してコンテンツが有料壁に阻まれやすい',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'インタラクティブ演習・プロジェクト・クイズ・AI Mentor・パス',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'kaggle': const _CompetitorInfo(
+    name: 'Kaggle',
+    emoji: '🏆',
+    tagline: 'Googleデータサイエンス・MLコンペティションプラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Kaggle代替 データサイエンス 機械学習 コンペ Jupyter notebook データセット',
+    accentColor: Color(0xFF20BEFF),
+    painPoints: [
+      '無料だがコンペ特化・AIプロ向け設計・個人のライフ管理は別途必要',
+      'データサイエンス/コンペ特化・一般個人向けのAI管理機能は別途必要',
+      'DataCampと比較して体系的な学習パス・入門者向けコンテンツが弱い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'コンペ・データセット・Notebook・コース・GPUリソース・コミュニティ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'edx': const _CompetitorInfo(
+    name: 'edX',
+    emoji: '🎓',
+    tagline: 'MIT・Harvard発MOOCプラットフォーム・MicroMastersで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'edX代替 MOOC オンライン大学 MIT Harvard MicroMasters 認定証',
+    accentColor: Color(0xFF02262B),
+    painPoints: [
+      '証明書は有料(月額150ドル〜)・大学院水準で時間コミットが大きい',
+      '大学院レベル学習特化・個人のAIライフ管理・財務管理は別途必要',
+      'Courseraと比較して講師との直接インタラクションが少ない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'MIT/Harvard他世界大学・MicroMasters・Boot Camps・Executive Ed',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'redash': const _CompetitorInfo(
+    name: 'Redash',
+    emoji: '📊',
+    tagline: 'OSSクエリ&ダッシュボード・データ可視化ツールで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Redash代替 SQL クエリ ダッシュボード データ可視化 OSS BI',
+    accentColor: Color(0xFFE8292B),
+    painPoints: [
+      '無料(OSS)/クラウドは月額500ドル〜・SQLスキルが必要・個人管理は別途',
+      'クエリ/ダッシュボード特化・技術者向け・個人のAIライフ管理は別途必要',
+      'Metabase/Tableauと比較してUIデザイン・ノーコード機能が弱い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'SQL/NoSQL対応・ビジュアライゼーション・スケジュール・API・OSS',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'superset': const _CompetitorInfo(
+    name: 'Apache Superset',
+    emoji: '🦸',
+    tagline: 'Apache製OSS BIプラットフォーム・データ探索・ダッシュボードで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Superset代替 Apache BI データ探索 ダッシュボード OSS 可視化',
+    accentColor: Color(0xFF20A7C9),
+    painPoints: [
+      '無料(OSS)だがセルフホスト必須・インフラ/Python知識が必要',
+      'BI/データ探索特化・技術者向け・個人のAIライフ管理は別途必要',
+      'Tableau/Power BIと比較してビジュアルデザイン・エンドユーザー向けUIが弱い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '40+コネクタ・SQL Lab・ドラッグ&ドロップ・ノーコード・スケーラブル',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'whimsical': const _CompetitorInfo(
+    name: 'Whimsical',
+    emoji: '✏️',
+    tagline: 'ワイヤーフレーム・フローチャート・マインドマップ統合ツールで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Whimsical代替 ワイヤーフレーム フローチャート マインドマップ プロトタイプ 設計',
+    accentColor: Color(0xFF7B5EA7),
+    painPoints: [
+      '月額10ドル〜・デザイン/設計特化・個人のライフ管理は別途必要',
+      'ビジュアルコラボ特化でデザイナー/PM向け・個人のAI管理は別途必要',
+      'Figma/Miroと比較してリアルタイムコラボ・プレゼン機能が弱い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ワイヤーフレーム・フローチャート・マインドマップ・スティッキーノート',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'mural': const _CompetitorInfo(
+    name: 'MURAL',
+    emoji: '🖼️',
+    tagline: 'デジタルホワイトボード・デザイン思考コラボツールで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'MURAL代替 デジタルホワイトボード デザイン思考 ブレスト コラボ リモートワーク',
+    accentColor: Color(0xFFFF4F00),
+    painPoints: [
+      '月額9.99ドル〜・ホワイトボード特化・個人のライフ管理は別途必要',
+      'デザイン思考/コラボ特化でチーム向け設計・個人のAI管理は別途必要',
+      'Miroと比較してテンプレート数・統合機能が少ない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ホワイトボード・ファシリテーションテンプレート・投票・タイマー',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'conceptboard': const _CompetitorInfo(
+    name: 'Conceptboard',
+    emoji: '🗺️',
+    tagline: 'ドイツ製企業向けセキュアオンラインホワイトボードで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Conceptboard代替 ホワイトボード オンライン コラボ GDPR準拠 欧州 セキュア',
+    accentColor: Color(0xFF0082C9),
+    painPoints: [
+      '月額7.5ドル〜・企業コラボ特化・個人のライフ管理は別途必要',
+      'ホワイトボード特化でチーム向け設計・個人のAIライフ管理は別途必要',
+      'Miro/MURALと比較してテンプレート数・AI機能が少ない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'GDPR準拠・ドイツサーバー・大容量ボード・PDF取込・Teams統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'remote-com': const _CompetitorInfo(
+    name: 'Remote.com',
+    emoji: '🌍',
+    tagline: 'グローバルリモートチーム向け雇用主代行(EOR)・給与管理で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Remote.com代替 EOR 雇用主代行 グローバル採用 リモートワーク 給与 コンプライアンス',
+    accentColor: Color(0xFF4353FF),
+    painPoints: [
+      '月額599ドル〜(EORプラン)・グローバル雇用特化・個人のライフ管理は別途',
+      'EOR/グローバル給与特化でビジネス向け設計・個人のAI管理は別途必要',
+      'Deelと比較してコントラクター管理・統合機能が限定的',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'EOR・コントラクター・給与・福利厚生・IPプロテクション・180+国',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
