@@ -1,7 +1,7 @@
 ---
 title: "Flutter GoRouter Deep Dive — Type-safe Navigation, Nested Routes, and Redirects"
 tags: flutter,dart,webdev,indiedev
-published: false
+published: true
 ---
 
 # Flutter GoRouter Deep Dive — Type-safe Navigation, Nested Routes, and Redirects
