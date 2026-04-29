@@ -28763,6 +28763,312 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'egghead': const _CompetitorInfo(
+    name: 'egghead.io',
+    emoji: '🥚',
+    tagline: 'エキスパート開発者向け高密度ビデオコースプラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'egghead代替 開発者学習 短編ビデオ React JavaScript TypeScript 高密度',
+    accentColor: Color(0xFF1A202C),
+    painPoints: [
+      '月額25ドル〜・開発者学習特化・個人のライフ管理は別途必要',
+      '短編コーディング教育特化・個人のAI管理は別途必要',
+      'Frontend Masters/Pluralsightと比較してコース量・学習パスが限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '短編高密度動画・ReactEcosystem・OSS・transcripts・DX重視',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'exercism': const _CompetitorInfo(
+    name: 'Exercism',
+    emoji: '💪',
+    tagline: 'メンター付きコーディング練習・言語習得プラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Exercism代替 コーディング練習 プログラミング言語習得 メンタリング OSS',
+    accentColor: Color(0xFF009CAB),
+    painPoints: [
+      '無料・コーディング練習特化・個人のライフ管理は別途必要',
+      '言語習得練習特化・個人のAI管理は別途必要',
+      'Codewars/LeetCodeと比較して採用テスト準備・競プロ要素が弱い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '67言語・メンターフィードバック・実践課題・コミュニティ・完全無料',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'mimo': const _CompetitorInfo(
+    name: 'Mimo',
+    emoji: '📱',
+    tagline: 'スマートフォンでコーディングを学べるモバイル学習アプリで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Mimo代替 モバイル コーディング学習 スマートフォン Python JavaScript HTML',
+    accentColor: Color(0xFF4C00FF),
+    painPoints: [
+      '月額7ドル〜・モバイルコーディング特化・個人のライフ管理は別途必要',
+      'モバイル学習特化・個人のAI管理は別途必要',
+      'Sololearn/Grasshopperと比較してカリキュラム深度・プロジェクト数が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'モバイルファースト・Python/JS/HTML・チャレンジ・キャリアパス・AI助手',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'sololearn': const _CompetitorInfo(
+    name: 'SoloLearn',
+    emoji: '🌟',
+    tagline: 'コミュニティ駆動コーディング学習・AI支援モバイルアプリで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'SoloLearn代替 プログラミング学習 モバイル コミュニティ Python JavaScript',
+    accentColor: Color(0xFF149EF2),
+    painPoints: [
+      '無料/月額6.99ドル〜・コーディング学習特化・個人のライフ管理は別途必要',
+      'モバイルコーディング特化・個人のAI管理は別途必要',
+      'Mimo/Codecademyと比較して学習コンテンツ深度・資格連携が劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AI Tutor・コースクリエーター・コードプレイグラウンド・コミュニティ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'geeksforgeeks': const _CompetitorInfo(
+    name: 'GeeksforGeeks',
+    emoji: '🤓',
+    tagline: 'コンピュータサイエンス学習・面接準備・コーディング問題で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'GeeksforGeeks代替 コンピュータサイエンス DSA 面接準備 アルゴリズム コーディング',
+    accentColor: Color(0xFF2F8D46),
+    painPoints: [
+      '無料/月額499ルピー〜・CS学習特化・個人のライフ管理は別途必要',
+      'アルゴリズム/CS特化・個人のAI管理は別途必要',
+      'LeetCode/HackerRankと比較してUX・コンテンツ構造・英語品質が劣ることがある',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'DSA/アルゴリズム・コース・コーディング問題・面接Q&A・記事',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'zerotomastery': const _CompetitorInfo(
+    name: 'Zero To Mastery',
+    emoji: '🚀',
+    tagline: 'エンジニア就職・スキルアップ特化オンライン学習プラットフォームで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Zero To Mastery代替 Web開発学習 エンジニア就職 Python React Machine Learning',
+    accentColor: Color(0xFF5D5DFF),
+    painPoints: [
+      '月額39ドル〜・エンジニア学習特化・個人のライフ管理は別途必要',
+      'Web/ML学習特化・個人のAI管理は別途必要',
+      'Udemy/Frontend Mastersと比較してコース数・認知度が劣る',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Web/Python/ML/面接対策コース・コミュニティ・キャリアサポート',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'novu': const _CompetitorInfo(
+    name: 'Novu',
+    emoji: '🔔',
+    tagline: 'オープンソース通知インフラ・マルチチャネル通知管理で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Novu代替 通知インフラ OSS マルチチャネル プッシュ メール SMS In-App',
+    accentColor: Color(0xFF7B61FF),
+    painPoints: [
+      '無料/月額250ドル〜・通知特化・個人のライフ管理は別途必要',
+      '通知インフラ特化・個人のAI管理は別途必要',
+      'Customer.io/Brazeと比較してマーケティングオートメーション機能が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'マルチチャネル通知・テンプレート・ワークフロー・ダイジェスト・OSS',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'knock-app': const _CompetitorInfo(
+    name: 'Knock',
+    emoji: '🚪',
+    tagline: 'エンタープライズ通知インフラストラクチャAPIで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Knock代替 通知インフラ API マルチチャネル プッシュ メール In-App SaaS',
+    accentColor: Color(0xFFE84C89),
+    painPoints: [
+      '月額100ドル〜・通知インフラ特化・個人のライフ管理は別途必要',
+      '開発者向け通知特化・個人のAI管理は別途必要',
+      'Novu/Magicbellと比較してOSS・コミュニティが限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ワークフロー・好み管理・テナントサポート・In-App・メール・プッシュ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'courier': const _CompetitorInfo(
+    name: 'Courier',
+    emoji: '📦',
+    tagline: 'マルチチャネル通知APIとデザイナーツールで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Courier代替 通知API マルチチャネル メール プッシュ SMS デザイナー',
+    accentColor: Color(0xFF9F55FF),
+    painPoints: [
+      '月額0〜・通知API特化・個人のライフ管理は別途必要',
+      '通知配信特化・個人のAI管理は別途必要',
+      'Novu/Knockと比較してOSS・セルフホスト・コミュニティが限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ビジュアルエディター・メール/SMS/プッシュ・オートメーション・分析',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------

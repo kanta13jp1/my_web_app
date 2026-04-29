@@ -3202,4 +3202,13 @@
   <url><loc>https://my-web-app-b67f4.web.app/vs-codesignal</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
   <url><loc>https://my-web-app-b67f4.web.app/vs-codewars</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
   <url><loc>https://my-web-app-b67f4.web.app/vs-frontendmasters</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://my-web-app-b67f4.web.app/vs-egghead</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://my-web-app-b67f4.web.app/vs-exercism</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://my-web-app-b67f4.web.app/vs-mimo</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://my-web-app-b67f4.web.app/vs-sololearn</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://my-web-app-b67f4.web.app/vs-geeksforgeeks</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://my-web-app-b67f4.web.app/vs-zerotomastery</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://my-web-app-b67f4.web.app/vs-novu</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://my-web-app-b67f4.web.app/vs-knock-app</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://my-web-app-b67f4.web.app/vs-courier</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
 </urlset>
