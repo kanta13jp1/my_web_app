@@ -18,6 +18,7 @@ import '../services/public_memo_service.dart';
 import '../widgets/election_japan_map.dart';
 import '../widgets/election_progress_chart.dart';
 import '../widgets/election_regional_kpi_chart.dart';
+import '../widgets/election_news_badge.dart';
 import '../widgets/election_x_post_composer_dialog.dart';
 
 class ElectionVictoryPage extends StatefulWidget {
@@ -4985,6 +4986,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
               ],
             ),
             const SizedBox(height: 12),
+            ElectionNewsBadge(prefecture: plan.prefecture),
             _buildKgiCsfKpiPanel(plan),
             const SizedBox(height: 12),
             _buildPrefectureOfficerPanel(plan),
