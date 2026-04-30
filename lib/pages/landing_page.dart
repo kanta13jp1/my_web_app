@@ -1691,7 +1691,7 @@ $input
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        '1869社との機能比較',
+                        '1825社との機能比較',
                         style: TextStyle(
                           fontSize: 17,
                           fontWeight: FontWeight.w700,
@@ -1766,7 +1766,7 @@ $input
                   size: 14,
                 ),
                 label: const Text(
-                  '全1869社を見る →',
+                  '全1825社を見る →',
                   style: TextStyle(fontSize: 13, height: 1.5),
                 ),
               ),

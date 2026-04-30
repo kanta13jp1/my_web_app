@@ -64269,6 +64269,330 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'playwright-microsoft-e2e': const _CompetitorInfo(
+    name: 'Playwright',
+    emoji: '🎭',
+    tagline:
+        'Playwright・Microsoft製E2Eテスト・クロスブラウザ(Chrome/Firefox/Safari)・Python/JS/TS/Java/C#・並列実行・自動待機・スクリーンショット・トレース・CI統合で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Playwright代替 E2Eテスト クロスブラウザ Microsoft テスト自動化 Cypress代替 Selenium代替',
+    accentColor: Color(0xFF2EAD33),
+    painPoints: [
+      '無料(OSS)・テスト自動化特化・個人のライフ管理は別途必要',
+      'エンジニア特化・AI個人アシスタントは別途必要',
+      'セットアップ複雑・ブラウザバイナリ管理・フレーキーテスト対応が必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'クロスブラウザE2Eテスト・自動待機・並列実行・トレース記録',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'puppeteer-google-headless': const _CompetitorInfo(
+    name: 'Puppeteer',
+    emoji: '🤹',
+    tagline:
+        'Puppeteer・Google製ヘッドレスChrome/Firefox・Node.js・スクレイピング・PDF生成・スクリーンショット・フォーム操作・SPA対応・DevTools Protocol直接制御で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Puppeteer代替 ヘッドレスブラウザ スクレイピング PDF生成 Node.js Chrome自動化 Playwright代替',
+    accentColor: Color(0xFF00D8A2),
+    painPoints: [
+      '無料(OSS)・ブラウザ自動化特化・個人のライフ管理は別途必要',
+      'Chrome/Firefox限定・Safari未サポート・個人AI管理は別途必要',
+      'メモリ消費大・長時間スクレイピングの安定性・レート制限対応が課題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ヘッドレスブラウザ自動化・PDF生成・スクリーンショット・DevTools Protocol',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'testcafe-devexpress-e2e': const _CompetitorInfo(
+    name: 'TestCafe',
+    emoji: '☕',
+    tagline:
+        'TestCafe・DevExpress製E2Eテスト・WebDriver不要・クロスブラウザ・JS/TS・並列テスト・ライブモード・スマート待機・CI/CD統合・セットアップ簡単で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'TestCafe代替 E2Eテスト WebDriver不要 クロスブラウザ テスト自動化 Playwright代替 Cypress代替',
+    accentColor: Color(0xFF65BA04),
+    painPoints: [
+      '商用ライセンス(無料版あり)・テスト自動化特化・個人のライフ管理は別途必要',
+      'エンジニア特化・AI個人アシスタントは別途必要',
+      'Playwright/Cypress比較でエコシステム小さい・プラグイン少ない',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'WebDriver不要E2Eテスト・ライブモード・並列テスト・スマート待機',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'mocha-nodejs-test-framework': const _CompetitorInfo(
+    name: 'Mocha',
+    emoji: '☕',
+    tagline:
+        'Mocha・Node.js向け柔軟テストフレームワーク・BDD/TDD・非同期テスト・豊富なレポーター・Chai/Sinon組み合わせ・ブラウザ対応・並列実行・長い歴史と巨大エコシステムで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Mocha代替 Node.jsテスト BDD TDD 非同期テスト Jest代替 Jasmine代替 テストフレームワーク',
+    accentColor: Color(0xFF8D6748),
+    painPoints: [
+      '無料(OSS)・テストフレームワーク特化・個人のライフ管理は別途必要',
+      'アサーション/モックは別途ライブラリ必要(Chai/Sinon等)・設定多い',
+      'Jest/Vitestに比べてセットアップ工数大・個人AI管理は別途必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'BDD/TDD対応・非同期テスト・豊富なレポーター・高い柔軟性',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'chai-assertion-library': const _CompetitorInfo(
+    name: 'Chai',
+    emoji: '🍵',
+    tagline:
+        'Chai・BDD/TDDアサーションライブラリ・should/expect/assert・Node.js/ブラウザ対応・Mocha組み合わせ標準・プラグイン拡張・自然言語チェーン・OSS広く普及で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Chai代替 アサーションライブラリ BDD TDD expect should assert Mocha テスト Node.js',
+    accentColor: Color(0xFFA30701),
+    painPoints: [
+      '無料(OSS)・アサーション特化・個人のライフ管理は別途必要',
+      'テストランナーは別途必要(Mocha等)・単体では動作しない',
+      'Jest/Vitest内蔵アサーションが台頭・Chai単体の必要性低下',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'BDD/TDDアサーション・should/expect/assert・自然言語チェーン・プラグイン拡張',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'nightwatch-e2e-webdriver': const _CompetitorInfo(
+    name: 'Nightwatch.js',
+    emoji: '🌙',
+    tagline:
+        'Nightwatch.js・Node.js E2Eテスト・WebDriver/DevTools Protocol・クロスブラウザ・BDD構文・並列テスト・クラウドテスト統合・Page Object・CI対応で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Nightwatch代替 E2Eテスト WebDriver Node.js クロスブラウザ Selenium代替 Playwright代替',
+    accentColor: Color(0xFF04C755),
+    painPoints: [
+      '無料(OSS)・E2Eテスト特化・個人のライフ管理は別途必要',
+      'Playwright/Cypress比較でコミュニティ小さい・エコシステム差',
+      'エンジニア特化・AI個人アシスタントは別途必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'WebDriver/DevTools E2Eテスト・クロスブラウザ・並列・Page Object',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'webdriverio-openjs-testing': const _CompetitorInfo(
+    name: 'WebdriverIO',
+    emoji: '🔧',
+    tagline:
+        'WebdriverIO・OpenJS Foundation・WebDriver/DevTools・Node.js・クロスブラウザ・モバイル(Appium)・豊富なサービスプラグイン・TS完全対応・BDD/TDD・大規模テスト向けで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'WebdriverIO代替 E2Eテスト WebDriver Appium Node.js クロスブラウザ モバイルテスト Playwright代替',
+    accentColor: Color(0xFFEA5906),
+    painPoints: [
+      '無料(OSS)・テスト自動化特化・個人のライフ管理は別途必要',
+      'セットアップ複雑・学習コスト高い・個人AI管理は別途必要',
+      'Playwright比較でパフォーマンス差・設定ファイル多い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'WebDriver/DevToolsテスト・Appiumモバイル統合・プラグイン豊富・TS対応',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'appium-mobile-automation': const _CompetitorInfo(
+    name: 'Appium',
+    emoji: '📱',
+    tagline:
+        'Appium・OpenJS Foundation・iOS/Android/Windows自動化・WebDriver準拠・実機/エミュレータ・クロスプラットフォーム・多言語(JS/Python/Java/Ruby)・Selenium互換で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Appium代替 モバイルテスト iOS Android 自動化 WebDriver クロスプラットフォーム Detox代替',
+    accentColor: Color(0xFF662D91),
+    painPoints: [
+      '無料(OSS)・モバイル自動化特化・個人のライフ管理は別途必要',
+      'セットアップ複雑・実機管理コスト・フレーキーテスト多い',
+      'React NativeにはDetoxがE2Eで優位・エンジニア特化',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'iOS/Android/Windowsモバイル自動化・WebDriver準拠・多言語対応',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'detox-wix-react-native-e2e': const _CompetitorInfo(
+    name: 'Detox',
+    emoji: '🧪',
+    tagline:
+        'Detox・Wix Engineering製・React Native E2Eテスト・グレーボックス・iOS/Android・実機/シミュレータ・並列実行・JS/TS・フレーキーテスト低減・CI統合で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Detox代替 React Native E2Eテスト iOS Android グレーボックス Appium代替 モバイルテスト',
+    accentColor: Color(0xFF764ABC),
+    painPoints: [
+      '無料(OSS)・React Native特化・個人のライフ管理は別途必要',
+      'React Native専用・Flutter/ネイティブアプリには使えない',
+      'エンジニア特化・AI個人アシスタントは別途必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'React Native E2Eグレーボックステスト・iOS/Android・フレーキー低減',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
