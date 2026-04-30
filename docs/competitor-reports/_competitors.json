@@ -1,0 +1,34 @@
+{
+  "version": 1,
+  "_comment": "競合モニタリング対象リスト (scheduled-task: competitor-monitoring). 1 run = 最大1社 discovery で追加. 編集は scheduled task 経由 or 手動 PR で.",
+  "cap": 50,
+  "discovery_per_run": 1,
+  "competitors": [
+    { "name": "Notion", "url": "https://notion.so", "category": "AI productivity / docs", "added": "seed", "added_date": "2026-04-30" },
+    { "name": "Evernote", "url": "https://evernote.com", "category": "notes / AI assistant", "added": "seed", "added_date": "2026-04-30" },
+    { "name": "MoneyForward", "url": "https://moneyforward.com", "category": "finance / B/S", "added": "seed", "added_date": "2026-04-30" },
+    { "name": "X (Twitter)", "url": "https://x.com", "category": "social / super-app", "added": "seed", "added_date": "2026-04-30" },
+    { "name": "Animaworks", "url": "https://animaworks.com", "category": "HR / 6部署", "added": "seed", "added_date": "2026-04-30" },
+    { "name": "Claude Code", "url": "https://claude.ai", "category": "AI dev tool", "added": "seed", "added_date": "2026-04-30" },
+    { "name": "OpenAI Codex", "url": "https://openai.com", "category": "AI dev tool", "added": "seed", "added_date": "2026-04-30" },
+    { "name": "netkeiba", "url": "https://netkeiba.com", "category": "horse-racing prediction", "added": "seed", "added_date": "2026-04-30" },
+    { "name": "OpenClaw", "url": "https://openclaw.com", "category": "AI agent", "added": "seed", "added_date": "2026-04-30" },
+    { "name": "Claude Cowork", "url": "https://claude.com/cowork", "category": "AI collaboration", "added": "seed", "added_date": "2026-04-30" },
+    { "name": "Chatwork", "url": "https://chatwork.com", "category": "business chat (JP)", "added": "seed", "added_date": "2026-04-30" },
+    { "name": "Slack", "url": "https://slack.com", "category": "business chat", "added": "seed", "added_date": "2026-04-30" },
+    { "name": "ジョブカン", "url": "https://jobcan.ne.jp", "category": "HR / attendance", "added": "seed", "added_date": "2026-04-30" },
+    { "name": "Amazon", "url": "https://amazon.co.jp", "category": "ecommerce / API", "added": "seed", "added_date": "2026-04-30" }
+  ],
+  "discovery_history": [],
+  "_schema_notes": {
+    "added": "seed (initial 14) | discovery (auto-added by scheduled task) | manual (手動 PR)",
+    "category": "free text — used for diversification check (e.g. 同一カテゴリ偏り防止)",
+    "discovery_history_entry": {
+      "date": "YYYY-MM-DD",
+      "name": "company name",
+      "category": "...",
+      "reason": "なぜ追加したか (1-2 sentences, 含意 + ソース URL)",
+      "skipped_candidates": ["candidate names that were considered but rejected"]
+    }
+  }
+}
