@@ -295,5 +295,6 @@ jobs:
             -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \
             -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
             -H "Content-Type: application/json" \
+            --max-time 30 \
             -d '{"action":"notion.sync_wbs","limit":100,"offset":0}' \
             || true
