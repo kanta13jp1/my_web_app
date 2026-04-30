@@ -58,12 +58,21 @@ X への自動投稿先: **@kanta13jp1**
 ```bash
 # 今日のレポートファイルが存在するか確認
 ls docs/daily-reports/YYYY-MM-DD.md 2>/dev/null
+
+# 推奨: レポート・schedule-log・metrics の複数シグナルで確認する
+git fetch origin main --quiet
+python scripts/check_daily_report_freshness.py --date YYYY-MM-DD --ref origin/main --json
 ```
 
-**ケース A: ファイルが存在し `<!-- generated-by: github-actions -->` を含む場合**
+**ケース A: ファイルが存在し `<!-- generated-by: github-actions -->` または `<!-- generated-by: claude-schedule -->` を含む場合**
 
 Read ツールでファイルを読み込み、概要セクション（ユーザー数・リクエスト数等）を
 そのまま利用する。Step 3・Step 4 は Actions 実施済みとしてスキップ可。
+
+> 誤検知防止: `git log --author='Claude Schedule'` だけで未実行判定しないこと。
+> GitHub Actions / Claude Schedule / 復旧ジョブのどれが完了させても、
+> `docs/daily-reports/YYYY-MM-DD.md` と `docs/schedule-logs/daily-report-YYYY-MM-DD-00.json`
+> を正本として扱う。
 
 **ケース B: ファイルが存在しない場合（Actions 未実行 or 失敗）**
 

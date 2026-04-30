@@ -179,6 +179,26 @@ jobs:
             }' > /tmp/flutter-analyze-cache.json
           echo "✅ flutter-analyze-cache: conclusion=$CONCLUSION"
 
+      - name: Step 5.5 - daily-report freshness guard
+        id: daily_report
+        run: |
+          git fetch origin main --quiet
+          set +e
+          python scripts/check_daily_report_freshness.py \
+            --ref origin/main \
+            --json \
+            --github-output "$GITHUB_OUTPUT" \
+            > /tmp/daily-report-freshness.json
+          CHECK_EXIT=$?
+          set -e
+          cat /tmp/daily-report-freshness.json
+          if [ "$CHECK_EXIT" -eq 0 ]; then
+            echo "✅ daily-report freshness confirmed"
+          else
+            echo "⚠️ daily-report freshness check failed"
+          fi
+          exit 0
+
       - name: Step 3/6 - Update cache files via GitHub API (branch protection bypass)
         env:
           GH_TOKEN: ${{ secrets.GH_PAT || secrets.GITHUB_TOKEN }}
@@ -254,9 +274,11 @@ jobs:
         run: |
           TICKET_COUNT="${{ steps.tickets.outputs.ticket_count }}"
           HEALTHY="${{ steps.health.outputs.healthy }}"
+          DAILY_REPORT="${{ steps.daily_report.outputs.fresh }}"
           STATUS="success"
           [ "$HEALTHY" != "true" ] && STATUS="partial"
-          SUMMARY="CS Check: tickets=${TICKET_COUNT}, infra_healthy=${HEALTHY}"
+          [ "$DAILY_REPORT" != "true" ] && STATUS="partial"
+          SUMMARY="CS Check: tickets=${TICKET_COUNT}, infra_healthy=${HEALTHY}, daily_report_fresh=${DAILY_REPORT}"
           curl -s -o /dev/null \
             -X POST \
             -H "apikey: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
@@ -274,7 +296,9 @@ jobs:
           HTTP="${{ steps.tickets.outputs.http_code }}"
           PR_COUNT="${{ steps.pr_review.outputs.pr_count }}"
           HEALTHY="${{ steps.health.outputs.healthy }}"
+          DAILY_REPORT="${{ steps.daily_report.outputs.fresh }}"
           HEALTH_ICON=$([ "$HEALTHY" = "true" ] && echo "✅" || echo "⚠️")
+          DAILY_ICON=$([ "$DAILY_REPORT" = "true" ] && echo "✅" || echo "⚠️")
           {
             echo "## CS Check $(TZ=Asia/Tokyo date +'%Y-%m-%d %H:%M JST')"
             echo ""
@@ -283,5 +307,6 @@ jobs:
             echo "| サポートチケット | ${TICKETS}件 (HTTP ${HTTP}) |"
             echo "| オープンPR | ${PR_COUNT}件 |"
             echo "| インフラ | ${HEALTH_ICON} healthy=${HEALTHY} |"
+            echo "| daily-report | ${DAILY_ICON} fresh=${DAILY_REPORT} |"
             echo "| キャッシュ更新 | GitHub API 方式 |"
           } >> $GITHUB_STEP_SUMMARY
