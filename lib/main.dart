@@ -276,6 +276,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:my_web_app/services/notification_service.dart';
 import 'package:my_web_app/services/theme_service.dart';
 import 'package:my_web_app/widgets/global_header_clock_bar.dart';
+import 'utils/app_logger.dart';
 import 'utils/error_reporter.dart';
 
 SupabaseClient? _testSupabaseClient;
@@ -302,6 +303,13 @@ Future<void> main() async {
   );
 
   // Flutter/Dart エラーを自動で Sentry + フィードバックEF に送信
+  AppLogger.setErrorReporter(
+    (message, {error, stackTrace}) => ErrorReporter.instance.report(
+      message,
+      error: error,
+      stackTrace: stackTrace,
+    ),
+  );
   await ErrorReporter.instance.install(
     appRunner: () {
       runApp(

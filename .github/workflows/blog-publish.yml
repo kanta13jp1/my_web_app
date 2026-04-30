@@ -7,8 +7,8 @@ on:
     inputs:
       draft_path:
         description: '日本語ドラフトのパス → Qiita に投稿'
-        required: true
-        default: 'docs/blog-drafts/2026-03-31-notification-center.md'
+        required: false
+        default: ''
       draft_path_en:
         description: '英語ドラフトのパス → dev.to に投稿 (省略時は dev.to をスキップ)'
         required: false
@@ -48,13 +48,28 @@ jobs:
         uses: actions/checkout@v6
 
       # ── Step 1.5: 自動スケジュール実行時 — 未投稿ドラフト自動選択 ──────
-      - name: Auto-select unpublished draft (scheduled)
-        if: github.event_name == 'schedule'
+      - name: Resolve publish draft
         id: auto_select
         run: |
           # docs/blog-drafts/ から未投稿ドラフトを日付順(古い順)で探す
           # YYYY-MM-DD.md 形式の日次自動レポートはスキップ
           # frontmatter なし (# 見出しのみ) のファイルも対象
+          REQUESTED_DRAFT=""
+          if [ "${{ github.event_name }}" != "schedule" ]; then
+            REQUESTED_DRAFT="${{ github.event.inputs.draft_path }}"
+          fi
+
+          if [ -n "$REQUESTED_DRAFT" ] && [ -f "$REQUESTED_DRAFT" ]; then
+            echo "has_draft=true" >> $GITHUB_OUTPUT
+            echo "draft_path=$REQUESTED_DRAFT" >> $GITHUB_OUTPUT
+            echo "Using requested draft: $REQUESTED_DRAFT"
+            exit 0
+          fi
+
+          if [ -n "$REQUESTED_DRAFT" ]; then
+            echo "::warning::Requested draft not found: $REQUESTED_DRAFT; falling back to the next unpublished draft."
+          fi
+
           DRAFT=$(find docs/blog-drafts/ -name "*.md" -type f | sort | while read f; do
             # YYYY-MM-DD.md 形式の日次レポートはスキップ
             if echo "$f" | grep -qE '/[0-9]{4}-[0-9]{2}-[0-9]{2}\.md$'; then
@@ -91,15 +106,11 @@ jobs:
 
       # ── Step 2: ドラフトを読み込んでメタデータ抽出 ──────────────────────
       - name: Step 2 - Extract metadata from draft
-        if: github.event_name != 'schedule' || steps.auto_select.outputs.has_draft == 'true'
+        if: steps.auto_select.outputs.has_draft == 'true'
         id: meta
         run: |
           # Scheduled実行の場合は自動選択ドラフトを使用、手動実行の場合は入力値を使用
-          if [ "${{ github.event_name }}" = "schedule" ]; then
-            DRAFT_PATH="${{ steps.auto_select.outputs.draft_path }}"
-          else
-            DRAFT_PATH="${{ github.event.inputs.draft_path }}"
-          fi
+          DRAFT_PATH="${{ steps.auto_select.outputs.draft_path }}"
           
           if [ ! -f "$DRAFT_PATH" ]; then
             echo "Error: $DRAFT_PATH not found"
@@ -139,7 +150,7 @@ jobs:
 
       # ── Step 2.5: Circuit Breaker — Qiita 日次 4本上限 (AI_DEV Principle 4) ─
       - name: Circuit breaker — daily post limit
-        if: (github.event_name != 'schedule' || steps.auto_select.outputs.has_draft == 'true') && github.event.inputs.dry_run != 'true'
+        if: steps.auto_select.outputs.has_draft == 'true' && github.event.inputs.dry_run != 'true'
         env:
           SUPABASE_URL: https://smmkxxavexumewbfaqpy.supabase.co
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
@@ -160,7 +171,7 @@ jobs:
 
       # ── Step 2.6: Quality Gate — Sentinel + Warden (AI_DEV Principle 7) ──
       - name: Quality gate — Sentinel + Warden
-        if: github.event_name != 'schedule' || steps.auto_select.outputs.has_draft == 'true'
+        if: steps.auto_select.outputs.has_draft == 'true'
         env:
           DRAFT_PATH_VAR: ${{ steps.meta.outputs.draft_path }}
           ALREADY_PUBLISHED: ${{ steps.meta.outputs.already_published }}
@@ -181,7 +192,7 @@ jobs:
 
       # ── Step 3: メタデータ記録 (schedule-hub blog.create) ────────────────
       - name: Step 3 - Register in blog_posts table
-        if: github.event_name != 'schedule' || steps.auto_select.outputs.has_draft == 'true'
+        if: steps.auto_select.outputs.has_draft == 'true'
         id: register
         env:
           ARTICLE_TITLE: ${{ steps.meta.outputs.title }}
@@ -208,7 +219,7 @@ jobs:
           PAYLOAD=$(jq -n \
             --arg action "blog.create" \
             --arg title "$TITLE" \
-            --arg platform "${{ github.event.inputs.platforms }}" \
+            --arg platform "$PLATFORMS" \
             '{action: $action, title: $title, platform: $platform}')
 
           RESPONSE=$(curl -s -w "\n%{http_code}" \
@@ -233,7 +244,7 @@ jobs:
       # Qiita: 日本語ドラフト (draft_path) を投稿
       # dev.to: 英語ドラフト (draft_path_en) を投稿 — 省略時はスキップ
       - name: Step 4 - Publish to platforms
-        if: github.event_name != 'schedule' || steps.auto_select.outputs.has_draft == 'true'
+        if: steps.auto_select.outputs.has_draft == 'true'
         id: publish
         env:
           ARTICLE_TITLE: ${{ steps.meta.outputs.title }}
@@ -335,7 +346,7 @@ jobs:
       # push reject → continue-on-error: true で warn-only 化 (published:true 更新は
       # 次回 schedule で再試行 / 同一 draft 2 重投稿リスクは auto_select の orphan 検知で回避)
       - name: Step 5 - Mark draft as published
-        if: (github.event_name != 'schedule' || steps.auto_select.outputs.has_draft == 'true') && github.event.inputs.dry_run != 'true'
+        if: steps.auto_select.outputs.has_draft == 'true' && github.event.inputs.dry_run != 'true'
         continue-on-error: true
         env:
           GH_TOKEN: ${{ secrets.BYPASS_RULES || secrets.GITHUB_TOKEN }}
