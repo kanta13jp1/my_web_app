@@ -7,6 +7,7 @@ import 'asset_management_page.dart';
 import 'financial_report_page.dart';
 import 'admin_analytics_page.dart';
 import 'feedback_page.dart';
+import 'theme_selector_page.dart';
 
 class SettingsPage extends StatelessWidget {
   const SettingsPage({super.key});
@@ -35,6 +36,18 @@ class SettingsPage extends StatelessWidget {
             subtitle: Text(_getThemeText(themeService.themeMode)),
             trailing: const Icon(Icons.arrow_forward_ios),
             onTap: () => _showThemeDialog(context, themeService),
+          ),
+          ListTile(
+            leading: const Icon(Icons.palette_outlined),
+            title: const Text('デザインテーマ'),
+            subtitle: Text(
+              _currentCatalogThemeName(themeService.selectedThemeCode),
+            ),
+            trailing: const Icon(Icons.arrow_forward_ios),
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const ThemeSelectorPage()),
+            ),
           ),
           ListTile(
             leading: const Icon(Icons.inventory_2_outlined),
@@ -91,6 +104,14 @@ class SettingsPage extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  String _currentCatalogThemeName(String code) {
+    final def = ThemeService.catalog.firstWhere(
+      (d) => d.code == code,
+      orElse: () => ThemeService.catalog.first,
+    );
+    return '${def.emoji} ${def.nameJa}';
   }
 
   String _getThemeText(ThemeMode mode) {
