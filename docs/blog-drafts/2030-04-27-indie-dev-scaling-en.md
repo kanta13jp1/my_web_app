@@ -1,7 +1,7 @@
 ---
 title: "Indie Dev Scaling — Serving 100k Users as a Solo Engineer"
 tags: indiedev,webdev,flutter,supabase
-published: false
+published: true
 ---
 
 # Indie Dev Scaling — Serving 100k Users as a Solo Engineer

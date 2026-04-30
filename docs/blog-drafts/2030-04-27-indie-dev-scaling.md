@@ -1,7 +1,7 @@
 ---
 title: "インディー開発者のスケーリング戦略 — 1人で10万ユーザーを支える設計と運用"
 tags: 個人開発,flutter,supabase,AI
-published: false
+published: true
 ---
 
 # インディー開発者のスケーリング戦略 — 1人で10万ユーザーを支える設計と運用
