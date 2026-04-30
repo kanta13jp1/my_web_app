@@ -10,7 +10,7 @@ import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import {
   createClient,
   SupabaseClient,
-} from "https://esm.sh/@supabase/supabase-js@2";
+} from "npm:@supabase/supabase-js@2";
 import { AI_CHARACTER_PREAMBLE, prependCharacter } from "../_shared/ai_character_preamble.ts";
 import { selectEffort } from "../_shared/effort_router.ts";
 import {

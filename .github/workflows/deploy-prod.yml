@@ -500,6 +500,33 @@ jobs:
           # preflight requests (which carry no Authorization header) are not
           # rejected by Supabase's platform-level JWT check.
 
+          supabase_deploy_attempt() {
+            local attempt=1
+            local max_attempts=3
+            local delay=20
+            while true; do
+              if command supabase "$@"; then
+                return 0
+              fi
+              if [ "$attempt" -ge "$max_attempts" ]; then
+                echo "::error::supabase $* failed after ${max_attempts} attempts"
+                return 1
+              fi
+              echo "::warning::supabase $* failed (attempt ${attempt}/${max_attempts}); retrying in ${delay}s"
+              sleep "$delay"
+              attempt=$((attempt + 1))
+              delay=$((delay * 2))
+            done
+          }
+
+          supabase() {
+            if [ "${1:-}" = "functions" ] && [ "${2:-}" = "deploy" ]; then
+              supabase_deploy_attempt "$@"
+            else
+              command supabase "$@"
+            fi
+          }
+
           # --- Standalone (5本: 複雑すぎてhub統合困難) ---
           # local-election-intelligence は line 275 にあり (並び順維持のため)
           supabase functions deploy get-home-dashboard --no-verify-jwt

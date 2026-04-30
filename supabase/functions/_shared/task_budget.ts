@@ -1,7 +1,7 @@
 import {
   createClient,
   SupabaseClient,
-} from "https://esm.sh/@supabase/supabase-js@2";
+} from "npm:@supabase/supabase-js@2";
 
 export type BudgetScope = "ef" | "gha" | "instance" | "month";
 
