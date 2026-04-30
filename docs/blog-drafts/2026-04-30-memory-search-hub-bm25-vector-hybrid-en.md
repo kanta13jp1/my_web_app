@@ -1,7 +1,7 @@
 ---
 title: "Memory Search Hub: BM25 + pgvector Hybrid Search on Supabase Edge Functions"
 tags: Supabase,Deno,buildinpublic,AI,pgvector
-published: false
+published: true
 ---
 
 # Memory Search Hub: BM25 + pgvector Hybrid Search on Supabase Edge Functions
