@@ -604,14 +604,43 @@ jobs:
         run: |
           sed -i 's|/ogp\.png"|/ogp.png?v=${{ steps.version.outputs.version }}"|g' build/web/index.html
 
-      - name: Deploy to Firebase Hosting (Production)
-        uses: FirebaseExtended/action-hosting-deploy@v0
-        continue-on-error: true  # 509 Bandwidth Exceeded 発生中 (2026-04-18) — 復旧後に削除
+      - name: Setup Node for Firebase CLI
+        uses: actions/setup-node@v6
         with:
-          repoToken: "${{ secrets.GITHUB_TOKEN }}"
-          firebaseServiceAccount: "${{ secrets.FIREBASE_SERVICE_ACCOUNT_PROD }}"
-          projectId: ${{ secrets.FIREBASE_PROJECT_ID }}
-          channelId: live
+          node-version: "24"
+          cache: npm
+
+      - name: Deploy to Firebase Hosting (Production)
+        id: firebase_cli_deploy
+        continue-on-error: true  # 509 Bandwidth Exceeded 発生中 (2026-04-18) — 復旧後に削除
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          key_file="$(mktemp)"
+          output_file="$(mktemp)"
+          cleanup() {
+            rm -f "$key_file" "$output_file"
+          }
+          trap cleanup EXIT
+
+          printf '%s' '${{ secrets.FIREBASE_SERVICE_ACCOUNT_PROD }}' > "$key_file"
+          export GOOGLE_APPLICATION_CREDENTIALS="$key_file"
+
+          npx -y firebase-tools@latest deploy \
+            --only hosting \
+            --project "${{ secrets.FIREBASE_PROJECT_ID }}" \
+            --json > "$output_file"
+
+          cat "$output_file"
+
+          deploy_url="$(jq -r '.result.hosting[]?.url // empty' "$output_file" | head -n 1)"
+          if [ -z "$deploy_url" ]; then
+            deploy_url="https://${{ secrets.FIREBASE_PROJECT_ID }}.web.app"
+          fi
+
+          echo "details_url=$deploy_url" >> "$GITHUB_OUTPUT"
+          echo "Firebase Hosting live deploy complete: $deploy_url"
         env:
           FIREBASE_CLI_EXPERIMENTS: webframeworks
 
