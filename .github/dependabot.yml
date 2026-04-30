@@ -1,6 +1,5 @@
 version: 2
 updates:
-  # GitHub Actions の自動更新
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
@@ -8,21 +7,49 @@ updates:
       day: "monday"
       time: "09:00"
       timezone: "Asia/Tokyo"
+    groups:
+      github-actions:
+        patterns:
+          - "*"
     open-pull-requests-limit: 5
     labels:
       - "dependencies"
       - "github-actions"
     commit-message:
       prefix: "ci"
+    rebase-strategy: "auto"
 
-  # Python pip パッケージの自動更新 (requirements.txt)
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:10"
+      timezone: "Asia/Tokyo"
+    groups:
+      npm-dev-dependencies:
+        dependency-type: "development"
+        patterns:
+          - "*"
+    open-pull-requests-limit: 3
+    labels:
+      - "dependencies"
+      - "javascript"
+    commit-message:
+      prefix: "deps"
+    rebase-strategy: "auto"
+
   - package-ecosystem: "pip"
     directory: "/"
     schedule:
       interval: "weekly"
       day: "monday"
-      time: "09:15"
+      time: "09:20"
       timezone: "Asia/Tokyo"
+    groups:
+      python-dependencies:
+        patterns:
+          - "*"
     open-pull-requests-limit: 3
     labels:
       - "dependencies"
@@ -30,11 +57,10 @@ updates:
     commit-message:
       prefix: "deps"
     ignore:
-      # メジャーバージョンアップは手動で対応
       - dependency-name: "*"
         update-types: ["version-update:semver-major"]
+    rebase-strategy: "auto"
 
-  # Flutter / Dart pub パッケージの自動更新
   - package-ecosystem: "pub"
     directory: "/"
     schedule:
@@ -42,6 +68,10 @@ updates:
       day: "monday"
       time: "09:30"
       timezone: "Asia/Tokyo"
+    groups:
+      flutter-dependencies:
+        patterns:
+          - "*"
     open-pull-requests-limit: 5
     labels:
       - "dependencies"
@@ -49,6 +79,6 @@ updates:
     commit-message:
       prefix: "deps"
     ignore:
-      # メジャーバージョンアップは手動で対応
       - dependency-name: "*"
         update-types: ["version-update:semver-major"]
+    rebase-strategy: "auto"
