@@ -93,8 +93,21 @@ jobs:
       - name: Check Edge Function deploy count (ハードキャップ50本以下)
         run: |
           # deploy-prod.yml のデプロイリストを抽出 (macro-hub体制 — Tier1/Tier2廃止)
-          DEPLOYED=$(grep "supabase functions deploy" .github/workflows/deploy-prod.yml \
-            | grep -v "^#\|#" | awk '{print $4}' | sort)
+          DEPLOYED=$(python3 - <<'PY'
+          import re
+          from pathlib import Path
+
+          pattern = re.compile(
+              r'^\s*(?:supabase\s+functions\s+deploy|deploy_function)\s+([A-Za-z0-9_-]+)\b'
+          )
+          deployed = []
+          for line in Path('.github/workflows/deploy-prod.yml').read_text(encoding='utf-8').splitlines():
+              match = pattern.search(line)
+              if match:
+                  deployed.append(match.group(1))
+          print('\n'.join(sorted(set(deployed))))
+          PY
+          )
           DEPLOY_COUNT=$(echo "$DEPLOYED" | grep -c . || true)
           # supabase/functions/ の実EFディレクトリ数 (_shared除く)
           EXISTING=$(find supabase/functions -maxdepth 1 -mindepth 1 -type d \
