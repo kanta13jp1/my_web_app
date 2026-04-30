@@ -32,7 +32,7 @@
 
 = 「物理大学の組織 (= 学部 → 学科 → 講座 → 講義回)」と相似形にして、**学習者の cognitive map** に直感的に符合させる.
 
-### 初期 学部/学科 構成 (= 5 学部 / 22 学科)
+### 初期 学部/学科 構成 (= 6 学部 / 29 学科 / part 94 で SWE 学部追加)
 
 #### 1. AI 学部 (faculty_code: `ai`)
 
@@ -83,9 +83,23 @@
 | `paper` | 研究論文学科 | Transformer / RLHF / Diffusion / arxiv 主要論文 |
 | `lab` | 研究機関学科 | OpenAI Research / Anthropic Research / Stanford / MIT |
 
+#### 6. ソフトウェアエンジニアリング学部 (faculty_code: `swe`) ← **新規 / part 94 追加**
+
+User 要望「アジャイル開発など Software エンジニアリング content も学べるように」を受けて新設.
+
+| 学科 code | 学科名 | 含む provider / topic 例 |
+| --- | --- | --- |
+| `agile` | アジャイル・Scrum 学科 | Scrum.org / Scrum Guide / SAFe / Spotify Model / Lean / XP / Kanban |
+| `architecture` | アーキテクチャ・設計学科 | Clean Architecture (Uncle Bob) / DDD (Eric Evans) / Hexagonal / Microservices / Design Patterns (GoF) |
+| `testing` | テスト・品質保証学科 | TDD (Kent Beck) / BDD / Cypress / Playwright / Jest / pytest / property-based testing |
+| `security` | セキュリティ・SecDevOps 学科 | OWASP Top 10 / SAST / DAST / SCA / Zero Trust / SLSA / Threat Modeling |
+| `refactoring` | リファクタリング・コード品質学科 | SOLID / Clean Code / Refactoring (Fowler) / Code Review / Pair Programming |
+| `pm` | プロジェクト・チームマネジメント学科 | PMBOK / PRINCE2 / OKR / Team Topologies / DORA Metrics / Engineering Ladder |
+| `documentation` | ドキュメント・テクニカルライティング学科 | RFC / ADR / Diátaxis / C4 model / Mermaid / API doc 技法 |
+
 ### 合計
 
-- 5 学部 / 22 学科 / 既存 380+ provider + クラウド系 30+ 新規 = **400+ provider 想定**
+- **6 学部 / 29 学科** / 既存 380+ provider + クラウド系 30+ + SWE 系 30+ = **440+ provider 想定**
 
 ---
 

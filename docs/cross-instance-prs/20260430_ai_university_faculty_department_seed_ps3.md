@@ -118,13 +118,32 @@ PS#3 が既存 seed pattern に沿って migration 作成:
 - データ基盤 3 学科 (= Database / Warehouse / Stream) / 各 5 provider = 15+ provider
 - 学術研究 3 学科 (= Benchmark / Paper / Lab) / 既存 benchmark 集約 + 新規 paper/lab seed = 20+ provider
 
-合計 phase 2-4 で **70+ provider 追加** + **既存 380+ mapping** = 450+ provider に拡大.
+## 4.1 Phase 4.5: ソフトウェアエンジニアリング学部 (= part 94 追加 / 6 学部目)
+
+Win版 part 94 で `20260430030000_add_software_engineering_faculty.sql` 適用済 (= 学部 + 7 学科 seed 完了).
+
+PS#3 territory: SWE 学部 7 学科に **30+ provider seed** (= migration `20260430040000_seed_swe_university.sql` 想定):
+
+| 学科 | 想定 provider 例 |
+| --- | --- |
+| `agile` | Scrum.org / SAFe / Atlassian / Mountain Goat (Mike Cohn) / Spotify / GitHub / GitLab |
+| `architecture` | Uncle Bob (Clean Architecture) / Eric Evans (DDD) / Martin Fowler (Refactoring Guru) / GoF / Microservices.io |
+| `testing` | Kent Beck (TDD) / Cucumber (BDD) / Playwright / Cypress / Jest / pytest / Hypothesis |
+| `security` | OWASP / Snyk / Aqua / Hashicorp Vault / Auth0 / Okta |
+| `refactoring` | Refactoring (Fowler 著) / Clean Code (Uncle Bob) / Code Climate / SonarQube |
+| `pm` | PMI / Atlassian Jira / Linear / OKR Software / DORA / DevOps Research |
+| `documentation` | Diátaxis / Stripe Doc Style / Stoplight / ReadMe / Mintlify |
+
+各 provider に overview / tutorial / pricing 等 category content を seed.
+
+合計 phase 2-4.5 で **100+ provider 追加** + **既存 380+ mapping** = 480+ provider に拡大.
 
 ## 5. 受入基準
 
 - [ ] Phase 2 mapping migration 完了 → `SELECT count(*) FROM ai_university_content WHERE faculty_id IS NULL` = 0
 - [ ] Phase 3 クラウド学部 5 学科分 seed migration 完了 (= 5 file)
 - [ ] Phase 4 開発ツール 4 / データ 3 / 学術 3 = 10 学科分 seed migration 完了 (= 10 file)
+- [ ] **Phase 4.5 SWE 学部 7 学科分 seed migration 完了 (= 7 file)** ← part 94 追加
 - [ ] 各 migration `python scripts/check_migration_timestamps.py` PASS
 - [ ] development_achievements に各 phase の seed entry 追加
 - [ ] cross-instance-pr 完了時 `done/` 移動
