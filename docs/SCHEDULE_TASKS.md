@@ -896,9 +896,13 @@ Claude Code / Codex の公式変更と NotebookLM の Harness Engineering 方針
 ローカルでは次を実行する。
 
 ```powershell
+python scripts/codex_session_check.py
 python scripts/ai_tool_watch.py --print-only
 ```
 
 出力に `changed/new official sources` がある場合は、必ず「WBS route / GitHub issue / hook / workflow / PR」の
 いずれかに落とし、NotebookLM のメモだけで完了にしない。
+
+`codex_session_check.py` に dirty worktree、upstream gone、base branch 直編集、origin/main 未取得などの警告が
+出た場合は、実装前に新しい worktree / branch へ移るか、Codex#2 に sync / CI 側の修復として回す。
 

@@ -7,7 +7,17 @@ actionable; detailed product memory stays in docs, issues, and NotebookLM.
 
 1. Check the working tree before editing.
 2. Prefer a fresh worktree from `origin/main` when the root tree is dirty.
-3. Run the official AI tooling watch:
+3. Record the Codex session/worktree safety snapshot:
+
+```powershell
+python scripts/codex_session_check.py
+```
+
+The report should show the current branch, upstream drift, dirty paths, nearby
+worktrees, and any exposed sandbox/approval environment variables. Treat
+warnings as routing signals before editing.
+
+4. Run the official AI tooling watch:
 
 ```powershell
 python scripts/ai_tool_watch.py --print-only
