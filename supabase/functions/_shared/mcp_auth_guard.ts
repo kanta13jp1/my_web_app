@@ -249,7 +249,23 @@ export function requireScope(ctx: McpAuthContext, tool: string): boolean {
  * 呼び出し例:
  *   await logMcpInvocation(ctx, "judgment.get", { date: "2026-04-28" }, 200, req);
  */
-// deno-lint-ignore require-await -- skeleton state; supabase INSERT (await) wired in part 50+
+function normalizeRequestIp(raw: string): string | null {
+  const first = raw.split(",")[0]?.trim() ?? "";
+  if (!first) return null;
+  if (/^[0-9.]+$/.test(first)) return first;
+  if (/^[0-9a-fA-F:]+$/.test(first)) return first;
+  return null;
+}
+
+function toAuditJson(value: unknown): unknown {
+  if (value == null) return null;
+  try {
+    return JSON.parse(JSON.stringify(value));
+  } catch {
+    return { unserializable: String(value).slice(0, 500) };
+  }
+}
+
 export async function logMcpInvocation(
   ctx: McpAuthContext | null,
   toolName: string,
@@ -259,17 +275,26 @@ export async function logMcpInvocation(
 ): Promise<void> {
   const ip = req.headers.get("x-forwarded-for") ??
     req.headers.get("cf-connecting-ip") ?? "";
-  // TODO (Win版#132 part 50+): supabase service role で
-  // INSERT INTO mcp_audit_log (client_id, tool_name, request_args, response_status,
-  //                            request_ip, invoked_at)
-  // VALUES ($1, $2, $3, $4, $5, now());
+  const admin = getAdminClient();
+  if (admin) {
+    const { error } = await admin.from("mcp_audit_log").insert({
+      client_id: ctx?.client_id ?? "anonymous",
+      tool_name: toolName || "unknown",
+      request_args: toAuditJson(requestArgs),
+      response_status: responseStatus,
+      request_ip: normalizeRequestIp(ip),
+    });
+    if (!error) return;
+    console.warn("[mcp-audit] insert failed", error.message);
+  }
+
   console.log(
     "[mcp-audit]",
     JSON.stringify({
       client_id: ctx?.client_id ?? "anonymous",
       tool_name: toolName,
       response_status: responseStatus,
-      ip: ip.split(",")[0]?.trim() || null,
+      ip: normalizeRequestIp(ip),
       args_preview: typeof requestArgs === "string"
         ? requestArgs.slice(0, 200)
         : JSON.stringify(requestArgs).slice(0, 200),
