@@ -55,6 +55,9 @@ jobs:
         with:
           deno-version: v2.x
 
+      - name: Check Edge Function imports
+        run: python scripts/check_edge_function_imports.py
+
       - name: Deno lint (Edge Functions)
         id: deno_lint
         run: |

@@ -53,6 +53,8 @@ and GitHub Actions proves the result.
   clean fix PRs from a fresh worktree.
 - Codex #2 should take red CI, deploy unblockers, workflow drift, Edge Function
   failures, and GitHub/Notion/Slack synchronization issues.
+- Edge Function dependency resolution follows
+  `docs/adr/2026-04-30-edge-function-dependency-resolution.md`.
 - If a task needs product judgment, cross-instance arbitration, or NotebookLM
   synthesis before code can be safely changed, route it back to Claude Code and
   leave a short handoff note.

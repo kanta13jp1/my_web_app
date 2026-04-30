@@ -12,7 +12,7 @@
 // POST → improve / summarize / continue / translate / tone / titles / minutes / thread / blog
 
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from "npm:@supabase/supabase-js@2";
 import { prependCharacter } from "../_shared/ai_character_preamble.ts";
 
 const corsHeaders = {
