@@ -1,7 +1,7 @@
 # 自分株式会社 — User Tasks Snapshot
 
-_Generated: 2026/4/29 (JST)_
-_Active user tasks: 19_
+_Generated: 2026/4/30 (JST)_
+_Active user tasks: 20_
 
 ## 概要
 
@@ -11,21 +11,6 @@ NotebookLM に source として追加し、「具体的手順」「詰まりポ�
 カテゴリ別の手動タスクが含まれます: 法人登記 / 商標 / Notion 設定 / Slack Webhook / 監査法人選定 / 上場審査 等。
 
 ## タスク一覧
-
-### 🟡 ⏳ [Issue #845] [追加要望] AI役員向けMCP外部ツール連携のOAuth/DCR認証ハブ
-
-- **id**: `5f8e41cf-81d2-4f2e-9788-a7a686fc5ac0`
-- **category**: GitHub Issue / Feature Request
-- **progress**: 0%
-- **status**: pending
-- **priority**: medium
-- **deadline**: 2026-04-30
-
-**説明**:
-
-GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/845 / Author: kanta13jp1 / Labels: enhancement, 追加要望 / GitHub updated: 2026-04-27T16:10:50Z
-
----
 
 ### 🟡 ⏳ [Issue #846] [追加要望] AI役員ツール実行の権限スコープと承認ゲート
 
@@ -39,6 +24,21 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/845 / Author: kant
 **説明**:
 
 GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/846 / Author: kanta13jp1 / Labels: enhancement, 追加要望 / GitHub updated: 2026-04-27T16:10:51Z
+
+---
+
+### 🟡 ⏳ [Issue #845] [追加要望] AI役員向けMCP外部ツール連携のOAuth/DCR認証ハブ
+
+- **id**: `5f8e41cf-81d2-4f2e-9788-a7a686fc5ac0`
+- **category**: GitHub Issue / Feature Request
+- **progress**: 0%
+- **status**: pending
+- **priority**: medium
+- **deadline**: 2026-04-30
+
+**説明**:
+
+GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/845 / Author: kanta13jp1 / Labels: enhancement, 追加要望 / GitHub updated: 2026-04-27T16:10:50Z
 
 ---
 
@@ -106,14 +106,40 @@ freee / MoneyForward Cloud 比較 → 契約
 
 - **id**: `714ee4a4-13c8-4161-9b78-de468660c3cf`
 - **category**: GitHub Issue
-- **progress**: 0%
+- **progress**: 100%
 - **status**: pending
 - **priority**: low
 - **deadline**: 2026-04-27
 
+---
+
+### 🟢 ⏳ [Issue #1037] [Backlog] N4 schedule-hub:notion.sync_memory_index action
+
+- **id**: `fe0df234-1fc0-49b2-b10b-2122c0de9cf5`
+- **category**: GitHub Issue
+- **progress**: 0%
+- **status**: pending
+- **priority**: low
+- **deadline**: 2026-05-02
+
 **説明**:
 
-GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/696 / Author: kanta13jp1 / Labels: automation / GitHub updated: 2026-04-24T14:12:52Z
+GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/1037 / Author: kanta13jp1 / Labels: automation / GitHub updated: 2026-04-29T07:03:30Z
+
+---
+
+### 🟢 ⏳ [Issue #1036] [Backlog] N3 schedule-hub:notion.sync_roadmap action
+
+- **id**: `1d85c5a8-ef13-45a5-b6d7-cd62e1ffc23c`
+- **category**: GitHub Issue
+- **progress**: 0%
+- **status**: pending
+- **priority**: low
+- **deadline**: 2026-05-02
+
+**説明**:
+
+GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/1036 / Author: kanta13jp1 / Labels: automation / GitHub updated: 2026-04-29T07:03:29Z
 
 ---
 
@@ -129,21 +155,6 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/696 / Author: kant
 **説明**:
 
 渋谷 or 六本木 / 100 坪 / 5 年契約
-
----
-
-### 🔴 ⏳ [Issue #931] [CI失敗] Blog Draft Register (blog_posts テーブル自動登録) (main)
-
-- **id**: `cd64cc05-40e9-41b8-a588-ce3242798cb6`
-- **category**: GitHub Issue / Bug
-- **progress**: 0%
-- **status**: pending
-- **priority**: high
-- **deadline**: 2026-04-29
-
-**説明**:
-
-GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/931 / Author: app/github-actions / Labels: bug, workflow-failure / GitHub updated: 2026-04-28T15:04:49Z
 
 ---
 
