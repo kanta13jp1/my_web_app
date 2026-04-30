@@ -25225,3 +25225,13 @@ a9d7b1517 on main
 
 ### Philosophy Alignment
 #6 資本=時間 (= CI自動修復の信頼性向上で手動対応コスト削減) / #5 商品=ユーザー価値 (= deploy-prod安定化)
+
+## PS#6 S151-S153 (2026-05-01)
+- 競馬予測EF confidence 66→69 terms
+- S151: trainerTopCourseBonus (調教師得意コース一致 +1%)
+- S152: prev3FormTrendBonus (3走着順改善トレンド +1% / 悪化 -1%)
+- S153: jockeyChangeBonus (騎乗交代×勝率 ±1%)
+- HEAD: 19e0c9f93
+
+### Philosophy Alignment
+#5 商品=ユーザー価値 (= 予測精度向上で競馬ユーザー体験改善) / #6 資本=時間 (= 定型term追加pattern確立)
