@@ -106,7 +106,7 @@ jobs:
       - name: Sync issues to WBS
         env:
           REPO: ${{ github.repository }}
-          WBS_SYNC_BATCH_SIZE: "200"
+          WBS_SYNC_BATCH_SIZE: "100"
         run: |
           if [ -z "$SUPABASE_SERVICE_ROLE_KEY" ]; then
             echo "SUPABASE_SERVICE_ROLE_KEY is not configured"
@@ -142,12 +142,24 @@ jobs:
             [ -n "$payload_path" ] || continue
             batch_number=$((batch_number + 1))
             echo "Syncing WBS batch ${batch_number}/${total_batches}: ${payload_path}"
-            HTTP_CODE=$(curl -sS -o /tmp/wbs-sync-batch-response.json -w "%{http_code}" \
-              -X POST "$SUPABASE_URL/functions/v1/tools-hub" \
-              -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \
-              -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
-              -H "Content-Type: application/json" \
-              --data-binary @"$payload_path")
+            attempt=1
+            while true; do
+              HTTP_CODE=$(curl -sS -o /tmp/wbs-sync-batch-response.json -w "%{http_code}" \
+                -X POST "$SUPABASE_URL/functions/v1/tools-hub" \
+                -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \
+                -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
+                -H "Content-Type: application/json" \
+                --data-binary @"$payload_path")
+
+              if [ "$HTTP_CODE" -lt 500 ] || [ "$attempt" -ge 2 ]; then
+                break
+              fi
+              echo "::warning::tools-hub wbs.sync_github_issues batch ${batch_number}/${total_batches} returned HTTP $HTTP_CODE on attempt $attempt; retrying"
+              cat /tmp/wbs-sync-batch-response.json || true
+              echo ""
+              sleep 5
+              attempt=$((attempt + 1))
+            done
 
             if [ "$HTTP_CODE" -ge 400 ]; then
               echo "::warning::tools-hub wbs.sync_github_issues batch ${batch_number}/${total_batches} returned HTTP $HTTP_CODE"
@@ -199,6 +211,18 @@ jobs:
           PY
 
           cat /tmp/wbs-sync-response.json
+
+          python3 <<'PY'
+          import json
+          import sys
+
+          with open("/tmp/wbs-sync-response.json", encoding="utf-8") as fh:
+              response = json.load(fh)
+
+          if not response.get("success", False):
+              print(f"::error::WBS sync finished with failed batches: {response.get('batch_failures', [])}")
+              sys.exit(1)
+          PY
 
       - name: Close GitHub issues completed in WBS
         env:
