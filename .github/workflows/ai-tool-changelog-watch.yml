@@ -1,0 +1,102 @@
+name: AI Tool Changelog Watch (Claude Code + Codex CLI 月次新機能 fetch)
+
+# Win版#132 part 99 直接実装 (= part 98 の Codex#2 cross-instance-pr を Win territory で先行実装)
+# AI_FLEET_SYNERGY 原則 #3 (Automate Feature Monitoring) dogfood
+# fleet 自身が fleet 自身を進化させる infrastructure
+
+on:
+  schedule:
+    - cron: "0 0 1 * *"  # monthly / 1 日 00:00 UTC (= 09:00 JST)
+  workflow_dispatch:
+    inputs:
+      tool_filter:
+        description: 'tool filter (claude / codex / both / 省略=both)'
+        required: false
+        default: 'both'
+
+concurrency:
+  group: ai-tool-changelog-watch
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  fetch-and-summarize:
+    name: Fetch + Summarize + Issue
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    env:
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      GH_TOKEN: ${{ secrets.BYPASS_RULES || github.token }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 5
+          token: ${{ secrets.BYPASS_RULES || github.token }}
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      - name: Install Python deps
+        run: |
+          pip install requests
+
+      - name: Compute month tag
+        id: tag
+        run: |
+          MONTH=$(TZ=UTC date +'%Y-%m')
+          echo "month=$MONTH" >> $GITHUB_OUTPUT
+
+      - name: Fetch Claude Code release notes
+        if: ${{ github.event.inputs.tool_filter != 'codex' }}
+        run: |
+          mkdir -p .ci-logs
+          # Anthropic docs changelog (= public)
+          curl -sL --fail \
+            -A "Mozilla/5.0 (compatible; jibun-fleet-bot/1.0)" \
+            "https://docs.claude.com/en/release-notes/claude-code" \
+            > .ci-logs/claude-code-changelog-${{ steps.tag.outputs.month }}.html \
+            || echo "WARN: claude code changelog fetch failed (non-fatal)"
+          ls -la .ci-logs/ || true
+
+      - name: Fetch Codex CLI release notes
+        if: ${{ github.event.inputs.tool_filter != 'claude' }}
+        run: |
+          mkdir -p .ci-logs
+          # OpenAI Codex CLI GitHub releases (= public API)
+          gh api repos/openai/codex/releases?per_page=10 \
+            > .ci-logs/codex-cli-releases-${{ steps.tag.outputs.month }}.json \
+            || echo "WARN: codex release fetch failed (non-fatal)"
+
+      - name: Summarize via Claude API
+        run: |
+          python scripts/ai_tool_changelog_summarize.py \
+            --month "${{ steps.tag.outputs.month }}" \
+            --output "docs/ai-tool-changelog/${{ steps.tag.outputs.month }}.md"
+
+      - name: Create GitHub Issues for high-priority items
+        run: |
+          python scripts/ai_tool_changelog_to_issues.py \
+            --input "docs/ai-tool-changelog/${{ steps.tag.outputs.month }}.md" \
+            --label  ai-tool-update \
+            --repo "${{ github.repository }}"
+        continue-on-error: true  # API quota 等で失敗しても summary commit は実施
+
+      - name: Commit summary
+        run: |
+          git config user.name  "ai-tool-changelog-watch[bot]"
+          git config user.email "ai-tool-changelog-watch@users.noreply.github.com"
+          git add docs/ai-tool-changelog/ .ci-logs/ || true
+          if git diff --staged --quiet; then
+            echo "no changes to commit"
+          else
+            git commit -m "docs(ai-tool): monthly changelog watch ${{ steps.tag.outputs.month }}"
+            git push origin HEAD:main || git push --force-with-lease origin HEAD:main
+          fi
