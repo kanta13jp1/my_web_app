@@ -121,7 +121,11 @@ class _BudgetFinancialPlannerPageState extends State<BudgetFinancialPlannerPage>
         ),
         _supabase.functions.invoke(
           'social-commerce-hub',
-          body: {'action': 'budget.expense_list', 'view': 'income', 'month': _selectedMonth},
+          body: {
+            'action': 'budget.expense_list',
+            'view': 'income',
+            'month': _selectedMonth,
+          },
         ),
       ]);
 
