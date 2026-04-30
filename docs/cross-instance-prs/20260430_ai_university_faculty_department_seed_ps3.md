@@ -182,6 +182,24 @@ Win版 part 96 で `20260430050000_add_hardware_faculty.sql` 適用済 (= 学部
 
 合計 phase 2-4.7 で **200+ provider 追加** + **既存 380+ mapping** = **580+ provider** に拡大.
 
+## 4.4 Phase 4.8: 資格試験学部 (= part 97 追加 / 10 学部目)
+
+Win版 part 97 で `20260430060000_add_certification_faculty.sql` 適用済 (= 学部 + 7 学科 seed 完了).
+
+### 資格試験学部 7 学科に 50+ provider seed (= migration `20260430080000_seed_certification_university.sql` 想定)
+
+| 学科 | 想定 provider 例 |
+| --- | --- |
+| `ipa` | 基本情報技術者 (FE) / 応用情報技術者 (AP) / DB スペシャリスト / NW スペシャリスト / SC 安全確保支援士 / PM / IT パスポート / G 検定 / E 資格 |
+| `cloud_cert` | AWS Certified (CP/SAA/DOP/MLS) / Azure (AZ-900/104/204/305) / Google Cloud (CDL/Associate/PCA/PDE) / Oracle Cloud Infrastructure |
+| `network_sec` | Cisco CCNA/CCNP/CCIE / CompTIA Network+/Security+/CySA+ / CISSP / CCSP / CEH / OSCP |
+| `database_data` | Oracle Master (Bronze/Silver/Gold/Platinum) / Snowflake Certified / Databricks / MongoDB / PostgreSQL Associate |
+| `pm_cert` | PMP / PRINCE2 / CSM / PSM I/II/III / SAFe / ITIL 4 Foundation / Lean Six Sigma |
+| `developer` | Microsoft Certified Developer / Oracle Java SE/EE / Python PCEP/PCAP/PCPP / CKA/CKAD/CKS / GitHub Foundations / HashiCorp Terraform |
+| `business_intl` | TOEIC / TOEFL / IELTS / 日商簿記 1-3 級 / 中小企業診断士 / 統計検定 / 行政書士 |
+
+合計 phase 2-4.8 で **250+ provider 追加** + **既存 380+ mapping** = **630+ provider** に拡大.
+
 ## 5. 受入基準
 
 - [ ] Phase 2 mapping migration 完了 → `SELECT count(*) FROM ai_university_content WHERE faculty_id IS NULL` = 0
@@ -191,6 +209,7 @@ Win版 part 96 で `20260430050000_add_hardware_faculty.sql` 適用済 (= 学部
 - [ ] **Phase 4.6 OS 学部 5 学科分 seed migration 完了 (= 5 file)** ← part 95 追加
 - [ ] **Phase 4.6 モバイル学部 5 学科分 seed migration 完了 (= 5 file)** ← part 95 追加
 - [ ] **Phase 4.7 ハードウェア学部 7 学科分 seed migration 完了 (= 7 file)** ← part 96 追加
+- [ ] **Phase 4.8 資格試験学部 7 学科分 seed migration 完了 (= 7 file)** ← part 97 追加
 - [ ] 各 migration `python scripts/check_migration_timestamps.py` PASS
 - [ ] development_achievements に各 phase の seed entry 追加
 - [ ] cross-instance-pr 完了時 `done/` 移動

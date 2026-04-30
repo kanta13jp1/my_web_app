@@ -32,7 +32,7 @@
 
 = 「物理大学の組織 (= 学部 → 学科 → 講座 → 講義回)」と相似形にして、**学習者の cognitive map** に直感的に符合させる.
 
-### 初期 学部/学科 構成 (= 9 学部 / 46 学科 / part 96 でハードウェア学部追加)
+### 初期 学部/学科 構成 (= 10 学部 / 53 学科 / part 97 で資格試験学部追加)
 
 #### 1. AI 学部 (faculty_code: `ai`)
 
@@ -82,6 +82,20 @@
 | `benchmark` | ベンチマーク学科 | MMLU / HumanEval / SWE-bench / WebArena / GSM8K |
 | `paper` | 研究論文学科 | Transformer / RLHF / Diffusion / arxiv 主要論文 |
 | `lab` | 研究機関学科 | OpenAI Research / Anthropic Research / Stanford / MIT |
+
+#### 10. 資格試験学部 (faculty_code: `certification`) ← **新規 / part 97 追加 / sort_order 45**
+
+User 要望「情報処理技術者試験 / ベンダー資格等の資格試験 content」を受けて新設. **学習成果を validate する層** として学術 (50) の前に配置.
+
+| 学科 code | 学科名 | 含む 資格例 |
+| --- | --- | --- |
+| `ipa` | 情報処理技術者試験学科 | 基本情報技術者 (FE) / 応用情報技術者 (AP) / DB スペシャリスト / NW スペシャリスト / SC 情報処理安全確保支援士 / PM プロジェクトマネージャー / IT パスポート / G 検定 / E 資格 |
+| `cloud_cert` | クラウドベンダー資格学科 | AWS Certified (CP / SAA / DevOps Pro / ML Specialty) / Azure (AZ-900 / AZ-104 / AZ-204 / AZ-305) / Google Cloud (CDL / Associate / Professional) / Oracle Cloud / IBM Cloud |
+| `network_sec` | ネットワーク・セキュリティ資格学科 | Cisco (CCNA / CCNP / CCIE) / CompTIA (Network+ / Security+ / CySA+) / (ISC)2 (CISSP / CCSP) / EC-Council (CEH) / OSCP |
+| `database_data` | データベース・データ資格学科 | Oracle Master (Bronze - Platinum) / Microsoft Azure Data / Snowflake Certified / Databricks / MongoDB / PostgreSQL Associate |
+| `pm_cert` | プロジェクトマネジメント資格学科 | PMP / PRINCE2 / CSM / PSM / SAFe Agilist / ITIL Foundation / Lean Six Sigma |
+| `developer` | 開発者資格学科 | Microsoft Certified Developer / Java SE/EE Programmer / Python Institute (PCEP/PCAP/PCPP) / Kubernetes (CKA/CKAD/CKS) / GitHub / Terraform Associate |
+| `business_intl` | ビジネス・国際資格学科 | TOEIC / TOEFL / IELTS / 日商簿記 / 中小企業診断士 / 統計検定 / 行政書士 |
 
 #### 9. ハードウェア学部 (faculty_code: `hardware`) ← **新規 / part 96 追加 / sort_order 2**
 
@@ -137,13 +151,13 @@ User 要望「アジャイル開発など Software エンジニアリング cont
 
 ### 合計
 
-- **9 学部 / 46 学科** / 既存 380+ provider + クラウド系 30+ + SWE 系 30+ + OS 系 25+ + モバイル系 25+ + ハードウェア系 50+ = **540+ provider 想定**
+- **10 学部 / 53 学科** / 既存 380+ + クラウド系 30+ + SWE 系 30+ + OS 系 25+ + モバイル系 25+ + ハードウェア系 50+ + 資格試験系 50+ = **590+ provider 想定**
 
-### 学部 sort_order 体系 (= UI 表示順 / 9 layer 順序教育設計)
+### 学部 sort_order 体系 (= UI 表示順 / 10 layer 順序教育設計)
 
 | sort_order | 学部 | 位置づけ |
 | --- | --- | --- |
-| **2** | 💻 **ハードウェア** | **物理層 (= 最も foundational)** |
+| 2 | 💻 ハードウェア | 物理層 (= 最も foundational) |
 | 5 | 💿 OS | OS 層 |
 | 10 | 🤖 AI | 基盤技術 |
 | 15 | 📱 モバイル | app delivery (= ユーザーに届く層) |
@@ -151,9 +165,10 @@ User 要望「アジャイル開発など Software エンジニアリング cont
 | 30 | 🛠️ 開発ツール | 道具 |
 | 35 | 👷 ソフトウェアエンジニアリング | 方法論 |
 | 40 | 💾 データ基盤 | データ層 |
+| **45** | 🎓 **資格試験** | **学習成果 validation 層** |
 | 50 | 📚 学術研究 | 学術 |
 
-= **「物理層 → OS → 基盤 → app → infra → 道具 → 方法論 → データ → 学術」** の 9 layer 構成的学習 path 完成.
+= **「物理 → OS → 基盤 → app → infra → 道具 → 方法論 → データ → 資格 → 学術」** の **10 layer 構成的学習 path** 完成.
 
 ---
 
