@@ -1,3 +1,6 @@
+// AgentOrgPage transitively imports browser-only package:web APIs.
+@TestOn('browser')
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/models/agent_memory_entry.dart';
