@@ -1,7 +1,7 @@
 ---
 title: "Dart Generics Deep Dive — Bounds, Variance, and Production Patterns"
 tags: dart,flutter,webdev,indiedev
-published: false
+published: true
 ---
 
 # Dart Generics Deep Dive — Bounds, Variance, and Production Patterns
