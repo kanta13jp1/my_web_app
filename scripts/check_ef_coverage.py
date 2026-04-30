@@ -10,10 +10,13 @@ def main():
 
     # Read deployed EFs from deploy-prod.yml
     deploy_yml = os.path.join(repo_root, '.github/workflows/deploy-prod.yml')
+    deploy_line = re.compile(
+        r'^\s*(?:supabase\s+functions\s+deploy|deploy_function)\s+([A-Za-z0-9_-]+)\b'
+    )
     deployed = []
     with open(deploy_yml, encoding='utf-8') as f:
         for line in f:
-            m = re.search(r'functions deploy (\S+)', line)
+            m = deploy_line.search(line)
             if m:
                 deployed.append(m.group(1).rstrip())
 
