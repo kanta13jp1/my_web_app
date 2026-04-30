@@ -21,7 +21,7 @@ jobs:
 
     steps:
       - name: Checkout repo (required for git commit/push step)
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
           token: ${{ secrets.GH_PAT || secrets.BYPASS_RULES || secrets.GITHUB_TOKEN }}

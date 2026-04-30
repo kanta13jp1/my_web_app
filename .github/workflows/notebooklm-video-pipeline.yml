@@ -67,13 +67,13 @@ jobs:
       YOUTUBE_TOKEN: ${{ secrets.YOUTUBE_TOKEN_JSON }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           token: ${{ secrets.GITHUB_PAT }}
           fetch-depth: 100  # Step 0 dedup needs ≥1h of history (default depth=1 hides past bot commits)
 
       - name: Setup Python 3.12
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: '3.12'
 
