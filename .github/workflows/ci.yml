@@ -147,20 +147,8 @@ jobs:
         continue-on-error: false  # migration 構文エラーはCIブロック
 
       - name: Check formatting
-        # Win版#131 part 18: deploy-prod 連鎖失敗 (4 件以上) の根本対策。
-        # 複数 instance 並行で dart format スキップした場合の hard fail を warn 化。
-        # 実害なし (Flutter web build は JS bundle 出力なので format 影響ゼロ)。
-        # 強制 enforce が必要なら local pre-commit hook を導入推奨。
-        run: |
-          if dart format --set-exit-if-changed .; then
-            echo "All files properly formatted."
-          else
-            echo "::warning::dart format 差分あり。次回 push 前に dart format lib/ 実行推奨。deploy 自体は続行。"
-            echo "## Format 警告" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "dart format で差分検出。次 commit 前に修正してください。" >> $GITHUB_STEP_SUMMARY
-          fi
-        continue-on-error: true  # warn-only (Win#131 part 18)
+        # #1372: treat Dart formatting as a required static-analysis gate.
+        run: dart format --output=none --set-exit-if-changed .
 
       - name: Run VM tests
         id: flutter_test
@@ -216,6 +204,7 @@ jobs:
             echo "|---------|------|"
             echo "| \`flutter analyze\` | ✅ 0エラー (強制) |"
             echo "| \`deno lint\` | ✅ 0エラー (強制) |"
+            echo "| \`dart format --set-exit-if-changed\` | ✅ 差分なし (強制) |"
             echo "| \`flutter test --coverage\` | $FT_ICON $FLUTTER_TEST |"
             echo "| \`flutter test --platform chrome\` | $FLUTTER_WEB_TEST |"
             echo "| \`deno test\` | $DT_ICON $DENO_TEST (continue-on-error) |"
@@ -285,5 +274,5 @@ jobs:
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: '✅ CI全チェック通過！\n\n**必須ゲート (強制)**\n- `flutter analyze` 0エラー ✅\n- `deno lint` 0エラー ✅\n- `flutter build web --release` 成功 ✅\n\nコードレビュー準備完了です。'
+              body: '✅ CI全チェック通過！\n\n**必須ゲート (強制)**\n- `flutter analyze` 0エラー ✅\n- `deno lint` 0エラー ✅\n- `dart format` 差分なし ✅\n- `flutter build web --release` 成功 ✅\n\nコードレビュー準備完了です。'
             })

@@ -46,9 +46,18 @@ class _ElearningCourseManagerPageState extends State<ElearningCourseManagerPage>
       _errorMessage = null;
     });
     try {
-      final coursesRes = await _supabase.functions.invoke('social-commerce-hub', body: {'action': 'course.list'});
-      final progressRes = await _supabase.functions.invoke('social-commerce-hub', body: {'action': 'course.progress'});
-      final certRes = await _supabase.functions.invoke('social-commerce-hub', body: {'action': 'course.certificates'});
+      final coursesRes = await _supabase.functions.invoke(
+        'social-commerce-hub',
+        body: {'action': 'course.list'},
+      );
+      final progressRes = await _supabase.functions.invoke(
+        'social-commerce-hub',
+        body: {'action': 'course.progress'},
+      );
+      final certRes = await _supabase.functions.invoke(
+        'social-commerce-hub',
+        body: {'action': 'course.certificates'},
+      );
 
       setState(() {
         _courses = _extractList(coursesRes.data, 'courses');

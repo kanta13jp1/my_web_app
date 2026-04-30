@@ -4569,8 +4569,7 @@ abstinence_slip_details: $slipDetailsText
                       children: [
                         _buildHopsonMetricPill(
                           label: '今日',
-                          value:
-                              '${goal.todayCompletedCount}/$targetCount',
+                          value: '${goal.todayCompletedCount}/$targetCount',
                           color: navy,
                         ),
                         _buildHopsonMetricPill(
@@ -4815,7 +4814,8 @@ abstinence_slip_details: $slipDetailsText
       decoration: BoxDecoration(
         color: boardColor,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFF17324A).withValues(alpha: 0.18)),
+        border:
+            Border.all(color: const Color(0xFF17324A).withValues(alpha: 0.18)),
         boxShadow: [
           BoxShadow(
             color: navy.withValues(alpha: 0.18),
@@ -5041,7 +5041,9 @@ abstinence_slip_details: $slipDetailsText
             height: 34,
             margin: const EdgeInsets.only(bottom: 8),
             decoration: BoxDecoration(
-              color: active ? const Color(0xFFFFFBF1) : blue.withValues(alpha: 0.35),
+              color: active
+                  ? const Color(0xFFFFFBF1)
+                  : blue.withValues(alpha: 0.35),
               borderRadius: BorderRadius.circular(10),
               border: Border.all(color: navy.withValues(alpha: 0.32)),
             ),
@@ -5073,7 +5075,9 @@ abstinence_slip_details: $slipDetailsText
             height: 22,
             margin: const EdgeInsets.only(bottom: 8),
             decoration: BoxDecoration(
-              color: i == 0 ? const Color(0xFFFFFBF1) : bars[i].withValues(alpha: 0.18),
+              color: i == 0
+                  ? const Color(0xFFFFFBF1)
+                  : bars[i].withValues(alpha: 0.18),
               borderRadius: BorderRadius.circular(999),
               border: Border.all(color: bars[i].withValues(alpha: 0.78)),
             ),
@@ -5087,7 +5091,8 @@ abstinence_slip_details: $slipDetailsText
                 height: 5,
                 margin: const EdgeInsets.only(right: 6),
                 decoration: BoxDecoration(
-                  color: i <= completed % 5 ? navy : navy.withValues(alpha: 0.22),
+                  color:
+                      i <= completed % 5 ? navy : navy.withValues(alpha: 0.22),
                   shape: BoxShape.circle,
                 ),
               ),
@@ -9305,7 +9310,12 @@ class _HopsonHomePainter extends CustomPainter {
       Paint()..color = peach.withValues(alpha: 0.86),
     );
     canvas.drawRect(
-      Rect.fromLTWH(0, size.height * 0.80, size.width * 0.22, size.height * 0.2),
+      Rect.fromLTWH(
+        0,
+        size.height * 0.80,
+        size.width * 0.22,
+        size.height * 0.2,
+      ),
       Paint()..color = peach.withValues(alpha: 0.18),
     );
   }
