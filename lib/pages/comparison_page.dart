@@ -59090,8 +59090,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'traefik': const _CompetitorInfo(
     name: 'Traefik',
     emoji: '🔀',
-    tagline: 'Traefik・クラウドネイティブリバースプロキシ・自動設定・Let\'s Encrypt・Docker/K8s統合・OSS・エッジルーターで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Traefik代替 クラウドネイティブ リバースプロキシ 自動設定 Let\'s Encrypt Docker Kubernetes エッジルーター nginx代替 HAProxy代替',
+    tagline:
+        'Traefik・クラウドネイティブリバースプロキシ・自動設定・Let\'s Encrypt・Docker/K8s統合・OSS・エッジルーターで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Traefik代替 クラウドネイティブ リバースプロキシ 自動設定 Let\'s Encrypt Docker Kubernetes エッジルーター nginx代替 HAProxy代替',
     accentColor: Color(0xFF24A1C1),
     painPoints: [
       '無料(OSS)/有料・インフラ特化・個人のライフ管理は別途必要',
@@ -59124,8 +59126,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'haproxy': const _CompetitorInfo(
     name: 'HAProxy',
     emoji: '⚖️',
-    tagline: 'HAProxy・高可用性ロードバランサー・TCP/HTTP対応・セッション維持・ヘルスチェック・OSS/Enterprise・高パフォーマンスで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'HAProxy代替 高可用性 ロードバランサー TCP HTTP セッション維持 ヘルスチェック nginx代替 Traefik代替',
+    tagline:
+        'HAProxy・高可用性ロードバランサー・TCP/HTTP対応・セッション維持・ヘルスチェック・OSS/Enterprise・高パフォーマンスで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'HAProxy代替 高可用性 ロードバランサー TCP HTTP セッション維持 ヘルスチェック nginx代替 Traefik代替',
     accentColor: Color(0xFF0C3B60),
     painPoints: [
       '無料(OSS)/有料・LB特化・個人のライフ管理は別途必要',
@@ -59158,8 +59162,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'nginx-ingress': const _CompetitorInfo(
     name: 'NGINX Ingress Controller',
     emoji: '🌐',
-    tagline: 'NGINX Ingress Controller・K8s標準イングレス・高パフォーマンス・SSL終端・WebSocket・F5傘下・OSS/Plusで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'NGINX Ingress代替 Kubernetes イングレス 高パフォーマンス SSL WebSocket F5 Traefik代替 Contour代替',
+    tagline:
+        'NGINX Ingress Controller・K8s標準イングレス・高パフォーマンス・SSL終端・WebSocket・F5傘下・OSS/Plusで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'NGINX Ingress代替 Kubernetes イングレス 高パフォーマンス SSL WebSocket F5 Traefik代替 Contour代替',
     accentColor: Color(0xFF009639),
     painPoints: [
       '無料(OSS)/有料(Plus)・K8sイングレス特化・個人のライフ管理は別途必要',
@@ -59192,8 +59198,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'cilium': const _CompetitorInfo(
     name: 'Cilium',
     emoji: '🛡️',
-    tagline: 'Cilium・eBPFベースK8sネットワーキング・セキュリティ・可観測性・Hubble・CNCF卒業・高パフォーマンスで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Cilium代替 eBPF Kubernetes ネットワーキング セキュリティ 可観測性 Hubble CNCF Calico代替 Flannel代替',
+    tagline:
+        'Cilium・eBPFベースK8sネットワーキング・セキュリティ・可観測性・Hubble・CNCF卒業・高パフォーマンスで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Cilium代替 eBPF Kubernetes ネットワーキング セキュリティ 可観測性 Hubble CNCF Calico代替 Flannel代替',
     accentColor: Color(0xFFF8C517),
     painPoints: [
       '無料(OSS)/有料・K8sネットワーク特化・個人のライフ管理は別途必要',
@@ -59226,8 +59234,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'calico': const _CompetitorInfo(
     name: 'Calico',
     emoji: '🐱',
-    tagline: 'Calico・K8sネットワークポリシー・BGPルーティング・ゼロトラスト・Tigera製・CNCF・OSS/Enterprise・高スケーラビリティで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Calico代替 Kubernetes ネットワークポリシー BGP ゼロトラスト Tigera CNCF Cilium代替 Flannel代替',
+    tagline:
+        'Calico・K8sネットワークポリシー・BGPルーティング・ゼロトラスト・Tigera製・CNCF・OSS/Enterprise・高スケーラビリティで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Calico代替 Kubernetes ネットワークポリシー BGP ゼロトラスト Tigera CNCF Cilium代替 Flannel代替',
     accentColor: Color(0xFFFC8100),
     painPoints: [
       '無料(OSS)/有料・K8sネットワーク特化・個人のライフ管理は別途必要',
@@ -59260,8 +59270,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'envoy': const _CompetitorInfo(
     name: 'Envoy Proxy',
     emoji: '📨',
-    tagline: 'Envoy Proxy・クラウドネイティブプロキシ・サービスメッシュ基盤・Lyft製・CNCF卒業・gRPC・可観測性・Istio/Contour基盤で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Envoy Proxy代替 クラウドネイティブ プロキシ サービスメッシュ Lyft CNCF gRPC 可観測性 Istio基盤 nginx代替',
+    tagline:
+        'Envoy Proxy・クラウドネイティブプロキシ・サービスメッシュ基盤・Lyft製・CNCF卒業・gRPC・可観測性・Istio/Contour基盤で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Envoy Proxy代替 クラウドネイティブ プロキシ サービスメッシュ Lyft CNCF gRPC 可観測性 Istio基盤 nginx代替',
     accentColor: Color(0xFF9B51E0),
     painPoints: [
       '無料(OSS)・プロキシ/サービスメッシュ特化・個人のライフ管理は別途必要',
@@ -59294,8 +59306,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'aws-api-gateway': const _CompetitorInfo(
     name: 'AWS API Gateway',
     emoji: '🔶',
-    tagline: 'AWS API Gateway・マネージドAPI管理・REST/WebSocket/HTTP API・Lambda統合・認証・スロットリング・AWS統合で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'AWS API Gateway代替 マネージドAPI REST WebSocket Lambda統合 認証 スロットリング Kong代替 Apigee代替',
+    tagline:
+        'AWS API Gateway・マネージドAPI管理・REST/WebSocket/HTTP API・Lambda統合・認証・スロットリング・AWS統合で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'AWS API Gateway代替 マネージドAPI REST WebSocket Lambda統合 認証 スロットリング Kong代替 Apigee代替',
     accentColor: Color(0xFFFF9900),
     painPoints: [
       '有料(従量課金)・AWS API管理特化・個人のライフ管理は別途必要',
@@ -59328,8 +59342,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'azure-api-management': const _CompetitorInfo(
     name: 'Azure API Management',
     emoji: '🔵',
-    tagline: 'Azure API Management・マネージドAPI管理・ポリシーエンジン・開発者ポータル・Azure統合・ハイブリッド・Microsoft・企業向けで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Azure API Management代替 マネージドAPI ポリシーエンジン 開発者ポータル Microsoft ハイブリッド Kong代替 AWS API Gateway代替',
+    tagline:
+        'Azure API Management・マネージドAPI管理・ポリシーエンジン・開発者ポータル・Azure統合・ハイブリッド・Microsoft・企業向けで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Azure API Management代替 マネージドAPI ポリシーエンジン 開発者ポータル Microsoft ハイブリッド Kong代替 AWS API Gateway代替',
     accentColor: Color(0xFF0078D4),
     painPoints: [
       '有料・Azure API管理特化・個人のライフ管理は別途必要',
@@ -59362,8 +59378,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'gravitee': const _CompetitorInfo(
     name: 'Gravitee.io',
     emoji: '🪐',
-    tagline: 'Gravitee.io・OSS APIゲートウェイ・アクセス管理・イベントネイティブ・開発者ポータル・Kafka対応・オンプレ/クラウドで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Gravitee.io代替 OSS APIゲートウェイ アクセス管理 イベントネイティブ Kafka 開発者ポータル Kong代替 Tyk代替',
+    tagline:
+        'Gravitee.io・OSS APIゲートウェイ・アクセス管理・イベントネイティブ・開発者ポータル・Kafka対応・オンプレ/クラウドで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Gravitee.io代替 OSS APIゲートウェイ アクセス管理 イベントネイティブ Kafka 開発者ポータル Kong代替 Tyk代替',
     accentColor: Color(0xFF6D1FDB),
     painPoints: [
       '無料(OSS)/有料・APIゲートウェイ特化・個人のライフ管理は別途必要',
@@ -59396,8 +59414,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'logzio': const _CompetitorInfo(
     name: 'Logz.io',
     emoji: '📊',
-    tagline: 'Logz.io・クラウドネイティブ可観測性・ELKスタックSaaS・AIアラート・OpenSearch・セキュリティ分析・企業向けで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Logz.io代替 クラウドネイティブ 可観測性 ELK SaaS AIアラート OpenSearch セキュリティ分析 Datadog代替 Splunk代替',
+    tagline:
+        'Logz.io・クラウドネイティブ可観測性・ELKスタックSaaS・AIアラート・OpenSearch・セキュリティ分析・企業向けで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Logz.io代替 クラウドネイティブ 可観測性 ELK SaaS AIアラート OpenSearch セキュリティ分析 Datadog代替 Splunk代替',
     accentColor: Color(0xFF1F6BFF),
     painPoints: [
       '有料・ログ管理特化・個人のライフ管理は別途必要',
@@ -59430,8 +59450,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'sumologic': const _CompetitorInfo(
     name: 'Sumo Logic',
     emoji: '🔮',
-    tagline: 'Sumo Logic・クラウドネイティブSIEM・ログ分析・脅威インテリジェンス・コンプライアンス・CSE・AWS統合で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Sumo Logic代替 クラウドネイティブ SIEM ログ分析 脅威インテリジェンス コンプライアンス CSE AWS統合 Splunk代替 Datadog代替',
+    tagline:
+        'Sumo Logic・クラウドネイティブSIEM・ログ分析・脅威インテリジェンス・コンプライアンス・CSE・AWS統合で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Sumo Logic代替 クラウドネイティブ SIEM ログ分析 脅威インテリジェンス コンプライアンス CSE AWS統合 Splunk代替 Datadog代替',
     accentColor: Color(0xFF000099),
     painPoints: [
       '有料・SIEM/ログ管理特化・個人のライフ管理は別途必要',
@@ -59464,8 +59486,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'statuspage': const _CompetitorInfo(
     name: 'Atlassian Statuspage',
     emoji: '📋',
-    tagline: 'Atlassian Statuspage・インシデント管理・ステータスページ・購読者通知・メンテナンス予告・コンポーネント管理・Jira統合で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Atlassian Statuspage代替 インシデント管理 ステータスページ 購読者通知 メンテナンス Jira統合 Freshstatus代替 Better Uptime代替',
+    tagline:
+        'Atlassian Statuspage・インシデント管理・ステータスページ・購読者通知・メンテナンス予告・コンポーネント管理・Jira統合で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Atlassian Statuspage代替 インシデント管理 ステータスページ 購読者通知 メンテナンス Jira統合 Freshstatus代替 Better Uptime代替',
     accentColor: Color(0xFF0052CC),
     painPoints: [
       '有料・ステータスページ特化・個人のライフ管理は別途必要',
@@ -59498,8 +59522,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'freshstatus': const _CompetitorInfo(
     name: 'Freshstatus',
     emoji: '🌿',
-    tagline: 'Freshstatus・無料ステータスページ・インシデント管理・Freshdesk統合・購読者通知・カスタムドメイン・シンプルで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Freshstatus代替 無料ステータスページ インシデント管理 Freshdesk統合 購読通知 カスタムドメイン Statuspage代替 Instatus代替',
+    tagline:
+        'Freshstatus・無料ステータスページ・インシデント管理・Freshdesk統合・購読者通知・カスタムドメイン・シンプルで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Freshstatus代替 無料ステータスページ インシデント管理 Freshdesk統合 購読通知 カスタムドメイン Statuspage代替 Instatus代替',
     accentColor: Color(0xFF25B75E),
     painPoints: [
       '無料/有料・ステータスページ特化・個人のライフ管理は別途必要',
@@ -59532,8 +59558,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'betteruptime': const _CompetitorInfo(
     name: 'Better Uptime',
     emoji: '⏱️',
-    tagline: 'Better Uptime・死活監視・インシデントタイムライン・オンコール管理・スクリーンショット・ステータスページ・Slack統合で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Better Uptime代替 死活監視 インシデント オンコール スクリーンショット ステータスページ Slack統合 Pingdom代替 UptimeRobot代替',
+    tagline:
+        'Better Uptime・死活監視・インシデントタイムライン・オンコール管理・スクリーンショット・ステータスページ・Slack統合で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Better Uptime代替 死活監視 インシデント オンコール スクリーンショット ステータスページ Slack統合 Pingdom代替 UptimeRobot代替',
     accentColor: Color(0xFF3ECF8E),
     painPoints: [
       '有料・死活監視/インシデント特化・個人のライフ管理は別途必要',
@@ -59566,8 +59594,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'checkly': const _CompetitorInfo(
     name: 'Checkly',
     emoji: '✅',
-    tagline: 'Checkly・API監視・E2Eテスト・Playwright統合・コードファーストモニタリング・アラート・デベロッパー向け・GHAで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Checkly代替 API監視 E2Eテスト Playwright コードファースト モニタリング アラート GitHub Actions Pingdom代替 Runscope代替',
+    tagline:
+        'Checkly・API監視・E2Eテスト・Playwright統合・コードファーストモニタリング・アラート・デベロッパー向け・GHAで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Checkly代替 API監視 E2Eテスト Playwright コードファースト モニタリング アラート GitHub Actions Pingdom代替 Runscope代替',
     accentColor: Color(0xFF45C8B4),
     painPoints: [
       '有料・API/E2E監視特化・個人のライフ管理は別途必要',
@@ -59600,8 +59630,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'pingdom': const _CompetitorInfo(
     name: 'Pingdom',
     emoji: '🏓',
-    tagline: 'Pingdom・Webパフォーマンス監視・死活監視・ページスピード・トランザクション監視・SolarWinds傘下・企業向けで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Pingdom代替 Webパフォーマンス 死活監視 ページスピード トランザクション SolarWinds UptimeRobot代替 Better Uptime代替',
+    tagline:
+        'Pingdom・Webパフォーマンス監視・死活監視・ページスピード・トランザクション監視・SolarWinds傘下・企業向けで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Pingdom代替 Webパフォーマンス 死活監視 ページスピード トランザクション SolarWinds UptimeRobot代替 Better Uptime代替',
     accentColor: Color(0xFFFF7200),
     painPoints: [
       '有料・Web監視特化・個人のライフ管理は別途必要',
@@ -59634,8 +59666,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'uptimerobot-free-monitoring': const _CompetitorInfo(
     name: 'UptimeRobot',
     emoji: '🤖',
-    tagline: 'UptimeRobot・無料死活監視・50モニター無料・5分間隔・ステータスページ・Slack/メール通知・シンプルUIで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'UptimeRobot代替 無料死活監視 50モニター ステータスページ Slack メール通知 Pingdom代替 Better Uptime代替',
+    tagline:
+        'UptimeRobot・無料死活監視・50モニター無料・5分間隔・ステータスページ・Slack/メール通知・シンプルUIで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'UptimeRobot代替 無料死活監視 50モニター ステータスページ Slack メール通知 Pingdom代替 Better Uptime代替',
     accentColor: Color(0xFF3DBD6E),
     painPoints: [
       '無料(50モニター)/有料・死活監視特化・個人のライフ管理は別途必要',
@@ -59668,8 +59702,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'instatus': const _CompetitorInfo(
     name: 'Instatus',
     emoji: '📡',
-    tagline: 'Instatus・モダンステータスページ・高速・無料プラン・カスタムドメイン・Slack/Datadog統合・インシデント更新・SEO最適化で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Instatus代替 モダンステータスページ 高速 カスタムドメイン Slack Datadog統合 インシデント Statuspage代替 Freshstatus代替',
+    tagline:
+        'Instatus・モダンステータスページ・高速・無料プラン・カスタムドメイン・Slack/Datadog統合・インシデント更新・SEO最適化で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Instatus代替 モダンステータスページ 高速 カスタムドメイン Slack Datadog統合 インシデント Statuspage代替 Freshstatus代替',
     accentColor: Color(0xFF6C47FF),
     painPoints: [
       '無料/有料・ステータスページ特化・個人のライフ管理は別途必要',
@@ -59702,8 +59738,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'aquasec': const _CompetitorInfo(
     name: 'Aqua Security',
     emoji: '🐟',
-    tagline: 'Aqua Security・コンテナセキュリティ・クラウドネイティブ・CSPM・脆弱性スキャン・実行時保護・CI/CD統合・企業向けで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Aqua Security代替 コンテナセキュリティ クラウドネイティブ CSPM 脆弱性スキャン 実行時保護 Prisma Cloud代替 Wiz代替',
+    tagline:
+        'Aqua Security・コンテナセキュリティ・クラウドネイティブ・CSPM・脆弱性スキャン・実行時保護・CI/CD統合・企業向けで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Aqua Security代替 コンテナセキュリティ クラウドネイティブ CSPM 脆弱性スキャン 実行時保護 Prisma Cloud代替 Wiz代替',
     accentColor: Color(0xFF00ADEF),
     painPoints: [
       '有料・コンテナ/クラウドセキュリティ特化・個人のライフ管理は別途必要',
@@ -59736,8 +59774,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'grype': const _CompetitorInfo(
     name: 'Grype',
     emoji: '🔍',
-    tagline: 'Grype・OSS脆弱性スキャナー・コンテナ/ファイルシステム対応・Anchore製・Syft統合・CI/CD・軽量・無料で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Grype代替 OSS脆弱性スキャン コンテナ ファイルシステム Anchore Syft CI/CD 軽量 Trivy代替 Snyk代替',
+    tagline:
+        'Grype・OSS脆弱性スキャナー・コンテナ/ファイルシステム対応・Anchore製・Syft統合・CI/CD・軽量・無料で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Grype代替 OSS脆弱性スキャン コンテナ ファイルシステム Anchore Syft CI/CD 軽量 Trivy代替 Snyk代替',
     accentColor: Color(0xFF2D5BFF),
     painPoints: [
       '無料(OSS)・脆弱性スキャン特化・個人のライフ管理は別途必要',
@@ -59770,8 +59810,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'gitleaks': const _CompetitorInfo(
     name: 'Gitleaks',
     emoji: '🔐',
-    tagline: 'Gitleaks・gitシークレット検出・OSS・CI/CD統合・パターンマッチング・履歴スキャン・軽量・Go製で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Gitleaks代替 gitシークレット検出 OSS CI/CD パターンマッチング 履歴スキャン TruffleHog代替 detect-secrets代替',
+    tagline:
+        'Gitleaks・gitシークレット検出・OSS・CI/CD統合・パターンマッチング・履歴スキャン・軽量・Go製で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Gitleaks代替 gitシークレット検出 OSS CI/CD パターンマッチング 履歴スキャン TruffleHog代替 detect-secrets代替',
     accentColor: Color(0xFFE44A52),
     painPoints: [
       '無料(OSS)・シークレット検出特化・個人のライフ管理は別途必要',
@@ -59804,8 +59846,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'trufflehog': const _CompetitorInfo(
     name: 'TruffleHog',
     emoji: '🐷',
-    tagline: 'TruffleHog・gitシークレット検出・エントロピー解析・700+検出器・Trufflesecurity製・OSS・Enterprise版で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'TruffleHog代替 gitシークレット検出 エントロピー解析 Trufflesecurity OSS Enterprise Gitleaks代替 GitGuardian代替',
+    tagline:
+        'TruffleHog・gitシークレット検出・エントロピー解析・700+検出器・Trufflesecurity製・OSS・Enterprise版で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'TruffleHog代替 gitシークレット検出 エントロピー解析 Trufflesecurity OSS Enterprise Gitleaks代替 GitGuardian代替',
     accentColor: Color(0xFFFF6B35),
     painPoints: [
       '無料(OSS)/有料・シークレット検出特化・個人のライフ管理は別途必要',
@@ -59838,8 +59882,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'codeql': const _CompetitorInfo(
     name: 'CodeQL',
     emoji: '🔬',
-    tagline: 'CodeQL・GitHub製SAST・コードクエリ言語・脆弱性パターン分析・GitHub Advanced Security・OSS/無料・10言語対応で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'CodeQL代替 GitHub SAST コードクエリ 脆弱性分析 GitHub Advanced Security Semgrep代替 SonarQube代替',
+    tagline:
+        'CodeQL・GitHub製SAST・コードクエリ言語・脆弱性パターン分析・GitHub Advanced Security・OSS/無料・10言語対応で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'CodeQL代替 GitHub SAST コードクエリ 脆弱性分析 GitHub Advanced Security Semgrep代替 SonarQube代替',
     accentColor: Color(0xFF2DA44E),
     painPoints: [
       '無料(OSS)/有料・SAST特化・個人のライフ管理は別途必要',
@@ -59872,8 +59918,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'blackduck': const _CompetitorInfo(
     name: 'Black Duck',
     emoji: '🦆',
-    tagline: 'Black Duck・SCAソフトウェア構成分析・OSS脆弱性・ライセンスコンプライアンス・Synopsys傘下・企業向け・CI/CD統合で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Black Duck代替 SCA ソフトウェア構成分析 OSS脆弱性 ライセンスコンプライアンス Synopsys Snyk代替 Mend代替',
+    tagline:
+        'Black Duck・SCAソフトウェア構成分析・OSS脆弱性・ライセンスコンプライアンス・Synopsys傘下・企業向け・CI/CD統合で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Black Duck代替 SCA ソフトウェア構成分析 OSS脆弱性 ライセンスコンプライアンス Synopsys Snyk代替 Mend代替',
     accentColor: Color(0xFF1E3050),
     painPoints: [
       '高額・SCA特化・個人のライフ管理は別途必要',
@@ -59906,8 +59954,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'gitguardian': const _CompetitorInfo(
     name: 'GitGuardian',
     emoji: '💂',
-    tagline: 'GitGuardian・シークレット検出SaaS・リアルタイム監視・パブリック/プライベートリポジトリ・350+検出器・インシデント管理・企業向けで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'GitGuardian代替 シークレット検出 リアルタイム監視 パブリックリポジトリ 350+検出器 インシデント管理 Gitleaks代替 TruffleHog代替',
+    tagline:
+        'GitGuardian・シークレット検出SaaS・リアルタイム監視・パブリック/プライベートリポジトリ・350+検出器・インシデント管理・企業向けで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'GitGuardian代替 シークレット検出 リアルタイム監視 パブリックリポジトリ 350+検出器 インシデント管理 Gitleaks代替 TruffleHog代替',
     accentColor: Color(0xFF4A90D9),
     painPoints: [
       '有料・シークレット検出特化・個人のライフ管理は別途必要',
@@ -59940,8 +59990,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'dependabot-github-security': const _CompetitorInfo(
     name: 'Dependabot',
     emoji: '🤖',
-    tagline: 'Dependabot・GitHub自動依存関係更新・セキュリティアラート・PR自動作成・無料・GitHubネイティブ・40言語対応で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Dependabot代替 GitHub 自動依存関係更新 セキュリティアラート PR自動作成 無料 Renovate代替 Snyk代替',
+    tagline:
+        'Dependabot・GitHub自動依存関係更新・セキュリティアラート・PR自動作成・無料・GitHubネイティブ・40言語対応で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Dependabot代替 GitHub 自動依存関係更新 セキュリティアラート PR自動作成 無料 Renovate代替 Snyk代替',
     accentColor: Color(0xFF0D6EFD),
     painPoints: [
       '無料(GitHub統合)・依存関係管理特化・個人のライフ管理は別途必要',
@@ -59974,8 +60026,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'renovate-mend-automation': const _CompetitorInfo(
     name: 'Renovate',
     emoji: '🔄',
-    tagline: 'Renovate・自動依存関係更新・高カスタマイズ・グループ更新・Mend製・OSS・GitHub/GitLab/Bitbucket・セルフホスト可で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Renovate代替 自動依存関係更新 高カスタマイズ グループ更新 Mend OSS セルフホスト Dependabot代替 Snyk代替',
+    tagline:
+        'Renovate・自動依存関係更新・高カスタマイズ・グループ更新・Mend製・OSS・GitHub/GitLab/Bitbucket・セルフホスト可で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Renovate代替 自動依存関係更新 高カスタマイズ グループ更新 Mend OSS セルフホスト Dependabot代替 Snyk代替',
     accentColor: Color(0xFF009CA6),
     painPoints: [
       '無料(OSS)/有料・依存関係管理特化・個人のライフ管理は別途必要',
@@ -60008,8 +60062,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'eslint': const _CompetitorInfo(
     name: 'ESLint',
     emoji: '🔷',
-    tagline: 'ESLint・JavaScript/TypeScript静的解析・カスタムルール・プラグイン・自動修正・VSCode統合・CI/CD・OSS・業界標準で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'ESLint代替 JavaScript TypeScript 静的解析 カスタムルール 自動修正 VSCode CI/CD Biome代替 Prettier代替',
+    tagline:
+        'ESLint・JavaScript/TypeScript静的解析・カスタムルール・プラグイン・自動修正・VSCode統合・CI/CD・OSS・業界標準で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'ESLint代替 JavaScript TypeScript 静的解析 カスタムルール 自動修正 VSCode CI/CD Biome代替 Prettier代替',
     accentColor: Color(0xFF4B32C3),
     painPoints: [
       '無料(OSS)・JS/TSリンティング特化・個人のライフ管理は別途必要',
@@ -60042,8 +60098,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'prettier': const _CompetitorInfo(
     name: 'Prettier',
     emoji: '✨',
-    tagline: 'Prettier・コードフォーマッター・意見あり・JS/TS/CSS/HTML・自動整形・エディタ統合・CI/CD・OSS・業界標準で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Prettier代替 コードフォーマット JS TS CSS HTML 自動整形 エディタ統合 Biome代替 dprint代替',
+    tagline:
+        'Prettier・コードフォーマッター・意見あり・JS/TS/CSS/HTML・自動整形・エディタ統合・CI/CD・OSS・業界標準で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Prettier代替 コードフォーマット JS TS CSS HTML 自動整形 エディタ統合 Biome代替 dprint代替',
     accentColor: Color(0xFFF7B93E),
     painPoints: [
       '無料(OSS)・コードフォーマット特化・個人のライフ管理は別途必要',
@@ -60076,8 +60134,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'husky': const _CompetitorInfo(
     name: 'Husky',
     emoji: '🐕',
-    tagline: 'Husky・Gitフック管理・pre-commit・commit-msg・push・Node.js・lint-staged統合・OSS・シンプル設定で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Husky代替 Gitフック pre-commit commit-msg Node.js lint-staged Lefthook代替 simple-git-hooks代替',
+    tagline:
+        'Husky・Gitフック管理・pre-commit・commit-msg・push・Node.js・lint-staged統合・OSS・シンプル設定で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Husky代替 Gitフック pre-commit commit-msg Node.js lint-staged Lefthook代替 simple-git-hooks代替',
     accentColor: Color(0xFF000000),
     painPoints: [
       '無料(OSS)・Gitフック特化・個人のライフ管理は別途必要',
@@ -60110,8 +60170,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'lefthook': const _CompetitorInfo(
     name: 'Lefthook',
     emoji: '🪝',
-    tagline: 'Lefthook・高速Gitフック・Go製・言語非依存・並行実行・YAML設定・lint-staged不要・mono repo対応で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Lefthook代替 高速Gitフック Go言語非依存 並行実行 YAML設定 monorepo Husky代替 pre-commit代替',
+    tagline:
+        'Lefthook・高速Gitフック・Go製・言語非依存・並行実行・YAML設定・lint-staged不要・mono repo対応で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Lefthook代替 高速Gitフック Go言語非依存 並行実行 YAML設定 monorepo Husky代替 pre-commit代替',
     accentColor: Color(0xFFFF5400),
     painPoints: [
       '無料(OSS)・Gitフック特化・個人のライフ管理は別途必要',
@@ -60144,8 +60206,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'biome': const _CompetitorInfo(
     name: 'Biome',
     emoji: '🌍',
-    tagline: 'Biome・高速JS/TSリンター+フォーマッター・Rust製・ESLint/Prettier代替・単一ツール・OSS・CNCF・Zero configで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Biome代替 高速 JS TS リンター フォーマッター Rust ESLint Prettier代替 単一ツール Zero config',
+    tagline:
+        'Biome・高速JS/TSリンター+フォーマッター・Rust製・ESLint/Prettier代替・単一ツール・OSS・CNCF・Zero configで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Biome代替 高速 JS TS リンター フォーマッター Rust ESLint Prettier代替 単一ツール Zero config',
     accentColor: Color(0xFF60A5FA),
     painPoints: [
       '無料(OSS)・JS/TSリント+フォーマット特化・個人のライフ管理は別途必要',
@@ -60178,8 +60242,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'pylint': const _CompetitorInfo(
     name: 'Pylint',
     emoji: '🐍',
-    tagline: 'Pylint・Python静的解析・コードスタイル・エラー検出・複雑度分析・プラグイン・CI/CD・OSS・業界標準で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Pylint代替 Python 静的解析 コードスタイル エラー検出 複雑度 CI/CD Ruff代替 Flake8代替',
+    tagline:
+        'Pylint・Python静的解析・コードスタイル・エラー検出・複雑度分析・プラグイン・CI/CD・OSS・業界標準で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Pylint代替 Python 静的解析 コードスタイル エラー検出 複雑度 CI/CD Ruff代替 Flake8代替',
     accentColor: Color(0xFF3776AB),
     painPoints: [
       '無料(OSS)・Python解析特化・個人のライフ管理は別途必要',
@@ -60212,8 +60278,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'ruff': const _CompetitorInfo(
     name: 'Ruff',
     emoji: '⚡',
-    tagline: 'Ruff・高速PythonリンターフォーマッターRust製・Flake8/Black/isort代替・100倍高速・OSS・Astral製・単一ツールで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Ruff代替 高速Pythonリンター Rust Flake8 Black isort代替 100倍高速 Astral Pylint代替',
+    tagline:
+        'Ruff・高速PythonリンターフォーマッターRust製・Flake8/Black/isort代替・100倍高速・OSS・Astral製・単一ツールで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Ruff代替 高速Pythonリンター Rust Flake8 Black isort代替 100倍高速 Astral Pylint代替',
     accentColor: Color(0xFFD7522E),
     painPoints: [
       '無料(OSS)・Pythonリント+フォーマット特化・個人のライフ管理は別途必要',
@@ -60246,8 +60314,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'oxlint': const _CompetitorInfo(
     name: 'oxlint',
     emoji: '🦊',
-    tagline: 'oxlint・超高速JavaScriptリンター・Rust製・Oxc Toolchainの一部・ESLint互換・50-100倍高速・OSS・TypeScript対応で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'oxlint代替 超高速 JavaScript リンター Rust ESLint互換 50倍高速 Oxc TypeScript Biome代替',
+    tagline:
+        'oxlint・超高速JavaScriptリンター・Rust製・Oxc Toolchainの一部・ESLint互換・50-100倍高速・OSS・TypeScript対応で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'oxlint代替 超高速 JavaScript リンター Rust ESLint互換 50倍高速 Oxc TypeScript Biome代替',
     accentColor: Color(0xFFFF6B00),
     painPoints: [
       '無料(OSS)・JSリンティング特化・個人のライフ管理は別途必要',
@@ -60280,8 +60350,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'rubocop': const _CompetitorInfo(
     name: 'RuboCop',
     emoji: '💎',
-    tagline: 'RuboCop・Ruby静的コード解析・スタイルガイド準拠・自動修正・Cops設定・Gemインストール・CI/CD・OSS・Rails対応で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'RuboCop代替 Ruby 静的コード解析 スタイルガイド 自動修正 Cops Rails CI/CD standardrb代替',
+    tagline:
+        'RuboCop・Ruby静的コード解析・スタイルガイド準拠・自動修正・Cops設定・Gemインストール・CI/CD・OSS・Rails対応で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'RuboCop代替 Ruby 静的コード解析 スタイルガイド 自動修正 Cops Rails CI/CD standardrb代替',
     accentColor: Color(0xFFCC342D),
     painPoints: [
       '無料(OSS)・Ruby解析特化・個人のライフ管理は別途必要',
@@ -60314,8 +60386,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'pnpm': const _CompetitorInfo(
     name: 'pnpm',
     emoji: '📦',
-    tagline: 'pnpm・高速ディスク効率パッケージマネージャー・シンボリックリンク・モノレポ・ワークスペース・npm互換・OSS・省スペースで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'pnpm代替 高速ディスク効率 パッケージマネージャー シンボリックリンク モノレポ ワークスペース npm yarn代替',
+    tagline:
+        'pnpm・高速ディスク効率パッケージマネージャー・シンボリックリンク・モノレポ・ワークスペース・npm互換・OSS・省スペースで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'pnpm代替 高速ディスク効率 パッケージマネージャー シンボリックリンク モノレポ ワークスペース npm yarn代替',
     accentColor: Color(0xFFF69220),
     painPoints: [
       '無料(OSS)・パッケージ管理特化・個人のライフ管理は別途必要',
@@ -60348,8 +60422,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'yarn-berry': const _CompetitorInfo(
     name: 'Yarn Berry',
     emoji: '🧶',
-    tagline: 'Yarn Berry (v2+)・プラグインPnP・ゼロインストール・制約エンジン・モノレポ・TypeScript製・OSS・Plug\'n\'Playで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Yarn Berry代替 PnP プラグイン ゼロインストール 制約エンジン モノレポ TypeScript pnpm代替 npm代替',
+    tagline:
+        'Yarn Berry (v2+)・プラグインPnP・ゼロインストール・制約エンジン・モノレポ・TypeScript製・OSS・Plug\'n\'Playで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Yarn Berry代替 PnP プラグイン ゼロインストール 制約エンジン モノレポ TypeScript pnpm代替 npm代替',
     accentColor: Color(0xFF2C8EBB),
     painPoints: [
       '無料(OSS)・パッケージ管理特化・個人のライフ管理は別途必要',
@@ -60382,8 +60458,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'cargo': const _CompetitorInfo(
     name: 'Cargo',
     emoji: '⚓',
-    tagline: 'Cargo・Rust公式パッケージマネージャー・ビルドツール・依存解決・crates.io・ワークスペース・テスト統合・ドキュメント生成で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Cargo代替 Rust パッケージマネージャー ビルドツール crates.io ワークスペース テスト統合 Bazel代替',
+    tagline:
+        'Cargo・Rust公式パッケージマネージャー・ビルドツール・依存解決・crates.io・ワークスペース・テスト統合・ドキュメント生成で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Cargo代替 Rust パッケージマネージャー ビルドツール crates.io ワークスペース テスト統合 Bazel代替',
     accentColor: Color(0xFFDEA584),
     painPoints: [
       '無料(Rust標準)・Rustビルド特化・個人のライフ管理は別途必要',
@@ -60416,8 +60494,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'poetry': const _CompetitorInfo(
     name: 'Poetry',
     emoji: '📜',
-    tagline: 'Poetry・Python依存関係管理・pyproject.toml・仮想環境・ロックファイル・パッケージング・公開・OSS・シンプルUIで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Poetry代替 Python 依存関係管理 pyproject.toml 仮想環境 ロックファイル パッケージング pip代替 uv代替',
+    tagline:
+        'Poetry・Python依存関係管理・pyproject.toml・仮想環境・ロックファイル・パッケージング・公開・OSS・シンプルUIで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Poetry代替 Python 依存関係管理 pyproject.toml 仮想環境 ロックファイル パッケージング pip代替 uv代替',
     accentColor: Color(0xFF60A5FA),
     painPoints: [
       '無料(OSS)・Python依存管理特化・個人のライフ管理は別途必要',
@@ -60450,8 +60530,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'uv': const _CompetitorInfo(
     name: 'uv',
     emoji: '⚡',
-    tagline: 'uv・超高速Pythonパッケージマネージャー・Rust製・Astral製・pip/venv/pyenv代替・10-100倍高速・単一ツール・OSS・プロジェクト管理で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'uv代替 超高速 Python パッケージマネージャー Rust Astral pip venv pyenv代替 100倍高速 Poetry代替',
+    tagline:
+        'uv・超高速Pythonパッケージマネージャー・Rust製・Astral製・pip/venv/pyenv代替・10-100倍高速・単一ツール・OSS・プロジェクト管理で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'uv代替 超高速 Python パッケージマネージャー Rust Astral pip venv pyenv代替 100倍高速 Poetry代替',
     accentColor: Color(0xFFFB6B26),
     painPoints: [
       '無料(OSS)・Pythonパッケージ管理特化・個人のライフ管理は別途必要',
@@ -60484,8 +60566,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'gradle': const _CompetitorInfo(
     name: 'Gradle',
     emoji: '🐘',
-    tagline: 'Gradle・Java/Kotlin/Android向けビルドツール・インクリメンタルビルド・Groovy/Kotlin DSL・プラグイン・CI/CD・Android標準で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Gradle代替 Java Kotlin Android ビルドツール インクリメンタル Groovy Kotlin DSL Maven代替 Bazel代替',
+    tagline:
+        'Gradle・Java/Kotlin/Android向けビルドツール・インクリメンタルビルド・Groovy/Kotlin DSL・プラグイン・CI/CD・Android標準で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Gradle代替 Java Kotlin Android ビルドツール インクリメンタル Groovy Kotlin DSL Maven代替 Bazel代替',
     accentColor: Color(0xFF02303A),
     painPoints: [
       '無料(OSS)/有料・Javaビルド特化・個人のライフ管理は別途必要',
@@ -60518,8 +60602,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'maven': const _CompetitorInfo(
     name: 'Apache Maven',
     emoji: '🦅',
-    tagline: 'Apache Maven・Java標準ビルドツール・POM.xml・依存管理・ライフサイクル・Central Repository・プラグイン・企業で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Apache Maven代替 Java ビルドツール POM.xml 依存管理 ライフサイクル Central Repository Gradle代替 Ant代替',
+    tagline:
+        'Apache Maven・Java標準ビルドツール・POM.xml・依存管理・ライフサイクル・Central Repository・プラグイン・企業で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Apache Maven代替 Java ビルドツール POM.xml 依存管理 ライフサイクル Central Repository Gradle代替 Ant代替',
     accentColor: Color(0xFFC71A36),
     painPoints: [
       '無料(OSS)・Javaビルド特化・個人のライフ管理は別途必要',
@@ -60552,8 +60638,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'bazel': const _CompetitorInfo(
     name: 'Bazel',
     emoji: '🏗️',
-    tagline: 'Bazel・Google製ビルドツール・リモートキャッシュ・多言語対応・大規模モノレポ・再現可能ビルド・OSS・エンタープライズで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Bazel代替 Google ビルドツール リモートキャッシュ 多言語 大規模モノレポ 再現可能ビルド Buck代替 Gradle代替',
+    tagline:
+        'Bazel・Google製ビルドツール・リモートキャッシュ・多言語対応・大規模モノレポ・再現可能ビルド・OSS・エンタープライズで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Bazel代替 Google ビルドツール リモートキャッシュ 多言語 大規模モノレポ 再現可能ビルド Buck代替 Gradle代替',
     accentColor: Color(0xFF43A047),
     painPoints: [
       '無料(OSS)・ビルドツール特化・個人のライフ管理は別途必要',
@@ -60586,8 +60674,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'lerna': const _CompetitorInfo(
     name: 'Lerna',
     emoji: '🌳',
-    tagline: 'Lerna・JavaScriptモノレポ管理・バージョン管理・パブリッシュ・Nx統合・Nrwl製・changeset・ワークスペース・OSS・企業でも使用で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Lerna代替 JavaScript モノレポ バージョン管理 パブリッシュ Nx統合 changeset Turborepo代替 Rush代替',
+    tagline:
+        'Lerna・JavaScriptモノレポ管理・バージョン管理・パブリッシュ・Nx統合・Nrwl製・changeset・ワークスペース・OSS・企業でも使用で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Lerna代替 JavaScript モノレポ バージョン管理 パブリッシュ Nx統合 changeset Turborepo代替 Rush代替',
     accentColor: Color(0xFF9333EA),
     painPoints: [
       '無料(OSS)・モノレポ管理特化・個人のライフ管理は別途必要',
@@ -60620,8 +60710,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'jest': const _CompetitorInfo(
     name: 'Jest',
     emoji: '🃏',
-    tagline: 'Jest・JavaScript/TypeScriptテストフレームワーク・Facebook製・スナップショット・モック・カバレッジ・並行実行・OSS・業界標準で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Jest代替 JavaScript TypeScript テストフレームワーク スナップショット モック カバレッジ Facebook Vitest代替 Mocha代替',
+    tagline:
+        'Jest・JavaScript/TypeScriptテストフレームワーク・Facebook製・スナップショット・モック・カバレッジ・並行実行・OSS・業界標準で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Jest代替 JavaScript TypeScript テストフレームワーク スナップショット モック カバレッジ Facebook Vitest代替 Mocha代替',
     accentColor: Color(0xFFC21325),
     painPoints: [
       '無料(OSS)・テスト特化・個人のライフ管理は別途必要',
@@ -60654,8 +60746,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'vitest': const _CompetitorInfo(
     name: 'Vitest',
     emoji: '⚡',
-    tagline: 'Vitest・Vite統合テストフレームワーク・Jest互換API・ESM・高速・TypeScript・In-source・UI・コンポーネントテストで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Vitest代替 Vite テストフレームワーク Jest互換 ESM 高速 TypeScript コンポーネントテスト Jest代替',
+    tagline:
+        'Vitest・Vite統合テストフレームワーク・Jest互換API・ESM・高速・TypeScript・In-source・UI・コンポーネントテストで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Vitest代替 Vite テストフレームワーク Jest互換 ESM 高速 TypeScript コンポーネントテスト Jest代替',
     accentColor: Color(0xFF6E9F18),
     painPoints: [
       '無料(OSS)・テスト特化・個人のライフ管理は別途必要',
@@ -60688,8 +60782,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'selenium': const _CompetitorInfo(
     name: 'Selenium',
     emoji: '🌐',
-    tagline: 'Selenium・ブラウザ自動化・E2Eテスト・多言語対応・WebDriver・Grid・OSS・業界標準・クロスブラウザで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Selenium代替 ブラウザ自動化 E2Eテスト WebDriver Grid クロスブラウザ Playwright代替 Cypress代替',
+    tagline:
+        'Selenium・ブラウザ自動化・E2Eテスト・多言語対応・WebDriver・Grid・OSS・業界標準・クロスブラウザで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Selenium代替 ブラウザ自動化 E2Eテスト WebDriver Grid クロスブラウザ Playwright代替 Cypress代替',
     accentColor: Color(0xFF43B02A),
     painPoints: [
       '無料(OSS)・ブラウザ自動化特化・個人のライフ管理は別途必要',
@@ -60722,8 +60818,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'storybook': const _CompetitorInfo(
     name: 'Storybook',
     emoji: '📖',
-    tagline: 'Storybook・UIコンポーネント開発環境・ビジュアルテスト・ドキュメント自動生成・React/Vue/Angular・OSS・業界標準で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Storybook代替 UIコンポーネント開発 ビジュアルテスト ドキュメント React Vue Angular Chromatic代替',
+    tagline:
+        'Storybook・UIコンポーネント開発環境・ビジュアルテスト・ドキュメント自動生成・React/Vue/Angular・OSS・業界標準で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Storybook代替 UIコンポーネント開発 ビジュアルテスト ドキュメント React Vue Angular Chromatic代替',
     accentColor: Color(0xFFFF4785),
     painPoints: [
       '無料(OSS)/有料(Chromatic)・UIコンポーネント特化・個人のライフ管理は別途必要',
@@ -60756,8 +60854,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'chromatic': const _CompetitorInfo(
     name: 'Chromatic',
     emoji: '🎨',
-    tagline: 'Chromatic・ビジュアルリグレッションテスト・Storybook連携・UI変更レビュー・スナップショット・自動PR確認・Storybook製で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Chromatic代替 ビジュアルリグレッション Storybook UIレビュー スナップショット PR自動確認 Percy代替 AppliTools代替',
+    tagline:
+        'Chromatic・ビジュアルリグレッションテスト・Storybook連携・UI変更レビュー・スナップショット・自動PR確認・Storybook製で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Chromatic代替 ビジュアルリグレッション Storybook UIレビュー スナップショット PR自動確認 Percy代替 AppliTools代替',
     accentColor: Color(0xFFFC521F),
     painPoints: [
       '有料・ビジュアルテスト特化・個人のライフ管理は別途必要',
@@ -60790,8 +60890,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'percy': const _CompetitorInfo(
     name: 'Percy',
     emoji: '👁️',
-    tagline: 'Percy・ビジュアルテスト・BrowserStack傘下・スクリーンショット比較・クロスブラウザ・CI/CD統合・自動UIレビューで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Percy代替 ビジュアルテスト BrowserStack スクリーンショット クロスブラウザ CI/CD Chromatic代替 Applitools代替',
+    tagline:
+        'Percy・ビジュアルテスト・BrowserStack傘下・スクリーンショット比較・クロスブラウザ・CI/CD統合・自動UIレビューで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Percy代替 ビジュアルテスト BrowserStack スクリーンショット クロスブラウザ CI/CD Chromatic代替 Applitools代替',
     accentColor: Color(0xFF512DA8),
     painPoints: [
       '有料・ビジュアルテスト特化・個人のライフ管理は別途必要',
@@ -60824,8 +60926,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'browserstack': const _CompetitorInfo(
     name: 'BrowserStack',
     emoji: '🌍',
-    tagline: 'BrowserStack・クロスブラウザ/デバイステスト・実機テスト・Selenium/Playwright統合・3000+環境・CI/CD・企業向けで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'BrowserStack代替 クロスブラウザ デバイステスト 実機 Selenium Playwright 3000+環境 Sauce Labs代替 LambdaTest代替',
+    tagline:
+        'BrowserStack・クロスブラウザ/デバイステスト・実機テスト・Selenium/Playwright統合・3000+環境・CI/CD・企業向けで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'BrowserStack代替 クロスブラウザ デバイステスト 実機 Selenium Playwright 3000+環境 Sauce Labs代替 LambdaTest代替',
     accentColor: Color(0xFFFF6C37),
     painPoints: [
       '高額・クロスブラウザテスト特化・個人のライフ管理は別途必要',
@@ -60858,8 +60962,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'lambdatest-cloud-browser': const _CompetitorInfo(
     name: 'LambdaTest',
     emoji: '🔬',
-    tagline: 'LambdaTest・クロスブラウザテスト・3000+環境・HyperExecute・スマートビジュアルテスト・AI・BrowserStack代替・低コストで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'LambdaTest代替 クロスブラウザテスト 3000+環境 HyperExecute スマートビジュアル AI BrowserStack代替 Sauce Labs代替',
+    tagline:
+        'LambdaTest・クロスブラウザテスト・3000+環境・HyperExecute・スマートビジュアルテスト・AI・BrowserStack代替・低コストで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'LambdaTest代替 クロスブラウザテスト 3000+環境 HyperExecute スマートビジュアル AI BrowserStack代替 Sauce Labs代替',
     accentColor: Color(0xFF1789FC),
     painPoints: [
       '有料・クロスブラウザテスト特化・個人のライフ管理は別途必要',
@@ -60892,8 +60998,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'testcontainers': const _CompetitorInfo(
     name: 'Testcontainers',
     emoji: '🐋',
-    tagline: 'Testcontainers・Dockerコンテナを使った統合テスト・データベース/Redis/Kafka・本番同等環境・多言語・OSS・モックレスで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Testcontainers代替 Docker 統合テスト データベース Redis Kafka 本番同等環境 多言語 OSS モックレス',
+    tagline:
+        'Testcontainers・Dockerコンテナを使った統合テスト・データベース/Redis/Kafka・本番同等環境・多言語・OSS・モックレスで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Testcontainers代替 Docker 統合テスト データベース Redis Kafka 本番同等環境 多言語 OSS モックレス',
     accentColor: Color(0xFF2496ED),
     painPoints: [
       '無料(OSS)・統合テスト特化・個人のライフ管理は別途必要',
@@ -60926,8 +61034,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'readme-io': const _CompetitorInfo(
     name: 'ReadMe',
     emoji: '📚',
-    tagline: 'ReadMe・開発者向けドキュメントSaaS・APIリファレンス・インタラクティブ・バージョニング・カスタムドメイン・GitHub連携で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'ReadMe代替 開発者ドキュメント SaaS APIリファレンス インタラクティブ バージョニング GitBook代替 Mintlify代替',
+    tagline:
+        'ReadMe・開発者向けドキュメントSaaS・APIリファレンス・インタラクティブ・バージョニング・カスタムドメイン・GitHub連携で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'ReadMe代替 開発者ドキュメント SaaS APIリファレンス インタラクティブ バージョニング GitBook代替 Mintlify代替',
     accentColor: Color(0xFF018EF5),
     painPoints: [
       '有料・API/開発者ドキュメント特化・個人のライフ管理は別途必要',
@@ -60960,8 +61070,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'swagger-ui': const _CompetitorInfo(
     name: 'Swagger UI',
     emoji: '🔍',
-    tagline: 'Swagger UI・OpenAPI仕様可視化・インタラクティブドキュメント・APIテスト・OSS・SmartBear製・業界標準・多言語で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Swagger UI代替 OpenAPI 可視化 インタラクティブドキュメント APIテスト SmartBear Redoc代替 Stoplight代替',
+    tagline:
+        'Swagger UI・OpenAPI仕様可視化・インタラクティブドキュメント・APIテスト・OSS・SmartBear製・業界標準・多言語で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Swagger UI代替 OpenAPI 可視化 インタラクティブドキュメント APIテスト SmartBear Redoc代替 Stoplight代替',
     accentColor: Color(0xFF85EA2D),
     painPoints: [
       '無料(OSS)/有料・APIドキュメント特化・個人のライフ管理は別途必要',
@@ -60994,8 +61106,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'redoc': const _CompetitorInfo(
     name: 'ReDoc',
     emoji: '📋',
-    tagline: 'ReDoc・OpenAPIドキュメント・3パネルレイアウト・レスポンシブ・OSS・埋め込み可・カスタマイズ・Redocly製・無料で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'ReDoc代替 OpenAPI ドキュメント 3パネル レスポンシブ OSS 埋め込み Redocly Swagger UI代替 Stoplight代替',
+    tagline:
+        'ReDoc・OpenAPIドキュメント・3パネルレイアウト・レスポンシブ・OSS・埋め込み可・カスタマイズ・Redocly製・無料で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'ReDoc代替 OpenAPI ドキュメント 3パネル レスポンシブ OSS 埋め込み Redocly Swagger UI代替 Stoplight代替',
     accentColor: Color(0xFFE53935),
     painPoints: [
       '無料(OSS)/有料・APIドキュメント特化・個人のライフ管理は別途必要',
@@ -61028,8 +61142,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'mkdocs': const _CompetitorInfo(
     name: 'MkDocs',
     emoji: '📝',
-    tagline: 'MkDocs・Markdownベースドキュメントサイト生成・Python製・Material for MkDocs・テーマ・静的サイト・GitHub Pages対応で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'MkDocs代替 Markdown ドキュメント Python Material for MkDocs 静的サイト GitHub Pages Docusaurus代替 VitePress代替',
+    tagline:
+        'MkDocs・Markdownベースドキュメントサイト生成・Python製・Material for MkDocs・テーマ・静的サイト・GitHub Pages対応で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'MkDocs代替 Markdown ドキュメント Python Material for MkDocs 静的サイト GitHub Pages Docusaurus代替 VitePress代替',
     accentColor: Color(0xFF526CFE),
     painPoints: [
       '無料(OSS)・ドキュメントサイト特化・個人のライフ管理は別途必要',
@@ -61062,8 +61178,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'vitepress': const _CompetitorInfo(
     name: 'VitePress',
     emoji: '⚡',
-    tagline: 'VitePress・Vite+Vue静的サイト生成・高速・Markdownドキュメント・Vue SFCサポート・カスタムテーマ・OSS・Vue公式ドキュメントで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'VitePress代替 Vite Vue 静的サイト 高速 Markdown カスタムテーマ OSS Docusaurus代替 MkDocs代替',
+    tagline:
+        'VitePress・Vite+Vue静的サイト生成・高速・Markdownドキュメント・Vue SFCサポート・カスタムテーマ・OSS・Vue公式ドキュメントで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'VitePress代替 Vite Vue 静的サイト 高速 Markdown カスタムテーマ OSS Docusaurus代替 MkDocs代替',
     accentColor: Color(0xFF646CFF),
     painPoints: [
       '無料(OSS)・Vue/Viteドキュメント特化・個人のライフ管理は別途必要',
@@ -61096,8 +61214,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'nextra': const _CompetitorInfo(
     name: 'Nextra',
     emoji: '📖',
-    tagline: 'Nextra・Next.js製ドキュメント/Blogフレームワーク・MDX・テーマ・検索・Vercel統合・OSS・シンプルで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Nextra代替 Next.js ドキュメント MDX テーマ 検索 Vercel統合 OSS Docusaurus代替 VitePress代替',
+    tagline:
+        'Nextra・Next.js製ドキュメント/Blogフレームワーク・MDX・テーマ・検索・Vercel統合・OSS・シンプルで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Nextra代替 Next.js ドキュメント MDX テーマ 検索 Vercel統合 OSS Docusaurus代替 VitePress代替',
     accentColor: Color(0xFF000000),
     painPoints: [
       '無料(OSS)・Next.jsドキュメント特化・個人のライフ管理は別途必要',
@@ -61130,8 +61250,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'docsify': const _CompetitorInfo(
     name: 'Docsify',
     emoji: '🪄',
-    tagline: 'Docsify・ビルドレスドキュメントサイト・SPA・Markdownレンダリング・プラグイン・テーマ・GitHub Pages・軽量で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Docsify代替 ビルドレス ドキュメントサイト SPA Markdown プラグイン テーマ GitHub Pages MkDocs代替 VitePress代替',
+    tagline:
+        'Docsify・ビルドレスドキュメントサイト・SPA・Markdownレンダリング・プラグイン・テーマ・GitHub Pages・軽量で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Docsify代替 ビルドレス ドキュメントサイト SPA Markdown プラグイン テーマ GitHub Pages MkDocs代替 VitePress代替',
     accentColor: Color(0xFF42B983),
     painPoints: [
       '無料(OSS)・ドキュメントサイト特化・個人のライフ管理は別途必要',
@@ -61164,8 +61286,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'doxygen': const _CompetitorInfo(
     name: 'Doxygen',
     emoji: '📐',
-    tagline: 'Doxygen・ソースコードからドキュメント生成・C++/C/Java・クラス図・UML・HTML/PDF出力・OSS・レガシー対応で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Doxygen代替 ソースコード ドキュメント生成 C++ Java クラス図 UML HTML PDF出力 Javadoc代替',
+    tagline:
+        'Doxygen・ソースコードからドキュメント生成・C++/C/Java・クラス図・UML・HTML/PDF出力・OSS・レガシー対応で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Doxygen代替 ソースコード ドキュメント生成 C++ Java クラス図 UML HTML PDF出力 Javadoc代替',
     accentColor: Color(0xFF2C5F8A),
     painPoints: [
       '無料(OSS)・ドキュメント生成特化・個人のライフ管理は別途必要',
@@ -61198,8 +61322,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'sphinx': const _CompetitorInfo(
     name: 'Sphinx',
     emoji: '🏛️',
-    tagline: 'Sphinx・Python標準ドキュメントツール・reStructuredText/Markdown・ReadTheDocs統合・拡張可能・多言語・OSS・業界標準で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Sphinx代替 Python ドキュメント reStructuredText ReadTheDocs 拡張可能 多言語 OSS MkDocs代替',
+    tagline:
+        'Sphinx・Python標準ドキュメントツール・reStructuredText/Markdown・ReadTheDocs統合・拡張可能・多言語・OSS・業界標準で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Sphinx代替 Python ドキュメント reStructuredText ReadTheDocs 拡張可能 多言語 OSS MkDocs代替',
     accentColor: Color(0xFF3B4252),
     painPoints: [
       '無料(OSS)・Python/技術ドキュメント特化・個人のライフ管理は別途必要',
@@ -61232,8 +61358,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'nextjs': const _CompetitorInfo(
     name: 'Next.js',
     emoji: '⬛',
-    tagline: 'Next.js・Reactメタフレームワーク・SSR/SSG/ISR・App Router・Vercel製・フルスタック・Edge Runtime・TypeScript・業界標準で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Next.js代替 React メタフレームワーク SSR SSG ISR App Router Vercel フルスタック Remix代替 Nuxt代替',
+    tagline:
+        'Next.js・Reactメタフレームワーク・SSR/SSG/ISR・App Router・Vercel製・フルスタック・Edge Runtime・TypeScript・業界標準で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Next.js代替 React メタフレームワーク SSR SSG ISR App Router Vercel フルスタック Remix代替 Nuxt代替',
     accentColor: Color(0xFF000000),
     painPoints: [
       '無料(OSS)/Vercel有料・Webフレームワーク特化・個人のライフ管理は別途必要',
@@ -61266,8 +61394,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'nuxt': const _CompetitorInfo(
     name: 'Nuxt',
     emoji: '💚',
-    tagline: 'Nuxt・Vueメタフレームワーク・SSR/SSG/ISR・Nitro・自動インポート・TypeScript・OSS・フルスタック・モジュールエコシステムで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Nuxt代替 Vue メタフレームワーク SSR SSG Nitro 自動インポート TypeScript Next.js代替 SvelteKit代替',
+    tagline:
+        'Nuxt・Vueメタフレームワーク・SSR/SSG/ISR・Nitro・自動インポート・TypeScript・OSS・フルスタック・モジュールエコシステムで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Nuxt代替 Vue メタフレームワーク SSR SSG Nitro 自動インポート TypeScript Next.js代替 SvelteKit代替',
     accentColor: Color(0xFF00DC82),
     painPoints: [
       '無料(OSS)・Vueフレームワーク特化・個人のライフ管理は別途必要',
@@ -61300,8 +61430,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'remix': const _CompetitorInfo(
     name: 'Remix',
     emoji: '💿',
-    tagline: 'Remix・React Routerベースフルスタック・Web標準重視・ネストレイアウト・ローダー/アクション・Shopify傘下・SSRで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Remix代替 React Router フルスタック Web標準 ネストレイアウト ローダー Shopify SSR Next.js代替 SvelteKit代替',
+    tagline:
+        'Remix・React Routerベースフルスタック・Web標準重視・ネストレイアウト・ローダー/アクション・Shopify傘下・SSRで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Remix代替 React Router フルスタック Web標準 ネストレイアウト ローダー Shopify SSR Next.js代替 SvelteKit代替',
     accentColor: Color(0xFFE8F2FF),
     painPoints: [
       '無料(OSS)・Webフレームワーク特化・個人のライフ管理は別途必要',
@@ -61334,8 +61466,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'astro': const _CompetitorInfo(
     name: 'Astro',
     emoji: '🚀',
-    tagline: 'Astro・コンテンツ重視静的サイト・Islands Architecture・マルチフレームワーク・ゼロJS・高パフォーマンス・OSS・Contentで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Astro代替 コンテンツ 静的サイト Islands Architecture マルチフレームワーク ゼロJS 高パフォーマンス Gatsby代替 Hugo代替',
+    tagline:
+        'Astro・コンテンツ重視静的サイト・Islands Architecture・マルチフレームワーク・ゼロJS・高パフォーマンス・OSS・Contentで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Astro代替 コンテンツ 静的サイト Islands Architecture マルチフレームワーク ゼロJS 高パフォーマンス Gatsby代替 Hugo代替',
     accentColor: Color(0xFFFF5D01),
     painPoints: [
       '無料(OSS)/有料(Astro Cloud)・静的サイト特化・個人のライフ管理は別途必要',
@@ -61368,8 +61502,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'sveltekit': const _CompetitorInfo(
     name: 'SvelteKit',
     emoji: '🧡',
-    tagline: 'SvelteKit・Svelteフルスタックフレームワーク・SSR/SSG・ファイルルーティング・Vite統合・アダプター・TypeScript・OSS・高パフォーマンスで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'SvelteKit代替 Svelte フルスタック SSR SSG ファイルルーティング Vite アダプター TypeScript Next.js代替 Nuxt代替',
+    tagline:
+        'SvelteKit・Svelteフルスタックフレームワーク・SSR/SSG・ファイルルーティング・Vite統合・アダプター・TypeScript・OSS・高パフォーマンスで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'SvelteKit代替 Svelte フルスタック SSR SSG ファイルルーティング Vite アダプター TypeScript Next.js代替 Nuxt代替',
     accentColor: Color(0xFFFF3E00),
     painPoints: [
       '無料(OSS)・Svelteフレームワーク特化・個人のライフ管理は別途必要',
@@ -61402,8 +61538,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'gatsby': const _CompetitorInfo(
     name: 'Gatsby',
     emoji: '💜',
-    tagline: 'Gatsby・React静的サイト生成・GraphQL・プラグイン・CMS統合・高パフォーマンス・Netlify傘下・OSS・コンテンツサイトで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Gatsby代替 React 静的サイト GraphQL プラグイン CMS Netlify 高パフォーマンス Astro代替 Next.js代替',
+    tagline:
+        'Gatsby・React静的サイト生成・GraphQL・プラグイン・CMS統合・高パフォーマンス・Netlify傘下・OSS・コンテンツサイトで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Gatsby代替 React 静的サイト GraphQL プラグイン CMS Netlify 高パフォーマンス Astro代替 Next.js代替',
     accentColor: Color(0xFF663399),
     painPoints: [
       '無料(OSS)/有料(Gatsby Cloud)・静的サイト特化・個人のライフ管理は別途必要',
@@ -61436,8 +61574,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'hugo': const _CompetitorInfo(
     name: 'Hugo',
     emoji: '🏃',
-    tagline: 'Hugo・超高速静的サイト生成・Go製・テンプレート・Markdown・多言語・テーマ・GitHub Pages・Netlify・OSS・ブログで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Hugo代替 超高速 静的サイト Go製 テンプレート Markdown 多言語 GitHub Pages Gatsby代替 Jekyll代替',
+    tagline:
+        'Hugo・超高速静的サイト生成・Go製・テンプレート・Markdown・多言語・テーマ・GitHub Pages・Netlify・OSS・ブログで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Hugo代替 超高速 静的サイト Go製 テンプレート Markdown 多言語 GitHub Pages Gatsby代替 Jekyll代替',
     accentColor: Color(0xFFFF4088),
     painPoints: [
       '無料(OSS)・静的サイト特化・個人のライフ管理は別途必要',
@@ -61470,8 +61610,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'jekyll': const _CompetitorInfo(
     name: 'Jekyll',
     emoji: '💎',
-    tagline: 'Jekyll・Ruby製静的サイト生成・GitHub Pages標準・Markdown/Liquid・ブログ・テーマ・OSS・シンプルで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Jekyll代替 Ruby 静的サイト GitHub Pages Markdown Liquid ブログ テーマ Hugo代替 Gatsby代替',
+    tagline:
+        'Jekyll・Ruby製静的サイト生成・GitHub Pages標準・Markdown/Liquid・ブログ・テーマ・OSS・シンプルで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Jekyll代替 Ruby 静的サイト GitHub Pages Markdown Liquid ブログ テーマ Hugo代替 Gatsby代替',
     accentColor: Color(0xFFCC0000),
     painPoints: [
       '無料(OSS)・静的サイト特化・個人のライフ管理は別途必要',
@@ -61504,8 +61646,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'eleventy': const _CompetitorInfo(
     name: 'Eleventy (11ty)',
     emoji: '🦔',
-    tagline: 'Eleventy・シンプル静的サイト生成・11ty・多テンプレート対応・JavaScript・高速・独断なし・OSS・柔軟・ブログで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Eleventy 11ty代替 シンプル 静的サイト 多テンプレート JavaScript 高速 独断なし Hugo代替 Jekyll代替',
+    tagline:
+        'Eleventy・シンプル静的サイト生成・11ty・多テンプレート対応・JavaScript・高速・独断なし・OSS・柔軟・ブログで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Eleventy 11ty代替 シンプル 静的サイト 多テンプレート JavaScript 高速 独断なし Hugo代替 Jekyll代替',
     accentColor: Color(0xFF222222),
     painPoints: [
       '無料(OSS)・静的サイト特化・個人のライフ管理は別途必要',
@@ -61538,8 +61682,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'tailwind': const _CompetitorInfo(
     name: 'Tailwind CSS',
     emoji: '🌊',
-    tagline: 'Tailwind CSS・ユーティリティファーストCSS・JIT・クラスベース・高速プロトタイプ・カスタマイズ・OSS・業界標準・レスポンシブで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Tailwind CSS代替 ユーティリティファースト JIT クラスベース 高速プロトタイプ カスタマイズ Bootstrap代替 UnoCSS代替',
+    tagline:
+        'Tailwind CSS・ユーティリティファーストCSS・JIT・クラスベース・高速プロトタイプ・カスタマイズ・OSS・業界標準・レスポンシブで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Tailwind CSS代替 ユーティリティファースト JIT クラスベース 高速プロトタイプ カスタマイズ Bootstrap代替 UnoCSS代替',
     accentColor: Color(0xFF06B6D4),
     painPoints: [
       '無料(OSS)/有料(UI Kit)・CSSフレームワーク特化・個人のライフ管理は別途必要',
@@ -61572,8 +61718,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'bootstrap': const _CompetitorInfo(
     name: 'Bootstrap',
     emoji: '🅱️',
-    tagline: 'Bootstrap・CSS/JSフレームワーク・コンポーネント・グリッドシステム・テーマ・jQuery非依存・Twitter製・業界標準・OSS・v5で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Bootstrap代替 CSS JS コンポーネント グリッドシステム テーマ Twitter OSS Tailwind代替 Foundation代替',
+    tagline:
+        'Bootstrap・CSS/JSフレームワーク・コンポーネント・グリッドシステム・テーマ・jQuery非依存・Twitter製・業界標準・OSS・v5で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Bootstrap代替 CSS JS コンポーネント グリッドシステム テーマ Twitter OSS Tailwind代替 Foundation代替',
     accentColor: Color(0xFF7952B3),
     painPoints: [
       '無料(OSS)/有料テーマ・UIフレームワーク特化・個人のライフ管理は別途必要',
@@ -61606,8 +61754,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'material-ui': const _CompetitorInfo(
     name: 'Material UI (MUI)',
     emoji: '🎨',
-    tagline: 'Material UI (MUI)・Google Material Design・Reactコンポーネント・テーマ・アクセシビリティ・TypeScript・OSS・カスタマイズで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Material UI MUI代替 Google Material Design React コンポーネント テーマ アクセシビリティ TypeScript shadcn代替 Chakra UI代替',
+    tagline:
+        'Material UI (MUI)・Google Material Design・Reactコンポーネント・テーマ・アクセシビリティ・TypeScript・OSS・カスタマイズで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Material UI MUI代替 Google Material Design React コンポーネント テーマ アクセシビリティ TypeScript shadcn代替 Chakra UI代替',
     accentColor: Color(0xFF0081CB),
     painPoints: [
       '無料(OSS)/有料(X)・ReactUIコンポーネント特化・個人のライフ管理は別途必要',
@@ -61640,8 +61790,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'shadcn': const _CompetitorInfo(
     name: 'shadcn/ui',
     emoji: '🔲',
-    tagline: 'shadcn/ui・コピペReactコンポーネント・Radix UI基盤・Tailwind CSS・アクセシビリティ・無料・カスタマイズ・TypeScript・CLI追加で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'shadcn/ui代替 コピペ React Radix UI Tailwind CSS アクセシビリティ カスタマイズ TypeScript CLI Material UI代替',
+    tagline:
+        'shadcn/ui・コピペReactコンポーネント・Radix UI基盤・Tailwind CSS・アクセシビリティ・無料・カスタマイズ・TypeScript・CLI追加で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'shadcn/ui代替 コピペ React Radix UI Tailwind CSS アクセシビリティ カスタマイズ TypeScript CLI Material UI代替',
     accentColor: Color(0xFF09090B),
     painPoints: [
       '無料(コピペ)・Reactコンポーネント特化・個人のライフ管理は別途必要',
@@ -61674,8 +61826,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'chakra-ui': const _CompetitorInfo(
     name: 'Chakra UI',
     emoji: '⚡',
-    tagline: 'Chakra UI・アクセシブルReactコンポーネント・テーマ・ダークモード・Emotion基盤・TypeScript・カスタマイズ・OSS・シンプルAPIで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Chakra UI代替 アクセシブル React コンポーネント テーマ ダークモード Emotion TypeScript shadcn代替 Material UI代替',
+    tagline:
+        'Chakra UI・アクセシブルReactコンポーネント・テーマ・ダークモード・Emotion基盤・TypeScript・カスタマイズ・OSS・シンプルAPIで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Chakra UI代替 アクセシブル React コンポーネント テーマ ダークモード Emotion TypeScript shadcn代替 Material UI代替',
     accentColor: Color(0xFF319795),
     painPoints: [
       '無料(OSS)/有料(Pro)・ReactUIコンポーネント特化・個人のライフ管理は別途必要',
@@ -61708,8 +61862,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'mantine': const _CompetitorInfo(
     name: 'Mantine',
     emoji: '🔵',
-    tagline: 'Mantine・Reactコンポーネント・120+コンポーネント・フック・フォーム・通知・100%TypeScript・無料・テーマ・ダークモードで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Mantine代替 React 120+コンポーネント フック フォーム 通知 TypeScript 無料 Chakra UI代替 Material UI代替',
+    tagline:
+        'Mantine・Reactコンポーネント・120+コンポーネント・フック・フォーム・通知・100%TypeScript・無料・テーマ・ダークモードで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Mantine代替 React 120+コンポーネント フック フォーム 通知 TypeScript 無料 Chakra UI代替 Material UI代替',
     accentColor: Color(0xFF339AF0),
     painPoints: [
       '無料(OSS)・ReactUIコンポーネント特化・個人のライフ管理は別途必要',
@@ -61742,8 +61898,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'ant-design': const _CompetitorInfo(
     name: 'Ant Design',
     emoji: '🐜',
-    tagline: 'Ant Design・エンタープライズReactUIコンポーネント・60+・Alibaba製・デザインシステム・TypeScript・多言語・OSS・大規模で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Ant Design代替 エンタープライズ React UIコンポーネント 60+ Alibaba デザインシステム TypeScript 多言語 Material UI代替',
+    tagline:
+        'Ant Design・エンタープライズReactUIコンポーネント・60+・Alibaba製・デザインシステム・TypeScript・多言語・OSS・大規模で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Ant Design代替 エンタープライズ React UIコンポーネント 60+ Alibaba デザインシステム TypeScript 多言語 Material UI代替',
     accentColor: Color(0xFF1677FF),
     painPoints: [
       '無料(OSS)/有料・UIコンポーネント特化・個人のライフ管理は別途必要',
@@ -61776,8 +61934,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'daisyui': const _CompetitorInfo(
     name: 'daisyUI',
     emoji: '🌼',
-    tagline: 'daisyUI・TailwindCSS向けコンポーネント・クラスベース・テーマ35+・無料・軽量・フレームワーク非依存・カスタマイズ・OSS・シンプルで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'daisyUI代替 TailwindCSS コンポーネント クラスベース テーマ35+ 無料 軽量 フレームワーク非依存 Bootstrap代替',
+    tagline:
+        'daisyUI・TailwindCSS向けコンポーネント・クラスベース・テーマ35+・無料・軽量・フレームワーク非依存・カスタマイズ・OSS・シンプルで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'daisyUI代替 TailwindCSS コンポーネント クラスベース テーマ35+ 無料 軽量 フレームワーク非依存 Bootstrap代替',
     accentColor: Color(0xFF570DF8),
     painPoints: [
       '無料(OSS)/有料(Pro)・TailwindCSSコンポーネント特化・個人のライフ管理は別途必要',
@@ -61810,8 +61970,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'unocss': const _CompetitorInfo(
     name: 'UnoCSS',
     emoji: '⚡',
-    tagline: 'UnoCSS・超高速原子CSSエンジン・オンデマンド・Tailwind互換・プリセット・アイコン統合・Vite・OSS・Anthony Fu製で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'UnoCSS代替 超高速 原子CSS オンデマンド Tailwind互換 プリセット アイコン統合 Vite Tailwind代替 Windi CSS代替',
+    tagline:
+        'UnoCSS・超高速原子CSSエンジン・オンデマンド・Tailwind互換・プリセット・アイコン統合・Vite・OSS・Anthony Fu製で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'UnoCSS代替 超高速 原子CSS オンデマンド Tailwind互換 プリセット アイコン統合 Vite Tailwind代替 Windi CSS代替',
     accentColor: Color(0xFF333333),
     painPoints: [
       '無料(OSS)・CSSエンジン特化・個人のライフ管理は別途必要',
@@ -61844,8 +62006,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'redux': const _CompetitorInfo(
     name: 'Redux',
     emoji: '🔵',
-    tagline: 'Redux・JavaScript状態管理・Flux パターン・予測可能・DevTools・Redux Toolkit・TypeScript・React連携・業界標準で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Redux代替 JavaScript 状態管理 Flux パターン DevTools Redux Toolkit TypeScript React Zustand代替 Jotai代替',
+    tagline:
+        'Redux・JavaScript状態管理・Flux パターン・予測可能・DevTools・Redux Toolkit・TypeScript・React連携・業界標準で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Redux代替 JavaScript 状態管理 Flux パターン DevTools Redux Toolkit TypeScript React Zustand代替 Jotai代替',
     accentColor: Color(0xFF764ABC),
     painPoints: [
       '無料(OSS)・状態管理特化・個人のライフ管理は別途必要',
@@ -61878,8 +62042,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'zustand': const _CompetitorInfo(
     name: 'Zustand',
     emoji: '🐻',
-    tagline: 'Zustand・軽量React状態管理・シンプルAPI・ボイラープレートなし・TypeScript・永続化・DevTools・OSS・Jotai同作者で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Zustand代替 軽量 React 状態管理 シンプルAPI ボイラープレートなし TypeScript 永続化 Redux代替 Jotai代替',
+    tagline:
+        'Zustand・軽量React状態管理・シンプルAPI・ボイラープレートなし・TypeScript・永続化・DevTools・OSS・Jotai同作者で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Zustand代替 軽量 React 状態管理 シンプルAPI ボイラープレートなし TypeScript 永続化 Redux代替 Jotai代替',
     accentColor: Color(0xFFFF9F00),
     painPoints: [
       '無料(OSS)・状態管理特化・個人のライフ管理は別途必要',
@@ -61912,8 +62078,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'jotai': const _CompetitorInfo(
     name: 'Jotai',
     emoji: '⚛️',
-    tagline: 'Jotai・アトムベースReact状態管理・Recoil互換・TypeScript・最小限API・SSR・永続化・Zustand同作者・OSS・Reactに馴染むで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Jotai代替 アトムベース React 状態管理 Recoil互換 TypeScript 最小限API SSR Zustand代替 Redux代替',
+    tagline:
+        'Jotai・アトムベースReact状態管理・Recoil互換・TypeScript・最小限API・SSR・永続化・Zustand同作者・OSS・Reactに馴染むで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Jotai代替 アトムベース React 状態管理 Recoil互換 TypeScript 最小限API SSR Zustand代替 Redux代替',
     accentColor: Color(0xFF282C34),
     painPoints: [
       '無料(OSS)・状態管理特化・個人のライフ管理は別途必要',
@@ -61946,8 +62114,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'tanstack-query': const _CompetitorInfo(
     name: 'TanStack Query',
     emoji: '🔄',
-    tagline: 'TanStack Query・非同期状態管理・サーバー状態・キャッシュ・バックグラウンド更新・React/Vue/Solid対応・OSS・SWR代替で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'TanStack Query代替 非同期状態管理 サーバー状態 キャッシュ バックグラウンド更新 React Vue SWR代替 React Query',
+    tagline:
+        'TanStack Query・非同期状態管理・サーバー状態・キャッシュ・バックグラウンド更新・React/Vue/Solid対応・OSS・SWR代替で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'TanStack Query代替 非同期状態管理 サーバー状態 キャッシュ バックグラウンド更新 React Vue SWR代替 React Query',
     accentColor: Color(0xFFEF4444),
     painPoints: [
       '無料(OSS)・サーバー状態管理特化・個人のライフ管理は別途必要',
@@ -61980,8 +62150,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'swr': const _CompetitorInfo(
     name: 'SWR',
     emoji: '🔃',
-    tagline: 'SWR・React Hooksデータフェッチ・キャッシュ・再検証・Vercel製・リアルタイム・TypeScript・OSS・シンプルAPIで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'SWR代替 React Hooks データフェッチ キャッシュ 再検証 Vercel リアルタイム TypeScript TanStack Query代替',
+    tagline:
+        'SWR・React Hooksデータフェッチ・キャッシュ・再検証・Vercel製・リアルタイム・TypeScript・OSS・シンプルAPIで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'SWR代替 React Hooks データフェッチ キャッシュ 再検証 Vercel リアルタイム TypeScript TanStack Query代替',
     accentColor: Color(0xFF000000),
     painPoints: [
       '無料(OSS)・データフェッチ特化・個人のライフ管理は別途必要',
@@ -62014,8 +62186,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'mobx': const _CompetitorInfo(
     name: 'MobX',
     emoji: '🎭',
-    tagline: 'MobX・リアクティブ状態管理・オブザーバブル・自動追跡・React/Angular/Vue・TypeScript・OSS・シンプルメンタルモデルで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'MobX代替 リアクティブ 状態管理 オブザーバブル 自動追跡 React Angular Vue TypeScript Redux代替 Zustand代替',
+    tagline:
+        'MobX・リアクティブ状態管理・オブザーバブル・自動追跡・React/Angular/Vue・TypeScript・OSS・シンプルメンタルモデルで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'MobX代替 リアクティブ 状態管理 オブザーバブル 自動追跡 React Angular Vue TypeScript Redux代替 Zustand代替',
     accentColor: Color(0xFFFF7102),
     painPoints: [
       '無料(OSS)・状態管理特化・個人のライフ管理は別途必要',
@@ -62048,8 +62222,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'pinia': const _CompetitorInfo(
     name: 'Pinia',
     emoji: '🍍',
-    tagline: 'Pinia・Vue公式状態管理・Vuex後継・Vue 3対応・TypeScript・Devtools・モジュール分割・SSR・コンポジションAPIで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Pinia代替 Vue 状態管理 Vuex後継 Vue 3 TypeScript Devtools SSR コンポジションAPI Zustand代替',
+    tagline:
+        'Pinia・Vue公式状態管理・Vuex後継・Vue 3対応・TypeScript・Devtools・モジュール分割・SSR・コンポジションAPIで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Pinia代替 Vue 状態管理 Vuex後継 Vue 3 TypeScript Devtools SSR コンポジションAPI Zustand代替',
     accentColor: Color(0xFFFFD859),
     painPoints: [
       '無料(OSS)・Vue状態管理特化・個人のライフ管理は別途必要',
@@ -62082,8 +62258,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'xstate': const _CompetitorInfo(
     name: 'XState',
     emoji: '🤖',
-    tagline: 'XState・有限状態機械・ステートチャート・ビジュアライザー・JS/TS・React/Vue/Svelte・予測可能・OSS・複雑UIロジックで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'XState代替 有限状態機械 ステートチャート ビジュアライザー JavaScript TypeScript React Vue 予測可能 Redux代替',
+    tagline:
+        'XState・有限状態機械・ステートチャート・ビジュアライザー・JS/TS・React/Vue/Svelte・予測可能・OSS・複雑UIロジックで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'XState代替 有限状態機械 ステートチャート ビジュアライザー JavaScript TypeScript React Vue 予測可能 Redux代替',
     accentColor: Color(0xFF2B1B67),
     painPoints: [
       '無料(OSS)/有料(Cloud)・状態機械特化・個人のライフ管理は別途必要',
@@ -62116,8 +62294,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'nanostores': const _CompetitorInfo(
     name: 'Nano Stores',
     emoji: '🔬',
-    tagline: 'Nano Stores・超軽量状態管理・フレームワーク非依存・React/Vue/Svelte/Solid・TypeScript・0依存・OSS・スケーラブルで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Nano Stores代替 超軽量 状態管理 フレームワーク非依存 React Vue Svelte Solid TypeScript Zustand代替 Jotai代替',
+    tagline:
+        'Nano Stores・超軽量状態管理・フレームワーク非依存・React/Vue/Svelte/Solid・TypeScript・0依存・OSS・スケーラブルで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Nano Stores代替 超軽量 状態管理 フレームワーク非依存 React Vue Svelte Solid TypeScript Zustand代替 Jotai代替',
     accentColor: Color(0xFF44B4A6),
     painPoints: [
       '無料(OSS)・状態管理特化・個人のライフ管理は別途必要',
@@ -62150,8 +62330,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'prisma': const _CompetitorInfo(
     name: 'Prisma',
     emoji: '🔷',
-    tagline: 'Prisma・次世代Node.js ORM・型安全・自動生成クライアント・マイグレーション・PostgreSQL/MySQL/SQLite・TypeScript・業界標準で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Prisma代替 Node.js ORM 型安全 自動生成 マイグレーション PostgreSQL MySQL TypeScript Drizzle代替 TypeORM代替',
+    tagline:
+        'Prisma・次世代Node.js ORM・型安全・自動生成クライアント・マイグレーション・PostgreSQL/MySQL/SQLite・TypeScript・業界標準で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Prisma代替 Node.js ORM 型安全 自動生成 マイグレーション PostgreSQL MySQL TypeScript Drizzle代替 TypeORM代替',
     accentColor: Color(0xFF2D3748),
     painPoints: [
       '無料(OSS)/有料(Platform)・ORM特化・個人のライフ管理は別途必要',
@@ -62184,8 +62366,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'drizzle': const _CompetitorInfo(
     name: 'Drizzle ORM',
     emoji: '💧',
-    tagline: 'Drizzle ORM・TypeScript SQLクエリビルダー・型安全・軽量・エッジランタイム対応・Prisma代替・PostgreSQL/MySQL/SQLite・OSS・高速で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Drizzle ORM代替 TypeScript SQLクエリビルダー 型安全 軽量 エッジランタイム PostgreSQL MySQL Prisma代替 Kysely代替',
+    tagline:
+        'Drizzle ORM・TypeScript SQLクエリビルダー・型安全・軽量・エッジランタイム対応・Prisma代替・PostgreSQL/MySQL/SQLite・OSS・高速で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Drizzle ORM代替 TypeScript SQLクエリビルダー 型安全 軽量 エッジランタイム PostgreSQL MySQL Prisma代替 Kysely代替',
     accentColor: Color(0xFFC5F74F),
     painPoints: [
       '無料(OSS)・ORM特化・個人のライフ管理は別途必要',
@@ -62218,8 +62402,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'typeorm': const _CompetitorInfo(
     name: 'TypeORM',
     emoji: '🔗',
-    tagline: 'TypeORM・TypeScript ORM・デコレータ・アクティブレコード/データマッパー・リレーション・マイグレーション・多DB対応・OSS・Node.jsで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'TypeORM代替 TypeScript ORM デコレータ アクティブレコード データマッパー マイグレーション 多DB Prisma代替 Sequelize代替',
+    tagline:
+        'TypeORM・TypeScript ORM・デコレータ・アクティブレコード/データマッパー・リレーション・マイグレーション・多DB対応・OSS・Node.jsで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'TypeORM代替 TypeScript ORM デコレータ アクティブレコード データマッパー マイグレーション 多DB Prisma代替 Sequelize代替',
     accentColor: Color(0xFFE83E8C),
     painPoints: [
       '無料(OSS)・ORM特化・個人のライフ管理は別途必要',
@@ -62252,8 +62438,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'sequelize': const _CompetitorInfo(
     name: 'Sequelize',
     emoji: '🔄',
-    tagline: 'Sequelize・Node.js ORM・多DB対応・マイグレーション・アソシエーション・バリデーション・TypeScript・OSS・長年の実績で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Sequelize代替 Node.js ORM 多DB マイグレーション アソシエーション TypeScript Prisma代替 TypeORM代替',
+    tagline:
+        'Sequelize・Node.js ORM・多DB対応・マイグレーション・アソシエーション・バリデーション・TypeScript・OSS・長年の実績で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Sequelize代替 Node.js ORM 多DB マイグレーション アソシエーション TypeScript Prisma代替 TypeORM代替',
     accentColor: Color(0xFF03AFEF),
     painPoints: [
       '無料(OSS)・ORM特化・個人のライフ管理は別途必要',
@@ -62286,8 +62474,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'mongoose': const _CompetitorInfo(
     name: 'Mongoose',
     emoji: '🐍',
-    tagline: 'Mongoose・MongoDB Node.js ODM・スキーマ定義・バリデーション・ミドルウェア・クエリビルダー・TypeScript・業界標準で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Mongoose代替 MongoDB Node.js ODM スキーマ定義 バリデーション ミドルウェア TypeScript Prisma代替 Typegoose代替',
+    tagline:
+        'Mongoose・MongoDB Node.js ODM・スキーマ定義・バリデーション・ミドルウェア・クエリビルダー・TypeScript・業界標準で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Mongoose代替 MongoDB Node.js ODM スキーマ定義 バリデーション ミドルウェア TypeScript Prisma代替 Typegoose代替',
     accentColor: Color(0xFF800000),
     painPoints: [
       '無料(OSS)・MongoDB ODM特化・個人のライフ管理は別途必要',
@@ -62320,8 +62510,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'kysely': const _CompetitorInfo(
     name: 'Kysely',
     emoji: '🔑',
-    tagline: 'Kysely・型安全SQL クエリビルダー・TypeScript・零依存・多DB・エッジランタイム・マイグレーション・OSS・Drizzle競合で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Kysely代替 型安全 SQL クエリビルダー TypeScript 零依存 多DB エッジランタイム Drizzle代替 Knex代替',
+    tagline:
+        'Kysely・型安全SQL クエリビルダー・TypeScript・零依存・多DB・エッジランタイム・マイグレーション・OSS・Drizzle競合で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Kysely代替 型安全 SQL クエリビルダー TypeScript 零依存 多DB エッジランタイム Drizzle代替 Knex代替',
     accentColor: Color(0xFF3B82F6),
     painPoints: [
       '無料(OSS)・SQLクエリビルダー特化・個人のライフ管理は別途必要',
@@ -62354,8 +62546,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'sqlalchemy': const _CompetitorInfo(
     name: 'SQLAlchemy',
     emoji: '🧪',
-    tagline: 'SQLAlchemy・Python ORM/SQL toolkit・宣言的マッピング・Core/ORM両モード・非同期・多DB・OSS・業界標準・Django ORM並で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'SQLAlchemy代替 Python ORM SQL toolkit 宣言的マッピング 非同期 多DB Alembic マイグレーション Django ORM代替',
+    tagline:
+        'SQLAlchemy・Python ORM/SQL toolkit・宣言的マッピング・Core/ORM両モード・非同期・多DB・OSS・業界標準・Django ORM並で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'SQLAlchemy代替 Python ORM SQL toolkit 宣言的マッピング 非同期 多DB Alembic マイグレーション Django ORM代替',
     accentColor: Color(0xFFD4380D),
     painPoints: [
       '無料(OSS)・Python ORM特化・個人のライフ管理は別途必要',
@@ -62388,8 +62582,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'hibernate': const _CompetitorInfo(
     name: 'Hibernate',
     emoji: '☕',
-    tagline: 'Hibernate・Java ORM・JPA実装・HQL/JPQL・キャッシュ・Spring統合・エンタープライズ・RedHat・OSS・業界標準で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Hibernate代替 Java ORM JPA HQL JPQL Spring統合 エンタープライズ RedHat MyBatis代替 JOOQ代替',
+    tagline:
+        'Hibernate・Java ORM・JPA実装・HQL/JPQL・キャッシュ・Spring統合・エンタープライズ・RedHat・OSS・業界標準で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Hibernate代替 Java ORM JPA HQL JPQL Spring統合 エンタープライズ RedHat MyBatis代替 JOOQ代替',
     accentColor: Color(0xFF59666C),
     painPoints: [
       '無料(OSS)・Java ORM特化・個人のライフ管理は別途必要',
@@ -62422,8 +62618,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'mikro-orm': const _CompetitorInfo(
     name: 'MikroORM',
     emoji: '🔬',
-    tagline: 'MikroORM・TypeScript ORM・DataMapper・Unit of Work・マイグレーション・PostgreSQL/MySQL/SQLite/MongoDB・OSS・Nestjs統合で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'MikroORM代替 TypeScript ORM DataMapper Unit of Work マイグレーション PostgreSQL MongoDB NestJS Prisma代替 TypeORM代替',
+    tagline:
+        'MikroORM・TypeScript ORM・DataMapper・Unit of Work・マイグレーション・PostgreSQL/MySQL/SQLite/MongoDB・OSS・Nestjs統合で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'MikroORM代替 TypeScript ORM DataMapper Unit of Work マイグレーション PostgreSQL MongoDB NestJS Prisma代替 TypeORM代替',
     accentColor: Color(0xFF5B21B6),
     painPoints: [
       '無料(OSS)・ORM特化・個人のライフ管理は別途必要',
@@ -62456,8 +62654,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'express': const _CompetitorInfo(
     name: 'Express.js',
     emoji: '🚂',
-    tagline: 'Express.js・Node.js Webフレームワーク・ミニマリスト・ミドルウェア・REST API・TypeScript・業界標準・OSS・最多採用で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Express.js代替 Node.js Webフレームワーク ミニマリスト ミドルウェア REST API TypeScript Fastify代替 Koa代替',
+    tagline:
+        'Express.js・Node.js Webフレームワーク・ミニマリスト・ミドルウェア・REST API・TypeScript・業界標準・OSS・最多採用で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Express.js代替 Node.js Webフレームワーク ミニマリスト ミドルウェア REST API TypeScript Fastify代替 Koa代替',
     accentColor: Color(0xFF000000),
     painPoints: [
       '無料(OSS)・Webフレームワーク特化・個人のライフ管理は別途必要',
@@ -62490,8 +62690,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'fastify': const _CompetitorInfo(
     name: 'Fastify',
     emoji: '⚡',
-    tagline: 'Fastify・高速Node.js Webフレームワーク・プラグイン・スキーマバリデーション・TypeScript・低オーバーヘッド・Express代替・OSS・Hono競合で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Fastify代替 高速 Node.js Webフレームワーク プラグイン スキーマバリデーション TypeScript Express代替 Hono代替',
+    tagline:
+        'Fastify・高速Node.js Webフレームワーク・プラグイン・スキーマバリデーション・TypeScript・低オーバーヘッド・Express代替・OSS・Hono競合で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Fastify代替 高速 Node.js Webフレームワーク プラグイン スキーマバリデーション TypeScript Express代替 Hono代替',
     accentColor: Color(0xFF2C8EBB),
     painPoints: [
       '無料(OSS)・Webフレームワーク特化・個人のライフ管理は別途必要',
@@ -62524,8 +62726,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'hono': const _CompetitorInfo(
     name: 'Hono',
     emoji: '🔥',
-    tagline: 'Hono・超高速エッジWebフレームワーク・Cloudflare Workers/Deno/Bun対応・TypeScript・軽量・JSXサポート・OSS・日本製で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Hono代替 超高速 エッジ Webフレームワーク Cloudflare Workers Deno Bun TypeScript 軽量 Express代替 Fastify代替',
+    tagline:
+        'Hono・超高速エッジWebフレームワーク・Cloudflare Workers/Deno/Bun対応・TypeScript・軽量・JSXサポート・OSS・日本製で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Hono代替 超高速 エッジ Webフレームワーク Cloudflare Workers Deno Bun TypeScript 軽量 Express代替 Fastify代替',
     accentColor: Color(0xFFE86A1E),
     painPoints: [
       '無料(OSS)・Webフレームワーク特化・個人のライフ管理は別途必要',
@@ -62558,8 +62762,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'nestjs': const _CompetitorInfo(
     name: 'NestJS',
     emoji: '🐈',
-    tagline: 'NestJS・TypeScript Node.jsフレームワーク・Angular風DI・デコレータ・モジュール・マイクロサービス・GraphQL・企業向けで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'NestJS代替 TypeScript Node.js フレームワーク Angular DI デコレータ モジュール マイクロサービス GraphQL Express代替',
+    tagline:
+        'NestJS・TypeScript Node.jsフレームワーク・Angular風DI・デコレータ・モジュール・マイクロサービス・GraphQL・企業向けで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'NestJS代替 TypeScript Node.js フレームワーク Angular DI デコレータ モジュール マイクロサービス GraphQL Express代替',
     accentColor: Color(0xFFE0234E),
     painPoints: [
       '無料(OSS)/有料(Platform)・Webフレームワーク特化・個人のライフ管理は別途必要',
@@ -62592,8 +62798,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'django': const _CompetitorInfo(
     name: 'Django',
     emoji: '🎸',
-    tagline: 'Django・Python Webフレームワーク・バッテリー同梱・ORM・管理画面・セキュリティ・REST API・業界標準・OSS・急速開発で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Django代替 Python Webフレームワーク バッテリー同梱 ORM 管理画面 セキュリティ REST API FastAPI代替 Flask代替',
+    tagline:
+        'Django・Python Webフレームワーク・バッテリー同梱・ORM・管理画面・セキュリティ・REST API・業界標準・OSS・急速開発で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Django代替 Python Webフレームワーク バッテリー同梱 ORM 管理画面 セキュリティ REST API FastAPI代替 Flask代替',
     accentColor: Color(0xFF092E20),
     painPoints: [
       '無料(OSS)・Webフレームワーク特化・個人のライフ管理は別途必要',
@@ -62626,8 +62834,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'flask': const _CompetitorInfo(
     name: 'Flask',
     emoji: '🍶',
-    tagline: 'Flask・Python マイクロWebフレームワーク・シンプル・拡張可能・Jinja2・Werkzeug・REST API・OSS・Django代替・学習コスト低で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Flask代替 Python マイクロWebフレームワーク シンプル 拡張可能 Jinja2 REST API Django代替 FastAPI代替',
+    tagline:
+        'Flask・Python マイクロWebフレームワーク・シンプル・拡張可能・Jinja2・Werkzeug・REST API・OSS・Django代替・学習コスト低で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Flask代替 Python マイクロWebフレームワーク シンプル 拡張可能 Jinja2 REST API Django代替 FastAPI代替',
     accentColor: Color(0xFF000000),
     painPoints: [
       '無料(OSS)・Webフレームワーク特化・個人のライフ管理は別途必要',
@@ -62660,8 +62870,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'rails': const _CompetitorInfo(
     name: 'Ruby on Rails',
     emoji: '💎',
-    tagline: 'Ruby on Rails・フルスタックWebフレームワーク・CoC・DRY・ActiveRecord・Generator・高速開発・OSS・スタートアップで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Ruby on Rails代替 フルスタック CoC DRY ActiveRecord 高速開発 スタートアップ Django代替 Laravel代替',
+    tagline:
+        'Ruby on Rails・フルスタックWebフレームワーク・CoC・DRY・ActiveRecord・Generator・高速開発・OSS・スタートアップで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Ruby on Rails代替 フルスタック CoC DRY ActiveRecord 高速開発 スタートアップ Django代替 Laravel代替',
     accentColor: Color(0xFFCC0000),
     painPoints: [
       '無料(OSS)・Webフレームワーク特化・個人のライフ管理は別途必要',
@@ -62694,8 +62906,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'laravel': const _CompetitorInfo(
     name: 'Laravel',
     emoji: '🎭',
-    tagline: 'Laravel・PHP Webフレームワーク・Eloquent ORM・Blade・Queue・スケジューラー・エコシステム・OSS・業界標準・Fortifyで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Laravel代替 PHP Webフレームワーク Eloquent ORM Blade Queue スケジューラー Rails代替 Symfony代替',
+    tagline:
+        'Laravel・PHP Webフレームワーク・Eloquent ORM・Blade・Queue・スケジューラー・エコシステム・OSS・業界標準・Fortifyで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Laravel代替 PHP Webフレームワーク Eloquent ORM Blade Queue スケジューラー Rails代替 Symfony代替',
     accentColor: Color(0xFFFF2D20),
     painPoints: [
       '無料(OSS)/有料(Vapor/Forge)・Webフレームワーク特化・個人のライフ管理は別途必要',
@@ -62728,8 +62942,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'spring-boot': const _CompetitorInfo(
     name: 'Spring Boot',
     emoji: '🍃',
-    tagline: 'Spring Boot・Java/Kotlin Webフレームワーク・自動設定・組み込みサーバー・エンタープライズ・マイクロサービス・Cloud Native・OSS・業界標準で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Spring Boot代替 Java Kotlin Webフレームワーク 自動設定 組み込みサーバー エンタープライズ マイクロサービス Quarkus代替 Micronaut代替',
+    tagline:
+        'Spring Boot・Java/Kotlin Webフレームワーク・自動設定・組み込みサーバー・エンタープライズ・マイクロサービス・Cloud Native・OSS・業界標準で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Spring Boot代替 Java Kotlin Webフレームワーク 自動設定 組み込みサーバー エンタープライズ マイクロサービス Quarkus代替 Micronaut代替',
     accentColor: Color(0xFF6DB33F),
     painPoints: [
       '無料(OSS)/有料(Commercial)・Java Webフレームワーク特化・個人のライフ管理は別途必要',
@@ -62762,7 +62978,8 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'gin': const _CompetitorInfo(
     name: 'Gin',
     emoji: '🍸',
-    tagline: 'Gin・Go言語Webフレームワーク・高速・軽量・ミドルウェア・ルーター・REST API・JSON・HTTPルーター最速級・OSS・Martini風で、なぜ「自分株式会社」を選ぶか。',
+    tagline:
+        'Gin・Go言語Webフレームワーク・高速・軽量・ミドルウェア・ルーター・REST API・JSON・HTTPルーター最速級・OSS・Martini風で、なぜ「自分株式会社」を選ぶか。',
     searchKeyword: 'Gin代替 Go言語 Webフレームワーク 高速 軽量 ミドルウェア REST API Fiber代替 Echo代替',
     accentColor: Color(0xFF00ADD8),
     painPoints: [
@@ -62796,8 +63013,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'fiber': const _CompetitorInfo(
     name: 'Fiber',
     emoji: '🔗',
-    tagline: 'Fiber・Go言語Webフレームワーク・Express風・fasthttp・超高速・低メモリ・ゼロアロケーション・REST API・OSS・Gin代替で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Fiber代替 Go言語 Webフレームワーク Express風 fasthttp 超高速 低メモリ REST API Gin代替 Echo代替',
+    tagline:
+        'Fiber・Go言語Webフレームワーク・Express風・fasthttp・超高速・低メモリ・ゼロアロケーション・REST API・OSS・Gin代替で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Fiber代替 Go言語 Webフレームワーク Express風 fasthttp 超高速 低メモリ REST API Gin代替 Echo代替',
     accentColor: Color(0xFF00ACD7),
     painPoints: [
       '無料(OSS)・Webフレームワーク特化・個人のライフ管理は別途必要',
@@ -62830,8 +63049,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'echo': const _CompetitorInfo(
     name: 'Echo',
     emoji: '📣',
-    tagline: 'Echo・Go言語Webフレームワーク・高パフォーマンス・ミニマリスト・ミドルウェア・WebSocket・HTTP/2・TLS・REST API・OSS・Gin代替で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Echo代替 Go言語 Webフレームワーク 高パフォーマンス ミニマリスト WebSocket REST API Gin代替 Fiber代替',
+    tagline:
+        'Echo・Go言語Webフレームワーク・高パフォーマンス・ミニマリスト・ミドルウェア・WebSocket・HTTP/2・TLS・REST API・OSS・Gin代替で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Echo代替 Go言語 Webフレームワーク 高パフォーマンス ミニマリスト WebSocket REST API Gin代替 Fiber代替',
     accentColor: Color(0xFF5463FF),
     painPoints: [
       '無料(OSS)・Webフレームワーク特化・個人のライフ管理は別途必要',
@@ -62864,8 +63085,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'actix': const _CompetitorInfo(
     name: 'Actix Web',
     emoji: '🦀',
-    tagline: 'Actix Web・Rust Webフレームワーク・アクターモデル・型安全・超高速・TechEmpower上位・OSS・メモリ安全・Axum代替で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Actix Web代替 Rust Webフレームワーク アクターモデル 型安全 超高速 メモリ安全 Axum代替 Warp代替',
+    tagline:
+        'Actix Web・Rust Webフレームワーク・アクターモデル・型安全・超高速・TechEmpower上位・OSS・メモリ安全・Axum代替で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Actix Web代替 Rust Webフレームワーク アクターモデル 型安全 超高速 メモリ安全 Axum代替 Warp代替',
     accentColor: Color(0xFFDEA584),
     painPoints: [
       '無料(OSS)・Webフレームワーク特化・個人のライフ管理は別途必要',
@@ -62898,8 +63121,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'axum': const _CompetitorInfo(
     name: 'Axum',
     emoji: '⚙️',
-    tagline: 'Axum・Rust Webフレームワーク・Tokio/Tower統合・型安全・非同期・モジュラー・ミドルウェア・OSS・Actix代替・Hyper基盤で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Axum代替 Rust Webフレームワーク Tokio Tower 型安全 非同期 モジュラー Actix代替 Warp代替',
+    tagline:
+        'Axum・Rust Webフレームワーク・Tokio/Tower統合・型安全・非同期・モジュラー・ミドルウェア・OSS・Actix代替・Hyper基盤で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Axum代替 Rust Webフレームワーク Tokio Tower 型安全 非同期 モジュラー Actix代替 Warp代替',
     accentColor: Color(0xFFCE422A),
     painPoints: [
       '無料(OSS)・Webフレームワーク特化・個人のライフ管理は別途必要',
@@ -62932,8 +63157,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'quarkus': const _CompetitorInfo(
     name: 'Quarkus',
     emoji: '⚛️',
-    tagline: 'Quarkus・Kubernetes Native Java・GraalVMネイティブ・超高速起動・低メモリ・Red Hat・CDI・RESTEasy・MicroProfile・Cloud Nativeで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Quarkus代替 Kubernetes Native Java GraalVM 超高速起動 低メモリ Cloud Native Spring Boot代替 Micronaut代替',
+    tagline:
+        'Quarkus・Kubernetes Native Java・GraalVMネイティブ・超高速起動・低メモリ・Red Hat・CDI・RESTEasy・MicroProfile・Cloud Nativeで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Quarkus代替 Kubernetes Native Java GraalVM 超高速起動 低メモリ Cloud Native Spring Boot代替 Micronaut代替',
     accentColor: Color(0xFF4695EB),
     painPoints: [
       '無料(OSS)/有料(Red Hat)・Javaフレームワーク特化・個人のライフ管理は別途必要',
@@ -62966,8 +63193,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'micronaut': const _CompetitorInfo(
     name: 'Micronaut',
     emoji: '🔬',
-    tagline: 'Micronaut・JVM マイクロサービスフレームワーク・コンパイル時DI・GraalVM対応・低メモリ・高速起動・Kotlin/Java/Groovy・Cloud Native・OSS・Spring代替で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Micronaut代替 JVM マイクロサービス コンパイル時DI GraalVM Cloud Native Kotlin Spring Boot代替 Quarkus代替',
+    tagline:
+        'Micronaut・JVM マイクロサービスフレームワーク・コンパイル時DI・GraalVM対応・低メモリ・高速起動・Kotlin/Java/Groovy・Cloud Native・OSS・Spring代替で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Micronaut代替 JVM マイクロサービス コンパイル時DI GraalVM Cloud Native Kotlin Spring Boot代替 Quarkus代替',
     accentColor: Color(0xFF2DA44E),
     painPoints: [
       '無料(OSS)・マイクロサービスフレームワーク特化・個人のライフ管理は別途必要',
@@ -63000,8 +63229,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'ktor': const _CompetitorInfo(
     name: 'Ktor',
     emoji: '🎯',
-    tagline: 'Ktor・Kotlin非同期Webフレームワーク・JetBrains製・コルーチン・軽量・マルチプラットフォーム・クライアント/サーバー統合・OSS・Spring代替で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Ktor代替 Kotlin 非同期 Webフレームワーク JetBrains コルーチン 軽量 マルチプラットフォーム Spring Boot代替',
+    tagline:
+        'Ktor・Kotlin非同期Webフレームワーク・JetBrains製・コルーチン・軽量・マルチプラットフォーム・クライアント/サーバー統合・OSS・Spring代替で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Ktor代替 Kotlin 非同期 Webフレームワーク JetBrains コルーチン 軽量 マルチプラットフォーム Spring Boot代替',
     accentColor: Color(0xFF7F52FF),
     painPoints: [
       '無料(OSS)・Kotlinフレームワーク特化・個人のライフ管理は別途必要',
@@ -63034,8 +63265,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'vertx': const _CompetitorInfo(
     name: 'Vert.x',
     emoji: '🔄',
-    tagline: 'Vert.x・Eclipse JVM リアクティブツールキット・イベントループ・非同期・マルチ言語(Java/Kotlin/JS/Python)・高スループット・マイクロサービス・OSS・Spring代替で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Vert.x代替 Eclipse JVM リアクティブ イベントループ 非同期 マイクロサービス 高スループット Spring Boot代替 Quarkus代替',
+    tagline:
+        'Vert.x・Eclipse JVM リアクティブツールキット・イベントループ・非同期・マルチ言語(Java/Kotlin/JS/Python)・高スループット・マイクロサービス・OSS・Spring代替で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Vert.x代替 Eclipse JVM リアクティブ イベントループ 非同期 マイクロサービス 高スループット Spring Boot代替 Quarkus代替',
     accentColor: Color(0xFF7B2FBE),
     painPoints: [
       '無料(OSS)・JVMツールキット特化・個人のライフ管理は別途必要',
@@ -63068,8 +63301,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'grpc': const _CompetitorInfo(
     name: 'gRPC',
     emoji: '🔌',
-    tagline: 'gRPC・Google製高性能RPC・Protocol Buffers・HTTP/2・双方向ストリーミング・多言語・マイクロサービス・型安全・OSS・REST代替で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'gRPC代替 Google RPC Protocol Buffers HTTP/2 ストリーミング マイクロサービス 型安全 REST代替 tRPC代替',
+    tagline:
+        'gRPC・Google製高性能RPC・Protocol Buffers・HTTP/2・双方向ストリーミング・多言語・マイクロサービス・型安全・OSS・REST代替で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'gRPC代替 Google RPC Protocol Buffers HTTP/2 ストリーミング マイクロサービス 型安全 REST代替 tRPC代替',
     accentColor: Color(0xFF244C5A),
     painPoints: [
       '無料(OSS)・RPC/通信プロトコル特化・個人のライフ管理は別途必要',
@@ -63102,8 +63337,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'graphql': const _CompetitorInfo(
     name: 'GraphQL',
     emoji: '🕸️',
-    tagline: 'GraphQL・Facebook製クエリ言語・型安全・スキーマファースト・オーバーフェッチ解消・単一エンドポイント・リアルタイムSubscription・REST代替・OSS・多言語対応で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'GraphQL代替 Facebook クエリ言語 型安全 スキーマファースト REST代替 Apollo Relay tRPC代替',
+    tagline:
+        'GraphQL・Facebook製クエリ言語・型安全・スキーマファースト・オーバーフェッチ解消・単一エンドポイント・リアルタイムSubscription・REST代替・OSS・多言語対応で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'GraphQL代替 Facebook クエリ言語 型安全 スキーマファースト REST代替 Apollo Relay tRPC代替',
     accentColor: Color(0xFFE10098),
     painPoints: [
       '無料(OSS)・クエリ言語/プロトコル特化・個人のライフ管理は別途必要',
@@ -63136,8 +63373,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'trpc': const _CompetitorInfo(
     name: 'tRPC',
     emoji: '🔐',
-    tagline: 'tRPC・TypeScript型安全RPC・ゼロスキーマ・コード生成不要・Next.js統合・React Query・エンドツーエンド型安全・OSS・GraphQL代替・REST代替で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'tRPC代替 TypeScript 型安全 RPC ゼロスキーマ Next.js React Query エンドツーエンド GraphQL代替 REST代替',
+    tagline:
+        'tRPC・TypeScript型安全RPC・ゼロスキーマ・コード生成不要・Next.js統合・React Query・エンドツーエンド型安全・OSS・GraphQL代替・REST代替で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'tRPC代替 TypeScript 型安全 RPC ゼロスキーマ Next.js React Query エンドツーエンド GraphQL代替 REST代替',
     accentColor: Color(0xFF398CCB),
     painPoints: [
       '無料(OSS)・TypeScript RPC特化・個人のライフ管理は別途必要',
@@ -63170,8 +63409,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'openapi': const _CompetitorInfo(
     name: 'OpenAPI',
     emoji: '📋',
-    tagline: 'OpenAPI・REST API仕様標準・Swagger・YAML/JSON定義・コード生成・ドキュメント自動生成・バリデーション・契約ファースト・OSS・業界標準で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'OpenAPI代替 REST API仕様 Swagger YAML JSON コード生成 ドキュメント自動生成 契約ファースト GraphQL代替',
+    tagline:
+        'OpenAPI・REST API仕様標準・Swagger・YAML/JSON定義・コード生成・ドキュメント自動生成・バリデーション・契約ファースト・OSS・業界標準で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'OpenAPI代替 REST API仕様 Swagger YAML JSON コード生成 ドキュメント自動生成 契約ファースト GraphQL代替',
     accentColor: Color(0xFF85EA2D),
     painPoints: [
       '無料(OSS)・API仕様標準特化・個人のライフ管理は別途必要',
@@ -63204,8 +63445,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'caddy': const _CompetitorInfo(
     name: 'Caddy',
     emoji: '🌐',
-    tagline: 'Caddy・自動HTTPS Webサーバー・Let\'s Encrypt自動取得・HTTP/3・リバースプロキシ・静的ファイル・設定簡単・Go製・OSS・nginx代替・Apache代替で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Caddy代替 自動HTTPS Webサーバー Let\'s Encrypt HTTP/3 リバースプロキシ nginx代替 Apache代替',
+    tagline:
+        'Caddy・自動HTTPS Webサーバー・Let\'s Encrypt自動取得・HTTP/3・リバースプロキシ・静的ファイル・設定簡単・Go製・OSS・nginx代替・Apache代替で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Caddy代替 自動HTTPS Webサーバー Let\'s Encrypt HTTP/3 リバースプロキシ nginx代替 Apache代替',
     accentColor: Color(0xFF00ADD8),
     painPoints: [
       '無料(OSS)/有料(Caddy商用)・Webサーバー特化・個人のライフ管理は別途必要',
@@ -63238,7 +63481,8 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'varnish': const _CompetitorInfo(
     name: 'Varnish Cache',
     emoji: '🚀',
-    tagline: 'Varnish Cache・高速HTTPキャッシュ・リバースプロキシ・VCL設定言語・CDN代替・ESI・メモリキャッシュ・Webアクセラレーター・OSS・大規模サイト向けで、なぜ「自分株式会社」を選ぶか。',
+    tagline:
+        'Varnish Cache・高速HTTPキャッシュ・リバースプロキシ・VCL設定言語・CDN代替・ESI・メモリキャッシュ・Webアクセラレーター・OSS・大規模サイト向けで、なぜ「自分株式会社」を選ぶか。',
     searchKeyword: 'Varnish代替 HTTPキャッシュ リバースプロキシ VCL CDN代替 Webアクセラレーター nginx代替',
     accentColor: Color(0xFF009BDE),
     painPoints: [
@@ -63272,8 +63516,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'apisix': const _CompetitorInfo(
     name: 'Apache APISIX',
     emoji: '🛤️',
-    tagline: 'Apache APISIX・クラウドネイティブAPIゲートウェイ・動的ルーティング・プラグイン・認証・レートリミット・WebSocket・gRPC・Etcd・OSS・Kong代替で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'APISIX代替 クラウドネイティブ APIゲートウェイ 動的ルーティング プラグイン 認証 Kong代替 Traefik代替',
+    tagline:
+        'Apache APISIX・クラウドネイティブAPIゲートウェイ・動的ルーティング・プラグイン・認証・レートリミット・WebSocket・gRPC・Etcd・OSS・Kong代替で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'APISIX代替 クラウドネイティブ APIゲートウェイ 動的ルーティング プラグイン 認証 Kong代替 Traefik代替',
     accentColor: Color(0xFFE8512A),
     painPoints: [
       '無料(OSS)・APIゲートウェイ特化・個人のライフ管理は別途必要',
@@ -63306,8 +63552,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'nginx-unit': const _CompetitorInfo(
     name: 'NGINX Unit',
     emoji: '⚡',
-    tagline: 'NGINX Unit・動的アプリケーションサーバー・多言語(Go/PHP/Python/Ruby/Node.js/Java)・動的設定・REST API制御・OSS・nginx製・モノリスからマイクロサービスへで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'NGINX Unit代替 動的アプリケーションサーバー 多言語 動的設定 REST API制御 nginx Apache代替',
+    tagline:
+        'NGINX Unit・動的アプリケーションサーバー・多言語(Go/PHP/Python/Ruby/Node.js/Java)・動的設定・REST API制御・OSS・nginx製・モノリスからマイクロサービスへで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'NGINX Unit代替 動的アプリケーションサーバー 多言語 動的設定 REST API制御 nginx Apache代替',
     accentColor: Color(0xFF009639),
     painPoints: [
       '無料(OSS)・アプリケーションサーバー特化・個人のライフ管理は別途必要',
@@ -63340,8 +63588,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'swagger': const _CompetitorInfo(
     name: 'Swagger',
     emoji: '📖',
-    tagline: 'Swagger・OpenAPI UIツール・REST API可視化・Swagger UI/Editor/Codegen・インタラクティブドキュメント・モックサーバー・OSS・SmartBear・OpenAPI前身で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Swagger代替 OpenAPI UIツール REST API可視化 インタラクティブドキュメント Swagger UI Editor Codegen Postman代替',
+    tagline:
+        'Swagger・OpenAPI UIツール・REST API可視化・Swagger UI/Editor/Codegen・インタラクティブドキュメント・モックサーバー・OSS・SmartBear・OpenAPI前身で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Swagger代替 OpenAPI UIツール REST API可視化 インタラクティブドキュメント Swagger UI Editor Codegen Postman代替',
     accentColor: Color(0xFF85EA2D),
     painPoints: [
       '無料(OSS)/有料(SwaggerHub)・API文書化ツール特化・個人のライフ管理は別途必要',
@@ -63374,8 +63624,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'kafka': const _CompetitorInfo(
     name: 'Apache Kafka',
     emoji: '📨',
-    tagline: 'Apache Kafka・分散イベントストリーミング・高スループット・耐障害性・リアルタイム・ログ集約・ストリーム処理・LinkedIn発・OSS・業界標準・RabbitMQ代替で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Apache Kafka代替 分散イベントストリーミング 高スループット リアルタイム ログ集約 RabbitMQ代替 Pulsar代替',
+    tagline:
+        'Apache Kafka・分散イベントストリーミング・高スループット・耐障害性・リアルタイム・ログ集約・ストリーム処理・LinkedIn発・OSS・業界標準・RabbitMQ代替で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Apache Kafka代替 分散イベントストリーミング 高スループット リアルタイム ログ集約 RabbitMQ代替 Pulsar代替',
     accentColor: Color(0xFF231F20),
     painPoints: [
       '無料(OSS)/有料(Confluent)・ストリーミング特化・個人のライフ管理は別途必要',
@@ -63408,8 +63660,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'pulsar': const _CompetitorInfo(
     name: 'Apache Pulsar',
     emoji: '⭐',
-    tagline: 'Apache Pulsar・マルチテナントメッセージング・ストリーミング・地理分散・階層型ストレージ・Kafka代替・Yahoo発・OSS・Functions・Connectors・低レイテンシで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Apache Pulsar代替 マルチテナント メッセージング ストリーミング 地理分散 Kafka代替 RabbitMQ代替',
+    tagline:
+        'Apache Pulsar・マルチテナントメッセージング・ストリーミング・地理分散・階層型ストレージ・Kafka代替・Yahoo発・OSS・Functions・Connectors・低レイテンシで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Apache Pulsar代替 マルチテナント メッセージング ストリーミング 地理分散 Kafka代替 RabbitMQ代替',
     accentColor: Color(0xFF188FFF),
     painPoints: [
       '無料(OSS)/有料(StreamNative)・メッセージング特化・個人のライフ管理は別途必要',
@@ -63442,8 +63696,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'activemq': const _CompetitorInfo(
     name: 'ActiveMQ',
     emoji: '📬',
-    tagline: 'ActiveMQ・Apache JMSブローカー・AMQP/STOMP/MQTT/OpenWire・Java/Spring統合・エンタープライズ・クラスタリング・OSS・RabbitMQ代替・Artemis後継で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'ActiveMQ代替 Apache JMS AMQP STOMP MQTT Java Spring エンタープライズ RabbitMQ代替 Kafka代替',
+    tagline:
+        'ActiveMQ・Apache JMSブローカー・AMQP/STOMP/MQTT/OpenWire・Java/Spring統合・エンタープライズ・クラスタリング・OSS・RabbitMQ代替・Artemis後継で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'ActiveMQ代替 Apache JMS AMQP STOMP MQTT Java Spring エンタープライズ RabbitMQ代替 Kafka代替',
     accentColor: Color(0xFF8A2BE2),
     painPoints: [
       '無料(OSS)・JMSブローカー特化・個人のライフ管理は別途必要',
@@ -63476,8 +63732,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'celery': const _CompetitorInfo(
     name: 'Celery',
     emoji: '🥬',
-    tagline: 'Celery・Python分散タスクキュー・非同期処理・スケジューラー・Redis/RabbitMQブローカー・リトライ・モニタリング・OSS・Django/Flask統合・バックグラウンドジョブで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Celery代替 Python 分散タスクキュー 非同期処理 スケジューラー Django Flask Redis バックグラウンドジョブ',
+    tagline:
+        'Celery・Python分散タスクキュー・非同期処理・スケジューラー・Redis/RabbitMQブローカー・リトライ・モニタリング・OSS・Django/Flask統合・バックグラウンドジョブで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Celery代替 Python 分散タスクキュー 非同期処理 スケジューラー Django Flask Redis バックグラウンドジョブ',
     accentColor: Color(0xFF37814A),
     painPoints: [
       '無料(OSS)・Python タスクキュー特化・個人のライフ管理は別途必要',
@@ -63510,8 +63768,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'bullmq': const _CompetitorInfo(
     name: 'BullMQ',
     emoji: '🐂',
-    tagline: 'BullMQ・Node.js Redisジョブキュー・優先度・遅延・リトライ・並行処理・スケジュール・フロー・Bull後継・TypeScript・OSS・Agenda代替で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'BullMQ代替 Node.js Redis ジョブキュー 優先度 遅延 リトライ TypeScript Bull後継 Agenda代替',
+    tagline:
+        'BullMQ・Node.js Redisジョブキュー・優先度・遅延・リトライ・並行処理・スケジュール・フロー・Bull後継・TypeScript・OSS・Agenda代替で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'BullMQ代替 Node.js Redis ジョブキュー 優先度 遅延 リトライ TypeScript Bull後継 Agenda代替',
     accentColor: Color(0xFFFF6B6B),
     painPoints: [
       '無料(OSS)・Node.jsジョブキュー特化・個人のライフ管理は別途必要',
@@ -63544,8 +63804,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'sqs': const _CompetitorInfo(
     name: 'Amazon SQS',
     emoji: '📩',
-    tagline: 'Amazon SQS・AWS マネージドメッセージキュー・フルマネージド・スケーラブル・標準/FIFOキュー・デッドレターキュー・SNS統合・サーバーレス対応・従量課金で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Amazon SQS代替 AWS マネージドメッセージキュー スケーラブル FIFO デッドレターキュー RabbitMQ代替 Kafka代替',
+    tagline:
+        'Amazon SQS・AWS マネージドメッセージキュー・フルマネージド・スケーラブル・標準/FIFOキュー・デッドレターキュー・SNS統合・サーバーレス対応・従量課金で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Amazon SQS代替 AWS マネージドメッセージキュー スケーラブル FIFO デッドレターキュー RabbitMQ代替 Kafka代替',
     accentColor: Color(0xFFFF9900),
     painPoints: [
       '従量課金・AWSエコシステム依存・個人のライフ管理は別途必要',
@@ -63578,8 +63840,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'zeromq': const _CompetitorInfo(
     name: 'ZeroMQ',
     emoji: '⚡',
-    tagline: 'ZeroMQ・高性能非同期メッセージングライブラリ・ブローカーレス・多パターン(pub-sub/push-pull/req-rep)・多言語・低レイテンシ・OSS・分散システム基盤で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'ZeroMQ代替 高性能 非同期メッセージング ブローカーレス pub-sub push-pull 分散システム RabbitMQ代替',
+    tagline:
+        'ZeroMQ・高性能非同期メッセージングライブラリ・ブローカーレス・多パターン(pub-sub/push-pull/req-rep)・多言語・低レイテンシ・OSS・分散システム基盤で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'ZeroMQ代替 高性能 非同期メッセージング ブローカーレス pub-sub push-pull 分散システム RabbitMQ代替',
     accentColor: Color(0xFFDF0000),
     painPoints: [
       '無料(OSS)・低レベルメッセージングライブラリ特化・個人のライフ管理は別途必要',
@@ -63612,8 +63876,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'redis-streams': const _CompetitorInfo(
     name: 'Redis Streams',
     emoji: '🌊',
-    tagline: 'Redis Streams・Redisネイティブストリーミング・消費者グループ・永続化・低レイテンシ・Kafka代替・インメモリ・AOF/RDB永続化・OSS・Redis Stack一部で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Redis Streams代替 Redisストリーミング 消費者グループ 低レイテンシ Kafka代替 インメモリ Pub/Sub代替',
+    tagline:
+        'Redis Streams・Redisネイティブストリーミング・消費者グループ・永続化・低レイテンシ・Kafka代替・インメモリ・AOF/RDB永続化・OSS・Redis Stack一部で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Redis Streams代替 Redisストリーミング 消費者グループ 低レイテンシ Kafka代替 インメモリ Pub/Sub代替',
     accentColor: Color(0xFFDC382D),
     painPoints: [
       '無料(OSS)/有料(Redis Cloud)・Redisストリーミング特化・個人のライフ管理は別途必要',
@@ -63646,8 +63912,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'temporal': const _CompetitorInfo(
     name: 'Temporal',
     emoji: '⏱️',
-    tagline: 'Temporal・耐障害性ワークフローエンジン・Cadence後継・コードファーストワークフロー・長期実行・リトライ・タイムアウト・可視性・多言語SDK・OSS・Airflow代替で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Temporal代替 耐障害性ワークフロー コードファースト 長期実行 リトライ Cadence後継 Airflow代替 Conductor代替',
+    tagline:
+        'Temporal・耐障害性ワークフローエンジン・Cadence後継・コードファーストワークフロー・長期実行・リトライ・タイムアウト・可視性・多言語SDK・OSS・Airflow代替で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Temporal代替 耐障害性ワークフロー コードファースト 長期実行 リトライ Cadence後継 Airflow代替 Conductor代替',
     accentColor: Color(0xFF141414),
     painPoints: [
       '無料(OSS)/有料(Temporal Cloud)・ワークフローエンジン特化・個人のライフ管理は別途必要',
@@ -63680,8 +63948,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'cdk': const _CompetitorInfo(
     name: 'AWS CDK',
     emoji: '🏗️',
-    tagline: 'AWS CDK・クラウド開発キット・TypeScript/Python/Java/Go でインフラ定義・CloudFormation生成・コンストラクトライブラリ・テスト可能・OSS・Pulumi代替で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'AWS CDK代替 クラウド開発キット TypeScript Python インフラ定義 CloudFormation Pulumi代替 Terraform代替',
+    tagline:
+        'AWS CDK・クラウド開発キット・TypeScript/Python/Java/Go でインフラ定義・CloudFormation生成・コンストラクトライブラリ・テスト可能・OSS・Pulumi代替で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'AWS CDK代替 クラウド開発キット TypeScript Python インフラ定義 CloudFormation Pulumi代替 Terraform代替',
     accentColor: Color(0xFFFF9900),
     painPoints: [
       '無料(OSS)・AWSインフラツール特化・個人のライフ管理は別途必要',
@@ -63714,8 +63984,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'helm': const _CompetitorInfo(
     name: 'Helm',
     emoji: '⛵',
-    tagline: 'Helm・Kubernetes パッケージマネージャー・チャート・テンプレート・バージョン管理・ロールバック・Chart.yaml・OSS・CNCF・Kustomize代替・k8sアプリデプロイ標準で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Helm代替 Kubernetes パッケージマネージャー チャート テンプレート Kustomize代替 ArgoCD統合',
+    tagline:
+        'Helm・Kubernetes パッケージマネージャー・チャート・テンプレート・バージョン管理・ロールバック・Chart.yaml・OSS・CNCF・Kustomize代替・k8sアプリデプロイ標準で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Helm代替 Kubernetes パッケージマネージャー チャート テンプレート Kustomize代替 ArgoCD統合',
     accentColor: Color(0xFF0F1689),
     painPoints: [
       '無料(OSS)・Kubernetesパッケージ特化・個人のライフ管理は別途必要',
@@ -63748,8 +64020,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'kustomize': const _CompetitorInfo(
     name: 'Kustomize',
     emoji: '🔧',
-    tagline: 'Kustomize・Kubernetes設定カスタマイズ・オーバーレイ・テンプレートなし・kubectl統合・パッチ・bases/overlays・OSS・CNCF・Helm代替・GitOpsで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Kustomize代替 Kubernetes設定カスタマイズ オーバーレイ テンプレートなし kubectl GitOps Helm代替',
+    tagline:
+        'Kustomize・Kubernetes設定カスタマイズ・オーバーレイ・テンプレートなし・kubectl統合・パッチ・bases/overlays・OSS・CNCF・Helm代替・GitOpsで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Kustomize代替 Kubernetes設定カスタマイズ オーバーレイ テンプレートなし kubectl GitOps Helm代替',
     accentColor: Color(0xFF326CE5),
     painPoints: [
       '無料(OSS)・Kubernetes設定管理特化・個人のライフ管理は別途必要',
@@ -63782,8 +64056,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'argo-cd': const _CompetitorInfo(
     name: 'Argo CD',
     emoji: '🚀',
-    tagline: 'Argo CD・Kubernetes GitOps CDツール・宣言的・Git-as-a-source-of-truth・自動同期・UIダッシュボード・RBAC・CNCF・OSS・Flux代替で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Argo CD代替 Kubernetes GitOps CD 宣言的 Git自動同期 UIダッシュボード Flux代替 Spinnaker代替',
+    tagline:
+        'Argo CD・Kubernetes GitOps CDツール・宣言的・Git-as-a-source-of-truth・自動同期・UIダッシュボード・RBAC・CNCF・OSS・Flux代替で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Argo CD代替 Kubernetes GitOps CD 宣言的 Git自動同期 UIダッシュボード Flux代替 Spinnaker代替',
     accentColor: Color(0xFFEF7B4D),
     painPoints: [
       '無料(OSS)・Kubernetes CDツール特化・個人のライフ管理は別途必要',
@@ -63816,8 +64092,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'packer-hashicorp-image': const _CompetitorInfo(
     name: 'Packer',
     emoji: '📦',
-    tagline: 'Packer・HashiCorp マシンイメージビルダー・AMI/Docker/VMware/GCE・コードでイメージ定義・マルチプロバイダー・並行ビルド・OSS・Vagrant連携・Terraform統合で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Packer代替 HashiCorp マシンイメージビルダー AMI Docker VMware マルチプロバイダー Vagrant Terraform統合',
+    tagline:
+        'Packer・HashiCorp マシンイメージビルダー・AMI/Docker/VMware/GCE・コードでイメージ定義・マルチプロバイダー・並行ビルド・OSS・Vagrant連携・Terraform統合で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Packer代替 HashiCorp マシンイメージビルダー AMI Docker VMware マルチプロバイダー Vagrant Terraform統合',
     accentColor: Color(0xFF1DAEFF),
     painPoints: [
       '無料(OSS)・イメージビルド特化・個人のライフ管理は別途必要',
@@ -63850,8 +64128,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'vagrant-hashicorp-vm': const _CompetitorInfo(
     name: 'Vagrant',
     emoji: '🏠',
-    tagline: 'Vagrant・HashiCorp 仮想マシン管理・Vagrantfile・開発環境再現・VirtualBox/VMware対応・プロビジョニング・OSS・Docker代替・チーム間環境統一で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Vagrant代替 HashiCorp 仮想マシン管理 開発環境再現 VirtualBox Docker代替 devcontainer代替',
+    tagline:
+        'Vagrant・HashiCorp 仮想マシン管理・Vagrantfile・開発環境再現・VirtualBox/VMware対応・プロビジョニング・OSS・Docker代替・チーム間環境統一で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Vagrant代替 HashiCorp 仮想マシン管理 開発環境再現 VirtualBox Docker代替 devcontainer代替',
     accentColor: Color(0xFF1563FF),
     painPoints: [
       '無料(OSS)・仮想マシン管理特化・個人のライフ管理は別途必要',
@@ -63884,8 +64164,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'skaffold': const _CompetitorInfo(
     name: 'Skaffold',
     emoji: '🔄',
-    tagline: 'Skaffold・Google製Kubernetes継続開発ツール・ビルド/デプロイ自動化・ホットリロード・CI/CD統合・Helm/Kustomize対応・OSS・Tilt代替・内部ループ最適化で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Skaffold代替 Google Kubernetes 継続開発 ビルドデプロイ自動化 ホットリロード Helm Kustomize Tilt代替',
+    tagline:
+        'Skaffold・Google製Kubernetes継続開発ツール・ビルド/デプロイ自動化・ホットリロード・CI/CD統合・Helm/Kustomize対応・OSS・Tilt代替・内部ループ最適化で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Skaffold代替 Google Kubernetes 継続開発 ビルドデプロイ自動化 ホットリロード Helm Kustomize Tilt代替',
     accentColor: Color(0xFF4285F4),
     painPoints: [
       '無料(OSS)・Kubernetes開発ツール特化・個人のライフ管理は別途必要',
@@ -63918,8 +64200,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'tilt': const _CompetitorInfo(
     name: 'Tilt',
     emoji: '🎮',
-    tagline: 'Tilt・ローカルKubernetes開発環境・Starlark設定・ライブアップデート・UIダッシュボード・マイクロサービス開発・OSS・Skaffold代替・快速内部ループで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Tilt代替 ローカルKubernetes開発 Starlark ライブアップデート UIダッシュボード マイクロサービス Skaffold代替',
+    tagline:
+        'Tilt・ローカルKubernetes開発環境・Starlark設定・ライブアップデート・UIダッシュボード・マイクロサービス開発・OSS・Skaffold代替・快速内部ループで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Tilt代替 ローカルKubernetes開発 Starlark ライブアップデート UIダッシュボード マイクロサービス Skaffold代替',
     accentColor: Color(0xFF20BA31),
     painPoints: [
       '無料(OSS)・ローカルKubernetes開発特化・個人のライフ管理は別途必要',
@@ -63952,8 +64236,10 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'terragrunt-opentofu-iac': const _CompetitorInfo(
     name: 'Terragrunt',
     emoji: '🌍',
-    tagline: 'Terragrunt・Terraform薄いラッパー・DRY・モジュール管理・リモートステート・依存関係・マルチアカウント・OSS・大規模Terraform管理・Gruntwork製で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Terragrunt代替 Terraform ラッパー DRY モジュール管理 リモートステート マルチアカウント Pulumi代替',
+    tagline:
+        'Terragrunt・Terraform薄いラッパー・DRY・モジュール管理・リモートステート・依存関係・マルチアカウント・OSS・大規模Terraform管理・Gruntwork製で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Terragrunt代替 Terraform ラッパー DRY モジュール管理 リモートステート マルチアカウント Pulumi代替',
     accentColor: Color(0xFF7B42BC),
     painPoints: [
       '無料(OSS)・Terraformラッパー特化・個人のライフ管理は別途必要',

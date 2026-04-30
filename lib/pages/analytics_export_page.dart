@@ -34,8 +34,14 @@ class _AnalyticsExportPageState extends State<AnalyticsExportPage> {
       _errorMessage = null;
     });
     try {
-      final optRes = await _supabase.functions.invoke('enterprise-hub', body: {'action': 'analytics.export_options'});
-      final histRes = await _supabase.functions.invoke('enterprise-hub', body: {'action': 'analytics.export_history'});
+      final optRes = await _supabase.functions.invoke(
+        'enterprise-hub',
+        body: {'action': 'analytics.export_options'},
+      );
+      final histRes = await _supabase.functions.invoke(
+        'enterprise-hub',
+        body: {'action': 'analytics.export_history'},
+      );
       final optData = optRes.data;
       final histData = histRes.data;
       setState(() {

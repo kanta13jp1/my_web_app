@@ -49,7 +49,8 @@ class _LeaveManagementPageState extends State<LeaveManagementPage> {
       final data = response.data;
       if (data is Map<String, dynamic> && data['requests'] is List) {
         setState(
-          () => _leaves = (data['requests'] as List).cast<Map<String, dynamic>>(),
+          () =>
+              _leaves = (data['requests'] as List).cast<Map<String, dynamic>>(),
         );
       } else {
         setState(() => _leaves = []);
