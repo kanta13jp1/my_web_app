@@ -488,6 +488,9 @@ class GrowthMissionService {
   static const _guestSessionIdKey = 'growth_guest_session_id';
   static const _pendingReferralCodeKey = 'growth_pending_referral_code';
   static const _referralAlphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  static const Duration _aggregateRefreshCooldown = Duration(minutes: 3);
+  static DateTime? _lastAggregateRefreshAt;
+  static Future<void>? _aggregateRefreshInFlight;
 
   // #551 Phase 1: guest→user 遷移時のみ guest_presence.delete を発火し
   // heartbeat ごとの無駄な DELETE を抑止する。
@@ -646,12 +649,40 @@ $inviteUrl
     }
   }
 
-  Future<void> refreshAggregateMetrics() async {
+  Future<void> refreshAggregateMetrics({bool force = false}) async {
     final client = _client;
     if (client == null) {
       return;
     }
 
+    final DateTime now = DateTime.now();
+    if (!force) {
+      final Future<void>? inFlight = _aggregateRefreshInFlight;
+      if (inFlight != null) {
+        await inFlight;
+        return;
+      }
+
+      final DateTime? lastRefreshedAt = _lastAggregateRefreshAt;
+      if (lastRefreshedAt != null &&
+          now.difference(lastRefreshedAt) < _aggregateRefreshCooldown) {
+        return;
+      }
+    }
+
+    final Future<void> refreshFuture = _runAggregateRefresh(client);
+    _aggregateRefreshInFlight = refreshFuture;
+    try {
+      await refreshFuture;
+      _lastAggregateRefreshAt = DateTime.now();
+    } finally {
+      if (identical(_aggregateRefreshInFlight, refreshFuture)) {
+        _aggregateRefreshInFlight = null;
+      }
+    }
+  }
+
+  Future<void> _runAggregateRefresh(SupabaseClient client) async {
     try {
       await client.rpc('cleanup_old_presence');
     } catch (error) {
