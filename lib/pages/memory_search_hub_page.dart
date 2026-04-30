@@ -112,6 +112,8 @@ class _MemorySearchHubPageState extends State<MemorySearchHubPage> {
                     itemBuilder: (context, i) {
                       final item = _results[i];
                       final score = item['score'] ?? item['bm25_score'] ?? 0.0;
+                      final metadata = item['metadata'];
+                      final source = metadata is Map ? metadata['source'] : item['source'];
                       return ListTile(
                         leading: CircleAvatar(
                           backgroundColor: const Color(0xFF6366F1).withAlpha(30),
@@ -130,7 +132,7 @@ class _MemorySearchHubPageState extends State<MemorySearchHubPage> {
                           overflow: TextOverflow.ellipsis,
                         ),
                         subtitle: Text(
-                          'スコア: ${(score as num).toStringAsFixed(3)}  |  ${item['metadata']?['source'] ?? item['source'] ?? ''}',
+                          'スコア: ${(score as num).toStringAsFixed(3)}  |  ${source ?? ''}',
                           style: const TextStyle(fontSize: 11),
                         ),
                       );

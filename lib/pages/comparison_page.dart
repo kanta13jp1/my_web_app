@@ -34785,7 +34785,7 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
-  'uptimerobot': const _CompetitorInfo(
+  'uptimerobot-monitoring': const _CompetitorInfo(
     name: 'UptimeRobot',
     emoji: '🤖',
     tagline: '無料稼働率監視・HTTP/PINGチェック・アラートで、なぜ「自分株式会社」を選ぶか。',
@@ -47202,7 +47202,7 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
-  'dependabot': const _CompetitorInfo(
+  'dependabot-security': const _CompetitorInfo(
     name: 'Dependabot',
     emoji: '🤖',
     tagline: 'GitHub公式依存関係自動更新・セキュリティアラート・PR自動作成・無料で、なぜ「自分株式会社」を選ぶか。',
@@ -51367,7 +51367,7 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
-  'renovate': const _CompetitorInfo(
+  'renovate-dependencies': const _CompetitorInfo(
     name: 'Renovate (Mend)',
     emoji: '🔄',
     tagline: 'OSS自動依存関係更新・PR自動生成・スケジュール制御・全言語対応・Dependabot代替で、なぜ「自分株式会社」を選ぶか。',
@@ -59090,8 +59090,8 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'traefik': const _CompetitorInfo(
     name: 'Traefik',
     emoji: '🔀',
-    tagline: 'Traefik・クラウドネイティブリバースプロキシ・自動設定・Let's Encrypt・Docker/K8s統合・OSS・エッジルーターで、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Traefik代替 クラウドネイティブ リバースプロキシ 自動設定 Let's Encrypt Docker Kubernetes エッジルーター nginx代替 HAProxy代替',
+    tagline: 'Traefik・クラウドネイティブリバースプロキシ・自動設定・Let\'s Encrypt・Docker/K8s統合・OSS・エッジルーターで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Traefik代替 クラウドネイティブ リバースプロキシ 自動設定 Let\'s Encrypt Docker Kubernetes エッジルーター nginx代替 HAProxy代替',
     accentColor: Color(0xFF24A1C1),
     painPoints: [
       '無料(OSS)/有料・インフラ特化・個人のライフ管理は別途必要',
@@ -59100,7 +59100,7 @@ final _competitorInfo = <String, _CompetitorInfo>{
     ],
     features: [
       _FeatureComparison(
-        feature: 'クラウドネイティブ・自動設定・Let's Encrypt・Docker/K8s統合',
+        feature: 'クラウドネイティブ・自動設定・Let\'s Encrypt・Docker/K8s統合',
         competitorHas: true,
         weHave: false,
       ),
@@ -60348,7 +60348,7 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'yarn-berry': const _CompetitorInfo(
     name: 'Yarn Berry',
     emoji: '🧶',
-    tagline: 'Yarn Berry (v2+)・プラグインPnP・ゼロインストール・制約エンジン・モノレポ・TypeScript製・OSS・Plug'n'Playで、なぜ「自分株式会社」を選ぶか。',
+    tagline: 'Yarn Berry (v2+)・プラグインPnP・ゼロインストール・制約エンジン・モノレポ・TypeScript製・OSS・Plug\'n\'Playで、なぜ「自分株式会社」を選ぶか。',
     searchKeyword: 'Yarn Berry代替 PnP プラグイン ゼロインストール 制約エンジン モノレポ TypeScript pnpm代替 npm代替',
     accentColor: Color(0xFF2C8EBB),
     painPoints: [
@@ -60855,7 +60855,7 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
-  'lambdatest': const _CompetitorInfo(
+  'lambdatest-crossbrowser': const _CompetitorInfo(
     name: 'LambdaTest',
     emoji: '🔬',
     tagline: 'LambdaTest・クロスブラウザテスト・3000+環境・HyperExecute・スマートビジュアルテスト・AI・BrowserStack代替・低コストで、なぜ「自分株式会社」を選ぶか。',
@@ -63204,8 +63204,8 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'caddy': const _CompetitorInfo(
     name: 'Caddy',
     emoji: '🌐',
-    tagline: 'Caddy・自動HTTPS Webサーバー・Let's Encrypt自動取得・HTTP/3・リバースプロキシ・静的ファイル・設定簡単・Go製・OSS・nginx代替・Apache代替で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword: 'Caddy代替 自動HTTPS Webサーバー Let's Encrypt HTTP/3 リバースプロキシ nginx代替 Apache代替',
+    tagline: 'Caddy・自動HTTPS Webサーバー・Let\'s Encrypt自動取得・HTTP/3・リバースプロキシ・静的ファイル・設定簡単・Go製・OSS・nginx代替・Apache代替で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Caddy代替 自動HTTPS Webサーバー Let\'s Encrypt HTTP/3 リバースプロキシ nginx代替 Apache代替',
     accentColor: Color(0xFF00ADD8),
     painPoints: [
       '無料(OSS)/有料(Caddy商用)・Webサーバー特化・個人のライフ管理は別途必要',
@@ -63214,7 +63214,7 @@ final _competitorInfo = <String, _CompetitorInfo>{
     ],
     features: [
       _FeatureComparison(
-        feature: '自動HTTPS・Let's Encrypt自動取得・HTTP/3・リバースプロキシ・設定簡単',
+        feature: '自動HTTPS・Let\'s Encrypt自動取得・HTTP/3・リバースプロキシ・設定簡単',
         competitorHas: true,
         weHave: false,
       ),
@@ -63813,7 +63813,7 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
-  'packer': const _CompetitorInfo(
+  'packer-image-build': const _CompetitorInfo(
     name: 'Packer',
     emoji: '📦',
     tagline: 'Packer・HashiCorp マシンイメージビルダー・AMI/Docker/VMware/GCE・コードでイメージ定義・マルチプロバイダー・並行ビルド・OSS・Vagrant連携・Terraform統合で、なぜ「自分株式会社」を選ぶか。',
@@ -63847,7 +63847,7 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
-  'vagrant': const _CompetitorInfo(
+  'vagrant-dev-env': const _CompetitorInfo(
     name: 'Vagrant',
     emoji: '🏠',
     tagline: 'Vagrant・HashiCorp 仮想マシン管理・Vagrantfile・開発環境再現・VirtualBox/VMware対応・プロビジョニング・OSS・Docker代替・チーム間環境統一で、なぜ「自分株式会社」を選ぶか。',
@@ -63949,7 +63949,7 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
-  'terragrunt': const _CompetitorInfo(
+  'terragrunt-terraform': const _CompetitorInfo(
     name: 'Terragrunt',
     emoji: '🌍',
     tagline: 'Terragrunt・Terraform薄いラッパー・DRY・モジュール管理・リモートステート・依存関係・マルチアカウント・OSS・大規模Terraform管理・Gruntwork製で、なぜ「自分株式会社」を選ぶか。',
