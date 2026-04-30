@@ -25179,3 +25179,16 @@ a9d7b1517 on main
 
 ### Philosophy Alignment
 #5 商品=ユーザー価値 (= 競合脅威を早期キャッチして対抗策を立案) / #6 資本=時間 (= 自動スケジュールで手動レポート工数ゼロ)
+
+### Rule 17 WF health check (2026-05-01 00:30 JST) — PS#1 S22
+- 全 WF success率: 26/30 runs (87%) — Migration Time-Relative CHECK が 1/4 failure (false positive)
+- 失敗 WF: `Migration Time-Relative CHECK Detector` — 20260501010000 part104 UPDATE wbs_tasks が false positive WARN → exit 1
+  - 修正: `scripts/check_migration_time_relative_check.py` に `-- nocheck: time-relative` exemption 追加 (commit f3b4e10ff)
+- orphan branch 整理: `codex/*` 17→11本 (merged PR 6本削除: codex1 hedra/comparison/migration 系)
+  - 残留 codex/* 11本: codex2-mcp-auth-jwks(#1031 conflict) / codex2-platform-memory(#1008 conflict) / codex1-x-post-diagnostics(#863 conflict) / fix-wbs-issue-sync(#848 conflict) / codex2-wbs-part104-guard-fix(#1466 open) / codex1-wbs-automation-drain(5ahead) / vscode-ui-rollout(3ahead) / collision-fix 2本(0 collision現在) / codex1-wip / codex2-wip
+- CI #1465 クローズ: deploy-prod migration failure (wbs_tasks_instance_check / codex2 instance 違反) → Codex#2 PR #1464 fix merge で解消
+- migration collision: 0件 (1602 migrations unique)
+- timeout-minutes / concurrency: 異常なし (deploy-prod cancel-in-progress: false 確認済)
+
+### Philosophy Alignment
+#6 資本=時間 (= CI 自動修復・false positive 排除でデプロイ品質維持) / #5 商品=ユーザー価値 (= prod deploy 100% 成功が前提)
