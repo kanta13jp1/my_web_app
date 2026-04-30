@@ -2297,6 +2297,11 @@ function enrichHorsePredictionForClient(
   };
 }
 
+function hasExistingHorsePrediction(predictions: unknown): boolean {
+  if (Array.isArray(predictions)) return predictions.length > 0;
+  return Boolean(predictions && typeof predictions === "object");
+}
+
 function enrichHorseRaceForClient(race: Record<string, unknown>): Record<string, unknown> {
   const normalizedRace = {
     ...race,
@@ -2791,10 +2796,7 @@ serve(async (req) => {
           if (!races || races.length === 0) return json({ success: true, predictions: [], message: "本日のレースなし" });
           const allUnpredicted = force
             ? races
-            : races.filter((r) => {
-              const predictions = (r as { horse_predictions?: unknown }).horse_predictions;
-              return !Array.isArray(predictions) || predictions.length === 0;
-            });
+            : races.filter((r) => !hasExistingHorsePrediction((r as { horse_predictions?: unknown }).horse_predictions));
           if (allUnpredicted.length === 0) return json({ success: true, predictions: [], message: "全レース予想済" });
           // Windows版#94b: EF 150s timeout 対策として 1 回あたり最大 limit 件まで処理
           // (4 providers × 長レースで 120s urllib timeout に到達するため)
