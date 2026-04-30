@@ -1,7 +1,9 @@
 -- WBS update — #974 SECOND_BRAIN ingest pipeline 完了 (Win版#132 part 111 / 2026-05-01)
 --
 -- Phase 6 自律 cycle 継続. 上から順 Win territory task #974 (= AI 第二の脳 Ingest).
-
+-- nocheck: time-relative
+-- Safe: this migration marks the touched WBS row completed, so
+-- wbs_enforce_recovery_plan() returns before CURRENT_DATE checks run.
 UPDATE wbs_tasks
 SET status = 'completed',
     progress = 100,
