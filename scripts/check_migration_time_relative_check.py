@@ -48,19 +48,34 @@ TRIGGER_ATTACH_RE = re.compile(
 )
 EXEC_FUNC_RE = re.compile(r"EXECUTE\s+(?:FUNCTION|PROCEDURE)\s+(\w+)", re.IGNORECASE)
 UPDATE_RE = re.compile(r"\bUPDATE\s+(\w+)\b", re.IGNORECASE)
+# Detect trigger early-return: IF NEW.status = 'completed' THEN RETURN NEW
+TRIGGER_EARLY_RETURN_RE = re.compile(
+    r"IF\s+NEW\s*\.\s*status\s*=\s*'completed'\s+THEN\s+RETURN\s+NEW",
+    re.IGNORECASE,
+)
+# Detect UPDATE SET status = 'completed' (trailing \b omitted: quote is not \w)
+SET_COMPLETED_RE = re.compile(r"\bstatus\s*=\s*'completed'", re.IGNORECASE)
 
 
-def get_time_enforcement_tables() -> tuple[set[str], set[str]]:
-    """Return (defining_files, sensitive_tables)."""
+def get_time_enforcement_tables() -> tuple[set[str], set[str], set[str]]:
+    """Return (defining_files, sensitive_tables, completed_safe_tables).
+
+    completed_safe_tables: tables whose trigger function has an early-return
+    for status='completed', making SET status='completed' UPDATEs always safe.
+    """
     time_funcs: set[str] = set()
+    early_return_funcs: set[str] = set()
     table_to_funcs: dict[str, set[str]] = {}
     defining_files: set[str] = set()
 
     for sql_file in MIGRATIONS_DIR.glob("*.sql"):
         content = sql_file.read_text(encoding="utf-8", errors="replace")
         for m in FUNC_DEF_RE.finditer(content):
-            if TIME_IN_BODY_RE.search(m.group(2)):
+            body = m.group(2)
+            if TIME_IN_BODY_RE.search(body):
                 time_funcs.add(m.group(1).lower())
+            if TRIGGER_EARLY_RETURN_RE.search(body):
+                early_return_funcs.add(m.group(1).lower())
         for tm in TRIGGER_ATTACH_RE.finditer(content):
             table = tm.group(1).lower()
             rest = content[tm.start():tm.start() + 600]
@@ -70,7 +85,8 @@ def get_time_enforcement_tables() -> tuple[set[str], set[str]]:
                 defining_files.add(sql_file.name)
 
     sensitive = {t for t, fns in table_to_funcs.items() if fns & time_funcs}
-    return defining_files, sensitive
+    completed_safe = {t for t, fns in table_to_funcs.items() if fns & early_return_funcs}
+    return defining_files, sensitive, completed_safe
 
 
 def get_new_migration_files() -> list[Path]:
@@ -110,7 +126,7 @@ def main() -> int:
         return 1
 
     total = len(list(MIGRATIONS_DIR.glob("*.sql")))
-    defining_files, sensitive = get_time_enforcement_tables()
+    defining_files, sensitive, completed_safe = get_time_enforcement_tables()
 
     if not sensitive:
         print(f"scanned {total} migration files — no time-relative enforcement triggers found")
@@ -136,9 +152,18 @@ def main() -> int:
             print(f"  skip: {sql_file.name} (-- nocheck: time-relative)")
             continue
         for m in UPDATE_RE.finditer(content):
-            if m.group(1).lower() in sensitive:
-                risky.append({"file": sql_file.name, "table": m.group(1).lower()})
-                break
+            table = m.group(1).lower()
+            if table not in sensitive:
+                continue
+            # Safe if trigger short-circuits for completed status and this UPDATE sets it
+            if table in completed_safe:
+                stmt_end = content.find(';', m.start())
+                stmt = content[m.start():stmt_end + 1] if stmt_end != -1 else content[m.start():]
+                if SET_COMPLETED_RE.search(stmt):
+                    print(f"  skip: {sql_file.name} (UPDATE {table} SET status='completed' — trigger short-circuits)")
+                    break
+            risky.append({"file": sql_file.name, "table": table})
+            break
 
     if not risky:
         print("clean — no new migration UPDATEs a time-constrained table")
