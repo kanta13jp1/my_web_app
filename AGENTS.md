@@ -15,6 +15,10 @@ python scripts/ai_tool_watch.py --print-only
 
 Use the report to route new Claude Code or Codex capabilities into WBS, issues,
 GitHub Actions, hooks, or review automation.
+For NotebookLM-driven sessions, treat notebook
+`bc58b50b-5fc4-4840-9a62-b397d6d3b65a` as the current harness-engineering
+reference: Claude Code designs the environment, Codex executes scoped changes,
+and GitHub Actions proves the result.
 
 ## Role Split
 
@@ -23,7 +27,7 @@ GitHub Actions, hooks, or review automation.
 - Codex #2 owns CI, synchronization, operations, Edge Functions, GitHub Actions,
   and deterministic automation.
 
-## Codex #2 Defaults
+## Codex Defaults
 
 - Work from a scoped branch and keep unrelated user changes intact.
 - Prefer deterministic checks over agent claims: `flutter analyze`,
@@ -34,3 +38,11 @@ GitHub Actions, hooks, or review automation.
 - When an official Claude Code or Codex changelog mentions hooks, schedules,
   models, in-app browser, worktrees, MCP, or cost controls, connect it to the
   nearest existing issue before creating a new one.
+- Codex #1 should take broad but bounded work from the WBS top list:
+  migrations, data import/export, UI verification, stale automation audits, and
+  clean fix PRs from a fresh worktree.
+- Codex #2 should take red CI, deploy unblockers, workflow drift, Edge Function
+  failures, and GitHub/Notion/Slack synchronization issues.
+- If a task needs product judgment, cross-instance arbitration, or NotebookLM
+  synthesis before code can be safely changed, route it back to Claude Code and
+  leave a short handoff note.

@@ -10,6 +10,9 @@ Claude Code and Codex changes.
 - Workflow keywords that affect this repo: hooks, schedules, GitHub Actions,
   Automations, in-app browser, models, worktrees, MCP, cost controls, CI, and
   review gates.
+- NotebookLM harness notebook
+  `bc58b50b-5fc4-4840-9a62-b397d6d3b65a`, used as the Master Brain routing
+  reference for Claude Code 10 instances plus Codex 2 instances.
 
 ## How To Run
 
@@ -34,8 +37,11 @@ started manually. It updates the report/state files and comments on issue
 - Claude Code hooks, SessionStart, PostToolUse, Stop, or ultrareview changes
   route to Claude Code quality-gate work.
 - Codex model, browser, computer-use, worktree, or subagent changes route to
-  Codex execution and UI verification work.
+  Codex #1 execution and UI verification work unless the item is CI/deploy
+  related.
 - Schedule, GitHub Actions, and automation changes route to WBS/CI/deploy
-  automation.
+  automation, normally owned by Codex #2.
 - MCP, connector, Slack, and integration changes route to connector reliability
   and NotebookLM knowledge capture.
+- Repeated manual WBS work becomes a candidate for a scheduled task, hook, or
+  GitHub Actions gate.
