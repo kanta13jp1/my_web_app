@@ -1,17 +1,12 @@
 # AI Tool Watch Report
 
-- Checked at: `2026-04-30T05:24:14Z`
-- Previous check: `first run`
-- Changed/new official sources: `6`
+- Checked at: `2026-04-30T09:32:14Z`
+- Previous check: `2026-04-30T05:24:14Z`
+- Changed/new official sources: `1`
 - Active routing groups: `codex-runtime, hooks, integration, quality-cost, schedule`
 
 ## Session Start Summary
-- `new` Claude Code changelog: 2.1.123 / April 29, 2026
-- `new` Claude Code hooks reference: Hooks reference - Claude Code Docs Skip to main content Claude Code Docs home page English
-- `new` Claude Code GitHub Actions: Claude Code GitHub Actions - Claude Code Docs Skip to main content Claude Code Docs home pa
-- `new` Codex changelog: 2026-04-23 / GPT-5.5 and Codex app updates GPT-5.5 is now available in Codex as OpenAI
-- `new` Codex use cases: Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoint
-- `new` Codex overview: AI Coding Partner from OpenAI
+- `changed` Codex changelog: 2026-04-24 / Codex CLI 0.125.0 pre
 
 ## Recommended Actions
 - **codex-runtime** (#1422, #1377, #1375, #1408): Route to Codex execution: use newer models for broad refactors, in-app browser for UI verification, and worktrees for parallel fixes.
@@ -41,10 +36,10 @@
   - Short signal: Navigation Code review & CI/CD Claude Code GitHub Actions Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting...
 - **Codex changelog** (HTTP 200)
   - URL: https://developers.openai.com/codex/changelog
-  - Latest signal: 2026-04-23 / GPT-5.5 and Codex app updates GPT-5.5 is now available in Codex as OpenAI
+  - Latest signal: 2026-04-24 / Codex CLI 0.125.0 pre
   - Keyword groups: hooks, schedule, codex-runtime, integration, quality-cost
   - Short signal: Changelog – Codex | OpenAI Developers Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and...
-  - Short signal: GPT-5.5 in Codex GPT-5.5 is the recommended choice for most Codex tasks when it appears in your model picker.
+  - Short signal: ( #18917 , #19074 ) Permission profiles now round-trip across TUI sessions, user turns, MCP sandbox state, shell escalation, and app-server APIs.
 - **Codex use cases** (HTTP 200)
   - URL: https://developers.openai.com/codex/use-cases/
   - Latest signal: Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoint
@@ -59,8 +54,18 @@
   - Short signal: With built-in worktrees and cloud environments, agents work in parallel across projects, completing weeks of work in days.
 
 ## NotebookLM Harness Mapping
-- Claude Code remains the design, review, and quality-gate owner.
-- Codex remains the implementation, CI repair, test generation, and worktree execution owner.
-- GitHub Actions is the deterministic harness: reports are useful only when they flow into checks, issues, or PRs.
+- Source notebook: `Codex vs Claude Code: The Ultimate AI Development Synergy` (`bc58b50b-5fc4-4840-9a62-b397d6d3b65a`)
+- **Claude Code**: Owns problem framing, architecture, review gates, and hook design.
+- **Codex #1**: Owns cross-cutting implementation, SQL/migration review, UI/browser QA, and scoped fix PRs.
+- **Codex #2**: Owns CI repair, synchronization, Edge Functions, GitHub Actions, and deterministic automation.
+- **GitHub Actions**: Owns reproducible proof: lint, tests, deploy checks, stale-audit jobs, and report artifacts.
+- **NotebookLM**: Acts as external memory and Master Brain; it informs routing but does not replace repository checks.
+- Practical rule: every detected tool change must become a WBS route, GitHub issue, hook, workflow check, or PR; notes alone are not complete.
+
+## 12-Instance Routing Reminder
+- Claude Code instances take ambiguous design and cross-instance coordination.
+- Codex #1 takes mechanical implementation and broad repo scans that need a clean worktree.
+- Codex #2 takes failing checks, deploy unblockers, and sync/automation drift.
+- Rebalance owners when the WBS top-20 contains repeated manual work, repeated CI failures, or stale handoffs.
 
 <!-- generated-by: scripts/ai_tool_watch.py -->
