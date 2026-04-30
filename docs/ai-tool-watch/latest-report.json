@@ -11,7 +11,7 @@
       "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "b1443c19a51261b7732bcc906c7562b166ac367561819fc9fcd981796c1282c8",
+      "hash": "e6b8caa96e7dbaf69af5c8952d8c5057325bfcc819facf67f56013635b2bbf10",
       "keyword_groups": {
         "codex-runtime": [
           "GPT-5.5",
@@ -56,21 +56,89 @@
           "workflow"
         ]
       },
-      "latest_signal": "2026-04-24 / Codex CLI 0.125.0 pre",
+      "latest_signal": "2026-04-30 / Codex CLI 0.128.0 pre",
       "name": "Codex changelog",
       "owner": "Codex",
-      "previous_hash": "3526c938bee4cdef1556f321f1a5458ff7397ce14f634aab9fb5121f5f858f4b",
+      "previous_hash": "b1443c19a51261b7732bcc906c7562b166ac367561819fc9fcd981796c1282c8",
       "slug": "codex-changelog",
       "snippets": [
         "Changelog – Codex | OpenAI Developers Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and...",
-        "( #18917 , #19074 ) Permission profiles now round-trip across TUI sessions, user turns, MCP sandbox state, shell escalation, and app-server APIs.",
-        "( #19308 ) Rollout tracing now records tool, code-mode, session, and multi-agent relationships, with a debug reducer command for inspection."
+        "( #19933 , #18593 , #19901 , #18372 , #19917 ) Expanded permission profiles with built-in defaults, sandbox CLI profile selection, cwd controls, and active-profile metadata for...",
+        "( #19900 , #20117 , #20118 , #20095 ) Improved plugin workflows with marketplace installation, remote bundle caching, remote uninstall, plugin-bundled hooks, hook enablement..."
       ],
       "status": 200,
       "url": "https://developers.openai.com/codex/changelog"
+    },
+    {
+      "changed": true,
+      "error": null,
+      "first_seen": false,
+      "hash": "48e0aca5d67ddbaaa9d17a5674474c7e398da0017c542aefa6bc6beff8e42846",
+      "keyword_groups": {
+        "codex-runtime": [
+          "GPT-5.5",
+          "GPT-5.4",
+          "in-app browser",
+          "computer use",
+          "worktree",
+          "subagents"
+        ],
+        "hooks": [
+          "hook",
+          "hooks"
+        ],
+        "integration": [
+          "MCP",
+          "connector",
+          "Slack",
+          "Linear",
+          "GitHub",
+          "IDE extension"
+        ],
+        "quality-cost": [
+          "cost",
+          "rate limit",
+          "sandbox",
+          "permission",
+          "review",
+          "CI"
+        ],
+        "schedule": [
+          "automation",
+          "automations",
+          "workflow"
+        ]
+      },
+      "latest_signal": "Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoint",
+      "name": "Codex use cases",
+      "owner": "Codex",
+      "previous_hash": "656583465d76aa96abea31c7027047089ab58e7235147ead2d2441af8ffce51a",
+      "slug": "codex-use-cases",
+      "snippets": [
+        "Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and product docs for Codex...",
+        "Web development Turn design inputs into responsive UI, and iterate on the frontend with scoped changes and fast reviews.",
+        "Featured Start with the most common Codex workflows."
+      ],
+      "status": 200,
+      "url": "https://developers.openai.com/codex/use-cases/"
+    },
+    {
+      "changed": true,
+      "error": "HTTP 403",
+      "first_seen": false,
+      "hash": "",
+      "keyword_groups": {},
+      "latest_signal": "No title detected",
+      "name": "Codex overview",
+      "owner": "Codex",
+      "previous_hash": "0ec1bde0f7b497e4d8f9319b97beef3fe8fcbc9446413f73861fce9def4c1e2e",
+      "slug": "codex-overview",
+      "snippets": [],
+      "status": 403,
+      "url": "https://openai.com/codex/"
     }
   ],
-  "checked_at": "2026-04-30T09:32:14Z",
+  "checked_at": "2026-04-30T21:37:54Z",
   "high_priority_groups": [
     "codex-runtime",
     "hooks",
@@ -122,7 +190,7 @@
     }
   },
   "issue": "1422",
-  "previous_checked_at": "2026-04-30T05:24:14Z",
+  "previous_checked_at": "2026-04-30T09:32:14Z",
   "sources": [
     {
       "changed": false,
@@ -285,7 +353,7 @@
       "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "b1443c19a51261b7732bcc906c7562b166ac367561819fc9fcd981796c1282c8",
+      "hash": "e6b8caa96e7dbaf69af5c8952d8c5057325bfcc819facf67f56013635b2bbf10",
       "keyword_groups": {
         "codex-runtime": [
           "GPT-5.5",
@@ -330,24 +398,24 @@
           "workflow"
         ]
       },
-      "latest_signal": "2026-04-24 / Codex CLI 0.125.0 pre",
+      "latest_signal": "2026-04-30 / Codex CLI 0.128.0 pre",
       "name": "Codex changelog",
       "owner": "Codex",
-      "previous_hash": "3526c938bee4cdef1556f321f1a5458ff7397ce14f634aab9fb5121f5f858f4b",
+      "previous_hash": "b1443c19a51261b7732bcc906c7562b166ac367561819fc9fcd981796c1282c8",
       "slug": "codex-changelog",
       "snippets": [
         "Changelog – Codex | OpenAI Developers Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and...",
-        "( #18917 , #19074 ) Permission profiles now round-trip across TUI sessions, user turns, MCP sandbox state, shell escalation, and app-server APIs.",
-        "( #19308 ) Rollout tracing now records tool, code-mode, session, and multi-agent relationships, with a debug reducer command for inspection."
+        "( #19933 , #18593 , #19901 , #18372 , #19917 ) Expanded permission profiles with built-in defaults, sandbox CLI profile selection, cwd controls, and active-profile metadata for...",
+        "( #19900 , #20117 , #20118 , #20095 ) Improved plugin workflows with marketplace installation, remote bundle caching, remote uninstall, plugin-bundled hooks, hook enablement..."
       ],
       "status": 200,
       "url": "https://developers.openai.com/codex/changelog"
     },
     {
-      "changed": false,
+      "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "656583465d76aa96abea31c7027047089ab58e7235147ead2d2441af8ffce51a",
+      "hash": "48e0aca5d67ddbaaa9d17a5674474c7e398da0017c542aefa6bc6beff8e42846",
       "keyword_groups": {
         "codex-runtime": [
           "GPT-5.5",
@@ -397,38 +465,18 @@
       "url": "https://developers.openai.com/codex/use-cases/"
     },
     {
-      "changed": false,
-      "error": null,
+      "changed": true,
+      "error": "HTTP 403",
       "first_seen": false,
-      "hash": "0ec1bde0f7b497e4d8f9319b97beef3fe8fcbc9446413f73861fce9def4c1e2e",
-      "keyword_groups": {
-        "codex-runtime": [
-          "GPT-5.5",
-          "GPT-5.4",
-          "worktree"
-        ],
-        "quality-cost": [
-          "review",
-          "CI"
-        ],
-        "schedule": [
-          "automation",
-          "automations",
-          "schedule",
-          "workflow"
-        ]
-      },
-      "latest_signal": "AI Coding Partner from OpenAI",
+      "hash": "",
+      "keyword_groups": {},
+      "latest_signal": "No title detected",
       "name": "Codex overview",
       "owner": "Codex",
       "previous_hash": "0ec1bde0f7b497e4d8f9319b97beef3fe8fcbc9446413f73861fce9def4c1e2e",
       "slug": "codex-overview",
-      "snippets": [
-        "Designed for multi-agent workflows The Codex app is a command center for agentic coding.",
-        "With built-in worktrees and cloud environments, agents work in parallel across projects, completing weeks of work in days.",
-        "Made for always-on background work With Automations, Codex works unprompted, picking up routine but important work like issue triage, alert monitoring, CI/CD, and more, so you..."
-      ],
-      "status": 200,
+      "snippets": [],
+      "status": 403,
       "url": "https://openai.com/codex/"
     }
   ]

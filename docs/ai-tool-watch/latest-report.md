@@ -1,12 +1,14 @@
 # AI Tool Watch Report
 
-- Checked at: `2026-04-30T09:32:14Z`
-- Previous check: `2026-04-30T05:24:14Z`
-- Changed/new official sources: `1`
+- Checked at: `2026-04-30T21:37:54Z`
+- Previous check: `2026-04-30T09:32:14Z`
+- Changed/new official sources: `3`
 - Active routing groups: `codex-runtime, hooks, integration, quality-cost, schedule`
 
 ## Session Start Summary
-- `changed` Codex changelog: 2026-04-24 / Codex CLI 0.125.0 pre
+- `changed` Codex changelog: 2026-04-30 / Codex CLI 0.128.0 pre
+- `changed` Codex use cases: Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoint
+- `changed` Codex overview: No title detected
 
 ## Recommended Actions
 - **codex-runtime** (#1422, #1377, #1375, #1408): Route to Codex execution: use newer models for broad refactors, in-app browser for UI verification, and worktrees for parallel fixes.
@@ -36,22 +38,20 @@
   - Short signal: Navigation Code review & CI/CD Claude Code GitHub Actions Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting...
 - **Codex changelog** (HTTP 200)
   - URL: https://developers.openai.com/codex/changelog
-  - Latest signal: 2026-04-24 / Codex CLI 0.125.0 pre
+  - Latest signal: 2026-04-30 / Codex CLI 0.128.0 pre
   - Keyword groups: hooks, schedule, codex-runtime, integration, quality-cost
   - Short signal: Changelog – Codex | OpenAI Developers Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and...
-  - Short signal: ( #18917 , #19074 ) Permission profiles now round-trip across TUI sessions, user turns, MCP sandbox state, shell escalation, and app-server APIs.
+  - Short signal: ( #19933 , #18593 , #19901 , #18372 , #19917 ) Expanded permission profiles with built-in defaults, sandbox CLI profile selection, cwd controls, and active-profile metadata for...
 - **Codex use cases** (HTTP 200)
   - URL: https://developers.openai.com/codex/use-cases/
   - Latest signal: Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoint
   - Keyword groups: hooks, schedule, codex-runtime, integration, quality-cost
   - Short signal: Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and product docs for Codex...
   - Short signal: Web development Turn design inputs into responsive UI, and iterate on the frontend with scoped changes and fast reviews.
-- **Codex overview** (HTTP 200)
+- **Codex overview** (HTTP 403)
   - URL: https://openai.com/codex/
-  - Latest signal: AI Coding Partner from OpenAI
-  - Keyword groups: schedule, codex-runtime, quality-cost
-  - Short signal: Designed for multi-agent workflows The Codex app is a command center for agentic coding.
-  - Short signal: With built-in worktrees and cloud environments, agents work in parallel across projects, completing weeks of work in days.
+  - Latest signal: No title detected
+  - Keyword groups: none
 
 ## NotebookLM Harness Mapping
 - Source notebook: `Codex vs Claude Code: The Ultimate AI Development Synergy` (`bc58b50b-5fc4-4840-9a62-b397d6d3b65a`)
