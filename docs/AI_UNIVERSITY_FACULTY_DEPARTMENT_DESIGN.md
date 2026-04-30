@@ -32,7 +32,7 @@
 
 = 「物理大学の組織 (= 学部 → 学科 → 講座 → 講義回)」と相似形にして、**学習者の cognitive map** に直感的に符合させる.
 
-### 初期 学部/学科 構成 (= 6 学部 / 29 学科 / part 94 で SWE 学部追加)
+### 初期 学部/学科 構成 (= 8 学部 / 39 学科 / part 95 で OS + モバイル学部追加)
 
 #### 1. AI 学部 (faculty_code: `ai`)
 
@@ -83,6 +83,30 @@
 | `paper` | 研究論文学科 | Transformer / RLHF / Diffusion / arxiv 主要論文 |
 | `lab` | 研究機関学科 | OpenAI Research / Anthropic Research / Stanford / MIT |
 
+#### 7. OS 学部 (faculty_code: `os`) ← **新規 / part 95 追加 / sort_order 5**
+
+User 要望「Windows / macOS / Linux 等の OS も学べる content」を受けて新設.
+
+| 学科 code | 学科名 | 含む provider / topic 例 |
+| --- | --- | --- |
+| `windows` | Windows 学科 | Windows 11 / Server / WSL / PowerShell / Active Directory / Hyper-V / .NET |
+| `macos` | macOS 学科 | macOS Sequoia / Sonoma / iCloud / Homebrew / SwiftUI Mac / Xcode / Apple Silicon |
+| `linux` | Linux 学科 | Ubuntu / Debian / Fedora / RHEL / Arch / NixOS / Alpine / kernel / systemd |
+| `bsd_unix` | BSD・Unix 系学科 | FreeBSD / OpenBSD / NetBSD / Solaris / AIX / illumos / ZFS / pf |
+| `rtos` | 組み込み・RTOS 学科 | FreeRTOS / Zephyr / VxWorks / TRON / Yocto / Buildroot |
+
+#### 8. モバイル学部 (faculty_code: `mobile`) ← **新規 / part 95 追加 / sort_order 15**
+
+User 要望「iOS / Android 等のモバイルも学べる content」を受けて新設.
+
+| 学科 code | 学科名 | 含む provider / topic 例 |
+| --- | --- | --- |
+| `ios` | iOS 学科 | Swift / SwiftUI / UIKit / Xcode / TestFlight / WidgetKit / WatchKit |
+| `android` | Android 学科 | Kotlin / Jetpack Compose / Android Studio / Material 3 / Google Play / KMP |
+| `cross_platform` | クロスプラットフォーム学科 | Flutter / React Native / .NET MAUI / Ionic / Capacitor / Expo |
+| `mobile_uiux` | モバイル UI/UX 学科 | HIG / Material Design / Touch Target / VoiceOver / TalkBack / Dark Mode |
+| `mobile_devops` | モバイル DevOps 学科 | Fastlane / TestFlight / Firebase App Distribution / App Center / Codemagic |
+
 #### 6. ソフトウェアエンジニアリング学部 (faculty_code: `swe`) ← **新規 / part 94 追加**
 
 User 要望「アジャイル開発など Software エンジニアリング content も学べるように」を受けて新設.
@@ -99,7 +123,20 @@ User 要望「アジャイル開発など Software エンジニアリング cont
 
 ### 合計
 
-- **6 学部 / 29 学科** / 既存 380+ provider + クラウド系 30+ + SWE 系 30+ = **440+ provider 想定**
+- **8 学部 / 39 学科** / 既存 380+ provider + クラウド系 30+ + SWE 系 30+ + OS 系 25+ + モバイル系 25+ = **490+ provider 想定**
+
+### 学部 sort_order 体系 (= UI 表示順)
+
+| sort_order | 学部 | 位置づけ |
+| --- | --- | --- |
+| 5 | 💿 OS | foundational layer (= 全ての基盤) |
+| 10 | 🤖 AI | 基盤技術 |
+| 15 | 📱 モバイル | app delivery (= ユーザーに届く層) |
+| 20 | ☁️ クラウド | infra |
+| 30 | 🛠️ 開発ツール | 道具 |
+| 35 | 👷 ソフトウェアエンジニアリング | 方法論 |
+| 40 | 💾 データ基盤 | データ層 |
+| 50 | 📚 学術研究 | 学術 |
 
 ---
 

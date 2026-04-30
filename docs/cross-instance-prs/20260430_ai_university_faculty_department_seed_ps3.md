@@ -138,12 +138,40 @@ PS#3 territory: SWE 学部 7 学科に **30+ provider seed** (= migration `20260
 
 合計 phase 2-4.5 で **100+ provider 追加** + **既存 380+ mapping** = 480+ provider に拡大.
 
+## 4.2 Phase 4.6: OS 学部 + モバイル学部 (= part 95 追加 / 7・8 学部目)
+
+Win版 part 95 で `20260430040000_add_os_and_mobile_faculties.sql` 適用済 (= 学部 + 10 学科 seed 完了).
+
+### OS 学部 5 学科に 25+ provider seed (= migration `20260430050000_seed_os_university.sql` 想定)
+
+| 学科 | 想定 provider 例 |
+| --- | --- |
+| `windows` | Windows 11 / Windows Server / WSL2 / PowerShell / Active Directory / Hyper-V |
+| `macos` | macOS Sequoia / Homebrew / Xcode / SwiftUI / Apple Silicon (M1/M2/M3) |
+| `linux` | Ubuntu / Debian / Fedora / Arch / NixOS / Alpine / Linux Kernel |
+| `bsd_unix` | FreeBSD / OpenBSD / Solaris / illumos |
+| `rtos` | FreeRTOS / Zephyr / VxWorks / TRON / Yocto |
+
+### モバイル学部 5 学科に 25+ provider seed (= migration `20260430060000_seed_mobile_university.sql` 想定)
+
+| 学科 | 想定 provider 例 |
+| --- | --- |
+| `ios` | Swift / SwiftUI / UIKit / Xcode / TestFlight / WidgetKit |
+| `android` | Kotlin / Jetpack Compose / Android Studio / Material Design 3 / Google Play |
+| `cross_platform` | Flutter / React Native / .NET MAUI / Ionic / Capacitor / Expo |
+| `mobile_uiux` | Apple HIG / Material Design / Mobile Patterns |
+| `mobile_devops` | Fastlane / Firebase App Distribution / App Center / Codemagic / Bitrise |
+
+合計 phase 2-4.6 で **150+ provider 追加** + **既存 380+ mapping** = **530+ provider** に拡大.
+
 ## 5. 受入基準
 
 - [ ] Phase 2 mapping migration 完了 → `SELECT count(*) FROM ai_university_content WHERE faculty_id IS NULL` = 0
 - [ ] Phase 3 クラウド学部 5 学科分 seed migration 完了 (= 5 file)
 - [ ] Phase 4 開発ツール 4 / データ 3 / 学術 3 = 10 学科分 seed migration 完了 (= 10 file)
 - [ ] **Phase 4.5 SWE 学部 7 学科分 seed migration 完了 (= 7 file)** ← part 94 追加
+- [ ] **Phase 4.6 OS 学部 5 学科分 seed migration 完了 (= 5 file)** ← part 95 追加
+- [ ] **Phase 4.6 モバイル学部 5 学科分 seed migration 完了 (= 5 file)** ← part 95 追加
 - [ ] 各 migration `python scripts/check_migration_timestamps.py` PASS
 - [ ] development_achievements に各 phase の seed entry 追加
 - [ ] cross-instance-pr 完了時 `done/` 移動
