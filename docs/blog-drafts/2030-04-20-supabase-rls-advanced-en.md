@@ -1,7 +1,7 @@
 ---
 title: "Supabase RLS Deep Dive — Multi-Tenant Design, Dynamic Policies, and Performance"
 tags: supabase,postgresql,webdev,indiedev
-published: false
+published: true
 ---
 
 # Supabase RLS Deep Dive — Multi-Tenant Design, Dynamic Policies, and Performance
