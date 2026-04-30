@@ -499,6 +499,36 @@ jobs:
           # All browser-facing functions use --no-verify-jwt so that CORS OPTIONS
           # preflight requests (which carry no Authorization header) are not
           # rejected by Supabase's platform-level JWT check.
+          #
+          # Remote dependency CDNs can occasionally return transient 5xx errors
+          # while the Supabase CLI builds each function graph. Retry per
+          # function so one flaky import does not block the whole deploy lane.
+          deploy_function() {
+            local function_name="$1"
+            shift
+            local attempt
+            local sleep_seconds
+
+            for attempt in 1 2 3; do
+              echo "::group::Deploy ${function_name} (attempt ${attempt}/3)"
+              if supabase functions deploy "$function_name" "$@"; then
+                echo "::endgroup::"
+                return 0
+              fi
+
+              local exit_code=$?
+              echo "::endgroup::"
+
+              if [ "$attempt" -eq 3 ]; then
+                echo "::error::supabase functions deploy ${function_name} failed after ${attempt} attempts (exit ${exit_code})"
+                return "$exit_code"
+              fi
+
+              sleep_seconds=$((attempt * 20))
+              echo "::warning::supabase functions deploy ${function_name} failed with ${exit_code}; retrying in ${sleep_seconds}s"
+              sleep "$sleep_seconds"
+            done
+          }
 
           supabase_deploy_attempt() {
             local attempt=1
@@ -529,32 +559,32 @@ jobs:
 
           # --- Standalone (5本: 複雑すぎてhub統合困難) ---
           # local-election-intelligence は line 275 にあり (並び順維持のため)
-          supabase functions deploy get-home-dashboard --no-verify-jwt
-          supabase functions deploy ai-assistant --no-verify-jwt
-          supabase functions deploy growth-weekly-digest --no-verify-jwt
-          supabase functions deploy guitar-recording-studio --no-verify-jwt
+          deploy_function get-home-dashboard --no-verify-jwt
+          deploy_function ai-assistant --no-verify-jwt
+          deploy_function growth-weekly-digest --no-verify-jwt
+          deploy_function guitar-recording-studio --no-verify-jwt
 
           # --- Macro-Hub (6本: 旧Tier1全統合) ---
-          supabase functions deploy core-hub --no-verify-jwt
-          supabase functions deploy growth-hub --no-verify-jwt
-          supabase functions deploy ai-hub --no-verify-jwt
-          supabase functions deploy admin-hub --no-verify-jwt
-          supabase functions deploy app-hub --no-verify-jwt
-          supabase functions deploy schedule-hub --no-verify-jwt
+          deploy_function core-hub --no-verify-jwt
+          deploy_function growth-hub --no-verify-jwt
+          deploy_function ai-hub --no-verify-jwt
+          deploy_function admin-hub --no-verify-jwt
+          deploy_function app-hub --no-verify-jwt
+          deploy_function schedule-hub --no-verify-jwt
 
           # --- Mega-Hub (5本: 旧Tier2全統合) ---
-          supabase functions deploy tools-hub --no-verify-jwt
-          supabase functions deploy media-hub --no-verify-jwt
-          supabase functions deploy enterprise-hub --no-verify-jwt
-          supabase functions deploy social-commerce-hub --no-verify-jwt
-          supabase functions deploy lifestyle-hub --no-verify-jwt
-          supabase functions deploy local-election-intelligence --no-verify-jwt
+          deploy_function tools-hub --no-verify-jwt
+          deploy_function media-hub --no-verify-jwt
+          deploy_function enterprise-hub --no-verify-jwt
+          deploy_function social-commerce-hub --no-verify-jwt
+          deploy_function lifestyle-hub --no-verify-jwt
+          deploy_function local-election-intelligence --no-verify-jwt
 
           # --- Public health-check (認証不要・スケジュールタスクからの死活監視用) ---
-          supabase functions deploy health-check --no-verify-jwt
-          supabase functions deploy ai-writing-assistant --no-verify-jwt
-          supabase functions deploy viral-video-ad-generator --no-verify-jwt
-          supabase functions deploy memory-search-hub --no-verify-jwt
+          deploy_function health-check --no-verify-jwt
+          deploy_function ai-writing-assistant --no-verify-jwt
+          deploy_function viral-video-ad-generator --no-verify-jwt
+          deploy_function memory-search-hub --no-verify-jwt
 
           # Total: 20 functions deployed (ハードキャップ50本に対し20本 — 余裕30本)
           # memo-reactions → core-hub に統合済み (b4c91bc2 2026-04-24)

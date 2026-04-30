@@ -21,6 +21,9 @@ jobs:
     name: Audit stale EF references
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    permissions:
+      contents: read
+      issues: write
     steps:
       - uses: actions/checkout@v6
 
@@ -31,7 +34,7 @@ jobs:
         run: python3 scripts/check_ef_coverage.py
 
       - name: Create Issue on failure
-        if: failure()
+        if: failure() && github.event_name != 'pull_request'
         uses: actions/github-script@v9
         with:
           script: |
