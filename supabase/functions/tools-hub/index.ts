@@ -540,9 +540,12 @@ function normalizeDuplicateKey(value: unknown): string {
 }
 
 function isWbsTitleInstanceUniqueConflict(error: { code?: string; message?: string; details?: string } | null): boolean {
-  if (!error || error.code !== "23505") return false;
+  if (!error) return false;
   const text = `${error.message ?? ""} ${error.details ?? ""}`.toLowerCase();
-  return text.includes("wbs_tasks_title_instance_unique") || text.includes("key (title, instance)");
+  const isUniqueViolation = error.code === "23505" ||
+    text.includes("duplicate key value violates unique constraint");
+  return isUniqueViolation &&
+    (text.includes("wbs_tasks_title_instance_unique") || text.includes("key (title, instance)"));
 }
 
 function githubIssueLabelNames(issue: Record<string, unknown>): string[] {
@@ -1287,9 +1290,12 @@ function gradeDifficultyPenalty(grade: unknown): number {
 
 function horseWeightStabilityBonus(topEntry: Record<string, unknown> | undefined): number {
   if (!topEntry) return 0;
-  const change = numericOrFallback(topEntry.horse_weight_change, null);
-  if (change === null || change === 0) return 0; // データなし or 前走同体重
-  const abs = Math.abs(change as number);
+  if (topEntry.horse_weight_change === null || topEntry.horse_weight_change === undefined || topEntry.horse_weight_change === "") {
+    return 0;
+  }
+  const change = numericOrFallback(topEntry.horse_weight_change, 0);
+  if (change === 0) return 0; // 前走同体重
+  const abs = Math.abs(change);
   if (abs <= 2) return 0.01;  // ±2kg以内: 体重安定管理/予測容易
   if (abs >= 8) return -0.01; // ±8kg以上: 大幅変動/調整乱れ/予測困難
   return 0;                    // 3〜7kg: 標準範囲
@@ -3865,19 +3871,48 @@ serve(async (req) => {
               .eq("id", String(keeper.id))
               .select(taskSelect)
               .single();
-            if (updateError) throw new Error(updateError.message);
+            let updatedKeeper = updated as Record<string, unknown> | null;
+            if (updateError) {
+              if (!isWbsTitleInstanceUniqueConflict(updateError)) {
+                throw new Error(updateError.message);
+              }
+              const { data: conflictingTasks, error: conflictFindError } = await admin.from("wbs_tasks")
+                .select(taskSelect)
+                .eq("title", String(payload.title ?? ""))
+                .eq("instance", lane)
+                .neq("id", String(keeper.id))
+                .order("created_at", { ascending: true })
+                .limit(1);
+              if (conflictFindError) throw new Error(conflictFindError.message);
+              const conflictingTask = (conflictingTasks ?? [])[0] as Record<string, unknown> | undefined;
+              if (!conflictingTask?.id) throw new Error(updateError.message);
+
+              const { data: recovered, error: recoveryError } = await admin.from("wbs_tasks")
+                .update(payload)
+                .eq("id", String(conflictingTask.id))
+                .select(taskSelect)
+                .single();
+              if (recoveryError) throw new Error(recoveryError.message);
+              updatedKeeper = recovered as Record<string, unknown>;
+            }
+            if (!updatedKeeper?.id) throw new Error("WBS task update did not return a canonical row.");
             stats.updated += 1;
             if (isClosed) stats.completed_from_closed_issues += 1;
             if (!isClosed && closureReady && !closedIssueNumbers.has(issueNumber)) {
               issuesToClose.push({
                 number: issueNumber,
-                task_id: keeper.id,
+                task_id: updatedKeeper.id,
                 reason: "linked WBS task is completed and AI review approved",
               });
               closedIssueNumbers.add(issueNumber);
             }
 
-            const updatedKeeper = updated as Record<string, unknown>;
+            const updatedIndex = allTasks.findIndex((task) => String(task.id ?? "") === String(updatedKeeper.id ?? ""));
+            if (updatedIndex >= 0) {
+              allTasks[updatedIndex] = updatedKeeper;
+            } else {
+              allTasks.push(updatedKeeper);
+            }
             const duplicateTasks = existing.filter((task) =>
               String(task.id ?? "") !== String(updatedKeeper.id ?? "")
             );

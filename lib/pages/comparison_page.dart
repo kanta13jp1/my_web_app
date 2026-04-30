@@ -34785,7 +34785,7 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
-  'uptimerobot': const _CompetitorInfo(
+  'uptimerobot-monitoring': const _CompetitorInfo(
     name: 'UptimeRobot',
     emoji: '🤖',
     tagline: '無料稼働率監視・HTTP/PINGチェック・アラートで、なぜ「自分株式会社」を選ぶか。',
@@ -47202,7 +47202,7 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
-  'dependabot': const _CompetitorInfo(
+  'dependabot-security': const _CompetitorInfo(
     name: 'Dependabot',
     emoji: '🤖',
     tagline: 'GitHub公式依存関係自動更新・セキュリティアラート・PR自動作成・無料で、なぜ「自分株式会社」を選ぶか。',
@@ -51367,7 +51367,7 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
-  'renovate': const _CompetitorInfo(
+  'renovate-dependencies': const _CompetitorInfo(
     name: 'Renovate (Mend)',
     emoji: '🔄',
     tagline: 'OSS自動依存関係更新・PR自動生成・スケジュール制御・全言語対応・Dependabot代替で、なぜ「自分株式会社」を選ぶか。',

@@ -1,5 +1,10 @@
 import 'package:logger/logger.dart';
-import 'error_reporter.dart';
+
+typedef AppLoggerErrorReporter = void Function(
+  String message, {
+  dynamic error,
+  StackTrace? stackTrace,
+});
 
 /// アプリケーション全体で使用するロガー
 ///
@@ -9,6 +14,8 @@ import 'error_reporter.dart';
 /// AppLogger.error('エラーメッセージ', error: e, stackTrace: st);
 /// ```
 class AppLogger {
+  static AppLoggerErrorReporter? _errorReporter;
+
   static final Logger _logger = Logger(
     printer: PrettyPrinter(
       methodCount: 2,
@@ -19,6 +26,10 @@ class AppLogger {
       dateTimeFormat: DateTimeFormat.onlyTimeAndSinceStart,
     ),
   );
+
+  static void setErrorReporter(AppLoggerErrorReporter? reporter) {
+    _errorReporter = reporter;
+  }
 
   /// デバッグレベルのログ（開発時のみ）
   static void debug(dynamic message, {dynamic error, StackTrace? stackTrace}) {
@@ -42,7 +53,7 @@ class AppLogger {
   /// エラーレベルのログ（自動でエラー報告EFにも送信）
   static void error(dynamic message, {dynamic error, StackTrace? stackTrace}) {
     _logger.e(message, error: error, stackTrace: stackTrace);
-    ErrorReporter.instance.report(
+    _errorReporter?.call(
       message.toString(),
       error: error,
       stackTrace: stackTrace,
