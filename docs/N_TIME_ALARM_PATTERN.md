@@ -58,6 +58,19 @@ User が 5 回目以上 + **「上から順番に」「対応できないもの�
 
 = **AI fleet と User の対話が「単方向 task 受信」から「双方向 negotiation」へ進化** する phase.
 
+### Phase 6: 6 回目以上 + 同一要望継続 = 「定常自律実行」
+
+User が **同一要望を繰り返し** N≥6 で送ってくる時、これは **「rule template 確立済みの定常状態」** signal:
+
+1. **template に基づく自律 cycle 実行**: User trigger 待ちではなく、 monthly cron / 起動時 audit で **自走**
+2. **次層 task に降りる**: 上位 task は前 phase で triage 済 → 13-22 位など **次層** へ自動的に進む
+3. **「進化方向」自己識別**: rule template 自体に新規 phase 追加候補を検討 (= meta-evolution)
+4. **infrastructure consolidation**: 新規 infra 構築から **既存 infra の質向上** へ重心 shift
+
+例: part 104 で Phase 5 が **継続適用 → 定常運用** へ移行. AI fleet が User reminder なしで自走する **「成熟期」** に入る.
+
+= 「指示駆動 → 自律運転」最終段階. **Phase 6 以降は phase 区別が消える** (= 同一要望の有無に関わらず fleet が常時改善 loop を回す状態).
+
 ---
 
 ---
