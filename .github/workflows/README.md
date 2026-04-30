@@ -10,7 +10,7 @@
 | **Deploy to Development** | `deploy-dev.yml` | `develop` へのpush | 開発環境デプロイ (concurrency制御・timeout付き) |
 | **Deploy to Staging** | `deploy-staging.yml` | `staging` へのpush | ステージング環境デプロイ (concurrency制御・timeout付き) |
 | **Deploy to Production** | `deploy-prod.yml` | `main` へのpush | 本番環境デプロイ + バージョニング (concurrency制御・timeout付き) |
-| **Daily Report** | `daily-report.yml` | 毎日 08:58 JST / 手動 | 日次レポート生成 + X投稿 + 競合モニタリング + schedule_task_runs記録 + Job Summary |
+| **Daily Report** | `daily-report.yml` | 毎日 07:30 JST / 手動 | 日次レポート生成 + X投稿 + 競合モニタリング + schedule_task_runs記録 + Job Summary |
 | **CS Check** | `cs-check.yml` | 毎時 07分 / 手動 | CS自動対応 + PR自動レビュー + schedule_task_runs記録 + Job Summary |
 | **Edge Function Audit** | `edge-function-audit.yml` | 毎時 47分 / 手動 | EF UI導線カバレッジチェック + schedule_task_runs記録 + Job Summary |
 | **Infra Health Check** | `infra-health-check.yml` | 毎時 37分 / 手動 | Firebase + 重要EF 6件監視 + schedule_task_runs記録 + Job Summary |
@@ -42,7 +42,7 @@
 | `dependabot` 自動更新 | ✅ Actions + pub + pip (毎週月曜) |
 | **Claude Managed Agents 統合** | ✅ claude-agent-review.yml (`ANTHROPIC_API_KEY` 要設定) |
 | **ユーザーフィードバックパイプライン** | ✅ feedback-issue-resolved.yml (`SUPABASE_SERVICE_ROLE_KEY` 使用) |
-| **CI失敗自動修復** | ✅ ci-auto-fix.yml (`dart fix --apply` + `deno fmt` → PR自動コミット) |
+| **CI失敗自動修復** | ✅ ci-auto-fix.yml (`dart fix --apply` + `dart format` + `deno fmt` → PR自動コミット) |
 | **YouTube競合分析自動化** | ✅ youtube-analysis.yml (`yt-dlp` 毎日スナップショット → TSV更新) |
 | **技術記事手動投稿** | ✅ blog-publish.yml (Qiita/dev.to `workflow_dispatch` + dry_run対応) |
 | **AI大学コンテンツ週次自動更新** | ✅ ai-university-update.yml (毎週月曜 11:00 JST RSS取得・UPSERT) |
