@@ -1,0 +1,42 @@
+{
+  "task": "blog-draft",
+  "executed_at": "2026-05-01T00:00:00+09:00",
+  "status": "draft_created",
+  "blog_post": {
+    "title": "12AIエージェント並列開発: AI大学4層UI・Build in Public自動化・AI第二の脳を1週間で実装",
+    "draft_path": "docs/blog-drafts/2026-05-01.md",
+    "status": "draft",
+    "target_platforms": ["zenn","qiita","note","hatena","medium","devto","hashnode","substack","github-pages","notion","x-article"],
+    "created_at": "2026-05-01T00:00:00+09:00"
+  },
+  "files_created": [
+    "docs/blog-drafts/2026-05-01.md",
+    "docs/blog/zenn/2026-05-01.md",
+    "docs/blog/github-pages/2026-05-01.md",
+    "docs/blog/cross-post/2026-05-01.md"
+  ],
+  "supabase_insert": {
+    "status": "skipped",
+    "reason": "sandbox host_not_allowed — Supabase REST API blocked in WEB edition. Insert to blog_posts table should be executed by a local instance (VSCode/Win/PS) with network access.",
+    "pending_insert": {
+      "table": "blog_posts",
+      "payload": {
+        "title": "12AIエージェント並列開発: AI大学4層UI・Build in Public自動化・AI第二の脳を1週間で実装",
+        "draft_path": "docs/blog-drafts/2026-05-01.md",
+        "status": "draft",
+        "target_platforms": ["zenn","qiita","note","hatena","medium","devto","hashnode","substack","github-pages","notion","x-article"],
+        "created_at": "2026-05-01T00:00:00+09:00"
+      }
+    }
+  },
+  "commits_analyzed": [
+    "feat(ai-university): 4層 drill-down UI — 学部/学科選択ページ追加",
+    "feat(community): Build in Public weekly cron (#1125 = 100%)",
+    "feat(community): Build in Public 自動化 Phase 1",
+    "feat(memory): AI 第二の脳 Ingest pipeline 実装 (#974)",
+    "feat(theme): テーマ切り替え UI Phase 2 — ThemeSelectorPage + 10 catalog",
+    "feat(mcp): persist auth audit log",
+    "feat(ps6): 競馬予測EF confidence 66→69 terms",
+    "feat(election): 宮崎県連 news badge UI"
+  ]
+}
