@@ -38,6 +38,13 @@ Before an Edge Function executes an external tool, it should call
 `evaluateAgentToolPolicy()`. If `blockedReason` is present, the function should
 skip execution and persist `auditPayload` to the audit log.
 
+`mcp_auth_guard.logMcpInvocation()` now writes MCP calls to `mcp_audit_log`
+through the Supabase service role when runtime secrets are present, and falls
+back to structured console logging in local/test environments. This gives the
+approval gate work a durable server-side audit trail before high-risk tool
+actions such as `send`, `purchase`, and `external_share` are wired to blocking
+CEO approval screens.
+
 This follows the Harness Engineering direction from NotebookLM
 `bc58b50b-5fc4-4840-9a62-b397d6d3b65a`: Claude Code, Codex, and external AI
 agents should operate inside explicit scopes, approval gates, and audit logs.
