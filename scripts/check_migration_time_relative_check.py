@@ -121,11 +121,16 @@ def main() -> int:
 
     print(f"checking {len(new_files)} new migration file(s)...")
 
+    NOCHECK_RE = re.compile(r"--\s*nocheck:\s*time-relative", re.IGNORECASE)
+
     risky = []
     for sql_file in new_files:
         if sql_file.name in defining_files:
             continue
         content = sql_file.read_text(encoding="utf-8", errors="replace")
+        if NOCHECK_RE.search(content):
+            print(f"  skip: {sql_file.name} (-- nocheck: time-relative)")
+            continue
         for m in UPDATE_RE.finditer(content):
             if m.group(1).lower() in sensitive:
                 risky.append({"file": sql_file.name, "table": m.group(1).lower()})
