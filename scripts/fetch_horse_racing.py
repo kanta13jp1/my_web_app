@@ -84,6 +84,57 @@ HEADERS = {
 _REPLACEMENT_CHAR = chr(0xFFFD)
 _CJK_EXT_A_START = 0x3400
 _CJK_EXT_A_END = 0x4DBF
+_MOJIBAKE_MARKERS = (
+    "ï¿½",
+    "Ã",
+    "Â",
+    "縺",
+    "繧",
+    "譁",
+    "荳",
+    "鬥",
+)
+
+
+def _cjk_ext_a_count(text: str) -> int:
+    return sum(1 for c in text if _CJK_EXT_A_START <= ord(c) <= _CJK_EXT_A_END)
+
+
+def _looks_garbled(value: object) -> bool:
+    """DBに残った置換文字・典型的な mojibake を検出する。"""
+    text = str(value or "")
+    if not text:
+        return False
+    if _REPLACEMENT_CHAR in text or _cjk_ext_a_count(text) > 0:
+        return True
+    marker_count = sum(text.count(marker) for marker in _MOJIBAKE_MARKERS)
+    return marker_count >= 2
+
+
+def _decode_quality_score(text: str) -> int:
+    """低いほど自然な日本語HTMLとして扱う。"""
+    replacement_count = text.count(_REPLACEMENT_CHAR)
+    ext_a_count = _cjk_ext_a_count(text)
+    mojibake_count = sum(text.count(marker) for marker in _MOJIBAKE_MARKERS)
+    japanese_hits = sum(
+        text.count(token)
+        for token in (
+            "馬名",
+            "騎手",
+            "厩舎",
+            "枠",
+            "馬番",
+            "出走",
+            "発走",
+            "芝",
+            "ダート",
+            "水沢",
+            "園田",
+            "大井",
+            "笠松",
+        )
+    )
+    return replacement_count * 1000 + ext_a_count * 100 + mojibake_count * 50 - min(japanese_hits, 50)
 
 
 def _split_stable_and_trainer(value: str) -> tuple[Optional[str], Optional[str]]:
@@ -133,7 +184,7 @@ def http_get(url: str, timeout: int = 15) -> Optional[str]:
             # Content-Type → meta charset → フォールバック
             charset = resp.headers.get_content_charset()
             if not charset:
-                m = re.search(rb"charset=[\"']?\s*([A-Za-z0-9_-]+)", raw[:4096])
+                m = re.search(rb"charset=[\"']?\s*([A-Za-z0-9_-]+)", raw[:4096], re.I)
                 if m:
                     charset = m.group(1).decode("ascii", errors="ignore")
             candidates: list[str] = []
@@ -143,11 +194,26 @@ def http_get(url: str, timeout: int = 15) -> Optional[str]:
                 normalized = enc.replace("-", "").lower()
                 if not any(normalized == c.replace("-", "").lower() for c in candidates):
                     candidates.append(enc)
+            best_text: Optional[str] = None
+            best_score: Optional[int] = None
+            best_enc: Optional[str] = None
             for enc in candidates:
                 try:
-                    return raw.decode(enc)
-                except (UnicodeDecodeError, LookupError):
+                    text = raw.decode(enc, errors="replace")
+                except LookupError:
                     continue
+                score = _decode_quality_score(text)
+                if best_score is None or score < best_score:
+                    best_text = text
+                    best_score = score
+                    best_enc = enc
+            if best_text is not None:
+                if best_score is not None and best_score > 0:
+                    print(
+                        f"[INFO] decoded {url} as {best_enc} with replacement-aware score {best_score}",
+                        file=sys.stderr,
+                    )
+                return best_text
             return raw.decode("utf-8", errors="replace")
     except Exception as e:
         print(f"[WARN] GET {url} failed: {e}", file=sys.stderr)
@@ -716,9 +782,9 @@ def fetch_horse_histories(target_date: str) -> None:
 
 # ─── 文字化けレコード削除 ────────────────────────────────────────────────────
 def _clean_garbled_races(target_date: str, source: str) -> int:
-    """文字化けしている horse_races レコードを削除してリフェッチを可能にする。
+    """文字化けしている race/entry/prediction を削除してリフェッチを可能にする。
     NAR サイトが EUC-JP で配信するため、エンコーディング修正前に保存されたレコードを
-    U+FFFD 置換文字の有無で検出して削除する。"""
+    U+FFFD 置換文字や典型的な mojibake の有無で検出して削除する。"""
     races = supabase_rest("GET", "horse_races", params={
         "race_date": f"eq.{target_date}",
         "source": f"eq.{source}",
@@ -729,20 +795,91 @@ def _clean_garbled_races(target_date: str, source: str) -> int:
 
     deleted = 0
     for race in races:
+        bad_fields: list[str] = []
         race_name = race.get("race_name", "") or ""
-        is_garbled = _REPLACEMENT_CHAR in race_name or any(
-            _CJK_EXT_A_START <= ord(c) <= _CJK_EXT_A_END for c in race_name
-        )
-        if is_garbled:
-            race_db_id = race["id"]
+        if _looks_garbled(race_name):
+            bad_fields.append("race_name")
+
+        race_db_id = race["id"]
+        entries = supabase_rest("GET", "horse_entries", params={
+            "race_id": f"eq.{race_db_id}",
+            "select": "horse_name,jockey,trainer,stable,age_sex",
+        }) or []
+        for entry in entries:
+            if not isinstance(entry, dict):
+                continue
+            for field in ("horse_name", "jockey", "trainer", "stable", "age_sex"):
+                if _looks_garbled(entry.get(field)):
+                    bad_fields.append(f"horse_entries.{field}")
+                    break
+
+        predictions = supabase_rest("GET", "horse_predictions", params={
+            "race_id": f"eq.{race_db_id}",
+            "select": "first_pick,second_pick,third_pick,ai_reasoning,recommended_bet",
+        }) or []
+        for prediction in predictions:
+            if not isinstance(prediction, dict):
+                continue
+            for field in ("first_pick", "second_pick", "third_pick", "ai_reasoning", "recommended_bet"):
+                if _looks_garbled(prediction.get(field)):
+                    bad_fields.append(f"horse_predictions.{field}")
+                    break
+
+        if bad_fields:
             supabase_rest("DELETE", f"horse_entries?race_id=eq.{race_db_id}")
             supabase_rest("DELETE", f"horse_predictions?race_id=eq.{race_db_id}")
             supabase_rest("DELETE", f"horse_results?race_id=eq.{race_db_id}")
             supabase_rest("DELETE", f"horse_races?id=eq.{race_db_id}")
-            print(f"    [CLEAN] 文字化けレコード削除: {race_name!r} (id={race_db_id})")
+            reason = ", ".join(dict.fromkeys(bad_fields[:4]))
+            print(f"    [CLEAN] 文字化けレコード削除: {race_name!r} ({reason}; id={race_db_id})")
             deleted += 1
 
     return deleted
+
+
+def _first_embedded_record(value: object) -> Optional[dict]:
+    """PostgREST embed の 1:1/1:M 差を吸収して最初の dict を返す。"""
+    if isinstance(value, dict):
+        return value
+    if isinstance(value, list) and value and isinstance(value[0], dict):
+        return value[0]
+    return None
+
+
+def _result_looks_garbled(result: object) -> bool:
+    row = _first_embedded_record(result)
+    if not row:
+        return False
+    return any(
+        _looks_garbled(row.get(field))
+        for field in ("first_place", "second_place", "third_place")
+    )
+
+
+def _recent_completed_races_with_garbled_results(from_date: str, target_date: str) -> list[dict]:
+    """過去に壊れた文字コードで保存された完了済み結果を再取得対象に戻す。"""
+    races = supabase_rest("GET", "horse_races", params=[
+        ("race_date", f"lte.{target_date}"),
+        ("race_date", f"gte.{from_date}"),
+        ("status", "eq.completed"),
+        ("race_id_ext", "not.is.null"),
+        (
+            "select",
+            "id,race_id_ext,race_name,source,race_date,horse_results(first_place,second_place,third_place)",
+        ),
+        ("order", "race_date.asc"),
+    ]) or []
+    retry_races: list[dict] = []
+    for race in races:
+        if not isinstance(race, dict) or not _result_looks_garbled(race.get("horse_results")):
+            continue
+        retry = {
+            key: race.get(key)
+            for key in ("id", "race_id_ext", "race_name", "source", "race_date")
+        }
+        retry["_repair_reason"] = "garbled_result"
+        retry_races.append(retry)
+    return retry_races
 
 
 # ─── 出走表取得 (JRA / NAR 共通ロジック) ──────────────────────────────────────
@@ -889,14 +1026,29 @@ def fetch_results(target_date: str):
     ).isoformat()
     print(f"[INFO] {from_date}〜{target_date} のレース結果を取得中...")
     # supabase_rest に list of tuples を渡すことで同一カラムへの複数条件を実現
-    races = supabase_rest("GET", "horse_races", params=[
+    scheduled_races = supabase_rest("GET", "horse_races", params=[
         ("race_date", f"lte.{target_date}"),
         ("race_date", f"gte.{from_date}"),
         ("status", "eq.scheduled"),
         ("race_id_ext", "not.is.null"),
         ("select", "id,race_id_ext,race_name,source,race_date"),
         ("order", "race_date.asc"),
-    ])
+    ]) or []
+    garbled_result_races = _recent_completed_races_with_garbled_results(from_date, target_date)
+    if garbled_result_races:
+        print(f"[INFO] 文字化け済み horse_results {len(garbled_result_races)}件を再取得対象に追加")
+
+    races = []
+    seen_race_ids: set[str] = set()
+    for race in [*scheduled_races, *garbled_result_races]:
+        if not isinstance(race, dict):
+            continue
+        race_db_id = str(race.get("id") or "")
+        if not race_db_id or race_db_id in seen_race_ids:
+            continue
+        seen_race_ids.add(race_db_id)
+        races.append(race)
+
     if not races:
         print("[INFO] 対象レースなし")
         return
@@ -906,6 +1058,7 @@ def fetch_results(target_date: str):
         race_id_ext = race["race_id_ext"]
         race_db_id = race["id"]
         source = race.get("source", "jra")
+        repair_reason = race.get("_repair_reason")
 
         # ソースに応じて正しいURLを選択
         result_url_template = NAR_RESULT_URL if source == "nar" else JRA_RESULT_URL
@@ -944,6 +1097,8 @@ def fetch_results(target_date: str):
             "payouts": parser.payouts,
             "is_prediction_correct": is_correct,
         }
+        if repair_reason == "garbled_result":
+            supabase_rest("DELETE", f"horse_results?race_id=eq.{race_db_id}")
         stored_result = supabase_rest("POST", "horse_results", result_row)
         if not stored_result and parser.payouts:
             # Migration not applied yet: keep the legacy result write path alive.
