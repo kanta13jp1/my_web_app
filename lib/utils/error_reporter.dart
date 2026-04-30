@@ -19,8 +19,7 @@ import 'dart:math';
 
 import 'package:flutter/foundation.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
-
-import '../main.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class ErrorReporter {
   ErrorReporter._();
@@ -50,6 +49,14 @@ class ErrorReporter {
   bool get sentryEnabled => _sentryEnabled;
 
   bool get _hasSentryDsn => _sentryDsn.trim().isNotEmpty;
+
+  SupabaseClient? get _supabaseOrNull {
+    try {
+      return Supabase.instance.client;
+    } catch (_) {
+      return null;
+    }
+  }
 
   /// `main()` の Supabase.initialize() 直後に呼ぶ。
   /// SENTRY_DSN が設定されていれば、Sentry の zone 内で appRunner を実行する。
@@ -260,6 +267,9 @@ class ErrorReporter {
     }
 
     // ログイン確認
+    final supabase = _supabaseOrNull;
+    if (supabase == null) return;
+
     final user = supabase.auth.currentUser;
     if (user == null) return;
 
@@ -313,6 +323,9 @@ class ErrorReporter {
   }
 
   void _watchAuthChanges() {
+    final supabase = _supabaseOrNull;
+    if (supabase == null) return;
+
     _authSubscription ??= supabase.auth.onAuthStateChange.listen((_) {
       _syncSentryUser();
     });
@@ -321,7 +334,8 @@ class ErrorReporter {
   void _syncSentryUser() {
     if (!_sentryEnabled) return;
 
-    final user = supabase.auth.currentUser;
+    final supabase = _supabaseOrNull;
+    final user = supabase?.auth.currentUser;
     unawaited(
       Future<void>.sync(
         () => Sentry.configureScope((scope) async {
