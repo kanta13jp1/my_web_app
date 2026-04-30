@@ -24,8 +24,8 @@ INSERT INTO wbs_tasks (title, category, instance, owner_instance, priority, stat
 VALUES (
   '[AI_FLEET_SYNERGY #3] Claude Code + Codex CLI 月次 changelog watch cron',
   'CX',
-  'codex2',
-  'codex2',
+  'codex',
+  'codex',
   'high',
   'pending',
   10,
@@ -38,8 +38,8 @@ INSERT INTO wbs_tasks (title, category, instance, owner_instance, priority, stat
 VALUES (
   '[AI_FLEET_SYNERGY #1] インスタンス担当分担 monthly audit cron',
   'CX',
-  'codex2',
-  'codex2',
+  'codex',
+  'codex',
   'medium',
   'pending',
   0,
@@ -52,8 +52,8 @@ INSERT INTO wbs_tasks (title, category, instance, owner_instance, priority, stat
 VALUES (
   '[AI_FLEET_SYNERGY #4] CLAUDE.md / inject-rules.txt 行数 monthly 監視 cron',
   'CX',
-  'codex2',
-  'codex2',
+  'codex',
+  'codex',
   'medium',
   'pending',
   0,
@@ -112,8 +112,8 @@ INSERT INTO wbs_tasks (title, category, instance, owner_instance, priority, stat
 VALUES (
   'AI 大学 ai-hub に 学部/学科 4 actions 追加 (= Codex#2 territory)',
   'CX',
-  'codex2',
-  'codex2',
+  'codex',
+  'codex',
   'high',
   'pending',
   0,
