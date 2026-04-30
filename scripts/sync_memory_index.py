@@ -15,6 +15,14 @@ from pathlib import Path
 
 EMBEDDING_DIMENSION = 768
 EMBEDDING_MODEL = "models/gemini-embedding-001"
+QUOTA_HTTP_CODES = {429, 503}
+QUOTA_ERROR_MARKERS = (
+    "RESOURCE_EXHAUSTED",
+    "quota",
+    "rate limit",
+    "rate-limit",
+    "rate_limited",
+)
 
 
 def title_for(path: Path, text: str) -> str:
@@ -48,6 +56,13 @@ def embedding_text_for(row: dict) -> str:
         str(row.get("content") or ""),
     ]
     return "\n".join(part for part in parts if part).strip()[:3500]
+
+
+def is_embedding_quota_error(status_code: int, body: str) -> bool:
+    if status_code in QUOTA_HTTP_CODES:
+        return True
+    lowered = body.lower()
+    return any(marker.lower() in lowered for marker in QUOTA_ERROR_MARKERS)
 
 
 def load_rows(memory_dir: Path) -> list[dict]:
@@ -155,6 +170,11 @@ def main() -> int:
         action="store_true",
         help="Generate Gemini retrieval-document embeddings when GEMINI_API_KEY is set.",
     )
+    parser.add_argument(
+        "--soft-fail-embedding-quota",
+        action="store_true",
+        help="Exit successfully when Gemini embedding quota is exhausted.",
+    )
     args = parser.parse_args()
 
     memory_dir = Path(args.memory_dir)
@@ -170,7 +190,18 @@ def main() -> int:
             try:
                 embed_rows(rows, gemini_api_key)
             except urllib.error.HTTPError as exc:
-                print(exc.read().decode("utf-8", errors="replace"), file=sys.stderr)
+                detail = exc.read().decode("utf-8", errors="replace")
+                print(detail, file=sys.stderr)
+                if args.soft_fail_embedding_quota and is_embedding_quota_error(
+                    exc.code,
+                    detail,
+                ):
+                    print(
+                        "::warning::Gemini embedding quota exhausted; "
+                        "memory sync skipped and will retry on the next run",
+                        file=sys.stderr,
+                    )
+                    return 0
                 return 1
         else:
             print("GEMINI_API_KEY not configured; embeddings skipped", file=sys.stderr)
