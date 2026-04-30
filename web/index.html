@@ -40,9 +40,11 @@
   >
   <meta
     property="og:image"
-    content="https://my-web-app-b67f4.web.app/ogp.png"
+    content="https://my-web-app-b67f4.web.app/ogp-image-gen2-20260428.png"
   >
   <meta property="og:image:type" content="image/png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
   <meta property="og:image:alt" content="自分株式会社 - AI life management app">
   <meta property="og:site_name" content="自分株式会社">
   <meta property="og:locale" content="ja_JP">
@@ -57,7 +59,7 @@
   >
   <meta
     property="twitter:image"
-    content="https://my-web-app-b67f4.web.app/ogp.png"
+    content="https://my-web-app-b67f4.web.app/ogp-image-gen2-20260428.png"
   >
   <meta property="twitter:image:alt" content="自分株式会社 - AI life management app">
 
@@ -511,16 +513,22 @@
         if (link) link.setAttribute('href', url);
       }
 
+      var defaultOgImageUrl = 'https://my-web-app-b67f4.web.app/ogp-image-gen2-20260428.png';
+      var aiUniversityOgImageUrl = defaultOgImageUrl;
+
       function applyRouteMeta(meta) {
         var url = 'https://my-web-app-b67f4.web.app' + path;
+        var imageUrl = meta.image || defaultOgImageUrl;
         document.title = meta.title;
         setMeta('description', meta.desc);
         setMeta('og:title', meta.title);
         setMeta('og:description', meta.desc);
         setMeta('og:url', url);
+        setMeta('og:image', imageUrl);
         setMeta('twitter:title', meta.title);
         setMeta('twitter:description', meta.desc);
         setMeta('twitter:url', url);
+        setMeta('twitter:image', imageUrl);
         setCanonical(url);
       }
 
@@ -536,19 +544,28 @@
         },
         '/ai-university': {
           title: 'AI大学 | 自分株式会社',
-          desc: 'AIツール、AIプロバイダー、実務ユースケースを学べる無料のAI大学。クイズ、ランキング、バッジで継続学習できます。'
+          desc: 'AIツール、AIプロバイダー、実務ユースケースを学べる無料のAI大学。クイズ、ランキング、バッジで継続学習できます。',
+          image: aiUniversityOgImageUrl
+        },
+        '/gemini-university': {
+          title: 'AI大学 | 自分株式会社',
+          desc: 'Google / OpenAI / Anthropic など259社を体系的に学ぶ無料のAI大学。クイズ、ランキング、バッジで継続学習できます。',
+          image: aiUniversityOgImageUrl
         },
         '/ai-university-content': {
           title: 'AI大学 コンテンツ一覧 | 自分株式会社',
-          desc: 'AI大学の学習コンテンツ、プロバイダー解説、クイズ教材を一覧できる公開ページです。'
+          desc: 'AI大学の学習コンテンツ、プロバイダー解説、クイズ教材を一覧できる公開ページです。',
+          image: aiUniversityOgImageUrl
         },
         '/ai-university-ranking': {
           title: 'AI大学ランキング | 自分株式会社',
-          desc: 'AI大学の学習進捗、ストリーク、バッジ獲得状況をランキング形式で確認できます。'
+          desc: 'AI大学の学習進捗、ストリーク、バッジ獲得状況をランキング形式で確認できます。',
+          image: aiUniversityOgImageUrl
         },
         '/ai-university-voice': {
           title: 'AI大学 音声学習 | 自分株式会社',
-          desc: 'AI大学の内容を音声で学習するためのページ。移動中や作業中でもAIリテラシーを積み上げられます。'
+          desc: 'AI大学の内容を音声で学習するためのページ。移動中や作業中でもAIリテラシーを積み上げられます。',
+          image: aiUniversityOgImageUrl
         },
         '/ai-image-generator': {
           title: 'AI画像生成 | 自分株式会社',
