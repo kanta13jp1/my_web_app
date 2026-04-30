@@ -26,6 +26,10 @@ import subprocess
 import sys
 from pathlib import Path
 
+for _stream in (sys.stdout, sys.stderr):
+    if hasattr(_stream, "reconfigure"):
+        _stream.reconfigure(errors="replace")
+
 MIGRATIONS_DIR = Path("supabase/migrations")
 
 FUNC_DEF_RE = re.compile(
