@@ -25,7 +25,7 @@ SELECT
   'high',
   'pending',
   10,
-  'PHASE-1',
+  NULL,
   'Monthly cron to fetch Claude Code and Codex CLI changelogs, summarize with Claude API, create issues, and draft cross-instance PRs for high-impact changes. Delegated to Codex #2 in docs/cross-instance-prs/20260430_ai_tool_changelog_watch_codex2.md.'
 WHERE NOT EXISTS (
   SELECT 1 FROM wbs_tasks
@@ -51,7 +51,7 @@ SELECT
   'medium',
   'pending',
   0,
-  'PHASE-1',
+  NULL,
   'Monthly audit that compares recent commits by instance against the CLAUDE.md routing matrix, then opens a GitHub issue when ownership drift is detected.'
 WHERE NOT EXISTS (
   SELECT 1 FROM wbs_tasks
@@ -77,7 +77,7 @@ SELECT
   'medium',
   'pending',
   0,
-  'PHASE-1',
+  NULL,
   'Monthly monitor for CLAUDE.md and inject-rules.txt line growth. Warn when policy files exceed the agreed pointer-based configuration thresholds.'
 WHERE NOT EXISTS (
   SELECT 1 FROM wbs_tasks
@@ -103,7 +103,7 @@ SELECT
   'high',
   'completed',
   100,
-  'PHASE-1',
+  NULL,
   'Win part 93-97 completed the 10-faculty, 53-department hierarchy and seed structure.'
 WHERE NOT EXISTS (
   SELECT 1 FROM wbs_tasks
@@ -129,7 +129,7 @@ SELECT
   'high',
   'in_progress',
   10,
-  'PHASE-1',
+  NULL,
   'PS#3 owns provider mapping and department seeds from docs/cross-instance-prs/20260430_ai_university_faculty_department_seed_ps3.md.'
 WHERE NOT EXISTS (
   SELECT 1 FROM wbs_tasks
@@ -155,7 +155,7 @@ SELECT
   'high',
   'pending',
   0,
-  'PHASE-1',
+  NULL,
   'VSCode owns faculty, department, provider, and content drill-down UI work from docs/cross-instance-prs/20260430_ai_university_faculty_ui_vscode.md.'
 WHERE NOT EXISTS (
   SELECT 1 FROM wbs_tasks
@@ -181,7 +181,7 @@ SELECT
   'high',
   'pending',
   0,
-  'PHASE-1',
+  NULL,
   'Codex #2 owns university.faculty_list, department_list, provider_by_department, and content_by_faculty actions without increasing the Edge Function count.'
 WHERE NOT EXISTS (
   SELECT 1 FROM wbs_tasks
