@@ -43,25 +43,6 @@ jobs:
               fi
             done)
 
-          ready_prs=$(gh pr list --state open --limit 100 \
-            --json number,title,headRefName,isDraft,reviewDecision,statusCheckRollup,url \
-            --jq '.[] |
-              select(.headRefName | startswith("codex/")) |
-              select(.isDraft == false) |
-              . as $pr |
-              ($pr.statusCheckRollup // []) as $checks |
-              select(($checks | length) > 0) |
-              select(([
-                $checks[] |
-                select(
-                  ((.status // "COMPLETED") != "COMPLETED") or
-                  ((.conclusion // .state // "SUCCESS") != "SUCCESS")
-                )
-              ] | length) == 0) |
-              select(($pr.reviewDecision // "") != "APPROVED") |
-              ($pr.reviewDecision | if . == null or . == "" then "REVIEW_REQUIRED" else . end) as $reviewDecision |
-              "- #\($pr.number) `\($pr.headRefName)` \($reviewDecision) - \($pr.title)\n  \($pr.url)"')
-
           conflicted_prs=$(gh pr list --state open --limit 100 \
             --json number,title,headRefName,isDraft,url \
             --jq '.[] |
@@ -79,6 +60,34 @@ jobs:
                 echo "- #$number \`$head\` CONFLICT - $title"
                 echo "  $url"
               fi
+            done)
+
+          ready_prs=$(gh pr list --state open --limit 100 \
+            --json number,title,headRefName,isDraft,reviewDecision,statusCheckRollup,url \
+            --jq '.[] |
+              select(.headRefName | startswith("codex/")) |
+              select(.isDraft == false) |
+              . as $pr |
+              ($pr.statusCheckRollup // []) as $checks |
+              select(($checks | length) > 0) |
+              select(([
+                $checks[] |
+                select(
+                  ((.status // "COMPLETED") != "COMPLETED") or
+                  ((.conclusion // .state // "SUCCESS") != "SUCCESS")
+                )
+              ] | length) == 0) |
+              select(($pr.reviewDecision // "") != "APPROVED") |
+              ($pr.reviewDecision | if . == null or . == "" then "REVIEW_REQUIRED" else . end) as $reviewDecision |
+              [.number, .headRefName, $reviewDecision, .title, .url] |
+              @tsv' \
+            | while IFS=$'\t' read -r number head review_decision title url; do
+              if printf '%s\n' "$conflicted_prs" | grep -Fq "\`$head\`"; then
+                continue
+              fi
+
+              echo "- #$number \`$head\` $review_decision - $title"
+              echo "  $url"
             done)
 
           open_pr_heads=$(gh pr list --state open --limit 100 \
