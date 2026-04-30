@@ -1,0 +1,26 @@
+{
+  "task_id": "daily-report",
+  "status": "success",
+  "executed_at": "2026-04-30T00:07:00Z",
+  "environment": "web-version",
+  "summary": "日次レポート生成完了 / 競合モニタリング確認 / ロードマップ更新 / push: 5e091f7",
+  "details": {
+    "daily_report_saved": "docs/daily-reports/2026-04-30.md",
+    "roadmap_updated": "docs/GROWTH_STRATEGY_ROADMAP.md",
+    "competitor_report_existing": "docs/competitor-reports/2026-04-30.md",
+    "auto_review_issues": 0,
+    "viral_growth_engine": "blocked (host_not_allowed)",
+    "x_post_fallback": "blocked (host_not_allowed)",
+    "supabase_rest_api": "blocked (host_not_allowed)",
+    "schedule_health": "ok (health-monitor 14x, ai-university 4x in last 24h)",
+    "competitor_alerts": {
+      "notion": "CRITICAL — Opus 4.7 adoption + Notion Credits 5/4",
+      "codex": "CRITICAL — Codex×Slack native integration + Codex SDK",
+      "x": "CRITICAL — X Money launch + XChat standalone app",
+      "evernote": "WARNING — AI Assistant proactive features + tabs",
+      "moneyforward": "WARNING — SMBC app integration"
+    },
+    "commit": "5e091f7",
+    "push": "success"
+  }
+}
