@@ -166,6 +166,40 @@ IMPACT_ROUTES: dict[str, dict[str, Any]] = {
 }
 
 
+HARNESS_NOTEBOOK = {
+    "id": "bc58b50b-5fc4-4840-9a62-b397d6d3b65a",
+    "title": "Codex vs Claude Code: The Ultimate AI Development Synergy",
+}
+
+
+HARNESS_LANES = [
+    (
+        "Claude Code",
+        "Owns problem framing, architecture, review gates, and hook design.",
+    ),
+    (
+        "Codex #1",
+        "Owns cross-cutting implementation, SQL/migration review, "
+        "UI/browser QA, and scoped fix PRs.",
+    ),
+    (
+        "Codex #2",
+        "Owns CI repair, synchronization, Edge Functions, GitHub Actions, "
+        "and deterministic automation.",
+    ),
+    (
+        "GitHub Actions",
+        "Owns reproducible proof: lint, tests, deploy checks, stale-audit jobs, "
+        "and report artifacts.",
+    ),
+    (
+        "NotebookLM",
+        "Acts as external memory and Master Brain; it informs routing but does "
+        "not replace repository checks.",
+    ),
+]
+
+
 def now_iso() -> str:
     return dt.datetime.now(UTC).replace(microsecond=0).isoformat().replace("+00:00", "Z")
 
@@ -375,9 +409,21 @@ def render_markdown(report: dict[str, Any]) -> str:
         [
             "",
             "## NotebookLM Harness Mapping",
-            "- Claude Code remains the design, review, and quality-gate owner.",
-            "- Codex remains the implementation, CI repair, test generation, and worktree execution owner.",
-            "- GitHub Actions is the deterministic harness: reports are useful only when they flow into checks, issues, or PRs.",
+            f"- Source notebook: `{HARNESS_NOTEBOOK['title']}` (`{HARNESS_NOTEBOOK['id']}`)",
+        ]
+    )
+    for owner, action in HARNESS_LANES:
+        lines.append(f"- **{owner}**: {action}")
+
+    lines.extend(
+        [
+            "- Practical rule: every detected tool change must become a WBS route, GitHub issue, hook, workflow check, or PR; notes alone are not complete.",
+            "",
+            "## 12-Instance Routing Reminder",
+            "- Claude Code instances take ambiguous design and cross-instance coordination.",
+            "- Codex #1 takes mechanical implementation and broad repo scans that need a clean worktree.",
+            "- Codex #2 takes failing checks, deploy unblockers, and sync/automation drift.",
+            "- Rebalance owners when the WBS top-20 contains repeated manual work, repeated CI failures, or stale handoffs.",
             "",
             "<!-- generated-by: scripts/ai_tool_watch.py -->",
         ]
