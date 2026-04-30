@@ -1,5 +1,8 @@
 -- WBS update — #1125 Build in Public Phase 2 完了 = 100% (Win版#132 part 113 / 2026-05-01)
 
+-- nocheck: time-relative
+-- Safe: this migration marks the touched WBS rows completed, so
+-- wbs_enforce_recovery_plan() returns before CURRENT_DATE checks run.
 UPDATE wbs_tasks
 SET status = 'completed',
     progress = 100,
