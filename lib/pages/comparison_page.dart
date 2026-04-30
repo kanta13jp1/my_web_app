@@ -59631,7 +59631,7 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
-  'uptimerobot': const _CompetitorInfo(
+  'uptimerobot-free-monitoring': const _CompetitorInfo(
     name: 'UptimeRobot',
     emoji: '🤖',
     tagline: 'UptimeRobot・無料死活監視・50モニター無料・5分間隔・ステータスページ・Slack/メール通知・シンプルUIで、なぜ「自分株式会社」を選ぶか。',
@@ -59937,7 +59937,7 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
-  'dependabot': const _CompetitorInfo(
+  'dependabot-github-security': const _CompetitorInfo(
     name: 'Dependabot',
     emoji: '🤖',
     tagline: 'Dependabot・GitHub自動依存関係更新・セキュリティアラート・PR自動作成・無料・GitHubネイティブ・40言語対応で、なぜ「自分株式会社」を選ぶか。',
@@ -59971,7 +59971,7 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
-  'renovate': const _CompetitorInfo(
+  'renovate-mend-automation': const _CompetitorInfo(
     name: 'Renovate',
     emoji: '🔄',
     tagline: 'Renovate・自動依存関係更新・高カスタマイズ・グループ更新・Mend製・OSS・GitHub/GitLab/Bitbucket・セルフホスト可で、なぜ「自分株式会社」を選ぶか。',
@@ -60855,7 +60855,7 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
-  'lambdatest-crossbrowser': const _CompetitorInfo(
+  'lambdatest-cloud-browser': const _CompetitorInfo(
     name: 'LambdaTest',
     emoji: '🔬',
     tagline: 'LambdaTest・クロスブラウザテスト・3000+環境・HyperExecute・スマートビジュアルテスト・AI・BrowserStack代替・低コストで、なぜ「自分株式会社」を選ぶか。',
@@ -63813,7 +63813,7 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
-  'packer-image-build': const _CompetitorInfo(
+  'packer-hashicorp-image': const _CompetitorInfo(
     name: 'Packer',
     emoji: '📦',
     tagline: 'Packer・HashiCorp マシンイメージビルダー・AMI/Docker/VMware/GCE・コードでイメージ定義・マルチプロバイダー・並行ビルド・OSS・Vagrant連携・Terraform統合で、なぜ「自分株式会社」を選ぶか。',
@@ -63847,7 +63847,7 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
-  'vagrant-dev-env': const _CompetitorInfo(
+  'vagrant-hashicorp-vm': const _CompetitorInfo(
     name: 'Vagrant',
     emoji: '🏠',
     tagline: 'Vagrant・HashiCorp 仮想マシン管理・Vagrantfile・開発環境再現・VirtualBox/VMware対応・プロビジョニング・OSS・Docker代替・チーム間環境統一で、なぜ「自分株式会社」を選ぶか。',
@@ -63949,7 +63949,7 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
-  'terragrunt-terraform': const _CompetitorInfo(
+  'terragrunt-opentofu-iac': const _CompetitorInfo(
     name: 'Terragrunt',
     emoji: '🌍',
     tagline: 'Terragrunt・Terraform薄いラッパー・DRY・モジュール管理・リモートステート・依存関係・マルチアカウント・OSS・大規模Terraform管理・Gruntwork製で、なぜ「自分株式会社」を選ぶか。',
