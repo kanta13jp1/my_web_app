@@ -28,7 +28,8 @@ class _MemorySearchHubPageState extends State<MemorySearchHubPage> {
         body: {'action': 'search', 'query': query, 'limit': 20},
       );
       final data = res.data as Map<String, dynamic>?;
-      final hits = (data?['results'] as List?)?.cast<Map<String, dynamic>>() ?? [];
+      final hits =
+          (data?['results'] as List?)?.cast<Map<String, dynamic>>() ?? [];
       setState(() => _results = hits);
     } catch (e) {
       setState(() => _error = e.toString());
@@ -74,10 +75,20 @@ class _MemorySearchHubPageState extends State<MemorySearchHubPage> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF6366F1),
                     foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 14,
+                    ),
                   ),
                   child: _loading
-                      ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
                       : const Text('検索'),
                 ),
               ],
@@ -111,10 +122,16 @@ class _MemorySearchHubPageState extends State<MemorySearchHubPage> {
                     separatorBuilder: (_, __) => const Divider(height: 1),
                     itemBuilder: (context, i) {
                       final item = _results[i];
-                      final score = item['score'] ?? item['bm25_score'] ?? 0.0;
+                      final rawScore = item['score'] ?? item['bm25_score'];
+                      final score = rawScore is num ? rawScore : 0.0;
+                      final metadata = item['metadata'];
+                      final source = metadata is Map
+                          ? metadata['source'] ?? item['source'] ?? ''
+                          : item['source'] ?? '';
                       return ListTile(
                         leading: CircleAvatar(
-                          backgroundColor: const Color(0xFF6366F1).withAlpha(30),
+                          backgroundColor:
+                              const Color(0xFF6366F1).withAlpha(30),
                           child: Text(
                             '${i + 1}',
                             style: const TextStyle(
@@ -125,12 +142,14 @@ class _MemorySearchHubPageState extends State<MemorySearchHubPage> {
                           ),
                         ),
                         title: Text(
-                          item['content'] as String? ?? item['text'] as String? ?? '(内容なし)',
+                          item['content'] as String? ??
+                              item['text'] as String? ??
+                              '(内容なし)',
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                         ),
                         subtitle: Text(
-                          'スコア: ${(score as num).toStringAsFixed(3)}  |  ${item['metadata']?['source'] ?? item['source'] ?? ''}',
+                          'スコア: ${score.toStringAsFixed(3)}  |  $source',
                           style: const TextStyle(fontSize: 11),
                         ),
                       );
