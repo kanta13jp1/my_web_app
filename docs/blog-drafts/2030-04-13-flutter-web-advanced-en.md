@@ -1,7 +1,7 @@
 ---
 title: "Flutter Web in Production — SEO, Core Web Vitals, and PWA at Scale"
 tags: flutter,webdev,pwa,indiedev
-published: false
+published: true
 ---
 
 # Flutter Web in Production — SEO, Core Web Vitals, and PWA at Scale
