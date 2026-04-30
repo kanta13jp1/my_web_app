@@ -230,36 +230,22 @@ jobs:
           supabase migration repair --status reverted 20260426215100 2>/dev/null || true
           supabase migration repair --status applied 20260426222000 2>/dev/null || true
           supabase migration repair --status applied 20260426235000 2>/dev/null || true
-          # Run migrations with auto-repair retry.
-          # If db push fails with "Remote migration versions not found", extract the
-          # stuck version numbers, repair them as reverted, and retry once.
-          echo "=== supabase db push start ==="
-          PUSH_EXIT=0
-          PUSH_LOG=$(supabase db push --include-all 2>&1) || PUSH_EXIT=$?
-          echo "=== db push exit=$PUSH_EXIT ==="
-          echo "$PUSH_LOG"
-          if [ $PUSH_EXIT -ne 0 ]; then
-            # SQLSTATE 23505 on schema_migrations_pkey = version already applied by a
-            # concurrent run. Mark those as applied so db push skips them.
-            DUP=$(echo "$PUSH_LOG" | grep -E "schema_migrations_pkey|Key \(version\)=" | grep -oE '[0-9]{14}' | sort -u)
-            # "Remote migration versions not found" = DB has version not in local files.
-            STUCK=$(echo "$PUSH_LOG" | grep -oE '[0-9]{14}' | sort -u)
-            if [ -n "$DUP" ]; then
-              echo "Marking as applied (concurrent-run duplicate): $DUP"
-              for v in $DUP; do supabase migration repair --status applied "$v" 2>/dev/null || true; done
-              supabase db push --include-all
-            elif [ -n "$STUCK" ]; then
-              echo "Auto-repairing remote-only versions: $STUCK"
-              for v in $STUCK; do supabase migration repair --status reverted "$v" 2>/dev/null || true; done
-              supabase db push --include-all
-            else
-              echo "=== db push failed (no stuck versions found). See output above. ==="
-              exit 1
-            fi
-          fi
+          python scripts/ci_failure_digest.py supabase-db-push \
+            --include-all \
+            --recent-limit 10 \
+            --log-dir .deploy-logs \
+            --summary "$GITHUB_STEP_SUMMARY"
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
           SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD_PROD }}
+
+      - name: Upload Supabase migration logs
+        if: always() && hashFiles('.deploy-logs/**') != ''
+        uses: actions/upload-artifact@v6
+        with:
+          name: supabase-migration-logs
+          path: .deploy-logs/
+          if-no-files-found: ignore
 
       - name: Cleanup consolidated Edge Functions
         run: |

@@ -56,8 +56,25 @@ jobs:
           deno-version: v2.x
 
       - name: Deno lint (Edge Functions)
-        run: deno lint --config supabase/functions/deno.json supabase/functions/
+        id: deno_lint
+        run: |
+          mkdir -p .ci-logs
+          set +e
+          deno lint --config supabase/functions/deno.json supabase/functions/ 2>&1 | tee .ci-logs/deno-lint.log
+          status=${PIPESTATUS[0]}
+          python scripts/ci_failure_digest.py summarize-log .ci-logs/deno-lint.log \
+            --kind deno-lint \
+            --summary "$GITHUB_STEP_SUMMARY" || true
+          exit "$status"
         # プロジェクトルール「deno lint 常に0エラー」をCIで強制
+
+      - name: Upload Deno lint log
+        if: always() && hashFiles('.ci-logs/deno-lint.log') != ''
+        uses: actions/upload-artifact@v6
+        with:
+          name: deno-lint-log
+          path: .ci-logs/deno-lint.log
+          if-no-files-found: ignore
 
       - name: Deno test (Edge Functions)
         id: deno_test
