@@ -39,11 +39,26 @@ cross-instance-pr 待ちから **Win territory で先行実装** にエスカレ
 - workflow_dispatch で actual run validation
 - 例: part 101 で 4 軌跡並列 (= deploy-prod fix / audit 自己改善 / changelog production validation / WBS close)
 
-### Phase 4: 4 回目以上同一要望 = 究極深層 (= 残課題殲滅 + meta pattern 文書化)
+### Phase 4: 4 回目同一要望 = 究極深層 (= 残課題殲滅 + meta pattern 文書化)
 
 - Phase 3 で identified した 残課題を **ALL 解決**
 - pattern 自体を docs 化 (= fleet 全体に rule として伝播)
 - 例: part 102 で Claude Code changelog URL 改善 + commit convention 文書化 + N-time alarm pattern 自体を本 doc 化
+
+### Phase 5: 5 回目以上同一要望 + User 指示具体化 = 「明示遵守 + 透明 handoff」
+
+User が 5 回目以上 + **「上から順番に」「対応できないものは報告」** など指示が **より具体化** した場合、AI fleet は:
+
+1. **指示の literal 遵守**: 推測ではなく User 文言通りに優先順位を解釈
+2. **own territory で着手可能なものは即実装**: Win territory 該当 task は part 内で 0% → 100%
+3. **対応不可分は明示 handoff**: cross-instance-pr で「この task はこの instance がやるべき」を **公開 report**
+4. **User が状況把握できる成果物を出す**: 進捗 table + 残課題 list + 各 instance assign
+
+例: part 103 で Top 10 期限超過を triage, Win 直接実装 2 件 (#926, #1267) + 9 件 cross-instance-pr 公開 handoff.
+
+= **AI fleet と User の対話が「単方向 task 受信」から「双方向 negotiation」へ進化** する phase.
+
+---
 
 ---
 
