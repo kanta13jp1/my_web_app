@@ -845,3 +845,60 @@ Haiku 4.5 + effort=medium で signals を bundle → JSON 形式 findings 出力
 - 1 週後: 既存 issue 半数 closed (= 開発反映 cycle 健全)
 - 緊急時: `workflow_dispatch` + `force_full_scan=true` で 13 機能即時 audit
 
+---
+
+### Task: ai-tool-harness-review (毎日 06:15 JST / セッション開始時)
+
+**起源**: NotebookLM `bc58b50b-5fc4-4840-9a62-b397d6d3b65a`
+「Codex vs Claude Code: The Ultimate AI Development Synergy」適用 / 2026-04-30
+**Workflow**: `.github/workflows/ai-tool-watch.yml`
+**Script**: `scripts/ai_tool_watch.py`
+**Report**: `docs/ai-tool-watch/latest-report.md`
+
+#### 目的
+
+Claude Code / Codex の公式変更と NotebookLM の Harness Engineering 方針を毎日・毎セッションで照合し、
+12 インスタンスの担当分担、WBS 優先度、スケジュールタスク候補、GitHub Actions 品質ゲートへ反映する。
+
+#### Step 1: 公式情報を取得
+
+`scripts/ai_tool_watch.py` が以下の一次情報を取得する。
+
+- Claude Code changelog: `https://code.claude.com/docs/en/changelog`
+- Claude Code hooks: `https://code.claude.com/docs/en/hooks`
+- Claude Code GitHub Actions: `https://code.claude.com/docs/en/github-actions`
+- Codex changelog: `https://developers.openai.com/codex/changelog`
+- Codex use cases: `https://developers.openai.com/codex/use-cases/`
+- Codex overview: `https://openai.com/codex/`
+
+#### Step 2: NotebookLM Harness へ写像
+
+検出したキーワードを次の担当へ振り分ける。
+
+| 検出カテゴリ | 担当 | WBS 反映先 |
+| --- | --- | --- |
+| hooks / SessionStart / PostToolUse / Stop | Claude Code | 品質ゲート設計、hook runbook、セッション開始ルール |
+| model / in-app browser / computer use / worktree | Codex#1 | UI検証、横断修正、クリーン worktree PR |
+| CI / GitHub Actions / deploy / sync | Codex#2 | red check 修復、deploy unblock、WBS/Issue/Notion同期 |
+| MCP / Slack / Notion / connector | Claude Code + Codex#2 | 連携基盤、通知、外部メモリ同期 |
+| cost / quota / sandbox / permission | Claude Code | 自動化範囲、deny-by-default、予算・権限境界 |
+
+#### Step 3: 出力と反映
+
+- `docs/ai-tool-watch/latest-report.md` を更新する。
+- high-priority change があれば `#1422` へ comment する。
+- 新しい hook / workflow / automation 候補がある場合は GitHub Issue を起票する。
+- WBS 上位 20 件に手動反復タスクがある場合、`feature-review` または新規 Schedule タスクへ昇格する。
+- 既存 PR が clean / checks pass なら merge queue 候補に入れ、conflict PR は Codex#2 に回す。
+
+#### セッション開始の手動確認
+
+ローカルでは次を実行する。
+
+```powershell
+python scripts/ai_tool_watch.py --print-only
+```
+
+出力に `changed/new official sources` がある場合は、必ず「WBS route / GitHub issue / hook / workflow / PR」の
+いずれかに落とし、NotebookLM のメモだけで完了にしない。
+

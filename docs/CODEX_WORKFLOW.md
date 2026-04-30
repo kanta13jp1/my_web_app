@@ -218,3 +218,50 @@ Codex に出したが想定と違う結果 → cross-instance-pr に「Claude (W
 ---
 
 *Win版#132 part 53 追加 / 2026-04-28*
+
+## 7. Harness Engineering Intake (NotebookLM bc58b50b / 2026-04-30)
+
+### 背景
+
+NotebookLM `bc58b50b-5fc4-4840-9a62-b397d6d3b65a`
+「Codex vs Claude Code: The Ultimate AI Development Synergy」の要点は、個別エージェントの性能比較ではなく、
+**正しい答えを出しやすい開発環境を設計する Harness Engineering** である。
+
+本プロジェクトでは、Claude Code 10 枠 + Codex 2 枠 + GitHub Actions + NotebookLM を次の役割で固定する。
+
+| 面 | 主担当 | 完了条件 |
+| --- | --- | --- |
+| 問題設定 / 設計判断 | Claude Code | handoff に判断理由・代替案・検証方針が残る |
+| 横断実装 / SQL / migration / UI確認 | Codex#1 | clean worktree の PR と deterministic check が残る |
+| CI / deploy / sync / Edge Function / GHA | Codex#2 | red check が green になり、再発防止メモが残る |
+| 外部記憶 / Master Brain | NotebookLM | ノート由来の知見が WBS・Issue・docs・workflow のいずれかに反映される |
+| 真実の場 | GitHub Actions | lint / test / deploy / sync の結果で成否を判定する |
+
+### 5 レーン運用
+
+NotebookLM の示す「AI agent synergy」は、次の 5 レーンに分けて WBS 上へ流す。
+
+| レーン | 実装先 | 初回確認 |
+| --- | --- | --- |
+| Agent-in-agent / MCP | Claude Code が設計、Codex#2 が CI 化 | MCP/connector 設定がドキュメント化され、手動操作なしに疎通確認できる |
+| Codex browser / UI QA | Codex#1 | UI 変更 PR にスクリーンショット・console エラー確認・必要なら Playwright が付く |
+| StatusLine / PreCompact / hooks | Claude Code | session start / pre-compact / post-tool-use のどこで品質ゲートを置くか決まる |
+| Worktrees / Memory / long-running state | Codex#1/#2 | 固定 worktree と担当 branch が WBS/Issue と一致する |
+| Skill activation / tool search | Claude Code + Codex | 使う skill/tool を session start で宣言し、不要なコンテキスト展開を避ける |
+
+### セッション開始チェック
+
+Codex #1/#2 は作業開始時に次を実施する。
+
+1. `python scripts/ai_tool_watch.py --print-only` で Claude Code / Codex 公式情報を確認する。
+2. WBS の上位 20 件を見て、期限超過・CI失敗・同期ズレ・手動作業が反復している項目を優先する。
+3. 役割境界に従い、Codex#1 は横断実装 / UI検証 / SQL、Codex#2 は CI / deploy / sync を優先する。
+4. NotebookLM 由来の提案は、Issue / PR / docs / workflow / hook のどれかに落ちるまで完了扱いにしない。
+5. 作業完了後、PR URL・検証結果・残タスクを WBS/Issue へ同期できる形で残す。
+
+### 再配分ルール
+
+- 同じ種類の CI 失敗が 2 回以上続く場合、Codex#2 に「再発防止 workflow 化」を振る。
+- UI/console エラーが本番で再発する場合、Codex#1 に「browser QA + screenshot gate」を振る。
+- cross-instance 競合、設計判断、NotebookLM の概念蒸留が必要な場合、Claude Code に戻す。
+- 手動確認が 3 回以上出る WBS タスクは、スケジュールタスク・GitHub Actions・Edge Function の候補として起票する。
