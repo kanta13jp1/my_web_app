@@ -32,7 +32,7 @@
 
 = 「物理大学の組織 (= 学部 → 学科 → 講座 → 講義回)」と相似形にして、**学習者の cognitive map** に直感的に符合させる.
 
-### 初期 学部/学科 構成 (= 8 学部 / 39 学科 / part 95 で OS + モバイル学部追加)
+### 初期 学部/学科 構成 (= 9 学部 / 46 学科 / part 96 でハードウェア学部追加)
 
 #### 1. AI 学部 (faculty_code: `ai`)
 
@@ -83,6 +83,20 @@
 | `paper` | 研究論文学科 | Transformer / RLHF / Diffusion / arxiv 主要論文 |
 | `lab` | 研究機関学科 | OpenAI Research / Anthropic Research / Stanford / MIT |
 
+#### 9. ハードウェア学部 (faculty_code: `hardware`) ← **新規 / part 96 追加 / sort_order 2**
+
+User 要望「ハードウェアについても学べる content / 例: CPU / GPU / nvidia / intel / Apple / DELL / HP 等」を受けて新設. 全 IT スタックの **物理基盤層**.
+
+| 学科 code | 学科名 | 含む provider / topic 例 |
+| --- | --- | --- |
+| `cpu` | CPU 学科 | Intel Core / Xeon / AMD Ryzen / EPYC / Apple Silicon (M シリーズ) / Qualcomm Snapdragon / ARM / RISC-V |
+| `gpu` | GPU・アクセラレータ学科 | NVIDIA GeForce / RTX / H100 / Blackwell / AMD Radeon / Intel Arc / Apple Neural Engine / Google TPU / AWS Trainium |
+| `memory_storage` | メモリ・ストレージ学科 | DDR5 / LPDDR5X / HBM3e / NVMe SSD / Intel Optane / Samsung / Micron / SK Hynix / WD / Seagate |
+| `pc_workstation` | PC・ワークステーション学科 | Apple Mac / Dell XPS / Precision / HP Spectre / ZBook / Lenovo ThinkPad / ASUS ROG / Microsoft Surface / Framework |
+| `server_dc` | サーバー・データセンター学科 | Dell PowerEdge / HP ProLiant / Lenovo ThinkSystem / Supermicro / NVIDIA DGX / Cerebras / Groq |
+| `network_peripheral` | ネットワーク・周辺機器学科 | Cisco / Juniper / Arista / Mellanox / Logitech / Razer / Apple Magic / displays |
+| `semiconductor` | 半導体製造学科 | TSMC / Samsung Foundry / Intel Foundry / GlobalFoundries / ASML / Applied Materials / KLA |
+
 #### 7. OS 学部 (faculty_code: `os`) ← **新規 / part 95 追加 / sort_order 5**
 
 User 要望「Windows / macOS / Linux 等の OS も学べる content」を受けて新設.
@@ -123,13 +137,14 @@ User 要望「アジャイル開発など Software エンジニアリング cont
 
 ### 合計
 
-- **8 学部 / 39 学科** / 既存 380+ provider + クラウド系 30+ + SWE 系 30+ + OS 系 25+ + モバイル系 25+ = **490+ provider 想定**
+- **9 学部 / 46 学科** / 既存 380+ provider + クラウド系 30+ + SWE 系 30+ + OS 系 25+ + モバイル系 25+ + ハードウェア系 50+ = **540+ provider 想定**
 
-### 学部 sort_order 体系 (= UI 表示順)
+### 学部 sort_order 体系 (= UI 表示順 / 9 layer 順序教育設計)
 
 | sort_order | 学部 | 位置づけ |
 | --- | --- | --- |
-| 5 | 💿 OS | foundational layer (= 全ての基盤) |
+| **2** | 💻 **ハードウェア** | **物理層 (= 最も foundational)** |
+| 5 | 💿 OS | OS 層 |
 | 10 | 🤖 AI | 基盤技術 |
 | 15 | 📱 モバイル | app delivery (= ユーザーに届く層) |
 | 20 | ☁️ クラウド | infra |
@@ -137,6 +152,8 @@ User 要望「アジャイル開発など Software エンジニアリング cont
 | 35 | 👷 ソフトウェアエンジニアリング | 方法論 |
 | 40 | 💾 データ基盤 | データ層 |
 | 50 | 📚 学術研究 | 学術 |
+
+= **「物理層 → OS → 基盤 → app → infra → 道具 → 方法論 → データ → 学術」** の 9 layer 構成的学習 path 完成.
 
 ---
 

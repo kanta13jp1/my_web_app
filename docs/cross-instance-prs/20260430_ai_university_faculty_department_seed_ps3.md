@@ -164,6 +164,24 @@ Win版 part 95 で `20260430040000_add_os_and_mobile_faculties.sql` 適用済 (=
 
 合計 phase 2-4.6 で **150+ provider 追加** + **既存 380+ mapping** = **530+ provider** に拡大.
 
+## 4.3 Phase 4.7: ハードウェア学部 (= part 96 追加 / 9 学部目)
+
+Win版 part 96 で `20260430050000_add_hardware_faculty.sql` 適用済 (= 学部 + 7 学科 seed 完了).
+
+### ハードウェア学部 7 学科に 50+ provider seed (= migration `20260430070000_seed_hardware_university.sql` 想定)
+
+| 学科 | 想定 provider 例 |
+| --- | --- |
+| `cpu` | Intel Core / Xeon / AMD Ryzen / EPYC / Apple Silicon M3/M4 / Qualcomm Snapdragon X / ARM Cortex / RISC-V |
+| `gpu` | NVIDIA RTX 5090 / H100 / Blackwell B200 / AMD Radeon RX / Instinct MI300 / Intel Arc / Apple Neural Engine / Google TPU v5p / AWS Trainium |
+| `memory_storage` | DDR5 / LPDDR5X / HBM3e / NVMe SSD / Samsung 990 Pro / Micron / SK Hynix / WD Black / Seagate IronWolf |
+| `pc_workstation` | Mac Studio / MacBook Pro M4 / Dell XPS / Precision / HP Spectre / ZBook / Lenovo ThinkPad X1 / ASUS ROG / Microsoft Surface / Framework Laptop |
+| `server_dc` | Dell PowerEdge / HP ProLiant / Lenovo ThinkSystem / Supermicro / NVIDIA DGX H200 / Cerebras WSE-3 / Groq LPU |
+| `network_peripheral` | Cisco Catalyst / Juniper MX / Arista 7800 / Mellanox ConnectX / Logitech MX Master / Razer / Apple Studio Display |
+| `semiconductor` | TSMC 3nm/2nm / Samsung Foundry / Intel 18A / GlobalFoundries / ASML EUV / Applied Materials / Tokyo Electron |
+
+合計 phase 2-4.7 で **200+ provider 追加** + **既存 380+ mapping** = **580+ provider** に拡大.
+
 ## 5. 受入基準
 
 - [ ] Phase 2 mapping migration 完了 → `SELECT count(*) FROM ai_university_content WHERE faculty_id IS NULL` = 0
@@ -172,6 +190,7 @@ Win版 part 95 で `20260430040000_add_os_and_mobile_faculties.sql` 適用済 (=
 - [ ] **Phase 4.5 SWE 学部 7 学科分 seed migration 完了 (= 7 file)** ← part 94 追加
 - [ ] **Phase 4.6 OS 学部 5 学科分 seed migration 完了 (= 5 file)** ← part 95 追加
 - [ ] **Phase 4.6 モバイル学部 5 学科分 seed migration 完了 (= 5 file)** ← part 95 追加
+- [ ] **Phase 4.7 ハードウェア学部 7 学科分 seed migration 完了 (= 7 file)** ← part 96 追加
 - [ ] 各 migration `python scripts/check_migration_timestamps.py` PASS
 - [ ] development_achievements に各 phase の seed entry 追加
 - [ ] cross-instance-pr 完了時 `done/` 移動
