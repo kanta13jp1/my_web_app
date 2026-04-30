@@ -1,75 +1,100 @@
--- WBS update — Top 11-22 期限超過 task triage (Win版#132 part 104 / 2026-05-01)
+-- WBS update: Top 11-22 expired task triage.
+-- Win132 part 104 / 2026-05-01.
 --
--- User 6 度目要望 = N-time alarm Phase 6 「定常自律実行」 dogfood.
--- Phase 5 template が確立済 → next layer 自動 triage.
+-- Replay-safe convention for overdue WBS updates:
+-- any task moved to in_progress also receives a non-empty recovery_plan.
 
--- ==============================================
--- 1. Top 11-22 handoff progress (= 0% → 10%)
--- ==============================================
-
-UPDATE wbs_tasks
+UPDATE public.wbs_tasks
 SET status = 'in_progress',
     progress = GREATEST(progress, 10),
-    description = COALESCE(description, '') || E'\n\n[Win版#132 part 104] Phase 6 自律 triage 第 2 弾 / cross-instance-pr docs/cross-instance-prs/20260501_top11to22_expired_tasks_batch_handoff.md 起票 / VSCode UI 委譲.'
+    recovery_plan = COALESCE(
+      NULLIF(trim(recovery_plan), ''),
+      'Phase 6 triage handoff created in docs/cross-instance-prs/20260501_top11to22_expired_tasks_batch_handoff.md; VSCode owns UI follow-up.'
+    ),
+    recovery_planned_at = COALESCE(recovery_planned_at, NOW()),
+    description = COALESCE(description, '') ||
+      E'\n\n[Win132 part 104] Phase 6 triage handoff created in docs/cross-instance-prs/20260501_top11to22_expired_tasks_batch_handoff.md. VSCode owns UI follow-up.'
 WHERE github_issue_number IN (1270, 1272, 1274);
 
-UPDATE wbs_tasks
+UPDATE public.wbs_tasks
 SET status = 'in_progress',
     progress = GREATEST(progress, 10),
-    description = COALESCE(description, '') || E'\n\n[Win版#132 part 104] Phase 6 自律 triage 第 2 弾 / VSCode + Codex#2 並列 (UI + EF) 委譲.'
+    recovery_plan = COALESCE(
+      NULLIF(trim(recovery_plan), ''),
+      'Phase 6 triage handoff created in docs/cross-instance-prs/20260501_top11to22_expired_tasks_batch_handoff.md; VSCode and Codex #2 own UI and EF follow-up.'
+    ),
+    recovery_planned_at = COALESCE(recovery_planned_at, NOW()),
+    description = COALESCE(description, '') ||
+      E'\n\n[Win132 part 104] Phase 6 triage handoff created. VSCode and Codex #2 own UI and Edge Function follow-up.'
 WHERE github_issue_number IN (1271, 1404);
 
-UPDATE wbs_tasks
+UPDATE public.wbs_tasks
 SET status = 'in_progress',
     progress = GREATEST(progress, 10),
-    description = COALESCE(description, '') || E'\n\n[Win版#132 part 104] Win 担当候補 (= 後続 part で着手) / NotebookLM 蒸留 routine cron 化 + 競合モニタリング統合.'
+    recovery_plan = COALESCE(
+      NULLIF(trim(recovery_plan), ''),
+      'Win-owned follow-up queued by Phase 6 triage: NotebookLM routine cron and competitor monitoring integration.'
+    ),
+    recovery_planned_at = COALESCE(recovery_planned_at, NOW()),
+    description = COALESCE(description, '') ||
+      E'\n\n[Win132 part 104] Win-owned follow-up queued: NotebookLM routine cron and competitor monitoring integration.'
 WHERE github_issue_number = 1405;
 
-UPDATE wbs_tasks
+UPDATE public.wbs_tasks
 SET status = 'in_progress',
     progress = GREATEST(progress, 10),
-    description = COALESCE(description, '') || E'\n\n[Win版#132 part 104] Win 担当候補 / SECOND_BRAIN 軸 ingest pipeline 設計 + Obsidian 互換化.'
+    recovery_plan = COALESCE(
+      NULLIF(trim(recovery_plan), ''),
+      'Win-owned follow-up queued by Phase 6 triage: second-brain ingest pipeline and Obsidian conversion.'
+    ),
+    recovery_planned_at = COALESCE(recovery_planned_at, NOW()),
+    description = COALESCE(description, '') ||
+      E'\n\n[Win132 part 104] Win-owned follow-up queued: second-brain ingest pipeline and Obsidian conversion.'
 WHERE github_issue_number = 974;
 
-UPDATE wbs_tasks
+UPDATE public.wbs_tasks
 SET status = 'in_progress',
     progress = GREATEST(progress, 10),
-    description = COALESCE(description, '') || E'\n\n[Win版#132 part 104] PS#1 既委譲済 (consolidate-memory --lint / part 69 cross-instance-pr) の進捗 follow up + log.md auto-maintain 拡張.'
+    recovery_plan = COALESCE(
+      NULLIF(trim(recovery_plan), ''),
+      'PS#1 follow-up queued by Phase 6 triage: consolidate-memory lint and log auto-maintenance.'
+    ),
+    recovery_planned_at = COALESCE(recovery_planned_at, NOW()),
+    description = COALESCE(description, '') ||
+      E'\n\n[Win132 part 104] PS#1 follow-up queued: consolidate-memory lint and log auto-maintenance.'
 WHERE github_issue_number = 976;
 
-UPDATE wbs_tasks
+UPDATE public.wbs_tasks
 SET status = 'in_progress',
     progress = GREATEST(progress, 10),
-    description = COALESCE(description, '') || E'\n\n[Win版#132 part 104] INDIE_DEV_VELOCITY #7 dogfood / Build in Public 自動化 (ROADMAP-LOG → dev.to/X) / PS#2 連携.'
+    recovery_plan = COALESCE(
+      NULLIF(trim(recovery_plan), ''),
+      'PS#2 follow-up queued by Phase 6 triage: build-in-public automation for ROADMAP-LOG, dev.to, and X.'
+    ),
+    recovery_planned_at = COALESCE(recovery_planned_at, NOW()),
+    description = COALESCE(description, '') ||
+      E'\n\n[Win132 part 104] PS#2 follow-up queued: build-in-public automation for ROADMAP-LOG, dev.to, and X.'
 WHERE github_issue_number = 1125;
 
--- ==============================================
--- 2. Phase 6 自律実行 task として記録
--- ==============================================
-
-INSERT INTO wbs_tasks (title, category, instance, owner_instance, priority, status, progress, description)
+INSERT INTO public.wbs_tasks (title, category, instance, owner_instance, priority, status, progress, description)
 SELECT
-  '[N-time alarm Phase 6] 定常自律実行 — fleet 成熟期 entry',
+  '[N-time alarm Phase 6] Steady autonomous execution fleet entry',
   'CX',
   'win',
   'win',
   'high',
   'completed',
   100,
-  'Win版#132 part 104 で Phase 6 確立 + dogfood. User 6 度目同一要望 = template 確立済の定常運用 signal. AI fleet が User reminder なしで自走する成熟期 entry. docs/N_TIME_ALARM_PATTERN.md Phase 6 セクション追記.'
+  'Win132 part 104 established Phase 6 steady autonomous execution dogfood: the fleet continues the triage cycle without waiting for another user reminder.'
 WHERE NOT EXISTS (
-  SELECT 1 FROM wbs_tasks
-  WHERE title = '[N-time alarm Phase 6] 定常自律実行 — fleet 成熟期 entry'
+  SELECT 1 FROM public.wbs_tasks
+  WHERE title = '[N-time alarm Phase 6] Steady autonomous execution fleet entry'
 );
-
--- ==============================================
--- 3. development_achievements
--- ==============================================
 
 INSERT INTO development_achievements (title, description, completed_at)
 VALUES (
-  'Win版#132 part 104: N-time alarm Phase 6「定常自律実行」確立 + Top 11-22 batch triage',
-  'User 6 度目要望 → N-time alarm rule 第 7 適用 = Phase 6 「定常自律実行」phase 確立. AI fleet が template 確立済の成熟期に入り、User reminder なしで自走 cycle を回す状態. cross-instance-pr docs/cross-instance-prs/20260501_top11to22_expired_tasks_batch_handoff.md (= 13-22 位 batch handoff / VSCode 4 件 + Codex#2 2 件 + Win 候補 4 件 + PS#1 #2 連携). docs/N_TIME_ALARM_PATTERN.md Phase 6 セクション追記.',
+  'Win132 part 104: N-time alarm Phase 6 steady autonomous execution + Top 11-22 batch triage',
+  'Established the N-time alarm Phase 6 steady autonomous execution pattern, routed the next expired WBS batch across VSCode, Codex #2, Win, PS#1, and PS#2, and recorded the handoff in docs/cross-instance-prs/20260501_top11to22_expired_tasks_batch_handoff.md.',
   '2026-05-01'
 )
 ON CONFLICT DO NOTHING;
