@@ -58,13 +58,10 @@ jobs:
         if: ${{ github.event.inputs.tool_filter != 'codex' }}
         run: |
           mkdir -p .ci-logs
-          # Anthropic docs changelog (= public)
-          curl -sL --fail \
-            -A "Mozilla/5.0 (compatible; jibun-fleet-bot/1.0)" \
-            "https://docs.claude.com/en/release-notes/claude-code" \
-            > .ci-logs/claude-code-changelog-${{ steps.tag.outputs.month }}.html \
-            || echo "WARN: claude code changelog fetch failed (non-fatal)"
-          ls -la .ci-logs/ || true
+          # Anthropic Claude Code GitHub Releases (= part 102 改善 / docs.claude.com HTML scraping から API へ)
+          gh api repos/anthropics/claude-code/releases?per_page=20 \
+            > .ci-logs/claude-code-releases-${{ steps.tag.outputs.month }}.json \
+            || echo "WARN: claude code release fetch failed (non-fatal)"
 
       - name: Fetch Codex CLI release notes
         if: ${{ github.event.inputs.tool_filter != 'claude' }}

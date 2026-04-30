@@ -34,7 +34,8 @@ LOG_DIR = REPO_ROOT / ".ci-logs"
 DOC_DIR = REPO_ROOT / "docs" / "ai-tool-changelog"
 
 
-def parse_codex_releases(path: Path) -> list[dict[str, Any]]:
+def parse_github_releases(path: Path) -> list[dict[str, Any]]:
+    """GitHub Releases JSON parser (= Claude Code + Codex CLI 共通 / part 102 で統一)."""
     if not path.exists():
         return []
     try:
@@ -42,23 +43,22 @@ def parse_codex_releases(path: Path) -> list[dict[str, Any]]:
     except json.JSONDecodeError:
         return []
     out: list[dict[str, Any]] = []
-    for r in data[:10]:
+    for r in data[:15]:
         out.append({
             "name": r.get("name") or r.get("tag_name") or "(untitled)",
             "tag": r.get("tag_name") or "",
             "date": (r.get("published_at") or "")[:10],
             "url": r.get("html_url") or "",
-            "body": (r.get("body") or "")[:600],
+            "body": (r.get("body") or "")[:800],
         })
     return out
 
 
 def parse_claude_html(path: Path) -> list[dict[str, Any]]:
-    """Naive heuristic: extract <h2> + nearest <p> blocks."""
+    """Legacy HTML fallback (= part 99 旧 path 用 / 当面残置)."""
     if not path.exists():
         return []
     text = path.read_text(encoding="utf-8", errors="replace")
-    # extremely naive — production の本気版は BeautifulSoup 使う
     matches = re.findall(r"<h2[^>]*>(.*?)</h2>", text, re.DOTALL | re.IGNORECASE)
     out: list[dict[str, Any]] = []
     for h in matches[:15]:
@@ -141,13 +141,26 @@ def render_markdown(month: str, claude_items: list[dict[str, Any]],
         lines.append(ai_summary)
         lines.append("")
 
-    lines.append("## Anthropic Claude Code (heuristic 抽出)")
+    lines.append("## Anthropic Claude Code (GitHub Releases)")
     lines.append("")
     if claude_items:
         for item in claude_items:
-            title = item.get("title", "")
-            pri = heuristic_priority(title)
-            lines.append(f"- [{pri}] {title}")
+            name = item.get("name", "")
+            tag = item.get("tag", "")
+            date = item.get("date", "")
+            url = item.get("url", "")
+            body = item.get("body", "")
+            # GitHub Releases JSON 形式 (= name/tag あり) と legacy HTML 形式 (= title のみ) 両対応
+            if tag or url:
+                pri = heuristic_priority(name, body)
+                lines.append(f"- [{pri}] **{name}** ({tag}, {date}) — [link]({url})")
+                if body:
+                    snippet = body.replace("\n", " ").strip()[:200]
+                    lines.append(f"  - {snippet}")
+            else:
+                title = item.get("title", name)
+                pri = heuristic_priority(title)
+                lines.append(f"- [{pri}] {title}")
     else:
         lines.append("- (changelog fetch 失敗 or 該当なし)")
     lines.append("")
@@ -197,11 +210,16 @@ def main() -> int:
     out_path = REPO_ROOT / args.output
     out_path.parent.mkdir(parents=True, exist_ok=True)
 
+    # Claude Code: 新 GitHub Releases JSON (= part 102 改善) を優先 / なければ legacy HTML へ fallback
+    claude_json = LOG_DIR / f"claude-code-releases-{month}.json"
     claude_html = LOG_DIR / f"claude-code-changelog-{month}.html"
-    codex_json = LOG_DIR / f"codex-cli-releases-{month}.json"
+    if claude_json.exists():
+        claude_items = parse_github_releases(claude_json)
+    else:
+        claude_items = parse_claude_html(claude_html)
 
-    claude_items = parse_claude_html(claude_html)
-    codex_items = parse_codex_releases(codex_json)
+    codex_json = LOG_DIR / f"codex-cli-releases-{month}.json"
+    codex_items = parse_github_releases(codex_json)
 
     text_chunks: list[str] = []
     if claude_items:
