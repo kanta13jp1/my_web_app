@@ -104,6 +104,7 @@ import 'package:my_web_app/pages/health_page.dart';
 import 'package:my_web_app/pages/medical_notes_page.dart';
 import 'package:my_web_app/pages/mental_check_page.dart';
 import 'package:my_web_app/pages/settings_page.dart';
+import 'package:my_web_app/pages/theme_selector_page.dart';
 import 'package:my_web_app/pages/stats_page.dart';
 import 'package:my_web_app/pages/team_workspace_page.dart';
 import 'package:my_web_app/pages/ai_status_page.dart';
@@ -439,9 +440,11 @@ class _MyAppState extends State<MyApp> {
       debugShowCheckedModeBanner: false,
       scaffoldMessengerKey: _scaffoldMessengerKey,
       navigatorKey: _navigatorKey,
-      theme: themeService.getLightTheme(),
-      darkTheme: themeService.getDarkTheme(),
-      themeMode: themeService.getFlutterThemeMode(),
+      theme: themeService.overrideTheme ?? themeService.getLightTheme(),
+      darkTheme: themeService.overrideTheme ?? themeService.getDarkTheme(),
+      themeMode: themeService.overrideTheme != null
+          ? ThemeMode.light
+          : themeService.getFlutterThemeMode(),
       builder: (context, child) {
         return GlobalHeaderClockShell(
           child: UniversalAiShareShell(
@@ -879,6 +882,10 @@ class _MyAppState extends State<MyApp> {
           case '/settings':
             return MaterialPageRoute(
               builder: (_) => const SettingsPage(),
+            );
+          case '/settings/theme':
+            return MaterialPageRoute(
+              builder: (_) => const ThemeSelectorPage(),
             );
           case '/stats':
             return MaterialPageRoute(
