@@ -1,6 +1,6 @@
 ﻿// AI Assistant Edge Function: "The Five Emperors" (Ultimate Edition)
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts"
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { createClient } from 'npm:@supabase/supabase-js@2'
 import { AI_CHARACTER_PREAMBLE } from "../_shared/ai_character_preamble.ts"
 
 const corsHeaders = {
