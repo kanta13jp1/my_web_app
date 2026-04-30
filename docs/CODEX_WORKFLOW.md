@@ -253,11 +253,16 @@ NotebookLM の示す「AI agent synergy」は、次の 5 レーンに分けて W
 
 Codex #1/#2 は作業開始時に次を実施する。
 
-1. `python scripts/ai_tool_watch.py --print-only` で Claude Code / Codex 公式情報を確認する。
-2. WBS の上位 20 件を見て、期限超過・CI失敗・同期ズレ・手動作業が反復している項目を優先する。
-3. 役割境界に従い、Codex#1 は横断実装 / UI検証 / SQL、Codex#2 は CI / deploy / sync を優先する。
-4. NotebookLM 由来の提案は、Issue / PR / docs / workflow / hook のどれかに落ちるまで完了扱いにしない。
-5. 作業完了後、PR URL・検証結果・残タスクを WBS/Issue へ同期できる形で残す。
+1. `python scripts/codex_session_check.py` で branch / upstream / dirty state / worktree / sandbox snapshot を確認する。
+2. `python scripts/ai_tool_watch.py --print-only` で Claude Code / Codex 公式情報を確認する。
+3. WBS の上位 20 件を見て、期限超過・CI失敗・同期ズレ・手動作業が反復している項目を優先する。
+4. 役割境界に従い、Codex#1 は横断実装 / UI検証 / SQL、Codex#2 は CI / deploy / sync を優先する。
+5. NotebookLM 由来の提案は、Issue / PR / docs / workflow / hook のどれかに落ちるまで完了扱いにしない。
+6. 作業完了後、PR URL・検証結果・残タスクを WBS/Issue へ同期できる形で残す。
+
+`codex_session_check.py` は Codex CLI 0.125.0 系の permission profile / session state 改善を運用に反映する
+ための最小ハーネスである。Codex アプリ内部の権限状態を推測せず、実際の Git worktree と環境変数に
+露出している情報だけを記録する。
 
 ### 再配分ルール
 
