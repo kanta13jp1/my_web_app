@@ -25207,3 +25207,21 @@ a9d7b1517 on main
 
 ### Philosophy Alignment
 #5 商品=ユーザー価値 (= 実用的な技術記事でコミュニティに価値提供) / #6 資本=時間 (= 自動 dispatch で手動作業ゼロ)
+
+## 2026-05-01 PS版#5 S116 — CI Auto-Fix race condition修正 + CIトリアージ
+
+### 修正内容
+- **fix**: ci-auto-fix.yml Step6にgit pull --rebase追加 (Issue #1469 close)
+  - 並行push後のfetch first reject (run 25175761539) を根本修正
+- **triage**: Issue #1468 (codex/codex2-mcp-auth-jwks) — ブランチ削除済みでclose
+- **merge**: PR #1472 (migration 050000タイムスタンプ衝突) — 全チェックpass確認後merge
+- **review**: PR #1475 (WBS progress時刻相対CHECK nocheck追加) — merge準備中
+- **check**: EFカバレッジ 19/20 (health-check=GHA専用正常) / deploy-prod in_progress確認
+
+### CIインフラ健全化
+- ci-auto-fix.yml race condition → git pull --rebase で恒久修正
+- migration collision 1件解消 (050000 kagawa 050100 rename)
+- time-relative CHECK誤検知 → nocheck exemption パターン確立
+
+### Philosophy Alignment
+#6 資本=時間 (= CI自動修復の信頼性向上で手動対応コスト削減) / #5 商品=ユーザー価値 (= deploy-prod安定化)
