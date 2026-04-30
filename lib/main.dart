@@ -105,6 +105,8 @@ import 'package:my_web_app/pages/medical_notes_page.dart';
 import 'package:my_web_app/pages/mental_check_page.dart';
 import 'package:my_web_app/pages/settings_page.dart';
 import 'package:my_web_app/pages/theme_selector_page.dart';
+import 'package:my_web_app/pages/ai_university_faculty_select_page.dart';
+import 'package:my_web_app/pages/ai_university_department_select_page.dart';
 import 'package:my_web_app/pages/stats_page.dart';
 import 'package:my_web_app/pages/team_workspace_page.dart';
 import 'package:my_web_app/pages/ai_status_page.dart';
@@ -1555,6 +1557,19 @@ class _MyAppState extends State<MyApp> {
           case '/ai-university-content':
             return MaterialPageRoute(
               builder: (_) => const AiUniversityContentPage(),
+            );
+          case '/ai-university-faculty':
+            return MaterialPageRoute(
+              builder: (_) => const AiUniversityFacultySelectPage(),
+            );
+          case '/ai-university-department':
+            final args = settings.arguments as Map<String, dynamic>?;
+            return MaterialPageRoute(
+              builder: (_) => AiUniversityDepartmentSelectPage(
+                facultyCode: args?['faculty_code'] as String? ?? '',
+                facultyName: args?['faculty_name'] as String? ?? '',
+                facultyEmoji: args?['faculty_emoji'] as String? ?? '🎓',
+              ),
             );
           case '/development-achievements':
             return MaterialPageRoute(

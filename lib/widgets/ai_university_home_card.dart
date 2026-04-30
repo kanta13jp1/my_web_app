@@ -15,7 +15,7 @@ import '../services/ai_university_x_post_service.dart';
 /// - プロバイダー絵文字一覧 (DB登録数に関わらず既知分を表示)
 /// - クイズ達成数 (SharedPreferences から取得)
 /// - シェアボタン (share_plus)
-/// - タップで /gemini-university へ遷移
+/// - タップで /ai-university-faculty (学部選択) へ遷移
 
 class AiUniversityHomeCard extends StatefulWidget {
   const AiUniversityHomeCard({super.key});
@@ -214,7 +214,7 @@ class _AiUniversityHomeCardState extends State<AiUniversityHomeCard> {
   }
 
   void _openUniversity() {
-    Navigator.of(context).pushNamed('/gemini-university');
+    Navigator.of(context).pushNamed('/ai-university-faculty');
   }
 
   void _openProvider(String providerId) {
