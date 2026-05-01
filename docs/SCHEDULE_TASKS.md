@@ -909,6 +909,26 @@ python scripts/codex_session_check.py
 python scripts/ai_tool_watch.py --print-only
 ```
 
+---
+
+### Task: wbs-stale-subdivide (daily 09:00 JST)
+
+**Source**: `docs/BUSINESS_WBS_AI_AUTOMATION.md` Phase 3
+**Workflow**: `.github/workflows/wbs-stale-subdivide.yml`
+**Script**: `scripts/wbs_stale_subdivide.py`
+
+Detects WBS tasks that are still `in_progress`, below 100%, older than each
+row's `stale_threshold_hours`, and not subdivided within the last 7 days. The
+workflow asks Gemini for 3-7 smaller execution tasks, inserts child rows with
+`parent_task_id`, then patches the parent `auto_subdivided_at`.
+
+Operational rules:
+
+- Missing `GEMINI_API_KEY` or `SUPABASE_SERVICE_ROLE_KEY` is a clean no-op.
+- `workflow_dispatch` supports `dry_run=true` before enabling writes.
+- Rows with `ai_review_status='skip'` are excluded by default.
+- The script has a dependency-free `--self-test` step in the workflow.
+
 出力に `changed/new official sources` がある場合は、必ず「WBS route / GitHub issue / hook / workflow / PR」の
 いずれかに落とし、NotebookLM のメモだけで完了にしない。
 

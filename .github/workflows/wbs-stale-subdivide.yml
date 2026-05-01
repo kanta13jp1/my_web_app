@@ -1,0 +1,79 @@
+name: WBS Stale Subdivide
+
+# BUSINESS_WBS_AI_AUTOMATION Phase 3.
+# Every morning, split stale in-progress WBS tasks into smaller child tasks.
+# The workflow is deny-by-default: missing secrets or no candidates are clean
+# no-ops, not red checks.
+
+on:
+  schedule:
+    - cron: "0 0 * * *" # 09:00 JST
+  workflow_dispatch:
+    inputs:
+      max_tasks:
+        description: "Maximum parent tasks to subdivide"
+        required: false
+        default: "5"
+      dry_run:
+        description: "Generate and log child tasks without writing to Supabase"
+        required: false
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
+
+concurrency:
+  group: wbs-stale-subdivide
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  subdivide:
+    name: Subdivide stale WBS tasks
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    env:
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      SUPABASE_URL: https://smmkxxavexumewbfaqpy.supabase.co
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      MAX_TASKS: ${{ github.event.inputs.max_tasks || '5' }}
+      DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Self-test script
+        run: python scripts/wbs_stale_subdivide.py --self-test
+
+      - name: Secret presence check
+        id: precheck
+        run: |
+          if [ -z "$GEMINI_API_KEY" ] || [ -z "$SUPABASE_SERVICE_ROLE_KEY" ]; then
+            echo "::warning::GEMINI_API_KEY or SUPABASE_SERVICE_ROLE_KEY is missing; skipping"
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Subdivide stale tasks
+        if: steps.precheck.outputs.skip != 'true'
+        run: |
+          ARGS=(--max-tasks "$MAX_TASKS")
+          if [ "$DRY_RUN" = "true" ]; then
+            ARGS+=(--dry-run)
+          fi
+          python scripts/wbs_stale_subdivide.py "${ARGS[@]}"
+
+      - name: No-op summary
+        if: steps.precheck.outputs.skip == 'true'
+        run: |
+          {
+            echo "## WBS stale subdivide"
+            echo
+            echo "Skipped because required secrets are not configured."
+          } >> "$GITHUB_STEP_SUMMARY"
