@@ -33,6 +33,8 @@ import '../pages/home_insights_page.dart';
 import '../pages/import_page.dart';
 import '../pages/kanban_board_page.dart';
 import '../pages/life_goals_page.dart';
+import '../pages/local_smart_cleanup_page.dart';
+import '../pages/windows_app_install_page.dart';
 import '../pages/memory_drill_page.dart';
 import '../pages/mind_map_page.dart';
 import '../pages/mindless_task_page.dart';
@@ -528,6 +530,46 @@ List<HomeToolEntry> buildHomeToolCatalog({
       color: const Color(0xFF3D5AFE),
       keywords: const <String>['メール', '整理', '受信箱'],
       onOpen: (context) => _pushPage(context, const EmailCleanupPage()),
+      requiresClearDeck: true,
+    ),
+    HomeToolEntry(
+      id: 'local-smart-cleanup',
+      sectionId: 'personal',
+      title: 'ローカルPCスマート整理',
+      subtitle: 'Cドライブ重複レポートと承認CSVを確認',
+      icon: Icons.cleaning_services_outlined,
+      color: const Color(0xFF00897B),
+      keywords: const <String>[
+        'PC整理',
+        '重複',
+        'Cドライブ',
+        'Google Drive',
+        'cleanup',
+      ],
+      onOpen: (context) => _pushPage(
+        context,
+        const LocalSmartCleanupPage(),
+      ),
+      requiresClearDeck: true,
+    ),
+    HomeToolEntry(
+      id: 'windows-app',
+      sectionId: 'personal',
+      title: 'Windowsアプリ版',
+      subtitle: 'ローカルPC整理用のWindows Companion Appを入手',
+      icon: Icons.desktop_windows_outlined,
+      color: const Color(0xFF1565C0),
+      keywords: const <String>[
+        'Windows',
+        'Windowsアプリ',
+        'インストール',
+        'ローカルPC',
+        'cleanup',
+      ],
+      onOpen: (context) => _pushPage(
+        context,
+        const WindowsAppInstallPage(),
+      ),
       requiresClearDeck: true,
     ),
     HomeToolEntry(

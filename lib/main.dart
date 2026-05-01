@@ -21,6 +21,8 @@ import 'package:my_web_app/pages/behavior_log_page.dart';
 import 'package:my_web_app/pages/wip_limit_page.dart';
 import 'package:my_web_app/pages/danshari_page.dart';
 import 'package:my_web_app/pages/email_cleanup_page.dart';
+import 'package:my_web_app/pages/local_smart_cleanup_page.dart';
+import 'package:my_web_app/pages/windows_app_install_page.dart';
 import 'package:my_web_app/pages/payment_reminder_page.dart';
 import 'package:my_web_app/pages/shopping_list_page.dart';
 import 'package:my_web_app/pages/digest_queue_page.dart';
@@ -661,6 +663,14 @@ class _MyAppState extends State<MyApp> {
           case '/email-cleanup':
             return MaterialPageRoute(
               builder: (_) => const EmailCleanupPage(),
+            );
+          case '/local-smart-cleanup':
+            return MaterialPageRoute(
+              builder: (_) => const LocalSmartCleanupPage(),
+            );
+          case '/windows-app':
+            return MaterialPageRoute(
+              builder: (_) => const WindowsAppInstallPage(),
             );
           case '/payment-reminders':
             return MaterialPageRoute(

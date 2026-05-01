@@ -1,0 +1,103 @@
+name: Build Windows Companion App
+
+on:
+  workflow_dispatch:
+    inputs:
+      publish_release:
+        description: 'Publish jibun-windows-companion.zip to GitHub Releases'
+        required: true
+        default: false
+        type: boolean
+      release_tag:
+        description: 'Release tag to create when publish_release is true'
+        required: false
+        default: 'windows-companion-latest'
+        type: string
+  push:
+    tags:
+      - 'windows-companion-v*'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: windows-companion-build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-windows:
+    name: Build Windows ZIP
+    runs-on: windows-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.38.x'
+          channel: 'stable'
+          cache: true
+
+      - name: Enable Windows desktop
+        run: flutter config --enable-windows-desktop
+
+      - name: Enable Git long paths
+        run: git config --global core.longpaths true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Analyze Windows companion surface
+        run: |
+          flutter analyze `
+            lib/windows_companion_main.dart `
+            lib/pages/local_smart_cleanup_page.dart `
+            lib/pages/windows_app_install_page.dart `
+            lib/services/local_cleanup_result.dart `
+            lib/services/local_cleanup_service.dart `
+            lib/services/local_cleanup_service_io.dart `
+            lib/services/local_cleanup_service_stub.dart
+
+      - name: Build Windows release
+        run: flutter build windows --release --no-tree-shake-icons --target lib/windows_companion_main.dart
+
+      - name: Package Windows release
+        shell: pwsh
+        run: |
+          $releaseDir = Join-Path $PWD 'build\windows\x64\runner\Release'
+          if (-not (Test-Path -LiteralPath $releaseDir)) {
+            throw "Windows release directory not found: $releaseDir"
+          }
+          $scriptSource = Join-Path $PWD 'tools\windows-companion\SmartCleanup'
+          $scriptDest = Join-Path $releaseDir 'scripts\SmartCleanup'
+          New-Item -ItemType Directory -Force -Path $scriptDest | Out-Null
+          Copy-Item -LiteralPath (Join-Path $scriptSource 'Invoke-SmartCleanup.ps1') -Destination $scriptDest -Force
+          Copy-Item -LiteralPath (Join-Path $scriptSource 'Invoke-ApprovedCleanup.ps1') -Destination $scriptDest -Force
+          $distDir = Join-Path $PWD 'dist'
+          New-Item -ItemType Directory -Force -Path $distDir | Out-Null
+          $zipPath = Join-Path $distDir 'jibun-windows-companion.zip'
+          Compress-Archive -Path (Join-Path $releaseDir '*') -DestinationPath $zipPath -Force
+          Get-Item -LiteralPath $zipPath | Select-Object FullName, Length, LastWriteTime
+
+      - name: Upload Windows artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: jibun-windows-companion
+          path: dist/jibun-windows-companion.zip
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Publish GitHub Release asset
+        if: startsWith(github.ref, 'refs/tags/windows-companion-v') || inputs.publish_release == true
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ startsWith(github.ref, 'refs/tags/windows-companion-v') && github.ref_name || inputs.release_tag }}
+          name: Jibun Windows Companion
+          body: |
+            Windows companion app build for local smart cleanup workflows.
+
+            Download `jibun-windows-companion.zip`, extract it, and run `my_web_app.exe`.
+          files: dist/jibun-windows-companion.zip
