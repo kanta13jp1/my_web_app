@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       publish_release:
-        description: 'Publish jibun-windows-companion.zip to GitHub Releases'
+        description: 'Publish Windows Companion artifacts to GitHub Releases'
         required: true
         default: false
         type: boolean
@@ -20,13 +20,16 @@ on:
 permissions:
   contents: write
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 concurrency:
   group: windows-companion-build-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
   build-windows:
-    name: Build Windows ZIP
+    name: Build Windows ZIP/MSIX
     runs-on: windows-latest
     timeout-minutes: 45
 
@@ -82,11 +85,36 @@ jobs:
           Compress-Archive -Path (Join-Path $releaseDir '*') -DestinationPath $zipPath -Force
           Get-Item -LiteralPath $zipPath | Select-Object FullName, Length, LastWriteTime
 
+      - name: Package and sign Windows MSIX
+        shell: pwsh
+        env:
+          WINDOWS_MSIX_PFX_BASE64: ${{ secrets.WINDOWS_MSIX_PFX_BASE64 }}
+          WINDOWS_MSIX_PFX_PASSWORD: ${{ secrets.WINDOWS_MSIX_PFX_PASSWORD }}
+          WINDOWS_MSIX_PUBLISHER: ${{ secrets.WINDOWS_MSIX_PUBLISHER }}
+          WINDOWS_MSIX_PUBLISHER_DISPLAY_NAME: ${{ secrets.WINDOWS_MSIX_PUBLISHER_DISPLAY_NAME }}
+        run: |
+          $releaseDir = Join-Path $PWD 'build\windows\x64\runner\Release'
+          $distDir = Join-Path $PWD 'dist'
+          $publisher = if ($env:WINDOWS_MSIX_PUBLISHER) { $env:WINDOWS_MSIX_PUBLISHER } else { 'CN=Jibun Windows Companion' }
+          $publisherDisplayName = if ($env:WINDOWS_MSIX_PUBLISHER_DISPLAY_NAME) { $env:WINDOWS_MSIX_PUBLISHER_DISPLAY_NAME } else { 'Jibun Inc.' }
+          $msixVersion = "1.0.${{ github.run_number }}.${{ github.run_attempt }}"
+          .\tools\windows-companion\msix\New-WindowsCompanionMsix.ps1 `
+            -ReleaseDir $releaseDir `
+            -OutputDir $distDir `
+            -Version $msixVersion `
+            -Publisher $publisher `
+            -PublisherDisplayName $publisherDisplayName `
+            -CertificateBase64 $env:WINDOWS_MSIX_PFX_BASE64 `
+            -CertificatePassword $env:WINDOWS_MSIX_PFX_PASSWORD
+
       - name: Upload Windows artifact
         uses: actions/upload-artifact@v6
         with:
           name: jibun-windows-companion
-          path: dist/jibun-windows-companion.zip
+          path: |
+            dist/jibun-windows-companion.zip
+            dist/jibun-windows-companion.msix
+            dist/jibun-windows-companion.cer
           if-no-files-found: error
           retention-days: 30
 
@@ -99,5 +127,10 @@ jobs:
           body: |
             Windows companion app build for local smart cleanup workflows.
 
-            Download `jibun-windows-companion.zip`, extract it, and run `my_web_app.exe`.
-          files: dist/jibun-windows-companion.zip
+            Prefer `jibun-windows-companion.msix` for installation.
+            If the MSIX is self-signed, import `jibun-windows-companion.cer` into Trusted People first.
+            `jibun-windows-companion.zip` remains available as the portable fallback.
+          files: |
+            dist/jibun-windows-companion.zip
+            dist/jibun-windows-companion.msix
+            dist/jibun-windows-companion.cer

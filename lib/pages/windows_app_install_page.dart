@@ -5,12 +5,18 @@ import '../utils/web_image_downloader.dart';
 class WindowsAppInstallPage extends StatelessWidget {
   const WindowsAppInstallPage({super.key});
 
+  static const latestMsixUrl =
+      'https://github.com/kanta13jp1/my_web_app/releases/latest/download/jibun-windows-companion.msix';
+  static const latestCertificateUrl =
+      'https://github.com/kanta13jp1/my_web_app/releases/latest/download/jibun-windows-companion.cer';
   static const latestZipUrl =
       'https://github.com/kanta13jp1/my_web_app/releases/latest/download/jibun-windows-companion.zip';
   static const workflowUrl =
       'https://github.com/kanta13jp1/my_web_app/actions/workflows/windows-companion-build.yml';
+  static const guideUrl =
+      'https://github.com/kanta13jp1/my_web_app/blob/main/docs/WINDOWS_COMPANION_APP.md';
   static const issueUrl =
-      'https://github.com/kanta13jp1/my_web_app/issues/1493';
+      'https://github.com/kanta13jp1/my_web_app/issues/1498';
 
   @override
   Widget build(BuildContext context) {
@@ -19,7 +25,7 @@ class WindowsAppInstallPage extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Windowsアプリ版'),
+        title: const Text('Windows アプリ版'),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
@@ -36,25 +42,30 @@ class WindowsAppInstallPage extends StatelessWidget {
                   runSpacing: 10,
                   children: [
                     FilledButton.icon(
+                      onPressed: () => openWebUrl(latestMsixUrl),
+                      icon: const Icon(Icons.install_desktop_outlined),
+                      label: const Text('MSIX をインストール'),
+                    ),
+                    OutlinedButton.icon(
+                      onPressed: () => openWebUrl(latestCertificateUrl),
+                      icon: const Icon(Icons.verified_user_outlined),
+                      label: const Text('証明書を取得'),
+                    ),
+                    OutlinedButton.icon(
                       onPressed: () => openWebUrl(latestZipUrl),
-                      icon: const Icon(Icons.download_for_offline_outlined),
-                      label: const Text('Windows版ZIPをダウンロード'),
+                      icon: const Icon(Icons.archive_outlined),
+                      label: const Text('ZIP 版'),
                     ),
                     OutlinedButton.icon(
                       onPressed: () => openWebUrl(workflowUrl),
                       icon: const Icon(Icons.build_circle_outlined),
-                      label: const Text('ビルド履歴を見る'),
+                      label: const Text('ビルド履歴'),
                     ),
                     OutlinedButton.icon(
                       onPressed: () => Navigator.of(context)
                           .pushNamed('/local-smart-cleanup'),
                       icon: const Icon(Icons.cleaning_services_outlined),
                       label: const Text('スマート整理を開く'),
-                    ),
-                    OutlinedButton.icon(
-                      onPressed: () => openWebUrl(issueUrl),
-                      icon: const Icon(Icons.flag_outlined),
-                      label: const Text('P0 Issue'),
                     ),
                   ],
                 ),
@@ -65,27 +76,30 @@ class WindowsAppInstallPage extends StatelessWidget {
                     const cards = <Widget>[
                       _StepCard(
                         number: '1',
-                        title: 'ZIPを取得',
-                        body: '最新版の配布ZIPをダウンロードします。',
-                        icon: Icons.file_download_outlined,
+                        title: 'MSIX を取得',
+                        body:
+                            '通常は MSIX を使います。Windows のアプリとして登録され、更新管理もしやすくなります。',
+                        icon: Icons.install_desktop_outlined,
                       ),
                       _StepCard(
                         number: '2',
-                        title: '任意フォルダに展開',
-                        body: 'Downloads以外の固定フォルダに展開すると更新管理が安定します。',
-                        icon: Icons.folder_open_outlined,
+                        title: '証明書を信頼',
+                        body:
+                            '自己署名ビルドの場合だけ、同梱の .cer を Trusted People に登録してからインストールします。',
+                        icon: Icons.verified_outlined,
                       ),
                       _StepCard(
                         number: '3',
                         title: 'アプリを起動',
-                        body: '展開先の my_web_app.exe を起動します。',
+                        body:
+                            'インストール後は Jibun Windows Companion としてスタートメニューから起動できます。',
                         icon: Icons.desktop_windows_outlined,
                       ),
                       _StepCard(
                         number: '4',
                         title: '承認して実行',
-                        body: 'スキャン結果を確認し、承認済みの候補だけをローカルで処理します。',
-                        icon: Icons.verified_user_outlined,
+                        body: 'スキャン結果を確認し、承認済みの候補だけをローカルPCで処理します。',
+                        icon: Icons.task_alt_outlined,
                       ),
                     ];
                     if (wide) {
@@ -118,6 +132,15 @@ class WindowsAppInstallPage extends StatelessWidget {
                 const SizedBox(height: 16),
                 _RolePanel(theme: theme),
                 const SizedBox(height: 16),
+                _LinkPanel(
+                  theme: theme,
+                  msixUrl: latestMsixUrl,
+                  certUrl: latestCertificateUrl,
+                  zipUrl: latestZipUrl,
+                  guideUrl: guideUrl,
+                  issueUrl: issueUrl,
+                ),
+                const SizedBox(height: 16),
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
@@ -125,7 +148,7 @@ class WindowsAppInstallPage extends StatelessWidget {
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
-                    '安定ダウンロードURL: $latestZipUrl',
+                    'MSIX が利用できない場合も、ZIP 版を展開して my_web_app.exe を起動できます。',
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: colorScheme.onSurfaceVariant,
                     ),
@@ -183,7 +206,7 @@ class _HeroPanel extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Web版ではできないローカルPCのスキャン、承認済み整理、Windowsタスク登録をWindowsアプリ側で実行します。',
+                  'Web 版ではできないローカルPCのスキャン、承認済み整理、Windows タスク登録をアプリ側で実行します。',
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: colorScheme.onSurfaceVariant,
                   ),
@@ -271,16 +294,20 @@ class _RolePanel extends StatelessWidget {
     final colorScheme = theme.colorScheme;
     final rows = <({String label, String body})>[
       (
-        label: 'Web版',
-        body: 'インストール導線、レポート確認、承認CSV編集を担当します。',
+        label: 'MSIX',
+        body: 'Windows にアプリとして登録し、今後の更新や署名検証に乗せる標準配布形式です。',
       ),
       (
-        label: 'Windows版',
-        body: 'ローカルPCのファイル確認とPowerShell実行を担当します。',
+        label: '証明書',
+        body: '本番証明書が未設定の場合は自己署名になります。初回だけ .cer を信頼してから使います。',
+      ),
+      (
+        label: 'ZIP',
+        body: 'インストールが難しい環境向けのポータブル fallback として残しています。',
       ),
       (
         label: 'PowerShell',
-        body: '承認済み候補だけを検証し、ごみ箱移動と結果ログ保存を行います。',
+        body: '承認済み候補だけを検証し、ごみ箱移動と結果ログ保存をローカルで実行します。',
       ),
     ];
 
@@ -295,7 +322,7 @@ class _RolePanel extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            '役割分担',
+            '配布方式',
             style: theme.textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.w700,
             ),
@@ -344,6 +371,71 @@ class _RoleLine extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _LinkPanel extends StatelessWidget {
+  const _LinkPanel({
+    required this.theme,
+    required this.msixUrl,
+    required this.certUrl,
+    required this.zipUrl,
+    required this.guideUrl,
+    required this.issueUrl,
+  });
+
+  final ThemeData theme;
+  final String msixUrl;
+  final String certUrl;
+  final String zipUrl;
+  final String guideUrl;
+  final String issueUrl;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = theme.colorScheme;
+    final links = <({String label, String url})>[
+      (label: 'MSIX', url: msixUrl),
+      (label: '証明書', url: certUrl),
+      (label: 'ZIP fallback', url: zipUrl),
+      (label: '運用手順', url: guideUrl),
+      (label: 'Issue #1498', url: issueUrl),
+    ];
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: colorScheme.surface,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: colorScheme.outlineVariant),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'ダウンロードリンク',
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 10),
+          for (final link in links)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: InkWell(
+                onTap: () => openWebUrl(link.url),
+                child: Text(
+                  '${link.label}: ${link.url}',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: colorScheme.primary,
+                    decoration: TextDecoration.underline,
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
     );
   }
 }
