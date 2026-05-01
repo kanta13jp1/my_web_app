@@ -17,13 +17,48 @@ The executable is created under:
 build\windows\x64\runner\Release\my_web_app.exe
 ```
 
-## Package
+## Portable Package
 
 ```powershell
 New-Item -ItemType Directory -Force -Path build\windows\x64\runner\Release\scripts\SmartCleanup
 Copy-Item tools\windows-companion\SmartCleanup\*.ps1 build\windows\x64\runner\Release\scripts\SmartCleanup -Force
 Compress-Archive -Path build\windows\x64\runner\Release\* -DestinationPath dist\jibun-windows-companion.zip -Force
 ```
+
+## MSIX Package
+
+MSIX gives the companion app a normal Windows install/update surface. The
+repository builds both:
+
+- `jibun-windows-companion.msix`: signed Windows app package.
+- `jibun-windows-companion.cer`: public certificate for self-signed builds.
+- `jibun-windows-companion.zip`: portable fallback.
+
+Local package command:
+
+```powershell
+.\tools\windows-companion\msix\New-WindowsCompanionMsix.ps1 `
+  -ReleaseDir build\windows\x64\runner\Release `
+  -OutputDir dist `
+  -Version 1.0.0.0 `
+  -Publisher 'CN=Jibun Windows Companion'
+```
+
+For production signing, configure these GitHub repository secrets:
+
+```text
+WINDOWS_MSIX_PFX_BASE64
+WINDOWS_MSIX_PFX_PASSWORD
+WINDOWS_MSIX_PUBLISHER
+WINDOWS_MSIX_PUBLISHER_DISPLAY_NAME
+```
+
+`WINDOWS_MSIX_PUBLISHER` must match the certificate subject, for example
+`CN=Jibun Windows Companion`.
+
+If `WINDOWS_MSIX_PFX_BASE64` is not configured, the workflow creates a
+self-signed certificate and publishes the `.cer` next to the `.msix`. The user
+must trust that certificate before installing the MSIX.
 
 ## Release
 
@@ -36,6 +71,18 @@ The stable download URL used by the web app is:
 
 ```text
 https://github.com/kanta13jp1/my_web_app/releases/latest/download/jibun-windows-companion.zip
+```
+
+The stable MSIX URL used by the web app is:
+
+```text
+https://github.com/kanta13jp1/my_web_app/releases/latest/download/jibun-windows-companion.msix
+```
+
+The public certificate URL for self-signed builds is:
+
+```text
+https://github.com/kanta13jp1/my_web_app/releases/latest/download/jibun-windows-companion.cer
 ```
 
 ## Safety Model
