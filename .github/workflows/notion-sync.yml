@@ -1,18 +1,18 @@
 name: Notion Mirror Sync (hourly)
 
-# Multi-AI resilience / Win#132 part 7 (Backlog N5 消化)
+# Multi-AI resilience / Win#132 part 7 (Backlog N5)
 #
-# Supabase wbs_tasks → Notion "WBS Tasks" Database に 1h 毎同期。
-# Anthropic / Claude Code outage 時もユーザーが Notion mirror で WBS 閲覧可能。
-# 将来 N3 / N4 実装後は roadmap / memory_index sync もここに追加。
+# Sync Supabase wbs_tasks, development_achievements, and memory_index to the
+# Notion mirror every hour so the WBS remains readable during AI service outages.
 #
-# 事前条件 (Win#132 part 5 で登録済):
+# Prerequisites:
 #   - Supabase Secrets: NOTION_API_TOKEN / NOTION_WBS_DATABASE_ID
-#   - EF schedule-hub (notion.sync_wbs action / Win#132 part 6 / 0d1b4903)
+#   - Supabase Secrets: NOTION_ROADMAP_PAGE_ID / NOTION_MEMORY_DATABASE_ID
+#   - EF schedule-hub notion.sync_{wbs,roadmap,memory_index} actions
 
 on:
   schedule:
-    - cron: "10 * * * *" # 毎時 10 分 (UTC) = JST の毎時 10 分
+    - cron: "10 * * * *" # Every hour at minute 10 UTC.
   workflow_dispatch:
     inputs:
       offset:
@@ -26,14 +26,14 @@ on:
 
 concurrency:
   group: notion-sync
-  cancel-in-progress: false # 前回を待って逐次実行 (Notion rate limit 3 req/sec / 350ms sleep)
+  cancel-in-progress: false # Serialize runs for Notion rate limits.
 
 permissions:
   contents: read
 
 jobs:
-  sync-wbs:
-    name: Sync wbs_tasks → Notion
+  sync-notion:
+    name: Sync WBS / ROADMAP / Memory to Notion
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
@@ -51,52 +51,116 @@ jobs:
           echo "Response: $RESP"
           echo "response=$RESP" >> "$GITHUB_OUTPUT"
 
-          # success 判定
+          # Success status.
           SUCCESS=$(echo "$RESP" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('success',False))" 2>/dev/null || echo "false")
           TOTAL=$(echo "$RESP" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('total',0))" 2>/dev/null || echo "0")
           CREATED=$(echo "$RESP" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('created',0))" 2>/dev/null || echo "0")
           UPDATED=$(echo "$RESP" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('updated',0))" 2>/dev/null || echo "0")
           FAILED=$(echo "$RESP" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('failed',0))" 2>/dev/null || echo "0")
 
-          echo "✅ success=$SUCCESS total=$TOTAL created=$CREATED updated=$UPDATED failed=$FAILED"
+          echo "success=$SUCCESS total=$TOTAL created=$CREATED updated=$UPDATED failed=$FAILED"
 
-          # failed 件数が total の 10% 超えたら警告 (fail-fast しない・次回 cron でリトライ)
+          # Warn on partial failures but allow the next cron run to retry.
           if [ "$TOTAL" != "0" ] && [ "$FAILED" != "0" ]; then
             FAIL_PCT=$(python3 -c "print(round($FAILED / $TOTAL * 100, 1))")
             echo "::warning::Notion sync had $FAILED/$TOTAL failed (${FAIL_PCT}%)"
           fi
 
-          # EF 側が deny-by-default (503 notion_not_configured) 返した場合は即 fail
+          # Soft-fail expected setup and transient cases.
           if [ "$SUCCESS" = "False" ]; then
             ERROR=$(echo "$RESP" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('error','unknown'))" 2>/dev/null || echo "unknown")
             echo "::error::Notion sync returned success=false / error=$ERROR"
-            # notion_not_configured = 環境セットアップ未完了 → soft-fail
+            # notion_not_configured means setup is incomplete.
             if echo "$ERROR" | grep -q "notion_not_configured"; then
-              echo "::warning::NOTION_* secrets not configured yet — skip (set in Supabase dashboard)"
+              echo "::warning::NOTION_* secrets not configured yet - skip (set in Supabase dashboard)"
               exit 0
             fi
-            # Notion DB property schema mismatch (e.g. task_title not created yet) → soft-fail
+            # Notion DB property schema mismatch.
             if echo "$RESP" | grep -q "is not a property that exists"; then
-              echo "::warning::Notion DB schema mismatch — add required properties to Notion WBS DB (task_title rich_text / instance select / status select / progress number / deadline date / updated_at date)"
+              echo "::warning::Notion DB schema mismatch - add required properties to Notion WBS DB (task_title rich_text / instance select / status select / progress number / deadline date / updated_at date)"
               exit 0
             fi
-            # Supabase EF idle timeout (141 tasks × Notion rate limit > 150s) → soft-fail
+            # Supabase Edge Function idle timeout.
             if echo "$RESP" | grep -q "IDLE_TIMEOUT"; then
-              echo "::warning::Notion sync EF idle timeout — batch too large for Supabase 150s limit (will retry next hour)"
+              echo "::warning::Notion sync EF idle timeout - batch too large for Supabase 150s limit (will retry next hour)"
               exit 0
             fi
-            # Notion API rate limit (HTTP 429) → soft-fail (will retry next hour)
+            # Notion API rate limit.
             if echo "$RESP" | grep -q "rate_limited\|\"429\""; then
-              echo "::warning::Notion API rate limited (HTTP 429) — will retry next cron"
+              echo "::warning::Notion API rate limited (HTTP 429) - will retry next cron"
               exit 0
             fi
-            # Notion object_not_found (deleted/moved page) → soft-fail if < 10% fail rate
+            # Notion object_not_found (deleted/moved page) is tolerated below 10%.
             if echo "$RESP" | grep -q "object_not_found"; then
               FAIL_PCT_VAL=$(python3 -c "print(round($FAILED / max($TOTAL,1) * 100, 1))" 2>/dev/null || echo "100")
               if python3 -c "exit(0 if float('$FAIL_PCT_VAL') < 10 else 1)" 2>/dev/null; then
-                echo "::warning::Notion sync: $FAILED orphan page(s) not found (${FAIL_PCT_VAL}% < 10%) — will auto-skip on next sync"
+                echo "::warning::Notion sync: $FAILED orphan page(s) not found (${FAIL_PCT_VAL}% < 10%) - will auto-skip on next sync"
                 exit 0
               fi
             fi
+            exit 1
+          fi
+
+      - name: Call schedule-hub:notion.sync_roadmap
+        run: |
+          RESP=$(curl -sS -X POST \
+            "https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/schedule-hub" \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY || secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
+            -H "Content-Type: application/json" \
+            -d '{"action":"notion.sync_roadmap","limit":10}' \
+            --max-time 180)
+
+          echo "Response: $RESP"
+          SUCCESS=$(echo "$RESP" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('success',False))" 2>/dev/null || echo "false")
+          APPENDED=$(echo "$RESP" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('appended',0))" 2>/dev/null || echo "0")
+          SKIPPED=$(echo "$RESP" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('skipped',False))" 2>/dev/null || echo "false")
+          echo "roadmap success=$SUCCESS appended=$APPENDED skipped=$SKIPPED"
+
+          if [ "$SUCCESS" = "False" ]; then
+            ERROR=$(echo "$RESP" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('error','unknown'))" 2>/dev/null || echo "unknown")
+            if echo "$ERROR" | grep -q "notion_not_configured"; then
+              echo "::warning::NOTION_ROADMAP_PAGE_ID not configured yet - roadmap sync skipped"
+              exit 0
+            fi
+            if echo "$RESP" | grep -q "object_not_found\|unauthorized"; then
+              echo "::warning::Notion ROADMAP page not accessible - check integration connection"
+              exit 0
+            fi
+            echo "::error::Roadmap sync failed / error=$ERROR"
+            exit 1
+          fi
+
+      - name: Call schedule-hub:notion.sync_memory_index
+        run: |
+          RESP=$(curl -sS -X POST \
+            "https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/schedule-hub" \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY || secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
+            -H "Content-Type: application/json" \
+            -d "{\"action\":\"notion.sync_memory_index\",\"limit\":${{ github.event.inputs.limit || '30' }},\"offset\":${{ github.event.inputs.offset || '0' }}}" \
+            --max-time 600)
+
+          echo "Response: $RESP"
+          SUCCESS=$(echo "$RESP" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('success',False))" 2>/dev/null || echo "false")
+          TOTAL=$(echo "$RESP" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('total',0))" 2>/dev/null || echo "0")
+          CREATED=$(echo "$RESP" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('created',0))" 2>/dev/null || echo "0")
+          UPDATED=$(echo "$RESP" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('updated',0))" 2>/dev/null || echo "0")
+          FAILED=$(echo "$RESP" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('failed',0))" 2>/dev/null || echo "0")
+          echo "memory success=$SUCCESS total=$TOTAL created=$CREATED updated=$UPDATED failed=$FAILED"
+
+          if [ "$SUCCESS" = "False" ]; then
+            ERROR=$(echo "$RESP" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('error','unknown'))" 2>/dev/null || echo "unknown")
+            if echo "$ERROR" | grep -q "notion_not_configured"; then
+              echo "::warning::NOTION_MEMORY_DATABASE_ID not configured yet - memory sync skipped"
+              exit 0
+            fi
+            if echo "$RESP" | grep -q "is not a property that exists"; then
+              echo "::warning::Notion Memory DB schema mismatch - add filename/title, type/select, timestamp/date, description/rich_text"
+              exit 0
+            fi
+            if echo "$RESP" | grep -q "rate_limited\|\"429\""; then
+              echo "::warning::Notion API rate limited (HTTP 429) - will retry next cron"
+              exit 0
+            fi
+            echo "::error::Memory index sync failed / error=$ERROR"
             exit 1
           fi

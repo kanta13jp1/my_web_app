@@ -391,7 +391,7 @@ CREATE TRIGGER ai_circuit_breaker_notify
 Workspace: 自分株式会社 mirror
   ├── 📄 Page: ROADMAP (long-form / replace 全文)
   ├── 🗂 Database: WBS Tasks
-  │     Properties: id (text) / title (text) / instance (select) /
+  │     Properties: id (title) / task_title (rich_text) / instance (select) /
   │                 status (select) / progress (number) / deadline (date) /
   │                 updated_at (datetime)
   ├── 🗂 Database: Memory Index
@@ -449,7 +449,7 @@ case 'notion.sync_wbs': {
         parent: { database_id: dbId },
         properties: {
           id:         { title:  [{ text: { content: t.id } }] },
-          title:      { rich_text: [{ text: { content: t.title } }] },
+          task_title: { rich_text: [{ text: { content: t.title } }] },
           instance:   { select: { name: t.instance ?? 'all' } },
           status:     { select: { name: t.status ?? 'pending' } },
           progress:   { number: t.progress ?? 0 },

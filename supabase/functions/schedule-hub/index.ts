@@ -9,11 +9,17 @@
 
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient, SupabaseClient } from "npm:@supabase/supabase-js@2";
-import { getXAccountHandle, isXConfigured, postTweet, uploadMediaFromUrl } from "../_shared/x-client.ts";
+import {
+  getXAccountHandle,
+  isXConfigured,
+  postTweet,
+  uploadMediaFromUrl,
+} from "../_shared/x-client.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type",
 };
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
@@ -85,6 +91,147 @@ async function deleteItem(
   if (error) throw new Error(error.message);
 }
 
+const NOTION_VERSION = "2022-06-28";
+
+function notionHeaders(token: string): Record<string, string> {
+  return {
+    "Authorization": `Bearer ${token}`,
+    "Notion-Version": NOTION_VERSION,
+    "Content-Type": "application/json",
+  };
+}
+
+function truncateText(value: unknown, maxLength = 1900): string {
+  const text = String(value ?? "").replace(/\s+/g, " ").trim();
+  return text.length > maxLength ? `${text.slice(0, maxLength - 3)}...` : text;
+}
+
+function notionRichText(
+  value: unknown,
+  maxLength = 1900,
+): Record<string, unknown>[] {
+  const content = truncateText(value, maxLength);
+  return content ? [{ text: { content } }] : [];
+}
+
+function notionTitleProperty(value: unknown): Record<string, unknown> {
+  return { title: notionRichText(value) };
+}
+
+function notionRichTextProperty(value: unknown): Record<string, unknown> {
+  return { rich_text: notionRichText(value) };
+}
+
+function notionSelectProperty(value: unknown): Record<string, unknown> {
+  return { select: { name: truncateText(value, 100) || "unknown" } };
+}
+
+function notionNumberProperty(value: unknown): Record<string, unknown> {
+  const number = Number(value ?? 0);
+  return { number: Number.isFinite(number) ? number : 0 };
+}
+
+function notionDateProperty(value: unknown): Record<string, unknown> | null {
+  const text = String(value ?? "").trim();
+  if (!text) return null;
+  const time = Date.parse(text);
+  if (Number.isNaN(time)) return null;
+  return { date: { start: text } };
+}
+
+function setNotionProperty(
+  properties: Record<string, unknown>,
+  name: string,
+  property: Record<string, unknown> | null,
+): void {
+  if (!property) return;
+  if (name === "title" && !("title" in property)) {
+    throw new Error(
+      "notion_property_collision: rich_text property must not be named title; use a distinct property such as task_title",
+    );
+  }
+  properties[name] = property;
+}
+
+function hashString(value: string): string {
+  let hash = 5381;
+  for (let i = 0; i < value.length; i++) {
+    hash = ((hash << 5) + hash + value.charCodeAt(i)) >>> 0;
+  }
+  return hash.toString(16).padStart(8, "0");
+}
+
+function richTextPlainText(value: unknown): string {
+  if (!Array.isArray(value)) return "";
+  return value.map((item) => {
+    const obj = item as Record<string, unknown>;
+    if (typeof obj.plain_text === "string") return obj.plain_text;
+    const text = obj.text as Record<string, unknown> | undefined;
+    return typeof text?.content === "string" ? text.content : "";
+  }).join("");
+}
+
+function notionBlockPlainText(block: Record<string, unknown>): string {
+  const type = String(block.type ?? "");
+  const typed = block[type] as Record<string, unknown> | undefined;
+  return richTextPlainText(typed?.rich_text);
+}
+
+async function notionPageHasMarker(
+  token: string,
+  pageId: string,
+  marker: string,
+): Promise<boolean> {
+  let cursor: string | null = null;
+  for (let i = 0; i < 3; i++) {
+    const url = new URL(`https://api.notion.com/v1/blocks/${pageId}/children`);
+    url.searchParams.set("page_size", "100");
+    if (cursor) url.searchParams.set("start_cursor", cursor);
+    const resp = await fetch(url, { headers: notionHeaders(token) });
+    if (!resp.ok) {
+      const text = await resp.text().catch(() => "");
+      throw new Error(
+        `notion_children_failed: HTTP ${resp.status} ${text.slice(0, 180)}`,
+      );
+    }
+    const payload = await resp.json() as {
+      results?: Record<string, unknown>[];
+      has_more?: boolean;
+      next_cursor?: string | null;
+    };
+    if (
+      (payload.results ?? []).some((block) =>
+        notionBlockPlainText(block).includes(marker)
+      )
+    ) {
+      return true;
+    }
+    if (!payload.has_more || !payload.next_cursor) break;
+    cursor = payload.next_cursor;
+  }
+  return false;
+}
+
+function inferMemoryType(row: Record<string, unknown>): string {
+  const metadata = row.metadata as Record<string, unknown> | undefined;
+  const raw = String(metadata?.type ?? row.source ?? row.file_path ?? "")
+    .toLowerCase();
+  if (raw.includes("feedback_success")) return "feedback_success";
+  if (raw.includes("feedback_correction")) return "feedback_correction";
+  return "project";
+}
+
+function inferMemoryDate(row: Record<string, unknown>): string | null {
+  const metadata = row.metadata as Record<string, unknown> | undefined;
+  const rawDate = String(
+    metadata?.timestamp ?? row.file_path ?? row.updated_at ?? "",
+  );
+  const ymd = rawDate.match(/(20\d{2})[-_]?(\d{2})[-_]?(\d{2})/);
+  if (ymd) return `${ymd[1]}-${ymd[2]}-${ymd[3]}`;
+  const date = new Date(String(row.updated_at ?? ""));
+  return Number.isNaN(date.getTime()) ? null : date.toISOString().split("T")[0];
+}
+
 serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -107,6 +254,8 @@ serve(async (req: Request) => {
       "blog.create",
       "reminders.study",
       "notion.sync_wbs",
+      "notion.sync_roadmap",
+      "notion.sync_memory_index",
       "notion.fix_wbs_all_instances",
       "wbs.unblock_dependents",
       "x.post_with_media",
@@ -121,30 +270,31 @@ serve(async (req: Request) => {
       // ─── Digest ───────────────────────────────────────────────────────────────
       case "digest.run": {
         const today = new Date().toISOString().split("T")[0];
-        const [usersRes, newFrRes, openFrRes, topFrRes, achievementsRes] = await Promise.all([
-          admin.auth.admin.listUsers({ page: 1, perPage: 1 }),
-          admin
-            .from("feature_requests")
-            .select("id, title, created_at")
-            .gte("created_at", `${today}T00:00:00Z`)
-            .order("created_at", { ascending: false })
-            .limit(10),
-          admin
-            .from("feature_requests")
-            .select("count", { count: "exact", head: true })
-            .eq("status", "open"),
-          admin
-            .from("feature_requests")
-            .select("title, votes")
-            .eq("status", "open")
-            .order("votes", { ascending: false })
-            .limit(5),
-          admin
-            .from("development_achievements")
-            .select("title, completed_at")
-            .order("completed_at", { ascending: false })
-            .limit(5),
-        ]);
+        const [usersRes, newFrRes, openFrRes, topFrRes, achievementsRes] =
+          await Promise.all([
+            admin.auth.admin.listUsers({ page: 1, perPage: 1 }),
+            admin
+              .from("feature_requests")
+              .select("id, title, created_at")
+              .gte("created_at", `${today}T00:00:00Z`)
+              .order("created_at", { ascending: false })
+              .limit(10),
+            admin
+              .from("feature_requests")
+              .select("count", { count: "exact", head: true })
+              .eq("status", "open"),
+            admin
+              .from("feature_requests")
+              .select("title, votes")
+              .eq("status", "open")
+              .order("votes", { ascending: false })
+              .limit(5),
+            admin
+              .from("development_achievements")
+              .select("title, completed_at")
+              .order("completed_at", { ascending: false })
+              .limit(5),
+          ]);
         return json({
           success: true,
           digest: {
@@ -204,7 +354,8 @@ serve(async (req: Request) => {
       case "x.post": {
         const text = String(body.text ?? "").trim();
         const mediaUrl = String(body.mediaUrl ?? body.media_url ?? "").trim();
-        const mediaType = String(body.mediaType ?? body.media_type ?? "").trim();
+        const mediaType = String(body.mediaType ?? body.media_type ?? "")
+          .trim();
         const dryRun = body.dryRun === true;
         if (!text) return json({ success: false, error: "text required" }, 400);
         if (text.length > 280) {
@@ -233,7 +384,9 @@ serve(async (req: Request) => {
             account: getXAccountHandle(),
             text,
             log,
-            warning: dryRun ? undefined : "X API credentials are not configured in Supabase secrets.",
+            warning: dryRun
+              ? undefined
+              : "X API credentials are not configured in Supabase secrets.",
           });
         }
 
@@ -275,9 +428,14 @@ serve(async (req: Request) => {
         const dryRun = body.dryRun === true;
         if (!text) return json({ success: false, error: "text required" }, 400);
         if (text.length > 280) {
-          return json({ success: false, error: "text exceeds 280 characters" }, 400);
+          return json(
+            { success: false, error: "text exceeds 280 characters" },
+            400,
+          );
         }
-        if (!mediaUrl) return json({ success: false, error: "mediaUrl required" }, 400);
+        if (!mediaUrl) {
+          return json({ success: false, error: "mediaUrl required" }, 400);
+        }
 
         const baseLog = {
           text,
@@ -299,14 +457,22 @@ serve(async (req: Request) => {
             text,
             mediaUrl,
             log,
-            warning: dryRun ? undefined : "X API credentials are not configured in Supabase secrets.",
+            warning: dryRun
+              ? undefined
+              : "X API credentials are not configured in Supabase secrets.",
           });
         }
 
         const mediaType = String(body.mediaType ?? "image/png");
         const mediaCategory = String(body.mediaCategory ?? "tweet_image");
-        const uploadResult = await uploadMediaFromUrl(mediaUrl, { mediaType, mediaCategory });
-        const result = await postTweet({ text, mediaIds: [uploadResult.mediaId] });
+        const uploadResult = await uploadMediaFromUrl(mediaUrl, {
+          mediaType,
+          mediaCategory,
+        });
+        const result = await postTweet({
+          text,
+          mediaIds: [uploadResult.mediaId],
+        });
         const log = await addItem(admin, "x_post", userId ?? "gha", {
           ...baseLog,
           status: "posted",
@@ -431,7 +597,9 @@ serve(async (req: Request) => {
               body: JSON.stringify({
                 title,
                 body: content,
-                tags: tagObjects.length > 0 ? tagObjects : [{ name: "Flutter" }],
+                tags: tagObjects.length > 0
+                  ? tagObjects
+                  : [{ name: "Flutter" }],
                 private: false,
                 tweet: false,
               }),
@@ -452,7 +620,9 @@ serve(async (req: Request) => {
 
         if (platforms.includes("devto") && devtoKey) {
           try {
-            const cleanTags = rawTags.slice(0, 4).map((t: string) => t.toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 30)).filter((t: string) => t.length > 0);
+            const cleanTags = rawTags.slice(0, 4).map((t: string) =>
+              t.toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 30)
+            ).filter((t: string) => t.length > 0);
             const dr = await fetch("https://dev.to/api/articles", {
               method: "POST",
               headers: {
@@ -767,7 +937,8 @@ serve(async (req: Request) => {
                   .eq("comment_id", c.id)
                   .single();
 
-                const alreadyReplied = (existing as { replied?: boolean } | null)?.replied === true;
+                const alreadyReplied =
+                  (existing as { replied?: boolean } | null)?.replied === true;
                 await admin.from("blog_comments").upsert({
                   platform: "qiita",
                   article_id: article.id,
@@ -831,8 +1002,9 @@ serve(async (req: Request) => {
                   .eq("qiita_user_id", uid)
                   .single();
 
-                const alreadyFollowed = (existingLiker as { followed?: boolean } | null)?.followed ===
-                  true;
+                const alreadyFollowed =
+                  (existingLiker as { followed?: boolean } | null)?.followed ===
+                    true;
                 await admin.from("blog_likers").upsert({
                   article_id: article.id,
                   qiita_user_id: uid,
@@ -909,8 +1081,12 @@ serve(async (req: Request) => {
           return json({ error: "Service role required" }, 403);
         }
 
-        const minIdleDays = typeof body.min_idle_days === "number" ? Math.max(1, Math.min(30, body.min_idle_days as number)) : 3;
-        const maxIdleDays = typeof body.max_idle_days === "number" ? Math.max(minIdleDays, Math.min(90, body.max_idle_days as number)) : 30;
+        const minIdleDays = typeof body.min_idle_days === "number"
+          ? Math.max(1, Math.min(30, body.min_idle_days as number))
+          : 3;
+        const maxIdleDays = typeof body.max_idle_days === "number"
+          ? Math.max(minIdleDays, Math.min(90, body.max_idle_days as number))
+          : 30;
         const dryRun = Boolean(body.dry_run);
 
         const nowJst = new Date(Date.now() + 9 * 60 * 60 * 1000);
@@ -946,7 +1122,9 @@ serve(async (req: Request) => {
           Date.now() - minIdleDays * 86_400_000,
         ).toISOString();
 
-        const userIds = candidates.map((r) => (r as { user_id: string }).user_id);
+        const userIds = candidates.map((r) =>
+          (r as { user_id: string }).user_id
+        );
 
         const { data: recentRows, error: recentErr } = await admin
           .from("app_notifications")
@@ -999,7 +1177,9 @@ serve(async (req: Request) => {
           );
           const bestStreak = Math.max(r.current_streak, r.longest_streak);
           const title = `${REMINDER_PREFIX} — ${idleDays}日ぶりにAIを学ぼう`;
-          const message = bestStreak > 1 ? `前回の学習から${idleDays}日経過。過去最長 ${bestStreak} 日連続を更新しよう！１分クイズでストリーク復活。` : `前回の学習から${idleDays}日経過。AI大学で１分クイズに挑戦して知識をアップデート。`;
+          const message = bestStreak > 1
+            ? `前回の学習から${idleDays}日経過。過去最長 ${bestStreak} 日連続を更新しよう！１分クイズでストリーク復活。`
+            : `前回の学習から${idleDays}日経過。AI大学で１分クイズに挑戦して知識をアップデート。`;
           return {
             user_id: r.user_id,
             title,
@@ -1065,7 +1245,10 @@ serve(async (req: Request) => {
         // 毎時 cron で 30件ずつローリング sync → 141件 ≒ 5h で全件完了
         const limitN = Math.min(Math.max(Number(body.limit ?? 30), 1), 50);
         const offsetN = Math.max(Number(body.offset ?? 0), 0);
-        const delayMs = Math.min(Math.max(Number(body.delay_ms ?? 750), 350), 2000);
+        const delayMs = Math.min(
+          Math.max(Number(body.delay_ms ?? 750), 350),
+          2000,
+        );
         const rangeTo = offsetN + limitN - 1;
         const { data: tasks, error: fetchErr } = await admin
           .from("wbs_tasks")
@@ -1143,21 +1326,38 @@ serve(async (req: Request) => {
           //
           // null 値の property は omit (Notion API は `{date: null}` を受けるが
           // 他の type では 400 になるため全て conditional 構築)
-          const properties: Record<string, unknown> = {
-            id: { title: [{ text: { content: String(t.id) } }] },
-            task_title: {
-              rich_text: [{ text: { content: String(t.title ?? "") } }],
-            },
-            instance: { select: { name: normalizeInstance(t.instance) } },
-            status: { select: { name: normalizeStatus(t.status) } },
-            progress: { number: Number(t.progress ?? 0) },
-          };
-          if (t.end_date) {
-            properties.deadline = { date: { start: String(t.end_date) } };
-          }
-          if (t.updated_at) {
-            properties.updated_at = { date: { start: String(t.updated_at) } };
-          }
+          const properties: Record<string, unknown> = {};
+          setNotionProperty(properties, "id", notionTitleProperty(t.id));
+          setNotionProperty(
+            properties,
+            "task_title",
+            notionRichTextProperty(t.title),
+          );
+          setNotionProperty(
+            properties,
+            "instance",
+            notionSelectProperty(normalizeInstance(t.instance)),
+          );
+          setNotionProperty(
+            properties,
+            "status",
+            notionSelectProperty(normalizeStatus(t.status)),
+          );
+          setNotionProperty(
+            properties,
+            "progress",
+            notionNumberProperty(t.progress),
+          );
+          setNotionProperty(
+            properties,
+            "deadline",
+            notionDateProperty(t.end_date),
+          );
+          setNotionProperty(
+            properties,
+            "updated_at",
+            notionDateProperty(t.updated_at),
+          );
 
           try {
             // 既存 page を id (Title) で検索
@@ -1165,11 +1365,7 @@ serve(async (req: Request) => {
               `https://api.notion.com/v1/databases/${dbId}/query`,
               {
                 method: "POST",
-                headers: {
-                  "Authorization": `Bearer ${token}`,
-                  "Notion-Version": "2022-06-28",
-                  "Content-Type": "application/json",
-                },
+                headers: notionHeaders(token),
                 body: JSON.stringify({
                   filter: { property: "id", title: { equals: String(t.id) } },
                   page_size: 1,
@@ -1195,11 +1391,7 @@ serve(async (req: Request) => {
                 `https://api.notion.com/v1/pages/${existingPageId}`,
                 {
                   method: "PATCH",
-                  headers: {
-                    "Authorization": `Bearer ${token}`,
-                    "Notion-Version": "2022-06-28",
-                    "Content-Type": "application/json",
-                  },
+                  headers: notionHeaders(token),
                   body: JSON.stringify({ properties }),
                 },
               );
@@ -1217,11 +1409,7 @@ serve(async (req: Request) => {
                 `https://api.notion.com/v1/pages`,
                 {
                   method: "POST",
-                  headers: {
-                    "Authorization": `Bearer ${token}`,
-                    "Notion-Version": "2022-06-28",
-                    "Content-Type": "application/json",
-                  },
+                  headers: notionHeaders(token),
                   body: JSON.stringify({
                     parent: { database_id: dbId },
                     properties,
@@ -1233,7 +1421,9 @@ serve(async (req: Request) => {
                 failed++;
                 const eb = await createResp.text().catch(() => "");
                 errors.push(
-                  `create ${t.id}: HTTP ${createResp.status} ${eb.slice(0, 200)}`,
+                  `create ${t.id}: HTTP ${createResp.status} ${
+                    eb.slice(0, 200)
+                  }`,
                 );
               }
             }
@@ -1256,6 +1446,278 @@ serve(async (req: Request) => {
           updated,
           failed,
           errors: errors.slice(0, 10), // 最初の 10 件のみ返す
+        });
+      }
+
+      // Notion Roadmap Mirror
+      // Append recent Supabase development_achievements rows to the Notion
+      // ROADMAP page. The deployed Edge Function cannot read repo docs, so the
+      // normalized achievement log is the roadmap mirror source.
+      // Secrets: NOTION_API_TOKEN / NOTION_ROADMAP_PAGE_ID
+      case "notion.sync_roadmap": {
+        const token = Deno.env.get("NOTION_API_TOKEN");
+        const pageId = Deno.env.get("NOTION_ROADMAP_PAGE_ID");
+        if (!token || !pageId) {
+          return json(
+            {
+              success: false,
+              error: "notion_not_configured",
+              missing: !token ? "NOTION_API_TOKEN" : "NOTION_ROADMAP_PAGE_ID",
+            },
+            503,
+          );
+        }
+
+        const limitN = Math.min(Math.max(Number(body.limit ?? 10), 1), 25);
+        const { data: achievements, error: fetchErr } = await admin
+          .from("development_achievements")
+          .select("title, description, completed_at")
+          .order("completed_at", { ascending: false })
+          .limit(limitN);
+
+        if (fetchErr) {
+          return json({
+            success: false,
+            error: `supabase_fetch_failed: ${fetchErr.message}`,
+          }, 500);
+        }
+
+        const rows = achievements ?? [];
+        if (rows.length === 0) {
+          return json({ success: true, total: 0, appended: 0, skipped: true });
+        }
+
+        const today = new Date().toISOString().split("T")[0];
+        const digestSource = rows.map((row) =>
+          `${String(row.completed_at ?? "")}|${String(row.title ?? "")}`
+        ).join("\n");
+        const marker = `roadmap-sync:${today}:${hashString(digestSource)}`;
+
+        if (await notionPageHasMarker(token, pageId, marker)) {
+          return json({
+            success: true,
+            total: rows.length,
+            appended: 0,
+            skipped: true,
+            marker,
+          });
+        }
+
+        const children: Record<string, unknown>[] = [
+          {
+            object: "block",
+            type: "heading_2",
+            heading_2: {
+              rich_text: notionRichText(`ROADMAP sync ${today}`),
+            },
+          },
+          {
+            object: "block",
+            type: "paragraph",
+            paragraph: {
+              rich_text: notionRichText(marker),
+            },
+          },
+        ];
+
+        for (const row of rows) {
+          const date = String(row.completed_at ?? "").split("T")[0];
+          const title = String(row.title ?? "");
+          const description = String(row.description ?? "");
+          children.push({
+            object: "block",
+            type: "bulleted_list_item",
+            bulleted_list_item: {
+              rich_text: notionRichText(`${date} ${title} - ${description}`),
+            },
+          });
+        }
+
+        const appendResp = await fetch(
+          `https://api.notion.com/v1/blocks/${pageId}/children`,
+          {
+            method: "PATCH",
+            headers: notionHeaders(token),
+            body: JSON.stringify({ children }),
+          },
+        );
+        if (!appendResp.ok) {
+          const text = await appendResp.text().catch(() => "");
+          return json({
+            success: false,
+            error: `notion_append_failed: HTTP ${appendResp.status}`,
+            details: text.slice(0, 300),
+          }, 502);
+        }
+
+        return json({
+          success: true,
+          total: rows.length,
+          appended: rows.length,
+          skipped: false,
+          marker,
+        });
+      }
+
+      // Notion Memory Index Mirror
+      // Upsert Supabase memory_index rows into the Notion Memory Index database.
+      // Secrets: NOTION_API_TOKEN / NOTION_MEMORY_DATABASE_ID
+      case "notion.sync_memory_index": {
+        const token = Deno.env.get("NOTION_API_TOKEN");
+        const dbId = Deno.env.get("NOTION_MEMORY_DATABASE_ID");
+        if (!token || !dbId) {
+          return json(
+            {
+              success: false,
+              error: "notion_not_configured",
+              missing: !token
+                ? "NOTION_API_TOKEN"
+                : "NOTION_MEMORY_DATABASE_ID",
+            },
+            503,
+          );
+        }
+
+        const limitN = Math.min(Math.max(Number(body.limit ?? 25), 1), 50);
+        const offsetN = Math.max(Number(body.offset ?? 0), 0);
+        const delayMs = Math.min(
+          Math.max(Number(body.delay_ms ?? 750), 350),
+          2000,
+        );
+        const rangeTo = offsetN + limitN - 1;
+        const { data: memories, error: fetchErr } = await admin
+          .from("memory_index")
+          .select("file_path, title, snippet, source, metadata, updated_at")
+          .order("updated_at", { ascending: false })
+          .range(offsetN, rangeTo);
+
+        if (fetchErr) {
+          return json({
+            success: false,
+            error: `supabase_fetch_failed: ${fetchErr.message}`,
+          }, 500);
+        }
+
+        const headers = notionHeaders(token);
+        let created = 0;
+        let updated = 0;
+        let failed = 0;
+        const errors: string[] = [];
+
+        for (const memory of memories ?? []) {
+          const row = memory as Record<string, unknown>;
+          const filePath = String(row.file_path ?? "").trim();
+          if (!filePath) continue;
+
+          const title = String(row.title ?? filePath);
+          const snippet = String(row.snippet ?? "");
+          const timestamp = inferMemoryDate(row);
+          const properties: Record<string, unknown> = {};
+          setNotionProperty(
+            properties,
+            "filename",
+            notionTitleProperty(filePath),
+          );
+          setNotionProperty(
+            properties,
+            "type",
+            notionSelectProperty(inferMemoryType(row)),
+          );
+          setNotionProperty(
+            properties,
+            "description",
+            notionRichTextProperty(`${title}${snippet ? ` - ${snippet}` : ""}`),
+          );
+          setNotionProperty(
+            properties,
+            "timestamp",
+            notionDateProperty(timestamp),
+          );
+
+          try {
+            const queryResp = await fetch(
+              `https://api.notion.com/v1/databases/${dbId}/query`,
+              {
+                method: "POST",
+                headers,
+                body: JSON.stringify({
+                  filter: { property: "filename", title: { equals: filePath } },
+                  page_size: 1,
+                }),
+              },
+            );
+            if (!queryResp.ok) {
+              failed++;
+              const text = await queryResp.text().catch(() => "");
+              errors.push(
+                `query ${filePath}: HTTP ${queryResp.status} ${
+                  text.slice(0, 180)
+                }`,
+              );
+              continue;
+            }
+
+            const queryJson = await queryResp.json();
+            const existingPageId = queryJson?.results?.[0]?.id;
+            if (existingPageId) {
+              const patchResp = await fetch(
+                `https://api.notion.com/v1/pages/${existingPageId}`,
+                {
+                  method: "PATCH",
+                  headers,
+                  body: JSON.stringify({ properties }),
+                },
+              );
+              if (patchResp.ok) updated++;
+              else {
+                failed++;
+                const text = await patchResp.text().catch(() => "");
+                errors.push(
+                  `patch ${filePath}: HTTP ${patchResp.status} ${
+                    text.slice(0, 180)
+                  }`,
+                );
+              }
+            } else {
+              const createResp = await fetch(
+                `https://api.notion.com/v1/pages`,
+                {
+                  method: "POST",
+                  headers,
+                  body: JSON.stringify({
+                    parent: { database_id: dbId },
+                    properties,
+                  }),
+                },
+              );
+              if (createResp.ok) created++;
+              else {
+                failed++;
+                const text = await createResp.text().catch(() => "");
+                errors.push(
+                  `create ${filePath}: HTTP ${createResp.status} ${
+                    text.slice(0, 180)
+                  }`,
+                );
+              }
+            }
+            await new Promise((r) => setTimeout(r, delayMs));
+          } catch (e) {
+            failed++;
+            errors.push(`${filePath}: ${String(e)}`);
+          }
+        }
+
+        return json({
+          success: failed === 0,
+          total: memories?.length ?? 0,
+          limit: limitN,
+          offset: offsetN,
+          delay_ms: delayMs,
+          created,
+          updated,
+          failed,
+          errors: errors.slice(0, 10),
         });
       }
 
@@ -1313,7 +1775,10 @@ serve(async (req: Request) => {
             : "pending";
         };
 
-        const maxPages = Math.min(Math.max(Number(body.max_pages ?? 40), 1), 80);
+        const maxPages = Math.min(
+          Math.max(Number(body.max_pages ?? 40), 1),
+          80,
+        );
         const pages: Record<string, unknown>[] = [];
         let cursor: string | null = null;
         for (let i = 0; i < 10; i++) {
@@ -1357,7 +1822,8 @@ serve(async (req: Request) => {
           const titleItems = (idProp.title ?? []) as Record<string, unknown>[];
           const taskId = String(
             titleItems[0]?.plain_text ??
-              ((titleItems[0]?.text as Record<string, unknown> | undefined)?.content) ??
+              ((titleItems[0]?.text as Record<string, unknown> | undefined)
+                ?.content) ??
               "",
           ).trim();
           if (taskId && page.id) pageIdByTaskId.set(taskId, String(page.id));
@@ -1368,7 +1834,9 @@ serve(async (req: Request) => {
         if (taskIds.length > 0) {
           const { data: tasks, error: tasksErr } = await admin
             .from("wbs_tasks")
-            .select("id, title, instance, status, progress, end_date, updated_at")
+            .select(
+              "id, title, instance, status, progress, end_date, updated_at",
+            )
             .in("id", taskIds);
           if (tasksErr) {
             return json({
@@ -1385,39 +1853,53 @@ serve(async (req: Request) => {
         let missing = 0;
         let failed = 0;
         const errors: string[] = [];
-        const delayMs = Math.min(Math.max(Number(body.delay_ms ?? 900), 500), 2500);
+        const delayMs = Math.min(
+          Math.max(Number(body.delay_ms ?? 900), 500),
+          2500,
+        );
 
         for (const [taskId, pageId] of pageIdByTaskId.entries()) {
           const task = tasksById.get(taskId);
           if (!task) missing++;
           const properties: Record<string, unknown> = {
-            instance: { select: { name: normalizeInstance(task?.instance ?? "codex") } },
+            instance: {
+              select: { name: normalizeInstance(task?.instance ?? "codex") },
+            },
           };
           if (task) {
             properties.task_title = {
               rich_text: [{ text: { content: String(task.title ?? "") } }],
             };
-            properties.status = { select: { name: normalizeStatus(task.status) } };
+            properties.status = {
+              select: { name: normalizeStatus(task.status) },
+            };
             properties.progress = { number: Number(task.progress ?? 0) };
             if (task.end_date) {
               properties.deadline = { date: { start: String(task.end_date) } };
             }
             if (task.updated_at) {
-              properties.updated_at = { date: { start: String(task.updated_at) } };
+              properties.updated_at = {
+                date: { start: String(task.updated_at) },
+              };
             }
           }
 
-          const patchResp = await fetch(`https://api.notion.com/v1/pages/${pageId}`, {
-            method: "PATCH",
-            headers: notionHeaders,
-            body: JSON.stringify({ properties }),
-          });
+          const patchResp = await fetch(
+            `https://api.notion.com/v1/pages/${pageId}`,
+            {
+              method: "PATCH",
+              headers: notionHeaders,
+              body: JSON.stringify({ properties }),
+            },
+          );
           if (patchResp.ok) {
             updated++;
           } else {
             failed++;
             const text = await patchResp.text().catch(() => "");
-            errors.push(`patch ${taskId}: HTTP ${patchResp.status} ${text.slice(0, 180)}`);
+            errors.push(
+              `patch ${taskId}: HTTP ${patchResp.status} ${text.slice(0, 180)}`,
+            );
           }
           await new Promise((r) => setTimeout(r, delayMs));
         }

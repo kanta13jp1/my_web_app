@@ -144,6 +144,27 @@ Could not find a set of Noto fonts
 - 原則 #5 (Memory Continuity): 本 cross-instance-pr が **fleet 横断 state** を bridge
 - 原則 #7 (Visual Validation): production errors を VSCode へ visual debug 委譲
 
+## 8. Codex #3 PowerShell follow-up (2026-05-01)
+
+- [x] #1036 `schedule-hub:notion.sync_roadmap` implemented.
+  - Appends latest `development_achievements` rows to the Notion ROADMAP page with an idempotency marker.
+  - Missing `NOTION_API_TOKEN` / `NOTION_ROADMAP_PAGE_ID` returns 503 and soft-fails in the workflow.
+- [x] #1037 `schedule-hub:notion.sync_memory_index` implemented.
+  - Upserts latest Supabase `memory_index` rows into the Notion Memory Index database by `filename` title.
+  - Syncs `type`, `timestamp`, and `description` properties.
+- [x] `.github/workflows/notion-sync.yml` now calls WBS, ROADMAP, and Memory sync actions.
+- [x] #1287 Notion title collision guard implemented.
+  - WBS and Memory sync now build Notion properties through strict wrappers.
+  - A `title` rich_text property name is rejected before calling the Notion API.
+- [x] #1321 Notion-style comments execution checklist generated.
+  - Added `docs/task-checklists/notion_style_comments_flutter_supabase.md`.
+  - Covers schema, RLS, Edge Function ownership checks, Flutter UI, and automation hooks.
+- [x] #1288 Notion database IDs and API properties checklist generated.
+  - Added `docs/task-checklists/notion_database_ids_api_properties.md`.
+  - Covers ID extraction, secret handling, property schemas, strict wrappers, and verification.
+
+Remaining: close GitHub issues #1036/#1037/#1287/#1321/#1288 after merge and confirm the WBS migrations are applied.
+
 ---
 
 *Win版#132 part 103 / 2026-04-30 起票 / Top 10 期限超過 batch handoff / N-time alarm Phase 5 / Win → 4 instance 並列 lane*

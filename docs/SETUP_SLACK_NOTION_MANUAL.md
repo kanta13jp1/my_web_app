@@ -163,7 +163,7 @@ top-level page 内で "/" コマンドで追加:
 | Property 名 | Type | 備考 |
 |------------|------|------|
 | `id` | **Title** (既存の Name を rename) | 主キー |
-| `title` | Text | task タイトル |
+| `task_title` | Rich text | task タイトル (`title` という Rich text 名は Notion API の内部 Title ID と衝突するため禁止) |
 | `instance` | Select | options: `vscode` / `win` / `ps1`-`ps6` / `web` / `mobile` / `all` |
 | `status` | Select | options: `pending` / `in_progress` / `completed` / `blocked` |
 | `progress` | Number | 0-100 |
@@ -270,7 +270,7 @@ curl -sf "https://api.notion.com/v1/databases/$DB_ID" \
     "title": [{"plain_text": "WBS Tasks", ...}],
     "properties": {
         "id": {"type": "title", ...},
-        "title": {"type": "rich_text", ...},
+        "task_title": {"type": "rich_text", ...},
         "instance": {"type": "select", ...},
         ...
     }
