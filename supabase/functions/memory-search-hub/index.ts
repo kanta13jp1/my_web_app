@@ -2,6 +2,8 @@ import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { corsHeaders, jsonResponse } from "../_shared/edge.ts";
 import {
+  buildOAuthProtectedResourceMetadata,
+  isOAuthProtectedResourceMetadataRequest,
   logMcpInvocation,
   McpAuthContext,
   requireScope,
@@ -279,6 +281,17 @@ async function memoryStats() {
 serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
+  }
+  if (isOAuthProtectedResourceMetadataRequest(req)) {
+    return jsonResponse(
+      buildOAuthProtectedResourceMetadata(req.url, "memory-search-hub", [
+        "memory",
+        "memory.search",
+        "memory.rank",
+        "memory.related",
+        "memory.stats",
+      ]),
+    );
   }
 
   let ctx: McpAuthContext | null = null;
