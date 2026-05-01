@@ -108,13 +108,11 @@ class KrispAiCoachHandoff {
   final List<KrispAiCoachPipelineStep> pipeline;
   final List<String> acceptanceChecks;
 
-  Iterable<KrispSdkGate> get blockers =>
-      gates.where((gate) => !gate.satisfied);
+  Iterable<KrispSdkGate> get blockers => gates.where((gate) => !gate.satisfied);
 
   bool get readyForSdkSpike => blockers.isEmpty;
 
-  int get satisfiedGateCount =>
-      gates.where((gate) => gate.satisfied).length;
+  int get satisfiedGateCount => gates.where((gate) => gate.satisfied).length;
 }
 
 class KrispAudioQualityService {

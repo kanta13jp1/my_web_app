@@ -58,7 +58,9 @@ void main() {
       );
       expect(
         handoff.acceptanceChecks,
-        contains('Fallback to raw microphone input when Krisp SDK is unavailable.'),
+        contains(
+          'Fallback to raw microphone input when Krisp SDK is unavailable.',
+        ),
       );
     });
   });
