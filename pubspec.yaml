@@ -35,13 +35,11 @@ dependencies:
   cross_file: ^0.3.4+2             # 共有ファイルラッパー
   share_plus: ^12.0.1              # 共有（SNS/共有シート）
   path_provider: ^2.1.5            # 保存先パス取得
-  image_gallery_saver: ^2.0.3      # ギャラリーへ保存
 
   logger: ^2.0.2                   # ログ出力
   timeago: ^3.7.0                  # 相対時刻表示（例: 3分前）
   fl_chart: ^1.0.0                 # グラフ描画
   package_info_plus: ^8.0.0        # アプリ情報（バージョン等）
-  device_info_plus: ^12.4.0        # デバイス情報
   uuid: ^4.3.3                     # UUID生成
   image_picker: ^1.2.2
   google_generative_ai: ^0.4.7
