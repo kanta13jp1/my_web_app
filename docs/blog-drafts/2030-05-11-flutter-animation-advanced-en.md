@@ -1,7 +1,7 @@
 ---
 title: "Flutter Animation Deep Dive — AnimationController, Custom Tweens, and Physics Simulations"
 tags: flutter,dart,webdev,indiedev
-published: false
+published: true
 ---
 
 # Flutter Animation Deep Dive — AnimationController, Custom Tweens, and Physics Simulations
