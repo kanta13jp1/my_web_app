@@ -25289,3 +25289,19 @@ a9d7b1517 on main
 ### Philosophy Alignment
 #5 商品=ユーザー価値 (= fleet 機能 keep up to date で開発速度維持) / #6 資本=時間 (= 11 件 issue → 4 件 keep に集約 = 7 件分の triage 工数削減)
 
+
+## 2026-05-01 PS#1 S23 — WF health audit + orphan branch cleanup
+
+### 実施内容
+- CI/deploy-prod全パス確認 (main branch healthy)
+- migration collision 0件確認 (1698 migrations clean)
+- orphan branch 5本削除: codex2-android-agp/jvm-target (merged済) + codex1-fix-collision 3本 (main反映済)
+- PR#1519: codex/codex1-wbs-automation-drain → issue limit 1000→5000 / timeout 10→25min / VM import fix (app_logger) / dup key fix (comparison_page)
+- PR#1520: codex/codex1-msix-installer-url-fix → Windows MSIX installer URL correction
+
+### 新発見・パターン
+- **「collision-fix branch が main に先行反映されて stale になる」pattern** — fleet 並行作業時に collision fix が direct commit と branch PR の二重経路で入り、branch が stale orphan になる。定期的な merged check が必要。
+- **「orphan branch の merge 検出は `git branch -r --merged origin/main`」** — PS#1 がセッション毎に実行すべき必須チェック。
+
+### Philosophy Alignment
+#6 資本=時間 (= stale 5本削除 + 2 PR整理でfleet技術負債削減) / #2 ミッション駆動 (= CI健全性維持でリリース速度保持)
