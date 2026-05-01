@@ -25305,3 +25305,24 @@ a9d7b1517 on main
 
 ### Philosophy Alignment
 #6 資本=時間 (= stale 5本削除 + 2 PR整理でfleet技術負債削減) / #2 ミッション駆動 (= CI健全性維持でリリース速度保持)
+
+## 2026-05-01 PS版#2 S101 — T-1 Phase50全4弾完結 (#227-#230)
+
+### T-1 Phase50 投稿成功 (dev.to 累計230本)
+
+- T-1 第227弾: Flutter Animation Deep Dive — AnimationController, Custom Tweens, and Physics Simulations
+  - https://dev.to/kanta13jp1/flutter-animation-deep-dive-animationcontroller-custom-tweens-and-physics-simulations-136f
+- T-1 第228弾: Supabase Storage Deep Dive — Bucket Design, Signed URLs, Image Transforms, and RLS
+  - https://dev.to/kanta13jp1/supabase-storage-deep-dive-bucket-design-signed-urls-image-transforms-and-rls-3b9k
+- T-1 第229弾: Indie Dev Monetization — Pricing Psychology, Subscriptions, and Freemium Done Right
+  - https://dev.to/kanta13jp1/indie-dev-monetization-pricing-psychology-subscriptions-and-freemium-done-right-3eb8
+- T-1 第230弾: Dart Isolates Deep Dive — compute, SendPort, and Parallel Processing Patterns
+  - https://dev.to/kanta13jp1/dart-isolates-deep-dive-compute-sendport-and-parallel-processing-patterns-4ij6
+
+### 特記事項
+- Phase50 drafts 新規生成 (Phase49 S100で全draft published済 → 8ファイル新規作成)
+- 4弾すべて devto のみ (Qiita rate limit 回避)
+- 初回dispatch前commit漏れ → 2回目で成功 (lesson: dispatch前にpush必須)
+
+### Philosophy Alignment
+#5 商品=ユーザー価値 (= 実用的な技術記事でコミュニティに価値提供) / #6 資本=時間 (= 自動 dispatch で手動作業ゼロ)
