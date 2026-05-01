@@ -18,7 +18,7 @@ DELETE FROM public.wbs_tasks
 WHERE id = 'a4a5b0db-2e0b-401d-abc3-0c1c8d7154f0'::uuid
   AND instance = 'codex'
   AND owner_instance = 'codex'
-  AND title LIKE '???AI%';
+  AND title LIKE '%AI%';
 
 INSERT INTO public.wbs_tasks (
   category,
@@ -39,10 +39,10 @@ INSERT INTO public.wbs_tasks (
 )
 VALUES (
   'AI Strategy',
-  '🤖',
+  'AI',
   15,
-  '全機能AI連携・ライフ浪費ゼロ運用ループ',
-  'Codex担当。既存の全機能AI戦略モニタとライフ浪費ゼロ司令塔を活かし、今日の1手・拡張しない条件・毎日のKGI/CSF/KPI再計算をUIに接続した。',
+  'Life AI operating loop and waste-zero runbook',
+  'Codex applied the existing cross-feature AI strategy monitor and life-waste service to expose one daily operating action, no-expansion guardrails, and recurring KGI/CSF/KPI review without adding a duplicate dashboard.',
   'codex',
   'codex',
   'completed',
