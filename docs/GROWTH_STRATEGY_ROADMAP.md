@@ -25342,3 +25342,14 @@ a9d7b1517 on main
 
 ### Philosophy Alignment
 #5 商品=ユーザー価値 (= 競技数学推論 + 人間評価ランキング知識でユーザーのAI選定支援) / #8 KPI=昨日の自分 (= 386→388社 連続追加継続)
+
+### PS#5 S117: ci-auto-fix bash -e 伝播バグ修正 (2026-05-01 19:xx)
+- 根本原因: GHA `bash -e` モードで `RESULT=$(flutter analyze)` が非ゼロ終了を即時伝播
+  → Step 6 (commit) / Step 7 (PR comment) がスキップされ format 修正が失われていた
+- 修正1: Step 5 に `set +e` / `set -e` ラッパー追加 (analyze exit code を正しく捕捉)
+- 修正2: Step 6/7 に `always() &&` 条件追加 (Step 5 失敗でも commit/comment 実行)
+- 副次対応: CI失敗issue #1522/#1523 close (PR#785 krisp 10:13 merge 済み)
+- commit: b62e70d44 → main直接push
+
+### Philosophy Alignment
+#5 商品=ユーザー価値 (= CI自動修復が確実に動作し開発者の手間削減) / #6 資本=時間 (= format fix の自動コミットで手動修正ゼロ化)
