@@ -17,9 +17,18 @@
     { "name": "Chatwork", "url": "https://chatwork.com", "category": "business chat (JP)", "added": "seed", "added_date": "2026-04-30" },
     { "name": "Slack", "url": "https://slack.com", "category": "business chat", "added": "seed", "added_date": "2026-04-30" },
     { "name": "ジョブカン", "url": "https://jobcan.ne.jp", "category": "HR / attendance", "added": "seed", "added_date": "2026-04-30" },
-    { "name": "Amazon", "url": "https://amazon.co.jp", "category": "ecommerce / API", "added": "seed", "added_date": "2026-04-30" }
+    { "name": "Amazon", "url": "https://amazon.co.jp", "category": "ecommerce / API", "added": "seed", "added_date": "2026-04-30" },
+    { "name": "Cursor", "url": "https://cursor.com", "category": "AI IDE / agentic dev tool", "added": "discovery", "added_date": "2026-05-01" }
   ],
-  "discovery_history": [],
+  "discovery_history": [
+    {
+      "date": "2026-05-01",
+      "name": "Cursor",
+      "category": "AI IDE / agentic dev tool",
+      "reason": "AI dev tool 4 強 (Claude Code / OpenAI Codex / Claude Cowork / OpenClaw) のうち seed に Cursor が抜けていた。1月 Cursor CLI 公開 + 4月 Cursor Automations + Bugbot Autofix で過去 30 日内に重大リリース複数。multi-agent workflows + Cursor Automations が自社 12 fleet 戦略の正面競合軸。https://www.builder.io/blog/cursor-vs-claude-code",
+      "skipped_candidates": ["Salesforce Agentforce (Slack 経由で間接監視済)", "Devin (採用事例更新薄)", "Lovable / Bolt.new (Flutter Web と別軸)", "Replit Agent (Cursor 類似 / shareclass 小)", "Manus AI (自社協調軸として組込済)"]
+    }
+  ],
   "_schema_notes": {
     "added": "seed (initial 14) | discovery (auto-added by scheduled task) | manual (手動 PR)",
     "category": "free text — used for diversification check (e.g. 同一カテゴリ偏り防止)",
