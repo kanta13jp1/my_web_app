@@ -1,0 +1,36 @@
+{
+  "task": "infra-health-check",
+  "ran_at": "2026-05-01T13:35:35+09:00",
+  "supabase_health_check_ef": {
+    "status": "skipped",
+    "reason": "SUPABASE_SERVICE_KEY env var not set in this Claude Code session; cannot authenticate /functions/v1/health-check",
+    "recurring": true,
+    "history": [
+      "memory obs 588/589/647/669",
+      "incident-reports/2026-04-18-ai-assistant-429.md",
+      "schedule-logs/infra-health-2026-05-01-04.json",
+      "schedule-logs/infra-health-2026-05-01-12.json"
+    ]
+  },
+  "supabase_indirect_signals": {
+    "flutter_analyze_cache_updated_at": "2026-04-11T16:28:19Z",
+    "flutter_analyze_cache_stale_days": 20,
+    "flutter_analyze_cache_head_sha": "9bde2d17eafbba9186cdf106be657ce5e6768477",
+    "flutter_analyze_cache_conclusion": "cancelled",
+    "note": "cs-check.yml が cache 更新を期待されているが head_sha 9bde2d17 / 2026-04-11 で停滞。本タスク範囲外 (PS#1 Rule17 WF health 監視マター)。"
+  },
+  "firebase_hosting": {
+    "url": "https://my-web-app-b67f4.web.app/",
+    "status": "ok",
+    "title": "自分株式会社 | AIが今日の最優先タスクを整理",
+    "first_heading": "自分株式会社",
+    "title_visible": true,
+    "note": "WebFetch で fully rendered AI life management page を確認。5xx / SyntaxError なし。"
+  },
+  "incident_created": false,
+  "action": "log only; no fix required",
+  "next_steps_when_user_present": [
+    "SUPABASE_SERVICE_KEY を Schedule env に渡す or skill を WEB版-style cache 参照に書き換え",
+    "flutter-analyze-cache 停滞 20 日 を PS#1 Rule17 WF health に escalation 済か確認"
+  ]
+}
