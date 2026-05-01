@@ -25264,3 +25264,28 @@ a9d7b1517 on main
 
 ### Philosophy Alignment
 #5 商品=ユーザー価値 (= 競合脅威の早期検知で対抗策立案) / #6 資本=時間 (= 自動スケジュールで手動レポート工数ゼロ)
+
+## 2026-05-01 Win版#132 part 114 — ai-tool-update batch triage (= scheduled daily-development)
+
+### 実施内容
+- AI_FLEET_SYNERGY #3 changelog watch infra (= part 99 構築) で auto-起票された 11 件 ai-tool-update issue を batch triage
+- `docs/ai-tool-changelog/2026-05-triage.md` 新規 (= 評価軸 3 種 + 11 件判定 matrix + KEEP 4 件 adoption owner + CLOSE 共通コメント + 学び 3 点 + next steps 3 件)
+
+### 判定結果
+| 判定 | 件数 | issue # |
+| --- | --- | --- |
+| CLOSE | 7 | #1482 (OAuth fix) / #1483 (Bedrock 不使用) / #1485 (vim UX) / #1487 (/resume 自動恩恵) / #1488 (Opus 4.7 既採用) / #1489 (thinking UX) / #1491 (thinking UX) |
+| KEEP | 4 | #1484 (alwaysLoad MCP / Win版) / #1486 (forked subagents / VSCode版) / #1490 (1h prompt cache / PS#1) / #1492 (Codex /goal workflows / Codex#2) |
+
+### 副次成果物
+- `docs/cross-instance-prs/20260501_codex2_goal_workflows_eval.md` 起票 (= Codex#2 lane 評価依頼 / 検討期限 2026-05-15)
+- 4 KEEP issue に adoption owner + 検討期限 + cross-instance-pr 候補 を comment 追記
+
+### 学び
+- **end-to-end loop 完成形 第 1 例** — 自動 issue 起票 → 自動 triage → 自動 cross-instance-pr 起票
+- **CLOSE 比率 7/11 (64%)** — bug fix + 自動恩恵が大半 / signal-to-noise 改善余地 (= part 115 で LLM 仕分け自動化候補)
+- **「scheduled daily-development が次の scheduled work を生成」reflexive pattern** — INDIE_DEV_VELOCITY #6 Avoid Side-Project Graveyard dogfood
+
+### Philosophy Alignment
+#5 商品=ユーザー価値 (= fleet 機能 keep up to date で開発速度維持) / #6 資本=時間 (= 11 件 issue → 4 件 keep に集約 = 7 件分の triage 工数削減)
+
