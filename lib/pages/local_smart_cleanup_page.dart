@@ -4,6 +4,8 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../services/local_cleanup_result.dart';
+import '../services/local_cleanup_service.dart';
 import '../utils/web_image_downloader.dart';
 
 class LocalSmartCleanupPage extends StatefulWidget {
@@ -32,13 +34,23 @@ class _LocalSmartCleanupPageState extends State<LocalSmartCleanupPage> {
       r'powershell.exe -NoProfile -ExecutionPolicy Bypass -File "C:\Users\kanta\Scripts\SmartCleanup\Invoke-SmartCleanup.ps1"';
   static const _applyCommand =
       r'powershell.exe -NoProfile -ExecutionPolicy Bypass -File "C:\Users\kanta\Scripts\SmartCleanup\Invoke-ApprovedCleanup.ps1" -Apply';
+  static const _windowsReleaseUrl =
+      'https://github.com/kanta13jp1/my_web_app/releases/latest/download/jibun-windows-companion.zip';
+  static const _windowsWorkflowUrl =
+      'https://github.com/kanta13jp1/my_web_app/actions/workflows/windows-companion-build.yml';
+  static const _windowsGuideUrl =
+      'https://github.com/kanta13jp1/my_web_app/blob/main/docs/WINDOWS_COMPANION_APP.md';
+  static const _trackingIssueUrl =
+      'https://github.com/kanta13jp1/my_web_app/issues/1493';
 
+  final LocalCleanupService _localCleanupService = const LocalCleanupService();
   final List<_DuplicateRow> _duplicates = <_DuplicateRow>[];
   final List<_ApprovalRow> _approvals = <_ApprovalRow>[];
   String? _reportFileName;
   String? _approvalFileName;
   String _statusText = 'CSVを読み込むと、重複候補・承認候補・定期実行コマンドを確認できます。';
   bool _isBusy = false;
+  bool _isRunningLocalAction = false;
   int _selectedTab = 0;
   _CleanupFrequency _scheduleFrequency = _CleanupFrequency.weekly;
   _CleanupScheduleKind _scheduleKind = _CleanupScheduleKind.reportOnly;
@@ -175,6 +187,34 @@ class _LocalSmartCleanupPageState extends State<LocalSmartCleanupPage> {
     setState(() => _scheduleTime = picked);
   }
 
+  Future<void> _runLocalAction(
+    String label,
+    Future<LocalCleanupResult> Function() action,
+  ) async {
+    if (_isRunningLocalAction) {
+      return;
+    }
+    setState(() => _isRunningLocalAction = true);
+    try {
+      final result = await action();
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _statusText = result.success ? '$label が完了しました。' : '$label が完了しませんでした。';
+      });
+      _showMessage(result.displayMessage);
+    } finally {
+      if (mounted) {
+        setState(() => _isRunningLocalAction = false);
+      }
+    }
+  }
+
+  void _openUrl(String url) {
+    openWebUrl(url);
+  }
+
   Future<void> _copyText(String text, String message) async {
     await Clipboard.setData(ClipboardData(text: text));
     if (!mounted) {
@@ -276,6 +316,8 @@ class _LocalSmartCleanupPageState extends State<LocalSmartCleanupPage> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     _buildHeader(theme),
+                    const SizedBox(height: 16),
+                    _buildWindowsInstallPanel(theme),
                     const SizedBox(height: 16),
                     _buildMetrics(wide),
                     const SizedBox(height: 16),
@@ -385,6 +427,83 @@ class _LocalSmartCleanupPageState extends State<LocalSmartCleanupPage> {
     );
   }
 
+  Widget _buildWindowsInstallPanel(ThemeData theme) {
+    final colorScheme = theme.colorScheme;
+    final supported = _localCleanupService.isSupported;
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: supported
+            ? colorScheme.primaryContainer
+            : colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                supported ? Icons.desktop_windows : Icons.install_desktop,
+                color: supported
+                    ? colorScheme.onPrimaryContainer
+                    : colorScheme.primary,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  supported ? 'Windowsアプリ版で実行中' : 'Windowsアプリ版をインストール',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    color: supported ? colorScheme.onPrimaryContainer : null,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            supported
+                ? 'このビルドではレポート生成、承認適用、スケジュール操作をアプリから直接実行できます。'
+                : 'Windows版ではCドライブの重複スキャン、承認済みクリーンアップ、タスク登録をローカルで実行できます。',
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: supported
+                  ? colorScheme.onPrimaryContainer
+                  : colorScheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: [
+              FilledButton.icon(
+                onPressed: () => _openUrl(_windowsReleaseUrl),
+                icon: const Icon(Icons.download_for_offline_outlined),
+                label: const Text('最新版'),
+              ),
+              OutlinedButton.icon(
+                onPressed: () => _openUrl(_windowsWorkflowUrl),
+                icon: const Icon(Icons.inventory_2_outlined),
+                label: const Text('ビルド'),
+              ),
+              OutlinedButton.icon(
+                onPressed: () => _openUrl(_windowsGuideUrl),
+                icon: const Icon(Icons.article_outlined),
+                label: const Text('手順'),
+              ),
+              OutlinedButton.icon(
+                onPressed: () => _openUrl(_trackingIssueUrl),
+                icon: const Icon(Icons.task_alt),
+                label: const Text('Issue #1493'),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildMetrics(bool wide) {
     final tiles = <Widget>[
       _MetricTile(
@@ -466,6 +585,12 @@ class _LocalSmartCleanupPageState extends State<LocalSmartCleanupPage> {
                 onPressed: _copyApprovalCsv,
                 icon: const Icon(Icons.content_copy),
                 label: const Text('承認CSVコピー'),
+              ),
+              OutlinedButton.icon(
+                onPressed: () =>
+                    Navigator.of(context).pushNamed('/windows-app'),
+                icon: const Icon(Icons.desktop_windows_outlined),
+                label: const Text('Windows版'),
               ),
             ],
           ),
@@ -771,6 +896,67 @@ class _LocalSmartCleanupPageState extends State<LocalSmartCleanupPage> {
               'スケジュール削除コマンドをコピーしました。',
             ),
           ),
+          if (_localCleanupService.isSupported) ...[
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: [
+                FilledButton.icon(
+                  onPressed: _isRunningLocalAction
+                      ? null
+                      : () => _runLocalAction(
+                            'スケジュール登録',
+                            () => _localCleanupService.runGeneratedCommand(
+                              _scheduleCreateCommand,
+                              action: 'Schedule create',
+                            ),
+                          ),
+                  icon: const Icon(Icons.event_available),
+                  label: const Text('登録'),
+                ),
+                OutlinedButton.icon(
+                  onPressed: _isRunningLocalAction
+                      ? null
+                      : () => _runLocalAction(
+                            'スケジュール確認',
+                            () => _localCleanupService.runGeneratedCommand(
+                              _scheduleQueryCommand,
+                              action: 'Schedule query',
+                            ),
+                          ),
+                  icon: const Icon(Icons.search),
+                  label: const Text('確認'),
+                ),
+                OutlinedButton.icon(
+                  onPressed: _isRunningLocalAction
+                      ? null
+                      : () => _runLocalAction(
+                            'スケジュール実行',
+                            () => _localCleanupService.runGeneratedCommand(
+                              _scheduleRunCommand,
+                              action: 'Schedule run',
+                            ),
+                          ),
+                  icon: const Icon(Icons.play_arrow),
+                  label: const Text('実行'),
+                ),
+                OutlinedButton.icon(
+                  onPressed: _isRunningLocalAction
+                      ? null
+                      : () => _runLocalAction(
+                            'スケジュール削除',
+                            () => _localCleanupService.runGeneratedCommand(
+                              _scheduleDeleteCommand,
+                              action: 'Schedule delete',
+                            ),
+                          ),
+                  icon: const Icon(Icons.delete_outline),
+                  label: const Text('削除'),
+                ),
+              ],
+            ),
+          ],
         ],
       ),
     );
@@ -812,6 +998,35 @@ class _LocalSmartCleanupPageState extends State<LocalSmartCleanupPage> {
               '承認適用コマンドをコピーしました。',
             ),
           ),
+          if (_localCleanupService.isSupported) ...[
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: [
+                FilledButton.icon(
+                  onPressed: _isRunningLocalAction
+                      ? null
+                      : () => _runLocalAction(
+                            'レポート生成',
+                            _localCleanupService.runReport,
+                          ),
+                  icon: const Icon(Icons.play_circle_outline),
+                  label: const Text('レポート生成'),
+                ),
+                OutlinedButton.icon(
+                  onPressed: _isRunningLocalAction
+                      ? null
+                      : () => _runLocalAction(
+                            '承認適用',
+                            _localCleanupService.applyApprovedCleanup,
+                          ),
+                  icon: const Icon(Icons.recycling_outlined),
+                  label: const Text('承認適用'),
+                ),
+              ],
+            ),
+          ],
         ],
       ),
     );

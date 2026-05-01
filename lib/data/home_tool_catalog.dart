@@ -34,6 +34,7 @@ import '../pages/import_page.dart';
 import '../pages/kanban_board_page.dart';
 import '../pages/life_goals_page.dart';
 import '../pages/local_smart_cleanup_page.dart';
+import '../pages/windows_app_install_page.dart';
 import '../pages/memory_drill_page.dart';
 import '../pages/mind_map_page.dart';
 import '../pages/mindless_task_page.dart';
@@ -548,6 +549,26 @@ List<HomeToolEntry> buildHomeToolCatalog({
       onOpen: (context) => _pushPage(
         context,
         const LocalSmartCleanupPage(),
+      ),
+      requiresClearDeck: true,
+    ),
+    HomeToolEntry(
+      id: 'windows-app',
+      sectionId: 'personal',
+      title: 'Windowsアプリ版',
+      subtitle: 'ローカルPC整理用のWindows Companion Appを入手',
+      icon: Icons.desktop_windows_outlined,
+      color: const Color(0xFF1565C0),
+      keywords: const <String>[
+        'Windows',
+        'Windowsアプリ',
+        'インストール',
+        'ローカルPC',
+        'cleanup',
+      ],
+      onOpen: (context) => _pushPage(
+        context,
+        const WindowsAppInstallPage(),
       ),
       requiresClearDeck: true,
     ),

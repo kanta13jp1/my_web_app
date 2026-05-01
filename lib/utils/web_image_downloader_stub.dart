@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 // Web以外（テストやスマホ）では何もしない、またはログを出す
 void downloadImageFile(List<int> bytes, String fileName) {
@@ -7,7 +10,12 @@ void downloadImageFile(List<int> bytes, String fileName) {
 
 // URLを開く機能（スタブ）
 void openWebUrl(String url) {
-  debugPrint('Web以外: $url を開こうとしました');
+  final uri = Uri.tryParse(url);
+  if (uri == null) {
+    debugPrint('Invalid URL: $url');
+    return;
+  }
+  unawaited(launchUrl(uri, mode: LaunchMode.externalApplication));
 }
 
 // シェア機能（スタブ）
