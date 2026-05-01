@@ -1,7 +1,7 @@
 ---
 title: "Indie Dev Monetization — Pricing Psychology, Subscriptions, and Freemium Done Right"
 tags: indiedev,webdev,flutter,dart
-published: false
+published: true
 ---
 
 # Indie Dev Monetization — Pricing Psychology, Subscriptions, and Freemium Done Right

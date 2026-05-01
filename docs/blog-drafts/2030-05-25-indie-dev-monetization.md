@@ -1,7 +1,7 @@
 ---
 title: "インディー開発者の収益化戦略 — 価格設計・サブスクリプション・フリーミアムの使い分け"
 tags: 個人開発,flutter,AI,webdev
-published: false
+published: true
 ---
 
 # インディー開発者の収益化戦略 — 価格設計・サブスクリプション・フリーミアムの使い分け
