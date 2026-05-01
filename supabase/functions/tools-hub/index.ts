@@ -1713,6 +1713,40 @@ function jockeyChangeBonus(topEntry: Record<string, unknown> | undefined): numbe
   return 0;
 }
 
+function prevPopularityBounceBonus(topEntry: Record<string, unknown> | undefined): number {
+  if (!topEntry) return 0;
+  const prevPop = numericOrFallback(topEntry.prev_popularity, 0);
+  const prevFin = numericOrFallback(topEntry.prev_finish, 0);
+  if (!prevPop || !prevFin) return 0;
+  if (prevPop <= 2 && prevFin >= 4) return 0.01; // 前走1-2番人気→4着以下敗退 = 巻き返し期待
+  if (prevPop >= 6 && prevFin <= 3) return 0.01; // 前走6番人気以下→3着以内好走 = 人気薄好走実績
+  return 0;
+}
+
+function weightChangeCourseSuitBonus(
+  topEntry: Record<string, unknown> | undefined,
+): number {
+  if (!topEntry) return 0;
+  const change = numericOrFallback(topEntry.horse_weight_change, 0);
+  const courseType = String(topEntry.prev_course_type ?? "").trim();
+  if (!change || !courseType) return 0;
+  if (courseType === "ダート" && change >= 10) return 0.01;  // ダート+10kg以上増 = パワーアップ
+  if (courseType === "芝" && change >= 20) return -0.01;     // 芝+20kg以上増 = 重め仕上げ注意
+  return 0;
+}
+
+function prev3AvgFinishBonus(topEntry: Record<string, unknown> | undefined): number {
+  if (!topEntry) return 0;
+  const f1 = numericOrFallback(topEntry.prev_finish, 0);
+  const f2 = numericOrFallback(topEntry.prev2_finish, 0);
+  const f3 = numericOrFallback(topEntry.prev3_finish, 0);
+  if (!f1 || !f2 || !f3) return 0;
+  const avg = (f1 + f2 + f3) / 3;
+  if (avg <= 2.0) return 0.01;  // 前3走平均2着以内 = 圧倒的安定感
+  if (avg >= 7.0) return -0.01; // 前3走平均7着以下 = 不安定な戦績
+  return 0;
+}
+
 function prevTimeGapBonus(topEntry: Record<string, unknown> | undefined): number {
   if (!topEntry) return 0;
   const prev = timeToSecondsTS(topEntry.prev_time);
@@ -2168,7 +2202,10 @@ function buildHistoricalBaselinePrediction(
   const trainerTopCourse = trainerTopCourseBonus(first, race.venue);
   const prev3FormTrend = prev3FormTrendBonus(first);
   const jockeyChange = jockeyChangeBonus(first);
-  const confidence = Math.min(clampConfidence(0.31 + dataQuality * 0.22 + oddsCoverage * 0.12 + historyCoverage * 0.07 + bestTimeCoverage * 0.05 + prevMarginCoverage * 0.03 + jockeyCoverage * 0.02 + trainerCoverage * 0.01 + bloodlineCoverage * 0.01 + last3FCoverage * 0.01 + winningTimeCoverage * 0.01 + weightChangeCoverage * 0.01 + ageCoverage * 0.01 + sexCoverage * 0.01 + horseWeightCoverage * 0.01 + stableCoverage * 0.01 + damCoverage * 0.01 + damsireCoverage * 0.01 + popularityCoverage * 0.01 - fieldPenalty - tightOdds + oddsGapBonus + recentForm + venueBonus + favBonus + smallField + bloodlineBonus + distanceBonus + consensus + jockeyWinRate + trainerWinRate + gradePenalty + weightStability + ageOptimal + intervalBonus + courseTypeMatch + barrierPosition + prevVenueMatch + prevDistanceMatch + last3fBonus + weightKg + prevMargin + bodyWeight + prevTimeGap + sexCategory + popularityRank + weightChange + prevFinish + winExp + jtCombo + dataComplete + trifecta + bloodlineCourseType + bestTimeRank + popPrevFinishConsist + damSireLine + popOddsAlign + ageDistAffinity + sireRank + prevDistTrend + oddsSpread + prevWinMargin + horseNumRatio + multiSignal + trackCondAdapt + runStyleDist + prev2Consist + classStep + favConsist + jockeyTopCourse + trainerTopCourse + prev3FormTrend + jockeyChange), maxConf);
+  const prevPopBounce = prevPopularityBounceBonus(first);
+  const wtChangeCourse = weightChangeCourseSuitBonus(first);
+  const prev3AvgFinish = prev3AvgFinishBonus(first);
+  const confidence = Math.min(clampConfidence(0.31 + dataQuality * 0.22 + oddsCoverage * 0.12 + historyCoverage * 0.07 + bestTimeCoverage * 0.05 + prevMarginCoverage * 0.03 + jockeyCoverage * 0.02 + trainerCoverage * 0.01 + bloodlineCoverage * 0.01 + last3FCoverage * 0.01 + winningTimeCoverage * 0.01 + weightChangeCoverage * 0.01 + ageCoverage * 0.01 + sexCoverage * 0.01 + horseWeightCoverage * 0.01 + stableCoverage * 0.01 + damCoverage * 0.01 + damsireCoverage * 0.01 + popularityCoverage * 0.01 - fieldPenalty - tightOdds + oddsGapBonus + recentForm + venueBonus + favBonus + smallField + bloodlineBonus + distanceBonus + consensus + jockeyWinRate + trainerWinRate + gradePenalty + weightStability + ageOptimal + intervalBonus + courseTypeMatch + barrierPosition + prevVenueMatch + prevDistanceMatch + last3fBonus + weightKg + prevMargin + bodyWeight + prevTimeGap + sexCategory + popularityRank + weightChange + prevFinish + winExp + jtCombo + dataComplete + trifecta + bloodlineCourseType + bestTimeRank + popPrevFinishConsist + damSireLine + popOddsAlign + ageDistAffinity + sireRank + prevDistTrend + oddsSpread + prevWinMargin + horseNumRatio + multiSignal + trackCondAdapt + runStyleDist + prev2Consist + classStep + favConsist + jockeyTopCourse + trainerTopCourse + prev3FormTrend + jockeyChange + prevPopBounce + wtChangeCourse + prev3AvgFinish), maxConf);
   return {
     success: true,
     prediction: {
@@ -2180,7 +2217,7 @@ function buildHistoricalBaselinePrediction(
         "過去レース学習用の低リスク基準予想。",
         "レース結果は参照せず、人気・単勝オッズ・前走・着差・持ち時計・馬体重変動・馬体/騎手/調教師/血統など取得済み特徴量から順位付け。",
         `対象:${race.race_date ?? ""} ${race.venue ?? ""}${race.race_number ?? ""}R ${race.race_name ?? ""}`,
-        `信頼度:${Math.round(confidence * 100)}% (データ充足${Math.round(dataQuality * 100)}% オッズ${Math.round(oddsCoverage * 100)}% 上がり3F${Math.round(last3FCoverage * 100)}% 血統${Math.round(bloodlineCoverage * 100)}% 騎手${Math.round(jockeyCoverage * 100)}% 馬体重${Math.round(horseWeightCoverage * 100)}% 厩舎${Math.round(stableCoverage * 100)}% 人気${Math.round(popularityCoverage * 100)}% 頭数${entries.length}頭 グレード:${race.grade ?? "OP以下"} 会場補正:${venueBonus >= 0 ? "+" : ""}${Math.round(venueBonus * 100)}% 本命補正:+${Math.round(favBonus * 100)}% 少頭数補正:+${Math.round(smallField * 100)}% 血統充足:+${Math.round(bloodlineBonus * 100)}% 距離補正:${distanceBonus >= 0 ? "+" : ""}${Math.round(distanceBonus * 100)}% 合意補正:+${Math.round(consensus * 100)}% 騎手勝率補正:+${Math.round(jockeyWinRate * 100)}% 調教師勝率補正:+${Math.round(trainerWinRate * 100)}% グレード補正:${gradePenalty >= 0 ? "+" : ""}${Math.round(gradePenalty * 100)}% 体重安定:${weightStability >= 0 ? "+" : ""}${Math.round(weightStability * 100)}% 年齢補正:${ageOptimal >= 0 ? "+" : ""}${Math.round(ageOptimal * 100)}% 間隔補正:${intervalBonus >= 0 ? "+" : ""}${Math.round(intervalBonus * 100)}% コース種別補正:${courseTypeMatch >= 0 ? "+" : ""}${Math.round(courseTypeMatch * 100)}% 枠番補正:${barrierPosition >= 0 ? "+" : ""}${Math.round(barrierPosition * 100)}% 前走同会場:${prevVenueMatch >= 0 ? "+" : ""}${Math.round(prevVenueMatch * 100)}% 前走距離適合:${prevDistanceMatch >= 0 ? "+" : ""}${Math.round(prevDistanceMatch * 100)}% 上り3F:${last3fBonus >= 0 ? "+" : ""}${Math.round(last3fBonus * 100)}% 斤量:${weightKg >= 0 ? "+" : ""}${Math.round(weightKg * 100)}% 前走着差:${prevMargin >= 0 ? "+" : ""}${Math.round(prevMargin * 100)}% 馬体重:${bodyWeight >= 0 ? "+" : ""}${Math.round(bodyWeight * 100)}% 前走タイム差:${prevTimeGap >= 0 ? "+" : ""}${Math.round(prevTimeGap * 100)}% 性別:${sexCategory >= 0 ? "+" : ""}${Math.round(sexCategory * 100)}% 人気ランク:${popularityRank >= 0 ? "+" : ""}${Math.round(popularityRank * 100)}% 体重変動:${weightChange >= 0 ? "+" : ""}${Math.round(weightChange * 100)}% 前走着順:${prevFinish >= 0 ? "+" : ""}${Math.round(prevFinish * 100)}% 勝利実績:+${Math.round(winExp * 100)}% JTコンビ:+${Math.round(jtCombo * 100)}% データ完全:${dataComplete >= 0 ? "+" : ""}${Math.round(dataComplete * 100)}% 三一致:+${Math.round(trifecta * 100)}% 血統コース:${bloodlineCourseType >= 0 ? "+" : ""}${Math.round(bloodlineCourseType * 100)}% ベストタイム順位:${bestTimeRank >= 0 ? "+" : ""}${Math.round(bestTimeRank * 100)}% 人気前走整合:${popPrevFinishConsist >= 0 ? "+" : ""}${Math.round(popPrevFinishConsist * 100)}% 母父系統:${damSireLine >= 0 ? "+" : ""}${Math.round(damSireLine * 100)}% 人気オッズ整合:${popOddsAlign >= 0 ? "+" : ""}${Math.round(popOddsAlign * 100)}% 年齢距離親和:${ageDistAffinity >= 0 ? "+" : ""}${Math.round(ageDistAffinity * 100)}% 種牡馬ランク:+${Math.round(sireRank * 100)}% 前走距離傾向:${prevDistTrend >= 0 ? "+" : ""}${Math.round(prevDistTrend * 100)}% オッズ分散:${oddsSpread >= 0 ? "+" : ""}${Math.round(oddsSpread * 100)}% 前走圧勝:${prevWinMargin >= 0 ? "+" : ""}${Math.round(prevWinMargin * 100)}% 馬番比率:${horseNumRatio >= 0 ? "+" : ""}${Math.round(horseNumRatio * 100)}% 複合シグナル:+${Math.round(multiSignal * 100)}% 馬場適性:${trackCondAdapt >= 0 ? "+" : ""}${Math.round(trackCondAdapt * 100)}% 脚質距離:${runStyleDist >= 0 ? "+" : ""}${Math.round(runStyleDist * 100)}% 2走一貫:${prev2Consist >= 0 ? "+" : ""}${Math.round(prev2Consist * 100)}% クラス昇降:${classStep >= 0 ? "+" : ""}${Math.round(classStep * 100)}% 本命継続:${favConsist >= 0 ? "+" : ""}${Math.round(favConsist * 100)}% 騎手得意コース:+${Math.round(jockeyTopCourse * 100)}% 調教師得意コース:+${Math.round(trainerTopCourse * 100)}% 3走トレンド:${prev3FormTrend >= 0 ? "+" : ""}${Math.round(prev3FormTrend * 100)}% 騎乗交代:${jockeyChange >= 0 ? "+" : ""}${Math.round(jockeyChange * 100)}%)`,
+        `信頼度:${Math.round(confidence * 100)}% (データ充足${Math.round(dataQuality * 100)}% オッズ${Math.round(oddsCoverage * 100)}% 上がり3F${Math.round(last3FCoverage * 100)}% 血統${Math.round(bloodlineCoverage * 100)}% 騎手${Math.round(jockeyCoverage * 100)}% 馬体重${Math.round(horseWeightCoverage * 100)}% 厩舎${Math.round(stableCoverage * 100)}% 人気${Math.round(popularityCoverage * 100)}% 頭数${entries.length}頭 グレード:${race.grade ?? "OP以下"} 会場補正:${venueBonus >= 0 ? "+" : ""}${Math.round(venueBonus * 100)}% 本命補正:+${Math.round(favBonus * 100)}% 少頭数補正:+${Math.round(smallField * 100)}% 血統充足:+${Math.round(bloodlineBonus * 100)}% 距離補正:${distanceBonus >= 0 ? "+" : ""}${Math.round(distanceBonus * 100)}% 合意補正:+${Math.round(consensus * 100)}% 騎手勝率補正:+${Math.round(jockeyWinRate * 100)}% 調教師勝率補正:+${Math.round(trainerWinRate * 100)}% グレード補正:${gradePenalty >= 0 ? "+" : ""}${Math.round(gradePenalty * 100)}% 体重安定:${weightStability >= 0 ? "+" : ""}${Math.round(weightStability * 100)}% 年齢補正:${ageOptimal >= 0 ? "+" : ""}${Math.round(ageOptimal * 100)}% 間隔補正:${intervalBonus >= 0 ? "+" : ""}${Math.round(intervalBonus * 100)}% コース種別補正:${courseTypeMatch >= 0 ? "+" : ""}${Math.round(courseTypeMatch * 100)}% 枠番補正:${barrierPosition >= 0 ? "+" : ""}${Math.round(barrierPosition * 100)}% 前走同会場:${prevVenueMatch >= 0 ? "+" : ""}${Math.round(prevVenueMatch * 100)}% 前走距離適合:${prevDistanceMatch >= 0 ? "+" : ""}${Math.round(prevDistanceMatch * 100)}% 上り3F:${last3fBonus >= 0 ? "+" : ""}${Math.round(last3fBonus * 100)}% 斤量:${weightKg >= 0 ? "+" : ""}${Math.round(weightKg * 100)}% 前走着差:${prevMargin >= 0 ? "+" : ""}${Math.round(prevMargin * 100)}% 馬体重:${bodyWeight >= 0 ? "+" : ""}${Math.round(bodyWeight * 100)}% 前走タイム差:${prevTimeGap >= 0 ? "+" : ""}${Math.round(prevTimeGap * 100)}% 性別:${sexCategory >= 0 ? "+" : ""}${Math.round(sexCategory * 100)}% 人気ランク:${popularityRank >= 0 ? "+" : ""}${Math.round(popularityRank * 100)}% 体重変動:${weightChange >= 0 ? "+" : ""}${Math.round(weightChange * 100)}% 前走着順:${prevFinish >= 0 ? "+" : ""}${Math.round(prevFinish * 100)}% 勝利実績:+${Math.round(winExp * 100)}% JTコンビ:+${Math.round(jtCombo * 100)}% データ完全:${dataComplete >= 0 ? "+" : ""}${Math.round(dataComplete * 100)}% 三一致:+${Math.round(trifecta * 100)}% 血統コース:${bloodlineCourseType >= 0 ? "+" : ""}${Math.round(bloodlineCourseType * 100)}% ベストタイム順位:${bestTimeRank >= 0 ? "+" : ""}${Math.round(bestTimeRank * 100)}% 人気前走整合:${popPrevFinishConsist >= 0 ? "+" : ""}${Math.round(popPrevFinishConsist * 100)}% 母父系統:${damSireLine >= 0 ? "+" : ""}${Math.round(damSireLine * 100)}% 人気オッズ整合:${popOddsAlign >= 0 ? "+" : ""}${Math.round(popOddsAlign * 100)}% 年齢距離親和:${ageDistAffinity >= 0 ? "+" : ""}${Math.round(ageDistAffinity * 100)}% 種牡馬ランク:+${Math.round(sireRank * 100)}% 前走距離傾向:${prevDistTrend >= 0 ? "+" : ""}${Math.round(prevDistTrend * 100)}% オッズ分散:${oddsSpread >= 0 ? "+" : ""}${Math.round(oddsSpread * 100)}% 前走圧勝:${prevWinMargin >= 0 ? "+" : ""}${Math.round(prevWinMargin * 100)}% 馬番比率:${horseNumRatio >= 0 ? "+" : ""}${Math.round(horseNumRatio * 100)}% 複合シグナル:+${Math.round(multiSignal * 100)}% 馬場適性:${trackCondAdapt >= 0 ? "+" : ""}${Math.round(trackCondAdapt * 100)}% 脚質距離:${runStyleDist >= 0 ? "+" : ""}${Math.round(runStyleDist * 100)}% 2走一貫:${prev2Consist >= 0 ? "+" : ""}${Math.round(prev2Consist * 100)}% クラス昇降:${classStep >= 0 ? "+" : ""}${Math.round(classStep * 100)}% 本命継続:${favConsist >= 0 ? "+" : ""}${Math.round(favConsist * 100)}% 騎手得意コース:+${Math.round(jockeyTopCourse * 100)}% 調教師得意コース:+${Math.round(trainerTopCourse * 100)}% 3走トレンド:${prev3FormTrend >= 0 ? "+" : ""}${Math.round(prev3FormTrend * 100)}% 騎乗交代:${jockeyChange >= 0 ? "+" : ""}${Math.round(jockeyChange * 100)}% 人気リバウンド:${prevPopBounce >= 0 ? "+" : ""}${Math.round(prevPopBounce * 100)}% 体重増減コース:${wtChangeCourse >= 0 ? "+" : ""}${Math.round(wtChangeCourse * 100)}% 前3走平均:${prev3AvgFinish >= 0 ? "+" : ""}${Math.round(prev3AvgFinish * 100)}%)`,
       ].join(" "),
     },
     latency_ms: 0,
@@ -3539,32 +3576,151 @@ serve(async (req) => {
           // Win版#131 part 23: defensive — view/RPC 失敗でも 200 返す
           // 1) overview view から health snapshot 取得
           // 2) ai-hub:provider.chat (groq) に prompt 投げる
+          const currentDate = new Date().toISOString().split("T")[0];
+          let fallbackSnapshot: {
+            overview: Record<string, unknown>;
+            delayed: Array<Record<string, unknown>>;
+          } | null = null;
+          const dateOnly = (value: unknown): string | null => {
+            if (typeof value !== "string" || value.length < 10) return null;
+            return value.slice(0, 10);
+          };
+          const delayDays = (deadline: string): number => {
+            const todayMs = Date.parse(`${currentDate}T00:00:00Z`);
+            const deadlineMs = Date.parse(`${deadline}T00:00:00Z`);
+            if (Number.isNaN(todayMs) || Number.isNaN(deadlineMs)) return 0;
+            return Math.max(0, Math.ceil((todayMs - deadlineMs) / 86400000));
+          };
+          const buildFallbackSnapshot = async () => {
+            if (fallbackSnapshot !== null) return fallbackSnapshot;
+            const { data: tasks, error: taskErr } = await admin
+              .from("wbs_tasks")
+              .select("title,status,progress,instance,end_date,recovery_plan");
+            if (taskErr) throw new Error(taskErr.message);
+
+            const rows = (tasks ?? []) as Array<Record<string, unknown>>;
+            const byInstance: Record<string, number> = {};
+            const activeInstances = new Set<string>();
+            let doneTasks = 0;
+            let inProgressTasks = 0;
+            let pendingTasks = 0;
+            let blockedTasks = 0;
+            let overdueTasks = 0;
+            let overdueNoRecovery = 0;
+            let inProgressProgressTotal = 0;
+            let inProgressProgressCount = 0;
+            const delayedRows: Array<Record<string, unknown>> = [];
+
+            for (const row of rows) {
+              const status = String(row.status ?? "pending");
+              const instance = String(row.instance ?? "unassigned");
+              byInstance[instance] = (byInstance[instance] ?? 0) + 1;
+              if (instance !== "all") activeInstances.add(instance);
+
+              if (status === "completed") doneTasks++;
+              if (status === "in_progress") {
+                inProgressTasks++;
+                const progress = Number(row.progress ?? 0);
+                if (!Number.isNaN(progress)) {
+                  inProgressProgressTotal += progress;
+                  inProgressProgressCount++;
+                }
+              }
+              if (status === "pending") pendingTasks++;
+              if (status === "blocked") blockedTasks++;
+
+              const deadline = dateOnly(row.end_date);
+              const recoveryPlan = String(row.recovery_plan ?? "");
+              const isOverdue = status !== "completed" &&
+                deadline !== null &&
+                deadline < currentDate;
+              if (isOverdue) {
+                overdueTasks++;
+                if (recoveryPlan.trim().length === 0) overdueNoRecovery++;
+                delayedRows.push({
+                  title: row.title,
+                  instance,
+                  delay_days: delayDays(deadline),
+                  recovery_plan: recoveryPlan,
+                  recovery_status: recoveryPlan.trim().length === 0
+                    ? "delay_no_plan"
+                    : "has_recovery_plan",
+                });
+              }
+            }
+
+            delayedRows.sort((a, b) =>
+              Number(b.delay_days ?? 0) - Number(a.delay_days ?? 0)
+            );
+            fallbackSnapshot = {
+              overview: {
+                total_tasks: rows.length,
+                done_tasks: doneTasks,
+                in_progress_tasks: inProgressTasks,
+                pending_tasks: pendingTasks,
+                blocked_tasks: blockedTasks,
+                overdue_tasks: overdueTasks,
+                overdue_no_recovery: overdueNoRecovery,
+                active_instances: activeInstances.size,
+                avg_in_progress_pct: inProgressProgressCount > 0
+                  ? Math.round(inProgressProgressTotal / inProgressProgressCount)
+                  : null,
+                by_instance: byInstance,
+                source: "wbs_tasks_fallback",
+              },
+              delayed: delayedRows.slice(0, 10),
+            };
+            return fallbackSnapshot;
+          };
+
+          let overviewSource = "wbs_project_overview_view";
+          let overviewError = "";
           const { data: overview, error: oErr } = await admin
             .from("wbs_project_overview_view").select("*").maybeSingle();
+          let overviewForReport: Record<string, unknown> | null =
+            (overview ?? null) as Record<string, unknown> | null;
           if (oErr) {
-            return json({
-              success: false,
-              report: "WBS overview view 未 deploy または読み込み失敗",
-              error: oErr.message,
-              snapshot: null,
-            }, 200);
+            overviewError = oErr.message;
+            const fallback = await buildFallbackSnapshot();
+            overviewForReport = fallback.overview;
+            overviewSource = "wbs_tasks_fallback";
           }
-          const { data: delayed } = await admin
+          let delayedSource = "wbs_delayed_tasks_view";
+          let delayedError = "";
+          const { data: delayedViewRows, error: delayedErr } = await admin
             .from("wbs_delayed_tasks_view")
             .select("title, instance, delay_days, recovery_plan, recovery_status")
             .order("delay_days", { ascending: false })
             .limit(10);
-          const { data: risks } = await admin
+          let delayed = (delayedViewRows ?? []) as Array<
+            Record<string, unknown>
+          >;
+          if (delayedErr) {
+            delayedError = delayedErr.message;
+            const fallback = await buildFallbackSnapshot();
+            delayed = fallback.delayed;
+            delayedSource = "wbs_tasks_fallback";
+          }
+          let riskSource = "wbs_milestone_risk_view";
+          let riskError = "";
+          const { data: riskViewRows, error: risksErr } = await admin
             .from("wbs_milestone_risk_view").select("*");
+          let risks = (riskViewRows ?? []) as Array<Record<string, unknown>>;
+          if (risksErr) {
+            riskError = risksErr.message;
+            risks = [];
+            riskSource = "unavailable";
+          }
           const prompt =
             `自分株式会社 WBS プロジェクト健全性 snapshot:\n\n` +
-            `総タスク: ${overview?.total_tasks} (完了 ${overview?.done_tasks} / ` +
-            `進行中 ${overview?.in_progress_tasks} / 未着手 ${overview?.pending_tasks} / ` +
-            `ブロック ${overview?.blocked_tasks})\n` +
-            `遅延: ${overview?.overdue_tasks} (うちリカバリー案未記入 ${overview?.overdue_no_recovery})\n` +
-            `担当 instance 数: ${overview?.active_instances}\n` +
-            `進行中タスクの平均進捗: ${overview?.avg_in_progress_pct}%\n` +
-            `担当別: ${JSON.stringify(overview?.by_instance ?? {})}\n\n` +
+            `データソース: overview=${overviewSource}, delayed=${delayedSource}, risk=${riskSource}\n` +
+            `総タスク: ${overviewForReport?.total_tasks} (完了 ${overviewForReport?.done_tasks} / ` +
+            `進行中 ${overviewForReport?.in_progress_tasks} / 未着手 ${overviewForReport?.pending_tasks} / ` +
+            `ブロック ${overviewForReport?.blocked_tasks})\n` +
+            `遅延: ${overviewForReport?.overdue_tasks} (うちリカバリー案未記入 ${overviewForReport?.overdue_no_recovery})\n` +
+            `担当 instance 数: ${overviewForReport?.active_instances}\n` +
+            `進行中タスクの平均進捗: ${overviewForReport?.avg_in_progress_pct}%\n` +
+            `担当別: ${JSON.stringify(overviewForReport?.by_instance ?? {})}\n\n` +
             `遅延 TOP10:\n${(delayed ?? []).map((t: Record<string, unknown>, i: number) =>
               `${i + 1}. [${t.instance}] ${t.title} - ${t.delay_days}日遅延 - ${t.recovery_status}`).join("\n")}\n\n` +
             `マイルストーン risk:\n${(risks ?? []).map((m: Record<string, unknown>) =>
@@ -3592,14 +3748,42 @@ serve(async (req) => {
               report: aiData.success === true
                 ? String(aiData.text ?? "")
                 : "AI レポート取得失敗 (Groq 未設定の可能性)",
-              snapshot: { overview, delayed, risks },
+              snapshot: {
+                overview: overviewForReport,
+                delayed,
+                risks,
+                sources: {
+                  overview: overviewSource,
+                  delayed: delayedSource,
+                  risks: riskSource,
+                },
+                errors: {
+                  overview: overviewError,
+                  delayed: delayedError,
+                  risks: riskError,
+                },
+              },
             });
           } catch (e) {
             return json({
               success: false,
               report: "AI レポート生成エラー",
               error: String(e),
-              snapshot: { overview, delayed, risks },
+              snapshot: {
+                overview: overviewForReport,
+                delayed,
+                risks,
+                sources: {
+                  overview: overviewSource,
+                  delayed: delayedSource,
+                  risks: riskSource,
+                },
+                errors: {
+                  overview: overviewError,
+                  delayed: delayedError,
+                  risks: riskError,
+                },
+              },
             }, 200);
           }
         }

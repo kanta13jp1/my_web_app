@@ -1,5 +1,12 @@
 # Pull Request
 
+## Minimal E2E Gate
+
+- [ ] Implementation-detail independent: the E2E plan checks user-visible input/output, not private internals.
+- [ ] Minimal scope: about 3 cases only (happy path, error path, recovery or empty state).
+- [ ] E2E included: Flutter `integration_test/` or Playwright `test/e2e/`.
+- [ ] Exception reason, if no E2E file is included: <!-- reason + manual verification steps -->
+
 ## 📝 変更内容
 <!-- このPRで実施した変更内容を簡潔に説明してください -->
 
