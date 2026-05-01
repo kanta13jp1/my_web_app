@@ -6,6 +6,7 @@ on:
       - '.github/workflows/mobile-release-build.yml'
       - 'android/**'
       - 'ios/**'
+      - 'lib/main_mobile.dart'
       - 'scripts/check_mobile_release_readiness.py'
       - 'docs/MOBILE_SIMULTANEOUS_RELEASE.md'
   workflow_dispatch:
@@ -52,6 +53,7 @@ concurrency:
 
 env:
   FLUTTER_VERSION: '3.38.x'
+  MOBILE_TARGET: 'lib/main_mobile.dart'
 
 jobs:
   metadata-check:
@@ -140,6 +142,7 @@ jobs:
       - name: Build Android App Bundle
         run: >
           flutter build appbundle --release --no-tree-shake-icons
+          --target "$MOBILE_TARGET"
           --build-name "$BUILD_NAME"
           --build-number "$BUILD_NUMBER"
 
@@ -201,6 +204,7 @@ jobs:
       - name: Build iOS simulator app
         run: >
           flutter build ios --simulator --debug
+          --target "$MOBILE_TARGET"
           --build-name "$BUILD_NAME"
           --build-number "$BUILD_NUMBER"
 

@@ -17,6 +17,7 @@ or signing automation.
 | Android applicationId / namespace | `jp.kanta13.jibun` |
 | iOS bundle identifier | `jp.kanta13.jibun` |
 | Flutter build workflow | `.github/workflows/mobile-release-build.yml` |
+| Native CI entrypoint | `lib/main_mobile.dart` |
 | Metadata gate | `python scripts/check_mobile_release_readiness.py` |
 
 Do not upload to either store until the bundle identifiers are confirmed as the
@@ -56,6 +57,12 @@ Artifacts:
 
 - Android AAB: `jibun-android-release.aab`
 - iOS simulator CI app bundle zip: `jibun-ios-runner-simulator-debug.zip`
+
+The first native build intentionally uses `lib/main_mobile.dart` instead of the
+full Flutter Web entrypoint. This keeps `package:web`, JS interop, OGP sharing,
+and browser-only dashboards out of the Android/iOS route graph while the full
+web app remains unchanged. Move features into the native shell only after their
+imports are conditional or platform-neutral.
 
 The Android artifact is Play-upload ready only when the Android signing secrets
 are configured. Without those secrets, the workflow deliberately falls back to a
@@ -107,6 +114,9 @@ iOS / TestFlight:
   web-only imports, route the code split to Codex #1. Codex #2 should keep the
   workflow green by adding a mobile-safe target only after Claude Code confirms
   the product surface for the first app release.
+- Web-only features parked for the first mobile artifact: browser OGP sharing,
+  desktop cleanup, rich web dashboards, audio/media JS interop tools, and pages
+  that directly import `package:web` or `dart:js_interop`.
 
 ## Automation Follow-up
 
