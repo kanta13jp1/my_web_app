@@ -1,56 +1,49 @@
 # Issue Fix Plan #926
 
 - Issue: [[追加要望] 12インスタンス並行開発のリアルタイム競合予測を追加する](https://github.com/kanta13jp1/my_web_app/issues/926)
-- Labels: enhancement,priority:high,automation,追加要望
+- Labels: `enhancement`, `priority:high`, `automation`, `追加要望`
 - Workflow: `.github/workflows/github-issue-fix.yml`
-- CI repair pair: `.github/workflows/ci-auto-fix.yml`
-- Run: https://github.com/kanta13jp1/my_web_app/actions/runs/25086042680
+- Repair PR: https://github.com/kanta13jp1/my_web_app/pull/994
+- Source memo: NotebookLM `Codex vs Claude Code: The Ultimate AI Development Synergy` (`bc58b50b-5fc4-4840-9a62-b397d6d3b65a`)
 
 ## Goal
 
-[追加要望] 12インスタンス並行開発のリアルタイム競合予測を追加する
+Add a lightweight conflict predictor that the 12-instance fleet can run before
+session start, handoff, `git add`, and Supabase migration creation.
 
-## Current Context
+## Implementation
 
-```text
-## 背景
-NotebookLM `jibun-master-brain` には、Claude Code 10インスタンス + Codex 2インスタンスの並行開発、固定worktree、WBS/GitHub同期、Deno linterによる巻き戻し対策、migration衝突対策などの運用知見が蓄積されています。今後さらに並行度が上がるほど、同一ファイル編集やmigration timestamp衝突の予防が重要になります。
+- Replace `scripts/instance_conflict_predictor.py` with a dependency-free Python
+  guardrail.
+- Detect recent file overlaps, open PR overlaps, dirty worktree overlaps, and
+  migration timestamp collisions/clusters.
+- Emit human-readable Markdown plus machine-readable JSON.
+- Add configurable notification routes for console, Slack, Notion, and WBS.
+- Add a GitHub Actions workflow that runs the predictor on relevant PRs and
+  manual dispatch.
+- Document the fleet operating procedure in
+  `docs/INSTANCE_CONFLICT_PREDICTOR.md`.
 
-## 要望
-各インスタンスの作業開始時・git add前・migration作成時に、他インスタンスの作業状況や直近PR/コミットを見て競合リスクを予測し、High/Medium/Lowで警告する仕組みを追加したいです。
+## Acceptance Mapping
 
-## 期待する挙動
-- session start / handoff / git add 前に、対象ファイルと他インスタンスの担当範囲を照合する
-- migration作成時に空いているtimestampを提案する
-- 競合リスクと理由をコンソール、Slack、Notion/WBSのいずれかへ通知する
-- NotebookLM Master Brainへ競合事例と回避策を蓄積できる
+- `.claude` hook or existing script has a conflict prediction step:
+  `scripts/instance_conflict_predictor.py`.
+- Risk, files, related PR/commit/worktree, and recommended action are rendered
+  in Markdown/JSON.
+- Migration timestamp collisions are detected and the next free timestamp is
+  suggested.
+- Slack/Notion/WBS enablement is configurable through `--notify`; Notion/WBS use
+  `--json-out` as the schema-safe handoff payload.
 
-## 受け入れ条件
-- `.claude` hook または既存スクリプトに競合予測ステップが追加される
-- 競合リスク、該当ファイル、関連PR/Issue、推奨アクションが表示される
-- migration timestamp の衝突候補を検出し、代替timestampを提案できる
-- 通知先（Slack/Notion/WBS）の有効/無効を設定できる
+## Validation
 
-## 優先度
-High
+- `python -m py_compile scripts/instance_conflict_predictor.py`
+- `python scripts/instance_conflict_predictor.py --help`
+- `python scripts/instance_conflict_predictor.py --files scripts/instance_conflict_predictor.py --notify console --json-out tmp/instance-conflict.json --output tmp/instance-conflict.md`
+- `python scripts/instance_conflict_predictor.py --migration-timestamp 20260429070000 --notify console --json-out tmp/migration-risk.json --output tmp/migration-risk.md`
 
-## NotebookLM根拠
-- Notebook: `jibun-master-brain` / `ea6cff25-574d-4b8b-ad72-ab47cf1ed01f`
-- 12インスタンス運用、WBS同期、Deno lint巻き戻し、migration競合対策の記録に基づく追加要望
+## Remaining Risk
 
-```
-
-## Autonomous Repair Loop
-
-1. Reproduce the smallest failing path for this issue.
-2. Apply the minimum safe fix on this branch.
-3. Let normal CI run on the draft PR.
-4. If CI fails on mechanical issues, `ci-auto-fix.yml` attempts `dart fix --apply` and `deno fmt`.
-5. Merge only after CI is green and the issue scope is satisfied.
-
-## Checklist
-
-- [ ] Reproduction is clear
-- [ ] Smallest safe fix is implemented
-- [ ] Analyze/tests/CI are checked
-- [ ] PR notes explain the change and the remaining risk
+The first version writes directly only to console/Slack. Notion and WBS writes
+are deliberately left as JSON handoffs so the table-specific writers can own
+schema changes safely.
