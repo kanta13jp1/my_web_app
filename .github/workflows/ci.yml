@@ -162,6 +162,10 @@ jobs:
           fi
         continue-on-error: false  # migration 構文エラーはCIブロック
 
+      - name: Check GitHub Actions Node runtime floor
+        run: python scripts/check_github_actions_node_runtime.py
+        continue-on-error: false
+
       - name: Check formatting
         # #1372: treat Dart formatting as a required static-analysis gate.
         run: dart format --output=none --set-exit-if-changed .
