@@ -29,6 +29,17 @@ Manual build:
 
 ```powershell
 gh workflow run mobile-release-build.yml `
+  -f platform=all `
+  -f build_name=1.0.0 `
+  -f build_number=1 `
+  -f publish_release=false
+```
+
+Android-only build while iOS native route split is pending:
+
+```powershell
+gh workflow run mobile-release-build.yml `
+  -f platform=android `
   -f build_name=1.0.0 `
   -f build_number=1 `
   -f publish_release=false

@@ -10,6 +10,15 @@ on:
       - 'docs/MOBILE_SIMULTANEOUS_RELEASE.md'
   workflow_dispatch:
     inputs:
+      platform:
+        description: 'Artifacts to build'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - android
+          - ios
       build_name:
         description: 'Flutter build name, for example 1.0.0'
         required: false
@@ -60,7 +69,9 @@ jobs:
   android-aab:
     name: Android AAB
     needs: metadata-check
-    if: github.event_name != 'pull_request'
+    if: >
+      github.event_name != 'pull_request' &&
+      (github.event_name == 'push' || inputs.platform == 'all' || inputs.platform == 'android')
     runs-on: ubuntu-latest
     timeout-minutes: 45
     env:
@@ -150,7 +161,9 @@ jobs:
   ios-no-codesign:
     name: iOS Simulator CI Artifact
     needs: metadata-check
-    if: github.event_name != 'pull_request'
+    if: >
+      github.event_name != 'pull_request' &&
+      (github.event_name == 'push' || inputs.platform == 'all' || inputs.platform == 'ios')
     runs-on: macos-15
     timeout-minutes: 60
 
@@ -213,7 +226,9 @@ jobs:
       - android-aab
       - ios-no-codesign
     runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/mobile-v') || inputs.publish_release == true
+    if: >
+      (startsWith(github.ref, 'refs/tags/mobile-v') || inputs.publish_release == true) &&
+      (github.event_name == 'push' || inputs.platform == 'all')
     timeout-minutes: 10
 
     steps:
