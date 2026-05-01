@@ -6,11 +6,11 @@ class WindowsAppInstallPage extends StatelessWidget {
   const WindowsAppInstallPage({super.key});
 
   static const latestMsixUrl =
-      'https://github.com/kanta13jp1/my_web_app/releases/latest/download/jibun-windows-companion.msix';
+      'https://github.com/kanta13jp1/my_web_app/releases/download/windows-companion-latest/jibun-windows-companion.msix';
   static const latestCertificateUrl =
-      'https://github.com/kanta13jp1/my_web_app/releases/latest/download/jibun-windows-companion.cer';
+      'https://github.com/kanta13jp1/my_web_app/releases/download/windows-companion-latest/jibun-windows-companion.cer';
   static const latestZipUrl =
-      'https://github.com/kanta13jp1/my_web_app/releases/latest/download/jibun-windows-companion.zip';
+      'https://github.com/kanta13jp1/my_web_app/releases/download/windows-companion-latest/jibun-windows-companion.zip';
   static const workflowUrl =
       'https://github.com/kanta13jp1/my_web_app/actions/workflows/windows-companion-build.yml';
   static const guideUrl =

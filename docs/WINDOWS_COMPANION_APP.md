@@ -70,19 +70,19 @@ Run the `Build Windows Companion App` workflow from GitHub Actions.
 The stable download URL used by the web app is:
 
 ```text
-https://github.com/kanta13jp1/my_web_app/releases/latest/download/jibun-windows-companion.zip
+https://github.com/kanta13jp1/my_web_app/releases/download/windows-companion-latest/jibun-windows-companion.zip
 ```
 
 The stable MSIX URL used by the web app is:
 
 ```text
-https://github.com/kanta13jp1/my_web_app/releases/latest/download/jibun-windows-companion.msix
+https://github.com/kanta13jp1/my_web_app/releases/download/windows-companion-latest/jibun-windows-companion.msix
 ```
 
 The public certificate URL for self-signed builds is:
 
 ```text
-https://github.com/kanta13jp1/my_web_app/releases/latest/download/jibun-windows-companion.cer
+https://github.com/kanta13jp1/my_web_app/releases/download/windows-companion-latest/jibun-windows-companion.cer
 ```
 
 ## Safety Model
