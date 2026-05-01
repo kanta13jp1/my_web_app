@@ -44,14 +44,14 @@ git push origin mobile-v1.0.0
 Artifacts:
 
 - Android AAB: `jibun-android-release.aab`
-- iOS no-codesign app bundle zip: `jibun-ios-runner-no-codesign.zip`
+- iOS simulator CI app bundle zip: `jibun-ios-runner-simulator-debug.zip`
 
 The Android artifact is Play-upload ready only when the Android signing secrets
 are configured. Without those secrets, the workflow deliberately falls back to a
-debug-signed release artifact for build verification only. The iOS artifact
-proves the Flutter/Xcode build but is not a TestFlight-ready IPA. A signed
-archive still needs Apple Developer team, provisioning profile, certificate, and
-App Store Connect API key.
+debug-signed release artifact for build verification only. The iOS artifact is
+a simulator debug build that proves the Flutter/Xcode build path without Apple
+Developer credentials. A TestFlight-ready IPA still needs Apple Developer team,
+provisioning profile, certificate, and App Store Connect API key.
 
 ## Required Secrets Before Store Distribution
 
@@ -77,7 +77,7 @@ iOS / TestFlight:
 - [ ] Confirm app display name, icon, splash, screenshots, and store category.
 - [ ] Run `python scripts/check_mobile_release_readiness.py`.
 - [ ] Run Android AAB workflow and keep the artifact.
-- [ ] Run iOS no-codesign workflow and keep the artifact.
+- [ ] Run iOS simulator CI workflow and keep the artifact.
 - [ ] Configure Android signing and Google Play internal testing upload.
 - [ ] Configure iOS signing and TestFlight upload.
 - [ ] Verify Supabase redirect URLs, Google login, deep links, and notification permissions.
@@ -88,9 +88,10 @@ iOS / TestFlight:
 
 - Local Windows validation cannot run Android builds until `ANDROID_HOME` points
   to an installed Android SDK.
-- This branch adds no-codesign iOS archive automation. TestFlight upload needs
-  Apple signing material and should be wired after the developer account values
-  are confirmed.
+- The iOS workflow currently creates a simulator debug artifact so CI can prove
+  the Flutter/Xcode build without Apple signing material. TestFlight upload
+  needs Apple signing material and should be wired after the developer account
+  values are confirmed.
 - If the full `lib/main.dart` mobile build fails in GitHub Actions because of
   web-only imports, route the code split to Codex #1. Codex #2 should keep the
   workflow green by adding a mobile-safe target only after Claude Code confirms
