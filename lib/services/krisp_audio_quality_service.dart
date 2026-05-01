@@ -65,6 +65,56 @@ class KrispAudioPlan {
   }
 }
 
+class KrispSdkGate {
+  const KrispSdkGate({
+    required this.id,
+    required this.label,
+    required this.owner,
+    required this.satisfied,
+    required this.nextAction,
+  });
+
+  final String id;
+  final String label;
+  final String owner;
+  final bool satisfied;
+  final String nextAction;
+}
+
+class KrispAiCoachPipelineStep {
+  const KrispAiCoachPipelineStep({
+    required this.id,
+    required this.label,
+    required this.input,
+    required this.output,
+  });
+
+  final String id;
+  final String label;
+  final String input;
+  final String output;
+}
+
+class KrispAiCoachHandoff {
+  const KrispAiCoachHandoff({
+    required this.issueNumber,
+    required this.gates,
+    required this.pipeline,
+    required this.acceptanceChecks,
+  });
+
+  final int issueNumber;
+  final List<KrispSdkGate> gates;
+  final List<KrispAiCoachPipelineStep> pipeline;
+  final List<String> acceptanceChecks;
+
+  Iterable<KrispSdkGate> get blockers => gates.where((gate) => !gate.satisfied);
+
+  bool get readyForSdkSpike => blockers.isEmpty;
+
+  int get satisfiedGateCount => gates.where((gate) => gate.satisfied).length;
+}
+
 class KrispAudioQualityService {
   const KrispAudioQualityService();
 
@@ -217,16 +267,112 @@ class KrispAudioQualityService {
     return plans.firstWhere((plan) => plan.scenario == scenario);
   }
 
+  KrispAiCoachHandoff buildAiCoachHandoff() {
+    return const KrispAiCoachHandoff(
+      issueNumber: 755,
+      gates: [
+        KrispSdkGate(
+          id: 'contract',
+          label: 'Krisp Browser SDK contract and API key',
+          owner: 'user',
+          satisfied: false,
+          nextAction:
+              'Confirm SDK access, commercial terms, and allowed deployment domain.',
+        ),
+        KrispSdkGate(
+          id: 'model-distribution',
+          label: 'Noise model distribution terms',
+          owner: 'user',
+          satisfied: false,
+          nextAction:
+              'Confirm whether WASM/model assets can be bundled, cached, or fetched at runtime.',
+        ),
+        KrispSdkGate(
+          id: 'audio-runtime',
+          label: 'Web Audio runtime contract',
+          owner: 'codex',
+          satisfied: true,
+          nextAction:
+              'Keep the integration behind a feature flag and wire it after getUserMedia.',
+        ),
+        KrispSdkGate(
+          id: 'privacy-consent',
+          label: 'Voice privacy and retention policy',
+          owner: 'codex',
+          satisfied: true,
+          nextAction:
+              'Require explicit mic consent and default to no raw-audio persistence.',
+        ),
+        KrispSdkGate(
+          id: 'ai-coach-interface',
+          label: 'AI coach stream boundary',
+          owner: 'codex',
+          satisfied: true,
+          nextAction:
+              'Send only filtered PCM or transcript text into the coach turn pipeline.',
+        ),
+      ],
+      pipeline: [
+        KrispAiCoachPipelineStep(
+          id: 'capture',
+          label: 'Browser mic capture',
+          input: 'User media permission',
+          output: 'MediaStream',
+        ),
+        KrispAiCoachPipelineStep(
+          id: 'filter',
+          label: 'Krisp noise filter',
+          input: 'MediaStream audio track',
+          output: 'Filtered audio track or AudioWorklet node',
+        ),
+        KrispAiCoachPipelineStep(
+          id: 'turn-taking',
+          label: 'VAD and turn boundary',
+          input: 'Filtered PCM frames',
+          output: 'Stable user utterance segment',
+        ),
+        KrispAiCoachPipelineStep(
+          id: 'stt',
+          label: 'Speech-to-text',
+          input: 'Utterance segment',
+          output: 'Transcript with confidence',
+        ),
+        KrispAiCoachPipelineStep(
+          id: 'coach',
+          label: 'AI coach response',
+          input: 'Transcript plus session context',
+          output: 'Coach reply and next action',
+        ),
+      ],
+      acceptanceChecks: [
+        'Fallback to raw microphone input when Krisp SDK is unavailable.',
+        'No raw audio is stored unless the user explicitly enables recording.',
+        'Device switching rebuilds the filter chain without page reload.',
+        'STT and coach latency budgets are measured separately from filtering.',
+      ],
+    );
+  }
+
   String buildShareText(KrispAudioPlan plan) {
     final kpiText = plan.kpis
         .map((kpi) => '${kpi.label}: ${kpi.current}${kpi.unit}')
         .join(' / ');
-    return [
+    final lines = [
       plan.title,
       'KGI: ${plan.kgi}',
       'CSF: ${plan.csf.take(2).join(' / ')}',
       'KPI: $kpiText',
       'Source: ${plan.sourceUrl}',
-    ].join('\n');
+    ];
+    if (plan.scenario == KrispAudioScenario.aiCoachSdk) {
+      final handoff = buildAiCoachHandoff();
+      lines.add(
+        'SDK gates: ${handoff.satisfiedGateCount}/${handoff.gates.length}',
+      );
+      lines.add(
+        'Blockers: ${handoff.blockers.map((gate) => gate.id).join(', ')}',
+      );
+    }
+    return lines.join('\n');
   }
 }
