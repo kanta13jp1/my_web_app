@@ -1,4 +1,4 @@
-﻿// ai-hub — AI・エージェント・AI大学統合EF
+// ai-hub — AI・エージェント・AI大学統合EF
 // Merges (16 EFs): daily-judgment, ai-search, ai-suggest-tags, ai-secretary,
 //   ai-summarizer, agent-hub, virtual-organization, my-ai-agent,
 //   generate-daily-challenges, trigger-analysis, analyze-reality,
@@ -7,11 +7,16 @@
 // NOTE: ai-assistant stays standalone (1079 lines, complex multi-provider logic)
 
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
+import { createClient, SupabaseClient } from "npm:@supabase/supabase-js@2";
 import {
-  createClient,
-  SupabaseClient,
-} from "npm:@supabase/supabase-js@2";
-import { AI_CHARACTER_PREAMBLE, prependCharacter } from "../_shared/ai_character_preamble.ts";
+  AI_CHARACTER_PREAMBLE,
+  prependCharacter,
+} from "../_shared/ai_character_preamble.ts";
+import {
+  type AgentToolApproval,
+  type AgentToolPolicyDecision,
+  evaluateAgentToolPolicy,
+} from "../_shared/agent_tool_policy.ts";
 import { selectEffort } from "../_shared/effort_router.ts";
 import {
   calculateApiCost,
@@ -572,6 +577,25 @@ async function callSingleProvider(
 
 function asString(value: unknown): string {
   return typeof value === "string" ? value.trim() : "";
+}
+
+function asRecord(value: unknown): Record<string, unknown> | null {
+  return typeof value === "object" && value !== null && !Array.isArray(value)
+    ? value as Record<string, unknown>
+    : null;
+}
+
+function asStringArray(value: unknown): string[] {
+  if (Array.isArray(value)) {
+    return value
+      .flatMap((item) => asStringArray(item))
+      .map((item) => item.trim())
+      .filter(Boolean);
+  }
+  if (typeof value === "string") {
+    return value.split(/[,\s]+/).map((item) => item.trim()).filter(Boolean);
+  }
+  return [];
 }
 
 function asNumber(value: unknown, fallback = 0): number {
@@ -1819,6 +1843,163 @@ async function addItem(
   return data;
 }
 
+const UUID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+type AgentToolGateResult = {
+  decision: AgentToolPolicyDecision;
+  actorRole: string | null;
+  actorAgentId: string | null;
+  requestedScopes: string[];
+  allowedScopes: string[] | null;
+  approval: AgentToolApproval | null;
+  sideEffects: string | null;
+  auditLogged: boolean;
+};
+
+function nullableUuid(value: unknown): string | null {
+  const candidate = asString(value);
+  return UUID_PATTERN.test(candidate) ? candidate : null;
+}
+
+function parseAgentToolApproval(
+  body: Record<string, unknown>,
+): AgentToolApproval | null {
+  const approval = asRecord(body.approval);
+  const decision = asString(
+    approval?.decision ?? body.approval_decision ?? body.approvalDecision,
+  ).toLowerCase();
+  if (!["approved", "pending", "rejected"].includes(decision)) return null;
+  return {
+    decision: decision as AgentToolApproval["decision"],
+    approvedBy: asString(
+      approval?.approved_by ?? approval?.approvedBy ?? body.approved_by ??
+        body.approvedBy,
+    ) || null,
+    approvedAt: asString(
+      approval?.approved_at ?? approval?.approvedAt ?? body.approved_at ??
+        body.approvedAt,
+    ) || null,
+  };
+}
+
+function normalizeActorRole(value: unknown): string | null {
+  const raw = asString(value).toLowerCase();
+  if (!raw) return null;
+  if (raw === "ceo" || raw.includes("chief executive")) return "ceo";
+  if (raw === "cfo" || raw.includes("financial")) return "cfo";
+  if (raw === "cmo" || raw.includes("marketing")) return "cmo";
+  if (raw === "cho" || raw.includes("health")) return "cho";
+  if (raw === "chro" || raw.includes("people") || raw.includes("hr")) {
+    return "chro";
+  }
+  if (raw.includes("legal")) return "legal";
+  return raw;
+}
+
+async function loadAgentRole(
+  admin: SupabaseClient,
+  userId: string,
+  actorAgentId: string | null,
+): Promise<string | null> {
+  if (!actorAgentId) return null;
+  const { data, error } = await admin
+    .from("agents")
+    .select("slug,role_title,department")
+    .eq("id", actorAgentId)
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (error || !data) return null;
+  return normalizeActorRole(data.slug) ?? normalizeActorRole(data.role_title) ??
+    normalizeActorRole(data.department);
+}
+
+function publicPolicyDecision(decision: AgentToolPolicyDecision) {
+  return {
+    allowed: decision.allowed,
+    requires_approval: decision.requiresApproval,
+    missing_scopes: decision.missingScopes,
+    high_risk_scopes: decision.highRiskScopes,
+    blocked_reason: decision.blockedReason,
+  };
+}
+
+async function logAgentToolPolicyDecision(
+  admin: SupabaseClient,
+  userId: string,
+  input: AgentToolGateResult,
+): Promise<boolean> {
+  const payload = {
+    ...input.decision.auditPayload,
+    side_effects: input.sideEffects,
+    policy_source: "ai-hub:agent.tool_policy",
+  };
+  const { error } = await admin.from("agent_tool_execution_logs").insert({
+    user_id: userId,
+    actor_agent_id: input.actorAgentId,
+    actor_role: input.actorRole,
+    tool_name: String(input.decision.auditPayload.tool_name ?? "unknown"),
+    allowed: input.decision.allowed,
+    blocked_reason: input.decision.blockedReason,
+    requested_scopes: input.requestedScopes,
+    allowed_scopes: input.allowedScopes,
+    high_risk_scopes: input.decision.highRiskScopes,
+    requires_approval: input.decision.requiresApproval,
+    approval_decision: input.approval?.decision ?? null,
+    approved_by: input.approval?.approvedBy ?? null,
+    approved_at: input.approval?.approvedAt ?? null,
+    side_effects: input.sideEffects,
+    payload,
+  });
+  if (!error) return true;
+  console.warn("agent.tool_policy audit insert failed", error.message);
+  return false;
+}
+
+async function evaluateAgentToolGate(
+  admin: SupabaseClient,
+  userId: string,
+  body: Record<string, unknown>,
+): Promise<AgentToolGateResult> {
+  const actorAgentId = nullableUuid(
+    body.actor_agent_id ?? body.actorAgentId ?? body.agent_id ?? body.agentId,
+  );
+  const actorRole = normalizeActorRole(body.actor_role ?? body.actorRole) ??
+    await loadAgentRole(admin, userId, actorAgentId);
+  const requestedScopes = asStringArray(
+    body.requested_scopes ?? body.requestedScopes ?? body.scopes,
+  );
+  const allowedScopesRaw = body.allowed_scopes ?? body.allowedScopes;
+  const allowedScopes =
+    allowedScopesRaw === undefined || allowedScopesRaw === null
+      ? null
+      : asStringArray(allowedScopesRaw);
+  const approval = parseAgentToolApproval(body);
+  const sideEffects = asString(body.side_effects ?? body.sideEffects) || null;
+  const toolName =
+    asString(body.tool_name ?? body.toolName ?? body.target_tool) ||
+    "agent.run";
+  const decision = evaluateAgentToolPolicy({
+    actorRole,
+    toolName,
+    requestedScopes,
+    allowedScopes,
+    approval,
+  });
+  const result: AgentToolGateResult = {
+    decision,
+    actorRole,
+    actorAgentId,
+    requestedScopes,
+    allowedScopes,
+    approval,
+    sideEffects,
+    auditLogged: false,
+  };
+  result.auditLogged = await logAgentToolPolicyDecision(admin, userId, result);
+  return result;
+}
+
 const AI_UNIVERSITY_RLHF_SOURCE = "ai_university_rlhf_signal";
 const DAILY_JUDGMENT_QUALITY_SOURCE = "daily_judgment_quality_evaluation";
 
@@ -2550,6 +2731,7 @@ serve(async (req: Request) => {
       "agent.list",
       "agent.create",
       "agent.run",
+      "agent.tool_policy.evaluate",
       "org.get",
       "my_agent.chat",
       "my_agent.history",
@@ -2814,11 +2996,55 @@ serve(async (req: Request) => {
         return json({ success: true, agent: item });
       }
 
+      case "agent.tool_policy.evaluate": {
+        const gate = await evaluateAgentToolGate(admin, userId!, body);
+        return json({
+          success: gate.decision.allowed,
+          decision: publicPolicyDecision(gate.decision),
+          actor_role: gate.actorRole,
+          actor_agent_id: gate.actorAgentId,
+          requested_scopes: gate.requestedScopes,
+          allowed_scopes: gate.allowedScopes,
+          approval: gate.approval,
+          side_effects: gate.sideEffects,
+          audit_logged: gate.auditLogged,
+        }, gate.decision.allowed ? 200 : 403);
+      }
+
       case "agent.run": {
+        const shouldEvaluateToolPolicy = body.tool_name !== undefined ||
+          body.toolName !== undefined ||
+          body.requested_scopes !== undefined ||
+          body.requestedScopes !== undefined ||
+          body.scopes !== undefined;
+        const gate = shouldEvaluateToolPolicy
+          ? await evaluateAgentToolGate(admin, userId!, body)
+          : null;
+        if (gate && !gate.decision.allowed) {
+          return json({
+            success: false,
+            error: "agent_tool_policy_denied",
+            decision: publicPolicyDecision(gate.decision),
+            actor_role: gate.actorRole,
+            audit_logged: gate.auditLogged,
+          }, 403);
+        }
         const item = await addItem(admin, "agent_run_log", userId!, {
           agent_id: body.agent_id,
           task: body.task,
           status: "queued",
+          tool_policy: gate
+            ? {
+              decision: publicPolicyDecision(gate.decision),
+              actor_role: gate.actorRole,
+              actor_agent_id: gate.actorAgentId,
+              requested_scopes: gate.requestedScopes,
+              allowed_scopes: gate.allowedScopes,
+              approval: gate.approval,
+              side_effects: gate.sideEffects,
+              audit_logged: gate.auditLogged,
+            }
+            : null,
         });
         return json({ success: true, run: item });
       }
