@@ -25353,3 +25353,12 @@ a9d7b1517 on main
 
 ### Philosophy Alignment
 #5 商品=ユーザー価値 (= CI自動修復が確実に動作し開発者の手間削減) / #6 資本=時間 (= format fix の自動コミットで手動修正ゼロ化)
+
+## PS#6 S154-S156 (2026-05-02)
+- S154: prevPopularityBounceBonus (前走人気リバウンド +1%)
+- S155: weightChangeCourseSuitBonus (体重増減コース適合 ±1%)
+- S156: prev3AvgFinishBonus (前3走平均着順安定 ±1%)
+- confidence formula: 69 → 72 terms
+
+### Philosophy Alignment
+#5 商品=ユーザー価値 (= 予測精度向上で競馬ユーザーの的中率改善) / #6 資本=時間 (= 1セッション3term追加の高速開発サイクル維持)
