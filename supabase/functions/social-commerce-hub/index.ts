@@ -64,6 +64,64 @@ async function deleteItem(admin: SupabaseClient, source: string, userId: string,
   if (error) throw new Error(error.message);
 }
 
+const DISCOUNT_APPROVAL_SOURCE = "discount_approval";
+const DEFAULT_DISCOUNT_APPROVAL_THRESHOLD_PCT = 20;
+const DEFAULT_DISCOUNT_APPROVAL_AMOUNT = 5000;
+const DISCOUNT_APPROVER_ROLES = new Set(["admin", "ceo", "cfo", "legal", "manager", "owner", "system"]);
+
+function asNumber(value: unknown, fallback = 0): number {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+function normalizeRole(value: unknown): string {
+  return String(value ?? "").trim().toLowerCase();
+}
+
+function readAuditEvents(metadata: Record<string, unknown>): Array<Record<string, unknown>> {
+  return Array.isArray(metadata.audit_events)
+    ? metadata.audit_events.filter((event): event is Record<string, unknown> =>
+      event !== null && typeof event === "object" && !Array.isArray(event)
+    )
+    : [];
+}
+
+function evaluateDiscountHold(body: Record<string, unknown>) {
+  const thresholdPct = asNumber(body.approval_threshold_pct, DEFAULT_DISCOUNT_APPROVAL_THRESHOLD_PCT);
+  const amountThreshold = asNumber(body.approval_amount_threshold, DEFAULT_DISCOUNT_APPROVAL_AMOUNT);
+  const originalAmount = asNumber(body.original_amount ?? body.amount, 0);
+  const finalAmount = asNumber(body.final_amount, originalAmount);
+  const explicitDiscountAmount = asNumber(body.discount_amount, NaN);
+  const discountAmount = Number.isFinite(explicitDiscountAmount)
+    ? Math.max(0, explicitDiscountAmount)
+    : Math.max(0, originalAmount - finalAmount);
+  const explicitPct = asNumber(body.discount_pct, NaN);
+  const discountPct = Number.isFinite(explicitPct)
+    ? Math.max(0, explicitPct)
+    : originalAmount > 0
+    ? Math.round((discountAmount / originalAmount) * 10000) / 100
+    : 0;
+  const freeOffer = body.free_offer === true || discountPct >= 100 ||
+    (originalAmount > 0 && finalAmount <= 0);
+
+  const reasons: string[] = [];
+  if (freeOffer) reasons.push("free_offer");
+  if (discountPct >= thresholdPct) reasons.push("discount_pct_threshold");
+  if (discountAmount >= amountThreshold) reasons.push("discount_amount_threshold");
+
+  return {
+    approvalRequired: reasons.length > 0,
+    amountThreshold,
+    discountAmount,
+    discountPct,
+    freeOffer,
+    originalAmount,
+    finalAmount,
+    reasons,
+    thresholdPct,
+  };
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
@@ -246,6 +304,135 @@ serve(async (req) => {
           redeemed_at: new Date().toISOString(),
         });
         return json({ success: true, redeemed: item });
+      }
+
+      // ── Discount Approval Workflow ───────────────────────────────────────────
+      case "discount_approval.request": {
+        const now = new Date().toISOString();
+        const gate = evaluateDiscountHold(body);
+        const status = gate.approvalRequired ? "pending" : "not_required";
+        const transactionStatus = gate.approvalRequired ? "held_for_approval" : "discount_clear";
+        const item = await addItem(admin, DISCOUNT_APPROVAL_SOURCE, userId, {
+          transaction_id: body.transaction_id ?? body.order_id ?? null,
+          customer_id: body.customer_id ?? null,
+          customer_claim: body.customer_claim ?? null,
+          channel: body.channel ?? "unknown",
+          requested_by_actor: body.requested_by_actor ?? body.actor_role ?? "system",
+          reason: body.reason ?? "",
+          currency: body.currency ?? "JPY",
+          original_amount: gate.originalAmount,
+          final_amount: gate.finalAmount,
+          discount_amount: gate.discountAmount,
+          discount_pct: gate.discountPct,
+          free_offer: gate.freeOffer,
+          approval_threshold_pct: gate.thresholdPct,
+          approval_amount_threshold: gate.amountThreshold,
+          approval_required: gate.approvalRequired,
+          approval_reasons: gate.reasons,
+          status,
+          transaction_status: transactionStatus,
+          user_message: gate.approvalRequired
+            ? "割引適用は管理者承認待ちです。承認後に処理を再開します。"
+            : "この割引は承認不要の範囲です。",
+          audit_events: [{
+            event: "requested",
+            actor_id: userId,
+            at: now,
+            approval_required: gate.approvalRequired,
+            reasons: gate.reasons,
+          }],
+        });
+        return json({
+          success: true,
+          approval_required: gate.approvalRequired,
+          status,
+          transaction_status: transactionStatus,
+          request: item,
+        });
+      }
+      case "discount_approval.list": {
+        const approvals = await listItems(admin, DISCOUNT_APPROVAL_SOURCE, userId, 100);
+        const status = String(body.status ?? "");
+        return json({
+          success: true,
+          approvals: status
+            ? approvals.filter((approval: Record<string, unknown>) =>
+              String((approval.metadata as Record<string, unknown>)?.status ?? "") === status
+            )
+            : approvals,
+        });
+      }
+      case "discount_approval.decide": {
+        const id = String(body.id ?? "");
+        const decision = String(body.decision ?? "").trim().toLowerCase();
+        if (!id) return json({ success: false, error: "missing_discount_approval_id" }, 400);
+        if (decision !== "approved" && decision !== "rejected") {
+          return json({ success: false, error: "invalid_discount_approval_decision" }, 400);
+        }
+
+        const approverRole = normalizeRole(body.approver_role ?? body.actor_role);
+        if (!DISCOUNT_APPROVER_ROLES.has(approverRole)) {
+          return json({
+            success: false,
+            error: "discount_approver_role_required",
+            message: "割引承認には admin / ceo / cfo / legal / manager / owner / system のいずれかの権限が必要です。",
+          }, 403);
+        }
+
+        const { data: current, error: currentErr } = await admin.from("hub_data")
+          .select("id, metadata, created_at")
+          .eq("id", id)
+          .eq("source", DISCOUNT_APPROVAL_SOURCE)
+          .filter("metadata->>user_id", "eq", userId)
+          .maybeSingle();
+        if (currentErr) throw new Error(currentErr.message);
+        if (!current) return json({ success: false, error: "discount_approval_not_found" }, 404);
+
+        const now = new Date().toISOString();
+        const metadata = (current.metadata ?? {}) as Record<string, unknown>;
+        const auditEvents = readAuditEvents(metadata);
+        const nextMetadata = {
+          ...metadata,
+          status: decision,
+          transaction_status: decision === "approved" ? "discount_approved" : "discount_rejected",
+          decision,
+          decision_comment: body.comment ?? "",
+          decided_by: userId,
+          decided_by_role: approverRole,
+          decided_at: now,
+          audit_events: [
+            ...auditEvents,
+            {
+              event: decision,
+              actor_id: userId,
+              approver_role: approverRole,
+              comment: body.comment ?? "",
+              at: now,
+            },
+          ],
+        };
+        const { data: updated, error: updateErr } = await admin.from("hub_data")
+          .update({ metadata: nextMetadata })
+          .eq("id", id)
+          .eq("source", DISCOUNT_APPROVAL_SOURCE)
+          .select("id, metadata, created_at")
+          .single();
+        if (updateErr) throw new Error(updateErr.message);
+        return json({ success: true, approval: updated });
+      }
+      case "discount_approval.audit": {
+        const id = String(body.id ?? "");
+        if (!id) return json({ success: false, error: "missing_discount_approval_id" }, 400);
+        const { data, error } = await admin.from("hub_data")
+          .select("id, metadata, created_at")
+          .eq("id", id)
+          .eq("source", DISCOUNT_APPROVAL_SOURCE)
+          .filter("metadata->>user_id", "eq", userId)
+          .maybeSingle();
+        if (error) throw new Error(error.message);
+        if (!data) return json({ success: false, error: "discount_approval_not_found" }, 404);
+        const metadata = (data.metadata ?? {}) as Record<string, unknown>;
+        return json({ success: true, audit_events: readAuditEvents(metadata), approval: data });
       }
 
       // ── Digital Wallet ────────────────────────────────────────────────────────
