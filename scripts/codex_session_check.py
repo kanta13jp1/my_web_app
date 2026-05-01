@@ -12,6 +12,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import subprocess
 import sys
 from dataclasses import dataclass
@@ -35,6 +36,21 @@ def run_git(args: list[str], cwd: Path) -> CommandResult:
         stderr=subprocess.PIPE,
         check=False,
     )
+    return CommandResult(proc.returncode, proc.stdout.strip(), proc.stderr.strip())
+
+
+def run_command(args: list[str], cwd: Path) -> CommandResult:
+    try:
+        proc = subprocess.run(
+            args,
+            cwd=str(cwd),
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+        )
+    except FileNotFoundError as exc:
+        return CommandResult(127, "", str(exc))
     return CommandResult(proc.returncode, proc.stdout.strip(), proc.stderr.strip())
 
 
@@ -95,6 +111,20 @@ def env_snapshot() -> dict[str, str]:
     return {key: os.environ.get(key, "not-exposed") for key in keys}
 
 
+def codex_cli_version(root: Path) -> str:
+    result = run_command(["codex", "--version"], root)
+    if result.code != 0:
+        return "unavailable"
+    return result.stdout or result.stderr or "unknown"
+
+
+def parse_semver(text: str) -> tuple[int, int, int] | None:
+    match = re.search(r"(\d+)\.(\d+)\.(\d+)", text)
+    if not match:
+        return None
+    return int(match.group(1)), int(match.group(2)), int(match.group(3))
+
+
 def analyze(cwd: Path) -> dict[str, Any]:
     root = git_root(cwd)
     branch = git_text(["branch", "--show-current"], root, default="detached")
@@ -106,6 +136,7 @@ def analyze(cwd: Path) -> dict[str, Any]:
     dirty_lines = [line for line in dirty.splitlines() if line.strip()]
     remote_url = git_text(["remote", "get-url", "origin"], root, default="unknown")
     worktrees = worktree_entries(root)
+    codex_version = codex_cli_version(root)
 
     warnings: list[str] = []
     if dirty_lines:
@@ -123,6 +154,13 @@ def analyze(cwd: Path) -> dict[str, Any]:
         warnings.append("current branch is a protected base branch")
     if origin_main == "unknown":
         warnings.append("origin/main is unavailable; run git fetch origin main")
+    parsed_codex_version = parse_semver(codex_version)
+    if codex_version == "unavailable":
+        warnings.append("Codex CLI is unavailable on PATH")
+    elif parsed_codex_version and parsed_codex_version < (0, 128, 0):
+        warnings.append(
+            "Codex CLI is older than 0.128.0; persisted `/goal` workflows are not ready"
+        )
 
     return {
         "root": str(root),
@@ -135,6 +173,7 @@ def analyze(cwd: Path) -> dict[str, Any]:
         "dirty_count": len(dirty_lines),
         "dirty_paths": dirty_lines[:20],
         "remote": remote_url,
+        "codex_cli_version": codex_version,
         "worktrees": worktrees,
         "environment": env_snapshot(),
         "warnings": warnings,
@@ -153,6 +192,7 @@ def render_markdown(report: dict[str, Any]) -> str:
         f"- Ahead/behind: `{report['ahead'] if report['ahead'] is not None else '?'} / {report['behind'] if report['behind'] is not None else '?'}`",
         f"- Dirty paths: `{report['dirty_count']}`",
         f"- Remote: `{report['remote']}`",
+        f"- Codex CLI: `{report['codex_cli_version']}`",
         "",
         "## Permission / Sandbox Snapshot",
     ]
