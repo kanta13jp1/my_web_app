@@ -38,6 +38,17 @@ Before an Edge Function executes an external tool, it should call
 `evaluateAgentToolPolicy()`. If `blockedReason` is present, the function should
 skip execution and persist `auditPayload` to the audit log.
 
+`ai-hub` now exposes the server-side gate as
+`agent.tool_policy.evaluate`. Authenticated callers pass `actor_agent_id` or
+`actor_role`, `tool_name`, `requested_scopes`, optional `allowed_scopes`,
+optional `side_effects`, and optional `approval` metadata. The action writes a
+row to `agent_tool_execution_logs` and returns HTTP 403 when a scope is missing
+or a high-risk scope lacks CEO approval.
+
+`agent.run` also uses the same gate when a request includes `tool_name` or
+`requested_scopes`, so execution intents fail closed before they are queued.
+Existing simple `agent.run` calls without tool metadata keep their old behavior.
+
 `mcp_auth_guard.logMcpInvocation()` now writes MCP calls to `mcp_audit_log`
 through the Supabase service role when runtime secrets are present, and falls
 back to structured console logging in local/test environments. This gives the
