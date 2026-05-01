@@ -3,10 +3,15 @@
 UPDATE wbs_tasks
 SET status = 'in_progress',
     progress = 50,
+    recovery_plan = COALESCE(
+      NULLIF(trim(recovery_plan), ''),
+      'Phase 2 weekly cron is completed by 20260501150000; PS#2 dispatch follow-up remains as a cross-instance handoff.'
+    ),
+    recovery_planned_at = COALESCE(recovery_planned_at, NOW()),
     description = COALESCE(description, '') || E'\n\n[Win版#132 part 112] scripts/build_in_public_extract.py 実装 (~150 行 / ROADMAP-LOG + memory/log.md から直近 N 日 extract / dev.to draft + X 短文 + summary 生成 / INDIE #7 dogfood). 動作確認済 (= 162 ROADMAP + 57 log entries 処理). 残: weekly cron 化 + PS#2 dispatch 連携.'
 WHERE github_issue_number = 1125;
 
-INSERT INTO wbs_tasks (title, category, instance, owner_instance, priority, status, progress, description)
+INSERT INTO wbs_tasks (title, category, instance, owner_instance, priority, status, progress, recovery_plan, recovery_planned_at, description)
 SELECT
   '[INDIE_DEV_VELOCITY #7 dogfood] build_in_public_extract.py + future weekly cron',
   'CX',
@@ -15,6 +20,8 @@ SELECT
   'medium',
   'in_progress',
   50,
+  'Phase 2 weekly cron is completed by 20260501150000; PS#2 dispatch follow-up remains as a cross-instance handoff.',
+  NOW(),
   'Win版#132 part 112 で実装. WBS Issue #1125 Phase 1. ROADMAP-LOG + memory/log.md 直近 N 日を dev.to draft + X 短文 + summary に変換. 残: GHA workflow weekly cron + PS#2 T-1 dispatch routine 連携.'
 WHERE NOT EXISTS (
   SELECT 1 FROM wbs_tasks
