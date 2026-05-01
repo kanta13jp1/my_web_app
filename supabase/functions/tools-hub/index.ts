@@ -3576,32 +3576,151 @@ serve(async (req) => {
           // Win版#131 part 23: defensive — view/RPC 失敗でも 200 返す
           // 1) overview view から health snapshot 取得
           // 2) ai-hub:provider.chat (groq) に prompt 投げる
+          const currentDate = new Date().toISOString().split("T")[0];
+          let fallbackSnapshot: {
+            overview: Record<string, unknown>;
+            delayed: Array<Record<string, unknown>>;
+          } | null = null;
+          const dateOnly = (value: unknown): string | null => {
+            if (typeof value !== "string" || value.length < 10) return null;
+            return value.slice(0, 10);
+          };
+          const delayDays = (deadline: string): number => {
+            const todayMs = Date.parse(`${currentDate}T00:00:00Z`);
+            const deadlineMs = Date.parse(`${deadline}T00:00:00Z`);
+            if (Number.isNaN(todayMs) || Number.isNaN(deadlineMs)) return 0;
+            return Math.max(0, Math.ceil((todayMs - deadlineMs) / 86400000));
+          };
+          const buildFallbackSnapshot = async () => {
+            if (fallbackSnapshot !== null) return fallbackSnapshot;
+            const { data: tasks, error: taskErr } = await admin
+              .from("wbs_tasks")
+              .select("title,status,progress,instance,end_date,recovery_plan");
+            if (taskErr) throw new Error(taskErr.message);
+
+            const rows = (tasks ?? []) as Array<Record<string, unknown>>;
+            const byInstance: Record<string, number> = {};
+            const activeInstances = new Set<string>();
+            let doneTasks = 0;
+            let inProgressTasks = 0;
+            let pendingTasks = 0;
+            let blockedTasks = 0;
+            let overdueTasks = 0;
+            let overdueNoRecovery = 0;
+            let inProgressProgressTotal = 0;
+            let inProgressProgressCount = 0;
+            const delayedRows: Array<Record<string, unknown>> = [];
+
+            for (const row of rows) {
+              const status = String(row.status ?? "pending");
+              const instance = String(row.instance ?? "unassigned");
+              byInstance[instance] = (byInstance[instance] ?? 0) + 1;
+              if (instance !== "all") activeInstances.add(instance);
+
+              if (status === "completed") doneTasks++;
+              if (status === "in_progress") {
+                inProgressTasks++;
+                const progress = Number(row.progress ?? 0);
+                if (!Number.isNaN(progress)) {
+                  inProgressProgressTotal += progress;
+                  inProgressProgressCount++;
+                }
+              }
+              if (status === "pending") pendingTasks++;
+              if (status === "blocked") blockedTasks++;
+
+              const deadline = dateOnly(row.end_date);
+              const recoveryPlan = String(row.recovery_plan ?? "");
+              const isOverdue = status !== "completed" &&
+                deadline !== null &&
+                deadline < currentDate;
+              if (isOverdue) {
+                overdueTasks++;
+                if (recoveryPlan.trim().length === 0) overdueNoRecovery++;
+                delayedRows.push({
+                  title: row.title,
+                  instance,
+                  delay_days: delayDays(deadline),
+                  recovery_plan: recoveryPlan,
+                  recovery_status: recoveryPlan.trim().length === 0
+                    ? "delay_no_plan"
+                    : "has_recovery_plan",
+                });
+              }
+            }
+
+            delayedRows.sort((a, b) =>
+              Number(b.delay_days ?? 0) - Number(a.delay_days ?? 0)
+            );
+            fallbackSnapshot = {
+              overview: {
+                total_tasks: rows.length,
+                done_tasks: doneTasks,
+                in_progress_tasks: inProgressTasks,
+                pending_tasks: pendingTasks,
+                blocked_tasks: blockedTasks,
+                overdue_tasks: overdueTasks,
+                overdue_no_recovery: overdueNoRecovery,
+                active_instances: activeInstances.size,
+                avg_in_progress_pct: inProgressProgressCount > 0
+                  ? Math.round(inProgressProgressTotal / inProgressProgressCount)
+                  : null,
+                by_instance: byInstance,
+                source: "wbs_tasks_fallback",
+              },
+              delayed: delayedRows.slice(0, 10),
+            };
+            return fallbackSnapshot;
+          };
+
+          let overviewSource = "wbs_project_overview_view";
+          let overviewError = "";
           const { data: overview, error: oErr } = await admin
             .from("wbs_project_overview_view").select("*").maybeSingle();
+          let overviewForReport: Record<string, unknown> | null =
+            (overview ?? null) as Record<string, unknown> | null;
           if (oErr) {
-            return json({
-              success: false,
-              report: "WBS overview view 未 deploy または読み込み失敗",
-              error: oErr.message,
-              snapshot: null,
-            }, 200);
+            overviewError = oErr.message;
+            const fallback = await buildFallbackSnapshot();
+            overviewForReport = fallback.overview;
+            overviewSource = "wbs_tasks_fallback";
           }
-          const { data: delayed } = await admin
+          let delayedSource = "wbs_delayed_tasks_view";
+          let delayedError = "";
+          const { data: delayedViewRows, error: delayedErr } = await admin
             .from("wbs_delayed_tasks_view")
             .select("title, instance, delay_days, recovery_plan, recovery_status")
             .order("delay_days", { ascending: false })
             .limit(10);
-          const { data: risks } = await admin
+          let delayed = (delayedViewRows ?? []) as Array<
+            Record<string, unknown>
+          >;
+          if (delayedErr) {
+            delayedError = delayedErr.message;
+            const fallback = await buildFallbackSnapshot();
+            delayed = fallback.delayed;
+            delayedSource = "wbs_tasks_fallback";
+          }
+          let riskSource = "wbs_milestone_risk_view";
+          let riskError = "";
+          const { data: riskViewRows, error: risksErr } = await admin
             .from("wbs_milestone_risk_view").select("*");
+          let risks = (riskViewRows ?? []) as Array<Record<string, unknown>>;
+          if (risksErr) {
+            riskError = risksErr.message;
+            risks = [];
+            riskSource = "unavailable";
+          }
           const prompt =
             `自分株式会社 WBS プロジェクト健全性 snapshot:\n\n` +
-            `総タスク: ${overview?.total_tasks} (完了 ${overview?.done_tasks} / ` +
-            `進行中 ${overview?.in_progress_tasks} / 未着手 ${overview?.pending_tasks} / ` +
-            `ブロック ${overview?.blocked_tasks})\n` +
-            `遅延: ${overview?.overdue_tasks} (うちリカバリー案未記入 ${overview?.overdue_no_recovery})\n` +
-            `担当 instance 数: ${overview?.active_instances}\n` +
-            `進行中タスクの平均進捗: ${overview?.avg_in_progress_pct}%\n` +
-            `担当別: ${JSON.stringify(overview?.by_instance ?? {})}\n\n` +
+            `データソース: overview=${overviewSource}, delayed=${delayedSource}, risk=${riskSource}\n` +
+            `総タスク: ${overviewForReport?.total_tasks} (完了 ${overviewForReport?.done_tasks} / ` +
+            `進行中 ${overviewForReport?.in_progress_tasks} / 未着手 ${overviewForReport?.pending_tasks} / ` +
+            `ブロック ${overviewForReport?.blocked_tasks})\n` +
+            `遅延: ${overviewForReport?.overdue_tasks} (うちリカバリー案未記入 ${overviewForReport?.overdue_no_recovery})\n` +
+            `担当 instance 数: ${overviewForReport?.active_instances}\n` +
+            `進行中タスクの平均進捗: ${overviewForReport?.avg_in_progress_pct}%\n` +
+            `担当別: ${JSON.stringify(overviewForReport?.by_instance ?? {})}\n\n` +
             `遅延 TOP10:\n${(delayed ?? []).map((t: Record<string, unknown>, i: number) =>
               `${i + 1}. [${t.instance}] ${t.title} - ${t.delay_days}日遅延 - ${t.recovery_status}`).join("\n")}\n\n` +
             `マイルストーン risk:\n${(risks ?? []).map((m: Record<string, unknown>) =>
@@ -3629,14 +3748,42 @@ serve(async (req) => {
               report: aiData.success === true
                 ? String(aiData.text ?? "")
                 : "AI レポート取得失敗 (Groq 未設定の可能性)",
-              snapshot: { overview, delayed, risks },
+              snapshot: {
+                overview: overviewForReport,
+                delayed,
+                risks,
+                sources: {
+                  overview: overviewSource,
+                  delayed: delayedSource,
+                  risks: riskSource,
+                },
+                errors: {
+                  overview: overviewError,
+                  delayed: delayedError,
+                  risks: riskError,
+                },
+              },
             });
           } catch (e) {
             return json({
               success: false,
               report: "AI レポート生成エラー",
               error: String(e),
-              snapshot: { overview, delayed, risks },
+              snapshot: {
+                overview: overviewForReport,
+                delayed,
+                risks,
+                sources: {
+                  overview: overviewSource,
+                  delayed: delayedSource,
+                  risks: riskSource,
+                },
+                errors: {
+                  overview: overviewError,
+                  delayed: delayedError,
+                  risks: riskError,
+                },
+              },
             }, 200);
           }
         }
