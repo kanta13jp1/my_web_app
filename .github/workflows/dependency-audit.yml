@@ -138,6 +138,20 @@ jobs:
           fi
           echo "📦 pubspec.yaml 未固定パッケージ: ${UNCONSTRAINED_COUNT}件 (${UNCONSTRAINED})"
 
+      - name: Check GitHub Actions Node runtime floor
+        id: gha_node_runtime
+        run: |
+          echo "" >> /tmp/audit_report.txt
+          echo "## GitHub Actions Node runtime floor" >> /tmp/audit_report.txt
+          if python scripts/check_github_actions_node_runtime.py | tee /tmp/gha-node-runtime.txt; then
+            echo "OK: Node.js 24 runner transition floor satisfied." >> /tmp/audit_report.txt
+            echo "status=ok" >> "$GITHUB_OUTPUT"
+          else
+            cat /tmp/gha-node-runtime.txt >> /tmp/audit_report.txt
+            echo "status=fail" >> "$GITHUB_OUTPUT"
+            exit 1
+          fi
+
       - name: Record to schedule_task_runs
         if: always()
         run: |
