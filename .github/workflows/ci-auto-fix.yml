@@ -122,8 +122,10 @@ jobs:
         if: steps.pr_info.outputs.has_pr == 'true'
         id: analyze_after
         run: |
+          set +e
           RESULT=$(flutter analyze --no-fatal-infos 2>&1)
           EXIT_CODE=$?
+          set -e
           echo "exit_code=$EXIT_CODE" >> $GITHUB_OUTPUT
           if [ "$EXIT_CODE" = "0" ]; then
             echo "analyze_clean=true" >> $GITHUB_OUTPUT
@@ -136,7 +138,7 @@ jobs:
 
       # ── Step 6: 修復をコミット ────────────────────────────────────────────
       - name: Step 6 - 修復をコミット & プッシュ
-        if: steps.pr_info.outputs.has_pr == 'true'
+        if: always() && steps.pr_info.outputs.has_pr == 'true'
         id: commit
         run: |
           TOTAL_CHANGED=$(git diff --name-only | wc -l | tr -d ' ')
@@ -159,7 +161,7 @@ jobs:
 
       # ── Step 7: PRにコメント ─────────────────────────────────────────────
       - name: Step 7 - PRにコメント投稿
-        if: steps.pr_info.outputs.has_pr == 'true'
+        if: always() && steps.pr_info.outputs.has_pr == 'true'
         uses: actions/github-script@v9
         with:
           script: |
