@@ -64593,6 +64593,323 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  // --- Performance testing tools (PS#4 S667) ---
+  'k6-grafana-load-testing': const _CompetitorInfo(
+    name: 'k6',
+    emoji: '⚡',
+    tagline:
+        'k6・Grafana製モダン負荷テスト・Go製高性能エンジン・JS/TS スクリプト・CI/CD統合・クラウド拡張・Prometheus連携・Grafana可視化・OSS＆商用で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'k6代替 負荷テスト ロードテスト パフォーマンステスト Grafana JMeter代替 Artillery代替',
+    accentColor: Color(0xFF7B4FFF),
+    painPoints: [
+      '無料(OSS)・負荷テスト特化・個人ライフ管理は別途必要',
+      'クラウド実行は有料(k6 Cloud)・大規模は追加コスト発生',
+      'エンジニア特化・AI個人アシスタントは別途必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'JS/TSスクリプト・高性能負荷テスト・Grafana可視化・CI統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'apache-jmeter-performance': const _CompetitorInfo(
+    name: 'Apache JMeter',
+    emoji: '🔧',
+    tagline:
+        'Apache JMeter・Java製オープンソース負荷テスト・HTTP/FTP/JDBC/SOAP・GUIテスト設計・分散テスト・プラグイン豊富・30年の実績・エンタープライズ標準で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'JMeter代替 負荷テスト パフォーマンステスト Apache Java 分散テスト k6代替',
+    accentColor: Color(0xFFD22128),
+    painPoints: [
+      '無料(OSS)・パフォーマンステスト特化・個人ライフ管理は別途必要',
+      'GUIが古い・大量VUはリソース消費大・モダンな代替に移行トレンド',
+      'Java必須・エンジニア特化・AI個人アシスタントは別途必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'HTTP/JDBC/SOAP負荷テスト・分散実行・豊富なプラグイン・30年実績',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'gatling-load-testing': const _CompetitorInfo(
+    name: 'Gatling',
+    emoji: '🎯',
+    tagline:
+        'Gatling・Scala/Kotlin製高性能負荷テスト・非同期Akka・HTML詳細レポート・DSL記述・リアルユーザー模擬・CI統合・エンタープライズ対応・OSSと商用で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Gatling代替 負荷テスト Scala Kotlin 非同期 JMeter代替 パフォーマンステスト',
+    accentColor: Color(0xFFFF5100),
+    painPoints: [
+      'OSS版無料・Scala/Kotlin学習コスト・個人ライフ管理は別途必要',
+      '商用機能は有料(Gatling Enterprise)・エンタープライズ向け',
+      'エンジニア特化・AI個人アシスタントは別途必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Scala/Kotlin DSL・高性能負荷テスト・詳細HTML レポート・非同期',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'locust-python-load-testing': const _CompetitorInfo(
+    name: 'Locust',
+    emoji: '🦗',
+    tagline:
+        'Locust・Python製オープンソース負荷テスト・Pythonコードでシナリオ記述・分散実行・Web UI・リアルタイム統計・Greenlet非同期・柔軟なカスタマイズで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Locust代替 負荷テスト Python 分散 JMeter代替 k6代替 パフォーマンステスト',
+    accentColor: Color(0xFF4CAF50),
+    painPoints: [
+      '無料(OSS)・負荷テスト特化・個人ライフ管理は別途必要',
+      'Python必須・大規模分散は別途インフラ構築が必要',
+      'エンジニア特化・AI個人アシスタントは別途必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Pythonシナリオ・分散負荷テスト・Web UI・リアルタイム統計',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'artillery-nodejs-performance': const _CompetitorInfo(
+    name: 'Artillery',
+    emoji: '🚀',
+    tagline:
+        'Artillery・Node.js製モダン負荷テスト・YAML/JS設定・HTTP/WebSocket/gRPC・シナリオテスト・Lambda/ECS実行・クラウドネイティブ・CI/CD統合で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Artillery代替 負荷テスト Node.js YAML WebSocket gRPC k6代替 クラウドネイティブ',
+    accentColor: Color(0xFFF7567C),
+    painPoints: [
+      'OSS版無料・クラウド実行は有料(Artillery Cloud)・個人ライフ管理は別途必要',
+      'Node.js/YAML設定・大規模テストはクラウドプラン必要',
+      'エンジニア特化・AI個人アシスタントは別途必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'YAML/JSシナリオ・HTTP/WS/gRPC・Lambda実行・クラウドネイティブ',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'blazemeter-cloud-load-testing': const _CompetitorInfo(
+    name: 'BlazeMeter',
+    emoji: '🔥',
+    tagline:
+        'BlazeMeter・Perforce傘下クラウド負荷テスト・JMeter/Gatling/Locust互換・大規模分散・CI/CD統合・詳細レポート・エンタープライズSLA・自動スケールで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'BlazeMeter代替 クラウド負荷テスト JMeter互換 大規模 分散 エンタープライズ パフォーマンス',
+    accentColor: Color(0xFFE55200),
+    painPoints: [
+      '商用サービス・無料枠あり大規模は有料・個人ライフ管理は別途必要',
+      'JMeter/Gatling変換が主目的・独自機能は限定的',
+      'エンジニア特化・AI個人アシスタントは別途必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'クラウド大規模負荷テスト・JMeter互換・自動スケール・詳細レポート',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'vegeta-go-http-load-testing': const _CompetitorInfo(
+    name: 'Vegeta',
+    emoji: '💥',
+    tagline:
+        'Vegeta・Go製HTTP負荷テストツール・固定レート攻撃・CLI＆ライブラリ・リアルタイムレポート・プロット生成・シンプル設計・OSS・高スループットで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Vegeta代替 HTTP負荷テスト Go CLI ベンチマーク wrk代替 hey代替 シンプル',
+    accentColor: Color(0xFF00C7B7),
+    painPoints: [
+      '無料(OSS)・HTTPベンチマーク特化・個人ライフ管理は別途必要',
+      'CLI専用・GUI なし・複雑なシナリオは苦手',
+      'エンジニア特化・AI個人アシスタントは別途必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Go製高速HTTP負荷テスト・固定レート・CLI・リアルタイムメトリクス',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'hey-http-load-generator': const _CompetitorInfo(
+    name: 'hey',
+    emoji: '👋',
+    tagline:
+        'hey・Go製シンプルHTTP負荷生成ツール・旧Boom・並列リクエスト・レイテンシ分布・パーセンタイル表示・単一バイナリ・軽量CLI・開発時クイックチェックで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'hey代替 HTTP負荷テスト Go CLI boom ベンチマーク wrk代替 シンプル軽量',
+    accentColor: Color(0xFF0078D7),
+    painPoints: [
+      '無料(OSS)・シンプルHTTPベンチ特化・個人ライフ管理は別途必要',
+      '機能が最小限・複雑シナリオ/分散テストは不可',
+      'エンジニア特化・AI個人アシスタントは別途必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'シンプルHTTPベンチ・単一バイナリ・パーセンタイルレポート・軽量',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: true,
+        weHave: true,
+      ),
+    ],
+  ),
+  'neoload-tricentis-enterprise': const _CompetitorInfo(
+    name: 'NeoLoad',
+    emoji: '🏎️',
+    tagline:
+        'NeoLoad・Tricentis製エンタープライズパフォーマンステスト・ノーコード設計・CI/CD統合・クラウド/オンプレ・AIアシスト・Dynatrace連携・SLA監視・大規模チーム向けで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'NeoLoad代替 エンタープライズ負荷テスト Tricentis ノーコード CI/CD AIパフォーマンス',
+    accentColor: Color(0xFFFFC107),
+    painPoints: [
+      '商用ツール・高コスト・大企業向け・個人ライフ管理は別途必要',
+      '個人/スタートアップには過剰スペック・ライセンス費用高',
+      'エンジニア/QA特化・AI個人アシスタントは別途必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ノーコード性能テスト・AIアシスト・クラウド/オンプレ・Dynatrace連携',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
@@ -64974,6 +65291,15 @@ class _ComparisonShellState extends State<_ComparisonShell> {
     'apple-fitness-plus': 'fitness',
     'spartan': 'wellness',
     'beachbody': 'fitness',
+    'k6-grafana-load-testing': 'perf-testing',
+    'apache-jmeter-performance': 'perf-testing',
+    'gatling-load-testing': 'perf-testing',
+    'locust-python-load-testing': 'perf-testing',
+    'artillery-nodejs-performance': 'perf-testing',
+    'blazemeter-cloud-load-testing': 'perf-testing',
+    'vegeta-go-http-load-testing': 'perf-testing',
+    'hey-http-load-generator': 'perf-testing',
+    'neoload-tricentis-enterprise': 'perf-testing',
   };
 
   @override
