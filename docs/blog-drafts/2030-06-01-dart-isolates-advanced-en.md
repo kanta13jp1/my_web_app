@@ -1,7 +1,7 @@
 ---
 title: "Dart Isolates Deep Dive — compute, SendPort, and Parallel Processing Patterns"
 tags: dart,flutter,webdev,indiedev
-published: false
+published: true
 ---
 
 # Dart Isolates Deep Dive — compute, SendPort, and Parallel Processing Patterns
