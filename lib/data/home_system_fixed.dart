@@ -22,7 +22,7 @@ const List<HomeFixedFeature> kHomeSystemFixed = [
     color: Color(0xFF4F46E5),
   ),
   HomeFixedFeature(
-    route: '/ai-assistant',
+    route: '/ai-secretary',
     label: 'AI秘書',
     icon: Icons.smart_toy_outlined,
     color: Color(0xFF6366F1),
@@ -44,5 +44,11 @@ const List<HomeFixedFeature> kHomeSystemFixed = [
     label: 'AI大学',
     icon: Icons.school_outlined,
     color: Color(0xFF6366F1),
+  ),
+  HomeFixedFeature(
+    route: '/release-notes',
+    label: 'Release Notes',
+    icon: Icons.new_releases_outlined,
+    color: Color(0xFF0D9488),
   ),
 ];
