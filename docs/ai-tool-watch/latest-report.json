@@ -11,54 +11,7 @@
       "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "88ac3d90d9fc104944667bb367f99851c1b6857e2e483a82bf950665befdbee5",
-      "keyword_groups": {
-        "codex-runtime": [
-          "computer use"
-        ],
-        "hooks": [
-          "hook",
-          "hooks"
-        ],
-        "integration": [
-          "MCP",
-          "connector",
-          "Slack",
-          "GitHub",
-          "Visual Studio Code"
-        ],
-        "quality-cost": [
-          "cost",
-          "permission",
-          "review",
-          "CI"
-        ],
-        "schedule": [
-          "automation",
-          "schedule",
-          "cron",
-          "GitHub Actions",
-          "workflow"
-        ]
-      },
-      "latest_signal": "Claude Code GitHub Actions - Claude Code Docs Skip to main content Claude Code Docs home pa",
-      "name": "Claude Code GitHub Actions",
-      "owner": "Claude Code",
-      "previous_hash": "477a9e122eddb998acc2f87a6ecd8ddbe982654b52800a2a6ccd71de6c086dda",
-      "slug": "claude-code-github-actions",
-      "snippets": [
-        "Claude Code GitHub Actions - Claude Code Docs Skip to main content Claude Code Docs home page English Search...",
-        "Navigation Code review & CI/CD Claude Code GitHub Actions Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting...",
-        "Claude Code Action Setup Quick setup Manual setup Upgrading from Beta Essential changes Breaking Changes Reference Before and After Example Example use cases Basic workflow..."
-      ],
-      "status": 200,
-      "url": "https://code.claude.com/docs/en/github-actions"
-    },
-    {
-      "changed": true,
-      "error": null,
-      "first_seen": false,
-      "hash": "0ec1bde0f7b497e4d8f9319b97beef3fe8fcbc9446413f73861fce9def4c1e2e",
+      "hash": "a349e452019207c9f236403724f30fcdf7612ffa7a8e048ebdfb469b5b442ba3",
       "keyword_groups": {
         "codex-runtime": [
           "GPT-5.5",
@@ -79,7 +32,7 @@
       "latest_signal": "AI Coding Partner from OpenAI",
       "name": "Codex overview",
       "owner": "Codex",
-      "previous_hash": "a349e452019207c9f236403724f30fcdf7612ffa7a8e048ebdfb469b5b442ba3",
+      "previous_hash": "0ec1bde0f7b497e4d8f9319b97beef3fe8fcbc9446413f73861fce9def4c1e2e",
       "slug": "codex-overview",
       "snippets": [
         "Designed for multi-agent workflows The Codex app is a command center for agentic coding.",
@@ -90,7 +43,7 @@
       "url": "https://openai.com/codex/"
     }
   ],
-  "checked_at": "2026-05-02T19:08:13Z",
+  "checked_at": "2026-05-02T21:29:16Z",
   "high_priority_groups": [
     "codex-runtime",
     "hooks",
@@ -142,7 +95,7 @@
     }
   },
   "issue": "1422",
-  "previous_checked_at": "2026-05-02T10:23:33Z",
+  "previous_checked_at": "2026-05-02T19:08:13Z",
   "sources": [
     {
       "changed": false,
@@ -255,7 +208,7 @@
       "url": "https://code.claude.com/docs/en/hooks"
     },
     {
-      "changed": true,
+      "changed": false,
       "error": null,
       "first_seen": false,
       "hash": "88ac3d90d9fc104944667bb367f99851c1b6857e2e483a82bf950665befdbee5",
@@ -291,7 +244,7 @@
       "latest_signal": "Claude Code GitHub Actions - Claude Code Docs Skip to main content Claude Code Docs home pa",
       "name": "Claude Code GitHub Actions",
       "owner": "Claude Code",
-      "previous_hash": "477a9e122eddb998acc2f87a6ecd8ddbe982654b52800a2a6ccd71de6c086dda",
+      "previous_hash": "88ac3d90d9fc104944667bb367f99851c1b6857e2e483a82bf950665befdbee5",
       "slug": "claude-code-github-actions",
       "snippets": [
         "Claude Code GitHub Actions - Claude Code Docs Skip to main content Claude Code Docs home page English Search...",
@@ -420,7 +373,7 @@
       "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "0ec1bde0f7b497e4d8f9319b97beef3fe8fcbc9446413f73861fce9def4c1e2e",
+      "hash": "a349e452019207c9f236403724f30fcdf7612ffa7a8e048ebdfb469b5b442ba3",
       "keyword_groups": {
         "codex-runtime": [
           "GPT-5.5",
@@ -441,7 +394,7 @@
       "latest_signal": "AI Coding Partner from OpenAI",
       "name": "Codex overview",
       "owner": "Codex",
-      "previous_hash": "a349e452019207c9f236403724f30fcdf7612ffa7a8e048ebdfb469b5b442ba3",
+      "previous_hash": "0ec1bde0f7b497e4d8f9319b97beef3fe8fcbc9446413f73861fce9def4c1e2e",
       "slug": "codex-overview",
       "snippets": [
         "Designed for multi-agent workflows The Codex app is a command center for agentic coding.",
