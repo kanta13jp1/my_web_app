@@ -96,6 +96,21 @@ function asString(value: unknown, fallback = ""): string {
   return typeof value === "string" ? value.trim() : fallback;
 }
 
+function normalizeNotionId(value: unknown): string {
+  const raw = asString(value);
+  if (!raw) return "";
+  const compactIds = raw.replace(/-/g, "").match(/[0-9a-fA-F]{32}/g);
+  const compact = compactIds?.at(-1)?.toLowerCase();
+  if (!compact) return raw.replace(/^['"]|['"]$/g, "");
+  return [
+    compact.slice(0, 8),
+    compact.slice(8, 12),
+    compact.slice(12, 16),
+    compact.slice(16, 20),
+    compact.slice(20),
+  ].join("-");
+}
+
 function asNumber(value: unknown, fallback: number): number {
   if (typeof value === "number" && Number.isFinite(value)) return value;
   if (typeof value === "string") {
@@ -175,10 +190,13 @@ async function listNotionChildren(
   blockId: string,
   pageSize = 100,
 ): Promise<Array<Record<string, unknown>>> {
+  const notionBlockId = normalizeNotionId(blockId);
   const children: Array<Record<string, unknown>> = [];
   let cursor: string | null = null;
   for (let i = 0; i < 10; i++) {
-    const url = new URL(`https://api.notion.com/v1/blocks/${blockId}/children`);
+    const url = new URL(
+      `https://api.notion.com/v1/blocks/${notionBlockId}/children`,
+    );
     url.searchParams.set("page_size", String(pageSize));
     if (cursor) url.searchParams.set("start_cursor", cursor);
     const resp = await fetch(url, { headers: notionHeaders(token) });
@@ -205,7 +223,8 @@ async function findOrCreateNotionChildPage(
   parentPageId: string,
   title: string,
 ): Promise<{ pageId: string; created: boolean }> {
-  const children = await listNotionChildren(token, parentPageId);
+  const notionParentPageId = normalizeNotionId(parentPageId);
+  const children = await listNotionChildren(token, notionParentPageId);
   for (const child of children) {
     if (child.type !== "child_page") continue;
     const childPage = (child.child_page ?? {}) as Record<string, unknown>;
@@ -217,7 +236,7 @@ async function findOrCreateNotionChildPage(
   const resp = await notionFetch(token, "/pages", {
     method: "POST",
     body: JSON.stringify({
-      parent: { page_id: parentPageId },
+      parent: { page_id: notionParentPageId },
       properties: {
         title: { title: [{ text: { content: title } }] },
       },
@@ -244,7 +263,8 @@ async function replaceNotionPageChildren(
   blocks: Array<Record<string, unknown>>,
   delayMs: number,
 ): Promise<{ archived: number; appended: number }> {
-  const existing = await listNotionChildren(token, pageId);
+  const notionPageId = normalizeNotionId(pageId);
+  const existing = await listNotionChildren(token, notionPageId);
   let archived = 0;
   for (const block of existing) {
     if (!block.id) continue;
@@ -266,7 +286,7 @@ async function replaceNotionPageChildren(
   let appended = 0;
   for (let i = 0; i < blocks.length; i += 100) {
     const children = blocks.slice(i, i + 100);
-    const resp = await notionFetch(token, `/blocks/${pageId}/children`, {
+    const resp = await notionFetch(token, `/blocks/${notionPageId}/children`, {
       method: "PATCH",
       body: JSON.stringify({ children }),
     });
@@ -291,7 +311,8 @@ async function upsertNotionDatabasePage(
   titleValue: string,
   properties: Record<string, unknown>,
 ): Promise<"created" | "updated"> {
-  const queryResp = await notionFetch(token, `/databases/${dbId}/query`, {
+  const notionDbId = normalizeNotionId(dbId);
+  const queryResp = await notionFetch(token, `/databases/${notionDbId}/query`, {
     method: "POST",
     body: JSON.stringify({
       filter: { property: titleProperty, title: { equals: titleValue } },
@@ -312,10 +333,14 @@ async function upsertNotionDatabasePage(
   const existingPageId = queryJson.results?.[0]?.id;
 
   if (existingPageId) {
-    const patchResp = await notionFetch(token, `/pages/${existingPageId}`, {
-      method: "PATCH",
-      body: JSON.stringify({ properties }),
-    });
+    const patchResp = await notionFetch(
+      token,
+      `/pages/${normalizeNotionId(existingPageId)}`,
+      {
+        method: "PATCH",
+        body: JSON.stringify({ properties }),
+      },
+    );
     if (!patchResp.ok) {
       const detail = await patchResp.text().catch(() => "");
       throw new Error(
@@ -330,7 +355,7 @@ async function upsertNotionDatabasePage(
   const createResp = await notionFetch(token, "/pages", {
     method: "POST",
     body: JSON.stringify({
-      parent: { database_id: dbId },
+      parent: { database_id: notionDbId },
       properties,
     }),
   });
@@ -373,7 +398,8 @@ async function validateNotionDatabaseSchema(
   mismatched: Array<RequiredNotionProperty & { actual: string }>;
   detected: Record<string, string>;
 }> {
-  const resp = await notionFetch(token, `/databases/${dbId}`);
+  const notionDbId = normalizeNotionId(dbId);
+  const resp = await notionFetch(token, `/databases/${notionDbId}`);
   if (!resp.ok) {
     const detail = await resp.text().catch(() => "");
     return {
@@ -1432,7 +1458,7 @@ serve(async (req: Request) => {
       // Secrets: NOTION_API_TOKEN / NOTION_WBS_DATABASE_ID
       case "notion.sync_wbs": {
         const token = Deno.env.get("NOTION_API_TOKEN");
-        const dbId = Deno.env.get("NOTION_WBS_DATABASE_ID");
+        const dbId = normalizeNotionId(Deno.env.get("NOTION_WBS_DATABASE_ID"));
         if (!token || !dbId) {
           return json(
             {
@@ -1685,7 +1711,9 @@ serve(async (req: Request) => {
       // content は保持し、"ROADMAP mirror (auto)" child page だけを更新する。
       case "notion.sync_roadmap": {
         const token = Deno.env.get("NOTION_API_TOKEN");
-        const pageId = Deno.env.get("NOTION_ROADMAP_PAGE_ID");
+        const pageId = normalizeNotionId(
+          Deno.env.get("NOTION_ROADMAP_PAGE_ID"),
+        );
         if (!token || !pageId) {
           return json(
             {
@@ -1760,7 +1788,9 @@ serve(async (req: Request) => {
       // Fallback: GHA から rows を渡して Notion DB へ upsert.
       case "notion.sync_memory_index": {
         const token = Deno.env.get("NOTION_API_TOKEN");
-        const dbId = Deno.env.get("NOTION_MEMORY_DATABASE_ID");
+        const dbId = normalizeNotionId(
+          Deno.env.get("NOTION_MEMORY_DATABASE_ID"),
+        );
         if (!token || !dbId) {
           return json(
             {
@@ -1865,7 +1895,7 @@ serve(async (req: Request) => {
       // ─── Notion WBS Mirror Repair ───
       case "notion.fix_wbs_all_instances": {
         const token = Deno.env.get("NOTION_API_TOKEN");
-        const dbId = Deno.env.get("NOTION_WBS_DATABASE_ID");
+        const dbId = normalizeNotionId(Deno.env.get("NOTION_WBS_DATABASE_ID"));
         if (!token || !dbId) {
           return json(
             {
