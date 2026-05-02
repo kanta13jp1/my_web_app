@@ -1,6 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
+
+const String _kGithubRepoUrl = 'https://github.com/kanta13jp1/my_web_app';
+final RegExp _kIssueNumberRegex = RegExp(r'\[Issue\s*#(\d+)\]');
+
+int? _extractIssueNumber(String title) {
+  final match = _kIssueNumberRegex.firstMatch(title);
+  if (match == null) return null;
+  return int.tryParse(match.group(1) ?? '');
+}
+
+Future<void> _openGithubIssue(int issueNumber) async {
+  final uri = Uri.parse('$_kGithubRepoUrl/issues/$issueNumber');
+  await launchUrl(uri, mode: LaunchMode.externalApplication);
+}
 
 // ── データモデル ──────────────────────────────────────────────────────────────
 
@@ -1263,6 +1278,27 @@ class _TaskRow extends StatelessWidget {
                   ),
                 ),
               ),
+              if (_extractIssueNumber(task.title) != null) ...[
+                const SizedBox(width: 6),
+                Tooltip(
+                  message:
+                      'GitHub Issue #${_extractIssueNumber(task.title)} を開く',
+                  child: InkWell(
+                    onTap: () => _openGithubIssue(
+                      _extractIssueNumber(task.title)!,
+                    ),
+                    borderRadius: BorderRadius.circular(4),
+                    child: const Padding(
+                      padding: EdgeInsets.all(4),
+                      child: Icon(
+                        Icons.open_in_new,
+                        size: 14,
+                        color: Color(0xFF60A5FA),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
               const SizedBox(width: 8),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
@@ -2706,6 +2742,27 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
+                          if (_extractIssueNumber(task.title) != null) ...[
+                            const SizedBox(width: 4),
+                            Tooltip(
+                              message:
+                                  'GitHub Issue #${_extractIssueNumber(task.title)} を開く',
+                              child: InkWell(
+                                onTap: () => _openGithubIssue(
+                                  _extractIssueNumber(task.title)!,
+                                ),
+                                borderRadius: BorderRadius.circular(4),
+                                child: const Padding(
+                                  padding: EdgeInsets.all(2),
+                                  child: Icon(
+                                    Icons.open_in_new,
+                                    size: 12,
+                                    color: Color(0xFF60A5FA),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
                           if (isDelayedNoPlan) ...[
                             const SizedBox(width: 4),
                             Container(
