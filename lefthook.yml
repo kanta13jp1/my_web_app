@@ -1,0 +1,26 @@
+min_version: 2.1.0
+skip_lfs: true
+
+pre-commit:
+  parallel: false
+  jobs:
+    - name: fast quality gate
+      run: python scripts/pre_commit_quality_gate.py
+
+prepare-commit-msg:
+  parallel: false
+  jobs:
+    - name: block no-verify bypass
+      run: python scripts/no_verify_sentinel.py assert-pre-commit --message-file "{1}" --source "{2}"
+
+commit-msg:
+  parallel: false
+  jobs:
+    - name: reject hook bypass markers
+      run: python scripts/check_no_verify_bypass.py --message-file "{1}"
+
+pre-push:
+  parallel: false
+  jobs:
+    - name: full quality gate
+      run: python scripts/quality_gate.py --full
