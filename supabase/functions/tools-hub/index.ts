@@ -1136,6 +1136,30 @@ function isCompletedWbsTask(task: Record<string, unknown>): boolean {
     Number(task.progress ?? 0) >= 100;
 }
 
+function isClosedGithubIssueWbsTask(task: Record<string, unknown>): boolean {
+  if (githubIssueNumberFromTask(task) === null) return false;
+  return String(task.github_issue_state ?? "").trim().toUpperCase() ===
+    "CLOSED";
+}
+
+function filterClosedGithubIssueWbsTasks(
+  tasks: Array<Record<string, unknown>>,
+): {
+  activeTasks: Array<Record<string, unknown>>;
+  excludedTasks: Array<Record<string, unknown>>;
+} {
+  const activeTasks: Array<Record<string, unknown>> = [];
+  const excludedTasks: Array<Record<string, unknown>> = [];
+  for (const task of tasks) {
+    if (isClosedGithubIssueWbsTask(task)) {
+      excludedTasks.push(task);
+    } else {
+      activeTasks.push(task);
+    }
+  }
+  return { activeTasks, excludedTasks };
+}
+
 function isGithubIssueClosureReadyWbsTask(
   task: Record<string, unknown>,
 ): boolean {
@@ -6035,13 +6059,16 @@ serve(async (req) => {
             true,
           );
           const taskSelect =
-            "id, category, category_order, title, status, progress, priority, end_date, planned_end_date, updated_at, instance, owner_instance, recovery_plan";
+            "id, category, category_order, title, status, progress, priority, end_date, planned_end_date, updated_at, instance, owner_instance, recovery_plan, github_issue_number, github_issue_url, github_issue_state, github_issue_synced_at";
           const { data, error } = await admin.from("wbs_tasks")
             .select(taskSelect)
             .eq("instance", inst)
             .in("status", ["pending", "in_progress", "blocked"]);
           if (error) throw new Error(error.message);
-          let topTasks = ([...(data ?? [])] as Array<Record<string, unknown>>)
+          const ownTaskFilter = filterClosedGithubIssueWbsTasks(
+            [...(data ?? [])] as Array<Record<string, unknown>>,
+          );
+          let topTasks = ownTaskFilter.activeTasks
             .sort(compareWbsTasks)
             .slice(0, limit);
 
@@ -6050,9 +6077,10 @@ serve(async (req) => {
             .in("status", ["pending", "in_progress", "blocked"]);
           if (allErr) throw new Error(allErr.message);
           const now = new Date();
-          const openTasks = [...(allOpen ?? [])] as Array<
-            Record<string, unknown>
-          >;
+          const allTaskFilter = filterClosedGithubIssueWbsTasks(
+            [...(allOpen ?? [])] as Array<Record<string, unknown>>,
+          );
+          const openTasks = allTaskFilter.activeTasks;
           const workload = buildWbsWorkload(openTasks, now);
           const rebalanceSuggestions = buildWbsRebalanceSuggestions(
             openTasks,
@@ -6139,6 +6167,20 @@ serve(async (req) => {
             user_tasks_count: userTasks.length,
             workload,
             rebalance_suggestions: rebalanceSuggestions,
+            closed_issue_exclusions: {
+              own_count: ownTaskFilter.excludedTasks.length,
+              total_count: allTaskFilter.excludedTasks.length,
+              own_tasks: ownTaskFilter.excludedTasks.slice(0, 10).map((
+                task,
+              ) => ({
+                id: task.id,
+                title: task.title,
+                github_issue_number: githubIssueNumberFromTask(task),
+                github_issue_url: task.github_issue_url ?? null,
+                github_issue_state: task.github_issue_state ?? null,
+                github_issue_synced_at: task.github_issue_synced_at ?? null,
+              })),
+            },
             auto_reassign: autoReassign,
             reassigned_task: reassignedTask,
           });
@@ -6146,13 +6188,16 @@ serve(async (req) => {
         case "wbs.instance_workload": {
           // body: { instance?: string } 任意。全 instance の負荷と救援候補を返す。
           const taskSelect =
-            "id, category, category_order, title, status, progress, priority, end_date, planned_end_date, updated_at, instance, owner_instance, recovery_plan";
+            "id, category, category_order, title, status, progress, priority, end_date, planned_end_date, updated_at, instance, owner_instance, recovery_plan, github_issue_number, github_issue_url, github_issue_state, github_issue_synced_at";
           const { data, error } = await admin.from("wbs_tasks")
             .select(taskSelect)
             .in("status", ["pending", "in_progress", "blocked"]);
           if (error) throw new Error(error.message);
           const now = new Date();
-          const openTasks = [...(data ?? [])] as Array<Record<string, unknown>>;
+          const taskFilter = filterClosedGithubIssueWbsTasks(
+            [...(data ?? [])] as Array<Record<string, unknown>>,
+          );
+          const openTasks = taskFilter.activeTasks;
           return json({
             success: true,
             instance: body.instance
@@ -6160,6 +6205,9 @@ serve(async (req) => {
               : null,
             workload: buildWbsWorkload(openTasks, now),
             rebalance_suggestions: buildWbsRebalanceSuggestions(openTasks, now),
+            closed_issue_exclusions: {
+              total_count: taskFilter.excludedTasks.length,
+            },
           });
         }
 
@@ -6180,18 +6228,21 @@ serve(async (req) => {
           // 2. 他 instance の active task 取得 (rebalance 候補)
           const { data: otherTasks, error } = await admin.from("wbs_tasks")
             .select(
-              "id, category, title, instance, owner_instance, status, progress, priority, end_date, updated_at, last_rebalanced_at",
+              "id, category, title, instance, owner_instance, status, progress, priority, end_date, updated_at, last_rebalanced_at, github_issue_number, github_issue_url, github_issue_state, github_issue_synced_at",
             )
             .neq("instance", myInstance)
             .in("status", ["pending", "in_progress", "blocked"])
             .neq("priority", "completed")
             .limit(200);
           if (error) throw new Error(error.message);
+          const otherTaskFilter = filterClosedGithubIssueWbsTasks(
+            [...(otherTasks ?? [])] as Array<Record<string, unknown>>,
+          );
 
           // 3. 抑制ルール: PS 専任 / IPO 専決 / 期限直前は除外
           const NOW = Date.now();
           const HOUR = 3600 * 1000;
-          const filtered = (otherTasks ?? []).filter((t) => {
+          const filtered = otherTaskFilter.activeTasks.filter((t) => {
             const cat = String(t.category ?? "");
             const title = String(t.title ?? "");
             // PS#1 専任 (Rule17)
@@ -6204,14 +6255,14 @@ serve(async (req) => {
             if (cat === "business-ipo") return false;
             // 期限直前 (1 日切ってる) は元担当継続
             if (t.end_date) {
-              const dueMs = new Date(t.end_date).getTime();
+              const dueMs = new Date(String(t.end_date)).getTime();
               if (dueMs - NOW < 24 * HOUR && t.priority === "high") {
                 return false;
               }
             }
             // 7 日以内に rebalance 済 = loop 防止
             if (t.last_rebalanced_at) {
-              const lastMs = new Date(t.last_rebalanced_at).getTime();
+              const lastMs = new Date(String(t.last_rebalanced_at)).getTime();
               if (NOW - lastMs < 7 * 24 * HOUR) return false;
             }
             return true;
@@ -6221,9 +6272,11 @@ serve(async (req) => {
           const scored = filtered.map((t) => {
             let score = 0;
             const reasons: string[] = [];
-            const dueMs = t.end_date ? new Date(t.end_date).getTime() : null;
+            const dueMs = t.end_date
+              ? new Date(String(t.end_date)).getTime()
+              : null;
             const updMs = t.updated_at
-              ? new Date(t.updated_at).getTime()
+              ? new Date(String(t.updated_at)).getTime()
               : null;
 
             // 期限ペナルティ
@@ -6291,6 +6344,9 @@ serve(async (req) => {
             my_instance: myInstance,
             my_active_count: myActiveCount ?? 0,
             candidates,
+            closed_issue_exclusions: {
+              total_count: otherTaskFilter.excludedTasks.length,
+            },
           });
         }
 
