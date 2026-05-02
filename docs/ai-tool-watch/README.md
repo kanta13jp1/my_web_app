@@ -32,6 +32,12 @@ inspection without changing the baseline.
 started manually. It updates the report/state files and comments on issue
 `#1422` when high-priority official changes are detected.
 
+When a changed official source also maps to a high-priority route, the workflow
+runs `scripts/ai_tool_watch_route.py`. That script creates one deduplicated
+GitHub issue, writes a cross-instance handoff draft under
+`docs/cross-instance-prs/`, and lets the existing issue-to-WBS workflow mirror
+the request into `wbs_tasks`.
+
 ## Routing
 
 - Claude Code hooks, SessionStart, PostToolUse, Stop, or ultrareview changes
