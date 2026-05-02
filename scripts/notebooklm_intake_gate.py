@@ -373,10 +373,12 @@ def static_route(notebook: dict[str, Any]) -> dict[str, str] | None:
         token in title
         for token in [
             "competitor",
+            "competitive ai intelligence",
             "competitive intelligence",
             "strategic intelligence",
             "google i/o",
             "marketplace trends",
+            "multi-agent convergence",
         ]
     ):
         return {
