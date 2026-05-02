@@ -32,6 +32,7 @@ void main() {
         localModelPath: r' C:\models\pleias-rag.gguf ',
         localVectorDbPath: r' C:\rag\lancedb ',
         inferenceEngine: 'ollama',
+        localRuntimeUrl: ' http://127.0.0.1:8765/rag ',
         blockExternalApiWhenEnabled: true,
       ),
     );
@@ -40,11 +41,16 @@ void main() {
     expect(saved.localModelPath, r'C:\models\pleias-rag.gguf');
     expect(loaded.localVectorDbPath, r'C:\rag\lancedb');
     expect(loaded.inferenceEngine, 'ollama');
+    expect(loaded.localRuntimeUrl, 'http://127.0.0.1:8765/rag');
     expect(loaded.localRuntimeConfigured, isTrue);
     expect(loaded.externalApiBlocked, isTrue);
     expect(
       loaded.toAiHubPolicyPayload(),
       containsPair('offline_external_api_blocked', true),
+    );
+    expect(
+      loaded.toAiHubPolicyPayload(),
+      containsPair('offline_local_runtime_url', 'http://127.0.0.1:8765/rag'),
     );
   });
 

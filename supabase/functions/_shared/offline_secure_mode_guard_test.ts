@@ -49,6 +49,7 @@ Deno.test("offline guard reports pending local runtime when paths are configured
     offline_external_api_blocked: "true",
     offline_local_model_path: "C:/models/pleias-rag.gguf",
     offline_local_vector_db_path: "C:/rag/lancedb",
+    offline_local_runtime_url: "http://127.0.0.1:8765/rag",
     offline_inference_engine: "ollama",
   });
 
@@ -63,6 +64,7 @@ Deno.test("offline guard reports pending local runtime when paths are configured
       offline_blocked: true,
       offline_runtime_configured: true,
       offline_inference_engine: "ollama",
+      local_runtime_url: "http://127.0.0.1:8765/rag",
     },
   );
 });

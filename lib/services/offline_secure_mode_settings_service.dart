@@ -4,6 +4,7 @@ class OfflineSecureModeSettings {
   static const bool defaultEnabled = false;
   static const bool defaultBlockExternalApiWhenEnabled = true;
   static const String defaultInferenceEngine = 'pleias-rag';
+  static const String defaultLocalRuntimeUrl = 'http://127.0.0.1:8765/rag';
   static const List<String> supportedInferenceEngines = <String>[
     'pleias-rag',
     'llama.cpp',
@@ -16,6 +17,7 @@ class OfflineSecureModeSettings {
   final String localModelPath;
   final String localVectorDbPath;
   final String inferenceEngine;
+  final String localRuntimeUrl;
   final bool blockExternalApiWhenEnabled;
 
   const OfflineSecureModeSettings({
@@ -23,6 +25,7 @@ class OfflineSecureModeSettings {
     this.localModelPath = '',
     this.localVectorDbPath = '',
     this.inferenceEngine = defaultInferenceEngine,
+    this.localRuntimeUrl = defaultLocalRuntimeUrl,
     this.blockExternalApiWhenEnabled = defaultBlockExternalApiWhenEnabled,
   });
 
@@ -38,6 +41,7 @@ class OfflineSecureModeSettings {
     String? localModelPath,
     String? localVectorDbPath,
     String? inferenceEngine,
+    String? localRuntimeUrl,
     bool? blockExternalApiWhenEnabled,
   }) {
     return OfflineSecureModeSettings(
@@ -45,6 +49,7 @@ class OfflineSecureModeSettings {
       localModelPath: localModelPath ?? this.localModelPath,
       localVectorDbPath: localVectorDbPath ?? this.localVectorDbPath,
       inferenceEngine: inferenceEngine ?? this.inferenceEngine,
+      localRuntimeUrl: localRuntimeUrl ?? this.localRuntimeUrl,
       blockExternalApiWhenEnabled:
           blockExternalApiWhenEnabled ?? this.blockExternalApiWhenEnabled,
     );
@@ -56,6 +61,7 @@ class OfflineSecureModeSettings {
       'offline_external_api_blocked': externalApiBlocked,
       'offline_runtime_configured': localRuntimeConfigured,
       'offline_inference_engine': inferenceEngine,
+      'offline_local_runtime_url': localRuntimeUrl,
       if (localModelPath.trim().isNotEmpty)
         'offline_local_model_path': localModelPath.trim(),
       if (localVectorDbPath.trim().isNotEmpty)
@@ -72,6 +78,8 @@ class OfflineSecureModeSettingsService {
       'offline_secure_mode_local_vector_db_path_v1';
   static const String _inferenceEngineKey =
       'offline_secure_mode_inference_engine_v1';
+  static const String _localRuntimeUrlKey =
+      'offline_secure_mode_local_runtime_url_v1';
   static const String _blockExternalApiWhenEnabledKey =
       'offline_secure_mode_block_external_api_when_enabled_v1';
 
@@ -98,6 +106,9 @@ class OfflineSecureModeSettingsService {
       localVectorDbPath:
           _normalizedString(store.getString(_localVectorDbPathKey)),
       inferenceEngine: _normalizedEngine(store.getString(_inferenceEngineKey)),
+      localRuntimeUrl: _normalizedRuntimeUrl(
+        store.getString(_localRuntimeUrlKey),
+      ),
       blockExternalApiWhenEnabled:
           store.getBool(_blockExternalApiWhenEnabledKey) ??
               OfflineSecureModeSettings.defaultBlockExternalApiWhenEnabled,
@@ -113,11 +124,13 @@ class OfflineSecureModeSettingsService {
       localModelPath: settings.localModelPath.trim(),
       localVectorDbPath: settings.localVectorDbPath.trim(),
       inferenceEngine: _normalizedEngine(settings.inferenceEngine),
+      localRuntimeUrl: _normalizedRuntimeUrl(settings.localRuntimeUrl),
     );
     await store.setBool(_enabledKey, normalized.enabled);
     await store.setString(_localModelPathKey, normalized.localModelPath);
     await store.setString(_localVectorDbPathKey, normalized.localVectorDbPath);
     await store.setString(_inferenceEngineKey, normalized.inferenceEngine);
+    await store.setString(_localRuntimeUrlKey, normalized.localRuntimeUrl);
     await store.setBool(
       _blockExternalApiWhenEnabledKey,
       normalized.blockExternalApiWhenEnabled,
@@ -134,6 +147,14 @@ class OfflineSecureModeSettingsService {
   }
 
   String _normalizedString(String? raw) => raw?.trim() ?? '';
+
+  String _normalizedRuntimeUrl(String? raw) {
+    final normalized = raw?.trim();
+    if (normalized == null || normalized.isEmpty) {
+      return OfflineSecureModeSettings.defaultLocalRuntimeUrl;
+    }
+    return normalized;
+  }
 
   String _normalizedEngine(String? raw) {
     final normalized = raw?.trim().toLowerCase();
