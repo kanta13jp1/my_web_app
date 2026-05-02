@@ -25384,3 +25384,27 @@ a9d7b1517 on main
 
 ### Philosophy Alignment
 #5 商品=ユーザー価値 (= 競合動向をリアルタイム把握しユーザーへの差別化メッセージを強化) / #6 資本=時間 (= 自動日次レポートで競合モニタリングコストをゼロ化)
+
+## Scheduled Daily Session S2 (2026-05-02 06:00 UTC)
+
+### 実施内容
+- 朝の scheduled daily-development task 実行
+- 本日 main にマージ済の `feat: expose MCP AuthKit metadata` (commit fd173222b) を題材に技術ブログドラフト 2 本作成 (JA + EN)
+  - `docs/blog-drafts/2026-05-02-mcp-authkit-metadata-discovery.md`
+  - `docs/blog-drafts/2026-05-02-mcp-authkit-metadata-discovery-en.md`
+- RFC 9728 Protected Resource Metadata + RFC 8707 Resource Indicator + WorkOS AuthKit issuer ordering + trailing-slash 経験則を文書化
+- agent_tool_policy_server_gate.sql との対構造 ("metadata は契約 / gate は強制") を明示
+- development_achievements seed migration 追加 (`20260502170000_seed_achievements_scheduled_daily_s2.sql`)
+
+### 現状確認
+- main HEAD: baf91bd20 (CS チェック 2026-05-02-05:00)
+- 本日 main へのマージ済重要 PR: discount approval workflow / MCP AuthKit metadata / WBS automation 群 / Notion mirror sync
+- AI大学 自動更新も本日実行済 (commit feb859258)
+
+### 次回アクション候補 (Scheduled Daily S3 向け)
+1. agent tool policy server gate (MCP scope deny-by-default) 単体ブログ化 — Rule 27 #5 (Scope) 補強
+2. Codex#1 が PR 化中の `mcp_my_web_app_tools` facade ドラフトレビュー (現在 uncommitted on codex/codex1-mcp-authkit-metadata)
+3. discount approval workflow (afd16cd01) のユーザー価値ブログ — #5 商品=ユーザー価値 強化
+
+### Philosophy Alignment
+#3 優しい mentor (= MCP/AuthKit/RFC 周辺の落とし穴を後発開発者に共有) / #5 商品=ユーザー価値 (= MCP セキュリティ堅牢化はユーザーデータ保護に直結) / #6 資本=時間 (= 新規 client onboarding を 1h → 5min 短縮した運用知見を外部還元)

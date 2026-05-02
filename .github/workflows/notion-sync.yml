@@ -153,6 +153,9 @@ jobs:
           except urllib.error.HTTPError as exc:
               text = exc.read().decode("utf-8", errors="replace")
               print(text)
+              if "notion_not_configured" in text:
+                  print("::warning::NOTION_* secrets not configured — skip roadmap sync")
+                  sys.exit(0)
               sys.exit(1)
           print(f"Response: {text}")
           data = json.loads(text)
@@ -232,6 +235,9 @@ jobs:
           except urllib.error.HTTPError as exc:
               text = exc.read().decode("utf-8", errors="replace")
               print(text)
+              if "notion_not_configured" in text:
+                  print("::warning::NOTION_* secrets not configured — skip memory sync")
+                  sys.exit(0)
               sys.exit(1)
           print(f"Response: {text}")
           data = json.loads(text)
