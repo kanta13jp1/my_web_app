@@ -14,6 +14,7 @@ import {
   rankBm25,
   ScoredMemoryDocument,
 } from "./search/bm25.ts";
+import { buildQueryRouteDecision } from "./query_report.ts";
 import { rerankWithHaiku } from "./search/rerank.ts";
 import { vectorSearch } from "./search/vector.ts";
 
@@ -184,6 +185,57 @@ async function memorySearch(body: Body) {
   });
 }
 
+async function memoryQueryRoute(body: Body) {
+  const query = asString(body.query);
+  if (!query) return jsonResponse({ error: "query required" }, 400);
+
+  const rawReport = asString(
+    body.query_report ?? body.queryReport ?? body.report,
+  );
+  if (!rawReport) {
+    return jsonResponse({ error: "query_report required" }, 400);
+  }
+
+  const route = buildQueryRouteDecision(query, rawReport);
+  const queryRoute = {
+    state: route.state,
+    action: route.action,
+    original_query: query,
+    search_query: route.searchQuery,
+    used_reformulated_query:
+      route.action === "search" && route.searchQuery !== query,
+    feedback: route.feedback,
+    parsed_report: {
+      state: route.report.state,
+      reformulated_query: route.report.reformulatedQuery,
+      reason: route.report.reason,
+    },
+  };
+
+  if (route.action === "clarify") {
+    return jsonResponse({
+      success: false,
+      action: "memory.query_route",
+      error: "query_clarification_required",
+      query_route: queryRoute,
+    }, 422);
+  }
+
+  const response = await memorySearch({
+    ...body,
+    query: route.searchQuery,
+  });
+  const payload = await response.json() as Record<string, unknown>;
+  return jsonResponse({
+    ...payload,
+    action: "memory.query_route",
+    original_action: payload.action,
+    original_query: query,
+    query: route.searchQuery,
+    query_route: queryRoute,
+  }, response.status);
+}
+
 async function memoryRank(body: Body) {
   const query = asString(body.query);
   const candidates = asStringArray(body.candidates ?? body.file_paths, 20);
@@ -287,6 +339,7 @@ serve(async (req: Request) => {
       buildOAuthProtectedResourceMetadata(req.url, "memory-search-hub", [
         "memory",
         "memory.search",
+        "memory.query_route",
         "memory.rank",
         "memory.related",
         "memory.stats",
@@ -316,6 +369,9 @@ serve(async (req: Request) => {
     switch (action) {
       case "memory.search":
         response = await memorySearch(body);
+        break;
+      case "memory.query_route":
+        response = await memoryQueryRoute(body);
         break;
       case "memory.rank":
         response = await memoryRank(body);
