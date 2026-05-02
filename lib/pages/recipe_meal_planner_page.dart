@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-/// レシピ・食事プランナーページ
-/// レシピ管理・週間食事計画・買い物リスト自動生成。
-/// recipe-meal-planner Edge Function と連携。
+import '../widgets/meal_nutrition_tracker.dart';
+
 class RecipeMealPlannerPage extends StatefulWidget {
   const RecipeMealPlannerPage({super.key});
 
@@ -18,14 +17,14 @@ class _RecipeMealPlannerPageState extends State<RecipeMealPlannerPage>
 
   bool _isLoading = false;
   String? _errorMessage;
-  List<Map<String, dynamic>> _recipes = [];
-  List<Map<String, dynamic>> _weekPlan = [];
-  List<Map<String, dynamic>> _shoppingList = [];
+  List<Map<String, dynamic>> _recipes = <Map<String, dynamic>>[];
+  List<Map<String, dynamic>> _weekPlan = <Map<String, dynamic>>[];
+  List<Map<String, dynamic>> _shoppingList = <Map<String, dynamic>>[];
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 4, vsync: this);
     _fetchData();
   }
 
@@ -47,38 +46,41 @@ class _RecipeMealPlannerPageState extends State<RecipeMealPlannerPage>
     try {
       final recipesRes = await _supabase.functions.invoke(
         'lifestyle-hub',
-        body: {'action': 'recipe.list'},
+        body: <String, dynamic>{'action': 'recipe.list'},
       );
       final planRes = await _supabase.functions.invoke(
         'lifestyle-hub',
-        body: {'action': 'meal.list_plans'},
+        body: <String, dynamic>{'action': 'meal.list_plans'},
       );
 
       setState(() {
-        final rd = recipesRes.data;
-        if (rd is Map<String, dynamic>) {
-          final list = rd['recipes'];
-          if (list is List) {
-            _recipes = list.map((r) => r as Map<String, dynamic>).toList();
-          }
-        }
-
-        final pd = planRes.data;
-        if (pd is Map<String, dynamic>) {
-          final list = pd['plans'];
-          if (list is List) {
-            _weekPlan = list.map((p) => p as Map<String, dynamic>).toList();
-          }
-        }
-
-        _shoppingList = [];
+        _recipes = _readMapList(recipesRes.data, 'recipes');
+        _weekPlan = _readMapList(planRes.data, 'plans');
+        _shoppingList = <Map<String, dynamic>>[];
       });
     } catch (e) {
-      if (!mounted) return;
+      if (!mounted) {
+        return;
+      }
       setState(() => _errorMessage = '$e');
     } finally {
-      if (mounted) setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
+  }
+
+  List<Map<String, dynamic>> _readMapList(Object? data, String key) {
+    if (data is! Map<String, dynamic>) {
+      return <Map<String, dynamic>>[];
+    }
+    final list = data[key];
+    if (list is! List) {
+      return <Map<String, dynamic>>[];
+    }
+    return list.whereType<Map>().map((item) {
+      return item.cast<String, dynamic>();
+    }).toList();
   }
 
   @override
@@ -86,15 +88,16 @@ class _RecipeMealPlannerPageState extends State<RecipeMealPlannerPage>
     return Scaffold(
       appBar: AppBar(
         title: const Text('レシピ・食事プランナー'),
-        actions: [
+        actions: <Widget>[
           IconButton(icon: const Icon(Icons.refresh), onPressed: _fetchData),
         ],
         bottom: TabBar(
           controller: _tabController,
-          tabs: const [
+          tabs: const <Widget>[
             Tab(icon: Icon(Icons.restaurant_menu), text: 'レシピ'),
             Tab(icon: Icon(Icons.calendar_today), text: '週間プラン'),
-            Tab(icon: Icon(Icons.shopping_cart), text: '買い物リスト'),
+            Tab(icon: Icon(Icons.shopping_cart), text: '買い物'),
+            Tab(icon: Icon(Icons.monitor_heart_outlined), text: '栄養ログ'),
           ],
         ),
       ),
@@ -104,10 +107,11 @@ class _RecipeMealPlannerPageState extends State<RecipeMealPlannerPage>
               ? _buildError()
               : TabBarView(
                   controller: _tabController,
-                  children: [
+                  children: <Widget>[
                     _buildRecipesTab(),
                     _buildWeekPlanTab(),
                     _buildShoppingListTab(),
+                    const MealNutritionTracker(),
                   ],
                 ),
     );
@@ -117,7 +121,7 @@ class _RecipeMealPlannerPageState extends State<RecipeMealPlannerPage>
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
-        children: [
+        children: <Widget>[
           const Icon(Icons.error_outline, size: 48, color: Color(0xFFE53935)),
           const SizedBox(height: 12),
           Text(_errorMessage!),
@@ -133,15 +137,12 @@ class _RecipeMealPlannerPageState extends State<RecipeMealPlannerPage>
       return const Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
-          children: [
+          children: <Widget>[
             Icon(Icons.restaurant_menu, size: 64, color: Color(0xFF9CA3AF)),
             SizedBox(height: 12),
             Text(
               'レシピがありません',
-              style: TextStyle(
-                color: Color(0xFF9CA3AF),
-                height: 1.5,
-              ),
+              style: TextStyle(color: Color(0xFF9CA3AF), height: 1.5),
             ),
           ],
         ),
@@ -150,34 +151,25 @@ class _RecipeMealPlannerPageState extends State<RecipeMealPlannerPage>
     return ListView.builder(
       padding: const EdgeInsets.all(12),
       itemCount: _recipes.length,
-      itemBuilder: (ctx, i) {
-        final r = _recipes[i];
-        final name = r['name'] as String? ?? 'レシピ ${i + 1}';
-        final category = r['category'] as String? ?? '';
-        final time = r['cookingTime'] as int? ?? 0;
-        final calories = r['calories'] as int? ?? 0;
-        final emoji = r['emoji'] as String? ?? '🍽️';
+      itemBuilder: (context, index) {
+        final recipe = _recipes[index];
+        final name = recipe['name'] as String? ?? 'レシピ ${index + 1}';
+        final category = recipe['category'] as String? ?? '';
+        final time = recipe['cookingTime'] as int? ?? 0;
+        final calories = recipe['calories'] as int? ?? 0;
+        final emoji = recipe['emoji'] as String? ?? '🍽️';
         return Card(
           margin: const EdgeInsets.only(bottom: 8),
           child: ListTile(
             leading: CircleAvatar(
               backgroundColor: Theme.of(context).colorScheme.primaryContainer,
-              child: Text(
-                emoji,
-                style: const TextStyle(
-                  fontSize: 20,
-                  height: 1.5,
-                ),
-              ),
+              child: Text(emoji, style: const TextStyle(fontSize: 20)),
             ),
             title: Text(
               name,
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-                height: 1.5,
-              ),
+              style: const TextStyle(fontWeight: FontWeight.bold, height: 1.5),
             ),
-            subtitle: Text('$category${time > 0 ? " · $time分" : ""}'),
+            subtitle: Text('$category${time > 0 ? " / $time分" : ""}'),
             trailing: calories > 0
                 ? Chip(
                     label: Text('${calories}kcal'),
@@ -192,12 +184,12 @@ class _RecipeMealPlannerPageState extends State<RecipeMealPlannerPage>
   }
 
   Widget _buildWeekPlanTab() {
-    const days = ['月', '火', '水', '木', '金', '土', '日'];
+    const days = <String>['月', '火', '水', '木', '金', '土', '日'];
     if (_weekPlan.isEmpty) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
-          children: [
+          children: <Widget>[
             const Icon(
               Icons.calendar_today,
               size: 64,
@@ -206,10 +198,7 @@ class _RecipeMealPlannerPageState extends State<RecipeMealPlannerPage>
             const SizedBox(height: 12),
             const Text(
               '週間プランがありません',
-              style: TextStyle(
-                color: Color(0xFF9CA3AF),
-                height: 1.5,
-              ),
+              style: TextStyle(color: Color(0xFF9CA3AF), height: 1.5),
             ),
             const SizedBox(height: 16),
             ElevatedButton.icon(
@@ -217,7 +206,7 @@ class _RecipeMealPlannerPageState extends State<RecipeMealPlannerPage>
                 try {
                   await _supabase.functions.invoke(
                     'lifestyle-hub',
-                    body: {'action': 'meal.plan'},
+                    body: <String, dynamic>{'action': 'meal.plan'},
                   );
                   await _fetchData();
                 } catch (e) {
@@ -238,12 +227,12 @@ class _RecipeMealPlannerPageState extends State<RecipeMealPlannerPage>
     return ListView.builder(
       padding: const EdgeInsets.all(12),
       itemCount: _weekPlan.length,
-      itemBuilder: (ctx, i) {
-        final p = _weekPlan[i];
-        final day = days[i % 7];
-        final breakfast = p['breakfast'] as String? ?? '-';
-        final lunch = p['lunch'] as String? ?? '-';
-        final dinner = p['dinner'] as String? ?? '-';
+      itemBuilder: (context, index) {
+        final plan = _weekPlan[index];
+        final day = days[index % 7];
+        final breakfast = plan['breakfast'] as String? ?? '-';
+        final lunch = plan['lunch'] as String? ?? '-';
+        final dinner = plan['dinner'] as String? ?? '-';
         return Card(
           margin: const EdgeInsets.only(bottom: 8),
           child: ListTile(
@@ -251,10 +240,7 @@ class _RecipeMealPlannerPageState extends State<RecipeMealPlannerPage>
               backgroundColor: Theme.of(context).colorScheme.primaryContainer,
               child: Text(
                 day,
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  height: 1.5,
-                ),
+                style: const TextStyle(fontWeight: FontWeight.bold),
               ),
             ),
             title: Text('朝: $breakfast'),
@@ -271,15 +257,12 @@ class _RecipeMealPlannerPageState extends State<RecipeMealPlannerPage>
       return const Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
-          children: [
+          children: <Widget>[
             Icon(Icons.shopping_cart, size: 64, color: Color(0xFF9CA3AF)),
             SizedBox(height: 12),
             Text(
               '買い物リストが空です',
-              style: TextStyle(
-                color: Color(0xFF9CA3AF),
-                height: 1.5,
-              ),
+              style: TextStyle(color: Color(0xFF9CA3AF), height: 1.5),
             ),
           ],
         ),
@@ -288,8 +271,8 @@ class _RecipeMealPlannerPageState extends State<RecipeMealPlannerPage>
     return ListView.builder(
       padding: const EdgeInsets.all(12),
       itemCount: _shoppingList.length,
-      itemBuilder: (ctx, i) {
-        final item = _shoppingList[i];
+      itemBuilder: (context, index) {
+        final item = _shoppingList[index];
         final name = item['name'] as String? ?? '';
         final qty = item['quantity'] as String? ?? '';
         final category = item['category'] as String? ?? '';
@@ -305,7 +288,7 @@ class _RecipeMealPlannerPageState extends State<RecipeMealPlannerPage>
               height: 1.5,
             ),
           ),
-          subtitle: Text('$category${qty.isNotEmpty ? " · $qty" : ""}'),
+          subtitle: Text('$category${qty.isNotEmpty ? " / $qty" : ""}'),
         );
       },
     );
