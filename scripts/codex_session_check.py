@@ -20,6 +20,10 @@ from pathlib import Path
 from typing import Any
 
 
+NOTEBOOKLM_HARNESS_ID = "bc58b50b-5fc4-4840-9a62-b397d6d3b65a"
+NOTEBOOKLM_LIST_TIMEOUT_SECONDS = 20
+
+
 @dataclass(frozen=True)
 class CommandResult:
     code: int
@@ -39,7 +43,15 @@ def run_git(args: list[str], cwd: Path) -> CommandResult:
     return CommandResult(proc.returncode, proc.stdout.strip(), proc.stderr.strip())
 
 
-def run_command(args: list[str], cwd: Path) -> CommandResult:
+def coerce_completed_output(value: str | bytes | None) -> str:
+    if value is None:
+        return ""
+    if isinstance(value, bytes):
+        return value.decode("utf-8", errors="replace")
+    return value
+
+
+def run_command(args: list[str], cwd: Path, timeout: int | None = None) -> CommandResult:
     try:
         proc = subprocess.run(
             args,
@@ -48,9 +60,16 @@ def run_command(args: list[str], cwd: Path) -> CommandResult:
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             check=False,
+            timeout=timeout,
         )
     except FileNotFoundError as exc:
         return CommandResult(127, "", str(exc))
+    except subprocess.TimeoutExpired as exc:
+        return CommandResult(
+            124,
+            coerce_completed_output(exc.stdout).strip(),
+            coerce_completed_output(exc.stderr).strip(),
+        )
     return CommandResult(proc.returncode, proc.stdout.strip(), proc.stderr.strip())
 
 
@@ -118,6 +137,55 @@ def codex_cli_version(root: Path) -> str:
     return result.stdout or result.stderr or "unknown"
 
 
+def first_nonempty_line(text: str) -> str:
+    for line in text.splitlines():
+        stripped = line.strip()
+        if stripped:
+            return stripped
+    return ""
+
+
+def notebooklm_cli_status(root: Path) -> dict[str, Any]:
+    result = run_command(
+        ["notebooklm", "list"],
+        root,
+        timeout=NOTEBOOKLM_LIST_TIMEOUT_SECONDS,
+    )
+    combined_output = "\n".join(part for part in [result.stdout, result.stderr] if part)
+    harness_visible = (
+        NOTEBOOKLM_HARNESS_ID in combined_output
+        or NOTEBOOKLM_HARNESS_ID.split("-", 1)[0] in combined_output
+    )
+
+    if result.code == 0:
+        status = "ok"
+        message = ""
+    elif result.code == 127:
+        status = "unavailable"
+        message = "notebooklm CLI is unavailable on PATH"
+        harness_visible = None
+    elif result.code == 124:
+        status = "timeout"
+        message = f"notebooklm list timed out after {NOTEBOOKLM_LIST_TIMEOUT_SECONDS}s"
+        harness_visible = None
+    elif "Authentication expired" in combined_output or "notebooklm login" in combined_output:
+        status = "auth_expired"
+        message = "NotebookLM CLI authentication expired; run `notebooklm login`"
+        harness_visible = None
+    else:
+        status = "error"
+        message = first_nonempty_line(combined_output) or "notebooklm list failed"
+        harness_visible = None
+
+    return {
+        "status": status,
+        "exit_code": result.code,
+        "harness_notebook_id": NOTEBOOKLM_HARNESS_ID,
+        "harness_visible": harness_visible,
+        "message": message,
+    }
+
+
 def parse_semver(text: str) -> tuple[int, int, int] | None:
     match = re.search(r"(\d+)\.(\d+)\.(\d+)", text)
     if not match:
@@ -137,6 +205,7 @@ def analyze(cwd: Path) -> dict[str, Any]:
     remote_url = git_text(["remote", "get-url", "origin"], root, default="unknown")
     worktrees = worktree_entries(root)
     codex_version = codex_cli_version(root)
+    notebooklm = notebooklm_cli_status(root)
 
     warnings: list[str] = []
     if dirty_lines:
@@ -161,6 +230,19 @@ def analyze(cwd: Path) -> dict[str, Any]:
         warnings.append(
             "Codex CLI is older than 0.128.0; persisted `/goal` workflows are not ready"
         )
+    notebooklm_status = notebooklm["status"]
+    if notebooklm_status == "auth_expired":
+        warnings.append("NotebookLM CLI authentication expired; run `notebooklm login`")
+    elif notebooklm_status == "unavailable":
+        warnings.append("NotebookLM CLI is unavailable on PATH")
+    elif notebooklm_status == "timeout":
+        warnings.append("NotebookLM list timed out; auth state was not verified")
+    elif notebooklm_status == "error":
+        warnings.append("NotebookLM list failed; auth state was not verified")
+    elif notebooklm_status == "ok" and notebooklm["harness_visible"] is False:
+        warnings.append(
+            f"NotebookLM harness notebook `{NOTEBOOKLM_HARNESS_ID}` was not visible in `notebooklm list`"
+        )
 
     return {
         "root": str(root),
@@ -174,6 +256,7 @@ def analyze(cwd: Path) -> dict[str, Any]:
         "dirty_paths": dirty_lines[:20],
         "remote": remote_url,
         "codex_cli_version": codex_version,
+        "notebooklm": notebooklm,
         "worktrees": worktrees,
         "environment": env_snapshot(),
         "warnings": warnings,
@@ -194,8 +277,18 @@ def render_markdown(report: dict[str, Any]) -> str:
         f"- Remote: `{report['remote']}`",
         f"- Codex CLI: `{report['codex_cli_version']}`",
         "",
-        "## Permission / Sandbox Snapshot",
+        "## NotebookLM CLI",
+        f"- Status: `{report['notebooklm']['status']}`",
+        f"- Harness notebook: `{report['notebooklm']['harness_notebook_id']}`",
+        f"- Harness visible in list: `{report['notebooklm']['harness_visible']}`",
     ]
+    if report["notebooklm"]["message"]:
+        lines.append(f"- Note: {report['notebooklm']['message']}")
+
+    lines.extend([
+        "",
+        "## Permission / Sandbox Snapshot",
+    ])
     for key, value in report["environment"].items():
         lines.append(f"- `{key}`: `{value}`")
 

@@ -17,6 +17,8 @@ Claude Code and Codex changes.
 ## How To Run
 
 ```powershell
+python scripts/codex_session_check.py
+
 python scripts/ai_tool_watch.py `
   --state docs/ai-tool-watch/state.json `
   --report docs/ai-tool-watch/latest-report.md `
@@ -25,6 +27,16 @@ python scripts/ai_tool_watch.py `
 
 Use `--no-save-state` during a manual session-start read if you want a dry
 inspection without changing the baseline.
+
+`codex_session_check.py` runs a soft `notebooklm list` probe and confirms that
+the harness notebook is visible before a NotebookLM-driven session continues.
+If the CLI reports an expired login, run `notebooklm login` locally and rerun
+the check before using `notebooklm ask`.
+
+Never commit or upload NotebookLM browser state. The default
+`%USERPROFILE%\.notebooklm\storage_state.json` file is a local auth artifact,
+not a project secret, and it must stay out of GitHub Actions logs, issues, PR
+comments, and repository files.
 
 ## Automation
 
