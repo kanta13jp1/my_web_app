@@ -25408,3 +25408,29 @@ a9d7b1517 on main
 
 ### Philosophy Alignment
 #3 優しい mentor (= MCP/AuthKit/RFC 周辺の落とし穴を後発開発者に共有) / #5 商品=ユーザー価値 (= MCP セキュリティ堅牢化はユーザーデータ保護に直結) / #6 資本=時間 (= 新規 client onboarding を 1h → 5min 短縮した運用知見を外部還元)
+
+---
+
+## stupefied-jackson worktree 2026-05-02 — WBS Issue Link UI
+
+### 実装
+
+- `lib/pages/project_gantt_page.dart` に `[Issue #NNN]` regex 検出 + `Icons.open_in_new` (青) → `launchUrl` で GitHub Issue を新規タブで開く UI を追加
+- 2 箇所適用: `_TaskRow` (開発WBS タブ / 14px) + `_GanttTimelineTabState` (timeline table / 12px)
+- url_launcher は既に pubspec 済 / WbsTask schema 拡張不要 (title 内 issue 番号は既存 seed の慣習と一致)
+- commit `46a9f3d39` direct main push (owner bypass)
+
+### 副次対応
+
+- Notion Calendar 1.129.0 の uninstaller .exe 消失を手動復旧 (registry + folder + AppData 削除 / プロセス kill は `Get-Process | Where Path -like "*cron-web*"` Path フィルタで)
+- 第三者 YouTube masterclass 動画再アップ要望 → 著作権リスク (Content ID は非公開 upload もスキャン) を説明し中止 → 元動画 URL を WebSearch で発見 (https://www.youtube.com/watch?v=fQgJ7qXlyDE)
+
+### 次回優先
+
+1. WbsTask schema 拡張 (`github_issue_number` column) → Codex#1 ルーティング (Migration + tools-hub:wbs.add_task / list_tasks 拡張)
+2. Issue 番号別の状態 (open/closed) を icon 色で示す (GitHub API 呼び出し or 既存 EF 拡張)
+3. project-gantt 本番 deploy 確認 (deploy-prod.yml が回ったあと UI 動作確認)
+
+### Philosophy Alignment
+
+#1 CEO 感 (= タスク所在を即座に navigation 可能 / プロジェクト掌握の自己効力感) / #5 商品=ユーザー価値 (= 自己使用 dogfood のクリック数削減) / #6 資本=時間 (= title からの目視 issue 番号タイプを排除)
