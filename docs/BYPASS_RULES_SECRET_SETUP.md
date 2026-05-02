@@ -1,45 +1,82 @@
 # BYPASS_RULES Secret Setup
 
-担当: Codex (Claude quota fallback)
+Role: Codex / Claude quota fallback
 
-`BYPASS_RULES` は、GitHub Actions が保護ブランチへの自動 push を行うための repository secret です。2026-04-21 時点で `kanta13jp1/my_web_app` には secret の存在を確認済みです。値は GitHub から読み出せないため、権限不足や期限切れが疑われる場合だけローテーションしてください。
+`BYPASS_RULES` is a GitHub Actions repository secret used by selected automation
+workflows when they need write-capable checkout or push credentials. The secret
+value cannot be read back from GitHub, so normal verification checks only that
+the secret exists and that a workflow using it can complete without `GH006`.
 
-## 確認
+## Verify The Secret Exists
+
+Run this from the repository root:
 
 ```powershell
 .\scripts\set_bypass_rules_secret.ps1 -Repo "kanta13jp1/my_web_app" -VerifyOnly
 ```
 
-期待結果:
+Expected result:
 
 ```text
 OK: BYPASS_RULES exists in kanta13jp1/my_web_app
 ```
 
-## ローテーション
+Codex #1 verified this on 2026-05-02 with `gh secret list`, which showed
+`BYPASS_RULES` configured.
 
-新しい PAT を用意してから実行します。値はプロンプトで入力し、コマンド履歴には残しません。
+## Smoke Test
+
+Use a workflow that checks out with `secrets.BYPASS_RULES || github.token` and
+can safely run manually:
+
+```powershell
+gh workflow run ai-tool-watch.yml --repo kanta13jp1/my_web_app -f comment_mode=never
+gh run list --repo kanta13jp1/my_web_app --workflow "AI Tool Changelog Watch" --limit 3
+```
+
+Codex #1 smoke-tested this on 2026-05-02:
+
+- Workflow: `AI Tool Changelog Watch`
+- Run: `25249810490`
+- Result: success
+- `GH006` protected-branch errors: none observed
+
+## Rotate The Secret
+
+Only rotate the token if workflows start failing with permission errors, expired
+credentials, or `GH006`.
 
 ```powershell
 .\scripts\set_bypass_rules_secret.ps1 -Repo "kanta13jp1/my_web_app"
 ```
 
-PAT の目安:
+Recommended token permissions:
 
-- 対象リポジトリ: `kanta13jp1/my_web_app`
-- Repository permissions: `Contents: Read and write`
-- Workflow 更新が必要な場合: `Workflows: Read and write`
-- 保護ブランチへ直接 push する workflow で使うため、所有者または branch protection bypass 権限を持つアカウントの token を使う
+- Repository: `kanta13jp1/my_web_app`
+- Contents: read and write
+- Workflows: read and write, when workflow file changes are required
+- Branch protection bypass: only when the workflow genuinely needs protected
+  branch writes
 
-## 利用箇所
+The script prompts for the value as a `SecureString`, writes it to a temporary
+file for `gh secret set --body-file`, and deletes the temporary file afterward.
+Do not pass secret values directly on the command line.
 
+## Workflows That Reference BYPASS_RULES
+
+Examples include:
+
+- `.github/workflows/ai-tool-watch.yml`
+- `.github/workflows/ai-tool-changelog-watch.yml`
 - `.github/workflows/ai-university-update.yml`
 - `.github/workflows/blog-publish.yml`
 - `.github/workflows/blog-draft.yml`
 - `.github/workflows/blog-verify.yml`
+- `.github/workflows/daily-report.yml`
 
-## 注意
+## Notes
 
-- secret 値を docs、migration、issue、チャットに貼らない。
-- `gh secret set --body "..."` のような平文引数は避ける。
-- ローテーション後は、対象 workflow の次回実行で GH006 が再発しないか確認する。
+- Never paste the secret value into docs, migrations, issues, or chat.
+- Treat GitHub as the source of truth for whether the secret exists.
+- Treat a successful workflow smoke test as the practical proof that current
+  automation can use the credential path.
