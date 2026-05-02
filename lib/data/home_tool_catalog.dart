@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../pages/abstinence_guard_page.dart';
 import '../pages/admin_analytics_page.dart';
 import '../pages/agent_org_page.dart';
+import '../pages/agent_tool_approval_page.dart';
 import '../pages/ai_company_builder_page.dart';
 import '../pages/ai_secretary_page.dart';
 import '../pages/my_skills_page.dart';
@@ -292,6 +293,8 @@ String? _homeToolRoutePathForId(String id) {
       return '/real-world-danshari';
     case 'agent-org':
       return '/agents';
+    case 'agent-tool-approvals':
+      return '/agent-tool-approvals';
     case 'admin-analytics':
       return '/admin';
     case 'edge-function-status':
@@ -1022,6 +1025,23 @@ List<HomeToolEntry> buildHomeToolCatalog({
       color: const Color(0xFFFF6B35),
       keywords: const <String>['管理者', '分析', 'dashboard'],
       onOpen: (context) => _pushPage(context, const AdminAnalyticsPage()),
+    ),
+    HomeToolEntry(
+      id: 'agent-tool-approvals',
+      sectionId: 'growth',
+      title: 'AI役員 承認ゲート',
+      subtitle: '高リスクなAIツール実行をCEOが承認・拒否する',
+      icon: Icons.verified_user_outlined,
+      color: const Color(0xFF0D9488),
+      keywords: const <String>[
+        'AI役員',
+        '承認',
+        '監査',
+        'approval',
+        'scope',
+        'tool',
+      ],
+      onOpen: (context) => _pushPage(context, AgentToolApprovalPage()),
     ),
     HomeToolEntry(
       id: 'edge-function-status',

@@ -10,6 +10,7 @@ import 'package:my_web_app/data/home_tool_catalog.dart';
 import 'package:my_web_app/models/site_guide_catalog_item.dart';
 import 'package:my_web_app/pages/abstinence_guard_page.dart';
 import 'package:my_web_app/pages/agent_org_page.dart';
+import 'package:my_web_app/pages/agent_tool_approval_page.dart';
 import 'package:my_web_app/pages/ai_company_builder_page.dart';
 import 'package:my_web_app/pages/ai_agent_page.dart';
 import 'package:my_web_app/pages/behavior_review_page.dart';
@@ -492,6 +493,10 @@ class _MyAppState extends State<MyApp> {
             return MaterialPageRoute(builder: (_) => const HomePage());
           case '/agents':
             return MaterialPageRoute(builder: (_) => AgentOrgPage());
+          case '/agent-tool-approvals':
+            return MaterialPageRoute(
+              builder: (_) => AgentToolApprovalPage(),
+            );
           case '/ai-company-builder':
             return MaterialPageRoute(
               builder: (_) => const AiCompanyBuilderPage(),
