@@ -96,4 +96,53 @@ void main() {
     expect(find.text('取り戻した時間 15分'), findsOneWidget);
     expect(find.text('コンビニに寄らなかった'), findsOneWidget);
   });
+
+  testWidgets('AbstinenceGuardPage tracks self contact from one tap',
+      (WidgetTester tester) async {
+    await tester.binding.setSurfaceSize(const Size(1200, 2200));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: AbstinenceGuardPage(
+          nowProvider: () => DateTime(2026, 3, 21, 9),
+          initialDate: DateTime(2026, 3, 21),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byKey(const Key('abstinence_guard_self_contact_panel')),
+      findsOneWidget,
+    );
+    expect(find.text('今日 0回'), findsOneWidget);
+
+    final logButton = find.byKey(
+      const Key('abstinence_guard_self_contact_log'),
+    );
+    await tester.ensureVisible(logButton);
+    await tester.tap(find.text('髪をさわった +1'));
+    await tester.pump(const Duration(milliseconds: 100));
+    await tester.pumpAndSettle();
+
+    expect(find.text('今日 1回'), findsOneWidget);
+    expect(
+      find.byKey(const Key('abstinence_guard_self_contact_chart')),
+      findsOneWidget,
+    );
+
+    await tester.ensureVisible(logButton);
+    await tester.tap(find.text('髪をさわった +1'));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(logButton);
+    await tester.tap(find.text('髪をさわった +1'));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byKey(const Key('abstinence_guard_self_contact_alert')),
+      findsOneWidget,
+    );
+    expect(find.text('代替アクションへ切替'), findsOneWidget);
+  });
 }
