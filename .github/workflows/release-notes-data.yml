@@ -1,0 +1,64 @@
+name: Release Notes Data
+
+on:
+  pull_request:
+    paths:
+      - "scripts/generate_release_notes.py"
+      - "test/scripts/test_generate_release_notes.py"
+      - "web/release-notes.json"
+      - "pubspec.yaml"
+      - "docs/ai-tool-watch/latest-report.json"
+      - ".github/workflows/release-notes-data.yml"
+  push:
+    branches: [main]
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  release-notes-data:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Test release notes generator
+        run: |
+          python -m py_compile scripts/generate_release_notes.py
+          PYTHONPATH=. python test/scripts/test_generate_release_notes.py
+
+      - name: Check committed Release Notes JSON on PR
+        if: github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python scripts/generate_release_notes.py \
+            --repo "${{ github.repository }}" \
+            --output web/release-notes.json \
+            --check
+
+      - name: Detect Release Notes JSON drift on main or tag
+        if: github.event_name != 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python scripts/generate_release_notes.py \
+            --repo "${{ github.repository }}" \
+            --output /tmp/release-notes.generated.json
+          if ! diff -u web/release-notes.json /tmp/release-notes.generated.json; then
+            echo "::warning::web/release-notes.json differs from generated release notes data."
+            {
+              echo "## Release Notes data drift"
+              echo
+              echo "Run \`python scripts/generate_release_notes.py --repo ${{ github.repository }} --output web/release-notes.json\` and commit the result."
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi

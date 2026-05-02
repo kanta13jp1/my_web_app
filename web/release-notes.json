@@ -1,0 +1,444 @@
+{
+  "current": {
+    "build": "1",
+    "category": "release",
+    "date": "2026-05-02",
+    "links": [
+      {
+        "title": "GitHub Release v1.0.0",
+        "type": "release",
+        "url": "https://github.com/kanta13jp1/my_web_app/releases/tag/v1.0.0"
+      }
+    ],
+    "summary": "Release 1.0.0",
+    "version": "1.0.0"
+  },
+  "generatedAt": "2026-05-02T00:00:00Z",
+  "schemaVersion": 1,
+  "source": {
+    "aiToolWatch": "docs/ai-tool-watch/latest-report.json",
+    "pubspec": "pubspec.yaml",
+    "repo": "kanta13jp1/my_web_app"
+  },
+  "versions": [
+    {
+      "build": "1",
+      "category": "release",
+      "changeCategories": [
+        "automation",
+        "docs",
+        "feature",
+        "fix"
+      ],
+      "changes": [
+        {
+          "category": "automation",
+          "id": "pr-1693",
+          "links": [
+            {
+              "title": "PR #1693",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/1693"
+            }
+          ],
+          "mergedAt": "2026-05-02T22:06:32Z",
+          "summary": "#1693 [codex] Preserve WBS stale repair sync aggregates"
+        },
+        {
+          "category": "feature",
+          "id": "pr-1691",
+          "links": [
+            {
+              "title": "PR #1691",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/1691"
+            }
+          ],
+          "mergedAt": "2026-05-02T21:56:56Z",
+          "summary": "#1691 [codex] Refresh NotebookLM intake routing snapshot"
+        },
+        {
+          "category": "feature",
+          "id": "pr-1690",
+          "links": [
+            {
+              "title": "PR #1690",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/1690"
+            }
+          ],
+          "mergedAt": "2026-05-02T21:10:42Z",
+          "summary": "#1690 [codex] Route PR review feedback into repair queues"
+        },
+        {
+          "category": "automation",
+          "id": "pr-1689",
+          "links": [
+            {
+              "title": "PR #1689",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/1689"
+            }
+          ],
+          "mergedAt": "2026-05-02T21:02:07Z",
+          "summary": "#1689 [codex] Add manual WBS progress update workflow"
+        },
+        {
+          "category": "fix",
+          "id": "pr-1688",
+          "links": [
+            {
+              "title": "PR #1688",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/1688"
+            }
+          ],
+          "mergedAt": "2026-05-02T20:48:11Z",
+          "summary": "#1688 fix: repair stale closed Issue WBS sync"
+        },
+        {
+          "category": "automation",
+          "id": "pr-1684",
+          "links": [
+            {
+              "title": "PR #1684",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/1684"
+            }
+          ],
+          "mergedAt": "2026-05-02T20:45:08Z",
+          "summary": "#1684 [codex] Avoid GraphQL timeout in WBS issue sync"
+        },
+        {
+          "category": "feature",
+          "id": "pr-1686",
+          "links": [
+            {
+              "title": "PR #1686",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/1686"
+            }
+          ],
+          "mergedAt": "2026-05-02T19:49:16Z",
+          "summary": "#1686 feat: add NotebookLM intake gate"
+        },
+        {
+          "category": "feature",
+          "id": "pr-1681",
+          "links": [
+            {
+              "title": "PR #1681",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/1681"
+            }
+          ],
+          "mergedAt": "2026-05-02T19:31:32Z",
+          "summary": "#1681 feat(notebooklm): add intake diff gate"
+        },
+        {
+          "category": "feature",
+          "id": "pr-1678",
+          "links": [
+            {
+              "title": "PR #1678",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/1678"
+            }
+          ],
+          "mergedAt": "2026-05-02T19:21:29Z",
+          "summary": "#1678 feat: automate tools-hub MCP AuthKit smoke"
+        },
+        {
+          "category": "feature",
+          "id": "pr-1676",
+          "links": [
+            {
+              "title": "PR #1676",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/1676"
+            }
+          ],
+          "mergedAt": "2026-05-02T18:48:57Z",
+          "summary": "#1676 feat: add offline local RAG runtime harness"
+        },
+        {
+          "category": "fix",
+          "id": "pr-1672",
+          "links": [
+            {
+              "title": "PR #1672",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/1672"
+            }
+          ],
+          "mergedAt": "2026-05-02T18:20:01Z",
+          "summary": "#1672 fix: block ai-hub providers in offline secure mode"
+        },
+        {
+          "category": "feature",
+          "id": "pr-1663",
+          "links": [
+            {
+              "title": "PR #1663",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/1663"
+            }
+          ],
+          "mergedAt": "2026-05-02T17:14:02Z",
+          "summary": "#1663 feat: add offline secure mode settings"
+        },
+        {
+          "category": "fix",
+          "id": "pr-1651",
+          "links": [
+            {
+              "title": "PR #1651",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/1651"
+            }
+          ],
+          "mergedAt": "2026-05-02T16:54:34Z",
+          "summary": "#1651 fix(wbs): filter closed GitHub issue mirrors"
+        },
+        {
+          "category": "feature",
+          "id": "pr-1659",
+          "links": [
+            {
+              "title": "PR #1659",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/1659"
+            }
+          ],
+          "mergedAt": "2026-05-02T16:36:59Z",
+          "summary": "#1659 chore: check Claude remote control at session start"
+        },
+        {
+          "category": "feature",
+          "id": "pr-1649",
+          "links": [
+            {
+              "title": "PR #1649",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/1649"
+            }
+          ],
+          "mergedAt": "2026-05-02T15:44:14Z",
+          "summary": "#1649 feat: add thought stuck support sheet"
+        },
+        {
+          "category": "feature",
+          "id": "pr-1616",
+          "links": [
+            {
+              "title": "PR #1616",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/1616"
+            }
+          ],
+          "mergedAt": "2026-05-02T15:33:15Z",
+          "summary": "#1616 [codex] Add time waste refresh action logging"
+        },
+        {
+          "category": "feature",
+          "id": "pr-1639",
+          "links": [
+            {
+              "title": "PR #1639",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/1639"
+            }
+          ],
+          "mergedAt": "2026-05-02T15:17:07Z",
+          "summary": "#1639 feat: add self contact tracking"
+        },
+        {
+          "category": "feature",
+          "id": "pr-1622",
+          "links": [
+            {
+              "title": "PR #1622",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/1622"
+            }
+          ],
+          "mergedAt": "2026-05-02T15:15:20Z",
+          "summary": "#1622 [codex] Add Notion WBS preflight guard"
+        },
+        {
+          "category": "feature",
+          "id": "pr-1631",
+          "links": [
+            {
+              "title": "PR #1631",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/1631"
+            }
+          ],
+          "mergedAt": "2026-05-02T13:21:54Z",
+          "summary": "#1631 feat: add AI journal feedback loop"
+        },
+        {
+          "category": "feature",
+          "id": "pr-1630",
+          "links": [
+            {
+              "title": "PR #1630",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/1630"
+            }
+          ],
+          "mergedAt": "2026-05-02T12:09:36Z",
+          "summary": "#1630 feat: route memory search from query reports"
+        },
+        {
+          "category": "fix",
+          "id": "pr-1617",
+          "links": [
+            {
+              "title": "PR #1617",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/1617"
+            }
+          ],
+          "mergedAt": "2026-05-02T11:26:50Z",
+          "summary": "#1617 fix(notion): normalize mirror sync ids"
+        },
+        {
+          "category": "fix",
+          "id": "pr-1615",
+          "links": [
+            {
+              "title": "PR #1615",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/1615"
+            }
+          ],
+          "mergedAt": "2026-05-02T11:13:35Z",
+          "summary": "#1615 fix(wbs): close BYPASS_RULES after manual review"
+        },
+        {
+          "category": "docs",
+          "id": "pr-1613",
+          "links": [
+            {
+              "title": "PR #1613",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/1613"
+            }
+          ],
+          "mergedAt": "2026-05-02T10:46:46Z",
+          "summary": "#1613 docs: close out BYPASS_RULES secret task"
+        },
+        {
+          "category": "fix",
+          "id": "pr-1604",
+          "links": [
+            {
+              "title": "PR #1604",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/1604"
+            }
+          ],
+          "mergedAt": "2026-05-02T09:58:57Z",
+          "summary": "#1604 fix(wbs): repair overview view runtime objects"
+        },
+        {
+          "category": "automation",
+          "id": "pr-1588",
+          "links": [
+            {
+              "title": "PR #1588",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/1588"
+            }
+          ],
+          "mergedAt": "2026-05-02T09:40:30Z",
+          "summary": "#1588 Guard Notion WBS schema sync"
+        },
+        {
+          "category": "feature",
+          "id": "pr-1546",
+          "links": [
+            {
+              "title": "PR #1546",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/1546"
+            }
+          ],
+          "mergedAt": "2026-05-02T09:03:53Z",
+          "summary": "#1546 auto: issue #1537 [追加要望] AI大学動画からバイラルショート・動的字幕・SNS投稿案を自動生成"
+        },
+        {
+          "category": "fix",
+          "id": "pr-1555",
+          "links": [
+            {
+              "title": "PR #1555",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/1555"
+            }
+          ],
+          "mergedAt": "2026-05-02T07:52:36Z",
+          "summary": "#1555 fix: resolve migration timestamp collision"
+        },
+        {
+          "category": "feature",
+          "id": "pr-1547",
+          "links": [
+            {
+              "title": "PR #1547",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/1547"
+            }
+          ],
+          "mergedAt": "2026-05-02T07:16:55Z",
+          "summary": "#1547 auto: issue #793 [追加要望] Claude Apps/MCPからmy_web_appを直接操作できる連携基盤"
+        },
+        {
+          "category": "docs",
+          "id": "pr-1551",
+          "links": [
+            {
+              "title": "PR #1551",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/1551"
+            }
+          ],
+          "mergedAt": "2026-05-02T05:34:26Z",
+          "summary": "#1551 docs: scheduled-daily 2026-05-02 — MCP AuthKit metadata blog drafts"
+        },
+        {
+          "category": "feature",
+          "id": "pr-1534",
+          "links": [
+            {
+              "title": "PR #1534",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/1534"
+            }
+          ],
+          "mergedAt": "2026-05-01T15:44:05Z",
+          "summary": "#1534 [codex] add minimal E2E issue gate"
+        }
+      ],
+      "date": "2026-05-02",
+      "extensions": {
+        "aiToolWatch": {
+          "changedSourceCount": 1,
+          "signalCount": 0,
+          "source": "docs/ai-tool-watch/latest-report.json"
+        }
+      },
+      "links": [
+        {
+          "title": "GitHub Release v1.0.0",
+          "type": "release",
+          "url": "https://github.com/kanta13jp1/my_web_app/releases/tag/v1.0.0"
+        }
+      ],
+      "summary": "Release 1.0.0",
+      "version": "1.0.0"
+    }
+  ]
+}
