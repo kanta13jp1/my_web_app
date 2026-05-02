@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../services/ai_hub_chat_service.dart';
+import 'offline_secure_mode_settings_service.dart';
 
 typedef EdgeLlmPlaygroundInvoker = AiHubChatInvoker;
 
@@ -42,12 +43,16 @@ class EdgeLlmPlaygroundResponse {
 class EdgeLlmPlaygroundService {
   final SupabaseClient? _supabase;
   final EdgeLlmPlaygroundInvoker? _invoker;
+  final OfflineSecureModeSettingsService _offlineSettingsService;
 
   const EdgeLlmPlaygroundService({
     SupabaseClient? supabase,
     EdgeLlmPlaygroundInvoker? invoker,
+    OfflineSecureModeSettingsService offlineSettingsService =
+        const OfflineSecureModeSettingsService(),
   })  : _supabase = supabase,
-        _invoker = invoker;
+        _invoker = invoker,
+        _offlineSettingsService = offlineSettingsService;
 
   Future<EdgeLlmPlaygroundResponse> invoke({
     required String userPrompt,
@@ -91,7 +96,7 @@ class EdgeLlmPlaygroundService {
       body['context_data'] = _parseContextDraft(normalizedContextDraft);
     }
 
-    final data = await _invoke(body);
+    final data = await _invoke(await _withOfflinePolicy(body));
     if (data['success'] != true) {
       final detail =
           (data['message'] ?? data['detail'] ?? 'LLM invocation failed')
@@ -154,6 +159,16 @@ class EdgeLlmPlaygroundService {
     return <String, dynamic>{
       'success': false,
       'message': data?.toString() ?? 'empty response',
+    };
+  }
+
+  Future<Map<String, dynamic>> _withOfflinePolicy(
+    Map<String, dynamic> body,
+  ) async {
+    final settings = await _offlineSettingsService.loadSettingsOrDefaults();
+    return <String, dynamic>{
+      ...body,
+      ...settings.toAiHubPolicyPayload(),
     };
   }
 

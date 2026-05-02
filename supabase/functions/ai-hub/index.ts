@@ -23,6 +23,11 @@ import {
   checkBudget,
   recordSpend,
 } from "../_shared/task_budget.ts";
+import {
+  buildOfflineBlockedResponseBody,
+  parseOfflineSecureModePolicy,
+  shouldBlockExternalProviderCall,
+} from "../_shared/offline_secure_mode_guard.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -2177,7 +2182,8 @@ function buildUserDataFineTuneReadiness(
       approved_judgments: approvedJudgments,
       review_judgments: reviewJudgments,
     },
-    kgi: "Use first-party product data to improve AI answer quality without unsafe raw-data fine-tuning.",
+    kgi:
+      "Use first-party product data to improve AI answer quality without unsafe raw-data fine-tuning.",
     csf: [
       "Consent-aware first-party signal collection",
       "De-identification before export",
@@ -2230,7 +2236,11 @@ function clampPercent(value: number): number {
   return Math.max(0, Math.min(100, Math.round(value)));
 }
 
-function textLengthScore(text: string, minGood: number, maxGood: number): number {
+function textLengthScore(
+  text: string,
+  minGood: number,
+  maxGood: number,
+): number {
   const length = text.trim().length;
   if (length <= 0) return 20;
   if (length >= minGood && length <= maxGood) return 100;
@@ -2241,10 +2251,12 @@ function textLengthScore(text: string, minGood: number, maxGood: number): number
 
 function keywordScore(text: string, keywords: string[], base = 45): number {
   const normalized = text.toLowerCase();
-  const hits = keywords.filter((keyword) =>
-    normalized.includes(keyword.toLowerCase())
-  ).length;
-  return clampPercent(base + hits * Math.floor((100 - base) / Math.max(1, keywords.length)));
+  const hits =
+    keywords.filter((keyword) => normalized.includes(keyword.toLowerCase()))
+      .length;
+  return clampPercent(
+    base + hits * Math.floor((100 - base) / Math.max(1, keywords.length)),
+  );
 }
 
 function normalizeDailyJudgmentPayload(
@@ -2330,7 +2342,7 @@ function buildDailyJudgmentQualityEvaluation(
         (focusArea ? 25 : 0) +
           (asNumber(judgment.score, -1) >= 0 ? 25 : 0) +
           (advice.length > 0 ? 20 : 0) +
-          (kgiText || csfText !== "\"\"" || kpiText !== "\"\"" ? 30 : 0),
+          (kgiText || csfText !== '""' || kpiText !== '""' ? 30 : 0),
       ),
       weight: 25,
       reason: "Checks whether score, focus, and decision context are present.",
@@ -3708,11 +3720,17 @@ serve(async (req: Request) => {
         if (error) return json({ error: error.message }, 500);
         const cards = (data ?? []) as Array<Record<string, unknown>>;
         const totalCards = cards.length;
-        const dueToday = cards.filter((c) => String(c.due_date ?? "") <= todayIso).length;
+        const dueToday = cards.filter((c) =>
+          String(c.due_date ?? "") <= todayIso
+        ).length;
         const totalReps = cards.reduce((s, c) => s + (Number(c.reps) || 0), 0);
-        const totalLapses = cards.reduce((s, c) => s + (Number(c.lapses) || 0), 0);
+        const totalLapses = cards.reduce(
+          (s, c) => s + (Number(c.lapses) || 0),
+          0,
+        );
         const avgStability = totalCards > 0
-          ? cards.reduce((s, c) => s + (Number(c.stability) || 1), 0) / totalCards
+          ? cards.reduce((s, c) => s + (Number(c.stability) || 1), 0) /
+            totalCards
           : 0;
         const retentionRate = totalReps > 0
           ? Math.round((1 - totalLapses / totalReps) * 100)
@@ -3890,11 +3908,21 @@ serve(async (req: Request) => {
         // 対応: OpenAI互換 8社 (openai/xai/deepseek/groq/sambanova/openrouter/fireworks/together/arcee_ai)
         //       + 独自API 3社 (mistral/perplexity/cohere) + anthropic/google (MAGI互換)
         const providerId = String(body.provider ?? "");
+        const offlinePolicy = parseOfflineSecureModePolicy(body);
         const messages = Array.isArray(body.messages) ? body.messages : null;
         const userMsg = String(body.message ?? "");
         if (!providerId) return json({ error: "provider required" }, 400);
         if (!messages && !userMsg) {
           return json({ error: "messages or message required" }, 400);
+        }
+        if (shouldBlockExternalProviderCall(offlinePolicy)) {
+          return json(
+            buildOfflineBlockedResponseBody(offlinePolicy, {
+              action: "provider.chat",
+              provider: providerId,
+            }),
+            409,
+          );
         }
         const finalMessages = messages ?? [{ role: "user", content: userMsg }];
 
@@ -4003,6 +4031,21 @@ serve(async (req: Request) => {
 
       case "provider.chat_auto": {
         const effortSelection = await selectEffort("provider.chat_auto", body);
+        const offlinePolicy = parseOfflineSecureModePolicy(body);
+        const requestedTier = body.tier as Tier | undefined;
+        const messages = Array.isArray(body.messages) ? body.messages : null;
+        const userMsg = String(body.message ?? "");
+        if (!messages && !userMsg) {
+          return json({ error: "messages or message required" }, 400);
+        }
+        if (shouldBlockExternalProviderCall(offlinePolicy)) {
+          return json(
+            buildOfflineBlockedResponseBody(offlinePolicy, {
+              action: "provider.chat_auto",
+            }),
+            409,
+          );
+        }
         const budget = await checkBudget("ef", "ai-hub");
         if (!budget.ok) {
           return json({
@@ -4013,15 +4056,9 @@ serve(async (req: Request) => {
             exceeded_scope_id: budget.exceeded_scope_id,
           }, 429);
         }
-
-        const requestedTier = body.tier as Tier | undefined;
-        const messages = Array.isArray(body.messages) ? body.messages : null;
-        const userMsg = String(body.message ?? "");
-        if (!messages && !userMsg) {
-          return json({ error: "messages or message required" }, 400);
-        }
         const finalMessages = messages ?? [{ role: "user", content: userMsg }];
-        const routedTier = requestedTier ?? effortToTier(effortSelection.effort);
+        const routedTier = requestedTier ??
+          effortToTier(effortSelection.effort);
         const startTierIndex = TIER_ORDER.indexOf(routedTier);
         if (startTierIndex === -1) return json({ error: "invalid tier" }, 400);
 
@@ -4131,6 +4168,25 @@ serve(async (req: Request) => {
 
       case "edge_llm.invoke": {
         const effortSelection = await selectEffort("edge_llm.invoke", body);
+        const offlinePolicy = parseOfflineSecureModePolicy(body);
+        const requestedTier = body.tier as Tier | undefined;
+        const providerId = asString(body.provider) || undefined;
+        const systemPrompt = asString(body.system_prompt);
+        const userPrompt = asString(body.user_prompt) ||
+          asString(body.prompt) ||
+          asString(body.message);
+        if (!userPrompt) {
+          return json({ error: "user_prompt required" }, 400);
+        }
+        if (shouldBlockExternalProviderCall(offlinePolicy)) {
+          return json(
+            buildOfflineBlockedResponseBody(offlinePolicy, {
+              action: "edge_llm.invoke",
+              provider: providerId,
+            }),
+            409,
+          );
+        }
         const budget = await checkBudget("ef", "ai-hub");
         if (!budget.ok) {
           return json({
@@ -4140,16 +4196,6 @@ serve(async (req: Request) => {
             exceeded_scope: budget.exceeded_scope,
             exceeded_scope_id: budget.exceeded_scope_id,
           }, 429);
-        }
-
-        const requestedTier = body.tier as Tier | undefined;
-        const providerId = asString(body.provider) || undefined;
-        const systemPrompt = asString(body.system_prompt);
-        const userPrompt = asString(body.user_prompt) ||
-          asString(body.prompt) ||
-          asString(body.message);
-        if (!userPrompt) {
-          return json({ error: "user_prompt required" }, 400);
         }
 
         const responseFormat = asString(body.response_format) === "json"
@@ -4256,14 +4302,16 @@ serve(async (req: Request) => {
               }
             }
             if (!resultText) {
-              failureDetail =
-                `${result.error ?? "quota exceeded"} (all fallbacks failed)`;
+              failureDetail = `${
+                result.error ?? "quota exceeded"
+              } (all fallbacks failed)`;
             }
           } else {
             failureDetail = result.error ?? "provider failed";
           }
         } else {
-          const routedTier = requestedTier ?? effortToTier(effortSelection.effort);
+          const routedTier = requestedTier ??
+            effortToTier(effortSelection.effort);
           const startTierIndex = TIER_ORDER.indexOf(routedTier);
           if (startTierIndex === -1) {
             return json({ error: "invalid tier" }, 400);

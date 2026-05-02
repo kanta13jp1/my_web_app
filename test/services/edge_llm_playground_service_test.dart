@@ -1,7 +1,13 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/services/edge_llm_playground_service.dart';
+import 'package:my_web_app/services/offline_secure_mode_settings_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
+  setUp(() {
+    SharedPreferences.setMockInitialValues(<String, Object>{});
+  });
+
   test('invoke sends edge_llm action with parsed context JSON', () async {
     Map<String, dynamic>? capturedBody;
     final service = EdgeLlmPlaygroundService(
@@ -35,6 +41,7 @@ void main() {
 
     expect(capturedBody?['action'], 'edge_llm.invoke');
     expect(capturedBody?['tier'], 'budget');
+    expect(capturedBody?['offline_secure_mode'], false);
     expect(capturedBody?['context_data'], <String, dynamic>{'goal': '習慣化'});
     expect(response.provider, 'google');
     expect(response.parsedJson, <String, dynamic>{'status': 'ok'});
@@ -61,5 +68,34 @@ void main() {
 
     expect(capturedBody?['context_data'], 'これは plain text context です');
     expect(capturedBody?.containsKey('provider'), isFalse);
+  });
+
+  test('invoke includes offline secure mode policy payload', () async {
+    const offlineSettings = OfflineSecureModeSettingsService();
+    await offlineSettings.saveSettings(
+      const OfflineSecureModeSettings(
+        enabled: true,
+        blockExternalApiWhenEnabled: true,
+      ),
+    );
+    Map<String, dynamic>? capturedBody;
+    final service = EdgeLlmPlaygroundService(
+      offlineSettingsService: offlineSettings,
+      invoker: (body) async {
+        capturedBody = body;
+        return <String, dynamic>{
+          'success': true,
+          'provider': 'openai',
+          'text': 'offline guard metadata attached',
+        };
+      },
+    );
+
+    await service.invoke(userPrompt: 'hello');
+
+    expect(capturedBody?['action'], 'edge_llm.invoke');
+    expect(capturedBody?['offline_secure_mode'], true);
+    expect(capturedBody?['offline_external_api_blocked'], true);
+    expect(capturedBody?['offline_runtime_configured'], false);
   });
 }

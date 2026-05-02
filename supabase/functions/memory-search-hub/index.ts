@@ -202,8 +202,8 @@ async function memoryQueryRoute(body: Body) {
     action: route.action,
     original_query: query,
     search_query: route.searchQuery,
-    used_reformulated_query:
-      route.action === "search" && route.searchQuery !== query,
+    used_reformulated_query: route.action === "search" &&
+      route.searchQuery !== query,
     feedback: route.feedback,
     parsed_report: {
       state: route.report.state,
