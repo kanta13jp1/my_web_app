@@ -1,0 +1,104 @@
+name: PR Review Routing
+
+on:
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: "Pull request number to inspect"
+        required: true
+        type: string
+      comment_on_pr:
+        description: "Post the routing report back to the PR"
+        required: true
+        default: "true"
+        type: choice
+        options:
+          - "true"
+          - "false"
+      handoff_issue_number:
+        description: "Optional Issue number that should receive the same handoff report"
+        required: false
+        type: string
+      validation_summary:
+        description: "Optional validation commands or Actions evidence to include in the report"
+        required: false
+        type: string
+
+permissions:
+  contents: read
+  pull-requests: read
+  issues: write
+
+concurrency:
+  group: pr-review-routing-${{ inputs.pr_number }}
+  cancel-in-progress: false
+
+jobs:
+  route:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      GH_TOKEN: ${{ github.token }}
+      PR_NUMBER: ${{ inputs.pr_number }}
+      COMMENT_ON_PR: ${{ inputs.comment_on_pr }}
+      HANDOFF_ISSUE_NUMBER: ${{ inputs.handoff_issue_number }}
+      VALIDATION_SUMMARY: ${{ inputs.validation_summary }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Validate inputs
+        run: |
+          set -euo pipefail
+          if ! [[ "$PR_NUMBER" =~ ^[0-9]+$ ]]; then
+            echo "::error::pr_number must be numeric"
+            exit 1
+          fi
+          if [ -n "${HANDOFF_ISSUE_NUMBER:-}" ] && ! [[ "$HANDOFF_ISSUE_NUMBER" =~ ^[0-9]+$ ]]; then
+            echo "::error::handoff_issue_number must be numeric when provided"
+            exit 1
+          fi
+
+      - name: Route review feedback
+        run: |
+          set -euo pipefail
+          python scripts/pr_review_router.py \
+            --repo "$GITHUB_REPOSITORY" \
+            --pr-number "$PR_NUMBER" \
+            --validation-summary "$VALIDATION_SUMMARY" \
+            --output-md /tmp/pr-review-routing.md \
+            --output-json /tmp/pr-review-routing.json
+
+      - name: Write job summary
+        if: always()
+        run: |
+          set -euo pipefail
+          if [ -f /tmp/pr-review-routing.md ]; then
+            cat /tmp/pr-review-routing.md >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "PR review routing did not produce a report." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Upload routing artifacts
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: pr-review-routing-${{ inputs.pr_number }}
+          path: |
+            /tmp/pr-review-routing.md
+            /tmp/pr-review-routing.json
+          if-no-files-found: ignore
+
+      - name: Comment on PR
+        if: success() && inputs.comment_on_pr == 'true'
+        run: |
+          set -euo pipefail
+          gh pr comment "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --body-file /tmp/pr-review-routing.md
+
+      - name: Comment on handoff Issue
+        if: success() && inputs.handoff_issue_number != ''
+        run: |
+          set -euo pipefail
+          gh issue comment "$HANDOFF_ISSUE_NUMBER" --repo "$GITHUB_REPOSITORY" --body-file /tmp/pr-review-routing.md
