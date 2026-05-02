@@ -20,17 +20,95 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
+      - name: Install REST issue fetcher
+        run: |
+          cat > /tmp/fetch-github-issues.py <<'PY'
+          import json
+          import os
+          import sys
+          import time
+          import urllib.error
+          import urllib.parse
+          import urllib.request
+
+          output_path = sys.argv[1]
+          repo = os.environ["REPO"]
+          token = os.environ["GH_TOKEN"]
+          base_url = f"https://api.github.com/repos/{repo}/issues"
+          fields = {
+              "state": "all",
+              "per_page": "100",
+              "sort": "updated",
+              "direction": "desc",
+          }
+          headers = {
+              "Accept": "application/vnd.github+json",
+              "Authorization": f"Bearer {token}",
+              "X-GitHub-Api-Version": "2022-11-28",
+              "User-Agent": "my-web-app-wbs-sync",
+          }
+
+          def fetch_page(page):
+              query = urllib.parse.urlencode({**fields, "page": str(page)})
+              request = urllib.request.Request(f"{base_url}?{query}", headers=headers)
+              for attempt in range(1, 4):
+                  try:
+                      with urllib.request.urlopen(request, timeout=30) as response:
+                          return json.loads(response.read().decode("utf-8"))
+                  except urllib.error.HTTPError as exc:
+                      if exc.code not in {502, 503, 504} or attempt == 3:
+                          raise
+                      print(
+                          f"::warning::GitHub REST issues page {page} returned HTTP {exc.code}; retrying",
+                          flush=True,
+                      )
+                  except urllib.error.URLError as exc:
+                      if attempt == 3:
+                          raise
+                      print(
+                          f"::warning::GitHub REST issues page {page} failed: {exc}; retrying",
+                          flush=True,
+                      )
+                  time.sleep(2 * attempt)
+
+          issues = []
+          page = 1
+          while True:
+              items = fetch_page(page)
+              issue_items = [item for item in items if "pull_request" not in item]
+              for item in issue_items:
+                  issues.append(
+                      {
+                          "number": item["number"],
+                          "title": item.get("title") or "",
+                          "url": item.get("html_url") or item.get("url") or "",
+                          "state": str(item.get("state") or "").upper(),
+                          "labels": [{"name": label.get("name", "")} for label in item.get("labels", [])],
+                          "author": {"login": (item.get("user") or {}).get("login", "")},
+                          "createdAt": item.get("created_at") or "",
+                          "updatedAt": item.get("updated_at") or "",
+                      }
+                  )
+              print(
+                  f"Fetched GitHub issues page {page}: {len(issue_items)} issues "
+                  f"({len(items) - len(issue_items)} PRs skipped)",
+                  flush=True,
+              )
+              if len(items) < 100:
+                  break
+              page += 1
+
+          with open(output_path, "w", encoding="utf-8") as fh:
+              json.dump(issues, fh, ensure_ascii=False)
+          print(f"Wrote {len(issues)} GitHub issues to {output_path}")
+          PY
+
       - name: Fetch GitHub issues
         env:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
         run: |
-          gh issue list \
-            --repo "$REPO" \
-            --state all \
-            --limit 5000 \
-            --json number,title,url,state,labels,author,createdAt,updatedAt \
-            > /tmp/issues.json
+          python3 /tmp/fetch-github-issues.py /tmp/issues.json
 
           python3 - <<'PY'
           import json
@@ -38,8 +116,6 @@ jobs:
           with open("/tmp/issues.json", encoding="utf-8") as fh:
               issues = json.load(fh)
           print(f"Fetched {len(issues)} GitHub issues for WBS sync")
-          if len(issues) >= 5000:
-              print("::warning::GitHub issue fetch reached the 5000 item cap; WBS sync may still be incomplete.")
           PY
 
       - name: Close duplicate GitHub issues
@@ -86,12 +162,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
         run: |
-          gh issue list \
-            --repo "$REPO" \
-            --state all \
-            --limit 5000 \
-            --json number,title,url,state,labels,author,createdAt,updatedAt \
-            > /tmp/issues.json
+          python3 /tmp/fetch-github-issues.py /tmp/issues.json
 
           python3 - <<'PY'
           import json
@@ -99,8 +170,6 @@ jobs:
           with open("/tmp/issues.json", encoding="utf-8") as fh:
               issues = json.load(fh)
           print(f"Refetched {len(issues)} GitHub issues after dedupe")
-          if len(issues) >= 5000:
-              print("::warning::GitHub issue refetch reached the 5000 item cap; WBS sync may still be incomplete.")
           PY
 
       - name: Sync issues to WBS
