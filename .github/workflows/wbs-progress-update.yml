@@ -1,0 +1,269 @@
+name: WBS Progress Update (manual)
+
+on:
+  workflow_dispatch:
+    inputs:
+      task_id:
+        description: "wbs_tasks.id to update"
+        required: true
+        type: string
+      progress:
+        description: "Progress percent, 0-100. Use 95 for implemented-but-unmerged PRs."
+        required: true
+        default: "95"
+        type: string
+      status:
+        description: "Target WBS status"
+        required: true
+        default: in_progress
+        type: choice
+        options:
+          - in_progress
+          - pending
+          - blocked
+          - completed
+      recovery_plan:
+        description: "Required for non-completed work; describe the next step or merge path."
+        required: false
+        type: string
+      issue_number:
+        description: "Optional GitHub Issue number for traceability"
+        required: false
+        type: string
+      pr_number:
+        description: "Optional GitHub PR number for traceability"
+        required: false
+        type: string
+      validation_summary:
+        description: "Commands, CI run, or review evidence that justifies this update"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: wbs-progress-${{ inputs.task_id }}
+  cancel-in-progress: false
+
+env:
+  SUPABASE_URL: https://smmkxxavexumewbfaqpy.supabase.co
+  SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Build request payload
+        env:
+          INPUT_TASK_ID: ${{ inputs.task_id }}
+          INPUT_PROGRESS: ${{ inputs.progress }}
+          INPUT_STATUS: ${{ inputs.status }}
+          INPUT_RECOVERY_PLAN: ${{ inputs.recovery_plan }}
+          INPUT_ISSUE_NUMBER: ${{ inputs.issue_number }}
+          INPUT_PR_NUMBER: ${{ inputs.pr_number }}
+          INPUT_VALIDATION_SUMMARY: ${{ inputs.validation_summary }}
+        run: |
+          set -euo pipefail
+          python3 <<'PY'
+          import json
+          import math
+          import os
+          import re
+          import sys
+          from pathlib import Path
+
+          def env(name: str) -> str:
+              return os.environ.get(name, "").strip()
+
+          task_id = env("INPUT_TASK_ID")
+          status = env("INPUT_STATUS")
+          recovery_plan = env("INPUT_RECOVERY_PLAN")
+          issue_number = env("INPUT_ISSUE_NUMBER").lstrip("#")
+          pr_number = env("INPUT_PR_NUMBER").lstrip("#")
+          validation_summary = env("INPUT_VALIDATION_SUMMARY")
+          valid_statuses = {"pending", "in_progress", "blocked", "completed"}
+
+          if not task_id:
+              print("::error::task_id is required")
+              sys.exit(1)
+          if status not in valid_statuses:
+              print(f"::error::status must be one of {sorted(valid_statuses)}")
+              sys.exit(1)
+          if status != "completed" and not recovery_plan:
+              print("::error::recovery_plan is required when status is not completed")
+              sys.exit(1)
+          if not validation_summary:
+              print("::error::validation_summary is required")
+              sys.exit(1)
+          if issue_number and not re.fullmatch(r"\d+", issue_number):
+              print("::error::issue_number must be a GitHub Issue number")
+              sys.exit(1)
+          if pr_number and not re.fullmatch(r"\d+", pr_number):
+              print("::error::pr_number must be a GitHub PR number")
+              sys.exit(1)
+
+          try:
+              progress_raw = env("INPUT_PROGRESS")
+              progress_float = float(progress_raw)
+          except ValueError:
+              print("::error::progress must be a number from 0 to 100")
+              sys.exit(1)
+          if not math.isfinite(progress_float):
+              print("::error::progress must be a finite number from 0 to 100")
+              sys.exit(1)
+          if progress_float < 0 or progress_float > 100:
+              print("::error::progress must be between 0 and 100")
+              sys.exit(1)
+          if int(progress_float) != progress_float:
+              print("::error::progress must be an integer percent")
+              sys.exit(1)
+          progress = int(progress_float)
+          if progress == 100 and status != "completed":
+              print("::error::progress=100 must use status=completed")
+              sys.exit(1)
+          if status == "completed" and progress != 100:
+              print("::error::status=completed must use progress=100")
+              sys.exit(1)
+
+          payload = {
+              "action": "wbs.update_progress",
+              "id": task_id,
+              "progress": progress,
+              "status": status,
+          }
+          if recovery_plan:
+              payload["recovery_plan"] = recovery_plan
+
+          request_log = {
+              "actor": os.environ.get("GITHUB_ACTOR", ""),
+              "repository": os.environ.get("GITHUB_REPOSITORY", ""),
+              "run_id": os.environ.get("GITHUB_RUN_ID", ""),
+              "task_id": task_id,
+              "progress": progress,
+              "status": status,
+              "issue_number": issue_number,
+              "pr_number": pr_number,
+              "validation_summary": validation_summary,
+              "payload": payload,
+          }
+          Path("/tmp/wbs-progress-payload.json").write_text(
+              json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
+              encoding="utf-8",
+          )
+          Path("/tmp/wbs-progress-request.json").write_text(
+              json.dumps(request_log, ensure_ascii=False, indent=2) + "\n",
+              encoding="utf-8",
+          )
+
+          print(f"Prepared WBS update for task {task_id}: {status} / {progress}%")
+          print(f"Actor: {request_log['actor']}")
+          print(f"Issue: {issue_number or 'n/a'}")
+          print(f"PR: {pr_number or 'n/a'}")
+          print("Validation summary:")
+          print(validation_summary)
+          PY
+
+      - name: Call tools-hub wbs.update_progress
+        id: call
+        run: |
+          set -euo pipefail
+          if [ -z "${SUPABASE_SERVICE_ROLE_KEY:-}" ]; then
+            echo "::error::SUPABASE_SERVICE_ROLE_KEY is not configured"
+            exit 1
+          fi
+
+          set +e
+          HTTP_CODE=$(curl -sS -o /tmp/wbs-progress-response.json -w "%{http_code}" \
+            -X POST "$SUPABASE_URL/functions/v1/tools-hub" \
+            -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \
+            -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
+            -H "Content-Type: application/json" \
+            --data-binary @/tmp/wbs-progress-payload.json)
+          CURL_STATUS=$?
+          set -e
+
+          echo "http_code=$HTTP_CODE" >> "$GITHUB_OUTPUT"
+          if [ "$CURL_STATUS" -ne 0 ]; then
+            echo "::error::curl failed with status $CURL_STATUS"
+            exit "$CURL_STATUS"
+          fi
+
+          python3 - "$HTTP_CODE" <<'PY'
+          import json
+          import sys
+          from pathlib import Path
+
+          http_code = int(sys.argv[1])
+          response_path = Path("/tmp/wbs-progress-response.json")
+          response_text = response_path.read_text(encoding="utf-8") if response_path.exists() else ""
+          print(response_text)
+          if http_code < 200 or http_code >= 300:
+              print(f"::error::tools-hub returned HTTP {http_code}")
+              sys.exit(1)
+          try:
+              response = json.loads(response_text)
+          except json.JSONDecodeError as exc:
+              print(f"::error::tools-hub response was not JSON: {exc}")
+              sys.exit(1)
+          if not response.get("success"):
+              print("::error::tools-hub response did not include success=true")
+              sys.exit(1)
+          task = response.get("task") or {}
+          print(
+              "Updated WBS task "
+              f"{task.get('id', 'unknown')}: "
+              f"{task.get('status', 'unknown')} / {task.get('progress', 'unknown')}%"
+          )
+          PY
+
+      - name: Write run summary
+        if: always()
+        env:
+          HTTP_CODE: ${{ steps.call.outputs.http_code }}
+        run: |
+          set -euo pipefail
+          python3 <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          def load_json(path: str) -> dict:
+              p = Path(path)
+              if not p.exists():
+                  return {}
+              try:
+                  return json.loads(p.read_text(encoding="utf-8"))
+              except json.JSONDecodeError:
+                  return {"raw": p.read_text(encoding="utf-8")}
+
+          def cell(value: object) -> str:
+              text = "" if value is None else str(value)
+              return text.replace("|", "\\|").replace("\r\n", "\n").replace("\n", "<br>")
+
+          request = load_json("/tmp/wbs-progress-request.json")
+          response = load_json("/tmp/wbs-progress-response.json")
+          task = response.get("task") if isinstance(response.get("task"), dict) else {}
+          lines = [
+              "## WBS Progress Update",
+              "",
+              "| Field | Value |",
+              "| --- | --- |",
+              f"| Actor | {cell(request.get('actor') or os.environ.get('GITHUB_ACTOR', ''))} |",
+              f"| Task ID | {cell(request.get('task_id'))} |",
+              f"| Status | {cell(task.get('status') or request.get('status'))} |",
+              f"| Progress | {cell(task.get('progress') or request.get('progress'))}% |",
+              f"| Issue | {cell('#' + request['issue_number'] if request.get('issue_number') else 'n/a')} |",
+              f"| PR | {cell('#' + request['pr_number'] if request.get('pr_number') else 'n/a')} |",
+              f"| HTTP | {cell(os.environ.get('HTTP_CODE') or 'n/a')} |",
+              f"| Validation | {cell(request.get('validation_summary'))} |",
+              "",
+              "### Response",
+              "",
+              "```json",
+              json.dumps(response, ensure_ascii=False, indent=2)[:4000],
+              "```",
+          ]
+          Path(os.environ["GITHUB_STEP_SUMMARY"]).write_text("\n".join(lines) + "\n", encoding="utf-8")
+          PY
