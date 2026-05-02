@@ -5,9 +5,16 @@
     "e2e:smoke": "playwright test test/e2e/public_smoke.spec.ts",
     "e2e:visual": "playwright test test/e2e/visual_evidence.spec.ts",
     "workflow:guard": "python scripts/check_remote_synced.py --require-clean",
-    "workflow:blog-publish": "bash scripts/t1-dispatch.sh"
+    "workflow:blog-publish": "bash scripts/t1-dispatch.sh",
+    "hooks:install": "lefthook install --force",
+    "hooks:validate": "lefthook validate",
+    "quality:browser": "flutter test --platform chrome test/web_import_smoke_test.dart",
+    "quality:fast": "python scripts/quality_gate.py --fast",
+    "quality:full": "python scripts/quality_gate.py --full",
+    "quality:no-verify": "python scripts/check_no_verify_bypass.py --range HEAD~1..HEAD"
   },
   "devDependencies": {
-    "@playwright/test": "^1.59.1"
+    "@playwright/test": "^1.59.1",
+    "lefthook": "^2.1.6"
   }
 }

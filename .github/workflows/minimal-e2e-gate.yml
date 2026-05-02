@@ -52,6 +52,11 @@ jobs:
             "${{ github.event.pull_request.head.sha }}" \
             > .ci-logs/changed-files.txt
 
+      - name: Check hook bypass markers
+        run: >
+          python scripts/check_no_verify_bypass.py
+          --range "${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }}"
+
       - name: Check minimal E2E PR contract
         run: >
           python scripts/check_minimal_e2e_gate.py
