@@ -1,6 +1,6 @@
 # NotebookLM Intake Gate Report
 
-- Checked at: `2026-05-02T18:08:10Z`
+- Checked at: `2026-05-02T19:38:00Z`
 - Notebook count: `94`
 - Harness found: `True`
 - Routed to existing issues: `90`
@@ -13,22 +13,22 @@
 - NotebookLM informs routing; repo checks, official sources, CI, and Issues/WBS prove the result.
 
 ## Routed Existing Issues
-- `64fc639e` Automating Technical Blogs with Claude Code and Supabase Edge Functions -> #1638 / ai-dev-workflow
-- `b74e9ada` Code with Claude 開会の基調講演 -> #1638 / unclassified
-- `d89ae1f5` Building Long-Term Memory for Claude Code: claude-mem vs. DIY Hooks -> #1638 / ai-dev-workflow
-- `239c758b` Gemini Code Assist Release Notes -> #1628 / developer-tool-watch
-- `72d24a65` Gemini Code Assist Release Notes -> #1628 / developer-tool-watch
-- `ed1aac00` Mastering Claude: A Guide to Intelligent Collaboration -> #1638 / unclassified
-- `47bd101a` Managing Notion Database IDs and API Page Properties -> #1628 / integration-reliability
-- `1b808a60` Streamlining MCP Authentication with WorkOS AuthKit -> #1628 / integration-reliability
-- `9b8885ef` Automating SaaS Operations with Claude Code Schedule -> #1638 / ai-dev-workflow
-- `1aced136` Claude Code Masterclass: From Foundations to Agentic Workflows -> #1638 / ai-dev-workflow
-- `f985728b` Devin Documentation Release Notes 2026 -> #1628 / developer-tool-watch
-- `fdea9e6d` Cursor Product Updates and Agent Innovation Changelog -> #1628 / developer-tool-watch
-- `0829f536` Google I/O 2026: Strategic Defense and Competitive Analysis Briefing -> #1660 / competitive-intel
-- `c60da02b` Strategic Intelligence Scoreboard: May 2026 Competitive Analysis Summary -> #1660 / competitive-intel
-- `d83954af` Competitor Discovery Report: April 2026 Status Update -> #1660 / competitive-intel
 - `17cd45cd` Competitive Intelligence Report: 2026 AI Infrastructure and Marketplace Trends -> #1660 / competitive-intel
+- `d83954af` Competitor Discovery Report: April 2026 Status Update -> #1660 / competitive-intel
+- `c60da02b` Strategic Intelligence Scoreboard: May 2026 Competitive Analysis Summary -> #1660 / competitive-intel
+- `0829f536` Google I/O 2026: Strategic Defense and Competitive Analysis Briefing -> #1660 / competitive-intel
+- `fdea9e6d` Cursor Product Updates and Agent Innovation Changelog -> #1628 / developer-tool-watch
+- `f985728b` Devin Documentation Release Notes 2026 -> #1628 / developer-tool-watch
+- `1aced136` Claude Code Masterclass: From Foundations to Agentic Workflows -> #1638 / ai-dev-workflow
+- `9b8885ef` Automating SaaS Operations with Claude Code Schedule -> #1638 / ai-dev-workflow
+- `1b808a60` Streamlining MCP Authentication with WorkOS AuthKit -> #1628 / integration-reliability
+- `47bd101a` Managing Notion Database IDs and API Page Properties -> #1628 / integration-reliability
+- `ed1aac00` Mastering Claude: A Guide to Intelligent Collaboration -> #1638 / unclassified
+- `72d24a65` Gemini Code Assist Release Notes -> #1628 / developer-tool-watch
+- `239c758b` Gemini Code Assist Release Notes -> #1628 / developer-tool-watch
+- `d89ae1f5` Building Long-Term Memory for Claude Code: claude-mem vs. DIY Hooks -> #1638 / ai-dev-workflow
+- `b74e9ada` Code with Claude 開会の基調講演 -> #1638 / unclassified
+- `64fc639e` Automating Technical Blogs with Claude Code and Supabase Edge Functions -> #1638 / ai-dev-workflow
 - `2f516389` Mastering Descript: AI Video Editing and Underlord Co-Editor Guide -> #1537 / unclassified
 - `7ccb0520` Weights & Biases: Comprehensive AI Developer Platform Guide -> #1529 / unclassified
 - `27730002` DEV Community Newsletter: AI Evolution and Developer Wins -> #1180 / unclassified
@@ -65,23 +65,23 @@
 ## Normalized Notebook Snapshot
 | id | title | sources | created_at | updated_at | disposition |
 | --- | --- | ---: | --- | --- | --- |
-| `64fc639e` | Automating Technical Blogs with Claude Code and Supabase Edge Functions | 1 | 2026-05-03T03:08:17 |  | route_existing_issue |
-| `b74e9ada` | Code with Claude 開会の基調講演 | 1 | 2026-05-03T03:08:20 |  | route_existing_issue |
-| `d89ae1f5` | Building Long-Term Memory for Claude Code: claude-mem vs. DIY Hooks | 1 | 2026-05-03T03:08:22 |  | route_existing_issue |
-| `239c758b` | Gemini Code Assist Release Notes | 1 | 2026-05-03T03:08:25 |  | route_existing_issue |
-| `72d24a65` | Gemini Code Assist Release Notes | 1 | 2026-05-03T03:08:28 |  | route_existing_issue |
-| `ed1aac00` | Mastering Claude: A Guide to Intelligent Collaboration | 2 | 2026-05-03T03:08:30 |  | route_existing_issue |
-| `47bd101a` | Managing Notion Database IDs and API Page Properties | 11 | 2026-05-03T03:08:33 |  | route_existing_issue |
-| `1b808a60` | Streamlining MCP Authentication with WorkOS AuthKit | 11 | 2026-05-03T03:08:35 |  | route_existing_issue |
-| `9b8885ef` | Automating SaaS Operations with Claude Code Schedule | 1 | 2026-05-03T03:08:37 |  | route_existing_issue |
-| `1aced136` | Claude Code Masterclass: From Foundations to Agentic Workflows | 15 | 2026-05-03T03:08:40 |  | route_existing_issue |
-| `f985728b` | Devin Documentation Release Notes 2026 | 11 | 2026-05-03T03:08:43 |  | route_existing_issue |
-| `fdea9e6d` | Cursor Product Updates and Agent Innovation Changelog | 11 | 2026-05-03T03:08:45 |  | route_existing_issue |
-| `0829f536` | Google I/O 2026: Strategic Defense and Competitive Analysis Briefing | 10 | 2026-05-03T03:08:48 |  | route_existing_issue |
-| `c60da02b` | Strategic Intelligence Scoreboard: May 2026 Competitive Analysis Summary | 11 | 2026-05-03T03:08:50 |  | route_existing_issue |
-| `d83954af` | Competitor Discovery Report: April 2026 Status Update | 11 | 2026-05-03T03:08:53 |  | route_existing_issue |
-| `bc58b50b` | Codex vs Claude Code: The Ultimate AI Development Synergy | 11 | 2026-05-03T03:08:15 |  | priority_reference |
-| `17cd45cd` | Competitive Intelligence Report: 2026 AI Infrastructure and Marketplace Trends |  | 2026-05-03T02:37:26 |  | route_existing_issue |
+| `bc58b50b` | Codex vs Claude Code: The Ultimate AI Development Synergy | 11 | 2026-05-03T04:38:05 |  | priority_reference |
+| `17cd45cd` | Competitive Intelligence Report: 2026 AI Infrastructure and Marketplace Trends |  | 2026-05-03T04:14:54 |  | route_existing_issue |
+| `d83954af` | Competitor Discovery Report: April 2026 Status Update | 11 | 2026-05-03T04:38:07 |  | route_existing_issue |
+| `c60da02b` | Strategic Intelligence Scoreboard: May 2026 Competitive Analysis Summary | 11 | 2026-05-03T04:38:10 |  | route_existing_issue |
+| `0829f536` | Google I/O 2026: Strategic Defense and Competitive Analysis Briefing | 10 | 2026-05-03T04:38:12 |  | route_existing_issue |
+| `fdea9e6d` | Cursor Product Updates and Agent Innovation Changelog | 11 | 2026-05-03T04:38:15 |  | route_existing_issue |
+| `f985728b` | Devin Documentation Release Notes 2026 | 11 | 2026-05-03T04:38:17 |  | route_existing_issue |
+| `1aced136` | Claude Code Masterclass: From Foundations to Agentic Workflows | 15 | 2026-05-03T04:38:20 |  | route_existing_issue |
+| `9b8885ef` | Automating SaaS Operations with Claude Code Schedule | 1 | 2026-05-03T04:38:22 |  | route_existing_issue |
+| `1b808a60` | Streamlining MCP Authentication with WorkOS AuthKit | 11 | 2026-05-03T04:38:25 |  | route_existing_issue |
+| `47bd101a` | Managing Notion Database IDs and API Page Properties | 11 | 2026-05-03T04:38:27 |  | route_existing_issue |
+| `ed1aac00` | Mastering Claude: A Guide to Intelligent Collaboration | 2 | 2026-05-03T04:38:30 |  | route_existing_issue |
+| `72d24a65` | Gemini Code Assist Release Notes | 1 | 2026-05-03T04:38:32 |  | route_existing_issue |
+| `239c758b` | Gemini Code Assist Release Notes |  | 2026-05-03T03:08:25 |  | route_existing_issue |
+| `d89ae1f5` | Building Long-Term Memory for Claude Code: claude-mem vs. DIY Hooks |  | 2026-05-03T03:08:22 |  | route_existing_issue |
+| `b74e9ada` | Code with Claude 開会の基調講演 |  | 2026-05-03T03:08:20 |  | route_existing_issue |
+| `64fc639e` | Automating Technical Blogs with Claude Code and Supabase Edge Functions |  | 2026-05-03T03:08:17 |  | route_existing_issue |
 | `2f516389` | Mastering Descript: AI Video Editing and Underlord Co-Editor Guide |  | 2026-05-02T01:03:17 |  | route_existing_issue |
 | `7ccb0520` | Weights & Biases: Comprehensive AI Developer Platform Guide |  | 2026-05-02T00:22:35 |  | route_existing_issue |
 | `cc9ac313` | React Frontend Implementation and Material-UI Architecture Guide |  | 2026-05-01T19:45:45 |  | skipped |

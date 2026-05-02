@@ -578,6 +578,26 @@ def render_issue_drafts(snapshot: dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
+def write_github_outputs(snapshot: dict[str, Any]) -> None:
+    output_path = os.environ.get("GITHUB_OUTPUT")
+    if not output_path:
+        return
+    notebooks = snapshot["notebooks"]
+    counts: dict[str, int] = {}
+    for item in notebooks:
+        counts[item["disposition"]] = counts.get(item["disposition"], 0) + 1
+    lines = [
+        f"notebook_count={snapshot['notebook_count']}",
+        f"harness_found={str(snapshot['harness_found']).lower()}",
+        f"routed_count={counts.get('route_existing_issue', 0)}",
+        f"candidate_issue_draft_count={counts.get('candidate_issue_draft', 0)}",
+        f"skipped_count={counts.get('skipped', 0)}",
+        f"applied_count={counts.get('applied_in_repo', 0) + counts.get('priority_reference', 0)}",
+    ]
+    with open(output_path, "a", encoding="utf-8") as handle:
+        handle.write("\n".join(lines) + "\n")
+
+
 def parse_args(argv: list[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--refresh", action="store_true", help="Run notebooklm list --json.")
@@ -622,6 +642,7 @@ def main(argv: list[str]) -> int:
     }
     report = render_report(snapshot)
     issue_drafts = render_issue_drafts(snapshot)
+    write_github_outputs(snapshot)
     if args.print_only:
         print(report)
         print(issue_drafts)
