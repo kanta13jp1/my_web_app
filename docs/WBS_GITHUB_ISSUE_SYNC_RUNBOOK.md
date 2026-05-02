@@ -25,10 +25,17 @@ closed GitHub Issue still appearing in `wbs.priority_for_instance`.
    gh run watch <run-id> --exit-status
    ```
 
-4. Check the sync summary. A healthy run includes these response fields:
+4. Check the sync summary. The workflow prints the aggregate
+   `/tmp/wbs-sync-response.json`. A healthy run includes these response fields:
+   `success`, `issue_count`, `created`, `updated`, `skipped`,
    `wbs_task_scan_count`, `completed_from_closed_issues`,
-   `duplicate_wbs_closed`, `stale_wbs_repaired`, `duplicate_wbs_tasks`, and
-   `repaired_wbs_tasks`.
+   `duplicate_wbs_closed`, `stale_wbs_repaired`, `issues_to_close`,
+   `duplicate_wbs_tasks`, `repaired_wbs_tasks`, and `batch_failures`.
+
+   `wbs_task_scan_count` and `stale_wbs_repaired` are summed across batches.
+   `repaired_wbs_tasks` is merged across batches without dropping task IDs,
+   linked issue numbers, or repair reasons, so stale repair audits can be
+   traced from the workflow log.
 
 ## Drift Rules
 

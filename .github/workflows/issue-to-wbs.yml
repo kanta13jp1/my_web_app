@@ -243,41 +243,10 @@ jobs:
             echo "" >> /tmp/wbs-sync-responses.jsonl
           done < /tmp/wbs-sync-batches.txt
 
-          python3 <<'PY' > /tmp/wbs-sync-response.json
-          import json
-          from pathlib import Path
-
-          aggregate = {
-              "success": True,
-              "issue_count": 0,
-              "created": 0,
-              "updated": 0,
-              "completed_from_closed_issues": 0,
-              "duplicate_wbs_closed": 0,
-              "skipped": 0,
-              "issues_to_close": [],
-              "duplicate_wbs_tasks": [],
-              "batch_failures": [],
-          }
-          for line in Path("/tmp/wbs-sync-responses.jsonl").read_text(encoding="utf-8").splitlines():
-              if not line.strip():
-                  continue
-              response = json.loads(line)
-              aggregate["success"] = aggregate["success"] and bool(response.get("success", False))
-              for key in ["issue_count", "created", "updated", "completed_from_closed_issues", "duplicate_wbs_closed", "skipped"]:
-                  aggregate[key] += int(response.get(key) or 0)
-              aggregate["issues_to_close"].extend(response.get("issues_to_close") or [])
-              aggregate["duplicate_wbs_tasks"].extend(response.get("duplicate_wbs_tasks") or [])
-
-          failures_path = Path("/tmp/wbs-sync-failures.tsv")
-          if failures_path.exists() and failures_path.read_text(encoding="utf-8").strip():
-              aggregate["success"] = False
-              for line in failures_path.read_text(encoding="utf-8").splitlines():
-                  batch_number, http_code = line.split("\t", 1)
-                  aggregate["batch_failures"].append({"batch": int(batch_number), "http_code": http_code})
-
-          print(json.dumps(aggregate, ensure_ascii=False))
-          PY
+          python3 scripts/wbs_sync_aggregate.py \
+            --responses /tmp/wbs-sync-responses.jsonl \
+            --failures /tmp/wbs-sync-failures.tsv \
+            --output /tmp/wbs-sync-response.json
 
           cat /tmp/wbs-sync-response.json
 
