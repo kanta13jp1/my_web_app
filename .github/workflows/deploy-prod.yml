@@ -96,6 +96,19 @@ jobs:
         run: |
           sed -i "s/^version: .*/version: ${{ steps.version.outputs.version }}+${{ github.run_number }}/" pubspec.yaml
 
+      - name: Generate Release Notes data
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python scripts/generate_release_notes.py \
+            --repo "${{ github.repository }}" \
+            --version "${{ steps.version.outputs.version }}" \
+            --build "${{ github.run_number }}" \
+            --commit "${{ github.sha }}" \
+            --date "$(date -u +%Y-%m-%d)" \
+            --deploy-url "https://${{ secrets.FIREBASE_PROJECT_ID }}.web.app" \
+            --output web/release-notes.json
+
       - name: Check migration timestamp collisions
         run: python scripts/check_migration_timestamps.py
 
@@ -642,6 +655,7 @@ jobs:
       - name: Write version.json
         run: |
           echo '{"version":"${{ steps.version.outputs.version }}","buildNumber":"${{ github.run_number }}","commit":"${{ github.sha }}","deployedAt":"'"$(date -u +%Y-%m-%dT%H:%M:%SZ)"'"}' > build/web/version.json
+          cp web/release-notes.json build/web/release-notes.json
 
       - name: Cache-bust OGP image URLs
         run: |
@@ -733,6 +747,7 @@ jobs:
             - **Environment**: Production
             - **Commit**: ${{ github.sha }}
             - **Deployed Site**: https://${{ secrets.FIREBASE_PROJECT_ID }}.web.app
+            - **Release Notes JSON**: https://${{ secrets.FIREBASE_PROJECT_ID }}.web.app/release-notes.json
           draft: false
           prerelease: false
         env:
