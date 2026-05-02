@@ -66,6 +66,12 @@ same notebook.
   clean fix PRs from a fresh worktree.
 - Codex #2 should take red CI, deploy unblockers, workflow drift, Edge Function
   failures, and GitHub/Notion/Slack synchronization issues.
+- If local `SUPABASE_SERVICE_ROLE_KEY` is unavailable, use GitHub Actions
+  `WBS Progress Update (manual)` (`wbs-progress-update.yml`) to dispatch one
+  `wbs.update_progress` call with task id, progress, status, Issue/PR reference,
+  validation summary, and a recovery plan for non-completed work. Use
+  `in_progress` / `95` for implemented-but-unmerged PRs; reserve
+  `completed` / `100` for merged or otherwise proven work.
 - Edge Function dependency resolution follows
   `docs/adr/2026-04-30-edge-function-dependency-resolution.md`.
 - If a task needs product judgment, cross-instance arbitration, or NotebookLM
