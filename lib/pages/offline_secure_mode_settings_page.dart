@@ -19,6 +19,7 @@ class _OfflineSecureModeSettingsPageState
     extends State<OfflineSecureModeSettingsPage> {
   final TextEditingController _modelPathController = TextEditingController();
   final TextEditingController _vectorDbPathController = TextEditingController();
+  final TextEditingController _runtimeUrlController = TextEditingController();
 
   OfflineSecureModeSettings _settings = const OfflineSecureModeSettings();
   bool _loading = true;
@@ -34,6 +35,7 @@ class _OfflineSecureModeSettingsPageState
   void dispose() {
     _modelPathController.dispose();
     _vectorDbPathController.dispose();
+    _runtimeUrlController.dispose();
     super.dispose();
   }
 
@@ -45,6 +47,7 @@ class _OfflineSecureModeSettingsPageState
     if (!mounted) return;
     _modelPathController.text = settings.localModelPath;
     _vectorDbPathController.text = settings.localVectorDbPath;
+    _runtimeUrlController.text = settings.localRuntimeUrl;
     setState(() {
       _settings = settings;
       _loading = false;
@@ -59,6 +62,7 @@ class _OfflineSecureModeSettingsPageState
     final next = _settings.copyWith(
       localModelPath: _modelPathController.text,
       localVectorDbPath: _vectorDbPathController.text,
+      localRuntimeUrl: _runtimeUrlController.text,
     );
     final saved = await widget.settingsService.saveSettings(next);
     if (!mounted) return;
@@ -173,6 +177,15 @@ class _OfflineSecureModeSettingsPageState
                     border: OutlineInputBorder(),
                   ),
                 ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: _runtimeUrlController,
+                  decoration: const InputDecoration(
+                    labelText: 'ローカルRAGランタイムURL',
+                    hintText: OfflineSecureModeSettings.defaultLocalRuntimeUrl,
+                    border: OutlineInputBorder(),
+                  ),
+                ),
                 const SizedBox(height: 20),
                 FilledButton.icon(
                   onPressed: _saving ? null : _saveSettings,
@@ -233,6 +246,8 @@ class _StatusPanel extends StatelessWidget {
                   Text(_runtimeText),
                   const SizedBox(height: 6),
                   Text('推論エンジン: ${settings.inferenceEngine}'),
+                  const SizedBox(height: 6),
+                  Text('ローカルRAG: ${settings.localRuntimeUrl}'),
                 ],
               ),
             ),

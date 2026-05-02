@@ -5,6 +5,7 @@ export type OfflineSecureModePolicy = {
   inferenceEngine: string;
   localModelPath: string;
   localVectorDbPath: string;
+  localRuntimeUrl: string;
 };
 
 export function parseOfflineSecureModePolicy(
@@ -20,6 +21,8 @@ export function parseOfflineSecureModePolicy(
     : parseBooleanish(body.offline_external_api_blocked, false);
   const localModelPath = asString(body.offline_local_model_path);
   const localVectorDbPath = asString(body.offline_local_vector_db_path);
+  const localRuntimeUrl = asString(body.offline_local_runtime_url) ||
+    "http://127.0.0.1:8765/rag";
   const inferredRuntimeConfigured = localModelPath.length > 0 &&
     localVectorDbPath.length > 0;
   const localRuntimeConfigured = body.offline_runtime_configured === undefined
@@ -34,6 +37,7 @@ export function parseOfflineSecureModePolicy(
     inferenceEngine: asString(body.offline_inference_engine) || "pleias-rag",
     localModelPath,
     localVectorDbPath,
+    localRuntimeUrl,
   };
 }
 
@@ -56,6 +60,7 @@ export function buildOfflineBlockedResponseBody(
     offline_secure_mode: policy.enabled,
     offline_runtime_configured: policy.localRuntimeConfigured,
     local_runtime_configured: policy.localRuntimeConfigured,
+    local_runtime_url: policy.localRuntimeUrl,
     offline_inference_engine: policy.inferenceEngine,
     action: context.action,
     provider: context.provider ?? null,

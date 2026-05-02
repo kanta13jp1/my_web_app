@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/services/edge_llm_playground_service.dart';
+import 'package:my_web_app/services/local_rag_runtime_service.dart';
 import 'package:my_web_app/services/offline_secure_mode_settings_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -97,5 +98,67 @@ void main() {
     expect(capturedBody?['offline_secure_mode'], true);
     expect(capturedBody?['offline_external_api_blocked'], true);
     expect(capturedBody?['offline_runtime_configured'], false);
+  });
+
+  test('invoke routes to local RAG runtime when offline paths are configured',
+      () async {
+    const offlineSettings = OfflineSecureModeSettingsService();
+    await offlineSettings.saveSettings(
+      const OfflineSecureModeSettings(
+        enabled: true,
+        localModelPath: r'C:\models\pleias-rag.gguf',
+        localVectorDbPath: r'C:\rag\lancedb',
+        inferenceEngine: 'pleias-rag',
+        blockExternalApiWhenEnabled: true,
+      ),
+    );
+    var aiHubCalled = false;
+    Map<String, dynamic>? localBody;
+    final service = EdgeLlmPlaygroundService(
+      offlineSettingsService: offlineSettings,
+      invoker: (_) async {
+        aiHubCalled = true;
+        return <String, dynamic>{'success': false};
+      },
+      localRagRuntimeService: LocalRagRuntimeService(
+        invoker: (body) async {
+          localBody = body;
+          return <String, dynamic>{
+            'success': true,
+            'text': 'ローカル根拠だけで回答します。',
+            'engine': 'pleias-rag',
+            'model': 'pleias-rag.gguf',
+            'vector_db_path': r'C:\rag\lancedb',
+            'offline_only': true,
+            'network_blocked': true,
+            'citations': <Map<String, dynamic>>[
+              <String, dynamic>{
+                'source_id': 'doc-1',
+                'title': 'policy.md',
+                'path': r'C:\rag\lancedb\policy.md',
+                'snippet': '外部APIなしで回答する。',
+                'score': 0.91,
+              },
+            ],
+          };
+        },
+      ),
+    );
+
+    final response = await service.invoke(
+      userPrompt: '社内規程を要約して',
+      responseFormat: 'json',
+      sessionId: 'session-local',
+    );
+
+    expect(aiHubCalled, isFalse);
+    expect(localBody?['query'], '社内規程を要約して');
+    expect(localBody?['model_path'], r'C:\models\pleias-rag.gguf');
+    expect(localBody?['vector_db_path'], r'C:\rag\lancedb');
+    expect(localBody?['network_policy'], 'offline_only');
+    expect(response.provider, 'local-rag');
+    expect(response.tier, 'offline');
+    expect(response.parsedJson?['citations'], isA<List>());
+    expect(response.source, 'local-rag runtime / pleias-rag');
   });
 }
