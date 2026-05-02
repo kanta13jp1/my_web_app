@@ -375,6 +375,33 @@ type RequiredNotionProperty = {
   type: string;
 };
 
+type NotionPreflightCategory =
+  | "missing_permission"
+  | "missing_property"
+  | "type_mismatch"
+  | "internal_name_mismatch"
+  | "advanced_property_constraint";
+
+type NotionPreflightSeverity = "error" | "warning" | "info";
+
+type NotionPreflightFinding = {
+  category: NotionPreflightCategory;
+  severity: NotionPreflightSeverity;
+  message: string;
+  property_name?: string;
+  property_id?: string;
+  property_type?: string;
+  expected?: string;
+  actual?: string;
+  recommendation?: string;
+};
+
+type NotionPropertyMapping = {
+  name: string;
+  id: string;
+  type: string;
+};
+
 const NOTION_WBS_REQUIRED_PROPERTIES: RequiredNotionProperty[] = [
   { name: "id", type: "title" },
   { name: "task_title", type: "rich_text" },
@@ -385,31 +412,77 @@ const NOTION_WBS_REQUIRED_PROPERTIES: RequiredNotionProperty[] = [
   { name: "updated_at", type: "date" },
 ];
 
+function notionPreflightFetchCategory(
+  status: number,
+  detail: string,
+): NotionPreflightCategory {
+  const normalized = detail.toLowerCase();
+  if (
+    status === 401 ||
+    status === 403 ||
+    status === 404 ||
+    normalized.includes("object_not_found") ||
+    normalized.includes("unauthorized")
+  ) {
+    return "missing_permission";
+  }
+  return "advanced_property_constraint";
+}
+
+function notionPreflightFixes(
+  findings: NotionPreflightFinding[],
+): string[] {
+  const fixes = new Set<string>();
+  for (const finding of findings) {
+    if (finding.severity === "info") continue;
+    if (finding.recommendation) fixes.add(finding.recommendation);
+  }
+  return [...fixes];
+}
+
 async function validateNotionDatabaseSchema(
   token: string,
   dbId: string,
   required: RequiredNotionProperty[],
+  options: { checkAdvancedProperties?: boolean } = {},
 ): Promise<{
   ok: boolean;
+  preflight_ok: boolean;
   error?: string;
   status?: number;
   detail?: string;
   missing: RequiredNotionProperty[];
   mismatched: Array<RequiredNotionProperty & { actual: string }>;
   detected: Record<string, string>;
+  property_mappings: NotionPropertyMapping[];
+  findings: NotionPreflightFinding[];
+  human_fix_required: string[];
 }> {
   const notionDbId = normalizeNotionId(dbId);
   const resp = await notionFetch(token, `/databases/${notionDbId}`);
   if (!resp.ok) {
     const detail = await resp.text().catch(() => "");
+    const category = notionPreflightFetchCategory(resp.status, detail);
+    const finding: NotionPreflightFinding = {
+      category,
+      severity: "error",
+      message: `Notion database schema fetch failed: HTTP ${resp.status}.`,
+      recommendation: category === "missing_permission"
+        ? "Share the target Notion database with the integration and verify NOTION_WBS_DATABASE_ID."
+        : "Retry the Notion schema preflight and inspect the returned API detail.",
+    };
     return {
       ok: false,
+      preflight_ok: false,
       error: "notion_schema_fetch_failed",
       status: resp.status,
       detail: detail.slice(0, 300),
       missing: [],
       mismatched: [],
       detected: {},
+      property_mappings: [],
+      findings: [finding],
+      human_fix_required: notionPreflightFixes([finding]),
     };
   }
 
@@ -418,8 +491,26 @@ async function validateNotionDatabaseSchema(
   };
   const properties = payload.properties ?? {};
   const detected: Record<string, string> = {};
+  const propertyMappings: NotionPropertyMapping[] = [];
+  const findings: NotionPreflightFinding[] = [];
   for (const [name, property] of Object.entries(properties)) {
-    detected[name] = asString(property.type, "unknown");
+    const type = asString(property.type, "unknown");
+    const propertyId = asString(property.id, name);
+    detected[name] = type;
+    propertyMappings.push({ name, id: propertyId, type });
+    if (propertyId && propertyId !== name) {
+      findings.push({
+        category: "internal_name_mismatch",
+        severity: "info",
+        property_name: name,
+        property_id: propertyId,
+        property_type: type,
+        message:
+          `Notion property "${name}" uses API/internal id "${propertyId}".`,
+        recommendation:
+          "Persist UI name to internal id mappings from database schema/pages.retrieve before batch updates.",
+      });
+    }
   }
 
   const missing: RequiredNotionProperty[] = [];
@@ -428,16 +519,114 @@ async function validateNotionDatabaseSchema(
     const actual = detected[property.name];
     if (!actual) {
       missing.push(property);
+      findings.push({
+        category: "missing_property",
+        severity: "error",
+        property_name: property.name,
+        expected: property.type,
+        message: `Required Notion property "${property.name}" is missing.`,
+        recommendation:
+          `Create a "${property.name}" property with type "${property.type}" in the WBS database.`,
+      });
     } else if (actual !== property.type) {
       mismatched.push({ ...property, actual });
+      findings.push({
+        category: "type_mismatch",
+        severity: "error",
+        property_name: property.name,
+        expected: property.type,
+        actual,
+        message:
+          `Notion property "${property.name}" has type "${actual}", expected "${property.type}".`,
+        recommendation:
+          `Change "${property.name}" to type "${property.type}" or update the sync property mapping.`,
+      });
     }
   }
 
+  if (options.checkAdvancedProperties === true) {
+    for (const [name, property] of Object.entries(properties)) {
+      const type = asString(property.type, "unknown");
+      const propertyId = asString(property.id, name);
+      if (type === "relation") {
+        const relation = (property.relation ?? {}) as Record<string, unknown>;
+        const relationDbId = asString(relation.database_id);
+        if (!relationDbId) {
+          findings.push({
+            category: "advanced_property_constraint",
+            severity: "warning",
+            property_name: name,
+            property_id: propertyId,
+            property_type: type,
+            message:
+              `Relation property "${name}" does not expose relation.database_id.`,
+            recommendation:
+              "Verify the relation target database is shared with the Notion integration.",
+          });
+          continue;
+        }
+        const relationResp = await notionFetch(
+          token,
+          `/databases/${relationDbId}`,
+        );
+        if (!relationResp.ok) {
+          const detail = await relationResp.text().catch(() => "");
+          findings.push({
+            category: notionPreflightFetchCategory(relationResp.status, detail),
+            severity: "error",
+            property_name: name,
+            property_id: propertyId,
+            property_type: type,
+            message:
+              `Relation target for "${name}" is not accessible: HTTP ${relationResp.status}.`,
+            recommendation:
+              "Share every related Notion database with the integration before WBS sync.",
+          });
+        }
+      } else if (type === "formula") {
+        const formula = (property.formula ?? {}) as Record<string, unknown>;
+        const expression = asString(formula.expression);
+        const referencedProps = (expression.match(/prop\(/g) ?? []).length;
+        findings.push({
+          category: "advanced_property_constraint",
+          severity: referencedProps >= 10 ? "warning" : "info",
+          property_name: name,
+          property_id: propertyId,
+          property_type: type,
+          message:
+            `Formula property "${name}" should be treated as read-only computed data in sync preflight.`,
+          recommendation:
+            "Do not write Formula values directly; fetch page values after update and warn if Formula depth or dependencies become unstable.",
+        });
+      } else if (type === "rollup") {
+        const rollup = (property.rollup ?? {}) as Record<string, unknown>;
+        const rollupFunction = asString(rollup.function, "unknown");
+        findings.push({
+          category: "advanced_property_constraint",
+          severity: "warning",
+          property_name: name,
+          property_id: propertyId,
+          property_type: type,
+          actual: rollupFunction,
+          message:
+            `Rollup property "${name}" uses aggregate "${rollupFunction}" and may require page property item pagination.`,
+          recommendation:
+            "Use the Page property item API for Rollup/Relation values over 25 references, or compute the aggregate in Supabase before syncing.",
+        });
+      }
+    }
+  }
+
+  const preflightOk = !findings.some((finding) => finding.severity === "error");
   return {
     ok: missing.length === 0 && mismatched.length === 0,
+    preflight_ok: preflightOk,
     missing,
     mismatched,
     detected,
+    property_mappings: propertyMappings,
+    findings,
+    human_fix_required: notionPreflightFixes(findings),
   };
 }
 
@@ -484,6 +673,7 @@ serve(async (req: Request) => {
       "blog.create",
       "reminders.study",
       "notion.sync_wbs",
+      "notion.preflight_wbs",
       "notion.sync_roadmap",
       "notion.sync_memory_index",
       "notion.fix_wbs_all_instances",
@@ -1450,6 +1640,51 @@ serve(async (req: Request) => {
         });
       }
 
+      // ─── Notion WBS DB preflight ─────────────────────────────────────────
+      case "notion.preflight_wbs": {
+        const token = Deno.env.get("NOTION_API_TOKEN");
+        const dbId = Deno.env.get("NOTION_WBS_DATABASE_ID");
+        if (!token || !dbId) {
+          return json(
+            {
+              success: false,
+              error: "notion_not_configured",
+              missing: !token ? "NOTION_API_TOKEN" : "NOTION_WBS_DATABASE_ID",
+            },
+            503,
+          );
+        }
+
+        const schema = await validateNotionDatabaseSchema(
+          token,
+          dbId,
+          NOTION_WBS_REQUIRED_PROPERTIES,
+          { checkAdvancedProperties: true },
+        );
+        if (schema.error) {
+          return json({
+            success: false,
+            error: schema.error,
+            detail: schema.detail ?? "",
+            findings: schema.findings,
+            human_fix_required: schema.human_fix_required,
+          }, schema.status ?? 502);
+        }
+
+        return json({
+          success: schema.ok && schema.preflight_ok,
+          schema_ok: schema.ok,
+          preflight_ok: schema.preflight_ok,
+          required_properties: NOTION_WBS_REQUIRED_PROPERTIES,
+          detected_properties: schema.detected,
+          property_mappings: schema.property_mappings,
+          missing_properties: schema.missing,
+          mismatched_properties: schema.mismatched,
+          findings: schema.findings,
+          human_fix_required: schema.human_fix_required,
+        }, schema.ok && schema.preflight_ok ? 200 : 422);
+      }
+
       // ─── Notion Sync (Multi-AI resilience / Win#132 part 6 · Backlog N2) ────
       // Win版#132 part 4 設計の N2 実装。Supabase wbs_tasks → Notion Database
       // upsert (last_edited 順で最新 500 件)。Anthropic outage 時もユーザーが
@@ -1477,12 +1712,15 @@ serve(async (req: Request) => {
           token,
           dbId,
           NOTION_WBS_REQUIRED_PROPERTIES,
+          { checkAdvancedProperties: body.advanced_preflight === true },
         );
         if (schema.error) {
           return json({
             success: false,
             error: schema.error,
             detail: schema.detail ?? "",
+            findings: schema.findings,
+            human_fix_required: schema.human_fix_required,
           }, schema.status ?? 502);
         }
         if (!schema.ok) {
@@ -1493,14 +1731,32 @@ serve(async (req: Request) => {
             mismatched_properties: schema.mismatched,
             required_properties: NOTION_WBS_REQUIRED_PROPERTIES,
             detected_properties: schema.detected,
+            property_mappings: schema.property_mappings,
+            findings: schema.findings,
+            human_fix_required: schema.human_fix_required,
+          }, 422);
+        }
+        if (body.advanced_preflight === true && !schema.preflight_ok) {
+          return json({
+            success: false,
+            error: "notion_preflight_failed",
+            required_properties: NOTION_WBS_REQUIRED_PROPERTIES,
+            detected_properties: schema.detected,
+            property_mappings: schema.property_mappings,
+            findings: schema.findings,
+            human_fix_required: schema.human_fix_required,
           }, 422);
         }
         if (body.schema_only === true) {
           return json({
             success: true,
             schema_ok: true,
+            preflight_ok: schema.preflight_ok,
             required_properties: NOTION_WBS_REQUIRED_PROPERTIES,
             detected_properties: schema.detected,
+            property_mappings: schema.property_mappings,
+            findings: schema.findings,
+            human_fix_required: schema.human_fix_required,
           });
         }
 
