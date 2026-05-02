@@ -1,0 +1,99 @@
+name: NotebookLM Intake Gate
+
+on:
+  schedule:
+    - cron: "45 21 * * *" # daily 06:45 JST
+  workflow_dispatch:
+    inputs:
+      comment_mode:
+        description: "Issue comment policy: routed, always, or never"
+        required: false
+        default: "routed"
+        type: choice
+        options:
+          - routed
+          - always
+          - never
+
+permissions:
+  contents: write
+  issues: write
+
+concurrency:
+  group: notebooklm-intake-gate
+  cancel-in-progress: false
+
+jobs:
+  intake:
+    name: Normalize and route NotebookLM list
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      COMMENT_MODE: ${{ inputs.comment_mode || 'routed' }}
+      NOTEBOOKLM_LIST_JSON: ${{ secrets.NOTEBOOKLM_LIST_JSON }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 20
+          token: ${{ secrets.BYPASS_RULES || github.token }}
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Prepare NotebookLM payload
+        id: payload
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p docs/notebooklm-intake
+          if [ -n "${NOTEBOOKLM_LIST_JSON}" ]; then
+            printf '%s' "${NOTEBOOKLM_LIST_JSON}" > docs/notebooklm-intake/notebooklm-list.json
+            echo "available=true" >> "$GITHUB_OUTPUT"
+          elif command -v notebooklm >/dev/null 2>&1; then
+            notebooklm list --json > docs/notebooklm-intake/notebooklm-list.json
+            echo "available=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "NotebookLM CLI unavailable and NOTEBOOKLM_LIST_JSON secret is not configured."
+            echo "available=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Generate intake report
+        if: steps.payload.outputs.available == 'true'
+        id: intake
+        run: |
+          python scripts/notebooklm_intake_gate.py \
+            --input-json docs/notebooklm-intake/notebooklm-list.json \
+            --gh-dedup \
+            --metadata none \
+            --report docs/notebooklm-intake/latest-report.md \
+            --snapshot docs/notebooklm-intake/latest-snapshot.json \
+            --issue-drafts docs/notebooklm-intake/issue-drafts.md \
+            --state docs/notebooklm-intake/state.json
+
+      - name: Commit updated intake state
+        if: steps.payload.outputs.available == 'true'
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- docs/notebooklm-intake; then
+            echo "No NotebookLM intake changes to commit."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/notebooklm-intake
+          git commit -m "chore: update NotebookLM intake gate"
+          git push
+
+      - name: Comment routed findings on #1606
+        if: |
+          steps.payload.outputs.available == 'true' &&
+          (env.COMMENT_MODE == 'always' ||
+            (env.COMMENT_MODE == 'routed' && steps.intake.outputs.routed_count != '0'))
+        run: |
+          gh issue comment 1606 --body-file docs/notebooklm-intake/latest-report.md
