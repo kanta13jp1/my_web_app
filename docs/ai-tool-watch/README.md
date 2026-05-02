@@ -26,6 +26,17 @@ python scripts/ai_tool_watch.py `
 Use `--no-save-state` during a manual session-start read if you want a dry
 inspection without changing the baseline.
 
+NotebookLM intake uses a separate gate because it needs local NotebookLM auth
+and Issue/WBS deduplication:
+
+```powershell
+notebooklm list --json
+python scripts/notebooklm_intake_gate.py --refresh --metadata routed --gh-dedup
+```
+
+Review `docs/notebooklm-intake/issue-drafts.md` before creating new Issues;
+existing Issues and skip reasons should be preferred.
+
 ## Automation
 
 `.github/workflows/ai-tool-watch.yml` runs daily at 06:15 JST and can also be

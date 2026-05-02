@@ -30,6 +30,19 @@ For NotebookLM-driven sessions, treat notebook
 reference: Claude Code designs the environment, Codex executes scoped changes,
 and GitHub Actions proves the result.
 
+5. For NotebookLM-driven sessions, run the intake diff gate after confirming
+   NotebookLM authentication:
+
+```powershell
+notebooklm list --json
+python scripts/notebooklm_intake_gate.py --refresh --metadata routed --gh-dedup
+```
+
+Route `docs/notebooklm-intake/issue-drafts.md` into existing GitHub Issues/WBS
+before creating a new Issue. Keep skip reasons in
+`docs/notebooklm-intake/state.json` so repeated sessions do not re-triage the
+same notebook.
+
 ## Role Split
 
 - Claude Code owns planning, architecture, review, and quality-gate design.
