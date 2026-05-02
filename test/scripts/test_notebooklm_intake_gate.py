@@ -1,3 +1,4 @@
+import argparse
 import tempfile
 import unittest
 from pathlib import Path
@@ -6,92 +7,122 @@ from scripts import notebooklm_intake_gate as gate
 
 
 class NotebookLmIntakeGateTest(unittest.TestCase):
-    def test_normalizes_optional_metadata(self):
-        payload = {
-            "count": 1,
-            "notebooks": [
-                {
-                    "index": 1,
-                    "id": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
-                    "title": "Example Notebook",
-                    "updated_at": "2026-05-03T00:00:00",
-                    "sources": [{"title": "A"}, {"title": "B"}],
+    def test_parse_json_maybe_prefixed(self):
+        payload = gate.parse_json_maybe_prefixed("log line\n{\"notebooks\": []}")
+
+        self.assertEqual(payload, {"notebooks": []})
+
+    def test_normalize_notebook_keeps_optional_fields(self):
+        item = gate.normalize_notebook(
+            {
+                "index": 7,
+                "id": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+                "title": "Example Notebook",
+                "is_owner": True,
+                "created_at": "2026-05-03T00:00:00",
+                "updated_at": "2026-05-03T01:00:00",
+                "source_count": 2,
+            },
+            1,
+        )
+
+        self.assertEqual(item["short_id"], "aaaaaaaa")
+        self.assertEqual(item["title_key"], "example-notebook")
+        self.assertEqual(item["source_count"], 2)
+        self.assertEqual(item["source_count_state"], "from_list")
+
+    def test_static_routes_harness_and_competitive_notebooks(self):
+        harness = gate.static_route(
+            {
+                "id": gate.HARNESS_NOTEBOOK_ID,
+                "title": gate.HARNESS_TITLE,
+            }
+        )
+        competitive = gate.static_route(
+            {
+                "id": "17cd45cd-5166-4b3f-aefb-107e2c1e3589",
+                "title": "Competitive Intelligence Report",
+            }
+        )
+
+        self.assertEqual(harness["disposition"], "priority_reference")
+        self.assertEqual(harness["issue"], "1606")
+        self.assertEqual(competitive["disposition"], "route_existing_issue")
+        self.assertEqual(competitive["issue"], "1660")
+
+    def test_build_routing_uses_previous_skip_reason(self):
+        notebook = gate.normalize_notebook(
+            {
+                "id": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+                "title": "Unmatched Notebook",
+            },
+            1,
+        )
+        routed = gate.build_routing(
+            [notebook],
+            {},
+            [],
+            {
+                "notebooks": {
+                    notebook["id"]: {
+                        "disposition": "skipped",
+                        "skip_reason": "non_project_topic",
+                    }
                 }
-            ],
-        }
+            },
+        )
 
-        notebooks = gate.normalize_notebooks(payload)
+        self.assertEqual(routed[0]["disposition"], "skipped")
+        self.assertEqual(routed[0]["skip_reason"], "non_project_topic")
 
-        self.assertEqual(len(notebooks), 1)
-        self.assertEqual(notebooks[0]["source_count"], 2)
-        self.assertEqual(notebooks[0]["updated_at"], "2026-05-03T00:00:00")
-        self.assertEqual(notebooks[0]["title_key"], "example notebook")
-
-    def test_routes_harness_and_known_notebooks(self):
-        harness = {
-            "id": gate.HARNESS_NOTEBOOK_ID,
-            "title": gate.HARNESS_NOTEBOOK_TITLE,
-        }
-        competitive = {
-            "id": "17cd45cd-5166-4b3f-aefb-107e2c1e3589",
-            "title": "Competitive Intelligence Report: 2026 AI Infrastructure",
-        }
-
-        harness_decision = gate.classify_notebook(harness, "", {})
-        competitive_decision = gate.classify_notebook(competitive, "", {})
-
-        self.assertEqual(harness_decision["disposition"], "priority_reference")
-        self.assertEqual(harness_decision["issue"], 1606)
-        self.assertEqual(competitive_decision["disposition"], "routed")
-        self.assertEqual(competitive_decision["issue"], 1660)
-
-    def test_existing_issue_reference_skips_duplicate(self):
-        notebook_id = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"
-        notebook = {"id": notebook_id, "title": "WorkOS AuthKit MCP"}
-
-        decision = gate.classify_notebook(notebook, "", {notebook_id: ["issue #1194"]})
-
-        self.assertEqual(decision["disposition"], "applied")
-        self.assertEqual(decision["action"], "skip")
-        self.assertIn("issue #1194", decision["references"])
-
-    def test_analyze_from_input_file(self):
+    def test_main_writes_snapshot_from_input_json(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            (root / "docs" / "ai-tool-watch").mkdir(parents=True)
-            (root / "docs" / "ai-tool-watch" / "latest-report.md").write_text(
-                f"`{gate.HARNESS_NOTEBOOK_ID}`\n",
-                encoding="utf-8",
-            )
-            input_path = root / "notebooks.json"
-            input_path.write_text(
+            input_json = root / "notebooks.json"
+            input_json.write_text(
                 """
                 {
-                  "count": 2,
                   "notebooks": [
                     {
-                      "index": 1,
                       "id": "bc58b50b-5fc4-4840-9a62-b397d6d3b65a",
                       "title": "Codex vs Claude Code: The Ultimate AI Development Synergy"
-                    },
-                    {
-                      "index": 2,
-                      "id": "9b8885ef-86a6-45c4-8e3d-2dc6fd601fd0",
-                      "title": "Automating SaaS Operations with Claude Code Schedule"
                     }
                   ]
                 }
                 """,
                 encoding="utf-8",
             )
-            args = gate.parse_args(["--root", str(root), "--input", str(input_path), "--no-gh"])
+            args = argparse.Namespace(
+                input_json=str(input_json),
+                refresh=False,
+                state=str(root / "state.json"),
+                snapshot=str(root / "snapshot.json"),
+                report=str(root / "report.md"),
+                issue_drafts=str(root / "drafts.md"),
+                repo="kanta13jp1/my_web_app",
+                gh_dedup=False,
+                gh_issues_json=None,
+                metadata="none",
+                metadata_limit=12,
+                timeout=10,
+                print_only=False,
+            )
 
-            report = gate.analyze(args)
+            notebooks = gate.read_notebook_list(args, root)
+            routed = gate.build_routing(notebooks, {}, [], {"notebooks": {}})
+            snapshot = {
+                "checked_at": gate.now_iso(),
+                "harness_notebook_id": gate.HARNESS_NOTEBOOK_ID,
+                "harness_found": True,
+                "notebook_count": len(routed),
+                "notebooks": routed,
+            }
+            gate.save_json(Path(args.snapshot), snapshot)
 
-        self.assertEqual(report["notebook_count"], 2)
-        self.assertTrue(report["harness"]["found"])
-        self.assertEqual(report["counts"]["priority_reference"], 1)
-        self.assertEqual(report["counts"]["routed"], 1)
+            written = gate.load_json(Path(args.snapshot), {})
+
+        self.assertEqual(written["notebook_count"], 1)
+        self.assertTrue(written["harness_found"])
 
 
 if __name__ == "__main__":

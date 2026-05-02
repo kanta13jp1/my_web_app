@@ -67,10 +67,12 @@ jobs:
         id: intake
         run: |
           python scripts/notebooklm_intake_gate.py \
-            --input docs/notebooklm-intake/notebooklm-list.json \
-            --repo "$GITHUB_REPOSITORY" \
+            --input-json docs/notebooklm-intake/notebooklm-list.json \
+            --gh-dedup \
+            --metadata none \
             --report docs/notebooklm-intake/latest-report.md \
-            --json docs/notebooklm-intake/latest-report.json \
+            --snapshot docs/notebooklm-intake/latest-snapshot.json \
+            --issue-drafts docs/notebooklm-intake/issue-drafts.md \
             --state docs/notebooklm-intake/state.json
 
       - name: Commit updated intake state
