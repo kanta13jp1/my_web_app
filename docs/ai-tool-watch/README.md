@@ -26,6 +26,10 @@ python scripts/ai_tool_watch.py `
 Use `--no-save-state` during a manual session-start read if you want a dry
 inspection without changing the baseline.
 
+Run `python scripts/notebooklm_intake_gate.py --repo kanta13jp1/my_web_app`
+after `notebooklm list --json` checks to keep NotebookLM-derived routing in
+`docs/notebooklm-intake/`.
+
 ## Automation
 
 `.github/workflows/ai-tool-watch.yml` runs daily at 06:15 JST and can also be

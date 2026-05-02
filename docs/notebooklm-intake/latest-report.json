@@ -1,0 +1,2500 @@
+{
+  "generated_at": "2026-05-02T19:30:50Z",
+  "source_state": "notebooklm_cli",
+  "source_detail": "notebooklm list --json",
+  "notebook_count": 94,
+  "normalized_count": 94,
+  "issues_loaded": 1000,
+  "harness": {
+    "id": "bc58b50b-5fc4-4840-9a62-b397d6d3b65a",
+    "title": "Codex vs Claude Code: The Ultimate AI Development Synergy",
+    "found": true,
+    "decision": "priority_reference"
+  },
+  "counts": {
+    "priority_reference": 1,
+    "applied": 93
+  },
+  "notebooks": [
+    {
+      "index": 1,
+      "id": "bc58b50b-5fc4-4840-9a62-b397d6d3b65a",
+      "title": "Codex vs Claude Code: The Ultimate AI Development Synergy",
+      "title_key": "codex claude code the ultimate development synergy",
+      "is_owner": true,
+      "created_at": "2026-05-03T04:23:39",
+      "updated_at": null,
+      "source_count": null,
+      "decision": {
+        "disposition": "priority_reference",
+        "route": "harness",
+        "issue": 1606,
+        "lane": "NotebookLM intake",
+        "action": "keep_prioritized",
+        "reason": "Harness notebook is the mandatory routing reference.",
+        "references": [
+          "AGENTS.md",
+          "docs/AGENT_TOOL_POLICY.md",
+          "docs/AI_FLEET_SYNERGY_PLAYBOOK.md",
+          "docs/CODEX_WORKFLOW.md",
+          "docs/SCHEDULE_TASKS.md",
+          "docs/ai-tool-watch/README.md",
+          "docs/ai-tool-watch/latest-report.md",
+          "docs/issue-fix-plans/issue-926.md",
+          "docs/notebooklm-intake/README.md",
+          "docs/notebooklm-intake/latest-report.json",
+          "docs/notebooklm-intake/latest-report.md",
+          "docs/notebooklm-intake/state.json",
+          "docs/technical/TOOLS_HUB_MCP_SMOKE.md",
+          "issue #1445",
+          "issue #1579",
+          "issue #1580",
+          "issue #1581",
+          "issue #1582",
+          "issue #1583",
+          "issue #1589",
+          "issue #1590",
+          "issue #1591",
+          "issue #1592",
+          "issue #1593",
+          "issue #1594",
+          "issue #1595",
+          "issue #1596",
+          "issue #1597",
+          "issue #1598",
+          "issue #1599",
+          "issue #1601",
+          "issue #1606",
+          "issue #1608",
+          "issue #1614",
+          "issue #1619",
+          "issue #1620",
+          "issue #1628",
+          "issue #1635",
+          "issue #1636",
+          "issue #1638",
+          "issue #1640",
+          "issue #1643",
+          "issue #1644",
+          "issue #1652"
+        ],
+        "needs_source_policy": false
+      }
+    },
+    {
+      "index": 2,
+      "id": "17cd45cd-5166-4b3f-aefb-107e2c1e3589",
+      "title": "Competitive Intelligence Report: 2026 AI Infrastructure and Marketplace Trends",
+      "title_key": "competitive intelligence report 2026 infrastructure and marketplace trends",
+      "is_owner": true,
+      "created_at": "2026-05-03T04:14:54",
+      "updated_at": null,
+      "source_count": null,
+      "decision": {
+        "disposition": "applied",
+        "route": "existing-reference",
+        "issue": null,
+        "lane": "repository",
+        "action": "skip",
+        "reason": "Notebook id already appears in repository/Issue references.",
+        "references": [
+          "docs/notebooklm-intake/latest-report.json",
+          "docs/notebooklm-intake/state.json"
+        ],
+        "needs_source_policy": false
+      }
+    },
+    {
+      "index": 3,
+      "id": "d83954af-f6a7-44fa-a1fe-fbc75b5ae7be",
+      "title": "Competitor Discovery Report: April 2026 Status Update",
+      "title_key": "competitor discovery report april 2026 status update",
+      "is_owner": true,
+      "created_at": "2026-05-03T03:08:53",
+      "updated_at": null,
+      "source_count": null,
+      "decision": {
+        "disposition": "applied",
+        "route": "existing-reference",
+        "issue": null,
+        "lane": "repository",
+        "action": "skip",
+        "reason": "Notebook id already appears in repository/Issue references.",
+        "references": [
+          "docs/notebooklm-intake/latest-report.json",
+          "docs/notebooklm-intake/state.json"
+        ],
+        "needs_source_policy": false
+      }
+    },
+    {
+      "index": 4,
+      "id": "c60da02b-69b2-4c09-8708-8ddec784ebba",
+      "title": "Strategic Intelligence Scoreboard: May 2026 Competitive Analysis Summary",
+      "title_key": "strategic intelligence scoreboard may 2026 competitive analysis summary",
+      "is_owner": true,
+      "created_at": "2026-05-03T03:08:50",
+      "updated_at": null,
+      "source_count": null,
+      "decision": {
+        "disposition": "applied",
+        "route": "existing-reference",
+        "issue": null,
+        "lane": "repository",
+        "action": "skip",
+        "reason": "Notebook id already appears in repository/Issue references.",
+        "references": [
+          "docs/notebooklm-intake/latest-report.json",
+          "docs/notebooklm-intake/state.json"
+        ],
+        "needs_source_policy": false
+      }
+    },
+    {
+      "index": 5,
+      "id": "0829f536-32d7-4b49-917f-26d27b43e0c7",
+      "title": "Google I/O 2026: Strategic Defense and Competitive Analysis Briefing",
+      "title_key": "google 2026 strategic defense and competitive analysis briefing",
+      "is_owner": true,
+      "created_at": "2026-05-03T03:08:48",
+      "updated_at": null,
+      "source_count": null,
+      "decision": {
+        "disposition": "applied",
+        "route": "existing-reference",
+        "issue": null,
+        "lane": "repository",
+        "action": "skip",
+        "reason": "Notebook id already appears in repository/Issue references.",
+        "references": [
+          "docs/notebooklm-intake/latest-report.json",
+          "docs/notebooklm-intake/state.json"
+        ],
+        "needs_source_policy": false
+      }
+    },
+    {
+      "index": 6,
+      "id": "fdea9e6d-a2dd-428d-997c-36cba9626afd",
+      "title": "Cursor Product Updates and Agent Innovation Changelog",
+      "title_key": "cursor product updates and agent innovation changelog",
+      "is_owner": true,
+      "created_at": "2026-05-03T03:08:45",
+      "updated_at": null,
+      "source_count": null,
+      "decision": {
+        "disposition": "applied",
+        "route": "existing-reference",
+        "issue": null,
+        "lane": "repository",
+        "action": "skip",
+        "reason": "Notebook id already appears in repository/Issue references.",
+        "references": [
+          "docs/notebooklm-intake/latest-report.json",
+          "docs/notebooklm-intake/state.json"
+        ],
+        "needs_source_policy": false
+      }
+    },
+    {
+      "index": 7,
+      "id": "f985728b-3976-4b24-b8c6-a3f318905e34",
+      "title": "Devin Documentation Release Notes 2026",
+      "title_key": "devin documentation release notes 2026",
+      "is_owner": true,
+      "created_at": "2026-05-03T03:08:43",
+      "updated_at": null,
+      "source_count": null,
+      "decision": {
+        "disposition": "applied",
+        "route": "existing-reference",
+        "issue": null,
+        "lane": "repository",
+        "action": "skip",
+        "reason": "Notebook id already appears in repository/Issue references.",
+        "references": [
+          "docs/notebooklm-intake/latest-report.json",
+          "docs/notebooklm-intake/state.json"
+        ],
+        "needs_source_policy": false
+      }
+    },
+    {
+      "index": 8,
+      "id": "1aced136-1352-4933-b727-478d3c35b360",
+      "title": "Claude Code Masterclass: From Foundations to Agentic Workflows",
+      "title_key": "claude code masterclass from foundations agentic workflows",
+      "is_owner": true,
+      "created_at": "2026-05-03T03:08:40",
+      "updated_at": null,
+      "source_count": null,
+      "decision": {
+        "disposition": "applied",
+        "route": "existing-reference",
+        "issue": null,
+        "lane": "repository",
+        "action": "skip",
+        "reason": "Notebook id already appears in repository/Issue references.",
+        "references": [
+          "docs/notebooklm-intake/latest-report.json",
+          "docs/notebooklm-intake/state.json",
+          "issue #1611"
+        ],
+        "needs_source_policy": false
+      }
+    },
+    {
+      "index": 9,
+      "id": "9b8885ef-86a6-45c4-8e3d-2dc6fd601fd0",
+      "title": "Automating SaaS Operations with Claude Code Schedule",
+      "title_key": "automating saas operations with claude code schedule",
+      "is_owner": true,
+      "created_at": "2026-05-03T03:08:38",
+      "updated_at": null,
+      "source_count": null,
+      "decision": {
+        "disposition": "applied",
+        "route": "existing-reference",
+        "issue": null,
+        "lane": "repository",
+        "action": "skip",
+        "reason": "Notebook id already appears in repository/Issue references.",
+        "references": [
+          "docs/notebooklm-intake/latest-report.json",
+          "docs/notebooklm-intake/state.json",
+          "issue #1350",
+          "issue #1351",
+          "issue #1352"
+        ],
+        "needs_source_policy": false
+      }
+    },
+    {
+      "index": 10,
+      "id": "1b808a60-85d6-49f7-ab80-0e90a43cf1d8",
+      "title": "Streamlining MCP Authentication with WorkOS AuthKit",
+      "title_key": "streamlining mcp authentication with workos authkit",
+      "is_owner": true,
+      "created_at": "2026-05-03T03:08:35",
+      "updated_at": null,
+      "source_count": null,
+      "decision": {
+        "disposition": "applied",
+        "route": "existing-reference",
+        "issue": null,
+        "lane": "repository",
+        "action": "skip",
+        "reason": "Notebook id already appears in repository/Issue references.",
+        "references": [
+          "docs/notebooklm-intake/latest-report.json",
+          "docs/notebooklm-intake/state.json",
+          "issue #1194",
+          "issue #1195",
+          "issue #1196",
+          "issue #1608",
+          "issue #845",
+          "issue #846"
+        ],
+        "needs_source_policy": false
+      }
+    },
+    {
+      "index": 11,
+      "id": "47bd101a-533e-45b0-be0b-7a3299b2538d",
+      "title": "Managing Notion Database IDs and API Page Properties",
+      "title_key": "managing notion database ids and api page properties",
+      "is_owner": true,
+      "created_at": "2026-05-03T03:08:33",
+      "updated_at": null,
+      "source_count": null,
+      "decision": {
+        "disposition": "applied",
+        "route": "existing-reference",
+        "issue": null,
+        "lane": "repository",
+        "action": "skip",
+        "reason": "Notebook id already appears in repository/Issue references.",
+        "references": [
+          "docs/notebooklm-intake/latest-report.json",
+          "docs/notebooklm-intake/state.json",
+          "issue #1287",
+          "issue #1288",
+          "issue #1289"
+        ],
+        "needs_source_policy": false
+      }
+    },
+    {
+      "index": 12,
+      "id": "ed1aac00-a9a0-4937-94c0-e835b71016c3",
+      "title": "Mastering Claude: A Guide to Intelligent Collaboration",
+      "title_key": "mastering claude guide intelligent collaboration",
+      "is_owner": true,
+      "created_at": "2026-05-03T03:08:30",
+      "updated_at": null,
+      "source_count": null,
+      "decision": {
+        "disposition": "applied",
+        "route": "existing-reference",
+        "issue": null,
+        "lane": "repository",
+        "action": "skip",
+        "reason": "Notebook id already appears in repository/Issue references.",
+        "references": [
+          "docs/notebooklm-intake/latest-report.json",
+          "docs/notebooklm-intake/state.json"
+        ],
+        "needs_source_policy": false
+      }
+    },
+    {
+      "index": 13,
+      "id": "72d24a65-a81d-4b0a-a413-7ae3cd335dcc",
+      "title": "Gemini Code Assist Release Notes",
+      "title_key": "gemini code assist release notes",
+      "is_owner": false,
+      "created_at": "2026-05-03T03:08:28",
+      "updated_at": null,
+      "source_count": null,
+      "decision": {
+        "disposition": "applied",
+        "route": "existing-reference",
+        "issue": null,
+        "lane": "repository",
+        "action": "skip",
+        "reason": "Notebook id already appears in repository/Issue references.",
+        "references": [
+          "docs/notebooklm-intake/latest-report.json",
+          "docs/notebooklm-intake/state.json",
+          "issue #1407",
+          "issue #1408",
+          "issue #1409"
+        ],
+        "needs_source_policy": false
+      }
+    },
+    {
+      "index": 14,
+      "id": "239c758b-8a8f-4a9e-9d1d-1bdcafaacc09",
+      "title": "Gemini Code Assist Release Notes",
+      "title_key": "gemini code assist release notes",
+      "is_owner": true,
+      "created_at": "2026-05-03T03:08:25",
+      "updated_at": null,
+      "source_count": null,
+      "decision": {
+        "disposition": "applied",
+        "route": "existing-reference",
+        "issue": null,
+        "lane": "repository",
+        "action": "skip",
+        "reason": "Notebook id already appears in repository/Issue references.",
+        "references": [
+          "docs/notebooklm-intake/latest-report.json",
+          "docs/notebooklm-intake/state.json",
+          "issue #1353",
+          "issue #1354",
+          "issue #1355"
+        ],
+        "needs_source_policy": false
+      }
+    },
+    {
+      "index": 15,
+      "id": "d89ae1f5-6081-4084-b573-6d817e4abaf4",
+      "title": "Building Long-Term Memory for Claude Code: claude-mem vs. DIY Hooks",
+      "title_key": "building long term memory for claude code claude mem diy hooks",
+      "is_owner": false,
+      "created_at": "2026-05-03T03:08:22",
+      "updated_at": null,
+      "source_count": null,
+      "decision": {
+        "disposition": "applied",
+        "route": "existing-reference",
+        "issue": null,
+        "lane": "repository",
+        "action": "skip",
+        "reason": "Notebook id already appears in repository/Issue references.",
+        "references": [
+          "docs/notebooklm-intake/latest-report.json",
+          "docs/notebooklm-intake/state.json",
+          "issue #1341",
+          "issue #1342",
+          "issue #1343"
+        ],
+        "needs_source_policy": false
+      }
+    },
+    {
+      "index": 16,
+      "id": "b74e9ada-b9b1-4917-9b8c-66afcb7bf6ce",
+      "title": "Code with Claude 開会の基調講演",
+      "title_key": "code with claude",
+      "is_owner": false,
+      "created_at": "2026-05-03T03:08:20",
+      "updated_at": null,
+      "source_count": null,
+      "decision": {
+        "disposition": "applied",
+        "route": "existing-reference",
+        "issue": null,
+        "lane": "repository",
+        "action": "skip",
+        "reason": "Notebook id already appears in repository/Issue references.",
+        "references": [
+          "docs/notebooklm-intake/latest-report.json",
+          "docs/notebooklm-intake/state.json",
+          "issue #1338",
+          "issue #1339",
+          "issue #1340"
+        ],
+        "needs_source_policy": false
+      }
+    },
+    {
+      "index": 17,
+      "id": "64fc639e-a6ac-4e32-84a8-f3f7278b6d6d",
+      "title": "Automating Technical Blogs with Claude Code and Supabase Edge Functions",
+      "title_key": "automating technical blogs with claude code and supabase edge functions",
+      "is_owner": true,
+      "created_at": "2026-05-03T03:08:17",
+      "updated_at": null,
+      "source_count": null,
+      "decision": {
+        "disposition": "applied",
+        "route": "existing-reference",
+        "issue": null,
+        "lane": "repository",
+        "action": "skip",
+        "reason": "Notebook id already appears in repository/Issue references.",
+        "references": [
+          "docs/notebooklm-intake/latest-report.json",
+          "docs/notebooklm-intake/state.json",
+          "issue #1326",
+          "issue #1327",
+          "issue #1328"
+        ],
+        "needs_source_policy": false
+      }
+    },
+    {
+      "index": 18,
+      "id": "2f516389-a41f-499d-bc05-ae54562a6295",
+      "title": "Mastering Descript: AI Video Editing and Underlord Co-Editor Guide",
+      "title_key": "mastering descript video editing and underlord editor guide",
+      "is_owner": true,
+      "created_at": "2026-05-02T01:03:17",
+      "updated_at": null,
+      "source_count": null,
+      "decision": {
+        "disposition": "applied",
+        "route": "existing-reference",
+        "issue": null,
+        "lane": "repository",
+        "action": "skip",
+        "reason": "Notebook id already appears in repository/Issue references.",
+        "references": [
+          "docs/issue-fix-plans/issue-1537.md",
+          "docs/notebooklm-intake/latest-report.json",
+          "docs/notebooklm-intake/state.json",
+          "issue #1535",
+          "issue #1536",
+          "issue #1537"
+        ],
+        "needs_source_policy": false
+      }
+    },
+    {
+      "index": 19,
+      "id": "7ccb0520-04f2-4775-adaa-1acf96025bd1",
+      "title": "Weights & Biases: Comprehensive AI Developer Platform Guide",
+      "title_key": "weights biases comprehensive developer platform guide",
+      "is_owner": true,
+      "created_at": "2026-05-02T00:22:35",
+      "updated_at": null,
+      "source_count": null,
+      "decision": {
+        "disposition": "applied",
+        "route": "existing-reference",
+        "issue": null,
+        "lane": "repository",
+        "action": "skip",
+        "reason": "Notebook id already appears in repository/Issue references.",
+        "references": [
+          "docs/notebooklm-intake/latest-report.json",
+          "docs/notebooklm-intake/state.json",
+          "issue #1527",
+          "issue #1528",
+          "issue #1529"
+        ],
+        "needs_source_policy": false
+      }
+    },
+    {
+      "index": 20,
+      "id": "cc9ac313-d42e-47a9-93e3-bcd5a4e61020",
+      "title": "React Frontend Implementation and Material-UI Architecture Guide",
+      "title_key": "react frontend implementation and material architecture guide",
+      "is_owner": true,
+      "created_at": "2026-05-01T19:45:45",
+      "updated_at": null,
+      "source_count": null,
+      "decision": {
+        "disposition": "applied",
+        "route": "existing-reference",
+        "issue": null,
+        "lane": "repository",
+        "action": "skip",
+        "reason": "Notebook id already appears in repository/Issue references.",
+        "references": [
+          "docs/notebooklm-intake/latest-report.json",
+          "docs/notebooklm-intake/state.json"
+        ],
+        "needs_source_policy": false
+      }
+    },
+    {
+      "index": 21,
+      "id": "27730002-fe8c-40ff-b2c3-431ab8f40a9a",
+      "title": "DEV Community Newsletter: AI Evolution and Developer Wins",
+      "title_key": "dev community newsletter evolution and developer wins",
+      "is_owner": true,
+      "created_at": "2026-05-01T19:25:27",
+      "updated_at": null,
+      "source_count": null,
+      "decision": {
+        "disposition": "applied",
+        "route": "existing-reference",
+        "issue": null,
+        "lane": "repository",
+        "action": "skip",
+        "reason": "Notebook id already appears in repository/Issue references.",
+        "references": [
+          "docs/notebooklm-intake/latest-report.json",
+          "docs/notebooklm-intake/state.json",
+          "issue #1123",
+          "issue #1124",
+          "issue #1125",
+          "issue #1178",
+          "issue #1179",
+          "issue #1180"
+        ],
+        "needs_source_policy": false
+      }
+    },
+    {
+      "index": 22,
+      "id": "971910f8-b814-43bb-8bc3-591df138666d",
+      "title": "Internal Review Record Sheet for Non-TCF Projects",
+      "title_key": "internal review record sheet for non tcf projects",
+      "is_owner": true,
+      "created_at": "2026-05-01T15:56:30",
+      "updated_at": null,
+      "source_count": null,
+      "decision": {
+        "disposition": "applied",
+        "route": "existing-reference",
+        "issue": null,
+        "lane": "repository",
+        "action": "skip",
+        "reason": "Notebook id already appears in repository/Issue references.",
+        "references": [
+          "docs/notebooklm-intake/latest-report.json",
+          "docs/notebooklm-intake/state.json"
+        ],
+        "needs_source_policy": false
+      }
+    },
+    {
+      "index": 23,
+      "id": "b0ca91aa-ae60-498d-a1d0-ed2fcf2a0a7f",
+      "title": "EKS Manifest IaC Pipeline Operations Guide",
+      "title_key": "eks manifest iac pipeline operations guide",
+      "is_owner": true,
+      "created_at": "2026-05-01T15:37:24",
+      "updated_at": null,
+      "source_count": null,
+      "decision": {
+        "disposition": "applied",
+        "route": "existing-reference",
+        "issue": null,
+        "lane": "repository",
+        "action": "skip",
+        "reason": "Notebook id already appears in repository/Issue references.",
+        "references": [
+          "docs/notebooklm-intake/latest-report.json",
+          "docs/notebooklm-intake/state.json"
+        ],
+        "needs_source_policy": false
+      }
+    },
+    {
+      "index": 24,
+      "id": "6a7f61ea-5463-4ed5-aba0-7dd7dcc404ad",
+      "title": "Mastering Visual Studio Code Dev Containers",
+      "title_key": "mastering visual studio code dev containers",
+      "is_owner": true,
+      "created_at": "2026-05-01T12:04:47",
+      "updated_at": null,
+      "source_count": null,
+      "decision": {
+        "disposition": "applied",
+        "route": "existing-reference",
+        "issue": null,
+        "lane": "repository",
+        "action": "skip",
+        "reason": "Notebook id already appears in repository/Issue references.",
+        "references": [
+          "docs/notebooklm-intake/latest-report.json",
+          "docs/notebooklm-intake/state.json"
+        ],
+        "needs_source_policy": false
+      }
+    },
+    {
+      "index": 25,
+      "id": "02e9cf0a-55f6-4896-b0de-29278f3b18d0",
+      "title": "次期CATS開発プロセス及びアーキテクチャQA集",
+      "title_key": "cats",
+      "is_owner": true,
+      "created_at": "2026-05-01T12:04:21",
+      "updated_at": null,
+      "source_count": null,
+      "decision": {
+        "disposition": "applied",
+        "route": "existing-reference",
+        "issue": null,
+        "lane": "repository",
+        "action": "skip",
+        "reason": "Notebook id already appears in repository/Issue references.",
+        "references": [
+          "docs/notebooklm-intake/latest-report.json",
+          "docs/notebooklm-intake/state.json",
+          "issue #1238",
+          "issue #1239",
+          "issue #1240"
+        ],
+        "needs_source_policy": false
+      }
+    },
+    {
+      "index": 26,
+      "id": "850dfd54-0be1-47de-bd7f-4d4e51808fed",
+      "title": "Visual Studio Code 1.118 Release Notes",
+      "title_key": "visual studio code 118 release notes",
+      "is_owner": true,
+      "created_at": "2026-05-01T12:04:15",
+      "updated_at": null,
+      "source_count": null,
+      "decision": {
+        "disposition": "applied",
+        "route": "existing-reference",
+        "issue": null,
+        "lane": "repository",
+        "action": "skip",
+        "reason": "Notebook id already appears in repository/Issue references.",
+        "references": [
+          "docs/notebooklm-intake/latest-report.json",
+          "docs/notebooklm-intake/state.json"
+        ],
+        "needs_source_policy": false
+      }
+    },
+    {
+      "index": 27,
+      "id": "54b6f2f2-6831-4376-b2dd-99a1a4bf90ec",
+      "title": "Writer AI Studio Comprehensive Development and Management Guide",
+      "title_key": "writer studio comprehensive development and management guide",
+      "is_owner": true,
+      "created_at": "2026-04-30T20:21:33",
+      "updated_at": null,
+      "source_count": null,
+      "decision": {
+        "disposition": "applied",
+        "route": "existing-reference",
+        "issue": null,
+        "lane": "repository",
+        "action": "skip",
+        "reason": "Notebook id already appears in repository/Issue references.",
+        "references": [
+          "docs/issue-fix-plans/issue-774.md",
+          "docs/notebooklm-intake/latest-report.json",
+          "docs/notebooklm-intake/state.json",
+          "issue #1253",
+          "issue #1254",
+          "issue #1255",
+          "issue #772",
+          "issue #773"
+        ],
+        "needs_source_policy": false
+      }
+    },
+    {
+      "index": 28,
+      "id": "0f52e149-b074-44d2-931c-c43b4c527767",
+      "title": "Next-Generation CATS Project Status and Architecture Memo",
+      "title_key": "next generation cats project status and architecture memo",
+      "is_owner": true,
+      "created_at": "2026-04-30T19:16:36",
+      "updated_at": null,
+      "source_count": null,
+      "decision": {
+        "disposition": "applied",
+        "route": "existing-reference",
+        "issue": null,
+        "lane": "repository",
+        "action": "skip",
+        "reason": "Notebook id already appears in repository/Issue references.",
+        "references": [
+          "docs/notebooklm-intake/latest-report.json",
+          "docs/notebooklm-intake/state.json",
+          "issue #1311",
+          "issue #1312",
+          "issue #1313"
+        ],
+        "needs_source_policy": false
+      }
+    },
+    {
+      "index": 29,
+      "id": "f404e403-d347-4baf-850b-3702fb3c13ab",
+      "title": "CATS System Planned Outage Notification and Correspondence",
+      "title_key": "cats system planned outage notification and correspondence",
+      "is_owner": true,
+      "created_at": "2026-04-30T19:16:31",
+      "updated_at": null,
+      "source_count": null,
+      "decision": {
+        "disposition": "applied",
+        "route": "existing-reference",
+        "issue": null,
+        "lane": "repository",
+        "action": "skip",
+        "reason": "Notebook id already appears in repository/Issue references.",
+        "references": [
+          "docs/notebooklm-intake/latest-report.json",
+          "docs/notebooklm-intake/state.json",
+          "issue #1308",
+          "issue #1309",
+          "issue #1310"
+        ],
+        "needs_source_policy": false
+      }
+    },
+    {
+      "index": 30,
+      "id": "29540f60-4afa-4825-8e33-6751040caef2",
+      "title": "GitHub Authentication and Session Management Error Interface",
+      "title_key": "github authentication and session management error interface",
+      "is_owner": true,
+      "created_at": "2026-04-30T18:41:57",
+      "updated_at": null,
+      "source_count": null,
+      "decision": {
+        "disposition": "applied",
+        "route": "existing-reference",
+        "issue": null,
+        "lane": "repository",
+        "action": "skip",
+        "reason": "Notebook id already appears in repository/Issue references.",
+        "references": [
+          "docs/notebooklm-intake/latest-report.json",
+          "docs/notebooklm-intake/state.json",
+          "issue #1317",
+          "issue #1318",
+          "issue #1319"
+        ],
+        "needs_source_policy": false
+      }
+    },
+    {
+      "index": 31,
+      "id": "173db965-435a-429a-bcdf-7b38ffe68efb",
+      "title": "Personal Cash Flow Ledger and Withdrawal Analysis 2026",
+      "title_key": "personal cash flow ledger and withdrawal analysis 2026",
+      "is_owner": true,
+      "created_at": "2026-04-30T18:41:35",
+      "updated_at": null,
+      "source_count": null,
+      "decision": {
+        "disposition": "applied",
+        "route": "existing-reference",
+        "issue": null,
+        "lane": "repository",
+        "action": "skip",
+        "reason": "Notebook id already appears in repository/Issue references.",
+        "references": [
+          "docs/notebooklm-intake/latest-report.json",
+          "docs/notebooklm-intake/state.json",
+          "issue #1368",
+          "issue #1369",
+          "issue #1370"
+        ],
+        "needs_source_policy": false
+      }
+    },
+    {
+      "index": 32,
+      "id": "3545ffe5-37b0-4d96-87f5-599039add518",
+      "title": "Pleias: Open Data Layers for Enterprise AI Training",
+      "title_key": "pleias open data layers for enterprise training",
+      "is_owner": true,
+      "created_at": "2026-04-30T10:10:26",
+      "updated_at": null,
+      "source_count": null,
+      "decision": {
+        "disposition": "applied",
+        "route": "existing-reference",
+        "issue": null,
+        "lane": "repository",
+        "action": "skip",
+        "reason": "Notebook id already appears in repository/Issue references.",
+        "references": [
+          "docs/notebooklm-intake/latest-report.json",
+          "docs/notebooklm-intake/state.json",
+          "issue #1263",
+          "issue #1264",
+          "issue #1265"
+        ],
+        "needs_source_policy": false
+      }
+    },
+    {
+      "index": 33,
+      "id": "7f26d8be-f969-4bb4-81dd-d257728158eb",
+      "title": "国民民主党 玉木代表による備蓄米に関する質問",
+      "title_key": "",
+      "is_owner": false,
+      "created_at": "2026-04-30T09:37:18",
+      "updated_at": null,
+      "source_count": null,
+      "decision": {
+        "disposition": "applied",
+        "route": "existing-reference",
+        "issue": null,
+        "lane": "repository",
+        "action": "skip",
+        "reason": "Notebook id already appears in repository/Issue references.",
+        "references": [
+          "docs/notebooklm-intake/latest-report.json",
+          "docs/notebooklm-intake/state.json",
+          "issue #1410",
+          "issue #1411",
+          "issue #1412"
+        ],
+        "needs_source_policy": false
+      }
+    },
+    {
+      "index": 34,
+      "id": "59536494-36fd-4c28-8444-df9c2c570f9c",
+      "title": "Me Inc. AI-Powered Executive Simulation App Repository",
+      "title_key": "inc powered executive simulation app repository",
+      "is_owner": true,
+      "created_at": "2026-04-30T09:35:58",
+      "updated_at": null,
+      "source_count": null,
+      "decision": {
+        "disposition": "applied",
+        "route": "existing-reference",
+        "issue": null,
+        "lane": "repository",
+        "action": "skip",
+        "reason": "Notebook id already appears in repository/Issue references.",
+        "references": [
+          "docs/notebooklm-intake/latest-report.json",
+          "docs/notebooklm-intake/state.json",
+          "issue #1404",
+          "issue #1405",
+          "issue #1406"
+        ],
+        "needs_source_policy": false
+      }
+    },
+    {
+      "index": 35,
+      "id": "386e02ec-cc1a-43ea-b1cb-f66176b9841e",
+      "title": "jibun-research-20260416-163955",
+      "title_key": "jibun research 20260416 163955",
+      "is_owner": true,
+      "created_at": "2026-04-30T09:35:29",
+      "updated_at": null,
+      "source_count": null,
+      "decision": {
+        "disposition": "applied",
+        "route": "existing-reference",
+        "issue": null,
+        "lane": "repository",
+        "action": "skip",
+        "reason": "Notebook id already appears in repository/Issue references.",
+        "references": [
+          "docs/notebooklm-intake/latest-report.json",
+          "docs/notebooklm-intake/state.json",
+          "issue #1401",
+          "issue #1402",
+          "issue #1403"
+        ],
+        "needs_source_policy": false
+      }
+    },
+    {
+      "index": 36,
+      "id": "6884b88d-5a70-463c-9e48-7482ff504ac1",
+      "title": "The Architecture of Functional Emotion in AI",
+      "title_key": "the architecture functional emotion",
+      "is_owner": true,
+      "created_at": "2026-04-30T09:34:35",
+      "updated_at": null,
+      "source_count": null,
+      "decision": {
+        "disposition": "applied",
+        "route": "existing-reference",
+        "issue": null,
+        "lane": "repository",
+        "action": "skip",
+        "reason": "Notebook id already appears in repository/Issue references.",
+        "references": [
+          "docs/notebooklm-intake/latest-report.json",
+          "docs/notebooklm-intake/state.json",
+          "issue #1398",
+          "issue #1399",
+          "issue #1400"
+        ],
+        "needs_source_policy": false
+      }
+    },
+    {
+      "index": 37,
+      "id": "f45600f2-1883-4043-bfec-b1309f468889",
+      "title": "Firebase Service Plans and Pricing Guide",
+      "title_key": "firebase service plans and pricing guide",
+      "is_owner": true,
+      "created_at": "2026-04-30T09:34:00",
+      "updated_at": null,
+      "source_count": null,
+      "decision": {
+        "disposition": "applied",
+        "route": "existing-reference",
+        "issue": null,
+        "lane": "repository",
+        "action": "skip",
+        "reason": "Notebook id already appears in repository/Issue references.",
+        "references": [
+          "docs/notebooklm-intake/latest-report.json",
+          "docs/notebooklm-intake/state.json",
+          "issue #1395",
+          "issue #1396",
+          "issue #1397"
+        ],
+        "needs_source_policy": false
+      }
+    },
+    {
+      "index": 38,
+      "id": "20ef0ed7-8864-41ee-9d6e-8c85696d205a",
+      "title": "The Enterprise of Self",
+      "title_key": "the enterprise self",
+      "is_owner": false,
+      "created_at": "2026-04-30T09:33:20",
+      "updated_at": null,
+      "source_count": null,
+      "decision": {
+        "disposition": "applied",
+        "route": "existing-reference",
+        "issue": null,
+        "lane": "repository",
+        "action": "skip",
+        "reason": "Notebook id already appears in repository/Issue references.",
+        "references": [
+          "docs/notebooklm-intake/latest-report.json",
+          "docs/notebooklm-intake/state.json",
+          "issue #1392",
+          "issue #1393",
+          "issue #1394"
+        ],
+        "needs_source_policy": false
+      }
+    },
+    {
+      "index": 39,
+      "id": "25e74fc2-784d-4b82-88ff-75c69f1a668c",
+      "title": "Kepion Team Memory Scoping Fix and Per-Business Scoring Update",
+      "title_key": "kepion team memory scoping fix and per business scoring update",
+      "is_owner": false,
+      "created_at": "2026-04-30T09:32:35",
+      "updated_at": null,
+      "source_count": null,
+      "decision": {
+        "disposition": "applied",
+        "route": "existing-reference",
+        "issue": null,
+        "lane": "repository",
+        "action": "skip",
+        "reason": "Notebook id already appears in repository/Issue references.",
+        "references": [
+          "docs/notebooklm-intake/latest-report.json",
+          "docs/notebooklm-intake/state.json",
+          "issue #1389",
+          "issue #1390",
+          "issue #1391"
+        ],
+        "needs_source_policy": false
+      }
+    },
+    {
+      "index": 40,
+      "id": "c7e786bb-b4fb-466e-9382-efdb739b992f",
+      "title": "Building a Voice AI GMAT Tutor with Long-Term Memory",
+      "title_key": "building voice gmat tutor with long term memory",
+      "is_owner": false,
+      "created_at": "2026-04-30T09:31:54",
+      "updated_at": null,
+      "source_count": null,
+      "decision": {
+        "disposition": "applied",
+        "route": "existing-reference",
+        "issue": null,
+        "lane": "repository",
+        "action": "skip",
+        "reason": "Notebook id already appears in repository/Issue references.",
+        "references": [
+          "docs/notebooklm-intake/latest-report.json",
+          "docs/notebooklm-intake/state.json",
+          "issue #1386",
+          "issue #1387",
+          "issue #1388"
+        ],
+        "needs_source_policy": false
+      }
+    },
+    {
+      "index": 41,
+      "id": "d6dd44af-a129-42fa-b30c-e9a87916eca0",
+      "title": "Building a Zero-Cost Amazon Price Tracker in Python",
+      "title_key": "building zero cost amazon price tracker python",
+      "is_owner": true,
+      "created_at": "2026-04-30T09:31:19",
+      "updated_at": null,
+      "source_count": null,
+      "decision": {
+        "disposition": "applied",
+        "route": "existing-reference",
+        "issue": null,
+        "lane": "repository",
+        "action": "skip",
+        "reason": "Notebook id already appears in repository/Issue references.",
+        "references": [
+          "docs/notebooklm-intake/latest-report.json",
+          "docs/notebooklm-intake/state.json",
+          "issue #1383",
+          "issue #1384",
+          "issue #1385"
+        ],
+        "needs_source_policy": false
+      }
+    },
+    {
+      "index": 42,
+      "id": "7e39f060-7f61-4a31-babb-237da14f06aa",
+      "title": "Rapid AI Scaling and the Perils of Invisible Defaults",
+      "title_key": "rapid scaling and the perils invisible defaults",
+      "is_owner": false,
+      "created_at": "2026-04-30T09:30:38",
+      "updated_at": null,
+      "source_count": null,
+      "decision": {
+        "disposition": "applied",
+        "route": "existing-reference",
+        "issue": null,
+        "lane": "repository",
+        "action": "skip",
+        "reason": "Notebook id already appears in repository/Issue references.",
+        "references": [
+          "docs/notebooklm-intake/latest-report.json",
+          "docs/notebooklm-intake/state.json",
+          "issue #1380",
+          "issue #1381",
+          "issue #1382"
+        ],
+        "needs_source_policy": false
+      }
+    },
+    {
+      "index": 43,
+      "id": "819f4e8d-d48f-4a09-8920-89cf83da9091",
+      "title": "Kepion: Building an Autonomous AI Company Orchestrator",
+      "title_key": "kepion building autonomous company orchestrator",
+      "is_owner": true,
+      "created_at": "2026-04-30T09:29:50",
+      "updated_at": null,
+      "source_count": null,
+      "decision": {
+        "disposition": "applied",
+        "route": "existing-reference",
+        "issue": null,
+        "lane": "repository",
+        "action": "skip",
+        "reason": "Notebook id already appears in repository/Issue references.",
+        "references": [
+          "docs/notebooklm-intake/latest-report.json",
+          "docs/notebooklm-intake/state.json",
+          "issue #1377",
+          "issue #1378",
+          "issue #1379"
+        ],
+        "needs_source_policy": false
+      }
+    },
+    {
+      "index": 44,
+      "id": "5578d76e-012f-4739-bf1d-c47f5f4693ba",
+      "title": "The Browser Privacy and X Access Directive",
+      "title_key": "the browser privacy and access directive",
+      "is_owner": true,
+      "created_at": "2026-04-30T09:29:02",
+      "updated_at": null,
+      "source_count": null,
+      "decision": {
+        "disposition": "applied",
+        "route": "existing-reference",
+        "issue": null,
+        "lane": "repository",
+        "action": "skip",
+        "reason": "Notebook id already appears in repository/Issue references.",
+        "references": [
+          "docs/notebooklm-intake/latest-report.json",
+          "docs/notebooklm-intake/state.json",
+          "issue #1374",
+          "issue #1375",
+          "issue #1376"
+        ],
+        "needs_source_policy": false
+      }
+    },
+    {
+      "index": 45,
+      "id": "ab987be4-3e04-43aa-a94a-76eaaaad1fb9",
+      "title": "Software Engineering at Google: Sustainability and Scale at Work",
+      "title_key": "software engineering google sustainability and scale work",
+      "is_owner": true,
+      "created_at": "2026-04-30T09:28:23",
+      "updated_at": null,
+      "source_count": null,
+      "decision": {
+        "disposition": "applied",
+        "route": "existing-reference",
+        "issue": null,
+        "lane": "repository",
+        "action": "skip",
+        "reason": "Notebook id already appears in repository/Issue references.",
+        "references": [
+          "docs/notebooklm-intake/latest-report.json",
+          "docs/notebooklm-intake/state.json",
+          "issue #1371",
+          "issue #1372",
+          "issue #1373"
+        ],
+        "needs_source_policy": false
+      }
+    },
+    {
+      "index": 46,
+      "id": "dd2b382d-88d7-4a79-b6a7-11e420f62759",
+      "title": "The Ghost in the Schema: Emergent AI Semantic Abstraction",
+      "title_key": "the ghost the schema emergent semantic abstraction",
+      "is_owner": true,
+      "created_at": "2026-04-30T09:27:02",
+      "updated_at": null,
+      "source_count": null,
+      "decision": {
+        "disposition": "applied",
+        "route": "existing-reference",
+        "issue": null,
+        "lane": "repository",
+        "action": "skip",
+        "reason": "Notebook id already appears in repository/Issue references.",
+        "references": [
+          "docs/notebooklm-intake/latest-report.json",
+          "docs/notebooklm-intake/state.json",
+          "issue #1365",
+          "issue #1366",
+          "issue #1367"
+        ],
+        "needs_source_policy": false
+      }
+    },
+    {
+      "index": 47,
+      "id": "110ca978-707c-4fc5-820d-d50b74ee910c",
+      "title": "AWS Black Belt Online Seminar: Amazon AppStream 2.0",
+      "title_key": "aws black belt online seminar amazon appstream",
+      "is_owner": true,
+      "created_at": "2026-04-30T09:26:21",
+      "updated_at": null,
+      "source_count": null,
+      "decision": {
+        "disposition": "applied",
+        "route": "existing-reference",
+        "issue": null,
+        "lane": "repository",
+        "action": "skip",
+        "reason": "Notebook id already appears in repository/Issue references.",
+        "references": [
+          "docs/notebooklm-intake/latest-report.json",
+          "docs/notebooklm-intake/state.json",
+          "issue #1362",
+          "issue #1363",
+          "issue #1364"
+        ],
+        "needs_source_policy": false
+      }
+    },
+    {
+      "index": 48,
+      "id": "fe10a9f9-f50a-42cc-b5bd-1da5f5ab0917",
+      "title": "Visual Studio Code April 2026 Release Notes",
+      "title_key": "visual studio code april 2026 release notes",
+      "is_owner": true,
+      "created_at": "2026-04-30T09:25:42",
+      "updated_at": null,
+      "source_count": null,
+      "decision": {
+        "disposition": "applied",
+        "route": "existing-reference",
+        "issue": null,
+        "lane": "repository",
+        "action": "skip",
+        "reason": "Notebook id already appears in repository/Issue references.",
+        "references": [
+          "docs/notebooklm-intake/latest-report.json",
+          "docs/notebooklm-intake/state.json",
+          "issue #1359",
+          "issue #1360",
+          "issue #1361"
+        ],
+        "needs_source_policy": false
+      }
+    },
+    {
+      "index": 49,
+      "id": "55a65bf0-61cc-4c73-aa44-662b2baa9a63",
+      "title": "Winget Local Environment Configuration for Windows 11",
+      "title_key": "winget local environment configuration for windows",
+      "is_owner": true,
+      "created_at": "2026-04-30T09:24:48",
+      "updated_at": null,
+      "source_count": null,
+      "decision": {
+        "disposition": "applied",
+        "route": "existing-reference",
+        "issue": null,
+        "lane": "repository",
+        "action": "skip",
+        "reason": "Notebook id already appears in repository/Issue references.",
+        "references": [
+          "docs/notebooklm-intake/latest-report.json",
+          "docs/notebooklm-intake/state.json",
+          "issue #1356",
+          "issue #1357",
+          "issue #1358"
+        ],
+        "needs_source_policy": false
+      }
+    },
+    {
+      "index": 50,
+      "id": "7e72ced1-67b5-4f47-a3a0-2327236ffbd5",
+      "title": "衆議院憲法審査会：憲法改正の論点と起草への進路",
+      "title_key": "",
+      "is_owner": true,
+      "created_at": "2026-04-30T09:21:57",
+      "updated_at": null,
+      "source_count": null,
+      "decision": {
+        "disposition": "applied",
+        "route": "existing-reference",
+        "issue": null,
+        "lane": "repository",
+        "action": "skip",
+        "reason": "Notebook id already appears in repository/Issue references.",
+        "references": [
+          "docs/notebooklm-intake/latest-report.json",
+          "docs/notebooklm-intake/state.json",
+          "issue #1347",
+          "issue #1348",
+          "issue #1349"
+        ],
+        "needs_source_policy": false
+      }
+    },
+    {
+      "index": 51,
+      "id": "d91788ce-67b5-4fcd-86dd-779de2e56972",
+      "title": "国民民主党の政策と日本の未来",
+      "title_key": "",
+      "is_owner": true,
+      "created_at": "2026-04-30T09:21:17",
+      "updated_at": null,
+      "source_count": null,
+      "decision": {
+        "disposition": "applied",
+        "route": "existing-reference",
+        "issue": null,
+        "lane": "repository",
+        "action": "skip",
+        "reason": "Notebook id already appears in repository/Issue references.",
+        "references": [
+          "docs/notebooklm-intake/latest-report.json",
+          "docs/notebooklm-intake/state.json",
+          "issue #1344",
+          "issue #1345",
+          "issue #1346"
+        ],
+        "needs_source_policy": false
+      }
+    },
+    {
+      "index": 52,
+      "id": "f56cc07c-4e9e-4370-be5f-5d5fa919ff78",
+      "title": "TraceHawk vs Datadog: AI Agent Observability in 2026",
+      "title_key": "tracehawk datadog agent observability 2026",
+      "is_owner": true,
+      "created_at": "2026-04-30T09:17:40",
+      "updated_at": null,
+      "source_count": null,
+      "decision": {
+        "disposition": "applied",
+        "route": "existing-reference",
+        "issue": null,
+        "lane": "repository",
+        "action": "skip",
+        "reason": "Notebook id already appears in repository/Issue references.",
+        "references": [
+          "docs/notebooklm-intake/latest-report.json",
+          "docs/notebooklm-intake/state.json",
+          "issue #1335",
+          "issue #1336",
+          "issue #1337"
+        ],
+        "needs_source_policy": false
+      }
+    },
+    {
+      "index": 53,
+      "id": "28590c8b-8147-424f-b1a3-03facef824b9",
+      "title": "Building a Flutter Web Personal KPI Dashboard with Supabase",
+      "title_key": "building flutter web personal kpi dashboard with supabase",
+      "is_owner": true,
+      "created_at": "2026-04-30T09:16:20",
+      "updated_at": null,
+      "source_count": null,
+      "decision": {
+        "disposition": "applied",
+        "route": "existing-reference",
+        "issue": null,
+        "lane": "repository",
+        "action": "skip",
+        "reason": "Notebook id already appears in repository/Issue references.",
+        "references": [
+          "docs/notebooklm-intake/latest-report.json",
+          "docs/notebooklm-intake/state.json",
+          "issue #1332",
+          "issue #1333",
+          "issue #1334"
+        ],
+        "needs_source_policy": false
+      }
+    },
+    {
+      "index": 54,
+      "id": "bc98957a-f609-417f-a655-6e581b0056ab",
+      "title": "The 30-Day SaaS Blueprint: From Zero to $1,287 MRR",
+      "title_key": "the day saas blueprint from zero 287 mrr",
+      "is_owner": true,
+      "created_at": "2026-04-30T09:15:07",
+      "updated_at": null,
+      "source_count": null,
+      "decision": {
+        "disposition": "applied",
+        "route": "existing-reference",
+        "issue": null,
+        "lane": "repository",
+        "action": "skip",
+        "reason": "Notebook id already appears in repository/Issue references.",
+        "references": [
+          "docs/notebooklm-intake/latest-report.json",
+          "docs/notebooklm-intake/state.json",
+          "issue #1305",
+          "issue #1306",
+          "issue #1307"
+        ],
+        "needs_source_policy": false
+      }
+    },
+    {
+      "index": 55,
+      "id": "6deda071-e5a5-488f-9fc9-f3697c13a157",
+      "title": "Anthropic Claude Design Plugin and Platform Ecosystem",
+      "title_key": "anthropic claude design plugin and platform ecosystem",
+      "is_owner": true,
+      "created_at": "2026-04-30T09:14:18",
+      "updated_at": null,
+      "source_count": null,
+      "decision": {
+        "disposition": "applied",
+        "route": "existing-reference",
+        "issue": null,
+        "lane": "repository",
+        "action": "skip",
+        "reason": "Notebook id already appears in repository/Issue references.",
+        "references": [
+          "docs/notebooklm-intake/latest-report.json",
+          "docs/notebooklm-intake/state.json",
+          "issue #1281",
+          "issue #1282",
+          "issue #1283"
+        ],
+        "needs_source_policy": false
+      }
+    },
+    {
+      "index": 56,
+      "id": "0dbe8df1-7225-4a03-b155-cd7bed34b50b",
+      "title": "Gemini Code Assist: Quotas and System Limits",
+      "title_key": "gemini code assist quotas and system limits",
+      "is_owner": true,
+      "created_at": "2026-04-30T09:12:31",
+      "updated_at": null,
+      "source_count": null,
+      "decision": {
+        "disposition": "applied",
+        "route": "existing-reference",
+        "issue": null,
+        "lane": "repository",
+        "action": "skip",
+        "reason": "Notebook id already appears in repository/Issue references.",
+        "references": [
+          "docs/notebooklm-intake/latest-report.json",
+          "docs/notebooklm-intake/state.json",
+          "issue #1175",
+          "issue #1176",
+          "issue #1177"
+        ],
+        "needs_source_policy": false
+      }
+    },
+    {
+      "index": 57,
+      "id": "f24897ad-12df-4d1a-a3a4-f7bb2eb08e73",
+      "title": "Surviving the Paddle Approval Process: A SaaS Founder's Guide",
+      "title_key": "surviving the paddle approval process saas founder guide",
+      "is_owner": true,
+      "created_at": "2026-04-30T09:12:16",
+      "updated_at": null,
+      "source_count": null,
+      "decision": {
+        "disposition": "applied",
+        "route": "existing-reference",
+        "issue": null,
+        "lane": "repository",
+        "action": "skip",
+        "reason": "Notebook id already appears in repository/Issue references.",
+        "references": [
+          "docs/notebooklm-intake/latest-report.json",
+          "docs/notebooklm-intake/state.json",
+          "issue #1329",
+          "issue #1330",
+          "issue #1331"
+        ],
+        "needs_source_policy": false
+      }
+    },
+    {
+      "index": 58,
+      "id": "41231bac-c9d5-4c03-8129-edb68dc048bc",
+      "title": "Lessons from 50 User Interviews for a DevOps SaaS",
+      "title_key": "lessons from user interviews for devops saas",
+      "is_owner": true,
+      "created_at": "2026-04-30T09:10:45",
+      "updated_at": null,
+      "source_count": null,
+      "decision": {
+        "disposition": "applied",
+        "route": "existing-reference",
+        "issue": null,
+        "lane": "repository",
+        "action": "skip",
+        "reason": "Notebook id already appears in repository/Issue references.",
+        "references": [
+          "docs/notebooklm-intake/latest-report.json",
+          "docs/notebooklm-intake/state.json",
+          "issue #1323",
+          "issue #1324",
+          "issue #1325"
+        ],
+        "needs_source_policy": false
+      }
+    },
+    {
+      "index": 59,
+      "id": "9b2e686f-1189-4187-a5bf-e8347cb9d5f2",
+      "title": "Building Notion-Style Comments with Flutter and Supabase",
+      "title_key": "building notion style comments with flutter and supabase",
+      "is_owner": false,
+      "created_at": "2026-04-30T09:10:08",
+      "updated_at": null,
+      "source_count": null,
+      "decision": {
+        "disposition": "applied",
+        "route": "existing-reference",
+        "issue": null,
+        "lane": "repository",
+        "action": "skip",
+        "reason": "Notebook id already appears in repository/Issue references.",
+        "references": [
+          "docs/notebooklm-intake/latest-report.json",
+          "docs/notebooklm-intake/state.json",
+          "issue #1320",
+          "issue #1321",
+          "issue #1322"
+        ],
+        "needs_source_policy": false
+      }
+    },
+    {
+      "index": 60,
+      "id": "569fcf08-91d2-4e04-8634-d9f49d2bf616",
+      "title": "The 3-Layer Design for Bundling AI as a Solo CEO",
+      "title_key": "the layer design for bundling solo ceo",
+      "is_owner": true,
+      "created_at": "2026-04-30T09:08:44",
+      "updated_at": null,
+      "source_count": null,
+      "decision": {
+        "disposition": "applied",
+        "route": "existing-reference",
+        "issue": null,
+        "lane": "repository",
+        "action": "skip",
+        "reason": "Notebook id already appears in repository/Issue references.",
+        "references": [
+          "docs/notebooklm-intake/latest-report.json",
+          "docs/notebooklm-intake/state.json",
+          "issue #1314",
+          "issue #1315",
+          "issue #1316"
+        ],
+        "needs_source_policy": false
+      }
+    },
+    {
+      "index": 61,
+      "id": "31ddb877-b168-4f86-abc8-2451e7c0f36a",
+      "title": "Automating High-Volume Article Publishing via GitHub Actions and Supabase",
+      "title_key": "automating high volume article publishing via github actions and supabase",
+      "is_owner": true,
+      "created_at": "2026-04-30T09:06:03",
+      "updated_at": null,
+      "source_count": null,
+      "decision": {
+        "disposition": "applied",
+        "route": "existing-reference",
+        "issue": null,
+        "lane": "repository",
+        "action": "skip",
+        "reason": "Notebook id already appears in repository/Issue references.",
+        "references": [
+          "docs/notebooklm-intake/latest-report.json",
+          "docs/notebooklm-intake/state.json",
+          "issue #1302",
+          "issue #1303",
+          "issue #1304"
+        ],
+        "needs_source_policy": false
+      }
+    },
+    {
+      "index": 62,
+      "id": "0b7a7406-b695-48f9-b9b2-30dd1b08aef4",
+      "title": "Slack and Notion Manual Setup Protocol",
+      "title_key": "slack and notion manual setup protocol",
+      "is_owner": true,
+      "created_at": "2026-04-30T09:05:17",
+      "updated_at": null,
+      "source_count": null,
+      "decision": {
+        "disposition": "applied",
+        "route": "existing-reference",
+        "issue": null,
+        "lane": "repository",
+        "action": "skip",
+        "reason": "Notebook id already appears in repository/Issue references.",
+        "references": [
+          "docs/notebooklm-intake/latest-report.json",
+          "docs/notebooklm-intake/state.json",
+          "issue #1299",
+          "issue #1300",
+          "issue #1301"
+        ],
+        "needs_source_policy": false
+      }
+    },
+    {
+      "index": 63,
+      "id": "9cf1602a-3f69-4811-a1da-b516379b299f",
+      "title": "Vercel Security Browser Verification Page",
+      "title_key": "vercel security browser verification page",
+      "is_owner": true,
+      "created_at": "2026-04-30T09:04:37",
+      "updated_at": null,
+      "source_count": null,
+      "decision": {
+        "disposition": "applied",
+        "route": "existing-reference",
+        "issue": null,
+        "lane": "repository",
+        "action": "skip",
+        "reason": "Notebook id already appears in repository/Issue references.",
+        "references": [
+          "docs/notebooklm-intake/latest-report.json",
+          "docs/notebooklm-intake/state.json",
+          "issue #1296",
+          "issue #1297",
+          "issue #1298"
+        ],
+        "needs_source_policy": false
+      }
+    },
+    {
+      "index": 64,
+      "id": "a9d5de3e-f3b9-433f-b51d-d1bb12cc7b79",
+      "title": "VS Code Integrated Terminal Troubleshooting Guide",
+      "title_key": "code integrated terminal troubleshooting guide",
+      "is_owner": true,
+      "created_at": "2026-04-30T09:04:01",
+      "updated_at": null,
+      "source_count": null,
+      "decision": {
+        "disposition": "applied",
+        "route": "existing-reference",
+        "issue": null,
+        "lane": "repository",
+        "action": "skip",
+        "reason": "Notebook id already appears in repository/Issue references.",
+        "references": [
+          "docs/notebooklm-intake/latest-report.json",
+          "docs/notebooklm-intake/state.json",
+          "issue #1293",
+          "issue #1294",
+          "issue #1295"
+        ],
+        "needs_source_policy": false
+      }
+    },
+    {
+      "index": 65,
+      "id": "d3264dd4-c3bc-4b63-8fb2-6c7003ff111d",
+      "title": "Supabase General Project Settings and Infrastructure Dashboard",
+      "title_key": "supabase general project settings and infrastructure dashboard",
+      "is_owner": true,
+      "created_at": "2026-04-30T09:03:29",
+      "updated_at": null,
+      "source_count": null,
+      "decision": {
+        "disposition": "applied",
+        "route": "existing-reference",
+        "issue": null,
+        "lane": "repository",
+        "action": "skip",
+        "reason": "Notebook id already appears in repository/Issue references.",
+        "references": [
+          "docs/notebooklm-intake/latest-report.json",
+          "docs/notebooklm-intake/state.json",
+          "issue #1290",
+          "issue #1291",
+          "issue #1292"
+        ],
+        "needs_source_policy": false
+      }
+    },
+    {
+      "index": 66,
+      "id": "afe03631-76b8-4d77-b7a3-62ec54e4ebca",
+      "title": "GitHub Branch Protection and Repository Ruleset Configuration",
+      "title_key": "github branch protection and repository ruleset configuration",
+      "is_owner": true,
+      "created_at": "2026-04-30T09:02:11",
+      "updated_at": null,
+      "source_count": null,
+      "decision": {
+        "disposition": "applied",
+        "route": "existing-reference",
+        "issue": null,
+        "lane": "repository",
+        "action": "skip",
+        "reason": "Notebook id already appears in repository/Issue references.",
+        "references": [
+          "docs/notebooklm-intake/latest-report.json",
+          "docs/notebooklm-intake/state.json",
+          "issue #1284",
+          "issue #1285",
+          "issue #1286"
+        ],
+        "needs_source_policy": false
+      }
+    },
+    {
+      "index": 67,
+      "id": "2af23b5e-510a-4a2d-bd51-3b60731dd868",
+      "title": "YouTube Platform Information and Policies",
+      "title_key": "youtube platform information and policies",
+      "is_owner": true,
+      "created_at": "2026-04-30T09:00:52",
+      "updated_at": null,
+      "source_count": null,
+      "decision": {
+        "disposition": "applied",
+        "route": "existing-reference",
+        "issue": null,
+        "lane": "repository",
+        "action": "skip",
+        "reason": "Notebook id already appears in repository/Issue references.",
+        "references": [
+          "docs/notebooklm-intake/latest-report.json",
+          "docs/notebooklm-intake/state.json",
+          "issue #1278",
+          "issue #1279",
+          "issue #1280"
+        ],
+        "needs_source_policy": false
+      }
+    },
+    {
+      "index": 68,
+      "id": "bdec9ea5-c6f6-4c7d-923c-9bdf87d553d0",
+      "title": "AI Agent Revolution and The Future of Workflow Automation",
+      "title_key": "agent revolution and the future workflow automation",
+      "is_owner": true,
+      "created_at": "2026-04-30T09:00:08",
+      "updated_at": null,
+      "source_count": null,
+      "decision": {
+        "disposition": "applied",
+        "route": "existing-reference",
+        "issue": null,
+        "lane": "repository",
+        "action": "skip",
+        "reason": "Notebook id already appears in repository/Issue references.",
+        "references": [
+          "docs/notebooklm-intake/latest-report.json",
+          "docs/notebooklm-intake/state.json",
+          "issue #1275",
+          "issue #1276",
+          "issue #1277"
+        ],
+        "needs_source_policy": false
+      }
+    },
+    {
+      "index": 69,
+      "id": "8b3d152f-a391-4019-b64c-79711cd07eac",
+      "title": "The Tactile Reflex of the Tresses",
+      "title_key": "the tactile reflex the tresses",
+      "is_owner": true,
+      "created_at": "2026-04-30T08:59:29",
+      "updated_at": null,
+      "source_count": null,
+      "decision": {
+        "disposition": "applied",
+        "route": "existing-reference",
+        "issue": null,
+        "lane": "repository",
+        "action": "skip",
+        "reason": "Notebook id already appears in repository/Issue references.",
+        "references": [
+          "docs/notebooklm-intake/latest-report.json",
+          "docs/notebooklm-intake/state.json",
+          "issue #1272",
+          "issue #1273",
+          "issue #1274"
+        ],
+        "needs_source_policy": false
+      }
+    },
+    {
+      "index": 70,
+      "id": "969632ac-01be-4d40-9f4f-47baadc92e7f",
+      "title": "Diary of a Digital Architect: Logic and Impulse",
+      "title_key": "diary digital architect logic and impulse",
+      "is_owner": true,
+      "created_at": "2026-04-30T08:58:47",
+      "updated_at": null,
+      "source_count": null,
+      "decision": {
+        "disposition": "applied",
+        "route": "existing-reference",
+        "issue": null,
+        "lane": "repository",
+        "action": "skip",
+        "reason": "Notebook id already appears in repository/Issue references.",
+        "references": [
+          "docs/notebooklm-intake/latest-report.json",
+          "docs/notebooklm-intake/state.json",
+          "issue #1269",
+          "issue #1270",
+          "issue #1271",
+          "issue #1665"
+        ],
+        "needs_source_policy": false
+      }
+    },
+    {
+      "index": 71,
+      "id": "f0895eb0-03e9-499d-ad8a-84b76417bd53",
+      "title": "Claude Code Remote Control Guide",
+      "title_key": "claude code remote control guide",
+      "is_owner": true,
+      "created_at": "2026-04-30T08:58:09",
+      "updated_at": null,
+      "source_count": null,
+      "decision": {
+        "disposition": "applied",
+        "route": "existing-reference",
+        "issue": null,
+        "lane": "repository",
+        "action": "skip",
+        "reason": "Notebook id already appears in repository/Issue references.",
+        "references": [
+          "docs/notebooklm-intake/latest-report.json",
+          "docs/notebooklm-intake/state.json",
+          "issue #1266",
+          "issue #1267",
+          "issue #1268"
+        ],
+        "needs_source_policy": false
+      }
+    },
+    {
+      "index": 72,
+      "id": "579bd686-f17e-414a-894f-822f29b5c11e",
+      "title": "8 Gemini Tips for Organizing Your Space and Life",
+      "title_key": "gemini tips for organizing your space and life",
+      "is_owner": true,
+      "created_at": "2026-04-30T01:03:10",
+      "updated_at": null,
+      "source_count": null,
+      "decision": {
+        "disposition": "applied",
+        "route": "existing-reference",
+        "issue": null,
+        "lane": "repository",
+        "action": "skip",
+        "reason": "Notebook id already appears in repository/Issue references.",
+        "references": [
+          "docs/notebooklm-intake/latest-report.json",
+          "docs/notebooklm-intake/state.json",
+          "issue #1256",
+          "issue #1257",
+          "issue #1258",
+          "issue #768",
+          "issue #769",
+          "issue #770"
+        ],
+        "needs_source_policy": false
+      }
+    },
+    {
+      "index": 73,
+      "id": "284ad4be-ffca-449a-9725-cab9337f3325",
+      "title": "Nomic Platform: Domain-Specific AI for Project Delivery",
+      "title_key": "nomic platform domain specific for project delivery",
+      "is_owner": true,
+      "created_at": "2026-04-30T01:01:32",
+      "updated_at": null,
+      "source_count": null,
+      "decision": {
+        "disposition": "applied",
+        "route": "existing-reference",
+        "issue": null,
+        "lane": "repository",
+        "action": "skip",
+        "reason": "Notebook id already appears in repository/Issue references.",
+        "references": [
+          "docs/notebooklm-intake/latest-report.json",
+          "docs/notebooklm-intake/state.json",
+          "issue #1250",
+          "issue #1251",
+          "issue #1252"
+        ],
+        "needs_source_policy": false
+      }
+    },
+    {
+      "index": 74,
+      "id": "9429530e-f350-44f6-ad2e-1df215c36eb2",
+      "title": "The Character of Claude: Philosophy and Ethics at Anthropic",
+      "title_key": "the character claude philosophy and ethics anthropic",
+      "is_owner": true,
+      "created_at": "2026-04-30T01:00:39",
+      "updated_at": null,
+      "source_count": null,
+      "decision": {
+        "disposition": "applied",
+        "route": "existing-reference",
+        "issue": null,
+        "lane": "repository",
+        "action": "skip",
+        "reason": "Notebook id already appears in repository/Issue references.",
+        "references": [
+          "docs/notebooklm-intake/latest-report.json",
+          "docs/notebooklm-intake/state.json",
+          "issue #1247",
+          "issue #1248",
+          "issue #1249"
+        ],
+        "needs_source_policy": false
+      }
+    },
+    {
+      "index": 75,
+      "id": "2eb9f737-82f2-4d73-8b4d-fd869e905d70",
+      "title": "The Mechanics of Prediction: Inside Large Language Models",
+      "title_key": "the mechanics prediction inside large language models",
+      "is_owner": true,
+      "created_at": "2026-04-30T00:59:28",
+      "updated_at": null,
+      "source_count": null,
+      "decision": {
+        "disposition": "applied",
+        "route": "existing-reference",
+        "issue": null,
+        "lane": "repository",
+        "action": "skip",
+        "reason": "Notebook id already appears in repository/Issue references.",
+        "references": [
+          "docs/notebooklm-intake/latest-report.json",
+          "docs/notebooklm-intake/state.json",
+          "issue #1244",
+          "issue #1245",
+          "issue #1246"
+        ],
+        "needs_source_policy": false
+      }
+    },
+    {
+      "index": 76,
+      "id": "5e03281b-e9de-43d4-bd58-07546dd5a478",
+      "title": "Machine Learning Systems: The AI Engineering Curriculum",
+      "title_key": "machine learning systems the engineering curriculum",
+      "is_owner": true,
+      "created_at": "2026-04-30T00:58:36",
+      "updated_at": null,
+      "source_count": null,
+      "decision": {
+        "disposition": "applied",
+        "route": "existing-reference",
+        "issue": null,
+        "lane": "repository",
+        "action": "skip",
+        "reason": "Notebook id already appears in repository/Issue references.",
+        "references": [
+          "docs/notebooklm-intake/latest-report.json",
+          "docs/notebooklm-intake/state.json",
+          "issue #1241",
+          "issue #1242",
+          "issue #1243"
+        ],
+        "needs_source_policy": false
+      }
+    },
+    {
+      "index": 77,
+      "id": "9eb645cd-31f2-4f45-b615-68c776f06f70",
+      "title": "Next-Generation Accounting System Impact Survey and Formal Quote Request",
+      "title_key": "next generation accounting system impact survey and formal quote request",
+      "is_owner": true,
+      "created_at": "2026-04-30T00:56:27",
+      "updated_at": null,
+      "source_count": null,
+      "decision": {
+        "disposition": "applied",
+        "route": "existing-reference",
+        "issue": null,
+        "lane": "repository",
+        "action": "skip",
+        "reason": "Notebook id already appears in repository/Issue references.",
+        "references": [
+          "docs/notebooklm-intake/latest-report.json",
+          "docs/notebooklm-intake/state.json",
+          "issue #1235",
+          "issue #1236",
+          "issue #1237"
+        ],
+        "needs_source_policy": false
+      }
+    },
+    {
+      "index": 78,
+      "id": "2fc6d86f-2bbd-4fdc-ad9e-f302d93b5c6e",
+      "title": "Imbue: Empowering Human Agency Through AI Reasoning and Coding",
+      "title_key": "imbue empowering human agency through reasoning and coding",
+      "is_owner": true,
+      "created_at": "2026-04-30T00:55:30",
+      "updated_at": null,
+      "source_count": null,
+      "decision": {
+        "disposition": "applied",
+        "route": "existing-reference",
+        "issue": null,
+        "lane": "repository",
+        "action": "skip",
+        "reason": "Notebook id already appears in repository/Issue references.",
+        "references": [
+          "docs/notebooklm-intake/latest-report.json",
+          "docs/notebooklm-intake/state.json",
+          "issue #1232",
+          "issue #1233",
+          "issue #1234",
+          "issue #830",
+          "issue #831",
+          "issue #832"
+        ],
+        "needs_source_policy": false
+      }
+    },
+    {
+      "index": 79,
+      "id": "9de41659-0832-4523-9d85-6737645a8ebe",
+      "title": "The Threshold of Digital Access",
+      "title_key": "the threshold digital access",
+      "is_owner": true,
+      "created_at": "2026-04-30T00:54:49",
+      "updated_at": null,
+      "source_count": null,
+      "decision": {
+        "disposition": "applied",
+        "route": "existing-reference",
+        "issue": null,
+        "lane": "repository",
+        "action": "skip",
+        "reason": "Notebook id already appears in repository/Issue references.",
+        "references": [
+          "docs/notebooklm-intake/latest-report.json",
+          "docs/notebooklm-intake/state.json",
+          "issue #1229",
+          "issue #1230",
+          "issue #1231"
+        ],
+        "needs_source_policy": false
+      }
+    },
+    {
+      "index": 80,
+      "id": "491f57bc-68a1-4b12-b1f8-5eaffbc0fe8e",
+      "title": "Architecting the Frontier of Collaborative Intelligence",
+      "title_key": "architecting the frontier collaborative intelligence",
+      "is_owner": true,
+      "created_at": "2026-04-30T00:53:58",
+      "updated_at": null,
+      "source_count": null,
+      "decision": {
+        "disposition": "applied",
+        "route": "existing-reference",
+        "issue": null,
+        "lane": "repository",
+        "action": "skip",
+        "reason": "Notebook id already appears in repository/Issue references.",
+        "references": [
+          "docs/notebooklm-intake/latest-report.json",
+          "docs/notebooklm-intake/state.json",
+          "issue #1226",
+          "issue #1227",
+          "issue #1228",
+          "issue #842",
+          "issue #843",
+          "issue #844"
+        ],
+        "needs_source_policy": false
+      }
+    },
+    {
+      "index": 81,
+      "id": "52daba63-0971-42a8-a9d6-f3dbff3466bd",
+      "title": "Claude Code: The Agentic Future of Terminal Programming",
+      "title_key": "claude code the agentic future terminal programming",
+      "is_owner": true,
+      "created_at": "2026-04-30T00:53:08",
+      "updated_at": null,
+      "source_count": null,
+      "decision": {
+        "disposition": "applied",
+        "route": "existing-reference",
+        "issue": null,
+        "lane": "repository",
+        "action": "skip",
+        "reason": "Notebook id already appears in repository/Issue references.",
+        "references": [
+          "docs/notebooklm-intake/latest-report.json",
+          "docs/notebooklm-intake/state.json",
+          "issue #1222",
+          "issue #1223",
+          "issue #1224"
+        ],
+        "needs_source_policy": false
+      }
+    },
+    {
+      "index": 82,
+      "id": "2ee2ea76-4a19-4586-926e-9e3fdca4463c",
+      "title": "Mastering GPT-Image-2: The Complete Prompt Engineering Guide",
+      "title_key": "mastering gpt image the complete prompt engineering guide",
+      "is_owner": true,
+      "created_at": "2026-04-30T00:52:10",
+      "updated_at": null,
+      "source_count": null,
+      "decision": {
+        "disposition": "applied",
+        "route": "existing-reference",
+        "issue": null,
+        "lane": "repository",
+        "action": "skip",
+        "reason": "Notebook id already appears in repository/Issue references.",
+        "references": [
+          "docs/notebooklm-intake/latest-report.json",
+          "docs/notebooklm-intake/state.json",
+          "issue #1219",
+          "issue #1220",
+          "issue #1221"
+        ],
+        "needs_source_policy": false
+      }
+    },
+    {
+      "index": 83,
+      "id": "da2a95d1-2db3-4677-9e67-52fae69fb8e9",
+      "title": "D-ID: Comprehensive Guide to AI Video Creation and Business Strategy",
+      "title_key": "comprehensive guide video creation and business strategy",
+      "is_owner": true,
+      "created_at": "2026-04-30T00:51:14",
+      "updated_at": null,
+      "source_count": null,
+      "decision": {
+        "disposition": "applied",
+        "route": "existing-reference",
+        "issue": null,
+        "lane": "repository",
+        "action": "skip",
+        "reason": "Notebook id already appears in repository/Issue references.",
+        "references": [
+          "docs/notebooklm-intake/latest-report.json",
+          "docs/notebooklm-intake/state.json",
+          "issue #1216",
+          "issue #1217",
+          "issue #1218",
+          "issue #916",
+          "issue #917",
+          "issue #918"
+        ],
+        "needs_source_policy": false
+      }
+    },
+    {
+      "index": 84,
+      "id": "e89d2ca7-1dc9-41a1-8fe2-bad5103a757b",
+      "title": "Anthropic Evolution: Claude Apps, Opus 4.7, and Enterprise Expansion",
+      "title_key": "anthropic evolution claude apps opus and enterprise expansion",
+      "is_owner": true,
+      "created_at": "2026-04-30T00:50:16",
+      "updated_at": null,
+      "source_count": null,
+      "decision": {
+        "disposition": "applied",
+        "route": "existing-reference",
+        "issue": null,
+        "lane": "repository",
+        "action": "skip",
+        "reason": "Notebook id already appears in repository/Issue references.",
+        "references": [
+          "docs/notebooklm-intake/latest-report.json",
+          "docs/notebooklm-intake/state.json",
+          "issue #1213",
+          "issue #1214",
+          "issue #1215",
+          "issue #793",
+          "issue #794",
+          "issue #795"
+        ],
+        "needs_source_policy": false
+      }
+    },
+    {
+      "index": 85,
+      "id": "ea6cff25-574d-4b8b-ad72-ab47cf1ed01f",
+      "title": "jibun-master-brain",
+      "title_key": "jibun master brain",
+      "is_owner": false,
+      "created_at": "2026-04-30T00:49:11",
+      "updated_at": null,
+      "source_count": null,
+      "decision": {
+        "disposition": "applied",
+        "route": "existing-reference",
+        "issue": null,
+        "lane": "repository",
+        "action": "skip",
+        "reason": "Notebook id already appears in repository/Issue references.",
+        "references": [
+          "docs/notebooklm-intake/latest-report.json",
+          "docs/notebooklm-intake/state.json",
+          "issue #1210",
+          "issue #1211",
+          "issue #1212",
+          "issue #924",
+          "issue #925",
+          "issue #926"
+        ],
+        "needs_source_policy": false
+      }
+    },
+    {
+      "index": 86,
+      "id": "ddde5a4b-ce1a-405d-8291-a334a9371454",
+      "title": "Vibe Coding: Responsible Engineering in the Era of AI Agents",
+      "title_key": "vibe coding responsible engineering the era agents",
+      "is_owner": true,
+      "created_at": "2026-04-30T00:48:20",
+      "updated_at": null,
+      "source_count": null,
+      "decision": {
+        "disposition": "applied",
+        "route": "existing-reference",
+        "issue": null,
+        "lane": "repository",
+        "action": "skip",
+        "reason": "Notebook id already appears in repository/Issue references.",
+        "references": [
+          "docs/notebooklm-intake/latest-report.json",
+          "docs/notebooklm-intake/state.json",
+          "issue #1207",
+          "issue #1208",
+          "issue #1209",
+          "issue #833",
+          "issue #834",
+          "issue #835"
+        ],
+        "needs_source_policy": false
+      }
+    },
+    {
+      "index": 87,
+      "id": "4ba6066d-381c-4b4b-ad1a-5f7495761199",
+      "title": "BSLW Schedule Working Status Manual Editing Function Specification",
+      "title_key": "bslw schedule working status manual editing function specification",
+      "is_owner": true,
+      "created_at": "2026-04-30T00:47:11",
+      "updated_at": null,
+      "source_count": null,
+      "decision": {
+        "disposition": "applied",
+        "route": "existing-reference",
+        "issue": null,
+        "lane": "repository",
+        "action": "skip",
+        "reason": "Notebook id already appears in repository/Issue references.",
+        "references": [
+          "docs/notebooklm-intake/latest-report.json",
+          "docs/notebooklm-intake/state.json",
+          "issue #1204",
+          "issue #1205",
+          "issue #1206"
+        ],
+        "needs_source_policy": false
+      }
+    },
+    {
+      "index": 88,
+      "id": "4fb089e8-9d35-4bc4-b6ba-116c1777bb1e",
+      "title": "Cartesia Sonic: The Vanguard of Real-Time Voice AI",
+      "title_key": "cartesia sonic the vanguard real time voice",
+      "is_owner": true,
+      "created_at": "2026-04-30T00:46:24",
+      "updated_at": null,
+      "source_count": null,
+      "decision": {
+        "disposition": "applied",
+        "route": "existing-reference",
+        "issue": null,
+        "lane": "repository",
+        "action": "skip",
+        "reason": "Notebook id already appears in repository/Issue references.",
+        "references": [
+          "docs/notebooklm-intake/latest-report.json",
+          "docs/notebooklm-intake/state.json",
+          "issue #1201",
+          "issue #1202",
+          "issue #1203"
+        ],
+        "needs_source_policy": false
+      }
+    },
+    {
+      "index": 89,
+      "id": "d1b0fef3-155a-455f-a23c-4ec34bc9de4d",
+      "title": "ADHDとNotebookLM：認知負荷の軽減ツール",
+      "title_key": "adhd notebooklm",
+      "is_owner": true,
+      "created_at": "2026-04-30T00:45:35",
+      "updated_at": null,
+      "source_count": null,
+      "decision": {
+        "disposition": "applied",
+        "route": "existing-reference",
+        "issue": null,
+        "lane": "repository",
+        "action": "skip",
+        "reason": "Notebook id already appears in repository/Issue references.",
+        "references": [
+          "docs/notebooklm-intake/latest-report.json",
+          "docs/notebooklm-intake/state.json",
+          "issue #1197",
+          "issue #1198",
+          "issue #1199"
+        ],
+        "needs_source_policy": false
+      }
+    },
+    {
+      "index": 90,
+      "id": "b7034883-0cc8-45fe-b816-bd596de00210",
+      "title": "Project Vend: The Life and Times of Claudius the Shopkeeper",
+      "title_key": "project vend the life and times claudius the shopkeeper",
+      "is_owner": true,
+      "created_at": "2026-04-30T00:43:47",
+      "updated_at": null,
+      "source_count": null,
+      "decision": {
+        "disposition": "applied",
+        "route": "existing-reference",
+        "issue": null,
+        "lane": "repository",
+        "action": "skip",
+        "reason": "Notebook id already appears in repository/Issue references.",
+        "references": [
+          "docs/notebooklm-intake/latest-report.json",
+          "docs/notebooklm-intake/state.json",
+          "issue #1191",
+          "issue #1192",
+          "issue #1193"
+        ],
+        "needs_source_policy": false
+      }
+    },
+    {
+      "index": 91,
+      "id": "c3b1d9f2-1cc9-41ef-91d1-480d60b9df63",
+      "title": "Claude API Cost Optimization Strategies",
+      "title_key": "claude api cost optimization strategies",
+      "is_owner": true,
+      "created_at": "2026-04-30T00:42:54",
+      "updated_at": null,
+      "source_count": null,
+      "decision": {
+        "disposition": "applied",
+        "route": "existing-reference",
+        "issue": null,
+        "lane": "repository",
+        "action": "skip",
+        "reason": "Notebook id already appears in repository/Issue references.",
+        "references": [
+          "docs/notebooklm-intake/latest-report.json",
+          "docs/notebooklm-intake/state.json",
+          "issue #1188",
+          "issue #1189",
+          "issue #1190"
+        ],
+        "needs_source_policy": false
+      }
+    },
+    {
+      "index": 92,
+      "id": "d420e53f-3477-4aac-b4c7-6a1f8703370c",
+      "title": "Corporate Headquarters Selection and Registration Protocol",
+      "title_key": "corporate headquarters selection and registration protocol",
+      "is_owner": true,
+      "created_at": "2026-04-30T00:42:01",
+      "updated_at": null,
+      "source_count": null,
+      "decision": {
+        "disposition": "applied",
+        "route": "existing-reference",
+        "issue": null,
+        "lane": "repository",
+        "action": "skip",
+        "reason": "Notebook id already appears in repository/Issue references.",
+        "references": [
+          "docs/notebooklm-intake/latest-report.json",
+          "docs/notebooklm-intake/state.json",
+          "issue #1185",
+          "issue #1186",
+          "issue #1187"
+        ],
+        "needs_source_policy": false
+      }
+    },
+    {
+      "index": 93,
+      "id": "8a74030c-f0d2-4aeb-b2c3-4e3673564ed6",
+      "title": "Hedra API Guide: Generating Digital Assets",
+      "title_key": "hedra api guide generating digital assets",
+      "is_owner": true,
+      "created_at": "2026-04-30T00:41:17",
+      "updated_at": null,
+      "source_count": null,
+      "decision": {
+        "disposition": "applied",
+        "route": "existing-reference",
+        "issue": null,
+        "lane": "repository",
+        "action": "skip",
+        "reason": "Notebook id already appears in repository/Issue references.",
+        "references": [
+          "docs/notebooklm-intake/latest-report.json",
+          "docs/notebooklm-intake/state.json",
+          "issue #1182",
+          "issue #1183",
+          "issue #1184"
+        ],
+        "needs_source_policy": false
+      }
+    },
+    {
+      "index": 94,
+      "id": "9871b0b1-0748-4d7d-99bc-bd6aea2231f6",
+      "title": "Claude Code and Obsidian: Building Your AI Second Brain",
+      "title_key": "claude code and obsidian building your second brain",
+      "is_owner": true,
+      "created_at": "2026-04-30T00:37:44",
+      "updated_at": null,
+      "source_count": null,
+      "decision": {
+        "disposition": "applied",
+        "route": "existing-reference",
+        "issue": null,
+        "lane": "repository",
+        "action": "skip",
+        "reason": "Notebook id already appears in repository/Issue references.",
+        "references": [
+          "docs/notebooklm-intake/latest-report.json",
+          "docs/notebooklm-intake/state.json",
+          "issue #1172",
+          "issue #1173",
+          "issue #1174",
+          "issue #974",
+          "issue #975",
+          "issue #976"
+        ],
+        "needs_source_policy": false
+      }
+    }
+  ]
+}
