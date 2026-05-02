@@ -1,0 +1,29 @@
+name: MVP GA Readiness
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/mvp-ga-readiness.yml"
+      - "docs/product/MVP_GA_READINESS_GATE.md"
+      - "scripts/check_mvp_ga_readiness.py"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mvp-ga-readiness-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  readiness:
+    name: MVP GA Readiness Gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Check MVP GA readiness gate
+        run: python scripts/check_mvp_ga_readiness.py
