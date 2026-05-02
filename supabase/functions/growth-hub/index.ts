@@ -7,10 +7,7 @@
 //   seo-optimizer, send-waitlist-notification, viral-ad-generator, viral-growth-engine
 
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
-import {
-  createClient,
-  SupabaseClient,
-} from "npm:@supabase/supabase-js@2";
+import { createClient, SupabaseClient } from "npm:@supabase/supabase-js@2";
 import {
   getXAccountHandle,
   isXConfigured,

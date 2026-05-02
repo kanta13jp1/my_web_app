@@ -1,7 +1,4 @@
-import {
-  createClient,
-  SupabaseClient,
-} from "npm:@supabase/supabase-js@2";
+import { createClient, SupabaseClient } from "npm:@supabase/supabase-js@2";
 
 export type Effort = "low" | "medium" | "high" | "xhigh";
 

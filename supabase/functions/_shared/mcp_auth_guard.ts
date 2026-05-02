@@ -131,7 +131,8 @@ export function buildOAuthProtectedResourceMetadata(
   toolName: string,
   scopes: string[] = [toolName],
 ): Record<string, unknown> {
-  const resource = optionalEnv("MCP_RESOURCE_URL") || protectedResourceUrl(reqUrl);
+  const resource = optionalEnv("MCP_RESOURCE_URL") ||
+    protectedResourceUrl(reqUrl);
   const metadata: Record<string, unknown> = {
     resource,
     resource_name: toolName,

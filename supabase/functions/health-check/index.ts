@@ -1,4 +1,4 @@
-﻿// health-check
+// health-check
 // Infra health check endpoint called by the automated scheduled task.
 // Checks: DB connectivity, key table accessibility, EF runtime env.
 // Returns: { status: "healthy"|"degraded"|"unhealthy", checks: {...}, timestamp }
@@ -39,10 +39,9 @@ serve(async (req) => {
   // Check 1: env vars present
   checks["env"] = {
     ok: SUPABASE_URL !== "" && SERVICE_ROLE_KEY !== "",
-    detail:
-      SUPABASE_URL !== "" && SERVICE_ROLE_KEY !== ""
-        ? "SUPABASE_URL + SERVICE_ROLE_KEY set"
-        : "missing env vars",
+    detail: SUPABASE_URL !== "" && SERVICE_ROLE_KEY !== ""
+      ? "SUPABASE_URL + SERVICE_ROLE_KEY set"
+      : "missing env vars",
   };
   if (!checks["env"].ok) failCount++;
 
@@ -61,7 +60,9 @@ serve(async (req) => {
     checks["db_connectivity"] = {
       ok: !dbError,
       latencyMs,
-      detail: dbError ? dbError.message : `profiles reachable in ${latencyMs}ms`,
+      detail: dbError
+        ? dbError.message
+        : `profiles reachable in ${latencyMs}ms`,
     };
     if (!checks["db_connectivity"].ok) failCount++;
 
@@ -86,8 +87,11 @@ serve(async (req) => {
     if (!checks["ai_circuit_breaker"].ok) failCount++;
   }
 
-  const status: HealthResponse["status"] =
-    failCount === 0 ? "healthy" : failCount <= 1 ? "degraded" : "unhealthy";
+  const status: HealthResponse["status"] = failCount === 0
+    ? "healthy"
+    : failCount <= 1
+    ? "degraded"
+    : "unhealthy";
 
   const body: HealthResponse = {
     status,

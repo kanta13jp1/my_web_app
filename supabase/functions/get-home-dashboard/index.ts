@@ -1,4 +1,4 @@
-﻿// get-home-dashboard
+// get-home-dashboard
 // Authenticated endpoint that returns home screen KPI snapshot:
 //   - totalUsers, todaySignups (admin-level counts)
 //   - todayViews, todayShares, topShareChannel (from app_analytics)
@@ -112,7 +112,9 @@ serve(async (req) => {
       const rawSeries = lpStats["series"];
       if (Array.isArray(rawSeries)) {
         lpSeries = rawSeries
-          .filter((r): r is Record<string, unknown> => !!r && typeof r === "object")
+          .filter((r): r is Record<string, unknown> =>
+            !!r && typeof r === "object"
+          )
           .map((r) => ({
             date: String(r["date"] ?? "").slice(0, 10),
             count: toNumber(r["count"]),
