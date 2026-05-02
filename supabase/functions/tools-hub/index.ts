@@ -12,6 +12,27 @@
 
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient, SupabaseClient } from "npm:@supabase/supabase-js@2";
+import {
+  buildOAuthProtectedResourceMetadata,
+  isOAuthProtectedResourceMetadataRequest,
+  logMcpInvocation,
+  type McpAuthContext,
+  requireScope,
+  toolResourceUrn,
+  validateBearer,
+} from "../_shared/mcp_auth_guard.ts";
+import {
+  buildMcpClientRegistration,
+} from "../_shared/mcp_client_registration.ts";
+import {
+  buildMcpFeatureRequestPayload,
+  buildMcpToolCatalog,
+  hasMcpWriteConfirmation,
+  mcpActionToToolName,
+  mcpConfirmationPhrase,
+  mcpRequestedScopes,
+  type McpMyWebAppToolName,
+} from "../_shared/mcp_my_web_app_tools.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -22,10 +43,18 @@ const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
 const SERVICE_ROLE_KEY = Deno.env.get("SERVICE_ROLE_KEY") ?? "";
 
-function json(data: unknown, status = 200): Response {
+function json(
+  data: unknown,
+  status = 200,
+  extraHeaders: Record<string, string> = {},
+): Response {
   return new Response(JSON.stringify(data), {
     status,
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
+    headers: {
+      ...corsHeaders,
+      "Content-Type": "application/json",
+      ...extraHeaders,
+    },
   });
 }
 
@@ -515,6 +544,359 @@ function normalizeWbsInstance(value: unknown): string {
   if (normalized === "ps") return "ps1";
   if (normalized === "copilot" || normalized === "github-copilot") return "co-pilot";
   return WBS_INSTANCE_VALUES.includes(normalized) ? normalized : "codex";
+}
+
+function mcpArgsForAction(
+  action: string,
+  body: Record<string, unknown>,
+): Record<string, unknown> {
+  if (action === "mcp.tool.call") {
+    const params = asRecord(body.params) ?? {};
+    return asRecord(body.arguments) ?? asRecord(params.arguments) ?? {};
+  }
+  return body;
+}
+
+function isMcpJsonRpcRequest(body: Record<string, unknown>): boolean {
+  return body.jsonrpc === "2.0" && typeof body.method === "string";
+}
+
+function mcpActionFromJsonRpc(body: Record<string, unknown>): string {
+  if (!isMcpJsonRpcRequest(body)) return "";
+  const method = String(body.method);
+  if (method === "tools/list") return "mcp.tools.list";
+  if (method === "tools/call") return "mcp.tool.call";
+  return "";
+}
+
+function mcpJsonRpcId(body: Record<string, unknown>): unknown {
+  return "id" in body ? body.id : null;
+}
+
+function mcpJsonRpcResult(
+  body: Record<string, unknown>,
+  result: Record<string, unknown>,
+): Record<string, unknown> {
+  return {
+    jsonrpc: "2.0",
+    id: mcpJsonRpcId(body),
+    result,
+  };
+}
+
+function mcpProtocolToolCatalog(): Array<Record<string, unknown>> {
+  return buildMcpToolCatalog().map((tool) => ({
+    name: tool.name,
+    title: tool.title,
+    description: tool.description,
+    inputSchema: tool.input_schema,
+    annotations: {
+      requested_scopes: tool.requested_scopes,
+      write_confirmation_required: tool.write_confirmation_required,
+      invoke_action: tool.invoke_action,
+    },
+  }));
+}
+
+function mcpToolResponse(
+  body: Record<string, unknown>,
+  payload: Record<string, unknown>,
+  status = 200,
+  extraHeaders: Record<string, string> = {},
+): Response {
+  if (!isMcpJsonRpcRequest(body)) {
+    return json(payload, status, extraHeaders);
+  }
+
+  const isError = payload.success === false;
+  const text = payload.content ??
+    mcpTextResult(String(payload.error ?? "MCP tool call failed."));
+  return json(
+    mcpJsonRpcResult(body, {
+      content: text,
+      structuredContent: payload.structuredContent ?? payload,
+      isError,
+    }),
+    status,
+    extraHeaders,
+  );
+}
+
+function mcpAllowsToolScope(
+  ctx: McpAuthContext,
+  toolName: McpMyWebAppToolName,
+): boolean {
+  if (requireScope(ctx, toolName)) return true;
+  const audAllows = ctx.aud.includes(toolResourceUrn(toolName)) ||
+    ctx.aud.includes(toolResourceUrn("*"));
+  if (!audAllows) return false;
+  const requestedScopes = mcpRequestedScopes(toolName);
+  return requestedScopes.every((scope) => ctx.scopes.includes(scope));
+}
+
+async function authorizeMcpTool(
+  req: Request,
+  toolName: McpMyWebAppToolName,
+  args: Record<string, unknown>,
+  body: Record<string, unknown>,
+): Promise<{ ctx: McpAuthContext } | { response: Response }> {
+  const ctx = await validateBearer(req);
+  if (!ctx) {
+    await logMcpInvocation(null, toolName, args, 401, req);
+    return {
+      response: mcpToolResponse(body, {
+        success: false,
+        error: "mcp_auth_required",
+        tool: toolName,
+      }, 401, {
+        "WWW-Authenticate": `Bearer resource="${toolResourceUrn(toolName)}"`,
+      }),
+    };
+  }
+
+  if (!mcpAllowsToolScope(ctx, toolName)) {
+    await logMcpInvocation(ctx, toolName, args, 403, req);
+    return {
+      response: mcpToolResponse(body, {
+        success: false,
+        error: "mcp_scope_denied",
+        tool: toolName,
+        required_audience: toolResourceUrn(toolName),
+        accepted_scopes: ["all", toolName, ...mcpRequestedScopes(toolName)],
+      }, 403),
+    };
+  }
+
+  return { ctx };
+}
+
+function mcpTextResult(summary: string): Array<Record<string, string>> {
+  return [{ type: "text", text: summary }];
+}
+
+function isMcpClientRegistrationRequest(
+  req: Request,
+  action: string,
+): boolean {
+  if (action === "mcp.auth.register") return true;
+  if (req.method !== "POST") return false;
+  const { pathname } = new URL(req.url);
+  return pathname.endsWith("/register") ||
+    pathname.endsWith("/oauth/register");
+}
+
+async function handleMcpClientRegistration(
+  req: Request,
+  body: Record<string, unknown>,
+  admin: SupabaseClient,
+): Promise<Response> {
+  const registration = await buildMcpClientRegistration(body, req);
+  if (!registration.ok) {
+    return json({
+      success: false,
+      error: registration.error,
+    }, registration.status);
+  }
+
+  const { error } = await admin.from("mcp_oauth_clients")
+    .insert(registration.row);
+  if (error) throw new Error(error.message);
+
+  return json({
+    success: true,
+    ...registration.response,
+  }, 201, {
+    "Cache-Control": "no-store",
+  });
+}
+
+async function handleMcpFacade(
+  req: Request,
+  action: string,
+  body: Record<string, unknown>,
+  admin: SupabaseClient,
+): Promise<Response | null> {
+  if (action === "mcp.tools.list") {
+    if (isMcpJsonRpcRequest(body)) {
+      return json(mcpJsonRpcResult(body, { tools: mcpProtocolToolCatalog() }));
+    }
+    return json({
+      success: true,
+      tools: buildMcpToolCatalog(),
+      invocation: {
+        direct_actions: [
+          "mcp.wbs.list",
+          "mcp.feature_request.create",
+          "mcp.user_tasks.list",
+        ],
+        generic_action: "mcp.tool.call",
+        generic_arguments_shape: {
+          action: "mcp.tool.call",
+          tool_name: "wbs.tasks.list",
+          arguments: { instance: "codex", limit: 10 },
+        },
+      },
+    });
+  }
+
+  const toolName = mcpActionToToolName(action, body);
+  if (!toolName) return null;
+
+  const args = mcpArgsForAction(action, body);
+  const auth = await authorizeMcpTool(req, toolName, args, body);
+  if ("response" in auth) return auth.response;
+
+  if (toolName === "wbs.tasks.list") {
+    const rawInstance = String(args.instance ?? "codex").trim().toLowerCase();
+    const instance = rawInstance === "all"
+      ? "all"
+      : normalizeWbsInstance(rawInstance);
+    const includeCompleted = parseBooleanish(args.include_completed, false);
+    const status = String(args.status ?? "").trim();
+    const validStatuses = ["pending", "in_progress", "blocked", "completed"];
+    const limit = Math.min(Math.max(Number(args.limit ?? 10), 1), 50);
+    let query = admin.from("wbs_tasks")
+      .select(
+        "id, category, title, description, instance, owner_instance, status, progress, end_date, priority, remaining_work, updated_at, github_issue_number, github_issue_url",
+      );
+    if (instance !== "all") {
+      query = query.or(`instance.eq.${instance},owner_instance.eq.${instance}`);
+    }
+    if (validStatuses.includes(status)) {
+      query = query.eq("status", status);
+    } else if (!includeCompleted) {
+      query = query.in("status", WBS_OPEN_STATUSES);
+    }
+
+    const { data, error } = await query;
+    if (error) throw new Error(error.message);
+
+    const tasks = [...(data ?? [])].sort(compareWbsTasks).slice(0, limit);
+    await logMcpInvocation(auth.ctx, toolName, args, 200, req);
+    return mcpToolResponse(body, {
+      success: true,
+      tool: toolName,
+      structuredContent: {
+        count: tasks.length,
+        instance,
+        tasks,
+      },
+      content: mcpTextResult(
+        `Found ${tasks.length} WBS task(s) for instance=${instance}.`,
+      ),
+    });
+  }
+
+  if (toolName === "user_tasks.list") {
+    const includeCompleted = parseBooleanish(args.include_completed, false);
+    const limit = Math.min(Math.max(Number(args.limit ?? 10), 1), 50);
+    const fetchLimit = Math.max(limit * 3, 50);
+    const statusFilter = includeCompleted
+      ? ["pending", "in_progress", "blocked", "completed"]
+      : WBS_OPEN_STATUSES;
+    const { data: tasks, error: tasksErr } = await admin
+      .from("wbs_tasks")
+      .select(
+        "id, category, title, description, status, progress, priority, end_date, instance, owner_instance, user_report_status, user_report_note, user_reported_at, updated_at",
+      )
+      .or("instance.eq.user,owner_instance.eq.user")
+      .in("status", statusFilter)
+      .order("end_date", { ascending: true, nullsFirst: false })
+      .limit(fetchLimit);
+    if (tasksErr) throw new Error(tasksErr.message);
+
+    const sortedTasks = [...(tasks ?? [])].sort(compareWbsTasks).slice(0, limit);
+    const taskIds = sortedTasks.map((task: Record<string, unknown>) => task.id);
+    const latestReports: Record<string, Record<string, unknown>> = {};
+    if (taskIds.length > 0) {
+      const { data: reports, error: reportsErr } = await admin
+        .from("wbs_user_task_reports")
+        .select("task_id, status, progress, report_text, next_action, blockers, created_at")
+        .in("task_id", taskIds)
+        .order("created_at", { ascending: false })
+        .limit(taskIds.length * 3);
+      if (reportsErr) {
+        console.warn(
+          `mcp.user_tasks.list reports fetch skipped: ${reportsErr.message}`,
+        );
+      } else {
+        for (const report of reports ?? []) {
+          const row = report as Record<string, unknown>;
+          const taskId = String(row.task_id);
+          if (!latestReports[taskId]) latestReports[taskId] = row;
+        }
+      }
+    }
+
+    const enriched = sortedTasks.map((task: Record<string, unknown>) => ({
+      ...task,
+      latest_report: latestReports[String(task.id)] ?? null,
+    }));
+    await logMcpInvocation(auth.ctx, toolName, args, 200, req);
+    return mcpToolResponse(body, {
+      success: true,
+      tool: toolName,
+      structuredContent: {
+        count: enriched.length,
+        tasks: enriched,
+      },
+      content: mcpTextResult(`Found ${enriched.length} user task(s).`),
+    });
+  }
+
+  if (toolName === "feature_request.create") {
+    const payloadResult = buildMcpFeatureRequestPayload(args);
+    if (!payloadResult.ok) {
+      await logMcpInvocation(auth.ctx, toolName, args, payloadResult.status, req);
+      return mcpToolResponse(body, {
+        success: false,
+        error: payloadResult.error,
+        tool: toolName,
+      }, payloadResult.status);
+    }
+
+    if (!hasMcpWriteConfirmation(toolName, args)) {
+      const phrase = mcpConfirmationPhrase(toolName);
+      await logMcpInvocation(auth.ctx, toolName, {
+        ...args,
+        proposed_task: payloadResult.payload,
+      }, 409, req);
+      return mcpToolResponse(body, {
+        success: false,
+        error: "confirmation_required",
+        tool: toolName,
+        confirmation: {
+          confirm: true,
+          confirmation_phrase: phrase,
+        },
+        proposed_task: payloadResult.payload,
+        content: mcpTextResult(
+          `Confirmation required. Retry with confirm=true and confirmation_phrase=${phrase}.`,
+        ),
+      }, 409);
+    }
+
+    const payload = {
+      ...payloadResult.payload,
+      instance: normalizeWbsInstance(payloadResult.payload.instance),
+      owner_instance: normalizeWbsInstance(payloadResult.payload.owner_instance),
+    };
+    const { data, error } = await admin.from("wbs_tasks")
+      .insert(payload)
+      .select("id, title, instance, owner_instance, status, progress, priority, end_date")
+      .single();
+    if (error) throw new Error(error.message);
+
+    await logMcpInvocation(auth.ctx, toolName, args, 201, req);
+    return mcpToolResponse(body, {
+      success: true,
+      tool: toolName,
+      structuredContent: { task: data },
+      content: mcpTextResult(`Created feature request WBS task: ${data.title}`),
+    }, 201);
+  }
+
+  return null;
 }
 
 function parseGithubIssueNumber(value: unknown): number | null {
@@ -2704,14 +3086,35 @@ async function persistEnsemblePrediction(
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  if (isOAuthProtectedResourceMetadataRequest(req)) {
+    return json(
+      buildOAuthProtectedResourceMetadata(req.url, "tools-hub", [
+        "wbs.tasks.list",
+        "feature_request.create",
+        "user_tasks.list",
+        "read",
+        "create",
+      ]),
+    );
+  }
 
   try {
     const url = new URL(req.url);
     const body: Record<string, unknown> = req.method === "POST"
       ? await req.json().catch(() => ({}))
       : {};
-    const action = (body.action as string) ?? url.searchParams.get("action") ?? "";
+    const action = String(body.action ?? "").trim() ||
+      mcpActionFromJsonRpc(body) ||
+      url.searchParams.get("action") ||
+      "";
     const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, { auth: { persistSession: false } });
+
+    if (isMcpClientRegistrationRequest(req, action)) {
+      return await handleMcpClientRegistration(req, body, admin);
+    }
+
+    const mcpResponse = await handleMcpFacade(req, action, body, admin);
+    if (mcpResponse) return mcpResponse;
 
     // ── Stateless utilities (no auth needed) ────────────────────────────────
     if (action === "generate_password") {
@@ -5549,6 +5952,12 @@ ${reportText ? `> ${reportText}` : ""}`,
             "wbs.user_task_ai_assist",
             "wbs.get_user_tasks",
             "wbs.submit_user_task_report",
+            "mcp.tools.list",
+            "mcp.tool.call",
+            "mcp.auth.register",
+            "mcp.wbs.list",
+            "mcp.feature_request.create",
+            "mcp.user_tasks.list",
             "legal.harvey.complete",
             "legal-assistant.harvey.complete",
             "legal-assistant.review",

@@ -1,14 +1,14 @@
 # AI Tool Watch Report
 
-- Checked at: `2026-04-30T21:37:54Z`
-- Previous check: `2026-04-30T09:32:14Z`
+- Checked at: `2026-05-02T18:57:54Z`
+- Previous check: `2026-05-01T16:07:05Z`
 - Changed/new official sources: `3`
 - Active routing groups: `codex-runtime, hooks, integration, quality-cost, schedule`
 
 ## Session Start Summary
+- `changed` Claude Code GitHub Actions: Claude Code GitHub Actions - Claude Code Docs Skip to main content Claude Code Docs home pa
 - `changed` Codex changelog: 2026-04-30 / Codex CLI 0.128.0 pre
 - `changed` Codex use cases: Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoint
-- `changed` Codex overview: No title detected
 
 ## Recommended Actions
 - **codex-runtime** (#1422, #1377, #1375, #1408): Route to Codex execution: use newer models for broad refactors, in-app browser for UI verification, and worktrees for parallel fixes.
@@ -20,7 +20,7 @@
 ## Official Source Signals
 - **Claude Code changelog** (HTTP 200)
   - URL: https://code.claude.com/docs/en/changelog
-  - Latest signal: 2.1.123 / April 29, 2026
+  - Latest signal: 2.1.126 / May 1, 2026
   - Keyword groups: hooks, schedule, codex-runtime, integration, quality-cost
   - Short signal: Navigation Getting started Changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started Overview...
   - Short signal: This page is generated from the CHANGELOG.md on GitHub .
@@ -48,10 +48,12 @@
   - Keyword groups: hooks, schedule, codex-runtime, integration, quality-cost
   - Short signal: Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and product docs for Codex...
   - Short signal: Web development Turn design inputs into responsive UI, and iterate on the frontend with scoped changes and fast reviews.
-- **Codex overview** (HTTP 403)
+- **Codex overview** (HTTP 200)
   - URL: https://openai.com/codex/
-  - Latest signal: No title detected
-  - Keyword groups: none
+  - Latest signal: AI Coding Partner from OpenAI
+  - Keyword groups: schedule, codex-runtime, quality-cost
+  - Short signal: Designed for multi-agent workflows The Codex app is a command center for agentic coding.
+  - Short signal: With built-in worktrees and cloud environments, agents work in parallel across projects, completing weeks of work in days.
 
 ## NotebookLM Harness Mapping
 - Source notebook: `Codex vs Claude Code: The Ultimate AI Development Synergy` (`bc58b50b-5fc4-4840-9a62-b397d6d3b65a`)

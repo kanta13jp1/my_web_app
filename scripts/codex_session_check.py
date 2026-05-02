@@ -39,7 +39,11 @@ def run_git(args: list[str], cwd: Path) -> CommandResult:
     return CommandResult(proc.returncode, proc.stdout.strip(), proc.stderr.strip())
 
 
-def run_command(args: list[str], cwd: Path) -> CommandResult:
+def run_command(
+    args: list[str],
+    cwd: Path,
+    timeout_seconds: int | None = None,
+) -> CommandResult:
     try:
         proc = subprocess.run(
             args,
@@ -48,9 +52,20 @@ def run_command(args: list[str], cwd: Path) -> CommandResult:
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             check=False,
+            timeout=timeout_seconds,
         )
     except FileNotFoundError as exc:
         return CommandResult(127, "", str(exc))
+    except PermissionError as exc:
+        return CommandResult(126, "", str(exc))
+    except OSError as exc:
+        return CommandResult(126, "", str(exc))
+    except subprocess.TimeoutExpired as exc:
+        return CommandResult(
+            124,
+            (exc.stdout or "").strip() if isinstance(exc.stdout, str) else "",
+            f"timed out after {timeout_seconds}s",
+        )
     return CommandResult(proc.returncode, proc.stdout.strip(), proc.stderr.strip())
 
 
@@ -118,6 +133,71 @@ def codex_cli_version(root: Path) -> str:
     return result.stdout or result.stderr or "unknown"
 
 
+def notebooklm_snapshot(root: Path) -> dict[str, Any]:
+    harness_notebook_id = "bc58b50b-5fc4-4840-9a62-b397d6d3b65a"
+    result = run_command(["notebooklm", "list", "--json"], root, timeout_seconds=20)
+    combined = "\n".join(part for part in [result.stdout, result.stderr] if part)
+    detail = combined.splitlines()[0] if combined else ""
+    notebook_ids: list[str] = []
+    notebook_count = 0
+    harness_notebook_title = ""
+    if result.code == 0:
+        try:
+            payload = json.loads(result.stdout)
+            notebooks = payload.get("notebooks", [])
+            if isinstance(notebooks, list):
+                for notebook in notebooks:
+                    if not isinstance(notebook, dict) or not notebook.get("id"):
+                        continue
+                    notebook_id = str(notebook["id"])
+                    notebook_ids.append(notebook_id)
+                    if notebook_id == harness_notebook_id:
+                        harness_notebook_title = str(notebook.get("title", ""))
+                notebook_ids = sorted(set(notebook_ids))
+                notebook_count = int(payload.get("count", len(notebook_ids)))
+                if notebook_count:
+                    if harness_notebook_title:
+                        detail = (
+                            f"notebooks={notebook_count}; "
+                            f"harness_title={harness_notebook_title}"
+                        )
+                    else:
+                        detail = f"notebooks={notebook_count}; harness_notebook_missing"
+        except (json.JSONDecodeError, TypeError, ValueError):
+            notebook_ids = []
+    if not notebook_ids:
+        notebook_ids = sorted(set(re.findall(
+            r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+            combined,
+            flags=re.IGNORECASE,
+        )))
+        notebook_count = len(notebook_ids)
+
+    lowered = combined.lower()
+    if result.code == 0:
+        state = "ok"
+    elif result.code == 127:
+        state = "unavailable"
+    elif result.code == 124:
+        state = "timeout"
+    elif "notebooklm login" in lowered or "authentication expired" in lowered:
+        state = "auth_required"
+    elif "connection attempts failed" in lowered or "connection refused" in lowered:
+        state = "network_error"
+    else:
+        state = "error"
+
+    return {
+        "state": state,
+        "exit_code": result.code,
+        "harness_notebook_id": harness_notebook_id,
+        "harness_notebook_title": harness_notebook_title,
+        "harness_notebook_found": harness_notebook_id in notebook_ids,
+        "notebook_count": notebook_count,
+        "detail": detail[:240],
+    }
+
+
 def parse_semver(text: str) -> tuple[int, int, int] | None:
     match = re.search(r"(\d+)\.(\d+)\.(\d+)", text)
     if not match:
@@ -137,6 +217,7 @@ def analyze(cwd: Path) -> dict[str, Any]:
     remote_url = git_text(["remote", "get-url", "origin"], root, default="unknown")
     worktrees = worktree_entries(root)
     codex_version = codex_cli_version(root)
+    notebooklm = notebooklm_snapshot(root)
 
     warnings: list[str] = []
     if dirty_lines:
@@ -161,6 +242,20 @@ def analyze(cwd: Path) -> dict[str, Any]:
         warnings.append(
             "Codex CLI is older than 0.128.0; persisted `/goal` workflows are not ready"
         )
+    if notebooklm["state"] == "auth_required":
+        warnings.append("NotebookLM CLI auth is expired; run `notebooklm login`")
+    elif notebooklm["state"] == "unavailable":
+        warnings.append("NotebookLM CLI is unavailable on PATH")
+    elif notebooklm["state"] == "timeout":
+        warnings.append("NotebookLM CLI list timed out")
+    elif notebooklm["state"] == "network_error":
+        warnings.append("NotebookLM CLI list hit a network/browser connection error")
+    elif notebooklm["state"] == "error":
+        warnings.append("NotebookLM CLI list failed")
+    elif not notebooklm["harness_notebook_found"]:
+        warnings.append(
+            "NotebookLM harness notebook bc58b50b-5fc4-4840-9a62-b397d6d3b65a was not found"
+        )
 
     return {
         "root": str(root),
@@ -174,6 +269,7 @@ def analyze(cwd: Path) -> dict[str, Any]:
         "dirty_paths": dirty_lines[:20],
         "remote": remote_url,
         "codex_cli_version": codex_version,
+        "notebooklm": notebooklm,
         "worktrees": worktrees,
         "environment": env_snapshot(),
         "warnings": warnings,
@@ -198,6 +294,19 @@ def render_markdown(report: dict[str, Any]) -> str:
     ]
     for key, value in report["environment"].items():
         lines.append(f"- `{key}`: `{value}`")
+
+    notebooklm = report["notebooklm"]
+    lines.extend([
+        "",
+        "## NotebookLM Snapshot",
+        f"- State: `{notebooklm['state']}`",
+        f"- Harness notebook: `{notebooklm['harness_notebook_id']}`",
+        f"- Harness title: `{notebooklm['harness_notebook_title'] or 'unknown'}`",
+        f"- Harness found: `{notebooklm['harness_notebook_found']}`",
+        f"- Notebook count: `{notebooklm['notebook_count']}`",
+    ])
+    if notebooklm["detail"]:
+        lines.append(f"- Detail: `{notebooklm['detail']}`")
 
     lines.extend(["", "## Warnings"])
     if report["warnings"]:
