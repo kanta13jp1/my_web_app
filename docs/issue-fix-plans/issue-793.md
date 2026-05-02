@@ -1,51 +1,45 @@
 # Issue Fix Plan #793
 
 - Issue: [[追加要望] Claude Apps/MCPからmy_web_appを直接操作できる連携基盤](https://github.com/kanta13jp1/my_web_app/issues/793)
-- Labels: enhancement,追加要望
+- Labels: enhancement, 追加要望
 - Workflow: `.github/workflows/github-issue-fix.yml`
 - CI repair pair: `.github/workflows/ci-auto-fix.yml`
 - Run: https://github.com/kanta13jp1/my_web_app/actions/runs/25240588332
 
 ## Goal
 
-[追加要望] Claude Apps/MCPからmy_web_appを直接操作できる連携基盤
+Claude Apps / MCP クライアントから `my_web_app` の代表的な業務データを参照し、確認付きで追加要望を作成できる最小プロトタイプを提供する。
 
-## Current Context
+## Implemented Slice
 
-```text
-## 背景
-NotebookLM ノート `e89d2ca7-1dc9-41a1-8fe2-bad5103a757b` では、Anthropic が Claude を単なるチャットから業務ツールを横断して操作する AI OS 的な方向へ進化させており、MCP / Claude Apps による外部アプリ連携が重要テーマとして示されています。
+- `tools-hub` に MCP 互換の `tools/list` / `tools/call` facade を追加
+- `mcp.tools.list` で公開ツールカタログを取得
+- `mcp.wbs.list` / `wbs.tasks.list` で WBS タスクを期限順に取得
+- `mcp.user_tasks.list` / `user_tasks.list` でユーザー担当タスクと最新報告を取得
+- `mcp.feature_request.create` / `feature_request.create` で WBS-backed 追加要望を作成
+- 書き込み系は `confirm=true` と `confirmation_phrase=create_feature_request` を必須化
+- `/.well-known/oauth-protected-resource` と DCR-style `/register` を tools-hub に接続
 
-## 目的
-ユーザーが Claude などのAIチャット画面から my_web_app のデータ参照・タスク登録・WBS確認・追加要望登録などを直接実行できるようにし、画面切り替えと手作業を減らします。
+## Acceptance Mapping
 
-## 主要要件
-- my_web_app の主要機能を MCP サーバーとして公開できる設計を検討する
-- WBS、GitHub Issues、ユーザータスク、AIシェア、地方選KPIなどの読み取り系操作を MCP tool として提供する
-- 更新系操作は確認ステップを必須にし、誤操作を防ぐ
-- Claude Apps 風の埋め込みUIで、WBSやユーザータスクを確認・実行できる導線を検討する
+- MCP クライアントから代表的データを取得: `mcp.tools.list`, `mcp.wbs.list`, `mcp.user_tasks.list`
+- 3操作の設計またはプロトタイプ化: WBS一覧、追加要望作成、ユーザータスク確認を実装
+- 更新系の確認ガードレール: 追加要望作成に confirmation phrase を必須化
 
-## 受け入れ条件
-- MCP クライアントから my_web_app の代表的なデータを取得できる
-- 少なくとも WBS タスク一覧取得、追加要望作成、ユーザータスク確認の3操作が設計またはプロトタイプ化されている
-- 更新系操作にはユーザー確認のガードレールが入っている
+## Minimal E2E Gate
 
-## 参考
-https://notebooklm.google.com/notebook/e89d2ca7-1dc9-41a1-8fe2-bad5103a757b
+- Implementation-detail independent: MCP公開契約と tools-hub の観測可能な入出力を検証し、内部helperの形には依存しない
+- Minimal 3 cases: tool catalog listing, read-only WBS/user task calls, denied write without confirmation
+- E2E mechanism: public Playwright smoke remains the browser health gate; this PR adds Deno contract tests for the non-browser MCP facade
+- E2E-Exception: browser UIを直接変更しないEdge Function facadeのため、MCP I/O契約をDeno testsで保証する
 
-```
+## Validation
 
-## Autonomous Repair Loop
+- [x] `deno fmt supabase/functions/_shared/mcp_client_registration.ts supabase/functions/_shared/mcp_my_web_app_tools.ts supabase/functions/_shared/mcp_client_registration_test.ts supabase/functions/_shared/mcp_my_web_app_tools_test.ts supabase/functions/tools-hub/index.ts`
+- [x] `deno lint --config supabase/functions/deno.json supabase/functions/_shared/mcp_client_registration.ts supabase/functions/_shared/mcp_my_web_app_tools.ts supabase/functions/_shared/mcp_client_registration_test.ts supabase/functions/_shared/mcp_my_web_app_tools_test.ts supabase/functions/tools-hub/index.ts`
+- [x] `deno test --allow-all --config supabase/functions/deno.json supabase/functions/_shared/mcp_client_registration_test.ts supabase/functions/_shared/mcp_my_web_app_tools_test.ts`
+- [x] `deno check --config supabase/functions/deno.json supabase/functions/tools-hub/index.ts`
 
-1. Reproduce the smallest failing path for this issue.
-2. Apply the minimum safe fix on this branch.
-3. Let normal CI run on the draft PR.
-4. If CI fails on mechanical issues, `ci-auto-fix.yml` attempts `dart fix --apply` and `deno fmt`.
-5. Merge only after CI is green and the issue scope is satisfied.
+## Remaining Risk
 
-## Checklist
-
-- [ ] Reproduction is clear
-- [ ] Smallest safe fix is implemented
-- [ ] Analyze/tests/CI are checked
-- [ ] PR notes explain the change and the remaining risk
+External Claude Apps / WorkOS token issuance still needs a deployed smoke test with real client credentials. This PR provides the deployable tools-hub facade and guardrails needed for that test.
