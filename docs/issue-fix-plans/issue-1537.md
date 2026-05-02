@@ -63,7 +63,25 @@ AI大学・NotebookLM動画から、ショート動画パッケージを自動�
 
 ## Checklist
 
-- [ ] Reproduction is clear
-- [ ] Smallest safe fix is implemented
-- [ ] Analyze/tests/CI are checked
-- [ ] PR notes explain the change and the remaining risk
+- [x] Reproduction is clear
+- [x] Smallest safe fix is implemented
+- [x] Analyze/tests/CI are checked locally
+- [x] PR notes explain the change and the remaining risk
+
+## Implemented MVP
+
+- Added `scripts/video/build_shorts_package.py`.
+- The script reads an ElevenLabs/NotebookLM transcript and emits:
+  - `shorts_package.json`
+  - one `.srt` and `.vtt` per clip
+  - one `.ffmpeg.txt` render command per clip
+  - `social_posts.json`
+  - provenance metadata with transcript SHA-256
+- The render target is 9:16 (`1080x1920`) and subtitle placement is expressed as structured safe-zone parameters.
+- The existing `notebooklm-video-pipeline.yml` workflow now has an optional `generate_shorts_package` dispatch input that runs this package builder after Step 3.
+- `scripts/video/_smoke_test.py` now validates clip package generation, subtitle sidecars, 9:16 ffmpeg crop/scale commands, and safe-zone metadata.
+
+## Remaining Risk
+
+- This MVP prepares deterministic short-form packages and render commands, but does not upload short clips or feed post-performance metrics back into `growth-hub` yet.
+- Actual media rendering remains an operator/workflow step because CI should avoid burning video processing quota unless the workflow input is explicitly enabled.
