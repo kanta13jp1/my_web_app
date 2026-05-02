@@ -12,6 +12,7 @@
 
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient, SupabaseClient } from "npm:@supabase/supabase-js@2";
+import { buildJournalInsight, coerceJournalInsight, extractFirstJsonObject } from "./journal_analysis.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -58,6 +59,16 @@ async function addItem(admin: SupabaseClient, source: string, userId: string, me
   return data;
 }
 
+function dateOnly(date: Date): string {
+  return date.toISOString().slice(0, 10);
+}
+
+function boolBody(value: unknown, fallback: boolean): boolean {
+  if (typeof value === "boolean") return value;
+  if (typeof value === "string") return !["false", "0", "no", "off"].includes(value.toLowerCase());
+  return fallback;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
@@ -93,6 +104,141 @@ serve(async (req) => {
         return json({ success: true, log: item });
       }
       case "fitness.list_weight": return json({ success: true, weights: await listItems(admin, "weight_log", userId) });
+
+      // ── Journal AI feedback ─────────────────────────────────────────────────
+      case "journal.list": {
+        const limit = Math.min(Math.max(Number(body.limit ?? 30), 1), 100);
+        const { data, error } = await admin.from("mental_health_records")
+          .select("*")
+          .eq("user_id", userId)
+          .order("recorded_at", { ascending: false })
+          .limit(limit);
+        if (error) return json({ error: error.message }, 400);
+        return json({ success: true, records: data ?? [] });
+      }
+      case "journal.analyze": {
+        const recordId = String(body.record_id ?? "").trim();
+        const note = String(body.note ?? "").trim();
+        if (!recordId && !note) return json({ error: "note or record_id is required" }, 400);
+
+        const moodScore = Math.max(1, Math.min(5, Number(body.mood_score ?? 3)));
+        const stressScore = Math.max(1, Math.min(5, Number(body.stress_score ?? 3)));
+        const sleepHours = Math.max(0, Math.min(24, Number(body.sleep_hours ?? 7)));
+        const recordedAt = String(body.recorded_at ?? new Date().toISOString());
+
+        let record: Record<string, unknown> | null = null;
+        if (recordId) {
+          const { data, error } = await admin.from("mental_health_records")
+            .select("*")
+            .eq("id", recordId)
+            .eq("user_id", userId)
+            .single();
+          if (error || !data) return json({ error: error?.message ?? "record not found" }, 404);
+          record = data as Record<string, unknown>;
+        } else {
+          const { data, error } = await admin.from("mental_health_records")
+            .insert({
+              user_id: userId,
+              mood_score: moodScore,
+              stress_score: stressScore,
+              sleep_hours: sleepHours,
+              note,
+              recorded_at: recordedAt,
+            })
+            .select("*")
+            .single();
+          if (error) return json({ error: error.message }, 400);
+          record = data as Record<string, unknown>;
+        }
+
+        const analysisInput = {
+          note: String(record.note ?? note),
+          moodScore: Number(record.mood_score ?? moodScore),
+          stressScore: Number(record.stress_score ?? stressScore),
+          sleepHours: Number(record.sleep_hours ?? sleepHours),
+        };
+        const fallback = buildJournalInsight(analysisInput);
+        let insight = fallback;
+        let model = "local-journal-heuristic";
+
+        try {
+          const aiPrompt = [
+            "あなたは日記から自己改善のヒントを抽出するAIです。",
+            "出力はJSONのみ。キーは summary, emotion_tags, trigger_tags, next_actions, risk_level, focus_area。",
+            "risk_level は low/medium/high。focus_area は spending/health/mental/work/general。",
+            "next_actions は明日実行できる15分以内の行動を最大3件。",
+            "",
+            `気分スコア: ${analysisInput.moodScore}/5`,
+            `ストレススコア: ${analysisInput.stressScore}/5`,
+            `睡眠時間: ${analysisInput.sleepHours}h`,
+            `日記: ${analysisInput.note}`,
+          ].join("\n");
+          const aiResp = await fetch(`${SUPABASE_URL}/functions/v1/ai-hub`, {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${SERVICE_ROLE_KEY}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ action: "provider.chat", provider: "groq", message: aiPrompt }),
+          });
+          const aiData = await aiResp.json() as Record<string, unknown>;
+          const text = String(aiData.text ?? "");
+          if (aiData.success === true && text.trim()) {
+            insight = coerceJournalInsight(extractFirstJsonObject(text), fallback);
+            model = String(aiData.model_used ?? "groq");
+          }
+        } catch {
+          insight = fallback;
+        }
+
+        const analyzedAt = new Date().toISOString();
+        const { data: updated, error: updateError } = await admin
+          .from("mental_health_records")
+          .update({
+            ai_summary: insight.summary,
+            emotion_tags: insight.emotion_tags,
+            trigger_tags: insight.trigger_tags,
+            next_actions: insight.next_actions,
+            risk_level: insight.risk_level,
+            focus_area: insight.focus_area,
+            ai_model: model,
+            analyzed_at: analyzedAt,
+            analysis_report: { ...insight, generated_at: analyzedAt, source: model },
+          })
+          .eq("id", String(record.id))
+          .eq("user_id", userId)
+          .select("*")
+          .single();
+        if (updateError) return json({ error: updateError.message }, 400);
+
+        const createdTasks: Array<Record<string, unknown>> = [];
+        if (boolBody(body.create_tomorrow_tasks, true)) {
+          const tomorrow = new Date();
+          tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
+          const tomorrowDate = dateOnly(tomorrow);
+          for (const actionText of insight.next_actions.slice(0, 3)) {
+            const { data: task, error: taskError } = await admin
+              .from("daily_todos")
+              .insert({
+                user_id: userId,
+                task: actionText,
+                is_completed: false,
+                is_important: insight.risk_level !== "low",
+                category: "journal_ai",
+                estimated_minutes: 15,
+                difficulty: "easy",
+                task_date: tomorrowDate,
+                due_date: `${tomorrowDate}T09:00:00.000Z`,
+                details: `AI日記分析から生成: ${insight.summary} / record=${record.id}`,
+              })
+              .select("id, task, task_date, category")
+              .single();
+            if (!taskError && task) createdTasks.push(task as Record<string, unknown>);
+          }
+        }
+
+        return json({ success: true, record: updated, insight, created_tasks: createdTasks });
+      }
 
       // ── Recipe & Meal Planner ─────────────────────────────────────────────────
       case "recipe.list": return json({ success: true, recipes: await listItems(admin, "recipe", userId) });
