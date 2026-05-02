@@ -345,6 +345,76 @@ async function upsertNotionDatabasePage(
   return "created";
 }
 
+type RequiredNotionProperty = {
+  name: string;
+  type: string;
+};
+
+const NOTION_WBS_REQUIRED_PROPERTIES: RequiredNotionProperty[] = [
+  { name: "id", type: "title" },
+  { name: "task_title", type: "rich_text" },
+  { name: "instance", type: "select" },
+  { name: "status", type: "select" },
+  { name: "progress", type: "number" },
+  { name: "deadline", type: "date" },
+  { name: "updated_at", type: "date" },
+];
+
+async function validateNotionDatabaseSchema(
+  token: string,
+  dbId: string,
+  required: RequiredNotionProperty[],
+): Promise<{
+  ok: boolean;
+  error?: string;
+  status?: number;
+  detail?: string;
+  missing: RequiredNotionProperty[];
+  mismatched: Array<RequiredNotionProperty & { actual: string }>;
+  detected: Record<string, string>;
+}> {
+  const resp = await notionFetch(token, `/databases/${dbId}`);
+  if (!resp.ok) {
+    const detail = await resp.text().catch(() => "");
+    return {
+      ok: false,
+      error: "notion_schema_fetch_failed",
+      status: resp.status,
+      detail: detail.slice(0, 300),
+      missing: [],
+      mismatched: [],
+      detected: {},
+    };
+  }
+
+  const payload = await resp.json() as {
+    properties?: Record<string, Record<string, unknown>>;
+  };
+  const properties = payload.properties ?? {};
+  const detected: Record<string, string> = {};
+  for (const [name, property] of Object.entries(properties)) {
+    detected[name] = asString(property.type, "unknown");
+  }
+
+  const missing: RequiredNotionProperty[] = [];
+  const mismatched: Array<RequiredNotionProperty & { actual: string }> = [];
+  for (const property of required) {
+    const actual = detected[property.name];
+    if (!actual) {
+      missing.push(property);
+    } else if (actual !== property.type) {
+      mismatched.push({ ...property, actual });
+    }
+  }
+
+  return {
+    ok: missing.length === 0 && mismatched.length === 0,
+    missing,
+    mismatched,
+    detected,
+  };
+}
+
 function memoryTypeFor(filePath: string, source: unknown): string {
   const name = filePath.split(/[\\/]/).pop() ?? filePath;
   if (name.startsWith("feedback_success_")) return "feedback_success";
@@ -1377,6 +1447,37 @@ serve(async (req: Request) => {
         // Supabase 側から最新 WBS (last_edited 順 30 件) を取得
         // 30件 × ~150ms/task ≈ 4.5s sleep + HTTP = ~30s 合計 (Supabase 150s limit に余裕)
         // 毎時 cron で 30件ずつローリング sync → 141件 ≒ 5h で全件完了
+        const schema = await validateNotionDatabaseSchema(
+          token,
+          dbId,
+          NOTION_WBS_REQUIRED_PROPERTIES,
+        );
+        if (schema.error) {
+          return json({
+            success: false,
+            error: schema.error,
+            detail: schema.detail ?? "",
+          }, schema.status ?? 502);
+        }
+        if (!schema.ok) {
+          return json({
+            success: false,
+            error: "notion_schema_mismatch",
+            missing_properties: schema.missing,
+            mismatched_properties: schema.mismatched,
+            required_properties: NOTION_WBS_REQUIRED_PROPERTIES,
+            detected_properties: schema.detected,
+          }, 422);
+        }
+        if (body.schema_only === true) {
+          return json({
+            success: true,
+            schema_ok: true,
+            required_properties: NOTION_WBS_REQUIRED_PROPERTIES,
+            detected_properties: schema.detected,
+          });
+        }
+
         const limitN = Math.min(Math.max(Number(body.limit ?? 30), 1), 50);
         const offsetN = Math.max(Number(body.offset ?? 0), 0);
         const delayMs = Math.min(
