@@ -86,6 +86,12 @@ jobs:
               echo "::warning::NOTION_* secrets not configured yet — skip (set in Supabase dashboard)"
               exit 0
             fi
+            # Explicit preflight result from schedule-hub:notion.sync_wbs.
+            if echo "$ERROR" | grep -q "notion_schema_mismatch"; then
+              MISSING=$(echo "$RESP" | python3 -c "import sys,json; d=json.load(sys.stdin); print(', '.join([f'{p.get(\"name\")}:{p.get(\"type\")}' for p in d.get('missing_properties', [])] + [f'{p.get(\"name\")}:{p.get(\"actual\")}->{p.get(\"type\")}' for p in d.get('mismatched_properties', [])]))" 2>/dev/null || echo "")
+              echo "::warning::Notion WBS DB schema mismatch - add/repair required properties: ${MISSING:-id:title, task_title:rich_text, instance:select, status:select, progress:number, deadline:date, updated_at:date}"
+              exit 0
+            fi
             # Notion DB property schema mismatch (e.g. task_title not created yet) → soft-fail
             if echo "$RESP" | grep -q "is not a property that exists"; then
               echo "::warning::Notion DB schema mismatch — add required properties to Notion WBS DB (task_title rich_text / instance select / status select / progress number / deadline date / updated_at date)"
