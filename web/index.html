@@ -1044,12 +1044,27 @@
       var isMainBundle = stack.indexOf('main.dart.js') !== -1;
       var isFocusTraversalRenderBox =
         isMainBundle &&
-        stack.indexOf('.gN') !== -1 &&
-        stack.indexOf('.gn') !== -1 &&
-        stack.indexOf('Object.e') !== -1 &&
-        stack.indexOf('Object.dy') !== -1 &&
-        stack.indexOf('.ak') !== -1 &&
-        stack.indexOf('a7') !== -1;
+        (
+          (
+            stack.indexOf('.gN') !== -1 &&
+            stack.indexOf('.gn') !== -1 &&
+            stack.indexOf('Object.e') !== -1 &&
+            stack.indexOf('Object.dy') !== -1 &&
+            stack.indexOf('.ak') !== -1 &&
+            stack.indexOf('a7') !== -1
+          ) ||
+          (
+            stack.indexOf('.gO') !== -1 &&
+            (stack.indexOf('.gnc') !== -1 || stack.indexOf('.gmc') !== -1) &&
+            stack.indexOf('.ge2') !== -1 &&
+            stack.indexOf('Object.e93') !== -1 &&
+            stack.indexOf('Object.dBT') !== -1 &&
+            (stack.indexOf('.akW') !== -1 || stack.indexOf('.akk') !== -1) &&
+            stack.indexOf('.aEM') !== -1 &&
+            (stack.indexOf('.aTV') !== -1 || stack.indexOf('.a7V') !== -1) &&
+            (stack.indexOf('.asE') !== -1 || stack.indexOf('.aSE') !== -1)
+          )
+        );
       var isInkResponseNull =
         message.indexOf('Null check operator used on a null value') !== -1 &&
         isMainBundle &&

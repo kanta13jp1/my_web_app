@@ -209,20 +209,33 @@ class ErrorReporter {
     StackTrace? stackTrace,
   ) {
     if (!kIsWeb) return false;
-    if (!message.contains('RenderBox was not laid out')) return false;
 
     final stack = stackTrace?.toString() ?? '';
     final hasDebugFocusTraversalStack =
         stack.contains('FocusTraversalPolicy') ||
             stack.contains('FocusTraversalGroup');
-    final hasReleaseFocusTraversalStack = stack.contains('.gN') &&
+    final hasLegacyReleaseFocusTraversalStack = stack.contains('.gN') &&
         stack.contains('.gn') &&
         stack.contains('.ge') &&
         stack.contains('Object.e') &&
         stack.contains('Object.dy') &&
         stack.contains('.ak');
+    final hasCurrentReleaseFocusTraversalStack = stack.contains('.gO') &&
+        (stack.contains('.gnc') || stack.contains('.gmc')) &&
+        stack.contains('.ge2') &&
+        stack.contains('Object.e93') &&
+        stack.contains('Object.dBT') &&
+        (stack.contains('.akW') || stack.contains('.akk')) &&
+        stack.contains('.aEM') &&
+        (stack.contains('.aTV') || stack.contains('.a7V')) &&
+        (stack.contains('.asE') || stack.contains('.aSE'));
+    if (!message.contains('RenderBox was not laid out')) {
+      return hasCurrentReleaseFocusTraversalStack;
+    }
 
-    return hasDebugFocusTraversalStack || hasReleaseFocusTraversalStack;
+    return hasDebugFocusTraversalStack ||
+        hasLegacyReleaseFocusTraversalStack ||
+        hasCurrentReleaseFocusTraversalStack;
   }
 
   /// AppLogger.error から呼ばれる (caught errors)
