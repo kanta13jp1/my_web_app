@@ -4567,13 +4567,13 @@ serve(async (req: Request) => {
         const userId = String(body.user_id ?? "");
         if (!userId) return json({ error: "user_id required" }, 400);
         const { data: usage } = await admin.from("user_feature_usage")
-          .select("feature_id, last_used_at, use_count")
+          .select("feature_route, tapped_at")
           .eq("user_id", userId)
-          .order("last_used_at", { ascending: false })
+          .order("tapped_at", { ascending: false })
           .limit(30);
         const recent = new Set(
           (usage ?? []).map((r: Record<string, unknown>) =>
-            String(r.feature_id)
+            String(r.feature_route)
           ),
         );
         const recommendations: Array<Record<string, unknown>> = [];
@@ -4619,6 +4619,50 @@ serve(async (req: Request) => {
           if (recommendations.length >= 5) break;
         }
         return json({ success: true, recommendations });
+      }
+
+      case "home.popular": {
+        const limit = Math.min(Math.max(Number(body.limit ?? 8), 1), 20);
+        const windowDays = Math.min(
+          Math.max(Number(body.window_days ?? 30), 1),
+          365,
+        );
+        const since = new Date(
+          Date.now() - windowDays * 24 * 60 * 60 * 1000,
+        ).toISOString();
+        const { data, error } = await admin.from("user_feature_usage")
+          .select("feature_route, feature_label, tapped_at")
+          .gte("tapped_at", since)
+          .limit(2000);
+        if (error) return json({ error: error.message }, 400);
+
+        const byRoute = new Map<
+          string,
+          { feature_route: string; feature_label: string; use_count: number }
+        >();
+        for (const row of data ?? []) {
+          const rawRoute = String(row.feature_route ?? "").trim();
+          if (!rawRoute) continue;
+          const route = rawRoute.startsWith("/") ? rawRoute : `/${rawRoute}`;
+          const current = byRoute.get(route) ?? {
+            feature_route: route,
+            feature_label: String(row.feature_label ?? route),
+            use_count: 0,
+          };
+          current.use_count += 1;
+          if (!current.feature_label || current.feature_label === route) {
+            current.feature_label = String(row.feature_label ?? route);
+          }
+          byRoute.set(route, current);
+        }
+
+        const features = [...byRoute.values()]
+          .sort((a, b) =>
+            b.use_count - a.use_count ||
+            a.feature_label.localeCompare(b.feature_label)
+          )
+          .slice(0, limit);
+        return json({ success: true, features });
       }
 
       // ── Observability (Win版#131 part 4 / NotebookLM f56cc07c) ────────────────

@@ -214,6 +214,7 @@ import 'package:my_web_app/pages/real_estate_tracker_page.dart';
 import 'package:my_web_app/pages/spreadsheet_database_page.dart';
 import 'package:my_web_app/pages/travel_itinerary_planner_page.dart';
 import 'package:my_web_app/pages/changelog_manager_page.dart';
+import 'package:my_web_app/pages/release_notes_page.dart';
 import 'package:my_web_app/pages/pet_care_manager_page.dart';
 import 'package:my_web_app/pages/photo_gallery_manager_page.dart';
 import 'package:my_web_app/pages/elearning_course_manager_page.dart';
@@ -1333,6 +1334,10 @@ class _MyAppState extends State<MyApp> {
           case '/changelog':
             return MaterialPageRoute(
               builder: (_) => const ChangelogManagerPage(),
+            );
+          case '/release-notes':
+            return MaterialPageRoute(
+              builder: (_) => const ReleaseNotesPage(),
             );
           case '/pet-care':
             return MaterialPageRoute(

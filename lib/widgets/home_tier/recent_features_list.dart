@@ -31,12 +31,11 @@ class _RecentFeaturesListState extends State<RecentFeaturesList> {
           .eq('user_id', user.id)
           .order('tapped_at', ascending: false)
           .limit(8);
-      // deduplicate by route
       final seen = <String>{};
       final deduped = <Map<String, dynamic>>[];
-      for (final r in rows) {
-        final route = r['feature_route'] as String;
-        if (seen.add(route)) deduped.add(r);
+      for (final row in rows) {
+        final route = row['feature_route'] as String? ?? '';
+        if (route.isNotEmpty && seen.add(route)) deduped.add(row);
       }
       if (mounted) {
         setState(() {
@@ -61,7 +60,7 @@ class _RecentFeaturesListState extends State<RecentFeaturesList> {
       return const Padding(
         padding: EdgeInsets.all(16),
         child: Text(
-          'まだ履歴がありません',
+          'まだ利用履歴がありません。',
           style: TextStyle(
             color: Color(0xFF94A3B8),
             fontSize: 13,
@@ -76,8 +75,9 @@ class _RecentFeaturesListState extends State<RecentFeaturesList> {
         spacing: 8,
         runSpacing: 8,
         children: _items.map((item) {
+          final route = _normalizeRoute(item['feature_route'] as String? ?? '');
           final label = item['feature_label'] as String? ??
-              (item['feature_route'] as String).split('/').last;
+              route.substring(1).replaceAll('-', ' ');
           return ActionChip(
             label: Text(
               label,
@@ -89,13 +89,18 @@ class _RecentFeaturesListState extends State<RecentFeaturesList> {
             ),
             backgroundColor: const Color(0xFF1A1A1A),
             side: const BorderSide(color: Color(0xFF2A2A2A)),
-            onPressed: () => Navigator.pushNamed(
-              context,
-              item['feature_route'] as String,
-            ),
+            onPressed: route.isEmpty
+                ? null
+                : () => Navigator.pushNamed(context, route),
           );
         }).toList(),
       ),
     );
+  }
+
+  static String _normalizeRoute(String value) {
+    final route = value.trim();
+    if (route.isEmpty) return '';
+    return route.startsWith('/') ? route : '/$route';
   }
 }
