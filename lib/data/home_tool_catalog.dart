@@ -55,6 +55,7 @@ import '../pages/table_data_page.dart';
 import '../pages/tech_blog_tracker_page.dart';
 import '../pages/template_marketplace_page.dart';
 import '../pages/thought_anchor_page.dart';
+import '../pages/self_touch_tracker_page.dart';
 import '../pages/thought_capture_page.dart';
 import '../pages/wardrobe_page.dart';
 import '../pages/personality_test_questions_page.dart';
@@ -499,6 +500,16 @@ List<HomeToolEntry> buildHomeToolCatalog({
       color: const Color(0xFF607D8B),
       keywords: const <String>['行動', '発言', '振り返り'],
       onOpen: (context) => _pushPage(context, const BehaviorLogPage()),
+    ),
+    HomeToolEntry(
+      id: 'self-touch-tracker',
+      sectionId: 'personal',
+      title: '自己接触トラッカー',
+      subtitle: '髪や顔に手が伸びた瞬間を記録し、置き換え行動へ戻す',
+      icon: Icons.touch_app_outlined,
+      color: const Color(0xFF0891B2),
+      keywords: const <String>['自己接触', '髪', 'セルフケア', '思考サポート'],
+      onOpen: (context) => _pushPage(context, const SelfTouchTrackerPage()),
     ),
     HomeToolEntry(
       id: 'wip-limit',

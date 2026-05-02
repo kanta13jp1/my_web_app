@@ -55,6 +55,7 @@ import 'package:my_web_app/pages/profile_settings_page.dart';
 import 'package:my_web_app/pages/public_profile_page.dart';
 import 'package:my_web_app/pages/tech_blog_tracker_page.dart';
 import 'package:my_web_app/pages/thought_anchor_page.dart';
+import 'package:my_web_app/pages/self_touch_tracker_page.dart';
 import 'package:my_web_app/pages/rewards_page.dart';
 import 'package:my_web_app/pages/admin_analytics_page.dart';
 import 'package:my_web_app/pages/admin/feedback_list_page.dart';
@@ -703,6 +704,10 @@ class _MyAppState extends State<MyApp> {
           case '/behavior-log':
             return MaterialPageRoute(
               builder: (_) => const BehaviorLogPage(),
+            );
+          case '/self-touch-tracker':
+            return MaterialPageRoute(
+              builder: (_) => const SelfTouchTrackerPage(),
             );
           case '/wip-limit':
             return MaterialPageRoute(
