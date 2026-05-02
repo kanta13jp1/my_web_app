@@ -156,13 +156,13 @@ export function buildMcpFeatureRequestPayload(
   body: Record<string, unknown>,
 ): McpFeatureRequestPayloadResult {
   const rawTitle = String(body.title ?? "").trim();
-  const title = rawTitle.startsWith("[追加要望]")
-    ? rawTitle
-    : `[追加要望] ${rawTitle}`;
   if (rawTitle.length < 3) {
     return { ok: false, status: 400, error: "title must be at least 3 chars" };
   }
 
+  const title = rawTitle.startsWith("[追加要望]")
+    ? rawTitle
+    : `[追加要望] ${rawTitle}`;
   const description = String(body.description ?? "").trim();
   const sourceNote =
     "Created via MCP facade; requires product review before broad rollout.";
@@ -171,7 +171,7 @@ export function buildMcpFeatureRequestPayload(
     ok: true,
     payload: {
       category: String(body.category ?? "ユーザー要望"),
-      category_icon: String(body.category_icon ?? "📝"),
+      category_icon: String(body.category_icon ?? "🧩"),
       category_order: Number(body.category_order ?? 30),
       title,
       description: description ? `${description}\n\n${sourceNote}` : sourceNote,

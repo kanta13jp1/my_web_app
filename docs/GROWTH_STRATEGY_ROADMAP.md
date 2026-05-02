@@ -25362,3 +25362,75 @@ a9d7b1517 on main
 
 ### Philosophy Alignment
 #5 商品=ユーザー価値 (= 予測精度向上で競馬ユーザーの的中率改善) / #6 資本=時間 (= 1セッション3term追加の高速開発サイクル維持)
+
+## WEB版 Daily Report Session (2026-05-02 00:02 UTC)
+
+### 実施内容
+- 日次レポート生成: `docs/daily-reports/2026-05-02.md` にメトリクス + AIアクション提案追記
+- 競合インテリジェンス: WebSearch で Notion/Slack/GitHub Copilot 最新動向を収集・分析
+- 競合レポート更新: `docs/competitor-reports/2026-05-02.md` に AI分析セクション追記
+- スケジュールヘルスモニター: 全タスク正常稼働確認 (ヘルスモニター 8回 / AI大学更新 4回 / 競合レポート 1回)
+- GitHub Issues (auto-review): 0件
+
+### 競合重要変化 (本日発見)
+- **Notion Custom Agents 有料化 (5/4〜)** → AI機能「Always Free」訴求チャンス
+- **GitHub Copilot 従量制移行 (6/1〜)** → AI Fleet コスト見直し必須
+- **Slack × GitHub Issues 検索連携** → 統合プラットフォームとの機能競合強化
+
+### 次回アクション候補
+1. Notion 対抗: LP に「AI機能 Always Free」差別化バッジ追加 (VSCode版)
+2. GitHub Copilot 従量制対応: DEV_PROCESS_MULTI_AI.md 更新 (Codex#1)
+3. 競馬予測 EF: 72 terms 継続強化 (PS#6 継続)
+
+### Philosophy Alignment
+#5 商品=ユーザー価値 (= 競合動向をリアルタイム把握しユーザーへの差別化メッセージを強化) / #6 資本=時間 (= 自動日次レポートで競合モニタリングコストをゼロ化)
+
+## Scheduled Daily Session S2 (2026-05-02 06:00 UTC)
+
+### 実施内容
+- 朝の scheduled daily-development task 実行
+- 本日 main にマージ済の `feat: expose MCP AuthKit metadata` (commit fd173222b) を題材に技術ブログドラフト 2 本作成 (JA + EN)
+  - `docs/blog-drafts/2026-05-02-mcp-authkit-metadata-discovery.md`
+  - `docs/blog-drafts/2026-05-02-mcp-authkit-metadata-discovery-en.md`
+- RFC 9728 Protected Resource Metadata + RFC 8707 Resource Indicator + WorkOS AuthKit issuer ordering + trailing-slash 経験則を文書化
+- agent_tool_policy_server_gate.sql との対構造 ("metadata は契約 / gate は強制") を明示
+- development_achievements seed migration 追加 (`20260502170000_seed_achievements_scheduled_daily_s2.sql`)
+
+### 現状確認
+- main HEAD: baf91bd20 (CS チェック 2026-05-02-05:00)
+- 本日 main へのマージ済重要 PR: discount approval workflow / MCP AuthKit metadata / WBS automation 群 / Notion mirror sync
+- AI大学 自動更新も本日実行済 (commit feb859258)
+
+### 次回アクション候補 (Scheduled Daily S3 向け)
+1. agent tool policy server gate (MCP scope deny-by-default) 単体ブログ化 — Rule 27 #5 (Scope) 補強
+2. Codex#1 が PR 化中の `mcp_my_web_app_tools` facade ドラフトレビュー (現在 uncommitted on codex/codex1-mcp-authkit-metadata)
+3. discount approval workflow (afd16cd01) のユーザー価値ブログ — #5 商品=ユーザー価値 強化
+
+### Philosophy Alignment
+#3 優しい mentor (= MCP/AuthKit/RFC 周辺の落とし穴を後発開発者に共有) / #5 商品=ユーザー価値 (= MCP セキュリティ堅牢化はユーザーデータ保護に直結) / #6 資本=時間 (= 新規 client onboarding を 1h → 5min 短縮した運用知見を外部還元)
+
+---
+
+## stupefied-jackson worktree 2026-05-02 — WBS Issue Link UI
+
+### 実装
+
+- `lib/pages/project_gantt_page.dart` に `[Issue #NNN]` regex 検出 + `Icons.open_in_new` (青) → `launchUrl` で GitHub Issue を新規タブで開く UI を追加
+- 2 箇所適用: `_TaskRow` (開発WBS タブ / 14px) + `_GanttTimelineTabState` (timeline table / 12px)
+- url_launcher は既に pubspec 済 / WbsTask schema 拡張不要 (title 内 issue 番号は既存 seed の慣習と一致)
+- commit `46a9f3d39` direct main push (owner bypass)
+
+### 副次対応
+
+- Notion Calendar 1.129.0 の uninstaller .exe 消失を手動復旧 (registry + folder + AppData 削除 / プロセス kill は `Get-Process | Where Path -like "*cron-web*"` Path フィルタで)
+- 第三者 YouTube masterclass 動画再アップ要望 → 著作権リスク (Content ID は非公開 upload もスキャン) を説明し中止 → 元動画 URL を WebSearch で発見 (https://www.youtube.com/watch?v=fQgJ7qXlyDE)
+
+### 次回優先
+
+1. WbsTask schema 拡張 (`github_issue_number` column) → Codex#1 ルーティング (Migration + tools-hub:wbs.add_task / list_tasks 拡張)
+2. Issue 番号別の状態 (open/closed) を icon 色で示す (GitHub API 呼び出し or 既存 EF 拡張)
+3. project-gantt 本番 deploy 確認 (deploy-prod.yml が回ったあと UI 動作確認)
+
+### Philosophy Alignment
+
+#1 CEO 感 (= タスク所在を即座に navigation 可能 / プロジェクト掌握の自己効力感) / #5 商品=ユーザー価値 (= 自己使用 dogfood のクリック数削減) / #6 資本=時間 (= title からの目視 issue 番号タイプを排除)

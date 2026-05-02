@@ -63,7 +63,7 @@ Deno.test("write tools require explicit confirmation phrase", () => {
 Deno.test("feature request payload normalizes WBS fields", () => {
   const result = buildMcpFeatureRequestPayload({
     title: "MCPから追加要望を作る",
-    description: "Claude Apps 風の導線から登録する",
+    description: "Claude Apps風の導線から登録する",
     instance: "ps6",
     end_date: "2026-05-10",
   });

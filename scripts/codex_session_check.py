@@ -126,11 +126,118 @@ def env_snapshot() -> dict[str, str]:
     return {key: os.environ.get(key, "not-exposed") for key in keys}
 
 
-def codex_cli_version(root: Path) -> str:
-    result = run_command(["codex", "--version"], root)
+def cli_version(command: str, root: Path) -> str:
+    result = run_command([command, "--version"], root)
+    if result.code != 0 and os.name == "nt":
+        result = run_command([f"{command}.cmd", "--version"], root)
     if result.code != 0:
         return "unavailable"
     return result.stdout or result.stderr or "unknown"
+
+
+def codex_cli_version(root: Path) -> str:
+    return cli_version("codex", root)
+
+
+def claude_code_version(root: Path) -> str:
+    return cli_version("claude", root)
+
+
+def default_claude_settings_path() -> Path:
+    override = os.environ.get("CLAUDE_SETTINGS_PATH")
+    if override:
+        return Path(override)
+    return Path.home() / ".claude" / "settings.json"
+
+
+def normalized_key_path(path: list[str]) -> str:
+    return ".".join(path).lower().replace("_", "").replace("-", "").replace(" ", "")
+
+
+def is_remote_control_flag_path(path: list[str]) -> bool:
+    normalized = normalized_key_path(path)
+    if "remotecontrol" not in normalized:
+        return False
+    return any(
+        token in normalized
+        for token in [
+            "enable",
+            "enabled",
+            "allsessions",
+            "autosession",
+            "always",
+        ]
+    )
+
+
+def collect_remote_control_flags(
+    value: Any,
+    path: list[str] | None = None,
+) -> list[tuple[list[str], bool]]:
+    current_path = path or []
+    flags: list[tuple[list[str], bool]] = []
+    if isinstance(value, dict):
+        for key, item in value.items():
+            flags.extend(collect_remote_control_flags(item, [*current_path, str(key)]))
+    elif isinstance(value, list):
+        for index, item in enumerate(value):
+            flags.extend(collect_remote_control_flags(item, [*current_path, str(index)]))
+    elif isinstance(value, bool) and is_remote_control_flag_path(current_path):
+        flags.append((current_path, value))
+    return flags
+
+
+def analyze_claude_remote_control(
+    root: Path,
+    settings_path: Path | None = None,
+) -> dict[str, Any]:
+    path = settings_path or default_claude_settings_path()
+    version = claude_code_version(root)
+    status = "unknown"
+    evidence = "No known Remote Control all-sessions setting was found."
+    settings_state = "missing"
+    flag_path: str | None = None
+
+    if path.exists():
+        settings_state = "found"
+        try:
+            data = json.loads(path.read_text(encoding="utf-8-sig"))
+            flags = collect_remote_control_flags(data)
+            true_flags = [item for item in flags if item[1]]
+            false_flags = [item for item in flags if not item[1]]
+            if true_flags:
+                status = "enabled"
+                flag_path = ".".join(true_flags[0][0])
+                evidence = f"Detected true setting at `{flag_path}`."
+            elif false_flags:
+                status = "disabled"
+                flag_path = ".".join(false_flags[0][0])
+                evidence = f"Detected false setting at `{flag_path}`."
+        except json.JSONDecodeError as exc:
+            settings_state = "invalid-json"
+            evidence = f"Could not parse Claude settings JSON: {exc}"
+        except OSError as exc:
+            settings_state = "unreadable"
+            evidence = f"Could not read Claude settings: {exc}"
+
+    return {
+        "version": version,
+        "settings_path": str(path),
+        "settings_state": settings_state,
+        "all_sessions_status": status,
+        "flag_path": flag_path,
+        "evidence": evidence,
+        "manual_steps": [
+            "Open Claude Code locally.",
+            "Run `/config`.",
+            "Set `Enable Remote Control for all sessions` to `true`.",
+            "Start a normal interactive session and verify it appears in `claude.ai/code`.",
+        ],
+        "admin_note": (
+            "Team/Enterprise plans also require an admin to enable the Remote Control "
+            "toggle in Claude Code admin settings."
+        ),
+    }
 
 
 def notebooklm_snapshot(root: Path) -> dict[str, Any]:
@@ -166,11 +273,15 @@ def notebooklm_snapshot(root: Path) -> dict[str, Any]:
         except (json.JSONDecodeError, TypeError, ValueError):
             notebook_ids = []
     if not notebook_ids:
-        notebook_ids = sorted(set(re.findall(
-            r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
-            combined,
-            flags=re.IGNORECASE,
-        )))
+        notebook_ids = sorted(
+            set(
+                re.findall(
+                    r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+                    combined,
+                    flags=re.IGNORECASE,
+                )
+            )
+        )
         notebook_count = len(notebook_ids)
 
     lowered = combined.lower()
@@ -218,6 +329,7 @@ def analyze(cwd: Path) -> dict[str, Any]:
     worktrees = worktree_entries(root)
     codex_version = codex_cli_version(root)
     notebooklm = notebooklm_snapshot(root)
+    claude_remote_control = analyze_claude_remote_control(root)
 
     warnings: list[str] = []
     if dirty_lines:
@@ -256,6 +368,16 @@ def analyze(cwd: Path) -> dict[str, Any]:
         warnings.append(
             "NotebookLM harness notebook bc58b50b-5fc4-4840-9a62-b397d6d3b65a was not found"
         )
+    claude_version = claude_remote_control["version"]
+    parsed_claude_version = parse_semver(claude_version)
+    if claude_version == "unavailable":
+        warnings.append("Claude Code CLI is unavailable on PATH; Remote Control cannot be verified")
+    elif parsed_claude_version and parsed_claude_version < (2, 1, 79):
+        warnings.append("Claude Code is older than 2.1.79; Remote Control slash command support is not ready")
+    if claude_remote_control["all_sessions_status"] != "enabled":
+        warnings.append(
+            "Claude Code Remote Control all-sessions mode is not verified as enabled; run `/config` in Claude Code"
+        )
 
     return {
         "root": str(root),
@@ -270,6 +392,7 @@ def analyze(cwd: Path) -> dict[str, Any]:
         "remote": remote_url,
         "codex_cli_version": codex_version,
         "notebooklm": notebooklm,
+        "claude_remote_control": claude_remote_control,
         "worktrees": worktrees,
         "environment": env_snapshot(),
         "warnings": warnings,
@@ -307,6 +430,23 @@ def render_markdown(report: dict[str, Any]) -> str:
     ])
     if notebooklm["detail"]:
         lines.append(f"- Detail: `{notebooklm['detail']}`")
+
+    remote = report["claude_remote_control"]
+    lines.extend(
+        [
+            "",
+            "## Claude Code Remote Control",
+            f"- Claude Code CLI: `{remote['version']}`",
+            f"- Settings: `{remote['settings_path']}` ({remote['settings_state']})",
+            f"- All-session Remote Control: `{remote['all_sessions_status']}`",
+            f"- Evidence: {remote['evidence']}",
+        ]
+    )
+    if remote["all_sessions_status"] != "enabled":
+        lines.append("- Required manual steps:")
+        for step in remote["manual_steps"]:
+            lines.append(f"  - {step}")
+        lines.append(f"- Team/Enterprise note: {remote['admin_note']}")
 
     lines.extend(["", "## Warnings"])
     if report["warnings"]:

@@ -9,15 +9,22 @@
 
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient, SupabaseClient } from "npm:@supabase/supabase-js@2";
-import { getXAccountHandle, isXConfigured, postTweet, uploadMediaFromUrl } from "../_shared/x-client.ts";
+import {
+  getXAccountHandle,
+  isXConfigured,
+  postTweet,
+  uploadMediaFromUrl,
+} from "../_shared/x-client.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type",
 };
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
 const SERVICE_ROLE_KEY = Deno.env.get("SERVICE_ROLE_KEY") ?? "";
+const NOTION_VERSION = "2022-06-28";
 
 function json(data: unknown, status = 200): Response {
   return new Response(JSON.stringify(data), {
@@ -85,6 +92,565 @@ async function deleteItem(
   if (error) throw new Error(error.message);
 }
 
+function asString(value: unknown, fallback = ""): string {
+  return typeof value === "string" ? value.trim() : fallback;
+}
+
+function normalizeNotionId(value: unknown): string {
+  const raw = asString(value);
+  if (!raw) return "";
+  const compactIds = raw.replace(/-/g, "").match(/[0-9a-fA-F]{32}/g);
+  const compact = compactIds?.at(-1)?.toLowerCase();
+  if (!compact) return raw.replace(/^['"]|['"]$/g, "");
+  return [
+    compact.slice(0, 8),
+    compact.slice(8, 12),
+    compact.slice(12, 16),
+    compact.slice(16, 20),
+    compact.slice(20),
+  ].join("-");
+}
+
+function asNumber(value: unknown, fallback: number): number {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string") {
+    const parsed = Number(value);
+    if (Number.isFinite(parsed)) return parsed;
+  }
+  return fallback;
+}
+
+function clampNumber(
+  value: unknown,
+  fallback: number,
+  min: number,
+  max: number,
+): number {
+  return Math.min(Math.max(asNumber(value, fallback), min), max);
+}
+
+function notionHeaders(token: string): Record<string, string> {
+  return {
+    "Authorization": `Bearer ${token}`,
+    "Notion-Version": NOTION_VERSION,
+    "Content-Type": "application/json",
+  };
+}
+
+async function notionFetch(
+  token: string,
+  path: string,
+  init: RequestInit = {},
+): Promise<Response> {
+  return await fetch(`https://api.notion.com/v1${path}`, {
+    ...init,
+    headers: {
+      ...notionHeaders(token),
+      ...(init.headers ?? {}),
+    },
+  });
+}
+
+function notionRichText(content: string): Array<Record<string, unknown>> {
+  const text = content.slice(0, 2000);
+  return text ? [{ text: { content: text } }] : [];
+}
+
+function notionParagraph(content: string): Record<string, unknown> {
+  return {
+    object: "block",
+    type: "paragraph",
+    paragraph: { rich_text: notionRichText(content) },
+  };
+}
+
+function notionCodeBlock(content: string): Record<string, unknown> {
+  return {
+    object: "block",
+    type: "code",
+    code: {
+      language: "markdown",
+      rich_text: notionRichText(content),
+    },
+  };
+}
+
+function chunkText(text: string, chunkSize = 1800, maxChunks = 80): string[] {
+  const chunks: string[] = [];
+  let rest = text;
+  while (rest.length > 0 && chunks.length < maxChunks) {
+    chunks.push(rest.slice(0, chunkSize));
+    rest = rest.slice(chunkSize);
+  }
+  return chunks;
+}
+
+async function listNotionChildren(
+  token: string,
+  blockId: string,
+  pageSize = 100,
+): Promise<Array<Record<string, unknown>>> {
+  const notionBlockId = normalizeNotionId(blockId);
+  const children: Array<Record<string, unknown>> = [];
+  let cursor: string | null = null;
+  for (let i = 0; i < 10; i++) {
+    const url = new URL(
+      `https://api.notion.com/v1/blocks/${notionBlockId}/children`,
+    );
+    url.searchParams.set("page_size", String(pageSize));
+    if (cursor) url.searchParams.set("start_cursor", cursor);
+    const resp = await fetch(url, { headers: notionHeaders(token) });
+    if (!resp.ok) {
+      const detail = await resp.text().catch(() => "");
+      throw new Error(
+        `notion_children_failed: HTTP ${resp.status} ${detail.slice(0, 200)}`,
+      );
+    }
+    const payload = await resp.json() as {
+      results?: Array<Record<string, unknown>>;
+      has_more?: boolean;
+      next_cursor?: string | null;
+    };
+    children.push(...(payload.results ?? []));
+    if (!payload.has_more || !payload.next_cursor) break;
+    cursor = payload.next_cursor;
+  }
+  return children;
+}
+
+async function findOrCreateNotionChildPage(
+  token: string,
+  parentPageId: string,
+  title: string,
+): Promise<{ pageId: string; created: boolean }> {
+  const notionParentPageId = normalizeNotionId(parentPageId);
+  const children = await listNotionChildren(token, notionParentPageId);
+  for (const child of children) {
+    if (child.type !== "child_page") continue;
+    const childPage = (child.child_page ?? {}) as Record<string, unknown>;
+    if (asString(childPage.title) === title && child.id) {
+      return { pageId: String(child.id), created: false };
+    }
+  }
+
+  const resp = await notionFetch(token, "/pages", {
+    method: "POST",
+    body: JSON.stringify({
+      parent: { page_id: notionParentPageId },
+      properties: {
+        title: { title: [{ text: { content: title } }] },
+      },
+    }),
+  });
+  if (!resp.ok) {
+    const detail = await resp.text().catch(() => "");
+    throw new Error(
+      `notion_child_page_create_failed: HTTP ${resp.status} ${
+        detail.slice(0, 200)
+      }`,
+    );
+  }
+  const payload = await resp.json() as { id?: string };
+  if (!payload.id) {
+    throw new Error("notion_child_page_create_failed: missing page id");
+  }
+  return { pageId: payload.id, created: true };
+}
+
+async function replaceNotionPageChildren(
+  token: string,
+  pageId: string,
+  blocks: Array<Record<string, unknown>>,
+  delayMs: number,
+): Promise<{ archived: number; appended: number }> {
+  const notionPageId = normalizeNotionId(pageId);
+  const existing = await listNotionChildren(token, notionPageId);
+  let archived = 0;
+  for (const block of existing) {
+    if (!block.id) continue;
+    const resp = await notionFetch(token, `/blocks/${block.id}`, {
+      method: "DELETE",
+    });
+    if (!resp.ok) {
+      const detail = await resp.text().catch(() => "");
+      throw new Error(
+        `notion_block_delete_failed: HTTP ${resp.status} ${
+          detail.slice(0, 180)
+        }`,
+      );
+    }
+    archived++;
+    await new Promise((r) => setTimeout(r, delayMs));
+  }
+
+  let appended = 0;
+  for (let i = 0; i < blocks.length; i += 100) {
+    const children = blocks.slice(i, i + 100);
+    const resp = await notionFetch(token, `/blocks/${notionPageId}/children`, {
+      method: "PATCH",
+      body: JSON.stringify({ children }),
+    });
+    if (!resp.ok) {
+      const detail = await resp.text().catch(() => "");
+      throw new Error(
+        `notion_block_append_failed: HTTP ${resp.status} ${
+          detail.slice(0, 180)
+        }`,
+      );
+    }
+    appended += children.length;
+    await new Promise((r) => setTimeout(r, delayMs));
+  }
+  return { archived, appended };
+}
+
+async function upsertNotionDatabasePage(
+  token: string,
+  dbId: string,
+  titleProperty: string,
+  titleValue: string,
+  properties: Record<string, unknown>,
+): Promise<"created" | "updated"> {
+  const notionDbId = normalizeNotionId(dbId);
+  const queryResp = await notionFetch(token, `/databases/${notionDbId}/query`, {
+    method: "POST",
+    body: JSON.stringify({
+      filter: { property: titleProperty, title: { equals: titleValue } },
+      page_size: 1,
+    }),
+  });
+  if (!queryResp.ok) {
+    const detail = await queryResp.text().catch(() => "");
+    throw new Error(
+      `notion_db_query_failed: HTTP ${queryResp.status} ${
+        detail.slice(0, 180)
+      }`,
+    );
+  }
+  const queryJson = await queryResp.json() as {
+    results?: Array<{ id?: string }>;
+  };
+  const existingPageId = queryJson.results?.[0]?.id;
+
+  if (existingPageId) {
+    const patchResp = await notionFetch(
+      token,
+      `/pages/${normalizeNotionId(existingPageId)}`,
+      {
+        method: "PATCH",
+        body: JSON.stringify({ properties }),
+      },
+    );
+    if (!patchResp.ok) {
+      const detail = await patchResp.text().catch(() => "");
+      throw new Error(
+        `notion_db_patch_failed: HTTP ${patchResp.status} ${
+          detail.slice(0, 180)
+        }`,
+      );
+    }
+    return "updated";
+  }
+
+  const createResp = await notionFetch(token, "/pages", {
+    method: "POST",
+    body: JSON.stringify({
+      parent: { database_id: notionDbId },
+      properties,
+    }),
+  });
+  if (!createResp.ok) {
+    const detail = await createResp.text().catch(() => "");
+    throw new Error(
+      `notion_db_create_failed: HTTP ${createResp.status} ${
+        detail.slice(0, 180)
+      }`,
+    );
+  }
+  return "created";
+}
+
+type RequiredNotionProperty = {
+  name: string;
+  type: string;
+};
+
+type NotionPreflightCategory =
+  | "missing_permission"
+  | "missing_property"
+  | "type_mismatch"
+  | "internal_name_mismatch"
+  | "advanced_property_constraint";
+
+type NotionPreflightSeverity = "error" | "warning" | "info";
+
+type NotionPreflightFinding = {
+  category: NotionPreflightCategory;
+  severity: NotionPreflightSeverity;
+  message: string;
+  property_name?: string;
+  property_id?: string;
+  property_type?: string;
+  expected?: string;
+  actual?: string;
+  recommendation?: string;
+};
+
+type NotionPropertyMapping = {
+  name: string;
+  id: string;
+  type: string;
+};
+
+const NOTION_WBS_REQUIRED_PROPERTIES: RequiredNotionProperty[] = [
+  { name: "id", type: "title" },
+  { name: "task_title", type: "rich_text" },
+  { name: "instance", type: "select" },
+  { name: "status", type: "select" },
+  { name: "progress", type: "number" },
+  { name: "deadline", type: "date" },
+  { name: "updated_at", type: "date" },
+];
+
+function notionPreflightFetchCategory(
+  status: number,
+  detail: string,
+): NotionPreflightCategory {
+  const normalized = detail.toLowerCase();
+  if (
+    status === 401 ||
+    status === 403 ||
+    status === 404 ||
+    normalized.includes("object_not_found") ||
+    normalized.includes("unauthorized")
+  ) {
+    return "missing_permission";
+  }
+  return "advanced_property_constraint";
+}
+
+function notionPreflightFixes(
+  findings: NotionPreflightFinding[],
+): string[] {
+  const fixes = new Set<string>();
+  for (const finding of findings) {
+    if (finding.severity === "info") continue;
+    if (finding.recommendation) fixes.add(finding.recommendation);
+  }
+  return [...fixes];
+}
+
+async function validateNotionDatabaseSchema(
+  token: string,
+  dbId: string,
+  required: RequiredNotionProperty[],
+  options: { checkAdvancedProperties?: boolean } = {},
+): Promise<{
+  ok: boolean;
+  preflight_ok: boolean;
+  error?: string;
+  status?: number;
+  detail?: string;
+  missing: RequiredNotionProperty[];
+  mismatched: Array<RequiredNotionProperty & { actual: string }>;
+  detected: Record<string, string>;
+  property_mappings: NotionPropertyMapping[];
+  findings: NotionPreflightFinding[];
+  human_fix_required: string[];
+}> {
+  const notionDbId = normalizeNotionId(dbId);
+  const resp = await notionFetch(token, `/databases/${notionDbId}`);
+  if (!resp.ok) {
+    const detail = await resp.text().catch(() => "");
+    const category = notionPreflightFetchCategory(resp.status, detail);
+    const finding: NotionPreflightFinding = {
+      category,
+      severity: "error",
+      message: `Notion database schema fetch failed: HTTP ${resp.status}.`,
+      recommendation: category === "missing_permission"
+        ? "Share the target Notion database with the integration and verify NOTION_WBS_DATABASE_ID."
+        : "Retry the Notion schema preflight and inspect the returned API detail.",
+    };
+    return {
+      ok: false,
+      preflight_ok: false,
+      error: "notion_schema_fetch_failed",
+      status: resp.status,
+      detail: detail.slice(0, 300),
+      missing: [],
+      mismatched: [],
+      detected: {},
+      property_mappings: [],
+      findings: [finding],
+      human_fix_required: notionPreflightFixes([finding]),
+    };
+  }
+
+  const payload = await resp.json() as {
+    properties?: Record<string, Record<string, unknown>>;
+  };
+  const properties = payload.properties ?? {};
+  const detected: Record<string, string> = {};
+  const propertyMappings: NotionPropertyMapping[] = [];
+  const findings: NotionPreflightFinding[] = [];
+  for (const [name, property] of Object.entries(properties)) {
+    const type = asString(property.type, "unknown");
+    const propertyId = asString(property.id, name);
+    detected[name] = type;
+    propertyMappings.push({ name, id: propertyId, type });
+    if (propertyId && propertyId !== name) {
+      findings.push({
+        category: "internal_name_mismatch",
+        severity: "info",
+        property_name: name,
+        property_id: propertyId,
+        property_type: type,
+        message:
+          `Notion property "${name}" uses API/internal id "${propertyId}".`,
+        recommendation:
+          "Persist UI name to internal id mappings from database schema/pages.retrieve before batch updates.",
+      });
+    }
+  }
+
+  const missing: RequiredNotionProperty[] = [];
+  const mismatched: Array<RequiredNotionProperty & { actual: string }> = [];
+  for (const property of required) {
+    const actual = detected[property.name];
+    if (!actual) {
+      missing.push(property);
+      findings.push({
+        category: "missing_property",
+        severity: "error",
+        property_name: property.name,
+        expected: property.type,
+        message: `Required Notion property "${property.name}" is missing.`,
+        recommendation:
+          `Create a "${property.name}" property with type "${property.type}" in the WBS database.`,
+      });
+    } else if (actual !== property.type) {
+      mismatched.push({ ...property, actual });
+      findings.push({
+        category: "type_mismatch",
+        severity: "error",
+        property_name: property.name,
+        expected: property.type,
+        actual,
+        message:
+          `Notion property "${property.name}" has type "${actual}", expected "${property.type}".`,
+        recommendation:
+          `Change "${property.name}" to type "${property.type}" or update the sync property mapping.`,
+      });
+    }
+  }
+
+  if (options.checkAdvancedProperties === true) {
+    for (const [name, property] of Object.entries(properties)) {
+      const type = asString(property.type, "unknown");
+      const propertyId = asString(property.id, name);
+      if (type === "relation") {
+        const relation = (property.relation ?? {}) as Record<string, unknown>;
+        const relationDbId = asString(relation.database_id);
+        if (!relationDbId) {
+          findings.push({
+            category: "advanced_property_constraint",
+            severity: "warning",
+            property_name: name,
+            property_id: propertyId,
+            property_type: type,
+            message:
+              `Relation property "${name}" does not expose relation.database_id.`,
+            recommendation:
+              "Verify the relation target database is shared with the Notion integration.",
+          });
+          continue;
+        }
+        const relationResp = await notionFetch(
+          token,
+          `/databases/${relationDbId}`,
+        );
+        if (!relationResp.ok) {
+          const detail = await relationResp.text().catch(() => "");
+          findings.push({
+            category: notionPreflightFetchCategory(relationResp.status, detail),
+            severity: "error",
+            property_name: name,
+            property_id: propertyId,
+            property_type: type,
+            message:
+              `Relation target for "${name}" is not accessible: HTTP ${relationResp.status}.`,
+            recommendation:
+              "Share every related Notion database with the integration before WBS sync.",
+          });
+        }
+      } else if (type === "formula") {
+        const formula = (property.formula ?? {}) as Record<string, unknown>;
+        const expression = asString(formula.expression);
+        const referencedProps = (expression.match(/prop\(/g) ?? []).length;
+        findings.push({
+          category: "advanced_property_constraint",
+          severity: referencedProps >= 10 ? "warning" : "info",
+          property_name: name,
+          property_id: propertyId,
+          property_type: type,
+          message:
+            `Formula property "${name}" should be treated as read-only computed data in sync preflight.`,
+          recommendation:
+            "Do not write Formula values directly; fetch page values after update and warn if Formula depth or dependencies become unstable.",
+        });
+      } else if (type === "rollup") {
+        const rollup = (property.rollup ?? {}) as Record<string, unknown>;
+        const rollupFunction = asString(rollup.function, "unknown");
+        findings.push({
+          category: "advanced_property_constraint",
+          severity: "warning",
+          property_name: name,
+          property_id: propertyId,
+          property_type: type,
+          actual: rollupFunction,
+          message:
+            `Rollup property "${name}" uses aggregate "${rollupFunction}" and may require page property item pagination.`,
+          recommendation:
+            "Use the Page property item API for Rollup/Relation values over 25 references, or compute the aggregate in Supabase before syncing.",
+        });
+      }
+    }
+  }
+
+  const preflightOk = !findings.some((finding) => finding.severity === "error");
+  return {
+    ok: missing.length === 0 && mismatched.length === 0,
+    preflight_ok: preflightOk,
+    missing,
+    mismatched,
+    detected,
+    property_mappings: propertyMappings,
+    findings,
+    human_fix_required: notionPreflightFixes(findings),
+  };
+}
+
+function memoryTypeFor(filePath: string, source: unknown): string {
+  const name = filePath.split(/[\\/]/).pop() ?? filePath;
+  if (name.startsWith("feedback_success_")) return "feedback_success";
+  if (name.startsWith("feedback_correction_")) return "feedback_correction";
+  if (name.startsWith("project_")) return "project";
+  const s = asString(source, "project");
+  return ["feedback_success", "feedback_correction", "project"].includes(s)
+    ? s
+    : "project";
+}
+
+function dateFromMemoryPath(
+  filePath: string,
+  fallback: unknown,
+): string | null {
+  const match = filePath.match(/(20\d{2})(\d{2})(\d{2})/);
+  if (match) return `${match[1]}-${match[2]}-${match[3]}`;
+  const fallbackString = asString(fallback);
+  return fallbackString ? fallbackString.slice(0, 10) : null;
+}
+
 serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -107,6 +673,9 @@ serve(async (req: Request) => {
       "blog.create",
       "reminders.study",
       "notion.sync_wbs",
+      "notion.preflight_wbs",
+      "notion.sync_roadmap",
+      "notion.sync_memory_index",
       "notion.fix_wbs_all_instances",
       "wbs.unblock_dependents",
       "x.post_with_media",
@@ -121,30 +690,31 @@ serve(async (req: Request) => {
       // ─── Digest ───────────────────────────────────────────────────────────────
       case "digest.run": {
         const today = new Date().toISOString().split("T")[0];
-        const [usersRes, newFrRes, openFrRes, topFrRes, achievementsRes] = await Promise.all([
-          admin.auth.admin.listUsers({ page: 1, perPage: 1 }),
-          admin
-            .from("feature_requests")
-            .select("id, title, created_at")
-            .gte("created_at", `${today}T00:00:00Z`)
-            .order("created_at", { ascending: false })
-            .limit(10),
-          admin
-            .from("feature_requests")
-            .select("count", { count: "exact", head: true })
-            .eq("status", "open"),
-          admin
-            .from("feature_requests")
-            .select("title, votes")
-            .eq("status", "open")
-            .order("votes", { ascending: false })
-            .limit(5),
-          admin
-            .from("development_achievements")
-            .select("title, completed_at")
-            .order("completed_at", { ascending: false })
-            .limit(5),
-        ]);
+        const [usersRes, newFrRes, openFrRes, topFrRes, achievementsRes] =
+          await Promise.all([
+            admin.auth.admin.listUsers({ page: 1, perPage: 1 }),
+            admin
+              .from("feature_requests")
+              .select("id, title, created_at")
+              .gte("created_at", `${today}T00:00:00Z`)
+              .order("created_at", { ascending: false })
+              .limit(10),
+            admin
+              .from("feature_requests")
+              .select("count", { count: "exact", head: true })
+              .eq("status", "open"),
+            admin
+              .from("feature_requests")
+              .select("title, votes")
+              .eq("status", "open")
+              .order("votes", { ascending: false })
+              .limit(5),
+            admin
+              .from("development_achievements")
+              .select("title, completed_at")
+              .order("completed_at", { ascending: false })
+              .limit(5),
+          ]);
         return json({
           success: true,
           digest: {
@@ -204,7 +774,8 @@ serve(async (req: Request) => {
       case "x.post": {
         const text = String(body.text ?? "").trim();
         const mediaUrl = String(body.mediaUrl ?? body.media_url ?? "").trim();
-        const mediaType = String(body.mediaType ?? body.media_type ?? "").trim();
+        const mediaType = String(body.mediaType ?? body.media_type ?? "")
+          .trim();
         const dryRun = body.dryRun === true;
         if (!text) return json({ success: false, error: "text required" }, 400);
         if (text.length > 280) {
@@ -233,7 +804,9 @@ serve(async (req: Request) => {
             account: getXAccountHandle(),
             text,
             log,
-            warning: dryRun ? undefined : "X API credentials are not configured in Supabase secrets.",
+            warning: dryRun
+              ? undefined
+              : "X API credentials are not configured in Supabase secrets.",
           });
         }
 
@@ -275,9 +848,14 @@ serve(async (req: Request) => {
         const dryRun = body.dryRun === true;
         if (!text) return json({ success: false, error: "text required" }, 400);
         if (text.length > 280) {
-          return json({ success: false, error: "text exceeds 280 characters" }, 400);
+          return json(
+            { success: false, error: "text exceeds 280 characters" },
+            400,
+          );
         }
-        if (!mediaUrl) return json({ success: false, error: "mediaUrl required" }, 400);
+        if (!mediaUrl) {
+          return json({ success: false, error: "mediaUrl required" }, 400);
+        }
 
         const baseLog = {
           text,
@@ -299,14 +877,22 @@ serve(async (req: Request) => {
             text,
             mediaUrl,
             log,
-            warning: dryRun ? undefined : "X API credentials are not configured in Supabase secrets.",
+            warning: dryRun
+              ? undefined
+              : "X API credentials are not configured in Supabase secrets.",
           });
         }
 
         const mediaType = String(body.mediaType ?? "image/png");
         const mediaCategory = String(body.mediaCategory ?? "tweet_image");
-        const uploadResult = await uploadMediaFromUrl(mediaUrl, { mediaType, mediaCategory });
-        const result = await postTweet({ text, mediaIds: [uploadResult.mediaId] });
+        const uploadResult = await uploadMediaFromUrl(mediaUrl, {
+          mediaType,
+          mediaCategory,
+        });
+        const result = await postTweet({
+          text,
+          mediaIds: [uploadResult.mediaId],
+        });
         const log = await addItem(admin, "x_post", userId ?? "gha", {
           ...baseLog,
           status: "posted",
@@ -431,7 +1017,9 @@ serve(async (req: Request) => {
               body: JSON.stringify({
                 title,
                 body: content,
-                tags: tagObjects.length > 0 ? tagObjects : [{ name: "Flutter" }],
+                tags: tagObjects.length > 0
+                  ? tagObjects
+                  : [{ name: "Flutter" }],
                 private: false,
                 tweet: false,
               }),
@@ -452,7 +1040,9 @@ serve(async (req: Request) => {
 
         if (platforms.includes("devto") && devtoKey) {
           try {
-            const cleanTags = rawTags.slice(0, 4).map((t: string) => t.toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 30)).filter((t: string) => t.length > 0);
+            const cleanTags = rawTags.slice(0, 4).map((t: string) =>
+              t.toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 30)
+            ).filter((t: string) => t.length > 0);
             const dr = await fetch("https://dev.to/api/articles", {
               method: "POST",
               headers: {
@@ -767,7 +1357,8 @@ serve(async (req: Request) => {
                   .eq("comment_id", c.id)
                   .single();
 
-                const alreadyReplied = (existing as { replied?: boolean } | null)?.replied === true;
+                const alreadyReplied =
+                  (existing as { replied?: boolean } | null)?.replied === true;
                 await admin.from("blog_comments").upsert({
                   platform: "qiita",
                   article_id: article.id,
@@ -831,8 +1422,9 @@ serve(async (req: Request) => {
                   .eq("qiita_user_id", uid)
                   .single();
 
-                const alreadyFollowed = (existingLiker as { followed?: boolean } | null)?.followed ===
-                  true;
+                const alreadyFollowed =
+                  (existingLiker as { followed?: boolean } | null)?.followed ===
+                    true;
                 await admin.from("blog_likers").upsert({
                   article_id: article.id,
                   qiita_user_id: uid,
@@ -909,8 +1501,12 @@ serve(async (req: Request) => {
           return json({ error: "Service role required" }, 403);
         }
 
-        const minIdleDays = typeof body.min_idle_days === "number" ? Math.max(1, Math.min(30, body.min_idle_days as number)) : 3;
-        const maxIdleDays = typeof body.max_idle_days === "number" ? Math.max(minIdleDays, Math.min(90, body.max_idle_days as number)) : 30;
+        const minIdleDays = typeof body.min_idle_days === "number"
+          ? Math.max(1, Math.min(30, body.min_idle_days as number))
+          : 3;
+        const maxIdleDays = typeof body.max_idle_days === "number"
+          ? Math.max(minIdleDays, Math.min(90, body.max_idle_days as number))
+          : 30;
         const dryRun = Boolean(body.dry_run);
 
         const nowJst = new Date(Date.now() + 9 * 60 * 60 * 1000);
@@ -946,7 +1542,9 @@ serve(async (req: Request) => {
           Date.now() - minIdleDays * 86_400_000,
         ).toISOString();
 
-        const userIds = candidates.map((r) => (r as { user_id: string }).user_id);
+        const userIds = candidates.map((r) =>
+          (r as { user_id: string }).user_id
+        );
 
         const { data: recentRows, error: recentErr } = await admin
           .from("app_notifications")
@@ -999,7 +1597,9 @@ serve(async (req: Request) => {
           );
           const bestStreak = Math.max(r.current_streak, r.longest_streak);
           const title = `${REMINDER_PREFIX} — ${idleDays}日ぶりにAIを学ぼう`;
-          const message = bestStreak > 1 ? `前回の学習から${idleDays}日経過。過去最長 ${bestStreak} 日連続を更新しよう！１分クイズでストリーク復活。` : `前回の学習から${idleDays}日経過。AI大学で１分クイズに挑戦して知識をアップデート。`;
+          const message = bestStreak > 1
+            ? `前回の学習から${idleDays}日経過。過去最長 ${bestStreak} 日連続を更新しよう！１分クイズでストリーク復活。`
+            : `前回の学習から${idleDays}日経過。AI大学で１分クイズに挑戦して知識をアップデート。`;
           return {
             user_id: r.user_id,
             title,
@@ -1040,6 +1640,51 @@ serve(async (req: Request) => {
         });
       }
 
+      // ─── Notion WBS DB preflight ─────────────────────────────────────────
+      case "notion.preflight_wbs": {
+        const token = Deno.env.get("NOTION_API_TOKEN");
+        const dbId = Deno.env.get("NOTION_WBS_DATABASE_ID");
+        if (!token || !dbId) {
+          return json(
+            {
+              success: false,
+              error: "notion_not_configured",
+              missing: !token ? "NOTION_API_TOKEN" : "NOTION_WBS_DATABASE_ID",
+            },
+            503,
+          );
+        }
+
+        const schema = await validateNotionDatabaseSchema(
+          token,
+          dbId,
+          NOTION_WBS_REQUIRED_PROPERTIES,
+          { checkAdvancedProperties: true },
+        );
+        if (schema.error) {
+          return json({
+            success: false,
+            error: schema.error,
+            detail: schema.detail ?? "",
+            findings: schema.findings,
+            human_fix_required: schema.human_fix_required,
+          }, schema.status ?? 502);
+        }
+
+        return json({
+          success: schema.ok && schema.preflight_ok,
+          schema_ok: schema.ok,
+          preflight_ok: schema.preflight_ok,
+          required_properties: NOTION_WBS_REQUIRED_PROPERTIES,
+          detected_properties: schema.detected,
+          property_mappings: schema.property_mappings,
+          missing_properties: schema.missing,
+          mismatched_properties: schema.mismatched,
+          findings: schema.findings,
+          human_fix_required: schema.human_fix_required,
+        }, schema.ok && schema.preflight_ok ? 200 : 422);
+      }
+
       // ─── Notion Sync (Multi-AI resilience / Win#132 part 6 · Backlog N2) ────
       // Win版#132 part 4 設計の N2 実装。Supabase wbs_tasks → Notion Database
       // upsert (last_edited 順で最新 500 件)。Anthropic outage 時もユーザーが
@@ -1048,7 +1693,7 @@ serve(async (req: Request) => {
       // Secrets: NOTION_API_TOKEN / NOTION_WBS_DATABASE_ID
       case "notion.sync_wbs": {
         const token = Deno.env.get("NOTION_API_TOKEN");
-        const dbId = Deno.env.get("NOTION_WBS_DATABASE_ID");
+        const dbId = normalizeNotionId(Deno.env.get("NOTION_WBS_DATABASE_ID"));
         if (!token || !dbId) {
           return json(
             {
@@ -1063,9 +1708,64 @@ serve(async (req: Request) => {
         // Supabase 側から最新 WBS (last_edited 順 30 件) を取得
         // 30件 × ~150ms/task ≈ 4.5s sleep + HTTP = ~30s 合計 (Supabase 150s limit に余裕)
         // 毎時 cron で 30件ずつローリング sync → 141件 ≒ 5h で全件完了
+        const schema = await validateNotionDatabaseSchema(
+          token,
+          dbId,
+          NOTION_WBS_REQUIRED_PROPERTIES,
+          { checkAdvancedProperties: body.advanced_preflight === true },
+        );
+        if (schema.error) {
+          return json({
+            success: false,
+            error: schema.error,
+            detail: schema.detail ?? "",
+            findings: schema.findings,
+            human_fix_required: schema.human_fix_required,
+          }, schema.status ?? 502);
+        }
+        if (!schema.ok) {
+          return json({
+            success: false,
+            error: "notion_schema_mismatch",
+            missing_properties: schema.missing,
+            mismatched_properties: schema.mismatched,
+            required_properties: NOTION_WBS_REQUIRED_PROPERTIES,
+            detected_properties: schema.detected,
+            property_mappings: schema.property_mappings,
+            findings: schema.findings,
+            human_fix_required: schema.human_fix_required,
+          }, 422);
+        }
+        if (body.advanced_preflight === true && !schema.preflight_ok) {
+          return json({
+            success: false,
+            error: "notion_preflight_failed",
+            required_properties: NOTION_WBS_REQUIRED_PROPERTIES,
+            detected_properties: schema.detected,
+            property_mappings: schema.property_mappings,
+            findings: schema.findings,
+            human_fix_required: schema.human_fix_required,
+          }, 422);
+        }
+        if (body.schema_only === true) {
+          return json({
+            success: true,
+            schema_ok: true,
+            preflight_ok: schema.preflight_ok,
+            required_properties: NOTION_WBS_REQUIRED_PROPERTIES,
+            detected_properties: schema.detected,
+            property_mappings: schema.property_mappings,
+            findings: schema.findings,
+            human_fix_required: schema.human_fix_required,
+          });
+        }
+
         const limitN = Math.min(Math.max(Number(body.limit ?? 30), 1), 50);
         const offsetN = Math.max(Number(body.offset ?? 0), 0);
-        const delayMs = Math.min(Math.max(Number(body.delay_ms ?? 750), 350), 2000);
+        const delayMs = Math.min(
+          Math.max(Number(body.delay_ms ?? 750), 350),
+          2000,
+        );
         const rangeTo = offsetN + limitN - 1;
         const { data: tasks, error: fetchErr } = await admin
           .from("wbs_tasks")
@@ -1233,7 +1933,9 @@ serve(async (req: Request) => {
                 failed++;
                 const eb = await createResp.text().catch(() => "");
                 errors.push(
-                  `create ${t.id}: HTTP ${createResp.status} ${eb.slice(0, 200)}`,
+                  `create ${t.id}: HTTP ${createResp.status} ${
+                    eb.slice(0, 200)
+                  }`,
                 );
               }
             }
@@ -1259,10 +1961,197 @@ serve(async (req: Request) => {
         });
       }
 
+      // ─── Notion ROADMAP Mirror (Backlog N3) ───
+      // EF は repository file を直接読めないため、GHA から渡された markdown
+      // content を Notion child page に置換同期する。親 ROADMAP page の手書き
+      // content は保持し、"ROADMAP mirror (auto)" child page だけを更新する。
+      case "notion.sync_roadmap": {
+        const token = Deno.env.get("NOTION_API_TOKEN");
+        const pageId = normalizeNotionId(
+          Deno.env.get("NOTION_ROADMAP_PAGE_ID"),
+        );
+        if (!token || !pageId) {
+          return json(
+            {
+              success: false,
+              error: "notion_not_configured",
+              missing: !token ? "NOTION_API_TOKEN" : "NOTION_ROADMAP_PAGE_ID",
+            },
+            503,
+          );
+        }
+
+        const rawContent = String(body.content ?? "");
+        if (!rawContent.trim()) {
+          return json({ success: false, error: "content required" }, 400);
+        }
+        const maxChars = clampNumber(body.max_chars, 24000, 1000, 60000);
+        const delayMs = clampNumber(body.delay_ms, 800, 400, 2500);
+        const mirrorTitle = asString(body.title, "ROADMAP mirror (auto)");
+        const sourcePath = asString(
+          body.source_path,
+          "docs/GROWTH_STRATEGY_ROADMAP.md",
+        );
+        const contentMode = asString(body.mode, "tail");
+        const content = rawContent.length <= maxChars
+          ? rawContent
+          : contentMode === "head"
+          ? rawContent.slice(0, maxChars)
+          : rawContent.slice(rawContent.length - maxChars);
+        const syncedAt = new Date().toISOString();
+        const childPage = await findOrCreateNotionChildPage(
+          token,
+          pageId,
+          mirrorTitle,
+        );
+        const chunks = chunkText(content, 1800, 80);
+        const blocks: Array<Record<string, unknown>> = [
+          {
+            object: "block",
+            type: "heading_2",
+            heading_2: { rich_text: notionRichText(mirrorTitle) },
+          },
+          notionParagraph(
+            `Synced at ${syncedAt}. Source: ${sourcePath}. Mode: ${contentMode}. ` +
+              `Chars: ${content.length}/${rawContent.length}.`,
+          ),
+          ...chunks.map(notionCodeBlock),
+        ];
+
+        const result = await replaceNotionPageChildren(
+          token,
+          childPage.pageId,
+          blocks,
+          delayMs,
+        );
+
+        return json({
+          success: true,
+          page_id: childPage.pageId,
+          child_page_created: childPage.created,
+          source_path: sourcePath,
+          mode: contentMode,
+          source_chars: rawContent.length,
+          synced_chars: content.length,
+          chunks: chunks.length,
+          archived_blocks: result.archived,
+          appended_blocks: result.appended,
+        });
+      }
+
+      // ─── Notion Memory Index Mirror (Backlog N4) ───
+      // Primary: Supabase memory_index table (memory-search-sync.yml が更新).
+      // Fallback: GHA から rows を渡して Notion DB へ upsert.
+      case "notion.sync_memory_index": {
+        const token = Deno.env.get("NOTION_API_TOKEN");
+        const dbId = normalizeNotionId(
+          Deno.env.get("NOTION_MEMORY_DATABASE_ID"),
+        );
+        if (!token || !dbId) {
+          return json(
+            {
+              success: false,
+              error: "notion_not_configured",
+              missing: !token
+                ? "NOTION_API_TOKEN"
+                : "NOTION_MEMORY_DATABASE_ID",
+            },
+            503,
+          );
+        }
+
+        const limitN = clampNumber(body.limit, 50, 1, 100);
+        const offsetN = Math.max(asNumber(body.offset, 0), 0);
+        const delayMs = clampNumber(body.delay_ms, 800, 400, 2500);
+        const rowsFromBody = Array.isArray(body.rows)
+          ? (body.rows as Array<Record<string, unknown>>).slice(0, limitN)
+          : null;
+        let rows: Array<Record<string, unknown>>;
+
+        if (rowsFromBody) {
+          rows = rowsFromBody;
+        } else {
+          const { data, error } = await admin
+            .from("memory_index")
+            .select(
+              "file_path, title, snippet, source, metadata, updated_at, content_hash",
+            )
+            .order("updated_at", { ascending: false })
+            .range(offsetN, offsetN + limitN - 1);
+          if (error) {
+            return json({
+              success: false,
+              error: `supabase_fetch_failed: ${error.message}`,
+            }, 500);
+          }
+          rows = (data ?? []) as Array<Record<string, unknown>>;
+        }
+
+        let created = 0;
+        let updated = 0;
+        let failed = 0;
+        const errors: string[] = [];
+
+        for (const row of rows) {
+          const filePath = asString(row.file_path ?? row.filename);
+          if (!filePath) {
+            failed++;
+            errors.push("row skipped: file_path required");
+            continue;
+          }
+          const title = asString(
+            row.title,
+            filePath.split(/[\\/]/).pop() ?? filePath,
+          );
+          const description = asString(row.snippet ?? row.description, title)
+            .slice(0, 1800);
+          const type = memoryTypeFor(filePath, row.source);
+          const timestamp = dateFromMemoryPath(filePath, row.updated_at);
+          const properties: Record<string, unknown> = {
+            filename: {
+              title: [{ text: { content: filePath.slice(0, 2000) } }],
+            },
+            type: { select: { name: type } },
+            description: { rich_text: notionRichText(description) },
+          };
+          if (timestamp) {
+            properties.timestamp = { date: { start: timestamp } };
+          }
+
+          try {
+            const result = await upsertNotionDatabasePage(
+              token,
+              dbId,
+              "filename",
+              filePath,
+              properties,
+            );
+            if (result === "created") created++;
+            else updated++;
+          } catch (e) {
+            failed++;
+            errors.push(`${filePath}: ${String(e).slice(0, 220)}`);
+          }
+          await new Promise((r) => setTimeout(r, delayMs));
+        }
+
+        return json({
+          success: failed === 0,
+          total: rows.length,
+          source: rowsFromBody ? "request_rows" : "memory_index",
+          limit: limitN,
+          offset: offsetN,
+          created,
+          updated,
+          failed,
+          errors: errors.slice(0, 10),
+        });
+      }
+
       // ─── Notion WBS Mirror Repair ───
       case "notion.fix_wbs_all_instances": {
         const token = Deno.env.get("NOTION_API_TOKEN");
-        const dbId = Deno.env.get("NOTION_WBS_DATABASE_ID");
+        const dbId = normalizeNotionId(Deno.env.get("NOTION_WBS_DATABASE_ID"));
         if (!token || !dbId) {
           return json(
             {
@@ -1313,7 +2202,10 @@ serve(async (req: Request) => {
             : "pending";
         };
 
-        const maxPages = Math.min(Math.max(Number(body.max_pages ?? 40), 1), 80);
+        const maxPages = Math.min(
+          Math.max(Number(body.max_pages ?? 40), 1),
+          80,
+        );
         const pages: Record<string, unknown>[] = [];
         let cursor: string | null = null;
         for (let i = 0; i < 10; i++) {
@@ -1357,7 +2249,8 @@ serve(async (req: Request) => {
           const titleItems = (idProp.title ?? []) as Record<string, unknown>[];
           const taskId = String(
             titleItems[0]?.plain_text ??
-              ((titleItems[0]?.text as Record<string, unknown> | undefined)?.content) ??
+              ((titleItems[0]?.text as Record<string, unknown> | undefined)
+                ?.content) ??
               "",
           ).trim();
           if (taskId && page.id) pageIdByTaskId.set(taskId, String(page.id));
@@ -1368,7 +2261,9 @@ serve(async (req: Request) => {
         if (taskIds.length > 0) {
           const { data: tasks, error: tasksErr } = await admin
             .from("wbs_tasks")
-            .select("id, title, instance, status, progress, end_date, updated_at")
+            .select(
+              "id, title, instance, status, progress, end_date, updated_at",
+            )
             .in("id", taskIds);
           if (tasksErr) {
             return json({
@@ -1385,39 +2280,53 @@ serve(async (req: Request) => {
         let missing = 0;
         let failed = 0;
         const errors: string[] = [];
-        const delayMs = Math.min(Math.max(Number(body.delay_ms ?? 900), 500), 2500);
+        const delayMs = Math.min(
+          Math.max(Number(body.delay_ms ?? 900), 500),
+          2500,
+        );
 
         for (const [taskId, pageId] of pageIdByTaskId.entries()) {
           const task = tasksById.get(taskId);
           if (!task) missing++;
           const properties: Record<string, unknown> = {
-            instance: { select: { name: normalizeInstance(task?.instance ?? "codex") } },
+            instance: {
+              select: { name: normalizeInstance(task?.instance ?? "codex") },
+            },
           };
           if (task) {
             properties.task_title = {
               rich_text: [{ text: { content: String(task.title ?? "") } }],
             };
-            properties.status = { select: { name: normalizeStatus(task.status) } };
+            properties.status = {
+              select: { name: normalizeStatus(task.status) },
+            };
             properties.progress = { number: Number(task.progress ?? 0) };
             if (task.end_date) {
               properties.deadline = { date: { start: String(task.end_date) } };
             }
             if (task.updated_at) {
-              properties.updated_at = { date: { start: String(task.updated_at) } };
+              properties.updated_at = {
+                date: { start: String(task.updated_at) },
+              };
             }
           }
 
-          const patchResp = await fetch(`https://api.notion.com/v1/pages/${pageId}`, {
-            method: "PATCH",
-            headers: notionHeaders,
-            body: JSON.stringify({ properties }),
-          });
+          const patchResp = await fetch(
+            `https://api.notion.com/v1/pages/${pageId}`,
+            {
+              method: "PATCH",
+              headers: notionHeaders,
+              body: JSON.stringify({ properties }),
+            },
+          );
           if (patchResp.ok) {
             updated++;
           } else {
             failed++;
             const text = await patchResp.text().catch(() => "");
-            errors.push(`patch ${taskId}: HTTP ${patchResp.status} ${text.slice(0, 180)}`);
+            errors.push(
+              `patch ${taskId}: HTTP ${patchResp.status} ${text.slice(0, 180)}`,
+            );
           }
           await new Promise((r) => setTimeout(r, delayMs));
         }

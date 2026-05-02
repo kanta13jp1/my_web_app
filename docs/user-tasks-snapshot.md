@@ -1,6 +1,6 @@
 # 自分株式会社 — User Tasks Snapshot
 
-_Generated: 2026/5/1 (JST)_
+_Generated: 2026/5/2 (JST)_
 _Active user tasks: 47_
 
 ## 概要
@@ -11,21 +11,6 @@ NotebookLM に source として追加し、「具体的手順」「詰まりポ�
 カテゴリ別の手動タスクが含まれます: 法人登記 / 商標 / Notion 設定 / Slack Webhook / 監査法人選定 / 上場審査 等。
 
 ## タスク一覧
-
-### 🟡 🔧 [Issue #846] [追加要望] AI役員ツール実行の権限スコープと承認ゲート
-
-- **id**: `ec630420-e8fd-40f1-9c66-3dd4c8c6e746`
-- **category**: GitHub Issue / Feature Request
-- **progress**: 10%
-- **status**: in_progress
-- **priority**: medium
-- **deadline**: 2026-04-30
-
-**説明**:
-
-GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/846 / Author: kanta13jp1 / Labels: enhancement, 追加要望 / GitHub updated: 2026-04-30T18:20:49Z
-
----
 
 ### 🟡 🔧 [Issue #845] [追加要望] AI役員向けMCP外部ツール連携のOAuth/DCR認証ハブ
 
@@ -40,7 +25,22 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/846 / Author: kant
 
 GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/845 / Author: kanta13jp1 / Labels: enhancement, 追加要望 / GitHub updated: 2026-04-27T16:10:50Z
 
-[Win132 part 103] Cross-instance handoff created in docs/cross-instance-prs/20260430_top10_expired_tasks_batch_handoff.md. Codex #2 owns MCP_AUTH follow-up planning.
+---
+
+### 🟡 🔧 [Issue #846] [追加要望] AI役員ツール実行の権限スコープと承認ゲート
+
+- **id**: `ec630420-e8fd-40f1-9c66-3dd4c8c6e746`
+- **category**: GitHub Issue / Feature Request
+- **progress**: 35%
+- **status**: in_progress
+- **priority**: medium
+- **deadline**: 2026-04-30
+
+**説明**:
+
+GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/846 / Author: kanta13jp1 / Labels: enhancement, 追加要望 / GitHub updated: 2026-04-30T18:20:49Z
+
+[Codex #4 2026-05-01] Issue #846 advanced: ai-hub now exposes agent.tool_policy.evaluate and agent.run fail-closes before queueing when requested scopes are missing or high-risk scopes lack CEO approval. agent_tool_execution_logs gained explicit scope / approval audit columns.
 
 ---
 
@@ -59,21 +59,6 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/1194 / Author: kan
 
 ---
 
-### 🟡 ⏳ [Issue #1321] [追加要望] Building Notion-Style Comments with Flutter and Supabase 由来の実行チェックリスト生成
-
-- **id**: `43ad8384-7e02-494f-a30e-e8a8afd2b35f`
-- **category**: GitHub Issue / Feature Request
-- **progress**: 0%
-- **status**: pending
-- **priority**: medium
-- **deadline**: 2026-05-03
-
-**説明**:
-
-GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/1321 / Author: kanta13jp1 / Labels: enhancement, 追加要望 / GitHub updated: 2026-04-29T17:45:24Z
-
----
-
 ### 🟡 ⏳ [Issue #1276] [追加要望] Notion MCP連携によるAIアシスタントへの社内ナレッジ統合
 
 - **id**: `dad4dfdf-ce77-476f-b9a5-bad5bce66bb7`
@@ -86,6 +71,21 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/1321 / Author: kan
 **説明**:
 
 GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/1276 / Author: kanta13jp1 / Labels: enhancement, 追加要望 / GitHub updated: 2026-04-30T00:00:47Z
+
+---
+
+### 🟡 ⏳ [Issue #1299] [追加要望] Notion WBS Tasks DBとの自動同期機能の実装
+
+- **id**: `77cc5829-947f-4e40-95b5-3a3a60096827`
+- **category**: GitHub Issue / Feature Request
+- **progress**: 0%
+- **status**: pending
+- **priority**: medium
+- **deadline**: 2026-05-03
+
+**説明**:
+
+GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/1299 / Author: kanta13jp1 / Labels: enhancement, 追加要望 / GitHub updated: 2026-04-30T00:05:55Z
 
 ---
 
@@ -344,21 +344,6 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/1185 / Author: kan
 
 ---
 
-### 🟡 ⏳ [Issue #1299] [追加要望] Notion WBS Tasks DBとの自動同期機能の実装
-
-- **id**: `77cc5829-947f-4e40-95b5-3a3a60096827`
-- **category**: GitHub Issue / Feature Request
-- **progress**: 0%
-- **status**: pending
-- **priority**: medium
-- **deadline**: 2026-05-03
-
-**説明**:
-
-GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/1299 / Author: kanta13jp1 / Labels: enhancement, 追加要望 / GitHub updated: 2026-04-30T00:05:55Z
-
----
-
 ### 🟡 ⏳ [Issue #1330] [追加要望] サイト上の運営者名とPaddle登録アカウントの完全一致
 
 - **id**: `b6558116-cc08-4df2-9c22-e92362f15619`
@@ -431,6 +416,21 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/1300 / Author: kan
 **説明**:
 
 GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/1382 / Author: kanta13jp1 / Labels: enhancement, 追加要望 / GitHub updated: 2026-04-30T00:31:16Z
+
+---
+
+### 🟡 ⏳ [Issue #1321] [追加要望] Building Notion-Style Comments with Flutter and Supabase 由来の実行チェックリスト生成
+
+- **id**: `43ad8384-7e02-494f-a30e-e8a8afd2b35f`
+- **category**: GitHub Issue / Feature Request
+- **progress**: 0%
+- **status**: pending
+- **priority**: medium
+- **deadline**: 2026-05-03
+
+**説明**:
+
+GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/1321 / Author: kanta13jp1 / Labels: enhancement, 追加要望 / GitHub updated: 2026-04-29T17:45:24Z
 
 ---
 
@@ -509,7 +509,7 @@ freee / MoneyForward Cloud 比較 → 契約
 
 - **id**: `1d85c5a8-ef13-45a5-b6d7-cd62e1ffc23c`
 - **category**: GitHub Issue
-- **progress**: 10%
+- **progress**: 99%
 - **status**: in_progress
 - **priority**: low
 - **deadline**: 2026-05-02
@@ -520,13 +520,15 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/1036 / Author: kan
 
 [Win132 part 103] Cross-instance handoff created in docs/cross-instance-prs/20260430_top10_expired_tasks_batch_handoff.md. Codex #2 owns MCP_AUTH follow-up planning.
 
+[Codex #5 / 2026-05-02] Implemented schedule-hub notion.sync_roadmap and notion.sync_memory_index, and wired .github/workflows/notion-sync.yml to call WBS + ROADMAP + memory mirror syncs.
+
 ---
 
 ### 🟢 🔧 [Issue #1037] [Backlog] N4 schedule-hub:notion.sync_memory_index action
 
 - **id**: `fe0df234-1fc0-49b2-b10b-2122c0de9cf5`
 - **category**: GitHub Issue
-- **progress**: 10%
+- **progress**: 99%
 - **status**: in_progress
 - **priority**: low
 - **deadline**: 2026-05-02
@@ -534,8 +536,6 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/1036 / Author: kan
 **説明**:
 
 GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/1037 / Author: kanta13jp1 / Labels: automation / GitHub updated: 2026-04-29T07:03:30Z
-
-[Win132 part 103] Cross-instance handoff created in docs/cross-instance-prs/20260430_top10_expired_tasks_batch_handoff.md. Codex #2 owns MCP_AUTH follow-up planning.
 
 ---
 
