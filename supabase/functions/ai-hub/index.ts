@@ -23,6 +23,7 @@ import {
   checkBudget,
   recordSpend,
 } from "../_shared/task_budget.ts";
+import { buildOfflineBlockedPayload } from "../_shared/offline_secure_mode.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -51,6 +52,15 @@ function json(data: unknown, status = 200): Response {
     status,
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
+}
+
+function offlineSecureModeResponse(
+  action: string,
+  provider?: string | null,
+  model?: string | null,
+): Response | null {
+  const payload = buildOfflineBlockedPayload(action, { provider, model });
+  return payload ? json(payload, 503) : null;
 }
 
 // AI大学プロバイダー統一呼び出し設定 (Phase 2)
@@ -519,11 +529,24 @@ async function callSingleProvider(
     text?: string;
     modelUsed?: string;
     error?: string;
+    offlineBlocked?: boolean;
     isRetriable: boolean;
   }
 > {
   const cfg = PROVIDER_CONFIGS[providerId];
   if (!cfg) return { ok: false, error: "unknown provider", isRetriable: false };
+  const offlinePayload = buildOfflineBlockedPayload("provider.call", {
+    provider: providerId,
+    model: model ?? cfg.defaultModel,
+  });
+  if (offlinePayload) {
+    return {
+      ok: false,
+      error: "offlineSecureModeBlocked",
+      offlineBlocked: true,
+      isRetriable: false,
+    };
+  }
   const apiKey = Deno.env.get(cfg.envKey) ?? "";
   if (!apiKey) {
     return { ok: false, error: "apiKeyRequired", isRetriable: false };
@@ -2438,6 +2461,13 @@ async function embedTextsWithGemini(
   apiKey: string,
 ): Promise<number[][]> {
   if (texts.length === 0) return [];
+  const offlinePayload = buildOfflineBlockedPayload("gemini.embedding", {
+    provider: "google",
+    model: "gemini-embedding-001",
+  });
+  if (offlinePayload) {
+    throw new Error("offlineSecureModeBlocked");
+  }
   const response = await fetch(
     "https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-001:batchEmbedContents",
     {
@@ -2616,6 +2646,13 @@ async function callGemini(
   apiKey: string,
   image?: InlineImage,
 ): Promise<string> {
+  const offlinePayload = buildOfflineBlockedPayload("gemini.generateContent", {
+    provider: "google",
+    model: "gemini-2.5-flash",
+  });
+  if (offlinePayload) {
+    throw new Error("offlineSecureModeBlocked");
+  }
   const parts: Record<string, unknown>[] = [{ text: prompt }];
   if (image) {
     parts.push({
@@ -2654,6 +2691,12 @@ async function callManusTask(
   apiKey: string,
   image?: InlineImage,
 ): Promise<ManusTaskResult> {
+  const offlinePayload = buildOfflineBlockedPayload("manus.task.create", {
+    provider: "manus",
+  });
+  if (offlinePayload) {
+    throw new Error("offlineSecureModeBlocked");
+  }
   const baseUrl = (Deno.env.get("MANUS_API_BASE_URL") ??
     "https://api.manus.ai/v2").replace(/\/+$/, "");
   const manusPrompt = image
@@ -2796,6 +2839,12 @@ serve(async (req: Request) => {
       }
 
       case "judgment.get.legacy": {
+        const offlineResponse = offlineSecureModeResponse(
+          "judgment.get.legacy",
+          "google",
+          "gemini-2.5-flash",
+        );
+        if (offlineResponse) return offlineResponse;
         const geminiKey = Deno.env.get("GEMINI_API_KEY") ?? "";
         if (!geminiKey) {
           return json({ error: "GEMINI_API_KEY not configured" }, 503);
@@ -2831,6 +2880,10 @@ serve(async (req: Request) => {
         }
 
         const geminiKey = Deno.env.get("GEMINI_API_KEY") ?? "";
+        const offlineEmbeddingBlocked = buildOfflineBlockedPayload(
+          "search.query.embedding",
+          { provider: "google", model: "gemini-embedding-001" },
+        );
 
         try {
           await syncNoteSearchIndex(admin, userId);
@@ -2841,7 +2894,7 @@ serve(async (req: Request) => {
         let queryEmbedding: number[] | null = null;
         let searchMode = "text_fallback";
 
-        if (geminiKey) {
+        if (geminiKey && !offlineEmbeddingBlocked) {
           try {
             await embedPendingNoteSearchRows(admin, userId, geminiKey);
             const embeddings = await embedTextsWithGemini(
@@ -2900,10 +2953,18 @@ serve(async (req: Request) => {
           totalResults: results.length,
           searchMode,
           explanation,
+          offline_blocked: Boolean(offlineEmbeddingBlocked),
+          offline_blocked_action: offlineEmbeddingBlocked?.action ?? null,
         });
       }
 
       case "tags.suggest": {
+        const offlineResponse = offlineSecureModeResponse(
+          "tags.suggest",
+          "google",
+          "gemini-2.5-flash",
+        );
+        if (offlineResponse) return offlineResponse;
         const geminiKey = Deno.env.get("GEMINI_API_KEY") ?? "";
         if (!geminiKey) {
           return json({ error: "GEMINI_API_KEY not configured" }, 503);
@@ -2920,6 +2981,12 @@ serve(async (req: Request) => {
       }
 
       case "secretary.task": {
+        const offlineResponse = offlineSecureModeResponse(
+          "secretary.task",
+          "google",
+          "gemini-2.5-flash",
+        );
+        if (offlineResponse) return offlineResponse;
         const geminiKey = Deno.env.get("GEMINI_API_KEY") ?? "";
         if (!geminiKey) {
           return json({ error: "GEMINI_API_KEY not configured" }, 503);
@@ -2944,6 +3011,12 @@ serve(async (req: Request) => {
       }
 
       case "summarize.text": {
+        const offlineResponse = offlineSecureModeResponse(
+          "summarize.text",
+          null,
+          null,
+        );
+        if (offlineResponse) return offlineResponse;
         const geminiKey = Deno.env.get("GEMINI_API_KEY") ?? "";
         const openaiKey = Deno.env.get("OPENAI_API_KEY") ?? "";
         const text = String(body.text ?? "");
@@ -3062,6 +3135,12 @@ serve(async (req: Request) => {
         const responseMode = asString(body.response_mode) || "text";
         const requestedProvider = asString(body.provider) ||
           asString(body.ai_provider) || "gemini";
+        const offlineResponse = offlineSecureModeResponse(
+          "my_agent.chat",
+          requestedProvider,
+          null,
+        );
+        if (offlineResponse) return offlineResponse;
         const agentProvider = requestedProvider === "manus"
           ? "manus"
           : "gemini";
@@ -3187,6 +3266,12 @@ serve(async (req: Request) => {
         if (existing.length > 0) {
           return json({ success: true, challenges: existing });
         }
+        const offlineResponse = offlineSecureModeResponse(
+          "challenges.list",
+          "google",
+          "gemini-2.5-flash",
+        );
+        if (offlineResponse) return offlineResponse;
         const geminiKey = Deno.env.get("GEMINI_API_KEY") ?? "";
         if (!geminiKey) return json({ success: true, challenges: [] });
         const prompt =
@@ -3207,6 +3292,12 @@ serve(async (req: Request) => {
       }
 
       case "trigger.analyze": {
+        const offlineResponse = offlineSecureModeResponse(
+          "trigger.analyze",
+          "google",
+          "gemini-2.5-flash",
+        );
+        if (offlineResponse) return offlineResponse;
         const geminiKey = Deno.env.get("GEMINI_API_KEY") ?? "";
         if (!geminiKey) {
           return json({ error: "GEMINI_API_KEY not configured" }, 503);
@@ -3226,6 +3317,12 @@ serve(async (req: Request) => {
       }
 
       case "analyze.reality": {
+        const offlineResponse = offlineSecureModeResponse(
+          "analyze.reality",
+          "google",
+          "gemini-2.5-flash",
+        );
+        if (offlineResponse) return offlineResponse;
         const geminiKey = Deno.env.get("GEMINI_API_KEY") ?? "";
         if (!geminiKey) {
           return json({ error: "GEMINI_API_KEY not configured" }, 503);
@@ -3731,6 +3828,12 @@ serve(async (req: Request) => {
       // ── AI大学 v2: Memory Agent ──────────────────────────────────────────
       case "learner.update_profile": {
         if (!userId) return json({ error: "Unauthorized" }, 401);
+        const offlineResponse = offlineSecureModeResponse(
+          "learner.update_profile",
+          "anthropic",
+          "claude-opus-4-7",
+        );
+        if (offlineResponse) return offlineResponse;
         const sessionSummary = String(body.session_summary ?? "");
         const scores = body.scores ?? [];
         const claudeKey = Deno.env.get("ANTHROPIC_API_KEY") ?? "";
@@ -3791,6 +3894,12 @@ serve(async (req: Request) => {
       // ── AI大学 v2: Hybrid LLM ────────────────────────────────────────────
       case "quiz.evaluate": {
         if (!userId) return json({ error: "Unauthorized" }, 401);
+        const offlineResponse = offlineSecureModeResponse(
+          "quiz.evaluate",
+          "groq",
+          "llama-3.3-70b-versatile",
+        );
+        if (offlineResponse) return offlineResponse;
         const question = String(body.question ?? "");
         const userAnswer = String(body.user_answer ?? "");
         const correctAnswer = String(body.correct_answer ?? "");
@@ -3845,6 +3954,12 @@ serve(async (req: Request) => {
 
       case "quiz.explain": {
         if (!userId) return json({ error: "Unauthorized" }, 401);
+        const offlineResponse = offlineSecureModeResponse(
+          "quiz.explain",
+          "anthropic",
+          "claude-opus-4-7",
+        );
+        if (offlineResponse) return offlineResponse;
         const question = String(body.question ?? "");
         const userAnswer = String(body.user_answer ?? "");
         const correctAnswer = String(body.correct_answer ?? "");
@@ -3906,6 +4021,13 @@ serve(async (req: Request) => {
             message: `Provider "${providerId}" はまだ実装されていません。`,
           }, 400);
         }
+        const requestedModel = String(body.model ?? cfg.defaultModel);
+        const offlineResponse = offlineSecureModeResponse(
+          "provider.chat",
+          providerId,
+          requestedModel,
+        );
+        if (offlineResponse) return offlineResponse;
         const apiKey = Deno.env.get(cfg.envKey) ?? "";
         if (!apiKey) {
           return json({
@@ -3941,7 +4063,7 @@ serve(async (req: Request) => {
             body: JSON.stringify(
               cfg.buildBody(
                 finalMessages,
-                String(body.model ?? cfg.defaultModel),
+                requestedModel,
               ),
             ),
           });
@@ -4013,6 +4135,12 @@ serve(async (req: Request) => {
             exceeded_scope_id: budget.exceeded_scope_id,
           }, 429);
         }
+        const offlineResponse = offlineSecureModeResponse(
+          "provider.chat_auto",
+          null,
+          asString(body.model) || null,
+        );
+        if (offlineResponse) return offlineResponse;
 
         const requestedTier = body.tier as Tier | undefined;
         const messages = Array.isArray(body.messages) ? body.messages : null;
@@ -4144,6 +4272,13 @@ serve(async (req: Request) => {
 
         const requestedTier = body.tier as Tier | undefined;
         const providerId = asString(body.provider) || undefined;
+        const explicitModel = asString(body.model) || undefined;
+        const offlineResponse = offlineSecureModeResponse(
+          "edge_llm.invoke",
+          providerId ?? null,
+          explicitModel ?? null,
+        );
+        if (offlineResponse) return offlineResponse;
         const systemPrompt = asString(body.system_prompt);
         const userPrompt = asString(body.user_prompt) ||
           asString(body.prompt) ||
@@ -4196,7 +4331,6 @@ serve(async (req: Request) => {
         const sessionId = body.session_id != null
           ? String(body.session_id)
           : null;
-        const explicitModel = asString(body.model) || undefined;
 
         let resultText: string | undefined;
         let usedProvider: string | undefined;
@@ -4623,6 +4757,12 @@ serve(async (req: Request) => {
 
       // ---- Election analysis (Gemini direct, JSON mode) ----
       case "election.analyze": {
+        const offlineResponse = offlineSecureModeResponse(
+          "election.analyze",
+          "google",
+          "gemini-2.5-flash",
+        );
+        if (offlineResponse) return offlineResponse;
         const geminiApiKey = Deno.env.get("GEMINI_API_KEY") ?? "";
         if (!geminiApiKey) {
           return json({ success: false, error: "GEMINI_API_KEY not set" }, 500);
