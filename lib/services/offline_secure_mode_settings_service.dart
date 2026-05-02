@@ -77,6 +77,16 @@ class OfflineSecureModeSettingsService {
 
   const OfflineSecureModeSettingsService();
 
+  Future<OfflineSecureModeSettings> loadSettingsOrDefaults({
+    SharedPreferences? prefs,
+  }) async {
+    try {
+      return await loadSettings(prefs: prefs);
+    } catch (_) {
+      return const OfflineSecureModeSettings();
+    }
+  }
+
   Future<OfflineSecureModeSettings> loadSettings({
     SharedPreferences? prefs,
   }) async {

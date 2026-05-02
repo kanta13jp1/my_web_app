@@ -302,7 +302,7 @@ class AIService {
         action != 'edge_llm.invoke') {
       return body;
     }
-    final settings = await _offlineSettingsService.loadSettings();
+    final settings = await _offlineSettingsService.loadSettingsOrDefaults();
     return <String, dynamic>{
       ...body,
       ...settings.toAiHubPolicyPayload(),

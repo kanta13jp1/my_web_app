@@ -165,7 +165,7 @@ class EdgeLlmPlaygroundService {
   Future<Map<String, dynamic>> _withOfflinePolicy(
     Map<String, dynamic> body,
   ) async {
-    final settings = await _offlineSettingsService.loadSettings();
+    final settings = await _offlineSettingsService.loadSettingsOrDefaults();
     return <String, dynamic>{
       ...body,
       ...settings.toAiHubPolicyPayload(),
