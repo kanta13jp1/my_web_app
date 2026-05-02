@@ -1,6 +1,6 @@
 # NotebookLM Intake Gate Report
 
-- Checked at: `2026-05-02T19:38:00Z`
+- Checked at: `2026-05-02T21:11:58Z`
 - Notebook count: `94`
 - Harness found: `True`
 - Routed to existing issues: `90`
@@ -13,18 +13,18 @@
 - NotebookLM informs routing; repo checks, official sources, CI, and Issues/WBS prove the result.
 
 ## Routed Existing Issues
-- `17cd45cd` Competitive Intelligence Report: 2026 AI Infrastructure and Marketplace Trends -> #1660 / competitive-intel
-- `d83954af` Competitor Discovery Report: April 2026 Status Update -> #1660 / competitive-intel
-- `c60da02b` Strategic Intelligence Scoreboard: May 2026 Competitive Analysis Summary -> #1660 / competitive-intel
-- `0829f536` Google I/O 2026: Strategic Defense and Competitive Analysis Briefing -> #1660 / competitive-intel
-- `fdea9e6d` Cursor Product Updates and Agent Innovation Changelog -> #1628 / developer-tool-watch
-- `f985728b` Devin Documentation Release Notes 2026 -> #1628 / developer-tool-watch
-- `1aced136` Claude Code Masterclass: From Foundations to Agentic Workflows -> #1638 / ai-dev-workflow
-- `9b8885ef` Automating SaaS Operations with Claude Code Schedule -> #1638 / ai-dev-workflow
-- `1b808a60` Streamlining MCP Authentication with WorkOS AuthKit -> #1628 / integration-reliability
-- `47bd101a` Managing Notion Database IDs and API Page Properties -> #1628 / integration-reliability
-- `ed1aac00` Mastering Claude: A Guide to Intelligent Collaboration -> #1638 / unclassified
 - `72d24a65` Gemini Code Assist Release Notes -> #1628 / developer-tool-watch
+- `ed1aac00` Mastering Claude: A Guide to Intelligent Collaboration -> #1638 / unclassified
+- `47bd101a` Managing Notion Database IDs and API Page Properties -> #1628 / integration-reliability
+- `1b808a60` Streamlining MCP Authentication with WorkOS AuthKit -> #1628 / integration-reliability
+- `9b8885ef` Automating SaaS Operations with Claude Code Schedule -> #1638 / ai-dev-workflow
+- `1aced136` Claude Code Masterclass: From Foundations to Agentic Workflows -> #1638 / ai-dev-workflow
+- `f985728b` Devin Documentation Release Notes 2026 -> #1628 / developer-tool-watch
+- `fdea9e6d` Cursor Product Updates and Agent Innovation Changelog -> #1628 / developer-tool-watch
+- `0829f536` Google I/O 2026: Strategic Defense and Competitive Analysis Briefing -> #1660 / competitive-intel
+- `c60da02b` Strategic Intelligence Scoreboard: May 2026 Competitive Analysis Summary -> #1660 / competitive-intel
+- `d83954af` Competitor Discovery Report: April 2026 Status Update -> #1660 / competitive-intel
+- `17cd45cd` Competitive Intelligence Report: 2026 AI Infrastructure and Marketplace Trends -> #1660 / competitive-intel
 - `239c758b` Gemini Code Assist Release Notes -> #1628 / developer-tool-watch
 - `d89ae1f5` Building Long-Term Memory for Claude Code: claude-mem vs. DIY Hooks -> #1638 / ai-dev-workflow
 - `b74e9ada` Code with Claude 開会の基調講演 -> #1638 / unclassified
@@ -65,19 +65,19 @@
 ## Normalized Notebook Snapshot
 | id | title | sources | created_at | updated_at | disposition |
 | --- | --- | ---: | --- | --- | --- |
-| `bc58b50b` | Codex vs Claude Code: The Ultimate AI Development Synergy | 11 | 2026-05-03T04:38:05 |  | priority_reference |
+| `72d24a65` | Gemini Code Assist Release Notes | 1 | 2026-05-03T06:12:05 |  | route_existing_issue |
+| `ed1aac00` | Mastering Claude: A Guide to Intelligent Collaboration | 2 | 2026-05-03T06:12:07 |  | route_existing_issue |
+| `47bd101a` | Managing Notion Database IDs and API Page Properties | 11 | 2026-05-03T06:12:10 |  | route_existing_issue |
+| `1b808a60` | Streamlining MCP Authentication with WorkOS AuthKit | 11 | 2026-05-03T06:12:13 |  | route_existing_issue |
+| `9b8885ef` | Automating SaaS Operations with Claude Code Schedule | 1 | 2026-05-03T06:12:15 |  | route_existing_issue |
+| `1aced136` | Claude Code Masterclass: From Foundations to Agentic Workflows | 15 | 2026-05-03T06:12:17 |  | route_existing_issue |
+| `f985728b` | Devin Documentation Release Notes 2026 | 11 | 2026-05-03T06:12:20 |  | route_existing_issue |
+| `fdea9e6d` | Cursor Product Updates and Agent Innovation Changelog | 11 | 2026-05-03T06:12:22 |  | route_existing_issue |
+| `0829f536` | Google I/O 2026: Strategic Defense and Competitive Analysis Briefing | 10 | 2026-05-03T06:12:25 |  | route_existing_issue |
+| `c60da02b` | Strategic Intelligence Scoreboard: May 2026 Competitive Analysis Summary | 11 | 2026-05-03T06:12:27 |  | route_existing_issue |
+| `d83954af` | Competitor Discovery Report: April 2026 Status Update | 11 | 2026-05-03T06:12:30 |  | route_existing_issue |
+| `bc58b50b` | Codex vs Claude Code: The Ultimate AI Development Synergy | 11 | 2026-05-03T06:12:02 |  | priority_reference |
 | `17cd45cd` | Competitive Intelligence Report: 2026 AI Infrastructure and Marketplace Trends |  | 2026-05-03T04:14:54 |  | route_existing_issue |
-| `d83954af` | Competitor Discovery Report: April 2026 Status Update | 11 | 2026-05-03T04:38:07 |  | route_existing_issue |
-| `c60da02b` | Strategic Intelligence Scoreboard: May 2026 Competitive Analysis Summary | 11 | 2026-05-03T04:38:10 |  | route_existing_issue |
-| `0829f536` | Google I/O 2026: Strategic Defense and Competitive Analysis Briefing | 10 | 2026-05-03T04:38:12 |  | route_existing_issue |
-| `fdea9e6d` | Cursor Product Updates and Agent Innovation Changelog | 11 | 2026-05-03T04:38:15 |  | route_existing_issue |
-| `f985728b` | Devin Documentation Release Notes 2026 | 11 | 2026-05-03T04:38:17 |  | route_existing_issue |
-| `1aced136` | Claude Code Masterclass: From Foundations to Agentic Workflows | 15 | 2026-05-03T04:38:20 |  | route_existing_issue |
-| `9b8885ef` | Automating SaaS Operations with Claude Code Schedule | 1 | 2026-05-03T04:38:22 |  | route_existing_issue |
-| `1b808a60` | Streamlining MCP Authentication with WorkOS AuthKit | 11 | 2026-05-03T04:38:25 |  | route_existing_issue |
-| `47bd101a` | Managing Notion Database IDs and API Page Properties | 11 | 2026-05-03T04:38:27 |  | route_existing_issue |
-| `ed1aac00` | Mastering Claude: A Guide to Intelligent Collaboration | 2 | 2026-05-03T04:38:30 |  | route_existing_issue |
-| `72d24a65` | Gemini Code Assist Release Notes | 1 | 2026-05-03T04:38:32 |  | route_existing_issue |
 | `239c758b` | Gemini Code Assist Release Notes |  | 2026-05-03T03:08:25 |  | route_existing_issue |
 | `d89ae1f5` | Building Long-Term Memory for Claude Code: claude-mem vs. DIY Hooks |  | 2026-05-03T03:08:22 |  | route_existing_issue |
 | `b74e9ada` | Code with Claude 開会の基調講演 |  | 2026-05-03T03:08:20 |  | route_existing_issue |
