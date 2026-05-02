@@ -1,0 +1,40 @@
+commit-msg:
+  jobs:
+    - name: no-verify-policy
+      script: run_quality_gate.py
+      runner: python
+      args: commit-msg {1}
+
+pre-commit:
+  parallel: true
+  jobs:
+    - name: migration-collisions
+      script: run_quality_gate.py
+      runner: python
+      args: migration-collisions
+      glob: "supabase/migrations/*.sql"
+    - name: edge-imports
+      script: run_quality_gate.py
+      runner: python
+      args: edge-imports
+      glob: "supabase/functions/**/*.{ts,json,jsonc}"
+    - name: no-verify-policy
+      script: run_quality_gate.py
+      runner: python
+      args: no-verify-local
+
+pre-push:
+  parallel: false
+  jobs:
+    - name: flutter-analyze
+      script: run_quality_gate.py
+      runner: python
+      args: flutter-analyze
+    - name: edge-lint
+      script: run_quality_gate.py
+      runner: python
+      args: edge-lint
+    - name: migration-time-relative
+      script: run_quality_gate.py
+      runner: python
+      args: migration-time-relative

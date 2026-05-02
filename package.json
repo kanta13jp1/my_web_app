@@ -1,10 +1,15 @@
 {
+  "name": "my_web_app",
   "private": true,
   "scripts": {
     "e2e": "playwright test",
-    "e2e:smoke": "playwright test test/e2e/public_smoke.spec.ts"
+    "e2e:smoke": "playwright test test/e2e/public_smoke.spec.ts",
+    "hooks:install": "lefthook install",
+    "hooks:pre-commit": "lefthook run pre-commit --all-files",
+    "hooks:pre-push": "lefthook run pre-push"
   },
   "devDependencies": {
-    "@playwright/test": "^1.59.1"
+    "@playwright/test": "^1.59.1",
+    "lefthook": "^2.1.6"
   }
 }

@@ -1,0 +1,70 @@
+name: Lefthook Quality Gate
+
+on:
+  pull_request:
+    branches:
+      - main
+      - staging
+      - develop
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: lefthook-quality-gate-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  replay-local-gates:
+    name: Replay local quality gates
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.38.x"
+          channel: stable
+          cache: true
+
+      - name: Setup Deno
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      - name: Install Node dependencies
+        run: npm ci
+
+      - name: Install Flutter dependencies
+        run: flutter pub get
+
+      - name: Check hook-bypass markers
+        run: python scripts/check_no_verify_policy.py --event-path "$GITHUB_EVENT_PATH"
+
+      - name: Replay pre-commit hooks
+        run: npx lefthook run pre-commit --all-files
+
+      - name: Replay pre-push hooks
+        run: npx lefthook run pre-push
