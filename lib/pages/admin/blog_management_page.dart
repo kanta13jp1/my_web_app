@@ -20,10 +20,15 @@ class _BlogManagementPageState extends State<BlogManagementPage>
   List<Map<String, dynamic>> _drafts = [];
   bool _isLoading = true;
   bool _isSyncing = false;
+  String? _loadError;
   final Set<String> _publishingIds = {};
   final Set<String> _togglingIds = {};
+  final Set<String> _replyingIds = {};
   String _tab = 'articles'; // 'articles' | 'comments' | 'drafts'
   String _platformFilter = 'all'; // 'all' | 'qiita' | 'devto'
+  String _draftSearch = '';
+  String _draftStatusFilter = 'all'; // 'all' | 'draft' | 'ready'
+  final _draftSearchCtrl = TextEditingController();
 
   static const _bg = Color(0xFF0A0A0A);
   static const _card = Color(0xFF1A1A2E);
@@ -37,8 +42,17 @@ class _BlogManagementPageState extends State<BlogManagementPage>
     _loadData();
   }
 
+  @override
+  void dispose() {
+    _draftSearchCtrl.dispose();
+    super.dispose();
+  }
+
   Future<void> _loadData() async {
-    setState(() => _isLoading = true);
+    setState(() {
+      _isLoading = true;
+      _loadError = null;
+    });
     try {
       final results = await Future.wait([
         _supabase
@@ -53,10 +67,12 @@ class _BlogManagementPageState extends State<BlogManagementPage>
             .limit(300),
         _supabase
             .from('blog_posts')
-            .select('id, title, status, target_platforms, draft_path, posted_at, url, created_at')
+            .select(
+              'id, title, status, target_platforms, draft_path, posted_at, url, created_at, content',
+            )
             .inFilter('status', ['draft', 'ready'])
             .order('created_at', ascending: false)
-            .limit(50),
+            .limit(100),
       ]);
 
       if (mounted) {
@@ -67,7 +83,21 @@ class _BlogManagementPageState extends State<BlogManagementPage>
         });
       }
     } catch (e) {
-      debugPrint('blog management load error: $e');
+      if (mounted) {
+        setState(() => _loadError = e.toString());
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('❌ 読み込み失敗: $e'),
+            backgroundColor: _red,
+            duration: const Duration(seconds: 5),
+            action: SnackBarAction(
+              label: '再試行',
+              textColor: Colors.white,
+              onPressed: _loadData,
+            ),
+          ),
+        );
+      }
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -174,6 +204,427 @@ class _BlogManagementPageState extends State<BlogManagementPage>
     }
   }
 
+  Future<void> _editDraft(Map<String, dynamic> d) async {
+    final id = d['id']?.toString() ?? '';
+    if (id.isEmpty) return;
+    final titleCtrl = TextEditingController(text: d['title'] as String? ?? '');
+    final tagsCtrl = TextEditingController(
+      text: (d['tags'] is List)
+          ? (d['tags'] as List).join(', ')
+          : d['tags']?.toString() ?? '',
+    );
+    final contentCtrl =
+        TextEditingController(text: d['content'] as String? ?? '');
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: _card,
+        title: const Text(
+          '下書き編集',
+          style: TextStyle(color: Colors.white, height: 1.5),
+        ),
+        content: SizedBox(
+          width: 600,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: titleCtrl,
+                  style: const TextStyle(color: Colors.white, height: 1.5),
+                  decoration: _inputDeco('タイトル'),
+                ),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: tagsCtrl,
+                  style: const TextStyle(color: Colors.white, height: 1.5),
+                  decoration: _inputDeco('タグ (カンマ区切り、最大4個)'),
+                ),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: contentCtrl,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                    height: 1.5,
+                  ),
+                  decoration: _inputDeco('本文 (Markdown)'),
+                  maxLines: 20,
+                  maxLength: 100000,
+                ),
+              ],
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('キャンセル', style: TextStyle(color: Colors.white54)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: _orange),
+            onPressed: () => Navigator.pop(ctx, true),
+            child:
+                const Text('保存', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+    titleCtrl.dispose();
+    tagsCtrl.dispose();
+    contentCtrl.dispose();
+    if (ok != true || !mounted) return;
+
+    try {
+      final res = await _supabase.functions.invoke(
+        'schedule-hub',
+        body: {
+          'action': 'blog.update_post',
+          'id': id,
+          'title': titleCtrl.text.trim(),
+          'tags': tagsCtrl.text
+              .split(',')
+              .map((t) => t.trim())
+              .where((t) => t.isNotEmpty)
+              .take(4)
+              .toList(),
+          'content': contentCtrl.text,
+        },
+      );
+      if (!mounted) return;
+      final success = res.status == 200;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(success ? '✅ 保存完了' : '⚠️ 保存エラー (${res.status})'),
+        backgroundColor: success ? _green : _red,
+      ));
+      if (success) await _loadData();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('❌ 保存失敗: $e'),
+          backgroundColor: _red,
+        ));
+      }
+    }
+  }
+
+  Future<void> _deleteDraft(Map<String, dynamic> d) async {
+    final id = d['id']?.toString() ?? '';
+    if (id.isEmpty) return;
+    final title = d['title'] as String? ?? '(no title)';
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: _card,
+        title: const Text(
+          '削除確認',
+          style: TextStyle(color: Colors.white, height: 1.5),
+        ),
+        content: Text(
+          '「$title」を削除しますか？\nこの操作は取り消せません。',
+          style: const TextStyle(color: Colors.white70, height: 1.6),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child:
+                const Text('キャンセル', style: TextStyle(color: Colors.white54)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: _red),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('削除', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    try {
+      final res = await _supabase.functions.invoke(
+        'schedule-hub',
+        body: {'action': 'blog.delete_post', 'id': id},
+      );
+      if (!mounted) return;
+      final success = res.status == 200;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(success ? '🗑️ 削除しました' : '⚠️ 削除エラー (${res.status})'),
+        backgroundColor: success ? _green : _red,
+      ));
+      if (success) await _loadData();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('❌ 削除失敗: $e'),
+          backgroundColor: _red,
+        ));
+      }
+    }
+  }
+
+  Future<void> _createDraft() async {
+    final titleCtrl = TextEditingController();
+    final tagsCtrl = TextEditingController();
+    final contentCtrl = TextEditingController();
+    String selectedPlatform = 'qiita';
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx2, setSt) => AlertDialog(
+          backgroundColor: _card,
+          title: const Text(
+            '新規下書き作成',
+            style: TextStyle(color: Colors.white, height: 1.5),
+          ),
+          content: SizedBox(
+            width: 600,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: titleCtrl,
+                    style:
+                        const TextStyle(color: Colors.white, height: 1.5),
+                    decoration: _inputDeco('タイトル *'),
+                    autofocus: true,
+                  ),
+                  const SizedBox(height: 10),
+                  TextField(
+                    controller: tagsCtrl,
+                    style:
+                        const TextStyle(color: Colors.white, height: 1.5),
+                    decoration: _inputDeco('タグ (カンマ区切り、最大4個)'),
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      const Text(
+                        '投稿先: ',
+                        style:
+                            TextStyle(color: Colors.white54, height: 1.5),
+                      ),
+                      ...['qiita', 'devto', 'qiita,devto'].map(
+                        (p) => Padding(
+                          padding: const EdgeInsets.only(left: 8),
+                          child: ChoiceChip(
+                            label: Text(
+                              p,
+                              style: const TextStyle(height: 1.5),
+                            ),
+                            selected: selectedPlatform == p,
+                            onSelected: (_) =>
+                                setSt(() => selectedPlatform = p),
+                            selectedColor: _orange,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  TextField(
+                    controller: contentCtrl,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 12,
+                      height: 1.5,
+                    ),
+                    decoration: _inputDeco('本文 (Markdown) *'),
+                    maxLines: 15,
+                    maxLength: 100000,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx2, false),
+              child: const Text(
+                'キャンセル',
+                style: TextStyle(color: Colors.white54),
+              ),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: _orange),
+              onPressed: () {
+                if (titleCtrl.text.trim().isEmpty ||
+                    contentCtrl.text.trim().isEmpty) {
+                  ScaffoldMessenger.of(ctx2).showSnackBar(const SnackBar(
+                    content: Text('タイトルと本文は必須です'),
+                  ));
+                  return;
+                }
+                Navigator.pop(ctx2, true);
+              },
+              child:
+                  const Text('作成', style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        ),
+      ),
+    );
+    final title = titleCtrl.text.trim();
+    final content = contentCtrl.text;
+    final tags = tagsCtrl.text
+        .split(',')
+        .map((t) => t.trim())
+        .where((t) => t.isNotEmpty)
+        .take(4)
+        .toList();
+    titleCtrl.dispose();
+    tagsCtrl.dispose();
+    contentCtrl.dispose();
+    if (ok != true || !mounted) return;
+    try {
+      final res = await _supabase.functions.invoke(
+        'schedule-hub',
+        body: {
+          'action': 'blog.insert_post',
+          'title': title,
+          'content': content,
+          'tags': tags,
+          'target_platforms': selectedPlatform.split(','),
+          'status': 'draft',
+        },
+      );
+      if (!mounted) return;
+      final success = res.status == 200 || res.status == 201;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(success ? '✅ 下書き作成しました' : '⚠️ 作成エラー (${res.status})'),
+        backgroundColor: success ? _green : _red,
+      ));
+      if (success) {
+        setState(() => _tab = 'drafts');
+        await _loadData();
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('❌ 作成失敗: $e'),
+          backgroundColor: _red,
+        ));
+      }
+    }
+  }
+
+  Future<void> _replyToComment(Map<String, dynamic> c) async {
+    final commentId = c['comment_id']?.toString() ?? c['id']?.toString() ?? '';
+    final platform = c['platform'] as String? ?? '';
+    if (commentId.isEmpty || platform != 'qiita') return;
+    final id = c['id']?.toString() ?? '';
+    if (id.isEmpty || _replyingIds.contains(id)) return;
+    final bodyCtrl = TextEditingController();
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: _card,
+        title: Text(
+          '@${c['author']} へ返信',
+          style: const TextStyle(color: Colors.white, height: 1.5),
+        ),
+        content: SizedBox(
+          width: 500,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.white12,
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  c['body']?.toString() ?? '',
+                  style: const TextStyle(
+                    color: Colors.white54,
+                    fontSize: 11,
+                    height: 1.5,
+                  ),
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              const SizedBox(height: 10),
+              TextField(
+                controller: bodyCtrl,
+                style: const TextStyle(color: Colors.white, height: 1.5),
+                decoration: _inputDeco('返信内容'),
+                maxLines: 6,
+                autofocus: true,
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child:
+                const Text('キャンセル', style: TextStyle(color: Colors.white54)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: _orange),
+            onPressed: () {
+              if (bodyCtrl.text.trim().isEmpty) return;
+              Navigator.pop(ctx, true);
+            },
+            child:
+                const Text('送信', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+    final body = bodyCtrl.text.trim();
+    bodyCtrl.dispose();
+    if (ok != true || body.isEmpty || !mounted) return;
+    setState(() => _replyingIds.add(id));
+    try {
+      final res = await _supabase.functions.invoke(
+        'schedule-hub',
+        body: {
+          'action': 'blog.qiita_comment_post',
+          'comment_id': commentId,
+          'body': body,
+        },
+      );
+      if (!mounted) return;
+      final success = res.status == 200 || res.status == 201;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(success ? '✅ 返信しました' : '⚠️ 返信エラー (${res.status})'),
+        backgroundColor: success ? _green : _red,
+      ));
+      if (success) await _loadData();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('❌ 返信失敗: $e'),
+          backgroundColor: _red,
+        ));
+      }
+    } finally {
+      if (mounted) setState(() => _replyingIds.remove(id));
+    }
+  }
+
+  InputDecoration _inputDeco(String hint) => InputDecoration(
+        hintText: hint,
+        hintStyle: const TextStyle(color: Colors.white38, height: 1.5),
+        filled: true,
+        fillColor: Colors.white10,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: const BorderSide(color: Colors.white24),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: const BorderSide(color: Colors.white24),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: BorderSide(color: _orange),
+        ),
+        counterStyle: const TextStyle(color: Colors.white38),
+      );
+
   int get _unrepliedCount =>
       _comments.where((c) => c['replied'] != true).length;
 
@@ -224,6 +675,16 @@ class _BlogManagementPageState extends State<BlogManagementPage>
           ),
         ],
       ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _createDraft,
+        backgroundColor: _orange,
+        foregroundColor: Colors.white,
+        icon: const Icon(Icons.add),
+        label: const Text(
+          '新規下書き',
+          style: TextStyle(height: 1.5),
+        ),
+      ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator(color: _orange))
           : RefreshIndicator(
@@ -236,7 +697,7 @@ class _BlogManagementPageState extends State<BlogManagementPage>
                   if (_tab == 'articles') ..._buildArticleSliver(),
                   if (_tab == 'comments') ..._buildCommentSliver(),
                   if (_tab == 'drafts') ..._buildDraftSliver(),
-                  const SliverToBoxAdapter(child: SizedBox(height: 24)),
+                  const SliverToBoxAdapter(child: SizedBox(height: 80)),
                 ],
               ),
             ),
@@ -340,7 +801,7 @@ class _BlogManagementPageState extends State<BlogManagementPage>
                 'コメント${_unrepliedCount > 0 ? ' ($_unrepliedCount)' : ''}',
               ),
               const SizedBox(width: 8),
-              _tabBtn('drafts', '下書き (${_drafts.length})'),
+              _tabBtn('drafts', '下書き (${_filteredDrafts.length}/${_drafts.length})'),
             ],
           ),
           if (_tab == 'articles') ...[
@@ -352,6 +813,45 @@ class _BlogManagementPageState extends State<BlogManagementPage>
                 _filterBtn('qiita', 'Qiita'),
                 const SizedBox(width: 6),
                 _filterBtn('devto', 'dev.to'),
+              ],
+            ),
+          ],
+          if (_tab == 'drafts') ...[
+            const SizedBox(height: 10),
+            TextField(
+              controller: _draftSearchCtrl,
+              style: const TextStyle(color: Colors.white, height: 1.5),
+              decoration: InputDecoration(
+                hintText: 'タイトル検索...',
+                hintStyle: const TextStyle(color: Colors.white38, height: 1.5),
+                prefixIcon: const Icon(Icons.search, color: Colors.white38, size: 18),
+                filled: true,
+                fillColor: Colors.white10,
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(color: Colors.white24),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(color: Colors.white24),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(color: _orange),
+                ),
+              ),
+              onChanged: (v) => setState(() => _draftSearch = v),
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                _draftStatusBtn('all', '全て'),
+                const SizedBox(width: 6),
+                _draftStatusBtn('draft', '下書き'),
+                const SizedBox(width: 6),
+                _draftStatusBtn('ready', '公開準備完了'),
               ],
             ),
           ],
@@ -408,9 +908,48 @@ class _BlogManagementPageState extends State<BlogManagementPage>
     );
   }
 
+  Widget _draftStatusBtn(String id, String label) {
+    final selected = _draftStatusFilter == id;
+    return GestureDetector(
+      onTap: () => setState(() => _draftStatusFilter = id),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        decoration: BoxDecoration(
+          color: selected ? Colors.white24 : Colors.transparent,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: selected ? Colors.white38 : Colors.white12,
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: selected ? Colors.white70 : Colors.white38,
+            fontSize: 11,
+            height: 1.5,
+          ),
+        ),
+      ),
+    );
+  }
+
   List<Map<String, dynamic>> get _filteredEngagement {
     if (_platformFilter == 'all') return _engagement;
     return _engagement.where((e) => e['platform'] == _platformFilter).toList();
+  }
+
+  List<Map<String, dynamic>> get _filteredDrafts {
+    var list = _drafts;
+    if (_draftStatusFilter != 'all') {
+      list = list.where((d) => d['status'] == _draftStatusFilter).toList();
+    }
+    final q = _draftSearch.trim().toLowerCase();
+    if (q.isNotEmpty) {
+      list = list
+          .where((d) => (d['title'] as String? ?? '').toLowerCase().contains(q))
+          .toList();
+    }
+    return list;
   }
 
   // ── 記事一覧 ────────────────────────────────────────────────
@@ -733,6 +1272,41 @@ class _BlogManagementPageState extends State<BlogManagementPage>
                 ),
               ),
             ],
+            if (!replied && platform == 'qiita') ...[
+              const SizedBox(height: 8),
+              Align(
+                alignment: Alignment.centerRight,
+                child: Builder(builder: (ctx) {
+                  final id = c['id']?.toString() ?? '';
+                  final isReplying = _replyingIds.contains(id);
+                  return SizedBox(
+                    height: 28,
+                    child: ElevatedButton.icon(
+                      onPressed: isReplying ? null : () => _replyToComment(c),
+                      icon: isReplying
+                          ? const SizedBox(
+                              width: 12,
+                              height: 12,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 1.5,
+                                color: Colors.white,
+                              ),
+                            )
+                          : const Icon(Icons.reply, size: 14),
+                      label: Text(
+                        isReplying ? '送信中...' : '返信する',
+                        style: const TextStyle(fontSize: 11, height: 1.5),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: _orange,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                      ),
+                    ),
+                  );
+                }),
+              ),
+            ],
           ],
         ),
       ),
@@ -741,16 +1315,36 @@ class _BlogManagementPageState extends State<BlogManagementPage>
 
   // ── 下書き一覧 ──────────────────────────────────────────────
   List<Widget> _buildDraftSliver() {
-    if (_drafts.isEmpty) {
+    final items = _filteredDrafts;
+    if (items.isEmpty) {
       return [
-        const SliverToBoxAdapter(
+        SliverToBoxAdapter(
           child: Padding(
-            padding: EdgeInsets.all(32),
-            child: Center(
-              child: Text(
-                '下書きなし',
-                style: TextStyle(color: Colors.white38, height: 1.5),
-              ),
+            padding: const EdgeInsets.all(32),
+            child: Column(
+              children: [
+                const Icon(Icons.drafts_outlined, color: Colors.white24, size: 48),
+                const SizedBox(height: 12),
+                Text(
+                  _drafts.isEmpty
+                      ? '下書きなし\n右下のボタンで新規作成できます'
+                      : '検索結果なし',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: Colors.white38, height: 1.6),
+                ),
+                if (_drafts.isEmpty) ...[
+                  const SizedBox(height: 16),
+                  ElevatedButton.icon(
+                    onPressed: _createDraft,
+                    icon: const Icon(Icons.add),
+                    label: const Text('新規下書き作成'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: _orange,
+                      foregroundColor: Colors.white,
+                    ),
+                  ),
+                ],
+              ],
             ),
           ),
         ),
@@ -762,8 +1356,8 @@ class _BlogManagementPageState extends State<BlogManagementPage>
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
         sliver: SliverList(
           delegate: SliverChildBuilderDelegate(
-            (ctx, i) => _buildDraftCard(_drafts[i]),
-            childCount: _drafts.length,
+            (ctx, i) => _buildDraftCard(items[i]),
+            childCount: items.length,
           ),
         ),
       ),
@@ -833,6 +1427,22 @@ class _BlogManagementPageState extends State<BlogManagementPage>
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.edit_outlined, size: 16),
+                  color: Colors.white54,
+                  tooltip: '編集',
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                  onPressed: () => _editDraft(d),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.delete_outline, size: 16),
+                  color: _red.withAlpha(180),
+                  tooltip: '削除',
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                  onPressed: () => _deleteDraft(d),
                 ),
                 if (url.isNotEmpty)
                   IconButton(
