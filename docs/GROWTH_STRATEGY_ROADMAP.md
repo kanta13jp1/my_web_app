@@ -25434,3 +25434,29 @@ a9d7b1517 on main
 ### Philosophy Alignment
 
 #1 CEO 感 (= タスク所在を即座に navigation 可能 / プロジェクト掌握の自己効力感) / #5 商品=ユーザー価値 (= 自己使用 dogfood のクリック数削減) / #6 資本=時間 (= title からの目視 issue 番号タイプを排除)
+
+---
+
+## Scheduled Daily Session S3 (2026-05-03 06:00 UTC)
+
+### 実施内容
+- 朝の scheduled daily-development task を実行 (main 直接 push / Multi-instance fleet の scheduled lane)
+- Scheduled Daily S2 (2026-05-02) で次回候補として明示されていた「agent_tool_policy server gate (MCP scope deny-by-default) 単体ブログ化」を完了
+  - `docs/blog-drafts/2026-05-03-agent-tool-policy-server-gate.md` (JA)
+  - `docs/blog-drafts/2026-05-03-agent-tool-policy-server-gate-en.md` (EN)
+- 内容: 9-scope enum + 5 高リスク (delete/send/purchase/discount/external_share) / 役割別デフォルト scope テーブル / 拒否理由 3 分類 (`empty_requested_scope` / `missing_scope` / `approval_required`) / `agent.tool_policy.evaluate` (dry-run) と `agent.run` (fail-close) の対構造 / `agent_tool_execution_logs` の partial index 設計
+- MCP AuthKit metadata 記事 (S2) と「宣言 / 強制」の対構造をなす形で記事ペアを完結
+- development_achievements seed migration `20260503061000_seed_achievements_scheduled_daily_s3.sql` 追加
+
+### 現状確認
+- main HEAD: be251876e (競合モニタリング 2026-05-03 daily report + Replit discovery)
+- 本日 main へのマージ済タスク: 競合モニタリング日次 / AI大学コンテンツ更新 / WBS automation 群
+- AI大学 自動更新 / ヘルスモニター / 競合レポート — 全て正常稼働
+
+### 次回アクション候補 (Scheduled Daily S4 向け)
+1. `mcp_my_web_app_tools` facade の scope 配列を `agent_tool_policy.ts` の `AGENT_TOOL_SCOPES` から import するよう統一 (= 記事末尾で次のステップとして言及した single source of truth) — Codex#2 lane
+2. `agent_tool_execution_logs` 監査ダッシュボード (CEO view: 「approval pending 一覧」) — VSCode版 UI lane
+3. discount approval workflow (afd16cd01) のユーザー価値ブログ化 — S2 で残った候補 #3 を持ち越し
+
+### Philosophy Alignment
+#3 優しい mentor (= AI tool 実行の least-privilege 設計を後発開発者に共有) / #5 商品=ユーザー価値 (= deny-by-default gate はユーザーデータの破壊・課金・外部公開からの保護に直結) / #6 資本=時間 (= scope enum 化で fleet 全体の policy drift を構造的に防止)
