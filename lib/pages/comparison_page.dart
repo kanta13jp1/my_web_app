@@ -65553,8 +65553,7 @@ final _competitorInfo = <String, _CompetitorInfo>{
     emoji: '📸',
     tagline:
         'Happo・クロスブラウザ視覚的リグレッションテスト・コンポーネントスクリーンショット・PR差分確認で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword:
-        'Happo代替 クロスブラウザ視覚的リグレッション コンポーネントスクリーンショット PR差分確認',
+    searchKeyword: 'Happo代替 クロスブラウザ視覚的リグレッション コンポーネントスクリーンショット PR差分確認',
     accentColor: Color(0xFF7B1FA2),
     painPoints: [
       '視覚的リグレッションテスト専用・個人ライフ管理は別途必要',
@@ -65625,8 +65624,7 @@ final _competitorInfo = <String, _CompetitorInfo>{
     emoji: '🐕',
     tagline:
         'Argos CI・OSSビジュアルテストCI統合・GitHub Actions対応・スクリーンショット差分自動検出で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword:
-        'Argos CI代替 OSSビジュアルテスト CI統合 GitHub Actions スクリーンショット差分検出',
+    searchKeyword: 'Argos CI代替 OSSビジュアルテスト CI統合 GitHub Actions スクリーンショット差分検出',
     accentColor: Color(0xFFFF7043),
     painPoints: [
       'CI統合ビジュアルテスト専用・個人ライフ管理は別途必要',
@@ -65697,8 +65695,7 @@ final _competitorInfo = <String, _CompetitorInfo>{
     emoji: '📊',
     tagline:
         'reg-suit・OSSビジュアルリグレッションテストフレームワーク・S3/GCS対応・フレームワーク非依存で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword:
-        'reg-suit代替 OSSビジュアルリグレッション S3 GCS フレームワーク非依存 フロントエンドCI',
+    searchKeyword: 'reg-suit代替 OSSビジュアルリグレッション S3 GCS フレームワーク非依存 フロントエンドCI',
     accentColor: Color(0xFF00897B),
     painPoints: [
       'ビジュアルリグレッションフレームワーク専用・個人ライフ管理は別途必要',
@@ -65769,8 +65766,7 @@ final _competitorInfo = <String, _CompetitorInfo>{
     emoji: '🔄',
     tagline:
         'Diffy・API/UIビジュアルリグレッションテスト・本番/ステージング差分検出・自動スクリーンショット比較で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword:
-        'Diffy代替 API UIビジュアルリグレッション 本番ステージング差分検出 スクリーンショット比較',
+    searchKeyword: 'Diffy代替 API UIビジュアルリグレッション 本番ステージング差分検出 スクリーンショット比較',
     accentColor: Color(0xFF5C6BC0),
     painPoints: [
       'API/UIビジュアルリグレッション専用・個人ライフ管理は別途必要',
@@ -66021,8 +66017,7 @@ final _competitorInfo = <String, _CompetitorInfo>{
     emoji: '🐾',
     tagline:
         'Paw・Mac向けフル機能APIクライアント・動的値・コード生成・拡張機能・RapidAPI買収で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword:
-        'Paw代替 Mac APIクライアント フル機能 動的値 コード生成 拡張機能 RapidAPI Mac専用',
+    searchKeyword: 'Paw代替 Mac APIクライアント フル機能 動的値 コード生成 拡張機能 RapidAPI Mac専用',
     accentColor: Color(0xFF795548),
     painPoints: [
       'Mac向けAPIクライアント専用・個人ライフ管理は別途必要',
@@ -66057,8 +66052,7 @@ final _competitorInfo = <String, _CompetitorInfo>{
     emoji: '🦊',
     tagline:
         'Restfox・OSSブラウザ対応APIクライアント・PWA・Postman代替・プライバシー重視・自己ホスト可能で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword:
-        'Restfox代替 OSSブラウザAPIクライアント PWA Postman代替 プライバシー重視 自己ホスト',
+    searchKeyword: 'Restfox代替 OSSブラウザAPIクライアント PWA Postman代替 プライバシー重視 自己ホスト',
     accentColor: Color(0xFF0288D1),
     painPoints: [
       'OSSブラウザAPIクライアント専用・個人ライフ管理は別途必要',
@@ -66093,8 +66087,7 @@ final _competitorInfo = <String, _CompetitorInfo>{
     emoji: '🔧',
     tagline:
         'Requestly・HTTP傍受/モック・APIモッキング・リクエスト変更・チーム共有・フロントエンド開発加速で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword:
-        'Requestly代替 HTTP傍受 APIモッキング リクエスト変更 フロントエンド開発 チーム共有',
+    searchKeyword: 'Requestly代替 HTTP傍受 APIモッキング リクエスト変更 フロントエンド開発 チーム共有',
     accentColor: Color(0xFF43A047),
     painPoints: [
       'HTTP傍受/APIモック専用・個人ライフ管理は別途必要',
@@ -66140,6 +66133,325 @@ final _competitorInfo = <String, _CompetitorInfo>{
     features: [
       _FeatureComparison(
         feature: 'OSSマルチプロトコル・HTTP/gRPC/WebSocket/Kafka対応・JVM/JavaFX',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'llamaindex-rag-framework': const _CompetitorInfo(
+    name: 'LlamaIndex',
+    emoji: '🦙',
+    tagline:
+        'LlamaIndex・データ接続/インデックス/RAGフレームワーク・LLMアプリ基盤・カスタムデータ統合で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'LlamaIndex代替 RAGフレームワーク データ接続 LLMアプリ基盤 カスタムデータ統合 AI開発',
+    accentColor: Color(0xFF6A1B9A),
+    painPoints: [
+      'RAGフレームワーク専用・個人ライフ管理は別途必要',
+      '開発者向けLLM統合ツール・AI個人アシスタント機能なし',
+      'データインデックス/検索特化・財務・タスク管理は別途必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'データ接続/インデックス/RAGフレームワーク・LLMアプリ基盤・カスタムデータ統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'haystack-deepset-nlp': const _CompetitorInfo(
+    name: 'Haystack',
+    emoji: '🌾',
+    tagline:
+        'Haystack(deepset)・OSS NLP/RAGフレームワーク・パイプライン設計・マルチLLM対応・エンタープライズNLPで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Haystack代替 deepset NLP RAGフレームワーク パイプライン設計 マルチLLM エンタープライズNLP',
+    accentColor: Color(0xFFFF8F00),
+    painPoints: [
+      'NLP/RAGパイプラインフレームワーク専用・個人ライフ管理は別途必要',
+      '開発者向けNLPツール・AI個人アシスタント機能なし',
+      'エンタープライズNLP特化・財務・タスク管理は別途必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'OSS NLP/RAGフレームワーク・パイプライン設計・マルチLLM対応',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'semantic-kernel-microsoft': const _CompetitorInfo(
+    name: 'Semantic Kernel',
+    emoji: '🔮',
+    tagline:
+        'Microsoft Semantic Kernel・エンタープライズLLMオーケストレーション・C#/Python/Java対応・プラグイン設計で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Semantic Kernel代替 Microsoft LLMオーケストレーション C# Python Java プラグイン設計',
+    accentColor: Color(0xFF0078D4),
+    painPoints: [
+      'エンタープライズLLMオーケストレーション専用・個人ライフ管理は別途必要',
+      'Microsoft開発者向けSDK・AI個人アシスタント機能なし',
+      'C#/Python/Java LLM統合特化・財務・タスク管理は別途必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'エンタープライズLLMオーケストレーション・C#/Python/Java対応・プラグイン設計',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'dspy-stanford-llm': const _CompetitorInfo(
+    name: 'DSPy',
+    emoji: '🎓',
+    tagline:
+        'DSPy(Stanford)・LLMプログラミングフレームワーク・プロンプト自動最適化・宣言的パイプライン・研究→本番で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'DSPy代替 Stanford LLMプログラミング プロンプト自動最適化 宣言的パイプライン 研究AI',
+    accentColor: Color(0xFF1565C0),
+    painPoints: [
+      'LLMプログラミング/プロンプト最適化専用・個人ライフ管理は別途必要',
+      '研究者向け開発フレームワーク・AI個人アシスタント機能なし',
+      'プロンプト最適化特化・財務・タスク管理は別途必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'LLMプログラミング・プロンプト自動最適化・宣言的パイプライン・Stanford研究',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'langflow-visual-llm': const _CompetitorInfo(
+    name: 'LangFlow',
+    emoji: '🌊',
+    tagline:
+        'LangFlow・ビジュアルLLMワークフロービルダー・LangChain視覚化・ノーコードAIパイプライン・RAG構築UIで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'LangFlow代替 ビジュアルLLMワークフロー LangChain視覚化 ノーコードAI RAGビルダー',
+    accentColor: Color(0xFF00ACC1),
+    painPoints: [
+      'ビジュアルLLMワークフロービルダー専用・個人ライフ管理は別途必要',
+      '開発者向けノーコードAIツール・AI個人アシスタント機能なし',
+      'LangChain視覚化特化・財務・タスク管理は別途必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ビジュアルLLMワークフロービルダー・LangChain視覚化・ノーコードAIパイプライン',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'flowise-oss-llm': const _CompetitorInfo(
+    name: 'Flowise',
+    emoji: '🌀',
+    tagline:
+        'Flowise・OSS ローコードLLMワークフロービルダー・セルフホスト・LangChain/LlamaIndex統合・Docker対応で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Flowise代替 OSS ローコードLLMワークフロー セルフホスト LangChain LlamaIndex統合 Docker',
+    accentColor: Color(0xFF43A047),
+    painPoints: [
+      'OSSローコードLLMワークフロービルダー専用・個人ライフ管理は別途必要',
+      '開発者向けセルフホストAIツール・AI個人アシスタント機能なし',
+      'LLMワークフロー特化・財務・タスク管理は別途必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'OSSローコードLLMビルダー・セルフホスト・LangChain/LlamaIndex統合・Docker',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'dify-ai-platform': const _CompetitorInfo(
+    name: 'Dify',
+    emoji: '✨',
+    tagline:
+        'Dify・AIアプリ開発プラットフォーム・OSS/SaaS・RAGパイプライン・ビジュアルプロンプト管理・エージェント構築で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Dify代替 AIアプリ開発プラットフォーム OSS RAGパイプライン ビジュアルプロンプト管理 エージェント構築',
+    accentColor: Color(0xFF7C4DFF),
+    painPoints: [
+      'AIアプリ開発プラットフォーム専用・個人ライフ管理は別途必要',
+      '開発チーム向けAI構築ツール・AI個人アシスタント機能なし',
+      'RAGパイプライン/エージェント特化・財務・タスク管理は別途必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AIアプリ開発・RAGパイプライン・ビジュアルプロンプト管理・エージェント構築',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'vercel-ai-sdk': const _CompetitorInfo(
+    name: 'Vercel AI SDK',
+    emoji: '▲',
+    tagline:
+        'Vercel AI SDK・フロントエンドAI統合・Next.js/React向けLLM統合・ストリーミング対応・エッジAIで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Vercel AI SDK代替 フロントエンドAI統合 Next.js React LLM統合 ストリーミング エッジAI',
+    accentColor: Color(0xFF212121),
+    painPoints: [
+      'フロントエンドAI統合SDK専用・個人ライフ管理は別途必要',
+      'Next.js/React開発者向けSDK・AI個人アシスタント機能なし',
+      'フロントエンドLLM統合特化・財務・タスク管理は別途必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'フロントエンドAI統合・Next.js/React向けLLM・ストリーミング・エッジAI',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'rivet-ai-visual': const _CompetitorInfo(
+    name: 'Rivet',
+    emoji: '🔩',
+    tagline:
+        'Rivet・ビジュアルAIエージェントプログラミング・IronClad製OSS・グラフベースLLMワークフロー・デバッグ機能で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Rivet代替 ビジュアルAIエージェント OSS グラフベースLLMワークフロー デバッグ IronClad',
+    accentColor: Color(0xFFE91E63),
+    painPoints: [
+      'ビジュアルAIエージェントプログラミング専用・個人ライフ管理は別途必要',
+      '開発者向けグラフベースLLMツール・AI個人アシスタント機能なし',
+      'LLMワークフローデバッグ特化・財務・タスク管理は別途必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ビジュアルAIエージェント・OSS・グラフベースLLMワークフロー・デバッグ機能',
         competitorHas: true,
         weHave: false,
       ),
@@ -66622,6 +66934,15 @@ class _ComparisonShellState extends State<_ComparisonShell> {
     'restfox-oss': 'api-client',
     'requestly-api-client': 'api-client',
     'milkman-oss-api': 'api-client',
+    'llamaindex-rag-framework': 'llm-framework',
+    'haystack-deepset-nlp': 'llm-framework',
+    'semantic-kernel-microsoft': 'llm-framework',
+    'dspy-stanford-llm': 'llm-framework',
+    'langflow-visual-llm': 'llm-framework',
+    'flowise-oss-llm': 'llm-framework',
+    'dify-ai-platform': 'llm-framework',
+    'vercel-ai-sdk': 'llm-framework',
+    'rivet-ai-visual': 'llm-framework',
   };
 
   @override
