@@ -252,6 +252,12 @@ Codex CLI が **Memory** を持つようになり、past task の preference / p
 - Cloud agent **+20% startup** (Actions custom image) — `ci-auto-fix.yml` 高速化候補
 - **Model selection for Claude / Codex agents on github.com** — Copilot から Claude / Codex 直接呼出 (= fleet 連携の bridge)
 - Copilot **code review が Actions minutes 消費開始** (2026-06-01〜) — quota 影響を `quota-monitor.yml` に反映必要
+- 2026-05-03 実装: `quota-monitor.yml` に **Copilot Code Review Actions minutes gauge** を追加。
+  - GitHub 公式 changelog の発効日: **2026-06-01**
+  - private repo では Copilot code review が AI Credits に加えて Actions minutes を消費する。
+  - repo variables `COPILOT_REVIEW_RUNS_30D`, `COPILOT_REVIEW_AVG_MINUTES`, `COPILOT_REVIEW_MINUTES_BUDGET` で見積もりを調整する。
+  - public repo は Actions minutes 無料枠の扱いが変わらないため、gauge は budget pressure の可視化に使う。
+  - Source: https://github.blog/changelog/2026-04-27-github-copilot-code-review-will-start-consuming-github-actions-minutes-on-june-1-2026/
 
 ### Claude Code 2026-05 (`/tui` + push notification + project purge + /resume PR URL)
 

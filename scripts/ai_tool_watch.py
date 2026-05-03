@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Watch official Claude Code and Codex pages for workflow-relevant changes.
+"""Watch official AI coding-tool pages for workflow-relevant changes.
 
 The script is intentionally dependency-free so it can run in GitHub Actions,
 Codex sessions, Claude Code hooks, or a plain local shell.
@@ -71,6 +71,36 @@ SOURCES: list[Source] = [
         "https://openai.com/codex/",
         "Codex",
     ),
+    Source(
+        "gemini-code-assist-release-notes",
+        "Gemini Code Assist release notes",
+        "https://cloud.google.com/gemini/docs/codeassist/release-notes",
+        "Gemini Code Assist",
+    ),
+    Source(
+        "gemini-code-assist-github-review",
+        "Gemini Code Assist GitHub review docs",
+        "https://developers.google.com/gemini-code-assist/docs/review-github-code",
+        "Gemini Code Assist",
+    ),
+    Source(
+        "github-copilot-code-review-minutes",
+        "Copilot code review Actions minutes",
+        "https://github.blog/changelog/2026-04-27-github-copilot-code-review-will-start-consuming-github-actions-minutes-on-june-1-2026/",
+        "GitHub Copilot",
+    ),
+    Source(
+        "github-copilot-cloud-agent-custom-images",
+        "Copilot cloud agent custom images",
+        "https://github.blog/changelog/2026-04-27-copilot-cloud-agent-starts-20-faster-with-actions-custom-images/",
+        "GitHub Copilot",
+    ),
+    Source(
+        "github-agent-model-selection",
+        "Claude and Codex agent model selection",
+        "https://github.blog/changelog/2026-04-14-model-selection-for-claude-and-codex-agents-on-github-com/",
+        "GitHub Agents",
+    ),
 ]
 
 
@@ -114,7 +144,24 @@ KEYWORDS: dict[str, list[str]] = {
         "VSCode",
         "Visual Studio Code",
     ],
+    "agent-routing": [
+        "agent mode",
+        "cloud agent",
+        "code review",
+        "custom image",
+        "custom images",
+        "model selection",
+        "JetBrains",
+        "IntelliJ",
+        "Claude",
+        "Codex",
+        "Gemini Code Assist",
+    ],
     "quality-cost": [
+        "AI Credits",
+        "Actions minutes",
+        "billing",
+        "budget",
         "OpenTelemetry",
         "cost",
         "quota",
@@ -156,8 +203,15 @@ IMPACT_ROUTES: dict[str, dict[str, Any]] = {
             "and NotebookLM knowledge capture."
         ),
     },
+    "agent-routing": {
+        "issues": ["#1707", "#1706", "#1422"],
+        "action": (
+            "Route to fleet agent routing: Copilot/Claude/Codex/Gemini model "
+            "selection, PR review ownership, and CI cost guardrails."
+        ),
+    },
     "quality-cost": {
-        "issues": ["#1380", "#1374", "#1336", "#1352"],
+        "issues": ["#1707", "#1380", "#1374", "#1336", "#1352"],
         "action": (
             "Route to cost and safety controls: deny-by-default checks, budget "
             "routing, and telemetry before wider automation."
@@ -263,6 +317,21 @@ def extract_latest_signal(source: Source, text: str) -> str:
         match = re.search(r"GPT-5\.5 and Codex app updates", text)
         if match:
             return "GPT-5.5 and Codex app updates"
+    if source.slug == "gemini-code-assist-release-notes":
+        match = re.search(r"\b([A-Z][a-z]+ \d{1,2}, 20\d{2})\b", text)
+        if match:
+            return f"latest dated entry / {match.group(1)}"
+        match = re.search(r"\b(VS Code Gemini Code Assist \d+\.\d+\.\d+)\b", text)
+        if match:
+            return match.group(1)
+    if source.slug == "gemini-code-assist-github-review":
+        return "Gemini Code Assist GitHub code review docs"
+    if source.slug == "github-copilot-code-review-minutes":
+        return "2026-06-01 / Copilot code review consumes Actions minutes"
+    if source.slug == "github-copilot-cloud-agent-custom-images":
+        return "2026-04-27 / Copilot cloud agent custom images"
+    if source.slug == "github-agent-model-selection":
+        return "2026-04-14 / Claude and Codex agent model selection"
     title = re.search(r"([A-Z][A-Za-z0-9 .,/+-]{8,90})", text)
     return title.group(1).strip() if title else "No title detected"
 
@@ -343,7 +412,11 @@ def analyze(args: argparse.Namespace) -> tuple[dict[str, Any], dict[str, Any]]:
 
     changed_sources = [item for item in report_sources if item["changed"] or item["first_seen"]]
     active_groups = sorted({group for item in report_sources for group in item["keyword_groups"]})
-    high_priority_groups = [group for group in active_groups if group in {"hooks", "schedule", "codex-runtime"}]
+    high_priority_groups = [
+        group
+        for group in active_groups
+        if group in {"hooks", "schedule", "codex-runtime", "agent-routing", "quality-cost"}
+    ]
 
     report = {
         "checked_at": checked_at,

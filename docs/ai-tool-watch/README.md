@@ -1,15 +1,18 @@
 # AI Tool Watch
 
 This directory is the session-start and scheduled watch surface for official
-Claude Code and Codex changes.
+Claude Code, Codex, Gemini Code Assist, and GitHub Copilot changes.
 
 ## What It Watches
 
 - Claude Code changelog, hooks reference, and GitHub Actions docs.
 - Codex changelog, Codex use cases, and Codex overview.
+- Gemini Code Assist release notes and GitHub code review docs.
+- GitHub Copilot changelog entries for code-review Actions minutes, cloud
+  agent custom images, and Claude/Codex agent model selection.
 - Workflow keywords that affect this repo: hooks, schedules, GitHub Actions,
-  Automations, in-app browser, models, worktrees, MCP, cost controls, CI, and
-  review gates.
+  Automations, in-app browser, models, worktrees, MCP, agent routing, cost
+  controls, CI, and review gates.
 - NotebookLM harness notebook
   `bc58b50b-5fc4-4840-9a62-b397d6d3b65a`, used as the Master Brain routing
   reference for Claude Code 10 instances plus Codex 2 instances.
@@ -50,6 +53,10 @@ started manually. It updates the report/state files and comments on issue
 - Codex model, browser, computer-use, worktree, or subagent changes route to
   Codex #1 execution and UI verification work unless the item is CI/deploy
   related.
+- Gemini Code Assist agent-mode or GitHub-review changes route to fallback
+  review and quota policy work.
+- Copilot cloud-agent, code-review billing, or Claude/Codex agent-selection
+  changes route to #1707 and Codex #2 CI/quota automation.
 - Schedule, GitHub Actions, and automation changes route to WBS/CI/deploy
   automation, normally owned by Codex #2.
 - MCP, connector, Slack, and integration changes route to connector reliability

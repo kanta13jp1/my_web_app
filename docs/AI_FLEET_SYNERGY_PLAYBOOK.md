@@ -129,6 +129,8 @@ INDIE_DEV_VELOCITY (= indie 視点の規律) と直交する **「fleet 視点�
 
 Codex は **Stop Hooks** で CI/CD pipeline pass まで task 完了をブロック.
 
+**2026-05-03 追記**: Copilot Code Review は 2026-06-01 から private repo で GitHub Actions minutes も消費するため、レビュー自動化は **Actions budget cap も deterministic guardrail** として扱う。`quota-monitor.yml` の `github_copilot_code_review_minutes` gauge が 80% 以上になったら、Copilot review の自動起動を絞り、Claude/Codex の API review と `flutter analyze` / `flutter test` / `deno lint` へ逃がす。
+
 **なぜ重要か**: AI は「**それっぽく完了**」を返すことがある. 人間 review もスケールしない → fleet 規模では **deterministic gate** だけが信頼可能な validation.
 
 **どう適用するか**:

@@ -19,6 +19,7 @@ jobs:
     name: Auto-Fix CI Failures
     if: github.event.workflow_run.conclusion == 'failure'
     runs-on: ubuntu-latest
+    # Copilot cloud-agent custom image evaluation: docs/COPILOT_CLOUD_AGENT_CI_EVALUATION.md
     timeout-minutes: 15
 
     steps:

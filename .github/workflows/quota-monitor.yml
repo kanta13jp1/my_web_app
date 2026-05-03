@@ -167,6 +167,60 @@ jobs:
                   f.write('status=error\nusage_json={}\n')
           EOF
 
+      - name: Build Copilot Code Review Minutes Gauge
+        id: copilot_review_minutes
+        env:
+          COPILOT_REVIEW_RUNS_30D: ${{ vars.COPILOT_REVIEW_RUNS_30D || '0' }}
+          COPILOT_REVIEW_AVG_MINUTES: ${{ vars.COPILOT_REVIEW_AVG_MINUTES || '4' }}
+          COPILOT_REVIEW_MINUTES_BUDGET: ${{ vars.COPILOT_REVIEW_MINUTES_BUDGET || '200' }}
+          GITHUB_REPOSITORY_PRIVATE: ${{ github.event.repository.private }}
+        run: |
+          python3 - << 'EOF'
+          import json
+          import os
+          from datetime import date
+
+          def number_from_env(name, default):
+              raw = os.environ.get(name, str(default))
+              try:
+                  return float(raw)
+              except ValueError:
+                  return float(default)
+
+          billing_start = date(2026, 6, 1)
+          today = date.today()
+          days_until = (billing_start - today).days
+          private_repo = os.environ.get('GITHUB_REPOSITORY_PRIVATE', 'false').lower() == 'true'
+          runs_30d = number_from_env('COPILOT_REVIEW_RUNS_30D', 0)
+          avg_minutes = number_from_env('COPILOT_REVIEW_AVG_MINUTES', 4)
+          budget_minutes = number_from_env('COPILOT_REVIEW_MINUTES_BUDGET', 200)
+          estimated_minutes = round(runs_30d * avg_minutes, 2)
+          usage_pct = round((estimated_minutes / budget_minutes * 100), 1) if budget_minutes > 0 else 0
+          billing_active = today >= billing_start
+          warning_window = 0 <= days_until <= 14
+          alert = private_repo and budget_minutes > 0 and usage_pct >= 80 and (billing_active or warning_window)
+
+          gauge = {
+              'tool': 'github_copilot_code_review_minutes',
+              'billing_starts_on': billing_start.isoformat(),
+              'billing_active': billing_active,
+              'days_until_billing': max(days_until, 0),
+              'private_repo_actions_minutes_apply': private_repo,
+              'estimated_reviews_30d': runs_30d,
+              'avg_minutes_per_review_est': avg_minutes,
+              'estimated_minutes_30d': estimated_minutes,
+              'budget_minutes_30d': budget_minutes,
+              'usage_pct_est': usage_pct,
+              'alert': alert,
+              'source': 'https://github.blog/changelog/2026-04-27-github-copilot-code-review-will-start-consuming-github-actions-minutes-on-june-1-2026/',
+              'note': 'Set repository variables COPILOT_REVIEW_RUNS_30D, COPILOT_REVIEW_AVG_MINUTES, and COPILOT_REVIEW_MINUTES_BUDGET to tune this gauge.',
+          }
+          print(f"Copilot code review minutes gauge: {estimated_minutes}/{budget_minutes} min ({usage_pct}%), billing_active={billing_active}, private_repo={private_repo}")
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+              f.write('status=ok\n')
+              f.write(f'usage_json={json.dumps(gauge)}\n')
+          EOF
+
       - name: Check Gemini Code Assist Quota
         id: gemini
         env:
@@ -212,6 +266,7 @@ jobs:
           ANTHROPIC_USAGE: ${{ steps.anthropic.outputs.usage_json }}
           OPENAI_USAGE: ${{ steps.openai.outputs.usage_json }}
           COPILOT_USAGE: ${{ steps.copilot.outputs.usage_json }}
+          COPILOT_REVIEW_USAGE: ${{ steps.copilot_review_minutes.outputs.usage_json }}
           GEMINI_USAGE: ${{ steps.gemini.outputs.usage_json }}
         run: |
           python3 - << 'EOF'
@@ -228,7 +283,7 @@ jobs:
           }
           today = date.today().isoformat()
 
-          tools = ['ANTHROPIC_USAGE', 'OPENAI_USAGE', 'COPILOT_USAGE', 'GEMINI_USAGE']
+          tools = ['ANTHROPIC_USAGE', 'OPENAI_USAGE', 'COPILOT_USAGE', 'COPILOT_REVIEW_USAGE', 'GEMINI_USAGE']
           for env_key in tools:
               raw = os.environ.get(env_key, '{}')
               if not raw or raw == '{}':
@@ -258,6 +313,7 @@ jobs:
           ANTHROPIC_USAGE: ${{ steps.anthropic.outputs.usage_json }}
           OPENAI_USAGE: ${{ steps.openai.outputs.usage_json }}
           COPILOT_USAGE: ${{ steps.copilot.outputs.usage_json }}
+          COPILOT_REVIEW_USAGE: ${{ steps.copilot_review_minutes.outputs.usage_json }}
           GEMINI_USAGE: ${{ steps.gemini.outputs.usage_json }}
         run: |
           python3 - << 'EOF'
@@ -272,6 +328,7 @@ jobs:
               ('ANTHROPIC_USAGE', 'Claude (Anthropic)'),
               ('OPENAI_USAGE', 'OpenAI (CODEX)'),
               ('COPILOT_USAGE', 'GitHub Copilot'),
+              ('COPILOT_REVIEW_USAGE', 'Copilot Code Review Actions minutes'),
               ('GEMINI_USAGE', 'Gemini Code Assist'),
           ]:
               raw = os.environ.get(env_key, '{}')
