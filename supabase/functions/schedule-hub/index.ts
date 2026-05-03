@@ -1286,6 +1286,7 @@ serve(async (req: Request) => {
         if (Array.isArray(body.target_platforms)) {
           upFields.target_platforms = body.target_platforms;
         }
+        if (Array.isArray(body.tags)) upFields.tags = body.tags;
         if (Object.keys(upFields).length === 0) {
           return json({ error: "No fields to update" }, 400);
         }
@@ -1323,6 +1324,7 @@ serve(async (req: Request) => {
             target_platforms: Array.isArray(body.target_platforms)
               ? body.target_platforms
               : ["qiita", "devto"],
+            tags: Array.isArray(body.tags) ? body.tags : [],
           })
           .select("id, title, status, created_at")
           .single();

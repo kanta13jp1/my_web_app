@@ -20,7 +20,6 @@ class _BlogManagementPageState extends State<BlogManagementPage>
   List<Map<String, dynamic>> _drafts = [];
   bool _isLoading = true;
   bool _isSyncing = false;
-  String? _loadError;
   final Set<String> _publishingIds = {};
   final Set<String> _togglingIds = {};
   final Set<String> _replyingIds = {};
@@ -52,10 +51,7 @@ class _BlogManagementPageState extends State<BlogManagementPage>
   }
 
   Future<void> _loadData() async {
-    setState(() {
-      _isLoading = true;
-      _loadError = null;
-    });
+    setState(() => _isLoading = true);
     try {
       final results = await Future.wait([
         _supabase
@@ -71,7 +67,7 @@ class _BlogManagementPageState extends State<BlogManagementPage>
         _supabase
             .from('blog_posts')
             .select(
-              'id, title, status, target_platforms, draft_path, posted_at, url, created_at, content',
+              'id, title, status, target_platforms, draft_path, posted_at, url, created_at, content, tags, notes',
             )
             .inFilter('status', ['draft', 'ready'])
             .order('created_at', ascending: false)
@@ -97,7 +93,6 @@ class _BlogManagementPageState extends State<BlogManagementPage>
       }
     } catch (e) {
       if (mounted) {
-        setState(() => _loadError = e.toString());
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('❌ 読み込み失敗: $e'),
@@ -309,17 +304,21 @@ class _BlogManagementPageState extends State<BlogManagementPage>
       );
       if (!mounted) return;
       final success = res.status == 200;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(success ? '✅ 保存完了' : '⚠️ 保存エラー (${res.status})'),
-        backgroundColor: success ? _green : _red,
-      ));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(success ? '✅ 保存完了' : '⚠️ 保存エラー (${res.status})'),
+          backgroundColor: success ? _green : _red,
+        ),
+      );
       if (success) await _loadData();
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('❌ 保存失敗: $e'),
-          backgroundColor: _red,
-        ));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('❌ 保存失敗: $e'),
+            backgroundColor: _red,
+          ),
+        );
       }
     }
   }
@@ -362,17 +361,21 @@ class _BlogManagementPageState extends State<BlogManagementPage>
       );
       if (!mounted) return;
       final success = res.status == 200;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(success ? '🗑️ 削除しました' : '⚠️ 削除エラー (${res.status})'),
-        backgroundColor: success ? _green : _red,
-      ));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(success ? '🗑️ 削除しました' : '⚠️ 削除エラー (${res.status})'),
+          backgroundColor: success ? _green : _red,
+        ),
+      );
       if (success) await _loadData();
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('❌ 削除失敗: $e'),
-          backgroundColor: _red,
-        ));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('❌ 削除失敗: $e'),
+            backgroundColor: _red,
+          ),
+        );
       }
     }
   }
@@ -465,9 +468,11 @@ class _BlogManagementPageState extends State<BlogManagementPage>
               onPressed: () {
                 if (titleCtrl.text.trim().isEmpty ||
                     contentCtrl.text.trim().isEmpty) {
-                  ScaffoldMessenger.of(ctx2).showSnackBar(const SnackBar(
-                    content: Text('タイトルと本文は必須です'),
-                  ));
+                  ScaffoldMessenger.of(ctx2).showSnackBar(
+                    const SnackBar(
+                      content: Text('タイトルと本文は必須です'),
+                    ),
+                  );
                   return;
                 }
                 Navigator.pop(ctx2, true);
@@ -505,20 +510,24 @@ class _BlogManagementPageState extends State<BlogManagementPage>
       );
       if (!mounted) return;
       final success = res.status == 200 || res.status == 201;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(success ? '✅ 下書き作成しました' : '⚠️ 作成エラー (${res.status})'),
-        backgroundColor: success ? _green : _red,
-      ));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(success ? '✅ 下書き作成しました' : '⚠️ 作成エラー (${res.status})'),
+          backgroundColor: success ? _green : _red,
+        ),
+      );
       if (success) {
         setState(() => _tab = 'drafts');
         await _loadData();
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('❌ 作成失敗: $e'),
-          backgroundColor: _red,
-        ));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('❌ 作成失敗: $e'),
+            backgroundColor: _red,
+          ),
+        );
       }
     }
   }
@@ -604,17 +613,21 @@ class _BlogManagementPageState extends State<BlogManagementPage>
       );
       if (!mounted) return;
       final success = res.status == 200 || res.status == 201;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(success ? '✅ 返信しました' : '⚠️ 返信エラー (${res.status})'),
-        backgroundColor: success ? _green : _red,
-      ));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(success ? '✅ 返信しました' : '⚠️ 返信エラー (${res.status})'),
+          backgroundColor: success ? _green : _red,
+        ),
+      );
       if (success) await _loadData();
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('❌ 返信失敗: $e'),
-          backgroundColor: _red,
-        ));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('❌ 返信失敗: $e'),
+            backgroundColor: _red,
+          ),
+        );
       }
     } finally {
       if (mounted) setState(() => _replyingIds.remove(id));
@@ -636,7 +649,7 @@ class _BlogManagementPageState extends State<BlogManagementPage>
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(color: _orange),
+          borderSide: const BorderSide(color: _orange),
         ),
         counterStyle: const TextStyle(color: Colors.white38),
       );
@@ -865,7 +878,7 @@ class _BlogManagementPageState extends State<BlogManagementPage>
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: _orange),
+                  borderSide: const BorderSide(color: _orange),
                 ),
               ),
               onChanged: (v) => setState(() => _draftSearch = v),
@@ -1302,35 +1315,37 @@ class _BlogManagementPageState extends State<BlogManagementPage>
               const SizedBox(height: 8),
               Align(
                 alignment: Alignment.centerRight,
-                child: Builder(builder: (ctx) {
-                  final id = c['id']?.toString() ?? '';
-                  final isReplying = _replyingIds.contains(id);
-                  return SizedBox(
-                    height: 28,
-                    child: ElevatedButton.icon(
-                      onPressed: isReplying ? null : () => _replyToComment(c),
-                      icon: isReplying
-                          ? const SizedBox(
-                              width: 12,
-                              height: 12,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 1.5,
-                                color: Colors.white,
-                              ),
-                            )
-                          : const Icon(Icons.reply, size: 14),
-                      label: Text(
-                        isReplying ? '送信中...' : '返信する',
-                        style: const TextStyle(fontSize: 11, height: 1.5),
+                child: Builder(
+                  builder: (ctx) {
+                    final id = c['id']?.toString() ?? '';
+                    final isReplying = _replyingIds.contains(id);
+                    return SizedBox(
+                      height: 28,
+                      child: ElevatedButton.icon(
+                        onPressed: isReplying ? null : () => _replyToComment(c),
+                        icon: isReplying
+                            ? const SizedBox(
+                                width: 12,
+                                height: 12,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 1.5,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : const Icon(Icons.reply, size: 14),
+                        label: Text(
+                          isReplying ? '送信中...' : '返信する',
+                          style: const TextStyle(fontSize: 11, height: 1.5),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: _orange,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                        ),
                       ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: _orange,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
-                      ),
-                    ),
-                  );
-                }),
+                    );
+                  },
+                ),
               ),
             ],
           ],
