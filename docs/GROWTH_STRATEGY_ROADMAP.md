@@ -25743,3 +25743,26 @@ a9d7b1517 on main
   - additionalContext として agent にルーティングヒントを注入 → 修正品質向上
 - bc58b50b適用状況: #1765(✅ S119) #1766(✅ S119) #1752(✅ S119) #1753(✅ S119) #1779(✅ S119) #1836(✅ S120) #1834(✅ S120)
 - commit (次: settings.json + hook + migration + roadmap を1 commit)
+
+## 2026-05-03 (Win版#132 part 120) — NotebookLM × Issue Cross-Check 自動化 (manual triage Phase 2 自走化)
+
+### 完了
+- bc58b50b 既適用 reaffirm
+- `scripts/notebooklm_issue_crosscheck.py` 新規 (~250 行 / dependency-free / TRUE_GAP + DUP_OPEN 分類)
+- `.github/workflows/notebooklm-issue-crosscheck.yml` 新規 (daily 04:00 JST + Issue #1647 comment + TRUE_GAP ≥3 で Issue 自動作成)
+- 初回 smoke test (limit 25): TRUE_GAP 1 / DUP_OPEN 9 / OK 15
+- **fleet hygiene 問題 surface**: 4 instance 並列で同 notebook を Issue 化 → 規律拡散候補
+
+### Phase 6 進化観察 (= 第 9 例)
+- 「3 回手動 → 4 回目で自動化」pattern 観察 (part 115/117/119 で計 17 本手動 triage → 本 part で完結)
+- 「実装 → 自走化分離 → dispatch validation → 同類問題の自動化」4 phase 同セッション完結 pattern 第 1 例
+- dependency-free script pattern 第 4 例 (= ai_tool_watch / codex_session_check / session_residuals / notebooklm_crosscheck)
+
+### 次回候補
+- DUP_OPEN 9 件 cleanup (= 重複 Issue close)
+- title-search dedup 限界対応 (= body content scan + embedding similarity)
+- 「Issue 起票前 cross-check 必須」rule を inject-rules.txt 追加候補
+
+### Philosophy Alignment
+#3 優しい mentor (= 4 instance の重複起票を非難ではなく自動 cross-check で支援) / #6 資本=時間 (= 17 本 × 3 セッションの手動 triage を daily 自動化に移行) / #8 KPI=昨日の自分 (= part 115→117→119→120 で triage latency 短縮を定量化)
+
