@@ -25874,3 +25874,25 @@ a9d7b1517 on main
   - #242: Dart Package Publishing → https://dev.to/kanta13jp1/publishing-a-dart-package-to-pubdev-pubspec-dartdoc-and-automated-ci-3fig
 - **Phase53全4弾**: 8ファイル作成 (2030-08-03/10/17/24 JA+EN) / orphan branch 4本マージ+削除 / 全8ファイルpublished:true確認
 - **Issue #1873**: Dart+Flutter MCP server (Gemini Code Assist Agent Mode fleet統合) 登録
+
+## 2026-05-03 PS#4 S670 — フロントエンドビジュアルリグレッションテスト9社追加 (1852→1861社)
+
+- **visual-regressionカテゴリ新設 + 9社追加**:
+  - Applitools(AI Visual Testing/Eyes SDK/Ultrafast Grid)
+  - Happo(クロスブラウザ視覚リグレッション/コンポーネントSS)
+  - Lost Pixel(OSSビジュアルリグレッション/Storybook対応)
+  - Argos CI(OSSビジュアルテストCI/GitHub Actions)
+  - BackstopJS(OSS CSS視覚リグレッション/Puppeteer/Playwright)
+  - reg-suit(OSSビジュアルリグレッション/S3/GCS)
+  - Screener by Sauce Labs(AIビジュアルテスト/クロスブラウザ)
+  - Diffy(API/UIビジュアルリグレッション/本番ステージング差分)
+  - Visual Regression Tracker(OSSセルフホスト/チーム承認)
+- sitemap.xml: 1948→1957 URLs
+- landing_page.dart / user_manual_page.dart: 1852→1861社更新
+- **PHILOSOPHY #5 商品=ユーザー価値** (= ビジュアルテスト競合網羅でフロントエンド開発者SEO流入拡大)
+- **PHILOSOPHY #8 KPI=昨日の自分** (= S669→S670連続実施で1日3カテゴリ新設)
+
+### 次回候補 (PS#4 S671+)
+1. **#1762**: AIエージェント評価 (AgentBench/OSWorld/WebArena等 - comparison_page未登録)
+2. **#1760**: コード品質/静的解析残ギャップ (Codacy/CodeFactor/Veracode等)
+3. **S671**: APIテストツール (Hoppscotch/Bruno/Thunder Client/HTTPie等)

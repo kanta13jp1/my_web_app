@@ -65512,6 +65512,330 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'applitools-visual-ai': const _CompetitorInfo(
+    name: 'Applitools',
+    emoji: '👁️',
+    tagline:
+        'Applitools・AI Visual Testing・Eyes SDK・Ultrafast Grid・クロスブラウザ視覚的回帰テスト自動化で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Applitools代替 AI Visual Testing 視覚的回帰テスト Eyes SDK クロスブラウザ自動テスト',
+    accentColor: Color(0xFF00BCD4),
+    painPoints: [
+      'ビジュアルテスト専用・個人ライフ管理は別途必要',
+      'エンタープライズQAチーム向け・AI個人アシスタント機能なし',
+      '視覚的回帰テスト特化・財務・タスク管理は別途必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AI Visual Testing・Eyes SDK・Ultrafast Grid・クロスブラウザ対応',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'happo-visual-regression': const _CompetitorInfo(
+    name: 'Happo',
+    emoji: '📸',
+    tagline:
+        'Happo・クロスブラウザ視覚的リグレッションテスト・コンポーネントスクリーンショット・PR差分確認で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Happo代替 クロスブラウザ視覚的リグレッション コンポーネントスクリーンショット PR差分確認',
+    accentColor: Color(0xFF7B1FA2),
+    painPoints: [
+      '視覚的リグレッションテスト専用・個人ライフ管理は別途必要',
+      'フロントエンドQAツール・AI個人アシスタント機能なし',
+      'コンポーネントスクリーンショット特化・財務・タスク管理は別途必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'クロスブラウザ視覚的リグレッション・コンポーネントスクリーンショット・PR差分',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'lost-pixel-oss-visual': const _CompetitorInfo(
+    name: 'Lost Pixel',
+    emoji: '🔎',
+    tagline:
+        'Lost Pixel・OSSビジュアルリグレッションテスト・Storybook/Ladle/Histoire対応・自己ホスト可能で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Lost Pixel代替 OSSビジュアルリグレッション Storybook視覚テスト 自己ホスト フロントエンドCI',
+    accentColor: Color(0xFF43A047),
+    painPoints: [
+      'OSS視覚テスト専用・個人ライフ管理は別途必要',
+      '開発者向けフロントエンドQAツール・AI個人アシスタント機能なし',
+      'Storybookビジュアルテスト特化・財務・タスク管理は別途必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'OSSビジュアルリグレッション・Storybook/Ladle/Histoire対応・自己ホスト',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'argos-ci-visual-testing': const _CompetitorInfo(
+    name: 'Argos CI',
+    emoji: '🐕',
+    tagline:
+        'Argos CI・OSSビジュアルテストCI統合・GitHub Actions対応・スクリーンショット差分自動検出で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Argos CI代替 OSSビジュアルテスト CI統合 GitHub Actions スクリーンショット差分検出',
+    accentColor: Color(0xFFFF7043),
+    painPoints: [
+      'CI統合ビジュアルテスト専用・個人ライフ管理は別途必要',
+      '開発者向けCIビジュアルQAツール・AI個人アシスタント機能なし',
+      'スクリーンショット差分検出特化・財務・タスク管理は別途必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'OSSビジュアルテストCI統合・GitHub Actions対応・スクリーンショット差分',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'backstopjs-visual-regression': const _CompetitorInfo(
+    name: 'BackstopJS',
+    emoji: '🧪',
+    tagline:
+        'BackstopJS・OSS CSS視覚的リグレッションテスト・Puppeteer/Playwright/Casper対応・HTMLレポート生成で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'BackstopJS代替 CSS視覚リグレッション Puppeteer Playwright OSS フロントエンドテスト',
+    accentColor: Color(0xFF1565C0),
+    painPoints: [
+      'CSS視覚リグレッションテスト専用・個人ライフ管理は別途必要',
+      '開発者向けOSSテストツール・AI個人アシスタント機能なし',
+      'Puppeteer/Playwright視覚テスト特化・財務・タスク管理は別途必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'OSS CSS視覚リグレッション・Puppeteer/Playwright/Casper対応・HTMLレポート',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'reg-suit-visual-regression': const _CompetitorInfo(
+    name: 'reg-suit',
+    emoji: '📊',
+    tagline:
+        'reg-suit・OSSビジュアルリグレッションテストフレームワーク・S3/GCS対応・フレームワーク非依存で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'reg-suit代替 OSSビジュアルリグレッション S3 GCS フレームワーク非依存 フロントエンドCI',
+    accentColor: Color(0xFF00897B),
+    painPoints: [
+      'ビジュアルリグレッションフレームワーク専用・個人ライフ管理は別途必要',
+      '開発者向けOSSテストツール・AI個人アシスタント機能なし',
+      'S3/GCS対応視覚テスト特化・財務・タスク管理は別途必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'OSSビジュアルリグレッション・S3/GCS対応・フレームワーク非依存',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'screener-saucelabs-visual': const _CompetitorInfo(
+    name: 'Screener (Sauce Labs)',
+    emoji: '🖥️',
+    tagline:
+        'Screener by Sauce Labs・AIビジュアルテスト・クロスブラウザ/デバイス視覚テスト・CI/CD統合で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Screener Sauce Labs代替 AIビジュアルテスト クロスブラウザ視覚テスト エンタープライズQA CI/CD',
+    accentColor: Color(0xFFE53935),
+    painPoints: [
+      'エンタープライズビジュアルテスト専用・個人ライフ管理は別途必要',
+      'QAチーム向けSaaS・AI個人アシスタント機能なし',
+      'クロスブラウザ視覚QA特化・財務・タスク管理は別途必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AIビジュアルテスト・クロスブラウザ/デバイス・CI/CD統合・Sauce Labs連携',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'diffy-visual-regression': const _CompetitorInfo(
+    name: 'Diffy',
+    emoji: '🔄',
+    tagline:
+        'Diffy・API/UIビジュアルリグレッションテスト・本番/ステージング差分検出・自動スクリーンショット比較で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Diffy代替 API UIビジュアルリグレッション 本番ステージング差分検出 スクリーンショット比較',
+    accentColor: Color(0xFF5C6BC0),
+    painPoints: [
+      'API/UIビジュアルリグレッション専用・個人ライフ管理は別途必要',
+      '開発者向けデプロイ差分検出ツール・AI個人アシスタント機能なし',
+      '本番/ステージング比較特化・財務・タスク管理は別途必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'API/UIビジュアルリグレッション・本番/ステージング差分・自動スクリーンショット',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'visual-regression-tracker-vrt': const _CompetitorInfo(
+    name: 'Visual Regression Tracker',
+    emoji: '📈',
+    tagline:
+        'Visual Regression Tracker・OSSセルフホスト型ビジュアルリグレッション管理・マルチ言語SDK・チーム承認フローで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Visual Regression Tracker代替 OSSセルフホスト ビジュアルリグレッション マルチ言語SDK チーム承認フロー',
+    accentColor: Color(0xFF6D4C41),
+    painPoints: [
+      'OSSビジュアルリグレッション管理専用・個人ライフ管理は別途必要',
+      '開発チーム向けセルフホストQAツール・AI個人アシスタント機能なし',
+      'ビジュアル差分チーム承認特化・財務・タスク管理は別途必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'OSSセルフホスト型VRT・マルチ言語SDK・チーム承認フロー・Playwright対応',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
   'continue-dev-oss': const _CompetitorInfo(
     name: 'Continue.dev',
     emoji: '🔗',
@@ -65956,6 +66280,15 @@ class _ComparisonShellState extends State<_ComparisonShell> {
     'aider-ai-programmer': 'ai-coding-agent',
     'openhands-all-hands': 'ai-coding-agent',
     'continue-dev-oss': 'ai-coding-agent',
+    'applitools-visual-ai': 'visual-regression',
+    'happo-visual-regression': 'visual-regression',
+    'lost-pixel-oss-visual': 'visual-regression',
+    'argos-ci-visual-testing': 'visual-regression',
+    'backstopjs-visual-regression': 'visual-regression',
+    'reg-suit-visual-regression': 'visual-regression',
+    'screener-saucelabs-visual': 'visual-regression',
+    'diffy-visual-regression': 'visual-regression',
+    'visual-regression-tracker-vrt': 'visual-regression',
   };
 
   @override
