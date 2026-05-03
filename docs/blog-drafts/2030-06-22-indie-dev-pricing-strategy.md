@@ -3,7 +3,7 @@ title: "インディー開発者のための価格設計戦略 — 心理的価�
 emoji: "💰"
 type: "idea"
 topics: ["indiedev", "startup", "saas", "business"]
-published: false
+published: true
 ---
 
 # インディー開発者のための価格設計戦略 — 心理的価格・フリーミアム・年払い転換の実践
