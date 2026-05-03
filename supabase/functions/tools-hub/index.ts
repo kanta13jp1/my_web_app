@@ -2708,6 +2708,48 @@ function prev3AvgFinishBonus(
   return 0;
 }
 
+function prev2FormGapBonus(
+  topEntry: Record<string, unknown> | undefined,
+): number {
+  if (!topEntry) return 0;
+  const f1 = numericOrFallback(topEntry.prev_finish, 0);
+  const f2 = numericOrFallback(topEntry.prev2_finish, 0);
+  if (!f1 || !f2) return 0;
+  const gap = f2 - f1; // positive = improvement (lower number = better finish)
+  if (gap >= 3) return 0.01; // 3着以上急改善 = 直近上昇加速シグナル
+  if (gap <= -3) return -0.01; // 3着以上急悪化 = 直近下降加速シグナル
+  return 0;
+}
+
+function courseSurfaceMatchBonus(
+  topEntry: Record<string, unknown> | undefined,
+  currentCourseType: string,
+): number {
+  if (!topEntry || !currentCourseType) return 0;
+  const prev = String(topEntry.prev_course_type ?? "").trim();
+  if (!prev) return 0;
+  if (prev === currentCourseType) return 0.01; // 前走同じ馬場種別 = 実績の舞台で安心感
+  return -0.01; // 馬場種別変更 = 未知の適性リスク
+}
+
+function fieldWeightRankBonus(
+  topEntry: Record<string, unknown> | undefined,
+  entries: Record<string, unknown>[],
+): number {
+  if (!topEntry || entries.length < 3) return 0;
+  const w = numericOrFallback(topEntry.weight_kg, 0);
+  if (!w) return 0;
+  const weights = entries
+    .map((e) => numericOrFallback(e.weight_kg, 0))
+    .filter((x) => x > 0);
+  if (weights.length < 3) return 0;
+  const min = Math.min(...weights);
+  const max = Math.max(...weights);
+  if (w === min) return 0.01; // フィールド最軽量 = 斤量面の相対的有利
+  if (w === max) return -0.01; // フィールド最重量 = 斤量面の相対的不利
+  return 0;
+}
+
 function prevTimeGapBonus(
   topEntry: Record<string, unknown> | undefined,
 ): number {
@@ -3246,6 +3288,9 @@ function buildHistoricalBaselinePrediction(
   const prevPopBounce = prevPopularityBounceBonus(first);
   const wtChangeCourse = weightChangeCourseSuitBonus(first);
   const prev3AvgFinish = prev3AvgFinishBonus(first);
+  const prev2FormGap = prev2FormGapBonus(first);
+  const courseSurfaceMatch = courseSurfaceMatchBonus(first, race.course_type);
+  const fieldWeightRank = fieldWeightRankBonus(first, entries);
   const confidence = Math.min(
     clampConfidence(
       0.31 + dataQuality * 0.22 + oddsCoverage * 0.12 + historyCoverage * 0.07 +
@@ -3267,7 +3312,8 @@ function buildHistoricalBaselinePrediction(
         sireRank + prevDistTrend + oddsSpread + prevWinMargin + horseNumRatio +
         multiSignal + trackCondAdapt + runStyleDist + prev2Consist + classStep +
         favConsist + jockeyTopCourse + trainerTopCourse + prev3FormTrend +
-        jockeyChange + prevPopBounce + wtChangeCourse + prev3AvgFinish,
+        jockeyChange + prevPopBounce + wtChangeCourse + prev3AvgFinish +
+        prev2FormGap + courseSurfaceMatch + fieldWeightRank,
     ),
     maxConf,
   );
