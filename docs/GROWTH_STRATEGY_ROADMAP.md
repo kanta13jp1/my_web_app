@@ -25964,3 +25964,22 @@ a9d7b1517 on main
   - AI_FALLBACK_RUNBOOK.md に MCP auto-retry v2.1.126 改善詳細追記
   - /recap (CLAUDE_CODE_ENABLE_AWAY_SUMMARY) + project purge fleet活用法文書化
   - MCP_TIMEOUT=60000 (S119設定) + auto-retry の相乗効果確認
+
+
+### PS#3 S152 (2026-05-04) — AI大学400→402社化 + 未適用NB8件Issue登録
+- **AI大学コンテンツ2件追加** (400→402社):
+  - did: ai_video_avatar (AIアバター/V4 Expressive/Video Translate 100+言語/WebRTC Realtime/Embed SDK)
+  - academic: llm_mechanics (Transformer/Self-Attention/RLHF/Scaling Laws/幻覚メカニズム/Prompt Caching理論)
+- **bc58b50b確認**: 全11タスク実装済み状態維持 (S119-S122で完了)
+- **NotebookLM 未適用8冊 新規Issue登録**:
+  - #1885: 52daba63 Claude Code Agentic Future → PS#3
+  - #1886: 9429530e Claude Character/Ethics → PS#3
+  - #1887: 9871b0b1 Obsidian Second Brain → PS#3
+  - #1888: f0895eb0 Remote Control Guide → PS#3
+  - #1889: 2ee2ea76 GPT-Image-2 → PS#4
+  - #1890: e89d2ca7 Anthropic Evolution → Win版
+  - #1891: ddde5a4b Vibe Coding → PS#3
+  - #1892: 491f57bc Collaborative Intelligence → Win版
+- **Issue整理**: #1854 close (LLM実装済み)
+- **タイムスタンプ衝突**: did_video 000000→000100 (PS#6 ps6_s163と衝突 → 自動fix)
+- commit 14ec7a2de on main (タイムスタンプfix含む)
