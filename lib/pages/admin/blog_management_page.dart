@@ -2,6 +2,7 @@
 // ブログ管理ページ: 投稿済み記事一覧・エンゲージメント・コメント確認
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class BlogManagementPage extends StatefulWidget {
   const BlogManagementPage({super.key});
@@ -16,8 +17,11 @@ class _BlogManagementPageState extends State<BlogManagementPage>
 
   List<Map<String, dynamic>> _engagement = [];
   List<Map<String, dynamic>> _comments = [];
+  List<Map<String, dynamic>> _drafts = [];
   bool _isLoading = true;
-  String _tab = 'articles'; // 'articles' | 'comments' | 'likers'
+  bool _isSyncing = false;
+  String _tab = 'articles'; // 'articles' | 'comments' | 'drafts'
+  String _platformFilter = 'all'; // 'all' | 'qiita' | 'devto'
 
   static const _bg = Color(0xFF0A0A0A);
   static const _card = Color(0xFF1A1A2E);
@@ -34,27 +38,70 @@ class _BlogManagementPageState extends State<BlogManagementPage>
   Future<void> _loadData() async {
     setState(() => _isLoading = true);
     try {
-      final engRes = await _supabase
-          .from('blog_engagement')
-          .select()
-          .order('likes_count', ascending: false)
-          .limit(100);
-      final cmtRes = await _supabase
-          .from('blog_comments')
-          .select()
-          .order('fetched_at', ascending: false)
-          .limit(200);
+      final results = await Future.wait([
+        _supabase
+            .from('blog_engagement')
+            .select()
+            .order('likes_count', ascending: false)
+            .limit(200),
+        _supabase
+            .from('blog_comments')
+            .select()
+            .order('fetched_at', ascending: false)
+            .limit(300),
+        _supabase
+            .from('blog_posts')
+            .select('id, title, status, target_platforms, draft_path, posted_at, url, created_at')
+            .inFilter('status', ['draft', 'ready'])
+            .order('created_at', ascending: false)
+            .limit(50),
+      ]);
 
       if (mounted) {
         setState(() {
-          _engagement = List<Map<String, dynamic>>.from(engRes as List);
-          _comments = List<Map<String, dynamic>>.from(cmtRes as List);
+          _engagement = List<Map<String, dynamic>>.from(results[0] as List);
+          _comments = List<Map<String, dynamic>>.from(results[1] as List);
+          _drafts = List<Map<String, dynamic>>.from(results[2] as List);
         });
       }
     } catch (e) {
       debugPrint('blog management load error: $e');
     } finally {
       if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _syncNow() async {
+    if (_isSyncing) return;
+    setState(() => _isSyncing = true);
+    try {
+      final res = await _supabase.functions.invoke(
+        'schedule-hub',
+        body: {'action': 'blog.sync_engagement'},
+      );
+      if (mounted) {
+        final success = res.status == 200;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(success ? '✅ 同期完了' : '⚠️ 同期エラー (${res.status})'),
+            backgroundColor: success ? _green : _red,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+        if (success) await _loadData();
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('❌ 同期失敗: $e'),
+            backgroundColor: _red,
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isSyncing = false);
     }
   }
 
@@ -83,8 +130,27 @@ class _BlogManagementPageState extends State<BlogManagementPage>
         ),
         iconTheme: const IconThemeData(color: Colors.white),
         actions: [
+          if (_isSyncing)
+            const Padding(
+              padding: EdgeInsets.all(12),
+              child: SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Colors.white54,
+                ),
+              ),
+            )
+          else
+            IconButton(
+              icon: const Icon(Icons.sync, color: Colors.white70),
+              tooltip: 'Qiita/dev.to から同期',
+              onPressed: _syncNow,
+            ),
           IconButton(
             icon: const Icon(Icons.refresh, color: Colors.white70),
+            tooltip: 'DB 再読み込み',
             onPressed: _loadData,
           ),
         ],
@@ -100,6 +166,7 @@ class _BlogManagementPageState extends State<BlogManagementPage>
                   SliverToBoxAdapter(child: _buildTabBar()),
                   if (_tab == 'articles') ..._buildArticleSliver(),
                   if (_tab == 'comments') ..._buildCommentSliver(),
+                  if (_tab == 'drafts') ..._buildDraftSliver(),
                   const SliverToBoxAdapter(child: SizedBox(height: 24)),
                 ],
               ),
@@ -135,6 +202,13 @@ class _BlogManagementPageState extends State<BlogManagementPage>
             '$unreplied',
             Icons.comment_outlined,
             color: unreplied > 0 ? _red : _green,
+          ),
+          const SizedBox(width: 8),
+          _statCard(
+            '下書き',
+            '${_drafts.length}',
+            Icons.drafts_outlined,
+            color: _drafts.isNotEmpty ? _orange : Colors.white38,
           ),
         ],
       ),
@@ -184,15 +258,34 @@ class _BlogManagementPageState extends State<BlogManagementPage>
   // ── タブバー ────────────────────────────────────────────────
   Widget _buildTabBar() {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Row(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _tabBtn('articles', '記事一覧'),
-          const SizedBox(width: 8),
-          _tabBtn(
-            'comments',
-            'コメント${_unrepliedCount > 0 ? ' ($_unrepliedCount)' : ''}',
+          Row(
+            children: [
+              _tabBtn('articles', '記事一覧 (${_filteredEngagement.length})'),
+              const SizedBox(width: 8),
+              _tabBtn(
+                'comments',
+                'コメント${_unrepliedCount > 0 ? ' ($_unrepliedCount)' : ''}',
+              ),
+              const SizedBox(width: 8),
+              _tabBtn('drafts', '下書き (${_drafts.length})'),
+            ],
           ),
+          if (_tab == 'articles') ...[
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                _filterBtn('all', '全て'),
+                const SizedBox(width: 6),
+                _filterBtn('qiita', 'Qiita'),
+                const SizedBox(width: 6),
+                _filterBtn('devto', 'dev.to'),
+              ],
+            ),
+          ],
         ],
       ),
     );
@@ -203,7 +296,7 @@ class _BlogManagementPageState extends State<BlogManagementPage>
     return GestureDetector(
       onTap: () => setState(() => _tab = id),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
         decoration: BoxDecoration(
           color: selected ? _orange : Colors.white12,
           borderRadius: BorderRadius.circular(20),
@@ -213,7 +306,7 @@ class _BlogManagementPageState extends State<BlogManagementPage>
           style: TextStyle(
             color: selected ? Colors.white : Colors.white54,
             fontWeight: FontWeight.bold,
-            fontSize: 13,
+            fontSize: 12,
             height: 1.5,
           ),
         ),
@@ -221,22 +314,73 @@ class _BlogManagementPageState extends State<BlogManagementPage>
     );
   }
 
+  Widget _filterBtn(String id, String label) {
+    final selected = _platformFilter == id;
+    return GestureDetector(
+      onTap: () => setState(() => _platformFilter = id),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        decoration: BoxDecoration(
+          color: selected ? Colors.white24 : Colors.transparent,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: selected ? Colors.white38 : Colors.white12,
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: selected ? Colors.white70 : Colors.white38,
+            fontSize: 11,
+            height: 1.5,
+          ),
+        ),
+      ),
+    );
+  }
+
+  List<Map<String, dynamic>> get _filteredEngagement {
+    if (_platformFilter == 'all') return _engagement;
+    return _engagement.where((e) => e['platform'] == _platformFilter).toList();
+  }
+
   // ── 記事一覧 ────────────────────────────────────────────────
   List<Widget> _buildArticleSliver() {
-    if (_engagement.isEmpty) {
+    final items = _filteredEngagement;
+    if (items.isEmpty) {
       return [
-        const SliverToBoxAdapter(
+        SliverToBoxAdapter(
           child: Padding(
-            padding: EdgeInsets.all(32),
-            child: Center(
-              child: Text(
-                'blog-engagement.yml を実行すると\nデータが表示されます',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: Colors.white38,
-                  height: 1.5,
+            padding: const EdgeInsets.all(32),
+            child: Column(
+              children: [
+                const Icon(Icons.article_outlined, color: Colors.white24, size: 48),
+                const SizedBox(height: 12),
+                const Text(
+                  'データなし\nSync ボタンで Qiita / dev.to から取得できます',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: Colors.white38, height: 1.6),
                 ),
-              ),
+                const SizedBox(height: 16),
+                ElevatedButton.icon(
+                  onPressed: _isSyncing ? null : _syncNow,
+                  icon: _isSyncing
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Icon(Icons.sync),
+                  label: Text(_isSyncing ? '同期中...' : '今すぐ同期'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _orange,
+                    foregroundColor: Colors.white,
+                  ),
+                ),
+              ],
             ),
           ),
         ),
@@ -248,8 +392,8 @@ class _BlogManagementPageState extends State<BlogManagementPage>
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
         sliver: SliverList(
           delegate: SliverChildBuilderDelegate(
-            (ctx, i) => _buildArticleCard(_engagement[i]),
-            childCount: _engagement.length,
+            (ctx, i) => _buildArticleCard(items[i]),
+            childCount: items.length,
           ),
         ),
       ),
@@ -264,11 +408,12 @@ class _BlogManagementPageState extends State<BlogManagementPage>
     final comments = e['comments_count'] as int? ?? 0;
     final views = e['views_count'] as int? ?? 0;
 
-    final platformColor =
-        platform == 'qiita' ? const Color(0xFF55C500) : const Color(0xFF08090A);
-    final platformBg = platform == 'qiita'
-        ? const Color(0xFF55C500).withAlpha(20)
-        : const Color(0xFFFFFFFF).withAlpha(10);
+    final platformColor = switch (platform) {
+      'qiita' => const Color(0xFF55C500),
+      'devto' => const Color(0xFF3D5AFE),
+      _ => Colors.white38,
+    };
+    final platformBg = platformColor.withAlpha(25);
 
     return Card(
       color: _card,
@@ -525,10 +670,132 @@ class _BlogManagementPageState extends State<BlogManagementPage>
     );
   }
 
-  void _openUrl(String url) {
-    // URLはブラウザで開く (dart:html or url_launcher)
-    // Web環境: window.open(url, '_blank')
-    debugPrint('Open: $url');
+  // ── 下書き一覧 ──────────────────────────────────────────────
+  List<Widget> _buildDraftSliver() {
+    if (_drafts.isEmpty) {
+      return [
+        const SliverToBoxAdapter(
+          child: Padding(
+            padding: EdgeInsets.all(32),
+            child: Center(
+              child: Text(
+                '下書きなし',
+                style: TextStyle(color: Colors.white38, height: 1.5),
+              ),
+            ),
+          ),
+        ),
+      ];
+    }
+
+    return [
+      SliverPadding(
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+        sliver: SliverList(
+          delegate: SliverChildBuilderDelegate(
+            (ctx, i) => _buildDraftCard(_drafts[i]),
+            childCount: _drafts.length,
+          ),
+        ),
+      ),
+    ];
+  }
+
+  Widget _buildDraftCard(Map<String, dynamic> d) {
+    final title = d['title'] as String? ?? '(no title)';
+    final status = d['status'] as String? ?? 'draft';
+    final platforms = d['target_platforms'] as String? ?? '';
+    final url = d['url'] as String? ?? '';
+    final draftPath = d['draft_path'] as String? ?? '';
+
+    final statusColor = status == 'ready' ? _orange : Colors.white38;
+
+    return Card(
+      color: _card,
+      margin: const EdgeInsets.only(bottom: 8),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: statusColor.withAlpha(30),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: statusColor.withAlpha(80)),
+                  ),
+                  child: Text(
+                    status.toUpperCase(),
+                    style: TextStyle(
+                      color: statusColor,
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                      height: 1.5,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    title,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                      height: 1.5,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                if (url.isNotEmpty)
+                  IconButton(
+                    icon: const Icon(Icons.open_in_new, size: 16),
+                    color: _orange,
+                    tooltip: '記事を開く',
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(
+                      minWidth: 32,
+                      minHeight: 32,
+                    ),
+                    onPressed: () => _openUrl(url),
+                  ),
+              ],
+            ),
+            if (platforms.isNotEmpty || draftPath.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Text(
+                  [
+                    if (platforms.isNotEmpty) '📍 $platforms',
+                    if (draftPath.isNotEmpty) '📄 $draftPath',
+                  ].join('  '),
+                  style: const TextStyle(
+                    color: Colors.white38,
+                    fontSize: 11,
+                    height: 1.5,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _openUrl(String url) async {
+    final uri = Uri.tryParse(url);
+    if (uri == null) return;
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
   }
 
   String _formatNum(int n) {
