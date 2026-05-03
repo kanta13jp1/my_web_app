@@ -53,6 +53,7 @@ import '../pages/shopping_list_page.dart';
 import '../pages/stock_tasks_page.dart';
 import '../pages/table_data_page.dart';
 import '../pages/tech_blog_tracker_page.dart';
+import '../pages/blog_page.dart';
 import '../pages/template_marketplace_page.dart';
 import '../pages/thought_anchor_page.dart';
 import '../pages/thought_capture_page.dart';
@@ -983,6 +984,16 @@ List<HomeToolEntry> buildHomeToolCatalog({
       color: const Color(0xFF3D5AFE),
       keywords: const <String>['公開メモ', 'SEO', 'public'],
       onOpen: (context) => _pushPage(context, const PublicMemoDirectoryPage()),
+    ),
+    HomeToolEntry(
+      id: 'blog',
+      sectionId: 'growth',
+      title: '公式ブログ',
+      subtitle: '技術・AI・ライフマネジメント記事を読む',
+      icon: Icons.rss_feed,
+      color: const Color(0xFFFF6B35),
+      keywords: const <String>['ブログ', 'blog', '記事', '技術', 'qiita', 'devto'],
+      onOpen: (context) => _pushPage(context, const BlogPage()),
     ),
     HomeToolEntry(
       id: 'tech-blog-tracker',
