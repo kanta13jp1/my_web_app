@@ -25934,3 +25934,21 @@ a9d7b1517 on main
 ### Philosophy Alignment
 #3 優しい mentor (= 重複起票を非難せず自動 cleanup + 構造 rule で予防) / #6 資本=時間 (= 9 Issue × triage 工数を即時 close で削減) / #8 KPI=昨日の自分 (= part 120 検出 → 121 cleanup の連続性で fleet 規律加速度可視化)
 
+
+## 2026-05-03 (Win版#132 part 122) — [ISSUE-PRECHECK] rule 全 instance 同期 cross-instance-pr 起票
+
+### 完了
+- bc58b50b 既適用 reaffirm (notebook_count=97 / harness_found=true / behind=0)
+- NotebookLM count delta なし (97 不変 / part 120 と同数)
+- cross-instance-pr 起票: `docs/cross-instance-prs/20260503_issue_precheck_rule_all_instances.md`
+  - 対象: VSCode / PS#1-#6 / Codex#1-#2 (= 9 sister instance)
+  - part 121 で Win 版に追加した [ISSUE-PRECHECK] rule の全 instance home dir 同期依頼
+
+### Phase 6 進化観察 (= 第 11 例 / 半世紀記念 50 part 連続 dogfood)
+- discipline-spread cross-instance-pr 第 2 例 (= part 119 memo commit pattern が第 1 例)
+- 軽量定常 cycle pattern 第 1 例 (= 重 実装 part 120/121 + 軽 拡散 part 122)
+- fleet hygiene infra 5 layer 化 (= safety cron + residuals sync + crosscheck + precheck rule + 拡散 cross-pr)
+
+### Philosophy Alignment
+#3 優しい mentor (= 全 9 instance に「rule を強制」せず「依頼」として共有) / #6 資本=時間 (= 全 instance home dir 1 度更新で永続予防) / #8 KPI=昨日の自分 (= part 119/120/121/122 の連続性で fleet 規律拡散加速度を可視化)
+
