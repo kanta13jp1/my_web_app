@@ -25,7 +25,10 @@ def main():
         with open(f, encoding='utf-8', errors='ignore') as fp:
             all_dart += fp.read()
 
-    pattern = re.compile(r"invoke\(\s*'([^']+)'", re.DOTALL)
+    # Match real Supabase function invocations such as
+    # `client.functions.invoke('schedule-hub')` without counting local helper
+    # methods like `BlogService._invoke('blog.update_post')`.
+    pattern = re.compile(r"(?<![A-Za-z0-9_])invoke\(\s*'([^']+)'", re.DOTALL)
     called = set(pattern.findall(all_dart))
 
     print(f'Deployed EFs: {len(deployed)}')
