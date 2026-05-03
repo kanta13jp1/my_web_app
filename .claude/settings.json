@@ -14,7 +14,8 @@
   },
   "env": {
     "MCP_TIMEOUT": "60000",
-    "MAX_MCP_OUTPUT_TOKENS": "50000"
+    "MAX_MCP_OUTPUT_TOKENS": "50000",
+    "ENABLE_MCP_TOOL_SEARCH": "true"
   },
   "hooks": {
     "PostToolUse": [

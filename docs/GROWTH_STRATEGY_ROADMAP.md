@@ -25729,3 +25729,17 @@ a9d7b1517 on main
   - #1838: DBHub/Bytebase MCP (Supabase readonly安全アクセス)
 - **全26ノートブック適用確認完了**: 9b2e686f/#1768・6deda071/#1769・72d24a65/#1759・239c758b/#1775 含め全件Issue登録済
 - commit f14529ef7 on main
+
+
+### PS#5 S120 (2026-05-03) — bc58b50b #1836 ENABLE_MCP_TOOL_SEARCH + #1834 Plankton Pattern
+- **#1836: ENABLE_MCP_TOOL_SEARCH設定追加** (Issue #1836):
+  - `.claude/settings.json` の `env` に `ENABLE_MCP_TOOL_SEARCH: "true"` 追加
+  - MCP tool schema を deferred/on-demand ロードに切り替え、context 95%削減効果
+  - 既存 `MCP_TIMEOUT`/`MAX_MCP_OUTPUT_TOKENS` と合わせ MCP 安定性設定3点セット完成
+- **#1834: Plankton Pattern実装** (Issue #1834 Close):
+  - `.claude/hooks/post-tool-use-dart-format.ps1` 拡張 (bc58b50b #1765 + #1834)
+  - dart format 成功後に `flutter analyze` を自動実行する2ステップ自己修正ループ
+  - エラー件数集計 + SIMPLE(1-2件)/COMPLEX(3件以上)/WARN_ONLY の3段階 severity 分類
+  - additionalContext として agent にルーティングヒントを注入 → 修正品質向上
+- bc58b50b適用状況: #1765(✅ S119) #1766(✅ S119) #1752(✅ S119) #1753(✅ S119) #1779(✅ S119) #1836(✅ S120) #1834(✅ S120)
+- commit (次: settings.json + hook + migration + roadmap を1 commit)
