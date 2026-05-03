@@ -1,6 +1,6 @@
 ---
 title: "Dart Records & Patterns Deep Dive — Destructuring, Sealed Classes & Exhaustive Matching"
-published: false
+published: true
 tags: dart, flutter, programming, design-pattern
 canonical_url: null
 ---
