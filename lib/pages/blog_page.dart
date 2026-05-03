@@ -49,7 +49,8 @@ class _BlogPageState extends State<BlogPage> {
         _supabase
             .from('blog_engagement')
             .select(
-                'platform, article_id, title, likes_count, views_count, comments_count, url')
+              'platform, article_id, title, likes_count, views_count, comments_count, url',
+            )
             .order('likes_count', ascending: false)
             .limit(200),
       ]);

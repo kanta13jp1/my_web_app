@@ -164,7 +164,7 @@ class _BlogManagementPageState extends State<BlogManagementPage>
       final msg = ok
           ? '✅ 投稿完了 ${[
               if (qiitaOk) 'Qiita',
-              if (devtoOk) 'dev.to'
+              if (devtoOk) 'dev.to',
             ].join(' + ')}'
           : '⚠️ 投稿エラー (${res.status}): ${data?['error'] ?? ''}';
       ScaffoldMessenger.of(context).showSnackBar(
@@ -827,8 +827,10 @@ class _BlogManagementPageState extends State<BlogManagementPage>
                 'コメント${_unrepliedCount > 0 ? ' ($_unrepliedCount)' : ''}',
               ),
               const SizedBox(width: 8),
-              _tabBtn('drafts',
-                  '下書き (${_filteredDrafts.length}/${_drafts.length})'),
+              _tabBtn(
+                'drafts',
+                '下書き (${_filteredDrafts.length}/${_drafts.length})',
+              ),
               const SizedBox(width: 8),
               _tabBtn(
                 'corrections',
@@ -995,8 +997,11 @@ class _BlogManagementPageState extends State<BlogManagementPage>
             padding: const EdgeInsets.all(32),
             child: Column(
               children: [
-                const Icon(Icons.article_outlined,
-                    color: Colors.white24, size: 48),
+                const Icon(
+                  Icons.article_outlined,
+                  color: Colors.white24,
+                  size: 48,
+                ),
                 const SizedBox(height: 12),
                 const Text(
                   'データなし\nSync ボタンで Qiita / dev.to から取得できます',
@@ -1359,8 +1364,11 @@ class _BlogManagementPageState extends State<BlogManagementPage>
             padding: const EdgeInsets.all(32),
             child: Column(
               children: [
-                const Icon(Icons.drafts_outlined,
-                    color: Colors.white24, size: 48),
+                const Icon(
+                  Icons.drafts_outlined,
+                  color: Colors.white24,
+                  size: 48,
+                ),
                 const SizedBox(height: 12),
                 Text(
                   _drafts.isEmpty ? '下書きなし\n右下のボタンで新規作成できます' : '検索結果なし',
@@ -1835,7 +1843,7 @@ class _BlogManagementPageState extends State<BlogManagementPage>
     try {
       await _supabase.from('blog_corrections').update({
         'approved': false,
-        'applied_at': DateTime.now().toIso8601String()
+        'applied_at': DateTime.now().toIso8601String(),
       }).eq('id', id);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
