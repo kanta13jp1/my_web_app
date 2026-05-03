@@ -65836,6 +65836,330 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'bruno-oss-api': const _CompetitorInfo(
+    name: 'Bruno',
+    emoji: '🐶',
+    tagline:
+        'Bruno・OSSローカルAPIクライアント・Git管理可能・Postman/Insomnia代替・オフライン完全対応で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Bruno代替 OSSAPIクライアント Gitフレンドリー Postman代替 Insomnia代替 オフラインAPI',
+    accentColor: Color(0xFFFF6F00),
+    painPoints: [
+      'OSSAPIクライアント専用・個人ライフ管理は別途必要',
+      '開発者向けAPIテストツール・AI個人アシスタント機能なし',
+      'Gitベース設定特化・財務・タスク管理は別途必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'OSSローカルAPIクライアント・Git管理可能・Postman/Insomnia代替・完全オフライン',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'thunder-client-vscode': const _CompetitorInfo(
+    name: 'Thunder Client',
+    emoji: '⚡',
+    tagline:
+        'Thunder Client・VSCode拡張APIクライアント・軽量・Git同期・ローカルスクリプト不要・Postman代替で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Thunder Client代替 VSCode API拡張 軽量APIクライアント Git同期 Postman代替 IDE統合',
+    accentColor: Color(0xFFFF6D00),
+    painPoints: [
+      'VSCode拡張APIクライアント専用・個人ライフ管理は別途必要',
+      'IDE内開発者向けツール・AI個人アシスタント機能なし',
+      'API開発テスト特化・財務・タスク管理は別途必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'VSCode拡張軽量APIクライアント・Git同期・スクリプト不要・Postman代替',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'httpie-api-client': const _CompetitorInfo(
+    name: 'HTTPie',
+    emoji: '🌐',
+    tagline:
+        'HTTPie・人間向けHTTPクライアント・CLI/デスクトップGUI/Web・JSON強調表示・REST/GraphQL対応で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'HTTPie代替 人間向けHTTPクライアント CLI APIテスト JSON強調 REST GraphQL デスクトップ',
+    accentColor: Color(0xFF009688),
+    painPoints: [
+      'HTTPクライアント専用・個人ライフ管理は別途必要',
+      '開発者向けCLI/GUIツール・AI個人アシスタント機能なし',
+      'REST/GraphQL APIテスト特化・財務・タスク管理は別途必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '人間向けHTTPクライアント・CLI/デスクトップGUI/Web・JSON強調・REST/GraphQL',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'rapidapi-platform': const _CompetitorInfo(
+    name: 'RapidAPI Client',
+    emoji: '🚀',
+    tagline:
+        'RapidAPI Client・API marketplace統合・APIハブ・設計/テスト/モニタリング一体型・エンタープライズAPIで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'RapidAPI Client代替 API marketplace統合 APIハブ 設計テストモニタリング エンタープライズAPI',
+    accentColor: Color(0xFF0052CC),
+    painPoints: [
+      'API marketplace/クライアント専用・個人ライフ管理は別途必要',
+      'エンタープライズ開発者向け・AI個人アシスタント機能なし',
+      'API管理ハブ特化・財務・タスク管理は別途必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'API marketplace統合・設計/テスト/モニタリング一体型・エンタープライズ対応',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'apidog-all-in-one': const _CompetitorInfo(
+    name: 'Apidog',
+    emoji: '🐶',
+    tagline:
+        'Apidog・API設計/Mock/テスト/ドキュメント統合プラットフォーム・Postman+Swagger代替・チーム協働で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Apidog代替 API設計Mock統合 Postman Swagger代替 APIドキュメント チーム協働 オールインワン',
+    accentColor: Color(0xFFFF4081),
+    painPoints: [
+      'API設計/Mock/テスト統合ツール専用・個人ライフ管理は別途必要',
+      '開発チーム向けAPIプラットフォーム・AI個人アシスタント機能なし',
+      'API開発統合特化・財務・タスク管理は別途必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'API設計/Mock/テスト/ドキュメント統合・Postman+Swagger代替・チーム協働',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'paw-api-tool': const _CompetitorInfo(
+    name: 'Paw',
+    emoji: '🐾',
+    tagline:
+        'Paw・Mac向けフル機能APIクライアント・動的値・コード生成・拡張機能・RapidAPI買収で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Paw代替 Mac APIクライアント フル機能 動的値 コード生成 拡張機能 RapidAPI Mac専用',
+    accentColor: Color(0xFF795548),
+    painPoints: [
+      'Mac向けAPIクライアント専用・個人ライフ管理は別途必要',
+      'Mac開発者向けネイティブツール・AI個人アシスタント機能なし',
+      'API開発/テスト特化・財務・タスク管理は別途必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Mac向けフル機能APIクライアント・動的値・コード生成・拡張機能',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'restfox-oss': const _CompetitorInfo(
+    name: 'Restfox',
+    emoji: '🦊',
+    tagline:
+        'Restfox・OSSブラウザ対応APIクライアント・PWA・Postman代替・プライバシー重視・自己ホスト可能で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Restfox代替 OSSブラウザAPIクライアント PWA Postman代替 プライバシー重視 自己ホスト',
+    accentColor: Color(0xFF0288D1),
+    painPoints: [
+      'OSSブラウザAPIクライアント専用・個人ライフ管理は別途必要',
+      '開発者向けプライバシー重視ツール・AI個人アシスタント機能なし',
+      'PWA対応API開発特化・財務・タスク管理は別途必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'OSSブラウザ対応APIクライアント・PWA・Postman代替・プライバシー重視',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'requestly-api-client': const _CompetitorInfo(
+    name: 'Requestly',
+    emoji: '🔧',
+    tagline:
+        'Requestly・HTTP傍受/モック・APIモッキング・リクエスト変更・チーム共有・フロントエンド開発加速で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Requestly代替 HTTP傍受 APIモッキング リクエスト変更 フロントエンド開発 チーム共有',
+    accentColor: Color(0xFF43A047),
+    painPoints: [
+      'HTTP傍受/APIモック専用・個人ライフ管理は別途必要',
+      'フロントエンド開発者向けツール・AI個人アシスタント機能なし',
+      'APIモッキング特化・財務・タスク管理は別途必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'HTTP傍受/モック・APIモッキング・リクエスト変更・フロントエンド開発加速',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'milkman-oss-api': const _CompetitorInfo(
+    name: 'Milkman',
+    emoji: '🥛',
+    tagline:
+        'Milkman・OSSマルチプロトコルAPIクライアント・JVM/JavaFX・HTTP/gRPC/WebSocket/Kafka対応で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Milkman代替 OSSマルチプロトコルAPI JVM JavaFX HTTP gRPC WebSocket Kafka APIクライアント',
+    accentColor: Color(0xFF5C6BC0),
+    painPoints: [
+      'マルチプロトコルAPIクライアント専用・個人ライフ管理は別途必要',
+      '開発者向けJVM OSSツール・AI個人アシスタント機能なし',
+      'gRPC/WebSocket/Kafka対応特化・財務・タスク管理は別途必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'OSSマルチプロトコル・HTTP/gRPC/WebSocket/Kafka対応・JVM/JavaFX',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
   'continue-dev-oss': const _CompetitorInfo(
     name: 'Continue.dev',
     emoji: '🔗',
@@ -66289,6 +66613,15 @@ class _ComparisonShellState extends State<_ComparisonShell> {
     'screener-saucelabs-visual': 'visual-regression',
     'diffy-visual-regression': 'visual-regression',
     'visual-regression-tracker-vrt': 'visual-regression',
+    'bruno-oss-api': 'api-client',
+    'thunder-client-vscode': 'api-client',
+    'httpie-api-client': 'api-client',
+    'rapidapi-platform': 'api-client',
+    'apidog-all-in-one': 'api-client',
+    'paw-api-tool': 'api-client',
+    'restfox-oss': 'api-client',
+    'requestly-api-client': 'api-client',
+    'milkman-oss-api': 'api-client',
   };
 
   @override

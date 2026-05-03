@@ -25896,3 +25896,24 @@ a9d7b1517 on main
 1. **#1762**: AIエージェント評価 (AgentBench/OSWorld/WebArena等 - comparison_page未登録)
 2. **#1760**: コード品質/静的解析残ギャップ (Codacy/CodeFactor/Veracode等)
 3. **S671**: APIテストツール (Hoppscotch/Bruno/Thunder Client/HTTPie等)
+
+## 2026-05-03 PS#4 S671 — APIクライアントツール9社追加 (1861→1870社)
+
+- **api-clientカテゴリ新設 + 9社追加**:
+  - Bruno(OSSローカルAPIクライアント/Git管理可能/Postman代替)
+  - Thunder Client(VSCode拡張APIクライアント/軽量/Git同期)
+  - HTTPie(人間向けHTTPクライアント/CLI+デスクトップGUI+Web)
+  - RapidAPI Client(API marketplace統合/APIハブ/設計+テスト+モニタリング)
+  - Apidog(API設計/Mock/テスト/ドキュメント統合/Postman+Swagger代替)
+  - Paw(Mac向けフル機能APIクライアント/動的値/コード生成)
+  - Restfox(OSSブラウザ対応/PWA/Postman代替/プライバシー重視)
+  - Requestly(HTTP傍受/APIモッキング/リクエスト変更/フロントエンド開発)
+  - Milkman(OSSマルチプロトコル/HTTP/gRPC/WebSocket/Kafka)
+- sitemap.xml: 1957→1966 URLs
+- landing_page.dart / user_manual_page.dart: 1861→1870社更新
+- **PHILOSOPHY #5 商品=ユーザー価値** (= APIクライアント競合網羅でAPI開発者SEO流入拡大)
+
+### 次回候補 (PS#4 S672+)
+1. **#1762**: AIエージェント評価 (AgentBench/OSWorld/WebArena等 - comparison_page未登録)
+2. **S672**: コンテナ/Kubernetes管理ツール (Lens/k9s/Rancher等)
+3. **S673**: データベースGUIクライアント (TablePlus/DBeaver/DataGrip等)
