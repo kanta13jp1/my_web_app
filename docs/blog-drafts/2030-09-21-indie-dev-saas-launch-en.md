@@ -1,7 +1,7 @@
 ---
 title: "Indie Dev SaaS Launch — Pricing Strategy, Stripe Integration, and Freemium-to-Paid Design"
 tags: indiedev,buildinpublic,flutter,programming
-published: false
+published: true
 ---
 
 Monetization is where most indie SaaS apps die. Not because the product is bad, but because the pricing is wrong, the freemium tier is too generous, or the upgrade path is invisible. This guide covers the full stack: value-based pricing principles, freemium architecture, Stripe + Supabase implementation, and conversion optimization.
