@@ -404,8 +404,8 @@ class _MealLogPageState extends State<MealLogPage>
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
         subtitle: const Text(
-            '写真を撮るだけでAIが栄養素を自動推定\n(ai-hub food_analysis — Codex#2準備中)',
-          ),
+          '写真を撮るだけでAIが栄養素を自動推定\n(ai-hub food_analysis — Codex#2準備中)',
+        ),
         trailing: OutlinedButton(
           onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('AI栄養推定は準備中です。')),
@@ -514,10 +514,10 @@ class _MealLogPageState extends State<MealLogPage>
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text('今日のカロリー',
-                    style:
-                        TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                      ),
+                const Text(
+                  '今日のカロリー',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                ),
                 Text(
                   '目標: ${target}kcal',
                   style: TextStyle(color: Colors.grey[600], fontSize: 13),
@@ -621,9 +621,10 @@ class _MealLogPageState extends State<MealLogPage>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('食事別内訳',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
-              ),
+            const Text(
+              '食事別内訳',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+            ),
             const SizedBox(height: 8),
             ...byMeal.entries.map((e) {
               final label = _mealTypes
@@ -639,9 +640,10 @@ class _MealLogPageState extends State<MealLogPage>
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(label),
-                    Text('${cal}kcal',
-                        style: const TextStyle(fontWeight: FontWeight.bold),
-                      ),
+                    Text(
+                      '${cal}kcal',
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
                   ],
                 ),
               );
