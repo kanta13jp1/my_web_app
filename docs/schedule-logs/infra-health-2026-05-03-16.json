@@ -1,0 +1,25 @@
+{
+  "timestamp_jst": "2026-05-03T16:36+09:00",
+  "ef_health_check": {
+    "status": "healthy",
+    "ef_timestamp": "2026-05-03T07:36:13.495Z",
+    "checks": {
+      "env": "configured (SUPABASE_URL + SERVICE_ROLE_KEY set)",
+      "db_connectivity": "operational (1190ms, profiles reachable)",
+      "wbs_tasks": "accessible",
+      "ai_circuit_breaker": "active"
+    },
+    "notes": "db_connectivity latency 1190ms — elevated vs baseline (typical 90-300ms). 24h trend: 09h=253, 10h=2089, 11h=1075, 15h=66, 16h=1190. Spike-recover oscillation continues. EF reports status=healthy (no threshold breach), so no remediation per task spec."
+  },
+  "firebase_hosting": {
+    "status": "ok",
+    "url": "https://my-web-app-b67f4.web.app/",
+    "title": "自分株式会社 | AIが今日の最優先タスクを整理",
+    "notes": "Flutter Web SPA serving normally; 'Loading application...' = expected pre-hydration state, no error messages"
+  },
+  "anomaly": false,
+  "latency_observations": {
+    "note": "DB latency 16h=1190ms re-spike after 15h=66ms recovery. Pattern: spike-recover-respike across 8h window. Not actionable at task level (status=healthy); flag for ops review if continues into 17-18h."
+  },
+  "action_taken": "log only (no commit per task spec — anomaly=false)"
+}
