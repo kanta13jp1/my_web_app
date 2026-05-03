@@ -12,6 +12,10 @@
       ]
     }
   },
+  "env": {
+    "MCP_TIMEOUT": "60000",
+    "MAX_MCP_OUTPUT_TOKENS": "50000"
+  },
   "hooks": {
     "PostToolUse": [
       {
@@ -20,6 +24,17 @@
           {
             "type": "command",
             "command": "powershell -NoProfile -ExecutionPolicy Bypass -File .claude/hooks/post-tool-use-dart-format.ps1"
+          }
+        ]
+      }
+    ],
+    "Notification": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell -NoProfile -ExecutionPolicy Bypass -File .claude/hooks/notification-alert.ps1",
+            "async": true
           }
         ]
       }
