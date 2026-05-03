@@ -187,7 +187,9 @@ class _TechBlogTrackerPageState extends State<TechBlogTrackerPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-              content: Text('ログインが必要です'), backgroundColor: Colors.red),
+            content: Text('ログインが必要です'),
+            backgroundColor: Colors.red,
+          ),
         );
       }
       return;
@@ -821,11 +823,11 @@ class _TechBlogTrackerPageState extends State<TechBlogTrackerPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
+        const Row(
           children: [
-            const Icon(Icons.smart_toy, size: 16, color: Color(0xFF6366F1)),
-            const SizedBox(width: 6),
-            const Text(
+            Icon(Icons.smart_toy, size: 16, color: Color(0xFF6366F1)),
+            SizedBox(width: 6),
+            Text(
               '🤖 自動公開プラットフォーム',
               style: TextStyle(
                 fontSize: 14,
@@ -854,11 +856,11 @@ class _TechBlogTrackerPageState extends State<TechBlogTrackerPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
+        const Row(
           children: [
-            const Icon(Icons.edit, size: 16, color: Color(0xFF9CA3AF)),
-            const SizedBox(width: 6),
-            const Text(
+            Icon(Icons.edit, size: 16, color: Color(0xFF9CA3AF)),
+            SizedBox(width: 6),
+            Text(
               '✍️ 手動トラッキング',
               style: TextStyle(
                 fontSize: 14,
@@ -1054,11 +1056,11 @@ class _TechBlogTrackerPageState extends State<TechBlogTrackerPage> {
               color: const Color(0xFF1E1E1E),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: Row(
+            child: const Row(
               children: [
-                const Icon(Icons.inbox, color: Color(0xFF6B7280), size: 20),
-                const SizedBox(width: 10),
-                const Expanded(
+                Icon(Icons.inbox, color: Color(0xFF6B7280), size: 20),
+                SizedBox(width: 10),
+                Expanded(
                   child: Text(
                     'ドラフトがありません。「新規」ボタンで作成するか、docs/blog-drafts/ に .md ファイルを push してください。',
                     style: TextStyle(
@@ -1165,19 +1167,19 @@ class _TechBlogTrackerPageState extends State<TechBlogTrackerPage> {
                   else
                     IconButton(
                       icon: const Icon(Icons.rocket_launch,
-                          size: 18, color: Color(0xFF4CAF50)),
+                          size: 18, color: Color(0xFF4CAF50),),
                       tooltip: '今すぐ公開 (Qiita / dev.to)',
                       onPressed: () => _publishDraft(draft),
                     ),
                   IconButton(
                     icon: const Icon(Icons.edit,
-                        size: 18, color: Color(0xFF6366F1)),
+                        size: 18, color: Color(0xFF6366F1),),
                     tooltip: '編集',
                     onPressed: () => _showEditDraftDialog(draft),
                   ),
                   IconButton(
                     icon: const Icon(Icons.delete_outline,
-                        size: 18, color: Color(0xFF9CA3AF)),
+                        size: 18, color: Color(0xFF9CA3AF),),
                     tooltip: '削除',
                     onPressed: () => _deleteDraft(draft),
                   ),
