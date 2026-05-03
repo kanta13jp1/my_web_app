@@ -2797,6 +2797,58 @@ function sireDistanceAffinityBonus(
   return 0;
 }
 
+// S169: ageGradeInteractionBonus — 馬齢×グレード難易度複合補正
+function ageGradeInteractionBonus(
+  topEntry: Record<string, unknown> | undefined,
+  raceGrade: unknown,
+): number {
+  if (!topEntry) return 0;
+  const ageSex = String(topEntry.age_sex ?? "").trim();
+  const grade = String(raceGrade ?? "").trim();
+  if (!ageSex || !grade) return 0;
+  const ageMatch = ageSex.match(/(\d+)/);
+  if (!ageMatch) return 0;
+  const age = parseInt(ageMatch[1], 10);
+  const isTopGrade = /^(G1|GI|JpnI|G2|GII|JpnII)$/i.test(grade);
+  const isG1 = /^(G1|GI|JpnI)$/i.test(grade);
+  if (age >= 4 && age <= 5 && isTopGrade) return 0.01; // ピーク期×準最高峰以上: 能力最大化ステージ
+  if (age === 3 && isG1) return -0.01; // 発展途上×最高峰G1: 古馬一線級との実力差
+  if (age >= 7 && isTopGrade) return -0.01; // ピーク超え古馬×高難度グレード: 体力限界近い
+  return 0;
+}
+
+// S170: jockeyGradeCompatibilityBonus — 騎手勝率×グレード難易度適性補正
+function jockeyGradeCompatibilityBonus(
+  topEntry: Record<string, unknown> | undefined,
+  raceGrade: unknown,
+): number {
+  if (!topEntry) return 0;
+  const jRate = numericOrFallback(topEntry.jockey_win_rate, 0);
+  const grade = String(raceGrade ?? "").trim();
+  if (!grade) return 0;
+  const isTopGrade = /^(G1|GI|JpnI|G2|GII|JpnII)$/i.test(grade);
+  if (!isTopGrade) return 0;
+  if (jRate >= 0.18) return 0.01; // トップジョッキー×G1/G2: 大舞台での実績・対応力
+  if (jRate < 0.07) return -0.01; // 低勝率騎手×G1/G2: 最高峰では力量不一致
+  return 0;
+}
+
+// S171: prevWinVenueReturnsBonus — 前走勝利×同一会場再訪補正
+function prevWinVenueReturnsBonus(
+  topEntry: Record<string, unknown> | undefined,
+  raceVenue: unknown,
+): number {
+  if (!topEntry) return 0;
+  const prev = String(topEntry.prev_venue ?? "").trim();
+  const curr = String(raceVenue ?? "").trim();
+  if (!prev || !curr || prev !== curr) return 0;
+  const prevFin = numericOrFallback(topEntry.prev_finish, 0);
+  if (!prevFin) return 0;
+  if (prevFin === 1) return 0.01; // 同一会場前走勝利馬の再訪: コース得意の最強証明
+  if (prevFin >= 9) return -0.01; // 同一会場で大敗経験: コース苦手シグナル
+  return 0;
+}
+
 function consecutiveTopThreeBonus(
   topEntry: Record<string, unknown> | undefined,
 ): number {
@@ -3429,6 +3481,9 @@ function buildHistoricalBaselinePrediction(
   const runStyleFieldSize = runningStyleFieldSizeBonus(first, entries.length);
   const bodyCarryRatio = horseBodyCarryRatioBonus(first);
   const sireDistAffinity = sireDistanceAffinityBonus(first, race.distance);
+  const ageGradeInteract = ageGradeInteractionBonus(first, race.grade);
+  const jockeyGradeCompat = jockeyGradeCompatibilityBonus(first, race.grade);
+  const prevWinVenueReturn = prevWinVenueReturnsBonus(first, race.venue);
   const confidence = Math.min(
     clampConfidence(
       0.31 + dataQuality * 0.22 + oddsCoverage * 0.12 + historyCoverage * 0.07 +
@@ -3454,7 +3509,8 @@ function buildHistoricalBaselinePrediction(
         prev2FormGap + courseSurfaceMatch + fieldWeightRank +
         consec3Top + popShift + prev3WinRate +
         largeFieldPerf + jockeyReunion + formValue +
-        runStyleFieldSize + bodyCarryRatio + sireDistAffinity,
+        runStyleFieldSize + bodyCarryRatio + sireDistAffinity +
+        ageGradeInteract + jockeyGradeCompat + prevWinVenueReturn,
     ),
     maxConf,
   );
