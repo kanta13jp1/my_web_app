@@ -9,6 +9,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:my_web_app/data/home_tool_catalog.dart';
 import 'package:my_web_app/models/site_guide_catalog_item.dart';
 import 'package:my_web_app/pages/abstinence_guard_page.dart';
+import 'package:my_web_app/pages/self_touch_tracker_page.dart';
 import 'package:my_web_app/pages/agent_org_page.dart';
 import 'package:my_web_app/pages/ai_company_builder_page.dart';
 import 'package:my_web_app/pages/ai_agent_page.dart';
@@ -684,6 +685,10 @@ class _MyAppState extends State<MyApp> {
           case '/daily-habits':
             return MaterialPageRoute(
               builder: (_) => const DailyHabitsPage(),
+            );
+          case '/self-touch-tracker':
+            return MaterialPageRoute(
+              builder: (_) => const SelfTouchTrackerPage(),
             );
           case '/abstinence-guard':
             return MaterialPageRoute(
