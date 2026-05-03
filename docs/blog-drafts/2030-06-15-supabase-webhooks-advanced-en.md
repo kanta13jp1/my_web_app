@@ -1,6 +1,6 @@
 ---
 title: "Supabase Webhooks Deep Dive — Database Triggers, pg_net & Edge Function Patterns"
-published: false
+published: true
 tags: supabase, postgresql, deno, webdev
 canonical_url: null
 ---
