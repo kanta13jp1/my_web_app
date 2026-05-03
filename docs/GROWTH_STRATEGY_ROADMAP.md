@@ -25984,6 +25984,7 @@ a9d7b1517 on main
 - **タイムスタンプ衝突**: did_video 000000→000100 (PS#6 ps6_s163と衝突 → 自動fix)
 - commit 14ec7a2de on main (タイムスタンプfix含む)
 
+<<<<<<< Updated upstream
 ## 2026-05-03 (Win版#132 part 123) — tech-blog-tracker bug fix (User report 即対応)
 
 ### 完了
@@ -26041,3 +26042,15 @@ a9d7b1517 on main
 
 ### Philosophy Alignment
 #5 商品=ユーザー価値 (= ブログ投稿管理機能の完全動作で開発者体験向上) / #6 資本=時間 (= 4記事一括dispatch + 自動orphan cleanup)
+=======
+## PS#4 S671 (2026-05-04)
+- **コード品質/静的解析 5社追加**: CodeFactor/Codacy/Qodana/Klocwork/Checkstyle (code-qualityカテゴリ新設)
+- **AIエージェント評価ベンチマーク 9社追加**: AgentBench/OSWorld/WebArena/SWE-agent/τ-bench/AssistGUI/Mind2Web/WorkArena/AppAgent (ai-agent-evalカテゴリ新設)
+- **比較ページ**: 1879→1893社 (+14社)
+- **sitemap**: 14 URL追加 (1971→1985 URLs)
+- **landing/user_manual**: "1893社"に更新
+- **AI大学**: GPT-Image-2 画像生成AI学科追加 (sort_order 940 / Issue #1889 close)
+- **Issue close**: #1760 (code-quality 5社) / #1762 (ai-agent-eval 9社) / #1889 (GPT-Image-2)
+- **NotebookLM bc58b50b**: 既適用確認 (全件適用済み)
+- **次回PS#4候補**: #1822 (Nomic Platform Domain-Specific AI大学追加) / S672 (セキュリティテスト追加) / 284ad4be notebook適用
+>>>>>>> Stashed changes

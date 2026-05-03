@@ -66508,6 +66508,512 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  // ── Code Quality / Static Analysis ──────────────────────────────────────
+  'codefactor-code-review': const _CompetitorInfo(
+    name: 'CodeFactor',
+    emoji: '🔎',
+    tagline:
+        'CodeFactor・リアルタイム自動コードレビュー・GitHub/GitLab/Bitbucket統合・25言語・コード品質スコアで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'CodeFactor代替 自動コードレビュー リアルタイム GitHub統合 コード品質 静的解析 SonarCloud代替',
+    accentColor: Color(0xFF00BFA5),
+    painPoints: [
+      'OSS無料/有料・コードレビュー特化・個人のライフ管理は別途必要',
+      'コード品質スコア特化・個人AI管理機能なし',
+      'SonarCloud/Codacyとの比較でサポート言語・エンタープライズ機能が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'リアルタイム自動コードレビュー・25言語・GitHub/GitLab/Bitbucket統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'codacy-quality-platform': const _CompetitorInfo(
+    name: 'Codacy',
+    emoji: '🛡️',
+    tagline:
+        'Codacy・自動コードレビュー・セキュリティ+品質+カバレッジ統合・40言語・Pull Request自動チェックで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Codacy代替 自動コードレビュー セキュリティ コード品質 カバレッジ SonarCloud代替 CodeFactor代替',
+    accentColor: Color(0xFF7B1FA2),
+    painPoints: [
+      'OSS無料/有料・コードレビュー+セキュリティ特化・個人のライフ管理は別途必要',
+      '開発品質プラットフォーム・個人AI管理は別途必要',
+      'SonarCloud/CodeFactorとの比較でUI複雑・有料プランコスト・速度が問題',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '自動コードレビュー・40言語・セキュリティ+品質+カバレッジ統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'qodana-jetbrains-quality': const _CompetitorInfo(
+    name: 'Qodana',
+    emoji: '🧠',
+    tagline:
+        'Qodana・JetBrains製AI支援コード品質チェック・60+言語・IDE統合・CI/CD対応・静的解析+ライセンス検査で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Qodana代替 JetBrains コード品質 AI静的解析 IntelliJ CI/CD統合 SonarQube代替',
+    accentColor: Color(0xFFFF7043),
+    painPoints: [
+      'JetBrains IDEエコシステム前提・個人のライフ管理は別途必要',
+      'コード品質検査特化・個人AI管理・財務管理は別途必要',
+      'SonarQube/DeepSourceとの比較でJetBrains依存・OSSコミュニティが小さい',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'JetBrains製AI支援静的解析・60+言語・ライセンス検査・CI/CD統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'klocwork-perforce-sast': const _CompetitorInfo(
+    name: 'Klocwork',
+    emoji: '⚙️',
+    tagline:
+        'Klocwork・Perforce製組み込み/車載向け静的解析・MISRA/CERT準拠・リアルタイムデスクトップ解析・ISO 26262対応で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Klocwork代替 組み込み静的解析 Perforce MISRA CERT ISO26262 車載ソフトウェア SAST',
+    accentColor: Color(0xFF1565C0),
+    painPoints: [
+      '組み込み/車載向けエンタープライズ特化・個人のライフ管理は別途必要',
+      '高価なライセンス・大規模チーム向け・個人利用コスト高',
+      'SonarQube/Veracodeとの比較でコスト・Web/クラウド向けが弱い',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '組み込み/車載向け静的解析・MISRA/CERT・ISO 26262・リアルタイムIDE解析',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'checkstyle-java-lint': const _CompetitorInfo(
+    name: 'Checkstyle',
+    emoji: '✅',
+    tagline:
+        'Checkstyle・Java向けOSSコードスタイルチェッカー・Google/Sunスタイルガイド準拠・Mavenプラグイン統合で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Checkstyle代替 Java コードスタイル Google Sunスタイル OSS Mavenプラグイン PMD代替',
+    accentColor: Color(0xFF43A047),
+    painPoints: [
+      'Java専用スタイルチェッカー・個人のライフ管理は別途必要',
+      'スタイル検査のみ・セキュリティ・品質分析は別途必要',
+      'SonarQube/PMDとの比較でバグ検出・複雑度分析が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Java OSSスタイルチェック・Google/Sunガイド・Mavenプラグイン・CI/CD統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  // ── AI Agent Evaluation Benchmarks ──────────────────────────────────────
+  'agentbench-tsinghua-eval': const _CompetitorInfo(
+    name: 'AgentBench',
+    emoji: '🤖',
+    tagline:
+        'AgentBench・清華大学製AIエージェント評価・8環境統合・OS/DB/Web/Knowledge/Game横断・LLMエージェント比較基盤で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'AgentBench代替 AIエージェント評価 清華大学 LLMエージェント ベンチマーク OSWorld代替',
+    accentColor: Color(0xFF1976D2),
+    painPoints: [
+      'AI研究・エージェント評価専用・個人のライフ管理は別途必要',
+      'エージェントベンチマーク特化・一般ユーザー向けプロダクトではない',
+      'OSWorld/WebArenaとの比較でGUI操作・実環境タスクが限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'LLMエージェント評価・8環境統合・OS/DB/Web/Game横断ベンチマーク',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'osworld-cmu-desktop-eval': const _CompetitorInfo(
+    name: 'OSWorld',
+    emoji: '🖥️',
+    tagline:
+        'OSWorld・CMU製デスクトップGUI操作AIエージェント評価・369タスク・Mac/Windows/Ubuntu・実環境スクリーンショット観察で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'OSWorld代替 デスクトップGUI AIエージェント評価 CMU Computer Use スクリーンショット ベンチマーク',
+    accentColor: Color(0xFF6A1B9A),
+    painPoints: [
+      'GUI操作エージェント評価専用・個人のライフ管理は別途必要',
+      'AI研究ベンチマーク・一般ユーザー向けプロダクトではない',
+      'AgentBench/WebArenaとの比較でWeb/DB操作評価が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'デスクトップGUI操作評価・369タスク・Mac/Win/Ubuntu実環境・スクリーンショット観察',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'webarena-cmu-web-eval': const _CompetitorInfo(
+    name: 'WebArena',
+    emoji: '🌐',
+    tagline:
+        'WebArena・CMU製Webナビゲーションエージェント評価・812タスク・5実Webサイト環境・複合指示理解で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'WebArena代替 Webナビゲーション AIエージェント評価 CMU ベンチマーク Mind2Web代替',
+    accentColor: Color(0xFF00838F),
+    painPoints: [
+      'Webナビゲーション評価専用・個人のライフ管理は別途必要',
+      'AI研究ベンチマーク・一般ユーザー向けプロダクトではない',
+      'OSWorld/Mind2Webとの比較でデスクトップ/モバイル操作評価が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Webナビゲーション評価・812タスク・5実環境Webサイト・複合指示理解',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'swe-agent-princeton-eval': const _CompetitorInfo(
+    name: 'SWE-agent',
+    emoji: '🔧',
+    tagline:
+        'SWE-agent・Princeton製GitHubバグ自動修正AIエージェント・SWE-bench評価・自律コード編集・PR自動生成で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'SWE-agent代替 GitHub Issue自動修正 Princeton AIエージェント SWE-bench コード自動修正',
+    accentColor: Color(0xFFF57F17),
+    painPoints: [
+      'GitHub Issue自動修正エージェント特化・個人のライフ管理は別途必要',
+      'AI研究ツール・一般ユーザー向けプロダクトではない',
+      'AgentBench/OSWorldとの比較でGUI・マルチドメイン評価が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'GitHub Issue自動修正・SWE-bench評価・自律コード編集・PR自動生成',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'tau-bench-tool-eval': const _CompetitorInfo(
+    name: 'τ-bench',
+    emoji: '📊',
+    tagline:
+        'τ-bench・ツール呼び出しAIエージェント評価ベンチマーク・小売/航空ドメイン・APIコール精度・マルチターン会話評価で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'tau-bench代替 ツール呼び出し AIエージェント評価 API呼び出し精度 マルチターン ベンチマーク',
+    accentColor: Color(0xFF37474F),
+    painPoints: [
+      'ツール呼び出しエージェント評価専用・個人のライフ管理は別途必要',
+      'AI研究ベンチマーク・一般ユーザー向けプロダクトではない',
+      'AgentBench/WebArenaとの比較でドメイン範囲・タスク数が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'ツール呼び出しエージェント評価・小売/航空ドメイン・APIコール精度・マルチターン',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'assistgui-windows-agent': const _CompetitorInfo(
+    name: 'AssistGUI',
+    emoji: '🪟',
+    tagline:
+        'AssistGUI・Windows GUI操作AIエージェント評価・Office/ブラウザ統合・実環境スクリーンショット観察・タスク完了率評価で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'AssistGUI代替 Windows GUI AIエージェント評価 Office操作 スクリーンショット ベンチマーク',
+    accentColor: Color(0xFF0277BD),
+    painPoints: [
+      'Windows GUI評価専用・個人のライフ管理は別途必要',
+      'AI研究ベンチマーク・一般ユーザー向けプロダクトではない',
+      'OSWorld/AppAgentとの比較でモバイル・クロスプラットフォーム評価が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Windows GUI操作評価・Office/ブラウザ統合・実環境・タスク完了率測定',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'mind2web-web-task-eval': const _CompetitorInfo(
+    name: 'Mind2Web',
+    emoji: '🧩',
+    tagline:
+        'Mind2Web・汎用Webエージェント評価データセット・2K+タスク・137Webサイト・自然言語→Web操作変換で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Mind2Web代替 汎用Webエージェント評価 自然言語Web操作 ベンチマーク WebArena代替',
+    accentColor: Color(0xFF558B2F),
+    painPoints: [
+      'Webエージェント評価専用・個人のライフ管理は別途必要',
+      'AI研究データセット・一般ユーザー向けプロダクトではない',
+      'WebArena/OSWorldとの比較でライブ実行環境・タスク数が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '汎用Webエージェント評価・2K+タスク・137サイト・自然言語→Web操作',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'workarena-servicenow-eval': const _CompetitorInfo(
+    name: 'WorkArena',
+    emoji: '🏢',
+    tagline:
+        'WorkArena・ServiceNow製企業業務AIエージェント評価・291タスク・ITSMワークフロー・実Webブラウザ環境で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'WorkArena代替 ServiceNow企業業務 AIエージェント評価 ITSM ワークフロー ベンチマーク',
+    accentColor: Color(0xFF00695C),
+    painPoints: [
+      '企業業務エージェント評価専用・個人のライフ管理は別途必要',
+      'ServiceNow依存のエンタープライズ特化・一般ユーザー向けではない',
+      'AgentBench/WebArenaとの比較でSaaS汎用性・コミュニティが限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '企業業務AIエージェント評価・291タスク・ServiceNow/ITSM・実ブラウザ環境',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'appagent-mobile-eval': const _CompetitorInfo(
+    name: 'AppAgent',
+    emoji: '📱',
+    tagline:
+        'AppAgent・モバイルアプリ操作AIエージェント評価・Android/iOSタップ/スワイプ自動化・スクリーンショット観察・人間デモ模倣学習で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'AppAgent代替 モバイルアプリ操作 AIエージェント Android iOS自動化 スクリーンショット',
+    accentColor: Color(0xFFAD1457),
+    painPoints: [
+      'モバイルアプリ操作エージェント評価専用・個人のライフ管理は別途必要',
+      'AI研究ツール・一般ユーザー向けプロダクトではない',
+      'AssistGUI/OSWorldとの比較でデスクトップ・Web評価が限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'モバイルアプリ操作評価・Android/iOS・タップ/スワイプ自動化・人間デモ模倣',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
