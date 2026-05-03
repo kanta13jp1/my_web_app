@@ -173,31 +173,56 @@ class _TechBlogTrackerPageState extends State<TechBlogTrackerPage> {
 
   Future<void> _togglePost(String platform) async {
     final userId = _supabase.auth.currentUser?.id;
-    if (userId == null) return;
-
-    final existing = _getTodayPost(platform);
-    if (existing != null) {
-      // 削除
-      await _supabase
-          .from('tech_blog_posts')
-          .delete()
-          .eq('id', existing['id'])
-          .select();
-    } else {
-      // 追加ダイアログ
-      final result = await _showAddDialog(platform);
-      if (result == null) return;
-      final dateStr = DateFormat('yyyy-MM-dd').format(_selectedDate);
-      await _supabase.from('tech_blog_posts').insert({
-        'user_id': userId,
-        'platform': platform,
-        'title': result['title'] ?? '',
-        'url': result['url'] ?? '',
-        'notes': result['notes'] ?? '',
-        'posted_at': dateStr,
-      });
+    if (userId == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text('ログインが必要です'), backgroundColor: Colors.red),
+        );
+      }
+      return;
     }
-    await _load();
+
+    try {
+      final existing = _getTodayPost(platform);
+      if (existing != null) {
+        await _supabase
+            .from('tech_blog_posts')
+            .delete()
+            .eq('id', existing['id'] as String);
+      } else {
+        final result = await _showAddDialog(platform);
+        if (result == null) return;
+        final dateStr = DateFormat('yyyy-MM-dd').format(_selectedDate);
+        await _supabase.from('tech_blog_posts').insert({
+          'user_id': userId,
+          'platform': platform,
+          'title': result['title'] ?? '',
+          'url': result['url'] ?? '',
+          'notes': result['notes'] ?? '',
+          'posted_at': dateStr,
+        });
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('$platform への投稿を記録しました'),
+              backgroundColor: const Color(0xFF26A69A),
+            ),
+          );
+        }
+      }
+      await _load();
+    } catch (e) {
+      debugPrint('_togglePost error: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('エラーが発生しました: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   Future<Map<String, String>?> _showAddDialog(String platform) async {
@@ -489,6 +514,7 @@ class _TechBlogTrackerPageState extends State<TechBlogTrackerPage> {
             color: const Color(0xFF1E1E1E),
             margin: const EdgeInsets.only(bottom: 8),
             child: ListTile(
+              onTap: () => _togglePost(platform.id),
               leading: Container(
                 width: 36,
                 height: 36,

@@ -208,6 +208,7 @@ import 'package:my_web_app/pages/travel_itinerary_page.dart';
 import 'package:my_web_app/pages/virtual_whiteboard_page.dart';
 import 'package:my_web_app/pages/recipe_meal_planner_page.dart';
 import 'package:my_web_app/pages/meal_log_page.dart';
+import 'package:my_web_app/pages/life_goals_kpi_page.dart';
 import 'package:my_web_app/pages/language_learning_page.dart';
 import 'package:my_web_app/pages/habit_gamification_page.dart';
 import 'package:my_web_app/pages/focus_capture_game_page.dart';
@@ -1328,6 +1329,10 @@ class _MyAppState extends State<MyApp> {
           case '/meal-log':
             return MaterialPageRoute(
               builder: (_) => const MealLogPage(),
+            );
+          case '/life-goals-kpi':
+            return MaterialPageRoute(
+              builder: (_) => const LifeGoalsKpiPage(),
             );
           case '/recipe-meal-planner':
             return MaterialPageRoute(
