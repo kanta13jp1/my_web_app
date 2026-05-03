@@ -225,3 +225,55 @@ GitHub Copilot (補完のみ)
 - [ ] Codex CLI が使える状態か確認 (`codex --version`)
 - [ ] GHA 自動ワークフローは継続稼働中か確認 (影響なし)
 - [ ] claude.ai WEB版の残量を確認 (CLI と別枠の可能性あり)
+
+---
+
+## 2026-05 Update: AI tool fleet 進化を反映 (Win版#132 part 115)
+
+> 詳細 Issue: [#1706 fleet 全 instance 反映](https://github.com/kanta13jp1/my_web_app/issues/1706) / [#1707 Cloud Agent CI 統合](https://github.com/kanta13jp1/my_web_app/issues/1707)
+
+### Codex CLI Memory (= 2026-05 GA)
+
+Codex CLI が **Memory** を持つようになり、past task の preference / project convention / corrections を future thread に持続できる. fleet 視点での影響:
+
+- **Codex#1 / #2 が CLAUDE.md を毎回 re-load 不要** — Memory に project convention を一度書けば多 session で活用
+- 自分株式会社の **migration 命名則 / EF deny-by-default / Rule [WORKDIR-ISOLATION]** を Codex Memory に登録推奨
+- ただし **Memory が古くなった場合の reset コマンド** を運用フローに組み込む必要あり (= claude-mem decay と同種の問題)
+
+### Gemini Code Assist Agent Mode GA + Gemini 3.1 Pro
+
+- **Agent Mode が VS Code + IntelliJ で GA** (= 2026-04〜05 wave) — multi-step task plan + execute が Claude Code と同等水準に
+- **Gemini 3.1 Pro / 3.0 Flash** が agent mode + chat + code generation で利用可能
+- → **Claude quota 超過時の primary fallback** を従来 Codex CLI から **Gemini Code Assist Agent Mode (Gemini 3.1 Pro)** に格上げ可能性
+- VS Code Gemini Code Assist 拡張は **2.77.1 以上** に update 推奨 (= agent mode log が正しく Gemini Code Assist に attribute される)
+
+### GitHub Copilot Cloud Agent +20% startup + Claude/Codex model selection
+
+- Cloud agent **+20% startup** (Actions custom image) — `ci-auto-fix.yml` 高速化候補
+- **Model selection for Claude / Codex agents on github.com** — Copilot から Claude / Codex 直接呼出 (= fleet 連携の bridge)
+- Copilot **code review が Actions minutes 消費開始** (2026-06-01〜) — quota 影響を `quota-monitor.yml` に反映必要
+
+### Claude Code 2026-05 (`/tui` + push notification + project purge + /resume PR URL)
+
+- `/tui` fullscreen — flicker-free 画面 (= 12 instance 並列で見やすさ向上)
+- **Push notification tool** — Remote Control + "Push when Claude decides" でスマホ通知 (= スマホ版 instance 連携)
+- `claude project purge [path]` — project state 完全削除 (= worktree clean 自動化)
+- `/resume <PR URL>` — PR を作成した session に復帰 (= context 連続性向上)
+
+### 平常時 fallback 順序 (改訂)
+
+```text
+1. Claude Code CLI (= 設計 / 編集 main) ← 不変
+2. Gemini Code Assist Agent Mode (Gemini 3.1 Pro)  ← 昇格
+3. Codex CLI (with Memory)  ← 昇格
+4. GitHub Copilot (補完 + Cloud Agent)  ← 不変
+5. NotebookLM (リサーチ / Master Brain)  ← 不変
+6. GHA (= Claude 非依存)  ← 不変
+```
+
+### 関連 ai-tool-update Issue
+
+- [#1644](https://github.com/kanta13jp1/my_web_app/issues/1644) Skill Activation Hook + NotebookLM Master Brain
+- [#1645](https://github.com/kanta13jp1/my_web_app/issues/1645) Docker MCP Toolkit
+- [#1646](https://github.com/kanta13jp1/my_web_app/issues/1646) Codex 内蔵ブラウザ + 画像生成
+- [#1647](https://github.com/kanta13jp1/my_web_app/issues/1647) Codex Memory + Thread Automations
