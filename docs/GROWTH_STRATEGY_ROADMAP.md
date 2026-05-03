@@ -25533,3 +25533,21 @@ a9d7b1517 on main
 
 ### Philosophy Alignment
 #5 商品=ユーザー価値 (= 230+本の技術記事が自分株式会社の認知・信頼構築の直接資産) / #6 資本=時間 (= 4件並列dispatch で単発比2倍効率) / #8 KPI=昨日の自分 (= Phase50→51 draft作成速度向上 / WORKDIR-ISOLATION違反→即修正パターン確立)
+
+## 2026-05-03 (Win版#132 part 116) — NotebookLM #4 動画 self-host fallback (Multi-Agent Convergence)
+
+### 完了
+- NotebookLM f167dcc3 (Competitive AI Intelligence Report: The Multi-Agent Convergence) 動画 artifact 25423b84 を local download → ffmpeg 720p 圧縮 (47MB → 12MB)
+- web/assets/videos/multi-agent-convergence.mp4 に self-host (Firebase Hosting 経由配信)
+- philosophy_page.dart `_Video` class に `String? mp4Url` optional field 追加 (= YouTube ID と self-host MP4 切替可能)
+- AI大学シリーズ #4 として `_videos[]` に追加 + dart format + flutter analyze (No issues)
+- .gitignore に `!web/assets/videos/` carve-out 追加
+- commit `ddfe640f1` on main
+
+### 制約 (= 次回 Issue 起票済)
+- GHA `notebooklm-video-pipeline.yml` dispatch (run 25271275372) は **5 secrets 全未設定** で fail (GITHUB_PAT / NOTEBOOKLM_STORAGE_STATE_JSON / ELEVENLABS_API_KEY / YOUTUBE_CLIENT_SECRET_JSON / YOUTUBE_TOKEN_JSON)
+- → [Issue #1724](https://github.com/kanta13jp1/my_web_app/issues/1724) (P1) 起票. User 手動 secret 登録後 → workflow 再 dispatch → YouTube ID 取得 → philosophy_page.dart の id 置換 + mp4Url 削除 + 12MB MP4 削除
+
+### Philosophy Alignment
+#5 商品=ユーザー価値 (= AI大学コンテンツに #4 動画追加で価値増大) / #6 資本=時間 (= GHA pipeline fail で local fallback に即切替し配信即時性を優先) / #8 KPI=昨日の自分 (= AI 大学シリーズ #1-3 → #4 = 33% 増)
+
