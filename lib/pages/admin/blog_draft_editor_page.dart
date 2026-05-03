@@ -16,12 +16,14 @@ class _BlogDraftEditorPageState extends State<BlogDraftEditorPage> {
   final _titleCtrl = TextEditingController();
   final _contentCtrl = TextEditingController();
   final _notesCtrl = TextEditingController();
+  final _tagsCtrl = TextEditingController();
 
   bool _isLoading = false;
   bool _isSaving = false;
   bool _isPublishing = false;
   bool _showPreview = false;
   List<String> _targetPlatforms = ['qiita', 'devto'];
+  String? _savedPostId;
 
   static const _bg = Color(0xFF0A0A0A);
   static const _card = Color(0xFF1A1A2E);
@@ -29,12 +31,13 @@ class _BlogDraftEditorPageState extends State<BlogDraftEditorPage> {
   static const _green = Color(0xFF4CAF50);
   static const _red = Color(0xFFE53935);
 
-  bool get _isEditMode => widget.postId != null;
+  bool get _isEditMode => widget.postId != null || _savedPostId != null;
+  String? get _activePostId => widget.postId ?? _savedPostId;
 
   @override
   void initState() {
     super.initState();
-    if (_isEditMode) _fetchPost();
+    if (widget.postId != null) _fetchPost();
   }
 
   @override
@@ -42,8 +45,16 @@ class _BlogDraftEditorPageState extends State<BlogDraftEditorPage> {
     _titleCtrl.dispose();
     _contentCtrl.dispose();
     _notesCtrl.dispose();
+    _tagsCtrl.dispose();
     super.dispose();
   }
+
+  List<String> _parseTags(String raw) => raw
+      .split(',')
+      .map((t) => t.trim())
+      .where((t) => t.isNotEmpty)
+      .take(5)
+      .toList();
 
   Future<void> _fetchPost() async {
     setState(() => _isLoading = true);
@@ -58,6 +69,10 @@ class _BlogDraftEditorPageState extends State<BlogDraftEditorPage> {
           if (platforms is List) {
             _targetPlatforms = List<String>.from(platforms);
           }
+          final rawTags = post['tags'];
+          if (rawTags is List && rawTags.isNotEmpty) {
+            _tagsCtrl.text = rawTags.join(', ');
+          }
         });
       }
     } catch (e) {
@@ -71,6 +86,34 @@ class _BlogDraftEditorPageState extends State<BlogDraftEditorPage> {
     }
   }
 
+  Future<String?> _ensureSaved() async {
+    if (_activePostId != null) return _activePostId;
+    final title = _titleCtrl.text.trim();
+    if (title.isEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('タイトルを入力してください')),
+        );
+      }
+      return null;
+    }
+    final saved = await _service.insertPost(
+      title: title,
+      content: _contentCtrl.text,
+      targetPlatforms: _targetPlatforms,
+      tags: _parseTags(_tagsCtrl.text),
+      notes: _notesCtrl.text.trim(),
+    );
+    final post = saved['post'];
+    final id = saved['id']?.toString() ??
+        (post is Map ? post['id']?.toString() : null) ??
+        '';
+    if (id.isNotEmpty) {
+      setState(() => _savedPostId = id);
+    }
+    return id.isEmpty ? null : id;
+  }
+
   Future<void> _saveDraft() async {
     final title = _titleCtrl.text.trim();
     if (title.isEmpty) {
@@ -81,21 +124,28 @@ class _BlogDraftEditorPageState extends State<BlogDraftEditorPage> {
     }
     setState(() => _isSaving = true);
     try {
-      if (_isEditMode) {
+      if (_activePostId != null) {
         await _service.updatePost(
-          id: widget.postId!,
+          id: _activePostId!,
           title: title,
           content: _contentCtrl.text,
           targetPlatforms: _targetPlatforms,
+          tags: _parseTags(_tagsCtrl.text),
           notes: _notesCtrl.text.trim(),
         );
       } else {
-        await _service.insertPost(
+        final saved = await _service.insertPost(
           title: title,
           content: _contentCtrl.text,
           targetPlatforms: _targetPlatforms,
+          tags: _parseTags(_tagsCtrl.text),
           notes: _notesCtrl.text.trim(),
         );
+        final post = saved['post'];
+        final id = saved['id']?.toString() ??
+            (post is Map ? post['id']?.toString() : null) ??
+            '';
+        if (id.isNotEmpty) setState(() => _savedPostId = id);
       }
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -104,7 +154,6 @@ class _BlogDraftEditorPageState extends State<BlogDraftEditorPage> {
             backgroundColor: _green,
           ),
         );
-        if (!_isEditMode) Navigator.pop(context, true);
       }
     } catch (e) {
       if (mounted) {
@@ -118,9 +167,10 @@ class _BlogDraftEditorPageState extends State<BlogDraftEditorPage> {
   }
 
   Future<void> _publishNow() async {
-    if (!_isEditMode) {
+    final title = _titleCtrl.text.trim();
+    if (title.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('先に下書き保存してください')),
+        const SnackBar(content: Text('タイトルを入力してください')),
       );
       return;
     }
@@ -139,8 +189,7 @@ class _BlogDraftEditorPageState extends State<BlogDraftEditorPage> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('キャンセル',
-                style: TextStyle(color: Colors.white54)),
+            child: const Text('キャンセル', style: TextStyle(color: Colors.white54)),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: _orange),
@@ -153,7 +202,12 @@ class _BlogDraftEditorPageState extends State<BlogDraftEditorPage> {
     if (confirmed != true || !mounted) return;
     setState(() => _isPublishing = true);
     try {
-      final res = await _service.publishPost(widget.postId!);
+      final postId = await _ensureSaved();
+      if (postId == null || !mounted) {
+        setState(() => _isPublishing = false);
+        return;
+      }
+      final res = await _service.publishPost(postId);
       if (!mounted) return;
       final results = res['results'] as Map<String, dynamic>? ?? {};
       final qiitaOk = (results['qiita'] as Map?)?['ok'] == true;
@@ -164,11 +218,12 @@ class _BlogDraftEditorPageState extends State<BlogDraftEditorPage> {
       ].join(' + ');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('✅ 投稿完了 $platforms'),
-          backgroundColor: _green,
+          content:
+              Text(platforms.isNotEmpty ? '✅ 投稿完了 $platforms' : '⚠️ 投稿先なし'),
+          backgroundColor: platforms.isNotEmpty ? _green : _red,
         ),
       );
-      Navigator.pop(context, true);
+      if (platforms.isNotEmpty) Navigator.pop(context, true);
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -208,27 +263,26 @@ class _BlogDraftEditorPageState extends State<BlogDraftEditorPage> {
               style: const TextStyle(color: Colors.white70, height: 1.5),
             ),
           ),
-          if (_isEditMode)
-            _isPublishing
-                ? const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 12),
-                    child: SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: _orange,
-                      ),
-                    ),
-                  )
-                : TextButton.icon(
-                    onPressed: _publishNow,
-                    icon: const Icon(Icons.send, color: _orange, size: 18),
-                    label: const Text(
-                      '公開',
-                      style: TextStyle(color: _orange, height: 1.5),
+          _isPublishing
+              ? const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 12),
+                  child: SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: _orange,
                     ),
                   ),
+                )
+              : TextButton.icon(
+                  onPressed: _publishNow,
+                  icon: const Icon(Icons.send, color: _orange, size: 18),
+                  label: const Text(
+                    '公開',
+                    style: TextStyle(color: _orange, height: 1.5),
+                  ),
+                ),
           _isSaving
               ? const Padding(
                   padding: EdgeInsets.symmetric(horizontal: 12),
@@ -243,8 +297,7 @@ class _BlogDraftEditorPageState extends State<BlogDraftEditorPage> {
                 )
               : TextButton.icon(
                   onPressed: _saveDraft,
-                  icon:
-                      const Icon(Icons.save, color: Colors.white70, size: 18),
+                  icon: const Icon(Icons.save, color: Colors.white70, size: 18),
                   label: const Text(
                     '保存',
                     style: TextStyle(color: Colors.white70, height: 1.5),
@@ -281,9 +334,15 @@ class _BlogDraftEditorPageState extends State<BlogDraftEditorPage> {
           _buildPlatformSelector(),
           const SizedBox(height: 12),
           TextField(
+            controller: _tagsCtrl,
+            style: const TextStyle(color: Colors.white, height: 1.5),
+            decoration: _inputDeco('タグ (カンマ区切り、最大5個): Flutter, Supabase, Dart'),
+          ),
+          const SizedBox(height: 12),
+          TextField(
             controller: _notesCtrl,
             style: const TextStyle(color: Colors.white, height: 1.5),
-            decoration: _inputDeco('メモ / タグ'),
+            decoration: _inputDeco('メモ'),
           ),
           const SizedBox(height: 12),
           TextField(

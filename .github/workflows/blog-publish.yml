@@ -104,6 +104,66 @@ jobs:
           echo "draft_path=$DRAFT" >> $GITHUB_OUTPUT
           echo "✅ Auto-selected: $DRAFT"
 
+      # ── Step 1.7: DB status='ready' 記事の自動公開 ───────────────────────
+      # admin UI で「公開準備完了」に設定した記事を blog.publish_post EF で自動公開する
+      - name: Step 1.7 - Auto-publish DB ready posts
+        if: github.event_name == 'schedule' || github.event.inputs.dry_run != 'true'
+        continue-on-error: true
+        env:
+          SUPABASE_URL: https://smmkxxavexumewbfaqpy.supabase.co
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          echo "[trace=$TRACE_ID] Step 1.7: querying blog_posts WHERE status='ready'"
+          RESP=$(curl -sf \
+            "${SUPABASE_URL}/rest/v1/blog_posts?select=id,title&status=eq.ready&order=created_at.asc&limit=5" \
+            -H "apikey: ${SUPABASE_SERVICE_KEY}" \
+            -H "Authorization: Bearer ${SUPABASE_SERVICE_KEY}" 2>/dev/null || echo "[]")
+          COUNT=$(echo "$RESP" | python3 -c "import sys,json; print(len(json.load(sys.stdin)))" 2>/dev/null || echo "0")
+          echo "[trace=$TRACE_ID] Ready posts found: $COUNT"
+          if [ "$COUNT" -eq "0" ]; then
+            echo "ℹ️ No ready posts — skipping DB auto-publish"
+            exit 0
+          fi
+          RESP_JSON="$RESP" python3 - <<'PY'
+          import json
+          import os
+
+          posts = json.loads(os.environ["RESP_JSON"])
+          for p in posts:
+              print(f"  - [{p['id']}] {p['title']}")
+          PY
+          RESP_JSON="$RESP" python3 - <<'PY' 2>&1 || echo "[trace=$TRACE_ID] DB auto-publish step completed (errors above are non-blocking)"
+          import json
+          import os
+          import urllib.request
+
+          posts = json.loads(os.environ["RESP_JSON"])
+          url = os.environ["SUPABASE_URL"]
+          key = os.environ["SUPABASE_SERVICE_KEY"]
+          trace = os.environ.get("TRACE_ID", "")
+
+          for p in posts:
+              pid = p["id"]
+              title = p["title"]
+              print(f"[trace={trace}] Publishing DB post: {pid} — {title}")
+              payload = json.dumps({"action": "blog.publish_post", "id": pid}).encode()
+              req = urllib.request.Request(
+                  f"{url}/functions/v1/schedule-hub",
+                  data=payload,
+                  headers={
+                      "Authorization": f"Bearer {key}",
+                      "Content-Type": "application/json",
+                  },
+                  method="POST",
+              )
+              try:
+                  with urllib.request.urlopen(req, timeout=30) as r:
+                      body = r.read().decode()
+                      print(f"  ✅ HTTP {r.status}: {body[:200]}")
+              except Exception as e:
+                  print(f"  ⚠️ Failed: {e}")
+          PY
+
       # ── Step 2: ドラフトを読み込んでメタデータ抽出 ──────────────────────
       - name: Step 2 - Extract metadata from draft
         if: steps.auto_select.outputs.has_draft == 'true'

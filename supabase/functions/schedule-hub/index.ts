@@ -683,7 +683,10 @@ serve(async (req: Request) => {
       "x.post_with_media",
     ];
     let userId: string | null = null;
-    if (!publicActions.includes(action)) {
+    const authorization = req.headers.get("Authorization") ?? "";
+    const isServiceRoleRequest = SERVICE_ROLE_KEY.length > 0 &&
+      authorization === `Bearer ${SERVICE_ROLE_KEY}`;
+    if (!publicActions.includes(action) && !isServiceRoleRequest) {
       userId = await getUserId(req);
       if (!userId) return json({ error: "Unauthorized" }, 401);
     }
@@ -1151,7 +1154,7 @@ serve(async (req: Request) => {
 
         const { data: post, error: fetchErr } = await admin
           .from("blog_posts")
-          .select("id, title, content, target_platforms")
+          .select("id, title, content, target_platforms, tags")
           .eq("id", postId)
           .single();
         if (fetchErr || !post) return json({ error: "Post not found" }, 404);
@@ -1176,7 +1179,10 @@ serve(async (req: Request) => {
           );
         }
 
-        const ppRawTags: string[] = (body.tags as string[]) ?? [];
+        const ppRawTags: string[] =
+          Array.isArray((post as Record<string, unknown>).tags)
+            ? ((post as Record<string, unknown>).tags as string[])
+            : (body.tags as string[]) ?? [];
         const ppTargetPlatforms = (post as Record<string, unknown>)
           .target_platforms;
         const ppPlatforms: string[] = Array.isArray(ppTargetPlatforms)
@@ -1198,7 +1204,9 @@ serve(async (req: Request) => {
               body: JSON.stringify({
                 title: ppTitle,
                 body: ppContent,
-                tags: tagObjects.length > 0 ? tagObjects : [{ name: "Flutter" }],
+                tags: tagObjects.length > 0
+                  ? tagObjects
+                  : [{ name: "Flutter" }],
                 private: false,
                 tweet: false,
               }),
@@ -1283,6 +1291,12 @@ serve(async (req: Request) => {
         if (body.title !== undefined) upFields.title = String(body.title);
         if (body.content !== undefined) upFields.content = String(body.content);
         if (body.notes !== undefined) upFields.notes = String(body.notes);
+        if (
+          body.status !== undefined &&
+          ["draft", "ready", "posted", "skipped"].includes(String(body.status))
+        ) {
+          upFields.status = String(body.status);
+        }
         if (Array.isArray(body.target_platforms)) {
           upFields.target_platforms = body.target_platforms;
         }
@@ -1721,6 +1735,47 @@ serve(async (req: Request) => {
           tag_list: string[];
         }>;
         return json({ success: true, articles, total: articles.length });
+      }
+
+      case "blog.devto_sync_engagement": {
+        const devtoKey = Deno.env.get("DEVTO_API_KEY") ?? "";
+        if (!devtoKey) return json({ error: "DEVTO_API_KEY not set" }, 500);
+        const perPage = Math.min(Number(body.per_page ?? 1000), 1000);
+        const dr = await fetch(
+          `https://dev.to/api/articles/me/published?per_page=${perPage}`,
+          { headers: { "api-key": devtoKey } },
+        );
+        if (!dr.ok) {
+          return json(
+            { error: `dev.to ${dr.status}: ${await dr.text()}` },
+            502,
+          );
+        }
+        const articles = await dr.json() as Array<{
+          id: number;
+          title: string;
+          url: string;
+          public_reactions_count?: number;
+          comments_count?: number;
+          page_views_count?: number;
+        }>;
+        const rows = articles.map((article) => ({
+          platform: "devto",
+          article_id: String(article.id),
+          title: article.title,
+          url: article.url,
+          likes_count: Number(article.public_reactions_count ?? 0),
+          comments_count: Number(article.comments_count ?? 0),
+          views_count: Number(article.page_views_count ?? 0),
+          updated_at: new Date().toISOString(),
+        }));
+        if (rows.length > 0) {
+          const { error: upsertErr } = await admin
+            .from("blog_engagement")
+            .upsert(rows, { onConflict: "platform,article_id" });
+          if (upsertErr) return json({ error: upsertErr.message }, 500);
+        }
+        return json({ success: true, synced: rows.length });
       }
 
       // blog.sync_engagement — Qiita 全記事の likes/comments/likers を DB に同期

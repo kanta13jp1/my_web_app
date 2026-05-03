@@ -1431,6 +1431,103 @@ async function addItem(
   return data;
 }
 
+type RssFeedInput = {
+  title: string;
+  url: string;
+  category: string;
+};
+
+type RssNewsItem = {
+  title: string;
+  url: string;
+  source: string;
+  category: string;
+  published_at: string;
+  summary: string;
+};
+
+function decodeXmlEntities(value: string): string {
+  return value
+    .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(
+      /&#x([0-9a-fA-F]+);/g,
+      (_, hex) => String.fromCharCode(parseInt(hex, 16)),
+    )
+    .replace(
+      /&#([0-9]+);/g,
+      (_, code) => String.fromCharCode(parseInt(code, 10)),
+    )
+    .trim();
+}
+
+function stripHtml(value: string): string {
+  return decodeXmlEntities(value.replace(/<[^>]+>/g, " "))
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function extractXmlTag(xml: string, tag: string): string {
+  const match = xml.match(
+    new RegExp(`<${tag}[^>]*>([\\s\\S]*?)</${tag}>`, "i"),
+  );
+  return match ? decodeXmlEntities(match[1]) : "";
+}
+
+function parseRssItems(
+  xml: string,
+  feed: RssFeedInput,
+  perFeedLimit: number,
+): RssNewsItem[] {
+  const blocks = xml.match(/<item[\s\S]*?<\/item>|<entry[\s\S]*?<\/entry>/gi) ??
+    [];
+  const items: RssNewsItem[] = [];
+  for (const block of blocks.slice(0, perFeedLimit)) {
+    const title = stripHtml(extractXmlTag(block, "title"));
+    const linkMatch = block.match(/<link[^>]+href=["']([^"']+)["'][^>]*\/?>/i);
+    const url = decodeXmlEntities(
+      extractXmlTag(block, "link") || linkMatch?.[1] || "",
+    );
+    const published = extractXmlTag(block, "pubDate") ||
+      extractXmlTag(block, "published") ||
+      extractXmlTag(block, "updated");
+    const summary = stripHtml(
+      extractXmlTag(block, "description") ||
+        extractXmlTag(block, "summary") ||
+        extractXmlTag(block, "content"),
+    );
+    if (!title || !url) continue;
+    items.push({
+      title,
+      url,
+      source: feed.title,
+      category: feed.category,
+      published_at: published,
+      summary: summary.length > 220 ? `${summary.slice(0, 220)}…` : summary,
+    });
+  }
+  return items;
+}
+
+async function fetchRssNewsItems(
+  feed: RssFeedInput,
+  perFeedLimit: number,
+): Promise<RssNewsItem[]> {
+  const res = await fetch(feed.url, {
+    headers: {
+      "User-Agent":
+        "my-web-app-news-reader/1.0 (+https://my-web-app-b67f4.web.app)",
+    },
+  }).catch(() => null);
+  if (!res || !res.ok) return [];
+  const xml = await res.text();
+  return parseRssItems(xml, feed, perFeedLimit);
+}
+
 async function deleteItem(
   admin: SupabaseClient,
   source: string,
@@ -2786,8 +2883,18 @@ function sireDistanceAffinityBonus(
   const sire = String(topEntry.sire ?? "").trim();
   const dist = numericOrFallback(raceDistance, 0);
   if (!sire || !dist) return 0;
-  const sprintSires = ["ロードカナロア", "サクラバクシンオー", "タイキシャトル", "ビッグアーサー"];
-  const stayerSires = ["ハービンジャー", "マンハッタンカフェ", "ゴールドシップ", "ジャングルポケット"];
+  const sprintSires = [
+    "ロードカナロア",
+    "サクラバクシンオー",
+    "タイキシャトル",
+    "ビッグアーサー",
+  ];
+  const stayerSires = [
+    "ハービンジャー",
+    "マンハッタンカフェ",
+    "ゴールドシップ",
+    "ジャングルポケット",
+  ];
   const isSprint = dist <= 1400;
   const isRoute = dist >= 2000;
   if (isSprint && sprintSires.some((s) => sire.includes(s))) return 0.01; // スプリント血統×短距離: 適性一致
@@ -3470,7 +3577,10 @@ function buildHistoricalBaselinePrediction(
   const wtChangeCourse = weightChangeCourseSuitBonus(first);
   const prev3AvgFinish = prev3AvgFinishBonus(first);
   const prev2FormGap = prev2FormGapBonus(first);
-  const courseSurfaceMatch = courseSurfaceMatchBonus(first, race.course_type);
+  const courseSurfaceMatch = courseSurfaceMatchBonus(
+    first,
+    String(race.course_type ?? ""),
+  );
   const fieldWeightRank = fieldWeightRankBonus(first, entries);
   const consec3Top = consecutiveTopThreeBonus(first);
   const popShift = popularityShiftBonus(first);
@@ -7642,6 +7752,43 @@ ${reportText ? `> ${reportText}` : ""}`,
       }
     }
 
+    if (action === "rss.fetch_latest") {
+      const rawFeeds = Array.isArray(body.feeds) ? body.feeds : [];
+      const feeds: RssFeedInput[] = rawFeeds
+        .map((feed) => asRecord(feed))
+        .filter((feed): feed is Record<string, unknown> => feed !== null)
+        .map((feed) => ({
+          title: String(feed.title ?? feed.name ?? "RSS"),
+          url: String(feed.url ?? ""),
+          category: String(feed.category ?? "総合"),
+        }))
+        .filter((feed) => /^https?:\/\//i.test(feed.url))
+        .slice(0, 12);
+      const perFeedLimit = Math.min(
+        Math.max(Number(body.per_feed_limit ?? 8), 1),
+        20,
+      );
+      const totalLimit = Math.min(Math.max(Number(body.limit ?? 40), 1), 80);
+
+      const results = await Promise.all(
+        feeds.map((feed) => fetchRssNewsItems(feed, perFeedLimit)),
+      );
+      const items = results
+        .flat()
+        .sort((a, b) => {
+          const bTime = Date.parse(b.published_at || "") || 0;
+          const aTime = Date.parse(a.published_at || "") || 0;
+          return bTime - aTime;
+        })
+        .slice(0, totalLimit);
+      return json({
+        success: true,
+        fetched_at: new Date().toISOString(),
+        source_count: feeds.length,
+        items,
+      });
+    }
+
     // ── Authenticated CRUD operations ────────────────────────────────────────
     const userId = await getUserId(req);
     if (!userId) return json({ error: "Unauthorized" }, 401);
@@ -8123,6 +8270,7 @@ ${reportText ? `> ${reportText}` : ""}`,
         const item = await addItem(admin, "rss_feed", userId, {
           url: body.url,
           title: body.title,
+          category: body.category ?? "購読",
         });
         return json({ success: true, feed: item });
       }
@@ -8501,6 +8649,7 @@ ${reportText ? `> ${reportText}` : ""}`,
             "rss.list_feeds",
             "rss.add_feed",
             "rss.fetch",
+            "rss.fetch_latest",
             "changelog.list",
             "changelog.create",
             "mindmap.list",

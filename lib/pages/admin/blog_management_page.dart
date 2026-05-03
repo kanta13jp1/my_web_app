@@ -26,7 +26,8 @@ class _BlogManagementPageState extends State<BlogManagementPage>
   List<Map<String, dynamic>> _corrections = [];
   final Set<String> _approvingIds = {};
   final Set<String> _rejectingIds = {};
-  String _tab = 'articles'; // 'articles' | 'comments' | 'drafts' | 'corrections'
+  String _tab =
+      'articles'; // 'articles' | 'comments' | 'drafts' | 'corrections'
   String _platformFilter = 'all'; // 'all' | 'qiita' | 'devto'
   String _draftSearch = '';
   String _draftStatusFilter = 'all'; // 'all' | 'draft' | 'ready'
@@ -161,7 +162,10 @@ class _BlogManagementPageState extends State<BlogManagementPage>
       final qiitaOk = (results['qiita'] as Map?)?['ok'] == true;
       final devtoOk = (results['devto'] as Map?)?['ok'] == true;
       final msg = ok
-          ? '✅ 投稿完了 ${[if (qiitaOk) 'Qiita', if (devtoOk) 'dev.to'].join(' + ')}'
+          ? '✅ 投稿完了 ${[
+              if (qiitaOk) 'Qiita',
+              if (devtoOk) 'dev.to',
+            ].join(' + ')}'
           : '⚠️ 投稿エラー (${res.status}): ${data?['error'] ?? ''}';
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -193,11 +197,23 @@ class _BlogManagementPageState extends State<BlogManagementPage>
     final next = current == 'ready' ? 'draft' : 'ready';
     setState(() => _togglingIds.add(id));
     try {
-      await _supabase
-          .from('blog_posts')
-          .update({'status': next})
-          .eq('id', id);
-      await _loadData();
+      final res = await _supabase.functions.invoke(
+        'schedule-hub',
+        body: {'action': 'blog.update_post', 'id': id, 'status': next},
+      );
+      if (!mounted) return;
+      final success = res.status == 200;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            success
+                ? (next == 'ready' ? '公開キューへ追加しました' : '下書きに戻しました')
+                : 'ステータス更新エラー (${res.status})',
+          ),
+          backgroundColor: success ? _green : _red,
+        ),
+      );
+      if (success) await _loadData();
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -272,8 +288,7 @@ class _BlogManagementPageState extends State<BlogManagementPage>
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: _orange),
             onPressed: () => Navigator.pop(ctx, true),
-            child:
-                const Text('保存', style: TextStyle(color: Colors.white)),
+            child: const Text('保存', style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -342,8 +357,7 @@ class _BlogManagementPageState extends State<BlogManagementPage>
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child:
-                const Text('キャンセル', style: TextStyle(color: Colors.white54)),
+            child: const Text('キャンセル', style: TextStyle(color: Colors.white54)),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: _red),
@@ -402,16 +416,14 @@ class _BlogManagementPageState extends State<BlogManagementPage>
                 children: [
                   TextField(
                     controller: titleCtrl,
-                    style:
-                        const TextStyle(color: Colors.white, height: 1.5),
+                    style: const TextStyle(color: Colors.white, height: 1.5),
                     decoration: _inputDeco('タイトル *'),
                     autofocus: true,
                   ),
                   const SizedBox(height: 10),
                   TextField(
                     controller: tagsCtrl,
-                    style:
-                        const TextStyle(color: Colors.white, height: 1.5),
+                    style: const TextStyle(color: Colors.white, height: 1.5),
                     decoration: _inputDeco('タグ (カンマ区切り、最大4個)'),
                   ),
                   const SizedBox(height: 10),
@@ -419,8 +431,7 @@ class _BlogManagementPageState extends State<BlogManagementPage>
                     children: [
                       const Text(
                         '投稿先: ',
-                        style:
-                            TextStyle(color: Colors.white54, height: 1.5),
+                        style: TextStyle(color: Colors.white54, height: 1.5),
                       ),
                       ...['qiita', 'devto', 'qiita,devto'].map(
                         (p) => Padding(
@@ -477,8 +488,7 @@ class _BlogManagementPageState extends State<BlogManagementPage>
                 }
                 Navigator.pop(ctx2, true);
               },
-              child:
-                  const Text('作成', style: TextStyle(color: Colors.white)),
+              child: const Text('作成', style: TextStyle(color: Colors.white)),
             ),
           ],
         ),
@@ -533,9 +543,9 @@ class _BlogManagementPageState extends State<BlogManagementPage>
   }
 
   Future<void> _replyToComment(Map<String, dynamic> c) async {
-    final commentId = c['comment_id']?.toString() ?? c['id']?.toString() ?? '';
+    final articleId = c['article_id']?.toString() ?? '';
     final platform = c['platform'] as String? ?? '';
-    if (commentId.isEmpty || platform != 'qiita') return;
+    if (articleId.isEmpty || platform != 'qiita') return;
     final id = c['id']?.toString() ?? '';
     if (id.isEmpty || _replyingIds.contains(id)) return;
     final bodyCtrl = TextEditingController();
@@ -583,8 +593,7 @@ class _BlogManagementPageState extends State<BlogManagementPage>
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child:
-                const Text('キャンセル', style: TextStyle(color: Colors.white54)),
+            child: const Text('キャンセル', style: TextStyle(color: Colors.white54)),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: _orange),
@@ -592,8 +601,7 @@ class _BlogManagementPageState extends State<BlogManagementPage>
               if (bodyCtrl.text.trim().isEmpty) return;
               Navigator.pop(ctx, true);
             },
-            child:
-                const Text('送信', style: TextStyle(color: Colors.white)),
+            child: const Text('送信', style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -607,7 +615,7 @@ class _BlogManagementPageState extends State<BlogManagementPage>
         'schedule-hub',
         body: {
           'action': 'blog.qiita_comment_post',
-          'comment_id': commentId,
+          'item_id': articleId,
           'body': body,
         },
       );
@@ -706,8 +714,7 @@ class _BlogManagementPageState extends State<BlogManagementPage>
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () async {
-          final updated =
-              await Navigator.pushNamed(context, '/admin/blog/new');
+          final updated = await Navigator.pushNamed(context, '/admin/blog/new');
           if (updated == true) _loadData();
         },
         backgroundColor: _orange,
@@ -835,7 +842,10 @@ class _BlogManagementPageState extends State<BlogManagementPage>
                 'コメント${_unrepliedCount > 0 ? ' ($_unrepliedCount)' : ''}',
               ),
               const SizedBox(width: 8),
-              _tabBtn('drafts', '下書き (${_filteredDrafts.length}/${_drafts.length})'),
+              _tabBtn(
+                'drafts',
+                '下書き (${_filteredDrafts.length}/${_drafts.length})',
+              ),
               const SizedBox(width: 8),
               _tabBtn(
                 'corrections',
@@ -863,7 +873,8 @@ class _BlogManagementPageState extends State<BlogManagementPage>
               decoration: InputDecoration(
                 hintText: 'タイトル検索...',
                 hintStyle: const TextStyle(color: Colors.white38, height: 1.5),
-                prefixIcon: const Icon(Icons.search, color: Colors.white38, size: 18),
+                prefixIcon:
+                    const Icon(Icons.search, color: Colors.white38, size: 18),
                 filled: true,
                 fillColor: Colors.white10,
                 contentPadding:
@@ -1001,7 +1012,11 @@ class _BlogManagementPageState extends State<BlogManagementPage>
             padding: const EdgeInsets.all(32),
             child: Column(
               children: [
-                const Icon(Icons.article_outlined, color: Colors.white24, size: 48),
+                const Icon(
+                  Icons.article_outlined,
+                  color: Colors.white24,
+                  size: 48,
+                ),
                 const SizedBox(height: 12),
                 const Text(
                   'データなし\nSync ボタンで Qiita / dev.to から取得できます',
@@ -1364,12 +1379,14 @@ class _BlogManagementPageState extends State<BlogManagementPage>
             padding: const EdgeInsets.all(32),
             child: Column(
               children: [
-                const Icon(Icons.drafts_outlined, color: Colors.white24, size: 48),
+                const Icon(
+                  Icons.drafts_outlined,
+                  color: Colors.white24,
+                  size: 48,
+                ),
                 const SizedBox(height: 12),
                 Text(
-                  _drafts.isEmpty
-                      ? '下書きなし\n右下のボタンで新規作成できます'
-                      : '検索結果なし',
+                  _drafts.isEmpty ? '下書きなし\n右下のボタンで新規作成できます' : '検索結果なし',
                   textAlign: TextAlign.center,
                   style: const TextStyle(color: Colors.white38, height: 1.6),
                 ),
@@ -1474,7 +1491,8 @@ class _BlogManagementPageState extends State<BlogManagementPage>
                   color: Colors.white54,
                   tooltip: '編集',
                   padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                  constraints:
+                      const BoxConstraints(minWidth: 32, minHeight: 32),
                   onPressed: () => _editDraft(d),
                 ),
                 IconButton(
@@ -1482,7 +1500,8 @@ class _BlogManagementPageState extends State<BlogManagementPage>
                   color: _red.withAlpha(180),
                   tooltip: '削除',
                   padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                  constraints:
+                      const BoxConstraints(minWidth: 32, minHeight: 32),
                   onPressed: () => _deleteDraft(d),
                 ),
                 if (url.isNotEmpty)
@@ -1542,12 +1561,10 @@ class _BlogManagementPageState extends State<BlogManagementPage>
                       style: const TextStyle(fontSize: 11, height: 1.5),
                     ),
                     style: OutlinedButton.styleFrom(
-                      foregroundColor:
-                          isReady ? Colors.white38 : _orange,
+                      foregroundColor: isReady ? Colors.white38 : _orange,
                       side: BorderSide(
-                        color: isReady
-                            ? Colors.white24
-                            : _orange.withAlpha(120),
+                        color:
+                            isReady ? Colors.white24 : _orange.withAlpha(120),
                       ),
                       padding: const EdgeInsets.symmetric(horizontal: 10),
                     ),
@@ -1638,7 +1655,7 @@ class _BlogManagementPageState extends State<BlogManagementPage>
         decoration: BoxDecoration(
           color: _card,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: _red.withOpacity(0.4)),
+          border: Border.all(color: _red.withAlpha(102)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -1650,8 +1667,8 @@ class _BlogManagementPageState extends State<BlogManagementPage>
                       const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                   decoration: BoxDecoration(
                     color: platform == 'qiita'
-                        ? const Color(0xFF55C500).withOpacity(0.2)
-                        : const Color(0xFF3D5AFE).withOpacity(0.2),
+                        ? const Color(0xFF55C500).withAlpha(51)
+                        : const Color(0xFF3D5AFE).withAlpha(51),
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: Text(
@@ -1706,8 +1723,7 @@ class _BlogManagementPageState extends State<BlogManagementPage>
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Icon(Icons.error_outline,
-                          size: 14, color: _red),
+                      const Icon(Icons.error_outline, size: 14, color: _red),
                       const SizedBox(width: 6),
                       Expanded(
                         child: Text(
@@ -1753,8 +1769,10 @@ class _BlogManagementPageState extends State<BlogManagementPage>
                             color: Colors.white38,
                           ),
                         )
-                      : const Text('却下',
-                          style: TextStyle(fontSize: 12, height: 1.5)),
+                      : const Text(
+                          '却下',
+                          style: TextStyle(fontSize: 12, height: 1.5),
+                        ),
                 ),
                 const SizedBox(width: 8),
                 ElevatedButton(
@@ -1773,8 +1791,10 @@ class _BlogManagementPageState extends State<BlogManagementPage>
                             color: Colors.white,
                           ),
                         )
-                      : const Text('承認して適用',
-                          style: TextStyle(fontSize: 12, height: 1.5)),
+                      : const Text(
+                          '承認して適用',
+                          style: TextStyle(fontSize: 12, height: 1.5),
+                        ),
                 ),
               ],
             ),
@@ -1832,10 +1852,10 @@ class _BlogManagementPageState extends State<BlogManagementPage>
     if (id.isEmpty || _rejectingIds.contains(id)) return;
     setState(() => _rejectingIds.add(id));
     try {
-      await _supabase
-          .from('blog_corrections')
-          .update({'approved': false, 'applied_at': DateTime.now().toIso8601String()})
-          .eq('id', id);
+      await _supabase.from('blog_corrections').update({
+        'approved': false,
+        'applied_at': DateTime.now().toIso8601String(),
+      }).eq('id', id);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('🗑️ 却下しました')),

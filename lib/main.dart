@@ -54,6 +54,9 @@ import 'package:my_web_app/pages/ai_dev_principles_page.dart';
 import 'package:my_web_app/pages/feature_requests_page.dart';
 import 'package:my_web_app/pages/profile_settings_page.dart';
 import 'package:my_web_app/pages/public_profile_page.dart';
+import 'package:my_web_app/pages/blog_page.dart';
+import 'package:my_web_app/pages/blog_compose_page.dart';
+import 'package:my_web_app/pages/public_blog_post_page.dart';
 import 'package:my_web_app/pages/tech_blog_tracker_page.dart';
 import 'package:my_web_app/pages/thought_anchor_page.dart';
 import 'package:my_web_app/pages/rewards_page.dart';
@@ -624,6 +627,20 @@ class _MyAppState extends State<MyApp> {
           case '/note-editor':
             return MaterialPageRoute(
               builder: (_) => const NoteEditorPage(),
+            );
+          case '/blog':
+            return MaterialPageRoute(
+              builder: (_) => const BlogPage(),
+            );
+          case '/blog/compose':
+            return MaterialPageRoute(
+              builder: (_) => const BlogComposePage(),
+              settings: settings,
+            );
+          case '/blog/post':
+            return MaterialPageRoute(
+              builder: (_) => const PublicBlogPostPage(),
+              settings: settings,
             );
           case '/tech-blog-tracker':
             return MaterialPageRoute(
