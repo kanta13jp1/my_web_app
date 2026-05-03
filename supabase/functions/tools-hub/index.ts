@@ -2746,6 +2746,57 @@ function formValueBonus(
   return 0;
 }
 
+function runningStyleFieldSizeBonus(
+  topEntry: Record<string, unknown> | undefined,
+  fieldSize: number,
+): number {
+  if (!topEntry) return 0;
+  const style = String(topEntry.running_style ?? "").trim();
+  if (!style) return 0;
+  const isFront = style === "逃" || style === "先";
+  const isCloser = style === "差" || style === "追";
+  if (fieldSize >= 14) {
+    if (isFront) return -0.01; // 大頭数ペース激化→逃げ先行は消耗戦リスク
+    if (isCloser) return 0.01; // 大頭数で外差し有効→差し追い込みに捌きスペース
+  }
+  if (fieldSize <= 8) {
+    if (isFront) return 0.01; // 少頭数でペース落ち着く→逃げ先行が能力発揮
+  }
+  return 0;
+}
+
+function horseBodyCarryRatioBonus(
+  topEntry: Record<string, unknown> | undefined,
+): number {
+  if (!topEntry) return 0;
+  const body = numericOrFallback(topEntry.horse_weight, 0);
+  const carry = numericOrFallback(topEntry.weight_kg, 0);
+  if (body <= 0 || carry <= 0) return 0;
+  const ratio = carry / body;
+  if (ratio >= 0.13) return -0.01; // 高負担比率(斤量/馬体重≥13%): 体力消耗リスク
+  if (ratio <= 0.10) return 0.01; // 低負担比率(斤量/馬体重≤10%): 体格対比軽斤量優位
+  return 0;
+}
+
+function sireDistanceAffinityBonus(
+  topEntry: Record<string, unknown> | undefined,
+  raceDistance: unknown,
+): number {
+  if (!topEntry) return 0;
+  const sire = String(topEntry.sire ?? "").trim();
+  const dist = numericOrFallback(raceDistance, 0);
+  if (!sire || !dist) return 0;
+  const sprintSires = ["ロードカナロア", "サクラバクシンオー", "タイキシャトル", "ビッグアーサー"];
+  const stayerSires = ["ハービンジャー", "マンハッタンカフェ", "ゴールドシップ", "ジャングルポケット"];
+  const isSprint = dist <= 1400;
+  const isRoute = dist >= 2000;
+  if (isSprint && sprintSires.some((s) => sire.includes(s))) return 0.01; // スプリント血統×短距離: 適性一致
+  if (isRoute && stayerSires.some((s) => sire.includes(s))) return 0.01; // スタミナ血統×長距離: 適性一致
+  if (isSprint && stayerSires.some((s) => sire.includes(s))) return -0.01; // スタミナ血統×短距離: 逆適性リスク
+  if (isRoute && sprintSires.some((s) => sire.includes(s))) return -0.01; // スプリント血統×長距離: スタミナ不安
+  return 0;
+}
+
 function consecutiveTopThreeBonus(
   topEntry: Record<string, unknown> | undefined,
 ): number {
@@ -3375,6 +3426,9 @@ function buildHistoricalBaselinePrediction(
   const largeFieldPerf = largeFieldPerformerBonus(first, entries.length);
   const jockeyReunion = jockeyHorseReunionBonus(first);
   const formValue = formValueBonus(first);
+  const runStyleFieldSize = runningStyleFieldSizeBonus(first, entries.length);
+  const bodyCarryRatio = horseBodyCarryRatioBonus(first);
+  const sireDistAffinity = sireDistanceAffinityBonus(first, race.distance);
   const confidence = Math.min(
     clampConfidence(
       0.31 + dataQuality * 0.22 + oddsCoverage * 0.12 + historyCoverage * 0.07 +
@@ -3399,7 +3453,8 @@ function buildHistoricalBaselinePrediction(
         jockeyChange + prevPopBounce + wtChangeCourse + prev3AvgFinish +
         prev2FormGap + courseSurfaceMatch + fieldWeightRank +
         consec3Top + popShift + prev3WinRate +
-        largeFieldPerf + jockeyReunion + formValue,
+        largeFieldPerf + jockeyReunion + formValue +
+        runStyleFieldSize + bodyCarryRatio + sireDistAffinity,
     ),
     maxConf,
   );
