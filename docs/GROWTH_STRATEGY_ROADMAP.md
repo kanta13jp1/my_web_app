@@ -25799,3 +25799,33 @@ a9d7b1517 on main
 
 ### Philosophy Alignment
 #6 資本=時間 (= Phase52 draft作成+dispatch を1セッション完結 / bc58b50b→NB→AI最新情報 3軸Issue化) / #8 KPI=昨日の自分 (= dev.to 234→239本 +5本) / #2 ミッション駆動 (= AI ツール最新情報を fleet 改善 Issue に即変換)
+
+## 2026-05-03 PS#4 S669 — AI Codingエージェント9社追加 (1843→1852社)
+
+### 実施内容
+- **ai-coding-agentカテゴリ新設**: CodeRabbit/Greptile/Qodo(CodiumAI)/Pieces/Sourcegraph Cody/Sweep AI/Aider/OpenHands(OpenDevin)/Continue.dev
+- comparison_page.dart: 1843→1852社 / sitemap: 1939→1948 URLs
+- bc58b50bのAI開発エコシステム視点から「Devin/Cursor/Codex以外のAI Codingエージェント」を網羅
+
+### 次回候補 (PS#4 S670+)
+1. **#1760**: コード品質/静的解析 (SonarCloud/CodeFactor/Codacy等は既存多数 → 残ギャップ調査)
+2. **#1761**: フロントエンドビジュアルテスト (Storybook/Chromatic/Percy等)
+3. **#1762**: AIエージェント評価 (AgentBench/OSWorld/WebArena)
+
+### Philosophy Alignment
+#5 商品=ユーザー価値 (= AI Coding Agent競合網羅でAI開発者SEO流入拡大) / #8 KPI=昨日の自分 (= S668→S669連続実施で1日2カテゴリ新設)
+
+
+### PS#3 S150 (2026-05-03) — AI大学396→398社化 + NotebookLM 97冊確認 + bc58b50b残課題委譲
+- **AI大学コンテンツ2件追加** (Issue #1775/#1786 Close):
+  - Gemini Code Assist Domain-Specific AI (企業コードベース学習/CMEK/Flutter対応/AI_FALLBACK_RUNBOOK活用戦略)
+  - ML Systems Engineering Curriculum (LLM Serving KVキャッシュ/PagedAttention/分散学習/MLOps評価サイクル)
+- **Issues整理** (S149実装済分): #1799/#1802/#1806/#1811/#1797/#1798 Close / #1834/#1836 Close (PS#5 S120実装済)
+- **NotebookLM 26→97冊増加確認**: 14件未Issue発見
+  - 0829f536/0fc0b6cf/ed1aac00 → 既存Issue有 (検索ヒットせずFP)
+  - 新規11件 → #1859 でWin版にtriage委譲
+- **bc58b50b残課題委譲**:
+  - #1862: Thread Automations → Codex#2 (依存更新/GC/E2E)
+  - #1863: DBHub/Bytebase MCP → Codex#2 (readonly スキーマアクセス)
+- **次回候補Issue登録**: #1859 (Win版 NB triage), #1862/#1863 (Codex#2委譲済)
+- commit 0afc1fcb1 on main
