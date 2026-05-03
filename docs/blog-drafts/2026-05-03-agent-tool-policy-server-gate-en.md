@@ -2,8 +2,8 @@
 title: "Stopping AI agent tool calls with deny-by-default — server-side scope gate and CEO approval"
 emoji: "🛡️"
 type: "tech"
-topics: ["mcp", "supabase", "deno", "ai-agent", "security"]
-published: true
+topics: ["security", "mcp", "supabase", "ai-agent"]
+published: false
 ---
 
 ## Client guards alone do not stop a determined caller
