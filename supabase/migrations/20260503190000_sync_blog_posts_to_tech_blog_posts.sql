@@ -72,7 +72,7 @@ CREATE TRIGGER blog_posts_sync_to_tech_blog_posts
   FOR EACH ROW EXECUTE FUNCTION sync_blog_post_to_tech_blog_posts();
 
 -- Step 4: backfill — 既存 posted 全件を trigger 経由で展開 (冪等 / WHERE NOT EXISTS 保護済)
-UPDATE blog_posts SET status = status WHERE status = 'posted';
+UPDATE blog_posts SET status = status WHERE status = 'posted'; -- nocheck: time-relative
 
 -- 達成記録
 INSERT INTO development_achievements (title, description, completed_at)

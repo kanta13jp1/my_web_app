@@ -358,15 +358,7 @@ jobs:
         run: |
           DRAFT_PATH="$DRAFT_PATH_VAR"
           URL="${QIITA_URL:-$DEVTO_URL}"
-          PATCH=$(python3 -c "
-from datetime import datetime
-import json, os
-print(json.dumps({
-    'status': 'posted',
-    'posted_at': datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ'),
-    'url': os.environ.get('URL', '') or None
-}))
-")
+          PATCH=$(python3 -c "from datetime import datetime; import json, os; print(json.dumps({'status': 'posted', 'posted_at': datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ'), 'url': os.environ.get('URL', '') or None}))")
           HTTP=$(curl -s -o /dev/null -w "%{http_code}" \
             -X PATCH \
             "${SUPABASE_URL}/rest/v1/blog_posts?draft_path=eq.${DRAFT_PATH}" \

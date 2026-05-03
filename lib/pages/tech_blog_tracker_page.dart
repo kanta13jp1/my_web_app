@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../services/heygen_blog_video_service.dart';
+import '../services/blog_publish_service.dart';
 
 /// テック技術ブログ投稿管理ページ
-/// Zenn/Qiita/はてなブログ/note/Medium/dev.to/Hashnode/Substack/GitHub Pages/NOTION/X Article への
-/// 毎日の投稿状況を管理・記録するページ。
+/// Qiita/dev.to への自動公開 + 9 プラットフォームの手動トラッキング。
+/// blog_posts テーブル (drafts/posted) の CRUD を UI から操作可能。
 class TechBlogTrackerPage extends StatefulWidget {
   const TechBlogTrackerPage({super.key});
 
@@ -18,13 +20,18 @@ class TechBlogTrackerPage extends StatefulWidget {
 class _TechBlogTrackerPageState extends State<TechBlogTrackerPage> {
   final _supabase = Supabase.instance.client;
 
-  static const _platforms = [
-    _Platform('zenn', 'Zenn', '📝', Color(0xFF3EA8FF)),
+  // 🤖 自動公開対象プラットフォーム (schedule-hub blog.publish_post)
+  static const _autoPlatforms = [
     _Platform('qiita', 'Qiita', '🟢', Color(0xFF55C500)),
+    _Platform('devto', 'dev.to', '⬛', Color(0xFF0A0A0A)),
+  ];
+
+  // ✍️ 手動トラッキング対象プラットフォーム
+  static const _manualPlatforms = [
+    _Platform('zenn', 'Zenn', '📝', Color(0xFF3EA8FF)),
     _Platform('hatena', 'はてなブログ', '🔵', Color(0xFF00A4DE)),
     _Platform('note', 'note', '🔴', Color(0xFF41C9B4)),
     _Platform('medium', 'Medium', '⚫', Color(0xFF000000)),
-    _Platform('devto', 'dev.to', '⬛', Color(0xFF0A0A0A)),
     _Platform('hashnode', 'Hashnode', '💙', Color(0xFF2962FF)),
     _Platform('substack', 'Substack', '🟠', Color(0xFFFF6719)),
     _Platform('github_pages', 'GitHub Pages', '🐙', Color(0xFF24292E)),
@@ -32,11 +39,16 @@ class _TechBlogTrackerPageState extends State<TechBlogTrackerPage> {
     _Platform('x_article', 'X Article', '𝕏', Color(0xFF000000)),
   ];
 
+  static List<_Platform> get _allPlatforms =>
+      [..._autoPlatforms, ..._manualPlatforms];
+
   DateTime _selectedDate = DateTime.now();
   List<Map<String, dynamic>> _todayPosts = [];
   List<Map<String, dynamic>> _recentPosts = [];
   List<Map<String, dynamic>> _scheduleDrafts = [];
   bool _loading = true;
+  bool _publishing = false;
+  String? _draftLoadError;
 
   @override
   void initState() {
@@ -45,7 +57,10 @@ class _TechBlogTrackerPageState extends State<TechBlogTrackerPage> {
   }
 
   Future<void> _load() async {
-    setState(() => _loading = true);
+    setState(() {
+      _loading = true;
+      _draftLoadError = null;
+    });
     try {
       final userId = _supabase.auth.currentUser?.id;
       if (userId == null) return;
@@ -105,21 +120,15 @@ class _TechBlogTrackerPageState extends State<TechBlogTrackerPage> {
     }
   }
 
-  /// blog_posts.target_platforms (= 'github-pages' / 'x-article' 等の dash 表記)
-  /// を tech_blog_posts.platform (= 'github_pages' / 'x_article' 等の underscore 表記) に正規化.
   String _normalizePlatformId(String raw) =>
       raw.toLowerCase().replaceAll('-', '_');
 
-  /// 自動 dispatch (= T-1 / blog_posts.status='posted') された当日投稿の
-  /// platform 一覧を flat 化.
-  /// blog_posts は 1 row に複数 target_platforms を持つため expand する.
   List<String> _autoPostedPlatformsToday() {
     final dateStr = DateFormat('yyyy-MM-dd').format(_selectedDate);
     final platforms = <String>{};
     for (final draft in _scheduleDrafts) {
       if (draft['status'] != 'posted') continue;
       final postedAt = (draft['posted_at'] ?? '').toString();
-      // posted_at は timestamptz なので yyyy-MM-dd で前方一致判定
       if (!postedAt.startsWith(dateStr)) continue;
       final targets = draft['target_platforms'];
       if (targets is List) {
@@ -132,8 +141,6 @@ class _TechBlogTrackerPageState extends State<TechBlogTrackerPage> {
     return platforms.toList();
   }
 
-  /// 自動 dispatch (= blog_posts.status='posted') の posted_at を yyyy-MM-dd
-  /// 単位で重複排除.
   Set<String> _autoPostedDays() {
     final days = <String>{};
     for (final draft in _scheduleDrafts) {
@@ -155,7 +162,6 @@ class _TechBlogTrackerPageState extends State<TechBlogTrackerPage> {
     try {
       return _todayPosts.firstWhere((p) => p['platform'] == platform);
     } catch (_) {
-      // 自動 dispatch 由来の場合は blog_posts draft を返す (= UI で URL 抽出に使える)
       try {
         return _scheduleDrafts.firstWhere((d) {
           if (d['status'] != 'posted') return false;
@@ -230,7 +236,7 @@ class _TechBlogTrackerPageState extends State<TechBlogTrackerPage> {
   }
 
   Future<Map<String, String>?> _showAddDialog(String platform) async {
-    final platformLabel = _platforms
+    final platformLabel = _allPlatforms
         .firstWhere(
           (p) => p.id == platform,
           orElse: () => const _Platform('', '', '', Color(0xFF9CA3AF)),
@@ -291,8 +297,313 @@ class _TechBlogTrackerPageState extends State<TechBlogTrackerPage> {
     );
   }
 
-  /// 直近30日の投稿数を集計（連続投稿ストリーク計算用）.
-  /// tech_blog_posts (= 手動記録) + blog_posts (= 自動 dispatch / status='posted') を統合判定.
+  // ─── CRUD actions for blog_posts (drafts) ────────────────────────────────
+
+  Future<void> _publishDraft(Map<String, dynamic> draft) async {
+    final id = draft['id']?.toString();
+    if (id == null) return;
+
+    final content = draft['content']?.toString() ?? '';
+    if (content.trim().isEmpty) {
+      if (!mounted) return;
+      final proceed = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('コンテンツが空です'),
+          content: const Text('このドラフトにはコンテンツがありません。編集してから公開することをお勧めします。このまま公開しますか？'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('キャンセル'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('このまま公開'),
+            ),
+          ],
+        ),
+      );
+      if (proceed != true) {
+        await _showEditDraftDialog(draft);
+        return;
+      }
+    }
+
+    setState(() => _publishing = true);
+    try {
+      final result = await BlogPublishService.publishPost(id: id);
+      if (!mounted) return;
+      final qiitaUrl = result['qiita_url']?.toString();
+      final devtoUrl = result['devto_url']?.toString();
+      final urlText = [
+        if (qiitaUrl != null) 'Qiita: $qiitaUrl',
+        if (devtoUrl != null) 'dev.to: $devtoUrl',
+      ].join('\n');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(urlText.isNotEmpty ? '公開しました！\n$urlText' : '公開しました！'),
+          backgroundColor: const Color(0xFF4CAF50),
+          duration: const Duration(seconds: 6),
+          action: qiitaUrl != null
+              ? SnackBarAction(
+                  label: 'Qiita で開く',
+                  onPressed: () => launchUrl(Uri.parse(qiitaUrl)),
+                )
+              : null,
+        ),
+      );
+      await _load();
+    } catch (e) {
+      debugPrint('_publishDraft error: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('公開に失敗しました: $e'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 8),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _publishing = false);
+    }
+  }
+
+  Future<void> _showEditDraftDialog(Map<String, dynamic> draft) async {
+    final id = draft['id']?.toString();
+    if (id == null) return;
+
+    final titleCtrl =
+        TextEditingController(text: draft['title']?.toString() ?? '');
+    final contentCtrl =
+        TextEditingController(text: draft['content']?.toString() ?? '');
+    final notesCtrl =
+        TextEditingController(text: draft['notes']?.toString() ?? '');
+    final platforms = draft['target_platforms'];
+    final selectedPlatforms = (platforms is List)
+        ? platforms.map((p) => p.toString()).toList()
+        : ['qiita', 'devto'];
+
+    final saved = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('ドラフトを編集'),
+        content: SizedBox(
+          width: 480,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: titleCtrl,
+                decoration: const InputDecoration(
+                  labelText: 'タイトル',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: contentCtrl,
+                decoration: const InputDecoration(
+                  labelText: 'コンテンツ (Markdown)',
+                  border: OutlineInputBorder(),
+                ),
+                maxLines: 8,
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: notesCtrl,
+                decoration: const InputDecoration(
+                  labelText: 'メモ（任意）',
+                  border: OutlineInputBorder(),
+                ),
+                maxLines: 2,
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('キャンセル'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('保存'),
+          ),
+        ],
+      ),
+    );
+
+    if (saved != true) return;
+    try {
+      await BlogPublishService.updatePost(
+        id,
+        title: titleCtrl.text,
+        content: contentCtrl.text,
+        notes: notesCtrl.text,
+        targetPlatforms: selectedPlatforms,
+      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('ドラフトを更新しました'),
+            backgroundColor: Color(0xFF26A69A),
+          ),
+        );
+      }
+      await _load();
+    } catch (e) {
+      debugPrint('_showEditDraftDialog error: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('更新に失敗しました: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _showNewDraftDialog() async {
+    final titleCtrl = TextEditingController();
+    final contentCtrl = TextEditingController();
+    final notesCtrl = TextEditingController();
+
+    final saved = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('新規ドラフトを作成'),
+        content: SizedBox(
+          width: 480,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: titleCtrl,
+                autofocus: true,
+                decoration: const InputDecoration(
+                  labelText: 'タイトル *',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: contentCtrl,
+                decoration: const InputDecoration(
+                  labelText: 'コンテンツ (Markdown、任意)',
+                  border: OutlineInputBorder(),
+                ),
+                maxLines: 8,
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: notesCtrl,
+                decoration: const InputDecoration(
+                  labelText: 'メモ（任意）',
+                  border: OutlineInputBorder(),
+                ),
+                maxLines: 2,
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('キャンセル'),
+          ),
+          FilledButton(
+            onPressed: () {
+              if (titleCtrl.text.trim().isEmpty) return;
+              Navigator.pop(ctx, true);
+            },
+            child: const Text('作成'),
+          ),
+        ],
+      ),
+    );
+
+    if (saved != true || titleCtrl.text.trim().isEmpty) return;
+    try {
+      await BlogPublishService.insertPost(
+        title: titleCtrl.text.trim(),
+        content: contentCtrl.text,
+        notes: notesCtrl.text,
+      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('ドラフトを作成しました'),
+            backgroundColor: Color(0xFF26A69A),
+          ),
+        );
+      }
+      await _load();
+    } catch (e) {
+      debugPrint('_showNewDraftDialog error: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('作成に失敗しました: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _deleteDraft(Map<String, dynamic> draft) async {
+    final id = draft['id']?.toString();
+    if (id == null) return;
+    final title = draft['title']?.toString() ?? '(タイトルなし)';
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('ドラフトを削除'),
+        content: Text('「$title」を削除しますか？この操作は取り消せません。'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('キャンセル'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('削除する'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+    try {
+      await BlogPublishService.deletePost(id);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('ドラフトを削除しました'),
+            backgroundColor: Color(0xFF26A69A),
+          ),
+        );
+      }
+      await _load();
+    } catch (e) {
+      debugPrint('_deleteDraft error: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('削除に失敗しました: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  // ─── Streak / count helpers ───────────────────────────────────────────────
+
   int get _currentStreak {
     int streak = 0;
     DateTime check = DateTime.now();
@@ -308,6 +619,16 @@ class _TechBlogTrackerPageState extends State<TechBlogTrackerPage> {
     return streak;
   }
 
+  int get _totalPostedDays {
+    final days = <String>{};
+    for (final p in _recentPosts) {
+      days.add(p['posted_at']?.toString() ?? '');
+    }
+    days.addAll(_autoPostedDays());
+    days.remove('');
+    return days.length;
+  }
+
   Future<void> _copyHeyGenBlogVideoPlan(HeyGenBlogVideoPlan plan) async {
     await Clipboard.setData(ClipboardData(text: plan.clipboardText));
     if (!mounted) return;
@@ -319,25 +640,16 @@ class _TechBlogTrackerPageState extends State<TechBlogTrackerPage> {
     );
   }
 
-  int get _totalPostedDays {
-    final days = <String>{};
-    for (final p in _recentPosts) {
-      days.add(p['posted_at']?.toString() ?? '');
-    }
-    days.addAll(_autoPostedDays());
-    days.remove('');
-    return days.length;
-  }
+  // ─── Build ────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    // tech_blog_posts (手動) + blog_posts (自動 dispatch) を unique platform 集計.
     final manualPlatforms =
         _todayPosts.map((p) => p['platform']?.toString() ?? '').toSet();
-    final autoPlatforms = _autoPostedPlatformsToday().toSet();
+    final autoPlatformsToday = _autoPostedPlatformsToday().toSet();
     final todayCount =
-        ({...manualPlatforms, ...autoPlatforms}..remove('')).length;
+        ({...manualPlatforms, ...autoPlatformsToday}..remove('')).length;
 
     return Scaffold(
       backgroundColor: const Color(0xFF0A0A0A),
@@ -347,6 +659,11 @@ class _TechBlogTrackerPageState extends State<TechBlogTrackerPage> {
         foregroundColor: Colors.white,
         elevation: 0,
         actions: [
+          IconButton(
+            icon: const Icon(Icons.add),
+            tooltip: '新規ドラフト',
+            onPressed: _showNewDraftDialog,
+          ),
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: _load,
@@ -364,7 +681,9 @@ class _TechBlogTrackerPageState extends State<TechBlogTrackerPage> {
                   const SizedBox(height: 16),
                   _buildDateSelector(),
                   const SizedBox(height: 16),
-                  _buildPlatformList(isDark),
+                  _buildAutoPlatformSection(isDark),
+                  const SizedBox(height: 16),
+                  _buildManualPlatformSection(isDark),
                   const SizedBox(height: 24),
                   _buildScheduleDrafts(isDark),
                   const SizedBox(height: 24),
@@ -455,7 +774,7 @@ class _TechBlogTrackerPageState extends State<TechBlogTrackerPage> {
               final picked = await showDatePicker(
                 context: context,
                 initialDate: _selectedDate,
-                firstDate: DateTime(2026, 1, 1),
+                firstDate: DateTime(2024, 1, 1),
                 lastDate: DateTime.now(),
               );
               if (picked != null) {
@@ -498,128 +817,163 @@ class _TechBlogTrackerPageState extends State<TechBlogTrackerPage> {
     );
   }
 
-  Widget _buildPlatformList(bool isDark) {
+  Widget _buildAutoPlatformSection(bool isDark) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          '投稿プラットフォーム',
+        Row(
+          children: [
+            const Icon(Icons.smart_toy, size: 16, color: Color(0xFF6366F1)),
+            const SizedBox(width: 6),
+            const Text(
+              '🤖 自動公開プラットフォーム',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                height: 1.5,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'schedule-hub が Qiita / dev.to に自動公開します',
           style: TextStyle(
-            fontSize: 15,
-            fontWeight: FontWeight.bold,
+            fontSize: 11,
+            color: isDark ? const Color(0xFF6B7280) : const Color(0xFF6B7280),
             height: 1.5,
           ),
         ),
         const SizedBox(height: 8),
-        ...(_platforms.map((platform) {
-          final posted = _isPostedToday(platform.id);
-          final post = _getTodayPost(platform.id);
-          return Card(
-            color: const Color(0xFF1E1E1E),
-            margin: const EdgeInsets.only(bottom: 8),
-            child: ListTile(
-              onTap: () => _togglePost(platform.id),
-              leading: Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(
-                  color: (posted ? platform.color : const Color(0xFF9CA3AF))
-                      .withValues(alpha: 0.15),
-                  shape: BoxShape.circle,
-                ),
-                child: Center(
-                  child: Text(
-                    platform.emoji,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      height: 1.5,
-                    ),
-                  ),
-                ),
-              ),
-              title: Text(
-                platform.label,
-                style: TextStyle(
-                  fontWeight: FontWeight.w600,
-                  color: posted ? platform.color : null,
-                  height: 1.5,
-                ),
-              ),
-              subtitle: posted && post != null
-                  ? Text(
-                      post['title']?.toString().isNotEmpty == true
-                          ? post['title'].toString()
-                          : '投稿済み',
-                      style: const TextStyle(
-                        fontSize: 11,
-                        height: 1.5,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    )
-                  : Text(
-                      '未投稿',
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: Theme.of(context).colorScheme.outlineVariant,
-                        height: 1.5,
-                      ),
-                    ),
-              trailing: GestureDetector(
-                onTap: () => _togglePost(platform.id),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: posted
-                        ? platform.color.withValues(alpha: 0.1)
-                        : Theme.of(context).colorScheme.surfaceContainerHigh,
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: posted
-                          ? platform.color.withValues(alpha: 0.4)
-                          : Theme.of(context)
-                              .colorScheme
-                              .surfaceContainerHighest,
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        posted ? Icons.check_circle : Icons.circle_outlined,
-                        size: 14,
-                        color:
-                            posted ? platform.color : const Color(0xFF9CA3AF),
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        posted ? '投稿済' : '未投稿',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          color:
-                              posted ? platform.color : const Color(0xFF9CA3AF),
-                          height: 1.5,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          );
-        })),
+        ...(_autoPlatforms.map((platform) => _buildPlatformTile(platform))),
       ],
     );
   }
 
+  Widget _buildManualPlatformSection(bool isDark) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            const Icon(Icons.edit, size: 16, color: Color(0xFF9CA3AF)),
+            const SizedBox(width: 6),
+            const Text(
+              '✍️ 手動トラッキング',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                height: 1.5,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'タップして投稿記録を手動で登録',
+          style: TextStyle(
+            fontSize: 11,
+            color: isDark ? const Color(0xFF6B7280) : const Color(0xFF6B7280),
+            height: 1.5,
+          ),
+        ),
+        const SizedBox(height: 8),
+        ...(_manualPlatforms.map((platform) => _buildPlatformTile(platform))),
+      ],
+    );
+  }
+
+  Widget _buildPlatformTile(_Platform platform) {
+    final posted = _isPostedToday(platform.id);
+    final post = _getTodayPost(platform.id);
+    return Card(
+      color: const Color(0xFF1E1E1E),
+      margin: const EdgeInsets.only(bottom: 8),
+      child: ListTile(
+        onTap: () => _togglePost(platform.id),
+        leading: Container(
+          width: 36,
+          height: 36,
+          decoration: BoxDecoration(
+            color: (posted ? platform.color : const Color(0xFF9CA3AF))
+                .withValues(alpha: 0.15),
+            shape: BoxShape.circle,
+          ),
+          child: Center(
+            child: Text(
+              platform.emoji,
+              style: const TextStyle(fontSize: 16, height: 1.5),
+            ),
+          ),
+        ),
+        title: Text(
+          platform.label,
+          style: TextStyle(
+            fontWeight: FontWeight.w600,
+            color: posted ? platform.color : null,
+            height: 1.5,
+          ),
+        ),
+        subtitle: posted && post != null
+            ? Text(
+                post['title']?.toString().isNotEmpty == true
+                    ? post['title'].toString()
+                    : '投稿済み',
+                style: const TextStyle(fontSize: 11, height: 1.5),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              )
+            : Text(
+                '未投稿',
+                style: TextStyle(
+                  fontSize: 11,
+                  color: Theme.of(context).colorScheme.outlineVariant,
+                  height: 1.5,
+                ),
+              ),
+        trailing: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: BoxDecoration(
+            color: posted
+                ? platform.color.withValues(alpha: 0.1)
+                : Theme.of(context).colorScheme.surfaceContainerHigh,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: posted
+                  ? platform.color.withValues(alpha: 0.4)
+                  : Theme.of(context).colorScheme.surfaceContainerHighest,
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                posted ? Icons.check_circle : Icons.circle_outlined,
+                size: 14,
+                color: posted ? platform.color : const Color(0xFF9CA3AF),
+              ),
+              const SizedBox(width: 4),
+              Text(
+                posted ? '投稿済' : '未投稿',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: posted ? platform.color : const Color(0xFF9CA3AF),
+                  height: 1.5,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildScheduleDrafts(bool isDark) {
-    if (_scheduleDrafts.isEmpty) {
-      return const SizedBox.shrink();
-    }
+    final draftCount =
+        _scheduleDrafts.where((d) => d['status'] == 'draft').length;
+    final postedCount =
+        _scheduleDrafts.where((d) => d['status'] == 'posted').length;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -630,7 +984,7 @@ class _TechBlogTrackerPageState extends State<TechBlogTrackerPage> {
             const SizedBox(width: 6),
             const Expanded(
               child: Text(
-                'Schedule 自動生成ドラフト',
+                'ブログ下書き管理',
                 style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.bold,
@@ -639,7 +993,7 @@ class _TechBlogTrackerPageState extends State<TechBlogTrackerPage> {
               ),
             ),
             Text(
-              '${_scheduleDrafts.length}件',
+              '下書き $draftCount / 投稿済 $postedCount',
               style: TextStyle(
                 fontSize: 12,
                 color:
@@ -647,11 +1001,45 @@ class _TechBlogTrackerPageState extends State<TechBlogTrackerPage> {
                 height: 1.5,
               ),
             ),
+            const SizedBox(width: 8),
+            OutlinedButton.icon(
+              onPressed: _showNewDraftDialog,
+              icon: const Icon(Icons.add, size: 14),
+              label: const Text('新規', style: TextStyle(fontSize: 12)),
+              style: OutlinedButton.styleFrom(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+            ),
           ],
         ),
         const SizedBox(height: 4),
+        if (_draftLoadError != null)
+          Container(
+            margin: const EdgeInsets.only(bottom: 8),
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: Colors.red.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: Colors.red.withValues(alpha: 0.3)),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.error_outline, color: Colors.red, size: 16),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'blog_posts の取得に失敗: $_draftLoadError',
+                    style: const TextStyle(color: Colors.red, fontSize: 11, height: 1.5),
+                  ),
+                ),
+              ],
+            ),
+          ),
         Text(
-          'blog-draft タスクが自動生成した下書き（blog_posts テーブル）',
+          'blog_posts テーブル — 下書きを公開・編集・削除できます',
           style: TextStyle(
             fontSize: 11,
             color: isDark ? const Color(0xFF6B7280) : const Color(0xFF6B7280),
@@ -659,97 +1047,144 @@ class _TechBlogTrackerPageState extends State<TechBlogTrackerPage> {
           ),
         ),
         const SizedBox(height: 8),
-        ...(_scheduleDrafts.map((draft) {
-          final status = draft['status']?.toString() ?? 'draft';
-          final title = draft['title']?.toString() ?? '(タイトルなし)';
-          final platforms = draft['target_platforms'];
-          final targetPlatformLabels = (platforms is List)
-              ? platforms
-                  .map<String>((p) {
-                    final match = _platforms.where((pl) => pl.id == p);
-                    return match.isNotEmpty ? match.first.label : p.toString();
-                  })
-                  .where((label) => label.trim().isNotEmpty)
-                  .toList(
-                    growable: false,
-                  )
-              : const <String>[];
-          final platformLabels = targetPlatformLabels.join(', ');
-          final createdAt = DateTime.tryParse(
-            draft['created_at']?.toString() ?? '',
-          );
-          final dateLabel = createdAt != null
-              ? DateFormat('MM/dd HH:mm').format(createdAt)
-              : '';
-          final isPosted = status == 'posted';
-          final plan = HeyGenBlogVideoService.buildPlan(
-            title: title,
-            draftPath: draft['draft_path']?.toString(),
-            sourceUrl: draft['url']?.toString(),
-            targetPlatforms: targetPlatformLabels,
-          );
+        if (_scheduleDrafts.isEmpty && _draftLoadError == null)
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: const Color(0xFF1E1E1E),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.inbox, color: Color(0xFF6B7280), size: 20),
+                const SizedBox(width: 10),
+                const Expanded(
+                  child: Text(
+                    'ドラフトがありません。「新規」ボタンで作成するか、docs/blog-drafts/ に .md ファイルを push してください。',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Color(0xFF9CA3AF),
+                      height: 1.5,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ...(_scheduleDrafts.map((draft) => _buildDraftCard(draft, isDark))),
+      ],
+    );
+  }
 
-          return Card(
-            color: const Color(0xFF1E1E1E),
-            margin: const EdgeInsets.only(bottom: 6),
-            child: ExpansionTile(
-              tilePadding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 2,
-              ),
-              childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
-              leading: Icon(
-                isPosted ? Icons.check_circle : Icons.edit_note,
-                color: isPosted
-                    ? const Color(0xFF4CAF50)
-                    : const Color(0xFF6366F1),
-                size: 22,
-              ),
-              title: Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  height: 1.5,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-              subtitle: Text(
-                '$dateLabel  |  $platformLabels  |  ${isPosted ? '投稿済み' : '下書き'}',
-                style: TextStyle(
-                  fontSize: 11,
-                  color: isDark
-                      ? const Color(0xFF9CA3AF)
-                      : const Color(0xFF4B5563),
-                  height: 1.5,
-                ),
-              ),
-              trailing: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+  Widget _buildDraftCard(Map<String, dynamic> draft, bool isDark) {
+    final status = draft['status']?.toString() ?? 'draft';
+    final title = draft['title']?.toString() ?? '(タイトルなし)';
+    final platforms = draft['target_platforms'];
+    final targetPlatformLabels = (platforms is List)
+        ? platforms
+            .map<String>((p) {
+              final match = _allPlatforms.where((pl) => pl.id == p);
+              return match.isNotEmpty ? match.first.label : p.toString();
+            })
+            .where((label) => label.trim().isNotEmpty)
+            .toList(growable: false)
+        : const <String>[];
+    final platformLabels = targetPlatformLabels.join(', ');
+    final createdAt =
+        DateTime.tryParse(draft['created_at']?.toString() ?? '');
+    final dateLabel =
+        createdAt != null ? DateFormat('MM/dd HH:mm').format(createdAt) : '';
+    final isPosted = status == 'posted';
+    final plan = HeyGenBlogVideoService.buildPlan(
+      title: title,
+      draftPath: draft['draft_path']?.toString(),
+      sourceUrl: draft['url']?.toString(),
+      targetPlatforms: targetPlatformLabels,
+    );
+
+    return Card(
+      color: const Color(0xFF1E1E1E),
+      margin: const EdgeInsets.only(bottom: 6),
+      child: ExpansionTile(
+        tilePadding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
+        childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
+        leading: Icon(
+          isPosted ? Icons.check_circle : Icons.edit_note,
+          color:
+              isPosted ? const Color(0xFF4CAF50) : const Color(0xFF6366F1),
+          size: 22,
+        ),
+        title: Text(
+          title,
+          style: const TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            height: 1.5,
+          ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+        subtitle: Text(
+          '$dateLabel  |  $platformLabels  |  ${isPosted ? '投稿済み' : '下書き'}',
+          style: TextStyle(
+            fontSize: 11,
+            color: isDark
+                ? const Color(0xFF9CA3AF)
+                : const Color(0xFF4B5563),
+            height: 1.5,
+          ),
+        ),
+        trailing: isPosted
+            ? Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                  color: isPosted
-                      ? const Color(0xFF4CAF50).withAlpha(20)
-                      : const Color(0xFF6366F1).withAlpha(20),
+                  color: const Color(0xFF4CAF50).withAlpha(20),
                   borderRadius: BorderRadius.circular(6),
                 ),
-                child: Text(
-                  isPosted ? '投稿済' : '下書き',
+                child: const Text(
+                  '投稿済',
                   style: TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.w700,
-                    color: isPosted
-                        ? const Color(0xFF4CAF50)
-                        : const Color(0xFF6366F1),
+                    color: Color(0xFF4CAF50),
                     height: 1.5,
                   ),
                 ),
+              )
+            : Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (_publishing)
+                    const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  else
+                    IconButton(
+                      icon: const Icon(Icons.rocket_launch,
+                          size: 18, color: Color(0xFF4CAF50)),
+                      tooltip: '今すぐ公開 (Qiita / dev.to)',
+                      onPressed: () => _publishDraft(draft),
+                    ),
+                  IconButton(
+                    icon: const Icon(Icons.edit,
+                        size: 18, color: Color(0xFF6366F1)),
+                    tooltip: '編集',
+                    onPressed: () => _showEditDraftDialog(draft),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.delete_outline,
+                        size: 18, color: Color(0xFF9CA3AF)),
+                    tooltip: '削除',
+                    onPressed: () => _deleteDraft(draft),
+                  ),
+                ],
               ),
-              children: [_buildHeyGenBlogVideoPlan(plan, isDark)],
-            ),
-          );
-        })),
-      ],
+        children: [_buildHeyGenBlogVideoPlan(plan, isDark)],
+      ),
     );
   }
 
@@ -867,7 +1302,6 @@ class _TechBlogTrackerPageState extends State<TechBlogTrackerPage> {
       return const SizedBox.shrink();
     }
 
-    // 日付でグループ化
     final Map<String, List<Map<String, dynamic>>> grouped = {};
     for (final post in _recentPosts) {
       final date = post['posted_at']?.toString() ?? '';
@@ -924,7 +1358,7 @@ class _TechBlogTrackerPageState extends State<TechBlogTrackerPage> {
                     spacing: 4,
                     runSpacing: 4,
                     children: posts.map((post) {
-                      final platform = _platforms.firstWhere(
+                      final platform = _allPlatforms.firstWhere(
                         (p) => p.id == post['platform'],
                         orElse: () => const _Platform(
                           '',
