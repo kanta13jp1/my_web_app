@@ -25649,3 +25649,23 @@ a9d7b1517 on main
 
 ### Philosophy Alignment
 #2 ミッション駆動 (= AI tool最新情報を即プロジェクト化) / #6 資本=時間 (= Hooks→MCP tool自動化でPS#5担当CI手動作業削減) / #8 KPI=昨日の自分 (= fleet v2.1.126機能で今日の開発速度が昨日比向上)
+
+## 2026-05-03 (Win版#132 part 118) — Session Residuals → Issue 完全自動化 (#1647 完結)
+
+### 完了
+- bc58b50b 既適用 reaffirm (= notebook_count=97 / harness_found=true)
+- WBS Issue [#1647](https://github.com/kanta13jp1/my_web_app/issues/1647) 受け入れ条件 #3 (= セッション終了時残作業の Issue/WBS 自動接続) **完全自動化完結**:
+  - `scripts/session_residuals_to_issue.py` 新規 (~250 行 / dependency-free / memory/project_*.md `## 次回 candidate` parse + 重複 dedup + dry-run/apply 切替)
+  - `.github/workflows/session-residuals-sync.yml` 新規 (daily 02:30 JST + Issue #1647 comment + safety cap 5)
+  - Win 過去 3 part memo (115/116/117) を repo `memory/` 入り (= scan 対象 seed 化)
+- commit `25e570996` on main
+
+### Phase 6 進化観察 (= 第 7 例)
+- User 同一要望 **7 度目**. template 完全成熟.
+- 「**part 117 §5.2 で起草 → part 118 で実装**」自走 cycle 確立 — これ自体が #1647 で自動化対象 (= 自己言及的 dogfood)
+- 「Phase 1 → Phase 2 (= 実装 → 自走化分離)」dogfood **第 8 例** (= 既存: vault lint / build_in_public / changelog watch / role audit / memory ingest / safety cron / + 本 residuals sync)
+- dependency-free script pattern **第 3 例** (= ai_tool_watch / codex_session_check / + 本 residuals_to_issue)
+
+### Philosophy Alignment
+#3 優しい mentor (= 残作業を自動 Issue 化することで「忘れたら止まる」を「自動で拾う」に転換) / #6 資本=時間 (= 手動 `gh issue create` ループから完全解放) / #8 KPI=昨日の自分 (= fleet 12 instance 全 wrap-up が daily で 1 つの Issue queue に統合)
+
