@@ -2708,6 +2708,44 @@ function prev3AvgFinishBonus(
   return 0;
 }
 
+function largeFieldPerformerBonus(
+  topEntry: Record<string, unknown> | undefined,
+  fieldSize: number,
+): number {
+  if (!topEntry || fieldSize < 14) return 0;
+  const f1 = numericOrFallback(topEntry.prev_finish, 0);
+  if (!f1) return 0;
+  if (f1 <= 3) return 0.01; // 大頭数(14頭以上)で前走3着以内 = 混戦耐性実証済み
+  if (f1 >= 10) return -0.01; // 大頭数(14頭以上)で前走10着以下 = 大頭数苦手シグナル
+  return 0;
+}
+
+function jockeyHorseReunionBonus(
+  topEntry: Record<string, unknown> | undefined,
+): number {
+  if (!topEntry) return 0;
+  const curr = String(topEntry.jockey_name ?? "").trim();
+  const prev = String(topEntry.prev_jockey ?? "").trim();
+  if (!curr || !prev || curr !== prev) return 0; // 乗り替わりはjockeyChangeBonusが対応
+  const f1 = numericOrFallback(topEntry.prev_finish, 0);
+  if (!f1) return 0;
+  if (f1 <= 3) return 0.01; // 同騎手で前走3着以内 = 成功コンビ再結成
+  if (f1 >= 8) return -0.01; // 同騎手で前走8着以下 = 失敗コンビ継続懸念
+  return 0;
+}
+
+function formValueBonus(
+  topEntry: Record<string, unknown> | undefined,
+): number {
+  if (!topEntry) return 0;
+  const f1 = numericOrFallback(topEntry.prev_finish, 0);
+  const pop = numericOrFallback(topEntry.popularity, 0);
+  if (!f1 || !pop) return 0;
+  if (f1 <= 2 && pop >= 5) return 0.01; // 好フォーム(前走2着以内)×低人気(5番人気以下) = 市場が見逃した価値馬
+  if (f1 >= 8 && pop <= 3) return -0.01; // 不調(前走8着以下)×高人気(3番人気以内) = 市場の過大評価リスク
+  return 0;
+}
+
 function consecutiveTopThreeBonus(
   topEntry: Record<string, unknown> | undefined,
 ): number {
@@ -3334,6 +3372,9 @@ function buildHistoricalBaselinePrediction(
   const consec3Top = consecutiveTopThreeBonus(first);
   const popShift = popularityShiftBonus(first);
   const prev3WinRate = prev3WinRateBonus(first);
+  const largeFieldPerf = largeFieldPerformerBonus(first, entries.length);
+  const jockeyReunion = jockeyHorseReunionBonus(first);
+  const formValue = formValueBonus(first);
   const confidence = Math.min(
     clampConfidence(
       0.31 + dataQuality * 0.22 + oddsCoverage * 0.12 + historyCoverage * 0.07 +
@@ -3357,7 +3398,8 @@ function buildHistoricalBaselinePrediction(
         favConsist + jockeyTopCourse + trainerTopCourse + prev3FormTrend +
         jockeyChange + prevPopBounce + wtChangeCourse + prev3AvgFinish +
         prev2FormGap + courseSurfaceMatch + fieldWeightRank +
-        consec3Top + popShift + prev3WinRate,
+        consec3Top + popShift + prev3WinRate +
+        largeFieldPerf + jockeyReunion + formValue,
     ),
     maxConf,
   );
