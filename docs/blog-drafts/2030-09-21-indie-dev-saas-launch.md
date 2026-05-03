@@ -1,7 +1,7 @@
 ---
 title: "個人開発 SaaS ローンチ戦略 — 価格設定・Stripe 課金・フリーミアム設計"
 tags: Flutter,個人開発,webdev,programming
-published: false
+published: true
 ---
 
 個人開発でSaaSをローンチする際の最大の悩みは「どう収益化するか」です。価格設定・課金フロー・フリーミアム設計の実践ノウハウを、Flutter + Supabase + Stripe で構築する方法とともに解説します。
