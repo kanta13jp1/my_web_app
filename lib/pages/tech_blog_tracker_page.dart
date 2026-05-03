@@ -68,7 +68,8 @@ class _TechBlogTrackerPageState extends State<TechBlogTrackerPage> {
             .order('posted_at', ascending: false),
       ]);
 
-      // Schedule blog-draft タスクが生成した下書きを取得
+      // Schedule blog-draft タスクが生成した下書き + 自動 dispatch 済 (status='posted') を取得.
+      // 直近 30 日 (= streak/today カウント用) は全件 / それ以前の draft は新着 10 件のみ.
       List<Map<String, dynamic>> drafts = [];
       try {
         final draftData = await _supabase
@@ -77,11 +78,15 @@ class _TechBlogTrackerPageState extends State<TechBlogTrackerPage> {
               'id, title, status, target_platforms, draft_path, posted_at, url, created_at',
             )
             .inFilter('status', ['draft', 'posted'])
+            .or(
+              'posted_at.gte.${DateFormat('yyyy-MM-dd').format(thirtyDaysAgo)},'
+              'created_at.gte.${DateFormat('yyyy-MM-dd').format(thirtyDaysAgo)}',
+            )
             .order('created_at', ascending: false)
-            .limit(10);
+            .limit(200);
         drafts = List<Map<String, dynamic>>.from(draftData as List);
       } catch (_) {
-        // blog_posts テーブルが未作成の場合は空リスト
+        // blog_posts テーブルが未作成 or 権限不足の場合は空リスト (= 既存挙動を維持)
       }
 
       if (!mounted) return;
@@ -97,15 +102,72 @@ class _TechBlogTrackerPageState extends State<TechBlogTrackerPage> {
     }
   }
 
+  /// blog_posts.target_platforms (= 'github-pages' / 'x-article' 等の dash 表記)
+  /// を tech_blog_posts.platform (= 'github_pages' / 'x_article' 等の underscore 表記) に正規化.
+  String _normalizePlatformId(String raw) =>
+      raw.toLowerCase().replaceAll('-', '_');
+
+  /// 自動 dispatch (= T-1 / blog_posts.status='posted') された当日投稿の
+  /// platform 一覧を flat 化.
+  /// blog_posts は 1 row に複数 target_platforms を持つため expand する.
+  List<String> _autoPostedPlatformsToday() {
+    final dateStr = DateFormat('yyyy-MM-dd').format(_selectedDate);
+    final platforms = <String>{};
+    for (final draft in _scheduleDrafts) {
+      if (draft['status'] != 'posted') continue;
+      final postedAt = (draft['posted_at'] ?? '').toString();
+      // posted_at は timestamptz なので yyyy-MM-dd で前方一致判定
+      if (!postedAt.startsWith(dateStr)) continue;
+      final targets = draft['target_platforms'];
+      if (targets is List) {
+        for (final t in targets) {
+          if (t == null) continue;
+          platforms.add(_normalizePlatformId(t.toString()));
+        }
+      }
+    }
+    return platforms.toList();
+  }
+
+  /// 自動 dispatch (= blog_posts.status='posted') の posted_at を yyyy-MM-dd
+  /// 単位で重複排除.
+  Set<String> _autoPostedDays() {
+    final days = <String>{};
+    for (final draft in _scheduleDrafts) {
+      if (draft['status'] != 'posted') continue;
+      final postedAt = (draft['posted_at'] ?? '').toString();
+      if (postedAt.length >= 10) {
+        days.add(postedAt.substring(0, 10));
+      }
+    }
+    return days;
+  }
+
   bool _isPostedToday(String platform) {
-    return _todayPosts.any((p) => p['platform'] == platform);
+    if (_todayPosts.any((p) => p['platform'] == platform)) return true;
+    return _autoPostedPlatformsToday().contains(platform);
   }
 
   Map<String, dynamic>? _getTodayPost(String platform) {
     try {
       return _todayPosts.firstWhere((p) => p['platform'] == platform);
     } catch (_) {
-      return null;
+      // 自動 dispatch 由来の場合は blog_posts draft を返す (= UI で URL 抽出に使える)
+      try {
+        return _scheduleDrafts.firstWhere((d) {
+          if (d['status'] != 'posted') return false;
+          final dateStr = DateFormat('yyyy-MM-dd').format(_selectedDate);
+          if (!(d['posted_at'] ?? '').toString().startsWith(dateStr)) {
+            return false;
+          }
+          final targets = d['target_platforms'];
+          if (targets is! List) return false;
+          return targets.any((t) =>
+              t != null && _normalizePlatformId(t.toString()) == platform);
+        });
+      } catch (_) {
+        return null;
+      }
     }
   }
 
@@ -200,14 +262,17 @@ class _TechBlogTrackerPageState extends State<TechBlogTrackerPage> {
     );
   }
 
-  /// 直近30日の投稿数を集計（連続投稿ストリーク計算用）
+  /// 直近30日の投稿数を集計（連続投稿ストリーク計算用）.
+  /// tech_blog_posts (= 手動記録) + blog_posts (= 自動 dispatch / status='posted') を統合判定.
   int get _currentStreak {
     int streak = 0;
     DateTime check = DateTime.now();
+    final autoDays = _autoPostedDays();
     while (true) {
       final dateStr = DateFormat('yyyy-MM-dd').format(check);
-      final hasPost = _recentPosts.any((p) => p['posted_at'] == dateStr);
-      if (!hasPost) break;
+      final hasManual = _recentPosts.any((p) => p['posted_at'] == dateStr);
+      final hasAuto = autoDays.contains(dateStr);
+      if (!hasManual && !hasAuto) break;
       streak++;
       check = check.subtract(const Duration(days: 1));
     }
@@ -230,13 +295,20 @@ class _TechBlogTrackerPageState extends State<TechBlogTrackerPage> {
     for (final p in _recentPosts) {
       days.add(p['posted_at']?.toString() ?? '');
     }
+    days.addAll(_autoPostedDays());
+    days.remove('');
     return days.length;
   }
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final todayCount = _todayPosts.map((p) => p['platform']).toSet().length;
+    // tech_blog_posts (手動) + blog_posts (自動 dispatch) を unique platform 集計.
+    final manualPlatforms =
+        _todayPosts.map((p) => p['platform']?.toString() ?? '').toSet();
+    final autoPlatforms = _autoPostedPlatformsToday().toSet();
+    final todayCount =
+        ({...manualPlatforms, ...autoPlatforms}..remove('')).length;
 
     return Scaffold(
       backgroundColor: const Color(0xFF0A0A0A),
