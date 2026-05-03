@@ -387,7 +387,16 @@ def static_route(notebook: dict[str, Any]) -> dict[str, str] | None:
             "issue": "1660",
             "disposition": "route_existing_issue",
         }
-    if any(token in title for token in ["claude code", "codex", "schedule", "remote control", "second brain"]):
+    if any(
+        token in title
+        for token in [
+            "claude code",
+            "codex",
+            "schedule",
+            "remote control",
+            "second brain",
+        ]
+    ):
         return {
             "route": "ai-dev-workflow",
             "owner": "Claude Code design / Codex automation",
