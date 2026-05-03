@@ -260,6 +260,35 @@ Codex CLI が **Memory** を持つようになり、past task の preference / p
 - `claude project purge [path]` — project state 完全削除 (= worktree clean 自動化)
 - `/resume <PR URL>` — PR を作成した session に復帰 (= context 連続性向上)
 
+### Claude Code v2.1.113–v2.1.126 追加機能 (PS#5 S118 2026-05-03)
+
+**セキュリティ / 権限**
+- `sandbox.network.deniedDomains` — 特定ドメインのネットワークアクセスをブロック (= WEB版 sandbox でのリクエスト制御)
+- `allowManagedDomainsOnly` / `allowManagedReadPathsOnly` が正しく機能するよう修正 (= Issue #1751 の権限ロックダウン基盤強化)
+
+**Hook 進化 (v2.1.118) → Issue #1765**
+- Hooks が MCP ツールを直接呼べるように: `type: "mcp_tool"` — inject-rules.txt フックから Supabase/GitHub MCP を呼べる (= PostToolUse で自動コミットや Slack 通知が可能)
+
+**開発体験 (v2.1.118-v2.1.119)**
+- Vim visual mode (`v` / `V`) — TUI 操作効率向上
+- `/cost` + `/stats` → `/usage` 統合
+- `/theme` command + `~/.claude/themes/*.json` — カスタムテーマ作成 (= テーマ切り替えUIとの連携)
+- `--from-pr` が GitLab / Bitbucket / GitHub Enterprise URL を受け付け
+
+**CI / 認証 (v2.1.126) → Issue #1767**
+- `claude auth login` — WSL2/SSH/コンテナ環境で OAuth code をターミナルにペースト可能
+- `/model` picker が `ANTHROPIC_BASE_URL` の gateway `/v1/models` から動的にモデル一覧取得
+- `claude ultrareview [target]` — CI/スクリプトから非インタラクティブに `/ultrareview` 実行 (= GHA に組み込み可能)
+- `/recap` — セッション再開時に前回の context をサマリー提示 (= 12 instance fleet での session 引き継ぎ向上)
+
+**Windows (v2.1.126)**
+- Git for Windows (Git Bash) が不要に — PowerShell を primary shell として使用 (= Win版 fleet の環境要件簡素化)
+
+### GitHub Copilot 2026-05: GPT-5.3-Codex 昇格
+
+- GPT-5.3-Codex が Copilot Business / Enterprise の base model に (2026-05-17〜) — agentic coding +25% 高速化
+- Copilot CLI: streaming 改善 / MCP + OAuth サポート強化 / session 管理改善
+
 ### 平常時 fallback 順序 (改訂)
 
 ```text

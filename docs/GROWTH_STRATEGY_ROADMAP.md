@@ -25623,3 +25623,29 @@ a9d7b1517 on main
 ### Philosophy Alignment
 #3 優しい mentor (= 全 12 instance の自走化で「監視」ではなく「支援」体制確立) / #4 6 部署バランス (= 25 task が R&D / 財務 / マーケ / 人事 / 本社 全体に reach) / #6 資本=時間 (= 半自動 → 完全自動への移行で人手介入時間最小化) / #8 KPI=昨日の自分 (= AI fleet 25 自動化 task で前日比改善が定量化)
 
+
+## 2026-05-03 (PS#5 S118) — Claude Code v2.1.113-v2.1.126 fleet反映 + NotebookLM未適用Issues登録
+
+### 完了
+- **AI_FALLBACK_RUNBOOK.md 更新**: Claude Code v2.1.113–v2.1.126 新機能追記
+  - `sandbox.network.deniedDomains` (v2.1.113) — WEB版 sandbox ドメインブロック
+  - Hooks → MCP tool (`type: "mcp_tool"`, v2.1.118) → Issue [#1765](https://github.com/kanta13jp1/my_web_app/issues/1765)
+  - `/theme` command + カスタムテーマ / Vim visual mode / `/usage` 統合 (v2.1.118-119)
+  - `claude ultrareview [target]` CI統合 (v2.1.126) → Issue [#1767](https://github.com/kanta13jp1/my_web_app/issues/1767)
+  - `/recap` session復帰 / Windows Git Bash不要化 / auth login WSL2ペースト (v2.1.126)
+  - GitHub Copilot GPT-5.3-Codex 昇格 (2026-05-17〜)
+- **NotebookLM未適用 11件 Issues登録** (#1765-#1775):
+  - #1765: Hooks→MCP tool自動化強化
+  - #1766: sandbox.network.deniedDomains fleet設定
+  - #1767: claude ultrareview GHA統合
+  - #1768: 9b2e686f Notion-Style Comments (Flutter+Supabase)
+  - #1769: 6deda071 Claude Design Plugin MCP統合
+  - #1770: 4fb089e8 Cartesia Sonic TTS機能
+  - #1771: 2ee2ea76 GPT-Image-2 Nano Banana強化
+  - #1772: c3b1d9f2 Claude API Cost Optimization
+  - #1773: ddde5a4b Vibe Coding 品質ゲート
+  - #1774: e89d2ac7 Anthropic Evolution fleet反映
+  - #1775: 239c758b Gemini Domain-Specific AI大学
+
+### Philosophy Alignment
+#2 ミッション駆動 (= AI tool最新情報を即プロジェクト化) / #6 資本=時間 (= Hooks→MCP tool自動化でPS#5担当CI手動作業削減) / #8 KPI=昨日の自分 (= fleet v2.1.126機能で今日の開発速度が昨日比向上)

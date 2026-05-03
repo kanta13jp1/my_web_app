@@ -18,6 +18,6 @@ SET
   recovery_plan = '期限超過タスク: 次セッションで優先レビューし cross-instance-pr または直接実装で対応予定',
   recovery_planned_at = NOW(),
   updated_at = NOW()
-WHERE deadline < NOW()
+WHERE COALESCE(planned_end_date, end_date) < CURRENT_DATE
   AND status NOT IN ('completed', 'cancelled')
   AND (recovery_plan IS NULL OR length(trim(recovery_plan)) = 0);
