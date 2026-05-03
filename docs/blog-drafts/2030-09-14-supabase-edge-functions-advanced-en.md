@@ -1,7 +1,7 @@
 ---
 title: "Supabase Edge Functions Advanced — Streaming, WebSockets, and Background Jobs"
 tags: supabase,flutter,webdev,programming
-published: false
+published: true
 ---
 
 Supabase Edge Functions run on Deno Deploy and are far more capable than simple REST handlers. This guide covers three advanced patterns every indie developer should know: streaming responses (for LLM integrations), WebSocket upgrades (for real-time features), and background jobs using `EdgeRuntime.waitUntil`.

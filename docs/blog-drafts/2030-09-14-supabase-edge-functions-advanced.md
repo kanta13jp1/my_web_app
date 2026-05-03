@@ -1,7 +1,7 @@
 ---
 title: "Supabase Edge Functions 高度活用 — ストリーミング・WebSocket・バックグラウンドジョブ"
 tags: Supabase,Flutter,webdev,個人開発
-published: false
+published: true
 ---
 
 Supabase Edge Functions は Deno ベースの軽量サーバーレス環境です。シンプルな REST API を超えて、ストリーミングレスポンス・WebSocket・バックグラウンドジョブ処理など高度なユースケースを実装する方法を解説します。
