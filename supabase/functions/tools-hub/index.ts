@@ -2708,6 +2708,46 @@ function prev3AvgFinishBonus(
   return 0;
 }
 
+function consecutiveTopThreeBonus(
+  topEntry: Record<string, unknown> | undefined,
+): number {
+  if (!topEntry) return 0;
+  const f1 = numericOrFallback(topEntry.prev_finish, 0);
+  const f2 = numericOrFallback(topEntry.prev2_finish, 0);
+  const f3 = numericOrFallback(topEntry.prev3_finish, 0);
+  if (!f1 || !f2 || !f3) return 0;
+  if (f1 <= 3 && f2 <= 3 && f3 <= 3) return 0.01; // 前3走全て3着以内 = 安定した馬券圏内
+  if (f1 >= 4 && f2 >= 4 && f3 >= 4) return -0.01; // 前3走全て4着以下 = 一貫して圏外
+  return 0;
+}
+
+function popularityShiftBonus(
+  topEntry: Record<string, unknown> | undefined,
+): number {
+  if (!topEntry) return 0;
+  const curr = numericOrFallback(topEntry.popularity, 0);
+  const prev = numericOrFallback(topEntry.prev_popularity, 0);
+  if (!curr || !prev) return 0;
+  const shift = prev - curr; // positive = popularity improved (lower rank = more popular)
+  if (shift >= 3) return 0.01; // 3ランク以上人気急上昇 = 市場の急速な評価上昇
+  if (shift <= -3) return -0.01; // 3ランク以上人気急落下 = 市場の急速な評価下落
+  return 0;
+}
+
+function prev3WinRateBonus(
+  topEntry: Record<string, unknown> | undefined,
+): number {
+  if (!topEntry) return 0;
+  const f1 = numericOrFallback(topEntry.prev_finish, 0);
+  const f2 = numericOrFallback(topEntry.prev2_finish, 0);
+  const f3 = numericOrFallback(topEntry.prev3_finish, 0);
+  if (!f1 || !f2 || !f3) return 0;
+  const wins = [f1, f2, f3].filter((f) => f === 1).length;
+  if (wins >= 2) return 0.01; // 前3走2勝以上 = 近走圧倒的勝負強さ
+  if (wins === 0 && f1 >= 5 && f2 >= 5 && f3 >= 5) return -0.01; // 前3走無勝利かつ全て5着以下
+  return 0;
+}
+
 function prev2FormGapBonus(
   topEntry: Record<string, unknown> | undefined,
 ): number {
@@ -3291,6 +3331,9 @@ function buildHistoricalBaselinePrediction(
   const prev2FormGap = prev2FormGapBonus(first);
   const courseSurfaceMatch = courseSurfaceMatchBonus(first, race.course_type);
   const fieldWeightRank = fieldWeightRankBonus(first, entries);
+  const consec3Top = consecutiveTopThreeBonus(first);
+  const popShift = popularityShiftBonus(first);
+  const prev3WinRate = prev3WinRateBonus(first);
   const confidence = Math.min(
     clampConfidence(
       0.31 + dataQuality * 0.22 + oddsCoverage * 0.12 + historyCoverage * 0.07 +
@@ -3313,7 +3356,8 @@ function buildHistoricalBaselinePrediction(
         multiSignal + trackCondAdapt + runStyleDist + prev2Consist + classStep +
         favConsist + jockeyTopCourse + trainerTopCourse + prev3FormTrend +
         jockeyChange + prevPopBounce + wtChangeCourse + prev3AvgFinish +
-        prev2FormGap + courseSurfaceMatch + fieldWeightRank,
+        prev2FormGap + courseSurfaceMatch + fieldWeightRank +
+        consec3Top + popShift + prev3WinRate,
     ),
     maxConf,
   );
