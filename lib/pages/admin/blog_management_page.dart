@@ -20,6 +20,8 @@ class _BlogManagementPageState extends State<BlogManagementPage>
   List<Map<String, dynamic>> _drafts = [];
   bool _isLoading = true;
   bool _isSyncing = false;
+  final Set<String> _publishingIds = {};
+  final Set<String> _togglingIds = {};
   String _tab = 'articles'; // 'articles' | 'comments' | 'drafts'
   String _platformFilter = 'all'; // 'all' | 'qiita' | 'devto'
 
@@ -102,6 +104,73 @@ class _BlogManagementPageState extends State<BlogManagementPage>
       }
     } finally {
       if (mounted) setState(() => _isSyncing = false);
+    }
+  }
+
+  Future<void> _publishDraft(Map<String, dynamic> d) async {
+    final id = d['id']?.toString() ?? '';
+    if (id.isEmpty || _publishingIds.contains(id)) return;
+    setState(() => _publishingIds.add(id));
+    try {
+      final res = await _supabase.functions.invoke(
+        'schedule-hub',
+        body: {'action': 'blog.publish_post', 'id': id},
+      );
+      if (!mounted) return;
+      final ok = res.status == 200;
+      final data = res.data as Map<String, dynamic>?;
+      final results = data?['results'] as Map<String, dynamic>? ?? {};
+      final qiitaOk = (results['qiita'] as Map?)?['ok'] == true;
+      final devtoOk = (results['devto'] as Map?)?['ok'] == true;
+      final msg = ok
+          ? '✅ 投稿完了 ${[if (qiitaOk) 'Qiita', if (devtoOk) 'dev.to'].join(' + ')}'
+          : '⚠️ 投稿エラー (${res.status}): ${data?['error'] ?? ''}';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(msg),
+          backgroundColor: ok ? _green : _red,
+          duration: const Duration(seconds: 4),
+        ),
+      );
+      if (ok) await _loadData();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('❌ 投稿失敗: $e'),
+            backgroundColor: _red,
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _publishingIds.remove(id));
+    }
+  }
+
+  Future<void> _toggleDraftStatus(Map<String, dynamic> d) async {
+    final id = d['id']?.toString() ?? '';
+    if (id.isEmpty || _togglingIds.contains(id)) return;
+    final current = d['status'] as String? ?? 'draft';
+    final next = current == 'ready' ? 'draft' : 'ready';
+    setState(() => _togglingIds.add(id));
+    try {
+      await _supabase
+          .from('blog_posts')
+          .update({'status': next})
+          .eq('id', id);
+      await _loadData();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('❌ ステータス更新失敗: $e'),
+            backgroundColor: _red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _togglingIds.remove(id));
     }
   }
 
@@ -702,18 +771,30 @@ class _BlogManagementPageState extends State<BlogManagementPage>
   }
 
   Widget _buildDraftCard(Map<String, dynamic> d) {
+    final id = d['id']?.toString() ?? '';
     final title = d['title'] as String? ?? '(no title)';
     final status = d['status'] as String? ?? 'draft';
-    final platforms = d['target_platforms'] as String? ?? '';
+    final rawPlatforms = d['target_platforms'];
+    final platforms = (rawPlatforms is List)
+        ? rawPlatforms.map((p) => p.toString()).join(', ')
+        : rawPlatforms?.toString() ?? '';
     final url = d['url'] as String? ?? '';
     final draftPath = d['draft_path'] as String? ?? '';
 
+    final isPublishing = _publishingIds.contains(id);
+    final isToggling = _togglingIds.contains(id);
     final statusColor = status == 'ready' ? _orange : Colors.white38;
+    final isReady = status == 'ready';
 
     return Card(
       color: _card,
       margin: const EdgeInsets.only(bottom: 8),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(10),
+        side: isReady
+            ? BorderSide(color: _orange.withAlpha(80), width: 1)
+            : BorderSide.none,
+      ),
       child: Padding(
         padding: const EdgeInsets.all(12),
         child: Column(
@@ -784,6 +865,76 @@ class _BlogManagementPageState extends State<BlogManagementPage>
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                // ready/draft toggle
+                SizedBox(
+                  height: 28,
+                  child: OutlinedButton.icon(
+                    onPressed: isToggling ? null : () => _toggleDraftStatus(d),
+                    icon: isToggling
+                        ? const SizedBox(
+                            width: 12,
+                            height: 12,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 1.5,
+                              color: Colors.white54,
+                            ),
+                          )
+                        : Icon(
+                            isReady ? Icons.undo : Icons.check_circle_outline,
+                            size: 14,
+                          ),
+                    label: Text(
+                      isReady ? '下書きに戻す' : '公開準備完了',
+                      style: const TextStyle(fontSize: 11, height: 1.5),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor:
+                          isReady ? Colors.white38 : _orange,
+                      side: BorderSide(
+                        color: isReady
+                            ? Colors.white24
+                            : _orange.withAlpha(120),
+                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 10),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                // publish button — only active when ready
+                SizedBox(
+                  height: 28,
+                  child: ElevatedButton.icon(
+                    onPressed: (isReady && !isPublishing)
+                        ? () => _publishDraft(d)
+                        : null,
+                    icon: isPublishing
+                        ? const SizedBox(
+                            width: 12,
+                            height: 12,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 1.5,
+                              color: Colors.white,
+                            ),
+                          )
+                        : const Icon(Icons.send, size: 14),
+                    label: Text(
+                      isPublishing ? '投稿中...' : '今すぐ投稿',
+                      style: const TextStyle(fontSize: 11, height: 1.5),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: isReady ? _orange : Colors.white12,
+                      foregroundColor: Colors.white,
+                      disabledBackgroundColor: Colors.white12,
+                      disabledForegroundColor: Colors.white24,
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ],
         ),
       ),

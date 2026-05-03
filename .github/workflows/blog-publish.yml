@@ -341,6 +341,39 @@ jobs:
           echo "qiita_url=$QIITA_URL" >> $GITHUB_OUTPUT
           echo "devto_url=$DEVTO_URL" >> $GITHUB_OUTPUT
 
+      # ── Step 4.5: blog_posts.status を 'posted' に更新 (UI反映) ────────
+      - name: Step 4.5 - Update blog_posts status
+        if: steps.auto_select.outputs.has_draft == 'true' && github.event.inputs.dry_run != 'true'
+        continue-on-error: true
+        env:
+          SUPABASE_URL: https://smmkxxavexumewbfaqpy.supabase.co
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          DRAFT_PATH_VAR: ${{ steps.meta.outputs.draft_path }}
+          QIITA_URL: ${{ steps.publish.outputs.qiita_url }}
+          DEVTO_URL: ${{ steps.publish.outputs.devto_url }}
+        run: |
+          DRAFT_PATH="$DRAFT_PATH_VAR"
+          URL="${QIITA_URL:-$DEVTO_URL}"
+          PATCH=$(python3 -c "
+from datetime import datetime
+import json, os
+print(json.dumps({
+    'status': 'posted',
+    'posted_at': datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ'),
+    'url': os.environ.get('URL', '') or None
+}))
+")
+          HTTP=$(curl -s -o /dev/null -w "%{http_code}" \
+            -X PATCH \
+            "${SUPABASE_URL}/rest/v1/blog_posts?draft_path=eq.${DRAFT_PATH}" \
+            -H "apikey: ${SUPABASE_SERVICE_KEY}" \
+            -H "Authorization: Bearer ${SUPABASE_SERVICE_KEY}" \
+            -H "Content-Type: application/json" \
+            -H "Prefer: return=minimal" \
+            -d "$PATCH" \
+            --max-time 10 || echo "000")
+          echo "[trace=$TRACE_ID] blog_posts status update: HTTP $HTTP"
+
       # ── Step 5: frontmatter を published: true に更新 ───────────────────
       # PS#1 S21 (2026-04-20): BYPASS_RULES PAT 失効疑いで GH006 protected branch
       # push reject → continue-on-error: true で warn-only 化 (published:true 更新は

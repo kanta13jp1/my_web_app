@@ -1075,6 +1075,192 @@ serve(async (req: Request) => {
         return json({ success: true, results });
       }
 
+      // blog.publish_post — blog_posts行のcontentを読んでQiita/dev.toに公開し、statusを更新
+      case "blog.publish_post": {
+        const postId = String(body.id ?? "");
+        if (!postId) return json({ error: "id required" }, 400);
+
+        const { data: post, error: fetchErr } = await admin
+          .from("blog_posts")
+          .select("id, title, content, target_platforms")
+          .eq("id", postId)
+          .single();
+        if (fetchErr || !post) return json({ error: "Post not found" }, 404);
+
+        const qiitaToken = Deno.env.get("QIITA_ACCESS_TOKEN") ?? "";
+        const devtoKey = Deno.env.get("DEVTO_API_KEY") ?? "";
+        const ppTitle = String((post as Record<string, unknown>).title ?? "");
+        const rawContent = String(
+          (post as Record<string, unknown>).content ?? body.content ?? "",
+        );
+        const ppContent = rawContent
+          .replace(/^---[\r\n][\s\S]*?[\r\n]---[\r\n]?/, "")
+          .trimStart();
+
+        if (!ppContent.trim()) {
+          return json(
+            {
+              error:
+                "Content is empty. Edit the draft and add markdown content before publishing.",
+            },
+            400,
+          );
+        }
+
+        const ppRawTags: string[] = (body.tags as string[]) ?? [];
+        const ppTargetPlatforms = (post as Record<string, unknown>)
+          .target_platforms;
+        const ppPlatforms: string[] = Array.isArray(ppTargetPlatforms)
+          ? ppTargetPlatforms
+          : ["qiita", "devto"];
+        const ppResults: Record<string, unknown> = {};
+
+        if (ppPlatforms.includes("qiita") && qiitaToken) {
+          try {
+            const tagObjects = ppRawTags
+              .slice(0, 5)
+              .map((t: string) => ({ name: t.slice(0, 20) }));
+            const qr = await fetch("https://qiita.com/api/v2/items", {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${qiitaToken}`,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                title: ppTitle,
+                body: ppContent,
+                tags: tagObjects.length > 0 ? tagObjects : [{ name: "Flutter" }],
+                private: false,
+                tweet: false,
+              }),
+            });
+            if (qr.ok) {
+              const qd = await qr.json() as { url: string; id: string };
+              ppResults.qiita = { ok: true, url: qd.url };
+            } else {
+              ppResults.qiita = {
+                ok: false,
+                error: `${qr.status}: ${await qr.text()}`,
+              };
+            }
+          } catch (e) {
+            ppResults.qiita = { ok: false, error: String(e) };
+          }
+        }
+
+        if (ppPlatforms.includes("devto") && devtoKey) {
+          try {
+            const cleanTags = ppRawTags
+              .slice(0, 4)
+              .map((t: string) =>
+                t.toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 30)
+              )
+              .filter((t: string) => t.length > 0);
+            const dr = await fetch("https://dev.to/api/articles", {
+              method: "POST",
+              headers: {
+                "api-key": devtoKey,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                article: {
+                  title: ppTitle,
+                  body_markdown: ppContent,
+                  published: true,
+                  tags: cleanTags.length > 0 ? cleanTags : ["flutter"],
+                },
+              }),
+            });
+            if (dr.ok) {
+              const dd = await dr.json() as { url: string; id: number };
+              ppResults.devto = { ok: true, url: dd.url };
+            } else {
+              ppResults.devto = {
+                ok: false,
+                error: `${dr.status}: ${await dr.text()}`,
+              };
+            }
+          } catch (e) {
+            ppResults.devto = { ok: false, error: String(e) };
+          }
+        }
+
+        const successUrls = (
+          Object.values(ppResults) as Array<{ ok: boolean; url?: string }>
+        )
+          .filter((v) => v.ok)
+          .map((v) => v.url)
+          .filter(Boolean) as string[];
+
+        if (successUrls.length > 0) {
+          await admin
+            .from("blog_posts")
+            .update({
+              status: "posted",
+              posted_at: new Date().toISOString(),
+              url: successUrls[0],
+            })
+            .eq("id", postId);
+        }
+
+        return json({ success: true, results: ppResults });
+      }
+
+      // blog.update_post — blog_posts行のフィールドを更新
+      case "blog.update_post": {
+        const upId = String(body.id ?? "");
+        if (!upId) return json({ error: "id required" }, 400);
+        const upFields: Record<string, unknown> = {};
+        if (body.title !== undefined) upFields.title = String(body.title);
+        if (body.content !== undefined) upFields.content = String(body.content);
+        if (body.notes !== undefined) upFields.notes = String(body.notes);
+        if (Array.isArray(body.target_platforms)) {
+          upFields.target_platforms = body.target_platforms;
+        }
+        if (Object.keys(upFields).length === 0) {
+          return json({ error: "No fields to update" }, 400);
+        }
+        const { error: upErr } = await admin
+          .from("blog_posts")
+          .update(upFields)
+          .eq("id", upId);
+        if (upErr) return json({ error: upErr.message }, 500);
+        return json({ success: true });
+      }
+
+      // blog.delete_post — blog_postsから削除 (admin SERVICE_ROLE_KEY必要)
+      case "blog.delete_post": {
+        const delId = String(body.id ?? "");
+        if (!delId) return json({ error: "id required" }, 400);
+        const { error: delErr } = await admin
+          .from("blog_posts")
+          .delete()
+          .eq("id", delId);
+        if (delErr) return json({ error: delErr.message }, 500);
+        return json({ success: true });
+      }
+
+      // blog.insert_post — blog_postsに新規ドラフトを直接挿入
+      case "blog.insert_post": {
+        const insTitle = String(body.title ?? "");
+        if (!insTitle) return json({ error: "title required" }, 400);
+        const { data: newPost, error: insErr } = await admin
+          .from("blog_posts")
+          .insert({
+            title: insTitle,
+            content: String(body.content ?? ""),
+            notes: String(body.notes ?? ""),
+            status: "draft",
+            target_platforms: Array.isArray(body.target_platforms)
+              ? body.target_platforms
+              : ["qiita", "devto"],
+          })
+          .select("id, title, status, created_at")
+          .single();
+        if (insErr) return json({ error: insErr.message }, 500);
+        return json({ success: true, post: newPost });
+      }
+
       // ─── Blog Management: Qiita / dev.to ─────────────────────────────────────
 
       // blog.qiita_list — 自分の全記事一覧 (per_page最大100)
