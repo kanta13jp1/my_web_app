@@ -21,9 +21,10 @@ class _PhilosophyPageState extends State<PhilosophyPage> {
   void initState() {
     super.initState();
     for (final v in _videos) {
+      final src = v.mp4Url ?? 'https://www.youtube.com/embed/${v.id}';
       platform_view.registerIframeViewFactory(
         'youtube-${v.id}',
-        'https://www.youtube.com/embed/${v.id}',
+        src,
       );
     }
   }
@@ -200,11 +201,11 @@ class _PhilosophyPageState extends State<PhilosophyPage> {
             const SizedBox(width: 12),
             TextButton.icon(
               onPressed: () => launchUrl(
-                Uri.parse('https://youtu.be/${v.id}'),
+                Uri.parse(v.mp4Url ?? 'https://youtu.be/${v.id}'),
                 mode: LaunchMode.externalApplication,
               ),
               icon: const Icon(Icons.open_in_new, size: 16),
-              label: const Text('YouTube で見る'),
+              label: Text(v.mp4Url != null ? 'MP4 で見る' : 'YouTube で見る'),
               style: TextButton.styleFrom(
                 foregroundColor: const Color(0xFFFF6B35),
               ),
@@ -534,11 +535,18 @@ class _Video {
   final String label;
   final String duration;
   final String description;
+
+  /// 自前ホスト MP4 URL (= YouTube アップロード前の暫定動画).
+  /// 設定時は YouTube iframe ではなく `<iframe src=mp4Url>` で直再生する.
+  /// YouTube アップロード完了後 `id` を実 YouTube ID に書き換えて null 戻し.
+  final String? mp4Url;
+
   const _Video({
     required this.id,
     required this.label,
     required this.duration,
     required this.description,
+    this.mp4Url,
   });
 }
 
@@ -597,6 +605,17 @@ const _videos = [
         'Nomic Platform (Nomic AEC) — 建築 / エンジニアリング / 建設 業界向け Domain-Specific AI。'
         '3000 ページ規模の RFI / RFP / 仕様書を AI で横断検索・分析。BIM / Revit / Procore 統合。'
         'AI大学シリーズ #3。',
+  ),
+  _Video(
+    id: 'multi-agent-convergence',
+    mp4Url: '/assets/videos/multi-agent-convergence.mp4',
+    label: '番外: 2026年AIのパラダイムシフト — Multi-Agent Convergence (暫定MP4)',
+    duration: '9:19',
+    description:
+        'NotebookLM Video Overview 原版 (= 720p H.264 圧縮 / 12MB / 暫定 self-host)。'
+        '2026 AI Agent Blueprint + 多エージェント収束トレンド + 思考コスト 97% 減のインパクト。'
+        'YouTube アップロードは GHA secrets (GITHUB_PAT / YOUTUBE_*) 設定後に実施予定 → 完了後 id を YouTube ID に置換。'
+        'AI大学シリーズ #4。',
   ),
 ];
 
