@@ -1,7 +1,7 @@
 ---
 title: "インディー開発者のグロース戦略 — グロースループ・紹介設計・Analytics の実践"
 tags: 個人開発,buildinpublic,Flutter,programming
-published: false
+published: true
 ---
 
 「良いものを作れば売れる」は幻想です。インディー開発者がユーザーを増やすには、製品設計の段階からグロースの仕組みを組み込む必要があります。本記事ではグロースループの設計から紹介リワード、コンテンツマーケティング、Analytics まで、コードレベルで実践できる手法を解説します。

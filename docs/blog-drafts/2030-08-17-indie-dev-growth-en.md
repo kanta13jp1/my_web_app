@@ -1,7 +1,7 @@
 ---
 title: "Indie Dev Growth Loops — Referral Mechanics, Analytics, and Viral Coefficient in Flutter"
 tags: indiedev,buildinpublic,flutter,programming
-published: false
+published: true
 ---
 
 "Build it and they will come" is a myth. Indie developers need to engineer growth into the product from day one. This guide covers growth loop design, referral mechanics with real Dart code, UTM attribution, and analytics setup — all things you can ship in a weekend.
