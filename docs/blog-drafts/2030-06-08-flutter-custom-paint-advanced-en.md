@@ -1,6 +1,6 @@
 ---
 title: "Flutter CustomPaint Deep Dive — Canvas API, Animations & Fragment Shaders"
-published: false
+published: true
 tags: flutter, dart, animation, webdev
 canonical_url: null
 ---
