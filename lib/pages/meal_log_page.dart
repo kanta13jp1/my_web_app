@@ -222,7 +222,8 @@ class _MealLogPageState extends State<MealLogPage>
                     children: [
                       Icon(t.$3,
                           size: 18,
-                          color: selected ? Colors.white : Colors.grey[600],),
+                          color: selected ? Colors.white : Colors.grey[600],
+                        ),
                       const SizedBox(height: 2),
                       Text(
                         t.$2,
@@ -402,7 +403,8 @@ class _MealLogPageState extends State<MealLogPage>
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
         subtitle: const Text(
-            '写真を撮るだけでAIが栄養素を自動推定\n(ai-hub food_analysis — Codex#2準備中)',),
+            '写真を撮るだけでAIが栄養素を自動推定\n(ai-hub food_analysis — Codex#2準備中)',
+          ),
         trailing: OutlinedButton(
           onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('AI栄養推定は準備中です。')),
@@ -440,8 +442,10 @@ class _MealLogPageState extends State<MealLogPage>
     final cal = log['calories'] as int? ?? 0;
     final mealType = log['meal_type'] as String? ?? '';
     final mealLabel = _mealTypes
-        .firstWhere((t) => t.$1 == mealType,
-            orElse: () => ('', '食事', Icons.restaurant),)
+        .firstWhere(
+          (t) => t.$1 == mealType,
+          orElse: () => ('', '食事', Icons.restaurant),
+        )
         .$2;
     final loggedAt = log['logged_at'] as String? ?? '';
     final timeStr = loggedAt.length >= 16 ? loggedAt.substring(11, 16) : '';
@@ -511,7 +515,8 @@ class _MealLogPageState extends State<MealLogPage>
               children: [
                 const Text('今日のカロリー',
                     style:
-                        TextStyle(fontWeight: FontWeight.bold, fontSize: 16),),
+                        TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                      ),
                 Text(
                   '目標: ${target}kcal',
                   style: TextStyle(color: Colors.grey[600], fontSize: 13),
@@ -616,12 +621,15 @@ class _MealLogPageState extends State<MealLogPage>
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text('食事別内訳',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),),
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+              ),
             const SizedBox(height: 8),
             ...byMeal.entries.map((e) {
               final label = _mealTypes
-                  .firstWhere((t) => t.$1 == e.key,
-                      orElse: () => ('', e.key, Icons.restaurant),)
+                  .firstWhere(
+                    (t) => t.$1 == e.key,
+                    orElse: () => ('', e.key, Icons.restaurant),
+                  )
                   .$2;
               final cal = (e.value as num?)?.toInt() ?? 0;
               return Padding(
@@ -631,7 +639,8 @@ class _MealLogPageState extends State<MealLogPage>
                   children: [
                     Text(label),
                     Text('${cal}kcal',
-                        style: const TextStyle(fontWeight: FontWeight.bold),),
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
                   ],
                 ),
               );
