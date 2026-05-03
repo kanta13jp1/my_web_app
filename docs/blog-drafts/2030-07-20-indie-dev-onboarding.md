@@ -1,7 +1,7 @@
 ---
 title: "個人開発アプリのオンボーディング設計 — Day 0〜28 の定着率を最大化する"
 tags: 個人開発,Flutter,webdev,buildinpublic
-published: false
+published: true
 ---
 
 # 個人開発アプリのオンボーディング設計 — Day 0〜28 の定着率を最大化する
