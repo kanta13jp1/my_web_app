@@ -1,0 +1,33 @@
+{
+  "task": "infra-health-check",
+  "ran_at": "2026-05-03T04:33:00+09:00",
+  "supabase_health_check_ef": {
+    "status": "healthy",
+    "http_code": 200,
+    "auth": "anon (verify_jwt=false; no Authorization header required)",
+    "checks": {
+      "env": "ok — SUPABASE_URL + SERVICE_ROLE_KEY set on EF runtime",
+      "db_connectivity": "ok — profiles reachable in 93ms",
+      "wbs_tasks": "ok — wbs_tasks reachable",
+      "ai_circuit_breaker": "ok — ai_circuit_breaker reachable"
+    },
+    "ef_timestamp": "2026-05-02T19:32:57.755Z",
+    "note": "Local SUPABASE_SERVICE_KEY env unset in Codex#1 worktree session; EF accepts unauthenticated calls and reports healthy."
+  },
+  "firebase_hosting": {
+    "url": "https://my-web-app-b67f4.web.app/",
+    "status": "ok",
+    "http_code": 200,
+    "title_visible": "自分株式会社 | AIが今日の最優先タスクを整理",
+    "app_shell": "Flutter Web shell loading; 'Loading application...' visible; no 5xx / redirect.",
+    "note": "Static shell + meta tags render normally."
+  },
+  "latency_observations": {
+    "db_profiles_ms": 93,
+    "trend": "927ms (21:35) → 69ms (22:35) → 244ms (23:34) → 108ms (00:33) → 232ms (01:33) → 195ms (02:34) → 177ms (03:33) → 93ms (04:33) — within normal oscillation band (~70-250ms baseline). 12 consecutive hourly samples healthy on all 4 checks.",
+    "note": "No degradation; latency improving toward low-baseline."
+  },
+  "incident_created": false,
+  "committed": false,
+  "commit_skip_reason": "Task rule 4: commit only on abnormal. EF healthy across all 4 checks. Latency 93ms low-baseline. Branch codex/codex1-notebooklm-intake-gate holds unrelated WIP — no commit."
+}

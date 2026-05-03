@@ -1,0 +1,32 @@
+{
+  "task": "infra-health-check",
+  "ran_at": "2026-05-02T16:34:19+09:00",
+  "supabase_health_check_ef": {
+    "status": "healthy",
+    "http_code": 200,
+    "auth": "anon (verify_jwt=false; no Authorization header required)",
+    "checks": {
+      "env": "ok — SUPABASE_URL + SERVICE_ROLE_KEY set on EF runtime",
+      "db_connectivity": "ok — profiles reachable in 103ms",
+      "wbs_tasks": "ok — wbs_tasks reachable",
+      "ai_circuit_breaker": "ok — ai_circuit_breaker reachable"
+    },
+    "ef_timestamp": "2026-05-02T07:34:19.242Z",
+    "note": "Local SUPABASE_SERVICE_KEY env unset in this Codex#1 worktree session; EF accepts unauthenticated calls and reports healthy."
+  },
+  "firebase_hosting": {
+    "url": "https://my-web-app-b67f4.web.app/",
+    "status": "ok",
+    "title": "自分株式会社 | AIが今日の最優先タスクを整理",
+    "title_visible": true,
+    "note": "Flutter Web app renders. Three feature sections + CTAs visible. No 5xx / SyntaxError observed."
+  },
+  "latency_observations": {
+    "db_profiles_ms": 103,
+    "note": "103ms — within healthy range. Slight uptick from prior 69ms but no degradation."
+  },
+  "incident_created": false,
+  "committed": false,
+  "commit_skip_reason": "Task rule 4: commit only on abnormal. Also on feature branch codex/codex1-mcp-authkit-metadata with unrelated WIP — would pollute commit history.",
+  "action": "log only; no fix required"
+}

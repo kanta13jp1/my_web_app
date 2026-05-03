@@ -1,0 +1,34 @@
+{
+  "task": "infra-health-check",
+  "ran_at": "2026-05-02T21:35:00+09:00",
+  "supabase_health_check_ef": {
+    "status": "healthy",
+    "http_code": 200,
+    "auth": "anon (verify_jwt=false; no Authorization header required)",
+    "checks": {
+      "env": "ok — SUPABASE_URL + SERVICE_ROLE_KEY set on EF runtime",
+      "db_connectivity": "ok — profiles reachable in 927ms",
+      "wbs_tasks": "ok — wbs_tasks reachable",
+      "ai_circuit_breaker": "ok — ai_circuit_breaker reachable"
+    },
+    "ef_timestamp": "2026-05-02T12:32:42.858Z",
+    "note": "Local SUPABASE_SERVICE_KEY env unset in Codex#1 worktree session; EF accepts unauthenticated calls and reports healthy."
+  },
+  "firebase_hosting": {
+    "url": "https://my-web-app-b67f4.web.app/",
+    "status": "ok",
+    "http_code": 200,
+    "title": "自分株式会社 | AIが今日の最優先タスクを整理",
+    "title_visible": true,
+    "ctas_visible": ["無料で始める", "Watch Demo", "WBSガントチャート"],
+    "note": "Flutter Web app renders. Landing page CTAs visible. No 5xx / SyntaxError observed."
+  },
+  "latency_observations": {
+    "db_profiles_ms": 927,
+    "trend": "68ms (17:35) → 183ms (18:35) → 1313ms (19:33) → 143ms (20:35) → 927ms (21:35) — second elevated reading in 5h, but EF status still healthy",
+    "note": "Latency oscillation pattern continues. 927ms within healthy threshold (no degraded marker from EF). If next 2 hours stay > 800ms consistently, escalate to incident report. Current single sample insufficient."
+  },
+  "incident_created": false,
+  "committed": false,
+  "commit_skip_reason": "Task rule 4: commit only on abnormal. EF reports healthy across all 4 checks. Latency elevated but within healthy threshold. Branch codex/codex1-mcp-authkit-metadata holds unrelated WIP — no commit."
+}
