@@ -25482,3 +25482,21 @@ a9d7b1517 on main
 ### Philosophy Alignment
 #2 ミッション駆動 (= AI tool 進化を fleet 全 instance に同期させ続けることが「最高の AI fleet」mission に直結) / #6 資本=時間 (= NotebookLM list 由来の知識を Issue 化することで未適用 backlog の可視化 = 時間配分の最適化) / #8 KPI=昨日の自分 (= 12 軸 + 8 新 Issue で fleet 進化加速度を維持)
 
+
+### Rule 17 WF health check (2026-05-03 14:22 JST) — PS#1 S24
+- 全 WF success率: 8/10 workflow種別 (GitHub Issues WBS Sync 23/30失敗が最重大)
+- **失敗 WF**: GitHub Issues WBS Sync — 根本原因2件:
+  1. `scripts/wbs_sync_aggregate.py` をGHA runnerが見つけられない (checkout step なし)
+  2. WBSタスク `eec47160` (deadline=2026-05-02) に recovery_plan なし → HTTP 500 cascade
+- **修正済み**: 
+  - issue-to-wbs.yml: aggregate scriptをheredocとしてインライン化 (checkout不要)
+  - migration 20260503140000: overdue WBSタスク一括 recovery_plan 追加 (nocheck: time-relative)
+  - Migration Time-Relative CHECK: nocheck exemption追加で誤検知解消
+- **orphan branches**: blog-publish 1本 (許容範囲) / claude/* 7本 (アクティブWIP)
+- **bc58b50b 適用**: 5件の新規推奨事項 → Issue #1710-1714 登録
+  - #1710 DBHub MCP (Supabase安全アクセス)
+  - #1711 トークンコスト最適化 (200K-272K閾値)
+  - #1712 HTTP Streamable MCP + reset-project-choices
+  - #1713 steipete/claude-code-mcp Agent-in-Agent
+  - #1714 3ファイルバックアップアーキテクチャ
+- commit: 4014b42e0 + f9b0a3c26 → main push済み
