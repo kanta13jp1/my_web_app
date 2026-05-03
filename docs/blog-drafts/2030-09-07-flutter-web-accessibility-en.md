@@ -1,7 +1,7 @@
 ---
 title: "Flutter Web Accessibility Guide — WCAG 2.2, Semantics, and Screen Reader Support"
 tags: flutter,accessibility,webdev,indiedev
-published: false
+published: true
 ---
 
 Accessibility is not an afterthought — it's a quality signal. For Flutter Web, getting WCAG 2.2 compliance right requires understanding how Flutter's Semantics tree maps to browser accessibility APIs. This guide walks through practical implementation: contrast ratios, keyboard navigation, screen reader support, and automated testing.
