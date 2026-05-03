@@ -25669,3 +25669,12 @@ a9d7b1517 on main
 ### Philosophy Alignment
 #3 優しい mentor (= 残作業を自動 Issue 化することで「忘れたら止まる」を「自動で拾う」に転換) / #6 資本=時間 (= 手動 `gh issue create` ループから完全解放) / #8 KPI=昨日の自分 (= fleet 12 instance 全 wrap-up が daily で 1 つの Issue queue に統合)
 
+
+### Rule 17 WF health check (2026-05-03 18:00 JST) — PS#1 S25
+- 全 WF success率: 8/15 (pending/in_progress 含む)
+- 失敗 WF: `issue-to-wbs.yml` 6/6 失敗 — YAML構文エラー (heredoc Pythonが0インデント → block scalar破壊) → **修正済み** (10スペース追加)
+- Deploy to Production: `16e652922` でSUCCESS確認。旧失敗 #1763/#1764/#1776 close済み
+- orphan branches: `claude/mobile-version-task-hQxcq` 1本 (確認中)
+- sandbox.network.deniedDomains: `~/.claude/settings.json` に適用完了 (#1766)
+- NotebookLM bc58b50b 未適用5件: Issue #1789-#1793 登録
+- notebooklm list 全18ノートブック: Issue #1794-#1811 登録 (全適用済み)
