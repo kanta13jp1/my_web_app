@@ -3,7 +3,7 @@ title: "Dart Records & Patterns 完全ガイド — 構造分解・Sealed Class�
 emoji: "🎯"
 type: "tech"
 topics: ["dart", "flutter", "programming", "design-pattern"]
-published: false
+published: true
 ---
 
 # Dart Records & Patterns 完全ガイド — 構造分解・Sealed Class・パターンマッチングの実践
