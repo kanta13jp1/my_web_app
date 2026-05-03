@@ -25585,3 +25585,21 @@ a9d7b1517 on main
 
 ### Philosophy Alignment
 #5 商品=ユーザー価値 (= SWE-bench/GPQA追加でAI大学ベンチマーク学部の完成度向上) / #6 資本=時間 (= NotebookLM query で未適用コンテンツを効率調査) / #8 KPI=昨日の自分 (= 390社到達 / Issues 11件登録でfleet次session引継完了)
+
+
+## 2026-05-03 PS#4 S668 — LLM評価フレームワーク9社追加 (1834→1843社)
+
+### 実施内容
+- **bc58b50b適用**: DeepEval/promptfoo/lm-eval-harness/LightEval/Ragas/TruLens/Giskard/Braintrust/HELM を bc58b50b推奨ツール群として llm-eval カテゴリ新設
+- comparison_page.dart: 1834→1843社 / sitemap: 1930→1939 URLs
+- landing_page.dart・user_manual_page.dart 社数更新
+- notebooklm list 確認: bc58b50b (#1710-1714/#1727-1729) 既登録確認 / 未適用ノートブック (#1730-1736) 確認
+
+### 次回候補 (PS#4 S669+)
+1. **コード品質/静的解析** (SonarCloud/CodeFactor/Codacy/Codecov/Coveralls/Qodana など)
+2. **AIエージェント評価** (AgentBench/OSWorld/WebArena を競合として追加)
+3. **フロントエンドテスト** (Storybook/Chromatic/Percy/Applitools/BackstopJS)
+4. bc58b50b #1-8 Issues (#1710-1714/#1727-1729) の実装担当インスタンス割当
+
+### Philosophy Alignment
+#5 商品=ユーザー価値 (= LLM評価ツール群追加でAI開発者SEO流入拡大) / #8 KPI=昨日の自分 (= bc58b50b推奨ツールを当日中に反映 / 知識→実装サイクル短縮)

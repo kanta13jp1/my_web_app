@@ -4246,4 +4246,13 @@
   <url><loc>https://my-web-app-b67f4.web.app/vs-vegeta</loc><lastmod>2026-05-01</lastmod></url>
   <url><loc>https://my-web-app-b67f4.web.app/vs-hey-load</loc><lastmod>2026-05-01</lastmod></url>
   <url><loc>https://my-web-app-b67f4.web.app/vs-neoload</loc><lastmod>2026-05-01</lastmod></url>
+  <url><loc>https://my-web-app-b67f4.web.app/vs-deepeval</loc><lastmod>2026-05-03</lastmod></url>
+  <url><loc>https://my-web-app-b67f4.web.app/vs-promptfoo</loc><lastmod>2026-05-03</lastmod></url>
+  <url><loc>https://my-web-app-b67f4.web.app/vs-lm-eval-harness</loc><lastmod>2026-05-03</lastmod></url>
+  <url><loc>https://my-web-app-b67f4.web.app/vs-lighteval</loc><lastmod>2026-05-03</lastmod></url>
+  <url><loc>https://my-web-app-b67f4.web.app/vs-ragas</loc><lastmod>2026-05-03</lastmod></url>
+  <url><loc>https://my-web-app-b67f4.web.app/vs-trulens</loc><lastmod>2026-05-03</lastmod></url>
+  <url><loc>https://my-web-app-b67f4.web.app/vs-giskard</loc><lastmod>2026-05-03</lastmod></url>
+  <url><loc>https://my-web-app-b67f4.web.app/vs-braintrust</loc><lastmod>2026-05-03</lastmod></url>
+  <url><loc>https://my-web-app-b67f4.web.app/vs-helm-stanford</loc><lastmod>2026-05-03</lastmod></url>
 </urlset>

@@ -64910,6 +64910,327 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'deepeval-confident-ai': const _CompetitorInfo(
+    name: 'DeepEval',
+    emoji: '🧪',
+    tagline:
+        'DeepEval・Confident AI製LLM評価フレームワーク・pytest互換・RAGパイプライン評価・LLM-as-Judge・14+メトリクス・CIインテグレーション対応で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'DeepEval代替 LLM評価フレームワーク RAG評価 LLM-as-Judge pytest CI品質ゲート',
+    accentColor: Color(0xFF00D0A0),
+    painPoints: [
+      'エンジニア/MLOps特化・個人ライフ管理は別途必要',
+      'LLM評価専用・AI個人アシスタント機能なし',
+      '開発者向けツール・日常タスク管理は別途必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'pytest互換LLM評価・RAGパイプライン・14+メトリクス・CI統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'promptfoo-llm-testing': const _CompetitorInfo(
+    name: 'promptfoo',
+    emoji: '🔬',
+    tagline:
+        'promptfoo・OSSのLLMテスト・レッドチーミングツール・YAMLベース設定・脆弱性スキャン・CI/CD統合・プロンプト比較・A/Bテスト対応で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'promptfoo代替 LLMテスト レッドチーミング プロンプト評価 CI脆弱性スキャン YAML',
+    accentColor: Color(0xFF00A8E8),
+    painPoints: [
+      '開発者/セキュリティエンジニア特化・個人ライフ管理は別途必要',
+      'LLMテスト専用・総合個人AIアシスタントなし',
+      'プロンプト評価ツール・日常タスク管理は別途必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'YAMLベースLLMテスト・レッドチーミング・脆弱性スキャン・CI統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'lm-evaluation-harness-eleutherai': const _CompetitorInfo(
+    name: 'lm-evaluation-harness',
+    emoji: '📊',
+    tagline:
+        'lm-evaluation-harness・EleutherAI製OSSベンチマーク基盤・200+タスク・MMLU/HellaSwag/HumanEval対応・Hugging Face統合・学術標準で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'lm-evaluation-harness代替 EleutherAI LLMベンチマーク MMLU HumanEval Hugging Face評価',
+    accentColor: Color(0xFF6B4FFF),
+    painPoints: [
+      '研究者/MLエンジニア特化・個人ライフ管理は別途必要',
+      'LLMベンチマーク専用・AI個人アシスタント機能なし',
+      '評価ツール・日常タスク管理は別途必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '200+ベンチマーク・MMLU/HellaSwag/HumanEval・Hugging Face統合・学術標準',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'lighteval-huggingface': const _CompetitorInfo(
+    name: 'LightEval',
+    emoji: '⚡',
+    tagline:
+        'LightEval・HuggingFace製軽量LLM評価ライブラリ・シングルコード評価・カスタムタスク・Transformers完全統合・高速実行・研究者向けで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'LightEval代替 HuggingFace LLM評価 軽量ベンチマーク Transformers カスタムタスク',
+    accentColor: Color(0xFFFF9B00),
+    painPoints: [
+      'HuggingFace依存・個人ライフ管理は別途必要',
+      'LLM評価専用・総合個人AIアシスタントなし',
+      'ML研究ツール・日常タスク管理は別途必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '軽量LLM評価・Transformers統合・カスタムタスク・高速実行',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'ragas-rag-evaluation': const _CompetitorInfo(
+    name: 'Ragas',
+    emoji: '🎯',
+    tagline:
+        'Ragas・RAGパイプライン評価フレームワーク・Faithfulness/Answer Relevancy/Context Precision/Recall・LangChain統合・自動化評価で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Ragas代替 RAG評価 Faithfulness Answer Relevancy LangChain RAGパイプライン品質',
+    accentColor: Color(0xFFFF6B6B),
+    painPoints: [
+      'RAGシステム開発者特化・個人ライフ管理は別途必要',
+      'RAG評価専用・AI個人アシスタント機能なし',
+      '評価メトリクスツール・日常タスク管理は別途必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'RAG Faithfulness/Relevancy/Precision評価・LangChain統合・自動化',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'trulens-truera': const _CompetitorInfo(
+    name: 'TruLens',
+    emoji: '🔍',
+    tagline:
+        'TruLens・TruEra製RAGトライアド評価・ハルシネーション検出・Answer Relevance/Context Relevance/Groundedness・LlamaIndex/LangChain対応で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'TruLens代替 TruEra RAGトライアド ハルシネーション検出 LlamaIndex LangChain LLM評価',
+    accentColor: Color(0xFF4B9AF9),
+    painPoints: [
+      'AI開発者/MLOps特化・個人ライフ管理は別途必要',
+      'RAGトライアド評価専用・総合個人AIアシスタントなし',
+      '評価ダッシュボードツール・日常タスク管理は別途必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'RAGトライアド評価・ハルシネーション検出・LlamaIndex/LangChain統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'giskard-ml-testing': const _CompetitorInfo(
+    name: 'Giskard',
+    emoji: '🛡️',
+    tagline:
+        'Giskard・OSS MLテストフレームワーク・LLMバイアス/脆弱性検出・自動化スキャン・CI統合・Hugging Face/LangChain対応・OWASP LLM Top10対応で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Giskard代替 MLテスト LLMバイアス検出 OWASP LLM脆弱性スキャン CI自動化 Hugging Face',
+    accentColor: Color(0xFF9B59B6),
+    painPoints: [
+      'MLエンジニア/QA特化・個人ライフ管理は別途必要',
+      'MLテスト専用・AI個人アシスタント機能なし',
+      '脆弱性スキャンツール・日常タスク管理は別途必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'OSS LLMバイアス/脆弱性検出・OWASP LLM Top10・CI統合・自動化スキャン',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'braintrust-llm-evals': const _CompetitorInfo(
+    name: 'Braintrust',
+    emoji: '🧠',
+    tagline:
+        'Braintrust・LLMエバル統合プラットフォーム・ロギング/トレーシング/A/Bテスト・プロダクション評価・スコアリング自動化・チーム協働で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Braintrust代替 LLMエバル プロダクション評価 A/Bテスト ロギング トレーシング LLM品質',
+    accentColor: Color(0xFFFF5A00),
+    painPoints: [
+      'AI/LLMプロダクト開発者特化・個人ライフ管理は別途必要',
+      'LLMエバル専用・総合個人AIアシスタントなし',
+      'プロダクション評価ツール・日常タスク管理は別途必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'LLMエバル統合・ロギング/トレーシング/A/Bテスト・プロダクション評価',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'helm-stanford-eval': const _CompetitorInfo(
+    name: 'HELM',
+    emoji: '🎓',
+    tagline:
+        'HELM・Stanford製Holistic Evaluation of Language Models・100+シナリオ・30+メトリクス・公平性/堅牢性/校正度・LLM総合ベンチマーク学術標準で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'HELM代替 Stanford LLM総合評価 Holistic Evaluation ベンチマーク 公平性 堅牢性 学術標準',
+    accentColor: Color(0xFF3D5AFE),
+    painPoints: [
+      '研究者/学術機関特化・個人ライフ管理は別途必要',
+      '学術LLM評価専用・AI個人アシスタント機能なし',
+      'ベンチマーク研究ツール・日常タスク管理は別途必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '100+シナリオ・30+メトリクス・公平性/堅牢性/校正度・Stanford学術標準',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
@@ -65300,6 +65621,15 @@ class _ComparisonShellState extends State<_ComparisonShell> {
     'vegeta-go-http-load-testing': 'perf-testing',
     'hey-http-load-generator': 'perf-testing',
     'neoload-tricentis-enterprise': 'perf-testing',
+    'deepeval-confident-ai': 'llm-eval',
+    'promptfoo-llm-testing': 'llm-eval',
+    'lm-evaluation-harness-eleutherai': 'llm-eval',
+    'lighteval-huggingface': 'llm-eval',
+    'ragas-rag-evaluation': 'llm-eval',
+    'trulens-truera': 'llm-eval',
+    'giskard-ml-testing': 'llm-eval',
+    'braintrust-llm-evals': 'llm-eval',
+    'helm-stanford-eval': 'llm-eval',
   };
 
   @override
