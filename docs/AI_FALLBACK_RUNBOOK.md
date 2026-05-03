@@ -306,3 +306,32 @@ Codex CLI が **Memory** を持つようになり、past task の preference / p
 - [#1645](https://github.com/kanta13jp1/my_web_app/issues/1645) Docker MCP Toolkit
 - [#1646](https://github.com/kanta13jp1/my_web_app/issues/1646) Codex 内蔵ブラウザ + 画像生成
 - [#1647](https://github.com/kanta13jp1/my_web_app/issues/1647) Codex Memory + Thread Automations
+
+---
+
+## Copilot Code Review 課金変更 (2026-06-01〜) 対応
+
+### 変更内容
+- **2026-06-01** から GitHub Copilot Code Review が **Actions minutes を消費**開始
+- 従来: Copilot Code Review は無料 (Copilot Business/Enterprise プランで無制限)
+- 変更後: PR ごとに Actions minutes が加算される (精確な単価は GitHub 公式要確認)
+
+### fleet への影響
+- `claude-agent-review.yml` (Claude/Gemini PR review) + Copilot Code Review が**同時に動く**と Actions 二重消費
+- `ci-auto-fix.yml` も自動 Copilot review がトリガーされると minutes 増大
+
+### 対処方針
+1. **Copilot Code Review** は `on.pull_request` でデフォルト有効化しない (手動 `/review` コマンドのみ)
+2. `claude-agent-review.yml` で Claude/Gemini レビューを主軸として継続 (Actions minutes 内で完結)
+3. `quota-monitor.yml` に Copilot review minutes gauge 追加 (Issue #1707 フォローアップ)
+4. 月次 Actions budget チェック: Settings → Billing → Actions で実費確認
+
+### ci-auto-fix.yml 高速化
+- GitHub Copilot Cloud Agent の **Actions custom image** 採用で +20% 高速化可能
+  - `container: ghcr.io/...` で pre-warmed image 指定
+  - 参考: [GitHub Changelog 2026-04-27](https://github.blog/changelog/2026-04-27-copilot-cloud-agent-starts-20-faster-with-actions-custom-images/)
+  - 適用タイミング: Copilot Integration 本格採用時 (現在は Claude/Gemini 主軸のため延期)
+
+### 参照
+- Issue [#1707](https://github.com/kanta13jp1/my_web_app/issues/1707): Copilot Cloud Agent CI/PR フロー統合
+- `docs/AI_FLEET_SYNERGY_PLAYBOOK.md` 原則 6 (Deterministic Guardrails) — Budget cap rule 追記済

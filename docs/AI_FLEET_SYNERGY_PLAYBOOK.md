@@ -141,6 +141,8 @@ Codex は **Stop Hooks** で CI/CD pipeline pass まで task 完了をブロッ�
   - TS/JS → `oxlint`
   - Python → `ruff`
 - **cross-ref**: VIBE_CODING #4 (Black-Box I/O) / INDIE_DEV_VELOCITY #2 (Instruction Quality)
+- **Budget cap rule (2026-06-01〜)**: Copilot Code Review が Actions minutes 消費開始。
+  `quota-monitor.yml` で Copilot review minutes をガード。CI budget = Actions minutes であることを認識し、不要な Copilot review トリガーを避ける。
 
 ### 原則 7: Visual/GUI Validation Routing to Codex
 

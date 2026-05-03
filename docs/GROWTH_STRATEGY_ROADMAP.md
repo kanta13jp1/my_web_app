@@ -25829,3 +25829,16 @@ a9d7b1517 on main
   - #1863: DBHub/Bytebase MCP → Codex#2 (readonly スキーマアクセス)
 - **次回候補Issue登録**: #1859 (Win版 NB triage), #1862/#1863 (Codex#2委譲済)
 - commit 0afc1fcb1 on main
+
+
+### PS#5 S123 (2026-05-03) — #1707 Copilot Code Review課金変更対応 + bc58b50b docs更新
+- **#1707: Copilot CI/PR フロー統合** (P1 Issue #1707 文書対応):
+  - `docs/AI_FALLBACK_RUNBOOK.md` に「Copilot Code Review 課金変更 (2026-06-01〜)」セクション追加
+  - 対処方針: Copilot review は manual /review のみ / Claude-Gemini review 主軸継続 / budget チェック方法
+  - ci-auto-fix.yml Actions custom image +20%高速化候補を文書化
+  - `docs/AI_FLEET_SYNERGY_PLAYBOOK.md` 原則6 に Budget cap rule 追記
+- **bc58b50b 11件完了状態確認** (S119-S122):
+  - hooks 5件: PostToolUse dart-format / Notification / PreToolUse git-guard / PreCompact backup / allowManagedHooksOnly+PermissionRulesOnly
+  - settings 4件: deniedDomains / MCP_TIMEOUT+MAX_MCP_OUTPUT_TOKENS / ENABLE_MCP_TOOL_SEARCH
+  - GHA 1件: ultrareview job
+  - Plankton Pattern 1件: flutter analyze PostToolUse
