@@ -99,33 +99,32 @@ jobs:
             TITLE="[automation] NotebookLM × Issue cross-check: $TRUE_GAP_COUNT TRUE_GAP $TODAY"
             EXISTING=$(gh issue list --search "$TITLE in:title is:open" --json number --jq 'length')
             if [ "$EXISTING" = "0" ]; then
-              BODY=$(cat <<EOF
-              ## NotebookLM × Issue cross-check 自動検出 ($(date -u '+%Y-%m-%d %H:%M UTC'))
-
-              **TRUE_GAP**: $TRUE_GAP_COUNT 件 (= notebook 存在するが対応 Issue 無し)
-
-              ## 詳細
-
-              \`\`\`
-              $(cat crosscheck_report.txt)
-              \`\`\`
-
-              ## 推奨対応
-
-              1. 各 notebook を内容確認
-              2. 担当 instance を判断 → cross-instance-pr or 直接 Issue 作成
-              3. DUP_OPEN は重複 Issue を close + 主 Issue にコメント統合
-
-              ## 関連
-
-              - script: \`scripts/notebooklm_issue_crosscheck.py\` (= Win版#132 part 120)
-              - workflow: \`.github/workflows/notebooklm-issue-crosscheck.yml\`
-              - Issue [#1647](https://github.com/kanta13jp1/my_web_app/issues/1647) (= Codex Memory + Thread Automations)
-
-              (auto-opened by notebooklm-issue-crosscheck.yml)
-              EOF
-              )
-              gh issue create --title "$TITLE" --label "automation,enhancement,notebooklm" --body "$BODY"
+              {
+                echo "## NotebookLM × Issue cross-check 自動検出 ($(date -u '+%Y-%m-%d %H:%M UTC'))"
+                echo ""
+                echo "**TRUE_GAP**: $TRUE_GAP_COUNT 件 (= notebook 存在するが対応 Issue 無し)"
+                echo ""
+                echo "## 詳細"
+                echo ""
+                echo '```'
+                cat crosscheck_report.txt
+                echo '```'
+                echo ""
+                echo "## 推奨対応"
+                echo ""
+                echo "1. 各 notebook を内容確認"
+                echo "2. 担当 instance を判断 → cross-instance-pr or 直接 Issue 作成"
+                echo "3. DUP_OPEN は重複 Issue を close + 主 Issue にコメント統合"
+                echo ""
+                echo "## 関連"
+                echo ""
+                echo "- script: \`scripts/notebooklm_issue_crosscheck.py\` (= Win版#132 part 120)"
+                echo "- workflow: \`.github/workflows/notebooklm-issue-crosscheck.yml\`"
+                echo "- Issue [#1647](https://github.com/kanta13jp1/my_web_app/issues/1647) (= Codex Memory + Thread Automations)"
+                echo ""
+                echo "(auto-opened by notebooklm-issue-crosscheck.yml)"
+              } > issue_body.md
+              gh issue create --title "$TITLE" --label "automation,enhancement,notebooklm" --body-file issue_body.md
             else
               echo "Skip: same-title open Issue already exists ($EXISTING)"
             fi
