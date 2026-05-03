@@ -25853,3 +25853,24 @@ a9d7b1517 on main
   - #1783 → PS#1/Win版委譲コメント追加 (9b8885ef Automating SaaS Operations)
 - **#1735 残タスク**: Whisper/D-ID/Hedra/Runway ML → 次回S152で継続
 - commit 4f52bfb3f on main
+
+
+### PS#2 S103 (2026-05-03) — T-1 Phase52全5弾dispatch + bc58b50b/NB/AI最新情報 Issues登録
+- **T-1 Phase52 dispatch** (dev.to累計239本):
+  - #235: Flutter Web SEO → https://dev.to/kanta13jp1/flutter-web-seo-guide-meta-tags-sitemaps-and-structured-data-that-actually-work-18ha
+  - #236: Supabase Auth OAuth → https://dev.to/kanta13jp1/supabase-auth-oauth-in-flutter-google-github-and-apple-sign-in-end-to-end-2c4d
+  - #237: Indie Onboarding → https://dev.to/kanta13jp1/indie-app-onboarding-that-retains-users-day-0-to-day-28-engagement-design-4ej6
+  - #238: Dart Metaprogramming → https://dev.to/kanta13jp1/dart-metaprogramming-buildrunner-source-gen-and-dart-3-macros-explained-2m5m
+  - agent-tool-policy-server-gate EN補完 (published:false残り手動fix)
+- **Issues登録**: bc58b50b未適用#1847-#1849 / NB未適用#1850-#1856 / AI最新#1858/#1860/#1861
+- commit c04704fbe on main
+
+
+### PS#2 S104 (2026-05-03) — T-1 Phase53全4弾作成+dispatch (dev.to累計243本)
+- **T-1 Phase53 dispatch** (dev.to累計243本):
+  - #239: Flutter Web Performance → https://dev.to/kanta13jp1/flutter-web-performance-optimization-canvaskit-lazy-loading-and-image-best-practices-304e
+  - #240: Supabase Realtime → https://dev.to/kanta13jp1/supabase-realtime-with-flutter-postgres-changes-presence-and-broadcast-in-practice-44ko
+  - #241: Indie Dev Growth → https://dev.to/kanta13jp1/indie-dev-growth-loops-referral-mechanics-analytics-and-viral-coefficient-in-flutter-38k
+  - #242: Dart Package Publishing → https://dev.to/kanta13jp1/publishing-a-dart-package-to-pubdev-pubspec-dartdoc-and-automated-ci-3fig
+- **Phase53全4弾**: 8ファイル作成 (2030-08-03/10/17/24 JA+EN) / orphan branch 4本マージ+削除 / 全8ファイルpublished:true確認
+- **Issue #1873**: Dart+Flutter MCP server (Gemini Code Assist Agent Mode fleet統合) 登録
