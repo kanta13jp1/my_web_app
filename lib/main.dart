@@ -61,6 +61,7 @@ import 'package:my_web_app/pages/admin_analytics_page.dart';
 import 'package:my_web_app/pages/admin/feedback_list_page.dart';
 import 'package:my_web_app/pages/admin/quota_dashboard_page.dart';
 import 'package:my_web_app/pages/admin/blog_management_page.dart';
+import 'package:my_web_app/pages/admin/blog_draft_editor_page.dart';
 import 'package:my_web_app/pages/home_insights_page.dart';
 import 'package:my_web_app/pages/life_goals_page.dart';
 import 'package:my_web_app/pages/thought_capture_page.dart';
@@ -934,6 +935,15 @@ class _MyAppState extends State<MyApp> {
           case '/blog-management':
             return MaterialPageRoute(
               builder: (_) => const BlogManagementPage(),
+            );
+          case '/admin/blog/new':
+            return MaterialPageRoute(
+              builder: (_) => const BlogDraftEditorPage(),
+            );
+          case '/admin/blog/edit':
+            final postId = settings.arguments as String?;
+            return MaterialPageRoute(
+              builder: (_) => BlogDraftEditorPage(postId: postId),
             );
           case '/ai-assistant-chat':
             return MaterialPageRoute(
