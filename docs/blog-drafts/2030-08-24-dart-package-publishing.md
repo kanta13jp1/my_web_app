@@ -1,7 +1,7 @@
 ---
 title: "Dart パッケージを pub.dev に公開する — pubspec・dartdoc・GitHub Actions の完全ガイド"
 tags: Dart,Flutter,programming,個人開発
-published: false
+published: true
 ---
 
 「社内で便利なユーティリティを作ったので pub.dev に公開したい」「オープンソースで貢献したい」という方向けに、パッケージ設計から自動公開 CI まで一通りの手順を解説します。適切に整備されたパッケージは、あなたの技術ブランド向上にもつながります。

@@ -1,7 +1,7 @@
 ---
 title: "Publishing a Dart Package to pub.dev — pubspec, dartdoc, and Automated CI"
 tags: dart,flutter,programming,indiedev
-published: false
+published: true
 ---
 
 Publishing an open-source Dart package is one of the highest-leverage things an indie developer can do: it builds your reputation, drives traffic, and forces you to write cleaner code. This guide walks you through every step — package structure, pubspec setup, API docs, testing, and a fully automated GitHub Actions publish pipeline.
