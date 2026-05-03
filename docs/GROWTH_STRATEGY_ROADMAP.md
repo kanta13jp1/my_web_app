@@ -25984,7 +25984,6 @@ a9d7b1517 on main
 - **タイムスタンプ衝突**: did_video 000000→000100 (PS#6 ps6_s163と衝突 → 自動fix)
 - commit 14ec7a2de on main (タイムスタンプfix含む)
 
-<<<<<<< Updated upstream
 ## 2026-05-03 (Win版#132 part 123) — tech-blog-tracker bug fix (User report 即対応)
 
 ### 完了
@@ -26042,7 +26041,7 @@ a9d7b1517 on main
 
 ### Philosophy Alignment
 #5 商品=ユーザー価値 (= ブログ投稿管理機能の完全動作で開発者体験向上) / #6 資本=時間 (= 4記事一括dispatch + 自動orphan cleanup)
-=======
+
 ## PS#4 S671 (2026-05-04)
 - **コード品質/静的解析 5社追加**: CodeFactor/Codacy/Qodana/Klocwork/Checkstyle (code-qualityカテゴリ新設)
 - **AIエージェント評価ベンチマーク 9社追加**: AgentBench/OSWorld/WebArena/SWE-agent/τ-bench/AssistGUI/Mind2Web/WorkArena/AppAgent (ai-agent-evalカテゴリ新設)
@@ -26053,4 +26052,16 @@ a9d7b1517 on main
 - **Issue close**: #1760 (code-quality 5社) / #1762 (ai-agent-eval 9社) / #1889 (GPT-Image-2)
 - **NotebookLM bc58b50b**: 既適用確認 (全件適用済み)
 - **次回PS#4候補**: #1822 (Nomic Platform Domain-Specific AI大学追加) / S672 (セキュリティテスト追加) / 284ad4be notebook適用
->>>>>>> Stashed changes
+
+### Rule 17 WF health check (2026-05-03 22:50 JST) — PS#1 S26
+- 全 WF success率: 2/9 (cs-check, health-monitor が success / 7 WF 要対応)
+- 失敗 WF:
+  - **blog-draft-register.yml** (3/3 fail): python3 -c multiline → YAML column-0 parsing error → 修正済 (single-line -c)
+  - **blog-publish.yml** (3/3 fail): 同上 → 修正済 (single-line -c)
+  - **Deploy to Production** (1/2 fail): require_trailing_commas tech_blog_tracker_page.dart:166 → 修正済 (commit 4305a04c1)
+  - **Migration Time-Relative CHECK** (1/1 fail): backfill UPDATE blog_posts false positive → 修正済 (-- nocheck: time-relative)
+  - **Migration Timestamp Collision Check** (1/1 fail): 別インスタンス (2fefc0d29) で修正済
+  - **GitHub Issues WBS Sync**: 8本同時実行 storm → concurrency: cancel-in-progress: true 追加済 (d93c2a13e)
+- orphan branches: blog-publish/cs-check/ai-university/daily-report/youtube 全0本 / claude/* 7本 (= 全て active WIP branch — 削除不要)
+- 修正済commit: 4305a04c1 (trailing comma) + 77fdc76da (blog WF YAML + nocheck + tracker PS5)
+- 次回確認: CI pass 確認後 WBS sync storm 再発なし確認
