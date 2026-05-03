@@ -1,0 +1,55 @@
+name: Blog Backfill from APIs (one-shot)
+
+# Win版#132 part 124 (2026-05-03) — tech-blog-tracker page で過去 dispatch 済記事を表示するため、
+# dev.to + Qiita API から自分の published 記事を fetch → hub_data に backfill insert.
+# 一度実行すれば過去分が tracker page に反映される.
+
+on:
+  workflow_dispatch:
+    inputs:
+      days:
+        description: "How many days back to backfill (default 30, max 365)"
+        required: false
+        default: "60"
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: blog-backfill-from-apis
+  cancel-in-progress: false
+
+jobs:
+  backfill:
+    name: Run blog.backfill_from_apis
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Call schedule-hub blog.backfill_from_apis
+        run: |
+          DAYS="${{ inputs.days }}"
+          PAYLOAD=$(jq -n --arg action "blog.backfill_from_apis" --argjson days "${DAYS:-60}" \
+            '{action: $action, days: $days}')
+          echo "Payload: $PAYLOAD"
+          RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
+            -H "Content-Type: application/json" \
+            -d "$PAYLOAD" \
+            "https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/schedule-hub" \
+            --max-time 60)
+          HTTP_CODE=$(echo "$RESPONSE" | tail -1)
+          BODY=$(echo "$RESPONSE" | head -n -1)
+          echo "HTTP: $HTTP_CODE"
+          echo "$BODY" | jq . || echo "$BODY"
+          if [ "$HTTP_CODE" != "200" ]; then
+            echo "::error::backfill failed with HTTP $HTTP_CODE"
+            exit 1
+          fi
+          INSERTED=$(echo "$BODY" | jq -r '.summary.inserted // 0')
+          QF=$(echo "$BODY" | jq -r '.summary.qiita_fetched // 0')
+          DF=$(echo "$BODY" | jq -r '.summary.devto_fetched // 0')
+          DUP=$(echo "$BODY" | jq -r '.summary.skipped_dup // 0')
+          OLD=$(echo "$BODY" | jq -r '.summary.skipped_old // 0')
+          echo "✅ Backfill: inserted=$INSERTED qiita=$QF devto=$DF dup=$DUP old=$OLD"
