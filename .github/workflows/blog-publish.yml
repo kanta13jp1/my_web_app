@@ -280,13 +280,15 @@ jobs:
           # Qiita: 日本語コンテンツ
           if echo "$PLATFORMS" | grep -q "qiita"; then
             echo "📤 Qiita に日本語記事を投稿..."
+            POST_ID="${{ steps.register.outputs.post_id }}"
             PAYLOAD=$(jq -n \
               --arg action "blog.auto_publish" \
               --arg title "$TITLE" \
               --arg content "$CONTENT_JP" \
               --arg platforms "qiita" \
+              --arg id "$POST_ID" \
               --argjson tags "$TAGS_JSON" \
-              '{action: $action, title: $title, content: $content, platforms: $platforms, tags: $tags}')
+              '{action: $action, title: $title, content: $content, platforms: $platforms, tags: $tags, id: $id}')
             RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
               -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
               -H "Content-Type: application/json" \
@@ -315,13 +317,15 @@ jobs:
                 tr '\n' ',' | sed 's/,$//')
               [ -z "$TAGS_EN" ] && TAGS_EN="$TAGS"
               TAGS_EN_JSON=$(echo "$TAGS_EN" | tr ',' '\n' | jq -R . | jq -s .)
+              POST_ID="${{ steps.register.outputs.post_id }}"
               PAYLOAD_EN=$(jq -n \
                 --arg action "blog.auto_publish" \
                 --arg title "$TITLE_EN" \
                 --arg content "$CONTENT_EN" \
                 --arg platforms "devto" \
+                --arg id "$POST_ID" \
                 --argjson tags "$TAGS_EN_JSON" \
-                '{action: $action, title: $title, content: $content, platforms: $platforms, tags: $tags}')
+                '{action: $action, title: $title, content: $content, platforms: $platforms, tags: $tags, id: $id}')
               RESPONSE_EN=$(curl -s -w "\n%{http_code}" -X POST \
                 -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
                 -H "Content-Type: application/json" \

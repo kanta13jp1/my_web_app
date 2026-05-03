@@ -671,6 +671,8 @@ serve(async (req: Request) => {
       "health.check",
       "blog.auto_publish",
       "blog.create",
+      "blog.recent_posted", // Win版#132 part 124: tech-blog-tracker page 用 public read
+      "blog.backfill_from_apis", // Win版#132 part 124: 過去 dev.to + Qiita 投稿を hub_data に backfill
       "reminders.study",
       "notion.sync_wbs",
       "notion.preflight_wbs",
@@ -1072,6 +1074,73 @@ serve(async (req: Request) => {
           results.devto = { ok: false, error: "DEVTO_API_KEY not set" };
         }
 
+        // Win版#132 part 124: 投稿成功後、hub_data に status='posted' を記録
+        // (= tech-blog-tracker page が EF blog.recent_posted 経由で集計可能にする)
+        try {
+          const successPlatforms: string[] = [];
+          const platformUrls: Record<string, string> = {};
+          for (const p of ["qiita", "devto"]) {
+            const r = results[p] as { ok?: boolean; url?: string } | undefined;
+            if (r?.ok && typeof r.url === "string") {
+              successPlatforms.push(p);
+              platformUrls[p] = r.url;
+            }
+          }
+          if (successPlatforms.length > 0) {
+            const blogId = body.id ? String(body.id) : null;
+            const postedAt = new Date().toISOString();
+            const baseMeta = {
+              title,
+              status: "posted",
+              posted_at: postedAt,
+              target_platforms: successPlatforms,
+              platform_urls: platformUrls,
+              tags: rawTags,
+            };
+            if (blogId) {
+              // 既存 hub_data row (= blog.create で作った draft) を update.
+              // Workflow が qiita + devto 別 call で auto_publish するため、
+              // target_platforms + platform_urls は merge する.
+              const { data: existing } = await admin
+                .from("hub_data")
+                .select("metadata")
+                .eq("id", blogId)
+                .single();
+              const currentMeta =
+                (existing?.metadata as Record<string, unknown>) ?? {};
+              const prevTargets = Array.isArray(currentMeta.target_platforms)
+                ? (currentMeta.target_platforms as string[])
+                : [];
+              const prevUrls =
+                (currentMeta.platform_urls as Record<string, string>) ?? {};
+              const mergedTargets = Array.from(
+                new Set([...prevTargets, ...successPlatforms]),
+              );
+              const mergedUrls = { ...prevUrls, ...platformUrls };
+              await admin
+                .from("hub_data")
+                .update({
+                  metadata: {
+                    ...currentMeta,
+                    ...baseMeta,
+                    target_platforms: mergedTargets,
+                    platform_urls: mergedUrls,
+                  },
+                })
+                .eq("id", blogId);
+            } else {
+              // id 未指定 (= 直接 auto_publish 呼び出し) の場合は新規 insert
+              await admin.from("hub_data").insert({
+                source: "blog_post",
+                metadata: { ...baseMeta, user_id: "system" },
+              });
+            }
+          }
+        } catch (dbErr) {
+          // DB 書き込み失敗しても publish 結果は返す (= degrade safe)
+          console.error("blog.auto_publish DB write failed:", dbErr);
+        }
+
         return json({ success: true, results });
       }
 
@@ -1259,6 +1328,189 @@ serve(async (req: Request) => {
           .single();
         if (insErr) return json({ error: insErr.message }, 500);
         return json({ success: true, post: newPost });
+      }
+      // Win版#132 part 124: 過去 dispatch 済の dev.to + Qiita 記事を hub_data に backfill する.
+      // 既存の T-1 dispatch (= part 124 fix 前) は hub_data に記録されていないため、
+      // tech-blog-tracker page で過去投稿が見えない. 本 action で API 経由で取得 → 既存 row 検出 →
+      // 未登録分を新規 insert する (= 同 url 重複は skip).
+      case "blog.backfill_from_apis": {
+        const qiitaToken = Deno.env.get("QIITA_ACCESS_TOKEN") ?? "";
+        const devtoKey = Deno.env.get("DEVTO_API_KEY") ?? "";
+        const days = Math.min(Math.max(Number(body.days ?? 30), 1), 365);
+        const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+        const sinceIso = since.toISOString();
+
+        // 既存 hub_data の url を全部集めて dedup 用 set 構築
+        const { data: existingData } = await admin
+          .from("hub_data")
+          .select("metadata")
+          .eq("source", "blog_post")
+          .gte("created_at", sinceIso);
+        const existingUrls = new Set<string>();
+        for (const row of existingData ?? []) {
+          const m = (row.metadata as Record<string, unknown>) ?? {};
+          const urls = (m.platform_urls as Record<string, string>) ?? {};
+          for (const u of Object.values(urls)) {
+            if (u) existingUrls.add(u);
+          }
+        }
+
+        const inserts: Array<Record<string, unknown>> = [];
+        const summary: Record<string, number> = {
+          qiita_fetched: 0,
+          devto_fetched: 0,
+          inserted: 0,
+          skipped_dup: 0,
+          skipped_old: 0,
+        };
+
+        // ── Qiita 取得 ──────────────────────────────────────────────────
+        if (qiitaToken) {
+          try {
+            const qr = await fetch(
+              `https://qiita.com/api/v2/authenticated_user/items?per_page=100`,
+              { headers: { Authorization: `Bearer ${qiitaToken}` } },
+            );
+            if (qr.ok) {
+              const articles = await qr.json() as Array<{
+                id: string;
+                title: string;
+                url: string;
+                created_at: string;
+                tags: Array<{ name: string }>;
+              }>;
+              summary.qiita_fetched = articles.length;
+              for (const a of articles) {
+                if (new Date(a.created_at) < since) {
+                  summary.skipped_old++;
+                  continue;
+                }
+                if (existingUrls.has(a.url)) {
+                  summary.skipped_dup++;
+                  continue;
+                }
+                inserts.push({
+                  source: "blog_post",
+                  metadata: {
+                    title: a.title,
+                    status: "posted",
+                    posted_at: a.created_at,
+                    target_platforms: ["qiita"],
+                    platform_urls: { qiita: a.url },
+                    tags: a.tags.map((t) => t.name),
+                    user_id: "system",
+                    backfilled: true,
+                    source_api: "qiita",
+                    external_id: a.id,
+                  },
+                });
+                existingUrls.add(a.url);
+              }
+            }
+          } catch (e) {
+            console.error("qiita backfill fetch failed:", e);
+          }
+        }
+
+        // ── dev.to 取得 ─────────────────────────────────────────────────
+        if (devtoKey) {
+          try {
+            const dr = await fetch(
+              `https://dev.to/api/articles/me/published?per_page=1000`,
+              { headers: { "api-key": devtoKey } },
+            );
+            if (dr.ok) {
+              const articles = await dr.json() as Array<{
+                id: number;
+                title: string;
+                url: string;
+                published_at: string;
+                tag_list: string[];
+              }>;
+              summary.devto_fetched = articles.length;
+              for (const a of articles) {
+                if (!a.published_at) continue;
+                if (new Date(a.published_at) < since) {
+                  summary.skipped_old++;
+                  continue;
+                }
+                if (existingUrls.has(a.url)) {
+                  summary.skipped_dup++;
+                  continue;
+                }
+                inserts.push({
+                  source: "blog_post",
+                  metadata: {
+                    title: a.title,
+                    status: "posted",
+                    posted_at: a.published_at,
+                    target_platforms: ["devto"],
+                    platform_urls: { devto: a.url },
+                    tags: a.tag_list,
+                    user_id: "system",
+                    backfilled: true,
+                    source_api: "devto",
+                    external_id: String(a.id),
+                  },
+                });
+                existingUrls.add(a.url);
+              }
+            }
+          } catch (e) {
+            console.error("devto backfill fetch failed:", e);
+          }
+        }
+
+        // ── 一括 insert ─────────────────────────────────────────────────
+        if (inserts.length > 0) {
+          const { error: insErr } = await admin.from("hub_data").insert(
+            inserts,
+          );
+          if (insErr) {
+            return json({
+              success: false,
+              error: insErr.message,
+              summary,
+            }, 500);
+          }
+          summary.inserted = inserts.length;
+        }
+
+        return json({ success: true, summary });
+      }
+
+      // Win版#132 part 124: tech-blog-tracker page 用 public read action.
+      // service_role 経由で hub_data の posted blog_post を返す (= user 認証不要 / 安全な metadata のみ).
+      case "blog.recent_posted": {
+        const days = Math.min(Math.max(Number(body.days ?? 30), 1), 365);
+        const limit = Math.min(Math.max(Number(body.limit ?? 200), 1), 500);
+        const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000)
+          .toISOString();
+        const { data, error } = await admin
+          .from("hub_data")
+          .select("id, metadata, created_at")
+          .eq("source", "blog_post")
+          .filter("metadata->>status", "eq", "posted")
+          .gte("created_at", since)
+          .order("created_at", { ascending: false })
+          .limit(limit);
+        if (error) {
+          return json({ error: error.message }, 500);
+        }
+        const items = (data ?? []).map((row) => {
+          const m = (row.metadata as Record<string, unknown>) ?? {};
+          return {
+            id: row.id,
+            title: m.title ?? "",
+            status: m.status ?? "posted",
+            posted_at: m.posted_at ?? row.created_at,
+            target_platforms: m.target_platforms ?? [],
+            platform_urls: m.platform_urls ?? {},
+            tags: m.tags ?? [],
+            created_at: row.created_at,
+          };
+        });
+        return json({ success: true, items, count: items.length });
       }
 
       // ─── Blog Management: Qiita / dev.to ─────────────────────────────────────

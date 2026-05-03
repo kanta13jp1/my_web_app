@@ -68,25 +68,28 @@ class _TechBlogTrackerPageState extends State<TechBlogTrackerPage> {
             .order('posted_at', ascending: false),
       ]);
 
-      // Schedule blog-draft タスクが生成した下書き + 自動 dispatch 済 (status='posted') を取得.
-      // 直近 30 日 (= streak/today カウント用) は全件 / それ以前の draft は新着 10 件のみ.
+      // Win版#132 part 124: T-1 dispatch 済の posted blog metadata を schedule-hub
+      // EF (= blog.recent_posted action / public read / hub_data 由来) から取得.
+      // 旧実装は blog_posts テーブルを直接 select していたが、実際の dispatch は
+      // hub_data (source='blog_post' / user_id='system') に書き込まれるため空 list だった.
       List<Map<String, dynamic>> drafts = [];
       try {
-        final draftData = await _supabase
-            .from('blog_posts')
-            .select(
-              'id, title, status, target_platforms, draft_path, posted_at, url, created_at',
-            )
-            .inFilter('status', ['draft', 'posted'])
-            .or(
-              'posted_at.gte.${DateFormat('yyyy-MM-dd').format(thirtyDaysAgo)},'
-              'created_at.gte.${DateFormat('yyyy-MM-dd').format(thirtyDaysAgo)}',
-            )
-            .order('created_at', ascending: false)
-            .limit(200);
-        drafts = List<Map<String, dynamic>>.from(draftData as List);
+        final response = await _supabase.functions.invoke(
+          'schedule-hub',
+          body: {'action': 'blog.recent_posted', 'days': 30, 'limit': 200},
+        );
+        final data = response.data;
+        if (data is Map<String, dynamic>) {
+          final items = data['items'];
+          if (items is List) {
+            drafts = items
+                .whereType<Map>()
+                .map((e) => Map<String, dynamic>.from(e))
+                .toList();
+          }
+        }
       } catch (_) {
-        // blog_posts テーブルが未作成 or 権限不足の場合は空リスト (= 既存挙動を維持)
+        // EF call 失敗時は空リスト (= 既存挙動と同じ動作 / degrade safe)
       }
 
       if (!mounted) return;
