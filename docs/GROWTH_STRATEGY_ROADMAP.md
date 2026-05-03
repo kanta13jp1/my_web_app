@@ -25917,3 +25917,20 @@ a9d7b1517 on main
 1. **#1762**: AIエージェント評価 (AgentBench/OSWorld/WebArena等 - comparison_page未登録)
 2. **S672**: コンテナ/Kubernetes管理ツール (Lens/k9s/Rancher等)
 3. **S673**: データベースGUIクライアント (TablePlus/DBeaver/DataGrip等)
+## 2026-05-03 (Win版#132 part 121) — DUP_OPEN 9 件 cleanup + ISSUE-PRECHECK rule 追加
+
+### 完了
+- bc58b50b 既適用 reaffirm
+- part 120 で実装した `notebooklm_issue_crosscheck.py` を full scan (limit 100): TRUE_GAP 53 / DUP_OPEN 15 / OK 29
+- DUP_OPEN 9 件 programmatic 一括 close (両方向 merge note 追記):
+  - #1768→#1731 / #1769→#1730 / #1795+#1812→#1783 / #1819→#1784 / #1815→#1785 / #1813→#1801 / #1821→#1810 / #1820→#1808
+- `~/.claude/hooks/inject-rules.txt` に `[ISSUE-PRECHECK]` rule 追加 (= 起票前 cross-check 必須)
+
+### Phase 6 進化観察 (= 第 10 例)
+- 「tool 作った直後セッションで dogfood」pattern 第 1 例 (= part 120 実装 → part 121 cleanup)
+- 「実装→自走化→validation→同類問題自動化→dogfood cleanup→rule 構造化」6 phase 同セッション完結 pattern 第 1 例
+- fleet hygiene infra 4 layer 完成 (= safety cron / residuals sync / crosscheck / precheck rule)
+
+### Philosophy Alignment
+#3 優しい mentor (= 重複起票を非難せず自動 cleanup + 構造 rule で予防) / #6 資本=時間 (= 9 Issue × triage 工数を即時 close で削減) / #8 KPI=昨日の自分 (= part 120 検出 → 121 cleanup の連続性で fleet 規律加速度可視化)
+
