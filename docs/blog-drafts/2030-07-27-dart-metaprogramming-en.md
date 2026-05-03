@@ -1,7 +1,7 @@
 ---
 title: "Dart Metaprogramming — build_runner, Source Gen, and Dart 3 Macros Explained"
 tags: dart,flutter,programming,webdev
-published: false
+published: true
 ---
 
 # Dart Metaprogramming — build_runner, Source Gen, and Dart 3 Macros Explained
