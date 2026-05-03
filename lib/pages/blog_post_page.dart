@@ -19,8 +19,7 @@ class BlogPostPage extends StatelessWidget {
     final url = post['url'] as String? ?? '';
     final postedAt =
         post['posted_at'] as String? ?? post['created_at'] as String? ?? '';
-    final platforms =
-        (post['target_platforms'] as List? ?? []).cast<String>();
+    final platforms = (post['target_platforms'] as List? ?? []).cast<String>();
     final tags = (post['tags'] as List? ?? []).cast<String>();
     final dateStr = postedAt.length >= 10 ? postedAt.substring(0, 10) : '';
 
@@ -131,9 +130,9 @@ class BlogPostPage extends StatelessWidget {
     }
     buf.writeln('---');
     buf.writeln();
-    buf.writeln(content.isEmpty
-        ? '*この記事は外部プラットフォームに投稿されています。*'
-        : content,);
+    buf.writeln(
+      content.isEmpty ? '*この記事は外部プラットフォームに投稿されています。*' : content,
+    );
     if (url.isNotEmpty) {
       buf.writeln();
       buf.writeln('---');

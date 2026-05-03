@@ -1036,7 +1036,10 @@ class _TechBlogTrackerPageState extends State<TechBlogTrackerPage> {
                   child: Text(
                     'blog_posts の取得に失敗: $_draftLoadError',
                     style: const TextStyle(
-                        color: Colors.red, fontSize: 11, height: 1.5,),
+                      color: Colors.red,
+                      fontSize: 11,
+                      height: 1.5,
+                    ),
                   ),
                 ),
               ],

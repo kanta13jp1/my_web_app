@@ -139,8 +139,10 @@ class _BlogDraftEditorPageState extends State<BlogDraftEditorPage> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('キャンセル',
-                style: TextStyle(color: Colors.white54),),
+            child: const Text(
+              'キャンセル',
+              style: TextStyle(color: Colors.white54),
+            ),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: _orange),
@@ -243,8 +245,7 @@ class _BlogDraftEditorPageState extends State<BlogDraftEditorPage> {
                 )
               : TextButton.icon(
                   onPressed: _saveDraft,
-                  icon:
-                      const Icon(Icons.save, color: Colors.white70, size: 18),
+                  icon: const Icon(Icons.save, color: Colors.white70, size: 18),
                   label: const Text(
                     '保存',
                     style: TextStyle(color: Colors.white70, height: 1.5),

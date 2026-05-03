@@ -48,7 +48,8 @@ class _BlogPageState extends State<BlogPage> {
             .limit(100),
         _supabase
             .from('blog_engagement')
-            .select('platform, article_id, title, likes_count, views_count, comments_count, url')
+            .select(
+                'platform, article_id, title, likes_count, views_count, comments_count, url')
             .order('likes_count', ascending: false)
             .limit(200),
       ]);
@@ -248,7 +249,8 @@ class _BlogPageState extends State<BlogPage> {
               child: GestureDetector(
                 onTap: () => setState(() => _platformFilter = id),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                   decoration: BoxDecoration(
                     color: _platformFilter == id ? _orange : Colors.white12,
                     borderRadius: BorderRadius.circular(20),
@@ -256,7 +258,8 @@ class _BlogPageState extends State<BlogPage> {
                   child: Text(
                     label,
                     style: TextStyle(
-                      color: _platformFilter == id ? Colors.white : Colors.white54,
+                      color:
+                          _platformFilter == id ? Colors.white : Colors.white54,
                       fontSize: 13,
                       height: 1.5,
                     ),
@@ -271,7 +274,8 @@ class _BlogPageState extends State<BlogPage> {
 
   Widget _buildPostCard(Map<String, dynamic> post) {
     final title = post['title'] as String? ?? '(タイトルなし)';
-    final postedAt = post['posted_at'] as String? ?? post['created_at'] as String? ?? '';
+    final postedAt =
+        post['posted_at'] as String? ?? post['created_at'] as String? ?? '';
     final url = post['url'] as String? ?? '';
     final platforms = (post['target_platforms'] as List? ?? []).cast<String>();
     final tags = (post['tags'] as List? ?? []).cast<String>();
@@ -280,9 +284,7 @@ class _BlogPageState extends State<BlogPage> {
     final likes = _postLikes(post);
     final views = _postViews(post);
 
-    final dateStr = postedAt.isNotEmpty
-        ? postedAt.substring(0, 10)
-        : '';
+    final dateStr = postedAt.isNotEmpty ? postedAt.substring(0, 10) : '';
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
@@ -356,24 +358,36 @@ class _BlogPageState extends State<BlogPage> {
               Row(
                 children: [
                   if (likes > 0) ...[
-                    const Icon(Icons.favorite_outline,
-                        size: 14, color: Colors.white38,),
+                    const Icon(
+                      Icons.favorite_outline,
+                      size: 14,
+                      color: Colors.white38,
+                    ),
                     const SizedBox(width: 3),
                     Text(
                       '$likes',
                       style: const TextStyle(
-                          color: Colors.white38, fontSize: 12, height: 1.5,),
+                        color: Colors.white38,
+                        fontSize: 12,
+                        height: 1.5,
+                      ),
                     ),
                     const SizedBox(width: 10),
                   ],
                   if (views > 0) ...[
-                    const Icon(Icons.visibility_outlined,
-                        size: 14, color: Colors.white38,),
+                    const Icon(
+                      Icons.visibility_outlined,
+                      size: 14,
+                      color: Colors.white38,
+                    ),
                     const SizedBox(width: 3),
                     Text(
                       _formatNum(views),
                       style: const TextStyle(
-                          color: Colors.white38, fontSize: 12, height: 1.5,),
+                        color: Colors.white38,
+                        fontSize: 12,
+                        height: 1.5,
+                      ),
                     ),
                     const SizedBox(width: 10),
                   ],

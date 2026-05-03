@@ -66732,8 +66732,7 @@ final _competitorInfo = <String, _CompetitorInfo>{
     emoji: '🤖',
     tagline:
         'AgentBench・清華大学製AIエージェント評価・8環境統合・OS/DB/Web/Knowledge/Game横断・LLMエージェント比較基盤で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword:
-        'AgentBench代替 AIエージェント評価 清華大学 LLMエージェント ベンチマーク OSWorld代替',
+    searchKeyword: 'AgentBench代替 AIエージェント評価 清華大学 LLMエージェント ベンチマーク OSWorld代替',
     accentColor: Color(0xFF1976D2),
     painPoints: [
       'AI研究・エージェント評価専用・個人のライフ管理は別途必要',
@@ -66804,8 +66803,7 @@ final _competitorInfo = <String, _CompetitorInfo>{
     emoji: '🌐',
     tagline:
         'WebArena・CMU製Webナビゲーションエージェント評価・812タスク・5実Webサイト環境・複合指示理解で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword:
-        'WebArena代替 Webナビゲーション AIエージェント評価 CMU ベンチマーク Mind2Web代替',
+    searchKeyword: 'WebArena代替 Webナビゲーション AIエージェント評価 CMU ベンチマーク Mind2Web代替',
     accentColor: Color(0xFF00838F),
     painPoints: [
       'Webナビゲーション評価専用・個人のライフ管理は別途必要',
@@ -66876,8 +66874,7 @@ final _competitorInfo = <String, _CompetitorInfo>{
     emoji: '📊',
     tagline:
         'τ-bench・ツール呼び出しAIエージェント評価ベンチマーク・小売/航空ドメイン・APIコール精度・マルチターン会話評価で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword:
-        'tau-bench代替 ツール呼び出し AIエージェント評価 API呼び出し精度 マルチターン ベンチマーク',
+    searchKeyword: 'tau-bench代替 ツール呼び出し AIエージェント評価 API呼び出し精度 マルチターン ベンチマーク',
     accentColor: Color(0xFF37474F),
     painPoints: [
       'ツール呼び出しエージェント評価専用・個人のライフ管理は別途必要',
@@ -66948,8 +66945,7 @@ final _competitorInfo = <String, _CompetitorInfo>{
     emoji: '🧩',
     tagline:
         'Mind2Web・汎用Webエージェント評価データセット・2K+タスク・137Webサイト・自然言語→Web操作変換で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword:
-        'Mind2Web代替 汎用Webエージェント評価 自然言語Web操作 ベンチマーク WebArena代替',
+    searchKeyword: 'Mind2Web代替 汎用Webエージェント評価 自然言語Web操作 ベンチマーク WebArena代替',
     accentColor: Color(0xFF558B2F),
     painPoints: [
       'Webエージェント評価専用・個人のライフ管理は別途必要',
@@ -66984,8 +66980,7 @@ final _competitorInfo = <String, _CompetitorInfo>{
     emoji: '🏢',
     tagline:
         'WorkArena・ServiceNow製企業業務AIエージェント評価・291タスク・ITSMワークフロー・実Webブラウザ環境で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword:
-        'WorkArena代替 ServiceNow企業業務 AIエージェント評価 ITSM ワークフロー ベンチマーク',
+    searchKeyword: 'WorkArena代替 ServiceNow企業業務 AIエージェント評価 ITSM ワークフロー ベンチマーク',
     accentColor: Color(0xFF00695C),
     painPoints: [
       '企業業務エージェント評価専用・個人のライフ管理は別途必要',
@@ -67020,8 +67015,7 @@ final _competitorInfo = <String, _CompetitorInfo>{
     emoji: '📱',
     tagline:
         'AppAgent・モバイルアプリ操作AIエージェント評価・Android/iOSタップ/スワイプ自動化・スクリーンショット観察・人間デモ模倣学習で、なぜ「自分株式会社」を選ぶか。',
-    searchKeyword:
-        'AppAgent代替 モバイルアプリ操作 AIエージェント Android iOS自動化 スクリーンショット',
+    searchKeyword: 'AppAgent代替 モバイルアプリ操作 AIエージェント Android iOS自動化 スクリーンショット',
     accentColor: Color(0xFFAD1457),
     painPoints: [
       'モバイルアプリ操作エージェント評価専用・個人のライフ管理は別途必要',

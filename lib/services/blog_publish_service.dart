@@ -45,18 +45,17 @@ class BlogPublishService {
     String notes = '',
     List<String> targetPlatforms = const ['qiita', 'devto'],
   }) async {
-    final result =
-        await _supabase
-            .from('blog_posts')
-            .insert({
-              'title': title,
-              if (content.isNotEmpty) 'content': content,
-              if (notes.isNotEmpty) 'notes': notes,
-              'status': 'draft',
-              'target_platforms': targetPlatforms,
-            })
-            .select()
-            .single();
+    final result = await _supabase
+        .from('blog_posts')
+        .insert({
+          'title': title,
+          if (content.isNotEmpty) 'content': content,
+          if (notes.isNotEmpty) 'notes': notes,
+          'status': 'draft',
+          'target_platforms': targetPlatforms,
+        })
+        .select()
+        .single();
     return Map<String, dynamic>.from(result as Map);
   }
 }
