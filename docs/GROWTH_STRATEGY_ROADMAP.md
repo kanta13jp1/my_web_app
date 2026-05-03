@@ -26065,3 +26065,29 @@ a9d7b1517 on main
 - orphan branches: blog-publish/cs-check/ai-university/daily-report/youtube 全0本 / claude/* 7本 (= 全て active WIP branch — 削除不要)
 - 修正済commit: 4305a04c1 (trailing comma) + 77fdc76da (blog WF YAML + nocheck + tracker PS5)
 - 次回確認: CI pass 確認後 WBS sync storm 再発なし確認
+
+## 2026-05-03 (Win版#132 part 124) — ブログ投稿フロー完全自動化 (4 軸並列実装)
+
+### 完了
+- User「完全実装最優先」要望対応. part 123 page-side fix では root cause 未解決だった.
+- 真の root cause 発覚: blog.create は hub_data に書き、blog.auto_publish は dev.to+Qiita API POST のみで DB 更新せず. blog_posts table 自体が未使用. hub_data RLS で user_id='system' row は login user 不可視.
+- 4 軸並列実装:
+  1. EF (`schedule-hub`): blog.auto_publish 拡張 (= 成功後 hub_data upsert / merge target_platforms+platform_urls) + blog.recent_posted 新規 (public read) + blog.backfill_from_apis 新規 (one-shot dev.to+Qiita scan)
+  2. Workflow (`blog-publish.yml`): Step 4 auto_publish payload に id 渡し
+  3. Page (`tech_blog_tracker_page.dart`): 旧 blog_posts query → schedule-hub blog.recent_posted EF call
+  4. New workflow (`blog-backfill-from-apis.yml`): backfill EF 呼び出し one-shot
+- commits: `a09e07c5b` → `d0a083e3a` → `22f79e974` (rebase conflict 2 回解消 + lint 連鎖修正)
+
+### Phase 6 進化観察 (= 第 13 例)
+- 「page fix → EF 真因 fix」階層 escalation pattern 第 1 例
+- 4 軸並列実装 1 セッション完結
+- 並列 4 instance (Win/PS#3/PS#5/PS#6) 同 file 編集 → conflict 2 回 + lint 連鎖を coordination で着地
+- 52 part 連続 dogfood
+
+### 次回候補
+- deploy-prod 完了後 `gh workflow run blog-backfill-from-apis.yml -f days=60` で過去 250+ dispatch 反映 + 実機 verify
+- schema-EF 同期 audit (= 未使用 blog_posts table 等の発見 + 削除 or align)
+- 同 file 並列編集 coordination cross-instance-pr 起票
+
+### Philosophy Alignment
+#1 CEO 感 (= User「完全実装」最優先要望に root cause まで対応) / #5 商品=ユーザー価値 (= 投稿フロー全体の信頼性回復) / #6 資本=時間 (= 4 軸を 1 セッション並列で完結)
