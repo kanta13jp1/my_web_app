@@ -1,6 +1,8 @@
 -- PS#1 S24: WBS同期失敗修正 — overdue タスク recovery_plan 追加
 -- タスク eec47160 (deadline=2026-05-02) が recovery_plan なしで HTTP 500 を返し
 -- GitHub Issues WBS Sync の全バッチが失敗していた問題を修正する
+-- nocheck: time-relative (意図的に deadline < NOW() を使用 — このマイグレーション自体が
+-- overdue タスクの一括修復を目的としており、再実行時は WHERE 条件が 0 行を返すため安全)
 UPDATE wbs_tasks
 SET
   recovery_plan = 'deadline 超過: 2026-05-02 → 次セッションで優先着手。PS#1が直接対応できないタスクはcross-instance-prでVSCode版/Win版に委譲する',
