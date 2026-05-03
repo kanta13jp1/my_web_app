@@ -167,6 +167,55 @@ jobs:
                   f.write('status=error\nusage_json={}\n')
           EOF
 
+      - name: Check GitHub Actions Minutes (Copilot Code Review budget)
+        id: actions_minutes
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          python3 - << 'PYEOF'
+          import os, requests, json
+          from datetime import date
+
+          token = os.environ.get('GITHUB_TOKEN', '')
+          if not token:
+              print('GITHUB_TOKEN not set — skipping')
+              with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+                  f.write('usage_json={}\n')
+              exit(0)
+
+          try:
+              # User-level Actions billing (includes Copilot Code Review minutes from 2026-06-01)
+              resp = requests.get(
+                  'https://api.github.com/users/kanta13jp1/settings/billing/actions',
+                  headers={
+                      'Authorization': f'token {token}',
+                      'Accept': 'application/vnd.github+json',
+                      'X-GitHub-Api-Version': '2022-11-28'
+                  },
+                  timeout=10
+              )
+              if resp.ok:
+                  data = resp.json()
+                  included = data.get('included_minutes', 0)
+                  total_paid = data.get('total_paid_minutes_used', 0)
+                  total_used = data.get('total_minutes_used', 0)
+                  pct = round(total_used / max(included, 1) * 100, 1) if included else 0
+                  alert = pct >= 80
+                  note = '⚠️ Copilot Code Review がActions minutes消費開始(2026-06-01〜)' if date.today() >= date(2026, 6, 1) else 'Copilot Code Review billing starts 2026-06-01'
+                  print(f'Actions minutes: {total_used}/{included} ({pct}%) paid={total_paid}')
+                  print(note)
+                  with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+                      f.write(f'usage_json={json.dumps({"tool":"actions_minutes","used":total_used,"included":included,"pct":pct,"paid":total_paid,"alert":alert,"note":note})}\n')
+              else:
+                  print(f'Actions billing API: {resp.status_code}')
+                  with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+                      f.write(f'usage_json={json.dumps({"tool":"actions_minutes","status":resp.status_code,"alert":False})}\n')
+          except Exception as e:
+              print(f'Error: {e}')
+              with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+                  f.write('usage_json={}\n')
+          PYEOF
+
       - name: Check Gemini Code Assist Quota
         id: gemini
         env:
