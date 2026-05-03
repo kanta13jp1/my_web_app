@@ -1,7 +1,7 @@
 ---
 title: "Flutter Web Performance Optimization — CanvasKit, Lazy Loading, and Image Best Practices"
 tags: flutter,performance,webdev,programming
-published: false
+published: true
 ---
 
 Shipping a production-ready Flutter Web app requires going beyond default settings. This guide covers renderer selection, deferred imports, image optimization, profiling, and build-time optimizations — all with practical code examples.

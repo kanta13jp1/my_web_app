@@ -1,7 +1,7 @@
 ---
 title: "Flutter Web パフォーマンス最適化 — CanvasKit・遅延ロード・画像最適化の実践ガイド"
 tags: Flutter,performance,webdev,programming
-published: false
+published: true
 ---
 
 Flutter Web アプリを本番レベルで運用するには、デフォルト設定のままでは不十分です。本記事では CanvasKit vs HTML レンダラーの選択から始まり、遅延ロード、画像最適化、プロファイリング、ビルド最適化まで、実践的な手法を体系的に解説します。
