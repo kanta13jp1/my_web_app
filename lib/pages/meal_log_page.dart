@@ -220,10 +220,11 @@ class _MealLogPageState extends State<MealLogPage>
                   ),
                   child: Column(
                     children: [
-                      Icon(t.$3,
-                          size: 18,
-                          color: selected ? Colors.white : Colors.grey[600],
-                        ),
+                      Icon(
+                        t.$3,
+                        size: 18,
+                        color: selected ? Colors.white : Colors.grey[600],
+                      ),
                       const SizedBox(height: 2),
                       Text(
                         t.$2,
