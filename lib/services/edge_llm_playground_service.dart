@@ -122,6 +122,8 @@ class EdgeLlmPlaygroundService {
         responseFormat: normalizedFormat,
         parsedJson: <String, dynamic>{
           'citations': local.citations.map((item) => item.toJson()).toList(),
+          'source_references':
+              local.sourceReferences.map((item) => item.toJson()).toList(),
           'offline_runtime': local.toJson(),
         },
         observability: AiHubChatObservability.fromResponseMap(

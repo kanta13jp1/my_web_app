@@ -154,7 +154,11 @@ def snippet_for(query: str, text: str, limit: int = 260) -> str:
 
 
 def answer_from_citations(query: str, ranked: list[tuple[float, Document]]) -> str:
-    parts = [snippet_for(query, doc.text, limit=180) for _, doc in ranked[:3]]
+    parts = [
+        f"{snippet_for(query, doc.text, limit=180)} "
+        f"<|source_start|>{doc.source_id}<|source_end|>"
+        for _, doc in ranked[:3]
+    ]
     joined = " ".join(part for part in parts if part)
     return textwrap.shorten(
         f"{joined}\n\nSources: " + ", ".join(doc.title for _, doc in ranked[:3]),
@@ -170,8 +174,10 @@ def run_rag(
     engine: str,
     memory_limit_mb: int,
     network_blocked: bool,
+    temperature: float = 0.0,
 ) -> dict[str, Any]:
     started = time.perf_counter()
+    del temperature
     model = Path(model_path).expanduser()
     if not model.exists():
         return {
@@ -180,6 +186,7 @@ def run_rag(
             "message": f"local model path not found: {model}",
             "offline_only": True,
             "network_blocked": network_blocked,
+            "temperature": 0,
         }
 
     tracemalloc.start()
@@ -198,6 +205,7 @@ def run_rag(
             "memory_peak_mb": memory_peak_mb,
             "offline_only": True,
             "network_blocked": network_blocked,
+            "temperature": 0,
         }
 
     citations = [
@@ -220,6 +228,7 @@ def run_rag(
         "vector_db_path": str(Path(vector_db_path).expanduser()),
         "offline_only": True,
         "network_blocked": network_blocked,
+        "temperature": 0,
         "memory_peak_mb": memory_peak_mb,
         "latency_ms": int((time.perf_counter() - started) * 1000),
         "citations": citations,
@@ -245,6 +254,7 @@ class RagHandler(BaseHTTPRequestHandler):
             engine=str(payload.get("engine") or self.config.engine),
             memory_limit_mb=int(payload.get("memory_limit_mb") or self.config.memory_limit_mb),
             network_blocked=self.config.enforce_network_block,
+            temperature=float(payload.get("temperature") or 0),
         )
         self._send_json(result, status=200 if result.get("success") else 409)
 
@@ -270,6 +280,7 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser.add_argument("--vector-db-path", required=True)
     parser.add_argument("--engine", default="pleias-rag")
     parser.add_argument("--memory-limit-mb", type=int, default=8192)
+    parser.add_argument("--temperature", type=float, default=0)
     parser.add_argument("--enforce-network-block", action="store_true")
     parser.add_argument("--serve", action="store_true")
     parser.add_argument("--host", default="127.0.0.1")
@@ -300,6 +311,7 @@ def main(argv: list[str]) -> int:
             engine=args.engine,
             memory_limit_mb=args.memory_limit_mb,
             network_blocked=args.enforce_network_block,
+            temperature=args.temperature,
         )
         emit_json(result)
         return 0 if result.get("success") else 2

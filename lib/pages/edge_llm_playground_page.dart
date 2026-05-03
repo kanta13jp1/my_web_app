@@ -486,6 +486,7 @@ class _EdgeLlmPlaygroundPageState extends State<EdgeLlmPlaygroundPage> {
     final prettyJson = parsedJson == null
         ? null
         : const JsonEncoder.withIndent('  ').convert(parsedJson);
+    final citations = _citationMaps(parsedJson);
 
     return Container(
       width: double.infinity,
@@ -531,6 +532,25 @@ class _EdgeLlmPlaygroundPageState extends State<EdgeLlmPlaygroundPage> {
               text: response.text,
               isDark: isDark,
             ),
+            if (citations.isNotEmpty) ...[
+              const SizedBox(height: 16),
+              const Text(
+                'Citations',
+                style: TextStyle(
+                  fontWeight: FontWeight.w800,
+                  height: 1.4,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  for (final citation in citations)
+                    _citationSourceChip(citation, isDark),
+                ],
+              ),
+            ],
             if (prettyJson != null) ...[
               const SizedBox(height: 16),
               const Text(
@@ -559,6 +579,124 @@ class _EdgeLlmPlaygroundPageState extends State<EdgeLlmPlaygroundPage> {
           ],
         ),
       ),
+    );
+  }
+
+  List<Map<String, dynamic>> _citationMaps(Map<String, dynamic>? parsedJson) {
+    final raw = parsedJson?['citations'];
+    if (raw is! List) return const <Map<String, dynamic>>[];
+    return raw
+        .whereType<Map>()
+        .map((item) => Map<String, dynamic>.from(item))
+        .where((item) {
+      final id = item['source_id']?.toString().trim() ?? '';
+      final title = item['title']?.toString().trim() ?? '';
+      final snippet = item['snippet']?.toString().trim() ?? '';
+      return id.isNotEmpty || title.isNotEmpty || snippet.isNotEmpty;
+    }).toList(growable: false);
+  }
+
+  Widget _citationSourceChip(Map<String, dynamic> citation, bool isDark) {
+    final sourceId = citation['source_id']?.toString().trim() ?? '';
+    final title = citation['title']?.toString().trim() ?? '';
+    final path = citation['path']?.toString().trim() ?? '';
+    final snippet = citation['snippet']?.toString().trim() ?? '';
+    final label =
+        title.isNotEmpty ? title : (sourceId.isEmpty ? 'source' : sourceId);
+    final tooltip = snippet.isNotEmpty
+        ? snippet
+        : (path.isNotEmpty ? path : (sourceId.isEmpty ? label : sourceId));
+
+    return Tooltip(
+      message: tooltip,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 320),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(10),
+            onTap: () => _showCitationDialog(citation),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              decoration: BoxDecoration(
+                color: isDark
+                    ? Colors.white.withValues(alpha: 0.06)
+                    : const Color(0xFFF0FDFA),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.14)
+                      : const Color(0xFF99F6E4),
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(
+                    Icons.auto_stories_outlined,
+                    size: 16,
+                    color: Color(0xFF0F766E),
+                  ),
+                  const SizedBox(width: 6),
+                  Flexible(
+                    child: Text(
+                      sourceId.isEmpty ? label : '$label / $sourceId',
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: isDark ? Colors.white : const Color(0xFF134E4A),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        height: 1.3,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showCitationDialog(Map<String, dynamic> citation) {
+    final sourceId = citation['source_id']?.toString().trim() ?? '';
+    final title = citation['title']?.toString().trim() ?? '';
+    final path = citation['path']?.toString().trim() ?? '';
+    final snippet = citation['snippet']?.toString().trim() ?? '';
+    final score = citation['score']?.toString().trim() ?? '';
+
+    showDialog<void>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text(
+            title.isEmpty ? (sourceId.isEmpty ? 'Citation' : sourceId) : title,
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (sourceId.isNotEmpty) Text('source_id: $sourceId'),
+                if (path.isNotEmpty) Text('path: $path'),
+                if (score.isNotEmpty) Text('score: $score'),
+                if (snippet.isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  SelectableText(snippet),
+                ],
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('閉じる'),
+            ),
+          ],
+        );
+      },
     );
   }
 

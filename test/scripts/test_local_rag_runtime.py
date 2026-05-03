@@ -31,8 +31,10 @@ class LocalRagRuntimeTest(unittest.TestCase):
         self.assertTrue(result["success"])
         self.assertTrue(result["offline_only"])
         self.assertTrue(result["network_blocked"])
+        self.assertEqual(result["temperature"], 0)
         self.assertLessEqual(result["memory_peak_mb"], 8192)
         self.assertEqual(result["citations"][0]["title"], "policy")
+        self.assertIn("<|source_start|>doc-1<|source_end|>", result["text"])
         self.assertIn("Sources:", result["text"])
 
     def test_run_rag_fails_safely_when_model_is_missing(self) -> None:
@@ -54,6 +56,7 @@ class LocalRagRuntimeTest(unittest.TestCase):
         self.assertFalse(result["success"])
         self.assertEqual(result["status"], "missingModel")
         self.assertTrue(result["offline_only"])
+        self.assertEqual(result["temperature"], 0)
 
 
 if __name__ == "__main__":

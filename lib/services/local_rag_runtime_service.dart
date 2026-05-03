@@ -54,8 +54,29 @@ class LocalRagCitation {
   }
 }
 
+class LocalRagSourceReference {
+  final String sourceId;
+  final String rawPayload;
+  final String label;
+
+  const LocalRagSourceReference({
+    required this.sourceId,
+    required this.rawPayload,
+    required this.label,
+  });
+
+  Map<String, dynamic> toJson() {
+    return <String, dynamic>{
+      'source_id': sourceId,
+      'raw_payload': rawPayload,
+      'label': label,
+    };
+  }
+}
+
 class LocalRagRuntimeResponse {
   final String text;
+  final String rawText;
   final String engine;
   final String model;
   final String vectorDbPath;
@@ -63,16 +84,19 @@ class LocalRagRuntimeResponse {
   final bool networkBlocked;
   final int? memoryPeakMb;
   final List<LocalRagCitation> citations;
+  final List<LocalRagSourceReference> sourceReferences;
   final Map<String, dynamic> raw;
 
   const LocalRagRuntimeResponse({
     required this.text,
+    required this.rawText,
     required this.engine,
     required this.model,
     required this.vectorDbPath,
     required this.offlineOnly,
     required this.networkBlocked,
     required this.citations,
+    required this.sourceReferences,
     required this.raw,
     this.memoryPeakMb,
   });
@@ -89,9 +113,12 @@ class LocalRagRuntimeResponse {
             )
             .toList()
         : const <LocalRagCitation>[];
+    final rawText = (map['text'] ?? map['answer'] ?? '').toString().trim();
+    final parsedText = _parsePleiasSourceTokens(rawText, citations);
 
     return LocalRagRuntimeResponse(
-      text: (map['text'] ?? map['answer'] ?? '').toString().trim(),
+      text: parsedText.text.trim(),
+      rawText: rawText,
       engine: map['engine']?.toString().trim() ?? 'local-rag',
       model: map['model']?.toString().trim() ?? 'local-model',
       vectorDbPath: map['vector_db_path']?.toString().trim() ?? '',
@@ -99,6 +126,7 @@ class LocalRagRuntimeResponse {
       networkBlocked: map['network_blocked'] == true,
       memoryPeakMb: _asInt(map['memory_peak_mb']),
       citations: citations,
+      sourceReferences: parsedText.references,
       raw: map,
     );
   }
@@ -106,6 +134,7 @@ class LocalRagRuntimeResponse {
   Map<String, dynamic> toJson() {
     return <String, dynamic>{
       'text': text,
+      if (rawText != text) 'raw_text': rawText,
       'engine': engine,
       'model': model,
       'vector_db_path': vectorDbPath,
@@ -113,6 +142,8 @@ class LocalRagRuntimeResponse {
       'network_blocked': networkBlocked,
       if (memoryPeakMb != null) 'memory_peak_mb': memoryPeakMb,
       'citations': citations.map((item) => item.toJson()).toList(),
+      'source_references':
+          sourceReferences.map((item) => item.toJson()).toList(),
     };
   }
 }
@@ -153,6 +184,9 @@ class LocalRagRuntimeService {
       'engine': settings.inferenceEngine,
       'offline_only': true,
       'network_policy': 'offline_only',
+      'temperature': 0,
+      'include_citations': true,
+      'citation_token_format': 'pleias_source_start_end',
       if (sessionId != null && sessionId.trim().isNotEmpty)
         'session_id': sessionId.trim(),
       if (traceId != null && traceId.trim().isNotEmpty)
@@ -221,4 +255,93 @@ double? _asDouble(Object? value) {
   if (value is num) return value.toDouble();
   if (value == null) return null;
   return double.tryParse(value.toString());
+}
+
+class _PleiasSourceParseResult {
+  final String text;
+  final List<LocalRagSourceReference> references;
+
+  const _PleiasSourceParseResult({
+    required this.text,
+    required this.references,
+  });
+}
+
+_PleiasSourceParseResult _parsePleiasSourceTokens(
+  String text,
+  List<LocalRagCitation> citations,
+) {
+  final pattern = RegExp(
+    r'<\|source_start\|>(.*?)<\|source_end\|>',
+    dotAll: true,
+  );
+  final matches = pattern.allMatches(text).toList();
+  if (matches.isEmpty) {
+    return _PleiasSourceParseResult(
+      text: text,
+      references: const <LocalRagSourceReference>[],
+    );
+  }
+
+  final citationById = <String, LocalRagCitation>{
+    for (final citation in citations)
+      if (citation.sourceId.trim().isNotEmpty)
+        citation.sourceId.trim(): citation,
+  };
+  final buffer = StringBuffer();
+  final references = <LocalRagSourceReference>[];
+  var cursor = 0;
+
+  for (final match in matches) {
+    buffer.write(text.substring(cursor, match.start));
+    final rawPayload = (match.group(1) ?? '').trim();
+    final sourceId = _sourceIdFromPleiasPayload(rawPayload);
+    final citation = citationById[sourceId];
+    final citationTitle = citation?.title.trim() ?? '';
+    final label = citationTitle.isNotEmpty
+        ? citationTitle
+        : (sourceId.isEmpty ? 'source-${references.length + 1}' : sourceId);
+    references.add(
+      LocalRagSourceReference(
+        sourceId: sourceId,
+        rawPayload: rawPayload,
+        label: label,
+      ),
+    );
+    buffer.write('[$label]');
+    cursor = match.end;
+  }
+  buffer.write(text.substring(cursor));
+
+  return _PleiasSourceParseResult(
+    text: buffer.toString(),
+    references: references,
+  );
+}
+
+String _sourceIdFromPleiasPayload(String payload) {
+  final value = payload.trim();
+  if (value.isEmpty) return '';
+  final decoded = _tryDecodeJsonMap(value);
+  final fromJson = decoded == null
+      ? null
+      : decoded['source_id'] ??
+          decoded['sourceId'] ??
+          decoded['id'] ??
+          decoded['source'];
+  final normalized = (fromJson ?? value).toString().trim();
+  final match = RegExp(r'[A-Za-z0-9._:-]+').firstMatch(normalized);
+  return match?.group(0) ?? normalized;
+}
+
+Map<String, dynamic>? _tryDecodeJsonMap(String value) {
+  if (!value.startsWith('{')) return null;
+  try {
+    final decoded = jsonDecode(value);
+    if (decoded is Map<String, dynamic>) return decoded;
+    if (decoded is Map) return Map<String, dynamic>.from(decoded);
+  } on FormatException {
+    return null;
+  }
+  return null;
 }

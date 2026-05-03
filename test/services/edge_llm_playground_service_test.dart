@@ -156,9 +156,11 @@ void main() {
     expect(localBody?['model_path'], r'C:\models\pleias-rag.gguf');
     expect(localBody?['vector_db_path'], r'C:\rag\lancedb');
     expect(localBody?['network_policy'], 'offline_only');
+    expect(localBody?['temperature'], 0);
     expect(response.provider, 'local-rag');
     expect(response.tier, 'offline');
     expect(response.parsedJson?['citations'], isA<List>());
+    expect(response.parsedJson?['source_references'], isA<List>());
     expect(response.source, 'local-rag runtime / pleias-rag');
   });
 }
