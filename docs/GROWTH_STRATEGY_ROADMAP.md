@@ -25983,3 +25983,25 @@ a9d7b1517 on main
 - **Issue整理**: #1854 close (LLM実装済み)
 - **タイムスタンプ衝突**: did_video 000000→000100 (PS#6 ps6_s163と衝突 → 自動fix)
 - commit 14ec7a2de on main (タイムスタンプfix含む)
+
+## 2026-05-03 (Win版#132 part 123) — tech-blog-tracker bug fix (User report 即対応)
+
+### 完了
+- User bug 報告: `https://my-web-app-b67f4.web.app/tech-blog-tracker` で全 8 platform 「未投稿」/ ストリーク 0 表示
+- root cause 特定: カウンター (`_isPostedToday` / `_currentStreak` / `_totalPostedDays` / `todayCount`) が `tech_blog_posts` (= 手動記録) のみ参照、PS#2 T-1 dispatch 234+ 本が書く `blog_posts` (= 自動 / `status='posted'`) 未連携
+- 修正: 1 ファイル 5 edit で `_loadData()` 拡張 + 3 helper 追加 + 5 method を union 化
+- dart format + flutter analyze exit 0 / commit `f03de3491` → rebase `f1b6cc45d` on main
+- Plan mode 経由 (= 途中で plan mode キック → ExitPlanMode で承認後実装続行) / `velvet-soaring-wall.md` plan file 作成
+
+### Phase 6 進化観察 (= 第 12 例)
+- 「軽重 cycle と緊急差込 coexist」pattern 第 1 例 (= 通常 part 122 軽量作業 → User bug report で即時切替)
+- 51 part 連続 dogfood (= part 73-123)
+
+### 次回候補
+- `goals` × `life_goals` 等の 2 table 系統 audit (= 同 bug pattern 横展開チェック)
+- T-1 dispatch script が `tech_blog_posts` にも書く規律案 vs ページ側統合の trade-off Issue
+- 本 fix 実機確認 (= Firebase deploy 後 visual verify)
+
+### Philosophy Alignment
+#1 CEO 感 (= User からの bug 報告に最終決定権を尊重した Plan mode 経由) / #5 商品=ユーザー価値 (= ブログ投稿管理の正しい streak 表示で動機付け回復) / #6 資本=時間 (= 22 分で diagnose→fix→verify→commit 完遂)
+
