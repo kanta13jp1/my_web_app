@@ -1198,7 +1198,9 @@ serve(async (req: Request) => {
               body: JSON.stringify({
                 title: ppTitle,
                 body: ppContent,
-                tags: tagObjects.length > 0 ? tagObjects : [{ name: "Flutter" }],
+                tags: tagObjects.length > 0
+                  ? tagObjects
+                  : [{ name: "Flutter" }],
                 private: false,
                 tweet: false,
               }),
