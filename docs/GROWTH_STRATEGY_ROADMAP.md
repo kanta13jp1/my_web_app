@@ -25603,3 +25603,23 @@ a9d7b1517 on main
 
 ### Philosophy Alignment
 #5 商品=ユーザー価値 (= LLM評価ツール群追加でAI開発者SEO流入拡大) / #8 KPI=昨日の自分 (= bc58b50b推奨ツールを当日中に反映 / 知識→実装サイクル短縮)
+
+## 2026-05-03 (Win版#132 part 117) — Codex Memory + Thread Automations (Issue #1647 着地)
+
+### 完了
+- bc58b50b 既適用確認 (= part 98 取込済 / 再確認のみ / `notebooklm.harness_notebook_found=true` 検証済)
+- NotebookLM 新規 2 本 (bc91fac9 Faceless AI YouTube + 0fc0b6cf Design-Agent Convergence) → [Issue #1750](https://github.com/kanta13jp1/my_web_app/issues/1750) 起票
+- WBS Issue [#1647](https://github.com/kanta13jp1/my_web_app/issues/1647) Codex Memory + Thread Automations 着地:
+  - `docs/CODEX_MEMORY_AUTOMATIONS.md` 新規 (= 6 章 / 25 task ownership matrix / 12 instance 担当 cross-cut / 3 層 memory 戦略 / escalation path)
+  - `.github/workflows/codex-session-safety-cron.yml` 新規 (= daily 07:00 JST + Issue #1422 comment + warning 時 Issue 自動作成 dedup 24h)
+- commit `f3fae9cb1` on main
+
+### Phase 6 進化観察
+- User 同一要望 **6 度目** (= part 100/103/104 N-time alarm 第 6 適用)
+- Phase 6「定常自律実行」(= 成熟期 / part 104 entry) で **「上から順番」 + 「対応不能は報告」 + 「open Issue triage」** が template 化
+- 本 part: bc58b50b 確認 (秒) + 新規 notebook triage (分) + WBS 上位 task 着地 (= #1647 完結) + AI tool delta skip 判断 = **4 軸 1 セッション完結 pattern**
+- 「Phase 1 → Phase 2」(= 実装 → 自走化分離) の dogfood: `codex_session_check.py` (= 既存) を `codex-session-safety-cron.yml` (= 自走化) で wrap = pattern 第 7 例
+
+### Philosophy Alignment
+#3 優しい mentor (= 全 12 instance の自走化で「監視」ではなく「支援」体制確立) / #4 6 部署バランス (= 25 task が R&D / 財務 / マーケ / 人事 / 本社 全体に reach) / #6 資本=時間 (= 半自動 → 完全自動への移行で人手介入時間最小化) / #8 KPI=昨日の自分 (= AI fleet 25 自動化 task で前日比改善が定量化)
+
