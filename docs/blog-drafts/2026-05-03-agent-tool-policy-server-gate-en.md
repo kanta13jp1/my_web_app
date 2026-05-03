@@ -3,7 +3,7 @@ title: "Stopping AI agent tool calls with deny-by-default — server-side scope 
 emoji: "🛡️"
 type: "tech"
 topics: ["security", "mcp", "supabase", "ai-agent"]
-published: false
+published: true
 ---
 
 ## Client guards alone do not stop a determined caller

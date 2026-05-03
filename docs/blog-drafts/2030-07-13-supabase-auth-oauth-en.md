@@ -1,7 +1,7 @@
 ---
 title: "Supabase Auth OAuth in Flutter — Google, GitHub, and Apple Sign-In End-to-End"
 tags: supabase,flutter,oauth,security
-published: false
+published: true
 ---
 
 # Supabase Auth OAuth in Flutter — Google, GitHub, and Apple Sign-In End-to-End

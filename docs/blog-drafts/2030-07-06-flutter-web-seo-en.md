@@ -1,7 +1,7 @@
 ---
 title: "Flutter Web SEO Guide — Meta Tags, Sitemaps, and Structured Data That Actually Work"
 tags: flutter,webdev,SEO,indiedev
-published: false
+published: true
 ---
 
 # Flutter Web SEO Guide — Meta Tags, Sitemaps, and Structured Data That Actually Work
