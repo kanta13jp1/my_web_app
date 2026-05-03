@@ -496,6 +496,8 @@ class _MyAppState extends State<MyApp> {
                   ? const _AuthenticatedHomePage()
                   : const LandingPage(),
             );
+          case '/login':
+            return MaterialPageRoute(builder: (_) => const LandingPage());
           case '/home':
             return MaterialPageRoute(builder: (_) => const HomePage());
           case '/agents':
