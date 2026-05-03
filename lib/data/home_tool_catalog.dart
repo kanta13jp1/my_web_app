@@ -12,6 +12,7 @@ import '../pages/ai_status_page.dart';
 import '../pages/behavior_log_page.dart';
 import '../pages/behavior_review_page.dart';
 import '../pages/bookmark_folders_page.dart';
+import '../pages/career_monthly_kpi_page.dart';
 import '../pages/cfo_office_page.dart';
 import '../pages/cho_office_page.dart';
 import '../pages/chro_office_page.dart';
@@ -953,6 +954,16 @@ List<HomeToolEntry> buildHomeToolCatalog({
       color: const Color(0xFF3D5AFE),
       keywords: const <String>['人生目標', 'goal', 'vision'],
       onOpen: (context) => _pushPage(context, const LifeGoalsPage()),
+    ),
+    HomeToolEntry(
+      id: 'career-monthly-kpi',
+      sectionId: 'growth',
+      title: 'Career KPI Ledger',
+      subtitle: 'Track monthly career KPIs and generate a close report',
+      icon: Icons.analytics_outlined,
+      color: const Color(0xFF2563EB),
+      keywords: const <String>['career', 'kpi', 'monthly', 'goal'],
+      onOpen: (context) => _pushPage(context, const CareerMonthlyKpiPage()),
     ),
     HomeToolEntry(
       id: 'thought-capture',

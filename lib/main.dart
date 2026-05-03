@@ -62,6 +62,7 @@ import 'package:my_web_app/pages/admin/feedback_list_page.dart';
 import 'package:my_web_app/pages/admin/quota_dashboard_page.dart';
 import 'package:my_web_app/pages/admin/blog_management_page.dart';
 import 'package:my_web_app/pages/home_insights_page.dart';
+import 'package:my_web_app/pages/career_monthly_kpi_page.dart';
 import 'package:my_web_app/pages/life_goals_page.dart';
 import 'package:my_web_app/pages/thought_capture_page.dart';
 import 'package:my_web_app/pages/decision_check_page.dart';
@@ -1445,6 +1446,10 @@ class _MyAppState extends State<MyApp> {
           case '/goal-tracker':
             return MaterialPageRoute(
               builder: (_) => const GoalTrackerPage(),
+            );
+          case '/career-monthly-kpi':
+            return MaterialPageRoute(
+              builder: (_) => const CareerMonthlyKpiPage(),
             );
           case '/bookmark-sync':
             return MaterialPageRoute(

@@ -73,6 +73,32 @@ function parseBooleanish(value: unknown, defaultValue: boolean): boolean {
   return defaultValue;
 }
 
+function buildCareerKpiPayload(
+  body: Record<string, unknown>,
+): Record<string, unknown> {
+  return {
+    month_key: normalizeText(body.month_key, "1970-01"),
+    annual_goal: normalizeText(body.annual_goal),
+    category: normalizeText(body.category, "career"),
+    metric_name: normalizeText(body.metric_name),
+    target_value: normalizeNumber(body.target_value),
+    actual_value: normalizeNumber(body.actual_value),
+    unit: normalizeText(body.unit),
+    reflection: normalizeText(body.reflection),
+    next_action: normalizeText(body.next_action),
+  };
+}
+
+function normalizeText(value: unknown, fallback = ""): string {
+  const text = String(value ?? "").trim();
+  return text.length === 0 ? fallback : text;
+}
+
+function normalizeNumber(value: unknown): number {
+  const parsed = Number(value ?? 0);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
 function getHarveyBaseUrl(region: unknown): string {
   const normalized = String(region ?? "").trim().toLowerCase();
   if (normalized === "eu") return "https://eu.api.harvey.ai";
@@ -7745,6 +7771,42 @@ ${reportText ? `> ${reportText}` : ""}`,
       }
 
       // ── Contacts ────────────────────────────────────────────────────────────
+      case "career_kpi.list":
+        return json({
+          success: true,
+          items: await listItems(admin, "career_monthly_kpi", userId, 100),
+        });
+      case "career_kpi.add": {
+        const item = await addItem(
+          admin,
+          "career_monthly_kpi",
+          userId,
+          buildCareerKpiPayload(body),
+        );
+        return json({ success: true, item });
+      }
+      case "career_kpi.update": {
+        const id = String(body.id ?? "").trim();
+        if (!id) return json({ error: "Missing KPI id" }, 400);
+        const { error } = await admin.from("hub_data")
+          .update({
+            metadata: { ...buildCareerKpiPayload(body), user_id: userId },
+          })
+          .eq("id", id)
+          .eq("source", "career_monthly_kpi")
+          .filter("metadata->>user_id", "eq", userId);
+        if (error) throw new Error(error.message);
+        return json({ success: true });
+      }
+      case "career_kpi.delete": {
+        await deleteItem(
+          admin,
+          "career_monthly_kpi",
+          userId,
+          String(body.id ?? ""),
+        );
+        return json({ success: true });
+      }
       case "contact.list":
         return json({
           success: true,
@@ -8468,6 +8530,10 @@ ${reportText ? `> ${reportText}` : ""}`,
             "goal.add",
             "goal.update",
             "goal.delete",
+            "career_kpi.list",
+            "career_kpi.add",
+            "career_kpi.update",
+            "career_kpi.delete",
             "contact.list",
             "contact.add",
             "contact.delete",
