@@ -140,7 +140,7 @@ class _BlogDraftEditorPageState extends State<BlogDraftEditorPage> {
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
             child: const Text('キャンセル',
-                style: TextStyle(color: Colors.white54)),
+                style: TextStyle(color: Colors.white54),),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: _orange),

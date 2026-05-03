@@ -1638,7 +1638,7 @@ class _BlogManagementPageState extends State<BlogManagementPage>
         decoration: BoxDecoration(
           color: _card,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: _red.withOpacity(0.4)),
+          border: Border.all(color: _red.withValues(alpha: 0.4)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -1650,8 +1650,8 @@ class _BlogManagementPageState extends State<BlogManagementPage>
                       const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                   decoration: BoxDecoration(
                     color: platform == 'qiita'
-                        ? const Color(0xFF55C500).withOpacity(0.2)
-                        : const Color(0xFF3D5AFE).withOpacity(0.2),
+                        ? const Color(0xFF55C500).withValues(alpha: 0.2)
+                        : const Color(0xFF3D5AFE).withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: Text(
@@ -1707,7 +1707,7 @@ class _BlogManagementPageState extends State<BlogManagementPage>
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const Icon(Icons.error_outline,
-                          size: 14, color: _red),
+                          size: 14, color: _red,),
                       const SizedBox(width: 6),
                       Expanded(
                         child: Text(
@@ -1754,7 +1754,7 @@ class _BlogManagementPageState extends State<BlogManagementPage>
                           ),
                         )
                       : const Text('却下',
-                          style: TextStyle(fontSize: 12, height: 1.5)),
+                          style: TextStyle(fontSize: 12, height: 1.5),),
                 ),
                 const SizedBox(width: 8),
                 ElevatedButton(
@@ -1774,7 +1774,7 @@ class _BlogManagementPageState extends State<BlogManagementPage>
                           ),
                         )
                       : const Text('承認して適用',
-                          style: TextStyle(fontSize: 12, height: 1.5)),
+                          style: TextStyle(fontSize: 12, height: 1.5),),
                 ),
               ],
             ),

@@ -200,7 +200,7 @@ class _BlogPageState extends State<BlogPage> {
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: _orange.withOpacity(0.3)),
+        border: Border.all(color: _orange.withValues(alpha: 0.3)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -357,23 +357,23 @@ class _BlogPageState extends State<BlogPage> {
                 children: [
                   if (likes > 0) ...[
                     const Icon(Icons.favorite_outline,
-                        size: 14, color: Colors.white38),
+                        size: 14, color: Colors.white38,),
                     const SizedBox(width: 3),
                     Text(
                       '$likes',
                       style: const TextStyle(
-                          color: Colors.white38, fontSize: 12, height: 1.5),
+                          color: Colors.white38, fontSize: 12, height: 1.5,),
                     ),
                     const SizedBox(width: 10),
                   ],
                   if (views > 0) ...[
                     const Icon(Icons.visibility_outlined,
-                        size: 14, color: Colors.white38),
+                        size: 14, color: Colors.white38,),
                     const SizedBox(width: 3),
                     Text(
                       _formatNum(views),
                       style: const TextStyle(
-                          color: Colors.white38, fontSize: 12, height: 1.5),
+                          color: Colors.white38, fontSize: 12, height: 1.5,),
                     ),
                     const SizedBox(width: 10),
                   ],
@@ -411,8 +411,8 @@ class _BlogPageState extends State<BlogPage> {
       padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
       decoration: BoxDecoration(
         color: isQiita
-            ? const Color(0xFF55C500).withOpacity(0.15)
-            : const Color(0xFF3D5AFE).withOpacity(0.15),
+            ? const Color(0xFF55C500).withValues(alpha: 0.15)
+            : const Color(0xFF3D5AFE).withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(4),
       ),
       child: Text(

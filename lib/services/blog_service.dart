@@ -111,7 +111,7 @@ class BlogService {
     final res = await _client
         .from('blog_posts')
         .select(
-            'id, title, content, status, target_platforms, notes, created_at, updated_at')
+            'id, title, content, status, target_platforms, notes, created_at, updated_at',)
         .eq('id', id)
         .maybeSingle();
     return res;
@@ -123,7 +123,7 @@ class BlogService {
     final res = await _client
         .from('blog_corrections')
         .select(
-            'id, platform, article_id, title, url, confidence, errors_json, detected_at')
+            'id, platform, article_id, title, url, confidence, errors_json, detected_at',)
         .eq('approved', false)
         .isFilter('applied_at', null)
         .order('detected_at', ascending: false)
