@@ -133,7 +133,7 @@ class BlogPostPage extends StatelessWidget {
     buf.writeln();
     buf.writeln(content.isEmpty
         ? '*この記事は外部プラットフォームに投稿されています。*'
-        : content);
+        : content,);
     if (url.isNotEmpty) {
       buf.writeln();
       buf.writeln('---');
