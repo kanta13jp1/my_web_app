@@ -281,6 +281,21 @@ Codex CLI が **Memory** を持つようになり、past task の preference / p
 - `claude ultrareview [target]` — CI/スクリプトから非インタラクティブに `/ultrareview` 実行 (= GHA に組み込み可能)
 - `/recap` — セッション再開時に前回の context をサマリー提示 (= 12 instance fleet での session 引き継ぎ向上)
 
+**MCP 安定性改善 (v2.1.126) → Issue #1831**
+- MCP auto-retry: サーバー起動時の transient error を自動リトライ
+- SSE/HTTP transport で mid-response に connection drop した場合の hang 修正
+- 429 (rate limit) retry: exponential backoff を最低値として適用 (= 13秒で全試行消費するバグ修正)
+- API retry countdown が正確に表示されるよう修正
+- **fleet適用**: `MCP_TIMEOUT=60000` (S119で設定済み) と組み合わせて MCP 安定性が大幅向上
+
+**session /recap (v2.1.126)**
+- `CLAUDE_CODE_ENABLE_AWAY_SUMMARY=0` または `/config` でオプトアウト可能
+- **fleet活用**: 12 instance で session 引き継ぎ時に `/recap` で前回 context 即把握
+
+**project purge (v2.1.126)**
+- `claude project purge [path]` — project の全 state (transcript・session) を削除
+- **fleet活用**: worktree cleanup スクリプトに追加でゾンビ session を掃除できる
+
 **Windows (v2.1.126)**
 - Git for Windows (Git Bash) が不要に — PowerShell を primary shell として使用 (= Win版 fleet の環境要件簡素化)
 

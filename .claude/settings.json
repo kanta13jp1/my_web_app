@@ -20,6 +20,26 @@
   "allowManagedPermissionRulesOnly": true,
   "allowManagedHooksOnly": true,
   "hooks": {
+    "SubagentStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell -NoProfile -ExecutionPolicy Bypass -File .claude/hooks/subagent-start.ps1"
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell -NoProfile -ExecutionPolicy Bypass -File .claude/hooks/subagent-stop.ps1"
+          }
+        ]
+      }
+    ],
     "PreCompact": [
       {
         "hooks": [

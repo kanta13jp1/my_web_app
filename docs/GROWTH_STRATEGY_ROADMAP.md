@@ -25952,3 +25952,15 @@ a9d7b1517 on main
 ### Philosophy Alignment
 #3 優しい mentor (= 全 9 instance に「rule を強制」せず「依頼」として共有) / #6 資本=時間 (= 全 instance home dir 1 度更新で永続予防) / #8 KPI=昨日の自分 (= part 119/120/121/122 の連続性で fleet 規律拡散加速度を可視化)
 
+
+
+### PS#5 S124 (2026-05-03) — bc58b50b #1781 SubagentStart/SubagentStop hooks + #1831 MCP auto-retry docs
+- **#1871/#1781: SubagentStart/SubagentStop hooks** (Issue #1781/#1871 Close):
+  - `.claude/hooks/subagent-start.ps1` 新規: プロジェクト制約6件をadditionalContextとして注入
+  - `.claude/hooks/subagent-stop.ps1` 新規: ダミーデータ/migration命名不正/--no-verify 品質チェック
+  - settings.json に SubagentStart/SubagentStop hook追加 (Claude Code v2.1.126+ 対応確認済)
+  - bc58b50b #1781 完了 → PS#5 bc58b50b 13件完了
+- **#1831: Claude Code May 2026 新機能fleet適用**:
+  - AI_FALLBACK_RUNBOOK.md に MCP auto-retry v2.1.126 改善詳細追記
+  - /recap (CLAUDE_CODE_ENABLE_AWAY_SUMMARY) + project purge fleet活用法文書化
+  - MCP_TIMEOUT=60000 (S119設定) + auto-retry の相乗効果確認
