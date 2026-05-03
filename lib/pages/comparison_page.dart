@@ -65231,6 +65231,323 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  'coderabbit-ai-review': const _CompetitorInfo(
+    name: 'CodeRabbit',
+    emoji: '🐰',
+    tagline:
+        'CodeRabbit・AIコードレビューボット・PR自動レビュー・GitHub・GitLab統合・コード品質自動チェックで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'CodeRabbit代替 AIコードレビュー PR自動レビュー GitHub AI GitLabコードチェック',
+    accentColor: Color(0xFFFF6B35),
+    painPoints: [
+      'コードレビュー専用・個人ライフ管理は別途必要',
+      'エンジニアチーム向け・AI個人アシスタント機能なし',
+      'PR/コード品質ツール・財務・タスク管理は別途必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AIコードレビューボット・PR自動レビュー・GitHub/GitLab統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'greptile-codebase-ai': const _CompetitorInfo(
+    name: 'Greptile',
+    emoji: '🔍',
+    tagline: 'Greptile・AIコードベース横断検索・自然言語質問・PR文脈理解・コードベースQ&Aで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Greptile代替 AIコードベース検索 自然言語クエリ PRコンテキスト コードQ&A',
+    accentColor: Color(0xFF00BFA5),
+    painPoints: [
+      'コードベース検索専用・個人ライフ管理は別途必要',
+      '開発者向けコードQ&Aツール・AI個人アシスタント機能なし',
+      'PRコンテキスト解析特化・財務・タスク管理は別途必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AIコードベース横断検索・自然言語質問・PR文脈理解',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'qodo-ai-testing': const _CompetitorInfo(
+    name: 'Qodo',
+    emoji: '🧩',
+    tagline:
+        'Qodo(旧CodiumAI)・AIテスト生成・PR-Agent・コード整合性検証・テストカバレッジ自動化で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Qodo代替 CodiumAI AIテスト生成 PR-Agent コード整合性 テストカバレッジ自動化',
+    accentColor: Color(0xFF7C4DFF),
+    painPoints: [
+      'テスト生成・コード整合性専用・個人ライフ管理は別途必要',
+      '開発者向けAIテストツール・AI個人アシスタント機能なし',
+      'PR-Agent/コード品質特化・財務・タスク管理は別途必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AIテスト生成・PR-Agent・コード整合性検証・テストカバレッジ自動化',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'pieces-for-developers': const _CompetitorInfo(
+    name: 'Pieces for Developers',
+    emoji: '🧩',
+    tagline:
+        'Pieces for Developers・AIスニペット管理・ローカルLLM・オフライン対応・開発ワークフロー最適化で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Pieces for Developers代替 AIスニペット管理 ローカルLLM オフライン開発ツール',
+    accentColor: Color(0xFF00A8E8),
+    painPoints: [
+      'スニペット管理・開発ワークフロー専用・個人ライフ管理は別途必要',
+      '開発者向けローカルLLMツール・AI個人アシスタント機能なし',
+      'コードスニペット特化・財務・タスク管理は別途必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'AIスニペット管理・ローカルLLM・オフライン対応・開発ワークフロー最適化',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'sourcegraph-cody': const _CompetitorInfo(
+    name: 'Sourcegraph Cody',
+    emoji: '🦊',
+    tagline:
+        'Sourcegraph Cody・全社コードベース横断AI・Context fetcher・VSCode/JetBrains統合・エンタープライズコード理解で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Sourcegraph Cody代替 全社コードベースAI Context fetcher VSCode JetBrains エンタープライズ',
+    accentColor: Color(0xFFFF5F6D),
+    painPoints: [
+      '全社コードベース横断AI専用・個人ライフ管理は別途必要',
+      'エンタープライズ開発者向け・AI個人アシスタント機能なし',
+      'コードコンテキスト理解特化・財務・タスク管理は別途必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: '全社コードベース横断AI・Context fetcher・VSCode/JetBrains統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'sweep-ai-agent': const _CompetitorInfo(
+    name: 'Sweep AI',
+    emoji: '🧹',
+    tagline:
+        'Sweep AI・Issue→PR自動変換・自然言語でコード修正・OSS AIエージェント・GitHub Issue自動解決で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Sweep AI代替 Issue PR自動変換 自然言語コード修正 OSS AIエージェント GitHub',
+    accentColor: Color(0xFF43A047),
+    painPoints: [
+      'Issue→PR自動変換専用・個人ライフ管理は別途必要',
+      'GitHub Issue解決AIエージェント・AI個人アシスタント機能なし',
+      'OSSコード自動修正特化・財務・タスク管理は別途必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Issue→PR自動変換・自然言語コード修正・OSS AIエージェント',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'aider-ai-programmer': const _CompetitorInfo(
+    name: 'Aider',
+    emoji: '⌨️',
+    tagline:
+        'Aider・OSSターミナルAIペアプログラマー・git自動コミット・マルチファイル編集・コマンドライン開発で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword: 'Aider代替 OSS ターミナルAI ペアプログラミング git自動コミット マルチファイル編集',
+    accentColor: Color(0xFF009688),
+    painPoints: [
+      'ターミナルAIペアプロ専用・個人ライフ管理は別途必要',
+      'OSS開発者向けCLIツール・AI個人アシスタント機能なし',
+      'gitコミット自動化特化・財務・タスク管理は別途必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'OSSターミナルAIペアプロ・git自動コミット・マルチファイル編集',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'openhands-all-hands': const _CompetitorInfo(
+    name: 'OpenHands',
+    emoji: '🤖',
+    tagline:
+        'OpenHands(旧OpenDevin)・All Hands AI・OSS自律AIエージェント・Docker実行環境・コード自動実装で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'OpenHands代替 OpenDevin All Hands AI OSS自律エージェント Docker コード自動実装',
+    accentColor: Color(0xFFE91E63),
+    painPoints: [
+      'OSS自律AIエージェント専用・個人ライフ管理は別途必要',
+      'Docker実行環境コーディング特化・AI個人アシスタント機能なし',
+      '自律コード実装エージェント・財務・タスク管理は別途必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'OSS自律AIエージェント・Docker実行環境・コード自動実装',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
+  'continue-dev-oss': const _CompetitorInfo(
+    name: 'Continue.dev',
+    emoji: '🔗',
+    tagline:
+        'Continue.dev・OSS IDE拡張・任意LLM接続・ローカルモデル対応・VSCode/JetBrains AIコーディングアシスタントで、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Continue.dev代替 OSS IDE拡張 任意LLM接続 ローカルモデル VSCode JetBrains AIコーディング',
+    accentColor: Color(0xFF1976D2),
+    painPoints: [
+      'OSS IDE AIコーディング拡張専用・個人ライフ管理は別途必要',
+      '開発者向け任意LLM接続ツール・AI個人アシスタント機能なし',
+      'ローカルモデル開発特化・財務・タスク管理は別途必要',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'OSS IDE拡張・任意LLM接続・ローカルモデル対応・VSCode/JetBrains統合',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
 };
 
 // ---------------------------------------------------------------------------
@@ -65630,6 +65947,15 @@ class _ComparisonShellState extends State<_ComparisonShell> {
     'giskard-ml-testing': 'llm-eval',
     'braintrust-llm-evals': 'llm-eval',
     'helm-stanford-eval': 'llm-eval',
+    'coderabbit-ai-review': 'ai-coding-agent',
+    'greptile-codebase-ai': 'ai-coding-agent',
+    'qodo-ai-testing': 'ai-coding-agent',
+    'pieces-for-developers': 'ai-coding-agent',
+    'sourcegraph-cody': 'ai-coding-agent',
+    'sweep-ai-agent': 'ai-coding-agent',
+    'aider-ai-programmer': 'ai-coding-agent',
+    'openhands-all-hands': 'ai-coding-agent',
+    'continue-dev-oss': 'ai-coding-agent',
   };
 
   @override
