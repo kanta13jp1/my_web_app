@@ -25842,3 +25842,14 @@ a9d7b1517 on main
   - settings 4件: deniedDomains / MCP_TIMEOUT+MAX_MCP_OUTPUT_TOKENS / ENABLE_MCP_TOOL_SEARCH
   - GHA 1件: ultrareview job
   - Plankton Pattern 1件: flutter analyze PostToolUse
+
+
+### PS#3 S151 (2026-05-03) — AI大学398→400社化 + 音声AI学科新設 (Cartesia Sonic + ElevenLabs)
+- **AI大学コンテンツ2件追加** (398→400社):
+  - cartesia: sonic_tts (SSMアーキ/25ms低遅延TTS/Voice Cloning/Flutter WebSocket連携)
+  - elevenlabs: voice_design (29言語TTS/Voice Design/Projects audiobook/AIポッドキャスト)
+- **Issue整理**:
+  - #1733 close (SWE-bench+GPQA Diamond S148で実装済み)
+  - #1783 → PS#1/Win版委譲コメント追加 (9b8885ef Automating SaaS Operations)
+- **#1735 残タスク**: Whisper/D-ID/Hedra/Runway ML → 次回S152で継続
+- commit 4f52bfb3f on main
