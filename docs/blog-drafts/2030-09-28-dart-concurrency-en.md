@@ -1,7 +1,7 @@
 ---
 title: "Dart Concurrency Deep Dive — Isolates, Structured Concurrency, and Async Patterns"
 tags: dart,flutter,programming,indiedev
-published: false
+published: true
 ---
 
 Dart's concurrency model is unusual: single-threaded event loop by default, with explicit Isolates for true parallelism. No shared memory, no race conditions, no mutex locks. This guide covers everything from the simple `compute()` helper to long-lived Isolate workers, structured concurrency patterns, and Stream-based reactive flows.
