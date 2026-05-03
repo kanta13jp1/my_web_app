@@ -307,7 +307,7 @@ class UserManualPage extends StatelessWidget {
             'ホーム画面「競合機能比較」カードをタップするとタブが展開します。\n'
             '競合21社（Notion〜GitHub）の機能一覧と本サービスの実装状況を確認できます。\n\n'
             '【競合比較ページ（SEO対応）】\n'
-            'アドレスバーに /vs-notion, /vs-line, /vs-cursor, /vs-shopify など1893社分の比較ページが用意されています。',
+            'アドレスバーに /vs-notion, /vs-line, /vs-cursor, /vs-shopify など1894社分の比較ページが用意されています。',
             subColor,
           ),
           const SizedBox(height: 24),

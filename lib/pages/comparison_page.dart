@@ -66508,6 +66508,43 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
     ],
   ),
+  // ── Vector Search / Embedding Platforms ─────────────────────────────────
+  'nomic-ai-vector-search': const _CompetitorInfo(
+    name: 'Nomic AI',
+    emoji: '🗺️',
+    tagline:
+        'Nomic AI・Nomic Atlas可視化+Nomic Embed高性能埋め込み・8192トークン長・OSS・ドメイン特化AI構築基盤で、なぜ「自分株式会社」を選ぶか。',
+    searchKeyword:
+        'Nomic AI代替 ベクター検索 Nomic Embed テキスト埋め込み Nomic Atlas 高次元可視化 OpenAI ada代替',
+    accentColor: Color(0xFF5C6BC0),
+    painPoints: [
+      'ベクター検索・埋め込み特化・個人のライフ管理は別途必要',
+      '開発者向けEmbedding API・一般ユーザー向けプロダクトではない',
+      'OpenAI/Pineconeとの比較でエコシステム規模・マネージドサービスが限られる',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: 'Nomic Embed (8192トークン/OSS/Apache2.0) + Nomic Atlas高次元データ可視化',
+        competitorHas: true,
+        weHave: false,
+      ),
+      _FeatureComparison(
+        feature: 'AI支援個人管理',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '財務管理統合',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: '完全無料',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  ),
   // ── Code Quality / Static Analysis ──────────────────────────────────────
   'codefactor-code-review': const _CompetitorInfo(
     name: 'CodeFactor',
