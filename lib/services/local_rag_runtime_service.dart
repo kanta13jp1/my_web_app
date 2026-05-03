@@ -54,6 +54,36 @@ class LocalRagCitation {
   }
 }
 
+class PleiasCitationSegment {
+  final String text;
+  final String? sourceId;
+  final bool markerOnly;
+
+  const PleiasCitationSegment({
+    required this.text,
+    this.sourceId,
+    this.markerOnly = false,
+  });
+
+  bool get cited => sourceId != null && sourceId!.trim().isNotEmpty;
+}
+
+class PleiasCitationParseResult {
+  final String plainText;
+  final List<PleiasCitationSegment> segments;
+  final List<String> sourceIds;
+  final bool hasCitationTokens;
+
+  const PleiasCitationParseResult({
+    required this.plainText,
+    required this.segments,
+    required this.sourceIds,
+    required this.hasCitationTokens,
+  });
+
+  bool get hasCitations => sourceIds.isNotEmpty;
+}
+
 class LocalRagRuntimeResponse {
   final String text;
   final String engine;
@@ -63,6 +93,7 @@ class LocalRagRuntimeResponse {
   final bool networkBlocked;
   final int? memoryPeakMb;
   final List<LocalRagCitation> citations;
+  final PleiasCitationParseResult citationText;
   final Map<String, dynamic> raw;
 
   const LocalRagRuntimeResponse({
@@ -73,6 +104,7 @@ class LocalRagRuntimeResponse {
     required this.offlineOnly,
     required this.networkBlocked,
     required this.citations,
+    required this.citationText,
     required this.raw,
     this.memoryPeakMb,
   });
@@ -90,8 +122,9 @@ class LocalRagRuntimeResponse {
             .toList()
         : const <LocalRagCitation>[];
 
+    final text = (map['text'] ?? map['answer'] ?? '').toString().trim();
     return LocalRagRuntimeResponse(
-      text: (map['text'] ?? map['answer'] ?? '').toString().trim(),
+      text: text,
       engine: map['engine']?.toString().trim() ?? 'local-rag',
       model: map['model']?.toString().trim() ?? 'local-model',
       vectorDbPath: map['vector_db_path']?.toString().trim() ?? '',
@@ -99,6 +132,7 @@ class LocalRagRuntimeResponse {
       networkBlocked: map['network_blocked'] == true,
       memoryPeakMb: _asInt(map['memory_peak_mb']),
       citations: citations,
+      citationText: parsePleiasCitationText(text),
       raw: map,
     );
   }
@@ -113,6 +147,7 @@ class LocalRagRuntimeResponse {
       'network_blocked': networkBlocked,
       if (memoryPeakMb != null) 'memory_peak_mb': memoryPeakMb,
       'citations': citations.map((item) => item.toJson()).toList(),
+      'citation_source_ids': citationText.sourceIds,
     };
   }
 }
@@ -151,6 +186,7 @@ class LocalRagRuntimeService {
       'model_path': settings.localModelPath,
       'vector_db_path': settings.localVectorDbPath,
       'engine': settings.inferenceEngine,
+      'temperature': 0,
       'offline_only': true,
       'network_policy': 'offline_only',
       if (sessionId != null && sessionId.trim().isNotEmpty)
@@ -221,4 +257,143 @@ double? _asDouble(Object? value) {
   if (value is num) return value.toDouble();
   if (value == null) return null;
   return double.tryParse(value.toString());
+}
+
+PleiasCitationParseResult parsePleiasCitationText(String raw) {
+  if (raw.isEmpty) {
+    return const PleiasCitationParseResult(
+      plainText: '',
+      segments: <PleiasCitationSegment>[],
+      sourceIds: <String>[],
+      hasCitationTokens: false,
+    );
+  }
+
+  const sourceStart = '<|source_start|>';
+  const sourceEnd = '<|source_end|>';
+  const closeTokens = <String>[
+    '<|/source|>',
+    '<|source_close|>',
+    '<|source_stop|>',
+    '<|source_finish|>',
+  ];
+  final bracketSource = RegExp(r'\[source\s*:\s*([^\]]+)\]');
+  final segments = <PleiasCitationSegment>[];
+  final sourceIds = <String>{};
+  var cursor = 0;
+  var hasCitationTokens = false;
+
+  void addPlain(String value) {
+    if (value.isNotEmpty) {
+      segments.add(PleiasCitationSegment(text: value));
+    }
+  }
+
+  while (cursor < raw.length) {
+    final specialIndex = raw.indexOf(sourceStart, cursor);
+    final bracketMatch = bracketSource
+        .allMatches(raw, cursor)
+        .cast<RegExpMatch?>()
+        .firstWhere((match) => match != null, orElse: () => null);
+    final bracketIndex = bracketMatch?.start ?? -1;
+
+    final nextIndex = _earliestPositive(specialIndex, bracketIndex);
+    if (nextIndex < 0) {
+      addPlain(raw.substring(cursor));
+      break;
+    }
+
+    addPlain(raw.substring(cursor, nextIndex));
+
+    if (bracketIndex == nextIndex && bracketMatch != null) {
+      final sourceId = _normalizeSourceId(bracketMatch.group(1) ?? '');
+      final markerText = '[source:$sourceId]';
+      hasCitationTokens = true;
+      if (sourceId.isNotEmpty) sourceIds.add(sourceId);
+      segments.add(
+        PleiasCitationSegment(
+          text: markerText,
+          sourceId: sourceId,
+          markerOnly: true,
+        ),
+      );
+      cursor = bracketMatch.end;
+      continue;
+    }
+
+    final idStart = nextIndex + sourceStart.length;
+    final idEnd = raw.indexOf(sourceEnd, idStart);
+    if (idEnd < 0) {
+      addPlain(raw.substring(nextIndex));
+      break;
+    }
+
+    final sourceId = _normalizeSourceId(raw.substring(idStart, idEnd));
+    final contentStart = idEnd + sourceEnd.length;
+    final close = _findFirstCloseToken(raw, contentStart, closeTokens);
+    hasCitationTokens = true;
+    if (sourceId.isNotEmpty) sourceIds.add(sourceId);
+
+    if (close == null) {
+      segments.add(
+        PleiasCitationSegment(
+          text: '[source:$sourceId]',
+          sourceId: sourceId,
+          markerOnly: true,
+        ),
+      );
+      cursor = contentStart;
+      continue;
+    }
+
+    final citedText = raw.substring(contentStart, close.index);
+    if (citedText.isEmpty) {
+      segments.add(
+        PleiasCitationSegment(
+          text: '[source:$sourceId]',
+          sourceId: sourceId,
+          markerOnly: true,
+        ),
+      );
+    } else {
+      segments.add(
+        PleiasCitationSegment(text: citedText, sourceId: sourceId),
+      );
+    }
+    cursor = close.index + close.token.length;
+  }
+
+  final plainText = segments.map((segment) => segment.text).join();
+  return PleiasCitationParseResult(
+    plainText: plainText,
+    segments: segments,
+    sourceIds: sourceIds.toList(growable: false),
+    hasCitationTokens: hasCitationTokens,
+  );
+}
+
+int _earliestPositive(int first, int second) {
+  if (first < 0) return second;
+  if (second < 0) return first;
+  return first < second ? first : second;
+}
+
+({int index, String token})? _findFirstCloseToken(
+  String raw,
+  int start,
+  List<String> tokens,
+) {
+  ({int index, String token})? best;
+  for (final token in tokens) {
+    final index = raw.indexOf(token, start);
+    if (index < 0) continue;
+    if (best == null || index < best.index) {
+      best = (index: index, token: token);
+    }
+  }
+  return best;
+}
+
+String _normalizeSourceId(String value) {
+  return value.trim().replaceAll(RegExp(r'^\s*source\s*:\s*'), '').trim();
 }

@@ -27,6 +27,7 @@ class EdgeLlmPlaygroundResponse {
   final Map<String, dynamic>? parsedJson;
   final String? parseError;
   final AiHubChatObservability? observability;
+  final List<LocalRagCitation> citations;
 
   const EdgeLlmPlaygroundResponse({
     required this.text,
@@ -38,6 +39,7 @@ class EdgeLlmPlaygroundResponse {
     this.parsedJson,
     this.parseError,
     this.observability,
+    this.citations = const <LocalRagCitation>[],
   });
 }
 
@@ -84,6 +86,7 @@ class EdgeLlmPlaygroundService {
       'action': 'edge_llm.invoke',
       'user_prompt': normalizedPrompt,
       'response_format': normalizedFormat,
+      'temperature': 0,
       if (systemPrompt.trim().isNotEmpty) 'system_prompt': systemPrompt.trim(),
       if (normalizedProvider != 'auto') 'provider': normalizedProvider,
       if (normalizedProvider == 'auto' &&
@@ -124,6 +127,7 @@ class EdgeLlmPlaygroundService {
           'citations': local.citations.map((item) => item.toJson()).toList(),
           'offline_runtime': local.toJson(),
         },
+        citations: local.citations,
         observability: AiHubChatObservability.fromResponseMap(
           <String, dynamic>{
             'provider': 'local-rag',
@@ -160,6 +164,7 @@ class EdgeLlmPlaygroundService {
     final model = data['model']?.toString().trim();
     final parseError = data['parse_error']?.toString().trim();
     final parsedJson = _toStringMap(data['parsed_json']);
+    final citations = _extractCitations(parsedJson, data);
     final source = providerUsed.isEmpty
         ? 'ai-hub edge_llm.invoke'
         : 'ai-hub edge_llm.invoke / $providerUsed';
@@ -173,6 +178,7 @@ class EdgeLlmPlaygroundService {
       responseFormat: normalizedFormat,
       parsedJson: parsedJson,
       parseError: _emptyToNull(parseError),
+      citations: citations,
       observability: AiHubChatObservability.fromResponseMap(
         data,
         fallbackProvider:
@@ -228,6 +234,32 @@ class EdgeLlmPlaygroundService {
       );
     }
     return null;
+  }
+
+  List<LocalRagCitation> _extractCitations(
+    Map<String, dynamic>? parsedJson,
+    Map<String, dynamic> response,
+  ) {
+    final candidates = <Object?>[
+      parsedJson?['citations'],
+      parsedJson?['sources'],
+      response['citations'],
+      response['sources'],
+    ];
+    for (final candidate in candidates) {
+      if (candidate is List) {
+        return candidate
+            .whereType<Map>()
+            .map(
+              (item) => LocalRagCitation.fromMap(
+                Map<String, dynamic>.from(item),
+              ),
+            )
+            .where((item) => item.sourceId.isNotEmpty)
+            .toList(growable: false);
+      }
+    }
+    return const <LocalRagCitation>[];
   }
 }
 
