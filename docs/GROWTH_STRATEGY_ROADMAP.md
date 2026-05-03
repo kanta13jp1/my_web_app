@@ -25678,3 +25678,17 @@ a9d7b1517 on main
 - sandbox.network.deniedDomains: `~/.claude/settings.json` に適用完了 (#1766)
 - NotebookLM bc58b50b 未適用5件: Issue #1789-#1793 登録
 - notebooklm list 全18ノートブック: Issue #1794-#1811 登録 (全適用済み)
+
+
+### PS#5 S119 (2026-05-03) — bc58b50b適用 + PostToolUse dart format hook + NotebookLM Issues
+- **bc58b50b #1765**: `.claude/hooks/post-tool-use-dart-format.ps1` 新規作成 — Write/Edit後に dart format 自動実行 → hookSpecificOutput.additionalContext でエラーを self-correction loop に注入
+- **bc58b50b #1766**: `.claude/settings.json` に `sandbox.network.deniedDomains` 追加 (169.254.169.254 / metadata.google.internal 等 cloud metadata ブロック)
+- **設定**: `settings.json` に `hooks.PostToolUse` セクション追加 (dart ファイル全 Write/Edit に適用)
+- **NotebookLM Issues 登録**: #1816-#1823 (9871b0b1/52daba63/bdec9ea5/1aced136/0dbe8df1/d83954af/284ad4be/31ddb877)
+  - #1816: 9871b0b1 Claude Code + Obsidian Second Brain
+  - #1817: 52daba63 Claude Code Agentic Future
+  - #1818: bdec9ea5 AI Agent Revolution
+  - #1822: 284ad4be Nomic Platform Domain-Specific AI
+  - #1823: 31ddb877 Automating High-Volume Publishing
+- PS#1 S25 と一部重複 (#1812-#1815/#1819-#1821 は PS#1 S25 の #1795-#1810 と同ノートブック / 異なる実装角度)
+- commit on main
