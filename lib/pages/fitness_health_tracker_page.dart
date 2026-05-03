@@ -284,6 +284,23 @@ class _FitnessHealthTrackerPageState extends State<FitnessHealthTrackerPage>
               const Color(0xFF3D5AFE),
             ),
           ],
+          const SizedBox(height: 12),
+          Card(
+            color: Colors.orange[50],
+            child: ListTile(
+              leading: CircleAvatar(
+                backgroundColor: Colors.orange[100],
+                child: const Icon(Icons.restaurant, color: Colors.orange),
+              ),
+              title: const Text(
+                '今日の食事を記録',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              subtitle: const Text('カロリー・栄養バランスを管理'),
+              trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+              onTap: () => Navigator.of(context).pushNamed('/meal-log'),
+            ),
+          ),
           if (_workouts.isNotEmpty) ...[
             const SizedBox(height: 20),
             const Align(

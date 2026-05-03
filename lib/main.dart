@@ -207,6 +207,7 @@ import 'package:my_web_app/pages/horse_provider_leaderboard_page.dart';
 import 'package:my_web_app/pages/travel_itinerary_page.dart';
 import 'package:my_web_app/pages/virtual_whiteboard_page.dart';
 import 'package:my_web_app/pages/recipe_meal_planner_page.dart';
+import 'package:my_web_app/pages/meal_log_page.dart';
 import 'package:my_web_app/pages/language_learning_page.dart';
 import 'package:my_web_app/pages/habit_gamification_page.dart';
 import 'package:my_web_app/pages/focus_capture_game_page.dart';
@@ -1323,6 +1324,10 @@ class _MyAppState extends State<MyApp> {
           case '/virtual-whiteboard':
             return MaterialPageRoute(
               builder: (_) => const VirtualWhiteboardPage(),
+            );
+          case '/meal-log':
+            return MaterialPageRoute(
+              builder: (_) => const MealLogPage(),
             );
           case '/recipe-meal-planner':
             return MaterialPageRoute(

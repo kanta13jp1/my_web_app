@@ -1607,6 +1607,7 @@ $input
         color: Color(0xFFD97706)
       ),
       (key: 'codex', name: 'Codex', emoji: '⚡', color: Color(0xFF10B981)),
+      (key: 'replit', name: 'Replit', emoji: '💻', color: Color(0xFFF5821B)),
       (
         key: 'netkeiba',
         name: 'netkeiba',
