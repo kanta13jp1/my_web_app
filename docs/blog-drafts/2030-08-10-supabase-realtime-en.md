@@ -1,7 +1,7 @@
 ---
 title: "Supabase Realtime with Flutter — Postgres Changes, Presence, and Broadcast in Practice"
 tags: supabase,flutter,webdev,programming
-published: false
+published: true
 ---
 
 Supabase Realtime streams PostgreSQL changes to clients over WebSocket. Combine it with Flutter and you can ship live notifications, "who's online" indicators, and collaborative editing in dozens of lines of code. This guide covers all three channel types — Postgres Changes, Presence, and Broadcast — with production-ready examples.

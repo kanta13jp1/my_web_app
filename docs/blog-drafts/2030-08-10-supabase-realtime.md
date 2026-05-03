@@ -1,7 +1,7 @@
 ---
 title: "Supabase Realtime 完全ガイド — Flutter で作るリアルタイム通知・プレゼンス・ブロードキャスト"
 tags: Supabase,Flutter,programming,webdev
-published: false
+published: true
 ---
 
 Supabase Realtime は PostgreSQL の変更を WebSocket でクライアントにプッシュする仕組みです。Flutter と組み合わせると、チャット・通知・オンライン状態表示・コラボ編集といった機能を数十行で実装できます。本記事では Postgres Changes、Presence、Broadcast の 3 種を実践コードとともに解説します。
