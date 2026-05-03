@@ -162,8 +162,9 @@ class _TechBlogTrackerPageState extends State<TechBlogTrackerPage> {
           }
           final targets = d['target_platforms'];
           if (targets is! List) return false;
-          return targets.any((t) =>
-              t != null && _normalizePlatformId(t.toString()) == platform);
+          return targets.any(
+            (t) => t != null && _normalizePlatformId(t.toString()) == platform,
+          );
         });
       } catch (_) {
         return null;
