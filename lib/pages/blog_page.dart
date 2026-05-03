@@ -13,6 +13,7 @@ class BlogPage extends StatefulWidget {
 class _BlogPageState extends State<BlogPage> {
   final _supabase = Supabase.instance.client;
   List<Map<String, dynamic>> _posts = [];
+  Map<String, Map<String, dynamic>> _engagement = {};
   bool _loading = true;
   String? _error;
   String _platformFilter = 'all';
@@ -40,17 +41,35 @@ class _BlogPageState extends State<BlogPage> {
       _error = null;
     });
     try {
-      final data = await _supabase
-          .from('blog_posts')
-          .select(
-            'id, title, content, excerpt, url, posted_at, published_at, created_at, target_platforms, tags, notes',
-          )
-          .eq('status', 'posted')
-          .order('posted_at', ascending: false)
-          .limit(100);
+      final results = await Future.wait([
+        _supabase
+            .from('blog_posts')
+            .select(
+              'id, title, content, excerpt, url, posted_at, published_at, created_at, target_platforms, tags, notes',
+            )
+            .eq('status', 'posted')
+            .order('posted_at', ascending: false)
+            .limit(100),
+        _supabase
+            .from('blog_engagement')
+            .select(
+              'platform, article_id, title, likes_count, views_count, comments_count, url',
+            )
+            .order('likes_count', ascending: false)
+            .limit(200),
+      ]);
       if (mounted) {
+        final posts = List<Map<String, dynamic>>.from(results[0] as List);
+        final engagement = Map<String, Map<String, dynamic>>.fromEntries(
+          (results[1] as List).map((e) {
+            final m = e as Map<String, dynamic>;
+            final key = '${m['platform']}_${m['article_id']}';
+            return MapEntry(key, m);
+          }),
+        );
         setState(() {
-          _posts = List<Map<String, dynamic>>.from(data as List);
+          _posts = posts;
+          _engagement = engagement;
           _loading = false;
         });
       }
@@ -261,10 +280,37 @@ class _BlogPageState extends State<BlogPage> {
       child: ListView.builder(
         padding: const EdgeInsets.all(16),
         itemCount: posts.length,
-        itemBuilder: (ctx, i) => _BlogCard(post: posts[i]),
+        itemBuilder: (ctx, i) => _BlogCard(
+          post: posts[i],
+          likes: _postMetric(posts[i], 'likes_count'),
+          views: _postMetric(posts[i], 'views_count'),
+          comments: _postMetric(posts[i], 'comments_count'),
+        ),
       ),
     );
   }
+
+  int _postMetric(Map<String, dynamic> post, String field) {
+    final url = post['url']?.toString() ?? '';
+    final segments = Uri.tryParse(url)?.pathSegments ?? const <String>[];
+    final slug = segments.isEmpty ? '' : segments.last;
+    for (final entry in _engagement.values) {
+      final engagementUrl = entry['url']?.toString() ?? '';
+      if (url.isNotEmpty && engagementUrl == url) {
+        return _asInt(entry[field]);
+      }
+      if (slug.isNotEmpty && engagementUrl.contains(slug)) {
+        return _asInt(entry[field]);
+      }
+    }
+    return 0;
+  }
+}
+
+int _asInt(dynamic value) {
+  if (value is int) return value;
+  if (value is num) return value.toInt();
+  return int.tryParse(value?.toString() ?? '') ?? 0;
 }
 
 String _blogPostExcerpt(Map<String, dynamic> post) {
@@ -285,7 +331,15 @@ String _blogPostExcerpt(Map<String, dynamic> post) {
 
 class _BlogCard extends StatelessWidget {
   final Map<String, dynamic> post;
-  const _BlogCard({required this.post});
+  final int likes;
+  final int views;
+  final int comments;
+  const _BlogCard({
+    required this.post,
+    required this.likes,
+    required this.views,
+    required this.comments,
+  });
 
   static const _orange = Color(0xFFFF6B35);
   static const _platformColors = {
@@ -316,6 +370,7 @@ class _BlogCard extends StatelessWidget {
         : <String>[];
     final excerpt = _blogPostExcerpt(post);
     final postId = post['id']?.toString() ?? '';
+    final hasMetrics = likes > 0 || views > 0 || comments > 0;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -430,32 +485,46 @@ class _BlogCard extends StatelessWidget {
                       .toList(),
                 ),
               ],
-              if (url.isNotEmpty) ...[
+              if (hasMetrics || url.isNotEmpty) ...[
                 const SizedBox(height: 10),
                 Row(
                   children: [
+                    if (likes > 0) ...[
+                      _metric(Icons.favorite_outline, _formatCount(likes)),
+                      const SizedBox(width: 10),
+                    ],
+                    if (views > 0) ...[
+                      _metric(Icons.visibility_outlined, _formatCount(views)),
+                      const SizedBox(width: 10),
+                    ],
+                    if (comments > 0) ...[
+                      _metric(Icons.chat_bubble_outline, '$comments'),
+                      const SizedBox(width: 10),
+                    ],
                     const Spacer(),
-                    const Icon(
-                      Icons.open_in_new,
-                      size: 14,
-                      color: Colors.white38,
-                    ),
-                    const SizedBox(width: 4),
-                    InkWell(
-                      onTap: () async {
-                        final uri = Uri.tryParse(url);
-                        if (uri != null) {
-                          await launchUrl(
-                            uri,
-                            mode: LaunchMode.externalApplication,
-                          );
-                        }
-                      },
-                      child: const Text(
-                        '外部で読む',
-                        style: TextStyle(color: Colors.white38, fontSize: 12),
+                    if (url.isNotEmpty) ...[
+                      const Icon(
+                        Icons.open_in_new,
+                        size: 14,
+                        color: Colors.white38,
                       ),
-                    ),
+                      const SizedBox(width: 4),
+                      InkWell(
+                        onTap: () async {
+                          final uri = Uri.tryParse(url);
+                          if (uri != null) {
+                            await launchUrl(
+                              uri,
+                              mode: LaunchMode.externalApplication,
+                            );
+                          }
+                        },
+                        child: const Text(
+                          '外部で読む',
+                          style: TextStyle(color: Colors.white38, fontSize: 12),
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ],
@@ -464,5 +533,25 @@ class _BlogCard extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Widget _metric(IconData icon, String value) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 14, color: Colors.white38),
+        const SizedBox(width: 3),
+        Text(
+          value,
+          style: const TextStyle(color: Colors.white38, fontSize: 12),
+        ),
+      ],
+    );
+  }
+
+  String _formatCount(int value) {
+    if (value >= 1000000) return '${(value / 1000000).toStringAsFixed(1)}M';
+    if (value >= 1000) return '${(value / 1000).toStringAsFixed(0)}K';
+    return '$value';
   }
 }

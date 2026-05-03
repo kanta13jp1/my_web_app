@@ -6,44 +6,8 @@
     "quality-cost",
     "schedule"
   ],
-  "changed_sources": [
-    {
-      "changed": true,
-      "error": null,
-      "first_seen": false,
-      "hash": "a349e452019207c9f236403724f30fcdf7612ffa7a8e048ebdfb469b5b442ba3",
-      "keyword_groups": {
-        "codex-runtime": [
-          "GPT-5.5",
-          "GPT-5.4",
-          "worktree"
-        ],
-        "quality-cost": [
-          "review",
-          "CI"
-        ],
-        "schedule": [
-          "automation",
-          "automations",
-          "schedule",
-          "workflow"
-        ]
-      },
-      "latest_signal": "AI Coding Partner from OpenAI",
-      "name": "Codex overview",
-      "owner": "Codex",
-      "previous_hash": "0ec1bde0f7b497e4d8f9319b97beef3fe8fcbc9446413f73861fce9def4c1e2e",
-      "slug": "codex-overview",
-      "snippets": [
-        "Designed for multi-agent workflows The Codex app is a command center for agentic coding.",
-        "With built-in worktrees and cloud environments, agents work in parallel across projects, completing weeks of work in days.",
-        "Made for always-on background work With Automations, Codex works unprompted, picking up routine but important work like issue triage, alert monitoring, CI/CD, and more, so you..."
-      ],
-      "status": 200,
-      "url": "https://openai.com/codex/"
-    }
-  ],
-  "checked_at": "2026-05-02T21:29:16Z",
+  "changed_sources": [],
+  "checked_at": "2026-05-03T21:29:48Z",
   "high_priority_groups": [
     "codex-runtime",
     "hooks",
@@ -95,7 +59,7 @@
     }
   },
   "issue": "1422",
-  "previous_checked_at": "2026-05-02T19:08:13Z",
+  "previous_checked_at": "2026-05-02T21:29:16Z",
   "sources": [
     {
       "changed": false,
@@ -370,7 +334,7 @@
       "url": "https://developers.openai.com/codex/use-cases/"
     },
     {
-      "changed": true,
+      "changed": false,
       "error": null,
       "first_seen": false,
       "hash": "a349e452019207c9f236403724f30fcdf7612ffa7a8e048ebdfb469b5b442ba3",
@@ -394,7 +358,7 @@
       "latest_signal": "AI Coding Partner from OpenAI",
       "name": "Codex overview",
       "owner": "Codex",
-      "previous_hash": "0ec1bde0f7b497e4d8f9319b97beef3fe8fcbc9446413f73861fce9def4c1e2e",
+      "previous_hash": "a349e452019207c9f236403724f30fcdf7612ffa7a8e048ebdfb469b5b442ba3",
       "slug": "codex-overview",
       "snippets": [
         "Designed for multi-agent workflows The Codex app is a command center for agentic coding.",
