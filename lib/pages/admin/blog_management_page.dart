@@ -270,6 +270,14 @@ class _BlogManagementPageState extends State<BlogManagementPage>
         ],
       ),
     );
+    final savedTitle = titleCtrl.text.trim();
+    final savedTags = tagsCtrl.text
+        .split(',')
+        .map((t) => t.trim())
+        .where((t) => t.isNotEmpty)
+        .take(4)
+        .toList();
+    final savedContent = contentCtrl.text;
     titleCtrl.dispose();
     tagsCtrl.dispose();
     contentCtrl.dispose();
@@ -281,14 +289,9 @@ class _BlogManagementPageState extends State<BlogManagementPage>
         body: {
           'action': 'blog.update_post',
           'id': id,
-          'title': titleCtrl.text.trim(),
-          'tags': tagsCtrl.text
-              .split(',')
-              .map((t) => t.trim())
-              .where((t) => t.isNotEmpty)
-              .take(4)
-              .toList(),
-          'content': contentCtrl.text,
+          'title': savedTitle,
+          'tags': savedTags,
+          'content': savedContent,
         },
       );
       if (!mounted) return;
@@ -463,9 +466,9 @@ class _BlogManagementPageState extends State<BlogManagementPage>
         ),
       ),
     );
-    final title = titleCtrl.text.trim();
-    final content = contentCtrl.text;
-    final tags = tagsCtrl.text
+    final savedNewTitle = titleCtrl.text.trim();
+    final savedNewContent = contentCtrl.text;
+    final savedNewTags = tagsCtrl.text
         .split(',')
         .map((t) => t.trim())
         .where((t) => t.isNotEmpty)
@@ -480,9 +483,9 @@ class _BlogManagementPageState extends State<BlogManagementPage>
         'schedule-hub',
         body: {
           'action': 'blog.insert_post',
-          'title': title,
-          'content': content,
-          'tags': tags,
+          'title': savedNewTitle,
+          'content': savedNewContent,
+          'tags': savedNewTags,
           'target_platforms': selectedPlatform.split(','),
           'status': 'draft',
         },
