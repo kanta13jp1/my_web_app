@@ -1,6 +1,6 @@
 ---
 title: "Indie Dev Pricing Strategy — Psychological Pricing, Freemium Design & Annual Plan Conversion"
-published: false
+published: true
 tags: indiedev, saas, startup, webdev
 canonical_url: null
 ---
