@@ -3,6 +3,8 @@ import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../services/blog_service.dart';
+
 class NewsRssAggregatorPage extends StatefulWidget {
   const NewsRssAggregatorPage({super.key});
 
@@ -12,16 +14,19 @@ class NewsRssAggregatorPage extends StatefulWidget {
 
 class _NewsRssAggregatorPageState extends State<NewsRssAggregatorPage> {
   final _supabase = Supabase.instance.client;
+  final _blogService = BlogService();
   final _urlCtrl = TextEditingController();
   final _titleCtrl = TextEditingController();
 
   bool _isLoading = true;
   bool _isAdding = false;
+  bool _isDrafting = false;
   String? _errorMessage;
   String _selectedCategory = '総合';
   DateTime? _lastFetchedAt;
   List<_NewsFeedSource> _personalFeeds = [];
   List<_NewsItem> _items = [];
+  List<_NewsItem> _signals = [];
 
   static const _accent = Color(0xFFE53935);
   static const _ink = Color(0xFF172033);
@@ -31,7 +36,7 @@ class _NewsRssAggregatorPageState extends State<NewsRssAggregatorPage> {
   static const _defaultFeeds = <_NewsFeedSource>[
     _NewsFeedSource(
       title: 'NHK NEWS WEB',
-      url: 'https://news.web.nhk/n-data/conf/na/rss/cat0.xml',
+      url: 'https://www3.nhk.or.jp/rss/news/cat0.xml',
       category: '総合',
     ),
     _NewsFeedSource(
@@ -78,7 +83,8 @@ class _NewsRssAggregatorPageState extends State<NewsRssAggregatorPage> {
           'action': 'rss.fetch_latest',
           'feeds': feeds.map((feed) => feed.toJson()).toList(),
           'per_feed_limit': 10,
-          'limit': 60,
+          'limit': 80,
+          'signal_limit': 24,
         },
       );
       if (response.status != 200) {
@@ -86,9 +92,14 @@ class _NewsRssAggregatorPageState extends State<NewsRssAggregatorPage> {
       }
       final data = response.data as Map<String, dynamic>? ?? {};
       final rawItems = data['items'] as List? ?? [];
+      final rawSignals = data['signals'] as List? ?? [];
       if (!mounted) return;
       setState(() {
         _items = rawItems
+            .whereType<Map>()
+            .map((item) => _NewsItem.fromJson(Map<String, dynamic>.from(item)))
+            .toList();
+        _signals = rawSignals
             .whereType<Map>()
             .map((item) => _NewsItem.fromJson(Map<String, dynamic>.from(item)))
             .toList();
@@ -105,7 +116,10 @@ class _NewsRssAggregatorPageState extends State<NewsRssAggregatorPage> {
   }
 
   Future<void> _loadPersonalFeeds() async {
-    if (_supabase.auth.currentUser == null) return;
+    if (_supabase.auth.currentUser == null) {
+      _personalFeeds = [];
+      return;
+    }
     try {
       final response = await _supabase.functions.invoke(
         'tools-hub',
@@ -161,6 +175,98 @@ class _NewsRssAggregatorPageState extends State<NewsRssAggregatorPage> {
     } finally {
       if (mounted) setState(() => _isAdding = false);
     }
+  }
+
+  Future<void> _createBlogDraftFromSignals() async {
+    if (_signals.isEmpty || _isDrafting) return;
+    if (_supabase.auth.currentUser == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('ブログ下書き化にはログインが必要です')),
+      );
+      return;
+    }
+    setState(() => _isDrafting = true);
+    try {
+      final signals = _signals.take(5).toList();
+      final lead = signals.first;
+      final response = await _blogService.insertPost(
+        title: _shortenTitle('ニュースシグナル: ${lead.title}', 80),
+        content: _buildBlogDraftMarkdown(signals),
+        targetPlatforms: const ['note', 'qiita', 'devto'],
+        tags: const ['AI', 'ニュース', '自動化', '外部脳'],
+        notes:
+            'Generated from news.signal_rank at ${DateTime.now().toIso8601String()}',
+      );
+      if (!mounted) return;
+      final post = response['post'] is Map ? response['post'] as Map : null;
+      final postId = post?['id']?.toString();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            postId == null ? 'ブログ下書きを作成しました' : 'ブログ下書きを作成しました: $postId',
+          ),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('ブログ下書き化に失敗しました: $e')),
+      );
+    } finally {
+      if (mounted) setState(() => _isDrafting = false);
+    }
+  }
+
+  String _buildBlogDraftMarkdown(List<_NewsItem> signals) {
+    final fetched = _lastFetchedAt == null
+        ? DateTime.now().toIso8601String()
+        : _lastFetchedAt!.toIso8601String();
+    final lead = signals.first;
+    final buffer = StringBuffer()
+      ..writeln('# ${lead.title}')
+      ..writeln()
+      ..writeln('> RSSニュースをAI外部脳の素材として取り込み、重要シグナルを抽出した下書きです。')
+      ..writeln()
+      ..writeln('- 取得時刻: $fetched')
+      ..writeln('- 主要カテゴリ: ${lead.category}')
+      ..writeln('- 初期信頼度: ${lead.confidence ?? 'unknown'}')
+      ..writeln()
+      ..writeln('## 要点')
+      ..writeln()
+      ..writeln(lead.summary.isEmpty ? '- 本文要約は公開前に追記する。' : '- ${lead.summary}')
+      ..writeln()
+      ..writeln('## 注目シグナル')
+      ..writeln();
+    for (final item in signals) {
+      buffer
+        ..writeln('### ${item.title}')
+        ..writeln()
+        ..writeln('- スコア: ${item.signalScore ?? 0}')
+        ..writeln('- 出典: ${item.source}')
+        ..writeln('- URL: ${item.url}')
+        ..writeln('- なぜ重要か: ${item.whyItMatters ?? '要確認'}')
+        ..writeln('- 検証メモ: ${item.verificationWarning ?? '一次情報を確認'}')
+        ..writeln();
+    }
+    buffer
+      ..writeln('## 公開前チェック')
+      ..writeln()
+      ..writeln('- 一次情報と公開日時を確認する')
+      ..writeln('- 固有名詞、金額、引用元を確認する')
+      ..writeln('- 投資・医療・法律など高リスク領域は断定表現を避ける')
+      ..writeln('- 関連する既存メモやブログ記事へリンクする')
+      ..writeln()
+      ..writeln('## 次の自動化')
+      ..writeln()
+      ..writeln('- raw/news に原文を保存')
+      ..writeln('- wiki/sources に要約を保存')
+      ..writeln('- blog_posts の draft を人間レビュー後に公開');
+    return buffer.toString();
+  }
+
+  String _shortenTitle(String value, int maxLength) {
+    if (value.length <= maxLength) return value;
+    return '${value.substring(0, maxLength - 3)}...';
   }
 
   List<String> get _categories {
@@ -223,24 +329,23 @@ class _NewsRssAggregatorPageState extends State<NewsRssAggregatorPage> {
                   ),
                 ),
               )
-            else
+            else ...[
               SliverToBoxAdapter(
                 child: Padding(
-                  padding: EdgeInsets.fromLTRB(
-                    isWide ? 32 : 16,
-                    16,
-                    isWide ? 32 : 16,
-                    48,
-                  ),
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
                   child: isWide
                       ? Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Expanded(flex: 5, child: _LeadStory(item: lead)),
+                            Expanded(flex: 3, child: _LeadStory(item: lead)),
                             const SizedBox(width: 16),
                             Expanded(
-                              flex: 4,
-                              child: _buildNewsList(rest),
+                              flex: 2,
+                              child: _SignalPanel(
+                                items: _signals,
+                                isDrafting: _isDrafting,
+                                onCreateDraft: _createBlogDraftFromSignals,
+                              ),
                             ),
                           ],
                         )
@@ -248,11 +353,29 @@ class _NewsRssAggregatorPageState extends State<NewsRssAggregatorPage> {
                           children: [
                             _LeadStory(item: lead),
                             const SizedBox(height: 12),
-                            _buildNewsList(rest),
+                            _SignalPanel(
+                              items: _signals,
+                              isDrafting: _isDrafting,
+                              onCreateDraft: _createBlogDraftFromSignals,
+                            ),
                           ],
                         ),
                 ),
               ),
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+                sliver: SliverList.separated(
+                  itemCount: rest.length,
+                  separatorBuilder: (_, __) => const Divider(
+                    height: 1,
+                    color: _border,
+                  ),
+                  itemBuilder: (context, index) => _NewsRow(
+                    item: rest[index],
+                  ),
+                ),
+              ),
+            ],
           ],
         ),
       ),
@@ -395,13 +518,6 @@ class _NewsRssAggregatorPageState extends State<NewsRssAggregatorPage> {
       ),
     );
   }
-
-  Widget _buildNewsList(List<_NewsItem> items) {
-    if (items.isEmpty) return const SizedBox.shrink();
-    return Column(
-      children: items.map((item) => _NewsRow(item: item)).toList(),
-    );
-  }
 }
 
 class _LeadStory extends StatelessWidget {
@@ -469,6 +585,129 @@ class _LeadStory extends StatelessWidget {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SignalPanel extends StatelessWidget {
+  const _SignalPanel({
+    required this.items,
+    required this.isDrafting,
+    required this.onCreateDraft,
+  });
+
+  final List<_NewsItem> items;
+  final bool isDrafting;
+  final VoidCallback onCreateDraft;
+
+  @override
+  Widget build(BuildContext context) {
+    final signals = items.take(5).toList();
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border.all(color: _NewsRssAggregatorPageState._border),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(
+                  Icons.auto_awesome,
+                  size: 18,
+                  color: _NewsRssAggregatorPageState._accent,
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  '注目シグナル',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w900,
+                      ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            if (signals.isEmpty)
+              const Text(
+                'ランキング対象がありません',
+                style: TextStyle(color: _NewsRssAggregatorPageState._muted),
+              )
+            else
+              ...signals.map(
+                (item) => Padding(
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: InkWell(
+                    onTap: () => _openUrl(item.url),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        SizedBox(
+                          width: 44,
+                          child: Text(
+                            '${item.signalScore ?? 0}',
+                            style: const TextStyle(
+                              color: _NewsRssAggregatorPageState._accent,
+                              fontWeight: FontWeight.w900,
+                              fontSize: 18,
+                            ),
+                          ),
+                        ),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                item.title,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w800,
+                                  height: 1.35,
+                                ),
+                              ),
+                              Text(
+                                item.whyItMatters ?? item.source,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  color: _NewsRssAggregatorPageState._muted,
+                                  fontSize: 12,
+                                  height: 1.35,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            const Divider(height: 20),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                onPressed: signals.isEmpty || isDrafting ? null : onCreateDraft,
+                icon: isDrafting
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : const Icon(Icons.edit_note),
+                label: const Text('ブログ下書き化'),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -603,31 +842,53 @@ class _NewsFeedSource {
 
 class _NewsItem {
   const _NewsItem({
+    required this.id,
     required this.title,
     required this.url,
     required this.source,
     required this.category,
     required this.summary,
     this.publishedAt,
+    this.signalScore,
+    this.confidence,
+    this.verificationWarning,
+    this.whyItMatters,
   });
 
+  final String id;
   final String title;
   final String url;
   final String source;
   final String category;
   final String summary;
   final DateTime? publishedAt;
+  final int? signalScore;
+  final String? confidence;
+  final String? verificationWarning;
+  final String? whyItMatters;
 
   factory _NewsItem.fromJson(Map<String, dynamic> json) {
     return _NewsItem(
-      title: json['title']?.toString() ?? '',
+      id: json['id']?.toString() ?? '',
+      title: json['title']?.toString() ?? '(無題)',
       url: json['url']?.toString() ?? '',
       source: json['source']?.toString() ?? 'RSS',
       category: json['category']?.toString() ?? '総合',
       summary: json['summary']?.toString() ?? '',
       publishedAt: DateTime.tryParse(json['published_at']?.toString() ?? ''),
+      signalScore: _intOrNull(json['signal_score']),
+      confidence: json['confidence']?.toString(),
+      verificationWarning: json['verification_warning']?.toString(),
+      whyItMatters: json['why_it_matters']?.toString(),
     );
   }
+}
+
+int? _intOrNull(Object? value) {
+  if (value == null) return null;
+  if (value is int) return value;
+  if (value is num) return value.round();
+  return int.tryParse(value.toString());
 }
 
 Future<void> _openUrl(String url) async {
