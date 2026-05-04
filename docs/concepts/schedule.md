@@ -12,15 +12,15 @@
 ## 出典 (= raw layer 言及あり / 直近 30 日)
 
 - [memory/project_20260420_ps4_s30.md](memory/project_20260420_ps4_s30.md)
-- [docs/competitor-reports/2026-03-30.md](docs/competitor-reports/2026-03-30.md)
-- [docs/competitor-reports/2026-04-08.md](docs/competitor-reports/2026-04-08.md)
-- [docs/competitor-reports/2026-04-09.md](docs/competitor-reports/2026-04-09.md)
-- [docs/competitor-reports/2026-04-10.md](docs/competitor-reports/2026-04-10.md)
-- [docs/competitor-reports/2026-04-11.md](docs/competitor-reports/2026-04-11.md)
 - [docs/competitor-reports/2026-04-18.md](docs/competitor-reports/2026-04-18.md)
+- [docs/competitor-reports/2026-04-09.md](docs/competitor-reports/2026-04-09.md)
 - [docs/competitor-reports/2026-04-26.md](docs/competitor-reports/2026-04-26.md)
-- [docs/competitor-reports/2026-04-28-claude-curated.md](docs/competitor-reports/2026-04-28-claude-curated.md)
+- [docs/competitor-reports/2026-04-10.md](docs/competitor-reports/2026-04-10.md)
 - [docs/competitor-reports/2026-05-01.md](docs/competitor-reports/2026-05-01.md)
+- [docs/competitor-reports/2026-04-28-claude-curated.md](docs/competitor-reports/2026-04-28-claude-curated.md)
+- [docs/competitor-reports/2026-03-30.md](docs/competitor-reports/2026-03-30.md)
+- [docs/competitor-reports/2026-05-03.md](docs/competitor-reports/2026-05-03.md)
+- [docs/competitor-reports/2026-04-08.md](docs/competitor-reports/2026-04-08.md)
 
 ## 関連
 

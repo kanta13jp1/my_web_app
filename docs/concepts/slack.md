@@ -11,16 +11,16 @@
 
 ## 出典 (= raw layer 言及あり / 直近 30 日)
 
-- [memory/project_20260420_ps4_s17.md](memory/project_20260420_ps4_s17.md)
 - [memory/project_20260420_ps4_s18.md](memory/project_20260420_ps4_s18.md)
-- [docs/competitor-reports/2026-03-28.md](docs/competitor-reports/2026-03-28.md)
-- [docs/competitor-reports/2026-03-30.md](docs/competitor-reports/2026-03-30.md)
-- [docs/competitor-reports/2026-03-31.md](docs/competitor-reports/2026-03-31.md)
-- [docs/competitor-reports/2026-04-01.md](docs/competitor-reports/2026-04-01.md)
-- [docs/competitor-reports/2026-04-02.md](docs/competitor-reports/2026-04-02.md)
+- [memory/project_20260420_ps4_s17.md](memory/project_20260420_ps4_s17.md)
+- [docs/competitor-reports/2026-05-02.md](docs/competitor-reports/2026-05-02.md)
+- [docs/competitor-reports/SCOREBOARD_2026-04-25.md](docs/competitor-reports/SCOREBOARD_2026-04-25.md)
 - [docs/competitor-reports/2026-04-03.md](docs/competitor-reports/2026-04-03.md)
-- [docs/competitor-reports/2026-04-04.md](docs/competitor-reports/2026-04-04.md)
+- [docs/competitor-reports/SCOREBOARD_2026-05-01.md](docs/competitor-reports/SCOREBOARD_2026-05-01.md)
 - [docs/competitor-reports/2026-04-05.md](docs/competitor-reports/2026-04-05.md)
+- [docs/competitor-reports/2026-05-04.md](docs/competitor-reports/2026-05-04.md)
+- [docs/competitor-reports/SCOREBOARD_2026-04-28.md](docs/competitor-reports/SCOREBOARD_2026-04-28.md)
+- [docs/competitor-reports/2026-04-30.md](docs/competitor-reports/2026-04-30.md)
 
 ## 関連
 

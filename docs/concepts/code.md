@@ -6,21 +6,21 @@
 
 ## 統計
 
-- 総出現 source 数: **112**
-- レイヤー別: competitor: 25, cs-notes: 67, daily-report: 12, incident: 2, memory: 6
+- 総出現 source 数: **113**
+- レイヤー別: competitor: 25, cs-notes: 67, daily-report: 12, incident: 2, memory: 7
 
 ## 出典 (= raw layer 言及あり / 直近 30 日)
 
-- [memory/project_20260417_win_web_disabled.md](memory/project_20260417_win_web_disabled.md)
-- [memory/project_20260420_ps4_s21.md](memory/project_20260420_ps4_s21.md)
 - [memory/project_20260420_ps4_s24.md](memory/project_20260420_ps4_s24.md)
-- [memory/project_20260503_win132_part115.md](memory/project_20260503_win132_part115.md)
+- [memory/project_20260417_win_web_disabled.md](memory/project_20260417_win_web_disabled.md)
 - [memory/project_20260503_win132_part119.md](memory/project_20260503_win132_part119.md)
 - [memory/project_20260503_win132_part121.md](memory/project_20260503_win132_part121.md)
-- [docs/competitor-reports/2026-03-28.md](docs/competitor-reports/2026-03-28.md)
+- [memory/project_20260503_win132_part115.md](memory/project_20260503_win132_part115.md)
+- [memory/project_20260505_win132_part136.md](memory/project_20260505_win132_part136.md)
+- [memory/project_20260420_ps4_s21.md](memory/project_20260420_ps4_s21.md)
+- [docs/competitor-reports/2026-05-02.md](docs/competitor-reports/2026-05-02.md)
 - [docs/competitor-reports/2026-04-03.md](docs/competitor-reports/2026-04-03.md)
-- [docs/competitor-reports/2026-04-06-ai-tech-trends.md](docs/competitor-reports/2026-04-06-ai-tech-trends.md)
-- [docs/competitor-reports/2026-04-06.md](docs/competitor-reports/2026-04-06.md)
+- [docs/competitor-reports/2026-04-30.md](docs/competitor-reports/2026-04-30.md)
 
 ## 関連
 

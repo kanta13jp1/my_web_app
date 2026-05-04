@@ -11,16 +11,16 @@
 
 ## 出典 (= raw layer 言及あり / 直近 30 日)
 
-- [memory/project_20260420_ps4_s17.md](memory/project_20260420_ps4_s17.md)
-- [memory/project_20260420_ps4_s18.md](memory/project_20260420_ps4_s18.md)
-- [memory/project_20260420_ps4_s19.md](memory/project_20260420_ps4_s19.md)
 - [memory/project_20260420_ps4_s20.md](memory/project_20260420_ps4_s20.md)
-- [memory/project_20260420_ps4_s21.md](memory/project_20260420_ps4_s21.md)
-- [memory/project_20260420_ps4_s22.md](memory/project_20260420_ps4_s22.md)
-- [memory/project_20260420_ps4_s25.md](memory/project_20260420_ps4_s25.md)
-- [memory/project_20260420_ps4_s26.md](memory/project_20260420_ps4_s26.md)
-- [memory/project_20260420_ps4_s27.md](memory/project_20260420_ps4_s27.md)
 - [memory/project_20260420_ps4_s28.md](memory/project_20260420_ps4_s28.md)
+- [memory/project_20260420_ps4_s26.md](memory/project_20260420_ps4_s26.md)
+- [memory/project_20260420_ps4_s22.md](memory/project_20260420_ps4_s22.md)
+- [memory/project_20260420_ps4_s19.md](memory/project_20260420_ps4_s19.md)
+- [memory/project_20260420_ps4_s27.md](memory/project_20260420_ps4_s27.md)
+- [memory/project_20260420_ps4_s18.md](memory/project_20260420_ps4_s18.md)
+- [memory/project_20260420_ps4_s17.md](memory/project_20260420_ps4_s17.md)
+- [memory/project_20260420_ps4_s25.md](memory/project_20260420_ps4_s25.md)
+- [memory/project_20260421_ps2_s18.md](memory/project_20260421_ps2_s18.md)
 
 ## 関連
 

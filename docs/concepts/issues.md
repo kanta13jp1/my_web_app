@@ -12,15 +12,15 @@
 ## 出典 (= raw layer 言及あり / 直近 30 日)
 
 - [docs/competitor-reports/2026-05-01.md](docs/competitor-reports/2026-05-01.md)
-- [docs/cs-notes/2026-04-12-15.md](docs/cs-notes/2026-04-12-15.md)
-- [docs/cs-notes/2026-04-12-16.md](docs/cs-notes/2026-04-12-16.md)
-- [docs/cs-notes/2026-04-12-17.md](docs/cs-notes/2026-04-12-17.md)
-- [docs/cs-notes/2026-04-12-20.md](docs/cs-notes/2026-04-12-20.md)
-- [docs/cs-notes/2026-04-13-00.md](docs/cs-notes/2026-04-13-00.md)
-- [docs/cs-notes/2026-04-13-11.md](docs/cs-notes/2026-04-13-11.md)
+- [docs/cs-notes/2026-05-04-06.md](docs/cs-notes/2026-05-04-06.md)
+- [docs/cs-notes/2026-04-28-07.md](docs/cs-notes/2026-04-28-07.md)
+- [docs/cs-notes/2026-04-25-08.md](docs/cs-notes/2026-04-25-08.md)
+- [docs/cs-notes/2026-05-04-04.md](docs/cs-notes/2026-05-04-04.md)
+- [docs/cs-notes/2026-05-02-06.md](docs/cs-notes/2026-05-02-06.md)
+- [docs/cs-notes/2026-04-25-23.md](docs/cs-notes/2026-04-25-23.md)
+- [docs/cs-notes/2026-05-03-13.md](docs/cs-notes/2026-05-03-13.md)
 - [docs/cs-notes/2026-04-18-20.md](docs/cs-notes/2026-04-18-20.md)
-- [docs/cs-notes/2026-04-19-00.md](docs/cs-notes/2026-04-19-00.md)
-- [docs/cs-notes/2026-04-20-19.md](docs/cs-notes/2026-04-20-19.md)
+- [docs/cs-notes/2026-04-28-23.md](docs/cs-notes/2026-04-28-23.md)
 
 ## 関連
 

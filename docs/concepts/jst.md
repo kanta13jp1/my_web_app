@@ -6,21 +6,21 @@
 
 ## 統計
 
-- 総出現 source 数: **65**
-- レイヤー別: cs-notes: 58, daily-report: 1, incident: 3, memory: 3
+- 総出現 source 数: **67**
+- レイヤー別: cs-notes: 58, daily-report: 1, incident: 3, memory: 5
 
 ## 出典 (= raw layer 言及あり / 直近 30 日)
 
 - [memory/project_20260503_win132_part119.md](memory/project_20260503_win132_part119.md)
 - [memory/project_20260503_win132_part120.md](memory/project_20260503_win132_part120.md)
 - [memory/project_20260503_win132_part123.md](memory/project_20260503_win132_part123.md)
-- [docs/cs-notes/2026-04-08-00.md](docs/cs-notes/2026-04-08-00.md)
-- [docs/cs-notes/2026-04-08-12.md](docs/cs-notes/2026-04-08-12.md)
-- [docs/cs-notes/2026-04-08-13.md](docs/cs-notes/2026-04-08-13.md)
+- [memory/project_20260505_win132_part136.md](memory/project_20260505_win132_part136.md)
+- [memory/project_20260505_win132_part137.md](memory/project_20260505_win132_part137.md)
+- [docs/cs-notes/2026-05-04-06.md](docs/cs-notes/2026-05-04-06.md)
+- [docs/cs-notes/2026-04-17-00.md](docs/cs-notes/2026-04-17-00.md)
+- [docs/cs-notes/2026-05-02-06.md](docs/cs-notes/2026-05-02-06.md)
+- [docs/cs-notes/2026-05-01-00.md](docs/cs-notes/2026-05-01-00.md)
 - [docs/cs-notes/2026-04-10-00.md](docs/cs-notes/2026-04-10-00.md)
-- [docs/cs-notes/2026-04-10-18.md](docs/cs-notes/2026-04-10-18.md)
-- [docs/cs-notes/2026-04-11-20.md](docs/cs-notes/2026-04-11-20.md)
-- [docs/cs-notes/2026-04-16-19.md](docs/cs-notes/2026-04-16-19.md)
 
 ## 関連
 

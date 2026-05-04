@@ -6,21 +6,21 @@
 
 ## 統計
 
-- 総出現 source 数: **67**
-- レイヤー別: competitor: 17, cs-notes: 34, daily-report: 5, memory: 11
+- 総出現 source 数: **70**
+- レイヤー別: competitor: 17, cs-notes: 34, daily-report: 5, memory: 14
 
 ## 出典 (= raw layer 言及あり / 直近 30 日)
 
-- [memory/project_20260420_ps4_s21.md](memory/project_20260420_ps4_s21.md)
-- [memory/project_20260420_ps4_s22.md](memory/project_20260420_ps4_s22.md)
-- [memory/project_20260420_ps4_s23.md](memory/project_20260420_ps4_s23.md)
 - [memory/project_20260420_ps4_s24.md](memory/project_20260420_ps4_s24.md)
-- [memory/project_20260425_win132_part29.md](memory/project_20260425_win132_part29.md)
-- [memory/project_20260503_win132_part115.md](memory/project_20260503_win132_part115.md)
-- [memory/project_20260503_win132_part117.md](memory/project_20260503_win132_part117.md)
-- [memory/project_20260503_win132_part118.md](memory/project_20260503_win132_part118.md)
+- [memory/project_20260505_win132_part138.md](memory/project_20260505_win132_part138.md)
+- [memory/project_20260420_ps4_s22.md](memory/project_20260420_ps4_s22.md)
 - [memory/project_20260503_win132_part120.md](memory/project_20260503_win132_part120.md)
+- [memory/project_20260504_win132_part131.md](memory/project_20260504_win132_part131.md)
+- [memory/project_20260503_win132_part117.md](memory/project_20260503_win132_part117.md)
+- [memory/project_20260425_win132_part29.md](memory/project_20260425_win132_part29.md)
 - [memory/project_20260504_win132_part130.md](memory/project_20260504_win132_part130.md)
+- [memory/project_20260503_win132_part115.md](memory/project_20260503_win132_part115.md)
+- [memory/project_20260420_ps4_s23.md](memory/project_20260420_ps4_s23.md)
 
 ## 関連
 

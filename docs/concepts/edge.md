@@ -11,16 +11,16 @@
 
 ## 出典 (= raw layer 言及あり / 直近 30 日)
 
-- [docs/competitor-reports/2026-03-30.md](docs/competitor-reports/2026-03-30.md)
-- [docs/competitor-reports/2026-03-31.md](docs/competitor-reports/2026-03-31.md)
-- [docs/competitor-reports/2026-04-01.md](docs/competitor-reports/2026-04-01.md)
-- [docs/competitor-reports/2026-04-02.md](docs/competitor-reports/2026-04-02.md)
-- [docs/competitor-reports/2026-04-05.md](docs/competitor-reports/2026-04-05.md)
-- [docs/competitor-reports/2026-04-06-ai-tech-trends.md](docs/competitor-reports/2026-04-06-ai-tech-trends.md)
-- [docs/competitor-reports/2026-04-06.md](docs/competitor-reports/2026-04-06.md)
 - [docs/competitor-reports/2026-05-02.md](docs/competitor-reports/2026-05-02.md)
-- [docs/cs-notes/2026-04-08-00.md](docs/cs-notes/2026-04-08-00.md)
-- [docs/cs-notes/2026-04-08-01.md](docs/cs-notes/2026-04-08-01.md)
+- [docs/competitor-reports/2026-04-05.md](docs/competitor-reports/2026-04-05.md)
+- [docs/competitor-reports/2026-04-02.md](docs/competitor-reports/2026-04-02.md)
+- [docs/competitor-reports/2026-03-31.md](docs/competitor-reports/2026-03-31.md)
+- [docs/competitor-reports/2026-04-06-ai-tech-trends.md](docs/competitor-reports/2026-04-06-ai-tech-trends.md)
+- [docs/competitor-reports/2026-03-30.md](docs/competitor-reports/2026-03-30.md)
+- [docs/competitor-reports/2026-04-01.md](docs/competitor-reports/2026-04-01.md)
+- [docs/competitor-reports/2026-04-06.md](docs/competitor-reports/2026-04-06.md)
+- [docs/cs-notes/2026-04-08-08.md](docs/cs-notes/2026-04-08-08.md)
+- [docs/cs-notes/2026-04-08-14.md](docs/cs-notes/2026-04-08-14.md)
 
 ## 関連
 
