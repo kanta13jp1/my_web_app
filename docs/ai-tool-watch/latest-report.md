@@ -1,12 +1,14 @@
 # AI Tool Watch Report
 
-- Checked at: `2026-05-03T21:29:48Z`
-- Previous check: `2026-05-02T21:29:16Z`
-- Changed/new official sources: `0`
+- Checked at: `2026-05-04T21:40:56Z`
+- Previous check: `2026-05-03T21:29:48Z`
+- Changed/new official sources: `3`
 - Active routing groups: `codex-runtime, hooks, integration, quality-cost, schedule`
 
 ## Session Start Summary
-- No official source hash changed since the previous check.
+- `changed` Claude Code hooks reference: Hooks reference - Claude Code Docs Skip to main content Claude Code Docs home page English
+- `changed` Codex changelog: 2026-04-30 / Codex CLI 0.128.0 pre
+- `changed` Codex use cases: Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoint
 
 ## Recommended Actions
 - **codex-runtime** (#1422, #1377, #1375, #1408): Route to Codex execution: use newer models for broad refactors, in-app browser for UI verification, and worktrees for parallel fixes.
