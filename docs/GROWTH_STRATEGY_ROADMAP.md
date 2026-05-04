@@ -26164,3 +26164,26 @@ a9d7b1517 on main
 ### Philosophy Alignment
 #1 CEO 感 (= User 共有信号を最優先取込) / #5 商品=ユーザー価値 (= 100x cost disruption 教科書例の AI 大学化) / #6 資本=時間 (= 1 X post → 3 軸 Issue 並列で fleet 加速) / #8 KPI=昨日の自分 (= 「もし伝統 SaaS 使っていたら」counterfactual KPI 候補)
 
+
+## 2026-05-04 (Win版#132 part 127) — Tome Deck Studio UI 全文日本語化
+
+### 完了
+- User screenshot で /tome-deck-studio が英語表示確認 → 即対応
+- 2 ファイル / +191 / -212 で全 UI + 3 シナリオ deck 内容を日本語化
+  - lib/pages/tome_deck_studio_page.dart: AppBar / SegmentedButton / Source panel / SnackBar / Tome outline / Visual / 備考 / pages 表記 / 初期 controller text / `_sourceLabel`+`_scenarioTopic`+`_scenarioAudience`+`_scenarioSource`
+  - lib/services/tome_deck_studio_service.dart: 3 シナリオ deck 全 17 ページ (= title/narrative/visualDirection/blocks/speakerNote) + plan title/kgi/csf/kpi/automationNotes/tomePrompt + buildMarkdown header + sourceHint 定数 + `_defaultTopic`+`_defaultAudience`
+- 「緊急 / 高 / 監視 / 当面無視」(= threat ranking) UX 自然訳採用
+- Brand keywords (Tome/Airtable/KGI/CSF/KPI/WBS/RLHF) は英語維持
+- dart format + flutter analyze (No issues / 2 items) / commit `868176274` → rebase `1785813d6`
+
+### Phase 6 進化観察 (= 第 15 例)
+- 「User UI 異常 1 画面 → 2 ファイル深層 localization」即対応 pattern 第 1 例
+- 54 part 連続 dogfood
+
+### 次回候補
+- 他 page で同様 hard-coded 英語 audit (`grep Text\('[A-Z]` 全 page 走査)
+- AppLocalizations + .arb migration Issue 起票 (= 多言語化 infra)
+
+### Philosophy Alignment
+#1 CEO 感 (= User screenshot 報告に即対応) / #5 商品=ユーザー価値 (= 日本人ユーザーへの母語表示) / #6 資本=時間 (= 1 セッションで 2 ファイル深層 localization 完遂)
+
