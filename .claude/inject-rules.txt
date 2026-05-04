@@ -1,0 +1,69 @@
+RULES (毎ターン inject / pointer hub / 詳細展開 = docs/RULES_INDEX.md):
+
+# A. Critical (= 動作 rule)
+
+[INSTANCE] (part 130 / 2 instance 制) セッション冒頭で「Win版 (Claude Code) / Win版 (Codex CLI)」確認必須. 旧 instance (PS#1-6 / VSCode版 / WEB版 / スマホ版 / Codex#1 / Codex#2) は dormant. 詳細: docs/MULTI_INSTANCE_FLEET.md
+
+[DART-FORMAT] Dart 編集後: dart format <abs-path> --set-exit-if-changed → flutter analyze 0 → push. 絶対パス + pipe なし必須 (Win cygwin hang 回避 / PS#3 S26 教訓). 詳細: docs/RULES_INDEX.md
+
+[REBASE] push 前: git fetch origin main && git log HEAD..origin/main --oneline で衝突検知. 並行 push なら git stash → pull --rebase → stash pop → 手動解決. 1 bash invoke で完結.
+
+[WORKDIR-ISOLATION] (part 130 / 2 instance) 全 instance 別 worktree 必須. main repo 直接編集禁止 (push target only). Win Claude = .claude/worktrees/<part-name> / Win Codex = .claude/worktrees/instance-codex. 旧 12 instance dormant. 詳細: docs/MULTI_INSTANCE_FLEET.md
+
+[STASH-SAFETY] git stash 禁止 → WIP commit 推奨 (commit -m "WIP" → rebase → reset HEAD~1). uncommitted 変更 10 分以上維持禁止. Edit→format→analyze→add→commit を 1 Bash invoke で完結.
+
+[CAVEMAN] 通信スタイル: 記事/filler/pleasantries/hedging 削除 fragments OK. ただし code/commit/security の中身は normal で書く.
+
+[WBS-SYNC] (Win#128) 全 instance 毎セッション wbs.priority_for_instance で TOP 5 取得 + wbs.update_progress で更新必須. WBS: my-web-app-b67f4.web.app/project-gantt
+
+[INSTANCE-ROLES] (part 130 / 2 instance) Win Claude = architect/設計/docs/memory/UI design/triage/AI 大学/競合/mobile UAT/動画 / Win Codex = 実装/修正PR/SQL/EF Deno/GHA/T-1 dispatch/競馬/Karpathy Compile-Lint. Codex 振分 5 質問 (docs/CODEX_WORKFLOW.md §6) で 1 つでも YES = Win Claude / 全 NO = Win Codex. SLA: Issue → 24h triage. 詳細: docs/RULES_INDEX.md
+
+[CONCURRENCY] (Win#109) deploy-prod/dev/staging cancel-in-progress: false. 並行 push でも全 commit 順次 deploy. 後発 push 最大 11min × 並行数 待機.
+
+[AUTO-REPLY] 任意 auto-reply (Qiita/dev.to/Slack/Discord) は author == 自分 で必ず skip + MAX_REPLIES_PER_ARTICLE/RUN cap 併設. comment_id ベースは bot 自己ループ検出不能.
+
+# B. Principle docs pointer (= 13 rule / 数字は N+/M ✅実装可)
+[PHILOSOPHY-22] 9 原則チェック必須 (新機能設計時 / 7+/9 ✅) → docs/PHILOSOPHY.md
+[AI-DEV-23] 7 原則チェック必須 (新 AI 機能 / 6+/7 ✅) → docs/AI_DEV_PRINCIPLES.md
+[AI-CHARACTER-24] 8 原則チェック必須 (AI ペルソナ機能 / 7+/8 ✅) → docs/AI_CHARACTER_PRINCIPLES.md
+[IMBUE-25] 7 パターンチェック必須 (AI/UI で CEO 感保てる体験 / 6+/7 ✅) → docs/IMBUE_PATTERNS.md
+[COLLAB-26] 7 パターンチェック必須 (人間と協働進化 AI / 6+/7 ✅) → docs/COLLAB_AI_PATTERNS.md
+[MCP-AUTH-27] 10 原則チェック必須 (MCP server 公開 / 10/10 必須 deny-by-default) → docs/MCP_AUTH_SECURITY_PRINCIPLES.md
+[AI-VIDEO-29] 6 原則チェック必須 (合成メディア/アバター/動画 / 6/6 必須) → docs/AI_VIDEO_PRINCIPLES.md
+[VIBE-30] 7 原則チェック必須 (Production AI 開発全般 / 7/7 推奨 / 4-で CEO レビュー強化) → docs/VIBE_CODING_PRINCIPLES.md
+[PLATFORM-31] 7 原則チェック必須 (プラットフォーム進化 / 7/7 推奨) → docs/PLATFORM_EVOLUTION_PRINCIPLES.md
+[BRAIN-32] 7 原則チェック必須 (PKM インフラ / memory file 追加 PR で 7/7 推奨) → docs/SECOND_BRAIN_PRINCIPLES.md
+[INDIE-29] 7 原則チェック必須 (indie 開発 shipping / 5+/7 推奨) → docs/INDIE_DEV_VELOCITY_PRINCIPLES.md
+[SYNERGY-30] 7 原則チェック必須 (fleet 横断 / cross-instance-pr / 5+/7 推奨) → docs/AI_FLEET_SYNERGY_PLAYBOOK.md
+[OPS-28] 5 正本 + 6 AI 役割 + 5 監査チェック必須 (毎セッション運用憲章) → docs/OPERATIONS_CHARTER.md
+# C. Behavioral 1-line (= 15 rule / 詳細は docs/RULES_INDEX.md §C)
+
+[ROADMAP-LOG] docs/GROWTH_STRATEGY_ROADMAP.md 毎セッション末尾追記必須 (instance + session# + サマリ + commit hash + Philosophy Alignment).
+
+[ISSUE-PRECHECK] 起票前 gh issue list --search "<8文字notebook_id> in:title" で重複確認. 1+ open ならコメント merge / 0 で起票. 違反検知: scripts/notebooklm_issue_crosscheck.py.
+
+[REAL-DATA] ダミーデータ禁止 — Supabase リアルデータ使用. 例外: テスト widget catalog のみ const data 可.
+
+[EF-FIRST] 複雑ロジックは EF へ. Flutter widget は表示+操作のみ. 既存 hub に action 追加が最優先.
+
+[EF-CAP-50] deploy-prod EF 数 ≤ 50. 新機能 = 既存 hub action 追加 [最優先] / hub 統合 / 統合後 50 以下なら新規可.
+
+[NO-SCOPE-CREEP] 明示依頼ない機能勝手に追加禁止. 「ついでに〜」NG (TODO に書いて別 session). 例外: docs 1 行修正 / 誤字訂正.
+
+[UI-VERIFY] 毎セッション 本番 UI チェック (home/AI 大学/LP/ranking を Web+モバイル). 自動: Playwright MCP screenshot + design-skills.
+
+[CONSTRAINT-LOG] 新制約即記録 — docs/instance-constraints.md + docs/cross-instance-prs/<date>_constraint.md + memory/feedback_correction_<date>.md.
+
+[SCHEDULE-WAKEUP] (PS#3 S26 教訓) 深夜 JST 02:00-06:00 wakeup 禁止 / 3h+ idle で wrap-up / 7h+ idle = 暴走 / delaySeconds ≤ 1800 / 「user input なし 2 回連続」= 停止サイン.
+
+[COMPACTION-RESUME] (PS#3 S26 教訓) compaction 後セッションは 90min 以内 wrap-up + 終了. 新規大規模タスク詰込禁止 (= 再 compaction ループ).
+
+[DYNAMIC-CLAIM] primary no-op 時 wbs.rebalance_suggest → claim_task → 作業 → update_progress. 上限 1 session 2 件. 引き取り可: marketing/docs/seo/product-light. 禁止: business-legal/urgent/IPO.
+
+[WBS-DEDUP] (PS#2 S29 2026-04-25 発見) codex 451 / user 154 tasks に 9+ 重複. 原因: migration 20260425203000 cartesian INSERT. 修正担当: Win Claude. PR: docs/cross-instance-prs/20260425_wbs_dedup_fix.md.
+
+[MEMORY-DECAY] (Win#130) 全 memory file に YYYYMMDD timestamp 必須 / 同主題は shadow (上書き禁止) / 30+ 日経過 reference 0 で consolidate / feedback_correction_* は absolute keep / MEMORY.md 1 行サマリ / 200+ entries で MEMORY_<period>.md 分割 / 月 1 cleanup は Win Claude (consolidate-memory skill).
+
+[FLEET-OPS] 5 正本 (Issues/PR / WBS+Notion / NotebookLM / Slack / worktree+branch). 作業開始時: 担当重複 / file・schema・EF・workflow 競合 / 5 正本不一致 / 通知形骸化 / 他 AI 活用余地を確認.
+
+> 詳細展開 (= 全 37 rule の full body / 違反例 / 関連 docs link): docs/RULES_INDEX.md (= part 134 で新規)
