@@ -26242,3 +26242,28 @@ a9d7b1517 on main
 ### Philosophy Alignment
 #1 CEO 感 (= User screenshot 即対応) / #5 商品=ユーザー価値 (= 統一地方選 700 必達 mission の dashboard 可読性回復) / #6 資本=時間 (= 1 ファイル + 1 commit で完遂)
 
+
+## 2026-05-04 (Win版#132 part 130) — Fleet 12 → 2 instance 縮小 + HDD/memory 削減
+
+### 完了
+- User 要望: 「メモリ/token 制約のため Claude Code 1 + Codex 1 = 2 instance 制」+「HDD 削減常時検討」
+- Phase 1 (manifest): docs/MULTI_INSTANCE_FLEET.md 全面 rewrite (229→140行) + docs/FLEET_2_INSTANCE_TRANSITION.md 新規
+- Phase 2 (core): inject-rules.txt 372→344行 (= [INSTANCE]/[WORKDIR-ISOLATION]/[INSTANCE-ROLES] 3 rule 縮小) + CLAUDE.md instance 表 2 行化
+- Phase 3 (principle): docs/AI_FLEET_SYNERGY_PLAYBOOK.md (= 12→2 instance 全 6 箇所) + docs/AI_FALLBACK_RUNBOOK.md (= fallback 表 5→2 行)
+- Phase 4 (handoff): docs/cross-instance-prs/20260504_fleet_consolidation_to_2_instances.md 起票 + [Issue #1984 (P1)](https://github.com/kanta13jp1/my_web_app/issues/1984) HDD 削減
+
+### Phase 6 進化観察 (= 第 18 例 / 57 part 連続 dogfood)
+- 「fleet contract 大規模 doc rewrite」pattern 第 1 例 (= 12→2 instance 移行)
+- 「dormant 化 = 物理削除しない / 履歴保持」migration 安全 default 確立
+- Plan mode 採用 4 連続 (= part 123/127/128/130)
+- inject-rules 28 行短縮で 1 セッション 11k+ token/day 削減効果
+
+### 次回候補
+- 残 ~510 doc lazy update (= 重要 principle docs 優先)
+- skill description 更新 (= 6 skill の所有者 2 instance 化)
+- #1984 HDD 削減 script 実装 (= Win Codex)
+- #1974 CLAUDE.md 80 行達成 (= 464 → 80 行 / 5x 圧縮)
+
+### Philosophy Alignment
+#1 CEO 感 (= User 制約宣言を最優先 / Plan mode 経由) / #6 資本=時間 (= 12 instance 並列管理コスト撤廃 / inject-rules 短縮で 11k+ token/day 削減) / #7 資産負債 (= 旧 12 instance 物理保持で reactivation 容易性 / dormant は負債ではなく将来の資産)
+

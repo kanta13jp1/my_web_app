@@ -80,12 +80,12 @@ UIコンポーネントを新規作成・修正する際は、以下のファイ
 | `[AUTO-REPLY]` | author == 自分 で必ず skip + cap | — |
 | `[DART-FORMAT]` | dart format → flutter analyze 0 → push | Rule 1 + 2 |
 | `[REBASE]` | git fetch + log 確認 → pull --rebase | — |
-| `[WORKDIR-ISOLATION]` | **10 Claude + 2 Codex = 12 スロット fleet** 別 worktree 必須 (canonical: docs/MULTI_INSTANCE_FLEET.md) | — |
+| `[WORKDIR-ISOLATION]` | **2 instance 制 (Win Claude + Win Codex)** 別 worktree 必須 / 旧 12 instance dormant (canonical: docs/MULTI_INSTANCE_FLEET.md) | — |
 | `[STASH-SAFETY]` | git stash 危険・WIP commit 推奨 | — |
 | `[CAVEMAN]` | 通信 fragments OK・code は normal | — |
 | `[MEMORY-DECAY]` | memory/ タイムスタンプ + shadow + cleanup | — |
 | `[WBS-SYNC]` | 毎セッション wbs.priority_for_instance + update_progress | — |
-| `[INSTANCE-ROLES]` | **12 スロット (10 Claude + 2 Codex) 役割分担** — Codex#1=横断調査/修正PR, Codex#2=CI/同期/運用 (詳細 docs/MULTI_INSTANCE_FLEET.md) | — |
+| `[INSTANCE-ROLES]` | **2 instance 役割分担** — Win Claude=architect/docs/triage / Win Codex=実装/SQL/EF/GHA (詳細 docs/MULTI_INSTANCE_FLEET.md) | — |
 | `[CONCURRENCY]` | deploy-prod cancel-in-progress: false | — |
 | `[ROADMAP-LOG]` | docs/GROWTH_STRATEGY_ROADMAP.md 毎セッション末尾追記 | Rule 3 |
 | `[REAL-DATA]` | ダミーデータ禁止・Supabase リアルデータ使用 | Rule 4 |
@@ -110,8 +110,8 @@ UIコンポーネントを新規作成・修正する際は、以下のファイ
 ### 手動チェック (skill 化) — hook では強制せず
 
 - `/session-start-check` (Rule 14 + 10 + 並行衝突)
-- `/rule17-wf-health` (Rule 9 — PS版#1 専任)
-- `/blog-publish-cleanup` (T-1 関連 — PS版#2 専任)
+- `/rule17-wf-health` (Rule 9 — Win Claude 担当 / 旧 PS版#1 専任から統合)
+- `/blog-publish-cleanup` (T-1 関連 — Win Claude 担当 / 旧 PS版#2 統合)
 - `/wrap-up` (Rule 3 + Philosophy Alignment + 次回タスク提案)
 
 ---
@@ -136,15 +136,14 @@ Anthropic API outage 時も他 AI で開発継続可能な体制を確立する�
 
 ### インスタンス別 推奨モデル / 制約表
 
-| インスタンス | 推奨モデル | 推奨モード | 作業ディレクトリ | 主な制約 |
+**現行 2 instance 制 (Win版#132 part 130 / 2026-05-04 〜)**
+
+| インスタンス | 推奨モデル | 推奨モード | 作業ディレクトリ | 主担当領域 |
 | --- | --- | --- | --- | --- |
-| **VSCode版** | `claude-haiku-4-5` (Auto Mode) | 通常 (重い設計は sonnet-4-6 に一時切替可) | `.claude/worktrees/instance-vscode` | UI/design 専任 |
-| **Windowsアプリ版** | `claude-haiku-4-5` (Auto Mode) | 通常 + CAVEMAN節約 | `.claude/worktrees/instance-win` | `PYTHONUTF8=1` 必須 |
-| **PowerShell版 #1-6** | ルーティン: `claude-haiku-4-5` / 設計: `claude-sonnet-4-6` | `/fast` (定型作業) | `.claude/worktrees/instance-ps1` ... `instance-ps6` | 各PS固定担当 |
-| **WEB版** | `claude-sonnet-4-6` (変更不可の場合あり) | 通常 | GitHub MCP のみ | `notebooklm` / `flutter analyze` / `deno lint` / ローカルCLI **不可** |
-| **📱 スマホ版** | `claude-sonnet-4-6` | 通常 (画像分析重視) | GitHub MCP のみ | ローカルCLI **不可** / git/dart/flutter **不可** / **GitHub MCP のみ** で git 操作。**実機 UAT・モバイル不具合トリアージ専用** |
-| **Codex#1** | OpenAI Codex CLI | 横断調査・修正PR・レビュー補助 | `.claude/worktrees/instance-codex1` (`codex/codex1-wip`) | SQL / migration レビュー補助。PS#3 / Win版 補助 |
-| **Codex#2** | OpenAI Codex CLI | CI・同期・運用・EF/GHA補助 | `.claude/worktrees/instance-codex2` (`codex/codex2-wip`) | EF(Deno) / algorithm / GHA補助。PS#1/#5/#6 補助 |
+| **Win版 (Claude Code)** | `claude-opus-4-7` (1M ctx) / `claude-sonnet-4-6` / `claude-haiku-4-5` (Auto Mode) | 通常 + CAVEMAN 節約 | `.claude/worktrees/<part-name>` (= part 毎自動) | architect / 設計 / docs / memory / UI design / Rule17 WF health / triage / AI 大学 / 競合 / mobile UAT / 動画 pipeline (`PYTHONUTF8=1` 必須) |
+| **Win版 (Codex CLI)** | OpenAI Codex CLI 0.128.0+ (Memory GA) | task 毎 worktree | `.claude/worktrees/instance-codex` | 実装 / 修正PR / SQL・migration / EF Deno / GHA workflow / EF整理 / T-1 dispatch / 競馬モデル / Karpathy Compile/Lint cycle |
+
+旧 12 instance (PS#1-6 / VSCode版 / WEB版 / スマホ版 / Codex#1 / Codex#2) は **dormant** (= worktree 残存 / 新作業停止). 詳細・reactivation 手順は [`docs/MULTI_INSTANCE_FLEET.md`](docs/MULTI_INSTANCE_FLEET.md).
 
 **Worktree 運用ルール (ローカル編集インスタンス必須)**:
 - セッション開始時: `cd C:/Users/kanta/GitHub/my_web_app/.claude/worktrees/instance-<name>` で作業開始
