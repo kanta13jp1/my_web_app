@@ -2786,8 +2786,18 @@ function sireDistanceAffinityBonus(
   const sire = String(topEntry.sire ?? "").trim();
   const dist = numericOrFallback(raceDistance, 0);
   if (!sire || !dist) return 0;
-  const sprintSires = ["ロードカナロア", "サクラバクシンオー", "タイキシャトル", "ビッグアーサー"];
-  const stayerSires = ["ハービンジャー", "マンハッタンカフェ", "ゴールドシップ", "ジャングルポケット"];
+  const sprintSires = [
+    "ロードカナロア",
+    "サクラバクシンオー",
+    "タイキシャトル",
+    "ビッグアーサー",
+  ];
+  const stayerSires = [
+    "ハービンジャー",
+    "マンハッタンカフェ",
+    "ゴールドシップ",
+    "ジャングルポケット",
+  ];
   const isSprint = dist <= 1400;
   const isRoute = dist >= 2000;
   if (isSprint && sprintSires.some((s) => sire.includes(s))) return 0.01; // スプリント血統×短距離: 適性一致
