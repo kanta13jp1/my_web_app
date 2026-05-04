@@ -26459,3 +26459,47 @@ a9d7b1517 on main
 ### Philosophy Alignment
 #1 CEO 感 (= User 指示 即 Plan → 即実装) / #6 資本=時間 (= 手動 sync 工数ゼロ化 / 修復まで auto) / #7 資産負債 (= 多層 defense は資産 / 単層は負債) / #8 KPI=昨日の自分 (= part 135 検出 only → 136 修復 auto = 連続改善)
 
+
+## 2026-05-05 (Win版#132 part 137) — Tier 2 Windows Task install + setup script bugfix
+
+### 完了
+- User 指示「Tier 2 setup を user に依頼: powershell -File scripts/setup_inject_rules_auto_sync.ps1 -Install 1 度実行」 → Win Claude が **PowerShell tool 直接呼出で代行実行** (= dogfood)
+- **Phase A**: 初回実行 → `Register-ScheduledTask : The parameter is incorrect. (20,8):UserId:` 失敗発覚
+  - 原因: `New-ScheduledTaskPrincipal -UserId $env:USERNAME` で `$env:USERNAME = "kanta"` 単独はダメ. `Register-ScheduledTask` は **DOMAIN\USER** 形式 (= `KANTA\kanta`) を要求
+  - 副次問題: script が registration 失敗後も `Write-Host "INSTALLED"` 表示 → false-positive
+- **Phase B**: `scripts/setup_inject_rules_auto_sync.ps1` 修正
+  - `$userId = "$env:USERDOMAIN\$env:USERNAME"` (= `KANTA\kanta`)
+  - `Register-ScheduledTask` を `try/catch` + `-ErrorAction Stop` で wrap
+  - registration 後 `Get-ScheduledTask -TaskName $TaskName` 確認 / 不在なら `exit 5`
+- **Phase C**: 再実行成功 → `[OK] Task 'JibunKK-InjectRulesAutoSync' INSTALLED (verified).` / Next run 2026-05-05 03:30 JST 確認
+- commit `7fd5c585a` fix(infra): Tier 2 UserId DOMAIN\USER + verify-after-register (1 file / +18 / -4)
+
+### Phase 6 進化観察 (= 第 25 例 / 64 part 連続 dogfood)
+- 「自分で書いた script を自分で実行 → bug 発覚 → 即修正」dogfood loop 第 1 例
+- 「PowerShell tool 経由で Win Claude が Win 環境を直接操作する pattern」第 N 例
+- Plan mode は本 part スキップ (= 「実行 + 即時 bugfix」simple operation)
+
+### 学び
+1. `Register-ScheduledTask UserId` は **DOMAIN\USER 形式必須** (= `$env:USERNAME` 単独 NG / PowerShell 5.1 / Windows 11)
+2. 全 register 系 cmdlet は **registration 後 Get-* で再確認** (= verify-after-write pattern / false-positive 防止)
+3. `try/catch` + `-ErrorAction Stop` で確実に exception 拾う
+4. 「重い変更は plan / 軽い fix は inline」が Phase 6 成熟期 template
+
+### 動作確認状況
+| Tier | 状態 | 確認方法 |
+| --- | --- | --- |
+| Tier 1 (SessionStart hook) | 設定済 | next session 起動時に発火 (= `memory/inject-rules-sync/sync-YYYYMMDD.log`) |
+| **Tier 2 (Windows Task)** | **INSTALLED + verified ✅** (= 本 part) | `setup_inject_rules_auto_sync.ps1 -Status` |
+| Tier 3 (GHA workflow) | 設定済 | weekly 月曜 03:00 JST 自動 + workflow_dispatch |
+
+### 次回候補
+- 2026-05-05 03:30 JST に Tier 2 Task 実行確認 (= cron log 確認)
+- next session で Tier 1 hook 動作確認 (= sync log 確認)
+- 「PowerShell tool tip」を `docs/instance-constraints.md` に記録
+- #1975 SECOND_BRAIN_PRINCIPLES Karpathy 取込
+- #1977 wiki-skills 4 slash command
+- #1984 HDD 削減 worktree cleanup script
+
+### Philosophy Alignment
+#1 CEO 感 (= User 指示 即 PowerShell tool 代行実行) / #6 資本=時間 (= bug 発覚 → 即修正で同セッション完結) / #7 資産負債 (= verify-after-write pattern 確立 = 資産 / silent failure = 負債) / #8 KPI=昨日の自分 (= part 136 設計 → 137 動作確認 → bug → fix = 連続改善)
+
