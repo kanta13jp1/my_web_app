@@ -1178,38 +1178,39 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        '最新の実データ',
-                        style:
-                            Theme.of(context).textTheme.titleMedium?.copyWith(
-                                  fontWeight: FontWeight.w700,
-                                ),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        hasSnapshot
-                            ? '公式議員ページと2023年の公式選挙結果ページを取得して、'
-                                'AIで各県連の現職人数・目標擁立数・予定選挙数・公認期限を自動更新します。'
-                            : 'まだ最新データを取得できていません。'
-                                'ネット経由で公式ソースを再取得すると、'
-                                '計画値とのズレを把握できます。',
-                        style: Theme.of(context).textTheme.bodySmall,
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Wrap(
+            LayoutBuilder(
+              builder: (context, constraints) {
+                // Win版#132 part 129: 9 ボタンの Wrap が無制限幅で
+                // 「最新の実データ」テキスト Expanded を 0 幅に潰し、
+                // 縦書き 1 文字 / 行に崩れる bug の修正.
+                // 900px 以上なら横並び (= Row + Flexible 5:7) /
+                // 未満なら縦積み (= Column / 旧来の挙動).
+                final wide = constraints.maxWidth >= 900;
+                final textColumn = Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '最新の実データ',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w700,
+                          ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      hasSnapshot
+                          ? '公式議員ページと2023年の公式選挙結果ページを取得して、'
+                              'AIで各県連の現職人数・目標擁立数・予定選挙数・公認期限を自動更新します。'
+                          : 'まだ最新データを取得できていません。'
+                              'ネット経由で公式ソースを再取得すると、'
+                              '計画値とのズレを把握できます。',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  ],
+                );
+                final actionWrap = Wrap(
                   spacing: 8,
                   runSpacing: 8,
-                  alignment: WrapAlignment.end,
+                  alignment: wide ? WrapAlignment.end : WrapAlignment.start,
                   children: [
                     OutlinedButton.icon(
                       onPressed: _copyPublicDashboardLink,
@@ -1291,8 +1292,26 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                       label: Text(_isRealityLoading ? '取得中' : '最新取得'),
                     ),
                   ],
-                ),
-              ],
+                );
+                if (wide) {
+                  return Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Flexible(flex: 5, child: textColumn),
+                      const SizedBox(width: 12),
+                      Flexible(flex: 7, child: actionWrap),
+                    ],
+                  );
+                }
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    textColumn,
+                    const SizedBox(height: 12),
+                    actionWrap,
+                  ],
+                );
+              },
             ),
             if (realitySnapshot != null) ...[
               const SizedBox(height: 12),
