@@ -96,6 +96,135 @@ function asString(value: unknown, fallback = ""): string {
   return typeof value === "string" ? value.trim() : fallback;
 }
 
+function asRecord(value: unknown): Record<string, unknown> | null {
+  return typeof value === "object" && value !== null && !Array.isArray(value)
+    ? value as Record<string, unknown>
+    : null;
+}
+
+function asStringList(value: unknown, fallback: string[]): string[] {
+  return Array.isArray(value)
+    ? value.map((item) => String(item).trim()).filter(Boolean)
+    : fallback;
+}
+
+function defaultNewsSignalFeeds(): Array<Record<string, string>> {
+  return [
+    {
+      title: "NHK NEWS WEB",
+      url: "https://www3.nhk.or.jp/rss/news/cat0.xml",
+      category: "総合",
+    },
+    {
+      title: "ITmedia NEWS",
+      url: "https://rss.itmedia.co.jp/rss/2.0/news_bursts.xml",
+      category: "IT",
+    },
+    {
+      title: "ITmedia AI+",
+      url: "https://rss.itmedia.co.jp/rss/2.0/aiplus.xml",
+      category: "AI",
+    },
+    {
+      title: "CNET Japan",
+      url: "http://feed.japan.cnet.com/rss/index.rdf",
+      category: "IT",
+    },
+  ];
+}
+
+async function fetchNewsSignalsForDraft(
+  body: Record<string, unknown>,
+): Promise<Record<string, unknown>> {
+  const url = `${SUPABASE_URL.replace(/\/$/, "")}/functions/v1/tools-hub`;
+  const feeds = Array.isArray(body.feeds) && body.feeds.length > 0
+    ? body.feeds
+    : defaultNewsSignalFeeds();
+  const res = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...(SUPABASE_ANON_KEY ? { apikey: SUPABASE_ANON_KEY } : {}),
+      ...(SERVICE_ROLE_KEY
+        ? { Authorization: `Bearer ${SERVICE_ROLE_KEY}` }
+        : {}),
+    },
+    body: JSON.stringify({
+      action: "rss.fetch_latest",
+      feeds,
+      per_feed_limit: Number(body.per_feed_limit ?? 10),
+      limit: Number(body.limit ?? 80),
+      signal_limit: Number(body.signal_limit ?? 8),
+    }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(`tools-hub rss.fetch_latest failed: ${res.status}`);
+  }
+  return asRecord(data) ?? {};
+}
+
+function newsSignalTitle(signal: Record<string, unknown>): string {
+  return asString(signal.title, "(無題)");
+}
+
+function shortenNewsDraftTitle(value: string, maxLength = 80): string {
+  return value.length <= maxLength
+    ? value
+    : `${value.slice(0, Math.max(1, maxLength - 3))}...`;
+}
+
+function buildNewsSignalDraftMarkdown(
+  signals: Record<string, unknown>[],
+  fetchedAt: string,
+): string {
+  const lead = signals[0] ?? {};
+  const leadSummary = asString(lead.summary);
+  const lines = [
+    `# ${newsSignalTitle(lead)}`,
+    "",
+    "> RSSニュースをAI外部脳の素材として取り込み、重要シグナルを抽出した自動下書きです。",
+    "",
+    `- 取得時刻: ${fetchedAt}`,
+    `- 主要カテゴリ: ${asString(lead.category, "総合")}`,
+    `- 初期信頼度: ${asString(lead.confidence, "unknown")}`,
+    "",
+    "## 要点",
+    "",
+    leadSummary ? `- ${leadSummary}` : "- 本文要約は公開前に追記する。",
+    "",
+    "## 注目シグナル",
+    "",
+  ];
+  for (const signal of signals) {
+    lines.push(
+      `### ${newsSignalTitle(signal)}`,
+      "",
+      `- スコア: ${String(signal.signal_score ?? 0)}`,
+      `- 出典: ${asString(signal.source, "RSS")}`,
+      `- URL: ${asString(signal.url)}`,
+      `- なぜ重要か: ${asString(signal.why_it_matters, "要確認")}`,
+      `- 検証メモ: ${asString(signal.verification_warning, "一次情報を確認")}`,
+      "",
+    );
+  }
+  lines.push(
+    "## 公開前チェック",
+    "",
+    "- 一次情報と公開日時を確認する",
+    "- 固有名詞、金額、引用元を確認する",
+    "- 投資・医療・法律など高リスク領域は断定表現を避ける",
+    "- 関連する既存メモやブログ記事へリンクする",
+    "",
+    "## 次の自動化",
+    "",
+    "- raw/news に原文を保存",
+    "- wiki/sources に要約を保存",
+    "- blog_posts の draft を人間レビュー後に公開",
+  );
+  return lines.join("\n");
+}
+
 function normalizeNotionId(value: unknown): string {
   const raw = asString(value);
   if (!raw) return "";
@@ -1331,6 +1460,104 @@ serve(async (req: Request) => {
           .single();
         if (insErr) return json({ error: insErr.message }, 500);
         return json({ success: true, post: newPost });
+      }
+
+      case "blog.news_signal_draft": {
+        const force = Boolean(body.force ?? false);
+        const signalData = await fetchNewsSignalsForDraft(body);
+        const rawSignals = Array.isArray(signalData.signals)
+          ? signalData.signals
+          : [];
+        const signals = rawSignals
+          .map((signal) => asRecord(signal))
+          .filter((signal): signal is Record<string, unknown> =>
+            signal !== null
+          )
+          .slice(0, Math.min(Math.max(Number(body.signal_limit ?? 5), 1), 12));
+        if (signals.length === 0) {
+          return json({
+            success: true,
+            created: false,
+            reason: "no_signals",
+            fetched_at: signalData.fetched_at ?? null,
+          });
+        }
+
+        const fetchedAt = asString(
+          signalData.fetched_at,
+          new Date().toISOString(),
+        );
+        const topKey = asString(signals[0].id) ||
+          asString(signals[0].cluster_key) ||
+          newsSignalTitle(signals[0]);
+        const dedupeKey = asString(
+          body.dedupe_key,
+          `news-signal:${fetchedAt.slice(0, 10)}:${topKey}`,
+        );
+        if (!force) {
+          const { data: existing, error: existingErr } = await admin
+            .from("blog_posts")
+            .select("id, title, status, created_at")
+            .ilike("notes", `%AI_NEWS_SIGNAL_DRAFT_KEY=${dedupeKey}%`)
+            .limit(1)
+            .maybeSingle();
+          if (existingErr) return json({ error: existingErr.message }, 500);
+          if (existing) {
+            return json({
+              success: true,
+              created: false,
+              duplicate: true,
+              post: existing,
+              dedupe_key: dedupeKey,
+            });
+          }
+        }
+
+        const title = shortenNewsDraftTitle(
+          asString(body.title) ||
+            `ニュースシグナル: ${newsSignalTitle(signals[0])}`,
+        );
+        const content = buildNewsSignalDraftMarkdown(signals, fetchedAt);
+        const targetPlatforms = asStringList(body.target_platforms, [
+          "note",
+          "qiita",
+          "devto",
+        ]);
+        const tags = asStringList(body.tags, [
+          "AI",
+          "ニュース",
+          "自動化",
+          "外部脳",
+        ]);
+        const notes = [
+          `AI_NEWS_SIGNAL_DRAFT_KEY=${dedupeKey}`,
+          `Generated from schedule-hub blog.news_signal_draft at ${
+            new Date().toISOString()
+          }`,
+          asString(body.notes),
+        ].filter(Boolean).join("\n");
+        const { data: newPost, error: insertErr } = await admin
+          .from("blog_posts")
+          .insert({
+            title,
+            content,
+            notes,
+            status: "draft",
+            target_platforms: targetPlatforms,
+            tags,
+            ...(userId ? { created_by: userId } : {}),
+          })
+          .select("id, title, status, created_at")
+          .single();
+        if (insertErr) return json({ error: insertErr.message }, 500);
+        return json({
+          success: true,
+          created: true,
+          post: newPost,
+          dedupe_key: dedupeKey,
+          signal_count: signals.length,
+          fetched_at: fetchedAt,
+        });
       }
       // Win版#132 part 124: 過去 dispatch 済の dev.to + Qiita 記事を hub_data に backfill する.
       // 既存の T-1 dispatch (= part 124 fix 前) は hub_data に記録されていないため、
