@@ -123,6 +123,46 @@ jobs:
           } > issue_body.md
           gh issue create --title "$TITLE" --label "automation,enhancement,priority:high" --body-file issue_body.md
 
+      - name: Detect canonical update + comment to tracking Issue (Tier 3)
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Win版#132 part 136 — Tier 3: canonical 更新検出 → tracking Issue へ「local sync 推奨」コメント
+          # 直近の commit (= origin/main HEAD) と origin/main HEAD~1 の .claude/inject-rules.txt 差分比較
+          PREV_HASH=$(git rev-parse HEAD~1 2>/dev/null || echo "")
+          CURR_HASH=$(git rev-parse HEAD)
+          if [ -z "$PREV_HASH" ]; then
+            echo "No previous commit — skip diff"
+            exit 0
+          fi
+          DIFF_OUTPUT=$(git diff "$PREV_HASH" "$CURR_HASH" -- .claude/inject-rules.txt 2>/dev/null || echo "")
+          if [ -z "$DIFF_OUTPUT" ]; then
+            echo "canonical not updated since last commit — no notification"
+            exit 0
+          fi
+          echo "canonical updated detected (diff $(echo "$DIFF_OUTPUT" | wc -l) lines)"
+          TODAY=$(date -u '+%Y-%m-%d')
+          {
+            echo "📡 inject-rules.txt canonical updated ($TODAY $(date -u '+%H:%M UTC'))"
+            echo ""
+            echo "\`HEAD~1\` ($PREV_HASH) → \`HEAD\` ($CURR_HASH) で \`.claude/inject-rules.txt\` 更新検出."
+            echo ""
+            echo "**各 instance の手元 sync 推奨**:"
+            echo ""
+            echo '```bash'
+            echo "git pull origin main"
+            echo "PYTHONUTF8=1 python scripts/sync_inject_rules.py --apply"
+            echo '```'
+            echo ""
+            echo "auto-sync 設定済 instance は次セッション開始時に SessionStart hook (Tier 1) で自動修復される."
+            echo "Codex CLI / 長時間 idle instance は Windows Task Scheduler (Tier 2) で daily 03:30 JST に自動修復."
+            echo ""
+            echo "詳細: \`docs/INJECT_RULES_AUTO_SYNC.md\` (= Tier 1-3 defense in depth / Win版#132 part 136)"
+          } > update_comment.md
+          gh issue comment 1647 --body-file update_comment.md || true
+          echo "✅ canonical update notified to #1647"
+
       - name: Strict mode exit
         if: steps.verify.outputs.kpi_pass != 'True' && inputs.strict == 'true'
         run: exit 1
