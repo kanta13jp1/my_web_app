@@ -33,9 +33,9 @@ void main() {
     expect(plan.kpi['visual_blocks'], 5);
     expect(
       plan.pages.map((page) => page.title),
-      contains('Infographic export'),
+      contains('インフォグラフィック書き出し'),
     );
-    expect(plan.automationNotes.join('\n'), contains('quiz failures'));
+    expect(plan.automationNotes.join('\n'), contains('クイズ失敗'));
   });
 
   test('parses Airtable-style rows for competitor deck issue 758', () {
@@ -53,7 +53,7 @@ void main() {
     expect(plan.liveIntegrationReady, isFalse);
     expect(plan.kpi['airtable_rows_used'], 3);
     expect(plan.pages.first.narrative, contains('Tome, Gamma, Airtable'));
-    expect(markdown, contains('Automation Notes'));
+    expect(markdown, contains('自動化メモ'));
     expect(markdown, contains('Airtable'));
   });
 }
