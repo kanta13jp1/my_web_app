@@ -3785,7 +3785,10 @@ function buildHistoricalBaselinePrediction(
   const wtChangeCourse = weightChangeCourseSuitBonus(first);
   const prev3AvgFinish = prev3AvgFinishBonus(first);
   const prev2FormGap = prev2FormGapBonus(first);
-  const courseSurfaceMatch = courseSurfaceMatchBonus(first, race.course_type);
+  const courseSurfaceMatch = courseSurfaceMatchBonus(
+    first,
+    raceCtx.courseType ?? "",
+  );
   const fieldWeightRank = fieldWeightRankBonus(first, entries);
   const consec3Top = consecutiveTopThreeBonus(first);
   const popShift = popularityShiftBonus(first);

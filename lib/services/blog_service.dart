@@ -38,12 +38,14 @@ class BlogService {
     required String title,
     required String content,
     List<String> targetPlatforms = const ['qiita', 'devto'],
+    List<String> tags = const [],
     String notes = '',
   }) async {
     return _invoke('blog.insert_post', {
       'title': title,
       'content': content,
       'target_platforms': targetPlatforms,
+      'tags': tags,
       'notes': notes,
     });
   }
@@ -53,12 +55,14 @@ class BlogService {
     String? title,
     String? content,
     List<String>? targetPlatforms,
+    List<String>? tags,
     String? notes,
   }) async {
     final params = <String, dynamic>{'id': id};
     if (title != null) params['title'] = title;
     if (content != null) params['content'] = content;
     if (targetPlatforms != null) params['target_platforms'] = targetPlatforms;
+    if (tags != null) params['tags'] = tags;
     if (notes != null) params['notes'] = notes;
     await _invoke('blog.update_post', params);
   }

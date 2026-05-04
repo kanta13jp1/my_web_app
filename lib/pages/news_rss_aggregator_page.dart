@@ -1,5 +1,7 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../services/blog_service.dart';
 
@@ -14,7 +16,9 @@ class _NewsRssAggregatorPageState extends State<NewsRssAggregatorPage> {
   final _supabase = Supabase.instance.client;
   final _blogService = BlogService();
   final _urlCtrl = TextEditingController();
-  bool _isLoading = false;
+  final _titleCtrl = TextEditingController();
+
+  bool _isLoading = true;
   bool _isAdding = false;
   bool _isDrafting = false;
   String? _errorMessage;
@@ -55,25 +59,24 @@ class _NewsRssAggregatorPageState extends State<NewsRssAggregatorPage> {
   @override
   void initState() {
     super.initState();
-    _fetchFeeds();
+    _loadNews();
   }
 
   @override
   void dispose() {
     _urlCtrl.dispose();
+    _titleCtrl.dispose();
     super.dispose();
   }
 
-  Future<void> _fetchFeeds() async {
-    if (_supabase.auth.currentUser == null) {
-      setState(() => _isLoading = false);
-      return;
-    }
+  Future<void> _loadNews() async {
     setState(() {
       _isLoading = true;
       _errorMessage = null;
     });
     try {
+      await _loadPersonalFeeds();
+      final feeds = [..._defaultFeeds, ..._personalFeeds];
       final response = await _supabase.functions.invoke(
         'tools-hub',
         body: {
@@ -84,11 +87,8 @@ class _NewsRssAggregatorPageState extends State<NewsRssAggregatorPage> {
           'signal_limit': 24,
         },
       );
-      final data = response.data;
-      if (data is Map<String, dynamic> && data['feeds'] is List) {
-        setState(() => _feeds = data['feeds'] as List);
-      } else {
-        setState(() => _feeds = []);
+      if (response.status != 200) {
+        throw Exception('HTTP ${response.status}: ${response.data}');
       }
       final data = response.data as Map<String, dynamic>? ?? {};
       final rawItems = data['items'] as List? ?? [];
@@ -108,9 +108,8 @@ class _NewsRssAggregatorPageState extends State<NewsRssAggregatorPage> {
         );
       });
     } catch (e) {
-      if (mounted) {
-        setState(() => _errorMessage = 'フィード取得に失敗しました: $e');
-      }
+      if (!mounted) return;
+      setState(() => _errorMessage = 'ニュース取得に失敗しました: $e');
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -148,21 +147,31 @@ class _NewsRssAggregatorPageState extends State<NewsRssAggregatorPage> {
 
   Future<void> _addFeed() async {
     final url = _urlCtrl.text.trim();
-    if (url.isEmpty) return;
+    if (url.isEmpty || _isAdding) return;
     setState(() => _isAdding = true);
     try {
-      await _supabase.functions.invoke(
+      final title =
+          _titleCtrl.text.trim().isEmpty ? url : _titleCtrl.text.trim();
+      final response = await _supabase.functions.invoke(
         'tools-hub',
-        body: {'action': 'rss.add_feed', 'url': url, 'title': url},
+        body: {
+          'action': 'rss.add_feed',
+          'url': url,
+          'title': title,
+          'category': '購読',
+        },
       );
-      _urlCtrl.clear();
-      await _fetchFeeds();
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('追加失敗: $e')),
-        );
+      if (response.status != 200) {
+        throw Exception('HTTP ${response.status}: ${response.data}');
       }
+      _urlCtrl.clear();
+      _titleCtrl.clear();
+      await _loadNews();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('フィード追加に失敗しました: $e')),
+      );
     } finally {
       if (mounted) setState(() => _isAdding = false);
     }
@@ -272,37 +281,51 @@ class _NewsRssAggregatorPageState extends State<NewsRssAggregatorPage> {
 
   @override
   Widget build(BuildContext context) {
+    final isWide = MediaQuery.of(context).size.width >= 900;
+    final items = _filteredItems;
+    final lead = items.isNotEmpty ? items.first : null;
+    final rest = lead == null ? <_NewsItem>[] : items.skip(1).toList();
+
     return Scaffold(
+      backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
-        title: const Text('ニュース・RSS'),
-        backgroundColor: const Color(0xFFFF6B35),
-        foregroundColor: Colors.white,
+        title: const Text(
+          'ニュース',
+          style: TextStyle(fontWeight: FontWeight.w800),
+        ),
+        backgroundColor: Colors.white,
+        foregroundColor: _ink,
+        elevation: 0,
+        scrolledUnderElevation: 1,
+        surfaceTintColor: Colors.transparent,
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
-            onPressed: _isLoading ? null : _fetchFeeds,
+            tooltip: '更新',
+            onPressed: _isLoading ? null : _loadNews,
           ),
         ],
       ),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
-            child: Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _urlCtrl,
-                    decoration: const InputDecoration(
-                      hintText: 'RSS フィード URL を追加...',
-                      prefixIcon: Icon(Icons.rss_feed),
-                      border: OutlineInputBorder(),
-                      contentPadding: EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 8,
-                      ),
-                    ),
-                    onSubmitted: (_) => _addFeed(),
+      body: RefreshIndicator(
+        onRefresh: _loadNews,
+        child: CustomScrollView(
+          slivers: [
+            SliverToBoxAdapter(child: _buildHeader()),
+            SliverToBoxAdapter(child: _buildCategoryTabs()),
+            if (_errorMessage != null)
+              SliverToBoxAdapter(child: _buildError())
+            else if (_isLoading)
+              const SliverFillRemaining(
+                hasScrollBody: false,
+                child: Center(child: CircularProgressIndicator()),
+              )
+            else if (lead == null)
+              const SliverFillRemaining(
+                hasScrollBody: false,
+                child: Center(
+                  child: Text(
+                    '配信できるニュースがありません',
+                    style: TextStyle(color: _muted),
                   ),
                 ),
               )
@@ -392,6 +415,8 @@ class _NewsRssAggregatorPageState extends State<NewsRssAggregatorPage> {
                 ),
             ],
           ),
+          const SizedBox(height: 12),
+          _buildFeedInput(),
         ],
       ),
     );
