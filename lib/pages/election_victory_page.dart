@@ -1294,12 +1294,17 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                   ],
                 );
                 if (wide) {
+                  // Win版#132 part 138: Flexible (= FlexFit.loose) では
+                  // actionWrap の Wrap intrinsic width (= 8 ボタン単行 ≈1500px)
+                  // が textColumn の share を 0 近くまで奪い、
+                  // 縦書き 1 文字 / 行に再崩れする (= part 129 再発).
+                  // Expanded (= FlexFit.tight) で 5:7 share を強制割当する.
                   return Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Flexible(flex: 5, child: textColumn),
+                      Expanded(flex: 5, child: textColumn),
                       const SizedBox(width: 12),
-                      Flexible(flex: 7, child: actionWrap),
+                      Expanded(flex: 7, child: actionWrap),
                     ],
                   );
                 }
