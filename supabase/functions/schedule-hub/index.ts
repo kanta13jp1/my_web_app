@@ -1325,6 +1325,7 @@ serve(async (req: Request) => {
               ? body.target_platforms
               : ["qiita", "devto"],
             tags: Array.isArray(body.tags) ? body.tags : [],
+            ...(userId ? { created_by: userId } : {}),
           })
           .select("id, title, status, created_at")
           .single();

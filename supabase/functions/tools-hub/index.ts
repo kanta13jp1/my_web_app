@@ -1,4 +1,4 @@
-// tools-hub — 個人生産性ツール統合EF
+﻿// tools-hub — 個人生産性ツール統合EF
 // Merges (30 EFs): password-generator, password-vault, currency-converter,
 //   weather-widget, qr-code-generator, markdown-renderer, pomodoro-timer,
 //   focus-timer, clipboard-history, quick-note, goal-tracker, contact-manager,
@@ -1429,6 +1429,321 @@ async function addItem(
     .select("id, metadata, created_at").single();
   if (error) throw new Error(error.message);
   return data;
+}
+
+type RssFeedInput = {
+  title: string;
+  url: string;
+  category: string;
+};
+
+type RssNewsItem = {
+  title: string;
+  url: string;
+  source: string;
+  category: string;
+  published_at: string;
+  summary: string;
+};
+
+type RankedNewsItem = RssNewsItem & {
+  id: string;
+  fetched_at: string;
+  cluster_key: string;
+  signal_score: number;
+  confidence: "high" | "medium" | "low";
+  why_it_matters: string;
+  verification_warning: string;
+};
+
+function decodeXmlEntities(value: string): string {
+  return value
+    .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(
+      /&#x([0-9a-fA-F]+);/g,
+      (_, hex) => String.fromCharCode(parseInt(hex, 16)),
+    )
+    .replace(
+      /&#([0-9]+);/g,
+      (_, code) => String.fromCharCode(parseInt(code, 10)),
+    )
+    .trim();
+}
+
+function stripHtml(value: string): string {
+  return decodeXmlEntities(value.replace(/<[^>]+>/g, " "))
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function extractXmlTag(xml: string, tag: string): string {
+  const match = xml.match(
+    new RegExp(`<${tag}[^>]*>([\\s\\S]*?)</${tag}>`, "i"),
+  );
+  return match ? decodeXmlEntities(match[1]) : "";
+}
+
+function parseRssItems(
+  xml: string,
+  feed: RssFeedInput,
+  perFeedLimit: number,
+): RssNewsItem[] {
+  const blocks = xml.match(/<item[\s\S]*?<\/item>|<entry[\s\S]*?<\/entry>/gi) ??
+    [];
+  const items: RssNewsItem[] = [];
+  for (const block of blocks.slice(0, perFeedLimit)) {
+    const title = stripHtml(extractXmlTag(block, "title"));
+    const linkMatch = block.match(/<link[^>]+href=["']([^"']+)["'][^>]*\/?>/i);
+    const url = decodeXmlEntities(
+      extractXmlTag(block, "link") || linkMatch?.[1] || "",
+    );
+    const published = extractXmlTag(block, "pubDate") ||
+      extractXmlTag(block, "published") ||
+      extractXmlTag(block, "updated");
+    const summary = stripHtml(
+      extractXmlTag(block, "description") ||
+        extractXmlTag(block, "summary") ||
+        extractXmlTag(block, "content"),
+    );
+    if (!title || !url) continue;
+    items.push({
+      title,
+      url,
+      source: feed.title,
+      category: feed.category,
+      published_at: published,
+      summary: summary.length > 220 ? `${summary.slice(0, 220)}...` : summary,
+    });
+  }
+  return items;
+}
+
+async function fetchRssNewsItems(
+  feed: RssFeedInput,
+  perFeedLimit: number,
+): Promise<RssNewsItem[]> {
+  const res = await fetch(feed.url, {
+    headers: {
+      "User-Agent":
+        "my-web-app-news-reader/1.0 (+https://my-web-app-b67f4.web.app)",
+    },
+  }).catch(() => null);
+  if (!res || !res.ok) return [];
+  const xml = await res.text();
+  return parseRssItems(xml, feed, perFeedLimit);
+}
+
+function normalizeRssFeedInputs(value: unknown): RssFeedInput[] {
+  const rawFeeds = Array.isArray(value) ? value : [];
+  const seen = new Set<string>();
+  const feeds: RssFeedInput[] = [];
+  for (const raw of rawFeeds) {
+    const feed = asRecord(raw);
+    if (!feed) continue;
+    const url = String(feed.url ?? "").trim();
+    if (!/^https?:\/\//i.test(url) || seen.has(url)) continue;
+    seen.add(url);
+    feeds.push({
+      title: String(feed.title ?? feed.name ?? "RSS").trim() || "RSS",
+      url,
+      category: String(feed.category ?? "総合").trim() || "総合",
+    });
+  }
+  return feeds.slice(0, 20);
+}
+
+function stableNewsHash(value: string): string {
+  let hash = 0;
+  for (let i = 0; i < value.length; i += 1) {
+    hash = ((hash << 5) - hash + value.charCodeAt(i)) | 0;
+  }
+  return Math.abs(hash).toString(36);
+}
+
+function normalizePublishedAt(value: string): string {
+  const parsed = Date.parse(value || "");
+  return Number.isFinite(parsed) ? new Date(parsed).toISOString() : "";
+}
+
+function newsClusterKey(item: RssNewsItem): string {
+  const normalizedTitle = item.title
+    .toLowerCase()
+    .replace(/[^\p{Letter}\p{Number}]+/gu, " ")
+    .trim()
+    .slice(0, 80);
+  return `${item.source}:${normalizedTitle}`;
+}
+
+function sourceConfidence(source: string): number {
+  const trustedSources = [
+    "NHK",
+    "ITmedia",
+    "CNET",
+    "Yahoo",
+    "Reuters",
+    "Bloomberg",
+    "Nikkei",
+    "日経",
+  ];
+  return trustedSources.some((name) => source.includes(name)) ? 1 : 0.72;
+}
+
+function keywordSignalScore(text: string): number {
+  const keywords = [
+    "AI",
+    "生成AI",
+    "Claude",
+    "OpenAI",
+    "Codex",
+    "決算",
+    "提携",
+    "買収",
+    "規制",
+    "セキュリティ",
+    "障害",
+    "新機能",
+    "発表",
+    "速報",
+    "価格",
+    "投資",
+    "市場",
+    "選挙",
+    "不正",
+  ];
+  return keywords.reduce(
+    (score, keyword) =>
+      text.toLowerCase().includes(keyword.toLowerCase()) ? score + 5 : score,
+    0,
+  );
+}
+
+function freshnessScore(publishedAt: string): number {
+  const parsed = Date.parse(publishedAt || "");
+  if (!Number.isFinite(parsed)) return 8;
+  const ageHours = Math.max(0, (Date.now() - parsed) / 36e5);
+  if (ageHours <= 6) return 28;
+  if (ageHours <= 24) return 22;
+  if (ageHours <= 72) return 14;
+  return 6;
+}
+
+function newsWhyItMatters(text: string, category: string): string {
+  const lower = text.toLowerCase();
+  if (
+    lower.includes("claude") || lower.includes("openai") || lower.includes("ai")
+  ) {
+    return "AI活用、プロダクト改善、ブログ下書き化の候補として優先確認";
+  }
+  if (text.includes("選挙") || text.includes("不正") || text.includes("規制")) {
+    return "公共性が高く、一次情報確認と時系列整理が必要";
+  }
+  if (text.includes("決算") || text.includes("投資") || text.includes("市場")) {
+    return "市場変化の兆候としてKPI/競合レポートに転用可能";
+  }
+  return `${category}カテゴリの更新として、要約と関連タスク化を検討`;
+}
+
+function rankNewsSignals(rawItems: unknown, limit = 30): RankedNewsItem[] {
+  const values = Array.isArray(rawItems) ? rawItems : [];
+  const deduped = new Map<string, RankedNewsItem>();
+  for (const raw of values) {
+    const item = asRecord(raw);
+    if (!item) continue;
+    const title = String(item.title ?? "").trim();
+    const url = String(item.url ?? item.link ?? "").trim();
+    if (!title || !url) continue;
+    const source = String(item.source ?? "RSS").trim() || "RSS";
+    const category = String(item.category ?? "総合").trim() || "総合";
+    const publishedAt = normalizePublishedAt(String(item.published_at ?? ""));
+    const summary = String(item.summary ?? item.description ?? "").trim();
+    const base: RssNewsItem = {
+      title,
+      url,
+      source,
+      category,
+      published_at: publishedAt,
+      summary,
+    };
+    const text = `${title} ${summary}`;
+    const clusterKey = newsClusterKey(base);
+    const score = Math.round(
+      sourceConfidence(source) * 34 + freshnessScore(publishedAt) +
+        Math.min(28, keywordSignalScore(text)) +
+        (summary.length > 80 ? 10 : 4),
+    );
+    const confidence = score >= 72 ? "high" : score >= 54 ? "medium" : "low";
+    const ranked: RankedNewsItem = {
+      ...base,
+      id: `news_${stableNewsHash(`${source}|${url}|${title}`)}`,
+      fetched_at: String(item.fetched_at ?? ""),
+      cluster_key: clusterKey,
+      signal_score: Math.min(100, score),
+      confidence,
+      why_it_matters: newsWhyItMatters(text, category),
+      verification_warning: confidence === "low"
+        ? "低信頼または鮮度不明のため、一次情報で確認してから配信"
+        : "公開前に一次情報、日時、固有名詞を再確認",
+    };
+    const existing = deduped.get(clusterKey);
+    if (!existing || ranked.signal_score > existing.signal_score) {
+      deduped.set(clusterKey, ranked);
+    }
+  }
+  return [...deduped.values()]
+    .sort((a, b) => b.signal_score - a.signal_score)
+    .slice(0, Math.max(1, Math.min(100, Number(limit) || 30)));
+}
+
+async function fetchLatestNewsItems(body: Record<string, unknown>): Promise<{
+  fetched_at: string;
+  source_count: number;
+  items: RankedNewsItem[];
+  errors: Array<{ source: string; url: string; error: string }>;
+}> {
+  const feeds = normalizeRssFeedInputs(body.feeds);
+  const perFeedLimit = Math.min(
+    Math.max(Number(body.per_feed_limit ?? 8) || 8, 1),
+    30,
+  );
+  const totalLimit = Math.min(Math.max(Number(body.limit ?? 80) || 80, 1), 200);
+  const fetchedAt = new Date().toISOString();
+  const results = await Promise.allSettled(
+    feeds.map(async (feed) => ({
+      feed,
+      items: await fetchRssNewsItems(feed, perFeedLimit),
+    })),
+  );
+  const errors: Array<{ source: string; url: string; error: string }> = [];
+  const items: RssNewsItem[] = [];
+  for (const result of results) {
+    if (result.status === "fulfilled") {
+      items.push(...result.value.items);
+    } else {
+      errors.push({ source: "RSS", url: "", error: String(result.reason) });
+    }
+  }
+  const normalizedItems = rankNewsSignals(
+    items,
+    Math.max(totalLimit, items.length),
+  )
+    .sort((a, b) => {
+      const bTime = Date.parse(b.published_at || "") || 0;
+      const aTime = Date.parse(a.published_at || "") || 0;
+      return bTime - aTime;
+    })
+    .slice(0, totalLimit)
+    .map((item) => ({ ...item, fetched_at: fetchedAt }));
+  return {
+    fetched_at: fetchedAt,
+    source_count: feeds.length,
+    items: normalizedItems,
+    errors,
+  };
 }
 
 async function deleteItem(
@@ -7642,6 +7957,28 @@ ${reportText ? `> ${reportText}` : ""}`,
       }
     }
 
+    if (action === "rss.fetch_latest") {
+      const result = await fetchLatestNewsItems(body);
+      const signalLimit = Math.max(
+        1,
+        Math.min(30, Number(body.signal_limit ?? 20) || 20),
+      );
+      return json({
+        success: true,
+        ...result,
+        signals: rankNewsSignals(result.items, signalLimit),
+        signal_action: "news.signal_rank",
+      });
+    }
+
+    if (action === "news.signal_rank") {
+      const limit = Math.max(1, Math.min(100, Number(body.limit ?? 30)));
+      return json({
+        success: true,
+        signals: rankNewsSignals(body.items, limit),
+      });
+    }
+
     // ── Authenticated CRUD operations ────────────────────────────────────────
     const userId = await getUserId(req);
     if (!userId) return json({ error: "Unauthorized" }, 401);
@@ -8501,6 +8838,8 @@ ${reportText ? `> ${reportText}` : ""}`,
             "rss.list_feeds",
             "rss.add_feed",
             "rss.fetch",
+            "rss.fetch_latest",
+            "news.signal_rank",
             "changelog.list",
             "changelog.create",
             "mindmap.list",
