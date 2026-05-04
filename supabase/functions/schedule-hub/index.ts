@@ -225,6 +225,182 @@ function buildNewsSignalDraftMarkdown(
   return lines.join("\n");
 }
 
+function newsMemoryDate(fetchedAt: string): string {
+  return (/^\d{4}-\d{2}-\d{2}/.exec(fetchedAt)?.[0]) ??
+    new Date().toISOString().slice(0, 10);
+}
+
+function newsMemorySlug(signal: Record<string, unknown>): string {
+  const key = asString(signal.id) ||
+    asString(signal.cluster_key) ||
+    asString(signal.url) ||
+    newsSignalTitle(signal);
+  const slug = key
+    .toLowerCase()
+    .replace(/^https?:\/\//, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 96);
+  return slug || "news-signal";
+}
+
+function newsMemorySnippet(content: string): string {
+  return content.replace(/\s+/g, " ").trim().slice(0, 280);
+}
+
+function buildRawNewsMemoryContent(
+  signal: Record<string, unknown>,
+  fetchedAt: string,
+): string {
+  return [
+    `# ${newsSignalTitle(signal)}`,
+    "",
+    `Source: ${asString(signal.url)}`,
+    `Fetched: ${fetchedAt}`,
+    `Published: ${asString(signal.published_at, "unknown")}`,
+    `RSS Source: ${asString(signal.source, "RSS")}`,
+    `Category: ${asString(signal.category, "general")}`,
+    "",
+    "## Raw Summary",
+    "",
+    asString(signal.summary, "No summary supplied by RSS feed."),
+    "",
+    "## Signal Metadata",
+    "",
+    `- score: ${String(signal.signal_score ?? 0)}`,
+    `- confidence: ${asString(signal.confidence, "unknown")}`,
+    `- cluster_key: ${asString(signal.cluster_key)}`,
+  ].join("\n");
+}
+
+function buildWikiNewsSourceContent(
+  signal: Record<string, unknown>,
+  fetchedAt: string,
+): string {
+  return [
+    `# ${newsSignalTitle(signal)}`,
+    "",
+    "## Source",
+    "",
+    `- URL: ${asString(signal.url)}`,
+    `- RSS: ${asString(signal.source, "RSS")}`,
+    `- fetched_at: ${fetchedAt}`,
+    "",
+    "## Summary",
+    "",
+    asString(signal.summary, "公開前に本文要約を追記する。"),
+    "",
+    "## Why It Matters",
+    "",
+    asString(signal.why_it_matters, "要確認"),
+    "",
+    "## Verification",
+    "",
+    asString(signal.verification_warning, "一次情報、日時、固有名詞を確認する。"),
+    "",
+    "## Links",
+    "",
+    "- [[blog-news-automation]]",
+    "- [[ai-external-brain]]",
+  ].join("\n");
+}
+
+async function sha256Hex(content: string): Promise<string> {
+  const digest = await crypto.subtle.digest(
+    "SHA-256",
+    new TextEncoder().encode(content),
+  );
+  return Array.from(new Uint8Array(digest))
+    .map((byte) => byte.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+async function memoryIndexRow(
+  filePath: string,
+  title: string,
+  content: string,
+  source: string,
+  metadata: Record<string, unknown>,
+) {
+  return {
+    file_path: filePath,
+    title,
+    content,
+    snippet: newsMemorySnippet(content),
+    content_hash: await sha256Hex(content),
+    source,
+    metadata,
+  };
+}
+
+async function upsertExternalBrainNewsSignals(
+  admin: SupabaseClient,
+  signals: Record<string, unknown>[],
+  fetchedAt: string,
+  context: {
+    dedupeKey: string;
+    postId: string;
+    userId: string | null;
+    targetPlatforms: string[];
+    tags: string[];
+  },
+) {
+  const date = newsMemoryDate(fetchedAt);
+  const rows = [];
+  for (const signal of signals.slice(0, 8)) {
+    const slug = newsMemorySlug(signal);
+    const baseMetadata = {
+      kind: "news_signal",
+      generated_by: "schedule-hub.blog.news_signal_draft",
+      fetched_at: fetchedAt,
+      post_id: context.postId,
+      dedupe_key: context.dedupeKey,
+      user_id: context.userId,
+      url: asString(signal.url),
+      source_name: asString(signal.source, "RSS"),
+      category: asString(signal.category, "general"),
+      signal_score: Number(signal.signal_score ?? 0),
+      confidence: asString(signal.confidence, "unknown"),
+      target_platforms: context.targetPlatforms,
+      tags: context.tags,
+    };
+    const rawContent = buildRawNewsMemoryContent(signal, fetchedAt);
+    rows.push(await memoryIndexRow(
+      `raw/news/${date}/${slug}.md`,
+      `raw: ${newsSignalTitle(signal)}`,
+      rawContent,
+      "ai_external_brain_raw_news",
+      { ...baseMetadata, layer: "raw" },
+    ));
+    const wikiContent = buildWikiNewsSourceContent(signal, fetchedAt);
+    rows.push(await memoryIndexRow(
+      `wiki/sources/news/${date}/${slug}.md`,
+      `wiki: ${newsSignalTitle(signal)}`,
+      wikiContent,
+      "ai_external_brain_wiki_source",
+      { ...baseMetadata, layer: "wiki" },
+    ));
+  }
+  if (rows.length === 0) {
+    return { success: true, upserted: 0, file_paths: [] };
+  }
+  const { data, error } = await admin
+    .from("memory_index")
+    .upsert(rows, { onConflict: "file_path" })
+    .select("file_path");
+  if (error) throw new Error(error.message);
+  const filePaths = (data ?? [])
+    .map((row: Record<string, unknown>) => asString(row.file_path))
+    .filter(Boolean);
+  return {
+    success: true,
+    upserted: filePaths.length || rows.length,
+    file_paths: filePaths.length
+      ? filePaths
+      : rows.map((row) => row.file_path),
+  };
+}
+
 function normalizeNotionId(value: unknown): string {
   const raw = asString(value);
   if (!raw) return "";
@@ -1550,6 +1726,53 @@ serve(async (req: Request) => {
           .select("id, title, status, created_at")
           .single();
         if (insertErr) return json({ error: insertErr.message }, 500);
+        const postId = asString(
+          (newPost as Record<string, unknown> | null)?.id,
+        );
+        let externalBrain: Record<string, unknown> | null = null;
+        if (body.external_brain !== false) {
+          try {
+            externalBrain = await upsertExternalBrainNewsSignals(
+              admin,
+              signals,
+              fetchedAt,
+              {
+                dedupeKey,
+                postId,
+                userId,
+                targetPlatforms,
+                tags,
+              },
+            );
+            const filePaths = Array.isArray(externalBrain.file_paths)
+              ? externalBrain.file_paths.map((path) => String(path)).filter(
+                Boolean,
+              )
+              : [];
+            if (postId && filePaths.length > 0) {
+              const { error: notesErr } = await admin
+                .from("blog_posts")
+                .update({
+                  notes: [
+                    notes,
+                    `EXTERNAL_BRAIN_FILE_PATHS=${filePaths.join(",")}`,
+                  ].join("\n"),
+                })
+                .eq("id", postId);
+              if (notesErr) {
+                externalBrain = {
+                  ...externalBrain,
+                  notes_warning: notesErr.message,
+                };
+              }
+            }
+          } catch (err) {
+            externalBrain = {
+              success: false,
+              error: err instanceof Error ? err.message : String(err),
+            };
+          }
+        }
         return json({
           success: true,
           created: true,
@@ -1557,6 +1780,7 @@ serve(async (req: Request) => {
           dedupe_key: dedupeKey,
           signal_count: signals.length,
           fetched_at: fetchedAt,
+          external_brain: externalBrain,
         });
       }
       // Win版#132 part 124: 過去 dispatch 済の dev.to + Qiita 記事を hub_data に backfill する.
