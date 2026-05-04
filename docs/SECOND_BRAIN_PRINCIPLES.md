@@ -242,7 +242,7 @@ Karpathy 元記事 Level 1-3 と本プロジェクト ship 状況:
 | 原則 | 現状 | gap |
 | --- | --- | --- |
 | #1 階層型分離 | 部分 ✅ (memory/Layer2 + CLAUDE.md/Layer3) | Layer1 (immutable source) 明示なし |
-| #2 Autonomous Ingest & Linking | ❌ (新 file 単体追加 / 双方向リンクなし) | `[[file]]` link 慣習未定着 |
+| #2 Autonomous Ingest & Linking | △ measurement 完了 (= 2026-05-05 audit / 56 file 中 isolated 98.2%) | `[[file]]` link 慣習未定着 / 実 fix 待ち (`docs/audit-reports/memory_crosslinks_20260505.md`) |
 | #3 Master Index + Daily Log | 部分 ✅ (MEMORY.md = index あり / log なし) | `memory/log.md` 未作成 |
 | #4 定期 Lint + 孤児統合 | ✅ Done | `consolidate-memory --lint` PS#1 実装済 — orphan/duplicate/contradiction 3 検出器 + `lint_report_YYYY_MM.md` 自動生成 |
 | #5 Query 永続化 | △ (cross-instance-pr / project memory ある / query artifact 未分類) | `memory/query_artifact_*` カテゴリなし |
@@ -267,8 +267,18 @@ Karpathy 元記事 Level 1-3 と本プロジェクト ship 状況:
 
 ## 整合性監査 (定期セルフレビュー)
 
-`scripts/check_second_brain_health.py` (将来追加):
-- 全 memory/ file の `[[link]]` 参照数を集計 → 孤児 file 検出
+### 既存 audit script
+
+- **`scripts/audit_memory_crosslinks.py`** (= part 138 で新規 / dependency-free)
+  - 全 memory/*.md (root) の `[[link]]` outbound + inbound count
+  - healthy (≥10) / moderate (1-9) / orphan-outbound (=0) / **isolated (in=0 out=0)** に分類
+  - report: `docs/audit-reports/memory_crosslinks_YYYYMMDD.md`
+  - **2026-05-05 baseline**: 56 file / healthy 0 (0%) / isolated 55 (98.2%) = SECOND_BRAIN #2 慣習未定着 を定量確認
+  - 再実行: `PYTHONUTF8=1 python scripts/audit_memory_crosslinks.py`
+
+### 将来追加候補
+
+`scripts/check_second_brain_health.py` (= 上の audit を拡張):
 - file 命名 prefix の重複検出 (= 同主題 90 日以内の file を統合候補に)
 - MEMORY.md index と memory/ ディレクトリ実体の整合 (= 漏れ + 余剰検出)
 - 違反検出時は GitHub Issue 自動作成 (= COLLAB_AI Verifier-Generator + OPS-28 改善トリガー連携)
@@ -292,15 +302,21 @@ Karpathy 元記事 Level 1-3 と本プロジェクト ship 状況:
 | 2026-05-05 | Win版#132 part 135 | `scripts/sync_inject_rules.py` (= canonical / home sync mechanism / --verify mode) | #4 Lint (drift 検出 / Karpathy Level 3-1) | 4.5/7 維持 |
 | 2026-05-05 | Win版#132 part 136 | drift 自動修復 Tier 1-3 = SessionStart hook (Tier 1) + Windows Task setup script (Tier 2) + GHA cron 拡張 (Tier 3) | #4 Lint 自動化 (= Karpathy Level 3-3 + 3-4) | 4.5/7 維持 |
 | 2026-05-05 | Win版#132 part 137 | Tier 2 Windows Task INSTALLED + verified (= JibunKK-InjectRulesAutoSync daily 03:30 JST) + setup script bugfix (DOMAIN\USER + verify-after-write) | #4 Lint 自動化 (= Karpathy Level 3-3 dogfood) | 4.5/7 維持 |
-| 2026-05-05 | Win版#132 part 138 | Karpathy AI 外部脳 (2025) 取込 = 4 cycle / 3 layer / Memex 系譜 / Level 1-3 階段 cross-walk + #1975 close 候補 | (= 既存 7 原則の正当性 evidence + ship 状況可視化) | 4.5 → **5.0/7** |
+| 2026-05-05 | Win版#132 part 138 | Karpathy AI 外部脳 (2025) 取込 = 4 cycle / 3 layer / Memex 系譜 / Level 1-3 階段 cross-walk + #1975 close | (= 既存 7 原則の正当性 evidence + ship 状況可視化) | 4.5 → **5.0/7** |
+| 2026-05-05 | Win版#132 part 138 | `scripts/audit_memory_crosslinks.py` 新規 + 初回 audit (= 56 file / isolated 98.2% / healthy 0%) | #2 measurement layer (定量化 = baseline 把握 / 実 fix 待ち) | 5.0 → **5.25/7** |
 
-**次回ターゲット** (baseline 5.0/7):
-- #2 `[[link]]` 慣習定着: 全 memory file の crosslink audit → Win版 territory
+**次回ターゲット** (baseline 5.25/7):
+- **#2 実 fix** (= isolated 55 file 全てに `[[link]]` 10+ 追加 / audit healthy 50%+ 達成) → 5.25 → **5.5/7** (= 中規模 Win Claude task)
 - #3 `memory/log.md` 運用強化 (既存 part 47-67 backfill) → Win版 territory
 - #5 `memory/query_artifact_*` カテゴリ + テンプレ → Win版 territory (一部 part 71 + part 137 で実例あり)
 - #6 megaprompt artifact 保存 (= 各 instance 起動時) → 12 fleet 共通 routine
 - #7 `memory-search-hub` EF skeleton → Codex#2 cross-instance-pr 候補
 - **Karpathy Level 3-2 (= /wiki-init /wiki-ingest /wiki-query /wiki-lint slash commands)** → #1977 Win Codex territory
+
+### baseline 上昇 path (= measurement → fix → automation 3 phase)
+1. **measurement layer** (= +0.25): audit script で定量化 / 本 part 達成
+2. **fix layer** (= +0.25): isolated file への `[[link]]` 追加 / 別 session
+3. **automation layer** (= +0.25): audit を GHA cron 化 + threshold で Issue 自動作成 / 別 session
 
 ---
 
