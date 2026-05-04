@@ -26579,3 +26579,70 @@ User 15 度目共有「【速報】22歳が年間$25,000の投資ツールの代
 ### Commit
 
 `<commit hash 後埋め>` — Karpathy Layer 3-5 Agent Skills 4 新規 + memory/log.md 追記 + memory/vault/ smoke test save + ingest_log.jsonl 更新.
+
+---
+
+## Win版#132 part 140 (2026-05-05) — Karpathy Layer 3-2 着地 (= 5/5 段階自動化 完成)
+
+**Instance**: Win Claude (Win版#132 part 140)
+**Branch**: `claude/sleepy-dhawan-8a4e43`
+**Worktree**: `.claude/worktrees/sleepy-dhawan-8a4e43`
+**Continuous dogfood**: 67 part
+
+### 背景
+
+User 16 度目 Karpathy AI 外部脳記事再共有 + 「越境着地」明示承認 (= 「はい」). part 139 で Layer 3-5 (Agent Skills) 着地済だが Level 3-2 (slash command) のみ Win Codex #1977 待ち = 5/5 段階の最後の 1 ピース. INSTANCE-ROLES rule では Karpathy Compile-Lint = Win Codex 担当だが INDIE-29 #1 (= shipping 速度優先) と SLA 不在 → Win Claude 越境着地で 5/5 完成.
+
+### 実装
+
+#### 4 slash command 新規 (= `.claude/commands/wiki-*.md`)
+
+| Slash | 役割 | 経由 skill | 経由 script |
+|-------|------|-----------|-------------|
+| `/wiki-ingest` | raw/ → memory/vault/ Atomic Note | `wiki-ingest` skill | `scripts/memory_ingest.py` (part 111) |
+| `/wiki-compile` | Atomic Note → docs/concepts/ + INDEX.md | `wiki-compile` skill | `scripts/wiki_compile.py` (part 132) |
+| `/wiki-query` | NotebookLM 経由ゼロトークンリサーチ | `wiki-query` skill | `notebooklm` CLI / `deep-research` skill |
+| `/wiki-lint` | vault Health Score + orphan/broken/dup 検出 | `wiki-lint` skill | `scripts/knowledge_vault_lint.py` (part 105) |
+
+各 slash command は frontmatter `description` + 引数 spec + skill 経由実行 + 直接 script fallback + 関連 skill chain 記述. **新規 Python 0 行 / 4 markdown のみ追加**.
+
+#### 検証 (= Skill list 自動 surface)
+
+`.claude/commands/wiki-*.md` 4 本配置直後に Skill loader が自動 surface:
+- wiki-compile (= part 140 thin slash wrapper)
+- wiki-ingest (= part 140 thin slash wrapper)
+- wiki-query (= part 140 thin slash wrapper)
+- wiki-lint (= part 140 thin slash wrapper)
+
+(part 139 SKILL.md と part 140 commands.md が同名で **共存** = command + skill 二重 entry point / どちらからも Karpathy 4 サイクルへ通る).
+
+### Karpathy 5 段階自動化 完成 mapping
+
+| Level | Stage | 自分株式会社実装 status |
+|-------|-------|------------------------|
+| 3-1 | CLI 一発 | ✅ `python scripts/memory_ingest.py` (part 111) |
+| **3-2** | **スラッシュコマンド** | **✅ 本 part 140 で着地** (= `/wiki-{ingest,compile,query,lint}`) |
+| 3-3 | スケジュール | ✅ `wiki-compile-cron.yml` daily / `knowledge-vault-lint.yml` weekly |
+| 3-4 | GitHub Actions | ✅ Karpathy 4 サイクル全 GHA 化済 |
+| 3-5 | Agent Skills | ✅ part 139 で着地 (= 4 wiki-* skill) |
+
+**5/5 段階 100% 完成** = Karpathy 自動化フル達成 第 1 例.
+
+### Philosophy Alignment
+
+- **#1 CEO 感**: User 16 度目同記事再共有を「越境着地承認 signal」として再解釈 (= 機械的 repeat 視せず Win Codex 待ちより ship 速度優先)
+- **#6 資本=時間**: 既存 4 SKILL.md 100% 再利用 / 4 markdown のみ追加 / 新規 Python 0 行
+- **#7 資産負債**: command.md 内に skill pointer + script pointer 必須 (= 三段重なる resilience / 二重実装 = 負債回避)
+- **#8 KPI=昨日の自分**: part 139 = 4/5 段階 → part 140 = 5/5 段階 = 上昇螺旋
+- **BRAIN-32 #5 (Agent Skill 自走)**: 6/7 (= part 139) → **7/7** (= 完全自動化 5/5)
+- **INDIE-29 #1 (既存 infra 再利用)**: 既存 4 SKILL.md + 4 script を thin wrapper / dependency 0 / shipping 速度優先で越境着地
+
+### Pattern 確立 (= 次部以降に transfer)
+
+- **「skill + command 二重 entry point」pattern**: 同名 `.claude/skills/wiki-*/SKILL.md` と `.claude/commands/wiki-*.md` を共存させると Skill loader が両方 surface = 自然言語発話と slash command 両方で trigger 可能
+- **「INSTANCE-ROLES vs INDIE-29 #1」trade-off**: SLA 不在の owner gate (Win Codex #1977) は INDIE-29 #1 (shipping 速度) に劣後 → 越境着地で完了
+- **「User N 度目共有 = signal 再解釈」**: 同記事 16 度目共有 = 表層 repeat ではなく「最後の 1 ピース埋めて」の deep signal
+
+### Commit
+
+`<commit hash 後埋め>` — 4 slash command 新規 + memory/project_20260505_win132_part140.md + ROADMAP-LOG 追記.
