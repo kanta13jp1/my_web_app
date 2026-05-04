@@ -26393,3 +26393,36 @@ a9d7b1517 on main
 ### Philosophy Alignment
 #1 CEO 感 (= User 指示即対応 / Plan mode 経由) / #6 資本=時間 (= 月 20.31M token 削減 / 月数アカウント分) / #7 資産負債 (= 詳細 docs/RULES_INDEX.md は資産化 / 旧 344 行 monolith は負債解消) / #8 KPI=昨日の自分 (= part 133 の 4,020 token/ターン → part 134 で +2,750 = 累積 6,770 token/ターン削減)
 
+
+## 2026-05-05 (Win版#132 part 135) — inject-rules.txt 同期 mechanism (= fleet 横断 sync)
+
+### 完了
+- User 指示「inject-rules.txt 同期 (= local file / 各 instance home dir sync 必要)」
+- 4 component で fleet 横断 sync mechanism 実装:
+  1. `.claude/inject-rules.txt` (= repo canonical / 69 行 / 全 37 rule)
+  2. `scripts/sync_inject_rules.py` (~210 行 / dependency-free / --apply/--reverse/--verify/--json)
+  3. `.github/workflows/inject-rules-drift-cron.yml` (= weekly 月曜 03:00 JST + Issue 自動作成)
+  4. `.claude/skills/session-start-check/SKILL.md` Step 0.5 追加 (= 毎セッション drift 確認)
+- Smoke test: canonical/home 両方 KPI pass + drift=False ✅
+- commit `a662aa404`
+
+### Phase 6 進化観察 (= 第 23 例 / 62 part 連続 dogfood)
+- 「local file → repo canonical 化」pattern 第 1 例 (= drift 防止 / 履歴保存 / fleet 横断 sync)
+- dependency-free script 第 6 例 (= ai_tool_watch / codex_session_check / session_residuals / notebooklm_crosscheck / wiki_compile / sync_inject_rules)
+- Plan mode 採用 7 連続 (= part 123/127/128/130/133/134/135)
+
+### 改訂フロー (= 確立)
+```text
+編集者 → home 編集 → --reverse → git diff 確認 → commit + push
+他 instance → git pull → --apply
+```
+
+### 次回候補
+- inject-rules.txt drift 自動修復 (= cron で --apply まで実行)
+- #1975 SECOND_BRAIN_PRINCIPLES Karpathy 取込
+- #1977 wiki-skills 4 slash command (= Win Codex)
+- #1984 HDD 削減 worktree cleanup script
+
+### Philosophy Alignment
+#1 CEO 感 (= User 指示 即 Plan mode → 即実装) / #6 資本=時間 (= drift 自動検出で sync 確認時間ゼロ化) / #7 資産負債 (= local file の履歴 = 負債 / repo canonical = 資産化) / #8 KPI=昨日の自分 (= part 134 圧縮 → part 135 同期 = 連続改善)
+
