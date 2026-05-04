@@ -26092,3 +26092,20 @@ a9d7b1517 on main
 ### Philosophy Alignment
 #1 CEO 感 (= User「完全実装」最優先要望に root cause まで対応) / #5 商品=ユーザー価値 (= 投稿フロー全体の信頼性回復) / #6 資本=時間 (= 4 軸を 1 セッション並列で完結)
 
+
+## 2026-05-04 (Win版#132 part 124 続) — deploy-prod unblock + backfill dispatch (blocked by PS#4 migration)
+
+### 完了 (= part 124 line 全 commits)
+- a09e07c5b feat(blog-tracker): EF + workflow + page 完全自動化
+- d0a083e3a feat(workflow): blog-backfill-from-apis.yml
+- 22f79e974 + ef0a8c028 + 77d7e7139 + c9bf47d69 + 17857b22f fix(lint): tech_blog_tracker + 4 PS files (require_trailing_commas + withOpacity → withValues)
+- 8b8ff6f6b fix(workflow): blog-publish-orphan-cleanup checkout v4→v6
+- 424d50de9 + 9b63866a1 + e5db23b1b + b3d58a9c3 fix(migration): 4 件 timestamp collision rename (PS#6 S166 / PS#2 S105 / sync_blog_posts / vscode_s27)
+
+### Blocker
+- [Issue #1955](https://github.com/kanta13jp1/my_web_app/issues/1955) — PS#4 `20260504020000_seed_gpt_image2_ai_university.sql` ON CONFLICT 制約エラーで deploy-prod 停止 → Win版 EF 未 deploy → backfill workflow 401
+- backfill 実行は PS#4 修正後
+
+### Philosophy Alignment
+#3 優しい mentor (= PS#3/#5/#6 territory の lint + format + migration collision を Win territory で代理 fix して fleet 全体を unblock) / #6 資本=時間 (= 9 commit / 12 件修正を 1 セッションで連続実施)
+
