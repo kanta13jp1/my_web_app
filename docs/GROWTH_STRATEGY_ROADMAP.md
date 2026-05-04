@@ -26214,3 +26214,31 @@ a9d7b1517 on main
 ### Philosophy Alignment
 #1 CEO 感 (= User signal 解読 / Plan mode 経由) / #6 資本=時間 (= 80 行 KPI で context window 節約 = quota 削減) / #8 KPI=昨日の自分 (= Karpathy 推奨と既存 dogfood の 80% 一致は part 73-127 連続 dogfood 成果)
 
+
+## 2026-05-04 (Win版#132 part 129) — /local-election-700 layout 崩れ修正
+
+### 完了
+- User screenshot 報告: /local-election-700 で「最新の実データ」見出しが縦書き 1 文字 / 行
+- Root cause: `Row(Expanded(Column), Wrap(9 buttons))` で Wrap intrinsic 幅 1200px+ が Expanded を 0px に圧縮
+- Fix: LayoutBuilder + 900px breakpoint
+  - wide (≥900): `Row(Flexible flex:5 textColumn, Flexible flex:7 actionWrap)`
+  - narrow (<900): `Column(textColumn, SizedBox 12, actionWrap)`
+- lib/pages/election_victory_page.dart 1 ファイル / +51 / -32
+- dart format + flutter analyze (No issues / 10.2s) / commit `db1185649`
+
+### 別途観測 (= 次 part Issue 候補)
+- Console 401: core-hub auth fail (publicView 時の anon 経路要対応)
+- Noto fonts missing warning (pubspec.yaml asset 登録候補)
+
+### Phase 6 進化観察 (= 第 17 例 / 56 part 連続 dogfood)
+- 「screenshot 1 枚 → root cause Layout 修正 → 1 ファイル」即対応 pattern (= part 123/127 と同型)
+- LayoutBuilder + Flexible(flex 比率) は Flutter Web 多ボタン UI の universal fix
+
+### 次回候補
+- 401 core-hub publicView fix Issue
+- Noto fonts asset 登録 Issue
+- 同 layout 崩れ pattern 全 page audit (`grep "Row.*Expanded.*Wrap"`)
+
+### Philosophy Alignment
+#1 CEO 感 (= User screenshot 即対応) / #5 商品=ユーザー価値 (= 統一地方選 700 必達 mission の dashboard 可読性回復) / #6 資本=時間 (= 1 ファイル + 1 commit で完遂)
+
