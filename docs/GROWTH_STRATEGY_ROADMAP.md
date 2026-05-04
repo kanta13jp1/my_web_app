@@ -26323,3 +26323,40 @@ a9d7b1517 on main
 ### Philosophy Alignment
 #1 CEO 感 (= User signal 段階解読 / 「実装 push」3 度目に行動) / #6 資本=時間 (= 既存 4 サイクル中 3 つは dogfood 済 / 4 つ目補完で完成) / #8 KPI=昨日の自分 (= part 128 「80% dogfood」→ part 132 「100% dogfood」進化定量化)
 
+
+## 2026-05-05 (Win版#132 part 133) — CLAUDE.md 463 → 61 行達成 (#1974 close / Karpathy 80 行 KPI)
+
+### 完了
+- User 指示「#1974 CLAUDE.md 80 行達成」
+- Phase A (5 新規 docs): AGENT_COORDINATION_PATTERNS / NOTEBOOKLM_GUIDE / DIRECTORY_STRUCTURE / EDGE_FUNCTION_LIST / DEVELOPMENT_ACHIEVEMENTS_FORMAT
+- Phase B (CLAUDE.md): 463 → **61 行** (= 80 行 KPI / 19 行 buffer / 87% 削減)
+- Phase C 検証: wc -l 61 / 12 critical keyword / 5 新規 docs 全存在 ✅
+- Phase D: commit `9d3d781f6` + Issue [#1974](https://github.com/kanta13jp1/my_web_app/issues/1974) close
+
+### 削減効果
+- 行数: 463 → 61 (= -402 行 / -87%)
+- 1 ターン inject token: 4,630 → 610 (= -4,020/ターン)
+- 100 ターン/日 想定: **-402k token/日** / 月 30 日換算 **-12M token/月**
+
+### Karpathy 100% dogfood 達成
+- 4 サイクル全実装 (Ingest part 111 / Compile part 132 / Query notebooklm / Lint part 105)
+- + 3 層 raw/wiki/CLAUDE.md
+- + CLAUDE.md 80 行 KPI (= 本 part)
+- + 5 段階自動化 (CLI / skill / cron / GHA / Agent Skills)
+- = part 128 で識別した Karpathy guide gap **完全 close**
+
+### Phase 6 進化観察 (= 第 21 例 / 60 part 連続 dogfood)
+- 「Karpathy KPI 達成」pattern 第 1 例 (= part 128 識別 → 132 Compile → 133 80 行)
+- 「dispersed pointer hub」pattern 第 1 例 (= CLAUDE.md 中央 hub + docs/ 24 detail)
+- 「複合 KPI 達成セッション」pattern (= 5 新規 file + 1 rewrite + Issue close + push 完遂)
+- Plan mode 採用 5 連続 (= part 123/127/128/130/133)
+
+### 次回候補
+- inject-rules.txt 344 → 80 行達成 (= 同 path 適用)
+- #1975 SECOND_BRAIN_PRINCIPLES Karpathy 取込
+- #1977 wiki-skills 4 slash command (Win Codex)
+- #1984 HDD 削減 worktree cleanup script
+
+### Philosophy Alignment
+#1 CEO 感 (= User 指示即対応 / Plan mode 経由) / #6 資本=時間 (= 12M token/月削減 = 認知負荷激減) / #7 資産負債 (= 5 新規 docs は資産 / 旧 463 行 monolith は負債 / 分割で資産化) / #8 KPI=昨日の自分 (= part 128 識別 → 133 達成 = 5 part で目標着地)
+
