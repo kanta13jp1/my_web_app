@@ -26360,3 +26360,36 @@ a9d7b1517 on main
 ### Philosophy Alignment
 #1 CEO 感 (= User 指示即対応 / Plan mode 経由) / #6 資本=時間 (= 12M token/月削減 = 認知負荷激減) / #7 資産負債 (= 5 新規 docs は資産 / 旧 463 行 monolith は負債 / 分割で資産化) / #8 KPI=昨日の自分 (= part 128 識別 → 133 達成 = 5 part で目標着地)
 
+
+## 2026-05-05 (Win版#132 part 134) — inject-rules.txt 344 → 69 行達成 (Karpathy KPI 横展開)
+
+### 完了
+- User 指示「inject-rules.txt 344 → 80 行達成 (= 同 path 適用)」 → part 133 CLAUDE.md 圧縮 pattern を inject-rules.txt に横展開
+- Phase A: docs/RULES_INDEX.md 新規 (= 190 行 / 全 37 rule の詳細 expand 保存先)
+- Phase B: ~/.claude/hooks/inject-rules.txt 全面 rewrite (= 344 → **69 行** / 80 行 KPI / 11 行 buffer / 80% 削減)
+- Phase C 検証: wc -l 69 / 全 37 rule ID 残存 / 詳細展開先確認 ✅
+- Phase D: commit `6a3922582` on main + push
+
+### 削減効果
+- 行数: 344 → 69 (= -275 行 / -80%)
+- 1 ターン inject token: 3,440 → 690 (= -2,750/ターン)
+- 月 30 日換算: -8.25M token/月
+
+### 合計 (part 133 + part 134 = Karpathy KPI 全体)
+- CLAUDE.md + inject-rules: 807 行 → 130 行 (= -677 行 / -84%)
+- 月 token: 24.21M → 3.9M (= **-20.31M/月削減**)
+
+### Phase 6 進化観察 (= 第 22 例 / 61 part 連続 dogfood)
+- 「Karpathy KPI 横展開」pattern 第 1 例 (= part 133 → part 134)
+- 「worktree 環境喪失からの復旧」pattern 第 1 例 (= cleanup commit 後の git worktree add 復旧)
+- Plan mode 採用 6 連続 (= part 123/127/128/130/133/134)
+
+### 次回候補
+- inject-rules.txt 同期 (= local file / 各 instance home dir sync)
+- #1975 SECOND_BRAIN_PRINCIPLES Karpathy 取込
+- #1977 wiki-skills 4 slash command (Win Codex)
+- #1984 HDD 削減 worktree cleanup script
+
+### Philosophy Alignment
+#1 CEO 感 (= User 指示即対応 / Plan mode 経由) / #6 資本=時間 (= 月 20.31M token 削減 / 月数アカウント分) / #7 資産負債 (= 詳細 docs/RULES_INDEX.md は資産化 / 旧 344 行 monolith は負債解消) / #8 KPI=昨日の自分 (= part 133 の 4,020 token/ターン → part 134 で +2,750 = 累積 6,770 token/ターン削減)
+
