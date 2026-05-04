@@ -92,8 +92,9 @@ Add-Content -Path `$logFile -Value ('[' + `$ts + '] cron --apply exit=' + `$exit
     # Daily trigger at specified time (= local timezone)
     $trigger = New-ScheduledTaskTrigger -Daily -At $TriggerTime
 
-    # Run as current user, only when user is logged on (= simpler / no service account needed)
-    $principal = New-ScheduledTaskPrincipal -UserId $env:USERNAME -LogonType Interactive -RunLevel Limited
+    # Run as current user (= full DOMAIN\USER required by Register-ScheduledTask)
+    $userId = "$env:USERDOMAIN\$env:USERNAME"
+    $principal = New-ScheduledTaskPrincipal -UserId $userId -LogonType Interactive -RunLevel Limited
 
     $settings = New-ScheduledTaskSettingsSet `
         -StartWhenAvailable `
@@ -108,9 +109,22 @@ Add-Content -Path `$logFile -Value ('[' + `$ts + '] cron --apply exit=' + `$exit
         Unregister-ScheduledTask -TaskName $TaskName -Confirm:$false
     }
 
-    Register-ScheduledTask -TaskName $TaskName -Action $action -Trigger $trigger -Principal $principal -Settings $settings -Description "自分株式会社 / Win版#132 part 136 — inject-rules.txt drift 自動修復 (Tier 2)" | Out-Null
+    try {
+        Register-ScheduledTask -TaskName $TaskName -Action $action -Trigger $trigger -Principal $principal -Settings $settings -Description "Jibun-KK inject-rules.txt drift auto-fix (Tier 2 / Win132 part 136)" -ErrorAction Stop | Out-Null
+    } catch {
+        Write-Error "Register-ScheduledTask failed: $_"
+        Write-Host "Hint: Try running PowerShell as Administrator. Or use -RunLevel Highest if elevation needed."
+        exit 4
+    }
 
-    Write-Host "✅ Task '$TaskName' INSTALLED."
+    # Re-verify (= avoid false-positive INSTALLED message when Register fails silently)
+    $created = Get-ScheduledTask -TaskName $TaskName -ErrorAction SilentlyContinue
+    if (-not $created) {
+        Write-Error "Task registration succeeded silently but task not found. Check Task Scheduler permissions / Windows version."
+        exit 5
+    }
+
+    Write-Host "[OK] Task '$TaskName' INSTALLED (verified)."
     Write-Host "   Repo        : $RepoPath"
     Write-Host "   Trigger     : daily $TriggerTime (local timezone)"
     Write-Host "   Log         : $logDir\cron-YYYYMMDD.log"
