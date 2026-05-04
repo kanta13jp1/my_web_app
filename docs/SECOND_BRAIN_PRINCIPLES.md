@@ -153,6 +153,72 @@ Claude Code + Obsidian の PKM ベストプラクティス (Atomic Notes / Linki
 
 ---
 
+## Karpathy AI 外部脳 (2025) 取込 — 4 cycle + Memex 系譜
+
+> **追補ソース**: Andrej Karpathy (元 OpenAI / 元 Tesla AI トップ) が提唱した **「LLM Knowledge Base / AI 外部脳」** を hooeem (@hooeem / X) が 3 段階ガイド化 (= 海外 2,100+ いいね).
+> 元記事: [https://x.com/hooeem/status/2041196025906418094](https://x.com/hooeem/status/2041196025906418094)
+> 取込日: 2026-05-05 / Win版#132 part 138
+
+### Karpathy 4-cycle (= 本 7 原則との対応)
+
+Karpathy は AI 外部脳の運用を **4 サイクル** で定義. 本 7 原則とは以下の対応:
+
+| Karpathy 4 cycle | 本 7 原則 | 状態 |
+| --- | --- | --- |
+| **Ingest** (= 新ソース取込 + 概念ページ自動生成) | 原則 #2 (Autonomous Ingest & Linking) | ✅ 原則化済 |
+| **Compile** (= Wiki ページ構築・更新 / Index 維持) | 原則 #3 (Master Index + Daily Log) + 原則 #1 (Layer 2 evolving) | ✅ 原則化済 |
+| **Query** (= Wiki 横断検索 + 引用付き回答 / 結果 Wiki 保存) | 原則 #5 (Query 永続化) + 原則 #7 (Hybrid Search) | ✅ 原則化済 |
+| **Lint** (= 矛盾 / リンク漏れ / 古情報 自動検出 + 修正) | 原則 #4 (定期 Lint + 孤児統合) | ✅ 原則化済 |
+
+= **4 cycle ↔ 7 原則 全対応**. Karpathy 系譜での再確認 = 本原則の正当性 evidence.
+
+### 3-layer Architecture (= Karpathy 流) と本原則 #1 の整合
+
+Karpathy 提唱の 3 層 = 本原則 #1 の階層型分離と完全一致:
+
+| Karpathy Layer | 本原則 #1 Layer | 自分株式会社実装 |
+| --- | --- | --- |
+| `raw/` (= 元素材 / immutable) | Layer 1 (= 真実の源泉) | `session_summary` / NotebookLM source / claude-mem 圧縮 |
+| `wiki/` (= AI が更新 / 編集) | Layer 2 (= AI evolving) | `memory/*.md` / `docs/*PRINCIPLES.md` |
+| `CLAUDE.md` (= スキーマ / 80 行 KPI) | Layer 3 (= 動作スキーマ) | `CLAUDE.md` (= **part 133 で 61 行達成**) / `~/.claude/hooks/inject-rules.txt` (= **part 134 で 69 行達成**) |
+
+Karpathy 強調の **「CLAUDE.md は 80 行以内」KPI** = 本プロジェクト part 133-134 で **CLAUDE.md 61 行 / inject-rules.txt 69 行** 双方達成済.
+
+### Memex (Vannevar Bush 1945) 系譜とメンテナンス問題
+
+Karpathy 元記事 conclusion:
+
+> **「Vannevar Bush の Memex (1945) が描いて解決できなかったのは『誰がメンテナンスするか』だった. いま、その答えが出た.」**
+
+Notion / Evernote / Roam Research が数ヶ月で挫折してきた最大原因 = **メンテナンス労力の累積**. AI (= Claude Code) がこれを完全肩代わりすることで **「使うほど賢くなるパーソナル知識資産」** が初めて実用化.
+
+本プロジェクト原則 #4 (= 定期 Lint + 孤児統合) は **PS#1 S4-S5 で `consolidate-memory --lint` 実装完了** (= 928 file scan / orphan 881 / duplicate 62 groups 検出). さらに **part 135-137 で inject-rules.txt drift 自動修復 Tier 1-3** (= SessionStart hook + Windows Task + GHA cron) 完成 → **メンテナンス完全自動化を Layer 3 (schema) でも達成**.
+
+### Level 1-3 自動化階段との対応
+
+Karpathy 元記事 Level 1-3 と本プロジェクト ship 状況:
+
+| Karpathy Level | 説明 | 本プロジェクト実装 |
+| --- | --- | --- |
+| Level 1 (= コピペ運用) | Obsidian + Claude Chat / Vault + raw/ + wiki/ | (= 該当なし / Level 2 から開始) |
+| Level 2 (= 3 層 + 4 cycle 自動) | CLAUDE.md スキーマ駆動 | ✅ part 133-134 (CLAUDE.md 61 / inject 69 行) |
+| Level 3-1 (= CLI 一発実行) | `python scripts/sync_inject_rules.py --apply` | ✅ part 135 |
+| Level 3-2 (= スラッシュコマンド) | `.claude/commands/*.md` (= /wiki-init etc) | ⏳ #1977 (Win Codex territory) |
+| Level 3-3 (= スケジュール実行) | Windows Task / cron | ✅ part 137 (= JibunKK-InjectRulesAutoSync daily 03:30 JST) |
+| Level 3-4 (= GitHub Actions) | repo push で workflow 起動 | ✅ part 136 (inject-rules-drift-cron.yml) |
+| Level 3-5 (= Agent Skills) | `.claude/skills/*` 文脈自動検出 | ✅ session-start-check / consolidate-memory 等 既存 |
+
+= **Level 2 + Level 3 の 5 段中 4 段を本プロジェクトで ship 済** (= Level 3-2 のみ Win Codex 待ち).
+
+### Karpathy 取込で得た insights
+
+1. **「AI = 記憶喪失の検索エンジン」アンチパターン**: 質問 → 回答 → タブ閉じる → 翌日ゼロから = トークンを燃やし続けるだけ. PKM 化で **「使うほど賢くなる資産」** に転換.
+2. **「インデックスではなく統合」**: Google 検索 = 索引 / Karpathy 流 PKM = 統合 (= 概念 + 概念のつながり). 本原則 #2 の **「10-15 個の Atomic Notes 同時更新」** がまさにこれ.
+3. **「コピペで始められる」進入障壁の低さ**: Level 1 は技術スキル不要. CEO / 非技術 stakeholder にも展開可能 = `docs/PHILOSOPHY.md` #1 (CEO 感) と整合.
+4. **「Vault に入れるべきは『この 1 年で消費して消えたもの全部』」**: 読んだ記事 / Podcast / 議論 / 古いプロジェクトノート — 全て Layer 2 候補. 既存 `memory/transcripts/` と整合.
+
+---
+
 ## 既存 9 設計軸との関係
 
 | 既存軸 | SECOND_BRAIN 7 原則の augmentation 関係 |
@@ -221,14 +287,23 @@ Claude Code + Obsidian の PKM ベストプラクティス (Atomic Notes / Linki
 | 2026-04-29 | PS#1 S5 受領完成 | `consolidate-memory --lint` 実装完了 (= part 69 Win 起票 / 孤児ノート/重複候補/矛盾検出 + lint_report 生成 + GHA Issue 化) | #4 定期 Lint + 孤児統合 | 4.0 → **4.5/7** |
 | 2026-04-29 | Win版#132 part 84 | PS#1 #4 受領 close 確認 + `cross-instance-prs/done/` 移動済 (= PS#1 S5 で実施) + baseline 反映 | (= reciprocal close) | 4.5/7 維持 |
 | 2026-04-29 | PS#1 S4 | `~/.claude/skills/consolidate-memory/lint.py` + `SKILL.md` 実装 — orphan (MEMORY.md 未参照) / duplicate (同 prefix 3+件/90日) / contradiction (keyword 3-10件) 3 検出器 + `memory/lint_report_YYYY_MM.md` 自動生成。テスト実行: 928 files / orphan 881 / duplicate 62 groups | #4 定期 Lint + 孤児統合 | 4.0 → **4.5/7** |
+| 2026-05-05 | Win版#132 part 133 | CLAUDE.md 圧縮 → **61 行** (Karpathy 80 行 KPI 達成 / pointer hub 化) | #1 階層型分離 (Layer 3 sharpen) | 4.5/7 維持 |
+| 2026-05-05 | Win版#132 part 134 | inject-rules.txt 圧縮 → **69 行** (= 同 Karpathy KPI / RULES_INDEX.md 詳細展開) | #1 階層型分離 (Layer 3 sharpen) | 4.5/7 維持 |
+| 2026-05-05 | Win版#132 part 135 | `scripts/sync_inject_rules.py` (= canonical / home sync mechanism / --verify mode) | #4 Lint (drift 検出 / Karpathy Level 3-1) | 4.5/7 維持 |
+| 2026-05-05 | Win版#132 part 136 | drift 自動修復 Tier 1-3 = SessionStart hook (Tier 1) + Windows Task setup script (Tier 2) + GHA cron 拡張 (Tier 3) | #4 Lint 自動化 (= Karpathy Level 3-3 + 3-4) | 4.5/7 維持 |
+| 2026-05-05 | Win版#132 part 137 | Tier 2 Windows Task INSTALLED + verified (= JibunKK-InjectRulesAutoSync daily 03:30 JST) + setup script bugfix (DOMAIN\USER + verify-after-write) | #4 Lint 自動化 (= Karpathy Level 3-3 dogfood) | 4.5/7 維持 |
+| 2026-05-05 | Win版#132 part 138 | Karpathy AI 外部脳 (2025) 取込 = 4 cycle / 3 layer / Memex 系譜 / Level 1-3 階段 cross-walk + #1975 close 候補 | (= 既存 7 原則の正当性 evidence + ship 状況可視化) | 4.5 → **5.0/7** |
 
-**次回ターゲット** (baseline 4.5/7):
+**次回ターゲット** (baseline 5.0/7):
 - #2 `[[link]]` 慣習定着: 全 memory file の crosslink audit → Win版 territory
 - #3 `memory/log.md` 運用強化 (既存 part 47-67 backfill) → Win版 territory
-- #5 `memory/query_artifact_*` カテゴリ + テンプレ → Win版 territory
+- #5 `memory/query_artifact_*` カテゴリ + テンプレ → Win版 territory (一部 part 71 + part 137 で実例あり)
 - #6 megaprompt artifact 保存 (= 各 instance 起動時) → 12 fleet 共通 routine
 - #7 `memory-search-hub` EF skeleton → Codex#2 cross-instance-pr 候補
+- **Karpathy Level 3-2 (= /wiki-init /wiki-ingest /wiki-query /wiki-lint slash commands)** → #1977 Win Codex territory
 
 ---
 
 *Win版#132 part 68 / 2026-04-29 起票 / NotebookLM 9871b0b1 "Claude Code and Obsidian: Building Your AI Second Brain" 蒸留 / Rule [BRAIN-32] / 10 番目の設計軸 (= Layer 3 設計層 / 知識インフラ・PKM ドメイン応用)*
+
+*Win版#132 part 138 / 2026-05-05 改訂 / Karpathy AI 外部脳 (hooeem 経由) 取込 / 4 cycle + 3 layer + Memex + Level 1-3 cross-walk / #1975 受け入れ条件達成*
