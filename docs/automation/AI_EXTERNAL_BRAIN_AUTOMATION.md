@@ -33,8 +33,13 @@ when the Windows machine is off.
   news signals.
 - `schedule-hub` `blog.news_signal_draft`: creates a `blog_posts` draft and
   mirrors the same material into `memory_index` raw/wiki paths.
+- `schedule-hub` `blog.news_signal_lint`: checks saved news memories for
+  source gaps, stale material, raw/wiki pair gaps, high-risk topics, and draft
+  publish blockers.
 - `.github/workflows/blog-news-signal-draft.yml`: runs the action daily at
   06:20 JST.
+- `.github/workflows/blog-news-signal-lint.yml`: runs the lint action daily at
+  06:45 JST.
 - `/news-rss`: manual review surface for RSS sources and blog draft creation.
 
 ## Operating Constraints
@@ -49,9 +54,9 @@ when the Windows machine is off.
 
 ## Next Additions
 
-- Add `blog.news_signal_lint` to compare `raw/news` and `wiki/sources/news` for
-  stale facts and source conflicts.
 - Add a manual admin UI panel that shows the memory file paths attached to each
   blog draft.
-- Add high-risk-topic review flags before publishing finance, election, medical,
-  legal, or disaster-related drafts.
+- Add semantic contradiction checks once multiple independent sources exist for
+  the same cluster.
+- Add a human review queue for finance, election, medical, legal, disaster, and
+  security drafts flagged by `blog.news_signal_lint`.

@@ -45,6 +45,14 @@ async function getUserId(req: Request): Promise<string | null> {
   return user?.id ?? null;
 }
 
+function isServiceRoleRequest(req: Request): boolean {
+  const token = (req.headers.get("Authorization") ?? "").replace(
+    /^Bearer\s+/i,
+    "",
+  ).trim();
+  return Boolean(SERVICE_ROLE_KEY && token && token === SERVICE_ROLE_KEY);
+}
+
 async function listItems(
   admin: SupabaseClient,
   source: string,
@@ -398,6 +406,290 @@ async function upsertExternalBrainNewsSignals(
     file_paths: filePaths.length
       ? filePaths
       : rows.map((row) => row.file_path),
+  };
+}
+
+type NewsLintSeverity = "info" | "warning" | "review_required" | "error";
+
+type NewsLintFinding = {
+  severity: NewsLintSeverity;
+  code: string;
+  file_path: string;
+  title: string;
+  message: string;
+  post_id?: string;
+  url?: string;
+};
+
+function newsRiskFlags(text: string): string[] {
+  const lower = text.toLowerCase();
+  const groups: Array<[string, string[]]> = [
+    ["finance", [
+      "投資",
+      "利益",
+      "市場",
+      "株",
+      "暗号資産",
+      "仮想通貨",
+      "トレード",
+      "trading",
+      "crypto",
+      "market",
+      "profit",
+      "price",
+    ]],
+    ["election", ["選挙", "投票", "候補", "政党", "議員", "election", "vote"]],
+    ["medical", ["医療", "病院", "薬", "治療", "medical", "medicine"]],
+    ["legal", ["法律", "規制", "訴訟", "判決", "legal", "lawsuit"]],
+    ["disaster", ["地震", "災害", "避難", "台風", "disaster", "earthquake"]],
+    ["security", ["脆弱性", "漏洩", "攻撃", "security", "breach", "vulnerability"]],
+  ];
+  return groups
+    .filter(([, keywords]) =>
+      keywords.some((keyword) => lower.includes(keyword.toLowerCase()))
+    )
+    .map(([name]) => name);
+}
+
+function sourceUrlFromNewsMemory(
+  content: string,
+  metadata: Record<string, unknown>,
+): string {
+  const fromMeta = asString(metadata.url);
+  if (fromMeta) return fromMeta;
+  const sourceMatch = content.match(/^Source:\s*(https?:\/\/\S+)/im);
+  if (sourceMatch) return sourceMatch[1].trim();
+  const urlMatch = content.match(/^-\s*URL:\s*(https?:\/\/\S+)/im);
+  return urlMatch?.[1]?.trim() ?? "";
+}
+
+function fetchedAtFromNewsMemory(
+  row: Record<string, unknown>,
+  metadata: Record<string, unknown>,
+): string {
+  return asString(metadata.fetched_at) || asString(row.updated_at) ||
+    new Date().toISOString();
+}
+
+function lintBlock(summary: Record<string, unknown>, findings: NewsLintFinding[]) {
+  const lines = [
+    "NEWS_SIGNAL_LINT_START",
+    `checked_at=${summary.checked_at}`,
+    `status=${summary.status}`,
+    `findings=${summary.finding_count}`,
+  ];
+  for (const finding of findings.slice(0, 8)) {
+    lines.push(
+      `- [${finding.severity}] ${finding.code}: ${finding.message} (${finding.file_path})`,
+    );
+  }
+  lines.push("NEWS_SIGNAL_LINT_END");
+  return lines.join("\n");
+}
+
+function replaceLintBlock(notes: string, block: string): string {
+  const cleaned = notes
+    .replace(/NEWS_SIGNAL_LINT_START[\s\S]*?NEWS_SIGNAL_LINT_END/g, "")
+    .trim();
+  return [cleaned, block].filter(Boolean).join("\n\n");
+}
+
+async function checkNewsUrl(url: string): Promise<boolean> {
+  if (!/^https?:\/\//i.test(url)) return false;
+  try {
+    const head = await fetch(url, {
+      method: "HEAD",
+      signal: AbortSignal.timeout(7000),
+      headers: {
+        "User-Agent":
+          "my-web-app-news-lint/1.0 (+https://my-web-app-b67f4.web.app)",
+      },
+    });
+    if (head.ok || head.status === 405 || head.status === 403) return true;
+    const get = await fetch(url, {
+      method: "GET",
+      signal: AbortSignal.timeout(7000),
+      headers: {
+        "User-Agent":
+          "my-web-app-news-lint/1.0 (+https://my-web-app-b67f4.web.app)",
+      },
+    });
+    return get.ok || get.status === 403;
+  } catch (_) {
+    return false;
+  }
+}
+
+async function lintExternalBrainNewsSignals(
+  admin: SupabaseClient,
+  body: Record<string, unknown>,
+) {
+  const limit = clampNumber(body.limit, 80, 1, 300);
+  const maxAgeDays = clampNumber(body.max_age_days, 3, 1, 30);
+  const verifyLinks = Boolean(body.verify_links ?? false);
+  const updatePosts = body.update_posts !== false;
+  const checkedAt = new Date().toISOString();
+  const { data, error } = await admin
+    .from("memory_index")
+    .select("file_path,title,content,source,metadata,updated_at")
+    .in("source", [
+      "ai_external_brain_raw_news",
+      "ai_external_brain_wiki_source",
+    ])
+    .order("updated_at", { ascending: false })
+    .limit(limit);
+  if (error) throw new Error(error.message);
+
+  const rows = ((data ?? []) as Array<Record<string, unknown>>)
+    .filter((row) => asString(row.file_path));
+  const findings: NewsLintFinding[] = [];
+  const byKey = new Map<string, { raw: boolean; wiki: boolean }>();
+  const postFindings = new Map<string, NewsLintFinding[]>();
+  const linkChecks: Array<Promise<void>> = [];
+
+  for (const row of rows) {
+    const filePath = asString(row.file_path);
+    const title = asString(row.title, filePath);
+    const content = asString(row.content);
+    const metadata = asRecord(row.metadata) ?? {};
+    const postId = asString(metadata.post_id);
+    const url = sourceUrlFromNewsMemory(content, metadata);
+    const key = asString(metadata.dedupe_key) || asString(metadata.url) ||
+      filePath.replace(/^(raw\/news|wiki\/sources\/news)\//, "");
+    const pair = byKey.get(key) ?? { raw: false, wiki: false };
+    if (filePath.startsWith("raw/news/")) pair.raw = true;
+    if (filePath.startsWith("wiki/sources/news/")) pair.wiki = true;
+    byKey.set(key, pair);
+
+    const addFinding = (
+      severity: NewsLintSeverity,
+      code: string,
+      message: string,
+      targetUrl = url,
+    ) => {
+      const finding: NewsLintFinding = {
+        severity,
+        code,
+        file_path: filePath,
+        title,
+        message,
+        post_id: postId || undefined,
+        url: targetUrl || undefined,
+      };
+      findings.push(finding);
+      if (postId) {
+        postFindings.set(postId, [...(postFindings.get(postId) ?? []), finding]);
+      }
+    };
+
+    if (!url) {
+      addFinding("error", "missing_source_url", "Source URL is missing.");
+    } else if (!/^https?:\/\//i.test(url)) {
+      addFinding("error", "invalid_source_url", "Source URL is not http(s).");
+    }
+    if (
+      content.includes("公開前に本文要約を追記") ||
+      content.includes("No summary supplied")
+    ) {
+      addFinding("warning", "summary_stub", "Summary is still a stub.");
+    }
+    const risks = newsRiskFlags(`${title}\n${content}`);
+    if (risks.length > 0) {
+      addFinding(
+        "review_required",
+        "high_risk_topic",
+        `Human review required before publish: ${risks.join(",")}.`,
+      );
+    }
+    const fetchedAt = Date.parse(fetchedAtFromNewsMemory(row, metadata));
+    if (Number.isFinite(fetchedAt)) {
+      const ageDays = (Date.now() - fetchedAt) / 86_400_000;
+      if (ageDays > maxAgeDays) {
+        addFinding(
+          "warning",
+          "stale_source",
+          `Source is older than ${maxAgeDays} days.`,
+        );
+      }
+    }
+    if (verifyLinks && url && linkChecks.length < 20) {
+      linkChecks.push((async () => {
+        if (!(await checkNewsUrl(url))) {
+          addFinding("error", "source_link_unreachable", "Source URL did not respond.");
+        }
+      })());
+    }
+  }
+
+  await Promise.all(linkChecks);
+  for (const [key, pair] of byKey.entries()) {
+    if (!pair.raw || !pair.wiki) {
+      findings.push({
+        severity: "warning",
+        code: "raw_wiki_pair_incomplete",
+        file_path: key,
+        title: key,
+        message: "External-brain raw/wiki pair is incomplete.",
+      });
+    }
+  }
+
+  const blocking = findings.filter((finding) =>
+    finding.severity === "error" || finding.severity === "review_required"
+  );
+  const summary = {
+    checked_at: checkedAt,
+    status: blocking.length > 0 ? "review_required" : "pass",
+    row_count: rows.length,
+    finding_count: findings.length,
+    blocking_count: blocking.length,
+  };
+
+  let updatedPosts = 0;
+  if (updatePosts && postFindings.size > 0) {
+    const postIds = [...postFindings.keys()].filter(Boolean);
+    const { data: posts } = await admin
+      .from("blog_posts")
+      .select("id,notes,status")
+      .in("id", postIds);
+    for (const rawPost of posts ?? []) {
+      const post = rawPost as Record<string, unknown>;
+      const postId = asString(post.id);
+      const localFindings = postFindings.get(postId) ?? [];
+      const nextNotes = replaceLintBlock(
+        asString(post.notes),
+        lintBlock(summary, localFindings),
+      );
+      const shouldHold = localFindings.some((finding) =>
+        finding.severity === "error" ||
+        finding.severity === "review_required"
+      );
+      const update: Record<string, unknown> = { notes: nextNotes };
+      if (shouldHold && asString(post.status) === "ready") {
+        update.status = "draft";
+      }
+      const { error: updateErr } = await admin
+        .from("blog_posts")
+        .update(update)
+        .eq("id", postId);
+      if (!updateErr) updatedPosts++;
+    }
+  }
+
+  await admin.from("hub_data").insert({
+    source: "blog_news_signal_lint",
+    metadata: {
+      ...summary,
+      updated_posts: updatedPosts,
+      verify_links: verifyLinks,
+    },
+  });
+
+  return {
+    success: blocking.length === 0,
+    ...summary,
+    updated_posts: updatedPosts,
+    findings,
   };
 }
 
@@ -987,10 +1279,13 @@ serve(async (req: Request) => {
       "wbs.unblock_dependents",
       "x.post_with_media",
     ];
+    const serviceRoleRequest = isServiceRoleRequest(req);
     let userId: string | null = null;
     if (!publicActions.includes(action)) {
-      userId = await getUserId(req);
-      if (!userId) return json({ error: "Unauthorized" }, 401);
+      if (!serviceRoleRequest) {
+        userId = await getUserId(req);
+        if (!userId) return json({ error: "Unauthorized" }, 401);
+      }
     }
 
     switch (action) {
@@ -1782,6 +2077,11 @@ serve(async (req: Request) => {
           fetched_at: fetchedAt,
           external_brain: externalBrain,
         });
+      }
+
+      case "blog.news_signal_lint": {
+        const result = await lintExternalBrainNewsSignals(admin, body);
+        return json(result, result.success ? 200 : 207);
       }
       // Win版#132 part 124: 過去 dispatch 済の dev.to + Qiita 記事を hub_data に backfill する.
       // 既存の T-1 dispatch (= part 124 fix 前) は hub_data に記録されていないため、

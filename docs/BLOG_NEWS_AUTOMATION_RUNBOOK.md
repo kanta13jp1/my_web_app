@@ -45,6 +45,18 @@ Last updated: 2026-05-05
 5. Draft `notes` keep `AI_NEWS_SIGNAL_DRAFT_KEY` for dedupe and
    `EXTERNAL_BRAIN_FILE_PATHS` for later query/lint automation.
 
+## News Signal Lint Flow
+
+1. `.github/workflows/blog-news-signal-lint.yml` runs daily at 06:45 JST.
+2. The workflow calls `schedule-hub` `blog.news_signal_lint` with the Supabase
+   service role key.
+3. The lint action checks `memory_index` news rows for missing URLs, stale
+   sources, raw/wiki pair gaps, stub summaries, and high-risk topics.
+4. Findings are written back into each related `blog_posts.notes` block between
+   `NEWS_SIGNAL_LINT_START` and `NEWS_SIGNAL_LINT_END`.
+5. If a `ready` post has an error or high-risk finding, the action moves it back
+   to `draft` so the publish workflow cannot send it without review.
+
 ## Two-Instance Operating Rule
 
 - Local development stays on two app instances only: Claude Code #1 Windows app
@@ -71,7 +83,7 @@ Last updated: 2026-05-05
 
 - Add a scheduled `rss.fetch_latest` cache table when traffic grows.
 - Add AI summarization after RSS normalization is stable.
-- Add a `blog.news_signal_lint` action that checks contradictions, broken links,
-  and stale facts across `raw/news` and `wiki/sources/news`.
-- Add a human-review queue for high-risk domains such as investment, medical,
-  legal, election, and disaster information before any publish automation.
+- Extend `blog.news_signal_lint` with semantic contradiction checks across
+  related sources once summarization is stable.
+- Add an admin queue view for high-risk domains such as investment, medical,
+  legal, election, and disaster information.
