@@ -26539,3 +26539,43 @@ a9d7b1517 on main
 ### Philosophy Alignment
 #1 CEO 感 (= User 12 度目共有を「ship 状況 framing 待ち signal」と再解釈 = 機械的 repeat 視せず) / #6 資本=時間 (= 既存 7 原則 80% 重複と認識し無駄重複追加せず effective edit) / #7 資産負債 (= Karpathy framing 取込で理論 evidence 充実 = 資産 / 既存 doc を Karpathy 流に書き直し = 負債回避) / #8 KPI=昨日の自分 (= part 137 実装完了 → 138 理論裏付け = 上昇螺旋)
 
+
+## Win版 (Claude Code) #132 part 139 (= 66 part 連続 dogfood / Karpathy Layer 3-5 Agent Skills 着地) — 2026-05-05
+
+### Summary
+
+User 15 度目共有「【速報】22歳が年間$25,000の投資ツールの代わりに月$20のClaude Proを選んで毎日利益を出してる話」 (= Karpathy AI 外部脳記事再共有) + 明示要望「part 139 として Level 3-5 Agent Skills 化 (= raw/ に新 file 入れた発話 trigger で Ingest 自走)」に応答.
+
+**Layer 3-5 Agent Skills を 4 つ新規作成 (= Karpathy 5 段階自動化の最終 stage / wiki-skills plugin parity)**:
+
+1. `.claude/skills/wiki-ingest/SKILL.md` (= 「raw/ に file 入れた」発話自動検知 → `scripts/memory_ingest.py --mode draft → save` 自走)
+2. `.claude/skills/wiki-compile/SKILL.md` (= `scripts/wiki_compile.py` → `docs/concepts/` + `docs/INDEX.md` 再生成 thin wrapper)
+3. `.claude/skills/wiki-query/SKILL.md` (= NotebookLM CLI 経由ゼロトークンリサーチ + 過去判断 cross-reference)
+4. `.claude/skills/wiki-lint/SKILL.md` (= `scripts/knowledge_vault_lint.py` Health Score 算出 thin wrapper)
+
+**Smoke test 完全成功**:
+- `raw/articles/2026-05-05-karpathy-ai-external-brain-jp.md` を `--mode draft → save` で `memory/vault/ingest_20260505_karpathy-ai-external-brain-2026-05-05.md` 確定
+- related 8 件 detect (top score 108 = `docs/SECOND_BRAIN_PRINCIPLES.md` = perfect semantic linkage / 自分の既存 PKM doc が真っ先に hit = 自己整合性証明)
+
+### Karpathy 5 段階自動化 完成 mapping
+
+| Level | Stage | 自分株式会社実装 |
+|-------|-------|-----------------|
+| 3-1 | CLI 一発 | `python scripts/memory_ingest.py --input-file ...` (part 111) |
+| 3-2 | スラッシュコマンド | (Win Codex #1977 / 未着手) |
+| 3-3 | スケジュール | `wiki-compile-cron.yml` daily / `knowledge-vault-lint.yml` weekly |
+| 3-4 | GitHub Actions | 上記 cron 群 (= Karpathy 4 サイクル全部 GHA 化済) |
+| **3-5** | **Agent Skills** | **本 part 139 で着地 (= wiki-ingest/compile/query/lint × 4)** |
+
+### Philosophy Alignment
+
+- **#1 CEO 感**: User 「軽い signal」(= 投資ツール記事の薄い再共有) を「Layer 3-5 明示依頼」と再解釈 → 機械的 repeat 視せず実装応答
+- **#6 資本=時間**: 既存 4 script (memory_ingest / wiki_compile / knowledge_vault_lint / notebooklm) を thin wrapper する Skill 層のみ追加 (= 新規 Python 0 行 / 4 SKILL.md のみ)
+- **#7 資産負債**: SKILL.md 内に元 script への pointer 必須 (= 二重実装 = 負債を排除 / wrapper のみ = 資産)
+- **#8 KPI=昨日の自分**: part 138 = Layer 1 ingest 着地 → part 139 = Layer 3-5 skill 化 = 上昇螺旋
+- **BRAIN-32 #5 (Agent Skill 自走)**: 旧 baseline 5.5/7 → 6/7 候補 (= 4 skill + smoke test 確認)
+- **INDIE-29 #1 (既存 infra 再利用)**: 4 既存 script を 100% 再利用 / 新規実装 0 / dependency 追加 0
+
+### Commit
+
+`<commit hash 後埋め>` — Karpathy Layer 3-5 Agent Skills 4 新規 + memory/log.md 追記 + memory/vault/ smoke test save + ingest_log.jsonl 更新.
