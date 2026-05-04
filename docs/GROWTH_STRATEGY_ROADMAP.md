@@ -26426,3 +26426,36 @@ a9d7b1517 on main
 ### Philosophy Alignment
 #1 CEO 感 (= User 指示 即 Plan mode → 即実装) / #6 資本=時間 (= drift 自動検出で sync 確認時間ゼロ化) / #7 資産負債 (= local file の履歴 = 負債 / repo canonical = 資産化) / #8 KPI=昨日の自分 (= part 134 圧縮 → part 135 同期 = 連続改善)
 
+
+## 2026-05-05 (Win版#132 part 136) — inject-rules.txt drift 自動修復 Tier 1-3 (defense in depth)
+
+### 完了
+- User 指示「drift 自動修復 (= cron で --apply まで自動)」
+- 3 layer mechanism 実装:
+  - **Tier 1**: `.claude/hooks/session-start-sync-rules.ps1` + `.claude/settings.json` SessionStart hook (= primary / 即時)
+  - **Tier 2**: `scripts/setup_inject_rules_auto_sync.ps1` (= Windows Task / daily 03:30 JST / Codex CLI 対応)
+  - **Tier 3**: GHA workflow 拡張 (= canonical 更新検出 → #1647 コメント)
+- `docs/INJECT_RULES_AUTO_SYNC.md` 新規 (~140 行 / Tier 1-3 setup + troubleshoot)
+- commit `70c34d29d` (= 5 file / +408 / -1)
+
+### Phase 6 進化観察 (= 第 24 例 / 63 part 連続 dogfood)
+- 「Tier 1-3 defense in depth」pattern 第 1 例
+- 「local file auto-repair」pattern 第 1 例 (= GHA 限界を Hook で補完)
+- Plan mode 採用 8 連続 (= part 123/127/128/130/133/134/135/136)
+
+### 設計 trade-off
+- SessionStart 採用: 1 session 1 回 overhead 最小
+- 03:30 JST trigger: GHA cron 30 分後 / 深夜帯影響最小
+- silent failure: Python 不在でも session 継続
+- Tier 3 = comment (= noise 回避 / 既存 #1647 利用)
+
+### 次回候補
+- Tier 2 user setup (= 1 度 `-Install`)
+- next session で Tier 1 hook 動作確認
+- #1975 SECOND_BRAIN Karpathy 取込
+- #1977 wiki-skills 4 slash command
+- #1984 HDD 削減 worktree cleanup
+
+### Philosophy Alignment
+#1 CEO 感 (= User 指示 即 Plan → 即実装) / #6 資本=時間 (= 手動 sync 工数ゼロ化 / 修復まで auto) / #7 資産負債 (= 多層 defense は資産 / 単層は負債) / #8 KPI=昨日の自分 (= part 135 検出 only → 136 修復 auto = 連続改善)
+
