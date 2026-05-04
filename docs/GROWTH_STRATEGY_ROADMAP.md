@@ -26503,3 +26503,39 @@ a9d7b1517 on main
 ### Philosophy Alignment
 #1 CEO 感 (= User 指示 即 PowerShell tool 代行実行) / #6 資本=時間 (= bug 発覚 → 即修正で同セッション完結) / #7 資産負債 (= verify-after-write pattern 確立 = 資産 / silent failure = 負債) / #8 KPI=昨日の自分 (= part 136 設計 → 137 動作確認 → bug → fix = 連続改善)
 
+
+## 2026-05-05 (Win版#132 part 138) — Karpathy AI 外部脳 取込 → SECOND_BRAIN_PRINCIPLES.md (#1975)
+
+### 完了
+- User 12 度目同 article 共有 (= Karpathy AI 外部脳 / hooeem 経由) → #1975 doc 取込実施
+- `docs/SECOND_BRAIN_PRINCIPLES.md` に 5 sub-section 追加 (+78 / -3 / 234 → 309 行):
+  - **Karpathy 4-cycle ↔ 本 7 原則** cross-walk table (= Ingest→#2 / Compile→#3+#1 / Query→#5+#7 / Lint→#4)
+  - **3-layer Architecture** 整合 table (= Karpathy raw/wiki/CLAUDE.md と本 Layer 1/2/3 一致 / part 133-134 ship 状況明示)
+  - **Memex (Vannevar Bush 1945) 系譜** + メンテナンス問題 AI 解決 insight + PS#1 lint + part 135-137 link
+  - **Level 1-3 自動化階段** 5 段中 4 段 ship 済 (= Level 3-2 のみ #1977 Win Codex 待ち)
+  - **Karpathy 取込 4 insights** (= 記憶喪失検索エンジン アンチ / 統合 vs 索引 / 進入障壁低 / Vault 投入対象)
+- 実装履歴 table に part 133-138 backfill (= 6 entry)
+- baseline: **4.5 → 5.0/7**
+- commit `8fe16bf87` (= 1 file / +78 / -3)
+
+### Phase 6 進化観察 (= 第 26 例 / 65 part 連続 dogfood)
+- 「実装 → 理論裏付け reverse direction」pattern 第 1 例 (= 通常は 理論→設計→実装 だが Phase 6 = 実装連発 → 後で理論統合)
+- 「同 article N 度目共有 = ship 状況の理論 framing 待ち signal」発見
+- Plan mode skip (= 既存 doc 追補 / [COMPACTION-RESUME] 90min wrap-up rule 内)
+
+### #1975 受け入れ条件 達成
+- ✅ Karpathy 3 層 cross-walk
+- ✅ Karpathy 4 cycle cross-walk
+- ✅ Memex 系譜
+- ✅ 既存原則 dedup (= 80% 重複明示 / 無駄追加せず)
+- ✅ ship 済 infra link
+
+### 次回候補
+- #1975 close (= 受け入れ条件達成)
+- #1977 wiki-skills 4 slash command (= Win Codex / Level 3-2)
+- 03:30 JST cron 実行確認
+- baseline 5.0 → 5.5/7 = #2 `[[link]]` audit
+
+### Philosophy Alignment
+#1 CEO 感 (= User 12 度目共有を「ship 状況 framing 待ち signal」と再解釈 = 機械的 repeat 視せず) / #6 資本=時間 (= 既存 7 原則 80% 重複と認識し無駄重複追加せず effective edit) / #7 資産負債 (= Karpathy framing 取込で理論 evidence 充実 = 資産 / 既存 doc を Karpathy 流に書き直し = 負債回避) / #8 KPI=昨日の自分 (= part 137 実装完了 → 138 理論裏付け = 上昇螺旋)
+
