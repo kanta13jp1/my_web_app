@@ -26187,3 +26187,30 @@ a9d7b1517 on main
 ### Philosophy Alignment
 #1 CEO 感 (= User screenshot 報告に即対応) / #5 商品=ユーザー価値 (= 日本人ユーザーへの母語表示) / #6 資本=時間 (= 1 セッションで 2 ファイル深層 localization 完遂)
 
+
+## 2026-05-04 (Win版#132 part 128) — Karpathy AI 外部脳 guide 取込 (4 Issue + dogfood map)
+
+### 完了
+- bc58b50b reaffirm
+- User 共有 X post (= hooeem / Karpathy AI 外部脳) を fleet dogfood map で identify:
+  - 既存 80% カバー (Layer 1 raw / Layer 2 wiki / Cycle 1 Ingest / Cycle 4 Lint / Auto Level 3-1〜3-5)
+  - 残 20% gap (= CLAUDE.md 80 行違反 / Compile cycle 未実装) を 4 Issue 化
+- [#1974 (P1)](https://github.com/kanta13jp1/my_web_app/issues/1974) CLAUDE.md 464行+inject 372行 → 80 行 KPI 圧縮 + audit script
+- [#1975 (P1)](https://github.com/kanta13jp1/my_web_app/issues/1975) SECOND_BRAIN_PRINCIPLES.md に Karpathy 3 層 + 4 サイクル + Memex 哲学 + dogfood map 取込
+- [#1976 (P2)](https://github.com/kanta13jp1/my_web_app/issues/1976) scripts/wiki_compile.py 新規 (Compile cycle gap 補完)
+- [#1977 (P2)](https://github.com/kanta13jp1/my_web_app/issues/1977) wiki-skills 4 slash command + cross-instance-pr
+- Plan mode 経由 (= velvet-soaring-wall.md / ExitPlanMode 承認後実装)
+
+### Phase 6 進化観察 (= 第 16 例 / 55 part 連続 dogfood)
+- 「外部 trend → 既存 infra dogfood map → gap 補完 Issue」decomposition pattern 第 1 例 (= part 126 Lummox 3 軸の後継)
+- Plan mode 採用 3 連続 (= part 123/127/128 / 重い変更 + multi-Issue 起票)
+- 「同一 X post 2 度送付 = 別解釈追加要求」signal 解読 (= part 126 で見落とした 2 本目を処理)
+
+### 次回候補
+- 4 Issue 各実装
+- Karpathy guide blog draft (= PS版#2 T-1 / 「自分株式会社が Karpathy 外部脳の 80% を既に実装」narrative)
+- 5 cron infra → 6 cron infra (wiki_compile cron 追加)
+
+### Philosophy Alignment
+#1 CEO 感 (= User signal 解読 / Plan mode 経由) / #6 資本=時間 (= 80 行 KPI で context window 節約 = quota 削減) / #8 KPI=昨日の自分 (= Karpathy 推奨と既存 dogfood の 80% 一致は part 73-127 連続 dogfood 成果)
+
