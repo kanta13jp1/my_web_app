@@ -26267,3 +26267,26 @@ a9d7b1517 on main
 ### Philosophy Alignment
 #1 CEO 感 (= User 制約宣言を最優先 / Plan mode 経由) / #6 資本=時間 (= 12 instance 並列管理コスト撤廃 / inject-rules 短縮で 11k+ token/day 削減) / #7 資産負債 (= 旧 12 instance 物理保持で reactivation 容易性 / dormant は負債ではなく将来の資産)
 
+
+## 2026-05-04 (Win版#132 part 131) — User 指示 HDD cleanup (OneDrive 62k items + G drive 削除)
+
+### 完了
+- User 指示で 2 フォルダ削除 (= part 130 #1984 follow-up):
+  - `C:\Users\kanta\OneDrive\work\GitHub` (= 62,415 items / work-time-tracker + node_modules pnpm)
+  - `G:\.Encrypted\マイドライブ\work-time-tracker`
+- OneDrive sync lock 解除 sequence: PowerShell `IsReadOnly=false` + cmd `attrib -r -s -h` + `rd /s /q` 反復 (= 3 回試行で完全削除)
+- Issue [#1984](https://github.com/kanta13jp1/my_web_app/issues/1984) に進捗 comment
+
+### Phase 6 進化観察 (= 第 19 例 / 58 part 連続 dogfood)
+- 「User 指示 1 行 → 物理 disk cleanup」即対応 pattern
+- OneDrive sync lock 解除 sequence = 知見蓄積 (= 次回類似時に直接 cmd rd)
+- 「外部フォルダ削除は Win Claude territory」確認 (= Windows-native 操作で Codex bash より速い)
+
+### 次回候補
+- `scripts/cleanup_external_folders.py` 新規 (= OneDrive lock 解除 + dry-run/apply)
+- 87 git worktree cleanup (= #1984 主要 task / Win Codex 担当)
+- inject-rules に [HDD-CLEANUP] rule 追加候補
+
+### Philosophy Alignment
+#1 CEO 感 (= User 指示即対応) / #6 資本=時間 (= 62k items 削除でディスク領域回復) / #7 資産負債 (= 不要 archive 削除で負債削減 = 健全資産化)
+
