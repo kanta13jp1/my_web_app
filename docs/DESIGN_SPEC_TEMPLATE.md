@@ -59,7 +59,8 @@
 | MCP_AUTH_HARDENING | ✅ | ✅ | ❌ | ❌ | ✅ | + **MCP-AUTH 10/10** + AI-DEV 7/7 + AI-CHARACTER 8/8 + VIBE + SYNERGY | 14h | **sensitive 第 4** (単独) |
 | PII_GUARDRAIL | ✅ | ✅ | ❌ | ❌ | ✅ | + AI-CHARACTER 8/8 + AI-DEV 7/7 + MCP-AUTH cross-link | 14h | **sensitive 第 5** (二重: 個人+security) |
 | **VIBE_SANDBOX** | ✅ | ✅ | ✅ | ❌ | ✅ | + AI-CHARACTER 8/8 + AI-DEV 7/7 + **VIBE 7/7** + MCP-AUTH + PII cross-link | 14h | **sensitive 第 6** (三重: 個人+AI生成+security / 統合 spec 第 1) |
-| **平均工数** | | | | | | | **10.4h** | (= 通常 8.5h / sensitive 単独 12.0h / 二重 14h / 三重 14h) |
+| AI_LIFE_RESET_PLANNER | ✅ | ❌ | ✅ | ❌ | ✅ | PHILOSOPHY + AI-DEV 7/7 + IMBUE 7/7 + COLLAB | 8h | 通常 (= 既存 hub action 拡張) |
+| **平均工数** | | | | | | | **10.2h** | (= 通常 8.4h / sensitive 単独 12.0h / 二重 14h / 三重 14h) |
 
 = 1 spec ≈ 1 営業日 (= 5-14h Codex 工数) / Win Claude 起票工数 ≈ 30-60 min (= 7-28x leverage / 統合 spec で reviewer 効率 2x 上乗せ).
 = 詳細 KPI: [`PATTERNS.md` Ch6](DESIGN_SPEC_PATTERNS.md#chapter-6-13-spec-工数-kpi--empirical-baseline--第-6-改訂).
