@@ -1064,6 +1064,24 @@ List<HomeToolEntry> buildHomeToolCatalog({
           _pushPage(context, const DeploymentMonitoringSetupPage()),
     ),
     HomeToolEntry(
+      id: 'one-in-two-out-assist',
+      sectionId: 'growth',
+      title: '1 In 2 Out UI整理アシスト',
+      subtitle: '新規ウィジェット追加時に、利用頻度の低い2件を整理候補にする',
+      icon: Icons.rule_folder_outlined,
+      color: const Color(0xFF7C3AED),
+      keywords: const <String>[
+        '1 In 2 Out',
+        'UI整理',
+        'ウィジェット',
+        '利用頻度',
+        '認知負荷',
+      ],
+      onOpen: (context) => Navigator.of(context).pushNamed(
+        '/one-in-two-out-assist',
+      ),
+    ),
+    HomeToolEntry(
       id: 'ai-search',
       sectionId: 'growth',
       title: 'AI ノート検索',
