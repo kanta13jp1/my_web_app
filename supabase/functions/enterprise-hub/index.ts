@@ -616,6 +616,39 @@ serve(async (req) => {
         });
         return json({ success: true, event: item });
       }
+      case "integration.mapping_profiles": {
+        return json({
+          success: true,
+          profiles: await listItems(
+            admin,
+            "integration_mapping_profile",
+            userId,
+          ),
+        });
+      }
+      case "integration.mapping_profile.save": {
+        const profile = (body.profile ?? {}) as Record<string, unknown>;
+        const mappings = Array.isArray(profile.mappings)
+          ? profile.mappings
+          : [];
+        const item = await addItem(
+          admin,
+          "integration_mapping_profile",
+          userId,
+          {
+            profile: {
+              id: String(profile.id ?? "custom"),
+              label: String(profile.label ?? "Custom mapping"),
+              delimiter: String(profile.delimiter ?? ","),
+              mappings,
+            },
+            format_id: String(profile.id ?? "custom"),
+            mapping_count: mappings.length,
+            saved_at: new Date().toISOString(),
+          },
+        );
+        return json({ success: true, profile: item });
+      }
 
       // ── Feature Flags ────────────────────────────────────────────────────────
       case "flags.list": {
