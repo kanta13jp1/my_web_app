@@ -1957,11 +1957,11 @@ List<HomeToolEntry> buildHomeToolCatalog({
     HomeToolEntry(
       id: 'feature-requests',
       sectionId: 'growth',
-      title: '機能リクエスト',
-      subtitle: '欲しい機能の投票・提案・ステータス確認',
+      title: 'シングルページMVP',
+      subtitle: '記録・検索・発信の入口と機能要望フォーム',
       icon: Icons.lightbulb_outlined,
       color: const Color(0xFFF57C00),
-      keywords: const <String>['機能', 'リクエスト', '要望', '提案', 'feature', '投票'],
+      keywords: const <String>['MVP', '機能要望', 'リクエスト', 'feedback', 'feature'],
       onOpen: (context) => _pushPage(context, const FeatureRequestsPage()),
     ),
     HomeToolEntry(
