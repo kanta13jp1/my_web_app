@@ -78,6 +78,7 @@ PLACEHOLDER_LINKS = {
     "file_p",
     "file_q",
     "wikilink",
+    "xxx",
     "<関連 file 1>",
     "<関連 file 2>",
 }
