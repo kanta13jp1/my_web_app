@@ -76,7 +76,7 @@ part 143-145 で 6 spec ship したが、各 section 構成は同型. 7 件目�
 
 = GitHub Issue 受入 #1-#N が必ず spec section に対応する self-check.
 
-## 4. 適用済 10 spec の axis 早見表 (= part 143-152)
+## 4. 適用済 11 spec の axis 早見表 (= part 143-152)
 
 | spec | Q1 | Q2 | Q3 | Q4 | Q5 | 主 axis | 工数 | 種別 |
 |---|---|---|---|---|---|---|---:|---|
@@ -90,10 +90,12 @@ part 143-145 で 6 spec ship したが、各 section 構成は同型. 7 件目�
 | AI_DESPERATION_DETECTION | ✅ | ✅ | ❌ | ❌ | ✅ | + AI-CHARACTER 8/8 + AI-DEV 7/7 + COLLAB | 9h | **sensitive 第 2** |
 | ROBUST_AI_PERSONA | ✅ | ✅ | ❌ | ❌ | ✅ | + AI-CHARACTER 8/8 + AI-DEV 7/7 + VIBE | 14h | **sensitive 第 3** |
 | MCP_AUTH_HARDENING | ✅ | ✅ | ❌ | ❌ | ✅ | + **MCP-AUTH 10/10** + AI-DEV 7/7 + AI-CHARACTER 8/8 + VIBE + SYNERGY | 14h | **sensitive 第 4** |
-| **平均工数** | | | | | | | **10.0h** | |
+| PRECOMPACT_MEMORY_BACKUP | ✅ | ✅ | ❌ | ❌ | ✅ | PHILOSOPHY + AI-DEV + BRAIN + INDIE + SYNERGY | 8h | 通常 (= 既存拡張 第 1) |
+| **平均工数** | | | | | | | **9.8h** | |
 
 = 1 spec ≈ 1 営業日 (= 8-12h) Codex 工数 / Win Claude 起票工数 ≈ 30-60 min (= 7-15x leverage).
-= sensitive 平均 12.0h (= 通常 8.6h より +40% / 倫理 review section 拡張 reflect).
+= sensitive 平均 12.0h (= 通常 8.5h より +40% / 倫理 review section 拡張 reflect).
+= 通常 spec template の **既存 hook 拡張** pattern 第 1 例 (= PRECOMPACT_MEMORY_BACKUP / part 152) — ゼロから新規ではなく既存 base + 増分設計.
 
 ## 4A. Sensitive design 拡張 §2 倫理 review section (= 必須 / part 147 確立 + part 150 で 3 例完成 + part 152 で第 4 例 = security boundary 異領域拡張)
 
