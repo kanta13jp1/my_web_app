@@ -26743,11 +26743,22 @@ COMPACTION-RESUME: 90min ガード接近 → wrap-up 着地。
 - DYNAMIC-CLAIM: 1 session 2 件 cap 完全遵守
 
 ### 次回 candidate (= part 144)
-1. #1348 専門用語 inline tooltip 設計 spec (= ui-design skill + AI 大学 terminology DB join)
-2. #1366 ストーリー分岐 UI action 設計 spec (= ui-design skill general action pattern)
-3. part 142+143 設計 spec 4 件 (#1305/#1309/#1316/#1345) の Codex 着手 progress 確認
-4. 6 部門 KPI seed migration (= default 5 KPI per dept) の content 草案 (Codex 着手前 prep)
-5. 1 In 2 Out scoring algorithm の paramater tuning case study 追補
+1. **#1292 メンテナンス時 SOP 策定 (= docs/MAINTENANCE_SOP.md)** ← part 143 batch 3 triage で deferred / Win Claude territory primary
+2. #1348 専門用語 inline tooltip 設計 spec (= ui-design skill + AI 大学 terminology DB join)
+3. #1366 ストーリー分岐 UI action 設計 spec (= ui-design skill general action pattern)
+4. part 142+143 設計 spec 4 件 (#1305/#1309/#1316/#1345) の Codex 着手 progress 確認
+5. 6 部門 KPI seed migration (= default 5 KPI per dept) の content 草案 (Codex 着手前 prep)
+
+### Part 143 follow-up (= batch 3 triage)
+
+[docs/cross-instance-prs/20260505_codex_overdue_wbs_handoff_batch3.md](docs/cross-instance-prs/20260505_codex_overdue_wbs_handoff_batch3.md) で
+batch 1+2 漏れの **未 triage 残 2 件** (#1286 admin bypass無効化 / #1292 SOP) を補完。
+[DYNAMIC-CLAIM] 2 件 cap respect → #1292 (Win Claude territory) は part 144 deferred で scope outline のみ。
+
+新 pattern (= batch 3 で確立):
+- 「triage = cap 外」discipline (= primary claim 2 件と triage は別計上)
+- 「3 batch 連続 5-question matrix 適用」(= 累計 20 件 / 1 session 内最大)
+- 「missed Issue を後追い batch」(= UI top 表示遷移で漏れ検出 / weekly cron 候補)
 
 ## Win版#132 part 144 (= WBS overdue 期限近順 part 143 deferred 消化 + batch 4 / 2026-05-05)
 
