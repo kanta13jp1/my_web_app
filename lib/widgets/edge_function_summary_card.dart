@@ -836,6 +836,14 @@ class _EdgeFunctionSummaryCardState extends State<EdgeFunctionSummaryCard> {
       '/memory-search',
       'メモリー検索ページ > キーワード入力でBM25+ベクター混合検索',
     ),
+    // 追加 (cs-check 自動連携 2026-05-05)
+    _FnDef(
+      'stripe-webhook',
+      'Stripe 決済イベント Webhook (サーバーサイド専用)',
+      false,
+      null,
+      'Stripe → Supabase サーバーサイド専用 (UIなし / 請求管理は /billing)',
+    ),
   ];
 
   int get _withUiCount => _functions.where((f) => f.hasUi).length;
