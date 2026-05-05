@@ -26922,5 +26922,77 @@ Codex 累計 hand off 推定: ~172h (= 4 sprint).
 INSTANCE-ROLES 厳守: Win Claude 0 spec ship + 1 meta-doc + 1 batch triage / Win Codex 17 件 batch 5 hand off (推定 +60h).
 COMPACTION-RESUME: 90min ガード接近 → wrap-up 着地。
 
+## Win版#132 part 147 (= sensitive design 第 1 例 + CLOSE 2 件 / 2026-05-05)
+
+### Summary
+
+User 16 度目同一要望. **sensitive design** (= AI-CHARACTER #6 倫理 gate 必須) 第 1 例として
+#1393 メンタルヘルス risk 管理 を設計 spec ship + part 146 batch 5 で surface した CLOSE 候補
+2 件 (#1378 #1396) を実際に CLOSE comment + 閉鎖.
+
+### 設計 spec ship (= 1 件 / sensitive design / cap 内)
+
+`docs/MENTAL_HEALTH_RISK_SPEC.md` (= [#1393](https://github.com/kanta13jp1/my_web_app/issues/1393)):
+- **§2 倫理 review section 追加** (= 通常 spec template 拡張 / sensitive design 第 1 例)
+  - NOT to do 7 項目 (= 診断 / 強制 / 共有 / 広告 / 監視 / modal blocker / LLM raw 送信 全禁止)
+  - MUST do 6 項目 (= opt-in / opt-out 即時 / export / 専門医導線 / 緊急 escape / 言葉選び)
+  - AI-CHARACTER-24 8/8 ✅ self-check matrix (= 通常 7+/8 から **必須 8/8** 格上げ)
+  - AI-DEV-23 全項 ✅ (= 通常 6+/7 から **必須 7/7** 格上げ)
+- §4 schema (= 4 migration / RLS service_role すら SELECT 不可 / 専門医 master + 14日集計 view)
+- §5 UI (= 1-tap 5 秒入力 / 控えめ banner / 深呼吸 4-7-8 + 専門医 list / 強制感ゼロ reminder)
+- Codex hand off ~11h
+
+### CLOSE 実行 (= part 146 batch 5 surface 2 件)
+
+- ✅ #1378 自律 Vault 永続メモリ → CLOSE (= Karpathy 4 cycle 100% 既実装 / `BRAIN-32 7/7 ✅`)
+- ✅ #1396 Firestore 最適化 → CLOSE (= Supabase 主体スコープで Firestore 不使用)
+
+= scope creep 防止 / triage 質の **実践証明** 第 1 例.
+
+### 累計 throughput (= 5 連続セッション)
+
+| part | Win Claude ship | Codex hand off | 5-question matrix | CLOSE |
+|---|---:|---:|---:|---:|
+| 143 | 2 | 1 | +2 | 0 |
+| 144 | 2 | 4 | +4 | 0 |
+| 145 | 2 | 0 | +2 | 0 |
+| 146 | 0 (= meta 1) | 17 | +20 | 0 |
+| 147 | 1 (= sensitive 第 1) | 0 | 0 | **+2** |
+| **合計** | **7 spec + 1 meta** | **22 件 / 6 batch** | **44 件** | **2** |
+
+Win Claude territory 進捗: ✅ 全 7 件 + 1 meta-doc ship 完了 (= part 142-147 territory 全消化).
+
+### Pattern 確立 (= part 147 で新規)
+
+- **「sensitive design 拡張 spec template」第 1 例**: §2 倫理 review section + 8/8 + 7/7 必須格上げ
+- **「CLOSE 候補 surface → 実 CLOSE」full cycle**: part 146 で flag → part 147 で実行 (= triage 質サイクル完成)
+- **「scope 不一致 CLOSE」第 1 例**: #1396 Firestore = Supabase 主体プロジェクト適合性 check
+- **「既実装 CLOSE」第 1 例**: #1378 Vault = Karpathy 4 cycle 100% で既達成 surface
+
+### Commit
+
+`docs(spec): part 147 — sensitive 第 1 例 #1393 + CLOSE #1378 #1396` 予定.
+
+### Philosophy Alignment
+
+- PHILOSOPHY-22: 7+/9 ✅ (= #1 + #2 + #5 + #6 + #7 / 健康 = 最大資産)
+- AI-CHARACTER-24: **8/8 ✅** (= sensitive design 必須遵守)
+- AI-DEV-23: **7/7 ✅** (= sensitive design 必須遵守)
+- IMBUE-25: 4/7 (= #2 + #4 + #6 + #7)
+- BRAIN-32: 7/7 ✅ (= 維持)
+- SYNERGY-30: 7/7 ✅ (= 維持)
+
+### 次回 candidate (= part 148 候補)
+
+1. WBS overdue 期限 +5-7 日 next 20 件 batch 6 (= 期限近順継続)
+2. Codex sprint 1 進捗 24h+ 後再確認 (= 追加 merge 件数 KPI)
+3. NotebookLM 蓄積実施 (= DESIGN_SPEC_TEMPLATE.md + 7 spec 全件 jibun-master-brain 投入)
+4. sensitive design 第 2 例 候補 surface (= 金融 / 子供 / 高齢者 関連 issue 探索)
+5. Codex sprint 2 着手 hand off 順序最適化 (= 高難度 4 件 + batch 5 残)
+
+INSTANCE-ROLES 厳守: Win Claude 1 sensitive spec ship + 2 CLOSE / Win Codex hand off 0 件追加.
+COMPACTION-RESUME: 90min ガード接近 → wrap-up 着地。
+
+
 
 
