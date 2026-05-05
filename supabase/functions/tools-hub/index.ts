@@ -630,16 +630,45 @@ const WBS_INSTANCE_VALUES = [
   "user", // ユーザー手動操作タスク (法人登記/銀行口座/外部面談等)
 ];
 
+const WBS_ACTIVE_INSTANCE_VALUES = [
+  "claude",
+  "codex",
+  "user",
+  "automation",
+];
+
+const WBS_CODEX_LEGACY_INSTANCES = ["codex", "ps2", "ps5", "ps6"];
+const WBS_AUTOMATION_LEGACY_INSTANCES = [
+  "schedule",
+  "gha",
+  "gemini",
+  "co-pilot",
+];
+
 const WBS_OPEN_STATUSES = ["pending", "in_progress", "blocked"];
 
 function normalizeWbsInstance(value: unknown): string {
   const normalized = String(value ?? "").trim().toLowerCase();
+  if (
+    normalized === "claude" ||
+    normalized === "claude-code" ||
+    normalized === "claude-code-1"
+  ) return "win";
+  if (normalized === "automation" || normalized === "auto") return "schedule";
   if (normalized === "windows") return "win";
   if (normalized === "ps") return "ps1";
   if (normalized === "copilot" || normalized === "github-copilot") {
     return "co-pilot";
   }
   return WBS_INSTANCE_VALUES.includes(normalized) ? normalized : "codex";
+}
+
+function normalizeWbsActiveInstance(value: unknown): string {
+  const normalized = normalizeWbsInstance(value);
+  if (WBS_CODEX_LEGACY_INSTANCES.includes(normalized)) return "codex";
+  if (WBS_AUTOMATION_LEGACY_INSTANCES.includes(normalized)) return "automation";
+  if (normalized === "user") return "user";
+  return "claude";
 }
 
 function mcpArgsForAction(
@@ -856,7 +885,7 @@ async function handleMcpFacade(
     const rawInstance = String(args.instance ?? "codex").trim().toLowerCase();
     const instance = rawInstance === "all"
       ? "all"
-      : normalizeWbsInstance(rawInstance);
+      : normalizeWbsActiveInstance(rawInstance);
     const includeCompleted = parseBooleanish(args.include_completed, false);
     const status = String(args.status ?? "").trim();
     const validStatuses = ["pending", "in_progress", "blocked", "completed"];
@@ -865,9 +894,6 @@ async function handleMcpFacade(
       .select(
         "id, category, title, description, instance, owner_instance, status, progress, end_date, priority, remaining_work, updated_at, github_issue_number, github_issue_url",
       );
-    if (instance !== "all") {
-      query = query.or(`instance.eq.${instance},owner_instance.eq.${instance}`);
-    }
     if (validStatuses.includes(status)) {
       query = query.eq("status", status);
     } else if (!includeCompleted) {
@@ -877,13 +903,17 @@ async function handleMcpFacade(
     const { data, error } = await query;
     if (error) throw new Error(error.message);
 
-    const tasks = [...(data ?? [])].sort(compareWbsTasks).slice(0, limit);
+    const filtered = [...(data ?? [])].filter((task) =>
+      wbsTaskMatchesInstanceFilter(task, rawInstance)
+    );
+    const tasks = filtered.sort(compareWbsTasks).slice(0, limit);
     await logMcpInvocation(auth.ctx, toolName, args, 200, req);
     return mcpToolResponse(body, {
       success: true,
       tool: toolName,
       structuredContent: {
         count: tasks.length,
+        total: filtered.length,
         instance,
         tasks,
       },
@@ -1281,7 +1311,28 @@ function pickGithubIssueWbsKeeper(
 }
 
 function wbsTaskLane(task: Record<string, unknown>): string {
-  return normalizeWbsInstance(task.owner_instance ?? task.instance);
+  return normalizeWbsActiveInstance(task.owner_instance ?? task.instance);
+}
+
+function wbsTaskMatchesInstanceFilter(
+  task: Record<string, unknown>,
+  rawInstance: unknown,
+): boolean {
+  const raw = String(rawInstance ?? "").trim().toLowerCase();
+  if (!raw || raw === "all") return true;
+  if (
+    WBS_ACTIVE_INSTANCE_VALUES.includes(raw) ||
+    raw === "claude-code" ||
+    raw === "claude-code-1" ||
+    raw === "automation" ||
+    raw === "auto"
+  ) {
+    return wbsTaskLane(task) === normalizeWbsActiveInstance(raw);
+  }
+  const legacyInstance = normalizeWbsInstance(raw);
+  return normalizeWbsInstance(task.instance) === legacyInstance ||
+    normalizeWbsInstance(task.owner_instance ?? task.instance) ===
+      legacyInstance;
 }
 
 function wbsDeadline(task: Record<string, unknown>): string {
@@ -1319,7 +1370,7 @@ function wbsRescueScore(task: Record<string, unknown>, now: Date): number {
 
 function buildWbsWorkload(tasks: Array<Record<string, unknown>>, now: Date) {
   const today = new Date(now.toISOString().slice(0, 10));
-  const workload = WBS_INSTANCE_VALUES.map((instance) => {
+  const workload = WBS_ACTIVE_INSTANCE_VALUES.map((instance) => {
     const laneTasks = tasks.filter((task) => wbsTaskLane(task) === instance);
     const openTasks = laneTasks.filter((task) =>
       WBS_OPEN_STATUSES.includes(String(task.status ?? ""))
@@ -5680,7 +5731,7 @@ serve(async (req) => {
         // ─── WBS (Work Breakdown Structure) actions (Win版#128) ─────────
         case "wbs.list_tasks": {
           // インスタンス + status でフィルタしてタスク一覧取得
-          // body: { instance?: 'codex'|'vscode'|'win'|'ps1'..'ps6'|'web'|'mobile'|'schedule'|'gha',
+          // body: { instance?: 'all'|'claude'|'codex'|'user'|'automation' (legacy lanes are still accepted),
           //        status?: 'pending'|'in_progress'|'completed'|'blocked',
           //        updated_since?: 'YYYY-MM-DDTHH:MM:SSZ' (ISO-8601),
           //        limit?: 50 }
@@ -5692,14 +5743,17 @@ serve(async (req) => {
             .select(
               "id, category, category_icon, category_order, title, description, instance, owner_instance, status, progress, start_date, end_date, planned_end_date, milestone_code, priority, remaining_work, updated_at, github_issue_number, github_issue_url, github_issue_state, github_issue_labels, github_issue_synced_at",
             );
-          if (inst && inst !== "all") {
-            q = q.eq("instance", inst);
-          }
           if (status) q = q.eq("status", status);
           if (updatedSince) q = q.gte("updated_at", updatedSince);
           const { data, error } = await q;
           if (error) throw new Error(error.message);
-          const sortedTasks = [...(data ?? [])].sort(compareWbsTasks).slice(
+          const filteredTasks = [...(data ?? [])].filter((task) =>
+            wbsTaskMatchesInstanceFilter(
+              task as Record<string, unknown>,
+              inst ?? "all",
+            )
+          );
+          const sortedTasks = filteredTasks.sort(compareWbsTasks).slice(
             0,
             limit,
           );
@@ -5710,7 +5764,7 @@ serve(async (req) => {
             success: true,
             tasks: sortedTasks,
             milestones: milestones ?? [],
-            total: data?.length ?? 0,
+            total: filteredTasks.length,
           });
         }
         case "wbs.update_progress": {
@@ -6813,24 +6867,32 @@ serve(async (req) => {
         case "wbs.priority_for_instance": {
           // 指定インスタンスの優先タスク TOP 5 を返す (session-start-check 用)
           // 担当なしの場合は他 instance の滞留タスクを自担当へ救援 reassign する。
-          // body: { instance: 'codex'|'vscode'|'win'|'ps1'..'ps6'|'web'|'mobile'|'schedule'|'gha',
+          // body: { instance: 'claude'|'codex'|'user'|'automation' (legacy lanes are still accepted),
           //         auto_reassign?: true, limit?: 5 }
           const rawInstance = String(body.instance ?? "").trim();
           if (!rawInstance) return json({ error: "instance required" }, 400);
           const rawInstanceLower = rawInstance.toLowerCase();
           if (
             !WBS_INSTANCE_VALUES.includes(rawInstanceLower) &&
-            !["windows", "ps", "copilot", "github-copilot"].includes(
-              rawInstanceLower,
-            )
+            !WBS_ACTIVE_INSTANCE_VALUES.includes(rawInstanceLower) &&
+            ![
+              "windows",
+              "ps",
+              "copilot",
+              "github-copilot",
+              "claude-code",
+              "claude-code-1",
+              "automation",
+              "auto",
+            ].includes(rawInstanceLower)
           ) {
             return json({
               error: `instance must be one of: ${
-                WBS_INSTANCE_VALUES.join(", ")
+                WBS_ACTIVE_INSTANCE_VALUES.join(", ")
               }`,
             }, 400);
           }
-          const inst = normalizeWbsInstance(rawInstance);
+          const inst = normalizeWbsActiveInstance(rawInstance);
           const limit = Math.min(Math.max(Number(body.limit ?? 5), 1), 20);
           const autoReassign = parseBooleanish(
             body.auto_reassign ?? body.autoReassign,
@@ -6840,11 +6902,15 @@ serve(async (req) => {
             "id, category, category_order, title, status, progress, priority, end_date, planned_end_date, updated_at, instance, owner_instance, recovery_plan, github_issue_number, github_issue_url, github_issue_state, github_issue_synced_at";
           const { data, error } = await admin.from("wbs_tasks")
             .select(taskSelect)
-            .eq("instance", inst)
             .in("status", ["pending", "in_progress", "blocked"]);
           if (error) throw new Error(error.message);
           const ownTaskFilter = filterClosedGithubIssueWbsTasks(
-            [...(data ?? [])] as Array<Record<string, unknown>>,
+            [...(data ?? [])].filter((task) =>
+              wbsTaskMatchesInstanceFilter(
+                task as Record<string, unknown>,
+                rawInstance,
+              )
+            ) as Array<Record<string, unknown>>,
           );
           let topTasks = ownTaskFilter.activeTasks
             .sort(compareWbsTasks)
@@ -6866,12 +6932,13 @@ serve(async (req) => {
           );
           let reassignedTask: Record<string, unknown> | null = null;
 
-          if (topTasks.length === 0 && autoReassign) {
+          if (topTasks.length === 0 && autoReassign && inst !== "automation") {
             const candidate = pickWbsRescueCandidate(openTasks, inst, now);
             if (candidate) {
+              const legacyTarget = normalizeWbsInstance(rawInstance);
               const update: Record<string, unknown> = {
-                instance: inst,
-                owner_instance: inst,
+                instance: legacyTarget,
+                owner_instance: legacyTarget,
               };
               const needsRecoveryPlan = wbsOverdueDays(
                     candidate,
@@ -6979,7 +7046,7 @@ serve(async (req) => {
           return json({
             success: true,
             instance: body.instance
-              ? normalizeWbsInstance(body.instance)
+              ? normalizeWbsActiveInstance(body.instance)
               : null,
             workload: buildWbsWorkload(openTasks, now),
             rebalance_suggestions: buildWbsRebalanceSuggestions(openTasks, now),
@@ -6996,25 +7063,38 @@ serve(async (req) => {
           const myInstance = String(body.my_instance ?? "");
           const limitN = Math.min(Number(body.limit ?? 5), 20);
           if (!myInstance) return json({ error: "my_instance required" }, 400);
+          const myActiveInstance = normalizeWbsActiveInstance(myInstance);
 
           // 1. 自 instance の active task 数 fetch
-          const { count: myActiveCount } = await admin.from("wbs_tasks")
-            .select("id", { count: "exact", head: true })
-            .eq("instance", myInstance)
+          const { data: myActiveRaw, error: myActiveErr } = await admin.from(
+            "wbs_tasks",
+          )
+            .select("id, instance, owner_instance")
             .in("status", ["pending", "in_progress", "blocked"]);
+          if (myActiveErr) throw new Error(myActiveErr.message);
+          const myActiveCount = [...(myActiveRaw ?? [])].filter((task) =>
+            wbsTaskMatchesInstanceFilter(
+              task as Record<string, unknown>,
+              myActiveInstance,
+            )
+          ).length;
 
           // 2. 他 instance の active task 取得 (rebalance 候補)
           const { data: otherTasks, error } = await admin.from("wbs_tasks")
             .select(
               "id, category, title, instance, owner_instance, status, progress, priority, end_date, updated_at, last_rebalanced_at, github_issue_number, github_issue_url, github_issue_state, github_issue_synced_at",
             )
-            .neq("instance", myInstance)
             .in("status", ["pending", "in_progress", "blocked"])
             .neq("priority", "completed")
             .limit(200);
           if (error) throw new Error(error.message);
           const otherTaskFilter = filterClosedGithubIssueWbsTasks(
-            [...(otherTasks ?? [])] as Array<Record<string, unknown>>,
+            [...(otherTasks ?? [])].filter((task) =>
+              !wbsTaskMatchesInstanceFilter(
+                task as Record<string, unknown>,
+                myActiveInstance,
+              )
+            ) as Array<Record<string, unknown>>,
           );
 
           // 3. 抑制ルール: PS 専任 / IPO 専決 / 期限直前は除外
@@ -7120,7 +7200,8 @@ serve(async (req) => {
           return json({
             success: true,
             my_instance: myInstance,
-            my_active_count: myActiveCount ?? 0,
+            my_active_instance: myActiveInstance,
+            my_active_count: myActiveCount,
             candidates,
             closed_issue_exclusions: {
               total_count: otherTaskFilter.excludedTasks.length,

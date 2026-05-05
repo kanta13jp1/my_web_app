@@ -118,3 +118,8 @@ User 要望 (= 2026-05-04):
 - [`docs/AI_FALLBACK_RUNBOOK.md`](./AI_FALLBACK_RUNBOOK.md) — fallback
 - Issue [#1974](https://github.com/kanta13jp1/my_web_app/issues/1974) — CLAUDE.md 80 行 KPI (= 関連 context cost 削減)
 - part 128 memo — Karpathy AI 外部脳 dogfood map
+## Current 2-Instance Marker (2026-05-05)
+
+This transition note is legacy history plus the migration record. Current
+canonical operation is Claude Code #1 (Windows app) + Codex #1 (Windows app).
+Any 12-fleet, Codex#2, or PS#1-6 references below are historical mappings only.
