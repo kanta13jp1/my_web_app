@@ -27304,16 +27304,16 @@ batch 7 cross-instance-pr (20 件 / Codex 18 + Win Claude 2) + Codex sprint 1 �
 INSTANCE-ROLES 厳守: Win Claude meta-doc 改訂 + batch 7 triage / Win Codex 18 件 batch 7 hand off (推定 +90h).
 COMPACTION-RESUME: 90min ガード接近 → 本 part で wrap-up 着地。
 
-## Win版#132 part 152 (= sensitive 第 4 例 #1577 MCP-AUTH-27 10/10 + template §4A 第 4 改訂 / 2026-05-05)
+## Win版#132 part 152 (= 1 session 2 spec ship — sensitive 第 4 #1577 + 通常 第 7 #1564 / template §4A 第 4 改訂 / 2026-05-05)
 
 **Instance**: Win Claude (worktree: `.claude/worktrees/crazy-jennings-93b113`)
-**Session**: part 152
-**Commit**: `5f730d970` (PR #2022 / base = #2017 / 階層化 spec PR)
+**Session**: part 152 (= **1 session 2 spec ship** / Codex 起票工数合計 **22h** = sensitive 14h + 通常 8h)
+**Commits**: `5f730d970` (sensitive #1577) + `f523149f0` (ROADMAP entry) + `d77d5e752` (通常 #1564) — PR [#2022](https://github.com/kanta13jp1/my_web_app/pull/2022) / base = [#2017](https://github.com/kanta13jp1/my_web_app/pull/2017) / 階層化 spec PR / 3 commits
 **Branch**: `claude/crazy-jennings-93b113` (= `claude/amazing-hypatia-84b710` から rebase / part 144-151 spec チェーン継承)
 
 ### Ship 内容
 
-#### 1. `docs/MCP_AUTH_HARDENING_SPEC.md` 新規 (= sensitive 第 4 例 / 11 section / 618 行)
+#### 1A. `docs/MCP_AUTH_HARDENING_SPEC.md` 新規 (= sensitive 第 4 例 / 11 section / 618 行)
 
 Issue #1577 (= P1 / WorkOS AuthKit MCP 認可強化) の設計 spec.
 **MCP-AUTH-27 10/10 必須遵守** + sensitive design 拡張 spec template 第 4 例.
@@ -27330,6 +27330,27 @@ Issue #1577 (= P1 / WorkOS AuthKit MCP 認可強化) の設計 spec.
 - §6 memory-search-hub 5/10 → 10/10 達成手順 (= MCP 公開第 1 例)
 - §7 hand off 14 件 / EF +1 / 工数 14h
 - §8 9 原則 alignment: PHILOSOPHY 8/9 + MCP-AUTH 10/10 + AI-DEV 7/7 + AI-CHARACTER 8/8 + VIBE 4+/7 + SYNERGY 4+/7
+
+#### 1B. `docs/PRECOMPACT_MEMORY_BACKUP_SPEC.md` 新規 (= 通常 第 7 例 / 9 section / 既存 hook 拡張 pattern 第 1 例)
+
+Issue [#1564](https://github.com/kanta13jp1/my_web_app/issues/1564) (= P1 / Claude Code 記憶保全) の設計 spec.
+通常 5 section + sensitive ではないため §2 倫理 review section 不要.
+通常 spec template の **「既存 hook 拡張」pattern 第 1 例** (= ゼロから新規ではなく既存 4 hook + 1 script base に増分設計 / Codex 工数 +30% 削減).
+
+主要 section:
+- §3.1 PreCompact hook 拡張 (= 既存 `.claude/hooks/pre-compact-backup.ps1` / part 122 bc58b50b #1848)
+  - YAML payload + 秘匿情報 redact filter (= GitHub PAT / Bearer / API key / .env pattern)
+- §3.2 SessionStart hook 拡張 (= 既存 `session-start-sync-rules.ps1` / part 136 + 5 検出追加)
+  - branch prefix 取り違え (= claude/ vs codex/) / behind/ahead/dirty/未 push/品質ゲート未完
+- §3.3 StatusLine 設定 (= `~/.claude/settings.json` `statusLine` 新規)
+  - 形式: `[instance] #issue | branch*N | gate=name`
+- §3.4 Setup hook SOP (= `docs/CLAUDE_CODE_SETUP_RUNBOOK.md` 新設)
+  - `--init` 7 step + `--maintenance` 7 step + 秘匿情報取扱 明文化
+- §5 hand off scope **10 件** / EF +0 / 工数 8h
+- §6 9 原則 alignment: PHILOSOPHY 8/9 + AI-DEV 7/7 + BRAIN 7/7 + INDIE 7/7 + SYNERGY 4+/7
+
+[INSTANCE] (part 130 / 2 instance 制) 反映: Issue body は「10 インスタンス並行」前提だが現状 = Win Claude + Win Codex のみ.
+仕様は 2 instance を base にしつつ N instance scalable 設計.
 
 #### 2. `docs/DESIGN_SPEC_TEMPLATE.md` 第 4 改訂 (= meta-spec 更新)
 
@@ -27356,13 +27377,15 @@ Issue #1577 (= P1 / WorkOS AuthKit MCP 認可強化) の設計 spec.
 | 部 | 直前 (part 151) | part 152 後 |
 |---|---|---|
 | sensitive 設計 spec 件数 | 3 件 | **4 件** |
-| 通常設計 spec 件数 | 6 件 | 6 件 |
-| 設計 spec 総件数 | 9 件 | **10 件** (= 突破達成) |
+| 通常設計 spec 件数 | 6 件 | **7 件** |
+| 設計 spec 総件数 | 9 件 | **11 件** (= 1 session +2 / 過去最大) |
 | sensitive 平均工数 | 11.3h | 12.0h (= +30% → +40% / 第 4 例 14h reflect) |
+| 通常 spec 平均工数 | 8.6h | 8.5h (= 既存 hook 拡張 pattern で工数小さめ) |
 | 連続 dogfood part | 78 part | **79 part** |
 | §4A 共通項 (NOT to do) | 3 項 | **4 項** |
 | §4A 共通項 (MUST do) | 3 項 | **4 項** |
 | MCP 公開可 EF 候補 | 0 件 | **1 件** (= memory-search-hub 達成手順 §6) |
+| 1 session Codex 起票工数 | 14h (= part 145 / 過去最大) | **22h** (= 14h + 8h / 過去最大更新) |
 
 ### Pattern 確立 (= part 152 で新規)
 
@@ -27370,10 +27393,15 @@ Issue #1577 (= P1 / WorkOS AuthKit MCP 認可強化) の設計 spec.
 - 「sensitive 4 例完成 = 共通項抽象化 layer 候補」(= part 153+ で `DESIGN_SPEC_PATTERNS.md` 統合候補)
 - 「PR 階層化 spec ship」第 2 例 (= base = #2017 / merge 順序自動解決 / part 145 第 1 例: deferred 全消化)
 - 「principle gate 横断適用」(= 1 spec で MCP-AUTH-27 10/10 + AI-DEV 7/7 + AI-CHARACTER 8/8 + PHILOSOPHY 8/9 + VIBE 4+/7 + SYNERGY 4+/7 = 6 軸全 ✅)
+- **「1 session 2 spec ship」**(= sensitive + 通常 同 session 並行 ship / Codex 起票工数 22h で過去最大更新)
+- **「既存 hook 拡張 pattern」**第 1 例 (= 通常 #1564 / ゼロから新規ではなく既存 base + 増分設計 / Codex 工数 +30% 削減)
+- **「sensitive vs 通常 同 session 並行 ship」**(= template 汎用性検証 / 4 例 sensitive と通常 連続適用で robustness 確認)
 
-### Commit
+### Commits (= 3 件 / 同 PR #2022)
 
-`docs(spec): part 152 — sensitive 第 4 例 #1577 MCP-AUTH-27 10/10 + template §4A 第 4 改訂` / commit `5f730d970` / PR #2022.
+1. `5f730d970` `docs(spec): part 152 — sensitive 第 4 例 #1577 MCP-AUTH-27 10/10 + template §4A 第 4 改訂`
+2. `f523149f0` `docs(roadmap): part 152 entry — sensitive 第 4 例 #1577 MCP-AUTH 10/10 + template §4A 第 4 改訂`
+3. `d77d5e752` `docs(spec): part 152 (2 spec ship) — #1564 PreCompact/SessionStart/StatusLine/Setup 通常 spec 第 7 例`
 
 ### Philosophy Alignment
 
@@ -27388,13 +27416,12 @@ Issue #1577 (= P1 / WorkOS AuthKit MCP 認可強化) の設計 spec.
 
 ### 次回 candidate (= part 153 候補)
 
-1. **Win Claude deferred 残 ship**:
-   - #1564 PreCompact memory backup hook ship (= part 151 deferred 残 / sensitive 候補ではない通常 spec)
-   - #1397 開発推進 docs / #1399 機能的感情 (= 検討中)
-2. **DESIGN_SPEC_PATTERNS.md 統合** (= sensitive 4 例完成 → 抽象化 layer / 第 5 改訂)
-3. **NotebookLM 11 sources 完成** (= PR #2015 / #2017 / #2022 main merge 後 #1316 #1345 #1577 投入)
-4. **Codex sprint 1 翌日 KPI 計測** (= 24h+ 後 / 5+ merge 目標)
-5. **memory-search-hub 10/10 達成 hand off 監視** (= Win Codex 5 原則完成 / MCP 公開第 1 例 ship)
+1. **DESIGN_SPEC_PATTERNS.md 統合** (= sensitive 4 例完成 → 抽象化 layer / 第 5 改訂 / 11 spec 累積 base)
+2. **NotebookLM 14 sources 完成** (= PR #2015 / #2017 / #2022 main merge 後 #1316 #1345 #1564 #1577 投入 / 既存 8 + 6 = 14)
+3. **Codex sprint 1 翌日 KPI 計測** (= 24h+ 後 / 5+ merge 目標)
+4. **memory-search-hub 10/10 達成 hand off 監視** (= Win Codex 5 原則完成 / MCP 公開第 1 例 ship)
+5. **#1397 開発推進 docs / #1399 機能的感情** (= Win Claude territory 残候補 / triage 後判断)
+6. **MCP_AUTH_HARDENING_SPEC + PRECOMPACT_MEMORY_BACKUP_SPEC 実装監視** (= 22h Codex 工数 / sprint 期限管理)
 
 INSTANCE-ROLES 厳守: Win Claude territory (= 5-question matrix Q1+Q2+Q5 YES) 完全合致 / Win Codex 14 件 hand off scope §7 で明示.
 [DYNAMIC-CLAIM] cap 1 件遵守.
