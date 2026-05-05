@@ -27501,14 +27501,48 @@ main
 
 triage rate: 17 件 / ~25 min = **1.5 min/issue** (= batch 7 比 -16% 高速化 / 既存 spec 統合 pattern 確立効果).
 
-### 次回 candidate (= part 154 候補)
+### 追加: batch 9 cross-instance-pr + 3 件 CLOSE (= 同 part 153 / WBS overdue next 30 件 triage)
 
-1. **sprint 1 翌日 KPI 計測** (= 24h+ 後 / 5+ merge 目標 / 過去最大 22h 起票後 throughput 観測 / batch 8 hand off 4 件加算)
-2. **NotebookLM 14 sources 完成** (= PR #2015 / #2017 / #2022 / 本 #2024 main merge 後 / 4 spec + PATTERNS 投入 / 既存 8 + 6 = 14)
-3. **memory-search-hub 10/10 達成 hand off 監視** (= Win Codex 5 原則完成 / MCP 公開第 1 例 ship)
-4. **#773 PII ガードレール sensitive 第 5 spec ship** (= AI-DEV 7/7 + AI-CHARACTER 8/8 + 共通 4/4 NOT to do/MUST do 適用)
-5. **#833 コア/リーフ境界 spec** or **#832 評価データ品質ゲート spec** = 通常 spec ship 候補 (= 第 8 / 第 9 通常)
-6. **batch 9** = #768 等残 + 次 oldest 10 件 triage
+- **`docs/cross-instance-prs/20260505_codex_overdue_wbs_handoff_batch9.md` 起票** (= #916-1193 next 30 件)
+- **3 件 CLOSE (= 既存 script/spec 統合)**:
+  - #976 → `scripts/knowledge_vault_lint.py` + `/wiki-lint` skill (= part 105 + part 140) 全カバー
+  - #1173 → 同 wiki-lint カバー (= #976 dup)
+  - #1180 → #1124 dup (= GPA framework + dashboard 同主題 / canonical = #1124)
+- **Codex hand off = 12 件** (= sprint 3 候補): #925 / #1125 / #1172 / #1174 / #1175 / #1182 / #1183 / #1184 / #1186 / #1187 / #1189 / #1190
+- **Win Claude defer = 14 件 (+1 既存実装拡張統合候補)**:
+  - **sensitive 第 8 候補**: #918 合成メディア倫理 (= consent + watermark / AI-VIDEO-29 6/6 必須)
+  - 通常 spec 候補: #916 / #917 / #924 / #975 / #1123 / #1124 / #1176 / #1177 / #1185 / #1192 / #1193
+  - 統合候補: #1178 → #842 (= context routing 同領域)
+  - 既存実装拡張: #1188 → effort_router (= part 145 PS#5 S115 拡張 spec)
+- **5-question matrix 累計 = 126 件** (= batch 1-9 / Codex 比率 59% / Win Claude 比率 33% / CLOSE 比率 9%)
+
+triage rate: 30 件 / ~30 min = **1.0 min/issue** (= batch 8 比 -33% 高速化 / 既存 script 横展開 CLOSE 学習 + dup pattern 訓練効果).
+
+### 同 part 153 三段着地 record
+
+- **段 1**: PATTERNS.md 統合 (= 抽象化 layer / 388 行 / 9 ch)
+- **段 2**: batch 8 triage (= oldest 17 件 / 累計 96 件 / triage rate 1.5 min/issue)
+- **段 3**: batch 9 triage (= next 30 件 / 累計 126 件 / triage rate 1.0 min/issue)
+
+合計 47 件 triage + 7 件 CLOSE + PATTERNS 抽象化 layer 着地 = **1 session 過去最大 throughput** (= part 152 22h Codex 起票合計 を 工数密度で超過).
+
+### Pattern empirical validation 追加 (= part 153 batch 9)
+
+- 「既存 script 横展開 CLOSE」pattern 第 1 例: wiki-lint skill が #976 + #1173 二重 cover = leverage 2x
+- 「dup pair」検出 pattern: #1124 と #1180 = 同主題 / canonical 残し他 close
+- 「既存実装拡張 hint」pattern 第 1 例: #1188 → effort_router 拡張 / Win Claude が gap 評価 → spec
+- 「領域類似 → 統合提案」pattern: #1178 → #842 (= context routing 同領域)
+- triage rate 加速: batch 8 (= 1.5 min/issue) → batch 9 (= 1.0 min/issue) / 既存 infra 学習効果
+
+### 次回 candidate (= part 154 候補 / 拡張)
+
+1. **sprint 1+2+3 翌日 KPI 計測** (= 24h+ 後 / Codex 累計 hand off 16+ 件 = batch 8 4 + batch 9 12)
+2. **NotebookLM 14 sources 完成** (= chain merge 後)
+3. **memory-search-hub 10/10 hand off 監視**
+4. **#773 PII ガードレール sensitive 第 5 spec ship** (+ 第 6-8 候補 backlog: #839 sandbox / #843 redteam / #918 合成メディア倫理)
+5. **#833 コア/リーフ境界 / #832 評価データ品質ゲート / #1124 GPA dashboard / #1179 7 層 memory** = 通常 spec ship 候補
+6. **#1178 → #842 統合 + #1188 → effort_router 拡張** spec ship (= 統合 spec 第 1 例)
+7. **batch 10** = #1194+ next oldest 20-30 件 triage
 
 INSTANCE-ROLES 厳守: Win Claude territory (= Q1+Q2+Q5 YES = 抽象化 review + triage が中核成果物) 完全合致 / Win Codex 4 件 hand off scope §B で明示.
 [DYNAMIC-CLAIM] cap 1 件遵守 (= PATTERNS が cap 内 / batch 8 triage は cap 外 = part 143 確立).
