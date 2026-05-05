@@ -24,9 +24,13 @@
 | 4 | `~/.claude/todos\*` (completed) | 7 日超 | 10 MB |
 | 5 | `~/.claude/projects\*.jsonl` (gzip 圧縮) | 30 日超 | 600-900 MB (= 圧縮率 80%) |
 | 6 | `~/.claude/file-history\*` | 30 日超 | 300-500 MB |
-| 7 | `<repo>\build` `<repo>\.dart_tool` (main repo only) | 14 日超 | 800-900 MB |
+| 7a | **`%LOCALAPPDATA%\Google\DriveFS\Logs\*`** (= G: drive 関連) | 7 日超 | 100-486 MB |
+| 7b | **Chrome / Edge cache** (= `Cache` `Code Cache` `GPUCache` `Service Worker`) | browser 停止時のみ | 500-1500 MB |
+| 8 | `<repo>\build` `<repo>\.dart_tool` (main repo only) | 14 日超 | 800-900 MB |
 
-= 1 セッション平均 **6-8 GB 回収**.
+= 1 セッション平均 **6-9 GB 回収** (= G: cache 拡張で +1-2 GB).
+
+**G: drive 注**: G: は Google Drive 仮想 FS (= cloud-only stubs). 物理 disk 使用は `%LOCALAPPDATA%\Google\` 配下 (= **DriveFS cache 1.73 GB / DriveFS Logs 486 MB / Chrome cache 940 MB** / 計 ~3.2 GB / part 154-b 検出). G: 残量 < 50 GB は cloud quota 問題で physical disk 別.
 
 **安全 rule**:
 - ❌ worktree 内 build/ 削除しない (= 進行中 Flutter project 破壊 risk)
