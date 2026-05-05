@@ -27570,6 +27570,72 @@ INSTANCE-ROLES 厳守: Win Claude territory (= Q1+Q2+Q5 YES = 抽象化 review +
 [STASH-SAFETY] 遵守 (= stash 不使用 / 1 commit + amend で完結).
 [COMPACTION-RESUME] 90min ガード遵守 → 本 part で wrap-up 着地.
 
+## Win版#132 part 154 (= sensitive 第 5 spec ship #773 PII Guardrail / 個人 data × security boundary 二重 / 2026-05-05)
+
+### 着地
+
+- **#773 PII Guardrail / AI Audit Layer** sensitive 第 5 例 spec ship
+  - `docs/PII_GUARDRAIL_SPEC.md` 新設 (= 560 行 / 8 chapter)
+  - sensitive 4 領域 → **5 領域に拡張** (= 健康 / AI 状態 / persona / security boundary / **個人 data × security boundary 二重**)
+  - 適用原則: PHILOSOPHY-22 9/9 + AI-DEV-23 7/7 + AI-CHARACTER-24 8/8 + MCP-AUTH-27 cross-link + IMBUE-25 6+/7 + COLLAB-26 6+/7 + VIBE-30 7/7
+  - NOT to do 12 項目 + MUST do 12 項目 = sensitive history 最多 (= 第 1-4 例平均 9 → +33%)
+  - Win Codex hand off: 4 migration + 1 `_shared/guardrail.ts` + 1 EF (`ai-audit-hub`) + 4 Flutter widget + CI lint = **工数 16.5h** (= 第 4 例 14h と同等 sensitive premium)
+  - [EF-CAP-50] +1 (49 → 50) ✅
+- **5-question matrix**: Q1+Q3+Q5 ✅ → Win Claude territory 確認
+- **PR 階層化 第 4 段**: base = `claude/spec-patterns-part153` (= #2024 head) / chain depth 4 (= main → #2017 → #2022 → #2024 → 本 PR)
+- **MCP-AUTH-27 と二重防御 architecture 確立**:
+  - 外部 boundary = MCP_AUTH_HARDENING (#1577 / part 152 第 4 例 / 6x leverage record)
+  - 内部 boundary = **PII_GUARDRAIL (= 本 spec / #773)**
+  - 2 audit log (= mcp_audit_log + pii_audit_log) を trace_id で横断結合可
+- ROADMAP-LOG 本 entry + memory `project_20260505_win132_part154.md` + MEMORY.md index 1 行追加
+
+### KPI
+
+- 1 session 1 spec ship (= part 144-152 平均と同等)
+- sensitive spec 累計 5 例 (= 全 12 spec 中 41.7% sensitive 比率)
+- 起票工数 ~70 min (= sensitive premium / Codex 16.5h との leverage **14x**)
+- chain depth 4 達成 (= 過去最深 / part 153 record 3 を更新)
+- spec line count 560 (= 第 4 例 618 行 / 第 1 例 470 行台 と同 sensitive レンジ)
+
+### Pattern catalog 拡張
+
+新 pattern 候補 (= part 155+ で `DESIGN_SPEC_PATTERNS.md` 第 6 改訂 trigger):
+
+1. **「外部+内部 boundary 二重防御」pattern 第 1 例**: #1577 (外部) + #773 (内部) で同 trace_id 横断結合
+2. **「individual sensitive trigger 複数 hit」pattern 第 1 例**: 個人 data + security boundary 二重 hit (= 通常 1 trigger / 本 spec で初の 2 trigger 同時)
+3. **「monolith EF wrapper pattern」pattern 第 1 例**: 4829 行 ai-hub を `_shared/guardrail.ts` で 2 line 拡張のみで guardrail 適用 = Codex 工数 -50% (= 各 EF 個別実装比)
+4. **「公開面 double-gate」pattern 第 1 例**: 生成時 + publish 直前 2 段 moderation = X / blog / news writer 横断強制
+
+### 9 原則 alignment (= PHILOSOPHY-22)
+
+- ✅ #1 CEO 感: AI 機能横断 guardrail = ガバナンス viewpoint
+- ✅ #2 ミッション: 信頼資本 = 個人 data 保護
+- ✅ #3 mentor: redact modal で「伏せて送るね」mentor 感
+- ✅ #4 6 部署: AI 大学 / WBS / chatbot / blog / mealmate 横断 (= 6 部署全 hit)
+- ✅ #5 商品=価値: 信頼 = 商品価値の前提
+- ✅ #6 時間最適化: 監査時 trace_id 1 query で全 EF 横断 (= incident triage 工数 -90%)
+- ✅ #7 資産負債: pii_audit_log 90 日 retention = 監査資産 / GDPR 対応資産
+- ✅ #8 KPI: moderation reject 数 / FP 申告応答時間 / consent 取得率 = 計測可
+- ✅ #9 IPO: SOC2 + ISO27001 + 個情法監査 base 整備
+
+= 9/9 ✅ (= 通常 7+/9 推奨を sensitive 必須で **格上げ達成**).
+
+### 次回 candidate (= part 155 候補)
+
+1. **`DESIGN_SPEC_PATTERNS.md` 第 6 改訂** = sensitive 5 領域反映 + 「外部+内部 boundary 二重防御」pattern 追加 (= 12 spec 突破 trigger 達成)
+2. **#839 sandbox / #843 redteam / #918 合成メディア倫理** = sensitive 第 6-8 候補 backlog 消化
+3. **chain merge 完了確認** = #2017/#2022/#2024/本 PR 4 段 chain merge → main 単一化 → NotebookLM 14 sources 完成
+4. **batch 11 cross-instance-pr** = #1194+ next oldest 30 件 triage (= part 153 batch 10 = 30 件 record 並走)
+5. **統合 spec 第 1 例** = #1178 → #842 / #1188 → effort_router 拡張
+6. **memory-search-hub 10/10 hand off 監視** = part 152 ship 後の Codex sprint 進捗確認
+
+INSTANCE-ROLES 厳守: Win Claude territory (= Q1+Q3+Q5 YES = 設計 + UI + 部署横断) 完全合致 / Win Codex hand off scope §6 で明示.
+[DYNAMIC-CLAIM] cap 1 件遵守 (= PII spec のみ / 副 task 着手せず session 終了).
+[WORKDIR-ISOLATION] 遵守 (= `.claude/worktrees/beautiful-wu-767985` 内作業 / 直前 PR head 階層化 第 4 段).
+[STASH-SAFETY] 遵守 (= stash 不使用 / 1 commit で完結).
+[ISSUE-PRECHECK] 遵守 (= "PII" / "guardrail" 起票前 dup grep / #773 のみ open / dup 0).
+[COMPACTION-RESUME] 90min ガード遵守 → 本 part で wrap-up 着地.
+
 
 
 
