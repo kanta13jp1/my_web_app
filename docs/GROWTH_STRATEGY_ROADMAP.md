@@ -27485,19 +27485,35 @@ main
 - SYNERGY-30: 5+/7 ✅ (= cross-instance-pr / 5 正本 / leverage 計測値で記録)
 - INDIE-29: 6+/7 ✅ (= shipping 速度 / 1 session 完結 / dogfood)
 
+### 追加: batch 8 cross-instance-pr + 4 件 CLOSE (= 同 part 153 / WBS overdue oldest 17 件 triage)
+
+- **`docs/cross-instance-prs/20260505_codex_overdue_wbs_handoff_batch8.md` 起票** (= oldest #768-847 17 件 / batch 7 → batch 8)
+- **4 件 CLOSE (= 既存 spec 統合)**:
+  - #841 (= AIセッション自動コンパクション + オンボーディング資料) → #835 + #1564 PreCompact spec で大半カバー
+  - #845 (= MCP OAuth/DCR 認証ハブ) → #1577 MCP-AUTH-27 spec で全カバー
+  - #846 (= ツール実行権限スコープ + 承認ゲート) → #1577 で全カバー
+  - #847 (= prompt injection 検知 + 監査 log) → #1577 で全カバー
+- **Codex hand off = 4 件** (= #794 Opus 4.7 高解像度画像 / #834 最小E2E gate / #840 E2E 自動検証 gate / #844 LoRA 実験基盤) = sprint 2 候補
+- **Win Claude defer = 9 件** (= #768 / #772 / #773 / #832 / #833 / #835 / #839 / #842 / #843)
+  - sensitive 第 5-7 候補: #773 PII ガードレール / #839 sandbox / #843 redteam
+  - 通常 spec 候補: #768 / #772 / #832 / #833 / #835 / #842
+- **5-question matrix 累計 = 96 件** (= batch 1-7 79 件 + batch 8 17 件 / Codex 比率 65% / Win Claude 比率 27%)
+
+triage rate: 17 件 / ~25 min = **1.5 min/issue** (= batch 7 比 -16% 高速化 / 既存 spec 統合 pattern 確立効果).
+
 ### 次回 candidate (= part 154 候補)
 
-1. **NotebookLM 14 sources 完成** (= PR #2015 / #2017 / #2022 / 本 #2024 main merge 後 / 4 spec + PATTERNS 投入 / 既存 8 + 6 = 14)
-2. **Codex sprint 1 翌日 KPI 計測** (= 24h+ 後 / 5+ merge 目標 / 過去最大 22h 起票後 throughput 観測)
+1. **sprint 1 翌日 KPI 計測** (= 24h+ 後 / 5+ merge 目標 / 過去最大 22h 起票後 throughput 観測 / batch 8 hand off 4 件加算)
+2. **NotebookLM 14 sources 完成** (= PR #2015 / #2017 / #2022 / 本 #2024 main merge 後 / 4 spec + PATTERNS 投入 / 既存 8 + 6 = 14)
 3. **memory-search-hub 10/10 達成 hand off 監視** (= Win Codex 5 原則完成 / MCP 公開第 1 例 ship)
-4. **#1397 開発推進 docs / #1399 機能的感情** (= Win Claude territory 残候補 / triage 後判断)
-5. **第 12 spec ship** (= 12+ spec で第 6 改訂 trigger / PATTERNS Ch7.2 anti-pattern catalog 起草)
-6. **Win Codex side template 起草** (= PATTERNS Ch7.2 / `docs/CODEX_WORKFLOW.md` 連動 / hand off 受領後 ritual 標準化)
+4. **#773 PII ガードレール sensitive 第 5 spec ship** (= AI-DEV 7/7 + AI-CHARACTER 8/8 + 共通 4/4 NOT to do/MUST do 適用)
+5. **#833 コア/リーフ境界 spec** or **#832 評価データ品質ゲート spec** = 通常 spec ship 候補 (= 第 8 / 第 9 通常)
+6. **batch 9** = #768 等残 + 次 oldest 10 件 triage
 
-INSTANCE-ROLES 厳守: Win Claude territory (= Q1+Q2+Q5 YES = 抽象化 review が中核成果物) 完全合致.
-[DYNAMIC-CLAIM] cap 1 件遵守.
+INSTANCE-ROLES 厳守: Win Claude territory (= Q1+Q2+Q5 YES = 抽象化 review + triage が中核成果物) 完全合致 / Win Codex 4 件 hand off scope §B で明示.
+[DYNAMIC-CLAIM] cap 1 件遵守 (= PATTERNS が cap 内 / batch 8 triage は cap 外 = part 143 確立).
 [WORKDIR-ISOLATION] 遵守 (= `.claude/worktrees/practical-johnson-ea0e25` 内作業 / 直前 PR head 階層化).
-[STASH-SAFETY] 遵守 (= stash 不使用).
+[STASH-SAFETY] 遵守 (= stash 不使用 / 1 commit + amend で完結).
 [COMPACTION-RESUME] 90min ガード遵守 → 本 part で wrap-up 着地.
 
 
