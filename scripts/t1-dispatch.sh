@@ -18,6 +18,12 @@ if [ ! -f "$JA_PATH" ] && [ ! -f "$EN_PATH" ]; then
   exit 1
 fi
 
+python scripts/check_remote_synced.py \
+  --remote origin \
+  --branch main \
+  --require-clean \
+  --ignore-path ".claude/settings.local.json"
+
 echo "📋 Dispatch plan:"
 echo "  JA: $JA_PATH ($([ -f "$JA_PATH" ] && echo exists || echo missing))"
 echo "  EN: $EN_PATH ($([ -f "$EN_PATH" ] && echo exists || echo missing))"
