@@ -4,7 +4,7 @@ import 'package:my_web_app/services/external_format_service.dart';
 void main() {
   group('ExternalFormatService', () {
     test('maps SSIM rows and excludes disabled fields', () {
-      final service = ExternalFormatService();
+      const service = ExternalFormatService();
       final profile = ExternalFormatService.defaultProfile('ssim');
 
       final result = service.transform(
@@ -21,7 +21,7 @@ void main() {
     });
 
     test('reports required missing fields and exports selected targets', () {
-      final service = ExternalFormatService();
+      const service = ExternalFormatService();
       final profile = ExternalFormatService.defaultProfile('aidx').copyWith(
         mappings: const <ExternalFieldMapping>[
           ExternalFieldMapping(
