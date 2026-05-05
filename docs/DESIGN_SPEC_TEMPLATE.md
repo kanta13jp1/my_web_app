@@ -76,19 +76,91 @@ part 143-145 で 6 spec ship したが、各 section 構成は同型. 7 件目�
 
 = GitHub Issue 受入 #1-#N が必ず spec section に対応する self-check.
 
-## 4. 適用済 6 spec の axis 早見表
+## 4. 適用済 9 spec の axis 早見表 (= part 143-150)
 
-| spec | Q1 | Q2 | Q3 | Q4 | Q5 | 主 axis | 工数 |
-|---|---|---|---|---|---|---|---:|
-| SIX_DEPT_KPI | ✅ | ❌ | ✅ | ❌ | ✅ | PHILOSOPHY + AI-DEV + BRAIN | 12h |
-| ONE_IN_TWO_OUT | ✅ | ❌ | ✅ | ❌ | ✅ | PHILOSOPHY + IMBUE + AI-CHARACTER | 11.5h |
-| MAINTENANCE_SOP | ❌ | ✅ | ❌ | ❌ | ✅ | PHILOSOPHY + AI-DEV + OPS | 6h |
-| TERM_TOOLTIP | ✅ | ❌ | ✅ | ❌ | ❌ | PHILOSOPHY + IMBUE | 8h |
-| NARRATIVE_UI_ACTION | ✅ | ❌ | ✅ | ❌ | ✅ | PHILOSOPHY + AI-CHARACTER + IMBUE | 9h |
-| DEV_ENV_SETUP | ❌ | ✅ | ❌ | ❌ | ❌ | PHILOSOPHY + INDIE | 5h |
-| **平均工数** | | | | | | | **8.6h** |
+| spec | Q1 | Q2 | Q3 | Q4 | Q5 | 主 axis | 工数 | 種別 |
+|---|---|---|---|---|---|---|---:|---|
+| SIX_DEPT_KPI | ✅ | ❌ | ✅ | ❌ | ✅ | PHILOSOPHY + AI-DEV + BRAIN | 12h | 通常 |
+| ONE_IN_TWO_OUT | ✅ | ❌ | ✅ | ❌ | ✅ | PHILOSOPHY + IMBUE + AI-CHARACTER | 11.5h | 通常 |
+| MAINTENANCE_SOP | ❌ | ✅ | ❌ | ❌ | ✅ | PHILOSOPHY + AI-DEV + OPS | 6h | 通常 |
+| TERM_TOOLTIP | ✅ | ❌ | ✅ | ❌ | ❌ | PHILOSOPHY + IMBUE | 8h | 通常 |
+| NARRATIVE_UI_ACTION | ✅ | ❌ | ✅ | ❌ | ✅ | PHILOSOPHY + AI-CHARACTER + IMBUE | 9h | 通常 |
+| DEV_ENV_SETUP | ❌ | ✅ | ❌ | ❌ | ❌ | PHILOSOPHY + INDIE | 5h | 通常 |
+| MENTAL_HEALTH_RISK | ✅ | ❌ | ✅ | ❌ | ✅ | + AI-CHARACTER 8/8 + AI-DEV 7/7 + IMBUE | 11h | **sensitive 第 1** |
+| AI_DESPERATION_DETECTION | ✅ | ✅ | ❌ | ❌ | ✅ | + AI-CHARACTER 8/8 + AI-DEV 7/7 + COLLAB | 9h | **sensitive 第 2** |
+| ROBUST_AI_PERSONA | ✅ | ✅ | ❌ | ❌ | ✅ | + AI-CHARACTER 8/8 + AI-DEV 7/7 + VIBE | 14h | **sensitive 第 3** |
+| **平均工数** | | | | | | | **9.5h** | |
 
-= 1 spec ≈ 1 営業日 (= 8h) Codex 工数 / Win Claude 起票工数 ≈ 30-60 min (= 7-15x leverage).
+= 1 spec ≈ 1 営業日 (= 8-12h) Codex 工数 / Win Claude 起票工数 ≈ 30-60 min (= 7-15x leverage).
+= sensitive 平均 11.3h (= 通常 8.6h より +30% / 倫理 review section 拡張 reflect).
+
+## 4A. Sensitive design 拡張 §2 倫理 review section (= 必須 / part 147 確立 + part 150 で 3 例完成)
+
+### 4A.1 適用判断: sensitive design か
+
+以下 1 つでも YES = sensitive (= §2 倫理 review section 必須):
+- **健康データ**: 身体 / 精神 / 医療
+- **金融データ**: 投資判断 / 取引 / クレジット
+- **法務 data**: 法律解釈 / 契約 / 訴訟
+- **個人 data**: 子供 / 高齢者 / マイノリティ
+- **AI 内部状態**: 自己反映 / 焦り / desperation
+- **high-stakes persona**: 決定 影響度大 / 倫理基準 必須
+
+### 4A.2 §2 倫理 review section 構成 (= 必須 4 sub-section)
+
+```markdown
+## 2. 倫理 review (= sensitive design 必須拡張)
+
+### 2.1 NOT to do (= 5-10 項目 / 領域別)
+- ❌ {{specific NG}}: {{reason}}
+- ...
+
+### 2.2 MUST do (= 5-7 項目)
+- ✅ {{specific guarantee}}: {{mechanism}}
+- ...
+
+### 2.3 AI-CHARACTER-24 8/8 self-check matrix (= 必須格上げ / 通常 7+/8 推奨)
+| # | 原則 | 適用 |
+|---|---|---|
+| 1 | 自律性尊重 | ✅ ... |
+| ... | | |
+| 8 | 文化感度 | ✅ ... |
+
+### 2.4 AI-DEV-23 7/7 self-check matrix (= 必須格上げ / 通常 6+/7 推奨)
+| # | 原則 | 適用 |
+|---|---|---|
+| 1 | Auth | ✅ ... |
+| ... | | |
+| 7 | quality-gate | ✅ ... |
+```
+
+### 4A.3 3 例 異領域 NOT to do 対比 (= part 150 で完成)
+
+| 例 | 領域 | 主 NOT to do | 共通項 |
+|---|---|---|---|
+| 第 1 (#1393 / part 147) | 人間データ (健康) | 共有/診断/LLM raw 送信禁止 | 共有禁止 |
+| 第 2 (#1398 / part 149) | AI 内部状態 | 擬人化/labeling/black-box 禁止 | 操作禁止 |
+| 第 3 (#1400 / part 150) | high-stakes persona | 強靭=拒否しない誤解/medical-legal-financial 直接判断/gaslighting 禁止 | fail silent 禁止 |
+
+→ **3 異領域共通 NOT to do** (= 第 4 改訂で抽出):
+1. ❌ **共有禁止**: 第三者 / 外部 LLM / 学習 data へ raw 送信しない
+2. ❌ **操作禁止**: gaslighting / dark pattern / manipulation NG
+3. ❌ **fail silent 禁止**: failure / 誤検知 / NG list 通過を log + alert
+
+### 4A.4 3 例 異領域 MUST do 対比 (= part 150 で完成)
+
+| 共通 MUST | 第 1 (健康) | 第 2 (AI 状態) | 第 3 (persona) |
+|---|---|---|---|
+| **opt-in / opt-out** | default off / 1 tap 無効化 | default ON safety net / setting で OFF | escape hatch UI |
+| **export / 削除** | JSON export + 全削除 | 14 日 retention 自動 purge | 90 日 retention |
+| **観察可能性** | health_check_result jsonb | desperation_log + trace_id | test_run + ci_run_id |
+| **正直 report** | 「ひと休みのお誘い」 | 「指示 reframe / 完了困難」 | 「専門家へ link」 |
+| **退避 path** | 専門医導線 + 緊急 escape | 別 mentor / model swap / 手動完了 | escape hatch + persona 通常モード切替 |
+
+→ **3 異領域共通 MUST do** (= 第 4 改訂で抽出):
+1. ✅ **opt-in / opt-out**: 機能 ON/OFF が user 全権
+2. ✅ **観察可能性**: log + trace_id + retention 期間明記
+3. ✅ **退避 path**: 失敗時 必ず別 path / human-in-loop 提示
 
 ## 5. 起票 ritual (= Win Claude 起票時 8 step)
 

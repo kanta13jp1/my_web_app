@@ -27237,6 +27237,74 @@ User 19 度目同一要望. **sensitive design template 第 3 例** (= high-stak
 INSTANCE-ROLES 厳守: Win Claude 1 sensitive spec ship + NotebookLM 1 source / Win Codex 0 件追加 hand off.
 COMPACTION-RESUME: 90min ガード接近 → wrap-up 着地。
 
+## Win版#132 part 151 (= template 第 4 改訂 + batch 7 + sprint 1 確認 / 2026-05-05)
+
+### Summary
+
+User 20 度目同一要望. **DESIGN_SPEC_TEMPLATE.md 第 4 改訂** (= 3 例共通項抽出 §4A 追加) +
+batch 7 cross-instance-pr (20 件 / Codex 18 + Win Claude 2) + Codex sprint 1 進捗確認 (= 24% 維持).
+[COMPACTION-RESUME] 90min cap 接近 → wrap-up 着地.
+
+### template 第 4 改訂 (= meta-doc / 3 例共通項抽出)
+
+`docs/DESIGN_SPEC_TEMPLATE.md` 更新:
+- §4 早見表を **9 spec 対応** (= sensitive 種別 column 追加 / 平均工数 8.6h → 9.5h)
+- §4A **新設**: Sensitive design 拡張 §2 倫理 review section
+  - §4A.1 適用判断 6 領域 (健康/金融/法務/個人/AI 内部/high-stakes persona)
+  - §4A.2 §2 倫理 review section 構成 (= NOT to do + MUST do + 8/8 + 7/7)
+  - §4A.3 3 例 NOT to do 対比 → **共通項 3 種抽出** (= 共有禁止 / 操作禁止 / fail silent 禁止)
+  - §4A.4 3 例 MUST do 対比 → **共通項 3 種抽出** (= opt-in/out / 観察可能性 / 退避 path)
+
+### batch 7 cross-instance-pr (= 20 件)
+
+`docs/cross-instance-prs/20260505_codex_overdue_wbs_handoff_batch7.md`:
+- Codex 18 件 (= W&B 3 + CI/automation 系 11 + その他 4)
+- Win Claude 2 件 deferred (= #1564 PreCompact 10 instance 記憶保全 / #1577 MCP-AUTH = sensitive 第 4 候補)
+- 5-question matrix 累計 **79 件** (= 過去最大更新)
+
+### Codex sprint 1 進捗 (= 部分確認)
+
+- 4/17 (24%) 維持 (= part 148 から変化なし / ~1h-1.5h 経過)
+- 提言: sprint 1 優先消化 / batch 7 は sprint 2 組込推奨
+
+### 累計 throughput (= 9 連続セッション)
+
+| part | ship | hand off | matrix | CLOSE | NotebookLM |
+|---|---:|---:|---:|---:|---:|
+| 143-150 | 9 + meta + seed | 32 (7 batch) | 59 | 3 | 9 |
+| 151 | template 第 4 改訂 | 18 (batch 7) | +20 | 0 | 0 |
+| **合計** | **9 + meta+v2 + seed** | **50 件 / 8 batch** | **79** | **3** | **9** |
+
+### Pattern 確立 (= part 151 で新規)
+
+- 「DESIGN_SPEC_TEMPLATE 第 4 改訂」(= 3 例共通項抽出 / sensitive 領域定義 6 種 公式化)
+- 「sensitive 第 4 候補 surface」(= MCP-AUTH-27 10/10 領域 / template §4A.1 拡張候補)
+- 「Codex sprint priority 提言」第 1 例 (= sprint 1 優先 / batch 7 sprint 2 組込)
+- 「batch 7 同 P0/P1 集中」(= CI/automation/security 系統一傾向 / sprint planning に reflect)
+
+### Commit
+
+`docs(spec): part 151 — template 第 4 改訂 + batch 7` 予定.
+
+### Philosophy Alignment
+
+- PHILOSOPHY-22: 7+/9 ✅
+- BRAIN-32: 7/7 ✅ (= meta-doc 更新で強化)
+- SYNERGY-30: 7/7 ✅
+- INDIE-29: 7/7 ✅
+
+### 次回 candidate (= part 152 候補)
+
+1. Win Claude deferred 残 ship: #1397 開発推進 docs / #1399 機能的感情 / #1564 PreCompact / #1577 MCP-AUTH sensitive 第 4
+2. NotebookLM 11 sources 完成 (= PR #2015 main merge 後 #1316 #1345 投入)
+3. Codex sprint 1 翌日 KPI 計測 (= 24h+ 後 / 5+ merge 目標)
+4. sensitive 第 4 例 ship (#1577 MCP-AUTH = MCP-AUTH-27 10/10 必須適用)
+5. WBS overdue batch 8 (= 期限 +10-14 日 / capacity 落ち着き次第)
+
+INSTANCE-ROLES 厳守: Win Claude meta-doc 改訂 + batch 7 triage / Win Codex 18 件 batch 7 hand off (推定 +90h).
+COMPACTION-RESUME: 90min ガード接近 → 本 part で wrap-up 着地。
+
+
 
 
 
