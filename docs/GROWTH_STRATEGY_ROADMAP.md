@@ -26700,3 +26700,19 @@ Karpathy AI 外部脳 Lint サイクル (= part 105/111/132/139/140 系列) の 
 3. 新 helper を `.claude/skills/wiki-orphan-batch/SKILL.md` 化 (= part 140 pattern transfer)
 4. weekly cron 化 (= scripts/wiki_orphan_batch.py + wiki_broken_cleanup.py auto-run)
 5. NotebookLM `jibun-master-brain` に part 142 cleanup methodology を session summary 蓄積
+
+### Part 142 follow-up (= 5 PR / WBS triage / 設計 spec 2 件)
+
+PR #2008 squash `319ac0e3d` + PR #2009 squash `ec3672529` + PR #2010 (= 5 commit / open) で part 142 を完全完結。
+Karpathy Lint cycle cleanup を skill+command 化し、WBS overdue 18 件を 5-question matrix で 2 instance 制反映、
+Win Claude 担当 2 件 (#1305 Stripe + #1309 Maintenance) を設計 spec として ship。
+
+新 pattern (= follow-up で確立):
+- 「2-instance 5-question 一括適用」18 件 (= SYNERGY-30 7/7 ✅)
+- 「DYNAMIC-CLAIM cap respect」(= 4 件 deferred = discipline dogfood)
+- 「設計 spec 5 section template」(= Schema + EF + UI + 受入 + 9 原則 / 再利用可)
+- 「GitHub label = WBS UI sync 中継点」(= 即時 visible signal)
+- 「label timing → workflow re-run」(= docs-only label の hot path 確立)
+
+INSTANCE-ROLES 厳守: Win Claude 設計 spec 2 件 ship / Win Codex 12 件 hand off (推定 ~44h).
+COMPACTION-RESUME: 90min ガード接近 → wrap-up 着地。
