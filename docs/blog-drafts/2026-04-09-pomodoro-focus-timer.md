@@ -6,7 +6,7 @@ topics: [flutter, supabase, pomodoro, dart, webdev]
 published: true
 ---
 
-# ブログ下書き 2026-04-09
+# ブログ下書き 2026-04-09 — 2026-04-09-pomodoro-focus-timer
 
 ## タイトル案
 1. Flutter WebでForest競合のポモドーロタイマーを実装した — CustomPainter円形タイマー + Supabase Edge Function連携

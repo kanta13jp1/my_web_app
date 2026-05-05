@@ -15,7 +15,7 @@ Once you've mastered unit testing in Flutter, the next step is combining **E2E t
 `flutter_driver` is deprecated. The current official recommendation is the `integration_test` package.
 
 ```yaml
-# pubspec.yaml
+# pubspec.yaml — 2030-01-19-flutter-testing-advanced-en
 dev_dependencies:
   integration_test:
     sdk: flutter
