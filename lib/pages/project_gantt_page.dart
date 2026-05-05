@@ -344,6 +344,10 @@ String _activeWbsInstanceKey(String raw) {
   if (key == 'schedule' ||
       key == 'gha' ||
       key == 'github-actions' ||
+      key == 'gemini' ||
+      key == 'co-pilot' ||
+      key == 'copilot' ||
+      key == 'github-copilot' ||
       key == 'automation' ||
       key == 'auto') {
     return 'automation';
@@ -2463,18 +2467,13 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
               ),
             ),
             const SizedBox(width: 6),
-            ..._activeWbsInstanceFilters
-                .where(
-              (filter) =>
-                  filter.value == 'claude' || filter.value == 'automation',
-            )
-                .map((filter) {
+            ..._activeWbsInstanceFilters.map((filter) {
               final on = widget.filterInstance == filter.value;
               return Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 2),
                 child: FilterChip(
                   label: Text(
-                    filter.label,
+                    filter.value == null ? '全て' : filter.label,
                     style: TextStyle(
                       color: on ? Colors.black : filter.color,
                       fontSize: 10,
@@ -2514,7 +2513,7 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
               ('📱', 'mobile', const Color(0xFFF97316)),
               ('⏰', 'schedule', const Color(0xFFEAB308)),
               ('🔧', 'gha', const Color(0xFF6B7280)),
-            ].map((t) {
+            ].where((_) => false).map((t) {
               if (t.$2 != null &&
                   !_activeWbsInstanceFilters
                       .any((filter) => filter.value == t.$2)) {

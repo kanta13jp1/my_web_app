@@ -9,6 +9,13 @@ The WBS screen keeps historical `instance` and `owner_instance` values intact, b
 
 `User` and `Automation` remain visible as non-development lanes so manual decisions and scheduled/GitHub Actions work do not disappear into either agent lane.
 
+Implementation notes:
+
+- The WBS UI shows only `All`, `Claude Code`, `Codex`, `User`, and `Automation` chips. Historical VS/Win/PS#1-6/Gemini/Copilot chips are hidden from active operation.
+- `tools-hub:wbs.list_tasks`, `wbs.tasks.list`, `wbs.priority_for_instance`, and workload summaries project legacy DB values into the same four active lanes.
+- `claude` writes to legacy `win` only when a task must be persisted, and `automation` writes to legacy `schedule`. Existing historical `instance` values are not rewritten in place.
+- `gemini`, `co-pilot`, `schedule`, and `gha` are grouped as `Automation` because they are tools or scheduled jobs, not human development instances.
+
 WBS execution policy:
 
 1. Work from the nearest due date first.

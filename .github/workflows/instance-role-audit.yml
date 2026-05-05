@@ -4,6 +4,10 @@ name: Instance Role Audit (12 fleet 担当分担 monthly review)
 # AI_FLEET_SYNERGY 原則 #1 (Strict Instance Routing) dogfood
 # 過去 30 日の commit を instance 別に集計 / CLAUDE.md routing matrix 想定との乖離検出
 
+# Current canonical routing: Claude Code #1 (Windows app) + Codex #1
+# (Windows app). Old 12-fleet / PS#1-6 references in historical reports
+# are legacy-only and must not be used for new WBS ownership.
+
 on:
   schedule:
     - cron: "0 1 1 * *"  # monthly / 1 日 01:00 UTC (= 10:00 JST)
