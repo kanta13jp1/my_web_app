@@ -1131,6 +1131,10 @@ class _MyAppState extends State<MyApp> {
             return MaterialPageRoute(
               builder: (_) => const SubscriptionBillingPage(),
             );
+          case '/billing':
+            return MaterialPageRoute(
+              builder: (_) => const SubscriptionBillingPage(),
+            );
           case '/appointment-scheduler':
             return MaterialPageRoute(
               builder: (_) => const AppointmentSchedulerPage(),
