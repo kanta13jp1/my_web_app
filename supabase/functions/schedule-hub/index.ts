@@ -121,6 +121,121 @@ function asStringList(value: unknown, fallback: string[]): string[] {
     : fallback;
 }
 
+function billingPriceId(tier: string): string {
+  const normalized = tier === "team" ? "TEAM" : "PRO";
+  return Deno.env.get(`STRIPE_${normalized}_PRICE_ID`) ??
+    Deno.env.get(`STRIPE_PRICE_${normalized}`) ??
+    "";
+}
+
+function stripeSecretKey(): string {
+  return Deno.env.get("STRIPE_SECRET_KEY") ?? "";
+}
+
+function normalizeCheckoutTier(value: unknown): "pro" | "team" {
+  return String(value ?? "pro").toLowerCase() === "team" ? "team" : "pro";
+}
+
+function currentBillingPeriodStart(): string {
+  const now = new Date();
+  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1))
+    .toISOString()
+    .slice(0, 10);
+}
+
+function billingReturnUrl(value: unknown, fallbackPath: string): string {
+  const raw = asString(value);
+  if (raw) {
+    try {
+      const url = new URL(raw);
+      if (url.protocol === "http:" || url.protocol === "https:") {
+        return url.toString();
+      }
+    } catch {
+      // Fall through to the deployment fallback.
+    }
+  }
+  const base = Deno.env.get("PUBLIC_SITE_URL") ??
+    Deno.env.get("SITE_URL") ??
+    "https://my-web-app-b6f7f4.web.app";
+  return new URL(fallbackPath, base).toString();
+}
+
+function withBillingParam(url: string, value: string): string {
+  const parsed = new URL(url);
+  parsed.searchParams.set("billing", value);
+  return parsed.toString();
+}
+
+async function stripePostForm(
+  path: string,
+  params: Record<string, string>,
+): Promise<Record<string, unknown>> {
+  const key = stripeSecretKey();
+  if (!key) {
+    throw new Error("STRIPE_SECRET_KEY not configured");
+  }
+  const response = await fetch(`https://api.stripe.com/v1${path}`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${key}`,
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+    body: new URLSearchParams(params),
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const err = asRecord(data.error) ?? {};
+    throw new Error(
+      asString(err.message) || `Stripe API failed: ${response.status}`,
+    );
+  }
+  return asRecord(data) ?? {};
+}
+
+async function getBillingSubscription(
+  admin: SupabaseClient,
+  userId: string,
+): Promise<Record<string, unknown> | null> {
+  const { data, error } = await admin
+    .from("billing_subscriptions")
+    .select("*")
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  return asRecord(data);
+}
+
+async function getOrCreateStripeCustomer(
+  admin: SupabaseClient,
+  userId: string,
+): Promise<string> {
+  const current = await getBillingSubscription(admin, userId);
+  const existingCustomer = asString(current?.stripe_customer_id);
+  if (existingCustomer) return existingCustomer;
+
+  const { data: userData, error: userError } = await admin.auth.admin
+    .getUserById(userId);
+  if (userError) throw new Error(userError.message);
+
+  const customer = await stripePostForm("/customers", {
+    email: userData.user?.email ?? "",
+    "metadata[user_id]": userId,
+  });
+  const customerId = asString(customer.id);
+  if (!customerId) throw new Error("Stripe customer id missing");
+
+  const { error } = await admin.from("billing_subscriptions").upsert({
+    user_id: userId,
+    stripe_customer_id: customerId,
+    tier: asString(current?.tier, "free"),
+    status: asString(current?.status, "active"),
+    metadata: { ...(asRecord(current?.metadata) ?? {}), source: "checkout" },
+  }, { onConflict: "user_id" });
+  if (error) throw new Error(error.message);
+  return customerId;
+}
+
 function defaultNewsSignalFeeds(): Array<Record<string, string>> {
   return [
     {
@@ -1379,6 +1494,84 @@ serve(async (req: Request) => {
     }
 
     switch (action) {
+      case "billing.status": {
+        const billing = await getBillingSubscription(admin, userId!);
+        const periodStart = currentBillingPeriodStart();
+        const { data: usage, error: usageError } = await admin
+          .from("billing_usage_counters")
+          .select("*")
+          .eq("user_id", userId!)
+          .eq("period_start", periodStart)
+          .maybeSingle();
+        if (usageError) throw new Error(usageError.message);
+        return json({
+          success: true,
+          billing: billing ?? {
+            user_id: userId,
+            tier: "free",
+            status: "active",
+            current_period_end: null,
+            cancel_at_period_end: false,
+          },
+          usage: usage ?? {
+            user_id: userId,
+            period_start: periodStart,
+            ai_query_count: 0,
+            ef_call_count: 0,
+          },
+        });
+      }
+
+      case "billing.create_checkout_session": {
+        const tier = normalizeCheckoutTier(body.tier);
+        const priceId = billingPriceId(tier);
+        if (!priceId) {
+          return json({
+            error: `STRIPE_${tier.toUpperCase()}_PRICE_ID not configured`,
+          }, 503);
+        }
+        const customerId = await getOrCreateStripeCustomer(admin, userId!);
+        const returnUrl = billingReturnUrl(
+          body.return_url,
+          "/subscription-billing",
+        );
+        const session = await stripePostForm("/checkout/sessions", {
+          mode: "subscription",
+          customer: customerId,
+          "line_items[0][price]": priceId,
+          "line_items[0][quantity]": "1",
+          success_url: withBillingParam(returnUrl, "success"),
+          cancel_url: withBillingParam(returnUrl, "cancel"),
+          allow_promotion_codes: "true",
+          "metadata[user_id]": userId!,
+          "metadata[tier]": tier,
+          "subscription_data[metadata][user_id]": userId!,
+          "subscription_data[metadata][tier]": tier,
+        });
+        return json({
+          success: true,
+          id: session.id,
+          checkout_url: session.url,
+        });
+      }
+
+      case "billing.create_portal_session": {
+        const customerId = await getOrCreateStripeCustomer(admin, userId!);
+        const returnUrl = billingReturnUrl(
+          body.return_url,
+          "/subscription-billing",
+        );
+        const session = await stripePostForm("/billing_portal/sessions", {
+          customer: customerId,
+          return_url: returnUrl,
+        });
+        return json({
+          success: true,
+          id: session.id,
+          portal_url: session.url,
+        });
+      }
+
       // ─── Digest ───────────────────────────────────────────────────────────────
       case "digest.run": {
         const today = new Date().toISOString().split("T")[0];
