@@ -1,11 +1,12 @@
 # AI Tool Watch Report
 
-- Checked at: `2026-05-04T21:40:56Z`
-- Previous check: `2026-05-03T21:29:48Z`
-- Changed/new official sources: `3`
+- Checked at: `2026-05-05T21:39:04Z`
+- Previous check: `2026-05-04T21:40:56Z`
+- Changed/new official sources: `4`
 - Active routing groups: `codex-runtime, hooks, integration, quality-cost, schedule`
 
 ## Session Start Summary
+- `changed` Claude Code changelog: 2.1.128 / May 4, 2026
 - `changed` Claude Code hooks reference: Hooks reference - Claude Code Docs Skip to main content Claude Code Docs home page English
 - `changed` Codex changelog: 2026-04-30 / Codex CLI 0.128.0 pre
 - `changed` Codex use cases: Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoint
@@ -20,7 +21,7 @@
 ## Official Source Signals
 - **Claude Code changelog** (HTTP 200)
   - URL: https://code.claude.com/docs/en/changelog
-  - Latest signal: 2.1.126 / May 1, 2026
+  - Latest signal: 2.1.128 / May 4, 2026
   - Keyword groups: hooks, schedule, codex-runtime, integration, quality-cost
   - Short signal: Navigation Getting started Changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started Overview...
   - Short signal: This page is generated from the CHANGELOG.md on GitHub .
