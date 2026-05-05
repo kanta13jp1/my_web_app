@@ -6,6 +6,11 @@
 
 ## 2026-05-05
 
+### Win版#132 part 139 (= 66 part 連続 dogfood / Layer 3-5 Agent Skills)
+
+- `[2026-05-05 03:40 JST]` **create** | 4 wiki-* Agent Skills 新規 (= `.claude/skills/wiki-ingest/` `wiki-compile/` `wiki-query/` `wiki-lint/` SKILL.md) → User 15 度目共有 + 「Level 3-5 Agent Skills 化」明示要望に応答 / Karpathy 5 段階自動化最終 stage 着地 / wiki-skills plugin parity (= `/wiki-init` 以外 4 command 等価)
+- `[2026-05-05 03:45 JST]` **ingest** | wiki-ingest skill smoke test (= 既存 `raw/articles/2026-05-05-karpathy-ai-external-brain-jp.md` を draft → save mode 実行) → `memory/vault/ingest_20260505_karpathy-ai-external-brain-2026-05-05.md` 確定 / related 8 件 (top score 108 = SECOND_BRAIN_PRINCIPLES.md = perfect linkage)
+
 ### Win版#132 part 138 (= 65 part 連続 dogfood)
 
 - `[2026-05-05 02:55 JST]` **ingest** | Karpathy AI 外部脳 (= @hooeem 経由 / @ClaudeCode_love JP commentary) を Layer 1 raw source として永続化 → `raw/articles/2026-05-05-karpathy-ai-external-brain-jp.md` (= user 14 度目共有 / recursive insight: 本記事自体が「消費して消えるもの」の典型)

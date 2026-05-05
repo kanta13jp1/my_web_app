@@ -6,8 +6,172 @@
     "quality-cost",
     "schedule"
   ],
-  "changed_sources": [],
-  "checked_at": "2026-05-03T21:29:48Z",
+  "changed_sources": [
+    {
+      "changed": true,
+      "error": null,
+      "first_seen": false,
+      "hash": "8bf648d36c20d8b9b146eaf9a62e8afa64cd66d603055a1fd2382018f3a4017b",
+      "keyword_groups": {
+        "codex-runtime": [
+          "worktree",
+          "subagents"
+        ],
+        "hooks": [
+          "hook",
+          "hooks",
+          "SessionStart",
+          "UserPromptSubmit",
+          "PostToolUse",
+          "Stop",
+          "StopFailure"
+        ],
+        "integration": [
+          "MCP",
+          "connector",
+          "GitHub"
+        ],
+        "quality-cost": [
+          "OpenTelemetry",
+          "rate limit",
+          "permission",
+          "review",
+          "CI"
+        ],
+        "schedule": [
+          "schedule",
+          "workflow"
+        ]
+      },
+      "latest_signal": "Hooks reference - Claude Code Docs Skip to main content Claude Code Docs home page English",
+      "name": "Claude Code hooks reference",
+      "owner": "Claude Code",
+      "previous_hash": "bc5020b61fbb7e43bee73591ccf40a97ff35c1c89c81243e2b1c523507e1db9a",
+      "slug": "claude-code-hooks",
+      "snippets": [
+        "Hooks reference - Claude Code Docs Skip to main content Claude Code Docs home page English Search...",
+        "Navigation Reference Hooks reference Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Reference CLI reference...",
+        "For a quickstart guide with examples, see Automate workflows with hooks ."
+      ],
+      "status": 200,
+      "url": "https://code.claude.com/docs/en/hooks"
+    },
+    {
+      "changed": true,
+      "error": null,
+      "first_seen": false,
+      "hash": "3447d5038730947a97a418a873cecbbf28cdb38779f13ce983fe1441111a5137",
+      "keyword_groups": {
+        "codex-runtime": [
+          "GPT-5.5",
+          "GPT-5.4",
+          "model picker",
+          "in-app browser",
+          "browser use",
+          "computer use",
+          "worktree",
+          "subagents"
+        ],
+        "hooks": [
+          "hook",
+          "hooks",
+          "SessionStart",
+          "PostToolUse",
+          "Stop"
+        ],
+        "integration": [
+          "MCP",
+          "connector",
+          "Slack",
+          "Linear",
+          "GitHub",
+          "IDE extension"
+        ],
+        "quality-cost": [
+          "cost",
+          "quota",
+          "rate limit",
+          "sandbox",
+          "permission",
+          "review",
+          "CI"
+        ],
+        "schedule": [
+          "automation",
+          "automations",
+          "schedule",
+          "GitHub Actions",
+          "workflow"
+        ]
+      },
+      "latest_signal": "2026-04-30 / Codex CLI 0.128.0 pre",
+      "name": "Codex changelog",
+      "owner": "Codex",
+      "previous_hash": "c0fb530d22300eb6dd53f82917dc4409e4321e82da71600d451ff326556c46bd",
+      "slug": "codex-changelog",
+      "snippets": [
+        "Changelog – Codex | OpenAI Developers Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and...",
+        "( #19933 , #18593 , #19901 , #18372 , #19917 ) Expanded permission profiles with built-in defaults, sandbox CLI profile selection, cwd controls, and active-profile metadata for...",
+        "( #19900 , #20117 , #20118 , #20095 ) Improved plugin workflows with marketplace installation, remote bundle caching, remote uninstall, plugin-bundled hooks, hook enablement..."
+      ],
+      "status": 200,
+      "url": "https://developers.openai.com/codex/changelog"
+    },
+    {
+      "changed": true,
+      "error": null,
+      "first_seen": false,
+      "hash": "c136fffef70202bc2b9585ea23f759d0fb696073e003b24668fc3757abc84180",
+      "keyword_groups": {
+        "codex-runtime": [
+          "GPT-5.5",
+          "GPT-5.4",
+          "in-app browser",
+          "computer use",
+          "worktree",
+          "subagents"
+        ],
+        "hooks": [
+          "hook",
+          "hooks"
+        ],
+        "integration": [
+          "MCP",
+          "connector",
+          "Slack",
+          "Linear",
+          "GitHub",
+          "IDE extension"
+        ],
+        "quality-cost": [
+          "cost",
+          "rate limit",
+          "sandbox",
+          "permission",
+          "review",
+          "CI"
+        ],
+        "schedule": [
+          "automation",
+          "automations",
+          "workflow"
+        ]
+      },
+      "latest_signal": "Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoint",
+      "name": "Codex use cases",
+      "owner": "Codex",
+      "previous_hash": "0d63822ecc9b8a5076dc24f8ea3832c8c243d83e514edff0f7cf350c9717f9b4",
+      "slug": "codex-use-cases",
+      "snippets": [
+        "Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and product docs for Codex...",
+        "Web development Turn design inputs into responsive UI, and iterate on the frontend with scoped changes and fast reviews.",
+        "Featured Start with the most common Codex workflows."
+      ],
+      "status": 200,
+      "url": "https://developers.openai.com/codex/use-cases/"
+    }
+  ],
+  "checked_at": "2026-05-04T21:40:56Z",
   "high_priority_groups": [
     "codex-runtime",
     "hooks",
@@ -59,7 +223,7 @@
     }
   },
   "issue": "1422",
-  "previous_checked_at": "2026-05-02T21:29:16Z",
+  "previous_checked_at": "2026-05-03T21:29:48Z",
   "sources": [
     {
       "changed": false,
@@ -123,10 +287,10 @@
       "url": "https://code.claude.com/docs/en/changelog"
     },
     {
-      "changed": false,
+      "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "bc5020b61fbb7e43bee73591ccf40a97ff35c1c89c81243e2b1c523507e1db9a",
+      "hash": "8bf648d36c20d8b9b146eaf9a62e8afa64cd66d603055a1fd2382018f3a4017b",
       "keyword_groups": {
         "codex-runtime": [
           "worktree",
@@ -219,10 +383,10 @@
       "url": "https://code.claude.com/docs/en/github-actions"
     },
     {
-      "changed": false,
+      "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "c0fb530d22300eb6dd53f82917dc4409e4321e82da71600d451ff326556c46bd",
+      "hash": "3447d5038730947a97a418a873cecbbf28cdb38779f13ce983fe1441111a5137",
       "keyword_groups": {
         "codex-runtime": [
           "GPT-5.5",
@@ -238,7 +402,6 @@
           "hook",
           "hooks",
           "SessionStart",
-          "UserPromptSubmit",
           "PostToolUse",
           "Stop"
         ],
@@ -281,10 +444,10 @@
       "url": "https://developers.openai.com/codex/changelog"
     },
     {
-      "changed": false,
+      "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "0d63822ecc9b8a5076dc24f8ea3832c8c243d83e514edff0f7cf350c9717f9b4",
+      "hash": "c136fffef70202bc2b9585ea23f759d0fb696073e003b24668fc3757abc84180",
       "keyword_groups": {
         "codex-runtime": [
           "GPT-5.5",
