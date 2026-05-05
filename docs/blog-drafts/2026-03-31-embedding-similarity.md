@@ -4,7 +4,7 @@ tags: Flutter,Supabase,個人開発,buildinpublic,GeminiAPI
 published: true
 ---
 
-# ブログ下書き 2026-03-31
+# ブログ下書き 2026-03-31 — 2026-03-31-embedding-similarity
 
 ## タイトル案
 

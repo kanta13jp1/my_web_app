@@ -40,7 +40,7 @@ Part 69 で原則 #3 (Daily Log) を Win territory で実装 (= `~/.claude/proje
 
 #### A) 孤児ノート (Orphan Notes)
 
-定義: `[[file_name]]` 形式で **他 file から参照ゼロ** の memory file.
+定義: ``file_name`` 形式で **他 file から参照ゼロ** の memory file.
 
 ```bash
 # pseudo
@@ -96,15 +96,15 @@ for kw in keywords:
 - Contradictions: 2 candidates
 
 ## 孤児ノート (12 件)
-- [[file1]] → 関連既存 file 候補: ...
-- [[file2]] → 関連既存 file 候補: ...
+- `file1` → 関連既存 file 候補: ...
+- `file2` → 関連既存 file 候補: ...
 
 ## 重複候補 (3 group)
 - group A: [[a]], [[b]], [[c]] (similarity 0.82) → 統合提案
 - ...
 
 ## 矛盾候補 (2 件)
-- 概念 X: [[file_p]] と [[file_q]] で対立 → 検証推奨
+- 概念 X: `file_p` と `file_q` で対立 → 検証推奨
 ```
 
 ### 4. GitHub Issue 自動作成 (オプション)
