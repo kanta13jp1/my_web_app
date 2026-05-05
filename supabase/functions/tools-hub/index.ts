@@ -1,4 +1,4 @@
-﻿// tools-hub — 個人生産性ツール統合EF
+// tools-hub — 個人生産性ツール統合EF
 // Merges (30 EFs): password-generator, password-vault, currency-converter,
 //   weather-widget, qr-code-generator, markdown-renderer, pomodoro-timer,
 //   focus-timer, clipboard-history, quick-note, goal-tracker, contact-manager,
