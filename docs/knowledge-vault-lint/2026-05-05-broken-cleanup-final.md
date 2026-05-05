@@ -1,18 +1,19 @@
-# Knowledge Vault Lint — 2026-05-05 04:17 UTC
+# Knowledge Vault Lint — 2026-05-05 04:18 UTC
 
 
 > Win版#132 part 105 / Issues #976 + #1173 dogfood / SECOND_BRAIN #4 (定期 Lint) + INDIE #1 (Memory) 実装.
 
 
-**memory files**: 1147 / **docs files**: 1868 / total: 3015
+**memory files**: 1147 / **docs files**: 1871 / total: 3018
 
-## Health Score: **0/100**
+## Health Score: **32/100**
 
 
-- orphan files: 2508
+- orphan files: 2511
 - broken links: 0
 - duplicate titles: 30
 - missing index entries: 893
+- scoring: size-normalized weighted penalties
 
 ## Orphan files (= 他 file から [[link]] 参照なし)
 
@@ -46,7 +47,7 @@
 - `feedback_correction_20260424_duplicate_migration_version.md`
 - `feedback_correction_20260424_hub_duplicate_case.md`
 - `feedback_correction_20260424_migration_timestamp_codex_collision.md`
-- ... (2478 more)
+- ... (2481 more)
 
 ## Broken links (= [[link]] target 不在)
 
