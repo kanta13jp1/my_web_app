@@ -26716,3 +26716,73 @@ Win Claude 担当 2 件 (#1305 Stripe + #1309 Maintenance) を設計 spec とし
 
 INSTANCE-ROLES 厳守: Win Claude 設計 spec 2 件 ship / Win Codex 12 件 hand off (推定 ~44h).
 COMPACTION-RESUME: 90min ガード接近 → wrap-up 着地。
+
+## Win版#132 part 144 (= WBS overdue 期限近順 part 143 deferred 消化 + batch 4 / 2026-05-05)
+
+### Summary
+
+User 「WBSのタスクを期限が近いものから進めてください。2インスタンス制も反映してください。」
+13 度目同一要望 (= part 142 + 143 連続 dogfood). part 143 で deferred した Win Claude territory 2 件
+(#1292 SOP + #1348 Term Tooltip) を [DYNAMIC-CLAIM] 2 件 cap 内 ship. 並行で WBS UI top 漏れ
+4 件 (#1305 Stripe / #1376 OTel / #1383 scraping / #1388 RAG) を batch 4 として 5-question matrix で
+全件 Codex hand off. 累計 5-question matrix 適用 = **24 件** (= 1 session 内過去最大記録).
+
+### 設計 spec ship (= 2 件 / [DYNAMIC-CLAIM] cap 内)
+
+| # | 設計 spec doc | issue | scope |
+|---|---|---|---|
+| 1 | `docs/MAINTENANCE_SOP_SPEC.md` | [#1292](https://github.com/kanta13jp1/my_web_app/issues/1292) | Restart/Pause SOP / 4 段階 gate / 5 health check |
+| 2 | `docs/TERM_TOOLTIP_SPEC.md` | [#1348](https://github.com/kanta13jp1/my_web_app/issues/1348) | glossary_terms table / TermHighlightedText widget / responsive tooltip |
+
+### Codex hand off batch 4 (= 4 件 / 全件 Codex)
+
+`docs/cross-instance-prs/20260505_codex_overdue_wbs_handoff_batch4.md`:
+- #1305 Stripe 決済基盤 + フリーミアム (= Q1 schema + Q2 EF webhook / 8h)
+- #1376 OpenTelemetry + Agent SDK 分散 trace (= Q1 schema + Q2 instrumentation + Q3 GHA / 10h)
+- #1383 定期自動 scraping + 履歴 (= Q1 schema + Q2 EF cron + Q3 GHA / 8h)
+- #1388 ローカル埋め込み RAG (= Q1 schema + Q2 EF embedding / 12h)
+
+### 累計 throughput (= batch 1-4 / 1 session 24 件)
+
+| judge | batch1 | batch2 | batch3 | batch4 | 合計 |
+|---|---:|---:|---:|---:|---:|
+| Codex | 6 | 6 | 1 | 4 | **17** |
+| Win Claude | 2 | 4 | 1 | 0 | **7** |
+
+Win Claude 7 件処理:
+- ✅ part 143 ship: #1316 (6 部門 KPI) + #1345 (1 In 2 Out)
+- ✅ part 144 ship: #1292 (Maintenance SOP) + #1348 (Term Tooltip)
+- ⏸ part 145+ deferred: #1356 (dev env docs) + #1366 (story branch UI) + 1 残
+
+Codex sprint 構成: 2 sprint × 5 営業日 = ~80h 推定 (= sprint1 低-中難度 12 件 + sprint2 高難度 4 件).
+
+### Pattern 確立 (= part 144 で新規)
+
+- **「設計 spec 2 連続セッション」**: part 143 → part 144 で計 4 設計 spec ship (= 9 原則チェック完全遵守)
+- **「triage = cap 外」discipline 4 batch 連続**: cross-instance-pr で routing 委譲 → Win Claude 設計負荷を cap 厳守
+- **「missed Issue 後追い batch」第 2 例**: part 143 batch 3 で確立 → part 144 batch 4 で再現 (= UI top 19 件全 cover)
+- **「9 原則 + IMBUE/AI-DEV cross-check spec」**: 設計 spec 内で各 axis 自動 mapping → 9 原則 alignment 数値化
+
+### Commit
+
+`docs(spec): part 144 — 2 設計 spec ship + batch 4 cross-instance-pr` 予定.
+
+### Philosophy Alignment
+
+- PHILOSOPHY-22: 7/9 ✅ (= #1 + #2 + #5 + #6 + #7 + #8 + #9 / SOP+Tooltip 両方が CEO 感 + 商品価値 + 資産負債軸対応)
+- AI-DEV-23: 4/7 (= #1 Auth + #2 deny-by-default + #5 memory + #7 quality-gate / SOP spec 由来)
+- IMBUE-25: 3/7 (= #2 認知負荷削減 + #4 mentor + #6 CEO 感 / Tooltip spec 由来)
+- BRAIN-32: 7/7 ✅ (= part 142 達成 維持)
+- SYNERGY-30: 7/7 ✅ (= cross-instance-pr 4 batch 連続)
+
+### 次回 candidate (= part 145 候補)
+
+1. #1356 開発環境自動 setup + proxy 対策 docs (= deferred / ~3h docs-only)
+2. #1366 ストーリー分岐 / 文脈移行 UI action 設計 spec (= ui-design skill 経由)
+3. NotebookLM `jibun-master-brain` に part 143-144 spec template (= 5 section 標準形) 蓄積
+4. WBS overdue UI top 19 件全 cover 完了 → next 20 件 (= 期限 +3-5 日) を 5-question 適用
+5. Codex sprint 1 進捗確認 (= 12 件中 何件着手か / 完了率 KPI)
+
+INSTANCE-ROLES 厳守: Win Claude 設計 spec 2 件 ship / Win Codex 4 件 batch 4 hand off (推定 38h).
+COMPACTION-RESUME: 90min 以内 wrap-up 着地。
+
