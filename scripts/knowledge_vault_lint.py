@@ -58,6 +58,46 @@ def collect_md_files(roots: list[Path]) -> list[Path]:
 
 WIKILINK = re.compile(r"\[\[([^\[\]|]+?)(?:\|[^\[\]]+?)?\]\]")
 H1 = re.compile(r"^#\s+(.+?)\s*$", re.MULTILINE)
+PLACEHOLDER_LINKS = {
+    "",
+    "<file>",
+    "file",
+    "<related file>",
+    "<related file 1>",
+    "<related file 2>",
+    "<関連 file 1>",
+    "<関連 file 2>",
+}
+
+
+def normalize_link(link: str) -> str:
+    """Return the comparable stem for an Obsidian-style wikilink."""
+    link = link.strip().strip("/")
+    link = link.split("#", 1)[0].strip()
+    link = link.replace("\\", "/")
+    return Path(link).stem if "/" in link else Path(link).stem
+
+
+def is_placeholder_link(link: str) -> bool:
+    raw = link.strip().lower()
+    normalized = normalize_link(link).strip().lower()
+    return raw in PLACEHOLDER_LINKS or normalized in PLACEHOLDER_LINKS
+
+
+def calculate_health(total_files: int, memory_files_count: int, orphans_count: int,
+                     broken_count: int, duplicate_count: int,
+                     missing_index_count: int) -> int:
+    """Scale health by vault size so large vaults do not stay pinned at 0."""
+    total = max(1, total_files)
+    indexable_memory = max(1, memory_files_count - 2)
+    orphan_penalty = min(40.0, (orphans_count / total) * 40.0)
+    broken_penalty = min(25.0, (broken_count / total) * 300.0)
+    duplicate_penalty = min(15.0, duplicate_count * 0.5)
+    missing_index_penalty = min(20.0, (missing_index_count / indexable_memory) * 25.0)
+    health = 100 - (
+        orphan_penalty + broken_penalty + duplicate_penalty + missing_index_penalty
+    )
+    return max(0, round(health))
 
 
 def extract_links(text: str) -> set[str]:
@@ -102,9 +142,14 @@ def detect_broken_links(files: list[Path]) -> list[tuple[Path, str]]:
     """[[link]] が指す file が存在しない."""
     file_names: set[str] = set()
     file_stems: set[str] = set()
+    file_rel_stems: set[str] = set()
     for f in files:
         file_names.add(f.name)
         file_stems.add(f.stem)
+        try:
+            file_rel_stems.add(f.relative_to(REPO_ROOT).with_suffix("").as_posix())
+        except ValueError:
+            file_rel_stems.add(f.with_suffix("").as_posix())
 
     broken: list[tuple[Path, str]] = []
     for f in files:
@@ -113,8 +158,11 @@ def detect_broken_links(files: list[Path]) -> list[tuple[Path, str]]:
         except OSError:
             continue
         for link in extract_links(text):
-            target = Path(link).stem if "/" in link or "\\" in link else link
-            if target in file_stems or link in file_names:
+            if is_placeholder_link(link):
+                continue
+            target = normalize_link(link)
+            rel_target = link.strip().replace("\\", "/").removesuffix(".md")
+            if target in file_stems or link in file_names or rel_target in file_rel_stems:
                 continue
             # 部分 match (= "memory/<file>" 形式) 許容
             if any(target in s for s in file_stems):
@@ -173,14 +221,16 @@ def render_markdown(now: datetime, memory_files: list[Path], docs_files: list[Pa
     lines.append("")
 
     # Health Score 算出 (= 簡易 / 100 - issue count)
-    issues_count = len(orphans) + len(broken) + len(dup_titles) + len(missing_idx)
-    health = max(0, 100 - issues_count)
+    total_files = len(memory_files) + len(docs_files)
+    health = calculate_health(total_files, len(memory_files), len(orphans),
+                              len(broken), len(dup_titles), len(missing_idx))
     lines.append(f"## Health Score: **{health}/100**\n")
     lines.append("")
     lines.append(f"- orphan files: {len(orphans)}")
     lines.append(f"- broken links: {len(broken)}")
     lines.append(f"- duplicate titles: {len(dup_titles)}")
     lines.append(f"- missing index entries: {len(missing_idx)}")
+    lines.append("- scoring: size-normalized weighted penalties")
     lines.append("")
 
     lines.append("## Orphan files (= 他 file から [[link]] 参照なし)")
@@ -264,6 +314,8 @@ def main() -> int:
     broken = detect_broken_links(all_files)
     dup_titles = detect_duplicate_titles(all_files)
     missing_idx = detect_missing_index_entries(memory_files, memory_dir / "MEMORY.md")
+    health = calculate_health(len(all_files), len(memory_files), len(orphans),
+                              len(broken), len(dup_titles), len(missing_idx))
 
     if args.json_out:
         out_json = REPO_ROOT / args.json_out
@@ -272,6 +324,7 @@ def main() -> int:
             "timestamp": now.isoformat(),
             "memory_files": len(memory_files),
             "docs_files": len(docs_files),
+            "health": health,
             "orphans": [str(f.name) for f in orphans],
             "broken_links": [(str(f.name), link) for f, link in broken],
             "duplicate_titles": {t: [str(x.name) for x in fs] for t, fs in dup_titles.items()},
@@ -288,8 +341,6 @@ def main() -> int:
                         dup_titles, missing_idx)
     out_path.write_text(md, encoding="utf-8")
     print(f"wrote {out_path}")
-    issues_count = len(orphans) + len(broken) + len(dup_titles) + len(missing_idx)
-    health = max(0, 100 - issues_count)
     print(f"health: {health}/100")
     return 0 if health >= 90 else (1 if health >= 70 else 2)
 
