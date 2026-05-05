@@ -15,7 +15,7 @@ class BlogServiceException implements Exception {
 class BlogService {
   final _client = Supabase.instance.client;
 
-  Future<Map<String, dynamic>> _invoke(
+  Future<Map<String, dynamic>> _invokeBlogAction(
     String action,
     Map<String, dynamic> params,
   ) async {
@@ -41,7 +41,7 @@ class BlogService {
     List<String> tags = const [],
     String notes = '',
   }) async {
-    return _invoke('blog.insert_post', {
+    return _invokeBlogAction('blog.insert_post', {
       'title': title,
       'content': content,
       'target_platforms': targetPlatforms,
@@ -64,23 +64,23 @@ class BlogService {
     if (targetPlatforms != null) params['target_platforms'] = targetPlatforms;
     if (tags != null) params['tags'] = tags;
     if (notes != null) params['notes'] = notes;
-    await _invoke('blog.update_post', params);
+    await _invokeBlogAction('blog.update_post', params);
   }
 
   Future<void> deletePost(String id) async {
-    await _invoke('blog.delete_post', {'id': id});
+    await _invokeBlogAction('blog.delete_post', {'id': id});
   }
 
   // ── 公開 ────────────────────────────────────────────────────────
 
   Future<Map<String, dynamic>> publishPost(String id) async {
-    return _invoke('blog.publish_post', {'id': id});
+    return _invokeBlogAction('blog.publish_post', {'id': id});
   }
 
   // ── Engagement 同期 ──────────────────────────────────────────────
 
   Future<Map<String, dynamic>> syncEngagement() async {
-    return _invoke('blog.sync_engagement', {});
+    return _invokeBlogAction('blog.sync_engagement', {});
   }
 
   // ── Qiita コメント返信 ──────────────────────────────────────────
@@ -89,7 +89,7 @@ class BlogService {
     required String articleId,
     required String body,
   }) async {
-    await _invoke('blog.qiita_comment_post', {
+    await _invokeBlogAction('blog.qiita_comment_post', {
       'item_id': articleId,
       'body': body,
     });
@@ -102,7 +102,7 @@ class BlogService {
     required String title,
     required String body,
   }) async {
-    await _invoke('blog.qiita_update', {
+    await _invokeBlogAction('blog.qiita_update', {
       'item_id': articleId,
       'title': title,
       'body': body,
