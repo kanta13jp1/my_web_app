@@ -15,6 +15,11 @@ import {
   postTweet,
   uploadMediaFromUrl,
 } from "../_shared/x-client.ts";
+import {
+  externalFetch,
+  externalFetchErrorPayload,
+  isExternalFetchError,
+} from "../_shared/external_fetch.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -148,23 +153,28 @@ async function fetchNewsSignalsForDraft(
   const feeds = Array.isArray(body.feeds) && body.feeds.length > 0
     ? body.feeds
     : defaultNewsSignalFeeds();
-  const res = await fetch(url, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      ...(SUPABASE_ANON_KEY ? { apikey: SUPABASE_ANON_KEY } : {}),
-      ...(SERVICE_ROLE_KEY
-        ? { Authorization: `Bearer ${SERVICE_ROLE_KEY}` }
-        : {}),
+  const res = await externalFetch(
+    "tools-hub.rss.fetch_latest",
+    url,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(SUPABASE_ANON_KEY ? { apikey: SUPABASE_ANON_KEY } : {}),
+        ...(SERVICE_ROLE_KEY
+          ? { Authorization: `Bearer ${SERVICE_ROLE_KEY}` }
+          : {}),
+      },
+      body: JSON.stringify({
+        action: "rss.fetch_latest",
+        feeds,
+        per_feed_limit: Number(body.per_feed_limit ?? 10),
+        limit: Number(body.limit ?? 80),
+        signal_limit: Number(body.signal_limit ?? 8),
+      }),
     },
-    body: JSON.stringify({
-      action: "rss.fetch_latest",
-      feeds,
-      per_feed_limit: Number(body.per_feed_limit ?? 10),
-      limit: Number(body.limit ?? 80),
-      signal_limit: Number(body.signal_limit ?? 8),
-    }),
-  });
+    { traceId: "schedule-hub.blog.news_signal_draft" },
+  );
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
     throw new Error(`tools-hub rss.fetch_latest failed: ${res.status}`);
@@ -304,7 +314,10 @@ function buildWikiNewsSourceContent(
     "",
     "## Verification",
     "",
-    asString(signal.verification_warning, "一次情報、日時、固有名詞を確認する。"),
+    asString(
+      signal.verification_warning,
+      "一次情報、日時、固有名詞を確認する。",
+    ),
     "",
     "## Links",
     "",
@@ -373,21 +386,25 @@ async function upsertExternalBrainNewsSignals(
       tags: context.tags,
     };
     const rawContent = buildRawNewsMemoryContent(signal, fetchedAt);
-    rows.push(await memoryIndexRow(
-      `raw/news/${date}/${slug}.md`,
-      `raw: ${newsSignalTitle(signal)}`,
-      rawContent,
-      "ai_external_brain_raw_news",
-      { ...baseMetadata, layer: "raw" },
-    ));
+    rows.push(
+      await memoryIndexRow(
+        `raw/news/${date}/${slug}.md`,
+        `raw: ${newsSignalTitle(signal)}`,
+        rawContent,
+        "ai_external_brain_raw_news",
+        { ...baseMetadata, layer: "raw" },
+      ),
+    );
     const wikiContent = buildWikiNewsSourceContent(signal, fetchedAt);
-    rows.push(await memoryIndexRow(
-      `wiki/sources/news/${date}/${slug}.md`,
-      `wiki: ${newsSignalTitle(signal)}`,
-      wikiContent,
-      "ai_external_brain_wiki_source",
-      { ...baseMetadata, layer: "wiki" },
-    ));
+    rows.push(
+      await memoryIndexRow(
+        `wiki/sources/news/${date}/${slug}.md`,
+        `wiki: ${newsSignalTitle(signal)}`,
+        wikiContent,
+        "ai_external_brain_wiki_source",
+        { ...baseMetadata, layer: "wiki" },
+      ),
+    );
   }
   if (rows.length === 0) {
     return { success: true, upserted: 0, file_paths: [] };
@@ -403,9 +420,7 @@ async function upsertExternalBrainNewsSignals(
   return {
     success: true,
     upserted: filePaths.length || rows.length,
-    file_paths: filePaths.length
-      ? filePaths
-      : rows.map((row) => row.file_path),
+    file_paths: filePaths.length ? filePaths : rows.map((row) => row.file_path),
   };
 }
 
@@ -442,7 +457,14 @@ function newsRiskFlags(text: string): string[] {
     ["medical", ["医療", "病院", "薬", "治療", "medical", "medicine"]],
     ["legal", ["法律", "規制", "訴訟", "判決", "legal", "lawsuit"]],
     ["disaster", ["地震", "災害", "避難", "台風", "disaster", "earthquake"]],
-    ["security", ["脆弱性", "漏洩", "攻撃", "security", "breach", "vulnerability"]],
+    ["security", [
+      "脆弱性",
+      "漏洩",
+      "攻撃",
+      "security",
+      "breach",
+      "vulnerability",
+    ]],
   ];
   return groups
     .filter(([, keywords]) =>
@@ -471,7 +493,10 @@ function fetchedAtFromNewsMemory(
     new Date().toISOString();
 }
 
-function lintBlock(summary: Record<string, unknown>, findings: NewsLintFinding[]) {
+function lintBlock(
+  summary: Record<string, unknown>,
+  findings: NewsLintFinding[],
+) {
   const lines = [
     "NEWS_SIGNAL_LINT_START",
     `checked_at=${summary.checked_at}`,
@@ -497,22 +522,28 @@ function replaceLintBlock(notes: string, block: string): string {
 async function checkNewsUrl(url: string): Promise<boolean> {
   if (!/^https?:\/\//i.test(url)) return false;
   try {
-    const head = await fetch(url, {
+    const head = await externalFetch("news-source", url, {
       method: "HEAD",
-      signal: AbortSignal.timeout(7000),
       headers: {
         "User-Agent":
           "my-web-app-news-lint/1.0 (+https://my-web-app-b67f4.web.app)",
       },
+    }, {
+      retries: 1,
+      timeoutMs: 7_000,
+      traceId: "schedule-hub.blog.news_signal_lint.head",
     });
     if (head.ok || head.status === 405 || head.status === 403) return true;
-    const get = await fetch(url, {
+    const get = await externalFetch("news-source", url, {
       method: "GET",
-      signal: AbortSignal.timeout(7000),
       headers: {
         "User-Agent":
           "my-web-app-news-lint/1.0 (+https://my-web-app-b67f4.web.app)",
       },
+    }, {
+      retries: 1,
+      timeoutMs: 7_000,
+      traceId: "schedule-hub.blog.news_signal_lint.get",
     });
     return get.ok || get.status === 403;
   } catch (_) {
@@ -578,7 +609,10 @@ async function lintExternalBrainNewsSignals(
       };
       findings.push(finding);
       if (postId) {
-        postFindings.set(postId, [...(postFindings.get(postId) ?? []), finding]);
+        postFindings.set(postId, [
+          ...(postFindings.get(postId) ?? []),
+          finding,
+        ]);
       }
     };
 
@@ -615,7 +649,11 @@ async function lintExternalBrainNewsSignals(
     if (verifyLinks && url && linkChecks.length < 20) {
       linkChecks.push((async () => {
         if (!(await checkNewsUrl(url))) {
-          addFinding("error", "source_link_unreachable", "Source URL did not respond.");
+          addFinding(
+            "error",
+            "source_link_unreachable",
+            "Source URL did not respond.",
+          );
         }
       })());
     }
@@ -734,18 +772,65 @@ function notionHeaders(token: string): Record<string, string> {
   };
 }
 
+function mergeHeaders(
+  base: Record<string, string>,
+  extra: HeadersInit | undefined,
+): HeadersInit {
+  return { ...base, ...Object.fromEntries(new Headers(extra ?? {}).entries()) };
+}
+
+async function qiitaFetch(
+  path: string,
+  token: string,
+  init: RequestInit = {},
+  traceId = "schedule-hub.qiita",
+): Promise<Response> {
+  const url = path.startsWith("http")
+    ? path
+    : `https://qiita.com/api/v2${path}`;
+  return await externalFetch(
+    "qiita",
+    url,
+    {
+      ...init,
+      headers: mergeHeaders({ Authorization: `Bearer ${token}` }, init.headers),
+    },
+    { traceId },
+  );
+}
+
+async function devtoFetch(
+  path: string,
+  apiKey: string,
+  init: RequestInit = {},
+  traceId = "schedule-hub.devto",
+): Promise<Response> {
+  const url = path.startsWith("http") ? path : `https://dev.to/api${path}`;
+  return await externalFetch(
+    "dev.to",
+    url,
+    {
+      ...init,
+      headers: mergeHeaders({ "api-key": apiKey }, init.headers),
+    },
+    { traceId },
+  );
+}
+
 async function notionFetch(
   token: string,
   path: string,
   init: RequestInit = {},
 ): Promise<Response> {
-  return await fetch(`https://api.notion.com/v1${path}`, {
-    ...init,
-    headers: {
-      ...notionHeaders(token),
-      ...(init.headers ?? {}),
+  return await externalFetch(
+    "notion",
+    `https://api.notion.com/v1${path}`,
+    {
+      ...init,
+      headers: mergeHeaders(notionHeaders(token), init.headers),
     },
-  });
+    { traceId: `schedule-hub.notion${path}` },
+  );
 }
 
 function notionRichText(content: string): Array<Record<string, unknown>> {
@@ -796,7 +881,12 @@ async function listNotionChildren(
     );
     url.searchParams.set("page_size", String(pageSize));
     if (cursor) url.searchParams.set("start_cursor", cursor);
-    const resp = await fetch(url, { headers: notionHeaders(token) });
+    const resp = await externalFetch(
+      "notion",
+      url,
+      { headers: notionHeaders(token) },
+      { traceId: "schedule-hub.notion.children" },
+    );
     if (!resp.ok) {
       const detail = await resp.text().catch(() => "");
       throw new Error(
@@ -1539,10 +1629,9 @@ serve(async (req: Request) => {
         const results: Record<string, unknown> = {};
 
         if (qiitaToken && body.platform === "qiita") {
-          const qr = await fetch("https://qiita.com/api/v2/items", {
+          const qr = await qiitaFetch("/items", qiitaToken, {
             method: "POST",
             headers: {
-              Authorization: `Bearer ${qiitaToken}`,
               "Content-Type": "application/json",
             },
             body: JSON.stringify({
@@ -1553,15 +1642,14 @@ serve(async (req: Request) => {
               })),
               private: false,
             }),
-          });
+          }, "schedule-hub.blog.publish.qiita");
           results.qiita = { ok: qr.ok, status: qr.status };
         }
 
         if (devtoKey && body.platform === "devto") {
-          const dr = await fetch("https://dev.to/api/articles", {
+          const dr = await devtoFetch("/articles", devtoKey, {
             method: "POST",
             headers: {
-              "api-key": devtoKey,
               "Content-Type": "application/json",
             },
             body: JSON.stringify({
@@ -1572,7 +1660,7 @@ serve(async (req: Request) => {
                 tags: body.tags ?? [],
               },
             }),
-          });
+          }, "schedule-hub.blog.publish.devto");
           results.devto = { ok: dr.ok, status: dr.status };
         }
 
@@ -1610,10 +1698,9 @@ serve(async (req: Request) => {
             const tagObjects = rawTags.slice(0, 5).map((t: string) => ({
               name: t.slice(0, 20),
             }));
-            const qr = await fetch("https://qiita.com/api/v2/items", {
+            const qr = await qiitaFetch("/items", qiitaToken, {
               method: "POST",
               headers: {
-                Authorization: `Bearer ${qiitaToken}`,
                 "Content-Type": "application/json",
               },
               body: JSON.stringify({
@@ -1625,7 +1712,7 @@ serve(async (req: Request) => {
                 private: false,
                 tweet: false,
               }),
-            });
+            }, "schedule-hub.blog.auto_publish.qiita");
             if (qr.ok) {
               const qd = await qr.json() as { url: string; id: string };
               results.qiita = { ok: true, url: qd.url };
@@ -1634,7 +1721,9 @@ serve(async (req: Request) => {
               results.qiita = { ok: false, error: `${qr.status}: ${errText}` };
             }
           } catch (e) {
-            results.qiita = { ok: false, error: String(e) };
+            results.qiita = isExternalFetchError(e)
+              ? externalFetchErrorPayload(e)
+              : { ok: false, error: String(e) };
           }
         } else if (platforms.includes("qiita")) {
           results.qiita = { ok: false, error: "QIITA_ACCESS_TOKEN not set" };
@@ -1645,10 +1734,9 @@ serve(async (req: Request) => {
             const cleanTags = rawTags.slice(0, 4).map((t: string) =>
               t.toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 30)
             ).filter((t: string) => t.length > 0);
-            const dr = await fetch("https://dev.to/api/articles", {
+            const dr = await devtoFetch("/articles", devtoKey, {
               method: "POST",
               headers: {
-                "api-key": devtoKey,
                 "Content-Type": "application/json",
               },
               body: JSON.stringify({
@@ -1659,7 +1747,7 @@ serve(async (req: Request) => {
                   tags: cleanTags.length > 0 ? cleanTags : ["flutter"],
                 },
               }),
-            });
+            }, "schedule-hub.blog.auto_publish.devto");
             if (dr.ok) {
               const dd = await dr.json() as { url: string; id: number };
               results.devto = { ok: true, url: dd.url };
@@ -1668,7 +1756,9 @@ serve(async (req: Request) => {
               results.devto = { ok: false, error: `${dr.status}: ${errText}` };
             }
           } catch (e) {
-            results.devto = { ok: false, error: String(e) };
+            results.devto = isExternalFetchError(e)
+              ? externalFetchErrorPayload(e)
+              : { ok: false, error: String(e) };
           }
         } else if (platforms.includes("devto")) {
           results.devto = { ok: false, error: "DEVTO_API_KEY not set" };
@@ -1789,10 +1879,9 @@ serve(async (req: Request) => {
             const tagObjects = ppRawTags
               .slice(0, 5)
               .map((t: string) => ({ name: t.slice(0, 20) }));
-            const qr = await fetch("https://qiita.com/api/v2/items", {
+            const qr = await qiitaFetch("/items", qiitaToken, {
               method: "POST",
               headers: {
-                Authorization: `Bearer ${qiitaToken}`,
                 "Content-Type": "application/json",
               },
               body: JSON.stringify({
@@ -1804,7 +1893,7 @@ serve(async (req: Request) => {
                 private: false,
                 tweet: false,
               }),
-            });
+            }, "schedule-hub.blog.publish_post.qiita");
             if (qr.ok) {
               const qd = await qr.json() as { url: string; id: string };
               ppResults.qiita = { ok: true, url: qd.url };
@@ -1815,7 +1904,9 @@ serve(async (req: Request) => {
               };
             }
           } catch (e) {
-            ppResults.qiita = { ok: false, error: String(e) };
+            ppResults.qiita = isExternalFetchError(e)
+              ? externalFetchErrorPayload(e)
+              : { ok: false, error: String(e) };
           }
         }
 
@@ -1827,10 +1918,9 @@ serve(async (req: Request) => {
                 t.toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 30)
               )
               .filter((t: string) => t.length > 0);
-            const dr = await fetch("https://dev.to/api/articles", {
+            const dr = await devtoFetch("/articles", devtoKey, {
               method: "POST",
               headers: {
-                "api-key": devtoKey,
                 "Content-Type": "application/json",
               },
               body: JSON.stringify({
@@ -1841,7 +1931,7 @@ serve(async (req: Request) => {
                   tags: cleanTags.length > 0 ? cleanTags : ["flutter"],
                 },
               }),
-            });
+            }, "schedule-hub.blog.publish_post.devto");
             if (dr.ok) {
               const dd = await dr.json() as { url: string; id: number };
               ppResults.devto = { ok: true, url: dd.url };
@@ -1852,7 +1942,9 @@ serve(async (req: Request) => {
               };
             }
           } catch (e) {
-            ppResults.devto = { ok: false, error: String(e) };
+            ppResults.devto = isExternalFetchError(e)
+              ? externalFetchErrorPayload(e)
+              : { ok: false, error: String(e) };
           }
         }
 
@@ -2123,9 +2215,11 @@ serve(async (req: Request) => {
         // ── Qiita 取得 ──────────────────────────────────────────────────
         if (qiitaToken) {
           try {
-            const qr = await fetch(
-              `https://qiita.com/api/v2/authenticated_user/items?per_page=100`,
-              { headers: { Authorization: `Bearer ${qiitaToken}` } },
+            const qr = await qiitaFetch(
+              "/authenticated_user/items?per_page=100",
+              qiitaToken,
+              {},
+              "schedule-hub.blog.backfill.qiita",
             );
             if (qr.ok) {
               const articles = await qr.json() as Array<{
@@ -2171,9 +2265,11 @@ serve(async (req: Request) => {
         // ── dev.to 取得 ─────────────────────────────────────────────────
         if (devtoKey) {
           try {
-            const dr = await fetch(
-              `https://dev.to/api/articles/me/published?per_page=1000`,
-              { headers: { "api-key": devtoKey } },
+            const dr = await devtoFetch(
+              "/articles/me/published?per_page=1000",
+              devtoKey,
+              {},
+              "schedule-hub.blog.backfill.devto",
             );
             if (dr.ok) {
               const articles = await dr.json() as Array<{
@@ -2279,9 +2375,11 @@ serve(async (req: Request) => {
         }
         const page = Number(body.page ?? 1);
         const perPage = Math.min(Number(body.per_page ?? 100), 100);
-        const qr = await fetch(
-          `https://qiita.com/api/v2/authenticated_user/items?page=${page}&per_page=${perPage}`,
-          { headers: { Authorization: `Bearer ${qiitaToken}` } },
+        const qr = await qiitaFetch(
+          `/authenticated_user/items?page=${page}&per_page=${perPage}`,
+          qiitaToken,
+          {},
+          "schedule-hub.blog.qiita_list",
         );
         if (!qr.ok) {
           return json({ error: `Qiita ${qr.status}: ${await qr.text()}` }, 502);
@@ -2306,9 +2404,11 @@ serve(async (req: Request) => {
         }
         const itemId = String(body.item_id ?? "");
         if (!itemId) return json({ error: "item_id required" }, 400);
-        const qr = await fetch(
-          `https://qiita.com/api/v2/items/${itemId}/comments`,
-          { headers: { Authorization: `Bearer ${qiitaToken}` } },
+        const qr = await qiitaFetch(
+          `/items/${itemId}/comments`,
+          qiitaToken,
+          {},
+          "schedule-hub.blog.qiita_comments",
         );
         if (!qr.ok) return json({ error: `Qiita ${qr.status}` }, 502);
         const comments = await qr.json() as Array<{
@@ -2332,14 +2432,13 @@ serve(async (req: Request) => {
         if (!itemId || !replyBody) {
           return json({ error: "item_id and body required" }, 400);
         }
-        const qr = await fetch("https://qiita.com/api/v2/comments", {
+        const qr = await qiitaFetch("/comments", qiitaToken, {
           method: "POST",
           headers: {
-            Authorization: `Bearer ${qiitaToken}`,
             "Content-Type": "application/json",
           },
           body: JSON.stringify({ item_id: itemId, body: replyBody }),
-        });
+        }, "schedule-hub.blog.qiita_comment_post");
         if (!qr.ok) {
           return json({ error: `Qiita ${qr.status}: ${await qr.text()}` }, 502);
         }
@@ -2355,9 +2454,11 @@ serve(async (req: Request) => {
         }
         const itemId = String(body.item_id ?? "");
         if (!itemId) return json({ error: "item_id required" }, 400);
-        const qr = await fetch(
-          `https://qiita.com/api/v2/items/${itemId}/likes`,
-          { headers: { Authorization: `Bearer ${qiitaToken}` } },
+        const qr = await qiitaFetch(
+          `/items/${itemId}/likes`,
+          qiitaToken,
+          {},
+          "schedule-hub.blog.qiita_likers",
         );
         if (!qr.ok) return json({ error: `Qiita ${qr.status}` }, 502);
         const likers = await qr.json() as Array<
@@ -2374,12 +2475,11 @@ serve(async (req: Request) => {
         }
         const userId = String(body.user_id ?? "");
         if (!userId) return json({ error: "user_id required" }, 400);
-        const qr = await fetch(
-          `https://qiita.com/api/v2/users/${userId}/following`,
-          {
-            method: "PUT",
-            headers: { Authorization: `Bearer ${qiitaToken}` },
-          },
+        const qr = await qiitaFetch(
+          `/users/${userId}/following`,
+          qiitaToken,
+          { method: "PUT" },
+          "schedule-hub.blog.qiita_follow",
         );
         // 204 No Content = success
         const ok = qr.status === 204 || qr.ok;
@@ -2394,12 +2494,11 @@ serve(async (req: Request) => {
         }
         const itemId = String(body.item_id ?? "");
         if (!itemId) return json({ error: "item_id required" }, 400);
-        const qr = await fetch(
-          `https://qiita.com/api/v2/items/${itemId}`,
-          {
-            method: "DELETE",
-            headers: { Authorization: `Bearer ${qiitaToken}` },
-          },
+        const qr = await qiitaFetch(
+          `/items/${itemId}`,
+          qiitaToken,
+          { method: "DELETE" },
+          "schedule-hub.blog.qiita_delete",
         );
         return json({
           success: qr.status === 204,
@@ -2424,16 +2523,17 @@ serve(async (req: Request) => {
             name: t,
           }));
         }
-        const qr = await fetch(
-          `https://qiita.com/api/v2/items/${itemId}`,
+        const qr = await qiitaFetch(
+          `/items/${itemId}`,
+          qiitaToken,
           {
             method: "PATCH",
             headers: {
-              Authorization: `Bearer ${qiitaToken}`,
               "Content-Type": "application/json",
             },
             body: JSON.stringify(patchBody),
           },
+          "schedule-hub.blog.qiita_update",
         );
         if (!qr.ok) {
           return json({ error: `Qiita ${qr.status}: ${await qr.text()}` }, 502);
@@ -2455,9 +2555,11 @@ serve(async (req: Request) => {
         if (!devtoKey) return json({ error: "DEVTO_API_KEY not set" }, 500);
         const page = Number(body.page ?? 1);
         const perPage = Math.min(Number(body.per_page ?? 100), 1000);
-        const dr = await fetch(
-          `https://dev.to/api/articles/me?page=${page}&per_page=${perPage}`,
-          { headers: { "api-key": devtoKey } },
+        const dr = await devtoFetch(
+          `/articles/me?page=${page}&per_page=${perPage}`,
+          devtoKey,
+          {},
+          "schedule-hub.blog.devto_list",
         );
         if (!dr.ok) {
           return json(
@@ -2492,9 +2594,11 @@ serve(async (req: Request) => {
         );
 
         // 1. 全記事取得
-        const articlesRes = await fetch(
-          "https://qiita.com/api/v2/authenticated_user/items?page=1&per_page=100",
-          { headers: { Authorization: `Bearer ${qiitaToken}` } },
+        const articlesRes = await qiitaFetch(
+          "/authenticated_user/items?page=1&per_page=100",
+          qiitaToken,
+          {},
+          "schedule-hub.blog.sync_engagement.articles",
         );
         if (!articlesRes.ok) {
           return json({ error: `Qiita list: ${articlesRes.status}` }, 502);
@@ -2530,9 +2634,11 @@ serve(async (req: Request) => {
         for (const article of articles) {
           // comments
           if (article.comments_count > 0) {
-            const cr = await fetch(
-              `https://qiita.com/api/v2/items/${article.id}/comments`,
-              { headers: { Authorization: `Bearer ${qiitaToken}` } },
+            const cr = await qiitaFetch(
+              `/items/${article.id}/comments`,
+              qiitaToken,
+              {},
+              "schedule-hub.blog.sync_engagement.comments",
             );
             if (cr.ok) {
               const comments = await cr.json() as Array<{
@@ -2569,17 +2675,16 @@ serve(async (req: Request) => {
 
                 // auto-reply
                 if (autoReply && !alreadyReplied) {
-                  const rr = await fetch("https://qiita.com/api/v2/comments", {
+                  const rr = await qiitaFetch("/comments", qiitaToken, {
                     method: "POST",
                     headers: {
-                      Authorization: `Bearer ${qiitaToken}`,
                       "Content-Type": "application/json",
                     },
                     body: JSON.stringify({
                       item_id: article.id,
                       body: replyTemplate,
                     }),
-                  });
+                  }, "schedule-hub.blog.sync_engagement.reply");
                   if (rr.ok) {
                     await admin.from("blog_comments")
                       .update({
@@ -2598,9 +2703,11 @@ serve(async (req: Request) => {
 
           // likers (LGTM)
           if (article.likes_count > 0) {
-            const lr = await fetch(
-              `https://qiita.com/api/v2/items/${article.id}/likes`,
-              { headers: { Authorization: `Bearer ${qiitaToken}` } },
+            const lr = await qiitaFetch(
+              `/items/${article.id}/likes`,
+              qiitaToken,
+              {},
+              "schedule-hub.blog.sync_engagement.likes",
             );
             if (lr.ok) {
               const likers = await lr.json() as Array<
@@ -2632,12 +2739,11 @@ serve(async (req: Request) => {
 
                 // auto-follow
                 if (autoFollow && !alreadyFollowed) {
-                  const fr = await fetch(
-                    `https://qiita.com/api/v2/users/${uid}/following`,
-                    {
-                      method: "PUT",
-                      headers: { Authorization: `Bearer ${qiitaToken}` },
-                    },
+                  const fr = await qiitaFetch(
+                    `/users/${uid}/following`,
+                    qiitaToken,
+                    { method: "PUT" },
+                    "schedule-hub.blog.sync_engagement.follow",
                   );
                   if (fr.status === 204 || fr.ok) {
                     await admin.from("blog_likers")
@@ -2674,11 +2780,11 @@ serve(async (req: Request) => {
         const articleId = Number(body.article_id);
         if (!articleId) return json({ error: "article_id required" }, 400);
         // dev.to は物理削除不可 → unpublish で対応
-        const dr = await fetch(`https://dev.to/api/articles/${articleId}`, {
+        const dr = await devtoFetch(`/articles/${articleId}`, devtoKey, {
           method: "PUT",
-          headers: { "api-key": devtoKey, "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ article: { published: false } }),
-        });
+        }, "schedule-hub.blog.devto_delete");
         return json({
           success: dr.ok,
           status: dr.status,
@@ -3055,15 +3161,11 @@ serve(async (req: Request) => {
 
           try {
             // 既存 page を id (Title) で検索
-            const queryResp = await fetch(
-              `https://api.notion.com/v1/databases/${dbId}/query`,
+            const queryResp = await notionFetch(
+              token,
+              `/databases/${dbId}/query`,
               {
                 method: "POST",
-                headers: {
-                  "Authorization": `Bearer ${token}`,
-                  "Notion-Version": "2022-06-28",
-                  "Content-Type": "application/json",
-                },
                 body: JSON.stringify({
                   filter: { property: "id", title: { equals: String(t.id) } },
                   page_size: 1,
@@ -3085,15 +3187,11 @@ serve(async (req: Request) => {
 
             if (existingPageId) {
               // patch
-              const patchResp = await fetch(
-                `https://api.notion.com/v1/pages/${existingPageId}`,
+              const patchResp = await notionFetch(
+                token,
+                `/pages/${existingPageId}`,
                 {
                   method: "PATCH",
-                  headers: {
-                    "Authorization": `Bearer ${token}`,
-                    "Notion-Version": "2022-06-28",
-                    "Content-Type": "application/json",
-                  },
                   body: JSON.stringify({ properties }),
                 },
               );
@@ -3107,21 +3205,13 @@ serve(async (req: Request) => {
               }
             } else {
               // create
-              const createResp = await fetch(
-                `https://api.notion.com/v1/pages`,
-                {
-                  method: "POST",
-                  headers: {
-                    "Authorization": `Bearer ${token}`,
-                    "Notion-Version": "2022-06-28",
-                    "Content-Type": "application/json",
-                  },
-                  body: JSON.stringify({
-                    parent: { database_id: dbId },
-                    properties,
-                  }),
-                },
-              );
+              const createResp = await notionFetch(token, "/pages", {
+                method: "POST",
+                body: JSON.stringify({
+                  parent: { database_id: dbId },
+                  properties,
+                }),
+              });
               if (createResp.ok) created++;
               else {
                 failed++;
@@ -3405,7 +3495,8 @@ serve(async (req: Request) => {
         for (let i = 0; i < 10; i++) {
           const pageSize = Math.min(maxPages - pages.length, 100);
           if (pageSize <= 0) break;
-          const queryResp: Response = await fetch(
+          const queryResp: Response = await externalFetch(
+            "notion",
             `https://api.notion.com/v1/databases/${dbId}/query`,
             {
               method: "POST",
@@ -3416,6 +3507,7 @@ serve(async (req: Request) => {
                 ...(cursor ? { start_cursor: cursor } : {}),
               }),
             },
+            { traceId: "schedule-hub.notion.fix_wbs_all_instances.query" },
           );
           if (!queryResp.ok) {
             const text = await queryResp.text().catch(() => "");
@@ -3505,13 +3597,15 @@ serve(async (req: Request) => {
             }
           }
 
-          const patchResp = await fetch(
+          const patchResp = await externalFetch(
+            "notion",
             `https://api.notion.com/v1/pages/${pageId}`,
             {
               method: "PATCH",
               headers: notionHeaders,
               body: JSON.stringify({ properties }),
             },
+            { traceId: "schedule-hub.notion.fix_wbs_all_instances.patch" },
           );
           if (patchResp.ok) {
             updated++;
@@ -3525,7 +3619,8 @@ serve(async (req: Request) => {
           await new Promise((r) => setTimeout(r, delayMs));
         }
 
-        const verifyResp = await fetch(
+        const verifyResp = await externalFetch(
+          "notion",
           `https://api.notion.com/v1/databases/${dbId}/query`,
           {
             method: "POST",
@@ -3535,6 +3630,7 @@ serve(async (req: Request) => {
               page_size: 1,
             }),
           },
+          { traceId: "schedule-hub.notion.fix_wbs_all_instances.verify" },
         );
         let remainingAll: number | null = null;
         if (verifyResp.ok) {
@@ -3628,6 +3724,12 @@ serve(async (req: Request) => {
         return json({ error: `Unknown action: ${action}` }, 400);
     }
   } catch (e) {
+    if (isExternalFetchError(e)) {
+      return json({
+        success: false,
+        ...externalFetchErrorPayload(e),
+      }, 503);
+    }
     return json({ error: String(e) }, 500);
   }
 });
