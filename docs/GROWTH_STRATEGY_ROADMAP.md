@@ -26993,6 +26993,79 @@ Win Claude territory 進捗: ✅ 全 7 件 + 1 meta-doc ship 完了 (= part 142-
 INSTANCE-ROLES 厳守: Win Claude 1 sensitive spec ship + 2 CLOSE / Win Codex hand off 0 件追加.
 COMPACTION-RESUME: 90min ガード接近 → wrap-up 着地。
 
+## Win版#132 part 148 (= batch 6 + Codex sprint 1 24% + NotebookLM seed / 2026-05-05)
+
+### Summary
+
+User 17 度目同一要望. **batch 6** triage (= 期限 +5-7 日 next 15 件) + Codex sprint 1
+進捗再確認 (= 1h で +1 merge / 18% → 24%) + NotebookLM 蓄積実 seed file 投入.
+sensitive design 第 2-3 例候補 (= #1398 焦り検知 / #1400 強靭ペルソナ / #1399 機能的感情) surface.
+
+### batch 6 cross-instance-pr (= 15 件)
+
+`docs/cross-instance-prs/20260505_codex_overdue_wbs_handoff_batch6.md`:
+- Codex 10 件 (#1402-1406 + #1408-1412)
+- Win Claude 4 件 deferred (= part 149+ ship 計画 / #1397 docs / #1398 sensitive 第 2 例 / #1399 + #1400 sensitive)
+- 重複 CLOSE 候補 1 件 (#1407 = #1354 と同題 / 番号若い keep)
+
+### Codex sprint 1 進捗 update (= 1h 後 / part 146 → part 148)
+
+batch 1-4 累計 17 件中 **4 件 merged** (= **24% same-day** / +1 since part 146):
+- ✅ PR #2014 #1283 / PR #2016 #1296 / PR #2018 #1302 (= part 146 確認済)
+- ✅ PR #2019 [#1304](https://github.com/kanta13jp1/my_web_app/issues/1304) branch protection status (= NEW)
+
+= 1h で +6% 進捗 / Codex 効率継続証拠 第 2 例.
+
+### NotebookLM 蓄積 seed file (= jibun-master-brain 投入準備)
+
+`docs/notebooklm-intake/jibun-master-brain-spec-template-seed.md`:
+- 蓄積 source 一覧 (= meta 1 + 通常 spec 6 + sensitive 1 = 8 docs)
+- Query 例 5 種 (= 標準形 / 拡張 / axis 早見 / 失敗パターン / 工数)
+- CLI 実行手順 (= `notebooklm use ea6cff25` + `notebooklm add` 連打)
+- 蓄積後の効果計測 baseline 4 metric
+
+### 累計 throughput (= 6 連続セッション)
+
+| part | ship | hand off | matrix | CLOSE |
+|---|---:|---:|---:|---:|
+| 143 | 2 | 1 | +2 | 0 |
+| 144 | 2 | 4 | +4 | 0 |
+| 145 | 2 | 0 | +2 | 0 |
+| 146 | meta 1 | 17 | +20 | 0 |
+| 147 | 1 sensitive | 0 | 0 | 2 |
+| 148 | NotebookLM seed 1 | 10 | +15 | 0 |
+| **合計** | **7+1 meta+1 seed** | **32 件 / 7 batch** | **59 件** | **2** |
+
+### Pattern 確立 (= part 148 で新規)
+
+- 「batch 内 sensitive 候補 surface」第 1 例 (= 4 件 flag / part 149+ 計画明示)
+- 「重複 issue surface」第 1 例 (= #1407 #1354)
+- 「Codex 効率継続証拠」第 2 例 (= 1h 後 +6% / 累積 KPI 化)
+- 「NotebookLM seed file」pattern 確立 (= docs/notebooklm-intake/ 配下に蓄積準備 file)
+
+### Commit
+
+`docs(spec): part 148 — batch 6 + sprint 1 24% + NotebookLM seed` 予定.
+
+### Philosophy Alignment
+
+- PHILOSOPHY-22: 7+/9 ✅
+- BRAIN-32: 7/7 ✅ (= seed file で強化)
+- SYNERGY-30: 7/7 ✅
+- INDIE-29: 7/7 ✅
+
+### 次回 candidate (= part 149 候補)
+
+1. sensitive 第 2 例 ship: #1398 焦り (Desperation) 検知 + 緩和 (= mind-reading risk / 倫理 review 拡張)
+2. Codex sprint 1 進捗 24h+ 後 KPI 計測 (= 翌日 / 5+ merge 目標)
+3. NotebookLM CLI 実行 (= 8 docs 蓄積 actual)
+4. WBS overdue batch 7 (= 期限 +7-10 日 next 15 件)
+5. 重複 #1407 CLOSE 実行 (= #1354 へ merge note)
+
+INSTANCE-ROLES 厳守: Win Claude 0 spec ship + 1 batch triage + 1 NotebookLM seed / Win Codex 10 件 hand off (推定 +50h).
+COMPACTION-RESUME: 90min ガード接近 → wrap-up 着地。
+
+
 
 
 
