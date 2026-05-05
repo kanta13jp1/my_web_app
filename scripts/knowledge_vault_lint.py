@@ -52,6 +52,8 @@ def collect_md_files(roots: list[Path]) -> list[Path]:
             # node_modules / .git 等除外
             if any(part in {".git", "node_modules", "build", "dist"} for part in p.parts):
                 continue
+            if "knowledge-vault-lint" in p.parts:
+                continue
             out.append(p)
     return out
 
@@ -65,6 +67,14 @@ PLACEHOLDER_LINKS = {
     "<related file>",
     "<related file 1>",
     "<related file 2>",
+    "<this file>",
+    ":space:",
+    "file1",
+    "file2",
+    "file_name",
+    "file_p",
+    "file_q",
+    "wikilink",
     "<関連 file 1>",
     "<関連 file 2>",
 }
