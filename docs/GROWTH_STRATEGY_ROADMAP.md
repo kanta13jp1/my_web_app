@@ -27518,13 +27518,33 @@ triage rate: 17 件 / ~25 min = **1.5 min/issue** (= batch 7 比 -16% 高速化 
 
 triage rate: 30 件 / ~30 min = **1.0 min/issue** (= batch 8 比 -33% 高速化 / 既存 script 横展開 CLOSE 学習 + dup pattern 訓練効果).
 
-### 同 part 153 三段着地 record
+### 段 4 追加: batch 10 cross-instance-pr + 5 件 CLOSE (= 同 part 153 / 過去最大 single-batch CLOSE)
+
+- **`docs/cross-instance-prs/20260505_codex_overdue_wbs_handoff_batch10.md` 起票** (= #1194-1226 next 30 件)
+- **5 件 CLOSE (= 過去最大 single-batch / spec leverage 強烈)**:
+  - #1194 + #1195 + #1196 → #1577 MCP-AUTH (= 1 sensitive spec 3 dup-close)
+  - #1207 → #1564 PreCompact (= 1 通常 spec 1 dup-close)
+  - #1213 → 既存 HANDOFF_BUNDLE_SPEC.md (= part 144 系)
+- **Codex hand off = 17 件** (= 過去最大 single-batch / sprint 4 候補)
+- **Win Claude defer = 8 件 (+4 統合候補)**:
+  - #1209 → #839 sandbox sub-spec (= sensitive 第 6 sub)
+  - #1212 → #1188 effort_router 拡張 (= 既存実装拡張 統合)
+  - #1215 → #1577 sub-spec (= MCP_AUTH consent 同領域)
+  - #1216 → #918 sub-spec (= 合成メディア倫理同領域 / sensitive 第 8 sub)
+- **5-question matrix 累計 = 156 件** (= Codex 58% / Win Claude 31% / CLOSE 10%)
+- **#1577 単独 6 dup-close 達成** (= sensitive 第 4 spec 1 本で leverage 6x = **過去最大 leverage record**)
+
+triage rate: 30 件 / ~12 min = **0.4 min/issue** (= batch 9 比 -60% 高速化 / 既存 spec 統合 pattern 完全習熟).
+
+### 同 part 153 四段着地 record (= 1 session 過去最大 throughput / 連続更新)
 
 - **段 1**: PATTERNS.md 統合 (= 抽象化 layer / 388 行 / 9 ch)
-- **段 2**: batch 8 triage (= oldest 17 件 / 累計 96 件 / triage rate 1.5 min/issue)
-- **段 3**: batch 9 triage (= next 30 件 / 累計 126 件 / triage rate 1.0 min/issue)
+- **段 2**: batch 8 triage (= oldest 17 件 / 累計 96 件 / 1.5 min/issue)
+- **段 3**: batch 9 triage (= next 30 件 / 累計 126 件 / 1.0 min/issue)
+- **段 4**: batch 10 triage (= next 30 件 / 累計 156 件 / **0.4 min/issue** = 過去最高速)
 
-合計 47 件 triage + 7 件 CLOSE + PATTERNS 抽象化 layer 着地 = **1 session 過去最大 throughput** (= part 152 22h Codex 起票合計 を 工数密度で超過).
+合計 **77 件 triage + 12 件 CLOSE + PATTERNS 抽象化 layer 着地** = **1 session 過去最大 throughput** (= part 152 22h Codex 起票合計を工数密度で大幅超過).
+**#1577 leverage 6x record** (= sensitive 第 4 spec 1 本で 6 dup-close).
 
 ### Pattern empirical validation 追加 (= part 153 batch 9)
 
