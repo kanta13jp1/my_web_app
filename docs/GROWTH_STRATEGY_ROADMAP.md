@@ -27158,6 +27158,86 @@ notebooklm source add docs/notebooklm-intake/jibun-master-brain-spec-template-se
 INSTANCE-ROLES 厳守: Win Claude 1 sensitive spec ship + 1 CLOSE + NotebookLM 8 sources actual / Win Codex 0 件追加 hand off.
 COMPACTION-RESUME: 90min ガード接近 → wrap-up 着地。
 
+## Win版#132 part 150 (= sensitive 第 3 例 / 半世紀記念 / 2026-05-05)
+
+### Summary
+
+User 19 度目同一要望. **sensitive design template 第 3 例** (= high-stakes persona) ship 完了.
+3 異領域 (= 人間データ + AI 内部状態 + high-stakes persona) で共通 §2 倫理 review section 適用.
+8 連続セッション (= part 143-150) で **Win Claude 9 spec ship**. **part 150 半世紀記念** (= part 100 から 50 part).
+
+### 設計 spec ship (= 1 件 sensitive 第 3 例 / cap 内)
+
+`docs/ROBUST_AI_PERSONA_SPEC.md` (= [#1400](https://github.com/kanta13jp1/my_web_app/issues/1400)):
+- §2 倫理 review (= 第 3 例 / high-stakes persona 領域)
+  - NOT to do 7 項目 (= 「強靭」=「拒否しない」誤解 NG / medical-legal-financial 直接判断 NG /
+    stress test 漏洩 NG / persona 過剰 personalize NG / gaslighting NG / dark pattern NG / fail silent NG)
+  - MUST do 7 項目 (= 3 trait 明文化 / NG list / stress test 自動化 / 観察可能性 /
+    regression 検出 / human-in-loop / escape hatch)
+  - **AI-CHARACTER 8/8 ✅ + AI-DEV 7/7 ✅ + VIBE-30 4+/7 (= CEO レビュー強化)**
+- §4 schema (= ai_persona_definition + ai_persona_test_run / version 管理 / 90 日 retention)
+- §4.2 base prompt 3 trait inline (= 冷静さ / 回復力 / 公平性 / NG list)
+- §5 CI stress test (= GHA workflow / 8 kind × ~4 scenarios = ~30 / 95% pass rate gate)
+- §5.3 LLM-as-judge rubric (= claude-haiku-4-5 推奨 / 0.85+ pass)
+- Codex hand off ~14h
+
+### sensitive design 拡張 spec template 3 例完成
+
+| 例 | 領域 | 主 NOT to do |
+|---|---|---|
+| 第 1 (= #1393 / part 147) | 人間データ (健康) | 共有/診断/LLM raw 送信禁止 |
+| 第 2 (= #1398 / part 149) | AI 内部状態 | 擬人化/labeling/black-box 禁止 |
+| 第 3 (= #1400 / part 150) | high-stakes persona | 強靭=拒否しない誤解/medical-legal-financial 直接判断/gaslighting 禁止 |
+
+→ 3 異領域共通項 (= 共有禁止 / 操作禁止 / fail silent 禁止) を **template 第 4 改訂** で抽出予定 (= part 152+).
+
+### NotebookLM 追加蓄積 (= 1 source 投入)
+
+- ✅ `docs/ROBUST_AI_PERSONA_SPEC.md` (source ID `1db6a55f`)
+
+= 累計 9 sources / `jibun-master-brain` (`ea6cff25`) 成長中.
+
+### 累計 throughput (= 8 連続セッション / 半世紀記念)
+
+| part | ship | hand off | matrix | CLOSE | NotebookLM |
+|---|---:|---:|---:|---:|---:|
+| 143-149 | 8 spec + meta + seed | 32 (7 batch) | 59 | 3 | 8 |
+| 150 | sensitive 3 | 0 | 0 | 0 | **+1** |
+| **合計** | **9 spec + meta + seed** | **32 件 / 7 batch** | **59 件** | **3** | **9 sources** |
+
+### Pattern 確立 (= part 150 で新規)
+
+- **「sensitive design template 3 例」完成**: 人間データ + AI 内部状態 + high-stakes / 共通項抽出可能化
+- 「VIBE-30 CEO レビュー強化フラグ」第 1 適用 (= 4-/7 で CEO レビュー対象 / spec 自体が対象)
+- 「LLM-as-judge stress test rubric」設計 第 1 例 (= 0.85+ pass / claude-haiku-4-5)
+- 「persona version 管理 + regression alert」第 1 例 (= 5%+ score drop = 自動 Issue)
+
+### Commit
+
+`docs(spec): part 150 — sensitive 第 3 例 #1400 + NotebookLM source` 予定.
+
+### Philosophy Alignment
+
+- PHILOSOPHY-22: 7+/9 ✅
+- AI-CHARACTER-24: **8/8 ✅** (= sensitive 必須 / 第 3 例 維持)
+- AI-DEV-23: **7/7 ✅** (= sensitive 必須 / 第 3 例 維持)
+- VIBE-30: 4+/7 (= CEO レビュー強化 / spec 自体が CEO レビュー対象)
+- BRAIN-32: 7/7 ✅ (= NotebookLM 9 sources)
+- SYNERGY-30: 7/7 ✅
+- INDIE-29: 7/7 ✅
+
+### 次回 candidate (= part 151 候補)
+
+1. WBS overdue batch 7 (= 期限 +7-10 日 next 15-20 件)
+2. Win Claude territory deferred 残 #1397 開発推進ガイド docs ship + #1399 機能的感情 spec ship
+3. NotebookLM 追加蓄積 (= part 143 spec #1316 + #1345 main merge 後 = 11 sources 完成目標)
+4. sensitive design template 第 4 改訂 (= 3 例共通項抽出 / docs/DESIGN_SPEC_TEMPLATE.md §2 拡張)
+5. Codex sprint 1 翌日 KPI 計測 (= 5+ merge 目標 / 日跨ぎ後)
+
+INSTANCE-ROLES 厳守: Win Claude 1 sensitive spec ship + NotebookLM 1 source / Win Codex 0 件追加 hand off.
+COMPACTION-RESUME: 90min ガード接近 → wrap-up 着地。
+
+
 
 
 
