@@ -268,6 +268,7 @@ import 'package:my_web_app/pages/admin_notification_hub_page.dart';
 import 'package:my_web_app/pages/competitor_feature_sync_page.dart';
 import 'package:my_web_app/pages/daily_judgment_page.dart';
 import 'package:my_web_app/pages/deployment_monitoring_setup_page.dart';
+import 'package:my_web_app/pages/one_in_two_out_assist_page.dart';
 import 'package:my_web_app/pages/ai_university_content_page.dart';
 import 'package:my_web_app/pages/development_achievements_page.dart';
 import 'package:my_web_app/pages/invoice_generator_page.dart';
@@ -1691,6 +1692,12 @@ class _MyAppState extends State<MyApp> {
           case '/deployment-monitoring':
             return MaterialPageRoute(
               builder: (_) => const DeploymentMonitoringSetupPage(),
+            );
+          case '/one-in-two-out':
+          case '/one-in-two-out-assist':
+            return MaterialPageRoute(
+              builder: (_) => const OneInTwoOutAssistPage(),
+              settings: RouteSettings(name: settings.name),
             );
           case '/dev/claude-design-importer':
             return MaterialPageRoute(
