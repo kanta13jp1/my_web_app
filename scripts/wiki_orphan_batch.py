@@ -92,14 +92,31 @@ def resolve_lint_json(arg: str) -> Path:
     return Path(arg)
 
 
+def extract_yyyymm(stem: str) -> str | None:
+    """`<prefix>_YYYYMMDD_*` から YYYYMM を抽出 (= 月次 index 振分用)."""
+    m = re.search(r"_(\d{4})(\d{2})\d{2}_", stem)
+    return f"{m.group(1)}{m.group(2)}" if m else None
+
+
 def main() -> int:
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--lint-json", default="auto", help='lint JSON path or "auto"')
     p.add_argument("--top", type=int, default=50)
     p.add_argument("--memory-dir", default=str(DEFAULT_MEMORY_DIR))
     p.add_argument(
+        "--source",
+        choices=["orphans", "missing_index"],
+        default="orphans",
+        help="どの lint metric を input にするか (= orphans or missing_index)",
+    )
+    p.add_argument(
+        "--prefixes",
+        default="project_",
+        help="csv: e.g. project_,feedback_success_,feedback_correction_,query_artifact_",
+    )
+    p.add_argument(
         "--marker",
-        default=f"<!-- orphan-batch {datetime.now(timezone.utc).strftime('%Y-%m-%d')} -->",
+        default=f"<!-- wiki-batch {datetime.now(timezone.utc).strftime('%Y-%m-%d')} -->",
     )
     p.add_argument("--dry-run", action="store_true")
     args = p.parse_args()
@@ -108,8 +125,10 @@ def main() -> int:
     data = json.loads(lint_path.read_text(encoding="utf-8"))
     mem_dir = Path(args.memory_dir)
 
-    project_orphans = sorted(
-        [o for o in data["orphans"] if o.startswith("project_")],
+    prefixes = tuple(s.strip() for s in args.prefixes.split(",") if s.strip())
+    source_list: list[str] = data[args.source]
+    candidates = sorted(
+        [o for o in source_list if o.startswith(prefixes)],
         reverse=True,
     )[: args.top]
 
@@ -117,20 +136,23 @@ def main() -> int:
     apr_rows: list[str] = []
     other_rows: list[str] = []
 
-    for fname in project_orphans:
+    for fname in candidates:
         fpath = mem_dir / fname
         if not fpath.exists():
             continue
         row = f"| [[{fpath.stem}]] | {summarize(fpath)} |"
-        if fname.startswith("project_202605"):
+        yyyymm = extract_yyyymm(fpath.stem)
+        if yyyymm == "202605":
             may_rows.append(row)
-        elif fname.startswith("project_202604"):
+        elif yyyymm == "202604":
             apr_rows.append(row)
         else:
             other_rows.append(row)
 
     print(f"lint JSON       : {lint_path.name}")
-    print(f"top-{args.top} project orphans considered")
+    print(f"source          : {args.source}")
+    print(f"prefixes        : {prefixes}")
+    print(f"top-{args.top} candidates considered ({len(candidates)} found)")
     print(f"  May 2026  : {len(may_rows)}")
     print(f"  Apr 2026  : {len(apr_rows)}")
     print(f"  other     : {len(other_rows)}")
