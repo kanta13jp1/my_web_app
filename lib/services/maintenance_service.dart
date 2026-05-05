@@ -132,7 +132,7 @@ class MaintenanceService {
         DateTime.now().difference(cached.fetchedAt) < cacheTtl) {
       return cached;
     }
-    final data = await _invoke('maintenance.list_active', {
+    final data = await _callMaintenanceAction('maintenance.list_active', {
       'now': DateTime.now().toUtc().toIso8601String(),
     });
     final windows = _asList(data['windows'])
@@ -147,30 +147,36 @@ class MaintenanceService {
   }
 
   Future<List<MaintenanceWindow>> listWindows() async {
-    final data = await _invoke('maintenance.list', {});
+    final data = await _callMaintenanceAction('maintenance.list', {});
     return _asList(data['windows'])
         .map((item) => MaintenanceWindow.fromJson(_asMap(item)))
         .toList(growable: false);
   }
 
   Future<MaintenanceWindow> createWindow(MaintenanceWindow window) async {
-    final data = await _invoke('maintenance.create', window.toPayload());
+    final data = await _callMaintenanceAction(
+      'maintenance.create',
+      window.toPayload(),
+    );
     _activeCache = null;
     return MaintenanceWindow.fromJson(_asMap(data['window']));
   }
 
   Future<MaintenanceWindow> updateWindow(MaintenanceWindow window) async {
-    final data = await _invoke('maintenance.update', window.toPayload());
+    final data = await _callMaintenanceAction(
+      'maintenance.update',
+      window.toPayload(),
+    );
     _activeCache = null;
     return MaintenanceWindow.fromJson(_asMap(data['window']));
   }
 
   Future<void> deleteWindow(String id) async {
-    await _invoke('maintenance.delete', {'id': id});
+    await _callMaintenanceAction('maintenance.delete', {'id': id});
     _activeCache = null;
   }
 
-  Future<Map<String, dynamic>> _invoke(
+  Future<Map<String, dynamic>> _callMaintenanceAction(
     String action,
     Map<String, dynamic> params,
   ) async {
