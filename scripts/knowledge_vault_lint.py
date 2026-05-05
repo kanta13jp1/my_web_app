@@ -201,18 +201,23 @@ def detect_duplicate_titles(files: list[Path]) -> dict[str, list[Path]]:
 
 
 def detect_missing_index_entries(memory_files: list[Path], index_path: Path) -> list[Path]:
-    """memory/*.md のうち MEMORY.md に未登録のもの."""
-    if not index_path.exists():
+    """memory/*.md のうち MEMORY*.md (= 月次分割含む) に未登録のもの."""
+    # MEMORY.md + MEMORY_<period>.md を全部読んで連結 (= [MEMORY-DECAY] 200+ 分割対応)
+    memory_dir = index_path.parent
+    idx_texts: list[str] = []
+    if memory_dir.exists():
+        for idx in sorted(memory_dir.glob("MEMORY*.md")):
+            try:
+                idx_texts.append(idx.read_text(encoding="utf-8", errors="replace"))
+            except OSError:
+                continue
+    if not idx_texts:
         return []
-    try:
-        idx_text = index_path.read_text(encoding="utf-8", errors="replace")
-    except OSError:
-        return []
+    idx_text = "\n".join(idx_texts)
     missing: list[Path] = []
     for f in memory_files:
-        if f.name in {"MEMORY.md", "log.md"}:
+        if f.name in {"MEMORY.md", "log.md"} or f.name.startswith("MEMORY_"):
             continue
-        # MEMORY.md 内に file 名 mention があるかで判定
         if f.name not in idx_text and f.stem not in idx_text:
             missing.append(f)
     return missing
