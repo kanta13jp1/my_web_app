@@ -76,7 +76,7 @@ part 143-145 で 6 spec ship したが、各 section 構成は同型. 7 件目�
 
 = GitHub Issue 受入 #1-#N が必ず spec section に対応する self-check.
 
-## 4. 適用済 9 spec の axis 早見表 (= part 143-150)
+## 4. 適用済 11 spec の axis 早見表 (= part 143-152)
 
 | spec | Q1 | Q2 | Q3 | Q4 | Q5 | 主 axis | 工数 | 種別 |
 |---|---|---|---|---|---|---|---:|---|
@@ -89,12 +89,15 @@ part 143-145 で 6 spec ship したが、各 section 構成は同型. 7 件目�
 | MENTAL_HEALTH_RISK | ✅ | ❌ | ✅ | ❌ | ✅ | + AI-CHARACTER 8/8 + AI-DEV 7/7 + IMBUE | 11h | **sensitive 第 1** |
 | AI_DESPERATION_DETECTION | ✅ | ✅ | ❌ | ❌ | ✅ | + AI-CHARACTER 8/8 + AI-DEV 7/7 + COLLAB | 9h | **sensitive 第 2** |
 | ROBUST_AI_PERSONA | ✅ | ✅ | ❌ | ❌ | ✅ | + AI-CHARACTER 8/8 + AI-DEV 7/7 + VIBE | 14h | **sensitive 第 3** |
-| **平均工数** | | | | | | | **9.5h** | |
+| MCP_AUTH_HARDENING | ✅ | ✅ | ❌ | ❌ | ✅ | + **MCP-AUTH 10/10** + AI-DEV 7/7 + AI-CHARACTER 8/8 + VIBE + SYNERGY | 14h | **sensitive 第 4** |
+| PRECOMPACT_MEMORY_BACKUP | ✅ | ✅ | ❌ | ❌ | ✅ | PHILOSOPHY + AI-DEV + BRAIN + INDIE + SYNERGY | 8h | 通常 (= 既存拡張 第 1) |
+| **平均工数** | | | | | | | **9.8h** | |
 
 = 1 spec ≈ 1 営業日 (= 8-12h) Codex 工数 / Win Claude 起票工数 ≈ 30-60 min (= 7-15x leverage).
-= sensitive 平均 11.3h (= 通常 8.6h より +30% / 倫理 review section 拡張 reflect).
+= sensitive 平均 12.0h (= 通常 8.5h より +40% / 倫理 review section 拡張 reflect).
+= 通常 spec template の **既存 hook 拡張** pattern 第 1 例 (= PRECOMPACT_MEMORY_BACKUP / part 152) — ゼロから新規ではなく既存 base + 増分設計.
 
-## 4A. Sensitive design 拡張 §2 倫理 review section (= 必須 / part 147 確立 + part 150 で 3 例完成)
+## 4A. Sensitive design 拡張 §2 倫理 review section (= 必須 / part 147 確立 + part 150 で 3 例完成 + part 152 で第 4 例 = security boundary 異領域拡張)
 
 ### 4A.1 適用判断: sensitive design か
 
@@ -105,6 +108,7 @@ part 143-145 で 6 spec ship したが、各 section 構成は同型. 7 件目�
 - **個人 data**: 子供 / 高齢者 / マイノリティ
 - **AI 内部状態**: 自己反映 / 焦り / desperation
 - **high-stakes persona**: 決定 影響度大 / 倫理基準 必須
+- **security boundary** (= 第 4 例 / part 152 追加): 認証 / 認可 / 外部攻撃面 / token 発行 / capability 公開
 
 ### 4A.2 §2 倫理 review section 構成 (= 必須 4 sub-section)
 
@@ -134,33 +138,36 @@ part 143-145 で 6 spec ship したが、各 section 構成は同型. 7 件目�
 | 7 | quality-gate | ✅ ... |
 ```
 
-### 4A.3 3 例 異領域 NOT to do 対比 (= part 150 で完成)
+### 4A.3 4 例 異領域 NOT to do 対比 (= part 152 で第 4 例 = security boundary 拡張)
 
 | 例 | 領域 | 主 NOT to do | 共通項 |
 |---|---|---|---|
 | 第 1 (#1393 / part 147) | 人間データ (健康) | 共有/診断/LLM raw 送信禁止 | 共有禁止 |
 | 第 2 (#1398 / part 149) | AI 内部状態 | 擬人化/labeling/black-box 禁止 | 操作禁止 |
 | 第 3 (#1400 / part 150) | high-stakes persona | 強靭=拒否しない誤解/medical-legal-financial 直接判断/gaslighting 禁止 | fail silent 禁止 |
+| **第 4 (#1577 / part 152)** | **security boundary** | **token 共有/sampling 申告/Manual SQL 登録/権限過剰申告 禁止** | **権限過剰禁止** |
 
-→ **3 異領域共通 NOT to do** (= 第 4 改訂で抽出):
-1. ❌ **共有禁止**: 第三者 / 外部 LLM / 学習 data へ raw 送信しない
-2. ❌ **操作禁止**: gaslighting / dark pattern / manipulation NG
-3. ❌ **fail silent 禁止**: failure / 誤検知 / NG list 通過を log + alert
+→ **4 異領域共通 NOT to do** (= 第 5 改訂候補 / part 152 で抽出):
+1. ❌ **共有禁止**: 第三者 / 外部 LLM / 学習 data / 全 tool 横断 token へ raw 送信しない
+2. ❌ **操作禁止**: gaslighting / dark pattern / manipulation / impersonation NG
+3. ❌ **fail silent 禁止**: failure / 誤検知 / NG list 通過 / token invalid を log + alert
+4. ❌ **権限過剰禁止** (= 第 4 例で追加): default ON / capabilities 申告 / scope を最小に絞る (= AttestMCP 備え + sampling 排除)
 
-### 4A.4 3 例 異領域 MUST do 対比 (= part 150 で完成)
+### 4A.4 4 例 異領域 MUST do 対比 (= part 152 で第 4 例 = security boundary 拡張)
 
-| 共通 MUST | 第 1 (健康) | 第 2 (AI 状態) | 第 3 (persona) |
-|---|---|---|---|
-| **opt-in / opt-out** | default off / 1 tap 無効化 | default ON safety net / setting で OFF | escape hatch UI |
-| **export / 削除** | JSON export + 全削除 | 14 日 retention 自動 purge | 90 日 retention |
-| **観察可能性** | health_check_result jsonb | desperation_log + trace_id | test_run + ci_run_id |
-| **正直 report** | 「ひと休みのお誘い」 | 「指示 reframe / 完了困難」 | 「専門家へ link」 |
-| **退避 path** | 専門医導線 + 緊急 escape | 別 mentor / model swap / 手動完了 | escape hatch + persona 通常モード切替 |
+| 共通 MUST | 第 1 (健康) | 第 2 (AI 状態) | 第 3 (persona) | **第 4 (security)** |
+|---|---|---|---|---|
+| **opt-in / opt-out** | default off / 1 tap 無効化 | default ON safety net / setting で OFF | escape hatch UI | **consent screen で tool 単位 scope 選択** |
+| **export / 削除** | JSON export + 全削除 | 14 日 retention 自動 purge | 90 日 retention | **mcp_audit_log 90 日 + suspended flag 即 disable** |
+| **観察可能性** | health_check_result jsonb | desperation_log + trace_id | test_run + ci_run_id | **mcp_audit_log + anomaly_score + cross_server_trace** |
+| **正直 report** | 「ひと休みのお誘い」 | 「指示 reframe / 完了困難」 | 「専門家へ link」 | **WWW-Authenticate header + .well-known 公開** |
+| **退避 path** | 専門医導線 + 緊急 escape | 別 mentor / model swap / 手動完了 | escape hatch + persona 通常モード切替 | **incident runbook + Sentinel role で 1 SQL 全 disable** |
 
-→ **3 異領域共通 MUST do** (= 第 4 改訂で抽出):
-1. ✅ **opt-in / opt-out**: 機能 ON/OFF が user 全権
+→ **4 異領域共通 MUST do** (= 第 5 改訂候補 / part 152 で抽出):
+1. ✅ **opt-in / opt-out**: 機能 ON/OFF が user 全権 (= consent screen / tool 単位 scope)
 2. ✅ **観察可能性**: log + trace_id + retention 期間明記
-3. ✅ **退避 path**: 失敗時 必ず別 path / human-in-loop 提示
+3. ✅ **退避 path**: 失敗時 必ず別 path / human-in-loop 提示 (= incident runbook 含)
+4. ✅ **vendor managed 優先** (= 第 4 例で追加): MVP は managed (WorkOS / Stripe / Auth0) / 自前切替 trigger 明示
 
 ## 5. 起票 ritual (= Win Claude 起票時 8 step)
 
@@ -189,7 +196,8 @@ part 143-145 で 6 spec ship したが、各 section 構成は同型. 7 件目�
 
 - 本 template を NotebookLM `jibun-master-brain` 蓄積 (= part 146)
 - part 147+ 新 spec ship 時 §4 早見表更新 + 平均工数追跡
-- 10 spec 突破時 (= 推定 part 150 頃) **DESIGN_SPEC_PATTERNS.md** へ統合 (= 設計 patterns 体系化)
+- 10 spec 突破 ✅ **part 152 で達成** (= sensitive 4 例完成 + 通常 6 例) → 次 phase: **DESIGN_SPEC_PATTERNS.md** へ統合 (= 設計 patterns 体系化)
+- 第 5 改訂候補: 4 異領域共通 NOT to do / MUST do を **抽象化 layer** へ昇格 (= sensitive design 全体の base 規範化)
 
 ## 8. PHILOSOPHY-22 / BRAIN-32 alignment
 
