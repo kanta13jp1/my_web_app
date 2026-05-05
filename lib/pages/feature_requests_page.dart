@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-/// 機能リクエスト公開ページ
-/// 登録前ユーザーも閲覧・投票・投稿できる。
-/// anon RLS で open status のリクエストのみ参照可。
 class FeatureRequestsPage extends StatefulWidget {
   const FeatureRequestsPage({super.key});
 
@@ -13,44 +10,147 @@ class FeatureRequestsPage extends StatefulWidget {
 
 class _FeatureRequestsPageState extends State<FeatureRequestsPage> {
   final _supabase = Supabase.instance.client;
-  final _titleCtrl = TextEditingController();
+  final _titleController = TextEditingController();
+  final _descriptionController = TextEditingController();
 
-  List<Map<String, dynamic>> _requests = [];
+  List<Map<String, dynamic>> _requests = const [];
   bool _loading = true;
   bool _submitting = false;
-  String? _submitError;
-  bool _submitSuccess = false;
-  final Set<String> _votedIds = {};
+  String? _error;
+  final Set<String> _votedIds = <String>{};
 
   @override
   void initState() {
     super.initState();
-    _load();
+    _loadRequests();
   }
 
   @override
   void dispose() {
-    _titleCtrl.dispose();
+    _titleController.dispose();
+    _descriptionController.dispose();
     super.dispose();
   }
 
-  Future<void> _load() async {
-    setState(() => _loading = true);
+  Future<void> _loadRequests() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
     try {
       final data = await _supabase
           .from('feature_requests')
-          .select('id, title, votes, status, created_at')
+          .select('id, title, description, votes, status, created_at, user_id')
           .eq('status', 'open')
           .order('votes', ascending: false)
-          .limit(50);
+          .order('created_at', ascending: false)
+          .limit(30);
       if (!mounted) return;
       setState(() {
         _requests = List<Map<String, dynamic>>.from(data as List);
-        _loading = false;
       });
     } catch (e) {
-      debugPrint('feature_requests load error: $e');
+      if (!mounted) return;
+      setState(() => _error = '機能要望を読み込めませんでした: $e');
+    } finally {
       if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  Future<void> _openRequestDialog() async {
+    _titleController.clear();
+    _descriptionController.clear();
+    await showDialog<void>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('機能要望を送る'),
+          content: SizedBox(
+            width: 520,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                TextField(
+                  controller: _titleController,
+                  maxLength: 120,
+                  decoration: const InputDecoration(
+                    labelText: '要望タイトル',
+                    hintText: '例: ブログ投稿前に自動チェックしてほしい',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: _descriptionController,
+                  minLines: 4,
+                  maxLines: 8,
+                  maxLength: 1000,
+                  decoration: const InputDecoration(
+                    labelText: '詳細',
+                    hintText: '困っていること、ほしい動作、成功条件を短く書いてください。',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: _submitting ? null : () => Navigator.pop(context),
+              child: const Text('キャンセル'),
+            ),
+            FilledButton.icon(
+              onPressed: _submitting ? null : _submitRequest,
+              icon: _submitting
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.send_outlined),
+              label: Text(_submitting ? '送信中' : '送信'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _submitRequest() async {
+    final title = _titleController.text.trim();
+    final description = _descriptionController.text.trim();
+    if (title.length < 3 || description.length < 10) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('タイトル3文字以上、詳細10文字以上で入力してください。')),
+      );
+      return;
+    }
+
+    setState(() => _submitting = true);
+    try {
+      final user = _supabase.auth.currentUser;
+      await _supabase.from('feature_requests').insert({
+        'user_id': user?.id,
+        'email': user?.email,
+        'title': title,
+        'description': description,
+        'votes': 1,
+        'status': 'open',
+      });
+      if (!mounted) return;
+      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('機能要望を保存しました。')),
+      );
+      await _loadRequests();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('送信に失敗しました: $e')),
+      );
+    } finally {
+      if (mounted) setState(() => _submitting = false);
     }
   }
 
@@ -63,340 +163,281 @@ class _FeatureRequestsPageState extends State<FeatureRequestsPage> {
           .update({'votes': currentVotes + 1}).eq('id', id);
       if (!mounted) return;
       setState(() {
-        _requests = _requests.map((r) {
-          if (r['id'] == id) return {...r, 'votes': currentVotes + 1};
-          return r;
-        }).toList();
+        _requests = _requests.map((request) {
+          if (request['id'] == id) {
+            return <String, dynamic>{...request, 'votes': currentVotes + 1};
+          }
+          return request;
+        }).toList(growable: false);
       });
-    } catch (_) {
-      if (mounted) setState(() => _votedIds.remove(id));
+    } catch (e) {
+      if (mounted) {
+        setState(() => _votedIds.remove(id));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('投票に失敗しました: $e')),
+        );
+      }
     }
   }
 
-  Future<void> _submit() async {
-    final title = _titleCtrl.text.trim();
-    if (title.isEmpty) return;
-    setState(() {
-      _submitting = true;
-      _submitError = null;
-    });
-    try {
-      await _supabase.from('feature_requests').insert({'title': title});
-      if (!mounted) return;
-      setState(() {
-        _submitting = false;
-        _submitSuccess = true;
-        _titleCtrl.clear();
-      });
-      await _load();
-    } catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _submitting = false;
-        _submitError = '送信に失敗しました。もう一度お試しください。';
-      });
-    }
+  void _openRoute(String route) {
+    Navigator.of(context).pushNamed(route);
   }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('機能リクエスト'),
+        title: const Text('シングルページMVP'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: _load,
             tooltip: '更新',
+            onPressed: _loadRequests,
+            icon: const Icon(Icons.refresh),
           ),
         ],
       ),
       body: RefreshIndicator(
-        onRefresh: _load,
-        child: SingleChildScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
+        onRefresh: _loadRequests,
+        child: ListView(
           padding: const EdgeInsets.all(16),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 640),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // ヘッダー説明
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFF3949AB), Color(0xFF6366F1)],
-                    ),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: const Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        '💡 機能リクエスト',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w800,
-                          color: Colors.white,
-                          height: 1.5,
-                        ),
-                      ),
-                      SizedBox(height: 4),
-                      Text(
-                        'あなたのアイデアが次の機能になります。\n'
-                        '投票数が多いリクエストを優先的に開発します。',
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: Colors.white70,
-                          height: 1.5,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 16),
-
-                // リクエスト投稿フォーム
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).brightness == Brightness.dark
-                        ? const Color(0xFF2D2000).withAlpha(200)
-                        : const Color(0xFFFFFBEB),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: Theme.of(context).brightness == Brightness.dark
-                          ? const Color(0xFF92400E).withAlpha(180)
-                          : const Color(0xFFFDE68A),
-                    ),
-                  ),
-                  child: _submitSuccess
-                      ? const Row(
-                          children: [
-                            Icon(
-                              Icons.check_circle,
-                              color: Color(0xFFD97706),
-                            ),
-                            SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                'リクエストを受け付けました！\n投票数が増えると開発優先度が上がります。',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w600,
-                                  color: Color(0xFF92400E),
-                                  height: 1.5,
-                                ),
-                              ),
-                            ),
-                          ],
-                        )
-                      : Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            const Text(
-                              '新しいリクエストを送る',
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w700,
-                                color: Color(0xFF1E293B),
-                                height: 1.5,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            TextField(
-                              controller: _titleCtrl,
-                              decoration: InputDecoration(
-                                hintText: '例: カレンダー連携、Google Drive インポート…',
-                                hintStyle: const TextStyle(
-                                  fontSize: 13,
-                                  height: 1.5,
-                                ),
-                                isDense: true,
-                                contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 10,
-                                ),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                              ),
-                            ),
-                            if (_submitError != null) ...[
-                              const SizedBox(height: 6),
-                              Text(
-                                _submitError!,
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  color: Color(0xFFEF4444),
-                                  height: 1.5,
-                                ),
-                              ),
-                            ],
-                            const SizedBox(height: 8),
-                            FilledButton(
-                              onPressed: _submitting ? null : _submit,
-                              style: FilledButton.styleFrom(
-                                backgroundColor: const Color(0xFFD97706),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                              ),
-                              child: _submitting
-                                  ? const SizedBox(
-                                      width: 16,
-                                      height: 16,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                        color: Colors.white,
-                                      ),
-                                    )
-                                  : const Text(
-                                      'リクエストを送信する',
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.w700,
-                                        height: 1.5,
-                                      ),
-                                    ),
-                            ),
-                          ],
-                        ),
-                ),
-                const SizedBox(height: 16),
-
-                // リクエスト一覧
-                if (_loading)
-                  const Center(
-                    child: Padding(
-                      padding: EdgeInsets.all(32),
-                      child: CircularProgressIndicator(),
-                    ),
-                  )
-                else if (_requests.isEmpty)
-                  const Center(
-                    child: Padding(
-                      padding: EdgeInsets.all(32),
-                      child: Text(
-                        'まだリクエストがありません。\n最初のリクエストを送ってください！',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: Color(0xFF64748B),
-                          height: 1.5,
-                        ),
-                      ),
-                    ),
-                  )
-                else ...[
+          children: [
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 960),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
                   Text(
-                    'みんなのリクエスト (${_requests.length}件)',
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                      color: Color(0xFF374151),
-                      height: 1.5,
+                    '今日使うコア機能',
+                    style: theme.textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.w800,
                     ),
                   ),
                   const SizedBox(height: 8),
-                  ..._requests.asMap().entries.map((entry) {
-                    final rank = entry.key + 1;
-                    final req = entry.value;
-                    final id = req['id']?.toString() ?? '';
-                    final title = req['title']?.toString() ?? '';
-                    final votes = (req['votes'] as num?)?.toInt() ?? 0;
-                    final voted = _votedIds.contains(id);
-                    return Container(
-                      margin: const EdgeInsets.only(bottom: 8),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 12,
-                      ),
-                      decoration: BoxDecoration(
-                        color:
-                            rank <= 3 ? const Color(0xFFFEFCE8) : Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: rank <= 3
-                              ? const Color(0xFFFDE68A)
-                              : const Color(0xFFE2E8F0),
+                  Text(
+                    '複雑な画面遷移を避け、記録・検索・発信の入口を1画面に集約しています。',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      final compact = constraints.maxWidth < 720;
+                      final actions = [
+                        _CoreAction(
+                          icon: Icons.note_add_outlined,
+                          title: '記録する',
+                          subtitle: 'メモや作業ログを残す',
+                          onTap: () => _openRoute('/note-editor'),
                         ),
+                        _CoreAction(
+                          icon: Icons.search_outlined,
+                          title: '探す',
+                          subtitle: '外部脳と既存メモを検索',
+                          onTap: () => _openRoute('/memory-search'),
+                        ),
+                        _CoreAction(
+                          icon: Icons.article_outlined,
+                          title: '発信する',
+                          subtitle: 'ブログとニュース投稿へ進む',
+                          onTap: () => _openRoute('/blog'),
+                        ),
+                      ];
+                      if (compact) {
+                        return Column(
+                          children: actions
+                              .map(
+                                (action) => Padding(
+                                  padding: const EdgeInsets.only(bottom: 10),
+                                  child: action,
+                                ),
+                              )
+                              .toList(growable: false),
+                        );
+                      }
+                      return Row(
+                        children: actions
+                            .map(
+                              (action) => Expanded(
+                                child: Padding(
+                                  padding: const EdgeInsets.only(right: 10),
+                                  child: action,
+                                ),
+                              ),
+                            )
+                            .toList(growable: false),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 20),
+                  FilledButton.icon(
+                    onPressed: _openRequestDialog,
+                    icon: const Icon(Icons.lightbulb_outline),
+                    label: const Text('機能要望を送る'),
+                  ),
+                  const SizedBox(height: 24),
+                  Text(
+                    '届いている要望',
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  if (_error != null)
+                    _StatusMessage(
+                      icon: Icons.error_outline,
+                      color: colorScheme.error,
+                      text: _error!,
+                    )
+                  else if (_loading)
+                    const Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(32),
+                        child: CircularProgressIndicator(),
                       ),
-                      child: Row(
-                        children: [
-                          SizedBox(
-                            width: 24,
-                            child: Text(
-                              '#$rank',
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w700,
-                                color: rank <= 3
-                                    ? const Color(0xFFD97706)
-                                    : const Color(0xFF94A3B8),
-                                height: 1.5,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              title,
-                              style: const TextStyle(
-                                fontSize: 14,
-                                color: Color(0xFF1E293B),
-                                height: 1.5,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          GestureDetector(
-                            onTap: voted ? null : () => _upvote(id, votes),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 6,
-                              ),
-                              decoration: BoxDecoration(
-                                color: voted
-                                    ? const Color(0xFF3949AB)
-                                    : const Color(0xFFEEF2FF),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    Icons.thumb_up_alt,
-                                    size: 14,
-                                    color: voted
-                                        ? Colors.white
-                                        : const Color(0xFF3949AB),
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    '$votes',
-                                    style: TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w700,
-                                      color: voted
-                                          ? Colors.white
-                                          : const Color(0xFF3949AB),
-                                      height: 1.5,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  }),
+                    )
+                  else if (_requests.isEmpty)
+                    _StatusMessage(
+                      icon: Icons.inbox_outlined,
+                      color: colorScheme.primary,
+                      text: 'まだ要望はありません。最初の1件を送ってください。',
+                    )
+                  else
+                    ..._requests.map(_buildRequestTile),
                 ],
-                const SizedBox(height: 40),
-              ],
+              ),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRequestTile(Map<String, dynamic> request) {
+    final id = '${request['id'] ?? ''}';
+    final votes = (request['votes'] as num?)?.round() ?? 0;
+    final title = '${request['title'] ?? ''}';
+    final description = '${request['description'] ?? ''}'.trim();
+    final createdAt = '${request['created_at'] ?? ''}';
+    return Card(
+      margin: const EdgeInsets.only(bottom: 10),
+      child: ListTile(
+        title: Text(
+          title,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(fontWeight: FontWeight.w700),
+        ),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (description.isNotEmpty) ...[
+              const SizedBox(height: 4),
+              Text(
+                description,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+            if (createdAt.isNotEmpty) ...[
+              const SizedBox(height: 4),
+              Text('受付日時: $createdAt'),
+            ],
+          ],
+        ),
+        trailing: SizedBox(
+          width: 84,
+          child: OutlinedButton.icon(
+            onPressed: id.isEmpty ? null : () => _upvote(id, votes),
+            icon: const Icon(Icons.thumb_up_alt_outlined, size: 16),
+            label: Text('$votes'),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _CoreAction extends StatelessWidget {
+  const _CoreAction({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Card(
+      child: InkWell(
+        borderRadius: BorderRadius.circular(8),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              Icon(icon, color: colorScheme.primary),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(fontWeight: FontWeight.w800),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      subtitle,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(Icons.chevron_right),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _StatusMessage extends StatelessWidget {
+  const _StatusMessage({
+    required this.icon,
+    required this.color,
+    required this.text,
+  });
+
+  final IconData icon;
+  final Color color;
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        border: Border.all(color: color.withValues(alpha: 0.35)),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, color: color),
+          const SizedBox(width: 12),
+          Expanded(child: Text(text)),
+        ],
       ),
     );
   }
