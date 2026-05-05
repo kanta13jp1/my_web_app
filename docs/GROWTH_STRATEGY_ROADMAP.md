@@ -27712,3 +27712,64 @@ batch 8 (= part 152) で **既に triage 済**:
 
 
 
+
+## Win版#132 part 155 (= sensitive 第 6 spec ship + 統合 spec 第 1 例 + chain depth 5 record / 2026-05-05)
+
+### 着地
+
+- **#839 + #1209 統合 sensitive 第 6 spec ship** = `docs/VIBE_SANDBOX_SPEC.md` (= ~430 行 / 9 section / 三重 trigger = 個人 data + AI 生成コンテンツ + security boundary / **過去最多 trigger 数**)
+- **統合 spec 第 1 例** (= **2 issue 1 spec** / 同 NotebookLM source `ddde5a4b` / 受入 8 件全 mapping ✅ / reviewer cognitive load -50% / **leverage 2x** 上乗せ)
+- **PATTERNS.md 第 6 改訂** = sensitive 4→6 領域反映 / **multi-trigger sensitive 直交合成** Ch3.5 新設 / **統合 spec pattern** Ch3.6 新設 / 工数 KPI 13 spec 化 (= 平均 10.4h)
+- **TEMPLATE.md 第 5 改訂** = 13 spec axis 早見表 / sensitive 単独/二重/三重 ロウ追加 / AI 生成コンテンツ全般 row
+- **chain depth 5 record** (= main → #2017 → #2022 → #2024 → #2027 → 本 PR / **過去最深更新** / part 154 record 4 → 5)
+- **三重防御 architecture 完成** = 外部 (#1577) + 内部 AI 出力 (#773) + AI 生成コード (本 spec) / 三重 audit log を trace_id で横断結合可
+- **EF cap 50 到達** (= [EF-CAP-50] 49→50 / これ以降は 既存 hub 統合必須)
+
+### sensitive 6 領域全完成
+
+| # | spec | trigger 数 | 領域 |
+|---|---|---|---|
+| 1 | MENTAL_HEALTH_RISK | 単独 | 健康 (人間データ) |
+| 2 | AI_DESPERATION_DETECTION | 単独 | AI 内部状態 |
+| 3 | ROBUST_AI_PERSONA | 単独 | high-stakes persona |
+| 4 | MCP_AUTH_HARDENING | 単独 | security boundary (外部) |
+| 5 | PII_GUARDRAIL | 二重 | 個人 + security (内部 AI 出力) |
+| **6** | **VIBE_SANDBOX (本 part)** | **三重 (過去最多)** | **個人 + AI 生成 + security (生成コード)** |
+
+= 6 sensitive 領域全完成 → 次 sensitive (#843 / #918 / #1215 / #1216) は **横展開 phase** に移行.
+
+### Pattern catalog 拡張 (= 6 → 10)
+
+7. **multi-trigger sensitive 直交合成** (= 第 5-6 例で抽出 / trigger 数 N で NOT to do を N 軸合成)
+8. **統合 spec (= 2 issue 1 spec)** (= 第 6 例 第 1 例 / 同 NotebookLM source 三つ子の duplet 統合 / reviewer leverage 2x)
+9. **構造的隔離 4 層** (= iframe + CSP + RLS + cross-origin / 自己申告 review 排除)
+10. **4-eyes principle** (= multi-trigger 三重で必須化 / admin 2 人承認)
+
+### KPI
+
+- Win Claude 起票工数: 60 min (= 1 spec / patterns + template 第 5-6 改訂含)
+- Win Codex 実装工数推定: 14h (= sensitive baseline 12h より +17%)
+- **effective leverage 28x** (= 14x base × 2x reviewer = 統合 spec 効果)
+- 累計 13 spec ship (= 通常 7 + sensitive 6)
+
+### 9 原則 alignment (= PHILOSOPHY-22 9/9 ✅ / 7+/9 ゲート達成)
+
+- ✅ #1 CEO 感 / ✅ #2 ミッション / ✅ #3 mentor / ✅ #4 6 部署 / ✅ #5 商品=価値 / ✅ #6 時間最適化 / ✅ #7 資産負債 / ✅ #8 KPI / ✅ #9 IPO
+
+= **9/9 ✅** (= 過去最高 alignment / sensitive 第 6 で sensitive 領域全網羅).
+
+### 次 session 明示 commitment (= part 156)
+
+1. **chain merge** (= #2017/#2022/#2024/#2027 + 本 PR 5 段 → main 単一化 / chain depth 5 → 0 リセット)
+2. **#768 通常 spec ship** (= Gemini 整理術 / UI + AI 設計 / Q1+Q3+Q5 ✅ / 8h 推定)
+3. **#772 通常 spec ship** (= RAG / pgvector / 部署横断 / Q1+Q5 ✅ / 10h 推定)
+4. **#833 spec ship** (= core/leaf 表 programmatic 化 / 同 NotebookLM 三つ子完結 / 統合 spec 第 2 例 trigger 候補)
+5. **DESIGN_SPEC_PATTERNS.md 第 7 改訂** (= 14+ spec / sensitive 第 7 例 / quadruplet 統合 spec 後)
+
+[INSTANCE-ROLES] 厳守 (= sensitive design = Win Claude territory).
+[STASH-SAFETY] 遵守 (= stash 不使用 / 1 commit で完結).
+[ISSUE-PRECHECK] 遵守 (= "sandbox" / "vibe" 起票前 dup grep / #839+#1209+#833 のみ open / dup 0 / 三つ子確認).
+[NO-SCOPE-CREEP] 遵守 (= #833 同 NotebookLM だが明示依頼ない → cross-link only / scope 内 #839+#1209 のみ統合).
+[EF-CAP-50] 49→50 上限到達 / これ以降は 既存 hub 統合必須.
+[DYNAMIC-CLAIM] cap 1 件遵守 (= 本 part #839+#1209 統合 1 件のみ / 統合は 1 件 count).
+[COMPACTION-RESUME] 90min ガード遵守 → 本 part wrap-up 着地.

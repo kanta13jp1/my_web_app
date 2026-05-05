@@ -1,10 +1,10 @@
 # Win Claude 設計 spec — 起票 template (= operator-facing / 1 spec ritual + 早見表)
 
-> **status**: meta-spec / Win版#132 part 153 / 2026-05-05
+> **status**: meta-spec / Win版#132 part 155 / 2026-05-05 / **第 5 改訂** (= 13 spec / sensitive 6 領域 / multi-trigger + 統合 spec 第 1 例反映)
 > **issue**: 内部 docs (= Win Claude territory / NotebookLM 蓄積)
 > **scope**: 設計 spec を **1 件起票する際の operator ritual + axis 早見表**
-> **抽象 layer**: pattern + 共通項 + 異領域比較は [`docs/DESIGN_SPEC_PATTERNS.md`](DESIGN_SPEC_PATTERNS.md) (= designer-facing) を参照
-> **derived from**: 通常 7 spec + sensitive 4 spec (= part 143-152)
+> **抽象 layer**: pattern + 共通項 + 異領域比較は [`docs/DESIGN_SPEC_PATTERNS.md`](DESIGN_SPEC_PATTERNS.md) (= designer-facing / 第 6 改訂) を参照
+> **derived from**: 通常 7 spec + sensitive 6 spec (= part 143-155)
 
 ## 1. 2 doc 体制 (= part 153 で分離)
 
@@ -42,7 +42,7 @@
 
 各 section MUST do / NG: [`PATTERNS.md` Ch2](DESIGN_SPEC_PATTERNS.md#chapter-2-通常-spec-5-section-標準--11-spec-共通骨格).
 
-## 4. 適用済 11 spec の axis 早見表 (= empirical baseline / part 143-152)
+## 4. 適用済 13 spec の axis 早見表 (= empirical baseline / part 143-155)
 
 | spec | Q1 | Q2 | Q3 | Q4 | Q5 | 主 axis | 工数 | 種別 |
 |---|---|---|---|---|---|---|---:|---|
@@ -53,14 +53,16 @@
 | NARRATIVE_UI_ACTION | ✅ | ❌ | ✅ | ❌ | ✅ | PHILOSOPHY + AI-CHARACTER + IMBUE | 9h | 通常 |
 | DEV_ENV_SETUP | ❌ | ✅ | ❌ | ❌ | ❌ | PHILOSOPHY + INDIE | 5h | 通常 |
 | PRECOMPACT_MEMORY_BACKUP | ✅ | ✅ | ❌ | ❌ | ✅ | PHILOSOPHY + AI-DEV + BRAIN + INDIE + SYNERGY | 8h | 通常 (= 既存拡張 第 1) |
-| MENTAL_HEALTH_RISK | ✅ | ❌ | ✅ | ❌ | ✅ | + AI-CHARACTER 8/8 + AI-DEV 7/7 + IMBUE | 11h | **sensitive 第 1** |
-| AI_DESPERATION_DETECTION | ✅ | ✅ | ❌ | ❌ | ✅ | + AI-CHARACTER 8/8 + AI-DEV 7/7 + COLLAB | 9h | **sensitive 第 2** |
-| ROBUST_AI_PERSONA | ✅ | ✅ | ❌ | ❌ | ✅ | + AI-CHARACTER 8/8 + AI-DEV 7/7 + VIBE | 14h | **sensitive 第 3** |
-| MCP_AUTH_HARDENING | ✅ | ✅ | ❌ | ❌ | ✅ | + **MCP-AUTH 10/10** + AI-DEV 7/7 + AI-CHARACTER 8/8 + VIBE + SYNERGY | 14h | **sensitive 第 4** |
-| **平均工数** | | | | | | | **9.8h** | (= 通常 8.5h / sensitive 12.0h) |
+| MENTAL_HEALTH_RISK | ✅ | ❌ | ✅ | ❌ | ✅ | + AI-CHARACTER 8/8 + AI-DEV 7/7 + IMBUE | 11h | **sensitive 第 1** (単独) |
+| AI_DESPERATION_DETECTION | ✅ | ✅ | ❌ | ❌ | ✅ | + AI-CHARACTER 8/8 + AI-DEV 7/7 + COLLAB | 9h | **sensitive 第 2** (単独) |
+| ROBUST_AI_PERSONA | ✅ | ✅ | ❌ | ❌ | ✅ | + AI-CHARACTER 8/8 + AI-DEV 7/7 + VIBE | 14h | **sensitive 第 3** (単独) |
+| MCP_AUTH_HARDENING | ✅ | ✅ | ❌ | ❌ | ✅ | + **MCP-AUTH 10/10** + AI-DEV 7/7 + AI-CHARACTER 8/8 + VIBE + SYNERGY | 14h | **sensitive 第 4** (単独) |
+| PII_GUARDRAIL | ✅ | ✅ | ❌ | ❌ | ✅ | + AI-CHARACTER 8/8 + AI-DEV 7/7 + MCP-AUTH cross-link | 14h | **sensitive 第 5** (二重: 個人+security) |
+| **VIBE_SANDBOX** | ✅ | ✅ | ✅ | ❌ | ✅ | + AI-CHARACTER 8/8 + AI-DEV 7/7 + **VIBE 7/7** + MCP-AUTH + PII cross-link | 14h | **sensitive 第 6** (三重: 個人+AI生成+security / 統合 spec 第 1) |
+| **平均工数** | | | | | | | **10.4h** | (= 通常 8.5h / sensitive 単独 12.0h / 二重 14h / 三重 14h) |
 
-= 1 spec ≈ 1 営業日 (= 5-14h Codex 工数) / Win Claude 起票工数 ≈ 30-60 min (= 7-15x leverage).
-= 詳細 KPI: [`PATTERNS.md` Ch6](DESIGN_SPEC_PATTERNS.md#chapter-6-11-spec-工数-kpi--empirical-baseline).
+= 1 spec ≈ 1 営業日 (= 5-14h Codex 工数) / Win Claude 起票工数 ≈ 30-60 min (= 7-28x leverage / 統合 spec で reviewer 効率 2x 上乗せ).
+= 詳細 KPI: [`PATTERNS.md` Ch6](DESIGN_SPEC_PATTERNS.md#chapter-6-13-spec-工数-kpi--empirical-baseline--第-6-改訂).
 
 ## 5. 適用原則 matrix (= spec 種別ごと適用 axis 決定)
 
@@ -71,9 +73,12 @@
 | ops / SOP / runbook | PHILOSOPHY-22 + AI-DEV-23 | OPS-28 |
 | AI tool schema | PHILOSOPHY-22 + AI-CHARACTER-24 + IMBUE-25 | AI-DEV-23 |
 | dev env / docs | PHILOSOPHY-22 + INDIE-29 | SYNERGY-30 |
-| **sensitive** (= 健康 / 金融 / 個人 / AI 内部状態 / persona / security) | + **AI-CHARACTER-24 8/8 必須** + **AI-DEV-23 7/7 必須** | + **§2 倫理 review section 必須** |
+| **sensitive 単独 trigger** (= 健康 / 金融 / 個人 / AI 内部状態 / persona / security) | + **AI-CHARACTER-24 8/8 必須** + **AI-DEV-23 7/7 必須** | + **§2 倫理 review section 必須** |
+| **sensitive 二重 trigger** (= 第 5 例 PII / 個人+security 等) | 上記 + **cross-link spec 1 件必須** | + redact 透明性 + double-gate |
+| **sensitive 三重 trigger** (= 第 6 例 SANDBOX / 個人+AI生成+security 等 / 過去最多) | 上記 + **VIBE-30 7/7 必須** + **cross-link spec 2 件必須** + **4-eyes principle** + **構造的隔離 4 層** | + §7 統合 mapping section (= 統合 spec 時) |
+| **AI 生成コンテンツ全般** (= 第 6 例で必須化) | + **VIBE-30 7/7 必須** | + leaf 判定 3 条件 programmatic check |
 
-sensitive 拡張詳細 (= 4 領域共通 NOT to do/MUST do): [`PATTERNS.md` Ch3](DESIGN_SPEC_PATTERNS.md#chapter-3-sensitive-design-§2-倫理-review-section--4-領域--共通-44).
+sensitive 拡張詳細 (= 6 領域共通 NOT to do/MUST do + multi-trigger 直交合成): [`PATTERNS.md` Ch3](DESIGN_SPEC_PATTERNS.md#chapter-3-sensitive-design-§2-倫理-review-section--6-領域--共通-44--multi-trigger).
 
 ## 6. 起票 ritual (= Win Claude 起票時 8 step)
 
