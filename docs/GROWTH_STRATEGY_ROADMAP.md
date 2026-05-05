@@ -27304,6 +27304,104 @@ batch 7 cross-instance-pr (20 件 / Codex 18 + Win Claude 2) + Codex sprint 1 �
 INSTANCE-ROLES 厳守: Win Claude meta-doc 改訂 + batch 7 triage / Win Codex 18 件 batch 7 hand off (推定 +90h).
 COMPACTION-RESUME: 90min ガード接近 → 本 part で wrap-up 着地。
 
+## Win版#132 part 152 (= sensitive 第 4 例 #1577 MCP-AUTH-27 10/10 + template §4A 第 4 改訂 / 2026-05-05)
+
+**Instance**: Win Claude (worktree: `.claude/worktrees/crazy-jennings-93b113`)
+**Session**: part 152
+**Commit**: `5f730d970` (PR #2022 / base = #2017 / 階層化 spec PR)
+**Branch**: `claude/crazy-jennings-93b113` (= `claude/amazing-hypatia-84b710` から rebase / part 144-151 spec チェーン継承)
+
+### Ship 内容
+
+#### 1. `docs/MCP_AUTH_HARDENING_SPEC.md` 新規 (= sensitive 第 4 例 / 11 section / 618 行)
+
+Issue #1577 (= P1 / WorkOS AuthKit MCP 認可強化) の設計 spec.
+**MCP-AUTH-27 10/10 必須遵守** + sensitive design 拡張 spec template 第 4 例.
+
+主要 section:
+- §2 倫理 review (= NOT to do 10 項 + MUST do 12 項 + 8/8 + 7/7 + 10/10 self-check)
+- §4 5 hardening axis 採否決定 matrix:
+  - **CIMD**: △ Phase 2 採用 (2027 Q1) / Phase 1 = DCR 継続 (= Mercari 事例参照)
+  - **OAuth IaC**: ✅ Phase 1 採用 / Manual SQL 禁止 lint
+  - **Standalone Connect**: ✅ Phase 1 採用 / `workos_user_link` table
+  - **HMAC + Nonce + Timestamp**: △ 内部 EF 間 only / 外部 MCP は OAuth 2.1+PKCE で代替
+  - **Sampling Origin Tagging**: ✅ sampling 申告除外で代替 (= 攻撃面ゼロ化)
+- §5 schema 設計 (= mcp_auth_guard 完成 + 3 migration extend + mcp-well-known EF + Terraform skeleton + anomaly cron)
+- §6 memory-search-hub 5/10 → 10/10 達成手順 (= MCP 公開第 1 例)
+- §7 hand off 14 件 / EF +1 / 工数 14h
+- §8 9 原則 alignment: PHILOSOPHY 8/9 + MCP-AUTH 10/10 + AI-DEV 7/7 + AI-CHARACTER 8/8 + VIBE 4+/7 + SYNERGY 4+/7
+
+#### 2. `docs/DESIGN_SPEC_TEMPLATE.md` 第 4 改訂 (= meta-spec 更新)
+
+- §4 早見表: 10 spec 達成 (= sensitive 4/4 + 通常 6) / 平均工数 10.0h
+- §4A.1 sensitive 判断 list: **"security boundary"** 追加 (= 異領域 4 種目)
+- §4A.3 NOT to do 4 例対比: 共通 3 → 4 項目に拡張 (= **「権限過剰禁止」**追加)
+- §4A.4 MUST do 4 例対比: 共通 3 → 4 項目に拡張 (= **「vendor managed 優先」**追加)
+- §7 横展開計画: 10 spec 突破達成記録 + 第 5 改訂候補 (= DESIGN_SPEC_PATTERNS.md 統合) 明記
+
+### Sensitive matrix 拡張
+
+| 例 | 領域 | 先行 part | 特徴 |
+|---|---|---|---|
+| 第 1 (#1393) | 人間データ (健康) | part 147 | 個人 privacy |
+| 第 2 (#1398) | AI 内部状態 | part 149 | metaphor 適用 |
+| 第 3 (#1400) | high-stakes persona | part 150 | human-in-loop |
+| **第 4 (#1577)** | **security boundary** | **part 152** | **blast radius 最小化** |
+
+→ 4 異領域共通 NOT to do = 共有禁止 / 操作禁止 / fail silent 禁止 / **権限過剰禁止**.
+→ 4 異領域共通 MUST do = opt-in / 観察可能性 / 退避 path / **vendor managed 優先**.
+
+### KPI delta
+
+| 部 | 直前 (part 151) | part 152 後 |
+|---|---|---|
+| sensitive 設計 spec 件数 | 3 件 | **4 件** |
+| 通常設計 spec 件数 | 6 件 | 6 件 |
+| 設計 spec 総件数 | 9 件 | **10 件** (= 突破達成) |
+| sensitive 平均工数 | 11.3h | 12.0h (= +30% → +40% / 第 4 例 14h reflect) |
+| 連続 dogfood part | 78 part | **79 part** |
+| §4A 共通項 (NOT to do) | 3 項 | **4 項** |
+| §4A 共通項 (MUST do) | 3 項 | **4 項** |
+| MCP 公開可 EF 候補 | 0 件 | **1 件** (= memory-search-hub 達成手順 §6) |
+
+### Pattern 確立 (= part 152 で新規)
+
+- 「sensitive 異領域 4 種目 = security boundary」(= 認証/認可 を sensitive design template の正式領域に追加)
+- 「sensitive 4 例完成 = 共通項抽象化 layer 候補」(= part 153+ で `DESIGN_SPEC_PATTERNS.md` 統合候補)
+- 「PR 階層化 spec ship」第 2 例 (= base = #2017 / merge 順序自動解決 / part 145 第 1 例: deferred 全消化)
+- 「principle gate 横断適用」(= 1 spec で MCP-AUTH-27 10/10 + AI-DEV 7/7 + AI-CHARACTER 8/8 + PHILOSOPHY 8/9 + VIBE 4+/7 + SYNERGY 4+/7 = 6 軸全 ✅)
+
+### Commit
+
+`docs(spec): part 152 — sensitive 第 4 例 #1577 MCP-AUTH-27 10/10 + template §4A 第 4 改訂` / commit `5f730d970` / PR #2022.
+
+### Philosophy Alignment
+
+- PHILOSOPHY-22: 8/9 ✅ (= 7+/9 ゲート達成)
+- MCP-AUTH-27: 10/10 ✅ (= public 公開要件達成)
+- AI-DEV-23: 7/7 ✅
+- AI-CHARACTER-24: 8/8 ✅
+- VIBE-30: 4+/7 ✅ (= CEO レビュー強化フラグ)
+- SYNERGY-30: 4+/7 ✅
+- BRAIN-32: 7/7 ✅ (= NotebookLM 蓄積予定 + spec docs 永続化)
+- INDIE-29: 7/7 ✅ (= 1 session 1 spec ship discipline)
+
+### 次回 candidate (= part 153 候補)
+
+1. **Win Claude deferred 残 ship**:
+   - #1564 PreCompact memory backup hook ship (= part 151 deferred 残 / sensitive 候補ではない通常 spec)
+   - #1397 開発推進 docs / #1399 機能的感情 (= 検討中)
+2. **DESIGN_SPEC_PATTERNS.md 統合** (= sensitive 4 例完成 → 抽象化 layer / 第 5 改訂)
+3. **NotebookLM 11 sources 完成** (= PR #2015 / #2017 / #2022 main merge 後 #1316 #1345 #1577 投入)
+4. **Codex sprint 1 翌日 KPI 計測** (= 24h+ 後 / 5+ merge 目標)
+5. **memory-search-hub 10/10 達成 hand off 監視** (= Win Codex 5 原則完成 / MCP 公開第 1 例 ship)
+
+INSTANCE-ROLES 厳守: Win Claude territory (= 5-question matrix Q1+Q2+Q5 YES) 完全合致 / Win Codex 14 件 hand off scope §7 で明示.
+[DYNAMIC-CLAIM] cap 1 件遵守.
+[WORKDIR-ISOLATION] 遵守 (= `.claude/worktrees/crazy-jennings-93b113` 内作業).
+[STASH-SAFETY] 遵守 (= stash 不使用 / 1 commit で完結).
+[COMPACTION-RESUME] 90min ガード遵守 → 本 part で wrap-up 着地予定.
+
 
 
 
