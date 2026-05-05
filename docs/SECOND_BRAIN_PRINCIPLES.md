@@ -51,7 +51,7 @@ Claude Code + Obsidian の PKM ベストプラクティス (Atomic Notes / Linki
 **なぜ重要か**: 単純な append だけでは断片化する. 新情報を既存 Atomic Notes と双方向リンクで繋ぐことで、**12 fleet 全体で利用可能な PKM ネットワーク** が自動構築される.
 
 **どう適用するか**:
-- 新規 memory file 作成時、関連する 10-15 個の既存 file 名を **必ず** 本文中に `[[file_name]]` リンクとして記載
+- 新規 memory file 作成時、関連する 10-15 個の既存 file 名を **必ず** 本文中に ``file_name`` リンクとして記載
 - AI への ingest 指示テンプレ: 「`memory/<new>.md` を追加. 関連する既存 atomic notes 10 件以上を update して bidirectional link を張れ.」
 - 月次 lint script (= 原則 4) で双方向リンク完全性を検証
 - ❌ NG: 新 memory file 単体追加 → 既存 file は更新せず
@@ -79,7 +79,7 @@ Claude Code + Obsidian の PKM ベストプラクティス (Atomic Notes / Linki
 
 **どう適用するか**:
 - 既存 PS#1 専任 `consolidate-memory` skill を拡張: lint 機能追加
-  - 孤児ノート検出 (= 他 file から `[[<file>]]` 参照ゼロ)
+  - 孤児ノート検出 (= 他 file から ``<file>`` 参照ゼロ)
   - 重複候補検出 (= 同 prefix + 90 日以内)
   - 矛盾検出 (= 同概念で対立する記述)
 - 月 1 回 PS#1 が `consolidate-memory --lint` 実行 → 結果を `memory/lint_report_YYYY_MM.md` に保存
@@ -242,7 +242,7 @@ Karpathy 元記事 Level 1-3 と本プロジェクト ship 状況:
 | 原則 | 現状 | gap |
 | --- | --- | --- |
 | #1 階層型分離 | 部分 ✅ (memory/Layer2 + CLAUDE.md/Layer3) | Layer1 (immutable source) 明示なし |
-| #2 Autonomous Ingest & Linking | △ measurement 完了 (= 2026-05-05 audit / 56 file 中 isolated 98.2%) | `[[file]]` link 慣習未定着 / 実 fix 待ち (`docs/audit-reports/memory_crosslinks_20260505.md`) |
+| #2 Autonomous Ingest & Linking | △ measurement 完了 (= 2026-05-05 audit / 56 file 中 isolated 98.2%) | ``file`` link 慣習未定着 / 実 fix 待ち (`docs/audit-reports/memory_crosslinks_20260505.md`) |
 | #3 Master Index + Daily Log | 部分 ✅ (MEMORY.md = index あり / log なし) | `memory/log.md` 未作成 |
 | #4 定期 Lint + 孤児統合 | ✅ Done | `consolidate-memory --lint` PS#1 実装済 — orphan/duplicate/contradiction 3 検出器 + `lint_report_YYYY_MM.md` 自動生成 |
 | #5 Query 永続化 | △ (cross-instance-pr / project memory ある / query artifact 未分類) | `memory/query_artifact_*` カテゴリなし |

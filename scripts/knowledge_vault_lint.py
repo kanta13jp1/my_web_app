@@ -50,7 +50,10 @@ def collect_md_files(roots: list[Path]) -> list[Path]:
             continue
         for p in root.rglob("*.md"):
             # node_modules / .git 等除外
-            if any(part in {".git", "node_modules", "build", "dist"} for part in p.parts):
+            # knowledge-vault-lint は本 script 自身の出力 (= [[xxx]] 例文を含む) で
+            # scan すると大量 self-reference noise が出るため除外。
+            if any(part in {".git", "node_modules", "build", "dist",
+                            "knowledge-vault-lint"} for part in p.parts):
                 continue
             if "knowledge-vault-lint" in p.parts:
                 continue
