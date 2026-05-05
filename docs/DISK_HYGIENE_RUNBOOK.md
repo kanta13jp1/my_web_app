@@ -1,8 +1,8 @@
-# Disk Hygiene Runbook — 自分株式会社 (= Win版#132 part 154)
+# Disk + Memory Hygiene Runbook — 自分株式会社 (= Win版#132 part 154 → part 155-b 拡張)
 
-> **status**: ops runbook / 2026-05-05 / Win版#132 part 154
-> **trigger**: C: free < 50 GB / G: free < 50 GB / 9 worktree fleet による継続圧迫
-> **scope**: ローカル開発環境 (= Win Claude / Win Codex 2 instance + 9+ worktree fleet) のディスク逼迫を毎セッション自動軽減 + 週次手動深掘り
+> **status**: ops runbook / 2026-05-05 / Win版#132 part 154 + part 155-b memory 拡張
+> **trigger**: C: free < 50 GB / G: free < 50 GB / **Free RAM < 50%** / 2 instance + 9+ worktree fleet による継続圧迫
+> **scope**: ローカル開発環境 (= Win Claude / Win Codex 2 instance + 9+ worktree fleet) のディスク + メモリ逼迫を毎セッション自動軽減 + 週次手動深掘り (= Issue #1984 axis A-F 着地)
 
 ## 1. 思想
 
@@ -133,3 +133,95 @@
 - weekly cron (= GHA 不可 / Windows scheduled task) で Tier 2 自動化検討
 - WSL/Docker VHDX `optimize-vhd` 月次自動化
 - per-instance disk budget (= Win Claude 80 GB / Win Codex 80 GB / 共用 50 GB) を `instance-constraints.md` に記録
+
+---
+
+## 10. Memory Hygiene Tier 1.5 (= part 155-b 新設 / Issue #1984 axis D 着地)
+
+### 10.1 思想
+
+HDD 圧迫と並行して **RAM 圧迫** も Win 開発環境の継続課題. part 155-b 検出: Free RAM 17.2% (= 2.7 GB / 15.7 GB) = LOW zone. 原因: msedge / Codex / Claude / Memory Compression / MsMpEng 計 ~3 GB working set + Windows standby memory が大量蓄積.
+
+→ **毎セッション自動 Tier 1.5** (= safe / 30 sec 以内 / 閾値駆動 / idempotent fast path) を disk-cleanup と同 architecture で導入.
+
+### 10.2 Tier 1.5 (= 自動 / SessionStart hook / 5-15 sec budget)
+
+`~/.claude/hooks/memory-cleanup.ps1` (= part 155-b 新設) が SessionStart で自動実行 (= disk-cleanup と並列 register 推奨).
+
+| step | target | 期待回収 | 備考 |
+|---|---|---|---|
+| 1 | EmptyWorkingSet on heavy idle (= claude / Codex / msedge / chrome / Code / node / dotnet / python / flutter / dart) | 100-500 MB | Win32 P/Invoke / 即時 |
+| 2 | own GC (= `[System.GC]::Collect()`) | 10-50 MB | < 100 ms |
+| 3 | orphan PowerShell kill (= idle > 60 min かつ CPU < 1.0) | 50-200 MB | current PID 除外必須 |
+| 4 | DNS resolver cache clear | < 10 MB | small but free |
+| 5 | standby memory release (= `SetSystemFileCacheSize(-1,-1,0)`) | 500 MB - 2 GB | **admin only** / non-admin = soft skip |
+
+= 1 セッション平均 **0.2-2 GB 回収** (= admin run 時のみ standby 大量解放).
+
+### 10.3 閾値駆動 gating (= idempotent fast path)
+
+| Free RAM | 動作 | budget |
+|---|---|---|
+| **> 50%** | **fast path skip** (= step 0 only / log のみ) | **< 0.5 sec** |
+| 25-50% | step 1-4 実行 (= step 5 skip) | 5-10 sec |
+| 10-25% | step 1-5 全実行 + WARNING report | 10-20 sec |
+| **< 10%** | step 1-5 全実行 + **ALERT additionalContext** to Claude | 10-30 sec |
+
+= 第 1 回 heavy / 第 2 回以降 fast path (= disk-cleanup と同 idempotent pattern / part 154-b 確立).
+
+### 10.4 settings.json registration
+
+既存 disk-cleanup.ps1 の SessionStart hook に **第 4 段** として並列 register:
+
+```json
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup",
+        "hooks": [
+          { "type": "command", "command": "powershell -ExecutionPolicy Bypass -File \"C:\\Users\\kanta\\.claude\\hooks\\disk-cleanup.ps1\"" },
+          { "type": "command", "command": "powershell -ExecutionPolicy Bypass -File \"C:\\Users\\kanta\\.claude\\hooks\\memory-cleanup.ps1\"" }
+        ]
+      }
+    ]
+  }
+}
+```
+
+→ user に `/update-config` 経由で配線依頼 (= 任意 / hook 単独でも `& "C:\Users\kanta\.claude\hooks\memory-cleanup.ps1"` 手動実行可).
+
+### 10.5 安全 rule
+
+- ❌ current PowerShell session (= `$PID`) 絶対 kill しない (= 自分自身殺害 防止)
+- ❌ EmptyWorkingSet で active foreground process は paging risk → `WindowState='Minimized'` の process のみ target 推奨 (= 後日改善 / 現状全 target)
+- ❌ standby memory 解放は admin only / 非 admin で `SetSystemFileCacheSize` call で AccessDenied → soft skip
+- ✅ 全 step に `try/catch` + `-ErrorAction SilentlyContinue`
+- ✅ Free RAM > 50% で fast skip (= 健全時 0.5 sec 以下)
+- ✅ Free RAM < 10% でのみ Claude に additionalContext alert
+
+### 10.6 KPI / 計測
+
+- `~/.claude/logs/memory-cleanup-YYYYMMDD.log`: 1 行 / session / `before% before_GB after% after_GB gain_GB elapsed_sec`
+- `~/cleanup_reports/memory_report_<timestamp>.md`: free < 25% 時のみ生成 / Top 10 RAM consumers + 各 step reclaim 内訳
+
+### 10.7 Issue #1984 axis 適用 status (= part 155-b 着地 reaffirm)
+
+| axis | 内容 | 担当 | status |
+|---|---|---|---|
+| A | Worktree cleanup | Win Codex | **未着** (= cross-instance-pr part 155-b) |
+| B | 動画ファイル削減 | n/a | #1724 待ち |
+| C | Cache 清掃 (= Flutter / npm / pip / notebooklm) | Win Codex | **部分着地** (= disk-cleanup Tier 1 で browser cache 適用 / npm/pnpm/pub は Tier 2 のみ) |
+| D | **Memory cleanup** | **Win Claude** | **✅ 着地 part 155-b** (= memory-cleanup.ps1 / 5 step / 閾値 gating) |
+| E | docs rotate (= cs-notes / daily-reports 90 日 archive) | Win Codex | **未着** |
+| F | transcript ローテーション | (= disk-cleanup step 5 で 30 日 gzip 化済 part 154-a) | ✅ |
+
+= 6 axis 中 D ✅ (= 本 part 着地) + F ✅ + C 部分着地 + A/B/E 残.
+
+## 11. 関連 docs / files (= memory 拡張版)
+
+- Hooks: [`~/.claude/hooks/disk-cleanup.ps1`](C:/Users/kanta/.claude/hooks/disk-cleanup.ps1) + [`~/.claude/hooks/memory-cleanup.ps1`](C:/Users/kanta/.claude/hooks/memory-cleanup.ps1) (= part 155-b)
+- Slash commands: [`~/.claude/commands/disk-cleanup.md`](C:/Users/kanta/.claude/commands/disk-cleanup.md)
+- Settings registration: `~/.claude/settings.json` `hooks.SessionStart` 第 3-4 段
+- Issue #1984 axis A-F: [P1 infra Memory + HDD reduction](https://github.com/kanta13jp1/my_web_app/issues/1984)
+- 9 原則: PHILOSOPHY-22 #6 時間最適化 + #7 資産負債 (= RAM = 物理資産) / AI-DEV-23 #4 circuit-breaker

@@ -27773,3 +27773,61 @@ batch 8 (= part 152) で **既に triage 済**:
 [EF-CAP-50] 49→50 上限到達 / これ以降は 既存 hub 統合必須.
 [DYNAMIC-CLAIM] cap 1 件遵守 (= 本 part #839+#1209 統合 1 件のみ / 統合は 1 件 count).
 [COMPACTION-RESUME] 90min ガード遵守 → 本 part wrap-up 着地.
+
+## Win版#132 part 155-b (= memory hygiene Tier 1.5 着地 + Issue #1984 axis D 完了 / 2026-05-05)
+
+### 着地
+
+- **`~/.claude/hooks/memory-cleanup.ps1` 新設** (= 5 step / 閾値駆動 / idempotent fast path / disk-cleanup と並列 SessionStart hook 候補)
+- **`docs/DISK_HYGIENE_RUNBOOK.md` Section 10-11 拡張** (= memory hygiene 全章 + settings.json registration + axis status table)
+- **Issue #1984 axis D = ✅ 着地** (= 6 axis 中 D ✅ + F ✅ + C 部分着地 / A/B/E は Codex 残)
+- **cross-instance-pr 起票** (= axis A/B/C/E → Win Codex hand off / 1-2 week 期日)
+
+### Memory cleanup hook 設計
+
+| step | target | 期待回収 | 備考 |
+|---|---|---|---|
+| 1 | EmptyWorkingSet on 10 process names (= claude/Codex/msedge/chrome/Code/node/dotnet/python/flutter/dart) | 100-500 MB | Win32 P/Invoke |
+| 2 | own GC (= `[System.GC]::Collect()`) | 10-50 MB | < 100 ms |
+| 3 | orphan PowerShell kill (= idle > 60 min かつ CPU < 1.0 / current PID 除外) | 50-200 MB | safety check 必須 |
+| 4 | DNS resolver cache clear | < 10 MB | small but free |
+| 5 | standby memory release (= `SetSystemFileCacheSize(-1,-1,0)` / **admin only** / 非 admin = soft skip) | 500 MB - 2 GB | admin 時のみ effective |
+
+### 閾値 gating (= idempotent fast path)
+
+| Free RAM | 動作 | budget |
+|---|---|---|
+| > 50% | fast skip (= 健全) | < 0.5 sec |
+| 25-50% | step 1-4 | 5-10 sec |
+| 10-25% | step 1-5 + WARNING report | 10-20 sec |
+| < 10% | step 1-5 + ALERT additionalContext to Claude | 10-30 sec |
+
+### Smoke test (= Free RAM 17.2% / 2.7 GB / 15.7 GB total 環境)
+
+- `& "C:\Users\kanta\.claude\hooks\memory-cleanup.ps1"` 実行 → exit=0 / `{"continue":true,"suppressOutput":true}` 返却
+- step 1-5 実行 (= 25% 未満なので WARNING report 生成)
+- log: `~/.claude/logs/memory-cleanup-20260505.log`
+
+### KPI
+
+- Win Claude 工数: 60 min (= hook 設計 + runbook 拡張 + comment + cross-instance-pr)
+- 累計 hook 数: 2 (= disk + memory) / SessionStart 第 4 段 register 推奨
+- WBS top 5 reaffirm: chain merge / #768 / #772 / #833 / **#1984 axis D ✅** (= 残 axis A/B/C/E は Codex)
+
+### 9 原則 alignment (= PHILOSOPHY-22)
+
+- ✅ #2 ミッション: 開発インフラ自衛 = 自分株式会社の信頼資本 (= disk + memory 両方)
+- ✅ #4 6 部署: ops 部署 自走化 (= 2 instance 分担 D=Claude / A/B/C/E=Codex)
+- ✅ #6 時間最適化: 1 セッション < 30 sec で 0.2-2 GB RAM 回収
+- ✅ #7 資産負債: RAM = 物理資産 / 圧迫 = 負債 / hook = 資産化 仕組み
+- ✅ #8 KPI: free GB / reclaim MB / step 別 log で連続計測
+- ✅ #9 IPO: 監査 trace = log retention 政策 整合
+
+= 5+/9 ✅ (= 7+/9 ゲート未達 / インフラ #1 #3 #5 領域外 / disk-cleanup と同 alignment).
+
+[INSTANCE-ROLES] 厳守 (= memory hook = ops 自動化 + Q2 docs ✅ / Win Claude territory).
+[STASH-SAFETY] 遵守 (= stash 不使用 / 編集 → commit 単一連続).
+[ISSUE-PRECHECK] 遵守 (= "memory" / "HDD" 起票前 dup grep / **#1984 既存** → 新規起票せず comment 追記).
+[NO-SCOPE-CREEP] 遵守 (= axis D のみ着地 / A/B/C/E は Codex hand off / 「ついでに」NG).
+[DYNAMIC-CLAIM] cap 1 件遵守 (= 本 part-b axis D 1 件のみ).
+[COMPACTION-RESUME] 90min ガード遵守 → 本 part-b wrap-up 着地.
