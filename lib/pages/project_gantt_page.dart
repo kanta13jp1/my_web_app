@@ -246,6 +246,17 @@ class WbsTask {
         _ => const Color(0xFF707070),
       };
 
+  String get activeInstanceKey => _activeWbsInstanceKey(instance);
+  String get activeOwnerKey =>
+      _activeWbsInstanceKey(ownerInstance.isEmpty ? instance : ownerInstance);
+  String get activeInstanceLabel => _activeWbsInstanceLabel(activeInstanceKey);
+  String get activeOwnerLabel => _activeWbsInstanceLabel(activeOwnerKey);
+  Color get activeInstanceColor => _activeWbsInstanceColor(activeInstanceKey);
+  Color get activeOwnerColor => _activeWbsInstanceColor(activeOwnerKey);
+
+  bool matchesActiveInstanceFilter(String key) =>
+      activeInstanceKey == key || activeOwnerKey == key;
+
   bool get isFeatureRequestTask =>
       category == 'ユーザー要望' || title.startsWith('[追加要望]');
 
@@ -298,6 +309,68 @@ Color _hexColor(String hex) {
   final s = hex.replaceAll('#', '');
   return Color(int.parse('FF$s', radix: 16));
 }
+
+typedef _WbsInstanceFilter = ({
+  String label,
+  String? value,
+  Color color,
+});
+
+const List<_WbsInstanceFilter> _activeWbsInstanceFilters = [
+  (label: '全て', value: null, color: Color(0xFFFF6B35)),
+  (label: 'Claude Code', value: 'claude', color: Color(0xFF2563EB)),
+  (label: 'Codex', value: 'codex', color: Color(0xFF10B981)),
+  (label: 'User', value: 'user', color: Color(0xFFEF4444)),
+  (label: 'Automation', value: 'automation', color: Color(0xFFEAB308)),
+];
+
+String _activeWbsInstanceKey(String raw) {
+  final key = raw.trim().toLowerCase().replaceAll('_', '-');
+  if (key.isEmpty) return 'claude';
+  if (key == 'codex' ||
+      key == 'codex1' ||
+      key == 'codex-1' ||
+      key == 'codex2' ||
+      key == 'codex-2' ||
+      key == 'ps2' ||
+      key == 'ps-2' ||
+      key == 'ps5' ||
+      key == 'ps-5' ||
+      key == 'ps6' ||
+      key == 'ps-6') {
+    return 'codex';
+  }
+  if (key == 'user' || key == 'human') return 'user';
+  if (key == 'schedule' ||
+      key == 'gha' ||
+      key == 'github-actions' ||
+      key == 'automation' ||
+      key == 'auto') {
+    return 'automation';
+  }
+  return 'claude';
+}
+
+String _activeWbsInstanceLabel(String key) => switch (key) {
+      'codex' => 'Codex',
+      'user' => 'User',
+      'automation' => 'Automation',
+      _ => 'Claude Code',
+    };
+
+String _activeWbsShortInstance(String key) => switch (key) {
+      'codex' => 'CX',
+      'user' => 'USR',
+      'automation' => 'AUTO',
+      _ => 'CC',
+    };
+
+Color _activeWbsInstanceColor(String key) => switch (key) {
+      'codex' => const Color(0xFF10B981),
+      'user' => const Color(0xFFEF4444),
+      'automation' => const Color(0xFFEAB308),
+      _ => const Color(0xFF2563EB),
+    };
 
 // ── ページ本体 ────────────────────────────────────────────────────────────────
 
@@ -562,7 +635,8 @@ class _WbsTab extends StatelessWidget {
   });
 
   List<WbsTask> get _filtered => tasks.where((t) {
-        if (filterInstance != null && t.instance != filterInstance) {
+        if (filterInstance != null &&
+            !t.matchesActiveInstanceFilter(filterInstance!)) {
           return false;
         }
         if (filterMilestone != null && t.milestoneCode != filterMilestone) {
@@ -935,6 +1009,22 @@ class _FilterRow extends StatelessWidget {
           ),
           const SizedBox(width: 6),
           _chip(
+            'Claude Code',
+            'claude',
+            filterInstance,
+            onFilterInstance,
+            const Color(0xFF2563EB),
+          ),
+          const SizedBox(width: 6),
+          _chip(
+            'Automation',
+            'automation',
+            filterInstance,
+            onFilterInstance,
+            const Color(0xFFEAB308),
+          ),
+          const SizedBox(width: 6),
+          _chip(
             'Codex',
             'codex',
             filterInstance,
@@ -1132,6 +1222,12 @@ class _FilterRow extends StatelessWidget {
     ValueChanged<String?> onTap,
     Color color,
   ) {
+    final isInstanceFilter = identical(onTap, onFilterInstance);
+    final isVisibleInstanceChip = value == null ||
+        _activeWbsInstanceFilters.any((filter) => filter.value == value);
+    if (isInstanceFilter && !isVisibleInstanceChip) {
+      return const SizedBox.shrink();
+    }
     final selected = current == value;
     return GestureDetector(
       onTap: () => onTap(selected ? null : value),
@@ -1303,13 +1399,13 @@ class _TaskRow extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
-                  color: task.instanceColor.withValues(alpha: 0.15),
+                  color: task.activeInstanceColor.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: Text(
-                  task.instanceLabel,
+                  task.activeInstanceLabel,
                   style: TextStyle(
-                    color: task.instanceColor,
+                    color: task.activeInstanceColor,
                     fontSize: 9,
                     fontWeight: FontWeight.w600,
                     height: 1.5,
@@ -1322,13 +1418,13 @@ class _TaskRow extends StatelessWidget {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   decoration: BoxDecoration(
-                    color: task.ownerColor.withValues(alpha: 0.15),
+                    color: task.activeOwnerColor.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: Text(
-                    '担当 ${task.ownerLabel}',
+                    '担当 ${task.activeOwnerLabel}',
                     style: TextStyle(
-                      color: task.ownerColor,
+                      color: task.activeOwnerColor,
                       fontSize: 9,
                       fontWeight: FontWeight.w600,
                       height: 1.5,
@@ -1990,7 +2086,9 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
       list = list.where((t) => t.status != 'completed').toList();
     }
     if (widget.filterInstance != null) {
-      list = list.where((t) => t.instance == widget.filterInstance).toList();
+      list = list
+          .where((t) => t.matchesActiveInstanceFilter(widget.filterInstance!))
+          .toList();
     }
     list.sort(_compareTasksForCurrentSort);
     return list;
@@ -2365,6 +2463,39 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
               ),
             ),
             const SizedBox(width: 6),
+            ..._activeWbsInstanceFilters
+                .where(
+              (filter) =>
+                  filter.value == 'claude' || filter.value == 'automation',
+            )
+                .map((filter) {
+              final on = widget.filterInstance == filter.value;
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 2),
+                child: FilterChip(
+                  label: Text(
+                    filter.label,
+                    style: TextStyle(
+                      color: on ? Colors.black : filter.color,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                      height: 1.3,
+                    ),
+                  ),
+                  selected: on,
+                  onSelected: (_) =>
+                      widget.onFilterInstance(on ? null : filter.value),
+                  selectedColor: filter.color,
+                  backgroundColor: filter.color.withValues(alpha: 0.08),
+                  side: BorderSide(
+                    color: filter.color.withValues(alpha: 0.4),
+                  ),
+                  visualDensity: VisualDensity.compact,
+                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                ),
+              );
+            }),
             ...[
               ('全', null, const Color(0xFFFF6B35)),
               ('VS', 'vscode', const Color(0xFF007ACC)),
@@ -2384,6 +2515,11 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
               ('⏰', 'schedule', const Color(0xFFEAB308)),
               ('🔧', 'gha', const Color(0xFF6B7280)),
             ].map((t) {
+              if (t.$2 != null &&
+                  !_activeWbsInstanceFilters
+                      .any((filter) => filter.value == t.$2)) {
+                return const SizedBox.shrink();
+              }
               final on = widget.filterInstance == t.$2;
               return Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 2),
@@ -2859,7 +2995,7 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
             ),
           if (_colVisible['instance'] ?? true)
             Tooltip(
-              message: '担当: ${task.ownerLabel}',
+              message: '担当: ${task.activeOwnerLabel}',
               waitDuration: const Duration(milliseconds: 350),
               child: SizedBox(
                 width: _colWidths['instance'] ?? 70,
@@ -3140,8 +3276,8 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
           'title': '[依頼] ${task.title} の $fieldLabel を更新してください',
           'description':
               '依頼内容: $result\n\n対象タスク ID: ${task.id}\n\nWBS UI から自動送信',
-          'instance': task.instance,
-          'owner_instance': task.instance,
+          'instance': task.activeInstanceKey,
+          'owner_instance': task.activeOwnerKey,
           'priority': task.isDelayedNoPlan ? 'high' : 'medium',
           'status': 'pending',
           'progress': 0,
@@ -3241,9 +3377,9 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
 
   Widget _instanceBadge(WbsTask task) {
     final label = _instanceBadgeLabel(task);
-    final badgeColor = task.ownerInstance != task.instance
-        ? task.ownerColor
-        : task.instanceColor;
+    final badgeColor = task.activeOwnerKey != task.activeInstanceKey
+        ? task.activeOwnerColor
+        : task.activeInstanceColor;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
@@ -3264,34 +3400,14 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
   }
 
   String _instanceBadgeLabel(WbsTask task) {
-    final lane = _shortInstance(task.instance);
-    final owner = _shortInstance(task.ownerInstance);
+    final lane = _shortInstance(task.activeInstanceKey);
+    final owner = _shortInstance(task.activeOwnerKey);
     if (owner.isEmpty || owner == lane) return lane;
     return '$lane→$owner';
   }
 
-  String _shortInstance(String i) => switch (i) {
-        'codex' => 'CX',
-        'gemini' => 'GM',
-        'co-pilot' => 'CP',
-        'copilot' => 'CP',
-        'user' => 'USR',
-        'vscode' => 'VS',
-        'win' => 'Win',
-        'windows' => 'Win',
-        'ps1' => 'P1',
-        'ps2' => 'P2',
-        'ps3' => 'P3',
-        'ps4' => 'P4',
-        'ps5' => 'P5',
-        'ps6' => 'P6',
-        'ps' => 'PS',
-        'web' => 'WEB',
-        'mobile' => 'MOB',
-        'schedule' => 'SCH',
-        'gha' => 'GHA',
-        _ => '未割当',
-      };
+  String _shortInstance(String i) =>
+      _activeWbsShortInstance(_activeWbsInstanceKey(i));
 
   Widget _buildMonthHeader() {
     return Container(
