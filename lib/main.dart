@@ -62,6 +62,7 @@ import 'package:my_web_app/pages/admin/feedback_list_page.dart';
 import 'package:my_web_app/pages/admin/quota_dashboard_page.dart';
 import 'package:my_web_app/pages/admin/blog_management_page.dart';
 import 'package:my_web_app/pages/admin/blog_draft_editor_page.dart';
+import 'package:my_web_app/pages/admin/maintenance_management_page.dart';
 import 'package:my_web_app/pages/blog_page.dart';
 import 'package:my_web_app/pages/home_insights_page.dart';
 import 'package:my_web_app/pages/life_goals_page.dart';
@@ -131,6 +132,7 @@ import 'package:my_web_app/pages/notifications_page.dart';
 import 'package:my_web_app/pages/wardrobe_page.dart';
 import 'package:my_web_app/services/gamification_service.dart';
 import 'package:my_web_app/services/growth_mission_service.dart';
+import 'package:my_web_app/widgets/maintenance_banner.dart';
 import 'package:my_web_app/widgets/universal_ai_share_shell.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -156,6 +158,7 @@ import 'package:my_web_app/pages/workflow_templates_page.dart';
 import 'package:my_web_app/pages/customer_feedback_page.dart';
 import 'package:my_web_app/pages/address_book_page.dart';
 import 'package:my_web_app/pages/subscription_billing_page.dart';
+import 'package:my_web_app/pages/maintenance_mode_page.dart';
 import 'package:my_web_app/pages/appointment_scheduler_page.dart';
 import 'package:my_web_app/pages/budget_financial_planner_page.dart';
 import 'package:my_web_app/pages/feature_flags_page.dart';
@@ -459,14 +462,18 @@ class _MyAppState extends State<MyApp> {
         return GlobalHeaderClockShell(
           child: UniversalAiShareShell(
             navigatorKey: _navigatorKey,
-            child: Column(
-              children: [
-                if (_showUpdateBanner)
-                  UpdateBanner(
-                    onDismiss: () => setState(() => _showUpdateBanner = false),
-                  ),
-                Expanded(child: child ?? const SizedBox.shrink()),
-              ],
+            child: MaintenanceShell(
+              routeListenable: universalAiShareRouteObserver.currentPage,
+              child: Column(
+                children: [
+                  if (_showUpdateBanner)
+                    UpdateBanner(
+                      onDismiss: () =>
+                          setState(() => _showUpdateBanner = false),
+                    ),
+                  Expanded(child: child ?? const SizedBox.shrink()),
+                ],
+              ),
             ),
           ),
         );
@@ -932,6 +939,14 @@ class _MyAppState extends State<MyApp> {
           case '/quota-dashboard':
             return MaterialPageRoute(
               builder: (_) => const QuotaDashboardPage(),
+            );
+          case '/admin/maintenance':
+            return MaterialPageRoute(
+              builder: (_) => const MaintenanceManagementPage(),
+            );
+          case '/maintenance':
+            return MaterialPageRoute(
+              builder: (_) => const MaintenanceModePage(),
             );
           case '/blog-management':
             return MaterialPageRoute(

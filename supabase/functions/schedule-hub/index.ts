@@ -121,6 +121,104 @@ function asStringList(value: unknown, fallback: string[]): string[] {
     : fallback;
 }
 
+function normalizeMaintenanceScope(value: unknown): "system" | "feature" {
+  return asString(value).toLowerCase() === "feature" ? "feature" : "system";
+}
+
+function normalizeMaintenanceSeverity(
+  value: unknown,
+): "info" | "warning" | "critical" {
+  const normalized = asString(value, "info").toLowerCase();
+  if (normalized === "critical" || normalized === "warning") return normalized;
+  return "info";
+}
+
+function normalizeMaintenanceTimestamp(value: unknown, field: string): string {
+  const raw = asString(value);
+  const parsed = raw ? new Date(raw) : null;
+  if (!parsed || Number.isNaN(parsed.getTime())) {
+    throw new Error(`${field} must be a valid ISO timestamp`);
+  }
+  return parsed.toISOString();
+}
+
+function normalizeMaintenanceNoticeDays(value: unknown): number {
+  const raw = typeof value === "number" ? value : Number(value ?? 3);
+  if (!Number.isFinite(raw)) return 3;
+  return Math.max(0, Math.min(30, Math.round(raw)));
+}
+
+function maintenanceFeatureList(value: unknown): string[] {
+  return asStringList(value, [])
+    .map((item) => item.replace(/^\/+/, "").toLowerCase())
+    .filter(Boolean);
+}
+
+function maintenancePayload(
+  body: Record<string, unknown>,
+  userId: string | null,
+  partial = false,
+): Record<string, unknown> {
+  const payload: Record<string, unknown> = {};
+  if (!partial || body.scope !== undefined) {
+    payload.scope = normalizeMaintenanceScope(body.scope);
+  }
+  if (!partial || body.affected_features !== undefined) {
+    payload.affected_features = maintenanceFeatureList(body.affected_features);
+  }
+  if (!partial || body.starts_at !== undefined) {
+    payload.starts_at = normalizeMaintenanceTimestamp(
+      body.starts_at,
+      "starts_at",
+    );
+  }
+  if (!partial || body.ends_at !== undefined) {
+    payload.ends_at = normalizeMaintenanceTimestamp(body.ends_at, "ends_at");
+  }
+  if (!partial || body.notice_days_before !== undefined) {
+    payload.notice_days_before = normalizeMaintenanceNoticeDays(
+      body.notice_days_before,
+    );
+  }
+  if (!partial || body.message_ja !== undefined) {
+    const message = asString(body.message_ja);
+    if (!message) throw new Error("message_ja is required");
+    payload.message_ja = message;
+  }
+  if (body.message_en !== undefined) {
+    payload.message_en = asString(body.message_en) || null;
+  }
+  if (!partial || body.severity !== undefined) {
+    payload.severity = normalizeMaintenanceSeverity(body.severity);
+  }
+  if (!partial && userId) payload.created_by = userId;
+  const scope = payload.scope ?? body.scope;
+  const features = payload.affected_features ?? body.affected_features;
+  if (scope === "feature" && maintenanceFeatureList(features).length === 0) {
+    throw new Error("affected_features is required for feature scope");
+  }
+  const starts = payload.starts_at ? new Date(String(payload.starts_at)) : null;
+  const ends = payload.ends_at ? new Date(String(payload.ends_at)) : null;
+  if (starts && ends && ends <= starts) {
+    throw new Error("ends_at must be after starts_at");
+  }
+  return payload;
+}
+
+function maintenanceWindowVisible(
+  row: Record<string, unknown>,
+  now: Date,
+): boolean {
+  const startsAt = new Date(asString(row.starts_at));
+  const endsAt = new Date(asString(row.ends_at));
+  if (Number.isNaN(startsAt.getTime()) || Number.isNaN(endsAt.getTime())) {
+    return false;
+  }
+  const noticeDays = normalizeMaintenanceNoticeDays(row.notice_days_before);
+  const visibleFrom = new Date(startsAt.getTime() - noticeDays * 86400000);
+  return now >= visibleFrom && now < endsAt;
+}
+
 function billingPriceId(tier: string): string {
   const normalized = tier === "team" ? "TEAM" : "PRO";
   return Deno.env.get(`STRIPE_${normalized}_PRICE_ID`) ??
@@ -1483,6 +1581,7 @@ serve(async (req: Request) => {
       "notion.fix_wbs_all_instances",
       "wbs.unblock_dependents",
       "x.post_with_media",
+      "maintenance.list_active",
     ];
     const serviceRoleRequest = isServiceRoleRequest(req);
     let userId: string | null = null;
@@ -1573,6 +1672,86 @@ serve(async (req: Request) => {
       }
 
       // ─── Digest ───────────────────────────────────────────────────────────────
+      case "maintenance.list_active": {
+        const now = new Date(asString(body.now) || new Date().toISOString());
+        if (Number.isNaN(now.getTime())) {
+          return json(
+            { success: false, error: "now must be ISO timestamp" },
+            400,
+          );
+        }
+        const { data, error } = await admin
+          .from("maintenance_windows")
+          .select("*")
+          .gt("ends_at", now.toISOString())
+          .order("starts_at", { ascending: true })
+          .limit(50);
+        if (error) throw new Error(error.message);
+        const windows = (data ?? [])
+          .map((row) => asRecord(row) ?? {})
+          .filter((row) => maintenanceWindowVisible(row, now))
+          .map((row) => {
+            const startsAt = new Date(asString(row.starts_at));
+            const noticeDays = normalizeMaintenanceNoticeDays(
+              row.notice_days_before,
+            );
+            return {
+              ...row,
+              banner_visible_from: new Date(
+                startsAt.getTime() - noticeDays * 86400000,
+              ).toISOString(),
+              active: startsAt <= now,
+            };
+          });
+        return json({ success: true, windows });
+      }
+
+      case "maintenance.list": {
+        const { data, error } = await admin
+          .from("maintenance_windows")
+          .select("*")
+          .order("starts_at", { ascending: false })
+          .limit(100);
+        if (error) throw new Error(error.message);
+        return json({ success: true, windows: data ?? [] });
+      }
+
+      case "maintenance.create": {
+        const payload = maintenancePayload(body, userId);
+        const { data, error } = await admin
+          .from("maintenance_windows")
+          .insert(payload)
+          .select("*")
+          .single();
+        if (error) throw new Error(error.message);
+        return json({ success: true, window: data });
+      }
+
+      case "maintenance.update": {
+        const id = asString(body.id);
+        if (!id) return json({ success: false, error: "id required" }, 400);
+        const payload = maintenancePayload(body, userId, true);
+        const { data, error } = await admin
+          .from("maintenance_windows")
+          .update(payload)
+          .eq("id", id)
+          .select("*")
+          .single();
+        if (error) throw new Error(error.message);
+        return json({ success: true, window: data });
+      }
+
+      case "maintenance.delete": {
+        const id = asString(body.id);
+        if (!id) return json({ success: false, error: "id required" }, 400);
+        const { error } = await admin
+          .from("maintenance_windows")
+          .delete()
+          .eq("id", id);
+        if (error) throw new Error(error.message);
+        return json({ success: true });
+      }
+
       case "digest.run": {
         const today = new Date().toISOString().split("T")[0];
         const [usersRes, newFrRes, openFrRes, topFrRes, achievementsRes] =
