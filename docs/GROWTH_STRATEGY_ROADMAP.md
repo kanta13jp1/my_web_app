@@ -26716,3 +26716,598 @@ Win Claude 担当 2 件 (#1305 Stripe + #1309 Maintenance) を設計 spec とし
 
 INSTANCE-ROLES 厳守: Win Claude 設計 spec 2 件 ship / Win Codex 12 件 hand off (推定 ~44h).
 COMPACTION-RESUME: 90min ガード接近 → wrap-up 着地。
+
+## Win版#132 part 144 (= WBS overdue 期限近順 part 143 deferred 消化 + batch 4 / 2026-05-05)
+
+### Summary
+
+User 「WBSのタスクを期限が近いものから進めてください。2インスタンス制も反映してください。」
+13 度目同一要望 (= part 142 + 143 連続 dogfood). part 143 で deferred した Win Claude territory 2 件
+(#1292 SOP + #1348 Term Tooltip) を [DYNAMIC-CLAIM] 2 件 cap 内 ship. 並行で WBS UI top 漏れ
+4 件 (#1305 Stripe / #1376 OTel / #1383 scraping / #1388 RAG) を batch 4 として 5-question matrix で
+全件 Codex hand off. 累計 5-question matrix 適用 = **24 件** (= 1 session 内過去最大記録).
+
+### 設計 spec ship (= 2 件 / [DYNAMIC-CLAIM] cap 内)
+
+| # | 設計 spec doc | issue | scope |
+|---|---|---|---|
+| 1 | `docs/MAINTENANCE_SOP_SPEC.md` | [#1292](https://github.com/kanta13jp1/my_web_app/issues/1292) | Restart/Pause SOP / 4 段階 gate / 5 health check |
+| 2 | `docs/TERM_TOOLTIP_SPEC.md` | [#1348](https://github.com/kanta13jp1/my_web_app/issues/1348) | glossary_terms table / TermHighlightedText widget / responsive tooltip |
+
+### Codex hand off batch 4 (= 4 件 / 全件 Codex)
+
+`docs/cross-instance-prs/20260505_codex_overdue_wbs_handoff_batch4.md`:
+- #1305 Stripe 決済基盤 + フリーミアム (= Q1 schema + Q2 EF webhook / 8h)
+- #1376 OpenTelemetry + Agent SDK 分散 trace (= Q1 schema + Q2 instrumentation + Q3 GHA / 10h)
+- #1383 定期自動 scraping + 履歴 (= Q1 schema + Q2 EF cron + Q3 GHA / 8h)
+- #1388 ローカル埋め込み RAG (= Q1 schema + Q2 EF embedding / 12h)
+
+### 累計 throughput (= batch 1-4 / 1 session 24 件)
+
+| judge | batch1 | batch2 | batch3 | batch4 | 合計 |
+|---|---:|---:|---:|---:|---:|
+| Codex | 6 | 6 | 1 | 4 | **17** |
+| Win Claude | 2 | 4 | 1 | 0 | **7** |
+
+Win Claude 7 件処理:
+- ✅ part 143 ship: #1316 (6 部門 KPI) + #1345 (1 In 2 Out)
+- ✅ part 144 ship: #1292 (Maintenance SOP) + #1348 (Term Tooltip)
+- ⏸ part 145+ deferred: #1356 (dev env docs) + #1366 (story branch UI) + 1 残
+
+Codex sprint 構成: 2 sprint × 5 営業日 = ~80h 推定 (= sprint1 低-中難度 12 件 + sprint2 高難度 4 件).
+
+### Pattern 確立 (= part 144 で新規)
+
+- **「設計 spec 2 連続セッション」**: part 143 → part 144 で計 4 設計 spec ship (= 9 原則チェック完全遵守)
+- **「triage = cap 外」discipline 4 batch 連続**: cross-instance-pr で routing 委譲 → Win Claude 設計負荷を cap 厳守
+- **「missed Issue 後追い batch」第 2 例**: part 143 batch 3 で確立 → part 144 batch 4 で再現 (= UI top 19 件全 cover)
+- **「9 原則 + IMBUE/AI-DEV cross-check spec」**: 設計 spec 内で各 axis 自動 mapping → 9 原則 alignment 数値化
+
+### Commit
+
+`docs(spec): part 144 — 2 設計 spec ship + batch 4 cross-instance-pr` 予定.
+
+### Philosophy Alignment
+
+- PHILOSOPHY-22: 7/9 ✅ (= #1 + #2 + #5 + #6 + #7 + #8 + #9 / SOP+Tooltip 両方が CEO 感 + 商品価値 + 資産負債軸対応)
+- AI-DEV-23: 4/7 (= #1 Auth + #2 deny-by-default + #5 memory + #7 quality-gate / SOP spec 由来)
+- IMBUE-25: 3/7 (= #2 認知負荷削減 + #4 mentor + #6 CEO 感 / Tooltip spec 由来)
+- BRAIN-32: 7/7 ✅ (= part 142 達成 維持)
+- SYNERGY-30: 7/7 ✅ (= cross-instance-pr 4 batch 連続)
+
+### 次回 candidate (= part 145 候補)
+
+1. #1356 開発環境自動 setup + proxy 対策 docs (= deferred / ~3h docs-only)
+2. #1366 ストーリー分岐 / 文脈移行 UI action 設計 spec (= ui-design skill 経由)
+3. NotebookLM `jibun-master-brain` に part 143-144 spec template (= 5 section 標準形) 蓄積
+4. WBS overdue UI top 19 件全 cover 完了 → next 20 件 (= 期限 +3-5 日) を 5-question 適用
+5. Codex sprint 1 進捗確認 (= 12 件中 何件着手か / 完了率 KPI)
+
+INSTANCE-ROLES 厳守: Win Claude 設計 spec 2 件 ship / Win Codex 4 件 batch 4 hand off (推定 38h).
+COMPACTION-RESUME: 90min 以内 wrap-up 着地。
+
+## Win版#132 part 145 (= part 144 deferred 全消化 / 2026-05-05)
+
+### Summary
+
+User 14 度目同一要望「WBSのタスクを期限が近いものから進めてください。2インスタンス制も反映してください。」.
+part 144 で deferred した Win Claude territory 残 2 件 (#1366 + #1356) を [DYNAMIC-CLAIM] 2 件 cap 内 ship.
+**3 連続セッション (= part 143 + 144 + 145) で計 6 設計 spec ship** = Win Claude territory 累計 6 件全消化.
+
+### 設計 spec ship (= 2 件 / [DYNAMIC-CLAIM] cap 内)
+
+| # | 設計 spec doc | issue | scope |
+|---|---|---|---|
+| 1 | `docs/NARRATIVE_UI_ACTION_SPEC.md` | [#1366](https://github.com/kanta13jp1/my_web_app/issues/1366) | 抽象 action enum 6 種 + payload schema + Flutter dispatcher safe-handle + deny-by-default |
+| 2 | `docs/DEV_ENV_SETUP_GUIDE.md` | [#1356](https://github.com/kanta13jp1/my_web_app/issues/1356) | Win11 PowerShell setup script (6 step files) + proxy 5 症状 troubleshooting + README 導線 |
+
+### 累計 throughput (= 3 連続セッション)
+
+| part | Win Claude ship | Codex hand off (新規) | 5-question matrix |
+|---|---:|---:|---:|
+| part 143 | 2 (#1316 + #1345) | batch 3 (1 件 / #1286) | +2 |
+| part 144 | 2 (#1292 + #1348) | batch 4 (4 件) | +4 |
+| part 145 | 2 (#1366 + #1356) | 0 (= deferred 全消化) | +2 |
+| **合計** | **6** | **5 batch / 17 件** | **24 件 (= 1 session 過去最大)** |
+
+Win Claude 7 件全処理:
+- ✅ part 143: #1316 + #1345
+- ✅ part 144: #1292 + #1348
+- ✅ part 145: #1366 + #1356
+- 🟡 part 146+ candidate: 1 残 (= batch 1 territory / 詳細 batch 1 PR 参照)
+
+### Pattern 確立 (= part 145 で新規)
+
+- **「3 連続セッション 6 設計 spec」**: 1 work 大 + 1 work 小 で消化リズム確立
+- **「Win Claude territory 全消化」**: part 142-145 で deferred 1 件残し全 ship
+- **「設計 spec 5 section template 横展開」**: 思想 + 既存基盤 + Schema/UI + hand off + 9 原則 alignment + 受入 mapping
+- **「triage cap 外 + ship cap 内」discipline**: cap 抜け道なし / cross-instance-pr で route 委譲
+
+### Commit
+
+`docs(spec): part 145 — 2 設計 spec ship (#1366 #1356)` 予定.
+
+### Philosophy Alignment
+
+- PHILOSOPHY-22: 7+/9 ✅ (= #2 + #5 + #6 + #7 + 各 spec で個別 axis)
+- AI-CHARACTER-24: 3/8 (= #3 人格表現 + #5 会話自然性 + #6 倫理 gate / #1366 由来)
+- IMBUE-25: 4/7 (= #4 mentor + #6 CEO 感 + #7 流れ感 + 部分 #2 認知負荷削減)
+- INDIE-29: 7/7 ✅ (= 全 7 原則 / #1356 setup script で団体加入時 velocity 守備)
+- BRAIN-32: 7/7 ✅ (= 維持)
+- SYNERGY-30: 7/7 ✅ (= 維持)
+
+### 次回 candidate (= part 146 候補)
+
+1. WBS overdue 期限 +3-5 日 next 20 件 (= UI scroll 下) 5-question 適用 batch 5
+2. Codex sprint 1 進捗確認 (= batch 1-4 累計 17 件中 何件着手か)
+3. NotebookLM `jibun-master-brain` に 6 設計 spec template 蓄積 (= 標準形横展開)
+4. WSL Linux 環境向け dev setup guide (= part 145 #1356 補完)
+5. 設計 spec 適用後 Codex 実装 PR review (= 9 原則 alignment 検証 routine 化)
+
+INSTANCE-ROLES 厳守: Win Claude 設計 spec 2 件 ship / Win Codex 0 件追加 (= deferred 全消化).
+COMPACTION-RESUME: 90min ガード接近 → wrap-up 着地。
+
+## Win版#132 part 146 (= batch 5 + Codex sprint 1 進捗 + spec template / 2026-05-05)
+
+### Summary
+
+User 15 度目同一要望 (= 期限 +3-5 日 next 20 件 batch 5 + Codex sprint 1 進捗確認 + 設計 spec
+template NotebookLM 蓄積). [DYNAMIC-CLAIM] cap 内 ship なし (= triage + meta-doc のみ).
+4 連続セッション (= part 143-146) で **Win Claude territory 6 件 全消化 + 計 44 件 5-question matrix**.
+
+### batch 5 cross-instance-pr (= 20 件 / 主 Codex)
+
+`docs/cross-instance-prs/20260505_codex_overdue_wbs_handoff_batch5.md`:
+- Codex 17 件 (#1324 #1374 #1375 #1377 #1379 #1380 #1381 #1382 #1385 #1386 #1387 #1389 #1390 #1391 #1392 #1394 #1395)
+- CLOSE 候補 1 件 (#1378 自律 Vault = 既 implementation by Karpathy 4 cycle)
+- 検証要 1 件 (#1396 Firestore = Supabase 主体プロジェクトでスコープ外可能性)
+- Win Claude 1 件 part 147+ deferred (#1393 メンタルヘルス = 倫理 gate 必須 sensitive design)
+
+### Codex sprint 1 進捗 (= 同日中)
+
+batch 1-4 累計 17 件中 **3 件 merged** (= 18% same-day):
+- #2014 #1283 prepush guard
+- #2016 #1296 Hedra credit monitor
+- #2018 #1302 blog draft quality gate
+
+= AI-FLEET 効率第 1 数値化 (= 17 件 hand off → 1 day で 18% merge).
+
+### 設計 spec template doc (= meta-doc / NotebookLM 蓄積候補)
+
+`docs/DESIGN_SPEC_TEMPLATE.md`:
+- 6 spec 共通 5 section (思想 / 既存基盤 / Schema-UI / hand off / 9 原則 + 受入 mapping)
+- 適用判断 5-question matrix
+- 6 適用済 spec の axis 早見表 (= 平均工数 8.6h)
+- 起票 ritual 8 step (= 1 session 30-60 min 完結)
+- 失敗パターン 5 種 + 横展開計画
+
+### 累計 throughput (= 4 連続セッション)
+
+| part | Win Claude ship | Codex hand off (新規) | 5-question matrix |
+|---|---:|---:|---:|
+| 143 | 2 | batch 3 (1) | +2 |
+| 144 | 2 | batch 4 (4) | +4 |
+| 145 | 2 | 0 | +2 |
+| 146 | 0 (= meta-doc 1) | batch 5 (17) | +20 |
+| **合計** | **6 spec + 1 meta** | **6 batch / 22 件** | **44 件 (= 過去最大)** |
+
+Codex 累計 hand off 推定: ~172h (= 4 sprint).
+
+### Pattern 確立 (= part 146 で新規)
+
+- **「meta-doc 抽出 ritual」**: 6 spec ship 後 7 件目以降 効率化のため共通 template 抽出
+- **「same-day 18% Codex merge」**: AI-FLEET 効率の **数値化** 第 1 例
+- **「triage 質向上」**: CLOSE 候補 / 検証要 / sensitive design surface (= scope creep 防止)
+- **「sensitive design 拡張 axis」**: AI-CHARACTER #6 倫理 gate 必須 = 通常 spec template 拡張で対応
+
+### Commit
+
+`docs(spec): part 146 — batch 5 cross-instance-pr (20 件) + spec template + Codex sprint 1 進捗` 予定.
+
+### Philosophy Alignment
+
+- PHILOSOPHY-22: 7+/9 ✅ (= meta-doc は #4 + #5 + #7 が中核)
+- BRAIN-32: 7/7 ✅ (= 維持 / template 蓄積で強化)
+- SYNERGY-30: 7/7 ✅ (= 5 batch 連続 / Codex 進捗数値化で完全)
+- INDIE-29: 7/7 ✅ (= template = velocity 守備資産)
+
+### 次回 candidate (= part 147 候補)
+
+1. #1393 メンタルヘルス risk 管理 設計 spec (= AI-CHARACTER #6 倫理 gate / 拡張 template 適用 第 1 例)
+2. WBS overdue 期限 +5-7 日 next 20 件 batch 6
+3. Codex sprint 1 進捗 24h 後再確認 (= 何件 merge 進んだか KPI)
+4. NotebookLM 蓄積実施 (= DESIGN_SPEC_TEMPLATE.md content の jibun-master-brain 投入)
+5. #1378 #1396 受入条件 read → CLOSE comment 化 (= scope creep 削減)
+
+INSTANCE-ROLES 厳守: Win Claude 0 spec ship + 1 meta-doc + 1 batch triage / Win Codex 17 件 batch 5 hand off (推定 +60h).
+COMPACTION-RESUME: 90min ガード接近 → wrap-up 着地。
+
+## Win版#132 part 147 (= sensitive design 第 1 例 + CLOSE 2 件 / 2026-05-05)
+
+### Summary
+
+User 16 度目同一要望. **sensitive design** (= AI-CHARACTER #6 倫理 gate 必須) 第 1 例として
+#1393 メンタルヘルス risk 管理 を設計 spec ship + part 146 batch 5 で surface した CLOSE 候補
+2 件 (#1378 #1396) を実際に CLOSE comment + 閉鎖.
+
+### 設計 spec ship (= 1 件 / sensitive design / cap 内)
+
+`docs/MENTAL_HEALTH_RISK_SPEC.md` (= [#1393](https://github.com/kanta13jp1/my_web_app/issues/1393)):
+- **§2 倫理 review section 追加** (= 通常 spec template 拡張 / sensitive design 第 1 例)
+  - NOT to do 7 項目 (= 診断 / 強制 / 共有 / 広告 / 監視 / modal blocker / LLM raw 送信 全禁止)
+  - MUST do 6 項目 (= opt-in / opt-out 即時 / export / 専門医導線 / 緊急 escape / 言葉選び)
+  - AI-CHARACTER-24 8/8 ✅ self-check matrix (= 通常 7+/8 から **必須 8/8** 格上げ)
+  - AI-DEV-23 全項 ✅ (= 通常 6+/7 から **必須 7/7** 格上げ)
+- §4 schema (= 4 migration / RLS service_role すら SELECT 不可 / 専門医 master + 14日集計 view)
+- §5 UI (= 1-tap 5 秒入力 / 控えめ banner / 深呼吸 4-7-8 + 専門医 list / 強制感ゼロ reminder)
+- Codex hand off ~11h
+
+### CLOSE 実行 (= part 146 batch 5 surface 2 件)
+
+- ✅ #1378 自律 Vault 永続メモリ → CLOSE (= Karpathy 4 cycle 100% 既実装 / `BRAIN-32 7/7 ✅`)
+- ✅ #1396 Firestore 最適化 → CLOSE (= Supabase 主体スコープで Firestore 不使用)
+
+= scope creep 防止 / triage 質の **実践証明** 第 1 例.
+
+### 累計 throughput (= 5 連続セッション)
+
+| part | Win Claude ship | Codex hand off | 5-question matrix | CLOSE |
+|---|---:|---:|---:|---:|
+| 143 | 2 | 1 | +2 | 0 |
+| 144 | 2 | 4 | +4 | 0 |
+| 145 | 2 | 0 | +2 | 0 |
+| 146 | 0 (= meta 1) | 17 | +20 | 0 |
+| 147 | 1 (= sensitive 第 1) | 0 | 0 | **+2** |
+| **合計** | **7 spec + 1 meta** | **22 件 / 6 batch** | **44 件** | **2** |
+
+Win Claude territory 進捗: ✅ 全 7 件 + 1 meta-doc ship 完了 (= part 142-147 territory 全消化).
+
+### Pattern 確立 (= part 147 で新規)
+
+- **「sensitive design 拡張 spec template」第 1 例**: §2 倫理 review section + 8/8 + 7/7 必須格上げ
+- **「CLOSE 候補 surface → 実 CLOSE」full cycle**: part 146 で flag → part 147 で実行 (= triage 質サイクル完成)
+- **「scope 不一致 CLOSE」第 1 例**: #1396 Firestore = Supabase 主体プロジェクト適合性 check
+- **「既実装 CLOSE」第 1 例**: #1378 Vault = Karpathy 4 cycle 100% で既達成 surface
+
+### Commit
+
+`docs(spec): part 147 — sensitive 第 1 例 #1393 + CLOSE #1378 #1396` 予定.
+
+### Philosophy Alignment
+
+- PHILOSOPHY-22: 7+/9 ✅ (= #1 + #2 + #5 + #6 + #7 / 健康 = 最大資産)
+- AI-CHARACTER-24: **8/8 ✅** (= sensitive design 必須遵守)
+- AI-DEV-23: **7/7 ✅** (= sensitive design 必須遵守)
+- IMBUE-25: 4/7 (= #2 + #4 + #6 + #7)
+- BRAIN-32: 7/7 ✅ (= 維持)
+- SYNERGY-30: 7/7 ✅ (= 維持)
+
+### 次回 candidate (= part 148 候補)
+
+1. WBS overdue 期限 +5-7 日 next 20 件 batch 6 (= 期限近順継続)
+2. Codex sprint 1 進捗 24h+ 後再確認 (= 追加 merge 件数 KPI)
+3. NotebookLM 蓄積実施 (= DESIGN_SPEC_TEMPLATE.md + 7 spec 全件 jibun-master-brain 投入)
+4. sensitive design 第 2 例 候補 surface (= 金融 / 子供 / 高齢者 関連 issue 探索)
+5. Codex sprint 2 着手 hand off 順序最適化 (= 高難度 4 件 + batch 5 残)
+
+INSTANCE-ROLES 厳守: Win Claude 1 sensitive spec ship + 2 CLOSE / Win Codex hand off 0 件追加.
+COMPACTION-RESUME: 90min ガード接近 → wrap-up 着地。
+
+## Win版#132 part 148 (= batch 6 + Codex sprint 1 24% + NotebookLM seed / 2026-05-05)
+
+### Summary
+
+User 17 度目同一要望. **batch 6** triage (= 期限 +5-7 日 next 15 件) + Codex sprint 1
+進捗再確認 (= 1h で +1 merge / 18% → 24%) + NotebookLM 蓄積実 seed file 投入.
+sensitive design 第 2-3 例候補 (= #1398 焦り検知 / #1400 強靭ペルソナ / #1399 機能的感情) surface.
+
+### batch 6 cross-instance-pr (= 15 件)
+
+`docs/cross-instance-prs/20260505_codex_overdue_wbs_handoff_batch6.md`:
+- Codex 10 件 (#1402-1406 + #1408-1412)
+- Win Claude 4 件 deferred (= part 149+ ship 計画 / #1397 docs / #1398 sensitive 第 2 例 / #1399 + #1400 sensitive)
+- 重複 CLOSE 候補 1 件 (#1407 = #1354 と同題 / 番号若い keep)
+
+### Codex sprint 1 進捗 update (= 1h 後 / part 146 → part 148)
+
+batch 1-4 累計 17 件中 **4 件 merged** (= **24% same-day** / +1 since part 146):
+- ✅ PR #2014 #1283 / PR #2016 #1296 / PR #2018 #1302 (= part 146 確認済)
+- ✅ PR #2019 [#1304](https://github.com/kanta13jp1/my_web_app/issues/1304) branch protection status (= NEW)
+
+= 1h で +6% 進捗 / Codex 効率継続証拠 第 2 例.
+
+### NotebookLM 蓄積 seed file (= jibun-master-brain 投入準備)
+
+`docs/notebooklm-intake/jibun-master-brain-spec-template-seed.md`:
+- 蓄積 source 一覧 (= meta 1 + 通常 spec 6 + sensitive 1 = 8 docs)
+- Query 例 5 種 (= 標準形 / 拡張 / axis 早見 / 失敗パターン / 工数)
+- CLI 実行手順 (= `notebooklm use ea6cff25` + `notebooklm add` 連打)
+- 蓄積後の効果計測 baseline 4 metric
+
+### 累計 throughput (= 6 連続セッション)
+
+| part | ship | hand off | matrix | CLOSE |
+|---|---:|---:|---:|---:|
+| 143 | 2 | 1 | +2 | 0 |
+| 144 | 2 | 4 | +4 | 0 |
+| 145 | 2 | 0 | +2 | 0 |
+| 146 | meta 1 | 17 | +20 | 0 |
+| 147 | 1 sensitive | 0 | 0 | 2 |
+| 148 | NotebookLM seed 1 | 10 | +15 | 0 |
+| **合計** | **7+1 meta+1 seed** | **32 件 / 7 batch** | **59 件** | **2** |
+
+### Pattern 確立 (= part 148 で新規)
+
+- 「batch 内 sensitive 候補 surface」第 1 例 (= 4 件 flag / part 149+ 計画明示)
+- 「重複 issue surface」第 1 例 (= #1407 #1354)
+- 「Codex 効率継続証拠」第 2 例 (= 1h 後 +6% / 累積 KPI 化)
+- 「NotebookLM seed file」pattern 確立 (= docs/notebooklm-intake/ 配下に蓄積準備 file)
+
+### Commit
+
+`docs(spec): part 148 — batch 6 + sprint 1 24% + NotebookLM seed` 予定.
+
+### Philosophy Alignment
+
+- PHILOSOPHY-22: 7+/9 ✅
+- BRAIN-32: 7/7 ✅ (= seed file で強化)
+- SYNERGY-30: 7/7 ✅
+- INDIE-29: 7/7 ✅
+
+### 次回 candidate (= part 149 候補)
+
+1. sensitive 第 2 例 ship: #1398 焦り (Desperation) 検知 + 緩和 (= mind-reading risk / 倫理 review 拡張)
+2. Codex sprint 1 進捗 24h+ 後 KPI 計測 (= 翌日 / 5+ merge 目標)
+3. NotebookLM CLI 実行 (= 8 docs 蓄積 actual)
+4. WBS overdue batch 7 (= 期限 +7-10 日 next 15 件)
+5. 重複 #1407 CLOSE 実行 (= #1354 へ merge note)
+
+INSTANCE-ROLES 厳守: Win Claude 0 spec ship + 1 batch triage + 1 NotebookLM seed / Win Codex 10 件 hand off (推定 +50h).
+COMPACTION-RESUME: 90min ガード接近 → wrap-up 着地。
+
+## Win版#132 part 149 (= sensitive 第 2 例 + #1407 CLOSE + NotebookLM CLI 実行 / 2026-05-05)
+
+### Summary
+
+User 18 度目同一要望. **sensitive design 第 2 例** (= AI 内部状態系) ship + part 148 surface
+重複 #1407 を実 CLOSE + **NotebookLM CLI 実行 (= 8 sources 投入完了 / Master Brain 蓄積実証)**.
+
+### 設計 spec ship (= 1 件 sensitive 第 2 例 / cap 内)
+
+`docs/AI_DESPERATION_DETECTION_SPEC.md` (= [#1398](https://github.com/kanta13jp1/my_web_app/issues/1398)):
+- §2 倫理 review section (= sensitive design 拡張 / 第 2 例)
+  - NOT to do 7 項目 (= mind-reading 主張禁止 / labeling NG / black-box 介入 NG / 強制 modal NG / 誤検知 punish NG / 個人化学習 NG / 3rd party 共有 NG)
+  - MUST do 6 項目 (= threshold 公開 / prompt 緩和 log / 正直 report / opt-out / 退避 path / observability)
+  - AI-CHARACTER-24 **8/8 ✅** + AI-DEV-23 **7/7 ✅** + COLLAB-26 6+/7 ✅
+- §4 schema (= ai_desperation_log + settings / 14 日 retention / 3 段階 intervention level)
+- §4.3 介入 algorithm (= TypeScript middleware / STEP_BY_STEP_REFRAME + MODEL_SWAP_REFRAME)
+- §4.4 halt UI (= 「失敗」表示せず「選択肢提示」 = AI-CHARACTER #4 共感)
+- Codex hand off ~9h
+
+### sensitive design 拡張 spec template 第 2 例完成
+
+| 例 | 領域 | NOT to do 中核 |
+|---|---|---|
+| 第 1 例 (= part 147 #1393) | 人間データ | 共有禁止 / 診断禁止 / LLM raw 送信禁止 |
+| 第 2 例 (= part 149 #1398) | AI 内部状態 | 擬人化禁止 / labeling 禁止 / black-box 介入禁止 |
+
+= 同 template 適用で異領域カバー / part 150+ 第 3 例 (#1400 強靭ペルソナ) で 3 例蓄積予定.
+
+### #1407 CLOSE 実行 (= part 148 batch 6 surface)
+
+[#1407](https://github.com/kanta13jp1/my_web_app/issues/1407) Cloud Run /deploy 検証 = [#1354](https://github.com/kanta13jp1/my_web_app/issues/1354) 完全同題 → CLOSE not planned.
+
+### NotebookLM CLI 実行 (= jibun-master-brain 蓄積 8 sources 完了)
+
+```
+notebooklm use ea6cff25  # jibun-master-brain
+notebooklm source add docs/DESIGN_SPEC_TEMPLATE.md           # ✅ source ID a039d156
+notebooklm source add docs/MENTAL_HEALTH_RISK_SPEC.md         # ✅ d0429798
+notebooklm source add docs/AI_DESPERATION_DETECTION_SPEC.md   # ✅ 60044a1f
+notebooklm source add docs/MAINTENANCE_SOP_SPEC.md            # ✅ e77c4337
+notebooklm source add docs/TERM_TOOLTIP_SPEC.md               # ✅ b5991828
+notebooklm source add docs/NARRATIVE_UI_ACTION_SPEC.md        # ✅ 3a66fd65
+notebooklm source add docs/DEV_ENV_SETUP_GUIDE.md             # ✅ 26ad9072
+notebooklm source add docs/notebooklm-intake/jibun-master-brain-spec-template-seed.md  # ✅ 3fd37d54
+```
+
+= **8 sources 投入完了** (= part 143 #1316 + #1345 spec は別 branch / part 150 で追加投入予定).
+= **BRAIN-32 #3 Query 機構** が新 spec 蓄積で実稼働 (= 全 instance ゼロトークン Query 可能).
+
+### 累計 throughput (= 7 連続セッション)
+
+| part | ship | hand off | matrix | CLOSE | NotebookLM 蓄積 |
+|---|---:|---:|---:|---:|---:|
+| 143 | 2 | 1 | +2 | 0 | 0 |
+| 144 | 2 | 4 | +4 | 0 | 0 |
+| 145 | 2 | 0 | +2 | 0 | 0 |
+| 146 | meta 1 | 17 | +20 | 0 | 0 |
+| 147 | sensitive 1 | 0 | 0 | 2 | 0 |
+| 148 | seed 1 | 10 | +15 | 0 | 0 |
+| 149 | sensitive 2 | 0 | 0 | 1 | **8 sources** |
+| **合計** | **8 spec + meta + seed** | **32 件 / 7 batch** | **59** | **3** | **8** |
+
+### Pattern 確立 (= part 149 で新規)
+
+- 「sensitive design 拡張 template 異領域適用」第 2 例 (= AI 内部状態 / 人間データに続く)
+- 「重複 surface → 即 CLOSE」full cycle 第 2 例 (= part 147 #1378 #1396 後 / 質的 triage 継続)
+- **「NotebookLM CLI 実 ingest」第 1 例**: seed file → 8 sources actually 投入 / Master Brain Query 即可能化
+
+### Commit
+
+`docs(spec): part 149 — sensitive 第 2 例 #1398 + CLOSE #1407 + NotebookLM 8 sources` 予定.
+
+### Philosophy Alignment
+
+- PHILOSOPHY-22: 7+/9 ✅
+- AI-CHARACTER-24: **8/8 ✅** (= sensitive 必須 / 第 2 例 維持)
+- AI-DEV-23: **7/7 ✅** (= sensitive 必須 / 第 2 例 維持)
+- COLLAB-26: 6+/7 ✅ (= AI Desperation spec で達成 / Tinker + Co-Reasoning + Red-Team + 観察可能性)
+- BRAIN-32: 7/7 ✅ (= **NotebookLM 蓄積実稼働** / Query 機構強化)
+- SYNERGY-30: 7/7 ✅
+- INDIE-29: 7/7 ✅
+
+### 次回 candidate (= part 150 候補)
+
+1. sensitive 第 3 例 #1400 強靭 AI ペルソナ ハイステークス ship (= 高 stakes 領域 / 倫理 review template 第 3 例)
+2. WBS overdue batch 7 (= 期限 +7-10 日 next 15-20 件)
+3. NotebookLM 蓄積追加 (= part 143 spec #1316 + #1345 を main merge 後投入 / 計 10 sources 完成)
+4. Codex sprint 1 翌日 KPI 計測 (= 24h+ 経過後 / 5+ merge 目標)
+5. Win Claude territory deferred 残 (= #1397 公式サポート docs / #1399 機能的感情) part 151+ ship 計画
+
+INSTANCE-ROLES 厳守: Win Claude 1 sensitive spec ship + 1 CLOSE + NotebookLM 8 sources actual / Win Codex 0 件追加 hand off.
+COMPACTION-RESUME: 90min ガード接近 → wrap-up 着地。
+
+## Win版#132 part 150 (= sensitive 第 3 例 / 半世紀記念 / 2026-05-05)
+
+### Summary
+
+User 19 度目同一要望. **sensitive design template 第 3 例** (= high-stakes persona) ship 完了.
+3 異領域 (= 人間データ + AI 内部状態 + high-stakes persona) で共通 §2 倫理 review section 適用.
+8 連続セッション (= part 143-150) で **Win Claude 9 spec ship**. **part 150 半世紀記念** (= part 100 から 50 part).
+
+### 設計 spec ship (= 1 件 sensitive 第 3 例 / cap 内)
+
+`docs/ROBUST_AI_PERSONA_SPEC.md` (= [#1400](https://github.com/kanta13jp1/my_web_app/issues/1400)):
+- §2 倫理 review (= 第 3 例 / high-stakes persona 領域)
+  - NOT to do 7 項目 (= 「強靭」=「拒否しない」誤解 NG / medical-legal-financial 直接判断 NG /
+    stress test 漏洩 NG / persona 過剰 personalize NG / gaslighting NG / dark pattern NG / fail silent NG)
+  - MUST do 7 項目 (= 3 trait 明文化 / NG list / stress test 自動化 / 観察可能性 /
+    regression 検出 / human-in-loop / escape hatch)
+  - **AI-CHARACTER 8/8 ✅ + AI-DEV 7/7 ✅ + VIBE-30 4+/7 (= CEO レビュー強化)**
+- §4 schema (= ai_persona_definition + ai_persona_test_run / version 管理 / 90 日 retention)
+- §4.2 base prompt 3 trait inline (= 冷静さ / 回復力 / 公平性 / NG list)
+- §5 CI stress test (= GHA workflow / 8 kind × ~4 scenarios = ~30 / 95% pass rate gate)
+- §5.3 LLM-as-judge rubric (= claude-haiku-4-5 推奨 / 0.85+ pass)
+- Codex hand off ~14h
+
+### sensitive design 拡張 spec template 3 例完成
+
+| 例 | 領域 | 主 NOT to do |
+|---|---|---|
+| 第 1 (= #1393 / part 147) | 人間データ (健康) | 共有/診断/LLM raw 送信禁止 |
+| 第 2 (= #1398 / part 149) | AI 内部状態 | 擬人化/labeling/black-box 禁止 |
+| 第 3 (= #1400 / part 150) | high-stakes persona | 強靭=拒否しない誤解/medical-legal-financial 直接判断/gaslighting 禁止 |
+
+→ 3 異領域共通項 (= 共有禁止 / 操作禁止 / fail silent 禁止) を **template 第 4 改訂** で抽出予定 (= part 152+).
+
+### NotebookLM 追加蓄積 (= 1 source 投入)
+
+- ✅ `docs/ROBUST_AI_PERSONA_SPEC.md` (source ID `1db6a55f`)
+
+= 累計 9 sources / `jibun-master-brain` (`ea6cff25`) 成長中.
+
+### 累計 throughput (= 8 連続セッション / 半世紀記念)
+
+| part | ship | hand off | matrix | CLOSE | NotebookLM |
+|---|---:|---:|---:|---:|---:|
+| 143-149 | 8 spec + meta + seed | 32 (7 batch) | 59 | 3 | 8 |
+| 150 | sensitive 3 | 0 | 0 | 0 | **+1** |
+| **合計** | **9 spec + meta + seed** | **32 件 / 7 batch** | **59 件** | **3** | **9 sources** |
+
+### Pattern 確立 (= part 150 で新規)
+
+- **「sensitive design template 3 例」完成**: 人間データ + AI 内部状態 + high-stakes / 共通項抽出可能化
+- 「VIBE-30 CEO レビュー強化フラグ」第 1 適用 (= 4-/7 で CEO レビュー対象 / spec 自体が対象)
+- 「LLM-as-judge stress test rubric」設計 第 1 例 (= 0.85+ pass / claude-haiku-4-5)
+- 「persona version 管理 + regression alert」第 1 例 (= 5%+ score drop = 自動 Issue)
+
+### Commit
+
+`docs(spec): part 150 — sensitive 第 3 例 #1400 + NotebookLM source` 予定.
+
+### Philosophy Alignment
+
+- PHILOSOPHY-22: 7+/9 ✅
+- AI-CHARACTER-24: **8/8 ✅** (= sensitive 必須 / 第 3 例 維持)
+- AI-DEV-23: **7/7 ✅** (= sensitive 必須 / 第 3 例 維持)
+- VIBE-30: 4+/7 (= CEO レビュー強化 / spec 自体が CEO レビュー対象)
+- BRAIN-32: 7/7 ✅ (= NotebookLM 9 sources)
+- SYNERGY-30: 7/7 ✅
+- INDIE-29: 7/7 ✅
+
+### 次回 candidate (= part 151 候補)
+
+1. WBS overdue batch 7 (= 期限 +7-10 日 next 15-20 件)
+2. Win Claude territory deferred 残 #1397 開発推進ガイド docs ship + #1399 機能的感情 spec ship
+3. NotebookLM 追加蓄積 (= part 143 spec #1316 + #1345 main merge 後 = 11 sources 完成目標)
+4. sensitive design template 第 4 改訂 (= 3 例共通項抽出 / docs/DESIGN_SPEC_TEMPLATE.md §2 拡張)
+5. Codex sprint 1 翌日 KPI 計測 (= 5+ merge 目標 / 日跨ぎ後)
+
+INSTANCE-ROLES 厳守: Win Claude 1 sensitive spec ship + NotebookLM 1 source / Win Codex 0 件追加 hand off.
+COMPACTION-RESUME: 90min ガード接近 → wrap-up 着地。
+
+## Win版#132 part 151 (= template 第 4 改訂 + batch 7 + sprint 1 確認 / 2026-05-05)
+
+### Summary
+
+User 20 度目同一要望. **DESIGN_SPEC_TEMPLATE.md 第 4 改訂** (= 3 例共通項抽出 §4A 追加) +
+batch 7 cross-instance-pr (20 件 / Codex 18 + Win Claude 2) + Codex sprint 1 進捗確認 (= 24% 維持).
+[COMPACTION-RESUME] 90min cap 接近 → wrap-up 着地.
+
+### template 第 4 改訂 (= meta-doc / 3 例共通項抽出)
+
+`docs/DESIGN_SPEC_TEMPLATE.md` 更新:
+- §4 早見表を **9 spec 対応** (= sensitive 種別 column 追加 / 平均工数 8.6h → 9.5h)
+- §4A **新設**: Sensitive design 拡張 §2 倫理 review section
+  - §4A.1 適用判断 6 領域 (健康/金融/法務/個人/AI 内部/high-stakes persona)
+  - §4A.2 §2 倫理 review section 構成 (= NOT to do + MUST do + 8/8 + 7/7)
+  - §4A.3 3 例 NOT to do 対比 → **共通項 3 種抽出** (= 共有禁止 / 操作禁止 / fail silent 禁止)
+  - §4A.4 3 例 MUST do 対比 → **共通項 3 種抽出** (= opt-in/out / 観察可能性 / 退避 path)
+
+### batch 7 cross-instance-pr (= 20 件)
+
+`docs/cross-instance-prs/20260505_codex_overdue_wbs_handoff_batch7.md`:
+- Codex 18 件 (= W&B 3 + CI/automation 系 11 + その他 4)
+- Win Claude 2 件 deferred (= #1564 PreCompact 10 instance 記憶保全 / #1577 MCP-AUTH = sensitive 第 4 候補)
+- 5-question matrix 累計 **79 件** (= 過去最大更新)
+
+### Codex sprint 1 進捗 (= 部分確認)
+
+- 4/17 (24%) 維持 (= part 148 から変化なし / ~1h-1.5h 経過)
+- 提言: sprint 1 優先消化 / batch 7 は sprint 2 組込推奨
+
+### 累計 throughput (= 9 連続セッション)
+
+| part | ship | hand off | matrix | CLOSE | NotebookLM |
+|---|---:|---:|---:|---:|---:|
+| 143-150 | 9 + meta + seed | 32 (7 batch) | 59 | 3 | 9 |
+| 151 | template 第 4 改訂 | 18 (batch 7) | +20 | 0 | 0 |
+| **合計** | **9 + meta+v2 + seed** | **50 件 / 8 batch** | **79** | **3** | **9** |
+
+### Pattern 確立 (= part 151 で新規)
+
+- 「DESIGN_SPEC_TEMPLATE 第 4 改訂」(= 3 例共通項抽出 / sensitive 領域定義 6 種 公式化)
+- 「sensitive 第 4 候補 surface」(= MCP-AUTH-27 10/10 領域 / template §4A.1 拡張候補)
+- 「Codex sprint priority 提言」第 1 例 (= sprint 1 優先 / batch 7 sprint 2 組込)
+- 「batch 7 同 P0/P1 集中」(= CI/automation/security 系統一傾向 / sprint planning に reflect)
+
+### Commit
+
+`docs(spec): part 151 — template 第 4 改訂 + batch 7` 予定.
+
+### Philosophy Alignment
+
+- PHILOSOPHY-22: 7+/9 ✅
+- BRAIN-32: 7/7 ✅ (= meta-doc 更新で強化)
+- SYNERGY-30: 7/7 ✅
+- INDIE-29: 7/7 ✅
+
+### 次回 candidate (= part 152 候補)
+
+1. Win Claude deferred 残 ship: #1397 開発推進 docs / #1399 機能的感情 / #1564 PreCompact / #1577 MCP-AUTH sensitive 第 4
+2. NotebookLM 11 sources 完成 (= PR #2015 main merge 後 #1316 #1345 投入)
+3. Codex sprint 1 翌日 KPI 計測 (= 24h+ 後 / 5+ merge 目標)
+4. sensitive 第 4 例 ship (#1577 MCP-AUTH = MCP-AUTH-27 10/10 必須適用)
+5. WBS overdue batch 8 (= 期限 +10-14 日 / capacity 落ち着き次第)
+
+INSTANCE-ROLES 厳守: Win Claude meta-doc 改訂 + batch 7 triage / Win Codex 18 件 batch 7 hand off (推定 +90h).
+COMPACTION-RESUME: 90min ガード接近 → 本 part で wrap-up 着地。
+
+
+
+
+
+
+
+
