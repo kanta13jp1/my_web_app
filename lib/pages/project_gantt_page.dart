@@ -75,6 +75,10 @@ class WbsTask {
   // Win版#131 part 20: 残作業 + 依存関係
   final String remainingWork;
   final List<String> dependsOnTitles;
+  // Win版#132 part 156: GitHub Issue 同期遅延時の補完 filter 用
+  // status field は sync EF が遅延すると 'completed' へ変わらない場合がある.
+  // github_issue_state == 'CLOSED' を併用すれば close 反映を即時取得可.
+  final String githubIssueState;
 
   const WbsTask({
     required this.id,
@@ -95,7 +99,11 @@ class WbsTask {
     this.rescheduledCount = 0,
     this.remainingWork = '',
     this.dependsOnTitles = const [],
+    this.githubIssueState = '',
   });
+
+  bool get isEffectivelyCompleted =>
+      status == 'completed' || githubIssueState == 'CLOSED';
 
   factory WbsTask.fromMap(Map<String, dynamic> m) => WbsTask(
         id: m['id'] as String,
@@ -122,6 +130,7 @@ class WbsTask {
         remainingWork: (m['remaining_work'] as String?) ?? '',
         dependsOnTitles:
             (m['depends_on_titles'] as List?)?.cast<String>() ?? const [],
+        githubIssueState: (m['github_issue_state'] as String?) ?? '',
       );
 
   /// 遅延日数 (今日 - end_date / 完了済 or 期限なし は 0)
@@ -646,7 +655,7 @@ class _WbsTab extends StatelessWidget {
         if (filterMilestone != null && t.milestoneCode != filterMilestone) {
           return false;
         }
-        if (hideCompleted && t.status == 'completed') {
+        if (hideCompleted && t.isEffectivelyCompleted) {
           return false;
         }
         return true;
@@ -676,7 +685,10 @@ class _WbsTab extends StatelessWidget {
 
     final now = DateTime.now();
     final grouped = _grouped;
-    final overallProgress = _overallProgress(tasks);
+    // part 156: hideCompleted ON 時は filter 後タスクで進捗 + 件数算出
+    // (= GitHub Issue close 反映が visible になる)
+    final progressBase = hideCompleted ? _filtered : tasks;
+    final overallProgress = _overallProgress(progressBase);
 
     return ListView(
       padding: const EdgeInsets.all(16),
@@ -684,7 +696,9 @@ class _WbsTab extends StatelessWidget {
         // ── 全体進捗 ──────────────────────────────────────────────────────
         _OverallProgressCard(
           progress: overallProgress,
-          taskCount: tasks.length,
+          taskCount: progressBase.length,
+          totalCount: tasks.length,
+          showFilteredBadge: hideCompleted,
         ),
         const SizedBox(height: 16),
 
@@ -776,8 +790,15 @@ class _WbsTab extends StatelessWidget {
 class _OverallProgressCard extends StatelessWidget {
   final double progress;
   final int taskCount;
+  final int totalCount;
+  final bool showFilteredBadge;
 
-  const _OverallProgressCard({required this.progress, required this.taskCount});
+  const _OverallProgressCard({
+    required this.progress,
+    required this.taskCount,
+    this.totalCount = 0,
+    this.showFilteredBadge = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -818,7 +839,9 @@ class _OverallProgressCard extends StatelessWidget {
                               ),
                     ),
                     Text(
-                      '$taskCount タスク',
+                      showFilteredBadge && totalCount > taskCount
+                          ? '$taskCount 件 未完了 / $totalCount 件 全体'
+                          : '$taskCount タスク',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                             color: const Color(0xFF707070),
                           ),
@@ -2086,8 +2109,9 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
   List<WbsTask> get _orderedTasks {
     var list = [...widget.tasks];
     // Win版#131 part 12: 未完了 only filter + instance filter
+    // part 156: github_issue_state == 'CLOSED' も完了扱い (= sync 遅延補完)
     if (widget.hideCompleted) {
-      list = list.where((t) => t.status != 'completed').toList();
+      list = list.where((t) => !t.isEffectivelyCompleted).toList();
     }
     if (widget.filterInstance != null) {
       list = list
