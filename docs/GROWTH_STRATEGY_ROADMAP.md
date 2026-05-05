@@ -27429,6 +27429,77 @@ INSTANCE-ROLES 厳守: Win Claude territory (= 5-question matrix Q1+Q2+Q5 YES) �
 [STASH-SAFETY] 遵守 (= stash 不使用 / 1 commit で完結).
 [COMPACTION-RESUME] 90min ガード遵守 → 本 part で wrap-up 着地予定.
 
+## Win版#132 part 153 (= DESIGN_SPEC_PATTERNS.md 統合 / 11 spec 抽象化 layer / 第 5 改訂 / 2026-05-05)
+
+**Instance**: Win Claude (worktree: `.claude/worktrees/practical-johnson-ea0e25` / branch: `claude/spec-patterns-part153` / base = #2022 head 階層化第 3 段)
+**Session**: part 153 (= 抽象化 layer 着地 / pattern 体系化 / 0 spec ship + 1 meta-meta-spec 着地)
+
+### 着地内容
+
+1. **`docs/DESIGN_SPEC_PATTERNS.md` 新設** (= 388 行 / 9 chapter / designer-facing)
+   - Ch1: 5-question matrix (= Win Claude vs Win Codex territory / 11/11 false positive 0)
+   - Ch2: 通常 5 section 標準 (= 11/11 順守 / 順入れ替えゼロ)
+   - Ch3: sensitive §2 倫理 review section (= 4 領域 + 共通 4/4 NOT to do + MUST do)
+   - Ch4: 既存基盤 3 段階分類 (= 整備済 / 部分 / 未整備 / Codex 工数 -30% empirical)
+   - Ch5: PR 階層化 spec ship workflow (= 1 session 2+ spec ship / chain depth ≤ 3)
+   - Ch6: 11 spec 工数 KPI (= 通常 8.5h / sensitive 12.0h / leverage 7-15x)
+   - Ch7: pattern 横展開 + 第 6 改訂候補
+   - Ch8: PHILOSOPHY-22 / BRAIN-32 / SYNERGY-30 alignment
+   - Ch9: 関連 docs link
+
+2. **`docs/DESIGN_SPEC_TEMPLATE.md` 簡素化** (= 216 行 → 131 行 / -39% / operator-facing 専念)
+   - §4A 全部削除 (= sensitive 4 例 NOT to do/MUST do は PATTERNS.md Ch3 へ移動)
+   - §3 ritual 詳細削減 (= PATTERNS.md Ch2 へ link)
+   - 11 spec axis 早見表 + 起票 ritual 8 step + 失敗 pattern table は維持 (= operator 即参照)
+
+3. **2 doc 体制確立** (= part 153 第 1 改訂)
+   - TEMPLATE = operator-facing (= 1 spec 起票時 ritual + 早見表)
+   - PATTERNS = designer-facing (= 抽象 layer + 異領域共通項 + NotebookLM 蓄積向)
+   - 役割重複解消 / 個別 reviewer cognitive load 削減
+
+### Pattern empirical validation 数値 (= 11 spec base)
+
+- 5-question matrix: 11/11 false positive 0
+- 通常 5 section 順守: 11/11 (= 100%)
+- sensitive §2 倫理 review section 順守: 4/4 (= 100%)
+- 既存 hook 拡張 pattern (= part 152 PRECOMPACT 第 1 例): Codex 工数 -30% (= 11h → 8h 短縮)
+- 階層化 PR pattern (= part 152 + 153): chain depth 3 達成 / reviewer cognitive load 1/N
+- 起票 leverage: Win Claude 30-60min → Codex 5-14h (= **7-15x**)
+
+### PR 階層化 chain (= 第 3 段)
+
+```
+main
+  └── #2017 (claude/amazing-hypatia-84b710)  ← part 144-151 / 9 spec
+        └── #2022 (claude/crazy-jennings-93b113)  ← part 152 / 2 spec
+              └── #2024 (claude/spec-patterns-part153)  ← part 153 / PATTERNS 統合 (本 PR)
+```
+
+= **PR 階層化 spec ship pattern 第 3 例** (= part 152 第 2 例 → part 153 第 3 例 / chain depth 3 達成).
+
+### Philosophy Alignment
+
+- PHILOSOPHY-22: 8/9 ✅ (= 7+/9 ゲート達成 / #2 + #4-9 / 抽象化 layer = #5 商品=価値 + #7 資産負債 直撃)
+- AI-DEV-23: 6+/7 ✅ (= 通常 spec / sensitive ではない)
+- BRAIN-32: 7/7 ✅ (= NotebookLM 蓄積予定 / pattern catalog 永続化)
+- SYNERGY-30: 5+/7 ✅ (= cross-instance-pr / 5 正本 / leverage 計測値で記録)
+- INDIE-29: 6+/7 ✅ (= shipping 速度 / 1 session 完結 / dogfood)
+
+### 次回 candidate (= part 154 候補)
+
+1. **NotebookLM 14 sources 完成** (= PR #2015 / #2017 / #2022 / 本 #2024 main merge 後 / 4 spec + PATTERNS 投入 / 既存 8 + 6 = 14)
+2. **Codex sprint 1 翌日 KPI 計測** (= 24h+ 後 / 5+ merge 目標 / 過去最大 22h 起票後 throughput 観測)
+3. **memory-search-hub 10/10 達成 hand off 監視** (= Win Codex 5 原則完成 / MCP 公開第 1 例 ship)
+4. **#1397 開発推進 docs / #1399 機能的感情** (= Win Claude territory 残候補 / triage 後判断)
+5. **第 12 spec ship** (= 12+ spec で第 6 改訂 trigger / PATTERNS Ch7.2 anti-pattern catalog 起草)
+6. **Win Codex side template 起草** (= PATTERNS Ch7.2 / `docs/CODEX_WORKFLOW.md` 連動 / hand off 受領後 ritual 標準化)
+
+INSTANCE-ROLES 厳守: Win Claude territory (= Q1+Q2+Q5 YES = 抽象化 review が中核成果物) 完全合致.
+[DYNAMIC-CLAIM] cap 1 件遵守.
+[WORKDIR-ISOLATION] 遵守 (= `.claude/worktrees/practical-johnson-ea0e25` 内作業 / 直前 PR head 階層化).
+[STASH-SAFETY] 遵守 (= stash 不使用).
+[COMPACTION-RESUME] 90min ガード遵守 → 本 part で wrap-up 着地.
+
 
 
 
