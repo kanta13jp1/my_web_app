@@ -72,6 +72,119 @@ async function addItem(
   return data;
 }
 
+function monitoringMetricsFor(
+  platform: string,
+): Array<Record<string, unknown>> {
+  const normalized = platform.toLowerCase();
+  const metrics: Array<Record<string, unknown>> = [
+    {
+      key: "availability",
+      label: "Availability",
+      unit: "%",
+      warning_threshold: 99,
+      critical_threshold: 95,
+      sample_value: 99.9,
+    },
+    {
+      key: "error_rate",
+      label: "Error rate",
+      unit: "%",
+      warning_threshold: 1,
+      critical_threshold: 5,
+      sample_value: 0.2,
+    },
+    {
+      key: "p95_latency",
+      label: "p95 latency",
+      unit: "ms",
+      warning_threshold: 800,
+      critical_threshold: 1500,
+      sample_value: 240,
+    },
+    {
+      key: "cpu_or_invocations",
+      label: "CPU / invocations",
+      unit: "score",
+      warning_threshold: 75,
+      critical_threshold: 90,
+      sample_value: 38,
+    },
+  ];
+  if (normalized.includes("edge") || normalized.includes("lambda")) {
+    metrics.push({
+      key: "cold_start",
+      label: "Cold start",
+      unit: "ms",
+      warning_threshold: 1200,
+      critical_threshold: 2500,
+      sample_value: 410,
+    });
+  }
+  if (normalized.includes("ecs") || normalized.includes("generic")) {
+    metrics.push({
+      key: "memory_pressure",
+      label: "Memory pressure",
+      unit: "%",
+      warning_threshold: 80,
+      critical_threshold: 92,
+      sample_value: 47,
+    });
+  }
+  return metrics;
+}
+
+function buildDeploymentMonitoringRecord(
+  body: Record<string, unknown>,
+): Record<string, unknown> {
+  const serviceName = textValue(body.service_name, "new-service");
+  const platform = textValue(body.platform, "Generic API Service");
+  const provider = textValue(body.provider, "Built-in dashboard");
+  const environment = textValue(body.environment, "production");
+  const autoMonitoringEnabled = body.auto_monitoring_enabled !== false;
+  const metrics = autoMonitoringEnabled
+    ? (Array.isArray(body.metrics) && body.metrics.length > 0
+      ? body.metrics
+      : monitoringMetricsFor(platform))
+    : [];
+  const dashboardWidgets = Array.isArray(body.dashboard_widgets)
+    ? body.dashboard_widgets
+    : autoMonitoringEnabled
+    ? [
+      "Health summary",
+      "Latency and error trend",
+      "Recent incidents",
+      "Alert threshold table",
+    ]
+    : ["Opt-out audit trail", "Manual monitoring reminder"];
+  const setupSteps = Array.isArray(body.setup_steps)
+    ? body.setup_steps
+    : autoMonitoringEnabled
+    ? [
+      "Create default health check target",
+      "Attach metric thresholds to the service record",
+      "Show metrics on the deployment monitoring dashboard",
+    ]
+    : [
+      "Record opt-out reason before production release",
+      "Create a WBS follow-up if the service becomes customer-facing",
+    ];
+
+  return {
+    service_name: serviceName,
+    platform,
+    provider,
+    environment,
+    auto_monitoring_enabled: autoMonitoringEnabled,
+    metrics,
+    dashboard_widgets: dashboardWidgets,
+    setup_steps: setupSteps,
+    status_label: autoMonitoringEnabled
+      ? "Monitoring auto-enabled"
+      : "Monitoring opt-out",
+    created_at: textValue(body.created_at, new Date().toISOString()),
+  };
+}
+
 type TomeCompetitorRow = {
   Product: string;
   Feature: string;
@@ -648,6 +761,35 @@ serve(async (req) => {
           },
         );
         return json({ success: true, profile: item });
+      }
+
+      // ── Deployment Monitoring ────────────────────────────────────────────────
+      case "deployment.monitoring_setups": {
+        return json({
+          success: true,
+          setups: await listItems(
+            admin,
+            "deployment_monitoring_setup",
+            userId,
+          ),
+        });
+      }
+      case "deployment.monitoring.setup": {
+        const record = buildDeploymentMonitoringRecord(body);
+        const item = await addItem(
+          admin,
+          "deployment_monitoring_setup",
+          userId,
+          {
+            ...record,
+            saved_at: new Date().toISOString(),
+          },
+        );
+        return json({
+          success: true,
+          setup: item,
+          monitoring: record,
+        });
       }
 
       // ── Feature Flags ────────────────────────────────────────────────────────

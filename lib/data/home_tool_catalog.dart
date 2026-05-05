@@ -20,6 +20,7 @@ import '../pages/conveni_store_page.dart';
 import '../pages/daily_habits_page.dart';
 import '../pages/danshari_page.dart';
 import '../pages/decision_check_page.dart';
+import '../pages/deployment_monitoring_setup_page.dart';
 import '../pages/digest_queue_page.dart';
 import '../pages/edge_function_status_page.dart';
 import '../pages/edge_llm_playground_page.dart';
@@ -1043,6 +1044,24 @@ List<HomeToolEntry> buildHomeToolCatalog({
       color: const Color(0xFF607D8B),
       keywords: const <String>['Edge Function', 'API', 'status'],
       onOpen: (context) => _pushPage(context, const EdgeFunctionStatusPage()),
+    ),
+    HomeToolEntry(
+      id: 'deployment-monitoring',
+      sectionId: 'growth',
+      title: 'デプロイ監視自動設定',
+      subtitle: '新規サービス作成時に基本メトリクスと監視ダッシュボードを自動で用意',
+      icon: Icons.monitor_heart_outlined,
+      color: const Color(0xFF0F766E),
+      keywords: const <String>[
+        'deployment',
+        'monitoring',
+        'Datadog',
+        'CloudWatch',
+        '監視',
+        'デプロイ',
+      ],
+      onOpen: (context) =>
+          _pushPage(context, const DeploymentMonitoringSetupPage()),
     ),
     HomeToolEntry(
       id: 'ai-search',

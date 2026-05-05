@@ -267,6 +267,7 @@ import 'package:my_web_app/pages/agent_hub_page.dart';
 import 'package:my_web_app/pages/admin_notification_hub_page.dart';
 import 'package:my_web_app/pages/competitor_feature_sync_page.dart';
 import 'package:my_web_app/pages/daily_judgment_page.dart';
+import 'package:my_web_app/pages/deployment_monitoring_setup_page.dart';
 import 'package:my_web_app/pages/ai_university_content_page.dart';
 import 'package:my_web_app/pages/development_achievements_page.dart';
 import 'package:my_web_app/pages/invoice_generator_page.dart';
@@ -1686,6 +1687,10 @@ class _MyAppState extends State<MyApp> {
           case '/app-analytics-dashboard':
             return MaterialPageRoute(
               builder: (_) => const AppAnalyticsDashboardPage(),
+            );
+          case '/deployment-monitoring':
+            return MaterialPageRoute(
+              builder: (_) => const DeploymentMonitoringSetupPage(),
             );
           case '/dev/claude-design-importer':
             return MaterialPageRoute(
