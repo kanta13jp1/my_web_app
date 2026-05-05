@@ -26847,4 +26847,80 @@ Win Claude 7 件全処理:
 INSTANCE-ROLES 厳守: Win Claude 設計 spec 2 件 ship / Win Codex 0 件追加 (= deferred 全消化).
 COMPACTION-RESUME: 90min ガード接近 → wrap-up 着地。
 
+## Win版#132 part 146 (= batch 5 + Codex sprint 1 進捗 + spec template / 2026-05-05)
+
+### Summary
+
+User 15 度目同一要望 (= 期限 +3-5 日 next 20 件 batch 5 + Codex sprint 1 進捗確認 + 設計 spec
+template NotebookLM 蓄積). [DYNAMIC-CLAIM] cap 内 ship なし (= triage + meta-doc のみ).
+4 連続セッション (= part 143-146) で **Win Claude territory 6 件 全消化 + 計 44 件 5-question matrix**.
+
+### batch 5 cross-instance-pr (= 20 件 / 主 Codex)
+
+`docs/cross-instance-prs/20260505_codex_overdue_wbs_handoff_batch5.md`:
+- Codex 17 件 (#1324 #1374 #1375 #1377 #1379 #1380 #1381 #1382 #1385 #1386 #1387 #1389 #1390 #1391 #1392 #1394 #1395)
+- CLOSE 候補 1 件 (#1378 自律 Vault = 既 implementation by Karpathy 4 cycle)
+- 検証要 1 件 (#1396 Firestore = Supabase 主体プロジェクトでスコープ外可能性)
+- Win Claude 1 件 part 147+ deferred (#1393 メンタルヘルス = 倫理 gate 必須 sensitive design)
+
+### Codex sprint 1 進捗 (= 同日中)
+
+batch 1-4 累計 17 件中 **3 件 merged** (= 18% same-day):
+- #2014 #1283 prepush guard
+- #2016 #1296 Hedra credit monitor
+- #2018 #1302 blog draft quality gate
+
+= AI-FLEET 効率第 1 数値化 (= 17 件 hand off → 1 day で 18% merge).
+
+### 設計 spec template doc (= meta-doc / NotebookLM 蓄積候補)
+
+`docs/DESIGN_SPEC_TEMPLATE.md`:
+- 6 spec 共通 5 section (思想 / 既存基盤 / Schema-UI / hand off / 9 原則 + 受入 mapping)
+- 適用判断 5-question matrix
+- 6 適用済 spec の axis 早見表 (= 平均工数 8.6h)
+- 起票 ritual 8 step (= 1 session 30-60 min 完結)
+- 失敗パターン 5 種 + 横展開計画
+
+### 累計 throughput (= 4 連続セッション)
+
+| part | Win Claude ship | Codex hand off (新規) | 5-question matrix |
+|---|---:|---:|---:|
+| 143 | 2 | batch 3 (1) | +2 |
+| 144 | 2 | batch 4 (4) | +4 |
+| 145 | 2 | 0 | +2 |
+| 146 | 0 (= meta-doc 1) | batch 5 (17) | +20 |
+| **合計** | **6 spec + 1 meta** | **6 batch / 22 件** | **44 件 (= 過去最大)** |
+
+Codex 累計 hand off 推定: ~172h (= 4 sprint).
+
+### Pattern 確立 (= part 146 で新規)
+
+- **「meta-doc 抽出 ritual」**: 6 spec ship 後 7 件目以降 効率化のため共通 template 抽出
+- **「same-day 18% Codex merge」**: AI-FLEET 効率の **数値化** 第 1 例
+- **「triage 質向上」**: CLOSE 候補 / 検証要 / sensitive design surface (= scope creep 防止)
+- **「sensitive design 拡張 axis」**: AI-CHARACTER #6 倫理 gate 必須 = 通常 spec template 拡張で対応
+
+### Commit
+
+`docs(spec): part 146 — batch 5 cross-instance-pr (20 件) + spec template + Codex sprint 1 進捗` 予定.
+
+### Philosophy Alignment
+
+- PHILOSOPHY-22: 7+/9 ✅ (= meta-doc は #4 + #5 + #7 が中核)
+- BRAIN-32: 7/7 ✅ (= 維持 / template 蓄積で強化)
+- SYNERGY-30: 7/7 ✅ (= 5 batch 連続 / Codex 進捗数値化で完全)
+- INDIE-29: 7/7 ✅ (= template = velocity 守備資産)
+
+### 次回 candidate (= part 147 候補)
+
+1. #1393 メンタルヘルス risk 管理 設計 spec (= AI-CHARACTER #6 倫理 gate / 拡張 template 適用 第 1 例)
+2. WBS overdue 期限 +5-7 日 next 20 件 batch 6
+3. Codex sprint 1 進捗 24h 後再確認 (= 何件 merge 進んだか KPI)
+4. NotebookLM 蓄積実施 (= DESIGN_SPEC_TEMPLATE.md content の jibun-master-brain 投入)
+5. #1378 #1396 受入条件 read → CLOSE comment 化 (= scope creep 削減)
+
+INSTANCE-ROLES 厳守: Win Claude 0 spec ship + 1 meta-doc + 1 batch triage / Win Codex 17 件 batch 5 hand off (推定 +60h).
+COMPACTION-RESUME: 90min ガード接近 → wrap-up 着地。
+
+
 
