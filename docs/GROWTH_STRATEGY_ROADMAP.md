@@ -27065,6 +27065,100 @@ batch 1-4 累計 17 件中 **4 件 merged** (= **24% same-day** / +1 since part 
 INSTANCE-ROLES 厳守: Win Claude 0 spec ship + 1 batch triage + 1 NotebookLM seed / Win Codex 10 件 hand off (推定 +50h).
 COMPACTION-RESUME: 90min ガード接近 → wrap-up 着地。
 
+## Win版#132 part 149 (= sensitive 第 2 例 + #1407 CLOSE + NotebookLM CLI 実行 / 2026-05-05)
+
+### Summary
+
+User 18 度目同一要望. **sensitive design 第 2 例** (= AI 内部状態系) ship + part 148 surface
+重複 #1407 を実 CLOSE + **NotebookLM CLI 実行 (= 8 sources 投入完了 / Master Brain 蓄積実証)**.
+
+### 設計 spec ship (= 1 件 sensitive 第 2 例 / cap 内)
+
+`docs/AI_DESPERATION_DETECTION_SPEC.md` (= [#1398](https://github.com/kanta13jp1/my_web_app/issues/1398)):
+- §2 倫理 review section (= sensitive design 拡張 / 第 2 例)
+  - NOT to do 7 項目 (= mind-reading 主張禁止 / labeling NG / black-box 介入 NG / 強制 modal NG / 誤検知 punish NG / 個人化学習 NG / 3rd party 共有 NG)
+  - MUST do 6 項目 (= threshold 公開 / prompt 緩和 log / 正直 report / opt-out / 退避 path / observability)
+  - AI-CHARACTER-24 **8/8 ✅** + AI-DEV-23 **7/7 ✅** + COLLAB-26 6+/7 ✅
+- §4 schema (= ai_desperation_log + settings / 14 日 retention / 3 段階 intervention level)
+- §4.3 介入 algorithm (= TypeScript middleware / STEP_BY_STEP_REFRAME + MODEL_SWAP_REFRAME)
+- §4.4 halt UI (= 「失敗」表示せず「選択肢提示」 = AI-CHARACTER #4 共感)
+- Codex hand off ~9h
+
+### sensitive design 拡張 spec template 第 2 例完成
+
+| 例 | 領域 | NOT to do 中核 |
+|---|---|---|
+| 第 1 例 (= part 147 #1393) | 人間データ | 共有禁止 / 診断禁止 / LLM raw 送信禁止 |
+| 第 2 例 (= part 149 #1398) | AI 内部状態 | 擬人化禁止 / labeling 禁止 / black-box 介入禁止 |
+
+= 同 template 適用で異領域カバー / part 150+ 第 3 例 (#1400 強靭ペルソナ) で 3 例蓄積予定.
+
+### #1407 CLOSE 実行 (= part 148 batch 6 surface)
+
+[#1407](https://github.com/kanta13jp1/my_web_app/issues/1407) Cloud Run /deploy 検証 = [#1354](https://github.com/kanta13jp1/my_web_app/issues/1354) 完全同題 → CLOSE not planned.
+
+### NotebookLM CLI 実行 (= jibun-master-brain 蓄積 8 sources 完了)
+
+```
+notebooklm use ea6cff25  # jibun-master-brain
+notebooklm source add docs/DESIGN_SPEC_TEMPLATE.md           # ✅ source ID a039d156
+notebooklm source add docs/MENTAL_HEALTH_RISK_SPEC.md         # ✅ d0429798
+notebooklm source add docs/AI_DESPERATION_DETECTION_SPEC.md   # ✅ 60044a1f
+notebooklm source add docs/MAINTENANCE_SOP_SPEC.md            # ✅ e77c4337
+notebooklm source add docs/TERM_TOOLTIP_SPEC.md               # ✅ b5991828
+notebooklm source add docs/NARRATIVE_UI_ACTION_SPEC.md        # ✅ 3a66fd65
+notebooklm source add docs/DEV_ENV_SETUP_GUIDE.md             # ✅ 26ad9072
+notebooklm source add docs/notebooklm-intake/jibun-master-brain-spec-template-seed.md  # ✅ 3fd37d54
+```
+
+= **8 sources 投入完了** (= part 143 #1316 + #1345 spec は別 branch / part 150 で追加投入予定).
+= **BRAIN-32 #3 Query 機構** が新 spec 蓄積で実稼働 (= 全 instance ゼロトークン Query 可能).
+
+### 累計 throughput (= 7 連続セッション)
+
+| part | ship | hand off | matrix | CLOSE | NotebookLM 蓄積 |
+|---|---:|---:|---:|---:|---:|
+| 143 | 2 | 1 | +2 | 0 | 0 |
+| 144 | 2 | 4 | +4 | 0 | 0 |
+| 145 | 2 | 0 | +2 | 0 | 0 |
+| 146 | meta 1 | 17 | +20 | 0 | 0 |
+| 147 | sensitive 1 | 0 | 0 | 2 | 0 |
+| 148 | seed 1 | 10 | +15 | 0 | 0 |
+| 149 | sensitive 2 | 0 | 0 | 1 | **8 sources** |
+| **合計** | **8 spec + meta + seed** | **32 件 / 7 batch** | **59** | **3** | **8** |
+
+### Pattern 確立 (= part 149 で新規)
+
+- 「sensitive design 拡張 template 異領域適用」第 2 例 (= AI 内部状態 / 人間データに続く)
+- 「重複 surface → 即 CLOSE」full cycle 第 2 例 (= part 147 #1378 #1396 後 / 質的 triage 継続)
+- **「NotebookLM CLI 実 ingest」第 1 例**: seed file → 8 sources actually 投入 / Master Brain Query 即可能化
+
+### Commit
+
+`docs(spec): part 149 — sensitive 第 2 例 #1398 + CLOSE #1407 + NotebookLM 8 sources` 予定.
+
+### Philosophy Alignment
+
+- PHILOSOPHY-22: 7+/9 ✅
+- AI-CHARACTER-24: **8/8 ✅** (= sensitive 必須 / 第 2 例 維持)
+- AI-DEV-23: **7/7 ✅** (= sensitive 必須 / 第 2 例 維持)
+- COLLAB-26: 6+/7 ✅ (= AI Desperation spec で達成 / Tinker + Co-Reasoning + Red-Team + 観察可能性)
+- BRAIN-32: 7/7 ✅ (= **NotebookLM 蓄積実稼働** / Query 機構強化)
+- SYNERGY-30: 7/7 ✅
+- INDIE-29: 7/7 ✅
+
+### 次回 candidate (= part 150 候補)
+
+1. sensitive 第 3 例 #1400 強靭 AI ペルソナ ハイステークス ship (= 高 stakes 領域 / 倫理 review template 第 3 例)
+2. WBS overdue batch 7 (= 期限 +7-10 日 next 15-20 件)
+3. NotebookLM 蓄積追加 (= part 143 spec #1316 + #1345 を main merge 後投入 / 計 10 sources 完成)
+4. Codex sprint 1 翌日 KPI 計測 (= 24h+ 経過後 / 5+ merge 目標)
+5. Win Claude territory deferred 残 (= #1397 公式サポート docs / #1399 機能的感情) part 151+ ship 計画
+
+INSTANCE-ROLES 厳守: Win Claude 1 sensitive spec ship + 1 CLOSE + NotebookLM 8 sources actual / Win Codex 0 件追加 hand off.
+COMPACTION-RESUME: 90min ガード接近 → wrap-up 着地。
+
+
 
 
 
