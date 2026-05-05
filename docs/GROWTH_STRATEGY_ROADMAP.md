@@ -27429,6 +27429,147 @@ INSTANCE-ROLES 厳守: Win Claude territory (= 5-question matrix Q1+Q2+Q5 YES) �
 [STASH-SAFETY] 遵守 (= stash 不使用 / 1 commit で完結).
 [COMPACTION-RESUME] 90min ガード遵守 → 本 part で wrap-up 着地予定.
 
+## Win版#132 part 153 (= DESIGN_SPEC_PATTERNS.md 統合 / 11 spec 抽象化 layer / 第 5 改訂 / 2026-05-05)
+
+**Instance**: Win Claude (worktree: `.claude/worktrees/practical-johnson-ea0e25` / branch: `claude/spec-patterns-part153` / base = #2022 head 階層化第 3 段)
+**Session**: part 153 (= 抽象化 layer 着地 / pattern 体系化 / 0 spec ship + 1 meta-meta-spec 着地)
+
+### 着地内容
+
+1. **`docs/DESIGN_SPEC_PATTERNS.md` 新設** (= 388 行 / 9 chapter / designer-facing)
+   - Ch1: 5-question matrix (= Win Claude vs Win Codex territory / 11/11 false positive 0)
+   - Ch2: 通常 5 section 標準 (= 11/11 順守 / 順入れ替えゼロ)
+   - Ch3: sensitive §2 倫理 review section (= 4 領域 + 共通 4/4 NOT to do + MUST do)
+   - Ch4: 既存基盤 3 段階分類 (= 整備済 / 部分 / 未整備 / Codex 工数 -30% empirical)
+   - Ch5: PR 階層化 spec ship workflow (= 1 session 2+ spec ship / chain depth ≤ 3)
+   - Ch6: 11 spec 工数 KPI (= 通常 8.5h / sensitive 12.0h / leverage 7-15x)
+   - Ch7: pattern 横展開 + 第 6 改訂候補
+   - Ch8: PHILOSOPHY-22 / BRAIN-32 / SYNERGY-30 alignment
+   - Ch9: 関連 docs link
+
+2. **`docs/DESIGN_SPEC_TEMPLATE.md` 簡素化** (= 216 行 → 131 行 / -39% / operator-facing 専念)
+   - §4A 全部削除 (= sensitive 4 例 NOT to do/MUST do は PATTERNS.md Ch3 へ移動)
+   - §3 ritual 詳細削減 (= PATTERNS.md Ch2 へ link)
+   - 11 spec axis 早見表 + 起票 ritual 8 step + 失敗 pattern table は維持 (= operator 即参照)
+
+3. **2 doc 体制確立** (= part 153 第 1 改訂)
+   - TEMPLATE = operator-facing (= 1 spec 起票時 ritual + 早見表)
+   - PATTERNS = designer-facing (= 抽象 layer + 異領域共通項 + NotebookLM 蓄積向)
+   - 役割重複解消 / 個別 reviewer cognitive load 削減
+
+### Pattern empirical validation 数値 (= 11 spec base)
+
+- 5-question matrix: 11/11 false positive 0
+- 通常 5 section 順守: 11/11 (= 100%)
+- sensitive §2 倫理 review section 順守: 4/4 (= 100%)
+- 既存 hook 拡張 pattern (= part 152 PRECOMPACT 第 1 例): Codex 工数 -30% (= 11h → 8h 短縮)
+- 階層化 PR pattern (= part 152 + 153): chain depth 3 達成 / reviewer cognitive load 1/N
+- 起票 leverage: Win Claude 30-60min → Codex 5-14h (= **7-15x**)
+
+### PR 階層化 chain (= 第 3 段)
+
+```
+main
+  └── #2017 (claude/amazing-hypatia-84b710)  ← part 144-151 / 9 spec
+        └── #2022 (claude/crazy-jennings-93b113)  ← part 152 / 2 spec
+              └── #2024 (claude/spec-patterns-part153)  ← part 153 / PATTERNS 統合 (本 PR)
+```
+
+= **PR 階層化 spec ship pattern 第 3 例** (= part 152 第 2 例 → part 153 第 3 例 / chain depth 3 達成).
+
+### Philosophy Alignment
+
+- PHILOSOPHY-22: 8/9 ✅ (= 7+/9 ゲート達成 / #2 + #4-9 / 抽象化 layer = #5 商品=価値 + #7 資産負債 直撃)
+- AI-DEV-23: 6+/7 ✅ (= 通常 spec / sensitive ではない)
+- BRAIN-32: 7/7 ✅ (= NotebookLM 蓄積予定 / pattern catalog 永続化)
+- SYNERGY-30: 5+/7 ✅ (= cross-instance-pr / 5 正本 / leverage 計測値で記録)
+- INDIE-29: 6+/7 ✅ (= shipping 速度 / 1 session 完結 / dogfood)
+
+### 追加: batch 8 cross-instance-pr + 4 件 CLOSE (= 同 part 153 / WBS overdue oldest 17 件 triage)
+
+- **`docs/cross-instance-prs/20260505_codex_overdue_wbs_handoff_batch8.md` 起票** (= oldest #768-847 17 件 / batch 7 → batch 8)
+- **4 件 CLOSE (= 既存 spec 統合)**:
+  - #841 (= AIセッション自動コンパクション + オンボーディング資料) → #835 + #1564 PreCompact spec で大半カバー
+  - #845 (= MCP OAuth/DCR 認証ハブ) → #1577 MCP-AUTH-27 spec で全カバー
+  - #846 (= ツール実行権限スコープ + 承認ゲート) → #1577 で全カバー
+  - #847 (= prompt injection 検知 + 監査 log) → #1577 で全カバー
+- **Codex hand off = 4 件** (= #794 Opus 4.7 高解像度画像 / #834 最小E2E gate / #840 E2E 自動検証 gate / #844 LoRA 実験基盤) = sprint 2 候補
+- **Win Claude defer = 9 件** (= #768 / #772 / #773 / #832 / #833 / #835 / #839 / #842 / #843)
+  - sensitive 第 5-7 候補: #773 PII ガードレール / #839 sandbox / #843 redteam
+  - 通常 spec 候補: #768 / #772 / #832 / #833 / #835 / #842
+- **5-question matrix 累計 = 96 件** (= batch 1-7 79 件 + batch 8 17 件 / Codex 比率 65% / Win Claude 比率 27%)
+
+triage rate: 17 件 / ~25 min = **1.5 min/issue** (= batch 7 比 -16% 高速化 / 既存 spec 統合 pattern 確立効果).
+
+### 追加: batch 9 cross-instance-pr + 3 件 CLOSE (= 同 part 153 / WBS overdue next 30 件 triage)
+
+- **`docs/cross-instance-prs/20260505_codex_overdue_wbs_handoff_batch9.md` 起票** (= #916-1193 next 30 件)
+- **3 件 CLOSE (= 既存 script/spec 統合)**:
+  - #976 → `scripts/knowledge_vault_lint.py` + `/wiki-lint` skill (= part 105 + part 140) 全カバー
+  - #1173 → 同 wiki-lint カバー (= #976 dup)
+  - #1180 → #1124 dup (= GPA framework + dashboard 同主題 / canonical = #1124)
+- **Codex hand off = 12 件** (= sprint 3 候補): #925 / #1125 / #1172 / #1174 / #1175 / #1182 / #1183 / #1184 / #1186 / #1187 / #1189 / #1190
+- **Win Claude defer = 14 件 (+1 既存実装拡張統合候補)**:
+  - **sensitive 第 8 候補**: #918 合成メディア倫理 (= consent + watermark / AI-VIDEO-29 6/6 必須)
+  - 通常 spec 候補: #916 / #917 / #924 / #975 / #1123 / #1124 / #1176 / #1177 / #1185 / #1192 / #1193
+  - 統合候補: #1178 → #842 (= context routing 同領域)
+  - 既存実装拡張: #1188 → effort_router (= part 145 PS#5 S115 拡張 spec)
+- **5-question matrix 累計 = 126 件** (= batch 1-9 / Codex 比率 59% / Win Claude 比率 33% / CLOSE 比率 9%)
+
+triage rate: 30 件 / ~30 min = **1.0 min/issue** (= batch 8 比 -33% 高速化 / 既存 script 横展開 CLOSE 学習 + dup pattern 訓練効果).
+
+### 段 4 追加: batch 10 cross-instance-pr + 5 件 CLOSE (= 同 part 153 / 過去最大 single-batch CLOSE)
+
+- **`docs/cross-instance-prs/20260505_codex_overdue_wbs_handoff_batch10.md` 起票** (= #1194-1226 next 30 件)
+- **5 件 CLOSE (= 過去最大 single-batch / spec leverage 強烈)**:
+  - #1194 + #1195 + #1196 → #1577 MCP-AUTH (= 1 sensitive spec 3 dup-close)
+  - #1207 → #1564 PreCompact (= 1 通常 spec 1 dup-close)
+  - #1213 → 既存 HANDOFF_BUNDLE_SPEC.md (= part 144 系)
+- **Codex hand off = 17 件** (= 過去最大 single-batch / sprint 4 候補)
+- **Win Claude defer = 8 件 (+4 統合候補)**:
+  - #1209 → #839 sandbox sub-spec (= sensitive 第 6 sub)
+  - #1212 → #1188 effort_router 拡張 (= 既存実装拡張 統合)
+  - #1215 → #1577 sub-spec (= MCP_AUTH consent 同領域)
+  - #1216 → #918 sub-spec (= 合成メディア倫理同領域 / sensitive 第 8 sub)
+- **5-question matrix 累計 = 156 件** (= Codex 58% / Win Claude 31% / CLOSE 10%)
+- **#1577 単独 6 dup-close 達成** (= sensitive 第 4 spec 1 本で leverage 6x = **過去最大 leverage record**)
+
+triage rate: 30 件 / ~12 min = **0.4 min/issue** (= batch 9 比 -60% 高速化 / 既存 spec 統合 pattern 完全習熟).
+
+### 同 part 153 四段着地 record (= 1 session 過去最大 throughput / 連続更新)
+
+- **段 1**: PATTERNS.md 統合 (= 抽象化 layer / 388 行 / 9 ch)
+- **段 2**: batch 8 triage (= oldest 17 件 / 累計 96 件 / 1.5 min/issue)
+- **段 3**: batch 9 triage (= next 30 件 / 累計 126 件 / 1.0 min/issue)
+- **段 4**: batch 10 triage (= next 30 件 / 累計 156 件 / **0.4 min/issue** = 過去最高速)
+
+合計 **77 件 triage + 12 件 CLOSE + PATTERNS 抽象化 layer 着地** = **1 session 過去最大 throughput** (= part 152 22h Codex 起票合計を工数密度で大幅超過).
+**#1577 leverage 6x record** (= sensitive 第 4 spec 1 本で 6 dup-close).
+
+### Pattern empirical validation 追加 (= part 153 batch 9)
+
+- 「既存 script 横展開 CLOSE」pattern 第 1 例: wiki-lint skill が #976 + #1173 二重 cover = leverage 2x
+- 「dup pair」検出 pattern: #1124 と #1180 = 同主題 / canonical 残し他 close
+- 「既存実装拡張 hint」pattern 第 1 例: #1188 → effort_router 拡張 / Win Claude が gap 評価 → spec
+- 「領域類似 → 統合提案」pattern: #1178 → #842 (= context routing 同領域)
+- triage rate 加速: batch 8 (= 1.5 min/issue) → batch 9 (= 1.0 min/issue) / 既存 infra 学習効果
+
+### 次回 candidate (= part 154 候補 / 拡張)
+
+1. **sprint 1+2+3 翌日 KPI 計測** (= 24h+ 後 / Codex 累計 hand off 16+ 件 = batch 8 4 + batch 9 12)
+2. **NotebookLM 14 sources 完成** (= chain merge 後)
+3. **memory-search-hub 10/10 hand off 監視**
+4. **#773 PII ガードレール sensitive 第 5 spec ship** (+ 第 6-8 候補 backlog: #839 sandbox / #843 redteam / #918 合成メディア倫理)
+5. **#833 コア/リーフ境界 / #832 評価データ品質ゲート / #1124 GPA dashboard / #1179 7 層 memory** = 通常 spec ship 候補
+6. **#1178 → #842 統合 + #1188 → effort_router 拡張** spec ship (= 統合 spec 第 1 例)
+7. **batch 10** = #1194+ next oldest 20-30 件 triage
+
+INSTANCE-ROLES 厳守: Win Claude territory (= Q1+Q2+Q5 YES = 抽象化 review + triage が中核成果物) 完全合致 / Win Codex 4 件 hand off scope §B で明示.
+[DYNAMIC-CLAIM] cap 1 件遵守 (= PATTERNS が cap 内 / batch 8 triage は cap 外 = part 143 確立).
+[WORKDIR-ISOLATION] 遵守 (= `.claude/worktrees/practical-johnson-ea0e25` 内作業 / 直前 PR head 階層化).
+[STASH-SAFETY] 遵守 (= stash 不使用 / 1 commit + amend で完結).
+[COMPACTION-RESUME] 90min ガード遵守 → 本 part で wrap-up 着地.
+
 
 
 
