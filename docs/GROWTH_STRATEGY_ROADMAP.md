@@ -26786,3 +26786,65 @@ Codex sprint 構成: 2 sprint × 5 営業日 = ~80h 推定 (= sprint1 低-中難
 INSTANCE-ROLES 厳守: Win Claude 設計 spec 2 件 ship / Win Codex 4 件 batch 4 hand off (推定 38h).
 COMPACTION-RESUME: 90min 以内 wrap-up 着地。
 
+## Win版#132 part 145 (= part 144 deferred 全消化 / 2026-05-05)
+
+### Summary
+
+User 14 度目同一要望「WBSのタスクを期限が近いものから進めてください。2インスタンス制も反映してください。」.
+part 144 で deferred した Win Claude territory 残 2 件 (#1366 + #1356) を [DYNAMIC-CLAIM] 2 件 cap 内 ship.
+**3 連続セッション (= part 143 + 144 + 145) で計 6 設計 spec ship** = Win Claude territory 累計 6 件全消化.
+
+### 設計 spec ship (= 2 件 / [DYNAMIC-CLAIM] cap 内)
+
+| # | 設計 spec doc | issue | scope |
+|---|---|---|---|
+| 1 | `docs/NARRATIVE_UI_ACTION_SPEC.md` | [#1366](https://github.com/kanta13jp1/my_web_app/issues/1366) | 抽象 action enum 6 種 + payload schema + Flutter dispatcher safe-handle + deny-by-default |
+| 2 | `docs/DEV_ENV_SETUP_GUIDE.md` | [#1356](https://github.com/kanta13jp1/my_web_app/issues/1356) | Win11 PowerShell setup script (6 step files) + proxy 5 症状 troubleshooting + README 導線 |
+
+### 累計 throughput (= 3 連続セッション)
+
+| part | Win Claude ship | Codex hand off (新規) | 5-question matrix |
+|---|---:|---:|---:|
+| part 143 | 2 (#1316 + #1345) | batch 3 (1 件 / #1286) | +2 |
+| part 144 | 2 (#1292 + #1348) | batch 4 (4 件) | +4 |
+| part 145 | 2 (#1366 + #1356) | 0 (= deferred 全消化) | +2 |
+| **合計** | **6** | **5 batch / 17 件** | **24 件 (= 1 session 過去最大)** |
+
+Win Claude 7 件全処理:
+- ✅ part 143: #1316 + #1345
+- ✅ part 144: #1292 + #1348
+- ✅ part 145: #1366 + #1356
+- 🟡 part 146+ candidate: 1 残 (= batch 1 territory / 詳細 batch 1 PR 参照)
+
+### Pattern 確立 (= part 145 で新規)
+
+- **「3 連続セッション 6 設計 spec」**: 1 work 大 + 1 work 小 で消化リズム確立
+- **「Win Claude territory 全消化」**: part 142-145 で deferred 1 件残し全 ship
+- **「設計 spec 5 section template 横展開」**: 思想 + 既存基盤 + Schema/UI + hand off + 9 原則 alignment + 受入 mapping
+- **「triage cap 外 + ship cap 内」discipline**: cap 抜け道なし / cross-instance-pr で route 委譲
+
+### Commit
+
+`docs(spec): part 145 — 2 設計 spec ship (#1366 #1356)` 予定.
+
+### Philosophy Alignment
+
+- PHILOSOPHY-22: 7+/9 ✅ (= #2 + #5 + #6 + #7 + 各 spec で個別 axis)
+- AI-CHARACTER-24: 3/8 (= #3 人格表現 + #5 会話自然性 + #6 倫理 gate / #1366 由来)
+- IMBUE-25: 4/7 (= #4 mentor + #6 CEO 感 + #7 流れ感 + 部分 #2 認知負荷削減)
+- INDIE-29: 7/7 ✅ (= 全 7 原則 / #1356 setup script で団体加入時 velocity 守備)
+- BRAIN-32: 7/7 ✅ (= 維持)
+- SYNERGY-30: 7/7 ✅ (= 維持)
+
+### 次回 candidate (= part 146 候補)
+
+1. WBS overdue 期限 +3-5 日 next 20 件 (= UI scroll 下) 5-question 適用 batch 5
+2. Codex sprint 1 進捗確認 (= batch 1-4 累計 17 件中 何件着手か)
+3. NotebookLM `jibun-master-brain` に 6 設計 spec template 蓄積 (= 標準形横展開)
+4. WSL Linux 環境向け dev setup guide (= part 145 #1356 補完)
+5. 設計 spec 適用後 Codex 実装 PR review (= 9 原則 alignment 検証 routine 化)
+
+INSTANCE-ROLES 厳守: Win Claude 設計 spec 2 件 ship / Win Codex 0 件追加 (= deferred 全消化).
+COMPACTION-RESUME: 90min ガード接近 → wrap-up 着地。
+
+
