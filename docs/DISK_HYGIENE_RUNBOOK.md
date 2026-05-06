@@ -187,6 +187,15 @@ python scripts/worktree_cleanup.py --json-out tmp/worktree-cleanup.json
 
 `.github/workflows/worktree-cleanup-cron.yml` は weekly で同 script を hosted Windows runner 上で dry-run → apply → `git worktree prune` まで実行し、Issue #1984 に summary を残す。GitHub hosted runner はローカル C: の worktree を直接削除できないため、**local cleanup は Codex/Claude Windows app session で同 script を dry-run → apply** する。
 
+### 3.8 Dev cache cleanup automation (= Issue #1984 axis C / Codex #1)
+
+`scripts/dev_cache_cleanup.py` は Flutter / npm / pnpm / pub / pip / NotebookLM cache の portable/CI 版。default は dry-run で、実削除は `--apply` 明示時のみ。
+
+- `flutter clean`: `pubspec.yaml` を持つ worktree が対象。`--include-worktrees` で全 worktree を見るが、dirty worktree は default skip。
+- `npm cache verify` / `pnpm store prune` / `dart pub cache clean --force` / `python -m pip cache purge`: tool が無い場合は soft skip。
+- NotebookLM cache: known cache/log/temp directory の child のみ、default 7 日超で prune。`storage_state.json` / cookie/token 系は protected。
+- `.github/workflows/dev-cache-cleanup-cron.yml`: hosted Windows runner で dry-run -> safe apply -> artifact upload -> Issue #1984 comment。GHA は local C: を直接 reclaim できないため、Windows app session / local scheduled task でも同 script を使う。
+
 ## 4. 監視 KPI
 
 毎セッション自動記録 (= `~/.claude/logs/disk-cleanup-YYYYMMDD.log`):
@@ -331,9 +340,9 @@ HDD 圧迫と並行して **RAM 圧迫** も Win 開発環境の継続課題. pa
 
 | axis | 内容 | 担当 | status |
 |---|---|---|---|
-| A | Worktree cleanup | Win Codex | **未着** (= cross-instance-pr part 155-b) |
+| A | Worktree cleanup | Win Codex | **✅ 着地** (= `scripts/worktree_cleanup.py` + weekly workflow) |
 | B | 動画ファイル削減 | n/a | #1724 待ち |
-| C | Cache 清掃 (= Flutter / npm / pip / notebooklm) | Win Codex | **部分着地** (= disk-cleanup Tier 1 で browser cache 適用 / npm/pnpm/pub は Tier 2 のみ) |
+| C | Cache 清掃 (= Flutter / npm / pip / notebooklm) | Win Codex | **✅ 着地** (= `scripts/dev_cache_cleanup.py` + weekly workflow / local apply required for C:) |
 | D | **Memory cleanup** | **Win Claude** | **✅ 着地 part 155-b** (= memory-cleanup.ps1 / 5 step / 閾値 gating) |
 | E | docs rotate (= cs-notes / daily-reports 90 日 archive) | Win Codex | **未着** |
 | F | transcript ローテーション | (= disk-cleanup step 5 で 30 日 gzip 化済 part 154-a) | ✅ |
