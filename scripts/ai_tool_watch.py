@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Watch official Claude Code and Codex pages for workflow-relevant changes.
+"""Watch official AI coding tool pages for workflow-relevant changes.
 
 The script is intentionally dependency-free so it can run in GitHub Actions,
 Codex sessions, Claude Code hooks, or a plain local shell.
@@ -70,6 +70,24 @@ SOURCES: list[Source] = [
         "Codex overview",
         "https://openai.com/codex/",
         "Codex",
+    ),
+    Source(
+        "cursor-changelog",
+        "Cursor changelog",
+        "https://cursor.com/changelog",
+        "Cursor",
+    ),
+    Source(
+        "gemini-code-assist-release-notes",
+        "Gemini Code Assist release notes",
+        "https://developers.google.com/gemini-code-assist/resources/release-notes",
+        "Gemini Code Assist",
+    ),
+    Source(
+        "devin-release-notes",
+        "Devin release notes",
+        "https://docs.devin.ai/release-notes",
+        "Devin",
     ),
 ]
 
@@ -263,6 +281,24 @@ def extract_latest_signal(source: Source, text: str) -> str:
         match = re.search(r"GPT-5\.5 and Codex app updates", text)
         if match:
             return "GPT-5.5 and Codex app updates"
+    if source.slug == "cursor-changelog":
+        match = re.search(r"\b(\d+(?:\.\d+)*)\s+([A-Z][a-z]+ \d{1,2}, 2026)\b", text)
+        if match:
+            return f"{match.group(1)} / {match.group(2)}"
+    if source.slug == "gemini-code-assist-release-notes":
+        match = re.search(
+            r"\b([A-Z][a-z]+ \d{1,2}, 2026)\s+VS Code Gemini Code Assist\s+([0-9.]+)",
+            text,
+        )
+        if match:
+            return f"VS Code Gemini Code Assist {match.group(2)} / {match.group(1)}"
+        match = re.search(r"\b([A-Z][a-z]+ \d{1,2}, 2026)\b", text)
+        if match:
+            return match.group(1)
+    if source.slug == "devin-release-notes":
+        match = re.search(r"\b([A-Z][a-z]+ \d{1,2}, 2026)\b", text)
+        if match:
+            return match.group(1)
     title = re.search(r"([A-Z][A-Za-z0-9 .,/+-]{8,90})", text)
     return title.group(1).strip() if title else "No title detected"
 
