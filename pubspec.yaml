@@ -75,6 +75,7 @@ flutter:
 
   assets:
     - web/assets/fonts/
+    - assets/legal/
     - assets/sounds/
     - docs/
     - docs/release-notes/

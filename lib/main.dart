@@ -50,6 +50,7 @@ import 'package:my_web_app/pages/comparison_page.dart';
 import 'package:my_web_app/pages/competitor_browse_page.dart';
 import 'package:my_web_app/pages/note_list_page.dart';
 import 'package:my_web_app/pages/philosophy_page.dart';
+import 'package:my_web_app/pages/privacy_policy_page.dart';
 import 'package:my_web_app/pages/ai_dev_principles_page.dart';
 import 'package:my_web_app/pages/feature_requests_page.dart';
 import 'package:my_web_app/pages/profile_settings_page.dart';
@@ -615,6 +616,11 @@ class _MyAppState extends State<MyApp> {
             return MaterialPageRoute(
               builder: (_) => const PhilosophyPage(),
               settings: settings,
+            );
+          case '/privacy':
+            return MaterialPageRoute(
+              builder: (_) => const PrivacyPolicyPage(),
+              settings: const RouteSettings(name: '/privacy'),
             );
           case '/ai-dev-principles':
             return MaterialPageRoute(
