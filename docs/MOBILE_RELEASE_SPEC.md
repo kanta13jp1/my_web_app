@@ -52,6 +52,8 @@ Phase 2 (2026 Q4): Open beta / production track 公開
 
 ⚠️ **Phase 0 blocker**: Privacy Policy URL の作成が `web/` route として追加必要 (= Win Codex hand-off task).
 
+✅ **part 160 進捗**: ドラフト本文は [`docs/PRIVACY_POLICY_DRAFT.md`](PRIVACY_POLICY_DRAFT.md) で着地済 (= Win版#132 part 160 / 2026-05-07). PHILOSOPHY-22 9/9 + AI-CHARACTER-24 8/8 + MCP-AUTH-27 10/10 + AI-DEV-23 7/7 ✅. Win Codex は `lib/pages/privacy_policy_page.dart` 実装 + ルーティング登録 + Firebase Hosting 公開 URL 確認のみ残. 詳細 hand-off 表はドラフト §17.
+
 ---
 
 ## 3. 審査要件 (= store review compliance)
