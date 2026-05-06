@@ -160,9 +160,29 @@ class WbsTask {
         githubIssueState: (m['github_issue_state'] as String?) ?? '',
       );
 
-  /// 遅延日数 (今日 - end_date / 完了済 or 期限なし は 0)
-  DateTime? get scheduleStartDate => plannedStartDate ?? startDate;
-  DateTime? get scheduleEndDate => plannedEndDate ?? endDate;
+  DateTime? get rawScheduleStartDate => plannedStartDate ?? startDate;
+  DateTime? get rawScheduleEndDate => plannedEndDate ?? endDate;
+
+  /// Display dates are normalized so the Gantt never shows start > finish.
+  DateTime? get scheduleStartDate {
+    final start = rawScheduleStartDate;
+    final end = rawScheduleEndDate;
+    if (start != null && end != null && start.isAfter(end)) return end;
+    return start;
+  }
+
+  DateTime? get scheduleEndDate {
+    final start = rawScheduleStartDate;
+    final end = rawScheduleEndDate;
+    if (start != null && end != null && start.isAfter(end)) return start;
+    return end;
+  }
+
+  bool get hasInvertedSchedule {
+    final start = rawScheduleStartDate;
+    final end = rawScheduleEndDate;
+    return start != null && end != null && start.isAfter(end);
+  }
 
   int get delayDays {
     final scheduleEnd = scheduleEndDate;
@@ -1874,8 +1894,8 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
   final Map<String, double> _colWidths = {
     '#': 32,
     'task': 200,
-    'startDate': 80,
-    'endDate': 80,
+    'startDate': 104,
+    'endDate': 104,
     'instance': 70,
     'progress': 50,
     'remaining': 200,
@@ -1888,8 +1908,8 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
   static const Map<String, double> _colMinWidths = {
     '#': 32,
     'task': 120,
-    'startDate': 60,
-    'endDate': 60,
+    'startDate': 92,
+    'endDate': 92,
     'instance': 50,
     'progress': 40,
     'remaining': 120,
@@ -1938,7 +1958,7 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
           .fold<double>(0, (sum, e) => sum + (_colWidths[e.key] ?? 0)) +
       16; // padding
   static const _rowHeight = 32.0;
-  static const _headerHeight = 56.0;
+  static const _headerHeight = 64.0;
   static const _dayWidth = 6.0;
   static const _bgColor = Color(0xFF0F0F14);
   static const _panelColor = Color(0xFF1A1A24);
@@ -2123,20 +2143,31 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
   }
 
   DateTime get _timelineStart {
-    // 今日の 30日前 を起点 (過去タスクも若干見える)
+    // 今日の 30日前を基準に、表示中タスクの最古日も必ず含める。
     final now = DateTime.now();
-    return DateTime(now.year, now.month, 1).subtract(const Duration(days: 30));
+    final fallback =
+        DateTime(now.year, now.month, 1).subtract(const Duration(days: 30));
+    final taskDates = widget.tasks
+        .expand((t) => [t.scheduleStartDate, t.scheduleEndDate])
+        .whereType<DateTime>();
+    if (taskDates.isEmpty) return fallback;
+    final earliest = taskDates.reduce((a, b) => a.isBefore(b) ? a : b);
+    final padded = earliest.subtract(const Duration(days: 14));
+    return padded.isBefore(fallback) ? padded : fallback;
   }
 
   DateTime get _timelineEnd {
-    if (widget.milestones.isEmpty) {
-      return DateTime.now().add(const Duration(days: 210));
-    }
-    final latest = widget.milestones
-        .map((m) => m.targetDate)
-        .reduce((a, b) => a.isAfter(b) ? a : b);
-    // 最終マイルストーン +30日
-    return latest.add(const Duration(days: 30));
+    final fallback = DateTime.now().add(const Duration(days: 210));
+    final dates = [
+      ...widget.milestones.map((m) => m.targetDate),
+      ...widget.tasks
+          .expand((t) => [t.scheduleStartDate, t.scheduleEndDate])
+          .whereType<DateTime>(),
+    ];
+    if (dates.isEmpty) return fallback;
+    final latest = dates.reduce((a, b) => a.isAfter(b) ? a : b);
+    final padded = latest.add(const Duration(days: 30));
+    return padded.isAfter(fallback) ? padded : fallback;
   }
 
   int get _totalDays => _timelineEnd.difference(_timelineStart).inDays;
@@ -2576,9 +2607,9 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
       'endDate': '完了',
       'instance': '担当',
       'progress': '進捗',
-      'remaining': '残作業',
-      'depends': '依存',
-      'recovery': 'リカバリー',
+      'remaining': '次作業',
+      'depends': 'ブロック',
+      'recovery': '状態/対処',
       'flags': '⚠',
     };
     return Container(
@@ -2716,6 +2747,8 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
     final filtered = widget.hideCompleted && totalCount > taskCount;
     final countLabel =
         filtered ? '未完了 $taskCount / 全体 $totalCount 件' : '$taskCount タスク';
+    final invertedCount =
+        widget.tasks.where((t) => t.hasInvertedSchedule).length;
     return Container(
       color: _panelColor,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
@@ -2747,6 +2780,31 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
               height: 1.5,
             ),
           ),
+          if (invertedCount > 0) ...[
+            const SizedBox(width: 8),
+            Tooltip(
+              message: '開始予定が完了予定より後の元データを、画面では開始<=完了に補正表示しています。',
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFBBF24).withValues(alpha: 0.14),
+                  borderRadius: BorderRadius.circular(999),
+                  border: Border.all(
+                    color: const Color(0xFFFBBF24).withValues(alpha: 0.55),
+                  ),
+                ),
+                child: Text(
+                  '日付補正 $invertedCount件',
+                  style: const TextStyle(
+                    color: Color(0xFFFBBF24),
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    height: 1.3,
+                  ),
+                ),
+              ),
+            ),
+          ],
           const SizedBox(width: 16),
           // Win版#131 part 12: 未完了 only toggle
           Row(
@@ -2970,14 +3028,14 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
         children: [
           header('#', '#', align: TextAlign.center),
           // task 名のみ Expanded
-          header('task', 'タスク名', expanded: true),
+          header('task', 'タスク', expanded: true),
           header('startDate', '開始予定', align: TextAlign.center),
           header('endDate', '完了予定', align: TextAlign.center),
           header('instance', '担当', align: TextAlign.center),
           header('progress', '進捗', align: TextAlign.center),
-          header('remaining', '残作業'),
-          header('depends', '依存'),
-          header('recovery', 'リカバリー案 / 状態'),
+          header('remaining', '次にやること'),
+          header('depends', 'ブロック要因'),
+          header('recovery', '状態 / 対処'),
           header('flags', '⚠', align: TextAlign.center),
         ],
       ),
@@ -3138,15 +3196,22 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
           // Win版#132 part 86: 各 cell を Tooltip で wrap (= 列別 hover content 表示 / recovery 固定 bug 修正)
           if (_colVisible['startDate'] ?? true)
             Tooltip(
-              message: '開始予定: ${_formatDate(task.scheduleStartDate)}',
+              message: task.hasInvertedSchedule
+                  ? '開始予定: ${_formatDate(task.scheduleStartDate)}\n元データは開始 ${_formatDate(task.rawScheduleStartDate)} > 完了 ${_formatDate(task.rawScheduleEndDate)} のため補正表示'
+                  : '開始予定: ${_formatDate(task.scheduleStartDate)}',
               waitDuration: const Duration(milliseconds: 350),
               child: SizedBox(
                 width: _colWidths['startDate'] ?? 80,
                 child: Text(
                   _formatDate(task.scheduleStartDate),
-                  style: const TextStyle(
-                    color: Color(0xFFB0B0C0),
+                  style: TextStyle(
+                    color: task.hasInvertedSchedule
+                        ? const Color(0xFFFBBF24)
+                        : const Color(0xFFB0B0C0),
                     fontSize: 11,
+                    fontWeight: task.hasInvertedSchedule
+                        ? FontWeight.w700
+                        : FontWeight.normal,
                     height: 1.5,
                   ),
                   textAlign: TextAlign.center,
@@ -3155,20 +3220,24 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
             ),
           if (_colVisible['endDate'] ?? true)
             Tooltip(
-              message: task.delayDays > 0
-                  ? '完了予定: ${_formatDate(task.scheduleEndDate)} (${task.delayDays}日遅延)'
-                  : '完了予定: ${_formatDate(task.scheduleEndDate)}',
+              message: task.hasInvertedSchedule
+                  ? '完了予定: ${_formatDate(task.scheduleEndDate)}\n元データは開始 ${_formatDate(task.rawScheduleStartDate)} > 完了 ${_formatDate(task.rawScheduleEndDate)} のため補正表示'
+                  : task.delayDays > 0
+                      ? '完了予定: ${_formatDate(task.scheduleEndDate)} (${task.delayDays}日遅延)'
+                      : '完了予定: ${_formatDate(task.scheduleEndDate)}',
               waitDuration: const Duration(milliseconds: 350),
               child: SizedBox(
                 width: _colWidths['endDate'] ?? 80,
                 child: Text(
                   _formatDate(task.scheduleEndDate),
                   style: TextStyle(
-                    color: task.delayDays > 0
-                        ? const Color(0xFFEF4444)
-                        : const Color(0xFFB0B0C0),
+                    color: task.hasInvertedSchedule
+                        ? const Color(0xFFFBBF24)
+                        : task.delayDays > 0
+                            ? const Color(0xFFEF4444)
+                            : const Color(0xFFB0B0C0),
                     fontSize: 11,
-                    fontWeight: task.delayDays > 0
+                    fontWeight: task.hasInvertedSchedule || task.delayDays > 0
                         ? FontWeight.w700
                         : FontWeight.normal,
                     height: 1.5,
@@ -3236,10 +3305,12 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
                   padding: const EdgeInsets.only(left: 4, right: 4),
                   child: Text(
                     task.dependsOnTitles.isEmpty
-                        ? '—'
-                        : '↳ ${task.dependsOnTitles.join(", ")}',
-                    style: const TextStyle(
-                      color: Color(0xFFA855F7),
+                        ? 'なし'
+                        : task.dependsOnTitles.join(' / '),
+                    style: TextStyle(
+                      color: task.dependsOnTitles.isEmpty
+                          ? const Color(0xFF64748B)
+                          : const Color(0xFFA855F7),
                       fontSize: 10,
                       height: 1.5,
                     ),
@@ -3298,38 +3369,51 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
         ),
       );
     }
-    return Padding(
-      padding: const EdgeInsets.only(left: 4, right: 4),
-      child: InkWell(
-        onTap: () => _sendInstructionToInstance(task, field),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-          decoration: BoxDecoration(
-            color: const Color(0xFF3D5AFE).withValues(alpha: 0.15),
-            borderRadius: BorderRadius.circular(3),
-            border: Border.all(
-              color: const Color(0xFF3D5AFE).withValues(alpha: 0.4),
-              width: 0.5,
-            ),
-          ),
-          child: const Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.send_outlined, size: 10, color: Color(0xFF60A5FA)),
-              SizedBox(width: 3),
-              Flexible(
-                child: Text(
-                  '指示送信',
-                  style: TextStyle(
-                    color: Color(0xFF60A5FA),
-                    fontSize: 9,
-                    fontWeight: FontWeight.w600,
-                    height: 1.3,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
+    final label = field == 'remaining_work' ? '未記入' : '案なし';
+    final tooltip = field == 'remaining_work'
+        ? '次にやることが未記入です。クリックすると担当へ記入依頼を作成します。'
+        : '状態 / 対処が未記入です。クリックすると担当へ記入依頼を作成します。';
+    return Tooltip(
+      message: tooltip,
+      waitDuration: const Duration(milliseconds: 350),
+      child: Padding(
+        padding: const EdgeInsets.only(left: 4, right: 4),
+        child: InkWell(
+          onTap: () => _sendInstructionToInstance(task, field),
+          borderRadius: BorderRadius.circular(3),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+            decoration: BoxDecoration(
+              color: const Color(0xFF334155).withValues(alpha: 0.28),
+              borderRadius: BorderRadius.circular(3),
+              border: Border.all(
+                color: const Color(0xFF64748B).withValues(alpha: 0.35),
+                width: 0.5,
               ),
-            ],
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(
+                  Icons.edit_note_outlined,
+                  size: 11,
+                  color: Color(0xFF94A3B8),
+                ),
+                const SizedBox(width: 3),
+                Flexible(
+                  child: Text(
+                    label,
+                    style: const TextStyle(
+                      color: Color(0xFFCBD5E1),
+                      fontSize: 9,
+                      fontWeight: FontWeight.w600,
+                      height: 1.3,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -3485,7 +3569,7 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
 
   String _formatDate(DateTime? d) {
     if (d == null) return '—';
-    return '${d.month.toString().padLeft(2, '0')}/${d.day.toString().padLeft(2, '0')}';
+    return '${d.year}/${d.month.toString().padLeft(2, '0')}/${d.day.toString().padLeft(2, '0')}';
   }
 
   Widget _recoveryCell(WbsTask task) {
@@ -3500,6 +3584,22 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
             height: 1.5,
           ),
           maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+      );
+    }
+    if (task.hasInvertedSchedule) {
+      return const Padding(
+        padding: EdgeInsets.only(left: 4),
+        child: Text(
+          '日付補正: 開始<=完了で表示',
+          style: TextStyle(
+            color: Color(0xFFFBBF24),
+            fontSize: 10,
+            fontWeight: FontWeight.w700,
+            height: 1.5,
+          ),
+          maxLines: 2,
           overflow: TextOverflow.ellipsis,
         ),
       );
@@ -3777,7 +3877,8 @@ class _GanttGridPainter extends CustomPainter {
   bool shouldRepaint(covariant _GanttGridPainter oldDelegate) =>
       oldDelegate.todayX != todayX ||
       oldDelegate.start != start ||
-      oldDelegate.end != end;
+      oldDelegate.end != end ||
+      oldDelegate.dayWidth != dayWidth;
 }
 
 class _MonthHeaderPainter extends CustomPainter {
@@ -3837,8 +3938,9 @@ class _MonthHeaderPainter extends CustomPainter {
 
     // 日/週ヘッダー (下段)
     const weekLabelStyle = TextStyle(
-      color: Color(0xFF909098),
+      color: Color(0xFFB8B8C8),
       fontSize: 9,
+      fontWeight: FontWeight.w600,
       height: 1.5,
     );
     DateTime day = start;
@@ -3847,15 +3949,33 @@ class _MonthHeaderPainter extends CustomPainter {
       if (day.weekday == DateTime.monday && dayWidth >= 5) {
         final tp = TextPainter(
           text: TextSpan(
-            text: '${day.day}',
+            text:
+                '${day.month.toString().padLeft(2, '0')}/${day.day.toString().padLeft(2, '0')}',
             style: weekLabelStyle,
           ),
           textDirection: TextDirection.ltr,
         )..layout();
-        tp.paint(canvas, Offset(x + 1, 30));
+        tp.paint(canvas, Offset(x + 2, 35));
       }
       day = day.add(const Duration(days: 1));
       x += dayWidth;
+    }
+
+    final tickPaint = Paint()
+      ..color = const Color(0xFF52525F)
+      ..strokeWidth = 1;
+    DateTime tickDay = start;
+    double tickX = 0;
+    while (tickDay.isBefore(end)) {
+      if (tickDay.weekday == DateTime.monday || tickDay.day == 1) {
+        canvas.drawLine(
+          Offset(tickX, size.height - 10),
+          Offset(tickX, size.height - 1),
+          tickPaint,
+        );
+      }
+      tickDay = tickDay.add(const Duration(days: 1));
+      tickX += dayWidth;
     }
 
     // ヘッダー下の太線
@@ -3868,8 +3988,8 @@ class _MonthHeaderPainter extends CustomPainter {
     // 月/日セクション境界
     final midLinePaint = Paint()..color = const Color(0xFF2A2A36);
     canvas.drawLine(
-      const Offset(0, 26),
-      Offset(size.width, 26),
+      const Offset(0, 30),
+      Offset(size.width, 30),
       midLinePaint,
     );
 
@@ -3890,7 +4010,7 @@ class _MonthHeaderPainter extends CustomPainter {
       final todayLabel = TextPainter(
         text: TextSpan(
           text:
-              '今日 ${today.month.toString().padLeft(2, '0')}/${today.day.toString().padLeft(2, '0')}',
+              '今日 ${today.year}/${today.month.toString().padLeft(2, '0')}/${today.day.toString().padLeft(2, '0')}',
           style: const TextStyle(
             color: Color(0xFFFF6B35),
             fontSize: 10,
@@ -3926,6 +4046,7 @@ class _MonthHeaderPainter extends CustomPainter {
   bool shouldRepaint(covariant _MonthHeaderPainter oldDelegate) =>
       oldDelegate.start != start ||
       oldDelegate.end != end ||
+      oldDelegate.dayWidth != dayWidth ||
       oldDelegate.today != today;
 }
 
