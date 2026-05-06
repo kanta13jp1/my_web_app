@@ -28092,3 +28092,38 @@ parallel cap 4/8/12 は density 3.86/7.34/3.48 per day で適正 → 調整不�
 3. Plugin cache > 14 days (= 542.7 MB / 最大 win)
 
 ROI: 1 session ~1 GB reclaim / SessionStart+End dual で週 14-28 GB.
+
+## Win版#132 part 162 (Win Claude / 2026-05-07 / 91 part 連続 dogfood)
+
+### 着地サマリ
+
+1. **PR #2089 conflict resolve + merge** — `docs/DISK_HYGIENE_RUNBOOK.md` の §3.6 衝突 (= part 161 hygiene 3 改善 vs Issue #1984 axis A worktree_cleanup.py) を「両 side keep + renumber」で統合 (= part 161 §3.6 / Codex worktree_cleanup §3.7)。merge commit `87bc5244d`。
+2. **Issue #1495 Phase 0 status comment** — 2026-05-01 以降の mobile 進捗 stale を確認。Win Claude 完了分 (= part 160 + 161 + 162 / Privacy Policy + アプリアイコン + Codex hand-off doc 2 件) を summary table で post。Codex hand-off (= /privacy route + flutter_launcher_icons) 期限 2026-05-25 残 18 日。
+3. **Monthly memory consolidation** — `MEMORY.md` 341 lines / 87.4 KB → 78 lines / 7.9 KB (= -77% / -91%)。`MEMORY_202605_archive.md` 271 lines / 137 entries 新設 (= dormant instance PS#1-6 + VSCode + Win版 part 68-138 移動)。`[MEMORY-DECAY]` rule dogfood。
+
+### Pattern catalog 追加
+
+- **「conflict 内容 = 両 side 独立 section / 統合 = renumber」pattern** 第 1 例 (= part 162 / DISK_HYGIENE_RUNBOOK §3.6 vs §3.7)
+- **「PR worktree が別 dir / 当 worktree から merge fail → 別 worktree へ移動」pattern** (= 1 repo 複数 worktree 環境で `cd <branch worktree>` が安全)
+- **「monthly memory consolidation = active vs archive 分離」pattern** (= active = 現行 instance 直近 1 週間 + critical feedback / archive = dormant instance + 30+ days / `[MEMORY-DECAY]` 200+ entries split rule dogfood)
+
+### Commits
+
+- merge commit `87bc5244d` (= PR #2089 squash merge / part 161 アプリアイコン + Codex hand-off doc)
+
+### Philosophy Alignment
+
+- **PHILOSOPHY-22 9/9 ✅** (= mentor + 6 部署 + KPI / Win Claude territory 専念)
+- **AI-CHARACTER-24 8/8 ✅** (= privacy policy ship 継続)
+- **MCP-AUTH-27 10/10 ✅** (= 既存 hand-off doc reaffirm)
+- **AI-DEV-23 7/7 ✅** (= trace_id + audit log 既存遵守)
+- **BRAIN-32 7/7 ✅** (= memory hygiene 月次 cycle dogfood / `[MEMORY-DECAY]` rule)
+
+### 次回 candidate (= part 163)
+
+1. Codex flutter_launcher_icons + privacy route 進捗 follow (= 期限 2026-05-25 残 18 日)
+2. Issue #1495 Phase 0 完全閉ループ確認 (= Codex 2 PR merge 後 close)
+3. /project-gantt 1000 cap UI 件数表示問題 (= part 158 carry-over)
+4. Issue #1563 Codex PR #2088 review (= Visual E2E gate)
+
+**91 part 連続 dogfood** (= part 75 → part 162 / 2 month + 連続)
