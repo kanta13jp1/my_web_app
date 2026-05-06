@@ -28365,3 +28365,44 @@ User 要望「continue + 手動作業削減」契機 / hygiene 4 軸目 ship:
 8. Issue #1784 Claude Code Masterclass NB digest (= notebooklm CLI auth restore 後)
 
 **97 part 連続 dogfood** (= part 75 → part 168 / 2 month + 連続).
+
+## Win版#132 part 169 (Win Claude / 2026-05-07 / 98 part 連続 dogfood)
+
+### 着地サマリ
+
+User 要望「できる限り手動の作業をなくしていきたい」直接対応で 1 件 ship:
+
+1. **Cross-Instance Hand-off Auto-Ping Cron 設計 spec ship** — Win Claude session の主要 manual triage (= Codex hand-off PR daily query + ping trigger calendar 監視 + 期限残 7 日 ping comment / 5-10 min/session) を GHA cron + Python script で自走化する設計仕様。
+   - `docs/CROSS_INSTANCE_HANDOFF_MONITOR_SPEC.md` 新規 (= 8 section / Pattern 検出 logic + ping comment template + idempotent gate + safety cap 3 種)
+   - `docs/cross-instance-prs/20260507_codex_handoff_monitor_cron_handoff_part169.md` 起票
+   - `Phase 1 手動 → Phase 2 自走化分離 dogfood」pattern 第 9 例 (= 累積 ingest / lint / compile / query / scheduled-residuals / feature-review-rotation / ai-tool-changelog / dormant-grace / hand-off-monitor)
+
+### Pattern catalog 追加
+
+- **「Win Claude session manual triage 自走化」pattern 第 1 例 (part 169)** — daily 5-10 min の Codex hand-off PR 監視 + ping を GHA cron で完全自動化 / Win Claude territory が「設計 spec only / 実装 Codex / 運用 cron」に純化
+- **「Phase 1→2 dogfood 累積 9 例」milestone** — Karpathy 4 cycle (ingest / lint / compile / query) + 5 ops (residuals / feature-review / ai-tool-changelog / dormant-grace / **hand-off-monitor**) で 自走化 infra 完成
+
+### Commits (= 本 part)
+
+- (本 commit hash 未確定 / spec 1 + hand-off 1 + ROADMAP append / 3 file)
+
+### Philosophy Alignment
+
+- **PHILOSOPHY-22 9/9 ✅** (= mentor + 6 部署 / IPO 信頼 = fleet visibility 自動化)
+- **AI-DEV-23 7/7 ✅** ([EF-FIRST] 不要 / dependency-free / observability via action log)
+- **VIBE-30 7/7 ✅** (MVP scope 厳守 / dry-run default / safety cap 3 種 / idempotent gate)
+- **INDIE-29 7/7 ✅** (shipping 速度: spec 1 + hand-off 1 + ROADMAP / 1 session 完結)
+- **SYNERGY-30 7/7 ✅** (Win Claude design → Win Codex 実装 routing / Phase 6 自走化第 9 例)
+- **BRAIN-32 7/7 ✅** (memory pattern → 自動化 dogfood / triage default flow → cron 移行)
+- **PLATFORM-31 7/7 ✅** ([EF-CAP-50] 維持 / 新 EF なし)
+
+### 次回 candidate (= part 170)
+
+1. PR #2100 merge (= hand-off monitor cron spec)
+2. **5/14 (= part 163 期限 残 7 日 / 部分 ping trigger date)** で ai_tool_watch SOURCES Codex ping (= cron 完成前 manual fallback)
+3. dormant grace + wbs.list_tasks (= 1 week 経過) も併せて ping
+4. Codex 6+1 hand-off PR 一括 query (= 本 hand-off 含む)
+5. WSL VHDX 圧縮 + Docker prune (= hygiene 5 軸目候補)
+6. Issue #1495 Phase 0 完全閉ループ確認
+
+**98 part 連続 dogfood** (= part 75 → part 169 / 2 month + 連続).
