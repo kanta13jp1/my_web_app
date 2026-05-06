@@ -28,9 +28,34 @@ checks:
   code changed without an E2E file or an exception reason.
 - `Public E2E stability smoke`: runs the production public smoke test three
   times with Playwright to catch flaky shell, routing, or hosting regressions.
+- `Visual E2E evidence`: captures desktop and mobile screenshots for the
+  landing, home, auth, Notion/WBS, and agent-org equivalents, records console
+  errors, request failures, HTTP 5xx responses, `getAnimations()` settle state,
+  and a low-FPS screenshot sequence for dynamic UI review.
 
 Repository branch protection should require both checks once the workflow has
 landed on `main`.
+
+## Visual Evidence Contract
+
+For UI-facing PRs, include the `Visual E2E Evidence` checklist in the PR body.
+The default route coverage is:
+
+- landing: `/`
+- home: `/home`
+- auth: `/two-factor-auth`
+- Notion/WBS equivalent: `/project-gantt`
+- agent-org equivalent: `/agents`
+
+When a route is renamed, use the closest public equivalent and name it in the PR
+body. The Playwright report uploads `playwright-report/` and `test-results/`,
+including stable screenshots, low-FPS frames, and JSON evidence snapshots. CI
+also writes `playwright-report/issue-summary.md` so failures can be copied into
+a GitHub Issue without rereading the full report.
+
+`getAnimations()` is used when the browser supports it. If a page has no active
+CSS/Web Animations, the evidence snapshot records `total: 0`; this is the
+documented fallback for static SEO shell pages.
 
 ## AI Author Prompt
 

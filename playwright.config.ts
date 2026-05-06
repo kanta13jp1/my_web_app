@@ -1,6 +1,8 @@
 import { defineConfig, devices } from '@playwright/test';
 
 const baseURL = process.env.E2E_BASE_URL ?? 'https://my-web-app-b67f4.web.app';
+const jsonOutputFile =
+  process.env.PLAYWRIGHT_JSON_OUTPUT_NAME ?? 'playwright-report/results.json';
 
 export default defineConfig({
   testDir: './test/e2e',
@@ -12,7 +14,11 @@ export default defineConfig({
   workers: 1,
   retries: process.env.CI ? 2 : 1,
   reporter: process.env.CI
-    ? [['list'], ['html', { open: 'never' }]]
+    ? [
+        ['list'],
+        ['html', { open: 'never' }],
+        ['json', { outputFile: jsonOutputFile }],
+      ]
     : [['list'], ['html', { open: 'never' }]],
   use: {
     baseURL,
