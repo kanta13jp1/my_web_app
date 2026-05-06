@@ -2249,7 +2249,9 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
                     _leftPanelWidth + minTimelineViewport,
                   );
                   final timelineViewportWidth = math.max(
-                      minTimelineViewport, wholeWidth - _leftPanelWidth);
+                    minTimelineViewport,
+                    wholeWidth - _leftPanelWidth,
+                  );
                   return Scrollbar(
                     controller: _overallHScroll,
                     thumbVisibility: true,
@@ -2315,7 +2317,8 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
                                                     end: _timelineEnd,
                                                     dayWidth: _dayWidth,
                                                     todayX: _dateToX(
-                                                        DateTime.now()),
+                                                      DateTime.now(),
+                                                    ),
                                                   ),
                                                 ),
                                               ),
@@ -2502,11 +2505,14 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
     final buf = StringBuffer()
       ..writeln('### 即時診断')
       ..writeln(
-          '- 表示中: ${tasks.length}件 / 未完了: ${open.length}件 / 平均進捗: $avgProgress%')
+        '- 表示中: ${tasks.length}件 / 未完了: ${open.length}件 / 平均進捗: $avgProgress%',
+      )
       ..writeln(
-          '- 遅延: ${delayed.length}件 / 期限7日以内: ${dueSoon.length}件 / 日付補正: $inverted件')
+        '- 遅延: ${delayed.length}件 / 期限7日以内: ${dueSoon.length}件 / 日付補正: $inverted件',
+      )
       ..writeln(
-          '- 次にやること未記入: $noNext件 / 状態・対処未記入: $noAction件 / ブロック要因あり: $blockers件');
+        '- 次にやること未記入: $noNext件 / 状態・対処未記入: $noAction件 / ブロック要因あり: $blockers件',
+      );
     if (ownerSummary.isNotEmpty) {
       buf.writeln(
         '- 担当別未完了: ${ownerSummary.take(4).map((e) => '${e.key} ${e.value}件').join(' / ')}',
