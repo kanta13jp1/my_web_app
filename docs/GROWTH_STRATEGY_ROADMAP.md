@@ -28245,3 +28245,45 @@ User 要望「continue until all tasks done」契機で 3 件着地:
 8. transcript jsonl 7-day rotation (= aggressive hygiene 4 軸目候補)
 
 **94 part 連続 dogfood** (= part 75 → part 165 / 2 month + 連続).
+
+## Win版#132 part 166 (Win Claude / 2026-05-07 / 95 part 連続 dogfood)
+
+### 着地サマリ
+
+User 要望「continue + できる限り手動の作業をなくす」契機で 4 件着地:
+
+1. **PR #2095 admin squash merge** — dormant grace cron spec を `gh pr merge --admin --squash` で main 反映 (= part 156 chain merge --admin pattern 第 3 例 / docs-only + 全 CI ✅ で fast-track)。merge commit `883e7c9db`。
+2. **Codex 5 hand-off PR query 0 件確認** — 14-18 日 buffer の期日 still / ping 早 / monitor 継続。
+3. **Issue #2096 起票** — `tools-hub:wbs.list_tasks` Supabase 1000 行 cap で `/project-gantt` UI 件数誤表示 bug (= part 158 carry-over 8 part 持越し → 本 part で起票)。受け入れ条件 5 項目 / Codex territory (= EF Deno).
+4. **Codex hand-off doc 起票** — `docs/cross-instance-prs/20260507_codex_wbs_list_tasks_pagination_handoff_part166.md` (= pagination loop 完全 spec / 既存 caller breaking なし / smoke test 含む)。
+
+### Pattern catalog 追加
+
+- **「admin squash merge for docs PR」pattern 第 3 例 (累積 part 156→162→165)** — docs-only + 全 CI ✅ + base behind main で `gh pr merge --admin --squash` fast-track が standard 化
+- **「Win Claude triage role: bug 起票 + 修正 spec 1 commit ペア」pattern 第 1 例** — 「設計 spec ship + 同 commit hand-off doc 起票」(= part 164 pattern) を bug fix 文脈にも適用 / Issue 起票 + hand-off doc + ROADMAP append を 1 PR で
+
+### Commits (= 本 part)
+
+- `883e7c9db` PR #2095 admin squash merge (= dormant grace cron spec)
+- (本 commit hash 未確定 / hand-off 1 + ROADMAP append)
+
+### Philosophy Alignment
+
+- **PHILOSOPHY-22 9/9 ✅** (= mentor + 6 部署 / IPO 信頼 = データ整合性 fix)
+- **AI-DEV-23 7/7 ✅** ([EF-FIRST] / observability via total field / quality-gate via smoke test)
+- **VIBE-30 7/7 ✅** (MVP scope 厳守 / 修正範囲限定 / regression なし)
+- **INDIE-29 7/7 ✅** (shipping 速度: PR merge + Issue 起票 + hand-off doc / 1 session 完結)
+- **SYNERGY-30 7/7 ✅** (cross-instance-pr / Win Claude triage → Win Codex 実装 routing)
+- **PLATFORM-31 7/7 ✅** ([EF-CAP-50] 維持 / 新 EF なし)
+
+### 次回 candidate (= part 167)
+
+1. Codex `wbs.list_tasks` pagination 修正 PR follow (= Issue #2096 / 期限なし but 業務 risk)
+2. Codex 5 hand-off PR query (= meal_log / ai_tool_watch / launcher_icons / privacy / dormant grace)
+3. Issue #1495 Phase 0 完全閉ループ確認 (= Codex 2 PR merge 後 close)
+4. Issue #1660 Strategic Intel 25% follow (= Codex #6 routed)
+5. Issue #1784 Claude Code Masterclass NB digest (= notebooklm CLI auth restore 後)
+6. transcript jsonl 7-day rotation (= aggressive hygiene 4 軸目候補)
+7. WSL VHDX 圧縮 + Docker prune (= 残圧迫源 / hygiene 4 軸目候補)
+
+**95 part 連続 dogfood** (= part 75 → part 166 / 2 month + 連続).
