@@ -60,8 +60,8 @@
 
 | 残量 | action | 通知方法 |
 |---|---|---|
-| ≥ 50 GB | 通常運転 | log のみ (= `~/.claude/logs/disk-cleanup-YYYYMMDD.log`) |
-| 25-50 GB | report 書き出し | `~/cleanup_reports/disk_report_<ts>.md` (= 既存 cleanup_report_notify.ps1 が pickup) |
+| ≥ 80 GB | 通常運転 | log のみ (= `~/.claude/logs/disk-cleanup-YYYYMMDD.log`) |
+| 25-80 GB | report 書き出し | `~/cleanup_reports/disk_report_<ts>.md` (= 既存 cleanup_report_notify.ps1 が pickup) — fleet-loaded box では毎セッション report 出力 (= part 158 で 50→80 GB 厳格化 / 圧縮可視化) |
 | 10-25 GB | **WARN** | `additionalContext` 経由で Claude に「`/disk-cleanup` 推奨」surface |
 | < 10 GB | **ALERT** | `additionalContext` で「即座に `/disk-cleanup` 実行」surface (= ビルド失敗 risk) |
 
