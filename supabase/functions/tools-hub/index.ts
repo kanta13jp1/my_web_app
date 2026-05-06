@@ -6162,6 +6162,205 @@ serve(async (req) => {
             }, 200);
           }
         }
+        case "wbs.reschedule_realistic": {
+          // Win版#132 part 157 (2026-05-06):
+          // 全 open タスクの start_date / end_date を priority tier ベースで
+          // 「実際に着手可能な日付」へ再配置する。
+          //
+          // body:
+          //   dry_run?: boolean (default true)
+          //   priority_offset_days?: { high: number, medium: number, low: number }
+          //     (default {high: 7, medium: 30, low: 90})
+          //   duration_days?: { high: number, medium: number, low: number }
+          //     (default {high: 3, medium: 7, low: 14})
+          //   parallel_capacity?: { high: number, medium: number, low: number }
+          //     priority tier 内での並列着手可能数 (default {high: 4, medium: 8, low: 12})
+          //     スケジュール stagger は floor(queue_index / parallel_capacity) 日 ずらして配置
+          //
+          // 対象: status != 'completed' AND github_issue_state != 'CLOSED'
+          // skip: 上記完了系
+          const dryRun = body.dry_run !== false; // default true
+          const offsetIn =
+            (body.priority_offset_days as Record<string, number>) ?? {};
+          const durIn = (body.duration_days as Record<string, number>) ?? {};
+          const parIn = (body.parallel_capacity as Record<string, number>) ??
+            {};
+          const offset = {
+            high: Number(offsetIn.high ?? 7),
+            medium: Number(offsetIn.medium ?? 30),
+            low: Number(offsetIn.low ?? 90),
+          };
+          const duration = {
+            high: Number(durIn.high ?? 3),
+            medium: Number(durIn.medium ?? 7),
+            low: Number(durIn.low ?? 14),
+          };
+          const parallel = {
+            high: Math.max(1, Number(parIn.high ?? 4)),
+            medium: Math.max(1, Number(parIn.medium ?? 8)),
+            low: Math.max(1, Number(parIn.low ?? 12)),
+          };
+
+          const today = new Date();
+          today.setUTCHours(0, 0, 0, 0);
+          const fmt = (d: Date) => d.toISOString().slice(0, 10);
+          const addDays = (base: Date, days: number) => {
+            const d = new Date(base);
+            d.setUTCDate(d.getUTCDate() + days);
+            return d;
+          };
+
+          // 全 open タスクを取得 (完了系 skip)
+          const { data: rows, error: fetchErr } = await admin
+            .from("wbs_tasks")
+            .select(
+              "id, title, instance, owner_instance, priority, status, " +
+                "start_date, end_date, github_issue_state, category_order",
+            )
+            .neq("status", "completed");
+          if (fetchErr) {
+            return json({ success: false, error: fetchErr.message }, 200);
+          }
+          const all = (rows ?? []) as unknown as Array<
+            Record<string, unknown>
+          >;
+          const open = all.filter(
+            (r) => String(r.github_issue_state ?? "") !== "CLOSED",
+          );
+
+          // priority bucket 別 queue index を category_order, id で安定 sort
+          const buckets: Record<string, Array<Record<string, unknown>>> = {
+            high: [],
+            medium: [],
+            low: [],
+          };
+          for (const r of open) {
+            const p = String(r.priority ?? "medium").toLowerCase();
+            const tier = p === "high" || p === "urgent"
+              ? "high"
+              : p === "low" ? "low" : "medium";
+            buckets[tier].push(r);
+          }
+          for (const tier of Object.keys(buckets)) {
+            buckets[tier].sort((a, b) => {
+              const oa = Number(a.category_order ?? 999);
+              const ob = Number(b.category_order ?? 999);
+              if (oa !== ob) return oa - ob;
+              return String(a.id).localeCompare(String(b.id));
+            });
+          }
+
+          // queue index に基づき stagger 配置
+          const updates: Array<{
+            id: string;
+            start_date: string;
+            end_date: string;
+            tier: "high" | "medium" | "low";
+            stagger_days: number;
+          }> = [];
+          for (const tier of ["high", "medium", "low"] as const) {
+            const tasks = buckets[tier];
+            const offDays = offset[tier];
+            const durDays = duration[tier];
+            const par = parallel[tier];
+            for (let i = 0; i < tasks.length; i++) {
+              const t = tasks[i];
+              const stagger = Math.floor(i / par); // par 件並列、par 超で 1 日ずらす
+              const start = addDays(today, offDays + stagger);
+              const end = addDays(start, durDays);
+              updates.push({
+                id: String(t.id),
+                start_date: fmt(start),
+                end_date: fmt(end),
+                tier,
+                stagger_days: stagger,
+              });
+            }
+          }
+
+          // by_priority サマリ + sample 構築
+          const byPrio: Record<
+            string,
+            { count: number; first_start: string; last_end: string }
+          > = {};
+          for (const u of updates) {
+            const cur = byPrio[u.tier] ?? {
+              count: 0,
+              first_start: u.start_date,
+              last_end: u.end_date,
+            };
+            cur.count += 1;
+            if (u.start_date < cur.first_start) cur.first_start = u.start_date;
+            if (u.end_date > cur.last_end) cur.last_end = u.end_date;
+            byPrio[u.tier] = cur;
+          }
+          const sample = updates.slice(0, 10);
+
+          if (dryRun) {
+            return json({
+              success: true,
+              dry_run: true,
+              total_open: open.length,
+              total_skipped_completed: all.length - open.length,
+              would_update: updates.length,
+              by_priority: byPrio,
+              sample,
+              today: fmt(today),
+              params: { offset, duration, parallel },
+            });
+          }
+
+          // apply: 1 task ずつ update (Supabase JS は bulk update with different
+          // values per row が無いので loop / 918 row ≒ 数秒 / EF timeout 60s 内)
+          let updated = 0;
+          const errors: Array<{ id: string; error: string }> = [];
+          for (const u of updates) {
+            const { error } = await admin
+              .from("wbs_tasks")
+              .update({
+                start_date: u.start_date,
+                end_date: u.end_date,
+                planned_end_date: u.end_date,
+              })
+              .eq("id", u.id);
+            if (error) {
+              errors.push({ id: u.id, error: error.message });
+            } else {
+              updated += 1;
+            }
+          }
+
+          // monitoring_events に記録 (= scheduled task / GHA cron 監査用)
+          try {
+            await admin.from("monitoring_events").insert({
+              event_type: "wbs.reschedule_realistic",
+              severity: errors.length > 0 ? "warning" : "info",
+              metadata: {
+                total_open: open.length,
+                updated,
+                errors: errors.length,
+                by_priority: byPrio,
+                params: { offset, duration, parallel },
+                today: fmt(today),
+              },
+            });
+          } catch (_) {
+            // monitoring_events 未存在時は無視
+          }
+
+          return json({
+            success: errors.length === 0,
+            dry_run: false,
+            total_open: open.length,
+            updated,
+            errors_count: errors.length,
+            errors: errors.slice(0, 10),
+            by_priority: byPrio,
+            sample,
+            today: fmt(today),
+            params: { offset, duration, parallel },
+          });
+        }
         case "wbs.bulk_update": {
           // body: { updates: [{id, progress?, status?}, ...] }
           const updates = (body.updates as Array<Record<string, unknown>>) ??
