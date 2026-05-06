@@ -97,7 +97,10 @@ on:
 
 ## 完了定義
 
-- [ ] axis A: `scripts/worktree_cleanup.py` + `worktree-cleanup-cron.yml` (= 87 worktree → < 10 worktree 達成 dry-run validation 必須)
+- [x] axis A: `scripts/worktree_cleanup.py` + `worktree-cleanup-cron.yml` (= 87 worktree → < 10 worktree 達成 dry-run validation 必須)
+  - Codex #1 implementation: dependency-free `scripts/worktree_cleanup.py` with conservative guards for current PWD, primary worktree, detached HEAD, protected branches, dirty worktrees, open PR heads, upstream drift, and unmerged heads.
+  - Weekly workflow: `.github/workflows/worktree-cleanup-cron.yml` runs dry-run → safe apply → `git worktree prune` on the hosted Windows runner and comments the summary to Issue #1984.
+  - Validation: 2026-05-07 JST local dry-run/apply scanned 12 worktrees, found 0 safe candidates, and removed 0. Remaining worktrees are protected by dirty/open-PR/detached/main/upstream guards, so force-deleting to reach `<10` requires an explicit owner review.
 - [ ] axis B: Issue #1724 着地後に `web/assets/videos/` 削除 PR
 - [ ] axis C: `dev-cache-cleanup-cron.yml` または Tier 2 拡張で Flutter / npm / pub cache 自動 prune
 - [ ] axis E: `scripts/docs_rotate.py` + `docs-rotate-cron.yml` で 90 日 archive 自動化
