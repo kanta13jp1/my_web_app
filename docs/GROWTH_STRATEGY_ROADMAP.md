@@ -27995,3 +27995,19 @@ parallel cap 4/8/12 は density 3.86/7.34/3.48 per day で適正 → 調整不�
 - **BRAIN-32 7/7** ✅
 
 **86 part 連続 dogfood** (= part 75 → part 159 / 2 month + 連続)
+
+## Win版#132 part 159b (2026-05-07) — Win Claude
+
+**Hygiene 強化 + Issue #1495 設計 spec ship** / PR [#2084](https://github.com/kanta13jp1/my_web_app/pull/2084) / commit `00fd9702796`
+
+- `~/.claude/hooks/memory-cleanup.ps1` >70% RAM gate 撤廃 (= EmptyWorkingSet 常時実行 / 実測 0.5-2.7 GB reclaim/fire)
+- `~/.claude/settings.json` PreCompact hook 追加 (= compaction 直前 cleanup / [COMPACTION-RESUME] 軽減)
+- `~/.claude/hooks/disk-cleanup.ps1` report 閾値 80→100 GB
+- `docs/DISK_HYGIENE_RUNBOOK.md` §3.1 / §3.3 / §3.4 sync
+- `docs/MOBILE_RELEASE_SPEC.md` 新規 (= Issue #1495 [P0] 期限 2026-05-30 / 段階配布 Phase 0-2 / Codex 7 件 hand-off)
+
+**Philosophy Alignment**:
+- **PHILOSOPHY-22 9/9** ✅
+- **AI-CHARACTER-24 8/8** ✅ (= mental health 免責)
+
+**87 part 連続 dogfood** (= part 75 → part 159b / 2 month + 連続)
