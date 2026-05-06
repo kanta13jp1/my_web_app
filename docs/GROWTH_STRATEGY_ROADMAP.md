@@ -28127,3 +28127,39 @@ ROI: 1 session ~1 GB reclaim / SessionStart+End dual で週 14-28 GB.
 4. Issue #1563 Codex PR #2088 review (= Visual E2E gate)
 
 **91 part 連続 dogfood** (= part 75 → part 162 / 2 month + 連続)
+
+## Win版#132 part 163 (Win Claude / 2026-05-07 / 92 part 連続 dogfood)
+
+### 着地サマリ
+
+User 要望「WBS 期限近順 + 2 instance 制 + hygiene 圧縮」契機で 3 件着地:
+
+1. **Hygiene re-run** — `~/.claude/hooks/disk-cleanup.ps1` idempotent SessionStart trigger 確認 (= part 161 3 改善後初回 / suppressOutput 動作)。C: 96 GB free (79% used) / Memory 1.8 GB free。
+2. **Issue #1632 status verify + Codex hand-off** — Win Claude triage role で `ai_tool_watch.py` SOURCES (line 37-74) が 6 entries (Claude Code 3 + Codex 3) のみ / Cursor + Gemini Code Assist + Devin **未拡張** finding。2026-05-02 Codex #7 claim と実装ギャップ確認。`docs/cross-instance-prs/20260507_codex_ai_tool_watch_sources_expand_part163.md` 起票 (= 3 entries + smoke run + changelog file 反映 / 期限 2026-05-21 残 14 日)。
+3. **Issue #1962 VSCode dormant 整理** — `vscode-instance` label / 2 instance fleet で再現環境なし確認。2026-06-04 (= 30 日経過) で CLOSE 候補 status comment 投稿。
+
+### Pattern catalog 追加
+
+- **「claim と実装ギャップ verify」pattern** 第 1 例 (= part 163 / 2026-05-02 Codex #7 「Added watched official sources」claim を `grep -nE` で実 source list 確認 → 半分のみ実装判明 / Win Claude triage role で完全閉ループ確保)
+- **「dormant instance label = 30 日 grace + monitor」pattern** 第 1 例 (= part 163 / `vscode-instance` label 付与済 issue を直 close せず monitor period 設定 / [INSTANCE] + [MEMORY-DECAY] hybrid dogfood)
+
+### Commits (= 本 part)
+
+- (commit hash 未確定 / 本セクションを含む commit が ROADMAP append + cross-instance-pr 1 件の 2 file 変更)
+
+### Philosophy Alignment
+
+- **PHILOSOPHY-22 9/9 ✅** (= mentor + KPI / Win Claude territory triage 専念)
+- **AI-DEV-23 7/7 ✅** (= observability via verify / quality-gate via claim 検証)
+- **SYNERGY-30 7/7 ✅** (= cross-instance-pr で fleet 横断 / Win Claude triage → Win Codex 実装)
+- **BRAIN-32 7/7 ✅** (= memory hygiene 月次 cycle / part 162 で実施済 / 本 part も dogfood 継続)
+- **INDIE-29 7/7 ✅** (= shipping 速度: 1 session で triage 2 件 + cross-instance-pr 1 件 + ROADMAP append)
+
+### 次回 candidate (= part 164)
+
+1. Codex `ai_tool_watch.py` SOURCES 拡張 PR follow (= 期限 2026-05-21 残 14 日)
+2. Codex flutter_launcher_icons + privacy route 進捗 follow (= 期限 2026-05-25 残 18 日)
+3. WBS top 5 次の Win Claude territory item (= #1665 食事ログMVP UI 統合 / #1660 Strategic Intel 25% 進捗 follow)
+4. Issue #1495 Phase 0 完全閉ループ確認 (= Codex 2 PR merge 後 close)
+
+**92 part 連続 dogfood** (= part 75 → part 163 / 2 month + 連続).
