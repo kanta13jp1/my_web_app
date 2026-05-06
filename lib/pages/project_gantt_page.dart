@@ -3,6 +3,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../utils/web_image_downloader.dart';
+
 const String _kGithubRepoUrl = 'https://github.com/kanta13jp1/my_web_app';
 final RegExp _kIssueNumberRegex = RegExp(r'\[Issue\s*#(\d+)\]');
 
@@ -2140,7 +2142,7 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
       color: _bgColor,
       child: Column(
         children: [
-          _buildHeader(tasks.length),
+          _buildHeader(tasks.length, widget.tasks.length),
           // Win版#131 part 22: 列表示制御 + Gantt instance filter
           _buildColumnToggleBar(),
           // Win版#131 part 13: マイルストーン risk warning banner
@@ -2400,6 +2402,87 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
     );
   }
 
+  String _csvEscape(String s) {
+    if (s.contains(',') ||
+        s.contains('"') ||
+        s.contains('\n') ||
+        s.contains('\r')) {
+      return '"${s.replaceAll('"', '""')}"';
+    }
+    return s;
+  }
+
+  String _isoDate(DateTime? d) {
+    if (d == null) return '';
+    final y = d.year.toString().padLeft(4, '0');
+    final m = d.month.toString().padLeft(2, '0');
+    final day = d.day.toString().padLeft(2, '0');
+    return '$y-$m-$day';
+  }
+
+  void _exportCsv() {
+    final tasks = _orderedTasks;
+    final buf = StringBuffer();
+    const headers = [
+      '#',
+      'カテゴリ',
+      'タスク名',
+      '担当',
+      '進捗',
+      'ステータス',
+      '優先度',
+      '開始予定',
+      '完了予定',
+      '残作業',
+      'リカバリープラン',
+      'マイルストーン',
+      'GitHubIssue状態',
+      'GitHubIssue#',
+      'GitHubIssueURL',
+      'タスクID',
+    ];
+    buf.writeln(headers.join(','));
+    for (var i = 0; i < tasks.length; i++) {
+      final t = tasks[i];
+      final issueNo = _extractIssueNumber(t.title);
+      final fields = <String>[
+        '${i + 1}',
+        t.category,
+        t.title,
+        t.ownerInstance.isNotEmpty ? t.ownerInstance : t.instance,
+        '${t.progress}',
+        t.status,
+        t.priority,
+        _isoDate(t.startDate),
+        _isoDate(t.endDate),
+        t.remainingWork,
+        t.recoveryPlan,
+        t.milestoneCode ?? '',
+        t.githubIssueState,
+        issueNo?.toString() ?? '',
+        issueNo != null ? '$_kGithubRepoUrl/issues/$issueNo' : '',
+        t.id,
+      ].map(_csvEscape).toList();
+      buf.writeln(fields.join(','));
+    }
+
+    final now = DateTime.now();
+    final stamp =
+        '${now.year.toString().padLeft(4, '0')}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}-${now.hour.toString().padLeft(2, '0')}${now.minute.toString().padLeft(2, '0')}';
+    final scope = widget.hideCompleted ? 'open' : 'all';
+    downloadCsvFile(buf.toString(), 'wbs-timeline-$scope-$stamp.csv');
+
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          '📄 ${tasks.length} 件をCSVダウンロードしました (wbs-timeline-$scope-$stamp.csv)',
+        ),
+        backgroundColor: const Color(0xFF38BDF8),
+      ),
+    );
+  }
+
   Future<void> _autoRepairDependencies() async {
     if (Supabase.instance.client.auth.currentUser == null) return;
     try {
@@ -2573,7 +2656,10 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
     );
   }
 
-  Widget _buildHeader(int taskCount) {
+  Widget _buildHeader(int taskCount, int totalCount) {
+    final filtered = widget.hideCompleted && totalCount > taskCount;
+    final countLabel =
+        filtered ? '未完了 $taskCount / 全体 $totalCount 件' : '$taskCount タスク';
     return Container(
       color: _panelColor,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
@@ -2596,10 +2682,12 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
           ),
           const SizedBox(width: 12),
           Text(
-            '$taskCount タスク',
-            style: const TextStyle(
-              color: Color(0xFF808090),
+            countLabel,
+            style: TextStyle(
+              color:
+                  filtered ? const Color(0xFFFF6B35) : const Color(0xFF808090),
               fontSize: 12,
+              fontWeight: filtered ? FontWeight.w600 : FontWeight.normal,
               height: 1.5,
             ),
           ),
@@ -2656,6 +2744,23 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
               style: OutlinedButton.styleFrom(
                 foregroundColor: const Color(0xFF22C55E),
                 side: const BorderSide(color: Color(0xFF22C55E)),
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+              ),
+            ),
+          ),
+          const SizedBox(width: 6),
+          SizedBox(
+            height: 28,
+            child: OutlinedButton.icon(
+              onPressed: _exportCsv,
+              icon: const Icon(Icons.download, size: 14),
+              label: const Text(
+                'CSV',
+                style: TextStyle(fontSize: 11, height: 1.5),
+              ),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: const Color(0xFF38BDF8),
+                side: const BorderSide(color: Color(0xFF38BDF8)),
                 padding: const EdgeInsets.symmetric(horizontal: 8),
               ),
             ),
