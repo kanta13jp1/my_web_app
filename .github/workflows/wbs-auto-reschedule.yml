@@ -71,7 +71,7 @@ jobs:
             -H "Authorization: Bearer ${SUPABASE_SERVICE_ROLE_KEY}" \
             -H "Content-Type: application/json" \
             -d "$BODY" \
-            --max-time 90 \
+            --max-time 240 \
             "${SUPABASE_URL}/functions/v1/tools-hub")
           echo "$RESP" > reschedule_result.json
           echo "Response bytes: $(wc -c < reschedule_result.json)"
