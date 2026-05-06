@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../widgets/paddle_approval_readiness_card.dart';
+import '../widgets/legal_term_tooltip_text.dart';
 
 /// Legal / compliance manager page
 /// - contracts and checklist come from legal-compliance-manager EF
@@ -419,6 +420,36 @@ class _LegalComplianceManagerPageState extends State<LegalComplianceManagerPage>
           ),
         ),
         const SizedBox(height: 12),
+        const Card(
+          child: Padding(
+            padding: EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(Icons.info_outline, color: Color(0xFF7C3AED)),
+                    SizedBox(width: 8),
+                    Text(
+                      '専門用語のインライン解説',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 8),
+                LegalTermTooltipText(
+                  text:
+                      '憲法審査会では、参議院の緊急集会、緊急政令、繰延投票、国民投票法附則4条、国家緊急権などを横断して論点整理します。',
+                  style: TextStyle(height: 1.6),
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
         Card(
           child: Padding(
             padding: const EdgeInsets.all(16),
@@ -549,7 +580,10 @@ class _LegalComplianceManagerPageState extends State<LegalComplianceManagerPage>
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 8),
-                  SelectableText(answer, style: const TextStyle(height: 1.6)),
+                  LegalTermTooltipText(
+                    text: answer,
+                    style: const TextStyle(height: 1.6),
+                  ),
                 ],
               ),
             ),
