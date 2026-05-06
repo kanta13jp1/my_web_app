@@ -27922,3 +27922,28 @@ WBS タイムラインの全 1144 open タスク (= UI 表示 918 件は Supabas
 - [ISSUE-PRECHECK] N/A (= 起票なし)
 
 **83 part 連続 dogfood** (= part 75 → part 157 / 2 month 連続)
+
+## Win版#132 part 158 2026-05-06 (Win Claude / 84 part 連続 dogfood)
+
+### 着地サマリ
+
+part 157 follow-up 2 件:
+
+1. **disk-cleanup hook report 閾値 50→80 GB 厳格化** — Tier 1 自体は無条件実行されていたが report が < 50 GB でしか書かれず、fleet-loaded box (= C: 60 GB 帯) では report 0 件で圧縮効果が観測できなかった。閾値を 80 GB へ上げて毎セッション report 出力 → 圧縮可視化。
+2. **`wbs.reschedule_realistic` で `planned_start_date` 同期更新 bug fix** — /project-gantt screenshot で start > end の違和感観察 → root cause 特定 (= EF が `planned_start_date` のみ更新漏れ / UI `scheduleStartDate` getter は `plannedStartDate` 優先) → 1 行 update payload 追加。次 cron 走行で 1144 row 全 row が UI 整合する。
+
+parallel cap 4/8/12 は density 3.86/7.34/3.48 per day で適正 → 調整不要判定。
+
+### Commits
+
+- `0525b60d3` fix(wbs): sync planned_start_date in reschedule_realistic + raise disk-cleanup report threshold (PR #2075)
+
+### Philosophy Alignment
+
+- **PHILOSOPHY-22 9/9** (CEO 感 / mentor / 6 部署 / 商品 / 資本 / 資産負債 / KPI / IPO / mission)
+- **AI-DEV-23 7/7** (= part 157 と同 EF の 1 行 fix / 既存 audit log / 既存 quality-gate / regression-safe)
+- **INDIE-29 7/7** (shipping 速度 = 1 session で disk + EF + memory + ROADMAP 完結)
+- **PLATFORM-31 5+/7** (= 観察 → root cause → 1 行 fix の高 leverage 規律)
+- [ISSUE-PRECHECK] N/A (= 起票なし)
+
+**84 part 連続 dogfood** (= part 75 → part 158 / 2 month 連続)
