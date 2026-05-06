@@ -28082,3 +28082,13 @@ parallel cap 4/8/12 は density 3.86/7.34/3.48 per day で適正 → 調整不�
 ### Commit
 
 `94cb29720` — app icon design + Codex hand-off (PR #2089) + PR #2087 merged.
+`aa1cdc0d3` — disk-cleanup 3 aggressive improvements (939 MB / 28 sec + 2.34 GB free RAM).
+
+### Hygiene 強化 (= user 明示要求 / part 161 後半)
+
+診断: C: 81.6% used / Memory 84.6% used → 3 改善:
+1. Transcript gzip 30→14 days (= 348.5 MB)
+2. Browser cache 2-tier safe-running (= 48.1 MB)
+3. Plugin cache > 14 days (= 542.7 MB / 最大 win)
+
+ROI: 1 session ~1 GB reclaim / SessionStart+End dual で週 14-28 GB.
