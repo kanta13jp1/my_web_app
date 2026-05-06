@@ -6349,6 +6349,7 @@ serve(async (req) => {
                 .update({
                   start_date: u.start_date,
                   end_date: u.end_date,
+                  planned_start_date: u.start_date,
                   planned_end_date: u.end_date,
                 })
                 .eq("id", u.id);
