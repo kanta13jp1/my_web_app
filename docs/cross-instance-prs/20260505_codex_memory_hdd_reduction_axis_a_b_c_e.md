@@ -102,7 +102,10 @@ on:
   - Weekly workflow: `.github/workflows/worktree-cleanup-cron.yml` runs dry-run → safe apply → `git worktree prune` on the hosted Windows runner and comments the summary to Issue #1984.
   - Validation: 2026-05-07 JST local dry-run/apply scanned 12 worktrees, found 0 safe candidates, and removed 0. Remaining worktrees are protected by dirty/open-PR/detached/main/upstream guards, so force-deleting to reach `<10` requires an explicit owner review.
 - [ ] axis B: Issue #1724 着地後に `web/assets/videos/` 削除 PR
-- [ ] axis C: `dev-cache-cleanup-cron.yml` または Tier 2 拡張で Flutter / npm / pub cache 自動 prune
+- [x] axis C: `dev-cache-cleanup-cron.yml` または Tier 2 拡張で Flutter / npm / pub cache 自動 prune
+  - Codex #1 implementation: dependency-free `scripts/dev_cache_cleanup.py` with dry-run default, explicit `--apply`, clean-worktree guard for `flutter clean`, npm/pnpm/pub/pip cache commands, and age-gated NotebookLM cache pruning.
+  - Weekly workflow: `.github/workflows/dev-cache-cleanup-cron.yml` runs dry-run -> safe apply on the hosted Windows runner, uploads JSON reports, and comments the summary to Issue #1984.
+  - Note: GitHub Actions validates the path and cleans only its ephemeral runner. Local C: drive reclaim still requires a Windows app session or local scheduled task invoking the same script.
 - [ ] axis E: `scripts/docs_rotate.py` + `docs-rotate-cron.yml` で 90 日 archive 自動化
 
 ## 関連 docs
