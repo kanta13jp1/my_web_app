@@ -1,3 +1,5 @@
+import 'dart:ui' show PointerDeviceKind;
+
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -7,6 +9,19 @@ import '../utils/web_image_downloader.dart';
 
 const String _kGithubRepoUrl = 'https://github.com/kanta13jp1/my_web_app';
 final RegExp _kIssueNumberRegex = RegExp(r'\[Issue\s*#(\d+)\]');
+
+class _GanttDragScrollBehavior extends MaterialScrollBehavior {
+  const _GanttDragScrollBehavior();
+
+  @override
+  Set<PointerDeviceKind> get dragDevices => const {
+        PointerDeviceKind.touch,
+        PointerDeviceKind.mouse,
+        PointerDeviceKind.stylus,
+        PointerDeviceKind.invertedStylus,
+        PointerDeviceKind.unknown,
+      };
+}
 
 int? _extractIssueNumber(String title) {
   final match = _kIssueNumberRegex.firstMatch(title);
@@ -2173,88 +2188,104 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
           // Win版#131 part 13: マイルストーン risk warning banner
           if (_riskWarnings.isNotEmpty) _buildRiskBanner(),
           Expanded(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // 左パネル (# / タスク名 / 担当)
-                SizedBox(
-                  width: _leftPanelWidth,
-                  child: Column(
-                    children: [
-                      _buildLeftColumnHeader(),
-                      Expanded(
-                        child: ListView.builder(
-                          controller: _leftScroll,
-                          itemCount: tasks.length,
-                          itemExtent: _rowHeight,
-                          itemBuilder: (_, i) => _buildLeftRow(i, tasks[i]),
+            child: ScrollConfiguration(
+              behavior: const _GanttDragScrollBehavior(),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // 左パネル (# / タスク名 / 担当)
+                  SizedBox(
+                    width: _leftPanelWidth,
+                    child: Column(
+                      children: [
+                        _buildLeftColumnHeader(),
+                        Expanded(
+                          child: ListView.builder(
+                            controller: _leftScroll,
+                            itemCount: tasks.length,
+                            itemExtent: _rowHeight,
+                            itemBuilder: (_, i) => _buildLeftRow(i, tasks[i]),
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-                // 右タイムライン (横スクロール)
-                Expanded(
-                  child: Scrollbar(
-                    controller: _timelineHScroll,
-                    thumbVisibility: true,
-                    child: SingleChildScrollView(
+                  // 右タイムライン (横スクロール)
+                  Expanded(
+                    child: Scrollbar(
                       controller: _timelineHScroll,
-                      scrollDirection: Axis.horizontal,
-                      child: SizedBox(
-                        width: _timelineWidth,
-                        child: Column(
-                          children: [
-                            _buildMonthHeader(),
-                            Expanded(
-                              child: Stack(
-                                children: [
-                                  // グリッド + Today ライン
-                                  Positioned.fill(
-                                    child: CustomPaint(
-                                      painter: _GanttGridPainter(
-                                        start: _timelineStart,
-                                        end: _timelineEnd,
-                                        dayWidth: _dayWidth,
-                                        todayX: _dateToX(DateTime.now()),
-                                      ),
-                                    ),
-                                  ),
-                                  // タスクバー行
-                                  ListView.builder(
-                                    controller: _rightScroll,
-                                    itemCount: tasks.length,
-                                    itemExtent: _rowHeight,
-                                    itemBuilder: (_, i) =>
-                                        _buildTimelineRow(i, tasks[i]),
-                                  ),
-                                  // Win版#131 part 10: イナズマ線 (lightning line)
-                                  // 今日時点での進捗実態を zigzag で可視化
-                                  Positioned.fill(
-                                    child: IgnorePointer(
+                      thumbVisibility: true,
+                      trackVisibility: true,
+                      interactive: true,
+                      thickness: 8,
+                      scrollbarOrientation: ScrollbarOrientation.bottom,
+                      child: SingleChildScrollView(
+                        controller: _timelineHScroll,
+                        scrollDirection: Axis.horizontal,
+                        primary: false,
+                        child: SizedBox(
+                          width: _timelineWidth,
+                          child: Column(
+                            children: [
+                              _buildMonthHeader(),
+                              Expanded(
+                                child: Stack(
+                                  children: [
+                                    // グリッド + Today ライン
+                                    Positioned.fill(
                                       child: CustomPaint(
-                                        painter: _LightningLinePainter(
-                                          tasks: tasks,
+                                        painter: _GanttGridPainter(
+                                          start: _timelineStart,
+                                          end: _timelineEnd,
                                           dayWidth: _dayWidth,
-                                          rowHeight: _rowHeight,
-                                          timelineStart: _timelineStart,
-                                          today: DateTime.now(),
+                                          todayX: _dateToX(DateTime.now()),
                                         ),
                                       ),
                                     ),
-                                  ),
-                                  // マイルストーンの縦線 + 菱形
-                                  ...widget.milestones.map(_buildMilestoneMark),
-                                ],
+                                    // タスクバー行
+                                    ListView.builder(
+                                      controller: _rightScroll,
+                                      itemCount: tasks.length,
+                                      itemExtent: _rowHeight,
+                                      itemBuilder: (_, i) =>
+                                          _buildTimelineRow(i, tasks[i]),
+                                    ),
+                                    // Win版#131 part 10: イナズマ線 (lightning line)
+                                    // 今日時点での進捗実態を zigzag で可視化
+                                    Positioned.fill(
+                                      child: IgnorePointer(
+                                        child: AnimatedBuilder(
+                                          animation: _rightScroll,
+                                          builder: (context, _) => CustomPaint(
+                                            painter: _LightningLinePainter(
+                                              tasks: tasks,
+                                              dayWidth: _dayWidth,
+                                              rowHeight: _rowHeight,
+                                              timelineStart: _timelineStart,
+                                              today: DateTime.now(),
+                                              verticalOffset:
+                                                  _rightScroll.hasClients
+                                                      ? _rightScroll.offset
+                                                      : 0,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    // マイルストーンの縦線 + 菱形
+                                    ...widget.milestones
+                                        .map(_buildMilestoneMark),
+                                  ],
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ],
@@ -3964,6 +3995,7 @@ class _LightningLinePainter extends CustomPainter {
   final double rowHeight;
   final DateTime timelineStart;
   final DateTime today;
+  final double verticalOffset;
 
   _LightningLinePainter({
     required this.tasks,
@@ -3971,6 +4003,7 @@ class _LightningLinePainter extends CustomPainter {
     required this.rowHeight,
     required this.timelineStart,
     required this.today,
+    required this.verticalOffset,
   });
 
   double _dateToX(DateTime date) {
@@ -3992,10 +4025,12 @@ class _LightningLinePainter extends CustomPainter {
     final points = <Offset>[];
     bool anyDelay = false;
     bool anyDelayNoPlan = false;
+    final firstVisibleIndex = (verticalOffset / rowHeight).floor() - 1;
+    final lastVisibleIndex =
+        ((verticalOffset + size.height) / rowHeight).ceil() + 1;
 
     for (var i = 0; i < tasks.length; i++) {
       final t = tasks[i];
-      final y = i * rowHeight + rowHeight / 2;
       double x = todayX;
 
       if (t.scheduleStartDate != null &&
@@ -4038,8 +4073,16 @@ class _LightningLinePainter extends CustomPainter {
         }
       }
 
+      if (i < firstVisibleIndex || i > lastVisibleIndex) {
+        continue;
+      }
+      final y = i * rowHeight + rowHeight / 2 - verticalOffset;
+      if (y < -rowHeight || y > size.height + rowHeight) {
+        continue;
+      }
       points.add(Offset(x.clamp(0.0, size.width), y));
     }
+    if (points.isEmpty) return;
 
     // 線色決定
     Color lineColor;
@@ -4076,5 +4119,8 @@ class _LightningLinePainter extends CustomPainter {
   bool shouldRepaint(covariant _LightningLinePainter oldDelegate) =>
       oldDelegate.tasks != tasks ||
       oldDelegate.today != today ||
-      oldDelegate.dayWidth != dayWidth;
+      oldDelegate.dayWidth != dayWidth ||
+      oldDelegate.rowHeight != rowHeight ||
+      oldDelegate.timelineStart != timelineStart ||
+      oldDelegate.verticalOffset != verticalOffset;
 }
