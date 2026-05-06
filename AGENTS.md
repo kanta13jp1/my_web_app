@@ -46,9 +46,14 @@ same notebook.
 ## Role Split
 
 - Claude Code owns planning, architecture, review, and quality-gate design.
-- Codex #1 owns cross-cutting investigation, SQL/migration review, and fix PRs.
-- Codex #2 owns CI, synchronization, operations, Edge Functions, GitHub Actions,
-  and deterministic automation.
+- Codex #1 owns scoped implementation, cross-cutting investigation,
+  SQL/migration review, CI, synchronization, operations, Edge Functions,
+  GitHub Actions, deterministic automation, branch cleanup, and fix PRs.
+- Codex #2 and older PS/WEB/mobile/Gemini/Copilot lanes are historical labels
+  only. Do not start extra live instances unless the user explicitly reactivates
+  them.
+- Use `docs/AGENT_DELEGATION_PROTOCOL.md` as the current handoff and review
+  contract for WBS tasks.
 
 ## Codex Defaults
 
