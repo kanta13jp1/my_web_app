@@ -27947,3 +27947,34 @@ parallel cap 4/8/12 は density 3.86/7.34/3.48 per day で適正 → 調整不�
 - [ISSUE-PRECHECK] N/A (= 起票なし)
 
 **84 part 連続 dogfood** (= part 75 → part 158 / 2 month 連続)
+
+## Win版#132 part 158-b 2026-05-07 (Win Claude / 85 part 連続 dogfood)
+
+### 着地サマリ
+
+ユーザー指示「毎回のセッションで必ずメモリやハードディスク容量を圧縮する施策」(2026-05-06 / fleet-loaded box C: 60 GB / RAM 86-92% used) への対応として 3 件着地:
+
+1. **`~/.claude/hooks/memory-cleanup.ps1` fast-path skip 撤廃** — GC + DNS clear + orphan PowerShell sweep を free-RAM 閾値非依存で常時実行。`EmptyWorkingSet` heavy step の skip 閾値も 50% → 70% に緩和。
+2. **`~/.claude/settings.json` SessionEnd hook 登録** — disk-cleanup + memory-cleanup の 2 entry を SessionEnd 側にも新規追加。SessionStart + SessionEnd dual-trigger で「次 session 残骸持越し」を構造的に防止。
+3. **`docs/cross-instance-prs/20260507_wbs_top5_2instance_split_part158b.md` 起票** — WBS タイムライン top 5 (= 完了予定 05/17-05/18) を 5-question matrix で振分: Win Codex 4 件 (#1568 / #1563 / #1628 / #1699) + Win Claude 1 件 (#1704)。SLA 10 日。
+
+### Commits
+
+- `cdca93461` docs(hygiene): part 158-b — memory hook always-on cheap ops + SessionEnd hook (PR #2077)
+
+### Pattern catalog 追加
+
+- 「user-home hook + repo doc sync」分離 commit pattern 第 1 例
+- 「cheap unconditional + heavy threshold」hook design pattern 第 1 例
+- 「SessionStart + SessionEnd dual-trigger」registration pattern 第 1 例
+- 「minimal-e2e-gate body 雛形化」prevent-failure pattern 第 1 例
+
+### Philosophy Alignment
+
+- **PHILOSOPHY-22 9/9** (= CEO 感 / mentor / 6 部署 / 商品 / 資本 / 資産負債 / KPI / IPO / mission)
+- **AI-DEV-23 7/7** (= 既存 hook 拡張 / observability via log / DLQ via fallback path / quality-gate via threshold)
+- **INDIE-29 7/7** (= shipping 速度: 1 session で hook + settings + docs + cross-instance-pr 着地)
+- **SYNERGY-30 7/7** (= cross-instance-pr で fleet 横断 + 5Q matrix で振分 dogfood)
+- **BRAIN-32 6/7** (= memory file timestamp 必須 / 1 行サマリ / shadow 上書き禁止 遵守)
+
+**85 part 連続 dogfood** (= part 75 → part 158-b / 2 month + 連続)
