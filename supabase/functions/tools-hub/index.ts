@@ -5741,7 +5741,7 @@ serve(async (req) => {
           const limit = Math.min(Number(body.limit ?? 50), 200);
           let q = admin.from("wbs_tasks")
             .select(
-              "id, category, category_icon, category_order, title, description, instance, owner_instance, status, progress, start_date, end_date, planned_end_date, milestone_code, priority, remaining_work, updated_at, github_issue_number, github_issue_url, github_issue_state, github_issue_labels, github_issue_synced_at",
+              "id, category, category_icon, category_order, title, description, instance, owner_instance, status, progress, start_date, end_date, planned_start_date, planned_end_date, milestone_code, priority, remaining_work, updated_at, github_issue_number, github_issue_url, github_issue_state, github_issue_labels, github_issue_synced_at",
             );
           if (status) q = q.eq("status", status);
           if (updatedSince) q = q.gte("updated_at", updatedSince);
@@ -5770,7 +5770,7 @@ serve(async (req) => {
         case "wbs.update_progress": {
           // body: { id, progress?: 0-100, status?: 'in_progress'|'completed'|'blocked',
           //        recovery_plan?: string, end_date?: 'YYYY-MM-DD' (リスケ用),
-          //        planned_end_date?: 'YYYY-MM-DD', note?: string }
+          //        planned_start_date?: 'YYYY-MM-DD', planned_end_date?: 'YYYY-MM-DD', note?: string }
           // Win版#131 part 10: 遅延時 recovery_plan 必須化
           // Win版#131 part 14 / T2-Win: defense-in-depth EF validation
           //   DB trigger `wbs_enforce_recovery_plan_trg` も同仕様を block
@@ -5794,13 +5794,16 @@ serve(async (req) => {
             update.rescheduled_count =
               ((cur?.rescheduled_count as number) ?? 0) + 1;
           }
+          if (body.planned_start_date !== undefined) {
+            update.planned_start_date = String(body.planned_start_date);
+          }
           if (body.planned_end_date !== undefined) {
             update.planned_end_date = String(body.planned_end_date);
           }
           if (Object.keys(update).length === 0) {
             return json({
               error:
-                "progress, status, recovery_plan, end_date, or planned_end_date required",
+                "progress, status, recovery_plan, end_date, planned_start_date, or planned_end_date required",
             }, 400);
           }
 
@@ -5845,7 +5848,7 @@ serve(async (req) => {
           const { data, error } = await admin.from("wbs_tasks")
             .update(update).eq("id", id)
             .select(
-              "id, title, status, progress, recovery_plan, end_date, planned_end_date, rescheduled_count",
+              "id, title, status, progress, recovery_plan, end_date, planned_start_date, planned_end_date, rescheduled_count",
             )
             .single();
           if (error) {
@@ -6402,7 +6405,7 @@ serve(async (req) => {
         }
         case "wbs.add_task": {
           // body: { category, title, instance, owner_instance?, description?,
-          //        priority?, end_date?, planned_end_date?, milestone_code?,
+          //        priority?, end_date?, planned_start_date?, planned_end_date?, milestone_code?,
           //        github_issue_number?, github_issue_url?, github_issue_state?,
           //        github_issue_labels? }
           // PS#6 S23 (2026-04-21): instance を required 化 (ALL leak 防止)
@@ -6465,6 +6468,8 @@ serve(async (req) => {
             priority: String(body.priority ?? "medium"),
             start_date: body.start_date ?? null,
             end_date: body.end_date ?? null,
+            planned_start_date: body.planned_start_date ?? body.start_date ??
+              null,
             planned_end_date: body.planned_end_date ?? body.end_date ?? null,
             remaining_work: body.remaining_work ?? null,
             milestone_code: body.milestone_code ?? null,
@@ -6564,7 +6569,7 @@ serve(async (req) => {
           const nowIso = now.toISOString();
           const today = nowIso.slice(0, 10);
           const taskSelect =
-            "id, category, category_icon, category_order, title, description, instance, owner_instance, status, progress, start_date, end_date, planned_end_date, milestone_code, priority, remaining_work, recovery_plan, ai_review_status, created_at, updated_at, github_issue_number, github_issue_url, github_issue_state, github_issue_labels, github_issue_synced_at";
+            "id, category, category_icon, category_order, title, description, instance, owner_instance, status, progress, start_date, end_date, planned_start_date, planned_end_date, milestone_code, priority, remaining_work, recovery_plan, ai_review_status, created_at, updated_at, github_issue_number, github_issue_url, github_issue_state, github_issue_labels, github_issue_synced_at";
           const allTasks = await fetchAllWbsTasks(admin, taskSelect);
           const tasksByIssue = new Map<
             number,
@@ -6674,6 +6679,8 @@ serve(async (req) => {
               priority: githubIssuePriority(labels),
               start_date: keeper?.start_date ?? today,
               end_date: keeper?.end_date ?? githubIssueDueDate(labels, now),
+              planned_start_date: keeper?.planned_start_date ??
+                keeper?.start_date ?? today,
               planned_end_date: keeper?.planned_end_date ?? keeper?.end_date ??
                 githubIssueDueDate(labels, now),
               remaining_work: isClosed
@@ -7098,7 +7105,7 @@ serve(async (req) => {
             true,
           );
           const taskSelect =
-            "id, category, category_order, title, status, progress, priority, end_date, planned_end_date, updated_at, instance, owner_instance, recovery_plan, github_issue_number, github_issue_url, github_issue_state, github_issue_synced_at";
+            "id, category, category_order, title, status, progress, priority, end_date, planned_start_date, planned_end_date, updated_at, instance, owner_instance, recovery_plan, github_issue_number, github_issue_url, github_issue_state, github_issue_synced_at";
           const { data, error } = await admin.from("wbs_tasks")
             .select(taskSelect)
             .in("status", ["pending", "in_progress", "blocked"]);
@@ -7232,7 +7239,7 @@ serve(async (req) => {
         case "wbs.instance_workload": {
           // body: { instance?: string } 任意。全 instance の負荷と救援候補を返す。
           const taskSelect =
-            "id, category, category_order, title, status, progress, priority, end_date, planned_end_date, updated_at, instance, owner_instance, recovery_plan, github_issue_number, github_issue_url, github_issue_state, github_issue_synced_at";
+            "id, category, category_order, title, status, progress, priority, end_date, planned_start_date, planned_end_date, updated_at, instance, owner_instance, recovery_plan, github_issue_number, github_issue_url, github_issue_state, github_issue_synced_at";
           const { data, error } = await admin.from("wbs_tasks")
             .select(taskSelect)
             .in("status", ["pending", "in_progress", "blocked"]);
