@@ -11,7 +11,7 @@
       "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "eb08089778ddd810411cf157cd5d059e356207fad886e798dead430c3fdff302",
+      "hash": "8ccfb66f291236d5c4ef46faec212e9c58ae8fe61dbddad6c6d8b57fbb3e91cf",
       "keyword_groups": {
         "codex-runtime": [
           "model picker",
@@ -55,15 +55,15 @@
           "workflow"
         ]
       },
-      "latest_signal": "2.1.128 / May 4, 2026",
+      "latest_signal": "2.1.131 / May 6, 2026",
       "name": "Claude Code changelog",
       "owner": "Claude Code",
-      "previous_hash": "63c137dad96b2d28daef67710120893fa078eab73f725295771516c53f5dbe33",
+      "previous_hash": "eb08089778ddd810411cf157cd5d059e356207fad886e798dead430c3fdff302",
       "slug": "claude-code-changelog",
       "snippets": [
         "Navigation Getting started Changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started Overview...",
         "This page is generated from the CHANGELOG.md on GitHub .",
-        "​ 2.1.128 May 4, 2026 Bare /color (no args) now picks a random session color /mcp now shows the tool count for connected servers and flags servers that connected with 0 tools..."
+        "Top-level declarations still work but claude plugin validate will warn Gateway /v1/models discovery for the /model picker is now opt-in via..."
       ],
       "status": 200,
       "url": "https://code.claude.com/docs/en/changelog"
@@ -72,56 +72,7 @@
       "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "7ec6e5e55b336a8fdb4d3df1506b44c2872e4983ca0e17a1995eed5e5c2157cc",
-      "keyword_groups": {
-        "codex-runtime": [
-          "worktree",
-          "subagents"
-        ],
-        "hooks": [
-          "hook",
-          "hooks",
-          "SessionStart",
-          "UserPromptSubmit",
-          "PostToolUse",
-          "Stop",
-          "StopFailure"
-        ],
-        "integration": [
-          "MCP",
-          "connector",
-          "GitHub"
-        ],
-        "quality-cost": [
-          "OpenTelemetry",
-          "rate limit",
-          "permission",
-          "review",
-          "CI"
-        ],
-        "schedule": [
-          "schedule",
-          "workflow"
-        ]
-      },
-      "latest_signal": "Hooks reference - Claude Code Docs Skip to main content Claude Code Docs home page English",
-      "name": "Claude Code hooks reference",
-      "owner": "Claude Code",
-      "previous_hash": "8bf648d36c20d8b9b146eaf9a62e8afa64cd66d603055a1fd2382018f3a4017b",
-      "slug": "claude-code-hooks",
-      "snippets": [
-        "Hooks reference - Claude Code Docs Skip to main content Claude Code Docs home page English Search...",
-        "Navigation Reference Hooks reference Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Reference CLI reference...",
-        "For a quickstart guide with examples, see Automate workflows with hooks ."
-      ],
-      "status": 200,
-      "url": "https://code.claude.com/docs/en/hooks"
-    },
-    {
-      "changed": true,
-      "error": null,
-      "first_seen": false,
-      "hash": "d19318167e985b2adc42ce11d732c14a28aae03586352869fea5648a7f900c65",
+      "hash": "e5a7781e417dd4e533782583304d207f8eb4ba3ee64c4dc77c204bf46ef0a927",
       "keyword_groups": {
         "codex-runtime": [
           "GPT-5.5",
@@ -168,7 +119,7 @@
       "latest_signal": "2026-04-30 / Codex CLI 0.128.0 pre",
       "name": "Codex changelog",
       "owner": "Codex",
-      "previous_hash": "3447d5038730947a97a418a873cecbbf28cdb38779f13ce983fe1441111a5137",
+      "previous_hash": "d19318167e985b2adc42ce11d732c14a28aae03586352869fea5648a7f900c65",
       "slug": "codex-changelog",
       "snippets": [
         "Changelog – Codex | OpenAI Developers Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and...",
@@ -180,59 +131,21 @@
     },
     {
       "changed": true,
-      "error": null,
+      "error": "HTTP 403",
       "first_seen": false,
-      "hash": "74a355178495a9cc344b09b6419f3170b940f72075a391454c366d46c756d1ef",
-      "keyword_groups": {
-        "codex-runtime": [
-          "GPT-5.5",
-          "GPT-5.4",
-          "in-app browser",
-          "computer use",
-          "worktree",
-          "subagents"
-        ],
-        "hooks": [
-          "hook",
-          "hooks"
-        ],
-        "integration": [
-          "MCP",
-          "connector",
-          "Slack",
-          "Linear",
-          "GitHub",
-          "IDE extension"
-        ],
-        "quality-cost": [
-          "cost",
-          "rate limit",
-          "sandbox",
-          "permission",
-          "review",
-          "CI"
-        ],
-        "schedule": [
-          "automation",
-          "automations",
-          "workflow"
-        ]
-      },
-      "latest_signal": "Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoint",
-      "name": "Codex use cases",
+      "hash": "",
+      "keyword_groups": {},
+      "latest_signal": "No title detected",
+      "name": "Codex overview",
       "owner": "Codex",
-      "previous_hash": "c136fffef70202bc2b9585ea23f759d0fb696073e003b24668fc3757abc84180",
-      "slug": "codex-use-cases",
-      "snippets": [
-        "Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and product docs for Codex...",
-        "Web development Turn design inputs into responsive UI, and iterate on the frontend with scoped changes and fast reviews.",
-        "Featured Start with the most common Codex workflows."
-      ],
-      "status": 200,
-      "url": "https://developers.openai.com/codex/use-cases/"
+      "previous_hash": "a349e452019207c9f236403724f30fcdf7612ffa7a8e048ebdfb469b5b442ba3",
+      "slug": "codex-overview",
+      "snippets": [],
+      "status": 403,
+      "url": "https://openai.com/codex/"
     }
   ],
-  "checked_at": "2026-05-05T21:39:04Z",
+  "checked_at": "2026-05-06T21:41:17Z",
   "high_priority_groups": [
     "codex-runtime",
     "hooks",
@@ -284,13 +197,13 @@
     }
   },
   "issue": "1422",
-  "previous_checked_at": "2026-05-04T21:40:56Z",
+  "previous_checked_at": "2026-05-05T21:39:04Z",
   "sources": [
     {
       "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "eb08089778ddd810411cf157cd5d059e356207fad886e798dead430c3fdff302",
+      "hash": "8ccfb66f291236d5c4ef46faec212e9c58ae8fe61dbddad6c6d8b57fbb3e91cf",
       "keyword_groups": {
         "codex-runtime": [
           "model picker",
@@ -334,21 +247,21 @@
           "workflow"
         ]
       },
-      "latest_signal": "2.1.128 / May 4, 2026",
+      "latest_signal": "2.1.131 / May 6, 2026",
       "name": "Claude Code changelog",
       "owner": "Claude Code",
-      "previous_hash": "63c137dad96b2d28daef67710120893fa078eab73f725295771516c53f5dbe33",
+      "previous_hash": "eb08089778ddd810411cf157cd5d059e356207fad886e798dead430c3fdff302",
       "slug": "claude-code-changelog",
       "snippets": [
         "Navigation Getting started Changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started Overview...",
         "This page is generated from the CHANGELOG.md on GitHub .",
-        "​ 2.1.128 May 4, 2026 Bare /color (no args) now picks a random session color /mcp now shows the tool count for connected servers and flags servers that connected with 0 tools..."
+        "Top-level declarations still work but claude plugin validate will warn Gateway /v1/models discovery for the /model picker is now opt-in via..."
       ],
       "status": 200,
       "url": "https://code.claude.com/docs/en/changelog"
     },
     {
-      "changed": true,
+      "changed": false,
       "error": null,
       "first_seen": false,
       "hash": "7ec6e5e55b336a8fdb4d3df1506b44c2872e4983ca0e17a1995eed5e5c2157cc",
@@ -386,7 +299,7 @@
       "latest_signal": "Hooks reference - Claude Code Docs Skip to main content Claude Code Docs home page English",
       "name": "Claude Code hooks reference",
       "owner": "Claude Code",
-      "previous_hash": "8bf648d36c20d8b9b146eaf9a62e8afa64cd66d603055a1fd2382018f3a4017b",
+      "previous_hash": "7ec6e5e55b336a8fdb4d3df1506b44c2872e4983ca0e17a1995eed5e5c2157cc",
       "slug": "claude-code-hooks",
       "snippets": [
         "Hooks reference - Claude Code Docs Skip to main content Claude Code Docs home page English Search...",
@@ -447,7 +360,7 @@
       "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "d19318167e985b2adc42ce11d732c14a28aae03586352869fea5648a7f900c65",
+      "hash": "e5a7781e417dd4e533782583304d207f8eb4ba3ee64c4dc77c204bf46ef0a927",
       "keyword_groups": {
         "codex-runtime": [
           "GPT-5.5",
@@ -494,7 +407,7 @@
       "latest_signal": "2026-04-30 / Codex CLI 0.128.0 pre",
       "name": "Codex changelog",
       "owner": "Codex",
-      "previous_hash": "3447d5038730947a97a418a873cecbbf28cdb38779f13ce983fe1441111a5137",
+      "previous_hash": "d19318167e985b2adc42ce11d732c14a28aae03586352869fea5648a7f900c65",
       "slug": "codex-changelog",
       "snippets": [
         "Changelog – Codex | OpenAI Developers Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and...",
@@ -505,7 +418,7 @@
       "url": "https://developers.openai.com/codex/changelog"
     },
     {
-      "changed": true,
+      "changed": false,
       "error": null,
       "first_seen": false,
       "hash": "74a355178495a9cc344b09b6419f3170b940f72075a391454c366d46c756d1ef",
@@ -547,7 +460,7 @@
       "latest_signal": "Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoint",
       "name": "Codex use cases",
       "owner": "Codex",
-      "previous_hash": "c136fffef70202bc2b9585ea23f759d0fb696073e003b24668fc3757abc84180",
+      "previous_hash": "74a355178495a9cc344b09b6419f3170b940f72075a391454c366d46c756d1ef",
       "slug": "codex-use-cases",
       "snippets": [
         "Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and product docs for Codex...",
@@ -558,38 +471,18 @@
       "url": "https://developers.openai.com/codex/use-cases/"
     },
     {
-      "changed": false,
-      "error": null,
+      "changed": true,
+      "error": "HTTP 403",
       "first_seen": false,
-      "hash": "a349e452019207c9f236403724f30fcdf7612ffa7a8e048ebdfb469b5b442ba3",
-      "keyword_groups": {
-        "codex-runtime": [
-          "GPT-5.5",
-          "GPT-5.4",
-          "worktree"
-        ],
-        "quality-cost": [
-          "review",
-          "CI"
-        ],
-        "schedule": [
-          "automation",
-          "automations",
-          "schedule",
-          "workflow"
-        ]
-      },
-      "latest_signal": "AI Coding Partner from OpenAI",
+      "hash": "",
+      "keyword_groups": {},
+      "latest_signal": "No title detected",
       "name": "Codex overview",
       "owner": "Codex",
       "previous_hash": "a349e452019207c9f236403724f30fcdf7612ffa7a8e048ebdfb469b5b442ba3",
       "slug": "codex-overview",
-      "snippets": [
-        "Designed for multi-agent workflows The Codex app is a command center for agentic coding.",
-        "With built-in worktrees and cloud environments, agents work in parallel across projects, completing weeks of work in days.",
-        "Made for always-on background work With Automations, Codex works unprompted, picking up routine but important work like issue triage, alert monitoring, CI/CD, and more, so you..."
-      ],
-      "status": 200,
+      "snippets": [],
+      "status": 403,
       "url": "https://openai.com/codex/"
     }
   ]
