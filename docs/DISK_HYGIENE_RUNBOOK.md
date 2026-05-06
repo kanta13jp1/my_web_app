@@ -65,6 +65,28 @@
 | 10-25 GB | **WARN** | `additionalContext` 経由で Claude に「`/disk-cleanup` 推奨」surface |
 | < 10 GB | **ALERT** | `additionalContext` で「即座に `/disk-cleanup` 実行」surface (= ビルド失敗 risk) |
 
+### 3.1 Memory hook 閾値 (= memory-cleanup.ps1 / part 158-b 強化)
+
+| Free RAM | action | 期間 |
+|---|---|---|
+| > 70% | cheap ops のみ (= GC + DNS + orphan PS) — **常時実行** | < 1 sec |
+| 25-70% | Tier 1.5 steps 1-4 (= EmptyWorkingSet 含む) | 5-15 sec |
+| < 25% | Tier 1.5 all + WARNING report | 5-15 sec + report |
+| < 10% | Tier 1.5 all + ALERT additionalContext | 5-15 sec + alert |
+
+**part 158-b 変更**: 旧仕様「Free > 50% で完全 skip」を撤廃。GC + DNS + orphan PS は idempotent + 安価なので RAM 残量に依らず常時実行。fleet-loaded box でも毎セッション微小回収を観測可能化。
+
+### 3.2 SessionEnd hook (= part 158-b 新規)
+
+両 hook (= disk + memory) を **SessionStart + SessionEnd の二重 trigger** で登録 (`~/.claude/settings.json`):
+
+```jsonc
+"SessionStart": [/* disk-cleanup, memory-cleanup */],
+"SessionEnd":   [/* disk-cleanup, memory-cleanup */]
+```
+
+理由: SessionStart で前回残骸を清掃 + SessionEnd で当回残骸を清掃 → 「次回セッション開始時の disk pressure 永続化」を防ぐ。両 hook 共 idempotent なので二重発動でも副作用なし。「毎回のセッションで必ず圧縮」要件 (= ユーザー 2026-05-06 ask) を厳格化。
+
 ## 4. 監視 KPI
 
 毎セッション自動記録 (= `~/.claude/logs/disk-cleanup-YYYYMMDD.log`):
