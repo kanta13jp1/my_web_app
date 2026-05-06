@@ -137,7 +137,27 @@ powershell -File scripts/worktree_prune.ps1 -Apply -Force
 
 **ROI**: 1 sample worktree ~130 MB / 7 worktree = ~913 MB。fleet 運用で 1-2 week ごとに prune 推奨。
 
-### 3.6 Worktree cleanup automation (= Issue #1984 axis A / Codex #1)
+### 3.6 Aggressive auto-cleanup (= part 161 新設 / 3 改善)
+
+User 報告: 「今の開発フローだと、ローカル環境のメモリやハードディスク容量が必ず枯渇」(= 2026-05-07 part 161)。診断結果: C: 81.6% used (84 GB free / 455 GB) / Memory 84.6% used。最大圧迫源は **Chrome 5.11 GB / Edge 3.96 GB / .claude/plugins 1.17 GB / transcripts 1.12 GB**。
+
+**3 改善** (= `disk-cleanup.ps1` 編集 / part 161):
+
+1. **Transcript gzip 閾値 30→14 days** (= 1.12 GB transcripts のうち 14+ 日経過分を gzip 50-70% 圧縮)
+2. **Browser cache 2-tier 戦略** (= 従来は browser running 時 skip だった / 「Code Cache / GPUCache / Service Worker\\CacheStorage」は file lock 少なく **browser 動作中も削除可** + 3 日経過 file のみ削除で UX 影響最小化 / 「Cache」(SQLite-like) のみ browser stopped 時の deep clean)
+3. **Plugin cache > 14 days 削除** (= `~/.claude/plugins/cache/` ~1.17 GB / 100KB 以上 file の 14+ 日経過分のみ削除 / 最新 plugin version は LastWriteTime で keep)
+
+**part 161 smoke test 実績** (= 2026-05-07 03:43 JST):
+- **939.4 MB reclaim / 28.8 sec**
+  - plugin_cache_14d_MB: **542.7 MB** (新設 / 最大 win)
+  - transcripts_compacted_MB: **348.5 MB** (14 day threshold 効果)
+  - browser_cache_MB: **48.1 MB** (Chrome+Edge running 中も削除成功)
+- C: 83.6 → 84.1 GB (= 0.5 GB 反映 / 残りは即再生成)
+- Memory cleanup 同時実行: **2.34 GB free 増** (15.4% → 32%)
+
+**ROI**: 1 セッションあたり **~1 GB reclaim**。SessionStart + SessionEnd dual trigger で 1 日 2-4 回稼働 = 週 14-28 GB。
+
+### 3.7 Worktree cleanup automation (= Issue #1984 axis A / Codex #1)
 
 `scripts/worktree_cleanup.py` は PowerShell 手動 prune の portable/CI 版。`git worktree list --porcelain` 全件を見て、以下をすべて満たす worktree だけを `PRUNE` 候補にする。
 

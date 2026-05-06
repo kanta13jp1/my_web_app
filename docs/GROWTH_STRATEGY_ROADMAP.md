@@ -28048,3 +28048,47 @@ parallel cap 4/8/12 は density 3.86/7.34/3.48 per day で適正 → 調整不�
 - **INDIE-29 5+/7** ✅ (= shipping 速度のための環境圧縮)
 
 **89 part 連続 dogfood**
+
+---
+
+## Win版#132 part 161 (Win Claude / 2026-05-07)
+
+### Session Summary
+
+- PR #2087 MERGED: Privacy Policy draft (`docs/PRIVACY_POLICY_DRAFT.md` 18 section) + worktree prune script — Issue #1495 Phase 0 blocker 完全解消
+- App icon 1024×1024 designed (AIDesigner / Orange `#FF6B35` + Indigo `#3D5AFE` dark theme):
+  - `assets/icons/app_icon.png` — master PNG for iOS App Store + Android
+  - `assets/icons/app_icon_foreground.png` — Android Adaptive Icon foreground (75% safe zone)
+- Codex hand-off: `docs/cross-instance-prs/20260507_codex_app_icon_launcher_handoff_part161.md` (flutter_launcher_icons ^0.14.1 + flutter_native_splash ^2.4.1 spec / 7 acceptance criteria / due 2026-05-25)
+- PR #2089 created (docs-only label)
+- Codex PR #2088 (Issue #1563 Visual E2E gate) 確認
+
+### Philosophy Alignment
+
+| 原則 | ✅ | 確認 |
+|------|----|------|
+| CEO 感 | ✅ | アイコンはブランド identity を CEO 自身が決定 |
+| ミッション駆動 | ✅ | mobile presence = ユーザー導線拡大 |
+| 優しい mentor | ✅ | Codex hand-off 7 acceptance criteria で実装を支援 |
+| 6 部署バランス | ✅ | デザイン (R&D) + mobile 配布準備 (マーケ) |
+| 商品 = 価値 | ✅ | ブランドアイコンが価値接点増大 |
+| 資本 = 時間 | ✅ | AIDesigner で数分でプロ品質 icon 生成 |
+| 資産 vs 負債 | ✅ | icon = 長期資産 |
+| KPI = 昨日の自分 | ✅ | part 160 Privacy Policy → part 161 アイコン = Phase 0 完全閉ループ |
+| IPO / ウェルビーイング | ✅ | mobile presence = IPO 必須条件 |
+
+**判定: 9/9 ✅ / 90 part 連続 dogfood**
+
+### Commit
+
+`94cb29720` — app icon design + Codex hand-off (PR #2089) + PR #2087 merged.
+`aa1cdc0d3` — disk-cleanup 3 aggressive improvements (939 MB / 28 sec + 2.34 GB free RAM).
+
+### Hygiene 強化 (= user 明示要求 / part 161 後半)
+
+診断: C: 81.6% used / Memory 84.6% used → 3 改善:
+1. Transcript gzip 30→14 days (= 348.5 MB)
+2. Browser cache 2-tier safe-running (= 48.1 MB)
+3. Plugin cache > 14 days (= 542.7 MB / 最大 win)
+
+ROI: 1 session ~1 GB reclaim / SessionStart+End dual で週 14-28 GB.
