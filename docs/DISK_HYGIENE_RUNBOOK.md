@@ -137,6 +137,36 @@ powershell -File scripts/worktree_prune.ps1 -Apply -Force
 
 **ROI**: 1 sample worktree ~130 MB / 7 worktree = ~913 MB。fleet 運用で 1-2 week ごとに prune 推奨。
 
+### 3.6 Worktree cleanup automation (= Issue #1984 axis A / Codex #1)
+
+`scripts/worktree_cleanup.py` は PowerShell 手動 prune の portable/CI 版。`git worktree list --porcelain` 全件を見て、以下をすべて満たす worktree だけを `PRUNE` 候補にする。
+
+**追加 guard**:
+
+1. current `$PWD` の worktree を絶対 skip
+2. primary worktree を skip
+3. detached HEAD を skip
+4. `main` / `master` / `develop` / `staging` を skip
+5. `git status --porcelain` が 1 行でもあれば skip
+6. `gh pr list --state open` の head branch と一致すれば skip
+7. `HEAD == @{u}` (= upstream と完全一致) でなければ skip
+8. `HEAD` が `origin/main` に含まれていなければ skip
+
+**運用 cycle**:
+
+```bash
+# 1. dry-run = report only (default)
+python scripts/worktree_cleanup.py --fetch
+
+# 2. apply = safe PRUNE candidates only
+python scripts/worktree_cleanup.py --fetch --apply
+
+# 3. machine-readable report
+python scripts/worktree_cleanup.py --json-out tmp/worktree-cleanup.json
+```
+
+`.github/workflows/worktree-cleanup-cron.yml` は weekly で同 script を hosted Windows runner 上で dry-run → apply → `git worktree prune` まで実行し、Issue #1984 に summary を残す。GitHub hosted runner はローカル C: の worktree を直接削除できないため、**local cleanup は Codex/Claude Windows app session で同 script を dry-run → apply** する。
+
 ## 4. 監視 KPI
 
 毎セッション自動記録 (= `~/.claude/logs/disk-cleanup-YYYYMMDD.log`):
