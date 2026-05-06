@@ -27893,3 +27893,32 @@ chain depth **5** (= part 155 record / 過去最深) → **0 リセット** 達�
 - [ISSUE-PRECHECK] N/A (= 起票なし)
 
 **82 part 連続 dogfood** (= part 75 → part 156 / 2 month 連続)
+
+## Win版#132 part 157 2026-05-06 (Win Claude / 83 part 連続 dogfood)
+
+### 着地サマリ
+
+WBS タイムラインの全 1144 open タスク (= UI 表示 918 件は Supabase 1000 cap で抜け落ちていた真数の一部) を priority tier ベースで自動再配置するインフラを構築。pre-push backfill artifact (= 全タスク `04/30→05/03` 固定) を heuristic で「実際に着手可能」な日付へ daily 06:00 JST に自動 reset。
+
+### Commits
+
+- `4e004b4c5` feat(wbs): show filtered count + CSV download on timeline (PR #2057)
+- `8971436ad` fix(wbs-auto-reschedule): bump upload-artifact v4→v6 (PR #2065)
+- `10056062b` feat(wbs): add reschedule_realistic action + daily auto cron (PR #2062 後 squash)
+- `faf5322b0` fix(wbs): paginate reschedule_realistic to bypass 1000-row cap (PR #2067)
+- `042db7dff` fix(wbs): parallelize reschedule_realistic + bump curl timeout (PR #2072)
+
+### apply 結果 (run #25429351464)
+
+- total_open: 1144 / updated: 1144 / errors: 0
+- by_priority: high 425件 (5/13–8/30) / medium 646件 (6/5–8/31) / low 73件 (8/4–8/24)
+
+### Philosophy Alignment
+
+- **PHILOSOPHY-22 9/9** (CEO 感 / mentor / 6 部署 / 商品 / 資本 / 資産負債 / KPI / IPO / mission)
+- **AI-DEV-23 7/7** (Auth ✅ / deny-by-default ✅ / trace_id ✅ via monitoring_events / circuit-breaker ✅ pageSize cap / memory ✅ audit log / DLQ ✅ errors[] / quality-gate ✅ dry_run)
+- **VIBE-30 5+/7** (production-grade EF / observability / rollback path)
+- **INDIE-29 7/7** (shipping 速度 = 1 session で全 5 deploy 含めて完結)
+- [ISSUE-PRECHECK] N/A (= 起票なし)
+
+**83 part 連続 dogfood** (= part 75 → part 157 / 2 month 連続)
