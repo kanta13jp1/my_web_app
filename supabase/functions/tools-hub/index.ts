@@ -6336,23 +6336,30 @@ serve(async (req) => {
             });
           }
 
-          // apply: 1 task ずつ update (Supabase JS は bulk update with different
-          // values per row が無いので loop / 918 row ≒ 数秒 / EF timeout 60s 内)
+          // apply: Supabase JS は bulk update (行ごと異なる値) が無いので chunk
+          // 並列化 (concurrency=10 で 1144 row ≒ 6 sec / curl 240s 内に収まる)
           let updated = 0;
           const errors: Array<{ id: string; error: string }> = [];
-          for (const u of updates) {
-            const { error } = await admin
-              .from("wbs_tasks")
-              .update({
-                start_date: u.start_date,
-                end_date: u.end_date,
-                planned_end_date: u.end_date,
-              })
-              .eq("id", u.id);
-            if (error) {
-              errors.push({ id: u.id, error: error.message });
-            } else {
-              updated += 1;
+          const concurrency = 10;
+          for (let i = 0; i < updates.length; i += concurrency) {
+            const batch = updates.slice(i, i + concurrency);
+            const results = await Promise.all(batch.map(async (u) => {
+              const { error } = await admin
+                .from("wbs_tasks")
+                .update({
+                  start_date: u.start_date,
+                  end_date: u.end_date,
+                  planned_end_date: u.end_date,
+                })
+                .eq("id", u.id);
+              return { id: u.id, error: error?.message };
+            }));
+            for (const r of results) {
+              if (r.error) {
+                errors.push({ id: r.id, error: r.error });
+              } else {
+                updated += 1;
+              }
             }
           }
 
