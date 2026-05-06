@@ -134,7 +134,8 @@ SET
   planned_start_date = final_schedule.new_start_date,
   planned_end_date = final_schedule.new_end_date,
   owner_instance = final_schedule.lane,
-  instance = final_schedule.lane,
+  -- Keep instance stable: multiple legacy lanes can share the same title and
+  -- would collide with the title+instance unique constraint when collapsed.
   recovery_plan = CASE
     WHEN final_schedule.old_deadline < final_schedule.anchor_date THEN
       trim(BOTH FROM CONCAT_WS(
