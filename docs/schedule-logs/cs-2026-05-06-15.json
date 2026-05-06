@@ -3,5 +3,5 @@
   "status": "success",
   "executed_at": "2026-05-06T15:00:00Z",
   "environment": "web-version",
-  "summary": "Edge Function UI追加: 0件 / チケット: 0件 / auto-review Issue: 0件 / workflow-failure修復: 2件クローズ(#2032,#1902) / Schedule健全性: 正常"
+  "summary": "Edge Function UI追加: 0件 / チケット: 0件 / auto-review Issue: 0件 / workflow-failure修復: 0件 (5件スキップ) / Schedule健全性: cs-check正常/daily-report停止継続"
 }
