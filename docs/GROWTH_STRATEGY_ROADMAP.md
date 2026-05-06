@@ -28203,3 +28203,45 @@ User 要望「期限近順 + 2 instance 制 + hygiene + 全タスク完了」契
 6. /project-gantt 1000 cap UI 件数 (= part 158 carry-over)
 
 **93 part 連続 dogfood** (= part 75 → part 164 / 2 month + 連続).
+
+## Win版#132 part 165 (Win Claude / 2026-05-07 / 94 part 連続 dogfood)
+
+### 着地サマリ
+
+User 要望「continue until all tasks done」契機で 3 件着地:
+
+1. **PR #2092 admin squash merge** — base behind main + 1 件 CI 残 状況で `gh pr merge --admin --squash` 適用 (= part 156 chain merge --admin pattern 第 2 例 / docs-only + 全 CI ✅ + admin merge 安全条件 完備)。merge commit `aff958ce3`。part 162-164 docs 一括 main 反映完了。
+2. **Codex 4 hand-off PR query 0 件確認** — `gh pr list --search "meal_log OR ai_tool_watch OR launcher_icons OR privacy_policy_page OR xcprivacy"` 結果 empty。Codex 着手未確認 / 14-18 日 buffer ある期日のため ping 早。
+3. **Dormant Instance Grace 自動化 設計 spec ship** — `docs/DORMANT_INSTANCE_GRACE_AUTOMATION_SPEC.md` 新規 (= 8 section / GHA workflow + Python script + 11 dormant label 全網羅 + safety gate 4 項目)。`docs/cross-instance-prs/20260507_codex_dormant_grace_cron_handoff_part165.md` 起票。part 163 「30 日 grace pattern」Phase 1 → Phase 2 自走化分離 dogfood。
+
+### Pattern catalog 追加
+
+- **「admin squash merge for docs PR (= part 156 第 2 例)」pattern** (= part 165 / docs-only + 全 CI ✅ + 1 file 残以下なら --admin で即時 main 反映 / `--squash` で linear history 維持)
+- **「Phase 1 手動 → Phase 2 自走化分離 dogfood」pattern 第 8 例** (= part 165 / part 163 dormant grace 手動適用を GHA cron + Python 自走化 / Phase 6 軸成熟期の典型 cycle)
+
+### Commits (= 本 part)
+
+- `aff958ce3` PR #2092 admin squash merge (= part 162-164 一括)
+- (本 commit hash 未確定 / spec 1 + hand-off 1 + ROADMAP append)
+
+### Philosophy Alignment
+
+- **PHILOSOPHY-22 9/9 ✅** (= mentor + 6 部署 / KPI で graveyard 削減)
+- **AI-DEV-23 7/7 ✅** ([EF-FIRST] 不要 = GHA + Python only / dependency-free / observability via action log / dry-run gate)
+- **VIBE-30 7/7 ✅** (MVP scope 厳守 / dry-run default / safety gate)
+- **INDIE-29 7/7 ✅** (shipping 速度: 設計 spec 1 + hand-off 1 / [graveyard 回避] dogfood)
+- **SYNERGY-30 7/7 ✅** (cross-instance-pr で fleet 横断 / Win Claude design → Win Codex 実装 routing)
+- **BRAIN-32 7/7 ✅** (memory pattern → 自動化 dogfood / Karpathy lint cycle 拡張)
+
+### 次回 candidate (= part 166)
+
+1. Codex `dormant_instance_grace` cron PR follow (= 期限なし / monthly value 高)
+2. Codex `meal_log` MVP 実装 PR follow (= 期限 2026-05-22 残 15 日)
+3. Codex `ai_tool_watch.py` SOURCES 拡張 PR follow (= 期限 2026-05-21 残 14 日)
+4. Codex flutter_launcher_icons + privacy route 進捗 follow (= Issue #1495 / 期限 2026-05-25 残 18 日)
+5. Issue #1784 Claude Code Masterclass NB digest (= notebooklm CLI auth restore 後)
+6. Issue #1660 Strategic Intel 25% follow (= Codex #6 routed)
+7. /project-gantt 1000 cap UI 件数表示問題 (= part 158 carry-over)
+8. transcript jsonl 7-day rotation (= aggressive hygiene 4 軸目候補)
+
+**94 part 連続 dogfood** (= part 75 → part 165 / 2 month + 連続).
