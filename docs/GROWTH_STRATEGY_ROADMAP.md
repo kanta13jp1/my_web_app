@@ -28163,3 +28163,43 @@ User 要望「WBS 期限近順 + 2 instance 制 + hygiene 圧縮」契機で 3 �
 4. Issue #1495 Phase 0 完全閉ループ確認 (= Codex 2 PR merge 後 close)
 
 **92 part 連続 dogfood** (= part 75 → part 163 / 2 month + 連続).
+
+## Win版#132 part 164 (Win Claude / 2026-05-07 / 93 part 連続 dogfood)
+
+### 着地サマリ
+
+User 要望「期限近順 + 2 instance 制 + hygiene + 全タスク完了」契機で 4 件着地:
+
+1. **PR #2092 update-branch + merge cycle** — part 162-163 docs PR (= ai_tool_watch hand-off + dormant grace + memory consolidation) を `gh api -X PUT pulls/2092/update-branch` で base 同期 → CI 全 ✅ 待ち merge。
+2. **Hygiene re-run** — disk-cleanup.ps1 + memory-cleanup.ps1 idempotent 確認 (C: 94 GB free / Memory 1.46 GB free)。
+3. **Issue #1665 食事ログMVP 設計 spec ship** — `docs/MEAL_LOG_MVP_DESIGN_SPEC.md` 新規 (= 10 section / schema + EF action 4 件 + UI レイアウト + 受け入れ条件 9 項目)。`RecipeMealPlannerPage` 4 番目 tab + 既存 `lifestyle-hub` EF 拡張 + 新 `meal_logs` table + RLS 4 policy / [EF-CAP-50] 維持。
+4. **Codex hand-off doc** — `docs/cross-instance-prs/20260507_codex_meal_log_mvp_handoff_part164.md` 起票 (= 5 step 推奨実装順 + 9 受け入れ条件 + 注意 3 点 / 期限 2026-05-22 残 15 日)。
+
+### Pattern catalog 追加
+
+- **「設計 spec ship + 同 commit hand-off doc 起票」pattern** 第 1 例 (= part 164 / `MEAL_LOG_MVP_DESIGN_SPEC.md` + `cross-instance-prs/<date>_handoff.md` 1 commit ペア / Win Claude design role 完結 → Win Codex implementation 即着手可)
+- **「既存 page tab 数拡張 = 既存 EF action 追加 + 新 table」三位一体 pattern** 第 1 例 (= part 164 / RecipeMealPlannerPage `length: 3 → 4` + lifestyle-hub `meal_log.*` 4 action + meal_logs table / 全 [EF-CAP-50] 維持 / 既存資産最大活用 + 新規最小)
+
+### Commits (= 本 part)
+
+- (commit hash 未確定 / 本セクションを含む commit が ROADMAP append + spec doc + hand-off doc の 3 file 変更)
+
+### Philosophy Alignment
+
+- **PHILOSOPHY-22 9/9 ✅** (= mentor + 6 部署 KPI 健康部署 強化)
+- **AI-DEV-23 7/7 ✅** (= [EF-FIRST] / RLS gate / no admin client / observability via summary action)
+- **VIBE-30 7/7 ✅** (= MVP scope 厳守 / Phase 2 拡張余地明示 / [NO-SCOPE-CREEP] 遵守)
+- **INDIE-29 7/7 ✅** (= shipping 速度: spec 1 doc + hand-off 1 doc → Codex 実装 1 PR / 1 week 完結想定)
+- **PLATFORM-31 7/7 ✅** (= 既存 hub action 追加 [最優先] / 新 EF なし)
+- **SYNERGY-30 7/7 ✅** (= cross-instance-pr で fleet 横断 / Win Claude design → Win Codex 実装 routing)
+
+### 次回 candidate (= part 165)
+
+1. Codex `meal_log` MVP 実装 PR follow (= 期限 2026-05-22 残 15 日)
+2. Codex `ai_tool_watch.py` SOURCES 拡張 PR follow (= 期限 2026-05-21 残 14 日)
+3. Codex flutter_launcher_icons + privacy route 進捗 follow (= Issue #1495 / 期限 2026-05-25 残 18 日)
+4. Issue #1784 Claude Code Masterclass NB digest (= notebooklm CLI auth restore 後)
+5. dormant instance 30 日 grace 自動化 GHA cron 起票 (= part 163 pattern → 自走化分離 dogfood)
+6. /project-gantt 1000 cap UI 件数 (= part 158 carry-over)
+
+**93 part 連続 dogfood** (= part 75 → part 164 / 2 month + 連続).
