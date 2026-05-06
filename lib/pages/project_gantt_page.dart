@@ -68,6 +68,8 @@ class WbsTask {
   final int progress;
   final DateTime? startDate;
   final DateTime? endDate;
+  final DateTime? plannedStartDate;
+  final DateTime? plannedEndDate;
   final String? milestoneCode;
   final String priority;
   final String ownerInstance;
@@ -94,6 +96,8 @@ class WbsTask {
     required this.progress,
     this.startDate,
     this.endDate,
+    this.plannedStartDate,
+    this.plannedEndDate,
     this.milestoneCode,
     required this.priority,
     this.ownerInstance = '',
@@ -123,6 +127,12 @@ class WbsTask {
         endDate: m['end_date'] != null
             ? DateTime.tryParse(m['end_date'] as String)
             : null,
+        plannedStartDate: m['planned_start_date'] != null
+            ? DateTime.tryParse(m['planned_start_date'] as String)
+            : null,
+        plannedEndDate: m['planned_end_date'] != null
+            ? DateTime.tryParse(m['planned_end_date'] as String)
+            : null,
         milestoneCode: m['milestone_code'] as String?,
         priority: m['priority'] as String? ?? 'medium',
         ownerInstance: m['owner_instance'] as String? ??
@@ -136,10 +146,14 @@ class WbsTask {
       );
 
   /// 遅延日数 (今日 - end_date / 完了済 or 期限なし は 0)
+  DateTime? get scheduleStartDate => plannedStartDate ?? startDate;
+  DateTime? get scheduleEndDate => plannedEndDate ?? endDate;
+
   int get delayDays {
-    if (status == 'completed' || endDate == null) return 0;
+    final scheduleEnd = scheduleEndDate;
+    if (status == 'completed' || scheduleEnd == null) return 0;
     final now = DateTime.now();
-    final end = endDate!;
+    final end = scheduleEnd;
     final today = DateTime(now.year, now.month, now.day);
     final endDay = DateTime(end.year, end.month, end.day);
     final diff = today.difference(endDay).inDays;
@@ -164,7 +178,9 @@ class WbsTask {
       };
 
   String get instanceLabel => switch (instance) {
+        'claude' => 'Claude Code',
         'codex' => 'Codex',
+        'automation' => 'Automation',
         'gemini' => 'Gemini',
         'co-pilot' => 'Co-pilot',
         'copilot' => 'Co-pilot',
@@ -188,7 +204,9 @@ class WbsTask {
       };
 
   Color get instanceColor => switch (instance) {
+        'claude' => const Color(0xFF2563EB),
         'codex' => const Color(0xFF10B981),
+        'automation' => const Color(0xFFEAB308),
         'gemini' => const Color(0xFF4285F4),
         'co-pilot' => const Color(0xFF111827),
         'copilot' => const Color(0xFF111827),
@@ -212,7 +230,9 @@ class WbsTask {
       };
 
   String get ownerLabel => switch (ownerInstance) {
+        'claude' => 'Claude Code',
         'codex' => 'Codex',
+        'automation' => 'Automation',
         'gemini' => 'Gemini',
         'co-pilot' => 'Co-pilot',
         'copilot' => 'Co-pilot',
@@ -235,7 +255,9 @@ class WbsTask {
       };
 
   Color get ownerColor => switch (ownerInstance) {
+        'claude' => const Color(0xFF2563EB),
         'codex' => const Color(0xFF10B981),
+        'automation' => const Color(0xFFEAB308),
         'gemini' => const Color(0xFF4285F4),
         'co-pilot' => const Color(0xFF111827),
         'copilot' => const Color(0xFF111827),
@@ -307,10 +329,11 @@ int _compareWbsTasks(WbsTask a, WbsTask b) {
   final categoryCmp = a.categoryOrder.compareTo(b.categoryOrder);
   if (categoryCmp != 0) return categoryCmp;
 
-  final endDateCmp = _compareOptionalDate(a.endDate, b.endDate);
+  final endDateCmp = _compareOptionalDate(a.scheduleEndDate, b.scheduleEndDate);
   if (endDateCmp != 0) return endDateCmp;
 
-  final startDateCmp = _compareOptionalDate(a.startDate, b.startDate);
+  final startDateCmp =
+      _compareOptionalDate(a.scheduleStartDate, b.scheduleStartDate);
   if (startDateCmp != 0) return startDateCmp;
 
   return a.title.compareTo(b.title);
@@ -1508,7 +1531,8 @@ class _TaskRow extends StatelessWidget {
               ],
             ),
           ],
-          if (task.startDate != null || task.endDate != null) ...[
+          if (task.scheduleStartDate != null ||
+              task.scheduleEndDate != null) ...[
             const SizedBox(height: 4),
             Row(
               children: [
@@ -1520,10 +1544,10 @@ class _TaskRow extends StatelessWidget {
                 const SizedBox(width: 4),
                 Text(
                   [
-                    if (task.startDate != null)
-                      '開始予定: ${task.startDate!.year}/${task.startDate!.month.toString().padLeft(2, '0')}/${task.startDate!.day.toString().padLeft(2, '0')}',
-                    if (task.endDate != null)
-                      '完了予定: ${task.endDate!.year}/${task.endDate!.month.toString().padLeft(2, '0')}/${task.endDate!.day.toString().padLeft(2, '0')}',
+                    if (task.scheduleStartDate != null)
+                      '開始予定: ${task.scheduleStartDate!.year}/${task.scheduleStartDate!.month.toString().padLeft(2, '0')}/${task.scheduleStartDate!.day.toString().padLeft(2, '0')}',
+                    if (task.scheduleEndDate != null)
+                      '完了予定: ${task.scheduleEndDate!.year}/${task.scheduleEndDate!.month.toString().padLeft(2, '0')}/${task.scheduleEndDate!.day.toString().padLeft(2, '0')}',
                   ].join('  '),
                   style: TextStyle(
                     color: task.delayDays > 0
@@ -1997,8 +2021,9 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
     final result = switch (_sortColumnKey) {
       '#' => _compareWbsTasks(a, b),
       'task' => _compareText(a.title, b.title),
-      'startDate' => _compareOptionalDate(a.startDate, b.startDate),
-      'endDate' => _compareOptionalDate(a.endDate, b.endDate),
+      'startDate' =>
+        _compareOptionalDate(a.scheduleStartDate, b.scheduleStartDate),
+      'endDate' => _compareOptionalDate(a.scheduleEndDate, b.scheduleEndDate),
       'instance' => _compareText(
           _instanceBadgeLabel(a),
           _instanceBadgeLabel(b),
@@ -2453,8 +2478,8 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
         '${t.progress}',
         t.status,
         t.priority,
-        _isoDate(t.startDate),
-        _isoDate(t.endDate),
+        _isoDate(t.scheduleStartDate),
+        _isoDate(t.scheduleEndDate),
         t.remainingWork,
         t.recoveryPlan,
         t.milestoneCode ?? '',
@@ -3082,12 +3107,12 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
           // Win版#132 part 86: 各 cell を Tooltip で wrap (= 列別 hover content 表示 / recovery 固定 bug 修正)
           if (_colVisible['startDate'] ?? true)
             Tooltip(
-              message: '開始予定: ${_formatDate(task.startDate)}',
+              message: '開始予定: ${_formatDate(task.scheduleStartDate)}',
               waitDuration: const Duration(milliseconds: 350),
               child: SizedBox(
                 width: _colWidths['startDate'] ?? 80,
                 child: Text(
-                  _formatDate(task.startDate),
+                  _formatDate(task.scheduleStartDate),
                   style: const TextStyle(
                     color: Color(0xFFB0B0C0),
                     fontSize: 11,
@@ -3100,13 +3125,13 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
           if (_colVisible['endDate'] ?? true)
             Tooltip(
               message: task.delayDays > 0
-                  ? '完了予定: ${_formatDate(task.endDate)} (${task.delayDays}日遅延)'
-                  : '完了予定: ${_formatDate(task.endDate)}',
+                  ? '完了予定: ${_formatDate(task.scheduleEndDate)} (${task.delayDays}日遅延)'
+                  : '完了予定: ${_formatDate(task.scheduleEndDate)}',
               waitDuration: const Duration(milliseconds: 350),
               child: SizedBox(
                 width: _colWidths['endDate'] ?? 80,
                 child: Text(
-                  _formatDate(task.endDate),
+                  _formatDate(task.scheduleEndDate),
                   style: TextStyle(
                     color: task.delayDays > 0
                         ? const Color(0xFFEF4444)
@@ -3553,8 +3578,8 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
   }
 
   Widget _buildTimelineRow(int index, WbsTask task) {
-    final start = task.startDate;
-    final end = task.endDate;
+    final start = task.scheduleStartDate;
+    final end = task.scheduleEndDate;
     if (start == null || end == null) {
       return const SizedBox.shrink();
     }
@@ -3973,15 +3998,18 @@ class _LightningLinePainter extends CustomPainter {
       final y = i * rowHeight + rowHeight / 2;
       double x = todayX;
 
-      if (t.startDate != null && t.endDate != null && t.status != 'completed') {
-        final startX = _dateToX(t.startDate!);
-        final endX = _dateToX(t.endDate!);
+      if (t.scheduleStartDate != null &&
+          t.scheduleEndDate != null &&
+          t.status != 'completed') {
+        final startX = _dateToX(t.scheduleStartDate!);
+        final endX = _dateToX(t.scheduleEndDate!);
         final barWidth = endX - startX;
         if (barWidth > 0) {
           // 期待進捗
-          final totalDays = t.endDate!.difference(t.startDate!).inDays;
+          final totalDays =
+              t.scheduleEndDate!.difference(t.scheduleStartDate!).inDays;
           final passedDays =
-              today.difference(t.startDate!).inDays.clamp(0, totalDays);
+              today.difference(t.scheduleStartDate!).inDays.clamp(0, totalDays);
           final expected = totalDays > 0 ? passedDays / totalDays : 0.0;
           final actual = t.progress / 100.0;
 
@@ -3997,7 +4025,7 @@ class _LightningLinePainter extends CustomPainter {
             }
           }
         }
-      } else if (t.status == 'completed' || t.endDate == null) {
+      } else if (t.status == 'completed' || t.scheduleEndDate == null) {
         // 完了済 or 期限なし → 今日 X 維持
         x = todayX;
       }
