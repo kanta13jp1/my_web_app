@@ -22,7 +22,7 @@
 | 2 | Recycle Bin | > 100 MB 時 | 100-300 MB |
 | 3 | `~/.claude/shell-snapshots\*` | 7 日超 | 30-50 MB |
 | 4 | `~/.claude/todos\*` (completed) | 7 日超 | 10 MB |
-| 5 | `~/.claude/projects\*.jsonl` (gzip 圧縮) | 30 日超 | 600-900 MB (= 圧縮率 80%) |
+| 5 | `~/.claude/projects\*.jsonl` (gzip 圧縮) | 7 日超 (= part 168 / 30→14→7) | 600-900 MB (= 圧縮率 80%) |
 | 6 | `~/.claude/file-history\*` | 30 日超 | 300-500 MB |
 | 7a | **`%LOCALAPPDATA%\Google\DriveFS\Logs\*`** (= G: drive 関連) | 7 日超 | 100-486 MB |
 | 7b | **Chrome / Edge cache** (= `Cache` `Code Cache` `GPUCache` `Service Worker`) | browser 停止時のみ | 500-1500 MB |
@@ -34,7 +34,7 @@
 
 **安全 rule**:
 - ❌ worktree 内 build/ 削除しない (= 進行中 Flutter project 破壊 risk)
-- ❌ active session transcript (= 30 日以内) は触らない
+- ❌ active session transcript (= 7 日以内) は触らない (= part 168 / hot-cache window)
 - ❌ locked file は silently skip
 - ✅ 全 file mtime 7-30 日超 hard cutoff
 - ✅ JSONL transcript は **gzip 圧縮** で deletion ではなく **size 削減** (= 後で `Expand-Archive` 復元可)
@@ -157,6 +157,18 @@ User 報告: 「今の開発フローだと、ローカル環境のメモリや�
 
 **ROI**: 1 セッションあたり **~1 GB reclaim**。SessionStart + SessionEnd dual trigger で 1 日 2-4 回稼働 = 週 14-28 GB。
 
+### 3.6.1 Transcript hot-cache 7-day rotation (= part 168 / aggressive hygiene 4 軸目)
+
+User 報告: 「ローカル環境のメモリやハードディスク容量が必ず枯渇」継続観察 (= 2026-05-07 part 168)。1 session で C: 12 GB drop 観察 (= 94→82 GB / part 167 監視)。**transcripts dir 812 MB** + 1 session 数 MB-数十 MB 累積で hot-cache window 短縮効果が大きい。
+
+**1 改善** (= `disk-cleanup.ps1` step 5 編集 / part 168):
+
+- **Transcript gzip 閾値 14→7 days** (= hot-cache window 短縮 / 7 日経過分は LRU と仮定 / gzip 50-70% 圧縮継続)
+- 段階推移: part 154-a (30 日) → part 161 (14 日) → **part 168 (7 日)**
+- LRU 仮定の根拠: Win Claude session は 1-2 part/day 稼働 / 7 日 = 7-14 part 経過 / 直近 part 以外の transcript 参照頻度低い
+
+**ROI 推定**: 1 週間 12 GB consumption の内、**transcript 由来 ~1-2 GB** をさらに前倒し圧縮 → cumulative weekly +200-400 MB 上乗せ。
+
 ### 3.7 Worktree cleanup automation (= Issue #1984 axis A / Codex #1)
 
 `scripts/worktree_cleanup.py` は PowerShell 手動 prune の portable/CI 版。`git worktree list --porcelain` 全件を見て、以下をすべて満たす worktree だけを `PRUNE` 候補にする。
@@ -232,7 +244,7 @@ python scripts/worktree_cleanup.py --json-out tmp/worktree-cleanup.json
 |---|---|---|
 | hook が 30 sec 超 | Claude session 起動遅延 | `Get-DirSizeMB` を `-Recurse` 浅化 / `Measure-Object` のみ深い計測は週次に回す |
 | locked file で停止 | エラー dump で hook 失敗 | 全 `Remove-Item` に `-ErrorAction SilentlyContinue` + try/catch |
-| current session transcript 削除 | 進行中作業ロスト | `LastWriteTime > now - 30d` で完全 skip / gzip も active 除外 |
+| current session transcript 削除 | 進行中作業ロスト | `LastWriteTime > now - 7d` で完全 skip / gzip も active 除外 (= part 168 / hot-cache window) |
 | worktree 誤削除 (Tier 2) | 進行中 PR 破壊 | merged branch 確認 + current `$PWD` 絶対 skip |
 | Docker prune で 5 GB image 喪失 | 復元 30 min 必要 | Tier 2 で confirm prompt 必須 (= 自動化禁止) |
 | plugin cache prune で active version 喪失 | plugin 起動失敗 | LastWriteTime DESC で **最新 1 version は keep** / 他削除 |
@@ -345,7 +357,7 @@ HDD 圧迫と並行して **RAM 圧迫** も Win 開発環境の継続課題. pa
 | C | Cache 清掃 (= Flutter / npm / pip / notebooklm) | Win Codex | **✅ 着地** (= `scripts/dev_cache_cleanup.py` + weekly workflow / local apply required for C:) |
 | D | **Memory cleanup** | **Win Claude** | **✅ 着地 part 155-b** (= memory-cleanup.ps1 / 5 step / 閾値 gating) |
 | E | docs rotate (= cs-notes / daily-reports 90 日 archive) | Win Codex | **未着** |
-| F | transcript ローテーション | (= disk-cleanup step 5 で 30 日 gzip 化済 part 154-a) | ✅ |
+| F | transcript ローテーション | (= disk-cleanup step 5 で 7 日 gzip 化 / part 154-a → 161 → 168 で 30→14→7 段階強化) | ✅ |
 
 = 6 axis 中 D ✅ (= 本 part 着地) + F ✅ + C 部分着地 + A/B/E 残.
 

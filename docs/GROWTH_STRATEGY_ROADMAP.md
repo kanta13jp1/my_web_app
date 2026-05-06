@@ -28325,3 +28325,43 @@ User 要望「continue + 手動作業削減」契機で 3 件着地:
 6. WSL VHDX 圧縮 + Docker prune (= 残圧迫源 / hygiene 4 軸目候補)
 
 **96 part 連続 dogfood** (= part 75 → part 167 / 2 month + 連続).
+
+## Win版#132 part 168 (Win Claude / 2026-05-07 / 97 part 連続 dogfood)
+
+### 着地サマリ
+
+User 要望「continue + 手動作業削減」契機 / hygiene 4 軸目 ship:
+
+1. **Codex 6 hand-off PR query 0 件確認** — 14-18 日 buffer 状態継続 / 5/14 = ai_tool_watch ping trigger date / 7 日後 trigger / 本 session ping 早。
+2. **Transcript hot-cache 7-day rotation** (= aggressive hygiene 4 軸目) — `~/.claude/hooks/disk-cleanup.ps1` step 5 で gzip 閾値 **14→7 days** 強化。段階推移 part 154-a (30 日) → part 161 (14 日) → **part 168 (7 日)**。LRU 仮定: Win Claude session 1-2 part/day = 7 日 = 7-14 part 経過で transcript 参照頻度低い。
+3. **docs/DISK_HYGIENE_RUNBOOK.md sync** — table line 25 + 安全 rule + risk mitigation + axis F status 4 箇所 + 新 §3.6.1 「Transcript hot-cache 7-day rotation」section 追加。
+
+### Pattern catalog 追加
+
+- **「user-home hook 1 行変更 + repo doc 4 箇所 sync」pattern 第 2 例 (累積 part 158-b → 168)** — `~/.claude` 設定変更時に repo の DISK_HYGIENE_RUNBOOK.md を併せて 4 箇所 (= table / 安全 rule / risk mitigation / axis status) sync する分離 commit pattern
+- **「Transcript hot-cache 段階強化」pattern 第 1 例 (= 30→14→7 day)** — 観察 → 段階推移 → 検証 → 強化 cycle / 観察主体は user 報告 (「メモリ/HDD 必ず枯渇」継続)
+
+### Commits (= 本 part)
+
+- (本 commit hash 未確定 / docs sync 1 file + ROADMAP append / hook 編集は user-home / 別 commit chain)
+
+### Philosophy Alignment
+
+- **PHILOSOPHY-22 9/9 ✅** (= mentor / 6 部署 / IPO 信頼 = ローカル環境健全性)
+- **AI-DEV-23 7/7 ✅** ([EF-FIRST] 不要 / observability via cleanup log / quality-gate via idempotent fast-path)
+- **VIBE-30 7/7 ✅** (MVP scope 厳守 / 1 line value 最大 / 段階推移)
+- **INDIE-29 7/7 ✅** (shipping 速度: hook 1 line + docs 4 sync + ROADMAP / 1 session 完結)
+- **SECOND-BRAIN-32 7/7 ✅** (memory hygiene continuity / hot-cache window 短縮)
+
+### 次回 candidate (= part 169)
+
+1. **5/14 (= part 163 期限 残 7 日 trigger date)** で ai_tool_watch SOURCES Codex ping
+2. dormant grace + wbs.list_tasks (= 1 week 経過) も併せて ping
+3. Codex 6 hand-off PR 一括 query
+4. Issue #1495 Phase 0 完全閉ループ確認
+5. WSL VHDX 圧縮 + Docker prune (= hygiene 5 軸目候補)
+6. CI run / worktree 多発由来 12 GB drop 調査 (= part 167 finding follow)
+7. Issue #1660 close (= Codex #6 UI/WBS 完了後)
+8. Issue #1784 Claude Code Masterclass NB digest (= notebooklm CLI auth restore 後)
+
+**97 part 連続 dogfood** (= part 75 → part 168 / 2 month + 連続).
