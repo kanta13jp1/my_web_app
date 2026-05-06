@@ -5,6 +5,32 @@
 -- moves every open task onto a realistic forward-looking schedule without
 -- rewriting completed history.
 
+-- Step 1: normalize all existing rows so ADD CONSTRAINT NOT VALID + future validates pass
+UPDATE public.wbs_tasks
+SET instance = 'codex'
+WHERE instance IS NULL
+   OR TRIM(instance) = ''
+   OR LOWER(TRIM(instance)) NOT IN (
+    'claude', 'codex', 'codex1', 'codex2', 'cx', 'automation', 'auto', 'user', 'usr', 'human',
+    'gemini', 'co-pilot', 'copilot',
+    'vscode', 'win', 'windows',
+    'ps', 'ps1', 'ps2', 'ps3', 'ps4', 'ps5', 'ps6',
+    'web', 'mobile', 'schedule', 'scheduled', 'gha', 'github-actions', 'github-copilot', 'all'
+  );
+
+UPDATE public.wbs_tasks
+SET owner_instance = 'codex'
+WHERE owner_instance IS NULL
+   OR TRIM(owner_instance) = ''
+   OR LOWER(TRIM(owner_instance)) NOT IN (
+    'claude', 'codex', 'codex1', 'codex2', 'cx', 'automation', 'auto', 'user', 'usr', 'human',
+    'gemini', 'co-pilot', 'copilot',
+    'vscode', 'win', 'windows',
+    'ps', 'ps1', 'ps2', 'ps3', 'ps4', 'ps5', 'ps6',
+    'web', 'mobile', 'schedule', 'scheduled', 'gha', 'github-actions', 'github-copilot', 'all'
+  );
+
+-- Step 2: add constraints (all rows now valid)
 ALTER TABLE public.wbs_tasks DROP CONSTRAINT IF EXISTS wbs_tasks_instance_check;
 ALTER TABLE public.wbs_tasks ADD CONSTRAINT wbs_tasks_instance_check
   CHECK (instance IN (
