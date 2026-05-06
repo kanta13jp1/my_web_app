@@ -6213,20 +6213,43 @@ serve(async (req) => {
             return d;
           };
 
-          // 全 open タスクを取得 (完了系 skip)
-          const { data: rows, error: fetchErr } = await admin
-            .from("wbs_tasks")
-            .select(
-              "id, title, instance, owner_instance, priority, status, " +
-                "start_date, end_date, github_issue_state, category_order",
-            )
-            .neq("status", "completed");
-          if (fetchErr) {
-            return json({ success: false, error: fetchErr.message }, 200);
+          // 全 open タスクを取得 (完了系 skip / Supabase 1000 row cap 回避にページネーション)
+          const selectCols =
+            "id, title, instance, owner_instance, priority, status, " +
+            "start_date, end_date, github_issue_state, category_order";
+          const pageSize = 1000;
+          const maxPages = 50;
+          const all: Array<Record<string, unknown>> = [];
+          for (let page = 0; page < maxPages; page += 1) {
+            const from = page * pageSize;
+            const to = from + pageSize - 1;
+            const { data: pageRows, error: fetchErr } = await admin
+              .from("wbs_tasks")
+              .select(selectCols)
+              .neq("status", "completed")
+              .order("category_order", { ascending: true, nullsFirst: false })
+              .order("id", { ascending: true })
+              .range(from, to);
+            if (fetchErr) {
+              return json({ success: false, error: fetchErr.message }, 200);
+            }
+            const rows = (pageRows ?? []) as unknown as Array<
+              Record<string, unknown>
+            >;
+            all.push(...rows);
+            if (rows.length < pageSize) break;
+            if (page === maxPages - 1) {
+              return json(
+                {
+                  success: false,
+                  error:
+                    `wbs.reschedule_realistic scanned >= ${pageSize * maxPages} ` +
+                    "rows; increase pagination cap.",
+                },
+                200,
+              );
+            }
           }
-          const all = (rows ?? []) as unknown as Array<
-            Record<string, unknown>
-          >;
           const open = all.filter(
             (r) => String(r.github_issue_state ?? "") !== "CLOSED",
           );
