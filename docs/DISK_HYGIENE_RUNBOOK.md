@@ -65,18 +65,17 @@
 | 10-25 GB | **WARN** | `additionalContext` 経由で Claude に「`/disk-cleanup` 推奨」surface |
 | < 10 GB | **ALERT** | `additionalContext` で「即座に `/disk-cleanup` 実行」surface (= ビルド失敗 risk) |
 
-### 3.1 Memory hook 閾値 (= memory-cleanup.ps1 / part 158-b 強化)
+### 3.1 Memory hook 閾値 (= memory-cleanup.ps1 / part 159 強化: heavy gate 撤廃)
 
 | Free RAM | action | 期間 |
 |---|---|---|
-| > 70% | cheap ops のみ (= GC + DNS + orphan PS) — **常時実行** | < 1 sec |
-| 25-70% | Tier 1.5 steps 1-4 (= EmptyWorkingSet 含む) | 5-15 sec |
-| < 25% | Tier 1.5 all + WARNING report | 5-15 sec + report |
-| < 10% | Tier 1.5 all + ALERT additionalContext | 5-15 sec + alert |
+| **ALL** | cheap ops + EmptyWorkingSet — **常時実行** (part 159 撤廃) | 5-25 sec |
+| < 25% | Tier 1.5 all + WARNING report | 5-25 sec + report |
+| < 10% | Tier 1.5 all + ALERT additionalContext | 5-25 sec + alert |
 
-**part 158-b 変更**: 旧仕様「Free > 50% で完全 skip」を撤廃。GC + DNS + orphan PS は idempotent + 安価なので RAM 残量に依らず常時実行。fleet-loaded box でも毎セッション微小回収を観測可能化。
+**part 159 変更**: 旧仕様「Free > 70% で heavy step (EmptyWorkingSet) skip」を撤廃。fleet-loaded box では Free RAM 60-80% 帯が常時状態であり、その帯域でも毎回 0.5-2.7 GB の reclaim が発生 (実測)。SessionStart/End 各 +5-15 sec の代償で「毎セッション 必ず heavy 圧縮」要件 (= ユーザー 2026-05-07 ask) を厳格化。
 
-### 3.2 SessionEnd hook (= part 158-b 新規)
+### 3.2 Dual trigger (= SessionStart + SessionEnd / part 158-b)
 
 両 hook (= disk + memory) を **SessionStart + SessionEnd の二重 trigger** で登録 (`~/.claude/settings.json`):
 
@@ -85,7 +84,21 @@
 "SessionEnd":   [/* disk-cleanup, memory-cleanup */]
 ```
 
-理由: SessionStart で前回残骸を清掃 + SessionEnd で当回残骸を清掃 → 「次回セッション開始時の disk pressure 永続化」を防ぐ。両 hook 共 idempotent なので二重発動でも副作用なし。「毎回のセッションで必ず圧縮」要件 (= ユーザー 2026-05-06 ask) を厳格化。
+理由: SessionStart で前回残骸を清掃 + SessionEnd で当回残骸を清掃 → 「次回セッション開始時の disk pressure 永続化」を防ぐ。両 hook 共 idempotent なので二重発動でも副作用なし。
+
+### 3.3 PreCompact hook (= part 159 新規)
+
+**長時間セッションで context compact が走る時** にも heavy step を発火させる:
+
+```jsonc
+"PreCompact": [/* memory-cleanup */]
+```
+
+理由: SessionStart/End だけでは長時間 1 セッションでは不十分。compact 直前の RAM 圧迫が compact 失敗 / context 蒸発 / 再 compact ループの引き金になる ([COMPACTION-RESUME] 教訓)。compact 前に EmptyWorkingSet を 1 回挟むことで成功率向上。
+
+### 3.4 Disk report 閾値 (= part 159 80→100 GB へ拡大)
+
+`disk-cleanup.ps1` Tier 1 の report 閾値を 80 GB → **100 GB** に拡大。fleet-loaded box の C: 60-90 GB 帯で**毎セッション report が生成**され、可視化漏れ防止。Tier 1 cleanup 自体は常時実行 (= 変更なし)。
 
 ## 4. 監視 KPI
 
