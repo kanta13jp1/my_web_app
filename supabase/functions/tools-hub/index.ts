@@ -5739,17 +5739,27 @@ serve(async (req) => {
           const status = body.status as string | undefined;
           const updatedSince = body.updated_since as string | undefined;
           const limit = Math.min(Number(body.limit ?? 50), 200);
-          let q = admin.from("wbs_tasks")
-            .select(
-              "id, category, category_icon, category_order, title, description, instance, owner_instance, status, progress, start_date, end_date, planned_start_date, planned_end_date, milestone_code, priority, remaining_work, updated_at, github_issue_number, github_issue_url, github_issue_state, github_issue_labels, github_issue_synced_at",
-            );
-          if (status) q = q.eq("status", status);
-          if (updatedSince) q = q.gte("updated_at", updatedSince);
-          const { data, error } = await q;
-          if (error) throw new Error(error.message);
-          const filteredTasks = [...(data ?? [])].filter((task) =>
+          const taskSelect =
+            "id, category, category_icon, category_order, title, description, instance, owner_instance, status, progress, start_date, end_date, planned_start_date, planned_end_date, milestone_code, priority, remaining_work, updated_at, github_issue_number, github_issue_url, github_issue_state, github_issue_labels, github_issue_synced_at";
+          const pageSize = 1000;
+          const allTasks: Array<Record<string, unknown>> = [];
+          for (let offset = 0; ; offset += pageSize) {
+            let q = admin.from("wbs_tasks").select(taskSelect);
+            if (status) q = q.eq("status", status);
+            if (updatedSince) q = q.gte("updated_at", updatedSince);
+            const { data, error } = await q
+              .order("id", { ascending: true })
+              .range(offset, offset + pageSize - 1);
+            if (error) throw new Error(error.message);
+            const rows = (data ?? []) as unknown as Array<
+              Record<string, unknown>
+            >;
+            allTasks.push(...rows);
+            if (rows.length < pageSize) break;
+          }
+          const filteredTasks = allTasks.filter((task) =>
             wbsTaskMatchesInstanceFilter(
-              task as Record<string, unknown>,
+              task,
               inst ?? "all",
             )
           );
