@@ -100,6 +100,43 @@
 
 `disk-cleanup.ps1` Tier 1 の report 閾値を 80 GB → **100 GB** に拡大。fleet-loaded box の C: 60-90 GB 帯で**毎セッション report が生成**され、可視化漏れ防止。Tier 1 cleanup 自体は常時実行 (= 変更なし)。
 
+### 3.5 Worktree prune (= part 160-b 新設 / 手動 slash command)
+
+`scripts/worktree_prune.ps1` で `.claude/worktrees/` の stale worktree を **dry-run → apply** の 2 段階で安全 prune する。**自動 hook 化はしない** (= [WORKDIR-ISOLATION] safety / 誤削除リスク)。
+
+**SKIP rule (= 安全 guard)**:
+
+1. self (= 現在の worktree)
+2. detached HEAD (= 別 instance / codex active 可能性)
+3. uncommitted changes (= `git status -s` 1+ 行)
+4. open PR (= `gh pr list --state open` で head branch 一致)
+5. main / master branch (= `jolly-nash` 型)
+6. **未 merge 状態** (= `git rev-list main..<branch> --count` > 0)
+
+`-Force` flag で uncommitted / 未 merge guard をスキップ可能 (= 危険 / user 明示判断のみ)。
+
+**運用 cycle**:
+
+```bash
+# 1. dry-run = report only (default)
+powershell -File scripts/worktree_prune.ps1
+
+# 2. apply = 実 prune
+powershell -File scripts/worktree_prune.ps1 -Apply
+
+# 3. force apply (= uncommitted/未 merge も削除 / DANGER)
+powershell -File scripts/worktree_prune.ps1 -Apply -Force
+```
+
+**part 160-b smoke test 実績** (= 2026-05-07 02:35 JST):
+- 入力: 16 worktree
+- dry-run: 8 PRUNE / 7 SKIP (= uncommitted 5 + detached HEAD 2 + main 1 + 未 merge 1 + self 1)
+  - 内 1 が未 merge guard で救済 (= `claude/elegant-elgamal-aae681` 7 commits ahead)
+- apply: 7 prune / **913 MB reclaim**
+- 結果: 16 → 8 worktree (= `git worktree prune` 連動で孤児 dir も整理)
+
+**ROI**: 1 sample worktree ~130 MB / 7 worktree = ~913 MB。fleet 運用で 1-2 week ごとに prune 推奨。
+
 ## 4. 監視 KPI
 
 毎セッション自動記録 (= `~/.claude/logs/disk-cleanup-YYYYMMDD.log`):

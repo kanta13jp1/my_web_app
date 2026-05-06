@@ -28029,3 +28029,22 @@ parallel cap 4/8/12 は density 3.86/7.34/3.48 per day で適正 → 調整不�
 - **AI-DEV-23 7/7** ✅ (= §8 trace_id + memory boundary)
 
 **88 part 連続 dogfood** (= part 75 → part 160 / 2 month + 連続)
+
+## Win版#132 part 160-b (2026-05-07) — Win Claude
+
+**Worktree prune 施策追加 — メモリ/HDD 圧迫第 2 軸対策**
+
+- `scripts/worktree_prune.ps1` 新規 (= Powershell / 6 SKIP guard / dry-run + apply 2 段)
+  - SKIP: self / detached HEAD / uncommitted / open PR / main / 未 merge
+  - `-Force` で危険 guard 解除可
+- `docs/DISK_HYGIENE_RUNBOOK.md` §3.5 追加 (= 運用 cycle + smoke 実績)
+- 自動 hook 化はしない (= [WORKDIR-ISOLATION] safety / 誤削除リスク)
+- Smoke test apply: **16 → 8 worktree / 913 MB reclaim** / Codex active 3 worktree (= sleepy-dhawan / focused-darwin / 他) は SKIP で保護
+
+**Why:** part 159b で memory hygiene 常時圧縮化 + PreCompact hook 着地後も「メモリ/HDD 必ず枯渇」継続 / 圧迫源調査で `~/.claude/projects/ 1.2 GB` (= 30+ 日 4 MB のみ → 効果薄) と `.claude/worktrees/ 16 個 (= 大半 stale)` を比較 → 後者が桁違いに大きい leverage と判明.
+
+**Philosophy Alignment**:
+- **PHILOSOPHY-22 7+/9** ✅ (= 原則 6 = 資本=時間 / 原則 7 = 資産 vs 負債)
+- **INDIE-29 5+/7** ✅ (= shipping 速度のための環境圧縮)
+
+**89 part 連続 dogfood**
