@@ -106,7 +106,10 @@ on:
   - Codex #1 implementation: dependency-free `scripts/dev_cache_cleanup.py` with dry-run default, explicit `--apply`, clean-worktree guard for `flutter clean`, npm/pnpm/pub/pip cache commands, and age-gated NotebookLM cache pruning.
   - Weekly workflow: `.github/workflows/dev-cache-cleanup-cron.yml` runs dry-run -> safe apply on the hosted Windows runner, uploads JSON reports, and comments the summary to Issue #1984.
   - Note: GitHub Actions validates the path and cleans only its ephemeral runner. Local C: drive reclaim still requires a Windows app session or local scheduled task invoking the same script.
-- [ ] axis E: `scripts/docs_rotate.py` + `docs-rotate-cron.yml` で 90 日 archive 自動化
+- [x] axis E: `scripts/docs_rotate.py` + `docs-rotate-cron.yml` で 90 日 archive 自動化
+  - Codex #1 implementation: dependency-free `scripts/docs_rotate.py` with dry-run default, explicit `--apply`, filename-date retention, and archive moves into `docs/_archive/<YYYY-MM>/<source>/`.
+  - Monthly workflow: `.github/workflows/docs-rotate-cron.yml` runs dry-run -> apply on the hosted Windows runner, uploads JSON reports, comments the summary to Issue #1984, and opens a reviewable PR only when files moved.
+  - Validation note: current tracked `docs/cs-notes` / `docs/daily-reports` files are younger than 90 days, so the normal dry-run has 0 candidates; future-date validation proves the selector path without moving files.
 
 ## 関連 docs
 

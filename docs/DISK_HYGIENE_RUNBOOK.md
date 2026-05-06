@@ -196,6 +196,15 @@ python scripts/worktree_cleanup.py --json-out tmp/worktree-cleanup.json
 - NotebookLM cache: known cache/log/temp directory の child のみ、default 7 日超で prune。`storage_state.json` / cookie/token 系は protected。
 - `.github/workflows/dev-cache-cleanup-cron.yml`: hosted Windows runner で dry-run -> safe apply -> artifact upload -> Issue #1984 comment。GHA は local C: を直接 reclaim できないため、Windows app session / local scheduled task でも同 script を使う。
 
+### 3.9 Docs rotate automation (= Issue #1984 axis E / Codex #1)
+
+`scripts/docs_rotate.py` は schedule-output docs の active folder を小さく保つための portable/CI 版。default は dry-run で、実 move は `--apply` 明示時のみ。
+
+- 対象: `docs/cs-notes`, `docs/daily-reports`, `docs/auto-blog`。
+- retention: filename 内の `YYYY-MM-DD` を使って 90 日超を判定。CI checkout では mtime が更新されるため、mtime は使わない。
+- archive: `docs/_archive/<YYYY-MM>/<source>/filename` へ move。上書きはせず、既存 destination があれば skip。
+- `.github/workflows/docs-rotate-cron.yml`: monthly dry-run -> apply -> artifact upload -> Issue #1984 comment。変更がある場合だけ `automation/docs-rotate-<run_id>` branch と reviewable PR を作る。
+
 ## 4. 監視 KPI
 
 毎セッション自動記録 (= `~/.claude/logs/disk-cleanup-YYYYMMDD.log`):
@@ -344,10 +353,10 @@ HDD 圧迫と並行して **RAM 圧迫** も Win 開発環境の継続課題. pa
 | B | 動画ファイル削減 | n/a | #1724 待ち |
 | C | Cache 清掃 (= Flutter / npm / pip / notebooklm) | Win Codex | **✅ 着地** (= `scripts/dev_cache_cleanup.py` + weekly workflow / local apply required for C:) |
 | D | **Memory cleanup** | **Win Claude** | **✅ 着地 part 155-b** (= memory-cleanup.ps1 / 5 step / 閾値 gating) |
-| E | docs rotate (= cs-notes / daily-reports 90 日 archive) | Win Codex | **未着** |
+| E | docs rotate (= cs-notes / daily-reports 90 日 archive) | Win Codex | **✅ 着地** (= `scripts/docs_rotate.py` + monthly PR workflow) |
 | F | transcript ローテーション | (= disk-cleanup step 5 で 30 日 gzip 化済 part 154-a) | ✅ |
 
-= 6 axis 中 D ✅ (= 本 part 着地) + F ✅ + C 部分着地 + A/B/E 残.
+= 6 axis 中 A/C/D/E/F ✅。B は #1724 secrets blocker 解消後に動画削減 PR。
 
 ## 11. 関連 docs / files (= memory 拡張版)
 
