@@ -1,6 +1,8 @@
 # WBS 2-Instance Routing
 
-Last updated: 2026-05-05
+Last updated: 2026-05-07
+
+Canonical delegation protocol: [`docs/AGENT_DELEGATION_PROTOCOL.md`](./AGENT_DELEGATION_PROTOCOL.md).
 
 The WBS screen keeps historical `instance` and `owner_instance` values intact, but the active operating view is now projected into two human-operated development lanes:
 
@@ -22,4 +24,6 @@ WBS execution policy:
 2. If a task is obsolete because of the 2-instance Windows app flow, close or supersede the GitHub issue instead of implementing the old lane literally.
 3. For Codex-owned implementation tasks, ship a narrow PR and record cross-instance handoff notes.
 4. For Claude Code-owned design tasks, create the spec or decision note first, then hand implementation to Codex only when code changes are clear.
+5. Every handoff must include Issue/WBS id, branch, worktree, allowed write set, prohibited write set, validation command, unresolved risk, and the next owner.
+6. Every session must include a cheap memory/disk hygiene check before wrap-up.
 
