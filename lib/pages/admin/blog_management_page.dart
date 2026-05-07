@@ -1,8 +1,30 @@
 // lib/pages/admin/blog_management_page.dart
 // ブログ管理ページ: 投稿済み記事一覧・エンゲージメント・コメント確認
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
+
+class _NewsSignalLintReport {
+  final String checkedAt;
+  final String status;
+  final int findingCount;
+  final List<String> findings;
+
+  const _NewsSignalLintReport({
+    required this.checkedAt,
+    required this.status,
+    required this.findingCount,
+    required this.findings,
+  });
+
+  bool get needsReview =>
+      status == 'review_required' ||
+      findings.any(
+        (line) =>
+            line.contains('[error]') || line.contains('[review_required]'),
+      );
+}
 
 class BlogManagementPage extends StatefulWidget {
   const BlogManagementPage({super.key});
@@ -20,6 +42,7 @@ class _BlogManagementPageState extends State<BlogManagementPage>
   List<Map<String, dynamic>> _drafts = [];
   bool _isLoading = true;
   bool _isSyncing = false;
+  bool _isLintingNewsSignals = false;
   final Set<String> _publishingIds = {};
   final Set<String> _togglingIds = {};
   final Set<String> _replyingIds = {};
@@ -146,9 +169,154 @@ class _BlogManagementPageState extends State<BlogManagementPage>
     }
   }
 
+  Future<void> _runNewsSignalLint() async {
+    if (_isLintingNewsSignals) return;
+    setState(() => _isLintingNewsSignals = true);
+    try {
+      final res = await _supabase.functions.invoke(
+        'schedule-hub',
+        body: const {
+          'action': 'blog.news_signal_lint',
+          'limit': 160,
+          'max_age_days': 3,
+          'update_posts': true,
+        },
+      );
+      if (!mounted) return;
+      final data = res.data as Map<String, dynamic>?;
+      final findings = (data?['finding_count'] as num?)?.toInt() ?? 0;
+      final blocking = (data?['blocking_count'] as num?)?.toInt() ?? 0;
+      final ok = res.status == 200 && data?['success'] == true;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            ok
+                ? 'AI外部脳Lint完了: 問題なし'
+                : 'AI外部脳Lint完了: 要確認 $blocking 件 / 検出 $findings 件',
+          ),
+          backgroundColor: ok ? _green : _orange,
+          duration: const Duration(seconds: 4),
+        ),
+      );
+      await _loadData();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('AI外部脳Lint失敗: $e'),
+            backgroundColor: _red,
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLintingNewsSignals = false);
+    }
+  }
+
+  _NewsSignalLintReport? _parseNewsSignalLintReport(String notes) {
+    final match = RegExp(
+      r'NEWS_SIGNAL_LINT_START([\s\S]*?)NEWS_SIGNAL_LINT_END',
+    ).firstMatch(notes);
+    if (match == null) return null;
+
+    var checkedAt = '';
+    var status = 'unknown';
+    var findingCount = 0;
+    final findings = <String>[];
+    final body = match.group(1) ?? '';
+    for (final rawLine in body.split('\n')) {
+      final line = rawLine.trim();
+      if (line.isEmpty) continue;
+      if (line.startsWith('checked_at=')) {
+        checkedAt = line.substring('checked_at='.length);
+      } else if (line.startsWith('status=')) {
+        status = line.substring('status='.length);
+      } else if (line.startsWith('findings=')) {
+        findingCount = int.tryParse(line.substring('findings='.length)) ?? 0;
+      } else if (line.startsWith('- ')) {
+        findings.add(line.substring(2));
+      }
+    }
+
+    return _NewsSignalLintReport(
+      checkedAt: checkedAt,
+      status: status,
+      findingCount: findingCount,
+      findings: findings,
+    );
+  }
+
+  List<String> _externalBrainFilePaths(String notes) {
+    final match = RegExp(
+      r'^EXTERNAL_BRAIN_FILE_PATHS=(.+)$',
+      multiLine: true,
+    ).firstMatch(notes);
+    if (match == null) return const [];
+    return (match.group(1) ?? '')
+        .split(',')
+        .map((path) => path.trim())
+        .where((path) => path.isNotEmpty)
+        .toList(growable: false);
+  }
+
+  Future<bool> _confirmLintOverrideIfNeeded(Map<String, dynamic> d) async {
+    final notes = d['notes']?.toString() ?? '';
+    final lint = _parseNewsSignalLintReport(notes);
+    if (lint?.needsReview != true) return true;
+    final title = d['title'] as String? ?? '(no title)';
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: _card,
+        title: const Text(
+          'AI外部脳Lintの要確認があります',
+          style: TextStyle(color: Colors.white, height: 1.5),
+        ),
+        content: Text(
+          '「$title」にはニュース出典・高リスク領域などの確認事項が残っています。\n人間レビュー済みとして続行しますか？',
+          style: const TextStyle(color: Colors.white70, height: 1.6),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('戻る', style: TextStyle(color: Colors.white54)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: _orange),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text(
+              'レビュー済みとして続行',
+              style: TextStyle(color: Colors.white),
+            ),
+          ),
+        ],
+      ),
+    );
+    return ok == true;
+  }
+
+  String _shortIso(String value) {
+    final date = DateTime.tryParse(value)?.toLocal();
+    if (date == null) return value;
+    final hh = date.hour.toString().padLeft(2, '0');
+    final mm = date.minute.toString().padLeft(2, '0');
+    return '${date.month}/${date.day} $hh:$mm';
+  }
+
+  Future<void> _copyExternalBrainPaths(List<String> paths) async {
+    if (paths.isEmpty) return;
+    await Clipboard.setData(ClipboardData(text: paths.join('\n')));
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('AI外部脳パスをコピーしました')),
+    );
+  }
+
   Future<void> _publishDraft(Map<String, dynamic> d) async {
     final id = d['id']?.toString() ?? '';
     if (id.isEmpty || _publishingIds.contains(id)) return;
+    if (!await _confirmLintOverrideIfNeeded(d)) return;
     setState(() => _publishingIds.add(id));
     try {
       final res = await _supabase.functions.invoke(
@@ -195,6 +363,7 @@ class _BlogManagementPageState extends State<BlogManagementPage>
     if (id.isEmpty || _togglingIds.contains(id)) return;
     final current = d['status'] as String? ?? 'draft';
     final next = current == 'ready' ? 'draft' : 'ready';
+    if (next == 'ready' && !await _confirmLintOverrideIfNeeded(d)) return;
     setState(() => _togglingIds.add(id));
     try {
       final res = await _supabase.functions.invoke(
@@ -671,6 +840,12 @@ class _BlogManagementPageState extends State<BlogManagementPage>
   int get _totalViews =>
       _engagement.fold(0, (sum, e) => sum + ((e['views_count'] as int?) ?? 0));
 
+  int get _newsSignalReviewCount => _drafts.where((draft) {
+        final lint =
+            _parseNewsSignalLintReport(draft['notes']?.toString() ?? '');
+        return lint?.needsReview == true;
+      }).length;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -895,17 +1070,59 @@ class _BlogManagementPageState extends State<BlogManagementPage>
               onChanged: (v) => setState(() => _draftSearch = v),
             ),
             const SizedBox(height: 8),
-            Row(
+            Wrap(
+              spacing: 6,
+              runSpacing: 8,
+              crossAxisAlignment: WrapCrossAlignment.center,
               children: [
                 _draftStatusBtn('all', '全て'),
-                const SizedBox(width: 6),
                 _draftStatusBtn('draft', '下書き'),
-                const SizedBox(width: 6),
                 _draftStatusBtn('ready', '公開準備完了'),
+                _newsSignalLintButton(),
               ],
             ),
           ],
         ],
+      ),
+    );
+  }
+
+  Widget _newsSignalLintButton() {
+    final reviewCount = _newsSignalReviewCount;
+    return SizedBox(
+      height: 30,
+      child: OutlinedButton.icon(
+        onPressed: _isLintingNewsSignals ? null : _runNewsSignalLint,
+        icon: _isLintingNewsSignals
+            ? const SizedBox(
+                width: 12,
+                height: 12,
+                child: CircularProgressIndicator(
+                  strokeWidth: 1.5,
+                  color: Colors.white54,
+                ),
+              )
+            : Icon(
+                reviewCount > 0
+                    ? Icons.report_problem_outlined
+                    : Icons.rule_folder_outlined,
+                size: 14,
+              ),
+        label: Text(
+          _isLintingNewsSignals
+              ? 'Lint中...'
+              : reviewCount > 0
+                  ? 'AI外部脳Lint 要確認 $reviewCount'
+                  : 'AI外部脳Lint',
+          style: const TextStyle(fontSize: 11, height: 1.5),
+        ),
+        style: OutlinedButton.styleFrom(
+          foregroundColor: reviewCount > 0 ? _orange : Colors.white54,
+          side: BorderSide(
+            color: reviewCount > 0 ? _orange.withAlpha(140) : Colors.white24,
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 10),
+        ),
       ),
     );
   }
@@ -1432,6 +1649,9 @@ class _BlogManagementPageState extends State<BlogManagementPage>
         : rawPlatforms?.toString() ?? '';
     final url = d['url'] as String? ?? '';
     final draftPath = d['draft_path'] as String? ?? '';
+    final notes = d['notes']?.toString() ?? '';
+    final lint = _parseNewsSignalLintReport(notes);
+    final externalBrainPaths = _externalBrainFilePaths(notes);
 
     final isPublishing = _publishingIds.contains(id);
     final isToggling = _togglingIds.contains(id);
@@ -1535,6 +1755,8 @@ class _BlogManagementPageState extends State<BlogManagementPage>
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
+            if (lint != null || externalBrainPaths.isNotEmpty)
+              _buildNewsSignalLintPanel(lint, externalBrainPaths),
             const SizedBox(height: 10),
             Row(
               children: [
@@ -1605,6 +1827,123 @@ class _BlogManagementPageState extends State<BlogManagementPage>
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildNewsSignalLintPanel(
+    _NewsSignalLintReport? lint,
+    List<String> externalBrainPaths,
+  ) {
+    final needsReview = lint?.needsReview == true;
+    final accent = needsReview ? _orange : _green;
+    final label = lint == null
+        ? 'AI外部脳リンク'
+        : needsReview
+            ? 'AI外部脳Lint: 要確認'
+            : 'AI外部脳Lint: OK';
+    final details = lint?.findings.take(3).toList(growable: false) ?? const [];
+
+    return Container(
+      margin: const EdgeInsets.only(top: 8),
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: accent.withAlpha(18),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: accent.withAlpha(90)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                needsReview
+                    ? Icons.report_problem_outlined
+                    : Icons.verified_outlined,
+                size: 15,
+                color: accent,
+              ),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  [
+                    label,
+                    if (lint != null) '検出 ${lint.findingCount}',
+                    if ((lint?.checkedAt ?? '').isNotEmpty)
+                      _shortIso(lint!.checkedAt),
+                  ].join(' / '),
+                  style: TextStyle(
+                    color: accent,
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    height: 1.5,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              if (externalBrainPaths.isNotEmpty)
+                IconButton(
+                  tooltip: 'AI外部脳パスをコピー',
+                  onPressed: () => _copyExternalBrainPaths(externalBrainPaths),
+                  icon: const Icon(Icons.copy, size: 15),
+                  color: Colors.white54,
+                  padding: EdgeInsets.zero,
+                  constraints:
+                      const BoxConstraints(minWidth: 28, minHeight: 28),
+                ),
+            ],
+          ),
+          if (details.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            ...details.map(
+              (line) => Padding(
+                padding: const EdgeInsets.only(top: 2),
+                child: Text(
+                  line,
+                  style: const TextStyle(
+                    color: Colors.white70,
+                    fontSize: 10,
+                    height: 1.45,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ),
+          ],
+          if (externalBrainPaths.isNotEmpty) ...[
+            const SizedBox(height: 6),
+            Wrap(
+              spacing: 6,
+              runSpacing: 4,
+              children: externalBrainPaths.take(3).map((path) {
+                return ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 260),
+                  child: Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withAlpha(45),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      path,
+                      style: const TextStyle(
+                        color: Colors.white54,
+                        fontSize: 10,
+                        height: 1.4,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+          ],
+        ],
       ),
     );
   }

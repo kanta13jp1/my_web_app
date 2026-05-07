@@ -7,6 +7,14 @@
 - [ ] E2E included: Flutter `integration_test/` or Playwright `test/e2e/`.
 - [ ] Exception reason, if no E2E file is included: <!-- reason + manual verification steps -->
 
+## Visual E2E Evidence
+
+- [ ] Desktop and mobile Playwright evidence captured for landing/home/auth/notion-wbs/agent-org, or the current equivalent public routes.
+- [ ] Screenshots plus low-FPS frame sequence are attached in Playwright artifacts.
+- [ ] Console errors, page errors, request failures, and HTTP 5xx responses are reviewed.
+- [ ] `getAnimations()` wait path ran, or the fallback is documented in the PR.
+- [ ] Codex in-app browser or equivalent browser verification notes are included when UI changed.
+
 ## 📝 変更内容
 <!-- このPRで実施した変更内容を簡潔に説明してください -->
 

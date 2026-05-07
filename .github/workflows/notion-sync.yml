@@ -107,6 +107,11 @@ jobs:
               echo "::warning::Notion API rate limited (HTTP 429) — will retry next cron"
               exit 0
             fi
+            # Notion DB-level inaccessible (share with Integration / DB deleted) → always soft-fail
+            if echo "$RESP" | grep -q "Could not find database"; then
+              echo "::warning::Notion sync: 1+ database ID(s) inaccessible — share with Notion Integration or remove references (DB-level config issue, not page orphan)"
+              exit 0
+            fi
             # Notion object_not_found (deleted/moved page) → soft-fail if < 10% fail rate
             if echo "$RESP" | grep -q "object_not_found"; then
               FAIL_PCT_VAL=$(python3 -c "print(round($FAILED / max($TOTAL,1) * 100, 1))" 2>/dev/null || echo "100")

@@ -630,16 +630,45 @@ const WBS_INSTANCE_VALUES = [
   "user", // ユーザー手動操作タスク (法人登記/銀行口座/外部面談等)
 ];
 
+const WBS_ACTIVE_INSTANCE_VALUES = [
+  "claude",
+  "codex",
+  "user",
+  "automation",
+];
+
+const WBS_CODEX_LEGACY_INSTANCES = ["codex", "ps2", "ps5", "ps6"];
+const WBS_AUTOMATION_LEGACY_INSTANCES = [
+  "schedule",
+  "gha",
+  "gemini",
+  "co-pilot",
+];
+
 const WBS_OPEN_STATUSES = ["pending", "in_progress", "blocked"];
 
 function normalizeWbsInstance(value: unknown): string {
   const normalized = String(value ?? "").trim().toLowerCase();
+  if (
+    normalized === "claude" ||
+    normalized === "claude-code" ||
+    normalized === "claude-code-1"
+  ) return "win";
+  if (normalized === "automation" || normalized === "auto") return "schedule";
   if (normalized === "windows") return "win";
   if (normalized === "ps") return "ps1";
   if (normalized === "copilot" || normalized === "github-copilot") {
     return "co-pilot";
   }
   return WBS_INSTANCE_VALUES.includes(normalized) ? normalized : "codex";
+}
+
+function normalizeWbsActiveInstance(value: unknown): string {
+  const normalized = normalizeWbsInstance(value);
+  if (WBS_CODEX_LEGACY_INSTANCES.includes(normalized)) return "codex";
+  if (WBS_AUTOMATION_LEGACY_INSTANCES.includes(normalized)) return "automation";
+  if (normalized === "user") return "user";
+  return "claude";
 }
 
 function mcpArgsForAction(
@@ -856,7 +885,7 @@ async function handleMcpFacade(
     const rawInstance = String(args.instance ?? "codex").trim().toLowerCase();
     const instance = rawInstance === "all"
       ? "all"
-      : normalizeWbsInstance(rawInstance);
+      : normalizeWbsActiveInstance(rawInstance);
     const includeCompleted = parseBooleanish(args.include_completed, false);
     const status = String(args.status ?? "").trim();
     const validStatuses = ["pending", "in_progress", "blocked", "completed"];
@@ -865,9 +894,6 @@ async function handleMcpFacade(
       .select(
         "id, category, title, description, instance, owner_instance, status, progress, end_date, priority, remaining_work, updated_at, github_issue_number, github_issue_url",
       );
-    if (instance !== "all") {
-      query = query.or(`instance.eq.${instance},owner_instance.eq.${instance}`);
-    }
     if (validStatuses.includes(status)) {
       query = query.eq("status", status);
     } else if (!includeCompleted) {
@@ -877,13 +903,17 @@ async function handleMcpFacade(
     const { data, error } = await query;
     if (error) throw new Error(error.message);
 
-    const tasks = [...(data ?? [])].sort(compareWbsTasks).slice(0, limit);
+    const filtered = [...(data ?? [])].filter((task) =>
+      wbsTaskMatchesInstanceFilter(task, rawInstance)
+    );
+    const tasks = filtered.sort(compareWbsTasks).slice(0, limit);
     await logMcpInvocation(auth.ctx, toolName, args, 200, req);
     return mcpToolResponse(body, {
       success: true,
       tool: toolName,
       structuredContent: {
         count: tasks.length,
+        total: filtered.length,
         instance,
         tasks,
       },
@@ -1281,7 +1311,28 @@ function pickGithubIssueWbsKeeper(
 }
 
 function wbsTaskLane(task: Record<string, unknown>): string {
-  return normalizeWbsInstance(task.owner_instance ?? task.instance);
+  return normalizeWbsActiveInstance(task.owner_instance ?? task.instance);
+}
+
+function wbsTaskMatchesInstanceFilter(
+  task: Record<string, unknown>,
+  rawInstance: unknown,
+): boolean {
+  const raw = String(rawInstance ?? "").trim().toLowerCase();
+  if (!raw || raw === "all") return true;
+  if (
+    WBS_ACTIVE_INSTANCE_VALUES.includes(raw) ||
+    raw === "claude-code" ||
+    raw === "claude-code-1" ||
+    raw === "automation" ||
+    raw === "auto"
+  ) {
+    return wbsTaskLane(task) === normalizeWbsActiveInstance(raw);
+  }
+  const legacyInstance = normalizeWbsInstance(raw);
+  return normalizeWbsInstance(task.instance) === legacyInstance ||
+    normalizeWbsInstance(task.owner_instance ?? task.instance) ===
+      legacyInstance;
 }
 
 function wbsDeadline(task: Record<string, unknown>): string {
@@ -1319,7 +1370,7 @@ function wbsRescueScore(task: Record<string, unknown>, now: Date): number {
 
 function buildWbsWorkload(tasks: Array<Record<string, unknown>>, now: Date) {
   const today = new Date(now.toISOString().slice(0, 10));
-  const workload = WBS_INSTANCE_VALUES.map((instance) => {
+  const workload = WBS_ACTIVE_INSTANCE_VALUES.map((instance) => {
     const laneTasks = tasks.filter((task) => wbsTaskLane(task) === instance);
     const openTasks = laneTasks.filter((task) =>
       WBS_OPEN_STATUSES.includes(String(task.status ?? ""))
@@ -1446,6 +1497,16 @@ type RssNewsItem = {
   summary: string;
 };
 
+type RankedNewsItem = RssNewsItem & {
+  id: string;
+  fetched_at: string;
+  cluster_key: string;
+  signal_score: number;
+  confidence: "high" | "medium" | "low";
+  why_it_matters: string;
+  verification_warning: string;
+};
+
 function decodeXmlEntities(value: string): string {
   return value
     .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1")
@@ -1507,7 +1568,7 @@ function parseRssItems(
       source: feed.title,
       category: feed.category,
       published_at: published,
-      summary: summary.length > 220 ? `${summary.slice(0, 220)}…` : summary,
+      summary: summary.length > 220 ? `${summary.slice(0, 220)}...` : summary,
     });
   }
   return items;
@@ -1526,6 +1587,214 @@ async function fetchRssNewsItems(
   if (!res || !res.ok) return [];
   const xml = await res.text();
   return parseRssItems(xml, feed, perFeedLimit);
+}
+
+function normalizeRssFeedInputs(value: unknown): RssFeedInput[] {
+  const rawFeeds = Array.isArray(value) ? value : [];
+  const seen = new Set<string>();
+  const feeds: RssFeedInput[] = [];
+  for (const raw of rawFeeds) {
+    const feed = asRecord(raw);
+    if (!feed) continue;
+    const url = String(feed.url ?? "").trim();
+    if (!/^https?:\/\//i.test(url) || seen.has(url)) continue;
+    seen.add(url);
+    feeds.push({
+      title: String(feed.title ?? feed.name ?? "RSS").trim() || "RSS",
+      url,
+      category: String(feed.category ?? "総合").trim() || "総合",
+    });
+  }
+  return feeds.slice(0, 20);
+}
+
+function stableNewsHash(value: string): string {
+  let hash = 0;
+  for (let i = 0; i < value.length; i += 1) {
+    hash = ((hash << 5) - hash + value.charCodeAt(i)) | 0;
+  }
+  return Math.abs(hash).toString(36);
+}
+
+function normalizePublishedAt(value: string): string {
+  const parsed = Date.parse(value || "");
+  return Number.isFinite(parsed) ? new Date(parsed).toISOString() : "";
+}
+
+function newsClusterKey(item: RssNewsItem): string {
+  const normalizedTitle = item.title
+    .toLowerCase()
+    .replace(/[^\p{Letter}\p{Number}]+/gu, " ")
+    .trim()
+    .slice(0, 80);
+  return `${item.source}:${normalizedTitle}`;
+}
+
+function sourceConfidence(source: string): number {
+  const trustedSources = [
+    "NHK",
+    "ITmedia",
+    "CNET",
+    "Yahoo",
+    "Reuters",
+    "Bloomberg",
+    "Nikkei",
+    "日経",
+  ];
+  return trustedSources.some((name) => source.includes(name)) ? 1 : 0.72;
+}
+
+function keywordSignalScore(text: string): number {
+  const keywords = [
+    "AI",
+    "生成AI",
+    "Claude",
+    "OpenAI",
+    "Codex",
+    "決算",
+    "提携",
+    "買収",
+    "規制",
+    "セキュリティ",
+    "障害",
+    "新機能",
+    "発表",
+    "速報",
+    "価格",
+    "投資",
+    "市場",
+    "選挙",
+    "不正",
+  ];
+  return keywords.reduce(
+    (score, keyword) =>
+      text.toLowerCase().includes(keyword.toLowerCase()) ? score + 5 : score,
+    0,
+  );
+}
+
+function freshnessScore(publishedAt: string): number {
+  const parsed = Date.parse(publishedAt || "");
+  if (!Number.isFinite(parsed)) return 8;
+  const ageHours = Math.max(0, (Date.now() - parsed) / 36e5);
+  if (ageHours <= 6) return 28;
+  if (ageHours <= 24) return 22;
+  if (ageHours <= 72) return 14;
+  return 6;
+}
+
+function newsWhyItMatters(text: string, category: string): string {
+  const lower = text.toLowerCase();
+  if (
+    lower.includes("claude") || lower.includes("openai") || lower.includes("ai")
+  ) {
+    return "AI活用、プロダクト改善、ブログ下書き化の候補として優先確認";
+  }
+  if (text.includes("選挙") || text.includes("不正") || text.includes("規制")) {
+    return "公共性が高く、一次情報確認と時系列整理が必要";
+  }
+  if (text.includes("決算") || text.includes("投資") || text.includes("市場")) {
+    return "市場変化の兆候としてKPI/競合レポートに転用可能";
+  }
+  return `${category}カテゴリの更新として、要約と関連タスク化を検討`;
+}
+
+function rankNewsSignals(rawItems: unknown, limit = 30): RankedNewsItem[] {
+  const values = Array.isArray(rawItems) ? rawItems : [];
+  const deduped = new Map<string, RankedNewsItem>();
+  for (const raw of values) {
+    const item = asRecord(raw);
+    if (!item) continue;
+    const title = String(item.title ?? "").trim();
+    const url = String(item.url ?? item.link ?? "").trim();
+    if (!title || !url) continue;
+    const source = String(item.source ?? "RSS").trim() || "RSS";
+    const category = String(item.category ?? "総合").trim() || "総合";
+    const publishedAt = normalizePublishedAt(String(item.published_at ?? ""));
+    const summary = String(item.summary ?? item.description ?? "").trim();
+    const base: RssNewsItem = {
+      title,
+      url,
+      source,
+      category,
+      published_at: publishedAt,
+      summary,
+    };
+    const text = `${title} ${summary}`;
+    const clusterKey = newsClusterKey(base);
+    const score = Math.round(
+      sourceConfidence(source) * 34 + freshnessScore(publishedAt) +
+        Math.min(28, keywordSignalScore(text)) +
+        (summary.length > 80 ? 10 : 4),
+    );
+    const confidence = score >= 72 ? "high" : score >= 54 ? "medium" : "low";
+    const ranked: RankedNewsItem = {
+      ...base,
+      id: `news_${stableNewsHash(`${source}|${url}|${title}`)}`,
+      fetched_at: String(item.fetched_at ?? ""),
+      cluster_key: clusterKey,
+      signal_score: Math.min(100, score),
+      confidence,
+      why_it_matters: newsWhyItMatters(text, category),
+      verification_warning: confidence === "low"
+        ? "低信頼または鮮度不明のため、一次情報で確認してから配信"
+        : "公開前に一次情報、日時、固有名詞を再確認",
+    };
+    const existing = deduped.get(clusterKey);
+    if (!existing || ranked.signal_score > existing.signal_score) {
+      deduped.set(clusterKey, ranked);
+    }
+  }
+  return [...deduped.values()]
+    .sort((a, b) => b.signal_score - a.signal_score)
+    .slice(0, Math.max(1, Math.min(100, Number(limit) || 30)));
+}
+
+async function fetchLatestNewsItems(body: Record<string, unknown>): Promise<{
+  fetched_at: string;
+  source_count: number;
+  items: RankedNewsItem[];
+  errors: Array<{ source: string; url: string; error: string }>;
+}> {
+  const feeds = normalizeRssFeedInputs(body.feeds);
+  const perFeedLimit = Math.min(
+    Math.max(Number(body.per_feed_limit ?? 8) || 8, 1),
+    30,
+  );
+  const totalLimit = Math.min(Math.max(Number(body.limit ?? 80) || 80, 1), 200);
+  const fetchedAt = new Date().toISOString();
+  const results = await Promise.allSettled(
+    feeds.map(async (feed) => ({
+      feed,
+      items: await fetchRssNewsItems(feed, perFeedLimit),
+    })),
+  );
+  const errors: Array<{ source: string; url: string; error: string }> = [];
+  const items: RssNewsItem[] = [];
+  for (const result of results) {
+    if (result.status === "fulfilled") {
+      items.push(...result.value.items);
+    } else {
+      errors.push({ source: "RSS", url: "", error: String(result.reason) });
+    }
+  }
+  const normalizedItems = rankNewsSignals(
+    items,
+    Math.max(totalLimit, items.length),
+  )
+    .sort((a, b) => {
+      const bTime = Date.parse(b.published_at || "") || 0;
+      const aTime = Date.parse(a.published_at || "") || 0;
+      return bTime - aTime;
+    })
+    .slice(0, totalLimit)
+    .map((item) => ({ ...item, fetched_at: fetchedAt }));
+  return {
+    fetched_at: fetchedAt,
+    source_count: feeds.length,
+    items: normalizedItems,
+    errors,
+  };
 }
 
 async function deleteItem(
@@ -3579,7 +3848,7 @@ function buildHistoricalBaselinePrediction(
   const prev2FormGap = prev2FormGapBonus(first);
   const courseSurfaceMatch = courseSurfaceMatchBonus(
     first,
-    String(race.course_type ?? ""),
+    raceCtx.courseType ?? "",
   );
   const fieldWeightRank = fieldWeightRankBonus(first, entries);
   const consec3Top = consecutiveTopThreeBonus(first);
@@ -5462,7 +5731,7 @@ serve(async (req) => {
         // ─── WBS (Work Breakdown Structure) actions (Win版#128) ─────────
         case "wbs.list_tasks": {
           // インスタンス + status でフィルタしてタスク一覧取得
-          // body: { instance?: 'codex'|'vscode'|'win'|'ps1'..'ps6'|'web'|'mobile'|'schedule'|'gha',
+          // body: { instance?: 'all'|'claude'|'codex'|'user'|'automation' (legacy lanes are still accepted),
           //        status?: 'pending'|'in_progress'|'completed'|'blocked',
           //        updated_since?: 'YYYY-MM-DDTHH:MM:SSZ' (ISO-8601),
           //        limit?: 50 }
@@ -5470,18 +5739,31 @@ serve(async (req) => {
           const status = body.status as string | undefined;
           const updatedSince = body.updated_since as string | undefined;
           const limit = Math.min(Number(body.limit ?? 50), 200);
-          let q = admin.from("wbs_tasks")
-            .select(
-              "id, category, category_icon, category_order, title, description, instance, owner_instance, status, progress, start_date, end_date, planned_end_date, milestone_code, priority, remaining_work, updated_at, github_issue_number, github_issue_url, github_issue_state, github_issue_labels, github_issue_synced_at",
-            );
-          if (inst && inst !== "all") {
-            q = q.eq("instance", inst);
+          const taskSelect =
+            "id, category, category_icon, category_order, title, description, instance, owner_instance, status, progress, start_date, end_date, planned_start_date, planned_end_date, milestone_code, priority, remaining_work, updated_at, github_issue_number, github_issue_url, github_issue_state, github_issue_labels, github_issue_synced_at";
+          const pageSize = 1000;
+          const allTasks: Array<Record<string, unknown>> = [];
+          for (let offset = 0;; offset += pageSize) {
+            let q = admin.from("wbs_tasks").select(taskSelect);
+            if (status) q = q.eq("status", status);
+            if (updatedSince) q = q.gte("updated_at", updatedSince);
+            const { data, error } = await q
+              .order("id", { ascending: true })
+              .range(offset, offset + pageSize - 1);
+            if (error) throw new Error(error.message);
+            const rows = (data ?? []) as unknown as Array<
+              Record<string, unknown>
+            >;
+            allTasks.push(...rows);
+            if (rows.length < pageSize) break;
           }
-          if (status) q = q.eq("status", status);
-          if (updatedSince) q = q.gte("updated_at", updatedSince);
-          const { data, error } = await q;
-          if (error) throw new Error(error.message);
-          const sortedTasks = [...(data ?? [])].sort(compareWbsTasks).slice(
+          const filteredTasks = allTasks.filter((task) =>
+            wbsTaskMatchesInstanceFilter(
+              task,
+              inst ?? "all",
+            )
+          );
+          const sortedTasks = filteredTasks.sort(compareWbsTasks).slice(
             0,
             limit,
           );
@@ -5492,13 +5774,13 @@ serve(async (req) => {
             success: true,
             tasks: sortedTasks,
             milestones: milestones ?? [],
-            total: data?.length ?? 0,
+            total: filteredTasks.length,
           });
         }
         case "wbs.update_progress": {
           // body: { id, progress?: 0-100, status?: 'in_progress'|'completed'|'blocked',
           //        recovery_plan?: string, end_date?: 'YYYY-MM-DD' (リスケ用),
-          //        planned_end_date?: 'YYYY-MM-DD', note?: string }
+          //        planned_start_date?: 'YYYY-MM-DD', planned_end_date?: 'YYYY-MM-DD', note?: string }
           // Win版#131 part 10: 遅延時 recovery_plan 必須化
           // Win版#131 part 14 / T2-Win: defense-in-depth EF validation
           //   DB trigger `wbs_enforce_recovery_plan_trg` も同仕様を block
@@ -5522,13 +5804,16 @@ serve(async (req) => {
             update.rescheduled_count =
               ((cur?.rescheduled_count as number) ?? 0) + 1;
           }
+          if (body.planned_start_date !== undefined) {
+            update.planned_start_date = String(body.planned_start_date);
+          }
           if (body.planned_end_date !== undefined) {
             update.planned_end_date = String(body.planned_end_date);
           }
           if (Object.keys(update).length === 0) {
             return json({
               error:
-                "progress, status, recovery_plan, end_date, or planned_end_date required",
+                "progress, status, recovery_plan, end_date, planned_start_date, or planned_end_date required",
             }, 400);
           }
 
@@ -5573,7 +5858,7 @@ serve(async (req) => {
           const { data, error } = await admin.from("wbs_tasks")
             .update(update).eq("id", id)
             .select(
-              "id, title, status, progress, recovery_plan, end_date, planned_end_date, rescheduled_count",
+              "id, title, status, progress, recovery_plan, end_date, planned_start_date, planned_end_date, rescheduled_count",
             )
             .single();
           if (error) {
@@ -5890,6 +6175,240 @@ serve(async (req) => {
             }, 200);
           }
         }
+        case "wbs.reschedule_realistic": {
+          // Win版#132 part 157 (2026-05-06):
+          // 全 open タスクの start_date / end_date を priority tier ベースで
+          // 「実際に着手可能な日付」へ再配置する。
+          //
+          // body:
+          //   dry_run?: boolean (default true)
+          //   priority_offset_days?: { high: number, medium: number, low: number }
+          //     (default {high: 7, medium: 30, low: 90})
+          //   duration_days?: { high: number, medium: number, low: number }
+          //     (default {high: 3, medium: 7, low: 14})
+          //   parallel_capacity?: { high: number, medium: number, low: number }
+          //     priority tier 内での並列着手可能数 (default {high: 4, medium: 8, low: 12})
+          //     スケジュール stagger は floor(queue_index / parallel_capacity) 日 ずらして配置
+          //
+          // 対象: status != 'completed' AND github_issue_state != 'CLOSED'
+          // skip: 上記完了系
+          const dryRun = body.dry_run !== false; // default true
+          const offsetIn =
+            (body.priority_offset_days as Record<string, number>) ?? {};
+          const durIn = (body.duration_days as Record<string, number>) ?? {};
+          const parIn = (body.parallel_capacity as Record<string, number>) ??
+            {};
+          const offset = {
+            high: Number(offsetIn.high ?? 7),
+            medium: Number(offsetIn.medium ?? 30),
+            low: Number(offsetIn.low ?? 90),
+          };
+          const duration = {
+            high: Number(durIn.high ?? 3),
+            medium: Number(durIn.medium ?? 7),
+            low: Number(durIn.low ?? 14),
+          };
+          const parallel = {
+            high: Math.max(1, Number(parIn.high ?? 4)),
+            medium: Math.max(1, Number(parIn.medium ?? 8)),
+            low: Math.max(1, Number(parIn.low ?? 12)),
+          };
+
+          const today = new Date();
+          today.setUTCHours(0, 0, 0, 0);
+          const fmt = (d: Date) => d.toISOString().slice(0, 10);
+          const addDays = (base: Date, days: number) => {
+            const d = new Date(base);
+            d.setUTCDate(d.getUTCDate() + days);
+            return d;
+          };
+
+          // 全 open タスクを取得 (完了系 skip / Supabase 1000 row cap 回避にページネーション)
+          const selectCols =
+            "id, title, instance, owner_instance, priority, status, " +
+            "start_date, end_date, github_issue_state, category_order";
+          const pageSize = 1000;
+          const maxPages = 50;
+          const all: Array<Record<string, unknown>> = [];
+          for (let page = 0; page < maxPages; page += 1) {
+            const from = page * pageSize;
+            const to = from + pageSize - 1;
+            const { data: pageRows, error: fetchErr } = await admin
+              .from("wbs_tasks")
+              .select(selectCols)
+              .neq("status", "completed")
+              .order("category_order", { ascending: true, nullsFirst: false })
+              .order("id", { ascending: true })
+              .range(from, to);
+            if (fetchErr) {
+              return json({ success: false, error: fetchErr.message }, 200);
+            }
+            const rows = (pageRows ?? []) as unknown as Array<
+              Record<string, unknown>
+            >;
+            all.push(...rows);
+            if (rows.length < pageSize) break;
+            if (page === maxPages - 1) {
+              return json(
+                {
+                  success: false,
+                  error:
+                    `wbs.reschedule_realistic scanned >= ${
+                      pageSize * maxPages
+                    } ` +
+                    "rows; increase pagination cap.",
+                },
+                200,
+              );
+            }
+          }
+          const open = all.filter(
+            (r) => String(r.github_issue_state ?? "") !== "CLOSED",
+          );
+
+          // priority bucket 別 queue index を category_order, id で安定 sort
+          const buckets: Record<string, Array<Record<string, unknown>>> = {
+            high: [],
+            medium: [],
+            low: [],
+          };
+          for (const r of open) {
+            const p = String(r.priority ?? "medium").toLowerCase();
+            const tier = p === "high" || p === "urgent"
+              ? "high"
+              : p === "low"
+              ? "low"
+              : "medium";
+            buckets[tier].push(r);
+          }
+          for (const tier of Object.keys(buckets)) {
+            buckets[tier].sort((a, b) => {
+              const oa = Number(a.category_order ?? 999);
+              const ob = Number(b.category_order ?? 999);
+              if (oa !== ob) return oa - ob;
+              return String(a.id).localeCompare(String(b.id));
+            });
+          }
+
+          // queue index に基づき stagger 配置
+          const updates: Array<{
+            id: string;
+            start_date: string;
+            end_date: string;
+            tier: "high" | "medium" | "low";
+            stagger_days: number;
+          }> = [];
+          for (const tier of ["high", "medium", "low"] as const) {
+            const tasks = buckets[tier];
+            const offDays = offset[tier];
+            const durDays = duration[tier];
+            const par = parallel[tier];
+            for (let i = 0; i < tasks.length; i++) {
+              const t = tasks[i];
+              const stagger = Math.floor(i / par); // par 件並列、par 超で 1 日ずらす
+              const start = addDays(today, offDays + stagger);
+              const end = addDays(start, durDays);
+              updates.push({
+                id: String(t.id),
+                start_date: fmt(start),
+                end_date: fmt(end),
+                tier,
+                stagger_days: stagger,
+              });
+            }
+          }
+
+          // by_priority サマリ + sample 構築
+          const byPrio: Record<
+            string,
+            { count: number; first_start: string; last_end: string }
+          > = {};
+          for (const u of updates) {
+            const cur = byPrio[u.tier] ?? {
+              count: 0,
+              first_start: u.start_date,
+              last_end: u.end_date,
+            };
+            cur.count += 1;
+            if (u.start_date < cur.first_start) cur.first_start = u.start_date;
+            if (u.end_date > cur.last_end) cur.last_end = u.end_date;
+            byPrio[u.tier] = cur;
+          }
+          const sample = updates.slice(0, 10);
+
+          if (dryRun) {
+            return json({
+              success: true,
+              dry_run: true,
+              total_open: open.length,
+              total_skipped_completed: all.length - open.length,
+              would_update: updates.length,
+              by_priority: byPrio,
+              sample,
+              today: fmt(today),
+              params: { offset, duration, parallel },
+            });
+          }
+
+          // apply: Supabase JS は bulk update (行ごと異なる値) が無いので chunk
+          // 並列化 (concurrency=10 で 1144 row ≒ 6 sec / curl 240s 内に収まる)
+          let updated = 0;
+          const errors: Array<{ id: string; error: string }> = [];
+          const concurrency = 10;
+          for (let i = 0; i < updates.length; i += concurrency) {
+            const batch = updates.slice(i, i + concurrency);
+            const results = await Promise.all(batch.map(async (u) => {
+              const { error } = await admin
+                .from("wbs_tasks")
+                .update({
+                  start_date: u.start_date,
+                  end_date: u.end_date,
+                  planned_start_date: u.start_date,
+                  planned_end_date: u.end_date,
+                })
+                .eq("id", u.id);
+              return { id: u.id, error: error?.message };
+            }));
+            for (const r of results) {
+              if (r.error) {
+                errors.push({ id: r.id, error: r.error });
+              } else {
+                updated += 1;
+              }
+            }
+          }
+
+          // monitoring_events に記録 (= scheduled task / GHA cron 監査用)
+          try {
+            await admin.from("monitoring_events").insert({
+              event_type: "wbs.reschedule_realistic",
+              severity: errors.length > 0 ? "warning" : "info",
+              metadata: {
+                total_open: open.length,
+                updated,
+                errors: errors.length,
+                by_priority: byPrio,
+                params: { offset, duration, parallel },
+                today: fmt(today),
+              },
+            });
+          } catch (_) {
+            // monitoring_events 未存在時は無視
+          }
+
+          return json({
+            success: errors.length === 0,
+            dry_run: false,
+            total_open: open.length,
+            updated,
+            errors_count: errors.length,
+            errors: errors.slice(0, 10),
+            by_priority: byPrio,
+            sample,
+            today: fmt(today),
+            params: { offset, duration, parallel },
+          });
+        }
         case "wbs.bulk_update": {
           // body: { updates: [{id, progress?, status?}, ...] }
           const updates = (body.updates as Array<Record<string, unknown>>) ??
@@ -5931,7 +6450,7 @@ serve(async (req) => {
         }
         case "wbs.add_task": {
           // body: { category, title, instance, owner_instance?, description?,
-          //        priority?, end_date?, planned_end_date?, milestone_code?,
+          //        priority?, end_date?, planned_start_date?, planned_end_date?, milestone_code?,
           //        github_issue_number?, github_issue_url?, github_issue_state?,
           //        github_issue_labels? }
           // PS#6 S23 (2026-04-21): instance を required 化 (ALL leak 防止)
@@ -5994,6 +6513,8 @@ serve(async (req) => {
             priority: String(body.priority ?? "medium"),
             start_date: body.start_date ?? null,
             end_date: body.end_date ?? null,
+            planned_start_date: body.planned_start_date ?? body.start_date ??
+              null,
             planned_end_date: body.planned_end_date ?? body.end_date ?? null,
             remaining_work: body.remaining_work ?? null,
             milestone_code: body.milestone_code ?? null,
@@ -6093,7 +6614,7 @@ serve(async (req) => {
           const nowIso = now.toISOString();
           const today = nowIso.slice(0, 10);
           const taskSelect =
-            "id, category, category_icon, category_order, title, description, instance, owner_instance, status, progress, start_date, end_date, planned_end_date, milestone_code, priority, remaining_work, recovery_plan, ai_review_status, created_at, updated_at, github_issue_number, github_issue_url, github_issue_state, github_issue_labels, github_issue_synced_at";
+            "id, category, category_icon, category_order, title, description, instance, owner_instance, status, progress, start_date, end_date, planned_start_date, planned_end_date, milestone_code, priority, remaining_work, recovery_plan, ai_review_status, created_at, updated_at, github_issue_number, github_issue_url, github_issue_state, github_issue_labels, github_issue_synced_at";
           const allTasks = await fetchAllWbsTasks(admin, taskSelect);
           const tasksByIssue = new Map<
             number,
@@ -6203,6 +6724,8 @@ serve(async (req) => {
               priority: githubIssuePriority(labels),
               start_date: keeper?.start_date ?? today,
               end_date: keeper?.end_date ?? githubIssueDueDate(labels, now),
+              planned_start_date: keeper?.planned_start_date ??
+                keeper?.start_date ?? today,
               planned_end_date: keeper?.planned_end_date ?? keeper?.end_date ??
                 githubIssueDueDate(labels, now),
               remaining_work: isClosed
@@ -6595,38 +7118,52 @@ serve(async (req) => {
         case "wbs.priority_for_instance": {
           // 指定インスタンスの優先タスク TOP 5 を返す (session-start-check 用)
           // 担当なしの場合は他 instance の滞留タスクを自担当へ救援 reassign する。
-          // body: { instance: 'codex'|'vscode'|'win'|'ps1'..'ps6'|'web'|'mobile'|'schedule'|'gha',
+          // body: { instance: 'claude'|'codex'|'user'|'automation' (legacy lanes are still accepted),
           //         auto_reassign?: true, limit?: 5 }
           const rawInstance = String(body.instance ?? "").trim();
           if (!rawInstance) return json({ error: "instance required" }, 400);
           const rawInstanceLower = rawInstance.toLowerCase();
           if (
             !WBS_INSTANCE_VALUES.includes(rawInstanceLower) &&
-            !["windows", "ps", "copilot", "github-copilot"].includes(
-              rawInstanceLower,
-            )
+            !WBS_ACTIVE_INSTANCE_VALUES.includes(rawInstanceLower) &&
+            ![
+              "windows",
+              "ps",
+              "copilot",
+              "github-copilot",
+              "claude-code",
+              "claude-code-1",
+              "automation",
+              "auto",
+            ].includes(rawInstanceLower)
           ) {
             return json({
               error: `instance must be one of: ${
-                WBS_INSTANCE_VALUES.join(", ")
+                WBS_ACTIVE_INSTANCE_VALUES.join(", ")
               }`,
             }, 400);
           }
-          const inst = normalizeWbsInstance(rawInstance);
+          const inst = normalizeWbsActiveInstance(rawInstance);
           const limit = Math.min(Math.max(Number(body.limit ?? 5), 1), 20);
           const autoReassign = parseBooleanish(
             body.auto_reassign ?? body.autoReassign,
             true,
           );
           const taskSelect =
-            "id, category, category_order, title, status, progress, priority, end_date, planned_end_date, updated_at, instance, owner_instance, recovery_plan, github_issue_number, github_issue_url, github_issue_state, github_issue_synced_at";
+            "id, category, category_order, title, status, progress, priority, end_date, planned_start_date, planned_end_date, updated_at, instance, owner_instance, recovery_plan, github_issue_number, github_issue_url, github_issue_state, github_issue_synced_at";
           const { data, error } = await admin.from("wbs_tasks")
             .select(taskSelect)
-            .eq("instance", inst)
             .in("status", ["pending", "in_progress", "blocked"]);
-          if (error) throw new Error(error.message);
+          if (error) {
+            throw new Error(error.message);
+          }
           const ownTaskFilter = filterClosedGithubIssueWbsTasks(
-            [...(data ?? [])] as Array<Record<string, unknown>>,
+            [...(data ?? [])].filter((task) =>
+              wbsTaskMatchesInstanceFilter(
+                task as Record<string, unknown>,
+                rawInstance,
+              )
+            ) as Array<Record<string, unknown>>,
           );
           let topTasks = ownTaskFilter.activeTasks
             .sort(compareWbsTasks)
@@ -6648,12 +7185,13 @@ serve(async (req) => {
           );
           let reassignedTask: Record<string, unknown> | null = null;
 
-          if (topTasks.length === 0 && autoReassign) {
+          if (topTasks.length === 0 && autoReassign && inst !== "automation") {
             const candidate = pickWbsRescueCandidate(openTasks, inst, now);
             if (candidate) {
+              const legacyTarget = normalizeWbsInstance(rawInstance);
               const update: Record<string, unknown> = {
-                instance: inst,
-                owner_instance: inst,
+                instance: legacyTarget,
+                owner_instance: legacyTarget,
               };
               const needsRecoveryPlan = wbsOverdueDays(
                     candidate,
@@ -6748,7 +7286,7 @@ serve(async (req) => {
         case "wbs.instance_workload": {
           // body: { instance?: string } 任意。全 instance の負荷と救援候補を返す。
           const taskSelect =
-            "id, category, category_order, title, status, progress, priority, end_date, planned_end_date, updated_at, instance, owner_instance, recovery_plan, github_issue_number, github_issue_url, github_issue_state, github_issue_synced_at";
+            "id, category, category_order, title, status, progress, priority, end_date, planned_start_date, planned_end_date, updated_at, instance, owner_instance, recovery_plan, github_issue_number, github_issue_url, github_issue_state, github_issue_synced_at";
           const { data, error } = await admin.from("wbs_tasks")
             .select(taskSelect)
             .in("status", ["pending", "in_progress", "blocked"]);
@@ -6761,7 +7299,7 @@ serve(async (req) => {
           return json({
             success: true,
             instance: body.instance
-              ? normalizeWbsInstance(body.instance)
+              ? normalizeWbsActiveInstance(body.instance)
               : null,
             workload: buildWbsWorkload(openTasks, now),
             rebalance_suggestions: buildWbsRebalanceSuggestions(openTasks, now),
@@ -6778,25 +7316,40 @@ serve(async (req) => {
           const myInstance = String(body.my_instance ?? "");
           const limitN = Math.min(Number(body.limit ?? 5), 20);
           if (!myInstance) return json({ error: "my_instance required" }, 400);
+          const myActiveInstance = normalizeWbsActiveInstance(myInstance);
 
           // 1. 自 instance の active task 数 fetch
-          const { count: myActiveCount } = await admin.from("wbs_tasks")
-            .select("id", { count: "exact", head: true })
-            .eq("instance", myInstance)
+          const { data: myActiveRaw, error: myActiveErr } = await admin.from(
+            "wbs_tasks",
+          )
+            .select("id, instance, owner_instance")
             .in("status", ["pending", "in_progress", "blocked"]);
+          if (myActiveErr) throw new Error(myActiveErr.message);
+          const myActiveCount = [...(myActiveRaw ?? [])].filter((task) =>
+            wbsTaskMatchesInstanceFilter(
+              task as Record<string, unknown>,
+              myActiveInstance,
+            )
+          ).length;
 
           // 2. 他 instance の active task 取得 (rebalance 候補)
           const { data: otherTasks, error } = await admin.from("wbs_tasks")
             .select(
               "id, category, title, instance, owner_instance, status, progress, priority, end_date, updated_at, last_rebalanced_at, github_issue_number, github_issue_url, github_issue_state, github_issue_synced_at",
             )
-            .neq("instance", myInstance)
             .in("status", ["pending", "in_progress", "blocked"])
             .neq("priority", "completed")
             .limit(200);
-          if (error) throw new Error(error.message);
+          if (error) {
+            throw new Error(error.message);
+          }
           const otherTaskFilter = filterClosedGithubIssueWbsTasks(
-            [...(otherTasks ?? [])] as Array<Record<string, unknown>>,
+            [...(otherTasks ?? [])].filter((task) =>
+              !wbsTaskMatchesInstanceFilter(
+                task as Record<string, unknown>,
+                myActiveInstance,
+              )
+            ) as Array<Record<string, unknown>>,
           );
 
           // 3. 抑制ルール: PS 専任 / IPO 専決 / 期限直前は除外
@@ -6806,13 +7359,21 @@ serve(async (req) => {
             const cat = String(t.category ?? "");
             const title = String(t.title ?? "");
             // PS#1 専任 (Rule17)
-            if (cat.startsWith("rule17-")) return false;
+            if (cat.startsWith("rule17-")) {
+              return false;
+            }
             // PS#2 専任 (T-1 dispatch)
-            if (cat.startsWith("blog-") || title.includes("T-1")) return false;
+            if (cat.startsWith("blog-") || title.includes("T-1")) {
+              return false;
+            }
             // PS#5 専任 (urgent on-call)
-            if (t.priority === "high" && cat === "bug") return false;
+            if (t.priority === "high" && cat === "bug") {
+              return false;
+            }
             // IPO 専決 (CEO 固定)
-            if (cat === "business-ipo") return false;
+            if (cat === "business-ipo") {
+              return false;
+            }
             // 期限直前 (1 日切ってる) は元担当継続
             if (t.end_date) {
               const dueMs = new Date(String(t.end_date)).getTime();
@@ -6823,7 +7384,9 @@ serve(async (req) => {
             // 7 日以内に rebalance 済 = loop 防止
             if (t.last_rebalanced_at) {
               const lastMs = new Date(String(t.last_rebalanced_at)).getTime();
-              if (NOW - lastMs < 7 * 24 * HOUR) return false;
+              if (NOW - lastMs < 7 * 24 * HOUR) {
+                return false;
+              }
             }
             return true;
           });
@@ -6876,7 +7439,9 @@ serve(async (req) => {
             if (t.priority === "high") {
               score += 20;
               reasons.push("priority=high");
-            } else if (t.priority === "medium") score += 10;
+            } else if (t.priority === "medium") {
+              score += 10;
+            }
 
             return {
               id: t.id,
@@ -6895,14 +7460,17 @@ serve(async (req) => {
 
           // 5. score 高い順 sort + limit
           const candidates = scored
-            .filter((s) => s.stale_score > 0)
+            .filter((s) =>
+              s.stale_score > 0
+            )
             .sort((a, b) => b.stale_score - a.stale_score)
             .slice(0, limitN);
 
           return json({
             success: true,
             my_instance: myInstance,
-            my_active_count: myActiveCount ?? 0,
+            my_active_instance: myActiveInstance,
+            my_active_count: myActiveCount,
             candidates,
             closed_issue_exclusions: {
               total_count: otherTaskFilter.excludedTasks.length,
@@ -7753,39 +8321,24 @@ ${reportText ? `> ${reportText}` : ""}`,
     }
 
     if (action === "rss.fetch_latest") {
-      const rawFeeds = Array.isArray(body.feeds) ? body.feeds : [];
-      const feeds: RssFeedInput[] = rawFeeds
-        .map((feed) => asRecord(feed))
-        .filter((feed): feed is Record<string, unknown> => feed !== null)
-        .map((feed) => ({
-          title: String(feed.title ?? feed.name ?? "RSS"),
-          url: String(feed.url ?? ""),
-          category: String(feed.category ?? "総合"),
-        }))
-        .filter((feed) => /^https?:\/\//i.test(feed.url))
-        .slice(0, 12);
-      const perFeedLimit = Math.min(
-        Math.max(Number(body.per_feed_limit ?? 8), 1),
-        20,
+      const result = await fetchLatestNewsItems(body);
+      const signalLimit = Math.max(
+        1,
+        Math.min(30, Number(body.signal_limit ?? 20) || 20),
       );
-      const totalLimit = Math.min(Math.max(Number(body.limit ?? 40), 1), 80);
-
-      const results = await Promise.all(
-        feeds.map((feed) => fetchRssNewsItems(feed, perFeedLimit)),
-      );
-      const items = results
-        .flat()
-        .sort((a, b) => {
-          const bTime = Date.parse(b.published_at || "") || 0;
-          const aTime = Date.parse(a.published_at || "") || 0;
-          return bTime - aTime;
-        })
-        .slice(0, totalLimit);
       return json({
         success: true,
-        fetched_at: new Date().toISOString(),
-        source_count: feeds.length,
-        items,
+        ...result,
+        signals: rankNewsSignals(result.items, signalLimit),
+        signal_action: "news.signal_rank",
+      });
+    }
+
+    if (action === "news.signal_rank") {
+      const limit = Math.max(1, Math.min(100, Number(body.limit ?? 30)));
+      return json({
+        success: true,
+        signals: rankNewsSignals(body.items, limit),
       });
     }
 
@@ -8650,6 +9203,7 @@ ${reportText ? `> ${reportText}` : ""}`,
             "rss.add_feed",
             "rss.fetch",
             "rss.fetch_latest",
+            "news.signal_rank",
             "changelog.list",
             "changelog.create",
             "mindmap.list",

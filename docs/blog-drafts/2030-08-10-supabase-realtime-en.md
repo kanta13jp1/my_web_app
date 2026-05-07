@@ -17,7 +17,7 @@ Supabase Realtime streams PostgreSQL changes to clients over WebSocket. Combine 
 ## Setup
 
 ```yaml
-# pubspec.yaml
+# pubspec.yaml — 2030-08-10-supabase-realtime-en
 dependencies:
   supabase_flutter: ^2.5.0
 ```

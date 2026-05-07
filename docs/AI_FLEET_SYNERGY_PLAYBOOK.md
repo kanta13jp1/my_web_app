@@ -1,6 +1,6 @@
 # AI Fleet Synergy 7 原則 — Claude Code × Codex 協調運用方法論
 
-> このドキュメントは、自分株式会社の **12 instance fleet (10 Claude Code + 2 Codex CLI)** が **互いの強みを引き出して合計最大出力** を出すための **fleet 運用 playbook** である.
+> このドキュメントは、自分株式会社の **2 instance fleet (Win版 Claude Code + Win版 Codex CLI / 旧 12 instance は 2026-05-04 dormant 化)** が **互いの強みを引き出して合計最大出力** を出すための **fleet 運用 playbook** である. 7 原則は instance 数に依存せず、2 instance 体制でも完全に妥当.
 >
 > **ソース**: NotebookLM Notebook [Codex vs Claude Code: The Ultimate AI Development Synergy](https://notebooklm.google.com/notebook/bc58b50b-5fc4-4840-9a62-b397d6d3b65a)
 > Claude Code と Codex CLI の最適な使い分け・連携・モニタリング・guardrail 設計のベストプラクティス (2026-04-30 取込).
@@ -17,7 +17,7 @@
 
 ## なぜ必要か
 
-自分株式会社の fleet は **10 Claude Code + 2 Codex CLI = 12 instance** という構成. それぞれの AI が持つ **異なる得意領域** を理解せずに使い分けないと:
+自分株式会社の fleet は **Win版 Claude Code + Win版 Codex CLI = 2 instance** という構成 (2026-05-04 〜 / 旧 12 instance は dormant). それぞれの AI が持つ **異なる得意領域** を理解せずに使い分けないと:
 
 - **Claude Code を batch CI に使う** = 高度モデルで定型作業 = cost 浪費 (= INDIE #2 違反)
 - **Codex に architecture design を任せる** = 浅い設計で deploy 失敗 = 連鎖 fix (= part 91 cascade のような)
@@ -26,7 +26,7 @@
 - **Visual validation 不在** = UI 改修が API 観点だけで進む → ユーザー目線確認漏れ
 - **新機能 watch 抜け** = Claude Code / Codex CLI 月次新機能を見逃し → 古い使い方継続
 
-= 「**12 instance を 1 つの organism として動かす**」運用方法論が必要.
+= 「**2 instance を 1 つの organism として動かす**」(= 旧 12 instance 時代の運用方法論を継承) 運用方法論が必要.
 
 INDIE_DEV_VELOCITY (= indie 視点の規律) と直交する **「fleet 視点の運用」** を独立軸として確立.
 
@@ -36,7 +36,7 @@ INDIE_DEV_VELOCITY (= indie 視点の規律) と直交する **「fleet 視点�
 
 ### 原則 1: Strict Instance Routing (= AI 別役割分担の厳格化)
 
-**ルール本文**: 各 task を 12 instance のどれに振るかを **5 質問 + WORKDIR-ISOLATION dual-axis** で機械的に判定. 直感判断禁止.
+**ルール本文**: 各 task を 2 instance (Win Claude / Win Codex) のどちらに振るかを **5 質問 + WORKDIR-ISOLATION dual-axis** で機械的に判定. 直感判断禁止.
 
 | task 性質 | route 先 | 理由 |
 | --- | --- | --- |
@@ -105,6 +105,17 @@ INDIE_DEV_VELOCITY (= indie 視点の規律) と直交する **「fleet 視点�
 - ADR pattern: `docs/adrs/<YYYYMMDD>_<decision>.md` で immutable な意思決定記録
 - **cross-ref**: SECOND_BRAIN #1 (階層型ナレッジ厳格分離) / hook-rule-audit skill
 
+**競合 Pointer-Based Config 比較** (2026 Q2 / `docs/STRATEGIC_INTELLIGENCE_2026Q2.md` §1 より):
+
+| 競合 | Config 方式 | fleet drift リスク |
+|------|-----------|------------------|
+| Cursor Team | editor settings + .cursorrules (= 単一 flat file) | 1 instance のみ / drift なし but 拡張不可 |
+| Devin | 完全自律 / config なし (= agent が自己判断) | 不透明 / hallucinate 検知不能 |
+| Cline / RooCode | `.clinerules` (= 単一 flat) | multi-instance 未対応 |
+| **自分株式会社** | **CLAUDE.md (80 行) + pointer → docs/ + inject-rules.txt** | **2 instance で drift 最小 / pointer 分散で bloat 防止** |
+
+**自分株式会社優位**: 唯一 multi-instance を想定した pointer hub 設計. 競合が 1 instance flat config の間に、2 instance × pointer 分散 × 月次 audit cron の 3 層防衛を実装.
+
 ### 原則 5: Memory & State Continuity Hooks (= 12 fleet の記憶連続性)
 
 **ルール本文**: Claude Code の **PreCompact + StatusLine hooks** を全 instance で標準化し、context 蒸発前に transcript を自動 backup. **Git commit を fleet 間 state passing の primary bridge** として強制.
@@ -112,7 +123,7 @@ INDIE_DEV_VELOCITY (= indie 視点の規律) と直交する **「fleet 視点�
 **なぜ重要か**: Claude Code の context window は有限. compact が走るたびに **「前回これを決めた」** の記憶が蒸発し、次 session で再説明 cost. fleet 全体で乗算.
 
 **どう適用するか**:
-- `~/.claude/settings.json` に PreCompact hook 追加 (= 全 12 instance):
+- `~/.claude/settings.json` に PreCompact hook 追加 (= 全 2 instance):
   ```json
   "hooks": {
     "PreCompact": "powershell -ExecutionPolicy Bypass -File ~/.claude/hooks/backup-transcript.ps1"
@@ -224,7 +235,7 @@ Codex は **Stop Hooks** で CI/CD pipeline pass まで task 完了をブロッ�
 3. cross-instance-pr → Codex#2: `ai-tool-changelog-watch.yml` 実装 (= 原則 #3)
 4. monthly cron: instance 役割 audit + CLAUDE.md 行数監視 (= 原則 #1 + #4)
 5. ADR 形式確立: `docs/adrs/<YYYYMMDD>_<decision>.md` (= 原則 #2)
-6. PreCompact hook 全 12 instance 標準化 (= 原則 #5)
+6. PreCompact hook 全 2 instance 標準化 (= 原則 #5)
 7. PostToolUse linter hook 全 instance 標準化 (= 原則 #6)
 8. UI PR で Codex visual validation step 必須化 (= 原則 #7)
 

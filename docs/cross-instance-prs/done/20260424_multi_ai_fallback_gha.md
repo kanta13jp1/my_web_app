@@ -1,4 +1,4 @@
-# cross-instance-pr: Multi-AI フォールバック — GHA quota guard 追加
+# cross-instance-pr: Multi-AI フォールバック — GHA quota guard 追加 [Done]
 
 **from**: PS版#5 (on-call)
 **to**: PS版#1 (CI/CD 担当) または VSCode版

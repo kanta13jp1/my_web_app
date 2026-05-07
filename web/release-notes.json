@@ -2,7 +2,7 @@
   "current": {
     "build": "1",
     "category": "release",
-    "date": "2026-05-02",
+    "date": "2026-05-07",
     "links": [
       {
         "title": "GitHub Release v1.0.0",
@@ -13,7 +13,7 @@
     "summary": "Release 1.0.0",
     "version": "1.0.0"
   },
-  "generatedAt": "2026-05-02T00:00:00Z",
+  "generatedAt": "2026-05-07T00:00:00Z",
   "schemaVersion": 1,
   "source": {
     "aiToolWatch": "docs/ai-tool-watch/latest-report.json",
@@ -32,400 +32,400 @@
       ],
       "changes": [
         {
+          "category": "feature",
+          "id": "pr-2120",
+          "links": [
+            {
+              "title": "PR #2120",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/2120"
+            }
+          ],
+          "mergedAt": "2026-05-07T02:24:44Z",
+          "summary": "#2120 feat(mobile): generate app icon and splash assets (#1495)"
+        },
+        {
+          "category": "feature",
+          "id": "pr-2117",
+          "links": [
+            {
+              "title": "PR #2117",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/2117"
+            }
+          ],
+          "mergedAt": "2026-05-07T01:41:24Z",
+          "summary": "#2117 feat(meal-log): MVP 食事ログ統合 (#1665)"
+        },
+        {
+          "category": "feature",
+          "id": "pr-2114",
+          "links": [
+            {
+              "title": "PR #2114",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/2114"
+            }
+          ],
+          "mergedAt": "2026-05-07T01:09:01Z",
+          "summary": "#2114 [codex] #772 RAG Knowledge Graph Phase 1"
+        },
+        {
+          "category": "feature",
+          "id": "pr-2113",
+          "links": [
+            {
+              "title": "PR #2113",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/2113"
+            }
+          ],
+          "mergedAt": "2026-05-07T00:43:16Z",
+          "summary": "#2113 docs(raw): ingest Codex × NotebookLM integration spec v1.0 → jibun-master-brain"
+        },
+        {
+          "category": "feature",
+          "id": "pr-2112",
+          "links": [
+            {
+              "title": "PR #2112",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/2112"
+            }
+          ],
+          "mergedAt": "2026-05-07T00:27:03Z",
+          "summary": "#2112 docs(roadmap): part 175 — user override 明示 第 1 例 / STOP signal 第 6 / 14 part"
+        },
+        {
+          "category": "feature",
+          "id": "pr-2111",
+          "links": [
+            {
+              "title": "PR #2111",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/2111"
+            }
+          ],
+          "mergedAt": "2026-05-07T00:09:19Z",
+          "summary": "#2111 docs(roadmap): part 174 — 自己 cap rule 強制適用 / STOP signal 第 5 / forced-stop"
+        },
+        {
           "category": "automation",
-          "id": "pr-1693",
+          "id": "pr-2110",
           "links": [
             {
-              "title": "PR #1693",
+              "title": "PR #2110",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/1693"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/2110"
             }
           ],
-          "mergedAt": "2026-05-02T22:06:32Z",
-          "summary": "#1693 [codex] Preserve WBS stale repair sync aggregates"
+          "mergedAt": "2026-05-07T00:01:54Z",
+          "summary": "#2110 [part 158-b 振分] ci: add daily-report freshness monitor (#1699)"
         },
         {
           "category": "feature",
-          "id": "pr-1691",
+          "id": "pr-2108",
           "links": [
             {
-              "title": "PR #1691",
+              "title": "PR #2108",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/1691"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/2108"
             }
           ],
-          "mergedAt": "2026-05-02T21:56:56Z",
-          "summary": "#1691 [codex] Refresh NotebookLM intake routing snapshot"
-        },
-        {
-          "category": "feature",
-          "id": "pr-1690",
-          "links": [
-            {
-              "title": "PR #1690",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/1690"
-            }
-          ],
-          "mergedAt": "2026-05-02T21:10:42Z",
-          "summary": "#1690 [codex] Route PR review feedback into repair queues"
+          "mergedAt": "2026-05-06T23:40:46Z",
+          "summary": "#2108 feat(mobile): add privacy policy route (#1495)"
         },
         {
           "category": "automation",
-          "id": "pr-1689",
+          "id": "pr-2107",
           "links": [
             {
-              "title": "PR #1689",
+              "title": "PR #2107",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/1689"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/2107"
             }
           ],
-          "mergedAt": "2026-05-02T21:02:07Z",
-          "summary": "#1689 [codex] Add manual WBS progress update workflow"
+          "mergedAt": "2026-05-06T23:03:09Z",
+          "summary": "#2107 feat(automation): expand AI tool watch sources (#1632)"
         },
         {
           "category": "fix",
-          "id": "pr-1688",
+          "id": "pr-2104",
           "links": [
             {
-              "title": "PR #1688",
+              "title": "PR #2104",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/1688"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/2104"
             }
           ],
-          "mergedAt": "2026-05-02T20:48:11Z",
-          "summary": "#1688 fix: repair stale closed Issue WBS sync"
+          "mergedAt": "2026-05-06T22:42:03Z",
+          "summary": "#2104 fix(ef): paginate wbs.list_tasks beyond 1000 rows (#2096)"
+        },
+        {
+          "category": "feature",
+          "id": "pr-2106",
+          "links": [
+            {
+              "title": "PR #2106",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/2106"
+            }
+          ],
+          "mergedAt": "2026-05-06T22:25:35Z",
+          "summary": "#2106 docs(roadmap): part 173 — STOP signal 第 4 / 12 part 連続 / no-op minimum"
         },
         {
           "category": "automation",
-          "id": "pr-1684",
+          "id": "pr-2094",
           "links": [
             {
-              "title": "PR #1684",
+              "title": "PR #2094",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/1684"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/2094"
             }
           ],
-          "mergedAt": "2026-05-02T20:45:08Z",
-          "summary": "#1684 [codex] Avoid GraphQL timeout in WBS issue sync"
+          "mergedAt": "2026-05-06T21:54:00Z",
+          "summary": "#2094 [infra] Add docs rotate automation (#1984 axis E)"
         },
         {
           "category": "feature",
-          "id": "pr-1686",
+          "id": "pr-2103",
           "links": [
             {
-              "title": "PR #1686",
+              "title": "PR #2103",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/1686"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/2103"
             }
           ],
-          "mergedAt": "2026-05-02T19:49:16Z",
-          "summary": "#1686 feat: add NotebookLM intake gate"
+          "mergedAt": "2026-05-06T21:28:07Z",
+          "summary": "#2103 docs(roadmap): part 172 — manual fallback ping (#1632 #2096) / STOP signal 第 3"
         },
         {
           "category": "feature",
-          "id": "pr-1681",
+          "id": "pr-2102",
           "links": [
             {
-              "title": "PR #1681",
+              "title": "PR #2102",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/1681"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/2102"
             }
           ],
-          "mergedAt": "2026-05-02T19:31:32Z",
-          "summary": "#1681 feat(notebooklm): add intake diff gate"
+          "mergedAt": "2026-05-06T21:16:34Z",
+          "summary": "#2102 docs(roadmap): part 171 — 100 part milestone / STOP signal 第 2 / monitor-only"
         },
         {
           "category": "feature",
-          "id": "pr-1678",
+          "id": "pr-2101",
           "links": [
             {
-              "title": "PR #1678",
+              "title": "PR #2101",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/1678"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/2101"
             }
           ],
-          "mergedAt": "2026-05-02T19:21:29Z",
-          "summary": "#1678 feat: automate tools-hub MCP AuthKit smoke"
+          "mergedAt": "2026-05-06T21:11:20Z",
+          "summary": "#2101 docs(roadmap): part 170 — monitor-only / 9 part 連続 STOP signal 認識"
         },
         {
           "category": "feature",
-          "id": "pr-1676",
+          "id": "pr-2100",
           "links": [
             {
-              "title": "PR #1676",
+              "title": "PR #2100",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/1676"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/2100"
             }
           ],
-          "mergedAt": "2026-05-02T18:48:57Z",
-          "summary": "#1676 feat: add offline local RAG runtime harness"
+          "mergedAt": "2026-05-06T20:55:08Z",
+          "summary": "#2100 docs(spec): part 169 — cross-instance hand-off auto-ping cron 自走化 spec + Codex hand-off"
+        },
+        {
+          "category": "feature",
+          "id": "pr-2099",
+          "links": [
+            {
+              "title": "PR #2099",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/2099"
+            }
+          ],
+          "mergedAt": "2026-05-06T20:47:55Z",
+          "summary": "#2099 docs(hygiene): part 168 — transcript hot-cache 7-day rotation (14→7 / aggressive 4 軸目)"
+        },
+        {
+          "category": "feature",
+          "id": "pr-2098",
+          "links": [
+            {
+              "title": "PR #2098",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/2098"
+            }
+          ],
+          "mergedAt": "2026-05-06T20:39:19Z",
+          "summary": "#2098 docs(roadmap): part 167 — triage default flow dogfood + Issue #1660 docs portion 完了 mark"
         },
         {
           "category": "fix",
-          "id": "pr-1672",
+          "id": "pr-2097",
           "links": [
             {
-              "title": "PR #1672",
+              "title": "PR #2097",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/1672"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/2097"
             }
           ],
-          "mergedAt": "2026-05-02T18:20:01Z",
-          "summary": "#1672 fix: block ai-hub providers in offline secure mode"
+          "mergedAt": "2026-05-06T20:30:17Z",
+          "summary": "#2097 docs(triage): part 166 — wbs.list_tasks 1000 cap fix spec + Codex hand-off (#2096)"
+        },
+        {
+          "category": "automation",
+          "id": "pr-2095",
+          "links": [
+            {
+              "title": "PR #2095",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/2095"
+            }
+          ],
+          "mergedAt": "2026-05-06T20:23:29Z",
+          "summary": "#2095 docs(spec): part 165 — dormant instance 30-day grace cron automation spec + Codex hand-off"
         },
         {
           "category": "feature",
-          "id": "pr-1663",
+          "id": "pr-2092",
           "links": [
             {
-              "title": "PR #1663",
+              "title": "PR #2092",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/1663"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/2092"
             }
           ],
-          "mergedAt": "2026-05-02T17:14:02Z",
-          "summary": "#1663 feat: add offline secure mode settings"
+          "mergedAt": "2026-05-06T20:10:11Z",
+          "summary": "#2092 docs(roadmap): part 162 — PR #2089 merge + Phase 0 status + memory consolidation"
         },
         {
-          "category": "fix",
-          "id": "pr-1651",
+          "category": "automation",
+          "id": "pr-2093",
           "links": [
             {
-              "title": "PR #1651",
+              "title": "PR #2093",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/1651"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/2093"
             }
           ],
-          "mergedAt": "2026-05-02T16:54:34Z",
-          "summary": "#1651 fix(wbs): filter closed GitHub issue mirrors"
-        },
-        {
-          "category": "feature",
-          "id": "pr-1659",
-          "links": [
-            {
-              "title": "PR #1659",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/1659"
-            }
-          ],
-          "mergedAt": "2026-05-02T16:36:59Z",
-          "summary": "#1659 chore: check Claude remote control at session start"
+          "mergedAt": "2026-05-06T19:47:57Z",
+          "summary": "#2093 [infra] Add dev cache cleanup automation (#1984 axis C)"
         },
         {
           "category": "feature",
-          "id": "pr-1649",
+          "id": "pr-2089",
           "links": [
             {
-              "title": "PR #1649",
+              "title": "PR #2089",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/1649"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/2089"
             }
           ],
-          "mergedAt": "2026-05-02T15:44:14Z",
-          "summary": "#1649 feat: add thought stuck support sheet"
+          "mergedAt": "2026-05-06T19:06:14Z",
+          "summary": "#2089 feat(icon): app icon 1024x1024 design + Codex hand-off for flutter_launcher_icons"
+        },
+        {
+          "category": "automation",
+          "id": "pr-2091",
+          "links": [
+            {
+              "title": "PR #2091",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/2091"
+            }
+          ],
+          "mergedAt": "2026-05-06T18:54:20Z",
+          "summary": "#2091 [codex] Add safe worktree cleanup automation"
         },
         {
           "category": "feature",
-          "id": "pr-1616",
+          "id": "pr-2088",
           "links": [
             {
-              "title": "PR #1616",
+              "title": "PR #2088",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/1616"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/2088"
             }
           ],
-          "mergedAt": "2026-05-02T15:33:15Z",
-          "summary": "#1616 [codex] Add time waste refresh action logging"
-        },
-        {
-          "category": "feature",
-          "id": "pr-1639",
-          "links": [
-            {
-              "title": "PR #1639",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/1639"
-            }
-          ],
-          "mergedAt": "2026-05-02T15:17:07Z",
-          "summary": "#1639 feat: add self contact tracking"
-        },
-        {
-          "category": "feature",
-          "id": "pr-1622",
-          "links": [
-            {
-              "title": "PR #1622",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/1622"
-            }
-          ],
-          "mergedAt": "2026-05-02T15:15:20Z",
-          "summary": "#1622 [codex] Add Notion WBS preflight guard"
-        },
-        {
-          "category": "feature",
-          "id": "pr-1631",
-          "links": [
-            {
-              "title": "PR #1631",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/1631"
-            }
-          ],
-          "mergedAt": "2026-05-02T13:21:54Z",
-          "summary": "#1631 feat: add AI journal feedback loop"
-        },
-        {
-          "category": "feature",
-          "id": "pr-1630",
-          "links": [
-            {
-              "title": "PR #1630",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/1630"
-            }
-          ],
-          "mergedAt": "2026-05-02T12:09:36Z",
-          "summary": "#1630 feat: route memory search from query reports"
-        },
-        {
-          "category": "fix",
-          "id": "pr-1617",
-          "links": [
-            {
-              "title": "PR #1617",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/1617"
-            }
-          ],
-          "mergedAt": "2026-05-02T11:26:50Z",
-          "summary": "#1617 fix(notion): normalize mirror sync ids"
-        },
-        {
-          "category": "fix",
-          "id": "pr-1615",
-          "links": [
-            {
-              "title": "PR #1615",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/1615"
-            }
-          ],
-          "mergedAt": "2026-05-02T11:13:35Z",
-          "summary": "#1615 fix(wbs): close BYPASS_RULES after manual review"
+          "mergedAt": "2026-05-06T18:16:08Z",
+          "summary": "#2088 [codex] Add visual E2E evidence gate"
         },
         {
           "category": "docs",
-          "id": "pr-1613",
+          "id": "pr-2087",
           "links": [
             {
-              "title": "PR #1613",
+              "title": "PR #2087",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/1613"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/2087"
             }
           ],
-          "mergedAt": "2026-05-02T10:46:46Z",
-          "summary": "#1613 docs: close out BYPASS_RULES secret task"
-        },
-        {
-          "category": "fix",
-          "id": "pr-1604",
-          "links": [
-            {
-              "title": "PR #1604",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/1604"
-            }
-          ],
-          "mergedAt": "2026-05-02T09:58:57Z",
-          "summary": "#1604 fix(wbs): repair overview view runtime objects"
-        },
-        {
-          "category": "automation",
-          "id": "pr-1588",
-          "links": [
-            {
-              "title": "PR #1588",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/1588"
-            }
-          ],
-          "mergedAt": "2026-05-02T09:40:30Z",
-          "summary": "#1588 Guard Notion WBS schema sync"
-        },
-        {
-          "category": "feature",
-          "id": "pr-1546",
-          "links": [
-            {
-              "title": "PR #1546",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/1546"
-            }
-          ],
-          "mergedAt": "2026-05-02T09:03:53Z",
-          "summary": "#1546 auto: issue #1537 [追加要望] AI大学動画からバイラルショート・動的字幕・SNS投稿案を自動生成"
-        },
-        {
-          "category": "fix",
-          "id": "pr-1555",
-          "links": [
-            {
-              "title": "PR #1555",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/1555"
-            }
-          ],
-          "mergedAt": "2026-05-02T07:52:36Z",
-          "summary": "#1555 fix: resolve migration timestamp collision"
-        },
-        {
-          "category": "feature",
-          "id": "pr-1547",
-          "links": [
-            {
-              "title": "PR #1547",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/1547"
-            }
-          ],
-          "mergedAt": "2026-05-02T07:16:55Z",
-          "summary": "#1547 auto: issue #793 [追加要望] Claude Apps/MCPからmy_web_appを直接操作できる連携基盤"
+          "mergedAt": "2026-05-06T18:00:20Z",
+          "summary": "#2087 docs(privacy): part 160 — Privacy Policy draft for Issue #1495 Phase 0 blocker"
         },
         {
           "category": "docs",
-          "id": "pr-1551",
+          "id": "pr-2086",
           "links": [
             {
-              "title": "PR #1551",
+              "title": "PR #2086",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/1551"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/2086"
             }
           ],
-          "mergedAt": "2026-05-02T05:34:26Z",
-          "summary": "#1551 docs: scheduled-daily 2026-05-02 — MCP AuthKit metadata blog drafts"
+          "mergedAt": "2026-05-06T17:33:35Z",
+          "summary": "#2086 docs: define two-instance delegation protocol"
         },
         {
-          "category": "feature",
-          "id": "pr-1534",
+          "category": "docs",
+          "id": "pr-2085",
           "links": [
             {
-              "title": "PR #1534",
+              "title": "PR #2085",
               "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/1534"
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/2085"
             }
           ],
-          "mergedAt": "2026-05-01T15:44:05Z",
-          "summary": "#1534 [codex] add minimal E2E issue gate"
+          "mergedAt": "2026-05-06T17:06:45Z",
+          "summary": "#2085 docs(roadmap): part 159b — hygiene heavy compress + #1495 mobile spec"
+        },
+        {
+          "category": "docs",
+          "id": "pr-2084",
+          "links": [
+            {
+              "title": "PR #2084",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/2084"
+            }
+          ],
+          "mergedAt": "2026-05-06T17:05:22Z",
+          "summary": "#2084 feat(hygiene+mobile): part 159 — heavy compress always-on + #1495 mobile spec"
+        },
+        {
+          "category": "docs",
+          "id": "pr-2083",
+          "links": [
+            {
+              "title": "PR #2083",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/2083"
+            }
+          ],
+          "mergedAt": "2026-05-06T16:45:13Z",
+          "summary": "#2083 feat(fleet): Q2 strategic intelligence + fleet roadmap for Issue #1704"
         }
       ],
-      "date": "2026-05-02",
+      "date": "2026-05-07",
       "extensions": {
         "aiToolWatch": {
-          "changedSourceCount": 1,
+          "changedSourceCount": 3,
           "signalCount": 0,
           "source": "docs/ai-tool-watch/latest-report.json"
         }

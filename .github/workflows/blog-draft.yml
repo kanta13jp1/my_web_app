@@ -152,6 +152,35 @@ jobs:
         run: |
           python3 scripts/generate_blog_draft.py
 
+      - name: Quality gate - generated drafts
+        if: |
+          steps.skip_check.outputs.skip == 'false' &&
+          steps.gitlog.outputs.has_log == 'true' &&
+          steps.quota_check.outputs.anthropic_available == 'true' &&
+          github.event.inputs.dry_run != 'true'
+        env:
+          TRACE_ID: blog-draft-${{ github.run_id }}-${{ github.run_attempt }}
+        run: |
+          mkdir -p tmp/blog-quality
+          python3 scripts/validate_blog_draft.py \
+            --draft "${{ steps.period.outputs.draft_ja }}" \
+            --language ja \
+            --min-chars 800 \
+            --min-headings 2 \
+            --required-heading "##" \
+            --trace-id "$TRACE_ID" \
+            --source-ref "$GITHUB_SHA" \
+            --report "tmp/blog-quality/${TRACE_ID}-ja.json"
+          python3 scripts/validate_blog_draft.py \
+            --draft "${{ steps.period.outputs.draft_en }}" \
+            --language en \
+            --min-chars 1200 \
+            --min-headings 2 \
+            --required-heading "##" \
+            --trace-id "$TRACE_ID" \
+            --source-ref "$GITHUB_SHA" \
+            --report "tmp/blog-quality/${TRACE_ID}-en.json"
+
       - name: Commit drafts
         if: |
           steps.skip_check.outputs.skip == 'false' &&

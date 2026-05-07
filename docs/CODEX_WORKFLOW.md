@@ -270,3 +270,10 @@ Codex #1/#2 は作業開始時に次を実施する。
 - UI/console エラーが本番で再発する場合、Codex#1 に「browser QA + screenshot gate」を振る。
 - cross-instance 競合、設計判断、NotebookLM の概念蒸留が必要な場合、Claude Code に戻す。
 - 手動確認が 3 回以上出る WBS タスクは、スケジュールタスク・GitHub Actions・Edge Function の候補として起票する。
+## Current 2-Instance Override (2026-05-05)
+
+Canonical flow is now Claude Code #1 (Windows app) + Codex #1 (Windows app).
+This document keeps older Codex#2 / PS#1-6 / multi-worktree guidance as
+legacy history only. New Codex work should use one Codex Windows app instance,
+one active branch, and one shared dev server unless the user explicitly asks for
+an exception.

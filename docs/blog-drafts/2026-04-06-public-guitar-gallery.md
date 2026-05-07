@@ -4,7 +4,7 @@ tags: Flutter,Supabase,個人開発,buildinpublic,ギター
 published: true
 ---
 
-# ブログ下書き 2026-04-06
+# ブログ下書き 2026-04-06 — 2026-04-06-public-guitar-gallery
 
 ## タイトル案
 1. Flutter WebでギターSNSギャラリーを作った話 — 既存Edge Functionを使い倒す実装パターン

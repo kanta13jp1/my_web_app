@@ -15,7 +15,7 @@ class BlogServiceException implements Exception {
 class BlogService {
   final _client = Supabase.instance.client;
 
-  Future<Map<String, dynamic>> _invoke(
+  Future<Map<String, dynamic>> _invokeBlogAction(
     String action,
     Map<String, dynamic> params,
   ) async {
@@ -41,7 +41,7 @@ class BlogService {
     List<String> tags = const [],
     String notes = '',
   }) async {
-    return _invoke('blog.insert_post', {
+    return _invokeBlogAction('blog.insert_post', {
       'title': title,
       'content': content,
       'target_platforms': targetPlatforms,
@@ -66,23 +66,23 @@ class BlogService {
     if (tags != null) params['tags'] = tags;
     if (status != null) params['status'] = status;
     if (notes != null) params['notes'] = notes;
-    await _invoke('blog.update_post', params);
+    await _invokeBlogAction('blog.update_post', params);
   }
 
   Future<void> deletePost(String id) async {
-    await _invoke('blog.delete_post', {'id': id});
+    await _invokeBlogAction('blog.delete_post', {'id': id});
   }
 
   // ── 公開 ────────────────────────────────────────────────────────
 
   Future<Map<String, dynamic>> publishPost(String id) async {
-    return _invoke('blog.publish_post', {'id': id});
+    return _invokeBlogAction('blog.publish_post', {'id': id});
   }
 
   // ── Engagement 同期 ──────────────────────────────────────────────
 
   Future<Map<String, dynamic>> syncEngagement() async {
-    return _invoke('blog.sync_engagement', {});
+    return _invokeBlogAction('blog.sync_engagement', {});
   }
 
   // ── Qiita コメント返信 (item_id = Qiita 記事 ID) ──────────────
@@ -90,7 +90,7 @@ class BlogService {
     required String articleId,
     required String body,
   }) async {
-    await _invoke('blog.qiita_comment_post', {
+    await _invokeBlogAction('blog.qiita_comment_post', {
       'item_id': articleId,
       'body': body,
     });
@@ -98,7 +98,7 @@ class BlogService {
 
   // ── Qiita 記事本文取得 ────────────────────────────────────────
   Future<Map<String, dynamic>> qiitaGetItem(String itemId) async {
-    return _invoke('blog.qiita_get_item', {'item_id': itemId});
+    return _invokeBlogAction('blog.qiita_get_item', {'item_id': itemId});
   }
 
   // ── 訂正承認 ────────────────────────────────────────────────────
@@ -107,7 +107,7 @@ class BlogService {
     required String title,
     required String body,
   }) async {
-    await _invoke('blog.qiita_update', {
+    await _invokeBlogAction('blog.qiita_update', {
       'item_id': articleId,
       'title': title,
       'body': body,
@@ -163,24 +163,29 @@ class BlogService {
     required String body,
   }) async {
     await qiitaUpdate(articleId: articleId, title: title, body: body);
-    await _client.from('blog_corrections').update({
-      'approved': true,
-      'approved_at': DateTime.now().toIso8601String(),
-      'applied_at': DateTime.now().toIso8601String(),
-    }).eq('id', correctionId);
+    await _client
+        .from('blog_corrections')
+        .update({
+          'approved': true,
+          'approved_at': DateTime.now().toIso8601String(),
+          'applied_at': DateTime.now().toIso8601String(),
+        })
+        .eq('id', correctionId);
   }
 
   Future<void> rejectCorrection(String correctionId) async {
     await _client
         .from('blog_corrections')
-        .update({'approved': false}).eq('id', correctionId);
+        .update({'approved': false})
+        .eq('id', correctionId);
   }
 
   // ── Draft health check ───────────────────────────────────────────
 
   Future<List<Map<String, dynamic>>> fetchStaleDrafts() async {
-    return _invoke('blog.draft_health_check', {}).then(
-      (r) => List<Map<String, dynamic>>.from(r['stale'] as List? ?? []),
-    );
+    return _invokeBlogAction(
+      'blog.draft_health_check',
+      {},
+    ).then((r) => List<Map<String, dynamic>>.from(r['stale'] as List? ?? []));
   }
 }

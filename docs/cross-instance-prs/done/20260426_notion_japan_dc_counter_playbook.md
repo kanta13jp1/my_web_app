@@ -1,4 +1,4 @@
-# Cross-Instance PR: Notion Japan DC 対抗プレイブック
+# Cross-Instance PR: Notion Japan DC 対抗プレイブック [Done]
 
 **作成**: PS#4 S63 / 2026-04-26  
 **宛先**: VSCode版 (UI実装) + PS#3 (AI大学コンテンツ) + Win版 (EF/アーキテクチャ)  

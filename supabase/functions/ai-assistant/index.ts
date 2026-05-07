@@ -367,18 +367,22 @@ serve(async (req) => {
         );
       } catch (error: unknown) {
         const reason = error instanceof Error ? error.message : String(error);
+        const creditShortage = isHedraCreditError(undefined, reason);
         return new Response(
           JSON.stringify({
             success: true,
             result: {
               provider: "hedra",
-              status: "fallback_text",
+              status: creditShortage ? "credit_shortage" : "fallback_text",
               script,
               id: null,
               videoUrl: null,
               previewUrl: null,
               downloadUrl: null,
               reason,
+              userMessage: creditShortage
+                ? "Hedra API credits are low. The text reply is available, but video generation is paused until credits are replenished."
+                : undefined,
             },
           }),
           { headers: corsHeaders },
@@ -940,12 +944,14 @@ ${entryData}`;
         .single();
       if (fetchErr || !skill) throw new Error("Skill not found");
       // use_count をインクリメント (fire-and-forget)
-      supabaseClient
-        .from("user_skills")
-        .update({
-          use_count: ((skill as { use_count?: number }).use_count ?? 0) + 1,
-        })
-        .eq("id", skillId)
+      void Promise.resolve(
+        supabaseClient
+          .from("user_skills")
+          .update({
+            use_count: ((skill as { use_count?: number }).use_count ?? 0) + 1,
+          })
+          .eq("id", skillId),
+      )
         .then(() => {/* ignore */})
         .catch(() => {/* ignore */});
       const prompt = requestContent
@@ -1454,6 +1460,24 @@ function firstNonEmptyString(...values: unknown[]): string | null {
   return null;
 }
 
+function isHedraCreditError(
+  status: number | undefined,
+  message: string,
+): boolean {
+  if (status === 402) return true;
+  return /credit|billing|balance|payment|required top.?up|insufficient|quota|out of credits|not enough/i
+    .test(message);
+}
+
+function buildHedraCreditErrorMessage(status: number, message: string): string {
+  return [
+    "Hedra API credits are insufficient.",
+    `status=${status}`,
+    `detail=${message}`,
+    "Open /quota-dashboard to check remaining credits and replenish before retrying video generation.",
+  ].join(" ");
+}
+
 function buildHedraAvatarImage(data: AIRequest): string | null {
   const avatarImageUrl = data.avatarImageUrl?.trim();
   if (avatarImageUrl) return avatarImageUrl;
@@ -1558,6 +1582,9 @@ async function createHedraVideo(
       (parsed as Record<string, unknown> | null)?.message,
       rawText,
     ) ?? `Hedra request failed with status ${response.status}`;
+    if (isHedraCreditError(response.status, message)) {
+      throw new Error(buildHedraCreditErrorMessage(response.status, message));
+    }
     throw new Error(message);
   }
 

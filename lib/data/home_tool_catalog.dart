@@ -21,6 +21,7 @@ import '../pages/conveni_store_page.dart';
 import '../pages/daily_habits_page.dart';
 import '../pages/danshari_page.dart';
 import '../pages/decision_check_page.dart';
+import '../pages/deployment_monitoring_setup_page.dart';
 import '../pages/digest_queue_page.dart';
 import '../pages/edge_function_status_page.dart';
 import '../pages/edge_llm_playground_page.dart';
@@ -128,6 +129,7 @@ import '../pages/form_builder_page.dart';
 import '../pages/gift_registry_page.dart';
 import '../pages/growth_automation_controller_page.dart';
 import '../pages/knowledge_base_page.dart';
+import '../pages/knowledge_graph_page.dart';
 import '../pages/landing_ab_test_page.dart';
 import '../pages/loyalty_points_page.dart';
 import '../pages/meeting_manager_page.dart';
@@ -1045,6 +1047,42 @@ List<HomeToolEntry> buildHomeToolCatalog({
       onOpen: (context) => _pushPage(context, const EdgeFunctionStatusPage()),
     ),
     HomeToolEntry(
+      id: 'deployment-monitoring',
+      sectionId: 'growth',
+      title: 'デプロイ監視自動設定',
+      subtitle: '新規サービス作成時に基本メトリクスと監視ダッシュボードを自動で用意',
+      icon: Icons.monitor_heart_outlined,
+      color: const Color(0xFF0F766E),
+      keywords: const <String>[
+        'deployment',
+        'monitoring',
+        'Datadog',
+        'CloudWatch',
+        '監視',
+        'デプロイ',
+      ],
+      onOpen: (context) =>
+          _pushPage(context, const DeploymentMonitoringSetupPage()),
+    ),
+    HomeToolEntry(
+      id: 'one-in-two-out-assist',
+      sectionId: 'growth',
+      title: '1 In 2 Out UI整理アシスト',
+      subtitle: '新規ウィジェット追加時に、利用頻度の低い2件を整理候補にする',
+      icon: Icons.rule_folder_outlined,
+      color: const Color(0xFF7C3AED),
+      keywords: const <String>[
+        '1 In 2 Out',
+        'UI整理',
+        'ウィジェット',
+        '利用頻度',
+        '認知負荷',
+      ],
+      onOpen: (context) => Navigator.of(context).pushNamed(
+        '/one-in-two-out-assist',
+      ),
+    ),
+    HomeToolEntry(
       id: 'ai-search',
       sectionId: 'growth',
       title: 'AI ノート検索',
@@ -1819,6 +1857,23 @@ List<HomeToolEntry> buildHomeToolCatalog({
       onOpen: (context) => _pushPage(context, const KnowledgeBasePage()),
     ),
     HomeToolEntry(
+      id: 'knowledge-graph',
+      sectionId: 'knowledge',
+      title: 'Knowledge Graph RAG',
+      subtitle: 'Issues, WBS, docs, memory, and NotebookLM with citations',
+      icon: Icons.hub_outlined,
+      color: const Color(0xFF0F766E),
+      keywords: const <String>[
+        'knowledge graph',
+        'rag',
+        'citations',
+        'issues',
+        'wbs',
+        'notebooklm',
+      ],
+      onOpen: (context) => _pushPage(context, const KnowledgeGraphPage()),
+    ),
+    HomeToolEntry(
       id: 'semantic-search',
       sectionId: 'knowledge',
       title: 'セマンティック検索',
@@ -1957,11 +2012,11 @@ List<HomeToolEntry> buildHomeToolCatalog({
     HomeToolEntry(
       id: 'feature-requests',
       sectionId: 'growth',
-      title: '機能リクエスト',
-      subtitle: '欲しい機能の投票・提案・ステータス確認',
+      title: 'シングルページMVP',
+      subtitle: '記録・検索・発信の入口と機能要望フォーム',
       icon: Icons.lightbulb_outlined,
       color: const Color(0xFFF57C00),
-      keywords: const <String>['機能', 'リクエスト', '要望', '提案', 'feature', '投票'],
+      keywords: const <String>['MVP', '機能要望', 'リクエスト', 'feedback', 'feature'],
       onOpen: (context) => _pushPage(context, const FeatureRequestsPage()),
     ),
     HomeToolEntry(

@@ -1,8 +1,8 @@
 {
   "sources": {
     "claude-code-changelog": {
-      "checked_at": "2026-05-03T21:29:48Z",
-      "hash": "63c137dad96b2d28daef67710120893fa078eab73f725295771516c53f5dbe33",
+      "checked_at": "2026-05-06T21:41:17Z",
+      "hash": "8ccfb66f291236d5c4ef46faec212e9c58ae8fe61dbddad6c6d8b57fbb3e91cf",
       "keyword_groups": {
         "codex-runtime": [
           "model picker",
@@ -46,13 +46,13 @@
           "workflow"
         ]
       },
-      "latest_signal": "2.1.126 / May 1, 2026",
+      "latest_signal": "2.1.131 / May 6, 2026",
       "name": "Claude Code changelog",
       "status": 200,
       "url": "https://code.claude.com/docs/en/changelog"
     },
     "claude-code-github-actions": {
-      "checked_at": "2026-05-03T21:29:48Z",
+      "checked_at": "2026-05-06T21:41:17Z",
       "hash": "88ac3d90d9fc104944667bb367f99851c1b6857e2e483a82bf950665befdbee5",
       "keyword_groups": {
         "codex-runtime": [
@@ -89,8 +89,8 @@
       "url": "https://code.claude.com/docs/en/github-actions"
     },
     "claude-code-hooks": {
-      "checked_at": "2026-05-03T21:29:48Z",
-      "hash": "bc5020b61fbb7e43bee73591ccf40a97ff35c1c89c81243e2b1c523507e1db9a",
+      "checked_at": "2026-05-06T21:41:17Z",
+      "hash": "7ec6e5e55b336a8fdb4d3df1506b44c2872e4983ca0e17a1995eed5e5c2157cc",
       "keyword_groups": {
         "codex-runtime": [
           "worktree",
@@ -128,8 +128,8 @@
       "url": "https://code.claude.com/docs/en/hooks"
     },
     "codex-changelog": {
-      "checked_at": "2026-05-03T21:29:48Z",
-      "hash": "c0fb530d22300eb6dd53f82917dc4409e4321e82da71600d451ff326556c46bd",
+      "checked_at": "2026-05-06T21:41:17Z",
+      "hash": "e5a7781e417dd4e533782583304d207f8eb4ba3ee64c4dc77c204bf46ef0a927",
       "keyword_groups": {
         "codex-runtime": [
           "GPT-5.5",
@@ -145,7 +145,6 @@
           "hook",
           "hooks",
           "SessionStart",
-          "UserPromptSubmit",
           "PostToolUse",
           "Stop"
         ],
@@ -180,33 +179,17 @@
       "url": "https://developers.openai.com/codex/changelog"
     },
     "codex-overview": {
-      "checked_at": "2026-05-03T21:29:48Z",
-      "hash": "a349e452019207c9f236403724f30fcdf7612ffa7a8e048ebdfb469b5b442ba3",
-      "keyword_groups": {
-        "codex-runtime": [
-          "GPT-5.5",
-          "GPT-5.4",
-          "worktree"
-        ],
-        "quality-cost": [
-          "review",
-          "CI"
-        ],
-        "schedule": [
-          "automation",
-          "automations",
-          "schedule",
-          "workflow"
-        ]
-      },
-      "latest_signal": "AI Coding Partner from OpenAI",
+      "checked_at": "2026-05-06T21:41:17Z",
+      "hash": "",
+      "keyword_groups": {},
+      "latest_signal": "No title detected",
       "name": "Codex overview",
-      "status": 200,
+      "status": 403,
       "url": "https://openai.com/codex/"
     },
     "codex-use-cases": {
-      "checked_at": "2026-05-03T21:29:48Z",
-      "hash": "0d63822ecc9b8a5076dc24f8ea3832c8c243d83e514edff0f7cf350c9717f9b4",
+      "checked_at": "2026-05-06T21:41:17Z",
+      "hash": "74a355178495a9cc344b09b6419f3170b940f72075a391454c366d46c756d1ef",
       "keyword_groups": {
         "codex-runtime": [
           "GPT-5.5",
@@ -248,5 +231,5 @@
       "url": "https://developers.openai.com/codex/use-cases/"
     }
   },
-  "updated_at": "2026-05-03T21:29:48Z"
+  "updated_at": "2026-05-06T21:41:17Z"
 }

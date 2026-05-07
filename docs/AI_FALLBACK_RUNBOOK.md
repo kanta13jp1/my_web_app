@@ -56,11 +56,10 @@ codex "supabase/functions/tools-hub/index.ts に action=habit.list を追加"
 
 | インスタンス | Claude quota 超過時の代替 |
 |------------|------------------------|
-| VSCode版 | Copilot + Gemini Code Assist (ローカル環境) |
-| Win版 | Copilot + Codex CLI + NotebookLM |
-| PS版 | Codex CLI (スクリプト実行) |
-| WEB版 | claude.ai web ブラウザ (同一プラン内の別セッション枠) |
-| スマホ版 | GitHub Copilot Mobile + Copilot in GitHub Web |
+| **Win版 (Claude Code)** | Copilot + Gemini Code Assist Agent Mode (Gemini 3.1 Pro) + NotebookLM + claude.ai WEB版 |
+| **Win版 (Codex CLI)** | Codex CLI (Memory GA / 主担当) + Copilot + Gemini Code Assist |
+
+> 旧 12 instance (PS版#1-6 / VSCode版 / WEB版 / スマホ版 / Codex#1 / Codex#2) は 2026-05-04 dormant 化 (= [`docs/MULTI_INSTANCE_FLEET.md`](MULTI_INSTANCE_FLEET.md)). reactivation 時のみ各 fallback 適用.
 
 ---
 

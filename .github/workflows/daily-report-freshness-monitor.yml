@@ -1,0 +1,87 @@
+name: Daily Report Freshness Monitor
+
+on:
+  schedule:
+    - cron: "30 23 * * *" # 08:30 JST, one hour after daily-report.yml
+  workflow_dispatch:
+    inputs:
+      date:
+        description: "YYYY-MM-DD in JST. Defaults to today's JST date."
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  monitor:
+    name: Check daily-report freshness
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 50
+
+      - name: Resolve target date
+        id: target
+        run: |
+          DATE="${{ inputs.date }}"
+          if [ -z "$DATE" ]; then
+            DATE=$(TZ=Asia/Tokyo date +%Y-%m-%d)
+          fi
+          echo "date=$DATE" >> "$GITHUB_OUTPUT"
+          echo "Checking daily-report freshness for $DATE"
+
+      - name: Check durable daily-report artifacts
+        id: freshness
+        run: |
+          git fetch origin main --quiet
+          set +e
+          python scripts/check_daily_report_freshness.py \
+            --date "${{ steps.target.outputs.date }}" \
+            --ref origin/main \
+            --json \
+            --github-output "$GITHUB_OUTPUT" \
+            > daily-report-freshness.json
+          CHECK_EXIT=$?
+          set -e
+          cat daily-report-freshness.json
+          echo "check_exit=$CHECK_EXIT" >> "$GITHUB_OUTPUT"
+          exit 0
+
+      - name: Open or update canonical Issue on stale output
+        id: stale_issue
+        if: steps.freshness.outputs.fresh != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python scripts/report_daily_report_staleness.py \
+            --freshness-json daily-report-freshness.json \
+            --repo "$GITHUB_REPOSITORY" \
+            --workflow-url "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" \
+            --github-output "$GITHUB_OUTPUT"
+
+      - name: Job Summary
+        if: always()
+        run: |
+          FRESH="${{ steps.freshness.outputs.fresh }}"
+          ACTION="${{ steps.stale_issue.outputs.action }}"
+          ISSUE_URL="${{ steps.stale_issue.outputs.issue_url }}"
+          {
+            echo "## Daily Report Freshness Monitor"
+            echo ""
+            echo "| Item | Value |"
+            echo "|---|---|"
+            echo "| Date | ${{ steps.target.outputs.date }} |"
+            echo "| Fresh | ${FRESH:-unknown} |"
+            echo "| Stale action | ${ACTION:-none} |"
+            echo "| Issue | ${ISSUE_URL:-none} |"
+            echo ""
+            echo "Freshness JSON:"
+            echo '```json'
+            cat daily-report-freshness.json
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
