@@ -4,10 +4,13 @@ from __future__ import annotations
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 from codex_session_check import (
+    CommandResult,
     collect_remote_control_flags,
     is_remote_control_flag_path,
+    notebooklm_snapshot,
 )
 
 
@@ -69,6 +72,19 @@ class ClaudeRemoteControlDetectionTest(unittest.TestCase):
             flags = collect_remote_control_flags({"permissions": {"defaultMode": "bypassPermissions"}})
 
         self.assertEqual(flags, [])
+
+    def test_notebooklm_unavailable_is_skipped_on_github_actions(self) -> None:
+        with (
+            patch.dict("os.environ", {"GITHUB_ACTIONS": "true"}),
+            patch(
+                "codex_session_check.run_command",
+                return_value=CommandResult(127, "", "notebooklm not found"),
+            ),
+        ):
+            snapshot = notebooklm_snapshot(Path("."))
+
+        self.assertEqual(snapshot["state"], "skipped_ci_unavailable")
+        self.assertFalse(snapshot["harness_notebook_found"])
 
 
 if __name__ == "__main__":
