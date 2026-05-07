@@ -87,8 +87,8 @@ INDIE_DEV_VELOCITY (= indie 視点の規律) と直交する **「fleet 視点�
   - Anthropic blog + Codex CLI changelog を fetch
   - 新機能 candidate を Claude API で要約
   - GitHub Issue 自動起票 (label: `ai-tool-update`)
-  - 重要度高なら cross-instance-pr 自動生成 candidate
-- Codex#2 territory で実装 (= GHA + Deno EF 担当)
+  - 重要度高なら 2-instance flow 用 cross-instance draft bundle を自動生成
+- **2026-05-07 update**: canonical flow is Claude Code #1 (adoption/review) + Codex #1 (workflow/script PR + CI). Historical Codex#2 references are dormant mappings only.
 - **cross-ref**: PLATFORM_EVOLUTION #2 (Distill Best Practices) / INDIE_DEV_VELOCITY #7 (Community Engagement)
 
 ### 原則 4: Pointer-Based Configuration (= CLAUDE.md / AGENTS.md ≤ 50 lines)
@@ -202,7 +202,7 @@ Codex は **Stop Hooks** で CI/CD pipeline pass まで task 完了をブロッ�
 | --- | --- | --- |
 | #1 Strict Instance Routing | 🟢 既存 CLAUDE.md routing matrix で部分実装 | 月次 audit cron |
 | #2 Plan-Execute-Review Synergy | 🟡 cross-instance-pr で部分実装 | ADR 蓄積開始 |
-| #3 Automate Feature Monitoring | 🔴 未実装 | **本 part で Codex#2 cross-instance-pr 起票** |
+| #3 Automate Feature Monitoring | 🟢 実装済み | `ai-tool-changelog-watch.yml` + H item Issue/draft bundle |
 | #4 Pointer-Based Configuration | 🟡 CLAUDE.md ~200 行 / inject-rules ~500 行 | 月次行数監視 cron |
 | #5 Memory & State Continuity Hooks | 🟡 claude-mem 既存 / PreCompact hook 未 | hook 設定共有化 |
 | #6 Deterministic Guardrails | 🟢 dart format / flutter analyze 部分実装 | PostToolUse hook 標準化 |
@@ -234,7 +234,7 @@ Codex は **Stop Hooks** で CI/CD pipeline pass まで task 完了をブロッ�
 
 1. **本 doc commit** (= 12 番目軸 docs 化 / Win版#132 part 98)
 2. CLAUDE.md / inject-rules.txt に Rule [SYNERGY-30] 追加
-3. cross-instance-pr → Codex#2: `ai-tool-changelog-watch.yml` 実装 (= 原則 #3)
+3. `ai-tool-changelog-watch.yml` monthly cron + H item Issue/draft bundle (= 原則 #3 / Codex #1 closeout)
 4. monthly cron: instance 役割 audit + CLAUDE.md 行数監視 (= 原則 #1 + #4)
 5. ADR 形式確立: `docs/adrs/<YYYYMMDD>_<decision>.md` (= 原則 #2)
 6. PreCompact hook 全 2 instance 標準化 (= 原則 #5)
