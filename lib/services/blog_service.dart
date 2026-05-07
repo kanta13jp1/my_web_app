@@ -163,21 +163,17 @@ class BlogService {
     required String body,
   }) async {
     await qiitaUpdate(articleId: articleId, title: title, body: body);
-    await _client
-        .from('blog_corrections')
-        .update({
-          'approved': true,
-          'approved_at': DateTime.now().toIso8601String(),
-          'applied_at': DateTime.now().toIso8601String(),
-        })
-        .eq('id', correctionId);
+    await _client.from('blog_corrections').update({
+      'approved': true,
+      'approved_at': DateTime.now().toIso8601String(),
+      'applied_at': DateTime.now().toIso8601String(),
+    }).eq('id', correctionId);
   }
 
   Future<void> rejectCorrection(String correctionId) async {
     await _client
         .from('blog_corrections')
-        .update({'approved': false})
-        .eq('id', correctionId);
+        .update({'approved': false}).eq('id', correctionId);
   }
 
   // ── Draft health check ───────────────────────────────────────────

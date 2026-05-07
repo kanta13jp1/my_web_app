@@ -150,9 +150,8 @@ class _NewsRssAggregatorPageState extends State<NewsRssAggregatorPage> {
     if (url.isEmpty || _isAdding) return;
     setState(() => _isAdding = true);
     try {
-      final title = _titleCtrl.text.trim().isEmpty
-          ? url
-          : _titleCtrl.text.trim();
+      final title =
+          _titleCtrl.text.trim().isEmpty ? url : _titleCtrl.text.trim();
       final response = await _supabase.functions.invoke(
         'tools-hub',
         body: {
@@ -624,8 +623,8 @@ class _SignalPanel extends StatelessWidget {
                 Text(
                   '注目シグナル',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w900,
-                  ),
+                        fontWeight: FontWeight.w900,
+                      ),
                 ),
               ],
             ),
@@ -831,10 +830,10 @@ class _NewsFeedSource {
   final String category;
 
   Map<String, String> toJson() => {
-    'title': title,
-    'url': url,
-    'category': category,
-  };
+        'title': title,
+        'url': url,
+        'category': category,
+      };
 }
 
 class _NewsItem {
