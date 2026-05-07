@@ -1,8 +1,8 @@
 {
   "sources": {
     "claude-code-changelog": {
-      "checked_at": "2026-05-06T21:41:17Z",
-      "hash": "8ccfb66f291236d5c4ef46faec212e9c58ae8fe61dbddad6c6d8b57fbb3e91cf",
+      "checked_at": "2026-05-07T21:36:24Z",
+      "hash": "734e2ced0044fc40b2e4a4dca6fc73207e8da47c19431c792961e81fbf06370c",
       "keyword_groups": {
         "codex-runtime": [
           "model picker",
@@ -46,13 +46,13 @@
           "workflow"
         ]
       },
-      "latest_signal": "2.1.131 / May 6, 2026",
+      "latest_signal": "2.1.132 / May 6, 2026",
       "name": "Claude Code changelog",
       "status": 200,
       "url": "https://code.claude.com/docs/en/changelog"
     },
     "claude-code-github-actions": {
-      "checked_at": "2026-05-06T21:41:17Z",
+      "checked_at": "2026-05-07T21:36:24Z",
       "hash": "88ac3d90d9fc104944667bb367f99851c1b6857e2e483a82bf950665befdbee5",
       "keyword_groups": {
         "codex-runtime": [
@@ -89,7 +89,7 @@
       "url": "https://code.claude.com/docs/en/github-actions"
     },
     "claude-code-hooks": {
-      "checked_at": "2026-05-06T21:41:17Z",
+      "checked_at": "2026-05-07T21:36:24Z",
       "hash": "7ec6e5e55b336a8fdb4d3df1506b44c2872e4983ca0e17a1995eed5e5c2157cc",
       "keyword_groups": {
         "codex-runtime": [
@@ -128,8 +128,8 @@
       "url": "https://code.claude.com/docs/en/hooks"
     },
     "codex-changelog": {
-      "checked_at": "2026-05-06T21:41:17Z",
-      "hash": "e5a7781e417dd4e533782583304d207f8eb4ba3ee64c4dc77c204bf46ef0a927",
+      "checked_at": "2026-05-07T21:36:24Z",
+      "hash": "f66be8639aa0d23f7f2d6672e011fa9de697e41a273d2ecc34a325817366ce11",
       "keyword_groups": {
         "codex-runtime": [
           "GPT-5.5",
@@ -173,13 +173,13 @@
           "workflow"
         ]
       },
-      "latest_signal": "2026-04-30 / Codex CLI 0.128.0 pre",
+      "latest_signal": "2026-05-07 / Codex for Chrome With the new extension for Chrome, Codex is even better at working with ap",
       "name": "Codex changelog",
       "status": 200,
       "url": "https://developers.openai.com/codex/changelog"
     },
     "codex-overview": {
-      "checked_at": "2026-05-06T21:41:17Z",
+      "checked_at": "2026-05-07T21:36:24Z",
       "hash": "",
       "keyword_groups": {},
       "latest_signal": "No title detected",
@@ -188,8 +188,8 @@
       "url": "https://openai.com/codex/"
     },
     "codex-use-cases": {
-      "checked_at": "2026-05-06T21:41:17Z",
-      "hash": "74a355178495a9cc344b09b6419f3170b940f72075a391454c366d46c756d1ef",
+      "checked_at": "2026-05-07T21:36:24Z",
+      "hash": "639f8b6215403e62806d181ab0eff109153ea74e88217dd564ea36bfcf205b7e",
       "keyword_groups": {
         "codex-runtime": [
           "GPT-5.5",
@@ -229,7 +229,100 @@
       "name": "Codex use cases",
       "status": 200,
       "url": "https://developers.openai.com/codex/use-cases/"
+    },
+    "cursor-changelog": {
+      "checked_at": "2026-05-07T21:36:24Z",
+      "hash": "b4c27e0c0b2330ef868b43ff33074ac70a3ef06df0720aa1c2b5b590d03f1a64",
+      "keyword_groups": {
+        "codex-runtime": [
+          "subagents"
+        ],
+        "hooks": [
+          "hook",
+          "hooks"
+        ],
+        "integration": [
+          "MCP",
+          "Slack"
+        ],
+        "quality-cost": [
+          "review",
+          "CI"
+        ],
+        "schedule": [
+          "automation",
+          "automations",
+          "schedule",
+          "workflow"
+        ]
+      },
+      "latest_signal": "3.3 / May 7, 2026",
+      "name": "Cursor changelog",
+      "status": 200,
+      "url": "https://cursor.com/changelog"
+    },
+    "devin-release-notes": {
+      "checked_at": "2026-05-07T21:36:24Z",
+      "hash": "8d016da7f36dddb10521c38014e065cebd3c4625298600c263159a00dd1ce265",
+      "keyword_groups": {
+        "codex-runtime": [
+          "computer use",
+          "subagents"
+        ],
+        "integration": [
+          "MCP",
+          "Slack",
+          "Linear",
+          "GitHub"
+        ],
+        "quality-cost": [
+          "cost",
+          "quota",
+          "rate limit",
+          "permission",
+          "review",
+          "CI"
+        ],
+        "schedule": [
+          "automation",
+          "automations",
+          "schedule",
+          "workflow"
+        ]
+      },
+      "latest_signal": "May 6, 2026",
+      "name": "Devin release notes",
+      "status": 200,
+      "url": "https://docs.devin.ai/release-notes"
+    },
+    "gemini-code-assist-release-notes": {
+      "checked_at": "2026-05-07T21:36:24Z",
+      "hash": "84656b0b48c50c58bfa7fbe6d84583e4d02b52ac4ea45a56a44daeefdbbef051",
+      "keyword_groups": {
+        "hooks": [
+          "Stop"
+        ],
+        "integration": [
+          "MCP",
+          "GitHub",
+          "VSCode"
+        ],
+        "quality-cost": [
+          "cost",
+          "quota",
+          "permission",
+          "review",
+          "CI"
+        ],
+        "schedule": [
+          "workflow"
+        ]
+      },
+      "latest_signal": "VS Code Gemini Code Assist 2.79.0 / April 22, 2026",
+      "name": "Gemini Code Assist release notes",
+      "status": 200,
+      "url": "https://developers.google.com/gemini-code-assist/resources/release-notes"
     }
   },
-  "updated_at": "2026-05-06T21:41:17Z"
+  "updated_at": "2026-05-07T21:36:24Z"
 }
