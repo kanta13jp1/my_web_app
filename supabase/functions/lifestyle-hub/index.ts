@@ -86,6 +86,75 @@ function boolBody(value: unknown, fallback: boolean): boolean {
   return fallback;
 }
 
+const mealTypes = ["breakfast", "lunch", "dinner", "snack"] as const;
+type MealType = typeof mealTypes[number];
+
+function isMealType(value: unknown): value is MealType {
+  return typeof value === "string" &&
+    mealTypes.includes(value as MealType);
+}
+
+function optionalText(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim();
+  return trimmed ? trimmed : null;
+}
+
+function optionalNumber(value: unknown): number | null {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string" && value.trim()) {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+  return null;
+}
+
+function optionalInt(value: unknown): number | null {
+  const parsed = optionalNumber(value);
+  if (parsed == null) return null;
+  return Math.round(parsed);
+}
+
+function boundedLimit(value: unknown, fallback = 50, max = 200): number {
+  const parsed = optionalInt(value) ?? fallback;
+  return Math.min(Math.max(parsed, 1), max);
+}
+
+function dateWindowForDay(value: unknown): {
+  date: string;
+  start: string;
+  end: string;
+} {
+  const date = optionalText(value) ?? dateOnly(new Date());
+  const start = new Date(`${date}T00:00:00.000Z`);
+  if (Number.isNaN(start.getTime())) {
+    throw new Error("invalid date");
+  }
+  const end = new Date(start);
+  end.setUTCDate(end.getUTCDate() + 1);
+  return {
+    date: dateOnly(start),
+    start: start.toISOString(),
+    end: end.toISOString(),
+  };
+}
+
+function dateWindowFromRange(fromValue: unknown, toValue: unknown): {
+  start: string;
+  end: string;
+} {
+  const from = dateWindowForDay(fromValue);
+  const to = dateWindowForDay(toValue ?? from.date);
+  if (Date.parse(from.start) > Date.parse(to.start)) {
+    throw new Error("from must be before or equal to to");
+  }
+  return { start: from.start, end: to.end };
+}
+
+function roundOne(value: number): number {
+  return Math.round(value * 10) / 10;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -100,6 +169,11 @@ serve(async (req) => {
       "";
     const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
       auth: { persistSession: false },
+    });
+    const authHeader = req.headers.get("Authorization") ?? "";
+    const userDb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      auth: { persistSession: false },
+      global: { headers: { Authorization: authHeader } },
     });
     const userId = await getUserId(req);
     if (!userId) return json({ error: "Unauthorized" }, 401);
@@ -347,6 +421,125 @@ serve(async (req) => {
           success: true,
           plans: await listItems(admin, "meal_plan", userId),
         });
+      case "meal_log.add": {
+        if (!isMealType(body.meal_type)) {
+          return json({ error: "meal_type is required" }, 400);
+        }
+        const menuName = optionalText(body.menu_name);
+        if (!menuName) {
+          return json({ error: "menu_name is required" }, 400);
+        }
+        const loggedAt = optionalText(body.logged_at) ??
+          new Date().toISOString();
+        if (Number.isNaN(Date.parse(loggedAt))) {
+          return json({ error: "logged_at must be an ISO timestamp" }, 400);
+        }
+
+        const { data, error } = await userDb.from("meal_logs")
+          .insert({
+            user_id: userId,
+            meal_type: body.meal_type,
+            menu_name: menuName,
+            store_name: optionalText(body.store_name),
+            kcal: optionalInt(body.kcal),
+            protein_g: optionalNumber(body.protein_g),
+            fat_g: optionalNumber(body.fat_g),
+            carb_g: optionalNumber(body.carb_g),
+            vegetables_note: optionalText(body.vegetables_note),
+            salt_note: optionalText(body.salt_note),
+            logged_at: loggedAt,
+          })
+          .select("*")
+          .single();
+        if (error) return json({ error: error.message }, 400);
+        return json({ success: true, ok: true, id: data.id, log: data });
+      }
+      case "meal_log.list": {
+        let range: { start: string; end: string };
+        try {
+          range = dateWindowFromRange(body.from, body.to);
+        } catch (error) {
+          return json({ error: String(error) }, 400);
+        }
+        const limit = boundedLimit(body.limit, 50, 200);
+        const { data, error, count } = await userDb.from("meal_logs")
+          .select("*", { count: "exact" })
+          .eq("user_id", userId)
+          .gte("logged_at", range.start)
+          .lt("logged_at", range.end)
+          .order("logged_at", { ascending: false })
+          .limit(limit);
+        if (error) return json({ error: error.message }, 400);
+        return json({
+          success: true,
+          logs: data ?? [],
+          total: count ?? data?.length ?? 0,
+        });
+      }
+      case "meal_log.summary_today": {
+        let range: { date: string; start: string; end: string };
+        try {
+          range = dateWindowForDay(body.date);
+        } catch (error) {
+          return json({ error: String(error) }, 400);
+        }
+        const { data, error } = await userDb.from("meal_logs")
+          .select("meal_type, kcal, protein_g, fat_g, carb_g")
+          .eq("user_id", userId)
+          .gte("logged_at", range.start)
+          .lt("logged_at", range.end);
+        if (error) return json({ error: error.message }, 400);
+
+        const byMealType: Record<MealType, number> = {
+          breakfast: 0,
+          lunch: 0,
+          dinner: 0,
+          snack: 0,
+        };
+        let kcalTotal = 0;
+        let proteinTotal = 0;
+        let fatTotal = 0;
+        let carbTotal = 0;
+        for (const row of data ?? []) {
+          const mealType = isMealType(row.meal_type) ? row.meal_type : "snack";
+          const kcal = Number(row.kcal ?? 0);
+          const protein = Number(row.protein_g ?? 0);
+          const fat = Number(row.fat_g ?? 0);
+          const carb = Number(row.carb_g ?? 0);
+          byMealType[mealType] += Number.isFinite(kcal) ? kcal : 0;
+          kcalTotal += Number.isFinite(kcal) ? kcal : 0;
+          proteinTotal += Number.isFinite(protein) ? protein : 0;
+          fatTotal += Number.isFinite(fat) ? fat : 0;
+          carbTotal += Number.isFinite(carb) ? carb : 0;
+        }
+        return json({
+          success: true,
+          date: range.date,
+          kcal_total: Math.round(kcalTotal),
+          protein_g_total: roundOne(proteinTotal),
+          fat_g_total: roundOne(fatTotal),
+          carb_g_total: roundOne(carbTotal),
+          by_meal_type: {
+            breakfast: Math.round(byMealType.breakfast),
+            lunch: Math.round(byMealType.lunch),
+            dinner: Math.round(byMealType.dinner),
+            snack: Math.round(byMealType.snack),
+          },
+        });
+      }
+      case "meal_log.delete": {
+        const id = optionalText(body.id) ?? String(body.id ?? "").trim();
+        if (!id) return json({ error: "id is required" }, 400);
+        const { data, error } = await userDb.from("meal_logs")
+          .delete()
+          .eq("id", id)
+          .eq("user_id", userId)
+          .select("id")
+          .maybeSingle();
+        if (error) return json({ error: error.message }, 400);
+        if (!data) return json({ error: "meal log not found" }, 404);
+        return json({ success: true, ok: true });
+      }
 
       // ── Carbon Footprint ──────────────────────────────────────────────────────
       case "carbon.log": {
