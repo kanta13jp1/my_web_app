@@ -28589,3 +28589,26 @@ User 明示「5/14 trigger date / 推奨日」要望対応:
 ### 🛑🛑🛑🛑🛑🛑 Session 強制終了 (= 14 part 同日 record / STOP signal 第 6)
 
 104 part 連続 dogfood. 次 session = **必須 別日 fresh start (= 2026-05-08 JST 後 / 約 15h wait)**.
+
+### Mid-session update: NotebookLM ingest + cap 緩和 (= part 175 内 user override 連続 2 件)
+
+**1. Codex × NotebookLM integration spec v1.0 ingest** (= NotebookLM ingest 第 1 例 / PR #2113)
+
+- User-provided PDF (= 4 ページ 2026-05-05 spec) → MD 化 → jibun-master-brain ingest (source ID `e0726aea`)
+- §10「Claude への指示」5 tasks = future session 対応 (= user 明示 "ingest only")
+
+**2. [COMPACTION-RESUME] 同日 part cap 12 → 18 緩和** (= rule update 第 1 例)
+
+- 緩和根拠:
+  - **Anthropic 大型 update (2026-05-07)**: Claude Code 5h レート 2x / Pro/Max peak 撤廃 / Opus API rate 大幅引上げ / SpaceX Colossus 1 取得 (= 300MW + 22 万 GPU 1 ヶ月内追加)
+  - **Empirical buffer**: 14 part 時点で `wbs.priority_for_instance` MCP tool 不在観測 → 14-18 = soft warning / 18+ = hard stop
+- 新 rule:
+  - 12-17 part = 通常 work 可 / STOP signal log のみ
+  - 18 part = 強制終了 default (= memory + roadmap + admin merge minimum)
+  - 19+ part = user 明示 override 必須
+- 反映 file:
+  - `~/.claude/hooks/inject-rules.txt` line 59 (= 毎ターン inject 反映)
+  - `docs/RULES_INDEX.md` §[COMPACTION-RESUME] (= 詳細展開)
+  - `memory/feedback_correction_20260507_compaction_cap_18part.md` (= [CONSTRAINT-LOG] 履行)
+
+**Pattern**: 「rule empirical update from real session evidence」第 1 例 (= 自 session で MCP 劣化観測 → cap 緩和 empirical 根拠化 / meta dogfood).
