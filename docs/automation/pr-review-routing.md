@@ -36,5 +36,7 @@ later Codex or Claude Code session can continue from the same evidence.
 - #1557 clusters CI failures and duplicate workflow-failure Issues.
 - #1637 evaluates issue digests and backlog shape.
 - #1559 routes Claude Code/Codex changelog changes into automation.
+- #1565 classifies low-risk PR/Issue candidates before any autonomous review
+  comment is posted.
 - #1685 only routes PR review comments and requested changes into repair or
   handoff queues.
