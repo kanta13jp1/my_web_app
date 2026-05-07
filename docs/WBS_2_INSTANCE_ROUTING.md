@@ -3,6 +3,7 @@
 Last updated: 2026-05-07
 
 Canonical delegation protocol: [`docs/AGENT_DELEGATION_PROTOCOL.md`](./AGENT_DELEGATION_PROTOCOL.md).
+Role harness report: [`docs/automation/wbs-role-harness.md`](./automation/wbs-role-harness.md).
 
 The WBS screen keeps historical `instance` and `owner_instance` values intact, but the active operating view is now projected into two human-operated development lanes:
 
@@ -26,4 +27,7 @@ WBS execution policy:
 4. For Claude Code-owned design tasks, create the spec or decision note first, then hand implementation to Codex only when code changes are clear.
 5. Every handoff must include Issue/WBS id, branch, worktree, allowed write set, prohibited write set, validation command, unresolved risk, and the next owner.
 6. Every session must include a cheap memory/disk hygiene check before wrap-up.
+7. Use `scripts/wbs_role_harness.py` to classify high-priority WBS Issues into
+   `single_scoped_pr`, `multi_pr_or_claude_first`, or
+   `blocked_until_owner_decision` before opening a scoped PR.
 
