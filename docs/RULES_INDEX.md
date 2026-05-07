@@ -148,7 +148,19 @@ deploy-prod EF 数 ≤ 50 維持. hub 構成: `core / growth / ai / admin / app 
 
 ### `[COMPACTION-RESUME]`
 
-(PS#3 S26 教訓) summary 継続セッションは短時間で終了 — 90 min 以内で commit + roadmap + memory + 終了. 新規大規模タスク詰込禁止.
+(PS#3 S26 教訓 + part 175 update) summary 継続セッションは短時間で終了 — 90 min 以内で commit + roadmap + memory + 終了. 新規大規模タスク詰込禁止.
+
+**同日 part cap (= part 175 緩和 2026-05-07)**:
+
+- 旧 cap: **12 part 強制終了** (= part 173 確立)
+- 新 cap: **18 part 強制終了** (= 12 → 18 緩和)
+- 緩和根拠:
+  - Anthropic 大型 update (2026-05-07): Claude Code 5h レート 2x / Pro/Max peak 撤廃 / Opus API 大幅引上げ
+  - empirical buffer: 14 part で `wbs.priority_for_instance` MCP tool 不在観測 / 14-18 = soft warning zone / 18+ = hard stop
+- override pattern (= part 175 確立):
+  - 12-18 part = 通常 work 可 (= STOP signal log のみ)
+  - 18+ part = user 明示宣言 ("override 承認") 必須 / minimum scope のみ
+  - 自己判断 18+ proceed 禁止 (= 「自己 cap rule strict adherence」discipline 維持)
 
 ### `[DYNAMIC-CLAIM]`
 
