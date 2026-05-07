@@ -82,7 +82,10 @@ function normalizeUuid(value: unknown): string | null {
   return null;
 }
 
-function clientKeyFor(ctx: McpAuthContext | null, userId: string | null): string {
+function clientKeyFor(
+  ctx: McpAuthContext | null,
+  userId: string | null,
+): string {
   return userId ?? ctx?.client_id ?? "anonymous";
 }
 
