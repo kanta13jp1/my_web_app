@@ -5,6 +5,7 @@
 * **プロジェクト名**: 自分株式会社 (Me Inc.)
 * **コンセプト**: ユーザーはCEO。実務は全てAI（CXO）が担当する経営シミュレーション型生産性アプリ。
 * **技術スタック**: Flutter (Web), Supabase (Auth, DB, Edge Functions), AI (Gemini/OpenAI/Anthropic).
+* **AI tool update gate (2026-05-07 #1706)**: Claude/Codex/Gemini/Copilot changes must be verified against official sources, then routed through the two-instance flow in `docs/AI_FALLBACK_RUNBOOK.md`.
 
 ## 2. 組織構造 (AI Agents) & 機能マップ
 

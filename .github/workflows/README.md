@@ -2,6 +2,8 @@
 
 このディレクトリには、CI/CDパイプラインを構成するGitHub Actionsワークフローが含まれています。
 
+2026-05-07 #1706: AI-tool workflow changes must cite official sources, stay in the Claude Code #1 + Codex #1 two-instance flow, and avoid starting persistent local dev server / node / dart processes.
+
 ## 📋 ワークフロー一覧
 
 | ワークフロー | ファイル | トリガー | 用途 |

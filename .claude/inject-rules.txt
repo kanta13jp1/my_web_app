@@ -18,6 +18,8 @@ RULES (毎ターン inject / pointer hub / 詳細展開 = docs/RULES_INDEX.md):
 
 [INSTANCE-ROLES] (part 130 / 2 instance) Win Claude = architect/設計/docs/memory/UI design/triage/AI 大学/競合/mobile UAT/動画 / Win Codex = 実装/修正PR/SQL/EF Deno/GHA/T-1 dispatch/競馬/Karpathy Compile-Lint. Codex 振分 5 質問 (docs/CODEX_WORKFLOW.md §6) で 1 つでも YES = Win Claude / 全 NO = Win Codex. SLA: Issue → 24h triage. 詳細: docs/RULES_INDEX.md
 
+[AI-TOOL-VERIFY] (2026-05-07 #1706) Claude fullscreen/TUI-style rendering, remote/push notifications, Codex memory, Gemini fallback models, and Copilot agent claims are verify-first. Check official sources via scripts/check_versions.py --web before fleet adoption. 2-instance flow stays Claude Code #1 (policy/review) + Codex #1 (scoped PR/CI/cleanup). 詳細: docs/AI_FALLBACK_RUNBOOK.md
+
 [CONCURRENCY] (Win#109) deploy-prod/dev/staging cancel-in-progress: false. 並行 push でも全 commit 順次 deploy. 後発 push 最大 11min × 並行数 待機.
 
 [AUTO-REPLY] 任意 auto-reply (Qiita/dev.to/Slack/Discord) は author == 自分 で必ず skip + MAX_REPLIES_PER_ARTICLE/RUN cap 併設. comment_id ベースは bot 自己ループ検出不能.

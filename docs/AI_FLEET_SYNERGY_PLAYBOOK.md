@@ -95,6 +95,8 @@ INDIE_DEV_VELOCITY (= indie 視点の規律) と直交する **「fleet 視点�
 
 **ルール本文**: 各 instance が読む configuration file (= CLAUDE.md / AGENTS.md / inject-rules.txt) は **巨大化禁止 / 50-200 行上限**. それ以上は **pointer 化** (= "details: docs/X.md") して immutable ADR + executable test suite を **single source of truth** とする.
 
+**2026-05-07 #1706 update**: Codex 側の persistent memory / instruction pointer は **`AGENTS.md` + `~/.codex/AGENTS.md` + `~/.codex/config.toml`** を検出対象に含める. 2 instance 制では Claude Code #1 が policy/review, Codex #1 が `scripts/check_versions.py` evidence と scoped PR を担当する.
+
 **なぜ重要か**: configuration 巨大化 = 各 instance が古い state を hallucinate して矛盾 commit を発する **fleet drift** の根本原因.
 - 現状診断: CLAUDE.md ~200 行 / inject-rules.txt 30+ rules → **境界線**
 - 各 rule に詳細 docs を pointer 化することで **bloat 防止**

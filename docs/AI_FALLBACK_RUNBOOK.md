@@ -1,5 +1,40 @@
 # AI Fallback Runbook — 自分株式会社
 
+## 2026-05-07 Official AI Tool Update Gate (#1706)
+
+This runbook now treats AI-tool release claims as "verify before routing". Use
+these official sources before promoting a tool into the production fallback
+path:
+
+- Claude Code: official settings and memory docs confirm managed settings,
+  notification channels, hooks, and CLAUDE.md memory hierarchy. Do not require
+  unverified slash commands such as `/tui` or `/resume <PR URL>` unless a
+  current Claude Code release note confirms them.
+- OpenAI Codex: use the official Codex docs and OpenAI Docs MCP. Codex work is
+  routed through the Windows Codex #1 worktree and must keep AGENTS.md /
+  `~/.codex/config.toml` as pointer-based instruction memory, not a giant prompt.
+- Gemini Code Assist: agent mode is available in VS Code and IntelliJ, but
+  remains preview-gated. Gemini 3.1 Pro / 3.0 Flash availability depends on
+  license, waitlist, or release-channel status, so it is a candidate fallback
+  only after local availability is verified.
+- GitHub Copilot: official changelog confirms Copilot coding agent startup
+  improvements and Claude/Codex partner-agent availability. Treat performance
+  claims as changelog-scoped; this runbook records the official 50% startup
+  improvement, not the older unverified 20% figure.
+
+Official source pointers:
+
+- https://docs.anthropic.com/en/docs/claude-code/settings
+- https://docs.anthropic.com/en/docs/claude-code/memory
+- https://developers.openai.com/codex/cloud
+- https://developers.openai.com/learn/docs-mcp
+- https://developers.google.com/gemini-code-assist/resources/release-notes
+- https://docs.cloud.google.com/gemini/docs/codeassist/gemini-3
+- https://github.blog/changelog/2026-02-26-claude-and-codex-now-available-for-copilot-business-pro-users/
+- https://github.blog/changelog/2026-03-19-copilot-coding-agent-now-starts-work-50-faster/
+
+Related ai-tool-update Issues: #1644, #1645, #1646, #1647, #1706.
+
 > 作成: 2026-04-24 (PS#6 S26)  
 > 目的: Claude Code quota 制限時に開発・自動化が完全停止しないための手順書
 
