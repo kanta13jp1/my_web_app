@@ -12,11 +12,11 @@ class LrmGpaGoal {
   final List<String> completionSignals;
 
   Map<String, dynamic> toJson() => <String, dynamic>{
-    'title': title,
-    'success_criteria': successCriteria,
-    'constraints': constraints,
-    'completion_signals': completionSignals,
-  };
+        'title': title,
+        'success_criteria': successCriteria,
+        'constraints': constraints,
+        'completion_signals': completionSignals,
+      };
 }
 
 class LrmGpaPlanStep {
@@ -41,15 +41,15 @@ class LrmGpaPlanStep {
   final List<int> dependsOn;
 
   Map<String, dynamic> toJson() => <String, dynamic>{
-    'step_number': stepNumber,
-    'phase': phase,
-    'agent_slug': agentSlug,
-    'title': title,
-    'required_data': requiredData,
-    'done_when': doneWhen,
-    'tool_candidates': toolCandidates,
-    'depends_on': dependsOn,
-  };
+        'step_number': stepNumber,
+        'phase': phase,
+        'agent_slug': agentSlug,
+        'title': title,
+        'required_data': requiredData,
+        'done_when': doneWhen,
+        'tool_candidates': toolCandidates,
+        'depends_on': dependsOn,
+      };
 }
 
 class LrmGpaActionDraft {
@@ -70,13 +70,13 @@ class LrmGpaActionDraft {
   final Map<String, dynamic> draftPayload;
 
   Map<String, dynamic> toJson() => <String, dynamic>{
-    'kind': kind,
-    'owner_agent_slug': ownerAgentSlug,
-    'title': title,
-    'next_action': nextAction,
-    'acceptance_criteria': acceptanceCriteria,
-    'draft_payload': draftPayload,
-  };
+        'kind': kind,
+        'owner_agent_slug': ownerAgentSlug,
+        'title': title,
+        'next_action': nextAction,
+        'acceptance_criteria': acceptanceCriteria,
+        'draft_payload': draftPayload,
+      };
 }
 
 class LrmSelfReview {
@@ -95,12 +95,12 @@ class LrmSelfReview {
   final bool requiresApproval;
 
   Map<String, dynamic> toJson() => <String, dynamic>{
-    'missing_info': missingInfo,
-    'scope_warnings': scopeWarnings,
-    'risks': risks,
-    'safety_checks': safetyChecks,
-    'requires_approval': requiresApproval,
-  };
+        'missing_info': missingInfo,
+        'scope_warnings': scopeWarnings,
+        'risks': risks,
+        'safety_checks': safetyChecks,
+        'requires_approval': requiresApproval,
+      };
 }
 
 class LrmSelfCorrectionPlan {
@@ -128,9 +128,8 @@ class LrmSelfCorrectionPlan {
     final stepLines = plan
         .map((step) => '${step.stepNumber}. ${step.agentSlug}: ${step.title}')
         .join('\n');
-    final actionLines = actions
-        .map((action) => '- ${action.kind}: ${action.title}')
-        .join('\n');
+    final actionLines =
+        actions.map((action) => '- ${action.kind}: ${action.title}').join('\n');
     return [
       'LRM self-correcting GPA plan',
       'Request: $request',
@@ -144,14 +143,14 @@ class LrmSelfCorrectionPlan {
   }
 
   Map<String, dynamic> toJson() => <String, dynamic>{
-    'request': request,
-    'generated_at': generatedAt.toIso8601String(),
-    'strategy_label': strategyLabel,
-    'goal': goal.toJson(),
-    'plan': plan.map((step) => step.toJson()).toList(),
-    'actions': actions.map((action) => action.toJson()).toList(),
-    'self_review': selfReview.toJson(),
-  };
+        'request': request,
+        'generated_at': generatedAt.toIso8601String(),
+        'strategy_label': strategyLabel,
+        'goal': goal.toJson(),
+        'plan': plan.map((step) => step.toJson()).toList(),
+        'actions': actions.map((action) => action.toJson()).toList(),
+        'self_review': selfReview.toJson(),
+      };
 }
 
 class LrmSelfCorrectionPlannerService {
@@ -209,18 +208,18 @@ class LrmSelfCorrectionPlannerService {
       _LrmPlannerStrategy.legal => pick(['legal-director', 'secretary']),
       _LrmPlannerStrategy.health => pick(['cho', 'chro']),
       _LrmPlannerStrategy.operations => pick([
-        'planning-director',
-        'cs-director',
-      ]),
+          'planning-director',
+          'cs-director',
+        ]),
       _LrmPlannerStrategy.general => pick(['planning-director', 'secretary']),
     };
     final reviewer = switch (strategy) {
       _LrmPlannerStrategy.finance => pick(['accountant', 'legal-director']),
       _LrmPlannerStrategy.growth => pick(['cs-director', 'pr-director']),
       _LrmPlannerStrategy.engineering => pick([
-        'backend-dev',
-        'legal-director',
-      ]),
+          'backend-dev',
+          'legal-director',
+        ]),
       _LrmPlannerStrategy.legal => pick(['secretary', 'planning-director']),
       _LrmPlannerStrategy.health => pick(['chro', 'secretary']),
       _LrmPlannerStrategy.operations => pick(['secretary', 'product-manager']),
@@ -395,8 +394,7 @@ class LrmSelfCorrectionPlannerService {
       if (scopeWarnings.isNotEmpty)
         'Overscope can create unreviewable WBS or GitHub work.',
     ];
-    final requiresApproval =
-        dangerousMatches.isNotEmpty ||
+    final requiresApproval = dangerousMatches.isNotEmpty ||
         _containsAny(lower, [
           'send',
           'publish',

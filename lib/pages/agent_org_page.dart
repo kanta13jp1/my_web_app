@@ -730,8 +730,8 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
         payload: plan.toJson(),
       );
 
-      for (final action in plan.actions
-          .where((action) => action.kind == 'app_task')) {
+      for (final action
+          in plan.actions.where((action) => action.kind == 'app_task')) {
         final assignee = _findAgentBySlug(action.ownerAgentSlug);
         if (assignee == null || !assignee.isActive) continue;
         await widget.service.delegateTask(
