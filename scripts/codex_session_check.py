@@ -287,6 +287,10 @@ def notebooklm_snapshot(root: Path) -> dict[str, Any]:
     lowered = combined.lower()
     if result.code == 0:
         state = "ok"
+    elif result.code == 127 and os.environ.get("GITHUB_ACTIONS") == "true":
+        state = "skipped_ci_unavailable"
+        if not detail:
+            detail = "NotebookLM CLI is not installed on this GitHub Actions runner."
     elif result.code == 127:
         state = "unavailable"
     elif result.code == 124:
@@ -364,6 +368,8 @@ def analyze(cwd: Path) -> dict[str, Any]:
         warnings.append("NotebookLM CLI list hit a network/browser connection error")
     elif notebooklm["state"] == "error":
         warnings.append("NotebookLM CLI list failed")
+    elif notebooklm["state"] == "skipped_ci_unavailable":
+        pass
     elif not notebooklm["harness_notebook_found"]:
         warnings.append(
             "NotebookLM harness notebook bc58b50b-5fc4-4840-9a62-b397d6d3b65a was not found"
