@@ -186,4 +186,47 @@ Q2-Q3 強化候補:
 
 ---
 
-*Win版#132 part 159 / 2026-05-07 / Issue #1704 / 5 NotebookLM 戦略系蒸留 → 2-instance fleet Q2 戦略反映 / PHILOSOPHY-22 9/9 ✅ / SYNERGY-30 7/7 ✅ / BRAIN-32 7/7 ✅*
+## 6. Design-Agent Convergence — 2026 Q2 trend
+
+> **追加日**: 2026-05-08 / Win版#132 part 178 / Issue [#1750](https://github.com/kanta13jp1/my_web_app/issues/1750) (NotebookLM `0fc0b6cf` 蒸留)
+> **ソース**: NotebookLM Notebook [AI Competitive Monitoring Report: The Design-Agent Convergence (`0fc0b6cf-7d34-45d3-bea3-ca843cdf2ee9`)](https://notebooklm.google.com/notebook/0fc0b6cf-7d34-45d3-bea3-ca843cdf2ee9)
+> **scope 注意**: VSCode 版 (= UI 担当 / 旧 12 instance) は part 130 で **dormant**. 本章は **将来 VSCode 復活 or Win Claude UI design role 拡張時の参照点** として stub 化.
+
+### 業界 trend (= 2026 Q2)
+
+| 動向 | 内容 | 競合 21 社への波及 |
+|------|------|---------------------|
+| **Figma + Make / AI 統合** | Figma Make (= 2025 H2 GA) で design → code 直結 | `figma` MCP server で AI agent ↔ Figma 双方向化 (= 自分株式会社既統合) |
+| **Anthropic Labs / Claude Design** | SaaS で design handoff bundle 配布 (= 2026 Q1 announcement) | `claude-design-handoff` skill 既設 / Flutter widget skeleton + DESIGN.md 差分生成 |
+| **AIDesigner MCP** | URL → brand kit 自動抽出 → variation board 9 枚生成 | `aidesigner` MCP 既統合 / brand kit `cfd7afdc` 等で本番アイコン生成 (part 161-162) |
+| **21st Magic** | inspiration → component → refiner pipeline | `magic` MCP 既統合 / UI 競合監視に転用可 |
+| **Penpot AI** | Figma 競合 OSS が AI 生成機能追加 | 監視継続 / lock-in 回避層として注視 |
+| **Vercel v0 / Bolt.new** | プロンプト → React app full-stack 生成 | Flutter Web では直接競合せず / inspiration 取材源 |
+
+### 自分株式会社 design pipeline 現状 (= 2026-05-08)
+
+| 軸 | tool | 状態 | scope |
+| --- | --- | --- | --- |
+| design tokens | `docs/DESIGN.md` (Orange+Indigo dark) | ✅ single source of truth | 全 Flutter widget |
+| Figma 統合 | `figma` MCP | ✅ read + Code Connect | dormant (= VSCode版 担当) |
+| brand kit 生成 | `aidesigner` MCP | ✅ part 161-162 で実証 | Win Claude (= triage / icon ship) |
+| handoff | `claude-design-handoff` skill | ✅ 既設 | Win Claude or Codex 実装側 |
+| review | `design-skills` agent | ✅ 既設 | Win Claude UI レビュー時 |
+| component 生成 | `magic` MCP / `frontend-design` skill | 🟡 未実用化 | 将来 |
+
+### Q2-Q3 アクション (= stub)
+
+1. **dormant scope 維持**: VSCode版 復活 trigger (= mobile UAT 連携 / 月次 UI design review 必要時) を `docs/MULTI_INSTANCE_FLEET.md` 改訂で明示 (= 別 Issue 候補)
+2. **Win Claude UI role 拡張時**: `design-workflow` skill (= Figma + AIDesigner + design-skills + DESIGN.md) を 1 session triage routine 化
+3. **競合 21 社 design layer 監視**: `competitor-monitoring.yml` daily cron に Figma + Penpot + Bolt 系 changelog 取込 (= Codex hand-off 候補 / 別 Issue)
+4. **AI 大学 design module**: 既 AI 大学 4 本 (= 動画) に「design × AI 統合」module 追加 (= Faceless Channel パターン (= `AI_VIDEO_PRINCIPLES.md` Faceless 章) と相互利用)
+
+### 関連 Issue
+
+- [#1750](https://github.com/kanta13jp1/my_web_app/issues/1750) (= 親 / 2 本蒸留): 本章で Design-Agent 半分着地. Faceless 半分は `AI_VIDEO_PRINCIPLES.md` 参照
+- [#1704](https://github.com/kanta13jp1/my_web_app/issues/1704) (= 親 spec / 本 doc): part 159 起草 → part 178 で第 6 章追加
+- [#1706](https://github.com/kanta13jp1/my_web_app/issues/1706) (= AI tool verify / 関連): design tool 系 update も verify-first 適用
+
+---
+
+*Win版#132 part 159 / 2026-05-07 / Issue #1704 / 5 NotebookLM 戦略系蒸留 → 2-instance fleet Q2 戦略反映 / PHILOSOPHY-22 9/9 ✅ / SYNERGY-30 7/7 ✅ / BRAIN-32 7/7 ✅ / 2026-05-08 part 178 で Design-Agent Convergence 第 6 章追加 (= NotebookLM 0fc0b6cf / Issue #1750)*
