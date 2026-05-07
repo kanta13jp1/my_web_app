@@ -28597,18 +28597,26 @@ User 明示「5/14 trigger date / 推奨日」要望対応:
 - User-provided PDF (= 4 ページ 2026-05-05 spec) → MD 化 → jibun-master-brain ingest (source ID `e0726aea`)
 - §10「Claude への指示」5 tasks = future session 対応 (= user 明示 "ingest only")
 
-**2. [COMPACTION-RESUME] 同日 part cap 12 → 18 緩和** (= rule update 第 1 例)
+**2. [COMPACTION-RESUME] 同日 part cap 12 → 24 緩和 v2** (= rule iterative update / 段階 v0→v1→v2)
 
-- 緩和根拠:
-  - **Anthropic 大型 update (2026-05-07)**: Claude Code 5h レート 2x / Pro/Max peak 撤廃 / Opus API rate 大幅引上げ / SpaceX Colossus 1 取得 (= 300MW + 22 万 GPU 1 ヶ月内追加)
-  - **Empirical buffer**: 14 part 時点で `wbs.priority_for_instance` MCP tool 不在観測 → 14-18 = soft warning / 18+ = hard stop
-- 新 rule:
-  - 12-17 part = 通常 work 可 / STOP signal log のみ
-  - 18 part = 強制終了 default (= memory + roadmap + admin merge minimum)
-  - 19+ part = user 明示 override 必須
+| 版 | cap | 状態 |
+|---|---|---|
+| v0 | 12 part | 旧 / part 173 確立 |
+| v1 | 18 part | shadow / user revert で実質 ignore |
+| **v2 (現行)** | **24 part** | active / 本 entry |
+
+- 緩和根拠 (v2):
+  - **Anthropic 大型 update (2026-05-07)**: Claude Code 5h レート 2x / Pro/Max peak **完全撤廃** / Opus API rate 大幅引上げ / SpaceX Colossus 1 単独取得 (= 300MW + NVIDIA GPU 22 万基 1 ヶ月内 + 軌道上 AI compute 検討)
+  - **Empirical session evidence**: 14 part で MCP 1 例劣化 / 但し session 全体機能継続 + 主要 work 完了可 → 24 で 10 part buffer 残が妥当
+  - **dogfood discipline**: 完全撤廃 NG / 24 hard stop = 物理的 user input 限界点近く / guard rail 維持
+- 新 rule (v2):
+  - 1-11 part = 通常 work
+  - 12-23 part = 通常 work / STOP signal は参考表示のみ
+  - 24 part = 強制終了 default (= memory + roadmap + admin merge minimum)
+  - 25+ part = user 明示 override 必須
 - 反映 file:
   - `~/.claude/hooks/inject-rules.txt` line 59 (= 毎ターン inject 反映)
-  - `docs/RULES_INDEX.md` §[COMPACTION-RESUME] (= 詳細展開)
-  - `memory/feedback_correction_20260507_compaction_cap_18part.md` (= [CONSTRAINT-LOG] 履行)
+  - `docs/RULES_INDEX.md` §[COMPACTION-RESUME] = v2 履歴 table
+  - `memory/feedback_correction_20260507_compaction_cap_24part_v2.md` (= shadow / v0+v1 と併存)
 
-**Pattern**: 「rule empirical update from real session evidence」第 1 例 (= 自 session で MCP 劣化観測 → cap 緩和 empirical 根拠化 / meta dogfood).
+**Pattern**: 「rule iterative empirical update」第 1 例 (= v0(12)→v1(18 shadow)→v2(24 active) 段階緩和 / 各版で evidence + user judgment 反映 / shadow rollback 保持).
