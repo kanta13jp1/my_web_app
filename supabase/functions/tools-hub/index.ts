@@ -5743,7 +5743,7 @@ serve(async (req) => {
             "id, category, category_icon, category_order, title, description, instance, owner_instance, status, progress, start_date, end_date, planned_start_date, planned_end_date, milestone_code, priority, remaining_work, updated_at, github_issue_number, github_issue_url, github_issue_state, github_issue_labels, github_issue_synced_at";
           const pageSize = 1000;
           const allTasks: Array<Record<string, unknown>> = [];
-          for (let offset = 0; ; offset += pageSize) {
+          for (let offset = 0;; offset += pageSize) {
             let q = admin.from("wbs_tasks").select(taskSelect);
             if (status) q = q.eq("status", status);
             if (updatedSince) q = q.gte("updated_at", updatedSince);
@@ -6253,7 +6253,9 @@ serve(async (req) => {
                 {
                   success: false,
                   error:
-                    `wbs.reschedule_realistic scanned >= ${pageSize * maxPages} ` +
+                    `wbs.reschedule_realistic scanned >= ${
+                      pageSize * maxPages
+                    } ` +
                     "rows; increase pagination cap.",
                 },
                 200,
@@ -6274,7 +6276,9 @@ serve(async (req) => {
             const p = String(r.priority ?? "medium").toLowerCase();
             const tier = p === "high" || p === "urgent"
               ? "high"
-              : p === "low" ? "low" : "medium";
+              : p === "low"
+              ? "low"
+              : "medium";
             buckets[tier].push(r);
           }
           for (const tier of Object.keys(buckets)) {
@@ -7150,7 +7154,9 @@ serve(async (req) => {
           const { data, error } = await admin.from("wbs_tasks")
             .select(taskSelect)
             .in("status", ["pending", "in_progress", "blocked"]);
-          if (error) throw new Error(error.message);
+          if (error) {
+            throw new Error(error.message);
+          }
           const ownTaskFilter = filterClosedGithubIssueWbsTasks(
             [...(data ?? [])].filter((task) =>
               wbsTaskMatchesInstanceFilter(
@@ -7334,7 +7340,9 @@ serve(async (req) => {
             .in("status", ["pending", "in_progress", "blocked"])
             .neq("priority", "completed")
             .limit(200);
-          if (error) throw new Error(error.message);
+          if (error) {
+            throw new Error(error.message);
+          }
           const otherTaskFilter = filterClosedGithubIssueWbsTasks(
             [...(otherTasks ?? [])].filter((task) =>
               !wbsTaskMatchesInstanceFilter(
@@ -7351,13 +7359,21 @@ serve(async (req) => {
             const cat = String(t.category ?? "");
             const title = String(t.title ?? "");
             // PS#1 専任 (Rule17)
-            if (cat.startsWith("rule17-")) return false;
+            if (cat.startsWith("rule17-")) {
+              return false;
+            }
             // PS#2 専任 (T-1 dispatch)
-            if (cat.startsWith("blog-") || title.includes("T-1")) return false;
+            if (cat.startsWith("blog-") || title.includes("T-1")) {
+              return false;
+            }
             // PS#5 専任 (urgent on-call)
-            if (t.priority === "high" && cat === "bug") return false;
+            if (t.priority === "high" && cat === "bug") {
+              return false;
+            }
             // IPO 専決 (CEO 固定)
-            if (cat === "business-ipo") return false;
+            if (cat === "business-ipo") {
+              return false;
+            }
             // 期限直前 (1 日切ってる) は元担当継続
             if (t.end_date) {
               const dueMs = new Date(String(t.end_date)).getTime();
@@ -7368,7 +7384,9 @@ serve(async (req) => {
             // 7 日以内に rebalance 済 = loop 防止
             if (t.last_rebalanced_at) {
               const lastMs = new Date(String(t.last_rebalanced_at)).getTime();
-              if (NOW - lastMs < 7 * 24 * HOUR) return false;
+              if (NOW - lastMs < 7 * 24 * HOUR) {
+                return false;
+              }
             }
             return true;
           });
@@ -7421,7 +7439,9 @@ serve(async (req) => {
             if (t.priority === "high") {
               score += 20;
               reasons.push("priority=high");
-            } else if (t.priority === "medium") score += 10;
+            } else if (t.priority === "medium") {
+              score += 10;
+            }
 
             return {
               id: t.id,
@@ -7440,7 +7460,9 @@ serve(async (req) => {
 
           // 5. score 高い順 sort + limit
           const candidates = scored
-            .filter((s) => s.stale_score > 0)
+            .filter((s) =>
+              s.stale_score > 0
+            )
             .sort((a, b) => b.stale_score - a.stale_score)
             .slice(0, limitN);
 
@@ -8801,6 +8823,7 @@ ${reportText ? `> ${reportText}` : ""}`,
         const item = await addItem(admin, "rss_feed", userId, {
           url: body.url,
           title: body.title,
+          category: body.category ?? "購読",
         });
         return json({ success: true, feed: item });
       }

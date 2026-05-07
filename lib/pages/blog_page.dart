@@ -1,9 +1,7 @@
-// lib/pages/blog_page.dart
-// 公式ブログ一覧ページ — blog_posts (status='posted') を公開表示
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'blog_post_page.dart';
+import 'package:intl/intl.dart';
 
 class BlogPage extends StatefulWidget {
   const BlogPage({super.key});
@@ -14,26 +12,32 @@ class BlogPage extends StatefulWidget {
 
 class _BlogPageState extends State<BlogPage> {
   final _supabase = Supabase.instance.client;
-
   List<Map<String, dynamic>> _posts = [];
   Map<String, Map<String, dynamic>> _engagement = {};
-  bool _isLoading = true;
+  bool _loading = true;
   String? _error;
   String _platformFilter = 'all';
 
-  static const _bg = Color(0xFF0A0A0A);
-  static const _card = Color(0xFF1A1A2E);
+  static const _platformColors = {
+    'qiita': Color(0xFF55C500),
+    'devto': Color(0xFF0A0A0A),
+    'zenn': Color(0xFF3EA8FF),
+    'hatena': Color(0xFF00A4DE),
+    'note': Color(0xFF41C9B4),
+  };
+
   static const _orange = Color(0xFFFF6B35);
+  static const _indigo = Color(0xFF4B6EF5);
 
   @override
   void initState() {
     super.initState();
-    _loadData();
+    _load();
   }
 
-  Future<void> _loadData() async {
+  Future<void> _load() async {
     setState(() {
-      _isLoading = true;
+      _loading = true;
       _error = null;
     });
     try {
@@ -41,7 +45,7 @@ class _BlogPageState extends State<BlogPage> {
         _supabase
             .from('blog_posts')
             .select(
-              'id, title, content, status, target_platforms, notes, posted_at, created_at, url, tags',
+              'id, title, content, excerpt, url, posted_at, published_at, created_at, target_platforms, tags, notes',
             )
             .eq('status', 'posted')
             .order('posted_at', ascending: false)
@@ -56,7 +60,7 @@ class _BlogPageState extends State<BlogPage> {
       ]);
       if (mounted) {
         final posts = List<Map<String, dynamic>>.from(results[0] as List);
-        final eng = Map<String, Map<String, dynamic>>.fromEntries(
+        final engagement = Map<String, Map<String, dynamic>>.fromEntries(
           (results[1] as List).map((e) {
             final m = e as Map<String, dynamic>;
             final key = '${m['platform']}_${m['article_id']}';
@@ -65,127 +69,74 @@ class _BlogPageState extends State<BlogPage> {
         );
         setState(() {
           _posts = posts;
-          _engagement = eng;
+          _engagement = engagement;
+          _loading = false;
         });
       }
     } catch (e) {
-      if (mounted) setState(() => _error = e.toString());
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() {
+          _error = e.toString();
+          _loading = false;
+        });
+      }
     }
   }
 
-  List<Map<String, dynamic>> get _filteredPosts {
+  List<Map<String, dynamic>> get _filtered {
     if (_platformFilter == 'all') return _posts;
     return _posts.where((p) {
-      final platforms = p['target_platforms'] as List? ?? [];
+      final raw = p['target_platforms'];
+      final platforms = (raw is List)
+          ? raw.map((x) => x.toString().toLowerCase()).toList()
+          : <String>[];
       return platforms.contains(_platformFilter);
     }).toList();
   }
 
-  int _postLikes(Map<String, dynamic> post) {
-    final url = post['url'] as String? ?? '';
-    for (final e in _engagement.values) {
-      final engUrl = e['url'] as String? ?? '';
-      if (url.isNotEmpty && engUrl.contains(url.split('/').last)) {
-        return (e['likes_count'] as int?) ?? 0;
+  List<String> get _allPlatforms {
+    final set = <String>{};
+    for (final p in _posts) {
+      final raw = p['target_platforms'];
+      if (raw is List) {
+        for (final x in raw) {
+          set.add(x.toString().toLowerCase());
+        }
       }
     }
-    return 0;
-  }
-
-  int _postViews(Map<String, dynamic> post) {
-    final url = post['url'] as String? ?? '';
-    for (final e in _engagement.values) {
-      final engUrl = e['url'] as String? ?? '';
-      if (url.isNotEmpty && engUrl.contains(url.split('/').last)) {
-        return (e['views_count'] as int?) ?? 0;
-      }
-    }
-    return 0;
+    return set.toList()..sort();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _bg,
+      backgroundColor: const Color(0xFF0F0F1A),
       appBar: AppBar(
-        backgroundColor: _card,
-        iconTheme: const IconThemeData(color: Colors.white),
-        title: const Text(
-          '自分株式会社 ブログ',
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-            height: 1.5,
-          ),
-        ),
+        backgroundColor: const Color(0xFF1A1A2E),
+        foregroundColor: Colors.white,
+        title:
+            const Text('技術ブログ', style: TextStyle(fontWeight: FontWeight.bold)),
         actions: [
+          TextButton.icon(
+            onPressed: () => Navigator.pushNamed(context, '/blog/compose'),
+            icon: const Icon(Icons.edit_note, color: Colors.white70, size: 18),
+            label: const Text(
+              '記事を書く',
+              style: TextStyle(color: Colors.white70),
+            ),
+          ),
           IconButton(
-            icon: const Icon(Icons.refresh, color: Colors.white70),
-            tooltip: '再読み込み',
-            onPressed: _loadData,
+            icon: const Icon(Icons.refresh),
+            onPressed: _load,
+            tooltip: '更新',
           ),
         ],
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: _orange))
-          : _error != null
-              ? _buildError()
-              : RefreshIndicator(
-                  onRefresh: _loadData,
-                  color: _orange,
-                  child: CustomScrollView(
-                    slivers: [
-                      SliverToBoxAdapter(child: _buildHeader()),
-                      SliverToBoxAdapter(child: _buildFilterBar()),
-                      if (_filteredPosts.isEmpty)
-                        const SliverToBoxAdapter(
-                          child: Center(
-                            child: Padding(
-                              padding: EdgeInsets.all(48),
-                              child: Text(
-                                '公開記事がありません\n毎日 21:00 JST に自動公開されます',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  color: Colors.white38,
-                                  height: 1.7,
-                                ),
-                              ),
-                            ),
-                          ),
-                        )
-                      else
-                        SliverList(
-                          delegate: SliverChildBuilderDelegate(
-                            (ctx, i) => _buildPostCard(_filteredPosts[i]),
-                            childCount: _filteredPosts.length,
-                          ),
-                        ),
-                      const SliverToBoxAdapter(child: SizedBox(height: 40)),
-                    ],
-                  ),
-                ),
-    );
-  }
-
-  Widget _buildError() {
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
+      body: Column(
         children: [
-          const Icon(Icons.error_outline, color: Colors.red, size: 48),
-          const SizedBox(height: 12),
-          Text(
-            _error ?? '読み込みエラー',
-            style: const TextStyle(color: Colors.white54, height: 1.5),
-          ),
-          const SizedBox(height: 16),
-          ElevatedButton(
-            onPressed: _loadData,
-            style: ElevatedButton.styleFrom(backgroundColor: _orange),
-            child: const Text('再試行', style: TextStyle(color: Colors.white)),
-          ),
+          _buildHeader(),
+          _buildFilterBar(),
+          Expanded(child: _buildBody()),
         ],
       ),
     );
@@ -193,42 +144,43 @@ class _BlogPageState extends State<BlogPage> {
 
   Widget _buildHeader() {
     return Container(
-      margin: const EdgeInsets.all(16),
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
           colors: [Color(0xFF1A1A2E), Color(0xFF16213E)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: _orange.withValues(alpha: 0.3)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const Icon(Icons.rss_feed, color: _orange, size: 24),
-              const SizedBox(width: 8),
-              Text(
-                '${_posts.length} 件の記事',
-                style: const TextStyle(
-                  color: _orange,
-                  fontWeight: FontWeight.bold,
-                  height: 1.5,
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: _orange.withAlpha(30),
+                  border: Border.all(color: _orange.withAlpha(80)),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  '${_filtered.length} 記事',
+                  style: const TextStyle(
+                    color: _orange,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
             ],
           ),
           const SizedBox(height: 8),
           const Text(
-            '技術・ライフマネジメント・AI に関する記事を毎日自動公開。\nQiita・dev.to にも同時配信しています。',
-            style: TextStyle(
-              color: Colors.white54,
-              fontSize: 13,
-              height: 1.7,
-            ),
+            'Flutter × Supabase × AI の実装ログをサイト内で公開。\n管理画面のレビュー後、外部プラットフォームにも自動配信します。',
+            style: TextStyle(color: Colors.white70, fontSize: 13, height: 1.6),
           ),
         ],
       ),
@@ -236,93 +188,247 @@ class _BlogPageState extends State<BlogPage> {
   }
 
   Widget _buildFilterBar() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-      child: Row(
-        children: [
-          for (final (id, label) in [
-            ('all', '全て'),
-            ('qiita', 'Qiita'),
-            ('devto', 'dev.to'),
-          ])
-            Padding(
-              padding: const EdgeInsets.only(right: 8),
-              child: GestureDetector(
-                onTap: () => setState(() => _platformFilter = id),
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: _platformFilter == id ? _orange : Colors.white12,
-                    borderRadius: BorderRadius.circular(20),
+    final platforms = ['all', ..._allPlatforms];
+    final labels = {
+      'all': 'すべて',
+      'qiita': 'Qiita',
+      'devto': 'dev.to',
+      'zenn': 'Zenn',
+      'hatena': 'はてな',
+      'note': 'note',
+    };
+    return Container(
+      height: 44,
+      color: const Color(0xFF16213E),
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        children: platforms.map((p) {
+          final selected = _platformFilter == p;
+          final color =
+              p == 'all' ? _indigo : (_platformColors[p] ?? Colors.white38);
+          return Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: GestureDetector(
+              onTap: () => setState(() => _platformFilter = p),
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+                decoration: BoxDecoration(
+                  color: selected ? color.withAlpha(50) : Colors.transparent,
+                  border: Border.all(
+                    color: selected ? color : Colors.white24,
+                    width: selected ? 1.5 : 1,
                   ),
-                  child: Text(
-                    label,
-                    style: TextStyle(
-                      color:
-                          _platformFilter == id ? Colors.white : Colors.white54,
-                      fontSize: 13,
-                      height: 1.5,
-                    ),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  labels[p] ?? p,
+                  style: TextStyle(
+                    color: selected ? color : Colors.white54,
+                    fontSize: 12,
+                    fontWeight: selected ? FontWeight.bold : FontWeight.normal,
                   ),
                 ),
               ),
             ),
-        ],
+          );
+        }).toList(),
       ),
     );
   }
 
-  Widget _buildPostCard(Map<String, dynamic> post) {
-    final title = post['title'] as String? ?? '(タイトルなし)';
-    final postedAt =
-        post['posted_at'] as String? ?? post['created_at'] as String? ?? '';
-    final url = post['url'] as String? ?? '';
-    final platforms = (post['target_platforms'] as List? ?? []).cast<String>();
-    final tags = (post['tags'] as List? ?? []).cast<String>();
-    final content = post['content'] as String? ?? '';
-    final preview = _extractPreview(content);
-    final likes = _postLikes(post);
-    final views = _postViews(post);
-
-    final dateStr = postedAt.isNotEmpty ? postedAt.substring(0, 10) : '';
-
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-      child: InkWell(
-        onTap: () => Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => BlogPostPage(post: post),
-          ),
+  Widget _buildBody() {
+    if (_loading) {
+      return const Center(
+        child: CircularProgressIndicator(color: Color(0xFFFF6B35)),
+      );
+    }
+    if (_error != null) {
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.error_outline, color: Colors.red, size: 40),
+            const SizedBox(height: 12),
+            Text(_error!, style: const TextStyle(color: Colors.redAccent)),
+            const SizedBox(height: 12),
+            ElevatedButton(onPressed: _load, child: const Text('再試行')),
+          ],
         ),
+      );
+    }
+    final posts = _filtered;
+    if (posts.isEmpty) {
+      return const Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.article_outlined, color: Colors.white24, size: 48),
+            SizedBox(height: 12),
+            Text(
+              '記事がまだありません',
+              style: TextStyle(color: Colors.white38, fontSize: 14),
+            ),
+          ],
+        ),
+      );
+    }
+    return RefreshIndicator(
+      onRefresh: _load,
+      color: _orange,
+      child: ListView.builder(
+        padding: const EdgeInsets.all(16),
+        itemCount: posts.length,
+        itemBuilder: (ctx, i) => _BlogCard(
+          post: posts[i],
+          likes: _postMetric(posts[i], 'likes_count'),
+          views: _postMetric(posts[i], 'views_count'),
+          comments: _postMetric(posts[i], 'comments_count'),
+        ),
+      ),
+    );
+  }
+
+  int _postMetric(Map<String, dynamic> post, String field) {
+    final url = post['url']?.toString() ?? '';
+    final segments = Uri.tryParse(url)?.pathSegments ?? const <String>[];
+    final slug = segments.isEmpty ? '' : segments.last;
+    for (final entry in _engagement.values) {
+      final engagementUrl = entry['url']?.toString() ?? '';
+      if (url.isNotEmpty && engagementUrl == url) {
+        return _asInt(entry[field]);
+      }
+      if (slug.isNotEmpty && engagementUrl.contains(slug)) {
+        return _asInt(entry[field]);
+      }
+    }
+    return 0;
+  }
+}
+
+int _asInt(dynamic value) {
+  if (value is int) return value;
+  if (value is num) return value.toInt();
+  return int.tryParse(value?.toString() ?? '') ?? 0;
+}
+
+String _blogPostExcerpt(Map<String, dynamic> post) {
+  final explicit = post['excerpt']?.toString().trim() ?? '';
+  if (explicit.isNotEmpty) return explicit;
+  final content = post['content']?.toString().trim() ?? '';
+  if (content.isEmpty) return '';
+  final plain = content
+      .replaceAll(RegExp(r'^#{1,6}\s.*$', multiLine: true), '')
+      .replaceAll(RegExp(r'```[\s\S]*?```'), '')
+      .replaceAll(RegExp(r'`([^`]*)`'), r'$1')
+      .replaceAll(RegExp(r'\[([^\]]*)\]\([^)]*\)'), r'$1')
+      .replaceAll(RegExp(r'[*_~>#-]'), '')
+      .replaceAll(RegExp(r'\s+'), ' ')
+      .trim();
+  return plain.length <= 140 ? plain : '${plain.substring(0, 140)}…';
+}
+
+class _BlogCard extends StatelessWidget {
+  final Map<String, dynamic> post;
+  final int likes;
+  final int views;
+  final int comments;
+  const _BlogCard({
+    required this.post,
+    required this.likes,
+    required this.views,
+    required this.comments,
+  });
+
+  static const _orange = Color(0xFFFF6B35);
+  static const _platformColors = {
+    'qiita': Color(0xFF55C500),
+    'devto': Color(0xFF0A0A0A),
+    'zenn': Color(0xFF3EA8FF),
+    'hatena': Color(0xFF00A4DE),
+    'note': Color(0xFF41C9B4),
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    final title = post['title']?.toString() ?? '無題';
+    final url = post['url']?.toString() ?? '';
+    final rawDate =
+        post['posted_at'] ?? post['published_at'] ?? post['created_at'];
+    final postedAt = rawDate != null
+        ? DateFormat('yyyy/MM/dd')
+            .format(DateTime.parse(rawDate.toString()).toLocal())
+        : '';
+    final rawPlatforms = post['target_platforms'];
+    final platforms = (rawPlatforms is List)
+        ? rawPlatforms.map((p) => p.toString().toLowerCase()).toList()
+        : <String>[];
+    final rawTags = post['tags'];
+    final tags = (rawTags is List)
+        ? rawTags.map((t) => t.toString()).toList()
+        : <String>[];
+    final excerpt = _blogPostExcerpt(post);
+    final postId = post['id']?.toString() ?? '';
+    final hasMetrics = likes > 0 || views > 0 || comments > 0;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1A1A2E),
         borderRadius: BorderRadius.circular(12),
-        child: Container(
+        border: Border.all(color: Colors.white12),
+      ),
+      child: InkWell(
+        onTap: postId.isEmpty
+            ? null
+            : () => Navigator.pushNamed(
+                  context,
+                  '/blog/post',
+                  arguments: {'id': postId},
+                ),
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
           padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: _card,
-            borderRadius: BorderRadius.circular(12),
-          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 children: [
-                  for (final p in platforms)
-                    Padding(
-                      padding: const EdgeInsets.only(right: 6),
-                      child: _platformBadge(p),
-                    ),
-                  const Spacer(),
-                  if (dateStr.isNotEmpty)
+                  if (postedAt.isNotEmpty)
                     Text(
-                      dateStr,
+                      postedAt,
                       style: const TextStyle(
                         color: Colors.white38,
                         fontSize: 11,
-                        height: 1.5,
                       ),
                     ),
+                  const Spacer(),
+                  ...platforms.map((p) {
+                    final color = _platformColors[p] ?? Colors.white38;
+                    return Container(
+                      margin: const EdgeInsets.only(left: 6),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: color.withAlpha(25),
+                        border: Border.all(color: color.withAlpha(80)),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Text(
+                        p == 'devto'
+                            ? 'dev.to'
+                            : p.substring(0, 1).toUpperCase() + p.substring(1),
+                        style: TextStyle(
+                          color: color,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    );
+                  }),
                 ],
               ),
               const SizedBox(height: 8),
@@ -330,89 +436,98 @@ class _BlogPageState extends State<BlogPage> {
                 title,
                 style: const TextStyle(
                   color: Colors.white,
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  height: 1.5,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  height: 1.4,
                 ),
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
               ),
-              if (preview.isNotEmpty) ...[
-                const SizedBox(height: 6),
+              if (excerpt.isNotEmpty) ...[
+                const SizedBox(height: 8),
                 Text(
-                  preview,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
+                  excerpt,
                   style: const TextStyle(
-                    color: Colors.white54,
-                    fontSize: 13,
+                    color: Colors.white60,
+                    fontSize: 12,
                     height: 1.6,
                   ),
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ],
               if (tags.isNotEmpty) ...[
-                const SizedBox(height: 8),
+                const SizedBox(height: 10),
                 Wrap(
                   spacing: 6,
-                  children: tags.take(4).map((t) => _tagChip(t)).toList(),
-                ),
-              ],
-              const SizedBox(height: 10),
-              Row(
-                children: [
-                  if (likes > 0) ...[
-                    const Icon(
-                      Icons.favorite_outline,
-                      size: 14,
-                      color: Colors.white38,
-                    ),
-                    const SizedBox(width: 3),
-                    Text(
-                      '$likes',
-                      style: const TextStyle(
-                        color: Colors.white38,
-                        fontSize: 12,
-                        height: 1.5,
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                  ],
-                  if (views > 0) ...[
-                    const Icon(
-                      Icons.visibility_outlined,
-                      size: 14,
-                      color: Colors.white38,
-                    ),
-                    const SizedBox(width: 3),
-                    Text(
-                      _formatNum(views),
-                      style: const TextStyle(
-                        color: Colors.white38,
-                        fontSize: 12,
-                        height: 1.5,
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                  ],
-                  const Spacer(),
-                  if (url.isNotEmpty)
-                    GestureDetector(
-                      onTap: () => _openUrl(url),
-                      child: const Row(
-                        children: [
-                          Text(
-                            '外部で読む',
+                  runSpacing: 4,
+                  children: tags
+                      .take(5)
+                      .map(
+                        (t) => Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: _orange.withAlpha(20),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            '#$t',
                             style: TextStyle(
-                              color: _orange,
-                              fontSize: 12,
-                              height: 1.5,
+                              color: _orange.withAlpha(200),
+                              fontSize: 11,
                             ),
                           ),
-                          SizedBox(width: 2),
-                          Icon(Icons.open_in_new, size: 12, color: _orange),
-                        ],
+                        ),
+                      )
+                      .toList(),
+                ),
+              ],
+              if (hasMetrics || url.isNotEmpty) ...[
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    if (likes > 0) ...[
+                      _metric(Icons.favorite_outline, _formatCount(likes)),
+                      const SizedBox(width: 10),
+                    ],
+                    if (views > 0) ...[
+                      _metric(Icons.visibility_outlined, _formatCount(views)),
+                      const SizedBox(width: 10),
+                    ],
+                    if (comments > 0) ...[
+                      _metric(Icons.chat_bubble_outline, '$comments'),
+                      const SizedBox(width: 10),
+                    ],
+                    const Spacer(),
+                    if (url.isNotEmpty) ...[
+                      const Icon(
+                        Icons.open_in_new,
+                        size: 14,
+                        color: Colors.white38,
                       ),
-                    ),
-                ],
-              ),
+                      const SizedBox(width: 4),
+                      InkWell(
+                        onTap: () async {
+                          final uri = Uri.tryParse(url);
+                          if (uri != null) {
+                            await launchUrl(
+                              uri,
+                              mode: LaunchMode.externalApplication,
+                            );
+                          }
+                        },
+                        child: const Text(
+                          '外部で読む',
+                          style: TextStyle(color: Colors.white38, fontSize: 12),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ],
             ],
           ),
         ),
@@ -420,68 +535,23 @@ class _BlogPageState extends State<BlogPage> {
     );
   }
 
-  Widget _platformBadge(String platform) {
-    final isQiita = platform == 'qiita';
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-      decoration: BoxDecoration(
-        color: isQiita
-            ? const Color(0xFF55C500).withValues(alpha: 0.15)
-            : const Color(0xFF3D5AFE).withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(4),
-      ),
-      child: Text(
-        isQiita ? 'Qiita' : 'dev.to',
-        style: TextStyle(
-          color: isQiita ? const Color(0xFF55C500) : const Color(0xFF82B1FF),
-          fontSize: 10,
-          height: 1.5,
+  Widget _metric(IconData icon, String value) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 14, color: Colors.white38),
+        const SizedBox(width: 3),
+        Text(
+          value,
+          style: const TextStyle(color: Colors.white38, fontSize: 12),
         ),
-      ),
+      ],
     );
   }
 
-  Widget _tagChip(String tag) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-      decoration: BoxDecoration(
-        color: Colors.white10,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Text(
-        '#$tag',
-        style: const TextStyle(
-          color: Colors.white38,
-          fontSize: 11,
-          height: 1.5,
-        ),
-      ),
-    );
-  }
-
-  String _extractPreview(String content) {
-    final stripped = content
-        .replaceAll(RegExp(r'^#{1,6}\s.*$', multiLine: true), '')
-        .replaceAll(RegExp(r'```[\s\S]*?```'), '')
-        .replaceAll(RegExp(r'`[^`]*`'), '')
-        .replaceAll(RegExp(r'\[([^\]]*)\]\([^)]*\)'), r'$1')
-        .replaceAll(RegExp(r'[*_~]'), '')
-        .trim();
-    if (stripped.length <= 120) return stripped;
-    return '${stripped.substring(0, 120)}…';
-  }
-
-  String _formatNum(int n) {
-    if (n >= 1000000) return '${(n / 1000000).toStringAsFixed(1)}M';
-    if (n >= 1000) return '${(n / 1000).toStringAsFixed(0)}K';
-    return '$n';
-  }
-
-  Future<void> _openUrl(String url) async {
-    final uri = Uri.tryParse(url);
-    if (uri == null) return;
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-    }
+  String _formatCount(int value) {
+    if (value >= 1000000) return '${(value / 1000000).toStringAsFixed(1)}M';
+    if (value >= 1000) return '${(value / 1000).toStringAsFixed(0)}K';
+    return '$value';
   }
 }

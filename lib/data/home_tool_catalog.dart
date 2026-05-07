@@ -12,6 +12,7 @@ import '../pages/ai_status_page.dart';
 import '../pages/behavior_log_page.dart';
 import '../pages/behavior_review_page.dart';
 import '../pages/bookmark_folders_page.dart';
+import '../pages/blog_page.dart';
 import '../pages/cfo_office_page.dart';
 import '../pages/cho_office_page.dart';
 import '../pages/chro_office_page.dart';
@@ -54,7 +55,6 @@ import '../pages/shopping_list_page.dart';
 import '../pages/stock_tasks_page.dart';
 import '../pages/table_data_page.dart';
 import '../pages/tech_blog_tracker_page.dart';
-import '../pages/blog_page.dart';
 import '../pages/template_marketplace_page.dart';
 import '../pages/thought_anchor_page.dart';
 import '../pages/thought_capture_page.dart';
@@ -991,10 +991,10 @@ List<HomeToolEntry> buildHomeToolCatalog({
       id: 'blog',
       sectionId: 'growth',
       title: '公式ブログ',
-      subtitle: '技術・AI・ライフマネジメント記事を読む',
+      subtitle: 'サイト内の記事閲覧・投稿導線',
       icon: Icons.rss_feed,
       color: const Color(0xFFFF6B35),
-      keywords: const <String>['ブログ', 'blog', '記事', '技術', 'qiita', 'devto'],
+      keywords: const <String>['ブログ', 'blog', '記事', '投稿'],
       onOpen: (context) => _pushPage(context, const BlogPage()),
     ),
     HomeToolEntry(

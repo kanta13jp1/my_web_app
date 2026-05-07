@@ -366,8 +366,23 @@ class _BlogManagementPageState extends State<BlogManagementPage>
     if (next == 'ready' && !await _confirmLintOverrideIfNeeded(d)) return;
     setState(() => _togglingIds.add(id));
     try {
-      await _supabase.from('blog_posts').update({'status': next}).eq('id', id);
-      await _loadData();
+      final res = await _supabase.functions.invoke(
+        'schedule-hub',
+        body: {'action': 'blog.update_post', 'id': id, 'status': next},
+      );
+      if (!mounted) return;
+      final success = res.status == 200;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            success
+                ? (next == 'ready' ? '公開キューへ追加しました' : '下書きに戻しました')
+                : 'ステータス更新エラー (${res.status})',
+          ),
+          backgroundColor: success ? _green : _red,
+        ),
+      );
+      if (success) await _loadData();
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -697,9 +712,9 @@ class _BlogManagementPageState extends State<BlogManagementPage>
   }
 
   Future<void> _replyToComment(Map<String, dynamic> c) async {
-    final commentId = c['comment_id']?.toString() ?? c['id']?.toString() ?? '';
+    final articleId = c['article_id']?.toString() ?? '';
     final platform = c['platform'] as String? ?? '';
-    if (commentId.isEmpty || platform != 'qiita') return;
+    if (articleId.isEmpty || platform != 'qiita') return;
     final id = c['id']?.toString() ?? '';
     if (id.isEmpty || _replyingIds.contains(id)) return;
     final bodyCtrl = TextEditingController();
@@ -769,7 +784,7 @@ class _BlogManagementPageState extends State<BlogManagementPage>
         'schedule-hub',
         body: {
           'action': 'blog.qiita_comment_post',
-          'comment_id': commentId,
+          'item_id': articleId,
           'body': body,
         },
       );
@@ -1979,7 +1994,7 @@ class _BlogManagementPageState extends State<BlogManagementPage>
         decoration: BoxDecoration(
           color: _card,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: _red.withValues(alpha: 0.4)),
+          border: Border.all(color: _red.withAlpha(102)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -1991,8 +2006,8 @@ class _BlogManagementPageState extends State<BlogManagementPage>
                       const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                   decoration: BoxDecoration(
                     color: platform == 'qiita'
-                        ? const Color(0xFF55C500).withValues(alpha: 0.2)
-                        : const Color(0xFF3D5AFE).withValues(alpha: 0.2),
+                        ? const Color(0xFF55C500).withAlpha(51)
+                        : const Color(0xFF3D5AFE).withAlpha(51),
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: Text(
@@ -2047,11 +2062,7 @@ class _BlogManagementPageState extends State<BlogManagementPage>
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Icon(
-                        Icons.error_outline,
-                        size: 14,
-                        color: _red,
-                      ),
+                      const Icon(Icons.error_outline, size: 14, color: _red),
                       const SizedBox(width: 6),
                       Expanded(
                         child: Text(
