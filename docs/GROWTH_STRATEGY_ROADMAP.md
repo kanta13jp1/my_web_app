@@ -28645,4 +28645,42 @@ User 明示「5/14 trigger date / 推奨日」要望対応:
 
 ### Commit
 
-(本 commit) — Win Claude part 175 ROADMAP append + memory shadow.
+52fb53cac — Win Claude part 175 ROADMAP append + memory shadow.
+
+---
+
+## Win Claude part 176 (2026-05-07) — sensitive 第 4 例 #1577 verify + 残 11 件 Codex hand-off ship
+
+15 part 連続 same-day (= cap_24part_v2 範囲内). part 175 deferred 候補 #1577 を選択 → spec ship 重複回避のため verify-first triage 実施.
+
+### Action
+
+- **PR #2022 verify** (= MERGED 2026-05-05 / sensitive 第 4 例 spec doc): 14 件 hand-off 進捗 = **3/14 (21%)** / 11 件未完成判明.
+- **Codex hand-off omnibus 起票**: `docs/cross-instance-prs/20260507_mcp_auth_hardening_remaining_codex.md` 新設 (= 5 Phase / 推定 6.5h / 期限 2026-05-21).
+  - Phase A. SQL migration 3 件 (= mcp_oauth_clients/audit_log extend + workos_user_link 新設)
+  - Phase B. EF 2 件 + shared 1 件 (= mcp-well-known + internal_hmac.ts + config.toml)
+  - Phase C. GHA cron + Terraform skeleton 2 件
+  - Phase D. docs 3 件 (= dcr-vs-cimd / attest-roadmap / incident-runbook)
+  - Phase E. memory-search-hub 10/10 self-check verify
+- **Pattern**: 「claim と実装ギャップ verify」pattern 第 3 例 (= part 167 第 2 例 / part 163 第 1 例).
+- **Pattern**: 「親 spec §5-§7 サンプルコード = Codex 参照可」pattern 第 1 例 (= verbose spec → Codex 6.5h で実装可能設計).
+
+### Philosophy Alignment
+
+| 原則 | ✅ | 根拠 |
+|------|----|------|
+| CEO 感 | ✅ | triage role による spec → impl ギャップ閉じ |
+| ミッション駆動 | ✅ | sensitive 第 4 例 完成へ前進 |
+| 優しい mentor | ✅ | Phase 分割 + 期限 + 注意点記載 |
+| 6 部署バランス | ✅ | security 部署 prioritize |
+| 商品 = 価値 | ✅ | MCP server 公開 = ai-hub 拡張価値 |
+| 資本 = 時間 | ✅ | 1 omnibus hand-off doc = 11 件分の triage 一括化 |
+| 資産 vs 負債 | ✅ | spec 既存 → 6.5h で資産化可 |
+| KPI = 昨日の自分 | ✅ | 21% → 100% 目標 (= 14 日後) |
+| IPO / ウェルビーイング | ⏸ | 中立 |
+
+**判定: 8/9 ✅** (= 7+/9 ゲート達成)
+
+### Commit
+
+(本 commit) — Win Claude part 176 / sensitive 第 4 例 verify + Codex 11 件 hand-off doc.
