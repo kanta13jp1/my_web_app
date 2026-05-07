@@ -145,6 +145,7 @@ import 'package:my_web_app/pages/donation_crowdfunding_page.dart';
 import 'package:my_web_app/pages/emergency_contacts_page.dart';
 import 'package:my_web_app/pages/knowledge_base_page.dart';
 import 'package:my_web_app/pages/knowledge_graph_page.dart';
+import 'package:my_web_app/pages/market_intelligence_page.dart';
 import 'package:my_web_app/pages/meeting_manager_page.dart';
 import 'package:my_web_app/pages/news_rss_aggregator_page.dart';
 import 'package:my_web_app/pages/semantic_search_page.dart';
@@ -1004,6 +1005,10 @@ class _MyAppState extends State<MyApp> {
           case '/news-rss':
             return MaterialPageRoute(
               builder: (_) => const NewsRssAggregatorPage(),
+            );
+          case '/market-intelligence':
+            return MaterialPageRoute(
+              builder: (_) => const MarketIntelligencePage(),
             );
           case '/smart-inbox':
             return MaterialPageRoute(
