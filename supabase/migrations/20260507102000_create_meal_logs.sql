@@ -15,6 +15,9 @@ CREATE TABLE IF NOT EXISTS meal_logs (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+ALTER TABLE meal_logs
+  ADD COLUMN IF NOT EXISTS logged_at TIMESTAMPTZ NOT NULL DEFAULT NOW();
+
 CREATE INDEX IF NOT EXISTS meal_logs_user_id_logged_at_idx
   ON meal_logs (user_id, logged_at DESC);
 
