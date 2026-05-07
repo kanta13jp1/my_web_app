@@ -142,6 +142,7 @@ import 'package:my_web_app/pages/carbon_footprint_tracker_page.dart';
 import 'package:my_web_app/pages/donation_crowdfunding_page.dart';
 import 'package:my_web_app/pages/emergency_contacts_page.dart';
 import 'package:my_web_app/pages/knowledge_base_page.dart';
+import 'package:my_web_app/pages/knowledge_graph_page.dart';
 import 'package:my_web_app/pages/meeting_manager_page.dart';
 import 'package:my_web_app/pages/news_rss_aggregator_page.dart';
 import 'package:my_web_app/pages/semantic_search_page.dart';
@@ -1728,6 +1729,11 @@ class _MyAppState extends State<MyApp> {
           case '/memory-search':
             return MaterialPageRoute(
               builder: (_) => const MemorySearchHubPage(),
+            );
+          case '/knowledge-graph':
+            return MaterialPageRoute(
+              builder: (_) => const KnowledgeGraphPage(),
+              settings: const RouteSettings(name: '/knowledge-graph'),
             );
           default:
             if (uri.path.startsWith('/vs-')) {
