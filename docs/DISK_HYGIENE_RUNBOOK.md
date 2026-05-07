@@ -22,7 +22,7 @@
 | 2 | Recycle Bin | > 100 MB 時 | 100-300 MB |
 | 3 | `~/.claude/shell-snapshots\*` | 7 日超 | 30-50 MB |
 | 4 | `~/.claude/todos\*` (completed) | 7 日超 | 10 MB |
-| 5 | `~/.claude/projects\*.jsonl` (gzip 圧縮) | 30 日超 | 600-900 MB (= 圧縮率 80%) |
+| 5 | `~/.claude/projects\*.jsonl` (gzip 圧縮) | 7 日超 (= part 168 / 30→14→7) | 600-900 MB (= 圧縮率 80%) |
 | 6 | `~/.claude/file-history\*` | 30 日超 | 300-500 MB |
 | 7a | **`%LOCALAPPDATA%\Google\DriveFS\Logs\*`** (= G: drive 関連) | 7 日超 | 100-486 MB |
 | 7b | **Chrome / Edge cache** (= `Cache` `Code Cache` `GPUCache` `Service Worker`) | browser 停止時のみ | 500-1500 MB |
@@ -34,7 +34,7 @@
 
 **安全 rule**:
 - ❌ worktree 内 build/ 削除しない (= 進行中 Flutter project 破壊 risk)
-- ❌ active session transcript (= 30 日以内) は触らない
+- ❌ active session transcript (= 7 日以内) は触らない (= part 168 / hot-cache window)
 - ❌ locked file は silently skip
 - ✅ 全 file mtime 7-30 日超 hard cutoff
 - ✅ JSONL transcript は **gzip 圧縮** で deletion ではなく **size 削減** (= 後で `Expand-Archive` 復元可)
@@ -60,10 +60,162 @@
 
 | 残量 | action | 通知方法 |
 |---|---|---|
-| ≥ 50 GB | 通常運転 | log のみ (= `~/.claude/logs/disk-cleanup-YYYYMMDD.log`) |
-| 25-50 GB | report 書き出し | `~/cleanup_reports/disk_report_<ts>.md` (= 既存 cleanup_report_notify.ps1 が pickup) |
+| ≥ 80 GB | 通常運転 | log のみ (= `~/.claude/logs/disk-cleanup-YYYYMMDD.log`) |
+| 25-80 GB | report 書き出し | `~/cleanup_reports/disk_report_<ts>.md` (= 既存 cleanup_report_notify.ps1 が pickup) — fleet-loaded box では毎セッション report 出力 (= part 158 で 50→80 GB 厳格化 / 圧縮可視化) |
 | 10-25 GB | **WARN** | `additionalContext` 経由で Claude に「`/disk-cleanup` 推奨」surface |
 | < 10 GB | **ALERT** | `additionalContext` で「即座に `/disk-cleanup` 実行」surface (= ビルド失敗 risk) |
+
+### 3.1 Memory hook 閾値 (= memory-cleanup.ps1 / part 159 強化: heavy gate 撤廃)
+
+| Free RAM | action | 期間 |
+|---|---|---|
+| **ALL** | cheap ops + EmptyWorkingSet — **常時実行** (part 159 撤廃) | 5-25 sec |
+| < 25% | Tier 1.5 all + WARNING report | 5-25 sec + report |
+| < 10% | Tier 1.5 all + ALERT additionalContext | 5-25 sec + alert |
+
+**part 159 変更**: 旧仕様「Free > 70% で heavy step (EmptyWorkingSet) skip」を撤廃。fleet-loaded box では Free RAM 60-80% 帯が常時状態であり、その帯域でも毎回 0.5-2.7 GB の reclaim が発生 (実測)。SessionStart/End 各 +5-15 sec の代償で「毎セッション 必ず heavy 圧縮」要件 (= ユーザー 2026-05-07 ask) を厳格化。
+
+### 3.2 Dual trigger (= SessionStart + SessionEnd / part 158-b)
+
+両 hook (= disk + memory) を **SessionStart + SessionEnd の二重 trigger** で登録 (`~/.claude/settings.json`):
+
+```jsonc
+"SessionStart": [/* disk-cleanup, memory-cleanup */],
+"SessionEnd":   [/* disk-cleanup, memory-cleanup */]
+```
+
+理由: SessionStart で前回残骸を清掃 + SessionEnd で当回残骸を清掃 → 「次回セッション開始時の disk pressure 永続化」を防ぐ。両 hook 共 idempotent なので二重発動でも副作用なし。
+
+### 3.3 PreCompact hook (= part 159 新規)
+
+**長時間セッションで context compact が走る時** にも heavy step を発火させる:
+
+```jsonc
+"PreCompact": [/* memory-cleanup */]
+```
+
+理由: SessionStart/End だけでは長時間 1 セッションでは不十分。compact 直前の RAM 圧迫が compact 失敗 / context 蒸発 / 再 compact ループの引き金になる ([COMPACTION-RESUME] 教訓)。compact 前に EmptyWorkingSet を 1 回挟むことで成功率向上。
+
+### 3.4 Disk report 閾値 (= part 159 80→100 GB へ拡大)
+
+`disk-cleanup.ps1` Tier 1 の report 閾値を 80 GB → **100 GB** に拡大。fleet-loaded box の C: 60-90 GB 帯で**毎セッション report が生成**され、可視化漏れ防止。Tier 1 cleanup 自体は常時実行 (= 変更なし)。
+
+### 3.5 Worktree prune (= part 160-b 新設 / 手動 slash command)
+
+`scripts/worktree_prune.ps1` で `.claude/worktrees/` の stale worktree を **dry-run → apply** の 2 段階で安全 prune する。**自動 hook 化はしない** (= [WORKDIR-ISOLATION] safety / 誤削除リスク)。
+
+**SKIP rule (= 安全 guard)**:
+
+1. self (= 現在の worktree)
+2. detached HEAD (= 別 instance / codex active 可能性)
+3. uncommitted changes (= `git status -s` 1+ 行)
+4. open PR (= `gh pr list --state open` で head branch 一致)
+5. main / master branch (= `jolly-nash` 型)
+6. **未 merge 状態** (= `git rev-list main..<branch> --count` > 0)
+
+`-Force` flag で uncommitted / 未 merge guard をスキップ可能 (= 危険 / user 明示判断のみ)。
+
+**運用 cycle**:
+
+```bash
+# 1. dry-run = report only (default)
+powershell -File scripts/worktree_prune.ps1
+
+# 2. apply = 実 prune
+powershell -File scripts/worktree_prune.ps1 -Apply
+
+# 3. force apply (= uncommitted/未 merge も削除 / DANGER)
+powershell -File scripts/worktree_prune.ps1 -Apply -Force
+```
+
+**part 160-b smoke test 実績** (= 2026-05-07 02:35 JST):
+- 入力: 16 worktree
+- dry-run: 8 PRUNE / 7 SKIP (= uncommitted 5 + detached HEAD 2 + main 1 + 未 merge 1 + self 1)
+  - 内 1 が未 merge guard で救済 (= `claude/elegant-elgamal-aae681` 7 commits ahead)
+- apply: 7 prune / **913 MB reclaim**
+- 結果: 16 → 8 worktree (= `git worktree prune` 連動で孤児 dir も整理)
+
+**ROI**: 1 sample worktree ~130 MB / 7 worktree = ~913 MB。fleet 運用で 1-2 week ごとに prune 推奨。
+
+### 3.6 Aggressive auto-cleanup (= part 161 新設 / 3 改善)
+
+User 報告: 「今の開発フローだと、ローカル環境のメモリやハードディスク容量が必ず枯渇」(= 2026-05-07 part 161)。診断結果: C: 81.6% used (84 GB free / 455 GB) / Memory 84.6% used。最大圧迫源は **Chrome 5.11 GB / Edge 3.96 GB / .claude/plugins 1.17 GB / transcripts 1.12 GB**。
+
+**3 改善** (= `disk-cleanup.ps1` 編集 / part 161):
+
+1. **Transcript gzip 閾値 30→14 days** (= 1.12 GB transcripts のうち 14+ 日経過分を gzip 50-70% 圧縮)
+2. **Browser cache 2-tier 戦略** (= 従来は browser running 時 skip だった / 「Code Cache / GPUCache / Service Worker\\CacheStorage」は file lock 少なく **browser 動作中も削除可** + 3 日経過 file のみ削除で UX 影響最小化 / 「Cache」(SQLite-like) のみ browser stopped 時の deep clean)
+3. **Plugin cache > 14 days 削除** (= `~/.claude/plugins/cache/` ~1.17 GB / 100KB 以上 file の 14+ 日経過分のみ削除 / 最新 plugin version は LastWriteTime で keep)
+
+**part 161 smoke test 実績** (= 2026-05-07 03:43 JST):
+- **939.4 MB reclaim / 28.8 sec**
+  - plugin_cache_14d_MB: **542.7 MB** (新設 / 最大 win)
+  - transcripts_compacted_MB: **348.5 MB** (14 day threshold 効果)
+  - browser_cache_MB: **48.1 MB** (Chrome+Edge running 中も削除成功)
+- C: 83.6 → 84.1 GB (= 0.5 GB 反映 / 残りは即再生成)
+- Memory cleanup 同時実行: **2.34 GB free 増** (15.4% → 32%)
+
+**ROI**: 1 セッションあたり **~1 GB reclaim**。SessionStart + SessionEnd dual trigger で 1 日 2-4 回稼働 = 週 14-28 GB。
+
+### 3.6.1 Transcript hot-cache 7-day rotation (= part 168 / aggressive hygiene 4 軸目)
+
+User 報告: 「ローカル環境のメモリやハードディスク容量が必ず枯渇」継続観察 (= 2026-05-07 part 168)。1 session で C: 12 GB drop 観察 (= 94→82 GB / part 167 監視)。**transcripts dir 812 MB** + 1 session 数 MB-数十 MB 累積で hot-cache window 短縮効果が大きい。
+
+**1 改善** (= `disk-cleanup.ps1` step 5 編集 / part 168):
+
+- **Transcript gzip 閾値 14→7 days** (= hot-cache window 短縮 / 7 日経過分は LRU と仮定 / gzip 50-70% 圧縮継続)
+- 段階推移: part 154-a (30 日) → part 161 (14 日) → **part 168 (7 日)**
+- LRU 仮定の根拠: Win Claude session は 1-2 part/day 稼働 / 7 日 = 7-14 part 経過 / 直近 part 以外の transcript 参照頻度低い
+
+**ROI 推定**: 1 週間 12 GB consumption の内、**transcript 由来 ~1-2 GB** をさらに前倒し圧縮 → cumulative weekly +200-400 MB 上乗せ。
+
+### 3.7 Worktree cleanup automation (= Issue #1984 axis A / Codex #1)
+
+`scripts/worktree_cleanup.py` は PowerShell 手動 prune の portable/CI 版。`git worktree list --porcelain` 全件を見て、以下をすべて満たす worktree だけを `PRUNE` 候補にする。
+
+**追加 guard**:
+
+1. current `$PWD` の worktree を絶対 skip
+2. primary worktree を skip
+3. detached HEAD を skip
+4. `main` / `master` / `develop` / `staging` を skip
+5. `git status --porcelain` が 1 行でもあれば skip
+6. `gh pr list --state open` の head branch と一致すれば skip
+7. `HEAD == @{u}` (= upstream と完全一致) でなければ skip
+8. `HEAD` が `origin/main` に含まれていなければ skip
+
+**運用 cycle**:
+
+```bash
+# 1. dry-run = report only (default)
+python scripts/worktree_cleanup.py --fetch
+
+# 2. apply = safe PRUNE candidates only
+python scripts/worktree_cleanup.py --fetch --apply
+
+# 3. machine-readable report
+python scripts/worktree_cleanup.py --json-out tmp/worktree-cleanup.json
+```
+
+`.github/workflows/worktree-cleanup-cron.yml` は weekly で同 script を hosted Windows runner 上で dry-run → apply → `git worktree prune` まで実行し、Issue #1984 に summary を残す。GitHub hosted runner はローカル C: の worktree を直接削除できないため、**local cleanup は Codex/Claude Windows app session で同 script を dry-run → apply** する。
+
+### 3.8 Dev cache cleanup automation (= Issue #1984 axis C / Codex #1)
+
+`scripts/dev_cache_cleanup.py` は Flutter / npm / pnpm / pub / pip / NotebookLM cache の portable/CI 版。default は dry-run で、実削除は `--apply` 明示時のみ。
+
+- `flutter clean`: `pubspec.yaml` を持つ worktree が対象。`--include-worktrees` で全 worktree を見るが、dirty worktree は default skip。
+- `npm cache verify` / `pnpm store prune` / `dart pub cache clean --force` / `python -m pip cache purge`: tool が無い場合は soft skip。
+- NotebookLM cache: known cache/log/temp directory の child のみ、default 7 日超で prune。`storage_state.json` / cookie/token 系は protected。
+- `.github/workflows/dev-cache-cleanup-cron.yml`: hosted Windows runner で dry-run -> safe apply -> artifact upload -> Issue #1984 comment。GHA は local C: を直接 reclaim できないため、Windows app session / local scheduled task でも同 script を使う。
+
+### 3.9 Docs rotate automation (= Issue #1984 axis E / Codex #1)
+
+`scripts/docs_rotate.py` は schedule-output docs の active folder を小さく保つための portable/CI 版。default は dry-run で、実 move は `--apply` 明示時のみ。
+
+- 対象: `docs/cs-notes`, `docs/daily-reports`, `docs/auto-blog`。
+- retention: filename 内の `YYYY-MM-DD` を使って 90 日超を判定。CI checkout では mtime が更新されるため、mtime は使わない。
+- archive: `docs/_archive/<YYYY-MM>/<source>/filename` へ move。上書きはせず、既存 destination があれば skip。
+- `.github/workflows/docs-rotate-cron.yml`: monthly dry-run -> apply -> artifact upload -> Issue #1984 comment。変更がある場合だけ `automation/docs-rotate-<run_id>` branch と reviewable PR を作る。
 
 ## 4. 監視 KPI
 
@@ -101,7 +253,7 @@
 |---|---|---|
 | hook が 30 sec 超 | Claude session 起動遅延 | `Get-DirSizeMB` を `-Recurse` 浅化 / `Measure-Object` のみ深い計測は週次に回す |
 | locked file で停止 | エラー dump で hook 失敗 | 全 `Remove-Item` に `-ErrorAction SilentlyContinue` + try/catch |
-| current session transcript 削除 | 進行中作業ロスト | `LastWriteTime > now - 30d` で完全 skip / gzip も active 除外 |
+| current session transcript 削除 | 進行中作業ロスト | `LastWriteTime > now - 7d` で完全 skip / gzip も active 除外 (= part 168 / hot-cache window) |
 | worktree 誤削除 (Tier 2) | 進行中 PR 破壊 | merged branch 確認 + current `$PWD` 絶対 skip |
 | Docker prune で 5 GB image 喪失 | 復元 30 min 必要 | Tier 2 で confirm prompt 必須 (= 自動化禁止) |
 | plugin cache prune で active version 喪失 | plugin 起動失敗 | LastWriteTime DESC で **最新 1 version は keep** / 他削除 |
@@ -209,14 +361,14 @@ HDD 圧迫と並行して **RAM 圧迫** も Win 開発環境の継続課題. pa
 
 | axis | 内容 | 担当 | status |
 |---|---|---|---|
-| A | Worktree cleanup | Win Codex | **未着** (= cross-instance-pr part 155-b) |
+| A | Worktree cleanup | Win Codex | **✅ 着地** (= `scripts/worktree_cleanup.py` + weekly workflow) |
 | B | 動画ファイル削減 | n/a | #1724 待ち |
-| C | Cache 清掃 (= Flutter / npm / pip / notebooklm) | Win Codex | **部分着地** (= disk-cleanup Tier 1 で browser cache 適用 / npm/pnpm/pub は Tier 2 のみ) |
+| C | Cache 清掃 (= Flutter / npm / pip / notebooklm) | Win Codex | **✅ 着地** (= `scripts/dev_cache_cleanup.py` + weekly workflow / local apply required for C:) |
 | D | **Memory cleanup** | **Win Claude** | **✅ 着地 part 155-b** (= memory-cleanup.ps1 / 5 step / 閾値 gating) |
-| E | docs rotate (= cs-notes / daily-reports 90 日 archive) | Win Codex | **未着** |
-| F | transcript ローテーション | (= disk-cleanup step 5 で 30 日 gzip 化済 part 154-a) | ✅ |
+| E | docs rotate (= cs-notes / daily-reports 90 日 archive) | Win Codex | **✅ 着地** (= `scripts/docs_rotate.py` + monthly PR workflow) |
+| F | transcript ローテーション | (= disk-cleanup step 5 で 7 日 gzip 化 / part 154-a → 161 → 168 で 30→14→7 段階強化) | ✅ |
 
-= 6 axis 中 D ✅ (= 本 part 着地) + F ✅ + C 部分着地 + A/B/E 残.
+= 6 axis 中 A/C/D/E/F ✅。B は #1724 secrets blocker 解消後に動画削減 PR。
 
 ## 11. 関連 docs / files (= memory 拡張版)
 

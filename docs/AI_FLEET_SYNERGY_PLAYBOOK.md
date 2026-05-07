@@ -105,6 +105,17 @@ INDIE_DEV_VELOCITY (= indie 視点の規律) と直交する **「fleet 視点�
 - ADR pattern: `docs/adrs/<YYYYMMDD>_<decision>.md` で immutable な意思決定記録
 - **cross-ref**: SECOND_BRAIN #1 (階層型ナレッジ厳格分離) / hook-rule-audit skill
 
+**競合 Pointer-Based Config 比較** (2026 Q2 / `docs/STRATEGIC_INTELLIGENCE_2026Q2.md` §1 より):
+
+| 競合 | Config 方式 | fleet drift リスク |
+|------|-----------|------------------|
+| Cursor Team | editor settings + .cursorrules (= 単一 flat file) | 1 instance のみ / drift なし but 拡張不可 |
+| Devin | 完全自律 / config なし (= agent が自己判断) | 不透明 / hallucinate 検知不能 |
+| Cline / RooCode | `.clinerules` (= 単一 flat) | multi-instance 未対応 |
+| **自分株式会社** | **CLAUDE.md (80 行) + pointer → docs/ + inject-rules.txt** | **2 instance で drift 最小 / pointer 分散で bloat 防止** |
+
+**自分株式会社優位**: 唯一 multi-instance を想定した pointer hub 設計. 競合が 1 instance flat config の間に、2 instance × pointer 分散 × 月次 audit cron の 3 層防衛を実装.
+
 ### 原則 5: Memory & State Continuity Hooks (= 12 fleet の記憶連続性)
 
 **ルール本文**: Claude Code の **PreCompact + StatusLine hooks** を全 instance で標準化し、context 蒸発前に transcript を自動 backup. **Git commit を fleet 間 state passing の primary bridge** として強制.

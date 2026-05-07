@@ -12,6 +12,7 @@ import '../pages/ai_status_page.dart';
 import '../pages/behavior_log_page.dart';
 import '../pages/behavior_review_page.dart';
 import '../pages/bookmark_folders_page.dart';
+import '../pages/blog_page.dart';
 import '../pages/cfo_office_page.dart';
 import '../pages/cho_office_page.dart';
 import '../pages/chro_office_page.dart';
@@ -54,7 +55,6 @@ import '../pages/shopping_list_page.dart';
 import '../pages/stock_tasks_page.dart';
 import '../pages/table_data_page.dart';
 import '../pages/tech_blog_tracker_page.dart';
-import '../pages/blog_page.dart';
 import '../pages/template_marketplace_page.dart';
 import '../pages/thought_anchor_page.dart';
 import '../pages/thought_capture_page.dart';
@@ -129,8 +129,10 @@ import '../pages/form_builder_page.dart';
 import '../pages/gift_registry_page.dart';
 import '../pages/growth_automation_controller_page.dart';
 import '../pages/knowledge_base_page.dart';
+import '../pages/knowledge_graph_page.dart';
 import '../pages/landing_ab_test_page.dart';
 import '../pages/loyalty_points_page.dart';
+import '../pages/market_intelligence_page.dart';
 import '../pages/meeting_manager_page.dart';
 import '../pages/mindmap_diagram_page.dart';
 import '../pages/news_rss_aggregator_page.dart';
@@ -548,10 +550,7 @@ List<HomeToolEntry> buildHomeToolCatalog({
         'Google Drive',
         'cleanup',
       ],
-      onOpen: (context) => _pushPage(
-        context,
-        const LocalSmartCleanupPage(),
-      ),
+      onOpen: (context) => _pushPage(context, const LocalSmartCleanupPage()),
       requiresClearDeck: true,
     ),
     HomeToolEntry(
@@ -568,10 +567,7 @@ List<HomeToolEntry> buildHomeToolCatalog({
         'ローカルPC',
         'cleanup',
       ],
-      onOpen: (context) => _pushPage(
-        context,
-        const WindowsAppInstallPage(),
-      ),
+      onOpen: (context) => _pushPage(context, const WindowsAppInstallPage()),
       requiresClearDeck: true,
     ),
     HomeToolEntry(
@@ -990,10 +986,10 @@ List<HomeToolEntry> buildHomeToolCatalog({
       id: 'blog',
       sectionId: 'growth',
       title: '公式ブログ',
-      subtitle: '技術・AI・ライフマネジメント記事を読む',
+      subtitle: 'サイト内の記事閲覧・投稿導線',
       icon: Icons.rss_feed,
       color: const Color(0xFFFF6B35),
-      keywords: const <String>['ブログ', 'blog', '記事', '技術', 'qiita', 'devto'],
+      keywords: const <String>['ブログ', 'blog', '記事', '投稿'],
       onOpen: (context) => _pushPage(context, const BlogPage()),
     ),
     HomeToolEntry(
@@ -1017,9 +1013,9 @@ List<HomeToolEntry> buildHomeToolCatalog({
       onOpen: (context) async {
         final userId = Supabase.instance.client.auth.currentUser?.id;
         if (userId == null) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('ログイン後に公開プロフィールを開けます。')),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text('ログイン後に公開プロフィールを開けます。')));
           return;
         }
         await Navigator.of(context).pushNamed('/u?id=$userId');
@@ -1070,16 +1066,9 @@ List<HomeToolEntry> buildHomeToolCatalog({
       subtitle: '新規ウィジェット追加時に、利用頻度の低い2件を整理候補にする',
       icon: Icons.rule_folder_outlined,
       color: const Color(0xFF7C3AED),
-      keywords: const <String>[
-        '1 In 2 Out',
-        'UI整理',
-        'ウィジェット',
-        '利用頻度',
-        '認知負荷',
-      ],
-      onOpen: (context) => Navigator.of(context).pushNamed(
-        '/one-in-two-out-assist',
-      ),
+      keywords: const <String>['1 In 2 Out', 'UI整理', 'ウィジェット', '利用頻度', '認知負荷'],
+      onOpen: (context) =>
+          Navigator.of(context).pushNamed('/one-in-two-out-assist'),
     ),
     HomeToolEntry(
       id: 'ai-search',
@@ -1387,13 +1376,7 @@ List<HomeToolEntry> buildHomeToolCatalog({
       subtitle: '手動操作が必要なWBSタスクの確認、進捗報告、完了報告',
       icon: Icons.assignment_ind_outlined,
       color: const Color(0xFFEF4444),
-      keywords: const <String>[
-        'WBS',
-        'ユーザータスク',
-        '手動操作',
-        '進捗報告',
-        'Slack',
-      ],
+      keywords: const <String>['WBS', 'ユーザータスク', '手動操作', '進捗報告', 'Slack'],
       onOpen: (context) => _pushPage(context, const UserTasksPage()),
     ),
     HomeToolEntry(
@@ -1559,14 +1542,7 @@ List<HomeToolEntry> buildHomeToolCatalog({
       subtitle: '録音を公開・共有。コラボセッション・招待コード・SNSシェア',
       icon: Icons.groups_outlined,
       color: const Color(0xFFE65100),
-      keywords: const <String>[
-        '音楽',
-        'コラボ',
-        '共有',
-        'セッション',
-        'SNS',
-        'シェア',
-      ],
+      keywords: const <String>['音楽', 'コラボ', '共有', 'セッション', 'SNS', 'シェア'],
       onOpen: (context) => _pushPage(context, const MusicCollaborationPage()),
     ),
     // ── 以下: 未登録だったルートを一括追加 ──
@@ -1856,6 +1832,23 @@ List<HomeToolEntry> buildHomeToolCatalog({
       onOpen: (context) => _pushPage(context, const KnowledgeBasePage()),
     ),
     HomeToolEntry(
+      id: 'knowledge-graph',
+      sectionId: 'knowledge',
+      title: 'Knowledge Graph RAG',
+      subtitle: 'Issues, WBS, docs, memory, and NotebookLM with citations',
+      icon: Icons.hub_outlined,
+      color: const Color(0xFF0F766E),
+      keywords: const <String>[
+        'knowledge graph',
+        'rag',
+        'citations',
+        'issues',
+        'wbs',
+        'notebooklm',
+      ],
+      onOpen: (context) => _pushPage(context, const KnowledgeGraphPage()),
+    ),
+    HomeToolEntry(
       id: 'semantic-search',
       sectionId: 'knowledge',
       title: 'セマンティック検索',
@@ -1884,6 +1877,23 @@ List<HomeToolEntry> buildHomeToolCatalog({
       color: const Color(0xFFEF6C00),
       keywords: const <String>['ニュース', 'RSS', 'フィード', 'ブログ', 'news', '購読'],
       onOpen: (context) => _pushPage(context, const NewsRssAggregatorPage()),
+    ),
+    HomeToolEntry(
+      id: 'market-intelligence',
+      sectionId: 'knowledge',
+      title: 'Market Intelligence',
+      subtitle: 'Evidence-led AI market research and paper decision log',
+      icon: Icons.query_stats,
+      color: const Color(0xFF1565C0),
+      keywords: const <String>[
+        'market',
+        'intelligence',
+        'research',
+        'fintech',
+        'AI',
+        'signals',
+      ],
+      onOpen: (context) => _pushPage(context, const MarketIntelligencePage()),
     ),
     HomeToolEntry(
       id: 'smart-inbox',

@@ -1507,6 +1507,36 @@ type RankedNewsItem = RssNewsItem & {
   verification_warning: string;
 };
 
+type MarketIntelWatchItem = {
+  name: string;
+  keywords: string[];
+};
+
+type MarketIntelEvidence = {
+  title: string;
+  url: string;
+  source: string;
+  published_at: string;
+  signal_score: number;
+  confidence: string;
+};
+
+type MarketIntelSignal = {
+  id: string;
+  signal: string;
+  headline: string;
+  themes: string[];
+  watchlist_matches: string[];
+  evidence: MarketIntelEvidence[];
+  evidence_count: number;
+  source_count: number;
+  confidence: "high" | "medium" | "low";
+  uncertainty: string;
+  risk_note: string;
+  what_to_watch_next: string[];
+  paper_decision_log: Record<string, unknown>;
+};
+
 function decodeXmlEntities(value: string): string {
   return value
     .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1")
@@ -1794,6 +1824,299 @@ async function fetchLatestNewsItems(body: Record<string, unknown>): Promise<{
     source_count: feeds.length,
     items: normalizedItems,
     errors,
+  };
+}
+
+const MARKET_INTEL_DISCLAIMER =
+  "This is market research support, not investment advice. It never places trades, never recommends buy/sell orders, and requires human review before any decision.";
+
+function defaultMarketIntelFeeds(): RssFeedInput[] {
+  return [
+    {
+      title: "Google News: AI markets",
+      url:
+        "https://news.google.com/rss/search?q=AI%20market%20software%20startup&hl=en-US&gl=US&ceid=US:en",
+      category: "AI",
+    },
+    {
+      title: "Google News: fintech",
+      url:
+        "https://news.google.com/rss/search?q=fintech%20market%20intelligence%20software&hl=en-US&gl=US&ceid=US:en",
+      category: "FinTech",
+    },
+    {
+      title: "ITmedia AI+",
+      url: "https://rss.itmedia.co.jp/rss/2.0/aiplus.xml",
+      category: "AI",
+    },
+    {
+      title: "CNET Japan",
+      url: "http://feed.japan.cnet.com/rss/index.rdf",
+      category: "Technology",
+    },
+  ];
+}
+
+function defaultMarketIntelWatchlist(): MarketIntelWatchItem[] {
+  return [
+    {
+      name: "AI coding tools",
+      keywords: [
+        "Claude Code",
+        "Codex",
+        "Cursor",
+        "Gemini Code Assist",
+        "Devin",
+      ],
+    },
+    {
+      name: "AI infrastructure",
+      keywords: ["OpenAI", "Anthropic", "Google", "Microsoft", "Nvidia"],
+    },
+    {
+      name: "Financial terminals",
+      keywords: ["Bloomberg", "FactSet", "Refinitiv", "Koyfin", "Sentieo"],
+    },
+  ];
+}
+
+function normalizeMarketIntelWatchlist(
+  value: unknown,
+): MarketIntelWatchItem[] {
+  const rawItems = Array.isArray(value) ? value : [];
+  const parsed: MarketIntelWatchItem[] = [];
+  for (const raw of rawItems) {
+    if (typeof raw === "string") {
+      const name = raw.trim();
+      if (name) parsed.push({ name, keywords: [name] });
+      continue;
+    }
+    const item = asRecord(raw);
+    if (!item) continue;
+    const name = String(item.name ?? item.symbol ?? item.company ?? "").trim();
+    if (!name) continue;
+    const keywords = stringArrayFromUnknown(item.keywords, [name]);
+    parsed.push({ name, keywords: keywords.length ? keywords : [name] });
+  }
+  return (parsed.length ? parsed : defaultMarketIntelWatchlist()).slice(0, 24);
+}
+
+function normalizeMarketIntelThemes(value: unknown): string[] {
+  const themes = stringArrayFromUnknown(value, [
+    "AI automation",
+    "developer tooling",
+    "fintech disruption",
+    "pricing pressure",
+    "enterprise adoption",
+    "risk and regulation",
+  ]);
+  return themes.slice(0, 16);
+}
+
+function matchMarketIntelTerms(
+  text: string,
+  watchlist: MarketIntelWatchItem[],
+): string[] {
+  const lower = text.toLowerCase();
+  return watchlist
+    .filter((item) =>
+      [item.name, ...item.keywords].some((keyword) =>
+        lower.includes(keyword.toLowerCase())
+      )
+    )
+    .map((item) => item.name);
+}
+
+function matchMarketIntelThemes(text: string, themes: string[]): string[] {
+  const lower = text.toLowerCase();
+  const matched = themes.filter((theme) =>
+    theme.split(/\s+/).some((part) =>
+      part.length >= 4 && lower.includes(part.toLowerCase())
+    )
+  );
+  return matched.length ? matched : ["general market signal"];
+}
+
+function marketIntelClusterKey(item: RankedNewsItem): string {
+  const words = item.title
+    .toLowerCase()
+    .replace(/[^\p{Letter}\p{Number}]+/gu, " ")
+    .split(/\s+/)
+    .filter((word) => word.length >= 4)
+    .slice(0, 10);
+  return words.join("-") || item.cluster_key;
+}
+
+function sourceHost(url: string): string {
+  try {
+    return new URL(url).hostname.replace(/^www\./, "");
+  } catch {
+    return url;
+  }
+}
+
+function marketIntelConfidence(
+  score: number,
+  sourceCount: number,
+): "high" | "medium" | "low" {
+  if (sourceCount >= 2 && score >= 76) return "high";
+  if (sourceCount >= 2 || score >= 58) return "medium";
+  return "low";
+}
+
+function buildMarketIntelSignal(
+  clusterKey: string,
+  items: RankedNewsItem[],
+  watchlist: MarketIntelWatchItem[],
+  themes: string[],
+): MarketIntelSignal {
+  const ranked = [...items].sort((a, b) => b.signal_score - a.signal_score);
+  const lead = ranked[0];
+  const text = ranked.map((item) => `${item.title} ${item.summary}`).join(" ");
+  const evidence = ranked.slice(0, 6).map((item) => ({
+    title: item.title,
+    url: item.url,
+    source: item.source,
+    published_at: item.published_at,
+    signal_score: item.signal_score,
+    confidence: item.confidence,
+  }));
+  const sourceCount = new Set(
+    evidence.map((item) => item.source || sourceHost(item.url)),
+  ).size;
+  const watchlistMatches = matchMarketIntelTerms(text, watchlist);
+  const themeMatches = matchMarketIntelThemes(text, themes);
+  const score = Math.min(
+    100,
+    lead.signal_score +
+      Math.min(12, (sourceCount - 1) * 6) +
+      Math.min(10, watchlistMatches.length * 4),
+  );
+  const confidence = marketIntelConfidence(score, sourceCount);
+  const singleSource = sourceCount < 2;
+  const uncertainty = singleSource
+    ? "Single-source signal. Treat it as a research prompt until another independent source confirms it."
+    : "Multiple sources are present, but timing, incentives, and market reaction still need human review.";
+  const riskNote = [
+    singleSource ? "single-source claim" : "multi-source but unverified claim",
+    "no live price confirmation",
+    "no automated trading action",
+  ].join("; ");
+  return {
+    id: `market_${stableNewsHash(clusterKey)}`,
+    signal: lead.title,
+    headline: lead.title,
+    themes: themeMatches,
+    watchlist_matches: watchlistMatches,
+    evidence,
+    evidence_count: evidence.length,
+    source_count: sourceCount,
+    confidence,
+    uncertainty,
+    risk_note: riskNote,
+    what_to_watch_next: [
+      "Check official company or regulator source before acting.",
+      "Compare the news timestamp with price, volume, and peer movement.",
+      "Write a paper decision entry before any real-money decision.",
+    ],
+    paper_decision_log: {
+      status: "research_only",
+      action_allowed: "paper_decision_log",
+      human_approval_required: true,
+      auto_trade_allowed: false,
+      invalidate_if: singleSource
+        ? "No second source appears within the review window."
+        : "Primary evidence conflicts with later official source.",
+    },
+  };
+}
+
+function buildMarketIntelSignals(
+  items: RankedNewsItem[],
+  watchlist: MarketIntelWatchItem[],
+  themes: string[],
+  limit: number,
+): MarketIntelSignal[] {
+  const groups = new Map<string, RankedNewsItem[]>();
+  for (const item of items) {
+    const key = marketIntelClusterKey(item);
+    const current = groups.get(key) ?? [];
+    current.push(item);
+    groups.set(key, current);
+  }
+  return [...groups.entries()]
+    .map(([key, group]) =>
+      buildMarketIntelSignal(key, group, watchlist, themes)
+    )
+    .sort((a, b) => {
+      const confidenceRank = { high: 3, medium: 2, low: 1 };
+      const confidenceCmp = confidenceRank[b.confidence] -
+        confidenceRank[a.confidence];
+      if (confidenceCmp !== 0) return confidenceCmp;
+      return b.source_count - a.source_count ||
+        b.evidence[0].signal_score - a.evidence[0].signal_score;
+    })
+    .slice(0, Math.max(1, Math.min(50, limit)));
+}
+
+async function buildMarketIntelReport(
+  body: Record<string, unknown>,
+): Promise<Record<string, unknown>> {
+  const watchlist = normalizeMarketIntelWatchlist(body.watchlist);
+  const themes = normalizeMarketIntelThemes(body.themes);
+  const signalLimit = Math.max(
+    1,
+    Math.min(30, Number(body.signal_limit ?? body.limit ?? 12) || 12),
+  );
+  const fetchedAt = new Date().toISOString();
+  let items: RankedNewsItem[] = [];
+  let sourceCount = 0;
+  let errors: Array<{ source: string; url: string; error: string }> = [];
+
+  if (Array.isArray(body.items) && body.items.length > 0) {
+    items = rankNewsSignals(body.items, Math.max(100, signalLimit * 4));
+    sourceCount = new Set(items.map((item) => item.source)).size;
+  } else {
+    const feeds = normalizeRssFeedInputs(body.feeds);
+    const result = await fetchLatestNewsItems({
+      ...body,
+      feeds: feeds.length ? feeds : defaultMarketIntelFeeds(),
+      per_feed_limit: Number(body.per_feed_limit ?? 10),
+      limit: Number(body.news_limit ?? 120),
+    });
+    items = result.items;
+    sourceCount = result.source_count;
+    errors = result.errors;
+  }
+
+  const signals = buildMarketIntelSignals(
+    items,
+    watchlist,
+    themes,
+    signalLimit,
+  );
+  return {
+    success: true,
+    generated_at: fetchedAt,
+    fetched_at: fetchedAt,
+    disclaimer: MARKET_INTEL_DISCLAIMER,
+    guardrails: {
+      no_investment_advice: true,
+      auto_trading_enabled: false,
+      human_approval_required: true,
+      strong_single_source_claims_blocked: true,
+    },
+    watchlist,
+    themes,
+    signals,
+    audit: {
+      generated_by: "tools-hub.market_intel.analyze",
+      model: "market-intel-heuristic-v1",
+      source_count: sourceCount,
+      item_count: items.length,
+      signal_count: signals.length,
+      errors,
+    },
   };
 }
 
@@ -5739,17 +6062,27 @@ serve(async (req) => {
           const status = body.status as string | undefined;
           const updatedSince = body.updated_since as string | undefined;
           const limit = Math.min(Number(body.limit ?? 50), 200);
-          let q = admin.from("wbs_tasks")
-            .select(
-              "id, category, category_icon, category_order, title, description, instance, owner_instance, status, progress, start_date, end_date, planned_end_date, milestone_code, priority, remaining_work, updated_at, github_issue_number, github_issue_url, github_issue_state, github_issue_labels, github_issue_synced_at",
-            );
-          if (status) q = q.eq("status", status);
-          if (updatedSince) q = q.gte("updated_at", updatedSince);
-          const { data, error } = await q;
-          if (error) throw new Error(error.message);
-          const filteredTasks = [...(data ?? [])].filter((task) =>
+          const taskSelect =
+            "id, category, category_icon, category_order, title, description, instance, owner_instance, status, progress, start_date, end_date, planned_start_date, planned_end_date, milestone_code, priority, remaining_work, updated_at, github_issue_number, github_issue_url, github_issue_state, github_issue_labels, github_issue_synced_at";
+          const pageSize = 1000;
+          const allTasks: Array<Record<string, unknown>> = [];
+          for (let offset = 0;; offset += pageSize) {
+            let q = admin.from("wbs_tasks").select(taskSelect);
+            if (status) q = q.eq("status", status);
+            if (updatedSince) q = q.gte("updated_at", updatedSince);
+            const { data, error } = await q
+              .order("id", { ascending: true })
+              .range(offset, offset + pageSize - 1);
+            if (error) throw new Error(error.message);
+            const rows = (data ?? []) as unknown as Array<
+              Record<string, unknown>
+            >;
+            allTasks.push(...rows);
+            if (rows.length < pageSize) break;
+          }
+          const filteredTasks = allTasks.filter((task) =>
             wbsTaskMatchesInstanceFilter(
-              task as Record<string, unknown>,
+              task,
               inst ?? "all",
             )
           );
@@ -5770,7 +6103,7 @@ serve(async (req) => {
         case "wbs.update_progress": {
           // body: { id, progress?: 0-100, status?: 'in_progress'|'completed'|'blocked',
           //        recovery_plan?: string, end_date?: 'YYYY-MM-DD' (リスケ用),
-          //        planned_end_date?: 'YYYY-MM-DD', note?: string }
+          //        planned_start_date?: 'YYYY-MM-DD', planned_end_date?: 'YYYY-MM-DD', note?: string }
           // Win版#131 part 10: 遅延時 recovery_plan 必須化
           // Win版#131 part 14 / T2-Win: defense-in-depth EF validation
           //   DB trigger `wbs_enforce_recovery_plan_trg` も同仕様を block
@@ -5794,13 +6127,16 @@ serve(async (req) => {
             update.rescheduled_count =
               ((cur?.rescheduled_count as number) ?? 0) + 1;
           }
+          if (body.planned_start_date !== undefined) {
+            update.planned_start_date = String(body.planned_start_date);
+          }
           if (body.planned_end_date !== undefined) {
             update.planned_end_date = String(body.planned_end_date);
           }
           if (Object.keys(update).length === 0) {
             return json({
               error:
-                "progress, status, recovery_plan, end_date, or planned_end_date required",
+                "progress, status, recovery_plan, end_date, planned_start_date, or planned_end_date required",
             }, 400);
           }
 
@@ -5845,7 +6181,7 @@ serve(async (req) => {
           const { data, error } = await admin.from("wbs_tasks")
             .update(update).eq("id", id)
             .select(
-              "id, title, status, progress, recovery_plan, end_date, planned_end_date, rescheduled_count",
+              "id, title, status, progress, recovery_plan, end_date, planned_start_date, planned_end_date, rescheduled_count",
             )
             .single();
           if (error) {
@@ -6162,6 +6498,240 @@ serve(async (req) => {
             }, 200);
           }
         }
+        case "wbs.reschedule_realistic": {
+          // Win版#132 part 157 (2026-05-06):
+          // 全 open タスクの start_date / end_date を priority tier ベースで
+          // 「実際に着手可能な日付」へ再配置する。
+          //
+          // body:
+          //   dry_run?: boolean (default true)
+          //   priority_offset_days?: { high: number, medium: number, low: number }
+          //     (default {high: 7, medium: 30, low: 90})
+          //   duration_days?: { high: number, medium: number, low: number }
+          //     (default {high: 3, medium: 7, low: 14})
+          //   parallel_capacity?: { high: number, medium: number, low: number }
+          //     priority tier 内での並列着手可能数 (default {high: 4, medium: 8, low: 12})
+          //     スケジュール stagger は floor(queue_index / parallel_capacity) 日 ずらして配置
+          //
+          // 対象: status != 'completed' AND github_issue_state != 'CLOSED'
+          // skip: 上記完了系
+          const dryRun = body.dry_run !== false; // default true
+          const offsetIn =
+            (body.priority_offset_days as Record<string, number>) ?? {};
+          const durIn = (body.duration_days as Record<string, number>) ?? {};
+          const parIn = (body.parallel_capacity as Record<string, number>) ??
+            {};
+          const offset = {
+            high: Number(offsetIn.high ?? 7),
+            medium: Number(offsetIn.medium ?? 30),
+            low: Number(offsetIn.low ?? 90),
+          };
+          const duration = {
+            high: Number(durIn.high ?? 3),
+            medium: Number(durIn.medium ?? 7),
+            low: Number(durIn.low ?? 14),
+          };
+          const parallel = {
+            high: Math.max(1, Number(parIn.high ?? 4)),
+            medium: Math.max(1, Number(parIn.medium ?? 8)),
+            low: Math.max(1, Number(parIn.low ?? 12)),
+          };
+
+          const today = new Date();
+          today.setUTCHours(0, 0, 0, 0);
+          const fmt = (d: Date) => d.toISOString().slice(0, 10);
+          const addDays = (base: Date, days: number) => {
+            const d = new Date(base);
+            d.setUTCDate(d.getUTCDate() + days);
+            return d;
+          };
+
+          // 全 open タスクを取得 (完了系 skip / Supabase 1000 row cap 回避にページネーション)
+          const selectCols =
+            "id, title, instance, owner_instance, priority, status, " +
+            "start_date, end_date, github_issue_state, category_order";
+          const pageSize = 1000;
+          const maxPages = 50;
+          const all: Array<Record<string, unknown>> = [];
+          for (let page = 0; page < maxPages; page += 1) {
+            const from = page * pageSize;
+            const to = from + pageSize - 1;
+            const { data: pageRows, error: fetchErr } = await admin
+              .from("wbs_tasks")
+              .select(selectCols)
+              .neq("status", "completed")
+              .order("category_order", { ascending: true, nullsFirst: false })
+              .order("id", { ascending: true })
+              .range(from, to);
+            if (fetchErr) {
+              return json({ success: false, error: fetchErr.message }, 200);
+            }
+            const rows = (pageRows ?? []) as unknown as Array<
+              Record<string, unknown>
+            >;
+            all.push(...rows);
+            if (rows.length < pageSize) break;
+            if (page === maxPages - 1) {
+              return json(
+                {
+                  success: false,
+                  error:
+                    `wbs.reschedule_realistic scanned >= ${
+                      pageSize * maxPages
+                    } ` +
+                    "rows; increase pagination cap.",
+                },
+                200,
+              );
+            }
+          }
+          const open = all.filter(
+            (r) => String(r.github_issue_state ?? "") !== "CLOSED",
+          );
+
+          // priority bucket 別 queue index を category_order, id で安定 sort
+          const buckets: Record<string, Array<Record<string, unknown>>> = {
+            high: [],
+            medium: [],
+            low: [],
+          };
+          for (const r of open) {
+            const p = String(r.priority ?? "medium").toLowerCase();
+            const tier = p === "high" || p === "urgent"
+              ? "high"
+              : p === "low"
+              ? "low"
+              : "medium";
+            buckets[tier].push(r);
+          }
+          for (const tier of Object.keys(buckets)) {
+            buckets[tier].sort((a, b) => {
+              const oa = Number(a.category_order ?? 999);
+              const ob = Number(b.category_order ?? 999);
+              if (oa !== ob) return oa - ob;
+              return String(a.id).localeCompare(String(b.id));
+            });
+          }
+
+          // queue index に基づき stagger 配置
+          const updates: Array<{
+            id: string;
+            start_date: string;
+            end_date: string;
+            tier: "high" | "medium" | "low";
+            stagger_days: number;
+          }> = [];
+          for (const tier of ["high", "medium", "low"] as const) {
+            const tasks = buckets[tier];
+            const offDays = offset[tier];
+            const durDays = duration[tier];
+            const par = parallel[tier];
+            for (let i = 0; i < tasks.length; i++) {
+              const t = tasks[i];
+              const stagger = Math.floor(i / par); // par 件並列、par 超で 1 日ずらす
+              const start = addDays(today, offDays + stagger);
+              const end = addDays(start, durDays);
+              updates.push({
+                id: String(t.id),
+                start_date: fmt(start),
+                end_date: fmt(end),
+                tier,
+                stagger_days: stagger,
+              });
+            }
+          }
+
+          // by_priority サマリ + sample 構築
+          const byPrio: Record<
+            string,
+            { count: number; first_start: string; last_end: string }
+          > = {};
+          for (const u of updates) {
+            const cur = byPrio[u.tier] ?? {
+              count: 0,
+              first_start: u.start_date,
+              last_end: u.end_date,
+            };
+            cur.count += 1;
+            if (u.start_date < cur.first_start) cur.first_start = u.start_date;
+            if (u.end_date > cur.last_end) cur.last_end = u.end_date;
+            byPrio[u.tier] = cur;
+          }
+          const sample = updates.slice(0, 10);
+
+          if (dryRun) {
+            return json({
+              success: true,
+              dry_run: true,
+              total_open: open.length,
+              total_skipped_completed: all.length - open.length,
+              would_update: updates.length,
+              by_priority: byPrio,
+              sample,
+              today: fmt(today),
+              params: { offset, duration, parallel },
+            });
+          }
+
+          // apply: Supabase JS は bulk update (行ごと異なる値) が無いので chunk
+          // 並列化 (concurrency=10 で 1144 row ≒ 6 sec / curl 240s 内に収まる)
+          let updated = 0;
+          const errors: Array<{ id: string; error: string }> = [];
+          const concurrency = 10;
+          for (let i = 0; i < updates.length; i += concurrency) {
+            const batch = updates.slice(i, i + concurrency);
+            const results = await Promise.all(batch.map(async (u) => {
+              const { error } = await admin
+                .from("wbs_tasks")
+                .update({
+                  start_date: u.start_date,
+                  end_date: u.end_date,
+                  planned_start_date: u.start_date,
+                  planned_end_date: u.end_date,
+                })
+                .eq("id", u.id);
+              return { id: u.id, error: error?.message };
+            }));
+            for (const r of results) {
+              if (r.error) {
+                errors.push({ id: r.id, error: r.error });
+              } else {
+                updated += 1;
+              }
+            }
+          }
+
+          // monitoring_events に記録 (= scheduled task / GHA cron 監査用)
+          try {
+            await admin.from("monitoring_events").insert({
+              event_type: "wbs.reschedule_realistic",
+              severity: errors.length > 0 ? "warning" : "info",
+              metadata: {
+                total_open: open.length,
+                updated,
+                errors: errors.length,
+                by_priority: byPrio,
+                params: { offset, duration, parallel },
+                today: fmt(today),
+              },
+            });
+          } catch (_) {
+            // monitoring_events 未存在時は無視
+          }
+
+          return json({
+            success: errors.length === 0,
+            dry_run: false,
+            total_open: open.length,
+            updated,
+            errors_count: errors.length,
+            errors: errors.slice(0, 10),
+            by_priority: byPrio,
+            sample,
+            today: fmt(today),
+            params: { offset, duration, parallel },
+          });
+        }
         case "wbs.bulk_update": {
           // body: { updates: [{id, progress?, status?}, ...] }
           const updates = (body.updates as Array<Record<string, unknown>>) ??
@@ -6203,7 +6773,7 @@ serve(async (req) => {
         }
         case "wbs.add_task": {
           // body: { category, title, instance, owner_instance?, description?,
-          //        priority?, end_date?, planned_end_date?, milestone_code?,
+          //        priority?, end_date?, planned_start_date?, planned_end_date?, milestone_code?,
           //        github_issue_number?, github_issue_url?, github_issue_state?,
           //        github_issue_labels? }
           // PS#6 S23 (2026-04-21): instance を required 化 (ALL leak 防止)
@@ -6266,6 +6836,8 @@ serve(async (req) => {
             priority: String(body.priority ?? "medium"),
             start_date: body.start_date ?? null,
             end_date: body.end_date ?? null,
+            planned_start_date: body.planned_start_date ?? body.start_date ??
+              null,
             planned_end_date: body.planned_end_date ?? body.end_date ?? null,
             remaining_work: body.remaining_work ?? null,
             milestone_code: body.milestone_code ?? null,
@@ -6365,7 +6937,7 @@ serve(async (req) => {
           const nowIso = now.toISOString();
           const today = nowIso.slice(0, 10);
           const taskSelect =
-            "id, category, category_icon, category_order, title, description, instance, owner_instance, status, progress, start_date, end_date, planned_end_date, milestone_code, priority, remaining_work, recovery_plan, ai_review_status, created_at, updated_at, github_issue_number, github_issue_url, github_issue_state, github_issue_labels, github_issue_synced_at";
+            "id, category, category_icon, category_order, title, description, instance, owner_instance, status, progress, start_date, end_date, planned_start_date, planned_end_date, milestone_code, priority, remaining_work, recovery_plan, ai_review_status, created_at, updated_at, github_issue_number, github_issue_url, github_issue_state, github_issue_labels, github_issue_synced_at";
           const allTasks = await fetchAllWbsTasks(admin, taskSelect);
           const tasksByIssue = new Map<
             number,
@@ -6475,6 +7047,8 @@ serve(async (req) => {
               priority: githubIssuePriority(labels),
               start_date: keeper?.start_date ?? today,
               end_date: keeper?.end_date ?? githubIssueDueDate(labels, now),
+              planned_start_date: keeper?.planned_start_date ??
+                keeper?.start_date ?? today,
               planned_end_date: keeper?.planned_end_date ?? keeper?.end_date ??
                 githubIssueDueDate(labels, now),
               remaining_work: isClosed
@@ -6899,11 +7473,13 @@ serve(async (req) => {
             true,
           );
           const taskSelect =
-            "id, category, category_order, title, status, progress, priority, end_date, planned_end_date, updated_at, instance, owner_instance, recovery_plan, github_issue_number, github_issue_url, github_issue_state, github_issue_synced_at";
+            "id, category, category_order, title, status, progress, priority, end_date, planned_start_date, planned_end_date, updated_at, instance, owner_instance, recovery_plan, github_issue_number, github_issue_url, github_issue_state, github_issue_synced_at";
           const { data, error } = await admin.from("wbs_tasks")
             .select(taskSelect)
             .in("status", ["pending", "in_progress", "blocked"]);
-          if (error) throw new Error(error.message);
+          if (error) {
+            throw new Error(error.message);
+          }
           const ownTaskFilter = filterClosedGithubIssueWbsTasks(
             [...(data ?? [])].filter((task) =>
               wbsTaskMatchesInstanceFilter(
@@ -7033,7 +7609,7 @@ serve(async (req) => {
         case "wbs.instance_workload": {
           // body: { instance?: string } 任意。全 instance の負荷と救援候補を返す。
           const taskSelect =
-            "id, category, category_order, title, status, progress, priority, end_date, planned_end_date, updated_at, instance, owner_instance, recovery_plan, github_issue_number, github_issue_url, github_issue_state, github_issue_synced_at";
+            "id, category, category_order, title, status, progress, priority, end_date, planned_start_date, planned_end_date, updated_at, instance, owner_instance, recovery_plan, github_issue_number, github_issue_url, github_issue_state, github_issue_synced_at";
           const { data, error } = await admin.from("wbs_tasks")
             .select(taskSelect)
             .in("status", ["pending", "in_progress", "blocked"]);
@@ -7087,7 +7663,9 @@ serve(async (req) => {
             .in("status", ["pending", "in_progress", "blocked"])
             .neq("priority", "completed")
             .limit(200);
-          if (error) throw new Error(error.message);
+          if (error) {
+            throw new Error(error.message);
+          }
           const otherTaskFilter = filterClosedGithubIssueWbsTasks(
             [...(otherTasks ?? [])].filter((task) =>
               !wbsTaskMatchesInstanceFilter(
@@ -7104,13 +7682,21 @@ serve(async (req) => {
             const cat = String(t.category ?? "");
             const title = String(t.title ?? "");
             // PS#1 専任 (Rule17)
-            if (cat.startsWith("rule17-")) return false;
+            if (cat.startsWith("rule17-")) {
+              return false;
+            }
             // PS#2 専任 (T-1 dispatch)
-            if (cat.startsWith("blog-") || title.includes("T-1")) return false;
+            if (cat.startsWith("blog-") || title.includes("T-1")) {
+              return false;
+            }
             // PS#5 専任 (urgent on-call)
-            if (t.priority === "high" && cat === "bug") return false;
+            if (t.priority === "high" && cat === "bug") {
+              return false;
+            }
             // IPO 専決 (CEO 固定)
-            if (cat === "business-ipo") return false;
+            if (cat === "business-ipo") {
+              return false;
+            }
             // 期限直前 (1 日切ってる) は元担当継続
             if (t.end_date) {
               const dueMs = new Date(String(t.end_date)).getTime();
@@ -7121,7 +7707,9 @@ serve(async (req) => {
             // 7 日以内に rebalance 済 = loop 防止
             if (t.last_rebalanced_at) {
               const lastMs = new Date(String(t.last_rebalanced_at)).getTime();
-              if (NOW - lastMs < 7 * 24 * HOUR) return false;
+              if (NOW - lastMs < 7 * 24 * HOUR) {
+                return false;
+              }
             }
             return true;
           });
@@ -7174,7 +7762,9 @@ serve(async (req) => {
             if (t.priority === "high") {
               score += 20;
               reasons.push("priority=high");
-            } else if (t.priority === "medium") score += 10;
+            } else if (t.priority === "medium") {
+              score += 10;
+            }
 
             return {
               id: t.id,
@@ -7193,7 +7783,9 @@ serve(async (req) => {
 
           // 5. score 高い順 sort + limit
           const candidates = scored
-            .filter((s) => s.stale_score > 0)
+            .filter((s) =>
+              s.stale_score > 0
+            )
             .sort((a, b) => b.stale_score - a.stale_score)
             .slice(0, limitN);
 
@@ -8073,6 +8665,10 @@ ${reportText ? `> ${reportText}` : ""}`,
       });
     }
 
+    if (action === "market_intel.analyze") {
+      return json(await buildMarketIntelReport(body));
+    }
+
     // ── Authenticated CRUD operations ────────────────────────────────────────
     const userId = await getUserId(req);
     if (!userId) return json({ error: "Unauthorized" }, 401);
@@ -8554,6 +9150,7 @@ ${reportText ? `> ${reportText}` : ""}`,
         const item = await addItem(admin, "rss_feed", userId, {
           url: body.url,
           title: body.title,
+          category: body.category ?? "購読",
         });
         return json({ success: true, feed: item });
       }
@@ -8934,6 +9531,7 @@ ${reportText ? `> ${reportText}` : ""}`,
             "rss.fetch",
             "rss.fetch_latest",
             "news.signal_rank",
+            "market_intel.analyze",
             "changelog.list",
             "changelog.create",
             "mindmap.list",

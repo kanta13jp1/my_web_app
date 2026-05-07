@@ -109,9 +109,49 @@ reactivation 手順:
 
 ---
 
+## Q2-Q3 Fleet Roadmap (2026-05-07〜2026-09-30)
+
+> **ソース**: `docs/STRATEGIC_INTELLIGENCE_2026Q2.md` — 5 NotebookLM 戦略系蒸留より導出 (= Win版#132 part 159).
+
+### Win Claude (architect) Q2-Q3 優先テーマ
+
+| 期限 | テーマ | Issue / 成果物 | 優先 |
+|------|--------|---------------|------|
+| 2026-05-30 | **Mobile presence 確立** (= Google I/O 攻勢前) | Issue #1495 設計 spec ship → Codex hand off | P0 |
+| 2026-06-30 | **Memory architecture 深化** | PreCompact hook (Issue #1564) + Agent SDK 移行検討 | P1 |
+| 2026-07-31 | **Competitive intelligence pipeline** | 月次 5 本蒸留 → fleet 戦略文書更新 (本 doc 改訂サイクル) | P1 |
+| 2026-09-30 | **MCP エコシステム固有機能深化** | claude mcp serve + SubagentStart/Stop hooks 活用 | P2 |
+
+### Win Codex (worker) Q2-Q3 優先テーマ
+
+| 期限 | テーマ | Issue / 成果物 | 優先 |
+|------|--------|---------------|------|
+| 2026-05-18 | **Codex in-app browser E2E 視覚検証** | Issue #1563 | P1 |
+| 2026-05-17 | **claude mcp serve エージェント統合** | Issue #1568 | P1 |
+| 2026-06-30 | **Karpathy Compile/Lint cycle 継続** | weekly wiki-compile + wiki-lint | P2 |
+| 2026-07-31 | **iOS/Android 自動配布 CI** | Issue #1495 実装 phase | P0 |
+
+### 12-month fleet 方向性 (2026 Q3-Q4)
+
+```
+現状 (Q2):  Win Claude (architect) + Win Codex (worker) = 2 active instance
+           + 30+ GHA cron workflow (並列性維持)
+
+Q3 検討:   モデル upgrade (claude-opus-4-7 GA → Sonnet 4.6 cost 最適化)
+           Agent SDK 移行 (tools-hub EF → native Agent orchestration)
+
+Q4 検討:   reactivation トリガー確認 (= メモリ制約解除 or 並列需要)
+           mobile (実機) UAT 専任 instance 復活候補 (= 旧スマホ版)
+```
+
+**reactivation criteria (変更なし)**: 上記「再起動条件」セクション参照.
+
+---
+
 ## 改訂履歴
 
 | 日付 | 変更 | 担当 |
 | --- | --- | --- |
 | 2026-04-28 | 初版 (10 Claude + 2 Codex = 12 スロット fleet manifest) | Win版#132 part 44 |
 | 2026-05-04 | **12 → 2 instance 制縮小** (= Win Claude + Win Codex / 旧 10 dormant) | Win版#132 part 130 |
+| 2026-05-07 | **Q2-Q3 fleet roadmap 追加** (= STRATEGIC_INTELLIGENCE_2026Q2.md 蒸留) | Win版#132 part 159 |

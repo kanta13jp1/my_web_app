@@ -1,0 +1,118 @@
+name: dev-cache-cleanup-weekly
+
+on:
+  schedule:
+    - cron: "0 17 * * 0" # Monday 02:00 JST
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: dev-cache-cleanup-weekly
+  cancel-in-progress: false
+
+jobs:
+  cleanup:
+    name: Validate dev cache cleanup
+    runs-on: windows-latest
+    timeout-minutes: 15
+
+    env:
+      ISSUE_NUMBER: "1984"
+      GH_TOKEN: ${{ github.token }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.38.x"
+          channel: stable
+          cache: true
+
+      - name: Dry-run dev cache cleanup
+        shell: pwsh
+        run: |
+          python scripts/dev_cache_cleanup.py `
+            --include-worktrees `
+            --json-out dev-cache-cleanup-dry-run.json
+
+      - name: Apply safe runner cleanup
+        shell: pwsh
+        run: |
+          python scripts/dev_cache_cleanup.py `
+            --include-worktrees `
+            --apply `
+            --json-out dev-cache-cleanup-apply.json
+
+      - name: Upload cleanup reports
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: dev-cache-cleanup-report
+          path: |
+            dev-cache-cleanup-dry-run.json
+            dev-cache-cleanup-apply.json
+          if-no-files-found: ignore
+
+      - name: Comment weekly report to Issue
+        if: always()
+        shell: pwsh
+        run: |
+          $summaryPath = "dev-cache-cleanup-apply.json"
+          if (-not (Test-Path $summaryPath)) {
+            $summaryPath = "dev-cache-cleanup-dry-run.json"
+          }
+
+          if (Test-Path $summaryPath) {
+            $summary = Get-Content -Raw -LiteralPath $summaryPath | ConvertFrom-Json
+            $mode = $summary.mode
+            $total = $summary.total
+            $planned = $summary.counts.planned
+            $success = $summary.counts.success
+            $skipped = $summary.counts.skipped
+            $failed = $summary.counts.failed
+            $estimated = $summary.estimated_reclaim_mb
+            $actual = $summary.actual_reclaim_mb
+          } else {
+            $mode = "failed-before-summary"
+            $total = "n/a"
+            $planned = "n/a"
+            $success = "n/a"
+            $skipped = "n/a"
+            $failed = "n/a"
+            $estimated = "n/a"
+            $actual = "n/a"
+          }
+
+          $body = @"
+          ## dev-cache-cleanup-weekly
+
+          | metric | value |
+          | --- | --- |
+          | mode | $mode |
+          | actions scanned | $total |
+          | planned | $planned |
+          | success | $success |
+          | skipped | $skipped |
+          | failed | $failed |
+          | estimated reclaim MB | $estimated |
+          | actual reclaim MB | $actual |
+          | run | $env:GITHUB_SERVER_URL/$env:GITHUB_REPOSITORY/actions/runs/$env:GITHUB_RUN_ID |
+
+          This validates scripts/dev_cache_cleanup.py on the hosted Windows runner. Local Windows app cleanup still runs from Codex/Claude sessions or a local scheduled task; GitHub Actions cannot reclaim local C: drive caches.
+          "@
+
+          Set-Content -LiteralPath dev-cache-cleanup-comment.md -Value $body -Encoding utf8
+          gh issue comment $env:ISSUE_NUMBER --repo $env:GITHUB_REPOSITORY --body-file dev-cache-cleanup-comment.md
