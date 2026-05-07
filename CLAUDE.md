@@ -33,6 +33,7 @@
 - [`docs/EDGE_FUNCTION_LIST.md`](docs/EDGE_FUNCTION_LIST.md) — EF 一覧
 - [`docs/DEVELOPMENT_ACHIEVEMENTS_FORMAT.md`](docs/DEVELOPMENT_ACHIEVEMENTS_FORMAT.md) — migration 命名 + seed 形式
 - [`docs/FLEET_2_INSTANCE_TRANSITION.md`](docs/FLEET_2_INSTANCE_TRANSITION.md) — 12→2 instance 移行ログ
+- [`docs/PROMPT_CACHING_OPUS47_COST_GUIDE.md`](docs/PROMPT_CACHING_OPUS47_COST_GUIDE.md) — Prompt Caching × Opus 4.7 (= 88% コスト削減 / Issue #1756)
 
 ## Facts
 

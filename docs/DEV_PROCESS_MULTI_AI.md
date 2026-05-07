@@ -495,6 +495,7 @@ case 'notion.sync_wbs': {
 - `docs/MULTI_INSTANCE_FLEET.md` — 10 Claude + 2 Codex の canonical roster
 - `docs/CODEX_WORKFLOW.md` — Codex#1/#2 の起動・push・handoff 手順
 - `docs/AI_FALLBACK_RUNBOOK.md` (PS#6 S26) — 開発ワークフロー別 fallback 手順
+- `docs/PROMPT_CACHING_OPUS47_COST_GUIDE.md` (Win版#132 part 177) — Prompt Caching × Opus 4.7 88% コスト削減戦略
 - `supabase/migrations/20260424210000_create_ai_circuit_breaker.sql` (PS#1 S26) — quota 状態集約テーブル
 | AI | 用途 | セットアップ状態 | アクセス方法 |
 |----|------|----------------|------------|
