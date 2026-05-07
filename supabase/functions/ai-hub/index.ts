@@ -28,6 +28,13 @@ import {
   parseOfflineSecureModePolicy,
   shouldBlockExternalProviderCall,
 } from "../_shared/offline_secure_mode_guard.ts";
+import {
+  getUniversityContentByFaculty,
+  getUniversityDepartmentList,
+  getUniversityFacultyList,
+  getUniversityProviderByDepartment,
+  UniversityActionError,
+} from "./university_faculty_actions.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -3426,6 +3433,26 @@ serve(async (req: Request) => {
         return json({ success: true, items: data ?? [] });
       }
 
+      case "university.faculty_list": {
+        const result = await getUniversityFacultyList(admin);
+        return json({ success: true, ...result });
+      }
+
+      case "university.department_list": {
+        const result = await getUniversityDepartmentList(admin, body);
+        return json({ success: true, ...result });
+      }
+
+      case "university.provider_by_department": {
+        const result = await getUniversityProviderByDepartment(admin, body);
+        return json({ success: true, ...result });
+      }
+
+      case "university.content_by_faculty": {
+        const result = await getUniversityContentByFaculty(admin, body);
+        return json({ success: true, ...result });
+      }
+
       case "university.upsert": {
         const { error } = await admin.from("ai_university_content").upsert(
           {
@@ -4823,6 +4850,9 @@ serve(async (req: Request) => {
         return json({ error: `Unknown action: ${action}` }, 400);
     }
   } catch (err) {
+    if (err instanceof UniversityActionError) {
+      return json({ error: err.message }, err.status);
+    }
     const message = err instanceof Error ? err.message : String(err);
     return json({ error: message }, 500);
   }

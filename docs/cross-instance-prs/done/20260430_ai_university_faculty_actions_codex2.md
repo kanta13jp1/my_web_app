@@ -6,6 +6,7 @@
 **優先度**: HIGH (= VSCode UI PR の前提)
 **期限**: 2026-05-04 (5 日)
 **親軸**: AI 大学拡張 + EF-FIRST + EF-CAP-50
+**完了**: Codex #1 Windows app / PR TBD / 2026-05-07 — 4 actions + Deno unit coverage
 
 ---
 
