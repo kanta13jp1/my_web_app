@@ -28684,3 +28684,54 @@ User 明示「5/14 trigger date / 推奨日」要望対応:
 ### Commit
 
 (本 commit) — Win Claude part 176 / sensitive 第 4 例 verify + Codex 11 件 hand-off doc.
+
+---
+
+## 2026-05-07 — Win版#132 part 177 / Issue #1756 Prompt Caching × Opus 4.7 cost guide ship
+
+### サマリ
+
+- **`docs/PROMPT_CACHING_OPUS47_COST_GUIDE.md` ship 完了** (= 298 lines / 12 sections / Issue #1756 NotebookLM `bc58b50b` 推奨 #14 / Win版担当 / P2).
+- 1M tier 88% コスト削減戦略 (= 月 $15,625 → $1,900 試算 / 2 instance × 50 turn × 月 25 日).
+- 4-block cache breakpoint (= tool 定義 / system prompt / docs hub / 直近 N turn).
+- 5min ephemeral vs 1h tier 選び分け + break-even 解析 + Anthropic SDK Python 実装例.
+- Anti-pattern 5 種 (= timestamp 冒頭 / tool shuffle / inject-rules.txt 動的 / inline edit 同 turn 参照 / memory date 注入).
+- Karpathy 4 cycle 統合 (= Compile cycle 1h cache 推奨) + NotebookLM ゼロトークン優先順.
+- KPI: cache hit rate >70% / avg cost ≤ \$0.50/turn / 月 ≤ \$200.
+
+### Pointer 追記
+
+- `CLAUDE.md` 1 行 (= 80 行 KPI 維持 / 62→63 行).
+- `docs/DEV_PROCESS_MULTI_AI.md` 関連 docs section に 1 行.
+
+### 累積 milestone
+
+- 106 part 連続 dogfood (= part 75 → 177 / 2 month +).
+- 17 part 連続 same-day (= cap_24part_v2 内 / 残 7 part).
+- NotebookLM `bc58b50b` 14 件中 1 件消化 (= cost optimization).
+
+### Pattern
+
+- 「Prompt Caching cost guide ship」pattern 第 1 例 (= Anthropic SDK + Karpathy 統合 spec).
+- 「NotebookLM 推奨 → Issue → quick win 30min spec ship」pattern dogfood.
+- 「empty commit + docs-only label 再トリガー → admin merge」pattern dogfood 第 N 例.
+
+### Philosophy Alignment
+
+| 原則 | ✅ | 根拠 |
+|------|----|------|
+| CEO 感 | ✅ | コスト管理判断を docs 化 / 全 instance 共通戦略 |
+| ミッション駆動 | ✅ | 月 $20 プランで Opus 4.7 1M 運用継続を担保 |
+| 優しい mentor | ✅ | Anti-pattern 5 種 + Anthropic SDK 実装例で具体化 |
+| 6 部署バランス | ✅ | finance + ops + dev 横断 |
+| 商品 = 価値 | ✅ | コスト最適化 = 個人開発者向け価値提供の前提 |
+| 資本 = 時間 | ✅ | cache 88% 削減 = 月 $13K = 13K 時間の future budget |
+| 資産 vs 負債 | ✅ | docs/PROMPT_CACHING_*.md = 永続資産 / pattern 集 |
+| KPI = 昨日の自分 | ✅ | cache hit rate >70% target 設定 |
+| IPO / ウェルビーイング | ✅ | コスト ceiling 設定でウェルビーイング担保 |
+
+**判定: 9/9 ✅** (= 7+/9 ゲート達成 / 完全達成)
+
+### Commit
+
+- PR #2138 (= admin squash merge / commit `0eb3f83370633b4ae80a3612ca7e682c0ea78067`)
