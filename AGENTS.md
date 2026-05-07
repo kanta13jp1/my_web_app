@@ -29,6 +29,10 @@ For NotebookLM-driven sessions, treat notebook
 `bc58b50b-5fc4-4840-9a62-b397d6d3b65a` as the current harness-engineering
 reference: Claude Code designs the environment, Codex executes scoped changes,
 and GitHub Actions proves the result.
+For notebook `1aced136-1352-4933-b727-478d3c35b360`, use
+`docs/CLAUDE_CODE_MASTERCLASS_AGENTIC_WORKFLOW.md` as the applied decision note;
+refresh NotebookLM auth before adding new hooks, skills, MCP servers, or agent
+lanes from that source.
 
 5. For NotebookLM-driven sessions, run the intake diff gate after confirming
    NotebookLM authentication:
