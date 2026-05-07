@@ -1,5 +1,10 @@
 # Cross-Instance PR: AI Tool Changelog Watch (Claude Code + Codex CLI 月次 fetch)
 
+**2026-05-07 Codex #1 closeout**: The monthly workflow, summarizer, Issue creation,
+and H-priority cross-instance draft bundle are implemented under the canonical
+Claude Code #1 + Codex #1 two-instance flow. Historical Codex#2 ownership in this
+packet is retained below only as archival context.
+
 **作成**: Win版#132 part 98 / 2026-04-30
 **FROM**: Win版 (User 要望 + AI_FLEET_SYNERGY 原則 #3 dogfood)
 **TO**: Codex#2 (GHA / EF / 自動化補助 territory)
