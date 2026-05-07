@@ -129,6 +129,7 @@ import '../pages/form_builder_page.dart';
 import '../pages/gift_registry_page.dart';
 import '../pages/growth_automation_controller_page.dart';
 import '../pages/knowledge_base_page.dart';
+import '../pages/knowledge_graph_page.dart';
 import '../pages/landing_ab_test_page.dart';
 import '../pages/loyalty_points_page.dart';
 import '../pages/meeting_manager_page.dart';
@@ -1854,6 +1855,23 @@ List<HomeToolEntry> buildHomeToolCatalog({
         'ドキュメント',
       ],
       onOpen: (context) => _pushPage(context, const KnowledgeBasePage()),
+    ),
+    HomeToolEntry(
+      id: 'knowledge-graph',
+      sectionId: 'knowledge',
+      title: 'Knowledge Graph RAG',
+      subtitle: 'Issues, WBS, docs, memory, and NotebookLM with citations',
+      icon: Icons.hub_outlined,
+      color: const Color(0xFF0F766E),
+      keywords: const <String>[
+        'knowledge graph',
+        'rag',
+        'citations',
+        'issues',
+        'wbs',
+        'notebooklm',
+      ],
+      onOpen: (context) => _pushPage(context, const KnowledgeGraphPage()),
     ),
     HomeToolEntry(
       id: 'semantic-search',

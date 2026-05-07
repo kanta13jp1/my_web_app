@@ -1,0 +1,116 @@
+name: Knowledge Graph Indexer Nightly
+
+on:
+  schedule:
+    - cron: "30 19 * * *" # 04:30 JST
+  workflow_dispatch:
+    inputs:
+      apply:
+        description: "Upsert records into Supabase when secrets are present"
+        required: false
+        default: "true"
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  index:
+    name: Build Knowledge Graph source records
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Resolve apply mode
+        id: mode
+        shell: bash
+        run: |
+          APPLY_INPUT="${{ inputs.apply }}"
+          if [ -z "$APPLY_INPUT" ]; then
+            APPLY_INPUT="true"
+          fi
+          if [ "$APPLY_INPUT" = "true" ] && [ -n "$SUPABASE_URL" ] && [ -n "$SUPABASE_SERVICE_ROLE_KEY" ]; then
+            echo "args=--apply" >> "$GITHUB_OUTPUT"
+            echo "apply=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "args=" >> "$GITHUB_OUTPUT"
+            echo "apply=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Run indexers
+        shell: bash
+        run: |
+          mkdir -p tmp/kg-indexer
+          python scripts/kg_index_github_issues.py \
+            --repo "$GITHUB_REPOSITORY" \
+            --limit 200 \
+            --output tmp/kg-indexer/github-issues.jsonl \
+            ${{ steps.mode.outputs.args }}
+          python scripts/kg_index_wbs_tasks.py \
+            --limit 200 \
+            --output tmp/kg-indexer/wbs.jsonl \
+            ${{ steps.mode.outputs.args }}
+          python scripts/kg_index_docs.py \
+            --limit 500 \
+            --output tmp/kg-indexer/docs.jsonl \
+            ${{ steps.mode.outputs.args }}
+          python scripts/kg_index_memory_vault.py \
+            --limit 200 \
+            --output tmp/kg-indexer/memory.jsonl \
+            ${{ steps.mode.outputs.args }}
+          python scripts/kg_index_notebooklm_intake.py \
+            --limit 200 \
+            --output tmp/kg-indexer/notebooklm.jsonl \
+            ${{ steps.mode.outputs.args }}
+
+      - name: Upload indexer artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: kg-indexer-records
+          path: tmp/kg-indexer/
+          if-no-files-found: warn
+
+      - name: Open or update failure issue
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE_TITLE: "[Schedule監視] kg-indexer-nightly failure"
+        shell: bash
+        run: |
+          BODY="$(mktemp)"
+          {
+            echo "Knowledge Graph nightly indexer failed."
+            echo ""
+            echo "- Workflow: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+            echo "- Apply mode: ${{ steps.mode.outputs.apply }}"
+            echo "- Commit: $GITHUB_SHA"
+          } > "$BODY"
+          EXISTING="$(gh issue list --repo "$GITHUB_REPOSITORY" --state open --search "$ISSUE_TITLE in:title" --json number --jq '.[0].number // empty')"
+          if [ -n "$EXISTING" ]; then
+            gh issue comment "$EXISTING" --repo "$GITHUB_REPOSITORY" --body-file "$BODY"
+          else
+            gh issue create --repo "$GITHUB_REPOSITORY" --title "$ISSUE_TITLE" --body-file "$BODY" --label bug --label automation --label priority:high
+          fi
+
+      - name: Job Summary
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo "## Knowledge Graph Indexer"
+            echo ""
+            echo "| Item | Value |"
+            echo "|---|---|"
+            echo "| Apply | ${{ steps.mode.outputs.apply }} |"
+            echo "| Artifact | kg-indexer-records |"
+            echo ""
+            find tmp/kg-indexer -maxdepth 1 -type f -name '*.jsonl' -print0 2>/dev/null | while IFS= read -r -d '' file; do
+              echo "- $(basename "$file"): $(wc -l < "$file") records"
+            done
+          } >> "$GITHUB_STEP_SUMMARY"
