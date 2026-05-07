@@ -148,19 +148,27 @@ deploy-prod EF 数 ≤ 50 維持. hub 構成: `core / growth / ai / admin / app 
 
 ### `[COMPACTION-RESUME]`
 
-(PS#3 S26 教訓 + part 175 update) summary 継続セッションは短時間で終了 — 90 min 以内で commit + roadmap + memory + 終了. 新規大規模タスク詰込禁止.
+(PS#3 S26 教訓 + part 175 update v2) summary 継続セッションは短時間で終了 — 90 min 以内で commit + roadmap + memory + 終了. 新規大規模タスク詰込禁止.
 
-**同日 part cap (= part 175 緩和 2026-05-07)**:
+**同日 part cap 履歴 (= part 175 緩和 v2 / 2026-05-07)**:
 
-- 旧 cap: **12 part 強制終了** (= part 173 確立)
-- 新 cap: **18 part 強制終了** (= 12 → 18 緩和)
-- 緩和根拠:
-  - Anthropic 大型 update (2026-05-07): Claude Code 5h レート 2x / Pro/Max peak 撤廃 / Opus API 大幅引上げ
-  - empirical buffer: 14 part で `wbs.priority_for_instance` MCP tool 不在観測 / 14-18 = soft warning zone / 18+ = hard stop
-- override pattern (= part 175 確立):
-  - 12-18 part = 通常 work 可 (= STOP signal log のみ)
-  - 18+ part = user 明示宣言 ("override 承認") 必須 / minimum scope のみ
-  - 自己判断 18+ proceed 禁止 (= 「自己 cap rule strict adherence」discipline 維持)
+| 版 | cap | 確立 part | note |
+|---|---|---|---|
+| v0 | 12 part 強制終了 | part 173 (= 旧) | sustainability 重視 / part 173-174 dogfood pattern |
+| v1 | 18 part 強制終了 | part 175 (= shadow) | 一時緩和 (= user revert で実質 ignore) |
+| **v2 (= 現行)** | **24 part 強制終了** | **part 175** | Anthropic rate 大幅緩和 + 思い切った buffer |
+
+**緩和根拠 (v2)**:
+
+- Anthropic 大型 update (2026-05-07): Claude Code 5h レート 2x / Pro/Max peak 完全撤廃 / Opus API 大幅引上げ / SpaceX Colossus 1 単独取得 (= 300MW + 22 万 GPU)
+- 14 part で MCP 劣化観測も session 全体は機能継続 → 24 part hard stop で 10 part buffer 残
+
+**override pattern (現行 v2)**:
+
+- 1-23 part = 通常 work 可 (= STOP signal log は 12+ で参考表示 / 強制終了 不要)
+- 24 part = 強制終了 default (= memory + roadmap + admin merge minimum)
+- 25+ part = user 明示宣言 ("override 承認") 必須 / minimum scope のみ
+- 自己判断 25+ proceed 禁止 (= 「自己 cap rule strict adherence」discipline 維持)
 
 ### `[DYNAMIC-CLAIM]`
 
