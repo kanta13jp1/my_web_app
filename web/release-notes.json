@@ -2,7 +2,7 @@
   "current": {
     "build": "1",
     "category": "release",
-    "date": "2026-05-06",
+    "date": "2026-05-07",
     "links": [
       {
         "title": "GitHub Release v1.0.0",
@@ -13,7 +13,7 @@
     "summary": "Release 1.0.0",
     "version": "1.0.0"
   },
-  "generatedAt": "2026-05-06T00:00:00Z",
+  "generatedAt": "2026-05-07T00:00:00Z",
   "schemaVersion": 1,
   "source": {
     "aiToolWatch": "docs/ai-tool-watch/latest-report.json",
@@ -31,6 +31,123 @@
         "fix"
       ],
       "changes": [
+        {
+          "category": "feature",
+          "id": "pr-2124",
+          "links": [
+            {
+              "title": "PR #2124",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/2124"
+            }
+          ],
+          "mergedAt": "2026-05-07T02:58:55Z",
+          "summary": "#2124 docs(rules): [COMPACTION-RESUME] 同日 part cap 12 → 18 緩和 (part 175)"
+        },
+        {
+          "category": "feature",
+          "id": "pr-2120",
+          "links": [
+            {
+              "title": "PR #2120",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/2120"
+            }
+          ],
+          "mergedAt": "2026-05-07T02:24:44Z",
+          "summary": "#2120 feat(mobile): generate app icon and splash assets (#1495)"
+        },
+        {
+          "category": "feature",
+          "id": "pr-2117",
+          "links": [
+            {
+              "title": "PR #2117",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/2117"
+            }
+          ],
+          "mergedAt": "2026-05-07T01:41:24Z",
+          "summary": "#2117 feat(meal-log): MVP 食事ログ統合 (#1665)"
+        },
+        {
+          "category": "feature",
+          "id": "pr-2114",
+          "links": [
+            {
+              "title": "PR #2114",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/2114"
+            }
+          ],
+          "mergedAt": "2026-05-07T01:09:01Z",
+          "summary": "#2114 [codex] #772 RAG Knowledge Graph Phase 1"
+        },
+        {
+          "category": "feature",
+          "id": "pr-2113",
+          "links": [
+            {
+              "title": "PR #2113",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/2113"
+            }
+          ],
+          "mergedAt": "2026-05-07T00:43:16Z",
+          "summary": "#2113 docs(raw): ingest Codex × NotebookLM integration spec v1.0 → jibun-master-brain"
+        },
+        {
+          "category": "feature",
+          "id": "pr-2112",
+          "links": [
+            {
+              "title": "PR #2112",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/2112"
+            }
+          ],
+          "mergedAt": "2026-05-07T00:27:03Z",
+          "summary": "#2112 docs(roadmap): part 175 — user override 明示 第 1 例 / STOP signal 第 6 / 14 part"
+        },
+        {
+          "category": "feature",
+          "id": "pr-2111",
+          "links": [
+            {
+              "title": "PR #2111",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/2111"
+            }
+          ],
+          "mergedAt": "2026-05-07T00:09:19Z",
+          "summary": "#2111 docs(roadmap): part 174 — 自己 cap rule 強制適用 / STOP signal 第 5 / forced-stop"
+        },
+        {
+          "category": "automation",
+          "id": "pr-2110",
+          "links": [
+            {
+              "title": "PR #2110",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/2110"
+            }
+          ],
+          "mergedAt": "2026-05-07T00:01:54Z",
+          "summary": "#2110 [part 158-b 振分] ci: add daily-report freshness monitor (#1699)"
+        },
+        {
+          "category": "feature",
+          "id": "pr-2108",
+          "links": [
+            {
+              "title": "PR #2108",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/2108"
+            }
+          ],
+          "mergedAt": "2026-05-06T23:40:46Z",
+          "summary": "#2108 feat(mobile): add privacy policy route (#1495)"
+        },
         {
           "category": "automation",
           "id": "pr-2107",
@@ -303,126 +420,9 @@
           ],
           "mergedAt": "2026-05-06T17:05:22Z",
           "summary": "#2084 feat(hygiene+mobile): part 159 — heavy compress always-on + #1495 mobile spec"
-        },
-        {
-          "category": "docs",
-          "id": "pr-2083",
-          "links": [
-            {
-              "title": "PR #2083",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/2083"
-            }
-          ],
-          "mergedAt": "2026-05-06T16:45:13Z",
-          "summary": "#2083 feat(fleet): Q2 strategic intelligence + fleet roadmap for Issue #1704"
-        },
-        {
-          "category": "fix",
-          "id": "pr-2078",
-          "links": [
-            {
-              "title": "PR #2078",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/2078"
-            }
-          ],
-          "mergedAt": "2026-05-06T16:35:43Z",
-          "summary": "#2078 fix(wbs): make gantt controls readable"
-        },
-        {
-          "category": "feature",
-          "id": "pr-2082",
-          "links": [
-            {
-              "title": "PR #2082",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/2082"
-            }
-          ],
-          "mergedAt": "2026-05-06T16:34:00Z",
-          "summary": "#2082 docs(daily-report): Philosophy Alignment for Win#132 part 158-b"
-        },
-        {
-          "category": "feature",
-          "id": "pr-2077",
-          "links": [
-            {
-              "title": "PR #2077",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/2077"
-            }
-          ],
-          "mergedAt": "2026-05-06T16:24:56Z",
-          "summary": "#2077 docs(hygiene): part 158-b — memory hook always-on cheap ops + SessionEnd hook"
-        },
-        {
-          "category": "fix",
-          "id": "pr-2076",
-          "links": [
-            {
-              "title": "PR #2076",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/2076"
-            }
-          ],
-          "mergedAt": "2026-05-06T11:33:34Z",
-          "summary": "#2076 fix(wbs): clarify gantt dates and timeline readability"
-        },
-        {
-          "category": "fix",
-          "id": "pr-2075",
-          "links": [
-            {
-              "title": "PR #2075",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/2075"
-            }
-          ],
-          "mergedAt": "2026-05-06T11:21:17Z",
-          "summary": "#2075 fix(wbs): sync planned_start_date in reschedule_realistic + raise disk-cleanup report threshold"
-        },
-        {
-          "category": "feature",
-          "id": "pr-2074",
-          "links": [
-            {
-              "title": "PR #2074",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/2074"
-            }
-          ],
-          "mergedAt": "2026-05-06T10:39:27Z",
-          "summary": "#2074 docs(roadmap): part 157 — WBS auto-reschedule + UI 改善"
-        },
-        {
-          "category": "fix",
-          "id": "pr-2073",
-          "links": [
-            {
-              "title": "PR #2073",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/2073"
-            }
-          ],
-          "mergedAt": "2026-05-06T10:32:59Z",
-          "summary": "#2073 fix(wbs): make project gantt timeline scroll correctly"
-        },
-        {
-          "category": "fix",
-          "id": "pr-2072",
-          "links": [
-            {
-              "title": "PR #2072",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/2072"
-            }
-          ],
-          "mergedAt": "2026-05-06T09:59:35Z",
-          "summary": "#2072 fix(wbs): parallelize reschedule_realistic + bump curl timeout"
         }
       ],
-      "date": "2026-05-06",
+      "date": "2026-05-07",
       "extensions": {
         "aiToolWatch": {
           "changedSourceCount": 3,

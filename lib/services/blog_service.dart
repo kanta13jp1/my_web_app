@@ -56,6 +56,7 @@ class BlogService {
     String? content,
     List<String>? targetPlatforms,
     List<String>? tags,
+    String? status,
     String? notes,
   }) async {
     final params = <String, dynamic>{'id': id};
@@ -63,6 +64,7 @@ class BlogService {
     if (content != null) params['content'] = content;
     if (targetPlatforms != null) params['target_platforms'] = targetPlatforms;
     if (tags != null) params['tags'] = tags;
+    if (status != null) params['status'] = status;
     if (notes != null) params['notes'] = notes;
     await _invokeBlogAction('blog.update_post', params);
   }
@@ -83,8 +85,7 @@ class BlogService {
     return _invokeBlogAction('blog.sync_engagement', {});
   }
 
-  // ── Qiita コメント返信 ──────────────────────────────────────────
-
+  // ── Qiita コメント返信 (item_id = Qiita 記事 ID) ──────────────
   Future<void> qiitaCommentPost({
     required String articleId,
     required String body,
@@ -95,8 +96,12 @@ class BlogService {
     });
   }
 
-  // ── 訂正承認 ────────────────────────────────────────────────────
+  // ── Qiita 記事本文取得 ────────────────────────────────────────
+  Future<Map<String, dynamic>> qiitaGetItem(String itemId) async {
+    return _invokeBlogAction('blog.qiita_get_item', {'item_id': itemId});
+  }
 
+  // ── 訂正承認 ────────────────────────────────────────────────────
   Future<void> qiitaUpdate({
     required String articleId,
     required String title,
@@ -115,9 +120,23 @@ class BlogService {
     final res = await _client
         .from('blog_posts')
         .select(
-          'id, title, content, status, target_platforms, notes, created_at, updated_at',
+          'id, title, content, status, target_platforms, tags, notes, created_at, updated_at',
         )
         .eq('id', id)
+        .maybeSingle();
+    return res;
+  }
+
+  // ── blog_posts slug 単件取得 (公開記事閲覧用) ─────────────────────
+
+  Future<Map<String, dynamic>?> fetchPostBySlug(String slug) async {
+    final res = await _client
+        .from('blog_posts')
+        .select(
+          'id, slug, title, content, excerpt, tags, posted_at, published_at, target_platforms, url, cover_image_url',
+        )
+        .eq('slug', slug)
+        .eq('status', 'posted')
         .maybeSingle();
     return res;
   }
@@ -155,5 +174,14 @@ class BlogService {
     await _client
         .from('blog_corrections')
         .update({'approved': false}).eq('id', correctionId);
+  }
+
+  // ── Draft health check ───────────────────────────────────────────
+
+  Future<List<Map<String, dynamic>>> fetchStaleDrafts() async {
+    return _invokeBlogAction(
+      'blog.draft_health_check',
+      {},
+    ).then((r) => List<Map<String, dynamic>>.from(r['stale'] as List? ?? []));
   }
 }

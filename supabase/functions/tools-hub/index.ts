@@ -1507,6 +1507,36 @@ type RankedNewsItem = RssNewsItem & {
   verification_warning: string;
 };
 
+type MarketIntelWatchItem = {
+  name: string;
+  keywords: string[];
+};
+
+type MarketIntelEvidence = {
+  title: string;
+  url: string;
+  source: string;
+  published_at: string;
+  signal_score: number;
+  confidence: string;
+};
+
+type MarketIntelSignal = {
+  id: string;
+  signal: string;
+  headline: string;
+  themes: string[];
+  watchlist_matches: string[];
+  evidence: MarketIntelEvidence[];
+  evidence_count: number;
+  source_count: number;
+  confidence: "high" | "medium" | "low";
+  uncertainty: string;
+  risk_note: string;
+  what_to_watch_next: string[];
+  paper_decision_log: Record<string, unknown>;
+};
+
 function decodeXmlEntities(value: string): string {
   return value
     .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1")
@@ -1794,6 +1824,299 @@ async function fetchLatestNewsItems(body: Record<string, unknown>): Promise<{
     source_count: feeds.length,
     items: normalizedItems,
     errors,
+  };
+}
+
+const MARKET_INTEL_DISCLAIMER =
+  "This is market research support, not investment advice. It never places trades, never recommends buy/sell orders, and requires human review before any decision.";
+
+function defaultMarketIntelFeeds(): RssFeedInput[] {
+  return [
+    {
+      title: "Google News: AI markets",
+      url:
+        "https://news.google.com/rss/search?q=AI%20market%20software%20startup&hl=en-US&gl=US&ceid=US:en",
+      category: "AI",
+    },
+    {
+      title: "Google News: fintech",
+      url:
+        "https://news.google.com/rss/search?q=fintech%20market%20intelligence%20software&hl=en-US&gl=US&ceid=US:en",
+      category: "FinTech",
+    },
+    {
+      title: "ITmedia AI+",
+      url: "https://rss.itmedia.co.jp/rss/2.0/aiplus.xml",
+      category: "AI",
+    },
+    {
+      title: "CNET Japan",
+      url: "http://feed.japan.cnet.com/rss/index.rdf",
+      category: "Technology",
+    },
+  ];
+}
+
+function defaultMarketIntelWatchlist(): MarketIntelWatchItem[] {
+  return [
+    {
+      name: "AI coding tools",
+      keywords: [
+        "Claude Code",
+        "Codex",
+        "Cursor",
+        "Gemini Code Assist",
+        "Devin",
+      ],
+    },
+    {
+      name: "AI infrastructure",
+      keywords: ["OpenAI", "Anthropic", "Google", "Microsoft", "Nvidia"],
+    },
+    {
+      name: "Financial terminals",
+      keywords: ["Bloomberg", "FactSet", "Refinitiv", "Koyfin", "Sentieo"],
+    },
+  ];
+}
+
+function normalizeMarketIntelWatchlist(
+  value: unknown,
+): MarketIntelWatchItem[] {
+  const rawItems = Array.isArray(value) ? value : [];
+  const parsed: MarketIntelWatchItem[] = [];
+  for (const raw of rawItems) {
+    if (typeof raw === "string") {
+      const name = raw.trim();
+      if (name) parsed.push({ name, keywords: [name] });
+      continue;
+    }
+    const item = asRecord(raw);
+    if (!item) continue;
+    const name = String(item.name ?? item.symbol ?? item.company ?? "").trim();
+    if (!name) continue;
+    const keywords = stringArrayFromUnknown(item.keywords, [name]);
+    parsed.push({ name, keywords: keywords.length ? keywords : [name] });
+  }
+  return (parsed.length ? parsed : defaultMarketIntelWatchlist()).slice(0, 24);
+}
+
+function normalizeMarketIntelThemes(value: unknown): string[] {
+  const themes = stringArrayFromUnknown(value, [
+    "AI automation",
+    "developer tooling",
+    "fintech disruption",
+    "pricing pressure",
+    "enterprise adoption",
+    "risk and regulation",
+  ]);
+  return themes.slice(0, 16);
+}
+
+function matchMarketIntelTerms(
+  text: string,
+  watchlist: MarketIntelWatchItem[],
+): string[] {
+  const lower = text.toLowerCase();
+  return watchlist
+    .filter((item) =>
+      [item.name, ...item.keywords].some((keyword) =>
+        lower.includes(keyword.toLowerCase())
+      )
+    )
+    .map((item) => item.name);
+}
+
+function matchMarketIntelThemes(text: string, themes: string[]): string[] {
+  const lower = text.toLowerCase();
+  const matched = themes.filter((theme) =>
+    theme.split(/\s+/).some((part) =>
+      part.length >= 4 && lower.includes(part.toLowerCase())
+    )
+  );
+  return matched.length ? matched : ["general market signal"];
+}
+
+function marketIntelClusterKey(item: RankedNewsItem): string {
+  const words = item.title
+    .toLowerCase()
+    .replace(/[^\p{Letter}\p{Number}]+/gu, " ")
+    .split(/\s+/)
+    .filter((word) => word.length >= 4)
+    .slice(0, 10);
+  return words.join("-") || item.cluster_key;
+}
+
+function sourceHost(url: string): string {
+  try {
+    return new URL(url).hostname.replace(/^www\./, "");
+  } catch {
+    return url;
+  }
+}
+
+function marketIntelConfidence(
+  score: number,
+  sourceCount: number,
+): "high" | "medium" | "low" {
+  if (sourceCount >= 2 && score >= 76) return "high";
+  if (sourceCount >= 2 || score >= 58) return "medium";
+  return "low";
+}
+
+function buildMarketIntelSignal(
+  clusterKey: string,
+  items: RankedNewsItem[],
+  watchlist: MarketIntelWatchItem[],
+  themes: string[],
+): MarketIntelSignal {
+  const ranked = [...items].sort((a, b) => b.signal_score - a.signal_score);
+  const lead = ranked[0];
+  const text = ranked.map((item) => `${item.title} ${item.summary}`).join(" ");
+  const evidence = ranked.slice(0, 6).map((item) => ({
+    title: item.title,
+    url: item.url,
+    source: item.source,
+    published_at: item.published_at,
+    signal_score: item.signal_score,
+    confidence: item.confidence,
+  }));
+  const sourceCount = new Set(
+    evidence.map((item) => item.source || sourceHost(item.url)),
+  ).size;
+  const watchlistMatches = matchMarketIntelTerms(text, watchlist);
+  const themeMatches = matchMarketIntelThemes(text, themes);
+  const score = Math.min(
+    100,
+    lead.signal_score +
+      Math.min(12, (sourceCount - 1) * 6) +
+      Math.min(10, watchlistMatches.length * 4),
+  );
+  const confidence = marketIntelConfidence(score, sourceCount);
+  const singleSource = sourceCount < 2;
+  const uncertainty = singleSource
+    ? "Single-source signal. Treat it as a research prompt until another independent source confirms it."
+    : "Multiple sources are present, but timing, incentives, and market reaction still need human review.";
+  const riskNote = [
+    singleSource ? "single-source claim" : "multi-source but unverified claim",
+    "no live price confirmation",
+    "no automated trading action",
+  ].join("; ");
+  return {
+    id: `market_${stableNewsHash(clusterKey)}`,
+    signal: lead.title,
+    headline: lead.title,
+    themes: themeMatches,
+    watchlist_matches: watchlistMatches,
+    evidence,
+    evidence_count: evidence.length,
+    source_count: sourceCount,
+    confidence,
+    uncertainty,
+    risk_note: riskNote,
+    what_to_watch_next: [
+      "Check official company or regulator source before acting.",
+      "Compare the news timestamp with price, volume, and peer movement.",
+      "Write a paper decision entry before any real-money decision.",
+    ],
+    paper_decision_log: {
+      status: "research_only",
+      action_allowed: "paper_decision_log",
+      human_approval_required: true,
+      auto_trade_allowed: false,
+      invalidate_if: singleSource
+        ? "No second source appears within the review window."
+        : "Primary evidence conflicts with later official source.",
+    },
+  };
+}
+
+function buildMarketIntelSignals(
+  items: RankedNewsItem[],
+  watchlist: MarketIntelWatchItem[],
+  themes: string[],
+  limit: number,
+): MarketIntelSignal[] {
+  const groups = new Map<string, RankedNewsItem[]>();
+  for (const item of items) {
+    const key = marketIntelClusterKey(item);
+    const current = groups.get(key) ?? [];
+    current.push(item);
+    groups.set(key, current);
+  }
+  return [...groups.entries()]
+    .map(([key, group]) =>
+      buildMarketIntelSignal(key, group, watchlist, themes)
+    )
+    .sort((a, b) => {
+      const confidenceRank = { high: 3, medium: 2, low: 1 };
+      const confidenceCmp = confidenceRank[b.confidence] -
+        confidenceRank[a.confidence];
+      if (confidenceCmp !== 0) return confidenceCmp;
+      return b.source_count - a.source_count ||
+        b.evidence[0].signal_score - a.evidence[0].signal_score;
+    })
+    .slice(0, Math.max(1, Math.min(50, limit)));
+}
+
+async function buildMarketIntelReport(
+  body: Record<string, unknown>,
+): Promise<Record<string, unknown>> {
+  const watchlist = normalizeMarketIntelWatchlist(body.watchlist);
+  const themes = normalizeMarketIntelThemes(body.themes);
+  const signalLimit = Math.max(
+    1,
+    Math.min(30, Number(body.signal_limit ?? body.limit ?? 12) || 12),
+  );
+  const fetchedAt = new Date().toISOString();
+  let items: RankedNewsItem[] = [];
+  let sourceCount = 0;
+  let errors: Array<{ source: string; url: string; error: string }> = [];
+
+  if (Array.isArray(body.items) && body.items.length > 0) {
+    items = rankNewsSignals(body.items, Math.max(100, signalLimit * 4));
+    sourceCount = new Set(items.map((item) => item.source)).size;
+  } else {
+    const feeds = normalizeRssFeedInputs(body.feeds);
+    const result = await fetchLatestNewsItems({
+      ...body,
+      feeds: feeds.length ? feeds : defaultMarketIntelFeeds(),
+      per_feed_limit: Number(body.per_feed_limit ?? 10),
+      limit: Number(body.news_limit ?? 120),
+    });
+    items = result.items;
+    sourceCount = result.source_count;
+    errors = result.errors;
+  }
+
+  const signals = buildMarketIntelSignals(
+    items,
+    watchlist,
+    themes,
+    signalLimit,
+  );
+  return {
+    success: true,
+    generated_at: fetchedAt,
+    fetched_at: fetchedAt,
+    disclaimer: MARKET_INTEL_DISCLAIMER,
+    guardrails: {
+      no_investment_advice: true,
+      auto_trading_enabled: false,
+      human_approval_required: true,
+      strong_single_source_claims_blocked: true,
+    },
+    watchlist,
+    themes,
+    signals,
+    audit: {
+      generated_by: "tools-hub.market_intel.analyze",
+      model: "market-intel-heuristic-v1",
+      source_count: sourceCount,
+      item_count: items.length,
+      signal_count: signals.length,
+      errors,
+    },
   };
 }
 
@@ -5743,7 +6066,7 @@ serve(async (req) => {
             "id, category, category_icon, category_order, title, description, instance, owner_instance, status, progress, start_date, end_date, planned_start_date, planned_end_date, milestone_code, priority, remaining_work, updated_at, github_issue_number, github_issue_url, github_issue_state, github_issue_labels, github_issue_synced_at";
           const pageSize = 1000;
           const allTasks: Array<Record<string, unknown>> = [];
-          for (let offset = 0; ; offset += pageSize) {
+          for (let offset = 0;; offset += pageSize) {
             let q = admin.from("wbs_tasks").select(taskSelect);
             if (status) q = q.eq("status", status);
             if (updatedSince) q = q.gte("updated_at", updatedSince);
@@ -6253,7 +6576,9 @@ serve(async (req) => {
                 {
                   success: false,
                   error:
-                    `wbs.reschedule_realistic scanned >= ${pageSize * maxPages} ` +
+                    `wbs.reschedule_realistic scanned >= ${
+                      pageSize * maxPages
+                    } ` +
                     "rows; increase pagination cap.",
                 },
                 200,
@@ -6274,7 +6599,9 @@ serve(async (req) => {
             const p = String(r.priority ?? "medium").toLowerCase();
             const tier = p === "high" || p === "urgent"
               ? "high"
-              : p === "low" ? "low" : "medium";
+              : p === "low"
+              ? "low"
+              : "medium";
             buckets[tier].push(r);
           }
           for (const tier of Object.keys(buckets)) {
@@ -7150,7 +7477,9 @@ serve(async (req) => {
           const { data, error } = await admin.from("wbs_tasks")
             .select(taskSelect)
             .in("status", ["pending", "in_progress", "blocked"]);
-          if (error) throw new Error(error.message);
+          if (error) {
+            throw new Error(error.message);
+          }
           const ownTaskFilter = filterClosedGithubIssueWbsTasks(
             [...(data ?? [])].filter((task) =>
               wbsTaskMatchesInstanceFilter(
@@ -7334,7 +7663,9 @@ serve(async (req) => {
             .in("status", ["pending", "in_progress", "blocked"])
             .neq("priority", "completed")
             .limit(200);
-          if (error) throw new Error(error.message);
+          if (error) {
+            throw new Error(error.message);
+          }
           const otherTaskFilter = filterClosedGithubIssueWbsTasks(
             [...(otherTasks ?? [])].filter((task) =>
               !wbsTaskMatchesInstanceFilter(
@@ -7351,13 +7682,21 @@ serve(async (req) => {
             const cat = String(t.category ?? "");
             const title = String(t.title ?? "");
             // PS#1 専任 (Rule17)
-            if (cat.startsWith("rule17-")) return false;
+            if (cat.startsWith("rule17-")) {
+              return false;
+            }
             // PS#2 専任 (T-1 dispatch)
-            if (cat.startsWith("blog-") || title.includes("T-1")) return false;
+            if (cat.startsWith("blog-") || title.includes("T-1")) {
+              return false;
+            }
             // PS#5 専任 (urgent on-call)
-            if (t.priority === "high" && cat === "bug") return false;
+            if (t.priority === "high" && cat === "bug") {
+              return false;
+            }
             // IPO 専決 (CEO 固定)
-            if (cat === "business-ipo") return false;
+            if (cat === "business-ipo") {
+              return false;
+            }
             // 期限直前 (1 日切ってる) は元担当継続
             if (t.end_date) {
               const dueMs = new Date(String(t.end_date)).getTime();
@@ -7368,7 +7707,9 @@ serve(async (req) => {
             // 7 日以内に rebalance 済 = loop 防止
             if (t.last_rebalanced_at) {
               const lastMs = new Date(String(t.last_rebalanced_at)).getTime();
-              if (NOW - lastMs < 7 * 24 * HOUR) return false;
+              if (NOW - lastMs < 7 * 24 * HOUR) {
+                return false;
+              }
             }
             return true;
           });
@@ -7421,7 +7762,9 @@ serve(async (req) => {
             if (t.priority === "high") {
               score += 20;
               reasons.push("priority=high");
-            } else if (t.priority === "medium") score += 10;
+            } else if (t.priority === "medium") {
+              score += 10;
+            }
 
             return {
               id: t.id,
@@ -7440,7 +7783,9 @@ serve(async (req) => {
 
           // 5. score 高い順 sort + limit
           const candidates = scored
-            .filter((s) => s.stale_score > 0)
+            .filter((s) =>
+              s.stale_score > 0
+            )
             .sort((a, b) => b.stale_score - a.stale_score)
             .slice(0, limitN);
 
@@ -8320,6 +8665,10 @@ ${reportText ? `> ${reportText}` : ""}`,
       });
     }
 
+    if (action === "market_intel.analyze") {
+      return json(await buildMarketIntelReport(body));
+    }
+
     // ── Authenticated CRUD operations ────────────────────────────────────────
     const userId = await getUserId(req);
     if (!userId) return json({ error: "Unauthorized" }, 401);
@@ -8801,6 +9150,7 @@ ${reportText ? `> ${reportText}` : ""}`,
         const item = await addItem(admin, "rss_feed", userId, {
           url: body.url,
           title: body.title,
+          category: body.category ?? "購読",
         });
         return json({ success: true, feed: item });
       }
@@ -9181,6 +9531,7 @@ ${reportText ? `> ${reportText}` : ""}`,
             "rss.fetch",
             "rss.fetch_latest",
             "news.signal_rank",
+            "market_intel.analyze",
             "changelog.list",
             "changelog.create",
             "mindmap.list",

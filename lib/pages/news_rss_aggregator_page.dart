@@ -169,9 +169,9 @@ class _NewsRssAggregatorPageState extends State<NewsRssAggregatorPage> {
       await _loadNews();
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('フィード追加に失敗しました: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('フィード追加に失敗しました: $e')));
     } finally {
       if (mounted) setState(() => _isAdding = false);
     }
@@ -180,9 +180,9 @@ class _NewsRssAggregatorPageState extends State<NewsRssAggregatorPage> {
   Future<void> _createBlogDraftFromSignals() async {
     if (_signals.isEmpty || _isDrafting) return;
     if (_supabase.auth.currentUser == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('ブログ下書き化にはログインが必要です')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('ブログ下書き化にはログインが必要です')));
       return;
     }
     setState(() => _isDrafting = true);
@@ -209,9 +209,9 @@ class _NewsRssAggregatorPageState extends State<NewsRssAggregatorPage> {
       );
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('ブログ下書き化に失敗しました: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('ブログ下書き化に失敗しました: $e')));
     } finally {
       if (mounted) setState(() => _isDrafting = false);
     }
@@ -366,13 +366,9 @@ class _NewsRssAggregatorPageState extends State<NewsRssAggregatorPage> {
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
                 sliver: SliverList.separated(
                   itemCount: rest.length,
-                  separatorBuilder: (_, __) => const Divider(
-                    height: 1,
-                    color: _border,
-                  ),
-                  itemBuilder: (context, index) => _NewsRow(
-                    item: rest[index],
-                  ),
+                  separatorBuilder: (_, __) =>
+                      const Divider(height: 1, color: _border),
+                  itemBuilder: (context, index) => _NewsRow(item: rest[index]),
                 ),
               ),
             ],
