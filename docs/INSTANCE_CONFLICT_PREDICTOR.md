@@ -23,6 +23,14 @@ The predictor is intentionally dependency-free Python so it can run from
 PowerShell, Claude Code hooks, Codex sessions, GitHub Actions, and scheduled
 jobs.
 
+## Worktree Registry Preflight
+
+Use [`docs/WORKTREE_REGISTRY.md`](WORKTREE_REGISTRY.md) before editing when a
+task has an expected write scope. The registry records the owning instance,
+issue, worktree, branch, and planned paths in a local gitignored JSON file.
+That gives Claude Code #1 and Codex #1 an explicit ownership map before this
+predictor scans commits, open PRs, dirty worktrees, and migration timestamps.
+
 ## Commands
 
 Session start or handoff:
