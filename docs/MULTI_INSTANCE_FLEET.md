@@ -8,6 +8,13 @@
 > **運用憲章 (5 正本 + 6 AI 役割 + 監査)**: [`docs/OPERATIONS_CHARTER.md`](./OPERATIONS_CHARTER.md) を併せて参照.
 > **移行ログ**: [`docs/FLEET_2_INSTANCE_TRANSITION.md`](./FLEET_2_INSTANCE_TRANSITION.md).
 
+## 2026-05-07 AI Tool Update Overlay (#1706)
+
+- Keep the active fleet at exactly two local app instances: **Claude Code #1 (Windows app)** for architecture/review/docs triage and **Codex #1 (Windows app)** for scoped implementation PRs, CI, merge, and cleanup.
+- Treat Claude fullscreen/TUI rendering, remote notifications, Codex memory, Gemini fallback models, and GitHub Copilot agent updates as **verify-first capabilities**. Enable or document them only after checking the official source links recorded in [`AI_FALLBACK_RUNBOOK.md`](./AI_FALLBACK_RUNBOOK.md).
+- Smartphone/push handoff is an escalation channel, not a third active instance. It may notify the human owner or surface UAT context, but implementation still returns to Claude Code #1 + Codex #1.
+- `scripts/check_versions.py --web` is the lightweight session-start evidence command for this overlay. It prints official URLs and detects Codex instruction/memory pointers without starting dev servers or large local processes.
+
 ---
 
 ## 現行 2 instance (= active)
