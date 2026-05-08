@@ -24,6 +24,7 @@ import os
 import shutil
 import subprocess
 import sys
+import time
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
@@ -31,6 +32,7 @@ from typing import Any
 
 DEFAULT_BASE_REF = "origin/main"
 DEFAULT_SKIP_BRANCHES = {"main", "master", "develop", "staging"}
+DEFAULT_TIER1_SKIP_PREFIXES = ("codex/",)
 
 
 @dataclass(frozen=True)
@@ -47,6 +49,7 @@ class WorktreeEntry:
     branch_ref: str
     detached: bool
     bare: bool
+    locked: bool
 
     @property
     def branch(self) -> str:
@@ -68,6 +71,7 @@ class WorktreeDecision:
     upstream: str = ""
     uncommitted: int = 0
     size_mb: float = 0.0
+    idle_days: float = 0.0
     removed: bool = False
 
 
@@ -137,6 +141,7 @@ def parse_worktree_list(raw: str) -> list[WorktreeEntry]:
                 branch_ref=str(current.get("branch", "")),
                 detached=bool(current.get("detached", False)),
                 bare=bool(current.get("bare", False)),
+                locked=bool(current.get("locked", False)),
             )
         )
         current = {}
@@ -224,6 +229,19 @@ def directory_size_mb(path: Path) -> float:
     return round(total / (1024 * 1024), 1)
 
 
+def worktree_idle_days(path: Path, now: float | None = None) -> float:
+    try:
+        mtime = path.stat().st_mtime
+    except OSError:
+        return 0.0
+    current = time.time() if now is None else now
+    return round(max(0.0, current - mtime) / (24 * 60 * 60), 1)
+
+
+def has_branch_prefix(branch: str, prefixes: tuple[str, ...]) -> bool:
+    return any(branch.startswith(prefix) for prefix in prefixes)
+
+
 def short_sha(value: str) -> str:
     return value[:12] if value else ""
 
@@ -239,6 +257,10 @@ def evaluate_worktree(
     measure_size: bool,
     allow_main_worktree: bool,
     allow_missing_upstream: bool,
+    tier1: bool,
+    min_idle_days: int,
+    min_size_mb: float,
+    tier1_skip_prefixes: tuple[str, ...],
 ) -> WorktreeDecision:
     path = Path(entry.path).resolve(strict=False)
     branch = entry.branch
@@ -258,6 +280,8 @@ def evaluate_worktree(
         return skip("missing worktree path")
     if entry.bare:
         return skip("bare worktree")
+    if entry.locked:
+        return skip("locked worktree")
     if same_or_child(cwd, path):
         return skip("current working directory")
     if not allow_main_worktree and norm_path(path) == norm_path(main_worktree):
@@ -268,6 +292,8 @@ def evaluate_worktree(
         return skip("detached HEAD")
     if branch in skip_branches:
         return skip("protected branch")
+    if tier1 and has_branch_prefix(branch, tier1_skip_prefixes):
+        return skip("protected branch prefix")
 
     dirty = status_lines(path)
     if dirty:
@@ -292,6 +318,11 @@ def evaluate_worktree(
         return skip(f"not merged into {base_ref}", upstream=upstream)
 
     size_mb = directory_size_mb(path) if measure_size else 0.0
+    idle_days = worktree_idle_days(path)
+    if tier1 and idle_days < min_idle_days:
+        return skip(f"idle < {min_idle_days} days", upstream=upstream, size_mb=size_mb, idle_days=idle_days)
+    if tier1 and size_mb < min_size_mb:
+        return skip(f"size < {min_size_mb:g} MB", upstream=upstream, size_mb=size_mb, idle_days=idle_days)
     return WorktreeDecision(
         path=str(path),
         branch=branch,
@@ -301,6 +332,7 @@ def evaluate_worktree(
         upstream=upstream,
         uncommitted=0,
         size_mb=size_mb,
+        idle_days=idle_days,
     )
 
 
@@ -349,15 +381,18 @@ def print_report(decisions: list[WorktreeDecision], *, applied: bool, base_ref: 
     candidates = [item for item in decisions if item.decision == "PRUNE"]
     removed = [item for item in candidates if item.removed]
     reclaim = sum(item.size_mb for item in candidates)
+    reclaimed = sum(item.size_mb for item in removed) if applied else reclaim
     print(f"worktrees scanned: {len(decisions)}")
     print(f"candidates:        {len(candidates)}")
     print(f"removed:           {len(removed)}")
     print(f"estimated reclaim: {reclaim:.1f} MB")
+    print(f"reclaimed_mb={int(round(reclaimed))}")
 
 
 def summary_payload(decisions: list[WorktreeDecision], *, applied: bool, base_ref: str) -> dict[str, Any]:
     candidates = [item for item in decisions if item.decision == "PRUNE"]
     removed = [item for item in candidates if item.removed]
+    reclaimed = sum(item.size_mb for item in removed) if applied else sum(item.size_mb for item in candidates)
     reasons: dict[str, int] = {}
     for item in decisions:
         key = f"{item.decision}: {item.reason}"
@@ -369,6 +404,7 @@ def summary_payload(decisions: list[WorktreeDecision], *, applied: bool, base_re
         "candidates": len(candidates),
         "removed": len(removed),
         "estimated_reclaim_mb": round(sum(item.size_mb for item in candidates), 1),
+        "reclaimed_mb": round(reclaimed, 1),
         "reasons": reasons,
         "worktrees": [asdict(item) for item in decisions],
     }
@@ -408,6 +444,25 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
         action="store_true",
         help="Skip candidate directory size measurement.",
     )
+    parser.add_argument(
+        "--tier1",
+        action="store_true",
+        help="SessionStart-friendly stale worktree prune mode for Issue #1984 Tier 1.6.",
+    )
+    parser.add_argument(
+        "--max-runtime-sec",
+        type=int,
+        default=0,
+        help="Soft runtime cap. Exhausted entries are skipped gracefully.",
+    )
+    parser.add_argument("--min-idle-days", type=int, default=7)
+    parser.add_argument("--min-size-mb", type=float, default=100.0)
+    parser.add_argument(
+        "--tier1-skip-prefix",
+        action="append",
+        default=list(DEFAULT_TIER1_SKIP_PREFIXES),
+        help="Branch prefix protected in --tier1 mode. Repeatable.",
+    )
     return parser.parse_args(argv)
 
 
@@ -429,20 +484,38 @@ def main(argv: list[str]) -> int:
 
     main_worktree = Path(entries[0].path).resolve(strict=False)
     open_prs = set() if args.ignore_open_prs else open_pr_branches(root)
-    decisions = [
-        evaluate_worktree(
-            entry,
-            cwd=cwd,
-            main_worktree=main_worktree,
-            base_ref=args.base_ref,
-            open_prs=open_prs,
-            skip_branches=set(args.skip_branch),
-            measure_size=not args.no_size,
-            allow_main_worktree=args.allow_main_worktree,
-            allow_missing_upstream=args.allow_missing_upstream,
+    deadline = time.monotonic() + args.max_runtime_sec if args.max_runtime_sec > 0 else None
+    decisions: list[WorktreeDecision] = []
+    for entry in entries:
+        if deadline is not None and time.monotonic() > deadline:
+            path = Path(entry.path).resolve(strict=False)
+            decisions.append(
+                WorktreeDecision(
+                    path=str(path),
+                    branch=entry.branch or "HEAD",
+                    decision="SKIP",
+                    reason="runtime budget exhausted",
+                    head=short_sha(entry.head),
+                )
+            )
+            continue
+        decisions.append(
+            evaluate_worktree(
+                entry,
+                cwd=cwd,
+                main_worktree=main_worktree,
+                base_ref=args.base_ref,
+                open_prs=open_prs,
+                skip_branches=set(args.skip_branch),
+                measure_size=not args.no_size,
+                allow_main_worktree=args.allow_main_worktree,
+                allow_missing_upstream=args.allow_missing_upstream,
+                tier1=args.tier1,
+                min_idle_days=args.min_idle_days,
+                min_size_mb=args.min_size_mb,
+                tier1_skip_prefixes=tuple(args.tier1_skip_prefix),
+            )
         )
-        for entry in entries
-    ]
 
     if args.apply:
         for decision in decisions:
