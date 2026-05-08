@@ -161,7 +161,8 @@ Related to #
 - [ ] 該当なし（rule / script / hook 追加・変更なし）
 - [ ] `inject-rules.txt` に rule 追加時: `scripts/sync_inject_rules.py` の `EXPECTED_RULE_COUNT` + `CRITICAL_RULES` 同時更新済（= 二重 source-of-truth back-fill 漏れ防止 / part 185 KPI integrity fix 教訓）
 - [ ] `scripts/*.py` `scripts/*.ps1` 新規 primitive 追加時: `~/.claude/settings.json` `SessionStart` / `SessionEnd` hooks 配線済 — または別 issue で配線計画明記（= part 185b hook wiring gap 教訓）
-- [ ] hook wiring 変更時: 配線後 1 セッション内 smoke test で動作 verify 済（= manual invoke or 翌 session 起動で確認）
+- [ ] hook wiring 変更時: 配線後 **次セッション起動で auto-fire 動作 verify** 済（= log/CSV path に SessionStart timestamp 一致 row 追加確認 / **manual invoke だけでは不十分** — Win 環境では `python C:\...` raw 直叩きが WindowsApps stub で silent fail しても manual invoke は通る / part 187 finding）
+- [ ] hook command が `python` `node` 等 interpreter を直接呼ぶ場合: Win では `powershell -NoProfile -ExecutionPolicy Bypass -Command "& <interp> <args>"` でラップ済（= WindowsApps reparse-point stub 0-byte で非インタラクティブ silent fail 回避 / part 187 finding）
 
 ### テスト
 
