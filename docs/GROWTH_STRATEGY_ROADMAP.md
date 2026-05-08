@@ -28916,3 +28916,21 @@ User 第 2 弾 ask (= same session continuation): 「WBS 期限近順 + 2 instan
 
 ### Commit
 - `534cdbb47` docs(quality): LLM quality gate spec + promptfoo fixtures (#1598)
+
+## 2026-05-09 — Win版#132 part 180b (Win Claude / 続き)
+
+### Session Summary (User v3 ask)
+- **User 要望**: 毎セッション必ずメモリ + HDD 圧縮 + WBS 期限近順 triage (2 instance 制反映)
+- **隠れ負債 audit**: Temp 8.5 GB + npm 2 GB + pnpm 2.5 GB = 13 GB 取り逃し発見
+- **DISK_HYGIENE_RUNBOOK §14 ship**: Tier 1.8 (cache sweep) + 1.9 (Temp 深層) + 2.0 (delta tracking + 警告) + RAM trim Phase 2
+- Codex hand-off: 期限 2026-05-23 / [INSTANCE-ROLES] 5 質問 0/5 YES = 完全 Codex 案件
+
+### Philosophy Alignment (Win#132 part 180)
+- 主要実装: Tier 1.8/1.9/2.0 mandatory per-session compression + LLM quality gate spec
+- 該当原則: #6 (時間最適化) + #7 (資産負債 = 隠れ 13 GB 負債可視化) + #8 (KPI 自分比較 = 7 day median delta) + #5 (商品=価値 = 健全環境 = ユーザー時間保全)
+- 整合性スコア: 8/9 ✅ ([PHILOSOPHY-22] gate 通過 / 主要 4 原則体現)
+- 理念的貢献: ローカル開発環境の枯渇問題に audit-first で根本対処
+
+### Commit
+- `ee27d7110` docs(hygiene): Tier 1.8 / 1.9 / 2.0 mandatory per-session compression spec
+- PR #2163 admin squash merged 2026-05-08T03:55:57Z
