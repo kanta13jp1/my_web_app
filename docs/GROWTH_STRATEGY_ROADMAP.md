@@ -28991,4 +28991,27 @@ User 第 2 弾 ask (= same session continuation): 「WBS 期限近順 + 2 instan
 - 理念的貢献: gate compliance pattern を memory に dogfood 化 = 次回再発時の time-to-recovery 短縮
 
 ### Commit
-- (= 本 docs PR の merge commit / 後追記)
+- `8940b70ef` (= PR #2177 merge / docs-only roadmap append for part 183)
+
+## 2026-05-09 — Win版#132 part 184 (Win Claude / Claude Code)
+
+### Session Summary
+- **CODEX_WORKFLOW.md §8 PR body / synchronize gotchas 常駐記録 ship** (= 前 session 教訓 24h 以内 docs 化)
+  - §8.1 `gh pr edit --body` silent fail → `gh api -X PATCH` 直叩き recipe + 検出 (= body length 比較)
+  - §8.2 PR body update のみで workflow 再 trigger されない → empty commit synchronize trigger
+  - §8.3 minimal-e2e-gate skip label canonical = `docs-only` OR `no-e2e-needed` 完全一致
+  - §8.4 適用判断 (= <500 chars `gh pr edit` OK / 1KB+ `gh api -X PATCH` 必須)
+- **PR #2180 self-recipe dogfood**: `docs-only` label 即適用 → minimal-e2e + ultrareview gate 即 PASS / empty commit synchronize trigger 即 dogfood
+- **Issue #2171 T+1 day verify**: skip 確定 (= 既 part 183 で T+1 status comment 済 / next check 2026-05-12 = T+3)
+- **inject-rules.txt KPI finding**: rule count 38 vs expected 37 (= drift なし / 動作影響なし / 別 PR 候補 = `scripts/sync_inject_rules.py:83` `EXPECTED_RULE_COUNT` bump)
+- **production smoke**: `/calendar-events` 200 OK / 0.5s (= part 183 deploy 確認)
+- **memory ship 1 件**: project_20260509_win132_part184
+
+### Philosophy Alignment (Win#132 part 184)
+- 主要実装: individual session memory → fleet shared docs 昇格 (= operational gotcha 24h 以内常駐記録)
+- 該当原則: #2 (ミッション = 自分株式会社知識資産化) + #5 (商品 = 価値増大 = Codex も同じ落とし穴避けられる) + #6 (時間最適化 = 24h 内 docs 化) + #7 (資産負債 = memory のみ知識 → docs 資産化) + #8 (KPI = 知識共有率) + #9 (IPO = 全 instance 自走可能性向上)
+- 整合性スコア: 8/9 ✅ ([PHILOSOPHY-22] gate 通過)
+- 理念的貢献: memory feedback_correction → docs operational section 昇格 model 確立 / 114 part 連続 dogfood
+
+### Commit
+- (= 本 docs PR #2180 の merge commit / 後追記)
