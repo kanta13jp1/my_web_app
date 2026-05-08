@@ -11,7 +11,7 @@ Related readiness gate: #1556
 - The same script classifies migration push failures, extracts 14-digit migration versions, applies the safe Supabase repair status, and retries once.
 - CI captures Deno lint output into `.ci-logs/deno-lint.log` and appends a short digest to the GitHub Step Summary.
 - Production deploy uploads `.deploy-logs/` as an artifact when migration logs exist.
-- `release-readiness.yml` runs the alpha release gate manually, daily, and after successful `deploy-prod`: migration collision guard, Edge Function import guard, Deno lint/check, Flutter analyze/build, production route smoke, `tools-hub` / `schedule-hub` service-role smoke, Notion WBS preflight, Slack webhook readiness, and optional WBS completion for the synced #1556 task.
+- `release-readiness.yml` runs the alpha release gate manually, daily, and after successful `deploy-prod`: migration collision guard, Edge Function import guard, full Edge Function Deno lint, Deno check for the readiness smoke hub entrypoints, Flutter analyze/build, production route smoke, `tools-hub` / `schedule-hub` service-role smoke, Notion WBS preflight, Slack webhook readiness, and optional WBS completion for the synced #1556 task.
 
 ## Repair Rules
 
