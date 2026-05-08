@@ -915,3 +915,30 @@ python scripts/ai_tool_watch.py --print-only
 `codex_session_check.py` に dirty worktree、upstream gone、base branch 直編集、origin/main 未取得などの警告が
 出た場合は、実装前に新しい worktree / branch へ移るか、Codex#2 に sync / CI 側の修復として回す。
 
+
+## NotebookLM 9b8885ef Schedule Resilience Guard (#1783)
+
+NotebookLM `9b8885ef` ("Automating SaaS Operations with Claude Code Schedule") is applied as a
+cross-cutting guard instead of duplicating retry code inside every scheduled workflow.
+
+**Workflow**: `.github/workflows/schedule-resilience-watch.yml`
+**Script**: `scripts/schedule_resilience_watch.py`
+**Scope**: `daily-report.yml`, `cs-check.yml`, `competitor-monitoring.yml`, `infra-health-check.yml`
+
+Guard contract:
+
+1. **Retry**: when the latest scheduled run failed and `run_attempt < 2`, rerun failed jobs once through the GitHub Actions API.
+2. **Fallback**: when retry is exhausted, the run conclusion is unexpected, or no recent scheduled run exists, keep the guard itself green and preserve a JSON artifact for triage.
+3. **Alerting**: open or update a `workflow-failure` issue titled `[Schedule監視] <task> ...` with run URL, status, attempt, and the Codex #1 ownership note.
+4. **Freshness**: hourly schedules (`cs-check`, `infra-health-check`) must have a scheduled run within 3h; daily schedules (`daily-report`, `competitor-monitoring`) within 30h.
+
+2-instance routing:
+
+- Claude Code #1 owns automation pattern design and doc triage.
+- Codex #1 owns the old PS#1 workflow-health implementation lane and GitHub Actions CI integration.
+
+Manual dry run:
+
+```bash
+python scripts/schedule_resilience_watch.py --repo kanta13jp1/my_web_app --dry-run --output tmp/schedule-resilience/report.json
+```
