@@ -277,3 +277,67 @@ This document keeps older Codex#2 / PS#1-6 / multi-worktree guidance as
 legacy history only. New Codex work should use one Codex Windows app instance,
 one active branch, and one shared dev server unless the user explicitly asks for
 an exception.
+
+## 8. PR body / synchronize gotchas (Win版#132 part 183-184 / 2026-05-09)
+
+Win Claude part 183 で発見した PR 操作系の落とし穴。Codex / 全 instance 共通。
+
+### 8.1 `gh pr edit --body` silent fail
+
+**症状**: `gh pr edit <n> --body "$(cat body.md)"` 実行で GraphQL deprecation warning は出るが exit 0 で返る → body 実際には更新されない。
+
+**原因**: `gh pr edit` は GraphQL UpdatePullRequest mutation 経由 / 大幅な body 差分や特殊文字で silent fail (警告のみで abort しない)。
+
+**Recipe (= 大幅 update / 1KB+ body 差分時)**:
+
+```bash
+# REST API direct PATCH (= GraphQL bypass)
+BODY=$(cat <<'EOF'
+... new PR body markdown ...
+EOF
+)
+gh api -X PATCH repos/<owner>/<repo>/pulls/<n> \
+  -F body="$BODY" \
+  --jq '.body | length'
+
+# Verify reflected
+gh api repos/<owner>/<repo>/pulls/<n> --jq '.body | length'
+```
+
+**検出**: `gh pr view <n> --json body --jq '.body | length'` で update 前後の文字数比較。期待値より少なければ silent fail。
+
+### 8.2 PR body update のみで workflow 再 trigger されない
+
+**症状**: `pull_request` event listening の workflow (= minimal-e2e-gate / ultrareview-gate 等) は `synchronize` event を listen するが、body edit 単独では発火しない。
+
+**原因**: GitHub Actions の `pull_request: types: [synchronize]` は commit push trigger / body edit は `edited` event。
+
+**Recipe (= body 修正後 gate 再評価したい時)**:
+
+```bash
+# Empty commit で synchronize trigger
+git commit --allow-empty -m "ci: re-trigger gate after body update"
+git push origin <branch>
+```
+
+### 8.3 minimal-e2e-gate skip label canonical
+
+**症状**: `gh pr edit --add-label test` 等で適当 label 付けても gate skip しない。
+
+**Recipe**: skip label canonical = `docs-only` OR `no-e2e-needed` (完全一致).
+
+```bash
+gh api -X POST repos/<owner>/<repo>/issues/<n>/labels \
+  -f "labels[]=docs-only"
+git commit --allow-empty -m "ci: re-trigger after skip label"
+git push origin <branch>
+```
+
+### 8.4 適用判断
+
+- **少量 update (= 数行 / <500 chars)**: `gh pr edit --body` で OK
+- **大幅 update (= 1KB+ / 仕様 scope 拡張等)**: `gh api -X PATCH` 直叩き必須
+- **gate 再評価**: 必ず empty commit synchronize trigger
+- **skip label**: canonical 文字列のみ / typo NG
+
+参照: `feedback_correction_20260509_gh_pr_edit_silent_fail.md` (= part 183 dual-gate compliance recovery 教訓)
