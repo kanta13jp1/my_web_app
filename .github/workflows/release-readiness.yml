@@ -75,13 +75,18 @@ jobs:
       - name: Deno lint Edge Functions
         run: deno lint --config supabase/functions/deno.json supabase/functions/
 
-      - name: Deno check Edge Function entrypoints
+      - name: Deno check readiness hub entrypoints
         run: |
-          mapfile -t ENTRYPOINTS < <(find supabase/functions -maxdepth 2 -name index.ts | sort)
-          if [ "${#ENTRYPOINTS[@]}" -eq 0 ]; then
-            echo "No Edge Function entrypoints found"
-            exit 1
-          fi
+          ENTRYPOINTS=(
+            supabase/functions/tools-hub/index.ts
+            supabase/functions/schedule-hub/index.ts
+          )
+          for entrypoint in "${ENTRYPOINTS[@]}"; do
+            if [ ! -f "$entrypoint" ]; then
+              echo "Missing readiness hub entrypoint: $entrypoint"
+              exit 1
+            fi
+          done
           deno check --config supabase/functions/deno.json "${ENTRYPOINTS[@]}"
 
       - name: Flutter analyze
