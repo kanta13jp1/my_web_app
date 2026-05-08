@@ -28970,4 +28970,25 @@ User 第 2 弾 ask (= same session continuation): 「WBS 期限近順 + 2 instan
 - 理念的貢献: 経営者ダッシュボード (= WBS) のデータ品質を確保 → 意思決定速度の毀損防止
 
 ### Commit
-- (= 本 PR の merge commit / 後追記)
+- `284001999` fix(calendar): flatten app-hub calendar.list + WBS dedup Phase 2 spec (#2171) — admin squash merge (= 2026-05-08T15:40:40Z / part 183 で gate recovery 後 merge)
+
+## 2026-05-09 — Win版#132 part 183 (Win Claude / Claude Code)
+
+### Session Summary
+- **PR #2172 dual-gate compliance recovery** (= 前 session carry-over BLOCKED 状態解消)
+  - 観測: minimal-e2e gate + high-risk ultrareview gate 同時 FAIL (= EF `supabase/functions/app-hub/index.ts` 変更で 2 gate trigger)
+  - body 1654 → 4626 chars 拡充 (= minimal E2E plan + 5 軸 ultrareview evidence + unresolved findings 0)
+  - `gh pr edit --body` silent fail 発見 → `gh api -X PATCH repos/.../pulls/2172` 直叩きで update 成功
+  - `gh run rerun` ≠ body 反映発見 → empty commit synchronize 必須 (= `7636017cb` push)
+  - admin squash merge `284001999` (= 2026-05-08T15:40:40Z) / deploy-prod auto trigger
+- **Issue #2171 Codex hand-off ping 判定**: T+1 day = skip / 期限 5/22 残 13 日 / Codex bot PR 0 件
+- **memory ship 3 件**: project_20260509_win132_part183 + feedback_correction_20260509_gh_pr_edit_silent_fail + feedback_success_20260509_dual_gate_compliance_pattern
+
+### Philosophy Alignment (Win#132 part 183)
+- 主要実装: stuck PR の root cause 特定 + 1 PR 内完結 dual-gate compliance
+- 該当原則: #2 (ミッション = 信頼性) + #6 (時間最適化 = 1 PR 完結) + #7 (資産負債 = stuck PR 即返済) + #8 (KPI = MERGED 率)
+- 整合性スコア: 7/9 ✅ ([PHILOSOPHY-22] gate 通過)
+- 理念的貢献: gate compliance pattern を memory に dogfood 化 = 次回再発時の time-to-recovery 短縮
+
+### Commit
+- (= 本 docs PR の merge commit / 後追記)
