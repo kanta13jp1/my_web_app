@@ -751,3 +751,80 @@ Codex 振分 5 質問 score:
 
 = 8/9 ✅ ([PHILOSOPHY-22] gate 通過 / #4 6 部署 のみ marginal).
 
+## 15. 毎セッション圧縮 status verify (= part 184 新設 / User 要望 v3 再確認 / 2-instance fleet)
+
+### 15.1 hooks coverage 監査結果 (= 2026-05-09 part 184 verify)
+
+User 2026-05-09 part 184 ask: 「**今の開発フローだとローカル環境のメモリやハードディスク容量が必ず枯渇する**. 毎回のセッションで必ずメモリやハードディスク容量を圧縮する施策を検討してください」.
+
+→ §14 (= part 180 ship) と同 ask の **再確認要求**. hooks 設定 + 動作 verify の 2-axis audit を実施.
+
+#### 15.1.1 settings.json hooks 設定状況 (= 既 full coverage)
+
+```
+SessionStart (4 hooks): session-resume + cleanup_report_notify + disk-cleanup + memory-cleanup
+SessionEnd   (2 hooks): disk-cleanup + memory-cleanup
+PreCompact   (1 hook):  memory-cleanup
+```
+
+= **両端 trigger 設定済** (= user 要件「毎回のセッションで必ず」satisfy 設定).
+
+#### 15.1.2 実 reclaim 観測値 (= `~/.claude/logs/*-cleanup-20260509.log`)
+
+| axis | reclaim/session | 評価 |
+|---|---|---|
+| **Memory side** (= memory-cleanup.ps1 step1 EmptyWorkingSet) | **4.0-4.9 GB / session** | ✅ achieved (= claude/Codex/msedge/chrome/Code/node/dotnet/python/flutter/dart 全 trim) |
+| **Disk side** (= disk-cleanup.ps1 Tier 1 全 step) | **0.4-1.2 MB / session** | ⚠️ §14.1 audit と一致 (= 隠れ 13 GB 負債 / Tier 1.8/1.9/2.0 未実装) |
+
+memory side は既に「session 開始時 free 11% → session 終了時 free 30%」の劇的改善を達成. disk side は Codex hand-off `20260509_codex_tier18_19_20_compression_part180.md` (= 期限 2026-05-23) の実装着地 待ち.
+
+### 15.2 2-instance fleet routing 反映 (= [INSTANCE-ROLES])
+
+| instance | 役割 | 対応 task | 期限 / 状態 |
+|---|---|---|---|
+| **Win Claude (= 本 § 起票)** | architect / docs / triage / verify | §14 spec 起票 (part 180) + 本 §15 status verify (part 184) | ✅ both shipped |
+| **Win Codex** | 実装 / scripts / GHA | `disk-cleanup.ps1` step 11 (Tier 1.8) + step 1 拡張 (Tier 1.9) + `session_delta_tracker.ps1` (Tier 2.0) + `memory-cleanup.ps1` step 6 (RAM trim Phase 2) | 期限 **2026-05-23** / 今日 2026-05-09 = **T+0 day** / 残 14 days |
+
+**ping 判定** (= part 183 確立 schedule 厳守):
+- T+0 day (= 今日) = **skip** (= Codex CI/automation pickup window)
+- T+3 day (= 2026-05-12) = gentle ping if no movement
+- T+7 day (= 2026-05-16) = harder ping
+- T+13 day (= 2026-05-22) = definitive ping (= halfway to deadline)
+
+### 15.3 quick win options (= Codex impl 待ち期間 Win Claude actionable)
+
+| option | description | risk | 採用 |
+|---|---|---|---|
+| A. session-end manual `pnpm store prune` | `disk-cleanup` skill Step 5 を session ごと実行 | low (= active package 影響なし) | ✅ part 184 で実施済 (= Tier 2 hygiene 内) |
+| B. weekly 手動 `flutter pub cache repair` | session 外 / 週末 batch | medium (= 再 download cost) | △ user 判断 |
+| C. monthly browser cache deep clear | 月次 batch / msedge + chrome 全 cache 削除 | medium (= login state 影響) | △ user 判断 |
+| D. SessionEnd hook で `pnpm store prune` 自動化 | settings.json 拡張 | low | △ Codex hand-off に統合推奨 |
+
+→ **A (= 本 part 184 実施済)** + **D (= Codex 5/23 hand-off に option 追加)** が最適 routing.
+
+### 15.4 KPI / 監視 update (= part 184 baseline)
+
+| metric | 現状 (= part 184) | 目標 (= §14.9 reaffirm) | gap |
+|---|---|---|---|
+| `disk_reclaim_mb_per_session` | 0.4-1.2 MB | ≥ 500 MB / session (median) | **400x gap** (= Codex 5/23 impl で解消期待) |
+| `memory_reclaim_mb_per_session` | 4000-4900 MB | (新規 KPI / §14 で未定義) | ✅ implicit achieved |
+| `c_free_7d_delta_gb` | 79.17 → 79.5 (= +0.3 / part 184 manual + git gc) | ≥ 0 (= 漸増を相殺) | ✅ part 184 single-day OK / 7-day median は要 tracking |
+| `session_end_hook_invoke_count` | 2/session (= disk + memory) | 2/session | ✅ 100% |
+
+### 15.5 user 要望 reaffirm (= 「枯渇する」根本原因)
+
+User の本 ask の根本原因は **§14.1 で identified 済**:
+- 隠れ 13 GB 負債 (= Temp 8.5 GB + npm 2.0 GB + pnpm 2.5 GB) が現状 Tier 1-1.7 で **完全に取り逃し**
+- Tier 1.8/1.9/2.0 = 真の対策 / Codex 5/23 hand-off で着地予定
+
+**Win Claude (= 本 part 184) actionable**:
+- ✅ status verify + 2-instance routing 明示 (= 本 §15)
+- ✅ Codex T+0 ping skip 判断 (= 14 days deadline / 5/12 next check)
+- ❌ script 直接実装 = [INSTANCE-ROLES] Codex 担当 / scope creep 回避
+
+### 15.6 PHILOSOPHY-22 gate (= 8/9 ✅ 維持)
+
+§14.10 と同. 本 §15 = status verify only / 新原則追加なし.
+
+> **part 184 status**: hooks coverage = ✅ full / memory side = ✅ achieved / disk side = ⚠️ Codex impl 待ち / next ping = 2026-05-12 (= T+3).
+
