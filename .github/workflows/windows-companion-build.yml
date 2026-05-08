@@ -108,7 +108,7 @@ jobs:
             -CertificatePassword $env:WINDOWS_MSIX_PFX_PASSWORD
 
       - name: Upload Windows artifact
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: jibun-windows-companion
           path: |
@@ -120,7 +120,7 @@ jobs:
 
       - name: Publish GitHub Release asset
         if: startsWith(github.ref, 'refs/tags/windows-companion-v') || inputs.publish_release == true
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ startsWith(github.ref, 'refs/tags/windows-companion-v') && github.ref_name || inputs.release_tag }}
           name: Jibun Windows Companion
