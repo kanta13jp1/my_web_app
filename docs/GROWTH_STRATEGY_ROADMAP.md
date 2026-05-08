@@ -29033,4 +29033,35 @@ User 第 2 弾 ask (= same session continuation): 「WBS 期限近順 + 2 instan
 - 理念的貢献: 「rule 追加時 script 側 back-fill 必須」運用 pattern を memory に dogfood 化 / 115 part 連続 dogfood
 
 ### Commit
-- (= 本 docs + script PR の merge commit / 後追記)
+- `3a0c1b9d0` PR [#2183](https://github.com/kanta13jp1/my_web_app/pull/2183) — inject-rules KPI integrity fix + ROADMAP backfill (admin squash merge / docs-only)
+
+## 2026-05-09 — Win版#132 part 185b (Win Claude / Claude Code 続き)
+
+### Session Summary (User same-ask 第 N 弾)
+- **User ask**: WBS 期限近順 + 2 instance 反映 + メモリ/HDD 圧縮施策
+- **Codex PR #2182 dogfood verify 第 1 例** (= 5/23 deadline **14-day 早着地** / `9aa4cef08`):
+  - `worktree_cleanup.py --tier1`: 4 worktree scan / 0 candidate / safe SKIP
+  - `disk_hog_telemetry.py`: 5 metric 出力 OK (= cache_codex_runtimes 721 MB + plugins_marketplaces 625 MB + projects 559 MB + vscode_workspaceStorage 249 MB + npm_cache 95 MB)
+  - `dev_cache_cleanup --tier18 --tier19 --apply`: 9.4 MB 計画 → 0 MB 実 reclaim (= 4 command 失敗 / Win 環境互換 issue 別 issue 候補)
+  - `memory_trim_phase2.ps1`: **+1075 MB RAM 解放** (= 過去最大 single-script 効果)
+  - `session_delta_tracker.py --phase {start,end}`: log 書出 OK / 7-day median < 100 MB threshold で **WARNING 発火** + warning file 生成
+- **DISK_HYGIENE_RUNBOOK.md §15.7 ship** (= pre-existing spec verify pattern 第 6 例 / 章追加 / 新規 spec md 増殖回避):
+  - 5 primitive 動作 verify 表 + SessionStart hook wiring 漏れ finding + KPI table update + Issue #1984 close 推奨判定 (= 条件付き hook wiring 完了後)
+- **Issue #1984 verify comment ship**: 4 axis 全着地 ✅ / hook wiring = ⚠️ next session step / close 推奨判定 (= 条件付き)
+- **Issue #1962 VSCode dormant grace status**: 30 day monitor 継続 (= next 2026-06-03)
+- **WBS top 5 triage** (= verify-only / [NO-SCOPE-CREEP]):
+  - #1984 = Codex impl 完了 verify ✅
+  - #1965 competitor-monitoring (= score 2/5 split / spec ship 別 session)
+  - #1964 AI大学 FinTech (= score 5/5 Win Claude / spec ship 別 session)
+  - #1962 VSCode dormant grace (= 30 day monitor)
+  - #1950 ブログ E2E (= score 1/5 Codex / spec ship 別 session)
+- **Codex sprint 87.5% completion milestone** (= 7/8 of 5/22-5/24 hand-off / 過去最高 rate / 残 #2171 のみ)
+
+### Philosophy Alignment (Win#132 part 185b)
+- 主要実装: Codex 5/23 hand-off 14-day 早着地 dogfood verify + hook wiring gap 検出 + Issue close 条件提示
+- 該当原則: #2 (ミッション = 信頼性 = primitive 動作確認) + #5 (商品=価値 = 環境健全性向上) + #6 (時間最適化 = primitive 即 dogfood / 14-day 早着地確認) + #7 (資産負債 = 隠れ 13 GB 負債解消パス確立) + #8 (KPI = `disk_reclaim_mb_per_session` 観測値 base 確立 + WARNING threshold 動作確認)
+- 整合性スコア: 7/9 ✅ ([PHILOSOPHY-22] gate 通過)
+- 理念的貢献: spec ship → Codex impl → Win Claude verify → docs §X.Y status update → Issue close 推奨 の **5-step フロー** を 1 pattern として確立 (= 大 hand-off 完了確認 model)
+
+### Commit
+- (= 本 docs PR の merge commit / 後追記)

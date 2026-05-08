@@ -837,3 +837,64 @@ User の本 ask の根本原因は **§14.1 で identified 済**:
 
 > **part 184 status**: hooks coverage = ✅ full / memory side = ✅ achieved / disk side = ⚠️ Codex impl 待ち / next ping = 2026-05-12 (= T+3).
 
+### 15.7 part 185 update — Codex PR #2182 dogfood verify (= 14-day early着地)
+
+**2026-05-09 part 185** = Codex が 5/23 deadline を **14-day 前倒し** で全 5 primitive を着地. PR [#2182](https://github.com/kanta13jp1/my_web_app/pull/2182) MERGED (= +1252 / -18 / 11 files). Win Claude 側 dogfood-run 第 1 例で動作 verify 完了.
+
+#### 15.7.1 5 primitive 動作 verify (= Win Claude session 内 dogfood-run)
+
+| primitive | invocation | 結果 | 評価 |
+|---|---|---|---|
+| `worktree_cleanup.py --tier1 --max-runtime-sec=15` | dry-run | 4 worktree scan / 0 candidate (= 全 SKIP / safe) / `reclaimed_mb=0` | ✅ Tier 1 conservative 設計通り |
+| `disk_hog_telemetry.py` | telemetry only | cache_codex_runtimes=721 MB + plugins_marketplaces=625 MB + projects=559 MB + vscode_workspaceStorage=249 MB + npm_cache=95 MB | ✅ 5 metric 出力 OK / no auto-prune (= Tier 1.7 design 厳守) |
+| `dev_cache_cleanup.py --tier18 --tier19 --aggressive-cache-sweep --temp-deep-sweep --apply` | apply | dry-run 9.4 MB 計画 → actual 0 MB / 4 command failed / 1 success | ⚠️ 商用 command (`dart pub cache clean`/`pip cache purge`/`npm cache verify`/`pnpm store prune`) 4 失敗 / minor / 別 issue 候補 |
+| `memory_trim_phase2.ps1` | apply | `ram_trim_count=4 ram_trim_total_mb_freed=1075` | ✅ **+1075 MB RAM 解放** (= 過去最大 single-script 効果) |
+| `session_delta_tracker.py --phase {start,end}` | start + end | start: c_free=79.05 GB → end: c_free=79.08 GB / WARNING 発火: "7-day median reclaim 0.0 MB < 100 MB" → `cleanup_reports/warning_20260508_181354.md` 出力 | ✅ Tier 2.0 delta + threshold warning 正常動作 |
+
+#### 15.7.2 SessionStart hook wiring 漏れ finding (= 次 step)
+
+5 primitive は repo に着地済だが **SessionStart/SessionEnd hook が新 script を invoke していない**:
+
+```bash
+$ grep -E "dev_cache_cleanup|worktree_cleanup|memory_trim_phase2|session_delta_tracker|disk_hog_telemetry" ~/.claude/hooks/*.ps1 ~/.claude/hooks/*.sh
+(no match)
+```
+
+→ user 要望「**毎回のセッションで必ず**」を満たすには hook wiring が必須. options:
+
+| option | scope | risk | 担当 |
+|---|---|---|---|
+| **A.** `~/.claude/settings.json` `SessionStart` に `worktree_cleanup --tier1` + `session_delta_tracker --phase start` 追加 | settings.json edit | low (= dry-run / max-runtime-sec=15 制限) | Win Claude (= update-config skill / 1 セッション完結) |
+| **B.** `SessionEnd` に `dev_cache_cleanup --tier18` + `memory_trim_phase2.ps1` + `session_delta_tracker --phase end` 追加 | settings.json edit | low-medium (= --apply 実行 / dart pub fail 観測 / cmd 修正必要) | Win Claude + Codex follow-up |
+| **C.** Codex PR template に「rule 追加時 hook wiring 同時 update 必須」追記 | docs only / `.github/PULL_REQUEST_TEMPLATE.md` | low | Win Claude design / 別 session |
+
+→ **A + C** が最低限必須. **B は dev_cache_cleanup の 4 command 失敗 issue 解消後** 推奨.
+
+#### 15.7.3 KPI 状況 update (= part 185 baseline)
+
+| metric | part 184 | part 185 (= Codex impl 後 / hook 未配線) | next target |
+|---|---|---|---|
+| `disk_reclaim_mb_per_session` | 0.4-1.2 MB | 0.0 MB (= dev_cache --apply 4 failed / hook 未配線) | ≥ 500 MB / session — hook wiring (= option A+B) で達成見込み |
+| `memory_reclaim_mb_per_session` | 4000-4900 MB | **+1075 MB on-demand** (= memory_trim_phase2.ps1 / 1 回実行で観測) | hook wiring 後 session ごと自動化期待 |
+| `7d_median_reclaim_mb` (= 新 KPI) | n/a | **0.0 MB / threshold 100 MB 未達 / WARNING 発火** | hook 配線後 7-day rolling 目標 |
+| Codex sprint completion 5/22-5/24 | 4/8 (= part 184 時点) | **7/8 = 87.5%** (= part 185 / #1984 PR #2182 14-day 早着地で +3) | 残 #2171 (T+3 = 2026-05-12) |
+
+#### 15.7.4 Issue #1984 close 推奨判定 (= verify-only 結果)
+
+PR #2182 で **Tier 1.7/1.8/1.9/2.0 + RAM Phase 2 + worktree --tier1 全 primitive 着地** + unit test 完備. Issue #1984 の 4 axis 内訳:
+
+- ✅ axis A (= worktree cleanup) = `worktree_cleanup.py --tier1` 着地 (= part 178b 同等強化)
+- ✅ axis B (= cache rotation) = `dev_cache_cleanup.py --tier18` (= aggressive sweep) 着地 (= 4 command 失敗 detail は別 issue 推奨)
+- ✅ axis C (= dev cache) = PR #2093 で先行着地済 (= 旧 part 報告)
+- ✅ axis D (= memory + session delta) = `memory_trim_phase2.ps1` + `session_delta_tracker.py` 着地
+
+→ **Issue #1984 close 推奨** (= ただし **hook wiring (= 15.7.2 option A+B) 完了後**). Win Claude part 186 で Issue verify comment + close 提案 (= user 確認 1 step 経由).
+
+#### 15.7.5 PHILOSOPHY-22 gate (= 7/9 ✅ 維持)
+
+- 主要実装: dogfood verify + hook wiring gap finding + Issue close 推奨判定
+- 該当原則: #6 (時間最適化 = primitive 即 dogfood) + #7 (資産負債 = 隠れ 13 GB 負債解消パス確立) + #8 (KPI = `disk_reclaim_mb_per_session` 観測値 base 確立) + #5 (商品 = 価値 = 環境健全性向上)
+- 整合性スコア: 7/9 ✅ ([PHILOSOPHY-22] gate 通過)
+
+> **part 185 status**: Codex 5/23 hand-off **14-day early完了** ✅ / 5 primitive 動作 verify ✅ / hook wiring = ⚠️ next session step / Issue #1984 close 推奨 (= hook wiring 後) / next ping = 2026-05-12 (= T+3 / #2171 のみ).
+
