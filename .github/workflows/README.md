@@ -12,6 +12,7 @@
 | **Deploy to Development** | `deploy-dev.yml` | `develop` へのpush | 開発環境デプロイ (concurrency制御・timeout付き) |
 | **Deploy to Staging** | `deploy-staging.yml` | `staging` へのpush | ステージング環境デプロイ (concurrency制御・timeout付き) |
 | **Deploy to Production** | `deploy-prod.yml` | `main` へのpush | 本番環境デプロイ + バージョニング (concurrency制御・timeout付き) |
+| **Release Readiness Gate** | `release-readiness.yml` | deploy-prod success / daily 06:40 JST / manual | #1556 alpha gate: migration + EF import + Deno lint + readiness hub Deno check + Flutter build + production route + tools-hub/schedule-hub + Notion + Slack + WBS update |
 | **Daily Report** | `daily-report.yml` | 毎日 07:30 JST / 手動 | 日次レポート生成 + X投稿 + 競合モニタリング + schedule_task_runs記録 + Job Summary |
 | **CS Check** | `cs-check.yml` | 毎時 07分 / 手動 | CS自動対応 + PR自動レビュー + schedule_task_runs記録 + Job Summary |
 | **Edge Function Audit** | `edge-function-audit.yml` | 毎時 47分 / 手動 | EF UI導線カバレッジチェック + schedule_task_runs記録 + Job Summary |
