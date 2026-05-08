@@ -74,7 +74,7 @@ jobs:
           --allow-write=mcp-audit-anomaly-summary.json
           scripts/mcp_audit_anomaly.ts
         env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL_PROD }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
           MCP_AUDIT_ANOMALY_DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}

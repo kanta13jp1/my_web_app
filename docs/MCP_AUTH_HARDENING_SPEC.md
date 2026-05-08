@@ -437,7 +437,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Detect anomaly
         env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL_PROD }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: |
           # SQL: client_id × 5min での invocation 数 > p99×3 で suspended=true + Slack alert
