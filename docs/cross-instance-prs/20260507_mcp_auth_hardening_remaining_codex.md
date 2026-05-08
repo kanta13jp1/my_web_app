@@ -71,8 +71,10 @@ PR #2022 MERGED 2026-05-05 後 2 日経過. Codex 14 件 hand-off の進捗 veri
 
 ### Phase C. GHA cron + Terraform skeleton (= 推定 1h)
 
-7. `.github/workflows/mcp-audit-anomaly-cron.yml` — 親 spec §5.5. hourly :07 / `concurrency: cancel-in-progress: false` ([CONCURRENCY] rule). Slack Webhook env で alert.
-8. `terraform/mcp_oauth_clients/` skeleton — 親 spec §5.6 + Mercari Tip 1 応用. Custom Provider stub (= GHA で `terraform plan` のみ実行 / apply は別 PR).
+**Status**: ✅ Codex #1 Phase C PR prepared the anomaly cron, alerting script, and plan-only Terraform skeleton. Remaining phases D-E stay open.
+
+7. ✅ `.github/workflows/mcp-audit-anomaly-cron.yml` — 親 spec §5.5. hourly :07 / `concurrency: cancel-in-progress: false` ([CONCURRENCY] rule). Slack Webhook env で alert.
+8. ✅ `terraform/mcp_oauth_clients/` skeleton — 親 spec §5.6 + Mercari Tip 1 応用. Custom Provider stub (= GHA で `terraform plan` のみ実行 / apply は別 PR).
 
 ### Phase D. docs 3 件 (= 推定 1.5h)
 
