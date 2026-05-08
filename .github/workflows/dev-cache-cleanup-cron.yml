@@ -46,6 +46,8 @@ jobs:
         run: |
           python scripts/dev_cache_cleanup.py `
             --include-worktrees `
+            --tier18 `
+            --tier19 `
             --json-out dev-cache-cleanup-dry-run.json
 
       - name: Apply safe runner cleanup
@@ -53,8 +55,15 @@ jobs:
         run: |
           python scripts/dev_cache_cleanup.py `
             --include-worktrees `
+            --tier18 `
+            --tier19 `
             --apply `
             --json-out dev-cache-cleanup-apply.json
+
+      - name: Collect disk hog telemetry
+        shell: pwsh
+        run: |
+          python scripts/disk_hog_telemetry.py --json > disk-hog-telemetry.json
 
       - name: Upload cleanup reports
         if: always()
@@ -64,6 +73,7 @@ jobs:
           path: |
             dev-cache-cleanup-dry-run.json
             dev-cache-cleanup-apply.json
+            disk-hog-telemetry.json
           if-no-files-found: ignore
 
       - name: Comment weekly report to Issue
@@ -85,6 +95,9 @@ jobs:
             $failed = $summary.counts.failed
             $estimated = $summary.estimated_reclaim_mb
             $actual = $summary.actual_reclaim_mb
+            $tier18Pnpm = $summary.metrics.tier_1_8_pnpm_MB
+            $tier18Npm = $summary.metrics.tier_1_8_npm_MB
+            $tier19Temp = $summary.metrics.temp_subtree_14d_MB
           } else {
             $mode = "failed-before-summary"
             $total = "n/a"
@@ -94,6 +107,20 @@ jobs:
             $failed = "n/a"
             $estimated = "n/a"
             $actual = "n/a"
+            $tier18Pnpm = "n/a"
+            $tier18Npm = "n/a"
+            $tier19Temp = "n/a"
+          }
+
+          if (Test-Path "disk-hog-telemetry.json") {
+            $telemetry = Get-Content -Raw -LiteralPath "disk-hog-telemetry.json" | ConvertFrom-Json
+            $uncovered = $telemetry.uncovered_total_mb
+            $autoPrune = $telemetry.auto_prune
+            $warningCount = $telemetry.warnings.Count
+          } else {
+            $uncovered = "n/a"
+            $autoPrune = "n/a"
+            $warningCount = "n/a"
           }
 
           $body = @"
@@ -109,6 +136,12 @@ jobs:
           | failed | $failed |
           | estimated reclaim MB | $estimated |
           | actual reclaim MB | $actual |
+          | tier_1_8_pnpm_MB | $tier18Pnpm |
+          | tier_1_8_npm_MB | $tier18Npm |
+          | temp_subtree_14d_MB | $tier19Temp |
+          | uncovered telemetry MB | $uncovered |
+          | telemetry auto prune | $autoPrune |
+          | telemetry warnings | $warningCount |
           | run | $env:GITHUB_SERVER_URL/$env:GITHUB_REPOSITORY/actions/runs/$env:GITHUB_RUN_ID |
 
           This validates scripts/dev_cache_cleanup.py on the hosted Windows runner. Local Windows app cleanup still runs from Codex/Claude sessions or a local scheduled task; GitHub Actions cannot reclaim local C: drive caches.

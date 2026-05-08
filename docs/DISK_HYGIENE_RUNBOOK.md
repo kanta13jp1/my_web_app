@@ -751,6 +751,15 @@ Codex 振分 5 質問 score:
 
 = 8/9 ✅ ([PHILOSOPHY-22] gate 通過 / #4 6 部署 のみ marginal).
 
+### 14.11 Codex #1 implementation notes (= PR #1984 Tier 1.8/1.9/2.0)
+
+- `scripts/dev_cache_cleanup.py --tier18 --tier19` adds package-cache metrics (`tier_1_8_pnpm_MB`, `tier_1_8_npm_MB`, `tier_1_8_pub_MB`, `tier_1_8_pip_MB`, `tier_1_8_yarn_MB`, `tier_1_8_gh_MB`) and `temp_subtree_14d_MB`.
+- `.github/workflows/dev-cache-cleanup-cron.yml` validates Tier 1.8/1.9 in dry-run and safe apply on the hosted Windows runner.
+- `scripts/disk_hog_telemetry.py` emits the Tier 1.7 five-directory MAJOR_DIRS_MB telemetry and a 2 GB uncovered warning without automatic pruning.
+- `scripts/worktree_cleanup.py --tier1 --apply --max-runtime-sec=15` adds the SessionStart-friendly stale worktree prune primitive with idle/size/prefix/locked/current-worktree guards and a `reclaimed_mb=<int>` stdout line.
+- `scripts/session_delta_tracker.py --phase start|end` appends `~/.claude/logs/session-delta.csv` rows and creates warning files when median reclaim, 7-day C: delta, or absolute free-space thresholds are crossed.
+- `scripts/memory_trim_phase2.ps1` exposes `ram_trim_count` and `ram_trim_total_mb_freed` for hook integration without requiring administrator rights.
+
 ## 15. 毎セッション圧縮 status verify (= part 184 新設 / User 要望 v3 再確認 / 2-instance fleet)
 
 ### 15.1 hooks coverage 監査結果 (= 2026-05-09 part 184 verify)

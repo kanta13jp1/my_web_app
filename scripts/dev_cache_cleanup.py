@@ -10,11 +10,13 @@ or GitHub Actions.
 from __future__ import annotations
 
 import argparse
+import fnmatch
 import json
 import os
 import shutil
 import subprocess
 import sys
+import tempfile
 import time
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
@@ -65,6 +67,7 @@ class CleanupAction:
     target: str
     status: str
     reason: str
+    metric_key: str = ""
     command: list[str] = field(default_factory=list)
     before_mb: float | None = None
     after_mb: float | None = None
@@ -197,6 +200,7 @@ def command_action(
     apply: bool,
     before_paths: list[Path] | None = None,
     timeout: int = 300,
+    metric_key: str = "",
 ) -> CleanupAction:
     before = sum_existing_paths(before_paths or [])
     if not apply:
@@ -206,6 +210,7 @@ def command_action(
             target=target,
             status="planned",
             reason="dry-run; pass --apply to execute",
+            metric_key=metric_key,
             command=command,
             before_mb=before,
         )
@@ -220,6 +225,7 @@ def command_action(
         target=target,
         status=status,
         reason=reason,
+        metric_key=metric_key,
         command=command,
         before_mb=before,
         after_mb=after,
@@ -230,8 +236,15 @@ def command_action(
     )
 
 
-def skip_action(name: str, kind: str, target: str, reason: str) -> CleanupAction:
-    return CleanupAction(name=name, kind=kind, target=target, status="skipped", reason=reason)
+def skip_action(name: str, kind: str, target: str, reason: str, metric_key: str = "") -> CleanupAction:
+    return CleanupAction(
+        name=name,
+        kind=kind,
+        target=target,
+        status="skipped",
+        reason=reason,
+        metric_key=metric_key,
+    )
 
 
 def flutter_targets(root: Path, include_worktrees: bool) -> list[Path]:
@@ -351,10 +364,19 @@ def collect_tool_cache_actions(args: argparse.Namespace, root: Path) -> list[Cle
                 apply=args.apply,
                 before_paths=pnpm_store_paths(root),
                 timeout=args.command_timeout,
+                metric_key="tier_1_8_pnpm_MB",
             )
         )
     else:
-        actions.append(skip_action("pnpm store prune", "command", "pnpm store", "pnpm executable not found"))
+        actions.append(
+            skip_action(
+                "pnpm store prune",
+                "command",
+                "pnpm store",
+                "pnpm executable not found",
+                metric_key="tier_1_8_pnpm_MB",
+            )
+        )
 
     if command_available("dart"):
         actions.append(
@@ -366,6 +388,7 @@ def collect_tool_cache_actions(args: argparse.Namespace, root: Path) -> list[Cle
                 apply=args.apply,
                 before_paths=pub_cache_paths(),
                 timeout=args.command_timeout,
+                metric_key="tier_1_8_pub_command_MB",
             )
         )
     elif command_available("flutter"):
@@ -378,10 +401,19 @@ def collect_tool_cache_actions(args: argparse.Namespace, root: Path) -> list[Cle
                 apply=args.apply,
                 before_paths=pub_cache_paths(),
                 timeout=args.command_timeout,
+                metric_key="tier_1_8_pub_command_MB",
             )
         )
     else:
-        actions.append(skip_action("dart pub cache clean", "command", "pub cache", "dart/flutter executable not found"))
+        actions.append(
+            skip_action(
+                "dart pub cache clean",
+                "command",
+                "pub cache",
+                "dart/flutter executable not found",
+                metric_key="tier_1_8_pub_command_MB",
+            )
+        )
 
     pip_version = run_command([sys.executable, "-m", "pip", "--version"], cwd=root, timeout=30)
     if pip_version.code == 0:
@@ -394,10 +426,19 @@ def collect_tool_cache_actions(args: argparse.Namespace, root: Path) -> list[Cle
                 apply=args.apply,
                 before_paths=pip_cache_paths(root),
                 timeout=args.command_timeout,
+                metric_key="tier_1_8_pip_command_MB",
             )
         )
     else:
-        actions.append(skip_action("pip cache purge", "command", "pip cache", "python -m pip unavailable"))
+        actions.append(
+            skip_action(
+                "pip cache purge",
+                "command",
+                "pip cache",
+                "python -m pip unavailable",
+                metric_key="tier_1_8_pip_command_MB",
+            )
+        )
 
     return actions
 
@@ -435,6 +476,11 @@ def allowed_cleanup_roots(repo_root: Path) -> list[Path]:
         if value:
             roots.append(Path(value).resolve(strict=False))
     return dedupe_paths(roots)
+
+
+def is_allowed_cleanup_path(path: Path, repo_root: Path) -> bool:
+    resolved = path.resolve(strict=False)
+    return any(same_or_child(resolved, root) for root in allowed_cleanup_roots(repo_root))
 
 
 def is_safe_notebooklm_path(path: Path, repo_root: Path) -> bool:
@@ -477,6 +523,304 @@ def remove_child(path: Path) -> bool:
         return True
     except OSError:
         return False
+
+
+def deadline_from_seconds(seconds: int | float) -> float:
+    return time.monotonic() + max(1, float(seconds))
+
+
+def path_matches_any(path: Path, patterns: tuple[str, ...]) -> bool:
+    if not patterns:
+        return True
+    return any(fnmatch.fnmatch(path.name, pattern) for pattern in patterns)
+
+
+def stale_files(
+    root: Path,
+    max_age_days: int,
+    *,
+    patterns: tuple[str, ...] = (),
+    recursive: bool = True,
+    deadline: float | None = None,
+) -> list[Path]:
+    if not root.exists() or not root.is_dir():
+        return []
+    cutoff = time.time() - max_age_days * 24 * 60 * 60
+    iterator = root.rglob("*") if recursive else root.iterdir()
+    candidates: list[Path] = []
+    try:
+        for item in iterator:
+            if deadline is not None and time.monotonic() > deadline:
+                break
+            try:
+                if not item.is_file() or item.stat().st_mtime > cutoff:
+                    continue
+            except OSError:
+                continue
+            if path_matches_any(item, patterns):
+                candidates.append(item)
+    except OSError:
+        return candidates
+    return candidates
+
+
+def newest_mtime(path: Path, *, deadline: float | None = None) -> float | None:
+    try:
+        latest = path.stat().st_mtime
+    except OSError:
+        return None
+    if path.is_file():
+        return latest
+    try:
+        for item in path.rglob("*"):
+            if deadline is not None and time.monotonic() > deadline:
+                break
+            try:
+                latest = max(latest, item.stat().st_mtime)
+            except OSError:
+                continue
+    except OSError:
+        return latest
+    return latest
+
+
+def stale_child_dirs_by_latest_mtime(
+    root: Path,
+    max_age_days: int,
+    *,
+    deadline: float | None = None,
+) -> list[Path]:
+    if not root.exists() or not root.is_dir():
+        return []
+    cutoff = time.time() - max_age_days * 24 * 60 * 60
+    stale: list[Path] = []
+    try:
+        children = list(root.iterdir())
+    except OSError:
+        return []
+    for child in children:
+        if deadline is not None and time.monotonic() > deadline:
+            break
+        if not child.is_dir() or child.is_symlink():
+            continue
+        latest = newest_mtime(child, deadline=deadline)
+        if latest is not None and latest <= cutoff:
+            stale.append(child)
+    return stale
+
+
+def filesystem_prune_action(
+    *,
+    args: argparse.Namespace,
+    repo_root: Path,
+    name: str,
+    target: str,
+    candidates: list[Path],
+    reason: str,
+    metric_key: str,
+) -> CleanupAction:
+    safe_candidates = [
+        path
+        for path in dedupe_paths(candidates)
+        if path.exists() and is_allowed_cleanup_path(path, repo_root)
+    ]
+    before = sum_existing_paths(safe_candidates)
+    if not safe_candidates:
+        return CleanupAction(
+            name=name,
+            kind="filesystem",
+            target=target,
+            status="skipped",
+            reason="no safe stale paths found",
+            metric_key=metric_key,
+            before_mb=0.0,
+        )
+    if not args.apply:
+        return CleanupAction(
+            name=name,
+            kind="filesystem",
+            target=target,
+            status="planned",
+            reason=f"dry-run; {len(safe_candidates)} paths selected ({reason})",
+            metric_key=metric_key,
+            before_mb=before,
+        )
+
+    removed = 0
+    for path in safe_candidates:
+        if remove_child(path):
+            removed += 1
+    after = sum_existing_paths([path for path in safe_candidates if path.exists()])
+    status = "success" if removed == len(safe_candidates) else "failed"
+    return CleanupAction(
+        name=name,
+        kind="filesystem",
+        target=target,
+        status=status,
+        reason=f"removed {removed}/{len(safe_candidates)} paths ({reason})",
+        metric_key=metric_key,
+        before_mb=before,
+        after_mb=after,
+        reclaimed_mb=max(0.0, round(before - after, 1)),
+    )
+
+
+def default_env_path(env_name: str, *parts: str) -> list[Path]:
+    value = os.environ.get(env_name)
+    if not value:
+        return []
+    return [(Path(value) / Path(*parts)).resolve(strict=False)]
+
+
+def npm_content_roots(root: Path) -> list[Path]:
+    roots = []
+    for cache in npm_cache_paths(root):
+        roots.append(cache / "_cacache" / "content-v2" / "sha512")
+    roots.extend(path / "_cacache" / "content-v2" / "sha512" for path in default_env_path("LOCALAPPDATA", "npm-cache"))
+    roots.extend(path / "_cacache" / "content-v2" / "sha512" for path in default_env_path("APPDATA", "npm-cache"))
+    return dedupe_paths(roots)
+
+
+def pub_hosted_package_roots() -> list[Path]:
+    roots: list[Path] = []
+    for cache in pub_cache_paths():
+        hosted = cache / "hosted"
+        if not hosted.exists():
+            continue
+        try:
+            for host in hosted.iterdir():
+                if host.is_dir():
+                    roots.append(host)
+        except OSError:
+            continue
+    return dedupe_paths(roots)
+
+
+def yarn_cache_roots() -> list[Path]:
+    return dedupe_paths(
+        [
+            *default_env_path("LOCALAPPDATA", "Yarn", "Cache"),
+            *default_env_path("APPDATA", "Yarn", "Cache"),
+            Path.home() / ".cache" / "yarn",
+        ]
+    )
+
+
+def gh_cache_roots() -> list[Path]:
+    return dedupe_paths([Path.home() / ".cache" / "gh"])
+
+
+def collect_aggressive_cache_actions(args: argparse.Namespace, repo_root: Path) -> list[CleanupAction]:
+    deadline = deadline_from_seconds(args.max_runtime_sec)
+    actions: list[CleanupAction] = []
+
+    npm_candidates: list[Path] = []
+    for path in npm_content_roots(repo_root):
+        npm_candidates.extend(stale_files(path, args.npm_cache_age_days, deadline=deadline))
+    actions.append(
+        filesystem_prune_action(
+            args=args,
+            repo_root=repo_root,
+            name="npm cache stale content prune",
+            target="npm _cacache/content-v2/sha512",
+            candidates=npm_candidates,
+            reason=f"files older than {args.npm_cache_age_days} days",
+            metric_key="tier_1_8_npm_MB",
+        )
+    )
+
+    pub_candidates: list[Path] = []
+    for path in pub_hosted_package_roots():
+        pub_candidates.extend(stale_child_dirs_by_latest_mtime(path, args.pub_cache_age_days, deadline=deadline))
+    actions.append(
+        filesystem_prune_action(
+            args=args,
+            repo_root=repo_root,
+            name="pub hosted stale package prune",
+            target="pub hosted packages",
+            candidates=pub_candidates,
+            reason=f"package dirs with latest mtime older than {args.pub_cache_age_days} days",
+            metric_key="tier_1_8_pub_MB",
+        )
+    )
+
+    pip_candidates: list[Path] = []
+    for path in pip_cache_paths(repo_root):
+        pip_candidates.extend(stale_files(path, args.pip_cache_age_days, deadline=deadline))
+    actions.append(
+        filesystem_prune_action(
+            args=args,
+            repo_root=repo_root,
+            name="pip stale cache prune",
+            target="pip cache",
+            candidates=pip_candidates,
+            reason=f"files older than {args.pip_cache_age_days} days",
+            metric_key="tier_1_8_pip_MB",
+        )
+    )
+
+    yarn_candidates: list[Path] = []
+    for path in yarn_cache_roots():
+        yarn_candidates.extend(stale_files(path, args.yarn_cache_age_days, deadline=deadline))
+    actions.append(
+        filesystem_prune_action(
+            args=args,
+            repo_root=repo_root,
+            name="yarn stale cache prune",
+            target="yarn cache",
+            candidates=yarn_candidates,
+            reason=f"files older than {args.yarn_cache_age_days} days",
+            metric_key="tier_1_8_yarn_MB",
+        )
+    )
+
+    gh_candidates: list[Path] = []
+    for path in gh_cache_roots():
+        gh_candidates.extend(stale_files(path, args.gh_cache_age_days, deadline=deadline))
+    actions.append(
+        filesystem_prune_action(
+            args=args,
+            repo_root=repo_root,
+            name="gh stale cache prune",
+            target="gh cache",
+            candidates=gh_candidates,
+            reason=f"files older than {args.gh_cache_age_days} days",
+            metric_key="tier_1_8_gh_MB",
+        )
+    )
+
+    return actions
+
+
+def collect_temp_deep_sweep_actions(args: argparse.Namespace, repo_root: Path) -> list[CleanupAction]:
+    temp_root = Path(os.environ.get("TEMP") or os.environ.get("TMP") or tempfile.gettempdir()).resolve(strict=False)
+    deadline = deadline_from_seconds(args.max_runtime_sec)
+    dir_candidates = stale_child_dirs_by_latest_mtime(
+        temp_root,
+        args.temp_subtree_age_days,
+        deadline=deadline,
+    )
+    file_candidates = stale_files(
+        temp_root,
+        args.temp_file_age_days,
+        patterns=("*.tmp", "*.log", "*.etl", "*.dmp"),
+        recursive=False,
+        deadline=deadline,
+    )
+    return [
+        filesystem_prune_action(
+            args=args,
+            repo_root=repo_root,
+            name="temp subtree stale prune",
+            target=str(temp_root),
+            candidates=[*dir_candidates, *file_candidates],
+            reason=(
+                f"dirs older than {args.temp_subtree_age_days} days by latest mtime; "
+                f"root temp/log/etl/dmp files older than {args.temp_file_age_days} days"
+            ),
+            metric_key="temp_subtree_14d_MB",
+        )
+    ]
 
 
 def notebooklm_cleanup_action(args: argparse.Namespace, repo_root: Path, path: Path) -> CleanupAction:
@@ -581,6 +925,12 @@ def print_report(actions: list[CleanupAction], *, applied: bool) -> None:
         print(f"{status}: {totals.get(status, 0)}")
     print(f"estimated reclaim: {estimated_reclaim_mb(actions):.1f} MB")
     print(f"actual reclaim:    {actual_reclaim_mb(actions):.1f} MB")
+    metrics = metric_values(actions)
+    if metrics:
+        print("")
+        print("metrics:")
+        for key in sorted(metrics):
+            print(f"  {key}: {metrics[key]:.1f} MB")
 
 
 def status_counts(actions: list[CleanupAction]) -> dict[str, int]:
@@ -601,17 +951,32 @@ def actual_reclaim_mb(actions: list[CleanupAction]) -> float:
     return round(sum(action.reclaimed_mb or 0.0 for action in actions), 1)
 
 
+def metric_values(actions: list[CleanupAction]) -> dict[str, float]:
+    metrics: dict[str, float] = {}
+    for action in actions:
+        if not action.metric_key:
+            continue
+        value = action.reclaimed_mb
+        if value is None and action.status in {"planned", "success"}:
+            value = action.before_mb
+        metrics[action.metric_key] = round(metrics.get(action.metric_key, 0.0) + (value or 0.0), 1)
+    return metrics
+
+
 def summary_payload(args: argparse.Namespace, root: Path, actions: list[CleanupAction]) -> dict[str, Any]:
     return {
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "mode": "apply" if args.apply else "dry-run",
         "root": str(root),
         "include_worktrees": bool(args.include_worktrees),
+        "tier18": bool(args.tier18 or args.aggressive_cache_sweep),
+        "tier19": bool(args.tier19 or args.temp_deep_sweep),
         "cache_age_days": int(args.cache_age_days),
         "total": len(actions),
         "counts": status_counts(actions),
         "estimated_reclaim_mb": estimated_reclaim_mb(actions),
         "actual_reclaim_mb": actual_reclaim_mb(actions),
+        "metrics": metric_values(actions),
         "actions": [asdict(action) for action in actions],
     }
 
@@ -637,6 +1002,39 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
         help="Minimum age for NotebookLM cache children selected for pruning.",
     )
     parser.add_argument("--command-timeout", type=int, default=300, help="Per-command timeout in seconds.")
+    parser.add_argument(
+        "--tier18",
+        action="store_true",
+        help="Enable Tier 1.8 aggressive package cache sweep metrics.",
+    )
+    parser.add_argument(
+        "--aggressive-cache-sweep",
+        action="store_true",
+        help="Alias for --tier18.",
+    )
+    parser.add_argument(
+        "--tier19",
+        action="store_true",
+        help="Enable Tier 1.9 temp deep sweep metrics.",
+    )
+    parser.add_argument(
+        "--temp-deep-sweep",
+        action="store_true",
+        help="Alias for --tier19.",
+    )
+    parser.add_argument(
+        "--max-runtime-sec",
+        type=int,
+        default=60,
+        help="Soft runtime budget for filesystem sweeps.",
+    )
+    parser.add_argument("--npm-cache-age-days", type=int, default=30)
+    parser.add_argument("--pub-cache-age-days", type=int, default=30)
+    parser.add_argument("--pip-cache-age-days", type=int, default=14)
+    parser.add_argument("--yarn-cache-age-days", type=int, default=14)
+    parser.add_argument("--gh-cache-age-days", type=int, default=7)
+    parser.add_argument("--temp-subtree-age-days", type=int, default=14)
+    parser.add_argument("--temp-file-age-days", type=int, default=7)
     parser.add_argument("--json", action="store_true", help="Print the machine-readable summary.")
     parser.add_argument("--json-out", type=Path, help="Write the machine-readable summary.")
     return parser.parse_args(argv)
@@ -648,6 +1046,10 @@ def main(argv: list[str]) -> int:
     actions: list[CleanupAction] = []
     actions.extend(collect_flutter_actions(args, root))
     actions.extend(collect_tool_cache_actions(args, root))
+    if args.tier18 or args.aggressive_cache_sweep:
+        actions.extend(collect_aggressive_cache_actions(args, root))
+    if args.tier19 or args.temp_deep_sweep:
+        actions.extend(collect_temp_deep_sweep_actions(args, root))
     actions.extend(collect_notebooklm_actions(args, root))
 
     payload = summary_payload(args, root, actions)
