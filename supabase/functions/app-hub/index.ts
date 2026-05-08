@@ -205,7 +205,15 @@ serve(async (req: Request) => {
       // --- Calendar ---
       case "calendar.list": {
         const items = await listItems(admin, "calendar_event", userId);
-        return json({ success: true, events: items });
+        const events = items.map((it) => {
+          const meta = (it.metadata ?? {}) as Record<string, unknown>;
+          return {
+            ...meta,
+            event_id: it.id,
+            created_at: it.created_at,
+          };
+        });
+        return json({ success: true, events });
       }
 
       case "calendar.create": {
@@ -215,8 +223,13 @@ serve(async (req: Request) => {
           end_at: body.end_at,
           description: body.description ?? "",
           all_day: body.all_day ?? false,
+          color: body.color ?? "#4285f4",
         });
-        return json({ success: true, event: item });
+        const meta = (item.metadata ?? {}) as Record<string, unknown>;
+        return json({
+          success: true,
+          event: { ...meta, event_id: item.id, created_at: item.created_at },
+        });
       }
 
       case "calendar.delete": {

@@ -28953,3 +28953,20 @@ User 第 2 弾 ask (= same session continuation): 「WBS 期限近順 + 2 instan
 
 ### Commit
 - `7dd055355` docs(automation): SaaS automation patterns spec (#1783)
+
+## 2026-05-08 — Win版#132 part 182 (Win Claude / Claude Code)
+
+### Session Summary
+- **calendar bug fix** — `app-hub` EF `calendar.list` が `{id, metadata, created_at}` 構造を返していて Flutter 側が `ev['start_at']` を読めず全イベント filter 落ち (= 「0件」表示)。`calendar.list` を flatten + `calendar.create` に `color` 永続化追加。
+- **WBS dedup Phase 2 spec ship** — user 観測「法人銀行口座開設 14 件重複」→ Phase 1 (= migration `20260426080000`) の UNIQUE INDEX が prod に未作成 or cron auto-subdivide 増殖と推定。`docs/cross-instance-prs/20260508_wbs_dedup_v2_phase2_codex.md` で Codex hand-off (= 期限 2026-05-22 / 3 step: 診断 SQL + dedup v2 migration + cron audit)。
+- 「user 報告 → root cause 探索 → spec doc + Codex hand-off」pattern 第 N 例 (= [INSTANCE-ROLES] 5 質問 全 NO = Codex 振分)
+- 112 part 連続 dogfood
+
+### Philosophy Alignment (Win#132 part 182)
+- 主要実装: calendar EF 修正 + WBS dedup Phase 2 spec
+- 該当原則: #2 (= ミッション = 自分株式会社運営の信頼性) + #6 (= 時間最適化 = データ品質負債返済) + #7 (= 資産負債 = WBS データ正確性 = 経営判断資産)
+- 整合性スコア: 7/9 ✅ ([PHILOSOPHY-22] gate 通過)
+- 理念的貢献: 経営者ダッシュボード (= WBS) のデータ品質を確保 → 意思決定速度の毀損防止
+
+### Commit
+- (= 本 PR の merge commit / 後追記)
