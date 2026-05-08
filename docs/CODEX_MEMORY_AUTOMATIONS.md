@@ -4,10 +4,14 @@
 > Codex 公式が Automations を「Issue triage / alert monitoring / CI/CD を常時稼働で拾う機能」と説明.
 > NotebookLM 適用確認でも、Memory / long-running state を Codex#1 / #2 と WBS / Issue に接続する改善が未完了として挙がった.
 >
-> **目的**: 12 instance fleet の定常タスクを「人が忘れたら止まる」状態から「自走する」状態に移行.
-> daily / weekly / monthly の自動化タスクと所有者 (Codex#1 / #2 / GHA / Claude Code) を本ドキュメントで明示.
+> **現行運用**: 2026-05-08 時点の active fleet は **Claude Code #1 + Codex #1** の 2 instance 制.
+> 旧 Codex#2 / PS#1-#6 / VSCode / WEB / mobile lane は履歴上の ownership mapping として残し、現行実装・CI lane は Codex #1 が吸収する.
 >
-> **成果物**: 受け入れ条件を満たす最初の 1 つの GHA 自動化 = `.github/workflows/codex-session-safety-cron.yml` (= 本ドキュメントと同 commit).
+> **目的**: 定常タスクを「人が忘れたら止まる」状態から「自走する」状態に移行.
+> daily / weekly / monthly の自動化タスクと所有者 (Claude Code #1 / Codex #1 / GHA) を本ドキュメントで明示.
+>
+> **成果物**: 受け入れ条件を満たす GHA 自動化群 =
+> `.github/workflows/codex-session-safety-cron.yml` + `.github/workflows/session-residuals-sync.yml`.
 
 ---
 
@@ -43,7 +47,17 @@
 
 ---
 
-## 2. 12 instance fleet 担当分担 (= 上表 cross-cut)
+## 2. 2 instance active routing + legacy ownership map (= 上表 cross-cut)
+
+現行の運用判断では、旧 12 instance fleet の担当名は履歴・設計由来の分類として扱う。新規セッションで起動するのは Claude Code #1 と Codex #1 のみ。
+
+| Active owner | 吸収する旧 lane | 主な責務 |
+| --- | --- | --- |
+| **Claude Code #1** | Win / VSCode / PS#1 / PS#3 / PS#4 / WEB / mobile | architecture, triage, docs/spec, UX判断, cross-instance hand-off 設計 |
+| **Codex #1** | Codex#1 / Codex#2 / PS#2 / PS#5 / PS#6 | implementation, CI, GHA, scripts, sync, scoped PR |
+| **GHA / Automation** | schedule / monitor / sync jobs | 定常実行、Issue/WBS 接続、artifact / comment 出力 |
+
+下表は既存 automation の historical ownership map。現行では必要に応じて上表の 2 instance owner へ読み替える。
 
 | Instance | daily 自走責任 | weekly 自走責任 | monthly 自走責任 | 主な non-cron 責任 |
 | --- | --- | --- | --- | --- |
@@ -100,11 +114,11 @@
 
 | Trigger | 再開アクション | 再開所有者 |
 | --- | --- | --- |
-| GHA workflow failure (= `workflow-failure-handler.yml` 経由) | Issue 自動作成 + cs-check が triage | Codex#2 (= CI 担当) |
+| GHA workflow failure (= `workflow-failure-handler.yml` 経由) | Issue 自動作成 + cs-check が triage | Codex #1 (= CI 担当) |
 | migration collision detected (= part 47 detector) | rename + WIP commit | 検出元 instance |
 | WBS task 60 日未更新 (= `wbs-staleness-audit.yml`) | cross-instance-pr 自動作成 | 元 owner_instance |
 | Issue close (= bug 修正完了) | feedback メール送信 | (= 自動) |
-| AI tool changelog 重要 update (= `ai-tool-watch.yml`) | comment to Issue #1422 + Slack | Win版 (= triage 担当) |
+| AI tool changelog 重要 update (= `ai-tool-watch.yml`) | comment to Issue #1422 + Slack | Claude Code #1 (= triage 担当) |
 
 ### 4.2 上限 (= cap)
 
@@ -131,21 +145,33 @@ GHA workflow failure
 
 ## 5. セッション終了時残作業 → Issue/WBS 自動接続
 
-### 5.1 現状 (= 半手動)
+### 5.1 現状 (= 自動化済)
 
 各 instance のセッション終了時:
 1. `/wrap-up` skill 実行 (= memory/ 保存 + ROADMAP 追記)
-2. **手動で `gh issue create` で残作業 Issue 化** (= 本 part 117 で実施)
-3. 次回セッションが gh issue list で拾う
+2. `memory/project_*.md` に `## 次回 candidate` / `## 次回タスク候補` / `## 次回アクション候補` を残す
+3. `.github/workflows/session-residuals-sync.yml` が daily 02:30 JST に scan
+4. `scripts/session_residuals_to_issue.py` が重複除外後、未登録項目を GitHub Issue 化
+5. workflow summary を Issue #1647 に comment し、次回 Codex #1 / Claude Code #1 session が `gh issue list` / WBS から拾う
 
-### 5.2 改善案 (= 完全自動)
+### 5.2 実装済みの自動化
 
-`scripts/session_residuals_to_issue.py` を新規追加 (= 本 doc commit に含めない / 次 part で実装):
+`scripts/session_residuals_to_issue.py`:
 - `memory/project_YYYYMMDD_*.md` の `## 次回 candidate` セクションを parse
 - 既存 open Issue と diff を取って未登録項目のみ Issue 自動作成
 - 重複 check + label 自動付与 (= 追加要望 / instance 別)
+- link-only / narrative meta line を skip
+- `--limit` safety cap で 1 run の Issue 作成数を制限
 
-`.github/workflows/session-residuals-sync.yml` で daily 03:00 JST に実行.
+`.github/workflows/session-residuals-sync.yml`:
+- schedule: daily 02:30 JST
+- dispatch default: dry-run (`apply=false`) for manual safety
+- cron default: apply (`apply=true`)
+- comments report back to Issue #1647
+
+検証済み run:
+- initial dry-run: `25276920888`
+- apply: `25286317156`, `25334866200`, `25393385510`, `25452355648`, `25513384254`
 
 ---
 
@@ -153,9 +179,9 @@ GHA workflow failure
 
 | 条件 | 状況 | 根拠 |
 | --- | --- | --- |
-| 1. 日次/週次で自動化すべきタスク一覧と担当 (Codex #1/#2/GHA/Claude Code) が docs に反映 | ✅ | 本ドキュメント §1 §2 |
-| 2. 少なくとも 1 つの Codex Automation または GitHub Actions 代替が作成 | ✅ | `.github/workflows/codex-session-safety-cron.yml` (= 本 commit) |
-| 3. セッション終了時の残作業が自動で Issue/WBS へ残る導線が検証 | ⚠️ 半自動 (= 手動 `gh issue create` 確立) | §5.1 / §5.2 (完全自動化は次 part) |
+| 1. 日次/週次で自動化すべきタスク一覧と担当 (Claude Code #1 / Codex #1 / GHA) が docs に反映 | ✅ | 本ドキュメント §1 §2 |
+| 2. 少なくとも 1 つの Codex Automation または GitHub Actions 代替が作成 | ✅ | `.github/workflows/codex-session-safety-cron.yml` + `.github/workflows/session-residuals-sync.yml` |
+| 3. セッション終了時の残作業が自動で Issue/WBS へ残る導線が検証 | ✅ | `scripts/session_residuals_to_issue.py`; successful runs `25276920888`, `25286317156`, `25334866200`, `25393385510`, `25452355648`, `25513384254` |
 
 ---
 
@@ -169,4 +195,4 @@ GHA workflow failure
 - `docs/SCHEDULE_TASKS.md` (= cron 詳細)
 - `docs/MULTI_INSTANCE_FLEET.md` (= 12 instance canonical)
 
-(Win版#132 part 117 / 2026-05-03 / Issue #1647 着地)
+(Win版#132 part 117-118 / Codex #1 close-out update 2026-05-08 / Issue #1647 着地)
