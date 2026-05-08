@@ -483,3 +483,97 @@ $totals['stale_worktree_prune_MB'] = $worktreeReclaimMB
 | #4 6 部署 | ✅ infra 部署 dogfood |
 | #5 商品=価値 | ✅ ビルド失敗 risk 削減 = velocity 価値 |
 = 7/9 ✅ ([PHILOSOPHY-22] gate 通過).
+
+---
+
+## 13. Tier 1.7 disk hog telemetry (= part 179 新設 / observability 専用 / 自動 prune なし)
+
+### 13.1 背景 + 隙間特定
+
+User 2026-05-08 part 179 ask: 「**毎回のセッションで必ず** メモリ + HDD 容量圧縮施策」継続検討.
+
+part 179 audit 実測 (= `~` 配下 9 dir / `Get-ChildItem -Recurse | Measure-Object Length`):
+
+| Path | Size | hygiene カバー | 備考 |
+|---|---|---|---|
+| `~/.cache/codex-runtimes/codex-primary-runtime` | **721.9 MB** | ❌ なし | Codex CLI runtime / 単一 dir / 削除時 Codex 起動失敗 risk → **prune 不可** |
+| `~/.claude/plugins/marketplaces/thedotmack` | **612.3 MB** | ❌ なし | claude-mem plugin / `plugin/` 576.8 MB が assets / `.git` 27.2 MB 軽微 |
+| `~/.claude/projects` | 547.1 MB | ✅ Tier 1 (transcripts gzip) + Tier 1.5 (memory) | session log + memory hub |
+| `~/AppData/Roaming/Code/User/workspaceStorage` | 249.4 MB | ❌ なし | VSCode dormant 後も残存 (= 12 instance 移行 obsolete) |
+| `~/AppData/Local/npm-cache` | 245.2 MB | ⚠️ disk-cleanup Tier 2 のみ (= 週次手動) | Node tooling cache |
+| `~/AppData/Local/Google/Chrome/User Data/Default/Cache` | 177.3 MB | ✅ Tier 1 step 7 (browser_cache) | OK |
+
+**隙間** = `~/.cache/codex-runtimes` + `~/.claude/plugins/marketplaces` + VSCode workspaceStorage 計 **~1.6 GB が hygiene 非対象**.
+
+うち `codex-primary-runtime` 722 MB は **prune 不可** (= 削除時 Codex 起動 fail). 残り `marketplaces/thedotmack` 612 MB + `workspaceStorage` 249 MB = **~860 MB が prune 候補**.
+
+### 13.2 Tier 1.7 (= telemetry のみ / 自動 prune なし)
+
+**自動 prune は実装しない**. 代わりに `disk-cleanup.ps1` 末尾 step 12 として **MAJOR_DIRS_MB telemetry** を log:
+
+```powershell
+# step 12: MAJOR_DIRS_MB telemetry (= no prune / observability only)
+$majorDirs = @{
+    'cache_codex_runtimes_MB'      = "$env:USERPROFILE\.cache\codex-runtimes"
+    'plugins_marketplaces_MB'      = "$env:USERPROFILE\.claude\plugins\marketplaces"
+    'projects_MB'                  = "$env:USERPROFILE\.claude\projects"
+    'vscode_workspaceStorage_MB'   = "$env:USERPROFILE\AppData\Roaming\Code\User\workspaceStorage"
+    'npm_cache_MB'                 = "$env:USERPROFILE\AppData\Local\npm-cache"
+}
+foreach ($k in $majorDirs.Keys) {
+    $p = $majorDirs[$k]
+    $sizeMB = if (Test-Path $p) {
+        [math]::Round((Get-ChildItem $p -Recurse -Force -ErrorAction SilentlyContinue |
+            Where-Object { -not $_.PSIsContainer } |
+            Measure-Object Length -Sum).Sum / 1MB, 1)
+    } else { 0 }
+    "[$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')]   ${k}: $sizeMB MB" | Add-Content $logPath
+}
+```
+
+### 13.3 設計判断: なぜ自動 prune しないか
+
+1. `codex-runtimes` = 削除時 Codex 起動 fail (= 致命) / version-pinned binaries / 手動再 install 必要
+2. `marketplaces/thedotmack/plugin/` = claude-mem plugin assets / 削除時 plugin 失効 / 手動 reinstall 必要
+3. `workspaceStorage` = VSCode dormant 後 obsolete だが `.code-workspace` リンク次第で復帰時必要
+4. **観測 → 閾値超過時 user 判断** = INDIE-29 「YAGNI / 過剰自動化回避」
+
+### 13.4 閾値駆動 alert (= §3 拡張)
+
+`disk-cleanup.ps1` 末尾で telemetry 後 threshold check:
+
+```powershell
+$total_uncovered_MB = $majorDirs_telemetry['cache_codex_runtimes_MB'] +
+                      $majorDirs_telemetry['plugins_marketplaces_MB'] +
+                      $majorDirs_telemetry['vscode_workspaceStorage_MB']
+if ($total_uncovered_MB -gt 2000) {
+    "[$(Get-Date)] WARN: hygiene-uncovered dirs total ${total_uncovered_MB} MB > 2 GB threshold" |
+        Add-Content $logPath
+    # GHA scheduled-tasks-monitor が log scan で issue 起票 (= 既存 cron)
+}
+```
+
+### 13.5 Acceptance criteria (= Codex 実装委譲)
+
+- [ ] `disk-cleanup.ps1` step 12 = MAJOR_DIRS_MB telemetry 5 metric log 出力
+- [ ] threshold 2 GB 超過時 WARN log
+- [ ] 自動 prune 実装しない (= safety first)
+- [ ] tests/ で 5 metric 出力検証
+- [ ] PR description で「Issue #1984 axis A 強化 / Tier 1.7 telemetry only」明示
+
+### 13.6 委譲外 (= Win Claude follow-up)
+
+- 閾値超過 alert = GHA scheduled-tasks-monitor が log scan で auto-issue 起票連携 (= part 169 monitor cron 適用)
+- 観測 KPI 集計 = 2 week 後 trend 確認
+
+### 13.7 Philosophy alignment (= 6+/9 ✅)
+
+| 原則 | alignment |
+|---|---|
+| #1 CEO 感 | ✅ HDD 漏れ箇所 visibility |
+| #2 ミッション | ✅ 「毎セッション必ず」継続要件対応 |
+| #7 資産負債 | ✅ hygiene 漏れ = 隠れ負債 / 観測で可視化 |
+| #8 KPI | ✅ MAJOR_DIRS_MB 5 metric KPI 化 |
+| #6 時間最適化 | ✅ telemetry only / 自動 prune による事故 risk 0 |
+| #9 IPO 化 | ✅ disk audit 機構 = audit log 蓄積 |
+= 6/9 ✅ ([PHILOSOPHY-22] gate 通過).

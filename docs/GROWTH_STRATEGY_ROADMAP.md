@@ -28852,4 +28852,52 @@ Codex CLI が単独で着地した Issue #1569 (= high-risk PR ultrareview gate)
 
 ### Commit
 
+- PR [#2159](https://github.com/kanta13jp1/my_web_app/pull/2159) MERGED `b710a88ce` (admin squash)
+
+---
+
+## 2026-05-08 11:30 JST — Win版#132 part 179 続き (Win Claude / Tier 1.7 spec ship + 5/20-5/22 batch triage)
+
+### Summary
+
+User 第 2 弾 ask (= same session continuation): 「WBS 期限近順 + 2 instance 制反映 + メモリ HDD 圧縮施策」.
+
+新規 audit 発見 = `~/.cache/codex-runtimes` 722 MB + `~/.claude/plugins/marketplaces/thedotmack` 612 MB + VSCode workspaceStorage 249 MB = **計 ~1.6 GB hygiene 非対象 = 隠れ負債**. うち prune 候補 ~860 MB / 残 722 MB は不可 (= Codex 起動 fail risk).
+
+### Ship
+
+- `docs/DISK_HYGIENE_RUNBOOK.md` §13 新設 (= Tier 1.7 disk hog telemetry / 7 節 / 自動 prune なし / safety first)
+- `docs/cross-instance-prs/20260508_tier17_disk_hog_telemetry_codex.md` Codex hand-off (期限 2026-05-22)
+- Issue [#1984 comment 4402816831](https://github.com/kanta13jp1/my_web_app/issues/1984#issuecomment-4402816831) — axis A 継続強化 status
+- Issue [#1962 comment 4402817195](https://github.com/kanta13jp1/my_web_app/issues/1962#issuecomment-4402817195) — VSCode 版 dormant grace 30 day monitor 第 2 例
+
+### 5/20-5/22 batch triage matrix ([INSTANCE-ROLES] 5 質問 score)
+
+| Issue | score | 担当 | 推奨 |
+|---|---|---|---|
+| #1647 Codex Memory/Thread Automations | 0/5 | Codex | hand-off 別 session |
+| #1783 NotebookLM SaaS Operations 蒸留 | 4/5 | Win Claude | spec ship 別 session |
+| #1962 VSCode版 開発環境不具合 | n/a (dormant) | dormant grace | 30 day monitor |
+| #1124 AI役員GPA 評価 | n/a (= part 103 done) | verify-only | ack only |
+| #1558 Secrets/環境変数監査 | 3/5 split | Win Claude design + Codex impl | spec defer |
+| #1595 Testcontainers Codex #2 | 0/5 | Codex | 担当案明記 / hand-off 別 session |
+| #1719 Pleias UI 視覚検証 | 5/5 | Win Claude | UI/mobile UAT 別 session |
+| #1645 Docker MCP Toolkit | 2/5 split | split | spec defer |
+| #1741 自己接触トラッカー | 5/5 | Win Claude | UI/mobile/PWA 別 session |
+
+### Philosophy Alignment
+
+- **PHILOSOPHY-22** = 7/9 ✅ (= CEO 物理資産管理 / 時間最適化 / 隠れ負債削減 / mentor delegation)
+- **INDIE-29** = 6/7 ✅ (= 既存 doc 章追加 pattern 第 4 例 dogfood / YAGNI 自動 prune 回避)
+- **OPS-28** = 5 正本 ✅ (= Issues + PR + WBS + worktree+branch + Notion 不変)
+
+### Pattern dogfood
+
+- 「**既存 doc 章追加 pattern**」第 4 例 — DISK_HYGIENE_RUNBOOK.md §13 追加 (= 第 3 例 §12 連続応用 / 新規 spec md 増殖回避)
+- 「**自動 prune 回避 / telemetry only**」pattern 第 1 例 — ~860 MB prune 候補あるが 削除事故 risk → 観測のみ / INDIE-29 YAGNI 直接応用
+- 「**[INSTANCE-ROLES] 5 質問機械的振り分け**」第 3 例 — 5/20-5/22 9 issue を 30 sec/issue で score 化
+- 109 part 連続 dogfood / 21 part 連続 cross-day (cap_24part_v2 残 3) / 次 session = fresh start STRONGLY 推奨
+
+### Commit
+
 - PR #TBD (= admin squash merge 予定 / branch `claude/nostalgic-gagarin-03deac`)
