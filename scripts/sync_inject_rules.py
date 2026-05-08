@@ -49,6 +49,7 @@ CRITICAL_RULES = [
     "[CAVEMAN]",
     "[WBS-SYNC]",
     "[INSTANCE-ROLES]",
+    "[AI-TOOL-VERIFY]",
     "[CONCURRENCY]",
     "[AUTO-REPLY]",
     "[PHILOSOPHY-22]",
@@ -80,7 +81,7 @@ CRITICAL_RULES = [
     "[FLEET-OPS]",
 ]
 
-EXPECTED_RULE_COUNT = 37
+EXPECTED_RULE_COUNT = 38
 
 
 def read_text(path: Path) -> str | None:

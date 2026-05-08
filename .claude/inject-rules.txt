@@ -38,7 +38,7 @@ RULES (毎ターン inject / pointer hub / 詳細展開 = docs/RULES_INDEX.md):
 [INDIE-29] 7 原則チェック必須 (indie 開発 shipping / 5+/7 推奨) → docs/INDIE_DEV_VELOCITY_PRINCIPLES.md
 [SYNERGY-30] 7 原則チェック必須 (fleet 横断 / cross-instance-pr / 5+/7 推奨) → docs/AI_FLEET_SYNERGY_PLAYBOOK.md
 [OPS-28] 5 正本 + 6 AI 役割 + 5 監査チェック必須 (毎セッション運用憲章) → docs/OPERATIONS_CHARTER.md
-# C. Behavioral 1-line (= 15 rule / 詳細は docs/RULES_INDEX.md §C)
+# C. Behavioral 1-line (= 14 rule / 詳細は docs/RULES_INDEX.md §C)
 
 [ROADMAP-LOG] docs/GROWTH_STRATEGY_ROADMAP.md 毎セッション末尾追記必須 (instance + session# + サマリ + commit hash + Philosophy Alignment).
 
@@ -68,4 +68,4 @@ RULES (毎ターン inject / pointer hub / 詳細展開 = docs/RULES_INDEX.md):
 
 [FLEET-OPS] 5 正本 (Issues/PR / WBS+Notion / NotebookLM / Slack / worktree+branch). 作業開始時: 担当重複 / file・schema・EF・workflow 競合 / 5 正本不一致 / 通知形骸化 / 他 AI 活用余地を確認.
 
-> 詳細展開 (= 全 37 rule の full body / 違反例 / 関連 docs link): docs/RULES_INDEX.md (= part 134 で新規)
+> 詳細展開 (= 全 38 rule の full body / 違反例 / 関連 docs link): docs/RULES_INDEX.md (= part 134 で新規)
