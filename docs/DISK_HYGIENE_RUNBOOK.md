@@ -377,3 +377,109 @@ HDD 圧迫と並行して **RAM 圧迫** も Win 開発環境の継続課題. pa
 - Settings registration: `~/.claude/settings.json` `hooks.SessionStart` 第 3-4 段
 - Issue #1984 axis A-F: [P1 infra Memory + HDD reduction](https://github.com/kanta13jp1/my_web_app/issues/1984)
 - 9 原則: PHILOSOPHY-22 #6 時間最適化 + #7 資産負債 (= RAM = 物理資産) / AI-DEV-23 #4 circuit-breaker
+
+---
+
+## 12. Tier 1.6 SessionStart-integrated stale worktree prune (= part 178 新設 / 「毎セッション必ず」要件 v2)
+
+### 12.1 背景 + 隙間特定
+
+User 2026-05-08 ask: 「**毎回のセッションで必ず** メモリやハードディスク容量を圧縮する施策」.
+
+現状 audit:
+
+- `~/.claude/hooks/disk-cleanup.ps1` Tier 1 = 10 step 既存 (= temp / recycle / shell-snapshots / todos / transcripts gzip / file-history / DriveFS / browser cache / build / plugin cache)
+- `~/.claude/hooks/memory-cleanup.ps1` Tier 1.5 = 5 step 既存
+- `scripts/worktree_cleanup.py` = **weekly cron 経由のみ** (= GHA workflow / 7 日 1 回)
+- `git worktree list` 実測 (part 178): **17 worktree / 2.28 GB** = 圧迫源 #1 / 大半 1-3 day idle / 一部 detached HEAD 残存
+
+**隙間** = stale worktree auto-prune が **毎セッション** ではなく **週次** のみ → ユーザー要求「毎回必ず」とギャップ. weekly cron は 7 day 単位の累積を一気に刈るが、その間に C: ドライブ +0.5-1 GB / day 漸増. **SessionStart 統合 = 漸増を毎回 trim** で持続的に低位維持.
+
+### 12.2 Tier 1.6 (= 自動 / SessionStart hook step 11 / 10-15 sec budget)
+
+`disk-cleanup.ps1` 末尾に step 11 として `python scripts/worktree_cleanup.py --tier1` 呼び出しを追加.
+
+| 条件 (AND) | rationale |
+|---|---|
+| `git worktree list --porcelain` 列挙 | 全 worktree 列挙 |
+| branch merged-to-main (= `git branch --merged main`) | 未 merged は user 進行中の可能性 → 触らない |
+| idle > 7 days (= worktree dir 内 latest mtime > 7 day) | 7 day = part 168 hot-cache window と同じ cutoff |
+| size > 100 MB | sub-100MB は noise (= 13 個削除しても 1 GB に届かない) |
+| **current session worktree (= `$PWD` resolve) != target** | 自分自身 prune 防止 |
+| `.git/worktrees/<name>/locked` 不在 | git lock 機構尊重 |
+
+Action: `git worktree remove --force <path>` + `git worktree prune` (= dangling metadata sweep).
+
+期待回収: **0.5-2 GB / 月** (= 1 worktree 平均 130 MB × 月 5-15 件 prune).
+
+### 12.3 安全 rule
+
+- ❌ current session 絶対 skip (= `$PWD` parent 走査で自身 detect)
+- ❌ uncommitted change 検出時 skip (= `git -C <path> status --porcelain` 出力空チェック)
+- ❌ branch merged 判定不能時 skip (= detached HEAD は target 除外 / part 178 観測 2 件)
+- ❌ 60 sec 経過で `--max-runtime-sec=15` 強制中断 (= SessionStart 全体 30 sec budget 圧迫回避)
+- ✅ dry-run mode default + `--apply` flag 必須 (= `--tier1 --apply` で hook 起動)
+- ✅ 削除前 reclaim_MB log 出力 (= `~/.claude/logs/disk-cleanup-YYYYMMDD.log`)
+- ✅ SessionStart hook なので **削除 worktree 数 + reclaim_MB のみ** Claude context surface (= 詳細 log 別 file)
+
+### 12.4 settings.json (= 既存 hook 内に step 11 追加 / 配線変更不要)
+
+```powershell
+# disk-cleanup.ps1 末尾に追加 (step 11)
+$repoDir = "$env:USERPROFILE\GitHub\my_web_app"
+$worktreeScript = Join-Path $repoDir "scripts\worktree_cleanup.py"
+$worktreeReclaimMB = 0
+if (Test-Path $worktreeScript) {
+    try {
+        $out = & python $worktreeScript --tier1 --apply --max-runtime-sec=15 2>&1
+        if ($LASTEXITCODE -eq 0) {
+            $reclaimLine = $out | Select-String -Pattern 'reclaimed_mb=(\d+)' | Select-Object -First 1
+            if ($reclaimLine) {
+                $worktreeReclaimMB = [int]$reclaimLine.Matches[0].Groups[1].Value
+            }
+        }
+    } catch { }
+}
+$totals['stale_worktree_prune_MB'] = $worktreeReclaimMB
+```
+
+→ `~/.claude/settings.json` 変更不要 (= 既存 SessionStart 第 3 段 disk-cleanup.ps1 が呼ぶだけ).
+
+### 12.5 Codex hand-off (= 2 instance 制 / 実装委譲)
+
+| 工程 | 担当 | 状態 |
+|---|---|---|
+| spec doc 章追加 (= 本 §12) | **Win Claude** | ✅ part 178 |
+| `scripts/worktree_cleanup.py` `--tier1 --apply --max-runtime-sec=15` mode 追加 | **Win Codex** | 🔜 hand-off `docs/cross-instance-prs/20260508_tier16_stale_worktree_prune_codex.md` |
+| `~/.claude/hooks/disk-cleanup.ps1` step 11 配線 | **Win Claude** (= home dir 編集権限) | 🔜 follow-up session |
+| 観測 (= 2 week / 月 1+ GB reclaim 確認) | Win Claude | 🔜 part 180+ |
+
+### 12.6 KPI
+
+| metric | baseline | target |
+|---|---|---|
+| `.claude/worktrees/*` 合計 size | 2.28 GB (part 178) | < 1.5 GB |
+| stale worktree 数 (= idle > 14 day) | 1 (part 178: relaxed-cartwright-deb1e2) | 0 |
+| 月次 reclaim_MB | weekly cron 経由 ~500 MB | weekly + Tier 1.6 で 1500+ MB |
+
+### 12.7 失敗 mode + 対策
+
+| 失敗 mode | 対策 |
+|---|---|
+| `python` 不在 (= venv 未 activate) | hook 内 `python --version` check / 不在時 silently skip |
+| `git worktree list` 30 sec timeout | `--max-runtime-sec=15` で強制中断 |
+| current session detect 漏れ → 自己 prune | `$PWD` parent + `git rev-parse --show-toplevel` 二重 check |
+| ad-hoc Codex worktree (= `instance-codex`) 誤 prune | branch name `codex/*` 全 skip (= [INSTANCE-ROLES] 尊重) |
+
+### 12.8 PHILOSOPHY-22 alignment (= 7+/9 ✅)
+
+| 原則 | alignment |
+|---|---|
+| #1 CEO 感 | ✅ 開発環境 hygiene = CEO の物理資産管理 |
+| #2 ミッション | ✅ 「毎セッション必ず」要件直接対応 |
+| #6 時間最適化 | ✅ Tier 1.6 = 15 sec cap / 累積 GB 単位 reclaim |
+| #7 資産負債 | ✅ stale worktree = 隠れ負債 / 毎回 trim |
+| #8 KPI | ✅ §12.6 数値 KPI 設定 |
+| #4 6 部署 | ✅ infra 部署 dogfood |
+| #5 商品=価値 | ✅ ビルド失敗 risk 削減 = velocity 価値 |
+= 7/9 ✅ ([PHILOSOPHY-22] gate 通過).
