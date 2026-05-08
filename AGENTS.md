@@ -53,9 +53,9 @@ same notebook.
 - Codex #1 owns scoped implementation, cross-cutting investigation,
   SQL/migration review, CI, synchronization, operations, Edge Functions,
   GitHub Actions, deterministic automation, branch cleanup, and fix PRs.
-- Codex #2 and older PS/WEB/mobile/Gemini/Copilot lanes are historical labels
-  only. Do not start extra live instances unless the user explicitly reactivates
-  them.
+- Historical extra Codex lanes and older PS/WEB/mobile/Gemini/Copilot lanes are
+  dormant labels only. Codex #1 absorbs their implementation and CI duties under
+  the current two-instance flow unless the user explicitly reactivates them.
 - Use `docs/AGENT_DELEGATION_PROTOCOL.md` as the current handoff and review
   contract for WBS tasks.
 
@@ -73,8 +73,9 @@ same notebook.
 - Codex #1 should take broad but bounded work from the WBS top list:
   migrations, data import/export, UI verification, stale automation audits, and
   clean fix PRs from a fresh worktree.
-- Codex #2 should take red CI, deploy unblockers, workflow drift, Edge Function
-  failures, and GitHub/Notion/Slack synchronization issues.
+- Codex #1 should also absorb historical extra-Codex work: red CI, deploy
+  unblockers, workflow drift, Edge Function failures, and GitHub/Notion/Slack
+  synchronization issues.
 - If local `SUPABASE_SERVICE_ROLE_KEY` is unavailable, use GitHub Actions
   `WBS Progress Update (manual)` (`wbs-progress-update.yml`) to dispatch one
   `wbs.update_progress` call with task id, progress, status, Issue/PR reference,

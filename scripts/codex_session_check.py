@@ -15,7 +15,7 @@ import os
 import re
 import subprocess
 import sys
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
 
@@ -313,6 +313,59 @@ def notebooklm_snapshot(root: Path) -> dict[str, Any]:
     }
 
 
+def managed_mcp_snapshot(root: Path) -> dict[str, Any]:
+    config_path = root / "config" / "managed-mcp.json"
+    if not config_path.exists():
+        return {
+            "state": "missing",
+            "config": str(config_path),
+            "validation_errors": ["config/managed-mcp.json is missing"],
+            "session_findings": [],
+            "session_warning_count": 0,
+            "session_error_count": 0,
+        }
+    try:
+        from check_managed_mcp_policy import (
+            default_session_paths,
+            load_policy,
+            session_findings,
+            validate_policy,
+        )
+    except Exception as exc:
+        return {
+            "state": "unavailable",
+            "config": str(config_path),
+            "validation_errors": [f"could not import managed MCP checker: {exc}"],
+            "session_findings": [],
+            "session_warning_count": 0,
+            "session_error_count": 0,
+        }
+    try:
+        policy = load_policy(config_path)
+        validation_errors = validate_policy(policy)
+        findings = session_findings(
+            policy,
+            default_session_paths(root, include_home=True),
+        )
+    except Exception as exc:
+        return {
+            "state": "error",
+            "config": str(config_path),
+            "validation_errors": [f"managed MCP check failed: {exc}"],
+            "session_findings": [],
+            "session_warning_count": 0,
+            "session_error_count": 0,
+        }
+    return {
+        "state": "ok" if not validation_errors else "invalid",
+        "config": str(config_path),
+        "validation_errors": validation_errors,
+        "session_findings": [asdict(finding) for finding in findings],
+        "session_warning_count": sum(1 for finding in findings if finding.severity == "warning"),
+        "session_error_count": sum(1 for finding in findings if finding.severity == "error"),
+    }
+
+
 def parse_semver(text: str) -> tuple[int, int, int] | None:
     match = re.search(r"(\d+)\.(\d+)\.(\d+)", text)
     if not match:
@@ -334,6 +387,7 @@ def analyze(cwd: Path) -> dict[str, Any]:
     codex_version = codex_cli_version(root)
     notebooklm = notebooklm_snapshot(root)
     claude_remote_control = analyze_claude_remote_control(root)
+    managed_mcp = managed_mcp_snapshot(root)
 
     warnings: list[str] = []
     if dirty_lines:
@@ -384,6 +438,14 @@ def analyze(cwd: Path) -> dict[str, Any]:
         warnings.append(
             "Claude Code Remote Control all-sessions mode is not verified as enabled; run `/config` in Claude Code"
         )
+    if managed_mcp["validation_errors"]:
+        warnings.append("managed MCP policy validation failed")
+    for finding in managed_mcp["session_findings"][:12]:
+        warnings.append(f"managed MCP {finding['kind']}: {finding['message']}")
+    if len(managed_mcp["session_findings"]) > 12:
+        warnings.append(
+            f"managed MCP additional findings truncated: {len(managed_mcp['session_findings']) - 12}"
+        )
 
     return {
         "root": str(root),
@@ -399,6 +461,7 @@ def analyze(cwd: Path) -> dict[str, Any]:
         "codex_cli_version": codex_version,
         "notebooklm": notebooklm,
         "claude_remote_control": claude_remote_control,
+        "managed_mcp": managed_mcp,
         "worktrees": worktrees,
         "environment": env_snapshot(),
         "warnings": warnings,
@@ -453,6 +516,22 @@ def render_markdown(report: dict[str, Any]) -> str:
         for step in remote["manual_steps"]:
             lines.append(f"  - {step}")
         lines.append(f"- Team/Enterprise note: {remote['admin_note']}")
+
+    managed_mcp = report["managed_mcp"]
+    lines.extend(
+        [
+            "",
+            "## Managed MCP Policy",
+            f"- State: `{managed_mcp['state']}`",
+            f"- Config: `{managed_mcp['config']}`",
+            f"- Validation errors: `{len(managed_mcp['validation_errors'])}`",
+            f"- Session warnings/errors: `{managed_mcp['session_warning_count']} / {managed_mcp['session_error_count']}`",
+        ]
+    )
+    for finding in managed_mcp["session_findings"][:8]:
+        lines.append(
+            f"- `{finding['severity']}` `{finding['kind']}` `{finding['server']}`: {finding['message']}"
+        )
 
     lines.extend(["", "## Warnings"])
     if report["warnings"]:
