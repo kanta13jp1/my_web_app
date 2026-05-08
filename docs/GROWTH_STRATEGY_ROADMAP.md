@@ -28958,8 +28958,9 @@ User 第 2 弾 ask (= same session continuation): 「WBS 期限近順 + 2 instan
 
 ### Session Summary
 - **calendar bug fix** — `app-hub` EF `calendar.list` が `{id, metadata, created_at}` 構造を返していて Flutter 側が `ev['start_at']` を読めず全イベント filter 落ち (= 「0件」表示)。`calendar.list` を flatten + `calendar.create` に `color` 永続化追加。
-- **WBS dedup Phase 2 spec ship** — user 観測「法人銀行口座開設 14 件重複」→ Phase 1 (= migration `20260426080000`) の UNIQUE INDEX が prod に未作成 or cron auto-subdivide 増殖と推定。`docs/cross-instance-prs/20260508_wbs_dedup_v2_phase2_codex.md` で Codex hand-off (= 期限 2026-05-22 / 3 step: 診断 SQL + dedup v2 migration + cron audit)。
-- 「user 報告 → root cause 探索 → spec doc + Codex hand-off」pattern 第 N 例 (= [INSTANCE-ROLES] 5 質問 全 NO = Codex 振分)
+- **WBS dedup Phase 2 spec ship + Step 2.5 拡張** — user 観測「法人銀行口座開設 14 件重複」→ 全 917 行 audit で (A) `(title, instance)` 完全一致重複 700-800 行 + (B) `(github_issue_number, instance)` 重複で title バリエーション違い ~20 ペア (= GitHub Issue sync prefix 違い由来) を発見。Phase 2 spec を Step 2 + 2.5 二段 dedup + UNIQUE INDEX 2 種強制再作成に拡張。Codex hand-off (= 期限 2026-05-22 / Issue #2171)。
+- 「user iterative report → spec scope 拡張 → 1 PR で全件解消」pattern 第 1 例
+- 「データ品質負債 = 全観測表 audit → spec 拡張」pattern 第 1 例 (= 当初 spec の取りこぼし回避)
 - 112 part 連続 dogfood
 
 ### Philosophy Alignment (Win#132 part 182)

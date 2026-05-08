@@ -117,14 +117,26 @@ HAVING COUNT(*) > 1
 ORDER BY cnt DESC, title
 LIMIT 50;
 
--- (3) 「法人銀行口座開設」全行
+-- (3) Issue # ベース二次重複集計 (= title 表現バリエーション検出 / Step 2.5 対象)
+SELECT github_issue_number, instance, COUNT(*) AS cnt,
+       array_agg(DISTINCT title ORDER BY title) AS title_variations,
+       array_agg(id ORDER BY created_at) AS ids
+FROM public.wbs_tasks
+WHERE github_issue_number IS NOT NULL
+GROUP BY github_issue_number, instance
+HAVING COUNT(*) > 1
+ORDER BY cnt DESC, github_issue_number
+LIMIT 30;
+-- 期待: ~20 ペア (= 観測例 #1282 / #1275 / #1373 / #1383 / #1316 / #1385 / #1409 等)
+
+-- (4) 「法人銀行口座開設」全行 (= Step 2 対象の典型例 verify 用)
 SELECT id, title, instance, owner_instance, status, progress,
        start_date, end_date, created_at, updated_at, parent_task_id
 FROM public.wbs_tasks
 WHERE title = '法人銀行口座開設'
 ORDER BY created_at;
 
--- (4) auto-subdivided 行検出 (= parent_task_id 経由)
+-- (5) auto-subdivided 行検出 (= parent_task_id 経由 / Step 3 audit 用)
 SELECT parent_task_id, COUNT(*) AS subdivided
 FROM public.wbs_tasks
 WHERE parent_task_id IS NOT NULL
@@ -172,10 +184,55 @@ WHERE id IN (
 );
 
 -- ============================================================
--- Step 3: UNIQUE INDEX 強制再作成 (= 失敗時 migration 全体 rollback)
+-- Step 2.5: Issue # ベース二次 dedup (= title 表現バリエーション吸収)
+--   2026-05-08 user 第 3 報で発見 — 同 (github_issue_number, instance) で
+--   title 文字列が複数バリエーション存在するパターン (= GitHub Issue → WBS sync が
+--   「○○○ 由来の実行チェックリスト生成」「○○○ の運用レビュー・アラート」
+--   「○○○ の知見カード化・横断検索導線」等 prefix 違いで複数 row 生成)。
+--   Step 2 (= title, instance PARTITION) では title 文字列が違うため両方残る。
+--   観測例: Issue #1282 / #1275 / #1373 / #1383 / #1316 / #1385 / #1409 等 計 ~20 ペア。
+--
+-- 残す優先度:
+--   1. progress > 0 (= 進捗ある行を絶対 keep)
+--   2. ai_review_status != 'pending' (= AI review 経た行優先)
+--   3. LENGTH(title) DESC (= 詳細記述 = 後発で精度高い title 優先)
+--   4. created_at ASC (= 同点なら最古 / Step 2 と整合)
+-- ============================================================
+WITH issue_ranked AS (
+  SELECT id,
+    ROW_NUMBER() OVER (
+      PARTITION BY github_issue_number, instance
+      ORDER BY
+        CASE WHEN COALESCE(progress, 0) > 0 THEN 0 ELSE 1 END,
+        CASE WHEN COALESCE(ai_review_status, 'pending') != 'pending' THEN 0 ELSE 1 END,
+        LENGTH(title) DESC,
+        created_at ASC,
+        id ASC
+    ) AS rn
+  FROM public.wbs_tasks
+  WHERE github_issue_number IS NOT NULL
+)
+DELETE FROM public.wbs_tasks
+WHERE id IN (
+  SELECT id FROM issue_ranked WHERE rn > 1
+);
+
+-- ============================================================
+-- Step 3: UNIQUE INDEX (title, instance) 強制再作成
+--   (= Step 1 で DROP 済み / 失敗時 migration 全体 rollback)
 -- ============================================================
 CREATE UNIQUE INDEX wbs_tasks_title_instance_unique
   ON public.wbs_tasks (title, instance);
+
+-- ============================================================
+-- Step 3.5: UNIQUE INDEX (github_issue_number, instance) 新規追加
+--   (= Issue # 二次 dedup の再発防止)
+--   注意: github_issue_number IS NULL の行 (= business-* 等 Issue 紐付けなし)
+--         が複数あるため、partial index で NULL 除外。
+-- ============================================================
+CREATE UNIQUE INDEX wbs_tasks_issue_instance_unique
+  ON public.wbs_tasks (github_issue_number, instance)
+  WHERE github_issue_number IS NOT NULL;
 
 -- ============================================================
 -- Step 4: 削除件数を development_achievements に記録
@@ -184,8 +241,11 @@ INSERT INTO development_achievements (title, description, completed_at)
 VALUES (
   'WBS dedup v2 (Phase 2 / Win Codex)',
   format(
-    'WBS タスク重複 Phase 2 修正。UNIQUE INDEX wbs_tasks_title_instance_unique を ' ||
-    'DROP → 重複削除 → 強制再作成。Phase 1 (20260426080000) の不完全 dedup を補完。' ||
+    'WBS タスク重複 Phase 2 修正。Step 2 (title, instance) + Step 2.5 ' ||
+    '(github_issue_number, instance) の二段 dedup。UNIQUE INDEX 2 種を ' ||
+    'DROP → 削除 → 再作成 + Issue # 用 partial unique index 新規追加。' ||
+    'Phase 1 (20260426080000) の不完全 dedup を補完 + GitHub Issue sync 由来の ' ||
+    'title バリエーション重複も吸収。' ||
     '起票元: docs/cross-instance-prs/20260508_wbs_dedup_v2_phase2_codex.md'
   ),
   '2026-05-22'
@@ -198,9 +258,11 @@ COMMIT;
 **注意点 (= Codex 実装時)**:
 
 - migration 名 timestamp は実投入日 JST に合わせる (= e.g. `20260520120000`)
-- `BEGIN/COMMIT` で囲む (= `CREATE UNIQUE INDEX` 失敗時 rollback)
+- `BEGIN/COMMIT` で囲む (= `CREATE UNIQUE INDEX` 2 種いずれか失敗時 rollback)
 - prod に並行 `db push` がいないこと確認 (= `supabase migration list --remote` で head 確認)
-- 削除件数は migration 後に Step 1 (2) の SQL を再実行して 0 件確認
+- 削除件数は migration 後に Step 1 (1) (2) (3) を再実行して 0 件確認 (= `(title, instance)` 重複 0 件 + `(github_issue_number, instance)` 重複 0 件)
+- **Step 2.5 で削除されるのは title バリエーション違い行** — Step 2 で `(title, instance)` 完全一致重複削除後の残余に対して Issue # で二次 dedup する順序が重要 (= 入れ替え不可)
+- Step 2.5 の `ORDER BY` 優先順 — `progress > 0` 優先で進捗ある行を絶対 keep (= データ消失防止)
 
 ### Step 3: cron 増殖元 audit (= 仮説 B 検証 / 別 commit)
 
@@ -237,12 +299,13 @@ issue は audit 結果で別途起票 (= 本 issue scope 外)。
 
 ## 5. 受け入れ条件 (= Codex DoD)
 
-- [ ] Step 1 診断 SQL 4 種を Supabase prod で実行 → 結果を本 issue にコメント貼付
-- [ ] Step 2 dedup v2 migration を `supabase/migrations/2026MMDDHHMMSS_wbs_dedup_v2_force_index.sql` で commit
+- [ ] Step 1 診断 SQL **5 種** (= (1) INDEX 存在 / (2) `(title, instance)` 重複 / (3) `(github_issue_number, instance)` 重複 / (4) 法人銀行口座開設 verify / (5) auto-subdivide 親) を Supabase prod で実行 → 結果を本 issue にコメント貼付
+- [ ] Step 2 + 2.5 dedup v2 migration を `supabase/migrations/2026MMDDHHMMSS_wbs_dedup_v2_force_index.sql` で commit (= `BEGIN/COMMIT` 内で 2 段 dedup + UNIQUE INDEX 2 種再作成)
 - [ ] PR title: `fix(wbs): dedup v2 + force unique index recreate (Phase 2 from cross-instance-pr 20260508)`
-- [ ] PR description に Step 1 (1) (2) の before/after 件数 (= e.g. `9 dup combos / 65 余剰行 → 0 / 0`)
-- [ ] `deploy-prod` workflow 成功確認後、UI で再度「法人銀行口座開設」が 1 件 (= 仕様通り) になることを screenshot で確認
-- [ ] Step 3 cron audit は別 issue 起票 (= scope 外 / `[追加要望][P2]` 推奨)
+- [ ] PR description に Step 1 (1) (2) (3) の before/after 件数 (= e.g. `89 (title) + ~20 (issue#) dup combos / 700+ 余剰行 → 0 / 0 / 0`)
+- [ ] `deploy-prod` workflow 成功確認後、UI で再度「法人銀行口座開設」が 1 件 + Issue #1282 等が 1 件 (= 仕様通り) になることを screenshot で確認
+- [ ] Step 3 cron audit (= `wbs-stale-subdivide` workflow) は別 issue 起票 (= scope 外 / `[追加要望][P2]` 推奨)
+- [ ] **データ保全 verify**: Step 2.5 で削除された行の中に `progress > 0` または `ai_review_status != 'pending'` の行が**含まれないこと**を CTE 結果でログ確認 (= migration コメントに `RAISE NOTICE` で件数出力推奨)
 
 ---
 
@@ -259,10 +322,12 @@ issue は audit 結果で別途起票 (= 本 issue scope 外)。
 
 | | Phase 1 (= 20260426080000) | Phase 2 (= 本 spec) |
 |---|---|---|
-| dedup 方式 | `DELETE WHERE id NOT IN (DISTINCT ON)` | 同じ + `BEGIN/COMMIT` で原子化 |
-| UNIQUE INDEX | `CREATE IF NOT EXISTS` (= 既存重複時は skip 失敗の懸念) | `DROP → 重複削除 → CREATE` (= 強制再作成) |
-| 検証 | なし | Step 1 診断 SQL 4 種 + before/after 件数 |
-| cron audit | なし | Step 3 (別 issue) |
+| dedup 方式 | `DELETE WHERE id NOT IN (DISTINCT ON title, instance)` | 同じ + Step 2.5 `(github_issue_number, instance)` 二段 dedup + `BEGIN/COMMIT` で原子化 |
+| UNIQUE INDEX | `(title, instance)` のみ / `CREATE IF NOT EXISTS` (= 既存重複時 skip 失敗の懸念) | `(title, instance)` + `(github_issue_number, instance) WHERE NOT NULL` 2 種 / `DROP → 重複削除 → CREATE` (= 強制再作成) |
+| Issue # 重複対応 | なし (= title バリエーション違いの行が残存) | Step 2.5 で `progress > 0` 優先 keep + 詳細 title 優先で集約 |
+| 検証 | なし | Step 1 診断 SQL 5 種 + before/after 件数 + データ保全 verify |
+| cron audit | なし | Step 3 (= 別 issue 起票) |
+| 推定削除件数 | ~582 行 | ~700-800 行 (= Phase 1 後の cron 増殖分 + Issue # 重複 ~20 ペア) |
 
 ---
 
