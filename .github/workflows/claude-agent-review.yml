@@ -206,6 +206,50 @@ jobs:
             echo "**PR**: #${{ github.event.pull_request.number || 'N/A' }} | **Actor**: ${{ github.actor }}"
           } >> $GITHUB_STEP_SUMMARY
 
+  high-risk-ultrareview-gate:
+    name: High-risk ultrareview gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    if: github.event_name == 'pull_request'
+    permissions:
+      contents: read
+      pull-requests: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Collect changed files
+        run: |
+          mkdir -p .ci-logs
+          git diff --name-only \
+            "${{ github.event.pull_request.base.sha }}" \
+            "${{ github.event.pull_request.head.sha }}" \
+            > .ci-logs/high-risk-changed-files.txt
+
+      - name: Check high-risk ultrareview contract
+        run: |
+          set +e
+          python scripts/check_high_risk_ultrareview_gate.py \
+            --event "$GITHUB_EVENT_PATH" \
+            --changed-files .ci-logs/high-risk-changed-files.txt \
+            > .ci-logs/high-risk-ultrareview-gate.txt 2>&1
+          status=$?
+          cat .ci-logs/high-risk-ultrareview-gate.txt
+          cat .ci-logs/high-risk-ultrareview-gate.txt >> "$GITHUB_STEP_SUMMARY"
+          exit "$status"
+
+      - name: Upload gate evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: high-risk-ultrareview-gate
+          path: .ci-logs/high-risk-*.txt
+          if-no-files-found: ignore
+
   # --- bc58b50b #1765/#1779: claude ultrareview (opt-in, workflow_dispatch only) ---
   # Runs comprehensive multi-agent review via Claude Code CLI.
   # Triggered manually; never blocks PRs; billed separately.
