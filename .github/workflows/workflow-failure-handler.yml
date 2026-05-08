@@ -8,6 +8,7 @@ on:
       - "Deploy to Production"
       - "Deploy to Staging"
       - "Deploy to Development"
+      - "Release Readiness Gate"
       - "E2E Smoke"
       - "CI Auto-Fix (CI失敗自動修復)"
       # Schedule: コンテンツ
