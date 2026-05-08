@@ -11,6 +11,7 @@ concurrency:
 
 permissions:
   contents: write
+  issues: read
   pull-requests: write
 
 jobs:
@@ -348,11 +349,32 @@ jobs:
             DATE=$(TZ=Asia/Tokyo date +%Y-%m-%d)
           fi
           REPORT_FILE="${{ steps.report.outputs.filepath }}"
-          METRICS_FILE="docs/metrics/daily-metrics.json"
+          METRICS_DIR="docs/metrics"
           ARTIFACT_STAGING="$(mktemp -d)"
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          if gh issue list \
+              --label workflow-failure \
+              --state all \
+              --limit 200 \
+              --json number,state,createdAt,closedAt,title,labels,body \
+              > /tmp/workflow_failure_issues.json; then
+            mkdir -p docs/metrics
+            python scripts/ci_failure_digest.py workflow-failure-metrics \
+              --issues-json /tmp/workflow_failure_issues.json \
+              --markdown /tmp/workflow_failure_metrics.md \
+              --json docs/metrics/workflow-failure-metrics.json
+            if [ -n "$REPORT_FILE" ] && [ -f "$REPORT_FILE" ]; then
+              {
+                echo ""
+                cat /tmp/workflow_failure_metrics.md
+              } >> "$REPORT_FILE"
+            fi
+          else
+            echo "::warning::Workflow failure metrics were not generated"
+          fi
 
           if [ -n "$REPORT_FILE" ] && [ -f "$REPORT_FILE" ]; then
             mkdir -p "$(dirname "$ARTIFACT_STAGING/$REPORT_FILE")"
@@ -361,11 +383,11 @@ jobs:
             echo "::warning::Daily report file was not generated before commit step: ${REPORT_FILE:-unset}"
           fi
 
-          if [ -f "$METRICS_FILE" ]; then
-            mkdir -p "$(dirname "$ARTIFACT_STAGING/$METRICS_FILE")"
-            cp "$METRICS_FILE" "$ARTIFACT_STAGING/$METRICS_FILE"
+          if [ -d "$METRICS_DIR" ]; then
+            mkdir -p "$ARTIFACT_STAGING/docs"
+            cp -R "$METRICS_DIR" "$ARTIFACT_STAGING/docs/"
           else
-            echo "::warning::Daily metrics file was not generated before commit step"
+            echo "::warning::Daily metrics directory was not generated before commit step"
           fi
 
           git fetch origin main
@@ -395,6 +417,16 @@ jobs:
           API_OK="${{ steps.digest.outputs.api_ok }}"
           X_POSTED="${{ steps.xpost.outputs.x_posted }}"
           DOWN="${{ steps.competitor.outputs.down_count }}"
+          WF_OPEN=$(python - <<'PY'
+          import json
+          from pathlib import Path
+          path = Path("docs/metrics/workflow-failure-metrics.json")
+          if path.exists():
+              print(json.loads(path.read_text(encoding="utf-8")).get("open_count", "unknown"))
+          else:
+              print("unknown")
+          PY
+          )
           API_ICON=$([ "$API_OK" = "true" ] && echo "✅" || echo "⚠️")
           X_ICON=$([ "$X_POSTED" = "true" ] && echo "✅" || echo "—")
           COMP_ICON=$([ "${DOWN:-0}" = "0" ] && echo "✅ 全7社正常" || echo "⚠️ ${DOWN}社ダウン")
@@ -410,4 +442,5 @@ jobs:
             echo "| X投稿 | $X_ICON |"
             echo "| 競合監視 (7社) | $COMP_ICON |"
             echo "| メトリクスJSON | $([ -f docs/metrics/daily-metrics.json ] && echo "✅ 保存済" || echo "— API失敗のためスキップ") |"
+            echo "| workflow-failure open | ${WF_OPEN} |"
           } >> $GITHUB_STEP_SUMMARY
