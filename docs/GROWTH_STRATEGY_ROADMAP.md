@@ -29014,4 +29014,23 @@ User 第 2 弾 ask (= same session continuation): 「WBS 期限近順 + 2 instan
 - 理念的貢献: memory feedback_correction → docs operational section 昇格 model 確立 / 114 part 連続 dogfood
 
 ### Commit
-- (= 本 docs PR #2180 の merge commit / 後追記)
+- `b89a929eb` PR [#2180](https://github.com/kanta13jp1/my_web_app/pull/2180) — CODEX_WORKFLOW.md §8 PR body / synchronize gotchas (admin squash merge / docs-only)
+- `523576cc1` PR [#2181](https://github.com/kanta13jp1/my_web_app/pull/2181) — DISK_HYGIENE_RUNBOOK.md §15 毎セッション圧縮 status verify (admin squash merge / docs-only / self-recipe immediate dogfood 第 1 例)
+
+## 2026-05-09 — Win版#132 part 185 (Win Claude / Claude Code)
+
+### Session Summary
+- **inject-rules KPI integrity fix** (= part 184 finding consolidation): `scripts/sync_inject_rules.py` で `EXPECTED_RULE_COUNT` 37→38 + `CRITICAL_RULES` list に `[AI-TOOL-VERIFY]` 追加 (= 2026-05-07 #1706 で inject-rules.txt に追加されたが script 側 back-fill 漏れ); canonical `.claude/inject-rules.txt` line 41 「= 15 rule」→「= 14 rule」+ 末尾 line 71 「全 37 rule」→「全 38 rule」doc count 同期。 `python scripts/sync_inject_rules.py --verify` kpi_pass=true 復元。
+- **ROADMAP backfill**: part 184 placeholder「(= 本 docs PR #2180 の merge commit / 後追記)」を `b89a929eb` (#2180) + `523576cc1` (#2181) で実 commit hash 補完。
+- **Codex 5/22-5/24 hand-off snapshot** (= verify-only mode / [NO-SCOPE-CREEP]): #1598 LLM quality gate CLOSED (Codex 完了) / #1783 SaaS automation CLOSED (PR #2164 schedule resilience) / #1665 meal log MVP MERGED (#2117) / #1569 ultrareview gate MERGED (#2155) / #1586 managed MCP MERGED (#2160) / #1647 memory automation MERGED (#2169) / #1984 Tier 1.8/1.9/2.0 = `codex1/1984-tier18-compression` branch active in `my_web_app_wbs_sync` worktree (= in-progress) / #2171 WBS dedup Phase 2 = Codex Step 1 投稿なし継続 (T+1 day = skip per [SCHEDULE-WAKEUP] / next T+3 = 2026-05-12).
+- **Issue #2171 T+1 day verify**: skip 確定 (= 既 part 183 で T+1 status comment / part 184 で T+1 day 再確認 / 2 day 連続無 Codex action / next gentle ping 2026-05-12 T+3).
+- **memory ship**: project_20260509_win132_part185 + feedback_success_20260509_back_fill_drift_pattern (= script back-fill 漏れ pattern 第 1 例).
+
+### Philosophy Alignment (Win#132 part 185)
+- 主要実装: KPI 整合性 drift fix (= script + canonical + doc count 三 source 同時 update / single-PR consolidation)
+- 該当原則: #6 (時間最適化 = drift 即修正) + #7 (資産負債 = KPI 検証 false negative 解消 = 資産品質回復) + #8 (KPI = sync_inject_rules --verify kpi_pass=true 復元) + #9 (IPO = 検証 KPI 信頼性)
+- 整合性スコア: 7/9 ✅ ([PHILOSOPHY-22] gate 通過)
+- 理念的貢献: 「rule 追加時 script 側 back-fill 必須」運用 pattern を memory に dogfood 化 / 115 part 連続 dogfood
+
+### Commit
+- (= 本 docs + script PR の merge commit / 後追記)
