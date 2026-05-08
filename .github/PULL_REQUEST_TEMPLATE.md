@@ -155,6 +155,14 @@ Related to #
 - [ ] 不要なコメントや console.log を削除しました
 - [ ] コードレビューを受ける準備ができています（Claude Agent が自動レビューします）
 
+### Rule / Script / Hook wiring 同期（追加時のみ — part 185 finding）
+<!-- inject-rules.txt rule 追加 / scripts/ 新 primitive 追加 / hook 配線変更時にチェック -->
+
+- [ ] 該当なし（rule / script / hook 追加・変更なし）
+- [ ] `inject-rules.txt` に rule 追加時: `scripts/sync_inject_rules.py` の `EXPECTED_RULE_COUNT` + `CRITICAL_RULES` 同時更新済（= 二重 source-of-truth back-fill 漏れ防止 / part 185 KPI integrity fix 教訓）
+- [ ] `scripts/*.py` `scripts/*.ps1` 新規 primitive 追加時: `~/.claude/settings.json` `SessionStart` / `SessionEnd` hooks 配線済 — または別 issue で配線計画明記（= part 185b hook wiring gap 教訓）
+- [ ] hook wiring 変更時: 配線後 1 セッション内 smoke test で動作 verify 済（= manual invoke or 翌 session 起動で確認）
+
 ### テスト
 
 - [ ] 新しいコードにテストを追加しました
