@@ -343,14 +343,37 @@ jobs:
           GH_TOKEN: ${{ secrets.BYPASS_RULES }}
           BYPASS_TOKEN: ${{ secrets.BYPASS_RULES }}
         run: |
-          DATE=${{ steps.report.outputs.date }}
+          DATE="${{ steps.report.outputs.date }}"
+          if [ -z "$DATE" ]; then
+            DATE=$(TZ=Asia/Tokyo date +%Y-%m-%d)
+          fi
+          REPORT_FILE="${{ steps.report.outputs.filepath }}"
+          METRICS_FILE="docs/metrics/daily-metrics.json"
+          ARTIFACT_STAGING="$(mktemp -d)"
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
+          if [ -n "$REPORT_FILE" ] && [ -f "$REPORT_FILE" ]; then
+            mkdir -p "$(dirname "$ARTIFACT_STAGING/$REPORT_FILE")"
+            cp "$REPORT_FILE" "$ARTIFACT_STAGING/$REPORT_FILE"
+          else
+            echo "::warning::Daily report file was not generated before commit step: ${REPORT_FILE:-unset}"
+          fi
+
+          if [ -f "$METRICS_FILE" ]; then
+            mkdir -p "$(dirname "$ARTIFACT_STAGING/$METRICS_FILE")"
+            cp "$METRICS_FILE" "$ARTIFACT_STAGING/$METRICS_FILE"
+          else
+            echo "::warning::Daily metrics file was not generated before commit step"
+          fi
+
           git fetch origin main
           git checkout main
           git reset --hard origin/main
+          if [ -d "$ARTIFACT_STAGING/docs" ]; then
+            cp -R "$ARTIFACT_STAGING/docs/." docs/
+          fi
           git add docs/daily-reports/ docs/metrics/
           if git diff --cached --quiet; then
             echo "📝 変更なし — スキップ"
