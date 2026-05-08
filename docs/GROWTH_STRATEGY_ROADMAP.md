@@ -28781,3 +28781,34 @@ User 明示「5/14 trigger date / 推奨日」要望対応:
 ### Commit
 
 - PR #TBD (= admin squash merge 予定 / branch `claude/win132-part178-faceless-youtube-spec`)
+
+---
+
+## 2026-05-08 09:55 JST — Win版#132 part 178b (Win Claude / hygiene Tier 1.6 spec ship)
+
+### Summary
+
+User 2026-05-08 ask「**毎回のセッションで必ず** メモリ + HDD 圧縮」要件 v2 → Tier 1.6 SessionStart-integrated stale worktree prune spec ship。
+
+### Ship
+
+- PR [#2156](https://github.com/kanta13jp1/my_web_app/pull/2156) MERGED `a0e51bc572` (admin squash)
+- `docs/DISK_HYGIENE_RUNBOOK.md` §12 新設 — Tier 1.6 SessionStart-integrated stale worktree prune (8 節 191 行)
+- `docs/cross-instance-prs/20260508_tier16_stale_worktree_prune_codex.md` — Codex hand-off (期限 2026-05-22)
+- Issue #1984 [comment 4402365885](https://github.com/kanta13jp1/my_web_app/issues/1984#issuecomment-4402365885) — axis A 強化 status
+
+### 隙間特定
+
+`scripts/worktree_cleanup.py` = weekly cron のみ → 17 worktree / 2.28 GB 蓄積 → SessionStart 統合で漸増 trim 化。
+
+### Philosophy Alignment
+
+- **PHILOSOPHY-22** = 7/9 ✅ (= CEO の物理資産管理 / 時間最適化 / 隠れ負債削減)
+- **INDIE-29** = 6/7 ✅ (= 既存 doc 章追加 pattern dogfood / scope creep 回避)
+- **OPS-28** = 5 正本 ✅ (= Issues + PR + WBS + worktree+branch + Notion 不変)
+
+### Pattern dogfood
+
+- 「**既存 doc 章追加 pattern**」(= 新規 spec md 増殖回避) 第 3 例 — DISK_HYGIENE_RUNBOOK.md §12 拡張
+- 「**Win Claude triage + Codex 実装委譲**」pattern 連続例 ([INSTANCE-ROLES] dogfood)
+- 108 part 連続 dogfood / 19 part 連続 cross-day (cap_24part_v2 残 5)
