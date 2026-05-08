@@ -63,9 +63,11 @@ PR #2022 MERGED 2026-05-05 後 2 日経過. Codex 14 件 hand-off の進捗 veri
 
 ### Phase B. EF 2 件 + shared 1 件 (= 推定 2.5h)
 
-4. `supabase/functions/mcp-well-known/index.ts` — 親 spec §5.4 そのまま (= 30 行 / unauthenticated / Cache-Control 1h). `MCP_RESOURCE_URL` + `WORKOS_ISSUER` env 必要.
-5. `supabase/functions/_shared/internal_hmac.ts` — 親 spec §4.4. **内部 EF 間のみ** (= 外部 MCP 受け口は OAuth 2.1+PKCE). HMAC-SHA256 + Nonce (UUID) + Timestamp (±5 min skew) 検証.
-6. `supabase/config.toml` の `mcp-well-known` 登録 (= unauthenticated / public function).
+**Status**: ✅ Codex #1 Phase B PR prepared the public metadata function, internal HMAC helper, function registration, and focused tests. Remaining phases C-E stay open.
+
+4. ✅ `supabase/functions/mcp-well-known/index.ts` — 親 spec §5.4 そのまま (= unauthenticated / Cache-Control 1h). `MCP_RESOURCE_URL` + `WORKOS_ISSUER` env 必要.
+5. ✅ `supabase/functions/_shared/internal_hmac.ts` — 親 spec §4.4. **内部 EF 間のみ** (= 外部 MCP 受け口は OAuth 2.1+PKCE). HMAC-SHA256 + Nonce (UUID) + Timestamp (±5 min skew) 検証.
+6. ✅ `supabase/config.toml` の `mcp-well-known` 登録 (= unauthenticated / public function).
 
 ### Phase C. GHA cron + Terraform skeleton (= 推定 1h)
 
