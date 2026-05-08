@@ -32,9 +32,9 @@ PR #2022 MERGED 2026-05-05 後 2 日経過. Codex 14 件 hand-off の進捗 veri
 |---|---|---|
 | 1 | `supabase/functions/_shared/mcp_auth_guard.ts` 完成 | ✅ (= part 49 skeleton + part 54 PR で WorkOS JWKS 配線済) |
 | 2 | `mcp_auth_guard_test.ts` | ✅ |
-| 3 | migration extend `mcp_oauth_clients` (= managed_by/reputation/rotation_due_at) | ❌ |
-| 4 | migration extend `mcp_audit_log` (= anomaly_score/cross_server_trace/origin_tag) | ❌ |
-| 5 | migration `workos_user_link` 新設 | ❌ |
+| 3 | migration extend `mcp_oauth_clients` (= managed_by/reputation/rotation_due_at) | ✅ Codex #1 Phase A PR |
+| 4 | migration extend `mcp_audit_log` (= anomaly_score/cross_server_trace/origin_tag) | ✅ Codex #1 Phase A PR |
+| 5 | migration `workos_user_link` 新設 | ✅ Codex #1 Phase A PR |
 | 6 | `supabase/functions/mcp-well-known/index.ts` (= 新規 EF) | ❌ |
 | 7 | `supabase/functions/_shared/internal_hmac.ts` | ❌ |
 | 8 | `.github/workflows/mcp-audit-anomaly-cron.yml` (= hourly :07) | ❌ |
@@ -53,11 +53,13 @@ PR #2022 MERGED 2026-05-05 後 2 日経過. Codex 14 件 hand-off の進捗 veri
 
 ### Phase A. SQL migration 3 件 (= 推定 1.5h)
 
+**Status**: ✅ Codex #1 Phase A PR prepared the three schema migrations. Remaining phases B-E stay open.
+
 ファイル名 = `YYYYMMDDHHMMSS_descriptive_name.sql` ([DEVELOPMENT_ACHIEVEMENTS_FORMAT.md](../DEVELOPMENT_ACHIEVEMENTS_FORMAT.md) 準拠).
 
-1. `extend_mcp_oauth_clients.sql` — 親 spec §5.2 SQL そのまま. `managed_by` CHECK + `reputation_score` + `metadata_document_url` (CIMD Phase 2) + `rotation_due_at` 4 列追加.
-2. `extend_mcp_audit_log.sql` — 親 spec §5.3 SQL そのまま. `anomaly_score` + `cross_server_trace` + `origin_tag` 3 列追加 + `purge_mcp_audit_log()` 90 日 retention 関数.
-3. `create_workos_user_link.sql` — 親 spec §4.3 Standalone Connect / 既存 `users` テーブル × WorkOS user id 1:1 mapping. RLS = `auth.uid() = local_user_id`.
+1. ✅ `20260509093000_extend_mcp_oauth_clients.sql` — 親 spec §5.2 SQL そのまま. `managed_by` CHECK + `reputation_score` + `metadata_document_url` (CIMD Phase 2) + `rotation_due_at` 4 列追加.
+2. ✅ `20260509093100_extend_mcp_audit_log.sql` — 親 spec §5.3 SQL そのまま. `anomaly_score` + `cross_server_trace` + `origin_tag` 3 列追加 + `purge_mcp_audit_log()` 90 日 retention 関数.
+3. ✅ `20260509093200_create_workos_user_link.sql` — 親 spec §4.3 Standalone Connect / 既存 `users` テーブル × WorkOS user id 1:1 mapping. RLS = `auth.uid() = supabase_user_id`.
 
 ### Phase B. EF 2 件 + shared 1 件 (= 推定 2.5h)
 
