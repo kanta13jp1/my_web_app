@@ -23,7 +23,7 @@
 | **Dependency Audit** | `dependency-audit.yml` | 毎週月曜 08:00 JST / 手動 | Flutter pub outdated + Deno import バージョン監査 + schedule_task_runs記録 + Job Summary |
 | **Claude Agent PR Review** | `claude-agent-review.yml` | PR (main/staging/develop) / 手動 | **Claude Managed Agents** — PR即時AIレビュー (ルール違反・EF上限・アーキテクチャ観点) |
 | **User Feedback Resolved** | `feedback-issue-resolved.yml` | issues: [closed] | `user-feedback` ラベルIssueクローズ → `notify-feature-request` EF でリリース通知メール |
-| **Workflow Failure Handler** | `workflow-failure-handler.yml` | workflow_run: [completed] | ワークフロー失敗時に GitHub Issue 自動生成 (重複スキップ) |
+| **Workflow Failure Handler** | `workflow-failure-handler.yml` | workflow_run: [completed] | workflow-failure Issue clustering by root-cause key, duplicate comments, and recovery auto-close |
 | **YouTube Analysis** | `youtube-analysis.yml` | 毎日 11:00 JST / 手動 | YouTube競合分析スナップショット (`fetch_yt.py` + `update_tsv.py`) → `updated_table.tsv` PR自動マージ |
 | **CI Auto-Fix** | `ci-auto-fix.yml` | workflow_run: CI失敗時 | PR の `dart fix --apply` + `deno fmt` 自動修復コミット → 結果をPRにコメント |
 | **Blog Publish** | `blog-publish.yml` | workflow_dispatch | 技術記事手動投稿 (Qiita/dev.to) — `draft_path` / `platforms` / `dry_run` 入力。投稿後 frontmatter `published:true` 更新 |
