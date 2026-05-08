@@ -577,3 +577,177 @@ if ($total_uncovered_MB -gt 2000) {
 | #6 時間最適化 | ✅ telemetry only / 自動 prune による事故 risk 0 |
 | #9 IPO 化 | ✅ disk audit 機構 = audit log 蓄積 |
 = 6/9 ✅ ([PHILOSOPHY-22] gate 通過).
+
+---
+
+## 14. Tier 1.8 / 1.9 / 2.0 — 毎セッション必須圧縮の強化 (= part 180 新設 / User 要望 v3)
+
+### 14.1 背景: 観測 -15.5 GB / day vs reclaim 0.5 MB / session = 圧倒的捕捉漏れ
+
+User 2026-05-09 ask: 「**今の開発フローだとローカル環境のメモリやハードディスク容量が必ず枯渇する**. 毎回のセッションで必ずメモリやHDD容量を圧縮する施策」.
+
+実測 audit (= part 180 / `~/.claude/logs/disk-cleanup-20260508.log`):
+
+| metric | 値 | 評価 |
+|---|---|---|
+| C: free part 178b 終了時 | 86.6 GB | baseline |
+| C: free part 180 開始時 | 71.1 GB | **-15.5 GB / 1 day** |
+| Tier 1 average reclaim | 0.5 MB / session | **捕捉率 0.003%** |
+| 推定隠れ負債合計 | 約 14 GB | -15.5 GB と整合 |
+
+**隠れ負債 audit 結果** (= part 180 新規 PowerShell scan):
+
+| dir | size | Tier 1-1.7 対象 | gap |
+|---|---|---|---|
+| `~\AppData\Local\Temp` (recursive) | **8.5 GB** | step 1 (`temp_7d_MB`) で 7 day filter / mtime 維持で対象外多数 | **大** |
+| `~\AppData\Roaming\npm` | **2.0 GB** | ❌ 完全未対象 | **大** |
+| `~\AppData\Local\pnpm` | **2.5 GB** | ❌ 完全未対象 | **大** |
+| `~\AppData\Local\Programs\Python` | 0.9 GB | system file / 触らない | n/a |
+| `~\AppData\Local\Microsoft\Edge\...\Cache` | 0.32 GB | step 8 (browser_cache) で部分対象 | 小 |
+| `~\AppData\Local\Microsoft\TypeScript` | 0.16 GB | ❌ 未対象 | 小 |
+
+→ **合計 13 GB (Temp + npm + pnpm) が現状 Tier 1-1.7 で完全に取り逃し**.
+
+### 14.2 Tier 1.8 — Package manager cache aggressive sweep (= 新設 / 自動 prune)
+
+`disk-cleanup.ps1` step 11 として追加:
+
+| step | target | 戦略 | 期待 reclaim |
+|---|---|---|---|
+| 11.1 | `~\AppData\Local\pnpm\store\v3` | `pnpm store prune` (= unused 削除 / 100 MB+ なら実行) | 1-2 GB |
+| 11.2 | `~\AppData\Roaming\npm-cache` | mtime > 30 day file 削除 (= active package は触らない) | 0.5-1 GB |
+| 11.3 | `~\.pub-cache\hosted` | mtime > 30 day | 0-2 GB |
+| 11.4 | `~\.cache\pip` (= macOS / Linux 経由) | mtime > 14 day | 0-0.3 GB |
+| 11.5 | `~\AppData\Local\Yarn\Cache` | mtime > 14 day | 0-0.5 GB |
+| 11.6 | `~\.cache\gh` | mtime > 7 day | 0-0.2 GB |
+
+**安全 rule** (Tier 1.6 / 1.7 と同じ):
+- ❌ `pnpm store prune` のみ native command 経由 (= dangling package のみ削除 / active 安全)
+- ❌ npm-cache は `mtime + filename pattern` filter (`_cacache/content-v2/sha512/**` のみ削除対象)
+- ❌ 各 step `--max-runtime-sec=10` で SessionStart 全体 60 sec budget 内
+- ❌ active 開発中 (= node_modules 内 package が cache 参照中) の場合 noop (= cache miss → 再 download = ネットコスト発生のみ / アプリ動作は無事)
+
+### 14.3 Tier 1.9 — Temp 深層 sweep 強化 (= step 1 拡張 / 自動 prune)
+
+現状 step 1: `Remove-OlderThan -Path $env:TEMP -Days 7 -Recurse`
+
+問題: -Recurse でも mtime 更新が継続している sub-tree が大量 (= installer / IDE intellisense の中間ファイル等).
+
+修正方針:
+
+```ps1
+# Tier 1.9 拡張 (= step 1 への追加 sub-step)
+# 1.9.1 - Temp 直下のサブディレクトリ単位で「dir 内の最新 mtime」が 14 day 超なら dir ごと削除
+$tempDirs = Get-ChildItem -Path $env:TEMP -Directory -Force -EA SilentlyContinue
+foreach ($d in $tempDirs) {
+    $latest = (Get-ChildItem $d.FullName -Recurse -Force -EA SilentlyContinue |
+              Measure-Object LastWriteTime -Maximum).Maximum
+    if ($latest -and $latest -lt (Get-Date).AddDays(-14)) {
+        Remove-Item $d.FullName -Recurse -Force -EA SilentlyContinue
+    }
+}
+# 1.9.2 - Temp ルート直下の .tmp / .log / .etl / *.dmp は 7 day で問答無用削除
+```
+
+期待 reclaim: **3-5 GB / session** (= 8.5 GB のうち 14 day 超サブツリー).
+
+### 14.4 Tier 2.0 — Session delta tracking + 警告 (= 新設 / 観測専用)
+
+毎 SessionStart + SessionEnd で delta を `~\.claude\logs\session-delta.csv` に append:
+
+```csv
+ts,session_id,phase,c_free_gb,reclaim_mb_session,reclaim_mb_7d_median
+2026-05-09T11:30:00Z,b1042d,start,71.1,,
+2026-05-09T12:30:00Z,b1042d,end,72.4,1340,820
+```
+
+**警告 trigger** (= cleanup_report_notify.ps1 hook へ統合):
+
+| 条件 | action |
+|---|---|
+| 7-day median session reclaim < 100 MB | `~\cleanup_reports\warning_<ts>.md` 自動生成 + Claude additionalContext で「Tier 1.8 効果未達 / scope 拡張要検討」 |
+| C: free 7-day delta < -3 GB | 同上 + Issue 自動起票 (= `gh issue create` / label `disk-hygiene` `auto-generated`) |
+| C: free < 30 GB (= 危険水域) | RED alert / SessionStart で Claude に最優先 instruction |
+
+### 14.5 RAM trim Phase 2 (= memory-cleanup.ps1 step 6 として追加)
+
+現状 memory-cleanup.ps1 = 5 step / 大半 admin only で skip.
+
+新 step 6 (= non-admin 動作可):
+
+```ps1
+# Step 6 - idle process working set trim (= EmptyWorkingSet)
+# admin 不要 / 非 admin でも自プロセスや user-owned proc に対して可
+$targets = Get-Process -EA SilentlyContinue | Where-Object {
+    $_.Name -match '^(claude|code|node|electron|Code|Cursor)' -and
+    $_.WorkingSet64 -gt 200MB -and
+    ((Get-Date) - $_.StartTime).TotalMinutes -gt 10
+}
+foreach ($p in $targets) {
+    try { [void]$p.MinWorkingSet; $p.MinWorkingSet = 1MB } catch {}
+}
+```
+
+期待効果: idle Claude/VSCode の RSS を OS が swap 可能化 → 物理 RAM free 0.5-2 GB / session.
+
+### 14.6 [INSTANCE-ROLES] 振分
+
+| 担当 | 内容 | session |
+|---|---|---|
+| **Win Claude (= 本 spec)** | §14.1-14.5 設計 + acceptance criteria + rollback 戦略 | part 180 完了 |
+| **Win Codex (= hand-off)** | `disk-cleanup.ps1` step 11 (Tier 1.8) + step 1 拡張 (Tier 1.9) + `session_delta_tracker.ps1` (Tier 2.0) + `memory-cleanup.ps1` step 6 (RAM trim Phase 2) 実装 | 期限 **2026-05-23** |
+
+Codex 振分 5 質問 score:
+
+| Q | A |
+|---|---|
+| 1. 設計 / アーキ判断要? | NO (= 本 spec で確定) |
+| 2. 横断 docs / memory 編集要? | NO (= 本 spec のみ) |
+| 3. UI design 要? | NO |
+| 4. triage / hand-off 判断要? | NO (= 本 spec で完了) |
+| 5. mobile UAT / 動画要? | NO |
+
+= 0/5 → **完全 Codex 案件** (= 実装 + script 配線).
+
+### 14.7 安全 rule 全体 (= Tier 1.8 / 1.9 / 2.0 共通)
+
+- ❌ active 開発中 process の lock file detect 時 skip
+- ❌ 各 Tier 独立に `--max-runtime-sec` cap (= SessionStart 全体 60 sec budget 維持)
+- ❌ 失敗時 silent (= `try/catch` + `-EA SilentlyContinue`)
+- ❌ Tier 1.9 Temp sub-tree 削除前 = `git status` 等 active workspace 内の Temp 参照不在を確認
+- ❌ rollback: 全 Tier `--dry-run` flag / `--apply` 二段運用 (Tier 1.6 / 1.7 と同じ)
+
+### 14.8 Acceptance Criteria
+
+- [ ] `disk-cleanup.ps1` 1 回実行で 7-day median reclaim ≥ 500 MB / session
+- [ ] `~\.claude\logs\session-delta.csv` が SessionStart + SessionEnd で append される
+- [ ] `pnpm store prune` 動作確認 (= disk-cleanup-YYYYMMDD.log に `tier_1_8_pnpm_MB: <数値>` 出力)
+- [ ] `npm-cache` 30 day filter 動作確認
+- [ ] Temp sub-tree 14-day prune 動作確認 (= `temp_subtree_14d_MB: <数値>` 新 metric)
+- [ ] RAM trim Phase 2 で `Get-Process` 結果に Claude/Code が trim 検知される
+- [ ] 警告閾値 (Tier 2.0) 動作確認 (= 7-day median < 100 MB or C: < 30 GB)
+
+### 14.9 KPI / 監視
+
+| metric | 計測場所 | 目標 |
+|---|---|---|
+| `reclaim_mb_per_session` | `disk-cleanup-YYYYMMDD.log` 末尾 1 行 | ≥ 500 MB / session (median) |
+| `c_free_7d_delta_gb` | `session-delta.csv` 7 row median | ≥ 0 (= 漸増を相殺) |
+| `ram_trim_count` | `memory-cleanup-YYYYMMDD.log` step 6 行 | session ごとに ≥ 1 件記録 |
+| `tier_skipped_count` | 各 Tier の skip 理由 log | < 50% |
+
+### 14.10 PHILOSOPHY-22 gate (= 7+/9 ✅ 必須)
+
+| 原則 | 対応 |
+|---|---|
+| #1 CEO 感 | ✅ user 介在 0 / 完全自走 (= 1-click 操作不要) |
+| #2 ミッション | ✅ 「健全な開発環境」= ユーザー時間資本保全 |
+| #3 mentor | ✅ 失敗 silent / 警告 doc 経由で穏やか |
+| #5 商品 = 価値 | ✅ disk 圧迫 = 価値減 / 解放 = 価値増 |
+| #6 時間最適化 | ✅ session 開始時の手動 cleanup → 0 sec |
+| #7 資産負債 | ✅ 隠れ 13 GB 負債 → 可視化 → 月次定常解放 |
+| #8 KPI 自分比較 | ✅ 7 day median delta tracking |
+| #9 IPO 化 | ✅ 持続的 hygiene 機構 = 永続資産 |
+
+= 8/9 ✅ ([PHILOSOPHY-22] gate 通過 / #4 6 部署 のみ marginal).
+
