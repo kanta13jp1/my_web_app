@@ -28812,3 +28812,44 @@ User 2026-05-08 ask「**毎回のセッションで必ず** メモリ + HDD 圧�
 - 「**既存 doc 章追加 pattern**」(= 新規 spec md 増殖回避) 第 3 例 — DISK_HYGIENE_RUNBOOK.md §12 拡張
 - 「**Win Claude triage + Codex 実装委譲**」pattern 連続例 ([INSTANCE-ROLES] dogfood)
 - 108 part 連続 dogfood / 19 part 連続 cross-day (cap_24part_v2 残 5)
+
+---
+
+## 2026-05-08 11:00 JST — Win版#132 part 179 (Win Claude / Codex 自走着地 verify + 3 issue triage)
+
+### Summary
+
+Codex CLI が単独で着地した Issue #1569 (= high-risk PR ultrareview gate) を verify-only で確認 + 5/19 deadline 3 P1 issue を [INSTANCE-ROLES] 5 質問 score で triage + #2152 を Codex hand-off doc ship。
+
+### Ship
+
+- **Codex 自走着地 verify** (= 関与なし): Issue #1569 CLOSED 2026-05-08T01:28:04Z / PR #2155 squash merged commit `36935f38a` / `.github/workflows/claude-agent-review.yml` + `scripts/check_high_risk_ultrareview_gate.py` (+472 lines) / CI 7 checks green
+- `docs/cross-instance-prs/20260508_codex_kg_indexer_fix_part179.md` — Codex hand-off (Issue #2152 / 期限 2026-05-19 / 11 day grace)
+- Issue [#1586 comment](https://github.com/kanta13jp1/my_web_app/issues/1586#issuecomment-4402664362) — Win Claude defer status (= managed-mcp.json spec ship 別 session)
+- Issue [#1598 comment](https://github.com/kanta13jp1/my_web_app/issues/1598#issuecomment-4402664552) — Win Claude defer status (= DeepEval 評価観点 spec ship 別 session)
+- Issue [#2152 comment](https://github.com/kanta13jp1/my_web_app/issues/2152#issuecomment-4402664757) — Codex hand-off ack
+
+### Triage matrix ([INSTANCE-ROLES] 5 質問 score)
+
+| Issue | score | 担当 | 着地 |
+|---|---|---|---|
+| #1569 high-risk ultrareview gate | n/a (already CLOSED by Codex) | Codex | ✅ commit `36935f38a` |
+| #1586 managed-mcp.json | 4/5 | Win Claude (architect) | spec ship 別 session |
+| #1598 DeepEval/promptfoo | 1/5 (split) | Win Claude design + Codex #2 CI | Win Claude design 別 session |
+| #2152 kg-indexer-nightly failure | 0/5 | Codex (GHA fix) | hand-off doc ship |
+
+### Philosophy Alignment
+
+- **PHILOSOPHY-22** = 6/9 ✅ (= CEO triage role + mentor delegation + 商品=価値 = 5 正本同期)
+- **OPS-28** = 5 正本 ✅ (= Issues + PR + WBS + worktree+branch + Notion 不変)
+- **SYNERGY-30** = 5/7 ✅ (= cross-instance-pr / [INSTANCE-ROLES] dogfood / verify-only pattern 第 1 例)
+
+### Pattern dogfood
+
+- 「**Codex 自走着地 verify-only**」pattern 第 1 例 — Win Claude が hand-off せず Codex が独立着地 → triage 時 commit + Issue close 状態で verify のみ / cap_24 conservation 完璧
+- 「**[INSTANCE-ROLES] 5 質問機械的振り分け**」第 2 例 — 3 issue 各 30 sec 以内 score 化 / triage 速度向上
+- 109 part 連続 dogfood / 20 part 連続 cross-day (cap_24part_v2 残 4) / 次 session = fresh start 強推奨
+
+### Commit
+
+- PR #TBD (= admin squash merge 予定 / branch `claude/nostalgic-gagarin-03deac`)
