@@ -22,6 +22,7 @@ jobs:
     env:
       SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
       SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      GH_TOKEN: ${{ github.token }}
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -46,27 +47,62 @@ jobs:
         shell: bash
         run: |
           mkdir -p tmp/kg-indexer
-          python scripts/kg_index_github_issues.py \
-            --repo "$GITHUB_REPOSITORY" \
-            --limit 200 \
-            --output tmp/kg-indexer/github-issues.jsonl \
-            ${{ steps.mode.outputs.args }}
-          python scripts/kg_index_wbs_tasks.py \
-            --limit 200 \
-            --output tmp/kg-indexer/wbs.jsonl \
-            ${{ steps.mode.outputs.args }}
-          python scripts/kg_index_docs.py \
-            --limit 500 \
-            --output tmp/kg-indexer/docs.jsonl \
-            ${{ steps.mode.outputs.args }}
-          python scripts/kg_index_memory_vault.py \
-            --limit 200 \
-            --output tmp/kg-indexer/memory.jsonl \
-            ${{ steps.mode.outputs.args }}
-          python scripts/kg_index_notebooklm_intake.py \
-            --limit 200 \
-            --output tmp/kg-indexer/notebooklm.jsonl \
-            ${{ steps.mode.outputs.args }}
+          failures=()
+
+          run_indexer() {
+            local name="$1"
+            shift
+            echo "::group::kg-indexer ${name}"
+            if "$@"; then
+              echo "::notice::kg-indexer ${name} completed"
+            else
+              local code="$?"
+              echo "::error::kg-indexer ${name} failed with exit code ${code}"
+              failures+=("${name}:${code}")
+            fi
+            echo "::endgroup::"
+          }
+
+          run_indexer github-issues \
+            python scripts/kg_index_github_issues.py \
+              --repo "$GITHUB_REPOSITORY" \
+              --limit 200 \
+              --output tmp/kg-indexer/github-issues.jsonl \
+              ${{ steps.mode.outputs.args }}
+          run_indexer wbs \
+            python scripts/kg_index_wbs_tasks.py \
+              --limit 200 \
+              --output tmp/kg-indexer/wbs.jsonl \
+              ${{ steps.mode.outputs.args }}
+          run_indexer docs \
+            python scripts/kg_index_docs.py \
+              --limit 500 \
+              --output tmp/kg-indexer/docs.jsonl \
+              ${{ steps.mode.outputs.args }}
+          run_indexer memory \
+            python scripts/kg_index_memory_vault.py \
+              --limit 200 \
+              --output tmp/kg-indexer/memory.jsonl \
+              ${{ steps.mode.outputs.args }}
+          run_indexer notebooklm \
+            python scripts/kg_index_notebooklm_intake.py \
+              --limit 200 \
+              --output tmp/kg-indexer/notebooklm.jsonl \
+              ${{ steps.mode.outputs.args }}
+
+          artifact_count="$(find tmp/kg-indexer -maxdepth 1 -type f -name '*.jsonl' | wc -l | tr -d ' ')"
+          echo "kg-indexer artifact count: ${artifact_count}"
+          if [ "${artifact_count}" -eq 0 ]; then
+            printf '%s\n' "${failures[@]}" > tmp/kg-indexer/failures.txt
+            echo "::error::No kg-indexer artifacts were produced"
+            exit 1
+          fi
+
+          if [ "${#failures[@]}" -gt 0 ]; then
+            printf '%s\n' "${failures[@]}" > tmp/kg-indexer/failures.txt
+            echo "::error::Some kg indexers failed after producing ${artifact_count} artifact(s); uploaded partial artifacts before opening the failure issue."
+            exit 1
+          fi
 
       - name: Upload indexer artifacts
         if: always()
