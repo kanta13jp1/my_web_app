@@ -29065,3 +29065,58 @@ User 第 2 弾 ask (= same session continuation): 「WBS 期限近順 + 2 instan
 
 ### Commit
 - (= 本 docs PR の merge commit / 後追記)
+
+## 2026-05-09 — Win版#132 part 186 (Win Claude / Claude Code 続き)
+
+### Session Summary (= part 185b hand-off 完了)
+- **User ask**: SessionStart/SessionEnd hook wiring (=「毎回必ず圧縮」要件充足 + Issue #1984 close 前提)
+- **Hook wiring 完了** (= `~/.claude/settings.json` SessionStart 4→6 / SessionEnd 2→4 entries / `PYTHONUTF8=1` env 追加):
+  - SessionStart 追加: `worktree_cleanup.py --tier1 --max-runtime-sec=15` (timeout 30s) + `session_delta_tracker.py --phase start` (timeout 15s)
+  - SessionEnd 追加: `memory_trim_phase2.ps1` (timeout 30s) + `session_delta_tracker.py --phase end` (timeout 15s)
+  - script 配置: `~/.claude/scripts/` (= stable path 採用 / main repo 他 instance WIP rebase conflict 観測で main 触らず判断)
+  - 配線前 smoke test 全 OK: worktree (6 scan / 0 cand) / session_delta (c_free=78.86 GB / WARNING fire 正常) / memory_trim (+785 MB freed observed)
+  - dev_cache_cleanup deferred: 4 cmd Win 互換 issue → Issue #2186 Codex 5/23 hand-off 切出
+- **Issue #1984 close-suggest comment ship** (= [4409048952](https://github.com/kanta13jp1/my_web_app/issues/1984#issuecomment-4409048952) / 4 axis 充足表 + dev_cache deferred 説明 + user 承認 1 step 経由 close 提案)
+- **Issue #2186 起票** (= dev_cache_cleanup 4 cmd Win compat / `dart pub cache clean` + `pip cache purge` + `npm cache verify` + `pnpm store prune` / Codex 5/23 hand-off / SLA 14-day buffer 維持)
+- **PR #2187 ship** (= MERGED `72468b6a6` admin / docs(pr-template): rule/script ↔ hook wiring sync 4 checkbox checklist / part 185 finding 1 (KPI integrity drift) + finding 2 (hook wiring gap) 教訓を再発防止策に反映)
+- **memory ship 3 件**: project_20260509_win132_part186 / feedback_success_20260509_hook_wiring_completion_pattern / MEMORY.md 更新
+- **WBS-SYNC**: SUPABASE_ANON_KEY_PROD 未設定継続で skip (= GitHub Issue triage 代替)
+
+### Philosophy Alignment (Win#132 part 186)
+- 主要実装: hook wiring 完了 (= 4 hook 配線) + Codex follow-up issue 切出 (= dev_cache 4 cmd) + PR template back-fill checklist (= 教訓再発防止)
+- 該当原則: #1 (CEO感 = close 提案 user 承認 1 step 経由 / autonomous close 回避) + #2 (ミッション = 教訓即 PR 化 / 再発防止策) + #5 (商品=価値 = 開発体験品質向上) + #6 (時間最適化 = 毎セッション auto reclaim 基盤) + #7 (資産負債 = 隠れ負債解消パス完成) + #8 (KPI = disk + memory reclaim 自動測定基盤確立) + #9 (長期幸福感 = SYNERGY-30 fleet 維持)
+- 整合性スコア: 7/9 ✅ ([PHILOSOPHY-22] gate 通過)
+- 理念的貢献: 「**5-step hand-off 完了 verify pattern」第 2 例累積** + 「実装 deferred → follow-up issue 切出」pattern 第 1 例 + 「`~/.claude/scripts/` stable path 採用」第 1 例
+
+### Commit
+- 0798c4e60 (= PR #2187 / 72468b6a6 admin squash) — docs(pr-template): hook wiring sync checklist
+- (= 本 docs PR の merge commit / 後追記)
+
+## 2026-05-09 — Win版#132 part 187 (Win Claude / Claude Code 続き)
+
+### Session Summary (= part 186 hand-off auto-fire verify)
+- **User ask**: SessionStart 6 hook 動作 verify (= part 186 配線後 初回 fire 確認) → 動作 OK 確認後 Issue #1984 close
+- **Hidden bug 発覚** (= part 186 manual smoke ✅ だったが auto-fire ❌):
+  - PowerShell hooks 1-4 = SessionStart 5:00:04 fire 確認 ✅ (disk/memory log row 追加)
+  - **raw `python C:\...` hooks 5+6 = silent fail** ❌ (= session-delta.csv row 追加されず / cleanup_reports 出力なし)
+  - Root cause: `C:\Users\kanta\AppData\Local\Microsoft\WindowsApps\python.exe` = **0-byte reparse-point stub** (= Microsoft Store loader / PATH 先頭) / 非インタラクティブ context で silent fail (no error / no output / exit 0)
+  - Manual fire は TTY context で stub fallback 経由 → 動作 (= manual smoke test では発覚せず)
+- **Fix shipped** (= `~/.claude/settings.json` 直接 edit / part 187 in-flight session 内):
+  - SessionStart hook 5+6 + SessionEnd hook 4 = 計 3 entries を `powershell -NoProfile -ExecutionPolicy Bypass -Command "& python C:\..."` で wrap 化
+  - JSON validate ✅ / manual fire 全 OK / auto-fire verify 次セッション (= part 188) 起動時待ち
+- **Issue #1984 comment update** ([4409512738](https://github.com/kanta13jp1/my_web_app/issues/1984#issuecomment-4409512738)) — close 延期判定 + 4 axis 状況再掲 + verify 条件 (= part 188 で session-delta.csv row + worktree_cleanup output + SessionEnd reclaim_mb_session 値出力 = 3 項目満たせば close 推奨)
+- **PR #2190 ship** (= PR template に "manual invoke ≠ auto-fire" + "interpreter wrap" rule 追加 / docs-only label / part 187 finding back-fill)
+- **memory ship 3 件**: project_20260509_win132_part187 / feedback_correction_20260509_win_python_hook_silent_fail / MEMORY.md 更新
+- **Issue #2171 T+3 day verify**: today 5/9 = next gentle ping 2026-05-12 確定 / Codex Step 1 投稿なし継続 / skip / verify-only
+- **Issue #2186 Codex 5/23 hand-off snapshot**: today T+0 / SLA 14-day buffer 維持 / verify-only
+
+### Philosophy Alignment (Win#132 part 187)
+- 主要実装: auto-fire hidden bug 検出 + fix + PR template 教訓反映 + Issue #1984 close 条件再提示
+- 該当原則: #2 (ミッション = 自動化基盤の信頼性) + #5 (商品=価値 = hidden trap 検出により全 Win Claude 環境改善) + #6 (時間最適化 = 1 session 内 detect-fix-document) + #7 (資産負債 = silent fail = 検出困難な隠れ負債 → 即返済 + 検出再発防止) + #8 (KPI = manual smoke ≠ auto-fire の 2 段 verify ゲート確立) + #9 (IPO = 全 instance hook 配線品質基準向上)
+- 整合性スコア: 7/9 ✅ ([PHILOSOPHY-22] gate 通過)
+- 理念的貢献: 「**WindowsApps stub silent fail**」pattern 第 1 例 + 「**manual smoke ≠ fire-from-settings**」教訓を PR template + memory に dogfood 化 / 118 part 連続 dogfood
+
+### Commit
+- 871b0482b (= PR [#2190](https://github.com/kanta13jp1/my_web_app/pull/2190)) — docs(pr-template): extend hook wiring checklist (part 187 finding)
+- 6b16672ad (= cherry-pick e3c00401e from `claude/nifty-shtern-572a13`) — docs(roadmap): part 186 backfill (= part 186 で push したが main 未到達だった entry)
+- (= 本 docs PR の merge commit / 後追記)
