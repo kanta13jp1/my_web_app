@@ -193,17 +193,13 @@ HARNESS_NOTEBOOK = {
 HARNESS_LANES = [
     (
         "Claude Code",
-        "Owns problem framing, architecture, review gates, and hook design.",
+        "Claude Code #1 owns problem framing, architecture, review gates, and hook design.",
     ),
     (
         "Codex #1",
         "Owns cross-cutting implementation, SQL/migration review, "
-        "UI/browser QA, and scoped fix PRs.",
-    ),
-    (
-        "Codex #2",
-        "Owns CI repair, synchronization, Edge Functions, GitHub Actions, "
-        "and deterministic automation.",
+        "UI/browser QA, CI repair, Edge Functions, GitHub Actions, "
+        "and legacy Codex #2/#3 implementation lanes.",
     ),
     (
         "GitHub Actions",
@@ -455,10 +451,10 @@ def render_markdown(report: dict[str, Any]) -> str:
         [
             "- Practical rule: every detected tool change must become a WBS route, GitHub issue, hook, workflow check, or PR; notes alone are not complete.",
             "",
-            "## 12-Instance Routing Reminder",
-            "- Claude Code instances take ambiguous design and cross-instance coordination.",
-            "- Codex #1 takes mechanical implementation and broad repo scans that need a clean worktree.",
-            "- Codex #2 takes failing checks, deploy unblockers, and sync/automation drift.",
+            "## 2-Instance Routing Reminder",
+            "- Claude Code #1 takes ambiguous design, architecture, review policy, and cross-instance coordination.",
+            "- Codex #1 takes scoped implementation, CI/deploy unblockers, Edge Functions, GitHub Actions, and broad repo scans that need a clean worktree.",
+            "- Legacy Codex #2/#3 lanes are absorbed by Codex #1; do not start extra instances for changelog follow-up work.",
             "- Rebalance owners when the WBS top-20 contains repeated manual work, repeated CI failures, or stale handoffs.",
             "",
             "<!-- generated-by: scripts/ai_tool_watch.py -->",
