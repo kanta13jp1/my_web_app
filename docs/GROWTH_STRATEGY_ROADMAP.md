@@ -29194,3 +29194,26 @@ User 第 2 弾 ask (= same session continuation): 「WBS 期限近順 + 2 instan
 
 ### Commit
 - (= 本 docs PR の merge commit / 後追記)
+
+## Win版#132 part 189 — WBS P1 期限近順 batch + mid-session 圧縮 spec (2026-05-09 JST)
+
+### 概要
+WBS P1 期限近順 5 件を 2-instance 制で振分: Win Claude 4 件 (= #1124/#1640/#1662/#1724) + Win Codex 1 件 (= #1741 cross-instance-pr hand-off). 加えて user 直接 ask = "メモリ/HDD 毎セッション必ず枯渇" に対する **Tier 2.1 mid-session 圧縮 spec** を `DISK_HYGIENE_RUNBOOK.md §16` 章追加で ship.
+
+### 主要 ship
+- **3 docs ship**:
+  - `docs/AI_EXECUTIVE_GPA_DASHBOARD_DESIGN_SPEC.md` (= #1124 / 4 軸 GPA / EF 2 action / Phase 1-4 Codex hand-off)
+  - `docs/GA_LAUNCH_READINESS_GATE_SPEC.md` (= #1640+#1662+#1724 統合 5 axis SSOT / 1 doc / 3 issue 統合 pattern 第 1 例)
+  - `docs/cross-instance-prs/20260509_self_contact_tracker_widget_codex.md` (= #1741 → Codex hand-off / [INSTANCE-ROLES] 5 質問 全 NO 振分 score 化 第 4 例)
+- **1 doc 章追加**: `DISK_HYGIENE_RUNBOOK.md §16` Tier 2.1 mid-session 圧縮 (= PostToolUse hook throttle + threshold-trigger + Phase 1-4 Codex hand-off / 「既存 doc 章追加 pattern」第 7 例)
+- **Issue close 推奨**: #1984 (= 4 axis 全着地 + hook wiring 完了 / part 188 SessionEnd verify 2/3 + 45a1b2e5 end row 欠損は session transition 仕様 known behavior)
+- **5 status comment**: #1124 / #1640 / #1662 / #1724 / #1741 / #1984 (= spec link + hand-off 期限明示)
+
+### Philosophy Alignment (Win#132 part 189)
+- 主要実装: WBS P1 5 件の 2-instance 振分 score 化 + 3 issue → 1 SSOT doc 統合 + user 直接 ask への即応 mid-session 圧縮 spec
+- 該当原則: #1 (CEO 感 = user 要望即応) + #2 (mission = GA 道筋) + #5 (商品 = 価値 = 環境健全性 + AI 役員品質) + #6 (時間 = 資本 = 3 issue/1 doc + 自動圧縮で user 介入ゼロ) + #7 (資産負債 = 法人化 + 圧縮で session 内負債漸減) + #8 (KPI = mid_compress_fires + GPA 履歴) + #9 (IPO = GA Readiness gate)
+- 整合性スコア: 7/9 ✅ ([PHILOSOPHY-22] gate 通過)
+- 理念的貢献: 「**3 issue → 1 SSOT doc 統合 pattern**」第 1 例 + 「**[INSTANCE-ROLES] 5 質問 score 化**」第 4 例 + 「**user 直接 ask 即応 = 同 session 内 spec ship**」第 N 例 + 「**既存 doc 章追加 pattern**」第 7 例 / 120 part 連続 dogfood 達成
+
+### Commit
+- (= 本 docs PR の merge commit / 後追記)
