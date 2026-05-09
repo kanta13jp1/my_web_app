@@ -48,6 +48,42 @@ void main() {
     );
   }
 
+  test('sortCalendarEventsForDisplay orders events chronologically', () {
+    Map<String, dynamic> event(
+      String title,
+      DateTime start,
+      DateTime end, {
+      bool allDay = false,
+    }) {
+      return {
+        'title': title,
+        'start_at': start.toIso8601String(),
+        'end_at': end.toIso8601String(),
+        'all_day': allDay,
+      };
+    }
+
+    final day = DateTime(2026, 5, 9);
+    final sorted = sortCalendarEventsForDisplay([
+      event(
+        'Late event',
+        DateTime(2026, 5, 9, 16, 15),
+        DateTime(2026, 5, 9, 16, 30),
+      ),
+      event(
+        'Earlier event',
+        DateTime(2026, 5, 9, 15, 30),
+        DateTime(2026, 5, 9, 16),
+      ),
+      event('All day event', day, day, allDay: true),
+    ]);
+
+    expect(
+      sorted.map((event) => event['title']),
+      ['All day event', 'Earlier event', 'Late event'],
+    );
+  });
+
   Widget testWidget() {
     return MaterialApp(
       home: CalendarEventsPage(supabaseClient: mockSupabaseClient),

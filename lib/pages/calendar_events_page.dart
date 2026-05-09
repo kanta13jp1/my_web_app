@@ -70,6 +70,43 @@ String _eventColorHex(Map<String, dynamic> event) {
   return RegExp(r'^#[0-9a-f]{6}$').hasMatch(lower) ? lower : '#4285f4';
 }
 
+@visibleForTesting
+List<Map<String, dynamic>> sortCalendarEventsForDisplay(
+  Iterable<Map<String, dynamic>> events,
+) {
+  return events.toList()..sort(_compareCalendarEventsForDisplay);
+}
+
+int _compareCalendarEventsForDisplay(
+  Map<String, dynamic> a,
+  Map<String, dynamic> b,
+) {
+  final aAllDay = _eventIsAllDay(a);
+  final bAllDay = _eventIsAllDay(b);
+  if (aAllDay != bAllDay) return aAllDay ? -1 : 1;
+
+  final byStart = _compareNullableDateTime(
+    _eventDateTime(a, 'start_at'),
+    _eventDateTime(b, 'start_at'),
+  );
+  if (byStart != 0) return byStart;
+
+  final byEnd = _compareNullableDateTime(
+    _eventDateTime(a, 'end_at'),
+    _eventDateTime(b, 'end_at'),
+  );
+  if (byEnd != 0) return byEnd;
+
+  return _eventTitle(a).compareTo(_eventTitle(b));
+}
+
+int _compareNullableDateTime(DateTime? a, DateTime? b) {
+  if (a == null && b == null) return 0;
+  if (a == null) return 1;
+  if (b == null) return -1;
+  return a.compareTo(b);
+}
+
 int _clampInt(int value, int min, int max) {
   if (value < min) return min;
   if (value > max) return max;
@@ -94,7 +131,7 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
   // 選択日のイベントリスト
   List<Map<String, dynamic>> get _selectedDayEvents {
     final key = _dateKey(_selectedDay);
-    return _eventsByDate[key] ?? [];
+    return sortCalendarEventsForDisplay(_eventsByDate[key] ?? []);
   }
 
   static String _dateKey(DateTime d) =>
@@ -239,7 +276,7 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
   }
 
   List<Map<String, dynamic>> _eventsLoader(DateTime day) {
-    return _eventsByDate[_dateKey(day)] ?? [];
+    return sortCalendarEventsForDisplay(_eventsByDate[_dateKey(day)] ?? []);
   }
 
   void _setCalendarView(_CalendarView view) {
