@@ -29146,4 +29146,28 @@ User 第 2 弾 ask (= same session continuation): 「WBS 期限近順 + 2 instan
 - 理念的貢献: 「**spec 誤前提即訂正 verify pattern**」第 1 例 (= part 187 spec の `cleanup_reports/` 期待を 1 session 内 actual output 確認 → comment 訂正) + 「**startup auto-fire 2/3 verify within 30 sec**」pattern 第 1 例 + 「**verify-only session = no new spec**」discipline 厳守 / 119 part 連続 dogfood
 
 ### Commit
-- (= 本 docs PR の merge commit / 後追記)
+- b51ca38d (= PR [#2201](https://github.com/kanta13jp1/my_web_app/pull/2201)) — docs(roadmap): part 188 — auto-fire 完全 verify (2/3 ✅) + spec 訂正
+
+## 2026-05-09 — Win版#132 part 188-b (Win Claude / Claude Code 続き)
+
+### Session Summary (= verify-only 解除 / user 新規 task = calendar 時間単位化)
+- **User ask**: Google Calendar 風 時間単位 schedule 登録要望 (= screenshot https://my-web-app-b67f4.web.app/calendar-events / 現状「終日 only」)
+- **frontend-only fix ship**: `lib/pages/calendar_events_page.dart` 改修
+  - 「終日」default `true` → `false` (= 時間指定 default)
+  - 開始/終了 **TimePicker** 追加 (= `showTimePicker` / hour:minute granularity)
+  - 終日 toggle 時 time picker 非表示
+  - 開始時刻変更時 終了 ≤ 開始 → 開始 + 60 min auto-bump
+  - `_EventCard` time label = `HH:MM - HH:MM` range 表示 (= `start_at` + `end_at` 両方使用)
+  - 旧 `all_day=true` event は引き続き「終日」表示 (= backward compat)
+- **Backend 改修なし** (= `app-hub` EF `calendar.create` 既に `start_at` / `end_at` ISO 8601 受付 / `hub_data.metadata` JSONB 格納 / [EF-CAP-50] 影響なし)
+- **dart format ✅ + flutter analyze 0 issues ✅** (= 47.8s)
+- **[NO-SCOPE-CREEP] 厳守** (= `pubspec.lock` 自動 pub-update revert / calendar feature のみ commit)
+
+### Philosophy Alignment (Win#132 part 188-b)
+- 主要実装: user 直接報告 UX 改善 (= 終日 only → 時間単位) frontend-only fix
+- 該当原則: #2 (ミッション = カレンダー実用化) + #5 (商品=価値 = 時間単位 = 実用 calendar) + #6 (時間最適化 = backend 改修なしで UX 大幅向上) + #7 (資産負債 = 「終日 only」UX 負債解消) + #8 (KPI = backward compat 維持) + #9 (IPO = small frontend tweak でも standard PR template 遵守)
+- 整合性スコア: 6/9 ✅ ([PHILOSOPHY-22] gate 通過)
+- 理念的貢献: 「**user screenshot direct ask → frontend-only fix → 即 ship**」pattern 第 1 例 (= verify-only mode 中でも user 直接 ask 優先) + 「**EF + DB schema 改修なしで frontend UX 改善**」pattern 第 N 例累積 / 119 part 連続 dogfood
+
+### Commit
+- (= 本 feature PR の merge commit / 後追記)
