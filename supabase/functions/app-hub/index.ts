@@ -78,6 +78,40 @@ async function deleteItem(
   if (error) throw new Error(error.message);
 }
 
+async function updateItem(
+  admin: SupabaseClient,
+  source: string,
+  userId: string,
+  id: string,
+  patch: Record<string, unknown>,
+) {
+  const { data: existing, error: readError } = await admin.from("hub_data")
+    .select("metadata")
+    .eq("id", id)
+    .eq("source", source)
+    .filter("metadata->>user_id", "eq", userId)
+    .maybeSingle();
+  if (readError) throw new Error(readError.message);
+  if (!existing) return null;
+
+  const previous = (existing.metadata ?? {}) as Record<string, unknown>;
+  const next = {
+    ...previous,
+    ...patch,
+    user_id: userId,
+    updated_at: new Date().toISOString(),
+  };
+  const { data, error } = await admin.from("hub_data")
+    .update({ metadata: next })
+    .eq("id", id)
+    .eq("source", source)
+    .filter("metadata->>user_id", "eq", userId)
+    .select("id, metadata, created_at")
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  return data;
+}
+
 serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -225,6 +259,35 @@ serve(async (req: Request) => {
           all_day: body.all_day ?? false,
           color: body.color ?? "#4285f4",
         });
+        const meta = (item.metadata ?? {}) as Record<string, unknown>;
+        return json({
+          success: true,
+          event: { ...meta, event_id: item.id, created_at: item.created_at },
+        });
+      }
+
+      case "calendar.update": {
+        const id = String(body.id ?? "");
+        if (!id) return json({ error: "id is required" }, 400);
+        const patch: Record<string, unknown> = {};
+        if (Object.hasOwn(body, "title")) patch.title = body.title;
+        if (Object.hasOwn(body, "start_at")) patch.start_at = body.start_at;
+        if (Object.hasOwn(body, "end_at")) patch.end_at = body.end_at;
+        if (Object.hasOwn(body, "description")) {
+          patch.description = body.description ?? "";
+        }
+        if (Object.hasOwn(body, "all_day")) {
+          patch.all_day = body.all_day ?? false;
+        }
+        if (Object.hasOwn(body, "color")) patch.color = body.color ?? "#4285f4";
+        const item = await updateItem(
+          admin,
+          "calendar_event",
+          userId,
+          id,
+          patch,
+        );
+        if (!item) return json({ error: "Event not found" }, 404);
         const meta = (item.metadata ?? {}) as Record<string, unknown>;
         return json({
           success: true,
