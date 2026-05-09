@@ -29280,4 +29280,59 @@ Part 189-b で残した Phase B 47 candidates を user option A 承認 (= 「全
 - 理念的貢献: 「**EPIC + atomic batch python script pattern**」第 3 例 (= 11 → 29 → 47 / 4.3x scale 検証) + 「**post-wrap-up direct ask 即応 = 同 session batch ship pattern**」第 2 例 (= part 189-b option A 承認 → part 190 batch ship / 1 session decision-to-ship 完結) + 「**user 1-step decision pattern**」第 1 例 (= 47 atomic 化判定 = 1 word 承認で全件 ship 完結) / 122 part 連続 dogfood
 
 ### Commit
+- `81c211e9d` (= PR #2298 squash merge / Phase B 47 atomic + Phase 1 hand-off + RUNBOOK)
+- 6aad70d93 (= 1st commit) / 1b0c9fbb0 (= 2nd commit)
+
+## Win版#132 part 190-b — 圧縮自動化 v5 (= hook wiring gap fix) + WBS Top 5 振分 (2026-05-09 JST)
+
+### 概要
+User 第 4 直接 ask = 「ローカル環境のメモリやハードディスク容量が必ず枯渇 / 毎回のセッションで必ず圧縮する施策を検討」(= v5). Part 190 audit で actual `~/.claude/settings.json` の hook wiring 実測 → **3 critical gap 発見** (= SessionEnd 非対称 + PostToolUse mid-session 未配線 + PreCompact 限定配線). DISK_HYGIENE_RUNBOOK §17 新設 (= Tier 2.2-2.4 / v5) + Codex hand-off ship + WBS Top 5 期限近順 + 2-instance 振分 完了.
+
+### 主要 ship
+- **DISK_HYGIENE_RUNBOOK §17 新設** (= Tier 2.2-2.4 / v5):
+  - 17.1 課題 (= why v5)
+  - 17.2 Wiring gap audit (= 4 finding)
+  - 17.3 Tier 2.2 = SessionEnd worktree_cleanup 追加
+  - 17.4 Tier 2.3 = PostToolUse mid_session_compress 配線 (= §16 spec 実装)
+  - 17.5 Tier 2.4 = PreCompact 完全圧縮
+  - 17.6 Threshold-triggered emergency fire (= < 50 GB)
+  - 17.7 Codex hand-off scope (= 5 task / 期限 5/30)
+  - 17.8 KPI 追跡 (= mid-compress.csv)
+- **Codex hand-off ship**: `docs/cross-instance-prs/20260509_codex_compression_v5_hook_wiring.md`
+  - Task A: `mid_session_compress.py` 実装 (= 5/23)
+  - Task B: SessionEnd 5th hook 配線 (= 5/23)
+  - Task C: PostToolUse 2nd hook 配線 (= 5/25)
+  - Task D: PreCompact 3 hook 配線 (= 5/25)
+  - Task E: Threshold-triggered emergency fire (= 5/28)
+- **WBS Top 5 期限近順 + 2-instance 振分** (= [INSTANCE-ROLES] 5 質問 score 化):
+
+| # | Issue | 期限近度 | 振分 | 担当判定根拠 |
+|---|-------|---------|------|------------|
+| 1 | #1983 (= dev-env compression 定期監査) | 本 session ship | Win Claude → Codex | spec = Win Claude / 実装 = Codex |
+| 2 | #2171 (WBS dedup Phase 2) | 5/22 (T+13) | Win Codex | 既存 5/22-5/24 sprint in-flight |
+| 3 | #2186 (dev_cache 4 cmd Win) | 5/23 (T+14) | Win Codex | 既存 sprint in-flight |
+| 4 | #1741 (PWA self-touch widget) | 5/23 (T+14) | Win Codex | part 189 hand-off in-flight |
+| 5 | #1124 (GPA dashboard) | 5/30 (T+21) | Win Claude → Codex | spec ship part 189 / Phase 1-4 Codex 実装 |
+
+→ **5 件中 4 件 Win Codex 実装 / 1 件 (#1983) 本 session で Win Claude spec ship + Codex hand-off**
+
+### Hook wiring 実測 (= part 190 audit)
+
+```
+PostToolUse:    1 hook  (= auto-capture only)                        ← +1 必要
+SessionStart:   6 hooks (= ✅ 配線完成)                                ← OK
+SessionEnd:     4 hooks (= worktree_cleanup 欠落)                     ← +1 必要
+UserPromptSubmit: 1 hook                                              ← OK
+PreCompact:     1 hook  (= disk-cleanup + worktree_cleanup 欠落)      ← +2 必要
+```
+
+→ **+4 hook 追加** で全 lifecycle 圧縮自動化完成.
+
+### Philosophy Alignment (Win#132 part 190-b)
+- 主要実装: hook wiring gap 3 finding fix で「毎セッション必ず圧縮」guarantee + WBS top 5 期限近順 振分
+- 該当原則: #2 (mission) #5 (商品=価値) #6 (時間=資本) #7 (資産負債) #8 (KPI) #9 (IPO)
+- 整合性スコア: 7/9 ✅ ([PHILOSOPHY-22] gate 通過)
+- 理念的貢献: 「**spec ship 後の actual wiring audit pattern**」第 1 例 (= part 189 §16 spec → part 190 audit で実装未配線発見) + 「**user 同テーマ iterative ask v1-v5 累積管理 pattern**」第 1 例 (= disk-pressure → worktree → tier1.8 → mid-session → wiring 完成 / 5 phase 累積) + 「**WBS Top 5 期限近順 + 2-instance 振分**」第 6 例 / 122 part 連続 dogfood
+
+### Commit
 - (= 本 docs PR の merge commit / 後追記)
