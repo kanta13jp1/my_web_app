@@ -29595,4 +29595,4 @@ User 第 7 直接 ask = v6/v7 と同テーマ再受信. v8 dogfood で **dev_cac
 → 126 part 連続 dogfood (= part 75 → 193).
 
 ### Commit
-- (= 本 docs PR の merge commit / 後追記)
+- PR #2312 merge commit: `e2a7b891d`
