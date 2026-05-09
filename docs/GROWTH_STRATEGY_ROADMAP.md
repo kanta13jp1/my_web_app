@@ -29336,3 +29336,46 @@ PreCompact:     1 hook  (= disk-cleanup + worktree_cleanup 欠落)      ← +2 �
 
 ### Commit
 - `9d90796d3` (= PR #2301 squash merge / DISK_HYGIENE §17 v5 + Codex 5 task hand-off + WBS Top 5 振分)
+
+## Win版#132 part 191 — Opus 4.7 1M default + ROADMAP backfill + v6 圧縮 immediate manual fire verify (2026-05-09 JST)
+
+### 概要
+User 直接 ask (= 3 件):
+1. **Opus 4.7 1M Max default 設定** (= `~/.claude/settings.json` model field `opusplan` → `claude-opus-4-7[1m]` / 次セッションから有効)
+2. **WBS task 期限近順 + 2-instance 振分** (= 7 例目 pattern / 全 5 件 Win Codex sprint in-flight)
+3. **毎セッション必ず memory + disk 圧縮 施策検討** (= v6 / 同テーマ iterative ask)
+
+→ pre-existing spec verify pattern 第 2 例 適用 (= v5 既 spec ship / Codex T+1 day pre-impl / immediate manual fire recipe 確立).
+
+### 主要 ship (= 4 件)
+
+1. **Opus 4.7 1M default** (= `~/.claude/settings.json` 1 line edit / 次セッション起動時から有効)
+
+2. **PR #2302 ROADMAP backfill** (= part 190-b Commit `9d90796d3` placeholder 解消 / `1b15d1121` admin merge)
+
+3. **v6 immediate manual fire verify** (= DISK_HYGIENE §17.11 新設):
+   - 17.11.1 measured (= RAM 93.1% → 87.2% / +930 MB / C: 70.24 GB / worktree 0 stale)
+   - 17.11.2 manual fire recipe (= memory_trim_phase2.ps1 + worktree_cleanup.py --tier1)
+   - 17.11.3 適用条件 (= RAM > 90% or C: < 50 GB or Codex Tier A-E 未完了)
+   - 17.11.4 Codex impl 完了後 archive section 化方針
+
+4. **WBS Top 5 期限近順 + 2-instance 振分** (= 7 例目):
+
+| # | Issue | 期限 | 振分 | 状態 (= part 191 / today T+1) |
+|---|-------|-----|------|-----|
+| 1 | #2171 WBS dedup Phase 2 | 5/22 (T+13) | Win Codex | T+1 / monitor / 5/12 = T+3 ping 判断 |
+| 2 | #2186 dev_cache 4 cmd Win | 5/23 (T+14) | Win Codex | T+1 / monitor / 5/12 = T+3 ping 判断 |
+| 3 | #1741 PWA self-touch widget | 5/23 (T+14) | Win Codex | part 189 hand-off / monitor |
+| 4 | v5 hook wiring 5 task (Tier A-E) | 5/23-5/28 | Win Codex | T+1 / monitor / 5/12 = T+3 ping 判断 |
+| 5 | #1124 GPA dashboard | 5/30 (T+21) | Win Codex | spec ship / Phase 1-4 待ち |
+
+→ 5 件全件 Win Codex sprint in-flight / Win Claude this session = monitor only + ROADMAP + v6 verify
+
+### Philosophy Alignment (Win#132 part 191)
+- 主要実装: Opus 4.7 1M default + ROADMAP backfill + v6 verify pattern + WBS triage 振分
+- 該当原則: #2 (mission) #5 (商品=価値) #6 (時間=資本) #7 (資産負債) #8 (KPI) #9 (IPO)
+- 整合性スコア: 7/9 ✅ ([PHILOSOPHY-22] gate 通過)
+- 理念的貢献: 「**pre-existing spec verify pattern**」第 2 例 (= part 184 第 1 例継承 / v5 spec ship 後 v6 同主題 ask は新 spec 起票せず status section 追加 + immediate manual fire) + 「**user 同テーマ iterative ask v1-v6 累積管理 pattern**」第 2 例 (= part 190-b 第 1 例継承 / 6 phase 累積) + 「**WBS Top 5 期限近順 + 2-instance 振分**」第 7 例 + 「**immediate manual fire pattern**」第 1 例 (= Codex T+1 day pre-impl 期間中の relief recipe / RAM +930 MB) / 123 part 連続 dogfood
+
+### Commit
+- (= 本 docs PR の merge commit / 後追記)
