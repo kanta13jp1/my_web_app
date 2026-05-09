@@ -29245,4 +29245,39 @@ User 第 3 直接 ask = `/project-gantt` 画面に **76 view を最小単位で 
 - 理念的貢献: 「**EPIC + atomic sub-issue batch (= python script 経由 29 issue/3min ship) pattern**」第 2 例 (= part 188-c 11 issue → part 189-b 29 issue / 2.6x scale 検証) + 「**user 大量列挙 ask → prioritized atomic + Phase B 候補列挙 split pattern**」第 1 例 / 121 part 連続 dogfood
 
 ### Commit
+- `c88184133` (= part 189-b PR #2250 merge / EPIC #2220 + 29 atomic #2221-#2249 batch ship)
+
+## Win版#132 part 190 — /project-gantt EPIC #2220 Phase B 47 atomic batch ship (2026-05-09 JST)
+
+### 概要
+Part 189-b で残した Phase B 47 candidates を user option A 承認 (= 「全 47 atomic 化」) 受けて 1 session 内 atomic 化完了. Python batch script template (= part 189-b script 流用) で **47 atomic issue 起票 + EPIC #2220 body PATCH** を 5 min 内に着地. EPIC #2220 累計 = **76 atomic** (= 29 Phase A + 47 Phase B). 「**EPIC + atomic batch python script pattern**」第 3 例 (= 11 → 29 → 47 / 4.3x scale).
+
+### 主要 ship
+- **47 Phase B atomic sub-issue ship** ([#2251-#2297](https://github.com/kanta13jp1/my_web_app/issues/2220)):
+  - **進捗管理 (= 4)**: #2251 バーンアップ / #2252 期限切れ / #2253 停滞タスク / #2254 完了済み
+  - **ストレージ (= 1)**: #2255 アーカイブ
+  - **依存関係・設計 (= 4)**: #2256 クリティカルパス / #2257 機能マップ / #2258 画面別 / #2259 技術領域別
+  - **担当・リソース (= 5)**: #2260 AIエージェント別 / #2261 ワークロード / #2262 自分のタスク / #2263 レビュー待ち / #2264 自動化候補
+  - **GitHub連携 (= 2)**: #2265 CI/CD失敗 / #2266 コミット履歴
+  - **カレンダー・時間軸 (= 5)**: #2267 月間 / #2268 週間 / #2269 日次 / #2270 タイムブロッキング / #2271 リリースカレンダー
+  - **優先度・意思決定 (= 5)**: #2272 優先度マトリクス / #2273 P1/P2/P3別 / #2274 意思決定待ち / #2275 次にやるべき / #2276 AIおすすめ順
+  - **品質管理 (= 4)**: #2277 バグ / #2278 セキュリティ / #2279 パフォーマンス / #2280 UX改善
+  - **ドキュメント・仕様 (= 5)**: #2281 PRD / #2282 画面仕様 / #2283 API仕様 / #2284 用語集 / #2285 決定履歴
+  - **振り返り・分析 (= 4)**: #2286 週次 / #2287 月次 / #2288 見積もり精度 / #2289 スコープ増加
+  - **Issue一覧 (= 1)**: #2290
+  - **AI活用 (= 7)**: #2291 タスク分解 / #2292 レビュー / #2293 実装候補 / #2294 プロンプト管理 / #2295 自動Issue / #2296 要約 / #2297 リスク診断
+- **EPIC #2220 body PATCH**: Phase B section の 47 行 `- name — purpose` を `- [ ] #<num> name — purpose` に置換 + EPIC scope header を「Phase A 29 ✅ / Phase B 47 ✅ / 累計 76」に更新
+- **Python batch script** (`C:/tmp/create_project_gantt_phase_b_atomic.py`): 既存 EPIC への atomic 追加 + body PATCH 用 template (= part 189-b script 流用 / 3-phase = read body → 47 atomic loop → body PATCH)
+
+### Verify findings
+- **part 189 SessionEnd CSV**: `ecff83f0` end row 欠落 ❌ (= 部分的 SessionEnd hook 不発持続 / `45a1b2e5` も同様 / `86c89891` `568dc693` は記録あり) — session 強制終了系で skip 仮説. Issue #1984 close 延期は妥当.
+- **Codex sprint 5/22-5/24**: PR 0 件 / Issue #2171 #2186 とも last upd 5/8 self comment / T+1 day = gentle ping skip / 5/12 = T+3 で再判定
+
+### Philosophy Alignment (Win#132 part 190)
+- 主要実装: user option A 承認受け Phase B 47 candidates → 47 atomic batch ship + EPIC body 累計 76 atomic 化
+- 該当原則: #1 (CEO 感 = user 1-step decision で大規模 atomic 化) + #2 (mission = 個人開発 PM ツール OS 化) + #5 (商品 = 価値 = view 76 で全方位視点) + #6 (時間 = 資本 = 47 atomic を 5 min ship) + #7 (資産負債 = atomic = 進捗 trackable asset 化) + #8 (KPI = 76 issue で WBS gantt 視覚化) + #9 (IPO = 個人 PM ツール差別化資産)
+- 整合性スコア: 7/9 ✅ ([PHILOSOPHY-22] gate 通過)
+- 理念的貢献: 「**EPIC + atomic batch python script pattern**」第 3 例 (= 11 → 29 → 47 / 4.3x scale 検証) + 「**post-wrap-up direct ask 即応 = 同 session batch ship pattern**」第 2 例 (= part 189-b option A 承認 → part 190 batch ship / 1 session decision-to-ship 完結) + 「**user 1-step decision pattern**」第 1 例 (= 47 atomic 化判定 = 1 word 承認で全件 ship 完結) / 122 part 連続 dogfood
+
+### Commit
 - (= 本 docs PR の merge commit / 後追記)
