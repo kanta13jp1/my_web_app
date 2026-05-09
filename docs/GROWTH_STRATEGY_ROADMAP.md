@@ -29531,3 +29531,68 @@ part 192 → 同日連続 part 192-b. user 第 6 直接 ask 3 件 (= iterative a
 ### Commit
 - (= 本 docs PR の merge commit / 後追記)
 
+
+## 2026-05-09 Win#132 part 193 (= 同日連続 / iterative ask v8 第 8 phase)
+
+### 概要
+User 第 7 直接 ask = v6/v7 と同テーマ再受信. v8 dogfood で **dev_cache_cleanup.py impl 既出荷 (35741 bytes / 2026-05-09 03:51 mtime) を発見** + **4 cmd Win compat 未解決 (= Issue #2186 OPEN) を re-verify**. **「impl ship 完了 ≠ functional 完了」pattern 確立**. DISK_HYGIENE §17.13 v8 spec ship.
+
+### 主要 ship
+- **DISK_HYGIENE_RUNBOOK §17.13 v8 spec ship**:
+  - 17.13.1 v8 measured (= immediate fire result table)
+  - 17.13.2 v8 critical finding (= 3 重 gap: impl ✅ + Win compat ❌ + wiring ❌)
+  - 17.13.3 即時対応 (= dev_cache 配線 deferred / Issue #2186 close 後)
+  - 17.13.4 dogfood evidence (= pre-existing spec verify pattern 第 4 例 / artifact category 拡張)
+  - 17.13.5 KPI 追跡 (= v6/v7/v8 比較表 / dev_cache success rate 1/5)
+  - 17.13.6 next session 推奨条件 (= mtime audit + functional verify + 5/12 ping)
+
+### v8 immediate fire dogfood KPI
+
+| metric | v6 (part 191) | v7 (part 192-b) | v8 (part 193) | trend |
+|--------|---------------|-----------------|---------------|-------|
+| process trim freed | ~930 MB | 1666 MB | 946.7 MB | stable band 900-1700 MB |
+| system RAM net delta | -5.9 pt | +0.4 pt | -2.0 pt | recovery |
+| worktree count | 13 | 17 | 16 | -1 cleanup |
+| C: free | 70.24 GB | 66.22 GB | 62.26 GB | **-8 GB / 2 session** ⚠️ |
+| dev_cache success rate | n/a | n/a | 1/5 (20%) | gap 露呈 |
+
+→ C: free 8 GB 喪失 (= 30 min interval) で dev_cache fix priority high. process trim 単独では disk 圧迫不解決.
+
+### v8 finding = 3 重 gap
+
+| 軸 | status | next |
+|----|--------|------|
+| script body | ✅ 既出荷 (35741 bytes / 2026-05-09 03:51) | observation 完了 |
+| 4 cmd Win compat | ❌ flutter/npm/pnpm/dart 全 WinError 2 (= path 未解決) | Codex Issue #2186 fix 5/23 |
+| hook wiring | ❌ ANY lifecycle 未配線 | #2186 close 後に SessionEnd / PostToolUse 配線 |
+
+→ pip cache purge のみ ✅ (= python -m pip absolute path 解決済 / 0 file reclaim).
+
+### WBS Top 5 (期限近順 / 2-instance 振分) — v8 update
+
+| # | issue | 期限 | instance | 状態 |
+|---|-------|------|----------|------|
+| 1 | #2171 WBS dedup Phase 2 | 5/22 (T+13) | Win Codex | T+0 / monitor / 5/12 = T+3 ping schedule |
+| 2 | #2186 dev_cache 4 cmd Win | 5/23 (T+14) | Win Codex | T+0 / **v8 re-verify で priority high 確認** / 5/12 = T+3 ping with v8 finding |
+| 3 | #1741 PWA self-touch widget | 5/23 (T+14) | Win Codex | hand-off / monitor (= PR #2309 既 push 観測 / merge status verify 推奨) |
+| 4 | v5 hook wiring 5 task (Tier A-E) | 5/23-5/28 | Win Codex | T+0 / monitor / 5/12 = T+3 ping schedule |
+| 5 | #1124 GPA Phase 1 PR | 5/30 (T+21) | Win Codex | spec ship / 5/13 = T+4 ping schedule |
+
+→ 全 5 件 Win Codex sprint in-flight 維持 / Win Claude this session = monitor + v8 dev_cache re-verify only
+
+### Philosophy Alignment (Win#132 part 193)
+- 主要実装: v8 immediate fire dogfood + dev_cache pre-existing impl 発見 + Win compat re-verify + DISK_HYGIENE §17.13 + WBS Top 5 + iterative ask 第 8 phase
+- 該当原則: #2 (mission) #4 (mentor) #5 (商品=価値) #6 (時間=資本) #7 (資産負債) #8 (KPI) #9 (IPO)
+- 整合性スコア: 7/9 ✅ ([PHILOSOPHY-22] gate 通過)
+- 理念的貢献:
+  - 「**pre-existing spec verify pattern**」第 4 例 (= part 184/191/192-b/193 / **artifact category 拡張**: spec text → script existence → impl content → functional verify / v(N+1) で v(N) 既 spec/script status verify + 数値 update / 新 spec 起票回避)
+  - 「**user 同テーマ iterative ask v1-v8 累積管理 pattern**」第 4 例 (= part 190-b/191/192-b/193 / 8 phase 累積)
+  - 「**immediate manual fire pattern**」第 3 例 (= part 191/192-b/193 / persistent KPI = process trim 900-1700 MB band)
+  - 「**WBS Top 5 期限近順 + 2-instance 振分**」第 9 例
+  - 「**既存 doc 章追加 pattern**」第 9 例 (= DISK_HYGIENE §17.13 / 新 doc 増殖回避)
+  - 「**impl ship 完了 ≠ functional 完了 pattern**」第 1 例 (= dev_cache_cleanup.py 35741 bytes 既存在 / 4 cmd Win compat 未解決 / silent ship + observation gap)
+
+→ 126 part 連続 dogfood (= part 75 → 193).
+
+### Commit
+- (= 本 docs PR の merge commit / 後追記)
