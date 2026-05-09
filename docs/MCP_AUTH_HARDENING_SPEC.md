@@ -119,7 +119,7 @@ Issue #1577 が要求する 5 axis を MCP-AUTH 10 原則と cross-check し、*
 
 | # | axis | 採否 | 関連 MCP-AUTH 原則 | 採用 phase | 代替/補完 |
 |---|---|---|---|---|---|
-| 4.1 | CIMD (Client ID Metadata Document) | △ Phase 2 採用 | #1 | 2027 Q1 | Phase 1 = DCR / 移行設計を `docs/architecture/mcp-dcr-vs-cimd-decision.md` に記録 |
+| 4.1 | CIMD (Client ID Metadata Document) | △ Phase 2 採用 | #1 | 2027 Q1 | Phase 1 = DCR / 移行設計を `docs/mcp-dcr-vs-cimd-decision.md` に記録 |
 | 4.2 | OAuth クライアント Terraform IaC | ✅ Phase 1 採用 | #1 + #7 | 2026 Q3 | Manual SQL 禁止 / Mercari 事例 Tip 1 応用 |
 | 4.3 | Standalone Connect (既存ユーザー基盤 + AuthKit) | ✅ Phase 1 採用 | #6 | 2026 Q3 | Supabase Auth user_id ↔ WorkOS user_id mapping table 新設 |
 | 4.4 | HMAC + Nonce + Timestamp (改ざん/リプレイ防止) | △ Phase 1 部分採用 | #2 + #3 + #7 | 2026 Q4 | 採用範囲 = 内部 EF 間 only / 外部 MCP は OAuth 2.1 + PKCE で代替 (= 二重署名で実装複雑度 vs 攻撃面 trade-off) |
@@ -136,13 +136,13 @@ Issue #1577 が要求する 5 axis を MCP-AUTH 10 原則と cross-check し、*
 - Mercari は CIMD vs DCR の優先順位を理解した上で **意図的に DCR 継続採用** (= 既存実装流用 vs 仕様策定状況).
 
 **Phase 2 移行設計** (= 別 docs に詳細):
-- `docs/architecture/mcp-dcr-vs-cimd-decision.md` 新設 (= 設計判断の年代記化)
+- `docs/mcp-dcr-vs-cimd-decision.md` 新設 (= 設計判断の年代記化)
 - migration: `mcp_oauth_clients` に `metadata_document_url` 列追加 / NULL = DCR / 値あり = CIMD
 - `validateBearer` で metadata_document_url 経由の動的 lookup 経路追加
 
 **採用しない場合の代替 risk 対策** (= 受入 #2):
-- Phase 2 移行を docs で確約 / `docs/architecture/mcp-dcr-vs-cimd-decision.md` で「いつ CIMD に乗るか」明文化
-- DCR 継続中に MCP client (Claude Code 等) が CIMD のみ対応へ移行した場合の incident response runbook を `docs/MCP_AUTH_INCIDENT_RUNBOOK.md` に記録
+- Phase 2 移行を docs で確約 / `docs/mcp-dcr-vs-cimd-decision.md` で「いつ CIMD に乗るか」明文化
+- DCR 継続中に MCP client (Claude Code 等) が CIMD のみ対応へ移行した場合の incident response runbook を `docs/mcp-auth-incident-runbook.md` に記録
 
 ### 4.2 OAuth クライアント Terraform IaC (Phase 1 採用)
 
@@ -501,9 +501,9 @@ memory-search-hub は 5/10. 残 5 原則を埋める手順:
 - [ ] `scripts/mcp_cross_server_check.ts` (= §5.5 / arXiv ベクトル B)
 - [ ] `.github/workflows/mcp-audit-anomaly-cron.yml` (= §5.5 / hourly :07)
 - [ ] `infra/terraform/mcp_oauth_clients/` skeleton (= §5.6 / Phase 1 Q3)
-- [ ] `docs/architecture/mcp-dcr-vs-cimd-decision.md` (= §4.1 / Phase 2 移行設計年代記)
-- [ ] `docs/architecture/mcp-attest-roadmap.md` (= MCP-AUTH #10 / AttestMCP 備え)
-- [ ] `docs/MCP_AUTH_INCIDENT_RUNBOOK.md` (= §4.1 / incident response runbook)
+- [ ] `docs/mcp-dcr-vs-cimd-decision.md` (= §4.1 / Phase 2 移行設計年代記)
+- [ ] `docs/mcp-attest-roadmap.md` (= MCP-AUTH #10 / AttestMCP 備え)
+- [ ] `docs/mcp-auth-incident-runbook.md` (= §4.1 / incident response runbook)
 - [ ] memory-search-hub の 5 原則完成 (= §6 / MCP 公開第 1 例)
 
 EF 数 +1 (= mcp-well-known / [EF-CAP-50] 残枠 30 内 / 影響なし).

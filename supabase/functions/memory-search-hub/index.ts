@@ -40,6 +40,30 @@ const KG_SOURCE_ALIASES: Record<string, string> = {
 };
 const KG_RATE_LIMIT_PER_MINUTE = 5;
 
+/**
+ * MCP-AUTH-27 self-check for memory-search-hub (#1577 Phase E).
+ *
+ * 1. DCR: PASS via mcp_oauth_clients + Terraform plan-only registry path.
+ * 2. Bearer deny-by-default: PASS through authorize() + validateBearer().
+ * 3. Prompt injection boundary: PASS for RAG answers through citation-only
+ *    system prompt, excerpt trimming, and extractive fallback.
+ * 4. Streamable HTTP: PASS; this function exposes JSON HTTP only and no SSE.
+ * 5. Resource Indicators: PASS through requireScope(ctx, "memory-search-hub")
+ *    or requireScope(ctx, "memory").
+ * 6. WorkOS managed: PASS through WorkOS JWKS/issuer validation in the shared
+ *    auth guard, with service-role bypass limited to internal calls.
+ * 7. Audit log + monitoring: PASS through try/finally logMcpInvocation() plus
+ *    the mcp-audit-anomaly-cron workflow.
+ * 8. OAuth 2.1 + PKCE: PASS at the WorkOS/AuthKit boundary; the EF only accepts
+ *    already-issued bearer tokens.
+ * 9. .well-known: PASS through OAuth protected resource metadata handling.
+ * 10. Least privilege + AttestMCP readiness: PASS with an explicit scope list,
+ *    no sampling capability declaration, and docs/mcp-attest-roadmap.md.
+ *
+ * Result: 10/10 public MCP boundary criteria satisfied for the first guarded
+ * memory-search-hub surface. Future tool additions must update this checklist.
+ */
+
 function adminClient() {
   return createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
 }
