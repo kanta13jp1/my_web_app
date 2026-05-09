@@ -12,8 +12,8 @@ final universalAiShareRouteObserver = UniversalAiShareRouteObserver();
 class UniversalAiShareRouteObserver extends NavigatorObserver {
   final ValueNotifier<UniversalSharePageContext> currentPage =
       ValueNotifier<UniversalSharePageContext>(
-        UniversalSharePageContext.fromRouteName('/'),
-      );
+    UniversalSharePageContext.fromRouteName('/'),
+  );
 
   @override
   void didPush(Route<dynamic> route, Route<dynamic>? previousRoute) {
@@ -149,9 +149,8 @@ class _UniversalAiShareFab extends StatelessWidget {
     final backgroundColor = isLoggedIn
         ? colorScheme.primaryContainer
         : colorScheme.surfaceContainerHighest;
-    final foregroundColor = isLoggedIn
-        ? colorScheme.onPrimaryContainer
-        : colorScheme.onSurface;
+    final foregroundColor =
+        isLoggedIn ? colorScheme.onPrimaryContainer : colorScheme.onSurface;
 
     return Material(
       color: backgroundColor,
@@ -256,9 +255,8 @@ class _UniversalAiShareDialogState extends State<UniversalAiShareDialog> {
         _draft = draft;
         _textController.text = draft.text;
         _loadingDraft = false;
-        _statusMessage = draft.fallbackUsed
-            ? 'AI生成が不安定なため、安全な定型文を使っています'
-            : null;
+        _statusMessage =
+            draft.fallbackUsed ? 'AI生成が不安定なため、安全な定型文を使っています' : null;
       });
     } catch (error) {
       if (_disposed || !mounted) return;
@@ -284,9 +282,8 @@ class _UniversalAiShareDialogState extends State<UniversalAiShareDialog> {
       if (_disposed || !mounted) return;
       setState(() {
         _imageUrl = result.url;
-        _statusMessage = result.url == null
-            ? '画像生成URLを取得できませんでした'
-            : 'シェア画像を生成しました';
+        _statusMessage =
+            result.url == null ? '画像生成URLを取得できませんでした' : 'シェア画像を生成しました';
       });
     } catch (error) {
       if (_disposed || !mounted) return;
@@ -457,8 +454,8 @@ class _UniversalAiShareDialogState extends State<UniversalAiShareDialog> {
                       _generatingVideo
                           ? '動画生成中'
                           : _hedraGenerationId == null
-                          ? '動画生成'
-                          : '動画確認',
+                              ? '動画生成'
+                              : '動画確認',
                     ),
                   ),
                 ],
@@ -508,8 +505,7 @@ class _UniversalAiShareDialogState extends State<UniversalAiShareDialog> {
           label: const Text('X画面'),
         ),
         FilledButton.icon(
-          onPressed:
-              _loadingDraft ||
+          onPressed: _loadingDraft ||
                   _posting ||
                   textLength > UniversalXShareService.maxTweetLength
               ? null
