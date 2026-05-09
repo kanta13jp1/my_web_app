@@ -26717,6 +26717,49 @@ Win Claude 担当 2 件 (#1305 Stripe + #1309 Maintenance) を設計 spec とし
 INSTANCE-ROLES 厳守: Win Claude 設計 spec 2 件 ship / Win Codex 12 件 hand off (推定 ~44h).
 COMPACTION-RESUME: 90min ガード接近 → wrap-up 着地。
 
+---
+
+## Win版#132 part 143 (2026-05-05)
+
+**instance**: Win Claude (= worktree `elegant-kepler-87c585`)
+**summary**: WBS overdue 期限近順 → part 142 5-question matrix で振分済 Win Claude 残 4 件のうち、[DYNAMIC-CLAIM] 1 session 2 件 cap 内で **#1316 (6 部門 KPI 永続化) + #1345 (1 In 2 Out UI)** を architect 設計 spec として ship.
+
+### Deliverables
+- [docs/SIX_DEPT_KPI_PERSISTENCE_SPEC.md](docs/SIX_DEPT_KPI_PERSISTENCE_SPEC.md) — Issue #1316 / 6 部門 schema (3 table + materialized view) + EF 3 action 追加 (新規 EF 0) + UI 2 page + Codex hand off ~12h
+- [docs/ONE_IN_TWO_OUT_SPEC.md](docs/ONE_IN_TWO_OUT_SPEC.md) — Issue #1345 / widget_usage 3 table + scoring algorithm + modal flow + Codex hand off ~11.5h
+
+### 2-instance 反映
+- Win Claude (本 part): 設計 spec 2 件のみ ship (= 実装 0 行)
+- Win Codex hand off: 計 ~23.5h (= migration + EF + Flutter widget 全行 Codex 担当)
+- 残 Win Claude territory 2 件 (#1348 inline tooltip / #1366 ストーリー分岐 UI) は part 144 deferred (= cap respect)
+
+### Philosophy Alignment
+- PHILOSOPHY-22: 7/9 (#4 6 部署 + #5 価値 + #6 時間 + #7 資産 vs 負債)
+- AI-DEV-23: 5/7 (#2 deny-by-default RLS + #3 trace_id + #7 quality-gate)
+- IMBUE-25: 6/7 (認知負荷削減 + CEO 感)
+- COLLAB-26: 6/7 (Red-Team = AI が自社機能を抑制提案)
+- BRAIN-32: **7/7** ✅ (= AI 揮発履歴 → Supabase 永続資産化)
+- INSTANCE-ROLES 厳守: 設計 spec 100% / 実装 0 行
+- DYNAMIC-CLAIM: 1 session 2 件 cap 完全遵守
+
+### 次回 candidate (= part 144)
+1. **#1292 メンテナンス時 SOP 策定 (= docs/MAINTENANCE_SOP.md)** ← part 143 batch 3 triage で deferred / Win Claude territory primary
+2. #1348 専門用語 inline tooltip 設計 spec (= ui-design skill + AI 大学 terminology DB join)
+3. #1366 ストーリー分岐 UI action 設計 spec (= ui-design skill general action pattern)
+4. part 142+143 設計 spec 4 件 (#1305/#1309/#1316/#1345) の Codex 着手 progress 確認
+5. 6 部門 KPI seed migration (= default 5 KPI per dept) の content 草案 (Codex 着手前 prep)
+
+### Part 143 follow-up (= batch 3 triage)
+
+[docs/cross-instance-prs/20260505_codex_overdue_wbs_handoff_batch3.md](docs/cross-instance-prs/20260505_codex_overdue_wbs_handoff_batch3.md) で
+batch 1+2 漏れの **未 triage 残 2 件** (#1286 admin bypass無効化 / #1292 SOP) を補完。
+[DYNAMIC-CLAIM] 2 件 cap respect → #1292 (Win Claude territory) は part 144 deferred で scope outline のみ。
+
+新 pattern (= batch 3 で確立):
+- 「triage = cap 外」discipline (= primary claim 2 件と triage は別計上)
+- 「3 batch 連続 5-question matrix 適用」(= 累計 20 件 / 1 session 内最大)
+- 「missed Issue を後追い batch」(= UI top 表示遷移で漏れ検出 / weekly cron 候補)
+
 ## Win版#132 part 144 (= WBS overdue 期限近順 part 143 deferred 消化 + batch 4 / 2026-05-05)
 
 ### Summary
