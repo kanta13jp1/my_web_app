@@ -6,7 +6,10 @@ import 'package:table_calendar/table_calendar.dart';
 /// calendar-events Edge Function と連携してイベントを管理
 /// table_calendar による月次ビュー + 日付別イベントリスト
 class CalendarEventsPage extends StatefulWidget {
-  const CalendarEventsPage({super.key});
+  const CalendarEventsPage({super.key, SupabaseClient? supabaseClient})
+      : _supabaseClient = supabaseClient;
+
+  final SupabaseClient? _supabaseClient;
 
   @override
   State<CalendarEventsPage> createState() => _CalendarEventsPageState();
@@ -39,6 +42,14 @@ String _eventTimeLabel(Map<String, dynamic> event) {
   return '${_formatClock(start)} - ${_formatClock(end)}';
 }
 
+String _eventColorHex(Map<String, dynamic> event) {
+  final raw = event['color']?.toString().trim();
+  if (raw == null || raw.isEmpty) return '#4285f4';
+  final normalized = raw.startsWith('#') ? raw : '#$raw';
+  final lower = normalized.toLowerCase();
+  return RegExp(r'^#[0-9a-f]{6}$').hasMatch(lower) ? lower : '#4285f4';
+}
+
 int _clampInt(int value, int min, int max) {
   if (value < min) return min;
   if (value > max) return max;
@@ -46,7 +57,8 @@ int _clampInt(int value, int min, int max) {
 }
 
 class _CalendarEventsPageState extends State<CalendarEventsPage> {
-  final _supabase = Supabase.instance.client;
+  late final SupabaseClient _supabase =
+      widget._supabaseClient ?? Supabase.instance.client;
 
   bool _isLoading = false;
   String? _errorMessage;
@@ -69,11 +81,8 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
       '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
 
   static Color _eventColor(Map<String, dynamic> event) {
-    final hex = event['color']?.toString().replaceFirst('#', '') ?? '4285f4';
-    if (hex.length == 6) {
-      return Color(int.parse('FF$hex', radix: 16));
-    }
-    return const Color(0xFF4285F4);
+    final hex = _eventColorHex(event).replaceFirst('#', '');
+    return Color(int.parse('FF$hex', radix: 16));
   }
 
   @override
@@ -115,9 +124,9 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
 
       if (mounted) {
         setState(() {
-          for (final key in newMap.keys) {
-            _eventsByDate[key] = newMap[key]!;
-          }
+          _eventsByDate
+            ..clear()
+            ..addAll(newMap);
         });
       }
     } catch (e) {
@@ -154,6 +163,43 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
     } catch (e) {
       if (mounted) {
         setState(() => _errorMessage = 'イベントの作成に失敗しました: $e');
+      }
+    }
+  }
+
+  Future<void> _updateEvent({
+    required String eventId,
+    required String title,
+    required DateTime startAt,
+    DateTime? endAt,
+    String description = '',
+    bool allDay = false,
+    String color = '#4285f4',
+  }) async {
+    if (eventId.isEmpty) {
+      setState(() => _errorMessage = 'Event id is missing.');
+      return;
+    }
+    try {
+      final end =
+          allDay ? startAt : (endAt ?? startAt.add(const Duration(hours: 1)));
+      await _supabase.functions.invoke(
+        'app-hub',
+        body: {
+          'action': 'calendar.update',
+          'id': eventId,
+          'title': title,
+          'description': description,
+          'start_at': startAt.toIso8601String(),
+          'end_at': end.toIso8601String(),
+          'all_day': allDay,
+          'color': color,
+        },
+      );
+      await _fetchMonth(_focusedDay);
+    } catch (e) {
+      if (mounted) {
+        setState(() => _errorMessage = 'Failed to update event: $e');
       }
     }
   }
@@ -345,6 +391,7 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
                 ? _DayTimelineView(
                     selectedDay: _selectedDay,
                     events: _selectedDayEvents,
+                    onTap: (event) => _showEditEventDialog(context, event),
                     onDelete: (event) => _confirmDeleteEvent(context, event),
                   )
                 : _selectedDayEvents.isEmpty
@@ -380,6 +427,7 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
                           return _EventCard(
                             event: event,
                             color: _eventColor(event),
+                            onTap: () => _showEditEventDialog(context, event),
                             onDelete: () {
                               final eventId =
                                   event['event_id']?.toString() ?? '';
@@ -425,14 +473,42 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
   }
 
   void _showAddEventDialog(BuildContext context) {
-    final titleCtrl = TextEditingController();
-    final descCtrl = TextEditingController();
-    var eventDate = _selectedDay;
-    var allDay = false;
-    var startTime = const TimeOfDay(hour: 9, minute: 0);
-    var endTime = const TimeOfDay(hour: 10, minute: 0);
+    _showEventDialog(context);
+  }
+
+  void _showEditEventDialog(BuildContext context, Map<String, dynamic> event) {
+    _showEventDialog(context, event: event);
+  }
+
+  void _showEventDialog(BuildContext context, {Map<String, dynamic>? event}) {
+    final isEditing = event != null;
+    final eventId = event?['event_id']?.toString() ?? '';
+    final initialStart = event == null
+        ? _selectedDay
+        : (_eventDateTime(event, 'start_at') ?? _selectedDay);
+    final initialEnd = event == null
+        ? initialStart.add(const Duration(hours: 1))
+        : (_eventDateTime(event, 'end_at') ??
+            initialStart.add(const Duration(hours: 1)));
+    final titleCtrl = TextEditingController(
+      text: event?['title']?.toString() ?? '',
+    );
+    final descCtrl = TextEditingController(
+      text: event?['description']?.toString() ?? '',
+    );
+    var eventDate = DateTime(
+      initialStart.year,
+      initialStart.month,
+      initialStart.day,
+    );
+    var allDay = event == null ? false : _eventIsAllDay(event);
+    var startTime = TimeOfDay.fromDateTime(initialStart);
+    var endTime = TimeOfDay.fromDateTime(initialEnd);
     final colors = ['#4285f4', '#ea4335', '#34a853', '#fbbc05', '#9334e6'];
-    var selectedColor = colors.first;
+    var selectedColor = event == null ? colors.first : _eventColorHex(event);
+    if (!colors.contains(selectedColor)) {
+      selectedColor = colors.first;
+    }
 
     String fmtTime(TimeOfDay t) =>
         '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
@@ -441,7 +517,7 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setDialogState) => AlertDialog(
-          title: const Text('イベントを追加'),
+          title: Text(isEditing ? 'イベントを編集' : 'イベントを追加'),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -612,16 +688,28 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
                         endTime.hour,
                         endTime.minute,
                       );
-                _createEvent(
-                  title: title,
-                  startAt: startDateTime,
-                  endAt: endDateTime,
-                  description: descCtrl.text.trim(),
-                  allDay: allDay,
-                  color: selectedColor,
-                );
+                if (isEditing) {
+                  _updateEvent(
+                    eventId: eventId,
+                    title: title,
+                    startAt: startDateTime,
+                    endAt: endDateTime,
+                    description: descCtrl.text.trim(),
+                    allDay: allDay,
+                    color: selectedColor,
+                  );
+                } else {
+                  _createEvent(
+                    title: title,
+                    startAt: startDateTime,
+                    endAt: endDateTime,
+                    description: descCtrl.text.trim(),
+                    allDay: allDay,
+                    color: selectedColor,
+                  );
+                }
               },
-              child: const Text('追加'),
+              child: Text(isEditing ? '保存' : '追加'),
             ),
           ],
         ),
@@ -737,6 +825,7 @@ class _DayTimelineView extends StatelessWidget {
   const _DayTimelineView({
     required this.selectedDay,
     required this.events,
+    required this.onTap,
     required this.onDelete,
   });
 
@@ -746,6 +835,7 @@ class _DayTimelineView extends StatelessWidget {
 
   final DateTime selectedDay;
   final List<Map<String, dynamic>> events;
+  final ValueChanged<Map<String, dynamic>> onTap;
   final ValueChanged<Map<String, dynamic>> onDelete;
 
   @override
@@ -774,6 +864,7 @@ class _DayTimelineView extends StatelessWidget {
                     ),
                   ),
                   label: Text(_eventTitle(event)),
+                  onPressed: () => onTap(event),
                   onDeleted: () => onDelete(event),
                 ),
             ],
@@ -828,6 +919,7 @@ class _DayTimelineView extends StatelessWidget {
       child: _DayTimelineEventTile(
         event: entry.event,
         color: _CalendarEventsPageState._eventColor(entry.event),
+        onTap: () => onTap(entry.event),
         onDelete: () => onDelete(entry.event),
       ),
     );
@@ -976,67 +1068,79 @@ class _DayTimelineEventTile extends StatelessWidget {
   const _DayTimelineEventTile({
     required this.event,
     required this.color,
+    required this.onTap,
     required this.onDelete,
   });
 
   final Map<String, dynamic> event;
   final Color color;
+  final VoidCallback onTap;
   final VoidCallback onDelete;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final description = event['description']?.toString() ?? '';
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
-        border: Border(left: BorderSide(color: color, width: 4)),
+    return Material(
+      color: color.withValues(alpha: 0.12),
+      borderRadius: BorderRadius.circular(6),
+      child: InkWell(
         borderRadius: BorderRadius.circular(6),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(8, 4, 4, 4),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    _eventTitle(event),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.labelLarge,
+        onTap: onTap,
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            border: Border(left: BorderSide(color: color, width: 4)),
+            borderRadius: BorderRadius.circular(6),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(8, 4, 4, 4),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        _eventTitle(event),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.labelLarge,
+                      ),
+                      Text(
+                        _eventTimeLabel(event),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.outline,
+                        ),
+                      ),
+                      if (description.isNotEmpty)
+                        Text(
+                          description,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.bodySmall,
+                        ),
+                    ],
                   ),
-                  Text(
-                    _eventTimeLabel(event),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.outline,
-                    ),
+                ),
+                IconButton(
+                  tooltip: 'Delete',
+                  visualDensity: VisualDensity.compact,
+                  iconSize: 18,
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints.tightFor(
+                    width: 32,
+                    height: 32,
                   ),
-                  if (description.isNotEmpty)
-                    Text(
-                      description,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: theme.textTheme.bodySmall,
-                    ),
-                ],
-              ),
+                  icon: const Icon(Icons.delete_outline),
+                  onPressed: onDelete,
+                ),
+              ],
             ),
-            IconButton(
-              tooltip: 'Delete',
-              visualDensity: VisualDensity.compact,
-              iconSize: 18,
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints.tightFor(width: 32, height: 32),
-              icon: const Icon(Icons.delete_outline),
-              onPressed: onDelete,
-            ),
-          ],
+          ),
         ),
       ),
     );
@@ -1080,11 +1184,13 @@ class _EventCard extends StatelessWidget {
   const _EventCard({
     required this.event,
     required this.color,
+    required this.onTap,
     required this.onDelete,
   });
 
   final Map<String, dynamic> event;
   final Color color;
+  final VoidCallback onTap;
   final VoidCallback onDelete;
 
   @override
@@ -1114,6 +1220,7 @@ class _EventCard extends StatelessWidget {
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 4),
       child: ListTile(
+        onTap: onTap,
         leading: CircleAvatar(
           backgroundColor: color.withValues(alpha: 0.15),
           child: Icon(Icons.event, color: color, size: 20),
