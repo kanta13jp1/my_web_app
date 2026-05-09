@@ -1054,3 +1054,166 @@ PostToolUse 50 tool call 毎の軽量実行に加えて、**threshold cross 時�
 
 > **part 189 status**: spec ship / Codex hand-off (= Phase 1-4 / 期限 2026-05-23) / Win Claude verify は part 196 想定 (= Phase 4 完了後 1 week observation).
 
+## 17. Tier 2.2 / 2.3 / 2.4 — v5: Hook wiring 完成 + 圧縮自動化 100% 化 (= part 190 新設 / User 要望 v5 / Issue #1983 連動)
+
+### 17.1 課題 (= why v5)
+
+User 直接 ask (= part 190 / 2026-05-09):
+> 今の開発フローだと、ローカル環境のメモリやハードディスク容量が必ず枯渇します。毎回のセッションで必ずメモリやハードディスク容量を圧縮する施策を検討してください。
+
+v4 (= §16 / part 189) で **mid-session compression spec** は ship 済. しかし part 190 audit で actual `settings.json` の hook wiring を実測 → **3 critical gap** 発見:
+
+| Gap | 観測 | 影響 |
+|-----|------|------|
+| **A. SessionEnd 非対称** | SessionStart 6 hook ↔ SessionEnd 4 hook (= `worktree_cleanup` 欠落) | session 終了時に worktree 累積 = 14 GB 漸増 |
+| **B. PostToolUse mid-session 未配線** | `auto-capture.ps1` のみ / `mid_session_compress.py` 起動なし | 90+ min session で SessionStart 効果消失 = §16 spec が dead 状態 |
+| **C. PreCompact 限定配線** | `memory-cleanup.ps1` のみ / disk-cleanup + worktree_cleanup 欠落 | compaction 直前の重い session で disk pressure 解消されない |
+
+→ **v5 = §16 spec の実装 + 上記 3 gap fix で「毎セッション必ず圧縮」を 100% 化**.
+
+### 17.2 Wiring gap audit (= 4 finding)
+
+actual `~/.claude/settings.json` (= part 190 audit):
+
+```
+PostToolUse:    1 hook  (= auto-capture only)
+SessionStart:   6 hooks (= resume, cleanup_report, disk-cleanup, memory-cleanup, worktree_cleanup --tier1, session_delta --start)
+SessionEnd:     4 hooks (= disk-cleanup, memory-cleanup, memory_trim_phase2, session_delta --end)  ← worktree_cleanup 欠落
+UserPromptSubmit: 1 hook (= inject-rules)
+PreCompact:     1 hook  (= memory-cleanup only)  ← disk-cleanup + worktree_cleanup 欠落
+```
+
+期待:
+
+```
+PostToolUse:    2 hooks (= auto-capture + mid_session_compress)
+SessionStart:   6 hooks (= 現状維持)
+SessionEnd:     5 hooks (= worktree_cleanup --tier1 追加)
+UserPromptSubmit: 1 hook (= 現状維持)
+PreCompact:     3 hooks (= memory-cleanup + disk-cleanup --pre-compact + worktree_cleanup --tier1)
+```
+
+→ **+3 hook 追加** で全 lifecycle 圧縮自動化完成.
+
+### 17.3 Tier 2.2 = SessionEnd worktree_cleanup 追加
+
+```json
+{
+  "type": "command",
+  "command": "powershell -NoProfile -ExecutionPolicy Bypass -Command \"& python C:\\Users\\kanta\\.claude\\scripts\\worktree_cleanup.py --tier1 --apply --max-runtime-sec=15\"",
+  "timeout": 20
+}
+```
+
+期待効果:
+- SessionEnd 時の stale worktree (= 30 day 経過 / merged ✅ 検出) を **--apply 強制 prune**
+- safety: `--max-runtime-sec=15` で session 終了を遅延させない
+- start/end symmetric → worktree 累積防止
+
+### 17.4 Tier 2.3 = PostToolUse mid_session_compress 追加 (= §16 spec 実装)
+
+```json
+{
+  "matcher": "Bash|Write|Edit",
+  "hooks": [
+    { "type": "command", "command": "powershell -ExecutionPolicy Bypass -File \"C:\\Users\\kanta\\.claude\\hooks\\auto-capture.ps1\"" },
+    {
+      "type": "command",
+      "command": "powershell -NoProfile -ExecutionPolicy Bypass -Command \"& python C:\\Users\\kanta\\.claude\\scripts\\mid_session_compress.py --quick\"",
+      "timeout": 8
+    }
+  ]
+}
+```
+
+`mid_session_compress.py` 仕様 (= §16.2 から再掲):
+- **Throttle**: 50 tool call ごと fire (= internal counter 管理)
+- **Tasks**: transcript hot-cache gzip / flutter build cache prune / RAM working set trim
+- **Runtime**: < 5 sec (= non-blocking / Start-Job background)
+- **Idempotent**: lock file (= `~/.claude/logs/mid-compress.lock`) で並行 fire 防止
+
+### 17.5 Tier 2.4 = PreCompact 完全圧縮 (= compaction 前の最終駆込)
+
+```json
+"PreCompact": [
+  { "hooks": [
+    { "type": "command", "command": "powershell -ExecutionPolicy Bypass -File \"C:\\Users\\kanta\\.claude\\hooks\\memory-cleanup.ps1\"" },
+    { "type": "command", "command": "powershell -ExecutionPolicy Bypass -File \"C:\\Users\\kanta\\.claude\\hooks\\disk-cleanup.ps1\" -PreCompact" },
+    {
+      "type": "command",
+      "command": "powershell -NoProfile -ExecutionPolicy Bypass -Command \"& python C:\\Users\\kanta\\.claude\\scripts\\worktree_cleanup.py --tier1 --apply --max-runtime-sec=20\"",
+      "timeout": 25
+    }
+  ]}
+]
+```
+
+PreCompact = compaction 直前 = session 内で最も disk/RAM 圧迫している瞬間. 全 hygiene 一斉 fire で **compaction → resume の cycle で 1-2 GB reclaim 期待**.
+
+### 17.6 Threshold-triggered emergency fire (= safety net)
+
+PostToolUse hook 内で C: free GB が **< 50 GB cross 時** に追加 fire:
+
+```powershell
+$freeGB = (Get-PSDrive C).Free / 1GB
+if ($freeGB -lt 50) {
+  Start-Job -ScriptBlock {
+    & python "$env:USERPROFILE\.claude\scripts\mid_session_compress.py" --aggressive
+    & python "$env:USERPROFILE\.claude\scripts\worktree_cleanup.py" --tier1 --apply --max-runtime-sec=30
+  } | Out-Null
+}
+```
+
+「毎セッション必ず圧縮」guarantee = throttle (= 50 tool call) + threshold (= < 50 GB) の **OR fire**.
+
+### 17.7 Codex hand-off scope (= 期限 2026-05-30 / Issue #1983 follow-up)
+
+| Task | 担当 | 期限 |
+|------|------|------|
+| A. `~/.claude/scripts/mid_session_compress.py` 実装 (= §16.2 spec) | Codex | 2026-05-23 |
+| B. SessionEnd hook 5th = `worktree_cleanup.py --tier1` 配線 (= settings.json patch) | Codex | 2026-05-23 |
+| C. PostToolUse hook 2nd = `mid_session_compress.py --quick` 配線 | Codex | 2026-05-25 |
+| D. PreCompact hook 2nd-3rd = disk-cleanup + worktree_cleanup 配線 | Codex | 2026-05-25 |
+| E. Threshold-triggered emergency fire 実装 (= §17.6) | Codex | 2026-05-28 |
+| F. Documentation update (= 本 §17 status table backfill / 完了 mark) | Win Claude | 2026-05-30 (= self) |
+
+### 17.8 KPI 追跡 (= verify automation)
+
+`~/.claude/logs/mid-compress.csv` を新設:
+
+```csv
+ts,session_id,phase,counter,c_free_gb_before,c_free_gb_after,reclaim_mb,duration_sec
+2026-05-09T08:00:00Z,abc123,quick,50,70.09,70.32,235.5,2.1
+2026-05-09T08:30:00Z,abc123,quick,100,70.10,70.41,317.8,2.4
+```
+
+KPI:
+- `mid_compress_fires_per_session` ≥ 3 (= 90+ min session で 3+ fire 期待)
+- `reclaim_mb_per_fire` ≥ 100 MB (= 軽量 fire で最低 100 MB / aggressive で 500+ MB)
+- `duration_sec` < 5 (= non-blocking guarantee)
+
+### 17.9 PHILOSOPHY-22 alignment (= 7+/9 ✅)
+
+- 主要実装: hook wiring gap 3 finding fix + spec → 実装 100% 化
+- 該当原則:
+  - #2 (mission) — 開発環境枯渇 = mission blocker / 解消で全 part 連続 dogfood 維持
+  - #5 (商品 = 価値) — disk pressure 0 = AI が能力を 100% 発揮できる前提
+  - #6 (時間 = 資本) — automation で user 介入 0
+  - #7 (資産負債) — disk = 資産 / 累積 = 負債 / hook で 自動相殺
+  - #8 (KPI) — mid-compress.csv で `reclaim_mb_per_fire` 計測
+  - #9 (IPO) — local dev env stability = production scaling 前提
+- 整合性スコア: **7/9 ✅** ([PHILOSOPHY-22] gate 通過)
+
+### 17.10 関連
+
+- 親要望 (= user iterative ask v1-v5):
+  - **v1** (= part 154) `[disk-pressure]` SessionStart hook 新設
+  - **v2** (= part 178b) Tier 1.6 stale worktree prune
+  - **v3** (= part 180) Tier 1.8/1.9/2.0 強化
+  - **v4** (= part 189 / §16) mid-session 圧縮 spec
+  - **v5** (= part 190 / 本 §17) **hook wiring 完成 + 圧縮自動化 100% 化**
+- Issue: [#1983](https://github.com/kanta13jp1/my_web_app/issues/1983) (= P1 / メモリー/ディスク削減 定期監査)
+- 親 Issue: [#1984](https://github.com/kanta13jp1/my_web_app/issues/1984) (= 4 axis / closed in part 189)
+
+> **part 190 status**: spec ship / Codex hand-off (= Tier A-E / 期限 2026-05-30) / Win Claude verify は part 197 想定 (= Tier E 完了後 1 week observation). Win Claude self deliverable = §17 status table backfill (= F task / 期限 5/30).
+
