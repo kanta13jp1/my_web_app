@@ -29217,3 +29217,32 @@ WBS P1 期限近順 5 件を 2-instance 制で振分: Win Claude 4 件 (= #1124/
 
 ### Commit
 - (= 本 docs PR の merge commit / 後追記)
+
+## Win版#132 part 189-b — /project-gantt 76 view 追加 EPIC + 29 atomic batch ship (2026-05-09 JST)
+
+### 概要
+User 第 3 直接 ask = `/project-gantt` 画面に **76 view を最小単位で GitHub Issue 化** 要望. 「最終的に用意したい View 一覧」P0-P3 prioritized **29 view を atomic 化** + 残 **47 view は EPIC body の Phase B 候補リスト** に列挙. 通知 noise 軽減 + 段階導入実現.
+
+### 主要 ship
+- **EPIC umbrella**: [#2220](https://github.com/kanta13jp1/my_web_app/issues/2220) `[追加要望][EPIC][P1] /project-gantt 76 view 追加 EPIC (= 29 atomic + 47 Phase B)`
+- **29 atomic sub-issue ship** (= [#2221-#2249](https://github.com/kanta13jp1/my_web_app/issues/2220) / EPIC link):
+  - **P0 (= 8)**: #2221 タイムライン改善 / #2222 WBS 改善 / #2223 カンバン / #2224 カレンダー / #2225 ガント / #2226 タスク詳細 / #2227 バックログ / #2228 今日やること
+  - **P1 (= 9)**: #2229 ロードマップ / #2230 スプリント / #2231 マイルストーン / #2232 依存関係グラフ / #2233 ブロッカー / #2234 担当者別 / #2235 GitHub Issue 連携 / #2236 PR/Workflow / #2237 進捗ダッシュボード
+  - **P2 (= 7)**: #2238 バーンダウン / #2239 ベロシティ / #2240 リスク / #2241 テスト対象 / #2242 技術的負債 / #2243 AI 実行ログ / #2244 リリースノート
+  - **P3 (= 5)**: #2245 レトロスペクティブ / #2246 仕様書 / #2247 Impact/Effort / #2248 期限ヒートマップ / #2249 生産性分析
+- **EPIC body 構造**: 既存 7 view + 追加 29 atomic + Phase B 47 候補 + 段階導入 5 view recommend (= カンバン / カレンダー / ガント / バックログ / ブロッカー)
+- **Python script** (`C:/tmp/create_project_gantt_views_issues.py`): EPIC create → 29 atomic loop → EPIC body PATCH の 3-phase batch
+
+### 設計指針 documented
+- Backend 改修最小化 (= 既存 `app-hub` `wbs.list_tasks` 再利用 / [EF-CAP-50] 維持)
+- Frontend tab 拡張 (= `lib/pages/project_gantt_page.dart` segment 追加)
+- [DESIGN.md] dark theme + [REAL-DATA] Supabase 遵守 + Backward compat
+
+### Philosophy Alignment (Win#132 part 189-b)
+- 主要実装: user 第 3 直接 ask = 76 view 列挙を atomic 化 + Phase B 段階導入
+- 該当原則: #1 (CEO 感 = view 切替で視点選択) + #2 (mission = 個人開発 PM ツール OS 化) + #5 (商品 = 価値 = view 多様性) + #6 (時間 = 資本 = 適切な view で意思決定時間最小化) + #7 (資産負債 = view ごと asset/負債可視化) + #8 (KPI = 進捗ダッシュボード + バーンダウン で自己進捗) + #9 (IPO = 競合 21 社中の差別化資産)
+- 整合性スコア: 7/9 ✅ ([PHILOSOPHY-22] gate 通過)
+- 理念的貢献: 「**EPIC + atomic sub-issue batch (= python script 経由 29 issue/3min ship) pattern**」第 2 例 (= part 188-c 11 issue → part 189-b 29 issue / 2.6x scale 検証) + 「**user 大量列挙 ask → prioritized atomic + Phase B 候補列挙 split pattern**」第 1 例 / 121 part 連続 dogfood
+
+### Commit
+- (= 本 docs PR の merge commit / 後追記)
