@@ -5,7 +5,12 @@ import 'package:flutter/material.dart';
 import '../services/abstinence_guard_store.dart';
 
 class SelfTouchTrackerPage extends StatefulWidget {
-  const SelfTouchTrackerPage({super.key});
+  final bool quickLogOnOpen;
+
+  const SelfTouchTrackerPage({
+    super.key,
+    this.quickLogOnOpen = false,
+  });
 
   @override
   State<SelfTouchTrackerPage> createState() => _SelfTouchTrackerPageState();
@@ -28,6 +33,7 @@ class _SelfTouchTrackerPageState extends State<SelfTouchTrackerPage>
   int _todayCount = 0;
   List<AbstinenceSlipDailyCount> _weekTrend = [];
   bool _loading = true;
+  bool _quickLogInProgress = false;
   late AnimationController _pulseCtrl;
   late Animation<double> _pulseAnim;
 
@@ -41,7 +47,10 @@ class _SelfTouchTrackerPageState extends State<SelfTouchTrackerPage>
     _pulseAnim = Tween<double>(begin: 1.0, end: 1.12).animate(
       CurvedAnimation(parent: _pulseCtrl, curve: Curves.easeInOut),
     );
-    _load();
+    final initialLoad = _load();
+    if (widget.quickLogOnOpen) {
+      initialLoad.whenComplete(_runQuickLog);
+    }
   }
 
   @override
@@ -76,15 +85,63 @@ class _SelfTouchTrackerPageState extends State<SelfTouchTrackerPage>
     return d.year == now.year && d.month == now.month && d.day == now.day;
   }
 
-  Future<void> _record() async {
-    await _pulseCtrl.forward(from: 0);
-    await AbstinenceGuardStore.incrementSlip(itemId: _itemId);
-    await _load();
+  Future<void> _record({
+    bool showSuccess = false,
+    bool showFailure = false,
+  }) async {
+    try {
+      await _pulseCtrl.forward(from: 0);
+      await AbstinenceGuardStore.incrementSlip(
+        itemId: _itemId,
+        triggerNote: 'self_touch_quick_log',
+      );
+      await _load();
+    } catch (_) {
+      if (!mounted || !showFailure) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Could not record.'),
+          action: SnackBarAction(
+            label: 'Retry',
+            onPressed: _runQuickLog,
+          ),
+        ),
+      );
+      return;
+    }
+
     if (!mounted) return;
+
+    if (showSuccess) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Recorded'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+    }
 
     if (_todayCount >= _alertThreshold) {
       _showAlternativeActions();
     }
+  }
+
+  Future<void> _runQuickLog() async {
+    if (!mounted || _quickLogInProgress) {
+      return;
+    }
+    setState(() {
+      _quickLogInProgress = true;
+    });
+    await _record(showSuccess: true, showFailure: true);
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _quickLogInProgress = false;
+    });
   }
 
   void _showAlternativeActions() {

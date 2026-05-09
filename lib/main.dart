@@ -715,7 +715,10 @@ class _MyAppState extends State<MyApp> {
             return MaterialPageRoute(builder: (_) => const DailyHabitsPage());
           case '/self-touch-tracker':
             return MaterialPageRoute(
-              builder: (_) => const SelfTouchTrackerPage(),
+              builder: (_) => SelfTouchTrackerPage(
+                quickLogOnOpen: uri.queryParameters['action'] == 'quick_log',
+              ),
+              settings: RouteSettings(name: settings.name),
             );
           case '/abstinence-guard':
             return MaterialPageRoute(
