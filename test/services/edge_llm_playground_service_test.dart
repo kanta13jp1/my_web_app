@@ -42,6 +42,7 @@ void main() {
 
     expect(capturedBody?['action'], 'edge_llm.invoke');
     expect(capturedBody?['tier'], 'budget');
+    expect(capturedBody?['temperature'], 0);
     expect(capturedBody?['offline_secure_mode'], false);
     expect(capturedBody?['context_data'], <String, dynamic>{'goal': '習慣化'});
     expect(response.provider, 'google');
@@ -156,9 +157,38 @@ void main() {
     expect(localBody?['model_path'], r'C:\models\pleias-rag.gguf');
     expect(localBody?['vector_db_path'], r'C:\rag\lancedb');
     expect(localBody?['network_policy'], 'offline_only');
+    expect(localBody?['temperature'], 0);
     expect(response.provider, 'local-rag');
     expect(response.tier, 'offline');
     expect(response.parsedJson?['citations'], isA<List>());
+    expect(response.citations.single.sourceId, 'doc-1');
     expect(response.source, 'local-rag runtime / pleias-rag');
+  });
+
+  test('invoke extracts citations from parsed JSON payloads', () async {
+    final service = EdgeLlmPlaygroundService(
+      invoker: (_) async {
+        return <String, dynamic>{
+          'success': true,
+          'provider': 'pleias',
+          'text': 'Common Corpus [source:1]',
+          'parsed_json': <String, dynamic>{
+            'citations': <Map<String, dynamic>>[
+              <String, dynamic>{
+                'source_id': '1',
+                'title': 'common-corpus.md',
+                'snippet': 'Common Corpus is traceable training data.',
+              },
+            ],
+          },
+        };
+      },
+    );
+
+    final response = await service.invoke(userPrompt: 'Explain citations');
+
+    expect(response.text, 'Common Corpus [source:1]');
+    expect(response.citations.single.sourceId, '1');
+    expect(response.citations.single.title, 'common-corpus.md');
   });
 }

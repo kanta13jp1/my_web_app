@@ -6,7 +6,9 @@ import 'package:uuid/uuid.dart';
 
 import '../models/ai_provider_registry.dart';
 import '../services/edge_llm_playground_service.dart';
+import '../services/local_rag_runtime_service.dart';
 import '../widgets/ai_response_observability_panel.dart';
+import '../widgets/pleias_citation_text.dart';
 import 'offline_secure_mode_settings_page.dart';
 
 class EdgeLlmPlaygroundPage extends StatefulWidget {
@@ -530,6 +532,7 @@ class _EdgeLlmPlaygroundPageState extends State<EdgeLlmPlaygroundPage> {
             _codeBlock(
               text: response.text,
               isDark: isDark,
+              citations: response.citations,
             ),
             if (prettyJson != null) ...[
               const SizedBox(height: 16),
@@ -565,6 +568,7 @@ class _EdgeLlmPlaygroundPageState extends State<EdgeLlmPlaygroundPage> {
   Widget _codeBlock({
     required String text,
     required bool isDark,
+    List<LocalRagCitation> citations = const <LocalRagCitation>[],
   }) {
     return Container(
       width: double.infinity,
@@ -578,13 +582,10 @@ class _EdgeLlmPlaygroundPageState extends State<EdgeLlmPlaygroundPage> {
               : const Color(0xFFE2E8F0),
         ),
       ),
-      child: SelectableText(
-        text,
-        style: const TextStyle(
-          fontFamily: 'monospace',
-          fontSize: 12,
-          height: 1.5,
-        ),
+      child: PleiasCitationText(
+        text: text,
+        citations: citations,
+        isDark: isDark,
       ),
     );
   }
