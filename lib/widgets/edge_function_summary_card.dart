@@ -829,6 +829,14 @@ class _EdgeFunctionSummaryCardState extends State<EdgeFunctionSummaryCard> {
       null,
       'Stripe → Supabase サーバーサイド専用 (UIなし / 請求管理は /billing)',
     ),
+    // 追加 (cs-check 自動連携 2026-05-09)
+    _FnDef(
+      'mcp-well-known',
+      'MCP Well-Known URI ディスカバリー (サーバーサイド専用)',
+      false,
+      null,
+      'MCP クライアント向け Well-Known エンドポイント (UIなし / サーバーサイド専用)',
+    ),
   ];
 
   int get _withUiCount => _functions.where((f) => f.hasUi).length;
