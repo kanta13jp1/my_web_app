@@ -1252,3 +1252,59 @@ powershell -NoProfile -ExecutionPolicy Bypass -Command "& python C:\Users\kanta\
 - Tier A-E 完了 (= 5/28 想定) 後は SessionEnd + PostToolUse + PreCompact hook が auto fire → manual fire 不要
 - §17.11 は historical reference として維持 (= 削除しない / part 197 verify 完了で archive section 化)
 
+### 17.12 v7 = part 192-b immediate manual fire delta verify (= pre-existing spec verify pattern 第 3 例 / 2026-05-09)
+
+User 第 6 直接 ask = v6 と同テーマ再受信 (= 「毎回のセッションで必ず memory + disk 圧縮 施策検討」). Codex hand-off T+0/T+1 day 進捗 0 (= dev_cache_cleanup.py 5/23 期限). 空白期間中の **immediate fire delta 実測値** + system pressure gap 強調.
+
+#### 17.12.1 v7 measured (= part 192-b 開始時 / 2026-05-09 19:32 JST)
+
+| 指標 | 開始時 | manual fire 後 | delta | 備考 |
+|------|--------|----------------|-------|------|
+| RAM Free | 0.81 GB | 0.75 GB | -60 MB | system pressure +60 MB > trim rate |
+| RAM Used % | 94.8% | 95.2% | **+0.4 pt** | net 増 (= v6 -5.9 pt と逆) |
+| C: Free | 66.22 GB | 66.22 GB | 0 | worktree 0 stale 維持 |
+| Worktree count | 17 | 17 | 0 | 全 in-flight (= +4 since v6) |
+| memory_trim_phase2 ram_trim_total_mb_freed | - | **1666.8 MB** | - | process level success |
+
+→ **process level: ✅ 1.67 GB freed / 5 procs trimmed** (= memory_trim_phase2.ps1 設計通り)
+→ **system level: ⚠️ +0.4 pt 増** (= 並行する Chrome/VSCode/etc が trim 速度超過で消費 / external app pressure)
+
+#### 17.12.2 v7 finding = browser/IDE cache trim gap exposed
+
+immediate fire 単独不足. memory_trim_phase2 は python/dart process target のみ → Chrome/VSCode/Edge/cargo/pip cache は対象外:
+
+| 圧迫源 | 推定 | 現対応 | gap |
+|--------|------|--------|-----|
+| python/dart process | 1.5-2 GB | memory_trim_phase2 ✅ | none |
+| browser cache (Chrome/Edge) | 1-3 GB | dev_cache_cleanup.py 未実装 | **Codex 5/23** |
+| IDE cache (VSCode workspaceStorage) | 0.5-1 GB | Tier 1.7 telemetry only | **Codex 5/23** |
+| build artifact (cargo/pip/npm) | 0.5-2 GB | dev_cache_cleanup.py 未実装 | **Codex 5/23** |
+
+→ Issue #2186 dev_cache_cleanup.py 4 cmd Win compat (= Codex 5/23 期限 / today T+0/T+1) impl 完了で gap 解消想定.
+
+#### 17.12.3 即時対応 (= Codex impl 待ち期間 / 5/9-5/23)
+
+- v6 recipe (= §17.11.2) 維持: process level RAM trim は確実 (= 1.5-2 GB freed)
+- system pressure 高時 (= RAM > 95%): user manual close (= Chrome tab / VSCode window 等)
+- worktree count > 15: `--apply` mode (= --no-apply で 17 → 検査のみ / 安全)
+- next session 推奨条件: RAM < 90% / C: > 60 GB / worktree < 15
+
+#### 17.12.4 v7 dogfood evidence
+
+- pre-existing spec verify pattern 第 3 例適用 ✅ (= part 184 第 1 例 / part 191 第 2 例 / part 192-b 第 3 例)
+- 新 spec 起票回避 ✅ (= 既 §17.11 拡張 / §17.12 として 1 章追加)
+- immediate manual fire pattern 第 2 例 ✅ (= part 191 第 1 例 +930 MB / part 192-b 第 2 例 +1666 MB process / -0.4 pt system)
+- v7 finding = 「process level ✅ + system level ⚠️ gap」明文化 → Codex 5/23 dev_cache_cleanup.py priority justification
+
+#### 17.12.5 KPI 追跡
+
+| metric | v6 (part 191) | v7 (part 192-b) | trend |
+|--------|---------------|-----------------|-------|
+| process trim freed | ~930 MB | 1666 MB | +79% |
+| system RAM net delta | -5.9 pt | +0.4 pt | ⚠️ system pressure 増 |
+| worktree count | 13 | 17 | +30% |
+| C: free | 70.24 GB | 66.22 GB | -4 GB |
+
+→ system pressure 上昇傾向 (= worktree +4 / C: -4 GB) → Codex 5/23 impl までの暫定 recipe 強化必要なし (= process level は十分 / system level は user manual + browser/IDE 制御に依存)
+
+

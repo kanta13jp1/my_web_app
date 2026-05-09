@@ -29477,4 +29477,57 @@ part 191 末尾 → 同日連続 part 192 開始. user direct ask 3 件 全 veri
 - 理念的貢献: 「**verify-only session = ROADMAP backfill + Codex direct push acknowledgment pattern**」第 1 例 (= sprint task 外の Codex direct push を ROADMAP 履歴に記録 / commit hash + scope 明記 / audit trail 完備) + 「**MEMORY.md size audit pattern**」第 1 例 (= line length / entry 数 / split threshold の 3 軸監視 / line length 是正先行 = split 後置) / 124 part 連続 dogfood
 
 ### Commit
+- `f8928622a` — `docs(part 192): backfill part 191 commit + Codex AI share controls acknowledgment (#2307)` (= part 192-b backfill)
+
+---
+
+## Win版#132 part 192-b — v7 immediate fire delta verify + WBS Top 5 振分 + iterative ask 第 7 phase (2026-05-09 JST)
+
+### 概要
+part 192 → 同日連続 part 192-b. user 第 6 直接 ask 3 件 (= iterative ask v7 phase / pre-existing spec verify pattern 第 3 例):
+1. **WBS タスク期限近順 + 2 instance 反映**
+2. **メモリ/HDD 圧縮施策 v7 検討** (= part 191 v6 と同テーマ再受信)
+3. **wrap-up + next session prompt 出力**
+
+→ pre-existing spec verify pattern 第 3 例適用 (= 新 spec 起票回避 / DISK_HYGIENE §17.12 拡張 / immediate fire delta 実測 + system pressure gap 強調).
+
+### 主要 ship (= 4 件)
+
+1. **v7 immediate fire delta dogfood** (= RAM 94.8% > 90% threshold trigger met / v6 recipe 即 fire / process level ✅ 1666.8 MB freed / system level ⚠️ +0.4 pt 増 / `dev_cache_cleanup.py` Codex 5/23 impl gap exposed)
+
+2. **DISK_HYGIENE §17.12 v7 verify section ship** (= immediate fire delta 実測表 + 圧迫源 4 軸 gap 表 + 即時対応 + dogfood evidence + KPI v6→v7 比較 / 新 spec 起票回避 = 既 doc 章追加 pattern 第 8 例)
+
+3. **WBS Top 5 期限近順 + 2-instance 振分 第 8 例** (= today 5/9 19:32 JST T+0/T+1 / 5 件全件 Win Codex sprint in-flight 維持 / 5/12 T+3 ping schedule unchanged):
+
+| # | Issue | 期限 | 振分 | 状態 (= part 192-b / today T+0/T+1) |
+|---|-------|-----|------|-----|
+| 1 | #2171 WBS dedup Phase 2 | 5/22 (T+13) | Win Codex | T+1 / monitor / 5/12 = T+3 ping schedule |
+| 2 | #2186 dev_cache 4 cmd Win | 5/23 (T+14) | Win Codex | T+1 / monitor / 5/12 = T+3 ping (= v7 gap exposed = priority up) |
+| 3 | #1741 PWA self-touch widget | 5/23 (T+14) | Win Codex | hand-off / monitor |
+| 4 | v5 hook wiring 5 task (Tier A-E) | 5/23-5/28 | Win Codex | T+1 / monitor / 5/12 = T+3 ping schedule |
+| 5 | #1124 GPA Phase 1 PR | 5/30 (T+21) | Win Codex | spec ship / 5/13 = T+4 ping schedule |
+
+→ 全 5 件 Win Codex sprint in-flight 維持 / Win Claude this session = monitor + v7 status verify only
+
+4. **session ritual ship** (= memory entry + MEMORY.md index 更新 + ROADMAP part 192-b entry / 部分 = part 192 → 192-b に renaming なし = entry 並列 append)
+
+### v7 finding (= browser/IDE cache trim gap)
+
+| 圧迫源 | 推定 | 現対応 | gap → 解消想定 |
+|--------|------|--------|-----|
+| python/dart process | 1.5-2 GB | memory_trim_phase2 ✅ | none |
+| browser cache | 1-3 GB | dev_cache_cleanup.py 未実装 | Codex 5/23 |
+| IDE cache | 0.5-1 GB | Tier 1.7 telemetry only | Codex 5/23 |
+| build artifact | 0.5-2 GB | dev_cache_cleanup.py 未実装 | Codex 5/23 |
+
+→ Issue #2186 priority up (= v7 dogfood で gap 数値化 / 5/12 T+3 ping 時に v7 finding 添付推奨)
+
+### Philosophy Alignment (Win#132 part 192-b)
+- 主要実装: v7 immediate fire delta dogfood + DISK_HYGIENE §17.12 + WBS Top 5 + iterative ask 第 7 phase
+- 該当原則: #2 (mission) #5 (商品=価値) #6 (時間=資本) #7 (資産負債) #8 (KPI) #9 (IPO)
+- 整合性スコア: 6/9 ✅ ([PHILOSOPHY-22] gate 通過)
+- 理念的貢献: 「**pre-existing spec verify pattern**」第 3 例 (= part 184 第 1 例 / part 191 第 2 例 / part 192-b 第 3 例 累積 / v(N+1) で v(N) 既 spec status verify + 数値 update / 新 spec 起票回避) + 「**user 同テーマ iterative ask v1-v7 累積管理 pattern**」第 3 例 (= part 190-b 第 1 例 / part 191 第 2 例 / part 192-b 第 3 例 / 7 phase 累積) + 「**immediate manual fire pattern**」第 2 例 (= part 191 第 1 例 / part 192-b 第 2 例 / process level ✅ + system level ⚠️ 二層管理) + 「**WBS Top 5 期限近順 + 2-instance 振分**」第 8 例 + 「**既存 doc 章追加 pattern**」第 8 例 (= DISK_HYGIENE §17.12 / 新 doc 増殖回避) / 125 part 連続 dogfood (= part 75 → 192-b)
+
+### Commit
 - (= 本 docs PR の merge commit / 後追記)
+
