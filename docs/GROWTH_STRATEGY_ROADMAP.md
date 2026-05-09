@@ -29170,4 +29170,27 @@ User 第 2 弾 ask (= same session continuation): 「WBS 期限近順 + 2 instan
 - 理念的貢献: 「**user screenshot direct ask → frontend-only fix → 即 ship**」pattern 第 1 例 (= verify-only mode 中でも user 直接 ask 優先) + 「**EF + DB schema 改修なしで frontend UX 改善**」pattern 第 N 例累積 / 119 part 連続 dogfood
 
 ### Commit
-- (= 本 feature PR の merge commit / 後追記)
+- b3cbcf02 (= PR [#2202](https://github.com/kanta13jp1/my_web_app/pull/2202)) — feat(calendar): Google Calendar 風 時間単位 schedule 登録
+
+## 2026-05-09 — Win版#132 part 188-c (Win Claude / Claude Code 続き)
+
+### Session Summary (= user 第 2 ask = Google Calendar 全機能 atomic Issue 化)
+- **User ask**: 「Google Calendar にある機能はすべて追加したい / 最小単位に分割して GitHub Issues に追加要望として登録」
+- **既存 calendar issue 重複確認** ([ISSUE-PRECHECK]): `calendar in:title` / `カレンダー in:title` = 0 件 / Google Planner Gem #525 は別軸 (= LP 訴求) / 重複なし
+- **EPIC issue ship**: [#2204](https://github.com/kanta13jp1/my_web_app/issues/2204) `[追加要望][P1] Google Calendar 全機能 段階導入 EPIC` (= Phase 1-4 / 11 atomic + 11 future / 設計指針 + Philosophy Alignment)
+- **11 atomic sub-issue ship** (= [#2205-#2215](https://github.com/kanta13jp1/my_web_app/issues/2204) / EPIC link 全体 statusable):
+  - **Phase 1 (P1)**: #2205 Day/Week view 切替 / #2206 イベント編集機能 / #2207 詳細 bottom sheet
+  - **Phase 2 (P2)**: #2208 リマインダー通知 / #2209 イベント検索 / #2210 複数カレンダー / #2211 繰り返し (RRULE)
+  - **Phase 3 (P3)**: #2212 ドラッグ&ドロップ / #2213 iCal export/import / #2214 タイムゾーン / #2215 自然言語クイック追加
+- **EPIC body PATCH** (= `gh api -X PATCH` / `#N1-#N11` placeholder → actual `#2205-#2215` 一括 sed 置換 / body 2731 chars)
+- **設計指針 documented**: Backend 改修最小化 (= `hub_data.metadata` JSONB) + [EF-CAP-50] 維持 (= 全部 `app-hub` calendar.* action 拡張) + Backward compat
+- **/tmp vs Windows python3 path mismatch finding**: bash `/tmp` ≠ Windows python3 `/tmp` (= `C:/tmp` 経由で workaround / jq 不在 = python3 fallback)
+
+### Philosophy Alignment (Win#132 part 188-c)
+- 主要実装: user 第 2 直接 ask = atomic issue 11 件 + EPIC umbrella 1 件 一括 ship
+- 該当原則: #2 (ミッション = カレンダー基盤確立) + #5 (商品=価値 = Google Calendar パリティ asset 化) + #6 (時間最適化 = batch shell loop で 11 issue/3min) + #7 (資産負債 = 機能 gap 競合優位喪失 → backlog 化で可視化) + #8 (KPI = phase 分割 1 PR/phase 計画) + #9 (IPO = atomic issue で Codex hand-off 可能化)
+- 整合性スコア: 6/9 ✅ ([PHILOSOPHY-22] gate 通過)
+- 理念的貢献: 「**EPIC + atomic sub-issue batch shell loop pattern**」第 1 例 (= 11 issue を 1 Bash invoke + heredoc array で 3min 着地) + 「**user 連続 direct ask 一括対応**」pattern 第 1 例 (= 同 session 内 part 188-b ship + part 188-c 11 issue ship) / 119 part 連続 dogfood
+
+### Commit
+- (= 本 docs PR の merge commit / 後追記)
