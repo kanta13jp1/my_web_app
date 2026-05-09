@@ -70,8 +70,13 @@ import '../utils/feature_tap_logger.dart';
 
 class HomePage extends StatefulWidget {
   final DateTime Function()? nowProvider;
+  final bool showLegacyOperations;
 
-  const HomePage({super.key, this.nowProvider});
+  const HomePage({
+    super.key,
+    this.nowProvider,
+    this.showLegacyOperations = false,
+  });
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -1845,13 +1850,32 @@ abstinence_slip_details: $slipDetailsText
     String toolId,
     Future<dynamic> Function() action,
   ) async {
+    final entry = _findHomeToolEntry(toolId);
     await HomeToolUsageService.recordToolUse(toolId);
-    unawaited(recordFeatureTap(toolId, toolId));
+    unawaited(
+      recordFeatureTap(
+        _usageRouteForTool(toolId, entry),
+        entry?.title ?? toolId,
+      ),
+    );
     await action();
     if (!mounted) return;
     setState(() {
       _reloadRecentToolSignals();
     });
+  }
+
+  HomeToolEntry? _findHomeToolEntry(String toolId) {
+    for (final entry in _buildHomeToolCatalog()) {
+      if (entry.id == toolId) return entry;
+    }
+    return null;
+  }
+
+  String _usageRouteForTool(String toolId, HomeToolEntry? entry) {
+    final route = entry?.routePath;
+    if (route != null && route.isNotEmpty) return route;
+    return toolId.startsWith('/') ? toolId : '/$toolId';
   }
 
   List<HomeToolEntry> _buildHomeToolCatalog() {
@@ -5332,7 +5356,19 @@ abstinence_slip_details: $slipDetailsText
                               isDark: isDark,
                               isCompact: isCompact,
                             ),
-                            if (_showLegacyHomeSections) ...[
+                            if (!widget.showLegacyOperations &&
+                                !_showLegacyHomeSections) ...[
+                              const SizedBox(height: 24),
+                              _buildSectionHeader(
+                                '追加要望フォーム',
+                                Icons.add_task_outlined,
+                                const Color(0xFF0F766E),
+                                key: const Key('home_section_feature_request'),
+                              ),
+                              _buildHomeFeatureRequestForm(isDark, isCompact),
+                            ],
+                            if (widget.showLegacyOperations ||
+                                _showLegacyHomeSections) ...[
                               const SizedBox(height: 40),
                               _buildHopsonInspiredHomeHero(
                                 context,

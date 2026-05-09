@@ -2557,6 +2557,22 @@ List<HomeToolEntry> buildHomeToolCatalog({
       onOpen: (context) => Navigator.of(context).pushNamed('/site-guide-ai'),
     ),
     HomeToolEntry(
+      id: 'release-notes',
+      sectionId: 'knowledge',
+      title: 'Release Notes',
+      subtitle: 'バージョンごとの変更点、修正、既知の注意点を確認',
+      icon: Icons.new_releases_outlined,
+      color: const Color(0xFF0D9488),
+      keywords: const <String>[
+        'release notes',
+        'リリースノート',
+        '変更履歴',
+        'バージョン',
+        'build',
+      ],
+      onOpen: (context) => Navigator.of(context).pushNamed('/release-notes'),
+    ),
+    HomeToolEntry(
       id: 'edge-llm-playground',
       sectionId: 'ai',
       title: 'Edge LLM Playground',
