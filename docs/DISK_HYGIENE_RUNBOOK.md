@@ -1217,3 +1217,38 @@ KPI:
 
 > **part 190 status**: spec ship / Codex hand-off (= Tier A-E / 期限 2026-05-30) / Win Claude verify は part 197 想定 (= Tier E 完了後 1 week observation). Win Claude self deliverable = §17 status table backfill (= F task / 期限 5/30).
 
+### 17.11 v6 = part 191 immediate manual fire verify (= pre-existing spec verify pattern 第 2 例 / 2026-05-09)
+
+User 第 5 直接 ask = v5 と同テーマ (= 「毎回のセッションで必ず memory + disk 圧縮」). Codex hand-off T+1 day 進捗 0 (= 5/23-5/28 期限). 空白期間中の **immediate manual fire recipe** を確立.
+
+#### 17.11.1 v6 measured (= part 191 開始時)
+
+| 指標 | 開始時 | manual fire 後 | delta |
+|------|--------|----------------|-------|
+| RAM Free | 1.08 GB | 2.01 GB | **+930 MB** |
+| RAM Used % | 93.1% | 87.2% | **-5.9 pt** |
+| C: Free | 70.24 GB | 70.24 GB | 0 (= worktree 0 stale) |
+| Worktree count | 13 | 13 | 0 (= 全 in-flight) |
+
+#### 17.11.2 manual fire recipe (= Codex impl 完了まで暫定)
+
+```powershell
+# 1. RAM trim (= ~1 GB free 即 / 4 procs target)
+powershell -ExecutionPolicy Bypass -File "C:\Users\kanta\.claude\scripts\memory_trim_phase2.ps1"
+
+# 2. worktree cleanup tier1 (= stale only / max 20 sec)
+powershell -NoProfile -ExecutionPolicy Bypass -Command "& python C:\Users\kanta\.claude\scripts\worktree_cleanup.py --root C:\Users\kanta\GitHub\my_web_app --tier1 --apply --max-runtime-sec=20"
+```
+
+#### 17.11.3 適用条件
+
+- session 開始時 RAM > 90% used
+- session 開始時 C: < 50 GB free
+- Codex Tier A-E 完了前 (= 5/28 まで)
+- mid_session_compress.py 未配線期間中
+
+#### 17.11.4 Codex impl 完了後
+
+- Tier A-E 完了 (= 5/28 想定) 後は SessionEnd + PostToolUse + PreCompact hook が auto fire → manual fire 不要
+- §17.11 は historical reference として維持 (= 削除しない / part 197 verify 完了で archive section 化)
+
