@@ -1307,4 +1307,111 @@ immediate fire 単独不足. memory_trim_phase2 は python/dart process target �
 
 → system pressure 上昇傾向 (= worktree +4 / C: -4 GB) → Codex 5/23 impl までの暫定 recipe 強化必要なし (= process level は十分 / system level は user manual + browser/IDE 制御に依存)
 
+### 17.13 v8 = part 193 dev_cache pre-existing impl + Win compat gap re-verify (= pre-existing spec verify pattern 第 4 例 / 2026-05-09)
+
+User 第 7 直接 ask = v6/v7 と同テーマ再受信 (= 「毎回のセッションで必ず memory + disk 圧縮」). part 192-b finding (= browser/IDE cache trim gap) を起点に **dev_cache_cleanup.py の actual 実装 status を audit**. **新発見: script body = 既出荷 (35741 bytes / 2026-05-09 03:51 mtime) / 但し 4 cmd Win compat fix 未完**.
+
+#### 17.13.1 v8 measured (= part 193 開始時 / 2026-05-09 21:30 JST)
+
+**Pre-fire baseline:**
+
+| 指標 | v7 末尾 (part 192-b) | v8 開始時 (part 193) | delta |
+|------|---------------------|---------------------|-------|
+| C: Free | 66.22 GB | 62.25 GB | **-3.97 GB** ⚠️ |
+| RAM Used % | 95.2% | 94% | -1.2 pt |
+| RAM Free | 0.75 GB | 0.94 GB | +0.19 GB |
+| Worktree count | 17 | 16 | -1 (= cleanup ✅) |
+
+→ C: 3.97 GB 喪失 (= 約 30 min interval 内 / system 自然消費 + dev cache 蓄積).
+
+**Immediate fire result:**
+
+| step | 動作 | reclaim | status |
+|------|------|---------|--------|
+| 1. memory_trim_phase2.ps1 | 3 procs trim | 946.7 MB | ✅ |
+| 2a. dev_cache flutter clean | --apply | 0 MB | ❌ WinError 2 |
+| 2b. dev_cache npm cache verify | --apply | 0 MB | ❌ WinError 2 |
+| 2c. dev_cache pnpm store prune | --apply | 0 MB | ❌ WinError 2 |
+| 2d. dev_cache dart pub cache clean | --apply | 0 MB | ❌ WinError 2 |
+| 2e. dev_cache pip cache purge | --apply | 0 MB | ✅ (= 0 file) |
+
+→ memory_trim ✅ 946.7 MB / dev_cache 4/5 ❌ Win path 解決失敗 (= part 185 と同じ症状再現).
+
+**Post-fire state:**
+
+| 指標 | Pre | Post (final) | delta |
+|------|-----|--------------|-------|
+| RAM Used % | 94% | 92% | **-2 pt** ✅ |
+| RAM Free | 0.94 GB | 1.10 GB | +0.16 GB |
+| C: Free | 62.25 GB | 62.26 GB | +0.01 GB (= negligible) |
+
+→ system level: -2 pt 改善 (= v7 +0.4 pt 増 / v6 -5.9 pt 減 中間値 / sustained).
+
+#### 17.13.2 v8 critical finding = pre-existing impl ≠ functional verify
+
+**Discovery 1: dev_cache_cleanup.py script body 既出荷**
+
+```
+$ ls -la ~/.claude/scripts/dev_cache_cleanup.py
+-rwxr-xr-x 35741 May  9 03:51 dev_cache_cleanup.py
+$ wc -l ~/.claude/scripts/dev_cache_cleanup.py
+1068 dev_cache_cleanup.py
+```
+
+→ part 192-b §17.12 は「Codex 5/23 期限 / 未実装」と推定 / 実際は **2026-05-09 03:51 = 同日 17:30 前に Codex push 済**. Win Claude triage なしで unobserved 化 (= **observation gap pattern**).
+
+**Discovery 2: 4 cmd Win compat 未解決**
+
+| command | status | error | root cause |
+|---------|--------|-------|-----------|
+| flutter clean | ❌ exit 127 | WinError 2 | flutter PATH unresolved via subprocess |
+| npm cache verify | ❌ exit 127 | WinError 2 | npm PATH (= .ps1 wrapper not invoked) |
+| pnpm store prune | ❌ exit 127 | WinError 2 | pnpm PATH (= same as npm) |
+| dart pub cache clean | ❌ exit 127 | WinError 2 | dart PATH (= sdk bin unresolved) |
+| pip cache purge | ✅ exit 0 | - | python -m pip absolute path 解決済 |
+
+→ Issue #2186 (= 4 cmd Win compat fix / 5/23 期限) **依然 OPEN / fix 未着地**. script structure ≠ working tool.
+
+**Discovery 3: hook wiring NOT done**
+
+```
+$ grep dev_cache_cleanup ~/.claude/settings.json
+(no output)
+```
+
+→ dev_cache_cleanup.py は ANY lifecycle event に 配線なし. v5 spec (= §17.4-17.5) PostToolUse / PreCompact 配線も dev_cache 含まず. **3 重 gap**: impl ✅ + Win compat ❌ + wiring ❌.
+
+#### 17.13.3 即時対応 (= Codex impl 待ち + Win compat fix 待ち期間 / 5/9-5/23)
+
+- v6 recipe (= §17.11.2) 維持: process level RAM trim は確実 (= memory_trim_phase2.ps1 / 900-1700 MB freed)
+- dev_cache 配線 deferred: **4 cmd Win compat 解決 (= Issue #2186 close) 後**に SessionEnd / PostToolUse 配線
+- system pressure 高時: user manual close (= Chrome tab / VSCode window 等)
+- worktree count > 15: SessionStart `--apply` mode 検討 (= 現状 --max-runtime-sec=15 で safe)
+
+#### 17.13.4 v8 dogfood evidence
+
+- pre-existing spec verify pattern 第 4 例適用 ✅ (= part 184/191/192-b/193 の 4 例累積 / **artifact category 拡張**: spec text → script existence → impl content → functional verify)
+- 新 spec 起票回避 ✅ (= §17.13 として 1 章追加 / 既存 §17 体系維持)
+- immediate manual fire pattern 第 3 例 ✅ (= part 191 / 192-b / 193 / **persistent KPI**: process trim 900-1700 MB band)
+- v8 finding = 「**impl ship 完了 ≠ functional 完了**」明文化 → Codex Win compat fix priority justification
+
+#### 17.13.5 KPI 追跡
+
+| metric | v6 (part 191) | v7 (part 192-b) | v8 (part 193) | trend |
+|--------|---------------|-----------------|---------------|-------|
+| process trim freed | ~930 MB | 1666 MB | 946.7 MB | stable band |
+| system RAM net delta | -5.9 pt | +0.4 pt | -2.0 pt | recovery |
+| worktree count | 13 | 17 | 16 | -1 cleanup |
+| C: free | 70.24 GB | 66.22 GB | 62.26 GB | **-8 GB / 2 session** ⚠️ |
+| dev_cache success rate | n/a | n/a | 1/5 (20%) | **gap 露呈** |
+
+→ C: free 8 GB 喪失 (= 2 session = 30 min interval) で dev_cache fix priority high. process trim 単独では disk 圧迫不解決. **Codex #2186 fix 5/23 deadline 厳守要請 + 5/12 T+3 ping 加点根拠**.
+
+#### 17.13.6 next session 推奨条件
+
+- **観察 first**: `~/.claude/scripts/` 全 file の mtime audit (= silent ship detection)
+- **functional verify**: script existence ≠ working tool — `--apply` で smoke test 必須
+- 5/12 T+3 = Codex sprint progress ping (= Issue #1983 + #2186 + #2171 状況確認)
+- 5/13 T+4 = Codex Phase 1 PR query (= author:app/codex / Issue #2223-#2233)
+
 
