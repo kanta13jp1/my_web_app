@@ -8,6 +8,7 @@
 
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient, SupabaseClient } from "npm:@supabase/supabase-js@2";
+import { AgentGpaActionError, handleAgentGpaAction } from "./agent_gpa.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -738,11 +739,24 @@ serve(async (req: Request) => {
         return json({ success: true, entry });
       }
 
+      // --- Agent GPA Evaluations (#1124 Phase 1) ---
+      case "agent.evaluate_gpa":
+      case "agent.list_gpa_recent": {
+        const result = await handleAgentGpaAction({
+          action,
+          admin,
+          body,
+          userId,
+        });
+        return json({ success: true, ...result });
+      }
+
       default:
         return json({ error: `Unknown action: ${action}` }, 400);
     }
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    return json({ error: message }, 500);
+    const status = err instanceof AgentGpaActionError ? err.status : 500;
+    return json({ error: message }, status);
   }
 });
