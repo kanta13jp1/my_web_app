@@ -32,6 +32,32 @@
       ],
       "changes": [
         {
+          "category": "fix",
+          "id": "pr-2299",
+          "links": [
+            {
+              "title": "PR #2299",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/2299"
+            }
+          ],
+          "mergedAt": "2026-05-09T10:25:55Z",
+          "summary": "#2299 fix(calendar): order daily events chronologically"
+        },
+        {
+          "category": "feature",
+          "id": "pr-2307",
+          "links": [
+            {
+              "title": "PR #2307",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/2307"
+            }
+          ],
+          "mergedAt": "2026-05-09T10:20:39Z",
+          "summary": "#2307 docs(part 192): backfill part 191 commit + Codex AI share controls acknowledgment"
+        },
+        {
           "category": "feature",
           "id": "pr-2303",
           "links": [
@@ -394,32 +420,6 @@
           ],
           "mergedAt": "2026-05-08T15:49:13Z",
           "summary": "#2177 docs(roadmap): Win版#132 part 183 PR #2172 dual-gate compliance recovery [ROADMAP-LOG]"
-        },
-        {
-          "category": "automation",
-          "id": "pr-2176",
-          "links": [
-            {
-              "title": "PR #2176",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/2176"
-            }
-          ],
-          "mergedAt": "2026-05-08T15:24:36Z",
-          "summary": "#2176 ci: scope release readiness deno check (#2175)"
-        },
-        {
-          "category": "automation",
-          "id": "pr-2174",
-          "links": [
-            {
-              "title": "PR #2174",
-              "type": "pull_request",
-              "url": "https://github.com/kanta13jp1/my_web_app/pull/2174"
-            }
-          ],
-          "mergedAt": "2026-05-08T14:58:28Z",
-          "summary": "#2174 ci: add alpha release readiness gate (#1556)"
         }
       ],
       "date": "2026-05-09",
