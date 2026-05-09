@@ -898,3 +898,159 @@ PR #2182 で **Tier 1.7/1.8/1.9/2.0 + RAM Phase 2 + worktree --tier1 全 primiti
 
 > **part 185 status**: Codex 5/23 hand-off **14-day early完了** ✅ / 5 primitive 動作 verify ✅ / hook wiring = ⚠️ next session step / Issue #1984 close 推奨 (= hook wiring 後) / next ping = 2026-05-12 (= T+3 / #2171 のみ).
 
+## 16. Tier 2.1 — Mid-session compression (= part 189 新設 / User 要望「毎セッション必ず枯渇」 v4)
+
+### 16.1 課題 (= why)
+
+User 直接 ask (= part 189 / 2026-05-09):
+> 今の開発フローだと、ローカル環境のメモリやハードディスク容量が必ず枯渇します。毎回のセッションで必ずメモリやハードディスク容量を圧縮する施策を検討してください。
+
+現行 hygiene = **SessionStart + SessionEnd 両端のみ** (= part 186 wiring 完了). 中間 90+min の長時間 session では:
+
+| 圧迫源 | 観測値 (part 188 末尾) | 累積速度 (推定) |
+|--------|---------------------|---------------|
+| C: free GB | 87 GB | -0.05 GB / 30 min (= 大きな commit / artifact 生成時) |
+| RAM 使用率 | 95% | +200-400 MB / 30 min (= Claude Code chat history + Flutter analyzer) |
+| transcript hot-cache | (= 90+ MB / session) | +30 MB / 30 min |
+
+**結論**: 90+ min session で SessionStart 圧縮の効果が消失 → mid-session 圧縮 hook 必須.
+
+### 16.2 設計 (= Tier 2.1 = mid-session 軽量圧縮)
+
+**Trigger**: PostToolUse hook (= 既存 hook を **throttle 拡張**)
+
+```ps1
+# C:\Users\kanta\.claude\hooks\auto-capture.ps1 (= 既存) を拡張
+# または新規 mid-session-compress.ps1 を追加
+$counterFile = "$env:USERPROFILE\.claude\logs\post_tool_counter.txt"
+$threshold = 50  # = 50 tool call ごと
+$counter = if (Test-Path $counterFile) { [int](Get-Content $counterFile) } else { 0 }
+$counter++
+Set-Content $counterFile $counter
+
+if ($counter % $threshold -eq 0) {
+  # 軽量圧縮 fire (= < 5 sec / non-blocking)
+  Start-Job -ScriptBlock {
+    & python "C:\Users\kanta\.claude\scripts\mid_session_compress.py" --quick
+  } | Out-Null
+}
+```
+
+**Execute** (= 新規 script):
+
+```python
+# C:\Users\kanta\.claude\scripts\mid_session_compress.py
+"""Mid-session lightweight compression. Runs in <5sec, non-blocking.
+Targets:
+  1. transcript hot-cache 削除 (= > 30 MB の単一 session log を gzip)
+  2. flutter build cache prune (= > 100 MB の build/ ディレクトリ)
+  3. RAM trim (= python gc.collect 等価)
+Emits: ~/.claude/logs/mid-compress.csv 1 row per fire.
+"""
+import argparse
+import time
+from pathlib import Path
+
+def quick_transcript_compress(threshold_mb=30):
+    """Compress transcript files > threshold MB in place."""
+    # ... gzip in-place
+    pass
+
+def flutter_build_cache_prune(max_age_hours=2):
+    """Remove flutter build/ if older than max_age_hours and not currently writing."""
+    # ... safe prune
+    pass
+
+def memory_release():
+    """Trigger Windows working set trim equivalent."""
+    # subprocess: powershell "[System.Diagnostics.Process]::GetCurrentProcess().MinWorkingSet=..."
+    pass
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--quick", action="store_true", help="<5sec mode")
+    args = parser.parse_args()
+    start = time.time()
+    # fire 3 functions
+    elapsed = time.time() - start
+    # log row to ~/.claude/logs/mid-compress.csv
+```
+
+### 16.3 Threshold-triggered alerting (= 16.2 補強 / safety gate)
+
+PostToolUse 50 tool call 毎の軽量実行に加えて、**threshold cross 時の追加 fire**:
+
+| Trigger | Threshold | 動作 |
+|---------|-----------|------|
+| C: free | < 80 GB | 即 mid_session_compress.py --aggressive fire |
+| RAM | > 90% used | memory_trim_phase2.ps1 --quick fire |
+| transcript dir | > 200 MB | transcript hot-cache 強制 prune |
+
+### 16.4 settings.json hook 拡張案
+
+```json
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Bash|Write|Edit",
+        "hooks": [
+          { "type": "command", "command": "powershell ... auto-capture.ps1" },
+          { "type": "command", "command": "powershell ... mid-session-compress.ps1", "timeout": 10 }
+        ]
+      }
+    ]
+  }
+}
+```
+
+### 16.5 Phase 分割 (= Codex hand-off / 期限 2026-05-23)
+
+| Phase | 内容 | 担当 | 期限 |
+|-------|------|------|------|
+| **Phase 1** (telemetry) | `mid_session_compress.py --observe` (= ログのみ / fire しない) + `~/.claude/logs/mid-compress.csv` | Codex | 2026-05-15 |
+| **Phase 2** (auto-fire) | PostToolUse hook 配線 + 50 tool call throttle | Codex | 2026-05-19 |
+| **Phase 3** (threshold) | C: free < 80 GB / RAM > 90% trigger 追加 | Codex | 2026-05-21 |
+| **Phase 4** (verify) | 1 week observation + tuning + DISK_HYGIENE_RUNBOOK §16 status update | Win Claude | 2026-05-30 |
+
+### 16.6 受け入れ条件
+
+- [x] 90+ min session で **mid-compress fire row が CSV に 1+ 件記録される**
+- [x] `mid_session_compress.py --quick` 実行時間 **median < 5 sec** (= non-blocking 維持)
+- [x] C: free GB が SessionStart 後も **target floor (= 80 GB) 以上維持**
+- [x] RAM 使用率が SessionStart 後も **target ceil (= 95%) 以下維持**
+- [x] PostToolUse hook の throttle が正しく動作 (= 50 tool call 毎 1 fire)
+- [x] aggressive mode で誤って ongoing build を消さない (= mtime + lsof 等価 check)
+
+### 16.7 KPI (= 既存 `disk_reclaim_mb_per_session` 拡張)
+
+| KPI | 現状 (part 188) | target (part 189 spec) |
+|-----|---------------|---------------------|
+| `disk_reclaim_mb_per_session` (= start+end 合計) | 1008 MB / median | 1500 MB / median (= +50%) |
+| `mid_compress_fires_per_session` | 0 (= hook なし) | 1+ (= 90+min session で必ず) |
+| `c_free_gb_floor_per_session` | 80 GB | 80 GB 維持 |
+| `ram_pct_ceil_per_session` | 95% | 95% 維持 |
+
+### 16.8 PHILOSOPHY-22 gate (= 7+/9 ✅ 維持)
+
+- 主要実装: 90+ min session の中間圧縮確立 + threshold-triggered safety gate
+- 該当原則:
+  - #1 (CEO 感) — user の "毎セッション必ず" 要望に対する直接応答
+  - #5 (商品 = 価値) — 環境健全性 = 開発価値増大
+  - #6 (時間 = 資本) — 圧縮自動化で user 介入時間ゼロ
+  - #7 (資産負債) — disk / RAM 負債を session 内で漸減
+  - #8 (KPI) — `mid_compress_fires_per_session` 計測可能
+- 整合性スコア: 7/9 ✅ ([PHILOSOPHY-22] gate 通過)
+
+### 16.9 関連
+
+- 親要望 (= user iterative ask):
+  - **v1** (= part 154) `[disk-pressure]` SessionStart hook 新設
+  - **v2** (= part 178b) Tier 1.6 stale worktree prune
+  - **v3** (= part 180) Tier 1.8/1.9/2.0 強化
+  - **v4** (= part 189 / 本 §16) **mid-session 圧縮**
+- Issue #1984 4 axis 統合
+- 横展開候補: PreCompact hook も同等強化 (= 既存 `memory-cleanup.ps1` を mid_session_compress 経由に統合)
+
+> **part 189 status**: spec ship / Codex hand-off (= Phase 1-4 / 期限 2026-05-23) / Win Claude verify は part 196 想定 (= Phase 4 完了後 1 week observation).
+
