@@ -29120,3 +29120,30 @@ User 第 2 弾 ask (= same session continuation): 「WBS 期限近順 + 2 instan
 - 871b0482b (= PR [#2190](https://github.com/kanta13jp1/my_web_app/pull/2190)) — docs(pr-template): extend hook wiring checklist (part 187 finding)
 - 6b16672ad (= cherry-pick e3c00401e from `claude/nifty-shtern-572a13`) — docs(roadmap): part 186 backfill (= part 186 で push したが main 未到達だった entry)
 - (= 本 docs PR の merge commit / 後追記)
+
+## 2026-05-09 — Win版#132 part 188 (Win Claude / Claude Code 続き)
+
+### Session Summary (= part 187 fix auto-fire 完全 verify / verify-only)
+- **User ask**: SessionStart 6 hook auto-fire 完全 verify (= part 187 fix 後 初回 fire 確認) → 3 項目満たせば Issue #1984 close
+- **Startup verify 結果 (2/3 ✅ + 1 ⏳)**:
+  - item 1: `~/.claude/logs/session-delta.csv` row 追加 ✅ (= `45a1b2e5,start,86.92` / 03:34 UTC = 12:34 JST = 当 session start)
+  - item 2: worktree_cleanup output ✅ (= startup `system-reminder` 内に banner 出力 / scanned 9 / removed 0 / dry-run)
+  - item 3: SessionEnd row + reclaim_mb_session ⏳ (= SessionEnd fire 待ち)
+- **Spec 訂正 ship** (= Issue #1984 comment [4411300487](https://github.com/kanta13jp1/my_web_app/issues/1984#issuecomment-4411300487)):
+  - part 187 で挙げた `cleanup_reports/` path 監視は不要 = `worktree_cleanup.py` 現実装は stdout output で `system-reminder` 内に直接表示される
+  - `--json-out <path>` flag 指定時のみ file 書き込み (現 settings.json 未指定)
+  - 「path expectation 訂正」を verify table に明記 + close 条件再提示
+- **part 187 fix の有効性 verify**: `python C:\...` 直起動の WindowsApps stub silent fail を `powershell -NoProfile -ExecutionPolicy Bypass -Command "& python C:\..."` ラップで完全解消 = 2/3 verify 達成 (= 第 3 項目 SessionEnd 待ち)
+- **WBS P1 batch verify**: #1559 / #1564 / #1638 / #1640 / #1644 / #1124 / #1495 全 OPEN / 5/3-5/7 update 範囲 / 新 spec 起票なし ([NO-SCOPE-CREEP] 厳守)
+- **Issue #2171 T+1 day**: today 5/9 = T+1 = skip / next gentle ping T+3 = 2026-05-12
+- **Issue #2186 T+0**: today 5/9 = Codex 5/23 hand-off SLA 14-day buffer 維持 / verify-only
+- **NotebookLM cookie 再認証 deferred**: interactive 必要 / 別 session で実施
+
+### Philosophy Alignment (Win#132 part 188)
+- 主要実装: part 187 fix 動作 verify + spec 訂正 (= cleanup_reports/ → system-reminder output) + Issue #1984 close 条件 progress + WBS P1 batch verify
+- 該当原則: #2 (ミッション = 自動化基盤の信頼性 verify) + #6 (時間最適化 = startup 30 秒で 2/3 verify 完了) + #7 (資産負債 = spec 誤前提即訂正 → false negative 回避) + #8 (KPI = 2 段 verify ゲート (= startup + SessionEnd) dogfood) + #9 (IPO = hidden trap 検出再発防止 documentation)
+- 整合性スコア: 5/9 ✅ ([PHILOSOPHY-22] gate 通過 / verify-only session の典型 score)
+- 理念的貢献: 「**spec 誤前提即訂正 verify pattern**」第 1 例 (= part 187 spec の `cleanup_reports/` 期待を 1 session 内 actual output 確認 → comment 訂正) + 「**startup auto-fire 2/3 verify within 30 sec**」pattern 第 1 例 + 「**verify-only session = no new spec**」discipline 厳守 / 119 part 連続 dogfood
+
+### Commit
+- (= 本 docs PR の merge commit / 後追記)
