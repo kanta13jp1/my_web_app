@@ -96,12 +96,14 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
   Future<void> _createEvent({
     required String title,
     required DateTime startAt,
+    DateTime? endAt,
     String description = '',
     bool allDay = false,
     String color = '#4285f4',
   }) async {
     try {
-      final end = allDay ? startAt : startAt.add(const Duration(hours: 1));
+      final end =
+          allDay ? startAt : (endAt ?? startAt.add(const Duration(hours: 1)));
       await _supabase.functions.invoke(
         'app-hub',
         body: {
@@ -314,9 +316,14 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
     final titleCtrl = TextEditingController();
     final descCtrl = TextEditingController();
     var eventDate = _selectedDay;
-    var allDay = true;
+    var allDay = false;
+    var startTime = const TimeOfDay(hour: 9, minute: 0);
+    var endTime = const TimeOfDay(hour: 10, minute: 0);
     final colors = ['#4285f4', '#ea4335', '#34a853', '#fbbc05', '#9334e6'];
     var selectedColor = colors.first;
+
+    String fmtTime(TimeOfDay t) =>
+        '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
 
     showDialog(
       context: context,
@@ -372,11 +379,62 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
                     Checkbox(
                       value: allDay,
                       onChanged: (v) =>
-                          setDialogState(() => allDay = v ?? true),
+                          setDialogState(() => allDay = v ?? false),
                     ),
                     const Text('終日'),
                   ],
                 ),
+                if (!allDay) ...[
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      const Icon(Icons.schedule, size: 18),
+                      const SizedBox(width: 8),
+                      const Text('開始'),
+                      const SizedBox(width: 8),
+                      OutlinedButton(
+                        onPressed: () async {
+                          final picked = await showTimePicker(
+                            context: ctx,
+                            initialTime: startTime,
+                          );
+                          if (picked != null) {
+                            setDialogState(() {
+                              startTime = picked;
+                              final startMinutes =
+                                  picked.hour * 60 + picked.minute;
+                              final endMinutes =
+                                  endTime.hour * 60 + endTime.minute;
+                              if (endMinutes <= startMinutes) {
+                                final next = startMinutes + 60;
+                                endTime = TimeOfDay(
+                                  hour: (next ~/ 60) % 24,
+                                  minute: next % 60,
+                                );
+                              }
+                            });
+                          }
+                        },
+                        child: Text(fmtTime(startTime)),
+                      ),
+                      const SizedBox(width: 8),
+                      const Text('終了'),
+                      const SizedBox(width: 8),
+                      OutlinedButton(
+                        onPressed: () async {
+                          final picked = await showTimePicker(
+                            context: ctx,
+                            initialTime: endTime,
+                          );
+                          if (picked != null) {
+                            setDialogState(() => endTime = picked);
+                          }
+                        },
+                        child: Text(fmtTime(endTime)),
+                      ),
+                    ],
+                  ),
+                ],
                 const SizedBox(height: 8),
                 const Text(
                   'カラー:',
@@ -430,9 +488,28 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
                 final title = titleCtrl.text.trim();
                 if (title.isEmpty) return;
                 Navigator.pop(ctx);
+                final startDateTime = allDay
+                    ? DateTime(eventDate.year, eventDate.month, eventDate.day)
+                    : DateTime(
+                        eventDate.year,
+                        eventDate.month,
+                        eventDate.day,
+                        startTime.hour,
+                        startTime.minute,
+                      );
+                final endDateTime = allDay
+                    ? null
+                    : DateTime(
+                        eventDate.year,
+                        eventDate.month,
+                        eventDate.day,
+                        endTime.hour,
+                        endTime.minute,
+                      );
                 _createEvent(
                   title: title,
-                  startAt: eventDate,
+                  startAt: startDateTime,
+                  endAt: endDateTime,
                   description: descCtrl.text.trim(),
                   allDay: allDay,
                   color: selectedColor,
@@ -463,17 +540,23 @@ class _EventCard extends StatelessWidget {
     final title = event['title']?.toString() ?? 'タイトルなし';
     final description = event['description']?.toString() ?? '';
     final startAt = event['start_at']?.toString() ?? '';
+    final endAt = event['end_at']?.toString() ?? '';
     final allDay = event['all_day'] == true;
 
+    String fmt(DateTime d) =>
+        '${d.hour.toString().padLeft(2, '0')}:${d.minute.toString().padLeft(2, '0')}';
+
     String timeLabel = '';
-    if (!allDay && startAt.isNotEmpty) {
-      final dt = DateTime.tryParse(startAt)?.toLocal();
-      if (dt != null) {
-        timeLabel =
-            '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
-      }
-    } else {
+    if (allDay) {
       timeLabel = '終日';
+    } else if (startAt.isNotEmpty) {
+      final start = DateTime.tryParse(startAt)?.toLocal();
+      final end = DateTime.tryParse(endAt)?.toLocal();
+      if (start != null && end != null) {
+        timeLabel = '${fmt(start)} - ${fmt(end)}';
+      } else if (start != null) {
+        timeLabel = fmt(start);
+      }
     }
 
     return Card(
