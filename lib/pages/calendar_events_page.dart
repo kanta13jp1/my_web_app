@@ -12,6 +12,39 @@ class CalendarEventsPage extends StatefulWidget {
   State<CalendarEventsPage> createState() => _CalendarEventsPageState();
 }
 
+enum _CalendarView { month, week, day }
+
+String _formatClock(DateTime d) =>
+    '${d.hour.toString().padLeft(2, '0')}:${d.minute.toString().padLeft(2, '0')}';
+
+DateTime? _eventDateTime(Map<String, dynamic> event, String key) {
+  final value = event[key]?.toString() ?? '';
+  if (value.isEmpty) return null;
+  return DateTime.tryParse(value)?.toLocal();
+}
+
+bool _eventIsAllDay(Map<String, dynamic> event) => event['all_day'] == true;
+
+String _eventTitle(Map<String, dynamic> event) =>
+    event['title']?.toString().trim().isNotEmpty == true
+        ? event['title'].toString()
+        : 'Untitled';
+
+String _eventTimeLabel(Map<String, dynamic> event) {
+  if (_eventIsAllDay(event)) return 'All-day';
+  final start = _eventDateTime(event, 'start_at');
+  final end = _eventDateTime(event, 'end_at');
+  if (start == null) return '';
+  if (end == null) return _formatClock(start);
+  return '${_formatClock(start)} - ${_formatClock(end)}';
+}
+
+int _clampInt(int value, int min, int max) {
+  if (value < min) return min;
+  if (value > max) return max;
+  return value;
+}
+
 class _CalendarEventsPageState extends State<CalendarEventsPage> {
   final _supabase = Supabase.instance.client;
 
@@ -24,6 +57,7 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
   DateTime _focusedDay = DateTime.now();
   DateTime _selectedDay = DateTime.now();
   CalendarFormat _calendarFormat = CalendarFormat.month;
+  _CalendarView _calendarView = _CalendarView.month;
 
   // 選択日のイベントリスト
   List<Map<String, dynamic>> get _selectedDayEvents {
@@ -142,6 +176,56 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
     return _eventsByDate[_dateKey(day)] ?? [];
   }
 
+  void _setCalendarView(_CalendarView view) {
+    setState(() {
+      _calendarView = view;
+      _calendarFormat = view == _CalendarView.week
+          ? CalendarFormat.week
+          : CalendarFormat.month;
+      if (view == _CalendarView.day) {
+        _focusedDay = _selectedDay;
+      }
+    });
+  }
+
+  void _moveSelectedDay(int deltaDays) {
+    final next = _selectedDay.add(Duration(days: deltaDays));
+    setState(() {
+      _selectedDay = next;
+      _focusedDay = next;
+    });
+    _fetchMonth(next);
+  }
+
+  void _confirmDeleteEvent(BuildContext context, Map<String, dynamic> event) {
+    final eventId = event['event_id']?.toString() ?? '';
+    if (eventId.isEmpty) return;
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('削除確認'),
+        content: Text('「${_eventTitle(event)}」を削除しますか？'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('キャンセル'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFE53935),
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () {
+              Navigator.pop(ctx);
+              _deleteEvent(eventId);
+            },
+            child: const Text('削除'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -164,6 +248,13 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
               onPressed: () => _fetchMonth(_focusedDay),
             ),
         ],
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(56),
+          child: _CalendarViewSwitcher(
+            selectedView: _calendarView,
+            onChanged: _setCalendarView,
+          ),
+        ),
       ),
       body: Column(
         children: [
@@ -178,49 +269,60 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
                 ),
               ],
             ),
-          TableCalendar<Map<String, dynamic>>(
-            firstDay: DateTime(2020),
-            lastDay: DateTime(2030),
-            focusedDay: _focusedDay,
-            calendarFormat: _calendarFormat,
-            selectedDayPredicate: (day) => isSameDay(day, _selectedDay),
-            eventLoader: _eventsLoader,
-            startingDayOfWeek: StartingDayOfWeek.monday,
-            onDaySelected: (selectedDay, focusedDay) {
-              setState(() {
-                _selectedDay = selectedDay;
+          if (_calendarView != _CalendarView.day)
+            TableCalendar<Map<String, dynamic>>(
+              firstDay: DateTime(2020),
+              lastDay: DateTime(2030),
+              focusedDay: _focusedDay,
+              calendarFormat: _calendarFormat,
+              selectedDayPredicate: (day) => isSameDay(day, _selectedDay),
+              eventLoader: _eventsLoader,
+              startingDayOfWeek: StartingDayOfWeek.monday,
+              onDaySelected: (selectedDay, focusedDay) {
+                setState(() {
+                  _selectedDay = selectedDay;
+                  _focusedDay = focusedDay;
+                });
+              },
+              onFormatChanged: (format) {
+                setState(() {
+                  _calendarFormat = format;
+                  _calendarView = format == CalendarFormat.week
+                      ? _CalendarView.week
+                      : _CalendarView.month;
+                });
+              },
+              onPageChanged: (focusedDay) {
                 _focusedDay = focusedDay;
-              });
-            },
-            onFormatChanged: (format) {
-              setState(() => _calendarFormat = format);
-            },
-            onPageChanged: (focusedDay) {
-              _focusedDay = focusedDay;
-              _fetchMonth(focusedDay);
-            },
-            calendarStyle: CalendarStyle(
-              markerDecoration: const BoxDecoration(
-                color: Color(0xFF4285F4),
-                shape: BoxShape.circle,
+                _fetchMonth(focusedDay);
+              },
+              calendarStyle: CalendarStyle(
+                markerDecoration: const BoxDecoration(
+                  color: Color(0xFF4285F4),
+                  shape: BoxShape.circle,
+                ),
+                selectedDecoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.primary,
+                  shape: BoxShape.circle,
+                ),
+                todayDecoration: BoxDecoration(
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.primary.withValues(alpha: 0.3),
+                  shape: BoxShape.circle,
+                ),
               ),
-              selectedDecoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.primary,
-                shape: BoxShape.circle,
+              headerStyle: const HeaderStyle(
+                formatButtonVisible: false,
+                titleCentered: true,
               ),
-              todayDecoration: BoxDecoration(
-                color: Theme.of(context)
-                    .colorScheme
-                    .primary
-                    .withValues(alpha: 0.3),
-                shape: BoxShape.circle,
-              ),
+            )
+          else
+            _DayViewHeader(
+              selectedDay: _selectedDay,
+              onPreviousDay: () => _moveSelectedDay(-1),
+              onNextDay: () => _moveSelectedDay(1),
             ),
-            headerStyle: const HeaderStyle(
-              formatButtonShowsNext: false,
-              titleCentered: true,
-            ),
-          ),
           const Divider(height: 1),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -239,68 +341,78 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
             ),
           ),
           Expanded(
-            child: _selectedDayEvents.isEmpty
-                ? Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.event_available,
-                          size: 48,
-                          color: Theme.of(context)
-                              .colorScheme
-                              .surfaceContainerHighest,
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'この日のイベントはありません',
-                          style: TextStyle(
-                            color: Theme.of(context).colorScheme.outlineVariant,
-                            height: 1.5,
-                          ),
-                        ),
-                      ],
-                    ),
+            child: _calendarView == _CalendarView.day
+                ? _DayTimelineView(
+                    selectedDay: _selectedDay,
+                    events: _selectedDayEvents,
+                    onDelete: (event) => _confirmDeleteEvent(context, event),
                   )
-                : ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    itemCount: _selectedDayEvents.length,
-                    itemBuilder: (context, index) {
-                      final event = _selectedDayEvents[index];
-                      return _EventCard(
-                        event: event,
-                        color: _eventColor(event),
-                        onDelete: () {
-                          final eventId = event['event_id']?.toString() ?? '';
-                          if (eventId.isEmpty) return;
-                          showDialog(
-                            context: context,
-                            builder: (ctx) => AlertDialog(
-                              title: const Text('削除確認'),
-                              content: Text('「${event['title']}」を削除しますか？'),
-                              actions: [
-                                TextButton(
-                                  onPressed: () => Navigator.pop(ctx),
-                                  child: const Text('キャンセル'),
-                                ),
-                                ElevatedButton(
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: const Color(0xFFE53935),
-                                    foregroundColor: Colors.white,
-                                  ),
-                                  onPressed: () {
-                                    Navigator.pop(ctx);
-                                    _deleteEvent(eventId);
-                                  },
-                                  child: const Text('削除'),
-                                ),
-                              ],
+                : _selectedDayEvents.isEmpty
+                    ? Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.event_available,
+                              size: 48,
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.surfaceContainerHighest,
                             ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'この日のイベントはありません',
+                              style: TextStyle(
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .outlineVariant,
+                                height: 1.5,
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    : ListView.builder(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        itemCount: _selectedDayEvents.length,
+                        itemBuilder: (context, index) {
+                          final event = _selectedDayEvents[index];
+                          return _EventCard(
+                            event: event,
+                            color: _eventColor(event),
+                            onDelete: () {
+                              final eventId =
+                                  event['event_id']?.toString() ?? '';
+                              if (eventId.isEmpty) return;
+                              showDialog(
+                                context: context,
+                                builder: (ctx) => AlertDialog(
+                                  title: const Text('削除確認'),
+                                  content: Text('「${event['title']}」を削除しますか？'),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () => Navigator.pop(ctx),
+                                      child: const Text('キャンセル'),
+                                    ),
+                                    ElevatedButton(
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor:
+                                            const Color(0xFFE53935),
+                                        foregroundColor: Colors.white,
+                                      ),
+                                      onPressed: () {
+                                        Navigator.pop(ctx);
+                                        _deleteEvent(eventId);
+                                      },
+                                      child: const Text('削除'),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
                           );
                         },
-                      );
-                    },
-                  ),
+                      ),
           ),
         ],
       ),
@@ -436,13 +548,7 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
                   ),
                 ],
                 const SizedBox(height: 8),
-                const Text(
-                  'カラー:',
-                  style: TextStyle(
-                    fontSize: 13,
-                    height: 1.5,
-                  ),
-                ),
+                const Text('カラー:', style: TextStyle(fontSize: 13, height: 1.5)),
                 const SizedBox(height: 6),
                 Wrap(
                   spacing: 8,
@@ -463,9 +569,9 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
                               shape: BoxShape.circle,
                               border: selectedColor == c
                                   ? Border.all(
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .onSurface,
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.onSurface,
                                       width: 2.5,
                                     )
                                   : null,
@@ -524,6 +630,452 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
   }
 }
 
+class _CalendarViewSwitcher extends StatelessWidget {
+  const _CalendarViewSwitcher({
+    required this.selectedView,
+    required this.onChanged,
+  });
+
+  final _CalendarView selectedView;
+  final ValueChanged<_CalendarView> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final items = <(_CalendarView, String, IconData)>[
+      (_CalendarView.month, 'Month', Icons.calendar_month),
+      (_CalendarView.week, 'Week', Icons.view_week),
+      (_CalendarView.day, 'Day', Icons.view_day),
+    ];
+
+    return Material(
+      color: theme.colorScheme.surface,
+      child: SizedBox(
+        height: 56,
+        child: SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          child: Row(
+            children: [
+              for (final item in items) ...[
+                ChoiceChip(
+                  avatar: Icon(item.$3, size: 18),
+                  label: Text(item.$2),
+                  selected: selectedView == item.$1,
+                  onSelected: (_) => onChanged(item.$1),
+                  showCheckmark: false,
+                  selectedColor: theme.colorScheme.primaryContainer,
+                  labelStyle: TextStyle(
+                    color: selectedView == item.$1
+                        ? theme.colorScheme.onPrimaryContainer
+                        : theme.colorScheme.onSurface,
+                  ),
+                ),
+                const SizedBox(width: 8),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _DayViewHeader extends StatelessWidget {
+  const _DayViewHeader({
+    required this.selectedDay,
+    required this.onPreviousDay,
+    required this.onNextDay,
+  });
+
+  final DateTime selectedDay;
+  final VoidCallback onPreviousDay;
+  final VoidCallback onNextDay;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      color: theme.colorScheme.surface,
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      child: Row(
+        children: [
+          IconButton(
+            tooltip: 'Previous day',
+            icon: const Icon(Icons.chevron_left),
+            onPressed: onPreviousDay,
+          ),
+          Expanded(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  '${selectedDay.year}/${selectedDay.month}/${selectedDay.day}',
+                  style: theme.textTheme.titleMedium,
+                ),
+                Text(
+                  'Day view',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.outline,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          IconButton(
+            tooltip: 'Next day',
+            icon: const Icon(Icons.chevron_right),
+            onPressed: onNextDay,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DayTimelineView extends StatelessWidget {
+  const _DayTimelineView({
+    required this.selectedDay,
+    required this.events,
+    required this.onDelete,
+  });
+
+  static const double _hourHeight = 64;
+  static const double _timeGutterWidth = 56;
+  static const double _eventGap = 6;
+
+  final DateTime selectedDay;
+  final List<Map<String, dynamic>> events;
+  final ValueChanged<Map<String, dynamic>> onDelete;
+
+  @override
+  Widget build(BuildContext context) {
+    final allDayEvents = events.where(_eventIsAllDay).toList();
+    final entries = _buildTimelineEntries(events, selectedDay);
+
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(12, 8, 12, 20),
+      children: [
+        if (allDayEvents.isNotEmpty) ...[
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (final event in allDayEvents)
+                InputChip(
+                  avatar: CircleAvatar(
+                    backgroundColor: _CalendarEventsPageState._eventColor(
+                      event,
+                    ).withValues(alpha: 0.18),
+                    child: Icon(
+                      Icons.event,
+                      size: 16,
+                      color: _CalendarEventsPageState._eventColor(event),
+                    ),
+                  ),
+                  label: Text(_eventTitle(event)),
+                  onDeleted: () => onDelete(event),
+                ),
+            ],
+          ),
+          const SizedBox(height: 12),
+        ],
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final contentWidth =
+                constraints.maxWidth - _timeGutterWidth - (_eventGap * 2);
+            final safeContentWidth = contentWidth < 0 ? 0.0 : contentWidth;
+
+            return SizedBox(
+              height: 24 * _hourHeight,
+              child: Stack(
+                children: [
+                  for (var hour = 0; hour < 24; hour++)
+                    Positioned(
+                      top: hour * _hourHeight,
+                      left: 0,
+                      right: 0,
+                      height: _hourHeight,
+                      child: _HourSlot(hour: hour),
+                    ),
+                  for (final entry in entries)
+                    _buildPositionedEvent(entry, safeContentWidth),
+                ],
+              ),
+            );
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPositionedEvent(_TimelineEntry entry, double contentWidth) {
+    final columnWidth = (contentWidth - (entry.columnCount - 1) * _eventGap) /
+        entry.columnCount;
+    final safeColumnWidth = columnWidth < 48 ? 48.0 : columnWidth;
+    final top = (entry.startMinute / 60) * _hourHeight + 2;
+    final height =
+        ((entry.endMinute - entry.startMinute) / 60) * _hourHeight - 4;
+    final safeHeight = height < 36 ? 36.0 : height;
+
+    return Positioned(
+      top: top,
+      left: _timeGutterWidth +
+          _eventGap +
+          entry.column * (safeColumnWidth + _eventGap),
+      width: safeColumnWidth,
+      height: safeHeight,
+      child: _DayTimelineEventTile(
+        event: entry.event,
+        color: _CalendarEventsPageState._eventColor(entry.event),
+        onDelete: () => onDelete(entry.event),
+      ),
+    );
+  }
+
+  List<_TimelineEntry> _buildTimelineEntries(
+    List<Map<String, dynamic>> rawEvents,
+    DateTime day,
+  ) {
+    final candidates = <_TimelineEntry>[];
+    for (final event in rawEvents) {
+      if (_eventIsAllDay(event)) continue;
+      final range = _timelineRange(event, day);
+      if (range == null) continue;
+      candidates.add(
+        _TimelineEntry(
+          event: event,
+          startMinute: range.startMinute,
+          endMinute: range.endMinute,
+        ),
+      );
+    }
+
+    candidates.sort((a, b) {
+      final byStart = a.startMinute.compareTo(b.startMinute);
+      return byStart != 0 ? byStart : a.endMinute.compareTo(b.endMinute);
+    });
+
+    final entries = <_TimelineEntry>[];
+    var group = <_TimelineEntry>[];
+    var groupEnd = -1;
+
+    void flushGroup() {
+      if (group.isEmpty) return;
+      final columns = <int>[];
+      final laidOut = <_TimelineEntry>[];
+
+      for (final candidate in group) {
+        var column = columns.indexWhere(
+          (endMinute) => endMinute <= candidate.startMinute,
+        );
+        if (column == -1) {
+          column = columns.length;
+          columns.add(candidate.endMinute);
+        } else {
+          columns[column] = candidate.endMinute;
+        }
+        laidOut.add(candidate.copyWith(column: column));
+      }
+
+      final columnCount = columns.length;
+      entries.addAll(
+        laidOut.map((entry) => entry.copyWith(columnCount: columnCount)),
+      );
+      group = <_TimelineEntry>[];
+      groupEnd = -1;
+    }
+
+    for (final candidate in candidates) {
+      if (group.isEmpty || candidate.startMinute < groupEnd) {
+        group.add(candidate);
+        if (candidate.endMinute > groupEnd) {
+          groupEnd = candidate.endMinute;
+        }
+      } else {
+        flushGroup();
+        group.add(candidate);
+        groupEnd = candidate.endMinute;
+      }
+    }
+    flushGroup();
+
+    return entries;
+  }
+
+  _TimelineRange? _timelineRange(Map<String, dynamic> event, DateTime day) {
+    final start = _eventDateTime(event, 'start_at');
+    if (start == null) return null;
+    final end =
+        _eventDateTime(event, 'end_at') ?? start.add(const Duration(hours: 1));
+
+    final dayStart = DateTime(day.year, day.month, day.day);
+    final dayEnd = dayStart.add(const Duration(days: 1));
+    if (!end.isAfter(dayStart) || !start.isBefore(dayEnd)) return null;
+
+    final clampedStart = start.isBefore(dayStart) ? dayStart : start;
+    final clampedEnd = end.isAfter(dayEnd) ? dayEnd : end;
+    final startMinute = _clampInt(
+      clampedStart.difference(dayStart).inMinutes,
+      0,
+      1439,
+    );
+    final rawEndMinute = _clampInt(
+      clampedEnd.difference(dayStart).inMinutes,
+      1,
+      1440,
+    );
+    final minimumEndMinute = _clampInt(startMinute + 30, 1, 1440);
+    final endMinute =
+        rawEndMinute < minimumEndMinute ? minimumEndMinute : rawEndMinute;
+
+    return _TimelineRange(startMinute, endMinute);
+  }
+}
+
+class _HourSlot extends StatelessWidget {
+  const _HourSlot({required this.hour});
+
+  final int hour;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          width: _DayTimelineView._timeGutterWidth,
+          child: Padding(
+            padding: const EdgeInsets.only(top: 2),
+            child: Text(
+              '${hour.toString().padLeft(2, '0')}:00',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.outline,
+              ),
+            ),
+          ),
+        ),
+        Expanded(
+          child: Container(
+            decoration: BoxDecoration(
+              border: Border(
+                top: BorderSide(
+                  color: theme.dividerColor.withValues(alpha: 0.7),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _DayTimelineEventTile extends StatelessWidget {
+  const _DayTimelineEventTile({
+    required this.event,
+    required this.color,
+    required this.onDelete,
+  });
+
+  final Map<String, dynamic> event;
+  final Color color;
+  final VoidCallback onDelete;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final description = event['description']?.toString() ?? '';
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        border: Border(left: BorderSide(color: color, width: 4)),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(8, 4, 4, 4),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    _eventTitle(event),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.labelLarge,
+                  ),
+                  Text(
+                    _eventTimeLabel(event),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.outline,
+                    ),
+                  ),
+                  if (description.isNotEmpty)
+                    Text(
+                      description,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.bodySmall,
+                    ),
+                ],
+              ),
+            ),
+            IconButton(
+              tooltip: 'Delete',
+              visualDensity: VisualDensity.compact,
+              iconSize: 18,
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints.tightFor(width: 32, height: 32),
+              icon: const Icon(Icons.delete_outline),
+              onPressed: onDelete,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _TimelineRange {
+  const _TimelineRange(this.startMinute, this.endMinute);
+
+  final int startMinute;
+  final int endMinute;
+}
+
+class _TimelineEntry {
+  const _TimelineEntry({
+    required this.event,
+    required this.startMinute,
+    required this.endMinute,
+    this.column = 0,
+    this.columnCount = 1,
+  });
+
+  final Map<String, dynamic> event;
+  final int startMinute;
+  final int endMinute;
+  final int column;
+  final int columnCount;
+
+  _TimelineEntry copyWith({int? column, int? columnCount}) {
+    return _TimelineEntry(
+      event: event,
+      startMinute: startMinute,
+      endMinute: endMinute,
+      column: column ?? this.column,
+      columnCount: columnCount ?? this.columnCount,
+    );
+  }
+}
+
 class _EventCard extends StatelessWidget {
   const _EventCard({
     required this.event,
@@ -570,20 +1122,11 @@ class _EventCard extends StatelessWidget {
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              timeLabel,
-              style: const TextStyle(
-                fontSize: 12,
-                height: 1.5,
-              ),
-            ),
+            Text(timeLabel, style: const TextStyle(fontSize: 12, height: 1.5)),
             if (description.isNotEmpty)
               Text(
                 description,
-                style: const TextStyle(
-                  fontSize: 12,
-                  height: 1.5,
-                ),
+                style: const TextStyle(fontSize: 12, height: 1.5),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
