@@ -29335,4 +29335,4 @@ PreCompact:     1 hook  (= disk-cleanup + worktree_cleanup 欠落)      ← +2 �
 - 理念的貢献: 「**spec ship 後の actual wiring audit pattern**」第 1 例 (= part 189 §16 spec → part 190 audit で実装未配線発見) + 「**user 同テーマ iterative ask v1-v5 累積管理 pattern**」第 1 例 (= disk-pressure → worktree → tier1.8 → mid-session → wiring 完成 / 5 phase 累積) + 「**WBS Top 5 期限近順 + 2-instance 振分**」第 6 例 / 122 part 連続 dogfood
 
 ### Commit
-- (= 本 docs PR の merge commit / 後追記)
+- `9d90796d3` (= PR #2301 squash merge / DISK_HYGIENE §17 v5 + Codex 5 task hand-off + WBS Top 5 振分)
