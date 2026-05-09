@@ -18,7 +18,9 @@
     { "name": "Slack", "url": "https://slack.com", "category": "business chat", "added": "seed", "added_date": "2026-04-30" },
     { "name": "ジョブカン", "url": "https://jobcan.ne.jp", "category": "HR / attendance", "added": "seed", "added_date": "2026-04-30" },
     { "name": "Amazon", "url": "https://amazon.co.jp", "category": "ecommerce / API", "added": "seed", "added_date": "2026-04-30" },
-    { "name": "Cursor", "url": "https://cursor.com", "category": "AI IDE / agentic dev tool", "added": "discovery", "added_date": "2026-05-01" }
+    { "name": "Cursor", "url": "https://cursor.com", "category": "AI IDE / agentic dev tool", "added": "discovery", "added_date": "2026-05-01" },
+    { "name": "Devin", "url": "https://cognition.ai", "category": "AI autonomous SWE / multi-agent orchestration", "added": "discovery", "added_date": "2026-05-02" },
+    { "name": "Replit", "url": "https://replit.com", "category": "AI app builder / vibe coding / Design Canvas", "added": "discovery", "added_date": "2026-05-03" }
   ],
   "discovery_history": [
     {
@@ -27,6 +29,20 @@
       "category": "AI IDE / agentic dev tool",
       "reason": "AI dev tool 4 強 (Claude Code / OpenAI Codex / Claude Cowork / OpenClaw) のうち seed に Cursor が抜けていた。1月 Cursor CLI 公開 + 4月 Cursor Automations + Bugbot Autofix で過去 30 日内に重大リリース複数。multi-agent workflows + Cursor Automations が自社 12 fleet 戦略の正面競合軸。https://www.builder.io/blog/cursor-vs-claude-code",
       "skipped_candidates": ["Salesforce Agentforce (Slack 経由で間接監視済)", "Devin (採用事例更新薄)", "Lovable / Bolt.new (Flutter Web と別軸)", "Replit Agent (Cursor 類似 / shareclass 小)", "Manus AI (自社協調軸として組込済)"]
+    },
+    {
+      "date": "2026-05-02",
+      "name": "Devin",
+      "category": "AI autonomous SWE / multi-agent orchestration",
+      "reason": "5/1 で skip した Devin を 5/2 で再評価 → 採択。新機能『managed Devins (= 1 main Devin が複数 sub-Devin を独立 VM で並列 orchestrate)』が自社 12 fleet (Claude × 10 + Codex × 2) と『1 product 内 multi-agent fleet』軸で正面競合。v3 API が beta → GA 化 + RBAC + session attribution = enterprise 化加速。$20/月の低価格 (Devin 2.0) + GitHub/Linear/Slack/Jira ネイティブ統合で IndieDev 層侵食リスク。基準: a (差別化軸直接競合) + c (v3 API GA = 過去 30 日重大リリース)。https://docs.devin.ai/release-notes/2026",
+      "skipped_candidates": ["Replit Agent 4 (= 候補強い / $400M Series D / Agent 4 リリース / 次回 5/3 候補)", "Lovable (= 4/28 mobile app launch / vibe coding 軸 / 次々回候補)", "Bolt.new (= Opus 4.6 + Figma import / Lovable と類似軸)", "Salesforce Agentforce (= Slack 経由間接監視継続)", "Manus AI (= 1.6 Max + My Computer 機能で更に強化したが 依然 自社 routing matrix で協調軸 / 競合追加せず)"]
+    },
+    {
+      "date": "2026-05-03",
+      "name": "Replit",
+      "category": "AI app builder / vibe coding / Design Canvas",
+      "reason": "5/2 で skipped 第 1 候補として記録済 → 5/3 採択。Agent 4 で 4 軸同時進化: (1) Design Canvas = 無限ボード上で全 artifact 生成 + ライブプレビュー + mobile/tablet/desktop 並列比較 + 直接編集が即コードベースへ反映 (= 自社 design-skills + Figma MCP の統合 UX に対する正面競合) / (2) plan-while-building = 段階待ちなしの並列 plan-execute (= 自社 12 fleet handoff の対抗軸) / (3) shared project + agent-assisted merging = fork-merge 廃止 (= 自社 worktree-isolation 12 fleet と異なる単一 product 統合 UX) / (4) mobile/web app + landing page + decks + videos を同一 project で生成 (= 自社 LP + 動画パイプライン + AI 大学 の統合戦略と直接競合)。$9B 評価 + Series D $400M で IndieDev 層浸透加速。基準 a (差別化軸直接競合 = Cursor multi-agent + Devin managed Devins + Replit Agent 4 の 3 強で 「1 product 内 multi-agent + design 統合」軸へ完全収斂) + c (4/30 前後 Agent 4 + Series D = 過去 30 日重大リリース)。https://blog.replit.com/whats-changed-agent3-to-agent4",
+      "skipped_candidates": ["Lovable (= 4/28 mobile launch / 次回 5/4 候補)", "Bolt.new (= Lovable と類似軸 / Opus 4.6 + Figma import)", "Salesforce Agentforce (= Slack 経由間接監視継続)", "Codeium / Sourcegraph Cody (= AI dev tool だが Cursor / Devin と類似軸)", "Manus AI (= My Computer 拡張継続も依然協調軸組込済)"]
     }
   ],
   "_schema_notes": {

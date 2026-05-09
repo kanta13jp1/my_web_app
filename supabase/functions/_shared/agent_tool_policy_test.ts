@@ -61,6 +61,22 @@ Deno.test("high risk scopes require explicit CEO approval metadata", () => {
   assertEquals(decision.blockedReason, "approval_required");
 });
 
+Deno.test("discount scope is high risk and waits for explicit approval", () => {
+  assertEquals(requiresCeoApproval(["discount"]), true);
+
+  const decision = evaluateAgentToolPolicy({
+    actorRole: "cfo",
+    toolName: "discount.apply",
+    requestedScopes: ["create", "discount"],
+    allowedScopes: ["read", "suggest", "create", "discount"],
+  });
+
+  assertEquals(decision.allowed, false);
+  assertEquals(decision.requiresApproval, true);
+  assertEquals(decision.highRiskScopes, ["discount"]);
+  assertEquals(decision.blockedReason, "approval_required");
+});
+
 Deno.test("approved high risk execution is allowed and audit-ready", () => {
   const decision = evaluateAgentToolPolicy({
     actorRole: "cmo",

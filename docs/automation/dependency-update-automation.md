@@ -30,6 +30,12 @@ The production Firebase Hosting deployment no longer depends on `FirebaseExtende
 
 Production deploy now installs and runs `firebase-tools@latest` through Node.js 24 with the same service account secret used before. This keeps the deployment path aligned with the Node.js 24 transition while preserving the existing post-deploy version verification.
 
+## GitHub Actions Runtime Guard
+
+Mobile release builds use `actions/setup-java@v5` so Android artifact jobs no longer emit the Node.js 20 runtime deprecation warning observed in run `25201820274`.
+
+`scripts/check_github_actions_node_runtime.py` is wired into CI and the weekly Dependency Audit workflow. It blocks regressions to action majors known to be below this repository's Node.js 24 transition floor, including `actions/setup-java@v4`. A scheduled Dependency Audit failure is routed through `workflow-failure-handler.yml`, which creates a GitHub Issue for follow-up.
+
 ## Agent Workflow Notes
 
 - Codex #2 owns small, low-risk automation fixes such as Dependabot coverage, workflow runtime updates, and CI/deploy maintenance.

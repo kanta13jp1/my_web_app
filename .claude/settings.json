@@ -3,8 +3,96 @@
     "network": {
       "allowedDomains": [
         "smmkxxavexumewbfaqpy.supabase.co"
+      ],
+      "deniedDomains": [
+        "169.254.169.254",
+        "metadata.google.internal",
+        "metadata.azure.com",
+        "169.254.170.2"
       ]
     }
+  },
+  "env": {
+    "MCP_TIMEOUT": "60000",
+    "MAX_MCP_OUTPUT_TOKENS": "50000",
+    "ENABLE_MCP_TOOL_SEARCH": "true"
+  },
+  "allowManagedPermissionRulesOnly": true,
+  "allowManagedHooksOnly": true,
+  "hooks": {
+    "SubagentStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell -NoProfile -ExecutionPolicy Bypass -File .claude/hooks/subagent-start.ps1"
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell -NoProfile -ExecutionPolicy Bypass -File .claude/hooks/subagent-stop.ps1"
+          }
+        ]
+      }
+    ],
+    "PreCompact": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell -NoProfile -ExecutionPolicy Bypass -File .claude/hooks/pre-compact-backup.ps1"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "mcp__plugin_github_github__create_or_update_file|mcp__github__push_files|mcp__plugin_github_github__push_files",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell -NoProfile -ExecutionPolicy Bypass -File .claude/hooks/pre-commit-guard.ps1"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell -NoProfile -ExecutionPolicy Bypass -File .claude/hooks/post-tool-use-dart-format.ps1"
+          }
+        ]
+      }
+    ],
+    "Notification": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell -NoProfile -ExecutionPolicy Bypass -File .claude/hooks/notification-alert.ps1",
+            "async": true
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell -NoProfile -ExecutionPolicy Bypass -File .claude/hooks/session-start-sync-rules.ps1"
+          }
+        ]
+      }
+    ]
   },
   "permissions": {
     "allow": [

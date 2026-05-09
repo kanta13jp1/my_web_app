@@ -1,0 +1,146 @@
+name: tools-hub MCP Smoke
+
+on:
+  schedule:
+    - cron: "22 */6 * * *" # every 6 hours at :22
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: "Override tools-hub URL. Defaults to prod tools-hub."
+        required: false
+        type: string
+      registration_redirect_uri:
+        description: "Optional DCR redirect URI. Leave blank to avoid creating a client row."
+        required: false
+        type: string
+      enable_write_confirmation_probe:
+        description: "Probe feature_request.create without confirmation and expect 409."
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tools-hub-mcp-smoke
+  cancel-in-progress: false
+
+jobs:
+  smoke:
+    name: MCP facade smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    env:
+      DEFAULT_SUPABASE_URL: https://smmkxxavexumewbfaqpy.supabase.co
+      MCP_BEARER_TOKEN: ${{ secrets.TOOLS_HUB_MCP_BEARER_TOKEN }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      REGISTRATION_REDIRECT_URI: ${{ inputs.registration_redirect_uri || '' }}
+      ENABLE_WRITE_CONFIRMATION_PROBE: ${{ inputs.enable_write_confirmation_probe || false }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Resolve smoke target
+        shell: pwsh
+        run: |
+          $baseUrl = "${{ inputs.base_url || '' }}"
+          if ([string]::IsNullOrWhiteSpace($baseUrl)) {
+            $supabaseUrl = "${{ secrets.SUPABASE_URL_PROD || '' }}"
+            if ([string]::IsNullOrWhiteSpace($supabaseUrl)) {
+              $supabaseUrl = $env:DEFAULT_SUPABASE_URL
+            }
+            $baseUrl = "$($supabaseUrl.TrimEnd('/'))/functions/v1/tools-hub"
+          } else {
+            try {
+              $uri = [Uri]$baseUrl
+              if ($uri.Host.EndsWith(".supabase.co", [StringComparison]::OrdinalIgnoreCase)) {
+                $supabaseUrl = "$($uri.Scheme)://$($uri.Host)"
+              } else {
+                $supabaseUrl = "${{ secrets.SUPABASE_URL_PROD || '' }}"
+              }
+            } catch {
+              $supabaseUrl = "${{ secrets.SUPABASE_URL_PROD || '' }}"
+            }
+          }
+
+          "TOOLS_HUB_MCP_URL=$baseUrl" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          if (-not [string]::IsNullOrWhiteSpace($supabaseUrl)) {
+            "SUPABASE_URL=$($supabaseUrl.TrimEnd('/'))" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          }
+          "Smoke target: $baseUrl"
+
+      - name: Run tools-hub MCP smoke
+        id: smoke
+        continue-on-error: true
+        shell: pwsh
+        run: |
+          $args = @("-BaseUrl", $env:TOOLS_HUB_MCP_URL)
+
+          if (-not [string]::IsNullOrWhiteSpace($env:REGISTRATION_REDIRECT_URI)) {
+            $args += @("-RegistrationRedirectUri", $env:REGISTRATION_REDIRECT_URI)
+          }
+
+          if ($env:ENABLE_WRITE_CONFIRMATION_PROBE -eq "true") {
+            $args += "-EnableWriteConfirmationProbe"
+          }
+
+          ./scripts/tools_hub_mcp_smoke.ps1 @args
+
+      - name: Job summary
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo "## tools-hub MCP Smoke"
+            echo ""
+            echo "| Field | Value |"
+            echo "| --- | --- |"
+            echo "| Target | \`${TOOLS_HUB_MCP_URL}\` |"
+            echo "| Outcome | \`${{ steps.smoke.outcome }}\` |"
+            echo "| Auth token configured | \`${{ secrets.TOOLS_HUB_MCP_BEARER_TOKEN != '' }}\` |"
+            echo "| DCR redirect URI configured | \`${{ inputs.registration_redirect_uri != '' }}\` |"
+            echo "| Write confirmation probe | \`${ENABLE_WRITE_CONFIRMATION_PROBE}\` |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Record schedule run
+        if: always()
+        shell: bash
+        env:
+          SMOKE_OUTCOME: ${{ steps.smoke.outcome }}
+        run: |
+          if [ -z "${SUPABASE_SERVICE_ROLE_KEY:-}" ]; then
+            echo "::warning::SUPABASE_SERVICE_ROLE_KEY missing; skip schedule_task_runs record"
+            exit 0
+          fi
+
+          STATUS="success"
+          if [ "$SMOKE_OUTCOME" != "success" ]; then
+            STATUS="error"
+          fi
+
+          SUMMARY="tools-hub MCP smoke ${SMOKE_OUTCOME}; target=${TOOLS_HUB_MCP_URL}; auth_token_configured=${{ secrets.TOOLS_HUB_MCP_BEARER_TOKEN != '' }}"
+          jq -n \
+            --arg task_id "tools-hub-mcp-smoke" \
+            --arg status "$STATUS" \
+            --arg summary "$SUMMARY" \
+            '{task_id: $task_id, status: $status, summary: $summary}' \
+            > /tmp/tools_hub_mcp_smoke_run.json
+
+          curl -sS -o /dev/null \
+            -X POST \
+            -H "apikey: ${SUPABASE_SERVICE_ROLE_KEY}" \
+            -H "Authorization: Bearer ${SUPABASE_SERVICE_ROLE_KEY}" \
+            -H "Content-Type: application/json" \
+            -H "Prefer: return=minimal" \
+            --data-binary @/tmp/tools_hub_mcp_smoke_run.json \
+            "${DEFAULT_SUPABASE_URL}/rest/v1/schedule_task_runs" \
+            --max-time 10 || true
+
+      - name: Fail on smoke error
+        if: steps.smoke.outcome != 'success'
+        shell: bash
+        run: |
+          echo "tools-hub MCP smoke failed"
+          exit 1

@@ -2,13 +2,13 @@ name: Notion Mirror Sync (hourly)
 
 # Multi-AI resilience / Win#132 part 7 (Backlog N5 消化)
 #
-# Supabase wbs_tasks → Notion "WBS Tasks" Database に 1h 毎同期。
+# Supabase wbs_tasks / ROADMAP / memory index → Notion mirror に 1h 毎同期。
 # Anthropic / Claude Code outage 時もユーザーが Notion mirror で WBS 閲覧可能。
-# 将来 N3 / N4 実装後は roadmap / memory_index sync もここに追加。
 #
 # 事前条件 (Win#132 part 5 で登録済):
 #   - Supabase Secrets: NOTION_API_TOKEN / NOTION_WBS_DATABASE_ID
-#   - EF schedule-hub (notion.sync_wbs action / Win#132 part 6 / 0d1b4903)
+#   - Supabase Secrets: NOTION_ROADMAP_PAGE_ID / NOTION_MEMORY_DATABASE_ID
+#   - EF schedule-hub notion.sync_{wbs,roadmap,memory_index}
 
 on:
   schedule:
@@ -23,6 +23,14 @@ on:
         description: "Max tasks per run (max 50)"
         required: false
         default: "50"
+      roadmap_max_chars:
+        description: "Max ROADMAP markdown chars sent to Notion"
+        required: false
+        default: "24000"
+      memory_limit:
+        description: "Max memory index rows per run"
+        required: false
+        default: "50"
 
 concurrency:
   group: notion-sync
@@ -32,12 +40,15 @@ permissions:
   contents: read
 
 jobs:
-  sync-wbs:
-    name: Sync wbs_tasks → Notion
+  sync-notion:
+    name: Sync project mirrors → Notion
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
       - name: Call schedule-hub:notion.sync_wbs
         id: sync
         run: |
@@ -75,6 +86,12 @@ jobs:
               echo "::warning::NOTION_* secrets not configured yet — skip (set in Supabase dashboard)"
               exit 0
             fi
+            # Explicit preflight result from schedule-hub:notion.sync_wbs.
+            if echo "$ERROR" | grep -q "notion_schema_mismatch"; then
+              MISSING=$(echo "$RESP" | python3 -c "import sys,json; d=json.load(sys.stdin); print(', '.join([f'{p.get(\"name\")}:{p.get(\"type\")}' for p in d.get('missing_properties', [])] + [f'{p.get(\"name\")}:{p.get(\"actual\")}->{p.get(\"type\")}' for p in d.get('mismatched_properties', [])]))" 2>/dev/null || echo "")
+              echo "::warning::Notion WBS DB schema mismatch - add/repair required properties: ${MISSING:-id:title, task_title:rich_text, instance:select, status:select, progress:number, deadline:date, updated_at:date}"
+              exit 0
+            fi
             # Notion DB property schema mismatch (e.g. task_title not created yet) → soft-fail
             if echo "$RESP" | grep -q "is not a property that exists"; then
               echo "::warning::Notion DB schema mismatch — add required properties to Notion WBS DB (task_title rich_text / instance select / status select / progress number / deadline date / updated_at date)"
@@ -90,6 +107,11 @@ jobs:
               echo "::warning::Notion API rate limited (HTTP 429) — will retry next cron"
               exit 0
             fi
+            # Notion DB-level inaccessible (share with Integration / DB deleted) → always soft-fail
+            if echo "$RESP" | grep -q "Could not find database"; then
+              echo "::warning::Notion sync: 1+ database ID(s) inaccessible — share with Notion Integration or remove references (DB-level config issue, not page orphan)"
+              exit 0
+            fi
             # Notion object_not_found (deleted/moved page) → soft-fail if < 10% fail rate
             if echo "$RESP" | grep -q "object_not_found"; then
               FAIL_PCT_VAL=$(python3 -c "print(round($FAILED / max($TOTAL,1) * 100, 1))" 2>/dev/null || echo "100")
@@ -100,3 +122,146 @@ jobs:
             fi
             exit 1
           fi
+
+      - name: Call schedule-hub:notion.sync_roadmap
+        env:
+          SUPABASE_AUTH_TOKEN: ${{ secrets.SUPABASE_ANON_KEY || secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          ROADMAP_MAX_CHARS: ${{ github.event.inputs.roadmap_max_chars || '24000' }}
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+          import sys
+          import urllib.error
+          import urllib.request
+          from pathlib import Path
+
+          endpoint = "https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/schedule-hub"
+          roadmap_files = sorted(Path("docs/roadmap").glob("*.md"))
+          source = roadmap_files[-1] if roadmap_files else Path("docs/GROWTH_STRATEGY_ROADMAP.md")
+          content = source.read_text(encoding="utf-8", errors="replace")
+          payload = {
+              "action": "notion.sync_roadmap",
+              "title": "ROADMAP mirror (auto)",
+              "source_path": source.as_posix(),
+              "content": content,
+              "mode": "tail",
+              "max_chars": int(os.environ.get("ROADMAP_MAX_CHARS", "24000")),
+          }
+          headers = {"Content-Type": "application/json"}
+          token = os.environ.get("SUPABASE_AUTH_TOKEN", "")
+          if token:
+              headers["Authorization"] = f"Bearer {token}"
+          req = urllib.request.Request(
+              endpoint,
+              data=json.dumps(payload, ensure_ascii=False).encode("utf-8"),
+              headers=headers,
+              method="POST",
+          )
+          try:
+              with urllib.request.urlopen(req, timeout=600) as res:
+                  text = res.read().decode("utf-8", errors="replace")
+          except urllib.error.HTTPError as exc:
+              text = exc.read().decode("utf-8", errors="replace")
+              print(text)
+              if "notion_not_configured" in text:
+                  print("::warning::NOTION_* secrets not configured — skip roadmap sync")
+                  sys.exit(0)
+              sys.exit(1)
+          print(f"Response: {text}")
+          data = json.loads(text)
+          if data.get("success"):
+              print(
+                  "✅ roadmap synced "
+                  f"source={data.get('source_path')} chars={data.get('synced_chars')}"
+              )
+              sys.exit(0)
+          error = str(data.get("error", "unknown"))
+          if "notion_not_configured" in error:
+              print("::warning::NOTION_ROADMAP_PAGE_ID not configured yet — skip")
+              sys.exit(0)
+          print(f"::error::notion.sync_roadmap failed: {error}")
+          sys.exit(1)
+          PY
+
+      - name: Call schedule-hub:notion.sync_memory_index
+        env:
+          SUPABASE_AUTH_TOKEN: ${{ secrets.SUPABASE_ANON_KEY || secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          MEMORY_LIMIT: ${{ github.event.inputs.memory_limit || '50' }}
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+          import re
+          import sys
+          import urllib.error
+          import urllib.request
+          from pathlib import Path
+
+          def title_for(path: Path, text: str) -> str:
+              for line in text.splitlines():
+                  if line.startswith("#"):
+                      return line.lstrip("#").strip()[:180]
+              return path.stem.replace("_", " ")[:180]
+
+          def snippet_for(text: str) -> str:
+              return re.sub(r"\s+", " ", text).strip()[:500]
+
+          endpoint = "https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/schedule-hub"
+          limit = int(os.environ.get("MEMORY_LIMIT", "50"))
+          files = sorted(
+              Path("memory").glob("*.md"),
+              key=lambda p: (p.stat().st_mtime, p.name),
+              reverse=True,
+          )[:limit]
+          rows = []
+          for path in files:
+              text = path.read_text(encoding="utf-8", errors="replace")
+              rows.append(
+                  {
+                      "file_path": path.as_posix(),
+                      "title": title_for(path, text),
+                      "snippet": snippet_for(text),
+                      "source": "memory",
+                  }
+              )
+          payload = {
+              "action": "notion.sync_memory_index",
+              "rows": rows,
+              "limit": limit,
+          }
+          headers = {"Content-Type": "application/json"}
+          token = os.environ.get("SUPABASE_AUTH_TOKEN", "")
+          if token:
+              headers["Authorization"] = f"Bearer {token}"
+          req = urllib.request.Request(
+              endpoint,
+              data=json.dumps(payload, ensure_ascii=False).encode("utf-8"),
+              headers=headers,
+              method="POST",
+          )
+          try:
+              with urllib.request.urlopen(req, timeout=600) as res:
+                  text = res.read().decode("utf-8", errors="replace")
+          except urllib.error.HTTPError as exc:
+              text = exc.read().decode("utf-8", errors="replace")
+              print(text)
+              if "notion_not_configured" in text:
+                  print("::warning::NOTION_* secrets not configured — skip memory sync")
+                  sys.exit(0)
+              sys.exit(1)
+          print(f"Response: {text}")
+          data = json.loads(text)
+          if data.get("success"):
+              print(
+                  "✅ memory index synced "
+                  f"total={data.get('total')} created={data.get('created')} updated={data.get('updated')}"
+              )
+              sys.exit(0)
+          error = str(data.get("error", "unknown"))
+          if "notion_not_configured" in error:
+              print("::warning::NOTION_MEMORY_DATABASE_ID not configured yet — skip")
+              sys.exit(0)
+          print(f"::error::notion.sync_memory_index failed: {error}")
+          sys.exit(1)
+          PY

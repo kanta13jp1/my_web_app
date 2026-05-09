@@ -6,10 +6,20 @@ on:
       - '.github/workflows/mobile-release-build.yml'
       - 'android/**'
       - 'ios/**'
+      - 'lib/main_mobile.dart'
       - 'scripts/check_mobile_release_readiness.py'
       - 'docs/MOBILE_SIMULTANEOUS_RELEASE.md'
   workflow_dispatch:
     inputs:
+      platform:
+        description: 'Artifacts to build'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - android
+          - ios
       build_name:
         description: 'Flutter build name, for example 1.0.0'
         required: false
@@ -43,6 +53,7 @@ concurrency:
 
 env:
   FLUTTER_VERSION: '3.38.x'
+  MOBILE_TARGET: 'lib/main_mobile.dart'
 
 jobs:
   metadata-check:
@@ -60,7 +71,9 @@ jobs:
   android-aab:
     name: Android AAB
     needs: metadata-check
-    if: github.event_name != 'pull_request'
+    if: >
+      github.event_name != 'pull_request' &&
+      (github.event_name == 'push' || inputs.platform == 'all' || inputs.platform == 'android')
     runs-on: ubuntu-latest
     timeout-minutes: 45
     env:
@@ -74,7 +87,7 @@ jobs:
         uses: actions/checkout@v6
 
       - name: Setup Java
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: zulu
           java-version: '17'
@@ -129,6 +142,7 @@ jobs:
       - name: Build Android App Bundle
         run: >
           flutter build appbundle --release --no-tree-shake-icons
+          --target "$MOBILE_TARGET"
           --build-name "$BUILD_NAME"
           --build-number "$BUILD_NUMBER"
 
@@ -148,9 +162,11 @@ jobs:
           retention-days: 30
 
   ios-no-codesign:
-    name: iOS No-Codesign Archive
+    name: iOS Simulator CI Artifact
     needs: metadata-check
-    if: github.event_name != 'pull_request'
+    if: >
+      github.event_name != 'pull_request' &&
+      (github.event_name == 'push' || inputs.platform == 'all' || inputs.platform == 'ios')
     runs-on: macos-15
     timeout-minutes: 60
 
@@ -185,25 +201,26 @@ jobs:
       - name: Check mobile release metadata
         run: python scripts/check_mobile_release_readiness.py
 
-      - name: Build iOS app without code signing
+      - name: Build iOS simulator app
         run: >
-          flutter build ios --release --no-codesign --no-tree-shake-icons
+          flutter build ios --simulator --debug
+          --target "$MOBILE_TARGET"
           --build-name "$BUILD_NAME"
           --build-number "$BUILD_NUMBER"
 
-      - name: Package iOS app bundle
+      - name: Package iOS simulator app bundle
         shell: bash
         run: |
           mkdir -p dist/ios
-          test -d build/ios/iphoneos/Runner.app
-          ditto -c -k --sequesterRsrc --keepParent build/ios/iphoneos/Runner.app dist/ios/jibun-ios-runner-no-codesign.zip
-          ls -lh dist/ios/jibun-ios-runner-no-codesign.zip
+          test -d build/ios/iphonesimulator/Runner.app
+          ditto -c -k --sequesterRsrc --keepParent build/ios/iphonesimulator/Runner.app dist/ios/jibun-ios-runner-simulator-debug.zip
+          ls -lh dist/ios/jibun-ios-runner-simulator-debug.zip
 
       - name: Upload iOS artifact
         uses: actions/upload-artifact@v6
         with:
-          name: jibun-ios-runner-no-codesign
-          path: dist/ios/jibun-ios-runner-no-codesign.zip
+          name: jibun-ios-runner-simulator-debug
+          path: dist/ios/jibun-ios-runner-simulator-debug.zip
           if-no-files-found: error
           retention-days: 30
 
@@ -213,7 +230,9 @@ jobs:
       - android-aab
       - ios-no-codesign
     runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/mobile-v') || inputs.publish_release == true
+    if: >
+      (startsWith(github.ref, 'refs/tags/mobile-v') || inputs.publish_release == true) &&
+      (github.event_name == 'push' || inputs.platform == 'all')
     timeout-minutes: 10
 
     steps:
@@ -232,10 +251,10 @@ jobs:
             Mobile release artifacts for iOS and Android.
 
             - Android: `jibun-android-release.aab`
-            - iOS: `jibun-ios-runner-no-codesign.zip`
+            - iOS: `jibun-ios-runner-simulator-debug.zip`
 
-            The iOS artifact is intentionally not code signed. Use the checklist in
-            `docs/MOBILE_SIMULTANEOUS_RELEASE.md` before TestFlight upload.
+            The iOS artifact is a simulator debug build for CI verification. Use the
+            checklist in `docs/MOBILE_SIMULTANEOUS_RELEASE.md` before TestFlight upload.
           files: |
             dist/jibun-android-release.aab
-            dist/jibun-ios-runner-no-codesign.zip
+            dist/jibun-ios-runner-simulator-debug.zip

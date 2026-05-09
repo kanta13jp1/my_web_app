@@ -1,0 +1,6 @@
+自分株式会社 (= Jibun Inc.) 最近 7 日:
+- VSCode版 S4 — OGP cache-bust + x.post_with_media (dc2d8f25)
+- PS#3 S55: AI大学 202→204社化 — Coqui + Resemble AI 追加
+- PS#3 S56: AI大学 204→206社化 — Speechify + WellSaid Labs 追加
+
+#buildinpublic #flutter #supabase #claudecode #aifleet

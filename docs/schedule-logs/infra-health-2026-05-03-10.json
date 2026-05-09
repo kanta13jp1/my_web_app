@@ -1,0 +1,25 @@
+{
+  "timestamp_jst": "2026-05-03T10:34+09:00",
+  "ef_health_check": {
+    "status": "healthy",
+    "ef_timestamp": "2026-05-03T01:34:11.157Z",
+    "checks": {
+      "env": "configured (SUPABASE_URL + SERVICE_ROLE_KEY set)",
+      "db_connectivity": "operational (2089ms, profiles reachable)",
+      "wbs_tasks": "accessible",
+      "ai_circuit_breaker": "active"
+    },
+    "notes": "db_connectivity latency 2089ms — largest spike in 24h window (vs typical 90-300ms). Recent trend: 04h=93, 07h=155, 08h=976, 09h=253, 10h=2089. All checks still pass; status remains healthy."
+  },
+  "firebase_hosting": {
+    "status": "ok",
+    "url": "https://my-web-app-b67f4.web.app/",
+    "title": "自分株式会社 | AIが今日の最優先タスクを整理",
+    "notes": "Flutter Web SPA serving normally; 'Loading application...' = expected pre-hydration state, no error messages"
+  },
+  "anomaly": false,
+  "latency_observations": {
+    "note": "DB latency oscillating intermittently (08h 976ms → 09h 253ms → 10h 2089ms). Pattern matches yesterday 20h-22h spike-recover cycle. No action per task spec (status=healthy); flag for monitoring if 11h run >1500ms again."
+  },
+  "action_taken": "log only (no commit per task spec — anomaly=false)"
+}

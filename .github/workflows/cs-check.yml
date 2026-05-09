@@ -138,6 +138,17 @@ jobs:
             INFRA_ERRORS="${INFRA_ERRORS}- Firebase: HTTP ${FIREBASE_CODE}\n"
           fi
 
+          WBS_OVERVIEW_CODE=$(curl -s -o /tmp/wbs-overview-health.json -w "%{http_code}" \
+            -H "apikey: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
+            "https://smmkxxavexumewbfaqpy.supabase.co/rest/v1/wbs_project_overview_view?select=total_tasks,overdue_tasks,by_instance&limit=1" \
+            --max-time 10)
+          echo "WBS overview view: HTTP $WBS_OVERVIEW_CODE"
+          if [ "$WBS_OVERVIEW_CODE" != "200" ]; then
+            WBS_OVERVIEW_BODY=$(cat /tmp/wbs-overview-health.json 2>/dev/null | tr '\n' ' ' | cut -c 1-180)
+            INFRA_ERRORS="${INFRA_ERRORS}- WBS overview view: HTTP ${WBS_OVERVIEW_CODE} ${WBS_OVERVIEW_BODY}\n"
+          fi
+
           if [ -z "$INFRA_ERRORS" ]; then
             echo "healthy=true" >> $GITHUB_OUTPUT
             echo "errors=" >> $GITHUB_OUTPUT

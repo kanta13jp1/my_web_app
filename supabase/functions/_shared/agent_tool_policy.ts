@@ -6,6 +6,7 @@ export const AGENT_TOOL_SCOPES = [
   "delete",
   "send",
   "purchase",
+  "discount",
   "external_share",
 ] as const;
 
@@ -40,6 +41,7 @@ export const HIGH_RISK_AGENT_TOOL_SCOPES: readonly AgentToolScope[] = [
   "delete",
   "send",
   "purchase",
+  "discount",
   "external_share",
 ];
 

@@ -1,0 +1,11 @@
+{
+  "generated_at": "2026-05-08T22:50:22.469679+00:00",
+  "tracked_count": 200,
+  "open_count": 2,
+  "closed_count": 198,
+  "recovered_count": 198,
+  "avg_recovery_hours": 6.0,
+  "categories": {
+    "unclassified": 200
+  }
+}

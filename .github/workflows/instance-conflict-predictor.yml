@@ -1,0 +1,89 @@
+name: Instance Conflict Predictor
+
+on:
+  workflow_dispatch:
+    inputs:
+      changed_from:
+        description: "Base ref for branch file overlap checks"
+        required: false
+        default: "origin/main"
+      notify:
+        description: "Notification routes: none, console, slack, notion, wbs"
+        required: false
+        default: "console"
+  pull_request:
+    paths:
+      - ".github/workflows/instance-conflict-predictor.yml"
+      - "docs/INSTANCE_CONFLICT_PREDICTOR.md"
+      - "docs/WORKTREE_REGISTRY.md"
+      - "scripts/instance_conflict_predictor.py"
+      - "scripts/worktree_registry.py"
+      - "scripts/worktree_registry_test.py"
+      - "supabase/migrations/**"
+
+permissions:
+  contents: read
+  pull-requests: read
+
+concurrency:
+  group: instance-conflict-predictor-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  predict:
+    name: Predict fleet conflicts
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      GH_TOKEN: ${{ github.token }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Run predictor
+        shell: bash
+        env:
+          CHANGED_FROM: ${{ inputs.changed_from || 'origin/main' }}
+          NOTIFY: ${{ inputs.notify || 'console' }}
+        run: |
+          set -euo pipefail
+          mkdir -p tmp
+          python scripts/instance_conflict_predictor.py \
+            --changed-from "$CHANGED_FROM" \
+            --notify "$NOTIFY" \
+            --output tmp/instance-conflict.md \
+            --json-out tmp/instance-conflict.json \
+            --fail-on never
+
+      - name: Run worktree registry preflight
+        shell: bash
+        env:
+          CHANGED_FROM: ${{ inputs.changed_from || 'origin/main' }}
+        run: |
+          set -euo pipefail
+          python scripts/worktree_registry_test.py
+          python scripts/worktree_registry.py preflight \
+            --instance github-actions \
+            --issue "${{ github.event.pull_request.number || 'manual' }}" \
+            --changed-from "$CHANGED_FROM" \
+            --output tmp/worktree-registry-preflight.md \
+            --json-out tmp/worktree-registry-preflight.json \
+            --fail-on never
+
+      - name: Upload predictor report
+        uses: actions/upload-artifact@v6
+        with:
+          name: instance-conflict-predictor
+          path: |
+            tmp/instance-conflict.md
+            tmp/instance-conflict.json
+            tmp/worktree-registry-preflight.md
+            tmp/worktree-registry-preflight.json

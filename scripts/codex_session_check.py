@@ -15,7 +15,7 @@ import os
 import re
 import subprocess
 import sys
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
 
@@ -39,7 +39,11 @@ def run_git(args: list[str], cwd: Path) -> CommandResult:
     return CommandResult(proc.returncode, proc.stdout.strip(), proc.stderr.strip())
 
 
-def run_command(args: list[str], cwd: Path) -> CommandResult:
+def run_command(
+    args: list[str],
+    cwd: Path,
+    timeout_seconds: int | None = None,
+) -> CommandResult:
     try:
         proc = subprocess.run(
             args,
@@ -48,9 +52,20 @@ def run_command(args: list[str], cwd: Path) -> CommandResult:
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             check=False,
+            timeout=timeout_seconds,
         )
     except FileNotFoundError as exc:
         return CommandResult(127, "", str(exc))
+    except PermissionError as exc:
+        return CommandResult(126, "", str(exc))
+    except OSError as exc:
+        return CommandResult(126, "", str(exc))
+    except subprocess.TimeoutExpired as exc:
+        return CommandResult(
+            124,
+            (exc.stdout or "").strip() if isinstance(exc.stdout, str) else "",
+            f"timed out after {timeout_seconds}s",
+        )
     return CommandResult(proc.returncode, proc.stdout.strip(), proc.stderr.strip())
 
 
@@ -111,11 +126,244 @@ def env_snapshot() -> dict[str, str]:
     return {key: os.environ.get(key, "not-exposed") for key in keys}
 
 
-def codex_cli_version(root: Path) -> str:
-    result = run_command(["codex", "--version"], root)
+def cli_version(command: str, root: Path) -> str:
+    result = run_command([command, "--version"], root)
+    if result.code != 0 and os.name == "nt":
+        result = run_command([f"{command}.cmd", "--version"], root)
     if result.code != 0:
         return "unavailable"
     return result.stdout or result.stderr or "unknown"
+
+
+def codex_cli_version(root: Path) -> str:
+    return cli_version("codex", root)
+
+
+def claude_code_version(root: Path) -> str:
+    return cli_version("claude", root)
+
+
+def default_claude_settings_path() -> Path:
+    override = os.environ.get("CLAUDE_SETTINGS_PATH")
+    if override:
+        return Path(override)
+    return Path.home() / ".claude" / "settings.json"
+
+
+def normalized_key_path(path: list[str]) -> str:
+    return ".".join(path).lower().replace("_", "").replace("-", "").replace(" ", "")
+
+
+def is_remote_control_flag_path(path: list[str]) -> bool:
+    normalized = normalized_key_path(path)
+    if "remotecontrol" not in normalized:
+        return False
+    return any(
+        token in normalized
+        for token in [
+            "enable",
+            "enabled",
+            "allsessions",
+            "autosession",
+            "always",
+        ]
+    )
+
+
+def collect_remote_control_flags(
+    value: Any,
+    path: list[str] | None = None,
+) -> list[tuple[list[str], bool]]:
+    current_path = path or []
+    flags: list[tuple[list[str], bool]] = []
+    if isinstance(value, dict):
+        for key, item in value.items():
+            flags.extend(collect_remote_control_flags(item, [*current_path, str(key)]))
+    elif isinstance(value, list):
+        for index, item in enumerate(value):
+            flags.extend(collect_remote_control_flags(item, [*current_path, str(index)]))
+    elif isinstance(value, bool) and is_remote_control_flag_path(current_path):
+        flags.append((current_path, value))
+    return flags
+
+
+def analyze_claude_remote_control(
+    root: Path,
+    settings_path: Path | None = None,
+) -> dict[str, Any]:
+    path = settings_path or default_claude_settings_path()
+    version = claude_code_version(root)
+    status = "unknown"
+    evidence = "No known Remote Control all-sessions setting was found."
+    settings_state = "missing"
+    flag_path: str | None = None
+
+    if path.exists():
+        settings_state = "found"
+        try:
+            data = json.loads(path.read_text(encoding="utf-8-sig"))
+            flags = collect_remote_control_flags(data)
+            true_flags = [item for item in flags if item[1]]
+            false_flags = [item for item in flags if not item[1]]
+            if true_flags:
+                status = "enabled"
+                flag_path = ".".join(true_flags[0][0])
+                evidence = f"Detected true setting at `{flag_path}`."
+            elif false_flags:
+                status = "disabled"
+                flag_path = ".".join(false_flags[0][0])
+                evidence = f"Detected false setting at `{flag_path}`."
+        except json.JSONDecodeError as exc:
+            settings_state = "invalid-json"
+            evidence = f"Could not parse Claude settings JSON: {exc}"
+        except OSError as exc:
+            settings_state = "unreadable"
+            evidence = f"Could not read Claude settings: {exc}"
+
+    return {
+        "version": version,
+        "settings_path": str(path),
+        "settings_state": settings_state,
+        "all_sessions_status": status,
+        "flag_path": flag_path,
+        "evidence": evidence,
+        "manual_steps": [
+            "Open Claude Code locally.",
+            "Run `/config`.",
+            "Set `Enable Remote Control for all sessions` to `true`.",
+            "Start a normal interactive session and verify it appears in `claude.ai/code`.",
+        ],
+        "admin_note": (
+            "Team/Enterprise plans also require an admin to enable the Remote Control "
+            "toggle in Claude Code admin settings."
+        ),
+    }
+
+
+def notebooklm_snapshot(root: Path) -> dict[str, Any]:
+    harness_notebook_id = "bc58b50b-5fc4-4840-9a62-b397d6d3b65a"
+    result = run_command(["notebooklm", "list", "--json"], root, timeout_seconds=20)
+    combined = "\n".join(part for part in [result.stdout, result.stderr] if part)
+    detail = combined.splitlines()[0] if combined else ""
+    notebook_ids: list[str] = []
+    notebook_count = 0
+    harness_notebook_title = ""
+    if result.code == 0:
+        try:
+            payload = json.loads(result.stdout)
+            notebooks = payload.get("notebooks", [])
+            if isinstance(notebooks, list):
+                for notebook in notebooks:
+                    if not isinstance(notebook, dict) or not notebook.get("id"):
+                        continue
+                    notebook_id = str(notebook["id"])
+                    notebook_ids.append(notebook_id)
+                    if notebook_id == harness_notebook_id:
+                        harness_notebook_title = str(notebook.get("title", ""))
+                notebook_ids = sorted(set(notebook_ids))
+                notebook_count = int(payload.get("count", len(notebook_ids)))
+                if notebook_count:
+                    if harness_notebook_title:
+                        detail = (
+                            f"notebooks={notebook_count}; "
+                            f"harness_title={harness_notebook_title}"
+                        )
+                    else:
+                        detail = f"notebooks={notebook_count}; harness_notebook_missing"
+        except (json.JSONDecodeError, TypeError, ValueError):
+            notebook_ids = []
+    if not notebook_ids:
+        notebook_ids = sorted(
+            set(
+                re.findall(
+                    r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+                    combined,
+                    flags=re.IGNORECASE,
+                )
+            )
+        )
+        notebook_count = len(notebook_ids)
+
+    lowered = combined.lower()
+    if result.code == 0:
+        state = "ok"
+    elif result.code == 127 and os.environ.get("GITHUB_ACTIONS") == "true":
+        state = "skipped_ci_unavailable"
+        if not detail:
+            detail = "NotebookLM CLI is not installed on this GitHub Actions runner."
+    elif result.code == 127:
+        state = "unavailable"
+    elif result.code == 124:
+        state = "timeout"
+    elif "notebooklm login" in lowered or "authentication expired" in lowered:
+        state = "auth_required"
+    elif "connection attempts failed" in lowered or "connection refused" in lowered:
+        state = "network_error"
+    else:
+        state = "error"
+
+    return {
+        "state": state,
+        "exit_code": result.code,
+        "harness_notebook_id": harness_notebook_id,
+        "harness_notebook_title": harness_notebook_title,
+        "harness_notebook_found": harness_notebook_id in notebook_ids,
+        "notebook_count": notebook_count,
+        "detail": detail[:240],
+    }
+
+
+def managed_mcp_snapshot(root: Path) -> dict[str, Any]:
+    config_path = root / "config" / "managed-mcp.json"
+    if not config_path.exists():
+        return {
+            "state": "missing",
+            "config": str(config_path),
+            "validation_errors": ["config/managed-mcp.json is missing"],
+            "session_findings": [],
+            "session_warning_count": 0,
+            "session_error_count": 0,
+        }
+    try:
+        from check_managed_mcp_policy import (
+            default_session_paths,
+            load_policy,
+            session_findings,
+            validate_policy,
+        )
+    except Exception as exc:
+        return {
+            "state": "unavailable",
+            "config": str(config_path),
+            "validation_errors": [f"could not import managed MCP checker: {exc}"],
+            "session_findings": [],
+            "session_warning_count": 0,
+            "session_error_count": 0,
+        }
+    try:
+        policy = load_policy(config_path)
+        validation_errors = validate_policy(policy)
+        findings = session_findings(
+            policy,
+            default_session_paths(root, include_home=True),
+        )
+    except Exception as exc:
+        return {
+            "state": "error",
+            "config": str(config_path),
+            "validation_errors": [f"managed MCP check failed: {exc}"],
+            "session_findings": [],
+            "session_warning_count": 0,
+            "session_error_count": 0,
+        }
+    return {
+        "state": "ok" if not validation_errors else "invalid",
+        "config": str(config_path),
+        "validation_errors": validation_errors,
+        "session_findings": [asdict(finding) for finding in findings],
+        "session_warning_count": sum(1 for finding in findings if finding.severity == "warning"),
+        "session_error_count": sum(1 for finding in findings if finding.severity == "error"),
+    }
 
 
 def parse_semver(text: str) -> tuple[int, int, int] | None:
@@ -137,6 +385,9 @@ def analyze(cwd: Path) -> dict[str, Any]:
     remote_url = git_text(["remote", "get-url", "origin"], root, default="unknown")
     worktrees = worktree_entries(root)
     codex_version = codex_cli_version(root)
+    notebooklm = notebooklm_snapshot(root)
+    claude_remote_control = analyze_claude_remote_control(root)
+    managed_mcp = managed_mcp_snapshot(root)
 
     warnings: list[str] = []
     if dirty_lines:
@@ -161,6 +412,40 @@ def analyze(cwd: Path) -> dict[str, Any]:
         warnings.append(
             "Codex CLI is older than 0.128.0; persisted `/goal` workflows are not ready"
         )
+    if notebooklm["state"] == "auth_required":
+        warnings.append("NotebookLM CLI auth is expired; run `notebooklm login`")
+    elif notebooklm["state"] == "unavailable":
+        warnings.append("NotebookLM CLI is unavailable on PATH")
+    elif notebooklm["state"] == "timeout":
+        warnings.append("NotebookLM CLI list timed out")
+    elif notebooklm["state"] == "network_error":
+        warnings.append("NotebookLM CLI list hit a network/browser connection error")
+    elif notebooklm["state"] == "error":
+        warnings.append("NotebookLM CLI list failed")
+    elif notebooklm["state"] == "skipped_ci_unavailable":
+        pass
+    elif not notebooklm["harness_notebook_found"]:
+        warnings.append(
+            "NotebookLM harness notebook bc58b50b-5fc4-4840-9a62-b397d6d3b65a was not found"
+        )
+    claude_version = claude_remote_control["version"]
+    parsed_claude_version = parse_semver(claude_version)
+    if claude_version == "unavailable":
+        warnings.append("Claude Code CLI is unavailable on PATH; Remote Control cannot be verified")
+    elif parsed_claude_version and parsed_claude_version < (2, 1, 79):
+        warnings.append("Claude Code is older than 2.1.79; Remote Control slash command support is not ready")
+    if claude_remote_control["all_sessions_status"] != "enabled":
+        warnings.append(
+            "Claude Code Remote Control all-sessions mode is not verified as enabled; run `/config` in Claude Code"
+        )
+    if managed_mcp["validation_errors"]:
+        warnings.append("managed MCP policy validation failed")
+    for finding in managed_mcp["session_findings"][:12]:
+        warnings.append(f"managed MCP {finding['kind']}: {finding['message']}")
+    if len(managed_mcp["session_findings"]) > 12:
+        warnings.append(
+            f"managed MCP additional findings truncated: {len(managed_mcp['session_findings']) - 12}"
+        )
 
     return {
         "root": str(root),
@@ -174,6 +459,9 @@ def analyze(cwd: Path) -> dict[str, Any]:
         "dirty_paths": dirty_lines[:20],
         "remote": remote_url,
         "codex_cli_version": codex_version,
+        "notebooklm": notebooklm,
+        "claude_remote_control": claude_remote_control,
+        "managed_mcp": managed_mcp,
         "worktrees": worktrees,
         "environment": env_snapshot(),
         "warnings": warnings,
@@ -198,6 +486,52 @@ def render_markdown(report: dict[str, Any]) -> str:
     ]
     for key, value in report["environment"].items():
         lines.append(f"- `{key}`: `{value}`")
+
+    notebooklm = report["notebooklm"]
+    lines.extend([
+        "",
+        "## NotebookLM Snapshot",
+        f"- State: `{notebooklm['state']}`",
+        f"- Harness notebook: `{notebooklm['harness_notebook_id']}`",
+        f"- Harness title: `{notebooklm['harness_notebook_title'] or 'unknown'}`",
+        f"- Harness found: `{notebooklm['harness_notebook_found']}`",
+        f"- Notebook count: `{notebooklm['notebook_count']}`",
+    ])
+    if notebooklm["detail"]:
+        lines.append(f"- Detail: `{notebooklm['detail']}`")
+
+    remote = report["claude_remote_control"]
+    lines.extend(
+        [
+            "",
+            "## Claude Code Remote Control",
+            f"- Claude Code CLI: `{remote['version']}`",
+            f"- Settings: `{remote['settings_path']}` ({remote['settings_state']})",
+            f"- All-session Remote Control: `{remote['all_sessions_status']}`",
+            f"- Evidence: {remote['evidence']}",
+        ]
+    )
+    if remote["all_sessions_status"] != "enabled":
+        lines.append("- Required manual steps:")
+        for step in remote["manual_steps"]:
+            lines.append(f"  - {step}")
+        lines.append(f"- Team/Enterprise note: {remote['admin_note']}")
+
+    managed_mcp = report["managed_mcp"]
+    lines.extend(
+        [
+            "",
+            "## Managed MCP Policy",
+            f"- State: `{managed_mcp['state']}`",
+            f"- Config: `{managed_mcp['config']}`",
+            f"- Validation errors: `{len(managed_mcp['validation_errors'])}`",
+            f"- Session warnings/errors: `{managed_mcp['session_warning_count']} / {managed_mcp['session_error_count']}`",
+        ]
+    )
+    for finding in managed_mcp["session_findings"][:8]:
+        lines.append(
+            f"- `{finding['severity']}` `{finding['kind']}` `{finding['server']}`: {finding['message']}"
+        )
 
     lines.extend(["", "## Warnings"])
     if report["warnings"]:

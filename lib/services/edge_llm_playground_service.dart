@@ -3,6 +3,8 @@ import 'dart:convert';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../services/ai_hub_chat_service.dart';
+import 'local_rag_runtime_service.dart';
+import 'offline_secure_mode_settings_service.dart';
 
 typedef EdgeLlmPlaygroundInvoker = AiHubChatInvoker;
 
@@ -42,12 +44,20 @@ class EdgeLlmPlaygroundResponse {
 class EdgeLlmPlaygroundService {
   final SupabaseClient? _supabase;
   final EdgeLlmPlaygroundInvoker? _invoker;
+  final OfflineSecureModeSettingsService _offlineSettingsService;
+  final LocalRagRuntimeService _localRagRuntimeService;
 
   const EdgeLlmPlaygroundService({
     SupabaseClient? supabase,
     EdgeLlmPlaygroundInvoker? invoker,
+    OfflineSecureModeSettingsService offlineSettingsService =
+        const OfflineSecureModeSettingsService(),
+    LocalRagRuntimeService localRagRuntimeService =
+        const LocalRagRuntimeService(),
   })  : _supabase = supabase,
-        _invoker = invoker;
+        _invoker = invoker,
+        _offlineSettingsService = offlineSettingsService,
+        _localRagRuntimeService = localRagRuntimeService;
 
   Future<EdgeLlmPlaygroundResponse> invoke({
     required String userPrompt,
@@ -91,7 +101,41 @@ class EdgeLlmPlaygroundService {
       body['context_data'] = _parseContextDraft(normalizedContextDraft);
     }
 
-    final data = await _invoke(body);
+    final offlineSettings =
+        await _offlineSettingsService.loadSettingsOrDefaults();
+    if (offlineSettings.externalApiBlocked &&
+        offlineSettings.localRuntimeConfigured) {
+      final local = await _localRagRuntimeService.query(
+        query: normalizedPrompt,
+        settings: offlineSettings,
+        systemPrompt: systemPrompt,
+        contextData: body['context_data'],
+        sessionId: sessionId,
+        traceId: traceId,
+      );
+      return EdgeLlmPlaygroundResponse(
+        text: local.text,
+        source: 'local-rag runtime / ${local.engine}',
+        provider: 'local-rag',
+        tier: 'offline',
+        model: local.model,
+        responseFormat: normalizedFormat,
+        parsedJson: <String, dynamic>{
+          'citations': local.citations.map((item) => item.toJson()).toList(),
+          'offline_runtime': local.toJson(),
+        },
+        observability: AiHubChatObservability.fromResponseMap(
+          <String, dynamic>{
+            'provider': 'local-rag',
+            'model': local.model,
+            'action': 'edge_llm.invoke',
+          },
+          fallbackProvider: 'local-rag',
+        ),
+      );
+    }
+
+    final data = await _invoke(_withOfflinePolicy(body, offlineSettings));
     if (data['success'] != true) {
       final detail =
           (data['message'] ?? data['detail'] ?? 'LLM invocation failed')
@@ -154,6 +198,16 @@ class EdgeLlmPlaygroundService {
     return <String, dynamic>{
       'success': false,
       'message': data?.toString() ?? 'empty response',
+    };
+  }
+
+  Map<String, dynamic> _withOfflinePolicy(
+    Map<String, dynamic> body,
+    OfflineSecureModeSettings settings,
+  ) {
+    return <String, dynamic>{
+      ...body,
+      ...settings.toAiHubPolicyPayload(),
     };
   }
 

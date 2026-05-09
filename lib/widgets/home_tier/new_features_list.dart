@@ -52,7 +52,7 @@ class _NewFeaturesListState extends State<NewFeaturesList> {
       return const Padding(
         padding: EdgeInsets.all(16),
         child: Text(
-          '直近14日間に追加された機能はありません',
+          '直近14日間に追加された機能はありません。',
           style: TextStyle(
             color: Color(0xFF94A3B8),
             fontSize: 13,
@@ -63,9 +63,9 @@ class _NewFeaturesListState extends State<NewFeaturesList> {
     }
     return Column(
       children: _items.map((item) {
-        final label = item['feature_label'] as String;
+        final label = item['feature_label'] as String? ?? '新機能';
         final desc = item['description'] as String? ?? '';
-        final route = item['feature_route'] as String;
+        final route = _normalizeRoute(item['feature_route'] as String? ?? '');
         return ListTile(
           dense: true,
           leading: const Icon(
@@ -97,9 +97,16 @@ class _NewFeaturesListState extends State<NewFeaturesList> {
             size: 16,
             color: Color(0xFF64748B),
           ),
-          onTap: () => Navigator.pushNamed(context, route),
+          onTap:
+              route.isEmpty ? null : () => Navigator.pushNamed(context, route),
         );
       }).toList(),
     );
+  }
+
+  static String _normalizeRoute(String value) {
+    final route = value.trim();
+    if (route.isEmpty) return '';
+    return route.startsWith('/') ? route : '/$route';
   }
 }

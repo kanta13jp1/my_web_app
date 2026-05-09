@@ -46,6 +46,12 @@ def check_android(failures: list[str]) -> None:
         "Android namespace still uses the com.example placeholder.",
         failures,
     )
+    fail_if(
+        "sourceCompatibility = JavaVersion.VERSION_17" not in build_gradle
+        or "targetCompatibility = JavaVersion.VERSION_17" not in build_gradle,
+        "Android Java compatibility must target Java 17 to match release Kotlin tasks.",
+        failures,
+    )
 
     manifest = ET.parse(ROOT / "android/app/src/main/AndroidManifest.xml")
     application = manifest.getroot().find("application")

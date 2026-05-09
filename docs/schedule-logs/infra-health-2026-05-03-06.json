@@ -1,0 +1,22 @@
+{
+  "timestamp_jst": "2026-05-03T06:33+09:00",
+  "ef_health_check": {
+    "status": "healthy",
+    "ef_timestamp": "2026-05-02T21:33:43.124Z",
+    "checks": {
+      "environment": "configured",
+      "database": "operational (308ms)",
+      "wbs_tasks": "accessible",
+      "ai_circuit_breaker": "active"
+    }
+  },
+  "firebase_hosting": {
+    "status": "ok",
+    "url": "https://my-web-app-b67f4.web.app/",
+    "title": "自分株式会社 | AIが今日の最優先タスクを整理"
+  },
+  "anomaly": false,
+  "action_taken": "log only (no commit per task spec)"
+}
+</content>
+</invoke>

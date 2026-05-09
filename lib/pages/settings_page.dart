@@ -7,6 +7,7 @@ import 'asset_management_page.dart';
 import 'financial_report_page.dart';
 import 'admin_analytics_page.dart';
 import 'feedback_page.dart';
+import 'offline_secure_mode_settings_page.dart';
 import 'theme_selector_page.dart';
 
 class SettingsPage extends StatelessWidget {
@@ -65,6 +66,18 @@ class SettingsPage extends StatelessWidget {
             onTap: () => Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => const FinancialReportPage()),
+            ),
+          ),
+          ListTile(
+            leading: const Icon(Icons.security_outlined),
+            title: const Text('オフラインセキュアモード'),
+            subtitle: const Text('ローカルRAGと外部API遮断ポリシー'),
+            trailing: const Icon(Icons.arrow_forward_ios),
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const OfflineSecureModeSettingsPage(),
+              ),
             ),
           ),
           const Divider(),

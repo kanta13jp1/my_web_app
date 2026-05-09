@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:flutter/services.dart'
+    show FilteringTextInputFormatter, TextInputFormatter;
 import 'package:intl/intl.dart';
 
 import '../services/abstinence_guard_store.dart';
@@ -33,8 +34,12 @@ class _AbstinenceGuardPageState extends State<AbstinenceGuardPage> {
     'lust',
     'dating_apps',
   ];
+  static const String _selfContactItemId = 'touch_hair';
+  static const int _selfContactAlertThreshold = 3;
 
   AbstinenceGuardSnapshot? _snapshot;
+  List<AbstinenceSlipDailyCount> _selfContactTrend =
+      const <AbstinenceSlipDailyCount>[];
   bool _isLoading = true;
   late DateTime _selectedDate;
 
@@ -93,11 +98,17 @@ class _AbstinenceGuardPageState extends State<AbstinenceGuardPage> {
   }
 
   Future<void> _loadSnapshot() async {
-    final snapshot =
-        await AbstinenceGuardStore.loadSnapshot(now: _selectedDate);
+    final snapshot = await AbstinenceGuardStore.loadSnapshot(
+      now: _selectedDate,
+    );
+    final selfContactTrend = await AbstinenceGuardStore.loadSlipCountsByDate(
+      itemId: _selfContactItemId,
+      now: _selectedDate,
+    );
     if (!mounted) return;
     setState(() {
       _snapshot = snapshot;
+      _selfContactTrend = selfContactTrend;
       _isLoading = false;
     });
   }
@@ -114,6 +125,8 @@ class _AbstinenceGuardPageState extends State<AbstinenceGuardPage> {
   Future<void> _incrementSlip(String itemId) async {
     await AbstinenceGuardStore.incrementSlip(
       itemId: itemId,
+      triggerNote:
+          itemId == _selfContactItemId ? 'self_contact_quick_record' : '',
       now: _selectedDate,
     );
     await _loadSnapshot();
@@ -121,6 +134,16 @@ class _AbstinenceGuardPageState extends State<AbstinenceGuardPage> {
         AbstinenceGuardStore.items.where((entry) => entry.id == itemId);
     if (!mounted || item.isEmpty) return;
     final selectedItem = item.first;
+    final updatedState =
+        _snapshot == null ? null : _stateFor(_snapshot!, itemId);
+    if (itemId == _selfContactItemId &&
+        (updatedState?.slipCount ?? 0) >= _selfContactAlertThreshold) {
+      await _showSelfContactIntervention(
+        selectedItem,
+        updatedState?.slipCount ?? _selfContactAlertThreshold,
+      );
+      return;
+    }
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
@@ -135,6 +158,60 @@ class _AbstinenceGuardPageState extends State<AbstinenceGuardPage> {
   Future<void> _clearSlip(String itemId) async {
     await AbstinenceGuardStore.clearSlip(itemId: itemId, now: _selectedDate);
     await _loadSnapshot();
+  }
+
+  AbstinenceGuardState? _stateFor(
+    AbstinenceGuardSnapshot snapshot,
+    String itemId,
+  ) {
+    for (final state in snapshot.states) {
+      if (state.item.id == itemId) return state;
+    }
+    return null;
+  }
+
+  Future<void> _recordSelfContact() async {
+    await _incrementSlip(_selfContactItemId);
+  }
+
+  Future<void> _showSelfContactIntervention(
+    AbstinenceGuardItem item,
+    int slipCount,
+  ) async {
+    if (!mounted) return;
+    await showDialog<void>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          key: const Key('abstinence_guard_self_contact_alert'),
+          title: const Text('代替アクションへ切替'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('今日は $slipCount 回記録されています。'),
+              const SizedBox(height: 10),
+              Text('排除手順: ${item.eliminationAction}'),
+              const SizedBox(height: 6),
+              Text('代替行動: ${item.replacementAction}'),
+              const SizedBox(height: 6),
+              const Text('追加: ストレスボールを握る、肩を回す、30秒だけ腹式呼吸する。'),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('閉じる'),
+            ),
+            FilledButton.icon(
+              onPressed: () => Navigator.pop(context),
+              icon: const Icon(Icons.check, size: 18),
+              label: const Text('代替行動に戻る'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   Future<void> _setEnabledBatch(List<String> itemIds) async {
@@ -499,6 +576,7 @@ class _AbstinenceGuardPageState extends State<AbstinenceGuardPage> {
                   ),
                   const SizedBox(height: 16),
                   _buildDisciplinePanel(snapshot.disciplineSnapshot),
+                  _buildSelfContactPanel(snapshot),
                   _buildPriorityPanel(snapshot),
                   _buildAbsoluteQuitPanel(snapshot),
                   _buildPresetPanel(),
@@ -527,6 +605,214 @@ class _AbstinenceGuardPageState extends State<AbstinenceGuardPage> {
           fontWeight: FontWeight.w700,
           height: 1.5,
         ),
+      ),
+    );
+  }
+
+  Widget _buildSelfContactPanel(AbstinenceGuardSnapshot snapshot) {
+    final state = _stateFor(snapshot, _selfContactItemId);
+    final todayCount = state?.slipCount ?? 0;
+    final weekTotal =
+        _selfContactTrend.fold<int>(0, (sum, day) => sum + day.count);
+    final alertActive = todayCount >= _selfContactAlertThreshold;
+    final color =
+        alertActive ? const Color(0xFFE53935) : const Color(0xFF0F766E);
+
+    return Container(
+      key: const Key('abstinence_guard_self_contact_panel'),
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.07),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: color.withValues(alpha: 0.22)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.back_hand_outlined, color: color),
+              const SizedBox(width: 8),
+              const Expanded(
+                child: Text(
+                  '自己接触トラッカー',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w800,
+                    height: 1.5,
+                  ),
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Text(
+                  alertActive ? '介入ライン' : '監視中',
+                  style: TextStyle(
+                    color: color,
+                    fontWeight: FontWeight.w700,
+                    height: 1.5,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          const Text(
+            '髪に手が伸びた瞬間だけ記録し、短時間で増えたら代替行動に切り替えます。',
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _buildMetricChip(
+                label: '今日',
+                value: '$todayCount回',
+                color: color,
+              ),
+              _buildMetricChip(
+                label: '7日合計',
+                value: '$weekTotal回',
+                color: const Color(0xFF3D5AFE),
+              ),
+              _buildMetricChip(
+                label: '通知ライン',
+                value: '$_selfContactAlertThreshold回',
+                color: const Color(0xFFFF6B35),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          _buildSelfContactTrendBars(color),
+          const SizedBox(height: 12),
+          if (alertActive)
+            Container(
+              key: const Key('abstinence_guard_self_contact_inline_alert'),
+              width: double.infinity,
+              margin: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFF6B35).withValues(alpha: 0.10),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: const Color(0xFFFF6B35).withValues(alpha: 0.22),
+                ),
+              ),
+              child: const Text(
+                '手を机に置く、ストレスボールを握る、肩を回す、30秒腹式呼吸のどれかに切り替えます。',
+              ),
+            ),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              FilledButton.icon(
+                key: const Key('abstinence_guard_self_contact_log'),
+                onPressed: _recordSelfContact,
+                icon: const Icon(Icons.add_alert_rounded, size: 18),
+                label: const Text('髪をさわった +1'),
+                style: FilledButton.styleFrom(backgroundColor: color),
+              ),
+              OutlinedButton.icon(
+                key: const Key('abstinence_guard_self_contact_report'),
+                onPressed: () => Navigator.pushNamed(
+                  context,
+                  '/weekly-slip-report',
+                ),
+                icon: const Icon(Icons.bar_chart, size: 18),
+                label: const Text('週次レポート'),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSelfContactTrendBars(Color color) {
+    if (_selfContactTrend.isEmpty) {
+      return const Text('7日グラフを読み込み中です。');
+    }
+
+    final maxCount = _selfContactTrend.fold<int>(
+      1,
+      (maxValue, day) => day.count > maxValue ? day.count : maxValue,
+    );
+
+    return Container(
+      key: const Key('abstinence_guard_self_contact_chart'),
+      width: double.infinity,
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: color.withValues(alpha: 0.18),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            '日別頻度グラフ',
+            style: TextStyle(fontWeight: FontWeight.w800, height: 1.5),
+          ),
+          const SizedBox(height: 10),
+          SizedBox(
+            height: 108,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: _selfContactTrend.map((day) {
+                final barHeight = 8 + (44 * day.count / maxCount);
+                final isToday = _isSameDay(day.date, _selectedDate);
+                return Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 3),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        Text(
+                          '${day.count}',
+                          style: TextStyle(
+                            color: isToday ? color : const Color(0xFF607D8B),
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            height: 1.3,
+                          ),
+                        ),
+                        const SizedBox(height: 3),
+                        Container(
+                          height: barHeight.toDouble(),
+                          width: double.infinity,
+                          decoration: BoxDecoration(
+                            color: (isToday ? color : const Color(0xFF3D5AFE))
+                                .withValues(
+                              alpha: day.count == 0 ? 0.18 : 0.72,
+                            ),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          day.label,
+                          style: const TextStyle(fontSize: 10, height: 1.2),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+          ),
+        ],
       ),
     );
   }

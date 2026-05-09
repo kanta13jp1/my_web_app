@@ -1,0 +1,6 @@
+自分株式会社 (= Jibun Inc.) 最近 7 日:
+- PS版#2 S100 — T-1 Phase49全4弾完結 (#223-#226)
+- PS版#5 S116 — CI Auto-Fix race condition修正 + CIトリアージ
+- Win版#132 part 114 — ai-tool-update batch triage (= scheduled
+
+#buildinpublic #flutter #supabase #claudecode #aifleet

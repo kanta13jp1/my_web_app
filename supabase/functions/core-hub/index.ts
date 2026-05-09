@@ -1,9 +1,6 @@
 // core-hub — コアUI・メモ・通知・ユーザー管理統合EF
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
-import {
-  createClient,
-  SupabaseClient,
-} from "npm:@supabase/supabase-js@2";
+import { createClient, SupabaseClient } from "npm:@supabase/supabase-js@2";
 import {
   createSupabaseMemoReactionStore,
   handleMemoReactionAction,
@@ -2086,7 +2083,9 @@ description: ${pageDescription}
       case "design.screens.list": {
         const { data: screens, error: e1 } = await admin
           .from("design_screens")
-          .select("route, name, category, compliance, audit_date, notes, mcp_tool_used");
+          .select(
+            "route, name, category, compliance, audit_date, notes, mcp_tool_used",
+          );
         if (e1) return json({ error: e1.message }, 500);
 
         const { data: rollouts, error: e2 } = await admin
@@ -2104,10 +2103,13 @@ description: ${pageDescription}
         }
         const route = String(body.route ?? "");
         if (!route) return json({ error: "route required" }, 400);
-        const compliance = Array.isArray(body.compliance) ? body.compliance : null;
+        const compliance = Array.isArray(body.compliance)
+          ? body.compliance
+          : null;
         if (
           compliance &&
-          (compliance.length !== 7 || compliance.some((v) => typeof v !== "boolean"))
+          (compliance.length !== 7 ||
+            compliance.some((v) => typeof v !== "boolean"))
         ) {
           return json({ error: "compliance must be boolean[7]" }, 400);
         }
@@ -2133,13 +2135,15 @@ description: ${pageDescription}
         const route = String(body.route ?? "");
         if (!route) return json({ error: "route required" }, 400);
         const validStages = new Set(["applied", "in_progress", "planned"]);
-        for (const k of [
-          "stage",
-          "figma_mcp",
-          "ai_designer",
-          "design_skills",
-          "design_md",
-        ]) {
+        for (
+          const k of [
+            "stage",
+            "figma_mcp",
+            "ai_designer",
+            "design_skills",
+            "design_md",
+          ]
+        ) {
           if (!validStages.has(String(body[k]))) {
             return json({ error: `invalid ${k}` }, 400);
           }

@@ -1,0 +1,101 @@
+name: worktree-cleanup-weekly
+
+on:
+  schedule:
+    - cron: "0 16 * * 0" # Monday 01:00 JST
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: read
+
+concurrency:
+  group: worktree-cleanup-weekly
+  cancel-in-progress: false
+
+jobs:
+  cleanup:
+    name: Validate safe worktree cleanup
+    runs-on: windows-latest
+    timeout-minutes: 10
+
+    env:
+      ISSUE_NUMBER: "1984"
+      GH_TOKEN: ${{ github.token }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Dry-run safe cleanup
+        shell: pwsh
+        run: |
+          python scripts/worktree_cleanup.py `
+            --fetch `
+            --json-out worktree-cleanup-dry-run.json
+
+      - name: Apply safe runner cleanup
+        shell: pwsh
+        run: |
+          python scripts/worktree_cleanup.py `
+            --apply `
+            --json-out worktree-cleanup-apply.json
+          git worktree prune
+
+      - name: Upload cleanup reports
+        uses: actions/upload-artifact@v6
+        with:
+          name: worktree-cleanup-report
+          path: |
+            worktree-cleanup-dry-run.json
+            worktree-cleanup-apply.json
+
+      - name: Comment weekly report to Issue
+        if: always()
+        shell: pwsh
+        run: |
+          $summaryPath = "worktree-cleanup-apply.json"
+          if (-not (Test-Path $summaryPath)) {
+            $summaryPath = "worktree-cleanup-dry-run.json"
+          }
+
+          if (Test-Path $summaryPath) {
+            $summary = Get-Content -Raw -LiteralPath $summaryPath | ConvertFrom-Json
+            $mode = $summary.mode
+            $total = $summary.total
+            $candidates = $summary.candidates
+            $removed = $summary.removed
+            $reclaim = $summary.estimated_reclaim_mb
+          } else {
+            $mode = "failed-before-summary"
+            $total = "n/a"
+            $candidates = "n/a"
+            $removed = "n/a"
+            $reclaim = "n/a"
+          }
+
+          $body = @"
+          ## worktree-cleanup-weekly
+
+          | metric | value |
+          | --- | --- |
+          | mode | $mode |
+          | worktrees scanned | $total |
+          | safe candidates | $candidates |
+          | removed on runner | $removed |
+          | estimated reclaim MB | $reclaim |
+          | run | $env:GITHUB_SERVER_URL/$env:GITHUB_REPOSITORY/actions/runs/$env:GITHUB_RUN_ID |
+
+          This validates scripts/worktree_cleanup.py on the hosted runner. Local Windows app cleanup still runs from Codex/Claude sessions with the same dry-run then --apply guardrails.
+          "@
+
+          Set-Content -LiteralPath worktree-cleanup-comment.md -Value $body -Encoding utf8
+          gh issue comment $env:ISSUE_NUMBER --repo $env:GITHUB_REPOSITORY --body-file worktree-cleanup-comment.md

@@ -1,0 +1,141 @@
+name: WBS Auto Reschedule
+
+# Win版#132 part 157 (2026-05-06) — User 依頼着地
+# 全 open WBS タスクの start_date / end_date を priority tier ベースで
+# 「実際に着手可能な日付」へ daily 再配置する。
+#
+# 仕組み:
+#  - daily 06:00 JST (= 21:00 UTC) に tools-hub:wbs.reschedule_realistic を invoke
+#  - 完了系 (status='completed' OR github_issue_state='CLOSED') は skip
+#  - priority tier (high/medium/low) で start = today + offset、end = start + duration
+#  - 同 tier 内は parallel_capacity 件並列で stagger
+#  - 結果サマリを Issue #1422 (= Codex Memory + Thread Automations 着地点) に comment
+
+on:
+  schedule:
+    - cron: "0 21 * * *"  # daily 06:00 JST
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Dry run (= no DB write)"
+        required: false
+        default: "false"
+        type: choice
+        options:
+          - "true"
+          - "false"
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: wbs-auto-reschedule
+  cancel-in-progress: false
+
+jobs:
+  reschedule:
+    name: Invoke wbs.reschedule_realistic
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    env:
+      SUPABASE_URL: https://smmkxxavexumewbfaqpy.supabase.co
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      ISSUE_TRACKING_NUMBER: "1422"
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      DRY_RUN: ${{ inputs.dry_run || 'false' }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+
+      - name: Invoke tools-hub:wbs.reschedule_realistic
+        id: invoke
+        run: |
+          set -euo pipefail
+          if [ -z "${SUPABASE_SERVICE_ROLE_KEY:-}" ]; then
+            echo "::error::SUPABASE_SERVICE_ROLE_KEY missing"
+            exit 1
+          fi
+          if [ "$DRY_RUN" = "true" ]; then
+            BODY='{"action":"wbs.reschedule_realistic","dry_run":true}'
+          else
+            BODY='{"action":"wbs.reschedule_realistic","dry_run":false}'
+          fi
+          echo "Invoke body: $BODY"
+          RESP=$(curl -sS -X POST \
+            -H "apikey: ${SUPABASE_SERVICE_ROLE_KEY}" \
+            -H "Authorization: Bearer ${SUPABASE_SERVICE_ROLE_KEY}" \
+            -H "Content-Type: application/json" \
+            -d "$BODY" \
+            --max-time 240 \
+            "${SUPABASE_URL}/functions/v1/tools-hub")
+          echo "$RESP" > reschedule_result.json
+          echo "Response bytes: $(wc -c < reschedule_result.json)"
+
+          SUCCESS=$(jq -r '.success // false' reschedule_result.json)
+          UPDATED=$(jq -r '.updated // .would_update // 0' reschedule_result.json)
+          OPEN=$(jq -r '.total_open // 0' reschedule_result.json)
+          ERR=$(jq -r '.errors_count // 0' reschedule_result.json)
+          {
+            echo "success=$SUCCESS"
+            echo "updated=$UPDATED"
+            echo "total_open=$OPEN"
+            echo "errors=$ERR"
+            echo "dry_run=$DRY_RUN"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Build summary
+        id: summary
+        run: |
+          set -euo pipefail
+          {
+            echo "## WBS Auto Reschedule"
+            echo ""
+            echo "- date: $(date -u +%Y-%m-%dT%H:%M:%SZ) (= $(TZ=Asia/Tokyo date '+%Y-%m-%d %H:%M JST'))"
+            echo "- dry_run: ${{ steps.invoke.outputs.dry_run }}"
+            echo "- success: ${{ steps.invoke.outputs.success }}"
+            echo "- total_open: ${{ steps.invoke.outputs.total_open }}"
+            echo "- updated: ${{ steps.invoke.outputs.updated }}"
+            echo "- errors: ${{ steps.invoke.outputs.errors }}"
+            echo ""
+            echo "<details><summary>by_priority</summary>"
+            echo ""
+            echo '```json'
+            jq '.by_priority // {}' reschedule_result.json
+            echo '```'
+            echo ""
+            echo "</details>"
+            echo ""
+            echo "<details><summary>sample (first 10)</summary>"
+            echo ""
+            echo '```json'
+            jq '.sample // []' reschedule_result.json
+            echo '```'
+            echo ""
+            echo "</details>"
+          } > summary.md
+          cat summary.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Comment on tracking issue
+        if: always()
+        run: |
+          set -euo pipefail
+          if [ -s summary.md ]; then
+            gh issue comment "$ISSUE_TRACKING_NUMBER" \
+              --repo "$GITHUB_REPOSITORY" \
+              --body-file summary.md || true
+          fi
+
+      - name: Upload artifact
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: wbs-reschedule-result
+          path: |
+            reschedule_result.json
+            summary.md
+          retention-days: 14

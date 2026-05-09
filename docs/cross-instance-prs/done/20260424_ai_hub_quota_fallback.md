@@ -1,4 +1,4 @@
-# Cross-Instance PR: ai-hub EF 自動 Quota Routing
+# Cross-Instance PR: ai-hub EF 自動 Quota Routing [Done]
 
 **From**: PS#1  
 **To**: VSCode版  

@@ -37,6 +37,31 @@ void main() {
       expect(text, contains('CSF:'));
       expect(text, contains('KPI:'));
       expect(text, contains('https://sdk-docs.krisp.ai/docs/introduction'));
+      expect(text, contains('SDK gates: 3/5'));
+      expect(text, contains('contract'));
+      expect(text, contains('model-distribution'));
+    });
+
+    test('AI coach SDK handoff keeps external gates explicit', () {
+      final handoff = service.buildAiCoachHandoff();
+
+      expect(handoff.issueNumber, 755);
+      expect(handoff.readyForSdkSpike, isFalse);
+      expect(handoff.satisfiedGateCount, 3);
+      expect(
+        handoff.blockers.map((gate) => gate.id),
+        containsAll(<String>['contract', 'model-distribution']),
+      );
+      expect(
+        handoff.pipeline.map((step) => step.id).toList(),
+        <String>['capture', 'filter', 'turn-taking', 'stt', 'coach'],
+      );
+      expect(
+        handoff.acceptanceChecks,
+        contains(
+          'Fallback to raw microphone input when Krisp SDK is unavailable.',
+        ),
+      );
     });
   });
 }

@@ -7,6 +7,7 @@ import 'package:uuid/uuid.dart';
 import '../models/ai_provider_registry.dart';
 import '../services/edge_llm_playground_service.dart';
 import '../widgets/ai_response_observability_panel.dart';
+import 'offline_secure_mode_settings_page.dart';
 
 class EdgeLlmPlaygroundPage extends StatefulWidget {
   final EdgeLlmPlaygroundService? service;
@@ -154,6 +155,18 @@ class _EdgeLlmPlaygroundPageState extends State<EdgeLlmPlaygroundPage> {
       backgroundColor: background,
       appBar: AppBar(
         title: const Text('Edge LLM Playground'),
+        actions: [
+          IconButton(
+            tooltip: 'オフライン設定',
+            icon: const Icon(Icons.security_outlined),
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const OfflineSecureModeSettingsPage(),
+              ),
+            ),
+          ),
+        ],
       ),
       body: SafeArea(
         child: SingleChildScrollView(

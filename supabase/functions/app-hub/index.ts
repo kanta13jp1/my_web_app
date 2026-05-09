@@ -1,4 +1,4 @@
-﻿// app-hub — コアアプリ機能統合EF
+// app-hub — コアアプリ機能統合EF
 // Merges (17 EFs): subscription-management, subscription-billing,
 //   email-service, gamification-engine, calendar-events, kanban-board,
 //   chat-messaging, team-task-manager, team-collaboration-sync,
@@ -9,32 +9,53 @@
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient, SupabaseClient } from "npm:@supabase/supabase-js@2";
 
-const corsHeaders = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type" };
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type",
+};
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
 const SERVICE_ROLE_KEY = Deno.env.get("SERVICE_ROLE_KEY") ?? "";
 
 function json(data: unknown, status = 200): Response {
-  return new Response(JSON.stringify(data), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
 }
 
 async function getUserId(req: Request): Promise<string | null> {
   const auth = req.headers.get("Authorization") ?? "";
   if (!auth) return null;
-  const c = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { global: { headers: { Authorization: auth } } });
+  const c = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    global: { headers: { Authorization: auth } },
+  });
   const { data: { user } } = await c.auth.getUser();
   return user?.id ?? null;
 }
 
-async function listItems(admin: SupabaseClient, source: string, userId: string, limit = 50) {
-  const { data, error } = await admin.from("hub_data").select("id, metadata, created_at")
+async function listItems(
+  admin: SupabaseClient,
+  source: string,
+  userId: string,
+  limit = 50,
+) {
+  const { data, error } = await admin.from("hub_data").select(
+    "id, metadata, created_at",
+  )
     .eq("source", source).filter("metadata->>user_id", "eq", userId)
     .order("created_at", { ascending: false }).limit(limit);
   if (error) throw new Error(error.message);
   return data ?? [];
 }
 
-async function addItem(admin: SupabaseClient, source: string, userId: string, meta: Record<string, unknown>) {
+async function addItem(
+  admin: SupabaseClient,
+  source: string,
+  userId: string,
+  meta: Record<string, unknown>,
+) {
   const { data, error } = await admin.from("hub_data")
     .insert({ source, metadata: { ...meta, user_id: userId } })
     .select("id, metadata, created_at").single();
@@ -42,19 +63,34 @@ async function addItem(admin: SupabaseClient, source: string, userId: string, me
   return data;
 }
 
-async function deleteItem(admin: SupabaseClient, source: string, userId: string, id: string) {
+async function deleteItem(
+  admin: SupabaseClient,
+  source: string,
+  userId: string,
+  id: string,
+) {
   const { error } = await admin.from("hub_data")
-    .delete().eq("id", id).eq("source", source).filter("metadata->>user_id", "eq", userId);
+    .delete().eq("id", id).eq("source", source).filter(
+      "metadata->>user_id",
+      "eq",
+      userId,
+    );
   if (error) throw new Error(error.message);
 }
 
 serve(async (req: Request) => {
-  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  if (req.method === "OPTIONS") {
+    return new Response("ok", { headers: corsHeaders });
+  }
 
   try {
     const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
-    const body = req.method === "POST" ? await req.json() as Record<string, unknown> : {};
-    const action = String(body.action ?? new URL(req.url).searchParams.get("action") ?? "");
+    const body = req.method === "POST"
+      ? await req.json() as Record<string, unknown>
+      : {};
+    const action = String(
+      body.action ?? new URL(req.url).searchParams.get("action") ?? "",
+    );
     const userId = await getUserId(req);
 
     if (!userId) return json({ error: "Unauthorized" }, 401);
@@ -77,7 +113,13 @@ serve(async (req: Request) => {
 
       case "subscription.cancel": {
         const { error } = await admin.from("hub_data")
-          .update({ metadata: { user_id: userId, status: "cancelled", cancelled_at: new Date().toISOString() } })
+          .update({
+            metadata: {
+              user_id: userId,
+              status: "cancelled",
+              cancelled_at: new Date().toISOString(),
+            },
+          })
           .eq("id", String(body.id))
           .eq("source", "subscription");
         if (error) throw new Error(error.message);
@@ -100,8 +142,10 @@ serve(async (req: Request) => {
       }
       case "billing.create_invoice": {
         const item = await addItem(admin, "invoice", userId, {
-          client_name: body.client_name, amount: body.amount ?? 0,
-          description: body.description ?? "", status: "draft",
+          client_name: body.client_name,
+          amount: body.amount ?? 0,
+          description: body.description ?? "",
+          status: "draft",
         });
         return json({ success: true, invoice: item });
       }
@@ -109,10 +153,15 @@ serve(async (req: Request) => {
       // --- Email ---
       case "email.send": {
         const resendKey = Deno.env.get("RESEND_API_KEY") ?? "";
-        if (!resendKey) return json({ error: "RESEND_API_KEY not configured" }, 503);
+        if (!resendKey) {
+          return json({ error: "RESEND_API_KEY not configured" }, 503);
+        }
         const r = await fetch("https://api.resend.com/emails", {
           method: "POST",
-          headers: { Authorization: `Bearer ${resendKey}`, "Content-Type": "application/json" },
+          headers: {
+            Authorization: `Bearer ${resendKey}`,
+            "Content-Type": "application/json",
+          },
           body: JSON.stringify({
             from: body.from ?? "noreply@jibun.app",
             to: body.to,
@@ -125,9 +174,23 @@ serve(async (req: Request) => {
 
       // --- Gamification ---
       case "gamification.status": {
-        const points = await listItems(admin, "gamification_event", userId, 100);
-        const total = points.reduce((sum, p) => sum + (Number((p.metadata as Record<string, unknown>)?.points ?? 0)), 0);
-        return json({ success: true, total_points: total, events: points.slice(0, 10) });
+        const points = await listItems(
+          admin,
+          "gamification_event",
+          userId,
+          100,
+        );
+        const total = points.reduce(
+          (sum, p) =>
+            sum +
+            (Number((p.metadata as Record<string, unknown>)?.points ?? 0)),
+          0,
+        );
+        return json({
+          success: true,
+          total_points: total,
+          events: points.slice(0, 10),
+        });
       }
 
       case "gamification.award": {
@@ -142,7 +205,15 @@ serve(async (req: Request) => {
       // --- Calendar ---
       case "calendar.list": {
         const items = await listItems(admin, "calendar_event", userId);
-        return json({ success: true, events: items });
+        const events = items.map((it) => {
+          const meta = (it.metadata ?? {}) as Record<string, unknown>;
+          return {
+            ...meta,
+            event_id: it.id,
+            created_at: it.created_at,
+          };
+        });
+        return json({ success: true, events });
       }
 
       case "calendar.create": {
@@ -152,8 +223,13 @@ serve(async (req: Request) => {
           end_at: body.end_at,
           description: body.description ?? "",
           all_day: body.all_day ?? false,
+          color: body.color ?? "#4285f4",
         });
-        return json({ success: true, event: item });
+        const meta = (item.metadata ?? {}) as Record<string, unknown>;
+        return json({
+          success: true,
+          event: { ...meta, event_id: item.id, created_at: item.created_at },
+        });
       }
 
       case "calendar.delete": {
@@ -193,7 +269,8 @@ serve(async (req: Request) => {
           column: body.column ?? "Todo",
           created_at: new Date().toISOString(),
         });
-        await admin.from("hub_data").update({ metadata: { ...meta, cards } }).eq("id", board.id);
+        await admin.from("hub_data").update({ metadata: { ...meta, cards } })
+          .eq("id", board.id);
         return json({ success: true, card_count: cards.length });
       }
 
@@ -227,7 +304,9 @@ serve(async (req: Request) => {
 
       case "chat.get_messages": {
         const channelId = String(body.channel_id ?? "");
-        if (!channelId) return json({ success: false, error: "channel_id required" }, 400);
+        if (!channelId) {
+          return json({ success: false, error: "channel_id required" }, 400);
+        }
         const limit = Number(body.limit ?? 50);
         const { data, error: merr } = await admin.from("hub_data")
           .select("id, metadata, created_at")
@@ -252,7 +331,9 @@ serve(async (req: Request) => {
       case "chat.send": {
         const channelId = String(body.channel_id ?? body.room_id ?? "general");
         const content = String(body.content ?? body.text ?? "").trim();
-        if (!content) return json({ success: false, error: "content required" }, 400);
+        if (!content) {
+          return json({ success: false, error: "content required" }, 400);
+        }
         const message = await addItem(admin, "chat_message", userId, {
           channel_id: channelId,
           content,
@@ -345,13 +426,19 @@ serve(async (req: Request) => {
 
       case "expense.stats": {
         const expenses = await listItems(admin, "expense", userId, 200);
-        const total = expenses.reduce((s, e) => s + Number((e.metadata as Record<string, unknown>)?.amount ?? 0), 0);
+        const total = expenses.reduce(
+          (s, e) =>
+            s + Number((e.metadata as Record<string, unknown>)?.amount ?? 0),
+          0,
+        );
         return json({ success: true, total, count: expenses.length });
       }
 
       // --- Time Tracker ---
       case "time.list": {
-        const view = String(body.view ?? new URL(req.url).searchParams.get("view") ?? "today");
+        const view = String(
+          body.view ?? new URL(req.url).searchParams.get("view") ?? "today",
+        );
         const now = new Date();
         let since: Date;
         if (view === "week") {
@@ -373,7 +460,9 @@ serve(async (req: Request) => {
         const rows = data ?? [];
         let totalHours = 0;
         for (const e of rows) {
-          totalHours += Number((e.metadata as Record<string, unknown>)?.hours ?? 0);
+          totalHours += Number(
+            (e.metadata as Record<string, unknown>)?.hours ?? 0,
+          );
         }
         const entries = rows.map((e) => ({
           ...(e.metadata as Record<string, unknown>),
@@ -399,7 +488,10 @@ serve(async (req: Request) => {
           projectHours.set(proj, (projectHours.get(proj) ?? 0) + hours);
         }
         const projects = [...projectHours.entries()]
-          .map(([name, hours]) => ({ name, hours: Math.round(hours * 100) / 100 }))
+          .map(([name, hours]) => ({
+            name,
+            hours: Math.round(hours * 100) / 100,
+          }))
           .sort((a, b) => b.hours - a.hours);
         return json({ success: true, projects });
       }
@@ -416,7 +508,9 @@ serve(async (req: Request) => {
 
       case "time.log_hours": {
         const hours = Number(body.hours ?? 0);
-        if (hours <= 0) return json({ success: false, error: "hours required" }, 400);
+        if (hours <= 0) {
+          return json({ success: false, error: "hours required" }, 400);
+        }
         const entry = await addItem(admin, "time_entry", userId, {
           type: "manual",
           project: body.project ?? "未分類",
@@ -438,7 +532,13 @@ serve(async (req: Request) => {
 
       case "time.stop": {
         const { error: ste } = await admin.from("hub_data")
-          .update({ metadata: { user_id: userId, status: "done", stopped_at: new Date().toISOString() } })
+          .update({
+            metadata: {
+              user_id: userId,
+              status: "done",
+              stopped_at: new Date().toISOString(),
+            },
+          })
           .eq("id", String(body.id))
           .eq("source", "time_entry");
         if (ste) throw new Error(ste.message);
@@ -523,8 +623,17 @@ serve(async (req: Request) => {
           .filter("metadata->>user_id", "eq", userId)
           .gte("created_at", since);
         const count = hits?.length ?? 0;
-        if (count < limit) await addItem(admin, "rate_hit", userId, { key: body.key ?? "default" });
-        return json({ allowed: count < limit, count, limit, remaining: Math.max(0, limit - count) });
+        if (count < limit) {
+          await addItem(admin, "rate_hit", userId, {
+            key: body.key ?? "default",
+          });
+        }
+        return json({
+          allowed: count < limit,
+          count,
+          limit,
+          remaining: Math.max(0, limit - count),
+        });
       }
 
       // --- Music Collaboration ---
@@ -558,7 +667,8 @@ serve(async (req: Request) => {
       }
       case "changelog.create": {
         const entry = await addItem(admin, "changelog_entry", userId, {
-          title: body.title, type: body.type ?? "feature",
+          title: body.title,
+          type: body.type ?? "feature",
           description: body.description ?? "",
           created_at: new Date().toISOString(),
         });

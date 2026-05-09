@@ -43,9 +43,23 @@ export interface McpAuthContext {
  * 構築して `ctx.aud` に含まれるかを判定する。
  */
 export const MCP_RESOURCE_PREFIX = "urn:jibun:tool:";
+export const OAUTH_PROTECTED_RESOURCE_PATH =
+  "/.well-known/oauth-protected-resource";
 
 export function toolResourceUrn(tool: string): string {
   return `${MCP_RESOURCE_PREFIX}${tool}`;
+}
+
+function trimTrailingSlash(value: string): string {
+  return value.replace(/\/+$/, "");
+}
+
+function optionalEnv(name: string): string {
+  return (Deno.env.get(name) ?? "").trim();
+}
+
+function uniqueStrings(values: string[]): string[] {
+  return [...new Set(values.map((value) => value.trim()).filter(Boolean))];
 }
 
 let jwksCache: ReturnType<typeof createRemoteJWKSet> | null = null;
@@ -54,7 +68,7 @@ let adminClientCache: SupabaseClient | null = null;
 let adminClientCacheKey = "";
 
 function getWorkOsJwks(): ReturnType<typeof createRemoteJWKSet> | null {
-  const url = (Deno.env.get("WORKOS_JWKS_URL") ?? "").trim();
+  const url = optionalEnv("WORKOS_JWKS_URL");
   if (!url) return null;
 
   try {
@@ -69,17 +83,80 @@ function getWorkOsJwks(): ReturnType<typeof createRemoteJWKSet> | null {
 }
 
 function getWorkOsIssuers(): string[] {
-  const raw = (Deno.env.get("WORKOS_ISSUER") ?? "").trim();
+  const raw = optionalEnv("WORKOS_ISSUER");
   if (!raw) return [];
 
-  const withoutTrailingSlash = raw.replace(/\/+$/, "");
+  const withoutTrailingSlash = trimTrailingSlash(raw);
   const candidates = [
     raw,
     withoutTrailingSlash,
     withoutTrailingSlash ? `${withoutTrailingSlash}/` : "",
   ];
 
-  return [...new Set(candidates.filter(Boolean))];
+  return uniqueStrings(candidates);
+}
+
+function getAuthKitAuthorizationServers(): string[] {
+  const authKitUrl = optionalEnv("WORKOS_AUTHKIT_URL") ||
+    optionalEnv("WORKOS_AUTHKIT_DOMAIN");
+  return uniqueStrings([
+    authKitUrl,
+    ...getWorkOsIssuers(),
+  ]);
+}
+
+function protectedResourceUrl(reqUrl: string): string {
+  const url = new URL(reqUrl);
+  if (url.pathname.endsWith(`${OAUTH_PROTECTED_RESOURCE_PATH}/`)) {
+    url.pathname = url.pathname.slice(
+      0,
+      -(OAUTH_PROTECTED_RESOURCE_PATH.length + 1),
+    );
+  } else if (url.pathname.endsWith(OAUTH_PROTECTED_RESOURCE_PATH)) {
+    url.pathname = url.pathname.slice(0, -OAUTH_PROTECTED_RESOURCE_PATH.length);
+  }
+  url.search = "";
+  url.hash = "";
+  return trimTrailingSlash(url.toString());
+}
+
+export function isOAuthProtectedResourceMetadataRequest(req: Request): boolean {
+  const { pathname } = new URL(req.url);
+  return pathname.endsWith(OAUTH_PROTECTED_RESOURCE_PATH) ||
+    pathname.endsWith(`${OAUTH_PROTECTED_RESOURCE_PATH}/`);
+}
+
+export function buildOAuthProtectedResourceMetadata(
+  reqUrl: string,
+  toolName: string,
+  scopes: string[] = [toolName],
+): Record<string, unknown> {
+  const resource = optionalEnv("MCP_RESOURCE_URL") ||
+    protectedResourceUrl(reqUrl);
+  const metadata: Record<string, unknown> = {
+    resource,
+    resource_name: toolName,
+    authorization_servers: getAuthKitAuthorizationServers(),
+    scopes_supported: uniqueStrings(["all", toolName, ...scopes]),
+    bearer_methods_supported: ["header"],
+    resource_signing_alg_values_supported: ["RS256"],
+    jwks_uri: optionalEnv("WORKOS_JWKS_URL"),
+    authkit_url: optionalEnv("WORKOS_AUTHKIT_URL") ||
+      optionalEnv("WORKOS_AUTHKIT_DOMAIN") || null,
+    token_validation: {
+      audience_checked_by_jwt_verify: false,
+      audience_checked_by_resource_indicator: true,
+      issuer_trailing_slash_tolerant: true,
+    },
+  };
+
+  return Object.fromEntries(
+    Object.entries(metadata).filter(([, value]) =>
+      value !== "" &&
+      value !== null &&
+      (!Array.isArray(value) || value.length > 0)
+    ),
+  );
 }
 
 function getAdminClient(): SupabaseClient | null {

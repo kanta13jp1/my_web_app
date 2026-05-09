@@ -7,6 +7,10 @@ on:
     - cron: "25 * * * *"
   workflow_dispatch:
 
+concurrency:
+  group: wbs-sync
+  cancel-in-progress: true
+
 permissions:
   contents: read
   issues: write
@@ -20,17 +24,95 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
+      - name: Install REST issue fetcher
+        run: |
+          cat > /tmp/fetch-github-issues.py <<'PY'
+          import json
+          import os
+          import sys
+          import time
+          import urllib.error
+          import urllib.parse
+          import urllib.request
+
+          output_path = sys.argv[1]
+          repo = os.environ["REPO"]
+          token = os.environ["GH_TOKEN"]
+          base_url = f"https://api.github.com/repos/{repo}/issues"
+          fields = {
+              "state": "all",
+              "per_page": "100",
+              "sort": "updated",
+              "direction": "desc",
+          }
+          headers = {
+              "Accept": "application/vnd.github+json",
+              "Authorization": f"Bearer {token}",
+              "X-GitHub-Api-Version": "2022-11-28",
+              "User-Agent": "my-web-app-wbs-sync",
+          }
+
+          def fetch_page(page):
+              query = urllib.parse.urlencode({**fields, "page": str(page)})
+              request = urllib.request.Request(f"{base_url}?{query}", headers=headers)
+              for attempt in range(1, 4):
+                  try:
+                      with urllib.request.urlopen(request, timeout=30) as response:
+                          return json.loads(response.read().decode("utf-8"))
+                  except urllib.error.HTTPError as exc:
+                      if exc.code not in {502, 503, 504} or attempt == 3:
+                          raise
+                      print(
+                          f"::warning::GitHub REST issues page {page} returned HTTP {exc.code}; retrying",
+                          flush=True,
+                      )
+                  except urllib.error.URLError as exc:
+                      if attempt == 3:
+                          raise
+                      print(
+                          f"::warning::GitHub REST issues page {page} failed: {exc}; retrying",
+                          flush=True,
+                      )
+                  time.sleep(2 * attempt)
+
+          issues = []
+          page = 1
+          while True:
+              items = fetch_page(page)
+              issue_items = [item for item in items if "pull_request" not in item]
+              for item in issue_items:
+                  issues.append(
+                      {
+                          "number": item["number"],
+                          "title": item.get("title") or "",
+                          "url": item.get("html_url") or item.get("url") or "",
+                          "state": str(item.get("state") or "").upper(),
+                          "labels": [{"name": label.get("name", "")} for label in item.get("labels", [])],
+                          "author": {"login": (item.get("user") or {}).get("login", "")},
+                          "createdAt": item.get("created_at") or "",
+                          "updatedAt": item.get("updated_at") or "",
+                      }
+                  )
+              print(
+                  f"Fetched GitHub issues page {page}: {len(issue_items)} issues "
+                  f"({len(items) - len(issue_items)} PRs skipped)",
+                  flush=True,
+              )
+              if len(items) < 100:
+                  break
+              page += 1
+
+          with open(output_path, "w", encoding="utf-8") as fh:
+              json.dump(issues, fh, ensure_ascii=False)
+          print(f"Wrote {len(issues)} GitHub issues to {output_path}")
+          PY
+
       - name: Fetch GitHub issues
         env:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
         run: |
-          gh issue list \
-            --repo "$REPO" \
-            --state all \
-            --limit 5000 \
-            --json number,title,url,state,labels,author,createdAt,updatedAt \
-            > /tmp/issues.json
+          python3 /tmp/fetch-github-issues.py /tmp/issues.json
 
           python3 - <<'PY'
           import json
@@ -38,8 +120,6 @@ jobs:
           with open("/tmp/issues.json", encoding="utf-8") as fh:
               issues = json.load(fh)
           print(f"Fetched {len(issues)} GitHub issues for WBS sync")
-          if len(issues) >= 5000:
-              print("::warning::GitHub issue fetch reached the 5000 item cap; WBS sync may still be incomplete.")
           PY
 
       - name: Close duplicate GitHub issues
@@ -86,12 +166,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
         run: |
-          gh issue list \
-            --repo "$REPO" \
-            --state all \
-            --limit 5000 \
-            --json number,title,url,state,labels,author,createdAt,updatedAt \
-            > /tmp/issues.json
+          python3 /tmp/fetch-github-issues.py /tmp/issues.json
 
           python3 - <<'PY'
           import json
@@ -99,8 +174,6 @@ jobs:
           with open("/tmp/issues.json", encoding="utf-8") as fh:
               issues = json.load(fh)
           print(f"Refetched {len(issues)} GitHub issues after dedupe")
-          if len(issues) >= 5000:
-              print("::warning::GitHub issue refetch reached the 5000 item cap; WBS sync may still be incomplete.")
           PY
 
       - name: Sync issues to WBS
@@ -174,41 +247,45 @@ jobs:
             echo "" >> /tmp/wbs-sync-responses.jsonl
           done < /tmp/wbs-sync-batches.txt
 
-          python3 <<'PY' > /tmp/wbs-sync-response.json
-          import json
+          python3 - \
+            --responses /tmp/wbs-sync-responses.jsonl \
+            --failures /tmp/wbs-sync-failures.tsv \
+            --output /tmp/wbs-sync-response.json \
+            <<'AGGREGATE_PY'
+          import argparse, json
           from pathlib import Path
-
-          aggregate = {
-              "success": True,
-              "issue_count": 0,
-              "created": 0,
-              "updated": 0,
-              "completed_from_closed_issues": 0,
-              "duplicate_wbs_closed": 0,
-              "skipped": 0,
-              "issues_to_close": [],
-              "duplicate_wbs_tasks": [],
-              "batch_failures": [],
-          }
-          for line in Path("/tmp/wbs-sync-responses.jsonl").read_text(encoding="utf-8").splitlines():
-              if not line.strip():
-                  continue
-              response = json.loads(line)
-              aggregate["success"] = aggregate["success"] and bool(response.get("success", False))
-              for key in ["issue_count", "created", "updated", "completed_from_closed_issues", "duplicate_wbs_closed", "skipped"]:
-                  aggregate[key] += int(response.get(key) or 0)
-              aggregate["issues_to_close"].extend(response.get("issues_to_close") or [])
-              aggregate["duplicate_wbs_tasks"].extend(response.get("duplicate_wbs_tasks") or [])
-
-          failures_path = Path("/tmp/wbs-sync-failures.tsv")
-          if failures_path.exists() and failures_path.read_text(encoding="utf-8").strip():
-              aggregate["success"] = False
-              for line in failures_path.read_text(encoding="utf-8").splitlines():
-                  batch_number, http_code = line.split("\t", 1)
-                  aggregate["batch_failures"].append({"batch": int(batch_number), "http_code": http_code})
-
-          print(json.dumps(aggregate, ensure_ascii=False))
-          PY
+          SUM_FIELDS = ("issue_count","created","updated","completed_from_closed_issues","duplicate_wbs_closed","stale_wbs_repaired","wbs_task_scan_count","skipped")
+          LIST_FIELDS = ("issues_to_close","duplicate_wbs_tasks","repaired_wbs_tasks")
+          def as_int(v): return 0 if v is None or v == "" else int(v)
+          def item_key(i): return json.dumps(i,ensure_ascii=False,sort_keys=True,separators=(",",":"))
+          def extend_unique(t,seen,items):
+              if not isinstance(items,list): return
+              for item in items:
+                  k=item_key(item)
+                  if k in seen: continue
+                  t.append(item); seen.add(k)
+          def iter_lines(p):
+              if not Path(p).exists(): return []
+              return [json.loads(l) for l in Path(p).read_text(encoding="utf-8").splitlines() if l.strip()]
+          def read_failures(p):
+              if not Path(p).exists(): return []
+              return [{"batch":int(l.split("\t",1)[0]),"http_code":l.split("\t",1)[1]} for l in Path(p).read_text(encoding="utf-8").splitlines() if l.strip()]
+          def aggregate(responses,failures=None):
+              agg={"success":True,"issues_to_close":[],"duplicate_wbs_tasks":[],"repaired_wbs_tasks":[],"batch_failures":[]}
+              for f in SUM_FIELDS: agg[f]=0
+              seen={f:set() for f in LIST_FIELDS}
+              for r in responses:
+                  agg["success"]=agg["success"] and bool(r.get("success",False))
+                  for f in SUM_FIELDS: agg[f]+=as_int(r.get(f))
+                  for f in LIST_FIELDS: extend_unique(agg[f],seen[f],r.get(f))
+              if failures: agg["success"]=False; agg["batch_failures"].extend(failures)
+              return agg
+          p=argparse.ArgumentParser(); p.add_argument("--responses"); p.add_argument("--failures"); p.add_argument("--output")
+          a=p.parse_args()
+          out=json.dumps(aggregate(iter_lines(a.responses),read_failures(a.failures)),ensure_ascii=False)
+          if a.output: Path(a.output).write_text(out+"\n",encoding="utf-8")
+          else: print(out)
+          AGGREGATE_PY
 
           cat /tmp/wbs-sync-response.json
 

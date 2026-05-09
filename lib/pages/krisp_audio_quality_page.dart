@@ -32,6 +32,9 @@ class _KrispAudioQualityPageState extends State<KrispAudioQualityPage> {
   @override
   Widget build(BuildContext context) {
     final plan = _plan;
+    final handoff = plan.scenario == KrispAudioScenario.aiCoachSdk
+        ? _service.buildAiCoachHandoff()
+        : null;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
       backgroundColor:
@@ -84,6 +87,10 @@ class _KrispAudioQualityPageState extends State<KrispAudioQualityPage> {
                   _KpiPanel(plan: plan),
                   const SizedBox(height: 16),
                   _SdkPanel(plan: plan),
+                  if (handoff != null) ...[
+                    const SizedBox(height: 16),
+                    _AiCoachHandoffPanel(handoff: handoff),
+                  ],
                   const SizedBox(height: 16),
                   _RiskPanel(plan: plan),
                 ],
@@ -408,6 +415,129 @@ class _RiskPanel extends StatelessWidget {
                   ),
                   const SizedBox(width: 8),
                   Expanded(child: Text(risk)),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AiCoachHandoffPanel extends StatelessWidget {
+  const _AiCoachHandoffPanel({required this.handoff});
+
+  final KrispAiCoachHandoff handoff;
+
+  @override
+  Widget build(BuildContext context) {
+    final blockers = handoff.blockers.toList();
+    final statusColor = handoff.readyForSdkSpike
+        ? const Color(0xFF059669)
+        : const Color(0xFFD97706);
+    return _Panel(
+      title: 'AI coach handoff',
+      icon: Icons.record_voice_over_outlined,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: statusColor.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: statusColor.withValues(alpha: 0.3)),
+            ),
+            child: Text(
+              handoff.readyForSdkSpike
+                  ? 'Ready for SDK spike'
+                  : 'Blocked by ${blockers.length} external SDK gate(s)',
+              style: TextStyle(
+                color: statusColor,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          _InfoRow(
+            label: 'Gates',
+            value: '${handoff.satisfiedGateCount}/${handoff.gates.length}',
+          ),
+          _InfoRow(label: 'Issue', value: '#${handoff.issueNumber}'),
+          const SizedBox(height: 8),
+          ...handoff.gates.map(
+            (gate) => Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(
+                    gate.satisfied
+                        ? Icons.check_circle_outline
+                        : Icons.lock_outline,
+                    size: 18,
+                    color: gate.satisfied
+                        ? const Color(0xFF059669)
+                        : const Color(0xFFD97706),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '${gate.label} (${gate.owner})',
+                          style: const TextStyle(fontWeight: FontWeight.w700),
+                        ),
+                        Text(
+                          gate.nextAction,
+                          style: const TextStyle(
+                            color: Color(0xFF64748B),
+                            height: 1.4,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const Divider(height: 24),
+          Text(
+            'Pipeline',
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w800,
+                ),
+          ),
+          const SizedBox(height: 8),
+          for (var i = 0; i < handoff.pipeline.length; i++)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  CircleAvatar(
+                    radius: 11,
+                    backgroundColor: const Color(0xFFE0F2FE),
+                    child: Text(
+                      '${i + 1}',
+                      style: const TextStyle(
+                        color: Color(0xFF0369A1),
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      '${handoff.pipeline[i].label}: '
+                      '${handoff.pipeline[i].input} -> '
+                      '${handoff.pipeline[i].output}',
+                    ),
+                  ),
                 ],
               ),
             ),
