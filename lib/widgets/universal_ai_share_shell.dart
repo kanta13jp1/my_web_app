@@ -53,6 +53,9 @@ class UniversalAiShareShell extends StatefulWidget {
 }
 
 class _UniversalAiShareShellState extends State<UniversalAiShareShell> {
+  OverlayEntry? _overlayEntry;
+  OverlayState? _overlayState;
+
   AiShareButtonPreferencesController get _preferencesController =>
       aiShareButtonPreferencesController;
 
@@ -60,36 +63,81 @@ class _UniversalAiShareShellState extends State<UniversalAiShareShell> {
   void initState() {
     super.initState();
     _preferencesController.load();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _syncOverlayEntry();
+    });
+  }
+
+  @override
+  void didUpdateWidget(covariant UniversalAiShareShell oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.navigatorKey != widget.navigatorKey) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _syncOverlayEntry();
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _removeOverlayEntry();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        Positioned.fill(child: widget.child),
-        AnimatedBuilder(
-          animation: _preferencesController,
-          builder: (context, _) {
-            final preferences = _preferencesController.preferences;
-            if (!preferences.visible) return const SizedBox.shrink();
+    return widget.child;
+  }
 
-            return ValueListenableBuilder<UniversalSharePageContext>(
-              valueListenable: universalAiShareRouteObserver.currentPage,
-              builder: (context, page, _) {
-                return _positionedFab(
-                  preferences.position,
-                  SafeArea(
-                    child: _UniversalAiShareFab(
-                      page: page,
-                      navigatorKey: widget.navigatorKey,
-                    ),
-                  ),
-                );
-              },
+  void _syncOverlayEntry() {
+    if (!mounted) return;
+
+    final overlayState = widget.navigatorKey.currentState?.overlay;
+    if (overlayState == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _syncOverlayEntry();
+      });
+      return;
+    }
+
+    if (_overlayEntry != null && identical(_overlayState, overlayState)) {
+      return;
+    }
+
+    _removeOverlayEntry();
+    _overlayState = overlayState;
+    _overlayEntry = OverlayEntry(builder: _buildOverlayEntry);
+    overlayState.insert(_overlayEntry!);
+  }
+
+  void _removeOverlayEntry() {
+    _overlayEntry?.remove();
+    _overlayEntry = null;
+    _overlayState = null;
+  }
+
+  Widget _buildOverlayEntry(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _preferencesController,
+      builder: (context, _) {
+        final preferences = _preferencesController.preferences;
+        if (!preferences.visible) return const SizedBox.shrink();
+
+        return ValueListenableBuilder<UniversalSharePageContext>(
+          valueListenable: universalAiShareRouteObserver.currentPage,
+          builder: (context, page, _) {
+            return _positionedFab(
+              preferences.position,
+              SafeArea(
+                child: _UniversalAiShareFab(
+                  page: page,
+                  navigatorKey: widget.navigatorKey,
+                ),
+              ),
             );
           },
-        ),
-      ],
+        );
+      },
     );
   }
 
@@ -112,6 +160,14 @@ class _UniversalAiShareFab extends StatelessWidget {
   final GlobalKey<NavigatorState> navigatorKey;
 
   const _UniversalAiShareFab({required this.page, required this.navigatorKey});
+
+  bool get _isLoggedIn {
+    try {
+      return Supabase.instance.client.auth.currentSession != null;
+    } catch (_) {
+      return false;
+    }
+  }
 
   void _openShareDialog() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -144,7 +200,7 @@ class _UniversalAiShareFab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isLoggedIn = Supabase.instance.client.auth.currentSession != null;
+    final isLoggedIn = _isLoggedIn;
     final colorScheme = Theme.of(context).colorScheme;
     final backgroundColor = isLoggedIn
         ? colorScheme.primaryContainer
