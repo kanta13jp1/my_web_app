@@ -11,7 +11,7 @@
       "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "fe7203067183428c9ecbd3e97334c86868320476726d8542289237fb718db442",
+      "hash": "63957c96921e2aef5d41e089fb03c5dbad7bfdb75b3783a3266eb4dc124d57fe",
       "keyword_groups": {
         "codex-runtime": [
           "model picker",
@@ -55,15 +55,15 @@
           "workflow"
         ]
       },
-      "latest_signal": "2.1.136 / May 8, 2026",
+      "latest_signal": "2.1.138 / May 9, 2026",
       "name": "Claude Code changelog",
       "owner": "Claude Code",
-      "previous_hash": "734e2ced0044fc40b2e4a4dca6fc73207e8da47c19431c792961e81fbf06370c",
+      "previous_hash": "fe7203067183428c9ecbd3e97334c86868320476726d8542289237fb718db442",
       "slug": "claude-code-changelog",
       "snippets": [
         "Navigation Getting started Changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started Overview...",
         "This page is generated from the CHANGELOG.md on GitHub .",
-        "​ 2.1.136 May 8, 2026 Added CLAUDE_CODE_ENABLE_FEEDBACK_SURVEY_FOR_OTEL to re-enable the session quality survey for enterprises capturing responses through OpenTelemetry Added..."
+        "​ 2.1.138 May 9, 2026 Internal fixes ​ 2.1.137 May 9, 2026 [VSCode] Fixed extension failing to activate on Windows ​ 2.1.136 May 8, 2026 Added..."
       ],
       "status": 200,
       "url": "https://code.claude.com/docs/en/changelog"
@@ -72,56 +72,7 @@
       "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "7018ca8cde191d7c3d63cb7fbca172849fe993924cd26213df56e7d5b79b62ee",
-      "keyword_groups": {
-        "codex-runtime": [
-          "worktree",
-          "subagents"
-        ],
-        "hooks": [
-          "hook",
-          "hooks",
-          "SessionStart",
-          "UserPromptSubmit",
-          "PostToolUse",
-          "Stop",
-          "StopFailure"
-        ],
-        "integration": [
-          "MCP",
-          "connector",
-          "GitHub"
-        ],
-        "quality-cost": [
-          "OpenTelemetry",
-          "rate limit",
-          "permission",
-          "review",
-          "CI"
-        ],
-        "schedule": [
-          "schedule",
-          "workflow"
-        ]
-      },
-      "latest_signal": "Hooks reference - Claude Code Docs Skip to main content Claude Code Docs home page English",
-      "name": "Claude Code hooks reference",
-      "owner": "Claude Code",
-      "previous_hash": "7ec6e5e55b336a8fdb4d3df1506b44c2872e4983ca0e17a1995eed5e5c2157cc",
-      "slug": "claude-code-hooks",
-      "snippets": [
-        "Hooks reference - Claude Code Docs Skip to main content Claude Code Docs home page English Search...",
-        "Navigation Reference Hooks reference Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Reference CLI reference...",
-        "For a quickstart guide with examples, see Automate workflows with hooks ."
-      ],
-      "status": 200,
-      "url": "https://code.claude.com/docs/en/hooks"
-    },
-    {
-      "changed": true,
-      "error": null,
-      "first_seen": false,
-      "hash": "7057f45b0674802dcbfa2ff3f4af9d55e52e82d24a387f53b9fe8c551818414e",
+      "hash": "3481e8c38ac43a2983c92ddddaa6332d2047ed4c13c1638a0213d06c86ecba66",
       "keyword_groups": {
         "codex-runtime": [
           "GPT-5.5",
@@ -136,8 +87,6 @@
         "hooks": [
           "hook",
           "hooks",
-          "SessionStart",
-          "PostToolUse",
           "Stop"
         ],
         "integration": [
@@ -150,7 +99,6 @@
         ],
         "quality-cost": [
           "cost",
-          "quota",
           "rate limit",
           "sandbox",
           "permission",
@@ -161,19 +109,18 @@
           "automation",
           "automations",
           "schedule",
-          "GitHub Actions",
           "workflow"
         ]
       },
       "latest_signal": "2026-05-07 / Codex for Chrome With the new extension for Chrome, Codex is even better at working with ap",
       "name": "Codex changelog",
       "owner": "Codex",
-      "previous_hash": "f66be8639aa0d23f7f2d6672e011fa9de697e41a273d2ecc34a325817366ce11",
+      "previous_hash": "7057f45b0674802dcbfa2ff3f4af9d55e52e82d24a387f53b9fe8c551818414e",
       "slug": "codex-changelog",
       "snippets": [
         "Changelog – Codex | OpenAI Developers Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and...",
-        "2026-05-07 Codex CLI 0.129.0 pre]:w-full [&>pre]:max-w-full [&>pre]:mb-0 pt-4\"> $ npm install -g @openai/codex@0.129.0 View details New Features The TUI now supports modal Vim...",
-        "( #18595 ) TUI workflows are easier to resume and copy from with a redesigned resume/fork picker, raw scrollback mode, /ide context injection, and workspace-aware /diff ."
+        "April 2026 li+li]:mt-12\"> 2026-04-23 GPT-5.5 and Codex app updates GPT-5.5 is now available in Codex as OpenAI’s newest frontier model for complex coding, computer use,...",
+        "GPT-5.5 in Codex GPT-5.5 is the recommended choice for most Codex tasks when it appears in your model picker."
       ],
       "status": 200,
       "url": "https://developers.openai.com/codex/changelog"
@@ -182,32 +129,60 @@
       "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "674496770448525f6f4618967b90695936144cb101d2016bfbc383acb6706831",
+      "hash": "ce89397bbd9e1b45c0b54521bc998720cbe938306ef07f503898b5c2f4c134d9",
       "keyword_groups": {
-        "codex-runtime": [
-          "GPT-5.5",
-          "GPT-5.4",
-          "in-app browser",
-          "computer use",
-          "worktree",
-          "subagents"
-        ],
         "hooks": [
-          "hook",
-          "hooks"
+          "Stop"
         ],
         "integration": [
           "MCP",
-          "connector",
-          "Slack",
-          "Linear",
           "GitHub",
-          "IDE extension"
+          "VSCode"
         ],
         "quality-cost": [
           "cost",
+          "quota",
+          "permission",
+          "review",
+          "CI"
+        ],
+        "schedule": [
+          "workflow"
+        ]
+      },
+      "latest_signal": "VS Code Gemini Code Assist 2.81.0 / May 08, 2026",
+      "name": "Gemini Code Assist release notes",
+      "owner": "Gemini Code Assist",
+      "previous_hash": "84656b0b48c50c58bfa7fbe6d84583e4d02b52ac4ea45a56a44daeefdbbef051",
+      "slug": "gemini-code-assist-release-notes",
+      "snippets": [
+        "Gemini Code Assist release notes | Google for Developers Skip to main content Gemini Code Assist / English Deutsch Español Français Indonesia Português – Brasil Русский 中文 – 简体...",
+        "Page Summary outlined_flag As of October 14, 2025, Gemini Code Assist tools are no longer available and are replaced by agent mode (Preview).",
+        "Gemini Code Assist on GitHub now offers an enterprise version for enhanced code reviews across multiple repositories."
+      ],
+      "status": 200,
+      "url": "https://developers.google.com/gemini-code-assist/resources/release-notes"
+    },
+    {
+      "changed": true,
+      "error": null,
+      "first_seen": false,
+      "hash": "425f19e77f97d6510f7c7b75cc1b5bf1e0b2b1eac7cfacc7e5053215889c0399",
+      "keyword_groups": {
+        "codex-runtime": [
+          "computer use",
+          "subagents"
+        ],
+        "integration": [
+          "MCP",
+          "Slack",
+          "Linear",
+          "GitHub"
+        ],
+        "quality-cost": [
+          "cost",
+          "quota",
           "rate limit",
-          "sandbox",
           "permission",
           "review",
           "CI"
@@ -215,24 +190,25 @@
         "schedule": [
           "automation",
           "automations",
+          "schedule",
           "workflow"
         ]
       },
-      "latest_signal": "Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoint",
-      "name": "Codex use cases",
-      "owner": "Codex",
-      "previous_hash": "639f8b6215403e62806d181ab0eff109153ea74e88217dd564ea36bfcf205b7e",
-      "slug": "codex-use-cases",
+      "latest_signal": "May 8, 2026",
+      "name": "Devin release notes",
+      "owner": "Devin",
+      "previous_hash": "8d016da7f36dddb10521c38014e065cebd3c4625298600c263159a00dd1ce265",
+      "slug": "devin-release-notes",
       "snippets": [
-        "Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and product docs for Codex...",
-        "Web development Turn design inputs into responsive UI, and iterate on the frontend with scoped changes and fast reviews.",
-        "Featured Start with the most common Codex workflows."
+        "​ May 8, 2026 Devin Review API You can now trigger Devin Review programmatically via the REST API.",
+        "Use POST /v3/organizations/{org_id}/pr-reviews with a service user token or PAT to initiate reviews from CI pipelines, scripts, or custom integrations.",
+        "Close PRs on Session Archive When archiving a Devin session, a dialog now appears where you can optionally close any linked GitHub pull requests, keeping your repository tidy..."
       ],
       "status": 200,
-      "url": "https://developers.openai.com/codex/use-cases/"
+      "url": "https://docs.devin.ai/release-notes"
     }
   ],
-  "checked_at": "2026-05-08T21:37:47Z",
+  "checked_at": "2026-05-09T21:30:36Z",
   "high_priority_groups": [
     "codex-runtime",
     "hooks",
@@ -284,13 +260,13 @@
     }
   },
   "issue": "1422",
-  "previous_checked_at": "2026-05-07T21:36:24Z",
+  "previous_checked_at": "2026-05-08T21:37:47Z",
   "sources": [
     {
       "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "fe7203067183428c9ecbd3e97334c86868320476726d8542289237fb718db442",
+      "hash": "63957c96921e2aef5d41e089fb03c5dbad7bfdb75b3783a3266eb4dc124d57fe",
       "keyword_groups": {
         "codex-runtime": [
           "model picker",
@@ -334,21 +310,21 @@
           "workflow"
         ]
       },
-      "latest_signal": "2.1.136 / May 8, 2026",
+      "latest_signal": "2.1.138 / May 9, 2026",
       "name": "Claude Code changelog",
       "owner": "Claude Code",
-      "previous_hash": "734e2ced0044fc40b2e4a4dca6fc73207e8da47c19431c792961e81fbf06370c",
+      "previous_hash": "fe7203067183428c9ecbd3e97334c86868320476726d8542289237fb718db442",
       "slug": "claude-code-changelog",
       "snippets": [
         "Navigation Getting started Changelog Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting started Overview...",
         "This page is generated from the CHANGELOG.md on GitHub .",
-        "​ 2.1.136 May 8, 2026 Added CLAUDE_CODE_ENABLE_FEEDBACK_SURVEY_FOR_OTEL to re-enable the session quality survey for enterprises capturing responses through OpenTelemetry Added..."
+        "​ 2.1.138 May 9, 2026 Internal fixes ​ 2.1.137 May 9, 2026 [VSCode] Fixed extension failing to activate on Windows ​ 2.1.136 May 8, 2026 Added..."
       ],
       "status": 200,
       "url": "https://code.claude.com/docs/en/changelog"
     },
     {
-      "changed": true,
+      "changed": false,
       "error": null,
       "first_seen": false,
       "hash": "7018ca8cde191d7c3d63cb7fbca172849fe993924cd26213df56e7d5b79b62ee",
@@ -386,7 +362,7 @@
       "latest_signal": "Hooks reference - Claude Code Docs Skip to main content Claude Code Docs home page English",
       "name": "Claude Code hooks reference",
       "owner": "Claude Code",
-      "previous_hash": "7ec6e5e55b336a8fdb4d3df1506b44c2872e4983ca0e17a1995eed5e5c2157cc",
+      "previous_hash": "7018ca8cde191d7c3d63cb7fbca172849fe993924cd26213df56e7d5b79b62ee",
       "slug": "claude-code-hooks",
       "snippets": [
         "Hooks reference - Claude Code Docs Skip to main content Claude Code Docs home page English Search...",
@@ -447,7 +423,7 @@
       "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "7057f45b0674802dcbfa2ff3f4af9d55e52e82d24a387f53b9fe8c551818414e",
+      "hash": "3481e8c38ac43a2983c92ddddaa6332d2047ed4c13c1638a0213d06c86ecba66",
       "keyword_groups": {
         "codex-runtime": [
           "GPT-5.5",
@@ -462,8 +438,6 @@
         "hooks": [
           "hook",
           "hooks",
-          "SessionStart",
-          "PostToolUse",
           "Stop"
         ],
         "integration": [
@@ -476,7 +450,6 @@
         ],
         "quality-cost": [
           "cost",
-          "quota",
           "rate limit",
           "sandbox",
           "permission",
@@ -487,25 +460,24 @@
           "automation",
           "automations",
           "schedule",
-          "GitHub Actions",
           "workflow"
         ]
       },
       "latest_signal": "2026-05-07 / Codex for Chrome With the new extension for Chrome, Codex is even better at working with ap",
       "name": "Codex changelog",
       "owner": "Codex",
-      "previous_hash": "f66be8639aa0d23f7f2d6672e011fa9de697e41a273d2ecc34a325817366ce11",
+      "previous_hash": "7057f45b0674802dcbfa2ff3f4af9d55e52e82d24a387f53b9fe8c551818414e",
       "slug": "codex-changelog",
       "snippets": [
         "Changelog – Codex | OpenAI Developers Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and...",
-        "2026-05-07 Codex CLI 0.129.0 pre]:w-full [&>pre]:max-w-full [&>pre]:mb-0 pt-4\"> $ npm install -g @openai/codex@0.129.0 View details New Features The TUI now supports modal Vim...",
-        "( #18595 ) TUI workflows are easier to resume and copy from with a redesigned resume/fork picker, raw scrollback mode, /ide context injection, and workspace-aware /diff ."
+        "April 2026 li+li]:mt-12\"> 2026-04-23 GPT-5.5 and Codex app updates GPT-5.5 is now available in Codex as OpenAI’s newest frontier model for complex coding, computer use,...",
+        "GPT-5.5 in Codex GPT-5.5 is the recommended choice for most Codex tasks when it appears in your model picker."
       ],
       "status": 200,
       "url": "https://developers.openai.com/codex/changelog"
     },
     {
-      "changed": true,
+      "changed": false,
       "error": null,
       "first_seen": false,
       "hash": "674496770448525f6f4618967b90695936144cb101d2016bfbc383acb6706831",
@@ -547,7 +519,7 @@
       "latest_signal": "Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoint",
       "name": "Codex use cases",
       "owner": "Codex",
-      "previous_hash": "639f8b6215403e62806d181ab0eff109153ea74e88217dd564ea36bfcf205b7e",
+      "previous_hash": "674496770448525f6f4618967b90695936144cb101d2016bfbc383acb6706831",
       "slug": "codex-use-cases",
       "snippets": [
         "Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and product docs for Codex...",
@@ -614,10 +586,10 @@
       "url": "https://cursor.com/changelog"
     },
     {
-      "changed": false,
+      "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "84656b0b48c50c58bfa7fbe6d84583e4d02b52ac4ea45a56a44daeefdbbef051",
+      "hash": "ce89397bbd9e1b45c0b54521bc998720cbe938306ef07f503898b5c2f4c134d9",
       "keyword_groups": {
         "hooks": [
           "Stop"
@@ -638,7 +610,7 @@
           "workflow"
         ]
       },
-      "latest_signal": "VS Code Gemini Code Assist 2.79.0 / April 22, 2026",
+      "latest_signal": "VS Code Gemini Code Assist 2.81.0 / May 08, 2026",
       "name": "Gemini Code Assist release notes",
       "owner": "Gemini Code Assist",
       "previous_hash": "84656b0b48c50c58bfa7fbe6d84583e4d02b52ac4ea45a56a44daeefdbbef051",
@@ -652,10 +624,10 @@
       "url": "https://developers.google.com/gemini-code-assist/resources/release-notes"
     },
     {
-      "changed": false,
+      "changed": true,
       "error": null,
       "first_seen": false,
-      "hash": "8d016da7f36dddb10521c38014e065cebd3c4625298600c263159a00dd1ce265",
+      "hash": "425f19e77f97d6510f7c7b75cc1b5bf1e0b2b1eac7cfacc7e5053215889c0399",
       "keyword_groups": {
         "codex-runtime": [
           "computer use",
@@ -682,15 +654,15 @@
           "workflow"
         ]
       },
-      "latest_signal": "May 6, 2026",
+      "latest_signal": "May 8, 2026",
       "name": "Devin release notes",
       "owner": "Devin",
       "previous_hash": "8d016da7f36dddb10521c38014e065cebd3c4625298600c263159a00dd1ce265",
       "slug": "devin-release-notes",
       "snippets": [
-        "​ May 6, 2026 Slack Tool Use in Worklog When Devin interacts with Slack during a session (sending messages, adding reactions, reading channels), these actions now appear in the...",
-        "Review Commit Links Fixed commit links in Devin Review to point to the correct URL path, and improved status indicators for review progress.",
-        "Default Branch Detection Fixed an issue where repository indexing could use the wrong branch as the primary branch instead of the actual GitHub or GitLab default branch, which..."
+        "​ May 8, 2026 Devin Review API You can now trigger Devin Review programmatically via the REST API.",
+        "Use POST /v3/organizations/{org_id}/pr-reviews with a service user token or PAT to initiate reviews from CI pipelines, scripts, or custom integrations.",
+        "Close PRs on Session Archive When archiving a Devin session, a dialog now appears where you can optionally close any linked GitHub pull requests, keeping your repository tidy..."
       ],
       "status": 200,
       "url": "https://docs.devin.ai/release-notes"
