@@ -78,7 +78,7 @@ void main() {
     expect(find.text('23:00'), findsOneWidget);
   });
 
-  testWidgets('event tap opens edit dialog and saves calendar.update', (
+  testWidgets('event tap opens detail sheet and edit saves calendar.update', (
     tester,
   ) async {
     final today = DateTime.now();
@@ -116,8 +116,18 @@ void main() {
     await tester.tap(find.text('Budget review'));
     await tester.pumpAndSettle();
 
+    expect(find.text('Edit'), findsOneWidget);
+    expect(find.text('Delete'), findsOneWidget);
+    expect(find.text('Copy'), findsOneWidget);
+    expect(find.text('Share'), findsOneWidget);
+    expect(find.text('Metadata'), findsOneWidget);
+    expect(find.text('event_id'), findsOneWidget);
+    expect(find.text('event-1'), findsOneWidget);
     expect(find.text('Budget review'), findsWidgets);
     expect(find.text('Revise forecast'), findsWidgets);
+
+    await tester.tap(find.text('Edit'));
+    await tester.pumpAndSettle();
 
     await tester.enterText(find.byType(TextField).first, 'Budget review v2');
     await tester.tap(find.byType(ElevatedButton).last);

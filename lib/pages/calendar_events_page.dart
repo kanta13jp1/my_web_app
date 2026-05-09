@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:table_calendar/table_calendar.dart';
 
@@ -40,6 +42,24 @@ String _eventTimeLabel(Map<String, dynamic> event) {
   if (start == null) return '';
   if (end == null) return _formatClock(start);
   return '${_formatClock(start)} - ${_formatClock(end)}';
+}
+
+String _formatDate(DateTime d) =>
+    '${d.year}/${d.month.toString().padLeft(2, '0')}/${d.day.toString().padLeft(2, '0')}';
+
+String _formatDateTime(DateTime d) => '${_formatDate(d)} ${_formatClock(d)}';
+
+String _eventDateTimeLabel(Map<String, dynamic> event) {
+  final start = _eventDateTime(event, 'start_at');
+  final end = _eventDateTime(event, 'end_at');
+  if (start == null) return 'No start time';
+  if (_eventIsAllDay(event)) return '${_formatDate(start)} All-day';
+  if (end == null) return _formatDateTime(start);
+  final endLabel =
+      start.year == end.year && start.month == end.month && start.day == end.day
+          ? _formatClock(end)
+          : _formatDateTime(end);
+  return '${_formatDateTime(start)} - $endLabel';
 }
 
 String _eventColorHex(Map<String, dynamic> event) {
@@ -272,6 +292,191 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
     );
   }
 
+  String _eventDetailsText(Map<String, dynamic> event) {
+    final buffer = StringBuffer()
+      ..writeln(_eventTitle(event))
+      ..writeln(_eventDateTimeLabel(event));
+    final description = event['description']?.toString().trim() ?? '';
+    if (description.isNotEmpty) {
+      buffer
+        ..writeln()
+        ..writeln(description);
+    }
+    buffer
+      ..writeln()
+      ..writeln('Color: ${_eventColorHex(event)}');
+    final eventId = event['event_id']?.toString() ?? '';
+    if (eventId.isNotEmpty) {
+      buffer.writeln('Event ID: $eventId');
+    }
+    return buffer.toString().trim();
+  }
+
+  String _metadataValue(Object? value) {
+    if (value == null) return '-';
+    if (value is DateTime) return value.toIso8601String();
+    return value.toString();
+  }
+
+  List<({String label, String value})> _eventMetadataRows(
+    Map<String, dynamic> event,
+  ) {
+    final entries = event.entries.toList()
+      ..sort((a, b) => a.key.compareTo(b.key));
+    return [
+      for (final entry in entries)
+        (label: entry.key, value: _metadataValue(entry.value)),
+    ];
+  }
+
+  Future<void> _copyEventDetails(
+    BuildContext context,
+    Map<String, dynamic> event,
+  ) async {
+    final messenger = ScaffoldMessenger.of(context);
+    await Clipboard.setData(ClipboardData(text: _eventDetailsText(event)));
+    if (!mounted) return;
+    messenger.showSnackBar(
+      const SnackBar(content: Text('Event details copied')),
+    );
+  }
+
+  Future<void> _shareEventDetails(Map<String, dynamic> event) async {
+    await SharePlus.instance.share(
+      ShareParams(text: _eventDetailsText(event), subject: _eventTitle(event)),
+    );
+  }
+
+  void _showEventDetailsSheet(
+    BuildContext context,
+    Map<String, dynamic> event,
+  ) {
+    final color = _eventColor(event);
+    final description = event['description']?.toString().trim() ?? '';
+    final metadataRows = _eventMetadataRows(event);
+    showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      isScrollControlled: true,
+      builder: (sheetContext) {
+        final theme = Theme.of(sheetContext);
+        return SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    CircleAvatar(
+                      backgroundColor: color.withValues(alpha: 0.16),
+                      child: Icon(Icons.event, color: color),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            _eventTitle(event),
+                            style: theme.textTheme.titleLarge,
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            _eventDateTimeLabel(event),
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: theme.colorScheme.outline,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                if (description.isNotEmpty) ...[
+                  const SizedBox(height: 16),
+                  Text('Description', style: theme.textTheme.labelLarge),
+                  const SizedBox(height: 4),
+                  Text(description, style: theme.textTheme.bodyMedium),
+                ],
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Container(
+                      width: 18,
+                      height: 18,
+                      decoration: BoxDecoration(
+                        color: color,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      _eventColorHex(event),
+                      style: theme.textTheme.bodyMedium,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    FilledButton.icon(
+                      icon: const Icon(Icons.edit),
+                      label: const Text('Edit'),
+                      onPressed: () {
+                        Navigator.pop(sheetContext);
+                        _showEditEventDialog(context, event);
+                      },
+                    ),
+                    OutlinedButton.icon(
+                      icon: const Icon(Icons.delete_outline),
+                      label: const Text('Delete'),
+                      onPressed: () {
+                        Navigator.pop(sheetContext);
+                        _confirmDeleteEvent(context, event);
+                      },
+                    ),
+                    OutlinedButton.icon(
+                      icon: const Icon(Icons.content_copy),
+                      label: const Text('Copy'),
+                      onPressed: () => _copyEventDetails(sheetContext, event),
+                    ),
+                    OutlinedButton.icon(
+                      icon: const Icon(Icons.ios_share),
+                      label: const Text('Share'),
+                      onPressed: () => _shareEventDetails(event),
+                    ),
+                  ],
+                ),
+                if (metadataRows.isNotEmpty) ...[
+                  const SizedBox(height: 20),
+                  Text('Metadata', style: theme.textTheme.titleSmall),
+                  const SizedBox(height: 8),
+                  DecoratedBox(
+                    decoration: BoxDecoration(
+                      border: Border.all(color: theme.dividerColor),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Column(
+                      children: [
+                        for (final row in metadataRows)
+                          _EventMetadataRow(label: row.label, value: row.value),
+                      ],
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -391,7 +596,7 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
                 ? _DayTimelineView(
                     selectedDay: _selectedDay,
                     events: _selectedDayEvents,
-                    onTap: (event) => _showEditEventDialog(context, event),
+                    onTap: (event) => _showEventDetailsSheet(context, event),
                     onDelete: (event) => _confirmDeleteEvent(context, event),
                   )
                 : _selectedDayEvents.isEmpty
@@ -427,7 +632,7 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
                           return _EventCard(
                             event: event,
                             color: _eventColor(event),
-                            onTap: () => _showEditEventDialog(context, event),
+                            onTap: () => _showEventDetailsSheet(context, event),
                             onDelete: () {
                               final eventId =
                                   event['event_id']?.toString() ?? '';
@@ -713,6 +918,39 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _EventMetadataRow extends StatelessWidget {
+  const _EventMetadataRow({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 104,
+            child: Text(
+              label,
+              style: theme.textTheme.labelMedium?.copyWith(
+                color: theme.colorScheme.outline,
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: SelectableText(value, style: theme.textTheme.bodySmall),
+          ),
+        ],
       ),
     );
   }
