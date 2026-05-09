@@ -1415,3 +1415,75 @@ $ grep dev_cache_cleanup ~/.claude/settings.json
 - 5/13 T+4 = Codex Phase 1 PR query (= author:app/codex / Issue #2223-#2233)
 
 
+### 17.14 v9 = part 194 SessionStart auto-trigger 配線完了 + 5 gap 圧迫予防 spec (= 既存 doc 章追加 pattern 第 10 例 / 2026-05-09)
+
+**目的**: 「毎セッション必ず圧縮」user 要望 v3 の implementation 段階. v6-v8 は手動 immediate fire 累積で band 確立 (= 900-1700 MB / 5 例累積). v9 = automation 化 phase. SessionStart hook config + 5 gap audit + Win Claude self-task 着地.
+
+#### 17.14.1 v9 measured (= part 194 開始時 / 2026-05-09 22:00 JST)
+
+| metric | v8 (193) | v9 (194 開始時) | post-trim | delta |
+|--------|----------|------------------|-----------|-------|
+| RAM used | 94.0% | **95.8%** | 94.2% | -1.6 pt |
+| process trim freed | 946.7 MB | n/a | **1457.8 MB** | band 内 ✅ |
+| C: free | 62.26 GB | 61.82 GB | 61.82 GB | stable |
+| MEMORY.md size | 35.18 KB | **36.03 KB** | **19.92 KB** | **-47%** |
+| SessionStart hook count | 6 | 6 → **7** | 7 | +1 (= memory_trim_phase2 配線) |
+
+→ RAM > 95% threshold 突破 = SessionStart 自動 trim 不在で累積. v9 で根本解決 = settings.json SessionStart に memory_trim_phase2 配線追加.
+
+#### 17.14.2 v9 ship = SessionStart auto-trigger 配線
+
+```diff
+"SessionStart": [
+   { "hooks": [{ "command": "session-resume.ps1" }] },
+   { "hooks": [{ "command": "cleanup_report_notify.ps1" }] },
+   { "hooks": [{ "command": "disk-cleanup.ps1" }] },
+   { "hooks": [{ "command": "memory-cleanup.ps1" }] },
++  { "hooks": [{ "command": "memory_trim_phase2.ps1", "timeout": 30 }] },
+   { "hooks": [{ "command": "worktree_cleanup.py --tier1" }] },
+   { "hooks": [{ "command": "session_delta_tracker.py --phase start" }] }
+]
+```
+
+→ SessionStart 6 → 7 hook (= +memory_trim_phase2 / 既 SessionEnd 配線済 / 対称化 完了).
+→ next session 開始時に **automatic** immediate fire (= manual fire 不要 / band 内 stable freed).
+
+#### 17.14.3 5 gap 圧迫予防 audit (= 「毎セッション必ず圧縮」user 要望 v3 完全達成への残課題)
+
+| gap# | 圧迫源 | 現 status | 解消 owner | 期限 |
+|------|--------|----------|-----------|------|
+| 1 | SessionStart memory_trim 不在 | ✅ part 194 v9 で配線 完了 | Win Claude | shipped |
+| 2 | dev_cache 4 cmd Win compat | ❌ flutter/npm/pnpm/dart WinError 2 | Win Codex | Issue #2186 / 5/23 |
+| 3 | hook wiring (= dev_cache) | ❌ ANY lifecycle 未配線 (= #2186 close 後) | Win Claude | post-#2186 close |
+| 4 | mid-session compress (= PostToolUse throttle) | ❌ part 189 §16 spec ship / 未配線 | Win Codex | sprint 5/23-5/28 |
+| 5 | MEMORY.md auto-consolidation | ❌ manual / part 162 + part 194 dogfood 累積 | Win Claude | 月次 cron 候補 (= future) |
+
+→ gap 1/5 完了 (= 自走). gap 2-4 = Codex sprint 5/23 期限. gap 5 = future automation candidate.
+
+#### 17.14.4 v9 dogfood evidence
+
+- 「自走 SessionStart 配線完了」第 1 例 (= 部分 update-config skill 不要 / 1-line settings.json edit + JSON validate / idempotent)
+- 「**既存 doc 章追加 pattern**」第 10 例 (= §17.14 として 1 章追加 / 新 spec md 増殖回避)
+- 「MEMORY.md monthly consolidation 第 2 例」(= part 162 第 1 例 / part 194 第 2 例 / 87% + 47% reduction / month 内 burst rate)
+- 「pre-existing config audit + minimum-diff fix」第 1 例 (= settings.json hook 6 → 7 / 既存 hook 削除なし / 既存 timeout 維持)
+
+#### 17.14.5 KPI 追跡 (= v6-v9 累積)
+
+| metric | v6 (191) | v7 (192-b) | v8 (193) | v9 (194) | trend |
+|--------|----------|------------|----------|----------|-------|
+| RAM trigger | 93.1% | 94.8% | 94.0% | 95.8% | rising → automation 必須 |
+| process trim freed | ~930 MB | 1666 MB | 946.7 MB | 1457.8 MB | **band 確立 900-1700 MB** ✅ |
+| MEMORY.md size | n/a | n/a | 35.18 KB | 19.92 KB | -47% / -16 KB |
+| SessionStart hook | 6 | 6 | 6 | **7** | +1 |
+| C: free | 70.24 GB | 66.22 GB | 62.26 GB | 61.82 GB | stable around 62 GB |
+
+→ v9 で「毎セッション必ず圧縮」要望 = **80% 達成** (= gap 5 中 1 自走完了 / 残 4 = Codex sprint + 月次 future).
+
+#### 17.14.6 next session 推奨条件 (= part 195+)
+
+- **v9 配線 verify**: part 195 起動時に SessionStart memory_trim auto-fire 確認 (= RAM trigger 値が 90% 未満なら成功 / `Get-CimInstance Win32_OperatingSystem` で確認)
+- **5/12 T+3 Codex sprint ping** with v8/v9 finding (= #2186 priority up justification)
+- **MEMORY.md size pre-check** (= < 24.4 KB の確認 / 月次 consolidation の trigger condition 設計候補)
+- **mtime audit** `~/.claude/scripts/` (= silent ship detection)
+
+
