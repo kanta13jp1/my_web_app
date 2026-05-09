@@ -39,10 +39,10 @@ PR #2022 MERGED 2026-05-05 後 2 日経過. Codex 14 件 hand-off の進捗 veri
 | 7 | `supabase/functions/_shared/internal_hmac.ts` | ❌ |
 | 8 | `.github/workflows/mcp-audit-anomaly-cron.yml` (= hourly :07) | ❌ |
 | 9 | `terraform/` Custom Provider skeleton | ❌ |
-| 10 | `docs/mcp-dcr-vs-cimd-decision.md` | ❌ |
-| 11 | `docs/mcp-attest-roadmap.md` | ❌ |
-| 12 | `docs/mcp-auth-incident-runbook.md` | ❌ |
-| 13 | `memory-search-hub` 5/10 → 10/10 達成 | △ EF 存在 / 10 原則 self-check 未 verify |
+| 10 | `docs/mcp-dcr-vs-cimd-decision.md` | ✅ Codex #1 Phase D PR |
+| 11 | `docs/mcp-attest-roadmap.md` | ✅ Codex #1 Phase D PR |
+| 12 | `docs/mcp-auth-incident-runbook.md` | ✅ Codex #1 Phase D PR |
+| 13 | `memory-search-hub` 5/10 → 10/10 達成 | ✅ Codex #1 Phase E self-check |
 | 14 | `docs/DESIGN_SPEC_TEMPLATE.md` §4A 第 4 改訂 | ✅ (= PR #2022 で同梱) |
 
 **進捗 = 3/14 (= 21%) / 11 件未完成**. 親 spec §5-§7 に実装サンプルコード詳細記載済 → Codex は spec doc を参照しつつ実装可能.
@@ -78,11 +78,15 @@ PR #2022 MERGED 2026-05-05 後 2 日経過. Codex 14 件 hand-off の進捗 veri
 
 ### Phase D. docs 3 件 (= 推定 1.5h)
 
+**Status**: ✅ Codex #1 Phase D PR prepared the DCR/CIMD decision note, AttestMCP roadmap, and MCP auth incident runbook. Phase E is handled in the same scoped PR.
+
 9. `docs/mcp-dcr-vs-cimd-decision.md` — 親 spec §4.1 を docs 化. Phase 1 = DCR / Phase 2 (2027 Q1) = CIMD 移行決定理由.
 10. `docs/mcp-attest-roadmap.md` — 親 spec §6.6. AttestMCP 採用条件 (= MCP server 数 5+ / cross-server 攻撃 1+ 件 検知).
 11. `docs/mcp-auth-incident-runbook.md` — 親 spec §6.5 escape hatch. Sentinel role 1 SQL で全 client suspend 手順 + Slack channel + 復旧 SOP.
 
 ### Phase E. memory-search-hub 10/10 verify (= 推定 30 min)
+
+**Status**: ✅ Codex #1 Phase E PR documented the MCP-AUTH-27 10/10 self-check in `supabase/functions/memory-search-hub/index.ts`; no runtime code change was required.
 
 12. `supabase/functions/memory-search-hub/index.ts` の **MCP-AUTH-27 10 原則 self-check** を JSDoc にて明記. 既存実装が 10/10 を満たすか軸別 ✅/❌ で記録. ❌ あれば追加 issue 起票 (= [ISSUE-PRECHECK] 重複 check 必須).
 
