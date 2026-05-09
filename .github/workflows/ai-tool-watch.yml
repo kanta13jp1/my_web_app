@@ -54,17 +54,27 @@ jobs:
             --report docs/ai-tool-watch/latest-report.md \
             --json docs/ai-tool-watch/latest-report.json
 
+      - name: Detect repeated news patterns
+        id: patterns
+        run: |
+          python scripts/news_pattern_detector.py \
+            --source docs/ai-tool-watch/latest-report.json \
+            --label ai-tool-watch \
+            --output docs/ai-tool-watch/latest-patterns.json \
+            --markdown docs/ai-tool-watch/latest-patterns.md \
+            --min-confidence 0.55
+
       - name: Commit updated watch state
         run: |
           set -euo pipefail
-          if git diff --quiet -- docs/ai-tool-watch; then
+          if [ -z "$(git status --porcelain -- docs/ai-tool-watch)" ]; then
             echo "No report/state changes to commit."
             exit 0
           fi
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add docs/ai-tool-watch/latest-report.md docs/ai-tool-watch/latest-report.json docs/ai-tool-watch/state.json
+          git add docs/ai-tool-watch/latest-report.md docs/ai-tool-watch/latest-report.json docs/ai-tool-watch/latest-patterns.json docs/ai-tool-watch/latest-patterns.md docs/ai-tool-watch/state.json
           git commit -m "chore: update AI tool watch report"
           git push
 
