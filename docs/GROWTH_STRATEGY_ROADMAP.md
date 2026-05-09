@@ -29378,4 +29378,60 @@ User 直接 ask (= 3 件):
 - 理念的貢献: 「**pre-existing spec verify pattern**」第 2 例 (= part 184 第 1 例継承 / v5 spec ship 後 v6 同主題 ask は新 spec 起票せず status section 追加 + immediate manual fire) + 「**user 同テーマ iterative ask v1-v6 累積管理 pattern**」第 2 例 (= part 190-b 第 1 例継承 / 6 phase 累積) + 「**WBS Top 5 期限近順 + 2-instance 振分**」第 7 例 + 「**immediate manual fire pattern**」第 1 例 (= Codex T+1 day pre-impl 期間中の relief recipe / RAM +930 MB) / 123 part 連続 dogfood
 
 ### Commit
+- `635bbce18` — `docs(part 191): v6 圧縮 immediate manual fire verify + ROADMAP entry (#2306)` (= part 192 backfill)
+
+---
+
+## Win版#132 part 192 — ROADMAP backfill + Codex AI share controls acknowledgment + MEMORY.md size audit (2026-05-09 JST)
+
+### 概要
+part 191 末尾 → 同日連続 part 192 開始. user direct ask 3 件 全 verify-only + backfill scope:
+1. **Opus 4.7 1M default 動作 verify** (= 起動 model header `claude-opus-4-7[1m]` 反映確認)
+2. **ROADMAP part 191 Commit hash backfill** (= placeholder → `635bbce18`)
+3. **WBS Top 5 monitor + T+3/T+4 ping 判断** (= today = T+0/T+1 = early skip)
+
+→ 前 session ship 4 件 verify + Codex direct push acknowledgment + MEMORY.md size audit pattern.
+
+### 主要 ship (= 3 件 / verify-only)
+
+1. **Opus 4.7 1M default 反映 verify** (= `~/.claude/settings.json` line 122 `"model": "claude-opus-4-7[1m]"` 反映 / 本 session 起動時 model header 確認 ✅ / part 191 設定 → part 192 起動で初適用 / behavior 異常なし)
+
+2. **ROADMAP part 191 Commit section backfill** (= line 29381 placeholder `(= 本 docs PR の merge commit / 後追記)` → `635bbce18` 解消 / 別 commit でこの session 内 ship)
+
+3. **Codex direct push acknowledgment** (= `b0321e599 feat: add AI share button display controls` / 2026-05-09 18:47 JST / `codex1/ai-share-controls` worktree / 504 insertions / 6 files / PR 経由なし direct push / part 191→192 間 ship / Codex sprint 5 task 外の追加 deliverable):
+   - `lib/pages/ai_share_button_settings_page.dart` 新規 17 lines
+   - `lib/pages/settings_page.dart` +20
+   - `lib/services/ai_share_button_preferences_service.dart` 新規 158 lines
+   - `lib/widgets/ai_share_button_settings_panel.dart` 新規 140 lines
+   - `lib/widgets/universal_ai_share_shell.dart` +162
+   - `test/services/ai_share_button_preferences_service_test.dart` 新規 47 lines
+
+### WBS Top 5 monitor (= today T+0/T+1 / 5/12 T+3 ping skip / 5/13 T+4 ping skip)
+
+| # | Issue | 期限 | 振分 | 状態 (= part 192) |
+|---|-------|-----|------|-----|
+| 1 | #2171 WBS dedup Phase 2 | 5/22 (T+13) | Win Codex | T+1 / monitor / 5/12 = T+3 ping schedule |
+| 2 | #2186 dev_cache 4 cmd Win | 5/23 (T+14) | Win Codex | T+1 / monitor / 5/12 = T+3 ping schedule |
+| 3 | #1741 PWA self-touch widget | 5/23 (T+14) | Win Codex | part 189 hand-off / monitor |
+| 4 | v5 hook wiring 5 task (Tier A-E) | 5/23-5/28 | Win Codex | T+1 / monitor / 5/12 = T+3 ping schedule |
+| 5 | #1124 GPA dashboard Phase 1 PR | 5/30 (T+21) | Win Codex | spec ship / 5/13 = T+4 ping schedule |
+
+→ today = T+0/T+1 = early skip (= 5/12 = T+3 / 5/13 = T+4 / next session 待ち)
+
+### MEMORY.md size audit (= [MEMORY-DECAY] 監視)
+
+- 現状: 131 lines / **35.18 KB** (= part 191 終了 30.2 KB → +5 KB)
+- threshold: 24.4 KB (= system warning) / 200+ entries (= [MEMORY-DECAY] split)
+- entry 数: 41 row (= 200+ 未達)
+- 原因: index entry の line length 過大 (= ~150 chars/line target に対し 300-500 chars 多)
+- 推奨対応: next session で `consolidate-memory` skill 実行 (= 月次 cleanup / Win Claude role)
+- 即時 split 不要 (= entry 数 < 200 / line length 是正のみで足りる可能性高)
+
+### Philosophy Alignment (Win#132 part 192)
+- 主要実装: Opus 4.7 1M default verify + ROADMAP backfill + Codex direct push acknowledgment + MEMORY.md size audit
+- 該当原則: #2 (mission) #5 (商品=価値) #6 (時間=資本) #7 (資産負債) #8 (KPI)
+- 整合性スコア: 5/9 ✅ ([PHILOSOPHY-22] gate 通過 / verify-only session の典型値)
+- 理念的貢献: 「**verify-only session = ROADMAP backfill + Codex direct push acknowledgment pattern**」第 1 例 (= sprint task 外の Codex direct push を ROADMAP 履歴に記録 / commit hash + scope 明記 / audit trail 完備) + 「**MEMORY.md size audit pattern**」第 1 例 (= line length / entry 数 / split threshold の 3 軸監視 / line length 是正先行 = split 後置) / 124 part 連続 dogfood
+
+### Commit
 - (= 本 docs PR の merge commit / 後追記)
