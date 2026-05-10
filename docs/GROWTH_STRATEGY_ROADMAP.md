@@ -29824,11 +29824,92 @@ Step 5: fire or skip 判定 + memory log
 
 ### next session 第 1 候補 (= part 200 = 翌日 5/12 火曜 fresh start 強推奨)
 
-- A. cascade post-merge wave (= 最高 priority): #2331 + #2328 + #2323 全 admin merge 確認 + ROADMAP part 196/197/198 batch backfill + main HEAD §17.14→§17.15→§17.16 順序 verify
-- B. DISK_HYGIENE §17.17 v12 章追加 PR (= 「既存 doc 章追加 pattern」第 12 例 / cross-instance-pr doc Finding A+B+C inline 統合)
-- C. 5/12 T+3 Codex sprint ping (= 当日 fire / #2186 + #2171 + v5 hook 5 task)
-- D. v13 user iterative ask 受信時準備 (= 12 layer cumul / Finding B impl / Finding C impl / post-resume 自動配線)
+- A. cascade post-merge wave (= 最高 priority): #2331 + #2328 + #2323 + #2335 全 admin merge 確認 + ROADMAP part 196/197/198 batch backfill + main HEAD §17.14→§17.15→§17.16 順序 verify
+- B. DISK_HYGIENE §17.17 v12 + §17.18 v13 章追加 PR (= 「既存 doc 章追加 pattern」第 12 例 + 第 13 例 / cross-instance-pr doc Finding A+B+C + v13 SessionEnd hook inline 統合)
+- C. 5/12 T+3 Codex sprint ping batch (= 当日 fire / #2186 priority bump + #2171 + v5 hook 5 task / 本 doc Part A spec 経由)
+- D. v13 user iterative ask 第 12 layer 受信 → SessionEnd mandatory fire spec ship (= part 199-b で実施)
 - E. MEMORY.md 第 4 例 trigger 監視 only (= 5/15-5/18 想定 / threshold 24.4 KB)
+
+### Commit
+- (= 本 docs PR の merge commit / 後追記)
+
+---
+
+## 2026-05-11 Win#132 part 199-b (= 同一 session 継続 / user explicit ask 第 12 layer / hand-off + spec ship)
+
+### user explicit ask part 199 receipt (= iterative ask 第 12 layer)
+
+> 「WBS のタスクを期限が近いものから進めてください。2 インスタンス制も反映してください。
+> 今の開発フローだと、ローカル環境のメモリやハードディスク容量が必ず枯渇します。
+> 毎回のセッションで必ずメモリやハードディスク容量を圧縮する施策を検討してください。」
+
+→ user iterative ask v3-v12 累積 **12 layer 完了** + v13 受信 = SessionEnd mandatory fire spec.
+
+### Ship 一括 (= 1 cross-instance-pr doc / 2 part 統合)
+
+[`docs/cross-instance-prs/20260511_codex_wbs_top5_v13_session_end_part199.md`](../docs/cross-instance-prs/20260511_codex_wbs_top5_v13_session_end_part199.md)
+
+#### Part A: WBS Top 5 期限近順 batch hand-off
+
+- 5 task / 全 Win Codex 担当 (= [INSTANCE-ROLES] 反映 / 2-instance 制厳守)
+- 5/12 T+3 fire batch ping spec (= 4 issue ping payload prefab)
+- #2186 priority bump justification (= v11/v12/v13 evidence)
+- 「2-instance hand-off batch」第 1 例 (= 単一 doc 5 task 統合 / 個別 doc 創出回避 / 既存 issue + new spec layer)
+
+#### Part B: v13 SessionEnd mandatory fire spec
+
+- gap detection: SessionStart fire のみで mid-session build-up が < 85% threshold case で 2 session 跨ぎ漏れ
+- v13 spec: SessionEnd PowerShell hook (`session_end_compression.ps1`) + `/wrap-up` Step 0 mandatory pre-fire 統合
+- KPI 目標: session 終了時 RAM% < 85% / C: free > 50 GB / 「毎回必ず fire」compliance N/N (= 100%)
+- v6-v13 累積 layer audit table 提供
+- Win Codex 5/30 担当 (= v12 spec scope 同期)
+
+### 「user iterative ask 累積 12 layer」第 1 例 (= 新 dogfood pattern)
+
+| layer | session | ask theme |
+|-------|---------|-----------|
+| v3 | part 191 | 圧縮自動化 v6 immediate fire |
+| v4 | part 192 | ROADMAP backfill |
+| v5 | part 192-b | v7 immediate fire delta |
+| v6 | part 193 | v8 RAM+C: 連動 |
+| v7 | part 194 | SessionStart auto-fire 配線 |
+| v8 | part 195 | functional verify |
+| v9 | part 196 phase 2 | mid-session build-up |
+| v10 | part 197 | post-resume mandatory |
+| v11 | part 198 | v12 spec (= 3 Finding) |
+| v12 | part 199 | WBS hand-off + v13 SessionEnd |
+
+→ 月内 12 layer 進化 (= 5/9 → 5/11 / 3 day intervals / cumulative discipline pattern)
+
+### 「2-instance hand-off batch」第 1 例 (= 新 dogfood pattern)
+
+旧 pattern = 個別 task 1 cross-instance-pr doc (= 過去 8 個別 doc / 5/4-5/10 期間)
+新 pattern = 5 task + spec ship 統合 single doc (= 期限近順 priority table + Codex action prefab + sprint plan)
+
+→ Win Codex 認知 cost 削減 (= 8 doc → 1 doc) + sprint plan visibility 向上.
+
+### 「session-spanning continuity within 90min discipline」(= 新 dogfood pattern 候補)
+
+- part 199 起動: verify-only minimal session 第 1 例 ship (= 30min)
+- mid-session user explicit ask 受信 → part 199-b 継続 (= 60-90min budget 内)
+- 同一 session 内 2 wrap-up phase: phase 1 (verify) + phase 2 (hand-off + spec ship)
+- [COMPACTION-RESUME] 90min discipline 維持 (= 第 4 例累積継続)
+
+→ 「verify-only minimal session」第 1 例の延長 layer / 2 phase wrap-up 統合 pattern.
+
+### Philosophy Alignment (Win#132 part 199-b)
+
+- 主要実装: WBS Top 5 hand-off cross-instance-pr doc + v13 SessionEnd mandatory fire spec + 2-instance 制反映 + iterative ask 12 layer cumul
+- 該当原則: #2 (ミッション駆動=「毎回必ず」discipline) #3 (mentor=spec ship for Codex) #4 (6 部署 balance=2-instance fleet) #5 (商品=価値=hygiene 自動化) #6 (時間=資本=session 跨ぎ漏れ防止) #7 (資産負債=disk + RAM 累積管理) #8 (KPI=N/N compliance target) #9 (IPO=audit-ready dogfood)
+- 整合性スコア: 8/9 ✅ ([PHILOSOPHY-22] 7+/9 gate 通過)
+- 理念的貢献:
+  - 「**user iterative ask 累積 12 layer**」第 1 例 (= 月内 12 layer 進化 / 3 day intervals / cumulative discipline pattern)
+  - 「**2-instance hand-off batch**」第 1 例 (= 8 doc → 1 doc / Codex 認知 cost 削減)
+  - 「**session-spanning continuity within 90min discipline**」第 1 例 (= verify-only minimal + 2 phase wrap-up)
+  - 「**v13 SessionEnd mandatory fire spec ship**」第 1 例 (= v6-v13 累積 8 layer / 「毎回必ず」discipline 確立)
+  - 「**[INSTANCE-ROLES] 反映 hand-off**」第 1 例 (= Win Claude architect / Win Codex 実装 / 厳守)
+
+→ **132 part 連続 dogfood (= part 75 → 199-b / 2 month + / 13 dogfood pattern part 199 単独 ship)**.
 
 ### Commit
 - (= 本 docs PR の merge commit / 後追記)
