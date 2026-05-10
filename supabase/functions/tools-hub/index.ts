@@ -7234,10 +7234,8 @@ serve(async (req) => {
             for (const duplicate of duplicateTasks) {
               const duplicateNote =
                 `Duplicate of WBS task ${updatedKeeper.id}; GitHub Issue #${issueNumber} is kept on one canonical WBS row.`;
-              const duplicateStatus = isClosed ? "completed" : "in_progress";
-              const duplicateProgress = isClosed
-                ? 100
-                : Math.max(0, Math.min(99, Number(duplicate.progress ?? 0)));
+              const duplicateStatus = "completed";
+              const duplicateProgress = 100;
               const duplicateRepairReasons = githubIssueTaskRepairReasons(
                 duplicate,
                 issueNumber,
@@ -7249,9 +7247,7 @@ serve(async (req) => {
                 .update({
                   status: duplicateStatus,
                   progress: duplicateProgress,
-                  ai_review_status: isClosed
-                    ? (duplicate.ai_review_status ?? "pending")
-                    : "pending",
+                  ai_review_status: "pending",
                   remaining_work: duplicateNote,
                   github_issue_number: issueNumber,
                   github_issue_url: issueUrl,
@@ -7363,12 +7359,8 @@ serve(async (req) => {
                 : String(keeper.title ?? duplicate.title ?? "");
               const duplicateNote =
                 `Duplicate GitHub-origin WBS title; kept WBS task ${keeper.id} as canonical.`;
-              const duplicateStatus = state === "CLOSED"
-                ? "completed"
-                : "in_progress";
-              const duplicateProgress = state === "CLOSED"
-                ? 100
-                : Math.max(0, Math.min(99, Number(duplicate.progress ?? 0)));
+              const duplicateStatus = "completed";
+              const duplicateProgress = 100;
               const duplicateRepairReasons = githubIssueTaskRepairReasons(
                 duplicate,
                 Number(issueNumber),
@@ -7380,9 +7372,7 @@ serve(async (req) => {
                 .update({
                   status: duplicateStatus,
                   progress: duplicateProgress,
-                  ai_review_status: state === "CLOSED"
-                    ? (duplicate.ai_review_status ?? "pending")
-                    : "pending",
+                  ai_review_status: "pending",
                   remaining_work: duplicateNote,
                   github_issue_url:
                     (issueUrl || String(duplicate.github_issue_url ?? "")) ||
