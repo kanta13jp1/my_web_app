@@ -3021,8 +3021,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
                       Text(
                         msg.role,
                         style: TextStyle(
-                          color:
-                              Theme.of(context).colorScheme.onSurfaceVariant,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
                           fontSize: 12,
                           height: 1.5,
                         ),

@@ -3,8 +3,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../pages/agent_gpa_dashboard_page.dart';
 
-typedef AgentGpaBadgeLoader =
-    Future<List<AgentGpaEvaluation>> Function(AgentGpaDashboardQuery query);
+typedef AgentGpaBadgeLoader = Future<List<AgentGpaEvaluation>> Function(
+    AgentGpaDashboardQuery query);
 
 class AgentGpaBadge extends StatefulWidget {
   const AgentGpaBadge({
@@ -113,8 +113,8 @@ class _AgentGpaBadgeState extends State<AgentGpaBadge> {
     final value = _isLoading
         ? '...'
         : evaluation == null
-        ? '--'
-        : evaluation.gpa.toStringAsFixed(1);
+            ? '--'
+            : evaluation.gpa.toStringAsFixed(1);
 
     return Semantics(
       button: true,
@@ -172,8 +172,8 @@ class _AgentGpaBadgeState extends State<AgentGpaBadge> {
                 Text(
                   '${_sourceLabel(widget.sourceType)} GPA',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w800,
-                  ),
+                        fontWeight: FontWeight.w800,
+                      ),
                 ),
                 const SizedBox(height: 12),
                 if (evaluation == null)
@@ -235,20 +235,19 @@ AgentGpaEvaluation? selectAgentGpaBadgeEvaluation(
   String? sourceId,
 }) {
   final normalizedSourceId = sourceId?.trim();
-  final matches =
-      evaluations
-          .where((item) => item.sourceType == sourceType)
-          .where(
-            (item) => normalizedSourceId == null || normalizedSourceId.isEmpty
-                ? true
-                : item.sourceId == normalizedSourceId,
-          )
-          .toList()
-        ..sort((a, b) {
-          final aTime = a.evaluatedAt ?? DateTime.fromMillisecondsSinceEpoch(0);
-          final bTime = b.evaluatedAt ?? DateTime.fromMillisecondsSinceEpoch(0);
-          return bTime.compareTo(aTime);
-        });
+  final matches = evaluations
+      .where((item) => item.sourceType == sourceType)
+      .where(
+        (item) => normalizedSourceId == null || normalizedSourceId.isEmpty
+            ? true
+            : item.sourceId == normalizedSourceId,
+      )
+      .toList()
+    ..sort((a, b) {
+      final aTime = a.evaluatedAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+      final bTime = b.evaluatedAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+      return bTime.compareTo(aTime);
+    });
   return matches.isEmpty ? null : matches.first;
 }
 
