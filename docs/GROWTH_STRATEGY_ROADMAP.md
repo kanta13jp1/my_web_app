@@ -29734,3 +29734,74 @@ Step 5: ROADMAP KPI table append (= v(N) trigger row + v(N) verify row)
 
 ### Commit
 - (= 本 docs PR の merge commit / 後追記)
+
+---
+
+## Win版#132 part 196 + 197 entry — TBD (= cascade 待ち)
+
+> PR #2323 (= part 196 phase 2 / §17.15 v10) + PR #2328 (= part 197 / §17.16 v11) MERGE 後に backfill 予定 (= part 199 で batch).
+> 部分 196 phase 2 = mid-session build-up critical detect + DISK_HYGIENE §17.15 v10 ship.
+> 部分 197 = post-resume cycle hidden gap detection + DISK_HYGIENE §17.16 v11 ship.
+> 詳細 = local memory `project_20260510_win132_part196_phase2.md` / `project_20260510_win132_part197.md`.
+
+---
+
+## Win版#132 part 198 (= 2026-05-10 / 同日 9 part 連続 / verify + recovery)
+
+### Ship summary
+
+1. **v11 85% threshold verify SUCCESS ✅** (= part 197 §17.16.2 spec dogfood):
+   - 起動時 RAM 81.72% < 85% threshold = manual fire 不要 / band 内安定
+   - C: free 57.76 GB / scripts mtime no-drift
+2. **PR #2328 + #2323 minimal-e2e gate FAIL recovery** (= 2 PR 一括 fix):
+   - 原因: docs-only PR でも `Minimal E2E Gate` workflow が 3 declaration 要求 → FAIL
+   - Fix: `scripts/check_minimal_e2e_gate.py` line 160 `docs-only` label-based skip path 適用
+   - 手順: `gh pr edit --add-label docs-only` + body edit (`edited` event trigger) → re-fire SUCCESS
+   - 効果: #2328 13:41:04Z + #2323 13:41:15Z 両 SUCCESS
+3. **PR #2328 + #2323 update-branch fired** (= BEHIND→MERGEABLE):
+   - `gh api -X PUT repos/.../pulls/<N>/update-branch` で main merge into PR branch
+4. **5/12 T+3 Codex ping today skip** (= T+1 too early / schedule unchanged)
+5. **WBS Top 5 verify-only** (= unchanged from part 197)
+6. **memory ship 2 件** (= project_20260510_win132_part198 + feedback_success_20260510_docs_only_label_bypass)
+7. **MEMORY.md threshold 超過 detect** (= 25.88 KB > 24.4 KB / consolidation 候補 / next session)
+
+### dogfood pattern (= part 198 累積 5 件)
+
+- 「**v11 85% threshold verify SUCCESS**」第 1 例 (= part 197 §17.16.2 spec → part 198 起動時 functional verify)
+- 「**docs-only label-based gate bypass**」第 1 例 (= check_minimal_e2e_gate.py line 160 / 2 PR 一括適用 / part 183 dual-gate compliance より低 cost)
+- 「**premature ping skip discipline**」第 4 例累積 (= part 171/194/195/198)
+- 「**PR cascade 待ち pattern**」第 1 例 (= ROADMAP entry batch backfill 設計 / 同日多数 part in-flight 時)
+- 「**[COMPACTION-RESUME] 90min discipline**」第 3 例 (= part 188/197/198)
+
+### WBS Top 5 (期限近順 / 2-instance 振分) — verify-only
+
+| # | issue | 期限 | instance | 状態 |
+|---|-------|------|----------|------|
+| 1 | #2171 WBS dedup Phase 2 | 5/22 (T+12) | Win Codex | T+2 / 5/11-12 = T+3 ping schedule |
+| 2 | #2186 dev_cache 4 cmd Win | 5/23 (T+13) | Win Codex | T+1 / 5/12 = T+3 ping with v11 evidence |
+| 3 | v5 hook wiring 5 task | 5/23-5/28 | Win Codex | T+0 monitor |
+| 4 | #1124 GPA Phase 1 PR | 5/30 (T+20) | Win Codex | spec ship / 5/13 = T+4 ping |
+| 5 | #1640 GA launch readiness | TBD | Win Claude | spec consolidated (part 189) |
+
+### Philosophy Alignment (Win#132 part 198)
+
+- 主要実装: v11 verify SUCCESS + docs-only label bypass + branch update fix + memory ship + cascade defer pattern documented
+- 該当原則: #4 (mentor=verify discipline) #5 (商品=価値=automation effectiveness) #6 (時間=資本=low-cost gate fix) #8 (KPI=spec dogfood) #9 (IPO=audit-ready hygiene)
+- 整合性スコア: **5/9 ✅** ([PHILOSOPHY-22] gate 通過)
+- 理念的貢献:
+  - 既存 script bypass path を find → 適用 = part 184 「pre-existing spec verify pattern」第 7 例層に位置
+  - v11 measurement で 131 part 連続 dogfood (= part 75 → 198 / 2 month +) を維持
+  - cascade 待ち discipline = 同日多数 part in-flight 時の安全 pattern 確立
+
+→ 131 part 連続 dogfood (= part 75 → 198 / 2 month +).
+
+### next session 第 1 候補
+
+1. PR #2328 + #2323 merge verify (= cascade 完了 / mergeStateStatus=CLEAN 待ち)
+2. ROADMAP part 196/197/198 batch backfill (= cascade 後)
+3. MEMORY.md consolidation 第 3 例 (= 25.88 → ~16 KB / part 162 87% / part 194 47%)
+4. 5/12 T+3 Codex ping with v11 evidence (= #2186 + #2171 + v5 hook wiring)
+5. v12 候補 implementation 検討 (= docs-only label auto-tag GHA / build-up rate KPI 化)
+
+### Commit
+- (= 本 docs PR の merge commit / 後追記)
