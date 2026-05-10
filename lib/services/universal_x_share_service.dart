@@ -141,10 +141,7 @@ class UniversalXShareService {
       );
       final parsed = _parseDraft(response.text, context, fallback);
       if (_isUsableText(parsed.text, context.url)) {
-        return parsed.copyWith(
-          fallbackUsed: false,
-          source: response.source,
-        );
+        return parsed.copyWith(fallbackUsed: false, source: response.source);
       }
     } catch (_) {
       // The global share button must remain usable even when AI routing fails.
@@ -179,6 +176,17 @@ class UniversalXShareService {
     String? imageUrl,
     String? hedraGenerationId,
   }) async {
+    final normalizedImageUrl = _emptyToNull(imageUrl);
+    if (normalizedImageUrl != null && !_isPublicHttpUrl(normalizedImageUrl)) {
+      return const UniversalXMediaResult(
+        url: null,
+        status: 'fallback_text',
+        raw: {
+          'videoReason':
+              'Hedra avatar image must be a public URL. Regenerate the share image so it can be stored before video generation.',
+        },
+      );
+    }
     final requestBody = <String, dynamic>{
       'type': 'presenter_video',
       'template': _videoTemplateFor(context),
@@ -192,7 +200,6 @@ class UniversalXShareService {
       'source': 'universal_x_share',
       'route': context.routePath,
     };
-    final normalizedImageUrl = _emptyToNull(imageUrl);
     if (normalizedImageUrl != null) {
       requestBody['imageUrl'] = normalizedImageUrl;
     }
@@ -222,10 +229,14 @@ class UniversalXShareService {
     String? mediaUrl,
     bool dryRun = false,
   }) async {
+    final normalizedMediaUrl = _emptyToNull(mediaUrl);
     final data = await _invoke('growth-hub', {
       'action': 'x.post',
       'text': sanitizeTweet(text, url: context.url),
-      'mediaUrl': mediaUrl,
+      'mediaUrl':
+          normalizedMediaUrl != null && _isPublicHttpUrl(normalizedMediaUrl)
+              ? normalizedMediaUrl
+              : null,
       'dryRun': dryRun,
       'source': 'universal_x_share',
       'route': context.routePath,
@@ -485,5 +496,17 @@ ${draft.videoPrompt}
   static String? _emptyToNull(String? value) {
     final trimmed = value?.trim() ?? '';
     return trimmed.isEmpty ? null : trimmed;
+  }
+
+  static bool isEmbeddedDataUrl(String? value) {
+    return value?.trimLeft().toLowerCase().startsWith('data:') == true;
+  }
+
+  static bool _isPublicHttpUrl(String value) {
+    final uri = Uri.tryParse(value);
+    return uri != null &&
+        (uri.scheme == 'https' || uri.scheme == 'http') &&
+        uri.host.isNotEmpty &&
+        value.length <= 2083;
   }
 }

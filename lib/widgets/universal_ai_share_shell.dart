@@ -425,9 +425,21 @@ class _UniversalAiShareDialogState extends State<UniversalAiShareDialog> {
     return value == null || value.isEmpty || value == 'null' ? null : value;
   }
 
+  static String _mediaDisplayText(String mediaUrl) {
+    if (UniversalXShareService.isEmbeddedDataUrl(mediaUrl)) {
+      return 'Generated image is embedded data. Regenerate it to store a public URL before video generation or X posting.';
+    }
+    return mediaUrl.length <= 240
+        ? mediaUrl
+        : '${mediaUrl.substring(0, 220)}...';
+  }
+
   static String _videoStatusMessage(UniversalXMediaResult result) {
     if (result.url != null) return 'シェア動画を生成しました';
     final reason = _extractString(result.raw, 'videoReason');
+    if (reason != null && reason.contains('public URL')) {
+      return 'Video needs a public image URL. Please regenerate the share image, then retry video generation.';
+    }
     if (reason == 'Hedra avatar video requires imageUrl') {
       return '先に画像生成を実行してから、動画生成を開始してください';
     }
@@ -518,7 +530,7 @@ class _UniversalAiShareDialogState extends State<UniversalAiShareDialog> {
               ),
               if (mediaUrl != null) ...[
                 const SizedBox(height: 12),
-                SelectableText('添付メディア: $mediaUrl'),
+                SelectableText('添付メディア: ${_mediaDisplayText(mediaUrl)}'),
               ],
               if (_statusMessage != null) ...[
                 const SizedBox(height: 12),
