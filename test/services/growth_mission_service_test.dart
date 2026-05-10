@@ -1,7 +1,13 @@
+import 'dart:async';
+
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:my_web_app/services/growth_acquisition_service.dart';
 import 'package:my_web_app/services/growth_mission_service.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
   group('GrowthMissionService command center fallback', () {
     test('returns cross-functional brief when Supabase is unavailable',
         () async {
@@ -115,4 +121,62 @@ void main() {
       expect(snapshot.importPreviews.single.previewCount, 5);
     });
   });
+
+  group('GrowthPresenceNavigatorObserver', () {
+    test('suppresses duplicate immediate presence syncs for the same route',
+        () async {
+      final syncCompleter = Completer<void>();
+      final service = _FakePresenceService(syncCompleter.future);
+      final observer = GrowthPresenceNavigatorObserver(
+        service: service,
+        acquisitionService: const _NoopGrowthAcquisitionService(),
+      );
+      addTearDown(observer.dispose);
+
+      final route = MaterialPageRoute<void>(
+        settings: const RouteSettings(name: '/asset-management'),
+        builder: (_) => const SizedBox.shrink(),
+      );
+
+      observer.didPush(route, null);
+      observer.didPush(route, null);
+
+      expect(service.syncPresenceCalls, 1);
+      expect(service.syncedPagePaths, <String>['/asset-management']);
+
+      syncCompleter.complete();
+      await Future<void>.delayed(Duration.zero);
+    });
+  });
+}
+
+class _FakePresenceService extends GrowthMissionService {
+  _FakePresenceService(this._syncFuture);
+
+  final Future<void> _syncFuture;
+  final List<String> syncedPagePaths = <String>[];
+
+  int get syncPresenceCalls => syncedPagePaths.length;
+
+  @override
+  bool get isPresenceTrackingAvailable => true;
+
+  @override
+  Future<void> syncPresence({required String pagePath}) {
+    syncedPagePaths.add(pagePath);
+    return _syncFuture;
+  }
+
+  @override
+  Future<void> capturePendingReferralFromUri({Uri? currentUri}) async {}
+
+  @override
+  Future<void> applyPendingReferralIfPossible() async {}
+}
+
+class _NoopGrowthAcquisitionService extends GrowthAcquisitionService {
+  const _NoopGrowthAcquisitionService();
+
+  @override
+  Future<void> recordTouchpointForPagePath(String pagePath) async {}
 }
