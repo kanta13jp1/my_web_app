@@ -49,6 +49,10 @@ def base_commands() -> list[GateCommand]:
             [python, "scripts/check_codex_ui_qa_playbook_test.py"],
         ),
         GateCommand(
+            "dynamic context injection tests",
+            [python, "scripts/context_injection_check_test.py"],
+        ),
+        GateCommand(
             "no-verify bypass tests",
             [python, "scripts/check_no_verify_bypass_test.py"],
         ),
