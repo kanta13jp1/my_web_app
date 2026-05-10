@@ -8,6 +8,7 @@ import '../models/agent_task.dart';
 import '../services/agent_org_service.dart';
 import '../services/lrm_self_correction_planner_service.dart';
 import '../services/manus_like_task_service.dart';
+import '../widgets/agent_gpa_badge.dart';
 
 class AgentTaskTemplate {
   final String id;
@@ -1675,6 +1676,11 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
                     ),
                   ),
                 ),
+                AgentGpaBadge(
+                  sourceType: 'executive_chat',
+                  sourceId: message.id,
+                ),
+                const SizedBox(width: 8),
                 Text(
                   timestamp,
                   style: TextStyle(
@@ -1761,6 +1767,11 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
                     ),
                   ),
                 ),
+                AgentGpaBadge(
+                  sourceType: 'executive_chat',
+                  sourceId: message.id,
+                ),
+                const SizedBox(width: 8),
                 _buildStatusBadge(message.status),
               ],
             ),
