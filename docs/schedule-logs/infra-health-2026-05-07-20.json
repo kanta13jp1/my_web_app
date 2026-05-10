@@ -1,0 +1,30 @@
+{
+  "timestamp": "2026-05-07T11:05:01.320Z",
+  "supabase_health": {
+    "status": "healthy",
+    "http_status": 200,
+    "checks": {
+      "env": "ok (SUPABASE_URL + SERVICE_ROLE_KEY set)",
+      "db_connectivity": "ok (3101ms)",
+      "wbs_tasks": "ok",
+      "ai_circuit_breaker": "ok"
+    }
+  },
+  "firebase_hosting": {
+    "url": "https://my-web-app-b67f4.web.app/",
+    "http_status": 200,
+    "title": "自分株式会社 | AIが今日の最優先タスクを整理"
+  },
+  "anomalies": [
+    {
+      "severity": "warning",
+      "metric": "db_connectivity_latency",
+      "value_ms": 3101,
+      "baseline_ms": 119,
+      "ratio": 26.1,
+      "trend": "escalating (119 → 1325 → 3101 over last hour)",
+      "note": "Still under 5s unhealthy threshold but escalating across 2 consecutive hourly checks. Monitor next 1-2 cycles; if 5000ms+ → file incident report."
+    }
+  ],
+  "action": "log only (status=healthy / no commit per task rule)"
+}

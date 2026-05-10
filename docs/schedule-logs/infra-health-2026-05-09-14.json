@@ -1,0 +1,21 @@
+{
+  "run_at_utc": "2026-05-09T05:32:53Z",
+  "run_at_jst": "2026-05-09T14:32:53+09:00",
+  "supabase_health": {
+    "status": "healthy",
+    "http": 200,
+    "checks": {
+      "env": "ok",
+      "db_connectivity": "ok (1151ms)",
+      "wbs_tasks": "ok",
+      "ai_circuit_breaker": "ok"
+    }
+  },
+  "firebase_hosting": {
+    "url": "https://my-web-app-b67f4.web.app/",
+    "http": 200,
+    "time_total_sec": 0.5516
+  },
+  "anomaly": false,
+  "action": "log only"
+}

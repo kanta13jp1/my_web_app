@@ -1,0 +1,20 @@
+{
+  "task": "infra-health-check",
+  "ran_at_jst": "2026-05-09T08:33+09:00",
+  "supabase_health": {
+    "http": 200,
+    "status": "healthy",
+    "checks": {
+      "env": "ok",
+      "db_connectivity": "ok (150ms)",
+      "wbs_tasks": "ok",
+      "ai_circuit_breaker": "ok"
+    },
+    "timestamp": "2026-05-08T23:33:13.656Z"
+  },
+  "firebase_hosting": {
+    "ok": true,
+    "note": "renders normally; 'Loading application...' is standard Flutter Web init state"
+  },
+  "action": "no anomaly — no commit"
+}

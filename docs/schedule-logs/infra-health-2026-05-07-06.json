@@ -1,0 +1,24 @@
+{
+  "task": "infra-health-check",
+  "ranAt": "2026-05-07T06:33:07+09:00",
+  "supabase": {
+    "endpoint": "https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/health-check",
+    "httpStatus": 200,
+    "status": "healthy",
+    "checks": {
+      "env": { "ok": true, "detail": "SUPABASE_URL + SERVICE_ROLE_KEY set" },
+      "db_connectivity": { "ok": true, "latencyMs": 226, "detail": "profiles reachable in 226ms" },
+      "wbs_tasks": { "ok": true, "detail": "wbs_tasks reachable" },
+      "ai_circuit_breaker": { "ok": true, "detail": "ai_circuit_breaker reachable" }
+    },
+    "timestamp": "2026-05-06T21:33:07.435Z"
+  },
+  "firebase": {
+    "url": "https://my-web-app-b67f4.web.app/",
+    "ok": true,
+    "title": "自分株式会社 | AIが今日の最優先タスクを整理",
+    "note": "Flutter Web init splash visible (expected). Static shell + nav rendered."
+  },
+  "anomaly": false,
+  "actionTaken": "log only (no commit per task spec)"
+}

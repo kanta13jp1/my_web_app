@@ -1,0 +1,25 @@
+{
+  "run_at_jst": "2026-05-08T14:35:30+09:00",
+  "run_at_utc": "2026-05-08T05:35:30Z",
+  "supabase_health": {
+    "http_status": 200,
+    "ef_response_ms": 1501,
+    "status": "healthy",
+    "checks": {
+      "env": "ok (SUPABASE_URL + SERVICE_ROLE_KEY set)",
+      "db_connectivity": "ok (792ms)",
+      "wbs_tasks": "ok",
+      "ai_circuit_breaker": "ok"
+    },
+    "timestamp": "2026-05-08T05:35:30.264Z"
+  },
+  "firebase_hosting": {
+    "url": "https://my-web-app-b67f4.web.app/",
+    "http_status": 200,
+    "status": "ok",
+    "title": "自分株式会社 | AIが今日の最優先タスクを整理"
+  },
+  "anomaly": false,
+  "action_taken": "log only (no commit per task rule: commit only on anomaly)",
+  "notes": "All checks healthy. db_connectivity 792ms slightly elevated vs 04:35 baseline 126ms but well within healthy range; lower than 14:34 spike of 1159ms — recovering. EF response 1501ms acceptable. Firebase Hosting reachable, page rendering normally. File named -15 because -14 already filled by prior 14:34 run; this fired ~1 min later as a hourly cron backfill."
+}
