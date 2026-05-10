@@ -1,8 +1,14 @@
+import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 typedef AgentGpaDashboardLoader = Future<List<AgentGpaEvaluation>> Function(
   AgentGpaDashboardQuery query,
+);
+
+typedef AgentGpaImprovementActionHandler = Future<void> Function(
+  AgentGpaEvaluation evaluation,
+  AgentGpaSuggestion suggestion,
 );
 
 const List<String> agentGpaSourceTypes = <String>[
@@ -92,16 +98,49 @@ class AgentGpaSuggestion {
   }
 }
 
+@visibleForTesting
+class AgentGpaHistoryPoint {
+  const AgentGpaHistoryPoint({
+    required this.day,
+    required this.gpa,
+    required this.count,
+  });
+
+  final DateTime day;
+  final double gpa;
+  final int count;
+}
+
+@visibleForTesting
+class AgentGpaImprovementPlan {
+  const AgentGpaImprovementPlan({
+    required this.title,
+    required this.summary,
+    required this.primaryLabel,
+    required this.icon,
+    required this.canRunNow,
+  });
+
+  final String title;
+  final String summary;
+  final String primaryLabel;
+  final IconData icon;
+  final bool canRunNow;
+}
+
 class AgentGpaDashboardPage extends StatefulWidget {
   const AgentGpaDashboardPage({
     super.key,
     SupabaseClient? supabaseClient,
     AgentGpaDashboardLoader? loader,
+    AgentGpaImprovementActionHandler? improvementActionHandler,
   })  : _supabaseClient = supabaseClient,
-        _loader = loader;
+        _loader = loader,
+        _improvementActionHandler = improvementActionHandler;
 
   final SupabaseClient? _supabaseClient;
   final AgentGpaDashboardLoader? _loader;
+  final AgentGpaImprovementActionHandler? _improvementActionHandler;
 
   @override
   State<AgentGpaDashboardPage> createState() => _AgentGpaDashboardPageState();
@@ -196,6 +235,31 @@ class _AgentGpaDashboardPageState extends State<AgentGpaDashboardPage> {
     _loadEvaluations();
   }
 
+  Future<void> _handleImprovementAction(
+    AgentGpaEvaluation evaluation,
+    AgentGpaSuggestion suggestion,
+  ) async {
+    final handler = widget._improvementActionHandler;
+    if (handler != null) {
+      await handler(evaluation, suggestion);
+      return;
+    }
+    if (suggestion.type != 'rerun') return;
+    if (_supabase.auth.currentUser == null) {
+      throw StateError('Sign in before rerunning a GPA evaluation.');
+    }
+    await _supabase.functions.invoke(
+      'app-hub',
+      body: {
+        'action': 'agent.evaluate_gpa',
+        'source_type': evaluation.sourceType,
+        'source_id': evaluation.sourceId,
+        'judge_model': evaluation.judgeModel,
+      },
+    );
+    await _loadEvaluations();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -218,6 +282,8 @@ class _AgentGpaDashboardPageState extends State<AgentGpaDashboardPage> {
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 28),
           children: [
             _DashboardSummary(evaluations: _evaluations),
+            const SizedBox(height: 14),
+            _GpaHistoryChart(evaluations: _evaluations),
             const SizedBox(height: 14),
             _FilterBar(
               sourceType: _sourceType,
@@ -252,7 +318,10 @@ class _AgentGpaDashboardPageState extends State<AgentGpaDashboardPage> {
               ..._evaluations.map(
                 (evaluation) => Padding(
                   padding: const EdgeInsets.only(bottom: 10),
-                  child: _GpaEvaluationCard(evaluation: evaluation),
+                  child: _GpaEvaluationCard(
+                    evaluation: evaluation,
+                    onRunImprovement: _handleImprovementAction,
+                  ),
                 ),
               ),
           ],
@@ -260,6 +329,46 @@ class _AgentGpaDashboardPageState extends State<AgentGpaDashboardPage> {
       ),
     );
   }
+}
+
+@visibleForTesting
+List<AgentGpaHistoryPoint> buildAgentGpaHistoryPoints(
+  Iterable<AgentGpaEvaluation> evaluations, {
+  DateTime? now,
+  int days = 30,
+}) {
+  final dated = evaluations
+      .where((item) => item.evaluatedAt != null)
+      .map((item) => (evaluation: item, day: _dayOnly(item.evaluatedAt!)))
+      .toList();
+  if (dated.isEmpty) return const [];
+
+  final latestDay = now == null
+      ? dated
+          .map((item) => item.day)
+          .reduce((left, right) => left.isAfter(right) ? left : right)
+      : _dayOnly(now);
+  final startDay = latestDay.subtract(Duration(days: days - 1));
+  final buckets = <DateTime, List<double>>{};
+  for (final item in dated) {
+    if (item.day.isBefore(startDay) || item.day.isAfter(latestDay)) {
+      continue;
+    }
+    buckets.putIfAbsent(item.day, () => <double>[]).add(item.evaluation.gpa);
+  }
+
+  final points = buckets.entries.map((entry) {
+    final values = entry.value;
+    final avg =
+        values.fold<double>(0, (sum, value) => sum + value) / values.length;
+    return AgentGpaHistoryPoint(
+      day: entry.key,
+      gpa: double.parse(avg.toStringAsFixed(2)),
+      count: values.length,
+    );
+  }).toList()
+    ..sort((left, right) => left.day.compareTo(right.day));
+  return points;
 }
 
 @visibleForTesting
@@ -352,6 +461,174 @@ class _DashboardSummary extends StatelessWidget {
               ),
             ],
           ),
+        ],
+      ),
+    );
+  }
+}
+
+class _GpaHistoryChart extends StatelessWidget {
+  const _GpaHistoryChart({required this.evaluations});
+
+  final List<AgentGpaEvaluation> evaluations;
+
+  @override
+  Widget build(BuildContext context) {
+    final points = buildAgentGpaHistoryPoints(evaluations);
+    final latest = points.isEmpty ? null : points.last;
+    final spots = <FlSpot>[
+      for (var i = 0; i < points.length; i++)
+        FlSpot(i.toDouble(), points[i].gpa),
+    ];
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFF141414),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: const Color(0xFF262626)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.show_chart, color: Color(0xFFF97316), size: 20),
+              const SizedBox(width: 8),
+              const Expanded(
+                child: Text(
+                  '30-day GPA history',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    height: 1.3,
+                  ),
+                ),
+              ),
+              if (latest != null)
+                _Pill(
+                  label: '${latest.gpa.toStringAsFixed(2)} latest',
+                  color: _gpaColor(latest.gpa),
+                ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          if (spots.length < 2)
+            const Text(
+              'Trend line pending until another dated evaluation arrives.',
+              style: TextStyle(
+                color: Color(0xFF94A3B8),
+                fontSize: 13,
+                height: 1.45,
+              ),
+            )
+          else
+            SizedBox(
+              height: 170,
+              child: LineChart(
+                LineChartData(
+                  minX: 0,
+                  maxX: (spots.length - 1).toDouble(),
+                  minY: 0,
+                  maxY: 4,
+                  gridData: FlGridData(
+                    drawVerticalLine: false,
+                    horizontalInterval: 1,
+                    getDrawingHorizontalLine: (_) =>
+                        const FlLine(color: Color(0xFF262626), strokeWidth: 1),
+                  ),
+                  borderData: FlBorderData(show: false),
+                  titlesData: FlTitlesData(
+                    rightTitles: const AxisTitles(),
+                    topTitles: const AxisTitles(),
+                    leftTitles: AxisTitles(
+                      sideTitles: SideTitles(
+                        showTitles: true,
+                        reservedSize: 32,
+                        interval: 1,
+                        getTitlesWidget: (value, _) => Text(
+                          value.toStringAsFixed(0),
+                          style: const TextStyle(
+                            color: Color(0xFF94A3B8),
+                            fontSize: 10,
+                            height: 1.5,
+                          ),
+                        ),
+                      ),
+                    ),
+                    bottomTitles: AxisTitles(
+                      sideTitles: SideTitles(
+                        showTitles: true,
+                        reservedSize: 28,
+                        interval: (points.length / 4).ceilToDouble().clamp(
+                              1,
+                              30,
+                            ),
+                        getTitlesWidget: (value, _) {
+                          final index = value.toInt();
+                          if (index < 0 || index >= points.length) {
+                            return const SizedBox.shrink();
+                          }
+                          return Padding(
+                            padding: const EdgeInsets.only(top: 8),
+                            child: Text(
+                              _formatMonthDay(points[index].day),
+                              style: const TextStyle(
+                                color: Color(0xFF94A3B8),
+                                fontSize: 10,
+                                height: 1.2,
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                  lineTouchData: LineTouchData(
+                    enabled: true,
+                    touchTooltipData: LineTouchTooltipData(
+                      getTooltipItems: (items) => items.map((item) {
+                        final index = item.x.toInt();
+                        final point = points[index];
+                        return LineTooltipItem(
+                          '${_formatMonthDay(point.day)}\n'
+                          'GPA ${point.gpa.toStringAsFixed(2)}'
+                          ' (${point.count})',
+                          const TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            height: 1.35,
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                  lineBarsData: [
+                    LineChartBarData(
+                      spots: spots,
+                      isCurved: spots.length > 2,
+                      color: const Color(0xFFF97316),
+                      barWidth: 3,
+                      isStrokeCapRound: true,
+                      dotData: FlDotData(
+                        show: true,
+                        getDotPainter: (spot, _, __, ___) => FlDotCirclePainter(
+                          radius: spot.x == spots.last.x ? 4 : 3,
+                          color: _gpaColor(spot.y),
+                          strokeColor: const Color(0xFF0A0A0A),
+                          strokeWidth: 2,
+                        ),
+                      ),
+                      belowBarData: BarAreaData(
+                        show: true,
+                        color: const Color(0xFFF97316).withValues(alpha: 0.12),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
         ],
       ),
     );
@@ -454,9 +731,13 @@ class _FilterBar extends StatelessWidget {
 }
 
 class _GpaEvaluationCard extends StatelessWidget {
-  const _GpaEvaluationCard({required this.evaluation});
+  const _GpaEvaluationCard({
+    required this.evaluation,
+    required this.onRunImprovement,
+  });
 
   final AgentGpaEvaluation evaluation;
+  final AgentGpaImprovementActionHandler onRunImprovement;
 
   @override
   Widget build(BuildContext context) {
@@ -538,7 +819,11 @@ class _GpaEvaluationCard extends StatelessWidget {
                 runSpacing: 8,
                 children: evaluation.improvementSuggestions
                     .map(
-                      (suggestion) => _SuggestionChip(suggestion: suggestion),
+                      (suggestion) => _SuggestionButton(
+                        evaluation: evaluation,
+                        suggestion: suggestion,
+                        onRunImprovement: onRunImprovement,
+                      ),
                     )
                     .toList(),
               ),
@@ -666,30 +951,285 @@ class _AxisScoreRow extends StatelessWidget {
   }
 }
 
-class _SuggestionChip extends StatelessWidget {
-  const _SuggestionChip({required this.suggestion});
+class _SuggestionButton extends StatelessWidget {
+  const _SuggestionButton({
+    required this.evaluation,
+    required this.suggestion,
+    required this.onRunImprovement,
+  });
 
+  final AgentGpaEvaluation evaluation;
+  final AgentGpaSuggestion suggestion;
+  final AgentGpaImprovementActionHandler onRunImprovement;
+
+  @override
+  Widget build(BuildContext context) {
+    final plan = buildAgentGpaImprovementPlan(suggestion);
+    return Tooltip(
+      message: suggestion.suggestion,
+      child: OutlinedButton.icon(
+        onPressed: () => _showImprovementSheet(
+          context,
+          evaluation,
+          suggestion,
+          onRunImprovement,
+        ),
+        icon: Icon(plan.icon, size: 17),
+        label: Text('${suggestion.axis}: ${_suggestionTypeLabel(suggestion)}'),
+        style: OutlinedButton.styleFrom(
+          foregroundColor: const Color(0xFFFFEDD5),
+          side: BorderSide(
+            color: const Color(0xFFF97316).withValues(alpha: 0.55),
+          ),
+          backgroundColor: const Color(0xFFF97316).withValues(alpha: 0.12),
+          visualDensity: VisualDensity.compact,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+        ),
+      ),
+    );
+  }
+}
+
+Future<void> _showImprovementSheet(
+  BuildContext context,
+  AgentGpaEvaluation evaluation,
+  AgentGpaSuggestion suggestion,
+  AgentGpaImprovementActionHandler onRunImprovement,
+) async {
+  final plan = buildAgentGpaImprovementPlan(suggestion);
+  await showModalBottomSheet<void>(
+    context: context,
+    backgroundColor: const Color(0xFF141414),
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
+    ),
+    builder: (sheetContext) {
+      var running = false;
+      return StatefulBuilder(
+        builder: (context, setSheetState) {
+          return SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(18, 18, 18, 22),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(plan.icon, color: const Color(0xFFF97316)),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          plan.title,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w800,
+                            height: 1.25,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    plan.summary,
+                    style: const TextStyle(
+                      color: Color(0xFFCBD5E1),
+                      fontSize: 13,
+                      height: 1.45,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  _ImprovementContextPanel(
+                    evaluation: evaluation,
+                    suggestion: suggestion,
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: running
+                              ? null
+                              : () => Navigator.of(sheetContext).pop(),
+                          child: const Text('Close'),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: FilledButton.icon(
+                          onPressed: running
+                              ? null
+                              : () async {
+                                  if (!plan.canRunNow) {
+                                    Navigator.of(sheetContext).pop();
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                          '${plan.title} guidance opened for '
+                                          '${_sourceLabel(evaluation.sourceType)}.',
+                                        ),
+                                      ),
+                                    );
+                                    return;
+                                  }
+                                  setSheetState(() => running = true);
+                                  try {
+                                    await onRunImprovement(
+                                      evaluation,
+                                      suggestion,
+                                    );
+                                    if (sheetContext.mounted) {
+                                      Navigator.of(sheetContext).pop();
+                                    }
+                                    if (context.mounted) {
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        const SnackBar(
+                                          content: Text('GPA rerun completed.'),
+                                        ),
+                                      );
+                                    }
+                                  } catch (error) {
+                                    setSheetState(() => running = false);
+                                    if (context.mounted) {
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        SnackBar(
+                                          content: Text(
+                                            'GPA rerun failed: $error',
+                                          ),
+                                        ),
+                                      );
+                                    }
+                                  }
+                                },
+                          icon: running
+                              ? const SizedBox(
+                                  width: 16,
+                                  height: 16,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              : Icon(plan.icon, size: 18),
+                          label: Text(plan.primaryLabel),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      );
+    },
+  );
+}
+
+class _ImprovementContextPanel extends StatelessWidget {
+  const _ImprovementContextPanel({
+    required this.evaluation,
+    required this.suggestion,
+  });
+
+  final AgentGpaEvaluation evaluation;
   final AgentGpaSuggestion suggestion;
 
   @override
   Widget build(BuildContext context) {
-    return Tooltip(
-      message: suggestion.suggestion,
-      child: Chip(
-        avatar: const Icon(Icons.tips_and_updates_outlined, size: 17),
-        label: Text('${suggestion.axis}: ${suggestion.type}'),
-        visualDensity: VisualDensity.compact,
-        side: BorderSide(
-          color: const Color(0xFFF97316).withValues(alpha: 0.55),
-        ),
-        backgroundColor: const Color(0xFFF97316).withValues(alpha: 0.12),
-        labelStyle: const TextStyle(
-          color: Color(0xFFFFEDD5),
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-        ),
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFF0F0F0F),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: const Color(0xFF262626)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '${_sourceLabel(evaluation.sourceType)} / '
+            '${_shortId(evaluation.sourceId)} / '
+            'GPA ${evaluation.gpa.toStringAsFixed(2)}',
+            style: const TextStyle(
+              color: Color(0xFFE5E7EB),
+              fontSize: 12,
+              fontWeight: FontWeight.w800,
+              height: 1.35,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            suggestion.suggestion,
+            style: const TextStyle(
+              color: Color(0xFF94A3B8),
+              fontSize: 12,
+              height: 1.45,
+            ),
+          ),
+        ],
       ),
     );
+  }
+}
+
+@visibleForTesting
+AgentGpaImprovementPlan buildAgentGpaImprovementPlan(
+  AgentGpaSuggestion suggestion,
+) {
+  switch (suggestion.type) {
+    case 'rerun':
+      return const AgentGpaImprovementPlan(
+        title: 'Rerun evaluation',
+        summary:
+            'Run agent.evaluate_gpa again for this trace with the same source reference and judge model.',
+        primaryLabel: 'Run again',
+        icon: Icons.replay_circle_filled_outlined,
+        canRunNow: true,
+      );
+    case 'prompt_edit':
+      return const AgentGpaImprovementPlan(
+        title: 'Prompt revision brief',
+        summary:
+            'Use this weak-axis note as the prompt edit brief before the next executive run.',
+        primaryLabel: 'Use brief',
+        icon: Icons.edit_note_outlined,
+        canRunNow: false,
+      );
+    case 'approval_gate':
+      return const AgentGpaImprovementPlan(
+        title: 'Approval gate guidance',
+        summary:
+            'Route the next risky tool or database action through human approval before automation continues.',
+        primaryLabel: 'Use gate',
+        icon: Icons.verified_user_outlined,
+        canRunNow: false,
+      );
+    case 'scope_split':
+      return const AgentGpaImprovementPlan(
+        title: 'Scope split checklist',
+        summary:
+            'Split the original request into one atomic objective, then rerun the agent on that smaller scope.',
+        primaryLabel: 'Use split',
+        icon: Icons.call_split_outlined,
+        canRunNow: false,
+      );
+    default:
+      return const AgentGpaImprovementPlan(
+        title: 'Improvement guidance',
+        summary: 'Review this GPA suggestion before the next agent run.',
+        primaryLabel: 'Use guidance',
+        icon: Icons.tips_and_updates_outlined,
+        canRunNow: false,
+      );
   }
 }
 
@@ -800,9 +1340,34 @@ String _formatShortDateTime(DateTime value) {
   return '$date $time';
 }
 
+String _formatMonthDay(DateTime value) {
+  final local = value.toLocal();
+  return '${local.month}/${local.day}';
+}
+
+DateTime _dayOnly(DateTime value) {
+  final local = value.toLocal();
+  return DateTime(local.year, local.month, local.day);
+}
+
 String _shortId(String value) {
   if (value.length <= 8) return value;
   return value.substring(0, 8);
+}
+
+String _suggestionTypeLabel(AgentGpaSuggestion suggestion) {
+  switch (suggestion.type) {
+    case 'rerun':
+      return 'rerun';
+    case 'prompt_edit':
+      return 'prompt edit';
+    case 'approval_gate':
+      return 'approval gate';
+    case 'scope_split':
+      return 'scope split';
+    default:
+      return suggestion.type;
+  }
 }
 
 String _stringValue(Object? value, {String fallback = ''}) {

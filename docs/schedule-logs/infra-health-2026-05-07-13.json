@@ -1,0 +1,15 @@
+{
+  "timestamp": "2026-05-07T13:33:16.394Z",
+  "status": "healthy",
+  "checks": {
+    "env": { "ok": true, "detail": "SUPABASE_URL + SERVICE_ROLE_KEY set" },
+    "db_connectivity": { "ok": true, "latencyMs": 177, "detail": "profiles reachable in 177ms" },
+    "wbs_tasks": { "ok": true, "detail": "wbs_tasks reachable" },
+    "ai_circuit_breaker": { "ok": true, "detail": "ai_circuit_breaker reachable" }
+  },
+  "firebase_hosting": {
+    "ok": true,
+    "detail": "page renders, Flutter SPA bootstrapping ('Loading application...' transient)"
+  },
+  "action": "none — all healthy, no commit per task spec"
+}
