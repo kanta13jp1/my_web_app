@@ -64,6 +64,19 @@ Deno.test("Hedra TTS retry payload strips invalid model_id only from text_to_spe
   assertFalse("model_id" in strippedAudio);
 });
 
+Deno.test("Hedra TTS retry payload leaves non-TTS audio untouched", () => {
+  const body = {
+    type: "video",
+    audio_generation: {
+      type: "audio",
+      model_id: "d11481da-b973-4e72-ade0-7e8a86915bbf",
+      url: "https://example.com/audio.mp3",
+    },
+  };
+
+  assertEquals(stripHedraTextToSpeechModelId(body), body);
+});
+
 Deno.test("Hedra invalid text_to_speech model errors are recognized", () => {
   assert(
     isHedraInvalidTextToSpeechModelError(
