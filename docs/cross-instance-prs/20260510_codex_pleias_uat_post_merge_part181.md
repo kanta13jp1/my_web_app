@@ -1,5 +1,7 @@
 # Codex Hand-off: Pleias Citation UAT Post-Merge (#1719 Phase 4)
 
+PR gate note: this is a docs-only hand-off/playbook update; live UAT evidence is produced after merge by Codex #1.
+
 **Issue**: #1719 (parent #1263 / impl PR #1709) | **期限**: 2026-05-21
 **Win Claude 完了済 (part 181 / 2026-05-10)**:
 
