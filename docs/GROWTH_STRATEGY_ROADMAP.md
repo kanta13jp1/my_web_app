@@ -29776,5 +29776,51 @@ Step 5: ROADMAP KPI table append (= v(N) trigger row + v(N) verify row)
   - 129 part 連続 dogfood (= part 75 → 196 / 2 month +).
 
 ### Commit
+- PR [#2323](https://github.com/kanta13jp1/my_web_app/pull/2323) commit `3649545f3` (= phase 1 ship)
+
+## 2026-05-10 — Win版#132 part 196 phase 2 (Win Claude / User v10 ask)
+
+### Session Summary
+- **User v10 ask**: 「WBS 期限近順 + 2-instance 制反映 + メモリ HDD 圧縮施策 検討 + wrap-up + next session prompt 出力」
+- **mid-session state critical detect**: RAM 79.43% → **92.17%** (= +12.74pt build-up / 60min) / C: 71.81 → 52.76 GB (= -19.08 GB / 60min) — Playwright MCP 4 page navigation + Edit/Read 30+ tool call + git operation 累積効果
+- **immediate manual fire**: `memory_trim_phase2.ps1` ram_trim_count=6 / **+1686.9 MB freed (= 過去最大)** → RAM 86.64% (-5.53pt) + `worktree_cleanup --tier1` 23 scanned / 0 candidate (= safe)
+- **DISK_HYGIENE §17.15 v10 ship**: 60min build-up rate 数値化 + gap 4 (= PostToolUse wiring) **緊急度 up** + Codex 5/12 T+3 ping with v10 evidence 推奨
+- **WBS Top 5 期限近順 unchanged**: 5 件全 Win Codex sprint in-flight (= verify-only)
+
+### WBS Top 5 (= 期限近順 / 2-instance 制反映)
+
+| # | issue | 期限 | instance | 状態 (= part 196 phase 2 時点) |
+|---|-------|------|----------|-------------|
+| 1 | #2171 WBS dedup Phase 2 | 5/22 (T+12) | Win Codex | T+3 day / 5/12 T+3 ping schedule (= 2 day later) |
+| 2 | #2186 dev_cache 4 cmd Win | 5/23 (T+13) | Win Codex | T+1 day / **5/12 T+3 ping with v10 finding** = priority up justification |
+| 3 | v5 hook wiring 5 task (Tier A-E) | 5/23-5/28 | Win Codex | T+0 / 5/12 ping target |
+| 4 | **PostToolUse wiring (gap 4)** | 5/23-5/28 (推奨) | Win Codex | **v10 evidence priority up** ⚠️ |
+| 5 | #1124 GPA Phase 1 PR | 5/30 (T+20) | Win Codex | spec ship / 5/13 T+4 ping schedule |
+
+→ Win Claude this session = v10 spec ship + Codex hand-off doc proposal / 全 5 件 Codex sprint 在りで Win Claude の primary work は spec / verify / hand-off support
+
+### v10 KPI delta (= part 196 phase 2)
+
+| metric | phase 1 開始時 | phase 1 完了時 (= mid) | post-trim | delta |
+|--------|----------------|-----------------------|-----------|-------|
+| RAM% | 79.43% | 92.17% | **86.64%** | mid-session build-up = **+12.74pt / 60min** ⚠️ |
+| C: free | 71.81 GB | 52.73 GB | 52.76 GB | -19.08 GB / 60min ⚠️ (= Playwright artifact) |
+| process trim | n/a | n/a | **+1686.9 MB** (ram_trim_count=6) | band 内 ✅ / **過去最大** |
+
+### Pattern dogfood (= part 196 phase 2 累積 4 件追加 / 130 part 連続)
+
+1. 「**mid-session build-up rate measurement**」第 1 例 — 60min で +12.74pt RAM build-up を数値化 / Playwright MCP 4 page = 主因 / SessionStart 7 hook の効果が 60min で消失
+2. 「**iterative ask v10 累積**」(= v3 v4 v5 v6 v7 v8 v9 v9-verify v10 / 9 layer ship) — 同テーマ ask 累積 dogfood pattern 第 1 例 (= 1 user テーマ → 9 layer iterative spec ship)
+3. 「**option B 60min ship 後の immediate manual fire pattern**」第 1 例 — UI verify session 専用 hygiene rhythm 確立
+4. 「**Codex priority bump evidence-based justification pattern**」第 1 例 — gap 4 (= PostToolUse wiring) を 60min build-up 実測値で priority up 申し立て
+
+### Philosophy Alignment (Win#132 part 196 phase 2)
+- 主要実装: v10 evidence 採取 + gap 4 priority bump + Codex hand-off enrichment + mid-session immediate fire dogfood
+- 該当原則: #2 (mission = root cause evidence-based 特定) + #4 (mentor = Codex priority bump justification) + #5 (商品 = 価値) + #6 (時間 = 資本 = mid-session 健全保持) + #7 (資産負債 = build-up 観測) + #8 (KPI = build-up rate 候補) + #9 (IPO = audit-ready)
+- 整合性スコア: 7/9 ✅ ([PHILOSOPHY-22] gate 通過)
+- 130 part 連続 dogfood (= part 75 → 196 phase 2 / 2 month +)
+
+### Commit
 - (= 本 docs PR の merge commit / 後追記)
+
 

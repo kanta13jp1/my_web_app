@@ -1487,3 +1487,62 @@ $ grep dev_cache_cleanup ~/.claude/settings.json
 - **mtime audit** `~/.claude/scripts/` (= silent ship detection)
 
 
+### 17.15 v10 = part 196 mid-session build-up evidence + PostToolUse wiring priority up (= User v10 ask / 2026-05-10)
+
+**目的**: User 同テーマ iterative ask v10 受信. v9 SessionStart auto-fire 動作 verify part 195 で完了 + part 196 phase 1 = option B medium 60min UI verify ship 後の mid-session 計測で **+12.74pt RAM build-up を実測**. PostToolUse wiring (= §16 spec / gap 4) の **緊急度 up justification** を Codex 5/23 hand-off に追加.
+
+#### 17.15.1 v10 measured (= part 196 phase 2 / 2026-05-10 16:35 JST)
+
+| metric | session start (= part 196 起動時) | mid-session (= phase 1 60min 後) | post-trim | delta |
+|--------|----------------------------------|--------------------------------|-----------|-------|
+| RAM used | 79.43% | **92.17%** | 86.64% | **+12.74pt build-up / 60min** ⚠️ |
+| process trim freed | n/a | n/a | **1686.9 MB** (= ram_trim_count=6) | band 内 ✅ / **過去最大規模** |
+| C: free | 71.81 GB | 52.73 GB | 52.76 GB | **-19.08 GB / 60min** ⚠️ (= Playwright artifact + browser cache) |
+| worktree_cleanup --tier1 | n/a | 23 scanned | 0 candidate / 0 MB | safe / all in 7-day window |
+
+→ **mid-session build-up = +12.74pt / 1 hour** 実測. Playwright MCP 4 page navigation + Edit/Read 30+ tool call + git operation 累積効果. SessionStart/End 両端 7 hooks では 60+ min session で **必ず** 90% threshold 突破. **PostToolUse wiring (= §16 spec)** が真の解決策.
+
+#### 17.15.2 5 gap audit update (= v9 → v10)
+
+| gap# | 圧迫源 | v9 status | v10 update | 解消 owner | 期限 |
+|------|--------|-----------|------------|-----------|------|
+| 1 | SessionStart memory_trim 不在 | ✅ shipped | unchanged | Win Claude | (closed) |
+| 2 | dev_cache 4 cmd Win compat | ❌ pending | T+1 day / monitor | Win Codex | Issue #2186 / 5/23 |
+| 3 | hook wiring (= dev_cache) | ❌ pending | post-#2186 close 後 | Win Claude | post-#2186 |
+| 4 | **mid-session compress (= PostToolUse throttle)** | ❌ pending | ⚠️ **緊急度 up** (= part 196 +12.74pt 実測 / 60min build-up) | Win Codex | sprint 5/23-5/28 / **priority bump 推奨** |
+| 5 | MEMORY.md auto-consolidation | ❌ manual | unchanged (= 月次 cron candidate) | Win Claude | future |
+
+→ **gap 4 緊急度 up** = part 196 dogfood で「60min session で 必ず 90% 突破」を数値化. Codex 5/23 hand-off に v10 evidence 添付推奨.
+
+#### 17.15.3 v10 dogfood evidence
+
+- 「**mid-session build-up rate measurement**」第 1 例 (= 60min で +12.74pt / Playwright MCP 4 page = 主因 / ROI: SessionStart 7 hook fire の効果が 60min で消失)
+- 「**iterative ask v10 累積**」(= v3 part 178b / v4 part 189 / v5 part 190 / v6 part 191 / v7 part 192-b / v8 part 193 / v9 part 194 / v9 verify part 195 / **v10 part 196**)
+- 「**option B 60min ship 後の immediate manual fire pattern**」第 1 例 (= UI verify session 専用 hygiene rhythm)
+- 「pre-existing wiring functional verify pattern (part 195) → mid-session build-up evidence (part 196)」拡張
+
+#### 17.15.4 KPI 追跡 (= v6-v10 累積)
+
+| metric | v6 (191) | v7 (192-b) | v8 (193) | v9 (194) | v9 verify (195) | **v10 (196)** | trend |
+|--------|----------|------------|----------|----------|-----------------|----------------|-------|
+| RAM trigger | 93.1% | 94.8% | 94.0% | 95.8% | 92.9% | **92.17%** (= mid-session) | **mid-session > start ⚠️** |
+| process trim freed | ~930 MB | 1666 MB | 946.7 MB | 1457.8 MB | 720.5 MB | **1686.9 MB** | **過去最大** ✅ |
+| C: free | 70.24 GB | 66.22 GB | 62.26 GB | 61.82 GB | 72.8 GB | **52.76 GB** | **mid-session 急減 ⚠️** |
+| SessionStart hook | 6 | 6 | 6 | 7 | 7 | 7 | unchanged |
+| PostToolUse wiring | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | **gap 4 緊急 ⚠️** |
+
+#### 17.15.5 next session 推奨条件 (= part 197+)
+
+- **5/12 T+3 Codex sprint ping** with v10 evidence (= #2186 priority up + #2171 PR 状況 + v5 hook wiring 5 task / 同 ping で v10 finding 添付)
+- **PostToolUse wiring の Codex hand-off doc 作成** (= 5/23 期限 / §16 spec 既存活用 / gap 4 緊急度 up 反映)
+- **MEMORY.md size pre-check** (= 21-25 KB band / 月次 consolidation trigger 設計案 final ship)
+- **mid-session build-up monitoring KPI 化** (= session-delta.csv に mid-row 追加 / phase=mid 実装提案)
+
+#### 17.15.6 PHILOSOPHY-22 alignment (= 7/9 ✅)
+
+- 主要実装: v10 evidence 採取 (= 60min build-up rate 実測) + gap 4 priority bump justification + Codex hand-off update suggestion
+- 該当原則: #5 (商品 = 価値 = automation effectiveness) + #6 (時間 = 資本 = 60min compress = mid-session 健全保持) + #7 (資産負債 = mid-session build-up 観測) + #8 (KPI = build-up rate KPI 化候補) + #9 (IPO = audit-ready hygiene) + #2 (mission = root cause 圧迫源 evidence-based 特定) + #4 (mentor = Codex priority bump justification 提供)
+- 整合性スコア: 7/9 ✅ ([PHILOSOPHY-22] gate 通過)
+
+> **v10 status**: SessionStart 7 hook ✅ / mid-session build-up 実測 ✅ / PostToolUse wiring (= gap 4) **緊急度 up** ⚠️ / Codex 5/12 T+3 ping with v10 finding / next ping = 2026-05-12.
+
