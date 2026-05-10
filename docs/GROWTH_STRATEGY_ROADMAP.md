@@ -29734,3 +29734,57 @@ Step 5: ROADMAP KPI table append (= v(N) trigger row + v(N) verify row)
 
 ### Commit
 - (= 本 docs PR の merge commit / 後追記)
+
+---
+
+## Win版#132 part 197 (= 2026-05-10 / Win Claude / post-resume + v11 ship)
+
+### Session context
+- **Instance**: Win版 (Claude Code) part 197 (= post-resume / part 196 phase 2 直後 / 同日 8 part 連続)
+- **User ask**: v11 (= 「毎セッション必ず圧縮」9 layer 累積後 + WBS 期限近順)
+- **Risk band**: [COMPACTION-RESUME] 90min budget / [SCHEDULE-WAKEUP] 同日 8 part max risk
+
+### Ship summary
+1. **v9 verify FAIL → manual fire** (= 起動時 RAM 92.64% > 90% / +1421 MB / -1.46pt / system realloc gap part 192-b 既知 pattern)
+2. **post-resume v11 measurement** (= ram_trim_count=0 hidden gap 発見 / RAM 87.53% post-resume / manual fire 85.07% / -2.46pt / 626.8 MB)
+3. **DISK_HYGIENE_RUNBOOK.md §17.16 v11 ship** (= 既存 doc 章追加 pattern 第 11 例)
+   - §17.16.1 post-resume measurement
+   - §17.16.2 85% threshold lower (= 90 → 85 / earlier intervention)
+   - §17.16.3 post-resume mandatory fire policy (= ram_trim_count=0 gap close)
+   - §17.16.4 v6-v11 累積 KPI table (= 7 measurement points)
+   - §17.16.5 Codex priority bump payload for 5/12 T+3 ping
+   - §17.16.6 dogfood evidence (= 7 pattern)
+   - §17.16.7 next session 推奨
+4. **WBS Top 5 verify-only** (= 全 5 件 baseline unchanged from part 196 phase 2 / 全 Win Codex sprint 5/22-30 in-flight + 1 件 #1662 self-deliverable shipped)
+5. **PostToolUse wiring duplicate avoidance discipline** (= existing 5/9 hand-off doc Task C 既 cover / 新規 file 作成 skip = pre-existing spec verify pattern 第 6 例)
+
+### WBS Top 5 (期限近順 / 2-instance 振分 / unchanged from part 196)
+
+| # | issue | 期限 | instance | 状態 |
+|---|-------|------|----------|------|
+| 1 | #2171 WBS dedup Phase 2 | 5/22 (T+12) | Win Codex | T+1 day / 5/12 = T+3 ping schedule (= 2 day later) |
+| 2 | #2186 dev_cache 4 cmd Win | 5/23 (T+13) | Win Codex | T+1 day / 5/12 = T+3 ping with v11 evidence |
+| 3 | v5 hook wiring 5 task (Tier A-E) | 5/23-5/28 | Win Codex | T+0 / monitor / 5/12 = T+3 ping schedule |
+| 4 | #1124 GPA Phase 1 PR | 5/30 (T+20) | Win Codex | spec ship / 5/13 = T+4 ping schedule (= 3 day later) |
+| 5 | #1640 GA launch readiness | TBD | Win Claude | spec consolidated `GA_LAUNCH_READINESS_GATE_SPEC.md` / part 189 ship |
+
+→ 全 5 件 verify-only / Win Claude self = §17.16 v11 spec ship のみ.
+
+### Philosophy Alignment (Win#132 part 197)
+- 主要実装: post-resume hidden gap detection + 85% threshold lower spec ship + Codex priority bump payload + WBS verify
+- 該当原則: #4 (mentor=verify discipline) #5 (商品=価値=automation effectiveness) #6 (時間=資本=hook cost reduction) #7 (資産負債=manual fire 削減) #8 (KPI=delta measurement) #9 (IPO=audit-ready hygiene)
+- 整合性スコア: 6/9 ✅ ([PHILOSOPHY-22] gate 通過)
+- 理念的貢献:
+  - 「**post-resume cycle hidden gap detection**」第 1 例 (= ram_trim_count=0 + RAM 87.53% / hook 配線済でも fire skip pattern)
+  - 「**85% threshold lower discipline**」第 1 例 (= 90 → 85 / 5pt earlier intervention / 6 例累積 evidence base)
+  - 「**post-resume mandatory fire policy**」第 1 例 (= resume cycle gap explicit close)
+  - 「**user iterative ask v11 累積 10 layer**」第 1 例 (= 1 user テーマ v3-v11 / 10 layer ship)
+  - 「**既存 doc 章追加 pattern**」第 11 例 (= §17.16 / md 増殖回避)
+  - 「**pre-existing spec verify pattern**」第 6 例 (= existing 5/9 hand-off doc Task C 既 cover / 新規 hand-off doc 作成 avoid = duplicate avoidance)
+  - 「**RAM immediate fire band 確立**」7 例累積 (= v6/v7/v8/v9/v9-verify/v10 phase2/v11)
+  - 「**[COMPACTION-RESUME] 90min discipline**」第 2 例 (= part 188 第 1 例 / part 197 第 2 例 / spec ship 1 件 + memory 1 件 + ROADMAP 1 件 で完結)
+
+→ 130 part 連続 dogfood (= part 75 → 197 / 2 month +).
+
+### Commit
+- (= 本 docs PR の merge commit / 後追記)

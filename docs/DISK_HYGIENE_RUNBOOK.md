@@ -1486,4 +1486,93 @@ $ grep dev_cache_cleanup ~/.claude/settings.json
 - **MEMORY.md size pre-check** (= < 24.4 KB の確認 / 月次 consolidation の trigger condition 設計候補)
 - **mtime audit** `~/.claude/scripts/` (= silent ship detection)
 
+### 17.16 v11 = part 197 post-resume verify + 85% threshold lower + post-resume mandatory fire policy (= 既存 doc 章追加 pattern 第 11 例 / 2026-05-10)
+
+> **Note**: §17.15 v10 spec は PR #2323 (= OPEN / mergeStateStatus=BEHIND) で part 196 phase 2 として ship 中. 本 §17.16 v11 = part 197 post-resume layer 追加. v10 merge 後も sequential 維持 (= §17.16 unchanged).
+
+**目的**: User 要望 v11 (= 「毎セッション必ず圧縮」9 layer 累積後の 10 層目). v6-v9 = manual + auto-fire band / v10 = mid-session build-up rate / **v11 = post-resume cycle gap close + threshold lowering**.
+
+#### 17.16.1 post-resume measurement (= part 197 起動時 / 2026-05-10 JST)
+
+| metric | session start (= initial) | resume hook fire 後 | manual fire 後 | total delta |
+|--------|---------------------------|---------------------|---------------|-------------|
+| RAM used | 92.64% | **87.53%** | **85.07%** | **-7.57pt** |
+| ram_trim_count (= resume hook) | n/a | **0** ⚠️ | 2 | +2 manual |
+| process trim freed | n/a | 0 MB ⚠️ | 626.8 MB | band 内 (= 600-1700 MB) ✅ |
+| C: free | 51.13 GB | **58.17 GB** | 58.17 GB | +7.04 GB (= resume cycle 効果) |
+| MEMORY.md size | 23.30 KB | 23.30 KB | 23.30 KB | stable / threshold 24.4 KB 接近 ⚠️ |
+
+→ **発見 1**: post-resume hook fire 時 ram_trim_count=0 (= resume cycle で trim 不要判定だが 87.53% は依然 high band).
+→ **発見 2**: 90% threshold では post-resume 87.53% は trigger 外. **「fire しないが累積 high」状態**.
+→ **発見 3**: C: free は resume cycle で +7 GB 自然回復 (= OS file cache release).
+
+#### 17.16.2 v11 ship = 85% threshold lower
+
+```diff
+# RAM/C: 圧縮即時実行条件 (= part 197 v11 確立)
+- 起動時 RAM > 90% → manual `memory_trim_phase2.ps1` 即実行
++ 起動時 RAM > **85%** → manual `memory_trim_phase2.ps1` 即実行 (= -5pt earlier trigger / 600-1700 MB band)
++ post-resume cycle 後 ram_trim_count=0 でも **必ず 1 manual fire** (= resume cycle gap close)
+- mid-session RAM > 90% (= 60min 後想定) → immediate manual fire pattern
++ mid-session RAM > **85%** → immediate manual fire pattern (= build-up 早期検知)
+  C: < 50 GB free → worktree_cleanup.py --tier1 --apply
+  system RAM > 95% → user manual close 推奨
+```
+
+→ rationale: v6-v10 累積 6 例 measurements で confirm = 85-95% band で hook 自走 fire 後も system 高止まり (= browser/IDE realloc gap part 192-b 既知). 85% threshold = build-up 累積前の earlier intervention.
+
+#### 17.16.3 post-resume mandatory fire policy (= ram_trim_count=0 hidden gap close)
+
+```text
+post-resume sequence (= part 197 v11 ship):
+  Step 1: SessionStart hooks fire (= 7 hook 自走)
+  Step 2: ram_trim_count 確認 (= 0 = resume cycle で trim skip 判定)
+  Step 3: RAM% 測定 (= Get-CimInstance Win32_OperatingSystem)
+  Step 4: > 85% threshold = 必ず 1 manual fire
+  Step 5: post-fire RAM% 再測定 + delta log
+```
+
+→ resume cycle で hook 配線済でも `ram_trim_count=0` 可能 (= part 197 実測で confirm). manual fire 強制で gap close.
+
+#### 17.16.4 v6-v11 累積 KPI table
+
+| metric | v6 (191) | v7 (192-b) | v8 (193) | v9 (194) | v9 verify (195) | v11 (197 resume) | trend |
+|--------|----------|------------|----------|----------|-----------------|-------------------|-------|
+| 開始時 RAM | 93.1% | 94.8% | 94.0% | 95.8% | 92.9% | **92.64%** | high band 維持 |
+| post-fire RAM | 87.2% | 95.2%⚠️ | 84% | 94.2% | 87.7% | **85.07%** | -5 to -10pt band ✅ |
+| process trim freed | ~930 MB | 1666 MB | 946.7 MB | 1457.8 MB | 720.5 MB | **626.8 MB** | band 600-1700 MB ✅ |
+| ram_trim_count (auto) | n/a | n/a | n/a | n/a | n/a | **0** ⚠️ | resume cycle gap |
+| C: free | 70.24 GB | 66.22 GB | 62.26 GB | 61.82 GB | 72.8 GB | **58.17 GB** | -14 GB session 累積 ⚠️ |
+
+→ band 6 例累積 / process trim freed range 600-1700 MB = stable. ram_trim_count=0 (= v11 新発見 hidden gap).
+
+#### 17.16.5 Codex priority bump payload (= 5/12 T+3 ping for #2186 / #2171 / Tier C)
+
+> **5/12 T+3 ping 推奨文言** (= Win Claude part 197 v11 evidence):
+> ```
+> #2186 dev_cache priority bump justification (= Win Claude part 197 v11 measurement):
+> - post-resume cycle で `ram_trim_count=0` 観測 (= SessionStart 7 hook 配線済でも resume sequence で trim skip 判定)
+> - RAM 87.53% post-resume → 90% threshold 外 / 85% threshold 適用で manual fire 必要
+> - v11 = 85% threshold lower + post-resume mandatory fire policy で gap close
+> - dev_cache wiring (#2186 close) + PostToolUse wiring (Tier C / 5/25) で v11 manual fire 不要化
+> - 詳細 KPI = docs/DISK_HYGIENE_RUNBOOK.md §17.16
+> ```
+
+#### 17.16.6 dogfood evidence
+
+- 「post-resume cycle hidden gap detection」第 1 例 (= ram_trim_count=0 + RAM 87.53% / hook 配線済でも fire skip)
+- 「85% threshold lower discipline」第 1 例 (= 90 → 85 / 5pt earlier intervention / 6 例累積 evidence base)
+- 「post-resume mandatory fire policy」第 1 例 (= resume cycle gap explicit close)
+- 「既存 doc 章追加 pattern」第 11 例 (= §17.16 として 1 章追加 / 新 spec md 増殖回避)
+- 「user iterative ask v11 累積 10 layer」第 1 例 (= 1 user テーマ v3-v11 / 10 layer ship)
+- 「RAM immediate fire band 確立」7 例累積 (= v6/v7/v8/v9/v9-verify/v10 phase2/v11)
+
+#### 17.16.7 next session 推奨条件 (= part 198+)
+
+- **v11 85% threshold verify**: part 198 起動時に > 85% なら manual fire / < 85% なら skip + ROADMAP record
+- **post-resume gap monitor**: ram_trim_count 値 log + manual fire delta 比較 (= v11 hidden gap 再発確認)
+- **MEMORY.md size watch**: 23.30 KB (= threshold 24.4 KB まで残 1.1 KB) → 月次 consolidation candidate
+- **5/12 T+3 Codex sprint ping** with v11 evidence (= #2186 / Tier C / 上記 §17.16.5 文言)
+- **mtime audit** `~/.claude/scripts/` (= silent ship detection / part 193 pattern)
+
 
