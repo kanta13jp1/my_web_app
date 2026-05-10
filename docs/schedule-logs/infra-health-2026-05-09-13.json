@@ -1,0 +1,22 @@
+{
+  "run_at_jst": "2026-05-09T13:32 JST",
+  "supabase_health_check": {
+    "http": 200,
+    "status": "healthy",
+    "checks": {
+      "env": { "ok": true, "detail": "SUPABASE_URL + SERVICE_ROLE_KEY set" },
+      "db_connectivity": { "ok": true, "latencyMs": 261, "detail": "profiles reachable in 261ms" },
+      "wbs_tasks": { "ok": true, "detail": "wbs_tasks reachable" },
+      "ai_circuit_breaker": { "ok": true, "detail": "ai_circuit_breaker reachable" }
+    },
+    "timestamp": "2026-05-09T04:32:39.900Z"
+  },
+  "firebase_hosting": {
+    "url": "https://my-web-app-b67f4.web.app/",
+    "http": 200,
+    "time_total_sec": 0.332,
+    "note": "WebFetch false-negative ignored (Flutter Web loads via JS — raw curl 200 is canonical)"
+  },
+  "anomaly": false,
+  "action_taken": "log only (no commit per task spec)"
+}

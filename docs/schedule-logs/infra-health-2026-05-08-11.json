@@ -1,0 +1,21 @@
+{
+  "timestamp_jst": "2026-05-08T11:33+09:00",
+  "timestamp_utc": "2026-05-08T02:33:17.985Z",
+  "supabase": {
+    "status": "healthy",
+    "checks": {
+      "env": { "ok": true, "detail": "SUPABASE_URL + SERVICE_ROLE_KEY set" },
+      "db_connectivity": { "ok": true, "latencyMs": 381, "detail": "profiles reachable in 381ms" },
+      "wbs_tasks": { "ok": true, "detail": "wbs_tasks reachable" },
+      "ai_circuit_breaker": { "ok": true, "detail": "ai_circuit_breaker reachable" }
+    }
+  },
+  "firebase_hosting": {
+    "url": "https://my-web-app-b67f4.web.app/",
+    "ok": true,
+    "title": "自分株式会社 | AIが今日の最優先タスクを整理",
+    "shell": "Flutter Web app shell loading normally",
+    "errors": null
+  },
+  "action_taken": "none (all healthy)"
+}

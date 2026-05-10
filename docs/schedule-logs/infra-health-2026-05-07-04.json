@@ -1,0 +1,23 @@
+{
+  "run_at_jst": "2026-05-07T04:34:00+09:00",
+  "supabase_health_check": {
+    "http_status": 200,
+    "status": "healthy",
+    "checks": {
+      "env": { "ok": true, "detail": "SUPABASE_URL + SERVICE_ROLE_KEY set" },
+      "db_connectivity": { "ok": true, "latencyMs": 1351, "detail": "profiles reachable in 1351ms" },
+      "wbs_tasks": { "ok": true, "detail": "wbs_tasks reachable" },
+      "ai_circuit_breaker": { "ok": true, "detail": "ai_circuit_breaker reachable" }
+    },
+    "timestamp": "2026-05-06T19:34:17.502Z"
+  },
+  "firebase_hosting": {
+    "url": "https://my-web-app-b67f4.web.app/",
+    "title": "自分株式会社 | AIが今日の最優先タスクを整理",
+    "ok": true,
+    "note": "static shell rendered + Flutter init indicator (normal)"
+  },
+  "verdict": "healthy",
+  "action": "no commit (rule: 異常のみ commit&push)",
+  "notes": "SUPABASE_SERVICE_KEY env not set; called EF with anon key (health-check checks env presence server-side, no privileged data)"
+}

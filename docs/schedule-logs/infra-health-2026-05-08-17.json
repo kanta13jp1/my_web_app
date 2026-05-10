@@ -1,0 +1,23 @@
+{
+  "run_at_jst": "2026-05-08T17:33:23+09:00",
+  "run_at_utc": "2026-05-08T08:33:23Z",
+  "supabase_health": {
+    "http_status": 200,
+    "status": "healthy",
+    "checks": {
+      "env": "ok (SUPABASE_URL + SERVICE_ROLE_KEY set)",
+      "db_connectivity": "ok (1117ms)",
+      "wbs_tasks": "ok",
+      "ai_circuit_breaker": "ok"
+    }
+  },
+  "firebase_hosting": {
+    "url": "https://my-web-app-b67f4.web.app/",
+    "http_status": 200,
+    "status": "ok",
+    "title": "自分株式会社 | AIが今日の最優先タスクを整理"
+  },
+  "anomaly": false,
+  "action_taken": "log only (no commit per task rule: commit only on anomaly)",
+  "notes": "db_connectivity 1117ms — elevated vs 126ms baseline at 04:35 JST but under 2s SLA. wbs_tasks + ai_circuit_breaker reachable. Firebase LP serving normally."
+}

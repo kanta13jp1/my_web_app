@@ -1,0 +1,21 @@
+{
+  "timestamp": "2026-05-06T06:41:59.054Z",
+  "jst": "2026-05-06 15:42 JST",
+  "supabase": {
+    "status": "healthy",
+    "checks": {
+      "env": "ok",
+      "db_latency_ms": 1430,
+      "wbs_tasks": "ok",
+      "ai_circuit_breaker": "ok"
+    }
+  },
+  "firebase": {
+    "url": "https://my-web-app-b67f4.web.app/",
+    "title": "自分株式会社 | AIが今日の最優先タスクを整理",
+    "status": "ok",
+    "note": "Flutter Web shell rendered (Loading application... = normal SPA boot)"
+  },
+  "anomaly": false,
+  "action": "report-only"
+}

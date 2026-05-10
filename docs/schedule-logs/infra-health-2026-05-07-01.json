@@ -1,0 +1,21 @@
+{
+  "task": "infra-health-check",
+  "ranAt": "2026-05-07T01:33+09:00",
+  "supabaseHealthCheck": {
+    "status": "healthy",
+    "endpoint": "https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/health-check",
+    "checks": {
+      "env": "ok",
+      "db_connectivity": "ok (1705ms)",
+      "wbs_tasks": "ok",
+      "ai_circuit_breaker": "ok"
+    },
+    "efTimestamp": "2026-05-06T16:33:10.861Z"
+  },
+  "firebaseHosting": {
+    "url": "https://my-web-app-b67f4.web.app/",
+    "result": "Flutter app shell rendered, loading state observed"
+  },
+  "anomalies": [],
+  "action": "report-only (no anomalies; detached HEAD + WIP guard active)"
+}

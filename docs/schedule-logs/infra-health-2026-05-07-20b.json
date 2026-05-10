@@ -1,0 +1,28 @@
+{
+  "timestamp": "2026-05-07T11:34:00Z",
+  "supabase_health": {
+    "status": "healthy",
+    "http_status": 200,
+    "checks": {
+      "env": "ok (SUPABASE_URL + SERVICE_ROLE_KEY set)",
+      "db_connectivity": "ok (239ms)",
+      "wbs_tasks": "ok",
+      "ai_circuit_breaker": "ok"
+    }
+  },
+  "firebase_hosting": {
+    "url": "https://my-web-app-b67f4.web.app/",
+    "http_status": 200,
+    "title_excerpt": "自分株式会社"
+  },
+  "anomalies": [
+    {
+      "severity": "info",
+      "metric": "db_connectivity_latency",
+      "value_ms": 239,
+      "prior_trend": "119 → 1325 → 3101 → 239 (recovered)",
+      "note": "Latency back to baseline range. Escalating warning from 20:05 cycle has resolved."
+    }
+  ],
+  "action": "log only (status=healthy / no commit per task rule)"
+}

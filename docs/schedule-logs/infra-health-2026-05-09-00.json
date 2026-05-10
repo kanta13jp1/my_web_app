@@ -1,0 +1,23 @@
+{
+  "run_at": "2026-05-08T15:33:35.693Z",
+  "run_at_jst": "2026-05-09 00:33 JST",
+  "edge_function": {
+    "url": "https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/health-check",
+    "http_status": 200,
+    "status": "healthy",
+    "checks": {
+      "env": { "ok": true, "detail": "SUPABASE_URL + SERVICE_ROLE_KEY set" },
+      "db_connectivity": { "ok": true, "latency_ms": 111, "detail": "profiles reachable in 111ms" },
+      "wbs_tasks": { "ok": true, "detail": "wbs_tasks reachable" },
+      "ai_circuit_breaker": { "ok": true, "detail": "ai_circuit_breaker reachable" }
+    }
+  },
+  "firebase_hosting": {
+    "url": "https://my-web-app-b67f4.web.app/",
+    "http_status": 200,
+    "time_total_sec": 0.211
+  },
+  "verdict": "healthy",
+  "action_taken": "log only (no commit per task: 異常時のみコミット)",
+  "notes": "All 4 EF checks ok. DB latency 111ms (improved from prior 352ms). Firebase hosting 200/0.211s. WebFetch saw 'Loading application...' — normal Flutter Web SPA skeleton before hydration, not an error."
+}

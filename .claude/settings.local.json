@@ -151,7 +151,9 @@
       "Bash(PYTHONUTF8=1 python notebooklm_research.py --notebook \"jibun-master-brain\" \"VSCode#25 \\(2026-04-11\\): 機能#21通知センター・機能#22電子署名をLPの_buildUniqueValueSection\\(\\)に追加完了。「14のこと」→「16のこと」に更新。flutter analyze 0エラー確認・push成功。コンテキスト圧縮後の再開でEdit-before-Readエラーが発生したが即修正。次回優先: バグ#B4\\(JWT未検証・Web版\\)・機能#13\\(EF統合・Web版\\)。\")",
       "Bash(sed -n '1,5p' ~/.claude/hooks/inject-rules.txt)",
       "Bash(sed -n '32,50p' ~/.claude/hooks/inject-rules.txt)",
-      "Bash(gh label *)"
+      "Bash(gh label *)",
+      "Bash(Get-Date -Format \"yyyy-MM-dd HH:mm:ss zzz\")",
+      "Bash(git worktree *)"
     ]
   }
 }
