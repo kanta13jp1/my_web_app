@@ -29662,3 +29662,75 @@ Step 4: size verify (< 24.4 KB / < 200 lines)
 
 ### Commit
 - (= 本 docs PR の merge commit / 後追記)
+
+
+## 2026-05-10 Win#132 part 195 (= 同日 5 part 連続 / verify-only / v9 functional verify)
+
+### 概要
+session 開始時 RAM 92.9% used (= part 194 末尾 94.2% から -1.3pt 自然軽減 / pre-Bash measurement). SessionStart 7 hook fire 後 RAM 87.7% (= **-5.2pt** 自走改善 / **v9 SessionStart auto-fire functional success ✅**). manual `memory_trim_phase2.ps1` immediate fire = process trim **720.5 MB freed** (= band 内 / external delta +43 MB / OS realloc 埋め直し pattern part 192-b 既観測). MEMORY.md 19.92 KB 維持 (= [MEMORY-DECAY] 適合 / part 194 consolidation 効果持続 ✅). Codex sprint 0 PR open / 今日 T+0 / next 5/12 T+3 ping schedule unchanged (= premature ping skip discipline 第 3 例).
+
+### 主要 ship
+- **v9 SessionStart auto-fire functional verify ✅** (= 92.9% → 87.7% / -5.2pt / 7 hook fire 効果実測 / part 194 wiring 完了確認)
+- **manual fire delta band 維持** (= 720.5 MB process trim freed / 87.7% → 87.5% / +43 MB external delta / OS realloc gap 確認)
+- **scripts mtime audit** `~/.claude/scripts/`: 4 files 全 2026-05-09 03:51 (= part 192-b 以降変動なし / silent ship 検知 0 ✅)
+- **session-delta.csv tail verify**: part 195 start row logged at 2026-05-10T05:31:19 (= `568dc693` / `4b29d7a9` / `3759efa1` / `79750060` 複数 session_id record)
+- **Codex sprint state query**:
+  - #2186 OPEN last comment 2026-05-09 12:43 (= part 193 v8 finding) / Codex movement 0 / 5/12 T+3 ping unchanged
+  - #2171 OPEN last comment 2026-05-08 15:50 (= part 183 verify) / Codex movement 0 T+2 day / 5/12 T+3 ping unchanged
+  - 0 Codex PR open (= author:app/codex filter 0 件)
+- **WBS-SYNC skip note**: tools-hub:wbs.priority_for_instance 不在 / GitHub Issue 経由 fallback acknowledged
+- **ROADMAP 18 TBD audit**: defer (= 29664 lines / next session 精査推奨)
+- **UI verify Playwright**: defer (= mid-session bandwidth / [UI-VERIFY] backlog)
+
+### v9 functional verify dogfood KPI
+
+| metric | v6 (191) | v7 (192-b) | v8 (193) | v9 (194) | v9 verify (195) | trend |
+|--------|----------|------------|----------|----------|-----------------|-------|
+| session 起動時 RAM | 93.1% | 94.8% | 94.0% | 95.8% | **92.9%** | -2.9pt vs v9 trigger |
+| SessionStart hook fire 後 | n/a | n/a | n/a | n/a (manual) | **87.7%** | **-5.2pt 自走改善 ✅** |
+| process trim freed | ~930 MB | 1666 MB | 946.7 MB | 1457.8 MB | **720.5 MB** | band 700-1700 MB |
+| RAM net delta | -5.9 pt | +0.4 pt | -10 pt | -1.6 pt | -5.4 pt | recovery (= total) |
+| C: free | 70.24 GB | 66.22 GB | 62.26 GB | 61.82 GB | **72.8 GB** | **+10.98 GB** ⚠️ (= 別 session cleanup 効果) |
+| MEMORY.md size | n/a | n/a | 35.18 KB | 19.92 KB | **19.92 KB** | post-consolidation 維持 ✅ |
+
+→ **v9 wiring 効果実測 = SessionStart 7 hook fire で 5.2 pt 自走 RAM 軽減**. manual fire は補助 layer として 0.2 pt 追加削減 (= internal 720 MB / external 43 MB). dev_cache fix 後 SessionEnd 5th hook 配線で更に上積み期待.
+
+### v9 verify pattern 確立: 「pre-existing wiring functional verify」
+
+```
+Step 1: session 起動直後 RAM% 即測定 (= Bash + Get-CimInstance)
+Step 2: SessionStart hook fire 後 RAM% 再測定 (= delta = hook 効果)
+Step 3: < 90% threshold = success ✅ / > 90% = manual fire 必要 + 配線 audit
+Step 4: manual fire delta 測定 (= internal trim vs external realloc gap)
+Step 5: ROADMAP KPI table append (= v(N) trigger row + v(N) verify row)
+```
+
+第 1 例 = part 195 (= part 194 v9 wiring spec ship 後 / 翌セッション = next session 起動時 verify discipline).
+
+### WBS Top 5 (期限近順 / 2-instance 振分) — v9 verify (= unchanged from part 194)
+
+| # | issue | 期限 | instance | 状態 |
+|---|-------|------|----------|------|
+| 1 | #2171 WBS dedup Phase 2 | 5/22 (T+12) | Win Codex | T+2 day / monitor / 5/12 = T+3 ping schedule (= 2 day later) |
+| 2 | #2186 dev_cache 4 cmd Win | 5/23 (T+13) | Win Codex | T+1 day / monitor / 5/12 = T+3 ping with v8/v9 finding |
+| 3 | #1741 PWA self-touch widget | 5/23 (T+13) | Win Codex | merge confirmed `bb76bd83e` (part 194 verify) |
+| 4 | v5 hook wiring 5 task (Tier A-E) | 5/23-5/28 | Win Codex | T+0 / monitor / 5/12 = T+3 ping schedule |
+| 5 | #1124 GPA Phase 1 PR | 5/30 (T+20) | Win Codex | spec ship / 5/13 = T+4 ping schedule (= 3 day later) |
+
+→ 全 5 件 unchanged / Win Claude this session = v9 functional verify only (= hygiene primary)
+
+### Philosophy Alignment (Win#132 part 195)
+- 主要実装: SessionStart auto-fire functional verify success + manual fire band 維持 + scripts mtime no-drift + ROADMAP TBD defer + UI defer + Codex monitor
+- 該当原則: #4 (mentor=verify discipline) #5 (商品=価値=automation effectiveness) #6 (時間=資本=hook自走 cost) #7 (資産負債=manual fire 削減) #8 (KPI=hook delta measurement) #9 (IPO=audit-ready hygiene)
+- 整合性スコア: 6/9 ✅ ([PHILOSOPHY-22] gate 通過)
+- 理念的貢献:
+  - 「**pre-existing wiring functional verify pattern**」第 1 例 (= v(N) spec ship → v(N+1) 起動時 functional verify / 5-step procedure 確立 / part 184 pre-existing spec verify pattern の動作 layer 進化)
+  - 「**SessionStart auto-fire effectiveness measurement**」第 1 例 (= 7 hook fire = -5.2 pt 自走 RAM 軽減 / 数値化された hook ROI)
+  - 「**premature ping skip discipline**」第 3 例 (= part 171/194/195 / T+0 で T+3 schedule 維持 / Codex SLA 14-day buffer 保護)
+  - 「**silent ship detection mtime audit**」第 3 例 (= part 193/194/195 / 異常変動なし confirm pattern)
+  - 「**RAM immediate fire band 確立**」6 例累積 (= 191/192-b/193/194/195 / process trim 700-1700 MB / system trim user manual)
+
+→ 128 part 連続 dogfood (= part 75 → 195 / 2 month +).
+
+### Commit
+- (= 本 docs PR の merge commit / 後追記)
