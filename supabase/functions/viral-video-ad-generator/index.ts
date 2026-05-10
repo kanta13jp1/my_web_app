@@ -479,9 +479,15 @@ async function createHedraPresenterVideo(params: {
   imageUrl: string | null;
   lang: "ja" | "en";
 }): Promise<HedraVideoResult> {
-  const imageUrl = firstNonEmptyString(params.imageUrl);
-  if (!imageUrl) {
+  const rawImageUrl = firstNonEmptyString(params.imageUrl);
+  if (!rawImageUrl) {
     throw new Error("Hedra avatar video requires imageUrl");
+  }
+  const imageUrl = normalizeHedraStartKeyframeUrl(rawImageUrl);
+  if (!imageUrl) {
+    throw new Error(
+      "Hedra avatar image must be a public http(s) URL under 2083 characters. Regenerate the share image so it can be stored before video generation.",
+    );
   }
 
   const voiceId = await resolveHedraVoiceId(
@@ -792,6 +798,19 @@ function firstNonEmptyString(...values: unknown[]): string | null {
     }
   }
   return null;
+}
+
+function normalizeHedraStartKeyframeUrl(value: string | null): string | null {
+  if (!value) return null;
+  if (value.length > 2083) return null;
+  try {
+    const parsed = new URL(value);
+    return parsed.protocol === "https:" || parsed.protocol === "http:"
+      ? value
+      : null;
+  } catch {
+    return null;
+  }
 }
 
 function firstNumber(...values: unknown[]): number | null {
