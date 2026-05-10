@@ -1,0 +1,22 @@
+{
+  "run_at_jst": "2026-05-09T07:34+09:00",
+  "supabase_health": {
+    "http": 200,
+    "status": "healthy",
+    "checks": {
+      "env": "ok",
+      "db_connectivity": "ok 566ms",
+      "wbs_tasks": "ok",
+      "ai_circuit_breaker": "ok"
+    },
+    "timestamp": "2026-05-08T22:34:16.552Z"
+  },
+  "firebase_hosting": {
+    "url": "https://my-web-app-b67f4.web.app/",
+    "http": 200,
+    "time_total_sec": 1.067,
+    "content_length": 66079
+  },
+  "anomalies": [],
+  "action": "log-only (all healthy)"
+}
