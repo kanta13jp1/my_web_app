@@ -4,7 +4,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../pages/agent_gpa_dashboard_page.dart';
 
 typedef AgentGpaBadgeLoader = Future<List<AgentGpaEvaluation>> Function(
-    AgentGpaDashboardQuery query);
+  AgentGpaDashboardQuery query,
+);
 
 class AgentGpaBadge extends StatefulWidget {
   const AgentGpaBadge({
