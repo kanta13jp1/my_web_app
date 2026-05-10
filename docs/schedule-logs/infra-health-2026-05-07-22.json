@@ -1,0 +1,20 @@
+{
+  "timestamp_utc": "2026-05-07T13:03:59.139Z",
+  "timestamp_jst": "2026-05-07 22:04 JST",
+  "supabase": {
+    "status": "healthy",
+    "http_code": 200,
+    "checks": {
+      "env": "ok",
+      "db_connectivity": "ok (216ms)",
+      "wbs_tasks": "ok",
+      "ai_circuit_breaker": "ok"
+    }
+  },
+  "firebase_hosting": {
+    "status": "healthy",
+    "title": "自分株式会社 | AIが今日の最優先タスクを整理",
+    "app_shell": "loaded"
+  },
+  "action": "no_action_needed"
+}

@@ -1,0 +1,24 @@
+{
+  "task": "infra-health-check",
+  "ranAt": "2026-05-05T23:32:34+09:00",
+  "instance": "Win Claude (scheduled)",
+  "supabase": {
+    "endpoint": "https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/health-check",
+    "httpStatus": 200,
+    "status": "healthy",
+    "checks": {
+      "env": "ok",
+      "db_connectivity": "ok (149ms)",
+      "wbs_tasks": "ok",
+      "ai_circuit_breaker": "ok"
+    },
+    "timestamp": "2026-05-05T14:32:30.773Z"
+  },
+  "firebase": {
+    "url": "https://my-web-app-b67f4.web.app/",
+    "reachable": true,
+    "note": "Loading application... = Flutter Web bootstrap pre-hydration / normal (same as 20/21/22 prior runs)"
+  },
+  "result": "healthy",
+  "action": "no commit (per spec — commit only on abnormality)"
+}
