@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../pages/abstinence_guard_page.dart';
 import '../pages/admin_analytics_page.dart';
 import '../pages/agent_org_page.dart';
+import '../pages/agent_gpa_dashboard_page.dart';
 import '../pages/ai_company_builder_page.dart';
 import '../pages/ai_secretary_page.dart';
 import '../pages/my_skills_page.dart';
@@ -760,6 +761,24 @@ List<HomeToolEntry> buildHomeToolCatalog({
       color: const Color(0xFF3D5AFE),
       keywords: const <String>['AI組織', 'エージェント', 'OS'],
       onOpen: (context) => _pushPage(context, AgentOrgPage()),
+      requiresClearDeck: true,
+    ),
+    HomeToolEntry(
+      id: 'agent-gpa-dashboard',
+      sectionId: 'knowledge',
+      title: 'AI Executive GPA',
+      subtitle: 'Goal / Plan / Action / Consistency scores for agent traces',
+      icon: Icons.query_stats_outlined,
+      color: const Color(0xFFF97316),
+      keywords: const <String>[
+        'AI',
+        'agent',
+        'GPA',
+        'executive',
+        'trace',
+        'debug',
+      ],
+      onOpen: (context) => _pushPage(context, const AgentGpaDashboardPage()),
       requiresClearDeck: true,
     ),
     HomeToolEntry(
