@@ -28823,7 +28823,7 @@ User 明示「5/14 trigger date / 推奨日」要望対応:
 
 ### Commit
 
-- PR #TBD (= admin squash merge 予定 / branch `claude/win132-part178-faceless-youtube-spec`)
+- PR [#2149](https://github.com/kanta13jp1/my_web_app/pull/2149) MERGED `8aff1bef0` (admin squash / part 196 backfill)
 
 ---
 
@@ -28943,7 +28943,7 @@ User 第 2 弾 ask (= same session continuation): 「WBS 期限近順 + 2 instan
 
 ### Commit
 
-- PR #TBD (= admin squash merge 予定 / branch `claude/nostalgic-gagarin-03deac`)
+- PR [#2161](https://github.com/kanta13jp1/my_web_app/pull/2161) MERGED `324a49942` (admin squash / part 196 backfill)
 
 ## 2026-05-09 — Win版#132 part 180 (Win Claude / Claude Code)
 
@@ -29734,3 +29734,47 @@ Step 5: ROADMAP KPI table append (= v(N) trigger row + v(N) verify row)
 
 ### Commit
 - (= 本 docs PR の merge commit / 後追記)
+
+## 2026-05-10 — Win版#132 part 196 (Win Claude / 同日 6 part 連続 / option B medium)
+
+### Session Summary
+- **detect**: MEMORY.md TOP entry に既 part 195 着地確認 → user prompt = part 194 wrap-up template auto-inject / 本 session 実態 = part 196 (= 同日 6 part 連続)
+- **state snapshot**: RAM 79.43% (= part 195 end 87.7% から -8.3pt 継続改善 / system pressure 解消) / C: 71.81 GB (= +9.99 GB vs part 194 / +cleanup 蓄積) / MEMORY.md 21.57 KB (= safe / +1.65 KB part 195 追加分)
+- **session-delta.csv 検証**: actual path `~/.claude/logs/session-delta.csv` 蓄積継続 / 本 session start row `568dc693,start,71.80` logged
+- **option B 実行** = ROADMAP TBD partial backfill + UI verify 4 page screenshot
+- **ROADMAP TBD audit**: 全 17 entries 中 2 件 backfill 完了 (= 28826 part 178 → PR #2149 `8aff1bef0` / 28946 part 179 → PR #2161 `324a49942`) / 残 15 件 (= 旧 2026-04 entries) は context recovery 高 cost / defer
+- **UI verify 4 page**: home / AI 大学 / LP / ranking — 全 0 console error + 1 warning (= clean) / web 1280x800 / screenshot ship (= `.playwright-mcp/part196-{home,ai-university,lp,ranking}-web.png`)
+
+### Ship
+- `docs/GROWTH_STRATEGY_ROADMAP.md` 2 TBD backfill (= line 28826 + 28946) + part 196 entry append
+- 4 UI screenshot (= [UI-VERIFY] dogfood / mid-session bandwidth 確保)
+- memory ship 1 件 (= project_20260510_win132_part196)
+
+### KPI delta (part 195 → part 196)
+| metric | part 195 (start) | part 195 (end) | part 196 (start) | trend |
+|--------|------------------|----------------|------------------|-------|
+| RAM% | 92.9% | 87.7% | **79.43%** | **-8.3pt 継続改善** |
+| C: free | 71.78 GB | 72.8 GB | **71.81 GB** | stable -1 GB band |
+| MEMORY.md | 19.92 KB | 19.92 KB | **21.57 KB** | +1.65 KB (= part 195 entries) |
+| ROADMAP TBD | 17 | 17 | **15** | -2 (= part 178/179 backfill) |
+| Codex PR open | 0 | 0 | **0** | unchanged / movement 0 |
+
+### Codex sprint monitor (= 5/12 T+3 ping schedule unchanged)
+- #2186 dev_cache 4 cmd Win (5/23 / T+13) — T+2 day / **5/12 = T+3 ping schedule (= 2 day later)**
+- #2171 WBS dedup Phase 2 (5/22 / T+12) — T+3 day / 5/12 ping target
+- v5 hook wiring 5 task (5/23-5/28) — T+0 / 5/12 ping target
+- Phase 1 PR query (= 5/13 = T+3) — 5 view #2223/#2224/#2225/#2227/#2233
+
+### Philosophy Alignment (Win#132 part 196)
+- 主要実装: ROADMAP partial TBD backfill + UI verify 4 page (= [UI-VERIFY] backlog 回収) + Codex sprint monitor + verify-only hygiene
+- 該当原則: #4 (mentor=triage role) #5 (商品=価値=本番 UI clean confirm) #6 (時間=資本=partial backfill discipline / 全 17 件 audit せず high-value 2 件) #8 (KPI=session-delta 蓄積) #9 (IPO=audit ready / TBD 削減)
+- 整合性スコア: 5/9 ✅ ([PHILOSOPHY-22] gate 通過)
+- 理念的貢献:
+  - 「**partial TBD backfill discipline**」第 1 例 (= 全 17 件 audit せず branch 名既知 2 件のみ backfill / context recovery 高 cost 旧 entries は defer / scope creep 回避)
+  - 「**[UI-VERIFY] backlog mid-session 回収 pattern**」第 1 例 (= part 195 deferred → part 196 同日 60min option B で回収 / 4 page 0 error)
+  - 「**option B medium discipline**」第 1 例 (= [SCHEDULE-WAKEUP] 6 part 連続 risk 帯 / option C 推奨却下 → option B 60min 完結)
+  - 129 part 連続 dogfood (= part 75 → 196 / 2 month +).
+
+### Commit
+- (= 本 docs PR の merge commit / 後追記)
+
