@@ -29746,7 +29746,7 @@ Step 5: ROADMAP KPI table append (= v(N) trigger row + v(N) verify row)
 
 ---
 
-## Win版#132 part 198 (= 2026-05-10 / 同日 9 part 連続 / verify + recovery)
+## Win版#132 part 198 (= 2026-05-10/11 / 同日 9 part 連続 / verify + recovery + v12 ship)
 
 ### Ship summary
 
@@ -29758,20 +29758,33 @@ Step 5: ROADMAP KPI table append (= v(N) trigger row + v(N) verify row)
    - Fix: `scripts/check_minimal_e2e_gate.py` line 160 `docs-only` label-based skip path 適用
    - 手順: `gh pr edit --add-label docs-only` + body edit (`edited` event trigger) → re-fire SUCCESS
    - 効果: #2328 13:41:04Z + #2323 13:41:15Z 両 SUCCESS
-3. **PR #2328 + #2323 update-branch fired** (= BEHIND→MERGEABLE):
+3. **PR #2328 + #2323 update-branch fired** (= BEHIND→MERGEABLE→CLEAN):
    - `gh api -X PUT repos/.../pulls/<N>/update-branch` で main merge into PR branch
-4. **5/12 T+3 Codex ping today skip** (= T+1 too early / schedule unchanged)
-5. **WBS Top 5 verify-only** (= unchanged from part 197)
-6. **memory ship 2 件** (= project_20260510_win132_part198 + feedback_success_20260510_docs_only_label_bypass)
-7. **MEMORY.md threshold 超過 detect** (= 25.88 KB > 24.4 KB / consolidation 候補 / next session)
+   - Lint SUCCESS / mss=CLEAN ✅ / admin merge 待ち
+4. **MEMORY.md consolidation 第 3 例 dogfood ship** (= user v12 ask):
+   - 27.35 → 9.90 KB / **-63% trim** ✅
+   - moved part 182-193 entries (= 30 lines / 17 KB) → MEMORY_202605_archive.md
+   - 5-step pattern 第 3 適用 (= 月内 3 例 / 2-4 day interval / part 162 87% / part 194 47% / part 198 63%)
+5. **v12 spec ship via cross-instance-pr doc** (= user v12 ask / cascade conflict 回避):
+   - file: `docs/cross-instance-prs/20260511_v12_memory_disk_hygiene_spec.md`
+   - Finding A: MEMORY.md consolidation 第 3 例 dogfood (= same session)
+   - Finding B: per-session `memory_size_check.ps1` SessionStart hook spec (= Win Codex 5/30)
+   - Finding C: `auto-label-docs-only.yml` GHA workflow spec (= Win Codex 5/30)
+6. **5/12 T+3 Codex ping skip** (= today 5/11 = T+2 / schedule 5/12 unchanged)
+7. **WBS Top 5 verify-only** (= unchanged from part 197 / 全 5 件 Win Codex sprint in-flight)
+8. **memory ship 3 件** (= project_20260510_win132_part198 + feedback_success_20260510_docs_only_label_bypass + feedback_success_20260511_memory_consolidation_3rd_dogfood)
 
-### dogfood pattern (= part 198 累積 5 件)
+### dogfood pattern (= part 198 累積 9 件)
 
 - 「**v11 85% threshold verify SUCCESS**」第 1 例 (= part 197 §17.16.2 spec → part 198 起動時 functional verify)
 - 「**docs-only label-based gate bypass**」第 1 例 (= check_minimal_e2e_gate.py line 160 / 2 PR 一括適用 / part 183 dual-gate compliance より低 cost)
 - 「**premature ping skip discipline**」第 4 例累積 (= part 171/194/195/198)
 - 「**PR cascade 待ち pattern**」第 1 例 (= ROADMAP entry batch backfill 設計 / 同日多数 part in-flight 時)
 - 「**[COMPACTION-RESUME] 90min discipline**」第 3 例 (= part 188/197/198)
+- 「**MEMORY.md consolidation 第 3 例**」(= 27.35→9.90 KB / -63% / 月内 3 例 burst rate)
+- 「**5-step monthly consolidation pattern**」第 3 適用 (= backup → archive append → trim → note update → verify)
+- 「**v12 spec ship via cross-instance-pr doc**」第 1 例 (= cascade conflict 回避 / DISK_HYGIENE inline edit 不可 状態の workaround)
+- 「**user iterative ask v12 累積 11 layer**」第 1 例 (= 同 user テーマ「毎セッション必ず圧縮」継続)
 
 ### WBS Top 5 (期限近順 / 2-instance 振分) — verify-only
 
@@ -29785,23 +29798,25 @@ Step 5: ROADMAP KPI table append (= v(N) trigger row + v(N) verify row)
 
 ### Philosophy Alignment (Win#132 part 198)
 
-- 主要実装: v11 verify SUCCESS + docs-only label bypass + branch update fix + memory ship + cascade defer pattern documented
-- 該当原則: #4 (mentor=verify discipline) #5 (商品=価値=automation effectiveness) #6 (時間=資本=low-cost gate fix) #8 (KPI=spec dogfood) #9 (IPO=audit-ready hygiene)
-- 整合性スコア: **5/9 ✅** ([PHILOSOPHY-22] gate 通過)
+- 主要実装: v11 verify SUCCESS + docs-only label bypass + branch update fix + memory ship + MEMORY.md consolidation 第 3 例 + v12 spec ship + cascade defer pattern documented
+- 該当原則: #4 (mentor=verify discipline) #5 (商品=価値=automation effectiveness) #6 (時間=資本=low-cost gate fix) #7 (資産負債=memory size 管理) #8 (KPI=spec dogfood) #9 (IPO=audit-ready hygiene)
+- 整合性スコア: **6/9 ✅** ([PHILOSOPHY-22] gate 通過)
 - 理念的貢献:
   - 既存 script bypass path を find → 適用 = part 184 「pre-existing spec verify pattern」第 7 例層に位置
   - v11 measurement で 131 part 連続 dogfood (= part 75 → 198 / 2 month +) を維持
   - cascade 待ち discipline = 同日多数 part in-flight 時の安全 pattern 確立
+  - MEMORY.md 月内 3 例 burst rate 確立 = 「memory 容量管理」を CEO 感 hygiene 化
+  - v12 spec via cross-instance-pr doc = inline edit 不可 状態の workaround pattern 確立
 
 → 131 part 連続 dogfood (= part 75 → 198 / 2 month +).
 
 ### next session 第 1 候補
 
-1. PR #2328 + #2323 merge verify (= cascade 完了 / mergeStateStatus=CLEAN 待ち)
-2. ROADMAP part 196/197/198 batch backfill (= cascade 後)
-3. MEMORY.md consolidation 第 3 例 (= 25.88 → ~16 KB / part 162 87% / part 194 47%)
-4. 5/12 T+3 Codex ping with v11 evidence (= #2186 + #2171 + v5 hook wiring)
-5. v12 候補 implementation 検討 (= docs-only label auto-tag GHA / build-up rate KPI 化)
+1. PR #2328 + #2323 + #2331 cascade merge verify (= mergeStateStatus=CLEAN / admin merge 待ち)
+2. ROADMAP part 196/197/198 batch backfill (= cascade 後 placeholder 解消)
+3. DISK_HYGIENE_RUNBOOK §17.17 v12 章追加 PR (= cascade post-merge / 既存 doc 章追加 pattern 第 12 例)
+4. 5/12 T+3 Codex ping with v11/v12 evidence (= #2186 + #2171 + v5 hook wiring)
+5. v12 Finding B + C impl Codex hand-off (= memory_size_check.ps1 + auto-label-docs-only.yml / 期限 5/30)
 
 ### Commit
 - (= 本 docs PR の merge commit / 後追記)
