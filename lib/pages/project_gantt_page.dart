@@ -9,7 +9,10 @@ import 'package:url_launcher/url_launcher.dart';
 import '../utils/web_image_downloader.dart';
 
 const String _kGithubRepoUrl = 'https://github.com/kanta13jp1/my_web_app';
-final RegExp _kIssueNumberRegex = RegExp(r'\[Issue\s*#(\d+)\]');
+final RegExp _kIssueNumberRegex = RegExp(
+  r'github\.com\/[^\/\s]+\/[^\/\s]+\/issues\/(\d+)|(?:^|[\s\[(])(?:github\s+)?issue\s*#\s*(\d+)\]?',
+  caseSensitive: false,
+);
 
 class _GanttDragScrollBehavior extends MaterialScrollBehavior {
   const _GanttDragScrollBehavior();
@@ -27,7 +30,21 @@ class _GanttDragScrollBehavior extends MaterialScrollBehavior {
 int? _extractIssueNumber(String title) {
   final match = _kIssueNumberRegex.firstMatch(title);
   if (match == null) return null;
-  return int.tryParse(match.group(1) ?? '');
+  return int.tryParse(match.group(1) ?? match.group(2) ?? '');
+}
+
+int? _parseIssueNumberValue(Object? value) {
+  if (value is int && value > 0) return value;
+  if (value is num && value > 0) return value.toInt();
+  return _extractIssueNumber(value?.toString() ?? '');
+}
+
+bool _isDuplicateWbsMirrorNote(String value) {
+  final text = value.trim().toLowerCase();
+  return text.startsWith('duplicate of wbs task') ||
+      text.startsWith('duplicate github-origin wbs title') ||
+      text.contains('duplicate_wbs_row') ||
+      text.contains('duplicate_title');
 }
 
 Future<void> _openGithubIssue(int issueNumber) async {
@@ -95,6 +112,10 @@ class WbsTask {
   // Win版#131 part 20: 残作業 + 依存関係
   final String remainingWork;
   final List<String> dependsOnTitles;
+  final int? githubIssueNumber;
+  final String githubIssueUrl;
+  final DateTime? createdAt;
+  final DateTime? updatedAt;
   // Win版#132 part 156: GitHub Issue 同期遅延時の補完 filter 用
   // status field は sync EF が遅延すると 'completed' へ変わらない場合がある.
   // github_issue_state == 'CLOSED' を併用すれば close 反映を即時取得可.
@@ -121,11 +142,27 @@ class WbsTask {
     this.rescheduledCount = 0,
     this.remainingWork = '',
     this.dependsOnTitles = const [],
+    this.githubIssueNumber,
+    this.githubIssueUrl = '',
+    this.createdAt,
+    this.updatedAt,
     this.githubIssueState = '',
   });
 
   bool get isEffectivelyCompleted =>
-      status == 'completed' || githubIssueState == 'CLOSED';
+      status == 'completed' ||
+      githubIssueState == 'CLOSED' ||
+      isDuplicateGithubIssueMirror;
+
+  int? get linkedGithubIssueNumber =>
+      githubIssueNumber ??
+      _extractIssueNumber(title) ??
+      _extractIssueNumber(githubIssueUrl) ??
+      _extractIssueNumber(description);
+
+  bool get isDuplicateGithubIssueMirror =>
+      _isDuplicateWbsMirrorNote(remainingWork) ||
+      _isDuplicateWbsMirrorNote(recoveryPlan);
 
   factory WbsTask.fromMap(Map<String, dynamic> m) => WbsTask(
         id: m['id'] as String,
@@ -158,6 +195,14 @@ class WbsTask {
         remainingWork: (m['remaining_work'] as String?) ?? '',
         dependsOnTitles:
             (m['depends_on_titles'] as List?)?.cast<String>() ?? const [],
+        githubIssueNumber: _parseIssueNumberValue(m['github_issue_number']),
+        githubIssueUrl: (m['github_issue_url'] as String?) ?? '',
+        createdAt: m['created_at'] != null
+            ? DateTime.tryParse(m['created_at'] as String)
+            : null,
+        updatedAt: m['updated_at'] != null
+            ? DateTime.tryParse(m['updated_at'] as String)
+            : null,
         githubIssueState: (m['github_issue_state'] as String?) ?? '',
       );
 
@@ -375,6 +420,59 @@ int _compareWbsTasks(WbsTask a, WbsTask b) {
   return a.title.compareTo(b.title);
 }
 
+int _compareWbsTaskDisplayKeeper(WbsTask a, WbsTask b) {
+  final duplicateCmp = (a.isDuplicateGithubIssueMirror ? 1 : 0)
+      .compareTo(b.isDuplicateGithubIssueMirror ? 1 : 0);
+  if (duplicateCmp != 0) return duplicateCmp;
+
+  final explicitIssueCmp = (a.githubIssueNumber == null ? 1 : 0)
+      .compareTo(b.githubIssueNumber == null ? 1 : 0);
+  if (explicitIssueCmp != 0) return explicitIssueCmp;
+
+  final completedCmp = (a.isEffectivelyCompleted ? 1 : 0)
+      .compareTo(b.isEffectivelyCompleted ? 1 : 0);
+  if (completedCmp != 0) return completedCmp;
+
+  final progressCmp = b.progress.compareTo(a.progress);
+  if (progressCmp != 0) return progressCmp;
+
+  final updatedCmp = _compareOptionalDate(b.updatedAt, a.updatedAt);
+  if (updatedCmp != 0) return updatedCmp;
+
+  final createdCmp = _compareOptionalDate(a.createdAt, b.createdAt);
+  if (createdCmp != 0) return createdCmp;
+
+  return a.id.compareTo(b.id);
+}
+
+@visibleForTesting
+List<WbsTask> dedupeWbsTasksForDisplay(Iterable<WbsTask> tasks) {
+  final ordered = <WbsTask>[];
+  final indexByIssue = <int, int>{};
+
+  for (final task in tasks) {
+    final issueNumber = task.linkedGithubIssueNumber;
+    if (issueNumber == null) {
+      ordered.add(task);
+      continue;
+    }
+
+    final existingIndex = indexByIssue[issueNumber];
+    if (existingIndex == null) {
+      indexByIssue[issueNumber] = ordered.length;
+      ordered.add(task);
+      continue;
+    }
+
+    final existing = ordered[existingIndex];
+    if (_compareWbsTaskDisplayKeeper(task, existing) < 0) {
+      ordered[existingIndex] = task;
+    }
+  }
+
+  return ordered;
+}
+
 Color _hexColor(String hex) {
   final s = hex.replaceAll('#', '');
   return Color(int.parse('FF$s', radix: 16));
@@ -520,10 +618,10 @@ class _ProjectGanttPageState extends State<ProjectGanttPage>
           _milestones = (mData as List)
               .map((e) => WbsMilestone.fromMap(e as Map<String, dynamic>))
               .toList();
-          _tasks = (tData as List)
-              .map((e) => WbsTask.fromMap(e as Map<String, dynamic>))
-              .toList()
-            ..sort(_compareWbsTasks);
+          _tasks = dedupeWbsTasksForDisplay(
+            (tData as List)
+                .map((e) => WbsTask.fromMap(e as Map<String, dynamic>)),
+          )..sort(_compareWbsTasks);
         });
       }
       // Win版#131 part 13: マイルストーン risk view (failures は silent)
