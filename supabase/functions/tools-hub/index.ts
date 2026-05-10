@@ -1093,6 +1093,30 @@ function normalizeDuplicateKey(value: unknown): string {
     .toLowerCase();
 }
 
+function isDuplicateWbsMirrorTask(task: Record<string, unknown>): boolean {
+  const text =
+    `${task.remaining_work ?? ""} ${task.recovery_plan ?? ""}`.toLowerCase();
+  return text.includes("duplicate of wbs task") ||
+    text.includes("duplicate github-origin wbs title") ||
+    text.includes("duplicate wbs title") ||
+    text.includes("duplicate_wbs_row") ||
+    text.includes("duplicate_title") ||
+    text.includes("duplicate_title_generic");
+}
+
+function compareWbsDuplicateTitleKeeper(
+  a: Record<string, unknown>,
+  b: Record<string, unknown>,
+): number {
+  return Number(isDuplicateWbsMirrorTask(a)) -
+      Number(isDuplicateWbsMirrorTask(b)) ||
+    Number(isCompletedWbsTask(a)) - Number(isCompletedWbsTask(b)) ||
+    Number(b.progress ?? 0) - Number(a.progress ?? 0) ||
+    compareOptionalDate(b.updated_at, a.updated_at) ||
+    compareOptionalDate(a.created_at, b.created_at) ||
+    String(a.id ?? "").localeCompare(String(b.id ?? ""));
+}
+
 function isWbsTitleInstanceUniqueConflict(
   error: { code?: string; message?: string; details?: string } | null,
 ): boolean {
@@ -7412,6 +7436,65 @@ serve(async (req) => {
                 kept_id: keeper.id,
                 issue_number: issueNumber,
                 reason: "duplicate_title",
+              });
+              stats.duplicate_wbs_closed += 1;
+            }
+          }
+
+          const genericTitleGroups = new Map<
+            string,
+            Array<Record<string, unknown>>
+          >();
+          for (const task of allTasks) {
+            const taskId = String(task.id ?? "");
+            if (!taskId || duplicateTaskIds.has(taskId)) continue;
+            if (githubIssueNumberFromTask(task)) continue;
+            const titleKey = normalizeDuplicateKey(task.title);
+            if (!titleKey) continue;
+            const tasks = genericTitleGroups.get(titleKey) ?? [];
+            tasks.push(task);
+            genericTitleGroups.set(titleKey, tasks);
+          }
+          for (const tasks of genericTitleGroups.values()) {
+            if (tasks.length < 2) continue;
+            const sorted = [...tasks].sort(compareWbsDuplicateTitleKeeper);
+            const keeper = sorted.find((task) => !isCompletedWbsTask(task)) ??
+              sorted[0];
+            const keeperId = String(keeper.id ?? "");
+            if (!keeperId) continue;
+            for (const duplicate of sorted) {
+              const duplicateId = String(duplicate.id ?? "");
+              if (
+                !duplicateId || duplicateId === keeperId ||
+                duplicateTaskIds.has(duplicateId)
+              ) {
+                continue;
+              }
+              const duplicateNote =
+                `Duplicate WBS title; kept WBS task ${keeperId} as canonical.`;
+              const duplicateUpdate: Record<string, unknown> = {
+                status: "completed",
+                progress: 100,
+                ai_review_status: "pending",
+                remaining_work: duplicateNote,
+              };
+              if (!String(duplicate.recovery_plan ?? "").trim()) {
+                duplicateUpdate.recovery_plan =
+                  "Completed as a duplicate WBS title by wbs.sync_github_issues.";
+              }
+              if (!String(duplicate.recovery_planned_at ?? "").trim()) {
+                duplicateUpdate.recovery_planned_at = nowIso;
+              }
+              const { error: duplicateError } = await admin.from("wbs_tasks")
+                .update(duplicateUpdate)
+                .eq("id", duplicateId);
+              if (duplicateError) throw new Error(duplicateError.message);
+              Object.assign(duplicate, duplicateUpdate);
+              duplicateTaskIds.add(duplicateId);
+              duplicateWbsTasks.push({
+                id: duplicateId,
+                kept_id: keeperId,
+                reason: "duplicate_title_generic",
               });
               stats.duplicate_wbs_closed += 1;
             }
