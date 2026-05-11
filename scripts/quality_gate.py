@@ -68,6 +68,10 @@ def base_commands() -> list[GateCommand]:
             "github actions node runtime floor",
             [python, "scripts/check_github_actions_node_runtime.py"],
         ),
+        GateCommand(
+            "wbs sync timeout resilience",
+            [python, "scripts/check_wbs_sync_timeout_resilience.py"],
+        ),
     ]
 
 

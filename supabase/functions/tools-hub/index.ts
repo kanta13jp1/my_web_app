@@ -1229,6 +1229,31 @@ async function fetchAllWbsTasks(
   );
 }
 
+async function fetchWbsTasksForGithubIssues(
+  admin: SupabaseClient,
+  taskSelect: string,
+  issueNumbers: number[],
+): Promise<Array<Record<string, unknown>>> {
+  const uniqueNumbers = [...new Set(issueNumbers)].filter((number) =>
+    Number.isFinite(number)
+  );
+  if (uniqueNumbers.length === 0) return [];
+
+  const chunkSize = 100;
+  const tasks: Array<Record<string, unknown>> = [];
+  for (let index = 0; index < uniqueNumbers.length; index += chunkSize) {
+    const chunk = uniqueNumbers.slice(index, index + chunkSize);
+    const { data, error } = await admin.from("wbs_tasks")
+      .select(taskSelect)
+      .in("github_issue_number", chunk)
+      .order("created_at", { ascending: true, nullsFirst: true })
+      .order("id", { ascending: true });
+    if (error) throw new Error(error.message);
+    tasks.push(...((data ?? []) as unknown as Array<Record<string, unknown>>));
+  }
+  return tasks;
+}
+
 function githubIssueOwnerInstance(labels: string[]): string {
   const normalized = labels.join(",").toLowerCase();
   if (
@@ -6957,12 +6982,30 @@ serve(async (req) => {
             return json({ error: "issues array required" }, 400);
           }
 
+          const issuesByNumber = new Map<number, Record<string, unknown>>();
+          for (const issue of issueRecords) {
+            const issueNumber = githubIssueNumber(issue);
+            if (!issueNumber) continue;
+            issuesByNumber.set(issueNumber, issue);
+          }
+          const issueNumbers = [...issuesByNumber.keys()];
+          const runGlobalRepairs = parseBooleanish(
+            body.global_repairs ?? body.globalRepairs,
+            false,
+          );
+
           const now = new Date();
           const nowIso = now.toISOString();
           const today = nowIso.slice(0, 10);
           const taskSelect =
             "id, category, category_icon, category_order, title, description, instance, owner_instance, status, progress, start_date, end_date, planned_start_date, planned_end_date, milestone_code, priority, remaining_work, recovery_plan, ai_review_status, created_at, updated_at, github_issue_number, github_issue_url, github_issue_state, github_issue_labels, github_issue_synced_at";
-          const allTasks = await fetchAllWbsTasks(admin, taskSelect);
+          const allTasks = runGlobalRepairs
+            ? await fetchAllWbsTasks(admin, taskSelect)
+            : await fetchWbsTasksForGithubIssues(
+              admin,
+              taskSelect,
+              issueNumbers,
+            );
           const tasksByIssue = new Map<
             number,
             Array<Record<string, unknown>>
@@ -6973,13 +7016,6 @@ serve(async (req) => {
             const tasks = tasksByIssue.get(issueNumber) ?? [];
             tasks.push(task);
             tasksByIssue.set(issueNumber, tasks);
-          }
-
-          const issuesByNumber = new Map<number, Record<string, unknown>>();
-          for (const issue of issueRecords) {
-            const issueNumber = githubIssueNumber(issue);
-            if (!issueNumber) continue;
-            issuesByNumber.set(issueNumber, issue);
           }
 
           const stats = {
@@ -7505,6 +7541,7 @@ serve(async (req) => {
             repo,
             issue_count: issueRecords.length,
             wbs_task_scan_count: allTasks.length,
+            global_repairs: runGlobalRepairs,
             ...stats,
             issues_to_close: issuesToClose,
             duplicate_wbs_tasks: duplicateWbsTasks,
