@@ -1,6 +1,6 @@
 # 自分株式会社 — User Tasks Snapshot
 
-_Generated: 2026/5/10 (JST)_
+_Generated: 2026/5/11 (JST)_
 _Active user tasks: 41_
 
 ## 概要
@@ -19,7 +19,7 @@ NotebookLM に source として追加し、「具体的手順」「詰まりポ�
 - **progress**: 0%
 - **status**: pending
 - **priority**: medium
-- **deadline**: 2026-06-17
+- **deadline**: 2026-06-18
 
 **説明**:
 
@@ -34,7 +34,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/1215 / Author: kan
 - **progress**: 0%
 - **status**: pending
 - **priority**: medium
-- **deadline**: 2026-06-21
+- **deadline**: 2026-06-22
 
 **説明**:
 
@@ -46,10 +46,10 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/1705 / Author: kan
 
 - **id**: `2f04fca7-5695-4823-84ab-ab1c25826ace`
 - **category**: GitHub Issue / Feature Request
-- **progress**: 0%
+- **progress**: 99%
 - **status**: in_progress
 - **priority**: medium
-- **deadline**: 2026-06-24
+- **deadline**: 2026-06-25
 
 **説明**:
 
@@ -64,7 +64,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/1382 / Author: kan
 - **progress**: 0%
 - **status**: pending
 - **priority**: medium
-- **deadline**: 2026-06-27
+- **deadline**: 2026-06-28
 
 **説明**:
 
@@ -79,7 +79,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/1211 / Author: kan
 - **progress**: 0%
 - **status**: pending
 - **priority**: medium
-- **deadline**: 2026-06-27
+- **deadline**: 2026-06-28
 
 **説明**:
 
@@ -94,7 +94,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/1809 / Author: kan
 - **progress**: 0%
 - **status**: pending
 - **priority**: medium
-- **deadline**: 2026-06-28
+- **deadline**: 2026-06-29
 
 **説明**:
 
@@ -109,7 +109,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/1185 / Author: kan
 - **progress**: 0%
 - **status**: pending
 - **priority**: medium
-- **deadline**: 2026-06-29
+- **deadline**: 2026-06-30
 
 **説明**:
 
@@ -117,33 +117,33 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/1321 / Author: kan
 
 ---
 
-### 🟡 🔧 [Issue #1287] [追加要望] Notion連携時の「title」プロパティ衝突回避と厳密な型ラッピング機構の導入
-
-- **id**: `7d056fd3-2881-41d6-b237-dd6a75ac8d00`
-- **category**: GitHub Issue / Feature Request
-- **progress**: 0%
-- **status**: in_progress
-- **priority**: medium
-- **deadline**: 2026-07-05
-
-**説明**:
-
-GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/1287 / Author: kanta13jp1 / Labels: enhancement, 追加要望 / GitHub updated: 2026-04-30T00:03:22Z
-
----
-
 ### 🟡 🔧 [Issue #1287] [追加要望] Managing Notion Database IDs and API Page Properties の知見カード化・横断検索導線
 
 - **id**: `6b686730-7498-4e5f-b882-251c1198a698`
 - **category**: GitHub Issue / Feature Request
-- **progress**: 0%
+- **progress**: 99%
 - **status**: in_progress
 - **priority**: medium
-- **deadline**: 2026-07-05
+- **deadline**: 2026-07-06
 
 **説明**:
 
 GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/1287 / Author: kanta13jp1 / Labels: enhancement, 追加要望 / GitHub updated: 2026-04-29T17:44:05Z
+
+---
+
+### 🟡 🔧 [Issue #1287] [追加要望] Notion連携時の「title」プロパティ衝突回避と厳密な型ラッピング機構の導入
+
+- **id**: `7d056fd3-2881-41d6-b237-dd6a75ac8d00`
+- **category**: GitHub Issue / Feature Request
+- **progress**: 99%
+- **status**: in_progress
+- **priority**: medium
+- **deadline**: 2026-07-06
+
+**説明**:
+
+GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/1287 / Author: kanta13jp1 / Labels: enhancement, 追加要望 / GitHub updated: 2026-04-30T00:03:22Z
 
 ---
 
@@ -154,7 +154,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/1287 / Author: kan
 - **progress**: 0%
 - **status**: pending
 - **priority**: medium
-- **deadline**: 2026-07-08
+- **deadline**: 2026-07-09
 
 **説明**:
 
@@ -169,7 +169,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/1289 / Author: kan
 - **progress**: 0%
 - **status**: pending
 - **priority**: medium
-- **deadline**: 2026-07-12
+- **deadline**: 2026-07-13
 
 **説明**:
 
@@ -184,7 +184,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/1926 / Author: kan
 - **progress**: 0%
 - **status**: pending
 - **priority**: medium
-- **deadline**: 2026-07-17
+- **deadline**: 2026-07-18
 
 **説明**:
 
@@ -199,7 +199,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/1288 / Author: kan
 - **progress**: 0%
 - **status**: pending
 - **priority**: medium
-- **deadline**: 2026-07-19
+- **deadline**: 2026-07-20
 
 **説明**:
 
@@ -214,7 +214,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/1322 / Author: kan
 - **progress**: 0%
 - **status**: pending
 - **priority**: medium
-- **deadline**: 2026-07-21
+- **deadline**: 2026-07-22
 
 **説明**:
 
@@ -229,7 +229,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/1840 / Author: kan
 - **progress**: 0%
 - **status**: pending
 - **priority**: medium
-- **deadline**: 2026-07-21
+- **deadline**: 2026-07-22
 
 **説明**:
 
@@ -244,7 +244,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/1807 / Author: kan
 - **progress**: 0%
 - **status**: pending
 - **priority**: medium
-- **deadline**: 2026-07-24
+- **deadline**: 2026-07-25
 
 **説明**:
 
@@ -256,10 +256,10 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/1796 / Author: kan
 
 - **id**: `cab270e5-46a1-4aab-8190-107ec3d30a75`
 - **category**: GitHub Issue / Feature Request
-- **progress**: 10%
+- **progress**: 99%
 - **status**: in_progress
 - **priority**: medium
-- **deadline**: 2026-07-25
+- **deadline**: 2026-07-26
 
 **説明**:
 
@@ -274,7 +274,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/1286 / Author: kan
 - **progress**: 0%
 - **status**: pending
 - **priority**: medium
-- **deadline**: 2026-07-26
+- **deadline**: 2026-07-27
 
 **説明**:
 
@@ -289,7 +289,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/1894 / Author: kan
 - **progress**: 0%
 - **status**: pending
 - **priority**: medium
-- **deadline**: 2026-07-28
+- **deadline**: 2026-07-29
 
 **説明**:
 
@@ -304,7 +304,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/1239 / Author: kan
 - **progress**: 0%
 - **status**: pending
 - **priority**: medium
-- **deadline**: 2026-07-31
+- **deadline**: 2026-08-01
 
 **説明**:
 
@@ -319,7 +319,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/1228 / Author: kan
 - **progress**: 0%
 - **status**: pending
 - **priority**: medium
-- **deadline**: 2026-08-02
+- **deadline**: 2026-08-03
 
 **説明**:
 
@@ -349,7 +349,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/1187 / Author: kan
 - **progress**: 0%
 - **status**: pending
 - **priority**: medium
-- **deadline**: 2026-08-09
+- **deadline**: 2026-08-07
 
 **説明**:
 
@@ -364,7 +364,7 @@ freee / MoneyForward Cloud 比較 → 契約
 - **progress**: 0%
 - **status**: pending
 - **priority**: medium
-- **deadline**: 2026-08-17
+- **deadline**: 2026-08-08
 
 **説明**:
 
@@ -379,7 +379,7 @@ freee / MoneyForward Cloud 比較 → 契約
 - **progress**: 0%
 - **status**: pending
 - **priority**: medium
-- **deadline**: 2026-08-25
+- **deadline**: 2026-08-09
 
 **説明**:
 
@@ -394,7 +394,7 @@ Tokyo 1 等地 / 登記住所 / 郵便受取
 - **progress**: 0%
 - **status**: pending
 - **priority**: low
-- **deadline**: 2026-08-27
+- **deadline**: 2026-08-28
 
 **説明**:
 
@@ -409,7 +409,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/2235 / Author: kan
 - **progress**: 0%
 - **status**: pending
 - **priority**: low
-- **deadline**: 2026-08-27
+- **deadline**: 2026-08-28
 
 **説明**:
 
@@ -424,7 +424,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/1731 / Author: kan
 - **progress**: 0%
 - **status**: pending
 - **priority**: low
-- **deadline**: 2026-08-28
+- **deadline**: 2026-08-29
 
 **説明**:
 
@@ -454,7 +454,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/1728 / Author: kan
 - **progress**: 0%
 - **status**: pending
 - **priority**: high
-- **deadline**: 2026-05-19
+- **deadline**: 2026-05-20
 
 **説明**:
 
@@ -469,7 +469,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/1728 / Author: kan
 - **progress**: 70%
 - **status**: in_progress
 - **priority**: high
-- **deadline**: 2026-05-20
+- **deadline**: 2026-05-21
 
 **説明**:
 
@@ -514,7 +514,7 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/1985 / Author: git
 - **progress**: 0%
 - **status**: pending
 - **priority**: high
-- **deadline**: 2026-06-09
+- **deadline**: 2026-06-01
 
 **説明**:
 
@@ -529,26 +529,11 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/1985 / Author: git
 - **progress**: 0%
 - **status**: pending
 - **priority**: high
-- **deadline**: 2026-06-09
+- **deadline**: 2026-06-01
 
 **説明**:
 
 法人設立 + 顧問税理士 2 社相見積り
-
----
-
-### 🔴 ⏳ 法人銀行口座開設
-
-- **id**: `3fb7b193-c48a-4c7b-8c75-0db19345ebaf`
-- **category**: business-finance
-- **progress**: 0%
-- **status**: pending
-- **priority**: high
-- **deadline**: 2026-06-16
-
-**説明**:
-
-みずほ・三菱 UFJ・住信 SBI ネット銀行 比較 → 開設
 
 ---
 
@@ -559,11 +544,26 @@ GitHub Issue: https://github.com/kanta13jp1/my_web_app/issues/1985 / Author: git
 - **progress**: 0%
 - **status**: pending
 - **priority**: high
-- **deadline**: 2026-06-24
+- **deadline**: 2026-06-02
 
 **説明**:
 
 VC 30 社 / Angel 20 名 / 接点経路の整理
+
+---
+
+### 🔴 ⏳ 法人銀行口座開設
+
+- **id**: `3fb7b193-c48a-4c7b-8c75-0db19345ebaf`
+- **category**: business-finance
+- **progress**: 0%
+- **status**: pending
+- **priority**: high
+- **deadline**: 2026-06-02
+
+**説明**:
+
+みずほ・三菱 UFJ・住信 SBI ネット銀行 比較 → 開設
 
 ---
 
@@ -574,26 +574,11 @@ VC 30 社 / Angel 20 名 / 接点経路の整理
 - **progress**: 0%
 - **status**: pending
 - **priority**: high
-- **deadline**: 2026-08-04
+- **deadline**: 2026-06-06
 
 **説明**:
 
 野村 / 大和 / SBI / みずほ 4 社
-
----
-
-### 🔴 ⏳ 東証グロース申請書類作成
-
-- **id**: `480e8f90-5898-4575-8f11-7c043935064f`
-- **category**: business-ipo
-- **progress**: 0%
-- **status**: pending
-- **priority**: high
-- **deadline**: 2026-08-06
-
-**説明**:
-
-I の部 / II の部 / 申請書一式
 
 ---
 
@@ -604,11 +589,26 @@ I の部 / II の部 / 申請書一式
 - **progress**: 0%
 - **status**: pending
 - **priority**: high
-- **deadline**: 2026-08-11
+- **deadline**: 2026-06-06
 
 **説明**:
 
 EY / KPMG / PwC / Deloitte / 太陽 / トーマツ
+
+---
+
+### 🔴 ⏳ 東証グロース申請書類作成
+
+- **id**: `480e8f90-5898-4575-8f11-7c043935064f`
+- **category**: business-ipo
+- **progress**: 0%
+- **status**: pending
+- **priority**: high
+- **deadline**: 2026-06-06
+
+**説明**:
+
+I の部 / II の部 / 申請書一式
 
 ---
 
@@ -619,7 +619,7 @@ EY / KPMG / PwC / Deloitte / 太陽 / トーマツ
 - **progress**: 0%
 - **status**: pending
 - **priority**: high
-- **deadline**: 2026-08-15
+- **deadline**: 2026-06-07
 
 **説明**:
 

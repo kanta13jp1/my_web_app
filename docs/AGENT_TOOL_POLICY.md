@@ -78,3 +78,24 @@ entries must record a denial reason and review date.
 sessions warn on unmanaged servers, denied servers, expired or auth-required
 connectors, and dangerous permission settings. CI validates the JSON register
 without reading local secrets.
+
+## Containerized MCP / Dynamic MCP Isolation
+
+Issue #1645 adds the container isolation layer for MCP and Dynamic MCP style
+tool discovery:
+
+- isolation contract: `config/mcp-container-isolation.json`
+- runbook and execution matrix: `docs/MCP_CONTAINER_ISOLATION_RUNBOOK.md`
+- deterministic checker: `scripts/check_mcp_container_isolation.py`
+- low-risk stdio PoC: `tools/mcp-container-isolation/`
+
+Dynamic tool discovery does not weaken this policy. A discovered MCP server must
+still be recorded in the managed MCP register or treated as unmanaged, classified
+by requested scope, launched through an isolated container path when execution is
+needed, and audited in the PR, issue, workflow summary, or durable MCP log.
+
+`delete`, `send`, `purchase`, and `external_share` keep the existing fail-closed
+CEO approval requirement. The MCP isolation contract also treats
+`credential_access`, `shell_execute`, `filesystem_write`, and
+`production_write` as high-risk launch scopes. A container boundary is not an
+approval substitute for those scopes.
