@@ -391,6 +391,8 @@ class WbsTask {
       category.contains(_kAdditionalRequestText) ||
       title.contains(_kAdditionalRequestText);
 
+  bool get isGithubIssueLinkedTask => linkedGithubIssueNumber != null;
+
   int get priorityRank => switch (priority) {
         'high' => 3,
         'medium' => 2,
@@ -400,13 +402,14 @@ class WbsTask {
 }
 
 int _wbsTaskSortBucket(WbsTask task) {
-  if (task.status == 'completed') return 4;
+  if (task.status == 'completed') return 5;
   if (task.isFeatureRequestTask) return 0;
+  if (task.isGithubIssueLinkedTask) return 1;
   return switch (task.status) {
-    'in_progress' => 1,
-    'pending' => 2,
-    'blocked' => 3,
-    _ => 3,
+    'in_progress' => 2,
+    'pending' => 3,
+    'blocked' => 4,
+    _ => 4,
   };
 }
 
