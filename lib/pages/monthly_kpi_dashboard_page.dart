@@ -534,8 +534,11 @@ class _AdvicePanel extends StatelessWidget {
               children: [
                 const Padding(
                   padding: EdgeInsets.only(top: 7),
-                  child: Icon(Icons.check_circle,
-                      size: 14, color: Color(0xFF7C3AED)),
+                  child: Icon(
+                    Icons.check_circle,
+                    size: 14,
+                    color: Color(0xFF7C3AED),
+                  ),
                 ),
                 const SizedBox(width: 8),
                 Expanded(

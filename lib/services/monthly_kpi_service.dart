@@ -235,7 +235,8 @@ class MonthlyKpiService {
 
     if (atRisk.isNotEmpty) {
       actions.add(
-          '期限 30 日以内かつ進捗 80% 未満の目標があります: ${atRisk.first.goal.title}。今日の最初の 1 手にしてください。');
+        '期限 30 日以内かつ進捗 80% 未満の目標があります: ${atRisk.first.goal.title}。今日の最初の 1 手にしてください。',
+      );
     }
 
     return actions;
