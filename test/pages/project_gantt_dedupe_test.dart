@@ -102,4 +102,13 @@ void main() {
     expect(tasks, hasLength(1));
     expect(tasks.single.id, 'codex-copy');
   });
+
+  test('additional request titles are treated as feature request tasks', () {
+    final task = _task(
+      id: 'additional-request',
+      title: '[\u8ffd\u52a0\u8981\u671b] WBS schedule priority',
+    );
+
+    expect(task.isFeatureRequestTask, isTrue);
+  });
 }
