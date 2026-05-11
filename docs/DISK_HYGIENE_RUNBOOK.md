@@ -1682,3 +1682,59 @@ $ grep dev_cache_cleanup ~/.claude/settings.json
 
 > **v16 status**: part 202-b iterative ask v15 layer ship / `docs/cross-instance-prs/20260511_codex_wbs_top5_v16_proactive_enforcement_part202b.md` Part D spec / 累積 8 layer 5 fail-closed enforcement / Codex 11 件 5/30 期限.
 
+
+### 17.20 v17 = part 203-b mandatory per-session compression discipline (= observability-first + cross-session regression detection / 2026-05-12 / iterative ask 第 16 layer / Codex 5/30)
+
+#### 17.20.1 v17 finding (= systemic exhaust 継続 root cause)
+
+- v15 + v16 always-fire + fail-closed spec ship 済 だが actual IMPL 未着手 (= Codex 5/30 / 11 deliverable / 18 day 残)
+- spec ship → impl gap で「systemic local RAM/HDD exhaust」が継続
+- 個別 session improvement は見えるが **N session 累積 baseline ratchet (= 上昇傾向)** が検知されない
+- → cross-session observability + mandatory KPI logging が不足
+
+#### 17.20.2 v17 spec (= 5 layer F-J / 累積 13 layer)
+
+- **Layer F: SessionStart KPI log mandatory** (= session-delta.csv 行追加 / 圧縮 result 関係なく row 必須 / skip 不能)
+- **Layer G: rolling 3-session aggregate KPI** (= regression detection / avg_baseline_ram_pct > 80% → v18 escalate / avg_freed_mb < 500 MB → fire degradation / avg_post_ram_pct > 75% → effectiveness 不足)
+- **Layer H: pre-task hygiene gate** (= PreTool hook / RAM > 70% threshold lowest / Bash/Edit/Write 前 fire / v11 85% を更に低く)
+- **Layer I: cross-instance compression sync** (= Win Claude + Win Codex 両 instance session-delta.csv 週次 sync / fleet-wide accountability / per-instance regression detection)
+- **Layer J: weekly compression audit GHA cron** (= Mon 06:00 JST / 7-day rolling KPI table / Issue auto-comment / 自動 escalate cross-instance-pr doc)
+
+#### 17.20.3 累積 13 layer (= v15 3 + v16 5 + v17 5)
+
+| Layer | Phase | Trigger | Fail-closed | Observability |
+|-------|-------|---------|-------------|---------------|
+| v15-1 | SessionStart | always-fire | ❌ | hook log |
+| v15-2 | PostToolUse | 30 tool call OR 30min | ❌ | hook log |
+| v15-3 | SessionEnd | /wrap-up 直前 | ❌ | hook log |
+| v16-A | pre-session | nightly 04:00 cron | ✅ | cron log |
+| v16-B | session-wide | 15min interval | ✅ | hook log |
+| v16-C | /wrap-up 直前 | hard gate (DELTA<100 AND RAM>80) | ✅ | block log |
+| v16-D | session-wide | RAM 95% OR C: 30 GB- | ✅ | toast log |
+| v16-E | cross-session | ML predicted (= past 30 agg) | ✅ | ML log |
+| **v17-F** | **SessionStart** | **mandatory KPI log** | ❌ row 必須 | **session-delta.csv** |
+| **v17-G** | **post-Layer F** | **rolling 3-session aggregate** | ⚠️ alert if breach | **session-delta-aggregate.csv** |
+| **v17-H** | **PreTool** | **RAM > 70% pre-task fire** | ✅ fire-or-block | **pre-task-fire.log** |
+| **v17-I** | **weekly sync** | **cross-instance KPI merge** | ❌ informational | **cross-instance-pr doc** |
+| **v17-J** | **weekly cron** | **GHA Mon 06:00 audit** | ❌ informational | **GitHub Issue comment** |
+
+#### 17.20.4 session_kpi.py 拡張 (= v15 5 + v16 3 + v17 5 = 13 metric)
+
+- **v17 5 metric NEW**:
+  - `kpi_row_written` (bool / mandatory true)
+  - `rolling_3_avg_baseline_ram_pct` (float)
+  - `rolling_3_avg_freed_mb` (int)
+  - `pre_task_fire_count` (int)
+  - `weekly_audit_due` (bool / Mon 06:00 JST 以降 true)
+
+#### 17.20.5 Codex impl 待ち (= 5/30 期限 / 6 deliverable NEW)
+
+- `scripts/session_delta_writer.py` (= Layer F mandatory KPI log)
+- `scripts/rolling_aggregate.py` (= Layer G 3-session regression detection)
+- `.claude/hooks/pre-task-hygiene.ps1` (= Layer H PreTool hook 70% threshold)
+- `scripts/cross_instance_compression_sync.py` (= Layer I weekly sync)
+- `.github/workflows/weekly-compression-audit.yml` (= Layer J GHA cron)
+- `scripts/weekly_compression_audit.py` (= Layer J audit script)
+
+> **v17 status**: part 203-b iterative ask v16 layer ship / `docs/cross-instance-prs/20260512_codex_wbs_top5_v17_mandatory_per_session_compression_part203b.md` Part C spec / 累積 13 layer / Codex 11+6=17 件 5/30 期限.
+
