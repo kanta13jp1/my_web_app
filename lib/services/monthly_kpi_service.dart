@@ -64,7 +64,8 @@ class MonthlyKpiReview {
       goalId: _asString(data['goal_id']),
       progressBefore: _asNullableInt(data['progress_before']),
       progressAfter: _asNullableInt(data['progress_after']),
-      createdAt: _asDate(data['created_at']) ?? DateTime.fromMillisecondsSinceEpoch(0),
+      createdAt:
+          _asDate(data['created_at']) ?? DateTime.fromMillisecondsSinceEpoch(0),
     );
   }
 }
@@ -121,7 +122,8 @@ class MonthlyKpiLedger {
 
   int get goalCount => metrics.length;
 
-  int get completedCount => metrics.where((metric) => metric.goal.isCompleted).length;
+  int get completedCount =>
+      metrics.where((metric) => metric.goal.isCompleted).length;
 
   double get progressRate => averageProgress / 100;
 
@@ -217,7 +219,8 @@ class MonthlyKpiService {
     final atRisk = ledger.atRiskGoals(now);
     final actions = <String>[];
     if (ledger.averageProgress < 40) {
-      actions.add('平均進捗が 40% 未満です。今月は最重要の small 目標を 1 件に絞り、毎日 15 分の実行枠を固定してください。');
+      actions
+          .add('平均進捗が 40% 未満です。今月は最重要の small 目標を 1 件に絞り、毎日 15 分の実行枠を固定してください。');
     } else if (ledger.averageProgress < 70) {
       actions.add('平均進捗は中盤です。進捗 50% 未満の目標を 1 件選び、次のレビューまでに +10pt だけ進めてください。');
     } else {
@@ -231,7 +234,8 @@ class MonthlyKpiService {
     }
 
     if (atRisk.isNotEmpty) {
-      actions.add('期限 30 日以内かつ進捗 80% 未満の目標があります: ${atRisk.first.goal.title}。今日の最初の 1 手にしてください。');
+      actions.add(
+          '期限 30 日以内かつ進捗 80% 未満の目標があります: ${atRisk.first.goal.title}。今日の最初の 1 手にしてください。');
     }
 
     return actions;
@@ -254,10 +258,12 @@ class MonthlyKpiService {
     DateTime end,
   ) {
     final rows = reviews
-        .where((review) =>
-            review.goalId == goalId &&
-            !review.createdAt.isBefore(start) &&
-            review.createdAt.isBefore(end))
+        .where(
+          (review) =>
+              review.goalId == goalId &&
+              !review.createdAt.isBefore(start) &&
+              review.createdAt.isBefore(end),
+        )
         .toList()
       ..sort((a, b) => a.createdAt.compareTo(b.createdAt));
     if (rows.isEmpty) return 0;
