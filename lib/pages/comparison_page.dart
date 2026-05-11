@@ -139,8 +139,7 @@ _CompetitorInfo _fintechTradingAiInfo({
   return _CompetitorInfo(
     name: name,
     emoji: 'FX',
-    tagline:
-        '$name is a FinTech/trading intelligence provider. Jibun Company '
+    tagline: '$name is a FinTech/trading intelligence provider. Jibun Company '
         'turns that domain knowledge into AI University learning, personal '
         'finance review, KPI tracking, and WBS execution.',
     searchKeyword: searchKeyword,

@@ -45,7 +45,8 @@ const AiUniversityGenreEntry kFintechTradingAiGenre = AiUniversityGenreEntry(
   id: 'fintech_trading_ai',
   title: 'FinTech/Trading AI',
   headline: 'Decompose institutional finance workflows with low-cost AI',
-  description: 'Compare professional terminals with Claude Pro, Cursor, and the '
+  description:
+      'Compare professional terminals with Claude Pro, Cursor, and the '
       'Jibun Company signal-to-action pipeline. The learning path covers raw '
       'news capture, confidence scoring, fake-news filters, and human final '
       'review.',
