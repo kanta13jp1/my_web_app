@@ -1546,3 +1546,139 @@ $ grep dev_cache_cleanup ~/.claude/settings.json
 
 > **v10 status**: SessionStart 7 hook ✅ / mid-session build-up 実測 ✅ / PostToolUse wiring (= gap 4) **緊急度 up** ⚠️ / Codex 5/12 T+3 ping with v10 finding / next ping = 2026-05-12.
 
+
+### 17.16 v11 = part 197 post-resume hidden gap detection + 85% threshold lower + post-resume mandatory fire (= 既存 doc 章追加 pattern 第 11 例 / 2026-05-10)
+
+#### 17.16.1 v11 finding (= post-resume cycle hidden gap)
+
+- post-resume cycle で `ram_trim_count=0` + RAM 87.53% 観測 (= part 197 起動時)
+- SessionStart 7 hook 配線済 ✅ でも resume cycle で trim skip 判定発覚
+- 原因: 既存 trigger threshold 90% / 87.53% は **silent breach band**
+- → 90% trigger は post-resume 圧迫検出に不十分
+
+#### 17.16.2 v11 spec (= 2 layer fix)
+
+1. **85% threshold lower** (= 90% → 85%): silent breach band を early-trigger 化
+2. **post-resume mandatory fire policy**: resume cycle 開始時 SessionStart hook unconditional fire (= threshold 関係なく必ず一回 fire)
+
+#### 17.16.3 KPI 追跡 (= v6-v11 累積)
+
+| metric | v6 | v7 | v8 | v9 | v10 | **v11** | trend |
+|--------|-----|-----|-----|-----|------|---------|-------|
+| RAM trigger threshold | 90% | 90% | 90% | 90% | 90% | **85%** | **lower ✅** |
+| post-resume mandatory | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | **NEW** |
+| SessionStart hook | 6 | 6 | 6 | 7 | 7 | 7 | unchanged |
+
+#### 17.16.4 Codex impl 待ち (= 5/22 期限 / Issue #2186 配線対象)
+
+- memory-cleanup.ps1 line 14 RAM_THRESHOLD_PCT 90 → 85
+- post-resume detection (= last_session_end_at + recent reboot detection) + unconditional fire branch
+
+> **v11 status**: 「post-resume cycle hidden gap detection」第 1 例 confirmed / 「85% threshold lower discipline」第 1 例 / 「post-resume mandatory fire policy」第 1 例 / part 198 v11 verify SUCCESS 第 1 例 (= 81.72% < 85%) / part 199 v11 verify SUCCESS 第 2 例 (= 83.43%) / part 201 v11 PASS-after-fire 第 1 例.
+
+
+### 17.17 v14 = part 200-b 4-tier compression escalation protocol (= 2026-05-11 / iterative ask 第 13 layer / Codex 5/30)
+
+#### 17.17.1 v14 finding (= manual fire DELTA NEGATIVE 第 1 例)
+
+- part 200 で manual fire fired → DELTA **-20.7 MB** (= OS realloc 即時消費)
+- 「manual fire 後 RAM% threshold breach 継続」第 1 例
+- 既存 「RAM immediate fire band」 (700-1700 MB) と区別された新 pattern
+
+#### 17.17.2 v14 spec (= 4-tier escalation)
+
+1. **Tier 1**: 1x manual trim (= 既存 SessionStart hook)
+2. **Tier 2 fallback**: 2x manual trim within 60s (= DELTA<200 MB 時 retry)
+3. **Tier 3 user app close**: msedge / chrome / Code 主要 PID kill candidate emit (= user confirm)
+4. **Tier 4 /wrap-up immediate**: 90min 残でも即時 wrap-up (= compaction risk 回避)
+
+#### 17.17.3 Codex impl 待ち (= 5/30 期限)
+
+- memory-cleanup.ps1 4-tier branch
+- session_kpi.py = tier_used metric 追加
+
+> **v14 status**: part 200-b iterative ask v13 layer ship / `docs/cross-instance-prs/20260511_codex_wbs_top5_v14_compression_protocol_part200.md` Part A spec / 「fresh start failed 内 escalation」第 1 例.
+
+
+### 17.18 v15 = part 201-b guaranteed compression (= threshold-triggered → always-fire mandatory / 2026-05-11 / iterative ask 第 14 layer / Codex 5/30)
+
+#### 17.18.1 v15 finding (= threshold-triggered 不十分)
+
+- v11 85% threshold lower 後も「threshold > 85% 未満で潜行 build-up」を完全 cover 不能
+- → threshold-triggered policy を always-fire mandatory に進化
+
+#### 17.18.2 v15 spec (= 3 layer always-fire)
+
+1. **Layer 1 SessionStart always-fire** (= memory-cleanup.ps1 / threshold-agnostic mandatory)
+2. **Layer 2 PostToolUse periodic** (= 30 tool call OR 30min wall-clock 毎)
+3. **Layer 3 SessionEnd mandatory** (= /wrap-up 直前 always-fire)
+
+#### 17.18.3 5 KPI metric (= session_kpi.py 拡張)
+
+- `layer1_fired` (bool) / `layer1_delta_mb` (int)
+- `layer2_fire_count` (int) / `layer2_delta_total_mb` (int)
+- `layer3_fired` (bool)
+
+#### 17.18.4 Codex impl 待ち (= 5/30 期限 / 5 deliverable)
+
+- memory-cleanup.ps1 (= Layer 1 always-fire SessionStart)
+- posttooluse-periodic-trim.ps1 (= Layer 2 30 tool call / 30min wall-clock)
+- sessionend-mandatory-fire.ps1 (= Layer 3 /wrap-up 直前)
+- session_kpi.py (= 5 metric)
+- session_kpi_dashboard.py (= visualization)
+
+#### 17.18.5 functional verify
+
+- **part 202 第 1 例**: 83.15→82.48% / -0.67 pt / 107 MB (= threshold-agnostic mandatory dogfood)
+- **part 203 第 2 例**: 86.95→80.57% / +1026.09 MB DELTA (= +10x part 202 / 85% breach 検出 + recovery)
+
+> **v15 status**: part 201-b iterative ask v14 layer ship / `docs/cross-instance-prs/20260511_codex_wbs_top5_v15_guaranteed_compression_part201b.md` Part C spec / 累積 8 layer (= v15 3 + v16 5 = part 202-b).
+
+
+### 17.19 v16 = part 202-b proactive enforcement (= fail-closed Layer A-E / 2026-05-11 / iterative ask 第 15 layer / Codex 5/30)
+
+#### 17.19.1 v16 finding (= always-fire 単体不十分)
+
+- v15 always-fire でも「user app 大量 launch + fresh start failed 連鎖」で breach 継続
+- → proactive enforcement 5 layer + fail-closed 設計
+
+#### 17.19.2 v16 spec (= Layer A-E / 5 fail-closed enforcement)
+
+- **Layer A**: pre-session Win Task Scheduler nightly 04:00 (= cron 連携)
+- **Layer B**: session-wide wall-clock 15min interval (= PostToolUse fallback / v15 Layer 2 補完)
+- **Layer C**: /wrap-up 直前 hard gate (= fail-closed block if DELTA<100 MB AND RAM%>80%)
+- **Layer D**: RAM 95%+ / C: 30 GB- → toast notification + auto-pause
+- **Layer E**: cross-session ML predicted fire (= past 30 session aggregate)
+
+#### 17.19.3 累積 8 layer (= v15 3 + v16 5)
+
+| Layer | Phase | Trigger | Fail-closed |
+|-------|-------|---------|-------------|
+| v15-1 | SessionStart | always-fire | ❌ |
+| v15-2 | PostToolUse | 30 tool call OR 30min | ❌ |
+| v15-3 | SessionEnd | /wrap-up 直前 | ❌ |
+| v16-A | pre-session | nightly 04:00 cron | ✅ |
+| v16-B | session-wide | 15min interval | ✅ |
+| v16-C | /wrap-up 直前 | hard gate (DELTA<100 AND RAM>80) | ✅ |
+| v16-D | session-wide | RAM 95% OR C: 30 GB- | ✅ |
+| v16-E | cross-session | ML predicted (= past 30 agg) | ✅ |
+
+#### 17.19.4 session_kpi.py 拡張 (= 5 → 8 metric)
+
+- v15 5 metric + `wall_clock_fire_count` / `threshold_breach_count` / `session_duration_min`
+
+#### 17.19.5 Codex impl 待ち (= 5/30 期限 / 6 deliverable)
+
+- wall-clock-timer.ps1 (= Layer B 15min interval)
+- pre-session-cron.ps1 (= Layer A Win Task Scheduler nightly 04:00)
+- wrap-up-gate.ps1 (= Layer C fail-closed block)
+- hard-threshold-alert.ps1 (= Layer D RAM 95%+ / C: 30 GB- toast)
+- cross-session-kpi-ml.py (= Layer E predicted fire / 30 session aggregate)
+- session_alert_dashboard.py
+
+#### 17.19.6 functional verify
+
+- **part 202-b 第 1 例**: v16 Layer C SessionEnd hard gate functional verify 88.26→79.45% / DELTA +1416.37 MB / GATE PASS
+
+> **v16 status**: part 202-b iterative ask v15 layer ship / `docs/cross-instance-prs/20260511_codex_wbs_top5_v16_proactive_enforcement_part202b.md` Part D spec / 累積 8 layer 5 fail-closed enforcement / Codex 11 件 5/30 期限.
+
