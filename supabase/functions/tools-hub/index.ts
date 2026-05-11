@@ -1093,6 +1093,30 @@ function normalizeDuplicateKey(value: unknown): string {
     .toLowerCase();
 }
 
+function isDuplicateWbsMirrorTask(task: Record<string, unknown>): boolean {
+  const text =
+    `${task.remaining_work ?? ""} ${task.recovery_plan ?? ""}`.toLowerCase();
+  return text.includes("duplicate of wbs task") ||
+    text.includes("duplicate github-origin wbs title") ||
+    text.includes("duplicate wbs title") ||
+    text.includes("duplicate_wbs_row") ||
+    text.includes("duplicate_title") ||
+    text.includes("duplicate_title_generic");
+}
+
+function compareWbsDuplicateTitleKeeper(
+  a: Record<string, unknown>,
+  b: Record<string, unknown>,
+): number {
+  return Number(isDuplicateWbsMirrorTask(a)) -
+      Number(isDuplicateWbsMirrorTask(b)) ||
+    Number(isCompletedWbsTask(a)) - Number(isCompletedWbsTask(b)) ||
+    Number(b.progress ?? 0) - Number(a.progress ?? 0) ||
+    compareOptionalDate(b.updated_at, a.updated_at) ||
+    compareOptionalDate(a.created_at, b.created_at) ||
+    String(a.id ?? "").localeCompare(String(b.id ?? ""));
+}
+
 function isWbsTitleInstanceUniqueConflict(
   error: { code?: string; message?: string; details?: string } | null,
 ): boolean {
@@ -1203,6 +1227,31 @@ async function fetchAllWbsTasks(
     `wbs.sync_github_issues scanned at least ${pageSize * maxPages} rows; ` +
       "increase the WBS pagination cap before syncing.",
   );
+}
+
+async function fetchWbsTasksForGithubIssues(
+  admin: SupabaseClient,
+  taskSelect: string,
+  issueNumbers: number[],
+): Promise<Array<Record<string, unknown>>> {
+  const uniqueNumbers = [...new Set(issueNumbers)].filter((number) =>
+    Number.isFinite(number)
+  );
+  if (uniqueNumbers.length === 0) return [];
+
+  const chunkSize = 100;
+  const tasks: Array<Record<string, unknown>> = [];
+  for (let index = 0; index < uniqueNumbers.length; index += chunkSize) {
+    const chunk = uniqueNumbers.slice(index, index + chunkSize);
+    const { data, error } = await admin.from("wbs_tasks")
+      .select(taskSelect)
+      .in("github_issue_number", chunk)
+      .order("created_at", { ascending: true, nullsFirst: true })
+      .order("id", { ascending: true });
+    if (error) throw new Error(error.message);
+    tasks.push(...((data ?? []) as unknown as Array<Record<string, unknown>>));
+  }
+  return tasks;
 }
 
 function githubIssueOwnerInstance(labels: string[]): string {
@@ -6933,12 +6982,30 @@ serve(async (req) => {
             return json({ error: "issues array required" }, 400);
           }
 
+          const issuesByNumber = new Map<number, Record<string, unknown>>();
+          for (const issue of issueRecords) {
+            const issueNumber = githubIssueNumber(issue);
+            if (!issueNumber) continue;
+            issuesByNumber.set(issueNumber, issue);
+          }
+          const issueNumbers = [...issuesByNumber.keys()];
+          const runGlobalRepairs = parseBooleanish(
+            body.global_repairs ?? body.globalRepairs,
+            false,
+          );
+
           const now = new Date();
           const nowIso = now.toISOString();
           const today = nowIso.slice(0, 10);
           const taskSelect =
             "id, category, category_icon, category_order, title, description, instance, owner_instance, status, progress, start_date, end_date, planned_start_date, planned_end_date, milestone_code, priority, remaining_work, recovery_plan, ai_review_status, created_at, updated_at, github_issue_number, github_issue_url, github_issue_state, github_issue_labels, github_issue_synced_at";
-          const allTasks = await fetchAllWbsTasks(admin, taskSelect);
+          const allTasks = runGlobalRepairs
+            ? await fetchAllWbsTasks(admin, taskSelect)
+            : await fetchWbsTasksForGithubIssues(
+              admin,
+              taskSelect,
+              issueNumbers,
+            );
           const tasksByIssue = new Map<
             number,
             Array<Record<string, unknown>>
@@ -6949,13 +7016,6 @@ serve(async (req) => {
             const tasks = tasksByIssue.get(issueNumber) ?? [];
             tasks.push(task);
             tasksByIssue.set(issueNumber, tasks);
-          }
-
-          const issuesByNumber = new Map<number, Record<string, unknown>>();
-          for (const issue of issueRecords) {
-            const issueNumber = githubIssueNumber(issue);
-            if (!issueNumber) continue;
-            issuesByNumber.set(issueNumber, issue);
           }
 
           const stats = {
@@ -7417,11 +7477,71 @@ serve(async (req) => {
             }
           }
 
+          const genericTitleGroups = new Map<
+            string,
+            Array<Record<string, unknown>>
+          >();
+          for (const task of allTasks) {
+            const taskId = String(task.id ?? "");
+            if (!taskId || duplicateTaskIds.has(taskId)) continue;
+            if (githubIssueNumberFromTask(task)) continue;
+            const titleKey = normalizeDuplicateKey(task.title);
+            if (!titleKey) continue;
+            const tasks = genericTitleGroups.get(titleKey) ?? [];
+            tasks.push(task);
+            genericTitleGroups.set(titleKey, tasks);
+          }
+          for (const tasks of genericTitleGroups.values()) {
+            if (tasks.length < 2) continue;
+            const sorted = [...tasks].sort(compareWbsDuplicateTitleKeeper);
+            const keeper = sorted.find((task) => !isCompletedWbsTask(task)) ??
+              sorted[0];
+            const keeperId = String(keeper.id ?? "");
+            if (!keeperId) continue;
+            for (const duplicate of sorted) {
+              const duplicateId = String(duplicate.id ?? "");
+              if (
+                !duplicateId || duplicateId === keeperId ||
+                duplicateTaskIds.has(duplicateId)
+              ) {
+                continue;
+              }
+              const duplicateNote =
+                `Duplicate WBS title; kept WBS task ${keeperId} as canonical.`;
+              const duplicateUpdate: Record<string, unknown> = {
+                status: "completed",
+                progress: 100,
+                ai_review_status: "pending",
+                remaining_work: duplicateNote,
+              };
+              if (!String(duplicate.recovery_plan ?? "").trim()) {
+                duplicateUpdate.recovery_plan =
+                  "Completed as a duplicate WBS title by wbs.sync_github_issues.";
+              }
+              if (!String(duplicate.recovery_planned_at ?? "").trim()) {
+                duplicateUpdate.recovery_planned_at = nowIso;
+              }
+              const { error: duplicateError } = await admin.from("wbs_tasks")
+                .update(duplicateUpdate)
+                .eq("id", duplicateId);
+              if (duplicateError) throw new Error(duplicateError.message);
+              Object.assign(duplicate, duplicateUpdate);
+              duplicateTaskIds.add(duplicateId);
+              duplicateWbsTasks.push({
+                id: duplicateId,
+                kept_id: keeperId,
+                reason: "duplicate_title_generic",
+              });
+              stats.duplicate_wbs_closed += 1;
+            }
+          }
+
           return json({
             success: true,
             repo,
             issue_count: issueRecords.length,
             wbs_task_scan_count: allTasks.length,
+            global_repairs: runGlobalRepairs,
             ...stats,
             issues_to_close: issuesToClose,
             duplicate_wbs_tasks: duplicateWbsTasks,

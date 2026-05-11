@@ -366,6 +366,58 @@ def managed_mcp_snapshot(root: Path) -> dict[str, Any]:
     }
 
 
+def context_injection_snapshot(root: Path) -> dict[str, Any]:
+    try:
+        from context_injection_check import build_session_snapshot
+    except Exception as exc:
+        return {
+            "state": "unavailable",
+            "config": "config/context-injection-map.json",
+            "issue": 1644,
+            "route_count": 0,
+            "matched_route_ids": [],
+            "validation_errors": [f"could not import context injection checker: {exc}"],
+            "notebooklm": {
+                "harness_notebook_id": "bc58b50b-5fc4-4840-9a62-b397d6d3b65a",
+                "harness_found": False,
+                "notebook_count": 0,
+                "candidate_issue_drafts": 0,
+                "issue_drafts_state": "unknown",
+            },
+            "proposal_policy": {},
+        }
+    try:
+        snapshot = build_session_snapshot(root)
+    except Exception as exc:
+        return {
+            "state": "error",
+            "config": "config/context-injection-map.json",
+            "issue": 1644,
+            "route_count": 0,
+            "matched_route_ids": [],
+            "validation_errors": [f"context injection check failed: {exc}"],
+            "notebooklm": {
+                "harness_notebook_id": "bc58b50b-5fc4-4840-9a62-b397d6d3b65a",
+                "harness_found": False,
+                "notebook_count": 0,
+                "candidate_issue_drafts": 0,
+                "issue_drafts_state": "unknown",
+            },
+            "proposal_policy": {},
+        }
+
+    return {
+        "state": snapshot["state"],
+        "config": snapshot["config"],
+        "issue": snapshot["issue"],
+        "route_count": snapshot["routeCount"],
+        "matched_route_ids": [route["id"] for route in snapshot["matchedRoutes"]],
+        "validation_errors": snapshot["validation_errors"],
+        "notebooklm": snapshot["notebooklm"],
+        "proposal_policy": snapshot["proposalPolicy"],
+    }
+
+
 def parse_semver(text: str) -> tuple[int, int, int] | None:
     match = re.search(r"(\d+)\.(\d+)\.(\d+)", text)
     if not match:
@@ -388,6 +440,7 @@ def analyze(cwd: Path) -> dict[str, Any]:
     notebooklm = notebooklm_snapshot(root)
     claude_remote_control = analyze_claude_remote_control(root)
     managed_mcp = managed_mcp_snapshot(root)
+    context_injection = context_injection_snapshot(root)
 
     warnings: list[str] = []
     if dirty_lines:
@@ -446,6 +499,10 @@ def analyze(cwd: Path) -> dict[str, Any]:
         warnings.append(
             f"managed MCP additional findings truncated: {len(managed_mcp['session_findings']) - 12}"
         )
+    if context_injection["validation_errors"]:
+        warnings.append("dynamic context injection map validation failed")
+    if context_injection["state"] not in {"ok"}:
+        warnings.append(f"dynamic context injection state is {context_injection['state']}")
 
     return {
         "root": str(root),
@@ -462,6 +519,7 @@ def analyze(cwd: Path) -> dict[str, Any]:
         "notebooklm": notebooklm,
         "claude_remote_control": claude_remote_control,
         "managed_mcp": managed_mcp,
+        "context_injection": context_injection,
         "worktrees": worktrees,
         "environment": env_snapshot(),
         "warnings": warnings,
@@ -532,6 +590,28 @@ def render_markdown(report: dict[str, Any]) -> str:
         lines.append(
             f"- `{finding['severity']}` `{finding['kind']}` `{finding['server']}`: {finding['message']}"
         )
+
+    context_injection = report["context_injection"]
+    context_notebooklm = context_injection["notebooklm"]
+    lines.extend(
+        [
+            "",
+            "## Dynamic Context Injection",
+            f"- State: `{context_injection['state']}`",
+            f"- Config: `{context_injection['config']}`",
+            f"- Issue: `#{context_injection['issue']}`",
+            f"- Routes configured: `{context_injection['route_count']}`",
+            f"- Session default routes: `{', '.join(context_injection['matched_route_ids']) or 'none'}`",
+            f"- Harness notebook: `{context_notebooklm['harness_notebook_id']}`",
+            f"- Harness found in intake snapshot: `{context_notebooklm['harness_found']}`",
+            f"- Notebook count: `{context_notebooklm['notebook_count']}`",
+            f"- Unapplied NotebookLM candidates: `{context_notebooklm['candidate_issue_drafts']}`",
+            f"- Issue drafts state: `{context_notebooklm['issue_drafts_state']}`",
+            "- Proposal rule: distill NotebookLM output and connect it to a GitHub Issue, PR body, or existing Issue comment.",
+        ]
+    )
+    for failure in context_injection["validation_errors"][:8]:
+        lines.append(f"- Validation failure: {failure}")
 
     lines.extend(["", "## Warnings"])
     if report["warnings"]:

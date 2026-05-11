@@ -1,15 +1,12 @@
 # AI Tool Watch Report
 
-- Checked at: `2026-05-09T21:30:36Z`
-- Previous check: `2026-05-08T21:37:47Z`
-- Changed/new official sources: `4`
+- Checked at: `2026-05-10T21:34:01Z`
+- Previous check: `2026-05-09T21:30:36Z`
+- Changed/new official sources: `1`
 - Active routing groups: `codex-runtime, hooks, integration, quality-cost, schedule`
 
 ## Session Start Summary
-- `changed` Claude Code changelog: 2.1.138 / May 9, 2026
-- `changed` Codex changelog: 2026-05-07 / Codex for Chrome With the new extension for Chrome, Codex is even better at working with ap
-- `changed` Gemini Code Assist release notes: VS Code Gemini Code Assist 2.81.0 / May 08, 2026
-- `changed` Devin release notes: May 8, 2026
+- `changed` Codex changelog: 2026-05-08 / Codex CLI 0.130.0 pre
 
 ## Recommended Actions
 - **codex-runtime** (#1422, #1377, #1375, #1408): Route to Codex execution: use newer models for broad refactors, in-app browser for UI verification, and worktrees for parallel fixes.
@@ -39,10 +36,10 @@
   - Short signal: Navigation Code review & CI/CD Claude Code GitHub Actions Getting started Build with Claude Code Administration Configuration Reference Agent SDK What's New Resources Getting...
 - **Codex changelog** (HTTP 200)
   - URL: https://developers.openai.com/codex/changelog
-  - Latest signal: 2026-05-07 / Codex for Chrome With the new extension for Chrome, Codex is even better at working with ap
+  - Latest signal: 2026-05-08 / Codex CLI 0.130.0 pre
   - Keyword groups: hooks, schedule, codex-runtime, integration, quality-cost
   - Short signal: Changelog – Codex | OpenAI Developers Home API Docs Guides and concepts for the OpenAI API API reference Endpoints, parameters, and responses Codex Docs Guides, concepts, and...
-  - Short signal: April 2026 li+li]:mt-12"> 2026-04-23 GPT-5.5 and Codex app updates GPT-5.5 is now available in Codex as OpenAI’s newest frontier model for complex coding, computer use,...
+  - Short signal: ( #21642 , #21676 ) Windows sandbox setup now grants sandbox users access to the desktop runtime binary cache.
 - **Codex use cases** (HTTP 200)
   - URL: https://developers.openai.com/codex/use-cases/
   - Latest signal: Codex use cases Home API Docs Guides and concepts for the OpenAI API API reference Endpoint

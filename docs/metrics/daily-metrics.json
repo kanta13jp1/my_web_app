@@ -1,9 +1,9 @@
 {
   "success": true,
   "digest": {
-    "date": "2026-05-09",
+    "date": "2026-05-10",
     "users": {
-      "total": 22
+      "total": 37
     },
     "featureRequests": {
       "newToday": 0,
@@ -34,6 +34,14 @@
     },
     "recentAchievements": [
       {
+        "title": "Codex #1: completed duplicate GitHub-origin WBS rows",
+        "completed_at": "2026-05-11T00:00:00+00:00"
+      },
+      {
+        "title": "Codex #1: completed duplicate non-Issue WBS title rows",
+        "completed_at": "2026-05-11T00:00:00+00:00"
+      },
+      {
         "title": "PS#6 S163: 競馬予測EF confidence 79 terms — largeFieldPerformerBonus追加",
         "completed_at": "2026-05-04T00:00:00+00:00"
       },
@@ -44,17 +52,9 @@
       {
         "title": "PS#5 S125: Blog投稿管理 完全実装 (RLS緩和/content列/EF publish/CRUD UI)",
         "completed_at": "2026-05-04T00:00:00+00:00"
-      },
-      {
-        "title": "PS#3 S152: AI大学400→402社化 + 未適用NB新規Issue登録8件",
-        "completed_at": "2026-05-04T00:00:00+00:00"
-      },
-      {
-        "title": "PS#6 S165: 競馬予測EF confidence 81 terms — formValueBonus追加",
-        "completed_at": "2026-05-04T00:00:00+00:00"
       }
     ]
   },
-  "fetched_at": "2026-05-10T07:48:21+09:00",
-  "report_date": "2026-05-10"
+  "fetched_at": "2026-05-11T07:48:41+09:00",
+  "report_date": "2026-05-11"
 }

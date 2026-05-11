@@ -5,6 +5,8 @@ WbsTask _task({
   required String id,
   required String title,
   int? issueNumber,
+  String instance = 'codex',
+  String ownerInstance = '',
   String status = 'in_progress',
   int progress = 0,
   String remainingWork = '',
@@ -18,10 +20,11 @@ WbsTask _task({
     categoryOrder: 1,
     title: title,
     description: '',
-    instance: 'codex',
+    instance: instance,
     status: status,
     progress: progress,
     priority: 'medium',
+    ownerInstance: ownerInstance,
     remainingWork: remainingWork,
     githubIssueNumber: issueNumber,
     createdAt: createdAt,
@@ -74,5 +77,29 @@ void main() {
     ]);
 
     expect(tasks.map((task) => task.id), ['issue-1', 'issue-2']);
+  });
+
+  test('display dedupe keeps one canonical row per duplicate title', () {
+    final tasks = dedupeWbsTasksForDisplay([
+      _task(
+        id: 'automation-copy',
+        title: 'SOC 2 Type 1 認証準備',
+        instance: 'automation',
+        ownerInstance: 'automation',
+        progress: 0,
+        createdAt: DateTime.utc(2026, 5, 11, 1),
+      ),
+      _task(
+        id: 'codex-copy',
+        title: 'SOC 2 Type 1 認証準備',
+        instance: 'codex',
+        ownerInstance: 'codex',
+        progress: 25,
+        createdAt: DateTime.utc(2026, 5, 11, 2),
+      ),
+    ]);
+
+    expect(tasks, hasLength(1));
+    expect(tasks.single.id, 'codex-copy');
   });
 }

@@ -1,0 +1,213 @@
+{
+  "schemaVersion": 1,
+  "issue": 1644,
+  "status": "active",
+  "harnessNotebookId": "bc58b50b-5fc4-4840-9a62-b397d6d3b65a",
+  "harnessNotebookName": "jibun-master-brain",
+  "ownerModel": {
+    "activeInstances": [
+      "Claude Code #1",
+      "Codex #1"
+    ],
+    "designOwner": "Claude Code #1",
+    "implementationOwner": "Codex #1",
+    "externalMemoryOwner": "NotebookLM",
+    "notes": "Historical Codex #2/#3 lanes are dormant; implementation work is absorbed by Codex #1 under the current two-instance flow."
+  },
+  "proposalPolicy": {
+    "connectNotebooklmOutputTo": [
+      "GitHub Issue",
+      "PR body",
+      "existing Issue comment"
+    ],
+    "forbidRawNotebooklmDump": true,
+    "requiredFields": [
+      "matched route",
+      "recommended docs",
+      "recommended skill",
+      "NotebookLM query candidate",
+      "GitHub Issue or comment target"
+    ]
+  },
+  "routes": [
+    {
+      "id": "ai-tool-adoption",
+      "sessionStartDefault": true,
+      "description": "AI tool updates, hook adoption, Codex memory, and NotebookLM-backed workflow changes.",
+      "keywords": [
+        "ai tool",
+        "claude code",
+        "codex",
+        "codex memory",
+        "gemini",
+        "copilot",
+        "skill activation",
+        "hook",
+        "session start",
+        "notebooklm",
+        "master brain"
+      ],
+      "docs": [
+        "docs/AI_FALLBACK_RUNBOOK.md",
+        "docs/AI_FLEET_SYNERGY_PLAYBOOK.md",
+        "docs/NOTEBOOKLM_GUIDE.md",
+        "docs/CODEX_WORKFLOW.md",
+        "docs/FLEET_2_INSTANCE_TRANSITION.md"
+      ],
+      "skills": [
+        ".claude/skills/session-start-check/SKILL.md",
+        ".claude/skills/hook-rule-audit/SKILL.md"
+      ],
+      "notebooklmQueries": [
+        {
+          "notebookId": "bc58b50b-5fc4-4840-9a62-b397d6d3b65a",
+          "notebookName": "jibun-master-brain",
+          "question": "For this AI-tool or hook adoption task, which repo docs, prior decisions, and constraints should be checked before implementation?"
+        }
+      ],
+      "connectToIssues": [
+        1644,
+        1706,
+        1787
+      ]
+    },
+    {
+      "id": "mcp-tool-boundary",
+      "description": "MCP server access, external tool permissions, managed MCP policy, and container isolation decisions.",
+      "keywords": [
+        "mcp",
+        "managed-mcp",
+        "tool policy",
+        "external tool",
+        "docker mcp",
+        "dynamic mcp",
+        "oauth",
+        "workos",
+        "permission"
+      ],
+      "docs": [
+        "docs/AGENT_TOOL_POLICY.md",
+        "docs/MCP_AUTH_HARDENING_SPEC.md",
+        "docs/MCP_AUTH_SECURITY_PRINCIPLES.md",
+        "docs/automation/managed-mcp-access-control.md",
+        "config/managed-mcp.json"
+      ],
+      "skills": [
+        ".claude/skills/session-start-check/SKILL.md"
+      ],
+      "notebooklmQueries": [
+        {
+          "notebookId": "bc58b50b-5fc4-4840-9a62-b397d6d3b65a",
+          "notebookName": "jibun-master-brain",
+          "question": "Which MCP permission, audit log, and fallback constraints apply before adding or isolating an external tool?"
+        }
+      ],
+      "connectToIssues": [
+        1645,
+        1577,
+        1586
+      ]
+    },
+    {
+      "id": "wbs-priority-routing",
+      "sessionStartDefault": true,
+      "description": "WBS due-date selection, two-instance ownership, hand-off packet checks, and stale task closure.",
+      "keywords": [
+        "wbs",
+        "issue",
+        "priority",
+        "due date",
+        "handoff",
+        "cross-instance",
+        "two-instance",
+        "2-instance",
+        "task order"
+      ],
+      "docs": [
+        "docs/WBS.md",
+        "docs/CROSS_INSTANCE_HANDOFF_MONITOR_SPEC.md",
+        "docs/DEV_PROCESS_MULTI_AI.md",
+        "docs/FLEET_2_INSTANCE_TRANSITION.md",
+        "docs/cross-instance-prs/20260507_wbs_top5_2instance_split_part158b.md"
+      ],
+      "skills": [
+        ".claude/skills/session-start-check/SKILL.md"
+      ],
+      "notebooklmQueries": [
+        {
+          "notebookId": "bc58b50b-5fc4-4840-9a62-b397d6d3b65a",
+          "notebookName": "jibun-master-brain",
+          "question": "Given the current WBS and two-instance flow, what constraints should be checked before starting the next due task?"
+        }
+      ],
+      "connectToIssues": [
+        1644
+      ]
+    },
+    {
+      "id": "calendar-ui",
+      "description": "Google Calendar UI work, calendar-events phases, and browser evidence requirements.",
+      "keywords": [
+        "calendar",
+        "google calendar",
+        "day view",
+        "week view",
+        "event edit",
+        "bottom sheet",
+        "calendar-events"
+      ],
+      "docs": [
+        "docs/CODEX_UI_QA_PLAYBOOK.md",
+        "docs/GA_LAUNCH_READINESS_GATE_SPEC.md",
+        ".github/PULL_REQUEST_TEMPLATE.md"
+      ],
+      "skills": [
+        ".claude/skills/session-start-check/SKILL.md"
+      ],
+      "notebooklmQueries": [
+        {
+          "notebookId": "bc58b50b-5fc4-4840-9a62-b397d6d3b65a",
+          "notebookName": "jibun-master-brain",
+          "question": "Which UI QA, route, and viewport evidence rules apply to this calendar change?"
+        }
+      ],
+      "connectToIssues": [
+        2204
+      ]
+    },
+    {
+      "id": "blog-news-automation",
+      "description": "Blog/news publishing automation, signal-to-draft routing, production E2E, and confidence gates.",
+      "keywords": [
+        "blog",
+        "news",
+        "publishing",
+        "article",
+        "signal",
+        "draft",
+        "dev.to",
+        "fake news",
+        "source risk"
+      ],
+      "docs": [
+        "docs/BLOG_NEWS_AUTOMATION_RUNBOOK.md",
+        "docs/automation/AI_EXTERNAL_BRAIN_AUTOMATION.md",
+        "docs/COMPETITOR_EXPANSION_PLAN.md"
+      ],
+      "skills": [
+        ".claude/skills/session-start-check/SKILL.md"
+      ],
+      "notebooklmQueries": [
+        {
+          "notebookId": "bc58b50b-5fc4-4840-9a62-b397d6d3b65a",
+          "notebookName": "jibun-master-brain",
+          "question": "Which source-risk, confidence, and human ready-gate rules apply before creating blog/news drafts?"
+        }
+      ],
+      "connectToIssues": [
+        1950,
+        1990
+      ]
+    }
+  ]
+}
