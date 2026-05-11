@@ -29890,3 +29890,25 @@ Step 5: ROADMAP KPI table append (= v(N) trigger row + v(N) verify row)
 - (= 本 docs PR の merge commit / 後追記)
 
 
+## Win版#132 part 203-b — v17 mandatory per-session compression spec ship + iterative ask 第 16 layer + WBS Top 5 triage (2026-05-12 JST)
+
+- post-wrap-up escalation 第 5 例累積 (= part 203 phase 1 wrap-up 後 user v17 ask 受信 / mid-session continuation):
+  - **v17 spec ship 第 1 例**: mandatory per-session compression discipline (= 5 new layer F-J / 累積 13 layer = v15 3 + v16 5 + v17 5)
+    - Layer F: SessionStart KPI log mandatory (= session-delta.csv 必須行追加)
+    - Layer G: rolling 3-session aggregate KPI (= regression detection)
+    - Layer H: pre-task hygiene gate (= RAM > 70% PreTool fire / lowest threshold)
+    - Layer I: cross-instance compression sync (= fleet-wide accountability)
+    - Layer J: weekly compression audit GHA cron (= Mon 06:00 JST)
+  - **iterative ask 累積 16 layer 第 1 例 update**: v3 (part 178b) → v17 (part 203-b) / 過去最高 update (= v15 14 → v16 15 → v17 16)
+  - **2-instance hand-off batch 第 5 例累積**: v13-v17 全 5 例連鎖 (= 同一 user iterative ask 連鎖 pattern)
+  - **WBS Top 5 期限近順 triage**: Win Claude 上位 2 件 (#1950 / #1495) Codex 再 assign 推奨 + WBS update_progress 5% / Win Codex top 5 (#1559/#1724/#2204/#1640/#1787) sprint pickup mapping
+  - **DISK_HYGIENE §17.20 v17 章追加**: 既存 doc 章追加 pattern 第 16 例累積
+  - **session_kpi.py 拡張**: 8 → 13 metric (= v17 5 metric NEW)
+  - **Codex 5/30 deliverable 17 件**: v15 5 + v16 6 + v17 6 (= 6 NEW = session_delta_writer / rolling_aggregate / pre-task-hygiene.ps1 / cross_instance_compression_sync / weekly-compression-audit.yml / weekly_compression_audit.py)
+- 「v17 mandatory per-session compression spec ship」第 1 例 NEW + 「iterative ask 累積 16 layer」第 1 例 NEW (= 過去最高 update) + 「2-instance hand-off batch」第 5 例累積 + 「post-wrap-up escalation」第 5 例累積
+- Philosophy 7/9 ✅ / 134 part 連続 (= part 70 → 203-b)
+
+### Commit
+- (= 本 docs PR の merge commit / 後追記)
+
+
