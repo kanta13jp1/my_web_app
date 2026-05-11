@@ -40,6 +40,13 @@ Related ai-tool-update Issues: #1644, #1645, #1646, #1647, #1706.
 viewport, screenshot/Playwright evidence, console/page/request review, and
 generated-image rights/provenance before marking the work review-ready.
 
+#1644 dynamic context injection is defined in
+`docs/DYNAMIC_CONTEXT_INJECTION.md` and `config/context-injection-map.json`.
+At session start, Codex #1 should run `python scripts/context_injection_check.py`
+or `python scripts/codex_session_check.py` to see keyword-matched docs, skills,
+NotebookLM query candidates, target Issue links, and unapplied NotebookLM intake
+counts before implementation begins.
+
 > 作成: 2026-04-24 (PS#6 S26)  
 > 目的: Claude Code quota 制限時に開発・自動化が完全停止しないための手順書
 

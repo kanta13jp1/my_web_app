@@ -43,14 +43,22 @@ bool _isDuplicateWbsMirrorNote(String value) {
   final text = value.trim().toLowerCase();
   return text.startsWith('duplicate of wbs task') ||
       text.startsWith('duplicate github-origin wbs title') ||
+      text.startsWith('duplicate wbs title') ||
       text.contains('duplicate_wbs_row') ||
-      text.contains('duplicate_title');
+      text.contains('duplicate_title') ||
+      text.contains('duplicate_title_generic');
 }
 
 Future<void> _openGithubIssue(int issueNumber) async {
   final uri = Uri.parse('$_kGithubRepoUrl/issues/$issueNumber');
   await launchUrl(uri, mode: LaunchMode.externalApplication);
 }
+
+String _normalizeWbsTitleDuplicateKey(String value) => value
+    .replaceFirst(RegExp(r'^\s*\[Issue #\d+\]\s*', caseSensitive: false), '')
+    .replaceAll(RegExp(r'\s+'), ' ')
+    .trim()
+    .toLowerCase();
 
 // ── データモデル ──────────────────────────────────────────────────────────────
 
@@ -163,6 +171,11 @@ class WbsTask {
   bool get isDuplicateGithubIssueMirror =>
       _isDuplicateWbsMirrorNote(remainingWork) ||
       _isDuplicateWbsMirrorNote(recoveryPlan);
+
+  String? get linkedDuplicateTitleKey {
+    final titleKey = _normalizeWbsTitleDuplicateKey(title);
+    return titleKey.isEmpty ? null : titleKey;
+  }
 
   factory WbsTask.fromMap(Map<String, dynamic> m) => WbsTask(
         id: m['id'] as String,
@@ -448,18 +461,25 @@ int _compareWbsTaskDisplayKeeper(WbsTask a, WbsTask b) {
 @visibleForTesting
 List<WbsTask> dedupeWbsTasksForDisplay(Iterable<WbsTask> tasks) {
   final ordered = <WbsTask>[];
-  final indexByIssue = <int, int>{};
+  final indexByKey = <String, int>{};
 
   for (final task in tasks) {
     final issueNumber = task.linkedGithubIssueNumber;
-    if (issueNumber == null) {
+    String? displayKey;
+    if (issueNumber != null) {
+      displayKey = 'issue:$issueNumber';
+    } else {
+      final titleKey = task.linkedDuplicateTitleKey;
+      if (titleKey != null) displayKey = 'title:$titleKey';
+    }
+    if (displayKey == null) {
       ordered.add(task);
       continue;
     }
 
-    final existingIndex = indexByIssue[issueNumber];
+    final existingIndex = indexByKey[displayKey];
     if (existingIndex == null) {
-      indexByIssue[issueNumber] = ordered.length;
+      indexByKey[displayKey] = ordered.length;
       ordered.add(task);
       continue;
     }
