@@ -9,6 +9,10 @@
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient, SupabaseClient } from "npm:@supabase/supabase-js@2";
 import { AgentGpaActionError, handleAgentGpaAction } from "./agent_gpa.ts";
+import {
+  GaReadinessActionError,
+  handleGaReadinessAction,
+} from "./ga_readiness.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -751,12 +755,21 @@ serve(async (req: Request) => {
         return json({ success: true, ...result });
       }
 
+      // --- GA Launch Readiness Gate (#1640) ---
+      case "agent.list_ga_axes": {
+        const gaReadiness = handleGaReadinessAction(action);
+        return json({ success: true, ga_readiness: gaReadiness });
+      }
+
       default:
         return json({ error: `Unknown action: ${action}` }, 400);
     }
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    const status = err instanceof AgentGpaActionError ? err.status : 500;
+    const status = err instanceof AgentGpaActionError ||
+        err instanceof GaReadinessActionError
+      ? err.status
+      : 500;
     return json({ error: message }, status);
   }
 });
