@@ -29824,3 +29824,69 @@ Step 5: ROADMAP KPI table append (= v(N) trigger row + v(N) verify row)
 - (= 本 docs PR の merge commit / 後追記)
 
 
+## Win版#132 part 197 — DISK_HYGIENE §17.16 v11 ship (= post-resume hidden gap detection 第 1 例 / 2026-05-10 JST)
+
+- post-resume cycle で SessionStart 7 hook 配線済でも `ram_trim_count=0` + RAM 87.53% 発覚 → 「post-resume cycle hidden gap detection 第 1 例」確立
+- DISK_HYGIENE §17.16 v11 = 85% threshold lower + post-resume mandatory fire policy ship (= 既存 doc 章追加 pattern 第 11 例)
+- v9 verify FAIL → manual fire 1421 MB / 92.64→91.18%
+- 「85% threshold lower discipline」第 1 例 + 「post-resume mandatory fire policy」第 1 例 + 「user iterative ask v11 累積 10 layer」第 1 例 + 「RAM immediate fire band 確立」7 例累積 + 「[COMPACTION-RESUME] 90min discipline」第 2 例
+- Philosophy 7/9 ✅ / 130 part 連続 / commit hash: (= PR #2328 closed-as-superseded part 203 / content backfill via this entry)
+
+
+## Win版#132 part 198 — v11 85% threshold verify SUCCESS 第 1 例 + docs-only label-based gate bypass 第 1 例 + MEMORY consolidation 第 3 例 (2026-05-10/11 JST)
+
+- v11 85% threshold verify SUCCESS ✅ (= RAM 81.72% < 85% / manual fire skip / §17.16.2 spec dogfood)
+- PR #2328 + #2323 minimal-e2e gate FAIL recovery via `gh pr edit --add-label docs-only` + body edit (`edited` event trigger) → 「docs-only label-based gate bypass」第 1 例
+- MEMORY.md consolidation 第 3 例 dogfood (= 27.35 → 9.90 KB / -63% trim / 4-step pattern 第 3 適用)
+- v12 spec ship via `docs/cross-instance-prs/20260511_v12_memory_disk_hygiene_spec.md` (= cascade conflict 回避)
+- 「v11 85% threshold verify SUCCESS」第 1 例 + 「premature ping skip discipline」第 4 例累積 + 「PR cascade 待ち pattern」第 1 例 + 「[COMPACTION-RESUME] 90min discipline」第 3 例 / 131 part 連続
+- Philosophy 7/9 ✅ / commit hash: (= PR #2331 closed-as-superseded part 203 / content backfill via this entry)
+
+
+## Win版#132 part 199 + 199-b — verify-only minimal session 第 1 例 + v13 SessionEnd mandatory fire spec ship + 2-instance hand-off batch 第 1 例 (2026-05-11 JST)
+
+- part 199 (= verify-only minimal session 第 1 例): v11 85% threshold verify SUCCESS 第 2 例 (= 83.43%) / PR cascade 全 BLOCKED 確認 / 「5/12 T+3 Codex ping premature skip 第 5 例累積」
+- part 199-b (= mid-session escalation 第 1 例): 「user iterative ask 累積 12 layer」第 1 例 + 「2-instance hand-off batch」第 1 例 (= 8 doc → 1 doc 統合) + 「v13 SessionEnd mandatory fire spec ship」第 1 例 + 「session-spanning continuity within 90min discipline」第 1 例
+- 13 dogfood pattern (= 6 phase 1 + 7 phase 2 = 過去最高 single-day)
+- Philosophy 7/9 ✅ / 132 part 連続 / commit hash: (= PR #2335 closed-as-superseded part 203 / content backfill via this entry)
+
+
+## Win版#132 part 200 + 200-b — 同日 11 part 連続 fresh start failed + v14 4-tier compression spec ship (2026-05-11 JST)
+
+- part 200 (= 同日 11 part 連続 / fresh start failed pattern 第 1 例): v11 verify FAIL (= RAM 94.34% > 85%) / manual fire DELTA NEGATIVE **-20.7 MB** / cascade-gated ROADMAP discipline 第 1 例
+- part 200-b (= 4 dogfood ship): 「user iterative ask 累積 13 layer」第 1 例 / 「2-instance hand-off batch」第 2 例累積 / 「v14 4-tier compression spec ship」第 1 例 / 「fresh start failed 内 escalation」第 1 例
+- part 200 + 200-b 合算 = 14 dogfood pattern (= 過去最高)
+- Philosophy 7/9 ✅ / 132 part 連続 / commit hash: (= PR #2340 merged `0ea2024ca`)
+
+
+## Win版#132 part 201 + 201-b — 同日 12 part 連続 fresh start 復帰 + manual fire 過去最大 +2216.2 MB + v15 guaranteed compression spec ship (2026-05-11 JST)
+
+- part 201 (= 5 dogfood ship): v11 verify PASS-after-fire 第 1 例 (= 85.04→74.22% 一発 recovery) / manual fire 過去最大 record update (= +2216.2 MB freed / 旧 part 196 phase 2 +1686.9 MB +31% 上回る) / scheduled task autonomous TBD audit 第 1 例 (= 10 件 TBD batch backfill 27 → 17)
+- part 201-b (= 5 dogfood ship): 「user iterative ask 累積 14 layer」第 1 例 / 「2-instance hand-off batch」第 3 例累積 / 「v15 guaranteed compression spec ship」第 1 例 (= Layer 1-3 always-fire mandatory / 5 KPI metric / Codex 5/30 deliverable 5 件) / 「post-wrap-up escalation」第 3 例累積
+- part 201 + 201-b 合算 = 10 dogfood pattern
+- Philosophy 7/9 ✅ / 132 part 連続 / commit hash: (= PR #2352 merged `877341580`)
+
+
+## Win版#132 part 202 + 202-b — 同日 14 part 連続 violation 第 1 例 + v16 proactive enforcement spec ship + manual fire 過去最大 record update 第 2 例 +2785.65 MB (2026-05-11 JST)
+
+- part 202 (= 同日 14 part 連続 [COMPACTION-RESUME] discipline 違反 第 1 例 / minimal session): v15 Layer 1 always-fire functional verify 第 1 例 (= 83.15→82.48% / -107 MB threshold-agnostic mandatory) / premature ping skip 第 8 例累積 / cascade BEHIND→updated 第 5 例累積 (= 6/6 SUCCESS)
+- part 202-b (= post-wrap-up escalation 第 4 例累積 / 過去最重 risk band): 「user iterative ask 累積 15 layer 過去最高」 / 「2-instance hand-off batch」第 4 例累積 / 「v16 proactive enforcement spec ship」第 1 例 (= Layer A-E / 5 fail-closed enforcement) / 「manual fire 過去最大 record update 第 2 例累積」(= +2785.65 MB / 90.28→72.95% / 旧 part 201 +2216.2 MB +26% 上回る) / 「v16 Layer C SessionEnd hard gate functional verify 第 1 例」(= 88.26→79.45% / DELTA +1416.37 MB)
+- part 202 + 202-b 合算 = 8 dogfood + 1 violation pattern
+- Philosophy 7/9 ✅ / 133 part 連続 / commit hash: (= PR #2358 merged `8b439788d`)
+
+
+## Win版#132 part 203 — 翌日 5/12 火曜 fresh start 復帰 + cascade admin merge partial-conflict 第 1 例 + MEMORY consolidation 第 4 例 -71% (2026-05-12 JST)
+
+- [COMPACTION-RESUME] 90min discipline 第 8 例累積 / 翌日 fresh start 復帰成功:
+  - **v15 Layer 1 manual fire functional verify 第 2 例**: PRE 86.95% (= 85% threshold breach detected) → POST 80.57% / DELTA **+1026.09 MB** (= part 202 第 1 例 -107 MB を **+10x** 上回る)
+  - **cascade admin merge partial-conflict 第 1 例**: 7 PR cascade → 4/7 SUCCESS (#2323/#2340/#2352/#2358 全 v14/v15/v16 land) + 3/7 ROADMAP overlap conflict → close-as-superseded (#2328/#2331/#2335) + content backfill via this PR
+  - **5/12 T+3 Codex ping batch fire 3 件**: #2186 dev_cache hygiene + PR #2352 v15 ack + PR #2358 v16 ack / 3 件 skip (= #2171 #1124 closed + #1124 翌日 fire)
+  - **MEMORY.md consolidation 第 4 例**: 20.1 → 5.85 KB = **-71% trim** (= 4-step pattern 第 4 適用 / 月内 4 例 burst rate)
+  - **iterative ask v3-v16 完了 → ack-only phase 移行**
+- 「cascade admin merge partial-conflict pattern」第 1 例 NEW + 「Codex ping skip-on-closed discipline」第 1 例 NEW + 「v15 Layer 1 functional verify 第 2 例」 + 「[COMPACTION-RESUME] 90min discipline 第 8 例 (= 復帰成功)」
+- Philosophy 7/9 ✅ / 134 part 連続 (= part 70 → 203 / 2 month +)
+
+### Commit
+- (= 本 docs PR の merge commit / 後追記)
+
+
