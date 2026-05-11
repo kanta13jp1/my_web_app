@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:my_web_app/pages/asset_management_page.dart';
 import 'package:my_web_app/pages/budget_financial_planner_page.dart';
 import 'package:my_web_app/pages/financial_report_page.dart';
+import 'package:my_web_app/pages/monthly_kpi_dashboard_page.dart';
 import 'package:my_web_app/pages/payment_channel_ledger_page.dart';
 
 import '../models/agent_task.dart';
@@ -85,6 +86,13 @@ class _CfoOfficePageState extends State<CfoOfficePage> {
               onProcessTask: _processTask,
             ),
             const SizedBox(height: 16),
+            _buildMenuCard(
+              context,
+              '月次 KPI レポート',
+              'LifeGoals から目標値・実績値・進捗率・前月比を自動集計し、AI 達成アドバイスを確認します。',
+              Icons.insights,
+              const MonthlyKpiDashboardPage(),
+            ),
             _buildMenuCard(
               context,
               'コスト・予算管理',
