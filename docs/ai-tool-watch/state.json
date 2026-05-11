@@ -1,7 +1,7 @@
 {
   "sources": {
     "claude-code-changelog": {
-      "checked_at": "2026-05-09T21:30:36Z",
+      "checked_at": "2026-05-10T21:34:01Z",
       "hash": "63957c96921e2aef5d41e089fb03c5dbad7bfdb75b3783a3266eb4dc124d57fe",
       "keyword_groups": {
         "codex-runtime": [
@@ -52,7 +52,7 @@
       "url": "https://code.claude.com/docs/en/changelog"
     },
     "claude-code-github-actions": {
-      "checked_at": "2026-05-09T21:30:36Z",
+      "checked_at": "2026-05-10T21:34:01Z",
       "hash": "88ac3d90d9fc104944667bb367f99851c1b6857e2e483a82bf950665befdbee5",
       "keyword_groups": {
         "codex-runtime": [
@@ -89,7 +89,7 @@
       "url": "https://code.claude.com/docs/en/github-actions"
     },
     "claude-code-hooks": {
-      "checked_at": "2026-05-09T21:30:36Z",
+      "checked_at": "2026-05-10T21:34:01Z",
       "hash": "7018ca8cde191d7c3d63cb7fbca172849fe993924cd26213df56e7d5b79b62ee",
       "keyword_groups": {
         "codex-runtime": [
@@ -128,8 +128,8 @@
       "url": "https://code.claude.com/docs/en/hooks"
     },
     "codex-changelog": {
-      "checked_at": "2026-05-09T21:30:36Z",
-      "hash": "3481e8c38ac43a2983c92ddddaa6332d2047ed4c13c1638a0213d06c86ecba66",
+      "checked_at": "2026-05-10T21:34:01Z",
+      "hash": "3dd3635452d2d04c87bd89d73f960dc1e158d34e138a6f604804d06848eb6806",
       "keyword_groups": {
         "codex-runtime": [
           "GPT-5.5",
@@ -144,6 +144,8 @@
         "hooks": [
           "hook",
           "hooks",
+          "SessionStart",
+          "PostToolUse",
           "Stop"
         ],
         "integration": [
@@ -155,7 +157,9 @@
           "IDE extension"
         ],
         "quality-cost": [
+          "OpenTelemetry",
           "cost",
+          "quota",
           "rate limit",
           "sandbox",
           "permission",
@@ -166,16 +170,17 @@
           "automation",
           "automations",
           "schedule",
+          "GitHub Actions",
           "workflow"
         ]
       },
-      "latest_signal": "2026-05-07 / Codex for Chrome With the new extension for Chrome, Codex is even better at working with ap",
+      "latest_signal": "2026-05-08 / Codex CLI 0.130.0 pre",
       "name": "Codex changelog",
       "status": 200,
       "url": "https://developers.openai.com/codex/changelog"
     },
     "codex-overview": {
-      "checked_at": "2026-05-09T21:30:36Z",
+      "checked_at": "2026-05-10T21:34:01Z",
       "hash": "",
       "keyword_groups": {},
       "latest_signal": "No title detected",
@@ -184,7 +189,7 @@
       "url": "https://openai.com/codex/"
     },
     "codex-use-cases": {
-      "checked_at": "2026-05-09T21:30:36Z",
+      "checked_at": "2026-05-10T21:34:01Z",
       "hash": "674496770448525f6f4618967b90695936144cb101d2016bfbc383acb6706831",
       "keyword_groups": {
         "codex-runtime": [
@@ -227,7 +232,7 @@
       "url": "https://developers.openai.com/codex/use-cases/"
     },
     "cursor-changelog": {
-      "checked_at": "2026-05-09T21:30:36Z",
+      "checked_at": "2026-05-10T21:34:01Z",
       "hash": "b4c27e0c0b2330ef868b43ff33074ac70a3ef06df0720aa1c2b5b590d03f1a64",
       "keyword_groups": {
         "codex-runtime": [
@@ -258,7 +263,7 @@
       "url": "https://cursor.com/changelog"
     },
     "devin-release-notes": {
-      "checked_at": "2026-05-09T21:30:36Z",
+      "checked_at": "2026-05-10T21:34:01Z",
       "hash": "425f19e77f97d6510f7c7b75cc1b5bf1e0b2b1eac7cfacc7e5053215889c0399",
       "keyword_groups": {
         "codex-runtime": [
@@ -292,7 +297,7 @@
       "url": "https://docs.devin.ai/release-notes"
     },
     "gemini-code-assist-release-notes": {
-      "checked_at": "2026-05-09T21:30:36Z",
+      "checked_at": "2026-05-10T21:34:01Z",
       "hash": "ce89397bbd9e1b45c0b54521bc998720cbe938306ef07f503898b5c2f4c134d9",
       "keyword_groups": {
         "hooks": [
@@ -320,5 +325,5 @@
       "url": "https://developers.google.com/gemini-code-assist/resources/release-notes"
     }
   },
-  "updated_at": "2026-05-09T21:30:36Z"
+  "updated_at": "2026-05-10T21:34:01Z"
 }

@@ -1,0 +1,3 @@
+{"jsonrpc":"2.0","id":"init","method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"mcp-container-isolation-smoke","version":"1.0.0"}}}
+{"jsonrpc":"2.0","id":"tools","method":"tools/list","params":{}}
+{"jsonrpc":"2.0","id":"call","method":"tools/call","params":{"name":"echo.ping","arguments":{"message":"container-isolated"}}}

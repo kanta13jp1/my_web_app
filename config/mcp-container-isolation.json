@@ -1,0 +1,253 @@
+{
+  "schemaVersion": 1,
+  "status": "active",
+  "issue": 1645,
+  "lastUpdated": "2026-05-11",
+  "ownerModel": {
+    "activeInstances": [
+      "Claude Code #1",
+      "Codex #1"
+    ],
+    "policyOwner": "Claude Code #1",
+    "implementationOwner": "Codex #1",
+    "notes": "Historical extra Codex routing is absorbed by Codex #1 under the current two-instance flow."
+  },
+  "policySources": [
+    "docs/AGENT_TOOL_POLICY.md",
+    "docs/automation/managed-mcp-access-control.md",
+    "config/managed-mcp.json"
+  ],
+  "defaultIsolationDecision": "container_or_deny",
+  "dynamicMcpFlow": [
+    {
+      "step": "discover",
+      "owner": "Codex #1",
+      "evidence": "Issue, PR, or runbook note records the requested tool and source."
+    },
+    {
+      "step": "classify",
+      "owner": "Codex #1",
+      "evidence": "Map requested scopes to read/suggest/create/update/delete/send/purchase/external_share plus managed-mcp high-risk scopes."
+    },
+    {
+      "step": "approve",
+      "owner": "Claude Code #1",
+      "evidence": "High-risk scopes require explicit CEO approval metadata before launch."
+    },
+    {
+      "step": "launch_isolated",
+      "owner": "Codex #1",
+      "evidence": "Prefer containerized MCP execution with least privilege, no host secrets, and no ambient writable mounts."
+    },
+    {
+      "step": "audit",
+      "owner": "Codex #1",
+      "evidence": "Record workflow run, issue comment, PR summary, or durable MCP audit row."
+    },
+    {
+      "step": "fallback",
+      "owner": "Codex #1",
+      "evidence": "Fail closed or use a read-only documented fallback when the isolated launch is unavailable."
+    }
+  ],
+  "highRiskApprovalGate": {
+    "policy": "docs/AGENT_TOOL_POLICY.md",
+    "requiredApproval": "CEO",
+    "failureMode": "fail_closed",
+    "scopes": [
+      "delete",
+      "send",
+      "purchase",
+      "external_share",
+      "credential_access",
+      "shell_execute",
+      "filesystem_write",
+      "production_write"
+    ]
+  },
+  "serverExecutionMatrix": [
+    {
+      "id": "context7-docs",
+      "managedMcpId": "context7",
+      "risk": "low",
+      "executionForm": "Docker MCP catalog read-only container preferred; hosted read-only connector fallback.",
+      "permissions": [
+        "read",
+        "suggest"
+      ],
+      "containerIsolation": {
+        "required": true,
+        "networkMode": "egress_public_docs_only",
+        "readOnlyRootFilesystem": true,
+        "runAsNonRoot": true,
+        "capDrop": [
+          "ALL"
+        ],
+        "secrets": [],
+        "ports": []
+      },
+      "auditLog": "Issue/PR note with package, documentation source, and lookup summary.",
+      "failureFallback": "Use checked-in docs or skip lookup; do not fall back to unregistered host shell execution.",
+      "approvalRequiredFor": [
+        "write",
+        "admin",
+        "external_share"
+      ],
+      "approvalGate": "docs/AGENT_TOOL_POLICY.md"
+    },
+    {
+      "id": "tools-hub-read-facade",
+      "managedMcpId": "tools-hub",
+      "risk": "medium",
+      "executionForm": "Supabase Edge Function MCP facade with container-smoke contract for local read-only MCP fixtures.",
+      "permissions": [
+        "read",
+        "suggest",
+        "create"
+      ],
+      "containerIsolation": {
+        "required": true,
+        "networkMode": "configured_service_endpoint_only",
+        "readOnlyRootFilesystem": true,
+        "runAsNonRoot": true,
+        "capDrop": [
+          "ALL"
+        ],
+        "secrets": [
+          "managed_ci_secret_only"
+        ],
+        "ports": []
+      },
+      "auditLog": "tools-hub MCP smoke workflow, schedule_task_runs row, and PR/issue validation note.",
+      "failureFallback": "Use tools-hub MCP smoke in GitHub Actions or leave feature_request.create disabled.",
+      "approvalRequiredFor": [
+        "send",
+        "delete",
+        "external_share",
+        "production_write"
+      ],
+      "approvalGate": "docs/AGENT_TOOL_POLICY.md"
+    },
+    {
+      "id": "playwright-browser",
+      "managedMcpId": "playwright",
+      "risk": "medium",
+      "executionForm": "Containerized browser session or in-app browser with no credential entry unless explicitly approved.",
+      "permissions": [
+        "read",
+        "suggest",
+        "browser_interact"
+      ],
+      "containerIsolation": {
+        "required": false,
+        "networkMode": "target_url_only",
+        "readOnlyRootFilesystem": false,
+        "runAsNonRoot": true,
+        "capDrop": [
+          "ALL"
+        ],
+        "secrets": [],
+        "ports": []
+      },
+      "auditLog": "Browser URL, screenshot or console evidence, and PR validation summary.",
+      "failureFallback": "Skip browser evidence and mark the validation gap in the PR when no isolated browser is available.",
+      "approvalRequiredFor": [
+        "credential_entry",
+        "purchase",
+        "external_share"
+      ],
+      "approvalGate": "docs/AGENT_TOOL_POLICY.md"
+    },
+    {
+      "id": "slack-gmail-outbound",
+      "managedMcpId": "slack,gmail",
+      "risk": "high",
+      "executionForm": "Read/draft connector only by default; outbound send is blocked until approval metadata is present.",
+      "permissions": [
+        "read",
+        "suggest",
+        "send",
+        "external_share"
+      ],
+      "containerIsolation": {
+        "required": true,
+        "networkMode": "connector_endpoint_only",
+        "readOnlyRootFilesystem": true,
+        "runAsNonRoot": true,
+        "capDrop": [
+          "ALL"
+        ],
+        "secrets": [
+          "managed_connector_token_only"
+        ],
+        "ports": []
+      },
+      "auditLog": "Permalink/thread reference, explicit user approval, and issue/PR note before any outbound action.",
+      "failureFallback": "Keep draft local and do not send.",
+      "approvalRequiredFor": [
+        "send",
+        "delete",
+        "external_share"
+      ],
+      "approvalGate": "docs/AGENT_TOOL_POLICY.md"
+    },
+    {
+      "id": "direct-production-db",
+      "managedMcpId": "direct-production-db",
+      "risk": "denied",
+      "executionForm": "Denied as direct MCP. Use reviewed Supabase scripts, GitHub Actions, or explicit runbook instead.",
+      "permissions": [
+        "credential_access",
+        "production_write"
+      ],
+      "containerIsolation": {
+        "required": false,
+        "networkMode": "none",
+        "readOnlyRootFilesystem": true,
+        "runAsNonRoot": true,
+        "capDrop": [
+          "ALL"
+        ],
+        "secrets": [],
+        "ports": []
+      },
+      "auditLog": "Denied request is recorded in issue/PR notes; no production credential is exposed to MCP.",
+      "failureFallback": "Fail closed.",
+      "approvalRequiredFor": [
+        "credential_access",
+        "production_write"
+      ],
+      "approvalGate": "docs/AGENT_TOOL_POLICY.md"
+    }
+  ],
+  "pocLaunch": {
+    "id": "low-risk-stdio-poc",
+    "risk": "low",
+    "executionForm": "Local stdio MCP fixture in Docker Compose.",
+    "permissions": [
+      "read"
+    ],
+    "composeFile": "tools/mcp-container-isolation/docker-compose.yml",
+    "dockerfile": "tools/mcp-container-isolation/Dockerfile",
+    "fixtureInput": "tools/mcp-container-isolation/fixtures/smoke.jsonl",
+    "networkMode": "none",
+    "readOnlyRootFilesystem": true,
+    "runAsNonRoot": true,
+    "capDrop": [
+      "ALL"
+    ],
+    "noNewPrivileges": true,
+    "ports": [],
+    "secrets": [],
+    "auditLog": "mcp-container-isolation-smoke workflow summary plus PR/issue comment.",
+    "fallback": "If Docker is unavailable locally, run the Python fixture directly and require GitHub Actions smoke after merge."
+  },
+  "validation": {
+    "checker": "scripts/check_mcp_container_isolation.py",
+    "workflow": ".github/workflows/mcp-container-isolation-smoke.yml",
+    "requiredLocalCommands": [
+      "python scripts/check_mcp_container_isolation.py",
+      "python scripts/check_mcp_container_isolation_test.py"
+    ]
+  }
+}
