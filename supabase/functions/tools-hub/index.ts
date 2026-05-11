@@ -7247,6 +7247,131 @@ serve(async (req) => {
             });
             stats.stale_wbs_repaired += 1;
           };
+          const completeDuplicateWbsTask = async ({
+            duplicate,
+            keptId,
+            issueNumber,
+            issueUrl,
+            state,
+            labels,
+            canonicalTitle,
+            note,
+            reason,
+            context,
+          }: {
+            duplicate: Record<string, unknown>;
+            keptId: unknown;
+            issueNumber: number;
+            issueUrl: string;
+            state: string;
+            labels: string[];
+            canonicalTitle: string;
+            note: string;
+            reason: string;
+            context: string;
+          }) => {
+            const duplicateId = String(duplicate.id ?? "");
+            if (!duplicateId) return;
+            const duplicateRepairReasons = githubIssueTaskRepairReasons(
+              duplicate,
+              issueNumber,
+              state,
+              canonicalTitle,
+            );
+            duplicateRepairReasons.push(reason);
+            const statusPatch = {
+              status: "completed",
+              progress: 100,
+              ai_review_status: "manual_override",
+              remaining_work: note,
+            };
+            const metadataPatch = {
+              github_issue_number: issueNumber,
+              github_issue_url: issueUrl ||
+                String(duplicate.github_issue_url ?? "") ||
+                null,
+              github_issue_state: state,
+              github_issue_labels: labels.length
+                ? labels
+                : (duplicate.github_issue_labels ?? []),
+              github_issue_synced_at: nowIso,
+            };
+            const { error: statusError } = await admin.from("wbs_tasks")
+              .update(statusPatch)
+              .eq("id", duplicateId);
+            if (statusError) throw new Error(statusError.message);
+            const { error: metadataError } = await admin.from("wbs_tasks")
+              .update(metadataPatch)
+              .eq("id", duplicateId);
+            if (metadataError) throw new Error(metadataError.message);
+            Object.assign(duplicate, statusPatch, metadataPatch);
+            recordWbsRepair(
+              duplicate,
+              issueNumber,
+              duplicateRepairReasons,
+              context,
+            );
+            duplicateWbsTasks.push({
+              id: duplicateId,
+              kept_id: keptId,
+              issue_number: issueNumber,
+              reason,
+            });
+            stats.duplicate_wbs_closed += 1;
+          };
+          const completeActiveIssueInstanceConflicts = async ({
+            issueNumber,
+            lane,
+            keepId,
+            issueUrl,
+            state,
+            labels,
+            canonicalTitle,
+          }: {
+            issueNumber: number;
+            lane: string;
+            keepId: string;
+            issueUrl: string;
+            state: string;
+            labels: string[];
+            canonicalTitle: string;
+          }) => {
+            const { data: activeTasks, error: activeTasksError } = await admin
+              .from("wbs_tasks")
+              .select(taskSelect)
+              .eq("github_issue_number", issueNumber)
+              .eq("instance", lane)
+              .neq("status", "completed")
+              .order("created_at", { ascending: true, nullsFirst: true })
+              .order("id", { ascending: true });
+            if (activeTasksError) throw new Error(activeTasksError.message);
+            for (
+              const activeTask of (activeTasks ?? []) as Array<
+                Record<string, unknown>
+              >
+            ) {
+              const activeTaskId = String(activeTask.id ?? "");
+              if (!activeTaskId || activeTaskId === keepId) continue;
+              const inMemoryTask = allTasks.find((task) =>
+                String(task.id ?? "") === activeTaskId
+              ) ?? activeTask;
+              await completeDuplicateWbsTask({
+                duplicate: inMemoryTask,
+                keptId: keepId || "pending-canonical",
+                issueNumber,
+                issueUrl,
+                state,
+                labels,
+                canonicalTitle,
+                note:
+                  `Duplicate active WBS task for GitHub Issue #${issueNumber} and instance ${lane}; kept WBS task ${
+                    keepId || "pending canonical"
+                  } as canonical.`,
+                reason: "duplicate_issue_instance",
+                context: "issue_instance_preflight",
+              });
+            }
+          };
 
           for (const [issueNumber, issue] of issuesByNumber.entries()) {
             const issueTitle = String(issue.title ?? `Issue #${issueNumber}`)
@@ -7337,6 +7462,28 @@ serve(async (req) => {
               github_issue_synced_at: nowIso,
             };
             const canonicalTitle = String(payload.title ?? "");
+            const activeIssueInstanceRows = await admin.from("wbs_tasks")
+              .select("id")
+              .eq("github_issue_number", issueNumber)
+              .eq("instance", lane)
+              .neq("status", "completed")
+              .order("created_at", { ascending: true, nullsFirst: true })
+              .order("id", { ascending: true });
+            if (activeIssueInstanceRows.error) {
+              throw new Error(activeIssueInstanceRows.error.message);
+            }
+            const activeIssueInstanceKeepId = keeper?.id
+              ? String(keeper.id)
+              : String(activeIssueInstanceRows.data?.[0]?.id ?? "");
+            await completeActiveIssueInstanceConflicts({
+              issueNumber,
+              lane,
+              keepId: activeIssueInstanceKeepId,
+              issueUrl,
+              state,
+              labels,
+              canonicalTitle,
+            });
             if (!isClosed && currentCompleted && !closureReady) {
               payload.remaining_work =
                 "GitHub Issue is still open; WBS completion must pass AI review before the issue can be closed.";
@@ -7426,54 +7573,19 @@ serve(async (req) => {
               !isCompletedWbsTask(task)
             );
             for (const duplicate of activeDuplicateTasksBeforeUpdate) {
-              const duplicateNote =
-                `Duplicate of WBS task ${keeper.id}; GitHub Issue #${issueNumber} is kept on one canonical WBS row.`;
-              const duplicateStatus = "completed";
-              const duplicateProgress = 100;
-              const duplicateRepairReasons = githubIssueTaskRepairReasons(
+              await completeDuplicateWbsTask({
                 duplicate,
+                keptId: keeper.id,
                 issueNumber,
+                issueUrl,
                 state,
+                labels,
                 canonicalTitle,
-              );
-              duplicateRepairReasons.push("duplicate_wbs_row");
-              const { error: duplicateError } = await admin.from("wbs_tasks")
-                .update({
-                  status: duplicateStatus,
-                  progress: duplicateProgress,
-                  ai_review_status: "manual_override",
-                  remaining_work: duplicateNote,
-                  github_issue_number: issueNumber,
-                  github_issue_url: issueUrl,
-                  github_issue_state: state,
-                  github_issue_labels: labels,
-                  github_issue_synced_at: nowIso,
-                })
-                .eq("id", String(duplicate.id));
-              if (duplicateError) throw new Error(duplicateError.message);
-              Object.assign(duplicate, {
-                status: duplicateStatus,
-                progress: duplicateProgress,
-                ai_review_status: "manual_override",
-                remaining_work: duplicateNote,
-                github_issue_number: issueNumber,
-                github_issue_url: issueUrl,
-                github_issue_state: state,
-                github_issue_labels: labels,
-                github_issue_synced_at: nowIso,
+                note:
+                  `Duplicate of WBS task ${keeper.id}; GitHub Issue #${issueNumber} is kept on one canonical WBS row.`,
+                reason: "duplicate_wbs_row",
+                context: "issue_duplicate_pre_update",
               });
-              recordWbsRepair(
-                duplicate,
-                issueNumber,
-                duplicateRepairReasons,
-                "issue_duplicate_pre_update",
-              );
-              duplicateWbsTasks.push({
-                id: duplicate.id,
-                kept_id: keeper.id,
-                issue_number: issueNumber,
-              });
-              stats.duplicate_wbs_closed += 1;
             }
 
             const { data: updated, error: updateError } = await admin.from(
@@ -7585,54 +7697,19 @@ serve(async (req) => {
               !isCompletedWbsTask(task)
             );
             for (const duplicate of duplicateTasks) {
-              const duplicateNote =
-                `Duplicate of WBS task ${updatedKeeper.id}; GitHub Issue #${issueNumber} is kept on one canonical WBS row.`;
-              const duplicateStatus = "completed";
-              const duplicateProgress = 100;
-              const duplicateRepairReasons = githubIssueTaskRepairReasons(
+              await completeDuplicateWbsTask({
                 duplicate,
+                keptId: updatedKeeper.id,
                 issueNumber,
+                issueUrl,
                 state,
+                labels,
                 canonicalTitle,
-              );
-              duplicateRepairReasons.push("duplicate_wbs_row");
-              const { error: duplicateError } = await admin.from("wbs_tasks")
-                .update({
-                  status: duplicateStatus,
-                  progress: duplicateProgress,
-                  ai_review_status: "manual_override",
-                  remaining_work: duplicateNote,
-                  github_issue_number: issueNumber,
-                  github_issue_url: issueUrl,
-                  github_issue_state: state,
-                  github_issue_labels: labels,
-                  github_issue_synced_at: nowIso,
-                })
-                .eq("id", String(duplicate.id));
-              if (duplicateError) throw new Error(duplicateError.message);
-              Object.assign(duplicate, {
-                status: duplicateStatus,
-                progress: duplicateProgress,
-                ai_review_status: "manual_override",
-                remaining_work: duplicateNote,
-                github_issue_number: issueNumber,
-                github_issue_url: issueUrl,
-                github_issue_state: state,
-                github_issue_labels: labels,
-                github_issue_synced_at: nowIso,
+                note:
+                  `Duplicate of WBS task ${updatedKeeper.id}; GitHub Issue #${issueNumber} is kept on one canonical WBS row.`,
+                reason: "duplicate_wbs_row",
+                context: "issue_duplicate_update",
               });
-              recordWbsRepair(
-                duplicate,
-                issueNumber,
-                duplicateRepairReasons,
-                "issue_duplicate_update",
-              );
-              duplicateWbsTasks.push({
-                id: duplicate.id,
-                kept_id: updatedKeeper.id,
-                issue_number: issueNumber,
-              });
-              stats.duplicate_wbs_closed += 1;
             }
           }
 
@@ -7691,6 +7768,7 @@ serve(async (req) => {
                 continue;
               }
               const issueNumber = githubIssueNumberFromTask(duplicate);
+              if (!issueNumber) continue;
               const issue = issueNumber
                 ? issuesByNumber.get(issueNumber)
                 : null;
@@ -7711,64 +7789,20 @@ serve(async (req) => {
                   String(issue.title ?? `Issue #${issueNumber}`).trim()
                 }`
                 : String(keeper.title ?? duplicate.title ?? "");
-              const duplicateNote =
-                `Duplicate GitHub-origin WBS title; kept WBS task ${keeper.id} as canonical.`;
-              const duplicateStatus = "completed";
-              const duplicateProgress = 100;
-              const duplicateRepairReasons = githubIssueTaskRepairReasons(
+              await completeDuplicateWbsTask({
                 duplicate,
-                Number(issueNumber),
+                issueNumber,
+                issueUrl,
                 state,
+                labels,
                 canonicalTitle,
-              );
-              duplicateRepairReasons.push("duplicate_title");
-              const { error: duplicateError } = await admin.from("wbs_tasks")
-                .update({
-                  status: duplicateStatus,
-                  progress: duplicateProgress,
-                  ai_review_status: "manual_override",
-                  remaining_work: duplicateNote,
-                  github_issue_url:
-                    (issueUrl || String(duplicate.github_issue_url ?? "")) ||
-                    null,
-                  github_issue_number: issueNumber,
-                  github_issue_state: state,
-                  github_issue_labels: labels.length
-                    ? labels
-                    : (duplicate.github_issue_labels ?? []),
-                  github_issue_synced_at: nowIso,
-                })
-                .eq("id", duplicateId);
-              if (duplicateError) throw new Error(duplicateError.message);
-              Object.assign(duplicate, {
-                status: duplicateStatus,
-                progress: duplicateProgress,
-                ai_review_status: "manual_override",
-                remaining_work: duplicateNote,
-                github_issue_number: issueNumber,
-                github_issue_url: issueUrl ||
-                  String(duplicate.github_issue_url ?? "") ||
-                  null,
-                github_issue_state: state,
-                github_issue_labels: labels.length
-                  ? labels
-                  : (duplicate.github_issue_labels ?? []),
-                github_issue_synced_at: nowIso,
-              });
-              recordWbsRepair(
-                duplicate,
-                Number(issueNumber),
-                duplicateRepairReasons,
-                "title_duplicate_update",
-              );
-              duplicateTaskIds.add(duplicateId);
-              duplicateWbsTasks.push({
-                id: duplicateId,
-                kept_id: keeper.id,
-                issue_number: issueNumber,
+                keptId: keeper.id,
+                note:
+                  `Duplicate GitHub-origin WBS title; kept WBS task ${keeper.id} as canonical.`,
                 reason: "duplicate_title",
+                context: "title_duplicate_update",
               });
-              stats.duplicate_wbs_closed += 1;
+              duplicateTaskIds.add(duplicateId);
             }
           }
 
