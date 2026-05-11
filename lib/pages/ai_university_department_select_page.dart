@@ -35,8 +35,8 @@ class _AiUniversityDepartmentSelectPageState
       {'department_code': 'framework', 'name_ja': 'フレームワーク学科', 'emoji': '🛠️'},
       {
         'department_code': 'fintech_trading_ai',
-        'name_ja': 'FinTech disruption / Trading x AI 学科',
-        'emoji': '📈',
+        'name_ja': 'FinTech disruption / Trading x AI',
+        'emoji': 'FX',
       },
     ],
     'cloud': [

@@ -37,7 +37,7 @@ void main() {
     expect(kFintechTradingAiGenre.launchProviderId, 'claude_pro_finance');
   });
 
-  test('providerからFinTech/Trading AIジャンルを逆引きできる', () {
+  test('provider reverse lookup finds FinTech/Trading AI genre', () {
     final genre = aiUniversityGenreForProvider('koyfin');
 
     expect(genre, isNotNull);

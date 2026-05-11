@@ -44,10 +44,11 @@ const AiUniversityGenreEntry kLegalAiGenre = AiUniversityGenreEntry(
 const AiUniversityGenreEntry kFintechTradingAiGenre = AiUniversityGenreEntry(
   id: 'fintech_trading_ai',
   title: 'FinTech/Trading AI',
-  headline: 'Bloomberg級の金融情報ワークフローを低コストAIで分解する新ジャンル',
-  description: '年間25,000 USD級のprofessional terminalと、Claude Pro / Cursor / '
-      '自分株式会社を使ったsignal-to-action pipelineを比較し、raw news、'
-      'confidence scoring、fake-news filter、人間の最終判断を一つの学習導線にします。',
+  headline: 'Decompose institutional finance workflows with low-cost AI',
+  description: 'Compare professional terminals with Claude Pro, Cursor, and the '
+      'Jibun Company signal-to-action pipeline. The learning path covers raw '
+      'news capture, confidence scoring, fake-news filters, and human final '
+      'review.',
   providerIds: [
     'bloomberg_terminal',
     'refinitiv_eikon',
