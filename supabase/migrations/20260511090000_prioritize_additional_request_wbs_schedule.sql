@@ -48,10 +48,13 @@ updated_feature_tasks AS (
   WHERE task.id IN (SELECT id FROM feature_tasks)
   RETURNING task.id
 )
-INSERT INTO public.development_achievements (summary)
-SELECT format(
-  'Prioritized %s open additional-request WBS task(s) by moving planned dates ahead of regular tasks.',
-  COUNT(*)
-)
+INSERT INTO public.development_achievements (title, description, completed_at)
+SELECT
+  'Codex #1: prioritized additional-request WBS task dates',
+  format(
+    'Prioritized %s open additional-request WBS task(s) by moving planned dates ahead of regular tasks.',
+    COUNT(*)
+  ),
+  NOW()
 FROM updated_feature_tasks
 HAVING COUNT(*) > 0;
