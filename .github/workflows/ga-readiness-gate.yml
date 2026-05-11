@@ -1,0 +1,98 @@
+name: GA Launch Readiness Gate
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/ga-readiness-gate.yml"
+      - "docs/GA_LAUNCH_READINESS_GATE_SPEC.md"
+      - "docs/CORPORATE_FORMATION_RUNBOOK.md"
+      - "lib/pages/home_page.dart"
+      - "lib/widgets/ga_readiness_gate_panel.dart"
+      - "scripts/check_ga_readiness_gate.py"
+      - "supabase/functions/app-hub/**"
+      - "test/**"
+  schedule:
+    - cron: "55 21 * * *" # daily 06:55 JST
+  workflow_run:
+    workflows:
+      - "Deploy to Production"
+    types: [completed]
+
+concurrency:
+  group: ga-readiness-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  FLUTTER_VERSION: "3.38.x"
+
+jobs:
+  ga-readiness:
+    name: GA readiness gate
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Install Flutter dependencies
+        run: flutter pub get
+
+      - name: Setup Deno
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      - name: Validate GA readiness wiring
+        run: |
+          mkdir -p .ga-readiness
+          python scripts/check_ga_readiness_gate.py \
+            --output-json .ga-readiness/ga-readiness.json \
+            --summary "$GITHUB_STEP_SUMMARY"
+
+      - name: Deno check app-hub GA action
+        run: >
+          deno check --config supabase/functions/deno.json
+          supabase/functions/app-hub/index.ts
+          supabase/functions/app-hub/ga_readiness.ts
+
+      - name: Deno test app-hub GA action
+        run: >
+          deno test --config supabase/functions/deno.json
+          supabase/functions/app-hub/ga_readiness_test.ts
+
+      - name: Flutter analyze
+        run: flutter analyze --no-fatal-warnings
+
+      - name: Flutter test
+        run: flutter test --reporter=compact
+
+      - name: Critical browser E2E
+        run: |
+          if [ -d e2e/critical ]; then
+            npx playwright test e2e/critical/
+          else
+            echo "e2e/critical is not present yet; tracked as a GA Axis A follow-up."
+          fi
+
+      - name: Upload GA readiness artifact
+        if: always() && hashFiles('.ga-readiness/**') != ''
+        uses: actions/upload-artifact@v7
+        with:
+          name: ga-readiness-gate
+          path: .ga-readiness/
+          if-no-files-found: ignore
