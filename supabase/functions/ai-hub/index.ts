@@ -2770,6 +2770,7 @@ serve(async (req: Request) => {
       "learner.update_profile",
       "quiz.evaluate",
       "quiz.explain",
+      "kpi.monthly_summary",
       "voice.tts",
       "voice.stt",
     ];
@@ -2831,6 +2832,99 @@ serve(async (req: Request) => {
           });
         } catch {
           return json({ success: true, text });
+        }
+      }
+
+      case "kpi.monthly_summary": {
+        if (!userId) return json({ error: "Unauthorized" }, 401);
+        const ledger = body.ledger && typeof body.ledger === "object"
+          ? body.ledger as Record<string, unknown>
+          : {};
+        const goals = Array.isArray(body.goals)
+          ? body.goals
+            .filter((item): item is Record<string, unknown> =>
+              item !== null && typeof item === "object"
+            )
+            .slice(0, 12)
+          : [];
+        const averageProgress = asNumber(ledger.average_progress, 0);
+        const monthOverMonthDelta = asNumber(ledger.month_over_month_delta, 0);
+        const goalCount = asNumber(ledger.goal_count, goals.length);
+        const completedCount = asNumber(ledger.completed_count, 0);
+        const lowProgressGoal = goals.find((goal) =>
+          asNumber(goal.progress, 0) < 80
+        );
+        const fallbackActions = [
+          averageProgress < 40
+            ? "平均進捗が低いです。今月は最重要 LifeGoal を 1 件に絞り、毎日 15 分の実行枠を固定してください。"
+            : averageProgress < 70
+            ? "平均進捗は中盤です。50% 未満の目標を 1 件選び、次回レビューまでに +10pt だけ進めてください。"
+            : "平均進捗は良好です。完了目前の目標を締め切り、翌月 KPI の準備に 1 手だけ着手してください。",
+          monthOverMonthDelta < 0
+            ? "前月比が落ちています。新規 KPI を増やすより、既存目標のレビュー頻度を週 2 回に戻してください。"
+            : "前月比は改善傾向です。今月の勝ちパターンを 1 行メモに残し、来月の再現性を上げてください。",
+          lowProgressGoal
+            ? `優先フォロー: ${
+              asString(lowProgressGoal.title)
+            } を今日の最初の 1 手にしてください。`
+            : `今月は ${completedCount}/${goalCount} 件完了です。完了済み KPI の維持条件を 1 つだけ決めてください。`,
+        ];
+        const geminiKey = Deno.env.get("GEMINI_API_KEY") ?? "";
+        if (!geminiKey) {
+          return json({
+            success: true,
+            source: "heuristic",
+            advice: fallbackActions.join("\n"),
+            actions: fallbackActions,
+          });
+        }
+
+        const prompt = prependCharacter([
+          "あなたは自分株式会社のCFOです。LifeGoals から作った月次 KPI 台帳を見て、今月の達成確率を上げる助言を日本語で返してください。",
+          "必ず JSON のみで返してください。",
+          'Schema: {"advice":"短い総評","actions":["今日やる1手","今週やる1手","来月に残す判断"]}',
+          `Ledger: ${JSON.stringify(ledger)}`,
+          `Goals: ${
+            JSON.stringify(goals.map((goal) => ({
+              title: asString(goal.title),
+              level: asString(goal.level),
+              progress: asNumber(goal.progress, 0),
+              current_month_delta: asNumber(goal.current_month_delta, 0),
+              month_over_month_delta: asNumber(
+                goal.month_over_month_delta,
+                0,
+              ),
+              target_date: asString(goal.target_date),
+            })))
+          }`,
+        ].join("\n"));
+
+        try {
+          const text = await callGemini(prompt, geminiKey);
+          const parsed = extractJsonObject(text);
+          const actions = Array.isArray(parsed?.actions)
+            ? parsed.actions
+              .map((item) => asString(item))
+              .filter((item) => item.length > 0)
+              .slice(0, 4)
+            : [];
+          const advice = asString(parsed?.advice) || actions.join("\n") ||
+            text.trim();
+          return json({
+            success: true,
+            source: "gemini",
+            advice,
+            actions: actions.length > 0 ? actions : fallbackActions,
+            raw_text: text,
+          });
+        } catch (error) {
+          return json({
+            success: true,
+            source: "heuristic_fallback",
+            advice: fallbackActions.join("\n"),
+            actions: fallbackActions,
+            error: error instanceof Error ? error.message : String(error),
+          });
         }
       }
 
