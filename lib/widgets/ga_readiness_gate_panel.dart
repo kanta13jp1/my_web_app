@@ -93,9 +93,8 @@ class _GaReadinessGateBody extends StatelessWidget {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final baseColor = isDark ? const Color(0xFF0F172A) : Colors.white;
-    final borderColor = isDark
-        ? const Color(0xFF334155)
-        : const Color(0xFFE2E8F0);
+    final borderColor =
+        isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0);
     final progress = snapshot.overallProgress / 100;
     return Padding(
       padding: const EdgeInsets.fromLTRB(12, 4, 12, 10),
@@ -140,9 +139,8 @@ class _GaReadinessGateBody extends StatelessWidget {
               child: LinearProgressIndicator(
                 value: progress.clamp(0, 1),
                 minHeight: 8,
-                backgroundColor: isDark
-                    ? const Color(0xFF1E293B)
-                    : const Color(0xFFE5E7EB),
+                backgroundColor:
+                    isDark ? const Color(0xFF1E293B) : const Color(0xFFE5E7EB),
                 valueColor: AlwaysStoppedAnimation<Color>(
                   snapshot.gaEligible
                       ? const Color(0xFF0D9488)
@@ -160,9 +158,7 @@ class _GaReadinessGateBody extends StatelessWidget {
             ),
             if (snapshot.blockers.isNotEmpty) ...[
               const SizedBox(height: 12),
-              ...snapshot.blockers
-                  .take(3)
-                  .map(
+              ...snapshot.blockers.take(3).map(
                     (blocker) => Padding(
                       padding: const EdgeInsets.only(bottom: 6),
                       child: Row(
@@ -364,25 +360,25 @@ class _AxisColors {
 _AxisColors _axisColors(String status) {
   return switch (status) {
     'green' => const _AxisColors(
-      background: Color(0xFFEFFAF5),
-      border: Color(0xFF99F6C7),
-      foreground: Color(0xFF047857),
-    ),
+        background: Color(0xFFEFFAF5),
+        border: Color(0xFF99F6C7),
+        foreground: Color(0xFF047857),
+      ),
     'amber' => const _AxisColors(
-      background: Color(0xFFFFFBEB),
-      border: Color(0xFFFDE68A),
-      foreground: Color(0xFFB45309),
-    ),
+        background: Color(0xFFFFFBEB),
+        border: Color(0xFFFDE68A),
+        foreground: Color(0xFFB45309),
+      ),
     'red' => const _AxisColors(
-      background: Color(0xFFFEF2F2),
-      border: Color(0xFFFECACA),
-      foreground: Color(0xFFB91C1C),
-    ),
+        background: Color(0xFFFEF2F2),
+        border: Color(0xFFFECACA),
+        foreground: Color(0xFFB91C1C),
+      ),
     _ => const _AxisColors(
-      background: Color(0xFFF8FAFC),
-      border: Color(0xFFCBD5E1),
-      foreground: Color(0xFF475569),
-    ),
+        background: Color(0xFFF8FAFC),
+        border: Color(0xFFCBD5E1),
+        foreground: Color(0xFF475569),
+      ),
   };
 }
 
