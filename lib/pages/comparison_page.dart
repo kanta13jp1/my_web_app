@@ -130,6 +130,55 @@ const _defaultInfo = _CompetitorInfo(
   ],
 );
 
+_CompetitorInfo _fintechTradingAiInfo({
+  required String name,
+  required String searchKeyword,
+  required Color accentColor,
+  required String providerCapability,
+}) {
+  return _CompetitorInfo(
+    name: name,
+    emoji: 'FX',
+    tagline: '$name is a FinTech/trading intelligence provider. Jibun Company '
+        'turns that domain knowledge into AI University learning, personal '
+        'finance review, KPI tracking, and WBS execution.',
+    searchKeyword: searchKeyword,
+    accentColor: accentColor,
+    painPoints: [
+      '$name is optimized for $providerCapability, but it does not connect that insight to personal WBS execution.',
+      'FinTech/trading expertise can stay isolated from monthly KPI ledgers, learning plans, and task automation.',
+      'Professional market tools are heavy for individual operators who need action, review, and learning in one flow.',
+    ],
+    features: [
+      _FeatureComparison(
+        feature: providerCapability,
+        competitorHas: true,
+        weHave: false,
+      ),
+      const _FeatureComparison(
+        feature: 'AI University FinTech/Trading AI curriculum',
+        competitorHas: false,
+        weHave: true,
+      ),
+      const _FeatureComparison(
+        feature: 'Personal finance/KPI/WBS integration',
+        competitorHas: false,
+        weHave: true,
+      ),
+      const _FeatureComparison(
+        feature: 'Competitive intelligence to action loop',
+        competitorHas: false,
+        weHave: true,
+      ),
+      const _FeatureComparison(
+        feature: 'Free personal OS entry point',
+        competitorHas: false,
+        weHave: true,
+      ),
+    ],
+  );
+}
+
 final _competitorInfo = <String, _CompetitorInfo>{
   'notion': const _CompetitorInfo(
     name: 'Notion',
@@ -6292,6 +6341,55 @@ final _competitorInfo = <String, _CompetitorInfo>{
         weHave: true,
       ),
     ],
+  ),
+  'bloomberg-terminal': _fintechTradingAiInfo(
+    name: 'Bloomberg Terminal',
+    searchKeyword: 'Bloomberg Terminal alternative FinTech trading AI',
+    accentColor: const Color(0xFF141414),
+    providerCapability: 'Real-time market data, news, and terminal workflows',
+  ),
+  'refinitiv-eikon': _fintechTradingAiInfo(
+    name: 'Refinitiv Eikon',
+    searchKeyword: 'Refinitiv Eikon alternative market intelligence AI',
+    accentColor: const Color(0xFFFF7A00),
+    providerCapability: 'Institutional market data and analyst research',
+  ),
+  'factset': _fintechTradingAiInfo(
+    name: 'FactSet',
+    searchKeyword: 'FactSet alternative investment analytics AI',
+    accentColor: const Color(0xFF0F4C81),
+    providerCapability: 'Portfolio analytics, estimates, and company data',
+  ),
+  'sentieo': _fintechTradingAiInfo(
+    name: 'Sentieo',
+    searchKeyword: 'Sentieo alternative financial research AI',
+    accentColor: const Color(0xFF3559E0),
+    providerCapability: 'Financial document search and research notes',
+  ),
+  'koyfin': _fintechTradingAiInfo(
+    name: 'Koyfin',
+    searchKeyword: 'Koyfin alternative market dashboard AI',
+    accentColor: const Color(0xFF1E8E5A),
+    providerCapability: 'Market dashboards, charts, and macro data',
+  ),
+  'atom-finance': _fintechTradingAiInfo(
+    name: 'Atom Finance',
+    searchKeyword: 'Atom Finance alternative investing research AI',
+    accentColor: const Color(0xFF1D4ED8),
+    providerCapability: 'Retail investing research and portfolio insights',
+  ),
+  'claude-pro-finance': _fintechTradingAiInfo(
+    name: 'Claude Pro Finance',
+    searchKeyword: 'Claude Pro Finance alternative trading AI tutor',
+    accentColor: const Color(0xFF7C3AED),
+    providerCapability: 'AI-assisted finance reasoning and trade review',
+  ),
+  'cursor-jibun-finance': _fintechTradingAiInfo(
+    name: 'Cursor Jibun Finance',
+    searchKeyword: 'Cursor finance workflow alternative personal AI OS',
+    accentColor: const Color(0xFF111827),
+    providerCapability:
+        'Code-driven finance automation and personal dashboards',
   ),
   'perplexity-ai': const _CompetitorInfo(
     name: 'Perplexity AI',
@@ -67148,6 +67246,14 @@ class _ComparisonShellState extends State<_ComparisonShell> {
     'paidy': 'finance',
     'wise': 'finance',
     'coincheck': 'finance',
+    'bloomberg-terminal': 'finance',
+    'refinitiv-eikon': 'finance',
+    'factset': 'finance',
+    'sentieo': 'finance',
+    'koyfin': 'finance',
+    'atom-finance': 'finance',
+    'claude-pro-finance': 'finance',
+    'cursor-jibun-finance': 'finance',
     'klarna-ai': 'finance',
     'freee-insurance': 'finance',
     'jobcan': 'hr',
