@@ -122,13 +122,15 @@ class _MonthlyKpiDashboardPageState extends State<MonthlyKpiDashboardPage> {
         body: {
           'action': 'kpi.monthly_summary',
           'ledger': ledger.toJson(),
-          'goals': ledger.metrics.take(12).map((metric) => metric.toJson()).toList(),
+          'goals':
+              ledger.metrics.take(12).map((metric) => metric.toJson()).toList(),
         },
       );
       final advice = _extractAdvice(response.data);
       if (!mounted) return;
       setState(() {
-        _advice = advice.isEmpty ? _kpiService.fallbackAdvice(ledger, now) : advice;
+        _advice =
+            advice.isEmpty ? _kpiService.fallbackAdvice(ledger, now) : advice;
         _adviceLoading = false;
       });
     } catch (_) {
@@ -199,7 +201,8 @@ class _MonthlyKpiDashboardPageState extends State<MonthlyKpiDashboardPage> {
                     children: [
                       _HeaderBand(
                         title: _monthFormat.format(ledger!.monthStart),
-                        subtitle: '${ledger.goalCount} 件の LifeGoals から月次 KPI を自動集計',
+                        subtitle:
+                            '${ledger.goalCount} 件の LifeGoals から月次 KPI を自動集計',
                       ),
                       const SizedBox(height: 12),
                       _SummaryGrid(ledger: ledger),
@@ -391,7 +394,8 @@ class _SummaryGrid extends StatelessWidget {
   }
 
   String _formatSigned(double value, {String suffix = ''}) {
-    final text = value > 0 ? '+${value.toStringAsFixed(1)}' : value.toStringAsFixed(1);
+    final text =
+        value > 0 ? '+${value.toStringAsFixed(1)}' : value.toStringAsFixed(1);
     return '$text$suffix';
   }
 }
@@ -530,7 +534,8 @@ class _AdvicePanel extends StatelessWidget {
               children: [
                 const Padding(
                   padding: EdgeInsets.only(top: 7),
-                  child: Icon(Icons.check_circle, size: 14, color: Color(0xFF7C3AED)),
+                  child: Icon(Icons.check_circle,
+                      size: 14, color: Color(0xFF7C3AED)),
                 ),
                 const SizedBox(width: 8),
                 Expanded(
