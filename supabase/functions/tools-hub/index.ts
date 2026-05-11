@@ -7421,7 +7421,7 @@ serve(async (req) => {
                 .update({
                   status: duplicateStatus,
                   progress: duplicateProgress,
-                  ai_review_status: "pending",
+                  ai_review_status: "manual_override",
                   remaining_work: duplicateNote,
                   github_issue_number: issueNumber,
                   github_issue_url: issueUrl,
@@ -7434,6 +7434,7 @@ serve(async (req) => {
               Object.assign(duplicate, {
                 status: duplicateStatus,
                 progress: duplicateProgress,
+                ai_review_status: "manual_override",
                 remaining_work: duplicateNote,
                 github_issue_number: issueNumber,
                 github_issue_url: issueUrl,
@@ -7546,7 +7547,7 @@ serve(async (req) => {
                 .update({
                   status: duplicateStatus,
                   progress: duplicateProgress,
-                  ai_review_status: "pending",
+                  ai_review_status: "manual_override",
                   remaining_work: duplicateNote,
                   github_issue_url:
                     (issueUrl || String(duplicate.github_issue_url ?? "")) ||
@@ -7563,6 +7564,7 @@ serve(async (req) => {
               Object.assign(duplicate, {
                 status: duplicateStatus,
                 progress: duplicateProgress,
+                ai_review_status: "manual_override",
                 remaining_work: duplicateNote,
                 github_issue_number: issueNumber,
                 github_issue_url: issueUrl ||
@@ -7625,7 +7627,7 @@ serve(async (req) => {
               const duplicateUpdate: Record<string, unknown> = {
                 status: "completed",
                 progress: 100,
-                ai_review_status: "pending",
+                ai_review_status: "manual_override",
                 remaining_work: duplicateNote,
               };
               if (!String(duplicate.recovery_plan ?? "").trim()) {
