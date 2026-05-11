@@ -180,6 +180,8 @@ jobs:
         env:
           REPO: ${{ github.repository }}
           WBS_SYNC_BATCH_SIZE: "100"
+          WBS_SYNC_CURL_MAX_TIME: "90"
+          WBS_SYNC_GLOBAL_REPAIRS: "false"
         run: |
           if [ -z "$SUPABASE_SERVICE_ROLE_KEY" ]; then
             echo "SUPABASE_SERVICE_ROLE_KEY is not configured"
@@ -194,12 +196,19 @@ jobs:
               issues = json.load(fh)
 
           batch_size = max(1, int(os.environ.get("WBS_SYNC_BATCH_SIZE", "200")))
+          global_repairs = os.environ.get("WBS_SYNC_GLOBAL_REPAIRS", "false").strip().lower() in {
+              "1",
+              "true",
+              "yes",
+              "on",
+          }
           for index in range(0, len(issues), batch_size):
               batch = issues[index:index + batch_size]
               payload = {
                   "action": "wbs.sync_github_issues",
                   "repo": os.environ["REPO"],
                   "issues": batch,
+                  "global_repairs": global_repairs,
               }
               path = f"/tmp/wbs-sync-payload-{index // batch_size:03d}.json"
               with open(path, "w", encoding="utf-8") as out:
@@ -222,6 +231,8 @@ jobs:
                 -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \
                 -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
                 -H "Content-Type: application/json" \
+                --connect-timeout 10 \
+                --max-time "$WBS_SYNC_CURL_MAX_TIME" \
                 --data-binary @"$payload_path")
 
               if [ "$HTTP_CODE" -lt 500 ] || [ "$attempt" -ge 2 ]; then
