@@ -111,4 +111,14 @@ void main() {
 
     expect(task.isFeatureRequestTask, isTrue);
   });
+
+  test('Issue-linked tasks are detected from explicit issue numbers', () {
+    final task = _task(
+      id: 'issue-linked',
+      title: '[Issue #1559] AI Tool Watch routing',
+      issueNumber: 1559,
+    );
+
+    expect(task.isGithubIssueLinkedTask, isTrue);
+  });
 }
