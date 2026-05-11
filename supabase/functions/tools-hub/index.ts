@@ -1094,8 +1094,8 @@ function normalizeDuplicateKey(value: unknown): string {
 }
 
 function isDuplicateWbsMirrorTask(task: Record<string, unknown>): boolean {
-  const text =
-    `${task.remaining_work ?? ""} ${task.recovery_plan ?? ""}`.toLowerCase();
+  const text = `${task.remaining_work ?? ""} ${task.recovery_plan ?? ""}`
+    .toLowerCase();
   return text.includes("duplicate of wbs task") ||
     text.includes("duplicate github-origin wbs title") ||
     text.includes("duplicate wbs title") ||
