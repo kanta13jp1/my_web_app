@@ -110,7 +110,7 @@ jobs:
           for f in docs/daily-reports/*.md; do
             [ -f "$f" ] || continue
             FNAME=$(basename "$f" .md)
-            if [["$FNAME" > "${SINCE}" ]] || [[ "$FNAME" == "${SINCE}" ]]; then
+            if [[ "$FNAME" > "${SINCE}" ]] || [[ "$FNAME" == "${SINCE}" ]]; then
               if [[ "$FNAME" < "${UNTIL}" ]] || [[ "$FNAME" == "${UNTIL}" ]]; then
                 REPORT_CONTENT="${REPORT_CONTENT}$(head -30 "$f")\n\n---\n\n"
               fi
@@ -156,12 +156,14 @@ jobs:
               git config --local --unset-all http.https://github.com/.extraheader 2>/dev/null || true
               git remote set-url origin "https://x-access-token:${BYPASS_TOKEN}@github.com/${{ github.repository }}.git"
             fi
-            if ! git pull --rebase origin main 2>&1; then
-              echo "⚠️ Rebase failed — aborting and retrying with merge"
-              git rebase --abort 2>/dev/null || true
-              git pull --no-rebase origin main 2>&1 || true
-            fi
-            git push origin HEAD:main
+            for _push_attempt in 1 2 3; do
+              git pull --rebase origin main 2>/dev/null || { git rebase --abort 2>/dev/null || true; git pull --no-rebase origin main 2>/dev/null || true; }
+              if git push origin HEAD:main; then
+                break
+              fi
+              echo "⚠️ Push attempt $_push_attempt failed, retrying in ${_push_attempt}s..."
+              sleep "$_push_attempt"
+            done
           fi
 
       - name: Summary
