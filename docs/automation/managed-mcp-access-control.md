@@ -35,6 +35,19 @@ Slack, Google Drive, NotebookLM, and Context7. Related Google Calendar, Gmail,
 Playwright, Browser Use, Claude Memory, and local document runtimes are also
 recorded because they appear in the active Codex/Claude tool surface.
 
+Issue #1645 adds a companion isolation contract for external MCP execution:
+
+- `config/mcp-container-isolation.json` records the execution form,
+  permissions, audit log, and failure fallback for representative MCP lanes.
+- `docs/MCP_CONTAINER_ISOLATION_RUNBOOK.md` is the human-readable runbook.
+- `scripts/check_mcp_container_isolation.py` validates that high-risk scopes
+  still reference `docs/AGENT_TOOL_POLICY.md` and that the low-risk Docker PoC
+  has no network, ports, secrets, host volumes, or writable root filesystem.
+
+The managed register remains authoritative for allow/deny classification. The
+container contract describes how an approved or read-only lane should execute;
+it does not grant permission to use an unmanaged or denied server.
+
 ## Session-Start Gate
 
 `scripts/codex_session_check.py` now includes a Managed MCP Policy section. It
