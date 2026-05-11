@@ -7374,139 +7374,254 @@ serve(async (req) => {
           };
 
           for (const [issueNumber, issue] of issuesByNumber.entries()) {
-            const issueTitle = String(issue.title ?? `Issue #${issueNumber}`)
-              .trim();
-            const issueUrl = String(
-              issue.url ?? issue.html_url ??
-                `https://github.com/${repo}/issues/${issueNumber}`,
-            );
-            const labels = githubIssueLabelNames(issue);
-            const state = githubIssueState(issue);
-            const isClosed = state === "CLOSED";
-            const prioritizeAdditionalRequest = isAdditionalRequestIssue(
-              issueTitle,
-              labels,
-            );
-            const prioritizeIssueSchedule = !isClosed;
-            const existing = tasksByIssue.get(issueNumber) ?? [];
-            const keeper = pickGithubIssueWbsKeeper(existing);
-            const lane = normalizeWbsInstance(
-              keeper?.owner_instance ?? keeper?.instance ??
-                githubIssueOwnerInstance(labels),
-            );
-            const authorRecord = asRecord(issue.author) ?? asRecord(issue.user);
-            const author = authorRecord ? String(authorRecord.login ?? "") : "";
-            const issueUpdatedAt = String(
-              issue.updatedAt ?? issue.updated_at ?? "",
-            );
-            const description = [
-              `GitHub Issue: ${issueUrl}`,
-              author ? `Author: ${author}` : null,
-              labels.length ? `Labels: ${labels.join(", ")}` : null,
-              issueUpdatedAt ? `GitHub updated: ${issueUpdatedAt}` : null,
-            ].filter((line) => line !== null).join(" / ");
-            const currentCompleted = keeper
-              ? isCompletedWbsTask(keeper)
-              : false;
-            const closureReady = keeper
-              ? isGithubIssueClosureReadyWbsTask(keeper)
-              : false;
-            const nextStatus = isClosed
-              ? "completed"
-              : closureReady
-              ? "completed"
-              : wbsStatusForOpenGithubIssue(keeper);
-            const nextProgress = isClosed
-              ? 100
-              : closureReady
-              ? 100
-              : wbsProgressForOpenGithubIssue(keeper);
-            const syncedStartDate = prioritizeAdditionalRequest
-              ? additionalRequestStartDate(now)
-              : githubIssueStartDate(now);
-            const syncedEndDate = githubIssueDueDate(labels, now, issueTitle);
-            const payload: Record<string, unknown> = {
-              category: githubIssueCategory(labels),
-              category_icon: githubIssueCategoryIcon(labels),
-              category_order: 1,
-              title: `[Issue #${issueNumber}] ${issueTitle}`,
-              description,
-              instance: lane,
-              owner_instance: lane,
-              status: nextStatus,
-              progress: nextProgress,
-              priority: githubIssuePriority(labels),
-              start_date: prioritizeIssueSchedule
-                ? syncedStartDate
-                : keeper?.start_date ?? syncedStartDate,
-              end_date: prioritizeIssueSchedule
-                ? syncedEndDate
-                : keeper?.end_date ?? syncedEndDate,
-              planned_start_date: prioritizeIssueSchedule
-                ? syncedStartDate
-                : keeper?.planned_start_date ?? keeper?.start_date ??
-                  syncedStartDate,
-              planned_end_date: prioritizeIssueSchedule
-                ? syncedEndDate
-                : keeper?.planned_end_date ?? keeper?.end_date ??
-                  syncedEndDate,
-              remaining_work: isClosed
-                ? "GitHub Issue is closed; WBS mirrored as completed."
-                : (keeper?.remaining_work ??
-                  "GitHub Issue source of truth. Sync keeps WBS and Issues aligned."),
-              milestone_code: keeper?.milestone_code ?? null,
-              github_issue_number: issueNumber,
-              github_issue_url: issueUrl,
-              github_issue_state: state,
-              github_issue_labels: labels,
-              github_issue_synced_at: nowIso,
-            };
-            const canonicalTitle = String(payload.title ?? "");
-            const activeIssueInstanceRows = await admin.from("wbs_tasks")
-              .select("id")
-              .eq("github_issue_number", issueNumber)
-              .eq("instance", lane)
-              .neq("status", "completed")
-              .order("created_at", { ascending: true, nullsFirst: true })
-              .order("id", { ascending: true });
-            if (activeIssueInstanceRows.error) {
-              throw new Error(activeIssueInstanceRows.error.message);
-            }
-            const activeIssueInstanceKeepId = keeper?.id
-              ? String(keeper.id)
-              : String(activeIssueInstanceRows.data?.[0]?.id ?? "");
-            await completeActiveIssueInstanceConflicts({
-              issueNumber,
-              lane,
-              keepId: activeIssueInstanceKeepId,
-              issueUrl,
-              state,
-              labels,
-              canonicalTitle,
-            });
-            if (!isClosed && currentCompleted && !closureReady) {
-              payload.remaining_work =
-                "GitHub Issue is still open; WBS completion must pass AI review before the issue can be closed.";
-            }
+            try {
+              const issueTitle = String(issue.title ?? `Issue #${issueNumber}`)
+                .trim();
+              const issueUrl = String(
+                issue.url ?? issue.html_url ??
+                  `https://github.com/${repo}/issues/${issueNumber}`,
+              );
+              const labels = githubIssueLabelNames(issue);
+              const state = githubIssueState(issue);
+              const isClosed = state === "CLOSED";
+              const prioritizeAdditionalRequest = isAdditionalRequestIssue(
+                issueTitle,
+                labels,
+              );
+              const prioritizeIssueSchedule = !isClosed;
+              const existing = tasksByIssue.get(issueNumber) ?? [];
+              const keeper = pickGithubIssueWbsKeeper(existing);
+              const lane = normalizeWbsInstance(
+                keeper?.owner_instance ?? keeper?.instance ??
+                  githubIssueOwnerInstance(labels),
+              );
+              const authorRecord = asRecord(issue.author) ??
+                asRecord(issue.user);
+              const author = authorRecord
+                ? String(authorRecord.login ?? "")
+                : "";
+              const issueUpdatedAt = String(
+                issue.updatedAt ?? issue.updated_at ?? "",
+              );
+              const description = [
+                `GitHub Issue: ${issueUrl}`,
+                author ? `Author: ${author}` : null,
+                labels.length ? `Labels: ${labels.join(", ")}` : null,
+                issueUpdatedAt ? `GitHub updated: ${issueUpdatedAt}` : null,
+              ].filter((line) => line !== null).join(" / ");
+              const currentCompleted = keeper
+                ? isCompletedWbsTask(keeper)
+                : false;
+              const closureReady = keeper
+                ? isGithubIssueClosureReadyWbsTask(keeper)
+                : false;
+              const nextStatus = isClosed
+                ? "completed"
+                : closureReady
+                ? "completed"
+                : wbsStatusForOpenGithubIssue(keeper);
+              const nextProgress = isClosed
+                ? 100
+                : closureReady
+                ? 100
+                : wbsProgressForOpenGithubIssue(keeper);
+              const syncedStartDate = prioritizeAdditionalRequest
+                ? additionalRequestStartDate(now)
+                : githubIssueStartDate(now);
+              const syncedEndDate = githubIssueDueDate(labels, now, issueTitle);
+              const payload: Record<string, unknown> = {
+                category: githubIssueCategory(labels),
+                category_icon: githubIssueCategoryIcon(labels),
+                category_order: 1,
+                title: `[Issue #${issueNumber}] ${issueTitle}`,
+                description,
+                instance: lane,
+                owner_instance: lane,
+                status: nextStatus,
+                progress: nextProgress,
+                priority: githubIssuePriority(labels),
+                start_date: prioritizeIssueSchedule
+                  ? syncedStartDate
+                  : keeper?.start_date ?? syncedStartDate,
+                end_date: prioritizeIssueSchedule
+                  ? syncedEndDate
+                  : keeper?.end_date ?? syncedEndDate,
+                planned_start_date: prioritizeIssueSchedule
+                  ? syncedStartDate
+                  : keeper?.planned_start_date ?? keeper?.start_date ??
+                    syncedStartDate,
+                planned_end_date: prioritizeIssueSchedule
+                  ? syncedEndDate
+                  : keeper?.planned_end_date ?? keeper?.end_date ??
+                    syncedEndDate,
+                remaining_work: isClosed
+                  ? "GitHub Issue is closed; WBS mirrored as completed."
+                  : (keeper?.remaining_work ??
+                    "GitHub Issue source of truth. Sync keeps WBS and Issues aligned."),
+                milestone_code: keeper?.milestone_code ?? null,
+                github_issue_number: issueNumber,
+                github_issue_url: issueUrl,
+                github_issue_state: state,
+                github_issue_labels: labels,
+                github_issue_synced_at: nowIso,
+              };
+              const canonicalTitle = String(payload.title ?? "");
+              const activeIssueInstanceRows = await admin.from("wbs_tasks")
+                .select("id")
+                .eq("github_issue_number", issueNumber)
+                .eq("instance", lane)
+                .neq("status", "completed")
+                .order("created_at", { ascending: true, nullsFirst: true })
+                .order("id", { ascending: true });
+              if (activeIssueInstanceRows.error) {
+                throw new Error(activeIssueInstanceRows.error.message);
+              }
+              const activeIssueInstanceKeepId = keeper?.id
+                ? String(keeper.id)
+                : String(activeIssueInstanceRows.data?.[0]?.id ?? "");
+              await completeActiveIssueInstanceConflicts({
+                issueNumber,
+                lane,
+                keepId: activeIssueInstanceKeepId,
+                issueUrl,
+                state,
+                labels,
+                canonicalTitle,
+              });
+              if (!isClosed && currentCompleted && !closureReady) {
+                payload.remaining_work =
+                  "GitHub Issue is still open; WBS completion must pass AI review before the issue can be closed.";
+              }
 
-            if (!keeper) {
-              const { data: created, error: createError } = await admin.from(
+              if (!keeper) {
+                const { data: created, error: createError } = await admin.from(
+                  "wbs_tasks",
+                )
+                  .insert(payload)
+                  .select(taskSelect)
+                  .single();
+                if (createError) {
+                  if (!isWbsGithubSyncUniqueConflict(createError)) {
+                    throw new Error(createError.message);
+                  }
+                  const conflictQuery = isWbsIssueInstanceActiveUniqueConflict(
+                      createError,
+                    )
+                    ? admin.from("wbs_tasks")
+                      .select(taskSelect)
+                      .eq("github_issue_number", issueNumber)
+                      .eq("instance", lane)
+                      .neq("status", "completed")
+                      .order("created_at", { ascending: true })
+                      .limit(1)
+                    : admin.from("wbs_tasks")
+                      .select(taskSelect)
+                      .eq("title", String(payload.title ?? ""))
+                      .eq("instance", lane)
+                      .order("created_at", { ascending: true })
+                      .limit(1);
+                  const { data: conflictingTasks, error: conflictFindError } =
+                    await conflictQuery;
+                  if (conflictFindError) {
+                    throw new Error(conflictFindError.message);
+                  }
+                  const conflictingTask = (conflictingTasks ?? [])[0] as
+                    | Record<string, unknown>
+                    | undefined;
+                  if (!conflictingTask?.id) {
+                    throw new Error(createError.message);
+                  }
+                  const conflictRepairReasons = githubIssueTaskRepairReasons(
+                    conflictingTask,
+                    issueNumber,
+                    state,
+                    canonicalTitle,
+                  );
+
+                  const { data: recovered, error: recoveryError } = await admin
+                    .from("wbs_tasks")
+                    .update(payload)
+                    .eq("id", String(conflictingTask.id))
+                    .select(taskSelect)
+                    .single();
+                  if (recoveryError) throw new Error(recoveryError.message);
+                  const recoveredTask = recovered as Record<string, unknown>;
+                  tasksByIssue.set(issueNumber, [recoveredTask]);
+                  const existingIndex = allTasks.findIndex((task) =>
+                    String(task.id ?? "") === String(recoveredTask.id ?? "")
+                  );
+                  if (existingIndex >= 0) {
+                    allTasks[existingIndex] = recoveredTask;
+                  } else {
+                    allTasks.push(recoveredTask);
+                  }
+                  recordWbsRepair(
+                    conflictingTask,
+                    issueNumber,
+                    conflictRepairReasons.length
+                      ? conflictRepairReasons
+                      : ["title_instance_conflict_recovered"],
+                    "insert_conflict_recovery",
+                  );
+                  stats.updated += 1;
+                  if (isClosed) stats.completed_from_closed_issues += 1;
+                  continue;
+                }
+                const createdTask = created as Record<string, unknown>;
+                tasksByIssue.set(issueNumber, [createdTask]);
+                allTasks.push(createdTask);
+                stats.created += 1;
+                continue;
+              }
+
+              const activeDuplicateTasksBeforeUpdate = existing.filter((task) =>
+                String(task.id ?? "") !== String(keeper.id ?? "") &&
+                !isCompletedWbsTask(task)
+              );
+              for (const duplicate of activeDuplicateTasksBeforeUpdate) {
+                await completeDuplicateWbsTask({
+                  duplicate,
+                  keptId: keeper.id,
+                  issueNumber,
+                  issueUrl,
+                  state,
+                  labels,
+                  canonicalTitle,
+                  note:
+                    `Duplicate of WBS task ${keeper.id}; GitHub Issue #${issueNumber} is kept on one canonical WBS row.`,
+                  reason: "duplicate_wbs_row",
+                  context: "issue_duplicate_pre_update",
+                });
+              }
+
+              const { data: updated, error: updateError } = await admin.from(
                 "wbs_tasks",
               )
-                .insert(payload)
+                .update(payload)
+                .eq("id", String(keeper.id))
                 .select(taskSelect)
                 .single();
-              if (createError) {
-                if (!isWbsGithubSyncUniqueConflict(createError)) {
-                  throw new Error(createError.message);
+              let updatedKeeper = updated as Record<string, unknown> | null;
+              const keeperRepairReasons = githubIssueTaskRepairReasons(
+                keeper,
+                issueNumber,
+                state,
+                canonicalTitle,
+              );
+              let conflictRepairTask: Record<string, unknown> | null = null;
+              let conflictRepairReasons: string[] = [];
+              if (updateError) {
+                if (!isWbsGithubSyncUniqueConflict(updateError)) {
+                  throw new Error(updateError.message);
                 }
                 const conflictQuery = isWbsIssueInstanceActiveUniqueConflict(
-                    createError,
+                    updateError,
                   )
                   ? admin.from("wbs_tasks")
                     .select(taskSelect)
                     .eq("github_issue_number", issueNumber)
                     .eq("instance", lane)
+                    .neq("id", String(keeper.id))
                     .neq("status", "completed")
                     .order("created_at", { ascending: true })
                     .limit(1)
@@ -7514,6 +7629,7 @@ serve(async (req) => {
                     .select(taskSelect)
                     .eq("title", String(payload.title ?? ""))
                     .eq("instance", lane)
+                    .neq("id", String(keeper.id))
                     .order("created_at", { ascending: true })
                     .limit(1);
                 const { data: conflictingTasks, error: conflictFindError } =
@@ -7524,8 +7640,9 @@ serve(async (req) => {
                 const conflictingTask = (conflictingTasks ?? [])[0] as
                   | Record<string, unknown>
                   | undefined;
-                if (!conflictingTask?.id) throw new Error(createError.message);
-                const conflictRepairReasons = githubIssueTaskRepairReasons(
+                if (!conflictingTask?.id) throw new Error(updateError.message);
+                conflictRepairTask = conflictingTask;
+                conflictRepairReasons = githubIssueTaskRepairReasons(
                   conflictingTask,
                   issueNumber,
                   state,
@@ -7539,177 +7656,82 @@ serve(async (req) => {
                   .select(taskSelect)
                   .single();
                 if (recoveryError) throw new Error(recoveryError.message);
-                const recoveredTask = recovered as Record<string, unknown>;
-                tasksByIssue.set(issueNumber, [recoveredTask]);
-                const existingIndex = allTasks.findIndex((task) =>
-                  String(task.id ?? "") === String(recoveredTask.id ?? "")
+                updatedKeeper = recovered as Record<string, unknown>;
+              }
+              if (!updatedKeeper?.id) {
+                throw new Error(
+                  "WBS task update did not return a canonical row.",
                 );
-                if (existingIndex >= 0) {
-                  allTasks[existingIndex] = recoveredTask;
-                } else {
-                  allTasks.push(recoveredTask);
-                }
+              }
+              stats.updated += 1;
+              if (isClosed) stats.completed_from_closed_issues += 1;
+              recordWbsRepair(
+                keeper,
+                issueNumber,
+                keeperRepairReasons,
+                "canonical_update",
+              );
+              if (conflictRepairTask) {
                 recordWbsRepair(
-                  conflictingTask,
+                  conflictRepairTask,
                   issueNumber,
                   conflictRepairReasons.length
                     ? conflictRepairReasons
                     : ["title_instance_conflict_recovered"],
-                  "insert_conflict_recovery",
+                  "update_conflict_recovery",
                 );
-                stats.updated += 1;
-                if (isClosed) stats.completed_from_closed_issues += 1;
+              }
+              if (
+                !isClosed && closureReady &&
+                !closedIssueNumbers.has(issueNumber)
+              ) {
+                issuesToClose.push({
+                  number: issueNumber,
+                  task_id: updatedKeeper.id,
+                  reason: "linked WBS task is completed and AI review approved",
+                });
+                closedIssueNumbers.add(issueNumber);
+              }
+
+              const updatedIndex = allTasks.findIndex((task) =>
+                String(task.id ?? "") === String(updatedKeeper.id ?? "")
+              );
+              if (updatedIndex >= 0) {
+                allTasks[updatedIndex] = updatedKeeper;
+              } else {
+                allTasks.push(updatedKeeper);
+              }
+              const duplicateTasks = existing.filter((task) =>
+                String(task.id ?? "") !== String(updatedKeeper.id ?? "") &&
+                !isCompletedWbsTask(task)
+              );
+              for (const duplicate of duplicateTasks) {
+                await completeDuplicateWbsTask({
+                  duplicate,
+                  keptId: updatedKeeper.id,
+                  issueNumber,
+                  issueUrl,
+                  state,
+                  labels,
+                  canonicalTitle,
+                  note:
+                    `Duplicate of WBS task ${updatedKeeper.id}; GitHub Issue #${issueNumber} is kept on one canonical WBS row.`,
+                  reason: "duplicate_wbs_row",
+                  context: "issue_duplicate_update",
+                });
+              }
+            } catch (error) {
+              const message = error instanceof Error
+                ? error.message
+                : String(error);
+              if (isWbsGithubSyncUniqueConflict({ message })) {
+                console.warn(
+                  `wbs.sync_github_issues skipped Issue #${issueNumber} after unique-conflict recovery failed: ${message}`,
+                );
+                stats.skipped += 1;
                 continue;
               }
-              const createdTask = created as Record<string, unknown>;
-              tasksByIssue.set(issueNumber, [createdTask]);
-              allTasks.push(createdTask);
-              stats.created += 1;
-              continue;
-            }
-
-            const activeDuplicateTasksBeforeUpdate = existing.filter((task) =>
-              String(task.id ?? "") !== String(keeper.id ?? "") &&
-              !isCompletedWbsTask(task)
-            );
-            for (const duplicate of activeDuplicateTasksBeforeUpdate) {
-              await completeDuplicateWbsTask({
-                duplicate,
-                keptId: keeper.id,
-                issueNumber,
-                issueUrl,
-                state,
-                labels,
-                canonicalTitle,
-                note:
-                  `Duplicate of WBS task ${keeper.id}; GitHub Issue #${issueNumber} is kept on one canonical WBS row.`,
-                reason: "duplicate_wbs_row",
-                context: "issue_duplicate_pre_update",
-              });
-            }
-
-            const { data: updated, error: updateError } = await admin.from(
-              "wbs_tasks",
-            )
-              .update(payload)
-              .eq("id", String(keeper.id))
-              .select(taskSelect)
-              .single();
-            let updatedKeeper = updated as Record<string, unknown> | null;
-            const keeperRepairReasons = githubIssueTaskRepairReasons(
-              keeper,
-              issueNumber,
-              state,
-              canonicalTitle,
-            );
-            let conflictRepairTask: Record<string, unknown> | null = null;
-            let conflictRepairReasons: string[] = [];
-            if (updateError) {
-              if (!isWbsGithubSyncUniqueConflict(updateError)) {
-                throw new Error(updateError.message);
-              }
-              const conflictQuery = isWbsIssueInstanceActiveUniqueConflict(
-                  updateError,
-                )
-                ? admin.from("wbs_tasks")
-                  .select(taskSelect)
-                  .eq("github_issue_number", issueNumber)
-                  .eq("instance", lane)
-                  .neq("id", String(keeper.id))
-                  .neq("status", "completed")
-                  .order("created_at", { ascending: true })
-                  .limit(1)
-                : admin.from("wbs_tasks")
-                  .select(taskSelect)
-                  .eq("title", String(payload.title ?? ""))
-                  .eq("instance", lane)
-                  .neq("id", String(keeper.id))
-                  .order("created_at", { ascending: true })
-                  .limit(1);
-              const { data: conflictingTasks, error: conflictFindError } =
-                await conflictQuery;
-              if (conflictFindError) throw new Error(conflictFindError.message);
-              const conflictingTask = (conflictingTasks ?? [])[0] as
-                | Record<string, unknown>
-                | undefined;
-              if (!conflictingTask?.id) throw new Error(updateError.message);
-              conflictRepairTask = conflictingTask;
-              conflictRepairReasons = githubIssueTaskRepairReasons(
-                conflictingTask,
-                issueNumber,
-                state,
-                canonicalTitle,
-              );
-
-              const { data: recovered, error: recoveryError } = await admin
-                .from("wbs_tasks")
-                .update(payload)
-                .eq("id", String(conflictingTask.id))
-                .select(taskSelect)
-                .single();
-              if (recoveryError) throw new Error(recoveryError.message);
-              updatedKeeper = recovered as Record<string, unknown>;
-            }
-            if (!updatedKeeper?.id) {
-              throw new Error(
-                "WBS task update did not return a canonical row.",
-              );
-            }
-            stats.updated += 1;
-            if (isClosed) stats.completed_from_closed_issues += 1;
-            recordWbsRepair(
-              keeper,
-              issueNumber,
-              keeperRepairReasons,
-              "canonical_update",
-            );
-            if (conflictRepairTask) {
-              recordWbsRepair(
-                conflictRepairTask,
-                issueNumber,
-                conflictRepairReasons.length
-                  ? conflictRepairReasons
-                  : ["title_instance_conflict_recovered"],
-                "update_conflict_recovery",
-              );
-            }
-            if (
-              !isClosed && closureReady && !closedIssueNumbers.has(issueNumber)
-            ) {
-              issuesToClose.push({
-                number: issueNumber,
-                task_id: updatedKeeper.id,
-                reason: "linked WBS task is completed and AI review approved",
-              });
-              closedIssueNumbers.add(issueNumber);
-            }
-
-            const updatedIndex = allTasks.findIndex((task) =>
-              String(task.id ?? "") === String(updatedKeeper.id ?? "")
-            );
-            if (updatedIndex >= 0) {
-              allTasks[updatedIndex] = updatedKeeper;
-            } else {
-              allTasks.push(updatedKeeper);
-            }
-            const duplicateTasks = existing.filter((task) =>
-              String(task.id ?? "") !== String(updatedKeeper.id ?? "") &&
-              !isCompletedWbsTask(task)
-            );
-            for (const duplicate of duplicateTasks) {
-              await completeDuplicateWbsTask({
-                duplicate,
-                keptId: updatedKeeper.id,
-                issueNumber,
-                issueUrl,
-                state,
-                labels,
-                canonicalTitle,
-                note:
-                  `Duplicate of WBS task ${updatedKeeper.id}; GitHub Issue #${issueNumber} is kept on one canonical WBS row.`,
-                reason: "duplicate_wbs_row",
-                context: "issue_duplicate_update",
-              });
+              throw error;
             }
           }
 
