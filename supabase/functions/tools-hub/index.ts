@@ -1174,6 +1174,25 @@ function isWbsTitleInstanceUniqueConflict(
       text.includes("key (title, instance)"));
 }
 
+function isWbsIssueInstanceActiveUniqueConflict(
+  error: { code?: string; message?: string; details?: string } | null,
+): boolean {
+  if (!error) return false;
+  const text = `${error.message ?? ""} ${error.details ?? ""}`.toLowerCase();
+  const isUniqueViolation = error.code === "23505" ||
+    text.includes("duplicate key value violates unique constraint");
+  return isUniqueViolation &&
+    (text.includes("wbs_tasks_issue_instance_active_unique") ||
+      text.includes("key (github_issue_number, instance)"));
+}
+
+function isWbsGithubSyncUniqueConflict(
+  error: { code?: string; message?: string; details?: string } | null,
+): boolean {
+  return isWbsTitleInstanceUniqueConflict(error) ||
+    isWbsIssueInstanceActiveUniqueConflict(error);
+}
+
 function githubIssueLabelNames(issue: Record<string, unknown>): string[] {
   const labels = issue.labels;
   if (!Array.isArray(labels)) return [];
@@ -7331,16 +7350,27 @@ serve(async (req) => {
                 .select(taskSelect)
                 .single();
               if (createError) {
-                if (!isWbsTitleInstanceUniqueConflict(createError)) {
+                if (!isWbsGithubSyncUniqueConflict(createError)) {
                   throw new Error(createError.message);
                 }
-                const { data: conflictingTasks, error: conflictFindError } =
-                  await admin.from("wbs_tasks")
+                const conflictQuery = isWbsIssueInstanceActiveUniqueConflict(
+                    createError,
+                  )
+                  ? admin.from("wbs_tasks")
+                    .select(taskSelect)
+                    .eq("github_issue_number", issueNumber)
+                    .eq("instance", lane)
+                    .neq("status", "completed")
+                    .order("created_at", { ascending: true })
+                    .limit(1)
+                  : admin.from("wbs_tasks")
                     .select(taskSelect)
                     .eq("title", String(payload.title ?? ""))
                     .eq("instance", lane)
                     .order("created_at", { ascending: true })
                     .limit(1);
+                const { data: conflictingTasks, error: conflictFindError } =
+                  await conflictQuery;
                 if (conflictFindError) {
                   throw new Error(conflictFindError.message);
                 }
@@ -7391,6 +7421,61 @@ serve(async (req) => {
               continue;
             }
 
+            const activeDuplicateTasksBeforeUpdate = existing.filter((task) =>
+              String(task.id ?? "") !== String(keeper.id ?? "") &&
+              !isCompletedWbsTask(task)
+            );
+            for (const duplicate of activeDuplicateTasksBeforeUpdate) {
+              const duplicateNote =
+                `Duplicate of WBS task ${keeper.id}; GitHub Issue #${issueNumber} is kept on one canonical WBS row.`;
+              const duplicateStatus = "completed";
+              const duplicateProgress = 100;
+              const duplicateRepairReasons = githubIssueTaskRepairReasons(
+                duplicate,
+                issueNumber,
+                state,
+                canonicalTitle,
+              );
+              duplicateRepairReasons.push("duplicate_wbs_row");
+              const { error: duplicateError } = await admin.from("wbs_tasks")
+                .update({
+                  status: duplicateStatus,
+                  progress: duplicateProgress,
+                  ai_review_status: "manual_override",
+                  remaining_work: duplicateNote,
+                  github_issue_number: issueNumber,
+                  github_issue_url: issueUrl,
+                  github_issue_state: state,
+                  github_issue_labels: labels,
+                  github_issue_synced_at: nowIso,
+                })
+                .eq("id", String(duplicate.id));
+              if (duplicateError) throw new Error(duplicateError.message);
+              Object.assign(duplicate, {
+                status: duplicateStatus,
+                progress: duplicateProgress,
+                ai_review_status: "manual_override",
+                remaining_work: duplicateNote,
+                github_issue_number: issueNumber,
+                github_issue_url: issueUrl,
+                github_issue_state: state,
+                github_issue_labels: labels,
+                github_issue_synced_at: nowIso,
+              });
+              recordWbsRepair(
+                duplicate,
+                issueNumber,
+                duplicateRepairReasons,
+                "issue_duplicate_pre_update",
+              );
+              duplicateWbsTasks.push({
+                id: duplicate.id,
+                kept_id: keeper.id,
+                issue_number: issueNumber,
+              });
+              stats.duplicate_wbs_closed += 1;
+            }
+
             const { data: updated, error: updateError } = await admin.from(
               "wbs_tasks",
             )
@@ -7408,17 +7493,29 @@ serve(async (req) => {
             let conflictRepairTask: Record<string, unknown> | null = null;
             let conflictRepairReasons: string[] = [];
             if (updateError) {
-              if (!isWbsTitleInstanceUniqueConflict(updateError)) {
+              if (!isWbsGithubSyncUniqueConflict(updateError)) {
                 throw new Error(updateError.message);
               }
-              const { data: conflictingTasks, error: conflictFindError } =
-                await admin.from("wbs_tasks")
+              const conflictQuery = isWbsIssueInstanceActiveUniqueConflict(
+                  updateError,
+                )
+                ? admin.from("wbs_tasks")
+                  .select(taskSelect)
+                  .eq("github_issue_number", issueNumber)
+                  .eq("instance", lane)
+                  .neq("id", String(keeper.id))
+                  .neq("status", "completed")
+                  .order("created_at", { ascending: true })
+                  .limit(1)
+                : admin.from("wbs_tasks")
                   .select(taskSelect)
                   .eq("title", String(payload.title ?? ""))
                   .eq("instance", lane)
                   .neq("id", String(keeper.id))
                   .order("created_at", { ascending: true })
                   .limit(1);
+              const { data: conflictingTasks, error: conflictFindError } =
+                await conflictQuery;
               if (conflictFindError) throw new Error(conflictFindError.message);
               const conflictingTask = (conflictingTasks ?? [])[0] as
                 | Record<string, unknown>
@@ -7484,7 +7581,8 @@ serve(async (req) => {
               allTasks.push(updatedKeeper);
             }
             const duplicateTasks = existing.filter((task) =>
-              String(task.id ?? "") !== String(updatedKeeper.id ?? "")
+              String(task.id ?? "") !== String(updatedKeeper.id ?? "") &&
+              !isCompletedWbsTask(task)
             );
             for (const duplicate of duplicateTasks) {
               const duplicateNote =
