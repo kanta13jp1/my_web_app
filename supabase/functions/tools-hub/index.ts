@@ -201,10 +201,45 @@ function wbsPriorityRank(priority: unknown): number {
   return 0;
 }
 
+const ADDITIONAL_REQUEST_TEXT = "\u8ffd\u52a0\u8981\u671b";
+const USER_REQUEST_CATEGORY_TEXT = "\u30e6\u30fc\u30b6\u30fc\u8981\u671b";
+
+function hasAdditionalRequestText(value: unknown): boolean {
+  return String(value ?? "").includes(ADDITIONAL_REQUEST_TEXT);
+}
+
+function isAdditionalRequestIssue(
+  title: unknown,
+  labels: string[] = [],
+): boolean {
+  return hasAdditionalRequestText(title) ||
+    labels.some((label) => hasAdditionalRequestText(label));
+}
+
 function isFeatureRequestTask(task: Record<string, unknown>): boolean {
   const category = String(task.category ?? "");
   const title = String(task.title ?? "");
-  return category === "ユーザー要望" || title.startsWith("[追加要望]");
+  return category === USER_REQUEST_CATEGORY_TEXT ||
+    hasAdditionalRequestText(category) ||
+    hasAdditionalRequestText(title);
+}
+
+function dateOnlyUtc(date: Date): Date {
+  const copy = new Date(date);
+  copy.setUTCHours(0, 0, 0, 0);
+  return copy;
+}
+
+function formatIsoDate(date: Date): string {
+  return date.toISOString().slice(0, 10);
+}
+
+function additionalRequestStartDate(now: Date): string {
+  return formatIsoDate(dateOnlyUtc(now));
+}
+
+function additionalRequestEndDate(now: Date): string {
+  return formatIsoDate(dateOnlyUtc(now));
 }
 
 function wbsTaskSortBucket(task: Record<string, unknown>): number {
@@ -1094,8 +1129,8 @@ function normalizeDuplicateKey(value: unknown): string {
 }
 
 function isDuplicateWbsMirrorTask(task: Record<string, unknown>): boolean {
-  const text =
-    `${task.remaining_work ?? ""} ${task.recovery_plan ?? ""}`.toLowerCase();
+  const text = `${task.remaining_work ?? ""} ${task.recovery_plan ?? ""}`
+    .toLowerCase();
   return text.includes("duplicate of wbs task") ||
     text.includes("duplicate github-origin wbs title") ||
     text.includes("duplicate wbs title") ||
@@ -1273,7 +1308,14 @@ function githubIssuePriority(labels: string[]): string {
   return "low";
 }
 
-function githubIssueDueDate(labels: string[], now: Date): string {
+function githubIssueDueDate(
+  labels: string[],
+  now: Date,
+  title: unknown = "",
+): string {
+  if (isAdditionalRequestIssue(title, labels)) {
+    return additionalRequestEndDate(now);
+  }
   const normalized = labels.join(",").toLowerCase();
   const days = /(critical|p0|urgent|bug)/.test(normalized) ? 1 : 3;
   const due = new Date(now);
@@ -6570,6 +6612,18 @@ serve(async (req) => {
           const durIn = (body.duration_days as Record<string, number>) ?? {};
           const parIn = (body.parallel_capacity as Record<string, number>) ??
             {};
+          const featureRequestOffsetDays = Math.max(
+            0,
+            Number(body.feature_request_offset_days ?? 0),
+          );
+          const featureRequestDurationDays = Math.max(
+            0,
+            Number(body.feature_request_duration_days ?? 0),
+          );
+          const featureRequestParallelCapacity = Math.max(
+            1,
+            Number(body.feature_request_parallel_capacity ?? 1000),
+          );
           const offset = {
             high: Number(offsetIn.high ?? 7),
             medium: Number(offsetIn.medium ?? 30),
@@ -6585,6 +6639,16 @@ serve(async (req) => {
             medium: Math.max(1, Number(parIn.medium ?? 8)),
             low: Math.max(1, Number(parIn.low ?? 12)),
           };
+          const rescheduleParams = {
+            offset,
+            duration,
+            parallel,
+            feature_request: {
+              offset_days: featureRequestOffsetDays,
+              duration_days: featureRequestDurationDays,
+              parallel_capacity: featureRequestParallelCapacity,
+            },
+          };
 
           const today = new Date();
           today.setUTCHours(0, 0, 0, 0);
@@ -6597,7 +6661,7 @@ serve(async (req) => {
 
           // 全 open タスクを取得 (完了系 skip / Supabase 1000 row cap 回避にページネーション)
           const selectCols =
-            "id, title, instance, owner_instance, priority, status, " +
+            "id, category, title, instance, owner_instance, priority, status, " +
             "start_date, end_date, github_issue_state, category_order";
           const pageSize = 1000;
           const maxPages = 50;
@@ -6637,6 +6701,10 @@ serve(async (req) => {
           const open = all.filter(
             (r) => String(r.github_issue_state ?? "") !== "CLOSED",
           );
+          const featureRequestTasks = open.filter(isFeatureRequestTask);
+          const regularTasks = open.filter((task) =>
+            !isFeatureRequestTask(task)
+          );
 
           // priority bucket 別 queue index を category_order, id で安定 sort
           const buckets: Record<string, Array<Record<string, unknown>>> = {
@@ -6644,7 +6712,7 @@ serve(async (req) => {
             medium: [],
             low: [],
           };
-          for (const r of open) {
+          for (const r of regularTasks) {
             const p = String(r.priority ?? "medium").toLowerCase();
             const tier = p === "high" || p === "urgent"
               ? "high"
@@ -6661,18 +6729,48 @@ serve(async (req) => {
               return String(a.id).localeCompare(String(b.id));
             });
           }
+          featureRequestTasks.sort((a, b) =>
+            wbsPriorityRank(b.priority) - wbsPriorityRank(a.priority) ||
+            Number(a.category_order ?? 999) - Number(b.category_order ?? 999) ||
+            String(a.id).localeCompare(String(b.id))
+          );
+          const featureRequestWindowDays = featureRequestTasks.length === 0
+            ? 0
+            : featureRequestOffsetDays +
+              Math.floor(
+                (featureRequestTasks.length - 1) /
+                  featureRequestParallelCapacity,
+              ) +
+              featureRequestDurationDays +
+              1;
 
           // queue index に基づき stagger 配置
           const updates: Array<{
             id: string;
             start_date: string;
             end_date: string;
-            tier: "high" | "medium" | "low";
+            tier: "feature_request" | "high" | "medium" | "low";
             stagger_days: number;
           }> = [];
+          for (let i = 0; i < featureRequestTasks.length; i++) {
+            const t = featureRequestTasks[i];
+            const stagger = Math.floor(i / featureRequestParallelCapacity);
+            const start = addDays(
+              today,
+              featureRequestOffsetDays + stagger,
+            );
+            const end = addDays(start, featureRequestDurationDays);
+            updates.push({
+              id: String(t.id),
+              start_date: fmt(start),
+              end_date: fmt(end),
+              tier: "feature_request",
+              stagger_days: stagger,
+            });
+          }
           for (const tier of ["high", "medium", "low"] as const) {
             const tasks = buckets[tier];
-            const offDays = offset[tier];
+            const offDays = Math.max(offset[tier], featureRequestWindowDays);
             const durDays = duration[tier];
             const par = parallel[tier];
             for (let i = 0; i < tasks.length; i++) {
@@ -6718,7 +6816,7 @@ serve(async (req) => {
               by_priority: byPrio,
               sample,
               today: fmt(today),
-              params: { offset, duration, parallel },
+              params: rescheduleParams,
             });
           }
 
@@ -6760,7 +6858,7 @@ serve(async (req) => {
                 updated,
                 errors: errors.length,
                 by_priority: byPrio,
-                params: { offset, duration, parallel },
+                params: rescheduleParams,
                 today: fmt(today),
               },
             });
@@ -6778,7 +6876,7 @@ serve(async (req) => {
             by_priority: byPrio,
             sample,
             today: fmt(today),
-            params: { offset, duration, parallel },
+            params: rescheduleParams,
           });
         }
         case "wbs.bulk_update": {
@@ -7061,6 +7159,10 @@ serve(async (req) => {
             const labels = githubIssueLabelNames(issue);
             const state = githubIssueState(issue);
             const isClosed = state === "CLOSED";
+            const prioritizeAdditionalRequest = isAdditionalRequestIssue(
+              issueTitle,
+              labels,
+            );
             const existing = tasksByIssue.get(issueNumber) ?? [];
             const keeper = pickGithubIssueWbsKeeper(existing);
             const lane = normalizeWbsInstance(
@@ -7094,6 +7196,10 @@ serve(async (req) => {
               : closureReady
               ? 100
               : wbsProgressForOpenGithubIssue(keeper);
+            const syncedStartDate = prioritizeAdditionalRequest
+              ? additionalRequestStartDate(now)
+              : today;
+            const syncedEndDate = githubIssueDueDate(labels, now, issueTitle);
             const payload: Record<string, unknown> = {
               category: githubIssueCategory(labels),
               category_icon: githubIssueCategoryIcon(labels),
@@ -7105,12 +7211,20 @@ serve(async (req) => {
               status: nextStatus,
               progress: nextProgress,
               priority: githubIssuePriority(labels),
-              start_date: keeper?.start_date ?? today,
-              end_date: keeper?.end_date ?? githubIssueDueDate(labels, now),
-              planned_start_date: keeper?.planned_start_date ??
-                keeper?.start_date ?? today,
-              planned_end_date: keeper?.planned_end_date ?? keeper?.end_date ??
-                githubIssueDueDate(labels, now),
+              start_date: prioritizeAdditionalRequest
+                ? syncedStartDate
+                : keeper?.start_date ?? syncedStartDate,
+              end_date: prioritizeAdditionalRequest
+                ? syncedEndDate
+                : keeper?.end_date ?? syncedEndDate,
+              planned_start_date: prioritizeAdditionalRequest
+                ? syncedStartDate
+                : keeper?.planned_start_date ?? keeper?.start_date ??
+                  syncedStartDate,
+              planned_end_date: prioritizeAdditionalRequest
+                ? syncedEndDate
+                : keeper?.planned_end_date ?? keeper?.end_date ??
+                  syncedEndDate,
               remaining_work: isClosed
                 ? "GitHub Issue is closed; WBS mirrored as completed."
                 : (keeper?.remaining_work ??
