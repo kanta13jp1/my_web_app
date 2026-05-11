@@ -49,6 +49,7 @@ import '../widgets/profile_progress_card.dart';
 import '../widgets/proactive_diagnostics_card.dart';
 import '../widgets/development_achievements_card.dart';
 import '../widgets/edge_function_summary_card.dart';
+import '../widgets/ga_readiness_gate_panel.dart';
 import '../widgets/ai_university_home_card.dart';
 import '../widgets/api_key_status_banner.dart';
 import '../widgets/feature_strategy_monitor_panel.dart';
@@ -5970,6 +5971,8 @@ abstinence_slip_details: $slipDetailsText
         key: const Key('home_section_site_guide_ai'),
       ),
       _buildSiteGuideAiCard(isDark, isCompact),
+      const SizedBox(height: 8),
+      const GaReadinessGatePanel(),
       const SizedBox(height: 16),
       const CollapsibleHomeSection(
         key: Key('home_tier_recent'),
