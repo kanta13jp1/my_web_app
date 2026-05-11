@@ -41,7 +41,39 @@ const AiUniversityGenreEntry kLegalAiGenre = AiUniversityGenreEntry(
   launchProviderId: 'harvey',
 );
 
-const List<AiUniversityGenreEntry> kAiUniversityGenres = [kLegalAiGenre];
+const AiUniversityGenreEntry kFintechTradingAiGenre = AiUniversityGenreEntry(
+  id: 'fintech_trading_ai',
+  title: 'FinTech/Trading AI',
+  headline:
+      'Bloomberg級の金融情報ワークフローを低コストAIで分解する新ジャンル',
+  description:
+      '年間25,000 USD級のprofessional terminalと、Claude Pro / Cursor / '
+      '自分株式会社を使ったsignal-to-action pipelineを比較し、raw news、'
+      'confidence scoring、fake-news filter、人間の最終判断を一つの学習導線にします。',
+  providerIds: [
+    'bloomberg_terminal',
+    'refinitiv_eikon',
+    'factset',
+    'sentieo',
+    'koyfin',
+    'atom_finance',
+    'claude_pro_finance',
+    'cursor_jibun_finance',
+  ],
+  focusAreas: [
+    'market intelligence',
+    'signal detection',
+    'source confidence',
+    'cost discipline',
+  ],
+  accentColor: Color(0xFF0F766E),
+  launchProviderId: 'claude_pro_finance',
+);
+
+const List<AiUniversityGenreEntry> kAiUniversityGenres = [
+  kLegalAiGenre,
+  kFintechTradingAiGenre,
+];
 
 AiUniversityGenreEntry? aiUniversityGenreById(String id) {
   for (final genre in kAiUniversityGenres) {

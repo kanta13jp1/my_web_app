@@ -25,4 +25,23 @@ void main() {
     expect(genre!.id, 'legal_ai');
     expect(genre.title, '\u6cd5\u5f8bAI');
   });
+
+  test('FinTech/Trading AI genre contains #1964 provider set', () {
+    expect(kFintechTradingAiGenre.providerIds, hasLength(8));
+    expect(kFintechTradingAiGenre.providerIds, contains('bloomberg_terminal'));
+    expect(kFintechTradingAiGenre.providerIds, contains('claude_pro_finance'));
+    expect(
+      kFintechTradingAiGenre.providerIds,
+      contains('cursor_jibun_finance'),
+    );
+    expect(kFintechTradingAiGenre.launchProviderId, 'claude_pro_finance');
+  });
+
+  test('providerからFinTech/Trading AIジャンルを逆引きできる', () {
+    final genre = aiUniversityGenreForProvider('koyfin');
+
+    expect(genre, isNotNull);
+    expect(genre!.id, 'fintech_trading_ai');
+    expect(genre.title, 'FinTech/Trading AI');
+  });
 }

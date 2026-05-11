@@ -457,6 +457,55 @@ final Map<String, _ProviderMeta> _providerMeta = {
     color: const Color(0xFF2C5282),
     officialUrl: 'https://www.harvey.ai/',
   ),
+  'bloomberg_terminal': _ProviderMeta(
+    name: 'Bloomberg Terminal',
+    emoji: '📈',
+    color: const Color(0xFF1F2937),
+    officialUrl:
+        'https://www.bloomberg.com/professional/products/bloomberg-terminal/',
+  ),
+  'refinitiv_eikon': _ProviderMeta(
+    name: 'Refinitiv Eikon',
+    emoji: '📊',
+    color: const Color(0xFF0F766E),
+    officialUrl: 'https://www.lseg.com/en/data-analytics/products/workspace',
+  ),
+  'factset': _ProviderMeta(
+    name: 'FactSet',
+    emoji: '🧮',
+    color: const Color(0xFF2563EB),
+    officialUrl: 'https://www.factset.com/',
+  ),
+  'sentieo': _ProviderMeta(
+    name: 'Sentieo',
+    emoji: '🔎',
+    color: const Color(0xFF7C3AED),
+    officialUrl: 'https://www.alpha-sense.com/platform/sentieo/',
+  ),
+  'koyfin': _ProviderMeta(
+    name: 'Koyfin',
+    emoji: '📉',
+    color: const Color(0xFF059669),
+    officialUrl: 'https://www.koyfin.com/',
+  ),
+  'atom_finance': _ProviderMeta(
+    name: 'Atom Finance',
+    emoji: '⚛️',
+    color: const Color(0xFF0891B2),
+    officialUrl: 'https://atom.finance/',
+  ),
+  'claude_pro_finance': _ProviderMeta(
+    name: 'Claude Pro Finance Workflow',
+    emoji: '🟠',
+    color: const Color(0xFFD4690E),
+    officialUrl: 'https://www.anthropic.com/claude',
+  ),
+  'cursor_jibun_finance': _ProviderMeta(
+    name: 'Cursor + 自分株式会社 Finance OS',
+    emoji: '💹',
+    color: const Color(0xFF111827),
+    officialUrl: 'https://www.cursor.com/',
+  ),
   'manus': _ProviderMeta(
     name: 'Manus AI',
     emoji: '🤖',
