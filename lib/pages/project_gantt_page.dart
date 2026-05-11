@@ -9,6 +9,8 @@ import 'package:url_launcher/url_launcher.dart';
 import '../utils/web_image_downloader.dart';
 
 const String _kGithubRepoUrl = 'https://github.com/kanta13jp1/my_web_app';
+const String _kAdditionalRequestText = '\u8ffd\u52a0\u8981\u671b';
+const String _kUserRequestCategoryText = '\u30e6\u30fc\u30b6\u30fc\u8981\u671b';
 final RegExp _kIssueNumberRegex = RegExp(
   r'github\.com\/[^\/\s]+\/[^\/\s]+\/issues\/(\d+)|(?:^|[\s\[(])(?:github\s+)?issue\s*#\s*(\d+)\]?',
   caseSensitive: false,
@@ -385,7 +387,9 @@ class WbsTask {
       activeInstanceKey == key || activeOwnerKey == key;
 
   bool get isFeatureRequestTask =>
-      category == 'ユーザー要望' || title.startsWith('[追加要望]');
+      category == _kUserRequestCategoryText ||
+      category.contains(_kAdditionalRequestText) ||
+      title.contains(_kAdditionalRequestText);
 
   int get priorityRank => switch (priority) {
         'high' => 3,

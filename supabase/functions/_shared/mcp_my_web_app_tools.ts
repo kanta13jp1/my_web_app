@@ -166,13 +166,14 @@ export function buildMcpFeatureRequestPayload(
   const description = String(body.description ?? "").trim();
   const sourceNote =
     "Created via MCP facade; requires product review before broad rollout.";
+  const today = new Date().toISOString().slice(0, 10);
 
   return {
     ok: true,
     payload: {
       category: String(body.category ?? "ユーザー要望"),
       category_icon: String(body.category_icon ?? "🧩"),
-      category_order: Number(body.category_order ?? 30),
+      category_order: Number(body.category_order ?? 0),
       title,
       description: description ? `${description}\n\n${sourceNote}` : sourceNote,
       instance: String(body.instance ?? "codex"),
@@ -180,9 +181,10 @@ export function buildMcpFeatureRequestPayload(
       status: "pending",
       progress: 0,
       priority: String(body.priority ?? "medium"),
-      start_date: body.start_date ?? null,
-      end_date: body.end_date ?? null,
-      planned_end_date: body.planned_end_date ?? body.end_date ?? null,
+      start_date: body.start_date ?? today,
+      end_date: body.end_date ?? today,
+      planned_start_date: body.planned_start_date ?? body.start_date ?? today,
+      planned_end_date: body.planned_end_date ?? body.end_date ?? today,
       remaining_work: String(
         body.remaining_work ??
           "Review request, scope acceptance criteria, then schedule implementation.",
