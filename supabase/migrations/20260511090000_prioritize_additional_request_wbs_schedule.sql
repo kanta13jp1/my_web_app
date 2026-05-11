@@ -50,7 +50,7 @@ updated_feature_tasks AS (
 )
 INSERT INTO public.development_achievements (title, description, completed_at)
 SELECT
-  'Codex #1: prioritized additional-request WBS schedule',
+  'Codex #1: prioritized additional-request WBS task dates',
   format(
     'Prioritized %s open additional-request WBS task(s) by moving planned dates ahead of regular tasks.',
     COUNT(*)
