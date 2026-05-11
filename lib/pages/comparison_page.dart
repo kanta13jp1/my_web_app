@@ -6387,7 +6387,8 @@ final _competitorInfo = <String, _CompetitorInfo>{
     name: 'Cursor Jibun Finance',
     searchKeyword: 'Cursor finance workflow alternative personal AI OS',
     accentColor: const Color(0xFF111827),
-    providerCapability: 'Code-driven finance automation and personal dashboards',
+    providerCapability:
+        'Code-driven finance automation and personal dashboards',
   ),
   'perplexity-ai': const _CompetitorInfo(
     name: 'Perplexity AI',
