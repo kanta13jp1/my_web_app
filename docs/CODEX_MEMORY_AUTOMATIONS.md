@@ -31,7 +31,7 @@
 | **weekly** | AI tool changelog summarize → Issue (= deep) | GHA `ai-tool-changelog-watch.yml` | `scripts/ai_tool_changelog_to_issues.py` | Issue label `ai-tool-update` | ✅ Issue 自動作成 (= 月次) |
 | **weekly** | edge-function-audit (= EF 未接続検出) | GHA `edge-function-audit.yml` | EF coverage scanner | Issue label `edge-function` | ✅ Issue 自動作成 |
 | **weekly** | wbs-staleness-audit (= 60 日未更新検出) | GHA `wbs-staleness-audit.yml` | EF `tools-hub:wbs.audit` | cross-instance-pr 自動作成 | ✅ md ファイル自動作成 |
-| **weekly** | knowledge-vault-lint (= memory/ + docs/ orphan + broken link) | GHA `knowledge-vault-lint.yml` | `scripts/knowledge_vault_lint.py` | `docs/vault-health/health-YYYY-MM-DD.json` | ⚠️ Issue 接続未実装 (= 自動化候補) |
+| **weekly** | knowledge-vault-lint (= memory/ + docs/ orphan + broken link) | GHA `knowledge-vault-lint.yml` | `scripts/knowledge_vault_lint.py` | `docs/knowledge-vault-lint/YYYY-MM-DD.md` + warning Issue | ✅ health below target 時に上位修復候補付き Issue 自動作成 |
 | **weekly** | build-in-public extract (= ROADMAP-LOG → dev.to draft) | GHA `build-in-public-extract.yml` | `scripts/build_in_public_extract.py` | `docs/build-in-public/YYYY-MM-DD_devto_draft.md` | — (= manual review 必要) |
 | **monthly** | instance-role-audit (= 12 instance 役割妥当性) | GHA `instance-role-audit.yml` | `scripts/instance_role_audit.py` | `docs/instance-audit/audit-YYYY-MM.md` | ⚠️ Issue 接続未実装 (= 自動化候補) |
 | **monthly** | hook-rule-audit (= inject-rules.txt の rot/重複検出) | manual (= `/hook-rule-audit` skill) | hook-rule-audit skill | inject-rules.txt 整理 commit | ❌ 手動 only (= 自動化候補) |
