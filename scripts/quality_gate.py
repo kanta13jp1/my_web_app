@@ -53,6 +53,14 @@ def base_commands() -> list[GateCommand]:
             [python, "scripts/context_injection_check_test.py"],
         ),
         GateCommand(
+            "mcp container isolation contract",
+            [python, "scripts/check_mcp_container_isolation.py"],
+        ),
+        GateCommand(
+            "mcp container isolation tests",
+            [python, "scripts/check_mcp_container_isolation_test.py"],
+        ),
+        GateCommand(
             "no-verify bypass tests",
             [python, "scripts/check_no_verify_bypass_test.py"],
         ),
@@ -67,6 +75,10 @@ def base_commands() -> list[GateCommand]:
         GateCommand(
             "github actions node runtime floor",
             [python, "scripts/check_github_actions_node_runtime.py"],
+        ),
+        GateCommand(
+            "wbs sync timeout resilience",
+            [python, "scripts/check_wbs_sync_timeout_resilience.py"],
         ),
     ]
 

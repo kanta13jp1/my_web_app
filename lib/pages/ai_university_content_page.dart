@@ -47,7 +47,9 @@ class _AiUniversityContentPageState extends State<AiUniversityContentPage> {
     });
     try {
       final body = <String, dynamic>{
-        'action': 'university.content_all',
+        'action': _hasFacultyFilter
+            ? 'university.content_by_faculty'
+            : 'university.content_all',
         'limit': 500,
       };
       if (_hasDeptFilter) body['department_code'] = widget.departmentCode;

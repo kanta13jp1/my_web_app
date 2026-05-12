@@ -9,6 +9,8 @@ import 'package:url_launcher/url_launcher.dart';
 import '../utils/web_image_downloader.dart';
 
 const String _kGithubRepoUrl = 'https://github.com/kanta13jp1/my_web_app';
+const String _kAdditionalRequestText = '\u8ffd\u52a0\u8981\u671b';
+const String _kUserRequestCategoryText = '\u30e6\u30fc\u30b6\u30fc\u8981\u671b';
 final RegExp _kIssueNumberRegex = RegExp(
   r'github\.com\/[^\/\s]+\/[^\/\s]+\/issues\/(\d+)|(?:^|[\s\[(])(?:github\s+)?issue\s*#\s*(\d+)\]?',
   caseSensitive: false,
@@ -385,7 +387,11 @@ class WbsTask {
       activeInstanceKey == key || activeOwnerKey == key;
 
   bool get isFeatureRequestTask =>
-      category == 'ユーザー要望' || title.startsWith('[追加要望]');
+      category == _kUserRequestCategoryText ||
+      category.contains(_kAdditionalRequestText) ||
+      title.contains(_kAdditionalRequestText);
+
+  bool get isGithubIssueLinkedTask => linkedGithubIssueNumber != null;
 
   int get priorityRank => switch (priority) {
         'high' => 3,
@@ -396,13 +402,14 @@ class WbsTask {
 }
 
 int _wbsTaskSortBucket(WbsTask task) {
-  if (task.status == 'completed') return 4;
+  if (task.status == 'completed') return 5;
   if (task.isFeatureRequestTask) return 0;
+  if (task.isGithubIssueLinkedTask) return 1;
   return switch (task.status) {
-    'in_progress' => 1,
-    'pending' => 2,
-    'blocked' => 3,
-    _ => 3,
+    'in_progress' => 2,
+    'pending' => 3,
+    'blocked' => 4,
+    _ => 4,
   };
 }
 

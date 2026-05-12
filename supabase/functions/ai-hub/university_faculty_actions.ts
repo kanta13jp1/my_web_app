@@ -204,17 +204,29 @@ export async function getUniversityContentByFaculty(
 ) {
   const source = db as UniversityDb;
   const faculty = await resolveFaculty(source, body);
+  const departmentId = asTrimmedString(body.department_id);
+  const departmentCode = asTrimmedString(body.department_code);
+  const department = departmentId || departmentCode
+    ? await resolveDepartment(source, { ...body, faculty_id: faculty.id })
+    : null;
+  if (department && department.faculty_id !== faculty.id) {
+    throw new UniversityActionError("department not found", 404);
+  }
   const limit = boundedInt(body.limit, 200, 1, 500);
   const offset = boundedInt(body.offset, 0, 0, 10000);
+  let query = source.from("ai_university_content")
+    .select("*")
+    .eq("faculty_id", faculty.id)
+    .eq("is_active", true);
+  if (department) {
+    query = query.eq("department_id", department.id);
+  }
   const items = await queryRows<ContentRow>(
-    source.from("ai_university_content")
-      .select("*")
-      .eq("faculty_id", faculty.id)
-      .eq("is_active", true)
+    query
       .order("published_at", { ascending: false })
       .range(offset, offset + limit - 1),
   );
-  return { faculty, items, limit, offset };
+  return { faculty, department, items, limit, offset };
 }
 
 async function resolveFaculty(
