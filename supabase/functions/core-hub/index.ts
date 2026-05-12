@@ -568,6 +568,7 @@ async function createFeatureRequestWbsTask(
       `受入条件: ${params.attachmentAnalysis.acceptance_criteria}`,
     );
   }
+  const today = new Date().toISOString().slice(0, 10);
 
   const { data, error } = await admin.from("wbs_tasks").insert({
     category: "ユーザー要望",
@@ -579,6 +580,10 @@ async function createFeatureRequestWbsTask(
     owner_instance: "vscode",
     status: "pending",
     progress: 0,
+    start_date: today,
+    end_date: today,
+    planned_start_date: today,
+    planned_end_date: today,
     milestone_code: "beta",
     priority: params.priority,
     remaining_work: issueLine,
