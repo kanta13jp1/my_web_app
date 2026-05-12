@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../widgets/meal_nutrition_tracker.dart';
+
 const _accentOrange = Color(0xFFFF6B35);
 const _accentIndigo = Color(0xFF3D5AFE);
 const _softText = Color(0xFF6B7280);
@@ -64,7 +66,7 @@ class _RecipeMealPlannerPageState extends State<RecipeMealPlannerPage>
   void initState() {
     super.initState();
     _supabase = widget.supabaseClient ?? Supabase.instance.client;
-    _tabController = TabController(length: 4, vsync: this);
+    _tabController = TabController(length: 5, vsync: this);
     _fetchData();
   }
 
@@ -158,6 +160,7 @@ class _RecipeMealPlannerPageState extends State<RecipeMealPlannerPage>
             Tab(icon: Icon(Icons.calendar_today), text: '週間プラン'),
             Tab(icon: Icon(Icons.shopping_cart), text: '買い物リスト'),
             Tab(icon: Icon(Icons.dinner_dining), text: '食事ログ'),
+            Tab(icon: Icon(Icons.monitor_heart_outlined), text: '栄養ログ'),
           ],
         ),
       ),
@@ -172,6 +175,7 @@ class _RecipeMealPlannerPageState extends State<RecipeMealPlannerPage>
                     _buildWeekPlanTab(),
                     _buildShoppingListTab(),
                     _buildMealLogTab(),
+                    const MealNutritionTracker(),
                   ],
                 ),
     );
