@@ -22,7 +22,7 @@ env:
 jobs:
   sync:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 45
     steps:
       - name: Install REST issue fetcher
         run: |
@@ -179,7 +179,9 @@ jobs:
       - name: Sync issues to WBS
         env:
           REPO: ${{ github.repository }}
-          WBS_SYNC_BATCH_SIZE: "100"
+          WBS_SYNC_BATCH_SIZE: "50"
+          WBS_SYNC_CURL_MAX_TIME: "120"
+          WBS_SYNC_GLOBAL_REPAIRS: "false"
         run: |
           if [ -z "$SUPABASE_SERVICE_ROLE_KEY" ]; then
             echo "SUPABASE_SERVICE_ROLE_KEY is not configured"
@@ -194,12 +196,19 @@ jobs:
               issues = json.load(fh)
 
           batch_size = max(1, int(os.environ.get("WBS_SYNC_BATCH_SIZE", "200")))
+          global_repairs = os.environ.get("WBS_SYNC_GLOBAL_REPAIRS", "false").strip().lower() in {
+              "1",
+              "true",
+              "yes",
+              "on",
+          }
           for index in range(0, len(issues), batch_size):
               batch = issues[index:index + batch_size]
               payload = {
                   "action": "wbs.sync_github_issues",
                   "repo": os.environ["REPO"],
                   "issues": batch,
+                  "global_repairs": global_repairs,
               }
               path = f"/tmp/wbs-sync-payload-{index // batch_size:03d}.json"
               with open(path, "w", encoding="utf-8") as out:
@@ -217,12 +226,21 @@ jobs:
             echo "Syncing WBS batch ${batch_number}/${total_batches}: ${payload_path}"
             attempt=1
             while true; do
+              set +e
               HTTP_CODE=$(curl -sS -o /tmp/wbs-sync-batch-response.json -w "%{http_code}" \
                 -X POST "$SUPABASE_URL/functions/v1/tools-hub" \
                 -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \
                 -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
                 -H "Content-Type: application/json" \
+                --connect-timeout 10 \
+                --max-time "$WBS_SYNC_CURL_MAX_TIME" \
                 --data-binary @"$payload_path")
+              CURL_EXIT=$?
+              set -e
+              if [ "$CURL_EXIT" -ne 0 ]; then
+                HTTP_CODE=599
+                printf '{"success":false,"error":"curl exited with %s"}\n' "$CURL_EXIT" > /tmp/wbs-sync-batch-response.json
+              fi
 
               if [ "$HTTP_CODE" -lt 500 ] || [ "$attempt" -ge 2 ]; then
                 break

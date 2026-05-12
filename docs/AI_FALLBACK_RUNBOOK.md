@@ -1,5 +1,52 @@
 # AI Fallback Runbook — 自分株式会社
 
+## 2026-05-07 Official AI Tool Update Gate (#1706)
+
+This runbook now treats AI-tool release claims as "verify before routing". Use
+these official sources before promoting a tool into the production fallback
+path:
+
+- Claude Code: official settings and memory docs confirm managed settings,
+  notification channels, hooks, and CLAUDE.md memory hierarchy. Do not require
+  unverified slash commands such as `/tui` or `/resume <PR URL>` unless a
+  current Claude Code release note confirms them.
+- OpenAI Codex: use the official Codex docs and OpenAI Docs MCP. Codex work is
+  routed through the Windows Codex #1 worktree and must keep AGENTS.md /
+  `~/.codex/config.toml` as pointer-based instruction memory, not a giant prompt.
+- Gemini Code Assist: agent mode is available in VS Code and IntelliJ, but
+  remains preview-gated. Gemini 3.1 Pro / 3.0 Flash availability depends on
+  license, waitlist, or release-channel status, so it is a candidate fallback
+  only after local availability is verified.
+- GitHub Copilot: official changelog confirms Copilot coding agent startup
+  improvements and Claude/Codex partner-agent availability. Treat performance
+  claims as changelog-scoped; this runbook records the official 50% startup
+  improvement, not the older unverified 20% figure.
+
+Official source pointers:
+
+- https://docs.anthropic.com/en/docs/claude-code/settings
+- https://docs.anthropic.com/en/docs/claude-code/memory
+- https://developers.openai.com/codex/cloud
+- https://developers.openai.com/learn/docs-mcp
+- https://developers.google.com/gemini-code-assist/resources/release-notes
+- https://docs.cloud.google.com/gemini/docs/codeassist/gemini-3
+- https://github.blog/changelog/2026-02-26-claude-and-codex-now-available-for-copilot-business-pro-users/
+- https://github.blog/changelog/2026-03-19-copilot-coding-agent-now-starts-work-50-faster/
+
+Related ai-tool-update Issues: #1644, #1645, #1646, #1647, #1706.
+
+#1646 UI/browser QA and generated-image provenance are defined in
+`docs/CODEX_UI_QA_PLAYBOOK.md`. For UI PRs, Codex #1 must record route,
+viewport, screenshot/Playwright evidence, console/page/request review, and
+generated-image rights/provenance before marking the work review-ready.
+
+#1644 dynamic context injection is defined in
+`docs/DYNAMIC_CONTEXT_INJECTION.md` and `config/context-injection-map.json`.
+At session start, Codex #1 should run `python scripts/context_injection_check.py`
+or `python scripts/codex_session_check.py` to see keyword-matched docs, skills,
+NotebookLM query candidates, target Issue links, and unapplied NotebookLM intake
+counts before implementation begins.
+
 > 作成: 2026-04-24 (PS#6 S26)  
 > 目的: Claude Code quota 制限時に開発・自動化が完全停止しないための手順書
 
@@ -56,11 +103,10 @@ codex "supabase/functions/tools-hub/index.ts に action=habit.list を追加"
 
 | インスタンス | Claude quota 超過時の代替 |
 |------------|------------------------|
-| VSCode版 | Copilot + Gemini Code Assist (ローカル環境) |
-| Win版 | Copilot + Codex CLI + NotebookLM |
-| PS版 | Codex CLI (スクリプト実行) |
-| WEB版 | claude.ai web ブラウザ (同一プラン内の別セッション枠) |
-| スマホ版 | GitHub Copilot Mobile + Copilot in GitHub Web |
+| **Win版 (Claude Code)** | Copilot + Gemini Code Assist Agent Mode (Gemini 3.1 Pro) + NotebookLM + claude.ai WEB版 |
+| **Win版 (Codex CLI)** | Codex CLI (Memory GA / 主担当) + Copilot + Gemini Code Assist |
+
+> 旧 12 instance (PS版#1-6 / VSCode版 / WEB版 / スマホ版 / Codex#1 / Codex#2) は 2026-05-04 dormant 化 (= [`docs/MULTI_INSTANCE_FLEET.md`](MULTI_INSTANCE_FLEET.md)). reactivation 時のみ各 fallback 適用.
 
 ---
 

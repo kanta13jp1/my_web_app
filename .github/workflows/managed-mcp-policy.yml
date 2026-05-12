@@ -1,0 +1,57 @@
+name: Managed MCP Policy Audit
+
+on:
+  pull_request:
+    paths:
+      - "config/managed-mcp.json"
+      - "docs/automation/managed-mcp-access-control.md"
+      - "docs/AGENT_TOOL_POLICY.md"
+      - "AGENTS.md"
+      - "scripts/check_managed_mcp_policy.py"
+      - "scripts/check_managed_mcp_policy_test.py"
+      - "scripts/codex_session_check.py"
+      - ".github/workflows/managed-mcp-policy.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    name: Validate managed MCP register
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Validate managed MCP policy
+        run: python scripts/check_managed_mcp_policy.py --config config/managed-mcp.json
+
+      - name: Run managed MCP unit tests
+        run: python scripts/check_managed_mcp_policy_test.py
+
+      - name: Session-start scan against repo-managed settings
+        run: |
+          mkdir -p .ci-logs
+          python scripts/check_managed_mcp_policy.py \
+            --config config/managed-mcp.json \
+            --session-start \
+            --settings .claude/settings.json \
+            --settings .claude/settings.local.json \
+            --json > .ci-logs/managed-mcp-session.json
+
+      - name: Codex session check JSON
+        run: python scripts/codex_session_check.py --json > .ci-logs/codex-session-check.json
+
+      - name: Upload managed MCP audit artifacts
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: managed-mcp-policy-audit
+          path: .ci-logs/
+          if-no-files-found: ignore

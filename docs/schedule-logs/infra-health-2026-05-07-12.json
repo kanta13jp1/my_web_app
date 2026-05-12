@@ -1,0 +1,22 @@
+{
+  "task": "infra-health-check",
+  "timestamp_jst": "2026-05-07T12:34 JST",
+  "supabase_health": {
+    "status": "healthy",
+    "http_code": 200,
+    "checks": {
+      "env": "ok (SUPABASE_URL + SERVICE_ROLE_KEY set)",
+      "db_connectivity": "ok (161ms, profiles reachable)",
+      "wbs_tasks": "ok",
+      "ai_circuit_breaker": "ok"
+    },
+    "timestamp_utc": "2026-05-07T03:34:02.880Z"
+  },
+  "firebase_hosting": {
+    "url": "https://my-web-app-b67f4.web.app/",
+    "http_code": 200,
+    "rendered": true,
+    "note": "Flutter Web app shell loading normally"
+  },
+  "action_taken": "none (all healthy)"
+}

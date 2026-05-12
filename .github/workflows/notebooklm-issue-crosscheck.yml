@@ -1,17 +1,12 @@
-name: NotebookLM × Issue Cross-Check
+name: NotebookLM Issue Cross-Check
 
-# Win版#132 part 120 (2026-05-03) — manual triage 自動化
-#
-# Daily cron: scripts/notebooklm_issue_crosscheck.py を実行し、
-# notebook ↔ Issue の cross-check 結果 (TRUE_GAP / DUP_OPEN) を
-# tracking Issue #1647 に comment.
-#
-# - TRUE_GAP: notebook が存在するが対応 Issue 無し → 手動 triage 必須
-# - DUP_OPEN: 同 notebook に 2+ open Issue → cleanup candidate
+# Daily NotebookLM -> GitHub Issue cross-check.
+# TRUE_GAP candidates now pass through the local source-risk filter before
+# opening automation follow-up issues.
 
 on:
   schedule:
-    - cron: "0 19 * * *"  # daily 04:00 JST (= 19:00 UTC) — 全 instance wrap-up + residuals-sync 後
+    - cron: "0 19 * * *" # daily 04:00 JST
   workflow_dispatch:
     inputs:
       limit:
@@ -35,7 +30,7 @@ concurrency:
 
 jobs:
   crosscheck:
-    name: Run cross-check + report
+    name: Run cross-check + source-risk filter
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
@@ -55,10 +50,9 @@ jobs:
           python-version: "3.12"
 
       - name: Install notebooklm-py
-        run: |
-          pip install --quiet notebooklm-py
+        run: pip install --quiet notebooklm-py
 
-      - name: Restore NotebookLM auth (= guard if secret missing)
+      - name: Restore NotebookLM auth
         run: |
           mkdir -p ~/.notebooklm
           if [ -n "$NOTEBOOKLM_STORAGE_STATE" ]; then
@@ -66,7 +60,7 @@ jobs:
             chmod 600 ~/.notebooklm/storage_state.json
             echo "auth_present=true"
           else
-            echo "::warning::NOTEBOOKLM_STORAGE_STATE_JSON secret not set — script will exit 1"
+            echo "::warning::NOTEBOOKLM_STORAGE_STATE_JSON secret not set; script will exit 1"
             echo "auth_present=false"
           fi
 
@@ -77,50 +71,95 @@ jobs:
           PYTHONUTF8=1 python scripts/notebooklm_issue_crosscheck.py \
             --limit "${{ inputs.limit || '200' }}" \
             --comment-on-issue "${{ inputs.comment_target || '1647' }}" \
+            --json-out crosscheck_report.json \
             > crosscheck_report.txt 2>crosscheck_err.txt || true
           echo "--- stdout ---"
           cat crosscheck_report.txt
           echo "--- stderr ---"
           cat crosscheck_err.txt
 
-      - name: Open Issue if many TRUE_GAPs (≥3)
+      - name: Filter TRUE_GAP signals
+        id: patterns
         if: always()
         run: |
-          GAPS=$(grep -c "^- \`" crosscheck_report.txt 2>/dev/null || echo 0)
-          # rough heuristic: TRUE_GAP section + DUP_OPEN section listed entries
-          if grep -q "^## TRUE_GAP" crosscheck_report.txt; then
+          if [ -s crosscheck_report.json ]; then
+            python scripts/news_pattern_detector.py \
+              --source crosscheck_report.json \
+              --label notebooklm-issue-crosscheck \
+              --output crosscheck_patterns.json \
+              --markdown crosscheck_patterns.md \
+              --min-confidence 0.50
+          else
+            echo '{"entries":[],"patterns":[],"issue_candidates":[]}' > crosscheck_patterns.json
+            echo "# News Pattern Detector Report" > crosscheck_patterns.md
+            echo "" >> crosscheck_patterns.md
+            echo "- Cross-check JSON was not produced." >> crosscheck_patterns.md
+            echo "pattern_count=0" >> "$GITHUB_OUTPUT"
+            echo "issue_candidate_count=0" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Open Issue if many filtered TRUE_GAPs
+        if: always()
+        run: |
+          if grep -q "^## TRUE_GAP" crosscheck_report.txt 2>/dev/null; then
             TRUE_GAP_COUNT=$(awk '/## TRUE_GAP/,/^$/{ if (/^- /) print }' crosscheck_report.txt | wc -l)
           else
             TRUE_GAP_COUNT=0
           fi
+          if [ -s crosscheck_patterns.json ]; then
+            FILTERED_TRUE_GAP_COUNT=$(python3 - <<'PY'
+          import json
+          with open('crosscheck_patterns.json', encoding='utf-8') as f:
+              data = json.load(f)
+          count = 0
+          for row in data.get('entries', []):
+              entry = row.get('entry', {})
+              result = row.get('filter', {})
+              if entry.get('raw', {}).get('classification') == 'TRUE_GAP' and result.get('verdict') != 'drop':
+                  count += 1
+          print(count)
+          PY
+          )
+          else
+            FILTERED_TRUE_GAP_COUNT="$TRUE_GAP_COUNT"
+          fi
+
           echo "TRUE_GAP_COUNT=$TRUE_GAP_COUNT"
-          if [ "$TRUE_GAP_COUNT" -ge 3 ]; then
+          echo "FILTERED_TRUE_GAP_COUNT=$FILTERED_TRUE_GAP_COUNT"
+          if [ "$FILTERED_TRUE_GAP_COUNT" -ge 3 ]; then
             TODAY=$(date -u '+%Y-%m-%d')
-            TITLE="[automation] NotebookLM × Issue cross-check: $TRUE_GAP_COUNT TRUE_GAP $TODAY"
+            TITLE="[automation] NotebookLM x Issue cross-check: $FILTERED_TRUE_GAP_COUNT TRUE_GAP $TODAY"
             EXISTING=$(gh issue list --search "$TITLE in:title is:open" --json number --jq 'length')
             if [ "$EXISTING" = "0" ]; then
               {
-                echo "## NotebookLM × Issue cross-check 自動検出 ($(date -u '+%Y-%m-%d %H:%M UTC'))"
+                echo "## NotebookLM x Issue cross-check ($(date -u '+%Y-%m-%d %H:%M UTC'))"
                 echo ""
-                echo "**TRUE_GAP**: $TRUE_GAP_COUNT 件 (= notebook 存在するが対応 Issue 無し)"
+                echo "**TRUE_GAP**: $TRUE_GAP_COUNT raw / $FILTERED_TRUE_GAP_COUNT actionable after source-risk filter."
                 echo ""
-                echo "## 詳細"
+                echo "## Raw cross-check"
                 echo ""
                 echo '```'
                 cat crosscheck_report.txt
                 echo '```'
                 echo ""
-                echo "## 推奨対応"
+                echo "## Source-risk filter"
                 echo ""
-                echo "1. 各 notebook を内容確認"
-                echo "2. 担当 instance を判断 → cross-instance-pr or 直接 Issue 作成"
-                echo "3. DUP_OPEN は重複 Issue を close + 主 Issue にコメント統合"
+                echo '```'
+                cat crosscheck_patterns.md 2>/dev/null || true
+                echo '```'
                 echo ""
-                echo "## 関連"
+                echo "## Recommended action"
                 echo ""
-                echo "- script: \`scripts/notebooklm_issue_crosscheck.py\` (= Win版#132 part 120)"
+                echo "1. Review each actionable TRUE_GAP before creating implementation work."
+                echo "2. Route under the 2-instance policy: Claude Code #1 for design/review, Codex #1 for scoped implementation/CI."
+                echo "3. Merge duplicate open issues into the canonical issue before starting a PR."
+                echo ""
+                echo "## Related"
+                echo ""
+                echo "- script: \`scripts/notebooklm_issue_crosscheck.py\`"
+                echo "- source-risk filter: \`scripts/news_pattern_detector.py\` + \`scripts/fake_news_filter.py\`"
                 echo "- workflow: \`.github/workflows/notebooklm-issue-crosscheck.yml\`"
-                echo "- Issue [#1647](https://github.com/kanta13jp1/my_web_app/issues/1647) (= Codex Memory + Thread Automations)"
+                echo "- Issue [#1647](https://github.com/kanta13jp1/my_web_app/issues/1647)"
                 echo ""
                 echo "(auto-opened by notebooklm-issue-crosscheck.yml)"
               } > issue_body.md
@@ -129,5 +168,18 @@ jobs:
               echo "Skip: same-title open Issue already exists ($EXISTING)"
             fi
           else
-            echo "TRUE_GAP < 3 → no Issue auto-opened"
+            echo "filtered TRUE_GAP < 3 - no Issue auto-opened"
           fi
+
+      - name: Upload reports
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: notebooklm-crosscheck-reports
+          path: |
+            crosscheck_report.txt
+            crosscheck_err.txt
+            crosscheck_report.json
+            crosscheck_patterns.json
+            crosscheck_patterns.md
+          if-no-files-found: ignore

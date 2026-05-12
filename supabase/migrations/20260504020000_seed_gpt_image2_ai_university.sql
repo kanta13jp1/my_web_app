@@ -151,4 +151,4 @@ $$,
   '2026-05-04',
   940
 )
-ON CONFLICT (provider, category, title) DO NOTHING;
+ON CONFLICT (provider, category) DO NOTHING;

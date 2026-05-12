@@ -82,6 +82,16 @@
           }
         ]
       }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell -NoProfile -ExecutionPolicy Bypass -File .claude/hooks/session-start-sync-rules.ps1"
+          }
+        ]
+      }
     ]
   },
   "permissions": {

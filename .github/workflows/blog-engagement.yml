@@ -87,6 +87,18 @@ jobs:
           MAX_REPLIES_PER_ARTICLE: "2"
         run: python3 scripts/blog_engagement.py
 
+      - name: Sync dev.to engagement to Supabase
+        env:
+          SUPABASE_URL: https://smmkxxavexumewbfaqpy.supabase.co
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          curl -s -X POST \
+            -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \
+            -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
+            -H "Content-Type: application/json" \
+            "$SUPABASE_URL/functions/v1/schedule-hub" \
+            -d '{"action":"blog.devto_sync_engagement"}' | jq -r '"\(.synced // "?") dev.to articles synced"'
+
       - name: Summary
         if: always()
         run: |

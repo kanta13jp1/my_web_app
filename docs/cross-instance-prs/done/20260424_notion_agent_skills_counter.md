@@ -1,4 +1,4 @@
-# [VSCode版宛] Notion Agent Skills — LP「credit増加ループ」訴求追加
+# [VSCode版宛] Notion Agent Skills — LP「credit増加ループ」訴求追加 [Done]
 
 **発行**: PS版#4 競合モニタリング / 2026-04-24
 **宛先**: VSCode版 (UI/デザイン担当)

@@ -43,6 +43,7 @@ void main() {
 
     expect(capturedBody?['offline_only'], true);
     expect(capturedBody?['network_policy'], 'offline_only');
+    expect(capturedBody?['temperature'], 0);
     expect(capturedBody?['model_path'], r'C:\models\pleias-rag.gguf');
     expect(response.text, contains('外部ネットワークなし'));
     expect(response.citations.single.sourceId, 'doc-1');
@@ -59,6 +60,35 @@ void main() {
         settings: const OfflineSecureModeSettings(enabled: true),
       ),
       throwsA(isA<LocalRagRuntimeException>()),
+    );
+  });
+
+  test('parsePleiasCitationText removes native source span tokens', () {
+    final parsed = parsePleiasCitationText(
+      'Answer <|source_start|>doc-1<|source_end|>quoted fact<|/source|> done',
+    );
+
+    expect(parsed.hasCitationTokens, isTrue);
+    expect(parsed.plainText, 'Answer quoted fact done');
+    expect(parsed.sourceIds, <String>['doc-1']);
+    expect(parsed.segments.where((segment) => segment.cited), hasLength(1));
+    expect(parsed.segments[1].text, 'quoted fact');
+  });
+
+  test('parsePleiasCitationText supports Pleias bracket source markers', () {
+    final parsed = parsePleiasCitationText(
+      'Pleias created Common Corpus [source:1] for traceable RAG.',
+    );
+
+    expect(parsed.hasCitationTokens, isTrue);
+    expect(
+      parsed.plainText,
+      'Pleias created Common Corpus [source:1] for traceable RAG.',
+    );
+    expect(parsed.sourceIds, <String>['1']);
+    expect(
+      parsed.segments.where((segment) => segment.markerOnly),
+      hasLength(1),
     );
   });
 }

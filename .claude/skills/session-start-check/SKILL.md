@@ -44,6 +44,21 @@ esac
 **期待結果**: `.claude/worktrees/instance-<NAME>` で作業中。それ以外は即切替。
 別インスタンスの `git stash` / `git pull --rebase` で uncommitted 変更が消えるリスクを根本回避。
 
+### Step 0.5: inject-rules.txt drift 確認 (Win版#132 part 135)
+
+```bash
+# canonical (= repo) と home (= ~/.claude/hooks/) の drift 確認
+PYTHONUTF8=1 python scripts/sync_inject_rules.py --verify
+```
+
+期待: `✅ canonical kpi_pass=True / home kpi_pass=True / drift=False`.
+
+drift 検出時:
+- `--apply` で canonical → home (= 他 instance 編集を取り込む)
+- `--reverse` で home → canonical (= 自分の編集を repo へ push 用 / PR レビュー後 commit)
+
+詳細: [`docs/RULES_INDEX.md`](../../docs/RULES_INDEX.md)
+
 ### Step 1: ツールバージョン (Rule 14)
 
 ```bash

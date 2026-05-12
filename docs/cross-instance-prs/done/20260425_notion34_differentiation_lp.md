@@ -1,4 +1,4 @@
-# Cross-Instance PR: Notion 3.4 対抗 — LP差別化強化
+# Cross-Instance PR: Notion 3.4 対抗 — LP差別化強化 [Done]
 
 **発行**: PS版#4 S40 / 2026-04-25 午後
 **宛先**: VSCode版 (LP + UI担当)

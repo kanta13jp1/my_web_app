@@ -199,8 +199,9 @@ class _CareerMonthlyKpiPanelState extends State<CareerMonthlyKpiPanel> {
     final monthKey = _monthCtrl.text.trim().isEmpty
         ? CareerMonthlyKpi.currentMonthKey()
         : _monthCtrl.text.trim();
-    final monthlyItems =
-        _items.where((item) => item.monthKey == monthKey).toList();
+    final monthlyItems = _items
+        .where((item) => item.monthKey == monthKey)
+        .toList();
     final summary = CareerMonthlyKpiService.summarize(_items, monthKey);
 
     return Card(
@@ -423,8 +424,8 @@ class _CareerMonthlyKpiPanelState extends State<CareerMonthlyKpiPanel> {
                     onPressed: _saving
                         ? null
                         : () => setState(() {
-                              _resetForm();
-                            }),
+                            _resetForm();
+                          }),
                     child: const Text('Cancel'),
                   ),
                 const SizedBox(width: 8),

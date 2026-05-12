@@ -10,6 +10,7 @@ import '../services/magi_system_settings_service.dart';
 import '../services/attachment_service.dart';
 import '../services/agent_org_service.dart';
 import '../utils/ai_secretary_content.dart';
+import '../widgets/agent_gpa_badge.dart';
 
 class AISecretaryPage extends StatefulWidget {
   final String? initialStrategyType;
@@ -579,49 +580,66 @@ class _AISecretaryPageState extends State<AISecretaryPage> {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                if (_usedModel != null)
-                                  Column(
+                                Expanded(
+                                  child: Wrap(
+                                    spacing: 8,
+                                    runSpacing: 6,
                                     crossAxisAlignment:
-                                        CrossAxisAlignment.start,
+                                        WrapCrossAlignment.center,
                                     children: [
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 8,
-                                          vertical: 4,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: Theme.of(context).brightness ==
-                                                  Brightness.dark
-                                              ? const Color(0xFF2A1A00)
-                                              : const Color(0xFFFFECB3),
-                                          borderRadius:
-                                              BorderRadius.circular(4),
-                                        ),
-                                        child: Text(
-                                          'MAGI Strategist: $_usedModel',
-                                          style: const TextStyle(
-                                            fontSize: 10,
-                                            color: Color(0xFFFF6F00),
-                                            fontWeight: FontWeight.bold,
-                                            height: 1.5,
-                                          ),
-                                        ),
-                                      ),
-                                      if (_attemptLogs.isNotEmpty)
-                                        Padding(
-                                          padding:
-                                              const EdgeInsets.only(top: 4.0),
-                                          child: Text(
-                                            '(${_attemptLogs.length} MAGI attempts failed)',
-                                            style: const TextStyle(
-                                              fontSize: 10,
-                                              color: Color(0xFFE57373),
-                                              height: 1.5,
+                                      if (_usedModel != null)
+                                        Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Container(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                horizontal: 8,
+                                                vertical: 4,
+                                              ),
+                                              decoration: BoxDecoration(
+                                                color: Theme.of(context)
+                                                            .brightness ==
+                                                        Brightness.dark
+                                                    ? const Color(0xFF2A1A00)
+                                                    : const Color(0xFFFFECB3),
+                                                borderRadius:
+                                                    BorderRadius.circular(4),
+                                              ),
+                                              child: Text(
+                                                'MAGI Strategist: $_usedModel',
+                                                style: const TextStyle(
+                                                  fontSize: 10,
+                                                  color: Color(0xFFFF6F00),
+                                                  fontWeight: FontWeight.bold,
+                                                  height: 1.5,
+                                                ),
+                                              ),
                                             ),
-                                          ),
+                                            if (_attemptLogs.isNotEmpty)
+                                              Padding(
+                                                padding: const EdgeInsets.only(
+                                                  top: 4.0,
+                                                ),
+                                                child: Text(
+                                                  '(${_attemptLogs.length} MAGI attempts failed)',
+                                                  style: const TextStyle(
+                                                    fontSize: 10,
+                                                    color: Color(0xFFE57373),
+                                                    height: 1.5,
+                                                  ),
+                                                ),
+                                              ),
+                                          ],
                                         ),
+                                      const AgentGpaBadge(
+                                        sourceType: 'secretary_action',
+                                        label: 'Secretary',
+                                      ),
                                     ],
                                   ),
+                                ),
                                 TextButton.icon(
                                   onPressed: _isTranslating
                                       ? null

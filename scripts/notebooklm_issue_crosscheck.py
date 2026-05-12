@@ -179,6 +179,8 @@ def main() -> int:
     ap.add_argument("--dup-only", action="store_true", help="Show only DUP_OPEN entries")
     ap.add_argument("--comment-on-issue", type=int, default=0,
                     help="Post summary as comment to given Issue number")
+    ap.add_argument("--json-out", default="",
+                    help="Write the full machine-readable report to this path")
     ap.add_argument("--limit", type=int, default=200,
                     help="Max notebooks to process (safety cap)")
     args = ap.parse_args()
@@ -219,6 +221,11 @@ def main() -> int:
     else:
         report = render_text(checks)
     print(report)
+
+    if args.json_out:
+        with open(args.json_out, "w", encoding="utf-8", newline="\n") as f:
+            f.write(render_json(checks))
+            f.write("\n")
 
     if args.comment_on_issue:
         body = (

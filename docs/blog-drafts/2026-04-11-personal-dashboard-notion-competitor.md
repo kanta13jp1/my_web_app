@@ -5,7 +5,7 @@ topics: ["Flutter", "Supabase", "buildinpublic", "個人開発"]
 published: true
 ---
 
-# ブログ下書き 2026-04-11
+# ブログ下書き 2026-04-11 — 2026-04-11-personal-dashboard-notion-competitor
 
 ## タイトル案
 

@@ -51,14 +51,15 @@ jobs:
       - name: Run codex_session_check (JSON)
         id: check
         run: |
-          python scripts/codex_session_check.py --json > session_check.json
-          echo "Saved session_check.json ($(wc -c < session_check.json) bytes)"
+          SESSION_CHECK_JSON="$RUNNER_TEMP/session_check.json"
+          python scripts/codex_session_check.py --json > "$SESSION_CHECK_JSON"
+          echo "Saved session_check.json ($(wc -c < "$SESSION_CHECK_JSON") bytes)"
           # extract warning signals
-          BEHIND=$(jq -r '.behind // 0' session_check.json)
-          DIRTY=$(jq -r '.dirty_count // 0' session_check.json)
-          NB_STATE=$(jq -r '.notebooklm.state // "unknown"' session_check.json)
-          NB_COUNT=$(jq -r '.notebooklm.notebook_count // 0' session_check.json)
-          BC58_FOUND=$(jq -r '.notebooklm.harness_notebook_found // false' session_check.json)
+          BEHIND=$(jq -r '.behind // 0' "$SESSION_CHECK_JSON")
+          DIRTY=$(jq -r '.dirty_count // 0' "$SESSION_CHECK_JSON")
+          NB_STATE=$(jq -r '.notebooklm.state // "unknown"' "$SESSION_CHECK_JSON")
+          NB_COUNT=$(jq -r '.notebooklm.notebook_count // 0' "$SESSION_CHECK_JSON")
+          BC58_FOUND=$(jq -r '.notebooklm.harness_notebook_found // false' "$SESSION_CHECK_JSON")
 
           echo "behind=$BEHIND" >> $GITHUB_OUTPUT
           echo "dirty=$DIRTY" >> $GITHUB_OUTPUT
@@ -70,8 +71,8 @@ jobs:
           WARNINGS=()
           if [ "$BEHIND" -gt 50 ]; then WARNINGS+=("behind > 50 (= $BEHIND commits)"); fi
           if [ "$DIRTY" -gt 0 ]; then WARNINGS+=("dirty_count > 0 (= $DIRTY paths)"); fi
-          if [ "$NB_STATE" != "ok" ]; then WARNINGS+=("notebooklm state != ok (= $NB_STATE)"); fi
-          if [ "$BC58_FOUND" != "true" ]; then WARNINGS+=("bc58b50b harness notebook missing"); fi
+          if [ "$NB_STATE" != "ok" ] && [ "$NB_STATE" != "skipped_ci_unavailable" ]; then WARNINGS+=("notebooklm state != ok (= $NB_STATE)"); fi
+          if [ "$NB_STATE" = "ok" ] && [ "$BC58_FOUND" != "true" ]; then WARNINGS+=("bc58b50b harness notebook missing"); fi
 
           if [ ${#WARNINGS[@]} -eq 0 ]; then
             echo "has_warnings=false" >> $GITHUB_OUTPUT

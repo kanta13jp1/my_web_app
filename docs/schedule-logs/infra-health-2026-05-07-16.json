@@ -1,0 +1,30 @@
+{
+  "status": "healthy",
+  "checks": {
+    "env": {
+      "ok": true,
+      "detail": "SUPABASE_URL + SERVICE_ROLE_KEY set"
+    },
+    "db_connectivity": {
+      "ok": true,
+      "latencyMs": 183,
+      "detail": "profiles reachable in 183ms"
+    },
+    "wbs_tasks": {
+      "ok": true,
+      "detail": "wbs_tasks reachable"
+    },
+    "ai_circuit_breaker": {
+      "ok": true,
+      "detail": "ai_circuit_breaker reachable"
+    },
+    "firebase_hosting": {
+      "ok": true,
+      "http_status": 200,
+      "latency_s": 0.082704,
+      "detail": "https://my-web-app-b67f4.web.app/ reachable"
+    }
+  },
+  "timestamp": "2026-05-07T07:39:51.682Z",
+  "logged_at_jst": "2026-05-07T16:40:00+09:00"
+}

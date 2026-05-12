@@ -15,7 +15,7 @@ import os
 import re
 import subprocess
 import sys
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
 
@@ -287,6 +287,10 @@ def notebooklm_snapshot(root: Path) -> dict[str, Any]:
     lowered = combined.lower()
     if result.code == 0:
         state = "ok"
+    elif result.code == 127 and os.environ.get("GITHUB_ACTIONS") == "true":
+        state = "skipped_ci_unavailable"
+        if not detail:
+            detail = "NotebookLM CLI is not installed on this GitHub Actions runner."
     elif result.code == 127:
         state = "unavailable"
     elif result.code == 124:
@@ -306,6 +310,111 @@ def notebooklm_snapshot(root: Path) -> dict[str, Any]:
         "harness_notebook_found": harness_notebook_id in notebook_ids,
         "notebook_count": notebook_count,
         "detail": detail[:240],
+    }
+
+
+def managed_mcp_snapshot(root: Path) -> dict[str, Any]:
+    config_path = root / "config" / "managed-mcp.json"
+    if not config_path.exists():
+        return {
+            "state": "missing",
+            "config": str(config_path),
+            "validation_errors": ["config/managed-mcp.json is missing"],
+            "session_findings": [],
+            "session_warning_count": 0,
+            "session_error_count": 0,
+        }
+    try:
+        from check_managed_mcp_policy import (
+            default_session_paths,
+            load_policy,
+            session_findings,
+            validate_policy,
+        )
+    except Exception as exc:
+        return {
+            "state": "unavailable",
+            "config": str(config_path),
+            "validation_errors": [f"could not import managed MCP checker: {exc}"],
+            "session_findings": [],
+            "session_warning_count": 0,
+            "session_error_count": 0,
+        }
+    try:
+        policy = load_policy(config_path)
+        validation_errors = validate_policy(policy)
+        findings = session_findings(
+            policy,
+            default_session_paths(root, include_home=True),
+        )
+    except Exception as exc:
+        return {
+            "state": "error",
+            "config": str(config_path),
+            "validation_errors": [f"managed MCP check failed: {exc}"],
+            "session_findings": [],
+            "session_warning_count": 0,
+            "session_error_count": 0,
+        }
+    return {
+        "state": "ok" if not validation_errors else "invalid",
+        "config": str(config_path),
+        "validation_errors": validation_errors,
+        "session_findings": [asdict(finding) for finding in findings],
+        "session_warning_count": sum(1 for finding in findings if finding.severity == "warning"),
+        "session_error_count": sum(1 for finding in findings if finding.severity == "error"),
+    }
+
+
+def context_injection_snapshot(root: Path) -> dict[str, Any]:
+    try:
+        from context_injection_check import build_session_snapshot
+    except Exception as exc:
+        return {
+            "state": "unavailable",
+            "config": "config/context-injection-map.json",
+            "issue": 1644,
+            "route_count": 0,
+            "matched_route_ids": [],
+            "validation_errors": [f"could not import context injection checker: {exc}"],
+            "notebooklm": {
+                "harness_notebook_id": "bc58b50b-5fc4-4840-9a62-b397d6d3b65a",
+                "harness_found": False,
+                "notebook_count": 0,
+                "candidate_issue_drafts": 0,
+                "issue_drafts_state": "unknown",
+            },
+            "proposal_policy": {},
+        }
+    try:
+        snapshot = build_session_snapshot(root)
+    except Exception as exc:
+        return {
+            "state": "error",
+            "config": "config/context-injection-map.json",
+            "issue": 1644,
+            "route_count": 0,
+            "matched_route_ids": [],
+            "validation_errors": [f"context injection check failed: {exc}"],
+            "notebooklm": {
+                "harness_notebook_id": "bc58b50b-5fc4-4840-9a62-b397d6d3b65a",
+                "harness_found": False,
+                "notebook_count": 0,
+                "candidate_issue_drafts": 0,
+                "issue_drafts_state": "unknown",
+            },
+            "proposal_policy": {},
+        }
+
+    return {
+        "state": snapshot["state"],
+        "config": snapshot["config"],
+        "issue": snapshot["issue"],
+        "route_count": snapshot["routeCount"],
+        "matched_route_ids": [route["id"] for route in snapshot["matchedRoutes"]],
+        "validation_errors": snapshot["validation_errors"],
+        "notebooklm": snapshot["notebooklm"],
+        "proposal_policy": snapshot["proposalPolicy"],
     }
 
 
@@ -330,6 +439,8 @@ def analyze(cwd: Path) -> dict[str, Any]:
     codex_version = codex_cli_version(root)
     notebooklm = notebooklm_snapshot(root)
     claude_remote_control = analyze_claude_remote_control(root)
+    managed_mcp = managed_mcp_snapshot(root)
+    context_injection = context_injection_snapshot(root)
 
     warnings: list[str] = []
     if dirty_lines:
@@ -364,6 +475,8 @@ def analyze(cwd: Path) -> dict[str, Any]:
         warnings.append("NotebookLM CLI list hit a network/browser connection error")
     elif notebooklm["state"] == "error":
         warnings.append("NotebookLM CLI list failed")
+    elif notebooklm["state"] == "skipped_ci_unavailable":
+        pass
     elif not notebooklm["harness_notebook_found"]:
         warnings.append(
             "NotebookLM harness notebook bc58b50b-5fc4-4840-9a62-b397d6d3b65a was not found"
@@ -378,6 +491,18 @@ def analyze(cwd: Path) -> dict[str, Any]:
         warnings.append(
             "Claude Code Remote Control all-sessions mode is not verified as enabled; run `/config` in Claude Code"
         )
+    if managed_mcp["validation_errors"]:
+        warnings.append("managed MCP policy validation failed")
+    for finding in managed_mcp["session_findings"][:12]:
+        warnings.append(f"managed MCP {finding['kind']}: {finding['message']}")
+    if len(managed_mcp["session_findings"]) > 12:
+        warnings.append(
+            f"managed MCP additional findings truncated: {len(managed_mcp['session_findings']) - 12}"
+        )
+    if context_injection["validation_errors"]:
+        warnings.append("dynamic context injection map validation failed")
+    if context_injection["state"] not in {"ok"}:
+        warnings.append(f"dynamic context injection state is {context_injection['state']}")
 
     return {
         "root": str(root),
@@ -393,6 +518,8 @@ def analyze(cwd: Path) -> dict[str, Any]:
         "codex_cli_version": codex_version,
         "notebooklm": notebooklm,
         "claude_remote_control": claude_remote_control,
+        "managed_mcp": managed_mcp,
+        "context_injection": context_injection,
         "worktrees": worktrees,
         "environment": env_snapshot(),
         "warnings": warnings,
@@ -447,6 +574,44 @@ def render_markdown(report: dict[str, Any]) -> str:
         for step in remote["manual_steps"]:
             lines.append(f"  - {step}")
         lines.append(f"- Team/Enterprise note: {remote['admin_note']}")
+
+    managed_mcp = report["managed_mcp"]
+    lines.extend(
+        [
+            "",
+            "## Managed MCP Policy",
+            f"- State: `{managed_mcp['state']}`",
+            f"- Config: `{managed_mcp['config']}`",
+            f"- Validation errors: `{len(managed_mcp['validation_errors'])}`",
+            f"- Session warnings/errors: `{managed_mcp['session_warning_count']} / {managed_mcp['session_error_count']}`",
+        ]
+    )
+    for finding in managed_mcp["session_findings"][:8]:
+        lines.append(
+            f"- `{finding['severity']}` `{finding['kind']}` `{finding['server']}`: {finding['message']}"
+        )
+
+    context_injection = report["context_injection"]
+    context_notebooklm = context_injection["notebooklm"]
+    lines.extend(
+        [
+            "",
+            "## Dynamic Context Injection",
+            f"- State: `{context_injection['state']}`",
+            f"- Config: `{context_injection['config']}`",
+            f"- Issue: `#{context_injection['issue']}`",
+            f"- Routes configured: `{context_injection['route_count']}`",
+            f"- Session default routes: `{', '.join(context_injection['matched_route_ids']) or 'none'}`",
+            f"- Harness notebook: `{context_notebooklm['harness_notebook_id']}`",
+            f"- Harness found in intake snapshot: `{context_notebooklm['harness_found']}`",
+            f"- Notebook count: `{context_notebooklm['notebook_count']}`",
+            f"- Unapplied NotebookLM candidates: `{context_notebooklm['candidate_issue_drafts']}`",
+            f"- Issue drafts state: `{context_notebooklm['issue_drafts_state']}`",
+            "- Proposal rule: distill NotebookLM output and connect it to a GitHub Issue, PR body, or existing Issue comment.",
+        ]
+    )
+    for failure in context_injection["validation_errors"][:8]:
+        lines.append(f"- Validation failure: {failure}")
 
     lines.extend(["", "## Warnings"])
     if report["warnings"]:

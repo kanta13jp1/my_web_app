@@ -187,7 +187,9 @@ class _TechBlogTrackerPageState extends State<TechBlogTrackerPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-              content: Text('ログインが必要です'), backgroundColor: Colors.red),
+            content: Text('ログインが必要です'),
+            backgroundColor: Colors.red,
+          ),
         );
       }
       return;
@@ -310,7 +312,8 @@ class _TechBlogTrackerPageState extends State<TechBlogTrackerPage> {
         context: context,
         builder: (ctx) => AlertDialog(
           title: const Text('コンテンツが空です'),
-          content: const Text('このドラフトにはコンテンツがありません。編集してから公開することをお勧めします。このまま公開しますか？'),
+          content:
+              const Text('このドラフトにはコンテンツがありません。編集してから公開することをお勧めします。このまま公開しますか？'),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx, false),
@@ -821,11 +824,11 @@ class _TechBlogTrackerPageState extends State<TechBlogTrackerPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
+        const Row(
           children: [
-            const Icon(Icons.smart_toy, size: 16, color: Color(0xFF6366F1)),
-            const SizedBox(width: 6),
-            const Text(
+            Icon(Icons.smart_toy, size: 16, color: Color(0xFF6366F1)),
+            SizedBox(width: 6),
+            Text(
               '🤖 自動公開プラットフォーム',
               style: TextStyle(
                 fontSize: 14,
@@ -854,11 +857,11 @@ class _TechBlogTrackerPageState extends State<TechBlogTrackerPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
+        const Row(
           children: [
-            const Icon(Icons.edit, size: 16, color: Color(0xFF9CA3AF)),
-            const SizedBox(width: 6),
-            const Text(
+            Icon(Icons.edit, size: 16, color: Color(0xFF9CA3AF)),
+            SizedBox(width: 6),
+            Text(
               '✍️ 手動トラッキング',
               style: TextStyle(
                 fontSize: 14,
@@ -1032,7 +1035,11 @@ class _TechBlogTrackerPageState extends State<TechBlogTrackerPage> {
                 Expanded(
                   child: Text(
                     'blog_posts の取得に失敗: $_draftLoadError',
-                    style: const TextStyle(color: Colors.red, fontSize: 11, height: 1.5),
+                    style: const TextStyle(
+                      color: Colors.red,
+                      fontSize: 11,
+                      height: 1.5,
+                    ),
                   ),
                 ),
               ],
@@ -1054,11 +1061,11 @@ class _TechBlogTrackerPageState extends State<TechBlogTrackerPage> {
               color: const Color(0xFF1E1E1E),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: Row(
+            child: const Row(
               children: [
-                const Icon(Icons.inbox, color: Color(0xFF6B7280), size: 20),
-                const SizedBox(width: 10),
-                const Expanded(
+                Icon(Icons.inbox, color: Color(0xFF6B7280), size: 20),
+                SizedBox(width: 10),
+                Expanded(
                   child: Text(
                     'ドラフトがありません。「新規」ボタンで作成するか、docs/blog-drafts/ に .md ファイルを push してください。',
                     style: TextStyle(
@@ -1090,8 +1097,7 @@ class _TechBlogTrackerPageState extends State<TechBlogTrackerPage> {
             .toList(growable: false)
         : const <String>[];
     final platformLabels = targetPlatformLabels.join(', ');
-    final createdAt =
-        DateTime.tryParse(draft['created_at']?.toString() ?? '');
+    final createdAt = DateTime.tryParse(draft['created_at']?.toString() ?? '');
     final dateLabel =
         createdAt != null ? DateFormat('MM/dd HH:mm').format(createdAt) : '';
     final isPosted = status == 'posted';
@@ -1106,13 +1112,11 @@ class _TechBlogTrackerPageState extends State<TechBlogTrackerPage> {
       color: const Color(0xFF1E1E1E),
       margin: const EdgeInsets.only(bottom: 6),
       child: ExpansionTile(
-        tilePadding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
+        tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
         childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
         leading: Icon(
           isPosted ? Icons.check_circle : Icons.edit_note,
-          color:
-              isPosted ? const Color(0xFF4CAF50) : const Color(0xFF6366F1),
+          color: isPosted ? const Color(0xFF4CAF50) : const Color(0xFF6366F1),
           size: 22,
         ),
         title: Text(
@@ -1129,16 +1133,13 @@ class _TechBlogTrackerPageState extends State<TechBlogTrackerPage> {
           '$dateLabel  |  $platformLabels  |  ${isPosted ? '投稿済み' : '下書き'}',
           style: TextStyle(
             fontSize: 11,
-            color: isDark
-                ? const Color(0xFF9CA3AF)
-                : const Color(0xFF4B5563),
+            color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF4B5563),
             height: 1.5,
           ),
         ),
         trailing: isPosted
             ? Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
                   color: const Color(0xFF4CAF50).withAlpha(20),
                   borderRadius: BorderRadius.circular(6),
@@ -1164,20 +1165,29 @@ class _TechBlogTrackerPageState extends State<TechBlogTrackerPage> {
                     )
                   else
                     IconButton(
-                      icon: const Icon(Icons.rocket_launch,
-                          size: 18, color: Color(0xFF4CAF50)),
+                      icon: const Icon(
+                        Icons.rocket_launch,
+                        size: 18,
+                        color: Color(0xFF4CAF50),
+                      ),
                       tooltip: '今すぐ公開 (Qiita / dev.to)',
                       onPressed: () => _publishDraft(draft),
                     ),
                   IconButton(
-                    icon: const Icon(Icons.edit,
-                        size: 18, color: Color(0xFF6366F1)),
+                    icon: const Icon(
+                      Icons.edit,
+                      size: 18,
+                      color: Color(0xFF6366F1),
+                    ),
                     tooltip: '編集',
                     onPressed: () => _showEditDraftDialog(draft),
                   ),
                   IconButton(
-                    icon: const Icon(Icons.delete_outline,
-                        size: 18, color: Color(0xFF9CA3AF)),
+                    icon: const Icon(
+                      Icons.delete_outline,
+                      size: 18,
+                      color: Color(0xFF9CA3AF),
+                    ),
                     tooltip: '削除',
                     onPressed: () => _deleteDraft(draft),
                   ),

@@ -22,7 +22,7 @@ class CareerMonthlyKpiService {
   final SupabaseClient _client;
 
   CareerMonthlyKpiService({SupabaseClient? client})
-      : _client = client ?? Supabase.instance.client;
+    : _client = client ?? Supabase.instance.client;
 
   Future<List<CareerMonthlyKpi>> list() async {
     final response = await _client.functions.invoke(
@@ -36,9 +36,8 @@ class CareerMonthlyKpiService {
     final kpis = items
         .whereType<Map>()
         .map(
-          (item) => CareerMonthlyKpi.fromHubItem(
-            Map<String, dynamic>.from(item),
-          ),
+          (item) =>
+              CareerMonthlyKpi.fromHubItem(Map<String, dynamic>.from(item)),
         )
         .toList();
     kpis.sort((a, b) => b.monthKey.compareTo(a.monthKey));
@@ -81,8 +80,9 @@ class CareerMonthlyKpiService {
     List<CareerMonthlyKpi> items,
     String monthKey,
   ) {
-    final monthlyItems =
-        items.where((item) => item.monthKey == monthKey).toList();
+    final monthlyItems = items
+        .where((item) => item.monthKey == monthKey)
+        .toList();
     if (monthlyItems.isEmpty) {
       return CareerMonthlyKpiSummary(
         monthKey: monthKey,
@@ -120,8 +120,9 @@ class CareerMonthlyKpiService {
     List<CareerMonthlyKpi> items,
     String monthKey,
   ) {
-    final monthlyItems =
-        items.where((item) => item.monthKey == monthKey).toList();
+    final monthlyItems = items
+        .where((item) => item.monthKey == monthKey)
+        .toList();
     final summary = summarize(items, monthKey);
     final buffer = StringBuffer()
       ..writeln('# Career Monthly Close: $monthKey')

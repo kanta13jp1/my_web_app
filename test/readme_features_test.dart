@@ -48,9 +48,33 @@ void main() {
   }
 
   group('README Features Smoke Test', () {
-    testWidgets('Feature: HomePage (Cockpit) renders correctly',
+    testWidgets('Feature: HomePage default uses curated navigation sections',
         (WidgetTester tester) async {
       await tester.pumpWidget(createTestWidget(const HomePage()));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(const Key('home_section_site_guide_ai')),
+        findsOneWidget,
+      );
+      expect(find.byKey(const Key('home_tier_recent')), findsOneWidget);
+      expect(find.byKey(const Key('home_tier_popular')), findsOneWidget);
+      expect(find.byKey(const Key('home_tier_system')), findsOneWidget);
+      expect(find.byKey(const Key('home_tier_pinned')), findsOneWidget);
+      expect(find.byKey(const Key('home_tier_new')), findsOneWidget);
+      expect(find.byKey(const Key('home_tier_recommend')), findsOneWidget);
+      expect(
+        find.byKey(const Key('home_section_feature_request')),
+        findsOneWidget,
+      );
+      expect(find.byKey(const Key('home_section_ceo_office')), findsNothing);
+    });
+
+    testWidgets('Feature: HomePage (Cockpit) renders correctly',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(
+        createTestWidget(const HomePage(showLegacyOperations: true)),
+      );
       await tester.pumpAndSettle();
 
       expect(find.byKey(const Key('global_header_clock_bar')), findsOneWidget);
@@ -131,7 +155,10 @@ void main() {
       });
       await tester.pumpWidget(
         createTestWidget(
-          HomePage(nowProvider: () => DateTime(2026, 2, 26, 9, 0)),
+          HomePage(
+            nowProvider: () => DateTime(2026, 2, 26, 9, 0),
+            showLegacyOperations: true,
+          ),
         ),
       );
       await tester.pumpAndSettle();
@@ -148,7 +175,10 @@ void main() {
       SharedPreferences.setMockInitialValues({});
       await tester.pumpWidget(
         createTestWidget(
-          HomePage(nowProvider: () => DateTime(2026, 2, 26, 9, 0)),
+          HomePage(
+            nowProvider: () => DateTime(2026, 2, 26, 9, 0),
+            showLegacyOperations: true,
+          ),
         ),
       );
       await tester.pumpAndSettle();
@@ -177,7 +207,10 @@ void main() {
 
       await tester.pumpWidget(
         createTestWidget(
-          HomePage(nowProvider: () => DateTime(2026, 2, 26, 9, 0)),
+          HomePage(
+            nowProvider: () => DateTime(2026, 2, 26, 9, 0),
+            showLegacyOperations: true,
+          ),
         ),
       );
       await tester.pumpAndSettle();
@@ -200,7 +233,10 @@ void main() {
       });
       await tester.pumpWidget(
         createTestWidget(
-          HomePage(nowProvider: () => DateTime(2026, 2, 26, 10, 0)),
+          HomePage(
+            nowProvider: () => DateTime(2026, 2, 26, 10, 0),
+            showLegacyOperations: true,
+          ),
         ),
       );
       await tester.pumpAndSettle();
@@ -221,7 +257,10 @@ void main() {
       });
       await tester.pumpWidget(
         createTestWidget(
-          HomePage(nowProvider: () => DateTime(2026, 2, 26, 13, 0)),
+          HomePage(
+            nowProvider: () => DateTime(2026, 2, 26, 13, 0),
+            showLegacyOperations: true,
+          ),
         ),
       );
       await tester.pumpAndSettle();
@@ -252,7 +291,10 @@ void main() {
 
       await tester.pumpWidget(
         createTestWidget(
-          HomePage(nowProvider: () => DateTime(2026, 2, 26, 13, 0)),
+          HomePage(
+            nowProvider: () => DateTime(2026, 2, 26, 13, 0),
+            showLegacyOperations: true,
+          ),
         ),
       );
       await tester.pumpAndSettle();
@@ -289,7 +331,10 @@ void main() {
 
       await tester.pumpWidget(
         createTestWidget(
-          HomePage(nowProvider: () => DateTime(2026, 2, 26, 13, 0)),
+          HomePage(
+            nowProvider: () => DateTime(2026, 2, 26, 13, 0),
+            showLegacyOperations: true,
+          ),
         ),
       );
       await tester.pumpAndSettle();
@@ -311,7 +356,10 @@ void main() {
         (WidgetTester tester) async {
       await tester.pumpWidget(
         createTestWidget(
-          HomePage(nowProvider: () => DateTime(2026, 2, 26, 13, 0)),
+          HomePage(
+            nowProvider: () => DateTime(2026, 2, 26, 13, 0),
+            showLegacyOperations: true,
+          ),
         ),
       );
       await tester.pumpAndSettle();
@@ -349,7 +397,10 @@ void main() {
         (WidgetTester tester) async {
       await tester.pumpWidget(
         createTestWidget(
-          HomePage(nowProvider: () => DateTime(2026, 2, 26, 13, 0)),
+          HomePage(
+            nowProvider: () => DateTime(2026, 2, 26, 13, 0),
+            showLegacyOperations: true,
+          ),
         ),
       );
       await tester.pumpAndSettle();
@@ -385,7 +436,10 @@ void main() {
 
       await tester.pumpWidget(
         createTestWidget(
-          HomePage(nowProvider: () => DateTime(2026, 2, 26, 13, 0)),
+          HomePage(
+            nowProvider: () => DateTime(2026, 2, 26, 13, 0),
+            showLegacyOperations: true,
+          ),
         ),
       );
       await tester.pumpAndSettle();

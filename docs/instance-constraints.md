@@ -28,6 +28,8 @@
 | 2026-04-20 | 全インスタンス (PS版#3 発見) | git-bash + cygwin Windows 環境で `cd <dir> && dart format <file> 2>&1 \| tail -N` を background task で起動すると stdout buffering lock → 180s timeout 3 連発で永久 hang | **絶対パス + pipe なし** テンプレ: `dart format C:/absolute/path/file.dart 2>&1` (同期 Bash)。exit code 判定のみなら `--set-exit-if-changed` 付加で pipe 完全禁止 | PS#3 S26 |
 | 2026-04-20 | 全インスタンス (PS版#3 発見) | ScheduleWakeup 連鎖で 8h+ セッション化 (1 session で user input 3 件・last-prompt 31 件・idle gap 2 回 × 3.5h = 7h 待機) | 深夜 JST 02-06 は ScheduleWakeup 呼出禁止。idle gap 3h+ 検知で wrap-up 実行し session 終了。`delaySeconds` 1800 超過禁止。wake 2 連続自動起動=停止サイン | PS#3 S26 |
 | 2026-04-20 | 全インスタンス (PS版#3 発見) | compaction 後 summary 継続セッションに新規大規模タスク投入 → context 再圧迫 → 再 compaction ループ | summary 継続時は wrap-up 済ませて 90 min 以内に session 終了。次タスクは新セッションで起動 | PS#3 S26 |
+| 2026-05-05 | Windowsアプリ版 (Win Claude 発見) | `New-ScheduledTaskPrincipal -UserId $env:USERNAME` 単独 (= `"kanta"`) は `Register-ScheduledTask` で「The parameter is incorrect. (20,8):UserId:」失敗 (PowerShell 5.1 / Windows 11) | **DOMAIN\USER 形式必須**: `$userId = "$env:USERDOMAIN\$env:USERNAME"` (= `"KANTA\kanta"`) → `New-ScheduledTaskPrincipal -UserId $userId` | Win版#132 part 137 |
+| 2026-05-05 | Windowsアプリ版 (Win Claude 発見) | `Register-ScheduledTask` 失敗後も後続 `Write-Host "INSTALLED"` が走り false-positive 表示 | (a) `try/catch` + `-ErrorAction Stop` で exception 確実捕捉 (b) registration 後 `Get-ScheduledTask -TaskName $TaskName -ErrorAction SilentlyContinue` で **verify-after-write** (= 不在なら exit) | Win版#132 part 137 |
 
 ---
 

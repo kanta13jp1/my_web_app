@@ -545,7 +545,7 @@ $input
     }
 
     if (text.contains('タスク') ||
-        text.contains('TODO') ||
+        RegExp('[Tt][Oo][Dd][Oo]').hasMatch(text) ||
         text.contains('仕事') ||
         text.contains('課題')) {
       return (

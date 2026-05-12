@@ -1,8 +1,30 @@
 // lib/pages/admin/blog_management_page.dart
 // ブログ管理ページ: 投稿済み記事一覧・エンゲージメント・コメント確認
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
+
+class _NewsSignalLintReport {
+  final String checkedAt;
+  final String status;
+  final int findingCount;
+  final List<String> findings;
+
+  const _NewsSignalLintReport({
+    required this.checkedAt,
+    required this.status,
+    required this.findingCount,
+    required this.findings,
+  });
+
+  bool get needsReview =>
+      status == 'review_required' ||
+      findings.any(
+        (line) =>
+            line.contains('[error]') || line.contains('[review_required]'),
+      );
+}
 
 class BlogManagementPage extends StatefulWidget {
   const BlogManagementPage({super.key});
@@ -20,11 +42,15 @@ class _BlogManagementPageState extends State<BlogManagementPage>
   List<Map<String, dynamic>> _drafts = [];
   bool _isLoading = true;
   bool _isSyncing = false;
-  String? _loadError;
+  bool _isLintingNewsSignals = false;
   final Set<String> _publishingIds = {};
   final Set<String> _togglingIds = {};
   final Set<String> _replyingIds = {};
-  String _tab = 'articles'; // 'articles' | 'comments' | 'drafts'
+  List<Map<String, dynamic>> _corrections = [];
+  final Set<String> _approvingIds = {};
+  final Set<String> _rejectingIds = {};
+  String _tab =
+      'articles'; // 'articles' | 'comments' | 'drafts' | 'corrections'
   String _platformFilter = 'all'; // 'all' | 'qiita' | 'devto'
   String _draftSearch = '';
   String _draftStatusFilter = 'all'; // 'all' | 'draft' | 'ready'
@@ -49,10 +75,7 @@ class _BlogManagementPageState extends State<BlogManagementPage>
   }
 
   Future<void> _loadData() async {
-    setState(() {
-      _isLoading = true;
-      _loadError = null;
-    });
+    setState(() => _isLoading = true);
     try {
       final results = await Future.wait([
         _supabase
@@ -68,11 +91,20 @@ class _BlogManagementPageState extends State<BlogManagementPage>
         _supabase
             .from('blog_posts')
             .select(
-              'id, title, status, target_platforms, draft_path, posted_at, url, created_at, content',
+              'id, title, status, target_platforms, draft_path, posted_at, url, created_at, content, tags, notes',
             )
             .inFilter('status', ['draft', 'ready'])
             .order('created_at', ascending: false)
             .limit(100),
+        _supabase
+            .from('blog_corrections')
+            .select(
+              'id, platform, article_id, title, url, confidence, errors_json, detected_at',
+            )
+            .eq('approved', false)
+            .isFilter('applied_at', null)
+            .order('detected_at', ascending: false)
+            .limit(50),
       ]);
 
       if (mounted) {
@@ -80,11 +112,11 @@ class _BlogManagementPageState extends State<BlogManagementPage>
           _engagement = List<Map<String, dynamic>>.from(results[0] as List);
           _comments = List<Map<String, dynamic>>.from(results[1] as List);
           _drafts = List<Map<String, dynamic>>.from(results[2] as List);
+          _corrections = List<Map<String, dynamic>>.from(results[3] as List);
         });
       }
     } catch (e) {
       if (mounted) {
-        setState(() => _loadError = e.toString());
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('❌ 読み込み失敗: $e'),
@@ -137,9 +169,154 @@ class _BlogManagementPageState extends State<BlogManagementPage>
     }
   }
 
+  Future<void> _runNewsSignalLint() async {
+    if (_isLintingNewsSignals) return;
+    setState(() => _isLintingNewsSignals = true);
+    try {
+      final res = await _supabase.functions.invoke(
+        'schedule-hub',
+        body: const {
+          'action': 'blog.news_signal_lint',
+          'limit': 160,
+          'max_age_days': 3,
+          'update_posts': true,
+        },
+      );
+      if (!mounted) return;
+      final data = res.data as Map<String, dynamic>?;
+      final findings = (data?['finding_count'] as num?)?.toInt() ?? 0;
+      final blocking = (data?['blocking_count'] as num?)?.toInt() ?? 0;
+      final ok = res.status == 200 && data?['success'] == true;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            ok
+                ? 'AI外部脳Lint完了: 問題なし'
+                : 'AI外部脳Lint完了: 要確認 $blocking 件 / 検出 $findings 件',
+          ),
+          backgroundColor: ok ? _green : _orange,
+          duration: const Duration(seconds: 4),
+        ),
+      );
+      await _loadData();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('AI外部脳Lint失敗: $e'),
+            backgroundColor: _red,
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLintingNewsSignals = false);
+    }
+  }
+
+  _NewsSignalLintReport? _parseNewsSignalLintReport(String notes) {
+    final match = RegExp(
+      r'NEWS_SIGNAL_LINT_START([\s\S]*?)NEWS_SIGNAL_LINT_END',
+    ).firstMatch(notes);
+    if (match == null) return null;
+
+    var checkedAt = '';
+    var status = 'unknown';
+    var findingCount = 0;
+    final findings = <String>[];
+    final body = match.group(1) ?? '';
+    for (final rawLine in body.split('\n')) {
+      final line = rawLine.trim();
+      if (line.isEmpty) continue;
+      if (line.startsWith('checked_at=')) {
+        checkedAt = line.substring('checked_at='.length);
+      } else if (line.startsWith('status=')) {
+        status = line.substring('status='.length);
+      } else if (line.startsWith('findings=')) {
+        findingCount = int.tryParse(line.substring('findings='.length)) ?? 0;
+      } else if (line.startsWith('- ')) {
+        findings.add(line.substring(2));
+      }
+    }
+
+    return _NewsSignalLintReport(
+      checkedAt: checkedAt,
+      status: status,
+      findingCount: findingCount,
+      findings: findings,
+    );
+  }
+
+  List<String> _externalBrainFilePaths(String notes) {
+    final match = RegExp(
+      r'^EXTERNAL_BRAIN_FILE_PATHS=(.+)$',
+      multiLine: true,
+    ).firstMatch(notes);
+    if (match == null) return const [];
+    return (match.group(1) ?? '')
+        .split(',')
+        .map((path) => path.trim())
+        .where((path) => path.isNotEmpty)
+        .toList(growable: false);
+  }
+
+  Future<bool> _confirmLintOverrideIfNeeded(Map<String, dynamic> d) async {
+    final notes = d['notes']?.toString() ?? '';
+    final lint = _parseNewsSignalLintReport(notes);
+    if (lint?.needsReview != true) return true;
+    final title = d['title'] as String? ?? '(no title)';
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: _card,
+        title: const Text(
+          'AI外部脳Lintの要確認があります',
+          style: TextStyle(color: Colors.white, height: 1.5),
+        ),
+        content: Text(
+          '「$title」にはニュース出典・高リスク領域などの確認事項が残っています。\n人間レビュー済みとして続行しますか？',
+          style: const TextStyle(color: Colors.white70, height: 1.6),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('戻る', style: TextStyle(color: Colors.white54)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: _orange),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text(
+              'レビュー済みとして続行',
+              style: TextStyle(color: Colors.white),
+            ),
+          ),
+        ],
+      ),
+    );
+    return ok == true;
+  }
+
+  String _shortIso(String value) {
+    final date = DateTime.tryParse(value)?.toLocal();
+    if (date == null) return value;
+    final hh = date.hour.toString().padLeft(2, '0');
+    final mm = date.minute.toString().padLeft(2, '0');
+    return '${date.month}/${date.day} $hh:$mm';
+  }
+
+  Future<void> _copyExternalBrainPaths(List<String> paths) async {
+    if (paths.isEmpty) return;
+    await Clipboard.setData(ClipboardData(text: paths.join('\n')));
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('AI外部脳パスをコピーしました')),
+    );
+  }
+
   Future<void> _publishDraft(Map<String, dynamic> d) async {
     final id = d['id']?.toString() ?? '';
     if (id.isEmpty || _publishingIds.contains(id)) return;
+    if (!await _confirmLintOverrideIfNeeded(d)) return;
     setState(() => _publishingIds.add(id));
     try {
       final res = await _supabase.functions.invoke(
@@ -153,7 +330,10 @@ class _BlogManagementPageState extends State<BlogManagementPage>
       final qiitaOk = (results['qiita'] as Map?)?['ok'] == true;
       final devtoOk = (results['devto'] as Map?)?['ok'] == true;
       final msg = ok
-          ? '✅ 投稿完了 ${[if (qiitaOk) 'Qiita', if (devtoOk) 'dev.to'].join(' + ')}'
+          ? '✅ 投稿完了 ${[
+              if (qiitaOk) 'Qiita',
+              if (devtoOk) 'dev.to',
+            ].join(' + ')}'
           : '⚠️ 投稿エラー (${res.status}): ${data?['error'] ?? ''}';
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -183,13 +363,26 @@ class _BlogManagementPageState extends State<BlogManagementPage>
     if (id.isEmpty || _togglingIds.contains(id)) return;
     final current = d['status'] as String? ?? 'draft';
     final next = current == 'ready' ? 'draft' : 'ready';
+    if (next == 'ready' && !await _confirmLintOverrideIfNeeded(d)) return;
     setState(() => _togglingIds.add(id));
     try {
-      await _supabase
-          .from('blog_posts')
-          .update({'status': next})
-          .eq('id', id);
-      await _loadData();
+      final res = await _supabase.functions.invoke(
+        'schedule-hub',
+        body: {'action': 'blog.update_post', 'id': id, 'status': next},
+      );
+      if (!mounted) return;
+      final success = res.status == 200;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            success
+                ? (next == 'ready' ? '公開キューへ追加しました' : '下書きに戻しました')
+                : 'ステータス更新エラー (${res.status})',
+          ),
+          backgroundColor: success ? _green : _red,
+        ),
+      );
+      if (success) await _loadData();
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -264,8 +457,7 @@ class _BlogManagementPageState extends State<BlogManagementPage>
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: _orange),
             onPressed: () => Navigator.pop(ctx, true),
-            child:
-                const Text('保存', style: TextStyle(color: Colors.white)),
+            child: const Text('保存', style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -296,17 +488,21 @@ class _BlogManagementPageState extends State<BlogManagementPage>
       );
       if (!mounted) return;
       final success = res.status == 200;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(success ? '✅ 保存完了' : '⚠️ 保存エラー (${res.status})'),
-        backgroundColor: success ? _green : _red,
-      ));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(success ? '✅ 保存完了' : '⚠️ 保存エラー (${res.status})'),
+          backgroundColor: success ? _green : _red,
+        ),
+      );
       if (success) await _loadData();
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('❌ 保存失敗: $e'),
-          backgroundColor: _red,
-        ));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('❌ 保存失敗: $e'),
+            backgroundColor: _red,
+          ),
+        );
       }
     }
   }
@@ -330,8 +526,7 @@ class _BlogManagementPageState extends State<BlogManagementPage>
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child:
-                const Text('キャンセル', style: TextStyle(color: Colors.white54)),
+            child: const Text('キャンセル', style: TextStyle(color: Colors.white54)),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: _red),
@@ -349,17 +544,21 @@ class _BlogManagementPageState extends State<BlogManagementPage>
       );
       if (!mounted) return;
       final success = res.status == 200;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(success ? '🗑️ 削除しました' : '⚠️ 削除エラー (${res.status})'),
-        backgroundColor: success ? _green : _red,
-      ));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(success ? '🗑️ 削除しました' : '⚠️ 削除エラー (${res.status})'),
+          backgroundColor: success ? _green : _red,
+        ),
+      );
       if (success) await _loadData();
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('❌ 削除失敗: $e'),
-          backgroundColor: _red,
-        ));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('❌ 削除失敗: $e'),
+            backgroundColor: _red,
+          ),
+        );
       }
     }
   }
@@ -386,16 +585,14 @@ class _BlogManagementPageState extends State<BlogManagementPage>
                 children: [
                   TextField(
                     controller: titleCtrl,
-                    style:
-                        const TextStyle(color: Colors.white, height: 1.5),
+                    style: const TextStyle(color: Colors.white, height: 1.5),
                     decoration: _inputDeco('タイトル *'),
                     autofocus: true,
                   ),
                   const SizedBox(height: 10),
                   TextField(
                     controller: tagsCtrl,
-                    style:
-                        const TextStyle(color: Colors.white, height: 1.5),
+                    style: const TextStyle(color: Colors.white, height: 1.5),
                     decoration: _inputDeco('タグ (カンマ区切り、最大4個)'),
                   ),
                   const SizedBox(height: 10),
@@ -403,8 +600,7 @@ class _BlogManagementPageState extends State<BlogManagementPage>
                     children: [
                       const Text(
                         '投稿先: ',
-                        style:
-                            TextStyle(color: Colors.white54, height: 1.5),
+                        style: TextStyle(color: Colors.white54, height: 1.5),
                       ),
                       ...['qiita', 'devto', 'qiita,devto'].map(
                         (p) => Padding(
@@ -452,15 +648,16 @@ class _BlogManagementPageState extends State<BlogManagementPage>
               onPressed: () {
                 if (titleCtrl.text.trim().isEmpty ||
                     contentCtrl.text.trim().isEmpty) {
-                  ScaffoldMessenger.of(ctx2).showSnackBar(const SnackBar(
-                    content: Text('タイトルと本文は必須です'),
-                  ));
+                  ScaffoldMessenger.of(ctx2).showSnackBar(
+                    const SnackBar(
+                      content: Text('タイトルと本文は必須です'),
+                    ),
+                  );
                   return;
                 }
                 Navigator.pop(ctx2, true);
               },
-              child:
-                  const Text('作成', style: TextStyle(color: Colors.white)),
+              child: const Text('作成', style: TextStyle(color: Colors.white)),
             ),
           ],
         ),
@@ -492,28 +689,32 @@ class _BlogManagementPageState extends State<BlogManagementPage>
       );
       if (!mounted) return;
       final success = res.status == 200 || res.status == 201;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(success ? '✅ 下書き作成しました' : '⚠️ 作成エラー (${res.status})'),
-        backgroundColor: success ? _green : _red,
-      ));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(success ? '✅ 下書き作成しました' : '⚠️ 作成エラー (${res.status})'),
+          backgroundColor: success ? _green : _red,
+        ),
+      );
       if (success) {
         setState(() => _tab = 'drafts');
         await _loadData();
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('❌ 作成失敗: $e'),
-          backgroundColor: _red,
-        ));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('❌ 作成失敗: $e'),
+            backgroundColor: _red,
+          ),
+        );
       }
     }
   }
 
   Future<void> _replyToComment(Map<String, dynamic> c) async {
-    final commentId = c['comment_id']?.toString() ?? c['id']?.toString() ?? '';
+    final articleId = c['article_id']?.toString() ?? '';
     final platform = c['platform'] as String? ?? '';
-    if (commentId.isEmpty || platform != 'qiita') return;
+    if (articleId.isEmpty || platform != 'qiita') return;
     final id = c['id']?.toString() ?? '';
     if (id.isEmpty || _replyingIds.contains(id)) return;
     final bodyCtrl = TextEditingController();
@@ -561,8 +762,7 @@ class _BlogManagementPageState extends State<BlogManagementPage>
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child:
-                const Text('キャンセル', style: TextStyle(color: Colors.white54)),
+            child: const Text('キャンセル', style: TextStyle(color: Colors.white54)),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: _orange),
@@ -570,8 +770,7 @@ class _BlogManagementPageState extends State<BlogManagementPage>
               if (bodyCtrl.text.trim().isEmpty) return;
               Navigator.pop(ctx, true);
             },
-            child:
-                const Text('送信', style: TextStyle(color: Colors.white)),
+            child: const Text('送信', style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -585,23 +784,27 @@ class _BlogManagementPageState extends State<BlogManagementPage>
         'schedule-hub',
         body: {
           'action': 'blog.qiita_comment_post',
-          'comment_id': commentId,
+          'item_id': articleId,
           'body': body,
         },
       );
       if (!mounted) return;
       final success = res.status == 200 || res.status == 201;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(success ? '✅ 返信しました' : '⚠️ 返信エラー (${res.status})'),
-        backgroundColor: success ? _green : _red,
-      ));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(success ? '✅ 返信しました' : '⚠️ 返信エラー (${res.status})'),
+          backgroundColor: success ? _green : _red,
+        ),
+      );
       if (success) await _loadData();
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('❌ 返信失敗: $e'),
-          backgroundColor: _red,
-        ));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('❌ 返信失敗: $e'),
+            backgroundColor: _red,
+          ),
+        );
       }
     } finally {
       if (mounted) setState(() => _replyingIds.remove(id));
@@ -623,7 +826,7 @@ class _BlogManagementPageState extends State<BlogManagementPage>
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(color: _orange),
+          borderSide: const BorderSide(color: _orange),
         ),
         counterStyle: const TextStyle(color: Colors.white38),
       );
@@ -636,6 +839,12 @@ class _BlogManagementPageState extends State<BlogManagementPage>
 
   int get _totalViews =>
       _engagement.fold(0, (sum, e) => sum + ((e['views_count'] as int?) ?? 0));
+
+  int get _newsSignalReviewCount => _drafts.where((draft) {
+        final lint =
+            _parseNewsSignalLintReport(draft['notes']?.toString() ?? '');
+        return lint?.needsReview == true;
+      }).length;
 
   @override
   Widget build(BuildContext context) {
@@ -679,7 +888,10 @@ class _BlogManagementPageState extends State<BlogManagementPage>
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: _createDraft,
+        onPressed: () async {
+          final updated = await Navigator.pushNamed(context, '/admin/blog/new');
+          if (updated == true) _loadData();
+        },
         backgroundColor: _orange,
         foregroundColor: Colors.white,
         icon: const Icon(Icons.add),
@@ -700,6 +912,7 @@ class _BlogManagementPageState extends State<BlogManagementPage>
                   if (_tab == 'articles') ..._buildArticleSliver(),
                   if (_tab == 'comments') ..._buildCommentSliver(),
                   if (_tab == 'drafts') ..._buildDraftSliver(),
+                  if (_tab == 'corrections') ..._buildCorrectionsSliver(),
                   const SliverToBoxAdapter(child: SizedBox(height: 80)),
                 ],
               ),
@@ -804,7 +1017,15 @@ class _BlogManagementPageState extends State<BlogManagementPage>
                 'コメント${_unrepliedCount > 0 ? ' ($_unrepliedCount)' : ''}',
               ),
               const SizedBox(width: 8),
-              _tabBtn('drafts', '下書き (${_filteredDrafts.length}/${_drafts.length})'),
+              _tabBtn(
+                'drafts',
+                '下書き (${_filteredDrafts.length}/${_drafts.length})',
+              ),
+              const SizedBox(width: 8),
+              _tabBtn(
+                'corrections',
+                '訂正${_corrections.isNotEmpty ? ' ❗${_corrections.length}' : ''}',
+              ),
             ],
           ),
           if (_tab == 'articles') ...[
@@ -827,7 +1048,8 @@ class _BlogManagementPageState extends State<BlogManagementPage>
               decoration: InputDecoration(
                 hintText: 'タイトル検索...',
                 hintStyle: const TextStyle(color: Colors.white38, height: 1.5),
-                prefixIcon: const Icon(Icons.search, color: Colors.white38, size: 18),
+                prefixIcon:
+                    const Icon(Icons.search, color: Colors.white38, size: 18),
                 filled: true,
                 fillColor: Colors.white10,
                 contentPadding:
@@ -842,23 +1064,65 @@ class _BlogManagementPageState extends State<BlogManagementPage>
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: _orange),
+                  borderSide: const BorderSide(color: _orange),
                 ),
               ),
               onChanged: (v) => setState(() => _draftSearch = v),
             ),
             const SizedBox(height: 8),
-            Row(
+            Wrap(
+              spacing: 6,
+              runSpacing: 8,
+              crossAxisAlignment: WrapCrossAlignment.center,
               children: [
                 _draftStatusBtn('all', '全て'),
-                const SizedBox(width: 6),
                 _draftStatusBtn('draft', '下書き'),
-                const SizedBox(width: 6),
                 _draftStatusBtn('ready', '公開準備完了'),
+                _newsSignalLintButton(),
               ],
             ),
           ],
         ],
+      ),
+    );
+  }
+
+  Widget _newsSignalLintButton() {
+    final reviewCount = _newsSignalReviewCount;
+    return SizedBox(
+      height: 30,
+      child: OutlinedButton.icon(
+        onPressed: _isLintingNewsSignals ? null : _runNewsSignalLint,
+        icon: _isLintingNewsSignals
+            ? const SizedBox(
+                width: 12,
+                height: 12,
+                child: CircularProgressIndicator(
+                  strokeWidth: 1.5,
+                  color: Colors.white54,
+                ),
+              )
+            : Icon(
+                reviewCount > 0
+                    ? Icons.report_problem_outlined
+                    : Icons.rule_folder_outlined,
+                size: 14,
+              ),
+        label: Text(
+          _isLintingNewsSignals
+              ? 'Lint中...'
+              : reviewCount > 0
+                  ? 'AI外部脳Lint 要確認 $reviewCount'
+                  : 'AI外部脳Lint',
+          style: const TextStyle(fontSize: 11, height: 1.5),
+        ),
+        style: OutlinedButton.styleFrom(
+          foregroundColor: reviewCount > 0 ? _orange : Colors.white54,
+          side: BorderSide(
+            color: reviewCount > 0 ? _orange.withAlpha(140) : Colors.white24,
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 10),
+        ),
       ),
     );
   }
@@ -965,7 +1229,11 @@ class _BlogManagementPageState extends State<BlogManagementPage>
             padding: const EdgeInsets.all(32),
             child: Column(
               children: [
-                const Icon(Icons.article_outlined, color: Colors.white24, size: 48),
+                const Icon(
+                  Icons.article_outlined,
+                  color: Colors.white24,
+                  size: 48,
+                ),
                 const SizedBox(height: 12),
                 const Text(
                   'データなし\nSync ボタンで Qiita / dev.to から取得できます',
@@ -1279,35 +1547,37 @@ class _BlogManagementPageState extends State<BlogManagementPage>
               const SizedBox(height: 8),
               Align(
                 alignment: Alignment.centerRight,
-                child: Builder(builder: (ctx) {
-                  final id = c['id']?.toString() ?? '';
-                  final isReplying = _replyingIds.contains(id);
-                  return SizedBox(
-                    height: 28,
-                    child: ElevatedButton.icon(
-                      onPressed: isReplying ? null : () => _replyToComment(c),
-                      icon: isReplying
-                          ? const SizedBox(
-                              width: 12,
-                              height: 12,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 1.5,
-                                color: Colors.white,
-                              ),
-                            )
-                          : const Icon(Icons.reply, size: 14),
-                      label: Text(
-                        isReplying ? '送信中...' : '返信する',
-                        style: const TextStyle(fontSize: 11, height: 1.5),
+                child: Builder(
+                  builder: (ctx) {
+                    final id = c['id']?.toString() ?? '';
+                    final isReplying = _replyingIds.contains(id);
+                    return SizedBox(
+                      height: 28,
+                      child: ElevatedButton.icon(
+                        onPressed: isReplying ? null : () => _replyToComment(c),
+                        icon: isReplying
+                            ? const SizedBox(
+                                width: 12,
+                                height: 12,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 1.5,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : const Icon(Icons.reply, size: 14),
+                        label: Text(
+                          isReplying ? '送信中...' : '返信する',
+                          style: const TextStyle(fontSize: 11, height: 1.5),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: _orange,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                        ),
                       ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: _orange,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
-                      ),
-                    ),
-                  );
-                }),
+                    );
+                  },
+                ),
               ),
             ],
           ],
@@ -1326,12 +1596,14 @@ class _BlogManagementPageState extends State<BlogManagementPage>
             padding: const EdgeInsets.all(32),
             child: Column(
               children: [
-                const Icon(Icons.drafts_outlined, color: Colors.white24, size: 48),
+                const Icon(
+                  Icons.drafts_outlined,
+                  color: Colors.white24,
+                  size: 48,
+                ),
                 const SizedBox(height: 12),
                 Text(
-                  _drafts.isEmpty
-                      ? '下書きなし\n右下のボタンで新規作成できます'
-                      : '検索結果なし',
+                  _drafts.isEmpty ? '下書きなし\n右下のボタンで新規作成できます' : '検索結果なし',
                   textAlign: TextAlign.center,
                   style: const TextStyle(color: Colors.white38, height: 1.6),
                 ),
@@ -1377,6 +1649,9 @@ class _BlogManagementPageState extends State<BlogManagementPage>
         : rawPlatforms?.toString() ?? '';
     final url = d['url'] as String? ?? '';
     final draftPath = d['draft_path'] as String? ?? '';
+    final notes = d['notes']?.toString() ?? '';
+    final lint = _parseNewsSignalLintReport(notes);
+    final externalBrainPaths = _externalBrainFilePaths(notes);
 
     final isPublishing = _publishingIds.contains(id);
     final isToggling = _togglingIds.contains(id);
@@ -1436,7 +1711,8 @@ class _BlogManagementPageState extends State<BlogManagementPage>
                   color: Colors.white54,
                   tooltip: '編集',
                   padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                  constraints:
+                      const BoxConstraints(minWidth: 32, minHeight: 32),
                   onPressed: () => _editDraft(d),
                 ),
                 IconButton(
@@ -1444,7 +1720,8 @@ class _BlogManagementPageState extends State<BlogManagementPage>
                   color: _red.withAlpha(180),
                   tooltip: '削除',
                   padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                  constraints:
+                      const BoxConstraints(minWidth: 32, minHeight: 32),
                   onPressed: () => _deleteDraft(d),
                 ),
                 if (url.isNotEmpty)
@@ -1478,6 +1755,8 @@ class _BlogManagementPageState extends State<BlogManagementPage>
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
+            if (lint != null || externalBrainPaths.isNotEmpty)
+              _buildNewsSignalLintPanel(lint, externalBrainPaths),
             const SizedBox(height: 10),
             Row(
               children: [
@@ -1504,12 +1783,10 @@ class _BlogManagementPageState extends State<BlogManagementPage>
                       style: const TextStyle(fontSize: 11, height: 1.5),
                     ),
                     style: OutlinedButton.styleFrom(
-                      foregroundColor:
-                          isReady ? Colors.white38 : _orange,
+                      foregroundColor: isReady ? Colors.white38 : _orange,
                       side: BorderSide(
-                        color: isReady
-                            ? Colors.white24
-                            : _orange.withAlpha(120),
+                        color:
+                            isReady ? Colors.white24 : _orange.withAlpha(120),
                       ),
                       padding: const EdgeInsets.symmetric(horizontal: 10),
                     ),
@@ -1552,6 +1829,390 @@ class _BlogManagementPageState extends State<BlogManagementPage>
         ),
       ),
     );
+  }
+
+  Widget _buildNewsSignalLintPanel(
+    _NewsSignalLintReport? lint,
+    List<String> externalBrainPaths,
+  ) {
+    final needsReview = lint?.needsReview == true;
+    final accent = needsReview ? _orange : _green;
+    final label = lint == null
+        ? 'AI外部脳リンク'
+        : needsReview
+            ? 'AI外部脳Lint: 要確認'
+            : 'AI外部脳Lint: OK';
+    final details = lint?.findings.take(3).toList(growable: false) ?? const [];
+
+    return Container(
+      margin: const EdgeInsets.only(top: 8),
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: accent.withAlpha(18),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: accent.withAlpha(90)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                needsReview
+                    ? Icons.report_problem_outlined
+                    : Icons.verified_outlined,
+                size: 15,
+                color: accent,
+              ),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  [
+                    label,
+                    if (lint != null) '検出 ${lint.findingCount}',
+                    if ((lint?.checkedAt ?? '').isNotEmpty)
+                      _shortIso(lint!.checkedAt),
+                  ].join(' / '),
+                  style: TextStyle(
+                    color: accent,
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    height: 1.5,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              if (externalBrainPaths.isNotEmpty)
+                IconButton(
+                  tooltip: 'AI外部脳パスをコピー',
+                  onPressed: () => _copyExternalBrainPaths(externalBrainPaths),
+                  icon: const Icon(Icons.copy, size: 15),
+                  color: Colors.white54,
+                  padding: EdgeInsets.zero,
+                  constraints:
+                      const BoxConstraints(minWidth: 28, minHeight: 28),
+                ),
+            ],
+          ),
+          if (details.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            ...details.map(
+              (line) => Padding(
+                padding: const EdgeInsets.only(top: 2),
+                child: Text(
+                  line,
+                  style: const TextStyle(
+                    color: Colors.white70,
+                    fontSize: 10,
+                    height: 1.45,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ),
+          ],
+          if (externalBrainPaths.isNotEmpty) ...[
+            const SizedBox(height: 6),
+            Wrap(
+              spacing: 6,
+              runSpacing: 4,
+              children: externalBrainPaths.take(3).map((path) {
+                return ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 260),
+                  child: Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withAlpha(45),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      path,
+                      style: const TextStyle(
+                        color: Colors.white54,
+                        fontSize: 10,
+                        height: 1.4,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  // ── 訂正レビュー ────────────────────────────────────────────────
+  List<Widget> _buildCorrectionsSliver() {
+    if (_corrections.isEmpty) {
+      return [
+        const SliverToBoxAdapter(
+          child: Center(
+            child: Padding(
+              padding: EdgeInsets.all(48),
+              child: Text(
+                'AI 訂正提案はありません\n(週次 GHA が自動検出します)',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: Colors.white38, height: 1.7),
+              ),
+            ),
+          ),
+        ),
+      ];
+    }
+    return [
+      SliverList(
+        delegate: SliverChildBuilderDelegate(
+          (ctx, i) => _buildCorrectionCard(_corrections[i]),
+          childCount: _corrections.length,
+        ),
+      ),
+    ];
+  }
+
+  Widget _buildCorrectionCard(Map<String, dynamic> c) {
+    final id = c['id']?.toString() ?? '';
+    final platform = c['platform'] as String? ?? '';
+    final title = c['title'] as String? ?? '(タイトルなし)';
+    final url = c['url'] as String? ?? '';
+    final confidence = c['confidence']?.toString() ?? '';
+    final errors = c['errors_json'] as List? ?? [];
+    final isApproving = _approvingIds.contains(id);
+    final isRejecting = _rejectingIds.contains(id);
+    final isBusy = isApproving || isRejecting;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: _card,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: _red.withAlpha(102)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: platform == 'qiita'
+                        ? const Color(0xFF55C500).withAlpha(51)
+                        : const Color(0xFF3D5AFE).withAlpha(51),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(
+                    platform == 'qiita' ? 'Qiita' : 'dev.to',
+                    style: TextStyle(
+                      color: platform == 'qiita'
+                          ? const Color(0xFF55C500)
+                          : const Color(0xFF82B1FF),
+                      fontSize: 11,
+                      height: 1.5,
+                    ),
+                  ),
+                ),
+                if (confidence.isNotEmpty) ...[
+                  const SizedBox(width: 8),
+                  Text(
+                    '信頼度: $confidence',
+                    style: const TextStyle(
+                      color: Colors.white38,
+                      fontSize: 11,
+                      height: 1.5,
+                    ),
+                  ),
+                ],
+                const Spacer(),
+                if (url.isNotEmpty)
+                  GestureDetector(
+                    onTap: () => _openUrl(url),
+                    child: const Icon(
+                      Icons.open_in_new,
+                      size: 14,
+                      color: Colors.white38,
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            Text(
+              title,
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                height: 1.5,
+              ),
+            ),
+            if (errors.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              ...errors.take(3).map((e) {
+                final err = e as Map<String, dynamic>? ?? {};
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 4),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Icon(Icons.error_outline, size: 14, color: _red),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          '${err['issue'] ?? ''} → ${err['correction'] ?? ''}',
+                          style: const TextStyle(
+                            color: Colors.white60,
+                            fontSize: 12,
+                            height: 1.5,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }),
+              if (errors.length > 3)
+                Text(
+                  'ほか ${errors.length - 3} 件',
+                  style: const TextStyle(
+                    color: Colors.white38,
+                    fontSize: 11,
+                    height: 1.5,
+                  ),
+                ),
+            ],
+            const SizedBox(height: 10),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                OutlinedButton(
+                  onPressed: isBusy ? null : () => _rejectCorrection(c),
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: Colors.white24),
+                    foregroundColor: Colors.white54,
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                  ),
+                  child: isRejecting
+                      ? const SizedBox(
+                          width: 12,
+                          height: 12,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 1.5,
+                            color: Colors.white38,
+                          ),
+                        )
+                      : const Text(
+                          '却下',
+                          style: TextStyle(fontSize: 12, height: 1.5),
+                        ),
+                ),
+                const SizedBox(width: 8),
+                ElevatedButton(
+                  onPressed: isBusy ? null : () => _approveCorrection(c),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _orange,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                  ),
+                  child: isApproving
+                      ? const SizedBox(
+                          width: 12,
+                          height: 12,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 1.5,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Text(
+                          '承認して適用',
+                          style: TextStyle(fontSize: 12, height: 1.5),
+                        ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _approveCorrection(Map<String, dynamic> c) async {
+    final id = c['id']?.toString() ?? '';
+    final articleId = c['article_id']?.toString() ?? '';
+    final title = c['title'] as String? ?? '';
+    if (id.isEmpty || articleId.isEmpty || _approvingIds.contains(id)) return;
+    setState(() => _approvingIds.add(id));
+    try {
+      await _supabase.functions.invoke(
+        'schedule-hub',
+        body: {
+          'action': 'blog.qiita_update',
+          'item_id': articleId,
+          'title': title,
+        },
+      );
+      await _supabase.from('blog_corrections').update({
+        'approved': true,
+        'approved_at': DateTime.now().toIso8601String(),
+        'applied_at': DateTime.now().toIso8601String(),
+      }).eq('id', id);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('✅ 訂正を承認・適用しました'),
+            backgroundColor: _green,
+          ),
+        );
+        await _loadData();
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('❌ 承認失敗: $e'),
+            backgroundColor: _red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _approvingIds.remove(id));
+    }
+  }
+
+  Future<void> _rejectCorrection(Map<String, dynamic> c) async {
+    final id = c['id']?.toString() ?? '';
+    if (id.isEmpty || _rejectingIds.contains(id)) return;
+    setState(() => _rejectingIds.add(id));
+    try {
+      await _supabase.from('blog_corrections').update({
+        'approved': false,
+        'applied_at': DateTime.now().toIso8601String(),
+      }).eq('id', id);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('🗑️ 却下しました')),
+        );
+        await _loadData();
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('❌ 却下失敗: $e'),
+            backgroundColor: _red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _rejectingIds.remove(id));
+    }
   }
 
   Future<void> _openUrl(String url) async {

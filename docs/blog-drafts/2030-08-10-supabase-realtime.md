@@ -17,7 +17,7 @@ Supabase Realtime は PostgreSQL の変更を WebSocket でクライアントに
 ## セットアップ
 
 ```yaml
-# pubspec.yaml
+# pubspec.yaml — 2030-08-10-supabase-realtime
 dependencies:
   supabase_flutter: ^2.5.0
 ```

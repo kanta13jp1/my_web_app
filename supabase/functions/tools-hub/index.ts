@@ -227,20 +227,65 @@ function wbsPriorityRank(priority: unknown): number {
   return 0;
 }
 
+const ADDITIONAL_REQUEST_TEXT = "\u8ffd\u52a0\u8981\u671b";
+const USER_REQUEST_CATEGORY_TEXT = "\u30e6\u30fc\u30b6\u30fc\u8981\u671b";
+
+function hasAdditionalRequestText(value: unknown): boolean {
+  return String(value ?? "").includes(ADDITIONAL_REQUEST_TEXT);
+}
+
+function isAdditionalRequestIssue(
+  title: unknown,
+  labels: string[] = [],
+): boolean {
+  return hasAdditionalRequestText(title) ||
+    labels.some((label) => hasAdditionalRequestText(label));
+}
+
 function isFeatureRequestTask(task: Record<string, unknown>): boolean {
   const category = String(task.category ?? "");
   const title = String(task.title ?? "");
-  return category === "ユーザー要望" || title.startsWith("[追加要望]");
+  return category === USER_REQUEST_CATEGORY_TEXT ||
+    hasAdditionalRequestText(category) ||
+    hasAdditionalRequestText(title);
+}
+
+function isGithubIssueLinkedTask(task: Record<string, unknown>): boolean {
+  return githubIssueNumberFromTask(task) !== null ||
+    String(task.github_issue_state ?? "").trim() !== "";
+}
+
+function dateOnlyUtc(date: Date): Date {
+  const copy = new Date(date);
+  copy.setUTCHours(0, 0, 0, 0);
+  return copy;
+}
+
+function formatIsoDate(date: Date): string {
+  return date.toISOString().slice(0, 10);
+}
+
+function additionalRequestStartDate(now: Date): string {
+  return formatIsoDate(dateOnlyUtc(now));
+}
+
+function additionalRequestEndDate(now: Date): string {
+  return formatIsoDate(dateOnlyUtc(now));
+}
+
+function githubIssueStartDate(now: Date): string {
+  return formatIsoDate(dateOnlyUtc(now));
 }
 
 function wbsTaskSortBucket(task: Record<string, unknown>): number {
   const status = String(task.status ?? "");
-  if (status === "completed") return 4;
+  if (status === "completed") return 5;
   if (isFeatureRequestTask(task)) return 0;
-  if (status === "in_progress") return 1;
-  if (status === "pending") return 2;
-  if (status === "blocked") return 3;
-  return 3;
+  if (isGithubIssueLinkedTask(task)) return 1;
+  if (status === "in_progress") return 2;
+  if (status === "pending") return 3;
+  if (status === "blocked") return 4;
+  return 4;
 }
 
 function compareOptionalDate(a: unknown, b: unknown): number {
@@ -656,16 +701,45 @@ const WBS_INSTANCE_VALUES = [
   "user", // ユーザー手動操作タスク (法人登記/銀行口座/外部面談等)
 ];
 
+const WBS_ACTIVE_INSTANCE_VALUES = [
+  "claude",
+  "codex",
+  "user",
+  "automation",
+];
+
+const WBS_CODEX_LEGACY_INSTANCES = ["codex", "ps2", "ps5", "ps6"];
+const WBS_AUTOMATION_LEGACY_INSTANCES = [
+  "schedule",
+  "gha",
+  "gemini",
+  "co-pilot",
+];
+
 const WBS_OPEN_STATUSES = ["pending", "in_progress", "blocked"];
 
 function normalizeWbsInstance(value: unknown): string {
   const normalized = String(value ?? "").trim().toLowerCase();
+  if (
+    normalized === "claude" ||
+    normalized === "claude-code" ||
+    normalized === "claude-code-1"
+  ) return "win";
+  if (normalized === "automation" || normalized === "auto") return "schedule";
   if (normalized === "windows") return "win";
   if (normalized === "ps") return "ps1";
   if (normalized === "copilot" || normalized === "github-copilot") {
     return "co-pilot";
   }
   return WBS_INSTANCE_VALUES.includes(normalized) ? normalized : "codex";
+}
+
+function normalizeWbsActiveInstance(value: unknown): string {
+  const normalized = normalizeWbsInstance(value);
+  if (WBS_CODEX_LEGACY_INSTANCES.includes(normalized)) return "codex";
+  if (WBS_AUTOMATION_LEGACY_INSTANCES.includes(normalized)) return "automation";
+  if (normalized === "user") return "user";
+  return "claude";
 }
 
 function mcpArgsForAction(
@@ -882,7 +956,7 @@ async function handleMcpFacade(
     const rawInstance = String(args.instance ?? "codex").trim().toLowerCase();
     const instance = rawInstance === "all"
       ? "all"
-      : normalizeWbsInstance(rawInstance);
+      : normalizeWbsActiveInstance(rawInstance);
     const includeCompleted = parseBooleanish(args.include_completed, false);
     const status = String(args.status ?? "").trim();
     const validStatuses = ["pending", "in_progress", "blocked", "completed"];
@@ -891,9 +965,6 @@ async function handleMcpFacade(
       .select(
         "id, category, title, description, instance, owner_instance, status, progress, end_date, priority, remaining_work, updated_at, github_issue_number, github_issue_url",
       );
-    if (instance !== "all") {
-      query = query.or(`instance.eq.${instance},owner_instance.eq.${instance}`);
-    }
     if (validStatuses.includes(status)) {
       query = query.eq("status", status);
     } else if (!includeCompleted) {
@@ -903,13 +974,17 @@ async function handleMcpFacade(
     const { data, error } = await query;
     if (error) throw new Error(error.message);
 
-    const tasks = [...(data ?? [])].sort(compareWbsTasks).slice(0, limit);
+    const filtered = [...(data ?? [])].filter((task) =>
+      wbsTaskMatchesInstanceFilter(task, rawInstance)
+    );
+    const tasks = filtered.sort(compareWbsTasks).slice(0, limit);
     await logMcpInvocation(auth.ctx, toolName, args, 200, req);
     return mcpToolResponse(body, {
       success: true,
       tool: toolName,
       structuredContent: {
         count: tasks.length,
+        total: filtered.length,
         instance,
         tasks,
       },
@@ -1089,6 +1164,30 @@ function normalizeDuplicateKey(value: unknown): string {
     .toLowerCase();
 }
 
+function isDuplicateWbsMirrorTask(task: Record<string, unknown>): boolean {
+  const text = `${task.remaining_work ?? ""} ${task.recovery_plan ?? ""}`
+    .toLowerCase();
+  return text.includes("duplicate of wbs task") ||
+    text.includes("duplicate github-origin wbs title") ||
+    text.includes("duplicate wbs title") ||
+    text.includes("duplicate_wbs_row") ||
+    text.includes("duplicate_title") ||
+    text.includes("duplicate_title_generic");
+}
+
+function compareWbsDuplicateTitleKeeper(
+  a: Record<string, unknown>,
+  b: Record<string, unknown>,
+): number {
+  return Number(isDuplicateWbsMirrorTask(a)) -
+      Number(isDuplicateWbsMirrorTask(b)) ||
+    Number(isCompletedWbsTask(a)) - Number(isCompletedWbsTask(b)) ||
+    Number(b.progress ?? 0) - Number(a.progress ?? 0) ||
+    compareOptionalDate(b.updated_at, a.updated_at) ||
+    compareOptionalDate(a.created_at, b.created_at) ||
+    String(a.id ?? "").localeCompare(String(b.id ?? ""));
+}
+
 function isWbsTitleInstanceUniqueConflict(
   error: { code?: string; message?: string; details?: string } | null,
 ): boolean {
@@ -1099,6 +1198,25 @@ function isWbsTitleInstanceUniqueConflict(
   return isUniqueViolation &&
     (text.includes("wbs_tasks_title_instance_unique") ||
       text.includes("key (title, instance)"));
+}
+
+function isWbsIssueInstanceActiveUniqueConflict(
+  error: { code?: string; message?: string; details?: string } | null,
+): boolean {
+  if (!error) return false;
+  const text = `${error.message ?? ""} ${error.details ?? ""}`.toLowerCase();
+  const isUniqueViolation = error.code === "23505" ||
+    text.includes("duplicate key value violates unique constraint");
+  return isUniqueViolation &&
+    (text.includes("wbs_tasks_issue_instance_active_unique") ||
+      text.includes("key (github_issue_number, instance)"));
+}
+
+function isWbsGithubSyncUniqueConflict(
+  error: { code?: string; message?: string; details?: string } | null,
+): boolean {
+  return isWbsTitleInstanceUniqueConflict(error) ||
+    isWbsIssueInstanceActiveUniqueConflict(error);
 }
 
 function githubIssueLabelNames(issue: Record<string, unknown>): string[] {
@@ -1201,6 +1319,31 @@ async function fetchAllWbsTasks(
   );
 }
 
+async function fetchWbsTasksForGithubIssues(
+  admin: SupabaseClient,
+  taskSelect: string,
+  issueNumbers: number[],
+): Promise<Array<Record<string, unknown>>> {
+  const uniqueNumbers = [...new Set(issueNumbers)].filter((number) =>
+    Number.isFinite(number)
+  );
+  if (uniqueNumbers.length === 0) return [];
+
+  const chunkSize = 100;
+  const tasks: Array<Record<string, unknown>> = [];
+  for (let index = 0; index < uniqueNumbers.length; index += chunkSize) {
+    const chunk = uniqueNumbers.slice(index, index + chunkSize);
+    const { data, error } = await admin.from("wbs_tasks")
+      .select(taskSelect)
+      .in("github_issue_number", chunk)
+      .order("created_at", { ascending: true, nullsFirst: true })
+      .order("id", { ascending: true });
+    if (error) throw new Error(error.message);
+    tasks.push(...((data ?? []) as unknown as Array<Record<string, unknown>>));
+  }
+  return tasks;
+}
+
 function githubIssueOwnerInstance(labels: string[]): string {
   const normalized = labels.join(",").toLowerCase();
   if (
@@ -1220,7 +1363,14 @@ function githubIssuePriority(labels: string[]): string {
   return "low";
 }
 
-function githubIssueDueDate(labels: string[], now: Date): string {
+function githubIssueDueDate(
+  labels: string[],
+  now: Date,
+  title: unknown = "",
+): string {
+  if (isAdditionalRequestIssue(title, labels)) {
+    return additionalRequestEndDate(now);
+  }
   const normalized = labels.join(",").toLowerCase();
   const days = /(critical|p0|urgent|bug)/.test(normalized) ? 1 : 3;
   const due = new Date(now);
@@ -1307,7 +1457,28 @@ function pickGithubIssueWbsKeeper(
 }
 
 function wbsTaskLane(task: Record<string, unknown>): string {
-  return normalizeWbsInstance(task.owner_instance ?? task.instance);
+  return normalizeWbsActiveInstance(task.owner_instance ?? task.instance);
+}
+
+function wbsTaskMatchesInstanceFilter(
+  task: Record<string, unknown>,
+  rawInstance: unknown,
+): boolean {
+  const raw = String(rawInstance ?? "").trim().toLowerCase();
+  if (!raw || raw === "all") return true;
+  if (
+    WBS_ACTIVE_INSTANCE_VALUES.includes(raw) ||
+    raw === "claude-code" ||
+    raw === "claude-code-1" ||
+    raw === "automation" ||
+    raw === "auto"
+  ) {
+    return wbsTaskLane(task) === normalizeWbsActiveInstance(raw);
+  }
+  const legacyInstance = normalizeWbsInstance(raw);
+  return normalizeWbsInstance(task.instance) === legacyInstance ||
+    normalizeWbsInstance(task.owner_instance ?? task.instance) ===
+      legacyInstance;
 }
 
 function wbsDeadline(task: Record<string, unknown>): string {
@@ -1340,12 +1511,13 @@ function wbsRescueScore(task: Record<string, unknown>, now: Date): number {
     (staleDays >= 3 ? staleDays * 12 : 0) +
     (wbsPriorityRank(task.priority) * 25) +
     (isFeatureRequestTask(task) ? 40 : 0) +
+    (isGithubIssueLinkedTask(task) ? 25 : 0) +
     (status === "in_progress" ? 20 : 0);
 }
 
 function buildWbsWorkload(tasks: Array<Record<string, unknown>>, now: Date) {
   const today = new Date(now.toISOString().slice(0, 10));
-  const workload = WBS_INSTANCE_VALUES.map((instance) => {
+  const workload = WBS_ACTIVE_INSTANCE_VALUES.map((instance) => {
     const laneTasks = tasks.filter((task) => wbsTaskLane(task) === instance);
     const openTasks = laneTasks.filter((task) =>
       WBS_OPEN_STATUSES.includes(String(task.status ?? ""))
@@ -1455,6 +1627,644 @@ async function addItem(
     .select("id, metadata, created_at").single();
   if (error) throw new Error(error.message);
   return data;
+}
+
+type RssFeedInput = {
+  title: string;
+  url: string;
+  category: string;
+};
+
+type RssNewsItem = {
+  title: string;
+  url: string;
+  source: string;
+  category: string;
+  published_at: string;
+  summary: string;
+};
+
+type RankedNewsItem = RssNewsItem & {
+  id: string;
+  fetched_at: string;
+  cluster_key: string;
+  signal_score: number;
+  confidence: "high" | "medium" | "low";
+  why_it_matters: string;
+  verification_warning: string;
+};
+
+type MarketIntelWatchItem = {
+  name: string;
+  keywords: string[];
+};
+
+type MarketIntelEvidence = {
+  title: string;
+  url: string;
+  source: string;
+  published_at: string;
+  signal_score: number;
+  confidence: string;
+};
+
+type MarketIntelSignal = {
+  id: string;
+  signal: string;
+  headline: string;
+  themes: string[];
+  watchlist_matches: string[];
+  evidence: MarketIntelEvidence[];
+  evidence_count: number;
+  source_count: number;
+  confidence: "high" | "medium" | "low";
+  uncertainty: string;
+  risk_note: string;
+  what_to_watch_next: string[];
+  paper_decision_log: Record<string, unknown>;
+};
+
+function decodeXmlEntities(value: string): string {
+  return value
+    .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(
+      /&#x([0-9a-fA-F]+);/g,
+      (_, hex) => String.fromCharCode(parseInt(hex, 16)),
+    )
+    .replace(
+      /&#([0-9]+);/g,
+      (_, code) => String.fromCharCode(parseInt(code, 10)),
+    )
+    .trim();
+}
+
+function stripHtml(value: string): string {
+  return decodeXmlEntities(value.replace(/<[^>]+>/g, " "))
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function extractXmlTag(xml: string, tag: string): string {
+  const match = xml.match(
+    new RegExp(`<${tag}[^>]*>([\\s\\S]*?)</${tag}>`, "i"),
+  );
+  return match ? decodeXmlEntities(match[1]) : "";
+}
+
+function parseRssItems(
+  xml: string,
+  feed: RssFeedInput,
+  perFeedLimit: number,
+): RssNewsItem[] {
+  const blocks = xml.match(/<item[\s\S]*?<\/item>|<entry[\s\S]*?<\/entry>/gi) ??
+    [];
+  const items: RssNewsItem[] = [];
+  for (const block of blocks.slice(0, perFeedLimit)) {
+    const title = stripHtml(extractXmlTag(block, "title"));
+    const linkMatch = block.match(/<link[^>]+href=["']([^"']+)["'][^>]*\/?>/i);
+    const url = decodeXmlEntities(
+      extractXmlTag(block, "link") || linkMatch?.[1] || "",
+    );
+    const published = extractXmlTag(block, "pubDate") ||
+      extractXmlTag(block, "published") ||
+      extractXmlTag(block, "updated");
+    const summary = stripHtml(
+      extractXmlTag(block, "description") ||
+        extractXmlTag(block, "summary") ||
+        extractXmlTag(block, "content"),
+    );
+    if (!title || !url) continue;
+    items.push({
+      title,
+      url,
+      source: feed.title,
+      category: feed.category,
+      published_at: published,
+      summary: summary.length > 220 ? `${summary.slice(0, 220)}...` : summary,
+    });
+  }
+  return items;
+}
+
+async function fetchRssNewsItems(
+  feed: RssFeedInput,
+  perFeedLimit: number,
+): Promise<RssNewsItem[]> {
+  const res = await fetch(feed.url, {
+    headers: {
+      "User-Agent":
+        "my-web-app-news-reader/1.0 (+https://my-web-app-b67f4.web.app)",
+    },
+  }).catch(() => null);
+  if (!res || !res.ok) return [];
+  const xml = await res.text();
+  return parseRssItems(xml, feed, perFeedLimit);
+}
+
+function normalizeRssFeedInputs(value: unknown): RssFeedInput[] {
+  const rawFeeds = Array.isArray(value) ? value : [];
+  const seen = new Set<string>();
+  const feeds: RssFeedInput[] = [];
+  for (const raw of rawFeeds) {
+    const feed = asRecord(raw);
+    if (!feed) continue;
+    const url = String(feed.url ?? "").trim();
+    if (!/^https?:\/\//i.test(url) || seen.has(url)) continue;
+    seen.add(url);
+    feeds.push({
+      title: String(feed.title ?? feed.name ?? "RSS").trim() || "RSS",
+      url,
+      category: String(feed.category ?? "総合").trim() || "総合",
+    });
+  }
+  return feeds.slice(0, 20);
+}
+
+function stableNewsHash(value: string): string {
+  let hash = 0;
+  for (let i = 0; i < value.length; i += 1) {
+    hash = ((hash << 5) - hash + value.charCodeAt(i)) | 0;
+  }
+  return Math.abs(hash).toString(36);
+}
+
+function normalizePublishedAt(value: string): string {
+  const parsed = Date.parse(value || "");
+  return Number.isFinite(parsed) ? new Date(parsed).toISOString() : "";
+}
+
+function newsClusterKey(item: RssNewsItem): string {
+  const normalizedTitle = item.title
+    .toLowerCase()
+    .replace(/[^\p{Letter}\p{Number}]+/gu, " ")
+    .trim()
+    .slice(0, 80);
+  return `${item.source}:${normalizedTitle}`;
+}
+
+function sourceConfidence(source: string): number {
+  const trustedSources = [
+    "NHK",
+    "ITmedia",
+    "CNET",
+    "Yahoo",
+    "Reuters",
+    "Bloomberg",
+    "Nikkei",
+    "日経",
+  ];
+  return trustedSources.some((name) => source.includes(name)) ? 1 : 0.72;
+}
+
+function keywordSignalScore(text: string): number {
+  const keywords = [
+    "AI",
+    "生成AI",
+    "Claude",
+    "OpenAI",
+    "Codex",
+    "決算",
+    "提携",
+    "買収",
+    "規制",
+    "セキュリティ",
+    "障害",
+    "新機能",
+    "発表",
+    "速報",
+    "価格",
+    "投資",
+    "市場",
+    "選挙",
+    "不正",
+  ];
+  return keywords.reduce(
+    (score, keyword) =>
+      text.toLowerCase().includes(keyword.toLowerCase()) ? score + 5 : score,
+    0,
+  );
+}
+
+function freshnessScore(publishedAt: string): number {
+  const parsed = Date.parse(publishedAt || "");
+  if (!Number.isFinite(parsed)) return 8;
+  const ageHours = Math.max(0, (Date.now() - parsed) / 36e5);
+  if (ageHours <= 6) return 28;
+  if (ageHours <= 24) return 22;
+  if (ageHours <= 72) return 14;
+  return 6;
+}
+
+function newsWhyItMatters(text: string, category: string): string {
+  const lower = text.toLowerCase();
+  if (
+    lower.includes("claude") || lower.includes("openai") || lower.includes("ai")
+  ) {
+    return "AI活用、プロダクト改善、ブログ下書き化の候補として優先確認";
+  }
+  if (text.includes("選挙") || text.includes("不正") || text.includes("規制")) {
+    return "公共性が高く、一次情報確認と時系列整理が必要";
+  }
+  if (text.includes("決算") || text.includes("投資") || text.includes("市場")) {
+    return "市場変化の兆候としてKPI/競合レポートに転用可能";
+  }
+  return `${category}カテゴリの更新として、要約と関連タスク化を検討`;
+}
+
+function rankNewsSignals(rawItems: unknown, limit = 30): RankedNewsItem[] {
+  const values = Array.isArray(rawItems) ? rawItems : [];
+  const deduped = new Map<string, RankedNewsItem>();
+  for (const raw of values) {
+    const item = asRecord(raw);
+    if (!item) continue;
+    const title = String(item.title ?? "").trim();
+    const url = String(item.url ?? item.link ?? "").trim();
+    if (!title || !url) continue;
+    const source = String(item.source ?? "RSS").trim() || "RSS";
+    const category = String(item.category ?? "総合").trim() || "総合";
+    const publishedAt = normalizePublishedAt(String(item.published_at ?? ""));
+    const summary = String(item.summary ?? item.description ?? "").trim();
+    const base: RssNewsItem = {
+      title,
+      url,
+      source,
+      category,
+      published_at: publishedAt,
+      summary,
+    };
+    const text = `${title} ${summary}`;
+    const clusterKey = newsClusterKey(base);
+    const score = Math.round(
+      sourceConfidence(source) * 34 + freshnessScore(publishedAt) +
+        Math.min(28, keywordSignalScore(text)) +
+        (summary.length > 80 ? 10 : 4),
+    );
+    const confidence = score >= 72 ? "high" : score >= 54 ? "medium" : "low";
+    const ranked: RankedNewsItem = {
+      ...base,
+      id: `news_${stableNewsHash(`${source}|${url}|${title}`)}`,
+      fetched_at: String(item.fetched_at ?? ""),
+      cluster_key: clusterKey,
+      signal_score: Math.min(100, score),
+      confidence,
+      why_it_matters: newsWhyItMatters(text, category),
+      verification_warning: confidence === "low"
+        ? "低信頼または鮮度不明のため、一次情報で確認してから配信"
+        : "公開前に一次情報、日時、固有名詞を再確認",
+    };
+    const existing = deduped.get(clusterKey);
+    if (!existing || ranked.signal_score > existing.signal_score) {
+      deduped.set(clusterKey, ranked);
+    }
+  }
+  return [...deduped.values()]
+    .sort((a, b) => b.signal_score - a.signal_score)
+    .slice(0, Math.max(1, Math.min(100, Number(limit) || 30)));
+}
+
+async function fetchLatestNewsItems(body: Record<string, unknown>): Promise<{
+  fetched_at: string;
+  source_count: number;
+  items: RankedNewsItem[];
+  errors: Array<{ source: string; url: string; error: string }>;
+}> {
+  const feeds = normalizeRssFeedInputs(body.feeds);
+  const perFeedLimit = Math.min(
+    Math.max(Number(body.per_feed_limit ?? 8) || 8, 1),
+    30,
+  );
+  const totalLimit = Math.min(Math.max(Number(body.limit ?? 80) || 80, 1), 200);
+  const fetchedAt = new Date().toISOString();
+  const results = await Promise.allSettled(
+    feeds.map(async (feed) => ({
+      feed,
+      items: await fetchRssNewsItems(feed, perFeedLimit),
+    })),
+  );
+  const errors: Array<{ source: string; url: string; error: string }> = [];
+  const items: RssNewsItem[] = [];
+  for (const result of results) {
+    if (result.status === "fulfilled") {
+      items.push(...result.value.items);
+    } else {
+      errors.push({ source: "RSS", url: "", error: String(result.reason) });
+    }
+  }
+  const normalizedItems = rankNewsSignals(
+    items,
+    Math.max(totalLimit, items.length),
+  )
+    .sort((a, b) => {
+      const bTime = Date.parse(b.published_at || "") || 0;
+      const aTime = Date.parse(a.published_at || "") || 0;
+      return bTime - aTime;
+    })
+    .slice(0, totalLimit)
+    .map((item) => ({ ...item, fetched_at: fetchedAt }));
+  return {
+    fetched_at: fetchedAt,
+    source_count: feeds.length,
+    items: normalizedItems,
+    errors,
+  };
+}
+
+const MARKET_INTEL_DISCLAIMER =
+  "This is market research support, not investment advice. It never places trades, never recommends buy/sell orders, and requires human review before any decision.";
+
+function defaultMarketIntelFeeds(): RssFeedInput[] {
+  return [
+    {
+      title: "Google News: AI markets",
+      url:
+        "https://news.google.com/rss/search?q=AI%20market%20software%20startup&hl=en-US&gl=US&ceid=US:en",
+      category: "AI",
+    },
+    {
+      title: "Google News: fintech",
+      url:
+        "https://news.google.com/rss/search?q=fintech%20market%20intelligence%20software&hl=en-US&gl=US&ceid=US:en",
+      category: "FinTech",
+    },
+    {
+      title: "ITmedia AI+",
+      url: "https://rss.itmedia.co.jp/rss/2.0/aiplus.xml",
+      category: "AI",
+    },
+    {
+      title: "CNET Japan",
+      url: "http://feed.japan.cnet.com/rss/index.rdf",
+      category: "Technology",
+    },
+  ];
+}
+
+function defaultMarketIntelWatchlist(): MarketIntelWatchItem[] {
+  return [
+    {
+      name: "AI coding tools",
+      keywords: [
+        "Claude Code",
+        "Codex",
+        "Cursor",
+        "Gemini Code Assist",
+        "Devin",
+      ],
+    },
+    {
+      name: "AI infrastructure",
+      keywords: ["OpenAI", "Anthropic", "Google", "Microsoft", "Nvidia"],
+    },
+    {
+      name: "Financial terminals",
+      keywords: ["Bloomberg", "FactSet", "Refinitiv", "Koyfin", "Sentieo"],
+    },
+  ];
+}
+
+function normalizeMarketIntelWatchlist(
+  value: unknown,
+): MarketIntelWatchItem[] {
+  const rawItems = Array.isArray(value) ? value : [];
+  const parsed: MarketIntelWatchItem[] = [];
+  for (const raw of rawItems) {
+    if (typeof raw === "string") {
+      const name = raw.trim();
+      if (name) parsed.push({ name, keywords: [name] });
+      continue;
+    }
+    const item = asRecord(raw);
+    if (!item) continue;
+    const name = String(item.name ?? item.symbol ?? item.company ?? "").trim();
+    if (!name) continue;
+    const keywords = stringArrayFromUnknown(item.keywords, [name]);
+    parsed.push({ name, keywords: keywords.length ? keywords : [name] });
+  }
+  return (parsed.length ? parsed : defaultMarketIntelWatchlist()).slice(0, 24);
+}
+
+function normalizeMarketIntelThemes(value: unknown): string[] {
+  const themes = stringArrayFromUnknown(value, [
+    "AI automation",
+    "developer tooling",
+    "fintech disruption",
+    "pricing pressure",
+    "enterprise adoption",
+    "risk and regulation",
+  ]);
+  return themes.slice(0, 16);
+}
+
+function matchMarketIntelTerms(
+  text: string,
+  watchlist: MarketIntelWatchItem[],
+): string[] {
+  const lower = text.toLowerCase();
+  return watchlist
+    .filter((item) =>
+      [item.name, ...item.keywords].some((keyword) =>
+        lower.includes(keyword.toLowerCase())
+      )
+    )
+    .map((item) => item.name);
+}
+
+function matchMarketIntelThemes(text: string, themes: string[]): string[] {
+  const lower = text.toLowerCase();
+  const matched = themes.filter((theme) =>
+    theme.split(/\s+/).some((part) =>
+      part.length >= 4 && lower.includes(part.toLowerCase())
+    )
+  );
+  return matched.length ? matched : ["general market signal"];
+}
+
+function marketIntelClusterKey(item: RankedNewsItem): string {
+  const words = item.title
+    .toLowerCase()
+    .replace(/[^\p{Letter}\p{Number}]+/gu, " ")
+    .split(/\s+/)
+    .filter((word) => word.length >= 4)
+    .slice(0, 10);
+  return words.join("-") || item.cluster_key;
+}
+
+function sourceHost(url: string): string {
+  try {
+    return new URL(url).hostname.replace(/^www\./, "");
+  } catch {
+    return url;
+  }
+}
+
+function marketIntelConfidence(
+  score: number,
+  sourceCount: number,
+): "high" | "medium" | "low" {
+  if (sourceCount >= 2 && score >= 76) return "high";
+  if (sourceCount >= 2 || score >= 58) return "medium";
+  return "low";
+}
+
+function buildMarketIntelSignal(
+  clusterKey: string,
+  items: RankedNewsItem[],
+  watchlist: MarketIntelWatchItem[],
+  themes: string[],
+): MarketIntelSignal {
+  const ranked = [...items].sort((a, b) => b.signal_score - a.signal_score);
+  const lead = ranked[0];
+  const text = ranked.map((item) => `${item.title} ${item.summary}`).join(" ");
+  const evidence = ranked.slice(0, 6).map((item) => ({
+    title: item.title,
+    url: item.url,
+    source: item.source,
+    published_at: item.published_at,
+    signal_score: item.signal_score,
+    confidence: item.confidence,
+  }));
+  const sourceCount = new Set(
+    evidence.map((item) => item.source || sourceHost(item.url)),
+  ).size;
+  const watchlistMatches = matchMarketIntelTerms(text, watchlist);
+  const themeMatches = matchMarketIntelThemes(text, themes);
+  const score = Math.min(
+    100,
+    lead.signal_score +
+      Math.min(12, (sourceCount - 1) * 6) +
+      Math.min(10, watchlistMatches.length * 4),
+  );
+  const confidence = marketIntelConfidence(score, sourceCount);
+  const singleSource = sourceCount < 2;
+  const uncertainty = singleSource
+    ? "Single-source signal. Treat it as a research prompt until another independent source confirms it."
+    : "Multiple sources are present, but timing, incentives, and market reaction still need human review.";
+  const riskNote = [
+    singleSource ? "single-source claim" : "multi-source but unverified claim",
+    "no live price confirmation",
+    "no automated trading action",
+  ].join("; ");
+  return {
+    id: `market_${stableNewsHash(clusterKey)}`,
+    signal: lead.title,
+    headline: lead.title,
+    themes: themeMatches,
+    watchlist_matches: watchlistMatches,
+    evidence,
+    evidence_count: evidence.length,
+    source_count: sourceCount,
+    confidence,
+    uncertainty,
+    risk_note: riskNote,
+    what_to_watch_next: [
+      "Check official company or regulator source before acting.",
+      "Compare the news timestamp with price, volume, and peer movement.",
+      "Write a paper decision entry before any real-money decision.",
+    ],
+    paper_decision_log: {
+      status: "research_only",
+      action_allowed: "paper_decision_log",
+      human_approval_required: true,
+      auto_trade_allowed: false,
+      invalidate_if: singleSource
+        ? "No second source appears within the review window."
+        : "Primary evidence conflicts with later official source.",
+    },
+  };
+}
+
+function buildMarketIntelSignals(
+  items: RankedNewsItem[],
+  watchlist: MarketIntelWatchItem[],
+  themes: string[],
+  limit: number,
+): MarketIntelSignal[] {
+  const groups = new Map<string, RankedNewsItem[]>();
+  for (const item of items) {
+    const key = marketIntelClusterKey(item);
+    const current = groups.get(key) ?? [];
+    current.push(item);
+    groups.set(key, current);
+  }
+  return [...groups.entries()]
+    .map(([key, group]) =>
+      buildMarketIntelSignal(key, group, watchlist, themes)
+    )
+    .sort((a, b) => {
+      const confidenceRank = { high: 3, medium: 2, low: 1 };
+      const confidenceCmp = confidenceRank[b.confidence] -
+        confidenceRank[a.confidence];
+      if (confidenceCmp !== 0) return confidenceCmp;
+      return b.source_count - a.source_count ||
+        b.evidence[0].signal_score - a.evidence[0].signal_score;
+    })
+    .slice(0, Math.max(1, Math.min(50, limit)));
+}
+
+async function buildMarketIntelReport(
+  body: Record<string, unknown>,
+): Promise<Record<string, unknown>> {
+  const watchlist = normalizeMarketIntelWatchlist(body.watchlist);
+  const themes = normalizeMarketIntelThemes(body.themes);
+  const signalLimit = Math.max(
+    1,
+    Math.min(30, Number(body.signal_limit ?? body.limit ?? 12) || 12),
+  );
+  const fetchedAt = new Date().toISOString();
+  let items: RankedNewsItem[] = [];
+  let sourceCount = 0;
+  let errors: Array<{ source: string; url: string; error: string }> = [];
+
+  if (Array.isArray(body.items) && body.items.length > 0) {
+    items = rankNewsSignals(body.items, Math.max(100, signalLimit * 4));
+    sourceCount = new Set(items.map((item) => item.source)).size;
+  } else {
+    const feeds = normalizeRssFeedInputs(body.feeds);
+    const result = await fetchLatestNewsItems({
+      ...body,
+      feeds: feeds.length ? feeds : defaultMarketIntelFeeds(),
+      per_feed_limit: Number(body.per_feed_limit ?? 10),
+      limit: Number(body.news_limit ?? 120),
+    });
+    items = result.items;
+    sourceCount = result.source_count;
+    errors = result.errors;
+  }
+
+  const signals = buildMarketIntelSignals(
+    items,
+    watchlist,
+    themes,
+    signalLimit,
+  );
+  return {
+    success: true,
+    generated_at: fetchedAt,
+    fetched_at: fetchedAt,
+    disclaimer: MARKET_INTEL_DISCLAIMER,
+    guardrails: {
+      no_investment_advice: true,
+      auto_trading_enabled: false,
+      human_approval_required: true,
+      strong_single_source_claims_blocked: true,
+    },
+    watchlist,
+    themes,
+    signals,
+    audit: {
+      generated_by: "tools-hub.market_intel.analyze",
+      model: "market-intel-heuristic-v1",
+      source_count: sourceCount,
+      item_count: items.length,
+      signal_count: signals.length,
+      errors,
+    },
+  };
 }
 
 async function deleteItem(
@@ -2812,8 +3622,18 @@ function sireDistanceAffinityBonus(
   const sire = String(topEntry.sire ?? "").trim();
   const dist = numericOrFallback(raceDistance, 0);
   if (!sire || !dist) return 0;
-  const sprintSires = ["ロードカナロア", "サクラバクシンオー", "タイキシャトル", "ビッグアーサー"];
-  const stayerSires = ["ハービンジャー", "マンハッタンカフェ", "ゴールドシップ", "ジャングルポケット"];
+  const sprintSires = [
+    "ロードカナロア",
+    "サクラバクシンオー",
+    "タイキシャトル",
+    "ビッグアーサー",
+  ];
+  const stayerSires = [
+    "ハービンジャー",
+    "マンハッタンカフェ",
+    "ゴールドシップ",
+    "ジャングルポケット",
+  ];
   const isSprint = dist <= 1400;
   const isRoute = dist >= 2000;
   if (isSprint && sprintSires.some((s) => sire.includes(s))) return 0.01; // スプリント血統×短距離: 適性一致
@@ -3496,7 +4316,10 @@ function buildHistoricalBaselinePrediction(
   const wtChangeCourse = weightChangeCourseSuitBonus(first);
   const prev3AvgFinish = prev3AvgFinishBonus(first);
   const prev2FormGap = prev2FormGapBonus(first);
-  const courseSurfaceMatch = courseSurfaceMatchBonus(first, race.course_type);
+  const courseSurfaceMatch = courseSurfaceMatchBonus(
+    first,
+    raceCtx.courseType ?? "",
+  );
   const fieldWeightRank = fieldWeightRankBonus(first, entries);
   const consec3Top = consecutiveTopThreeBonus(first);
   const popShift = popularityShiftBonus(first);
@@ -5378,7 +6201,7 @@ serve(async (req) => {
         // ─── WBS (Work Breakdown Structure) actions (Win版#128) ─────────
         case "wbs.list_tasks": {
           // インスタンス + status でフィルタしてタスク一覧取得
-          // body: { instance?: 'codex'|'vscode'|'win'|'ps1'..'ps6'|'web'|'mobile'|'schedule'|'gha',
+          // body: { instance?: 'all'|'claude'|'codex'|'user'|'automation' (legacy lanes are still accepted),
           //        status?: 'pending'|'in_progress'|'completed'|'blocked',
           //        updated_since?: 'YYYY-MM-DDTHH:MM:SSZ' (ISO-8601),
           //        limit?: 50 }
@@ -5386,18 +6209,31 @@ serve(async (req) => {
           const status = body.status as string | undefined;
           const updatedSince = body.updated_since as string | undefined;
           const limit = Math.min(Number(body.limit ?? 50), 200);
-          let q = admin.from("wbs_tasks")
-            .select(
-              "id, category, category_icon, category_order, title, description, instance, owner_instance, status, progress, start_date, end_date, planned_end_date, milestone_code, priority, remaining_work, updated_at, github_issue_number, github_issue_url, github_issue_state, github_issue_labels, github_issue_synced_at",
-            );
-          if (inst && inst !== "all") {
-            q = q.eq("instance", inst);
+          const taskSelect =
+            "id, category, category_icon, category_order, title, description, instance, owner_instance, status, progress, start_date, end_date, planned_start_date, planned_end_date, milestone_code, priority, remaining_work, updated_at, github_issue_number, github_issue_url, github_issue_state, github_issue_labels, github_issue_synced_at";
+          const pageSize = 1000;
+          const allTasks: Array<Record<string, unknown>> = [];
+          for (let offset = 0;; offset += pageSize) {
+            let q = admin.from("wbs_tasks").select(taskSelect);
+            if (status) q = q.eq("status", status);
+            if (updatedSince) q = q.gte("updated_at", updatedSince);
+            const { data, error } = await q
+              .order("id", { ascending: true })
+              .range(offset, offset + pageSize - 1);
+            if (error) throw new Error(error.message);
+            const rows = (data ?? []) as unknown as Array<
+              Record<string, unknown>
+            >;
+            allTasks.push(...rows);
+            if (rows.length < pageSize) break;
           }
-          if (status) q = q.eq("status", status);
-          if (updatedSince) q = q.gte("updated_at", updatedSince);
-          const { data, error } = await q;
-          if (error) throw new Error(error.message);
-          const sortedTasks = [...(data ?? [])].sort(compareWbsTasks).slice(
+          const filteredTasks = allTasks.filter((task) =>
+            wbsTaskMatchesInstanceFilter(
+              task,
+              inst ?? "all",
+            )
+          );
+          const sortedTasks = filteredTasks.sort(compareWbsTasks).slice(
             0,
             limit,
           );
@@ -5408,13 +6244,13 @@ serve(async (req) => {
             success: true,
             tasks: sortedTasks,
             milestones: milestones ?? [],
-            total: data?.length ?? 0,
+            total: filteredTasks.length,
           });
         }
         case "wbs.update_progress": {
           // body: { id, progress?: 0-100, status?: 'in_progress'|'completed'|'blocked',
           //        recovery_plan?: string, end_date?: 'YYYY-MM-DD' (リスケ用),
-          //        planned_end_date?: 'YYYY-MM-DD', note?: string }
+          //        planned_start_date?: 'YYYY-MM-DD', planned_end_date?: 'YYYY-MM-DD', note?: string }
           // Win版#131 part 10: 遅延時 recovery_plan 必須化
           // Win版#131 part 14 / T2-Win: defense-in-depth EF validation
           //   DB trigger `wbs_enforce_recovery_plan_trg` も同仕様を block
@@ -5438,13 +6274,16 @@ serve(async (req) => {
             update.rescheduled_count =
               ((cur?.rescheduled_count as number) ?? 0) + 1;
           }
+          if (body.planned_start_date !== undefined) {
+            update.planned_start_date = String(body.planned_start_date);
+          }
           if (body.planned_end_date !== undefined) {
             update.planned_end_date = String(body.planned_end_date);
           }
           if (Object.keys(update).length === 0) {
             return json({
               error:
-                "progress, status, recovery_plan, end_date, or planned_end_date required",
+                "progress, status, recovery_plan, end_date, planned_start_date, or planned_end_date required",
             }, 400);
           }
 
@@ -5489,7 +6328,7 @@ serve(async (req) => {
           const { data, error } = await admin.from("wbs_tasks")
             .update(update).eq("id", id)
             .select(
-              "id, title, status, progress, recovery_plan, end_date, planned_end_date, rescheduled_count",
+              "id, title, status, progress, recovery_plan, end_date, planned_start_date, planned_end_date, rescheduled_count",
             )
             .single();
           if (error) {
@@ -5806,6 +6645,356 @@ serve(async (req) => {
             }, 200);
           }
         }
+        case "wbs.reschedule_realistic": {
+          // Win版#132 part 157 (2026-05-06):
+          // 全 open タスクの start_date / end_date を priority tier ベースで
+          // 「実際に着手可能な日付」へ再配置する。
+          //
+          // body:
+          //   dry_run?: boolean (default true)
+          //   priority_offset_days?: { high: number, medium: number, low: number }
+          //     (default {high: 7, medium: 30, low: 90})
+          //   duration_days?: { high: number, medium: number, low: number }
+          //     (default {high: 3, medium: 7, low: 14})
+          //   parallel_capacity?: { high: number, medium: number, low: number }
+          //     priority tier 内での並列着手可能数 (default {high: 4, medium: 8, low: 12})
+          //     スケジュール stagger は floor(queue_index / parallel_capacity) 日 ずらして配置
+          //
+          // 対象: status != 'completed' AND github_issue_state != 'CLOSED'
+          // skip: 上記完了系
+          const dryRun = body.dry_run !== false; // default true
+          const offsetIn =
+            (body.priority_offset_days as Record<string, number>) ?? {};
+          const durIn = (body.duration_days as Record<string, number>) ?? {};
+          const parIn = (body.parallel_capacity as Record<string, number>) ??
+            {};
+          const featureRequestOffsetDays = Math.max(
+            0,
+            Number(body.feature_request_offset_days ?? 0),
+          );
+          const featureRequestDurationDays = Math.max(
+            0,
+            Number(body.feature_request_duration_days ?? 0),
+          );
+          const featureRequestParallelCapacity = Math.max(
+            1,
+            Number(body.feature_request_parallel_capacity ?? 1000),
+          );
+          const githubIssueOffsetDays = Math.max(
+            0,
+            Number(body.github_issue_offset_days ?? 0),
+          );
+          const githubIssueDurationDays = Math.max(
+            0,
+            Number(body.github_issue_duration_days ?? 3),
+          );
+          const githubIssueParallelCapacity = Math.max(
+            1,
+            Number(body.github_issue_parallel_capacity ?? 1000),
+          );
+          const offset = {
+            high: Number(offsetIn.high ?? 7),
+            medium: Number(offsetIn.medium ?? 30),
+            low: Number(offsetIn.low ?? 90),
+          };
+          const duration = {
+            high: Number(durIn.high ?? 3),
+            medium: Number(durIn.medium ?? 7),
+            low: Number(durIn.low ?? 14),
+          };
+          const parallel = {
+            high: Math.max(1, Number(parIn.high ?? 4)),
+            medium: Math.max(1, Number(parIn.medium ?? 8)),
+            low: Math.max(1, Number(parIn.low ?? 12)),
+          };
+          const rescheduleParams = {
+            offset,
+            duration,
+            parallel,
+            feature_request: {
+              offset_days: featureRequestOffsetDays,
+              duration_days: featureRequestDurationDays,
+              parallel_capacity: featureRequestParallelCapacity,
+            },
+            github_issue: {
+              offset_days: githubIssueOffsetDays,
+              duration_days: githubIssueDurationDays,
+              parallel_capacity: githubIssueParallelCapacity,
+            },
+          };
+
+          const today = new Date();
+          today.setUTCHours(0, 0, 0, 0);
+          const fmt = (d: Date) => d.toISOString().slice(0, 10);
+          const addDays = (base: Date, days: number) => {
+            const d = new Date(base);
+            d.setUTCDate(d.getUTCDate() + days);
+            return d;
+          };
+
+          // 全 open タスクを取得 (完了系 skip / Supabase 1000 row cap 回避にページネーション)
+          const selectCols =
+            "id, category, title, instance, owner_instance, priority, status, " +
+            "description, start_date, end_date, github_issue_number, github_issue_url, " +
+            "github_issue_state, category_order";
+          const pageSize = 1000;
+          const maxPages = 50;
+          const all: Array<Record<string, unknown>> = [];
+          for (let page = 0; page < maxPages; page += 1) {
+            const from = page * pageSize;
+            const to = from + pageSize - 1;
+            const { data: pageRows, error: fetchErr } = await admin
+              .from("wbs_tasks")
+              .select(selectCols)
+              .neq("status", "completed")
+              .order("category_order", { ascending: true, nullsFirst: false })
+              .order("id", { ascending: true })
+              .range(from, to);
+            if (fetchErr) {
+              return json({ success: false, error: fetchErr.message }, 200);
+            }
+            const rows = (pageRows ?? []) as unknown as Array<
+              Record<string, unknown>
+            >;
+            all.push(...rows);
+            if (rows.length < pageSize) break;
+            if (page === maxPages - 1) {
+              return json(
+                {
+                  success: false,
+                  error:
+                    `wbs.reschedule_realistic scanned >= ${
+                      pageSize * maxPages
+                    } ` +
+                    "rows; increase pagination cap.",
+                },
+                200,
+              );
+            }
+          }
+          const open = all.filter(
+            (r) => String(r.github_issue_state ?? "") !== "CLOSED",
+          );
+          const featureRequestTasks = open.filter(isFeatureRequestTask);
+          const githubIssueTasks = open.filter((task) =>
+            !isFeatureRequestTask(task) && isGithubIssueLinkedTask(task)
+          );
+          const regularTasks = open.filter((task) =>
+            !isFeatureRequestTask(task) && !isGithubIssueLinkedTask(task)
+          );
+
+          // priority bucket 別 queue index を category_order, id で安定 sort
+          const buckets: Record<string, Array<Record<string, unknown>>> = {
+            high: [],
+            medium: [],
+            low: [],
+          };
+          for (const r of regularTasks) {
+            const p = String(r.priority ?? "medium").toLowerCase();
+            const tier = p === "high" || p === "urgent"
+              ? "high"
+              : p === "low"
+              ? "low"
+              : "medium";
+            buckets[tier].push(r);
+          }
+          for (const tier of Object.keys(buckets)) {
+            buckets[tier].sort((a, b) => {
+              const oa = Number(a.category_order ?? 999);
+              const ob = Number(b.category_order ?? 999);
+              if (oa !== ob) return oa - ob;
+              return String(a.id).localeCompare(String(b.id));
+            });
+          }
+          featureRequestTasks.sort((a, b) =>
+            wbsPriorityRank(b.priority) - wbsPriorityRank(a.priority) ||
+            Number(a.category_order ?? 999) - Number(b.category_order ?? 999) ||
+            String(a.id).localeCompare(String(b.id))
+          );
+          githubIssueTasks.sort((a, b) =>
+            wbsPriorityRank(b.priority) - wbsPriorityRank(a.priority) ||
+            Number(a.category_order ?? 999) - Number(b.category_order ?? 999) ||
+            String(a.id).localeCompare(String(b.id))
+          );
+          const featureRequestWindowDays = featureRequestTasks.length === 0
+            ? 0
+            : featureRequestOffsetDays +
+              Math.floor(
+                (featureRequestTasks.length - 1) /
+                  featureRequestParallelCapacity,
+              ) +
+              featureRequestDurationDays +
+              1;
+          const githubIssueStartOffsetDays = Math.max(
+            githubIssueOffsetDays,
+            featureRequestWindowDays,
+          );
+          const githubIssueWindowDays = githubIssueTasks.length === 0
+            ? featureRequestWindowDays
+            : githubIssueStartOffsetDays +
+              Math.floor(
+                (githubIssueTasks.length - 1) /
+                  githubIssueParallelCapacity,
+              ) +
+              githubIssueDurationDays +
+              1;
+
+          // queue index に基づき stagger 配置
+          const updates: Array<{
+            id: string;
+            start_date: string;
+            end_date: string;
+            tier:
+              | "feature_request"
+              | "github_issue"
+              | "high"
+              | "medium"
+              | "low";
+            stagger_days: number;
+          }> = [];
+          for (let i = 0; i < featureRequestTasks.length; i++) {
+            const t = featureRequestTasks[i];
+            const stagger = Math.floor(i / featureRequestParallelCapacity);
+            const start = addDays(
+              today,
+              featureRequestOffsetDays + stagger,
+            );
+            const end = addDays(start, featureRequestDurationDays);
+            updates.push({
+              id: String(t.id),
+              start_date: fmt(start),
+              end_date: fmt(end),
+              tier: "feature_request",
+              stagger_days: stagger,
+            });
+          }
+          for (let i = 0; i < githubIssueTasks.length; i++) {
+            const t = githubIssueTasks[i];
+            const stagger = Math.floor(i / githubIssueParallelCapacity);
+            const start = addDays(
+              today,
+              githubIssueStartOffsetDays + stagger,
+            );
+            const end = addDays(start, githubIssueDurationDays);
+            updates.push({
+              id: String(t.id),
+              start_date: fmt(start),
+              end_date: fmt(end),
+              tier: "github_issue",
+              stagger_days: stagger,
+            });
+          }
+          for (const tier of ["high", "medium", "low"] as const) {
+            const tasks = buckets[tier];
+            const offDays = Math.max(offset[tier], githubIssueWindowDays);
+            const durDays = duration[tier];
+            const par = parallel[tier];
+            for (let i = 0; i < tasks.length; i++) {
+              const t = tasks[i];
+              const stagger = Math.floor(i / par); // par 件並列、par 超で 1 日ずらす
+              const start = addDays(today, offDays + stagger);
+              const end = addDays(start, durDays);
+              updates.push({
+                id: String(t.id),
+                start_date: fmt(start),
+                end_date: fmt(end),
+                tier,
+                stagger_days: stagger,
+              });
+            }
+          }
+
+          // by_priority サマリ + sample 構築
+          const byPrio: Record<
+            string,
+            { count: number; first_start: string; last_end: string }
+          > = {};
+          for (const u of updates) {
+            const cur = byPrio[u.tier] ?? {
+              count: 0,
+              first_start: u.start_date,
+              last_end: u.end_date,
+            };
+            cur.count += 1;
+            if (u.start_date < cur.first_start) cur.first_start = u.start_date;
+            if (u.end_date > cur.last_end) cur.last_end = u.end_date;
+            byPrio[u.tier] = cur;
+          }
+          const sample = updates.slice(0, 10);
+
+          if (dryRun) {
+            return json({
+              success: true,
+              dry_run: true,
+              total_open: open.length,
+              total_skipped_completed: all.length - open.length,
+              would_update: updates.length,
+              by_priority: byPrio,
+              sample,
+              today: fmt(today),
+              params: rescheduleParams,
+            });
+          }
+
+          // apply: Supabase JS は bulk update (行ごと異なる値) が無いので chunk
+          // 並列化 (concurrency=10 で 1144 row ≒ 6 sec / curl 240s 内に収まる)
+          let updated = 0;
+          const errors: Array<{ id: string; error: string }> = [];
+          const concurrency = 10;
+          for (let i = 0; i < updates.length; i += concurrency) {
+            const batch = updates.slice(i, i + concurrency);
+            const results = await Promise.all(batch.map(async (u) => {
+              const { error } = await admin
+                .from("wbs_tasks")
+                .update({
+                  start_date: u.start_date,
+                  end_date: u.end_date,
+                  planned_start_date: u.start_date,
+                  planned_end_date: u.end_date,
+                })
+                .eq("id", u.id);
+              return { id: u.id, error: error?.message };
+            }));
+            for (const r of results) {
+              if (r.error) {
+                errors.push({ id: r.id, error: r.error });
+              } else {
+                updated += 1;
+              }
+            }
+          }
+
+          // monitoring_events に記録 (= scheduled task / GHA cron 監査用)
+          try {
+            await admin.from("monitoring_events").insert({
+              event_type: "wbs.reschedule_realistic",
+              severity: errors.length > 0 ? "warning" : "info",
+              metadata: {
+                total_open: open.length,
+                updated,
+                errors: errors.length,
+                by_priority: byPrio,
+                params: rescheduleParams,
+                today: fmt(today),
+              },
+            });
+          } catch (_) {
+            // monitoring_events 未存在時は無視
+          }
+
+          return json({
+            success: errors.length === 0,
+            dry_run: false,
+            total_open: open.length,
+            updated,
+            errors_count: errors.length,
+            errors: errors.slice(0, 10),
+            by_priority: byPrio,
+            sample,
+            today: fmt(today),
+            params: rescheduleParams,
+          });
+        }
         case "wbs.bulk_update": {
           // body: { updates: [{id, progress?, status?}, ...] }
           const updates = (body.updates as Array<Record<string, unknown>>) ??
@@ -5847,7 +7036,7 @@ serve(async (req) => {
         }
         case "wbs.add_task": {
           // body: { category, title, instance, owner_instance?, description?,
-          //        priority?, end_date?, planned_end_date?, milestone_code?,
+          //        priority?, end_date?, planned_start_date?, planned_end_date?, milestone_code?,
           //        github_issue_number?, github_issue_url?, github_issue_state?,
           //        github_issue_labels? }
           // PS#6 S23 (2026-04-21): instance を required 化 (ALL leak 防止)
@@ -5891,6 +7080,13 @@ serve(async (req) => {
               issueNumber > 0
               ? issueNumber
               : null;
+          const issueLinkedNow = new Date();
+          const issueLinkedStartDate = normalizedIssueNumber
+            ? githubIssueStartDate(issueLinkedNow)
+            : null;
+          const issueLinkedEndDate = normalizedIssueNumber
+            ? githubIssueDueDate(labels, issueLinkedNow, title)
+            : null;
           const status = body.status !== undefined
             ? String(body.status)
             : "pending";
@@ -5900,7 +7096,9 @@ serve(async (req) => {
           const payload: Record<string, unknown> = {
             category,
             category_icon: String(body.category_icon ?? "📋"),
-            category_order: Number(body.category_order ?? 99),
+            category_order: Number(
+              body.category_order ?? (normalizedIssueNumber ? 1 : 99),
+            ),
             title,
             description: body.description ?? null,
             instance,
@@ -5908,9 +7106,12 @@ serve(async (req) => {
             status,
             progress,
             priority: String(body.priority ?? "medium"),
-            start_date: body.start_date ?? null,
-            end_date: body.end_date ?? null,
-            planned_end_date: body.planned_end_date ?? body.end_date ?? null,
+            start_date: body.start_date ?? issueLinkedStartDate,
+            end_date: body.end_date ?? issueLinkedEndDate,
+            planned_start_date: body.planned_start_date ?? body.start_date ??
+              issueLinkedStartDate,
+            planned_end_date: body.planned_end_date ?? body.end_date ??
+              issueLinkedEndDate,
             remaining_work: body.remaining_work ?? null,
             milestone_code: body.milestone_code ?? null,
           };
@@ -6005,12 +7206,29 @@ serve(async (req) => {
             return json({ error: "issues array required" }, 400);
           }
 
+          const issuesByNumber = new Map<number, Record<string, unknown>>();
+          for (const issue of issueRecords) {
+            const issueNumber = githubIssueNumber(issue);
+            if (!issueNumber) continue;
+            issuesByNumber.set(issueNumber, issue);
+          }
+          const issueNumbers = [...issuesByNumber.keys()];
+          const runGlobalRepairs = parseBooleanish(
+            body.global_repairs ?? body.globalRepairs,
+            false,
+          );
+
           const now = new Date();
           const nowIso = now.toISOString();
-          const today = nowIso.slice(0, 10);
           const taskSelect =
-            "id, category, category_icon, category_order, title, description, instance, owner_instance, status, progress, start_date, end_date, planned_end_date, milestone_code, priority, remaining_work, recovery_plan, ai_review_status, created_at, updated_at, github_issue_number, github_issue_url, github_issue_state, github_issue_labels, github_issue_synced_at";
-          const allTasks = await fetchAllWbsTasks(admin, taskSelect);
+            "id, category, category_icon, category_order, title, description, instance, owner_instance, status, progress, start_date, end_date, planned_start_date, planned_end_date, milestone_code, priority, remaining_work, recovery_plan, ai_review_status, created_at, updated_at, github_issue_number, github_issue_url, github_issue_state, github_issue_labels, github_issue_synced_at";
+          const allTasks = runGlobalRepairs
+            ? await fetchAllWbsTasks(admin, taskSelect)
+            : await fetchWbsTasksForGithubIssues(
+              admin,
+              taskSelect,
+              issueNumbers,
+            );
           const tasksByIssue = new Map<
             number,
             Array<Record<string, unknown>>
@@ -6021,13 +7239,6 @@ serve(async (req) => {
             const tasks = tasksByIssue.get(issueNumber) ?? [];
             tasks.push(task);
             tasksByIssue.set(issueNumber, tasks);
-          }
-
-          const issuesByNumber = new Map<number, Record<string, unknown>>();
-          for (const issue of issueRecords) {
-            const issueNumber = githubIssueNumber(issue);
-            if (!issueNumber) continue;
-            issuesByNumber.set(issueNumber, issue);
           }
 
           const stats = {
@@ -6062,108 +7273,402 @@ serve(async (req) => {
             });
             stats.stale_wbs_repaired += 1;
           };
-
-          for (const [issueNumber, issue] of issuesByNumber.entries()) {
-            const issueTitle = String(issue.title ?? `Issue #${issueNumber}`)
-              .trim();
-            const issueUrl = String(
-              issue.url ?? issue.html_url ??
-                `https://github.com/${repo}/issues/${issueNumber}`,
+          const completeDuplicateWbsTask = async ({
+            duplicate,
+            keptId,
+            issueNumber,
+            issueUrl,
+            state,
+            labels,
+            canonicalTitle,
+            note,
+            reason,
+            context,
+          }: {
+            duplicate: Record<string, unknown>;
+            keptId: unknown;
+            issueNumber: number;
+            issueUrl: string;
+            state: string;
+            labels: string[];
+            canonicalTitle: string;
+            note: string;
+            reason: string;
+            context: string;
+          }) => {
+            const duplicateId = String(duplicate.id ?? "");
+            if (!duplicateId) return;
+            const duplicateRepairReasons = githubIssueTaskRepairReasons(
+              duplicate,
+              issueNumber,
+              state,
+              canonicalTitle,
             );
-            const labels = githubIssueLabelNames(issue);
-            const state = githubIssueState(issue);
-            const isClosed = state === "CLOSED";
-            const existing = tasksByIssue.get(issueNumber) ?? [];
-            const keeper = pickGithubIssueWbsKeeper(existing);
-            const lane = normalizeWbsInstance(
-              keeper?.owner_instance ?? keeper?.instance ??
-                githubIssueOwnerInstance(labels),
-            );
-            const authorRecord = asRecord(issue.author) ?? asRecord(issue.user);
-            const author = authorRecord ? String(authorRecord.login ?? "") : "";
-            const issueUpdatedAt = String(
-              issue.updatedAt ?? issue.updated_at ?? "",
-            );
-            const description = [
-              `GitHub Issue: ${issueUrl}`,
-              author ? `Author: ${author}` : null,
-              labels.length ? `Labels: ${labels.join(", ")}` : null,
-              issueUpdatedAt ? `GitHub updated: ${issueUpdatedAt}` : null,
-            ].filter((line) => line !== null).join(" / ");
-            const currentCompleted = keeper
-              ? isCompletedWbsTask(keeper)
-              : false;
-            const closureReady = keeper
-              ? isGithubIssueClosureReadyWbsTask(keeper)
-              : false;
-            const nextStatus = isClosed
-              ? "completed"
-              : closureReady
-              ? "completed"
-              : wbsStatusForOpenGithubIssue(keeper);
-            const nextProgress = isClosed
-              ? 100
-              : closureReady
-              ? 100
-              : wbsProgressForOpenGithubIssue(keeper);
-            const payload: Record<string, unknown> = {
-              category: githubIssueCategory(labels),
-              category_icon: githubIssueCategoryIcon(labels),
-              category_order: 1,
-              title: `[Issue #${issueNumber}] ${issueTitle}`,
-              description,
-              instance: lane,
-              owner_instance: lane,
-              status: nextStatus,
-              progress: nextProgress,
-              priority: githubIssuePriority(labels),
-              start_date: keeper?.start_date ?? today,
-              end_date: keeper?.end_date ?? githubIssueDueDate(labels, now),
-              planned_end_date: keeper?.planned_end_date ?? keeper?.end_date ??
-                githubIssueDueDate(labels, now),
-              remaining_work: isClosed
-                ? "GitHub Issue is closed; WBS mirrored as completed."
-                : (keeper?.remaining_work ??
-                  "GitHub Issue source of truth. Sync keeps WBS and Issues aligned."),
-              milestone_code: keeper?.milestone_code ?? null,
+            duplicateRepairReasons.push(reason);
+            const statusPatch = {
+              status: "completed",
+              progress: 100,
+              ai_review_status: "manual_override",
+              remaining_work: note,
+            };
+            const metadataPatch = {
               github_issue_number: issueNumber,
-              github_issue_url: issueUrl,
+              github_issue_url: issueUrl ||
+                String(duplicate.github_issue_url ?? "") ||
+                null,
               github_issue_state: state,
-              github_issue_labels: labels,
+              github_issue_labels: labels.length
+                ? labels
+                : (duplicate.github_issue_labels ?? []),
               github_issue_synced_at: nowIso,
             };
-            const canonicalTitle = String(payload.title ?? "");
-            if (!isClosed && currentCompleted && !closureReady) {
-              payload.remaining_work =
-                "GitHub Issue is still open; WBS completion must pass AI review before the issue can be closed.";
+            const { error: statusError } = await admin.from("wbs_tasks")
+              .update(statusPatch)
+              .eq("id", duplicateId);
+            if (statusError) throw new Error(statusError.message);
+            const { error: metadataError } = await admin.from("wbs_tasks")
+              .update(metadataPatch)
+              .eq("id", duplicateId);
+            if (metadataError) throw new Error(metadataError.message);
+            Object.assign(duplicate, statusPatch, metadataPatch);
+            recordWbsRepair(
+              duplicate,
+              issueNumber,
+              duplicateRepairReasons,
+              context,
+            );
+            duplicateWbsTasks.push({
+              id: duplicateId,
+              kept_id: keptId,
+              issue_number: issueNumber,
+              reason,
+            });
+            stats.duplicate_wbs_closed += 1;
+          };
+          const completeActiveIssueInstanceConflicts = async ({
+            issueNumber,
+            lane,
+            keepId,
+            issueUrl,
+            state,
+            labels,
+            canonicalTitle,
+          }: {
+            issueNumber: number;
+            lane: string;
+            keepId: string;
+            issueUrl: string;
+            state: string;
+            labels: string[];
+            canonicalTitle: string;
+          }) => {
+            const { data: activeTasks, error: activeTasksError } = await admin
+              .from("wbs_tasks")
+              .select(taskSelect)
+              .eq("github_issue_number", issueNumber)
+              .eq("instance", lane)
+              .neq("status", "completed")
+              .order("created_at", { ascending: true, nullsFirst: true })
+              .order("id", { ascending: true });
+            if (activeTasksError) throw new Error(activeTasksError.message);
+            for (
+              const activeTask of (activeTasks ?? []) as Array<
+                Record<string, unknown>
+              >
+            ) {
+              const activeTaskId = String(activeTask.id ?? "");
+              if (!activeTaskId || activeTaskId === keepId) continue;
+              const inMemoryTask = allTasks.find((task) =>
+                String(task.id ?? "") === activeTaskId
+              ) ?? activeTask;
+              await completeDuplicateWbsTask({
+                duplicate: inMemoryTask,
+                keptId: keepId || "pending-canonical",
+                issueNumber,
+                issueUrl,
+                state,
+                labels,
+                canonicalTitle,
+                note:
+                  `Duplicate active WBS task for GitHub Issue #${issueNumber} and instance ${lane}; kept WBS task ${
+                    keepId || "pending canonical"
+                  } as canonical.`,
+                reason: "duplicate_issue_instance",
+                context: "issue_instance_preflight",
+              });
             }
+          };
 
-            if (!keeper) {
-              const { data: created, error: createError } = await admin.from(
+          for (const [issueNumber, issue] of issuesByNumber.entries()) {
+            try {
+              const issueTitle = String(issue.title ?? `Issue #${issueNumber}`)
+                .trim();
+              const issueUrl = String(
+                issue.url ?? issue.html_url ??
+                  `https://github.com/${repo}/issues/${issueNumber}`,
+              );
+              const labels = githubIssueLabelNames(issue);
+              const state = githubIssueState(issue);
+              const isClosed = state === "CLOSED";
+              const prioritizeAdditionalRequest = isAdditionalRequestIssue(
+                issueTitle,
+                labels,
+              );
+              const prioritizeIssueSchedule = !isClosed;
+              const existing = tasksByIssue.get(issueNumber) ?? [];
+              const keeper = pickGithubIssueWbsKeeper(existing);
+              const lane = normalizeWbsInstance(
+                keeper?.owner_instance ?? keeper?.instance ??
+                  githubIssueOwnerInstance(labels),
+              );
+              const authorRecord = asRecord(issue.author) ??
+                asRecord(issue.user);
+              const author = authorRecord
+                ? String(authorRecord.login ?? "")
+                : "";
+              const issueUpdatedAt = String(
+                issue.updatedAt ?? issue.updated_at ?? "",
+              );
+              const description = [
+                `GitHub Issue: ${issueUrl}`,
+                author ? `Author: ${author}` : null,
+                labels.length ? `Labels: ${labels.join(", ")}` : null,
+                issueUpdatedAt ? `GitHub updated: ${issueUpdatedAt}` : null,
+              ].filter((line) => line !== null).join(" / ");
+              const currentCompleted = keeper
+                ? isCompletedWbsTask(keeper)
+                : false;
+              const closureReady = keeper
+                ? isGithubIssueClosureReadyWbsTask(keeper)
+                : false;
+              const nextStatus = isClosed
+                ? "completed"
+                : closureReady
+                ? "completed"
+                : wbsStatusForOpenGithubIssue(keeper);
+              const nextProgress = isClosed
+                ? 100
+                : closureReady
+                ? 100
+                : wbsProgressForOpenGithubIssue(keeper);
+              const syncedStartDate = prioritizeAdditionalRequest
+                ? additionalRequestStartDate(now)
+                : githubIssueStartDate(now);
+              const syncedEndDate = githubIssueDueDate(labels, now, issueTitle);
+              const payload: Record<string, unknown> = {
+                category: githubIssueCategory(labels),
+                category_icon: githubIssueCategoryIcon(labels),
+                category_order: 1,
+                title: `[Issue #${issueNumber}] ${issueTitle}`,
+                description,
+                instance: lane,
+                owner_instance: lane,
+                status: nextStatus,
+                progress: nextProgress,
+                priority: githubIssuePriority(labels),
+                start_date: prioritizeIssueSchedule
+                  ? syncedStartDate
+                  : keeper?.start_date ?? syncedStartDate,
+                end_date: prioritizeIssueSchedule
+                  ? syncedEndDate
+                  : keeper?.end_date ?? syncedEndDate,
+                planned_start_date: prioritizeIssueSchedule
+                  ? syncedStartDate
+                  : keeper?.planned_start_date ?? keeper?.start_date ??
+                    syncedStartDate,
+                planned_end_date: prioritizeIssueSchedule
+                  ? syncedEndDate
+                  : keeper?.planned_end_date ?? keeper?.end_date ??
+                    syncedEndDate,
+                remaining_work: isClosed
+                  ? "GitHub Issue is closed; WBS mirrored as completed."
+                  : (keeper?.remaining_work ??
+                    "GitHub Issue source of truth. Sync keeps WBS and Issues aligned."),
+                milestone_code: keeper?.milestone_code ?? null,
+                github_issue_number: issueNumber,
+                github_issue_url: issueUrl,
+                github_issue_state: state,
+                github_issue_labels: labels,
+                github_issue_synced_at: nowIso,
+              };
+              const canonicalTitle = String(payload.title ?? "");
+              const activeIssueInstanceRows = await admin.from("wbs_tasks")
+                .select("id")
+                .eq("github_issue_number", issueNumber)
+                .eq("instance", lane)
+                .neq("status", "completed")
+                .order("created_at", { ascending: true, nullsFirst: true })
+                .order("id", { ascending: true });
+              if (activeIssueInstanceRows.error) {
+                throw new Error(activeIssueInstanceRows.error.message);
+              }
+              const activeIssueInstanceKeepId = keeper?.id
+                ? String(keeper.id)
+                : String(activeIssueInstanceRows.data?.[0]?.id ?? "");
+              await completeActiveIssueInstanceConflicts({
+                issueNumber,
+                lane,
+                keepId: activeIssueInstanceKeepId,
+                issueUrl,
+                state,
+                labels,
+                canonicalTitle,
+              });
+              if (!isClosed && currentCompleted && !closureReady) {
+                payload.remaining_work =
+                  "GitHub Issue is still open; WBS completion must pass AI review before the issue can be closed.";
+              }
+
+              if (!keeper) {
+                const { data: created, error: createError } = await admin.from(
+                  "wbs_tasks",
+                )
+                  .insert(payload)
+                  .select(taskSelect)
+                  .single();
+                if (createError) {
+                  if (!isWbsGithubSyncUniqueConflict(createError)) {
+                    throw new Error(createError.message);
+                  }
+                  const conflictQuery = isWbsIssueInstanceActiveUniqueConflict(
+                      createError,
+                    )
+                    ? admin.from("wbs_tasks")
+                      .select(taskSelect)
+                      .eq("github_issue_number", issueNumber)
+                      .eq("instance", lane)
+                      .neq("status", "completed")
+                      .order("created_at", { ascending: true })
+                      .limit(1)
+                    : admin.from("wbs_tasks")
+                      .select(taskSelect)
+                      .eq("title", String(payload.title ?? ""))
+                      .eq("instance", lane)
+                      .order("created_at", { ascending: true })
+                      .limit(1);
+                  const { data: conflictingTasks, error: conflictFindError } =
+                    await conflictQuery;
+                  if (conflictFindError) {
+                    throw new Error(conflictFindError.message);
+                  }
+                  const conflictingTask = (conflictingTasks ?? [])[0] as
+                    | Record<string, unknown>
+                    | undefined;
+                  if (!conflictingTask?.id) {
+                    throw new Error(createError.message);
+                  }
+                  const conflictRepairReasons = githubIssueTaskRepairReasons(
+                    conflictingTask,
+                    issueNumber,
+                    state,
+                    canonicalTitle,
+                  );
+
+                  const { data: recovered, error: recoveryError } = await admin
+                    .from("wbs_tasks")
+                    .update(payload)
+                    .eq("id", String(conflictingTask.id))
+                    .select(taskSelect)
+                    .single();
+                  if (recoveryError) throw new Error(recoveryError.message);
+                  const recoveredTask = recovered as Record<string, unknown>;
+                  tasksByIssue.set(issueNumber, [recoveredTask]);
+                  const existingIndex = allTasks.findIndex((task) =>
+                    String(task.id ?? "") === String(recoveredTask.id ?? "")
+                  );
+                  if (existingIndex >= 0) {
+                    allTasks[existingIndex] = recoveredTask;
+                  } else {
+                    allTasks.push(recoveredTask);
+                  }
+                  recordWbsRepair(
+                    conflictingTask,
+                    issueNumber,
+                    conflictRepairReasons.length
+                      ? conflictRepairReasons
+                      : ["title_instance_conflict_recovered"],
+                    "insert_conflict_recovery",
+                  );
+                  stats.updated += 1;
+                  if (isClosed) stats.completed_from_closed_issues += 1;
+                  continue;
+                }
+                const createdTask = created as Record<string, unknown>;
+                tasksByIssue.set(issueNumber, [createdTask]);
+                allTasks.push(createdTask);
+                stats.created += 1;
+                continue;
+              }
+
+              const activeDuplicateTasksBeforeUpdate = existing.filter((task) =>
+                String(task.id ?? "") !== String(keeper.id ?? "") &&
+                !isCompletedWbsTask(task)
+              );
+              for (const duplicate of activeDuplicateTasksBeforeUpdate) {
+                await completeDuplicateWbsTask({
+                  duplicate,
+                  keptId: keeper.id,
+                  issueNumber,
+                  issueUrl,
+                  state,
+                  labels,
+                  canonicalTitle,
+                  note:
+                    `Duplicate of WBS task ${keeper.id}; GitHub Issue #${issueNumber} is kept on one canonical WBS row.`,
+                  reason: "duplicate_wbs_row",
+                  context: "issue_duplicate_pre_update",
+                });
+              }
+
+              const { data: updated, error: updateError } = await admin.from(
                 "wbs_tasks",
               )
-                .insert(payload)
+                .update(payload)
+                .eq("id", String(keeper.id))
                 .select(taskSelect)
                 .single();
-              if (createError) {
-                if (!isWbsTitleInstanceUniqueConflict(createError)) {
-                  throw new Error(createError.message);
+              let updatedKeeper = updated as Record<string, unknown> | null;
+              const keeperRepairReasons = githubIssueTaskRepairReasons(
+                keeper,
+                issueNumber,
+                state,
+                canonicalTitle,
+              );
+              let conflictRepairTask: Record<string, unknown> | null = null;
+              let conflictRepairReasons: string[] = [];
+              if (updateError) {
+                if (!isWbsGithubSyncUniqueConflict(updateError)) {
+                  throw new Error(updateError.message);
                 }
-                const { data: conflictingTasks, error: conflictFindError } =
-                  await admin.from("wbs_tasks")
+                const conflictQuery = isWbsIssueInstanceActiveUniqueConflict(
+                    updateError,
+                  )
+                  ? admin.from("wbs_tasks")
+                    .select(taskSelect)
+                    .eq("github_issue_number", issueNumber)
+                    .eq("instance", lane)
+                    .neq("id", String(keeper.id))
+                    .neq("status", "completed")
+                    .order("created_at", { ascending: true })
+                    .limit(1)
+                  : admin.from("wbs_tasks")
                     .select(taskSelect)
                     .eq("title", String(payload.title ?? ""))
                     .eq("instance", lane)
+                    .neq("id", String(keeper.id))
                     .order("created_at", { ascending: true })
                     .limit(1);
+                const { data: conflictingTasks, error: conflictFindError } =
+                  await conflictQuery;
                 if (conflictFindError) {
                   throw new Error(conflictFindError.message);
                 }
                 const conflictingTask = (conflictingTasks ?? [])[0] as
                   | Record<string, unknown>
                   | undefined;
-                if (!conflictingTask?.id) throw new Error(createError.message);
-                const conflictRepairReasons = githubIssueTaskRepairReasons(
+                if (!conflictingTask?.id) throw new Error(updateError.message);
+                conflictRepairTask = conflictingTask;
+                conflictRepairReasons = githubIssueTaskRepairReasons(
                   conflictingTask,
                   issueNumber,
                   state,
@@ -6177,182 +7682,82 @@ serve(async (req) => {
                   .select(taskSelect)
                   .single();
                 if (recoveryError) throw new Error(recoveryError.message);
-                const recoveredTask = recovered as Record<string, unknown>;
-                tasksByIssue.set(issueNumber, [recoveredTask]);
-                const existingIndex = allTasks.findIndex((task) =>
-                  String(task.id ?? "") === String(recoveredTask.id ?? "")
+                updatedKeeper = recovered as Record<string, unknown>;
+              }
+              if (!updatedKeeper?.id) {
+                throw new Error(
+                  "WBS task update did not return a canonical row.",
                 );
-                if (existingIndex >= 0) {
-                  allTasks[existingIndex] = recoveredTask;
-                } else {
-                  allTasks.push(recoveredTask);
-                }
+              }
+              stats.updated += 1;
+              if (isClosed) stats.completed_from_closed_issues += 1;
+              recordWbsRepair(
+                keeper,
+                issueNumber,
+                keeperRepairReasons,
+                "canonical_update",
+              );
+              if (conflictRepairTask) {
                 recordWbsRepair(
-                  conflictingTask,
+                  conflictRepairTask,
                   issueNumber,
                   conflictRepairReasons.length
                     ? conflictRepairReasons
                     : ["title_instance_conflict_recovered"],
-                  "insert_conflict_recovery",
+                  "update_conflict_recovery",
                 );
-                stats.updated += 1;
-                if (isClosed) stats.completed_from_closed_issues += 1;
+              }
+              if (
+                !isClosed && closureReady &&
+                !closedIssueNumbers.has(issueNumber)
+              ) {
+                issuesToClose.push({
+                  number: issueNumber,
+                  task_id: updatedKeeper.id,
+                  reason: "linked WBS task is completed and AI review approved",
+                });
+                closedIssueNumbers.add(issueNumber);
+              }
+
+              const updatedIndex = allTasks.findIndex((task) =>
+                String(task.id ?? "") === String(updatedKeeper.id ?? "")
+              );
+              if (updatedIndex >= 0) {
+                allTasks[updatedIndex] = updatedKeeper;
+              } else {
+                allTasks.push(updatedKeeper);
+              }
+              const duplicateTasks = existing.filter((task) =>
+                String(task.id ?? "") !== String(updatedKeeper.id ?? "") &&
+                !isCompletedWbsTask(task)
+              );
+              for (const duplicate of duplicateTasks) {
+                await completeDuplicateWbsTask({
+                  duplicate,
+                  keptId: updatedKeeper.id,
+                  issueNumber,
+                  issueUrl,
+                  state,
+                  labels,
+                  canonicalTitle,
+                  note:
+                    `Duplicate of WBS task ${updatedKeeper.id}; GitHub Issue #${issueNumber} is kept on one canonical WBS row.`,
+                  reason: "duplicate_wbs_row",
+                  context: "issue_duplicate_update",
+                });
+              }
+            } catch (error) {
+              const message = error instanceof Error
+                ? error.message
+                : String(error);
+              if (isWbsGithubSyncUniqueConflict({ message })) {
+                console.warn(
+                  `wbs.sync_github_issues skipped Issue #${issueNumber} after unique-conflict recovery failed: ${message}`,
+                );
+                stats.skipped += 1;
                 continue;
               }
-              const createdTask = created as Record<string, unknown>;
-              tasksByIssue.set(issueNumber, [createdTask]);
-              allTasks.push(createdTask);
-              stats.created += 1;
-              continue;
-            }
-
-            const { data: updated, error: updateError } = await admin.from(
-              "wbs_tasks",
-            )
-              .update(payload)
-              .eq("id", String(keeper.id))
-              .select(taskSelect)
-              .single();
-            let updatedKeeper = updated as Record<string, unknown> | null;
-            const keeperRepairReasons = githubIssueTaskRepairReasons(
-              keeper,
-              issueNumber,
-              state,
-              canonicalTitle,
-            );
-            let conflictRepairTask: Record<string, unknown> | null = null;
-            let conflictRepairReasons: string[] = [];
-            if (updateError) {
-              if (!isWbsTitleInstanceUniqueConflict(updateError)) {
-                throw new Error(updateError.message);
-              }
-              const { data: conflictingTasks, error: conflictFindError } =
-                await admin.from("wbs_tasks")
-                  .select(taskSelect)
-                  .eq("title", String(payload.title ?? ""))
-                  .eq("instance", lane)
-                  .neq("id", String(keeper.id))
-                  .order("created_at", { ascending: true })
-                  .limit(1);
-              if (conflictFindError) throw new Error(conflictFindError.message);
-              const conflictingTask = (conflictingTasks ?? [])[0] as
-                | Record<string, unknown>
-                | undefined;
-              if (!conflictingTask?.id) throw new Error(updateError.message);
-              conflictRepairTask = conflictingTask;
-              conflictRepairReasons = githubIssueTaskRepairReasons(
-                conflictingTask,
-                issueNumber,
-                state,
-                canonicalTitle,
-              );
-
-              const { data: recovered, error: recoveryError } = await admin
-                .from("wbs_tasks")
-                .update(payload)
-                .eq("id", String(conflictingTask.id))
-                .select(taskSelect)
-                .single();
-              if (recoveryError) throw new Error(recoveryError.message);
-              updatedKeeper = recovered as Record<string, unknown>;
-            }
-            if (!updatedKeeper?.id) {
-              throw new Error(
-                "WBS task update did not return a canonical row.",
-              );
-            }
-            stats.updated += 1;
-            if (isClosed) stats.completed_from_closed_issues += 1;
-            recordWbsRepair(
-              keeper,
-              issueNumber,
-              keeperRepairReasons,
-              "canonical_update",
-            );
-            if (conflictRepairTask) {
-              recordWbsRepair(
-                conflictRepairTask,
-                issueNumber,
-                conflictRepairReasons.length
-                  ? conflictRepairReasons
-                  : ["title_instance_conflict_recovered"],
-                "update_conflict_recovery",
-              );
-            }
-            if (
-              !isClosed && closureReady && !closedIssueNumbers.has(issueNumber)
-            ) {
-              issuesToClose.push({
-                number: issueNumber,
-                task_id: updatedKeeper.id,
-                reason: "linked WBS task is completed and AI review approved",
-              });
-              closedIssueNumbers.add(issueNumber);
-            }
-
-            const updatedIndex = allTasks.findIndex((task) =>
-              String(task.id ?? "") === String(updatedKeeper.id ?? "")
-            );
-            if (updatedIndex >= 0) {
-              allTasks[updatedIndex] = updatedKeeper;
-            } else {
-              allTasks.push(updatedKeeper);
-            }
-            const duplicateTasks = existing.filter((task) =>
-              String(task.id ?? "") !== String(updatedKeeper.id ?? "")
-            );
-            for (const duplicate of duplicateTasks) {
-              const duplicateNote =
-                `Duplicate of WBS task ${updatedKeeper.id}; GitHub Issue #${issueNumber} is kept on one canonical WBS row.`;
-              const duplicateStatus = isClosed ? "completed" : "in_progress";
-              const duplicateProgress = isClosed
-                ? 100
-                : Math.max(0, Math.min(99, Number(duplicate.progress ?? 0)));
-              const duplicateRepairReasons = githubIssueTaskRepairReasons(
-                duplicate,
-                issueNumber,
-                state,
-                canonicalTitle,
-              );
-              duplicateRepairReasons.push("duplicate_wbs_row");
-              const { error: duplicateError } = await admin.from("wbs_tasks")
-                .update({
-                  status: duplicateStatus,
-                  progress: duplicateProgress,
-                  ai_review_status: isClosed
-                    ? (duplicate.ai_review_status ?? "pending")
-                    : "pending",
-                  remaining_work: duplicateNote,
-                  github_issue_number: issueNumber,
-                  github_issue_url: issueUrl,
-                  github_issue_state: state,
-                  github_issue_labels: labels,
-                  github_issue_synced_at: nowIso,
-                })
-                .eq("id", String(duplicate.id));
-              if (duplicateError) throw new Error(duplicateError.message);
-              Object.assign(duplicate, {
-                status: duplicateStatus,
-                progress: duplicateProgress,
-                remaining_work: duplicateNote,
-                github_issue_number: issueNumber,
-                github_issue_url: issueUrl,
-                github_issue_state: state,
-                github_issue_labels: labels,
-                github_issue_synced_at: nowIso,
-              });
-              recordWbsRepair(
-                duplicate,
-                issueNumber,
-                duplicateRepairReasons,
-                "issue_duplicate_update",
-              );
-              duplicateWbsTasks.push({
-                id: duplicate.id,
-                kept_id: updatedKeeper.id,
-                issue_number: issueNumber,
-              });
-              stats.duplicate_wbs_closed += 1;
+              throw error;
             }
           }
 
@@ -6411,6 +7816,7 @@ serve(async (req) => {
                 continue;
               }
               const issueNumber = githubIssueNumberFromTask(duplicate);
+              if (!issueNumber) continue;
               const issue = issueNumber
                 ? issuesByNumber.get(issueNumber)
                 : null;
@@ -6431,67 +7837,77 @@ serve(async (req) => {
                   String(issue.title ?? `Issue #${issueNumber}`).trim()
                 }`
                 : String(keeper.title ?? duplicate.title ?? "");
-              const duplicateNote =
-                `Duplicate GitHub-origin WBS title; kept WBS task ${keeper.id} as canonical.`;
-              const duplicateStatus = state === "CLOSED"
-                ? "completed"
-                : "in_progress";
-              const duplicateProgress = state === "CLOSED"
-                ? 100
-                : Math.max(0, Math.min(99, Number(duplicate.progress ?? 0)));
-              const duplicateRepairReasons = githubIssueTaskRepairReasons(
+              await completeDuplicateWbsTask({
                 duplicate,
-                Number(issueNumber),
+                issueNumber,
+                issueUrl,
                 state,
+                labels,
                 canonicalTitle,
-              );
-              duplicateRepairReasons.push("duplicate_title");
+                keptId: keeper.id,
+                note:
+                  `Duplicate GitHub-origin WBS title; kept WBS task ${keeper.id} as canonical.`,
+                reason: "duplicate_title",
+                context: "title_duplicate_update",
+              });
+              duplicateTaskIds.add(duplicateId);
+            }
+          }
+
+          const genericTitleGroups = new Map<
+            string,
+            Array<Record<string, unknown>>
+          >();
+          for (const task of allTasks) {
+            const taskId = String(task.id ?? "");
+            if (!taskId || duplicateTaskIds.has(taskId)) continue;
+            if (githubIssueNumberFromTask(task)) continue;
+            const titleKey = normalizeDuplicateKey(task.title);
+            if (!titleKey) continue;
+            const tasks = genericTitleGroups.get(titleKey) ?? [];
+            tasks.push(task);
+            genericTitleGroups.set(titleKey, tasks);
+          }
+          for (const tasks of genericTitleGroups.values()) {
+            if (tasks.length < 2) continue;
+            const sorted = [...tasks].sort(compareWbsDuplicateTitleKeeper);
+            const keeper = sorted.find((task) => !isCompletedWbsTask(task)) ??
+              sorted[0];
+            const keeperId = String(keeper.id ?? "");
+            if (!keeperId) continue;
+            for (const duplicate of sorted) {
+              const duplicateId = String(duplicate.id ?? "");
+              if (
+                !duplicateId || duplicateId === keeperId ||
+                duplicateTaskIds.has(duplicateId)
+              ) {
+                continue;
+              }
+              const duplicateNote =
+                `Duplicate WBS title; kept WBS task ${keeperId} as canonical.`;
+              const duplicateUpdate: Record<string, unknown> = {
+                status: "completed",
+                progress: 100,
+                ai_review_status: "manual_override",
+                remaining_work: duplicateNote,
+              };
+              if (!String(duplicate.recovery_plan ?? "").trim()) {
+                duplicateUpdate.recovery_plan =
+                  "Completed as a duplicate WBS title by wbs.sync_github_issues.";
+              }
+              if (!String(duplicate.recovery_planned_at ?? "").trim()) {
+                duplicateUpdate.recovery_planned_at = nowIso;
+              }
               const { error: duplicateError } = await admin.from("wbs_tasks")
-                .update({
-                  status: duplicateStatus,
-                  progress: duplicateProgress,
-                  ai_review_status: state === "CLOSED"
-                    ? (duplicate.ai_review_status ?? "pending")
-                    : "pending",
-                  remaining_work: duplicateNote,
-                  github_issue_url:
-                    (issueUrl || String(duplicate.github_issue_url ?? "")) ||
-                    null,
-                  github_issue_number: issueNumber,
-                  github_issue_state: state,
-                  github_issue_labels: labels.length
-                    ? labels
-                    : (duplicate.github_issue_labels ?? []),
-                  github_issue_synced_at: nowIso,
-                })
+                .update(duplicateUpdate)
                 .eq("id", duplicateId);
               if (duplicateError) throw new Error(duplicateError.message);
-              Object.assign(duplicate, {
-                status: duplicateStatus,
-                progress: duplicateProgress,
-                remaining_work: duplicateNote,
-                github_issue_number: issueNumber,
-                github_issue_url: issueUrl ||
-                  String(duplicate.github_issue_url ?? "") ||
-                  null,
-                github_issue_state: state,
-                github_issue_labels: labels.length
-                  ? labels
-                  : (duplicate.github_issue_labels ?? []),
-                github_issue_synced_at: nowIso,
-              });
-              recordWbsRepair(
-                duplicate,
-                Number(issueNumber),
-                duplicateRepairReasons,
-                "title_duplicate_update",
-              );
+              Object.assign(duplicate, duplicateUpdate);
               duplicateTaskIds.add(duplicateId);
               duplicateWbsTasks.push({
                 id: duplicateId,
-                kept_id: keeper.id,
-                issue_number: issueNumber,
-                reason: "duplicate_title",
+                kept_id: keeperId,
+                reason: "duplicate_title_generic",
               });
               stats.duplicate_wbs_closed += 1;
             }
@@ -6502,6 +7918,7 @@ serve(async (req) => {
             repo,
             issue_count: issueRecords.length,
             wbs_task_scan_count: allTasks.length,
+            global_repairs: runGlobalRepairs,
             ...stats,
             issues_to_close: issuesToClose,
             duplicate_wbs_tasks: duplicateWbsTasks,
@@ -6511,38 +7928,52 @@ serve(async (req) => {
         case "wbs.priority_for_instance": {
           // 指定インスタンスの優先タスク TOP 5 を返す (session-start-check 用)
           // 担当なしの場合は他 instance の滞留タスクを自担当へ救援 reassign する。
-          // body: { instance: 'codex'|'vscode'|'win'|'ps1'..'ps6'|'web'|'mobile'|'schedule'|'gha',
+          // body: { instance: 'claude'|'codex'|'user'|'automation' (legacy lanes are still accepted),
           //         auto_reassign?: true, limit?: 5 }
           const rawInstance = String(body.instance ?? "").trim();
           if (!rawInstance) return json({ error: "instance required" }, 400);
           const rawInstanceLower = rawInstance.toLowerCase();
           if (
             !WBS_INSTANCE_VALUES.includes(rawInstanceLower) &&
-            !["windows", "ps", "copilot", "github-copilot"].includes(
-              rawInstanceLower,
-            )
+            !WBS_ACTIVE_INSTANCE_VALUES.includes(rawInstanceLower) &&
+            ![
+              "windows",
+              "ps",
+              "copilot",
+              "github-copilot",
+              "claude-code",
+              "claude-code-1",
+              "automation",
+              "auto",
+            ].includes(rawInstanceLower)
           ) {
             return json({
               error: `instance must be one of: ${
-                WBS_INSTANCE_VALUES.join(", ")
+                WBS_ACTIVE_INSTANCE_VALUES.join(", ")
               }`,
             }, 400);
           }
-          const inst = normalizeWbsInstance(rawInstance);
+          const inst = normalizeWbsActiveInstance(rawInstance);
           const limit = Math.min(Math.max(Number(body.limit ?? 5), 1), 20);
           const autoReassign = parseBooleanish(
             body.auto_reassign ?? body.autoReassign,
             true,
           );
           const taskSelect =
-            "id, category, category_order, title, status, progress, priority, end_date, planned_end_date, updated_at, instance, owner_instance, recovery_plan, github_issue_number, github_issue_url, github_issue_state, github_issue_synced_at";
+            "id, category, category_order, title, status, progress, priority, end_date, planned_start_date, planned_end_date, updated_at, instance, owner_instance, recovery_plan, github_issue_number, github_issue_url, github_issue_state, github_issue_synced_at";
           const { data, error } = await admin.from("wbs_tasks")
             .select(taskSelect)
-            .eq("instance", inst)
             .in("status", ["pending", "in_progress", "blocked"]);
-          if (error) throw new Error(error.message);
+          if (error) {
+            throw new Error(error.message);
+          }
           const ownTaskFilter = filterClosedGithubIssueWbsTasks(
-            [...(data ?? [])] as Array<Record<string, unknown>>,
+            [...(data ?? [])].filter((task) =>
+              wbsTaskMatchesInstanceFilter(
+                task as Record<string, unknown>,
+                rawInstance,
+              )
+            ) as Array<Record<string, unknown>>,
           );
           let topTasks = ownTaskFilter.activeTasks
             .sort(compareWbsTasks)
@@ -6564,12 +7995,13 @@ serve(async (req) => {
           );
           let reassignedTask: Record<string, unknown> | null = null;
 
-          if (topTasks.length === 0 && autoReassign) {
+          if (topTasks.length === 0 && autoReassign && inst !== "automation") {
             const candidate = pickWbsRescueCandidate(openTasks, inst, now);
             if (candidate) {
+              const legacyTarget = normalizeWbsInstance(rawInstance);
               const update: Record<string, unknown> = {
-                instance: inst,
-                owner_instance: inst,
+                instance: legacyTarget,
+                owner_instance: legacyTarget,
               };
               const needsRecoveryPlan = wbsOverdueDays(
                     candidate,
@@ -6664,7 +8096,7 @@ serve(async (req) => {
         case "wbs.instance_workload": {
           // body: { instance?: string } 任意。全 instance の負荷と救援候補を返す。
           const taskSelect =
-            "id, category, category_order, title, status, progress, priority, end_date, planned_end_date, updated_at, instance, owner_instance, recovery_plan, github_issue_number, github_issue_url, github_issue_state, github_issue_synced_at";
+            "id, category, category_order, title, status, progress, priority, end_date, planned_start_date, planned_end_date, updated_at, instance, owner_instance, recovery_plan, github_issue_number, github_issue_url, github_issue_state, github_issue_synced_at";
           const { data, error } = await admin.from("wbs_tasks")
             .select(taskSelect)
             .in("status", ["pending", "in_progress", "blocked"]);
@@ -6677,7 +8109,7 @@ serve(async (req) => {
           return json({
             success: true,
             instance: body.instance
-              ? normalizeWbsInstance(body.instance)
+              ? normalizeWbsActiveInstance(body.instance)
               : null,
             workload: buildWbsWorkload(openTasks, now),
             rebalance_suggestions: buildWbsRebalanceSuggestions(openTasks, now),
@@ -6694,25 +8126,40 @@ serve(async (req) => {
           const myInstance = String(body.my_instance ?? "");
           const limitN = Math.min(Number(body.limit ?? 5), 20);
           if (!myInstance) return json({ error: "my_instance required" }, 400);
+          const myActiveInstance = normalizeWbsActiveInstance(myInstance);
 
           // 1. 自 instance の active task 数 fetch
-          const { count: myActiveCount } = await admin.from("wbs_tasks")
-            .select("id", { count: "exact", head: true })
-            .eq("instance", myInstance)
+          const { data: myActiveRaw, error: myActiveErr } = await admin.from(
+            "wbs_tasks",
+          )
+            .select("id, instance, owner_instance")
             .in("status", ["pending", "in_progress", "blocked"]);
+          if (myActiveErr) throw new Error(myActiveErr.message);
+          const myActiveCount = [...(myActiveRaw ?? [])].filter((task) =>
+            wbsTaskMatchesInstanceFilter(
+              task as Record<string, unknown>,
+              myActiveInstance,
+            )
+          ).length;
 
           // 2. 他 instance の active task 取得 (rebalance 候補)
           const { data: otherTasks, error } = await admin.from("wbs_tasks")
             .select(
               "id, category, title, instance, owner_instance, status, progress, priority, end_date, updated_at, last_rebalanced_at, github_issue_number, github_issue_url, github_issue_state, github_issue_synced_at",
             )
-            .neq("instance", myInstance)
             .in("status", ["pending", "in_progress", "blocked"])
             .neq("priority", "completed")
             .limit(200);
-          if (error) throw new Error(error.message);
+          if (error) {
+            throw new Error(error.message);
+          }
           const otherTaskFilter = filterClosedGithubIssueWbsTasks(
-            [...(otherTasks ?? [])] as Array<Record<string, unknown>>,
+            [...(otherTasks ?? [])].filter((task) =>
+              !wbsTaskMatchesInstanceFilter(
+                task as Record<string, unknown>,
+                myActiveInstance,
+              )
+            ) as Array<Record<string, unknown>>,
           );
 
           // 3. 抑制ルール: PS 専任 / IPO 専決 / 期限直前は除外
@@ -6722,13 +8169,21 @@ serve(async (req) => {
             const cat = String(t.category ?? "");
             const title = String(t.title ?? "");
             // PS#1 専任 (Rule17)
-            if (cat.startsWith("rule17-")) return false;
+            if (cat.startsWith("rule17-")) {
+              return false;
+            }
             // PS#2 専任 (T-1 dispatch)
-            if (cat.startsWith("blog-") || title.includes("T-1")) return false;
+            if (cat.startsWith("blog-") || title.includes("T-1")) {
+              return false;
+            }
             // PS#5 専任 (urgent on-call)
-            if (t.priority === "high" && cat === "bug") return false;
+            if (t.priority === "high" && cat === "bug") {
+              return false;
+            }
             // IPO 専決 (CEO 固定)
-            if (cat === "business-ipo") return false;
+            if (cat === "business-ipo") {
+              return false;
+            }
             // 期限直前 (1 日切ってる) は元担当継続
             if (t.end_date) {
               const dueMs = new Date(String(t.end_date)).getTime();
@@ -6739,7 +8194,9 @@ serve(async (req) => {
             // 7 日以内に rebalance 済 = loop 防止
             if (t.last_rebalanced_at) {
               const lastMs = new Date(String(t.last_rebalanced_at)).getTime();
-              if (NOW - lastMs < 7 * 24 * HOUR) return false;
+              if (NOW - lastMs < 7 * 24 * HOUR) {
+                return false;
+              }
             }
             return true;
           });
@@ -6792,7 +8249,9 @@ serve(async (req) => {
             if (t.priority === "high") {
               score += 20;
               reasons.push("priority=high");
-            } else if (t.priority === "medium") score += 10;
+            } else if (t.priority === "medium") {
+              score += 10;
+            }
 
             return {
               id: t.id,
@@ -6811,14 +8270,17 @@ serve(async (req) => {
 
           // 5. score 高い順 sort + limit
           const candidates = scored
-            .filter((s) => s.stale_score > 0)
+            .filter((s) =>
+              s.stale_score > 0
+            )
             .sort((a, b) => b.stale_score - a.stale_score)
             .slice(0, limitN);
 
           return json({
             success: true,
             my_instance: myInstance,
-            my_active_count: myActiveCount ?? 0,
+            my_active_instance: myActiveInstance,
+            my_active_count: myActiveCount,
             candidates,
             closed_issue_exclusions: {
               total_count: otherTaskFilter.excludedTasks.length,
@@ -7668,6 +9130,32 @@ ${reportText ? `> ${reportText}` : ""}`,
       }
     }
 
+    if (action === "rss.fetch_latest") {
+      const result = await fetchLatestNewsItems(body);
+      const signalLimit = Math.max(
+        1,
+        Math.min(30, Number(body.signal_limit ?? 20) || 20),
+      );
+      return json({
+        success: true,
+        ...result,
+        signals: rankNewsSignals(result.items, signalLimit),
+        signal_action: "news.signal_rank",
+      });
+    }
+
+    if (action === "news.signal_rank") {
+      const limit = Math.max(1, Math.min(100, Number(body.limit ?? 30)));
+      return json({
+        success: true,
+        signals: rankNewsSignals(body.items, limit),
+      });
+    }
+
+    if (action === "market_intel.analyze") {
+      return json(await buildMarketIntelReport(body));
+    }
+
     // ── Authenticated CRUD operations ────────────────────────────────────────
     const userId = await getUserId(req);
     if (!userId) return json({ error: "Unauthorized" }, 401);
@@ -8185,6 +9673,7 @@ ${reportText ? `> ${reportText}` : ""}`,
         const item = await addItem(admin, "rss_feed", userId, {
           url: body.url,
           title: body.title,
+          category: body.category ?? "購読",
         });
         return json({ success: true, feed: item });
       }
@@ -8567,6 +10056,9 @@ ${reportText ? `> ${reportText}` : ""}`,
             "rss.list_feeds",
             "rss.add_feed",
             "rss.fetch",
+            "rss.fetch_latest",
+            "news.signal_rank",
+            "market_intel.analyze",
             "changelog.list",
             "changelog.create",
             "mindmap.list",

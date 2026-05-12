@@ -1,21 +1,66 @@
+import 'dart:math' as math;
+import 'dart:ui' show PointerDeviceKind;
+
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../utils/web_image_downloader.dart';
+
 const String _kGithubRepoUrl = 'https://github.com/kanta13jp1/my_web_app';
-final RegExp _kIssueNumberRegex = RegExp(r'\[Issue\s*#(\d+)\]');
+const String _kAdditionalRequestText = '\u8ffd\u52a0\u8981\u671b';
+const String _kUserRequestCategoryText = '\u30e6\u30fc\u30b6\u30fc\u8981\u671b';
+final RegExp _kIssueNumberRegex = RegExp(
+  r'github\.com\/[^\/\s]+\/[^\/\s]+\/issues\/(\d+)|(?:^|[\s\[(])(?:github\s+)?issue\s*#\s*(\d+)\]?',
+  caseSensitive: false,
+);
+
+class _GanttDragScrollBehavior extends MaterialScrollBehavior {
+  const _GanttDragScrollBehavior();
+
+  @override
+  Set<PointerDeviceKind> get dragDevices => const {
+        PointerDeviceKind.touch,
+        PointerDeviceKind.mouse,
+        PointerDeviceKind.stylus,
+        PointerDeviceKind.invertedStylus,
+        PointerDeviceKind.unknown,
+      };
+}
 
 int? _extractIssueNumber(String title) {
   final match = _kIssueNumberRegex.firstMatch(title);
   if (match == null) return null;
-  return int.tryParse(match.group(1) ?? '');
+  return int.tryParse(match.group(1) ?? match.group(2) ?? '');
+}
+
+int? _parseIssueNumberValue(Object? value) {
+  if (value is int && value > 0) return value;
+  if (value is num && value > 0) return value.toInt();
+  return _extractIssueNumber(value?.toString() ?? '');
+}
+
+bool _isDuplicateWbsMirrorNote(String value) {
+  final text = value.trim().toLowerCase();
+  return text.startsWith('duplicate of wbs task') ||
+      text.startsWith('duplicate github-origin wbs title') ||
+      text.startsWith('duplicate wbs title') ||
+      text.contains('duplicate_wbs_row') ||
+      text.contains('duplicate_title') ||
+      text.contains('duplicate_title_generic');
 }
 
 Future<void> _openGithubIssue(int issueNumber) async {
   final uri = Uri.parse('$_kGithubRepoUrl/issues/$issueNumber');
   await launchUrl(uri, mode: LaunchMode.externalApplication);
 }
+
+String _normalizeWbsTitleDuplicateKey(String value) => value
+    .replaceFirst(RegExp(r'^\s*\[Issue #\d+\]\s*', caseSensitive: false), '')
+    .replaceAll(RegExp(r'\s+'), ' ')
+    .trim()
+    .toLowerCase();
 
 // ── データモデル ──────────────────────────────────────────────────────────────
 
@@ -66,6 +111,8 @@ class WbsTask {
   final int progress;
   final DateTime? startDate;
   final DateTime? endDate;
+  final DateTime? plannedStartDate;
+  final DateTime? plannedEndDate;
   final String? milestoneCode;
   final String priority;
   final String ownerInstance;
@@ -75,6 +122,14 @@ class WbsTask {
   // Win版#131 part 20: 残作業 + 依存関係
   final String remainingWork;
   final List<String> dependsOnTitles;
+  final int? githubIssueNumber;
+  final String githubIssueUrl;
+  final DateTime? createdAt;
+  final DateTime? updatedAt;
+  // Win版#132 part 156: GitHub Issue 同期遅延時の補完 filter 用
+  // status field は sync EF が遅延すると 'completed' へ変わらない場合がある.
+  // github_issue_state == 'CLOSED' を併用すれば close 反映を即時取得可.
+  final String githubIssueState;
 
   const WbsTask({
     required this.id,
@@ -88,6 +143,8 @@ class WbsTask {
     required this.progress,
     this.startDate,
     this.endDate,
+    this.plannedStartDate,
+    this.plannedEndDate,
     this.milestoneCode,
     required this.priority,
     this.ownerInstance = '',
@@ -95,7 +152,32 @@ class WbsTask {
     this.rescheduledCount = 0,
     this.remainingWork = '',
     this.dependsOnTitles = const [],
+    this.githubIssueNumber,
+    this.githubIssueUrl = '',
+    this.createdAt,
+    this.updatedAt,
+    this.githubIssueState = '',
   });
+
+  bool get isEffectivelyCompleted =>
+      status == 'completed' ||
+      githubIssueState == 'CLOSED' ||
+      isDuplicateGithubIssueMirror;
+
+  int? get linkedGithubIssueNumber =>
+      githubIssueNumber ??
+      _extractIssueNumber(title) ??
+      _extractIssueNumber(githubIssueUrl) ??
+      _extractIssueNumber(description);
+
+  bool get isDuplicateGithubIssueMirror =>
+      _isDuplicateWbsMirrorNote(remainingWork) ||
+      _isDuplicateWbsMirrorNote(recoveryPlan);
+
+  String? get linkedDuplicateTitleKey {
+    final titleKey = _normalizeWbsTitleDuplicateKey(title);
+    return titleKey.isEmpty ? null : titleKey;
+  }
 
   factory WbsTask.fromMap(Map<String, dynamic> m) => WbsTask(
         id: m['id'] as String,
@@ -113,6 +195,12 @@ class WbsTask {
         endDate: m['end_date'] != null
             ? DateTime.tryParse(m['end_date'] as String)
             : null,
+        plannedStartDate: m['planned_start_date'] != null
+            ? DateTime.tryParse(m['planned_start_date'] as String)
+            : null,
+        plannedEndDate: m['planned_end_date'] != null
+            ? DateTime.tryParse(m['planned_end_date'] as String)
+            : null,
         milestoneCode: m['milestone_code'] as String?,
         priority: m['priority'] as String? ?? 'medium',
         ownerInstance: m['owner_instance'] as String? ??
@@ -122,13 +210,46 @@ class WbsTask {
         remainingWork: (m['remaining_work'] as String?) ?? '',
         dependsOnTitles:
             (m['depends_on_titles'] as List?)?.cast<String>() ?? const [],
+        githubIssueNumber: _parseIssueNumberValue(m['github_issue_number']),
+        githubIssueUrl: (m['github_issue_url'] as String?) ?? '',
+        createdAt: m['created_at'] != null
+            ? DateTime.tryParse(m['created_at'] as String)
+            : null,
+        updatedAt: m['updated_at'] != null
+            ? DateTime.tryParse(m['updated_at'] as String)
+            : null,
+        githubIssueState: (m['github_issue_state'] as String?) ?? '',
       );
 
-  /// 遅延日数 (今日 - end_date / 完了済 or 期限なし は 0)
+  DateTime? get rawScheduleStartDate => plannedStartDate ?? startDate;
+  DateTime? get rawScheduleEndDate => plannedEndDate ?? endDate;
+
+  /// Display dates are normalized so the Gantt never shows start > finish.
+  DateTime? get scheduleStartDate {
+    final start = rawScheduleStartDate;
+    final end = rawScheduleEndDate;
+    if (start != null && end != null && start.isAfter(end)) return end;
+    return start;
+  }
+
+  DateTime? get scheduleEndDate {
+    final start = rawScheduleStartDate;
+    final end = rawScheduleEndDate;
+    if (start != null && end != null && start.isAfter(end)) return start;
+    return end;
+  }
+
+  bool get hasInvertedSchedule {
+    final start = rawScheduleStartDate;
+    final end = rawScheduleEndDate;
+    return start != null && end != null && start.isAfter(end);
+  }
+
   int get delayDays {
-    if (status == 'completed' || endDate == null) return 0;
+    final scheduleEnd = scheduleEndDate;
+    if (status == 'completed' || scheduleEnd == null) return 0;
     final now = DateTime.now();
-    final end = endDate!;
+    final end = scheduleEnd;
     final today = DateTime(now.year, now.month, now.day);
     final endDay = DateTime(end.year, end.month, end.day);
     final diff = today.difference(endDay).inDays;
@@ -153,7 +274,9 @@ class WbsTask {
       };
 
   String get instanceLabel => switch (instance) {
+        'claude' => 'Claude Code',
         'codex' => 'Codex',
+        'automation' => 'Automation',
         'gemini' => 'Gemini',
         'co-pilot' => 'Co-pilot',
         'copilot' => 'Co-pilot',
@@ -177,7 +300,9 @@ class WbsTask {
       };
 
   Color get instanceColor => switch (instance) {
+        'claude' => const Color(0xFF2563EB),
         'codex' => const Color(0xFF10B981),
+        'automation' => const Color(0xFFEAB308),
         'gemini' => const Color(0xFF4285F4),
         'co-pilot' => const Color(0xFF111827),
         'copilot' => const Color(0xFF111827),
@@ -201,7 +326,9 @@ class WbsTask {
       };
 
   String get ownerLabel => switch (ownerInstance) {
+        'claude' => 'Claude Code',
         'codex' => 'Codex',
+        'automation' => 'Automation',
         'gemini' => 'Gemini',
         'co-pilot' => 'Co-pilot',
         'copilot' => 'Co-pilot',
@@ -224,7 +351,9 @@ class WbsTask {
       };
 
   Color get ownerColor => switch (ownerInstance) {
+        'claude' => const Color(0xFF2563EB),
         'codex' => const Color(0xFF10B981),
+        'automation' => const Color(0xFFEAB308),
         'gemini' => const Color(0xFF4285F4),
         'co-pilot' => const Color(0xFF111827),
         'copilot' => const Color(0xFF111827),
@@ -246,8 +375,23 @@ class WbsTask {
         _ => const Color(0xFF707070),
       };
 
+  String get activeInstanceKey => _activeWbsInstanceKey(instance);
+  String get activeOwnerKey =>
+      _activeWbsInstanceKey(ownerInstance.isEmpty ? instance : ownerInstance);
+  String get activeInstanceLabel => _activeWbsInstanceLabel(activeInstanceKey);
+  String get activeOwnerLabel => _activeWbsInstanceLabel(activeOwnerKey);
+  Color get activeInstanceColor => _activeWbsInstanceColor(activeInstanceKey);
+  Color get activeOwnerColor => _activeWbsInstanceColor(activeOwnerKey);
+
+  bool matchesActiveInstanceFilter(String key) =>
+      activeInstanceKey == key || activeOwnerKey == key;
+
   bool get isFeatureRequestTask =>
-      category == 'ユーザー要望' || title.startsWith('[追加要望]');
+      category == _kUserRequestCategoryText ||
+      category.contains(_kAdditionalRequestText) ||
+      title.contains(_kAdditionalRequestText);
+
+  bool get isGithubIssueLinkedTask => linkedGithubIssueNumber != null;
 
   int get priorityRank => switch (priority) {
         'high' => 3,
@@ -258,13 +402,14 @@ class WbsTask {
 }
 
 int _wbsTaskSortBucket(WbsTask task) {
-  if (task.status == 'completed') return 4;
+  if (task.status == 'completed') return 5;
   if (task.isFeatureRequestTask) return 0;
+  if (task.isGithubIssueLinkedTask) return 1;
   return switch (task.status) {
-    'in_progress' => 1,
-    'pending' => 2,
-    'blocked' => 3,
-    _ => 3,
+    'in_progress' => 2,
+    'pending' => 3,
+    'blocked' => 4,
+    _ => 4,
   };
 }
 
@@ -285,19 +430,146 @@ int _compareWbsTasks(WbsTask a, WbsTask b) {
   final categoryCmp = a.categoryOrder.compareTo(b.categoryOrder);
   if (categoryCmp != 0) return categoryCmp;
 
-  final endDateCmp = _compareOptionalDate(a.endDate, b.endDate);
+  final endDateCmp = _compareOptionalDate(a.scheduleEndDate, b.scheduleEndDate);
   if (endDateCmp != 0) return endDateCmp;
 
-  final startDateCmp = _compareOptionalDate(a.startDate, b.startDate);
+  final startDateCmp =
+      _compareOptionalDate(a.scheduleStartDate, b.scheduleStartDate);
   if (startDateCmp != 0) return startDateCmp;
 
   return a.title.compareTo(b.title);
+}
+
+int _compareWbsTaskDisplayKeeper(WbsTask a, WbsTask b) {
+  final duplicateCmp = (a.isDuplicateGithubIssueMirror ? 1 : 0)
+      .compareTo(b.isDuplicateGithubIssueMirror ? 1 : 0);
+  if (duplicateCmp != 0) return duplicateCmp;
+
+  final explicitIssueCmp = (a.githubIssueNumber == null ? 1 : 0)
+      .compareTo(b.githubIssueNumber == null ? 1 : 0);
+  if (explicitIssueCmp != 0) return explicitIssueCmp;
+
+  final completedCmp = (a.isEffectivelyCompleted ? 1 : 0)
+      .compareTo(b.isEffectivelyCompleted ? 1 : 0);
+  if (completedCmp != 0) return completedCmp;
+
+  final progressCmp = b.progress.compareTo(a.progress);
+  if (progressCmp != 0) return progressCmp;
+
+  final updatedCmp = _compareOptionalDate(b.updatedAt, a.updatedAt);
+  if (updatedCmp != 0) return updatedCmp;
+
+  final createdCmp = _compareOptionalDate(a.createdAt, b.createdAt);
+  if (createdCmp != 0) return createdCmp;
+
+  return a.id.compareTo(b.id);
+}
+
+@visibleForTesting
+List<WbsTask> dedupeWbsTasksForDisplay(Iterable<WbsTask> tasks) {
+  final ordered = <WbsTask>[];
+  final indexByKey = <String, int>{};
+
+  for (final task in tasks) {
+    final issueNumber = task.linkedGithubIssueNumber;
+    String? displayKey;
+    if (issueNumber != null) {
+      displayKey = 'issue:$issueNumber';
+    } else {
+      final titleKey = task.linkedDuplicateTitleKey;
+      if (titleKey != null) displayKey = 'title:$titleKey';
+    }
+    if (displayKey == null) {
+      ordered.add(task);
+      continue;
+    }
+
+    final existingIndex = indexByKey[displayKey];
+    if (existingIndex == null) {
+      indexByKey[displayKey] = ordered.length;
+      ordered.add(task);
+      continue;
+    }
+
+    final existing = ordered[existingIndex];
+    if (_compareWbsTaskDisplayKeeper(task, existing) < 0) {
+      ordered[existingIndex] = task;
+    }
+  }
+
+  return ordered;
 }
 
 Color _hexColor(String hex) {
   final s = hex.replaceAll('#', '');
   return Color(int.parse('FF$s', radix: 16));
 }
+
+typedef _WbsInstanceFilter = ({
+  String label,
+  String? value,
+  Color color,
+});
+
+const List<_WbsInstanceFilter> _activeWbsInstanceFilters = [
+  (label: '全て', value: null, color: Color(0xFFFF6B35)),
+  (label: 'Claude Code', value: 'claude', color: Color(0xFF2563EB)),
+  (label: 'Codex', value: 'codex', color: Color(0xFF10B981)),
+  (label: 'User', value: 'user', color: Color(0xFFEF4444)),
+  (label: 'Automation', value: 'automation', color: Color(0xFFEAB308)),
+];
+
+String _activeWbsInstanceKey(String raw) {
+  final key = raw.trim().toLowerCase().replaceAll('_', '-');
+  if (key.isEmpty) return 'claude';
+  if (key == 'codex' ||
+      key == 'codex1' ||
+      key == 'codex-1' ||
+      key == 'codex2' ||
+      key == 'codex-2' ||
+      key == 'ps2' ||
+      key == 'ps-2' ||
+      key == 'ps5' ||
+      key == 'ps-5' ||
+      key == 'ps6' ||
+      key == 'ps-6') {
+    return 'codex';
+  }
+  if (key == 'user' || key == 'human') return 'user';
+  if (key == 'schedule' ||
+      key == 'gha' ||
+      key == 'github-actions' ||
+      key == 'gemini' ||
+      key == 'co-pilot' ||
+      key == 'copilot' ||
+      key == 'github-copilot' ||
+      key == 'automation' ||
+      key == 'auto') {
+    return 'automation';
+  }
+  return 'claude';
+}
+
+String _activeWbsInstanceLabel(String key) => switch (key) {
+      'codex' => 'Codex',
+      'user' => 'User',
+      'automation' => 'Automation',
+      _ => 'Claude Code',
+    };
+
+String _activeWbsShortInstance(String key) => switch (key) {
+      'codex' => 'CX',
+      'user' => 'USR',
+      'automation' => 'AUTO',
+      _ => 'CC',
+    };
+
+Color _activeWbsInstanceColor(String key) => switch (key) {
+      'codex' => const Color(0xFF10B981),
+      'user' => const Color(0xFFEF4444),
+      'automation' => const Color(0xFFEAB308),
+      _ => const Color(0xFF2563EB),
+    };
 
 // ── ページ本体 ────────────────────────────────────────────────────────────────
 
@@ -373,10 +645,10 @@ class _ProjectGanttPageState extends State<ProjectGanttPage>
           _milestones = (mData as List)
               .map((e) => WbsMilestone.fromMap(e as Map<String, dynamic>))
               .toList();
-          _tasks = (tData as List)
-              .map((e) => WbsTask.fromMap(e as Map<String, dynamic>))
-              .toList()
-            ..sort(_compareWbsTasks);
+          _tasks = dedupeWbsTasksForDisplay(
+            (tData as List)
+                .map((e) => WbsTask.fromMap(e as Map<String, dynamic>)),
+          )..sort(_compareWbsTasks);
         });
       }
       // Win版#131 part 13: マイルストーン risk view (failures は silent)
@@ -516,6 +788,7 @@ class _ProjectGanttPageState extends State<ProjectGanttPage>
             filterInstance: _filterInstance,
             onFilterInstance: (v) => setState(() => _filterInstance = v),
             milestoneRisks: _milestoneRisks,
+            onRefreshWbs: _loadWbs,
           ),
           _MyProjectsTab(
             projects: _projects,
@@ -562,13 +835,14 @@ class _WbsTab extends StatelessWidget {
   });
 
   List<WbsTask> get _filtered => tasks.where((t) {
-        if (filterInstance != null && t.instance != filterInstance) {
+        if (filterInstance != null &&
+            !t.matchesActiveInstanceFilter(filterInstance!)) {
           return false;
         }
         if (filterMilestone != null && t.milestoneCode != filterMilestone) {
           return false;
         }
-        if (hideCompleted && t.status == 'completed') {
+        if (hideCompleted && t.isEffectivelyCompleted) {
           return false;
         }
         return true;
@@ -598,7 +872,10 @@ class _WbsTab extends StatelessWidget {
 
     final now = DateTime.now();
     final grouped = _grouped;
-    final overallProgress = _overallProgress(tasks);
+    // part 156: hideCompleted ON 時は filter 後タスクで進捗 + 件数算出
+    // (= GitHub Issue close 反映が visible になる)
+    final progressBase = hideCompleted ? _filtered : tasks;
+    final overallProgress = _overallProgress(progressBase);
 
     return ListView(
       padding: const EdgeInsets.all(16),
@@ -606,7 +883,9 @@ class _WbsTab extends StatelessWidget {
         // ── 全体進捗 ──────────────────────────────────────────────────────
         _OverallProgressCard(
           progress: overallProgress,
-          taskCount: tasks.length,
+          taskCount: progressBase.length,
+          totalCount: tasks.length,
+          showFilteredBadge: hideCompleted,
         ),
         const SizedBox(height: 16),
 
@@ -698,8 +977,15 @@ class _WbsTab extends StatelessWidget {
 class _OverallProgressCard extends StatelessWidget {
   final double progress;
   final int taskCount;
+  final int totalCount;
+  final bool showFilteredBadge;
 
-  const _OverallProgressCard({required this.progress, required this.taskCount});
+  const _OverallProgressCard({
+    required this.progress,
+    required this.taskCount,
+    this.totalCount = 0,
+    this.showFilteredBadge = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -740,7 +1026,9 @@ class _OverallProgressCard extends StatelessWidget {
                               ),
                     ),
                     Text(
-                      '$taskCount タスク',
+                      showFilteredBadge && totalCount > taskCount
+                          ? '$taskCount 件 未完了 / $totalCount 件 全体'
+                          : '$taskCount タスク',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                             color: const Color(0xFF707070),
                           ),
@@ -932,6 +1220,22 @@ class _FilterRow extends StatelessWidget {
             filterInstance,
             onFilterInstance,
             const Color(0xFFFF6B35),
+          ),
+          const SizedBox(width: 6),
+          _chip(
+            'Claude Code',
+            'claude',
+            filterInstance,
+            onFilterInstance,
+            const Color(0xFF2563EB),
+          ),
+          const SizedBox(width: 6),
+          _chip(
+            'Automation',
+            'automation',
+            filterInstance,
+            onFilterInstance,
+            const Color(0xFFEAB308),
           ),
           const SizedBox(width: 6),
           _chip(
@@ -1132,6 +1436,12 @@ class _FilterRow extends StatelessWidget {
     ValueChanged<String?> onTap,
     Color color,
   ) {
+    final isInstanceFilter = identical(onTap, onFilterInstance);
+    final isVisibleInstanceChip = value == null ||
+        _activeWbsInstanceFilters.any((filter) => filter.value == value);
+    if (isInstanceFilter && !isVisibleInstanceChip) {
+      return const SizedBox.shrink();
+    }
     final selected = current == value;
     return GestureDetector(
       onTap: () => onTap(selected ? null : value),
@@ -1303,13 +1613,13 @@ class _TaskRow extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
-                  color: task.instanceColor.withValues(alpha: 0.15),
+                  color: task.activeInstanceColor.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: Text(
-                  task.instanceLabel,
+                  task.activeInstanceLabel,
                   style: TextStyle(
-                    color: task.instanceColor,
+                    color: task.activeInstanceColor,
                     fontSize: 9,
                     fontWeight: FontWeight.w600,
                     height: 1.5,
@@ -1322,13 +1632,13 @@ class _TaskRow extends StatelessWidget {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   decoration: BoxDecoration(
-                    color: task.ownerColor.withValues(alpha: 0.15),
+                    color: task.activeOwnerColor.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: Text(
-                    '担当 ${task.ownerLabel}',
+                    '担当 ${task.activeOwnerLabel}',
                     style: TextStyle(
-                      color: task.ownerColor,
+                      color: task.activeOwnerColor,
                       fontSize: 9,
                       fontWeight: FontWeight.w600,
                       height: 1.5,
@@ -1383,7 +1693,8 @@ class _TaskRow extends StatelessWidget {
               ],
             ),
           ],
-          if (task.startDate != null || task.endDate != null) ...[
+          if (task.scheduleStartDate != null ||
+              task.scheduleEndDate != null) ...[
             const SizedBox(height: 4),
             Row(
               children: [
@@ -1395,10 +1706,10 @@ class _TaskRow extends StatelessWidget {
                 const SizedBox(width: 4),
                 Text(
                   [
-                    if (task.startDate != null)
-                      '開始予定: ${task.startDate!.year}/${task.startDate!.month.toString().padLeft(2, '0')}/${task.startDate!.day.toString().padLeft(2, '0')}',
-                    if (task.endDate != null)
-                      '完了予定: ${task.endDate!.year}/${task.endDate!.month.toString().padLeft(2, '0')}/${task.endDate!.day.toString().padLeft(2, '0')}',
+                    if (task.scheduleStartDate != null)
+                      '開始予定: ${task.scheduleStartDate!.year}/${task.scheduleStartDate!.month.toString().padLeft(2, '0')}/${task.scheduleStartDate!.day.toString().padLeft(2, '0')}',
+                    if (task.scheduleEndDate != null)
+                      '完了予定: ${task.scheduleEndDate!.year}/${task.scheduleEndDate!.month.toString().padLeft(2, '0')}/${task.scheduleEndDate!.day.toString().padLeft(2, '0')}',
                   ].join('  '),
                   style: TextStyle(
                     color: task.delayDays > 0
@@ -1686,6 +1997,7 @@ class _GanttTimelineTab extends StatefulWidget {
   final ValueChanged<String?> onFilterInstance;
   // Win版#131 part 13: マイルストーン risk
   final List<Map<String, dynamic>> milestoneRisks;
+  final Future<void> Function()? onRefreshWbs;
 
   const _GanttTimelineTab({
     required this.milestones,
@@ -1696,6 +2008,7 @@ class _GanttTimelineTab extends StatefulWidget {
     required this.filterInstance,
     required this.onFilterInstance,
     required this.milestoneRisks,
+    this.onRefreshWbs,
   });
 
   @override
@@ -1710,28 +2023,28 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
   final Map<String, double> _colWidths = {
     '#': 32,
     'task': 200,
-    'startDate': 80,
-    'endDate': 80,
+    'startDate': 104,
+    'endDate': 104,
     'instance': 70,
     'progress': 50,
-    'remaining': 200,
-    'depends': 150,
-    'recovery': 180,
-    'flags': 36, // Win#131 part 22: 遅延 ⚠ flag column
+    'remaining': 160,
+    'depends': 120,
+    'recovery': 160,
+    'flags': 64, // Win#131 part 22: 注意 flag column
   };
 
   // 列幅 min/max constraints (= drag 時の clamp 値)
   static const Map<String, double> _colMinWidths = {
     '#': 32,
     'task': 120,
-    'startDate': 60,
-    'endDate': 60,
+    'startDate': 92,
+    'endDate': 92,
     'instance': 50,
     'progress': 40,
     'remaining': 120,
     'depends': 100,
     'recovery': 120,
-    'flags': 36,
+    'flags': 64,
   };
   static const Map<String, double> _colMaxWidths = {
     '#': 80,
@@ -1743,7 +2056,7 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
     'remaining': 600,
     'depends': 400,
     'recovery': 600,
-    'flags': 36, // = 固定 (resize 不要)
+    'flags': 64, // = 固定 (resize 不要)
   };
   // resizable=false の列 (= drag handle 非表示)
   static const Set<String> _colNonResizable = {'#', 'flags'};
@@ -1774,8 +2087,8 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
           .fold<double>(0, (sum, e) => sum + (_colWidths[e.key] ?? 0)) +
       16; // padding
   static const _rowHeight = 32.0;
-  static const _headerHeight = 56.0;
-  static const _dayWidth = 6.0;
+  static const _headerHeight = 72.0;
+  static const _dayWidth = 7.0;
   static const _bgColor = Color(0xFF0F0F14);
   static const _panelColor = Color(0xFF1A1A24);
   static const _gridLine = Color(0xFF2A2A36);
@@ -1784,6 +2097,9 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
   final _leftScroll = ScrollController();
   final _rightScroll = ScrollController();
   final _timelineHScroll = ScrollController();
+  final _overallHScroll = ScrollController();
+  bool _aiReportLoading = false;
+  bool _repairLoading = false;
 
   // Win版#132 part 83: column resize — drag 中の hover key (= handle 強調表示用)
   String? _hoveredResizeColKey;
@@ -1872,8 +2188,9 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
     final result = switch (_sortColumnKey) {
       '#' => _compareWbsTasks(a, b),
       'task' => _compareText(a.title, b.title),
-      'startDate' => _compareOptionalDate(a.startDate, b.startDate),
-      'endDate' => _compareOptionalDate(a.endDate, b.endDate),
+      'startDate' =>
+        _compareOptionalDate(a.scheduleStartDate, b.scheduleStartDate),
+      'endDate' => _compareOptionalDate(a.scheduleEndDate, b.scheduleEndDate),
       'instance' => _compareText(
           _instanceBadgeLabel(a),
           _instanceBadgeLabel(b),
@@ -1954,24 +2271,36 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
     _leftScroll.dispose();
     _rightScroll.dispose();
     _timelineHScroll.dispose();
+    _overallHScroll.dispose();
     super.dispose();
   }
 
   DateTime get _timelineStart {
-    // 今日の 30日前 を起点 (過去タスクも若干見える)
+    // 今日の 30日前を基準に、表示中タスクの最古日も必ず含める。
     final now = DateTime.now();
-    return DateTime(now.year, now.month, 1).subtract(const Duration(days: 30));
+    final fallback =
+        DateTime(now.year, now.month, 1).subtract(const Duration(days: 30));
+    final taskDates = widget.tasks
+        .expand((t) => [t.scheduleStartDate, t.scheduleEndDate])
+        .whereType<DateTime>();
+    if (taskDates.isEmpty) return fallback;
+    final earliest = taskDates.reduce((a, b) => a.isBefore(b) ? a : b);
+    final padded = earliest.subtract(const Duration(days: 14));
+    return padded.isBefore(fallback) ? padded : fallback;
   }
 
   DateTime get _timelineEnd {
-    if (widget.milestones.isEmpty) {
-      return DateTime.now().add(const Duration(days: 210));
-    }
-    final latest = widget.milestones
-        .map((m) => m.targetDate)
-        .reduce((a, b) => a.isAfter(b) ? a : b);
-    // 最終マイルストーン +30日
-    return latest.add(const Duration(days: 30));
+    final fallback = DateTime.now().add(const Duration(days: 210));
+    final dates = [
+      ...widget.milestones.map((m) => m.targetDate),
+      ...widget.tasks
+          .expand((t) => [t.scheduleStartDate, t.scheduleEndDate])
+          .whereType<DateTime>(),
+    ];
+    if (dates.isEmpty) return fallback;
+    final latest = dates.reduce((a, b) => a.isAfter(b) ? a : b);
+    final padded = latest.add(const Duration(days: 30));
+    return padded.isAfter(fallback) ? padded : fallback;
   }
 
   int get _totalDays => _timelineEnd.difference(_timelineStart).inDays;
@@ -1983,14 +2312,29 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
     return days * _dayWidth;
   }
 
+  void _scrollWholeGridToGraph() {
+    if (!_overallHScroll.hasClients) return;
+    final target = (_leftPanelWidth - 56)
+        .clamp(0.0, _overallHScroll.position.maxScrollExtent)
+        .toDouble();
+    _overallHScroll.animateTo(
+      target,
+      duration: const Duration(milliseconds: 260),
+      curve: Curves.easeOutCubic,
+    );
+  }
+
   List<WbsTask> get _orderedTasks {
     var list = [...widget.tasks];
     // Win版#131 part 12: 未完了 only filter + instance filter
+    // part 156: github_issue_state == 'CLOSED' も完了扱い (= sync 遅延補完)
     if (widget.hideCompleted) {
-      list = list.where((t) => t.status != 'completed').toList();
+      list = list.where((t) => !t.isEffectivelyCompleted).toList();
     }
     if (widget.filterInstance != null) {
-      list = list.where((t) => t.instance == widget.filterInstance).toList();
+      list = list
+          .where((t) => t.matchesActiveInstanceFilter(widget.filterInstance!))
+          .toList();
     }
     list.sort(_compareTasksForCurrentSort);
     return list;
@@ -2014,94 +2358,152 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
       color: _bgColor,
       child: Column(
         children: [
-          _buildHeader(tasks.length),
+          _buildHeader(tasks.length, widget.tasks.length),
           // Win版#131 part 22: 列表示制御 + Gantt instance filter
           _buildColumnToggleBar(),
           // Win版#131 part 13: マイルストーン risk warning banner
           if (_riskWarnings.isNotEmpty) _buildRiskBanner(),
           Expanded(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // 左パネル (# / タスク名 / 担当)
-                SizedBox(
-                  width: _leftPanelWidth,
-                  child: Column(
-                    children: [
-                      _buildLeftColumnHeader(),
-                      Expanded(
-                        child: ListView.builder(
-                          controller: _leftScroll,
-                          itemCount: tasks.length,
-                          itemExtent: _rowHeight,
-                          itemBuilder: (_, i) => _buildLeftRow(i, tasks[i]),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                // 右タイムライン (横スクロール)
-                Expanded(
-                  child: Scrollbar(
-                    controller: _timelineHScroll,
+            child: ScrollConfiguration(
+              behavior: const _GanttDragScrollBehavior(),
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  const minTimelineViewport = 560.0;
+                  final wholeWidth = math.max(
+                    constraints.maxWidth,
+                    _leftPanelWidth + minTimelineViewport,
+                  );
+                  final timelineViewportWidth = math.max(
+                    minTimelineViewport,
+                    wholeWidth - _leftPanelWidth,
+                  );
+                  return Scrollbar(
+                    controller: _overallHScroll,
                     thumbVisibility: true,
+                    trackVisibility: true,
+                    interactive: true,
+                    thickness: 8,
+                    scrollbarOrientation: ScrollbarOrientation.top,
                     child: SingleChildScrollView(
-                      controller: _timelineHScroll,
+                      controller: _overallHScroll,
                       scrollDirection: Axis.horizontal,
+                      primary: false,
                       child: SizedBox(
-                        width: _timelineWidth,
-                        child: Column(
+                        width: wholeWidth,
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            _buildMonthHeader(),
-                            Expanded(
-                              child: Stack(
+                            // 左パネル (# / タスク名 / 担当)
+                            SizedBox(
+                              width: _leftPanelWidth,
+                              child: Column(
                                 children: [
-                                  // グリッド + Today ライン
-                                  Positioned.fill(
-                                    child: CustomPaint(
-                                      painter: _GanttGridPainter(
-                                        start: _timelineStart,
-                                        end: _timelineEnd,
-                                        dayWidth: _dayWidth,
-                                        todayX: _dateToX(DateTime.now()),
-                                      ),
+                                  _buildLeftColumnHeader(),
+                                  Expanded(
+                                    child: ListView.builder(
+                                      controller: _leftScroll,
+                                      itemCount: tasks.length,
+                                      itemExtent: _rowHeight,
+                                      itemBuilder: (_, i) =>
+                                          _buildLeftRow(i, tasks[i]),
                                     ),
                                   ),
-                                  // タスクバー行
-                                  ListView.builder(
-                                    controller: _rightScroll,
-                                    itemCount: tasks.length,
-                                    itemExtent: _rowHeight,
-                                    itemBuilder: (_, i) =>
-                                        _buildTimelineRow(i, tasks[i]),
-                                  ),
-                                  // Win版#131 part 10: イナズマ線 (lightning line)
-                                  // 今日時点での進捗実態を zigzag で可視化
-                                  Positioned.fill(
-                                    child: IgnorePointer(
-                                      child: CustomPaint(
-                                        painter: _LightningLinePainter(
-                                          tasks: tasks,
-                                          dayWidth: _dayWidth,
-                                          rowHeight: _rowHeight,
-                                          timelineStart: _timelineStart,
-                                          today: DateTime.now(),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  // マイルストーンの縦線 + 菱形
-                                  ...widget.milestones.map(_buildMilestoneMark),
                                 ],
+                              ),
+                            ),
+                            // 右タイムライン (横スクロール)
+                            SizedBox(
+                              width: timelineViewportWidth,
+                              child: Scrollbar(
+                                controller: _timelineHScroll,
+                                thumbVisibility: true,
+                                trackVisibility: true,
+                                interactive: true,
+                                thickness: 8,
+                                scrollbarOrientation:
+                                    ScrollbarOrientation.bottom,
+                                child: SingleChildScrollView(
+                                  controller: _timelineHScroll,
+                                  scrollDirection: Axis.horizontal,
+                                  primary: false,
+                                  child: SizedBox(
+                                    width: _timelineWidth,
+                                    child: Column(
+                                      children: [
+                                        _buildMonthHeader(),
+                                        Expanded(
+                                          child: Stack(
+                                            children: [
+                                              // グリッド + Today ライン
+                                              Positioned.fill(
+                                                child: CustomPaint(
+                                                  painter: _GanttGridPainter(
+                                                    start: _timelineStart,
+                                                    end: _timelineEnd,
+                                                    dayWidth: _dayWidth,
+                                                    todayX: _dateToX(
+                                                      DateTime.now(),
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                              // タスクバー行
+                                              ListView.builder(
+                                                controller: _rightScroll,
+                                                itemCount: tasks.length,
+                                                itemExtent: _rowHeight,
+                                                itemBuilder: (_, i) =>
+                                                    _buildTimelineRow(
+                                                  i,
+                                                  tasks[i],
+                                                ),
+                                              ),
+                                              // Win版#131 part 10: イナズマ線 (lightning line)
+                                              // 今日時点での進捗実態を zigzag で可視化
+                                              Positioned.fill(
+                                                child: IgnorePointer(
+                                                  child: AnimatedBuilder(
+                                                    animation: _rightScroll,
+                                                    builder: (context, _) =>
+                                                        CustomPaint(
+                                                      painter:
+                                                          _LightningLinePainter(
+                                                        tasks: tasks,
+                                                        dayWidth: _dayWidth,
+                                                        rowHeight: _rowHeight,
+                                                        timelineStart:
+                                                            _timelineStart,
+                                                        today: DateTime.now(),
+                                                        verticalOffset:
+                                                            _rightScroll
+                                                                    .hasClients
+                                                                ? _rightScroll
+                                                                    .offset
+                                                                : 0,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                              // マイルストーンの縦線 + 菱形
+                                              ...widget.milestones
+                                                  .map(_buildMilestoneMark),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
                               ),
                             ),
                           ],
                         ),
                       ),
                     ),
-                  ),
-                ),
-              ],
+                  );
+                },
+              ),
             ),
           ),
         ],
@@ -2192,43 +2594,131 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
     );
   }
 
+  String _buildLocalAiReport() {
+    final tasks = _orderedTasks;
+    final open = tasks.where((t) => !t.isEffectivelyCompleted).toList();
+    final delayed = open.where((t) => t.delayDays > 0).toList();
+    final noNext =
+        open.where((t) => _cleanDisplayText(t.remainingWork) == null).length;
+    final noAction =
+        open.where((t) => _cleanDisplayText(t.recoveryPlan) == null).length;
+    final blockers = open.where((t) => _visibleBlockers(t).isNotEmpty).length;
+    final inverted = open.where((t) => t.hasInvertedSchedule).length;
+    final avgProgress = tasks.isEmpty
+        ? 0
+        : (tasks.fold<int>(0, (sum, t) => sum + t.progress) / tasks.length)
+            .round();
+    final dueSoon = open.where((t) {
+      final end = t.scheduleEndDate;
+      if (end == null) return false;
+      final days = end.difference(DateTime.now()).inDays;
+      return days >= 0 && days <= 7;
+    }).toList();
+    final byOwner = <String, int>{};
+    for (final task in open) {
+      final owner = _instanceBadgeLabel(task);
+      byOwner[owner] = (byOwner[owner] ?? 0) + 1;
+    }
+    final ownerSummary = byOwner.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+    final urgent = [...open]..sort((a, b) {
+        final delay = b.delayDays.compareTo(a.delayDays);
+        if (delay != 0) return delay;
+        return _compareOptionalDate(a.scheduleEndDate, b.scheduleEndDate);
+      });
+
+    final buf = StringBuffer()
+      ..writeln('### 即時診断')
+      ..writeln(
+        '- 表示中: ${tasks.length}件 / 未完了: ${open.length}件 / 平均進捗: $avgProgress%',
+      )
+      ..writeln(
+        '- 遅延: ${delayed.length}件 / 期限7日以内: ${dueSoon.length}件 / 日付補正: $inverted件',
+      )
+      ..writeln(
+        '- 次にやること未記入: $noNext件 / 状態・対処未記入: $noAction件 / ブロック要因あり: $blockers件',
+      );
+    if (ownerSummary.isNotEmpty) {
+      buf.writeln(
+        '- 担当別未完了: ${ownerSummary.take(4).map((e) => '${e.key} ${e.value}件').join(' / ')}',
+      );
+    }
+    buf.writeln('\n### 先に見るべきタスク');
+    for (final task in urgent.take(5)) {
+      buf.writeln(
+        '- ${_compactText(task.title, max: 46)}: ${_statusActionLabel(task)}',
+      );
+    }
+    buf.writeln('\n### 改善提案');
+    if (noNext > 0) {
+      buf.writeln('- 「次にやること」が未記入のタスクを、担当ごとに3件ずつ具体化する。');
+    }
+    if (delayed.isNotEmpty) {
+      buf.writeln('- 遅延タスクは「状態 / 対処」を先に埋め、予定変更は依存修復後に行う。');
+    }
+    if (inverted > 0) {
+      buf.writeln('- 日付補正タスクは元データの開始予定・完了予定を見直す。');
+    }
+    if (blockers > 0) {
+      buf.writeln('- ブロック要因ありのタスクは依存先完了日を確認し、開始可能日を再計算する。');
+    }
+    return buf.toString();
+  }
+
   // Win版#131 part 20: AI 概観 + 依存関係自動修復
   Future<void> _showAiReport() async {
-    if (Supabase.instance.client.auth.currentUser == null) return;
-    showDialog<void>(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => const AlertDialog(
-        backgroundColor: Color(0xFF141414),
-        title: Text(
-          '🧠 AI 概観取得中...',
-          style: TextStyle(color: Colors.white, height: 1.5),
-        ),
-        content: Center(
-          child: SizedBox(
-            width: 24,
-            height: 24,
-            child: CircularProgressIndicator(
-              color: Color(0xFFA855F7),
-              strokeWidth: 2,
+    if (_aiReportLoading) return;
+    setState(() => _aiReportLoading = true);
+    final localReport = _buildLocalAiReport();
+    final user = Supabase.instance.client.auth.currentUser;
+    var loadingDialogShown = false;
+    if (user != null) {
+      loadingDialogShown = true;
+      showDialog<void>(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => const AlertDialog(
+          backgroundColor: Color(0xFF141414),
+          title: Text(
+            '🧠 AI 補足取得中...',
+            style: TextStyle(color: Colors.white, height: 1.5),
+          ),
+          content: Center(
+            child: SizedBox(
+              width: 24,
+              height: 24,
+              child: CircularProgressIndicator(
+                color: Color(0xFFA855F7),
+                strokeWidth: 2,
+              ),
             ),
           ),
         ),
-      ),
-    );
-    String? report;
-    try {
-      final resp = await Supabase.instance.client.functions.invoke(
-        'tools-hub',
-        body: {'action': 'wbs.ai_status_report'},
       );
-      final data = resp.data as Map<String, dynamic>?;
-      report = data?['report'] as String? ?? '取得失敗';
+    }
+    String? remoteReport;
+    try {
+      if (user != null) {
+        final resp = await Supabase.instance.client.functions.invoke(
+          'tools-hub',
+          body: {'action': 'wbs.ai_status_report'},
+        );
+        final data = resp.data as Map<String, dynamic>?;
+        remoteReport = data?['report'] as String?;
+      }
     } catch (e) {
-      report = 'エラー: $e';
+      remoteReport = 'AI補足の取得に失敗しました: $e';
     }
     if (!mounted) return;
-    Navigator.of(context).pop();
+    if (loadingDialogShown) Navigator.of(context).pop();
+    setState(() => _aiReportLoading = false);
+    final report = [
+      localReport,
+      if (remoteReport != null && remoteReport.trim().isNotEmpty)
+        '---\n### AI補足\n$remoteReport'
+      else if (user == null)
+        '---\n### AI補足\nログイン時のみサーバーAI補足を取得します。上記の即時診断は画面上のWBSから生成しています。',
+    ].join('\n\n');
     showDialog<void>(
       context: context,
       builder: (_) => AlertDialog(
@@ -2238,7 +2728,7 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
             Icon(Icons.psychology_alt, color: Color(0xFFA855F7)),
             SizedBox(width: 8),
             Text(
-              'AI 概観報告',
+              'AI 概観（即時診断）',
               style: TextStyle(color: Colors.white, height: 1.5),
             ),
           ],
@@ -2254,7 +2744,7 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
               ),
             ),
             child: Text(
-              report ?? '',
+              report,
               style: const TextStyle(
                 color: Color(0xFFE2E8F0),
                 fontSize: 13,
@@ -2274,22 +2764,118 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
     );
   }
 
+  String _csvEscape(String s) {
+    if (s.contains(',') ||
+        s.contains('"') ||
+        s.contains('\n') ||
+        s.contains('\r')) {
+      return '"${s.replaceAll('"', '""')}"';
+    }
+    return s;
+  }
+
+  String _isoDate(DateTime? d) {
+    if (d == null) return '';
+    final y = d.year.toString().padLeft(4, '0');
+    final m = d.month.toString().padLeft(2, '0');
+    final day = d.day.toString().padLeft(2, '0');
+    return '$y-$m-$day';
+  }
+
+  void _exportCsv() {
+    final tasks = _orderedTasks;
+    final buf = StringBuffer();
+    const headers = [
+      '#',
+      'カテゴリ',
+      'タスク名',
+      '担当',
+      '進捗',
+      'ステータス',
+      '優先度',
+      '開始予定',
+      '完了予定',
+      '次にやること',
+      '状態/対処',
+      'マイルストーン',
+      'GitHubIssue状態',
+      'GitHubIssue#',
+      'GitHubIssueURL',
+      'タスクID',
+    ];
+    buf.writeln(headers.join(','));
+    for (var i = 0; i < tasks.length; i++) {
+      final t = tasks[i];
+      final issueNo = _extractIssueNumber(t.title);
+      final fields = <String>[
+        '${i + 1}',
+        t.category,
+        t.title,
+        t.ownerInstance.isNotEmpty ? t.ownerInstance : t.instance,
+        '${t.progress}',
+        t.status,
+        t.priority,
+        _isoDate(t.scheduleStartDate),
+        _isoDate(t.scheduleEndDate),
+        _nextActionLabel(t),
+        _statusActionLabel(t),
+        t.milestoneCode ?? '',
+        t.githubIssueState,
+        issueNo?.toString() ?? '',
+        issueNo != null ? '$_kGithubRepoUrl/issues/$issueNo' : '',
+        t.id,
+      ].map(_csvEscape).toList();
+      buf.writeln(fields.join(','));
+    }
+
+    final now = DateTime.now();
+    final stamp =
+        '${now.year.toString().padLeft(4, '0')}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}-${now.hour.toString().padLeft(2, '0')}${now.minute.toString().padLeft(2, '0')}';
+    final scope = widget.hideCompleted ? 'open' : 'all';
+    downloadCsvFile(buf.toString(), 'wbs-timeline-$scope-$stamp.csv');
+
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          '📄 ${tasks.length} 件をCSVダウンロードしました (wbs-timeline-$scope-$stamp.csv)',
+        ),
+        backgroundColor: const Color(0xFF38BDF8),
+      ),
+    );
+  }
+
   Future<void> _autoRepairDependencies() async {
-    if (Supabase.instance.client.auth.currentUser == null) return;
+    if (_repairLoading) return;
+    if (Supabase.instance.client.auth.currentUser == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('依存修復にはログインが必要です')),
+      );
+      return;
+    }
+    setState(() => _repairLoading = true);
     try {
+      final blockerCount =
+          _orderedTasks.where((t) => _visibleBlockers(t).isNotEmpty).length;
       final resp = await Supabase.instance.client.functions.invoke(
         'tools-hub',
         body: {'action': 'wbs.auto_repair_dependencies'},
       );
       final data = resp.data as Map<String, dynamic>?;
       final repairs = (data?['repairs'] as List?) ?? [];
+      final refreshWbs = widget.onRefreshWbs;
+      if (refreshWbs != null) {
+        await refreshWbs();
+      }
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
             repairs.isEmpty
-                ? '✅ 依存関係 整合済 (修復対象 0 件)'
-                : '🔧 ${repairs.length} タスクの start_date を自動修復しました',
+                ? blockerCount == 0
+                    ? '✅ ブロック要因はありません。修復不要です'
+                    : '✅ 依存関係は整合済です (修復対象 0 件)'
+                : '🔧 ${repairs.length}件を修復し、WBSを再読み込みしました',
           ),
           backgroundColor: const Color(0xFF22C55E),
         ),
@@ -2299,6 +2885,8 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('自動修復エラー: $e')),
       );
+    } finally {
+      if (mounted) setState(() => _repairLoading = false);
     }
   }
 
@@ -2311,10 +2899,10 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
       'endDate': '完了',
       'instance': '担当',
       'progress': '進捗',
-      'remaining': '残作業',
-      'depends': '依存',
-      'recovery': 'リカバリー',
-      'flags': '⚠',
+      'remaining': '次作業',
+      'depends': 'ブロック',
+      'recovery': '状態/対処',
+      'flags': '注意',
     };
     return Container(
       color: const Color(0xFF0F0F18),
@@ -2365,6 +2953,34 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
               ),
             ),
             const SizedBox(width: 6),
+            ..._activeWbsInstanceFilters.map((filter) {
+              final on = widget.filterInstance == filter.value;
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 2),
+                child: FilterChip(
+                  label: Text(
+                    filter.value == null ? '全て' : filter.label,
+                    style: TextStyle(
+                      color: on ? Colors.black : filter.color,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                      height: 1.3,
+                    ),
+                  ),
+                  selected: on,
+                  onSelected: (_) =>
+                      widget.onFilterInstance(on ? null : filter.value),
+                  selectedColor: filter.color,
+                  backgroundColor: filter.color.withValues(alpha: 0.08),
+                  side: BorderSide(
+                    color: filter.color.withValues(alpha: 0.4),
+                  ),
+                  visualDensity: VisualDensity.compact,
+                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                ),
+              );
+            }),
             ...[
               ('全', null, const Color(0xFFFF6B35)),
               ('VS', 'vscode', const Color(0xFF007ACC)),
@@ -2383,7 +2999,12 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
               ('📱', 'mobile', const Color(0xFFF97316)),
               ('⏰', 'schedule', const Color(0xFFEAB308)),
               ('🔧', 'gha', const Color(0xFF6B7280)),
-            ].map((t) {
+            ].where((_) => false).map((t) {
+              if (t.$2 != null &&
+                  !_activeWbsInstanceFilters
+                      .any((filter) => filter.value == t.$2)) {
+                return const SizedBox.shrink();
+              }
               final on = widget.filterInstance == t.$2;
               return Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 2),
@@ -2414,7 +3035,12 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
     );
   }
 
-  Widget _buildHeader(int taskCount) {
+  Widget _buildHeader(int taskCount, int totalCount) {
+    final filtered = widget.hideCompleted && totalCount > taskCount;
+    final countLabel =
+        filtered ? '未完了 $taskCount / 全体 $totalCount 件' : '$taskCount タスク';
+    final invertedCount =
+        widget.tasks.where((t) => t.hasInvertedSchedule).length;
     return Container(
       color: _panelColor,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
@@ -2437,13 +3063,40 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
           ),
           const SizedBox(width: 12),
           Text(
-            '$taskCount タスク',
-            style: const TextStyle(
-              color: Color(0xFF808090),
+            countLabel,
+            style: TextStyle(
+              color:
+                  filtered ? const Color(0xFFFF6B35) : const Color(0xFF808090),
               fontSize: 12,
+              fontWeight: filtered ? FontWeight.w600 : FontWeight.normal,
               height: 1.5,
             ),
           ),
+          if (invertedCount > 0) ...[
+            const SizedBox(width: 8),
+            Tooltip(
+              message: '開始予定が完了予定より後の元データを、画面では開始<=完了に補正表示しています。',
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFBBF24).withValues(alpha: 0.14),
+                  borderRadius: BorderRadius.circular(999),
+                  border: Border.all(
+                    color: const Color(0xFFFBBF24).withValues(alpha: 0.55),
+                  ),
+                ),
+                child: Text(
+                  '日付補正 $invertedCount件',
+                  style: const TextStyle(
+                    color: Color(0xFFFBBF24),
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    height: 1.3,
+                  ),
+                ),
+              ),
+            ),
+          ],
           const SizedBox(width: 16),
           // Win版#131 part 12: 未完了 only toggle
           Row(
@@ -2467,20 +3120,79 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
             ],
           ),
           const Spacer(),
-          // Win版#131 part 20: AI 概観 + 自動修復 button
-          SizedBox(
-            height: 28,
-            child: OutlinedButton.icon(
-              onPressed: _showAiReport,
-              icon: const Icon(Icons.psychology_alt, size: 14),
-              label: const Text(
-                'AI 概観',
-                style: TextStyle(fontSize: 11, height: 1.5),
+          Tooltip(
+            message: '表が広くてグラフが隠れている場合、右側のガント領域へ移動します。',
+            child: SizedBox(
+              height: 28,
+              child: OutlinedButton.icon(
+                onPressed: _scrollWholeGridToGraph,
+                icon: const Icon(Icons.timeline, size: 14),
+                label: const Text(
+                  'グラフへ',
+                  style: TextStyle(fontSize: 11, height: 1.5),
+                ),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: const Color(0xFF60A5FA),
+                  side: const BorderSide(color: Color(0xFF60A5FA)),
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                ),
               ),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: const Color(0xFFA855F7),
-                side: const BorderSide(color: Color(0xFFA855F7)),
-                padding: const EdgeInsets.symmetric(horizontal: 8),
+            ),
+          ),
+          const SizedBox(width: 6),
+          // Win版#131 part 20: AI 概観 + 自動修復 button
+          Tooltip(
+            message: '表示中WBSをローカル診断し、可能ならAI補足も取得します。',
+            child: SizedBox(
+              height: 28,
+              child: OutlinedButton.icon(
+                onPressed: _aiReportLoading ? null : _showAiReport,
+                icon: _aiReportLoading
+                    ? const SizedBox(
+                        width: 14,
+                        height: 14,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.psychology_alt, size: 14),
+                label: Text(
+                  _aiReportLoading ? '分析中' : 'AI 概観',
+                  style: const TextStyle(fontSize: 11, height: 1.5),
+                ),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: const Color(0xFFA855F7),
+                  disabledForegroundColor:
+                      const Color(0xFFA855F7).withValues(alpha: 0.45),
+                  side: const BorderSide(color: Color(0xFFA855F7)),
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 6),
+          Tooltip(
+            message: '依存関係由来の日程矛盾を検査し、修復後にWBSを再読み込みします。',
+            child: SizedBox(
+              height: 28,
+              child: OutlinedButton.icon(
+                onPressed: _repairLoading ? null : _autoRepairDependencies,
+                icon: _repairLoading
+                    ? const SizedBox(
+                        width: 14,
+                        height: 14,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.auto_fix_high, size: 14),
+                label: Text(
+                  _repairLoading ? '修復中' : '依存修復',
+                  style: const TextStyle(fontSize: 11, height: 1.5),
+                ),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: const Color(0xFF22C55E),
+                  disabledForegroundColor:
+                      const Color(0xFF22C55E).withValues(alpha: 0.45),
+                  side: const BorderSide(color: Color(0xFF22C55E)),
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                ),
               ),
             ),
           ),
@@ -2488,15 +3200,15 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
           SizedBox(
             height: 28,
             child: OutlinedButton.icon(
-              onPressed: _autoRepairDependencies,
-              icon: const Icon(Icons.auto_fix_high, size: 14),
+              onPressed: _exportCsv,
+              icon: const Icon(Icons.download, size: 14),
               label: const Text(
-                '依存自動修復',
+                'CSV',
                 style: TextStyle(fontSize: 11, height: 1.5),
               ),
               style: OutlinedButton.styleFrom(
-                foregroundColor: const Color(0xFF22C55E),
-                side: const BorderSide(color: Color(0xFF22C55E)),
+                foregroundColor: const Color(0xFF38BDF8),
+                side: const BorderSide(color: Color(0xFF38BDF8)),
                 padding: const EdgeInsets.symmetric(horizontal: 8),
               ),
             ),
@@ -2650,18 +3362,126 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
         children: [
           header('#', '#', align: TextAlign.center),
           // task 名のみ Expanded
-          header('task', 'タスク名', expanded: true),
+          header('task', 'タスク', expanded: true),
           header('startDate', '開始予定', align: TextAlign.center),
           header('endDate', '完了予定', align: TextAlign.center),
           header('instance', '担当', align: TextAlign.center),
           header('progress', '進捗', align: TextAlign.center),
-          header('remaining', '残作業'),
-          header('depends', '依存'),
-          header('recovery', 'リカバリー案 / 状態'),
-          header('flags', '⚠', align: TextAlign.center),
+          header('remaining', '次にやること'),
+          header('depends', 'ブロック要因'),
+          header('recovery', '状態 / 対処'),
+          header('flags', '注意', align: TextAlign.center),
         ],
       ),
     );
+  }
+
+  String? _cleanDisplayText(String raw) {
+    final text = raw.trim().replaceAll(RegExp(r'\s+'), ' ');
+    if (text.isEmpty) return null;
+    final lower = text.toLowerCase();
+    const internalMarkers = [
+      'github issue source of truth',
+      'sync keeps wbs',
+      'tbd',
+      'pre-push backfill',
+      'duplicate of wbs task',
+      '遅延 detect',
+      '延定 detect',
+    ];
+    if (internalMarkers.any((marker) => lower.contains(marker))) return null;
+    return text;
+  }
+
+  String _compactText(String text, {int max = 54}) {
+    final normalized = text.trim().replaceAll(RegExp(r'\s+'), ' ');
+    if (normalized.length <= max) return normalized;
+    return '${normalized.substring(0, max - 1)}…';
+  }
+
+  String _nextActionLabel(WbsTask task) {
+    final text = _cleanDisplayText(task.remainingWork);
+    if (text != null) return _compactText(text, max: 64);
+    if (task.isEffectivelyCompleted) return '完了';
+    if (task.isDelayedNoPlan) return '遅延対応を記入';
+    if (task.delayDays > 0) return '遅延対応を確認';
+    if (task.progress > 0) return '進行中: 次手順未記入';
+    if (_extractIssueNumber(task.title) != null) return 'Issueを確認して着手';
+    return '次手順未記入';
+  }
+
+  Color _nextActionColor(WbsTask task) {
+    if (_cleanDisplayText(task.remainingWork) != null) {
+      return const Color(0xFFE2E8F0);
+    }
+    if (task.isDelayedNoPlan || task.delayDays > 0) {
+      return const Color(0xFFF97316);
+    }
+    return const Color(0xFF94A3B8);
+  }
+
+  List<String> _visibleBlockers(WbsTask task) => task.dependsOnTitles
+      .map(_cleanDisplayText)
+      .whereType<String>()
+      .map((t) => _compactText(t, max: 44))
+      .toList();
+
+  String _blockerLabel(WbsTask task) {
+    final blockers = _visibleBlockers(task);
+    if (blockers.isEmpty) return 'なし';
+    if (blockers.length == 1) return blockers.single;
+    return '${blockers.length}件: ${blockers.first}';
+  }
+
+  String _statusActionLabel(WbsTask task) {
+    if (task.isEffectivelyCompleted) return '完了';
+    if (task.hasInvertedSchedule) return '日付補正済';
+    final recovery = _cleanDisplayText(task.recoveryPlan);
+    if (task.delayDays > 0) {
+      if (recovery != null) {
+        return '${task.delayDays}日遅延: ${_compactText(recovery, max: 42)}';
+      }
+      return '${task.delayDays}日遅延: 対処未記入';
+    }
+    if (recovery != null) return _compactText(recovery, max: 58);
+    final end = task.scheduleEndDate;
+    if (end != null) {
+      final days = end.difference(DateTime.now()).inDays;
+      if (days >= 0 && days <= 7) return '期限近い: 残$days日';
+    }
+    if (task.progress > 0) return '進行中';
+    return '未着手';
+  }
+
+  Color _statusActionColor(WbsTask task) {
+    if (task.isEffectivelyCompleted) return const Color(0xFF22C55E);
+    if (task.hasInvertedSchedule) return const Color(0xFFFBBF24);
+    if (task.isDelayedNoPlan) return const Color(0xFFEF4444);
+    if (task.delayDays > 0) return const Color(0xFFF97316);
+    if (_cleanDisplayText(task.recoveryPlan) != null) {
+      return const Color(0xFFE2E8F0);
+    }
+    return const Color(0xFF94A3B8);
+  }
+
+  String _attentionLabel(WbsTask task) {
+    if (task.isEffectivelyCompleted) return '完了';
+    if (task.hasInvertedSchedule) return '日付';
+    if (task.isDelayedNoPlan) return '要対処';
+    if (task.delayDays > 0) return '遅延';
+    if (_cleanDisplayText(task.remainingWork) == null) return '未記入';
+    return 'OK';
+  }
+
+  Color _attentionColor(WbsTask task) {
+    if (task.isEffectivelyCompleted) return const Color(0xFF22C55E);
+    if (task.hasInvertedSchedule) return const Color(0xFFFBBF24);
+    if (task.isDelayedNoPlan) return const Color(0xFFEF4444);
+    if (task.delayDays > 0) return const Color(0xFFF97316);
+    if (_cleanDisplayText(task.remainingWork) == null) {
+      return const Color(0xFF94A3B8);
+    }
+    return const Color(0xFF38BDF8);
   }
 
   Widget _buildLeftRow(int index, WbsTask task) {
@@ -2818,15 +3638,22 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
           // Win版#132 part 86: 各 cell を Tooltip で wrap (= 列別 hover content 表示 / recovery 固定 bug 修正)
           if (_colVisible['startDate'] ?? true)
             Tooltip(
-              message: '開始予定: ${_formatDate(task.startDate)}',
+              message: task.hasInvertedSchedule
+                  ? '開始予定: ${_formatDate(task.scheduleStartDate)}\n元データは開始 ${_formatDate(task.rawScheduleStartDate)} > 完了 ${_formatDate(task.rawScheduleEndDate)} のため補正表示'
+                  : '開始予定: ${_formatDate(task.scheduleStartDate)}',
               waitDuration: const Duration(milliseconds: 350),
               child: SizedBox(
                 width: _colWidths['startDate'] ?? 80,
                 child: Text(
-                  _formatDate(task.startDate),
-                  style: const TextStyle(
-                    color: Color(0xFFB0B0C0),
+                  _formatDate(task.scheduleStartDate),
+                  style: TextStyle(
+                    color: task.hasInvertedSchedule
+                        ? const Color(0xFFFBBF24)
+                        : const Color(0xFFB0B0C0),
                     fontSize: 11,
+                    fontWeight: task.hasInvertedSchedule
+                        ? FontWeight.w700
+                        : FontWeight.normal,
                     height: 1.5,
                   ),
                   textAlign: TextAlign.center,
@@ -2835,20 +3662,24 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
             ),
           if (_colVisible['endDate'] ?? true)
             Tooltip(
-              message: task.delayDays > 0
-                  ? '完了予定: ${_formatDate(task.endDate)} (${task.delayDays}日遅延)'
-                  : '完了予定: ${_formatDate(task.endDate)}',
+              message: task.hasInvertedSchedule
+                  ? '完了予定: ${_formatDate(task.scheduleEndDate)}\n元データは開始 ${_formatDate(task.rawScheduleStartDate)} > 完了 ${_formatDate(task.rawScheduleEndDate)} のため補正表示'
+                  : task.delayDays > 0
+                      ? '完了予定: ${_formatDate(task.scheduleEndDate)} (${task.delayDays}日遅延)'
+                      : '完了予定: ${_formatDate(task.scheduleEndDate)}',
               waitDuration: const Duration(milliseconds: 350),
               child: SizedBox(
                 width: _colWidths['endDate'] ?? 80,
                 child: Text(
-                  _formatDate(task.endDate),
+                  _formatDate(task.scheduleEndDate),
                   style: TextStyle(
-                    color: task.delayDays > 0
-                        ? const Color(0xFFEF4444)
-                        : const Color(0xFFB0B0C0),
+                    color: task.hasInvertedSchedule
+                        ? const Color(0xFFFBBF24)
+                        : task.delayDays > 0
+                            ? const Color(0xFFEF4444)
+                            : const Color(0xFFB0B0C0),
                     fontSize: 11,
-                    fontWeight: task.delayDays > 0
+                    fontWeight: task.hasInvertedSchedule || task.delayDays > 0
                         ? FontWeight.w700
                         : FontWeight.normal,
                     height: 1.5,
@@ -2859,7 +3690,7 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
             ),
           if (_colVisible['instance'] ?? true)
             Tooltip(
-              message: '担当: ${task.ownerLabel}',
+              message: '担当: ${task.activeOwnerLabel}',
               waitDuration: const Duration(milliseconds: 350),
               child: SizedBox(
                 width: _colWidths['instance'] ?? 70,
@@ -2890,68 +3721,61 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
             ),
           if (_colVisible['remaining'] ?? true)
             Tooltip(
-              message: task.remainingWork.isNotEmpty
-                  ? '残作業: ${task.remainingWork}'
-                  : '残作業: (未記入 / クリックで指示送信)',
+              message: _cleanDisplayText(task.remainingWork) != null
+                  ? '次にやること: ${_cleanDisplayText(task.remainingWork)}'
+                  : '次にやること: ${_nextActionLabel(task)}',
               waitDuration: const Duration(milliseconds: 350),
               child: SizedBox(
                 width: _colWidths['remaining'] ?? 200,
-                child: _emptyOrText(
-                  text: task.remainingWork,
-                  task: task,
-                  field: 'remaining_work',
-                  color: const Color(0xFF9CA3AF),
+                child: _readableStatusCell(
+                  label: _nextActionLabel(task),
+                  color: _nextActionColor(task),
+                  onTap: _cleanDisplayText(task.remainingWork) == null
+                      ? () => _sendInstructionToInstance(task, 'remaining_work')
+                      : null,
                 ),
               ),
             ),
           if (_colVisible['depends'] ?? true)
             Tooltip(
-              message: task.dependsOnTitles.isEmpty
-                  ? '依存: なし'
-                  : '依存: ${task.dependsOnTitles.join(", ")}',
+              message: _visibleBlockers(task).isEmpty
+                  ? 'ブロック要因: なし'
+                  : 'ブロック要因: ${_visibleBlockers(task).join(" / ")}',
               waitDuration: const Duration(milliseconds: 350),
               child: SizedBox(
                 width: _colWidths['depends'] ?? 150,
-                child: Padding(
-                  padding: const EdgeInsets.only(left: 4, right: 4),
-                  child: Text(
-                    task.dependsOnTitles.isEmpty
-                        ? '—'
-                        : '↳ ${task.dependsOnTitles.join(", ")}',
-                    style: const TextStyle(
-                      color: Color(0xFFA855F7),
-                      fontSize: 10,
-                      height: 1.5,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
+                child: _readableStatusCell(
+                  label: _blockerLabel(task),
+                  color: _visibleBlockers(task).isEmpty
+                      ? const Color(0xFF64748B)
+                      : const Color(0xFFA855F7),
                 ),
               ),
             ),
           if (_colVisible['recovery'] ?? true)
             Tooltip(
-              message: task.recoveryPlan.isNotEmpty
-                  ? 'リカバリー案: ${task.recoveryPlan}'
-                  : 'リカバリー案: (未記入 / クリックで指示送信)',
+              message: '状態 / 対処: ${_statusActionLabel(task)}',
               waitDuration: const Duration(milliseconds: 350),
               child: SizedBox(
                 width: _colWidths['recovery'] ?? 180,
-                child: _recoveryCell(task),
+                child: _readableStatusCell(
+                  label: _statusActionLabel(task),
+                  color: _statusActionColor(task),
+                  onTap: _cleanDisplayText(task.recoveryPlan) == null &&
+                          !task.isEffectivelyCompleted
+                      ? () => _sendInstructionToInstance(task, 'recovery_plan')
+                      : null,
+                ),
               ),
             ),
-          // Win版#131 part 22: 遅延 ⚠ flag column (大きめ視覚マーカー)
+          // Win版#131 part 22: 注意 flag column (短い状態 badge)
           if (_colVisible['flags'] ?? true)
             Tooltip(
-              message: isDelayedNoPlan
-                  ? '⚠ ${task.delayDays}日遅延・リカバリー案未記入 (要対処)'
-                  : isDelayed
-                      ? '${task.delayDays}日遅延'
-                      : '遅延なし',
+              message: '注意: ${_attentionLabel(task)}',
               waitDuration: const Duration(milliseconds: 350),
               child: SizedBox(
                 width: _colWidths['flags'] ?? 36,
-                child: _delayFlagCell(task),
+                child: _attentionBadge(task),
               ),
             ),
         ],
@@ -2959,107 +3783,83 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
     ); // Win版#132 part 86: Tooltip 削除 — Container + Row 構造のみ (閉じ括弧 1 つ減)
   }
 
-  // Win版#131 part 23: 空セルを「指示送信」ボタンに変換
-  // 残作業 / リカバリー案 が空の時、担当 instance に直接指示送信できる
-  Widget _emptyOrText({
-    required String text,
-    required WbsTask task,
-    required String field,
+  Widget _readableStatusCell({
+    required String label,
     required Color color,
+    VoidCallback? onTap,
   }) {
-    if (text.isNotEmpty) {
-      return Padding(
-        padding: const EdgeInsets.only(left: 4, right: 4),
-        child: Text(
-          text,
-          style: TextStyle(color: color, fontSize: 10, height: 1.5),
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
-        ),
-      );
-    }
-    return Padding(
+    final text = Padding(
       padding: const EdgeInsets.only(left: 4, right: 4),
-      child: InkWell(
-        onTap: () => _sendInstructionToInstance(task, field),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-          decoration: BoxDecoration(
-            color: const Color(0xFF3D5AFE).withValues(alpha: 0.15),
-            borderRadius: BorderRadius.circular(3),
-            border: Border.all(
-              color: const Color(0xFF3D5AFE).withValues(alpha: 0.4),
-              width: 0.5,
-            ),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: color,
+          fontSize: 10,
+          fontWeight: onTap == null ? FontWeight.w500 : FontWeight.w700,
+          height: 1.5,
+        ),
+        maxLines: 2,
+        overflow: TextOverflow.ellipsis,
+      ),
+    );
+    if (onTap == null) return text;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(4),
+      child: Container(
+        margin: const EdgeInsets.only(left: 2, right: 4, top: 5, bottom: 5),
+        padding: const EdgeInsets.symmetric(horizontal: 5),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(4),
+          border: Border.all(color: color.withValues(alpha: 0.35), width: 0.5),
+        ),
+        alignment: Alignment.centerLeft,
+        child: Text(
+          label,
+          style: TextStyle(
+            color: color,
+            fontSize: 10,
+            fontWeight: FontWeight.w700,
+            height: 1.3,
           ),
-          child: const Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.send_outlined, size: 10, color: Color(0xFF60A5FA)),
-              SizedBox(width: 3),
-              Flexible(
-                child: Text(
-                  '指示送信',
-                  style: TextStyle(
-                    color: Color(0xFF60A5FA),
-                    fontSize: 9,
-                    fontWeight: FontWeight.w600,
-                    height: 1.3,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ],
-          ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
         ),
       ),
     );
   }
 
-  // Win版#131 part 22: 大きめ delay flag cell
-  Widget _delayFlagCell(WbsTask task) {
-    if (task.status == 'completed') {
-      return const Center(
+  Widget _attentionBadge(WbsTask task) {
+    final label = _attentionLabel(task);
+    final color = _attentionColor(task);
+    return Center(
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.14),
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(color: color.withValues(alpha: 0.4), width: 0.5),
+        ),
         child: Text(
-          '✓',
+          label,
           style: TextStyle(
-            color: Color(0xFF22C55E),
-            fontSize: 14,
-            fontWeight: FontWeight.w700,
+            color: color,
+            fontSize: 9,
+            fontWeight: FontWeight.w800,
             height: 1.2,
           ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
         ),
-      );
-    }
-    if (task.isDelayedNoPlan) {
-      return Tooltip(
-        message: '🚨 ${task.delayDays}日遅延・リカバリー案未記入',
-        child: const Center(
-          child: Text(
-            '🚨',
-            style: TextStyle(fontSize: 16, height: 1.2),
-          ),
-        ),
-      );
-    }
-    if (task.delayDays > 0) {
-      return Tooltip(
-        message: '⚠ ${task.delayDays}日遅延',
-        child: const Center(
-          child: Text(
-            '⚠',
-            style: TextStyle(fontSize: 16, height: 1.2),
-          ),
-        ),
-      );
-    }
-    return const SizedBox.shrink();
+      ),
+    );
   }
 
   // Win版#131 part 23: 担当 instance に直接指示送信 (cross-instance-pr 自動生成)
   Future<void> _sendInstructionToInstance(WbsTask task, String field) async {
     if (Supabase.instance.client.auth.currentUser == null) return;
-    final fieldLabel = field == 'remaining_work' ? '残作業' : 'リカバリー案 / 状態';
+    final fieldLabel = field == 'remaining_work' ? '次にやること' : '状態 / 対処';
     final controller = TextEditingController();
     final result = await showDialog<String>(
       context: context,
@@ -3140,8 +3940,8 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
           'title': '[依頼] ${task.title} の $fieldLabel を更新してください',
           'description':
               '依頼内容: $result\n\n対象タスク ID: ${task.id}\n\nWBS UI から自動送信',
-          'instance': task.instance,
-          'owner_instance': task.instance,
+          'instance': task.activeInstanceKey,
+          'owner_instance': task.activeOwnerKey,
           'priority': task.isDelayedNoPlan ? 'high' : 'medium',
           'status': 'pending',
           'progress': 0,
@@ -3165,85 +3965,14 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
 
   String _formatDate(DateTime? d) {
     if (d == null) return '—';
-    return '${d.month.toString().padLeft(2, '0')}/${d.day.toString().padLeft(2, '0')}';
-  }
-
-  Widget _recoveryCell(WbsTask task) {
-    if (task.status == 'completed') {
-      return const Padding(
-        padding: EdgeInsets.only(left: 4),
-        child: Text(
-          '✅ 完了',
-          style: TextStyle(
-            color: Color(0xFF4CAF50),
-            fontSize: 10,
-            height: 1.5,
-          ),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
-      );
-    }
-    if (task.isDelayedNoPlan) {
-      return Padding(
-        padding: const EdgeInsets.only(left: 4),
-        child: Text(
-          '⚠ ${task.delayDays}日遅延・未記入 (要対処)',
-          style: const TextStyle(
-            color: Color(0xFFEF4444),
-            fontSize: 10,
-            fontWeight: FontWeight.w700,
-            height: 1.5,
-          ),
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
-        ),
-      );
-    }
-    if (task.delayDays > 0 && task.recoveryPlan.isNotEmpty) {
-      return Padding(
-        padding: const EdgeInsets.only(left: 4),
-        child: Text(
-          '🟠 ${task.delayDays}日遅延 / ${task.recoveryPlan}',
-          style: const TextStyle(
-            color: Color(0xFFF97316),
-            fontSize: 10,
-            height: 1.5,
-          ),
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
-        ),
-      );
-    }
-    if (task.recoveryPlan.isNotEmpty) {
-      return Padding(
-        padding: const EdgeInsets.only(left: 4),
-        child: Text(
-          task.recoveryPlan,
-          style: const TextStyle(
-            color: Color(0xFF9CA3AF),
-            fontSize: 10,
-            height: 1.5,
-          ),
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
-        ),
-      );
-    }
-    // Win版#131 part 23: 空セルは「指示送信」ボタンに変換
-    return _emptyOrText(
-      text: '',
-      task: task,
-      field: 'recovery_plan',
-      color: const Color(0xFF9CA3AF),
-    );
+    return '${d.year}/${d.month.toString().padLeft(2, '0')}/${d.day.toString().padLeft(2, '0')}';
   }
 
   Widget _instanceBadge(WbsTask task) {
     final label = _instanceBadgeLabel(task);
-    final badgeColor = task.ownerInstance != task.instance
-        ? task.ownerColor
-        : task.instanceColor;
+    final badgeColor = task.activeOwnerKey != task.activeInstanceKey
+        ? task.activeOwnerColor
+        : task.activeInstanceColor;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
@@ -3264,34 +3993,14 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
   }
 
   String _instanceBadgeLabel(WbsTask task) {
-    final lane = _shortInstance(task.instance);
-    final owner = _shortInstance(task.ownerInstance);
+    final lane = _shortInstance(task.activeInstanceKey);
+    final owner = _shortInstance(task.activeOwnerKey);
     if (owner.isEmpty || owner == lane) return lane;
     return '$lane→$owner';
   }
 
-  String _shortInstance(String i) => switch (i) {
-        'codex' => 'CX',
-        'gemini' => 'GM',
-        'co-pilot' => 'CP',
-        'copilot' => 'CP',
-        'user' => 'USR',
-        'vscode' => 'VS',
-        'win' => 'Win',
-        'windows' => 'Win',
-        'ps1' => 'P1',
-        'ps2' => 'P2',
-        'ps3' => 'P3',
-        'ps4' => 'P4',
-        'ps5' => 'P5',
-        'ps6' => 'P6',
-        'ps' => 'PS',
-        'web' => 'WEB',
-        'mobile' => 'MOB',
-        'schedule' => 'SCH',
-        'gha' => 'GHA',
-        _ => '未割当',
-      };
+  String _shortInstance(String i) =>
+      _activeWbsShortInstance(_activeWbsInstanceKey(i));
 
   Widget _buildMonthHeader() {
     return Container(
@@ -3309,8 +4018,8 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
   }
 
   Widget _buildTimelineRow(int index, WbsTask task) {
-    final start = task.startDate;
-    final end = task.endDate;
+    final start = task.scheduleStartDate;
+    final end = task.scheduleEndDate;
     if (start == null || end == null) {
       return const SizedBox.shrink();
     }
@@ -3477,7 +4186,8 @@ class _GanttGridPainter extends CustomPainter {
   bool shouldRepaint(covariant _GanttGridPainter oldDelegate) =>
       oldDelegate.todayX != todayX ||
       oldDelegate.start != start ||
-      oldDelegate.end != end;
+      oldDelegate.end != end ||
+      oldDelegate.dayWidth != dayWidth;
 }
 
 class _MonthHeaderPainter extends CustomPainter {
@@ -3496,6 +4206,14 @@ class _MonthHeaderPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final line = Paint()..color = const Color(0xFF3A3A48);
+    canvas.drawRect(
+      Rect.fromLTWH(0, 0, size.width, 34),
+      Paint()..color = const Color(0xFF181824),
+    );
+    canvas.drawRect(
+      Rect.fromLTWH(0, 34, size.width, size.height - 34),
+      Paint()..color = const Color(0xFF12121B),
+    );
 
     // 月ヘッダー (上段)
     DateTime monthCursor = DateTime(start.year, start.month, 1);
@@ -3537,8 +4255,9 @@ class _MonthHeaderPainter extends CustomPainter {
 
     // 日/週ヘッダー (下段)
     const weekLabelStyle = TextStyle(
-      color: Color(0xFF909098),
+      color: Color(0xFFB8B8C8),
       fontSize: 9,
+      fontWeight: FontWeight.w600,
       height: 1.5,
     );
     DateTime day = start;
@@ -3547,15 +4266,33 @@ class _MonthHeaderPainter extends CustomPainter {
       if (day.weekday == DateTime.monday && dayWidth >= 5) {
         final tp = TextPainter(
           text: TextSpan(
-            text: '${day.day}',
+            text:
+                '${day.month.toString().padLeft(2, '0')}/${day.day.toString().padLeft(2, '0')}',
             style: weekLabelStyle,
           ),
           textDirection: TextDirection.ltr,
         )..layout();
-        tp.paint(canvas, Offset(x + 1, 30));
+        tp.paint(canvas, Offset(x + 2, 43));
       }
       day = day.add(const Duration(days: 1));
       x += dayWidth;
+    }
+
+    final tickPaint = Paint()
+      ..color = const Color(0xFF52525F)
+      ..strokeWidth = 1;
+    DateTime tickDay = start;
+    double tickX = 0;
+    while (tickDay.isBefore(end)) {
+      if (tickDay.weekday == DateTime.monday || tickDay.day == 1) {
+        canvas.drawLine(
+          Offset(tickX, 36),
+          Offset(tickX, size.height - 1),
+          tickPaint,
+        );
+      }
+      tickDay = tickDay.add(const Duration(days: 1));
+      tickX += dayWidth;
     }
 
     // ヘッダー下の太線
@@ -3568,8 +4305,8 @@ class _MonthHeaderPainter extends CustomPainter {
     // 月/日セクション境界
     final midLinePaint = Paint()..color = const Color(0xFF2A2A36);
     canvas.drawLine(
-      const Offset(0, 26),
-      Offset(size.width, 26),
+      const Offset(0, 34),
+      Offset(size.width, 34),
       midLinePaint,
     );
 
@@ -3590,7 +4327,7 @@ class _MonthHeaderPainter extends CustomPainter {
       final todayLabel = TextPainter(
         text: TextSpan(
           text:
-              '今日 ${today.month.toString().padLeft(2, '0')}/${today.day.toString().padLeft(2, '0')}',
+              '今日 ${today.year}/${today.month.toString().padLeft(2, '0')}/${today.day.toString().padLeft(2, '0')}',
           style: const TextStyle(
             color: Color(0xFFFF6B35),
             fontSize: 10,
@@ -3626,6 +4363,7 @@ class _MonthHeaderPainter extends CustomPainter {
   bool shouldRepaint(covariant _MonthHeaderPainter oldDelegate) =>
       oldDelegate.start != start ||
       oldDelegate.end != end ||
+      oldDelegate.dayWidth != dayWidth ||
       oldDelegate.today != today;
 }
 
@@ -3695,6 +4433,7 @@ class _LightningLinePainter extends CustomPainter {
   final double rowHeight;
   final DateTime timelineStart;
   final DateTime today;
+  final double verticalOffset;
 
   _LightningLinePainter({
     required this.tasks,
@@ -3702,6 +4441,7 @@ class _LightningLinePainter extends CustomPainter {
     required this.rowHeight,
     required this.timelineStart,
     required this.today,
+    required this.verticalOffset,
   });
 
   double _dateToX(DateTime date) {
@@ -3723,21 +4463,26 @@ class _LightningLinePainter extends CustomPainter {
     final points = <Offset>[];
     bool anyDelay = false;
     bool anyDelayNoPlan = false;
+    final firstVisibleIndex = (verticalOffset / rowHeight).floor() - 1;
+    final lastVisibleIndex =
+        ((verticalOffset + size.height) / rowHeight).ceil() + 1;
 
     for (var i = 0; i < tasks.length; i++) {
       final t = tasks[i];
-      final y = i * rowHeight + rowHeight / 2;
       double x = todayX;
 
-      if (t.startDate != null && t.endDate != null && t.status != 'completed') {
-        final startX = _dateToX(t.startDate!);
-        final endX = _dateToX(t.endDate!);
+      if (t.scheduleStartDate != null &&
+          t.scheduleEndDate != null &&
+          t.status != 'completed') {
+        final startX = _dateToX(t.scheduleStartDate!);
+        final endX = _dateToX(t.scheduleEndDate!);
         final barWidth = endX - startX;
         if (barWidth > 0) {
           // 期待進捗
-          final totalDays = t.endDate!.difference(t.startDate!).inDays;
+          final totalDays =
+              t.scheduleEndDate!.difference(t.scheduleStartDate!).inDays;
           final passedDays =
-              today.difference(t.startDate!).inDays.clamp(0, totalDays);
+              today.difference(t.scheduleStartDate!).inDays.clamp(0, totalDays);
           final expected = totalDays > 0 ? passedDays / totalDays : 0.0;
           final actual = t.progress / 100.0;
 
@@ -3753,7 +4498,7 @@ class _LightningLinePainter extends CustomPainter {
             }
           }
         }
-      } else if (t.status == 'completed' || t.endDate == null) {
+      } else if (t.status == 'completed' || t.scheduleEndDate == null) {
         // 完了済 or 期限なし → 今日 X 維持
         x = todayX;
       }
@@ -3766,8 +4511,16 @@ class _LightningLinePainter extends CustomPainter {
         }
       }
 
+      if (i < firstVisibleIndex || i > lastVisibleIndex) {
+        continue;
+      }
+      final y = i * rowHeight + rowHeight / 2 - verticalOffset;
+      if (y < -rowHeight || y > size.height + rowHeight) {
+        continue;
+      }
       points.add(Offset(x.clamp(0.0, size.width), y));
     }
+    if (points.isEmpty) return;
 
     // 線色決定
     Color lineColor;
@@ -3804,5 +4557,8 @@ class _LightningLinePainter extends CustomPainter {
   bool shouldRepaint(covariant _LightningLinePainter oldDelegate) =>
       oldDelegate.tasks != tasks ||
       oldDelegate.today != today ||
-      oldDelegate.dayWidth != dayWidth;
+      oldDelegate.dayWidth != dayWidth ||
+      oldDelegate.rowHeight != rowHeight ||
+      oldDelegate.timelineStart != timelineStart ||
+      oldDelegate.verticalOffset != verticalOffset;
 }

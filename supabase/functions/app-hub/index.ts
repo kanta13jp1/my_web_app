@@ -8,6 +8,11 @@
 
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient, SupabaseClient } from "npm:@supabase/supabase-js@2";
+import { AgentGpaActionError, handleAgentGpaAction } from "./agent_gpa.ts";
+import {
+  GaReadinessActionError,
+  handleGaReadinessAction,
+} from "./ga_readiness.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -76,6 +81,40 @@ async function deleteItem(
       userId,
     );
   if (error) throw new Error(error.message);
+}
+
+async function updateItem(
+  admin: SupabaseClient,
+  source: string,
+  userId: string,
+  id: string,
+  patch: Record<string, unknown>,
+) {
+  const { data: existing, error: readError } = await admin.from("hub_data")
+    .select("metadata")
+    .eq("id", id)
+    .eq("source", source)
+    .filter("metadata->>user_id", "eq", userId)
+    .maybeSingle();
+  if (readError) throw new Error(readError.message);
+  if (!existing) return null;
+
+  const previous = (existing.metadata ?? {}) as Record<string, unknown>;
+  const next = {
+    ...previous,
+    ...patch,
+    user_id: userId,
+    updated_at: new Date().toISOString(),
+  };
+  const { data, error } = await admin.from("hub_data")
+    .update({ metadata: next })
+    .eq("id", id)
+    .eq("source", source)
+    .filter("metadata->>user_id", "eq", userId)
+    .select("id, metadata, created_at")
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  return data;
 }
 
 serve(async (req: Request) => {
@@ -205,7 +244,15 @@ serve(async (req: Request) => {
       // --- Calendar ---
       case "calendar.list": {
         const items = await listItems(admin, "calendar_event", userId);
-        return json({ success: true, events: items });
+        const events = items.map((it) => {
+          const meta = (it.metadata ?? {}) as Record<string, unknown>;
+          return {
+            ...meta,
+            event_id: it.id,
+            created_at: it.created_at,
+          };
+        });
+        return json({ success: true, events });
       }
 
       case "calendar.create": {
@@ -215,8 +262,42 @@ serve(async (req: Request) => {
           end_at: body.end_at,
           description: body.description ?? "",
           all_day: body.all_day ?? false,
+          color: body.color ?? "#4285f4",
         });
-        return json({ success: true, event: item });
+        const meta = (item.metadata ?? {}) as Record<string, unknown>;
+        return json({
+          success: true,
+          event: { ...meta, event_id: item.id, created_at: item.created_at },
+        });
+      }
+
+      case "calendar.update": {
+        const id = String(body.id ?? "");
+        if (!id) return json({ error: "id is required" }, 400);
+        const patch: Record<string, unknown> = {};
+        if (Object.hasOwn(body, "title")) patch.title = body.title;
+        if (Object.hasOwn(body, "start_at")) patch.start_at = body.start_at;
+        if (Object.hasOwn(body, "end_at")) patch.end_at = body.end_at;
+        if (Object.hasOwn(body, "description")) {
+          patch.description = body.description ?? "";
+        }
+        if (Object.hasOwn(body, "all_day")) {
+          patch.all_day = body.all_day ?? false;
+        }
+        if (Object.hasOwn(body, "color")) patch.color = body.color ?? "#4285f4";
+        const item = await updateItem(
+          admin,
+          "calendar_event",
+          userId,
+          id,
+          patch,
+        );
+        if (!item) return json({ error: "Event not found" }, 404);
+        const meta = (item.metadata ?? {}) as Record<string, unknown>;
+        return json({
+          success: true,
+          event: { ...meta, event_id: item.id, created_at: item.created_at },
+        });
       }
 
       case "calendar.delete": {
@@ -662,11 +743,33 @@ serve(async (req: Request) => {
         return json({ success: true, entry });
       }
 
+      // --- Agent GPA Evaluations (#1124 Phase 1) ---
+      case "agent.evaluate_gpa":
+      case "agent.list_gpa_recent": {
+        const result = await handleAgentGpaAction({
+          action,
+          admin,
+          body,
+          userId,
+        });
+        return json({ success: true, ...result });
+      }
+
+      // --- GA Launch Readiness Gate (#1640) ---
+      case "agent.list_ga_axes": {
+        const gaReadiness = handleGaReadinessAction(action);
+        return json({ success: true, ga_readiness: gaReadiness });
+      }
+
       default:
         return json({ error: `Unknown action: ${action}` }, 400);
     }
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    return json({ error: message }, 500);
+    const status = err instanceof AgentGpaActionError ||
+        err instanceof GaReadinessActionError
+      ? err.status
+      : 500;
+    return json({ error: message }, status);
   }
 });

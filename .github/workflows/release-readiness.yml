@@ -1,0 +1,139 @@
+name: Release Readiness Gate
+
+on:
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: "Production base URL to smoke test"
+        required: false
+        default: "https://my-web-app-b67f4.web.app"
+        type: string
+      update_wbs:
+        description: "Mark the synced WBS task for #1556 completed after a green gate"
+        required: false
+        default: true
+        type: boolean
+      send_slack_probe:
+        description: "Send a low-noise Slack webhook probe instead of only checking that the secret exists"
+        required: false
+        default: false
+        type: boolean
+  schedule:
+    - cron: "40 21 * * *" # daily 06:40 JST
+  workflow_run:
+    workflows:
+      - "Deploy to Production"
+    types: [completed]
+
+concurrency:
+  group: release-readiness-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  DEFAULT_BASE_URL: https://my-web-app-b67f4.web.app
+  SUPABASE_URL: ${{ secrets.SUPABASE_URL_PROD || 'https://smmkxxavexumewbfaqpy.supabase.co' }}
+  SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+  SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+  FLUTTER_VERSION: "3.38.x"
+  LANDING_GOOGLE_LOGIN_ENABLED: "true"
+
+jobs:
+  readiness:
+    name: Alpha release readiness
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Install Flutter dependencies
+        run: flutter pub get
+
+      - name: Setup Deno
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      - name: Check migration timestamp collisions
+        run: python scripts/check_migration_timestamps.py
+
+      - name: Check Edge Function imports
+        run: python scripts/check_edge_function_imports.py
+
+      - name: Deno lint Edge Functions
+        run: deno lint --config supabase/functions/deno.json supabase/functions/
+
+      - name: Deno check readiness hub entrypoints
+        run: |
+          ENTRYPOINTS=(
+            supabase/functions/tools-hub/index.ts
+            supabase/functions/schedule-hub/index.ts
+          )
+          for entrypoint in "${ENTRYPOINTS[@]}"; do
+            if [ ! -f "$entrypoint" ]; then
+              echo "Missing readiness hub entrypoint: $entrypoint"
+              exit 1
+            fi
+          done
+          deno check --config supabase/functions/deno.json "${ENTRYPOINTS[@]}"
+
+      - name: Flutter analyze
+        run: flutter analyze
+
+      - name: Flutter web release build
+        run: >
+          flutter build web --release --pwa-strategy=none --no-tree-shake-icons
+          --dart-define=LANDING_GOOGLE_LOGIN_ENABLED=true
+        env:
+          FLUTTER_WEB: true
+
+      - name: Production routes, hubs, Notion, Slack, and WBS smoke
+        env:
+          INPUT_BASE_URL: ${{ github.event.inputs.base_url }}
+          INPUT_UPDATE_WBS: ${{ github.event.inputs.update_wbs }}
+          INPUT_SEND_SLACK_PROBE: ${{ github.event.inputs.send_slack_probe }}
+        run: |
+          set -euo pipefail
+          mkdir -p .release-readiness
+
+          BASE_URL="${INPUT_BASE_URL:-$DEFAULT_BASE_URL}"
+          UPDATE_WBS="${INPUT_UPDATE_WBS:-true}"
+          SEND_SLACK_PROBE="${INPUT_SEND_SLACK_PROBE:-false}"
+
+          args=(
+            --base-url "$BASE_URL"
+            --supabase-url "$SUPABASE_URL"
+            --require-slack-webhook
+            --issue-number 1556
+            --output-json .release-readiness/runtime-smoke.json
+            --summary "$GITHUB_STEP_SUMMARY"
+          )
+
+          if [ "$UPDATE_WBS" = "true" ]; then
+            args+=(--update-wbs)
+          fi
+          if [ "$SEND_SLACK_PROBE" = "true" ]; then
+            args+=(--send-slack)
+          fi
+
+          python scripts/release_readiness_gate.py "${args[@]}"
+
+      - name: Upload readiness artifacts
+        if: always() && hashFiles('.release-readiness/**') != ''
+        uses: actions/upload-artifact@v7
+        with:
+          name: release-readiness-runtime-smoke
+          path: .release-readiness/
+          if-no-files-found: ignore

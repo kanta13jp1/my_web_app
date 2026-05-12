@@ -4,6 +4,7 @@ import 'package:flutter/services.dart'
 import 'package:intl/intl.dart';
 
 import '../services/abstinence_guard_store.dart';
+import '../widgets/pwa_install_banner.dart';
 
 class AbstinenceGuardPage extends StatefulWidget {
   final DateTime Function()? nowProvider;
@@ -438,6 +439,10 @@ class _AbstinenceGuardPageState extends State<AbstinenceGuardPage> {
               child: ListView(
                 padding: const EdgeInsets.all(16),
                 children: [
+                  const PwaInstallBanner(
+                    storageKey: 'abstinence_guard_pwa_install_banner',
+                  ),
+                  const SizedBox(height: 16),
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
