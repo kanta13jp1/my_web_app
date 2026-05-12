@@ -66,6 +66,16 @@ keytool -genkey -v \
 3. CIで署名する場合は、keystoreをBase64化してGitHub Secretsへ保存する。
 4. 鍵を紛失すると更新が止まるため、バックアップ場所と復旧手順をWBSに残す。
 
+GitHub Actionsで配布前のstrict gateを通すには、少なくとも次のSecretsを登録する。
+
+- `ANDROID_KEYSTORE_BASE64`
+- `ANDROID_KEYSTORE_PASSWORD`
+- `ANDROID_KEY_ALIAS`
+- `ANDROID_KEY_PASSWORD`
+- `GOOGLE_PLAY_SERVICE_ACCOUNT_JSON`
+
+登録後、`mobile-distribution-readiness.yml` を `require_distribution_secrets=true` で手動実行し、Androidのsecret presenceがgreenであることを確認する。レポートartifactにはsecret値ではなく存在有無だけが記録される。
+
 ## 6. ローカルでリリースビルドを作る
 
 ```bash

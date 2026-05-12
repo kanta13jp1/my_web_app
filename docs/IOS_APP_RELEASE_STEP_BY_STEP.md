@@ -41,6 +41,18 @@ AI大学 iOS学科向けに、このFlutterアプリをApp Storeへ公開する�
 4. ログ、デバッグUI、開発用バナーが本番ビルドで出ないことを確認する。
 5. App Tracking Transparency、写真、通知、マイク等を使う場合はInfo.plistの説明文を実利用に合わせる。
 
+GitHub ActionsでTestFlight配布前のstrict gateを通すには、少なくとも次のSecretsを登録する。
+
+- `APPLE_TEAM_ID`
+- `APP_STORE_CONNECT_KEY_ID`
+- `APP_STORE_CONNECT_ISSUER_ID`
+- `APP_STORE_CONNECT_API_KEY_P8`
+- `IOS_SIGNING_CERTIFICATE_BASE64`
+- `IOS_SIGNING_CERTIFICATE_PASSWORD`
+- `IOS_PROVISIONING_PROFILE_BASE64`
+
+登録後、`mobile-distribution-readiness.yml` を `require_distribution_secrets=true` で手動実行し、iOSのsecret presenceがgreenであることを確認する。レポートartifactにはsecret値ではなく存在有無だけが記録される。
+
 ## 5. ローカルでビルドする
 
 ```bash

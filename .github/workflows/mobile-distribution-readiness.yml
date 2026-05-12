@@ -1,0 +1,96 @@
+name: Mobile Distribution Readiness
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/mobile-distribution-readiness.yml'
+      - '.github/workflows/mobile-release-build.yml'
+      - 'android/**'
+      - 'ios/**'
+      - 'lib/main_mobile.dart'
+      - 'scripts/check_mobile_release_readiness.py'
+      - 'scripts/check_mobile_distribution_readiness.py'
+      - 'test/scripts/test_mobile_distribution_readiness.py'
+      - 'docs/MOBILE_SIMULTANEOUS_RELEASE.md'
+      - 'docs/ANDROID_APP_RELEASE_STEP_BY_STEP.md'
+      - 'docs/IOS_APP_RELEASE_STEP_BY_STEP.md'
+  workflow_dispatch:
+    inputs:
+      platform:
+        description: 'Distribution readiness platform'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - android
+          - ios
+      require_distribution_secrets:
+        description: 'Fail if signing/store distribution secrets are missing'
+        required: true
+        default: false
+        type: boolean
+  workflow_run:
+    workflows:
+      - Build Mobile Release Artifacts
+    types:
+      - completed
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mobile-distribution-readiness-${{ github.event.pull_request.number || github.event.workflow_run.id || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  readiness:
+    name: Mobile Distribution Readiness
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      MOBILE_READINESS_PLATFORM: ${{ github.event_name == 'workflow_dispatch' && inputs.platform || 'all' }}
+      REQUIRE_DISTRIBUTION_SECRETS: ${{ github.event_name == 'workflow_dispatch' && inputs.require_distribution_secrets || 'false' }}
+      HAS_ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
+      HAS_ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD != '' }}
+      HAS_ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS != '' }}
+      HAS_ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD != '' }}
+      HAS_GOOGLE_PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON != '' }}
+      HAS_APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID != '' }}
+      HAS_APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID != '' }}
+      HAS_APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID != '' }}
+      HAS_APP_STORE_CONNECT_API_KEY_P8: ${{ secrets.APP_STORE_CONNECT_API_KEY_P8 != '' }}
+      HAS_IOS_SIGNING_CERTIFICATE_BASE64: ${{ secrets.IOS_SIGNING_CERTIFICATE_BASE64 != '' }}
+      HAS_IOS_SIGNING_CERTIFICATE_PASSWORD: ${{ secrets.IOS_SIGNING_CERTIFICATE_PASSWORD != '' }}
+      HAS_IOS_PROVISIONING_PROFILE_BASE64: ${{ secrets.IOS_PROVISIONING_PROFILE_BASE64 != '' }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
+
+      - name: Check mobile release metadata
+        run: python scripts/check_mobile_release_readiness.py
+
+      - name: Check mobile distribution readiness
+        shell: bash
+        run: |
+          mkdir -p tmp/mobile-distribution-readiness
+          args=(
+            --platform "$MOBILE_READINESS_PLATFORM"
+            --report tmp/mobile-distribution-readiness/report.json
+          )
+          if [ "$REQUIRE_DISTRIBUTION_SECRETS" = "true" ]; then
+            args+=(--require-secrets)
+          fi
+          python scripts/check_mobile_distribution_readiness.py "${args[@]}"
+
+      - name: Upload distribution readiness report
+        uses: actions/upload-artifact@v7
+        with:
+          name: mobile-distribution-readiness-report
+          path: tmp/mobile-distribution-readiness/report.json
+          if-no-files-found: error
+          retention-days: 30
