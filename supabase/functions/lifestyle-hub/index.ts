@@ -155,6 +155,28 @@ function roundOne(value: number): number {
   return Math.round(value * 10) / 10;
 }
 
+function finiteNumber(value: unknown, fallback = 0): number {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string" && value.trim()) {
+    const parsed = Number(value);
+    if (Number.isFinite(parsed)) return parsed;
+  }
+  return fallback;
+}
+
+function legacyMealLog(row: Record<string, unknown>): Record<string, unknown> {
+  return {
+    id: row.id,
+    food_name: row.food_name ?? row.menu_name ?? "",
+    meal_type: row.meal_type ?? "snack",
+    calories: Math.round(finiteNumber(row.calories ?? row.kcal)),
+    protein_g: roundOne(finiteNumber(row.protein_g)),
+    carbs_g: roundOne(finiteNumber(row.carbs_g ?? row.carb_g)),
+    fat_g: roundOne(finiteNumber(row.fat_g)),
+    logged_at: row.logged_at,
+  };
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -421,6 +443,105 @@ serve(async (req) => {
           success: true,
           plans: await listItems(admin, "meal_plan", userId),
         });
+      case "meal.log": {
+        if (!isMealType(body.meal_type)) {
+          return json({ error: "meal_type is required" }, 400);
+        }
+        const foodName = optionalText(body.food_name) ??
+          optionalText(body.menu_name);
+        if (!foodName) {
+          return json({ error: "food_name is required" }, 400);
+        }
+        const loggedAt = optionalText(body.logged_at) ??
+          new Date().toISOString();
+        if (Number.isNaN(Date.parse(loggedAt))) {
+          return json({ error: "logged_at must be an ISO timestamp" }, 400);
+        }
+
+        const { data, error } = await userDb.from("meal_logs")
+          .insert({
+            user_id: userId,
+            meal_type: body.meal_type,
+            menu_name: foodName,
+            kcal: optionalInt(body.calories ?? body.kcal),
+            protein_g: optionalNumber(body.protein_g),
+            fat_g: optionalNumber(body.fat_g),
+            carb_g: optionalNumber(body.carbs_g ?? body.carb_g),
+            logged_at: loggedAt,
+          })
+          .select("*")
+          .single();
+        if (error) return json({ error: error.message }, 400);
+        const log = legacyMealLog(data as Record<string, unknown>);
+        return json({ success: true, ok: true, id: data.id, log });
+      }
+      case "meal.today": {
+        let range: { date: string; start: string; end: string };
+        try {
+          range = dateWindowForDay(body.date);
+        } catch (error) {
+          return json({ error: String(error) }, 400);
+        }
+        const { data, error } = await userDb.from("meal_logs")
+          .select("meal_type, kcal, protein_g, fat_g, carb_g")
+          .eq("user_id", userId)
+          .gte("logged_at", range.start)
+          .lt("logged_at", range.end);
+        if (error) return json({ error: error.message }, 400);
+
+        const byMeal: Record<MealType, number> = {
+          breakfast: 0,
+          lunch: 0,
+          dinner: 0,
+          snack: 0,
+        };
+        let calories = 0;
+        let protein = 0;
+        let carbs = 0;
+        let fat = 0;
+        for (const row of data ?? []) {
+          const record = row as Record<string, unknown>;
+          const mealType = isMealType(record.meal_type)
+            ? record.meal_type
+            : "snack";
+          const rowCalories = finiteNumber(record.kcal);
+          byMeal[mealType] += rowCalories;
+          calories += rowCalories;
+          protein += finiteNumber(record.protein_g);
+          carbs += finiteNumber(record.carb_g);
+          fat += finiteNumber(record.fat_g);
+        }
+        return json({
+          success: true,
+          date: range.date,
+          total_calories: Math.round(calories),
+          total_protein_g: roundOne(protein),
+          total_carbs_g: roundOne(carbs),
+          total_fat_g: roundOne(fat),
+          by_meal: {
+            breakfast: Math.round(byMeal.breakfast),
+            lunch: Math.round(byMeal.lunch),
+            dinner: Math.round(byMeal.dinner),
+            snack: Math.round(byMeal.snack),
+          },
+        });
+      }
+      case "meal.list": {
+        const limit = boundedLimit(body.limit, 20, 100);
+        const { data, error, count } = await userDb.from("meal_logs")
+          .select("*", { count: "exact" })
+          .eq("user_id", userId)
+          .order("logged_at", { ascending: false })
+          .limit(limit);
+        if (error) return json({ error: error.message }, 400);
+        return json({
+          success: true,
+          logs: (data ?? []).map((row) =>
+            legacyMealLog(row as Record<string, unknown>)
+          ),
+          total: count ?? data?.length ?? 0,
+        });
+      }
       case "meal_log.add": {
         if (!isMealType(body.meal_type)) {
           return json({ error: "meal_type is required" }, 400);
