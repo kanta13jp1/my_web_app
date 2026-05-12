@@ -1,7 +1,7 @@
 {
   "success": true,
   "digest": {
-    "date": "2026-05-11",
+    "date": "2026-05-12",
     "users": {
       "total": 37
     },
@@ -38,23 +38,23 @@
         "completed_at": "2026-05-12T00:00:00+00:00"
       },
       {
+        "title": "Codex #1: AI Tool Watch route-to-issue bridge (#1559)",
+        "completed_at": "2026-05-12T00:00:00+00:00"
+      },
+      {
+        "title": "Codex #1: blog/news production smoke (#1950)",
+        "completed_at": "2026-05-12T00:00:00+00:00"
+      },
+      {
+        "title": "Codex #1: mobile distribution readiness gate (#1495)",
+        "completed_at": "2026-05-12T00:00:00+00:00"
+      },
+      {
         "title": "Codex #1: prioritized GitHub Issue-linked WBS task dates",
         "completed_at": "2026-05-11T15:03:02.581237+00:00"
-      },
-      {
-        "title": "Codex #1: WBS dedup v2 active issue uniqueness",
-        "completed_at": "2026-05-11T13:10:07.632842+00:00"
-      },
-      {
-        "title": "Codex #1: prioritized additional-request WBS task dates",
-        "completed_at": "2026-05-11T10:57:06.373613+00:00"
-      },
-      {
-        "title": "Codex #1: completed duplicate GitHub-origin WBS rows",
-        "completed_at": "2026-05-11T00:00:00+00:00"
       }
     ]
   },
-  "fetched_at": "2026-05-12T07:49:33+09:00",
-  "report_date": "2026-05-12"
+  "fetched_at": "2026-05-13T07:51:07+09:00",
+  "report_date": "2026-05-13"
 }
