@@ -1789,3 +1789,58 @@ part 204 (= 2026-05-12 12:15 JST) v15 Layer 1 manual fire 第 3 例累積:
 - `scripts/cross_session_ram_dashboard.py` (= Layer O)
 
 > **v18 status**: part 204-b iterative ask v17 layer ship / `docs/cross-instance-prs/20260512_codex_wbs_top5_v18_disk_hygiene_cascade_part204b.md` Part B spec / 累積 18 layer / Codex 17+5=22 件 5/30 期限.
+
+### §17.22 v19 mandatory per-session compression CONTRACT (= part 207 / 5 layer P-T / 累積 23 layer)
+
+> **TODO**: 本 section back-fill needed (= part 207 spec'd / part 208 not yet documented in RUNBOOK).
+> See [project_20260513_win132_part207](../memory/project_20260513_win132_part207.md) for full spec.
+> Layer P-T = SessionStart KPI MUST / quota fail-closed wrap-up exit 1 / PostTool 70% threshold / cross-instance sync 強化 / weekly GHA audit 強化.
+> v19-R quota = (a) reclaim ≥ +500 MB OR (b) RAM delta ≤ -5 pt OR (c) C: delta ≥ +0.5 GB → wrap-up exit 1 if ALL FAIL.
+> Codex 22+5=27 件 5/30 期限.
+
+### §17.23 v20 fleet adaptive compression (= part 208 / 5 layer U-Y / 累積 28 layer)
+
+User iterative ask 第 19 layer (= 2026-05-13 part 208) → 5 new layer U-Y design:
+
+#### 17.23.1 v20 gap analysis (= v15-v19 23 layer で足りない angle)
+
+| Gap | Layer | Why missing in v15-v19 |
+|-----|-------|------------------------|
+| Inter-session bridging (= 終了後-開始前 deadzone) | U | v15-v19 全部 session lifecycle 中 fire 前提 |
+| Multi-instance coordination (= duplicate fire 回避) | V | v15-v19 全 single-instance 前提 / fleet 2-instance 未考慮 |
+| Adaptive frequency (= drain rate base) | W | v15-v19 全部 fixed interval / 7d signal 未活用 |
+| User-visible KPI (= prompt input box) | X | v15-v19 全部 log-only / user 視覚 cue なし |
+| Hard exit emergency (= data loss prevention) | Y | v15-v19 全部 graceful degradation / catastrophic case 未対応 |
+
+#### 17.23.2 v20 5 layer 詳細
+
+| Layer | Phase | Trigger | Fail-closed | Observability |
+|-------|-------|---------|-------------|---------------|
+| **v20-U** | **GHA cron 30 min** | **cloud-managed / session状態無関係** | ❌ informational | **inter-session-cron.log** |
+| **v20-V** | **semaphore acquire** | **multi-instance lock check** | ✅ block fire if held | **semaphore.log** |
+| **v20-W** | **adaptive dial** | **7d drain rate base** | ❌ background | **adaptive-frequency.log** |
+| **v20-X** | **status-line render** | **every prompt output** | ❌ visual cue | **status-line 自身** |
+| **v20-Y** | **PreToolUse threshold** | **C: < 5 GB OR RAM > 98%** | ✅ force exit + WIP commit | **layer-y-emergency.log** |
+
+#### 17.23.3 累積 28 layer (= v15 3 + v16 5 + v17 5 + v18 5 + v19 5 + v20 5)
+
+(= 詳細 17.20.3 + 17.21.3 + 17.22 (back-fill 必要) を参照 / v20 5 layer = ↑ 17.23.2)
+
+#### 17.23.4 session_kpi.py 拡張 (= 23 → 28 metric)
+
+- **v20 5 metric NEW**:
+  - `inter_session_cron_fire_count` (int / 24h rolling / Layer U)
+  - `semaphore_collision_count` (int / 24h rolling / Layer V)
+  - `adaptive_frequency_current_interval_min` (int / Layer W)
+  - `statusline_render_count` (int / 24h rolling / debug / Layer X)
+  - `layer_y_fire_count` (int / lifetime counter / Layer Y)
+
+#### 17.23.5 Codex impl 待ち (= 5/30 期限 / 5 deliverable NEW / 累積 32)
+
+- `.github/workflows/inter-session-compression-cron.yml` + `scripts/inter_session_cron_handler.py` (= Layer U)
+- `scripts/compression_semaphore.py` (= Layer V / **High** priority = multi-instance correctness)
+- `scripts/adaptive_frequency_dialer.py` (= Layer W / High = drain rate response)
+- `~/.claude/plugins/cache/caveman/caveman/0bbd46c39031/hooks/caveman-statusline-v20.ps1` (= Layer X)
+- `scripts/layer_y_emergency_exit.ps1` + hook config (= Layer Y / **High** = data loss prevention)
+
+> **v20 status**: part 208 iterative ask v19 layer ship / `docs/cross-instance-prs/20260513_codex_wbs_top5_v20_fleet_adaptive_compression_part208.md` Part B spec / 累積 28 layer / Codex 27+5=32 件 5/30 期限 / 9-day sprint plan 5/22-5/30 (= Day 7 = v20 batch).

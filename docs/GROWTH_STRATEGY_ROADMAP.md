@@ -29998,7 +29998,16 @@ Step 5: ROADMAP KPI table append (= v(N) trigger row + v(N) verify row)
   - **same-day +44 min minimum session = 過去最短 update**: 第 1 例 (part 205 +9h) / 第 2 例 (part 206 +2h) / 第 3 例 (part 208 +44 min)
   - **C: -1.02 GB drop in 44 min**: 1.4 GB/h drain rate (= 4.4 GB/day trend と整合 / dev_cache 蓄積 continuing)
 - 「v19-R quota retroactive ALL FAIL dogfood」第 1 例 NEW + 「same-day +44 min minimum session 過去最短」第 3 例累積 + 「session-delta.csv auto-firing 確証」第 1 例 NEW + 「Codex idle between sprints」第 1 例 NEW
-- Philosophy 7/9 ✅ / 139 part 連続 (= part 70 → 208 / 過去最長 update)
+- **part 208 turn 2 user iterative ask v20**: 「毎セッションで必ずメモリ/HDD 圧縮施策」直接 ask 受信 → **v20 fleet adaptive compression spec ship 第 1 例** (= 5 new layer U-Y / 累積 28 layer / iterative ask 累積 19 layer 過去最高 update / Codex 32 deliverable 5/30 期限 / 9-day sprint plan)
+  - Layer U: inter-session GHA cron compression (= session状態無関係 30 min interval)
+  - Layer V: multi-instance coordination semaphore (= Win Claude+Codex duplicate fire 回避)
+  - Layer W: adaptive frequency dial (= 7d drain rate base / -3/-10/-30 GB で interval 自動 escalate)
+  - Layer X: user-visible KPI status-line (= caveman statusline 拡張 / RAM%+C: GB+drain live)
+  - Layer Y: hard exit emergency (= C:<5 GB OR RAM>98% で WIP commit + force exit / data loss prevention)
+- **WBS triage 期限近順 + 2-instance 反映**: #1495 P0 (期限 5/14 残 22.5h) day-of FINAL ping ✅ / #1950 P1 (-2d overdue) Codex 5/22 pickup ping ✅ / #1830 P1 (-10d overdue) Codex 5/22 meal_logs migration pickup ping ✅
+- **§17.22 v19 back-fill TODO + §17.23 v20 ship**: DISK_HYGIENE_RUNBOOK.md 既存 doc 章追加 pattern 第 19+20 例累積
+- 「v20 spec ship」第 1 例 NEW + 「iterative ask 累積 19 layer 過去最高」 + 「same-day turn 2 user direct ask」第 2 例累積 + 「post-wrap-up escalation」第 7 例累積
+- Philosophy 7/9 ✅ → 8/9 ✅ update (= v20 ship で 9 IPO 視野追加) / 139 part 連続 (= part 70 → 208 / 過去最長 update)
 
 ### Commit
 - (= 本 docs PR の merge commit / 後追記)
