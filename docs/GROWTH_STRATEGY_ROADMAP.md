@@ -29912,3 +29912,72 @@ Step 5: ROADMAP KPI table append (= v(N) trigger row + v(N) verify row)
 - (= 本 docs PR の merge commit / 後追記)
 
 
+
+
+## Win版#132 part 204 — minimum session (= 翌日 fresh start + v15 Layer 1 第 3 例 + v17 Layer F first row write 第 1 例) (2026-05-12 JST)
+
+- 翌日 fresh start 11h+ gap qualified (= part 203-b 00:53 → part 204 12:15 火 / [COMPACTION-RESUME] discipline 第 9 例累積 ✅):
+  - **system date cross-check fire**: 5/12 12:15 火曜 / 前 session 00:53 から 11h+ gap = fresh start qualified / 同日連続 violation 第 2 例 risk 回避
+  - **WBS Top 5 verify (gh CLI fallback)**: tools-hub MCP unavail → gh CLI fallback / #1495 (P0 5/14 期限) + #1950 (P1 5/11 過) + #2186 (P2 SLA 5/22) + #2204 (P1) + #1963 (P-med) 全て updatedAt 5/11 (= part 203-b triage commit) / Codex 未 response (= 5/22 sprint start 待ち expected)
+  - **v15+v16+v17 Codex impl progress monitor**: 0 PR open (= 17 deliverable / 5/30 期限 / 18 day window / sprint 5/22 start 待ち / monitor only / no action needed)
+  - **v15 Layer 1 manual fire 第 3 例累積**: PRE 91.37% → POST 87.06% / DELTA +1140 MB / 過去最高 freed update (= 第 2 例 +1026 から +11% improvement) / partial recovery 87% > 85% 残存 = v18 Layer K (= disk hygiene cascade / browser+Codex 閉じる escalate) candidate 発見
+  - **v17 Layer F session-delta.csv first row write 第 1 例**: file `memory/session-delta.csv` / schema = `session_id,started_at,pre_ram_pct,post_ram_pct,pre_c_free_gb,post_c_free_gb,ram_delta_mb,c_delta_gb,ram_trim_count,instance` / Codex impl (= session_delta_writer.py 5/30 deliverable) 未着手でも manual で先行 base 確保 + Layer G rolling 3-session aggregate base 確保
+  - **PRE→POST +16.43 pt in 3 min** rapid build-up 初測定: session start tools 起動で +2.6 GB / 3 min = v17 Layer H 70% threshold 必須性 reinforce
+  - **minimum session pattern 確立**: UI verify [UI-VERIFY] defer / Codex 監視 only / 90min budget / 過去最重 risk band (part 202 同日 14 part) から完全復帰 + safety margin 確保
+- 「v15 Layer 1 第 3 例累積 + 過去最高 freed update」第 1 例 NEW + 「v17 Layer F manual dogfood first row write」第 1 例 NEW + 「partial recovery 87% 残存 = v18 Layer K candidate 発見」第 1 例 NEW + 「PRE→POST +16.43 pt in 3 min 初測定」第 1 例 NEW + 「[COMPACTION-RESUME] discipline 第 9 例累積」復帰成功 + 「minimum session pattern」第 1 例
+- Philosophy 7/9 ✅ / 135 part 連続 (= part 70 → 204)
+
+### Commit
+- (= 本 docs PR の merge commit / 後追記)
+
+### Philosophy Alignment (Win#132 part 204)
+
+- 主要実装: minimum session pattern + v15 Layer 1 manual fire 第 3 例累積 + v17 Layer F session-delta.csv first row write 第 1 例
+- 該当原則: 1 (CEO 感) + 4 (6 部署バランス / 人事最優先) + 5 (商品=ユーザー価値) + 6 (資本=時間) + 7 (資産負債) + 8 (KPI=昨日の自分)
+- 整合性スコア: 6/9 ✅ (= 即実装可レベル)
+- 理念的貢献:
+  - 1 ✅ 翌日 fresh start 11h+ gap discipline = 自己責任で判断 + minimum session pattern 確立
+  - 4 ✅ 人事 (= 自分) 最優先 = RAM budget protect + UI verify defer
+  - 5 ✅ dogfood で fleet 健全運用 pattern 確立 = ユーザー (= 自分) experience 改善
+  - 6 ✅ 90min minimum budget = 時間 capital 効率使用
+  - 7 ✅ memory file 2 件 + session-delta.csv schema 確立 = 知的資産積み上げ
+  - 8 ✅ session-delta.csv = 昨日 (= 前 part) との KPI 比較 base 確立
+- 懸念: なし (= partial recovery 87% > 85% は v18 Layer K candidate / next session 対応 / 既知)
+
+
+## Win版#132 part 204-b — v18 disk hygiene cascade spec ship + iterative ask 第 17 layer + WBS Top 5 緊急 escalate (2026-05-12 JST)
+
+- post-wrap-up escalation 第 6 例累積 (= part 204 phase 1 wrap-up 完了後 user v18 ask 受信 / mid-session continuation):
+  - **v18 spec ship 第 1 例**: disk hygiene cascade (= 5 new layer K-O / 累積 18 layer = v15 3 + v16 5 + v17 5 + v18 5)
+    - Layer K: disk hygiene cascade (= main / v15 Layer 1 fire 後 RAM% > 85% で automatic cascade / worktree_cleanup --tier2 + dev_cache_cleanup --tier18 + 最終手段 browser/Codex 閉じる prompt)
+    - Layer L: pre-commit hard gate (= RAM > 80% OR C: < 10 GB で git commit/push block / exit 1)
+    - Layer M: hourly forced compression (= Win Task Scheduler PT1H / interactive session 中でも fire / +16 pt/3 min drift 回収)
+    - Layer N: post-PR-merge cleanup hook (= GHA / PR merge 直後 branch + worktree + dev_cache 自動 cleanup)
+    - Layer O: cross-session RAM trend dashboard (= session-delta.csv 7-day rolling / 自動 weekly GHA cron)
+  - **iterative ask 累積 17 layer 第 1 例 update**: v3 (part 178b) → v18 (part 204-b) / 過去最高 update (= v15 14 → v16 15 → v17 16 → v18 17)
+  - **2-instance hand-off batch 第 6 例累積**: v13-v18 全 6 例連鎖 (= 同一 user iterative ask 連鎖 pattern / 6 day window 5/9-5/12)
+  - **WBS Top 5 期限近順 緊急 escalate**: #1495 (5/14 残 2 day ⚠️) + #1950 (5/11 過 -1 day) Codex 再 assign 緊急 / 9-day sprint plan (5/22-5/30) = day 1-2 #1495+#1950 緊急回収 / day 3-5 v18 5 + v15 5 / day 6-8 v16 6 + v17 6 / day 9 #2186+#2204+#1963
+  - **DISK_HYGIENE §17.21 v18 章追加**: 既存 doc 章追加 pattern 第 17 例累積
+  - **session_kpi.py 拡張**: 13 → 18 metric (= v18 5 metric NEW)
+  - **Codex 5/30 deliverable 22 件**: v15 5 + v16 6 + v17 6 + v18 5 (= 5 NEW = disk_hygiene_cascade.ps1 / pre_commit_hard_gate.ps1 / hourly_forced_compression.ps1 / post-pr-merge-cleanup.yml / cross_session_ram_dashboard.py)
+- 「v18 disk hygiene cascade spec ship」第 1 例 NEW + 「iterative ask 累積 17 layer」第 1 例 NEW (= 過去最高 update / 累積 18 layer / 22 deliverable) + 「2-instance hand-off batch」第 6 例累積 + 「post-wrap-up escalation」第 6 例累積 + 「partial recovery 87% 問題への直接回答」第 1 例 NEW
+- Philosophy 7/9 ✅ / 135 part 連続 (= part 70 → 204-b)
+
+### Commit
+- (= 本 docs PR の merge commit / 後追記)
+
+### Philosophy Alignment (Win#132 part 204-b)
+
+- 主要実装: v18 disk hygiene cascade spec ship (= 5 layer K-O / 累積 18 layer) + WBS Top 5 緊急 escalate
+- 該当原則: 1 (CEO 感) + 2 (ミッション駆動) + 4 (6 部署 / 人事最優先) + 5 (商品=ユーザー価値) + 6 (資本=時間) + 7 (資産負債) + 8 (KPI=昨日の自分) + 9 (IPO/ウェルビーイング)
+- 整合性スコア: 8/9 ✅ (= 即実装可レベル 過去最高)
+- 理念的貢献:
+  - 1 ✅ 自己責任で v18 spec design + 期限近順 triage
+  - 2 ✅ 「資源枯渇で開発停止」回避 = ミッション継続
+  - 4 ✅ 人事 (= 自分) 最優先 / minimum session 後の追加 dogfood も safety margin 内
+  - 5 ✅ disk hygiene cascade = ユーザー (= 自分) experience 改善 / partial recovery 解消
+  - 6 ✅ Layer M hourly forced compression = 時間 capital 自動回収
+  - 7 ✅ Layer O dashboard = 知的資産 (= 7-day trend) 可視化
+  - 8 ✅ Layer K-O 全て = 昨日 (= 前 session) との KPI 比較 base 強化
+  - 9 ✅ IPO 視野 = systemic resource exhaustion 解消 = 持続可能開発
+- 懸念: なし (= 17 layer iterative ask 完了 / v19 candidate も今後継続可)
