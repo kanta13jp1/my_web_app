@@ -77,6 +77,29 @@ List<Map<String, dynamic>> sortCalendarEventsForDisplay(
   return events.toList()..sort(_compareCalendarEventsForDisplay);
 }
 
+@visibleForTesting
+List<Map<String, dynamic>> searchCalendarEventsForDisplay(
+  Iterable<Map<String, dynamic>> events,
+  String query,
+) {
+  final sorted = sortCalendarEventsForDisplay(events);
+  final terms = query
+      .trim()
+      .toLowerCase()
+      .split(RegExp(r'\s+'))
+      .where((term) => term.isNotEmpty)
+      .toList();
+  if (terms.isEmpty) return sorted;
+
+  return sorted.where((event) {
+    final searchable = [
+      _eventTitle(event),
+      event['description']?.toString() ?? '',
+    ].join(' ').toLowerCase();
+    return terms.every(searchable.contains);
+  }).toList();
+}
+
 int _compareCalendarEventsForDisplay(
   Map<String, dynamic> a,
   Map<String, dynamic> b,
@@ -132,6 +155,14 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
   List<Map<String, dynamic>> get _selectedDayEvents {
     final key = _dateKey(_selectedDay);
     return sortCalendarEventsForDisplay(_eventsByDate[key] ?? []);
+  }
+
+  List<Map<String, dynamic>> get _allEvents {
+    return sortCalendarEventsForDisplay(
+      _eventsByDate.values.expand((events) {
+        return events;
+      }),
+    );
   }
 
   static String _dateKey(DateTime d) =>
@@ -298,6 +329,21 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
       _focusedDay = next;
     });
     _fetchMonth(next);
+  }
+
+  Future<void> _showEventSearch() async {
+    final selectedEvent = await showSearch<Map<String, dynamic>?>(
+      context: context,
+      delegate: _CalendarEventSearchDelegate(events: _allEvents),
+    );
+    if (selectedEvent == null || !mounted) return;
+    final start = _eventDateTime(selectedEvent, 'start_at');
+    if (start == null) return;
+    final selected = DateTime(start.year, start.month, start.day);
+    setState(() {
+      _selectedDay = selected;
+      _focusedDay = selected;
+    });
   }
 
   void _confirmDeleteEvent(BuildContext context, Map<String, dynamic> event) {
@@ -520,6 +566,12 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
       appBar: AppBar(
         title: const Text('カレンダー'),
         actions: [
+          IconButton(
+            key: const Key('calendar_events_search_button'),
+            icon: const Icon(Icons.search),
+            tooltip: 'Search events',
+            onPressed: _showEventSearch,
+          ),
           if (_isLoading)
             const Padding(
               padding: EdgeInsets.all(14),
@@ -956,6 +1008,109 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _CalendarEventSearchDelegate
+    extends SearchDelegate<Map<String, dynamic>?> {
+  _CalendarEventSearchDelegate({required this.events})
+      : super(searchFieldLabel: 'Search events');
+
+  final List<Map<String, dynamic>> events;
+
+  @override
+  List<Widget>? buildActions(BuildContext context) {
+    return [
+      if (query.isNotEmpty)
+        IconButton(
+          tooltip: 'Clear search',
+          icon: const Icon(Icons.close),
+          onPressed: () => query = '',
+        ),
+    ];
+  }
+
+  @override
+  Widget? buildLeading(BuildContext context) {
+    return IconButton(
+      tooltip: 'Back',
+      icon: const Icon(Icons.arrow_back),
+      onPressed: () => close(context, null),
+    );
+  }
+
+  @override
+  Widget buildResults(BuildContext context) => _buildMatches(context);
+
+  @override
+  Widget buildSuggestions(BuildContext context) => _buildMatches(context);
+
+  Widget _buildMatches(BuildContext context) {
+    final matches = searchCalendarEventsForDisplay(events, query);
+    if (events.isEmpty) {
+      return const Center(child: Text('No events loaded'));
+    }
+    if (matches.isEmpty) {
+      return const Center(child: Text('No matching events'));
+    }
+
+    return ListView.separated(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      itemCount: matches.length,
+      separatorBuilder: (_, __) => const Divider(height: 1),
+      itemBuilder: (context, index) {
+        final event = matches[index];
+        return _SearchResultTile(
+          event: event,
+          color: _CalendarEventsPageState._eventColor(event),
+          onTap: () => close(context, event),
+        );
+      },
+    );
+  }
+}
+
+class _SearchResultTile extends StatelessWidget {
+  const _SearchResultTile({
+    required this.event,
+    required this.color,
+    required this.onTap,
+  });
+
+  final Map<String, dynamic> event;
+  final Color color;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final description = event['description']?.toString().trim() ?? '';
+    final start = _eventDateTime(event, 'start_at');
+    final dateLabel = start == null ? 'No date' : _formatDate(start);
+    final subtitle = [
+      dateLabel,
+      _eventTimeLabel(event),
+      if (description.isNotEmpty) description,
+    ].where((value) => value.isNotEmpty).join(' - ');
+
+    return ListTile(
+      leading: CircleAvatar(
+        backgroundColor: color.withValues(alpha: 0.15),
+        child: Icon(Icons.event, color: color, size: 20),
+      ),
+      title: Text(
+        _eventTitle(event),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+      ),
+      subtitle: Text(
+        subtitle,
+        maxLines: 2,
+        overflow: TextOverflow.ellipsis,
+        style: theme.textTheme.bodySmall,
+      ),
+      onTap: onTap,
     );
   }
 }
