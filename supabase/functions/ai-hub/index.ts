@@ -3520,10 +3520,49 @@ serve(async (req: Request) => {
 
       case "university.content_all": {
         const limit = Math.min(Number(body.limit ?? 200), 500);
-        const { data } = await admin.from("ai_university_content")
+        const facultyCode = asString(body.faculty_code);
+        const departmentCode = asString(body.department_code);
+        let query = admin.from("ai_university_content")
           .select("*")
+          .eq("is_active", true);
+
+        if (departmentCode) {
+          let departmentQuery = admin.from("university_departments")
+            .select("id, university_faculties!inner(faculty_code)")
+            .eq("department_code", departmentCode);
+          if (facultyCode) {
+            departmentQuery = departmentQuery.eq(
+              "university_faculties.faculty_code",
+              facultyCode,
+            );
+          }
+          const { data: departments, error: departmentError } =
+            await departmentQuery.limit(1);
+          if (departmentError) throw new Error(departmentError.message);
+          const departmentId = Array.isArray(departments) &&
+              departments.length > 0
+            ? asString((departments[0] as { id?: unknown }).id)
+            : "";
+          if (!departmentId) return json({ success: true, items: [] });
+          query = query.eq("department_id", departmentId);
+        } else if (facultyCode) {
+          const { data: faculties, error: facultyError } = await admin
+            .from("university_faculties")
+            .select("id")
+            .eq("faculty_code", facultyCode)
+            .limit(1);
+          if (facultyError) throw new Error(facultyError.message);
+          const facultyId = Array.isArray(faculties) && faculties.length > 0
+            ? asString((faculties[0] as { id?: unknown }).id)
+            : "";
+          if (!facultyId) return json({ success: true, items: [] });
+          query = query.eq("faculty_id", facultyId);
+        }
+
+        const { data, error } = await query
           .order("published_at", { ascending: false })
           .limit(limit);
+        if (error) throw new Error(error.message);
         return json({ success: true, items: data ?? [] });
       }
 
