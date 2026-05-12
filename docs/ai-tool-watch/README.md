@@ -49,6 +49,13 @@ existing Issues and skip reasons should be preferred.
 started manually. It updates the report/state files and comments on issue
 `#1422` when high-priority official changes are detected.
 
+When changed official sources also map to high-priority routing groups, the
+workflow runs `scripts/ai_tool_watch_route.py`. The router creates or updates a
+deduplicated `ai-tool-watch` GitHub Issue, writes a two-instance handoff draft,
+and writes a PR skeleton under `docs/cross-instance-prs/drafts/ai-tool-watch/`.
+GitHub Issues WBS Sync remains the WBS write path, so the watcher does not need
+Supabase service-role credentials.
+
 ## Routing
 
 - Claude Code hooks, SessionStart, PostToolUse, Stop, or ultrareview changes
