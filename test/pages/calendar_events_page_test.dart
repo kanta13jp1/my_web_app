@@ -78,10 +78,11 @@ void main() {
       event('All day event', day, day, allDay: true),
     ]);
 
-    expect(
-      sorted.map((event) => event['title']),
-      ['All day event', 'Earlier event', 'Late event'],
-    );
+    expect(sorted.map((event) => event['title']), [
+      'All day event',
+      'Earlier event',
+      'Late event',
+    ]);
   });
 
   test('searchCalendarEventsForDisplay matches title and description', () {
@@ -107,16 +108,19 @@ void main() {
           day.add(const Duration(hours: 9)),
         ),
         event('Dentist', 'Annual cleaning', day.add(const Duration(hours: 13))),
-        event(
-          'Planning',
-          'Weekly roadmap',
-          day.add(const Duration(hours: 10)),
-        ),
+        event('Planning', 'Weekly roadmap', day.add(const Duration(hours: 10))),
       ],
       'annual cleaning',
     );
 
     expect(matches.map((event) => event['title']), ['Dentist']);
+  });
+
+  test('calendarEventReminderMinutes normalizes allowed reminder metadata', () {
+    expect(calendarEventReminderMinutes({'reminder_min': 15}), 15);
+    expect(calendarEventReminderMinutes({'reminder_min': '30'}), 30);
+    expect(calendarEventReminderMinutes({'reminder_min': 7}), isNull);
+    expect(calendarEventReminderMinutes({'reminder_min': null}), isNull);
   });
 
   Widget testWidget() {
@@ -237,6 +241,7 @@ void main() {
           'end_at': endAt.toIso8601String(),
           'all_day': false,
           'color': '#ea4335',
+          'reminder_min': null,
         },
       ),
     ).thenAnswer((_) async => mockResponse({'success': true}));
@@ -276,6 +281,7 @@ void main() {
           'end_at': endAt.toIso8601String(),
           'all_day': false,
           'color': '#ea4335',
+          'reminder_min': null,
         },
       ),
     ).called(1);
