@@ -117,6 +117,15 @@ async function updateItem(
   return data;
 }
 
+const CALENDAR_REMINDER_MINUTES = new Set([0, 5, 10, 15, 30, 60]);
+
+function normalizeCalendarReminderMinutes(value: unknown): number | null {
+  if (value === null || value === undefined || value === "") return null;
+  const minutes = typeof value === "number" ? value : Number(value);
+  if (!Number.isInteger(minutes)) return null;
+  return CALENDAR_REMINDER_MINUTES.has(minutes) ? minutes : null;
+}
+
 serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -263,6 +272,7 @@ serve(async (req: Request) => {
           description: body.description ?? "",
           all_day: body.all_day ?? false,
           color: body.color ?? "#4285f4",
+          reminder_min: normalizeCalendarReminderMinutes(body.reminder_min),
         });
         const meta = (item.metadata ?? {}) as Record<string, unknown>;
         return json({
@@ -285,6 +295,11 @@ serve(async (req: Request) => {
           patch.all_day = body.all_day ?? false;
         }
         if (Object.hasOwn(body, "color")) patch.color = body.color ?? "#4285f4";
+        if (Object.hasOwn(body, "reminder_min")) {
+          patch.reminder_min = normalizeCalendarReminderMinutes(
+            body.reminder_min,
+          );
+        }
         const item = await updateItem(
           admin,
           "calendar_event",

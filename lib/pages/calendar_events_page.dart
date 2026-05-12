@@ -1,17 +1,28 @@
+import 'dart:async';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:table_calendar/table_calendar.dart';
+
+import 'package:my_web_app/services/notification_service.dart';
 
 /// カレンダーイベントページ
 /// calendar-events Edge Function と連携してイベントを管理
 /// table_calendar による月次ビュー + 日付別イベントリスト
 class CalendarEventsPage extends StatefulWidget {
-  const CalendarEventsPage({super.key, SupabaseClient? supabaseClient})
-      : _supabaseClient = supabaseClient;
+  const CalendarEventsPage({
+    super.key,
+    SupabaseClient? supabaseClient,
+    NotificationService? notificationService,
+  })  : _supabaseClient = supabaseClient,
+        _notificationService = notificationService;
 
   final SupabaseClient? _supabaseClient;
+  final NotificationService? _notificationService;
 
   @override
   State<CalendarEventsPage> createState() => _CalendarEventsPageState();
@@ -68,6 +79,30 @@ String _eventColorHex(Map<String, dynamic> event) {
   final normalized = raw.startsWith('#') ? raw : '#$raw';
   final lower = normalized.toLowerCase();
   return RegExp(r'^#[0-9a-f]{6}$').hasMatch(lower) ? lower : '#4285f4';
+}
+
+const List<int> _calendarReminderOptions = [-1, 0, 5, 10, 15, 30, 60];
+
+@visibleForTesting
+int? normalizeCalendarReminderMinutes(Object? value) {
+  if (value == null) return null;
+  final minutes = value is int ? value : int.tryParse(value.toString());
+  if (minutes == null) return null;
+  return _calendarReminderOptions.contains(minutes) && minutes >= 0
+      ? minutes
+      : null;
+}
+
+@visibleForTesting
+int? calendarEventReminderMinutes(Map<String, dynamic> event) {
+  return normalizeCalendarReminderMinutes(event['reminder_min']);
+}
+
+String _calendarReminderLabel(int? minutes) {
+  if (minutes == null || minutes < 0) return 'No reminder';
+  if (minutes == 0) return 'At start time';
+  if (minutes == 60) return '1 hour before';
+  return '$minutes minutes before';
 }
 
 @visibleForTesting
@@ -145,6 +180,7 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
 
   // キー: 'YYYY-MM-DD', 値: イベントリスト
   final Map<String, List<Map<String, dynamic>>> _eventsByDate = {};
+  final Map<String, Timer> _reminderTimers = {};
 
   DateTime _focusedDay = DateTime.now();
   DateTime _selectedDay = DateTime.now();
@@ -173,10 +209,100 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
     return Color(int.parse('FF$hex', radix: 16));
   }
 
+  NotificationService? _readNotificationService() {
+    if (widget._notificationService != null) {
+      return widget._notificationService;
+    }
+    try {
+      return context.read<NotificationService>();
+    } catch (_) {
+      return null;
+    }
+  }
+
+  void _rescheduleLoadedReminders() {
+    for (final timer in _reminderTimers.values) {
+      timer.cancel();
+    }
+    _reminderTimers.clear();
+    for (final event in _allEvents) {
+      _scheduleInAppReminderTimer(event);
+    }
+  }
+
+  void _scheduleInAppReminderTimer(Map<String, dynamic> event) {
+    final eventId = event['event_id']?.toString() ?? '';
+    if (eventId.isEmpty) return;
+    _reminderTimers.remove(eventId)?.cancel();
+
+    final reminderMinutes = calendarEventReminderMinutes(event);
+    final start = _eventDateTime(event, 'start_at');
+    if (reminderMinutes == null || start == null) return;
+
+    final dueAt = start.subtract(Duration(minutes: reminderMinutes));
+    final delay = dueAt.difference(DateTime.now());
+    if (delay <= Duration.zero) return;
+
+    _reminderTimers[eventId] = Timer(delay, () {
+      _reminderTimers.remove(eventId);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            '${_eventTitle(event)} - ${_calendarReminderLabel(reminderMinutes)}',
+          ),
+        ),
+      );
+    });
+  }
+
+  void _cancelInAppReminderTimer(String eventId) {
+    _reminderTimers.remove(eventId)?.cancel();
+  }
+
+  Future<void> _syncDeviceReminder({
+    required String eventId,
+    required String title,
+    required DateTime startAt,
+    required int? reminderMinutes,
+    bool cancelWhenNone = false,
+  }) async {
+    if (eventId.isEmpty || kIsWeb) return;
+    final notificationService = _readNotificationService();
+    if (notificationService == null) return;
+    try {
+      if (reminderMinutes == null) {
+        if (cancelWhenNone) {
+          await notificationService.cancelCalendarEventReminder(
+            eventId: eventId,
+          );
+        }
+        return;
+      }
+      await notificationService.scheduleCalendarEventReminder(
+        eventId: eventId,
+        title: title,
+        startAt: startAt,
+        reminderMinutes: reminderMinutes,
+      );
+    } catch (e) {
+      debugPrint('Calendar reminder sync failed: $e');
+    }
+  }
+
   @override
   void initState() {
     super.initState();
     _fetchMonth(_focusedDay);
+  }
+
+  @override
+  void dispose() {
+    for (final timer in _reminderTimers.values) {
+      timer.cancel();
+    }
+    _reminderTimers.clear();
+    super.dispose();
   }
 
   Future<void> _fetchMonth(DateTime month) async {
@@ -216,6 +342,7 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
             ..clear()
             ..addAll(newMap);
         });
+        _rescheduleLoadedReminders();
       }
     } catch (e) {
       if (mounted) setState(() => _errorMessage = 'イベントの取得に失敗しました: $e');
@@ -231,11 +358,12 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
     String description = '',
     bool allDay = false,
     String color = '#4285f4',
+    int? reminderMinutes,
   }) async {
     try {
       final end =
           allDay ? startAt : (endAt ?? startAt.add(const Duration(hours: 1)));
-      await _supabase.functions.invoke(
+      final res = await _supabase.functions.invoke(
         'app-hub',
         body: {
           'action': 'calendar.create',
@@ -245,8 +373,29 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
           'end_at': end.toIso8601String(),
           'all_day': allDay,
           'color': color,
+          'reminder_min': reminderMinutes,
         },
       );
+      final data = res.data;
+      final savedEvent = data is Map ? data['event'] : null;
+      final eventId =
+          savedEvent is Map ? savedEvent['event_id']?.toString() ?? '' : '';
+      if (eventId.isNotEmpty && reminderMinutes != null) {
+        _scheduleInAppReminderTimer({
+          'event_id': eventId,
+          'title': title,
+          'start_at': startAt.toIso8601String(),
+          'end_at': end.toIso8601String(),
+          'all_day': allDay,
+          'reminder_min': reminderMinutes,
+        });
+        await _syncDeviceReminder(
+          eventId: eventId,
+          title: title,
+          startAt: startAt,
+          reminderMinutes: reminderMinutes,
+        );
+      }
       await _fetchMonth(_focusedDay);
     } catch (e) {
       if (mounted) {
@@ -263,6 +412,8 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
     String description = '',
     bool allDay = false,
     String color = '#4285f4',
+    int? reminderMinutes,
+    bool cancelReminderWhenNone = false,
   }) async {
     if (eventId.isEmpty) {
       setState(() => _errorMessage = 'Event id is missing.');
@@ -282,7 +433,29 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
           'end_at': end.toIso8601String(),
           'all_day': allDay,
           'color': color,
+          'reminder_min': reminderMinutes,
         },
+      );
+      if (reminderMinutes == null) {
+        if (cancelReminderWhenNone) {
+          _cancelInAppReminderTimer(eventId);
+        }
+      } else {
+        _scheduleInAppReminderTimer({
+          'event_id': eventId,
+          'title': title,
+          'start_at': startAt.toIso8601String(),
+          'end_at': end.toIso8601String(),
+          'all_day': allDay,
+          'reminder_min': reminderMinutes,
+        });
+      }
+      await _syncDeviceReminder(
+        eventId: eventId,
+        title: title,
+        startAt: startAt,
+        reminderMinutes: reminderMinutes,
+        cancelWhenNone: cancelReminderWhenNone,
       );
       await _fetchMonth(_focusedDay);
     } catch (e) {
@@ -297,6 +470,14 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
       await _supabase.functions.invoke(
         'app-hub',
         body: {'action': 'calendar.delete', 'id': eventId},
+      );
+      _cancelInAppReminderTimer(eventId);
+      await _syncDeviceReminder(
+        eventId: eventId,
+        title: '',
+        startAt: DateTime.now(),
+        reminderMinutes: null,
+        cancelWhenNone: true,
       );
       await _fetchMonth(_focusedDay);
     } catch (e) {
@@ -803,6 +984,7 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
     if (!colors.contains(selectedColor)) {
       selectedColor = colors.first;
     }
+    var selectedReminder = calendarEventReminderMinutes(event ?? {}) ?? -1;
 
     String fmtTime(TimeOfDay t) =>
         '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
@@ -917,6 +1099,29 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
                     ],
                   ),
                 ],
+                const SizedBox(height: 12),
+                DropdownButtonFormField<int>(
+                  key: const Key('calendar_reminder_dropdown'),
+                  initialValue: selectedReminder,
+                  decoration: const InputDecoration(
+                    labelText: 'Reminder',
+                    border: OutlineInputBorder(),
+                    prefixIcon: Icon(Icons.notifications_none),
+                  ),
+                  items: [
+                    for (final minutes in _calendarReminderOptions)
+                      DropdownMenuItem<int>(
+                        value: minutes,
+                        child: Text(
+                          _calendarReminderLabel(minutes < 0 ? null : minutes),
+                        ),
+                      ),
+                  ],
+                  onChanged: (value) {
+                    if (value == null) return;
+                    setDialogState(() => selectedReminder = value);
+                  },
+                ),
                 const SizedBox(height: 8),
                 const Text('カラー:', style: TextStyle(fontSize: 13, height: 1.5)),
                 const SizedBox(height: 6),
@@ -982,6 +1187,8 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
                         endTime.hour,
                         endTime.minute,
                       );
+                final reminderMinutes =
+                    selectedReminder < 0 ? null : selectedReminder;
                 if (isEditing) {
                   _updateEvent(
                     eventId: eventId,
@@ -991,6 +1198,9 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
                     description: descCtrl.text.trim(),
                     allDay: allDay,
                     color: selectedColor,
+                    reminderMinutes: reminderMinutes,
+                    cancelReminderWhenNone:
+                        calendarEventReminderMinutes(event) != null,
                   );
                 } else {
                   _createEvent(
@@ -1000,6 +1210,7 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
                     description: descCtrl.text.trim(),
                     allDay: allDay,
                     color: selectedColor,
+                    reminderMinutes: reminderMinutes,
                   );
                 }
               },

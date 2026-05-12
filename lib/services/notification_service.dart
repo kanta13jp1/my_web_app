@@ -8,6 +8,7 @@ class NotificationService {
   static const int saturdayReminderId = 0;
   static const int abstinenceReminderId = 1001;
   static const int abstinenceRecoveryReminderId = 1002;
+  static const int _calendarReminderBaseId = 200000;
   Future<void>? _initFuture;
   bool _initialized = false;
 
@@ -62,8 +63,9 @@ class NotificationService {
       priority: Priority.high,
       showWhen: false,
     );
-    const NotificationDetails platformChannelSpecifics =
-        NotificationDetails(android: androidPlatformChannelSpecifics);
+    const NotificationDetails platformChannelSpecifics = NotificationDetails(
+      android: androidPlatformChannelSpecifics,
+    );
 
     await flutterLocalNotificationsPlugin.zonedSchedule(
       id: saturdayReminderId,
@@ -97,8 +99,9 @@ class NotificationService {
       priority: Priority.high,
       showWhen: false,
     );
-    const NotificationDetails platformChannelSpecifics =
-        NotificationDetails(android: androidPlatformChannelSpecifics);
+    const NotificationDetails platformChannelSpecifics = NotificationDetails(
+      android: androidPlatformChannelSpecifics,
+    );
 
     await flutterLocalNotificationsPlugin.zonedSchedule(
       id: id,
@@ -131,8 +134,9 @@ class NotificationService {
       priority: Priority.high,
       showWhen: false,
     );
-    const NotificationDetails platformChannelSpecifics =
-        NotificationDetails(android: androidPlatformChannelSpecifics);
+    const NotificationDetails platformChannelSpecifics = NotificationDetails(
+      android: androidPlatformChannelSpecifics,
+    );
 
     final now = tz.TZDateTime.now(tz.local);
     final scheduledDate = dueAt == null
@@ -162,10 +166,82 @@ class NotificationService {
     await flutterLocalNotificationsPlugin.cancel(id: id);
   }
 
+  Future<void> scheduleCalendarEventReminder({
+    required String eventId,
+    required String title,
+    required DateTime startAt,
+    required int reminderMinutes,
+  }) async {
+    final normalizedId = eventId.trim();
+    if (normalizedId.isEmpty) return;
+
+    await init();
+    final notificationId = calendarReminderIdForEvent(normalizedId);
+    await flutterLocalNotificationsPlugin.cancel(id: notificationId);
+
+    final now = tz.TZDateTime.now(tz.local);
+    final scheduledDate = tz.TZDateTime.from(
+      startAt.subtract(Duration(minutes: reminderMinutes)),
+      tz.local,
+    );
+    if (!scheduledDate.isAfter(now)) return;
+
+    const androidPlatformChannelSpecifics = AndroidNotificationDetails(
+      'calendar_event_reminder_channel',
+      'Calendar Event Reminders',
+      channelDescription: 'Reminders before scheduled calendar events.',
+      importance: Importance.max,
+      priority: Priority.high,
+      showWhen: true,
+    );
+    const iosPlatformChannelSpecifics = DarwinNotificationDetails(
+      presentAlert: true,
+      presentBadge: true,
+      presentSound: true,
+    );
+    const platformChannelSpecifics = NotificationDetails(
+      android: androidPlatformChannelSpecifics,
+      iOS: iosPlatformChannelSpecifics,
+    );
+
+    await flutterLocalNotificationsPlugin.zonedSchedule(
+      id: notificationId,
+      title: 'Calendar reminder',
+      body: reminderMinutes == 0
+          ? '$title starts now'
+          : '$title starts in $reminderMinutes minutes',
+      scheduledDate: scheduledDate,
+      notificationDetails: platformChannelSpecifics,
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+    );
+  }
+
+  Future<void> cancelCalendarEventReminder({required String eventId}) async {
+    final normalizedId = eventId.trim();
+    if (normalizedId.isEmpty) return;
+    await init();
+    await flutterLocalNotificationsPlugin.cancel(
+      id: calendarReminderIdForEvent(normalizedId),
+    );
+  }
+
+  static int calendarReminderIdForEvent(String eventId) {
+    var hash = 0;
+    for (final unit in eventId.codeUnits) {
+      hash = ((hash * 31) + unit) & 0x3fffffff;
+    }
+    return _calendarReminderBaseId + (hash % 800000000);
+  }
+
   tz.TZDateTime _nextInstanceOfSaturdayTenAM() {
     final tz.TZDateTime now = tz.TZDateTime.now(tz.local);
-    tz.TZDateTime scheduledDate =
-        tz.TZDateTime(tz.local, now.year, now.month, now.day, 10);
+    tz.TZDateTime scheduledDate = tz.TZDateTime(
+      tz.local,
+      now.year,
+      now.month,
+      now.day,
+      10,
+    );
 
     // If today is Saturday and it's already past 10 AM, schedule for next week
     if (scheduledDate.weekday == DateTime.saturday &&
