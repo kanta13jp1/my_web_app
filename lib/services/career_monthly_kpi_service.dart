@@ -98,8 +98,7 @@ class CareerMonthlyKpiService {
               item.targetValue > 0 && item.actualValue >= item.targetValue,
         )
         .length;
-    final progress =
-        monthlyItems
+    final progress = monthlyItems
             .map((item) => item.cappedProgress)
             .fold<double>(0, (sum, value) => sum + value) /
         monthlyItems.length;
