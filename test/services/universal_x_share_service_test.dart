@@ -73,6 +73,38 @@ void main() {
     expect(capturedBody?['mediaUrl'], 'https://example.com/share.png');
   });
 
+  test('postToX surfaces X developer project guidance', () async {
+    final service = UniversalXShareService(
+      functionInvoker: (functionName, body) async {
+        return {
+          'success': false,
+          'posted': false,
+          'error': 'X API app is not enrolled for v2 posting.',
+          'code': 'x_client_not_enrolled',
+          'actionRequired': 'Attach the App to an X Developer Project.',
+          'registrationUrl': 'https://developer.x.com/en/portal/projects',
+        };
+      },
+    );
+
+    expect(
+      () => service.postToX(context: page, text: '繝・せ繝域兜遞ｿ\n${page.url}'),
+      throwsA(
+        isA<Exception>()
+            .having(
+              (error) => error.toString(),
+              'message',
+              contains('Attach the App to an X Developer Project.'),
+            )
+            .having(
+              (error) => error.toString(),
+              'registration url',
+              contains('https://developer.x.com/en/portal/projects'),
+            ),
+      ),
+    );
+  });
+
   test('postToX omits embedded data URL media', () async {
     Map<String, dynamic>? capturedBody;
     final service = UniversalXShareService(

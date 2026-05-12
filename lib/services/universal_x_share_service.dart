@@ -242,7 +242,7 @@ class UniversalXShareService {
       'route': context.routePath,
     });
     if (data['success'] != true) {
-      throw Exception(data['error']?.toString() ?? 'X post failed');
+      throw Exception(buildXPostFailureMessage(data));
     }
     return UniversalXPostResult(
       posted: data['posted'] == true,
@@ -250,6 +250,19 @@ class UniversalXShareService {
       tweetId: data['tweetId']?.toString() ?? data['tweet_id']?.toString(),
       raw: data,
     );
+  }
+
+  static String buildXPostFailureMessage(Map<String, dynamic> data) {
+    final error = data['error']?.toString().trim();
+    final actionRequired = data['actionRequired']?.toString().trim();
+    final registrationUrl = data['registrationUrl']?.toString().trim();
+    final parts = <String>[
+      if (error != null && error.isNotEmpty) error else 'X post failed',
+      if (actionRequired != null && actionRequired.isNotEmpty) actionRequired,
+      if (registrationUrl != null && registrationUrl.isNotEmpty)
+        'Developer Portal: $registrationUrl',
+    ];
+    return parts.join('\n');
   }
 
   static UniversalXShareDraft buildFallbackDraft(
