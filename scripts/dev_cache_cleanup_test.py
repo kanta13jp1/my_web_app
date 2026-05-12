@@ -8,6 +8,7 @@ import os
 import tempfile
 import time
 import unittest
+from unittest import mock
 from pathlib import Path
 
 import dev_cache_cleanup as cleanup
@@ -101,6 +102,44 @@ class DevCacheCleanupTest(unittest.TestCase):
         ]
 
         self.assertEqual(cleanup.metric_values(actions), {"tier_1_8_npm_MB": 4.0})
+
+    def test_resolve_command_prefers_windows_cmd_shim(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            bin_dir = Path(tmp)
+            extensionless = bin_dir / "npm"
+            extensionless.write_text("#!/bin/sh\n", encoding="utf-8")
+            cmd = bin_dir / "npm.cmd"
+            cmd.write_text("@echo off\r\n", encoding="utf-8")
+
+            with mock.patch.object(cleanup.os, "name", "nt"), mock.patch.dict(
+                cleanup.os.environ,
+                {"PATH": str(bin_dir), "PATHEXT": ".COM;.EXE;.BAT;.CMD"},
+            ):
+                resolved = cleanup.resolve_command("npm")
+
+        self.assertIsNotNone(resolved)
+        self.assertTrue(str(resolved).lower().endswith("npm.cmd"))
+
+    def test_command_action_records_resolved_windows_command(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            bin_dir = Path(tmp) / "bin"
+            bin_dir.mkdir()
+            cmd = bin_dir / "pnpm.cmd"
+            cmd.write_text("@echo off\r\n", encoding="utf-8")
+
+            with mock.patch.object(cleanup.os, "name", "nt"), mock.patch.dict(
+                cleanup.os.environ,
+                {"PATH": str(bin_dir), "PATHEXT": ".COM;.EXE;.BAT;.CMD"},
+            ):
+                action = cleanup.command_action(
+                    name="pnpm store prune",
+                    target="pnpm store",
+                    command=["pnpm", "store", "prune"],
+                    cwd=Path(tmp),
+                    apply=False,
+                )
+
+        self.assertTrue(action.command[0].lower().endswith("pnpm.cmd"))
 
 
 if __name__ == "__main__":

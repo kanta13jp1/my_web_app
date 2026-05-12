@@ -187,8 +187,48 @@ def tail_text(text: str, limit: int = 500) -> str:
     return text[-limit:]
 
 
+WINDOWS_EXECUTABLE_SUFFIXES = (".exe", ".cmd", ".bat", ".com")
+
+
+def resolve_command(name: str) -> str | None:
+    has_path_part = os.path.sep in name or (os.path.altsep and os.path.altsep in name)
+    if has_path_part:
+        path = Path(name)
+        return str(path) if path.exists() else shutil.which(name)
+
+    if os.name == "nt":
+        suffix = Path(name).suffix.lower()
+        if suffix:
+            return shutil.which(name)
+
+        for extension in WINDOWS_EXECUTABLE_SUFFIXES:
+            resolved = shutil.which(name + extension)
+            if resolved:
+                return resolved
+
+        resolved = shutil.which(name)
+        if resolved:
+            resolved_path = Path(resolved)
+            if not resolved_path.suffix:
+                for extension in WINDOWS_EXECUTABLE_SUFFIXES:
+                    sibling = resolved_path.with_name(resolved_path.name + extension)
+                    if sibling.exists():
+                        return str(sibling)
+            return resolved
+        return None
+
+    return shutil.which(name)
+
+
+def resolve_command_args(command: list[str]) -> list[str]:
+    if not command:
+        return command
+    resolved = resolve_command(command[0])
+    return [resolved, *command[1:]] if resolved else command
+
+
 def command_available(name: str) -> bool:
-    return shutil.which(name) is not None
+    return resolve_command(name) is not None
 
 
 def command_action(
@@ -203,6 +243,7 @@ def command_action(
     metric_key: str = "",
 ) -> CleanupAction:
     before = sum_existing_paths(before_paths or [])
+    resolved_command = resolve_command_args(command)
     if not apply:
         return CleanupAction(
             name=name,
@@ -211,11 +252,11 @@ def command_action(
             status="planned",
             reason="dry-run; pass --apply to execute",
             metric_key=metric_key,
-            command=command,
+            command=resolved_command,
             before_mb=before,
         )
 
-    result = run_command(command, cwd=cwd, timeout=timeout)
+    result = run_command(resolved_command, cwd=cwd, timeout=timeout)
     after = sum_existing_paths(before_paths or [])
     status = "success" if result.code == 0 else "failed"
     reason = "command completed" if result.code == 0 else "command failed"
@@ -226,7 +267,7 @@ def command_action(
         status=status,
         reason=reason,
         metric_key=metric_key,
-        command=command,
+        command=resolved_command,
         before_mb=before,
         after_mb=after,
         reclaimed_mb=max(0.0, round(before - after, 1)),
@@ -299,7 +340,7 @@ def collect_flutter_actions(args: argparse.Namespace, root: Path) -> list[Cleanu
 def npm_cache_paths(root: Path) -> list[Path]:
     if not command_available("npm"):
         return []
-    result = run_command(["npm", "config", "get", "cache"], cwd=root, timeout=30)
+    result = run_command(resolve_command_args(["npm", "config", "get", "cache"]), cwd=root, timeout=30)
     if result.code != 0 or not result.stdout.strip():
         return []
     return [Path(result.stdout.strip()).expanduser().resolve(strict=False)]
@@ -308,7 +349,7 @@ def npm_cache_paths(root: Path) -> list[Path]:
 def pnpm_store_paths(root: Path) -> list[Path]:
     if not command_available("pnpm"):
         return []
-    result = run_command(["pnpm", "store", "path"], cwd=root, timeout=30)
+    result = run_command(resolve_command_args(["pnpm", "store", "path"]), cwd=root, timeout=30)
     if result.code != 0 or not result.stdout.strip():
         return []
     return [Path(result.stdout.strip()).expanduser().resolve(strict=False)]
