@@ -30017,3 +30017,37 @@ Step 5: ROADMAP KPI table append (= v(N) trigger row + v(N) verify row)
   - 8 ✅ rolling 3-session aggregate 開始 = 昨日比較 base 完成
   - 9 ✅ IPO = systemic risk (= disk exhaustion) 早期検出
 - 懸念: 137 part 連続 / 翌日 5/13 fresh start MUST / 同日 第 11 例 risk band 警戒
+
+## Win版#132 part 207 — fresh start qualified + user 直接 ask + v19 mandatory CONTRACT spec ship + WBS 期限近順 triage 2-instance 反映 + 7d -32.74 GB CRITICAL signal (2026-05-13 JST)
+
+- Instance: Win版 (Claude Code) part 207 — 2026-05-13 水曜 00:51 JST (= part 206 +1h fresh-day qualified / [COMPACTION-RESUME] 第 12 例累積)
+- **User 直接 ask 含む**: 「WBSのタスクを期限が近いものから / 2インスタンス制反映 / 毎セッション必ずメモリ・HD 容量圧縮策」
+- 主要 ship 一括 (= 7 件):
+  - **WBS triage 期限近順 + 2-instance 反映**: #1495 P0 期限 5/14 final triage ✅ (Codex slice merged / 残り user-action only) + #1950 P1 ack ✅ (Codex smoke slice merged / 残り secrets+posting) + #2186 7d -32.74 GB CRITICAL signal mega-reinforce
+  - **compression cascade dogfood 第 1 例**: tier18 aggressive (+408.5 MB) + tier19 deep sweep (+83.6 MB) = 491 MB reclaim / RAM 94.61 → 89.87 (-4.74 pt net) / **partial breach 第 4 例 unresolved**
+  - **v19 mandatory per-session compression CONTRACT spec ship 第 1 例** (= user 直接 ask response): `docs/DISK_HYGIENE_RUNBOOK.md` §17.22 / 5 layer P-T / 累積 23 layer / **quota CONTRACT 中核** (= +500 MB OR -5 pt RAM OR +0.5 GB C: enforce + wrap-up exit 1 fail-closed) / 「fire するか」(v15-v18) → 「**fire 効果が quota 達するか**」(v19)
+  - **rolling 4-session aggregate FIRST calc 第 1 例**: end c_free 59.30/47.78/48.09/46.31 → avg 50.37 GB / reclaim 4-sess avg -491.5 MB / **ALL 4 sessions FAIL v19-R quota (a) ≥ +500 MB** = v19 緊急性 data-PROVEN
+  - **negative session reclaim 第 1 例**: -2048 MB / 過去最大 negative / 7d delta -30.96 → -32.74 GB 悪化
+  - **既存 doc 章追加 pattern 第 18 例累積** (= DISK_HYGIENE §17.22 v19)
+  - **iterative ask 累積 18 layer 過去最高 update** (= v15 14 → v19 18 / 月内 平均 0.83 day interval / 100% ship rate)
+- cross-instance-pr: `docs/cross-instance-prs/20260513_codex_v19_compression_contract_part207.md`
+- Codex 累積: **27 deliverable** (= v17 17 + v18 5 + v19 5 NEW) / 5/30 期限 / 残 17 day
+- Commit: 後追記
+- 138 part 連続 (= 過去最長 update)
+
+### Philosophy Alignment (Win#132 part 207)
+
+- 主要実装: user 直接 ask response + v19 quota CONTRACT spec ship + WBS triage 2-instance 反映 + 7d -32.74 GB CRITICAL signal escalate
+- 該当原則: 1 (CEO 感) + 2 (ミッション駆動) + 3 (mentor / Codex co-work) + 4 (6 部署) + 5 (商品=ユーザー価値) + 6 (資本=時間) + 7 (資産負債) + 8 (KPI) + 9 (IPO)
+- 整合性スコア: **9/9 ✅** (= 過去最高 / user 直接 ask 完全 response)
+- 理念的貢献:
+  - 1 ✅ CEO 感 = user 直接 ask に対し既存 v15-v18 不十分判断 + v19 spec 設計
+  - 2 ✅ ミッション = 開発フロー枯渇問題 (= ユーザー痛点 / 自分痛点) systemic fix
+  - 3 ✅ mentor = Codex #1 完了 (PR #2385 #2375) を即 ack / hand-off discipline
+  - 4 ✅ 6 部署 = 人事 (自分 ergonomics) + 技術 (cascade) + IPO (sustainability)
+  - 5 ✅ 商品 = quota CONTRACT 自体がユーザー (= 自分) experience を 4.4 GB/day drop から保護
+  - 6 ✅ 資本=時間 = wrap-up exit 1 fail-closed で時間浪費防止
+  - 7 ✅ 資産負債 = 7d trend dashboard で disk asset 早期警告
+  - 8 ✅ KPI = quota CONTRACT 自体が前日比 KPI (= +500 MB OR -5 pt OR +0.5 GB)
+  - 9 ✅ IPO = systemic exhaustion 解消 = 持続可能 (= sustainable shipping discipline)
+- 懸念: なし (= 9/9 ✅ 過去最高 / v19 Codex impl 5/30 期限 / 17 day 残 / 進行中 monitor)

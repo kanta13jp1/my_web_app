@@ -1789,3 +1789,62 @@ part 204 (= 2026-05-12 12:15 JST) v15 Layer 1 manual fire 第 3 例累積:
 - `scripts/cross_session_ram_dashboard.py` (= Layer O)
 
 > **v18 status**: part 204-b iterative ask v17 layer ship / `docs/cross-instance-prs/20260512_codex_wbs_top5_v18_disk_hygiene_cascade_part204b.md` Part B spec / 累積 18 layer / Codex 17+5=22 件 5/30 期限.
+
+### §17.22 v19 mandatory per-session compression CONTRACT (= part 207 / user 直接 ask 2026-05-13 水曜)
+
+#### 17.22.1 user 直接 ask (= unique trigger / 既存 v15-v18 spec ship のみでは不十分判断)
+
+> 「今の開発フローだと、ローカル環境のメモリやハードディスク容量が必ず枯渇します。
+> 毎回のセッションで必ずメモリやハードディスク容量を圧縮する施策を検討してください。」
+
+**判断**: v15-v18 18 layer 既 ship + manual 4 fire 累積 ~2349 MB 解放 BUT C: は依然 4.4 GB/day 平均 drop. v15 always-fire + v16 proactive enforcement + v17 mandatory compression + v18 cascade のいずれも **enforcement 強度不足** (= dogfood レベル / Codex impl 未着手 22 件).
+
+**v19 = CONTRACT layer** = **「セッション当たり最小解放 quota 強制」** + **「fail-closed wrap-up gate 強化」**.
+
+#### 17.22.2 v19 spec (= 5 layer P-T / 累積 23 layer)
+
+| Layer | Phase | Trigger | Fail-closed | Observability |
+|-------|-------|---------|-------------|---------------|
+| **v19-P** | **SessionStart MUST** | **PRE metric capture + cascade fire** | ✅ exit 1 if RAM>90 | **session-delta.csv start row 強制** |
+| **v19-Q** | **mid-session 30min wall-clock** | **Auto cascade fire if RAM>85** | ✅ block tool call 1 turn | **mid-fire.log** |
+| **v19-R** | **wrap-up CONTRACT gate** | **session quota check (= +500 MB OR -5 pt RAM)** | ✅ wrap-up exit 1 if quota miss | **contract.log** |
+| **v19-S** | **MEMORY.md auto-rotation** | **20 KB threshold / archive split** | ✅ block memory write if size > 30 KB | **rotation.log** |
+| **v19-T** | **worktree max=5 enforcement** | **新 worktree 作成時 stale prune force** | ✅ block worktree create if active > 5 | **worktree-prune.log** |
+
+#### 17.22.3 quota contract (= v19-R 中核)
+
+Per-session minimum:
+- **MUST**: 1 件以上満たす (= OR condition)
+  - (a) reclaim_mb_session ≥ +500 MB (= session-delta.csv reclaim_mb_session 列)
+  - (b) RAM delta ≤ -5.0 pt (= PRE - POST RAM_pct)
+  - (c) C: free delta ≥ +0.5 GB (= cascade success)
+- **MAX**: wrap-up時 quota miss = exit 1 + warning_<date>.md + 翌セッション PRE 強制 cascade fire
+
+#### 17.22.4 session_kpi.py 拡張 (= v15 5 + v16 3 + v17 5 + v18 5 + v19 5 = 23 metric)
+
+- **v19 5 metric NEW**:
+  - `pre_metric_captured` (bool / Layer P)
+  - `mid_session_fired_count` (int / Layer Q)
+  - `quota_contract_met` (bool / Layer R / 必須 wrap-up gate)
+  - `memory_rotation_count` (int / Layer S / 累積 split 回数)
+  - `worktree_active_count` (int / Layer T / 現在 active 数)
+
+#### 17.22.5 Codex impl 待ち (= 5/30 期限 / 5 deliverable NEW / 累積 27)
+
+- `.claude/hooks/session_start_pre_metric.ps1` + `.claude/settings.json` SessionStart hook 登録 (= Layer P)
+- `scripts/mid_session_auto_fire.ps1` + Win Task Scheduler PT30M (= Layer Q)
+- `scripts/wrap_up_contract_gate.py` + `.claude/hooks/session_end_contract.ps1` (= Layer R / 中核)
+- `scripts/memory_md_auto_rotate.py` + Win Task Scheduler daily 03:00 (= Layer S)
+- `scripts/worktree_max_enforce.py` (= Layer T / 既存 worktree_cleanup.py 拡張)
+
+#### 17.22.6 Why v19 differs from v15-v18
+
+- **v15** (= guaranteed compression / always-fire): trigger 強制 but 効果検証なし
+- **v16** (= proactive enforcement / Win Task Scheduler nightly): nightly のみ / per-session 強制 0
+- **v17** (= mandatory per-session compression): SessionStart KPI log mandatory but reclaim quota なし
+- **v18** (= disk hygiene cascade): cascade fire but quota miss 検出なし
+- **v19** = quota CONTRACT (= +500 MB OR -5 pt OR +0.5 GB の **数値 enforce**) + wrap-up **exit 1** fail-closed
+
+**核心**: v18 までは「fire するか」 / v19 は「**fire 効果が quota 達するか**」.
+
+> **v19 status**: part 207 user 直接 ask ship / iterative ask 累積 18 layer 第 1 例 (= v15 14 → v18 17 → v19 18) / 月内 15 day window / 100% ship rate / Codex 22+5=27 件 5/30 期限.
