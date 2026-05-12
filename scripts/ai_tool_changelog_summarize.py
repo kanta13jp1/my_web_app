@@ -225,7 +225,7 @@ def main() -> int:
     if claude_items:
         text_chunks.append(
             "Claude Code titles: "
-            + ", ".join(i.get("title", "") for i in claude_items)
+            + ", ".join(i.get("name") or i.get("title", "") for i in claude_items)
         )
     if codex_items:
         text_chunks.append(

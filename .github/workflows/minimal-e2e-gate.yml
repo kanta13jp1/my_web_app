@@ -52,6 +52,11 @@ jobs:
             "${{ github.event.pull_request.head.sha }}" \
             > .ci-logs/changed-files.txt
 
+      - name: Check hook bypass markers
+        run: >
+          python scripts/check_no_verify_bypass.py
+          --range "${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }}"
+
       - name: Check minimal E2E PR contract
         run: >
           python scripts/check_minimal_e2e_gate.py
@@ -88,11 +93,32 @@ jobs:
         env:
           E2E_BASE_URL: ${{ github.event.inputs.base_url || 'https://my-web-app-b67f4.web.app' }}
           REPEAT_EACH: ${{ github.event.inputs.repeat_each || '3' }}
+          PLAYWRIGHT_JSON_OUTPUT_NAME: playwright-report/public-smoke-results.json
+
+      - name: Run desktop and mobile visual evidence tests
+        run: >
+          npm run e2e:visual --
+          --project=chromium
+          --project=mobile-chrome
+          --workers=1
+        env:
+          E2E_BASE_URL: ${{ github.event.inputs.base_url || 'https://my-web-app-b67f4.web.app' }}
+          PLAYWRIGHT_JSON_OUTPUT_NAME: playwright-report/visual-evidence-results.json
+
+      - name: Summarize Playwright evidence
+        if: always()
+        run: |
+          node scripts/summarize_playwright_results.mjs \
+            playwright-report/public-smoke-results.json \
+            playwright-report/visual-evidence-results.json \
+            --out playwright-report/issue-summary.md
 
       - name: Upload Playwright report
         if: always()
         uses: actions/upload-artifact@v7
         with:
           name: minimal-e2e-playwright-report
-          path: playwright-report/
+          path: |
+            playwright-report/
+            test-results/
           if-no-files-found: ignore

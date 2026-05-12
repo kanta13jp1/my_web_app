@@ -66,15 +66,41 @@ dev_dependencies:
   test: ^1.25.8
   mockito: ^5.6.1
   build_runner: ^2.10.4
+  flutter_launcher_icons: ^0.14.1
+  flutter_native_splash: ^2.4.1
 
   supabase: any
   image_picker_platform_interface: any
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/icons/app_icon.png"
+  min_sdk_android: 21
+  adaptive_icon_background: "#0A0A0A"
+  adaptive_icon_foreground: "assets/icons/app_icon_foreground.png"
+  remove_alpha_ios: true
+  web:
+    generate: false
+
+flutter_native_splash:
+  color: "#0A0A0A"
+  image: "assets/icons/app_icon.png"
+  color_dark: "#0A0A0A"
+  image_dark: "assets/icons/app_icon.png"
+  android_12:
+    image: "assets/icons/app_icon_foreground.png"
+    color: "#0A0A0A"
+    icon_background_color: "#0A0A0A"
+  fullscreen: false
+  web: false
 
 flutter:
   uses-material-design: true
 
   assets:
     - web/assets/fonts/
+    - assets/legal/
     - assets/sounds/
     - docs/
     - docs/release-notes/

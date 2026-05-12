@@ -1,0 +1,24 @@
+{
+  "run_at_jst": "2026-05-07T05:34:00+09:00",
+  "supabase_health_check": {
+    "http_status": 200,
+    "status": "healthy",
+    "checks": {
+      "env": { "ok": true, "detail": "SUPABASE_URL + SERVICE_ROLE_KEY set" },
+      "db_connectivity": { "ok": true, "latencyMs": 243, "detail": "profiles reachable in 243ms" },
+      "wbs_tasks": { "ok": true, "detail": "wbs_tasks reachable" },
+      "ai_circuit_breaker": { "ok": true, "detail": "ai_circuit_breaker reachable" }
+    },
+    "timestamp": "2026-05-06T20:34:11.750Z"
+  },
+  "firebase_hosting": {
+    "url": "https://my-web-app-b67f4.web.app/",
+    "http_status": 200,
+    "title": "自分株式会社 | AIが今日の最優先タスクを整理",
+    "content_length": 66079,
+    "ok": true
+  },
+  "verdict": "healthy",
+  "action": "no commit (rule: 異常のみ commit&push)",
+  "notes": "SUPABASE_SERVICE_KEY env not set; called EF with anon key (server-side checks env presence, no privileged data leaked). DB latency 243ms (improved from 1351ms on 04:34 run)."
+}

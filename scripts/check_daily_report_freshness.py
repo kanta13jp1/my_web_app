@@ -23,6 +23,7 @@ from zoneinfo import ZoneInfo
 GENERATED_MARKERS = (
     "<!-- generated-by: github-actions -->",
     "<!-- generated-by: claude-schedule",
+    "daily-report.yml",
 )
 
 
@@ -75,7 +76,6 @@ def check(date: str, root: Path, ref: str | None) -> dict[str, Any]:
     report_marker = False
     if report_text is not None:
         report_marker = any(marker in report_text for marker in GENERATED_MARKERS)
-        report_marker = report_marker or f"日次レポート {date}" in report_text
 
     schedule_log = load_json(root, log_path, ref)
     schedule_log_success = False

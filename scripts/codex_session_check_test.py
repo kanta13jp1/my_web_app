@@ -4,10 +4,14 @@ from __future__ import annotations
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 from codex_session_check import (
+    CommandResult,
     collect_remote_control_flags,
+    context_injection_snapshot,
     is_remote_control_flag_path,
+    notebooklm_snapshot,
 )
 
 
@@ -69,6 +73,26 @@ class ClaudeRemoteControlDetectionTest(unittest.TestCase):
             flags = collect_remote_control_flags({"permissions": {"defaultMode": "bypassPermissions"}})
 
         self.assertEqual(flags, [])
+
+    def test_notebooklm_unavailable_is_skipped_on_github_actions(self) -> None:
+        with (
+            patch.dict("os.environ", {"GITHUB_ACTIONS": "true"}),
+            patch(
+                "codex_session_check.run_command",
+                return_value=CommandResult(127, "", "notebooklm not found"),
+            ),
+        ):
+            snapshot = notebooklm_snapshot(Path("."))
+
+        self.assertEqual(snapshot["state"], "skipped_ci_unavailable")
+        self.assertFalse(snapshot["harness_notebook_found"])
+
+    def test_context_injection_snapshot_is_available(self) -> None:
+        snapshot = context_injection_snapshot(Path(__file__).resolve().parents[1])
+
+        self.assertEqual(snapshot["state"], "ok")
+        self.assertIn("ai-tool-adoption", snapshot["matched_route_ids"])
+        self.assertEqual(snapshot["notebooklm"]["harness_notebook_id"], "bc58b50b-5fc4-4840-9a62-b397d6d3b65a")
 
 
 if __name__ == "__main__":

@@ -1,0 +1,105 @@
+name: Session Residuals Sync
+
+# Win版#132 part 118 (2026-05-03) — Issue #1647 受け入れ条件 #3 完全自動化
+#
+# Daily cron: scripts/session_residuals_to_issue.py を --apply で実行し、
+# memory/project_*.md の `## 次回 candidate` section から actionable item を抽出 → GitHub Issue 自動作成.
+#
+# safety:
+# - default --limit 10 (= 1 run で 10 Issue 上限)
+# - dedup against open `追加要望` label (= 重複防止)
+# - 内部 dedup (= 同 run 内の重複 skip)
+# - link-only line (= "#1700-1707 8 件" のような既存参照のみ) は skip
+
+on:
+  schedule:
+    - cron: "30 17 * * *"  # daily 02:30 JST (= 17:30 UTC) — 全 instance の wrap-up 後
+  workflow_dispatch:
+    inputs:
+      days:
+        description: "How many days back to scan memory/ (default 1)"
+        required: false
+        default: "1"
+        type: string
+      apply:
+        description: "Actually create issues (= true) or dry-run (= false)"
+        required: false
+        default: "false"
+        type: choice
+        options:
+          - "true"
+          - "false"
+      limit:
+        description: "Max issues to create per run"
+        required: false
+        default: "5"
+        type: string
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: session-residuals-sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    name: Scan memos + create residual Issues
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 5
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Resolve params
+        id: params
+        run: |
+          DAYS="${{ inputs.days || '1' }}"
+          APPLY="${{ inputs.apply || 'true' }}"   # cron run = true (= dispatch defaults to false for safety)
+          LIMIT="${{ inputs.limit || '5' }}"
+          echo "days=$DAYS"   >> $GITHUB_OUTPUT
+          echo "apply=$APPLY" >> $GITHUB_OUTPUT
+          echo "limit=$LIMIT" >> $GITHUB_OUTPUT
+          echo "DAYS=$DAYS APPLY=$APPLY LIMIT=$LIMIT"
+
+      - name: Run session_residuals_to_issue.py
+        id: run
+        run: |
+          ARGS="--days ${{ steps.params.outputs.days }} --limit ${{ steps.params.outputs.limit }} --memory-dir memory"
+          if [ "${{ steps.params.outputs.apply }}" = "true" ]; then
+            ARGS="$ARGS --apply"
+          fi
+          echo "Args: $ARGS"
+          PYTHONUTF8=1 python scripts/session_residuals_to_issue.py $ARGS | tee residuals_report.txt
+
+      - name: Comment summary to tracking Issue (#1647)
+        if: always()
+        run: |
+          BODY=$(cat <<EOF
+          🤖 Session Residuals Sync $(date -u '+%Y-%m-%d %H:%M UTC')
+
+          mode: \`${{ steps.params.outputs.apply == 'true' && 'apply' || 'dry-run' }}\`
+          days: ${{ steps.params.outputs.days }}
+          limit: ${{ steps.params.outputs.limit }}
+
+          \`\`\`
+          $(tail -20 residuals_report.txt)
+          \`\`\`
+
+          workflow run: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID
+          script: \`scripts/session_residuals_to_issue.py\` (= [#1647](https://github.com/kanta13jp1/my_web_app/issues/1647) 受け入れ条件 #3)
+          EOF
+          )
+          gh issue comment 1647 --repo "$GITHUB_REPOSITORY" --body "$BODY" || true

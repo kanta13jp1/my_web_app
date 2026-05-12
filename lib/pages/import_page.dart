@@ -2,10 +2,12 @@ import 'dart:async';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../pages/landing_page.dart';
+import '../services/external_format_service.dart';
 import '../services/gamification_service.dart';
 import '../services/growth_acquisition_service.dart';
 import '../services/import_service.dart';
@@ -27,10 +29,23 @@ class _ImportPageState extends State<ImportPage> {
   ImportExecutionResult? _lastImportResult;
   String? _selectedSource;
   final TextEditingController _notionTokenController = TextEditingController();
+  final TextEditingController _externalFormatInputController =
+      TextEditingController(
+    text: ExternalFormatService.sampleText('ssim'),
+  );
+  final ExternalFormatService _externalFormatService =
+      const ExternalFormatService();
+  ExternalFormatProfile _externalFormatProfile =
+      ExternalFormatService.defaultProfile('ssim');
+  ExternalFormatTransformResult? _externalFormatPreview;
+  String _externalFormatId = 'ssim';
+  String? _externalFormatExport;
+  bool _isSavingExternalMapping = false;
 
   @override
   void dispose() {
     _notionTokenController.dispose();
+    _externalFormatInputController.dispose();
     super.dispose();
   }
 
@@ -244,6 +259,76 @@ class _ImportPageState extends State<ImportPage> {
     }
   }
 
+  void _selectExternalFormat(String? formatId) {
+    final nextFormatId = formatId ?? 'ssim';
+    setState(() {
+      _externalFormatId = nextFormatId;
+      _externalFormatProfile =
+          ExternalFormatService.defaultProfile(nextFormatId);
+      _externalFormatInputController.text =
+          ExternalFormatService.sampleText(nextFormatId);
+      _externalFormatPreview = null;
+      _externalFormatExport = null;
+    });
+  }
+
+  void _updateExternalMapping(
+    int index,
+    ExternalFieldMapping Function(ExternalFieldMapping mapping) update,
+  ) {
+    final mappings = List<ExternalFieldMapping>.from(
+      _externalFormatProfile.mappings,
+    );
+    mappings[index] = update(mappings[index]);
+    setState(() {
+      _externalFormatProfile = _externalFormatProfile.copyWith(
+        mappings: mappings,
+      );
+      _externalFormatPreview = null;
+      _externalFormatExport = null;
+    });
+  }
+
+  void _previewExternalFormat() {
+    final result = _externalFormatService.transform(
+      inputText: _externalFormatInputController.text,
+      profile: _externalFormatProfile,
+    );
+    setState(() {
+      _externalFormatPreview = result;
+      _externalFormatExport = _externalFormatService.exportDelimited(
+        result,
+        _externalFormatProfile.delimiter,
+      );
+    });
+  }
+
+  Future<void> _copyExternalExport() async {
+    final exportText = _externalFormatExport;
+    if (exportText == null || exportText.trim().isEmpty) {
+      _previewExternalFormat();
+    }
+    final text = _externalFormatExport;
+    if (text == null || text.trim().isEmpty) return;
+    await Clipboard.setData(ClipboardData(text: text));
+    if (!mounted) return;
+    _showMessage('出力CSVをコピーしました。');
+  }
+
+  Future<void> _saveExternalMappingProfile() async {
+    setState(() => _isSavingExternalMapping = true);
+    try {
+      await _externalFormatService.saveProfile(_externalFormatProfile);
+      if (!mounted) return;
+      _showMessage('外部連携マッピングを保存しました。');
+    } catch (error) {
+      if (!mounted) return;
+      _showMessage('マッピング保存に失敗しました: $error');
+    } finally {
+      if (mounted) setState(() => _isSavingExternalMapping = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final preview = _preview;
@@ -299,6 +384,8 @@ class _ImportPageState extends State<ImportPage> {
               ),
             ],
           ),
+          const SizedBox(height: 24),
+          _externalFormatPanel(),
           const SizedBox(height: 24),
           if (_isLoading) const LinearProgressIndicator(),
           if (_lastImportResult != null) ...[
@@ -460,6 +547,220 @@ class _ImportPageState extends State<ImportPage> {
                 ),
               ),
           ],
+        ],
+      ),
+    );
+  }
+
+  Widget _externalFormatPanel() {
+    final preview = _externalFormatPreview;
+    final exportText = _externalFormatExport;
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                const Icon(Icons.hub_outlined),
+                const Text(
+                  '外部標準フォーマット連携',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w800,
+                    height: 1.5,
+                  ),
+                ),
+                Chip(
+                  avatar: const Icon(Icons.rule, size: 18),
+                  label: Text(_externalFormatProfile.label),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'SSIM/AIDX 風の連携ファイルを取り込み、連携先ごとに必要な項目だけを動的にマッピングして、正規化済みデータとして出力します。',
+            ),
+            const SizedBox(height: 16),
+            DropdownButtonFormField<String>(
+              initialValue: _externalFormatId,
+              decoration: const InputDecoration(
+                labelText: 'フォーマット定義',
+                border: OutlineInputBorder(),
+              ),
+              items: const [
+                DropdownMenuItem(value: 'ssim', child: Text('SSIMスケジュール')),
+                DropdownMenuItem(value: 'aidx', child: Text('AIDX運航イベント')),
+              ],
+              onChanged: _selectExternalFormat,
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _externalFormatInputController,
+              minLines: 5,
+              maxLines: 8,
+              decoration: const InputDecoration(
+                labelText: '受信CSV / 標準テキスト',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              '項目マッピング',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+            ),
+            const SizedBox(height: 8),
+            ..._externalFormatProfile.mappings.asMap().entries.map(
+                  (entry) => _externalMappingRow(entry.key, entry.value),
+                ),
+            const SizedBox(height: 16),
+            Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              children: [
+                FilledButton.icon(
+                  onPressed: _previewExternalFormat,
+                  icon: const Icon(Icons.visibility_outlined),
+                  label: const Text('マッピング結果を確認'),
+                ),
+                OutlinedButton.icon(
+                  onPressed: preview == null ? null : _copyExternalExport,
+                  icon: const Icon(Icons.copy),
+                  label: const Text('出力CSVをコピー'),
+                ),
+                OutlinedButton.icon(
+                  onPressed: _isSavingExternalMapping
+                      ? null
+                      : _saveExternalMappingProfile,
+                  icon: _isSavingExternalMapping
+                      ? const SizedBox.square(
+                          dimension: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.save_outlined),
+                  label: Text(
+                    _isSavingExternalMapping ? '保存中...' : 'マッピングを保存',
+                  ),
+                ),
+              ],
+            ),
+            if (preview != null) ...[
+              const SizedBox(height: 16),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  Chip(label: Text('${preview.rows.length} rows')),
+                  Chip(label: Text('${preview.outputFields.length} fields')),
+                  if (preview.warnings.isNotEmpty)
+                    Chip(label: Text('${preview.warnings.length} warnings')),
+                ],
+              ),
+              if (preview.warnings.isNotEmpty) ...[
+                const SizedBox(height: 8),
+                ...preview.warnings.map(
+                  (warning) => Text(
+                    '- $warning',
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.error,
+                      height: 1.5,
+                    ),
+                  ),
+                ),
+              ],
+              const SizedBox(height: 12),
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: DataTable(
+                  columns: preview.outputFields
+                      .map((field) => DataColumn(label: Text(field)))
+                      .toList(),
+                  rows: preview.rows.take(5).map((row) {
+                    return DataRow(
+                      cells: preview.outputFields
+                          .map((field) => DataCell(Text(row[field] ?? '')))
+                          .toList(),
+                    );
+                  }).toList(),
+                ),
+              ),
+              if (exportText != null && exportText.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                SelectableText(
+                  exportText,
+                  maxLines: 6,
+                  style: const TextStyle(fontFamily: 'monospace'),
+                ),
+              ],
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _externalMappingRow(int index, ExternalFieldMapping mapping) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [
+          FilterChip(
+            label: const Text('送信'),
+            selected: mapping.include,
+            onSelected: (value) => _updateExternalMapping(
+              index,
+              (current) => current.copyWith(include: value),
+            ),
+          ),
+          FilterChip(
+            label: const Text('必須'),
+            selected: mapping.requiredField,
+            onSelected: (value) => _updateExternalMapping(
+              index,
+              (current) => current.copyWith(requiredField: value),
+            ),
+          ),
+          SizedBox(
+            width: 220,
+            child: TextFormField(
+              key: ValueKey('external-source-$_externalFormatId-$index'),
+              initialValue: mapping.sourceField,
+              decoration: const InputDecoration(
+                labelText: '元項目',
+                border: OutlineInputBorder(),
+                isDense: true,
+              ),
+              onChanged: (value) => _updateExternalMapping(
+                index,
+                (current) => current.copyWith(sourceField: value),
+              ),
+            ),
+          ),
+          SizedBox(
+            width: 220,
+            child: TextFormField(
+              key: ValueKey('external-target-$_externalFormatId-$index'),
+              initialValue: mapping.targetField,
+              decoration: const InputDecoration(
+                labelText: '出力項目',
+                border: OutlineInputBorder(),
+                isDense: true,
+              ),
+              onChanged: (value) => _updateExternalMapping(
+                index,
+                (current) => current.copyWith(targetField: value),
+              ),
+            ),
+          ),
         ],
       ),
     );

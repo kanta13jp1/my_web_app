@@ -1,7 +1,12 @@
 # AI Tool Watch
 
 This directory is the session-start and scheduled watch surface for official
-Claude Code and Codex changes.
+Claude Code, Codex, Gemini Code Assist, and GitHub Copilot changes.
+
+2026-05-07 #1706 gate: new AI-tool capability claims must be verified against
+official sources before they are adopted by the active two-instance flow:
+Claude Code #1 (Windows app) for policy/review and Codex #1 (Windows app) for
+scoped implementation PRs, CI, merge, and cleanup.
 
 ## What It Watches
 
@@ -12,7 +17,8 @@ Claude Code and Codex changes.
   review gates.
 - NotebookLM harness notebook
   `bc58b50b-5fc4-4840-9a62-b397d6d3b65a`, used as the Master Brain routing
-  reference for Claude Code 10 instances plus Codex 2 instances.
+  reference after it is normalized to the current Claude Code #1 plus Codex #1
+  two-instance operating model.
 
 ## How To Run
 
@@ -48,10 +54,9 @@ started manually. It updates the report/state files and comments on issue
 - Claude Code hooks, SessionStart, PostToolUse, Stop, or ultrareview changes
   route to Claude Code quality-gate work.
 - Codex model, browser, computer-use, worktree, or subagent changes route to
-  Codex #1 execution and UI verification work unless the item is CI/deploy
-  related.
+  Codex #1 execution and UI verification work.
 - Schedule, GitHub Actions, and automation changes route to WBS/CI/deploy
-  automation, normally owned by Codex #2.
+  automation, normally owned by Codex #1 as scoped PR work.
 - MCP, connector, Slack, and integration changes route to connector reliability
   and NotebookLM knowledge capture.
 - Repeated manual WBS work becomes a candidate for a scheduled task, hook, or

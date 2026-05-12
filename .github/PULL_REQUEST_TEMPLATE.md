@@ -7,6 +7,26 @@
 - [ ] E2E included: Flutter `integration_test/` or Playwright `test/e2e/`.
 - [ ] Exception reason, if no E2E file is included: <!-- reason + manual verification steps -->
 
+## Visual E2E Evidence
+
+- Reference: `docs/CODEX_UI_QA_PLAYBOOK.md`
+- [ ] Desktop and mobile Playwright evidence captured for landing/home/auth/notion-wbs/agent-org, or the current equivalent public routes.
+- [ ] Screenshots plus low-FPS frame sequence are attached in Playwright artifacts.
+- [ ] Console errors, page errors, request failures, and HTTP 5xx responses are reviewed.
+- [ ] `getAnimations()` wait path ran, or the fallback is documented in the PR.
+- [ ] Codex in-app browser or equivalent browser verification notes are included when UI changed.
+
+## Codex UI QA / Prototyping
+
+- [ ] Changed routes/surfaces are listed:
+- [ ] Codex in-app browser check is included for UI/layout/interaction changes, or this PR explains why it is not applicable.
+- [ ] Playwright command or artifact is listed, for example `npm run e2e:visual -- --project=chromium --project=mobile-chrome --workers=1`.
+- [ ] Desktop and mobile viewport findings are summarized.
+- [ ] Generated imagery status is recorded:
+  - [ ] No generated image was used.
+  - [ ] Generated image was used and the prompt, intended use, asset path, rights statement, and verification note are included.
+- [ ] Generated imagery is not being used as proof of the actual product state.
+
 ## 📝 変更内容
 <!-- このPRで実施した変更内容を簡潔に説明してください -->
 
@@ -146,6 +166,15 @@ Related to #
 - [ ] ダミーデータを使用していません（Supabase実データのみ）
 - [ ] 不要なコメントや console.log を削除しました
 - [ ] コードレビューを受ける準備ができています（Claude Agent が自動レビューします）
+
+### Rule / Script / Hook wiring 同期（追加時のみ — part 185 finding）
+<!-- inject-rules.txt rule 追加 / scripts/ 新 primitive 追加 / hook 配線変更時にチェック -->
+
+- [ ] 該当なし（rule / script / hook 追加・変更なし）
+- [ ] `inject-rules.txt` に rule 追加時: `scripts/sync_inject_rules.py` の `EXPECTED_RULE_COUNT` + `CRITICAL_RULES` 同時更新済（= 二重 source-of-truth back-fill 漏れ防止 / part 185 KPI integrity fix 教訓）
+- [ ] `scripts/*.py` `scripts/*.ps1` 新規 primitive 追加時: `~/.claude/settings.json` `SessionStart` / `SessionEnd` hooks 配線済 — または別 issue で配線計画明記（= part 185b hook wiring gap 教訓）
+- [ ] hook wiring 変更時: 配線後 **次セッション起動で auto-fire 動作 verify** 済（= log/CSV path に SessionStart timestamp 一致 row 追加確認 / **manual invoke だけでは不十分** — Win 環境では `python C:\...` raw 直叩きが WindowsApps stub で silent fail しても manual invoke は通る / part 187 finding）
+- [ ] hook command が `python` `node` 等 interpreter を直接呼ぶ場合: Win では `powershell -NoProfile -ExecutionPolicy Bypass -Command "& <interp> <args>"` でラップ済（= WindowsApps reparse-point stub 0-byte で非インタラクティブ silent fail 回避 / part 187 finding）
 
 ### テスト
 

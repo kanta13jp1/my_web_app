@@ -4,7 +4,7 @@ tags: Flutter,Supabase,個人開発,buildinpublic,バイラル
 published: true
 ---
 
-# ブログ下書き 2026-04-08
+# ブログ下書き 2026-04-08 — 2026-04-08-x-viral-pipeline-catalog-expansion
 
 ## タイトル案
 1. FlutterとSupabase Edge FunctionでギターレコーディングをX自動投稿するバイラルパイプラインを作った話

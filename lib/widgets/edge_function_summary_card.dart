@@ -27,13 +27,6 @@ class _EdgeFunctionSummaryCardState extends State<EdgeFunctionSummaryCard> {
       'ホーム > AI組織OS をタップ',
     ),
     _FnDef(
-      'growth-hub',
-      '獲得レポート / コマンドセンター / 紹介 (hub)',
-      true,
-      '/growth-mission',
-      '成長ミッション > グロース機能',
-    ),
-    _FnDef(
       'growth-weekly-digest',
       '週次グロース指標',
       true,
@@ -775,14 +768,6 @@ class _EdgeFunctionSummaryCardState extends State<EdgeFunctionSummaryCard> {
       '/two-factor-auth',
       '二要素認証ページ > 認証設定・バックアップコード確認',
     ),
-    // 追加 (cs-check 自動連携 2026-04-23)
-    _FnDef(
-      'customer-feedback',
-      'カスタマーフィードバック管理',
-      true,
-      '/customer-feedback',
-      'フィードバックページ > 顧客フィードバック収集・分析・対応状況確認',
-    ),
     // 追加 (cs-check 自動連携 2026-04-21)
     _FnDef(
       'line-notifications',
@@ -835,6 +820,22 @@ class _EdgeFunctionSummaryCardState extends State<EdgeFunctionSummaryCard> {
       true,
       '/memory-search',
       'メモリー検索ページ > キーワード入力でBM25+ベクター混合検索',
+    ),
+    // 追加 (cs-check 自動連携 2026-05-05)
+    _FnDef(
+      'stripe-webhook',
+      'Stripe 決済イベント Webhook (サーバーサイド専用)',
+      false,
+      null,
+      'Stripe → Supabase サーバーサイド専用 (UIなし / 請求管理は /billing)',
+    ),
+    // 追加 (cs-check 自動連携 2026-05-09)
+    _FnDef(
+      'mcp-well-known',
+      'MCP Well-Known URI ディスカバリー (サーバーサイド専用)',
+      false,
+      null,
+      'MCP クライアント向け Well-Known エンドポイント (UIなし / サーバーサイド専用)',
     ),
   ];
 

@@ -104,6 +104,66 @@ jobs:
           echo "draft_path=$DRAFT" >> $GITHUB_OUTPUT
           echo "✅ Auto-selected: $DRAFT"
 
+      # ── Step 1.7: DB status='ready' 記事の自動公開 ───────────────────────
+      # admin UI で「公開準備完了」に設定した記事を blog.publish_post EF で自動公開する
+      - name: Step 1.7 - Auto-publish DB ready posts
+        if: github.event_name == 'schedule' || github.event.inputs.dry_run != 'true'
+        continue-on-error: true
+        env:
+          SUPABASE_URL: https://smmkxxavexumewbfaqpy.supabase.co
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          echo "[trace=$TRACE_ID] Step 1.7: querying blog_posts WHERE status='ready'"
+          RESP=$(curl -sf \
+            "${SUPABASE_URL}/rest/v1/blog_posts?select=id,title&status=eq.ready&order=created_at.asc&limit=5" \
+            -H "apikey: ${SUPABASE_SERVICE_KEY}" \
+            -H "Authorization: Bearer ${SUPABASE_SERVICE_KEY}" 2>/dev/null || echo "[]")
+          COUNT=$(echo "$RESP" | python3 -c "import sys,json; print(len(json.load(sys.stdin)))" 2>/dev/null || echo "0")
+          echo "[trace=$TRACE_ID] Ready posts found: $COUNT"
+          if [ "$COUNT" -eq "0" ]; then
+            echo "ℹ️ No ready posts — skipping DB auto-publish"
+            exit 0
+          fi
+          RESP_JSON="$RESP" python3 - <<'PY'
+          import json
+          import os
+
+          posts = json.loads(os.environ["RESP_JSON"])
+          for p in posts:
+              print(f"  - [{p['id']}] {p['title']}")
+          PY
+          RESP_JSON="$RESP" python3 - <<'PY' 2>&1 || echo "[trace=$TRACE_ID] DB auto-publish step completed (errors above are non-blocking)"
+          import json
+          import os
+          import urllib.request
+
+          posts = json.loads(os.environ["RESP_JSON"])
+          url = os.environ["SUPABASE_URL"]
+          key = os.environ["SUPABASE_SERVICE_KEY"]
+          trace = os.environ.get("TRACE_ID", "")
+
+          for p in posts:
+              pid = p["id"]
+              title = p["title"]
+              print(f"[trace={trace}] Publishing DB post: {pid} — {title}")
+              payload = json.dumps({"action": "blog.publish_post", "id": pid}).encode()
+              req = urllib.request.Request(
+                  f"{url}/functions/v1/schedule-hub",
+                  data=payload,
+                  headers={
+                      "Authorization": f"Bearer {key}",
+                      "Content-Type": "application/json",
+                  },
+                  method="POST",
+              )
+              try:
+                  with urllib.request.urlopen(req, timeout=30) as r:
+                      body = r.read().decode()
+                      print(f"  ✅ HTTP {r.status}: {body[:200]}")
+              except Exception as e:
+                  print(f"  ⚠️ Failed: {e}")
+          PY
+
       # ── Step 2: ドラフトを読み込んでメタデータ抽出 ──────────────────────
       - name: Step 2 - Extract metadata from draft
         if: steps.auto_select.outputs.has_draft == 'true'
@@ -174,21 +234,32 @@ jobs:
         if: steps.auto_select.outputs.has_draft == 'true'
         env:
           DRAFT_PATH_VAR: ${{ steps.meta.outputs.draft_path }}
-          ALREADY_PUBLISHED: ${{ steps.meta.outputs.already_published }}
+          DRAFT_PATH_EN: ${{ github.event.inputs.draft_path_en }}
         run: |
-          DRAFT="$DRAFT_PATH_VAR"
-          echo "[trace=$TRACE_ID] Quality gate: $DRAFT"
-          # Sentinel: ファイル存在
-          [ -f "$DRAFT" ] || { echo "::error::[trace=$TRACE_ID] Sentinel: draft not found: $DRAFT"; exit 1; }
-          # Warden: 最低文字数 (品質保証 — 300 bytes 未満は投稿に不十分)
-          CHARS=$(wc -c < "$DRAFT")
-          if [ "$CHARS" -lt 300 ]; then
-            echo "::error::[trace=$TRACE_ID] Warden: draft too short ($CHARS bytes < 300)"
-            exit 1
+          mkdir -p tmp/blog-quality
+          echo "[trace=$TRACE_ID] Quality gate: $DRAFT_PATH_VAR"
+          python3 scripts/validate_blog_draft.py \
+            --draft "$DRAFT_PATH_VAR" \
+            --language ja \
+            --min-chars 800 \
+            --min-headings 2 \
+            --required-heading "##" \
+            --trace-id "$TRACE_ID" \
+            --source-ref "$GITHUB_SHA" \
+            --report "tmp/blog-quality/${TRACE_ID}-ja.json"
+
+          if [ -n "$DRAFT_PATH_EN" ] && [ -f "$DRAFT_PATH_EN" ]; then
+            echo "[trace=$TRACE_ID] Quality gate: $DRAFT_PATH_EN"
+            python3 scripts/validate_blog_draft.py \
+              --draft "$DRAFT_PATH_EN" \
+              --language en \
+              --min-chars 1200 \
+              --min-headings 2 \
+              --required-heading "##" \
+              --trace-id "$TRACE_ID" \
+              --source-ref "$GITHUB_SHA" \
+              --report "tmp/blog-quality/${TRACE_ID}-en.json"
           fi
-          # Sentinel: Qiita/dev.to 重複投稿検出 (Zenn published は許容)
-          # blog_posts テーブルに同一 title の posted レコードがあればブロック
-          echo "[trace=$TRACE_ID] ✅ Quality gate passed: $CHARS bytes, already_published=$ALREADY_PUBLISHED"
 
       # ── Step 3: メタデータ記録 (schedule-hub blog.create) ────────────────
       - name: Step 3 - Register in blog_posts table
@@ -280,13 +351,15 @@ jobs:
           # Qiita: 日本語コンテンツ
           if echo "$PLATFORMS" | grep -q "qiita"; then
             echo "📤 Qiita に日本語記事を投稿..."
+            POST_ID="${{ steps.register.outputs.post_id }}"
             PAYLOAD=$(jq -n \
               --arg action "blog.auto_publish" \
               --arg title "$TITLE" \
               --arg content "$CONTENT_JP" \
               --arg platforms "qiita" \
+              --arg id "$POST_ID" \
               --argjson tags "$TAGS_JSON" \
-              '{action: $action, title: $title, content: $content, platforms: $platforms, tags: $tags}')
+              '{action: $action, title: $title, content: $content, platforms: $platforms, tags: $tags, id: $id}')
             RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
               -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
               -H "Content-Type: application/json" \
@@ -315,13 +388,15 @@ jobs:
                 tr '\n' ',' | sed 's/,$//')
               [ -z "$TAGS_EN" ] && TAGS_EN="$TAGS"
               TAGS_EN_JSON=$(echo "$TAGS_EN" | tr ',' '\n' | jq -R . | jq -s .)
+              POST_ID="${{ steps.register.outputs.post_id }}"
               PAYLOAD_EN=$(jq -n \
                 --arg action "blog.auto_publish" \
                 --arg title "$TITLE_EN" \
                 --arg content "$CONTENT_EN" \
                 --arg platforms "devto" \
+                --arg id "$POST_ID" \
                 --argjson tags "$TAGS_EN_JSON" \
-                '{action: $action, title: $title, content: $content, platforms: $platforms, tags: $tags}')
+                '{action: $action, title: $title, content: $content, platforms: $platforms, tags: $tags, id: $id}')
               RESPONSE_EN=$(curl -s -w "\n%{http_code}" -X POST \
                 -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
                 -H "Content-Type: application/json" \
@@ -341,90 +416,47 @@ jobs:
           echo "qiita_url=$QIITA_URL" >> $GITHUB_OUTPUT
           echo "devto_url=$DEVTO_URL" >> $GITHUB_OUTPUT
 
-      # ── Step 5: frontmatter を published: true に更新 ───────────────────
-      # PS#1 S21 (2026-04-20): BYPASS_RULES PAT 失効疑いで GH006 protected branch
-      # push reject → continue-on-error: true で warn-only 化 (published:true 更新は
-      # 次回 schedule で再試行 / 同一 draft 2 重投稿リスクは auto_select の orphan 検知で回避)
-      - name: Step 5 - Mark draft as published
+      # ── Step 4.5: blog_posts.status を 'posted' に更新 (UI反映) ────────
+      - name: Step 4.5 - Update blog_posts status
         if: steps.auto_select.outputs.has_draft == 'true' && github.event.inputs.dry_run != 'true'
         continue-on-error: true
         env:
-          GH_TOKEN: ${{ secrets.BYPASS_RULES || secrets.GITHUB_TOKEN }}
-          BYPASS_TOKEN: ${{ secrets.BYPASS_RULES }}
+          SUPABASE_URL: https://smmkxxavexumewbfaqpy.supabase.co
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          DRAFT_PATH_VAR: ${{ steps.meta.outputs.draft_path }}
+          QIITA_URL: ${{ steps.publish.outputs.qiita_url }}
+          DEVTO_URL: ${{ steps.publish.outputs.devto_url }}
         run: |
-          DRAFT_PATH="${{ steps.meta.outputs.draft_path }}"
-          DRAFT_PATH_EN="${{ github.event.inputs.draft_path_en }}"
+          DRAFT_PATH="$DRAFT_PATH_VAR"
+          URL="${QIITA_URL:-$DEVTO_URL}"
+          PATCH=$(python3 -c "from datetime import datetime; import json, os; print(json.dumps({'status': 'posted', 'posted_at': datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ'), 'url': os.environ.get('URL', '') or None}))")
+          HTTP=$(curl -s -o /dev/null -w "%{http_code}" \
+            -X PATCH \
+            "${SUPABASE_URL}/rest/v1/blog_posts?draft_path=eq.${DRAFT_PATH}" \
+            -H "apikey: ${SUPABASE_SERVICE_KEY}" \
+            -H "Authorization: Bearer ${SUPABASE_SERVICE_KEY}" \
+            -H "Content-Type: application/json" \
+            -H "Prefer: return=minimal" \
+            -d "$PATCH" \
+            --max-time 10 || echo "000")
+          echo "[trace=$TRACE_ID] blog_posts status update: HTTP $HTTP"
 
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git fetch origin main
-
-          # published マーカー付与 (frontmatter あり/なし両対応)
-          _mark_published() {
-            local f="$1"
-            if [ -z "$f" ] || [ ! -f "$f" ]; then return; fi
-            if grep -q "^published: false" "$f"; then
-              sed -i 's/^published: false/published: true/' "$f"
-            elif grep -q "^published:" "$f"; then
-              :
-            elif head -1 "$f" | grep -q "^---"; then
-              sed -i '0,/^---$/!b; /^---$/{ n; /^published:/!{ i published: true
-              } }' "$f"
-            else
-              TMP=$(mktemp)
-              printf -- "---\npublished: true\n---\n" > "$TMP"
-              cat "$f" >> "$TMP"
-              mv "$TMP" "$f"
-            fi
-          }
-
-          if [ "${{ github.event_name }}" = "schedule" ]; then
-            # スケジュール実行: main に直接 push (schedule は branch protection bypass 済み)
-            git checkout main 2>/dev/null || git checkout -b main origin/main
-            git pull origin main --ff-only
-            _mark_published "$DRAFT_PATH"
-            _mark_published "$DRAFT_PATH_EN"
-            git add "$DRAFT_PATH" ${DRAFT_PATH_EN:+"$DRAFT_PATH_EN"}
-            if git diff --cached --quiet; then
-              echo "📝 変更なし — スキップ"
-              exit 0
-            fi
-            COMMIT_MSG="docs: ブログ記事投稿完了 $(basename "$DRAFT_PATH")"
-            [ -n "$DRAFT_PATH_EN" ] && COMMIT_MSG="$COMMIT_MSG + $(basename "$DRAFT_PATH_EN")"
-            git commit -m "$COMMIT_MSG"
-            git config --local --unset-all http.https://github.com/.extraheader 2>/dev/null || true
-            git remote set-url origin "https://x-access-token:${BYPASS_TOKEN}@github.com/${{ github.repository }}.git"
-            git push origin HEAD:main
-            echo "✅ [SCHEDULED] published:true に更新 → main push 完了"
-          else
-            # 手動実行: branch 経由 (branch protection により main 直push 不可 = GH006)
-            BRANCH="blog-publish/${{ github.run_id }}-$(TZ=Asia/Tokyo date +'%Y%m%d-%H%M%S')"
-            git checkout -b "$BRANCH" origin/main
-            _mark_published "$DRAFT_PATH"
-            _mark_published "$DRAFT_PATH_EN"
-            git add "$DRAFT_PATH" ${DRAFT_PATH_EN:+"$DRAFT_PATH_EN"}
-            if git diff --cached --quiet; then
-              echo "📝 変更なし — スキップ"
-              exit 0
-            fi
-            COMMIT_MSG="docs: ブログ記事投稿完了 $(basename "$DRAFT_PATH")"
-            [ -n "$DRAFT_PATH_EN" ] && COMMIT_MSG="$COMMIT_MSG + $(basename "$DRAFT_PATH_EN")"
-            git commit -m "$COMMIT_MSG"
-            git push origin "$BRANCH"
-
-            # PR を作成 (PAT があれば自動merge、なければ手動マージ待ち)
-            if [ -n "${{ secrets.GH_PAT_BLOG_MERGE }}" ]; then
-              gh auth login --with-token <<< "${{ secrets.GH_PAT_BLOG_MERGE }}"
-              PR_URL=$(gh pr create --base main --head "$BRANCH" \
-                --title "$COMMIT_MSG" \
-                --body "Auto-merge by blog-publish workflow (published:true frontmatter update)" 2>&1 | tail -1)
-              echo "📝 PR作成: $PR_URL"
-              gh pr merge "$BRANCH" --auto --squash --delete-branch 2>&1 | head -3
-            else
-              echo "ℹ️ ブランチ '$BRANCH' を push しました (GH_PAT_BLOG_MERGE 未設定のため手動マージ)。"
-              echo "   マージ: git fetch origin $BRANCH && git merge origin/$BRANCH && git push origin main"
-            fi
-          fi
+      # ── Step 5: frontmatter を published: true に更新 ───────────────────
+      # Branch-protection safe: always push a status branch, then auto-merge when BLOG_PAT can.
+      # If auto-merge fails, the branch/PR remains as the manual fallback.
+      - name: Step 5 - Mark draft as published
+        if: steps.auto_select.outputs.has_draft == 'true' && github.event.inputs.dry_run != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.BLOG_PAT || secrets.GH_PAT_BLOG_MERGE || secrets.BYPASS_RULES || github.token }}
+          BLOG_PAT: ${{ secrets.BLOG_PAT }}
+          GH_PAT_BLOG_MERGE: ${{ secrets.GH_PAT_BLOG_MERGE }}
+          BYPASS_RULES: ${{ secrets.BYPASS_RULES }}
+          GITHUB_TOKEN: ${{ github.token }}
+          DRAFT_PATH: ${{ steps.meta.outputs.draft_path }}
+          DRAFT_PATH_EN: ${{ github.event.inputs.draft_path_en }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: |
+          bash scripts/blog_mark_published_status.sh
 
       # ── Step 6: schedule_task_runs 記録 ─────────────────────────────────
       - name: Step 6 - schedule_task_runs 記録

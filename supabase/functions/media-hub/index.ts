@@ -19,6 +19,7 @@ const corsHeaders = {
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
 const SERVICE_ROLE_KEY = Deno.env.get("SERVICE_ROLE_KEY") ?? "";
+const GENERATED_IMAGE_BUCKET = "ai-generated-images";
 
 function json(data: unknown, status = 200): Response {
   return new Response(JSON.stringify(data), {
@@ -90,6 +91,52 @@ function imageSizeForModel(model: string, requested: string): string {
   return ["1024x1024", "1024x1792", "1792x1024"].includes(requested)
     ? requested
     : "1792x1024";
+}
+
+function base64ToBytes(base64: string): Uint8Array {
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let index = 0; index < binary.length; index++) {
+    bytes[index] = binary.charCodeAt(index);
+  }
+  return bytes;
+}
+
+function storageSafeSegment(value: string): string {
+  return value.replace(/[^a-zA-Z0-9._-]+/g, "-").replace(/^-+|-+$/g, "") ||
+    "anonymous";
+}
+
+async function persistGeneratedImageToStorage(
+  admin: SupabaseClient,
+  b64Json: string,
+  userId: string,
+): Promise<string | null> {
+  try {
+    const bytes = base64ToBytes(b64Json);
+    const datePrefix = new Date().toISOString().slice(0, 10);
+    const path = [
+      "openai",
+      storageSafeSegment(userId),
+      datePrefix,
+      `${crypto.randomUUID()}.png`,
+    ].join("/");
+    const { error } = await admin.storage
+      .from(GENERATED_IMAGE_BUCKET)
+      .upload(path, bytes, {
+        contentType: "image/png",
+        cacheControl: "604800",
+        upsert: false,
+      });
+    if (error) throw error;
+    const { data } = admin.storage.from(GENERATED_IMAGE_BUCKET).getPublicUrl(
+      path,
+    );
+    return data.publicUrl;
+  } catch (error) {
+    console.warn("Generated image storage upload failed", error);
+    return null;
+  }
 }
 
 async function listItems(
@@ -489,6 +536,10 @@ serve(async (req) => {
 
         const imageUrl = generated?.url ?? "";
         const b64Json = generated?.b64_json ?? "";
+        const storedImageUrl = !imageUrl && b64Json
+          ? await persistGeneratedImageToStorage(admin, b64Json, userId)
+          : null;
+        const publicImageUrl = imageUrl || storedImageUrl || "";
         const dataUrl = b64Json ? `data:image/png;base64,${b64Json}` : "";
         if (!imageUrl && !b64Json) {
           return json({
@@ -501,7 +552,7 @@ serve(async (req) => {
         const item = persist
           ? await addItem(admin, "ai_image", userId, {
             prompt,
-            url: imageUrl || dataUrl,
+            url: publicImageUrl || dataUrl,
             size: usedSize,
             style,
             quality,
@@ -514,7 +565,8 @@ serve(async (req) => {
         return json({
           success: true,
           image: item,
-          url: imageUrl || dataUrl,
+          url: publicImageUrl || dataUrl,
+          storageUrl: storedImageUrl,
           b64Json: returnB64 ? b64Json : undefined,
           prompt,
           size: usedSize,

@@ -152,10 +152,18 @@ jobs:
             echo "ℹ️ No changes to commit"
           else
             git commit -m "自動: 週次SNSドラフト $TARGET_DATE"
-            git config --local --unset-all http.https://github.com/.extraheader 2>/dev/null || true
-            git remote set-url origin "https://x-access-token:${BYPASS_TOKEN}@github.com/${{ github.repository }}.git"
-            git pull --rebase origin main 2>&1 || true
-            git push origin HEAD:main
+            if [ -n "${BYPASS_TOKEN}" ]; then
+              git config --local --unset-all http.https://github.com/.extraheader 2>/dev/null || true
+              git remote set-url origin "https://x-access-token:${BYPASS_TOKEN}@github.com/${{ github.repository }}.git"
+            fi
+            for _push_attempt in 1 2 3; do
+              git pull --rebase origin main 2>/dev/null || { git rebase --abort 2>/dev/null || true; git pull --no-rebase origin main 2>/dev/null || true; }
+              if git push origin HEAD:main; then
+                break
+              fi
+              echo "⚠️ Push attempt $_push_attempt failed, retrying in ${_push_attempt}s..."
+              sleep "$_push_attempt"
+            done
           fi
 
       - name: Summary

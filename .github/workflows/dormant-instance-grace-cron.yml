@@ -1,0 +1,64 @@
+name: Dormant Instance 30-Day Grace Cron
+
+on:
+  schedule:
+    # Weekly Monday 02:00 UTC = 11:00 JST.
+    - cron: "0 2 * * 1"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Dry run only; do not comment or close issues"
+        required: false
+        default: "true"
+        type: choice
+        options:
+          - "true"
+          - "false"
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: dormant-instance-grace-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  DORMANT_LABELS: vscode-instance,ps1-instance,ps2-instance,ps3-instance,ps4-instance,ps5-instance,ps6-instance,web-instance,mobile-instance,codex1-instance,codex2-instance
+  GRACE_DAYS: "30"
+  WARN_DAYS: "14"
+
+jobs:
+  grace:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+
+      - name: Run dormant grace audit
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT || github.token }}
+          DRY_RUN: ${{ github.event.inputs.dry_run || 'true' }}
+        run: |
+          mkdir -p tmp/dormant-instance-grace
+          APPLY=false
+          if [ "$DRY_RUN" = "false" ]; then
+            APPLY=true
+          fi
+          python scripts/dormant_instance_grace.py \
+            --repo "$GITHUB_REPOSITORY" \
+            --apply "$APPLY" \
+            --output tmp/dormant-instance-grace/report.json \
+            --github-step-summary "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload dormant grace report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: dormant-instance-grace-report
+          path: tmp/dormant-instance-grace/report.json
+          if-no-files-found: ignore

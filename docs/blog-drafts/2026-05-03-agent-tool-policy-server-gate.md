@@ -3,7 +3,7 @@ title: "AI エージェントの tool 実行を deny-by-default で止める —
 emoji: "🛡️"
 type: "tech"
 topics: ["mcp", "supabase", "deno", "ai-agent", "security"]
-published: false
+published: true
 ---
 
 ## クライアント側 guard だけでは止まらない

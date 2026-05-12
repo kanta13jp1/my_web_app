@@ -1,0 +1,91 @@
+name: Blog Publish Orphan Branch Cleanup
+
+on:
+  schedule:
+    - cron: '0 */6 * * *'  # every 6 hours
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          token: ${{ secrets.GH_PAT_BLOG_MERGE || secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Merge and delete stale blog-publish orphan branches
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT_BLOG_MERGE || secrets.GITHUB_TOKEN }}
+        run: |
+          set -e
+          MERGED=0
+          SKIPPED=0
+          ERRORS=0
+
+          # List all blog-publish/* remote branches
+          BRANCHES=$(git branch -r | grep 'origin/blog-publish/' | sed 's|.*origin/||' | sort || true)
+
+          if [ -z "$BRANCHES" ]; then
+            echo "No blog-publish orphan branches found."
+            exit 0
+          fi
+
+          echo "Found branches:"
+          echo "$BRANCHES"
+
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+
+          for BRANCH in $BRANCHES; do
+            echo "--- Processing: $BRANCH ---"
+
+            # Fetch the branch
+            git fetch origin "$BRANCH" 2>/dev/null || {
+              echo "  SKIP: could not fetch $BRANCH"
+              SKIPPED=$((SKIPPED + 1))
+              continue
+            }
+
+            # Check if draft files in branch are marked published: true
+            PUBLISHED=$(git diff origin/main...origin/$BRANCH -- 'docs/blog-drafts/**.md' 2>/dev/null | \
+              grep '^+published: true' | wc -l || echo 0)
+
+            if [ "$PUBLISHED" -gt 0 ]; then
+              echo "  published: true found ($PUBLISHED files) — merging"
+              git merge --no-ff "origin/$BRANCH" -m "Auto-merge orphan: $BRANCH (published: true)" && {
+                MERGED=$((MERGED + 1))
+                git push origin HEAD:main
+                # Delete remote branch
+                git push origin --delete "$BRANCH" && echo "  Deleted: $BRANCH" || echo "  Delete failed: $BRANCH"
+              } || {
+                echo "  Merge conflict — skipping $BRANCH"
+                git merge --abort 2>/dev/null || true
+                ERRORS=$((ERRORS + 1))
+              }
+            else
+              echo "  published: true NOT found — skipping (may still be in progress)"
+              SKIPPED=$((SKIPPED + 1))
+            fi
+          done
+
+          echo ""
+          echo "=== Summary ==="
+          echo "Merged:  $MERGED"
+          echo "Skipped: $SKIPPED"
+          echo "Errors:  $ERRORS"
+
+          # Report to GHA job summary
+          cat >> $GITHUB_STEP_SUMMARY << EOF
+          ## Blog Orphan Branch Cleanup
+
+          | Status  | Count |
+          |---------|-------|
+          | Merged  | $MERGED |
+          | Skipped | $SKIPPED |
+          | Errors  | $ERRORS |
+          EOF

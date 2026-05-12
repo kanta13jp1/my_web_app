@@ -4,7 +4,7 @@ tags: Flutter,Supabase,個人開発,buildinpublic,EdgeFunctions
 published: true
 ---
 
-# ブログ下書き 2026-04-03
+# ブログ下書き 2026-04-03 — 2026-04-03-travel-whiteboard-recipe
 
 ## タイトル案
 

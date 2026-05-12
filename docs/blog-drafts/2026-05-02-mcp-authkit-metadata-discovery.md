@@ -3,7 +3,7 @@ title: "MCP サーバーが OAuth Protected Resource Metadata を返すべき理
 emoji: "🔐"
 type: "tech"
 topics: ["mcp", "oauth", "workos", "supabase", "deno"]
-published: false
+published: true
 ---
 
 ## なぜ MCP サーバーに `.well-known/oauth-protected-resource` が要るのか

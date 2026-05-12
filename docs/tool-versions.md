@@ -11,6 +11,7 @@
 | ツール | 現在バージョン | 最終確認日 | 確認インスタンス |
 | --- | --- | --- | --- |
 | **Claude Code** (CLI) | `2.1.110` | 2026-04-16 | Windowsアプリ版 |
+| **OpenAI Codex CLI** (CLI) | `unknown` | 2026-05-07 | Codex #1 Windows app / memory pointers: `AGENTS.md`, `~/.codex/config.toml` |
 | **Claude Code** (VSCode ext) | `2.1.109` | 2026-04-16 | VSCode版 |
 | **Gemini Code Assist** (VSCode ext) | `2.78.0` | 2026-04-16 | VSCode版 |
 | **OpenAI ChatGPT** (VSCode ext) | `26.409.20454` | 2026-04-16 | VSCode版 |

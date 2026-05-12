@@ -1,0 +1,165 @@
+name: docs-rotate-monthly
+
+on:
+  schedule:
+    - cron: "0 18 1 * *" # monthly at 18:00 UTC
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+
+concurrency:
+  group: docs-rotate-monthly
+  cancel-in-progress: false
+
+jobs:
+  rotate:
+    name: Rotate aged schedule docs
+    runs-on: windows-latest
+    timeout-minutes: 10
+
+    env:
+      ISSUE_NUMBER: "1984"
+      GH_TOKEN: ${{ github.token }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Dry-run docs rotate
+        shell: pwsh
+        run: |
+          python scripts/docs_rotate.py `
+            --json-out docs-rotate-dry-run.json
+
+      - name: Apply docs rotate
+        shell: pwsh
+        run: |
+          python scripts/docs_rotate.py `
+            --apply `
+            --json-out docs-rotate-apply.json
+
+      - name: Upload rotate reports
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: docs-rotate-report
+          path: |
+            docs-rotate-dry-run.json
+            docs-rotate-apply.json
+          if-no-files-found: ignore
+
+      - name: Create rotate PR
+        id: pr
+        shell: pwsh
+        run: |
+          $summary = Get-Content -Raw -LiteralPath docs-rotate-apply.json | ConvertFrom-Json
+          if ([int]$summary.moved -eq 0) {
+            "created=false" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+            "url=" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+            exit 0
+          }
+
+          $branch = "automation/docs-rotate-$env:GITHUB_RUN_ID"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b $branch
+          foreach ($path in @("docs/cs-notes", "docs/daily-reports", "docs/auto-blog", "docs/_archive")) {
+            if (Test-Path $path) {
+              git add $path
+            }
+          }
+          if (-not (git diff --cached --name-only)) {
+            "created=false" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+            "url=" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+            exit 0
+          }
+          git commit -m "docs: rotate aged schedule outputs"
+          git push -u origin $branch
+
+          $body = @"
+          ## Summary
+          - Rotate schedule-output docs older than $($summary.age_days) days into `$($summary.archive_root)`.
+          - Source buckets: `$($summary.targets -join "`, `")`.
+
+          ## Rotation Report
+          | metric | value |
+          | --- | --- |
+          | files scanned | $($summary.files_scanned) |
+          | candidates | $($summary.candidates) |
+          | moved | $($summary.moved) |
+          | moved MB | $($summary.moved_mb) |
+          | workflow run | $env:GITHUB_SERVER_URL/$env:GITHUB_REPOSITORY/actions/runs/$env:GITHUB_RUN_ID |
+
+          Refs #1984 axis E.
+          "@
+
+          Set-Content -LiteralPath docs-rotate-pr.md -Value $body -Encoding utf8
+          $url = gh pr create `
+            --repo $env:GITHUB_REPOSITORY `
+            --base main `
+            --head $branch `
+            --title "[infra] Rotate aged schedule docs (#1984 axis E)" `
+            --body-file docs-rotate-pr.md
+          "created=true" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          "url=$url" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+
+      - name: Comment monthly report to Issue
+        if: always()
+        shell: pwsh
+        run: |
+          $summaryPath = "docs-rotate-apply.json"
+          if (-not (Test-Path $summaryPath)) {
+            $summaryPath = "docs-rotate-dry-run.json"
+          }
+
+          if (Test-Path $summaryPath) {
+            $summary = Get-Content -Raw -LiteralPath $summaryPath | ConvertFrom-Json
+            $mode = $summary.mode
+            $scanned = $summary.files_scanned
+            $candidates = $summary.candidates
+            $moved = $summary.moved
+            $failed = $summary.failed
+            $movedMb = $summary.moved_mb
+          } else {
+            $mode = "failed-before-summary"
+            $scanned = "n/a"
+            $candidates = "n/a"
+            $moved = "n/a"
+            $failed = "n/a"
+            $movedMb = "n/a"
+          }
+
+          $prUrl = "${{ steps.pr.outputs.url }}"
+          if (-not $prUrl) {
+            $prUrl = "none"
+          }
+
+          $body = @"
+          ## docs-rotate-monthly
+
+          | metric | value |
+          | --- | --- |
+          | mode | $mode |
+          | files scanned | $scanned |
+          | candidates | $candidates |
+          | moved | $moved |
+          | failed | $failed |
+          | moved MB | $movedMb |
+          | PR | $prUrl |
+          | run | $env:GITHUB_SERVER_URL/$env:GITHUB_REPOSITORY/actions/runs/$env:GITHUB_RUN_ID |
+
+          This keeps active schedule-output folders small by moving aged files into `docs/_archive` through a reviewable PR when there are changes.
+          "@
+
+          Set-Content -LiteralPath docs-rotate-comment.md -Value $body -Encoding utf8
+          gh issue comment $env:ISSUE_NUMBER --repo $env:GITHUB_REPOSITORY --body-file docs-rotate-comment.md
