@@ -1,0 +1,69 @@
+name: Config Size Monitor
+
+on:
+  schedule:
+    - cron: "0 0 1 * *" # monthly, first day 00:00 UTC
+  workflow_dispatch:
+    inputs:
+      strict:
+        description: "Fail the workflow when config size warnings are found"
+        required: false
+        default: "false"
+        type: choice
+        options:
+          - "true"
+          - "false"
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: config-size-monitor
+  cancel-in-progress: false
+
+jobs:
+  monitor:
+    name: Check CLAUDE.md and inject-rules size
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 5
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Run config size monitor
+        id: monitor
+        run: |
+          python scripts/config_size_monitor.py \
+            --json-output config-size-report.json \
+            --issue-body config-size-issue.md
+          cat config-size-report.json
+
+      - name: Open warning issue
+        if: steps.monitor.outputs.has_warnings == 'true'
+        run: |
+          TITLE="[automation][P2] config size monitor warning"
+          EXISTING=$(gh issue list --search "$TITLE in:title is:open" --json number --jq 'length')
+          if [ "$EXISTING" != "0" ]; then
+            echo "Skip: same-title open Issue already exists ($EXISTING)"
+            exit 0
+          fi
+          gh issue create \
+            --title "$TITLE" \
+            --label "automation,enhancement,priority:medium" \
+            --body-file config-size-issue.md
+
+      - name: Strict mode exit
+        if: steps.monitor.outputs.has_warnings == 'true' && github.event.inputs.strict == 'true'
+        run: exit 1
