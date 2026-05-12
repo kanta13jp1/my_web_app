@@ -1,8 +1,24 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class AiUniversityContentPage extends StatefulWidget {
-  const AiUniversityContentPage({super.key});
+  final String? facultyCode;
+  final String? facultyName;
+  final String? facultyEmoji;
+  final String? departmentCode;
+  final String? departmentName;
+  final String? departmentEmoji;
+
+  const AiUniversityContentPage({
+    super.key,
+    this.facultyCode,
+    this.facultyName,
+    this.facultyEmoji,
+    this.departmentCode,
+    this.departmentName,
+    this.departmentEmoji,
+  });
 
   @override
   State<AiUniversityContentPage> createState() =>
@@ -12,7 +28,14 @@ class AiUniversityContentPage extends StatefulWidget {
 class _AiUniversityContentPageState extends State<AiUniversityContentPage> {
   bool _loading = false;
   List<dynamic> _items = [];
+  List<dynamic> _filtered = [];
   String? _error;
+  String _searchQuery = '';
+
+  bool get _hasFacultyFilter =>
+      widget.facultyCode != null && widget.facultyCode!.isNotEmpty;
+  bool get _hasDeptFilter =>
+      widget.departmentCode != null && widget.departmentCode!.isNotEmpty;
 
   Future<void> _fetch() async {
     if (Supabase.instance.client.auth.currentUser == null) {
@@ -24,24 +47,54 @@ class _AiUniversityContentPageState extends State<AiUniversityContentPage> {
       _error = null;
     });
     try {
+      final body = <String, dynamic>{
+        'action': _hasFacultyFilter
+            ? 'university.content_by_faculty'
+            : 'university.content_all',
+        'limit': 500,
+      };
+      if (_hasDeptFilter) body['department_code'] = widget.departmentCode;
+      if (_hasFacultyFilter && !_hasDeptFilter) {
+        body['faculty_code'] = widget.facultyCode;
+      }
+
       final res = await Supabase.instance.client.functions.invoke(
         'ai-hub',
-        body: {'action': 'university.content_all', 'limit': 200},
+        body: body,
       );
       final data = res.data;
+      if (!mounted) return;
+      List<dynamic> all;
+      if (data is List) {
+        all = data;
+      } else if (data is Map && data['items'] is List) {
+        all = data['items'] as List;
+      } else {
+        all = [];
+      }
       setState(() {
-        if (data is List) {
-          _items = data;
-        } else if (data is Map && data['items'] is List) {
-          _items = data['items'] as List;
-        } else {
-          _items = [];
-        }
+        _items = all;
+        _applyFilter();
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() => _error = e.toString());
     } finally {
-      setState(() => _loading = false);
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  void _applyFilter() {
+    if (_searchQuery.isEmpty) {
+      _filtered = _items;
+    } else {
+      final q = _searchQuery.toLowerCase();
+      _filtered = _items.where((item) {
+        final m = item as Map<String, dynamic>? ?? {};
+        return (m['provider']?.toString().toLowerCase().contains(q) ?? false) ||
+            (m['title']?.toString().toLowerCase().contains(q) ?? false) ||
+            (m['category']?.toString().toLowerCase().contains(q) ?? false);
+      }).toList();
     }
   }
 
@@ -51,11 +104,23 @@ class _AiUniversityContentPageState extends State<AiUniversityContentPage> {
     _fetch();
   }
 
+  String get _pageTitle {
+    if (_hasDeptFilter) {
+      return '${widget.departmentEmoji ?? ''} ${widget.departmentName ?? '学科'}';
+    }
+    if (_hasFacultyFilter) {
+      return '${widget.facultyEmoji ?? ''} ${widget.facultyName ?? '学部'}';
+    }
+    return 'AI大学 コンテンツ';
+  }
+
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('AI大学 コンテンツ管理'),
+        title: Text(_pageTitle, overflow: TextOverflow.ellipsis),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
@@ -63,65 +128,259 @@ class _AiUniversityContentPageState extends State<AiUniversityContentPage> {
           ),
         ],
       ),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : _error != null
-              ? Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        'エラー: $_error',
-                        style: const TextStyle(
-                          color: Color(0xFFE53935),
-                          height: 1.5,
+      body: Column(
+        children: [
+          if (_hasFacultyFilter) _buildBreadcrumb(context, colorScheme),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
+            child: TextField(
+              decoration: const InputDecoration(
+                hintText: '検索...',
+                prefixIcon: Icon(Icons.search, size: 20),
+                isDense: true,
+              ),
+              onChanged: (v) => setState(() {
+                _searchQuery = v;
+                _applyFilter();
+              }),
+            ),
+          ),
+          Expanded(
+            child: _loading
+                ? const Center(child: CircularProgressIndicator())
+                : _error != null
+                    ? Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              'エラー: $_error',
+                              style: const TextStyle(
+                                color: Color(0xFFE53935),
+                                height: 1.5,
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            ElevatedButton(
+                              onPressed: _fetch,
+                              child: const Text('再試行'),
+                            ),
+                          ],
+                        ),
+                      )
+                    : _filtered.isEmpty
+                        ? Center(
+                            child: Text(
+                              _searchQuery.isNotEmpty
+                                  ? '「$_searchQuery」の結果なし'
+                                  : 'コンテンツなし',
+                            ),
+                          )
+                        : ListView.separated(
+                            padding: const EdgeInsets.all(12),
+                            itemCount: _filtered.length,
+                            separatorBuilder: (_, __) =>
+                                const Divider(height: 1),
+                            itemBuilder: (context, i) {
+                              final item =
+                                  _filtered[i] as Map<String, dynamic>? ?? {};
+                              return ListTile(
+                                dense: true,
+                                onTap: () =>
+                                    _showContentDetail(item, colorScheme),
+                                leading: Container(
+                                  width: 36,
+                                  height: 36,
+                                  decoration: BoxDecoration(
+                                    color: colorScheme.primary
+                                        .withValues(alpha: 0.1),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: const Icon(
+                                    Icons.school,
+                                    size: 18,
+                                    color: Color(0xFF6366F1),
+                                  ),
+                                ),
+                                title: Text(
+                                  '${item['provider'] ?? ''} — ${item['category'] ?? ''}',
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 13,
+                                    height: 1.4,
+                                  ),
+                                ),
+                                subtitle: Text(
+                                  item['title']?.toString() ?? '',
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    height: 1.4,
+                                  ),
+                                ),
+                                trailing: Text(
+                                  item['published_at']
+                                          ?.toString()
+                                          .substring(0, 10) ??
+                                      '',
+                                  style: const TextStyle(
+                                    fontSize: 10,
+                                    color: Color(0xFFB0B0B0),
+                                    height: 1.5,
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBreadcrumb(BuildContext context, ColorScheme colorScheme) {
+    final parts = <String>['AI大学'];
+    if (_hasFacultyFilter) {
+      parts.add('${widget.facultyEmoji ?? ''} ${widget.facultyName ?? ''}');
+    }
+    if (_hasDeptFilter) {
+      parts.add(
+        '${widget.departmentEmoji ?? ''} ${widget.departmentName ?? ''}',
+      );
+    }
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+      child: Row(
+        children: parts.asMap().entries.expand((entry) {
+          final idx = entry.key;
+          final label = entry.value;
+          final isLast = idx == parts.length - 1;
+          return [
+            Text(
+              label,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: isLast
+                        ? colorScheme.primary
+                        : colorScheme.onSurface.withValues(alpha: 0.5),
+                    fontWeight: isLast ? FontWeight.w700 : FontWeight.normal,
+                  ),
+            ),
+            if (!isLast)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                child: Icon(
+                  Icons.chevron_right,
+                  size: 14,
+                  color: colorScheme.onSurface.withValues(alpha: 0.4),
+                ),
+              ),
+          ];
+        }).toList(),
+      ),
+    );
+  }
+
+  void _showContentDetail(Map<String, dynamic> item, ColorScheme colorScheme) {
+    final title = item['title']?.toString() ?? '';
+    final provider = item['provider']?.toString() ?? '';
+    final category = item['category']?.toString() ?? '';
+    final publishedValue = item['published_at']?.toString() ?? '';
+    final publishedAt = publishedValue.length >= 10
+        ? publishedValue.substring(0, 10)
+        : publishedValue;
+    final content = item['content']?.toString() ?? '';
+
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (context) {
+        return DraggableScrollableSheet(
+          expand: false,
+          initialChildSize: 0.86,
+          minChildSize: 0.5,
+          maxChildSize: 0.96,
+          builder: (context, scrollController) {
+            return ListView(
+              controller: scrollController,
+              padding: const EdgeInsets.fromLTRB(20, 4, 20, 28),
+              children: [
+                Text(
+                  title,
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w800,
+                        height: 1.35,
+                      ),
+                ),
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    _MetaChip(label: provider),
+                    _MetaChip(label: category),
+                    if (publishedAt.isNotEmpty) _MetaChip(label: publishedAt),
+                  ],
+                ),
+                const SizedBox(height: 18),
+                MarkdownBody(
+                  data: content,
+                  styleSheet: MarkdownStyleSheet.fromTheme(
+                    Theme.of(context),
+                  ).copyWith(
+                    p: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          height: 1.65,
+                        ),
+                    h2: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w800,
+                          height: 1.4,
+                        ),
+                    codeblockDecoration: BoxDecoration(
+                      color: colorScheme.surfaceContainerHighest.withValues(
+                        alpha: 0.75,
+                      ),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: colorScheme.outlineVariant.withValues(
+                          alpha: 0.7,
                         ),
                       ),
-                      const SizedBox(height: 16),
-                      ElevatedButton(
-                        onPressed: _fetch,
-                        child: const Text('再試行'),
-                      ),
-                    ],
-                  ),
-                )
-              : _items.isEmpty
-                  ? const Center(child: Text('コンテンツなし'))
-                  : ListView.separated(
-                      padding: const EdgeInsets.all(16),
-                      itemCount: _items.length,
-                      separatorBuilder: (_, __) => const Divider(),
-                      itemBuilder: (context, i) {
-                        final item = _items[i] as Map<String, dynamic>? ?? {};
-                        return ListTile(
-                          leading: const Icon(
-                            Icons.school,
-                            color: Color(0xFF6366F1),
-                          ),
-                          title: Text(
-                            '${item['provider'] ?? ''} — ${item['category'] ?? ''}',
-                            style: const TextStyle(
-                              fontWeight: FontWeight.w600,
-                              height: 1.5,
-                            ),
-                          ),
-                          subtitle: Text(
-                            item['title']?.toString() ?? '',
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          trailing: Text(
-                            item['published_at']?.toString().substring(0, 10) ??
-                                '',
-                            style: const TextStyle(
-                              fontSize: 11,
-                              color: Color(0xFFB0B0B0),
-                              height: 1.5,
-                            ),
-                          ),
-                        );
-                      },
                     ),
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+}
+
+class _MetaChip extends StatelessWidget {
+  const _MetaChip({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: colorScheme.primary.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: colorScheme.primary.withValues(alpha: 0.16)),
+      ),
+      child: Text(
+        label,
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              color: colorScheme.primary,
+              fontWeight: FontWeight.w700,
+            ),
+      ),
     );
   }
 }

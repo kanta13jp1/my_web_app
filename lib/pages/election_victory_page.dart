@@ -1,7 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
-import 'dart:js_interop';
-import 'package:web/web.dart' as web;
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -14,12 +11,14 @@ import '../models/local_election_plan.dart';
 import '../models/local_election_reality.dart';
 import '../models/public_memo.dart';
 import '../services/local_election_plan_service.dart';
+import '../utils/web_image_downloader.dart';
 import '../services/local_election_reality_service.dart';
 import '../services/local_election_share_service.dart';
 import '../services/public_memo_service.dart';
 import '../widgets/election_japan_map.dart';
 import '../widgets/election_progress_chart.dart';
 import '../widgets/election_regional_kpi_chart.dart';
+import '../widgets/election_news_badge.dart';
 import '../widgets/election_x_post_composer_dialog.dart';
 
 class ElectionVictoryPage extends StatefulWidget {
@@ -595,6 +594,10 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
   }
 
   Future<void> _runGeminiAnalysis() async {
+    if (Supabase.instance.client.auth.currentUser == null) {
+      setState(() => _isLoading = false);
+      return;
+    }
     if (_isGeminiLoading) return;
     setState(() {
       _isGeminiLoading = true;
@@ -1175,38 +1178,39 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        '最新の実データ',
-                        style:
-                            Theme.of(context).textTheme.titleMedium?.copyWith(
-                                  fontWeight: FontWeight.w700,
-                                ),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        hasSnapshot
-                            ? '公式議員ページと2023年の公式選挙結果ページを取得して、'
-                                'AIで各県連の現職人数・目標擁立数・予定選挙数・公認期限を自動更新します。'
-                            : 'まだ最新データを取得できていません。'
-                                'ネット経由で公式ソースを再取得すると、'
-                                '計画値とのズレを把握できます。',
-                        style: Theme.of(context).textTheme.bodySmall,
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Wrap(
+            LayoutBuilder(
+              builder: (context, constraints) {
+                // Win版#132 part 129: 9 ボタンの Wrap が無制限幅で
+                // 「最新の実データ」テキスト Expanded を 0 幅に潰し、
+                // 縦書き 1 文字 / 行に崩れる bug の修正.
+                // 900px 以上なら横並び (= Row + Flexible 5:7) /
+                // 未満なら縦積み (= Column / 旧来の挙動).
+                final wide = constraints.maxWidth >= 900;
+                final textColumn = Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '最新の実データ',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w700,
+                          ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      hasSnapshot
+                          ? '公式議員ページと2023年の公式選挙結果ページを取得して、'
+                              'AIで各県連の現職人数・目標擁立数・予定選挙数・公認期限を自動更新します。'
+                          : 'まだ最新データを取得できていません。'
+                              'ネット経由で公式ソースを再取得すると、'
+                              '計画値とのズレを把握できます。',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  ],
+                );
+                final actionWrap = Wrap(
                   spacing: 8,
                   runSpacing: 8,
-                  alignment: WrapAlignment.end,
+                  alignment: wide ? WrapAlignment.end : WrapAlignment.start,
                   children: [
                     OutlinedButton.icon(
                       onPressed: _copyPublicDashboardLink,
@@ -1288,8 +1292,31 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                       label: Text(_isRealityLoading ? '取得中' : '最新取得'),
                     ),
                   ],
-                ),
-              ],
+                );
+                if (wide) {
+                  // Win版#132 part 138: Flexible (= FlexFit.loose) では
+                  // actionWrap の Wrap intrinsic width (= 8 ボタン単行 ≈1500px)
+                  // が textColumn の share を 0 近くまで奪い、
+                  // 縦書き 1 文字 / 行に再崩れする (= part 129 再発).
+                  // Expanded (= FlexFit.tight) で 5:7 share を強制割当する.
+                  return Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(flex: 5, child: textColumn),
+                      const SizedBox(width: 12),
+                      Expanded(flex: 7, child: actionWrap),
+                    ],
+                  );
+                }
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    textColumn,
+                    const SizedBox(height: 12),
+                    actionWrap,
+                  ],
+                );
+              },
             ),
             if (realitySnapshot != null) ...[
               const SizedBox(height: 12),
@@ -2192,18 +2219,10 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
     }
 
     final csvData = buffer.toString();
-    final csvBytes = Uint8List.fromList(utf8.encode('\uFEFF$csvData'));
-    final blob = web.Blob(
-      [csvBytes.toJS].toJS,
-      web.BlobPropertyBag(type: 'text/csv;charset=utf-8'),
+    downloadCsvFile(
+      csvData,
+      'election_data_${DateFormat('yyyyMMdd').format(DateTime.now())}.csv',
     );
-    final url = web.URL.createObjectURL(blob);
-    web.HTMLAnchorElement()
-      ..href = url
-      ..download =
-          'election_data_${DateFormat('yyyyMMdd').format(DateTime.now())}.csv'
-      ..click();
-    web.URL.revokeObjectURL(url);
 
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
@@ -4991,6 +5010,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
               ],
             ),
             const SizedBox(height: 12),
+            ElectionNewsBadge(prefecture: plan.prefecture),
             _buildKgiCsfKpiPanel(plan),
             const SizedBox(height: 12),
             _buildPrefectureOfficerPanel(plan),

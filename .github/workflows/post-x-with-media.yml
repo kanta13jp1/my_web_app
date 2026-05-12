@@ -15,9 +15,14 @@ on:
         type: string
         default: ""
 
+concurrency:
+  group: post-x-with-media
+  cancel-in-progress: false
+
 jobs:
   post:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - name: Build tweet text
         id: tweet
@@ -27,11 +32,17 @@ jobs:
             TEXT="$CUSTOM_TEXT"
           else
             WEEK=$(date +"%Y年%-m月%-d日週")
-            TEXT="🤖 自分株式会社 週次アップデート (${WEEK})\n\nAI統合ライフマネジメントアプリ — Notion/MoneyForward/Slack など21競合の機能を1つに。\n\nhttps://my-web-app-b67f4.web.app/ #AI #Flutter #個人開発"
+            # printf '%b' converts \n to actual LF
+            TEXT=$(printf '🤖 自分株式会社 週次アップデート (%s)\n\nAI統合ライフマネジメントアプリ — Notion/MoneyForward/Slack など21競合の機能を1つに。\n\nhttps://my-web-app-b67f4.web.app/ #AI #Flutter #個人開発' "$WEEK")
           fi
           # Truncate to 280 chars if needed
           TEXT="${TEXT:0:280}"
-          echo "text=$TEXT" >> $GITHUB_OUTPUT
+          # GitHub Actions multi-line output requires heredoc
+          {
+            echo "text<<__EOT__"
+            echo "$TEXT"
+            echo "__EOT__"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Post to X with OGP image
         run: |
@@ -44,7 +55,7 @@ jobs:
           PAYLOAD=$(jq -n \
             --arg action "x.post_with_media" \
             --arg text "${{ steps.tweet.outputs.text }}" \
-            --arg mediaUrl "https://my-web-app-b67f4.web.app/ogp.png" \
+            --arg mediaUrl "https://my-web-app-b67f4.web.app/ogp-image-gen2-20260428.png" \
             --arg mediaType "image/png" \
             --arg mediaCategory "tweet_image" \
             --arg source "post-x-with-media.yml" \

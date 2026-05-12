@@ -1,4 +1,4 @@
-# Google Gemini APIへの移行ガイド
+# Google Gemini APIへの移行ガイド [Archive]
 
 **作成日**: 2025年11月8日
 **目的**: OpenAI APIからGoogle Gemini APIへ移行し、レート制限問題を解決

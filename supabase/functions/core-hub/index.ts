@@ -1,9 +1,11 @@
 // core-hub — コアUI・メモ・通知・ユーザー管理統合EF
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
+import { createClient, SupabaseClient } from "npm:@supabase/supabase-js@2";
 import {
-  createClient,
-  SupabaseClient,
-} from "https://esm.sh/@supabase/supabase-js@2";
+  createSupabaseMemoReactionStore,
+  handleMemoReactionAction,
+  type MemoReactionAction,
+} from "./memo_reactions.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -566,6 +568,7 @@ async function createFeatureRequestWbsTask(
       `受入条件: ${params.attachmentAnalysis.acceptance_criteria}`,
     );
   }
+  const today = new Date().toISOString().slice(0, 10);
 
   const { data, error } = await admin.from("wbs_tasks").insert({
     category: "ユーザー要望",
@@ -577,6 +580,10 @@ async function createFeatureRequestWbsTask(
     owner_instance: "vscode",
     status: "pending",
     progress: 0,
+    start_date: today,
+    end_date: today,
+    planned_start_date: today,
+    planned_end_date: today,
     milestone_code: "beta",
     priority: params.priority,
     remaining_work: issueLine,
@@ -654,6 +661,24 @@ serve(async (req: Request) => {
           reaction: body.reaction,
         });
         return json({ success: true, item });
+      }
+
+      // ---- Memo reactions (anonymous, IP-based — public_memos に対する emoji reaction) ----
+      // Win版#132 part 50: legacy `memo-reactions` EF が core-hub 移行で部分実装に
+      // とどまっていた問題を補完。元 EF と同じ contract:
+      //   request:  { action, memo_id }                 → counts + userReactions
+      //             { action, memo_id, reaction }       → toggle (insert or delete) + counts
+      //   response: { reactions: {emoji: count}, userReactions: [emoji, ...], (added) }
+      // ip_hash は server 側で `x-forwarded-for` を sha256 して生成する (clientは送らない)。
+      case "memo.react.list":
+      case "memo.react.toggle": {
+        const result = await handleMemoReactionAction({
+          action: action as MemoReactionAction,
+          body,
+          headers: req.headers,
+          store: createSupabaseMemoReactionStore(admin),
+        });
+        return json(result.payload, result.status);
       }
 
       // ---- OGP (memo) ----
@@ -2056,6 +2081,91 @@ description: ${pageDescription}
           page_share_id: upserted?.id,
           generated_by: generatedBy,
         });
+      }
+
+      // ---- Design audit actions ----
+
+      case "design.screens.list": {
+        const { data: screens, error: e1 } = await admin
+          .from("design_screens")
+          .select(
+            "route, name, category, compliance, audit_date, notes, mcp_tool_used",
+          );
+        if (e1) return json({ error: e1.message }, 500);
+
+        const { data: rollouts, error: e2 } = await admin
+          .from("design_rollout")
+          .select("*");
+        if (e2) return json({ error: e2.message }, 500);
+
+        return json({ screens: screens ?? [], rollouts: rollouts ?? [] });
+      }
+
+      case "design.audit.upsert": {
+        const auth = req.headers.get("authorization") ?? "";
+        if (auth.replace(/^Bearer\s+/i, "") !== SERVICE_ROLE_KEY) {
+          return json({ error: "forbidden" }, 403);
+        }
+        const route = String(body.route ?? "");
+        if (!route) return json({ error: "route required" }, 400);
+        const compliance = Array.isArray(body.compliance)
+          ? body.compliance
+          : null;
+        if (
+          compliance &&
+          (compliance.length !== 7 ||
+            compliance.some((v) => typeof v !== "boolean"))
+        ) {
+          return json({ error: "compliance must be boolean[7]" }, 400);
+        }
+        const { error: uErr } = await admin.from("design_screens").upsert({
+          route,
+          name: body.name,
+          category: body.category,
+          compliance,
+          audit_date: body.audit_date ?? new Date().toISOString().slice(0, 10),
+          notes: body.notes ?? null,
+          mcp_tool_used: body.mcp_tool_used ?? null,
+          updated_at: new Date().toISOString(),
+        });
+        if (uErr) return json({ error: uErr.message }, 500);
+        return json({ success: true });
+      }
+
+      case "design.rollout.upsert": {
+        const auth = req.headers.get("authorization") ?? "";
+        if (auth.replace(/^Bearer\s+/i, "") !== SERVICE_ROLE_KEY) {
+          return json({ error: "forbidden" }, 403);
+        }
+        const route = String(body.route ?? "");
+        if (!route) return json({ error: "route required" }, 400);
+        const validStages = new Set(["applied", "in_progress", "planned"]);
+        for (
+          const k of [
+            "stage",
+            "figma_mcp",
+            "ai_designer",
+            "design_skills",
+            "design_md",
+          ]
+        ) {
+          if (!validStages.has(String(body[k]))) {
+            return json({ error: `invalid ${k}` }, 400);
+          }
+        }
+        const { error: rErr } = await admin.from("design_rollout").upsert({
+          route,
+          stage: body.stage,
+          figma_mcp: body.figma_mcp,
+          ai_designer: body.ai_designer,
+          design_skills: body.design_skills,
+          design_md: body.design_md,
+          headline: body.headline,
+          next_step: body.next_step,
+          updated_at: new Date().toISOString(),
+        });
+        if (rErr) return json({ error: rErr.message }, 500);
+        return json({ success: true });
       }
 
       default:

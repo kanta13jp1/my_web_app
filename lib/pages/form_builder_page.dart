@@ -81,6 +81,7 @@ class _FormBuilderPageState extends State<FormBuilderPage> {
       );
       await _fetchForms();
     } catch (e) {
+      if (!mounted) return;
       if (mounted) setState(() => _errorMessage = 'フォームの作成に失敗しました: $e');
     } finally {
       if (mounted) setState(() => _isLoading = false);

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// 旅行プランナーページ
-/// travel-itinerary-planner Edge Function と連携
+/// lifestyle-hub (travel.*) 連携
 /// Google Travel / TripAdvisor / Amazon Travel 競合
 class TravelItineraryPage extends StatefulWidget {
   const TravelItineraryPage({super.key});
@@ -57,8 +57,8 @@ class _TravelItineraryPageState extends State<TravelItineraryPage>
     });
     try {
       final response = await _supabase.functions.invoke(
-        'travel-itinerary-planner',
-        queryParameters: {'view': 'trips'},
+        'lifestyle-hub',
+        body: {'action': 'travel.list'},
       );
       final data = response.data;
       if (data is Map<String, dynamic> && data['trips'] is List) {
@@ -78,8 +78,12 @@ class _TravelItineraryPageState extends State<TravelItineraryPage>
   Future<void> _fetchItinerary(String tripId) async {
     try {
       final response = await _supabase.functions.invoke(
-        'travel-itinerary-planner',
-        queryParameters: {'view': 'itinerary', 'trip_id': tripId},
+        'lifestyle-hub',
+        body: {
+          'action': 'travel.get_items',
+          'trip_id': tripId,
+          'type': 'activity',
+        },
       );
       final data = response.data;
       if (data is Map<String, dynamic> && data['itinerary'] is Map) {
@@ -92,6 +96,12 @@ class _TravelItineraryPageState extends State<TravelItineraryPage>
             ),
           );
         });
+      } else if (data is Map<String, dynamic> && data['items'] is List) {
+        setState(
+          () => _itinerary = {
+            'all': (data['items'] as List).cast<Map<String, dynamic>>(),
+          },
+        );
       }
     } catch (_) {}
   }
@@ -99,15 +109,19 @@ class _TravelItineraryPageState extends State<TravelItineraryPage>
   Future<void> _fetchBookings(String tripId) async {
     try {
       final response = await _supabase.functions.invoke(
-        'travel-itinerary-planner',
-        queryParameters: {'view': 'bookings', 'trip_id': tripId},
+        'lifestyle-hub',
+        body: {
+          'action': 'travel.get_items',
+          'trip_id': tripId,
+          'type': 'booking',
+        },
       );
       final data = response.data;
-      if (data is Map<String, dynamic> && data['bookings'] is List) {
-        setState(
-          () => _bookings =
-              (data['bookings'] as List).cast<Map<String, dynamic>>(),
-        );
+      if (data is Map<String, dynamic>) {
+        final list = (data['items'] ?? data['bookings']) as List?;
+        if (list != null) {
+          setState(() => _bookings = list.cast<Map<String, dynamic>>());
+        }
       }
     } catch (_) {}
   }
@@ -115,15 +129,21 @@ class _TravelItineraryPageState extends State<TravelItineraryPage>
   Future<void> _fetchPacking(String tripId) async {
     try {
       final response = await _supabase.functions.invoke(
-        'travel-itinerary-planner',
-        queryParameters: {'view': 'packing', 'trip_id': tripId},
+        'lifestyle-hub',
+        body: {
+          'action': 'travel.get_items',
+          'trip_id': tripId,
+          'type': 'packing',
+        },
       );
       final data = response.data;
-      if (data is Map<String, dynamic> && data['items'] is List) {
-        setState(
-          () => _packingItems =
-              (data['items'] as List).map((e) => e.toString()).toList(),
-        );
+      if (data is Map<String, dynamic>) {
+        final list = (data['items'] ?? data['packing']) as List?;
+        if (list != null) {
+          setState(
+            () => _packingItems = list.map((e) => e.toString()).toList(),
+          );
+        }
       }
     } catch (_) {}
   }
@@ -131,8 +151,8 @@ class _TravelItineraryPageState extends State<TravelItineraryPage>
   Future<void> _fetchBudget(String tripId) async {
     try {
       final response = await _supabase.functions.invoke(
-        'travel-itinerary-planner',
-        queryParameters: {'view': 'budget', 'trip_id': tripId},
+        'lifestyle-hub',
+        body: {'action': 'travel.get_budget', 'trip_id': tripId},
       );
       final data = response.data;
       if (data is Map<String, dynamic>) {
@@ -214,9 +234,9 @@ class _TravelItineraryPageState extends State<TravelItineraryPage>
     if (_tripNameCtrl.text.trim().isEmpty) return;
     try {
       await _supabase.functions.invoke(
-        'travel-itinerary-planner',
+        'lifestyle-hub',
         body: {
-          'action': 'create_trip',
+          'action': 'travel.create',
           'name': _tripNameCtrl.text.trim(),
           'destination': _destinationCtrl.text.trim(),
           'start_date': _startDateCtrl.text.trim(),
@@ -286,9 +306,9 @@ class _TravelItineraryPageState extends State<TravelItineraryPage>
     if (confirmed != true) return;
     try {
       await _supabase.functions.invoke(
-        'travel-itinerary-planner',
+        'lifestyle-hub',
         body: {
-          'action': 'add_activity',
+          'action': 'travel.add_item',
           'trip_id': trip['id'],
           'name': nameCtrl.text.trim(),
           'day': dayCtrl.text.trim(),

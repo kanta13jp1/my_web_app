@@ -1,0 +1,70 @@
+name: Testcontainers Integration Smoke
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/testcontainers-integration.yml"
+      - "scripts/testcontainers_supabase_smoke.py"
+      - "test/fixtures/testcontainers/**"
+      - "test/scripts/test_testcontainers_supabase_smoke.py"
+      - "docs/testing/testcontainers_supabase_smoke.md"
+      - "supabase/functions/**"
+      - "supabase/migrations/**"
+  workflow_dispatch:
+
+concurrency:
+  group: testcontainers-integration-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    name: DB + Edge smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      TESTCONTAINERS_RYUK_DISABLED: "true"
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Setup Deno
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      - name: Show Docker version
+        run: docker version
+
+      - name: Install smoke dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install "testcontainers[postgres]>=4.8,<5" "psycopg[binary]>=3.2,<4"
+
+      - name: Unit-test smoke helpers
+        run: python test/scripts/test_testcontainers_supabase_smoke.py
+
+      - name: Print smoke plan
+        run: python scripts/testcontainers_supabase_smoke.py --plan
+
+      - name: Run Testcontainers smoke
+        run: python scripts/testcontainers_supabase_smoke.py --artifacts-dir .testcontainers-logs
+
+      - name: Upload smoke artifacts
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: testcontainers-smoke-logs
+          path: .testcontainers-logs/
+          if-no-files-found: ignore
+          include-hidden-files: true

@@ -1,0 +1,23 @@
+{
+  "task_id": "cs-check",
+  "status": "success",
+  "executed_at": "2026-05-01T02:14:51Z",
+  "environment": "web-version",
+  "summary": "Edge Function UI追加: 0件 / チケット: 0件(API疎通OK) / Issue修正: 0件 / workflow-failure修復: 0件(手動対応必要) / Schedule健全性: 正常",
+  "details": {
+    "ef_count": 20,
+    "ef_new_ui": 0,
+    "ticket_count": 0,
+    "ticket_http_code": 200,
+    "open_prs": 10,
+    "pr_reviews_posted": 0,
+    "issues_auto_review": 0,
+    "issues_workflow_failure": 1,
+    "schedule_ok": true,
+    "daily_report_ok": true,
+    "warnings": [
+      "flutter-analyze-cache.json は 2026-04-11 から未更新 (ci.yml cancelled 継続?)",
+      "PR #863 merge conflict — Issue #862 追跡中"
+    ]
+  }
+}

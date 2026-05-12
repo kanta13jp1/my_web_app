@@ -1,0 +1,84 @@
+name: Blog News Signal Draft
+
+on:
+  workflow_dispatch:
+    inputs:
+      signal_limit:
+        description: "Number of ranked news signals to turn into a draft"
+        required: false
+        default: "5"
+      force:
+        description: "true to bypass daily dedupe"
+        required: false
+        default: "false"
+      dry_run:
+        description: "true to print the request without creating a draft"
+        required: false
+        default: "false"
+  schedule:
+    # 06:20 JST. Runs before the daily blog draft/publish pipeline.
+    - cron: "20 21 * * *"
+
+concurrency:
+  group: blog-news-signal-draft
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  create-draft:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    env:
+      SUPABASE_URL: https://smmkxxavexumewbfaqpy.supabase.co
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      SIGNAL_LIMIT: ${{ github.event.inputs.signal_limit || '5' }}
+      FORCE: ${{ github.event.inputs.force || 'false' }}
+      DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
+
+    steps:
+      - name: Create news signal blog draft
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+          import urllib.request
+
+          url = os.environ["SUPABASE_URL"].rstrip("/")
+          key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "")
+          signal_limit = int(os.environ.get("SIGNAL_LIMIT") or "5")
+          force = os.environ.get("FORCE", "false").lower() == "true"
+          dry_run = os.environ.get("DRY_RUN", "false").lower() == "true"
+
+          payload = {
+              "action": "blog.news_signal_draft",
+              "signal_limit": signal_limit,
+              "force": force,
+              "external_brain": True,
+              "target_platforms": ["note", "qiita", "devto"],
+              "tags": ["AI", "ニュース", "自動化", "外部脳"],
+          }
+          print(json.dumps(payload, ensure_ascii=False, indent=2))
+
+          if dry_run:
+              print("dry_run=true, skipping schedule-hub call")
+              raise SystemExit(0)
+          if not key:
+              raise SystemExit("SUPABASE_SERVICE_ROLE_KEY is required")
+
+          req = urllib.request.Request(
+              f"{url}/functions/v1/schedule-hub",
+              data=json.dumps(payload).encode("utf-8"),
+              headers={
+                  "Authorization": f"Bearer {key}",
+                  "apikey": key,
+                  "Content-Type": "application/json",
+              },
+              method="POST",
+          )
+          with urllib.request.urlopen(req, timeout=60) as res:
+              body = res.read().decode("utf-8")
+              print(f"HTTP {res.status}")
+              print(body[:4000])
+          PY

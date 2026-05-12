@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <base href="$FLUTTER_BASE_HREF">
+  <base href="/">
 
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
@@ -40,9 +40,11 @@
   >
   <meta
     property="og:image"
-    content="https://my-web-app-b67f4.web.app/ogp.png"
+    content="https://my-web-app-b67f4.web.app/ogp-image-gen2-20260428.png"
   >
   <meta property="og:image:type" content="image/png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
   <meta property="og:image:alt" content="自分株式会社 - AI life management app">
   <meta property="og:site_name" content="自分株式会社">
   <meta property="og:locale" content="ja_JP">
@@ -57,7 +59,7 @@
   >
   <meta
     property="twitter:image"
-    content="https://my-web-app-b67f4.web.app/ogp.png"
+    content="https://my-web-app-b67f4.web.app/ogp-image-gen2-20260428.png"
   >
   <meta property="twitter:image:alt" content="自分株式会社 - AI life management app">
 
@@ -182,32 +184,33 @@
 
     body {
       margin: 0;
-      background:
-        radial-gradient(circle at top right, rgba(79, 70, 229, 0.16), transparent 36%),
-        linear-gradient(180deg, #eef2ff 0%, #ffffff 72%);
+      background: linear-gradient(180deg, #f8fbff 0%, #ffffff 76%);
       color: #111827;
     }
 
     #seo-shell {
       min-height: 100vh;
       display: flex;
-      align-items: center;
+      align-items: flex-start;
       justify-content: center;
-      padding: 24px;
+      padding: 58px 24px 32px;
       box-sizing: border-box;
     }
 
     .seo-card {
-      width: min(880px, 100%);
-      padding: 28px;
-      border-radius: 24px;
-      background: rgba(255, 255, 255, 0.94);
-      border: 1px solid rgba(99, 102, 241, 0.14);
-      box-shadow: 0 20px 60px rgba(15, 23, 42, 0.10);
+      width: min(1180px, 100%);
+      padding: 0;
+      border-radius: 10px;
+      background:
+        linear-gradient(176deg, rgba(255, 255, 255, 0) 0 38%, rgba(234, 244, 255, 0.86) 39% 100%),
+        #f8fbff;
+      border: 0;
+      box-shadow: none;
+      text-align: center;
     }
 
     .seo-badge {
-      margin: 0 0 10px;
+      margin: 0 0 12px;
       display: inline-flex;
       align-items: center;
       gap: 8px;
@@ -223,13 +226,15 @@
 
     .seo-card h1 {
       margin: 0;
-      font-family: "Noto Serif JP", serif;
-      font-size: clamp(32px, 5vw, 54px);
-      line-height: 1.08;
+      font-family: "Noto Sans JP", "Noto Sans", sans-serif;
+      font-size: clamp(42px, 5vw, 56px);
+      line-height: 1.12;
+      letter-spacing: 0;
     }
 
     .seo-card p {
-      margin: 14px 0 0;
+      max-width: 760px;
+      margin: 16px auto 0;
       font-size: 16px;
       line-height: 1.75;
       color: #374151;
@@ -243,6 +248,7 @@
     .seo-tags {
       display: flex;
       flex-wrap: wrap;
+      justify-content: center;
       gap: 10px;
       margin-top: 18px;
     }
@@ -259,8 +265,9 @@
     .seo-links {
       display: flex;
       flex-wrap: wrap;
+      justify-content: center;
       gap: 12px;
-      margin-top: 22px;
+      margin-top: 24px;
     }
 
     .seo-links a {
@@ -269,20 +276,102 @@
       justify-content: center;
       min-height: 46px;
       padding: 0 16px;
-      border-radius: 14px;
+      border-radius: 6px;
       text-decoration: none;
       font-weight: 700;
       transition: background-color 120ms ease;
     }
 
     .seo-links a.primary {
-      background: #3949ab;
+      background: #1f7ae0;
       color: #ffffff;
+      min-width: 160px;
     }
 
     .seo-links a.secondary {
-      background: #eef2ff;
-      color: #3949ab;
+      background: #ffffff;
+      color: #172033;
+      border: 1px solid #d8e2ee;
+    }
+
+    .seo-product-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      margin-top: 42px;
+      border: 1px solid #dce7f2;
+      border-radius: 8px;
+      overflow: hidden;
+      text-align: left;
+      background: rgba(255, 255, 255, 0.92);
+    }
+
+    .seo-product-card {
+      min-height: 214px;
+      padding: 30px;
+      border-right: 1px solid #dce7f2;
+    }
+
+    .seo-product-card:last-child {
+      border-right: 0;
+    }
+
+    .seo-product-card h2 {
+      margin: 0;
+      color: #245078;
+      font-size: 21px;
+      line-height: 1.25;
+    }
+
+    .seo-product-card p {
+      margin: 12px 0 0;
+      color: #4b5a6a;
+      font-size: 14px;
+      line-height: 1.55;
+    }
+
+    .seo-mock {
+      margin-top: 24px;
+      min-height: 76px;
+      padding: 16px;
+      border: 1px solid #e3eaf4;
+      border-radius: 6px;
+      background: white;
+      box-shadow: 0 10px 18px rgba(30, 58, 95, 0.08);
+      color: #172033;
+      font-size: 13px;
+    }
+
+    .seo-bars {
+      display: flex;
+      align-items: end;
+      gap: 8px;
+      height: 72px;
+    }
+
+    .seo-bars span {
+      width: 14px;
+      border-radius: 3px 3px 0 0;
+      background: #2f9ded;
+    }
+
+    .seo-bars span:nth-child(2n) {
+      background: #ffb547;
+    }
+
+    .seo-bars span:nth-child(3n) {
+      background: #43c77d;
+    }
+
+    .seo-new {
+      margin-top: 34px;
+      padding: 24px;
+      background: rgba(255, 255, 255, 0.9);
+    }
+
+    .seo-new h2 {
+      margin: 0;
+      color: #172033;
+      font-size: 28px;
     }
 
     .seo-loading {
@@ -305,8 +394,7 @@
       }
 
       .seo-card {
-        padding: 22px;
-        border-radius: 20px;
+        border-radius: 0;
       }
 
       .seo-card p {
@@ -315,6 +403,19 @@
 
       .seo-links a {
         width: 100%;
+      }
+
+      .seo-product-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .seo-product-card {
+        border-right: 0;
+        border-bottom: 1px solid #dce7f2;
+      }
+
+      .seo-product-card:last-child {
+        border-bottom: 0;
       }
     }
   </style>
@@ -349,13 +450,39 @@
       </div>
       <nav class="seo-links" aria-label="公開ページ">
         <a class="primary" href="https://my-web-app-b67f4.web.app/">無料で始める</a>
-        <a class="secondary" href="https://my-web-app-b67f4.web.app/gemini-university">Gemini University</a>
-        <a class="secondary" href="https://my-web-app-b67f4.web.app/feature-requests">機能リクエスト</a>
-        <a class="secondary" href="https://my-web-app-b67f4.web.app/danshari">断捨離ツール</a>
+        <a class="secondary" href="https://my-web-app-b67f4.web.app/">Watch Demo</a>
         <a class="secondary" href="https://my-web-app-b67f4.web.app/project-gantt">WBSガントチャート</a>
-        <a class="secondary" href="https://my-web-app-b67f4.web.app/ai-dev-principles">AI開発原則</a>
-        <a class="secondary" href="https://my-web-app-b67f4.web.app/public-guitar-gallery">公開ギャラリー</a>
       </nav>
+      <section class="seo-product-grid" aria-label="主要機能">
+        <article class="seo-product-card">
+          <h2>Task Automations</h2>
+          <p>迷ったタスクを、次の一手まで自動整理。</p>
+          <div class="seo-mock">
+            <strong>When</strong> WBS task is blocked<br>
+            <strong>Then</strong> Split into next actions
+          </div>
+        </article>
+        <article class="seo-product-card">
+          <h2>Time Tracking</h2>
+          <p>集中時間と習慣を、内蔵タイマーで記録。</p>
+          <div class="seo-mock" style="text-align:center;font-size:28px;letter-spacing:1px;">
+            02:17:45
+          </div>
+        </article>
+        <article class="seo-product-card">
+          <h2>Advanced Reporting</h2>
+          <p>WBS・成長・習慣をレポートで俯瞰。</p>
+          <div class="seo-mock seo-bars" aria-hidden="true">
+            <span style="height:45px"></span><span style="height:64px"></span><span style="height:38px"></span>
+            <span style="height:55px"></span><span style="height:32px"></span><span style="height:70px"></span>
+            <span style="height:48px"></span><span style="height:62px"></span>
+          </div>
+        </article>
+      </section>
+      <section class="seo-new" aria-label="新機能">
+        <h2>What's New?</h2>
+        <p>Smart Automations・Time Tracking・Detailed Reports を公開中。</p>
+      </section>
       <p class="seo-loading">Loading application...</p>
       <noscript>
         JavaScript is required to use the full app. Search engines and preview crawlers
@@ -386,16 +513,22 @@
         if (link) link.setAttribute('href', url);
       }
 
+      var defaultOgImageUrl = 'https://my-web-app-b67f4.web.app/ogp-image-gen2-20260428.png';
+      var aiUniversityOgImageUrl = defaultOgImageUrl;
+
       function applyRouteMeta(meta) {
         var url = 'https://my-web-app-b67f4.web.app' + path;
+        var imageUrl = meta.image || defaultOgImageUrl;
         document.title = meta.title;
         setMeta('description', meta.desc);
         setMeta('og:title', meta.title);
         setMeta('og:description', meta.desc);
         setMeta('og:url', url);
+        setMeta('og:image', imageUrl);
         setMeta('twitter:title', meta.title);
         setMeta('twitter:description', meta.desc);
         setMeta('twitter:url', url);
+        setMeta('twitter:image', imageUrl);
         setCanonical(url);
       }
 
@@ -411,19 +544,28 @@
         },
         '/ai-university': {
           title: 'AI大学 | 自分株式会社',
-          desc: 'AIツール、AIプロバイダー、実務ユースケースを学べる無料のAI大学。クイズ、ランキング、バッジで継続学習できます。'
+          desc: 'AIツール、AIプロバイダー、実務ユースケースを学べる無料のAI大学。クイズ、ランキング、バッジで継続学習できます。',
+          image: aiUniversityOgImageUrl
+        },
+        '/gemini-university': {
+          title: 'AI大学 | 自分株式会社',
+          desc: 'Google / OpenAI / Anthropic など259社を体系的に学ぶ無料のAI大学。クイズ、ランキング、バッジで継続学習できます。',
+          image: aiUniversityOgImageUrl
         },
         '/ai-university-content': {
           title: 'AI大学 コンテンツ一覧 | 自分株式会社',
-          desc: 'AI大学の学習コンテンツ、プロバイダー解説、クイズ教材を一覧できる公開ページです。'
+          desc: 'AI大学の学習コンテンツ、プロバイダー解説、クイズ教材を一覧できる公開ページです。',
+          image: aiUniversityOgImageUrl
         },
         '/ai-university-ranking': {
           title: 'AI大学ランキング | 自分株式会社',
-          desc: 'AI大学の学習進捗、ストリーク、バッジ獲得状況をランキング形式で確認できます。'
+          desc: 'AI大学の学習進捗、ストリーク、バッジ獲得状況をランキング形式で確認できます。',
+          image: aiUniversityOgImageUrl
         },
         '/ai-university-voice': {
           title: 'AI大学 音声学習 | 自分株式会社',
-          desc: 'AI大学の内容を音声で学習するためのページ。移動中や作業中でもAIリテラシーを積み上げられます。'
+          desc: 'AI大学の内容を音声で学習するためのページ。移動中や作業中でもAIリテラシーを積み上げられます。',
+          image: aiUniversityOgImageUrl
         },
         '/ai-image-generator': {
           title: 'AI画像生成 | 自分株式会社',
@@ -460,6 +602,18 @@
         '/agent-hub': {
           title: 'AIエージェントハブ | 自分株式会社',
           desc: 'AIエージェント、部署別AI、ワークフロー自動化機能を一覧できるエージェントハブです。'
+        },
+        '/competitors': {
+          title: '競合比較 174社一覧 | 自分株式会社',
+          desc: 'Notion・Slack・MoneyForwardなど174社以上のSaaSと自分株式会社を比較。AI大学×財務×習慣×タスクを完全無料で一元管理する唯一のライフマネジメントOS。'
+        },
+        '/tech-blog-tracker': {
+          title: 'テックブログトラッカー | 自分株式会社',
+          desc: '最新のAI・テック記事、エンジニアブログ、リリースノートを自動収集するテックブログトラッカー。'
+        },
+        '/real-world-danshari': {
+          title: 'リアルワールド断捨離 | 自分株式会社',
+          desc: '持ち物・サブスク・習慣をAIがスコアリング。不要なものを手放し本当に大切なことに集中できる断捨離支援ツール。'
         }
       };
 
@@ -488,9 +642,210 @@
         'line':        { title: '自分株式会社 vs LINE | LINEメモ・スケジュール代替比較', desc: 'LINEのメモ・スケジュール機能をAI統合プラットフォーム「自分株式会社」でパワーアップ。タスク管理・資産管理も完全無料。' },
         'facebook':    { title: '自分株式会社 vs Facebook | 個人情報管理アプリ比較', desc: 'Facebookのプライバシー問題なく、個人ノート・タスク・資産管理をAI統合プラットフォーム「自分株式会社」で安全に管理。完全無料。' },
         'liven':       { title: '自分株式会社 vs Liven | ライフスタイル管理アプリ比較', desc: 'Livenの飲食・ライフスタイル管理をAI統合プラットフォーム「自分株式会社」に統合。資産管理・習慣化・AI分析も一元管理。完全無料。' },
-        'github':      { title: '自分株式会社 vs GitHub | 開発者向けライフ管理比較', desc: 'GitHubのプロジェクト管理をAI統合プラットフォーム「自分株式会社」で補完。ノート・タスク・資産管理・AI秘書を開発者に無料提供。' }
+        'github':      { title: '自分株式会社 vs GitHub | 開発者向けライフ管理比較', desc: 'GitHubのプロジェクト管理をAI統合プラットフォーム「自分株式会社」で補完。ノート・タスク・資産管理・AI秘書を開発者に無料提供。' },
+        'google_agent_builder': { title: '自分株式会社 vs Google Agent Builder | Google Agent Builder代替アプリ比較', desc: 'Google Agent Builder はコード必須の開発者ツール。自分株式会社はノーコードで個人の人生6部署を無料管理。完全無料のAI統合ライフマネジメントアプリ。' },
+        'notion-ai': { title: '自分株式会社 vs Notion AI | Notion AI代替アプリ比較', desc: 'Notion AI は文書AIに特化。自分株式会社は個人の6部署すべてをAIで統括する生活OS。完全無料のAI統合ライフマネジメントアプリ。' },
+        'openai': { title: '自分株式会社 vs OpenAI / ChatGPT | OpenAI / ChatGPT代替アプリ比較', desc: 'ChatGPTは最強のAIだが、あなたの生活データを記憶・管理できない。自分株式会社はAI×ライフOSの統合体。完全無料のAI統合ライフマネジメントアプリ。' },
+        'anthropic': { title: '自分株式会社 vs Anthropic / Claude | Anthropic / Claude代替アプリ比較', desc: 'Claude は最高の推論AIだが、あなたの人生データを統合管理できない。自分株式会社はClaude APIを内部で活用する生活OS。完全無料のAI統合ライフマネジメントアプリ。' },
+        'cursor': { title: '自分株式会社 vs Cursor | Cursor代替アプリ比較', desc: 'Cursor はコード生成AI IDE。自分株式会社はコード以外の「人生」全体をAIで管理するOS。完全無料のAI統合ライフマネジメントアプリ。' },
+        'perplexity': { title: '自分株式会社 vs Perplexity AI | Perplexity AI代替アプリ比較', desc: 'Perplexityは最高のAI検索エンジン。自分株式会社はあなたの人生データを土台にした「個人専用AI秘書」。完全無料のAI統合ライフマネジメントアプリ。' },
+        'figma': { title: '自分株式会社 vs Figma | Figma代替アプリ比較', desc: 'Figmaはデザインコラボツール。自分株式会社はデザイン以外の人生全体をAIで最適化する個人OS。完全無料のAI統合ライフマネジメントアプリ。' },
+        'freee': { title: '自分株式会社 vs freee | freee代替アプリ比較', desc: 'freeeは中小企業の会計・バックオフィスDX。自分株式会社は個人・フリーランスのライフ全体をAIで最適化。完全無料のAI統合ライフマネジメントアプリ。' },
+        'smarthr': { title: '自分株式会社 vs SmartHR | SmartHR代替アプリ比較', desc: 'SmartHRは企業人事DXの王者。自分株式会社は個人が自分自身のHRを管理する個人人事部AI。完全無料のAI統合ライフマネジメントアプリ。' },
+        'zoom': { title: '自分株式会社 vs Zoom | Zoom代替アプリ比較', desc: 'ZoomはビデオMTGの定番。自分株式会社は会議を含む「仕事×生活×学習」を統合するライフOS。完全無料のAI統合ライフマネジメントアプリ。' },
+        'shopify': { title: '自分株式会社 vs Shopify | Shopify代替アプリ比較', desc: 'ShopifyはECサイト構築の王者。自分株式会社はECを含む個人のビジネス×生活全体をAIで最適化。完全無料のAI統合ライフマネジメントアプリ。' },
+        'canva': { title: '自分株式会社 vs Canva | Canva代替アプリ比較', desc: 'Canvaはデザイン民主化の先駆者。自分株式会社はデザイン以外の「人生全体」をAIで最適化する個人OS。完全無料のAI統合ライフマネジメントアプリ。' },
+        'mercari': { title: '自分株式会社 vs メルカリ | メルカリ代替アプリ比較', desc: 'メルカリは日本最大のフリマアプリ。自分株式会社は不要品売却を含む個人の資産・収支全体をAIで管理。完全無料のAI統合ライフマネジメントアプリ。' },
+        'rakuten': { title: '自分株式会社 vs 楽天グループ | 楽天グループ代替アプリ比較', desc: '楽天はEC・金融・通信の複合サービス群。自分株式会社は楽天サービスを含む個人の全取引・資産をAIで一元管理。完全無料のAI統合ライフマネジメントアプリ。' },
+        'salesforce': { title: '自分株式会社 vs Salesforce | Salesforce代替アプリ比較', desc: 'SalesforceはCRMの王者。自分株式会社は個人が「自分自身の顧客」として人生全体をCRM的にAI管理する個人OS。完全無料のAI統合ライフマネジメントアプリ。' },
+        'windsurf': { title: '自分株式会社 vs Windsurf (Codeium) | Windsurf (Codeium)代替アプリ比較', desc: 'Windsurfは次世代AI IDEの挑戦者。自分株式会社はコーディング以外の人生全体をAI化する個人OS。完全無料のAI統合ライフマネジメントアプリ。' },
+        'clickup': { title: '自分株式会社 vs ClickUp | ClickUp代替アプリ比較', desc: 'ClickUpはオールインワンプロジェクト管理ツール。自分株式会社はタスク管理に加えAI・財務・健康を統合した個人OS。完全無料のAI統合ライフマネジメントアプリ。' },
+        'airtable': { title: '自分株式会社 vs Airtable | Airtable代替アプリ比較', desc: 'Airtableはローコードデータベース。自分株式会社はデータベース構築不要で個人の全情報をAIが自動管理。完全無料のAI統合ライフマネジメントアプリ。' },
+        'miro': { title: '自分株式会社 vs Miro | Miro代替アプリ比較', desc: 'Miroはビジュアルコラボレーションの王者。自分株式会社はビジョンボード・WBSを含む個人の計画全体をAIで管理。完全無料のAI統合ライフマネジメントアプリ。' },
+        'obsidian': { title: '自分株式会社 vs Obsidian | Obsidian代替アプリ比較', desc: 'ObsidianはPKM(個人知識管理)の最高峰。自分株式会社はノートに留まらず財務・タスク・健康をAIで統合管理。完全無料のAI統合ライフマネジメントアプリ。' },
+        'grammarly': { title: '自分株式会社 vs Grammarly | Grammarly代替アプリ比較', desc: 'GrammarlyはAI文章校正の王者。自分株式会社はライティング支援を含む個人の情報発信・学習・生活全体をAI化。完全無料のAI統合ライフマネジメントアプリ。' },
+        'duolingo': { title: '自分株式会社 vs Duolingo | Duolingo代替アプリ比較', desc: 'Duolingoは語学学習のゲーミフィケーション先駆者。自分株式会社はAI大学で250+社のAIツール学習を同様の継続仕組みで提供。完全無料のAI統合ライフマネジメントアプリ。' },
+        'udemy': { title: '自分株式会社 vs Udemy | Udemy代替アプリ比較', desc: 'Udemyは世界最大のオンライン学習マーケット。自分株式会社のAI大学はAIツールに特化した無料・継続学習プラットフォーム。完全無料のAI統合ライフマネジメントアプリ。' },
+        'dropbox': { title: '自分株式会社 vs Dropbox | Dropbox代替アプリ比較', desc: 'Dropboxはファイルストレージの先駆者。自分株式会社はファイル管理を超えた個人の全情報・知識・計画をAIで統合管理。完全無料のAI統合ライフマネジメントアプリ。' },
+        'teams': { title: '自分株式会社 vs Microsoft Teams | Microsoft Teams代替アプリ比較', desc: 'Microsoft Teamsは企業コラボの定番。自分株式会社はTeamsを含む全コミュニケーション・仕事・生活をAIで一元管理。完全無料のAI統合ライフマネジメントアプリ。' },
+        'linear': { title: '自分株式会社 vs Linear | Linear代替アプリ比較', desc: 'LinearはエンジニアチームのためのモダンIssueトラッカー。自分株式会社は個人のすべての目標・タスクをAIで管理する個人OS。完全無料のAI統合ライフマネジメントアプリ。' },
+        'hubspot': { title: '自分株式会社 vs HubSpot | HubSpot代替アプリ比較', desc: 'HubSpotはインバウンドマーケティングCRMの王者。自分株式会社は個人が「自分自身のマーケター」としてライフ全体をAI管理。完全無料のAI統合ライフマネジメントアプリ。' },
+        'coda': { title: '自分株式会社 vs Coda | Coda代替アプリ比較', desc: 'CodaはドキュメントとデータベースとアプリをひとつにするAll-in-One。自分株式会社はAI×生活全体の統合OSとして一歩先を行く。完全無料のAI統合ライフマネジメントアプリ。' },
+        'atlassian': { title: '自分株式会社 vs Atlassian (Jira / Confluence) | Atlassian (Jira / Confluence)代替アプリ比較', desc: 'AtlassianはJira/Confluenceでソフトウェア開発の王者。自分株式会社は開発以外の「人生プロジェクト」を個人CEOとして管理。完全無料のAI統合ライフマネジメントアプリ。' },
+        'replit': { title: '自分株式会社 vs Replit | Replit代替アプリ比較', desc: 'Replitはブラウザ完結型AI開発環境。自分株式会社はコーディング以外の「人生OS」として全カテゴリをAIで管理。完全無料のAI統合ライフマネジメントアプリ。' },
+        'bolt-new': { title: '自分株式会社 vs Bolt.new (StackBlitz) | Bolt.new (StackBlitz)代替アプリ比較', desc: 'Bolt.newはAIフルスタックアプリビルダーの革命児。自分株式会社はアプリ構築を超えた個人の全ライフをAIで最適化。完全無料のAI統合ライフマネジメントアプリ。' },
+        'lovable': { title: '自分株式会社 vs Lovable | Lovable代替アプリ比較', desc: 'LovableはAIアプリビルダーの新星。自分株式会社はアプリ生成を超えた個人CEO向け統合ライフOSを無料提供。完全無料のAI統合ライフマネジメントアプリ。' },
+        'mistral': { title: '自分株式会社 vs Mistral AI | Mistral AI代替アプリ比較', desc: 'MistralはEU発の高性能オープンAIモデル。自分株式会社はAIモデルを内部活用しながら個人の生活OSとして完成系を提供。完全無料のAI統合ライフマネジメントアプリ。' },
+        'jasper-ai': { title: '自分株式会社 vs Jasper AI | Jasper AI代替アプリ比較', desc: 'JasperはAIコンテンツ生成の第一人者。自分株式会社はコンテンツ作成だけでなく個人の生活・学習・財務まで統合管理。完全無料のAI統合ライフマネジメントアプリ。' },
+        'logseq': { title: '自分株式会社 vs Logseq | Logseq代替アプリ比較', desc: 'LogseqはオープンソースPKMの新星。自分株式会社はノート管理を超えた財務・タスク・健康の全統合ライフOSをAIで提供。完全無料のAI統合ライフマネジメントアプリ。' },
+        'headspace': { title: '自分株式会社 vs Headspace | Headspace代替アプリ比較', desc: 'Headspaceはマインドフルネス瞑想アプリの王者。自分株式会社はメンタル健康を含む全ライフカテゴリをAIで統合管理。完全無料のAI統合ライフマネジメントアプリ。' },
+        'spotify': { title: '自分株式会社 vs Spotify | Spotify代替アプリ比較', desc: 'Spotifyは音楽・ポッドキャストの王者。自分株式会社はエンタメを含む個人の全ライフをAIで最適化する統合OS。完全無料のAI統合ライフマネジメントアプリ。' },
+        'moneyforward-cloud': { title: '自分株式会社 vs マネーフォワードクラウド | マネーフォワードクラウド代替アプリ比較', desc: 'マネーフォワードクラウドは法人向けバックオフィスDX。自分株式会社は個人・フリーランスのライフ全体をAIで最適化。完全無料のAI統合ライフマネジメントアプリ。' },
+        'zoho': { title: '自分株式会社 vs Zoho | Zoho代替アプリ比較', desc: 'ZohoはCRM・会計・HRの総合ビジネスSaaS。自分株式会社は個人版の統合ライフOSとして同等の機能を無料で提供。完全無料のAI統合ライフマネジメントアプリ。' },
+        'stripe': { title: '自分株式会社 vs Stripe | Stripe代替アプリ比較', desc: 'Stripeは決済インフラの覇者。自分株式会社はStripeを含む収入・支出・資産を統合した個人財務部長AIを提供。完全無料のAI統合ライフマネジメントアプリ。' },
+        'typeform': { title: '自分株式会社 vs Typeform | Typeform代替アプリ比較', desc: 'Typeformは会話型フォームの先駆者。自分株式会社はフォーム収集を超えた個人の全情報をAIで管理・活用する統合OS。完全無料のAI統合ライフマネジメントアプリ。' },
+        'make-integromat': { title: '自分株式会社 vs Make (旧Integromat) | Make (旧Integromat)代替アプリ比較', desc: 'Makeはワークフロー自動化の革命児。自分株式会社はMake的な自動化を内包した個人CEO向け統合ライフOS。完全無料のAI統合ライフマネジメントアプリ。' },
+        'whatsapp': { title: '自分株式会社 vs WhatsApp | WhatsApp代替アプリ比較', desc: 'WhatsAppは世界最大のメッセンジャー。自分株式会社はコミュニケーションを含む個人の全ライフをAIで統合管理。完全無料のAI統合ライフマネジメントアプリ。' },
+        'telegram': { title: '自分株式会社 vs Telegram | Telegram代替アプリ比較', desc: 'Telegramはセキュアメッセージングの先駆者。自分株式会社はプライバシーを重視しながら個人の全ライフをAI管理。完全無料のAI統合ライフマネジメントアプリ。' },
+        'wordpress': { title: '自分株式会社 vs WordPress | WordPress代替アプリ比較', desc: 'WordPressはウェブサイト構築の王者。自分株式会社はブログ・サイト管理を含む個人のビジネス×生活全体をAIで最適化。完全無料のAI統合ライフマネジメントアプリ。' },
+        'wix': { title: '自分株式会社 vs Wix | Wix代替アプリ比較', desc: 'Wixはノーコードウェブサイトビルダーの雄。自分株式会社はサイト構築を超えた個人の全ライフをAIで管理する統合OS。完全無料のAI統合ライフマネジメントアプリ。' },
+        'coursera': { title: '自分株式会社 vs Coursera | Coursera代替アプリ比較', desc: 'Courseraは世界最大のオンライン学習プラットフォーム。自分株式会社のAI大学はAIツールに特化した無料・実践学習を提供。完全無料のAI統合ライフマネジメントアプリ。' },
+        'elevenlabs': { title: '自分株式会社 vs ElevenLabs | ElevenLabs代替アプリ比較', desc: 'ElevenLabsはAI音声生成の最先端。自分株式会社はAI音声を含む全AIツール活用を個人のライフOS内で統合管理。完全無料のAI統合ライフマネジメントアプリ。' },
+        'ollama': { title: '自分株式会社 vs Ollama | Ollama代替アプリ比較', desc: 'OllamaはローカルLLM実行の決定版。自分株式会社はOllamaのようなAI基盤を活用した個人向け統合ライフOSを提供。完全無料のAI統合ライフマネジメントアプリ。' },
+        'vercel': { title: '自分株式会社 vs Vercel | Vercel代替アプリ比較', desc: 'Vercelはフロントエンドデプロイの王者。自分株式会社はデプロイインフラを超えた個人のビジネス×生活全体をAIで管理。完全無料のAI統合ライフマネジメントアプリ。' },
+        'v0': { title: '自分株式会社 vs v0 (Vercel) | v0 (Vercel)代替アプリ比較', desc: 'v0はAI UIジェネレーターの革命。自分株式会社はUIを生成するだけでなく個人の全ライフをAIで管理する完成済みOS。完全無料のAI統合ライフマネジメントアプリ。' },
+        'paypal': { title: '自分株式会社 vs PayPal | PayPal代替アプリ比較', desc: 'PayPalはグローバル決済の定番。自分株式会社はPayPal決済を含む個人の収入・支出・資産全体をAI財務部長が管理。完全無料のAI統合ライフマネジメントアプリ。' },
+        'freee-hr': { title: '自分株式会社 vs freee人事労務 | freee人事労務代替アプリ比較', desc: 'freee人事労務は勤怠・給与管理のSaaS。自分株式会社は個人が自分自身のHR部長として働き方・スキル・目標を管理。完全無料のAI統合ライフマネジメントアプリ。' },
+        'cloudsign': { title: '自分株式会社 vs クラウドサイン | クラウドサイン代替アプリ比較', desc: 'クラウドサインは電子契約の日本No.1。自分株式会社は契約管理を含む個人の法務・財務・タスクをAIで一元管理。完全無料のAI統合ライフマネジメントアプリ。' },
+        'groq-ai': { title: '自分株式会社 vs Groq | Groq代替アプリ比較', desc: 'GroqはLPU搭載の超高速AI推論プラットフォーム。自分株式会社はGroqのような高速AIを内部活用した完成済み個人OSを提供。完全無料のAI統合ライフマネジメントアプリ。' },
+        'databricks': { title: '自分株式会社 vs Databricks | Databricks代替アプリ比較', desc: 'DatabricksはAI/データLakehouseの王者。自分株式会社はデータ基盤を超えた個人のライフ全体をAIで最適化する個人OS。完全無料のAI統合ライフマネジメントアプリ。' },
+        'yamato-transport': { title: '自分株式会社 vs ヤマト運輸 | ヤマト運輸代替アプリ比較', desc: 'ヤマト運輸は日本最大の宅配・物流サービス。自分株式会社はAI大学で物流費管理×財務×習慣を統合した個人OS。完全無料のAI統合ライフマネジメントアプリ。' },
+        'sakura-internet': { title: '自分株式会社 vs さくらインターネット | さくらインターネット代替アプリ比較', desc: 'さくらインターネットは国産クラウド・レンタルサーバーサービス。自分株式会社はAI大学でクラウド知識×財務×習慣を統合した個人OS。完全無料のAI統合ライフマネジメントアプリ。' },
+        'viz-ai': { title: '自分株式会社 vs Viz.ai | Viz.ai代替アプリ比較', desc: 'Viz.aiはAI医療画像診断・脳卒中検出プラットフォーム。自分株式会社はAI大学で医療AI知識×財務×習慣を統合した個人OS。完全無料のAI統合ライフマネジメントアプリ。' },
+        'jules-google': { title: '自分株式会社 vs Jules (Google) | Jules (Google)代替アプリ比較', desc: 'JulesはGoogleのAI自律コーディングエージェント。自分株式会社はAI大学でAIエージェント知識×財務×習慣を統合した個人OS。完全無料のAI統合ライフマネジメントアプリ。' },
+        'kore-ai': { title: '自分株式会社 vs Kore.ai | Kore.ai代替アプリ比較', desc: 'Kore.aiはエンタープライズ向けAI会話プラットフォーム。自分株式会社はAI大学で会話AI知識×財務×習慣を統合した個人OS。完全無料のAI統合ライフマネジメントアプリ。' },
+        'lifenet-insurance': { title: '自分株式会社 vs ライフネット生命 | ライフネット生命代替アプリ比較', desc: 'ライフネット生命はネット完結型生命保険。自分株式会社はAI大学で保険管理×財務×習慣を統合した個人OS。完全無料のAI統合ライフマネジメントアプリ。' },
+        'magic-ai': { title: '自分株式会社 vs Magic AI | Magic AI代替アプリ比較', desc: 'Magic AIはAIコーディング・開発加速ツール。自分株式会社はAI大学でAI開発知識×財務×習慣を統合した個人OS。完全無料のAI統合ライフマネジメントアプリ。' },
+        'metamask': { title: '自分株式会社 vs MetaMask | MetaMask代替アプリ比較', desc: 'MetaMaskはWeb3・暗号資産管理ウォレット。自分株式会社はAI大学で暗号資産×財務×習慣を統合した個人OS。完全無料のAI統合ライフマネジメントアプリ。' },
+        'money-tree': { title: '自分株式会社 vs マネーツリー | マネーツリー代替アプリ比較', desc: 'マネーツリーは銀行・証券・ポイント一括管理の家計アプリ。自分株式会社はAI大学で資産管理×財務×習慣を統合した個人OS。完全無料のAI統合ライフマネジメントアプリ。' },
+        'paidy': { title: '自分株式会社 vs Paidy | Paidy代替アプリ比較', desc: 'Paidyは日本発の翌月後払い（BNPL）サービス。自分株式会社はAI大学でフィンテック知識×財務×習慣を統合した個人OS。完全無料のAI統合ライフマネジメントアプリ。' },
+        'pipedream': { title: '自分株式会社 vs Pipedream | Pipedream代替アプリ比較', desc: 'PipedreamはIPaaSとAIエージェントを統合する開発者向け自動化プラットフォーム。自分株式会社はAI大学で自動化知識×財務×習慣を統合した個人OS。完全無料のAI統合ライフマネジメントアプリ。' },
+        'poshmark': { title: '自分株式会社 vs Poshmark | Poshmark代替アプリ比較', desc: 'Poshmarkはファッション特化のC2Cマーケットプレイス。自分株式会社はAI大学でフリマ知識×財務×習慣を統合した個人OS。完全無料のAI統合ライフマネジメントアプリ。' },
+        'roblox': { title: '自分株式会社 vs Roblox | Roblox代替アプリ比較', desc: 'Robloxはユーザー生成コンテンツのゲームプラットフォーム。自分株式会社はAI大学でゲーム×学習×財務を統合した個人OS。完全無料のAI統合ライフマネジメントアプリ。' },
+        'sagawa-express': { title: '自分株式会社 vs 佐川急便 | 佐川急便代替アプリ比較', desc: '佐川急便は日本大手宅配・物流サービス。自分株式会社はAI大学で物流知識×財務×習慣を統合した個人OS。完全無料のAI統合ライフマネジメントアプリ。' },
+        'toyota-connected': { title: '自分株式会社 vs Toyota Connected | Toyota Connected代替アプリ比較', desc: 'Toyota Connectedは車両データ×AIの次世代モビリティサービス。自分株式会社はAI大学でモビリティ知識×財務×習慣を統合した個人OS。完全無料のAI統合ライフマネジメントアプリ。' },
+        'ubereats-japan': { title: '自分株式会社 vs Uber Eats | Uber Eats代替アプリ比較', desc: 'Uber Eatsはフードデリバリーのグローバルリーダー。自分株式会社はAI大学で食費管理×財務×習慣を統合した個人OS。完全無料のAI統合ライフマネジメントアプリ。' },
+        'xbox-cloud-gaming': { title: '自分株式会社 vs Xbox Cloud Gaming | Xbox Cloud Gaming代替アプリ比較', desc: 'Xbox Cloud GamingはMicrosoftのゲームパス型クラウドゲーミング。自分株式会社はAI大学でゲーム×学習×財務を統合した個人OS。完全無料のAI統合ライフマネジメントアプリ。' },
+        'anytype': { title: '自分株式会社 vs Anytype | Anytype代替アプリ比較', desc: 'AnytypeはローカルファーストのオールインワンPKMツール。自分株式会社はAI大学でPKM×財務×習慣を統合した個人OS。完全無料のAI統合ライフマネジメントアプリ。' },
+        'calm': { title: '自分株式会社 vs Calm | Calm代替アプリ比較', desc: 'CalmはマインドフルネスアプリのグローバルNo.1。自分株式会社はAI大学でメンタル×財務×習慣を統合した個人OS。完全無料のAI統合ライフマネジメントアプリ。' },
+        'cerebras-systems': { title: '自分株式会社 vs Cerebras Systems | Cerebras Systems代替アプリ比較', desc: 'CerebrasSystems はウェーハスケールAIチップで推論を革新。自分株式会社はAI大学でAIハード知識×財務×習慣を統合した個人OS。完全無料のAI統合ライフマネジメントアプリ。' },
+        'cohere': { title: '自分株式会社 vs Cohere | Cohere代替アプリ比較', desc: 'CohereはエンタープライズRAG・埋め込みAIプラットフォーム。自分株式会社はAI大学でAIプラットフォーム知識×財務×習慣を統合した個人OS。完全無料のAI統合ライフマネジメントアプリ。' },
+        'craft-docs': { title: '自分株式会社 vs Craft Docs | Craft Docs代替アプリ比較', desc: 'Craft DocsはAppleデザインの高品質ドキュメントアプリ。自分株式会社はAI大学でドキュメント×財務×習慣を統合した個人OS。完全無料のAI統合ライフマネジメントアプリ。' },
+        'criteo': { title: '自分株式会社 vs Criteo | Criteo代替アプリ比較', desc: 'Criteoはリターゲティング広告プラットフォーム。自分株式会社はAI大学でデジタルマーケ知識×財務×習慣を統合した個人OS。完全無料のAI統合ライフマネジメントアプリ。' },
+        'curon': { title: '自分株式会社 vs クロン (curon) | クロン (curon)代替アプリ比較', desc: 'クロンはオンライン診療・遠隔医療プラットフォーム。自分株式会社はAI大学で健康管理×財務×習慣を統合した個人OS。完全無料のAI統合ライフマネジメントアプリ。' },
+        'descript': { title: '自分株式会社 vs Descript | Descript代替アプリ比較', desc: 'Descriptはテキストベース動画・音声編集ツール。自分株式会社はAI大学で動画制作知識×財務×習慣を統合した個人OS。完全無料のAI統合ライフマネジメントアプリ。' },
+        'digi-smac': { title: '自分株式会社 vs DigiSMAC | DigiSMAC代替アプリ比較', desc: 'DigiSMACは製造業DX・IoTプラットフォーム。自分株式会社はAI大学でDX知識×財務×習慣を統合した個人OS。完全無料のAI統合ライフマネジメントアプリ。' },
+        'drata': { title: '自分株式会社 vs Drata | Drata代替アプリ比較', desc: 'DrataはSOC2・ISO27001等のコンプライアンス自動化プラットフォーム。自分株式会社はAI大学でセキュリティ知識×財務×習慣を統合した個人OS。完全無料のAI統合ライフマネジメントアプリ。' },
+        'ecforce': { title: '自分株式会社 vs ecforce | ecforce代替アプリ比較', desc: 'ecforceはブランドEC特化のプラットフォーム。自分株式会社はAI大学でEC知識×財務×習慣を統合した個人OS。完全無料のAI統合ライフマネジメントアプリ。' },
+        'factory-ai': { title: '自分株式会社 vs Factory AI | Factory AI代替アプリ比較', desc: 'Factory AIはAIソフトウェアエンジニアリング自動化プラットフォーム。自分株式会社はAI大学でAI開発知識×財務×習慣を統合した個人OS。完全無料のAI統合ライフマネジメントアプリ。' },
+        'freee-insurance': { title: '自分株式会社 vs freee保険 | freee保険代替アプリ比較', desc: 'freee保険はフリーランス・中小企業向け保険サービス。自分株式会社はAI大学で保険管理×財務×習慣を統合した個人OS。完全無料のAI統合ライフマネジメントアプリ。' },
+        'go-taxi': { title: '自分株式会社 vs GO (タクシーアプリ) | GO (タクシーアプリ)代替アプリ比較', desc: 'GOは日本No.1のタクシー配車アプリ。自分株式会社はAI大学で交通費管理×財務×習慣を統合した個人OS。完全無料のAI統合ライフマネジメントアプリ。' },
+        'graffer': { title: '自分株式会社 vs graffer (グラファー) | graffer (グラファー)代替アプリ比較', desc: 'grafferは行政手続きオンライン化プラットフォーム。自分株式会社はAI大学で行政×財務×習慣を統合した個人OS。完全無料のAI統合ライフマネジメントアプリ。' },
+        'itandi': { title: '自分株式会社 vs ITANDI (イタンジ) | ITANDI (イタンジ)代替アプリ比較', desc: 'ITANDIは不動産テックプラットフォーム。自分株式会社はAI大学で不動産知識×財務×習慣を統合した個人OS。完全無料のAI統合ライフマネジメントアプリ。' },
+        'kingoftime': { title: '自分株式会社 vs KING OF TIME | KING OF TIME代替アプリ比較', desc: 'KING OF TIMEはクラウド勤怠管理システム。自分株式会社はAI大学で時間管理×財務×習慣を統合した個人OS。完全無料のAI統合ライフマネジメントアプリ。' },
+        'klarna-ai': { title: '自分株式会社 vs Klarna AI | Klarna AI代替アプリ比較', desc: 'Klarna AIはBNPL×AI買い物アシスタント統合の次世代フィンテック。自分株式会社はAI大学でフィンテック知識×財務×習慣を統合した個人OS。完全無料のAI統合ライフマネジメントアプリ。' },
+        'stores-jp': { title: '自分株式会社 vs STORES | STORES代替アプリ比較', desc: 'STORESはオンラインショップ・予約・決済の統合プラットフォーム。自分株式会社はAI大学でEC知識×財務×習慣を統合した個人OS。完全無料のAI統合ライフマネジメントアプリ。' },
+        'zoho-crm': { title: '自分株式会社 vs Zoho CRM | Zoho CRM代替アプリ比較', desc: 'Zoho CRMは中小企業向けオールインワンCRM。自分株式会社はAI大学で営業管理知識×財務×習慣を統合した個人OS。完全無料のAI統合ライフマネジメントアプリ。' },
+        'ameba': { title: '自分株式会社 vs Ameba (サイバーエージェント) | Ameba (サイバーエージェント)代替アプリ比較', desc: 'AmebaはCA運営の日本最大級ブログ・エンタメSNS。自分株式会社はAI大学でブログ学習×財務×習慣を統合した個人OS。完全無料のAI統合ライフマネジメントアプリ。' },
+        'bluesky': { title: '自分株式会社 vs Bluesky | Bluesky代替アプリ比較', desc: 'BlueSkyはAT Protocol採用の分散SNS。自分株式会社はAI大学でソーシャル×学習×財務を統合した個人OS。完全無料のAI統合ライフマネジメントアプリ。' },
+        'calendly': { title: '自分株式会社 vs Calendly | Calendly代替アプリ比較', desc: 'Calendlyはオンライン日程調整ツール。自分株式会社はAI大学で時間管理×財務×習慣を統合した個人OS。完全無料のAI統合ライフマネジメントアプリ。' },
+        'carely': { title: '自分株式会社 vs Carely | Carely代替アプリ比較', desc: 'Carelyは健康経営・人事労務管理プラットフォーム。自分株式会社はAI大学で個人の健康×財務×習慣を統合した個人OS。完全無料のAI統合ライフマネジメントアプリ。' },
+        'cybozu-kintone': { title: '自分株式会社 vs サイボウズ kintone | サイボウズ kintone代替アプリ比較', desc: 'kintoneはノーコード業務改善プラットフォーム。自分株式会社はAI大学で個人業務×財務×習慣を統合した個人OS。完全無料のAI統合ライフマネジメントアプリ。' },
+        'datadog': { title: '自分株式会社 vs Datadog | Datadog代替アプリ比較', desc: 'DatadogはクラウドインフラのAI監視プラットフォーム。自分株式会社はAI大学でライフトラッキング×財務×習慣を統合した個人OS。完全無料のAI統合ライフマネジメントアプリ。' },
+        'docusign': { title: '自分株式会社 vs DocuSign | DocuSign代替アプリ比較', desc: 'DocuSignは電子署名・契約管理プラットフォーム。自分株式会社はAI大学で契約管理×財務×習慣を統合した個人OS。完全無料のAI統合ライフマネジメントアプリ。' },
+        'epic-games': { title: '自分株式会社 vs Epic Games (Fortnite) | Epic Games (Fortnite)代替アプリ比較', desc: 'Epic GamesはFortnite・UE5のゲームプラットフォーム。自分株式会社はAI大学でゲーム×学習×財務を統合した個人OS。完全無料のAI統合ライフマネジメントアプリ。' },
+        'google-ads': { title: '自分株式会社 vs Google 広告 | Google 広告代替アプリ比較', desc: 'Google広告はAI最適化デジタル広告プラットフォーム。自分株式会社はAI大学でマーケ知識×財務×習慣を統合した個人OS。完全無料のAI統合ライフマネジメントアプリ。' },
+        'harvey-ai': { title: '自分株式会社 vs Harvey AI | Harvey AI代替アプリ比較', desc: 'Harvey AIは法律・リーガルテックに特化したAIプラットフォーム。自分株式会社はAI大学で法律知識×財務×習慣を統合した個人OS。完全無料のAI統合ライフマネジメントアプリ。' },
+        'hrmos': { title: '自分株式会社 vs HRMOS (ビズリーチ) | HRMOS (ビズリーチ)代替アプリ比較', desc: 'HRMOSはビズリーチ運営の採用・人材管理プラットフォーム。自分株式会社はAI大学でキャリア×財務×習慣を統合した個人OS。完全無料のAI統合ライフマネジメントアプリ。' },
+        'hubspot-crm': { title: '自分株式会社 vs HubSpot CRM | HubSpot CRM代替アプリ比較', desc: 'HubSpot CRMは営業・マーケ統合プラットフォーム。自分株式会社はAI大学で個人関係管理×財務×習慣を統合した個人OS。完全無料のAI統合ライフマネジメントアプリ。' },
+        'ikyu': { title: '自分株式会社 vs 一休.com | 一休.com代替アプリ比較', desc: '一休.comは高級宿泊・レストラン予約サービス。自分株式会社はAI大学で旅行×財務×習慣を統合した個人OS。完全無料のAI統合ライフマネジメントアプリ。' },
+        'jalan': { title: '自分株式会社 vs じゃらん | じゃらん代替アプリ比較', desc: 'じゃらんはリクルート運営の国内旅行予約サービス。自分株式会社はAI大学で旅行管理×財務×習慣を統合した個人OS。完全無料のAI統合ライフマネジメントアプリ。' },
+        'kddi-au': { title: '自分株式会社 vs KDDI au | KDDI au代替アプリ比較', desc: 'KDDI auは日本3大キャリアの通信・au PAY・証券統合サービス。自分株式会社はAI大学で通信費管理×財務×習慣を統合した個人OS。完全無料のAI統合ライフマネジメントアプリ。' },
+        'langchain-inc': { title: '自分株式会社 vs LangChain | LangChain代替アプリ比較', desc: 'LangChainはLLMアプリ開発フレームワーク。自分株式会社はAI大学でLangChain知識×財務×習慣を統合した個人OS。完全無料のAI統合ライフマネジメントアプリ。' },
+        'luup-micromobility': { title: '自分株式会社 vs LUUP (電動キックボード) | LUUP (電動キックボード)代替アプリ比較', desc: 'LUUPは日本発の電動キックボード・シェアサイクルサービス。自分株式会社はAI大学で移動費管理×財務×習慣を統合した個人OS。完全無料のAI統合ライフマネジメントアプリ。' },
+        'meta-ads': { title: '自分株式会社 vs Meta広告 (Facebook/Instagram) | Meta広告 (Facebook/Instagram)代替アプリ比較', desc: 'Meta広告はFacebook/Instagram統合デジタル広告プラットフォーム。自分株式会社はAI大学でSNS知識×財務×習慣を統合した個人OS。完全無料のAI統合ライフマネジメントアプリ。' },
+        'nvidia-geforce-now': { title: '自分株式会社 vs NVIDIA GeForce NOW | NVIDIA GeForce NOW代替アプリ比較', desc: 'NVIDIA GeForce NOWはクラウドゲーミングサービス。自分株式会社はAI大学でゲーム×学習×財務を統合した個人OS。完全無料のAI統合ライフマネジメントアプリ。' },
+        'sony-playstation': { title: '自分株式会社 vs Sony PlayStation | Sony PlayStation代替アプリ比較', desc: 'PlayStation NetworkはソニーのゲームプラットフォームPC。自分株式会社はAI大学でゲーム×学習×財務を統合した個人OS。完全無料のAI統合ライフマネジメントアプリ。' },
+        'niconico': { title: '自分株式会社 vs ニコニコ動画 | ニコニコ動画代替アプリ比較', desc: 'ニコニコ動画は日本発のコメント付き動画プラットフォーム。自分株式会社はAI大学でエンタメ×学習を統合した個人OS。完全無料のAI統合ライフマネジメントアプリ。' },
+        'nintendo': { title: '自分株式会社 vs Nintendo | Nintendo代替アプリ比較', desc: 'Nintendoはゲームで世界を楽しませるIP帝国。自分株式会社はゲーミフィケーションで習慣・目標達成を楽しくする個人OS。完全無料のAI統合ライフマネジメントアプリ。' },
+        'ntt-docomo': { title: '自分株式会社 vs NTTドコモ | NTTドコモ代替アプリ比較', desc: 'NTTドコモは日本最大の通信キャリア。自分株式会社は通信費を含む家計全体をAIで最適化する個人OS。完全無料のAI統合ライフマネジメントアプリ。' },
+        'softbank-telecom': { title: '自分株式会社 vs SoftBank | SoftBank代替アプリ比較', desc: 'SoftBankは通信×AI投資で日本をリード。自分株式会社はAI活用を個人レベルで democratize した個人OS。完全無料のAI統合ライフマネジメントアプリ。' },
+        'tabelog': { title: '自分株式会社 vs 食べログ | 食べログ代替アプリ比較', desc: '食べログは日本No.1グルメ口コミサイト。自分株式会社は食費管理＋外食記録をAIで最適化する個人OS。完全無料のAI統合ライフマネジメントアプリ。' },
+        'suumo': { title: '自分株式会社 vs SUUMO | SUUMO代替アプリ比較', desc: 'SUUMOは日本No.1不動産情報サービス。自分株式会社は住居費を含む家計全体をAIで管理する個人OS。完全無料のAI統合ライフマネジメントアプリ。' },
+        'threads': { title: '自分株式会社 vs Threads | Threads代替アプリ比較', desc: 'ThreadsはMetaのX対抗テキストSNS。自分株式会社はSNS時間管理＋AI習慣管理で自己成長を最大化する個人OS。完全無料のAI統合ライフマネジメントアプリ。' },
+        'tiktok-shop': { title: '自分株式会社 vs TikTok Shop | TikTok Shop代替アプリ比較', desc: 'TikTok Shopはショート動画×EC融合の次世代ショッピング。自分株式会社はAI衝動買い防止＋家計管理で財務を守る個人OS。完全無料のAI統合ライフマネジメントアプリ。' },
+        'hatena': { title: '自分株式会社 vs はてな | はてな代替アプリ比較', desc: 'はてなはブログ・ブックマーク・QAで知識を共有する日本発プラットフォーム。自分株式会社はAI大学で体系的知識学習を提供する個人OS。完全無料のAI統合ライフマネジメントアプリ。' },
+        'yayoi': { title: '自分株式会社 vs 弥生 | 弥生代替アプリ比較', desc: '弥生は日本No.1会計ソフト。自分株式会社はAI家計管理を個人レベルで無料提供する個人OS。完全無料のAI統合ライフマネジメントアプリ。' },
+        'you-com': { title: '自分株式会社 vs You.com | You.com代替アプリ比較', desc: 'You.comはプライバシー重視のAI検索エンジン。自分株式会社はAI検索を超えた個人ライフ全体管理OSを提供。完全無料のAI統合ライフマネジメントアプリ。' },
+        'mem-ai': { title: '自分株式会社 vs Mem | Mem代替アプリ比較', desc: 'Mem AIはAI自動整理ノートの先駆者。自分株式会社はメモ管理を超えた財務＋習慣＋AI学習を統合した個人OS。完全無料のAI統合ライフマネジメントアプリ。' },
+        'together-ai': { title: '自分株式会社 vs Together AI | Together AI代替アプリ比較', desc: 'Together AIはOSSモデルの高速・低コストAI推論クラウド。自分株式会社はAI大学でTogether AI活用を学べる個人OS。完全無料のAI統合ライフマネジメントアプリ。' },
+        'postman': { title: '自分株式会社 vs Postman | Postman代替アプリ比較', desc: 'PostmanはAPI開発・テストの世界標準ツール。自分株式会社はAI大学でAPI開発スキルを学べる個人OS。完全無料のAI統合ライフマネジメントアプリ。' },
+        'sentry': { title: '自分株式会社 vs Sentry | Sentry代替アプリ比較', desc: 'Sentryはアプリエラー監視・パフォーマンス分析の定番。自分株式会社はAI大学でSentry活用を学べる個人OS。完全無料のAI統合ライフマネジメントアプリ。' },
+        'pika': { title: '自分株式会社 vs Pika | Pika代替アプリ比較', desc: 'Pikaはテキストから高品質AI動画を生成する次世代ツール。自分株式会社はAI大学でPika活用を学べる個人OS。完全無料のAI統合ライフマネジメントアプリ。' },
+        'wise': { title: '自分株式会社 vs Wise | Wise代替アプリ比較', desc: 'Wiseは銀行より安い国際送金・マルチカレンシー口座。自分株式会社はWiseを含む家計全体をAIで管理する個人OS。完全無料のAI統合ライフマネジメントアプリ。' },
+        'oura': { title: '自分株式会社 vs Oura Ring | Oura Ring代替アプリ比較', desc: 'Oura Ringは睡眠・健康スコアを計測するスマートリング。自分株式会社はOuraデータを含むライフ全体をAIで管理する個人OS。完全無料のAI統合ライフマネジメントアプリ。' },
+        'coincheck': { title: '自分株式会社 vs Coincheck | Coincheck代替アプリ比較', desc: 'Coincheckは日本最大級の暗号資産取引所。自分株式会社は暗号資産を含む資産全体をAIで管理する個人OS。完全無料のAI統合ライフマネジメントアプリ。' },
+        'perplexity-ai': { title: '自分株式会社 vs Perplexity AI | Perplexity AI代替アプリ比較', desc: 'Perplexity AIはリアルタイム引用付きAI検索の新標準。自分株式会社はAI検索を超えた個人ライフ全体管理OSを提供。完全無料のAI統合ライフマネジメントアプリ。' },
+        'asana': { title: '自分株式会社 vs Asana | Asana代替アプリ比較', desc: 'AsanaはチームPM標準ツール。自分株式会社は個人・チーム両対応のAI駆動タスク管理を1アプリで提供。完全無料のAI統合ライフマネジメントアプリ。' },
+        'trello': { title: '自分株式会社 vs Trello | Trello代替アプリ比較', desc: 'Trelloはカンバン型タスク管理の定番。自分株式会社はカンバン＋AI判定＋財務を統合した次世代個人OS。完全無料のAI統合ライフマネジメントアプリ。' },
+        'todoist': { title: '自分株式会社 vs Todoist | Todoist代替アプリ比較', desc: 'TodoistはGTD実践者向けタスク管理の傑作。自分株式会社はAI自動優先付け＋財務を統合した個人OS。完全無料のAI統合ライフマネジメントアプリ。' },
+        'n8n': { title: '自分株式会社 vs n8n | n8n代替アプリ比較', desc: 'n8nはOSSワークフロー自動化ツール。自分株式会社はノーコード設定不要で個人ライフを自動化する完成済みOS。完全無料のAI統合ライフマネジメントアプリ。' },
+        'zapier': { title: '自分株式会社 vs Zapier | Zapier代替アプリ比較', desc: 'Zapierはノーコード自動化の定番。自分株式会社はZap設計不要でAI統合ライフ管理を即提供。完全無料のAI統合ライフマネジメントアプリ。' },
+        'netflix': { title: '自分株式会社 vs Netflix | Netflix代替アプリ比較', desc: 'Netflixは世界No.1動画配信。自分株式会社はエンタメ管理＋学習推薦AIを搭載した個人OS。完全無料のAI統合ライフマネジメントアプリ。' },
+        'signal': { title: '自分株式会社 vs Signal | Signal代替アプリ比較', desc: 'Signalはプライバシー最優先の暗号化メッセージアプリ。自分株式会社はプライバシー重視のAI個人OSを提供。完全無料のAI統合ライフマネジメントアプリ。' },
+        'twilio': { title: '自分株式会社 vs Twilio | Twilio代替アプリ比較', desc: 'TwilioはコミュニケーションAPI最大手。自分株式会社はAPI知識不要でAI通知・リマインダーを提供する個人OS。完全無料のAI統合ライフマネジメントアプリ。' },
+        'snowflake': { title: '自分株式会社 vs Snowflake | Snowflake代替アプリ比較', desc: 'Snowflakeはエンタープライズデータクラウドの王者。自分株式会社はデータ分析を個人レベルに democratize した個人OS。完全無料のAI統合ライフマネジメントアプリ。' },
+        'vanta': { title: '自分株式会社 vs Vanta | Vanta代替アプリ比較', desc: 'VantaはSOC2/ISO27001自動化のセキュリティコンプライアンスSaaS。自分株式会社は個人データを安全に管理するAI個人OS。完全無料のAI統合ライフマネジメントアプリ。' },
+        'progate': { title: '自分株式会社 vs Progate | Progate代替アプリ比較', desc: 'Progateはブラウザで学ぶプログラミング学習サービス。自分株式会社はAI大学で260社超のAIツールを学べる個人OS。完全無料のAI統合ライフマネジメントアプリ。' },
+        'schoo': { title: '自分株式会社 vs Schoo | Schoo代替アプリ比較', desc: 'Schooは社会人向けオンライン学習の日本代表。自分株式会社はAI大学で最新AIスキルを無料で学べる個人OS。完全無料のAI統合ライフマネジメントアプリ。' },
+        'sansan': { title: '自分株式会社 vs Sansan | Sansan代替アプリ比較', desc: 'Sansanは名刺管理・法人CRMの日本No.1。自分株式会社はAI人脈管理を個人ライフ全体に統合した個人OS。完全無料のAI統合ライフマネジメントアプリ。' },
+        'kincone': { title: '自分株式会社 vs KINCONE | KINCONE代替アプリ比較', desc: 'KINCONEはSuicaで打刻できる交通費・勤怠管理SaaS。自分株式会社は勤怠＋財務＋AI管理を統合した個人OS。完全無料のAI統合ライフマネジメントアプリ。' },
+        'synthesia': { title: '自分株式会社 vs Synthesia | Synthesia代替アプリ比較', desc: 'SynthesiaはAIアバター動画生成の世界リーダー。自分株式会社はAI大学でSynthesia活用法を学べる個人OS。完全無料のAI統合ライフマネジメントアプリ。' },
+        'runway': { title: '自分株式会社 vs Runway | Runway代替アプリ比較', desc: 'RunwayはGen-3搭載のAI動画・クリエイティブツール。自分株式会社はAI大学でRunway活用を学べる個人OS。完全無料のAI統合ライフマネジメントアプリ。' },
+        'heygen': { title: '自分株式会社 vs HeyGen | HeyGen代替アプリ比較', desc: 'HeyGenはAIアバターで多言語動画を自動生成。自分株式会社はAI大学でHeyGenの活用法を学べる個人OS。完全無料のAI統合ライフマネジメントアプリ。' },
+        'devin': { title: '自分株式会社 vs Devin (Cognition AI) | Devin (Cognition AI)代替アプリ比較', desc: 'Devinは初のAIソフトウェアエンジニア。自分株式会社はAI大学でDevin等のAIコーディングエージェントを学べる個人OS。完全無料のAI統合ライフマネジメントアプリ。' },
+        'hugging-face': { title: '自分株式会社 vs Hugging Face | Hugging Face代替アプリ比較', desc: 'Hugging FaceはOSSモデルのGitHub。自分株式会社はAI大学でHugging Faceの活用を学べる個人OS。完全無料のAI統合ライフマネジメントアプリ。' },
+        'replicate': { title: '自分株式会社 vs Replicate | Replicate代替アプリ比較', desc: 'ReplicateはAPIでAIモデルを即呼び出せるクラウド。自分株式会社はAI大学でReplicate活用を学べる個人OS。完全無料のAI統合ライフマネジメントアプリ。' },
+        'github-copilot': { title: '自分株式会社 vs GitHub Copilot | GitHub Copilot代替アプリ比較', desc: 'GitHub CopilotはAIコード補完SaaSだが月額$10+のサブスクが必要。自分株式会社はコード生成+知識蓄積+AI大学(290社+)を完全無料で提供するライフOS。GitHub Copilot代替を探すなら。' },
+        'chatgpt': { title: '自分株式会社 vs ChatGPT | ChatGPT代替アプリ比較', desc: 'ChatGPTは世界最大のAIチャットだが無料プランは制限あり。自分株式会社はAI提案+財務+習慣+タスク+AI大学まで完全無料で一元管理できるAI統合ライフOS。ChatGPT無料代替。' },
+        'tabnine': { title: '自分株式会社 vs Tabnine | Tabnine代替アプリ比較', desc: 'TabnineはIDEのAIコード補完ツール。自分株式会社はAIコーディング支援に加えAI大学(290社+)・ノート・成長追跡を完全無料で提供。Tabnine代替を探すなら自分株式会社。' },
+        'codeium': { title: '自分株式会社 vs Codeium | Codeium代替アプリ比較', desc: 'CodiumはAIコード補完の無料ツールだがコード生成以外の個人管理機能がない。自分株式会社はAI補完+知識蓄積+AI大学+財務管理を完全無料で提供。Codeium代替を探すなら。' },
+        'gemini': { title: '自分株式会社 vs Gemini | Google Gemini代替アプリ比較', desc: 'Google GeminiはAIアシスタント・マルチモーダル検索の最前線。自分株式会社はGemini的なAI提案+財務+習慣+タスク+AI大学を完全無料で一元管理。Gemini代替。' },
+        'claude': { title: '自分株式会社 vs Claude (Anthropic) | Claude AI代替アプリ比較', desc: 'Claude AIはAnthropicの高性能AIチャット。自分株式会社はClaudeのようなAI対話に加え財務・習慣・タスク・AI大学(290社+)を完全無料で一元管理できるライフOS。Claude代替。' },
+        'microsoft-copilot': { title: '自分株式会社 vs Microsoft Copilot | Microsoft Copilot代替アプリ比較', desc: 'Microsoft CopilotはOffice/Bing統合AIだが個人ライフ管理には不向き。自分株式会社はCopilot的なAI支援+財務+習慣+AI大学を完全無料で提供。Microsoft Copilot代替。' },
+        'grok': { title: '自分株式会社 vs Grok (xAI) | Grok代替アプリ比較', desc: 'GrokはXプレミアム限定のリアルタイムAIチャット(月額$8+)。自分株式会社はAI支援+財務+習慣+タスク+AI大学(290社+)を完全無料で提供するライフOS。Grok代替を探すなら。' },
+        'meta-ai': { title: '自分株式会社 vs Meta AI | Meta AI代替アプリ比較', desc: 'Meta AIはInstagram/WhatsApp/Facebook内のAIアシスタント。自分株式会社はMeta AI的なAI提案+財務+習慣+タスク+AI大学を完全無料で独立管理できるOS。Meta AI代替。' },
+        'midjourney': { title: '自分株式会社 vs Midjourney | Midjourney代替アプリ比較', desc: 'MidjourneyはDiscord専用AI画像生成(月額$10~)。自分株式会社はAI画像生成+財務+習慣+タスク+AI大学(300社+)を完全無料で提供するライフOS。Midjourney代替を探すなら。' },
+        'character-ai': { title: '自分株式会社 vs Character.AI | Character AI代替アプリ比較', desc: 'Character AIはロールプレイ特化AIチャット(月額$9.99)。自分株式会社はAI対話+財務+習慣+タスク+AI大学を完全無料で提供する個人OS。Character AI代替。' },
+        'deepseek': { title: '自分株式会社 vs DeepSeek | DeepSeek代替アプリ比較', desc: 'DeepSeekはオープンソースAI推論モデル。自分株式会社はAI支援+財務+習慣+タスク+AI大学(300社+)を完全無料で統合管理できる個人ライフOS。DeepSeek代替。' },
+        'stable-diffusion': { title: '自分株式会社 vs Stable Diffusion | Stable Diffusion代替アプリ比較', desc: 'Stable DiffusionはOSS画像生成AI(GPU必須/ローカル実行)。自分株式会社はAI機能+財務+習慣+タスク+AI大学(300社+)を完全無料で提供するライフOS。Stable Diffusion代替。' },
+        'dalle': { title: '自分株式会社 vs DALL-E | DALL-E代替アプリ比較', desc: 'DALL-EはChatGPT Plus(月額20USD)統合のAI画像生成。自分株式会社はAI画像+財務+習慣+タスク+AI大学(300社+)を完全無料で提供する個人ライフOS。DALL-E代替。' },
+        'llama': { title: '自分株式会社 vs Meta Llama | Meta Llama代替アプリ比較', desc: 'Meta LlamaはOSS大規模言語モデル(ローカルGPU必須)。自分株式会社はLlama的なAI支援+財務+習慣+タスク+AI大学を完全無料で統合管理できる個人OS。Meta Llama代替。' },
+        'adobe-firefly': { title: '自分株式会社 vs Adobe Firefly | Adobe Firefly代替アプリ比較', desc: 'Adobe FireflyはCreative Cloud統合AI画像生成(月額数千円)。自分株式会社はAI画像+財務+習慣+タスク+AI大学(300社+)を完全無料で提供するライフOS。Adobe Firefly代替。' },
+        'leonardo-ai': { title: '自分株式会社 vs Leonardo.AI | Leonardo AI代替アプリ比較', desc: 'Leonardo AIはゲームアート特化AI画像生成ツール。自分株式会社はAI画像+財務+習慣+タスク+AI大学を完全無料で提供する個人ライフOS。Leonardo AI代替を探すなら。' },
+        'poe': { title: '自分株式会社 vs Poe (Quora) | Poe代替アプリ比較', desc: 'PoeはQuoraのマルチAIチャットアグリゲーター(月額19.99USD)。自分株式会社はAI支援+財務+習慣+タスク+AI大学を完全無料で統合管理できる個人OS。Poe代替。' },
+        'suno': { title: '自分株式会社 vs Suno AI | Suno代替アプリ比較', desc: 'Suno AIはAI音楽生成特化(月額約10USD)。自分株式会社はAI支援+財務+習慣+タスク管理を完全無料で統合できる個人OS。Suno代替。' },
+        'udio': { title: '自分株式会社 vs Udio | Udio代替アプリ比較', desc: 'UdioはAI楽曲生成サービス(月額約10USD)。自分株式会社はAI支援+財務+習慣+タスク+AI大学を完全無料で統合管理できる個人OS。Udio代替。' },
+        'ideogram': { title: '自分株式会社 vs Ideogram AI | Ideogram代替アプリ比較', desc: 'Ideogram AIはテキスト埋め込み特化のAI画像生成(月額約8USD)。自分株式会社はAI支援+財務+習慣+タスク管理を完全無料で統合できる個人OS。Ideogram代替。' },
+        'webflow': { title: '自分株式会社 vs Webflow | Webflow代替アプリ比較', desc: 'WebflowはノーコードWebサイト構築の定番ツール(月額14USD~)。自分株式会社はAI支援+財務+習慣+タスク+AI大学を完全無料で統合管理できる個人OS。Webflow代替。' },
+        'framer': { title: '自分株式会社 vs Framer | Framer代替アプリ比較', desc: 'FramerはAI駆動ノーコードWebデザインビルダー(月額15USD~)。自分株式会社はAI支援+財務+習慣+タスク+AI大学を完全無料で統合管理できる個人OS。Framer代替。' },
+        'copy-ai': { title: '自分株式会社 vs Copy.ai | Copy.ai代替アプリ比較', desc: 'Copy.aiはAIコピーライティング生成の人気ツール(月額49USD~)。自分株式会社はAI支援+財務+習慣+タスク+AI大学を完全無料で統合管理できる個人OS。Copy.ai代替。' },
+        'writesonic': { title: '自分株式会社 vs Writesonic | Writesonic代替アプリ比較', desc: 'WritesonicはAI長文コンテンツ生成ツール(月額13USD~)。自分株式会社はAI支援+財務+習慣+タスク+AI大学を完全無料で統合管理できる個人OS。Writesonic代替。' },
+        'zendesk': { title: '自分株式会社 vs Zendesk | Zendesk代替アプリ比較', desc: 'Zendeskはカスタマーサポート・ヘルプデスクの定番SaaS(月額55USD~)。自分株式会社はAI支援+財務+習慣+タスク+AI大学を完全無料で統合管理できる個人OS。Zendesk代替。' },
+        'intercom': { title: '自分株式会社 vs Intercom | Intercom代替アプリ比較', desc: 'IntercomはAI顧客チャットサポートの定番SaaS(月額74USD~)。自分株式会社はAI支援+財務+習慣+タスク+AI大学を完全無料で統合管理できる個人OS。Intercom代替。' },
+        'mailchimp': { title: '自分株式会社 vs Mailchimp | Mailchimp代替アプリ比較', desc: 'MailchimpはEメールマーケティング最大手(無料~月額13USD)。自分株式会社はAI支援+財務+習慣+タスク+AI大学を完全無料で統合管理できる個人OS。Mailchimp代替。' },
+        'monday-com': { title: '自分株式会社 vs Monday.com | Monday.com代替アプリ比較', desc: 'Monday.comはチームプロジェクト管理の定番SaaS(月額9USD~/人)。自分株式会社はAI支援+財務+習慣+タスク+AI大学を完全無料で統合管理できる個人OS。Monday.com代替。' },
+        'freshdesk': { title: '自分株式会社 vs Freshdesk | Freshdesk代替アプリ比較', desc: 'FreshdeskはAIヘルプデスク・チケット管理の定番SaaS(無料~月額15USD)。自分株式会社はAI支援+財務+習慣+タスク+AI大学を完全無料で統合管理できる個人OS。Freshdesk代替。' },
+        'loom': { title: '自分株式会社 vs Loom | Loom代替アプリ比較', desc: 'Loomは非同期ビデオコミュニケーションの定番(月額12.5USD~)。自分株式会社はAI支援+財務+習慣+タスク+AI大学を完全無料で統合管理できる個人OS。Loom代替。' },
+        'pipedrive': { title: '自分株式会社 vs Pipedrive | Pipedrive代替アプリ比較', desc: 'PipedriveはセールスCRM・パイプライン管理の定番(月額14.9USD~)。自分株式会社はAI支援+財務+習慣+タスク+AI大学を完全無料で統合管理できる個人OS。Pipedrive代替。' },
+        'photoroom': { title: '自分株式会社 vs PhotoRoom | PhotoRoom代替アプリ比較', desc: 'PhotoRoomはAI写真編集・背景除去の人気アプリ(月額9.99USD~)。自分株式会社はAI支援+財務+習慣+タスク+AI大学を完全無料で統合管理できる個人OS。PhotoRoom代替。' },
+        'substack': { title: '自分株式会社 vs Substack | Substack代替アプリ比較', desc: 'Substackはニュースレター配信・クリエイター収益化の定番(手数料10%)。自分株式会社はAI支援+財務+習慣+タスク+AI大学を完全無料で統合管理できる個人OS。Substack代替。' },
+        'klaviyo': { title: '自分株式会社 vs Klaviyo | Klaviyo代替アプリ比較', desc: 'KlaviyoはECサイト向けメール/SMS自動化の定番(月額20USD~)。自分株式会社はAI支援+財務+習慣+タスク+AI大学を完全無料で統合管理できる個人OS。Klaviyo代替。' },
+        'remove-bg': { title: '自分株式会社 vs Remove.bg | Remove.bg代替アプリ比較', desc: 'Remove.bgはAI背景除去の定番ツール(無料~月額9USD)。自分株式会社はAI支援+財務+習慣+タスク+AI大学を完全無料で統合管理できる個人OS。remove.bg代替。' },
+        'flux': { title: '自分株式会社 vs FLUX AI | FLUX代替アプリ比較', desc: 'FLUX (Black Forest Labs)は高品質AI画像生成の最先端モデル。自分株式会社はAI支援+財務+習慣+タスク+AI大学を完全無料で統合管理できる個人OS。FLUX代替。' },
+        'kling': { title: '自分株式会社 vs Kling AI | Kling AI代替アプリ比較', desc: 'Kling AIは快手(Kuaishou)製の高品質AI動画生成サービス。自分株式会社はAI支援+財務+習慣+タスク+AI大学を完全無料で統合管理できる個人OS。Kling AI代替。' },
+        'activecampaign': { title: '自分株式会社 vs ActiveCampaign | ActiveCampaign代替アプリ比較', desc: 'ActiveCampaignはメール自動化・CRM統合の定番SaaS(月額15USD~)。自分株式会社はAI支援+財務+習慣+タスク+AI大学を完全無料で統合管理できる個人OS。ActiveCampaign代替。' },
+        'hailuo': { title: '自分株式会社 vs Hailuo AI | Hailuo AI代替アプリ比較', desc: 'Hailuo AI (MiniMax)はトレンドのAI動画・音楽生成サービス。自分株式会社はAI支援+財務+習慣+タスク+AI大学を完全無料で統合管理できる個人OS。Hailuo AI代替。' },
+        'sendgrid': { title: '自分株式会社 vs SendGrid | SendGrid代替アプリ比較', desc: 'SendGrid (Twilio)はメール配信API・SMTPサービスの定番(無料~月額19.95USD)。自分株式会社はAI支援+財務+習慣+タスク+AI大学を完全無料で統合管理できる個人OS。SendGrid代替。' },
+        'convertkit': { title: '自分株式会社 vs ConvertKit | ConvertKit代替アプリ比較', desc: 'ConvertKit (Kit)はクリエイター向けメール配信・自動化の定番(無料~月額29USD)。自分株式会社はAI支援+財務+習慣+タスク+AI大学を完全無料で統合管理できる個人OS。ConvertKit代替。' },
+        'mailerlite': { title: '自分株式会社 vs MailerLite | MailerLite代替アプリ比較', desc: 'MailerLiteはシンプルで使いやすいメールマーケティングツール(無料~月額9USD)。自分株式会社はAI支援+財務+習慣+タスク+AI大学を完全無料で統合管理できる個人OS。MailerLite代替。' },
+        'hotjar': { title: '自分株式会社 vs Hotjar | Hotjar代替アプリ比較', desc: 'HotjarはヒートマップとUX録画の専門ツール(無料~月額32USD)。自分株式会社はAI支援+財務+習慣+タスク+AI大学を完全無料で統合管理できる個人OS。Hotjar代替。' },
+        'amplitude': { title: '自分株式会社 vs Amplitude | Amplitude代替アプリ比較', desc: 'AmplitudeはプロダクトアナリティクスSaaS(無料~月額49USD)。自分株式会社はAI支援+財務+習慣+タスク+AI大学を完全無料で統合管理できる個人OS。Amplitude代替。' },
+        'mixpanel': { title: '自分株式会社 vs Mixpanel | Mixpanel代替アプリ比較', desc: 'Mixpanelはイベントベースのプロダクトアナリティクス(無料~月額24USD)。自分株式会社はAI支援+財務+習慣+タスク+AI大学を完全無料で統合管理できる個人OS。Mixpanel代替。' },
+        'brevo': { title: '自分株式会社 vs Brevo | Brevo代替アプリ比較', desc: 'Brevo(旧Sendinblue)はメール・SMS統合マーケプラットフォーム(無料~)。自分株式会社はAI支援+財務+習慣+タスク+AI大学を完全無料で統合管理できる個人OS。Brevo代替。' },
+        'beehiiv': { title: '自分株式会社 vs beehiiv | beehiiv代替アプリ比較', desc: 'beehiivはクリエイター向けニュースレタープラットフォーム(無料~月額39USD)。自分株式会社はAI支援+財務+習慣+タスク+AI大学を完全無料で統合管理できる個人OS。beehiiv代替。' }
       };
-      var vsMatch = path.match(/\/vs-([a-z0-9\-]+)$/);
+      var vsMatch = path.match(/\/vs-([a-z0-9\-_]+)$/);
       if (vsMatch) {
         var competitor = vsMatch[1];
         var meta = competitorMeta[competitor];
@@ -504,6 +859,67 @@
           setMeta('og:url', window.location.href);
           setMeta('twitter:url', window.location.href);
           setMeta('og:type', 'article');
+          setMeta('og:image:alt', meta.title + ' 比較');
+          setMeta('twitter:image:alt', meta.title + ' 比較');
+          setCanonical(window.location.href);
+          // Update seo-shell for non-JS crawlers
+          var _h1 = document.getElementById('seo-title');
+          if (_h1) _h1.textContent = meta.title;
+          var _desc = document.querySelector('.seo-card p[lang="ja"]');
+          if (_desc) _desc.textContent = meta.desc;
+          // JSON-LD structured data for vs-* comparison pages
+          var jsonLd = {
+            "@context": "https://schema.org",
+            "@type": "WebPage",
+            "name": meta.title,
+            "description": meta.desc,
+            "url": window.location.href,
+            "breadcrumb": {
+              "@type": "BreadcrumbList",
+              "itemListElement": [
+                {"@type": "ListItem", "position": 1, "name": "自分株式会社", "item": "https://my-web-app-b67f4.web.app/"},
+                {"@type": "ListItem", "position": 2, "name": "競合比較", "item": "https://my-web-app-b67f4.web.app/competitors"},
+                {"@type": "ListItem", "position": 3, "name": meta.title, "item": window.location.href}
+              ]
+            }
+          };
+          var ldScript = document.createElement('script');
+          ldScript.type = 'application/ld+json';
+          ldScript.text = JSON.stringify(jsonLd);
+          document.head.appendChild(ldScript);
+          // FAQPage JSON-LD for rich results on vs-* comparison pages
+          var compName = meta.title.replace('自分株式会社 vs ', '').split(' | ')[0];
+          var faqLd = {
+            "@context": "https://schema.org",
+            "@type": "FAQPage",
+            "mainEntity": [
+              {
+                "@type": "Question",
+                "name": compName + "と自分株式会社は何が違うの?",
+                "acceptedAnswer": {"@type": "Answer", "text": meta.desc}
+              },
+              {
+                "@type": "Question",
+                "name": "自分株式会社は完全無料で使えますか?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "はい、現在は完全無料です。登録なしでAI提案を1回体験でき、登録後は制限なくすべての機能を利用できます。"
+                }
+              },
+              {
+                "@type": "Question",
+                "name": compName + "から自分株式会社に乗り換えられますか?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "30秒でアカウント登録できます。既存データはMarkdown形式で取り込め、NotionとEvernoteはインポート機能もあります。完全無料でお試しいただけます。"
+                }
+              }
+            ]
+          };
+          var faqScript = document.createElement('script');
+          faqScript.type = 'application/ld+json';
+          faqScript.text = JSON.stringify(faqLd);
+          document.head.appendChild(faqScript);
         }
       }
 
@@ -626,7 +1042,7 @@
       var stack = String((error && error.stack) || '');
       var message = String((event && event.message) || (error && error.message) || '');
       var isMainBundle = stack.indexOf('main.dart.js') !== -1;
-      var isFocusTraversalRenderBox =
+      var isFocusTraversalRenderBoxV1 =
         isMainBundle &&
         stack.indexOf('.gN') !== -1 &&
         stack.indexOf('.gn') !== -1 &&
@@ -634,6 +1050,17 @@
         stack.indexOf('Object.dy') !== -1 &&
         stack.indexOf('.ak') !== -1 &&
         stack.indexOf('a7') !== -1;
+      var isFocusTraversalRenderBoxV2 =
+        isMainBundle &&
+        stack.indexOf('.gn') !== -1 &&
+        stack.indexOf('.ge') !== -1 &&
+        stack.indexOf('Object.e') !== -1 &&
+        stack.indexOf('Object.d') !== -1 &&
+        (stack.indexOf('.aF') !== -1 || stack.indexOf('.aG') !== -1) &&
+        (stack.indexOf('.aU') !== -1 || stack.indexOf('.aV') !== -1) &&
+        stack.indexOf('.at') !== -1;
+      var isFocusTraversalRenderBox =
+        isFocusTraversalRenderBoxV1 || isFocusTraversalRenderBoxV2;
       var isInkResponseNull =
         message.indexOf('Null check operator used on a null value') !== -1 &&
         isMainBundle &&

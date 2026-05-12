@@ -1,7 +1,10 @@
 {
-  "http_code": "403",
+  "http_code": "200",
   "ticket_count": "0",
-  "fetched_at": "2026-04-25T00:00:00Z",
-  "note": "Supabase Network Restrictions によりブロック中 — Dashboard > Settings > Network > Network Restrictions で IP 許可リストを設定してください",
-  "data": {"tickets": []}
+  "fetched_at": "2026-05-01T15:29:44Z",
+  "note": "",
+  "data": {
+    "success": true,
+    "tickets": []
+  }
 }

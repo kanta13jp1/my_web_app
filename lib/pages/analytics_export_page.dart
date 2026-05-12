@@ -35,12 +35,12 @@ class _AnalyticsExportPageState extends State<AnalyticsExportPage> {
     });
     try {
       final optRes = await _supabase.functions.invoke(
-        'analytics-export',
-        queryParameters: {'view': 'options'},
+        'enterprise-hub',
+        body: {'action': 'analytics.export_options'},
       );
       final histRes = await _supabase.functions.invoke(
-        'analytics-export',
-        queryParameters: {'view': 'history'},
+        'enterprise-hub',
+        body: {'action': 'analytics.export_history'},
       );
       final optData = optRes.data;
       final histData = histRes.data;

@@ -55,9 +55,29 @@ jobs:
         with:
           deno-version: v2.x
 
+      - name: Check Edge Function imports
+        run: python scripts/check_edge_function_imports.py
+
       - name: Deno lint (Edge Functions)
-        run: deno lint --config supabase/functions/deno.json supabase/functions/
+        id: deno_lint
+        run: |
+          mkdir -p .ci-logs
+          set +e
+          deno lint --config supabase/functions/deno.json supabase/functions/ 2>&1 | tee .ci-logs/deno-lint.log
+          status=${PIPESTATUS[0]}
+          python scripts/ci_failure_digest.py summarize-log .ci-logs/deno-lint.log \
+            --kind deno-lint \
+            --summary "$GITHUB_STEP_SUMMARY" || true
+          exit "$status"
         # プロジェクトルール「deno lint 常に0エラー」をCIで強制
+
+      - name: Upload Deno lint log
+        if: always() && hashFiles('.ci-logs/deno-lint.log') != ''
+        uses: actions/upload-artifact@v7
+        with:
+          name: deno-lint-log
+          path: .ci-logs/deno-lint.log
+          if-no-files-found: ignore
 
       - name: Deno test (Edge Functions)
         id: deno_test
@@ -73,8 +93,21 @@ jobs:
       - name: Check Edge Function deploy count (ハードキャップ50本以下)
         run: |
           # deploy-prod.yml のデプロイリストを抽出 (macro-hub体制 — Tier1/Tier2廃止)
-          DEPLOYED=$(grep "supabase functions deploy" .github/workflows/deploy-prod.yml \
-            | grep -v "^#\|#" | awk '{print $4}' | sort)
+          DEPLOYED=$(python3 - <<'PY'
+          import re
+          from pathlib import Path
+
+          pattern = re.compile(
+              r'^\s*(?:supabase\s+functions\s+deploy|deploy_function)\s+([A-Za-z0-9_-]+)\b'
+          )
+          deployed = []
+          for line in Path('.github/workflows/deploy-prod.yml').read_text(encoding='utf-8').splitlines():
+              match = pattern.search(line)
+              if match:
+                  deployed.append(match.group(1))
+          print('\n'.join(sorted(set(deployed))))
+          PY
+          )
           DEPLOY_COUNT=$(echo "$DEPLOYED" | grep -c . || true)
           # supabase/functions/ の実EFディレクトリ数 (_shared除く)
           EXISTING=$(find supabase/functions -maxdepth 1 -mindepth 1 -type d \
@@ -129,30 +162,27 @@ jobs:
           fi
         continue-on-error: false  # migration 構文エラーはCIブロック
 
-      - name: Check formatting
-        # Win版#131 part 18: deploy-prod 連鎖失敗 (4 件以上) の根本対策。
-        # 複数 instance 並行で dart format スキップした場合の hard fail を warn 化。
-        # 実害なし (Flutter web build は JS bundle 出力なので format 影響ゼロ)。
-        # 強制 enforce が必要なら local pre-commit hook を導入推奨。
-        run: |
-          if dart format --set-exit-if-changed .; then
-            echo "All files properly formatted."
-          else
-            echo "::warning::dart format 差分あり。次回 push 前に dart format lib/ 実行推奨。deploy 自体は続行。"
-            echo "## Format 警告" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "dart format で差分検出。次 commit 前に修正してください。" >> $GITHUB_STEP_SUMMARY
-          fi
-        continue-on-error: true  # warn-only (Win#131 part 18)
+      - name: Check GitHub Actions Node runtime floor
+        run: python scripts/check_github_actions_node_runtime.py
+        continue-on-error: false
 
-      - name: Run tests
+      - name: Check formatting
+        # #1372: treat Dart formatting as a required static-analysis gate.
+        run: dart format --output=none --set-exit-if-changed .
+
+      - name: Run VM tests
         id: flutter_test
         run: flutter test --coverage
-        continue-on-error: true  # Tests can be flaky; acceptable soft failure if most pass
+        continue-on-error: false  # VSCode S21: 9 test files @TestOn('browser') 追加で VM contamination 完全解消
+
+      - name: Run web import smoke tests
+        id: flutter_web_test
+        run: flutter test --platform chrome test/web_import_smoke_test.dart
+        continue-on-error: false
 
       - name: Upload coverage to Codecov (optional)
         uses: codecov/codecov-action@v6
-        if: success()
+        if: success() && hashFiles('coverage/lcov.info') != ''
         with:
           files: ./coverage/lcov.info
           fail_ci_if_error: false
@@ -183,6 +213,7 @@ jobs:
         run: |
           BUILD_OK=$([ -d "build/web" ] && echo "✅" || echo "— (skipped: workflow_call)")
           FLUTTER_TEST="${{ steps.flutter_test.outcome }}"
+          FLUTTER_WEB_TEST="${{ steps.flutter_web_test.outcome }}"
           DENO_TEST="${{ steps.deno_test.outcome }}"
           FT_ICON=$([ "$FLUTTER_TEST" = "success" ] && echo "✅" || [ "$FLUTTER_TEST" = "skipped" ] && echo "—" || echo "⚠️")
           DT_ICON=$([ "$DENO_TEST" = "success" ] && echo "✅" || [ "$DENO_TEST" = "skipped" ] && echo "—" || echo "⚠️")
@@ -193,7 +224,9 @@ jobs:
             echo "|---------|------|"
             echo "| \`flutter analyze\` | ✅ 0エラー (強制) |"
             echo "| \`deno lint\` | ✅ 0エラー (強制) |"
-            echo "| \`flutter test\` | $FT_ICON $FLUTTER_TEST (continue-on-error) |"
+            echo "| \`dart format --set-exit-if-changed\` | ✅ 差分なし (強制) |"
+            echo "| \`flutter test --coverage\` | $FT_ICON $FLUTTER_TEST |"
+            echo "| \`flutter test --platform chrome\` | $FLUTTER_WEB_TEST |"
             echo "| \`deno test\` | $DT_ICON $DENO_TEST (continue-on-error) |"
             echo "| \`flutter build web --release\` | $BUILD_OK |"
             echo ""
@@ -261,5 +294,5 @@ jobs:
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: '✅ CI全チェック通過！\n\n**必須ゲート (強制)**\n- `flutter analyze` 0エラー ✅\n- `deno lint` 0エラー ✅\n- `flutter build web --release` 成功 ✅\n\nコードレビュー準備完了です。'
+              body: '✅ CI全チェック通過！\n\n**必須ゲート (強制)**\n- `flutter analyze` 0エラー ✅\n- `deno lint` 0エラー ✅\n- `dart format` 差分なし ✅\n- `flutter build web --release` 成功 ✅\n\nコードレビュー準備完了です。'
             })

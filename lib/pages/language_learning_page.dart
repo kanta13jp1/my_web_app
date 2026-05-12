@@ -81,8 +81,8 @@ class _LanguageLearningPageState extends State<LanguageLearningPage>
     });
     try {
       final response = await _supabase.functions.invoke(
-        'language-learning',
-        queryParameters: {'view': 'decks'},
+        'social-commerce-hub',
+        body: {'action': 'lang.list_decks'},
       );
       final data = response.data;
       if (data is Map<String, dynamic> && data['decks'] is List) {
@@ -102,8 +102,8 @@ class _LanguageLearningPageState extends State<LanguageLearningPage>
   Future<void> _fetchCards(String deckId) async {
     try {
       final response = await _supabase.functions.invoke(
-        'language-learning',
-        queryParameters: {'view': 'cards', 'deck_id': deckId},
+        'social-commerce-hub',
+        body: {'action': 'lang.list_cards', 'deck_id': deckId},
       );
       final data = response.data;
       if (data is Map<String, dynamic> && data['cards'] is List) {
@@ -117,8 +117,8 @@ class _LanguageLearningPageState extends State<LanguageLearningPage>
   Future<void> _fetchReviewCards(String deckId) async {
     try {
       final response = await _supabase.functions.invoke(
-        'language-learning',
-        queryParameters: {'view': 'review', 'deck_id': deckId},
+        'social-commerce-hub',
+        body: {'action': 'lang.review_session', 'deck_id': deckId},
       );
       final data = response.data;
       if (data is Map<String, dynamic> && data['dueCards'] is List) {
@@ -135,8 +135,8 @@ class _LanguageLearningPageState extends State<LanguageLearningPage>
   Future<void> _fetchStreak() async {
     try {
       final response = await _supabase.functions.invoke(
-        'language-learning',
-        queryParameters: {'view': 'streak'},
+        'social-commerce-hub',
+        body: {'action': 'lang.streak'},
       );
       final data = response.data;
       if (data is Map<String, dynamic> && data['streak'] is Map) {
@@ -150,8 +150,8 @@ class _LanguageLearningPageState extends State<LanguageLearningPage>
   Future<void> _fetchStats() async {
     try {
       final response = await _supabase.functions.invoke(
-        'language-learning',
-        queryParameters: {'view': 'stats'},
+        'social-commerce-hub',
+        body: {'action': 'lang.stats'},
       );
       final data = response.data;
       if (data is Map<String, dynamic> && data['stats'] is Map) {
@@ -166,9 +166,9 @@ class _LanguageLearningPageState extends State<LanguageLearningPage>
     if (_deckTitleCtrl.text.trim().isEmpty) return;
     try {
       await _supabase.functions.invoke(
-        'language-learning',
+        'social-commerce-hub',
         body: {
-          'action': 'create_deck',
+          'action': 'lang.create_deck',
           'title': _deckTitleCtrl.text.trim(),
           'language_from': _selectedFromLang,
           'language_to': _selectedToLang,
@@ -197,9 +197,9 @@ class _LanguageLearningPageState extends State<LanguageLearningPage>
     }
     try {
       await _supabase.functions.invoke(
-        'language-learning',
+        'social-commerce-hub',
         body: {
-          'action': 'add_card',
+          'action': 'lang.add_card',
           'deck_id': deck['deck_id'] as String? ?? '',
           'front': _cardFrontCtrl.text.trim(),
           'back': _cardBackCtrl.text.trim(),
@@ -225,9 +225,9 @@ class _LanguageLearningPageState extends State<LanguageLearningPage>
     final card = _reviewCards[_reviewIndex];
     try {
       await _supabase.functions.invoke(
-        'language-learning',
+        'social-commerce-hub',
         body: {
-          'action': 'review_card',
+          'action': 'lang.review_card',
           'card_id': card['card_id'] as String? ?? '',
           'correct': correct,
           'quality': correct ? 4 : 1,

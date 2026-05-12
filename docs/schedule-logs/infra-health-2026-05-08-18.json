@@ -1,0 +1,19 @@
+{
+  "timestamp_jst": "2026-05-08T18:33+09:00",
+  "supabase_health": {
+    "http_status": 200,
+    "status": "healthy",
+    "checks": {
+      "env": "ok",
+      "db_connectivity": "ok (1816ms)",
+      "wbs_tasks": "ok",
+      "ai_circuit_breaker": "ok"
+    }
+  },
+  "firebase_hosting": {
+    "reachable": true,
+    "note": "static content loads / interactive components init normally"
+  },
+  "anomalies": [],
+  "action": "log-only (no commit per task rule: commit only on anomaly)"
+}

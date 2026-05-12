@@ -27,6 +27,10 @@ class _AnalyzeRealityPageState extends State<AnalyzeRealityPage> {
     final text = _controller.text.trim();
     if (text.isEmpty) return;
 
+    if (_supabase.auth.currentUser == null) {
+      setState(() => _isLoading = false);
+      return;
+    }
     setState(() {
       _isLoading = true;
       _errorMessage = null;

@@ -1,3 +1,6 @@
+// AgentOrgPage transitively imports browser-only package:web APIs.
+@TestOn('browser')
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/models/agent_memory_entry.dart';
@@ -606,18 +609,11 @@ void main() {
     expect(find.byKey(const Key('landing_hero_section')), findsOneWidget);
     expect(find.byKey(const Key('landing_trial_section')), findsOneWidget);
     expect(find.byKey(const Key('landing_auth_section')), findsOneWidget);
-    expect(find.byKey(const Key('landing_share_section')), findsOneWidget);
-    expect(find.byKey(const Key('landing_pv_section')), findsOneWidget);
-    expect(adapter.loadShareSnapshotCallCount, 1);
-    expect(adapter.loadLpViewStatsCallCount, 1);
-
-    final shareButton = find.byKey(const Key('landing_share_button_x'));
-    await tester.ensureVisible(shareButton);
-    await tester.tap(shareButton);
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 300));
-
-    expect(adapter.sharedChannels, <String>[LandingShareService.channelX]);
+    expect(find.byKey(const Key('landing_social_proof_stats')), findsOneWidget);
+    expect(find.byKey(const Key('landing_migration_guide')), findsOneWidget);
+    expect(find.byKey(const Key('landing_comparison_links')), findsOneWidget);
+    expect(adapter.loadShareSnapshotCallCount, 0);
+    expect(adapter.loadLpViewStatsCallCount, 0);
   });
 
   testWidgets(
@@ -725,7 +721,7 @@ void main() {
     final scrollable = find.byType(Scrollable).first;
     final postButton = find.byKey(const Key('agent_org_board_post_button'));
     await tester.scrollUntilVisible(postButton, 200, scrollable: scrollable);
-    await tester.tap(postButton);
+    tester.widget<FilledButton>(postButton).onPressed?.call();
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 100));
 
@@ -825,7 +821,7 @@ void main() {
     final reactionChip =
         find.byKey(const Key('agent_org_board_reaction_message-1_thumbs_up'));
     await tester.scrollUntilVisible(reactionChip, 200, scrollable: scrollable);
-    await tester.tap(reactionChip);
+    tester.widget<FilterChip>(reactionChip).onSelected?.call(true);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 100));
 

@@ -45,7 +45,7 @@
 | ツール | 強み | 主な使いどころ | 入れない場所 |
 | --- | --- | --- | --- |
 | **Claude Code (10 枠)** | 大きめ実装・既存設計沿いの追加・並列ワーカー・設計判断 | 新機能 EF / Flutter UI / docs / memory consolidation / cross-instance-pr 起票 | 横断調査の最適化 (= NotebookLM が上) |
-| **Codex (2 枠)** | 横断調査・修正 PR・CI/同期/運用まわり・レビュー補助 | 大規模 refactor / SQL 最適化 / 馬学習ループ / WBS 同期ロジック | 設計判断 (= Claude が上) / memory 書込 |
+| **Codex (2 枠)** | 横断調査・修正 PR・CI/同期/運用まわり・レビュー補助 | Codex#1 = 横断調査 / 修正 PR / SQL・migration レビュー補助、Codex#2 = CI / 同期 / 運用 / EF(Deno)・GHA レビュー補助 | 設計判断 (= Claude が上) / memory 書込 / UI設計 |
 | **Gemini Code Assist** | Google / Flutter / Firebase 系・コード理解補助・別視点レビュー | Flutter API 更新 / Firebase Hosting 設定 / Anthropic API outage 時の Dart 実装 fallback | 戦略判断 / 競合調査 |
 | **GitHub Copilot** | IDE 内の短距離実装・補完・テスト追加 | コーディング中の関数補完 / 単体テスト雛形 / lint fix の suggestion | 設計 / 大規模 refactor |
 | **Manus AI** | ブラウザ操作・外部 SaaS 確認・長めの手順実行 | Notion / Slack / Stripe 等の外部 SaaS UI 操作 / 手作業の連続自動化 | コード生成 / 設計判断 |
@@ -62,10 +62,10 @@ Q1: 設計判断 / 戦略 / cross-instance 調整?
 Q2: 横断調査 / 過去判断の集約必要?
    YES → NotebookLM Deep Research
    NO ↓
-Q3: 500+ 行 refactor / SQL 最適化 / algorithm 改善?
-   YES → Codex (#1 SQL系 / #2 refactor系)
+Q3: 横断調査 / 修正 PR / CI・同期・運用 / レビュー補助?
+   YES → Codex (#1 横断調査・修正PR / #2 CI・同期・運用)
    NO ↓
-Q4: Flutter / Firebase 専門知識が決め手?
+Q4: 500+ 行 refactor / Flutter / Firebase 専門知識が決め手?
    YES → Gemini Code Assist
    NO ↓
 Q5: IDE 内補完で済む 50 行未満?
@@ -146,8 +146,95 @@ or memory に書き、wrap-up で確実に拾う)。
 
 ---
 
-## 6. 改訂履歴
+## 6. 1 日サイクル運用パターン (2026-04-28 確立)
+
+### 6.1 サイクル本体 — 「発見 → 提案 → 実装 → 完了確認」
+
+OPS-28 charter 採択日 (2026-04-28) に Win版が 1 セッション内で
+**4 種類の改善トリガー** を発見・提案・実装・完了確認まで完走させた
+実証パターン。本サイクルは今後の **標準運用フロー** として確立する。
+
+```text
+┌──────────────────────────────────────────────────────────────┐
+│ Win版 (Claude / 設計判断 + cross-instance-pr 起票専任)         │
+│   ↓ 第 3 章 5 監査 (30 秒) で改善トリガー発見                  │
+│   ↓ 第 4 章 改善トリガー #1〜#5 のいずれかに該当 → 即対応       │
+│                                                               │
+│   ★ 本トリガーが Win版 territory なら直接 hotfix              │
+│   ★ それ以外なら cross-instance-pr 起票                       │
+└──────────────────────────────────────────────────────────────┘
+                                 ↓
+┌──────────────────────────────────────────────────────────────┐
+│ 受領 worker (PS#1 / PS#5 / Codex#1 / Codex#2)                  │
+│   ↓ cross-instance-pr 内の handoff template に従って実装        │
+│   ↓ commit + push origin HEAD:main                             │
+│   ↓ docs/cross-instance-prs/<file>.md を done/ へ移動           │
+└──────────────────────────────────────────────────────────────┘
+                                 ↓
+┌──────────────────────────────────────────────────────────────┐
+│ Win版 (起票者) — 翌セッション or 同日 wakeup                    │
+│   ↓ MEMORY.md / git log で完了通知を観察                       │
+│   ↓ root と done/ で重複が無いか check (= 5 正本層 #1 整合)     │
+│   ↓ memory に「cycle close」記録                                │
+└──────────────────────────────────────────────────────────────┘
+```
+
+### 6.2 4 worker lane の reciprocal 完成 (2026-04-28)
+
+Win版が 1 日で起票した 7 件の cross-instance-pr が 4 worker lane
+全部に分散することを確認:
+
+| Lane | 起票 part | 受領者 | 内容 | 同日完了 |
+| --- | --- | --- | --- | --- |
+| Win版 → PS#1 | 47, 48, 51, 56 | PS#1 S57+S58 (3 件) / part 56 待機 | WF + 監視 + migration time-drift detector | ✅ 3/4 |
+| Win版 → PS#5 | 50 | PS#5 S75 | EF + audit | ✅ |
+| Win版 → Codex#1 | 54 (1 件) | (待機 / 翌日想定) | SQL view | ⏳ |
+| Win版 → Codex#2 | 54 (1 件) | (待機 / 翌日想定) | TS test | ⏳ |
+| Win版 → Codex#1or#2 | 54 (1 件) | (待機 / 翌日想定) | TS impl | ⏳ |
+| **PS#5 → Win版 → VSCode版** | 58 (incoming + reroute) | (VSCode版 待機 / 5/10 期限) | conditional import refactor | ⏳ |
+
+= 12-instance fleet の **全 4 worker lane が初めて稼働**. PS lane は
+当日 reciprocal 完結, Codex lane は翌日 reciprocal 想定。
+
+### 6.3 同日 cycle 成立条件 (再現性チェックリスト)
+
+```markdown
+### Daily Cycle Sustainability Check
+
+- [ ] 起票者 (Win版) が同日中に 5 監査を 1 回以上実施
+- [ ] 受領 worker (PS#1/#5/Codex#1/#2) のうち少なくとも 1 instance が
+      その日にアクティブ
+- [ ] cross-instance-pr に 5 質問 (Codex routing) or 案 A/B/C 提示
+      (Claude 受領) が含まれている
+- [ ] 受領者が 1 task = 1 commit + push まで実施 (途中放置しない)
+- [ ] 完了後 done/ 移動 (= 5 正本層 #1 整合)
+- [ ] 起票者が翌セッション or 同日 wakeup で完了確認
+```
+
+5 項目以上 ✅ → 1 日サイクル成立 / 4 以下 → broken (= 別 cycle で持ち越し).
+
+### 6.4 サイクル 1 日分のスループット (実測 2026-04-28)
+
+| 指標 | 値 |
+| --- | --- |
+| 起票数 | 8 (Win版 part 47/48/50/51/54×3/56) |
+| 当日完了数 | 4 (PS#1 S57+S58 / PS#5 S75 / Issue #862 自動生成) |
+| 翌日想定数 | 4 (Codex 3 件 + PS#1 part 56 migration time-drift detector) |
+| 受領 lane (PS#5 → Win版) | 1 件 (part 58 / VSCode版 へ reroute / 期限 5/10) |
+| 双方向 cycle 確立 | ✅ Win版 起票 + 受領 + routing 全 lane 稼働 |
+| 完了率 (当日) | 4/7 = 57% |
+| 完了率 (24h 想定) | 7/7 = 100% (Codex 翌日反映前提) |
+
+= Win版「発見 → 提案」専任 + PS/Codex 「実装」分担で **24h 内 100% close** を
+維持できる。Win版が「実装まで自力でやる」より **3-5 倍のスループット**
+(= 1 セッションで 1 件 vs 7 件) を実現.
+
+---
+
+## 7. 改訂履歴
 
 | 日付 | 変更 |
 | --- | --- |
 | 2026-04-28 | 初版 (User 直接指示「12 並行開発を前提に運用改善も常に見る方針」を canonical 化) |
+| 2026-04-28 | 第 6 章「1 日サイクル運用パターン」追加 (Win版#132 part 55) — 同日 part 47-54 で実証した「発見 → 提案 → 実装 → 完了確認」reciprocal cycle を charter 化。4 worker lane 並行稼働 + 同日 cycle 成立条件 5 項目チェックリスト。|
+| 2026-04-28 | §6.2 reciprocal 表 / §6.4 throughput 数値 update (Win版#132 part 59) — 同日 part 56 (PS#1 へ migration time-drift detector cross-instance-pr) + part 58 (PS#5 incoming → VSCode版 reroute) 追加. 起票 7 → 8 件 / 当日完了 4 件 / 翌日想定 3 → 4 件 / **受領 lane 初稼働** 1 件. **双方向 cycle 完全確立**. routing 判断 = 5 質問 + WORKDIR-ISOLATION 双軸. |

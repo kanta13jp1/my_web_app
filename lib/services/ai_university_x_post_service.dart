@@ -2,10 +2,11 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'ai_hub_chat_service.dart';
 
-typedef AiUniversityXPublisher = Future<Map<String, dynamic>> Function({
-  required String text,
-  required bool dryRun,
-});
+typedef AiUniversityXPublisher =
+    Future<Map<String, dynamic>> Function({
+      required String text,
+      required bool dryRun,
+    });
 
 class AiUniversityXPostMetrics {
   final int correctAnswers;
@@ -65,9 +66,9 @@ class AiUniversityXPostService {
     SupabaseClient? supabase,
     AiHubChatService? chatService,
     AiUniversityXPublisher? publisher,
-  })  : _supabase = supabase,
-        _chatService = chatService ?? AiHubChatService(supabase: supabase),
-        _publisher = publisher;
+  }) : _supabase = supabase,
+       _chatService = chatService ?? AiHubChatService(supabase: supabase),
+       _publisher = publisher;
 
   Future<AiUniversityXPostResult> generateAndPostLearningUpdate({
     required AiUniversityXPostMetrics metrics,
@@ -88,9 +89,7 @@ class AiUniversityXPostService {
   }
 
   Future<({String text, bool fallbackUsed, String source})>
-      generateLearningPost(
-    AiUniversityXPostMetrics metrics,
-  ) async {
+  generateLearningPost(AiUniversityXPostMetrics metrics) async {
     final fallback = buildFallbackLearningPost(metrics);
     try {
       final response = await _chatService.sendAutoChat(
@@ -100,20 +99,12 @@ class AiUniversityXPostService {
       );
       final normalized = sanitizeTweet(response.text);
       if (_isUsableTweet(normalized, metrics.url)) {
-        return (
-          text: normalized,
-          fallbackUsed: false,
-          source: response.source,
-        );
+        return (text: normalized, fallbackUsed: false, source: response.source);
       }
     } catch (_) {
       // The button should still work when AI quota or provider routing fails.
     }
-    return (
-      text: fallback,
-      fallbackUsed: true,
-      source: 'fallback',
-    );
+    return (text: fallback, fallbackUsed: true, source: 'fallback');
   }
 
   static String buildFallbackLearningPost(AiUniversityXPostMetrics metrics) {
@@ -192,8 +183,8 @@ ${metrics.url}$streakLine
     final map = data is Map<String, dynamic>
         ? data
         : data is Map
-            ? Map<String, dynamic>.from(data)
-            : <String, dynamic>{'success': false, 'message': data?.toString()};
+        ? Map<String, dynamic>.from(data)
+        : <String, dynamic>{'success': false, 'message': data?.toString()};
     if (map['success'] != true) {
       throw Exception(_buildXPostFailureMessage(map));
     }

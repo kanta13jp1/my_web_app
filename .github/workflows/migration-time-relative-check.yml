@@ -1,0 +1,40 @@
+name: Migration Time-Relative CHECK Detector
+
+on:
+  pull_request:
+    paths:
+      - 'supabase/migrations/**'
+      - 'scripts/check_migration_time_relative_check.py'
+  push:
+    branches: [main]
+    paths:
+      - 'supabase/migrations/**'
+
+concurrency:
+  group: migration-time-check-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  check:
+    name: Detect time-relative CHECK violations (PS#5 S78 regression guard)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      - name: Set base SHA (PR = base commit / push = before SHA)
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            echo "GITHUB_BASE_SHA=${{ github.event.pull_request.base.sha }}" >> $GITHUB_ENV
+          else
+            echo "GITHUB_BASE_SHA=${{ github.event.before }}" >> $GITHUB_ENV
+          fi
+
+      - name: Detect time-relative drift risk
+        run: python3 scripts/check_migration_time_relative_check.py

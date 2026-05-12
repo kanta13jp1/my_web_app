@@ -1,0 +1,9 @@
+{
+  "status": "healthy",
+  "firebase_http": 200,
+  "supabase_status": "healthy",
+  "db_latency_ms": 98,
+  "checks_ok": ["env", "db_connectivity", "wbs_tasks", "ai_circuit_breaker"],
+  "timestamp_utc": "2026-05-09T16:33:53.766Z",
+  "jst_label": "2026-05-10-01"
+}

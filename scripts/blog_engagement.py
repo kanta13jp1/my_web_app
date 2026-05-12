@@ -3,7 +3,7 @@
 Blog engagement automation:
 1. Fetch all Qiita/dev.to articles
 2. Detect & delete duplicate articles
-3. Auto-reply to unanswered comments (via Claude Haiku)
+3. Auto-reply to unanswered comments (Claude → Gemini → template fallback)
 4. Auto-follow users who liked (Qiita only)
 5. Store engagement data in Supabase for app display
 
@@ -11,7 +11,8 @@ Required GitHub secrets:
   QIITA_ACCESS_TOKEN   — Qiita personal access token
   DEVTO_API_KEY        — dev.to API key (optional)
   SUPABASE_SERVICE_ROLE_KEY
-  ANTHROPIC_API_KEY    — for generating replies (optional, uses template fallback)
+  ANTHROPIC_API_KEY    — for generating replies (optional)
+  GEMINI_API_KEY       — fallback reply generation (optional, uses template fallback)
 """
 from __future__ import annotations
 
@@ -28,6 +29,9 @@ DEVTO_KEY = os.environ.get("DEVTO_API_KEY", "")
 SUPABASE_URL = "https://smmkxxavexumewbfaqpy.supabase.co"
 SUPABASE_KEY = os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "")
 ANTHROPIC_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
+GEMINI_KEY = os.environ.get("GEMINI_API_KEY", "")
+ANTHROPIC_API = "https://api.anthropic.com/v1/messages"
+GEMINI_API = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent"
 
 DRY_RUN = os.environ.get("DRY_RUN", "false").lower() == "true"
 REPLY_DELAY = 3   # seconds between API calls
@@ -153,38 +157,67 @@ def sb_check(table: str, filters: dict) -> list:
 
 
 # ── AI reply generation ───────────────────────────────────────────
+def template_reply(author: str) -> str:
+    if author:
+        return f"{author}さん、コメントありがとうございます！参考になれば嬉しいです。"
+    return "コメントありがとうございます！参考になれば嬉しいです。"
+
+
+def call_claude_reply(prompt: str) -> str:
+    resp = requests.post(
+        ANTHROPIC_API,
+        headers={
+            "x-api-key": ANTHROPIC_KEY,
+            "anthropic-version": "2023-06-01",
+            "content-type": "application/json",
+        },
+        json={
+            "model": "claude-haiku-4-5-20251001",
+            "max_tokens": 250,
+            "messages": [{"role": "user", "content": prompt}],
+        },
+        timeout=30,
+    )
+    if resp.status_code != 200:
+        raise RuntimeError(f"Claude API HTTP {resp.status_code}: {resp.text[:200]}")
+    return resp.json()["content"][0]["text"].strip()
+
+
+def call_gemini_reply(prompt: str) -> str:
+    resp = requests.post(
+        f"{GEMINI_API}?key={GEMINI_KEY}",
+        headers={"content-type": "application/json"},
+        json={
+            "contents": [{"parts": [{"text": prompt}]}],
+            "generationConfig": {"maxOutputTokens": 250},
+        },
+        timeout=30,
+    )
+    if resp.status_code != 200:
+        raise RuntimeError(f"Gemini API HTTP {resp.status_code}: {resp.text[:200]}")
+    data = resp.json()
+    return data["candidates"][0]["content"]["parts"][0]["text"].strip()
+
+
 def generate_reply(title: str, body: str, author: str) -> str:
-    if not ANTHROPIC_KEY:
-        return f"コメントありがとうございます！参考になれば嬉しいです 😊"
+    prompt = REPLY_PROMPT.format(title=title, author=author, body=body)
+    if ANTHROPIC_KEY:
+        try:
+            return call_claude_reply(prompt)
+        except Exception as e:
+            print(f"  ⚠️ Claude API error: {e} — falling back to Gemini", file=sys.stderr)
+    else:
+        print("  ⚠️ ANTHROPIC_API_KEY not set — trying Gemini", file=sys.stderr)
 
-    try:
-        resp = requests.post(
-            "https://api.anthropic.com/v1/messages",
-            headers={
-                "x-api-key": ANTHROPIC_KEY,
-                "anthropic-version": "2023-06-01",
-                "content-type": "application/json",
-            },
-            json={
-                "model": "claude-haiku-4-5-20251001",
-                "max_tokens": 250,
-                "messages": [
-                    {
-                        "role": "user",
-                        "content": REPLY_PROMPT.format(
-                            title=title, author=author, body=body
-                        ),
-                    }
-                ],
-            },
-            timeout=30,
-        )
-        if resp.status_code == 200:
-            return resp.json()["content"][0]["text"].strip()
-    except Exception as e:
-        print(f"  ⚠️ Claude API error: {e}", file=sys.stderr)
+    if GEMINI_KEY:
+        try:
+            return call_gemini_reply(prompt)
+        except Exception as e:
+            print(f"  ⚠️ Gemini API error: {e} — using template reply", file=sys.stderr)
+    else:
+        print("  ⚠️ GEMINI_API_KEY not set — using template reply", file=sys.stderr)
 
-    return f"{author}さん、コメントありがとうございます！参考になれば嬉しいです。"
+    return template_reply(author)
 
 
 # ── Qiita engagement ──────────────────────────────────────────────
@@ -445,6 +478,7 @@ def process_devto() -> None:
                 reply_text = generate_reply(title, body, author)
                 replies_this_article += 1
 
+                replied = False
                 if not DRY_RUN:
                     r = devto_post("/comments", {
                         "comment": {

@@ -6,7 +6,7 @@ topics: [flutter, supabase, deno, webdev, buildinpublic]
 published: true
 ---
 
-# はじめに
+# はじめに — 2026-03-28-public-memo-reactions
 
 公開メモへの「👍❤️🔥💡🎉」絵文字リアクションを、**ログイン不要**で実装しました。
 

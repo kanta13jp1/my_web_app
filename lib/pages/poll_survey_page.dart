@@ -100,6 +100,7 @@ class _PollSurveyPageState extends State<PollSurveyPage> {
       _optionsController.clear();
       await _fetchPolls();
     } catch (e) {
+      if (!mounted) return;
       if (mounted) setState(() => _errorMessage = 'アンケートの作成に失敗しました: $e');
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -114,6 +115,7 @@ class _PollSurveyPageState extends State<PollSurveyPage> {
       );
       await _fetchPolls();
     } catch (e) {
+      if (!mounted) return;
       if (mounted) setState(() => _errorMessage = '投票に失敗しました: $e');
     }
   }

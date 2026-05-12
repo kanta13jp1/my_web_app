@@ -1365,9 +1365,13 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     final noteId = int.tryParse(_currentNoteId ?? '');
     if (noteId == null) return;
     _commentSubscription?.cancel();
-    _commentSubscription = _noteCommentsService
-        .watchCommentChanges(noteId: noteId)
-        .listen((_) => unawaited(_loadCommentCount()));
+    _commentSubscription =
+        _noteCommentsService.watchCommentChanges(noteId: noteId).listen(
+      (_) => unawaited(_loadCommentCount()),
+      onError: (Object error) {
+        debugPrint('Note comment realtime stream error: $error');
+      },
+    );
   }
 
   Future<void> _loadCommentCount() async {
@@ -1375,6 +1379,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     if (noteId == null) return;
     try {
       final count = await _noteCommentsService.getCommentCount(noteId: noteId);
+      if (!mounted) return;
       if (mounted) setState(() => _commentCount = count);
     } catch (_) {
       // silently ignore
@@ -1520,6 +1525,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
                               );
                               if (confirmed == true && mounted) {
                                 await _saveVersionSnapshot();
+                                if (!mounted) return;
                                 setState(() {
                                   _titleController.text =
                                       v['title'] as String? ?? '';
@@ -2429,6 +2435,7 @@ class _NoteCommentsSheetState extends State<_NoteCommentsSheet> {
     final token = await _getToken();
     if (token == null) return;
 
+    if (!mounted) return;
     setState(() => _submitting = true);
     try {
       final response = await widget.supabase

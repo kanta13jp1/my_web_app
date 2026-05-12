@@ -2,7 +2,9 @@
 // Voice AI チャットページ — Web Speech API + ai-hub my_agent.chat
 import 'dart:async';
 import 'dart:convert';
-import 'dart:js_interop';
+import 'dart:js_interop'
+    // ignore: uri_does_not_exist
+    if (dart.library.io) 'package:my_web_app/utils/js_interop_vm_stub.dart';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
@@ -314,6 +316,7 @@ class _AiAssistantChatPageState extends State<AiAssistantChatPage>
       try {
         _recognition!.start();
       } catch (e) {
+        if (!mounted) return;
         setState(() => _isListening = false);
         _pulseCtrl.stop();
         _pulseCtrl.reset();

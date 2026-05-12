@@ -1,0 +1,107 @@
+name: Low-Risk PR Digestion
+
+on:
+  schedule:
+    - cron: "17 21 * * *"
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: "Optional single PR number to classify"
+        required: false
+        type: string
+      comment_on_pr:
+        description: "Comment the report on the single PR"
+        required: true
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
+      max_prs:
+        description: "Open PRs to inspect in queue mode"
+        required: true
+        default: "20"
+        type: string
+      max_issues:
+        description: "Open Issues to inspect in queue mode"
+        required: true
+        default: "20"
+        type: string
+
+permissions:
+  contents: read
+  pull-requests: read
+  issues: write
+
+concurrency:
+  group: low-risk-pr-digestion-${{ github.event.inputs.pr_number || github.run_id }}
+  cancel-in-progress: false
+
+jobs:
+  digest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      GH_TOKEN: ${{ github.token }}
+      PR_NUMBER: ${{ github.event.inputs.pr_number }}
+      COMMENT_ON_PR: ${{ github.event.inputs.comment_on_pr || 'false' }}
+      MAX_PRS: ${{ github.event.inputs.max_prs || '20' }}
+      MAX_ISSUES: ${{ github.event.inputs.max_issues || '20' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Validate inputs
+        run: |
+          set -euo pipefail
+          if [ -n "${PR_NUMBER:-}" ] && ! [[ "$PR_NUMBER" =~ ^[0-9]+$ ]]; then
+            echo "::error::pr_number must be numeric when provided"
+            exit 1
+          fi
+          if ! [[ "$MAX_PRS" =~ ^[0-9]+$ ]] || ! [[ "$MAX_ISSUES" =~ ^[0-9]+$ ]]; then
+            echo "::error::max_prs and max_issues must be numeric"
+            exit 1
+          fi
+
+      - name: Classify low-risk queue
+        run: |
+          set -euo pipefail
+          args=(
+            --repo "$GITHUB_REPOSITORY"
+            --max-prs "$MAX_PRS"
+            --max-issues "$MAX_ISSUES"
+            --output-md /tmp/low-risk-pr-digest.md
+            --output-json /tmp/low-risk-pr-digest.json
+          )
+          if [ -n "${PR_NUMBER:-}" ]; then
+            args+=(--pr-number "$PR_NUMBER")
+          fi
+          python scripts/low_risk_pr_digest.py "${args[@]}"
+
+      - name: Write job summary
+        if: always()
+        run: |
+          set -euo pipefail
+          if [ -f /tmp/low-risk-pr-digest.md ]; then
+            cat /tmp/low-risk-pr-digest.md >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "Low-risk PR digestion did not produce a report." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Upload digest artifacts
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: low-risk-pr-digest-${{ github.run_id }}
+          path: |
+            /tmp/low-risk-pr-digest.md
+            /tmp/low-risk-pr-digest.json
+          if-no-files-found: ignore
+
+      - name: Comment on single PR
+        if: success() && env.PR_NUMBER != '' && env.COMMENT_ON_PR == 'true'
+        run: |
+          set -euo pipefail
+          gh pr comment "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --body-file /tmp/low-risk-pr-digest.md

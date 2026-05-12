@@ -51,6 +51,7 @@ class _PhotoGalleryManagerPageState extends State<PhotoGalleryManagerPage> {
         }
       }
     } catch (e) {
+      if (!mounted) return;
       setState(() => _errorMessage = '$e');
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -73,6 +74,7 @@ class _PhotoGalleryManagerPageState extends State<PhotoGalleryManagerPage> {
         }
       }
     } catch (_) {
+      if (!mounted) return;
       setState(() => _photos = []);
     }
   }

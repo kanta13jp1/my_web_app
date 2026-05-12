@@ -55,7 +55,7 @@ jobs:
 
       - name: Step 2 - Checkout
         if: steps.precheck.outputs.skip != 'true'
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           token: ${{ secrets.BYPASS_RULES || secrets.GH_PAT || github.token }}
 

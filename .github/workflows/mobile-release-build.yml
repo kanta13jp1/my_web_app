@@ -1,0 +1,260 @@
+name: Build Mobile Release Artifacts
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/mobile-release-build.yml'
+      - 'android/**'
+      - 'ios/**'
+      - 'lib/main_mobile.dart'
+      - 'scripts/check_mobile_release_readiness.py'
+      - 'docs/MOBILE_SIMULTANEOUS_RELEASE.md'
+  workflow_dispatch:
+    inputs:
+      platform:
+        description: 'Artifacts to build'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - android
+          - ios
+      build_name:
+        description: 'Flutter build name, for example 1.0.0'
+        required: false
+        default: ''
+        type: string
+      build_number:
+        description: 'Flutter build number. Defaults to the GitHub run number.'
+        required: false
+        default: ''
+        type: string
+      publish_release:
+        description: 'Publish artifacts to GitHub Releases'
+        required: true
+        default: false
+        type: boolean
+      release_tag:
+        description: 'Release tag to create when publish_release is true'
+        required: false
+        default: 'mobile-latest'
+        type: string
+  push:
+    tags:
+      - 'mobile-v*'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: mobile-release-build-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  FLUTTER_VERSION: '3.38.x'
+  MOBILE_TARGET: 'lib/main_mobile.dart'
+
+jobs:
+  metadata-check:
+    name: Mobile Metadata Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Check mobile release metadata
+        run: python scripts/check_mobile_release_readiness.py
+
+  android-aab:
+    name: Android AAB
+    needs: metadata-check
+    if: >
+      github.event_name != 'pull_request' &&
+      (github.event_name == 'push' || inputs.platform == 'all' || inputs.platform == 'android')
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+      ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+      ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+      ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Setup Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: zulu
+          java-version: '17'
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Resolve build version
+        shell: bash
+        run: |
+          build_name="${{ inputs.build_name }}"
+          build_number="${{ inputs.build_number }}"
+          if [ -z "$build_name" ]; then
+            build_name="$(grep '^version:' pubspec.yaml | awk '{print $2}' | cut -d '+' -f 1)"
+          fi
+          if [ -z "$build_number" ]; then
+            build_number="${GITHUB_RUN_NUMBER}"
+          fi
+          echo "BUILD_NAME=$build_name" >> "$GITHUB_ENV"
+          echo "BUILD_NUMBER=$build_number" >> "$GITHUB_ENV"
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Check mobile release metadata
+        run: python scripts/check_mobile_release_readiness.py
+
+      - name: Configure Android release signing
+        if: ${{ env.ANDROID_KEYSTORE_BASE64 != '' }}
+        shell: bash
+        run: |
+          test -n "$ANDROID_KEYSTORE_PASSWORD"
+          test -n "$ANDROID_KEY_ALIAS"
+          test -n "$ANDROID_KEY_PASSWORD"
+          echo "$ANDROID_KEYSTORE_BASE64" | base64 --decode > android/app/upload-keystore.jks
+          {
+            echo "storePassword=$ANDROID_KEYSTORE_PASSWORD"
+            echo "keyPassword=$ANDROID_KEY_PASSWORD"
+            echo "keyAlias=$ANDROID_KEY_ALIAS"
+            echo "storeFile=app/upload-keystore.jks"
+          } > android/key.properties
+
+      - name: Note unsigned Android fallback
+        if: ${{ env.ANDROID_KEYSTORE_BASE64 == '' }}
+        run: |
+          echo "::warning::ANDROID_KEYSTORE_BASE64 is not configured. Android release artifact will use the debug signing fallback and is not Play-upload ready."
+
+      - name: Build Android App Bundle
+        run: >
+          flutter build appbundle --release --no-tree-shake-icons
+          --target "$MOBILE_TARGET"
+          --build-name "$BUILD_NAME"
+          --build-number "$BUILD_NUMBER"
+
+      - name: Package Android artifact
+        shell: bash
+        run: |
+          mkdir -p dist/android
+          cp build/app/outputs/bundle/release/app-release.aab dist/android/jibun-android-release.aab
+          ls -lh dist/android/jibun-android-release.aab
+
+      - name: Upload Android artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: jibun-android-release-aab
+          path: dist/android/jibun-android-release.aab
+          if-no-files-found: error
+          retention-days: 30
+
+  ios-no-codesign:
+    name: iOS Simulator CI Artifact
+    needs: metadata-check
+    if: >
+      github.event_name != 'pull_request' &&
+      (github.event_name == 'push' || inputs.platform == 'all' || inputs.platform == 'ios')
+    runs-on: macos-15
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Resolve build version
+        shell: bash
+        run: |
+          build_name="${{ inputs.build_name }}"
+          build_number="${{ inputs.build_number }}"
+          if [ -z "$build_name" ]; then
+            build_name="$(grep '^version:' pubspec.yaml | awk '{print $2}' | cut -d '+' -f 1)"
+          fi
+          if [ -z "$build_number" ]; then
+            build_number="${GITHUB_RUN_NUMBER}"
+          fi
+          echo "BUILD_NAME=$build_name" >> "$GITHUB_ENV"
+          echo "BUILD_NUMBER=$build_number" >> "$GITHUB_ENV"
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Check mobile release metadata
+        run: python scripts/check_mobile_release_readiness.py
+
+      - name: Build iOS simulator app
+        run: >
+          flutter build ios --simulator --debug
+          --target "$MOBILE_TARGET"
+          --build-name "$BUILD_NAME"
+          --build-number "$BUILD_NUMBER"
+
+      - name: Package iOS simulator app bundle
+        shell: bash
+        run: |
+          mkdir -p dist/ios
+          test -d build/ios/iphonesimulator/Runner.app
+          ditto -c -k --sequesterRsrc --keepParent build/ios/iphonesimulator/Runner.app dist/ios/jibun-ios-runner-simulator-debug.zip
+          ls -lh dist/ios/jibun-ios-runner-simulator-debug.zip
+
+      - name: Upload iOS artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: jibun-ios-runner-simulator-debug
+          path: dist/ios/jibun-ios-runner-simulator-debug.zip
+          if-no-files-found: error
+          retention-days: 30
+
+  publish-release:
+    name: Publish Mobile Release
+    needs:
+      - android-aab
+      - ios-no-codesign
+    runs-on: ubuntu-latest
+    if: >
+      (startsWith(github.ref, 'refs/tags/mobile-v') || inputs.publish_release == true) &&
+      (github.event_name == 'push' || inputs.platform == 'all')
+    timeout-minutes: 10
+
+    steps:
+      - name: Download mobile artifacts
+        uses: actions/download-artifact@v8
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: Publish GitHub Release assets
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: ${{ startsWith(github.ref, 'refs/tags/mobile-v') && github.ref_name || inputs.release_tag }}
+          name: Jibun Mobile Artifacts
+          body: |
+            Mobile release artifacts for iOS and Android.
+
+            - Android: `jibun-android-release.aab`
+            - iOS: `jibun-ios-runner-simulator-debug.zip`
+
+            The iOS artifact is a simulator debug build for CI verification. Use the
+            checklist in `docs/MOBILE_SIMULTANEOUS_RELEASE.md` before TestFlight upload.
+          files: |
+            dist/jibun-android-release.aab
+            dist/jibun-ios-runner-simulator-debug.zip

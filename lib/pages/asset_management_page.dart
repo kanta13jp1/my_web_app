@@ -2,22 +2,29 @@
 
 import 'dart:async';
 import 'dart:convert';
-import 'package:http/http.dart' as http;
+import 'dart:js_interop'
+    // ignore: uri_does_not_exist
+    if (dart.library.io) 'package:my_web_app/utils/js_interop_vm_stub.dart';
 import 'dart:math'; // ← ★この1行を追加してください！
-import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+
+import 'package:file_picker/file_picker.dart';
 import 'package:fl_chart/fl_chart.dart';
-import 'package:intl/intl.dart';
-import 'package:flutter/services.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
+import 'package:flutter/services.dart';
+import 'package:http/http.dart' as http;
+import 'package:intl/intl.dart';
 import 'package:my_web_app/models/debt_repayment_plan.dart';
 import 'package:my_web_app/models/kgi_csf_kpi.dart';
 import 'package:my_web_app/services/asset_waste_training_ai_service.dart';
 import 'package:my_web_app/services/asset_watchlist_service.dart';
 import 'package:my_web_app/services/debt_lockdown_service.dart';
 import 'package:my_web_app/services/debt_repayment_planner_service.dart';
+import 'package:my_web_app/services/smbc_csv_import_service.dart';
 import 'package:my_web_app/services/waste_tracking_service.dart';
 import 'package:my_web_app/widgets/kgi_csf_kpi_panel.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:web/web.dart' as web;
 
 enum AssetManagementInitialFocus {
   overview,
@@ -81,6 +88,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   bool _isLoadingClosing = false;
   bool _isFetchingSmbc = false;
   bool _isFetchingJibun = false;
+  bool _isImportingSmbcCsv = false;
 
   // --- 資産・負債（ストック）用変数 ---
   Map<String, TextEditingController> _controllers = {};
@@ -164,6 +172,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
   static const double _compactWidthBreakpoint = 420;
   static const List<String> _flowTypeOptions = ['支出', '収入', '振替'];
+  static const String _smbcCsvSource = '[三井住友銀行]';
+  static final RegExp _flowImportMarkerPattern =
+      RegExp(r'\s*\[import:smbc:[^\]]+\]\s*$');
+  static final RegExp _smbcImportKeyPattern =
+      RegExp(r'\[import:(smbc:[^\]]+)\]\s*$');
   bool get _isCompact =>
       MediaQuery.sizeOf(context).width < _compactWidthBreakpoint;
 
@@ -259,6 +272,17 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
   String get _defaultFlowSource =>
       _sourceOptions.contains('[その他]') ? '[その他]' : _sourceOptions.last;
+
+  String _stripFlowImportMarker(String description) =>
+      description.replaceFirst(_flowImportMarkerPattern, '').trim();
+
+  String? _extractSmbcImportKey(String description) {
+    final match = _smbcImportKeyPattern.firstMatch(description.trim());
+    return match?.group(1);
+  }
+
+  String _withFlowImportMarker(String description, String importKey) =>
+      '${description.trim()} [import:$importKey]';
 
   String _sourceLabel(String source) =>
       source.replaceAll('[', '').replaceAll(']', '').trim();
@@ -2619,6 +2643,143 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     }
   }
 
+  Future<void> _pickAndImportSmbcCsv() async {
+    if (_isImportingSmbcCsv) return;
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) return;
+
+    setState(() => _isImportingSmbcCsv = true);
+    try {
+      final result = await FilePicker.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: const ['csv'],
+        allowMultiple: false,
+        withData: true,
+      );
+      if (result == null || result.files.isEmpty) return;
+
+      final file = result.files.single;
+      final bytes = file.bytes;
+      if (bytes == null || bytes.isEmpty) {
+        throw Exception('CSVデータを読み込めませんでした');
+      }
+
+      final text = _decodeSmbcCsvBytes(bytes);
+      final parsed = const SmbcCsvImportService().parse(text);
+      if (parsed.transactions.isEmpty) {
+        throw Exception('登録できる三井住友銀行の入出金明細が見つかりませんでした');
+      }
+
+      final knownImportKeys = <String>{};
+      for (final flow in _recentFlows) {
+        final key =
+            _extractSmbcImportKey(flow['description']?.toString() ?? '');
+        if (key != null) {
+          knownImportKeys.add(key);
+        }
+      }
+      final records = <Map<String, dynamic>>[];
+      var duplicateCount = 0;
+
+      for (final transaction in parsed.transactions) {
+        if (knownImportKeys.contains(transaction.importKey)) {
+          duplicateCount += 1;
+          continue;
+        }
+        knownImportKeys.add(transaction.importKey);
+        final flowType = transaction.isDeposit ? '収入' : '支出';
+        records.add({
+          'user_id': userId,
+          'action_type': transaction.actionType,
+          'amount': transaction.amount,
+          'description': _withFlowImportMarker(
+            _composeFlowDescription(
+              flowType: flowType,
+              source: _smbcCsvSource,
+              memo: transaction.displayMemo,
+            ),
+            transaction.importKey,
+          ),
+          'occurred_at': transaction.date.toUtc().toIso8601String(),
+        });
+      }
+
+      for (var i = 0; i < records.length; i += 200) {
+        final chunk = records.sublist(i, min(i + 200, records.length));
+        await _supabase.from('wealth_struggles').insert(chunk);
+      }
+
+      final latestDate = parsed.latestDate;
+      final latestBalance = parsed.latestBalance;
+      if (mounted) {
+        setState(() {
+          if (!_sourceOptions.contains(_smbcCsvSource)) {
+            _sourceOptions = [..._sourceOptions, _smbcCsvSource];
+          }
+          if (latestDate != null) {
+            _selectedFlowHistoryMonth = _monthStart(latestDate);
+          }
+          if (latestBalance != null) {
+            _applyFetchedAssetBalance(
+              assetName: '三井住友銀行',
+              balance: latestBalance.toDouble(),
+            );
+          }
+        });
+      }
+
+      await _fetchRecentFlows();
+      await _fetchTodayClosing();
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            '三井住友CSVを取り込みました: ${records.length}件登録 / '
+            '$duplicateCount件重複スキップ / ${parsed.skippedRows}行スキップ',
+          ),
+          backgroundColor: const Color(0xFF047857),
+        ),
+      );
+    } catch (e) {
+      debugPrint('Error importing SMBC CSV: $e');
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('三井住友CSVの取込に失敗しました: $e')),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isImportingSmbcCsv = false);
+      }
+    }
+  }
+
+  String _decodeSmbcCsvBytes(Uint8List bytes) {
+    try {
+      final text = utf8.decode(bytes);
+      if (_looksLikeSmbcCsv(text)) return text;
+    } catch (_) {
+      // SMBC exports are commonly CP932/Shift_JIS. Fall through to TextDecoder.
+    }
+
+    try {
+      final text = web.TextDecoder('shift_jis').decode(bytes.toJS);
+      if (_looksLikeSmbcCsv(text)) return text;
+    } catch (e) {
+      debugPrint('Shift_JIS decode failed: $e');
+    }
+
+    final malformed = utf8.decode(bytes, allowMalformed: true);
+    if (_looksLikeSmbcCsv(malformed)) return malformed;
+    throw const FormatException('三井住友銀行CSVの列名を判定できませんでした');
+  }
+
+  bool _looksLikeSmbcCsv(String text) =>
+      text.contains('年月日') &&
+      text.contains('お引出し') &&
+      text.contains('お預入れ') &&
+      text.contains('お取り扱い内容');
+
   String _composeFlowDescription({
     required String flowType,
     required String source,
@@ -2658,7 +2819,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     String description, {
     String? actionType,
   }) {
-    final normalizedDescription = description.trim();
+    final normalizedDescription = _stripFlowImportMarker(description.trim());
     final isExpense = _isExpenseActionType(actionType ?? '');
     final wasteCategory = isExpense
         ? WasteTrackingService.extractWasteCategory(normalizedDescription)
@@ -3337,6 +3498,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           .update({'is_completed': !currentStatus}).eq('id', id);
       _fetchMustTasks();
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         final index = _mustTasks.indexWhere((t) => t['id'] == id);
         if (index != -1) _mustTasks[index]['is_completed'] = !currentStatus;
@@ -6378,6 +6540,23 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 fontSize: 11,
                 color: Color(0xFF9CA3AF),
                 height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: OutlinedButton.icon(
+                onPressed: _isImportingSmbcCsv ? null : _pickAndImportSmbcCsv,
+                icon: _isImportingSmbcCsv
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.upload_file),
+                label: Text(
+                  _isImportingSmbcCsv ? '三井住友CSV取込中...' : '三井住友CSV取込',
+                ),
               ),
             ),
             const SizedBox(height: 16),

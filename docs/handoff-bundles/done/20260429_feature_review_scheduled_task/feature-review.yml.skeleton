@@ -1,0 +1,102 @@
+# SKELETON for .github/workflows/feature-review.yml
+# Codex#2 が本 skeleton を実装 + .github/workflows/ に移動
+# Win版#132 part 77 / 2026-04-29
+
+name: Feature Review (weekly cron)
+
+# Win版#132 part 77 — 各機能を週次 AI レビュー → GitHub Issue 自動起票
+# 親軸: COLLAB_AI #5 Verifier-Generator / OPS-28 改善トリガー / VIBE_CODING #4
+
+on:
+  schedule:
+    - cron: '0 * * * *'  # 毎時 0 分 (= 24 回/日)
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'dry-run mode (= Issue 起票せず log のみ)'
+        required: false
+        default: 'false'
+        type: string
+      target_features:
+        description: '対象機能 slug カンマ区切り (= rotation 上書き / 省略時は通常 rotation)'
+        required: false
+        default: ''
+        type: string
+      force_full_scan:
+        description: '全機能巡回 (= 緊急 audit / rotation 無視 / true で全 13 機能)'
+        required: false
+        default: 'false'
+        type: string
+
+permissions:
+  contents: read
+  issues: write    # = GitHub Issue 起票
+
+concurrency:
+  group: feature-review
+  cancel-in-progress: false  # = OPS-28 [CONCURRENCY] rule 準拠
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15  # 毎時運用 = 短時間で完結すべき (= 1 機能巡回)
+    env:
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      DRY_RUN: ${{ inputs.dry_run || 'false' }}
+      TARGET_FEATURES: ${{ inputs.target_features || '' }}
+      FORCE_FULL_SCAN: ${{ inputs.force_full_scan || 'false' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 100  # = git log 解析に必要
+
+      - name: Setup Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          pip install playwright anthropic requests
+          playwright install --with-deps chromium
+
+      - name: Run feature review
+        run: |
+          ARGS="--config scripts/feature_review_config.json"
+          [ "$DRY_RUN" = "true" ] && ARGS="$ARGS --dry-run"
+          [ -n "$TARGET_FEATURES" ] && ARGS="$ARGS --targets $TARGET_FEATURES"
+          [ "$FORCE_FULL_SCAN" = "true" ] && ARGS="$ARGS --force-full-scan"
+          PYTHONUTF8=1 python scripts/feature_review.py $ARGS
+
+      - name: Save review log
+        if: always()
+        run: |
+          DATE=$(date -u +%Y-%m-%d)
+          mkdir -p docs/feature-review-logs
+          mv /tmp/feature-review.log docs/feature-review-logs/${DATE}.md || true
+          if [ -f docs/feature-review-logs/${DATE}.md ]; then
+            git config user.name 'feature-review[bot]'
+            git config user.email 'feature-review[bot]@users.noreply.github.com'
+            git add docs/feature-review-logs/
+            git commit -m "auto: feature-review log ${DATE}" || echo "no changes"
+            git push origin HEAD:main || echo "push skipped"
+          fi
+
+      - name: Slack notify
+        if: always()
+        run: |
+          if [ -z "$SLACK_WEBHOOK_URL" ]; then
+            echo "::warning::SLACK_WEBHOOK_URL not set"
+            exit 0
+          fi
+          # = scripts/feature_review.py が /tmp/feature-review-summary.json を出力
+          if [ -f /tmp/feature-review-summary.json ]; then
+            SUMMARY=$(cat /tmp/feature-review-summary.json)
+            curl -X POST -H 'Content-Type: application/json' \
+              --data "{\"text\": \"🔍 feature-review run complete: ${SUMMARY}\"}" \
+              "$SLACK_WEBHOOK_URL"
+          fi

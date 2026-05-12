@@ -1,9 +1,9 @@
 name: CI Auto-Fix (CI失敗自動修復)
 
-# CI Checks が失敗した PR に対して dart fix + deno fmt を自動適用
+# CI が失敗した PR に対して dart fix + dart format + deno fmt を自動適用
 on:
   workflow_run:
-    workflows: ["CI Checks"]
+    workflows: ["CI"]
     types: [completed]
 
 concurrency:
@@ -92,6 +92,15 @@ jobs:
             git diff --name-only
           fi
 
+      - name: Step 3 - dart format (必須フォーマット自動修復)
+        if: steps.pr_info.outputs.has_pr == 'true'
+        id: dart_format
+        run: |
+          dart format . 2>/dev/null || true
+          DART_FORMAT_CHANGED=$(git diff --name-only -- '*.dart' | wc -l | tr -d ' ')
+          echo "dart_format_changed=$DART_FORMAT_CHANGED" >> $GITHUB_OUTPUT
+          echo "🔧 dart format 変更: ${DART_FORMAT_CHANGED}ファイル"
+
       # ── Step 4: Deno lint/fmt ────────────────────────────────────────────
       - name: Step 4 - Setup Deno
         if: steps.pr_info.outputs.has_pr == 'true'
@@ -113,8 +122,10 @@ jobs:
         if: steps.pr_info.outputs.has_pr == 'true'
         id: analyze_after
         run: |
+          set +e
           RESULT=$(flutter analyze --no-fatal-infos 2>&1)
           EXIT_CODE=$?
+          set -e
           echo "exit_code=$EXIT_CODE" >> $GITHUB_OUTPUT
           if [ "$EXIT_CODE" = "0" ]; then
             echo "analyze_clean=true" >> $GITHUB_OUTPUT
@@ -127,7 +138,7 @@ jobs:
 
       # ── Step 6: 修復をコミット ────────────────────────────────────────────
       - name: Step 6 - 修復をコミット & プッシュ
-        if: steps.pr_info.outputs.has_pr == 'true'
+        if: always() && steps.pr_info.outputs.has_pr == 'true'
         id: commit
         run: |
           TOTAL_CHANGED=$(git diff --name-only | wc -l | tr -d ' ')
@@ -139,17 +150,18 @@ jobs:
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add lib/ supabase/functions/ 2>/dev/null || true
+          git add .
           git diff --cached --quiet && echo "committed=false" >> $GITHUB_OUTPUT && exit 0
 
-          git commit -m "fix: CI自動修復 dart fix + deno fmt (ci-auto-fix.yml)"
+          git commit -m "fix: CI自動修復 dart fix + format + deno fmt (ci-auto-fix.yml)"
+          git pull --rebase origin "${{ steps.pr_info.outputs.branch }}" || true
           git push origin "${{ steps.pr_info.outputs.branch }}"
           echo "committed=true" >> $GITHUB_OUTPUT
           echo "✅ 修復コミット: ${TOTAL_CHANGED}ファイル"
 
       # ── Step 7: PRにコメント ─────────────────────────────────────────────
       - name: Step 7 - PRにコメント投稿
-        if: steps.pr_info.outputs.has_pr == 'true'
+        if: always() && steps.pr_info.outputs.has_pr == 'true'
         uses: actions/github-script@v9
         with:
           script: |
@@ -157,6 +169,7 @@ jobs:
             const clean      = '${{ steps.analyze_after.outputs.analyze_clean }}';
             const prNumber   = parseInt('${{ steps.pr_info.outputs.pr_number }}');
             const dartFiles  = parseInt('${{ steps.dart_fix.outputs.dart_changed }}' || '0');
+            const formatFiles = parseInt('${{ steps.dart_format.outputs.dart_format_changed }}' || '0');
             const denoFiles  = parseInt('${{ steps.deno_fmt.outputs.deno_changed }}' || '0');
 
             let body;
@@ -168,6 +181,7 @@ jobs:
                 '🤖 **CI自動修復** (`ci-auto-fix.yml`)',
                 '',
                 `\`dart fix --apply\`: ${dartFiles}ファイル修正`,
+                `\`dart format\`: ${formatFiles}ファイル修正`,
                 `\`deno fmt\`: ${denoFiles}ファイル修正`,
                 '',
                 cleanMsg,
@@ -176,7 +190,7 @@ jobs:
               body = [
                 '🤖 **CI自動修復** (`ci-auto-fix.yml`)',
                 '',
-                '`dart fix --apply` および `deno fmt` を試みましたが、自動修復できる箇所はありませんでした。',
+                '`dart fix --apply`、`dart format`、`deno fmt` を試みましたが、自動修復できる箇所はありませんでした。',
                 '',
                 '**手動修正が必要です**:',
                 '- `flutter analyze` のエラーログを確認',
@@ -199,8 +213,9 @@ jobs:
           HAS_PR="${{ steps.pr_info.outputs.has_pr }}"
           COMMITTED="${{ steps.commit.outputs.committed }}"
           CLEAN="${{ steps.analyze_after.outputs.analyze_clean }}"
+          FORMAT="${{ steps.dart_format.outputs.dart_format_changed }}"
           STATUS="success"
-          SUMMARY="CI Auto-Fix: has_pr=${HAS_PR}, committed=${COMMITTED}, analyze_clean=${CLEAN}"
+          SUMMARY="CI Auto-Fix: has_pr=${HAS_PR}, committed=${COMMITTED}, analyze_clean=${CLEAN}, dart_format=${FORMAT:-0}"
           curl -s -o /dev/null \
             -X POST \
             -H "apikey: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
@@ -219,6 +234,7 @@ jobs:
           COMMITTED="${{ steps.commit.outputs.committed }}"
           CLEAN="${{ steps.analyze_after.outputs.analyze_clean }}"
           DART="${{ steps.dart_fix.outputs.dart_changed }}"
+          FORMAT="${{ steps.dart_format.outputs.dart_format_changed }}"
           DENO="${{ steps.deno_fmt.outputs.deno_changed }}"
           FIX_ICON=$([ "${COMMITTED}" = "true" ] && echo "✅" || echo "—")
           CLEAN_ICON=$([ "${CLEAN}" = "true" ] && echo "✅" || echo "⚠️")
@@ -229,6 +245,7 @@ jobs:
             echo "| --- | --- |"
             echo "| PR検出 | ${HAS_PR} (PR #${PR_NUM:-なし}) |"
             echo "| dart fix 修正 | ${DART:-0}ファイル |"
+            echo "| dart format 修正 | ${FORMAT:-0}ファイル |"
             echo "| deno fmt 修正 | ${DENO:-0}ファイル |"
             echo "| コミット | $FIX_ICON ${COMMITTED:-false} |"
             echo "| analyze後 | $CLEAN_ICON clean=${CLEAN:-未実施} |"

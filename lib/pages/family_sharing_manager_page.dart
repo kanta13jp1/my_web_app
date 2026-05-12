@@ -34,8 +34,8 @@ class _FamilySharingManagerPageState extends State<FamilySharingManagerPage> {
     });
     try {
       final response = await _supabase.functions.invoke(
-        'family-sharing-manager',
-        body: {'action': 'list'},
+        'lifestyle-hub',
+        body: {'action': 'family.list'},
       );
       final data = response.data;
       if (data is Map<String, dynamic> && data['members'] is List) {

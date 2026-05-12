@@ -45,9 +45,10 @@ class _AiUniversityStreaksPageState extends State<AiUniversityStreaksPage> {
         setState(() => _leaderboard = lbData['leaderboard'] as List);
       }
     } catch (e) {
+      if (!mounted) return;
       setState(() => _error = e.toString());
     } finally {
-      setState(() => _loading = false);
+      if (mounted) setState(() => _loading = false);
     }
   }
 

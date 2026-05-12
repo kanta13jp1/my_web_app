@@ -488,6 +488,9 @@ class GrowthMissionService {
   static const _guestSessionIdKey = 'growth_guest_session_id';
   static const _pendingReferralCodeKey = 'growth_pending_referral_code';
   static const _referralAlphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  static const Duration _aggregateRefreshCooldown = Duration(minutes: 3);
+  static DateTime? _lastAggregateRefreshAt;
+  static Future<void>? _aggregateRefreshInFlight;
 
   // #551 Phase 1: guest→user 遷移時のみ guest_presence.delete を発火し
   // heartbeat ごとの無駄な DELETE を抑止する。
@@ -646,12 +649,40 @@ $inviteUrl
     }
   }
 
-  Future<void> refreshAggregateMetrics() async {
+  Future<void> refreshAggregateMetrics({bool force = false}) async {
     final client = _client;
     if (client == null) {
       return;
     }
 
+    final DateTime now = DateTime.now();
+    if (!force) {
+      final Future<void>? inFlight = _aggregateRefreshInFlight;
+      if (inFlight != null) {
+        await inFlight;
+        return;
+      }
+
+      final DateTime? lastRefreshedAt = _lastAggregateRefreshAt;
+      if (lastRefreshedAt != null &&
+          now.difference(lastRefreshedAt) < _aggregateRefreshCooldown) {
+        return;
+      }
+    }
+
+    final Future<void> refreshFuture = _runAggregateRefresh(client);
+    _aggregateRefreshInFlight = refreshFuture;
+    try {
+      await refreshFuture;
+      _lastAggregateRefreshAt = DateTime.now();
+    } finally {
+      if (identical(_aggregateRefreshInFlight, refreshFuture)) {
+        _aggregateRefreshInFlight = null;
+      }
+    }
+  }
+
+  Future<void> _runAggregateRefresh(SupabaseClient client) async {
     try {
       await client.rpc('cleanup_old_presence');
     } catch (error) {
@@ -1016,8 +1047,9 @@ $inviteUrl
 
     try {
       final response = await client.functions.invoke(
-        'growth-command-center',
+        'growth-hub',
         body: <String, dynamic>{
+          'action': 'command.analyze',
           'totalRegisteredUsers': dashboard.totalRegisteredUsers,
           'todayRegistrations': dashboard.todayRegistrations,
           'activeUsersToday': dashboard.activeUsersToday,
@@ -1373,10 +1405,16 @@ $inviteUrl
 
 class GrowthPresenceNavigatorObserver extends NavigatorObserver
     with WidgetsBindingObserver {
+  static const Duration _immediatePresenceCooldown = Duration(seconds: 45);
+
   final GrowthMissionService _service;
   final GrowthAcquisitionService _acquisitionService;
   Timer? _heartbeatTimer;
   Timer? _metricsTimer;
+  Future<void>? _immediatePresenceSyncInFlight;
+  String? _immediatePresenceSyncInFlightPagePath;
+  DateTime? _lastImmediatePresenceSyncAt;
+  String? _lastImmediatePresenceSyncPagePath;
   String _currentPagePath = '/';
 
   GrowthPresenceNavigatorObserver({
@@ -1409,10 +1447,7 @@ class GrowthPresenceNavigatorObserver extends NavigatorObserver
     _heartbeatTimer?.cancel();
     _metricsTimer?.cancel();
     if (!_service.isPresenceTrackingAvailable) return;
-    _runSafely(
-      _service.syncPresence(pagePath: _currentPagePath),
-      'syncPresence',
-    );
+    _syncPresenceImmediately();
     _heartbeatTimer = Timer.periodic(const Duration(minutes: 2), (_) {
       _runSafely(
         _service.syncPresence(pagePath: _currentPagePath),
@@ -1467,6 +1502,38 @@ class GrowthPresenceNavigatorObserver extends NavigatorObserver
       'applyPendingReferralIfPossible',
     );
     _restartTimers();
+  }
+
+  void _syncPresenceImmediately() {
+    final pagePath = _currentPagePath;
+    final inFlight = _immediatePresenceSyncInFlight;
+    if (inFlight != null &&
+        _immediatePresenceSyncInFlightPagePath == pagePath) {
+      return;
+    }
+
+    final lastSyncedAt = _lastImmediatePresenceSyncAt;
+    if (_lastImmediatePresenceSyncPagePath == pagePath &&
+        lastSyncedAt != null &&
+        DateTime.now().difference(lastSyncedAt) < _immediatePresenceCooldown) {
+      return;
+    }
+
+    final syncFuture = _service.syncPresence(pagePath: pagePath);
+    _immediatePresenceSyncInFlight = syncFuture;
+    _immediatePresenceSyncInFlightPagePath = pagePath;
+    _lastImmediatePresenceSyncAt = DateTime.now();
+    _lastImmediatePresenceSyncPagePath = pagePath;
+
+    _runSafely(
+      syncFuture.whenComplete(() {
+        if (identical(_immediatePresenceSyncInFlight, syncFuture)) {
+          _immediatePresenceSyncInFlight = null;
+          _immediatePresenceSyncInFlightPagePath = null;
+        }
+      }),
+      'syncPresence',
+    );
   }
 
   void _runSafely(Future<void> future, String label) {

@@ -28,22 +28,20 @@ dependencies:
   file_picker: ^11.0.0             # ファイル選択（Web含む）
   mime: ^1.0.6                     # MIMEタイプ判定
   path: ^1.9.0                     # パス操作
-  google_fonts: ^8.0.0             # Google Fonts
+  google_fonts: ^8.1.0             # Google Fonts
 
   # 画像保存・共有などの周辺機能
   screenshot: ^3.0.0               # Widgetを画像化
   cross_file: ^0.3.4+2             # 共有ファイルラッパー
   share_plus: ^12.0.1              # 共有（SNS/共有シート）
   path_provider: ^2.1.5            # 保存先パス取得
-  image_gallery_saver: ^2.0.3      # ギャラリーへ保存
 
   logger: ^2.0.2                   # ログ出力
   timeago: ^3.7.0                  # 相対時刻表示（例: 3分前）
   fl_chart: ^1.0.0                 # グラフ描画
   package_info_plus: ^8.0.0        # アプリ情報（バージョン等）
-  device_info_plus: ^12.4.0        # デバイス情報
   uuid: ^4.3.3                     # UUID生成
-  image_picker: ^1.2.1
+  image_picker: ^1.2.2
   google_generative_ai: ^0.4.7
   confetti: ^0.8.0
   audioplayers: ^6.5.1
@@ -54,10 +52,10 @@ dependencies:
   latlong2: ^0.9.1
   http: any
   graphview: ^1.2.0
-  flutter_secure_storage: ^10.0.0
+  flutter_secure_storage: ^10.1.0
   pdf: ^3.11.1                     # PDF生成 (選挙KPIレポート出力)
   printing: ^5.13.2                # PDF印刷 (選挙KPIレポート出力)
-  sentry_flutter: ^8.14.2
+  sentry_flutter: ^9.20.0
 
 dev_dependencies:
   flutter_test:
@@ -67,16 +65,42 @@ dev_dependencies:
   flutter_lints: ^3.0.0
   test: ^1.25.8
   mockito: ^5.6.1
-  build_runner: ^2.10.4
+  build_runner: ^2.15.0
+  flutter_launcher_icons: ^0.14.1
+  flutter_native_splash: ^2.4.1
 
   supabase: any
   image_picker_platform_interface: any
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/icons/app_icon.png"
+  min_sdk_android: 21
+  adaptive_icon_background: "#0A0A0A"
+  adaptive_icon_foreground: "assets/icons/app_icon_foreground.png"
+  remove_alpha_ios: true
+  web:
+    generate: false
+
+flutter_native_splash:
+  color: "#0A0A0A"
+  image: "assets/icons/app_icon.png"
+  color_dark: "#0A0A0A"
+  image_dark: "assets/icons/app_icon.png"
+  android_12:
+    image: "assets/icons/app_icon_foreground.png"
+    color: "#0A0A0A"
+    icon_background_color: "#0A0A0A"
+  fullscreen: false
+  web: false
 
 flutter:
   uses-material-design: true
 
   assets:
     - web/assets/fonts/
+    - assets/legal/
     - assets/sounds/
     - docs/
     - docs/release-notes/

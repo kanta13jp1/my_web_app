@@ -27,7 +27,7 @@ jobs:
       - name: Step 1 - 未返信サポートチケット取得
         id: tickets
         run: |
-          # get-support-tickets は admin-hub に統合済み (support.list action)
+          # admin-hub に統合済み (support.list action)
           HTTP_CODE=$(curl -s -o /tmp/tickets.json -w "%{http_code}" \
             -X POST \
             -H "apikey: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
@@ -40,28 +40,28 @@ jobs:
           if [ "$HTTP_CODE" = "200" ]; then
             BODY=$(cat /tmp/tickets.json)
             TICKET_COUNT=$(echo "$BODY" | jq '.tickets | length' 2>/dev/null || echo "0")
+            NOTE=""
           else
             BODY='{"tickets":[]}'
             TICKET_COUNT=0
+            NOTE="Supabase Network Restrictions によりブロック中 — Dashboard > Settings > Network > Network Restrictions で IP 許可リストを設定してください"
           fi
 
           echo "http_code=$HTTP_CODE" >> $GITHUB_OUTPUT
           echo "ticket_count=$TICKET_COUNT" >> $GITHUB_OUTPUT
-          # レスポンスをファイルに保存（GitHub Output の行数制限回避）
           echo "$BODY" > /tmp/tickets_body.json
           echo "📋 チケット数: $TICKET_COUNT (HTTP: $HTTP_CODE)"
 
-          # WEB版フォールバック用キャッシュ書き出し
+          # ticket-cache.json 生成
           FETCHED_AT=$(TZ=Asia/Tokyo date -u +%Y-%m-%dT%H:%M:%SZ)
           jq -n \
             --arg http_code "$HTTP_CODE" \
             --arg ticket_count "$TICKET_COUNT" \
             --arg fetched_at "$FETCHED_AT" \
+            --arg note "$NOTE" \
             --argjson body "$BODY" \
-            '{http_code: $http_code, ticket_count: $ticket_count, fetched_at: $fetched_at, data: $body}' \
+            '{http_code: $http_code, ticket_count: $ticket_count, fetched_at: $fetched_at, note: $note, data: $body}' \
             > /tmp/ticket-cache.json
-          mkdir -p docs
-          cp /tmp/ticket-cache.json docs/ticket-cache.json
 
       - name: Quota Guard — Anthropic circuit breaker check
         id: quota_check
@@ -75,7 +75,6 @@ jobs:
             --max-time 5 2>/dev/null || echo "[]")
           STATE=$(echo "$RESPONSE" | jq -r '.[0].state // "closed"' 2>/dev/null || echo "closed")
           EXPIRES=$(echo "$RESPONSE" | jq -r '.[0].expires_at // ""' 2>/dev/null || echo "")
-          # テーブル未存在 or 取得失敗 → closed 扱いでスキップしない
           if [ "$STATE" = "open" ] && [ -n "$EXPIRES" ]; then
             NOW=$(date -u +%s)
             EXP=$(date -u -d "$EXPIRES" +%s 2>/dev/null || echo "9999999999")
@@ -92,14 +91,10 @@ jobs:
       - name: Step 2 - FAQ自動返信
         if: steps.tickets.outputs.ticket_count != '0' && steps.quota_check.outputs.anthropic_available == 'true'
         run: |
-          # admin-hub レスポンス: tickets[].metadata.title (旧: tickets[].title)
           cat /tmp/tickets_body.json | jq -r '.tickets[]? | .id' | while read -r ID; do
             TITLE=$(cat /tmp/tickets_body.json | jq -r --arg id "$ID" '.tickets[] | select(.id == $id) | .metadata.title // .title // "(no title)"')
             echo "🎫 処理中: $TITLE (ID: $ID)"
-
             REPLY="お問い合わせありがとうございます。確認いたしますので少々お待ちください。"
-
-            # reply-support-request は admin-hub に統合済み (support.reply action)
             REPLY_CODE=$(curl -s -o /dev/null -w "%{http_code}" \
               -X POST \
               -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
@@ -107,12 +102,7 @@ jobs:
               -d "{\"action\":\"support.reply\",\"id\":\"$ID\",\"reply\":\"$REPLY\",\"new_status\":\"open\"}" \
               "https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/admin-hub" \
               --max-time 15)
-
-            if [ "$REPLY_CODE" = "200" ]; then
-              echo "  ✅ 返信送信 (HTTP $REPLY_CODE)"
-            else
-              echo "  ⚠️ 返信失敗 (HTTP $REPLY_CODE)"
-            fi
+            echo "  返信: HTTP $REPLY_CODE"
           done
 
       - name: Step 4 - GitHub PR レビュー
@@ -125,86 +115,65 @@ jobs:
           echo "pr_count=$PR_COUNT" >> $GITHUB_OUTPUT
           echo "📝 オープンPR: $PR_COUNT 件"
 
-          if [ "$PR_COUNT" -gt 0 ]; then
-            echo "$PRS" | jq -r '.[] | "\(.number) \(.title) +\(.additions)/-\(.deletions)"'
-          fi
-
       - name: Step 5 - インフラヘルスチェック
         id: health
         run: |
           INFRA_ERRORS=""
 
-          # Supabase チェック (POST で呼ぶ)
           SUPABASE_CODE=$(curl -s -o /dev/null -w "%{http_code}" \
             -X POST \
             -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
             -H "Content-Type: application/json" \
             "https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/development-achievements" \
             --max-time 10)
-          echo "🔍 Supabase development-achievements: HTTP $SUPABASE_CODE"
-
-          # 403 = Network Restrictions によるブロック → インフラ異常として検知
+          echo "🔍 Supabase: HTTP $SUPABASE_CODE"
           if [ "$SUPABASE_CODE" -ge 500 ] 2>/dev/null || [ "$SUPABASE_CODE" = "000" ] || [ "$SUPABASE_CODE" = "403" ]; then
-            INFRA_ERRORS="${INFRA_ERRORS}- Supabase development-achievements: HTTP ${SUPABASE_CODE}\n"
+            INFRA_ERRORS="${INFRA_ERRORS}- Supabase: HTTP ${SUPABASE_CODE}\n"
           fi
 
-          # Firebase チェック
           FIREBASE_CODE=$(curl -s -o /dev/null -w "%{http_code}" \
-            "https://my-web-app-b67f4.web.app/" \
-            --max-time 10)
-          echo "🔍 Firebase Hosting: HTTP $FIREBASE_CODE"
-
+            "https://my-web-app-b67f4.web.app/" --max-time 10)
+          echo "🔍 Firebase: HTTP $FIREBASE_CODE"
           if [ "$FIREBASE_CODE" != "200" ]; then
-            INFRA_ERRORS="${INFRA_ERRORS}- Firebase Hosting: HTTP ${FIREBASE_CODE}\n"
+            INFRA_ERRORS="${INFRA_ERRORS}- Firebase: HTTP ${FIREBASE_CODE}\n"
           fi
 
-          # get-competitor-features チェック
-          COMP_CODE=$(curl -s -o /dev/null -w "%{http_code}" \
-            -X POST \
+          WBS_OVERVIEW_CODE=$(curl -s -o /tmp/wbs-overview-health.json -w "%{http_code}" \
+            -H "apikey: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
             -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
-            -H "Content-Type: application/json" \
-            "https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/get-competitor-features" \
+            "https://smmkxxavexumewbfaqpy.supabase.co/rest/v1/wbs_project_overview_view?select=total_tasks,overdue_tasks,by_instance&limit=1" \
             --max-time 10)
-          echo "🔍 Supabase get-competitor-features: HTTP $COMP_CODE"
-
-          if [ "$COMP_CODE" -ge 500 ] 2>/dev/null || [ "$COMP_CODE" = "000" ]; then
-            INFRA_ERRORS="${INFRA_ERRORS}- Supabase get-competitor-features: HTTP ${COMP_CODE}\n"
+          echo "WBS overview view: HTTP $WBS_OVERVIEW_CODE"
+          if [ "$WBS_OVERVIEW_CODE" != "200" ]; then
+            WBS_OVERVIEW_BODY=$(cat /tmp/wbs-overview-health.json 2>/dev/null | tr '\n' ' ' | cut -c 1-180)
+            INFRA_ERRORS="${INFRA_ERRORS}- WBS overview view: HTTP ${WBS_OVERVIEW_CODE} ${WBS_OVERVIEW_BODY}\n"
           fi
 
           if [ -z "$INFRA_ERRORS" ]; then
-            echo "✅ 全エンドポイント正常"
             echo "healthy=true" >> $GITHUB_OUTPUT
             echo "errors=" >> $GITHUB_OUTPUT
           else
-            echo "⚠️ 異常検知"
             echo "healthy=false" >> $GITHUB_OUTPUT
-            # ファイルに保存
             echo -e "$INFRA_ERRORS" > /tmp/infra_errors.txt
             echo "errors<<ERREOF" >> $GITHUB_OUTPUT
             cat /tmp/infra_errors.txt >> $GITHUB_OUTPUT
             echo "ERREOF" >> $GITHUB_OUTPUT
           fi
 
-      - name: Write flutter-analyze-cache.json (WEB版フォールバック用)
+      - name: Write flutter-analyze-cache.json
         id: analyze_cache
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # 最新 CI run の結論を取得 (ci.yml / "Lint, Format, and Test")
           LATEST=$(gh run list \
-            --workflow=ci.yml \
-            --branch=main \
-            --limit=1 \
+            --workflow=ci.yml --branch=main --limit=1 \
             --json conclusion,updatedAt,headSha,status \
             2>/dev/null || echo "[]")
-
           CONCLUSION=$(echo "$LATEST" | jq -r '.[0].conclusion // "unknown"')
           STATUS=$(echo "$LATEST" | jq -r '.[0].status // "unknown"')
           UPDATED_AT=$(echo "$LATEST" | jq -r '.[0].updatedAt // ""')
           HEAD_SHA=$(echo "$LATEST" | jq -r '.[0].headSha // ""')
           ANALYZE_OK=$([ "$CONCLUSION" = "success" ] && echo "true" || echo "false")
-
-          mkdir -p docs
           jq -n \
             --arg conclusion "$CONCLUSION" \
             --arg status "$STATUS" \
@@ -219,41 +188,69 @@ jobs:
               head_sha: $head_sha,
               note: "ci.yml (Lint, Format, and Test) の最新 main ブランチ実行結果。cs-check.yml が毎時更新。"
             }' > /tmp/flutter-analyze-cache.json
-          cp /tmp/flutter-analyze-cache.json docs/flutter-analyze-cache.json
+          echo "✅ flutter-analyze-cache: conclusion=$CONCLUSION"
 
-          echo "✅ flutter-analyze-cache.json: conclusion=$CONCLUSION analyze_ok=$ANALYZE_OK"
+      - name: Step 5.5 - daily-report freshness guard
+        id: daily_report
+        run: |
+          git fetch origin main --quiet
+          set +e
+          python scripts/check_daily_report_freshness.py \
+            --ref origin/main \
+            --json \
+            --github-output "$GITHUB_OUTPUT" \
+            > /tmp/daily-report-freshness.json
+          CHECK_EXIT=$?
+          set -e
+          cat /tmp/daily-report-freshness.json
+          if [ "$CHECK_EXIT" -eq 0 ]; then
+            echo "✅ daily-report freshness confirmed"
+          else
+            echo "⚠️ daily-report freshness check failed"
+          fi
+          exit 0
 
-      - name: Step 3/6 - CS ノート記録 & main直接push
+      - name: Step 3/6 - Update cache files via GitHub API (branch protection bypass)
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT || secrets.GITHUB_TOKEN }}
         run: |
           TICKET_COUNT="${{ steps.tickets.outputs.ticket_count }}"
           HEALTHY="${{ steps.health.outputs.healthy }}"
           HTTP_CODE="${{ steps.tickets.outputs.http_code }}"
-
           DATETIME=$(TZ=Asia/Tokyo date +%Y-%m-%d-%H)
           DATE=$(TZ=Asia/Tokyo date +%Y-%m-%d)
           HOUR=$(TZ=Asia/Tokyo date +%H)
-          FILEPATH="docs/cs-notes/${DATETIME}.md"
+          REPO="kanta13jp1/my_web_app"
 
-          mkdir -p docs/cs-notes
+          update_file() {
+            local path="$1"
+            local content_b64="$2"
+            local message="$3"
+            # 現在のSHAを取得
+            local sha
+            sha=$(gh api "repos/${REPO}/contents/${path}" --jq '.sha' 2>/dev/null || echo "")
+            local body
+            if [ -n "$sha" ]; then
+              body="{\"message\":\"${message}\",\"content\":\"${content_b64}\",\"sha\":\"${sha}\"}"
+            else
+              body="{\"message\":\"${message}\",\"content\":\"${content_b64}\"}"
+            fi
+            gh api -X PUT "repos/${REPO}/contents/${path}" \
+              --input - <<< "$body" --silent && \
+              echo "✅ $path 更新完了" || echo "⚠️ $path 更新失敗"
+          }
 
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git fetch origin main
-          git checkout main
-          git reset --hard origin/main
+          # ticket-cache.json を更新
+          TICKET_B64=$(base64 -w0 /tmp/ticket-cache.json)
+          update_file "docs/ticket-cache.json" "$TICKET_B64" "自動: ticket-cache 更新 ${DATETIME}:00 (cs-check)"
 
-          # ticket-cache.json / flutter-analyze-cache.json は常に更新（WEB版フォールバック用）
-          cp /tmp/ticket-cache.json docs/ticket-cache.json
-          # flutter-analyze-cache.json は /tmp に退避済み (git reset 後に復元)
-          if [ -f "/tmp/flutter-analyze-cache.json" ]; then
-            cp /tmp/flutter-analyze-cache.json docs/flutter-analyze-cache.json
-          fi
+          # flutter-analyze-cache.json を更新
+          ANALYZE_B64=$(base64 -w0 /tmp/flutter-analyze-cache.json)
+          update_file "docs/flutter-analyze-cache.json" "$ANALYZE_B64" "自動: flutter-analyze-cache 更新 ${DATETIME}:00 (cs-check)"
 
-          # チケット0件かつインフラ正常なら CSノート記録のみスキップ
-          if [ "$TICKET_COUNT" = "0" ] && [ "$HEALTHY" = "true" ] && [ "$HTTP_CODE" != "403" ]; then
-            echo "📝 チケットなし・インフラ正常 — CSノート記録スキップ（キャッシュのみ更新）"
-          else
-            # CSノート作成 (要対応あり or インフラ異常 or 403エラー時)
+          # CSノート (チケットあり or 異常あり or 403エラー時のみ)
+          if [ "$TICKET_COUNT" != "0" ] || [ "$HEALTHY" != "true" ] || [ "$HTTP_CODE" = "403" ]; then
+            FILEPATH="docs/cs-notes/${DATETIME}.md"
             {
               echo "# CS チェック ${DATE} ${HOUR}:00 (GitHub Actions)"
               echo ""
@@ -261,50 +258,38 @@ jobs:
               echo "- 取得チケット数: ${TICKET_COUNT}件"
               echo "- API応答: HTTP ${HTTP_CODE}"
               if [ "$HTTP_CODE" = "403" ]; then
-                echo "- ⚠️ 403 Forbidden: Supabase Network Restrictions によりブロック — ダッシュボードでIP許可リスト確認を"
+                echo "- ⚠️ 403 Forbidden: Supabase Network Restrictions — \`docs/.supabase-network-allow\` コミットで自動修復"
               fi
               echo ""
-              echo "## GitHub PR レビュー"
+              echo "## GitHub PR"
               echo "- オープンPR: ${{ steps.pr_review.outputs.pr_count }}件"
               echo ""
               echo "## インフラヘルスチェック"
               if [ "$HEALTHY" = "true" ]; then
                 echo "- ✅ 全エンドポイント正常"
               else
-                echo ""
-                echo "### ⚠️ インフラ異常"
+                echo "- ⚠️ 異常検知"
                 echo "${{ steps.health.outputs.errors }}"
               fi
               echo ""
-              echo "---"
-              echo "*実行環境: GitHub Actions (cs-check.yml)*"
-            } > "$FILEPATH"
-            git add docs/cs-notes/
+              echo "*実行: GitHub Actions cs-check.yml*"
+            } > /tmp/cs-note.md
+            CS_B64=$(base64 -w0 /tmp/cs-note.md)
+            update_file "$FILEPATH" "$CS_B64" "自動: CS チェック ${DATETIME}:00 (GitHub Actions)"
           fi
 
-          git add docs/ticket-cache.json docs/flutter-analyze-cache.json
-          if git diff --cached --quiet; then
-            echo "📝 変更なし — スキップ"
-            exit 0
-          fi
-
-          git commit -m "自動: CS チェック ${DATETIME}:00 (GitHub Actions)"
-          # GH_PAT (deploy-prod と同じ bypass PAT) → BYPASS_RULES → GITHUB_TOKEN の順で試行
-          PUSH_TOKEN="${{ secrets.GH_PAT || secrets.BYPASS_RULES || secrets.GITHUB_TOKEN }}"
-          git remote set-url origin "https://x-access-token:${PUSH_TOKEN}@github.com/kanta13jp1/my_web_app.git"
-          git push origin main && echo "✅ CS ノート記録 & キャッシュ更新完了" || {
-            echo "⚠️ push失敗: GH_PAT または BYPASS_RULES secret (bypass権限付きPAT) を設定してください"
-            echo "  または Repository Settings > Branches > Branch protection rules > Allow GitHub Actions to bypass"
-          }
+          echo "✅ GitHub API ファイル更新完了"
 
       - name: Record to schedule_task_runs
         if: always()
         run: |
           TICKET_COUNT="${{ steps.tickets.outputs.ticket_count }}"
           HEALTHY="${{ steps.health.outputs.healthy }}"
+          DAILY_REPORT="${{ steps.daily_report.outputs.fresh }}"
           STATUS="success"
           [ "$HEALTHY" != "true" ] && STATUS="partial"
-          SUMMARY="CS Check: tickets=${TICKET_COUNT}, infra_healthy=${HEALTHY}"
+          [ "$DAILY_REPORT" != "true" ] && STATUS="partial"
+          SUMMARY="CS Check: tickets=${TICKET_COUNT}, infra_healthy=${HEALTHY}, daily_report_fresh=${DAILY_REPORT}"
           curl -s -o /dev/null \
             -X POST \
             -H "apikey: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
@@ -322,7 +307,9 @@ jobs:
           HTTP="${{ steps.tickets.outputs.http_code }}"
           PR_COUNT="${{ steps.pr_review.outputs.pr_count }}"
           HEALTHY="${{ steps.health.outputs.healthy }}"
+          DAILY_REPORT="${{ steps.daily_report.outputs.fresh }}"
           HEALTH_ICON=$([ "$HEALTHY" = "true" ] && echo "✅" || echo "⚠️")
+          DAILY_ICON=$([ "$DAILY_REPORT" = "true" ] && echo "✅" || echo "⚠️")
           {
             echo "## CS Check $(TZ=Asia/Tokyo date +'%Y-%m-%d %H:%M JST')"
             echo ""
@@ -331,4 +318,6 @@ jobs:
             echo "| サポートチケット | ${TICKETS}件 (HTTP ${HTTP}) |"
             echo "| オープンPR | ${PR_COUNT}件 |"
             echo "| インフラ | ${HEALTH_ICON} healthy=${HEALTHY} |"
+            echo "| daily-report | ${DAILY_ICON} fresh=${DAILY_REPORT} |"
+            echo "| キャッシュ更新 | GitHub API 方式 |"
           } >> $GITHUB_STEP_SUMMARY

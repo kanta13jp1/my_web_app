@@ -18,7 +18,7 @@ permissions:
 
 env:
   STALE_DAYS: 3 # この日数以上更新が無いインスタンスを overdue 扱い
-  INSTANCES: 'vscode win ps1 ps2 ps3 ps4 ps5 ps6'
+  INSTANCES: 'claude codex user automation'
 
 jobs:
   audit:
@@ -45,7 +45,7 @@ jobs:
               -H "Authorization: Bearer ${SUPABASE_ANON_KEY}" \
               -H "Content-Type: application/json" \
               -d "{\"action\":\"wbs.list_tasks\",\"instance\":\"${INSTANCE}\"}")
-            # PS#1 S21: 元 heredoc は 12-sp leading whitespace で Python IndentationError → 常に 0
+            # Two-instance S21: keep heredoc parsing stable for Python one-liners.
             # 1-line 化して YAML block scalar と Python 両方の indentation 問題を解消
             RECENT_COUNT=$(echo "$RESPONSE" | python3 -c "import sys,json; from datetime import datetime,timezone,timedelta; d=json.load(sys.stdin); c=datetime.now(timezone.utc)-timedelta(days=${STALE_DAYS}); print(sum(1 for t in d.get('tasks',[]) if t.get('updated_at') and datetime.fromisoformat(t['updated_at'].replace('Z','+00:00'))>c))" || echo "0")
 
@@ -67,7 +67,7 @@ jobs:
         run: |
           DATE=$(date -u +%Y%m%d)
           mkdir -p docs/cross-instance-prs
-          # PS#1 S21: 同日 2 回目 run の branch collision 回避で run_id suffix 付加
+          # Two-instance S21: add run_id suffix to avoid same-day branch collisions.
           BRANCH="wbs-staleness/${DATE}-${{ github.run_id }}"
 
           git config user.name 'github-actions[bot]'
@@ -114,7 +114,7 @@ jobs:
             --base main \
             --head "$BRANCH" || true
 
-      # Win版#131 part 21: PS#5 不在 fallback - unassigned bug 4h+ 検出
+      # Win版#131 part 21 updated 2026-05-05: Codex #1 fallback - unassigned bug 4h+ audit.
       - name: Detect unassigned bugs (4h+)
         env:
           GH_TOKEN: ${{ secrets.GH_PAT || secrets.GITHUB_TOKEN }}
@@ -138,28 +138,28 @@ jobs:
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git checkout -b "$BRANCH" 2>/dev/null || git checkout "$BRANCH"
 
-          FILE="docs/cross-instance-prs/${DATE}_unassigned_bugs_escalate_ps1.md"
+          FILE="docs/cross-instance-prs/${DATE}_unassigned_bugs_escalate_claude.md"
           cat > "$FILE" <<EOF
-          # 🚨 PS#5 不在 → PS#1 escalate: unassigned bug 4h+ 蓄積
+          # 🚨 Codex #1 fallback → Claude Code #1 escalate: unassigned bug 4h+ 蓄積
 
           - **検出日時**: $(date -u +%Y-%m-%dT%H:%M:%SZ)
           - **検出元**: \`.github/workflows/wbs-staleness-audit.yml\` (Win版#131 part 21)
 
-          ## 対象 Issue (PS#5 が 4h 以内に reach できなかった bug)
+          ## 対象 Issue (Codex #1 が 4h 以内に reach できなかった bug)
 
           $(echo "$OUT" | while IFS='|' read -r num title url; do echo "- [#$num] $title — $url"; done)
 
-          ## PS#1 アクション (Rule17 health check の流れで)
+          ## Claude Code #1 アクション (Rule17 health check の流れで)
 
           1. 各 Issue を確認
           2. severity 判定 (critical/high/normal)
-          3. PS#5 にメンション (もし PS#5 まだ起動していれば)
+          3. Codex #1 にメンション (もし Codex #1 まだ起動していれば)
           4. 重い修正 → /cross-instance-pr to=win/vscode で再 escalate
-          5. 軽量 → 自分 (PS#1) で即修正
+          5. 軽量 → Claude Code #1 で即修正
 
           ## SLA
 
-          - critical: **2h 以内** に PS#1 直接修正
+          - critical: **2h 以内** に Claude Code #1 直接修正
           - high: 4h 以内 cross-instance-pr or PR
           - normal: 翌日まで
 
@@ -170,12 +170,12 @@ jobs:
           EOF
 
           git add "$FILE"
-          git commit -m "audit: unassigned bug 4h+ escalate to PS#1 (${DATE})" || exit 0
+          git commit -m "audit: unassigned bug 4h+ escalate to Claude Code #1 (${DATE})" || exit 0
           git push origin "$BRANCH" || exit 0
 
           gh pr create \
-            --title "audit: PS#5 不在 → PS#1 escalate (${DATE})" \
-            --body "PS#5 が 4h 以内に reach できなかった unassigned bug を PS#1 にエスカレートします。" \
+            --title "audit: Codex #1 fallback -> Claude Code #1 escalate (${DATE})" \
+            --body "Codex #1 が 4h 以内に reach できなかった unassigned bug を Claude Code #1 にエスカレートします。" \
             --label "wbs-audit,bug-escalate,automated" \
             --base main \
             --head "$BRANCH" || true

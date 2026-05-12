@@ -1,0 +1,22 @@
+{
+  "task_id": "daily-report",
+  "status": "success",
+  "executed_at": "2026-04-28T00:30:00Z",
+  "environment": "web-version",
+  "summary": "日次レポート生成完了 / 競合モニタリング完了 / X投稿: sandbox blocked",
+  "details": {
+    "daily_report_saved": "docs/daily-reports/2026-04-28.md",
+    "competitor_report_saved": "docs/competitor-reports/2026-04-28.md",
+    "auto_review_issues": 0,
+    "viral_growth_engine": "blocked (host_not_allowed)",
+    "x_post_fallback": "blocked (host_not_allowed)",
+    "supabase_rest_api": "blocked (host_not_allowed)",
+    "ai_university_updates": "14/9 providers",
+    "cs_check_last_run": "2026-04-27T23:50:00Z",
+    "competitor_alerts": {
+      "notion": "HIGH — Workers for Agents developer preview",
+      "slack": "WATCH — 30 AI features (Salesforce)",
+      "github": "WATCH — Copilot plan split + token format change"
+    }
+  }
+}

@@ -1,4 +1,4 @@
-// MCP Auth Guard — 自分株式会社 MCP server 公開時の認可・スコープ検証 skeleton
+// MCP Auth Guard — 自分株式会社 MCP server 公開時の認可・スコープ検証
 //
 // docs/MCP_AUTH_SECURITY_PRINCIPLES.md 10 原則のうち以下を実装する基盤層:
 //   #2 Bearer Token Validation Deny-by-Default
@@ -6,14 +6,21 @@
 //   #7 Audit Log + Anomaly Detection (mcp_audit_log への記録呼び出し点)
 //   #8 OAuth 2.1 + PKCE (token 検証で aud / iss / scope を確認する point)
 //
-// **本 commit 時点ではシグネチャ確立 + 仮実装のみ** (Win版#132 part 49 / 段階的実装)。
-// WorkOS JWKS による JWT 検証本体は後続 commit で配線する。
+// WorkOS JWKS による JWT 検証本体をここで配線する。
+// mcp_audit_log への INSERT は logMcpInvocation() 側の後続配線で扱う。
 //
 // ソース: NotebookLM Notebook 1b808a60-85d6-49f7-ab80-0e90a43cf1d8
 // "Streamlining MCP Authentication with WorkOS AuthKit"
 // (RFC 7591 Dynamic Client Registration / RFC 8707 Resource Indicators /
 //  arXiv "Security Analysis of the MCP Specification and Prompt Injection
 //  Vulnerabilities in Tool-Integrated LLM Agents")
+
+import { createClient, type SupabaseClient } from "npm:@supabase/supabase-js@2";
+import {
+  createRemoteJWKSet,
+  type JWTPayload,
+  jwtVerify,
+} from "https://deno.land/x/jose@v5.9.6/index.ts";
 
 /**
  * Bearer 検証成功時に MCP EF へ渡されるコンテキスト。
@@ -36,9 +43,182 @@ export interface McpAuthContext {
  * 構築して `ctx.aud` に含まれるかを判定する。
  */
 export const MCP_RESOURCE_PREFIX = "urn:jibun:tool:";
+export const OAUTH_PROTECTED_RESOURCE_PATH =
+  "/.well-known/oauth-protected-resource";
 
 export function toolResourceUrn(tool: string): string {
   return `${MCP_RESOURCE_PREFIX}${tool}`;
+}
+
+function trimTrailingSlash(value: string): string {
+  return value.replace(/\/+$/, "");
+}
+
+function optionalEnv(name: string): string {
+  return (Deno.env.get(name) ?? "").trim();
+}
+
+function uniqueStrings(values: string[]): string[] {
+  return [...new Set(values.map((value) => value.trim()).filter(Boolean))];
+}
+
+let jwksCache: ReturnType<typeof createRemoteJWKSet> | null = null;
+let jwksCacheUrl = "";
+let adminClientCache: SupabaseClient | null = null;
+let adminClientCacheKey = "";
+
+function getWorkOsJwks(): ReturnType<typeof createRemoteJWKSet> | null {
+  const url = optionalEnv("WORKOS_JWKS_URL");
+  if (!url) return null;
+
+  try {
+    if (!jwksCache || jwksCacheUrl !== url) {
+      jwksCache = createRemoteJWKSet(new URL(url));
+      jwksCacheUrl = url;
+    }
+    return jwksCache;
+  } catch {
+    return null;
+  }
+}
+
+function getWorkOsIssuers(): string[] {
+  const raw = optionalEnv("WORKOS_ISSUER");
+  if (!raw) return [];
+
+  const withoutTrailingSlash = trimTrailingSlash(raw);
+  const candidates = [
+    raw,
+    withoutTrailingSlash,
+    withoutTrailingSlash ? `${withoutTrailingSlash}/` : "",
+  ];
+
+  return uniqueStrings(candidates);
+}
+
+function getAuthKitAuthorizationServers(): string[] {
+  const authKitUrl = optionalEnv("WORKOS_AUTHKIT_URL") ||
+    optionalEnv("WORKOS_AUTHKIT_DOMAIN");
+  return uniqueStrings([
+    authKitUrl,
+    ...getWorkOsIssuers(),
+  ]);
+}
+
+function protectedResourceUrl(reqUrl: string): string {
+  const url = new URL(reqUrl);
+  if (url.pathname.endsWith(`${OAUTH_PROTECTED_RESOURCE_PATH}/`)) {
+    url.pathname = url.pathname.slice(
+      0,
+      -(OAUTH_PROTECTED_RESOURCE_PATH.length + 1),
+    );
+  } else if (url.pathname.endsWith(OAUTH_PROTECTED_RESOURCE_PATH)) {
+    url.pathname = url.pathname.slice(0, -OAUTH_PROTECTED_RESOURCE_PATH.length);
+  }
+  url.search = "";
+  url.hash = "";
+  return trimTrailingSlash(url.toString());
+}
+
+export function isOAuthProtectedResourceMetadataRequest(req: Request): boolean {
+  const { pathname } = new URL(req.url);
+  return pathname.endsWith(OAUTH_PROTECTED_RESOURCE_PATH) ||
+    pathname.endsWith(`${OAUTH_PROTECTED_RESOURCE_PATH}/`);
+}
+
+export function buildOAuthProtectedResourceMetadata(
+  reqUrl: string,
+  toolName: string,
+  scopes: string[] = [toolName],
+): Record<string, unknown> {
+  const resource = optionalEnv("MCP_RESOURCE_URL") ||
+    protectedResourceUrl(reqUrl);
+  const metadata: Record<string, unknown> = {
+    resource,
+    resource_name: toolName,
+    authorization_servers: getAuthKitAuthorizationServers(),
+    scopes_supported: uniqueStrings(["all", toolName, ...scopes]),
+    bearer_methods_supported: ["header"],
+    resource_signing_alg_values_supported: ["RS256"],
+    jwks_uri: optionalEnv("WORKOS_JWKS_URL"),
+    authkit_url: optionalEnv("WORKOS_AUTHKIT_URL") ||
+      optionalEnv("WORKOS_AUTHKIT_DOMAIN") || null,
+    token_validation: {
+      audience_checked_by_jwt_verify: false,
+      audience_checked_by_resource_indicator: true,
+      issuer_trailing_slash_tolerant: true,
+    },
+  };
+
+  return Object.fromEntries(
+    Object.entries(metadata).filter(([, value]) =>
+      value !== "" &&
+      value !== null &&
+      (!Array.isArray(value) || value.length > 0)
+    ),
+  );
+}
+
+function getAdminClient(): SupabaseClient | null {
+  const url = (Deno.env.get("SUPABASE_URL") ?? "").trim();
+  const key = (Deno.env.get("SERVICE_ROLE_KEY") ?? "").trim();
+  if (!url || !key) return null;
+
+  const cacheKey = `${url}\n${key}`;
+  if (!adminClientCache || adminClientCacheKey !== cacheKey) {
+    adminClientCache = createClient(url, key, {
+      auth: { persistSession: false },
+    });
+    adminClientCacheKey = cacheKey;
+  }
+  return adminClientCache;
+}
+
+function stringClaim(value: unknown): string | null {
+  return typeof value === "string" && value.trim() ? value.trim() : null;
+}
+
+function getClientId(payload: JWTPayload): string | null {
+  return stringClaim(payload.client_id) ?? stringClaim(payload.sub);
+}
+
+function getScopes(payload: JWTPayload): string[] {
+  const scope = payload.scope;
+  if (typeof scope === "string") {
+    return scope.split(/\s+/).map((item) => item.trim()).filter(Boolean);
+  }
+  if (Array.isArray(scope)) {
+    return scope
+      .flatMap((item) => typeof item === "string" ? item.split(/\s+/) : [])
+      .map((item) => item.trim())
+      .filter(Boolean);
+  }
+  return [];
+}
+
+function getAudiences(payload: JWTPayload): string[] {
+  const { aud } = payload;
+  if (typeof aud === "string") return aud.trim() ? [aud.trim()] : [];
+  if (Array.isArray(aud)) {
+    return aud.flatMap((item) =>
+      typeof item === "string" && item.trim() ? [item.trim()] : []
+    );
+  }
+  return [];
+}
+
+async function isClientAllowed(clientId: string): Promise<boolean> {
+  const admin = getAdminClient();
+  if (!admin) return false;
+
+  const { data, error } = await admin
+    .from("mcp_oauth_clients")
+    .select("suspended")
+    .eq("client_id", clientId)
+    .maybeSingle();
+
+  if (error || !data) return false;
+  return data.suspended !== true;
 }
 
 /**
@@ -48,19 +228,20 @@ export function toolResourceUrn(tool: string): string {
  * 末尾スラッシュ問題 等で **すべて null を返す**。呼び出し側は `if (!ctx)` で
  * 即座に 401 応答すること。
  *
- * 本 commit (Win版#132 part 49) 時点では env `MCP_AUTH_BYPASS=1` なら synthetic
- * context を返す developer-only stub。本実装は後続:
- *   1. WORKOS_JWKS_URL から JWKS を fetch + cache
+ * env `MCP_AUTH_BYPASS=1` なら synthetic context を返す developer-only stub。
+ * 通常経路では:
+ *   1. WORKOS_JWKS_URL から JWKS を fetch + jose cache
  *   2. JWT signature 検証 (RS256)
  *   3. iss を WORKOS_ISSUER (末尾スラッシュ両許容) と比較
  *   4. aud / scope / sub claim を抽出して McpAuthContext に詰める
- *   5. exp / nbf を現在時刻と比較
+ *   5. exp / nbf を現在時刻と比較 (jose jwtVerify)
  *   6. mcp_oauth_clients.suspended=true なら拒否
  *
  * @returns null = 401 / それ以外 = {client_id, scopes, aud, subject}
  */
-// deno-lint-ignore require-await -- skeleton state; JWT verify (await) wired in part 50+
-export async function validateBearer(req: Request): Promise<McpAuthContext | null> {
+export async function validateBearer(
+  req: Request,
+): Promise<McpAuthContext | null> {
   const auth = req.headers.get("Authorization") ?? "";
   if (!auth.startsWith("Bearer ")) return null;
   const token = auth.slice("Bearer ".length).trim();
@@ -68,7 +249,10 @@ export async function validateBearer(req: Request): Promise<McpAuthContext | nul
 
   // Developer bypass — 本番環境では Supabase Secrets に MCP_AUTH_BYPASS を
   // 設定しないこと (production safety)
-  if (Deno.env.get("MCP_AUTH_BYPASS") === "1" && Deno.env.get("MCP_DEV_MODE") === "1") {
+  if (
+    Deno.env.get("MCP_AUTH_BYPASS") === "1" &&
+    Deno.env.get("MCP_DEV_MODE") === "1"
+  ) {
     return {
       client_id: "dev-bypass",
       scopes: ["all"],
@@ -76,8 +260,33 @@ export async function validateBearer(req: Request): Promise<McpAuthContext | nul
     };
   }
 
-  // TODO (Win版#132 part 50+): WorkOS JWKS による JWT 検証本体を実装。
-  // 現段階では deny-by-default 厳守 = 検証経路が無いので拒否。
+  if (token.split(".").length !== 3) return null;
+
+  const jwks = getWorkOsJwks();
+  const issuers = getWorkOsIssuers();
+  if (!jwks || issuers.length === 0) return null;
+
+  for (const issuer of issuers) {
+    try {
+      const { payload } = await jwtVerify(token, jwks, {
+        algorithms: ["RS256"],
+        issuer,
+      });
+      const clientId = getClientId(payload);
+      if (!clientId) return null;
+      if (!await isClientAllowed(clientId)) return null;
+
+      return {
+        client_id: clientId,
+        scopes: getScopes(payload),
+        aud: getAudiences(payload),
+        subject: stringClaim(payload.sub) ?? undefined,
+      };
+    } catch {
+      // Try the slash-tolerant issuer variant before denying.
+    }
+  }
+
   return null;
 }
 
@@ -97,8 +306,8 @@ export function requireScope(ctx: McpAuthContext, tool: string): boolean {
   const targetUrn = toolResourceUrn(tool);
   const wildcardUrn = `${MCP_RESOURCE_PREFIX}*`;
 
-  const audAllows =
-    ctx.aud.includes(targetUrn) || ctx.aud.includes(wildcardUrn);
+  const audAllows = ctx.aud.includes(targetUrn) ||
+    ctx.aud.includes(wildcardUrn);
   if (!audAllows) return false;
 
   if (ctx.scopes.includes("all")) return true;
@@ -117,7 +326,23 @@ export function requireScope(ctx: McpAuthContext, tool: string): boolean {
  * 呼び出し例:
  *   await logMcpInvocation(ctx, "judgment.get", { date: "2026-04-28" }, 200, req);
  */
-// deno-lint-ignore require-await -- skeleton state; supabase INSERT (await) wired in part 50+
+function normalizeRequestIp(raw: string): string | null {
+  const first = raw.split(",")[0]?.trim() ?? "";
+  if (!first) return null;
+  if (/^[0-9.]+$/.test(first)) return first;
+  if (/^[0-9a-fA-F:]+$/.test(first)) return first;
+  return null;
+}
+
+function toAuditJson(value: unknown): unknown {
+  if (value == null) return null;
+  try {
+    return JSON.parse(JSON.stringify(value));
+  } catch {
+    return { unserializable: String(value).slice(0, 500) };
+  }
+}
+
 export async function logMcpInvocation(
   ctx: McpAuthContext | null,
   toolName: string,
@@ -125,18 +350,31 @@ export async function logMcpInvocation(
   responseStatus: number,
   req: Request,
 ): Promise<void> {
-  const ip = req.headers.get("x-forwarded-for") ?? req.headers.get("cf-connecting-ip") ?? "";
-  // TODO (Win版#132 part 50+): supabase service role で
-  // INSERT INTO mcp_audit_log (client_id, tool_name, request_args, response_status,
-  //                            request_ip, invoked_at)
-  // VALUES ($1, $2, $3, $4, $5, now());
-  console.log("[mcp-audit]", JSON.stringify({
-    client_id: ctx?.client_id ?? "anonymous",
-    tool_name: toolName,
-    response_status: responseStatus,
-    ip: ip.split(",")[0]?.trim() || null,
-    args_preview: typeof requestArgs === "string"
-      ? requestArgs.slice(0, 200)
-      : JSON.stringify(requestArgs).slice(0, 200),
-  }));
+  const ip = req.headers.get("x-forwarded-for") ??
+    req.headers.get("cf-connecting-ip") ?? "";
+  const admin = getAdminClient();
+  if (admin) {
+    const { error } = await admin.from("mcp_audit_log").insert({
+      client_id: ctx?.client_id ?? "anonymous",
+      tool_name: toolName || "unknown",
+      request_args: toAuditJson(requestArgs),
+      response_status: responseStatus,
+      request_ip: normalizeRequestIp(ip),
+    });
+    if (!error) return;
+    console.warn("[mcp-audit] insert failed", error.message);
+  }
+
+  console.log(
+    "[mcp-audit]",
+    JSON.stringify({
+      client_id: ctx?.client_id ?? "anonymous",
+      tool_name: toolName,
+      response_status: responseStatus,
+      ip: normalizeRequestIp(ip),
+      args_preview: typeof requestArgs === "string"
+        ? requestArgs.slice(0, 200)
+        : JSON.stringify(requestArgs).slice(0, 200),
+    }),
+  );
 }

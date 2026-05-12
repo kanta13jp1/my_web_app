@@ -1,0 +1,97 @@
+name: AI Tool Changelog Watch
+
+on:
+  schedule:
+    - cron: "15 21 * * *" # daily 06:15 JST
+  workflow_dispatch:
+    inputs:
+      comment_mode:
+        description: "Issue comment policy: important, always, or never"
+        required: false
+        default: "important"
+        type: choice
+        options:
+          - important
+          - always
+          - never
+
+permissions:
+  contents: write
+  issues: write
+
+concurrency:
+  group: ai-tool-watch
+  cancel-in-progress: false
+
+jobs:
+  watch:
+    name: Watch Claude Code and Codex official sources
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      ISSUE_NUMBER: "1422"
+      COMMENT_MODE: ${{ inputs.comment_mode || 'important' }}
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 20
+          token: ${{ secrets.BYPASS_RULES || github.token }}
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Generate watch report
+        id: watch
+        run: |
+          python scripts/ai_tool_watch.py \
+            --issue "$ISSUE_NUMBER" \
+            --state docs/ai-tool-watch/state.json \
+            --report docs/ai-tool-watch/latest-report.md \
+            --json docs/ai-tool-watch/latest-report.json
+
+      - name: Detect repeated news patterns
+        id: patterns
+        run: |
+          python scripts/news_pattern_detector.py \
+            --source docs/ai-tool-watch/latest-report.json \
+            --label ai-tool-watch \
+            --output docs/ai-tool-watch/latest-patterns.json \
+            --markdown docs/ai-tool-watch/latest-patterns.md \
+            --min-confidence 0.55
+
+      - name: Route important findings to issues and handoff drafts
+        if: steps.watch.outputs.high_priority_count != '0' && steps.watch.outputs.changes_count != '0'
+        run: |
+          python scripts/ai_tool_watch_route.py \
+            --report-json docs/ai-tool-watch/latest-report.json \
+            --repo "${{ github.repository }}" \
+            --label ai-tool-watch \
+            --label ai-tool-update \
+            --label 追加要望 \
+            --draft-dir docs/cross-instance-prs/drafts/ai-tool-watch
+
+      - name: Commit updated watch state
+        run: |
+          set -euo pipefail
+          if [ -z "$(git status --porcelain -- docs/ai-tool-watch docs/cross-instance-prs/drafts/ai-tool-watch)" ]; then
+            echo "No report/state changes to commit."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/ai-tool-watch/latest-report.md docs/ai-tool-watch/latest-report.json docs/ai-tool-watch/latest-patterns.json docs/ai-tool-watch/latest-patterns.md docs/ai-tool-watch/state.json docs/cross-instance-prs/drafts/ai-tool-watch
+          git commit -m "chore: update AI tool watch report"
+          git push
+
+      - name: Comment important findings on issue
+        if: |
+          env.COMMENT_MODE == 'always' ||
+          (env.COMMENT_MODE == 'important' && steps.watch.outputs.high_priority_count != '0' && steps.watch.outputs.changes_count != '0')
+        run: |
+          gh issue comment "$ISSUE_NUMBER" --body-file docs/ai-tool-watch/latest-report.md

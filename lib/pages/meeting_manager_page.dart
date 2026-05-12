@@ -33,8 +33,8 @@ class _MeetingManagerPageState extends State<MeetingManagerPage> {
     });
     try {
       final response = await _supabase.functions.invoke(
-        'meeting-manager',
-        body: {'action': 'list'},
+        'media-hub',
+        body: {'action': 'meeting.list'},
       );
       final data = response.data;
       if (data is Map<String, dynamic> && data['meetings'] is List) {

@@ -1,0 +1,56 @@
+name: Blog News Production Smoke
+
+on:
+  workflow_dispatch:
+    inputs:
+      skip_rss:
+        description: "true to skip live RSS Edge Function smoke"
+        required: false
+        default: "false"
+  workflow_run:
+    workflows: ["Deploy to Production"]
+    types: [completed]
+
+concurrency:
+  group: blog-news-prod-smoke
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    name: Blog/news production smoke
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      SITE_URL: https://my-web-app-b67f4.web.app
+      SUPABASE_URL: https://smmkxxavexumewbfaqpy.supabase.co
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      SKIP_RSS: ${{ github.event.inputs.skip_rss || 'false' }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Run production smoke
+        run: |
+          mkdir -p tmp/blog-news-prod-smoke
+          ARGS=(
+            --site-url "$SITE_URL"
+            --supabase-url "$SUPABASE_URL"
+            --report tmp/blog-news-prod-smoke/report.json
+          )
+          if [ "$SKIP_RSS" = "true" ]; then
+            ARGS+=(--skip-rss)
+          fi
+          python3 scripts/blog_news_prod_smoke.py "${ARGS[@]}"
+
+      - name: Upload smoke report
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: blog-news-prod-smoke-report
+          path: tmp/blog-news-prod-smoke/report.json
+          if-no-files-found: ignore

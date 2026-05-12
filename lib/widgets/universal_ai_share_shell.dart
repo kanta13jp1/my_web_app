@@ -3,7 +3,9 @@ import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../services/ai_share_button_preferences_service.dart';
 import '../services/universal_x_share_service.dart';
+import 'ai_share_button_settings_panel.dart';
 
 final universalAiShareRouteObserver = UniversalAiShareRouteObserver();
 
@@ -36,7 +38,7 @@ class UniversalAiShareRouteObserver extends NavigatorObserver {
   }
 }
 
-class UniversalAiShareShell extends StatelessWidget {
+class UniversalAiShareShell extends StatefulWidget {
   final Widget child;
   final GlobalKey<NavigatorState> navigatorKey;
 
@@ -47,27 +49,109 @@ class UniversalAiShareShell extends StatelessWidget {
   });
 
   @override
+  State<UniversalAiShareShell> createState() => _UniversalAiShareShellState();
+}
+
+class _UniversalAiShareShellState extends State<UniversalAiShareShell> {
+  OverlayEntry? _overlayEntry;
+  OverlayState? _overlayState;
+
+  AiShareButtonPreferencesController get _preferencesController =>
+      aiShareButtonPreferencesController;
+
+  @override
+  void initState() {
+    super.initState();
+    _preferencesController.load();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _syncOverlayEntry();
+    });
+  }
+
+  @override
+  void didUpdateWidget(covariant UniversalAiShareShell oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.navigatorKey != widget.navigatorKey) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _syncOverlayEntry();
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _removeOverlayEntry();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        Positioned.fill(child: child),
-        ValueListenableBuilder<UniversalSharePageContext>(
+    return widget.child;
+  }
+
+  void _syncOverlayEntry() {
+    if (!mounted) return;
+
+    final overlayState = widget.navigatorKey.currentState?.overlay;
+    if (overlayState == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _syncOverlayEntry();
+      });
+      return;
+    }
+
+    if (_overlayEntry != null && identical(_overlayState, overlayState)) {
+      return;
+    }
+
+    _removeOverlayEntry();
+    _overlayState = overlayState;
+    _overlayEntry = OverlayEntry(builder: _buildOverlayEntry);
+    overlayState.insert(_overlayEntry!);
+  }
+
+  void _removeOverlayEntry() {
+    _overlayEntry?.remove();
+    _overlayEntry = null;
+    _overlayState = null;
+  }
+
+  Widget _buildOverlayEntry(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _preferencesController,
+      builder: (context, _) {
+        final preferences = _preferencesController.preferences;
+        if (!preferences.visible) return const SizedBox.shrink();
+
+        return ValueListenableBuilder<UniversalSharePageContext>(
           valueListenable: universalAiShareRouteObserver.currentPage,
           builder: (context, page, _) {
-            return Positioned(
-              right: 16,
-              bottom: 20,
-              child: SafeArea(
+            return _positionedFab(
+              preferences.position,
+              SafeArea(
                 child: _UniversalAiShareFab(
                   page: page,
-                  navigatorKey: navigatorKey,
+                  navigatorKey: widget.navigatorKey,
                 ),
               ),
             );
           },
-        ),
-      ],
+        );
+      },
     );
+  }
+
+  Widget _positionedFab(AiShareButtonPosition position, Widget child) {
+    switch (position) {
+      case AiShareButtonPosition.topLeft:
+        return Positioned(left: 16, top: 20, child: child);
+      case AiShareButtonPosition.topRight:
+        return Positioned(right: 16, top: 20, child: child);
+      case AiShareButtonPosition.bottomLeft:
+        return Positioned(left: 16, bottom: 20, child: child);
+      case AiShareButtonPosition.bottomRight:
+        return Positioned(right: 16, bottom: 20, child: child);
+    }
   }
 }
 
@@ -75,10 +159,15 @@ class _UniversalAiShareFab extends StatelessWidget {
   final UniversalSharePageContext page;
   final GlobalKey<NavigatorState> navigatorKey;
 
-  const _UniversalAiShareFab({
-    required this.page,
-    required this.navigatorKey,
-  });
+  const _UniversalAiShareFab({required this.page, required this.navigatorKey});
+
+  bool get _isLoggedIn {
+    try {
+      return Supabase.instance.client.auth.currentSession != null;
+    } catch (_) {
+      return false;
+    }
+  }
 
   void _openShareDialog() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -92,22 +181,81 @@ class _UniversalAiShareFab extends StatelessWidget {
     });
   }
 
+  void _openSettingsSheet() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final overlayContext = navigatorKey.currentState?.overlay?.context;
+      if (overlayContext == null || !overlayContext.mounted) return;
+      showModalBottomSheet<void>(
+        context: overlayContext,
+        useRootNavigator: true,
+        showDragHandle: true,
+        builder: (_) => const SafeArea(
+          child: AiShareButtonSettingsPanel(
+            padding: EdgeInsets.fromLTRB(20, 0, 20, 20),
+          ),
+        ),
+      );
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-    final isLoggedIn = Supabase.instance.client.auth.currentSession != null;
+    final isLoggedIn = _isLoggedIn;
     final colorScheme = Theme.of(context).colorScheme;
-    return TooltipVisibility(
-      visible: false,
-      child: FloatingActionButton.extended(
-        heroTag: 'universal-ai-share-fab',
-        backgroundColor: isLoggedIn
-            ? colorScheme.primaryContainer
-            : colorScheme.surfaceContainerHighest,
-        foregroundColor:
-            isLoggedIn ? colorScheme.onPrimaryContainer : colorScheme.onSurface,
-        onPressed: _openShareDialog,
-        icon: const Icon(Icons.auto_awesome),
-        label: const Text('AIシェア'),
+    final backgroundColor = isLoggedIn
+        ? colorScheme.primaryContainer
+        : colorScheme.surfaceContainerHighest;
+    final foregroundColor =
+        isLoggedIn ? colorScheme.onPrimaryContainer : colorScheme.onSurface;
+
+    return Material(
+      color: backgroundColor,
+      elevation: 6,
+      shadowColor: Colors.black.withValues(alpha: 0.24),
+      borderRadius: BorderRadius.circular(16),
+      clipBehavior: Clip.antiAlias,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Tooltip(
+            message: 'AIシェア',
+            child: InkWell(
+              onTap: _openShareDialog,
+              child: Padding(
+                padding: const EdgeInsetsDirectional.fromSTEB(16, 12, 12, 12),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.auto_awesome, color: foregroundColor),
+                    const SizedBox(width: 8),
+                    Text(
+                      'AIシェア',
+                      style: TextStyle(
+                        color: foregroundColor,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          Container(
+            width: 1,
+            height: 28,
+            color: colorScheme.outlineVariant.withValues(alpha: 0.78),
+          ),
+          Tooltip(
+            message: 'AIシェアボタン設定',
+            child: IconButton(
+              onPressed: _openSettingsSheet,
+              icon: const Icon(Icons.tune),
+              color: foregroundColor,
+              constraints: const BoxConstraints.tightFor(width: 44, height: 48),
+              padding: EdgeInsets.zero,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -116,10 +264,7 @@ class _UniversalAiShareFab extends StatelessWidget {
 class UniversalAiShareDialog extends StatefulWidget {
   final UniversalSharePageContext page;
 
-  const UniversalAiShareDialog({
-    super.key,
-    required this.page,
-  });
+  const UniversalAiShareDialog({super.key, required this.page});
 
   @override
   State<UniversalAiShareDialog> createState() => _UniversalAiShareDialogState();
@@ -131,11 +276,13 @@ class _UniversalAiShareDialogState extends State<UniversalAiShareDialog> {
   UniversalXShareDraft? _draft;
   String? _imageUrl;
   String? _videoUrl;
+  String? _hedraGenerationId;
   String? _statusMessage;
   bool _loadingDraft = true;
   bool _generatingImage = false;
   bool _generatingVideo = false;
   bool _posting = false;
+  bool _disposed = false;
 
   @override
   void initState() {
@@ -147,6 +294,7 @@ class _UniversalAiShareDialogState extends State<UniversalAiShareDialog> {
 
   @override
   void dispose() {
+    _disposed = true;
     _textController.dispose();
     super.dispose();
   }
@@ -156,14 +304,23 @@ class _UniversalAiShareDialogState extends State<UniversalAiShareDialog> {
       _loadingDraft = true;
       _statusMessage = null;
     });
-    final draft = await _service.generateDraft(widget.page);
-    if (!mounted) return;
-    setState(() {
-      _draft = draft;
-      _textController.text = draft.text;
-      _loadingDraft = false;
-      _statusMessage = draft.fallbackUsed ? 'AI生成が不安定なため、安全な定型文を使っています' : null;
-    });
+    try {
+      final draft = await _service.generateDraft(widget.page);
+      if (_disposed || !mounted) return;
+      setState(() {
+        _draft = draft;
+        _textController.text = draft.text;
+        _loadingDraft = false;
+        _statusMessage =
+            draft.fallbackUsed ? 'AI生成が不安定なため、安全な定型文を使っています' : null;
+      });
+    } catch (error) {
+      if (_disposed || !mounted) return;
+      setState(() {
+        _loadingDraft = false;
+        _statusMessage = 'ドラフト生成に失敗しました。手動で入力してください。';
+      });
+    }
   }
 
   Future<void> _generateImage() async {
@@ -178,17 +335,17 @@ class _UniversalAiShareDialogState extends State<UniversalAiShareDialog> {
         context: widget.page,
         draft: draft,
       );
-      if (!mounted) return;
+      if (_disposed || !mounted) return;
       setState(() {
         _imageUrl = result.url;
         _statusMessage =
             result.url == null ? '画像生成URLを取得できませんでした' : 'シェア画像を生成しました';
       });
     } catch (error) {
-      if (!mounted) return;
+      if (_disposed || !mounted) return;
       setState(() => _statusMessage = '画像生成に失敗しました: $error');
     } finally {
-      if (mounted) setState(() => _generatingImage = false);
+      if (!_disposed && mounted) setState(() => _generatingImage = false);
     }
   }
 
@@ -203,19 +360,22 @@ class _UniversalAiShareDialogState extends State<UniversalAiShareDialog> {
       final result = await _service.generateVideo(
         context: widget.page,
         draft: draft,
+        imageUrl: _imageUrl,
+        hedraGenerationId: _hedraGenerationId,
       );
-      if (!mounted) return;
+      if (_disposed || !mounted) return;
       setState(() {
         _videoUrl = result.url;
-        _statusMessage = result.url == null
-            ? '動画生成は準備中です。HEDRA_API_KEYや生成結果を確認してください'
-            : 'シェア動画を生成しました';
+        _hedraGenerationId = result.url == null
+            ? _extractString(result.raw, 'hedraGenerationId')
+            : null;
+        _statusMessage = _videoStatusMessage(result);
       });
     } catch (error) {
-      if (!mounted) return;
+      if (_disposed || !mounted) return;
       setState(() => _statusMessage = '動画生成に失敗しました: $error');
     } finally {
-      if (mounted) setState(() => _generatingVideo = false);
+      if (!_disposed && mounted) setState(() => _generatingVideo = false);
     }
   }
 
@@ -232,17 +392,17 @@ class _UniversalAiShareDialogState extends State<UniversalAiShareDialog> {
         text: _textController.text,
         mediaUrl: mediaUrl,
       );
-      if (!mounted) return;
+      if (_disposed || !mounted) return;
       setState(() {
         _statusMessage = result.posted
             ? '${result.account ?? '@kanta13jp1'} に投稿しました'
             : '投稿文を保存しました。X API secret設定を確認してください';
       });
     } catch (error) {
-      if (!mounted) return;
+      if (_disposed || !mounted) return;
       setState(() => _statusMessage = 'X投稿に失敗しました: $error');
     } finally {
-      if (mounted) setState(() => _posting = false);
+      if (!_disposed && mounted) setState(() => _posting = false);
     }
   }
 
@@ -258,6 +418,41 @@ class _UniversalAiShareDialogState extends State<UniversalAiShareDialog> {
       'text': _textController.text,
     });
     await launchUrl(uri, mode: LaunchMode.externalApplication);
+  }
+
+  static String? _extractString(Map<String, dynamic> raw, String key) {
+    final value = raw[key]?.toString().trim();
+    return value == null || value.isEmpty || value == 'null' ? null : value;
+  }
+
+  static String _mediaDisplayText(String mediaUrl) {
+    if (UniversalXShareService.isEmbeddedDataUrl(mediaUrl)) {
+      return 'Generated image is embedded data. Regenerate it to store a public URL before video generation or X posting.';
+    }
+    return mediaUrl.length <= 240
+        ? mediaUrl
+        : '${mediaUrl.substring(0, 220)}...';
+  }
+
+  static String _videoStatusMessage(UniversalXMediaResult result) {
+    if (result.url != null) return 'シェア動画を生成しました';
+    final reason = _extractString(result.raw, 'videoReason');
+    if (reason != null && reason.contains('public URL')) {
+      return 'Video needs a public image URL. Please regenerate the share image, then retry video generation.';
+    }
+    if (reason == 'Hedra avatar video requires imageUrl') {
+      return '先に画像生成を実行してから、動画生成を開始してください';
+    }
+    final status = _extractString(result.raw, 'videoStatus') ?? result.status;
+    final generationId = _extractString(result.raw, 'hedraGenerationId');
+    final eta = _extractString(result.raw, 'hedraEtaSec');
+    if (generationId != null &&
+        const {'queued', 'processing', 'submitted'}.contains(status)) {
+      final etaText = eta == null ? '' : ' 目安: 約$eta秒';
+      return 'Hedra動画生成ジョブを開始しました。少し待ってからもう一度「動画生成」を押すと結果を確認します。$etaText';
+    }
+    if (reason != null) return '動画生成結果を確認してください: $reason';
+    return '動画生成は完了待ちです。少し待ってからもう一度確認してください';
   }
 
   @override
@@ -323,13 +518,19 @@ class _UniversalAiShareDialogState extends State<UniversalAiShareDialog> {
                     icon: _generatingVideo
                         ? const _TinyProgress()
                         : const Icon(Icons.movie_creation_outlined),
-                    label: Text(_generatingVideo ? '動画生成中' : '動画生成'),
+                    label: Text(
+                      _generatingVideo
+                          ? '動画生成中'
+                          : _hedraGenerationId == null
+                              ? '動画生成'
+                              : '動画確認',
+                    ),
                   ),
                 ],
               ),
               if (mediaUrl != null) ...[
                 const SizedBox(height: 12),
-                SelectableText('添付メディア: $mediaUrl'),
+                SelectableText('添付メディア: ${_mediaDisplayText(mediaUrl)}'),
               ],
               if (_statusMessage != null) ...[
                 const SizedBox(height: 12),
@@ -431,8 +632,9 @@ class _CreativePipelineCard extends StatelessWidget {
 
     return DecoratedBox(
       decoration: BoxDecoration(
-        color:
-            theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.62),
+        color: theme.colorScheme.surfaceContainerHighest.withValues(
+          alpha: 0.62,
+        ),
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
           color: theme.colorScheme.outlineVariant.withValues(alpha: 0.72),

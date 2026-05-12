@@ -66,9 +66,10 @@ class _ApiPlaygroundPageState extends State<ApiPlaygroundPage> {
         );
       }
     } catch (e) {
+      if (!mounted) return;
       setState(() => _responseBody = 'エラーが発生しました: $e');
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -174,18 +175,22 @@ class _ApiPlaygroundPageState extends State<ApiPlaygroundPage> {
           _responseBody = encoder.convert(decoded);
         });
       } catch (_) {
+        if (!mounted) return;
         setState(() {
           _responseBody = response.body;
         });
       }
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _responseBody = 'Request Error: $e';
       });
     } finally {
-      setState(() {
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 

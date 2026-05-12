@@ -7,8 +7,6 @@ import 'app_share_service.dart';
 class PublicMemoService {
   static const String publicMemoShareSignal = 'public_memo_share';
   static const String publicMemoCopySignal = 'public_memo_copy';
-  static const String _functionBaseUrl =
-      'https://smmkxxavexumewbfaqpy.supabase.co/functions/v1';
 
   final SupabaseClient _supabase;
 
@@ -33,7 +31,8 @@ class PublicMemoService {
   }
 
   static String buildPublicMemoOgpUrl(int memoId) {
-    return '$_functionBaseUrl/get-public-memo-ogp?id=$memoId';
+    // get-public-memo-ogp EF は hub統合時に削除済みのためアプリURLに切替
+    return buildPublicMemoAppUrl(memoId);
   }
 
   static String buildShareMessage(PublicMemo memo) {
@@ -80,8 +79,9 @@ class PublicMemoService {
 
     try {
       final response = await _supabase.functions.invoke(
-        'growth-share-signal',
+        'growth-hub',
         body: <String, dynamic>{
+          'action': 'share.track',
           'memoId': memoId,
           'signalKey': signalKey,
           'dateKey': dateKey,

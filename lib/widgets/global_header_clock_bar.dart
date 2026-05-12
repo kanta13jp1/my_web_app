@@ -43,6 +43,7 @@ class GlobalHeaderClockBar extends StatefulWidget {
 class _GlobalHeaderClockBarState extends State<GlobalHeaderClockBar> {
   late DateTime _now;
   Timer? _timer;
+  bool _showVersionTooltip = false;
 
   @override
   void initState() {
@@ -125,48 +126,83 @@ class _GlobalHeaderClockBarState extends State<GlobalHeaderClockBar> {
                   ),
                 ),
                 const SizedBox(width: 8),
-                Tooltip(
-                  message: AppVersion.isDev ? 'アプリバージョン (開発ビルド)' : 'アプリバージョン',
-                  child: Semantics(
-                    label: 'アプリバージョン $versionText',
-                    button: true,
-                    child: Material(
-                      color: Colors.transparent,
-                      borderRadius: BorderRadius.circular(10),
-                      child: InkWell(
-                        key: const Key('global_header_version_badge'),
-                        borderRadius: BorderRadius.circular(10),
-                        onTap: () =>
-                            Navigator.of(context).pushNamed('/settings'),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 2,
-                          ),
-                          decoration: BoxDecoration(
-                            color: versionBadgeBg,
+                MouseRegion(
+                  onEnter: (_) => setState(() => _showVersionTooltip = true),
+                  onExit: (_) => setState(() => _showVersionTooltip = false),
+                  child: Stack(
+                    clipBehavior: Clip.none,
+                    alignment: Alignment.center,
+                    children: [
+                      Semantics(
+                        label: 'Release Notes $versionText',
+                        button: true,
+                        child: Material(
+                          color: Colors.transparent,
+                          borderRadius: BorderRadius.circular(10),
+                          child: InkWell(
+                            key: const Key('global_header_version_badge'),
                             borderRadius: BorderRadius.circular(10),
-                            border: Border.all(
-                              color: versionBadgeBorder,
-                              width: 1,
-                            ),
-                          ),
-                          child: Text(
-                            versionText,
-                            key: const Key('global_header_version_text'),
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w700,
-                              color: versionBadgeFg,
-                              height: 1.4,
-                              fontFeatures: const [
-                                FontFeature.tabularFigures(),
-                              ],
+                            onTap: () => Navigator.of(context)
+                                .pushNamed('/release-notes'),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: versionBadgeBg,
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(
+                                  color: versionBadgeBorder,
+                                  width: 1,
+                                ),
+                              ),
+                              child: Text(
+                                versionText,
+                                key: const Key('global_header_version_text'),
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                  color: versionBadgeFg,
+                                  height: 1.4,
+                                  fontFeatures: const [
+                                    FontFeature.tabularFigures(),
+                                  ],
+                                ),
+                              ),
                             ),
                           ),
                         ),
                       ),
-                    ),
+                      if (_showVersionTooltip)
+                        Positioned(
+                          bottom: 32,
+                          left: 0,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: isDark
+                                  ? const Color(0xFF2D3748)
+                                  : Colors.black87,
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              AppVersion.isDev
+                                  ? 'Release Notes (dev build)'
+                                  : 'Release Notes',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                                height: 1.4,
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
                 ),
                 const Spacer(),

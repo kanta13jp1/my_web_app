@@ -50,6 +50,31 @@ jobs:
       - name: Install deps
         run: pip install requests
 
+      - name: Quota Guard — Anthropic circuit breaker check
+        id: quota_check
+        env:
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          RESPONSE=$(curl -s \
+            -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \
+            -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
+            "https://smmkxxavexumewbfaqpy.supabase.co/rest/v1/ai_circuit_breaker?provider=eq.anthropic&select=state,expires_at" \
+            --max-time 5 2>/dev/null || echo "[]")
+          STATE=$(echo "$RESPONSE" | jq -r '.[0].state // "closed"' 2>/dev/null || echo "closed")
+          EXPIRES=$(echo "$RESPONSE" | jq -r '.[0].expires_at // ""' 2>/dev/null || echo "")
+          if [ "$STATE" = "open" ] && [ -n "$EXPIRES" ]; then
+            NOW=$(date -u +%s)
+            EXP=$(date -u -d "$EXPIRES" +%s 2>/dev/null || echo "9999999999")
+            [ "$EXP" -lt "$NOW" ] && STATE="closed" && echo "⏰ CB expired → closed"
+          fi
+          if [ "$STATE" = "open" ]; then
+            echo "⚠️ Anthropic quota exceeded — AI steps skipped"
+            echo "anthropic_available=false" >> $GITHUB_OUTPUT
+          else
+            echo "✅ Anthropic available"
+            echo "anthropic_available=true" >> $GITHUB_OUTPUT
+          fi
+
       - name: Determine target date and period
         id: period
         run: |
@@ -116,7 +141,7 @@ jobs:
           echo "gitlog_b64=$(cat /tmp/gitlog.b64)" >> $GITHUB_OUTPUT
 
       - name: Generate draft (Claude → Gemini → template fallback)
-        if: steps.skip_check.outputs.skip == 'false' && steps.gitlog.outputs.has_log == 'true'
+        if: steps.skip_check.outputs.skip == 'false' && steps.gitlog.outputs.has_log == 'true' && steps.quota_check.outputs.anthropic_available == 'true'
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
@@ -126,6 +151,35 @@ jobs:
           DRAFT_EN: ${{ steps.period.outputs.draft_en }}
         run: |
           python3 scripts/generate_blog_draft.py
+
+      - name: Quality gate - generated drafts
+        if: |
+          steps.skip_check.outputs.skip == 'false' &&
+          steps.gitlog.outputs.has_log == 'true' &&
+          steps.quota_check.outputs.anthropic_available == 'true' &&
+          github.event.inputs.dry_run != 'true'
+        env:
+          TRACE_ID: blog-draft-${{ github.run_id }}-${{ github.run_attempt }}
+        run: |
+          mkdir -p tmp/blog-quality
+          python3 scripts/validate_blog_draft.py \
+            --draft "${{ steps.period.outputs.draft_ja }}" \
+            --language ja \
+            --min-chars 800 \
+            --min-headings 2 \
+            --required-heading "##" \
+            --trace-id "$TRACE_ID" \
+            --source-ref "$GITHUB_SHA" \
+            --report "tmp/blog-quality/${TRACE_ID}-ja.json"
+          python3 scripts/validate_blog_draft.py \
+            --draft "${{ steps.period.outputs.draft_en }}" \
+            --language en \
+            --min-chars 1200 \
+            --min-headings 2 \
+            --required-heading "##" \
+            --trace-id "$TRACE_ID" \
+            --source-ref "$GITHUB_SHA" \
+            --report "tmp/blog-quality/${TRACE_ID}-en.json"
 
       - name: Commit drafts
         if: |

@@ -1,0 +1,31 @@
+name: Memory Search Sync
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "12 * * * *"
+
+permissions:
+  contents: read
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Pre-flight budget check
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL_PROD }}
+          SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          python scripts/check_budget.py --scope gha --scope-id memory-search-sync --limit "${TASK_BUDGET_USD:-20}"
+
+      - name: Sync memory index
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL_PROD }}
+          SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          python scripts/sync_memory_index.py --memory-dir memory --with-embeddings --soft-fail-embedding-quota

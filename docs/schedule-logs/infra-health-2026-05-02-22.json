@@ -1,0 +1,34 @@
+{
+  "task": "infra-health-check",
+  "ran_at": "2026-05-02T22:35:00+09:00",
+  "supabase_health_check_ef": {
+    "status": "healthy",
+    "http_code": 200,
+    "auth": "anon (verify_jwt=false; no Authorization header required)",
+    "checks": {
+      "env": "ok — SUPABASE_URL + SERVICE_ROLE_KEY set on EF runtime",
+      "db_connectivity": "ok — profiles reachable in 69ms",
+      "wbs_tasks": "ok — wbs_tasks reachable",
+      "ai_circuit_breaker": "ok — ai_circuit_breaker reachable"
+    },
+    "ef_timestamp": "2026-05-02T13:32:35.307Z",
+    "note": "Local SUPABASE_SERVICE_KEY env unset in Codex#1 worktree session; EF accepts unauthenticated calls and reports healthy."
+  },
+  "firebase_hosting": {
+    "url": "https://my-web-app-b67f4.web.app/",
+    "status": "ok",
+    "http_code": 200,
+    "lang": "ja",
+    "theme_color": "#3949AB",
+    "description_visible": true,
+    "note": "Flutter Web app HTML served (DOCTYPE + meta tags present). No 5xx / redirect."
+  },
+  "latency_observations": {
+    "db_profiles_ms": 69,
+    "trend": "68ms (17:35) → 183ms (18:35) → 1313ms (19:33) → 143ms (20:35) → 927ms (21:35) → 69ms (22:35) — recovered to baseline. Oscillation pattern continues but no sustained degradation.",
+    "note": "Two elevated samples (1313ms, 927ms) over 6h but neither sustained. EF healthy throughout. No incident escalation."
+  },
+  "incident_created": false,
+  "committed": false,
+  "commit_skip_reason": "Task rule 4: commit only on abnormal. EF healthy across all 4 checks. Latency back to 69ms baseline. Branch codex/codex1-mcp-authkit-metadata holds unrelated WIP — no commit."
+}

@@ -1,8 +1,8 @@
 {
-  "analyze_ok": null,
-  "conclusion": "unknown",
-  "status": "unknown",
-  "updated_at": "",
-  "head_sha": "",
-  "note": "cs-check.yml が毎時7分に自動更新。analyze_ok=true なら flutter analyze 0エラー。null/unknown の場合は cs-check.yml 未実行 or GH_TOKEN 取得失敗。WEB版では GitHub MCP pull_request_read(get_check_runs) でも確認可。"
+  "analyze_ok": false,
+  "conclusion": "cancelled",
+  "status": "completed",
+  "updated_at": "2026-04-11T16:28:19Z",
+  "head_sha": "9bde2d17eafbba9186cdf106be657ce5e6768477",
+  "note": "ci.yml (Lint, Format, and Test) の最新 main ブランチ実行結果。cs-check.yml が毎時更新。"
 }

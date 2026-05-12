@@ -5,7 +5,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>My Web App</string>
+	<string>自分株式会社</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -13,7 +13,7 @@
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>my_web_app</string>
+	<string>Jibun</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
@@ -23,11 +23,11 @@
 	<key>CFBundleVersion</key>
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>NSCameraUsageDescription</key>
-	<string>アイテムの撮影や画像解析のためにカメラを使用します。</string>
+	<string>アイデアの撮影や画像解析のためにカメラを使用します。</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>画像の解析やアップロードのために写真ライブラリにアクセスします。</string>
+	<string>画像の解析やアップロードのために写真ライブラリへアクセスします。</string>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>音声メモや演奏の録音のためにマイクを使用します。</string>
+	<string>音声メモや音声入力の録音のためにマイクを使用します。</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>
@@ -51,5 +51,7 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>UIStatusBarHidden</key>
+	<false/>
 </dict>
 </plist>

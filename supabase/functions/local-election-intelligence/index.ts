@@ -21,6 +21,8 @@ const CDP_PREFECTURE_MEMBERS_BASE_URL =
   "https://cdp-japan.jp/members/prefecture/";
 const NEW_KOKUMIN_ELECTIONS_URL =
   "https://local-elections.new-kokumin.jp/electionslist/";
+const NEXT_UNIFIED_LOCAL_ELECTION_INFO_URL =
+  "https://senkyo-news.jp/unified-local-elections/";
 const TARGET_LOCAL_MEMBERS = 700;
 const BASELINE_CURRENT_LOCAL_MEMBERS = 340;
 const SCHEDULE_PAST_DAYS = 14;
@@ -450,6 +452,41 @@ const MANUAL_2026_SCHEDULES: ManualScheduleSupplement[] = [
   },
 ];
 
+// The official per-municipality 2027 unified-local-election calendar is not
+// published yet, so upstream schedule pages can legitimately return only 2026.
+// Keep the 2027 first/second-half voting windows visible as planning entries
+// until the special law and individual election schedules are published.
+const NEXT_UNIFIED_LOCAL_ELECTION_PLANNING_SCHEDULES:
+  ManualScheduleSupplement[] = [
+    {
+      prefecture: "\u5168\u56fd",
+      municipality: "\u5168\u56fd",
+      electionName:
+        "\u7b2c21\u56de\u7d71\u4e00\u5730\u65b9\u9078\u6319 \u524d\u534a\u6226\uff08\u9053\u5e9c\u770c\u30fb\u653f\u4ee4\u6307\u5b9a\u90fd\u5e02\u8b70\u4f1a\u8b70\u54e1\u9078\u6319\u30fb\u898b\u8fbc\u307f\uff09",
+      voteDate: "2027-04-11",
+      electionCategory: "assembly",
+      detailUrl: NEXT_UNIFIED_LOCAL_ELECTION_INFO_URL,
+      officialCandidateSourceUrl: NEXT_UNIFIED_LOCAL_ELECTION_INFO_URL,
+      candidates: [],
+    },
+    {
+      prefecture: "\u5168\u56fd",
+      municipality: "\u5168\u56fd",
+      electionName:
+        "\u7b2c21\u56de\u7d71\u4e00\u5730\u65b9\u9078\u6319 \u5f8c\u534a\u6226\uff08\u5e02\u533a\u753a\u6751\u8b70\u4f1a\u8b70\u54e1\u9078\u6319\u30fb\u898b\u8fbc\u307f\uff09",
+      voteDate: "2027-04-25",
+      electionCategory: "assembly",
+      detailUrl: NEXT_UNIFIED_LOCAL_ELECTION_INFO_URL,
+      officialCandidateSourceUrl: NEXT_UNIFIED_LOCAL_ELECTION_INFO_URL,
+      candidates: [],
+    },
+  ];
+
+const MANUAL_SCHEDULE_SUPPLEMENTS: ManualScheduleSupplement[] = [
+  ...MANUAL_2026_SCHEDULES,
+  ...NEXT_UNIFIED_LOCAL_ELECTION_PLANNING_SCHEDULES,
+];
+
 interface SnapshotRequest {
   action: "snapshot";
   includeAiSummary: boolean;
@@ -536,11 +573,11 @@ serve(async (req) => {
     ).flat();
     const officialScheduledCandidates = mergeScheduledCandidates(
       scrapedScheduledCandidates,
-      buildManualScheduledCandidates(MANUAL_2026_SCHEDULES),
+      buildManualScheduledCandidates(MANUAL_SCHEDULE_SUPPLEMENTS),
     );
     const upcomingSchedules = await fetchUpcomingLocalElectionSchedules(
       officialScheduledCandidates,
-      MANUAL_2026_SCHEDULES,
+      MANUAL_SCHEDULE_SUPPLEMENTS,
     );
 
     const snapshotBase = {
@@ -607,6 +644,13 @@ serve(async (req) => {
           category: "manual_campaign_schedule",
           note:
             "Manual supplement for April 2026 local election candidates and X handles shared by the campaign team.",
+        },
+        {
+          label: "2027 unified local election planning",
+          url: NEXT_UNIFIED_LOCAL_ELECTION_INFO_URL,
+          category: "schedule_planning_placeholder",
+          note:
+            "Planning placeholder for the expected April 2027 unified local election windows until official dates and individual schedules are published.",
         },
       ],
       prefectures,

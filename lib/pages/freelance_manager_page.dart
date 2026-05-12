@@ -75,6 +75,7 @@ class _FreelanceManagerPageState extends State<FreelanceManagerPage>
         _invoices = (results[1] as List).cast<Map<String, dynamic>>();
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() => _error = e.toString());
     } finally {
       if (mounted) setState(() => _loading = false);

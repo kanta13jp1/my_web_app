@@ -9,19 +9,26 @@
 
 ## 1. 強制 Task Routing Matrix
 
-**このルールに従って AI を選択する。Claude Code は「判断・統合・memory管理」のみ。**
+**このルールに従って AI を選択する。Claude Code は「設計判断・大きめ実装・既存設計に沿った機能追加・並列ワーカー・統合・memory管理」を担う。**
+
+12 インスタンス並行開発では、作業そのものと同時に運用改善も見る。正本は GitHub Issues / PR、WBS / Notion、NotebookLM、Slack、各 worktree / branch に分散しているため、作業開始時に状態の食い違いと担当領域の衝突を確認する。
+
+12 インスタンス並行開発では、作業そのものと同時に運用改善も見る。正本は GitHub Issues / PR、WBS / Notion、NotebookLM、Slack、各 worktree / branch に分散しているため、作業開始時に状態の食い違いと担当領域の衝突を確認する。
 
 | タスク種別 | **Primary** | **Secondary** | **Tertiary** | Claude Code 役割 |
 | --- | --- | --- | --- | --- |
 | 行レベル補完 (< 10行) | GitHub Copilot | — | — | **不使用** |
 | 5分以内の修正 | Copilot Inline Chat | — | — | **不使用** |
 | 500行超リファクタリング | Gemini Code Assist | Copilot | Claude Code | 事前レビューのみ |
+| 横断調査 / 修正PR / レビュー補助 | **Codex#1** | Codex#2 | Claude Code | 仕様確認のみ |
+| CI / 同期 / 運用まわり | **Codex#2** | Codex#1 | Claude Code PS#1 | 完了判定のみ |
 | SQL / アルゴリズム最適化 | OpenAI Codex (`codex1`/`codex2`) | Copilot | Claude Code | 仕様確認のみ |
 | Migration (DDL + seed SQL) | **Codex#1** (template ベース) | Copilot | Claude Code | 命名則チェック |
 | AI大学 provider 追加 (seed SQL) | **Codex#1** (既存 SQL コピー改変) | — | Claude Code | routing 判断のみ |
 | ブログ・競合リサーチ | Claude Code WEB版 (WebSearch) | NotebookLM | Gemini Search | — |
 | NotebookLM Deep Research | Win版 CLI | Gemini Research | — | 統合・要約のみ |
 | UI/デザイン (新コンポーネント) | Claude Code VSCode版 + design-skills | Figma MCP | Copilot | 設計レビュー |
+| ブラウザ操作 / 外部SaaS確認 / 長手順実行 | Manus AI | Claude Code | — | 結果確認のみ |
 | アーキテクチャ判断 | **Claude Code** | NotebookLM + Copilot Chat | — | **専任** |
 | Dart バグ修正 (< 50行) | Copilot Inline Chat | Claude Code PS#5 | — | 必要時のみ |
 | EF バグ修正 (Deno) | **Codex#2** / Copilot | Claude Code PS#5 | — | deny-by-default確認 |
@@ -66,8 +73,8 @@ curl -s -o /dev/null -w "%{http_code}" \
 | **PS#5** | on-call バグ修正 | GitHub Copilot + GitHub MCP |
 | **PS#6** | horse_racing / バッチ | cron-batch.yml (Claude不要) ✅ |
 | **WEB版** | Issue起票 | GitHub MCP のみ (元々Claude不要) ✅ |
-| **Codex#1** | SQL / migration / seed生成 | `.claude/worktrees/instance-codex1` で継続 ✅ |
-| **Codex#2** | EF(Deno) / algorithm / GHA補助 | `.claude/worktrees/instance-codex2` で継続 ✅ |
+| **Codex#1** | 横断調査 / 修正PR / SQL・migrationレビュー補助 | `.claude/worktrees/instance-codex1` で継続 ✅ |
+| **Codex#2** | CI / 同期 / 運用 / EF・GHA補助 | `.claude/worktrees/instance-codex2` で継続 ✅ |
 
 **✅ = Claude quota枯渇でも自動継続**
 
@@ -83,7 +90,7 @@ curl -s -o /dev/null -w "%{http_code}" \
 | `ai-university-update.yml` | なし (REST直接) | N/A | ✅ 問題なし |
 | `quota-monitor.yml` | なし (監視のみ) | N/A | ✅ 問題なし |
 | `cs-check.yml` | Claude Schedule | ❌ 未実装 | 要対応 |
-| `blog-engagement.yml` | Claude Haiku | ❌ 未実装 | 要対応 |
+| `blog-engagement.yml` | Claude Haiku | **Gemini → template** | ✅ 完了 (Codex#2 2026-04-28) |
 | `blog-backfill.yml` | Claude Haiku | ❌ 未実装 | 要対応 |
 | `claude-agent-review.yml` | Claude Sonnet | skip-on-quota 推奨 | 要対応 |
 | `blog-verify.yml` | Claude Haiku | ❌ 未実装 | 要対応 |
@@ -192,7 +199,7 @@ notebooklm ask "Edge Function設計方針の経緯"
 | 🔴 **P0** | blog-draft.yml Gemini fallback | ✅ PS#1 S26 | 2026-04-24 |
 | 🔴 **P0** | `GOOGLE_AI_API_KEY` + `GEMINI_API_KEY` + `SLACK_WEBHOOK_URL` secrets | ✅ **設定済 (2026-04-24)** | — |
 | 🟠 **P1** | ai-hub EF 自動quota routing | VSCode版 | 2026-04-26 |
-| 🟠 **P1** | blog-engagement.yml Gemini fallback | PS#2 | 2026-04-28 |
+| 🟠 **P1** | blog-engagement.yml Gemini fallback | ✅ Codex#2 | 2026-04-28 |
 | 🟠 **P1** | claude-agent-review.yml skip-on-quota | PS#1 | 2026-05-01 |
 | 🟡 **P2** | cs-check.yml Gemini fallback | PS#1 | 2026-05-05 |
 | 🟢 **P3** | Notion WBS mirror | Win版 | 2026-05-15 |
@@ -488,6 +495,7 @@ case 'notion.sync_wbs': {
 - `docs/MULTI_INSTANCE_FLEET.md` — 10 Claude + 2 Codex の canonical roster
 - `docs/CODEX_WORKFLOW.md` — Codex#1/#2 の起動・push・handoff 手順
 - `docs/AI_FALLBACK_RUNBOOK.md` (PS#6 S26) — 開発ワークフロー別 fallback 手順
+- `docs/PROMPT_CACHING_OPUS47_COST_GUIDE.md` (Win版#132 part 177) — Prompt Caching × Opus 4.7 88% コスト削減戦略
 - `supabase/migrations/20260424210000_create_ai_circuit_breaker.sql` (PS#1 S26) — quota 状態集約テーブル
 | AI | 用途 | セットアップ状態 | アクセス方法 |
 |----|------|----------------|------------|

@@ -38,12 +38,12 @@ class _TwoFactorAuthPageState extends State<TwoFactorAuthPage> {
     });
     try {
       final statusRes = await _supabase.functions.invoke(
-        'two-factor-auth',
-        queryParameters: {'view': 'status'},
+        'lifestyle-hub',
+        body: {'action': '2fa.status'},
       );
       final devRes = await _supabase.functions.invoke(
-        'two-factor-auth',
-        queryParameters: {'view': 'trusted_devices'},
+        'lifestyle-hub',
+        body: {'action': '2fa.list_devices'},
       );
       setState(() {
         final sd = statusRes.data;
@@ -59,6 +59,7 @@ class _TwoFactorAuthPageState extends State<TwoFactorAuthPage> {
         }
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() => _errorMessage = '$e');
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -68,8 +69,8 @@ class _TwoFactorAuthPageState extends State<TwoFactorAuthPage> {
   Future<void> _toggle2FA(bool enable) async {
     try {
       final res = await _supabase.functions.invoke(
-        'two-factor-auth',
-        body: {'action': enable ? 'enable' : 'disable'},
+        'lifestyle-hub',
+        body: {'action': enable ? '2fa.enable' : '2fa.disable'},
       );
       final data = res.data;
       if (data is Map<String, dynamic> && enable) {
@@ -299,9 +300,9 @@ class _TwoFactorAuthPageState extends State<TwoFactorAuthPage> {
                           onPressed: () async {
                             try {
                               await _supabase.functions.invoke(
-                                'two-factor-auth',
+                                'lifestyle-hub',
                                 body: {
-                                  'action': 'revoke_device',
+                                  'action': '2fa.revoke_device',
                                   'deviceId': d['id'],
                                 },
                               );

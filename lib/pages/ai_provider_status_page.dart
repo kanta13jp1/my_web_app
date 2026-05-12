@@ -68,9 +68,10 @@ class _AiProviderStatusPageState extends State<AiProviderStatusPage>
       }
       setState(() => _testResults[providerId] = summary);
     } catch (e) {
+      if (!mounted) return;
       setState(() => _testResults[providerId] = '❌ 通信エラー: $e');
     } finally {
-      setState(() => _testing.remove(providerId));
+      if (mounted) setState(() => _testing.remove(providerId));
     }
   }
 

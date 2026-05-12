@@ -68,16 +68,16 @@ class _FitnessHealthTrackerPageState extends State<FitnessHealthTrackerPage>
     });
     try {
       final summaryRes = await _supabase.functions.invoke(
-        'fitness-health-tracker',
-        queryParameters: {'view': 'summary'},
+        'lifestyle-hub',
+        body: {'action': 'fitness.stats'},
       );
       final workoutRes = await _supabase.functions.invoke(
-        'fitness-health-tracker',
-        queryParameters: {'view': 'workouts'},
+        'lifestyle-hub',
+        body: {'action': 'fitness.list'},
       );
       final weightRes = await _supabase.functions.invoke(
-        'fitness-health-tracker',
-        queryParameters: {'view': 'weight'},
+        'lifestyle-hub',
+        body: {'action': 'fitness.list_weight'},
       );
 
       setState(() {
@@ -86,7 +86,7 @@ class _FitnessHealthTrackerPageState extends State<FitnessHealthTrackerPage>
 
         final wd = workoutRes.data;
         if (wd is Map<String, dynamic>) {
-          final list = wd['workouts'];
+          final list = wd['workouts'] ?? wd['logs'];
           if (list is List) {
             _workouts = list.map((w) => w as Map<String, dynamic>).toList();
           }
@@ -102,6 +102,7 @@ class _FitnessHealthTrackerPageState extends State<FitnessHealthTrackerPage>
         }
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() => _errorMessage = '$e');
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -112,11 +113,11 @@ class _FitnessHealthTrackerPageState extends State<FitnessHealthTrackerPage>
     setState(() => _isSaving = true);
     try {
       await _supabase.functions.invoke(
-        'fitness-health-tracker',
+        'lifestyle-hub',
         body: {
-          'action': 'log_workout',
-          'type': _selectedWorkoutType,
-          'durationMinutes': int.tryParse(_durationController.text) ?? 30,
+          'action': 'fitness.log',
+          'activity': _selectedWorkoutType,
+          'duration_min': int.tryParse(_durationController.text) ?? 30,
           'calories': int.tryParse(_caloriesController.text) ?? 0,
         },
       );
@@ -143,9 +144,9 @@ class _FitnessHealthTrackerPageState extends State<FitnessHealthTrackerPage>
     setState(() => _isSaving = true);
     try {
       await _supabase.functions.invoke(
-        'fitness-health-tracker',
+        'lifestyle-hub',
         body: {
-          'action': 'log_weight',
+          'action': 'fitness.log_weight',
           'weight': weight,
         },
       );
@@ -283,6 +284,23 @@ class _FitnessHealthTrackerPageState extends State<FitnessHealthTrackerPage>
               const Color(0xFF3D5AFE),
             ),
           ],
+          const SizedBox(height: 12),
+          Card(
+            color: Colors.orange[50],
+            child: ListTile(
+              leading: CircleAvatar(
+                backgroundColor: Colors.orange[100],
+                child: const Icon(Icons.restaurant, color: Colors.orange),
+              ),
+              title: const Text(
+                '今日の食事を記録',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              subtitle: const Text('カロリー・栄養バランスを管理'),
+              trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+              onTap: () => Navigator.of(context).pushNamed('/meal-log'),
+            ),
+          ),
           if (_workouts.isNotEmpty) ...[
             const SizedBox(height: 20),
             const Align(

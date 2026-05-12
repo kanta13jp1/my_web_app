@@ -33,11 +33,16 @@ class _ArNavigationPageState extends State<ArNavigationPage> {
     });
     try {
       final response = await _supabase.functions.invoke(
-        'ar-navigation',
-        body: {'action': 'list'},
+        'lifestyle-hub',
+        body: {'action': 'navigate.list_routes'},
       );
       final data = response.data;
-      if (data is Map<String, dynamic> && data['locations'] is List) {
+      if (data is Map<String, dynamic> && data['routes'] is List) {
+        setState(
+          () => _locations =
+              (data['routes'] as List).cast<Map<String, dynamic>>(),
+        );
+      } else if (data is Map<String, dynamic> && data['locations'] is List) {
         setState(
           () => _locations =
               (data['locations'] as List).cast<Map<String, dynamic>>(),

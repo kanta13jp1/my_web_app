@@ -1,0 +1,217 @@
+"""SKELETON for scripts/feature_review.py
+
+Codex#2 が本 skeleton を実装 + scripts/ に移動.
+Win版#132 part 77 → part 78 (= 毎時 round-robin 化) / 2026-04-29 / Handoff Bundle 第 1 適用
+
+機能: 13 機能 (= page + EF) を毎時 1 機能 round-robin で AI レビュー → GitHub Issue 自動起票.
+
+Usage:
+    python scripts/feature_review.py --config scripts/feature_review_config.json
+    python scripts/feature_review.py --dry-run                # = log のみ / Issue 起票せず
+    python scripts/feature_review.py --targets home           # = 特定機能のみ (rotation 上書き)
+    python scripts/feature_review.py --force-full-scan        # = 全機能巡回 (= 緊急 audit)
+
+Rotation:
+    UTC_HOUR_NOW % len(feature_order) でインデックス計算 → 1 機能のみ巡回.
+
+Exit codes:
+    0  success
+    1  全機能失敗 (= Slack escalation 想定)
+    2  config / argparse error
+"""
+
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+import os
+import subprocess
+import sys
+from pathlib import Path
+
+# === Codex#2 が以下を実装 ===
+# from playwright.sync_api import sync_playwright
+# from anthropic import Anthropic
+
+
+def load_config(path: Path) -> dict:
+    """feature_review_config.json を読み込み"""
+    with path.open(encoding="utf-8") as f:
+        return json.load(f)
+
+
+def select_feature_for_this_hour(config: dict) -> str | None:
+    """UTC 時刻 % len(feature_order) で本時刻の対象機能を選択.
+
+    毎時 cron 用 rotation logic. force_full_scan / --targets 上書き時は呼ばない.
+
+    Returns:
+        feature slug (= rotation で選ばれた 1 機能) or None (= 不正設定)
+    """
+    from datetime import datetime, timezone
+    rotation = config.get("rotation", {})
+    feature_order = rotation.get("feature_order", [])
+    if not feature_order:
+        return None
+    utc_hour = datetime.now(timezone.utc).hour
+    idx = utc_hour % len(feature_order)
+    return feature_order[idx]
+
+
+def issue_title_hash(feature_slug: str, category: str, summary: str) -> str:
+    """de-dupe 用 hash 計算"""
+    key = f"{feature_slug}|{category}|{summary[:80]}"
+    return hashlib.sha256(key.encode("utf-8")).hexdigest()[:8]
+
+
+def collect_page_signals(page_config: dict, production_url: str) -> dict:
+    """Page 機能のシグナル収集 (= Playwright + console + a11y tree)
+
+    Codex#2 実装範囲:
+    - playwright.chromium.launch() で page open
+    - screenshot 取得 (= 1280x720 or 2576x1440)
+    - page.console_messages 収集
+    - page.accessibility.snapshot() で a11y tree
+    - page.evaluate('document.documentElement.outerHTML') で DOM
+    """
+    raise NotImplementedError("Codex#2 が実装")
+
+
+def collect_ef_signals(ef_config: dict, repo_root: Path) -> dict:
+    """Edge Function 機能のシグナル収集 (= source TODO + git log + deno lint)
+
+    Codex#2 実装範囲:
+    - source file 読込 → grep TODO/FIXME/XXX
+    - git log -- <source> --since='30 days ago' で最近の変更
+    - deno lint <source> (= cache or 即時実行)
+    """
+    raise NotImplementedError("Codex#2 が実装")
+
+
+def claude_review(signals: dict, feature_config: dict, claude_config: dict) -> list[dict]:
+    """Claude API で signals を review → findings JSON
+
+    Codex#2 実装範囲:
+    - anthropic.Anthropic() client
+    - system prompt = claude_config["system_prompt_addition"]
+    - max_tokens / model = claude_config (= haiku-4-5 / effort=medium)
+    - response → JSON parse → max_findings_per_feature でクリップ
+    """
+    raise NotImplementedError("Codex#2 が実装")
+
+
+def existing_open_issue_hashes() -> set[str]:
+    """既存 open issue の hash 一覧取得 (= de-dupe 用)
+
+    Codex#2 実装範囲:
+    - `gh issue list --state open --label auto-review --limit 200 --json title`
+    - title から `[review:<hash>]` 抽出
+    - set 返却
+    """
+    raise NotImplementedError("Codex#2 が実装")
+
+
+def create_issue(finding: dict, template: dict, dry_run: bool) -> bool:
+    """Issue 起票 (or dry-run 時 log のみ)
+
+    Codex#2 実装範囲:
+    - title / body / labels を template から構築
+    - dry_run なら print のみ
+    - else `gh issue create --title ... --body ... --label ...` 実行
+    - return: True = 起票成功 / False = 失敗
+    """
+    raise NotImplementedError("Codex#2 が実装")
+
+
+def send_slack_summary(stats: dict, webhook_url: str | None) -> None:
+    """Slack 集計通知
+
+    Codex#2 実装範囲:
+    - webhook_url が None なら skip
+    - requests.post で text 送信
+    """
+    raise NotImplementedError("Codex#2 が実装")
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument("--config", required=True, type=Path, help="config JSON path")
+    parser.add_argument("--dry-run", action="store_true", help="Issue 起票せず log のみ")
+    parser.add_argument("--targets", default="", help="対象機能 slug カンマ区切り (= rotation 上書き)")
+    parser.add_argument("--force-full-scan", action="store_true", help="全機能巡回 (= 緊急 audit / rotation 無視)")
+    args = parser.parse_args(argv)
+
+    if not args.config.exists():
+        print(f"[FAIL] config not found: {args.config}", file=sys.stderr)
+        return 2
+
+    config = load_config(args.config)
+    repo_root = Path(__file__).resolve().parent.parent
+
+    # = 対象機能決定 logic
+    # 1. --targets 明示 → それのみ
+    # 2. --force-full-scan → 全機能
+    # 3. それ以外 (= 通常 cron) → rotation で 1 機能のみ
+    if args.targets:
+        target_filter = set(s.strip() for s in args.targets.split(",") if s.strip())
+    elif args.force_full_scan:
+        target_filter = None  # = 全機能
+    else:
+        rotation_target = select_feature_for_this_hour(config)
+        if rotation_target is None:
+            print("[FAIL] rotation.feature_order 未設定", file=sys.stderr)
+            return 2
+        target_filter = {rotation_target}
+        print(f"[INFO] rotation: this hour = {rotation_target}")
+
+    # = 既存 open issue hash 取得 (de-dupe 用)
+    # existing_hashes = existing_open_issue_hashes()
+
+    stats = {"new_count": 0, "skipped_count": 0, "error_count": 0, "details": []}
+
+    # === Codex#2 実装 ===
+    # for page in config["review_targets"]["pages"]:
+    #     if target_filter and page["slug"] not in target_filter:
+    #         continue
+    #     try:
+    #         signals = collect_page_signals(page, config["production_url"])
+    #         findings = claude_review(signals, page, config["claude_review"])
+    #         for finding in findings[:config["throttle"]["max_findings_per_feature"]]:
+    #             h = issue_title_hash(finding["feature_slug"], finding["category"], finding["summary"])
+    #             if h in existing_hashes:
+    #                 stats["skipped_count"] += 1
+    #                 continue
+    #             ok = create_issue({**finding, "hash": h}, config["issue_template"], args.dry_run)
+    #             if ok:
+    #                 stats["new_count"] += 1
+    #             else:
+    #                 stats["error_count"] += 1
+    #     except Exception as e:
+    #         stats["error_count"] += 1
+    #         stats["details"].append(f"{page['slug']}: {type(e).__name__}: {e}")
+    # ... (= edge_functions も同様)
+
+    print(f"[STUB] Codex#2 implementation pending. Config OK: {len(config['review_targets']['pages'])} pages, {len(config['review_targets']['edge_functions'])} EFs")
+    print(f"[STUB] dry_run={args.dry_run} targets={target_filter or 'ALL'}")
+
+    # = 集計サマリ書出 (= GHA Slack notify step が読む)
+    summary_path = Path("/tmp/feature-review-summary.json")
+    summary_path.write_text(json.dumps(stats, ensure_ascii=False), encoding="utf-8")
+
+    log_path = Path("/tmp/feature-review.log")
+    log_path.write_text(
+        f"# Feature Review Log (skeleton stub)\n\n"
+        f"- new_count: {stats['new_count']}\n"
+        f"- skipped_count: {stats['skipped_count']}\n"
+        f"- error_count: {stats['error_count']}\n"
+        f"- dry_run: {args.dry_run}\n"
+        f"- targets: {target_filter or 'ALL'}\n",
+        encoding="utf-8",
+    )
+
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

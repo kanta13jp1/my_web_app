@@ -1,0 +1,168 @@
+{
+  "_comment": "feature-review schedule task 対象機能リスト (Win版#132 part 78 / 2026-04-29 / 毎時運用 + rotation)",
+  "_schema_version": "1.1",
+  "_changelog": [
+    {"version": "1.0", "part": 77, "date": "2026-04-29", "change": "初版 / 週次 cron"},
+    {"version": "1.1", "part": 78, "date": "2026-04-29", "change": "毎時 cron + rotation 設計 + throttle 強化"}
+  ],
+  "_review_categories": [
+    "ui_bug",
+    "a11y",
+    "stale_todo",
+    "dead_code",
+    "outdated_docs",
+    "lint_warning",
+    "performance"
+  ],
+  "_severity_levels": ["low", "medium", "high"],
+  "production_url": "https://my-web-app-b67f4.web.app",
+  "review_targets": {
+    "pages": [
+      {
+        "slug": "home",
+        "path": "/",
+        "source": "lib/pages/home_dashboard_page.dart",
+        "priority": "high",
+        "review_categories": ["ui_bug", "a11y", "performance"]
+      },
+      {
+        "slug": "landing",
+        "path": "/lp",
+        "source": "lib/pages/landing_page.dart",
+        "priority": "high",
+        "review_categories": ["ui_bug", "a11y", "outdated_docs"]
+      },
+      {
+        "slug": "comparison",
+        "path": "/competitors",
+        "source": "lib/pages/comparison_page.dart",
+        "priority": "high",
+        "review_categories": ["ui_bug", "outdated_docs"]
+      },
+      {
+        "slug": "ai_university",
+        "path": "/ai-university",
+        "source": "lib/pages/ai_university_v2_page.dart",
+        "priority": "high",
+        "review_categories": ["ui_bug", "a11y", "performance", "outdated_docs"]
+      },
+      {
+        "slug": "horse_racing",
+        "path": "/horse-racing",
+        "source": "lib/pages/horse_racing_predictor_page.dart",
+        "priority": "medium",
+        "review_categories": ["ui_bug", "a11y"]
+      },
+      {
+        "slug": "philosophy",
+        "path": "/philosophy",
+        "source": "lib/pages/philosophy_page.dart",
+        "priority": "medium",
+        "review_categories": ["ui_bug", "outdated_docs"]
+      },
+      {
+        "slug": "gemini_university",
+        "path": "/gemini-university",
+        "source": "lib/pages/gemini_university_v2_page.dart",
+        "priority": "medium",
+        "review_categories": ["ui_bug", "a11y", "performance"]
+      },
+      {
+        "slug": "user_manual",
+        "path": "/manual",
+        "source": "lib/pages/user_manual_page.dart",
+        "priority": "low",
+        "review_categories": ["outdated_docs"]
+      },
+      {
+        "slug": "admin_analytics",
+        "path": "/admin/analytics",
+        "source": "lib/pages/admin_analytics_page.dart",
+        "priority": "low",
+        "review_categories": ["ui_bug"]
+      }
+    ],
+    "edge_functions": [
+      {
+        "slug": "core_hub",
+        "name": "core-hub",
+        "source": "supabase/functions/core-hub/index.ts",
+        "priority": "high",
+        "review_categories": ["lint_warning", "stale_todo"]
+      },
+      {
+        "slug": "ai_hub",
+        "name": "ai-hub",
+        "source": "supabase/functions/ai-hub/index.ts",
+        "priority": "high",
+        "review_categories": ["lint_warning", "stale_todo"]
+      },
+      {
+        "slug": "schedule_hub",
+        "name": "schedule-hub",
+        "source": "supabase/functions/schedule-hub/index.ts",
+        "priority": "high",
+        "review_categories": ["lint_warning", "stale_todo"]
+      },
+      {
+        "slug": "growth_weekly_digest",
+        "name": "growth-weekly-digest",
+        "source": "supabase/functions/growth-weekly-digest/index.ts",
+        "priority": "medium",
+        "review_categories": ["lint_warning"]
+      }
+    ]
+  },
+  "issue_template": {
+    "title_prefix": "[review:{hash}]",
+    "body_format": "## 概要\n{summary}\n\n## 該当機能\n- slug: {feature_slug}\n- source: {source}\n- priority: {priority}\n- severity: {severity}\n- category: {category}\n\n## Review\n{review_text}\n\n## 推奨対応\n{recommendation}\n\n## 収集シグナル\n{signals_summary}\n\n---\n_自動生成 (= feature-review.yml hourly cron / Win版#132 part 78)_",
+    "labels": ["auto-review"],
+    "severity_label_format": "severity:{severity}",
+    "feature_label_format": "feature:{feature_slug}",
+    "category_label_format": "category:{category}"
+  },
+  "claude_review": {
+    "model": "claude-haiku-4-5",
+    "effort": "medium",
+    "max_findings_per_feature": 3,
+    "system_prompt_addition": "あなたは自分株式会社の品質監査担当AIです。提供されたscreen/DOM/source/console/lint/git signalsから、ユーザー影響の高い問題だけを3件以内で抽出してください。好みの問題や軽微すぎる指摘は除外してください。"
+  },
+  "dedup": {
+    "title_hash_length": 8,
+    "skip_if_existing_open": true,
+    "skip_if_recent_closed_days": 7
+  },
+  "throttle": {
+    "max_issues_per_run": 3,
+    "max_issues_per_feature": 1,
+    "max_findings_per_feature": 3,
+    "playwright_timeout_seconds": 30,
+    "claude_api_max_retry": 3
+  },
+  "rotation": {
+    "_comment": "毎時 cron で全 13 機能を巡回. 1 時間 1 機能 = 13 時間で全周 = 24h で 1.8 周",
+    "strategy": "round_robin_by_hour",
+    "feature_order": [
+      "home",
+      "ai_university",
+      "comparison",
+      "landing",
+      "core_hub",
+      "ai_hub",
+      "horse_racing",
+      "schedule_hub",
+      "philosophy",
+      "gemini_university",
+      "growth_weekly_digest",
+      "user_manual",
+      "admin_analytics"
+    ],
+    "_priority_order_rationale": "high priority 機能を上位 (= 0-3 時間目に巡回 / 1 日 2 回見られる) / low priority は下位",
+    "force_run_all_dispatch": true,
+    "_force_run_all_dispatch_note": "workflow_dispatch で targets 未指定 + force_full_scan=true なら全機能巡回 (= 手動緊急 audit 用)"
+  },
+  "notifications": {
+    "slack_webhook_env": "SLACK_WEBHOOK_URL",
+    "summary_format": "🔍 feature-review run complete: {new_count} new issues, {skipped_count} duplicates, {error_count} errors"
+  }
+}

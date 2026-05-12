@@ -1,5 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'offline_secure_mode_settings_service.dart';
+
 typedef AiHubChatInvoker = Future<Map<String, dynamic>> Function(
   Map<String, dynamic> body,
 );
@@ -117,12 +119,16 @@ class AiHubChatException implements Exception {
 class AiHubChatService {
   final SupabaseClient? _supabase;
   final AiHubChatInvoker? _invoker;
+  final OfflineSecureModeSettingsService _offlineSettingsService;
 
   const AiHubChatService({
     SupabaseClient? supabase,
     AiHubChatInvoker? invoker,
+    OfflineSecureModeSettingsService offlineSettingsService =
+        const OfflineSecureModeSettingsService(),
   })  : _supabase = supabase,
-        _invoker = invoker;
+        _invoker = invoker,
+        _offlineSettingsService = offlineSettingsService;
 
   Future<AiHubChatResponse> sendProviderChat({
     required String message,
@@ -135,15 +141,17 @@ class AiHubChatService {
     }
 
     try {
-      final data = await _invoke({
-        'action': 'provider.chat',
-        'provider': provider,
-        'message': message,
-        if (sessionId != null && sessionId.trim().isNotEmpty)
-          'session_id': sessionId.trim(),
-        if (traceId != null && traceId.trim().isNotEmpty)
-          'trace_id': traceId.trim(),
-      });
+      final data = await _invoke(
+        await _withOfflinePolicy({
+          'action': 'provider.chat',
+          'provider': provider,
+          'message': message,
+          if (sessionId != null && sessionId.trim().isNotEmpty)
+            'session_id': sessionId.trim(),
+          if (traceId != null && traceId.trim().isNotEmpty)
+            'trace_id': traceId.trim(),
+        }),
+      );
       final text = (data['text'] ?? data['result'] ?? data['message'])
           ?.toString()
           .trim();
@@ -182,15 +190,17 @@ class AiHubChatService {
     }
 
     try {
-      final data = await _invoke({
-        'action': 'provider.chat_auto',
-        'message': message,
-        if (tier != null && tier.trim().isNotEmpty) 'tier': tier.trim(),
-        if (sessionId != null && sessionId.trim().isNotEmpty)
-          'session_id': sessionId.trim(),
-        if (traceId != null && traceId.trim().isNotEmpty)
-          'trace_id': traceId.trim(),
-      });
+      final data = await _invoke(
+        await _withOfflinePolicy({
+          'action': 'provider.chat_auto',
+          'message': message,
+          if (tier != null && tier.trim().isNotEmpty) 'tier': tier.trim(),
+          if (sessionId != null && sessionId.trim().isNotEmpty)
+            'session_id': sessionId.trim(),
+          if (traceId != null && traceId.trim().isNotEmpty)
+            'trace_id': traceId.trim(),
+        }),
+      );
       final text = (data['text'] ?? data['result'] ?? data['message'])
           ?.toString()
           .trim();
@@ -239,6 +249,16 @@ class AiHubChatService {
     return <String, dynamic>{
       'success': false,
       'message': data?.toString() ?? 'empty response',
+    };
+  }
+
+  Future<Map<String, dynamic>> _withOfflinePolicy(
+    Map<String, dynamic> body,
+  ) async {
+    final settings = await _offlineSettingsService.loadSettingsOrDefaults();
+    return <String, dynamic>{
+      ...body,
+      ...settings.toAiHubPolicyPayload(),
     };
   }
 }

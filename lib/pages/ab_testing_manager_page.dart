@@ -82,6 +82,7 @@ class _AbTestingManagerPageState extends State<AbTestingManagerPage> {
       _variantBController.clear();
       await _fetchTests();
     } catch (e) {
+      if (!mounted) return;
       if (mounted) setState(() => _errorMessage = 'テスト作成に失敗しました: $e');
     } finally {
       if (mounted) setState(() => _isLoading = false);

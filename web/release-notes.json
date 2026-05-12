@@ -1,0 +1,444 @@
+{
+  "current": {
+    "build": "1",
+    "category": "release",
+    "date": "2026-05-12",
+    "links": [
+      {
+        "title": "GitHub Release v1.0.0",
+        "type": "release",
+        "url": "https://github.com/kanta13jp1/my_web_app/releases/tag/v1.0.0"
+      }
+    ],
+    "summary": "Release 1.0.0",
+    "version": "1.0.0"
+  },
+  "generatedAt": "2026-05-12T00:00:00Z",
+  "schemaVersion": 1,
+  "source": {
+    "aiToolWatch": "docs/ai-tool-watch/latest-report.json",
+    "pubspec": "pubspec.yaml",
+    "repo": "kanta13jp1/my_web_app"
+  },
+  "versions": [
+    {
+      "build": "1",
+      "category": "release",
+      "changeCategories": [
+        "automation",
+        "docs",
+        "feature",
+        "fix"
+      ],
+      "changes": [
+        {
+          "category": "automation",
+          "id": "pr-2372",
+          "links": [
+            {
+              "title": "PR #2372",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/2372"
+            }
+          ],
+          "mergedAt": "2026-05-12T01:12:04Z",
+          "summary": "#2372 ci: route AI tool watch findings (#1559)"
+        },
+        {
+          "category": "feature",
+          "id": "pr-2368",
+          "links": [
+            {
+              "title": "PR #2368",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/2368"
+            }
+          ],
+          "mergedAt": "2026-05-11T22:04:23Z",
+          "summary": "#2368 feat(ai-university): seed FinTech trading AI (#1964)"
+        },
+        {
+          "category": "feature",
+          "id": "pr-2367",
+          "links": [
+            {
+              "title": "PR #2367",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/2367"
+            }
+          ],
+          "mergedAt": "2026-05-11T20:30:34Z",
+          "summary": "#2367 docs(v17): part 203-b mandatory per-session compression spec + WBS Top 5 triage"
+        },
+        {
+          "category": "automation",
+          "id": "pr-2366",
+          "links": [
+            {
+              "title": "PR #2366",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/2366"
+            }
+          ],
+          "mergedAt": "2026-05-11T18:20:34Z",
+          "summary": "#2366 ci: reduce WBS sync batch timeout risk (#2360)"
+        },
+        {
+          "category": "fix",
+          "id": "pr-2365",
+          "links": [
+            {
+              "title": "PR #2365",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/2365"
+            }
+          ],
+          "mergedAt": "2026-05-11T17:43:38Z",
+          "summary": "#2365 fix: skip unrecovered WBS sync conflicts (#2360)"
+        },
+        {
+          "category": "fix",
+          "id": "pr-2364",
+          "links": [
+            {
+              "title": "PR #2364",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/2364"
+            }
+          ],
+          "mergedAt": "2026-05-11T16:41:56Z",
+          "summary": "#2364 fix: preflight WBS issue-instance duplicates (#2360)"
+        },
+        {
+          "category": "feature",
+          "id": "pr-2363",
+          "links": [
+            {
+              "title": "PR #2363",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/2363"
+            }
+          ],
+          "mergedAt": "2026-05-11T16:10:58Z",
+          "summary": "#2363 docs(roadmap+hygiene): part 203 batch backfill 9 entry + DISK_HYGIENE §17.16-§17.19 v11/v14/v15/v16"
+        },
+        {
+          "category": "feature",
+          "id": "pr-2358",
+          "links": [
+            {
+              "title": "PR #2358",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/2358"
+            }
+          ],
+          "mergedAt": "2026-05-11T16:00:10Z",
+          "summary": "#2358 docs(cross-instance-pr): part 202-b v16 proactive enforcement protocol"
+        },
+        {
+          "category": "feature",
+          "id": "pr-2352",
+          "links": [
+            {
+              "title": "PR #2352",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/2352"
+            }
+          ],
+          "mergedAt": "2026-05-11T16:00:05Z",
+          "summary": "#2352 docs(cross-instance-pr): part 201-b v15 guaranteed compression protocol + WBS Top 5"
+        },
+        {
+          "category": "feature",
+          "id": "pr-2340",
+          "links": [
+            {
+              "title": "PR #2340",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/2340"
+            }
+          ],
+          "mergedAt": "2026-05-11T16:00:01Z",
+          "summary": "#2340 docs(cross-instance-pr): part 200-b v14 compression protocol + WBS Top 5 hand-off"
+        },
+        {
+          "category": "feature",
+          "id": "pr-2323",
+          "links": [
+            {
+              "title": "PR #2323",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/2323"
+            }
+          ],
+          "mergedAt": "2026-05-11T15:59:51Z",
+          "summary": "#2323 docs(roadmap): part 196 ROADMAP TBD partial backfill + UI verify 4 page"
+        },
+        {
+          "category": "fix",
+          "id": "pr-2362",
+          "links": [
+            {
+              "title": "PR #2362",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/2362"
+            }
+          ],
+          "mergedAt": "2026-05-11T15:56:53Z",
+          "summary": "#2362 fix: handle WBS issue-instance sync conflicts (#2360)"
+        },
+        {
+          "category": "feature",
+          "id": "pr-2360",
+          "links": [
+            {
+              "title": "PR #2360",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/2360"
+            }
+          ],
+          "mergedAt": "2026-05-11T15:07:17Z",
+          "summary": "#2360 feat: add GA readiness gate (#1640)"
+        },
+        {
+          "category": "feature",
+          "id": "pr-2359",
+          "links": [
+            {
+              "title": "PR #2359",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/2359"
+            }
+          ],
+          "mergedAt": "2026-05-11T14:49:37Z",
+          "summary": "#2359 [codex] prioritize issue-linked WBS schedules"
+        },
+        {
+          "category": "fix",
+          "id": "pr-2357",
+          "links": [
+            {
+              "title": "PR #2357",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/2357"
+            }
+          ],
+          "mergedAt": "2026-05-11T12:57:03Z",
+          "summary": "#2357 fix(wbs): enforce active issue dedup (#2171)"
+        },
+        {
+          "category": "fix",
+          "id": "pr-2355",
+          "links": [
+            {
+              "title": "PR #2355",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/2355"
+            }
+          ],
+          "mergedAt": "2026-05-11T10:44:55Z",
+          "summary": "#2355 fix: align additional request migration achievement insert"
+        },
+        {
+          "category": "feature",
+          "id": "pr-2350",
+          "links": [
+            {
+              "title": "PR #2350",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/2350"
+            }
+          ],
+          "mergedAt": "2026-05-11T10:05:31Z",
+          "summary": "#2350 [codex] prioritize additional request WBS schedule"
+        },
+        {
+          "category": "feature",
+          "id": "pr-2349",
+          "links": [
+            {
+              "title": "PR #2349",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/2349"
+            }
+          ],
+          "mergedAt": "2026-05-11T10:05:10Z",
+          "summary": "#2349 feat: add monthly KPI dashboard (#1745)"
+        },
+        {
+          "category": "automation",
+          "id": "pr-2348",
+          "links": [
+            {
+              "title": "PR #2348",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/2348"
+            }
+          ],
+          "mergedAt": "2026-05-11T04:45:02Z",
+          "summary": "#2348 ci: add MCP container isolation smoke (#1645)"
+        },
+        {
+          "category": "automation",
+          "id": "pr-2342",
+          "links": [
+            {
+              "title": "PR #2342",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/2342"
+            }
+          ],
+          "mergedAt": "2026-05-11T01:15:05Z",
+          "summary": "#2342 ci: add WBS sync timeout resilience (#1644)"
+        },
+        {
+          "category": "feature",
+          "id": "pr-2338",
+          "links": [
+            {
+              "title": "PR #2338",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/2338"
+            }
+          ],
+          "mergedAt": "2026-05-10T18:53:57Z",
+          "summary": "#2338 feat: add dynamic context injection map (#1644)"
+        },
+        {
+          "category": "fix",
+          "id": "pr-2339",
+          "links": [
+            {
+              "title": "PR #2339",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/2339"
+            }
+          ],
+          "mergedAt": "2026-05-10T18:45:41Z",
+          "summary": "#2339 [codex] fix remaining WBS duplicate titles"
+        },
+        {
+          "category": "fix",
+          "id": "pr-2337",
+          "links": [
+            {
+              "title": "PR #2337",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/2337"
+            }
+          ],
+          "mergedAt": "2026-05-10T17:42:15Z",
+          "summary": "#2337 [codex] fix WBS duplicate issue mirrors"
+        },
+        {
+          "category": "docs",
+          "id": "pr-2336",
+          "links": [
+            {
+              "title": "PR #2336",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/2336"
+            }
+          ],
+          "mergedAt": "2026-05-10T17:16:46Z",
+          "summary": "#2336 docs: add Codex UI QA playbook (#1646)"
+        },
+        {
+          "category": "feature",
+          "id": "pr-2334",
+          "links": [
+            {
+              "title": "PR #2334",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/2334"
+            }
+          ],
+          "mergedAt": "2026-05-10T16:13:46Z",
+          "summary": "#2334 feat: surface competitive intel intake (#1660)"
+        },
+        {
+          "category": "feature",
+          "id": "pr-2332",
+          "links": [
+            {
+              "title": "PR #2332",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/2332"
+            }
+          ],
+          "mergedAt": "2026-05-10T15:32:29Z",
+          "summary": "#2332 [codex] docs: consolidate local generated reports"
+        },
+        {
+          "category": "feature",
+          "id": "pr-2329",
+          "links": [
+            {
+              "title": "PR #2329",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/2329"
+            }
+          ],
+          "mergedAt": "2026-05-10T14:46:07Z",
+          "summary": "#2329 feat: complete agent GPA Phase 4 (#1124)"
+        },
+        {
+          "category": "fix",
+          "id": "pr-2327",
+          "links": [
+            {
+              "title": "PR #2327",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/2327"
+            }
+          ],
+          "mergedAt": "2026-05-10T10:34:44Z",
+          "summary": "#2327 fix: omit invalid Hedra TTS model id"
+        },
+        {
+          "category": "feature",
+          "id": "pr-2324",
+          "links": [
+            {
+              "title": "PR #2324",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/2324"
+            }
+          ],
+          "mergedAt": "2026-05-10T08:06:18Z",
+          "summary": "#2324 feat: add agent GPA badges Phase 3 (#1124)"
+        },
+        {
+          "category": "fix",
+          "id": "pr-2326",
+          "links": [
+            {
+              "title": "PR #2326",
+              "type": "pull_request",
+              "url": "https://github.com/kanta13jp1/my_web_app/pull/2326"
+            }
+          ],
+          "mergedAt": "2026-05-10T07:47:23Z",
+          "summary": "#2326 fix: throttle duplicate presence syncs"
+        }
+      ],
+      "date": "2026-05-12",
+      "extensions": {
+        "aiToolWatch": {
+          "changedSourceCount": 5,
+          "signalCount": 0,
+          "source": "docs/ai-tool-watch/latest-report.json"
+        }
+      },
+      "links": [
+        {
+          "title": "GitHub Release v1.0.0",
+          "type": "release",
+          "url": "https://github.com/kanta13jp1/my_web_app/releases/tag/v1.0.0"
+        }
+      ],
+      "summary": "Release 1.0.0",
+      "version": "1.0.0"
+    }
+  ]
+}

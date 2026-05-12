@@ -21,6 +21,7 @@ class _UserTasksPageState extends State<UserTasksPage> {
   List<Map<String, dynamic>> _tasks = const [];
   bool _loading = true;
   bool _saving = false;
+  String? _assistTaskId;
   bool _showCompleted = false;
   String? _error;
 
@@ -290,6 +291,70 @@ class _UserTasksPageState extends State<UserTasksPage> {
     );
   }
 
+  Future<void> _openAiAssist(
+    Map<String, dynamic> task, {
+    required String mode,
+  }) async {
+    final taskId = '${task['id'] ?? ''}'.trim();
+    if (taskId.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('タスクIDを取得できませんでした')),
+      );
+      return;
+    }
+
+    setState(() {
+      _assistTaskId = taskId;
+    });
+
+    try {
+      final response = await _supabase.functions.invoke(
+        'tools-hub',
+        body: {
+          'action': 'wbs.user_task_ai_assist',
+          'task_id': taskId,
+          'mode': mode,
+        },
+      );
+      final data = response.data;
+      if (data is Map && data['error'] != null) {
+        throw Exception(data['error']);
+      }
+      final payload =
+          data is Map ? Map<String, dynamic>.from(data) : <String, dynamic>{};
+      final guidanceRaw = payload['guidance'];
+      final guidance = guidanceRaw is Map
+          ? Map<String, dynamic>.from(guidanceRaw)
+          : <String, dynamic>{};
+
+      if (!mounted) return;
+      await showDialog<void>(
+        context: context,
+        builder: (context) => _AiAssistDialog(
+          taskTitle: '${payload['task_title'] ?? task['title'] ?? ''}',
+          mode: mode,
+          guidance: guidance,
+          generatedBy:
+              '${payload['generated_by'] ?? guidance['generated_by'] ?? ''}',
+          parentTask: task,
+          onTasksRegistered: _loadTasks,
+        ),
+      );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('AI支援の生成に失敗しました: $e')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _assistTaskId = null;
+        });
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final activeTasks = _tasks.where((task) => task['status'] != 'completed');
@@ -314,7 +379,7 @@ class _UserTasksPageState extends State<UserTasksPage> {
             _SummaryPanel(
               total: activeTasks.length,
               urgent: urgentTasks,
-              saving: _saving,
+              saving: _saving || _assistTaskId != null,
             ),
             const SizedBox(height: 12),
             SwitchListTile(
@@ -350,6 +415,9 @@ class _UserTasksPageState extends State<UserTasksPage> {
                   dateFormat: _dateFormat,
                   urgent: _isUrgent(task),
                   saving: _saving,
+                  aiBusy: _assistTaskId == '${task['id'] ?? ''}',
+                  onBreakdown: () => _openAiAssist(task, mode: 'breakdown'),
+                  onProcedure: () => _openAiAssist(task, mode: 'procedure'),
                   onStart: () => _submitReport(
                     task,
                     reportStatus: 'in_progress',
@@ -435,6 +503,9 @@ class _UserTaskCard extends StatelessWidget {
   final DateFormat dateFormat;
   final bool urgent;
   final bool saving;
+  final bool aiBusy;
+  final VoidCallback onBreakdown;
+  final VoidCallback onProcedure;
   final VoidCallback onStart;
   final VoidCallback onReport;
   final VoidCallback onComplete;
@@ -444,6 +515,9 @@ class _UserTaskCard extends StatelessWidget {
     required this.dateFormat,
     required this.urgent,
     required this.saving,
+    required this.aiBusy,
+    required this.onBreakdown,
+    required this.onProcedure,
     required this.onStart,
     required this.onReport,
     required this.onComplete,
@@ -556,17 +630,27 @@ class _UserTaskCard extends StatelessWidget {
               runSpacing: 8,
               children: [
                 OutlinedButton.icon(
-                  onPressed: saving || completed ? null : onStart,
+                  onPressed: saving || completed || aiBusy ? null : onStart,
                   icon: const Icon(Icons.play_arrow),
                   label: const Text('着手'),
                 ),
+                OutlinedButton.icon(
+                  onPressed: saving || completed || aiBusy ? null : onBreakdown,
+                  icon: const Icon(Icons.account_tree_outlined),
+                  label: const Text('タスク分割'),
+                ),
+                OutlinedButton.icon(
+                  onPressed: saving || completed || aiBusy ? null : onProcedure,
+                  icon: const Icon(Icons.menu_book_outlined),
+                  label: const Text('手順を見る'),
+                ),
                 FilledButton.icon(
-                  onPressed: saving || completed ? null : onReport,
+                  onPressed: saving || completed || aiBusy ? null : onReport,
                   icon: const Icon(Icons.edit_note),
                   label: const Text('状況報告'),
                 ),
                 OutlinedButton.icon(
-                  onPressed: saving || completed ? null : onComplete,
+                  onPressed: saving || completed || aiBusy ? null : onComplete,
                   icon: const Icon(Icons.check_circle_outline),
                   label: const Text('完了'),
                 ),
@@ -660,6 +744,505 @@ class _MessagePanel extends StatelessWidget {
       ),
     );
   }
+}
+
+class _AiAssistDialog extends StatefulWidget {
+  final String taskTitle;
+  final String mode;
+  final Map<String, dynamic> guidance;
+  final String generatedBy;
+  final Map<String, dynamic> parentTask;
+  final VoidCallback onTasksRegistered;
+
+  const _AiAssistDialog({
+    required this.taskTitle,
+    required this.mode,
+    required this.guidance,
+    required this.generatedBy,
+    required this.parentTask,
+    required this.onTasksRegistered,
+  });
+
+  @override
+  State<_AiAssistDialog> createState() => _AiAssistDialogState();
+}
+
+class _AiAssistDialogState extends State<_AiAssistDialog> {
+  bool _isRegistering = false;
+  int _registerProgress = 0;
+  bool _isSavingNote = false;
+
+  Future<void> _saveToNote(
+    String summary,
+    List<Map<String, dynamic>> subtasks,
+    List<Map<String, dynamic>> steps,
+    List<String> prerequisites,
+    List<String> blockers,
+    List<String> checklist,
+  ) async {
+    setState(() => _isSavingNote = true);
+    final buf = StringBuffer();
+    if (summary.isNotEmpty) buf.writeln('## AIの見立て\n$summary\n');
+    final isBreakdown = widget.mode == 'breakdown';
+    if (isBreakdown && subtasks.isNotEmpty) {
+      buf.writeln('## サブタスク');
+      for (var i = 0; i < subtasks.length; i++) {
+        final t = _aiText(subtasks[i]['title']);
+        final d =
+            _aiText(subtasks[i]['description'] ?? subtasks[i]['goal'] ?? '');
+        buf.writeln('${i + 1}. **$t**${d.isNotEmpty ? '\n   $d' : ''}');
+      }
+      buf.writeln();
+    } else if (!isBreakdown && steps.isNotEmpty) {
+      buf.writeln('## 手順');
+      for (var i = 0; i < steps.length; i++) {
+        final t = _aiText(steps[i]['step'] ?? steps[i]['title'] ?? '');
+        buf.writeln('${i + 1}. $t');
+      }
+      buf.writeln();
+    }
+    if (prerequisites.isNotEmpty) {
+      buf.writeln('## 事前確認\n${prerequisites.map((e) => '- $e').join('\n')}\n');
+    }
+    if (blockers.isNotEmpty) {
+      buf.writeln('## 詰まりやすい点\n${blockers.map((e) => '- $e').join('\n')}\n');
+    }
+    if (checklist.isNotEmpty) {
+      buf.writeln(
+        '## 完了前チェック\n${checklist.map((e) => '- [ ] $e').join('\n')}\n',
+      );
+    }
+
+    try {
+      await Supabase.instance.client.functions.invoke(
+        'tools-hub',
+        body: {
+          'action': 'note.add',
+          'title': 'AIアシスト: ${widget.taskTitle}',
+          'content': buf.toString().trim(),
+          'tags': ['ai-assist', isBreakdown ? 'breakdown' : 'procedure'],
+        },
+      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('✅ ノートに保存しました')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('⚠ 保存に失敗しました: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isSavingNote = false);
+    }
+  }
+
+  Future<void> _registerAllSubtasks(
+    List<Map<String, dynamic>> subtasks,
+  ) async {
+    setState(() {
+      _isRegistering = true;
+      _registerProgress = 0;
+    });
+    int success = 0;
+    int failed = 0;
+    final errors = <String>[];
+    final supabase = Supabase.instance.client;
+    final parent = widget.parentTask;
+
+    for (var i = 0; i < subtasks.length; i++) {
+      final s = subtasks[i];
+      try {
+        await supabase.functions.invoke(
+          'tools-hub',
+          body: {
+            'action': 'wbs.add_task',
+            'category': parent['category'],
+            'category_icon': parent['category_icon'],
+            'category_order': parent['category_order'],
+            'title':
+                '${parent['title'] ?? widget.taskTitle} :: ${_aiText(s['title']).isEmpty ? '小タスク${i + 1}' : _aiText(s['title'])}',
+            'description': _buildSubtaskDescription(s),
+            'instance': parent['instance'],
+            'owner_instance': parent['owner_instance'],
+            'priority': parent['priority'] ?? 'medium',
+            'status': 'pending',
+            'progress': 0,
+            'milestone_code': parent['milestone_code'],
+          },
+        );
+        success++;
+      } catch (e) {
+        failed++;
+        errors.add('${i + 1}. ${_aiText(s['title'])}: $e');
+      }
+      if (mounted) setState(() => _registerProgress = i + 1);
+    }
+
+    if (!mounted) return;
+    setState(() => _isRegistering = false);
+
+    final messenger = ScaffoldMessenger.of(context);
+    if (failed == 0) {
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text('✅ $success 件のサブタスクを登録しました'),
+          duration: const Duration(seconds: 3),
+        ),
+      );
+      Navigator.pop(context);
+      widget.onTasksRegistered();
+    } else {
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            '⚠ $success 件成功 / $failed 件失敗\n${errors.join('\n')}',
+          ),
+          duration: const Duration(seconds: 8),
+        ),
+      );
+    }
+  }
+
+  String _buildSubtaskDescription(Map<String, dynamic> s) {
+    final parts = <String>[];
+    final rawDesc = _aiText(s['description']);
+    final desc = rawDesc.isNotEmpty ? rawDesc : _aiText(s['goal']);
+    final criteria = _aiText(s['done_when'] ?? s['completion_criteria'] ?? '');
+    final minutes = s['estimated_minutes'];
+
+    if (desc.isNotEmpty) parts.add(desc);
+    if (criteria.isNotEmpty) parts.add('完了条件: $criteria');
+    if (minutes != null) parts.add('目安: $minutes 分');
+    parts.add('---');
+    parts.add('親タスク: ${widget.parentTask['title'] ?? widget.taskTitle}');
+    parts.add(
+      'AI分割で自動登録 (${DateTime.now().toIso8601String().substring(0, 16)})',
+    );
+    return parts.join('\n\n');
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isBreakdown = widget.mode == 'breakdown';
+    final summary = _aiText(widget.guidance['summary']);
+    final subtasks = _aiMapList(widget.guidance['subtasks']);
+    final steps = _aiMapList(widget.guidance['steps']);
+    final prerequisites = _aiStringList(widget.guidance['prerequisites']);
+    final blockers = _aiStringList(widget.guidance['blockers']);
+    final checklist = _aiStringList(widget.guidance['checklist']);
+    final source = widget.generatedBy.trim().isNotEmpty
+        ? widget.generatedBy.trim()
+        : _aiText(widget.guidance['generated_by']);
+
+    return AlertDialog(
+      title: Text(isBreakdown ? 'AIタスク分割' : 'AI実施手順'),
+      content: SizedBox(
+        width: 680,
+        child: SingleChildScrollView(
+          child: SelectionArea(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  widget.taskTitle,
+                  style: const TextStyle(fontWeight: FontWeight.w800),
+                ),
+                if (summary.isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  _assistCard(
+                    context,
+                    icon: Icons.auto_awesome,
+                    title: 'AIの見立て',
+                    child: Text(summary),
+                  ),
+                ],
+                const SizedBox(height: 12),
+                if (isBreakdown)
+                  _subtasksSection(context, subtasks)
+                else
+                  _procedureSection(context, steps),
+                _listSection(
+                  context,
+                  icon: Icons.fact_check_outlined,
+                  title: '事前に確認すること',
+                  items: prerequisites,
+                ),
+                _listSection(
+                  context,
+                  icon: Icons.warning_amber_outlined,
+                  title: '詰まりやすい点',
+                  items: blockers,
+                ),
+                _listSection(
+                  context,
+                  icon: Icons.checklist_outlined,
+                  title: '完了前チェック',
+                  items: checklist,
+                ),
+                if (source.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    'generated by $source',
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: _isRegistering ? null : () => Navigator.pop(context),
+          child: const Text('閉じる'),
+        ),
+        OutlinedButton.icon(
+          icon: _isSavingNote
+              ? const SizedBox(
+                  width: 14,
+                  height: 14,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Icon(Icons.bookmark_add_outlined, size: 16),
+          label: const Text('ノートに保存'),
+          onPressed: (_isRegistering || _isSavingNote)
+              ? null
+              : () => _saveToNote(
+                    summary,
+                    subtasks,
+                    steps,
+                    prerequisites,
+                    blockers,
+                    checklist,
+                  ),
+        ),
+        if (isBreakdown && subtasks.isNotEmpty)
+          FilledButton.icon(
+            icon: _isRegistering
+                ? const SizedBox(
+                    width: 14,
+                    height: 14,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
+                  )
+                : const Icon(Icons.add_task, size: 16),
+            label: Text(
+              _isRegistering
+                  ? '登録中... ($_registerProgress/${subtasks.length})'
+                  : '全部登録 (${subtasks.length} 件)',
+            ),
+            onPressed:
+                _isRegistering ? null : () => _registerAllSubtasks(subtasks),
+          ),
+      ],
+    );
+  }
+
+  Widget _subtasksSection(
+    BuildContext context,
+    List<Map<String, dynamic>> subtasks,
+  ) {
+    if (subtasks.isEmpty) return const SizedBox.shrink();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _sectionHeader(context, Icons.account_tree_outlined, '小さなタスク'),
+        const SizedBox(height: 8),
+        for (final entry in subtasks.asMap().entries) ...[
+          _assistCard(
+            context,
+            title:
+                '${entry.key + 1}. ${_aiText(entry.value['title']).isEmpty ? '小タスク' : _aiText(entry.value['title'])}',
+            subtitle: _aiText(entry.value['goal']),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _inlineList(_aiStringList(entry.value['steps'])),
+                if (_aiText(entry.value['done_when']).isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  Text('完了条件: ${_aiText(entry.value['done_when'])}'),
+                ],
+                if (entry.value['estimated_minutes'] != null) ...[
+                  const SizedBox(height: 4),
+                  Text('目安: ${entry.value['estimated_minutes']}分'),
+                ],
+              ],
+            ),
+          ),
+          const SizedBox(height: 8),
+        ],
+      ],
+    );
+  }
+
+  Widget _procedureSection(
+    BuildContext context,
+    List<Map<String, dynamic>> steps,
+  ) {
+    if (steps.isEmpty) return const SizedBox.shrink();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _sectionHeader(context, Icons.menu_book_outlined, '実施手順'),
+        const SizedBox(height: 8),
+        for (final entry in steps.asMap().entries) ...[
+          _assistCard(
+            context,
+            title:
+                '${entry.key + 1}. ${_aiText(entry.value['title']).isEmpty ? '手順' : _aiText(entry.value['title'])}',
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (_aiText(entry.value['detail']).isNotEmpty)
+                  Text(_aiText(entry.value['detail'])),
+                if (_aiText(entry.value['expected_result']).isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  Text('到達状態: ${_aiText(entry.value['expected_result'])}'),
+                ],
+                if (_aiText(entry.value['caution']).isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  Text('注意: ${_aiText(entry.value['caution'])}'),
+                ],
+              ],
+            ),
+          ),
+          const SizedBox(height: 8),
+        ],
+      ],
+    );
+  }
+
+  Widget _listSection(
+    BuildContext context, {
+    required IconData icon,
+    required String title,
+    required List<String> items,
+  }) {
+    if (items.isEmpty) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(top: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _sectionHeader(context, icon, title),
+          const SizedBox(height: 6),
+          _inlineList(items),
+        ],
+      ),
+    );
+  }
+
+  Widget _sectionHeader(BuildContext context, IconData icon, String title) {
+    return Row(
+      children: [
+        Icon(icon, size: 18, color: Theme.of(context).colorScheme.primary),
+        const SizedBox(width: 6),
+        Text(title, style: const TextStyle(fontWeight: FontWeight.w800)),
+      ],
+    );
+  }
+
+  Widget _inlineList(List<String> items) {
+    if (items.isEmpty) return const SizedBox.shrink();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        for (final item in items)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 4),
+            child: Text('・$item'),
+          ),
+      ],
+    );
+  }
+
+  Widget _assistCard(
+    BuildContext context, {
+    IconData? icon,
+    required String title,
+    String? subtitle,
+    required Widget child,
+  }) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        border: Border.all(
+          color: Theme.of(context).colorScheme.outlineVariant,
+        ),
+        borderRadius: BorderRadius.circular(8),
+        color: Theme.of(context)
+            .colorScheme
+            .surfaceContainerHighest
+            .withValues(alpha: 0.45),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                if (icon != null) ...[
+                  Icon(
+                    icon,
+                    size: 18,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                  const SizedBox(width: 6),
+                ],
+                Expanded(
+                  child: Text(
+                    title,
+                    style: const TextStyle(fontWeight: FontWeight.w800),
+                  ),
+                ),
+              ],
+            ),
+            if (subtitle != null && subtitle.trim().isNotEmpty) ...[
+              const SizedBox(height: 4),
+              Text(
+                subtitle.trim(),
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ],
+            const SizedBox(height: 8),
+            child,
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+String _aiText(Object? value) => '${value ?? ''}'.trim();
+
+List<String> _aiStringList(Object? value) {
+  if (value is List) {
+    return value
+        .map((item) => _aiText(item))
+        .where((item) => item.isNotEmpty)
+        .toList();
+  }
+  final single = _aiText(value);
+  return single.isEmpty ? const [] : [single];
+}
+
+List<Map<String, dynamic>> _aiMapList(Object? value) {
+  if (value is! List) return const [];
+  return value
+      .whereType<Map>()
+      .map((item) => Map<String, dynamic>.from(item))
+      .toList();
 }
 
 class _ReportResult {

@@ -108,11 +108,11 @@ class _BudgetFinancialPlannerPageState extends State<BudgetFinancialPlannerPage>
     try {
       final results = await Future.wait([
         _supabase.functions.invoke(
-          'budget-financial-planner',
-          body: {'action': 'get', 'view': 'budget', 'month': _selectedMonth},
+          'social-commerce-hub',
+          body: {'action': 'budget.summary', 'month': _selectedMonth},
         ),
         _supabase.functions.invoke(
-          'budget-financial-planner',
+          'social-commerce-hub',
           body: {
             'action': 'get',
             'view': 'expenses',
@@ -120,8 +120,12 @@ class _BudgetFinancialPlannerPageState extends State<BudgetFinancialPlannerPage>
           },
         ),
         _supabase.functions.invoke(
-          'budget-financial-planner',
-          body: {'action': 'get', 'view': 'income', 'month': _selectedMonth},
+          'social-commerce-hub',
+          body: {
+            'action': 'budget.expense_list',
+            'view': 'income',
+            'month': _selectedMonth,
+          },
         ),
       ]);
 
@@ -170,9 +174,9 @@ class _BudgetFinancialPlannerPageState extends State<BudgetFinancialPlannerPage>
   Future<void> _addBudget(String category, double amount) async {
     try {
       await _supabase.functions.invoke(
-        'budget-financial-planner',
+        'social-commerce-hub',
         body: {
-          'action': 'set_budget',
+          'action': 'budget.set',
           'month': _selectedMonth,
           'category': category,
           'amount': amount,
@@ -191,9 +195,9 @@ class _BudgetFinancialPlannerPageState extends State<BudgetFinancialPlannerPage>
   ) async {
     try {
       await _supabase.functions.invoke(
-        'budget-financial-planner',
+        'social-commerce-hub',
         body: {
-          'action': 'add_expense',
+          'action': 'budget.add_expense',
           'month': _selectedMonth,
           'category': category,
           'amount': amount,
@@ -213,9 +217,9 @@ class _BudgetFinancialPlannerPageState extends State<BudgetFinancialPlannerPage>
   ) async {
     try {
       await _supabase.functions.invoke(
-        'budget-financial-planner',
+        'social-commerce-hub',
         body: {
-          'action': 'add_income',
+          'action': 'budget.add_income',
           'month': _selectedMonth,
           'type': type,
           'amount': amount,
@@ -262,7 +266,7 @@ $breakdown
 
       final response = await _supabase.functions.invoke(
         'ai-assistant',
-        body: {'action': 'chat', 'message': prompt},
+        body: {'action': 'budget.chat', 'message': prompt},
       );
       final data = response.data;
       if (data is Map && data['reply'] != null) {

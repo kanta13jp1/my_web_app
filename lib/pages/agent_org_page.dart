@@ -6,7 +6,9 @@ import '../models/agent_profile.dart';
 import '../models/agent_relationship.dart';
 import '../models/agent_task.dart';
 import '../services/agent_org_service.dart';
+import '../services/lrm_self_correction_planner_service.dart';
 import '../services/manus_like_task_service.dart';
+import '../widgets/agent_gpa_badge.dart';
 
 class AgentTaskTemplate {
   final String id;
@@ -109,11 +111,14 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
   final TextEditingController _goalController = TextEditingController();
   final TextEditingController _manusObjectiveController =
       TextEditingController();
+  final TextEditingController _gpaRequestController = TextEditingController();
   bool _isTalkingToSecretary = false;
   bool _isSettingGoal = false;
   bool _isRunningManusPlan = false;
+  bool _isRunningGpaPlan = false;
   String? _secretaryReply;
   ManusLikeTaskPlan? _latestManusPlan;
+  LrmSelfCorrectionPlan? _latestGpaPlan;
 
   @override
   void initState() {
@@ -129,6 +134,7 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
     _secretaryController.dispose();
     _goalController.dispose();
     _manusObjectiveController.dispose();
+    _gpaRequestController.dispose();
     super.dispose();
   }
 
@@ -697,6 +703,89 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
     }
   }
 
+  Future<void> _runGpaPlan() async {
+    final request = _gpaRequestController.text.trim();
+    if (request.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Enter a CEO request for GPA planning.')),
+      );
+      return;
+    }
+    final ceoAgent = _ceoAgent;
+    if (ceoAgent == null) return;
+
+    final plan = LrmSelfCorrectionPlannerService.buildPlan(
+      request: request,
+      availableAgentSlugs: _snapshot.agents
+          .where((agent) => agent.isActive)
+          .map((agent) => agent.slug)
+          .toSet(),
+    );
+
+    setState(() => _isRunningGpaPlan = true);
+    try {
+      await widget.service.postBoardMessage(
+        fromAgentId: ceoAgent.id,
+        channel: 'executive',
+        summary: '[LRM GPA draft]\n${plan.executionSummary}',
+        payload: plan.toJson(),
+      );
+
+      for (final action
+          in plan.actions.where((action) => action.kind == 'app_task')) {
+        final assignee = _findAgentBySlug(action.ownerAgentSlug);
+        if (assignee == null || !assignee.isActive) continue;
+        await widget.service.delegateTask(
+          supervisorAgentId: ceoAgent.id,
+          assigneeAgentId: assignee.id,
+          title: action.title,
+          description: [
+            'Goal: ${plan.goal.title}',
+            'Next action: ${action.nextAction}',
+            '',
+            'Acceptance criteria:',
+            ...action.acceptanceCriteria.map((item) => '- $item'),
+            '',
+            'Self-review requires approval: ${plan.requiresApproval}',
+            if (plan.selfReview.missingInfo.isNotEmpty) ...[
+              'Missing info:',
+              ...plan.selfReview.missingInfo.map((item) => '- $item'),
+            ],
+            if (plan.selfReview.scopeWarnings.isNotEmpty) ...[
+              'Scope warnings:',
+              ...plan.selfReview.scopeWarnings.map((item) => '- $item'),
+            ],
+          ].join('\n'),
+          priority: plan.requiresApproval ? 'medium' : 'high',
+          taskType: 'lrm_gpa_action',
+          source: 'lrm_self_correction_planner',
+        );
+      }
+
+      await widget.service.appendMemoryEntry(
+        agentId: ceoAgent.id,
+        content: 'LRM GPA plan generated: ${plan.request}',
+        memoryLayer: 'episodes',
+        metadata: plan.toJson(),
+      );
+
+      if (!mounted) return;
+      _gpaRequestController.clear();
+      setState(() => _latestGpaPlan = plan);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('LRM GPA plan generated.')),
+      );
+      await _loadSnapshot();
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('LRM GPA planning failed: $error')),
+      );
+    } finally {
+      if (mounted) setState(() => _isRunningGpaPlan = false);
+    }
+  }
+
   void _applyTaskTemplate(AgentTaskTemplate template) {
     _taskTitleController.text = template.title;
     _taskDescriptionController.text = template.description;
@@ -882,6 +971,8 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
                       _buildSecretarySection(),
                       const SizedBox(height: 16),
                       _buildGoalSection(),
+                      const SizedBox(height: 16),
+                      _buildGpaPlannerSection(),
                       const SizedBox(height: 16),
                       _buildManusLikeSection(),
                       const SizedBox(height: 16),
@@ -1585,6 +1676,11 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
                     ),
                   ),
                 ),
+                AgentGpaBadge(
+                  sourceType: 'executive_chat',
+                  sourceId: message.id,
+                ),
+                const SizedBox(width: 8),
                 Text(
                   timestamp,
                   style: TextStyle(
@@ -1671,6 +1767,11 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
                     ),
                   ),
                 ),
+                AgentGpaBadge(
+                  sourceType: 'executive_chat',
+                  sourceId: message.id,
+                ),
+                const SizedBox(width: 8),
                 _buildStatusBadge(message.status),
               ],
             ),
@@ -1932,6 +2033,226 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildGpaPlannerSection() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final plan = _latestGpaPlan;
+    return Card(
+      elevation: 2,
+      color: isDark ? const Color(0xFF15211A) : const Color(0xFFEAF7EE),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Row(
+              children: [
+                Icon(Icons.fact_check, color: Color(0xFF047857)),
+                SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'LRM Goal-Plan-Action',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w800,
+                      height: 1.5,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _gpaRequestController,
+              enabled: !_isRunningGpaPlan,
+              minLines: 2,
+              maxLines: 4,
+              decoration: const InputDecoration(
+                labelText: 'CEO request',
+                hintText: 'Reduce cloud cost by 20% before the May review',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 10),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                onPressed: _isRunningGpaPlan ? null : _runGpaPlan,
+                icon: _isRunningGpaPlan
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.schema),
+                label: const Text('Generate GPA plan'),
+                style: FilledButton.styleFrom(
+                  backgroundColor: const Color(0xFF047857),
+                ),
+              ),
+            ),
+            if (plan != null) ...[
+              const SizedBox(height: 14),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: isDark ? const Color(0xFF06140D) : Colors.white,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: const Color(0xFF047857).withValues(alpha: 0.28),
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      plan.strategyLabel,
+                      style: const TextStyle(
+                        color: Color(0xFF047857),
+                        fontWeight: FontWeight.w800,
+                        height: 1.5,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    ExpansionTile(
+                      tilePadding: EdgeInsets.zero,
+                      childrenPadding: EdgeInsets.zero,
+                      initiallyExpanded: true,
+                      leading: const Icon(Icons.flag_outlined),
+                      title: const Text('Goal'),
+                      subtitle: Text(plan.goal.title),
+                      children: [
+                        _buildGpaBulletList(
+                          'Success',
+                          plan.goal.successCriteria,
+                        ),
+                        _buildGpaBulletList(
+                          'Constraints',
+                          plan.goal.constraints,
+                        ),
+                      ],
+                    ),
+                    ExpansionTile(
+                      tilePadding: EdgeInsets.zero,
+                      childrenPadding: EdgeInsets.zero,
+                      leading: const Icon(Icons.account_tree_outlined),
+                      title: const Text('Plan'),
+                      children: plan.plan
+                          .map(
+                            (step) => ListTile(
+                              dense: true,
+                              contentPadding: EdgeInsets.zero,
+                              leading: CircleAvatar(
+                                radius: 14,
+                                backgroundColor:
+                                    const Color(0xFF047857).withValues(
+                                  alpha: 0.12,
+                                ),
+                                child: Text(
+                                  '${step.stepNumber}',
+                                  style: const TextStyle(fontSize: 12),
+                                ),
+                              ),
+                              title: Text(step.title),
+                              subtitle: Text(
+                                '${step.phase} / ${step.agentSlug}\n${step.doneWhen}',
+                              ),
+                            ),
+                          )
+                          .toList(),
+                    ),
+                    ExpansionTile(
+                      tilePadding: EdgeInsets.zero,
+                      childrenPadding: EdgeInsets.zero,
+                      leading: const Icon(Icons.task_alt_outlined),
+                      title: const Text('Action drafts'),
+                      children: plan.actions
+                          .map(
+                            (action) => ListTile(
+                              dense: true,
+                              contentPadding: EdgeInsets.zero,
+                              title: Text(action.title),
+                              subtitle: Text(
+                                '${action.kind} / ${action.ownerAgentSlug}\n${action.nextAction}',
+                              ),
+                            ),
+                          )
+                          .toList(),
+                    ),
+                    ExpansionTile(
+                      tilePadding: EdgeInsets.zero,
+                      childrenPadding: EdgeInsets.zero,
+                      leading: Icon(
+                        plan.requiresApproval
+                            ? Icons.lock_outline
+                            : Icons.verified_user_outlined,
+                        color: plan.requiresApproval
+                            ? const Color(0xFFFF6B35)
+                            : const Color(0xFF047857),
+                      ),
+                      title: Text(
+                        plan.requiresApproval
+                            ? 'Self-review: approval required'
+                            : 'Self-review: ready for internal draft',
+                      ),
+                      children: [
+                        _buildGpaBulletList(
+                          'Missing info',
+                          plan.selfReview.missingInfo.isEmpty
+                              ? const <String>['None flagged']
+                              : plan.selfReview.missingInfo,
+                        ),
+                        _buildGpaBulletList(
+                          'Scope warnings',
+                          plan.selfReview.scopeWarnings.isEmpty
+                              ? const <String>['None flagged']
+                              : plan.selfReview.scopeWarnings,
+                        ),
+                        _buildGpaBulletList(
+                          'Safety',
+                          plan.selfReview.safetyChecks,
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGpaBulletList(String title, List<String> items) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 8, right: 8, bottom: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w800,
+              height: 1.5,
+            ),
+          ),
+          const SizedBox(height: 4),
+          ...items.map(
+            (item) => Padding(
+              padding: const EdgeInsets.only(bottom: 3),
+              child: Text(
+                '- $item',
+                style: const TextStyle(fontSize: 12, height: 1.5),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

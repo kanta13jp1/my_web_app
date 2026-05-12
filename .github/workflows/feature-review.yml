@@ -1,0 +1,106 @@
+name: Feature Review
+
+on:
+  schedule:
+    - cron: "0 * * * *"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Issue creation disabled when true"
+        required: false
+        default: "false"
+        type: string
+      target_features:
+        description: "Comma-separated feature slugs. Overrides hourly rotation."
+        required: false
+        default: ""
+        type: string
+      force_full_scan:
+        description: "Review all configured features immediately."
+        required: false
+        default: "false"
+        type: string
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: feature-review
+  cancel-in-progress: false
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      ANTHROPIC_MODEL: ${{ vars.FEATURE_REVIEW_ANTHROPIC_MODEL }}
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GITHUB_REPOSITORY: ${{ github.repository }}
+      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+      DRY_RUN: ${{ inputs.dry_run || 'false' }}
+      TARGET_FEATURES: ${{ inputs.target_features || '' }}
+      FORCE_FULL_SCAN: ${{ inputs.force_full_scan || 'false' }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 100
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Setup Deno
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install anthropic playwright requests
+          python -m playwright install --with-deps chromium
+
+      - name: Run feature review
+        run: |
+          ARGS="--config scripts/feature_review_config.json"
+          if [ "$DRY_RUN" = "true" ]; then ARGS="$ARGS --dry-run"; fi
+          if [ -n "$TARGET_FEATURES" ]; then ARGS="$ARGS --targets $TARGET_FEATURES"; fi
+          if [ "$FORCE_FULL_SCAN" = "true" ]; then ARGS="$ARGS --force-full-scan"; fi
+          PYTHONUTF8=1 python scripts/feature_review.py $ARGS
+
+      - name: Upload review artifacts
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: feature-review-${{ github.run_id }}
+          path: |
+            /tmp/feature-review.log
+            /tmp/feature-review-summary.json
+            /tmp/feature-review-screenshots/
+          if-no-files-found: ignore
+
+      - name: Slack notify
+        if: always()
+        run: |
+          if [ -z "$SLACK_WEBHOOK_URL" ]; then
+            echo "::notice::SLACK_WEBHOOK_URL not set"
+            exit 0
+          fi
+          if [ ! -f /tmp/feature-review-summary.json ]; then
+            echo "::warning::feature review summary missing"
+            exit 0
+          fi
+          NEW_COUNT=$(python -c "import json; data=json.load(open('/tmp/feature-review-summary.json', encoding='utf-8')); print(data.get('new_count', 0))")
+          if [ "$NEW_COUNT" = "0" ]; then
+            echo "::notice::No new issues; Slack notification skipped"
+            exit 0
+          fi
+          SUMMARY=$(python -c "import json; data=json.load(open('/tmp/feature-review-summary.json', encoding='utf-8')); print(f\"feature-review run complete: {data.get('new_count', 0)} new issues, {data.get('skipped_count', 0)} skipped, {data.get('error_count', 0)} errors\")")
+          curl -X POST -H 'Content-Type: application/json' \
+            --data "{\"text\":\"🔍 ${SUMMARY}\"}" \
+            "$SLACK_WEBHOOK_URL"

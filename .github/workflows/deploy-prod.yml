@@ -96,6 +96,19 @@ jobs:
         run: |
           sed -i "s/^version: .*/version: ${{ steps.version.outputs.version }}+${{ github.run_number }}/" pubspec.yaml
 
+      - name: Generate Release Notes data
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python scripts/generate_release_notes.py \
+            --repo "${{ github.repository }}" \
+            --version "${{ steps.version.outputs.version }}" \
+            --build "${{ github.run_number }}" \
+            --commit "${{ github.sha }}" \
+            --date "$(date -u +%Y-%m-%d)" \
+            --deploy-url "https://${{ secrets.FIREBASE_PROJECT_ID }}.web.app" \
+            --output web/release-notes.json
+
       - name: Check migration timestamp collisions
         run: python scripts/check_migration_timestamps.py
 
@@ -109,6 +122,7 @@ jobs:
           supabase link --project-ref ${{ secrets.SUPABASE_PROJECT_ID_PROD }} --password ${{ secrets.SUPABASE_DB_PASSWORD_PROD }}
           # Repair known stuck migrations (duplicate key from aborted deploys).
           # All are idempotent (ON CONFLICT DO NOTHING / IF NOT EXISTS / UPDATE).
+          supabase migration repair --status reverted 20260424225000 2>/dev/null || true  # pre-push recovery_plan backfill — always runs first (idempotent COALESCE)
           supabase migration repair --status reverted 20260424234000 2>/dev/null || true
           supabase migration repair --status reverted 20260424235000 2>/dev/null || true
           supabase migration repair --status reverted 20260424240000 2>/dev/null || true
@@ -200,7 +214,7 @@ jobs:
           supabase migration repair --status reverted 20260426010000 2>/dev/null || true
           supabase migration repair --status reverted 20260426015000 2>/dev/null || true
           supabase migration repair --status reverted 20260426020000 2>/dev/null || true
-          supabase migration repair --status reverted 20260426100000 2>/dev/null || true
+          supabase migration repair --status applied 20260426100000 2>/dev/null || true  # permanently skip — replaced by 20260428146000_wbs_github_issue_sync_v2
           supabase migration repair --status reverted 20260426110000 2>/dev/null || true
           supabase migration repair --status reverted 20260426120000 2>/dev/null || true
           supabase migration repair --status reverted 20260426121000 2>/dev/null || true
@@ -229,36 +243,22 @@ jobs:
           supabase migration repair --status reverted 20260426215100 2>/dev/null || true
           supabase migration repair --status applied 20260426222000 2>/dev/null || true
           supabase migration repair --status applied 20260426235000 2>/dev/null || true
-          # Run migrations with auto-repair retry.
-          # If db push fails with "Remote migration versions not found", extract the
-          # stuck version numbers, repair them as reverted, and retry once.
-          echo "=== supabase db push start ==="
-          PUSH_EXIT=0
-          PUSH_LOG=$(supabase db push --include-all 2>&1) || PUSH_EXIT=$?
-          echo "=== db push exit=$PUSH_EXIT ==="
-          echo "$PUSH_LOG"
-          if [ $PUSH_EXIT -ne 0 ]; then
-            # SQLSTATE 23505 on schema_migrations_pkey = version already applied by a
-            # concurrent run. Mark those as applied so db push skips them.
-            DUP=$(echo "$PUSH_LOG" | grep -E "schema_migrations_pkey|Key \(version\)=" | grep -oE '[0-9]{14}' | sort -u)
-            # "Remote migration versions not found" = DB has version not in local files.
-            STUCK=$(echo "$PUSH_LOG" | grep -oE '[0-9]{14}' | sort -u)
-            if [ -n "$DUP" ]; then
-              echo "Marking as applied (concurrent-run duplicate): $DUP"
-              for v in $DUP; do supabase migration repair --status applied "$v" 2>/dev/null || true; done
-              supabase db push --include-all
-            elif [ -n "$STUCK" ]; then
-              echo "Auto-repairing remote-only versions: $STUCK"
-              for v in $STUCK; do supabase migration repair --status reverted "$v" 2>/dev/null || true; done
-              supabase db push --include-all
-            else
-              echo "=== db push failed (no stuck versions found). See output above. ==="
-              exit 1
-            fi
-          fi
+          python scripts/ci_failure_digest.py supabase-db-push \
+            --include-all \
+            --recent-limit 10 \
+            --log-dir .deploy-logs \
+            --summary "$GITHUB_STEP_SUMMARY"
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
           SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD_PROD }}
+
+      - name: Upload Supabase migration logs
+        if: always() && hashFiles('.deploy-logs/**') != ''
+        uses: actions/upload-artifact@v7
+        with:
+          name: supabase-migration-logs
+          path: .deploy-logs/
+          if-no-files-found: ignore
 
       - name: Cleanup consolidated Edge Functions
         run: |
@@ -451,6 +451,38 @@ jobs:
             form-builder
             sitemap-analytics
             memo-reactions
+            access-control
+            ai-workflow-automation
+            ar-navigation
+            customer-feedback
+            discord-notifications
+            document-esignature
+            family-sharing-manager
+            feature-flags
+            fitness-health-tracker
+            home-iot-manager
+            knowledge-base
+            line-notifications
+            meeting-manager
+            slack-notifications
+            smart-inbox-triage
+            two-factor-auth
+            analytics-export
+            budget-financial-planner
+            dns-domain-manager
+            elearning-course-manager
+            email-template-builder
+            get-stoic-leaderboard
+            github-pr-manager
+            google-calendar-sync
+            language-learning
+            legal-compliance-manager
+            moneyforward-sync
+            recruitment-job-board
+            semantic-search
+            vehicle-fleet-manager
+            viral-video-generator
+            virtual-whiteboard
             schedule-daily-digest
           )
           EXISTING=$(supabase functions list --output json 2>/dev/null | jq -r '.[] | (.slug // .name // empty)' 2>/dev/null || echo "")
@@ -480,34 +512,96 @@ jobs:
           # All browser-facing functions use --no-verify-jwt so that CORS OPTIONS
           # preflight requests (which carry no Authorization header) are not
           # rejected by Supabase's platform-level JWT check.
+          #
+          # Remote dependency CDNs can occasionally return transient 5xx errors
+          # while the Supabase CLI builds each function graph. Retry per
+          # function so one flaky import does not block the whole deploy lane.
+          deploy_function() {
+            local function_name="$1"
+            shift
+            local attempt
+            local sleep_seconds
+
+            for attempt in 1 2 3; do
+              echo "::group::Deploy ${function_name} (attempt ${attempt}/3)"
+              if supabase functions deploy "$function_name" "$@"; then
+                echo "::endgroup::"
+                return 0
+              fi
+
+              local exit_code=$?
+              echo "::endgroup::"
+
+              if [ "$attempt" -eq 3 ]; then
+                echo "::error::supabase functions deploy ${function_name} failed after ${attempt} attempts (exit ${exit_code})"
+                return "$exit_code"
+              fi
+
+              sleep_seconds=$((attempt * 20))
+              echo "::warning::supabase functions deploy ${function_name} failed with ${exit_code}; retrying in ${sleep_seconds}s"
+              sleep "$sleep_seconds"
+            done
+          }
+
+          supabase_deploy_attempt() {
+            local attempt=1
+            local max_attempts=3
+            local delay=20
+            while true; do
+              if command supabase "$@"; then
+                return 0
+              fi
+              if [ "$attempt" -ge "$max_attempts" ]; then
+                echo "::error::supabase $* failed after ${max_attempts} attempts"
+                return 1
+              fi
+              echo "::warning::supabase $* failed (attempt ${attempt}/${max_attempts}); retrying in ${delay}s"
+              sleep "$delay"
+              attempt=$((attempt + 1))
+              delay=$((delay * 2))
+            done
+          }
+
+          supabase() {
+            if [ "${1:-}" = "functions" ] && [ "${2:-}" = "deploy" ]; then
+              supabase_deploy_attempt "$@"
+            else
+              command supabase "$@"
+            fi
+          }
 
           # --- Standalone (5本: 複雑すぎてhub統合困難) ---
           # local-election-intelligence は line 275 にあり (並び順維持のため)
-          supabase functions deploy get-home-dashboard --no-verify-jwt
-          supabase functions deploy ai-assistant --no-verify-jwt
-          supabase functions deploy growth-weekly-digest --no-verify-jwt
-          supabase functions deploy guitar-recording-studio --no-verify-jwt
+          deploy_function get-home-dashboard --no-verify-jwt
+          deploy_function ai-assistant --no-verify-jwt
+          deploy_function growth-weekly-digest --no-verify-jwt
+          deploy_function guitar-recording-studio --no-verify-jwt
 
           # --- Macro-Hub (6本: 旧Tier1全統合) ---
-          supabase functions deploy core-hub --no-verify-jwt
-          supabase functions deploy growth-hub --no-verify-jwt
-          supabase functions deploy ai-hub --no-verify-jwt
-          supabase functions deploy admin-hub --no-verify-jwt
-          supabase functions deploy app-hub --no-verify-jwt
-          supabase functions deploy schedule-hub --no-verify-jwt
+          deploy_function core-hub --no-verify-jwt
+          deploy_function growth-hub --no-verify-jwt
+          deploy_function ai-hub --no-verify-jwt
+          deploy_function admin-hub --no-verify-jwt
+          deploy_function app-hub --no-verify-jwt
+          deploy_function schedule-hub --no-verify-jwt
+          deploy_function stripe-webhook --no-verify-jwt
 
           # --- Mega-Hub (5本: 旧Tier2全統合) ---
-          supabase functions deploy tools-hub --no-verify-jwt
-          supabase functions deploy media-hub --no-verify-jwt
-          supabase functions deploy enterprise-hub --no-verify-jwt
-          supabase functions deploy social-commerce-hub --no-verify-jwt
-          supabase functions deploy lifestyle-hub --no-verify-jwt
-          supabase functions deploy local-election-intelligence --no-verify-jwt
+          deploy_function tools-hub --no-verify-jwt
+          deploy_function media-hub --no-verify-jwt
+          deploy_function enterprise-hub --no-verify-jwt
+          deploy_function social-commerce-hub --no-verify-jwt
+          deploy_function lifestyle-hub --no-verify-jwt
+          deploy_function local-election-intelligence --no-verify-jwt
 
           # --- Public health-check (認証不要・スケジュールタスクからの死活監視用) ---
-          supabase functions deploy health-check --no-verify-jwt
+          deploy_function health-check --no-verify-jwt
+          deploy_function ai-writing-assistant --no-verify-jwt
+          deploy_function viral-video-ad-generator --no-verify-jwt
+          deploy_function memory-search-hub --no-verify-jwt
+          deploy_function mcp-well-known --no-verify-jwt
 
-          # Total: 17 functions deployed (ハードキャップ50本に対し17本 — 余裕33本)
+          # Total: 22 functions deployed (ハードキャップ50本に対し22本 — 余裕28本)
           # memo-reactions → core-hub に統合済み (b4c91bc2 2026-04-24)
           #
           # Hub対応表:
@@ -563,21 +657,67 @@ jobs:
       - name: Write version.json
         run: |
           echo '{"version":"${{ steps.version.outputs.version }}","buildNumber":"${{ github.run_number }}","commit":"${{ github.sha }}","deployedAt":"'"$(date -u +%Y-%m-%dT%H:%M:%SZ)"'"}' > build/web/version.json
+          cp web/release-notes.json build/web/release-notes.json
 
       - name: Cache-bust OGP image URLs
         run: |
           sed -i 's|/ogp\.png"|/ogp.png?v=${{ steps.version.outputs.version }}"|g' build/web/index.html
 
-      - name: Deploy to Firebase Hosting (Production)
-        uses: FirebaseExtended/action-hosting-deploy@v0
-        continue-on-error: true  # 509 Bandwidth Exceeded 発生中 (2026-04-18) — 復旧後に削除
+      - name: Setup Node for Firebase CLI
+        uses: actions/setup-node@v6
         with:
-          repoToken: "${{ secrets.GITHUB_TOKEN }}"
-          firebaseServiceAccount: "${{ secrets.FIREBASE_SERVICE_ACCOUNT_PROD }}"
-          projectId: ${{ secrets.FIREBASE_PROJECT_ID }}
-          channelId: live
+          node-version: "24"
+          cache: npm
+
+      - name: Deploy to Firebase Hosting (Production)
+        id: firebase_cli_deploy
+        continue-on-error: true  # 509 Bandwidth Exceeded 発生中 (2026-04-18) — 復旧後に削除
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          key_file="$(mktemp)"
+          output_file="$(mktemp)"
+          cleanup() {
+            rm -f "$key_file" "$output_file"
+          }
+          trap cleanup EXIT
+
+          printf '%s' '${{ secrets.FIREBASE_SERVICE_ACCOUNT_PROD }}' > "$key_file"
+          export GOOGLE_APPLICATION_CREDENTIALS="$key_file"
+
+          npx -y firebase-tools@latest deploy \
+            --only hosting \
+            --project "${{ secrets.FIREBASE_PROJECT_ID }}" \
+            --json > "$output_file"
+
+          cat "$output_file"
+
+          deploy_url="$(jq -r '.result.hosting[]?.url // empty' "$output_file" | head -n 1)"
+          if [ -z "$deploy_url" ]; then
+            deploy_url="https://${{ secrets.FIREBASE_PROJECT_ID }}.web.app"
+          fi
+
+          echo "details_url=$deploy_url" >> "$GITHUB_OUTPUT"
+          echo "Firebase Hosting live deploy complete: $deploy_url"
         env:
           FIREBASE_CLI_EXPERIMENTS: webframeworks
+
+      - name: Verify deploy reflects current commit
+        continue-on-error: true
+        run: |
+          EXPECTED="${{ github.sha }}"
+          SITE="https://my-web-app-b67f4.web.app/version.json"
+          for i in 1 2 3 4; do
+            sleep 15
+            DEPLOYED=$(curl -sf "$SITE" | python3 -c 'import sys,json; print(json.load(sys.stdin).get("commit",""))' 2>/dev/null || echo "")
+            if [ "$DEPLOYED" = "$EXPECTED" ]; then
+              echo "Deploy verified: $EXPECTED is live"
+              exit 0
+            fi
+            echo "  attempt $i: deployed=$DEPLOYED expected=$EXPECTED"
+          done
+          echo "::warning::Deploy verification: production shows $DEPLOYED, expected $EXPECTED. A later queued run may have superseded this one."
 
       - name: Push Release Tag
         id: push_tag
@@ -609,6 +749,7 @@ jobs:
             - **Environment**: Production
             - **Commit**: ${{ github.sha }}
             - **Deployed Site**: https://${{ secrets.FIREBASE_PROJECT_ID }}.web.app
+            - **Release Notes JSON**: https://${{ secrets.FIREBASE_PROJECT_ID }}.web.app/release-notes.json
           draft: false
           prerelease: false
         env:
@@ -642,7 +783,7 @@ jobs:
             echo "| コミット | \`${SHA}\` |"
             echo "| Actor | ${{ github.actor }} |"
             echo "| 本番URL | https://my-web-app-b67f4.web.app/ |"
-            echo "| Edge Functions | 15本デプロイ済み (ハードキャップ50本以下) |"
+            echo "| Edge Functions | 21本デプロイ済み (ハードキャップ50本以下) |"
           } >> $GITHUB_STEP_SUMMARY
 
   # -----------------------------------------------------------------

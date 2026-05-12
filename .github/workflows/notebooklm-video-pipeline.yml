@@ -48,6 +48,11 @@ on:
         description: 'Output filename slug (e.g. gemini-organizing-tips)'
         required: true
         type: string
+      generate_shorts_package:
+        description: 'Also build 9:16 Shorts package metadata after transcription'
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: write
@@ -67,13 +72,13 @@ jobs:
       YOUTUBE_TOKEN: ${{ secrets.YOUTUBE_TOKEN_JSON }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           token: ${{ secrets.GITHUB_PAT }}
           fetch-depth: 100  # Step 0 dedup needs ≥1h of history (default depth=1 hides past bot commits)
 
       - name: Setup Python 3.12
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: '3.12'
 
@@ -169,6 +174,17 @@ jobs:
             videos/edit/transcripts/${{ inputs.slug }}.json \
             videos/master.srt
 
+      - name: Step 3b - Build Shorts package manifest (optional)
+        if: ${{ inputs.generate_shorts_package }}
+        run: |
+          python scripts/video/build_shorts_package.py \
+            videos/edit/transcripts/${{ inputs.slug }}.json \
+            --source-video videos/${{ inputs.slug }}.mp4 \
+            --source-url "notebooklm://${{ inputs.notebook_id }}/${{ inputs.artifact_id }}" \
+            --title "${{ inputs.title }}" \
+            --output-dir videos/shorts \
+            --count 3
+
       - name: Step 4 — Generate intro/outro cards
         env:
           CARD_TITLE: ${{ inputs.title }}
@@ -210,11 +226,24 @@ jobs:
             -c:v libx264 -preset fast -crf 22 -c:a copy output_D.mp4
           ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1 output_D.mp4
 
+      - name: Step 6c — Add provenance (watermark + metadata) [AI_VIDEO #5]
+        run: |
+          # AI_VIDEO_PRINCIPLES.md 原則 #5 Ethical Provenance & Transparency
+          # 可視ウォーターマーク + メタデータ (title/comment/creation_time/artist) を埋め込み.
+          # source SHA-256 は master.srt (= 字幕として焼き込まれた発話内容) のハッシュ.
+          python scripts/video/add_provenance.py \
+            --input videos/output_D.mp4 \
+            --output videos/output_D_provenanced.mp4 \
+            --title "${{ inputs.title }}" \
+            --series-number "${{ inputs.series_number }}" \
+            --source-file videos/master.srt \
+            --model "NotebookLM Deep Research + Claude Code Win版"
+
       - name: Step 7 — Upload to YouTube (unlisted)
         id: upload
         run: |
           OUT=$(python scripts/upload_youtube.py upload \
-            --file videos/output_D.mp4 \
+            --file videos/output_D_provenanced.mp4 \
             --title "${{ inputs.title }} — 自分株式会社 AI大学解説 #${{ inputs.series_number }}" \
             --description "NotebookLM Deep Research + 自分株式会社 AI大学 編集スタジオで生成。詳細は https://my-web-app-b67f4.web.app/ai-university" \
             --privacy unlisted)

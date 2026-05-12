@@ -27,7 +27,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 2
 
@@ -68,50 +68,51 @@ jobs:
 
             echo "📤 Registering: $TITLE ($DRAFT_PATH)"
 
-            # 既に同一 draft_path が登録済みなら skip (冪等性)
+            # 既に同一 draft_path が登録済みなら content だけ更新して skip (冪等性)
             EXISTING=$(curl -sf \
               "${SUPABASE_URL}/rest/v1/blog_posts?draft_path=eq.${DRAFT_PATH}&select=id" \
               -H "apikey: ${SUPABASE_SERVICE_KEY}" \
               -H "Authorization: Bearer ${SUPABASE_SERVICE_KEY}" 2>/dev/null || echo "[]")
             COUNT=$(echo "$EXISTING" | python3 -c "import sys,json; print(len(json.load(sys.stdin)))" 2>/dev/null || echo "0")
             if [ "$COUNT" -gt "0" ]; then
-              echo "ℹ️ Already registered: $DRAFT_PATH — skipping"
-              continue
-            fi
-
-            # schedule-hub blog.create で登録
-            PAYLOAD=$(TITLE="$TITLE" DRAFT_PATH="$DRAFT_PATH" python3 -c 'import json, os; print(json.dumps({"action": "blog.create", "title": os.environ["TITLE"], "platform": "zenn,qiita,note,hatena,medium,devto,hashnode,substack,github-pages,notion,x-article", "draft_path": os.environ["DRAFT_PATH"]}))')
-
-            RESPONSE=$(curl -s -w "\n%{http_code}" \
-              -X POST \
-              -H "Authorization: Bearer ${SUPABASE_SERVICE_KEY}" \
-              -H "Content-Type: application/json" \
-              -d "$PAYLOAD" \
-              "${SUPABASE_URL}/functions/v1/schedule-hub" \
-              --max-time 15)
-
-            HTTP_CODE=$(echo "$RESPONSE" | tail -1)
-            BODY=$(echo "$RESPONSE" | head -n -1)
-            echo "  HTTP: $HTTP_CODE"
-            echo "$BODY" | python3 -m json.tool 2>/dev/null || echo "$BODY"
-
-            if [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 300 ]; then
-              echo "  ✅ Registered: $TITLE"
-            else
-              echo "  ⚠️ Registration failed (HTTP $HTTP_CODE) — falling back to REST API direct insert"
-              # Fallback: REST API 直接 INSERT
-              ISO_NOW=$(date -u +%Y-%m-%dT%H:%M:%SZ)
-              FALLBACK_PAYLOAD=$(TITLE="$TITLE" DRAFT_PATH="$DRAFT_PATH" ISO_NOW="$ISO_NOW" python3 -c 'import json, os; print(json.dumps({"title": os.environ["TITLE"], "draft_path": os.environ["DRAFT_PATH"], "status": "draft", "target_platforms": ["zenn", "qiita", "note", "hatena", "medium", "devto", "hashnode", "substack", "github-pages", "notion", "x-article"], "created_at": os.environ["ISO_NOW"]}))')
-
-              curl -s -o /dev/null -w "Fallback HTTP: %{http_code}\n" \
-                -X POST \
-                "${SUPABASE_URL}/rest/v1/blog_posts" \
+              echo "ℹ️ Already registered: $DRAFT_PATH — updating content only"
+              # content を最新ファイルで更新 (UI から公開できるよう常に最新化)
+              CONTENT=$(python3 -c "import sys; print(open(sys.argv[1], encoding='utf-8', errors='replace').read()[:60000])" "$DRAFT_PATH" 2>/dev/null || head -c 60000 "$DRAFT_PATH")
+              UPDATE_PAYLOAD=$(CONTENT="$CONTENT" python3 -c 'import json,os; print(json.dumps({"content": os.environ["CONTENT"]}))')
+              curl -s -o /dev/null -w "  Content update HTTP: %{http_code}\n" \
+                -X PATCH \
+                "${SUPABASE_URL}/rest/v1/blog_posts?draft_path=eq.${DRAFT_PATH}" \
                 -H "apikey: ${SUPABASE_SERVICE_KEY}" \
                 -H "Authorization: Bearer ${SUPABASE_SERVICE_KEY}" \
                 -H "Content-Type: application/json" \
                 -H "Prefer: return=minimal" \
-                -d "$FALLBACK_PAYLOAD" \
-                --max-time 10 || echo "  ⚠️ Fallback also failed (non-blocking)"
+                -d "$UPDATE_PAYLOAD" \
+                --max-time 10 || true
+              continue
+            fi
+
+            # コンテンツ読み込み (最大60000文字 — Qiita/dev.to API 上限考慮)
+            CONTENT=$(python3 -c "import sys; print(open(sys.argv[1], encoding='utf-8', errors='replace').read()[:60000])" "$DRAFT_PATH" 2>/dev/null || head -c 60000 "$DRAFT_PATH")
+
+            # blog_posts テーブルに直接 INSERT (content付き)
+            ISO_NOW=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+            INSERT_PAYLOAD=$(TITLE="$TITLE" DRAFT_PATH="$DRAFT_PATH" ISO_NOW="$ISO_NOW" CONTENT="$CONTENT" python3 -c 'import json, os; print(json.dumps({"title": os.environ["TITLE"], "draft_path": os.environ["DRAFT_PATH"], "content": os.environ["CONTENT"], "status": "draft", "target_platforms": ["qiita", "devto"], "created_at": os.environ["ISO_NOW"]}))')
+
+            HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" \
+              -X POST \
+              "${SUPABASE_URL}/rest/v1/blog_posts" \
+              -H "apikey: ${SUPABASE_SERVICE_KEY}" \
+              -H "Authorization: Bearer ${SUPABASE_SERVICE_KEY}" \
+              -H "Content-Type: application/json" \
+              -H "Prefer: return=minimal" \
+              -d "$INSERT_PAYLOAD" \
+              --max-time 15)
+            echo "  HTTP: $HTTP_CODE"
+
+            if [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 300 ]; then
+              echo "  ✅ Registered with content: $TITLE"
+            else
+              echo "  ⚠️ Registration failed (HTTP $HTTP_CODE)"
             fi
           done
 

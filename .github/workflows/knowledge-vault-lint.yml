@@ -1,0 +1,61 @@
+name: Knowledge Vault Lint (memory + docs 健康診断)
+
+# Win版#132 part 105 / 2026-05-01
+# Issues #976 + #1173 dogfood / SECOND_BRAIN #4 + INDIE #1
+# 週次で memory/ + docs/ の orphan / broken link / dup title / missing index 検出
+
+on:
+  schedule:
+    - cron: "0 2 * * 1"  # weekly / 月曜 02:00 UTC (= 11:00 JST)
+  workflow_dispatch: {}
+
+concurrency:
+  group: knowledge-vault-lint
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  lint:
+    name: Knowledge Vault Lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout (full history)
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+          token: ${{ secrets.BYPASS_RULES || github.token }}
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      - name: Compute date tag
+        id: tag
+        run: |
+          DATE=$(TZ=UTC date +'%Y-%m-%d')
+          echo "date=$DATE" >> $GITHUB_OUTPUT
+
+      - name: Run lint
+        run: |
+          # GHA 環境では memory/ は repo 内の memory/ を使う (= local override)
+          python scripts/knowledge_vault_lint.py \
+            --memory-dir memory \
+            --output "docs/knowledge-vault-lint/${{ steps.tag.outputs.date }}.md"
+        continue-on-error: true  # health < 90 でも commit は実施
+
+      - name: Commit lint report
+        run: |
+          git config user.name  "knowledge-vault-lint[bot]"
+          git config user.email "knowledge-vault-lint@users.noreply.github.com"
+          git add docs/knowledge-vault-lint/ || true
+          if git diff --staged --quiet; then
+            echo "no changes"
+          else
+            git commit -m "docs(lint): knowledge vault lint ${{ steps.tag.outputs.date }}"
+            git push origin HEAD:main || git push --force-with-lease origin HEAD:main
+          fi

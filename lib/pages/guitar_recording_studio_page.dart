@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:js_interop';
+import 'dart:js_interop'
+    // ignore: uri_does_not_exist
+    if (dart.library.io) 'package:my_web_app/utils/js_interop_vm_stub.dart';
 import 'dart:math' as math;
 import 'dart:typed_data';
 
@@ -524,6 +526,10 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
   }
 
   Future<void> _playSavedRecording(Map<String, dynamic> recording) async {
+    if (_supabase.auth.currentUser == null) {
+      setState(() => _isLoadingStudio = false);
+      return;
+    }
     final url = await _resolveRecordingPlaybackUrl(recording);
     if (url == null || url.isEmpty) return;
     final audio = web.HTMLAudioElement()..src = url;
@@ -729,6 +735,10 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
   }
 
   Future<void> _fetchSharedRecording(String recordingId) async {
+    if (_supabase.auth.currentUser == null) {
+      setState(() => _isLoadingStudio = false);
+      return;
+    }
     setState(() {
       _isLoadingSharedRecording = true;
       _sharedRecordingError = null;
@@ -767,6 +777,10 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
   }
 
   Future<void> _playSharedRecording() async {
+    if (_supabase.auth.currentUser == null) {
+      setState(() => _isLoadingStudio = false);
+      return;
+    }
     if (_isPlayingShared && _sharedAudioElement != null) {
       _sharedAudioElement!.pause();
       setState(() => _isPlayingShared = false);
@@ -798,6 +812,10 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
   }
 
   Future<void> _fetchStudioData() async {
+    if (_supabase.auth.currentUser == null) {
+      setState(() => _isLoadingStudio = false);
+      return;
+    }
     setState(() => _isLoadingStudio = true);
     try {
       final res = await _supabase.functions.invoke(
@@ -824,6 +842,7 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
         });
       }
     } catch (_) {
+      if (!mounted) return;
       setState(() {
         _presets = [
           'acoustic_fingerpicking',
@@ -844,6 +863,10 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
   }
 
   Future<void> _fetchRecordings() async {
+    if (_supabase.auth.currentUser == null) {
+      setState(() => _isLoadingStudio = false);
+      return;
+    }
     final user = _supabase.auth.currentUser;
     if (user == null) return;
     setState(() => _isLoadingRecordings = true);
@@ -880,6 +903,10 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
   }
 
   Future<void> _fetchPracticeStats() async {
+    if (_supabase.auth.currentUser == null) {
+      setState(() => _isLoadingStudio = false);
+      return;
+    }
     final user = _supabase.auth.currentUser;
     if (user == null) {
       setState(() {
@@ -921,6 +948,10 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
     String recordingId, {
     bool isPublic = false,
   }) async {
+    if (_supabase.auth.currentUser == null) {
+      setState(() => _isLoadingStudio = false);
+      return;
+    }
     setState(() => _isPostingToX = true);
     try {
       final user = _supabase.auth.currentUser;
@@ -980,6 +1011,10 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
   }
 
   Future<void> _fetchAIAnalysis() async {
+    if (_supabase.auth.currentUser == null) {
+      setState(() => _isLoadingStudio = false);
+      return;
+    }
     final user = _supabase.auth.currentUser;
     if (user == null) return;
     setState(() => _isLoadingAI = true);
@@ -1001,6 +1036,10 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
   }
 
   Future<void> _generateAvatarCoachFeedback() async {
+    if (_supabase.auth.currentUser == null) {
+      setState(() => _isLoadingStudio = false);
+      return;
+    }
     final user = _supabase.auth.currentUser;
     final latestFeedback = (_latestRecordingAiFeedback ?? '').trim();
     if (user == null) return;
@@ -1104,6 +1143,10 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
   }
 
   Future<void> _deleteRecording(String recordingId) async {
+    if (_supabase.auth.currentUser == null) {
+      setState(() => _isLoadingStudio = false);
+      return;
+    }
     try {
       await _supabase.functions.invoke(
         'guitar-recording-studio',
@@ -1135,6 +1178,10 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
   }
 
   Future<void> _fetchChordDetail(String chordName) async {
+    if (_supabase.auth.currentUser == null) {
+      setState(() => _isLoadingStudio = false);
+      return;
+    }
     setState(() => _chordDetail = null);
     try {
       final res = await _supabase.functions.invoke(
@@ -1519,6 +1566,10 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
   }
 
   Future<void> _saveRecording() async {
+    if (_supabase.auth.currentUser == null) {
+      setState(() => _isLoadingStudio = false);
+      return;
+    }
     final user = _supabase.auth.currentUser;
     if (user == null) {
       setState(() => _errorMessage = 'ログインが必要です');

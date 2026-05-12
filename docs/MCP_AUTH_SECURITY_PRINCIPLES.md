@@ -250,7 +250,7 @@ URL だけ設定すれば後は自動認可) はこのメタデータがあっ�
 - `sampling` capability は本サービスでは使わない方向 → 申告から除外
   (= Sampling-Based Injection 攻撃ベクトルの完全排除)
 - `tools/list` の各 tool は最小 input/output スキーマで定義 (フィールド爆発防止)
-- 将来 AttestMCP 対応時の migration plan を docs/architecture/mcp-attest-roadmap.md に
+- 将来 AttestMCP 対応時の migration plan を docs/mcp-attest-roadmap.md に
   下書きしておく (実装は不要 / 設計負債を可視化)
 
 ---
@@ -303,7 +303,7 @@ ai-hub team の運用 runbook に追加。
 「実装当時の仕様策定状況」を天秤にかけ **意図的に DCR を継続採用**。設計判断の
 根拠を残す。
 
-**応用**: docs/architecture/mcp-dcr-vs-cimd-decision.md を作り、
+**応用**: docs/mcp-dcr-vs-cimd-decision.md を作り、
 「自分株式会社では Phase 1 で DCR を採用 / Phase 2 (2027 Q1) で CIMD migration 検討」
 を明記。設計判断の年代記化。
 
@@ -351,6 +351,7 @@ ai-hub team の運用 runbook に追加。
 | ai-hub | ❌ | △ | ❌ | △ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | 0.5/10 |
 | schedule-hub | ❌ | △ | ❌ | △ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | 0.5/10 |
 | ai-assistant | ❌ | △ | ❌ | △ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | 0.5/10 |
+| memory-search-hub | ❌ | ✅ | ✅ | ✅ | ✅ | △ | △ | ❌ | ❌ | ✅ | 5/10 |
 
 → **どの EF も MCP 公開には 9.5 ポイント以上のギャップ**。MCP 化前に
 mcp_auth_guard.ts + mcp_audit_log migration + WorkOS 統合 +
@@ -398,3 +399,4 @@ mcp-well-known EF + OAuth 2.1/PKCE 対応の **5 点が最低限必要**。
 | 2026-04-28 | 初版 (NotebookLM `1b808a60-85d6-49f7-ab80-0e90a43cf1d8` から蒸留 / Web ソース 9 件統合 / 7 原則) |
 | 2026-04-28 | NotebookLM 再 auth 後の verify query で大幅補強 (part 43): 7 原則に caveat 追記 + 新原則 #8 OAuth 2.1+PKCE / #9 .well-known / #10 最小権限 を追加 = 10 原則 / arXiv 攻撃ベクトル A/B/C 特定 / Mercari Terraform IaC tip 追加 / 実装最低基準を 3 点 → 5 点に厳格化 |
 | 2026-04-28 | 基盤 skeleton 着手 (part 49): supabase/functions/_shared/mcp_auth_guard.ts (validateBearer / requireScope / logMcpInvocation シグネチャ + dev bypass stub) + migration mcp_oauth_clients (RFC 7591 DCR / suspended flag / sha256 hash) + migration mcp_audit_log (3 index / response_preview 200 char) を新規追加。MCP_AUTH score 0/10 → 2/10 (原則 #2 deny-by-default + #7 audit log の枠組み完成 / 中身は part 50+)。 |
+| 2026-04-29 | Codex#2: memory-search-hub を MCP_AUTH guarded EF として追加。Bearer deny-by-default / resource scope / Streamable HTTP JSON / prompt delimiter / least-privilege read-only actions を適用。WorkOS JWT 本検証・OAuth2.1 PKCE・well-known は未実装のため public 公開は不可、内部/service-role + dev bypass 限定。 |

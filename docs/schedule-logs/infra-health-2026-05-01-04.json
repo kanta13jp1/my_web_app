@@ -1,0 +1,18 @@
+{
+  "task": "infra-health-check",
+  "ran_at": "2026-05-01T04:30:00+09:00",
+  "supabase_health_check_ef": {
+    "status": "skipped",
+    "reason": "SUPABASE_SERVICE_KEY env var not set in this Claude Code session; cannot authenticate /functions/v1/health-check",
+    "recurring": true,
+    "history": ["memory obs 588/589/647", "incident-reports/2026-04-18-ai-assistant-429.md"]
+  },
+  "firebase_hosting": {
+    "url": "https://my-web-app-b67f4.web.app/",
+    "status": "ok",
+    "title": "自分株式会社 | AIが今日の最優先タスクを整理",
+    "note": "WebFetch sees pre-hydration HTML with 'Loading application...' — expected Flutter Web async hydration, not an error"
+  },
+  "incident_created": false,
+  "action": "log only; no fix required"
+}

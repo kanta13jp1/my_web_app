@@ -1,0 +1,65 @@
+name: Stale EF Migration Completeness Check
+
+on:
+  pull_request:
+    paths:
+      - 'lib/**/*.dart'
+      - 'supabase/functions/**'
+      - '.github/workflows/deploy-prod.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'lib/**/*.dart'
+      - 'supabase/functions/**'
+      - '.github/workflows/deploy-prod.yml'
+  schedule:
+    - cron: '0 0 * * 1'  # weekly Monday 09:00 JST
+  workflow_dispatch:
+
+jobs:
+  audit:
+    name: Audit stale EF references
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Run stale EF audit
+        run: python3 scripts/audit_hub_migration_completeness.py
+
+      - name: Check EF coverage (phantom EF detection)
+        run: python3 scripts/check_ef_coverage.py
+
+      - name: Create Issue on failure
+        if: failure() && github.event_name != 'pull_request'
+        uses: actions/github-script@v9
+        with:
+          script: |
+            const title = '[stale-ef] Stale EF reference detected in client code';
+            const body = [
+              '## Stale EF References Detected',
+              '',
+              'The `audit_hub_migration_completeness.py` script found client code still',
+              'referencing retired Edge Functions. These EFs are in `DEAD_LIST` and are',
+              'deleted from Supabase, so callers will receive 404 errors.',
+              '',
+              '**Triggered by**: ' + context.sha.substring(0, 8),
+              '**Workflow run**: ' + context.serverUrl + '/' + context.repo.owner + '/' + context.repo.repo + '/actions/runs/' + context.runId,
+              '',
+              '**Action required**: Migrate each stale `invoke()` or URL reference to the',
+              'appropriate hub EF action. See `scripts/audit_hub_migration_completeness.py`',
+              'output for the exact files and EF names.',
+              '',
+              'Labels: `ops`, `stale-ef`, `priority:high`',
+            ].join('\n');
+
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title,
+              body,
+              labels: ['ops', 'stale-ef'],
+            });

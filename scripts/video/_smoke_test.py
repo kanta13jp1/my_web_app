@@ -213,12 +213,120 @@ def test_make_cards() -> None:
             assert img.getpixel((0, 0)) == (15, 17, 30), f"{path.name} bg pixel(0,0) != #0F111E"
 
 
+def test_add_provenance_cmd_construction() -> None:
+    """add_provenance.py builds an ffmpeg cmd containing watermark + metadata."""
+    add_provenance = REPO_ROOT / "scripts" / "video" / "add_provenance.py"
+    assert add_provenance.exists(), f"missing {add_provenance}"
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        tmp = Path(tmpdir)
+        in_mp4 = tmp / "in.mp4"
+        in_mp4.write_bytes(b"")
+        out_mp4 = tmp / "out.mp4"
+
+        proc = run_subprocess(
+            [
+                PYTHON,
+                str(add_provenance),
+                "--input", str(in_mp4),
+                "--output", str(out_mp4),
+                "--title", "Smoke Test",
+                "--series-number", "99",
+                "--source-sha256", "deadbeef",
+                "--print-cmd-only",
+            ],
+        )
+        cmd_str = proc.stdout
+        assert "drawtext" in cmd_str, "ffmpeg cmd missing drawtext (watermark)"
+        assert "自分株式会社 AI 生成" in cmd_str, "watermark text missing"
+        assert "-metadata" in cmd_str, "ffmpeg cmd missing -metadata flags"
+        assert "title=Smoke Test" in cmd_str, "metadata title not propagated"
+        assert "series #99" in cmd_str, "metadata comment series number not propagated"
+        assert "deadbeef" in cmd_str, "metadata source SHA-256 not propagated"
+        assert "creation_time=" in cmd_str, "metadata creation_time missing"
+
+
+def test_build_shorts_package() -> None:
+    """build_shorts_package.py emits 9:16 clip manifests, subtitle files, and ffmpeg commands."""
+    build_shorts = REPO_ROOT / "scripts" / "video" / "build_shorts_package.py"
+    assert build_shorts.exists(), f"missing {build_shorts}"
+
+    words = []
+    terms = [
+        "AI ",
+        "automation ",
+        "today? ",
+        "Codex ",
+        "NotebookLM ",
+        "workflow ",
+        "growth ",
+        "lesson. ",
+    ]
+    for i in range(120):
+        words.append({
+            "text": terms[i % len(terms)],
+            "start": float(i),
+            "end": float(i) + 0.6,
+            "type": "word",
+        })
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        tmp = Path(tmpdir)
+        transcript = tmp / "transcript.json"
+        out_dir = tmp / "shorts"
+        transcript.write_text(json.dumps({"words": words}, ensure_ascii=False), encoding="utf-8")
+
+        run_subprocess([
+            PYTHON,
+            str(build_shorts),
+            str(transcript),
+            "--source-url",
+            "https://youtu.be/smoke-test",
+            "--title",
+            "Smoke AI University lesson",
+            "--output-dir",
+            str(out_dir),
+            "--count",
+            "3",
+            "--min-sec",
+            "10",
+            "--max-sec",
+            "15",
+        ])
+
+        package_path = out_dir / "shorts_package.json"
+        assert package_path.exists(), "shorts_package.json was not created"
+        package = json.loads(package_path.read_text(encoding="utf-8"))
+
+        assert package["schema"] == "jibun.ai_university.shorts_package.v1"
+        assert len(package["clips"]) == 3, package["clips"]
+        assert len(package["social_posts"]) == 6, package["social_posts"]
+        assert package["source"]["transcript_sha256"], "missing transcript hash"
+
+        for clip in package["clips"]:
+            assert clip["duration_sec"] <= 15.0, clip
+            assert clip["duration_sec"] >= 10.0, clip
+            assert clip["caption_style"]["validation"]["within_safe_zone"] is True
+            srt_path = out_dir / clip["files"]["srt"]
+            vtt_path = out_dir / clip["files"]["vtt"]
+            ffmpeg_path = out_dir / clip["files"]["ffmpeg_command"]
+            assert srt_path.exists(), f"missing {srt_path}"
+            assert vtt_path.exists(), f"missing {vtt_path}"
+            assert ffmpeg_path.exists(), f"missing {ffmpeg_path}"
+            command = ffmpeg_path.read_text(encoding="utf-8")
+            assert "scale=1080:1920" in command, command
+            assert "crop=1080:1920" in command, command
+            assert "subtitles=" in command, command
+
+
 def main() -> int:
     cases = [
         ("build_srt", test_build_srt),
         ("build_srt_diarize", test_build_srt_diarize),
         ("embed_video", test_embed_video_dup_guard),
         ("make_cards", test_make_cards),
+        ("add_provenance", test_add_provenance_cmd_construction),
+        ("build_shorts_package", test_build_shorts_package),
     ]
     failed = 0
     for name, fn in cases:

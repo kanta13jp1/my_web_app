@@ -459,6 +459,7 @@ class _CopyCodeButtonState extends State<_CopyCodeButton> {
     if (!mounted) return;
     setState(() => _copied = true);
     await Future.delayed(const Duration(seconds: 2));
+    if (!mounted) return;
     if (mounted) setState(() => _copied = false);
   }
 

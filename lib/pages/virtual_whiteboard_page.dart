@@ -51,8 +51,8 @@ class _VirtualWhiteboardPageState extends State<VirtualWhiteboardPage>
     });
     try {
       final response = await _supabase.functions.invoke(
-        'virtual-whiteboard',
-        queryParameters: {'view': 'my_boards'},
+        'media-hub',
+        body: {'action': 'whiteboard.list'},
       );
       final data = response.data;
       if (data is Map<String, dynamic> && data['boards'] is List) {
@@ -72,8 +72,8 @@ class _VirtualWhiteboardPageState extends State<VirtualWhiteboardPage>
   Future<void> _fetchTemplates() async {
     try {
       final response = await _supabase.functions.invoke(
-        'virtual-whiteboard',
-        queryParameters: {'view': 'config'},
+        'media-hub',
+        body: {'action': 'whiteboard.config'},
       );
       final data = response.data;
       if (data is Map<String, dynamic> && data['templates'] is List) {
@@ -91,8 +91,8 @@ class _VirtualWhiteboardPageState extends State<VirtualWhiteboardPage>
     if (boardId.isEmpty) return;
     try {
       final response = await _supabase.functions.invoke(
-        'virtual-whiteboard',
-        queryParameters: {'view': 'board', 'board_id': boardId},
+        'media-hub',
+        body: {'action': 'whiteboard.get', 'board_id': boardId},
       );
       final data = response.data;
       if (data is Map<String, dynamic> && data['board'] is Map) {
@@ -197,9 +197,9 @@ class _VirtualWhiteboardPageState extends State<VirtualWhiteboardPage>
     if (_boardNameCtrl.text.trim().isEmpty) return;
     try {
       await _supabase.functions.invoke(
-        'virtual-whiteboard',
+        'media-hub',
         body: {
-          'action': 'create_board',
+          'action': 'whiteboard.create',
           'name': _boardNameCtrl.text.trim(),
           if (_selectedTemplateId != null) 'template_id': _selectedTemplateId,
         },
@@ -299,9 +299,9 @@ class _VirtualWhiteboardPageState extends State<VirtualWhiteboardPage>
     if (confirmed != true) return;
     try {
       await _supabase.functions.invoke(
-        'virtual-whiteboard',
+        'media-hub',
         body: {
-          'action': 'add_element',
+          'action': 'whiteboard.add_element',
           'board_id': boardId,
           'type': 'sticky_note',
           'content': textCtrl.text.trim(),

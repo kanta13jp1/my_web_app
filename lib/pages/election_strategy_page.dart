@@ -74,6 +74,7 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
     String? imageBase64,
     String? mimeType,
   }) async {
+    if (_supabase.auth.currentUser == null) return '';
     final body = <String, dynamic>{
       'action': 'generate',
       'model': model,
@@ -142,6 +143,7 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
   Future<void> _fetchCandidates() async {
     try {
       final data = await _supabase.from('candidates').select();
+      if (!mounted) return;
       setState(() {
         _candidates = List<Map<String, dynamic>>.from(data);
       });
@@ -152,6 +154,7 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
 
   // ★ GitHub Actionsを手動トリガー (Edge Function経由)
   Future<void> _triggerBatchAnalysis() async {
+    if (_supabase.auth.currentUser == null) return;
     setState(() => _isBusy = true);
     try {
       final response = await _supabase.functions
@@ -231,7 +234,7 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
     } catch (e) {
       debugPrint('AI Logistics Error: $e');
     } finally {
-      setState(() => _isBusy = false);
+      if (mounted) setState(() => _isBusy = false);
     }
   }
 
@@ -276,7 +279,7 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
     } catch (e) {
       debugPrint('Error: $e');
     } finally {
-      setState(() => _isBusy = false);
+      if (mounted) setState(() => _isBusy = false);
     }
   }
 
@@ -303,7 +306,7 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
             .showSnackBar(SnackBar(content: Text('エラー: $e')));
       }
     } finally {
-      setState(() => _isBusy = false);
+      if (mounted) setState(() => _isBusy = false);
     }
   }
 
@@ -344,7 +347,7 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
             .showSnackBar(SnackBar(content: Text('エラー: $e')));
       }
     } finally {
-      setState(() => _isBusy = false);
+      if (mounted) setState(() => _isBusy = false);
     }
   }
 
@@ -354,6 +357,7 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
     final XFile? image =
         await picker.pickImage(source: ImageSource.gallery, maxWidth: 800);
     if (image == null) return;
+    if (!mounted) return;
     setState(() => _isBusy = true);
     try {
       final bytes = await image.readAsBytes();
@@ -396,7 +400,7 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
             .showSnackBar(SnackBar(content: Text('画像分析エラー: $e')));
       }
     } finally {
-      setState(() => _isBusy = false);
+      if (mounted) setState(() => _isBusy = false);
     }
   }
 

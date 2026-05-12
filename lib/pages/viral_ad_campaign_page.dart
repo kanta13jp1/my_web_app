@@ -98,6 +98,7 @@ class _ViralAdCampaignPageState extends State<ViralAdCampaignPage> {
         );
       }
     } catch (e) {
+      if (!mounted) return;
       setState(() => _errorMessage = 'プレビュー取得エラー: $e');
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -142,6 +143,7 @@ class _ViralAdCampaignPageState extends State<ViralAdCampaignPage> {
         }
       }
     } catch (e) {
+      if (!mounted) return;
       setState(() => _errorMessage = 'キャンペーンエラー: $e');
     } finally {
       if (mounted) setState(() => _isLoading = false);

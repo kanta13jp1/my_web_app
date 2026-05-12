@@ -38,6 +38,7 @@ class _MySkillsPageState extends State<MySkillsPage> {
         body: {'action': 'list_skills'},
       );
       final data = res.data as Map<String, dynamic>?;
+      if (!mounted) return;
       setState(() {
         _skills = List<Map<String, dynamic>>.from(
           (data?['skills'] as List?) ?? [],
@@ -45,6 +46,7 @@ class _MySkillsPageState extends State<MySkillsPage> {
         _isLoading = false;
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _error = e.toString();
         _isLoading = false;

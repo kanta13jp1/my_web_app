@@ -13,6 +13,16 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 ])
 import 'ai_status_page_test.mocks.dart';
 
+class _FakeUser extends Fake implements User {
+  @override
+  String get id => 'test-user-id';
+}
+
+class _FakeGoTrueClient extends Fake implements GoTrueClient {
+  @override
+  User? get currentUser => _FakeUser();
+}
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -24,6 +34,7 @@ void main() {
     mockSupabaseClient = MockSupabaseClient();
     mockFunctionsClient = MockFunctionsClient();
     when(mockSupabaseClient.functions).thenReturn(mockFunctionsClient);
+    when(mockSupabaseClient.auth).thenReturn(_FakeGoTrueClient());
   });
 
   Widget createTestWidget() {

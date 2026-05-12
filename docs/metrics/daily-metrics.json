@@ -1,65 +1,14 @@
 {
   "success": true,
   "digest": {
-    "date": "2026-04-25",
+    "date": "2026-05-11",
     "users": {
-      "total": 21
+      "total": 37
     },
     "featureRequests": {
-      "newToday": 10,
+      "newToday": 0,
       "openCount": 41,
-      "newTodayList": [
-        {
-          "id": "166e708b-675e-4794-aaaa-185e14d23f7b",
-          "title": "【Poolside AI】4インスタンス体制の競争優位: Poolside/Devinは単一エージェント。当プロジェクトの Multi-AIアーキテクチャは独自の強み",
-          "created_at": "2026-04-25T16:58:54.048473+00:00"
-        },
-        {
-          "id": "0dedcb39-3dda-4985-8c43-e375e2e7b1d5",
-          "title": "【Poolside AI】将来のai-assistant EF: Poolside MalibuをDartコード生成オプションとして組み込む余地あり",
-          "created_at": "2026-04-25T16:58:37.308105+00:00"
-        },
-        {
-          "id": "90a8082e-ab55-4d65-a2a8-ff74b0a89011",
-          "title": "【Poolside AI】Claude Codeの立ち位置確認：Poolside/Devinの台頭により 「コーディングAI」競争が激化→Claude Codeの差別化は「プロジェクト文脈の深い理解」 と「マルチインスタンス協調」",
-          "created_at": "2026-04-25T16:58:25.453414+00:00"
-        },
-        {
-          "id": "c5b247f8-85cf-444c-8330-012e5ce60862",
-          "title": "【Tome】競合比較資料の自動更新（Airtable データ連携）",
-          "created_at": "2026-04-25T16:49:45.218425+00:00"
-        },
-        {
-          "id": "372e05b2-96cf-436d-b4c7-f7df6b5c45b1",
-          "title": "【Tome】AI大学コンテンツの四角か（インフォグラフィック → Tomeページ）",
-          "created_at": "2026-04-25T16:49:35.08904+00:00"
-        },
-        {
-          "id": "cf500c0f-d745-4115-a3bc-83a8386eb335",
-          "title": "【Tome】プレゼン資料の自動生成（投資家向け / 社内報告）",
-          "created_at": "2026-04-25T16:49:25.403186+00:00"
-        },
-        {
-          "id": "dca87360-af05-4162-8bcc-bc52f708df42",
-          "title": "【Krisp】SDKを使った音声機能組み込み（将来のAIコーチ機能）",
-          "created_at": "2026-04-25T16:18:05.242601+00:00"
-        },
-        {
-          "id": "dd2f8653-ab56-4fcb-b860-c5476e26df09",
-          "title": "【Krisp】投資家面談・クライアントコール品質向上",
-          "created_at": "2026-04-25T16:17:46.908902+00:00"
-        },
-        {
-          "id": "2786812f-c50d-44ea-bdd3-37aa223ada78",
-          "title": "【Krisp】AI大学 Tech Talk / Podcast 収録のノイズ除去",
-          "created_at": "2026-04-25T16:17:31.684959+00:00"
-        },
-        {
-          "id": "65601679-0f40-49ba-93b1-d5735654c803",
-          "title": "【Krisp】リモートミーティング環境改善（雑音多い在宅／カフェ作業時）",
-          "created_at": "2026-04-25T16:17:15.922723+00:00"
-        }
-      ],
+      "newTodayList": [],
       "topOpen": [
         {
           "title": "AI大学をもっと改善して",
@@ -85,27 +34,27 @@
     },
     "recentAchievements": [
       {
-        "title": "user タスク進捗報告 + NotebookLM 蓄積基盤 (Win#132 part 19)",
-        "completed_at": "2026-04-26T00:00:00+00:00"
+        "title": "Codex #1: Issue #1964 FinTech disruption / Trading x AI seed",
+        "completed_at": "2026-05-12T00:00:00+00:00"
       },
       {
-        "title": "GitHub Issues <-> WBS sync metadata",
-        "completed_at": "2026-04-26T00:00:00+00:00"
+        "title": "Codex #1: prioritized GitHub Issue-linked WBS task dates",
+        "completed_at": "2026-05-11T15:03:02.581237+00:00"
       },
       {
-        "title": "user タスク進捗報告 + NotebookLM 蓄積基盤 (Win#132 part 19)",
-        "completed_at": "2026-04-26T00:00:00+00:00"
+        "title": "Codex #1: WBS dedup v2 active issue uniqueness",
+        "completed_at": "2026-05-11T13:10:07.632842+00:00"
       },
       {
-        "title": "user タスク進捗報告 + NotebookLM 蓄積基盤 (Win#132 part 19)",
-        "completed_at": "2026-04-26T00:00:00+00:00"
+        "title": "Codex #1: prioritized additional-request WBS task dates",
+        "completed_at": "2026-05-11T10:57:06.373613+00:00"
       },
       {
-        "title": "user タスク進捗報告 + NotebookLM 蓄積基盤 (Win#132 part 19)",
-        "completed_at": "2026-04-26T00:00:00+00:00"
+        "title": "Codex #1: completed duplicate GitHub-origin WBS rows",
+        "completed_at": "2026-05-11T00:00:00+00:00"
       }
     ]
   },
-  "fetched_at": "2026-04-26T07:47:20+09:00",
-  "report_date": "2026-04-26"
+  "fetched_at": "2026-05-12T07:49:33+09:00",
+  "report_date": "2026-05-12"
 }

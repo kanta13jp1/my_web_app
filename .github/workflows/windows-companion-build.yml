@@ -1,0 +1,136 @@
+name: Build Windows Companion App
+
+on:
+  workflow_dispatch:
+    inputs:
+      publish_release:
+        description: 'Publish Windows Companion artifacts to GitHub Releases'
+        required: true
+        default: false
+        type: boolean
+      release_tag:
+        description: 'Release tag to create when publish_release is true'
+        required: false
+        default: 'windows-companion-latest'
+        type: string
+  push:
+    tags:
+      - 'windows-companion-v*'
+
+permissions:
+  contents: write
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+concurrency:
+  group: windows-companion-build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-windows:
+    name: Build Windows ZIP/MSIX
+    runs-on: windows-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.38.x'
+          channel: 'stable'
+          cache: true
+
+      - name: Enable Windows desktop
+        run: flutter config --enable-windows-desktop
+
+      - name: Enable Git long paths
+        run: git config --global core.longpaths true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Analyze Windows companion surface
+        run: |
+          flutter analyze `
+            lib/windows_companion_main.dart `
+            lib/pages/local_smart_cleanup_page.dart `
+            lib/pages/windows_app_install_page.dart `
+            lib/services/local_cleanup_result.dart `
+            lib/services/local_cleanup_service.dart `
+            lib/services/local_cleanup_service_io.dart `
+            lib/services/local_cleanup_service_stub.dart
+
+      - name: Build Windows release
+        run: flutter build windows --release --no-tree-shake-icons --target lib/windows_companion_main.dart
+
+      - name: Package Windows release
+        shell: pwsh
+        run: |
+          $releaseDir = Join-Path $PWD 'build\windows\x64\runner\Release'
+          if (-not (Test-Path -LiteralPath $releaseDir)) {
+            throw "Windows release directory not found: $releaseDir"
+          }
+          $scriptSource = Join-Path $PWD 'tools\windows-companion\SmartCleanup'
+          $scriptDest = Join-Path $releaseDir 'scripts\SmartCleanup'
+          New-Item -ItemType Directory -Force -Path $scriptDest | Out-Null
+          Copy-Item -LiteralPath (Join-Path $scriptSource 'Invoke-SmartCleanup.ps1') -Destination $scriptDest -Force
+          Copy-Item -LiteralPath (Join-Path $scriptSource 'Invoke-ApprovedCleanup.ps1') -Destination $scriptDest -Force
+          $distDir = Join-Path $PWD 'dist'
+          New-Item -ItemType Directory -Force -Path $distDir | Out-Null
+          $zipPath = Join-Path $distDir 'jibun-windows-companion.zip'
+          Compress-Archive -Path (Join-Path $releaseDir '*') -DestinationPath $zipPath -Force
+          Get-Item -LiteralPath $zipPath | Select-Object FullName, Length, LastWriteTime
+
+      - name: Package and sign Windows MSIX
+        shell: pwsh
+        env:
+          WINDOWS_MSIX_PFX_BASE64: ${{ secrets.WINDOWS_MSIX_PFX_BASE64 }}
+          WINDOWS_MSIX_PFX_PASSWORD: ${{ secrets.WINDOWS_MSIX_PFX_PASSWORD }}
+          WINDOWS_MSIX_PUBLISHER: ${{ secrets.WINDOWS_MSIX_PUBLISHER }}
+          WINDOWS_MSIX_PUBLISHER_DISPLAY_NAME: ${{ secrets.WINDOWS_MSIX_PUBLISHER_DISPLAY_NAME }}
+        run: |
+          $releaseDir = Join-Path $PWD 'build\windows\x64\runner\Release'
+          $distDir = Join-Path $PWD 'dist'
+          $publisher = if ($env:WINDOWS_MSIX_PUBLISHER) { $env:WINDOWS_MSIX_PUBLISHER } else { 'CN=Jibun Windows Companion' }
+          $publisherDisplayName = if ($env:WINDOWS_MSIX_PUBLISHER_DISPLAY_NAME) { $env:WINDOWS_MSIX_PUBLISHER_DISPLAY_NAME } else { 'Jibun Inc.' }
+          $msixVersion = "1.0.${{ github.run_number }}.${{ github.run_attempt }}"
+          .\tools\windows-companion\msix\New-WindowsCompanionMsix.ps1 `
+            -ReleaseDir $releaseDir `
+            -OutputDir $distDir `
+            -Version $msixVersion `
+            -Publisher $publisher `
+            -PublisherDisplayName $publisherDisplayName `
+            -CertificateBase64 $env:WINDOWS_MSIX_PFX_BASE64 `
+            -CertificatePassword $env:WINDOWS_MSIX_PFX_PASSWORD
+
+      - name: Upload Windows artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: jibun-windows-companion
+          path: |
+            dist/jibun-windows-companion.zip
+            dist/jibun-windows-companion.msix
+            dist/jibun-windows-companion.cer
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Publish GitHub Release asset
+        if: startsWith(github.ref, 'refs/tags/windows-companion-v') || inputs.publish_release == true
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: ${{ startsWith(github.ref, 'refs/tags/windows-companion-v') && github.ref_name || inputs.release_tag }}
+          name: Jibun Windows Companion
+          body: |
+            Windows companion app build for local smart cleanup workflows.
+
+            Prefer `jibun-windows-companion.msix` for installation.
+            If the MSIX is self-signed, import `jibun-windows-companion.cer` into Trusted People first.
+            `jibun-windows-companion.zip` remains available as the portable fallback.
+          files: |
+            dist/jibun-windows-companion.zip
+            dist/jibun-windows-companion.msix
+            dist/jibun-windows-companion.cer

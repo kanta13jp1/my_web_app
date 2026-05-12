@@ -1,0 +1,57 @@
+name: Build in Public Extract (weekly)
+
+# Win版#132 part 113 / 2026-05-01
+# WBS Issue #1125 Phase 2 / INDIE_DEV_VELOCITY #7 dogfood
+# scripts/build_in_public_extract.py を weekly 自走 → docs/build-in-public/ に draft 蓄積
+
+on:
+  schedule:
+    - cron: "0 3 * * 5"  # weekly / 金曜 03:00 UTC (= 12:00 JST)
+  workflow_dispatch:
+    inputs:
+      days:
+        description: 'extract window (days)'
+        required: false
+        default: '7'
+
+concurrency:
+  group: build-in-public-extract
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  extract:
+    name: Build in Public Extract
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 5
+          token: ${{ secrets.BYPASS_RULES || github.token }}
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      - name: Run extract
+        run: |
+          DAYS="${{ github.event.inputs.days || '7' }}"
+          python scripts/build_in_public_extract.py --days "$DAYS"
+
+      - name: Commit drafts
+        run: |
+          git config user.name  "build-in-public-extract[bot]"
+          git config user.email "build-in-public-extract@users.noreply.github.com"
+          git add docs/build-in-public/ || true
+          if git diff --staged --quiet; then
+            echo "no changes"
+          else
+            git commit -m "docs(build-in-public): weekly extract $(TZ=UTC date +'%Y-%m-%d')"
+            git push origin HEAD:main || git push --force-with-lease origin HEAD:main
+          fi

@@ -23,6 +23,10 @@ class _ChangelogManagerPageState extends State<ChangelogManagerPage> {
   }
 
   Future<void> _fetchChangelog() async {
+    if (_supabase.auth.currentUser == null) {
+      setState(() => _isLoading = false);
+      return;
+    }
     setState(() {
       _isLoading = true;
       _errorMessage = null;
@@ -32,6 +36,7 @@ class _ChangelogManagerPageState extends State<ChangelogManagerPage> {
           .invoke('app-hub', body: {'action': 'changelog.list'});
       if (res.data != null) {
         final data = res.data as Map<String, dynamic>;
+        if (!mounted) return;
         setState(() {
           _entries = List<Map<String, dynamic>>.from(
             data['entries'] as List? ?? [],
@@ -39,9 +44,10 @@ class _ChangelogManagerPageState extends State<ChangelogManagerPage> {
         });
       }
     } catch (e) {
+      if (!mounted) return;
       setState(() => _errorMessage = e.toString());
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 

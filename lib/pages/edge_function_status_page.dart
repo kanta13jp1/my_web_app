@@ -198,6 +198,10 @@ class _EdgeFunctionStatusPageState extends State<EdgeFunctionStatusPage> {
   /// 到達できれば (2xx / 4xx 含む) 「生存」と判定する。
   /// CORS / network error / 5xx のみ「接続失敗」扱い。
   Future<void> _testFunction(String name) async {
+    if (_supabase.auth.currentUser == null) {
+      setState(() => _loading = false);
+      return;
+    }
     setState(() => _loading = true);
     try {
       final bool isHub = name.endsWith('-hub');

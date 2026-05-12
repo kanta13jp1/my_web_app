@@ -28,6 +28,7 @@ class _AiUniversityBadgesPageState extends State<AiUniversityBadgesPage> {
         body: {'action': 'university.badges'},
       );
       final data = res.data;
+      if (!mounted) return;
       setState(() {
         if (data is Map && data['badges'] is List) {
           _badges = data['badges'] as List;
@@ -38,9 +39,10 @@ class _AiUniversityBadgesPageState extends State<AiUniversityBadgesPage> {
         }
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() => _error = e.toString());
     } finally {
-      setState(() => _loading = false);
+      if (mounted) setState(() => _loading = false);
     }
   }
 

@@ -62,8 +62,8 @@ class _SlackNotificationPageState extends State<SlackNotificationPage> {
     });
     try {
       final res = await _supabase.functions.invoke(
-        'slack-notifications',
-        body: {'action': 'get_config'},
+        'tools-hub',
+        body: {'action': 'slack.get_config'},
       );
       final data = res.data;
       if (data is Map<String, dynamic>) {
@@ -106,9 +106,9 @@ class _SlackNotificationPageState extends State<SlackNotificationPage> {
     });
     try {
       await _supabase.functions.invoke(
-        'slack-notifications',
+        'tools-hub',
         body: {
-          'action': 'configure',
+          'action': 'slack.configure',
           'webhook_url': url,
           'triggers': _triggers,
         },
@@ -129,8 +129,8 @@ class _SlackNotificationPageState extends State<SlackNotificationPage> {
     });
     try {
       final res = await _supabase.functions.invoke(
-        'slack-notifications',
-        body: {'action': 'test'},
+        'tools-hub',
+        body: {'action': 'slack.test'},
       );
       final data = res.data;
       if (mounted) {
@@ -142,6 +142,7 @@ class _SlackNotificationPageState extends State<SlackNotificationPage> {
       }
       await _fetchConfig();
     } catch (e) {
+      if (!mounted) return;
       if (mounted) setState(() => _errorMessage = 'テスト送信に失敗しました: $e');
     } finally {
       if (mounted) setState(() => _isTesting = false);

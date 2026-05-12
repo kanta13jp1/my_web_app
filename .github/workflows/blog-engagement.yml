@@ -2,7 +2,7 @@ name: Blog Engagement (毎日・コメント返信/フォロー/重複削除)
 
 # 毎日 10:00 JST に Qiita/dev.to の engagement を処理する:
 # 1. 記事一覧取得 → 重複削除
-# 2. コメント取得 → Claude で返信
+# 2. コメント取得 → Claude → Gemini → template fallback で返信
 # 3. いいねしたユーザー → フォロー
 # 4. 結果を Supabase に保存 → アプリ画面で閲覧可能に
 
@@ -11,6 +11,7 @@ name: Blog Engagement (毎日・コメント返信/フォロー/重複削除)
 #   DEVTO_API_KEY           — dev.to設定 > Extensions > DEV Community API Keys
 #   SUPABASE_SERVICE_ROLE_KEY — Supabase > Project Settings > API > service_role
 #   ANTHROPIC_API_KEY       — console.anthropic.com (コメント返信AI生成用・任意)
+#   GEMINI_API_KEY          — Google AI Studio (Claude quota時のfallback・任意)
 
 on:
   schedule:
@@ -45,12 +46,39 @@ jobs:
       - name: Install deps
         run: pip install requests
 
+      - name: Quota Guard — Anthropic circuit breaker check
+        id: quota_check
+        env:
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          RESPONSE=$(curl -s \
+            -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \
+            -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
+            "https://smmkxxavexumewbfaqpy.supabase.co/rest/v1/ai_circuit_breaker?provider=eq.anthropic&select=state,expires_at" \
+            --max-time 5 2>/dev/null || echo "[]")
+          STATE=$(echo "$RESPONSE" | jq -r '.[0].state // "closed"' 2>/dev/null || echo "closed")
+          EXPIRES=$(echo "$RESPONSE" | jq -r '.[0].expires_at // ""' 2>/dev/null || echo "")
+          if [ "$STATE" = "open" ] && [ -n "$EXPIRES" ]; then
+            NOW=$(date -u +%s)
+            EXP=$(date -u -d "$EXPIRES" +%s 2>/dev/null || echo "9999999999")
+            [ "$EXP" -lt "$NOW" ] && STATE="closed" && echo "⏰ CB expired → closed"
+          fi
+          if [ "$STATE" = "open" ]; then
+            echo "⚠️ Anthropic quota exceeded — AI steps skipped"
+            echo "anthropic_available=false" >> $GITHUB_OUTPUT
+          else
+            echo "✅ Anthropic available"
+            echo "anthropic_available=true" >> $GITHUB_OUTPUT
+          fi
+
       - name: Run engagement script
+        if: steps.quota_check.outputs.anthropic_available == 'true'
         env:
           QIITA_ACCESS_TOKEN: ${{ secrets.QIITA_ACCESS_TOKEN }}
           DEVTO_API_KEY: ${{ secrets.DEVTO_API_KEY }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
           # Self user IDs — CRITICAL: prevent infinite reply loop on own comments
           SELF_QIITA_USER: kanta13jp1
@@ -58,6 +86,18 @@ jobs:
           # Defense-in-depth: max replies per article per run
           MAX_REPLIES_PER_ARTICLE: "2"
         run: python3 scripts/blog_engagement.py
+
+      - name: Sync dev.to engagement to Supabase
+        env:
+          SUPABASE_URL: https://smmkxxavexumewbfaqpy.supabase.co
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          curl -s -X POST \
+            -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \
+            -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
+            -H "Content-Type: application/json" \
+            "$SUPABASE_URL/functions/v1/schedule-hub" \
+            -d '{"action":"blog.devto_sync_engagement"}' | jq -r '"\(.synced // "?") dev.to articles synced"'
 
       - name: Summary
         if: always()
@@ -68,6 +108,7 @@ jobs:
           echo "| dry_run | ${{ github.event.inputs.dry_run || 'false' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Qiita token | ${{ secrets.QIITA_ACCESS_TOKEN != '' && 'set' || '❌ NOT SET' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| dev.to key | ${{ secrets.DEVTO_API_KEY != '' && 'set' || '⚠️ not set' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Claude key | ${{ secrets.ANTHROPIC_API_KEY != '' && 'set (AI返信)' || '⚠️ not set (template返信)' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Claude key | ${{ secrets.ANTHROPIC_API_KEY != '' && 'set (primary)' || '⚠️ not set' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Gemini key | ${{ secrets.GEMINI_API_KEY != '' && 'set (fallback)' || '⚠️ not set (template fallback)' }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "ℹ️ Qiitaトークン未設定の場合: Settings > Secrets > QIITA_ACCESS_TOKEN を追加" >> $GITHUB_STEP_SUMMARY

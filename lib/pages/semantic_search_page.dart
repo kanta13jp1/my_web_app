@@ -26,6 +26,10 @@ class _SemanticSearchPageState extends State<SemanticSearchPage> {
   Future<void> _search() async {
     final query = _queryController.text.trim();
     if (query.isEmpty) return;
+    if (_supabase.auth.currentUser == null) {
+      setState(() => _isLoading = false);
+      return;
+    }
     setState(() {
       _isLoading = true;
       _errorMessage = null;
@@ -33,8 +37,8 @@ class _SemanticSearchPageState extends State<SemanticSearchPage> {
     });
     try {
       final response = await _supabase.functions.invoke(
-        'semantic-search',
-        body: {'query': query, 'limit': 20},
+        'enterprise-hub',
+        body: {'action': 'search.semantic', 'query': query, 'limit': 20},
       );
       final data = response.data;
       if (data is Map<String, dynamic> && data['results'] is List) {

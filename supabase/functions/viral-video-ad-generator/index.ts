@@ -12,17 +12,29 @@
 // GET  ?view=templates | ?view=history
 
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from "npm:@supabase/supabase-js@2";
+import {
+  buildHedraTextToSpeechAudioGeneration,
+  isHedraInvalidTextToSpeechModelError,
+  resolveConfiguredHedraTextToSpeechModelId,
+  stripHedraTextToSpeechModelId,
+} from "./hedra_tts.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type",
 };
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SERVICE_ROLE_KEY = Deno.env.get("SERVICE_ROLE_KEY") ?? "";
 const FAL_KEY = Deno.env.get("FAL_KEY") ?? "";
 const HEDRA_API_KEY = Deno.env.get("HEDRA_API_KEY") ?? "";
+const HEDRA_API_BASE = "https://api.hedra.com/web-app/public";
+const HEDRA_AVATAR_MODEL_ID = Deno.env.get("HEDRA_AVATAR_MODEL_ID") ??
+  "26f0fc66-152b-40ab-abed-76c43df99bc8";
+const HEDRA_VOICE_ID = Deno.env.get("HEDRA_VOICE_ID") ?? "";
+const HEDRA_TTS_MODEL_ID = Deno.env.get("HEDRA_TTS_MODEL_ID") ?? "";
 
 // Dark War風 広告テンプレート定義
 const AD_TEMPLATES = {
@@ -45,7 +57,8 @@ const AD_TEMPLATES = {
         "Start free → https://my-web-app-b67f4.web.app/",
       ],
     },
-    imagePrompt: "Epic dark cinematic battle scene, glowing UI interfaces floating in space, apps converging into one powerful orb, dramatic lighting, cyberpunk aesthetic, 16:9 aspect ratio",
+    imagePrompt:
+      "Epic dark cinematic battle scene, glowing UI interfaces floating in space, apps converging into one powerful orb, dramatic lighting, cyberpunk aesthetic, 16:9 aspect ratio",
     hashtags: ["#buildinpublic", "#FlutterWeb", "#Supabase", "#SaaS"],
   },
   feature_highlight: {
@@ -67,7 +80,8 @@ const AD_TEMPLATES = {
         "Try now → https://my-web-app-b67f4.web.app/",
       ],
     },
-    imagePrompt: "Clean modern app interface collage, multiple feature screens arranged in elegant grid, gradient purple background, material design, 16:9",
+    imagePrompt:
+      "Clean modern app interface collage, multiple feature screens arranged in elegant grid, gradient purple background, material design, 16:9",
     hashtags: ["#ProductHunt", "#IndieHacker", "#FlutterApp"],
   },
   mobile_ux_validation: {
@@ -89,7 +103,8 @@ const AD_TEMPLATES = {
         "https://my-web-app-b67f4.web.app/asset-management",
       ],
     },
-    imagePrompt: "A polished moving smartphone app UX validation storyboard for a Japanese personal finance app called My Finance, mobile screens, tap gestures, spending alerts, asset dashboard, clean fintech UI, 16:9",
+    imagePrompt:
+      "A polished moving smartphone app UX validation storyboard for a Japanese personal finance app called My Finance, mobile screens, tap gestures, spending alerts, asset dashboard, clean fintech UI, 16:9",
     hashtags: ["#AI動画", "#FlutterWeb", "#資産管理", "#buildinpublic"],
   },
   user_growth: {
@@ -111,7 +126,8 @@ const AD_TEMPLATES = {
         "自分株式会社 → https://my-web-app-b67f4.web.app/",
       ],
     },
-    imagePrompt: "Minimalist growth chart animation, single developer at desk, code flying around, user count increasing, warm inspiring colors, 16:9",
+    imagePrompt:
+      "Minimalist growth chart animation, single developer at desk, code flying around, user count increasing, warm inspiring colors, 16:9",
     hashtags: ["#buildinpublic", "#solofounder", "#indiedev"],
   },
   competitor_comparison: {
@@ -131,7 +147,8 @@ const AD_TEMPLATES = {
         "Switch now → https://my-web-app-b67f4.web.app/",
       ],
     },
-    imagePrompt: "Price comparison infographic, competitor logos with red X marks, self app with green checkmark, money savings visualization, 16:9",
+    imagePrompt:
+      "Price comparison infographic, competitor logos with red X marks, self app with green checkmark, money savings visualization, 16:9",
     hashtags: ["#freetool", "#productivity", "#nocode"],
   },
 };
@@ -169,7 +186,11 @@ serve(async (req) => {
         return jsonRes({ success: true, history: data ?? [] });
       }
 
-      return jsonRes({ success: true, templates: Object.keys(AD_TEMPLATES), message: "Use ?view=templates or POST to generate" });
+      return jsonRes({
+        success: true,
+        templates: Object.keys(AD_TEMPLATES),
+        message: "Use ?view=templates or POST to generate",
+      });
     }
 
     if (req.method !== "POST") {
@@ -185,6 +206,9 @@ serve(async (req) => {
       customHashtags?: string[];
       title?: string;
       voice?: string;
+      imageUrl?: string;
+      generatedImageUrl?: string;
+      hedraGenerationId?: string;
       preferredModel?: string;
       creativePipeline?: string[];
     };
@@ -192,16 +216,37 @@ serve(async (req) => {
     const templateKey = body.template ?? "dark_war";
     const lang = (body.lang ?? "ja") as "ja" | "en";
     const type = body.type ?? "image";
-    const preferredModel = typeof body.preferredModel === "string" && body.preferredModel.trim().length > 0 ? body.preferredModel.trim() : null;
-    const creativePipeline = Array.isArray(body.creativePipeline) ? body.creativePipeline.map((step) => String(step).trim()).filter((step) => step.length > 0).slice(0, 8) : [];
+    const preferredModel = typeof body.preferredModel === "string" &&
+        body.preferredModel.trim().length > 0
+      ? body.preferredModel.trim()
+      : null;
+    const creativePipeline = Array.isArray(body.creativePipeline)
+      ? body.creativePipeline.map((step) => String(step).trim()).filter((
+        step,
+      ) => step.length > 0).slice(0, 8)
+      : [];
 
     const template = AD_TEMPLATES[templateKey as keyof typeof AD_TEMPLATES];
     if (!template) {
-      return jsonRes({ error: `Unknown template: ${templateKey}. Available: ${Object.keys(AD_TEMPLATES).join(", ")}` }, 400);
+      return jsonRes({
+        error: `Unknown template: ${templateKey}. Available: ${
+          Object.keys(AD_TEMPLATES).join(", ")
+        }`,
+      }, 400);
     }
 
-    const script = Array.isArray(body.customScript) && body.customScript.length > 0 ? body.customScript.map((line) => String(line).trim()).filter((line) => line.length > 0).slice(0, 6) : template.script[lang];
-    const hashtags = Array.isArray(body.customHashtags) && body.customHashtags.length > 0 ? body.customHashtags.map((tag) => String(tag).trim()).filter((tag) => tag.length > 0).slice(0, 6) : template.hashtags;
+    const script =
+      Array.isArray(body.customScript) && body.customScript.length > 0
+        ? body.customScript.map((line) => String(line).trim()).filter((line) =>
+          line.length > 0
+        ).slice(0, 6)
+        : template.script[lang];
+    const hashtags =
+      Array.isArray(body.customHashtags) && body.customHashtags.length > 0
+        ? body.customHashtags.map((tag) => String(tag).trim()).filter((tag) =>
+          tag.length > 0
+        ).slice(0, 6)
+        : template.hashtags;
     const caption = script.join("\n") + "\n\n" + hashtags.join(" ");
     const imagePrompt = body.customPrompt ?? template.imagePrompt;
 
@@ -213,6 +258,9 @@ serve(async (req) => {
     let videoProvider: string | null = null;
     let videoStatus: string | null = null;
     let videoReason: string | null = null;
+    let hedraGenerationId: string | null = null;
+    let hedraProgress: number | null = null;
+    let hedraEtaSec: number | null = null;
 
     // FAL.ai で画像生成 (キーが設定されている場合)
     if (FAL_KEY && type === "image") {
@@ -233,7 +281,10 @@ serve(async (req) => {
         });
 
         if (falResp.ok) {
-          const falData = await falResp.json() as { images?: Array<{ url: string }>; request_id?: string };
+          const falData = await falResp.json() as {
+            images?: Array<{ url: string }>;
+            request_id?: string;
+          };
           generatedImageUrl = falData.images?.[0]?.url ?? null;
           falJobId = falData.request_id ?? null;
         }
@@ -249,19 +300,37 @@ serve(async (req) => {
         videoReason = "HEDRA_API_KEY not configured";
       } else {
         try {
-          const hedraVideo = await createHedraPresenterVideo({
-            apiKey: HEDRA_API_KEY,
-            script,
-            title: body.title ?? template.name,
-            voice: body.voice ?? defaultVoiceForLang(lang),
-          });
+          const existingGenerationId = firstNonEmptyString(
+            body.hedraGenerationId,
+          );
+          const hedraVideo = existingGenerationId
+            ? await getHedraGenerationStatus(
+              HEDRA_API_KEY,
+              existingGenerationId,
+            )
+            : await createHedraPresenterVideo({
+              apiKey: HEDRA_API_KEY,
+              script,
+              title: body.title ?? template.name,
+              prompt: imagePrompt,
+              voice: body.voice ?? defaultVoiceForLang(lang),
+              imageUrl: firstNonEmptyString(
+                body.imageUrl,
+                body.generatedImageUrl,
+              ),
+              lang,
+            });
           generatedVideoUrl = hedraVideo.videoUrl;
           generatedPreviewUrl = hedraVideo.previewUrl;
           generatedDownloadUrl = hedraVideo.downloadUrl;
           videoProvider = "hedra";
           videoStatus = hedraVideo.status;
+          videoReason = hedraVideo.reason;
+          hedraGenerationId = hedraVideo.id;
+          hedraProgress = hedraVideo.progress;
+          hedraEtaSec = hedraVideo.etaSec;
           if (!generatedVideoUrl) {
-            videoReason = "Hedra did not return a video URL";
+            videoReason = videoReason ?? "Hedra video is not complete yet";
           }
         } catch (error) {
           videoProvider = "hedra";
@@ -271,7 +340,13 @@ serve(async (req) => {
       }
     }
 
-    const generationStatus = generatedVideoUrl != null ? "video_ready" : generatedImageUrl != null ? "ready" : type === "presenter_video" && videoStatus != null ? videoStatus : "script_only";
+    const generationStatus = generatedVideoUrl != null
+      ? "video_ready"
+      : generatedImageUrl != null
+      ? "ready"
+      : type === "presenter_video" && videoStatus != null
+      ? videoStatus
+      : "script_only";
 
     // 生成履歴をDBに記録
     let recordId: string | null = null;
@@ -319,12 +394,25 @@ serve(async (req) => {
       generatedVideoUrl,
       generatedPreviewUrl,
       generatedDownloadUrl,
+      hedraGenerationId,
+      hedraProgress,
+      hedraEtaSec,
       falJobId,
       videoProvider,
       videoStatus,
       videoReason,
-      status: generatedVideoUrl != null || generatedImageUrl != null ? "ready_to_post" : generationStatus,
-      nextStep: generatedVideoUrl != null ? "Call x-media-post with this videoUrl and caption to post to X" : generatedImageUrl != null ? "Call x-media-post with this imageUrl and caption to post to X" : type === "presenter_video" ? "Hedra video generation is unavailable. Use the caption for text-only X post or retry after checking HEDRA_API_KEY." : "FAL_KEY not set or generation failed. Use caption for text-only X post via post-x-update",
+      status: generatedVideoUrl != null || generatedImageUrl != null
+        ? "ready_to_post"
+        : generationStatus,
+      nextStep: generatedVideoUrl != null
+        ? "Call x-media-post with this videoUrl and caption to post to X"
+        : generatedImageUrl != null
+        ? "Call x-media-post with this imageUrl and caption to post to X"
+        : hedraGenerationId != null
+        ? "Hedra generation is still processing. Poll again with hedraGenerationId."
+        : type === "presenter_video"
+        ? "Hedra video generation is unavailable. Use the caption for text-only X post or retry after checking HEDRA_API_KEY."
+        : "FAL_KEY not set or generation failed. Use caption for text-only X post via post-x-update",
       textPost: {
         endpoint: "post-x-update",
         body: { text: caption.slice(0, 280) },
@@ -346,87 +434,357 @@ function defaultVoiceForLang(lang: "ja" | "en"): string {
   return lang === "en" ? "en-US" : "ja-JP";
 }
 
-async function createHedraPresenterVideo(params: {
-  apiKey: string;
-  script: string[];
-  title?: string;
-  voice: string;
-}): Promise<{
+function hedraLanguageForLang(_lang: "ja" | "en"): string {
+  // Hedra TTS currently rejects "ja" / "Japanese"; use a supported enum value.
+  return "English";
+}
+
+function scriptForHedraVoice(
+  script: string[],
+  lang: "ja" | "en",
+  title?: string,
+): string[] {
+  if (lang === "en") return script;
+  const englishTitle = hedraEnglishTitle(title);
+  const url = script.find((line) => /^https?:\/\//.test(line));
+  return [
+    `${englishTitle} has been updated.`,
+    "This short video introduces the newest improvement in the app.",
+    "The creative workflow combines GPT image two, GPT five point five, and Seedance two point zero.",
+    url == null
+      ? "Open the app to try the latest experience."
+      : `Open ${url.replace(/^https?:\/\//, "")} to try it.`,
+  ];
+}
+
+function hedraEnglishTitle(title?: string): string {
+  const trimmed = title?.trim();
+  if (!trimmed) return "This app";
+  if (trimmed === "マイファイナンス") return "My Finance";
+  const isAscii = [...trimmed].every((char) => char.charCodeAt(0) <= 127);
+  return isAscii ? trimmed : "This app";
+}
+
+type HedraVideoResult = {
   id: string | null;
   status: string;
   videoUrl: string | null;
   previewUrl: string | null;
   downloadUrl: string | null;
-}> {
-  const response = await fetch("https://mercury.dev.dream-ai.com/api/v1/characters", {
-    method: "POST",
+  progress: number | null;
+  etaSec: number | null;
+  reason: string | null;
+};
+
+async function createHedraPresenterVideo(params: {
+  apiKey: string;
+  script: string[];
+  title?: string;
+  prompt: string;
+  voice: string;
+  imageUrl: string | null;
+  lang: "ja" | "en";
+}): Promise<HedraVideoResult> {
+  const rawImageUrl = firstNonEmptyString(params.imageUrl);
+  if (!rawImageUrl) {
+    throw new Error("Hedra avatar video requires imageUrl");
+  }
+  const imageUrl = normalizeHedraStartKeyframeUrl(rawImageUrl);
+  if (!imageUrl) {
+    throw new Error(
+      "Hedra avatar image must be a public http(s) URL under 2083 characters. Regenerate the share image so it can be stored before video generation.",
+    );
+  }
+
+  const voiceId = await resolveHedraVoiceId(
+    params.apiKey,
+    params.voice,
+    params.lang,
+  );
+  const ttsModelId = resolveConfiguredHedraTextToSpeechModelId(
+    HEDRA_TTS_MODEL_ID,
+  );
+  const hedraLanguage = hedraLanguageForLang(params.lang);
+  const ttsScript = scriptForHedraVoice(
+    params.script,
+    params.lang,
+    params.title,
+  )
+    .join("\n");
+  const generationBody: Record<string, unknown> = {
+    type: "video",
+    ai_model_id: HEDRA_AVATAR_MODEL_ID,
+    start_keyframe_url: imageUrl,
+    audio_generation: buildHedraTextToSpeechAudioGeneration({
+      voiceId,
+      modelId: ttsModelId,
+      text: ttsScript.slice(0, 1800),
+      language: hedraLanguage,
+    }),
+    generated_video_inputs: {
+      text_prompt: `${params.title ?? "Share update"}\n${params.prompt}`,
+      aspect_ratio: "16:9",
+      resolution: "540p",
+      enhance_prompt: true,
+    },
+  };
+  const payload = await createHedraGenerationWithTtsModelFallback(
+    params.apiKey,
+    generationBody,
+    ttsModelId != null,
+  );
+  return await pollHedraGeneration(
+    params.apiKey,
+    normalizeHedraVideoResponse(payload),
+  );
+}
+
+async function createHedraGenerationWithTtsModelFallback(
+  apiKey: string,
+  body: Record<string, unknown>,
+  canRetryWithoutTtsModel: boolean,
+): Promise<unknown> {
+  try {
+    return await hedraJsonRequest(apiKey, "/generations", {
+      method: "POST",
+      body,
+    });
+  } catch (error) {
+    if (
+      !canRetryWithoutTtsModel ||
+      !isHedraInvalidTextToSpeechModelError(error)
+    ) {
+      throw error;
+    }
+
+    return await hedraJsonRequest(apiKey, "/generations", {
+      method: "POST",
+      body: stripHedraTextToSpeechModelId(body),
+    });
+  }
+}
+
+async function getHedraGenerationStatus(
+  apiKey: string,
+  generationId: string,
+): Promise<HedraVideoResult> {
+  const payload = await hedraJsonRequest(
+    apiKey,
+    `/generations/${encodeURIComponent(generationId)}/status`,
+  );
+  const normalized = normalizeHedraVideoResponse(payload);
+  return { ...normalized, id: normalized.id ?? generationId };
+}
+
+async function pollHedraGeneration(
+  apiKey: string,
+  initial: HedraVideoResult,
+): Promise<HedraVideoResult> {
+  let current = initial;
+  const generationId = current.id;
+  if (!generationId || isHedraTerminal(current)) return current;
+  for (const delayMs of [3000, 5000, 8000, 10000, 10000]) {
+    await delay(delayMs);
+    current = await getHedraGenerationStatus(apiKey, generationId);
+    if (isHedraTerminal(current)) return current;
+  }
+  return current;
+}
+
+function isHedraTerminal(result: HedraVideoResult): boolean {
+  if (result.videoUrl || result.downloadUrl) return true;
+  return ["complete", "completed", "failed", "error", "canceled", "cancelled"]
+    .includes(
+      result.status.toLowerCase(),
+    );
+}
+
+async function resolveHedraVoiceId(
+  apiKey: string,
+  preferredVoice: string,
+  lang: "ja" | "en",
+): Promise<string> {
+  const configured = firstNonEmptyString(HEDRA_VOICE_ID);
+  if (configured && isUuid(configured)) return configured;
+  if (isUuid(preferredVoice)) return preferredVoice;
+
+  const payload = await hedraJsonRequest(apiKey, "/voices", { method: "GET" });
+  const voices = Array.isArray(payload)
+    ? payload
+    : Array.isArray(asRecord(payload)?.["data"])
+    ? asRecord(payload)?.["data"] as unknown[]
+    : [];
+  const hedraLanguage = hedraLanguageForLang(lang).toLowerCase();
+  const languageMarkers = hedraLanguage === "english"
+    ? ["en", "english"]
+    : [hedraLanguage];
+  const languageMatch = voices
+    .map((voice) => asRecord(voice))
+    .find((voice) => {
+      const haystack = `${voice?.["name"] ?? ""} ${
+        voice?.["description"] ?? ""
+      }`.toLowerCase();
+      return languageMarkers.some((marker) =>
+        haystack.includes(marker.toLowerCase())
+      );
+    });
+  const fallbackVoice = voices.map((voice) => asRecord(voice)).find((voice) =>
+    voice?.["id"]
+  );
+  const voiceId = firstNonEmptyString(
+    languageMatch?.["id"],
+    fallbackVoice?.["id"],
+  );
+  if (!voiceId) {
+    throw new Error("Hedra voice_id could not be resolved");
+  }
+  return voiceId;
+}
+
+async function hedraJsonRequest(
+  apiKey: string,
+  path: string,
+  init: { method?: string; body?: unknown } = {},
+): Promise<unknown> {
+  const response = await fetch(`${HEDRA_API_BASE}${path}`, {
+    method: init.method ?? "GET",
     headers: {
       "Content-Type": "application/json",
-      "X-API-KEY": params.apiKey,
+      "X-API-Key": apiKey,
     },
-    body: JSON.stringify({
-      text: params.script.join("\n"),
-      title: params.title,
-      voice: params.voice,
-    }),
+    body: init.body == null ? undefined : JSON.stringify(init.body),
   });
-
   const rawText = await response.text();
-  let parsed: Record<string, unknown> = {};
+  let parsed: unknown = {};
   if (rawText.trim().length > 0) {
     try {
-      parsed = JSON.parse(rawText) as Record<string, unknown>;
+      parsed = JSON.parse(rawText) as unknown;
     } catch {
       parsed = { raw: rawText };
     }
   }
 
   if (!response.ok) {
+    const parsedRecord = asRecord(parsed);
     const message = firstNonEmptyString(
-      parsed["error"],
-      parsed["message"],
+      parsedRecord?.["error"],
+      parsedRecord?.["error_message"],
+      parsedRecord?.["message"],
+      parsedRecord?.["detail"],
       rawText,
     ) ?? `Hedra request failed with status ${response.status}`;
-    throw new Error(message);
+    throw new Error(`Hedra API ${response.status}: ${message}`);
   }
 
-  return normalizeHedraVideoResponse(parsed);
+  return parsed;
 }
 
-function normalizeHedraVideoResponse(payload: Record<string, unknown>): {
-  id: string | null;
-  status: string;
-  videoUrl: string | null;
-  previewUrl: string | null;
-  downloadUrl: string | null;
-} {
-  const video = asRecord(payload["video"]);
-  const result = asRecord(payload["result"]);
+function normalizeHedraVideoResponse(payload: unknown): HedraVideoResult {
+  const record = asRecord(payload) ?? {};
+  const video = asRecord(record["video"]);
+  const result = asRecord(record["result"]);
+  const batchResults = Array.isArray(record["batch_results"])
+    ? record["batch_results"]
+    : [];
+  const firstBatchResult = asRecord(batchResults[0]);
+  const asset = asRecord(record["asset"]);
   return {
-    id: firstNonEmptyString(payload["id"], payload["video_id"], video?.["id"], result?.["id"]),
-    status: firstNonEmptyString(payload["status"], video?.["status"], result?.["status"]) ?? "submitted",
+    id: firstNonEmptyString(
+      record["id"],
+      record["generation_id"],
+      record["video_id"],
+      firstBatchResult?.["id"],
+      video?.["id"],
+      result?.["id"],
+    ),
+    status: firstNonEmptyString(
+      record["status"],
+      firstBatchResult?.["status"],
+      video?.["status"],
+      result?.["status"],
+    ) ?? "submitted",
     videoUrl: firstNonEmptyString(
-      payload["url"],
-      payload["video_url"],
-      payload["download_url"],
+      record["download_url"],
+      record["url"],
+      record["video_url"],
+      asset?.["url"],
       video?.["url"],
       video?.["download_url"],
       result?.["url"],
       result?.["download_url"],
     ),
-    previewUrl: firstNonEmptyString(payload["preview_url"], video?.["preview_url"], result?.["preview_url"]),
-    downloadUrl: firstNonEmptyString(payload["download_url"], video?.["download_url"], result?.["download_url"]),
+    previewUrl: firstNonEmptyString(
+      record["preview_url"],
+      record["streaming_url"],
+      record["thumbnail_url"],
+      video?.["preview_url"],
+      result?.["preview_url"],
+    ),
+    downloadUrl: firstNonEmptyString(
+      record["download_url"],
+      video?.["download_url"],
+      result?.["download_url"],
+    ),
+    progress: firstNumber(
+      record["progress"],
+      firstBatchResult?.["progress"],
+      result?.["progress"],
+    ),
+    etaSec: firstNumber(record["eta_sec"], result?.["eta_sec"]),
+    reason: firstNonEmptyString(
+      record["error_message"],
+      record["error"],
+      firstBatchResult?.["error"],
+      result?.["error_message"],
+      result?.["error"],
+    ),
   };
 }
 
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function isUuid(value: string | null): boolean {
+  return value != null &&
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+      .test(value);
+}
+
 function asRecord(value: unknown): Record<string, unknown> | null {
-  return typeof value === "object" && value !== null ? value as Record<string, unknown> : null;
+  return typeof value === "object" && value !== null
+    ? value as Record<string, unknown>
+    : null;
 }
 
 function firstNonEmptyString(...values: unknown[]): string | null {
   for (const value of values) {
     if (typeof value === "string" && value.trim().length > 0) {
       return value.trim();
+    }
+  }
+  return null;
+}
+
+function normalizeHedraStartKeyframeUrl(value: string | null): string | null {
+  if (!value) return null;
+  if (value.length > 2083) return null;
+  try {
+    const parsed = new URL(value);
+    return parsed.protocol === "https:" || parsed.protocol === "http:"
+      ? value
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+function firstNumber(...values: unknown[]): number | null {
+  for (const value of values) {
+    if (typeof value === "number" && Number.isFinite(value)) return value;
+    if (typeof value === "string" && value.trim().length > 0) {
+      const parsed = Number(value);
+      if (Number.isFinite(parsed)) return parsed;
     }
   }
   return null;

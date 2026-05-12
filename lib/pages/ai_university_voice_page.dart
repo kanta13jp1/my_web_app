@@ -73,6 +73,7 @@ class _AiUniversityVoicePageState extends State<AiUniversityVoicePage> {
       );
       await _playTts(_questionText);
     } catch (e) {
+      if (!mounted) return;
       setState(() => _questionText = 'エラー: $e');
     }
   }
@@ -104,6 +105,7 @@ class _AiUniversityVoicePageState extends State<AiUniversityVoicePage> {
       _audio!.play();
       setState(() => _ttsStatus = 'playing');
     } catch (_) {
+      if (!mounted) return;
       setState(() => _ttsStatus = 'error');
     }
   }
@@ -117,6 +119,7 @@ class _AiUniversityVoicePageState extends State<AiUniversityVoicePage> {
       web_api.window.speechSynthesis.speak(utter);
       setState(() => _ttsStatus = 'playing');
     } catch (_) {
+      if (!mounted) return;
       setState(() => _ttsStatus = 'error');
     }
   }
@@ -171,6 +174,7 @@ class _AiUniversityVoicePageState extends State<AiUniversityVoicePage> {
         );
       }
     } catch (e) {
+      if (!mounted) return;
       setState(() => _feedbackText = 'エラー: $e');
     }
   }

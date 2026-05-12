@@ -45,9 +45,8 @@ class _ViralVideoGeneratorPageState extends State<ViralVideoGeneratorPage> {
     });
     try {
       final res = await _supabase.functions.invoke(
-        'viral-video-generator',
-        method: HttpMethod.get,
-        queryParameters: {'view': 'recent_briefs'},
+        'media-hub',
+        body: {'action': 'viral_video.list_briefs'},
       );
       final data = res.data;
       if (data is Map<String, dynamic> && data['briefs'] is List) {
@@ -56,9 +55,10 @@ class _ViralVideoGeneratorPageState extends State<ViralVideoGeneratorPage> {
         });
       }
     } catch (e) {
+      if (!mounted) return;
       setState(() => _errorMessage = e.toString());
     } finally {
-      setState(() => _loading = false);
+      if (mounted) setState(() => _loading = false);
     }
   }
 
@@ -72,17 +72,19 @@ class _ViralVideoGeneratorPageState extends State<ViralVideoGeneratorPage> {
     });
     try {
       final res = await _supabase.functions.invoke(
-        'viral-video-generator',
+        'media-hub',
         body: {
-          'action': 'generate_brief',
+          'action': 'viral_video.create',
           'productSummary': prompt,
           'adStyle': _selectedStyle,
         },
       );
       final data = res.data as Map<String, dynamic>?;
+      if (!mounted) return;
       setState(() => _result = data?['brief'] as Map<String, dynamic>?);
       await _loadHistory();
     } catch (e) {
+      if (!mounted) return;
       setState(() => _errorMessage = e.toString());
       setState(() => _loading = false);
     }

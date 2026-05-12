@@ -37,6 +37,10 @@ class _QrCodeGeneratorPageState extends State<QrCodeGeneratorPage> {
   Future<void> _generateQr() async {
     final url = _urlController.text.trim();
     if (url.isEmpty) return;
+    if (_supabase.auth.currentUser == null) {
+      setState(() => _isLoading = false);
+      return;
+    }
     setState(() {
       _isLoading = true;
       _errorMessage = null;

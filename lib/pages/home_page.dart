@@ -49,6 +49,7 @@ import '../widgets/profile_progress_card.dart';
 import '../widgets/proactive_diagnostics_card.dart';
 import '../widgets/development_achievements_card.dart';
 import '../widgets/edge_function_summary_card.dart';
+import '../widgets/ga_readiness_gate_panel.dart';
 import '../widgets/ai_university_home_card.dart';
 import '../widgets/api_key_status_banner.dart';
 import '../widgets/feature_strategy_monitor_panel.dart';
@@ -65,18 +66,26 @@ import '../widgets/home_tier/system_fixed_features_list.dart';
 import '../widgets/home_tier/user_pinned_features_list.dart';
 import '../widgets/home_tier/new_features_list.dart';
 import '../widgets/home_tier/ai_recommended_features_list.dart';
+import '../widgets/home_tier/popular_features_list.dart';
 import '../utils/feature_tap_logger.dart';
 
 class HomePage extends StatefulWidget {
   final DateTime Function()? nowProvider;
+  final bool showLegacyOperations;
 
-  const HomePage({super.key, this.nowProvider});
+  const HomePage({
+    super.key,
+    this.nowProvider,
+    this.showLegacyOperations = false,
+  });
 
   @override
   State<HomePage> createState() => _HomePageState();
 }
 
 class _HomePageState extends State<HomePage> {
+  static const bool _showLegacyHomeSections = false;
+
   // ✅ 改善ポイント:
   // build() のたびに _fetchTotalAssets() が走るのを防ぐため Future をキャッシュする
   late Future<String> _totalAssetsFuture;
@@ -179,6 +188,9 @@ class _HomePageState extends State<HomePage> {
     _aiNudgeFuture = _opsSnapshotFuture.then((snapshot) {
       final command = _resolveNextAction(snapshot);
       return _loadAiNudgeIfNeeded(command, snapshot);
+    }).catchError((Object error) {
+      debugPrint('AI nudge chain failed: $error');
+      return null;
     });
     _timeWasteSlipCountFuture = TimeWasteGuardWidget.loadSlipCountFor(_now());
     _reloadRecentToolSignals();
@@ -1264,56 +1276,62 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<_HomeOpsSnapshot> _loadOpsSnapshot() async {
-    final prefs = await SharedPreferences.getInstance();
-    final today = _startOfDay(_now());
-    final monthlyCashflowSummary = await _loadMonthlyCashflowSummary(
-      prefs: prefs,
-      month: today,
-    );
-    final pendingCriticalTaskCount = await _fetchPendingCriticalTaskCount();
-    final pendingStockTaskCount = await _fetchPendingStockTaskCount();
-    final homeDailyMap = await _loadHomeDailyStatusMap(
-      prefs: prefs,
-      startDate: today,
-      endDate: today,
-    );
-    final todayStatus =
-        homeDailyMap[_statusDateKey(today)] ?? const _HomeDailyStatusRecord();
-    final abstinenceSnapshot = await AbstinenceGuardStore.loadSnapshot(
-      now: today,
-    );
-    final completionGoalSnapshot = await _loadDailyCompletionGoalSnapshot(
-      now: today,
-    );
-    final primaryInterference = abstinenceSnapshot.primaryInterference;
-    final calendarDays = await _loadCalendarDays(prefs: prefs);
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final today = _startOfDay(_now());
+      final monthlyCashflowSummary = await _loadMonthlyCashflowSummary(
+        prefs: prefs,
+        month: today,
+      );
+      final pendingCriticalTaskCount = await _fetchPendingCriticalTaskCount();
+      final pendingStockTaskCount = await _fetchPendingStockTaskCount();
+      final homeDailyMap = await _loadHomeDailyStatusMap(
+        prefs: prefs,
+        startDate: today,
+        endDate: today,
+      );
+      final todayStatus =
+          homeDailyMap[_statusDateKey(today)] ?? const _HomeDailyStatusRecord();
+      final abstinenceSnapshot = await AbstinenceGuardStore.loadSnapshot(
+        now: today,
+      );
+      final completionGoalSnapshot = await _loadDailyCompletionGoalSnapshot(
+        now: today,
+      );
+      final primaryInterference = abstinenceSnapshot.primaryInterference;
+      final calendarDays = await _loadCalendarDays(prefs: prefs);
 
-    return _HomeOpsSnapshot(
-      morningBriefingDone: todayStatus.morningBriefingDone,
-      balanceCheckDone: todayStatus.balanceCheckDone,
-      pendingCriticalTaskCount: pendingCriticalTaskCount,
-      pendingStockTaskCount: pendingStockTaskCount,
-      abstinenceFocusCount: abstinenceSnapshot.enabledCount,
-      abstinenceSlipCount: abstinenceSnapshot.totalSlipCount,
-      abstinenceSlipDetails: abstinenceSnapshot.slipDetails,
-      abstinenceTopLabels: abstinenceSnapshot.topEnabledLabels,
-      abstinencePrimaryLabel: primaryInterference?.item.label,
-      abstinencePrimarySignal: primaryInterference?.item.interruptionSignal,
-      abstinencePrimaryAction: primaryInterference?.item.eliminationAction,
-      abstinenceDisciplineRepCount:
-          abstinenceSnapshot.disciplineSnapshot.totalRepCount,
-      abstinenceDisciplineMoneySaved:
-          abstinenceSnapshot.disciplineSnapshot.totalMoneySaved,
-      abstinenceDisciplineTimeSavedMinutes:
-          abstinenceSnapshot.disciplineSnapshot.totalTimeSavedMinutes,
-      abstinenceDisciplineStreakDays:
-          abstinenceSnapshot.disciplineSnapshot.streakDays,
-      abstinenceDisciplineStageLabel:
-          abstinenceSnapshot.disciplineSnapshot.mindsetStageLabel,
-      completionGoalSnapshot: completionGoalSnapshot,
-      calendarDays: calendarDays,
-      monthlyCashflowSummary: monthlyCashflowSummary,
-    );
+      return _HomeOpsSnapshot(
+        morningBriefingDone: todayStatus.morningBriefingDone,
+        balanceCheckDone: todayStatus.balanceCheckDone,
+        pendingCriticalTaskCount: pendingCriticalTaskCount,
+        pendingStockTaskCount: pendingStockTaskCount,
+        abstinenceFocusCount: abstinenceSnapshot.enabledCount,
+        abstinenceSlipCount: abstinenceSnapshot.totalSlipCount,
+        abstinenceSlipDetails: abstinenceSnapshot.slipDetails,
+        abstinenceTopLabels: abstinenceSnapshot.topEnabledLabels,
+        abstinencePrimaryLabel: primaryInterference?.item.label,
+        abstinencePrimarySignal: primaryInterference?.item.interruptionSignal,
+        abstinencePrimaryAction: primaryInterference?.item.eliminationAction,
+        abstinenceDisciplineRepCount:
+            abstinenceSnapshot.disciplineSnapshot.totalRepCount,
+        abstinenceDisciplineMoneySaved:
+            abstinenceSnapshot.disciplineSnapshot.totalMoneySaved,
+        abstinenceDisciplineTimeSavedMinutes:
+            abstinenceSnapshot.disciplineSnapshot.totalTimeSavedMinutes,
+        abstinenceDisciplineStreakDays:
+            abstinenceSnapshot.disciplineSnapshot.streakDays,
+        abstinenceDisciplineStageLabel:
+            abstinenceSnapshot.disciplineSnapshot.mindsetStageLabel,
+        completionGoalSnapshot: completionGoalSnapshot,
+        calendarDays: calendarDays,
+        monthlyCashflowSummary: monthlyCashflowSummary,
+      );
+    } catch (error, stackTrace) {
+      debugPrint('Home ops snapshot load failed: $error');
+      debugPrintStack(stackTrace: stackTrace);
+      return const _HomeOpsSnapshot();
+    }
   }
 
   Future<List<_HomeCalendarDay>> _loadCalendarDays({
@@ -1833,13 +1851,32 @@ abstinence_slip_details: $slipDetailsText
     String toolId,
     Future<dynamic> Function() action,
   ) async {
+    final entry = _findHomeToolEntry(toolId);
     await HomeToolUsageService.recordToolUse(toolId);
-    unawaited(recordFeatureTap(toolId, toolId));
+    unawaited(
+      recordFeatureTap(
+        _usageRouteForTool(toolId, entry),
+        entry?.title ?? toolId,
+      ),
+    );
     await action();
     if (!mounted) return;
     setState(() {
       _reloadRecentToolSignals();
     });
+  }
+
+  HomeToolEntry? _findHomeToolEntry(String toolId) {
+    for (final entry in _buildHomeToolCatalog()) {
+      if (entry.id == toolId) return entry;
+    }
+    return null;
+  }
+
+  String _usageRouteForTool(String toolId, HomeToolEntry? entry) {
+    final route = entry?.routePath;
+    if (route != null && route.isNotEmpty) return route;
+    return toolId.startsWith('/') ? toolId : '/$toolId';
   }
 
   List<HomeToolEntry> _buildHomeToolCatalog() {
@@ -4440,6 +4477,690 @@ abstinence_slip_details: $slipDetailsText
     }
   }
 
+  Widget _buildHopsonInspiredHomeHero(
+    BuildContext context, {
+    required bool isDark,
+    required bool isCompact,
+    required _HomeOpsSnapshot snapshot,
+    required _HomeActionCommand nextAction,
+  }) {
+    final goal = snapshot.completionGoalSnapshot;
+    final targetCount = math.max(goal.targetCount, 1);
+    final completionRatio =
+        math.min(1.0, goal.todayCompletedCount / targetCount);
+    final shellColor =
+        isDark ? const Color(0xFFF4EFE2) : const Color(0xFFFFFBF1);
+    final boardColor =
+        isDark ? const Color(0xFFFBF3E6) : const Color(0xFFFFFCF2);
+    final navy = isDark ? const Color(0xFF0B1D2E) : const Color(0xFF102B43);
+    const ink = Color(0xFF17212D);
+    const mutedInk = Color(0xFF52606E);
+    const blue = Color(0xFF9EC1CF);
+    const peach = Color(0xFFD7A091);
+    const teal = Color(0xFF1A7C75);
+
+    return Container(
+      key: const Key('home_hopson_inspired_hero'),
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: shellColor,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.10)
+              : const Color(0xFFC8D7DD),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF2B4E66).withValues(alpha: 0.18),
+            blurRadius: 28,
+            offset: const Offset(0, 18),
+          ),
+        ],
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _buildHopsonChromeBar(
+            isCompact: isCompact,
+            navy: navy,
+            peach: peach,
+            blue: blue,
+          ),
+          Padding(
+            padding: EdgeInsets.all(isCompact ? 16 : 24),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final stacked = constraints.maxWidth < 760;
+                final intro = Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 7,
+                      ),
+                      decoration: BoxDecoration(
+                        color: blue.withValues(alpha: 0.28),
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: const Text(
+                        'AI OPERATING BOARD',
+                        style: TextStyle(
+                          color: Color(0xFF263747),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 0.6,
+                          height: 1.2,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 18),
+                    const Text(
+                      '自分株式会社',
+                      style: TextStyle(
+                        color: Color(0xFF121A25),
+                        fontSize: 38,
+                        fontWeight: FontWeight.w900,
+                        height: 1.05,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      nextAction.title,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: Color(0xFF233346),
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                        height: 1.35,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      nextAction.detail,
+                      maxLines: stacked ? 3 : 4,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: mutedInk,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        height: 1.55,
+                      ),
+                    ),
+                    const SizedBox(height: 18),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        _buildHopsonMetricPill(
+                          label: '今日',
+                          value: '${goal.todayCompletedCount}/$targetCount',
+                          color: navy,
+                        ),
+                        _buildHopsonMetricPill(
+                          label: '必須残',
+                          value: '${snapshot.pendingCriticalTaskCount}',
+                          color: const Color(0xFFC75B39),
+                        ),
+                        _buildHopsonMetricPill(
+                          label: '週末',
+                          value: '${snapshot.pendingStockTaskCount}',
+                          color: teal,
+                        ),
+                        _buildHopsonMetricPill(
+                          label: '逸脱',
+                          value: '${snapshot.abstinenceSlipCount}',
+                          color: peach,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 18),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(999),
+                      child: LinearProgressIndicator(
+                        value: completionRatio,
+                        minHeight: 8,
+                        backgroundColor: const Color(0xFFD9E5EB),
+                        color: teal,
+                      ),
+                    ),
+                    const SizedBox(height: 18),
+                    Wrap(
+                      spacing: 10,
+                      runSpacing: 10,
+                      children: [
+                        _buildHopsonActionButton(
+                          icon: Icons.wb_sunny_outlined,
+                          label: '朝の判断',
+                          color: navy,
+                          onPressed: () => _runTrackedAction(
+                            'morning-briefing',
+                            () => _openMorningBriefing(context),
+                          ),
+                        ),
+                        _buildHopsonActionButton(
+                          icon: Icons.school_outlined,
+                          label: 'AI大学',
+                          color: const Color(0xFF2E6F8E),
+                          onPressed: () => _runTrackedAction(
+                            'gemini-university',
+                            () => Navigator.of(context)
+                                .pushNamed('/gemini-university'),
+                          ),
+                        ),
+                        _buildHopsonActionButton(
+                          icon: Icons.account_tree_outlined,
+                          label: 'WBS',
+                          color: const Color(0xFFC77D54),
+                          onPressed: () => _runTrackedAction(
+                            'wbs-user-tasks',
+                            () => Navigator.of(context)
+                                .pushNamed('/wbs-user-tasks'),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                );
+                final board = _buildHopsonAbstractBoard(
+                  boardColor: boardColor,
+                  navy: navy,
+                  ink: ink,
+                  blue: blue,
+                  peach: peach,
+                  teal: teal,
+                  snapshot: snapshot,
+                );
+
+                if (stacked) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      intro,
+                      const SizedBox(height: 24),
+                      SizedBox(height: 300, child: board),
+                    ],
+                  );
+                }
+
+                return Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Expanded(flex: 9, child: intro),
+                    const SizedBox(width: 28),
+                    Expanded(
+                      flex: 11,
+                      child: SizedBox(height: 360, child: board),
+                    ),
+                  ],
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHopsonChromeBar({
+    required bool isCompact,
+    required Color navy,
+    required Color peach,
+    required Color blue,
+  }) {
+    return Container(
+      height: 42,
+      color: navy,
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Row(
+        children: [
+          _buildHopsonChromeDot(blue),
+          _buildHopsonChromeDot(peach),
+          _buildHopsonChromeDot(const Color(0xFFF1D6C7)),
+          _buildHopsonChromeDot(const Color(0xFFFFF8E7)),
+          const SizedBox(width: 18),
+          if (!isCompact) ...[
+            _buildHopsonNavText('Home', true),
+            _buildHopsonNavText('Today', false),
+            _buildHopsonNavText('Tasks', false),
+            _buildHopsonNavText('Reports', false),
+          ],
+          const Spacer(),
+          Icon(
+            Icons.search,
+            size: 18,
+            color: const Color(0xFFEFD9C8).withValues(alpha: 0.9),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHopsonChromeDot(Color color) {
+    return Container(
+      width: 10,
+      height: 10,
+      margin: const EdgeInsets.only(right: 7),
+      decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+    );
+  }
+
+  Widget _buildHopsonNavText(String label, bool selected) {
+    return Padding(
+      padding: const EdgeInsets.only(right: 18),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: selected
+              ? const Color(0xFFFFF8E7)
+              : const Color(0xFFFFF8E7).withValues(alpha: 0.66),
+          fontSize: 12,
+          fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+          height: 1.2,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHopsonMetricPill({
+    required String label,
+    required String value,
+    required Color color,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: color.withValues(alpha: 0.22)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              color: color.withValues(alpha: 0.78),
+              fontSize: 12,
+              fontWeight: FontWeight.w800,
+              height: 1.2,
+            ),
+          ),
+          const SizedBox(width: 6),
+          Text(
+            value,
+            style: TextStyle(
+              color: color,
+              fontSize: 14,
+              fontWeight: FontWeight.w900,
+              height: 1.2,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHopsonActionButton({
+    required IconData icon,
+    required String label,
+    required Color color,
+    required VoidCallback onPressed,
+  }) {
+    return FilledButton.icon(
+      onPressed: onPressed,
+      style: FilledButton.styleFrom(
+        backgroundColor: color,
+        foregroundColor: Colors.white,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(13)),
+        textStyle: const TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.w800,
+          height: 1.2,
+        ),
+      ),
+      icon: Icon(icon, size: 18),
+      label: Text(label),
+    );
+  }
+
+  Widget _buildHopsonAbstractBoard({
+    required Color boardColor,
+    required Color navy,
+    required Color ink,
+    required Color blue,
+    required Color peach,
+    required Color teal,
+    required _HomeOpsSnapshot snapshot,
+  }) {
+    final goal = snapshot.completionGoalSnapshot;
+    return Container(
+      decoration: BoxDecoration(
+        color: boardColor,
+        borderRadius: BorderRadius.circular(20),
+        border:
+            Border.all(color: const Color(0xFF17324A).withValues(alpha: 0.18)),
+        boxShadow: [
+          BoxShadow(
+            color: navy.withValues(alpha: 0.18),
+            blurRadius: 22,
+            offset: const Offset(0, 14),
+          ),
+        ],
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final w = constraints.maxWidth;
+          final h = constraints.maxHeight;
+          final bigOrb = math.min(w * 0.24, 92.0);
+          final midOrb = math.min(w * 0.18, 74.0);
+          return Stack(
+            children: [
+              Positioned.fill(
+                child: CustomPaint(
+                  painter: _HopsonHomePainter(
+                    ink: ink,
+                    navy: navy,
+                    blue: blue,
+                    peach: peach,
+                    teal: teal,
+                  ),
+                ),
+              ),
+              Positioned(
+                left: w * 0.07,
+                top: h * 0.13,
+                child: Text(
+                  'JibunOS',
+                  style: TextStyle(
+                    color: ink,
+                    fontSize: math.min(30.0, w * 0.08),
+                    fontWeight: FontWeight.w900,
+                    height: 1.0,
+                  ),
+                ),
+              ),
+              Positioned(
+                right: w * 0.46,
+                top: h * 0.08,
+                child: _HopsonOrb(
+                  size: bigOrb,
+                  baseColor: blue,
+                  shadowColor: navy,
+                ),
+              ),
+              Positioned(
+                right: w * 0.17,
+                top: h * 0.16,
+                child: _HopsonOrb(
+                  size: midOrb,
+                  baseColor: const Color(0xFFB9D4DD),
+                  shadowColor: navy,
+                ),
+              ),
+              Positioned(
+                right: w * 0.40,
+                top: h * 0.36,
+                child: _HopsonOrb(
+                  size: math.min(w * 0.08, 34.0),
+                  baseColor: const Color(0xFF6D93A7),
+                  shadowColor: navy,
+                ),
+              ),
+              Positioned(
+                left: w * 0.07,
+                top: h * 0.38,
+                width: math.min(220.0, w * 0.45),
+                child: _buildHopsonInputStack(navy: navy, blue: blue),
+              ),
+              Positioned(
+                left: w * 0.36,
+                bottom: h * 0.16,
+                width: math.min(170.0, w * 0.36),
+                child: _buildHopsonToggleDeck(navy: navy, blue: blue),
+              ),
+              Positioned(
+                right: w * 0.06,
+                bottom: h * 0.13,
+                width: math.min(190.0, w * 0.34),
+                child: _buildHopsonRightControls(
+                  navy: navy,
+                  blue: blue,
+                  peach: peach,
+                  completed: goal.todayCompletedCount,
+                ),
+              ),
+              Positioned(
+                left: w * 0.41,
+                top: h * 0.44,
+                right: w * 0.10,
+                height: h * 0.22,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF9E7D9).withValues(alpha: 0.78),
+                    border: Border.all(
+                      color: ink.withValues(alpha: 0.26),
+                    ),
+                  ),
+                  alignment: Alignment.center,
+                  child: Wrap(
+                    alignment: WrapAlignment.center,
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      _buildHopsonSegment('Daily', navy, true),
+                      _buildHopsonSegment('AI', peach, false),
+                      _buildHopsonSegment('KPI', blue, false),
+                    ],
+                  ),
+                ),
+              ),
+              Positioned(
+                left: w * 0.48,
+                bottom: h * 0.08,
+                width: math.min(200.0, w * 0.34),
+                child: Container(
+                  height: 42,
+                  padding: const EdgeInsets.symmetric(horizontal: 14),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFFBF1),
+                    borderRadius: BorderRadius.circular(999),
+                    border: Border.all(color: ink.withValues(alpha: 0.24)),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.search, size: 17, color: ink),
+                      const Spacer(),
+                      Container(
+                        width: 5,
+                        height: 5,
+                        decoration: BoxDecoration(
+                          color: peach,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              Positioned(
+                left: 0,
+                bottom: 0,
+                width: w * 0.22,
+                height: h * 0.20,
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: peach.withValues(alpha: 0.58),
+                    borderRadius: const BorderRadius.only(
+                      topRight: Radius.circular(28),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildHopsonInputStack({
+    required Color navy,
+    required Color blue,
+  }) {
+    return Column(
+      children: [
+        _buildHopsonInputLine('Decision', navy, filled: false),
+        const SizedBox(height: 8),
+        _buildHopsonInputLine('Focus', blue, filled: true),
+        const SizedBox(height: 8),
+        _buildHopsonInputLine('Next', navy, filled: false),
+      ],
+    );
+  }
+
+  Widget _buildHopsonInputLine(
+    String label,
+    Color color, {
+    required bool filled,
+  }) {
+    return Container(
+      height: 36,
+      padding: const EdgeInsets.symmetric(horizontal: 13),
+      decoration: BoxDecoration(
+        color: filled ? color.withValues(alpha: 0.22) : const Color(0xFFFFFBF1),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: color.withValues(alpha: 0.55)),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: color,
+                fontSize: 12,
+                fontWeight: FontWeight.w800,
+                height: 1.2,
+              ),
+            ),
+          ),
+          Icon(Icons.close, size: 14, color: color.withValues(alpha: 0.72)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHopsonToggleDeck({
+    required Color navy,
+    required Color blue,
+  }) {
+    return Column(
+      children: [
+        for (final active in const [true, false, true])
+          Container(
+            height: 34,
+            margin: const EdgeInsets.only(bottom: 8),
+            decoration: BoxDecoration(
+              color: active
+                  ? const Color(0xFFFFFBF1)
+                  : blue.withValues(alpha: 0.35),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: navy.withValues(alpha: 0.32)),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                _buildHopsonMiniDot(navy),
+                Icon(Icons.auto_awesome, size: 13, color: navy),
+                _buildHopsonMiniDot(navy),
+              ],
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildHopsonRightControls({
+    required Color navy,
+    required Color blue,
+    required Color peach,
+    required int completed,
+  }) {
+    final bars = <Color>[navy, peach, blue];
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        for (var i = 0; i < bars.length; i++)
+          Container(
+            height: 22,
+            margin: const EdgeInsets.only(bottom: 8),
+            decoration: BoxDecoration(
+              color: i == 0
+                  ? const Color(0xFFFFFBF1)
+                  : bars[i].withValues(alpha: 0.18),
+              borderRadius: BorderRadius.circular(999),
+              border: Border.all(color: bars[i].withValues(alpha: 0.78)),
+            ),
+          ),
+        const SizedBox(height: 4),
+        Row(
+          children: [
+            for (var i = 0; i < 5; i++)
+              Container(
+                width: 5,
+                height: 5,
+                margin: const EdgeInsets.only(right: 6),
+                decoration: BoxDecoration(
+                  color:
+                      i <= completed % 5 ? navy : navy.withValues(alpha: 0.22),
+                  shape: BoxShape.circle,
+                ),
+              ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildHopsonSegment(String label, Color color, bool selected) {
+    return Container(
+      width: 76,
+      padding: const EdgeInsets.symmetric(vertical: 9),
+      decoration: BoxDecoration(
+        color: selected ? color : color.withValues(alpha: 0.28),
+        border: Border.all(color: color.withValues(alpha: 0.4)),
+      ),
+      alignment: Alignment.center,
+      child: Text(
+        label,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: TextStyle(
+          color: selected ? Colors.white : const Color(0xFF1B2430),
+          fontSize: 11,
+          fontWeight: FontWeight.w800,
+          height: 1.2,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHopsonMiniDot(Color color) {
+    return Container(
+      width: 4,
+      height: 4,
+      decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final themeService = Provider.of<ThemeService>(context);
@@ -4453,7 +5174,7 @@ abstinence_slip_details: $slipDetailsText
     return Scaffold(
       key: const Key('home_page_scaffold'),
       backgroundColor:
-          isDark ? const Color(0xFF0A0A0A) : const Color(0xFFF3F7FF),
+          isDark ? const Color(0xFF08111F) : const Color(0xFFE8F2F5),
       appBar: AppBar(
         toolbarHeight: 74,
         title: const Column(
@@ -4470,18 +5191,16 @@ abstinence_slip_details: $slipDetailsText
               end: Alignment.bottomRight,
               colors: [
                 Color.alphaBlend(
-                  Colors.white.withValues(alpha: 0.08),
-                  primaryColor,
+                  primaryColor.withValues(alpha: 0.10),
+                  const Color(0xFF102B43),
                 ),
-                Color.alphaBlend(
-                  Colors.black.withValues(alpha: 0.2),
-                  primaryColor,
-                ),
+                const Color(0xFF183C5A),
+                const Color(0xFF0A1828),
               ],
             ),
           ),
         ),
-        backgroundColor: primaryColor,
+        backgroundColor: const Color(0xFF102B43),
         foregroundColor: Colors.white,
         centerTitle: true,
         actions: [
@@ -4560,14 +5279,14 @@ abstinence_slip_details: $slipDetailsText
             end: Alignment.bottomCenter,
             colors: isDark
                 ? const [
-                    Color(0xFF0A0A0A),
-                    Color(0xFF121212),
-                    Color(0xFF0A0A0A),
+                    Color(0xFF08111F),
+                    Color(0xFF0D1C2A),
+                    Color(0xFF102A35),
                   ]
                 : const [
-                    Color(0xFFF8FAFF),
-                    Color(0xFFF1F5F9),
-                    Color(0xFFE8EFF8),
+                    Color(0xFFE8F2F5),
+                    Color(0xFFFAF5EA),
+                    Color(0xFFDCEAF0),
                   ],
           ),
         ),
@@ -4634,548 +5353,578 @@ abstinence_slip_details: $slipDetailsText
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            // AI プロバイダー API キー未設定バナー (Windows版#94)
-                            const ApiKeyStatusBanner(),
-                            const ProactiveDiagnosticsCard(),
-                            const SizedBox(height: 8),
-                            // 最上部: AI大学キラーコンテンツバナー
-                            const AiUniversityHomeCard(),
-                            const SizedBox(height: 8),
-                            // 5階層カスタマイズパネル
-                            const CollapsibleHomeSection(
-                              storageKey: 'home_tier_recent',
-                              title: '最近使った機能',
-                              icon: Icons.history,
-                              iconColor: Color(0xFFFF6B35),
-                              initiallyExpanded: true,
-                              child: RecentFeaturesList(),
+                            ..._buildCuratedHomeSections(
+                              isDark: isDark,
+                              isCompact: isCompact,
                             ),
-                            const SizedBox(height: 4),
-                            const CollapsibleHomeSection(
-                              storageKey: 'home_tier_system',
-                              title: 'システム固定機能',
-                              icon: Icons.lock_outline,
-                              iconColor: Color(0xFF6366F1),
-                              initiallyExpanded: true,
-                              child: SystemFixedFeaturesList(),
-                            ),
-                            const SizedBox(height: 4),
-                            const CollapsibleHomeSection(
-                              storageKey: 'home_tier_pinned',
-                              title: 'お気に入り (ピン留め)',
-                              icon: Icons.push_pin_outlined,
-                              iconColor: Color(0xFF6366F1),
-                              initiallyExpanded: true,
-                              child: UserPinnedFeaturesList(),
-                            ),
-                            const SizedBox(height: 4),
-                            const CollapsibleHomeSection(
-                              storageKey: 'home_tier_new',
-                              title: '最近追加された機能',
-                              icon: Icons.new_releases_outlined,
-                              iconColor: Color(0xFFFF6B35),
-                              initiallyExpanded: false,
-                              child: NewFeaturesList(),
-                            ),
-                            const SizedBox(height: 4),
-                            const CollapsibleHomeSection(
-                              storageKey: 'home_tier_recommend',
-                              title: 'AI おすすめ機能',
-                              icon: Icons.auto_awesome,
-                              iconColor: Color(0xFF6366F1),
-                              initiallyExpanded: false,
-                              child: AiRecommendedFeaturesList(),
-                            ),
-                            const SizedBox(height: 8),
-                            // AI競馬的中率リーダーボード
-                            ListTile(
-                              dense: true,
-                              leading: const Icon(
-                                Icons.leaderboard_outlined,
-                                color: Color(0xFFFF6B35),
-                                size: 20,
+                            if (!widget.showLegacyOperations &&
+                                !_showLegacyHomeSections) ...[
+                              const SizedBox(height: 24),
+                              _buildSectionHeader(
+                                '追加要望フォーム',
+                                Icons.add_task_outlined,
+                                const Color(0xFF0F766E),
+                                key: const Key('home_section_feature_request'),
                               ),
-                              title: const Text(
-                                'AI競馬 的中率リーダーボード',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                  height: 1.5,
-                                ),
-                              ),
-                              subtitle: const Text(
-                                'プロバイダー別1着的中率・3連単率',
-                                style: TextStyle(
-                                  color: Color(0xFF94A3B8),
-                                  fontSize: 11,
-                                  height: 1.5,
-                                ),
-                              ),
-                              trailing: const Icon(
-                                Icons.chevron_right,
-                                size: 16,
-                                color: Color(0xFF64748B),
-                              ),
-                              onTap: () => Navigator.pushNamed(
-                                context,
-                                '/horse-provider-leaderboard',
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            // ギター録音スタジオ
-                            const _GuitarMainFeatureBanner(),
-                            const SizedBox(height: 10),
-                            // 競合21社 vs 開発進捗バー (アコーディオン)
-                            const CollapsibleHomeSection(
-                              storageKey: 'home_section_growth_roadmap',
-                              title: 'GROWTH ROADMAP',
-                              icon: Icons.flag_outlined,
-                              iconColor: Color(0xFF6366F1),
-                              initiallyExpanded: false,
-                              child: GrowthRoadmapProgressCard(),
-                            ),
-                            const SizedBox(height: 12),
-                            if (WelcomeNewUserCard.shouldShow()) ...[
-                              const WelcomeNewUserCard(),
-                              const SizedBox(height: 10),
+                              _buildHomeFeatureRequestForm(isDark, isCompact),
                             ],
-                            const ProfileCompletionBanner(),
-                            const ProfileProgressCard(),
-                            const ReferralShareCard(),
-                            const SizedBox(height: 10),
-                            _buildIntegratedBriefingCard(
-                              context,
-                              isDark,
-                              isCompact,
-                              opsSnapshot,
-                            ),
-                            const _PersonalityTypeBanner(),
-                            const SizedBox(height: 10),
-                            _buildMonthlyCashflowPriorityCard(
-                              context,
-                              opsSnapshot,
-                              isHighlighted: highlightMonthlyFlow,
-                            ),
-                            const SizedBox(height: 14),
-                            _buildNextActionBubble(
-                              context,
-                              nextAction,
-                              opsSnapshot,
-                              aiNudge: aiNudge,
-                              isAiNudgeLoading: isAiLoading,
-                            ),
-                            const SizedBox(height: 14),
-                            _buildForcedTaskPanel(context, opsSnapshot),
-                            const SizedBox(height: 14),
-                            _buildCompletionGoalPanel(
-                              context,
-                              opsSnapshot,
-                              isHighlighted: highlightBeatYesterday,
-                            ),
-                            const SizedBox(height: 14),
-                            _buildAbstinenceGuardPanel(context, opsSnapshot),
-                            const SizedBox(height: 20),
-                            _buildSectionHeader(
-                              'CEO OFFICE',
-                              Icons.business_center,
-                              const Color(0xFFE53935),
-                              key: const Key('home_section_ceo_office'),
-                            ),
-                            _buildCeoCard(context),
-                            const SizedBox(height: 12),
-                            // AI 秘書カード
-                            Card(
-                              elevation: 0,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(14),
-                                side: BorderSide(
-                                  color: const Color(0xFF3D5AFE)
-                                      .withValues(alpha: 0.24),
-                                ),
+                            if (widget.showLegacyOperations ||
+                                _showLegacyHomeSections) ...[
+                              const SizedBox(height: 40),
+                              _buildHopsonInspiredHomeHero(
+                                context,
+                                isDark: isDark,
+                                isCompact: isCompact,
+                                snapshot: opsSnapshot,
+                                nextAction: nextAction,
                               ),
-                              child: InkWell(
-                                borderRadius: BorderRadius.circular(14),
-                                onTap: () => _runTrackedAction(
-                                  'ai-secretary',
-                                  () => Navigator.of(context).push(
-                                    MaterialPageRoute<void>(
-                                      settings: const RouteSettings(
-                                        name: '/ai-secretary',
-                                      ),
-                                      builder: (_) => const AISecretaryPage(
-                                        autoRunOnOpen: true,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                child: Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 16,
-                                    vertical: 14,
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      Container(
-                                        width: 40,
-                                        height: 40,
-                                        decoration: BoxDecoration(
-                                          color: const Color(0xFF3D5AFE)
-                                              .withValues(alpha: 0.08),
-                                          borderRadius:
-                                              BorderRadius.circular(10),
-                                        ),
-                                        child: const Icon(
-                                          Icons.support_agent,
-                                          color: Color(0xFF3D5AFE),
-                                        ),
-                                      ),
-                                      const SizedBox(width: 14),
-                                      const Expanded(
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              'AI 秘書',
-                                              style: TextStyle(
-                                                fontWeight: FontWeight.w700,
-                                                fontSize: 14,
-                                                height: 1.5,
-                                              ),
-                                            ),
-                                            SizedBox(height: 2),
-                                            Text(
-                                              '戦略提案・全部署横断指示・本日のタスク生成',
-                                              style: TextStyle(
-                                                fontSize: 12,
-                                                height: 1.5,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                      const Icon(Icons.chevron_right),
-                                    ],
-                                  ),
-                                ),
+                              const SizedBox(height: 12),
+                              // AI プロバイダー API キー未設定バナー (Windows版#94)
+                              const ApiKeyStatusBanner(),
+                              const ProactiveDiagnosticsCard(),
+                              const SizedBox(height: 8),
+                              // 最上部: AI大学キラーコンテンツバナー
+                              const AiUniversityHomeCard(),
+                              const SizedBox(height: 8),
+                              // 5階層カスタマイズパネル
+                              const CollapsibleHomeSection(
+                                storageKey: 'home_tier_recent',
+                                title: '最近使った機能',
+                                icon: Icons.history,
+                                iconColor: Color(0xFFFF6B35),
+                                initiallyExpanded: true,
+                                child: RecentFeaturesList(),
                               ),
-                            ),
-                            const SizedBox(height: 12),
-                            const TimeWasteGuardWidget(),
-                            const SizedBox(height: 12),
-                            _buildLifeWasteEliminationPanel(
-                              isDark,
-                              isCompact,
-                              opsSnapshot,
-                            ),
-                            const SizedBox(height: 12),
-                            _buildMorningBriefingCard(
-                              context,
-                              isHighlighted: highlightMorning,
-                            ),
-                            const SizedBox(height: 12),
-                            Card(
-                              elevation: 0,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(14),
-                                side: BorderSide(
-                                  color: Theme.of(context)
-                                      .colorScheme
-                                      .outlineVariant,
-                                ),
+                              const SizedBox(height: 4),
+                              const CollapsibleHomeSection(
+                                storageKey: 'home_tier_system',
+                                title: 'システム固定機能',
+                                icon: Icons.lock_outline,
+                                iconColor: Color(0xFF6366F1),
+                                initiallyExpanded: true,
+                                child: SystemFixedFeaturesList(),
                               ),
-                              child: ListTile(
-                                leading: Container(
-                                  width: 40,
-                                  height: 40,
-                                  decoration: BoxDecoration(
-                                    color: Theme.of(context).brightness ==
-                                            Brightness.dark
-                                        ? const Color(0xFF2D2040)
-                                        : const Color(0xFFEDE7F6),
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                  child: const Icon(
-                                    Icons.repeat,
-                                    color: Color(0xFF4338CA),
-                                  ),
+                              const SizedBox(height: 4),
+                              const CollapsibleHomeSection(
+                                storageKey: 'home_tier_pinned',
+                                title: 'お気に入り (ピン留め)',
+                                icon: Icons.push_pin_outlined,
+                                iconColor: Color(0xFF6366F1),
+                                initiallyExpanded: true,
+                                child: UserPinnedFeaturesList(),
+                              ),
+                              const SizedBox(height: 4),
+                              const CollapsibleHomeSection(
+                                storageKey: 'home_tier_new',
+                                title: '最近追加された機能',
+                                icon: Icons.new_releases_outlined,
+                                iconColor: Color(0xFFFF6B35),
+                                initiallyExpanded: false,
+                                child: NewFeaturesList(),
+                              ),
+                              const SizedBox(height: 4),
+                              const CollapsibleHomeSection(
+                                storageKey: 'home_tier_recommend',
+                                title: 'AI おすすめ機能',
+                                icon: Icons.auto_awesome,
+                                iconColor: Color(0xFF6366F1),
+                                initiallyExpanded: false,
+                                child: AiRecommendedFeaturesList(),
+                              ),
+                              const SizedBox(height: 8),
+                              // AI競馬的中率リーダーボード
+                              ListTile(
+                                dense: true,
+                                leading: const Icon(
+                                  Icons.leaderboard_outlined,
+                                  color: Color(0xFFFF6B35),
+                                  size: 20,
                                 ),
                                 title: const Text(
-                                  '毎日の習慣',
+                                  'AI競馬 的中率リーダーボード',
                                   style: TextStyle(
-                                    fontWeight: FontWeight.w700,
-                                    fontSize: 14,
+                                    color: Colors.white,
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
                                     height: 1.5,
                                   ),
                                 ),
                                 subtitle: const Text(
-                                  'マネフォ更新・体重記録など',
+                                  'プロバイダー別1着的中率・3連単率',
                                   style: TextStyle(
-                                    fontSize: 12,
+                                    color: Color(0xFF94A3B8),
+                                    fontSize: 11,
                                     height: 1.5,
                                   ),
                                 ),
-                                trailing: const Icon(Icons.chevron_right),
-                                onTap: () => _runTrackedAction(
-                                  'daily-habits',
-                                  () => Navigator.pushNamed(
-                                    context,
-                                    '/daily-habits',
+                                trailing: const Icon(
+                                  Icons.chevron_right,
+                                  size: 16,
+                                  color: Color(0xFF64748B),
+                                ),
+                                onTap: () => Navigator.pushNamed(
+                                  context,
+                                  '/horse-provider-leaderboard',
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              // ギター録音スタジオ
+                              const _GuitarMainFeatureBanner(),
+                              const SizedBox(height: 10),
+                              // 競合21社 vs 開発進捗バー (アコーディオン)
+                              const CollapsibleHomeSection(
+                                storageKey: 'home_section_growth_roadmap',
+                                title: 'GROWTH ROADMAP',
+                                icon: Icons.flag_outlined,
+                                iconColor: Color(0xFF6366F1),
+                                initiallyExpanded: false,
+                                child: GrowthRoadmapProgressCard(),
+                              ),
+                              const SizedBox(height: 12),
+                              if (WelcomeNewUserCard.shouldShow()) ...[
+                                const WelcomeNewUserCard(),
+                                const SizedBox(height: 10),
+                              ],
+                              const ProfileCompletionBanner(),
+                              const ProfileProgressCard(),
+                              const ReferralShareCard(),
+                              const SizedBox(height: 10),
+                              _buildIntegratedBriefingCard(
+                                context,
+                                isDark,
+                                isCompact,
+                                opsSnapshot,
+                              ),
+                              const _PersonalityTypeBanner(),
+                              const SizedBox(height: 10),
+                              _buildMonthlyCashflowPriorityCard(
+                                context,
+                                opsSnapshot,
+                                isHighlighted: highlightMonthlyFlow,
+                              ),
+                              const SizedBox(height: 14),
+                              _buildNextActionBubble(
+                                context,
+                                nextAction,
+                                opsSnapshot,
+                                aiNudge: aiNudge,
+                                isAiNudgeLoading: isAiLoading,
+                              ),
+                              const SizedBox(height: 14),
+                              _buildForcedTaskPanel(context, opsSnapshot),
+                              const SizedBox(height: 14),
+                              _buildCompletionGoalPanel(
+                                context,
+                                opsSnapshot,
+                                isHighlighted: highlightBeatYesterday,
+                              ),
+                              const SizedBox(height: 14),
+                              _buildAbstinenceGuardPanel(context, opsSnapshot),
+                              const SizedBox(height: 20),
+                              _buildSectionHeader(
+                                'CEO OFFICE',
+                                Icons.business_center,
+                                const Color(0xFFE53935),
+                                key: const Key('home_section_ceo_office'),
+                              ),
+                              _buildCeoCard(context),
+                              const SizedBox(height: 12),
+                              // AI 秘書カード
+                              Card(
+                                elevation: 0,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(14),
+                                  side: BorderSide(
+                                    color: const Color(0xFF3D5AFE)
+                                        .withValues(alpha: 0.24),
+                                  ),
+                                ),
+                                child: InkWell(
+                                  borderRadius: BorderRadius.circular(14),
+                                  onTap: () => _runTrackedAction(
+                                    'ai-secretary',
+                                    () => Navigator.of(context).push(
+                                      MaterialPageRoute<void>(
+                                        settings: const RouteSettings(
+                                          name: '/ai-secretary',
+                                        ),
+                                        builder: (_) => const AISecretaryPage(
+                                          autoRunOnOpen: true,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 16,
+                                      vertical: 14,
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        Container(
+                                          width: 40,
+                                          height: 40,
+                                          decoration: BoxDecoration(
+                                            color: const Color(0xFF3D5AFE)
+                                                .withValues(alpha: 0.08),
+                                            borderRadius:
+                                                BorderRadius.circular(10),
+                                          ),
+                                          child: const Icon(
+                                            Icons.support_agent,
+                                            color: Color(0xFF3D5AFE),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 14),
+                                        const Expanded(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                'AI 秘書',
+                                                style: TextStyle(
+                                                  fontWeight: FontWeight.w700,
+                                                  fontSize: 14,
+                                                  height: 1.5,
+                                                ),
+                                              ),
+                                              SizedBox(height: 2),
+                                              Text(
+                                                '戦略提案・全部署横断指示・本日のタスク生成',
+                                                style: TextStyle(
+                                                  fontSize: 12,
+                                                  height: 1.5,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        const Icon(Icons.chevron_right),
+                                      ],
+                                    ),
                                   ),
                                 ),
                               ),
-                            ),
-                            const SizedBox(height: 24),
-                            _buildSectionHeader(
-                              'OFFICE KPI SNAPSHOT',
-                              Icons.space_dashboard,
-                              const Color(0xFF3D5AFE),
-                              key: const Key('home_section_office_kpi_summary'),
-                            ),
-                            _buildOfficeKpiSummary(
-                              context,
-                              isDark,
-                              isCompact,
-                              opsSnapshot,
-                            ),
-                            const SizedBox(height: 24),
-                            _buildSectionHeader(
-                              'AI FEATURE STRATEGY MONITOR',
-                              Icons.auto_graph,
-                              const Color(0xFF7C3AED),
-                              key: const Key(
-                                'home_section_feature_strategy_monitor',
+                              const SizedBox(height: 12),
+                              const TimeWasteGuardWidget(),
+                              const SizedBox(height: 12),
+                              _buildLifeWasteEliminationPanel(
+                                isDark,
+                                isCompact,
+                                opsSnapshot,
                               ),
-                            ),
-                            _buildFeatureStrategyMonitor(isDark, isCompact),
-                            const SizedBox(height: 24),
-                            _buildSectionHeader(
-                              'SITE GUIDE AI',
-                              Icons.support_agent_outlined,
-                              const Color(0xFF4F46E5),
-                              key: const Key('home_section_site_guide_ai'),
-                            ),
-                            _buildSiteGuideAiCard(isDark, isCompact),
-                            const SizedBox(height: 24),
-                            _buildSectionHeader(
-                              '追加要望フォーム',
-                              Icons.add_task_outlined,
-                              const Color(0xFF0F766E),
-                              key: const Key('home_section_feature_request'),
-                            ),
-                            _buildHomeFeatureRequestForm(isDark, isCompact),
-                            const SizedBox(height: 24),
-                            _buildSectionHeader(
-                              'KPI SUMMARY',
-                              Icons.show_chart,
-                              const Color(0xFF3D5AFE),
-                            ),
-                            _buildKpiSummary(
-                              context,
-                              isDark,
-                              isCompact,
-                              opsSnapshot,
-                            ),
-                            const SizedBox(height: 24),
-                            _buildSectionHeader(
-                              'OPERATIONS CALENDAR',
-                              Icons.calendar_month,
-                              const Color(0xFFB0B0B0),
-                              key:
-                                  const Key('home_section_operations_calendar'),
-                            ),
-                            _buildCalendarPanel(context, opsSnapshot),
-                            const SizedBox(height: 24),
-                            _buildSectionHeader(
-                              'SPECIAL PROJECT',
-                              Icons.rocket_launch,
-                              const Color(0xFF3D5AFE),
-                            ),
-                            Card(
-                              elevation: 6,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16),
+                              const SizedBox(height: 12),
+                              _buildMorningBriefingCard(
+                                context,
+                                isHighlighted: highlightMorning,
                               ),
-                              color: Colors.transparent,
-                              child: Ink(
-                                decoration: BoxDecoration(
-                                  gradient: const LinearGradient(
-                                    begin: Alignment.topLeft,
-                                    end: Alignment.bottomRight,
-                                    colors: [
-                                      Color(0xFF3F46CC),
-                                      Color(0xFF4F46E5),
-                                    ],
+                              const SizedBox(height: 12),
+                              Card(
+                                elevation: 0,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(14),
+                                  side: BorderSide(
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .outlineVariant,
                                   ),
-                                  borderRadius: BorderRadius.circular(16),
-                                  boxShadow: const [
-                                    BoxShadow(
-                                      color: Color(0x403D5AFE),
-                                      blurRadius: 18,
-                                      offset: Offset(0, 8),
-                                    ),
-                                  ],
                                 ),
                                 child: ListTile(
-                                  contentPadding: const EdgeInsets.symmetric(
-                                    horizontal: 20,
-                                    vertical: 16,
-                                  ),
-                                  leading: const CircleAvatar(
-                                    backgroundColor: Colors.white,
-                                    radius: 28,
-                                    child: Icon(
-                                      Icons.campaign,
-                                      color: Color(0xFF3D5AFE),
-                                      size: 30,
+                                  leading: Container(
+                                    width: 40,
+                                    height: 40,
+                                    decoration: BoxDecoration(
+                                      color: Theme.of(context).brightness ==
+                                              Brightness.dark
+                                          ? const Color(0xFF2D2040)
+                                          : const Color(0xFFEDE7F6),
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: const Icon(
+                                      Icons.repeat,
+                                      color: Color(0xFF4338CA),
                                     ),
                                   ),
                                   title: const Text(
-                                    '2026 衆院選 勝利戦略室',
+                                    '毎日の習慣',
                                     style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 16,
-                                      color: Colors.white,
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 14,
                                       height: 1.5,
                                     ),
                                   ),
-                                  subtitle: Text(
-                                    'AI参謀と連携し、地域特性を踏まえた勝利戦略を立案します。',
+                                  subtitle: const Text(
+                                    'マネフォ更新・体重記録など',
                                     style: TextStyle(
-                                      color:
-                                          Colors.white.withValues(alpha: 0.7),
+                                      fontSize: 12,
                                       height: 1.5,
                                     ),
                                   ),
-                                  trailing: const Icon(
-                                    Icons.arrow_forward_ios,
-                                    size: 16,
-                                    color: Colors.white,
-                                  ),
+                                  trailing: const Icon(Icons.chevron_right),
                                   onTap: () => _runTrackedAction(
-                                    'election-strategy',
-                                    () => Navigator.of(context)
-                                        .pushNamed('/election-strategy'),
+                                    'daily-habits',
+                                    () => Navigator.pushNamed(
+                                      context,
+                                      '/daily-habits',
+                                    ),
                                   ),
                                 ),
                               ),
-                            ),
-                            const SizedBox(height: 12),
-                            Card(
-                              elevation: 6,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16),
+                              const SizedBox(height: 24),
+                              _buildSectionHeader(
+                                'OFFICE KPI SNAPSHOT',
+                                Icons.space_dashboard,
+                                const Color(0xFF3D5AFE),
+                                key: const Key(
+                                  'home_section_office_kpi_summary',
+                                ),
                               ),
-                              color: Colors.transparent,
-                              child: Ink(
-                                decoration: BoxDecoration(
-                                  gradient: const LinearGradient(
-                                    begin: Alignment.topLeft,
-                                    end: Alignment.bottomRight,
-                                    colors: [
-                                      Color(0xFF0F766E),
-                                      Color(0xFF16A34A),
+                              _buildOfficeKpiSummary(
+                                context,
+                                isDark,
+                                isCompact,
+                                opsSnapshot,
+                              ),
+                              const SizedBox(height: 24),
+                              _buildSectionHeader(
+                                'AI FEATURE STRATEGY MONITOR',
+                                Icons.auto_graph,
+                                const Color(0xFF7C3AED),
+                                key: const Key(
+                                  'home_section_feature_strategy_monitor',
+                                ),
+                              ),
+                              _buildFeatureStrategyMonitor(isDark, isCompact),
+                              const SizedBox(height: 24),
+                              _buildSectionHeader(
+                                'SITE GUIDE AI',
+                                Icons.support_agent_outlined,
+                                const Color(0xFF4F46E5),
+                                key: const Key('home_section_site_guide_ai'),
+                              ),
+                              _buildSiteGuideAiCard(isDark, isCompact),
+                              const SizedBox(height: 24),
+                              _buildSectionHeader(
+                                '追加要望フォーム',
+                                Icons.add_task_outlined,
+                                const Color(0xFF0F766E),
+                                key: const Key('home_section_feature_request'),
+                              ),
+                              _buildHomeFeatureRequestForm(isDark, isCompact),
+                              const SizedBox(height: 24),
+                              _buildSectionHeader(
+                                'KPI SUMMARY',
+                                Icons.show_chart,
+                                const Color(0xFF3D5AFE),
+                              ),
+                              _buildKpiSummary(
+                                context,
+                                isDark,
+                                isCompact,
+                                opsSnapshot,
+                              ),
+                              const SizedBox(height: 24),
+                              _buildSectionHeader(
+                                'OPERATIONS CALENDAR',
+                                Icons.calendar_month,
+                                const Color(0xFFB0B0B0),
+                                key: const Key(
+                                  'home_section_operations_calendar',
+                                ),
+                              ),
+                              _buildCalendarPanel(context, opsSnapshot),
+                              const SizedBox(height: 24),
+                              _buildSectionHeader(
+                                'SPECIAL PROJECT',
+                                Icons.rocket_launch,
+                                const Color(0xFF3D5AFE),
+                              ),
+                              Card(
+                                elevation: 6,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                                color: Colors.transparent,
+                                child: Ink(
+                                  decoration: BoxDecoration(
+                                    gradient: const LinearGradient(
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                      colors: [
+                                        Color(0xFF3F46CC),
+                                        Color(0xFF4F46E5),
+                                      ],
+                                    ),
+                                    borderRadius: BorderRadius.circular(16),
+                                    boxShadow: const [
+                                      BoxShadow(
+                                        color: Color(0x403D5AFE),
+                                        blurRadius: 18,
+                                        offset: Offset(0, 8),
+                                      ),
                                     ],
                                   ),
-                                  borderRadius: BorderRadius.circular(16),
-                                  boxShadow: const [
-                                    BoxShadow(
-                                      color: Color(0x404CAF50),
-                                      blurRadius: 18,
-                                      offset: Offset(0, 8),
+                                  child: ListTile(
+                                    contentPadding: const EdgeInsets.symmetric(
+                                      horizontal: 20,
+                                      vertical: 16,
                                     ),
-                                  ],
-                                ),
-                                child: ListTile(
-                                  contentPadding: const EdgeInsets.symmetric(
-                                    horizontal: 20,
-                                    vertical: 16,
-                                  ),
-                                  leading: const CircleAvatar(
-                                    backgroundColor: Colors.white,
-                                    radius: 28,
-                                    child: Icon(
-                                      Icons.how_to_vote,
-                                      color: Color(0xFF4CAF50),
-                                      size: 30,
+                                    leading: const CircleAvatar(
+                                      backgroundColor: Colors.white,
+                                      radius: 28,
+                                      child: Icon(
+                                        Icons.campaign,
+                                        color: Color(0xFF3D5AFE),
+                                        size: 30,
+                                      ),
                                     ),
-                                  ),
-                                  title: const Text(
-                                    '2027 統一地方選 700必達管理室',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 16,
+                                    title: const Text(
+                                      '2026 衆院選 勝利戦略室',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16,
+                                        color: Colors.white,
+                                        height: 1.5,
+                                      ),
+                                    ),
+                                    subtitle: Text(
+                                      'AI参謀と連携し、地域特性を踏まえた勝利戦略を立案します。',
+                                      style: TextStyle(
+                                        color:
+                                            Colors.white.withValues(alpha: 0.7),
+                                        height: 1.5,
+                                      ),
+                                    ),
+                                    trailing: const Icon(
+                                      Icons.arrow_forward_ios,
+                                      size: 16,
                                       color: Colors.white,
-                                      height: 1.5,
                                     ),
-                                  ),
-                                  subtitle: Text(
-                                    '県連別の純増配分と月次KPIをまとめて管理し、'
-                                    '未配分ギャップや公認内定の遅れを可視化します。',
-                                    style: TextStyle(
-                                      color:
-                                          Colors.white.withValues(alpha: 0.7),
-                                      height: 1.5,
+                                    onTap: () => _runTrackedAction(
+                                      'election-strategy',
+                                      () => Navigator.of(context)
+                                          .pushNamed('/election-strategy'),
                                     ),
-                                  ),
-                                  trailing: const Icon(
-                                    Icons.arrow_forward_ios,
-                                    size: 16,
-                                    color: Colors.white,
-                                  ),
-                                  onTap: () => _runTrackedAction(
-                                    'local-election-700',
-                                    () => Navigator.of(context)
-                                        .pushNamed('/local-election-700'),
                                   ),
                                 ),
                               ),
-                            ),
-                            const SizedBox(height: 24),
-                            _buildSectionHeader(
-                              'QUICK ACCESS',
-                              Icons.dashboard_customize,
-                              const Color(0xFF3D5AFE),
-                            ),
-                            _buildQuickAccessMenu(
-                              context,
-                              isCompact,
-                              shouldLockExploratoryMenus:
-                                  shouldLockExploratoryMenus,
-                              highlightedToolIds: highlightedToolIds,
-                              badgeLabels: toolBadgeLabels,
-                            ),
-                            const SizedBox(height: 24),
-                            _buildSectionHeader(
-                              'RECENT TOOLS',
-                              Icons.history,
-                              const Color(0xFF3D5AFE),
-                            ),
-                            _buildRecentToolsMenu(context, isCompact),
-                            const SizedBox(height: 16),
-                            // 開発・成長実績 (アコーディオン / 初期折りたたみ)
-                            const CollapsibleHomeSection(
-                              storageKey: 'home_section_dev_achievements',
-                              title: '開発・成長実績',
-                              icon: Icons.bar_chart,
-                              iconColor: Color(0xFF10B981),
-                              initiallyExpanded: false,
-                              child: DevelopmentAchievementsCard(),
-                            ),
-                            const SizedBox(height: 12),
-                            // Edge Functions 実装状況 (アコーディオン / 初期折りたたみ)
-                            const CollapsibleHomeSection(
-                              storageKey: 'home_section_edge_functions',
-                              title: 'Edge Functions 実装状況',
-                              icon: Icons.bolt_outlined,
-                              iconColor: Color(0xFF6366F1),
-                              initiallyExpanded: false,
-                              child: EdgeFunctionSummaryCard(),
-                            ),
-                            const SizedBox(height: 16),
-                            _buildUiStatusButton(context),
-                            const SizedBox(height: 40),
+                              const SizedBox(height: 12),
+                              Card(
+                                elevation: 6,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                                color: Colors.transparent,
+                                child: Ink(
+                                  decoration: BoxDecoration(
+                                    gradient: const LinearGradient(
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                      colors: [
+                                        Color(0xFF0F766E),
+                                        Color(0xFF16A34A),
+                                      ],
+                                    ),
+                                    borderRadius: BorderRadius.circular(16),
+                                    boxShadow: const [
+                                      BoxShadow(
+                                        color: Color(0x404CAF50),
+                                        blurRadius: 18,
+                                        offset: Offset(0, 8),
+                                      ),
+                                    ],
+                                  ),
+                                  child: ListTile(
+                                    contentPadding: const EdgeInsets.symmetric(
+                                      horizontal: 20,
+                                      vertical: 16,
+                                    ),
+                                    leading: const CircleAvatar(
+                                      backgroundColor: Colors.white,
+                                      radius: 28,
+                                      child: Icon(
+                                        Icons.how_to_vote,
+                                        color: Color(0xFF4CAF50),
+                                        size: 30,
+                                      ),
+                                    ),
+                                    title: const Text(
+                                      '2027 統一地方選 700必達管理室',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16,
+                                        color: Colors.white,
+                                        height: 1.5,
+                                      ),
+                                    ),
+                                    subtitle: Text(
+                                      '県連別の純増配分と月次KPIをまとめて管理し、'
+                                      '未配分ギャップや公認内定の遅れを可視化します。',
+                                      style: TextStyle(
+                                        color:
+                                            Colors.white.withValues(alpha: 0.7),
+                                        height: 1.5,
+                                      ),
+                                    ),
+                                    trailing: const Icon(
+                                      Icons.arrow_forward_ios,
+                                      size: 16,
+                                      color: Colors.white,
+                                    ),
+                                    onTap: () => _runTrackedAction(
+                                      'local-election-700',
+                                      () => Navigator.of(context)
+                                          .pushNamed('/local-election-700'),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 24),
+                              _buildSectionHeader(
+                                'QUICK ACCESS',
+                                Icons.dashboard_customize,
+                                const Color(0xFF3D5AFE),
+                              ),
+                              _buildQuickAccessMenu(
+                                context,
+                                isCompact,
+                                shouldLockExploratoryMenus:
+                                    shouldLockExploratoryMenus,
+                                highlightedToolIds: highlightedToolIds,
+                                badgeLabels: toolBadgeLabels,
+                              ),
+                              const SizedBox(height: 24),
+                              _buildSectionHeader(
+                                'RECENT TOOLS',
+                                Icons.history,
+                                const Color(0xFF3D5AFE),
+                              ),
+                              _buildRecentToolsMenu(context, isCompact),
+                              const SizedBox(height: 16),
+                              // 開発・成長実績 (アコーディオン / 初期折りたたみ)
+                              const CollapsibleHomeSection(
+                                storageKey: 'home_section_dev_achievements',
+                                title: '開発・成長実績',
+                                icon: Icons.bar_chart,
+                                iconColor: Color(0xFF10B981),
+                                initiallyExpanded: false,
+                                child: DevelopmentAchievementsCard(),
+                              ),
+                              const SizedBox(height: 12),
+                              // Edge Functions 実装状況 (アコーディオン / 初期折りたたみ)
+                              const CollapsibleHomeSection(
+                                storageKey: 'home_section_edge_functions',
+                                title: 'Edge Functions 実装状況',
+                                icon: Icons.bolt_outlined,
+                                iconColor: Color(0xFF6366F1),
+                                initiallyExpanded: false,
+                                child: EdgeFunctionSummaryCard(),
+                              ),
+                              const SizedBox(height: 16),
+                              _buildUiStatusButton(context),
+                              const SizedBox(height: 40),
+                            ],
                           ],
                         ),
                       ),
@@ -5208,6 +5957,83 @@ abstinence_slip_details: $slipDetailsText
     if (page is ElectionStrategyPage) return '/election-strategy';
     if (page is ElectionVictoryPage) return '/local-election-700';
     return null;
+  }
+
+  List<Widget> _buildCuratedHomeSections({
+    required bool isDark,
+    required bool isCompact,
+  }) {
+    return [
+      _buildSectionHeader(
+        'SITE GUIDE AI',
+        Icons.support_agent_outlined,
+        const Color(0xFF4F46E5),
+        key: const Key('home_section_site_guide_ai'),
+      ),
+      _buildSiteGuideAiCard(isDark, isCompact),
+      const SizedBox(height: 8),
+      const GaReadinessGatePanel(),
+      const SizedBox(height: 16),
+      const CollapsibleHomeSection(
+        key: Key('home_tier_recent'),
+        storageKey: 'home_tier_recent',
+        title: '最近使った機能',
+        icon: Icons.history,
+        iconColor: Color(0xFFFF6B35),
+        initiallyExpanded: true,
+        child: RecentFeaturesList(),
+      ),
+      const SizedBox(height: 4),
+      const CollapsibleHomeSection(
+        key: Key('home_tier_popular'),
+        storageKey: 'home_tier_popular',
+        title: 'よく使われる機能（ユーザー全体）',
+        icon: Icons.trending_up,
+        iconColor: Color(0xFF0D9488),
+        initiallyExpanded: true,
+        child: PopularFeaturesList(),
+      ),
+      const SizedBox(height: 4),
+      const CollapsibleHomeSection(
+        key: Key('home_tier_system'),
+        storageKey: 'home_tier_system',
+        title: 'システム固定機能',
+        icon: Icons.lock_outline,
+        iconColor: Color(0xFF6366F1),
+        initiallyExpanded: true,
+        child: SystemFixedFeaturesList(),
+      ),
+      const SizedBox(height: 4),
+      const CollapsibleHomeSection(
+        key: Key('home_tier_pinned'),
+        storageKey: 'home_tier_pinned',
+        title: 'お気に入り（ピン止め）',
+        icon: Icons.push_pin_outlined,
+        iconColor: Color(0xFF6366F1),
+        initiallyExpanded: true,
+        child: UserPinnedFeaturesList(),
+      ),
+      const SizedBox(height: 4),
+      const CollapsibleHomeSection(
+        key: Key('home_tier_new'),
+        storageKey: 'home_tier_new',
+        title: '最近追加された機能',
+        icon: Icons.new_releases_outlined,
+        iconColor: Color(0xFFFF6B35),
+        initiallyExpanded: true,
+        child: NewFeaturesList(),
+      ),
+      const SizedBox(height: 4),
+      const CollapsibleHomeSection(
+        key: Key('home_tier_recommend'),
+        storageKey: 'home_tier_recommend',
+        title: 'AIおすすめ機能',
+        icon: Icons.auto_awesome,
+        iconColor: Color(0xFF6366F1),
+        initiallyExpanded: true,
+        child: AiRecommendedFeaturesList(),
+      ),
+    ];
   }
 
   Widget _buildUiStatusButton(BuildContext context) {
@@ -8408,6 +9234,227 @@ class _LpSeriesEntry {
   final int count;
 
   const _LpSeriesEntry({required this.date, required this.count});
+}
+
+class _HopsonOrb extends StatelessWidget {
+  final double size;
+  final Color baseColor;
+  final Color shadowColor;
+
+  const _HopsonOrb({
+    required this.size,
+    required this.baseColor,
+    required this.shadowColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: RadialGradient(
+          center: const Alignment(-0.42, -0.48),
+          radius: 0.94,
+          colors: [
+            Colors.white.withValues(alpha: 0.92),
+            baseColor,
+            shadowColor.withValues(alpha: 0.92),
+          ],
+          stops: const [0.0, 0.48, 1.0],
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: shadowColor.withValues(alpha: 0.28),
+            blurRadius: 18,
+            offset: const Offset(0, 12),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _HopsonHomePainter extends CustomPainter {
+  final Color ink;
+  final Color navy;
+  final Color blue;
+  final Color peach;
+  final Color teal;
+
+  const _HopsonHomePainter({
+    required this.ink,
+    required this.navy,
+    required this.blue,
+    required this.peach,
+    required this.teal,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final panel = Offset.zero & size;
+    final outlinePaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1
+      ..color = ink.withValues(alpha: 0.16);
+    final finePaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 0.8
+      ..color = ink.withValues(alpha: 0.23);
+    final dotPaint = Paint()..color = ink.withValues(alpha: 0.72);
+
+    final blueDiscPaint = Paint()..color = blue.withValues(alpha: 0.36);
+    canvas.drawCircle(
+      Offset(size.width * 0.20, size.height * 0.86),
+      size.width * 0.20,
+      blueDiscPaint,
+    );
+    canvas.drawCircle(
+      Offset(size.width * 0.92, size.height * 0.50),
+      size.width * 0.18,
+      Paint()..color = blue.withValues(alpha: 0.30),
+    );
+
+    canvas.drawLine(
+      Offset(size.width * 0.36, panel.top),
+      Offset(size.width * 0.36, panel.bottom),
+      outlinePaint,
+    );
+    canvas.drawLine(
+      Offset(size.width * 0.64, panel.top),
+      Offset(size.width * 0.64, panel.bottom),
+      outlinePaint,
+    );
+    canvas.drawLine(
+      Offset(panel.left, size.height * 0.46),
+      Offset(panel.right, size.height * 0.46),
+      outlinePaint,
+    );
+
+    for (var i = 0; i < 7; i++) {
+      final x = size.width * (0.30 + i * 0.025);
+      canvas.drawLine(
+        Offset(x, size.height * 0.32),
+        Offset(x, size.height * 0.70),
+        finePaint,
+      );
+    }
+
+    final chartRect = Rect.fromLTWH(
+      size.width * 0.48,
+      size.height * 0.08,
+      size.width * 0.16,
+      size.height * 0.25,
+    );
+    canvas.drawRect(chartRect, outlinePaint);
+    for (var i = 1; i < 4; i++) {
+      final x = chartRect.left + chartRect.width * i / 4;
+      canvas.drawLine(
+        Offset(x, chartRect.top),
+        Offset(x, chartRect.bottom),
+        finePaint,
+      );
+    }
+    for (var i = 1; i < 4; i++) {
+      final y = chartRect.top + chartRect.height * i / 4;
+      canvas.drawLine(
+        Offset(chartRect.left, y),
+        Offset(chartRect.right, y),
+        finePaint,
+      );
+    }
+    final path = Path()
+      ..moveTo(chartRect.left + chartRect.width * 0.10, chartRect.bottom)
+      ..lineTo(chartRect.left + chartRect.width * 0.35, chartRect.center.dy)
+      ..lineTo(chartRect.left + chartRect.width * 0.56, chartRect.top + 12)
+      ..lineTo(chartRect.right - 8, chartRect.top + chartRect.height * 0.34);
+    canvas.drawPath(
+      path,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.2
+        ..color = navy.withValues(alpha: 0.78),
+    );
+    for (final point in [
+      Offset(chartRect.left + chartRect.width * 0.10, chartRect.bottom),
+      Offset(chartRect.left + chartRect.width * 0.35, chartRect.center.dy),
+      Offset(chartRect.left + chartRect.width * 0.56, chartRect.top + 12),
+      Offset(chartRect.right - 8, chartRect.top + chartRect.height * 0.34),
+    ]) {
+      canvas.drawCircle(point, 2.5, Paint()..color = navy);
+    }
+
+    final dotStart = Offset(size.width * 0.70, size.height * 0.16);
+    for (var row = 0; row < 5; row++) {
+      for (var col = 0; col < 6; col++) {
+        canvas.drawCircle(
+          Offset(dotStart.dx + col * 20, dotStart.dy + row * 18),
+          row == 2 && col == 3 ? 2.6 : 1.9,
+          dotPaint,
+        );
+      }
+    }
+
+    final sunCenter = Offset(size.width * 0.88, size.height * 0.19);
+    for (var i = 0; i < 24; i++) {
+      final angle = (math.pi * 2 * i) / 24;
+      final inner = Offset(
+        sunCenter.dx + math.cos(angle) * 22,
+        sunCenter.dy + math.sin(angle) * 22,
+      );
+      final outer = Offset(
+        sunCenter.dx + math.cos(angle) * 48,
+        sunCenter.dy + math.sin(angle) * 48,
+      );
+      canvas.drawLine(inner, outer, finePaint);
+    }
+    canvas.drawCircle(sunCenter, 16, Paint()..color = navy);
+
+    final plantPaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.2
+      ..strokeCap = StrokeCap.round
+      ..color = teal.withValues(alpha: 0.85);
+    for (var i = 0; i < 7; i++) {
+      final baseX = size.width * (0.58 + i * 0.035);
+      final baseY = size.height * 0.73;
+      canvas.drawLine(
+        Offset(baseX, baseY),
+        Offset(baseX + (i.isEven ? -12 : 10), baseY - 52 - i * 4),
+        plantPaint,
+      );
+    }
+
+    canvas.drawCircle(
+      Offset(size.width * 0.68, size.height * 0.73),
+      size.width * 0.08,
+      Paint()..color = blue.withValues(alpha: 0.92),
+    );
+    canvas.drawCircle(
+      Offset(size.width * 0.73, size.height * 0.75),
+      size.width * 0.07,
+      Paint()..color = peach.withValues(alpha: 0.86),
+    );
+    canvas.drawRect(
+      Rect.fromLTWH(
+        0,
+        size.height * 0.80,
+        size.width * 0.22,
+        size.height * 0.2,
+      ),
+      Paint()..color = peach.withValues(alpha: 0.18),
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant _HopsonHomePainter oldDelegate) {
+    return oldDelegate.ink != ink ||
+        oldDelegate.navy != navy ||
+        oldDelegate.blue != blue ||
+        oldDelegate.peach != peach ||
+        oldDelegate.teal != teal;
+  }
 }
 
 class _HomeMonthlyCashflowSummary {

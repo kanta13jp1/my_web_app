@@ -1,0 +1,23 @@
+{
+  "run_at_jst": "2026-05-10T17:33+09:00",
+  "supabase_health_check": {
+    "http_status": 200,
+    "status": "healthy",
+    "checks": {
+      "env": "ok (SUPABASE_URL + SERVICE_ROLE_KEY set)",
+      "db_connectivity": "ok (136ms, profiles reachable)",
+      "wbs_tasks": "ok",
+      "ai_circuit_breaker": "ok"
+    },
+    "timestamp": "2026-05-10T08:33:41.471Z"
+  },
+  "firebase_hosting": {
+    "url": "https://my-web-app-b67f4.web.app/",
+    "http_status": 200,
+    "size_bytes": 106347,
+    "status": "ok",
+    "note": "index.html served (lang=ja, theme-color=#3949AB)"
+  },
+  "anomaly": false,
+  "action": "log only (no commit per task policy / no anomaly)"
+}

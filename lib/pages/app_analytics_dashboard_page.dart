@@ -40,9 +40,10 @@ class _AppAnalyticsDashboardPageState extends State<AppAnalyticsDashboardPage> {
         setState(() => _analytics = data);
       }
     } catch (e) {
+      if (!mounted) return;
       setState(() => _errorMessage = e.toString());
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 

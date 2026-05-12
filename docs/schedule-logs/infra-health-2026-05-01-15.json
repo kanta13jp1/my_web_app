@@ -1,0 +1,30 @@
+{
+  "task": "infra-health-check",
+  "ran_at": "2026-05-01T15:33:41+09:00",
+  "supabase_health_check_ef": {
+    "status": "healthy",
+    "http_code": 200,
+    "auth": "anon (no Authorization header required; verify_jwt=false)",
+    "checks": {
+      "env": "ok — SUPABASE_URL + SERVICE_ROLE_KEY set on EF runtime",
+      "db_connectivity": "ok — profiles reachable in 69ms",
+      "wbs_tasks": "ok",
+      "ai_circuit_breaker": "ok"
+    },
+    "ef_timestamp": "2026-05-01T06:33:41.107Z",
+    "note": "Local SUPABASE_SERVICE_KEY env still unset in Claude Code session, but health-check EF accepts unauthenticated calls and reports healthy."
+  },
+  "firebase_hosting": {
+    "url": "https://my-web-app-b67f4.web.app/",
+    "status": "ok",
+    "title": "自分株式会社 | AIが今日の最優先タスクを整理",
+    "title_visible": true,
+    "note": "Flutter Web app renders. No 5xx / SyntaxError observed."
+  },
+  "latency_observations": {
+    "db_profiles_ms": 69,
+    "note": "69ms — sharp recovery from previous hour's 1101ms. Healthy."
+  },
+  "incident_created": false,
+  "action": "log only; no fix required"
+}

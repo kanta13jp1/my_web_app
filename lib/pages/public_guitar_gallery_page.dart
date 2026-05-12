@@ -67,6 +67,7 @@ class _PublicGuitarGalleryPageState extends State<PublicGuitarGalleryPage> {
         _offset = nextOffset + items.length;
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() => _errorMessage = e.toString());
     } finally {
       if (mounted) setState(() => _isLoading = false);

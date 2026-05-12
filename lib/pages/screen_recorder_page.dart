@@ -58,6 +58,7 @@ class _ScreenRecorderPageState extends State<ScreenRecorderPage>
         _screenshots = _toList(ssRes.data, 'screenshots');
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() => _errorMessage = '$e');
     } finally {
       if (mounted) setState(() => _isLoading = false);

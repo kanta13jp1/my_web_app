@@ -8,7 +8,7 @@
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <application
-        android:label="my_web_app"
+        android:label="自分株式会社"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

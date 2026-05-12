@@ -40,11 +40,13 @@ class _KnowledgeBasePageState extends State<KnowledgeBasePage> {
     });
     try {
       final response = await _supabase.functions.invoke(
-        'knowledge-base',
-        body: {'query': query, 'limit': 20},
+        'enterprise-hub',
+        body: {'action': 'wiki.list'},
       );
       final data = response.data;
-      if (data is Map<String, dynamic> && data['articles'] is List) {
+      if (data is Map<String, dynamic> && data['pages'] is List) {
+        setState(() => _articles = data['pages'] as List);
+      } else if (data is Map<String, dynamic> && data['articles'] is List) {
         setState(() => _articles = data['articles'] as List);
       } else if (data is List) {
         setState(() => _articles = data);

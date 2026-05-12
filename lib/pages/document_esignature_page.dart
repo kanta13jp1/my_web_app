@@ -45,18 +45,19 @@ class _DocumentEsignaturePageState extends State<DocumentEsignaturePage>
     });
     try {
       final pendingRes = await _supabase.functions.invoke(
-        'document-esignature',
-        queryParameters: {'view': 'pending'},
+        'media-hub',
+        body: {'action': 'esign.list'},
       );
       final completedRes = await _supabase.functions.invoke(
-        'document-esignature',
-        queryParameters: {'view': 'completed'},
+        'media-hub',
+        body: {'action': 'esign.list'},
       );
       setState(() {
-        _pending = _toList(pendingRes.data, 'documents');
-        _completed = _toList(completedRes.data, 'documents');
+        _pending = _toList(pendingRes.data, 'requests');
+        _completed = _toList(completedRes.data, 'requests');
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() => _errorMessage = '$e');
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -208,8 +209,11 @@ class _DocumentEsignaturePageState extends State<DocumentEsignaturePage>
                     onPressed: () async {
                       try {
                         await _supabase.functions.invoke(
-                          'document-esignature',
-                          body: {'action': 'sign', 'documentId': doc['id']},
+                          'media-hub',
+                          body: {
+                            'action': 'esign.sign',
+                            'documentId': doc['id'],
+                          },
                         );
                         await _fetchData();
                         if (mounted) {
@@ -277,9 +281,9 @@ class _DocumentEsignaturePageState extends State<DocumentEsignaturePage>
               if (title.isEmpty || email.isEmpty) return;
               try {
                 await _supabase.functions.invoke(
-                  'document-esignature',
+                  'media-hub',
                   body: {
-                    'action': 'create_request',
+                    'action': 'esign.create_request',
                     'title': title,
                     'signerEmail': email,
                   },

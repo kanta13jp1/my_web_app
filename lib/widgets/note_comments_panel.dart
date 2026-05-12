@@ -117,9 +117,13 @@ class _NoteCommentsPanelState extends State<NoteCommentsPanel> {
   }
 
   void _attachRealtime() {
-    _watchSubscription = _service
-        .watchCommentChanges(noteId: widget.noteId)
-        .listen((_) => unawaited(_loadComments(showSpinner: false)));
+    _watchSubscription =
+        _service.watchCommentChanges(noteId: widget.noteId).listen(
+      (_) => unawaited(_loadComments(showSpinner: false)),
+      onError: (Object error) {
+        debugPrint('Note comment realtime stream error: $error');
+      },
+    );
   }
 
   Future<void> _loadComments({bool showSpinner = true}) async {

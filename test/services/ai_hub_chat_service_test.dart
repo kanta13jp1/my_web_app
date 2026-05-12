@@ -1,7 +1,13 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/services/ai_hub_chat_service.dart';
+import 'package:my_web_app/services/offline_secure_mode_settings_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
+  setUp(() {
+    SharedPreferences.setMockInitialValues(<String, Object>{});
+  });
+
   test('sendProviderChat returns normalized provider text', () async {
     final service = AiHubChatService(
       invoker: (body) async {
@@ -74,5 +80,35 @@ void main() {
     expect(response.source, 'ai-hub provider.chat_auto / groq');
     expect(response.observability?.provider, 'groq');
     expect(response.observability?.latencyMs, 210);
+  });
+
+  test('sendProviderChat includes offline secure mode policy', () async {
+    const offlineSettings = OfflineSecureModeSettingsService();
+    await offlineSettings.saveSettings(
+      const OfflineSecureModeSettings(
+        enabled: true,
+        localModelPath: r'C:\models\pleias-rag.gguf',
+        localVectorDbPath: r'C:\rag\lancedb',
+        blockExternalApiWhenEnabled: true,
+      ),
+    );
+
+    final service = AiHubChatService(
+      offlineSettingsService: offlineSettings,
+      invoker: (body) async {
+        expect(body['action'], 'provider.chat');
+        expect(body['offline_secure_mode'], true);
+        expect(body['offline_external_api_blocked'], true);
+        expect(body['offline_runtime_configured'], true);
+        return {
+          'success': true,
+          'text': 'blocked before provider fetch in ai-hub',
+        };
+      },
+    );
+
+    final response = await service.sendProviderChat(message: 'hello');
+
+    expect(response.text, 'blocked before provider fetch in ai-hub');
   });
 }

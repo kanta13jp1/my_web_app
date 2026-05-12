@@ -66,6 +66,10 @@ class _AiPresentationBuilderPageState extends State<AiPresentationBuilderPage> {
   }
 
   Future<void> _generate() async {
+    if (_supabase.auth.currentUser == null) {
+      setState(() => _loadingHistory = false);
+      return;
+    }
     if (_topicCtrl.text.trim().isEmpty) return;
     setState(() {
       _generating = true;
@@ -112,6 +116,7 @@ class _AiPresentationBuilderPageState extends State<AiPresentationBuilderPage> {
         }
       }
     } catch (e) {
+      if (!mounted) return;
       setState(() => _error = 'AI生成に失敗しました: $e');
     } finally {
       if (mounted) setState(() => _generating = false);

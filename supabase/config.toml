@@ -190,3 +190,8 @@ entrypoint = "./functions/viral-video-generator/index.ts"
 [functions.health-check]
 enabled = true
 verify_jwt = false
+
+[functions.mcp-well-known]
+enabled = true
+verify_jwt = false
+entrypoint = "./functions/mcp-well-known/index.ts"

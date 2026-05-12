@@ -47,16 +47,16 @@ class _ElearningCourseManagerPageState extends State<ElearningCourseManagerPage>
     });
     try {
       final coursesRes = await _supabase.functions.invoke(
-        'elearning-course-manager',
-        queryParameters: {'view': 'courses'},
+        'social-commerce-hub',
+        body: {'action': 'course.list'},
       );
       final progressRes = await _supabase.functions.invoke(
-        'elearning-course-manager',
-        queryParameters: {'view': 'in_progress'},
+        'social-commerce-hub',
+        body: {'action': 'course.progress'},
       );
       final certRes = await _supabase.functions.invoke(
-        'elearning-course-manager',
-        queryParameters: {'view': 'certificates'},
+        'social-commerce-hub',
+        body: {'action': 'course.certificates'},
       );
 
       setState(() {
@@ -65,6 +65,7 @@ class _ElearningCourseManagerPageState extends State<ElearningCourseManagerPage>
         _certificates = _extractList(certRes.data, 'certificates');
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() => _errorMessage = '$e');
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -251,9 +252,9 @@ class _ElearningCourseManagerPageState extends State<ElearningCourseManagerPage>
                           onPressed: () async {
                             try {
                               await _supabase.functions.invoke(
-                                'elearning-course-manager',
+                                'social-commerce-hub',
                                 body: {
-                                  'action': 'enroll',
+                                  'action': 'course.enroll',
                                   'courseId': c['id'],
                                 },
                               );

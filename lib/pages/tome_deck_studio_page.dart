@@ -13,9 +13,9 @@ class TomeDeckStudioPage extends StatefulWidget {
 
 class _TomeDeckStudioPageState extends State<TomeDeckStudioPage> {
   final _service = const TomeDeckStudioService();
-  final _topicCtrl = TextEditingController(text: 'Life Management AI OS');
+  final _topicCtrl = TextEditingController(text: 'ライフマネジメント AI OS');
   final _audienceCtrl = TextEditingController(
-    text: 'Investors / internal executive meeting',
+    text: '投資家 / 経営会議',
   );
   final _sourceCtrl = TextEditingController();
   bool _isSyncingCompetitors = false;
@@ -51,7 +51,7 @@ class _TomeDeckStudioPageState extends State<TomeDeckStudioPage> {
     await Clipboard.setData(ClipboardData(text: _service.buildMarkdown(_plan)));
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Tome paste-ready markdown copied')),
+      const SnackBar(content: Text('Tome 貼り付け用マークダウンをコピーしました')),
     );
   }
 
@@ -59,14 +59,15 @@ class _TomeDeckStudioPageState extends State<TomeDeckStudioPage> {
     await Clipboard.setData(ClipboardData(text: _plan.tomePrompt));
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Tome AI prompt copied')),
+      const SnackBar(content: Text('Tome AI プロンプトをコピーしました')),
     );
   }
 
   Future<void> _syncCompetitorSource() async {
+    if (Supabase.instance.client.auth.currentUser == null) return;
     setState(() {
       _isSyncingCompetitors = true;
-      _syncStatus = 'Syncing competitor source...';
+      _syncStatus = '競合ソースを同期中...';
     });
     try {
       final response = await Supabase.instance.client.functions.invoke(
@@ -79,22 +80,23 @@ class _TomeDeckStudioPageState extends State<TomeDeckStudioPage> {
       );
       final data = response.data;
       if (data is! Map || data['success'] != true || data['csv'] is! String) {
-        throw StateError('Unexpected sync response');
+        throw StateError('予期しない同期レスポンス');
       }
       final rowCount = data['rowCount'] ?? 0;
-      final source = data['source'] ?? 'unknown';
+      final source = data['source'] ?? '不明';
       final warning = data['warning'];
       setState(() {
         _sourceCtrl.text = data['csv'] as String;
         _syncStatus = warning is String && warning.isNotEmpty
-            ? 'Loaded $rowCount rows from $source. $warning'
-            : 'Loaded $rowCount rows from $source.';
+            ? '$source から $rowCount 行をロードしました。$warning'
+            : '$source から $rowCount 行をロードしました。';
       });
     } catch (error) {
-      setState(() => _syncStatus = 'Sync failed: $error');
+      if (!mounted) return;
+      setState(() => _syncStatus = '同期に失敗: $error');
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Competitor sync failed: $error')),
+        SnackBar(content: Text('競合同期に失敗: $error')),
       );
     } finally {
       if (mounted) {
@@ -111,11 +113,11 @@ class _TomeDeckStudioPageState extends State<TomeDeckStudioPage> {
       backgroundColor:
           isDark ? const Color(0xFF0A0A0A) : const Color(0xFFF8FAFC),
       appBar: AppBar(
-        title: const Text('Tome Deck Studio'),
+        title: const Text('Tome デッキスタジオ'),
         actions: [
           IconButton(
             icon: const Icon(Icons.content_copy_outlined),
-            tooltip: 'Copy markdown',
+            tooltip: 'マークダウンをコピー',
             onPressed: _copyMarkdown,
           ),
         ],
@@ -263,17 +265,17 @@ class _ScenarioSelector extends StatelessWidget {
         ButtonSegment(
           value: TomeDeckScenario.investorDeck,
           icon: Icon(Icons.request_quote_outlined),
-          label: Text('Investor / report'),
+          label: Text('投資家 / レポート'),
         ),
         ButtonSegment(
           value: TomeDeckScenario.aiUniversityInfographic,
           icon: Icon(Icons.school_outlined),
-          label: Text('AI University'),
+          label: Text('AI 大学'),
         ),
         ButtonSegment(
           value: TomeDeckScenario.competitorAirtable,
           icon: Icon(Icons.table_chart_outlined),
-          label: Text('Competitor / Airtable'),
+          label: Text('競合 / Airtable'),
         ),
       ],
     );
@@ -306,7 +308,7 @@ class _EditorPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return _Panel(
-      title: 'Source',
+      title: 'ソース',
       icon: Icons.edit_note_outlined,
       child: Column(
         children: [
@@ -314,7 +316,7 @@ class _EditorPanel extends StatelessWidget {
             controller: topicCtrl,
             onChanged: (_) => onChanged(),
             decoration: const InputDecoration(
-              labelText: 'Topic',
+              labelText: 'トピック',
               border: OutlineInputBorder(),
               prefixIcon: Icon(Icons.title_outlined),
             ),
@@ -324,7 +326,7 @@ class _EditorPanel extends StatelessWidget {
             controller: audienceCtrl,
             onChanged: (_) => onChanged(),
             decoration: const InputDecoration(
-              labelText: 'Audience',
+              labelText: 'ターゲット読者',
               border: OutlineInputBorder(),
               prefixIcon: Icon(Icons.people_outline),
             ),
@@ -348,7 +350,7 @@ class _EditorPanel extends StatelessWidget {
             child: FilledButton.icon(
               onPressed: onCopyPrompt,
               icon: const Icon(Icons.bolt_outlined),
-              label: const Text('Copy Tome AI prompt'),
+              label: const Text('Tome AI プロンプトをコピー'),
             ),
           ),
           if (scenario == TomeDeckScenario.competitorAirtable) ...[
@@ -364,7 +366,7 @@ class _EditorPanel extends StatelessWidget {
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
                     : const Icon(Icons.sync_outlined),
-                label: const Text('Sync Airtable / competitor source'),
+                label: const Text('Airtable / 競合ソースを同期'),
               ),
             ),
             if (syncStatus != null) ...[
@@ -470,7 +472,7 @@ class _OutlinePanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return _Panel(
-      title: 'Tome outline',
+      title: 'Tome アウトライン',
       icon: Icons.view_carousel_outlined,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -555,7 +557,7 @@ class _PageCard extends StatelessWidget {
           Text(page.narrative),
           const SizedBox(height: 8),
           Text(
-            'Visual: ${page.visualDirection}',
+            'ビジュアル: ${page.visualDirection}',
             style: const TextStyle(
               color: Color(0xFF0369A1),
               fontWeight: FontWeight.w700,
@@ -576,7 +578,7 @@ class _PageCard extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'Note: ${page.speakerNote}',
+            '備考: ${page.speakerNote}',
             style: const TextStyle(color: Color(0xFF64748B)),
           ),
         ],
@@ -665,7 +667,7 @@ class _ScoreBadge extends StatelessWidget {
               fontWeight: FontWeight.w900,
             ),
           ),
-          Text('$pages pages'),
+          Text('$pages ページ'),
         ],
       ),
     );
@@ -675,43 +677,43 @@ class _ScoreBadge extends StatelessWidget {
 String _sourceLabel(TomeDeckScenario scenario) {
   switch (scenario) {
     case TomeDeckScenario.investorDeck:
-      return 'Source memo, traction, KPI, meeting notes';
+      return 'ソースメモ、トラクション、KPI、会議ノート';
     case TomeDeckScenario.aiUniversityInfographic:
-      return 'AI University article, quiz result, learner feedback';
+      return 'AI 大学記事、クイズ結果、学習者フィードバック';
     case TomeDeckScenario.competitorAirtable:
-      return 'Airtable CSV/TSV rows';
+      return 'Airtable CSV/TSV 行';
   }
 }
 
 String _scenarioTopic(TomeDeckScenario scenario) {
   switch (scenario) {
     case TomeDeckScenario.investorDeck:
-      return 'Life Management AI OS';
+      return 'ライフマネジメント AI OS';
     case TomeDeckScenario.aiUniversityInfographic:
-      return 'Tome lesson for AI University';
+      return 'AI 大学向け Tome レッスン';
     case TomeDeckScenario.competitorAirtable:
-      return 'Competitor comparison and weekly product decision';
+      return '競合比較と週次プロダクト判断';
   }
 }
 
 String _scenarioAudience(TomeDeckScenario scenario) {
   switch (scenario) {
     case TomeDeckScenario.investorDeck:
-      return 'Investors / internal executive meeting';
+      return '投資家 / 経営会議';
     case TomeDeckScenario.aiUniversityInfographic:
-      return 'AI University learners';
+      return 'AI 大学学習者';
     case TomeDeckScenario.competitorAirtable:
-      return 'Product and marketing team';
+      return 'プロダクト / マーケティングチーム';
   }
 }
 
 String _scenarioSource(TomeDeckScenario scenario) {
   switch (scenario) {
     case TomeDeckScenario.investorDeck:
-      return 'The product reduces waste of time, money, health, stamina, intelligence, and focus by connecting AI analysis, KGI/CSF/KPI, WBS, and improvement loops.';
+      return '本プロダクトは AI 分析・KGI/CSF/KPI・WBS・改善ループを結合することで、時間・お金・健康・体力・知能・集中の無駄を削減する。';
     case TomeDeckScenario.aiUniversityInfographic:
-      return 'Tome is an AI presentation and document builder. AI University pages should compress provider lessons into visual blocks, comparisons, practice questions, and feedback loops.';
+      return 'Tome は AI プレゼン・ドキュメント生成ツール。AI 大学のページは provider レッスンをビジュアルブロック・比較表・演習問題・フィードバックループに圧縮する。';
     case TomeDeckScenario.competitorAirtable:
-      return 'Product,Feature,Price,Risk,Countermove\nTome,AI deck generation,Pro,Presentation workflow,Add Tome-ready export\nGamma,AI document deck,Pro,Fast deck creation,Improve KGI/CSF/KPI deck structure\nAirtable,Structured source,Team,Data freshness,Embed live view in Tome';
+      return 'プロダクト,機能,価格,リスク,対抗策\nTome,AI デッキ生成,Pro,プレゼン workflow,Tome-ready エクスポート追加\nGamma,AI ドキュメントデッキ,Pro,高速デッキ作成,KGI/CSF/KPI デッキ構造を改善\nAirtable,構造化ソース,Team,データ鮮度,Tome へライブビュー埋込み';
   }
 }

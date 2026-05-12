@@ -19,8 +19,7 @@ import 'dart:math';
 
 import 'package:flutter/foundation.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
-
-import '../main.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class ErrorReporter {
   ErrorReporter._();
@@ -50,6 +49,14 @@ class ErrorReporter {
   bool get sentryEnabled => _sentryEnabled;
 
   bool get _hasSentryDsn => _sentryDsn.trim().isNotEmpty;
+
+  SupabaseClient? get _supabaseOrNull {
+    try {
+      return Supabase.instance.client;
+    } catch (_) {
+      return null;
+    }
+  }
 
   /// `main()` の Supabase.initialize() 直後に呼ぶ。
   /// SENTRY_DSN が設定されていれば、Sentry の zone 内で appRunner を実行する。
@@ -194,28 +201,50 @@ class ErrorReporter {
         hasReleaseInkStack && (details == null || library.contains('widgets'));
   }
 
+  @visibleForTesting
+  bool isIgnorableFlutterWebFocusTraversalLayoutErrorForTesting(
+    String message,
+    StackTrace? stackTrace,
+  ) {
+    return _isIgnorableFlutterWebFocusTraversalLayoutError(
+      message,
+      stackTrace,
+      isWebOverride: true,
+    );
+  }
+
   // Flutter Web can trigger focus traversal before every candidate RenderBox
   // has completed layout. The framework path is minified in release builds, so
   // match the traversal shape instead of one exact symbol suffix.
   bool _isIgnorableFlutterWebFocusTraversalLayoutError(
     String message,
-    StackTrace? stackTrace,
-  ) {
-    if (!kIsWeb) return false;
+    StackTrace? stackTrace, {
+    bool? isWebOverride,
+  }) {
+    if (!(isWebOverride ?? kIsWeb)) return false;
     if (!message.contains('RenderBox was not laid out')) return false;
 
     final stack = stackTrace?.toString() ?? '';
     final hasDebugFocusTraversalStack =
         stack.contains('FocusTraversalPolicy') ||
             stack.contains('FocusTraversalGroup');
-    final hasReleaseFocusTraversalStack = stack.contains('.gN') &&
+    final hasReleaseFocusTraversalStackV1 = stack.contains('.gN') &&
         stack.contains('.gn') &&
         stack.contains('.ge') &&
         stack.contains('Object.e') &&
         stack.contains('Object.dy') &&
         stack.contains('.ak');
+    final hasReleaseFocusTraversalStackV2 = stack.contains('.gn') &&
+        stack.contains('.ge') &&
+        stack.contains('Object.e') &&
+        stack.contains('Object.d') &&
+        (stack.contains('.aF') || stack.contains('.aG')) &&
+        (stack.contains('.aU') || stack.contains('.aV')) &&
+        stack.contains('.at');
 
-    return hasDebugFocusTraversalStack || hasReleaseFocusTraversalStack;
+    return hasDebugFocusTraversalStack ||
+        hasReleaseFocusTraversalStackV1 ||
+        hasReleaseFocusTraversalStackV2;
   }
 
   /// AppLogger.error から呼ばれる (caught errors)
@@ -260,6 +289,9 @@ class ErrorReporter {
     }
 
     // ログイン確認
+    final supabase = _supabaseOrNull;
+    if (supabase == null) return;
+
     final user = supabase.auth.currentUser;
     if (user == null) return;
 
@@ -313,6 +345,9 @@ class ErrorReporter {
   }
 
   void _watchAuthChanges() {
+    final supabase = _supabaseOrNull;
+    if (supabase == null) return;
+
     _authSubscription ??= supabase.auth.onAuthStateChange.listen((_) {
       _syncSentryUser();
     });
@@ -321,7 +356,8 @@ class ErrorReporter {
   void _syncSentryUser() {
     if (!_sentryEnabled) return;
 
-    final user = supabase.auth.currentUser;
+    final supabase = _supabaseOrNull;
+    final user = supabase?.auth.currentUser;
     unawaited(
       Future<void>.sync(
         () => Sentry.configureScope((scope) async {

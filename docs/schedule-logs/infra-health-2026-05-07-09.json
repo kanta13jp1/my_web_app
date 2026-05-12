@@ -1,0 +1,22 @@
+{
+  "task": "infra-health-check",
+  "timestamp_jst": "2026-05-07T09:00 JST",
+  "supabase_health": {
+    "status": "healthy",
+    "http_code": 200,
+    "checks": {
+      "env": "ok",
+      "db_connectivity": "ok (877ms)",
+      "wbs_tasks": "ok",
+      "ai_circuit_breaker": "ok"
+    },
+    "timestamp_utc": "2026-05-07T00:34:41.113Z"
+  },
+  "firebase_hosting": {
+    "url": "https://my-web-app-b67f4.web.app/",
+    "http_code": 200,
+    "page_title": "自分株式会社 | AIが今日の最優先タスクを整理",
+    "rendered": true
+  },
+  "action_taken": "none (all healthy)"
+}

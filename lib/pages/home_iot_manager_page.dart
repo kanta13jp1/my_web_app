@@ -45,18 +45,19 @@ class _HomeIotManagerPageState extends State<HomeIotManagerPage>
     });
     try {
       final devRes = await _supabase.functions.invoke(
-        'home-iot-manager',
-        queryParameters: {'view': 'devices'},
+        'lifestyle-hub',
+        body: {'action': 'smarthome.list_devices'},
       );
       final autoRes = await _supabase.functions.invoke(
-        'home-iot-manager',
-        queryParameters: {'view': 'automations'},
+        'lifestyle-hub',
+        body: {'action': 'smarthome.list_automations'},
       );
       setState(() {
         _devices = _toList(devRes.data, 'devices');
         _automations = _toList(autoRes.data, 'automations');
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() => _errorMessage = '$e');
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -76,10 +77,10 @@ class _HomeIotManagerPageState extends State<HomeIotManagerPage>
   Future<void> _toggleDevice(String deviceId, bool currentState) async {
     try {
       await _supabase.functions.invoke(
-        'home-iot-manager',
+        'lifestyle-hub',
         body: {
-          'action': 'toggle',
-          'deviceId': deviceId,
+          'action': 'smarthome.control',
+          'device_id': deviceId,
           'state': !currentState,
         },
       );

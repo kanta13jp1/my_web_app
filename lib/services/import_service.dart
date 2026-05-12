@@ -157,8 +157,9 @@ class ImportService {
     int pageLimit = 10,
   }) async {
     final response = await _client.functions.invoke(
-      'growth-import-preview',
+      'growth-hub',
       body: <String, dynamic>{
+        'action': 'import.preview',
         'sourceType': 'notion_api',
         'notionToken': notionToken,
         'pageLimit': pageLimit,
@@ -179,8 +180,9 @@ class ImportService {
     required Uint8List bytes,
   }) async {
     final response = await _client.functions.invoke(
-      'growth-import-preview',
+      'growth-hub',
       body: <String, dynamic>{
+        'action': 'import.preview',
         'sourceType': sourceType,
         'fileName': fileName,
         'contentBase64': base64Encode(bytes),
@@ -400,8 +402,9 @@ class ImportService {
     required List<ImportedNoteDraft> notes,
   }) async {
     final response = await _client.functions.invoke(
-      'growth-import-commit',
+      'growth-hub',
       body: <String, dynamic>{
+        'action': 'import.commit',
         'userId': userId,
         'notes': notes.map((note) => note.toJson()).toList(),
       },

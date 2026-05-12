@@ -1,11 +1,15 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 
 import '../models/ai_provider_registry.dart';
 import '../services/edge_llm_playground_service.dart';
+import '../services/local_rag_runtime_service.dart';
 import '../widgets/ai_response_observability_panel.dart';
+import '../widgets/pleias_citation_text.dart';
+import 'offline_secure_mode_settings_page.dart';
 
 class EdgeLlmPlaygroundPage extends StatefulWidget {
   final EdgeLlmPlaygroundService? service;
@@ -90,6 +94,7 @@ class _EdgeLlmPlaygroundPageState extends State<EdgeLlmPlaygroundPage> {
   }
 
   Future<void> _send() async {
+    if (Supabase.instance.client.auth.currentUser == null) return;
     final prompt = _promptController.text.trim();
     if (prompt.isEmpty || _isSending) return;
 
@@ -152,6 +157,18 @@ class _EdgeLlmPlaygroundPageState extends State<EdgeLlmPlaygroundPage> {
       backgroundColor: background,
       appBar: AppBar(
         title: const Text('Edge LLM Playground'),
+        actions: [
+          IconButton(
+            tooltip: 'オフライン設定',
+            icon: const Icon(Icons.security_outlined),
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const OfflineSecureModeSettingsPage(),
+              ),
+            ),
+          ),
+        ],
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -515,6 +532,7 @@ class _EdgeLlmPlaygroundPageState extends State<EdgeLlmPlaygroundPage> {
             _codeBlock(
               text: response.text,
               isDark: isDark,
+              citations: response.citations,
             ),
             if (prettyJson != null) ...[
               const SizedBox(height: 16),
@@ -550,6 +568,7 @@ class _EdgeLlmPlaygroundPageState extends State<EdgeLlmPlaygroundPage> {
   Widget _codeBlock({
     required String text,
     required bool isDark,
+    List<LocalRagCitation> citations = const <LocalRagCitation>[],
   }) {
     return Container(
       width: double.infinity,
@@ -563,13 +582,10 @@ class _EdgeLlmPlaygroundPageState extends State<EdgeLlmPlaygroundPage> {
               : const Color(0xFFE2E8F0),
         ),
       ),
-      child: SelectableText(
-        text,
-        style: const TextStyle(
-          fontFamily: 'monospace',
-          fontSize: 12,
-          height: 1.5,
-        ),
+      child: PleiasCitationText(
+        text: text,
+        citations: citations,
+        isDark: isDark,
       ),
     );
   }

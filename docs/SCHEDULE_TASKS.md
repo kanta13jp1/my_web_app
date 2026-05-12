@@ -25,6 +25,23 @@ X への自動投稿先: **@kanta13jp1**
 
 ---
 
+### Task: feature-review (毎時 0 分 / 13 機能 round-robin)
+
+**起源**: Win版#132 part 77-78 / Handoff Bundle 第 1 適用例
+**Workflow**: `.github/workflows/feature-review.yml`
+**Script**: `scripts/feature_review.py`
+**Config**: `scripts/feature_review_config.json`
+
+13 機能 (= 9 page + 4 Edge Function) を毎時 1 機能ずつレビューし、修正すべき問題を `auto-review` GitHub Issue として自動起票する。
+
+- 通常 cron: `UTC hour % 13` で対象機能を 1 件選択
+- 手動実行: `target_features` で対象指定、または `force_full_scan=true` で全件 audit
+- throttle: max 3 issues/run、max 1 issue/feature
+- de-dupe: `[review:<hash>]` title hash で open issue と直近 closed issue を skip
+- Slack: 新規 issue がある run のみ `SLACK_WEBHOOK_URL` に集計通知
+
+---
+
 ### Task: daily-report (毎朝 09:00 JST に実行)
 
 > **アーキテクチャ**: GitHub Actions `daily-report.yml` が 07:30 JST に先行実行し、
@@ -41,12 +58,21 @@ X への自動投稿先: **@kanta13jp1**
 ```bash
 # 今日のレポートファイルが存在するか確認
 ls docs/daily-reports/YYYY-MM-DD.md 2>/dev/null
+
+# 推奨: レポート・schedule-log・metrics の複数シグナルで確認する
+git fetch origin main --quiet
+python scripts/check_daily_report_freshness.py --date YYYY-MM-DD --ref origin/main --json
 ```
 
-**ケース A: ファイルが存在し `<!-- generated-by: github-actions -->` を含む場合**
+**ケース A: ファイルが存在し `<!-- generated-by: github-actions -->` または `<!-- generated-by: claude-schedule -->` を含む場合**
 
 Read ツールでファイルを読み込み、概要セクション（ユーザー数・リクエスト数等）を
 そのまま利用する。Step 3・Step 4 は Actions 実施済みとしてスキップ可。
+
+> 誤検知防止: `git log --author='Claude Schedule'` だけで未実行判定しないこと。
+> GitHub Actions / Claude Schedule / 復旧ジョブのどれが完了させても、
+> `docs/daily-reports/YYYY-MM-DD.md` と `docs/schedule-logs/daily-report-YYYY-MM-DD-00.json`
+> を正本として扱う。
 
 **ケース B: ファイルが存在しない場合（Actions 未実行 or 失敗）**
 
@@ -746,3 +772,350 @@ git commit -m "自動: AI大学コンテンツ更新 YYYY-MM-DD"
 git push origin main
 ```
 
+
+---
+
+### Task: feature-review (毎時 0 分に実行 / 13 機能 round-robin)
+
+**起源**: Win版#132 part 77 → part 78 (= 頻度週次 → 毎時に変更) / 2026-04-29 / Handoff Bundle 第 1 適用例
+**Bundle**: `docs/handoff-bundles/20260429_feature_review_scheduled_task/` (= 完成後 `done/` 移動)
+**親軸**: COLLAB_AI #5 Verifier-Generator / OPS-28 改善トリガー / VIBE_CODING #4 Black-Box I/O Verification
+
+#### 概要
+
+13 機能 (= 9 page + 4 Edge Function) を **毎時 0 分に 1 機能ずつ round-robin** で AI レビューし、**修正すべき問題を GitHub Issue 自動起票** する. 24 時間で 1.8 周 = high priority 機能は 1 日 2 回見られる.
+
+#### Step 1: 対象機能選択 (= rotation)
+
+`scripts/feature_review_config.json` から `rotation.feature_order` (= 13 機能優先度順リスト) を読込.
+
+`UTC_HOUR_NOW % 13` でインデックス計算 → 1 機能を選択 (= 毎時 1 機能のみ).
+
+例: UTC 0 時 → home / UTC 1 時 → ai_university / ... / UTC 12 時 → admin_analytics / UTC 13 時 → home (= 2 周目).
+
+`workflow_dispatch` で `force_full_scan=true` の場合のみ全機能巡回 (= 緊急時 audit).
+
+#### Step 2: シグナル収集 (機能ごと)
+
+- **Page (Flutter)**:
+  - Playwright で本番 URL screenshot (= 1280×720 / 将来 2576px)
+  - console messages 取得 (= error / warning)
+  - DOM accessibility tree 取得 (= a11y チェック用)
+- **Edge Function (Deno)**:
+  - source の TODO/FIXME 検索
+  - 直近 git log (= 最近の変更履歴)
+  - deno lint 結果 (= cache or 即時実行)
+
+#### Step 3: Claude API レビュー
+
+Haiku 4.5 + effort=medium で signals を bundle → JSON 形式 findings 出力 (= max 3 件 / feature).
+
+```json
+{
+  "findings": [
+    {
+      "feature_slug": "horse_racing",
+      "category": "ui_bug",
+      "severity": "medium",
+      "summary": "オッズ列のテキストが幅 320px で折り返し",
+      "review_text": "Playwright screenshot で...",
+      "recommendation": "FittedBox or AutoSizeText の適用"
+    }
+  ]
+}
+```
+
+#### Step 4: de-dupe + Issue 起票
+
+- title hash 計算 (= `feature_slug | category | summary[:80]` の SHA-256 先頭 8 文字)
+- 既存 open issue が同 hash なら skip
+- 新 finding → `gh issue create` で起票:
+  - Title: `[review:<hash>] /<path> <category> <summary>`
+  - Labels: `auto-review`, `severity:<level>`, `feature:<slug>`, `category:<cat>`
+  - Body: signals + Claude review + recommendation
+
+#### Step 5: Slack 通知 + 記録
+
+- `SLACK_WEBHOOK_URL` 経由で集計通知 (= `🔍 feature-review run complete: N new / M skipped / E errors`)
+- `docs/feature-review-logs/<YYYY-MM-DD>.md` に詳細ログ保存
+
+#### 制約
+
+- max 3 issues per run (= 1 機能のみだが余裕枠 / ノイズ抑制)
+- max 1 issue per feature (= 同一 feature で連発防止)
+- max 3 findings per feature (= Claude が出す候補は 3 件まで)
+- Playwright timeout 30s / Claude API max retry 3 / GitHub API quota 監視
+- de-dupe: 既存 open issue + 7 日以内 closed を skip
+
+#### 成功条件
+
+- 初日 (= 24 cron run): 13 機能 × 1.8 周 = 0-13 件 issue 起票 (= 真の問題発見)
+- 翌日: de-dupe 効いて 0-3 件 (= 既存問題は再起票せず)
+- 1 週後: 既存 issue 半数 closed (= 開発反映 cycle 健全)
+- 緊急時: `workflow_dispatch` + `force_full_scan=true` で 13 機能即時 audit
+
+---
+
+### Task: ai-tool-harness-review (毎日 06:15 JST / セッション開始時)
+
+**起源**: NotebookLM `bc58b50b-5fc4-4840-9a62-b397d6d3b65a`
+「Codex vs Claude Code: The Ultimate AI Development Synergy」適用 / 2026-04-30
+**Workflow**: `.github/workflows/ai-tool-watch.yml`
+**Script**: `scripts/ai_tool_watch.py`
+**Report**: `docs/ai-tool-watch/latest-report.md`
+
+#### 目的
+
+Claude Code / Codex の公式変更と NotebookLM の Harness Engineering 方針を毎日・毎セッションで照合し、
+12 インスタンスの担当分担、WBS 優先度、スケジュールタスク候補、GitHub Actions 品質ゲートへ反映する。
+
+#### Step 1: 公式情報を取得
+
+`scripts/ai_tool_watch.py` が以下の一次情報を取得する。
+
+- Claude Code changelog: `https://code.claude.com/docs/en/changelog`
+- Claude Code hooks: `https://code.claude.com/docs/en/hooks`
+- Claude Code GitHub Actions: `https://code.claude.com/docs/en/github-actions`
+- Codex changelog: `https://developers.openai.com/codex/changelog`
+- Codex use cases: `https://developers.openai.com/codex/use-cases/`
+- Codex overview: `https://openai.com/codex/`
+
+#### Step 2: NotebookLM Harness へ写像
+
+検出したキーワードを次の担当へ振り分ける。
+
+| 検出カテゴリ | 担当 | WBS 反映先 |
+| --- | --- | --- |
+| hooks / SessionStart / PostToolUse / Stop | Claude Code | 品質ゲート設計、hook runbook、セッション開始ルール |
+| model / in-app browser / computer use / worktree | Codex#1 | UI検証、横断修正、クリーン worktree PR |
+| CI / GitHub Actions / deploy / sync | Codex#2 | red check 修復、deploy unblock、WBS/Issue/Notion同期 |
+| MCP / Slack / Notion / connector | Claude Code + Codex#2 | 連携基盤、通知、外部メモリ同期 |
+| cost / quota / sandbox / permission | Claude Code | 自動化範囲、deny-by-default、予算・権限境界 |
+
+#### Step 3: 出力と反映
+
+- `docs/ai-tool-watch/latest-report.md` を更新する。
+- high-priority change があれば `#1422` へ comment する。
+- 新しい hook / workflow / automation 候補がある場合は GitHub Issue を起票する。
+- WBS 上位 20 件に手動反復タスクがある場合、`feature-review` または新規 Schedule タスクへ昇格する。
+- 既存 PR が clean / checks pass なら merge queue 候補に入れ、conflict PR は Codex#2 に回す。
+
+#### セッション開始の手動確認
+
+ローカルでは次を実行する。
+
+```powershell
+python scripts/codex_session_check.py
+python scripts/ai_tool_watch.py --print-only
+```
+
+出力に `changed/new official sources` がある場合は、必ず「WBS route / GitHub issue / hook / workflow / PR」の
+いずれかに落とし、NotebookLM のメモだけで完了にしない。
+
+`codex_session_check.py` に dirty worktree、upstream gone、base branch 直編集、origin/main 未取得などの警告が
+出た場合は、実装前に新しい worktree / branch へ移るか、Codex#2 に sync / CI 側の修復として回す。
+
+
+<<<<<<< Updated upstream
+## NotebookLM 9b8885ef Schedule Resilience Guard (#1783)
+
+NotebookLM `9b8885ef` ("Automating SaaS Operations with Claude Code Schedule") is applied as a
+cross-cutting guard instead of duplicating retry code inside every scheduled workflow.
+
+**Workflow**: `.github/workflows/schedule-resilience-watch.yml`
+**Script**: `scripts/schedule_resilience_watch.py`
+**Scope**: `daily-report.yml`, `cs-check.yml`, `competitor-monitoring.yml`, `infra-health-check.yml`
+
+Guard contract:
+
+1. **Retry**: when the latest scheduled run failed and `run_attempt < 2`, rerun failed jobs once through the GitHub Actions API.
+2. **Fallback**: when retry is exhausted, the run conclusion is unexpected, or no recent scheduled run exists, keep the guard itself green and preserve a JSON artifact for triage.
+3. **Alerting**: open or update a `workflow-failure` issue titled `[Schedule監視] <task> ...` with run URL, status, attempt, and the Codex #1 ownership note.
+4. **Freshness**: hourly schedules (`cs-check`, `infra-health-check`) must have a scheduled run within 3h; daily schedules (`daily-report`, `competitor-monitoring`) within 30h.
+
+2-instance routing:
+
+- Claude Code #1 owns automation pattern design and doc triage.
+- Codex #1 owns the old PS#1 workflow-health implementation lane and GitHub Actions CI integration.
+
+Manual dry run:
+
+```bash
+python scripts/schedule_resilience_watch.py --repo kanta13jp1/my_web_app --dry-run --output tmp/schedule-resilience/report.json
+```
+=======
+---
+
+## SaaS Operations Automation Patterns (= NotebookLM 9b8885ef distill / part 181)
+
+> **Source**: NotebookLM ノートブック `9b8885ef` "Automating SaaS Operations with Claude Code Schedule"
+> **Issue**: #1783 | **Win Claude** (本 spec) → **Codex** (gap 実装 hand-off)
+> **Created**: 2026-05-10 (part 181)
+
+### A.1 背景
+
+Claude Code Schedule (= 定期 cron AI agent) で SaaS 操作 (= GHA / Supabase EF / WBS / Slack / Notion) を完全自動化するための 5 pattern を 9b8885ef から抽出 + 既存 15 workflow の gap 監査.
+
+### A.2 5 SaaS automation patterns
+
+#### Pattern 1 — Idempotency Key (= 再実行安全性)
+
+各 schedule task は `idempotency_key = sha256(<task>:<window_id>)` を artifact / DB / Issue body に記録. 同 key 検出時は no-op.
+
+```yaml
+# 例 (.github/workflows/<task>.yml)
+- run: |
+    KEY=$(echo "${{ github.workflow }}:$(date -u +%Y-%m-%dT%H)" | sha256sum | cut -c1-12)
+    if gh issue list --search "[idem:$KEY]" --state all | grep -q .; then exit 0; fi
+    # ... 実処理 ...
+    gh issue comment <n> -b "[idem:$KEY] done"
+```
+
+#### Pattern 2 — Multi-AI Fallback Chain (= graceful degradation)
+
+primary (Claude Code) → secondary (Codex CLI) → tertiary (Gemini Code Assist) を順に試行. 各失敗は trace_id 付き log → 最終失敗時のみ Issue 起票 + Slack 通知.
+
+優先順は `docs/AI_FALLBACK_RUNBOOK.md` 既存定義 + 各 task で env `AI_FALLBACK_CHAIN=claude,codex,gemini` で override 可.
+
+#### Pattern 3 — Self-Healing Loop (= 失敗検知 → 自動修復 → escalation)
+
+3 layer:
+
+1. **Detect**: artifact size 0 / exit code != 0 / KPI 閾値超 → workflow level retry (max 3, exponential backoff 30s/2m/10m)
+2. **Recover**: dispatch 別 workflow `<task>-recovery.yml` (= rerun + cleanup + Issue 起票)
+3. **Escalate**: 3 day 連続失敗 → label `automation-degraded` + WBS task add (= Codex 手動修復)
+
+#### Pattern 4 — Observability Triple (= artifact + metrics + alerts)
+
+各 task で:
+
+- **artifact**: `tmp/<task>-<run_id>.json` 必須 (= 入出力 + KPI 数値 + trace_id)
+- **metrics**: `docs/metrics/<task>.csv` に 1 row append (timestamp / status / elapsed_sec / cost_usd)
+- **alerts**: `docs/metrics/<task>.csv` 7-day median elapsed > p95 historical → warning Issue (= label `slo-breach`)
+
+#### Pattern 5 — Time-Window Throttling (= rate limit + circuit breaker)
+
+外部 API (X / Notion / Slack / Anthropic / OpenAI) call 前に `task_budget` 共通 EF (= 既存 `_shared/task_budget.ts`) で:
+
+- per-task daily quota (= `<task>:<YYYY-MM-DD>` Redis-like key)
+- 429 検出時 cooldown (= `_shared/AiQuotaGuard` pattern / 60 sec)
+- circuit open (= 5 min 内 3 連続失敗) で 30 min 全停止 → Slack alert
+
+### A.3 既存 15 workflow gap 監査
+
+| workflow | P1 idem | P2 fallback | P3 self-heal | P4 obs triple | P5 throttle |
+|---|---|---|---|---|---|
+| feature-review | ✅ (hash) | ❌ | ⚠️ retry のみ | ✅ artifact / ❌ metrics / ✅ Slack | ⚠️ max 3/run |
+| daily-report | ❌ | ❌ | ✅ #2154 で fix | ⚠️ artifact only | ❌ |
+| cs-check | ❌ | ❌ | ❌ | ✅ artifact | ❌ |
+| competitor-monitoring | ❌ | ⚠️ retry のみ | ❌ | ⚠️ artifact only | ❌ |
+| cron-batch | ❌ | ❌ | ❌ | ❌ | ❌ |
+| codex-session-safety-cron | ❌ | ❌ | ❌ | ❌ | ❌ |
+| daily-report-freshness-monitor | ✅ date key | ❌ | ❌ | ❌ | ❌ |
+| dev-cache-cleanup-cron | ✅ idem | ❌ | ❌ | ❌ | ❌ |
+| docs-rotate-cron | ✅ monthly | ❌ | ❌ | ❌ | ❌ |
+| health-monitor | ❌ | ❌ | ❌ | ⚠️ artifact only | ❌ |
+| inject-rules-drift-cron | ❌ | ❌ | ❌ | ⚠️ artifact only | ❌ |
+| quota-monitor | ❌ | n/a | ❌ | ⚠️ Slack only | n/a (= 自身が monitor) |
+| self-devin-schedule | ❌ | ❌ | ❌ | ❌ | ❌ |
+| wbs-auto-reschedule | ❌ | ❌ | ❌ | ❌ | ❌ |
+| worktree-cleanup-cron | ✅ weekly | ❌ | ❌ | ❌ | ❌ |
+
+集計: P1=6/15 ✅ / P2=0/15 / P3=1/15 ✅ / P4=8/15 ⚠️ / P5=0/15 → **P2/P3/P5 が完全 gap**.
+
+### A.4 [INSTANCE-ROLES] 振分
+
+| 担当 | スコープ | 期限 |
+|---|---|---|
+| **Win Claude (= 本 spec)** | 5 pattern 抽出 + 15 workflow gap 監査 + acceptance criteria | part 181 完了 |
+| **Win Codex (= hand-off)** | gap 修正 (P2 multi-AI fallback chain helper / P3 self-heal recovery workflow / P5 task_budget integration) | 2026-05-24 |
+
+Codex 振分 5 質問 score:
+
+| Q | A |
+|---|---|
+| 1. 設計 / アーキ判断要? | NO (= 5 pattern 確定) |
+| 2. 横断 docs / memory 編集要? | NO |
+| 3. UI design 要? | NO |
+| 4. triage / hand-off 判断要? | NO |
+| 5. mobile UAT / 動画要? | NO |
+
+= 0/5 → 完全 Codex 案件.
+
+### A.5 Codex 実装スコープ
+
+#### A.5.1 P2 multi-AI fallback chain helper (新規)
+
+```bash
+# scripts/ai_fallback_invoke.sh
+# 使用: ai_fallback_invoke.sh "claude" "<prompt>" "<artifact_path>"
+# claude 失敗 → codex 失敗 → gemini で順に試行 / trace_id ログ
+```
+
+各 schedule workflow から `run: ai_fallback_invoke.sh ...` で呼び出し可能化.
+
+#### A.5.2 P3 self-heal recovery workflow (新規)
+
+`.github/workflows/<task>-recovery.yml` template (3 件 priority):
+1. `daily-report-recovery.yml` (= 既存 freshness-monitor 拡張)
+2. `cs-check-recovery.yml`
+3. `competitor-monitoring-recovery.yml`
+
+template structure:
+```yaml
+on:
+  workflow_run:
+    workflows: ["<task>"]
+    types: [completed]
+jobs:
+  recover:
+    if: ${{ github.event.workflow_run.conclusion == 'failure' }}
+    steps:
+      - uses: actions/checkout@v4
+      - run: ./scripts/recover_<task>.sh ${{ github.event.workflow_run.id }}
+      - uses: actions/upload-artifact@v4
+```
+
+#### A.5.3 P5 task_budget integration
+
+既存 `supabase/functions/_shared/task_budget.ts` を schedule cron からも呼び出せる helper:
+
+```bash
+# scripts/budget_check.sh <task> <provider> <est_tokens>
+# exit 0 = OK / 1 = budget exceeded (= workflow short-circuit)
+```
+
+各 AI 呼び出し workflow 先頭で `run: scripts/budget_check.sh ${{ github.workflow }} anthropic 5000 || exit 0`.
+
+### A.6 受け入れ条件
+
+- [ ] `scripts/ai_fallback_invoke.sh` 実装 + 1 workflow で実証 (= daily-report 推奨)
+- [ ] `daily-report-recovery.yml` / `cs-check-recovery.yml` / `competitor-monitoring-recovery.yml` ship
+- [ ] `scripts/budget_check.sh` 実装 + 全 AI workflow に integration
+- [ ] gap 監査表更新 (P2 0→3+ / P3 1→4+ / P5 0→5+) を 1 week 後 spec doc に追記
+- [ ] PR コメントに 1-week 観測の retry 数 + recovery success 率 + budget 抑止数
+
+### A.7 KPI / 監視
+
+| metric | 計測 | 目標 |
+|---|---|---|
+| `automation_fail_rate_7d` | docs/metrics/all_workflows.csv | ≤ 5% |
+| `recovery_success_rate_7d` | recovery.yml artifact | ≥ 80% |
+| `budget_block_count_7d` | budget_check.sh log | < 10 (= 過剰 block 防止) |
+| `mttr_minutes_p95` | recovery start - failure | ≤ 60 min |
+
+### A.8 PHILOSOPHY-22 alignment
+
+| 原則 | 対応 |
+|---|---|
+| #6 時間最適化 | ✅ 失敗 → 手動 fix → user 介在 0 化 |
+| #7 資産負債 | ✅ self-heal = 信頼性資産 / 失敗放置 = 負債 |
+| #8 KPI 自分比較 | ✅ 7-day median 監視 |
+| #9 IPO | ✅ 持続的 SaaS 自動化 = 規模化基盤 |
+| #1 CEO 感 | ✅ escalation 時のみ user 通知 |
+| #3 mentor | ✅ 失敗 silent / Issue で穏やか報告 |
+| #5 商品=価値 | ✅ 安定動作 = ユーザー信頼 |
+
+= 7/9 ✅ ([PHILOSOPHY-22] gate 通過).
+
+>>>>>>> Stashed changes

@@ -46,18 +46,19 @@ class _RecruitmentJobBoardPageState extends State<RecruitmentJobBoardPage>
     });
     try {
       final jobsRes = await _supabase.functions.invoke(
-        'recruitment-job-board',
-        queryParameters: {'view': 'jobs'},
+        'enterprise-hub',
+        body: {'action': 'recruit.list_jobs'},
       );
       final appRes = await _supabase.functions.invoke(
-        'recruitment-job-board',
-        queryParameters: {'view': 'applicants'},
+        'enterprise-hub',
+        body: {'action': 'recruit.list_applicants'},
       );
       setState(() {
         _jobs = _toList(jobsRes.data, 'jobs');
         _applicants = _toList(appRes.data, 'applicants');
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() => _errorMessage = '$e');
     } finally {
       if (mounted) setState(() => _isLoading = false);

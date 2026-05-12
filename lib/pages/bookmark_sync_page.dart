@@ -366,6 +366,7 @@ class _BookmarkSyncPageState extends State<BookmarkSyncPage> {
   }
 
   Widget _buildBookmarkCard(Map<String, dynamic> bm) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final id = bm['id']?.toString() ?? '';
     final url = bm['url'] as String? ?? '';
     final title = bm['title'] as String? ?? url;
@@ -384,7 +385,9 @@ class _BookmarkSyncPageState extends State<BookmarkSyncPage> {
 
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
-      color: isRead ? null : const Color(0xFFE3F2FD),
+      color: isRead
+          ? null
+          : (isDark ? const Color(0xFF0C1A2A) : const Color(0xFFE3F2FD)),
       child: ListTile(
         leading: CircleAvatar(
           backgroundColor: isRead

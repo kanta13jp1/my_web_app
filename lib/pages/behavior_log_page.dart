@@ -193,6 +193,10 @@ class _BehaviorLogPageState extends State<BehaviorLogPage> {
   }
 
   Future<void> _analyzeEntry(Map<String, dynamic> entry) async {
+    if (_supabase.auth.currentUser == null) {
+      setState(() => _loading = false);
+      return;
+    }
     if (entry['ai_analysis'] != null) return;
     final entryId = entry['id']?.toString();
     if (entryId == null) return;

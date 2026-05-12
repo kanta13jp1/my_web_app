@@ -70,6 +70,7 @@ class _VirtualOrganizationPageState extends State<VirtualOrganizationPage>
         }
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() => _errorMessage = '$e');
     } finally {
       if (mounted) setState(() => _isLoading = false);

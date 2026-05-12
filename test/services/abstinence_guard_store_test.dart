@@ -238,4 +238,35 @@ void main() {
       contains('Xを開かなかった'),
     );
   });
+
+  test('loadSlipCountsByDate returns daily touch hair counts', () async {
+    final prefs = await SharedPreferences.getInstance();
+    final today = DateTime(2026, 3, 21, 9);
+
+    await AbstinenceGuardStore.incrementSlip(
+      itemId: 'touch_hair',
+      prefs: prefs,
+      now: DateTime(2026, 3, 19, 10),
+    );
+    await AbstinenceGuardStore.incrementSlip(
+      itemId: 'touch_hair',
+      prefs: prefs,
+      now: today,
+    );
+    await AbstinenceGuardStore.incrementSlip(
+      itemId: 'touch_hair',
+      prefs: prefs,
+      now: today.add(const Duration(minutes: 15)),
+    );
+
+    final trend = await AbstinenceGuardStore.loadSlipCountsByDate(
+      itemId: 'touch_hair',
+      days: 4,
+      prefs: prefs,
+      now: today,
+    );
+
+    expect(trend.map((day) => day.count), <int>[0, 1, 0, 2]);
+    expect(trend.last.label, '3/21');
+  });
 }

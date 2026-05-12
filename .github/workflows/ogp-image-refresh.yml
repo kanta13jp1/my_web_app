@@ -25,6 +25,10 @@ on:
         description: 'image prompt 上書き (省略時は default)'
         required: false
         default: ''
+      generator:
+        description: 'image generator: fal or image-gen-2'
+        required: false
+        default: 'fal'
 
 concurrency:
   group: ogp-image-refresh
@@ -44,13 +48,21 @@ jobs:
       SUPABASE_URL: https://smmkxxavexumewbfaqpy.supabase.co
       SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
       PROMPT_OVERRIDE: ${{ github.event.inputs.prompt_override || '' }}
+      GENERATOR: ${{ github.event.inputs.generator || 'fal' }}
 
     steps:
       # ── Step 1: secret presence check (deny-by-default) ───────────────────
       - name: Step 1 - Secret presence check
         id: precheck
         run: |
-          if [ -z "$FAL_KEY" ]; then
+          if [ "$GENERATOR" = "image-gen-2" ]; then
+            if [ -z "$SUPABASE_SERVICE_ROLE_KEY" ]; then
+              echo "::warning::SUPABASE_SERVICE_ROLE_KEY not configured — skip"
+              echo "skip=true" >> $GITHUB_OUTPUT
+            else
+              echo "skip=false" >> $GITHUB_OUTPUT
+            fi
+          elif [ -z "$FAL_KEY" ]; then
             echo "::warning::FAL_KEY not configured — skip"
             echo "skip=true" >> $GITHUB_OUTPUT
           else
@@ -59,7 +71,7 @@ jobs:
 
       - name: Step 2 - Checkout
         if: steps.precheck.outputs.skip != 'true'
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           token: ${{ secrets.BYPASS_RULES || github.token }}
 
@@ -68,23 +80,93 @@ jobs:
         id: weeknum
         run: |
           WEEK=$(TZ=Asia/Tokyo date +%Y%V)
-          FILENAME="ogp-${WEEK}.png"
+          DAY=$(TZ=Asia/Tokyo date +%Y%m%d)
+          if [ "$GENERATOR" = "image-gen-2" ]; then
+            FILENAME="ogp-image-gen2-${DAY}.png"
+          else
+            FILENAME="ogp-${WEEK}.png"
+          fi
           echo "week=$WEEK" >> $GITHUB_OUTPUT
+          echo "day=$DAY" >> $GITHUB_OUTPUT
           echo "filename=$FILENAME" >> $GITHUB_OUTPUT
-          echo "📅 Week: $WEEK / Filename: $FILENAME"
+          echo "Generator: $GENERATOR / Week: $WEEK / Filename: $FILENAME"
 
-      - name: Step 4 - Generate OGP image via FAL flux/schnell
+      - name: Step 4 - Generate OGP image
         if: steps.precheck.outputs.skip != 'true'
         id: gen
         run: |
           # Default prompt (季節 / 月変更可能 / Phase 1 は固定)
-          DEFAULT_PROMPT="Modern minimalist OGP banner for life management SaaS named 自分株式会社 (Jibun Kabushikigaisha), 1200x630 aspect ratio, gradient orange-purple-indigo background, futuristic UI elements floating in space, Japanese typography style, no text overlay, professional and clean, photorealistic high quality"
+          DEFAULT_PROMPT="A polished 1200x630 OGP banner for 自分株式会社 AI University. Theme: learn 259 AI companies including Google, OpenAI, Anthropic, Meta, xAI, Mistral, DeepSeek. Premium Japanese SaaS brand, dark navy and clean white UI, subtle circuit motifs, learning dashboard cards, progress badges, professional editorial composition. Include clear Japanese headline text: AI大学. Include small tagline: 259社を体系的に学ぶ. No mock browser chrome, no phone screenshot."
 
           PROMPT="${PROMPT_OVERRIDE:-$DEFAULT_PROMPT}"
-          echo "🎨 Prompt: ${PROMPT:0:120}..."
+          echo "Prompt: ${PROMPT:0:120}..."
+
+          if [ "$GENERATOR" = "image-gen-2" ]; then
+            PAYLOAD=$(PROMPT="$PROMPT" python3 -c "import json,os; print(json.dumps({'action':'image.generate','prompt':os.environ['PROMPT'],'size':'1536x1024','quality':'high','preferredModel':'image-gen-2','returnB64':True,'persist':False,'source':'ogp-image-refresh.yml'}))")
+
+            HTTP_CODE=$(curl -s -o /tmp/ogp-image-response.json -w "%{http_code}" \
+              "${SUPABASE_URL}/functions/v1/media-hub" \
+              -H "Authorization: Bearer ${SUPABASE_SERVICE_ROLE_KEY}" \
+              -H "Content-Type: application/json" \
+              -d "$PAYLOAD" \
+              --max-time 180)
+
+            echo "media-hub HTTP code: $HTTP_CODE"
+            if [ "$HTTP_CODE" != "200" ]; then
+              echo "::warning::media-hub fail HTTP ${HTTP_CODE}: $(head -c 500 /tmp/ogp-image-response.json)"
+              echo "skip=true" >> $GITHUB_OUTPUT
+              exit 0
+            fi
+
+            python3 -m pip install --quiet pillow
+            python3 - <<'PY'
+          import base64
+          import json
+          from io import BytesIO
+          from pathlib import Path
+          from PIL import Image
+
+          out = Path("web") / "${{ steps.weeknum.outputs.filename }}"
+          data = json.loads(Path("/tmp/ogp-image-response.json").read_text())
+          if not data.get("success"):
+              raise SystemExit(f"image generation failed: {data}")
+          b64 = data.get("b64Json") or ""
+          if not b64 and str(data.get("url", "")).startswith("data:image"):
+              b64 = str(data["url"]).split(",", 1)[1]
+          if not b64:
+              raise SystemExit(f"image generation returned no base64 payload: {data}")
+          img = Image.open(BytesIO(base64.b64decode(b64))).convert("RGB")
+          target_ratio = 1200 / 630
+          width, height = img.size
+          if width / height > target_ratio:
+              new_width = int(height * target_ratio)
+              left = (width - new_width) // 2
+              img = img.crop((left, 0, left + new_width, height))
+          else:
+              new_height = int(width / target_ratio)
+              top = (height - new_height) // 2
+              img = img.crop((0, top, width, top + new_height))
+          img = img.resize((1200, 630), Image.Resampling.LANCZOS)
+          img.save(out, "PNG", optimize=True)
+          print(f"Saved {out} from model={data.get('model')} requested={data.get('requestedModel')}")
+          PY
+
+            BYTES=$(stat -c %s "web/${{ steps.weeknum.outputs.filename }}" 2>/dev/null || echo "0")
+            if [ "$BYTES" -lt 10000 ]; then
+              echo "::warning::Image too small (${BYTES} bytes) — skip"
+              echo "skip=true" >> $GITHUB_OUTPUT
+              exit 0
+            fi
+
+            echo "skip=false" >> $GITHUB_OUTPUT
+            echo "img_url=media-hub:image-gen-2" >> $GITHUB_OUTPUT
+            echo "generated_by=image-gen-2" >> $GITHUB_OUTPUT
+            echo "cost_usd=0" >> $GITHUB_OUTPUT
+            exit 0
+          fi
 
           # FAL flux/schnell call
-          PAYLOAD=$(python3 -c "import json,os; print(json.dumps({'prompt': os.environ['PROMPT'], 'image_size': 'landscape_16_9', 'num_inference_steps': 4, 'num_images': 1, 'enable_safety_checker': True}))" PROMPT="$PROMPT")
+          PAYLOAD=$(PROMPT="$PROMPT" python3 -c "import json,os; print(json.dumps({'prompt': os.environ['PROMPT'], 'image_size': 'landscape_16_9', 'num_inference_steps': 4, 'num_images': 1, 'enable_safety_checker': True}))")
 
           FAL_RESP=$(curl -s -w "\n%{http_code}" \
             "https://fal.run/fal-ai/flux/schnell" \
@@ -134,23 +216,34 @@ jobs:
           echo "✅ Image saved (${BYTES} bytes): web/${{ steps.weeknum.outputs.filename }}"
           echo "skip=false" >> $GITHUB_OUTPUT
           echo "img_url=$IMG_URL" >> $GITHUB_OUTPUT
+          echo "generated_by=fal-flux-schnell" >> $GITHUB_OUTPUT
+          echo "cost_usd=0.003" >> $GITHUB_OUTPUT
 
       - name: Step 5 - Update web/index.html og:image meta
         if: steps.precheck.outputs.skip != 'true' && steps.gen.outputs.skip != 'true'
         run: |
           NEW_URL="https://my-web-app-b67f4.web.app/${{ steps.weeknum.outputs.filename }}"
+          export NEW_URL
 
-          # 既存 og:image content URL を sed で置換
-          # 既存形式: content="https://my-web-app-b67f4.web.app/ogp.png" or
-          # 既存形式: content="https://my-web-app-b67f4.web.app/ogp-YYYYWW.png"
-          sed -i -E "s|content=\"https://my-web-app-b67f4\.web\.app/ogp[^\"]*\"|content=\"${NEW_URL}\"|g" web/index.html
+          python3 - <<'PY'
+          import os
+          import re
+          from pathlib import Path
+
+          new_url = os.environ["NEW_URL"]
+          pattern = re.compile(r"https://my-web-app-b67f4\.web\.app/ogp[^\"'\s]*\.png(?:\?v=[^\"'\s]*)?")
+          for name in ["web/index.html", ".github/workflows/post-x-with-media.yml"]:
+              path = Path(name)
+              text = path.read_text(encoding="utf-8")
+              path.write_text(pattern.sub(new_url, text), encoding="utf-8")
+          PY
 
           # diff 確認
-          if git diff --quiet web/index.html; then
-            echo "::warning::index.html not modified (URL already up-to-date or pattern mismatch)"
+          if git diff --quiet web/index.html .github/workflows/post-x-with-media.yml; then
+            echo "::warning::OGP references not modified (URL already up-to-date or pattern mismatch)"
           else
-            echo "✅ index.html og:image updated to: $NEW_URL"
-            git diff web/index.html | head -10
+            echo "✅ OGP references updated to: $NEW_URL"
+            git diff web/index.html .github/workflows/post-x-with-media.yml | head -30
           fi
 
       - name: Step 6 - Record to og_assets table (best-effort)
@@ -164,8 +257,8 @@ jobs:
           NEW_URL="https://my-web-app-b67f4.web.app/${{ steps.weeknum.outputs.filename }}"
           TRACE="${{ github.run_id }}"
 
-          PAYLOAD=$(python3 -c "import json,os; print(json.dumps({'asset_type': 'ogp_image', 'url': os.environ['NEW_URL'], 'prompt': 'weekly auto-refresh ' + os.environ.get('PROMPT_OVERRIDE') or 'default', 'generated_by': 'fal-flux-schnell', 'cost_usd': 0.003, 'metadata': {'week': os.environ.get('WEEK'), 'trace_id': os.environ.get('TRACE')}}))" \
-            NEW_URL="$NEW_URL" PROMPT_OVERRIDE="$PROMPT_OVERRIDE" WEEK="${{ steps.weeknum.outputs.week }}" TRACE="$TRACE")
+          PAYLOAD=$(NEW_URL="$NEW_URL" PROMPT_OVERRIDE="$PROMPT_OVERRIDE" WEEK="${{ steps.weeknum.outputs.week }}" DAY="${{ steps.weeknum.outputs.day }}" TRACE="$TRACE" GENERATED_BY="${{ steps.gen.outputs.generated_by }}" COST_USD="${{ steps.gen.outputs.cost_usd }}" \
+            python3 -c "import json,os; print(json.dumps({'asset_type': 'ogp_image', 'url': os.environ['NEW_URL'], 'prompt': 'weekly auto-refresh ' + (os.environ.get('PROMPT_OVERRIDE') or 'default'), 'generated_by': os.environ.get('GENERATED_BY') or os.environ.get('GENERATOR') or 'unknown', 'cost_usd': float(os.environ.get('COST_USD') or '0'), 'metadata': {'week': os.environ.get('WEEK'), 'day': os.environ.get('DAY'), 'trace_id': os.environ.get('TRACE')}}))")
 
           HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" \
             "${SUPABASE_URL}/rest/v1/og_assets" \
@@ -190,15 +283,16 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-          git add "web/${{ steps.weeknum.outputs.filename }}" web/index.html
+          git add -f "web/${{ steps.weeknum.outputs.filename }}"
+          git add web/index.html .github/workflows/post-x-with-media.yml
 
           if git diff --staged --quiet; then
             echo "ℹ️ No changes to commit"
             exit 0
           fi
 
-          git commit             -m "chore(ogp): auto-refresh OGP image for week ${{ steps.weeknum.outputs.week }}"             -m "Generated by FAL flux/schnell. Filename: ${{ steps.weeknum.outputs.filename }} Trace: ${{ github.run_id }}"
-          git push origin HEAD:main
+          git commit             -m "chore(ogp): auto-refresh OGP image for week ${{ steps.weeknum.outputs.week }}"             -m "Generated by ${{ steps.gen.outputs.generated_by }}. Filename: ${{ steps.weeknum.outputs.filename }} Trace: ${{ github.run_id }}"
+          git push origin HEAD:${GITHUB_REF_NAME}
 
           echo "✅ Pushed OGP refresh commit"
 

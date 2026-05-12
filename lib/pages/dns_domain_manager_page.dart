@@ -73,7 +73,7 @@ class _DnsDomainManagerPageState extends State<DnsDomainManagerPage>
     setState(() => _isLoadingDomains = true);
     try {
       final response = await _supabase.functions.invoke(
-        'dns-domain-manager',
+        'enterprise-hub',
         method: HttpMethod.get,
         queryParameters: {'view': 'domains'},
       );
@@ -101,7 +101,7 @@ class _DnsDomainManagerPageState extends State<DnsDomainManagerPage>
     setState(() => _isLoadingRecords = true);
     try {
       final response = await _supabase.functions.invoke(
-        'dns-domain-manager',
+        'enterprise-hub',
         method: HttpMethod.get,
         queryParameters: {'view': 'records', 'domain_id': domainId},
       );
@@ -129,7 +129,7 @@ class _DnsDomainManagerPageState extends State<DnsDomainManagerPage>
     setState(() => _isLoadingSsl = true);
     try {
       final response = await _supabase.functions.invoke(
-        'dns-domain-manager',
+        'enterprise-hub',
         method: HttpMethod.get,
         queryParameters: {'view': 'ssl_status'},
       );
@@ -155,9 +155,9 @@ class _DnsDomainManagerPageState extends State<DnsDomainManagerPage>
   Future<void> _addDomain(String domain, String registrar) async {
     try {
       final response = await _supabase.functions.invoke(
-        'dns-domain-manager',
+        'enterprise-hub',
         body: {
-          'action': 'add_domain',
+          'action': 'dns.add',
           'domain': domain,
           'registrar': registrar,
         },
@@ -190,9 +190,9 @@ class _DnsDomainManagerPageState extends State<DnsDomainManagerPage>
   }) async {
     try {
       final response = await _supabase.functions.invoke(
-        'dns-domain-manager',
+        'enterprise-hub',
         body: {
-          'action': 'add_record',
+          'action': 'dns.add_record',
           'domain_id': domainId,
           'record_type': recordType,
           'name': name,
@@ -222,8 +222,8 @@ class _DnsDomainManagerPageState extends State<DnsDomainManagerPage>
   Future<void> _deleteRecord(String recordId, String domainId) async {
     try {
       final response = await _supabase.functions.invoke(
-        'dns-domain-manager',
-        body: {'action': 'delete_record', 'record_id': recordId},
+        'enterprise-hub',
+        body: {'action': 'dns.delete_record', 'record_id': recordId},
       );
       final data = response.data;
       if (data is Map<String, dynamic> && data['success'] == true) {

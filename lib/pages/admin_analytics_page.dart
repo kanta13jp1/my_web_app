@@ -536,6 +536,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
   }
 
   Future<void> _updateFeedbackStatus(int id, String newStatus) async {
+    if (_supabase.auth.currentUser == null) return;
     await _supabase
         .from('app_feedback')
         .update({'status': newStatus}).eq('id', id);
@@ -558,6 +559,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
   Future<void> _loadWeeklyDigest() async {
     try {
       final digest = await _growthService.loadWeeklyDigest();
+      if (!mounted) return;
       if (mounted) setState(() => _weeklyDigest = digest);
     } catch (e) {
       debugPrint('weekly digest load error: $e');
@@ -610,6 +612,10 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
 
   Future<void> _loadAdminUsers() async {
     if (!mounted) return;
+    if (_supabase.auth.currentUser == null) {
+      setState(() => _adminUsersLoading = false);
+      return;
+    }
     setState(() => _adminUsersLoading = true);
     try {
       final res = await _supabase.functions.invoke(
@@ -3734,6 +3740,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     String userId,
     Map<String, dynamic> updates,
   ) async {
+    if (_supabase.auth.currentUser == null) return;
     final body = <String, dynamic>{'userId': userId, ...updates};
     await _supabase.functions.invoke(
       'core-hub',
@@ -5401,6 +5408,10 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
 
   Future<void> _loadGrowthSummary({String? since, String? label}) async {
     if (!mounted) return;
+    if (_supabase.auth.currentUser == null) {
+      setState(() => _growthSummaryLoading = false);
+      return;
+    }
     setState(() => _growthSummaryLoading = true);
     try {
       final resp = await _supabase.functions.invoke(

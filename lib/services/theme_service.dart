@@ -1,6 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+class AppThemeDef {
+  final String code;
+  final String nameJa;
+  final String emoji;
+  final Color previewPrimary;
+  final Color previewAccent;
+  final Color previewBg;
+  final bool isDark;
+
+  const AppThemeDef({
+    required this.code,
+    required this.nameJa,
+    required this.emoji,
+    required this.previewPrimary,
+    required this.previewAccent,
+    required this.previewBg,
+    required this.isDark,
+  });
+}
+
 class ThemeService extends ChangeNotifier {
   static const String _appFontFamily = 'NotoSansJP';
   static const List<String> _appFontFallback = <String>[
@@ -53,8 +73,103 @@ class ThemeService extends ChangeNotifier {
     );
   }
 
+  static const List<AppThemeDef> catalog = [
+    AppThemeDef(
+      code: 'dark_ai',
+      nameJa: '自分株式会社',
+      emoji: '🌃',
+      previewPrimary: Color(0xFFFF6B35),
+      previewAccent: Color(0xFF3949AB),
+      previewBg: Color(0xFF0A0A0A),
+      isDark: true,
+    ),
+    AppThemeDef(
+      code: 'minimal_mono',
+      nameJa: 'ミニマル',
+      emoji: '⚫',
+      previewPrimary: Color(0xFF000000),
+      previewAccent: Color(0xFF0066FF),
+      previewBg: Color(0xFFFFFFFF),
+      isDark: false,
+    ),
+    AppThemeDef(
+      code: 'saas_blue',
+      nameJa: 'SaaSブルー',
+      emoji: '🟦',
+      previewPrimary: Color(0xFF2864F0),
+      previewAccent: Color(0xFFFF7849),
+      previewBg: Color(0xFFF8FAFC),
+      isDark: false,
+    ),
+    AppThemeDef(
+      code: 'retro_skeu',
+      nameJa: 'レトロ',
+      emoji: '🎞',
+      previewPrimary: Color(0xFF3B5998),
+      previewAccent: Color(0xFF8B9DC3),
+      previewBg: Color(0xFFE8ECF0),
+      isDark: false,
+    ),
+    AppThemeDef(
+      code: 'nature_calm',
+      nameJa: 'ネイチャー',
+      emoji: '🌿',
+      previewPrimary: Color(0xFF4CAF50),
+      previewAccent: Color(0xFF81C784),
+      previewBg: Color(0xFFF1F8E9),
+      isDark: false,
+    ),
+    AppThemeDef(
+      code: 'note_warm',
+      nameJa: 'note.com',
+      emoji: '📝',
+      previewPrimary: Color(0xFF5AC8B8),
+      previewAccent: Color(0xFFFF6B35),
+      previewBg: Color(0xFFFFFFFF),
+      isDark: false,
+    ),
+    AppThemeDef(
+      code: 'freee_blue',
+      nameJa: 'freee',
+      emoji: '💼',
+      previewPrimary: Color(0xFF2864F0),
+      previewAccent: Color(0xFFFF7849),
+      previewBg: Color(0xFFF5F7FA),
+      isDark: false,
+    ),
+    AppThemeDef(
+      code: 'smarthr_corp',
+      nameJa: 'SmartHR',
+      emoji: '🏢',
+      previewPrimary: Color(0xFF0077C7),
+      previewAccent: Color(0xFFFF7849),
+      previewBg: Color(0xFFFFFFFF),
+      isDark: false,
+    ),
+    AppThemeDef(
+      code: 'apple_clean',
+      nameJa: 'Apple',
+      emoji: '🍎',
+      previewPrimary: Color(0xFF000000),
+      previewAccent: Color(0xFF007AFF),
+      previewBg: Color(0xFFF5F5F7),
+      isDark: false,
+    ),
+    AppThemeDef(
+      code: 'wired_bold',
+      nameJa: 'WIRED',
+      emoji: '⚡',
+      previewPrimary: Color(0xFFFFFF00),
+      previewAccent: Color(0xFFFFFF00),
+      previewBg: Color(0xFF000000),
+      isDark: true,
+    ),
+  ];
+
   ThemeMode _themeMode = ThemeMode.system;
   Color _primaryColor = const Color(0xFF0F172A);
+  String _selectedThemeCode = 'dark_ai';
+  ThemeData? _overrideTheme;
 
   ThemeService() {
     _loadThemeMode();
@@ -64,6 +179,8 @@ class ThemeService extends ChangeNotifier {
   ThemeMode get themeMode => _themeMode;
   bool get isDarkMode => _themeMode == ThemeMode.dark;
   Color get primaryColor => _primaryColor;
+  String get selectedThemeCode => _selectedThemeCode;
+  ThemeData? get overrideTheme => _overrideTheme;
 
   static const Color roleCso = Color(0xFF475569);
   static const Color roleCfo = Color(0xFF0D9488);
@@ -97,8 +214,66 @@ class ThemeService extends ChangeNotifier {
       if (themeString == 'ThemeMode.light') _themeMode = ThemeMode.light;
       if (themeString == 'ThemeMode.dark') _themeMode = ThemeMode.dark;
       if (themeString == 'ThemeMode.system') _themeMode = ThemeMode.system;
-      notifyListeners();
     }
+    final String? savedCode = prefs.getString('catalog_theme_code');
+    if (savedCode != null && savedCode != 'dark_ai') {
+      _selectedThemeCode = savedCode;
+      final def = catalog.firstWhere(
+        (d) => d.code == savedCode,
+        orElse: () => catalog.first,
+      );
+      _overrideTheme = _buildCatalogTheme(def);
+    }
+    notifyListeners();
+  }
+
+  Future<void> applyThemeByCode(String code) async {
+    _selectedThemeCode = code;
+    if (code == 'dark_ai') {
+      _overrideTheme = null;
+    } else {
+      final def = catalog.firstWhere(
+        (d) => d.code == code,
+        orElse: () => catalog.first,
+      );
+      _overrideTheme = _buildCatalogTheme(def);
+    }
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.setString('catalog_theme_code', code);
+    notifyListeners();
+  }
+
+  ThemeData _buildCatalogTheme(AppThemeDef def) {
+    final brightness = def.isDark ? Brightness.dark : Brightness.light;
+    final scheme = ColorScheme.fromSeed(
+      seedColor: def.previewPrimary,
+      brightness: brightness,
+    ).copyWith(
+      primary: def.previewPrimary,
+      secondary: def.previewAccent,
+      surface:
+          def.isDark ? def.previewBg.withValues(alpha: 0.9) : def.previewBg,
+      onSurface: def.isDark ? const Color(0xFFE7EDF3) : const Color(0xFF08131A),
+    );
+
+    return ThemeData(
+      useMaterial3: true,
+      brightness: brightness,
+      colorScheme: scheme,
+      fontFamily: _appFontFamily,
+      fontFamilyFallback: _appFontFallback,
+      scaffoldBackgroundColor: def.previewBg,
+      cardTheme: CardThemeData(
+        elevation: 0,
+        margin: EdgeInsets.zero,
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(
+            def.code == 'minimal_mono' || def.code == 'apple_clean' ? 20 : 12,
+          ),
+        ),
+      ),
+    );
   }
 
   ThemeData getLightTheme() {

@@ -65,6 +65,7 @@ class _MusicPlaylistManagerPageState extends State<MusicPlaylistManagerPage> {
         }
       }
     } catch (e) {
+      if (!mounted) return;
       setState(() => _errorMessage = '$e');
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -88,6 +89,7 @@ class _MusicPlaylistManagerPageState extends State<MusicPlaylistManagerPage> {
         }
       }
     } catch (_) {
+      if (!mounted) return;
       setState(() => _tracks = []);
     } finally {
       if (mounted) setState(() => _isLoadingTracks = false);

@@ -33,8 +33,8 @@ class _SmartInboxTriagePageState extends State<SmartInboxTriagePage> {
     });
     try {
       final response = await _supabase.functions.invoke(
-        'smart-inbox-triage',
-        body: {'action': 'list'},
+        'lifestyle-hub',
+        body: {'action': 'inbox.list'},
       );
       final data = response.data;
       if (data is Map<String, dynamic> && data['items'] is List) {

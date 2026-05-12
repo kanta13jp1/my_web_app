@@ -8,47 +8,196 @@ on:
 permissions:
   issues: write
   contents: read
+  pull-requests: read
 
 jobs:
   check:
-    name: Check unmerged codex/* branches (7+ days)
+    name: Check Codex merge backlog
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
-      - name: List unmerged codex/* branches
+      - name: Upsert Codex backlog issue
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ISSUE_TITLE: "[ops] Codex worktree/PR merge backlog"
         run: |
-          git fetch origin '+refs/heads/codex/*:refs/remotes/origin/codex/*' --no-tags
+          set -euo pipefail
+          git fetch origin \
+            '+refs/heads/main:refs/remotes/origin/main' \
+            '+refs/heads/codex/*:refs/remotes/origin/codex/*' \
+            --no-tags
 
-          unmerged=$(git for-each-ref --format='%(refname:short)' \
+          stale_branches=$(git for-each-ref --format='%(refname:short)' \
             refs/remotes/origin/codex \
-            | while read b; do
-              count=$(git rev-list origin/main..$b --count 2>/dev/null || echo 0)
+            | while IFS= read -r branch; do
+              count=$(git rev-list origin/main.."$branch" --count 2>/dev/null || echo 0)
               if [ "$count" -gt 0 ]; then
-                age_days=$(( ($(date +%s) - $(git log -1 --format=%ct $b)) / 86400 ))
+                age_days=$(( ($(date +%s) - $(git log -1 --format=%ct "$branch")) / 86400 ))
                 if [ "$age_days" -ge 7 ]; then
-                  echo "$b ($count commits, ${age_days}d old)"
+                  echo "- \`$branch\` ($count commits, ${age_days}d old)"
                 fi
               fi
             done)
 
-          if [ -n "$unmerged" ]; then
-            existing=$(gh issue list --search 'Codex backlog in:title state:open' \
-              --json number --jq '.[0].number' 2>/dev/null || echo '')
-            if [ -z "$existing" ]; then
-              gh issue create \
-                --title "[ops] Codex worktree merge backlog (7+ days unmerged)" \
-                --label "workflow-failure,powershell-instance" \
-                --body "$(printf 'Unmerged codex/* branches >= 7 days old:\n\n%s\n\nReview each branch and either merge or close.\n\n— codex-backlog-check.yml' "$unmerged")"
-              echo "Issue created for $unmerged"
+          conflicted_prs=$(gh pr list --state open --limit 100 \
+            --json number,title,headRefName,isDraft,url \
+            --jq '.[] |
+              select(.headRefName | startswith("codex/")) |
+              select(.isDraft == false) |
+              [.number, .headRefName, .title, .url] |
+              @tsv' \
+            | while IFS=$'\t' read -r number head title url; do
+              branch="origin/$head"
+              if ! git show-ref --verify --quiet "refs/remotes/$branch"; then
+                continue
+              fi
+
+              if ! git merge-tree --write-tree origin/main "$branch" >/tmp/codex-merge-tree.out 2>&1; then
+                echo "- #$number \`$head\` CONFLICT - $title"
+                echo "  $url"
+              fi
+            done)
+
+          ready_prs=$(gh pr list --state open --limit 100 \
+            --json number,title,headRefName,isDraft,reviewDecision,statusCheckRollup,url \
+            --jq '.[] |
+              select(.headRefName | startswith("codex/")) |
+              select(.isDraft == false) |
+              . as $pr |
+              ($pr.statusCheckRollup // []) as $checks |
+              select(($checks | length) > 0) |
+              select(([
+                $checks[] |
+                select(
+                  ((.status // "COMPLETED") != "COMPLETED") or
+                  ((.conclusion // .state // "SUCCESS") != "SUCCESS")
+                )
+              ] | length) == 0) |
+              select(($pr.reviewDecision // "") != "APPROVED") |
+              ($pr.reviewDecision | if . == null or . == "" then "REVIEW_REQUIRED" else . end) as $reviewDecision |
+              [.number, .headRefName, $reviewDecision, .title, .url] |
+              @tsv' \
+            | while IFS=$'\t' read -r number head review_decision title url; do
+              if printf '%s\n' "$conflicted_prs" | grep -Fq "\`$head\`"; then
+                continue
+              fi
+
+              echo "- #$number \`$head\` $review_decision - $title"
+              echo "  $url"
+            done)
+
+          open_pr_heads=$(gh pr list --state open --limit 100 \
+            --json headRefName \
+            --jq '.[].headRefName')
+
+          cleanup_branches=$(git for-each-ref --format='%(refname:short)' \
+            refs/remotes/origin/codex \
+            | while IFS= read -r branch; do
+              head=${branch#origin/}
+              if printf '%s\n' "$open_pr_heads" | grep -Fxq "$head"; then
+                continue
+              fi
+
+              count=$(git rev-list origin/main.."$branch" --count 2>/dev/null || echo 0)
+              if [ "$count" -le 0 ]; then
+                continue
+              fi
+
+              cherry=$(git cherry -v origin/main "$branch" 2>/dev/null || true)
+              plus_count=$(printf '%s\n' "$cherry" | grep -c '^+' || true)
+              minus_count=$(printf '%s\n' "$cherry" | grep -c '^-' || true)
+              closed_pr=$(gh pr list --state closed --head "$head" --limit 1 \
+                --json number,title,url,mergedAt \
+                --jq '.[0] | if . then "#\(.number) \(.title) - \(.url)" else "" end' \
+                2>/dev/null || true)
+
+              reason=""
+              if [ "$plus_count" -eq 0 ] && [ "$minus_count" -gt 0 ]; then
+                reason="patch-equivalent to main"
+              elif [ -n "$closed_pr" ]; then
+                reason="closed PR branch still present"
+              fi
+
+              if [ -n "$reason" ]; then
+                age_days=$(( ($(date +%s) - $(git log -1 --format=%ct "$branch")) / 86400 ))
+                line="- \`$branch\` ($count commits, ${age_days}d old): $reason"
+                if [ -n "$closed_pr" ]; then
+                  line="$line; $closed_pr"
+                fi
+                echo "$line"
+              fi
+            done)
+
+          existing=$(gh issue list --search '"Codex worktree/PR merge backlog" in:title state:open' \
+            --json number --jq '.[0].number' 2>/dev/null || true)
+          if [ -z "$existing" ]; then
+            existing=$(gh issue list --search '"Codex worktree merge backlog" in:title state:open' \
+              --json number --jq '.[0].number' 2>/dev/null || true)
+          fi
+
+          if [ -z "$stale_branches" ] && [ -z "$ready_prs" ] && [ -z "$conflicted_prs" ] && [ -z "$cleanup_branches" ]; then
+            if [ -n "$existing" ]; then
+              gh issue close "$existing" \
+                --comment "No Codex backlog detected by codex-backlog-check.yml."
+              echo "Issue #$existing closed."
             else
-              echo "Issue #$existing already open — skipped"
+              echo "No Codex backlog detected."
             fi
+            exit 0
+          fi
+
+          body_file=$(mktemp)
+          {
+            echo "Codex backlog detected by \`codex-backlog-check.yml\`."
+            echo
+            echo "## Stale unmerged codex branches"
+            if [ -n "$stale_branches" ]; then
+              echo "$stale_branches"
+            else
+              echo "None."
+            fi
+            echo
+            echo "## Ready Codex PRs awaiting review or merge"
+            if [ -n "$ready_prs" ]; then
+              echo "$ready_prs"
+            else
+              echo "None."
+            fi
+            echo
+            echo "## Codex PRs blocked by merge conflicts"
+            if [ -n "$conflicted_prs" ]; then
+              echo "$conflicted_prs"
+            else
+              echo "None."
+            fi
+            echo
+            echo "## Closed or already-applied Codex branch cleanup"
+            if [ -n "$cleanup_branches" ]; then
+              echo "$cleanup_branches"
+            else
+              echo "None."
+            fi
+            echo
+            echo "## Operator action"
+            echo "- Review each ready PR and merge or request changes."
+            echo "- Rebase or fresh-port conflicted PRs before review."
+            echo "- Delete closed or already-applied branches only after owner confirmation."
+            echo "- For stale branches without useful PRs, close, delete, or rebase them."
+            echo
+            echo "Run: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          } > "$body_file"
+
+          if [ -n "$existing" ]; then
+            gh issue edit "$existing" --title "$ISSUE_TITLE" --body-file "$body_file"
+            echo "Issue #$existing updated."
           else
-            echo "No codex/* branches stale >= 7 days"
+            gh issue create \
+              --title "$ISSUE_TITLE" \
+              --label "workflow-failure,powershell-instance" \
+              --body-file "$body_file"
+            echo "Issue created."
           fi

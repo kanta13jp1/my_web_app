@@ -38,8 +38,8 @@ class _EmailTemplateBuilderPageState extends State<EmailTemplateBuilderPage> {
     });
     try {
       final res = await _supabase.functions.invoke(
-        'email-template-builder',
-        queryParameters: {'view': 'templates'},
+        'enterprise-hub',
+        body: {'action': 'email_template.list'},
       );
       final data = res.data;
       if (data is Map<String, dynamic>) {
@@ -51,6 +51,7 @@ class _EmailTemplateBuilderPageState extends State<EmailTemplateBuilderPage> {
         }
       }
     } catch (e) {
+      if (!mounted) return;
       setState(() => _errorMessage = '$e');
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -267,9 +268,9 @@ class _EmailTemplateBuilderPageState extends State<EmailTemplateBuilderPage> {
                   onPressed: () async {
                     try {
                       await _supabase.functions.invoke(
-                        'email-template-builder',
+                        'enterprise-hub',
                         body: {
-                          'action': 'use_template',
+                          'action': 'email_template.use',
                           'templateId': t['id'],
                         },
                       );
@@ -330,9 +331,9 @@ class _EmailTemplateBuilderPageState extends State<EmailTemplateBuilderPage> {
               if (name.isEmpty) return;
               try {
                 await _supabase.functions.invoke(
-                  'email-template-builder',
+                  'enterprise-hub',
                   body: {
-                    'action': 'create_template',
+                    'action': 'email_template.create',
                     'name': name,
                     'subject': subjectCtrl.text.trim(),
                   },

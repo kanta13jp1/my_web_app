@@ -64,8 +64,8 @@ class _LineNotificationPageState extends State<LineNotificationPage> {
     });
     try {
       final res = await _supabase.functions.invoke(
-        'line-notifications',
-        body: {'action': 'get_config'},
+        'lifestyle-hub',
+        body: {'action': 'line.get_config'},
       );
       final data = res.data;
       if (data is Map<String, dynamic>) {
@@ -108,9 +108,9 @@ class _LineNotificationPageState extends State<LineNotificationPage> {
     });
     try {
       await _supabase.functions.invoke(
-        'line-notifications',
+        'lifestyle-hub',
         body: {
-          'action': 'configure',
+          'action': 'line.configure',
           'notify_token': token,
           'triggers': _triggers,
         },
@@ -131,8 +131,8 @@ class _LineNotificationPageState extends State<LineNotificationPage> {
     });
     try {
       final res = await _supabase.functions.invoke(
-        'line-notifications',
-        body: {'action': 'test'},
+        'lifestyle-hub',
+        body: {'action': 'line.test'},
       );
       final data = res.data;
       if (mounted) {
@@ -144,6 +144,7 @@ class _LineNotificationPageState extends State<LineNotificationPage> {
       }
       await _fetchConfig();
     } catch (e) {
+      if (!mounted) return;
       if (mounted) setState(() => _errorMessage = 'テスト送信に失敗しました: $e');
     } finally {
       if (mounted) setState(() => _isTesting = false);

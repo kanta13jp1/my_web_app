@@ -22,7 +22,8 @@ class _StoicLeaderboardCardState extends State<StoicLeaderboardCard> {
   Future<void> _fetchLeaderboard() async {
     try {
       final response = await Supabase.instance.client.functions.invoke(
-        'get-stoic-leaderboard',
+        'tools-hub',
+        body: {'action': 'habit.leaderboard'},
       );
 
       final data = response.data as Map<String, dynamic>?;

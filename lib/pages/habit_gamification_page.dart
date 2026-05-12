@@ -90,9 +90,10 @@ class _HabitGamificationPageState extends State<HabitGamificationPage>
         }
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() => _errorMessage = '$e');
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -356,6 +357,7 @@ class _HabitGamificationPageState extends State<HabitGamificationPage>
   }
 
   Widget _buildChallengesTab() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final completedCount =
         _challenges.where((c) => c['completed'] == true).length;
     return RefreshIndicator(
@@ -379,7 +381,9 @@ class _HabitGamificationPageState extends State<HabitGamificationPage>
             final xp = c['xp'] as int? ?? 0;
             return Card(
               margin: const EdgeInsets.only(bottom: 8),
-              color: completed ? const Color(0xFFE8F5E9) : null,
+              color: completed
+                  ? (isDark ? const Color(0xFF0A1A0A) : const Color(0xFFE8F5E9))
+                  : null,
               child: ListTile(
                 leading: Icon(
                   completed ? Icons.check_circle : Icons.radio_button_unchecked,
@@ -399,7 +403,9 @@ class _HabitGamificationPageState extends State<HabitGamificationPage>
                 trailing: completed
                     ? Chip(
                         label: Text('+${xp}XP'),
-                        backgroundColor: const Color(0xFFC8E6C9),
+                        backgroundColor: isDark
+                            ? const Color(0xFF0A2A0A)
+                            : const Color(0xFFC8E6C9),
                         labelStyle: const TextStyle(
                           color: Color(0xFF4CAF50),
                           height: 1.5,
@@ -474,6 +480,7 @@ class _HabitGamificationPageState extends State<HabitGamificationPage>
   }
 
   Widget _buildBadgeChip(Map<String, dynamic> badge, {required bool earned}) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final icon = badge['icon'] as String? ?? 'star';
     final name = badge['name'] as String? ?? '';
     final desc = badge['description'] as String? ?? '';
@@ -484,7 +491,7 @@ class _HabitGamificationPageState extends State<HabitGamificationPage>
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
           color: earned
-              ? const Color(0xFFFFECB3)
+              ? (isDark ? const Color(0xFF2A1800) : const Color(0xFFFFECB3))
               : Theme.of(context).colorScheme.surfaceContainerHigh,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(

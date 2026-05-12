@@ -1,9 +1,14 @@
-﻿import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
-import { createClient, type SupabaseClient, type User } from "https://esm.sh/@supabase/supabase-js@2";
+import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
+import {
+  createClient,
+  type SupabaseClient,
+  type User,
+} from "npm:@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
 };
 
@@ -51,11 +56,46 @@ type AuthContext = {
 };
 
 const TUNINGS: Record<string, Record<string, number>> = {
-  standard: { E2: 82.41, A2: 110.0, D3: 146.83, G3: 196.0, B3: 246.94, E4: 329.63 },
-  drop_d: { D2: 73.42, A2: 110.0, D3: 146.83, G3: 196.0, B3: 246.94, E4: 329.63 },
-  open_g: { D2: 73.42, G2: 98.0, D3: 146.83, G3: 196.0, B3: 246.94, D4: 293.66 },
-  open_d: { D2: 73.42, A2: 110.0, D3: 146.83, "F#3": 185.0, A3: 220.0, D4: 293.66 },
-  dadgad: { D2: 73.42, A2: 110.0, D3: 146.83, G3: 196.0, A3: 220.0, D4: 293.66 },
+  standard: {
+    E2: 82.41,
+    A2: 110.0,
+    D3: 146.83,
+    G3: 196.0,
+    B3: 246.94,
+    E4: 329.63,
+  },
+  drop_d: {
+    D2: 73.42,
+    A2: 110.0,
+    D3: 146.83,
+    G3: 196.0,
+    B3: 246.94,
+    E4: 329.63,
+  },
+  open_g: {
+    D2: 73.42,
+    G2: 98.0,
+    D3: 146.83,
+    G3: 196.0,
+    B3: 246.94,
+    D4: 293.66,
+  },
+  open_d: {
+    D2: 73.42,
+    A2: 110.0,
+    D3: 146.83,
+    "F#3": 185.0,
+    A3: 220.0,
+    D4: 293.66,
+  },
+  dadgad: {
+    D2: 73.42,
+    A2: 110.0,
+    D3: 146.83,
+    G3: 196.0,
+    A3: 220.0,
+    D4: 293.66,
+  },
 };
 
 const CHORD_LIBRARY: Record<string, { frets: number[]; fingers: string }> = {
@@ -139,8 +179,7 @@ serve(async (req: Request) => {
     const auth = await getAuthContext(req);
     const url = new URL(req.url);
     const body = await readJsonBody(req);
-    const action =
-      normalizeString(body.action) ??
+    const action = normalizeString(body.action) ??
       url.searchParams.get("action") ??
       "dashboard";
 
@@ -168,7 +207,10 @@ serve(async (req: Request) => {
         return jsonResponse(await buildPracticeStats(auth));
       case "public_recording":
         return jsonResponse(
-          await getPublicRecording(auth.adminClient, url.searchParams.get("recordingId")),
+          await getPublicRecording(
+            auth.adminClient,
+            url.searchParams.get("recordingId"),
+          ),
         );
       case "public_gallery":
         return jsonResponse(
@@ -219,7 +261,10 @@ serve(async (req: Request) => {
     const message = error instanceof Error
       ? error.message
       : (error as { message?: string }).message ?? JSON.stringify(error);
-    console.error("[guitar-recording-studio] unhandled error:", JSON.stringify(error));
+    console.error(
+      "[guitar-recording-studio] unhandled error:",
+      JSON.stringify(error),
+    );
     return jsonResponse({ success: false, error: message }, 500);
   }
 });
@@ -281,7 +326,9 @@ async function buildDashboard(adminClient: SupabaseClient, user: User | null) {
     .from("guitar_recordings")
     .select("id, duration_seconds, user_id");
 
-  const rows = (recordings ?? []) as Array<Pick<GuitarRecordingRow, "id" | "duration_seconds" | "user_id">>;
+  const rows = (recordings ?? []) as Array<
+    Pick<GuitarRecordingRow, "id" | "duration_seconds" | "user_id">
+  >;
   const totalDurationSeconds = rows.reduce(
     (sum, row) => sum + (row.duration_seconds ?? 0),
     0,
@@ -294,7 +341,8 @@ async function buildDashboard(adminClient: SupabaseClient, user: User | null) {
     success: true,
     studio: {
       name: "ギターレコーディングスタジオ",
-      description: "ブラウザだけで録音・保存・共有・AIコーチングまで行えるギター練習スタジオ",
+      description:
+        "ブラウザだけで録音・保存・共有・AIコーチングまで行えるギター練習スタジオ",
       version: "2.0.0",
     },
     stats: {
@@ -356,9 +404,15 @@ function buildChordPayload(url: URL) {
 }
 
 function buildMetronomePayload(url: URL) {
-  const bpm = clampNumber(parseInt(url.searchParams.get("bpm") ?? "120", 10), 30, 300);
+  const bpm = clampNumber(
+    parseInt(url.searchParams.get("bpm") ?? "120", 10),
+    30,
+    300,
+  );
   const timeSignature = url.searchParams.get("timeSignature") ?? "4/4";
-  const [beats = 4, beatValue = 4] = timeSignature.split("/").map((value) => parseInt(value, 10));
+  const [beats = 4, beatValue = 4] = timeSignature.split("/").map((value) =>
+    parseInt(value, 10)
+  );
 
   return {
     success: true,
@@ -367,8 +421,9 @@ function buildMetronomePayload(url: URL) {
     beats,
     beatValue,
     intervalMs: Math.round(60000 / bpm),
-    accentPattern: Array.from({ length: beats }, (_, index) =>
-      index === 0 ? "accent" : "normal"
+    accentPattern: Array.from(
+      { length: beats },
+      (_, index) => index === 0 ? "accent" : "normal",
     ),
   };
 }
@@ -386,7 +441,9 @@ async function listUserRecordings(auth: AuthContext) {
     throw error;
   }
 
-  return ((data ?? []) as GuitarRecordingRow[]).map((row) => mapRecordingRow(row));
+  return ((data ?? []) as GuitarRecordingRow[]).map((row) =>
+    mapRecordingRow(row)
+  );
 }
 
 async function buildPracticeStats(auth: AuthContext) {
@@ -437,7 +494,8 @@ async function listPublicRecordings(
   // Body params (Flutter invoke) take priority over URL query params
   const limitRaw = body.limit ?? url.searchParams.get("limit") ?? "20";
   const offsetRaw = body.offset ?? url.searchParams.get("offset") ?? "0";
-  const sortByRaw = (body.sortBy ?? url.searchParams.get("sortBy") ?? "created_at") as string;
+  const sortByRaw =
+    (body.sortBy ?? url.searchParams.get("sortBy") ?? "created_at") as string;
   const limit = Math.min(parseInt(String(limitRaw), 10), 50);
   const offset = parseInt(String(offsetRaw), 10);
   const sortBy = sortByRaw; // created_at | likes | plays
@@ -453,7 +511,9 @@ async function listPublicRecordings(
 
   if (error) throw error;
 
-  const recordings = ((data ?? []) as GuitarRecordingRow[]).map((row) => mapRecordingRow(row));
+  const recordings = ((data ?? []) as GuitarRecordingRow[]).map((row) =>
+    mapRecordingRow(row)
+  );
 
   return {
     success: true,
@@ -502,8 +562,8 @@ async function saveRecording(auth: AuthContext, body: Json) {
   const title = normalizeString(body.title);
   const filePath = normalizeString(body.filePath);
   const fileMimeType = normalizeString(body.fileMimeType);
-  const exportFormat =
-    normalizeString(body.exportFormat)?.toLowerCase() ?? "wav";
+  const exportFormat = normalizeString(body.exportFormat)?.toLowerCase() ??
+    "wav";
 
   if (!title) {
     throw new Error("title is required");
@@ -515,7 +575,11 @@ async function saveRecording(auth: AuthContext, body: Json) {
   const recordingId = crypto.randomUUID();
   const now = new Date().toISOString();
 
-  const row: Partial<GuitarRecordingRow> & { id: string; user_id: string; title: string } = {
+  const row: Partial<GuitarRecordingRow> & {
+    id: string;
+    user_id: string;
+    title: string;
+  } = {
     id: recordingId,
     user_id: user.id,
     title,
@@ -556,9 +620,15 @@ async function saveRecording(auth: AuthContext, body: Json) {
       fileMimeType,
     ).catch((e) => {
       console.error("[guitar-studio] generateRecordingFeedback failed:", e);
-      return { text: buildFallbackRecordingFeedback(recordingMeta), source: "fallback" };
+      return {
+        text: buildFallbackRecordingFeedback(recordingMeta),
+        source: "fallback",
+      };
     })
-    : { text: buildFallbackRecordingFeedback(recordingMeta), source: "fallback" };
+    : {
+      text: buildFallbackRecordingFeedback(recordingMeta),
+      source: "fallback",
+    };
 
   row.ai_feedback = feedbackResult.text;
   row.ai_feedback_source = feedbackResult.source;
@@ -638,7 +708,9 @@ async function deleteRecording(auth: AuthContext, body: Json) {
 
   const row = existing as GuitarRecordingRow;
   if (row.file_path) {
-    await auth.adminClient.storage.from(RECORDING_BUCKET).remove([row.file_path]);
+    await auth.adminClient.storage.from(RECORDING_BUCKET).remove([
+      row.file_path,
+    ]);
   }
 
   const { error } = await auth.adminClient
@@ -776,7 +848,9 @@ async function shareRecordingToX(auth: AuthContext, body: Json) {
   if (error || !row) throw new Error("Recording not found");
 
   const recording = row as GuitarRecordingRow;
-  if (!recording.is_public) throw new Error("Recording must be public to share");
+  if (!recording.is_public) {
+    throw new Error("Recording must be public to share");
+  }
 
   await postPublicRecordingToX(recording);
   return { success: true, shareUrl: buildShareUrl(recording.id) };
@@ -813,7 +887,9 @@ async function buildAiAnalysis(auth: AuthContext, body: Json) {
         topTags: [],
         tuningDistribution: {},
       },
-      insights: ["まだ録音がありません。最初の 1 本を保存すると AI コーチングが有効になります。"],
+      insights: [
+        "まだ録音がありません。最初の 1 本を保存すると AI コーチングが有効になります。",
+      ],
       recommendations: [
         "30 秒でも良いので 1 本録音して保存する",
         "よく弾くジャンルとテンポをタグで残す",
@@ -850,7 +926,9 @@ function summariseRecordings(recordings: GuitarRecordingRow[]) {
     )
     : 0;
   const averageBpm = recordings.length > 0
-    ? Math.round(recordings.reduce((sum, row) => sum + row.bpm, 0) / recordings.length)
+    ? Math.round(
+      recordings.reduce((sum, row) => sum + row.bpm, 0) / recordings.length,
+    )
     : 0;
 
   const presetCounts: Record<string, number> = {};
@@ -895,33 +973,57 @@ function buildFallbackAiPayload(
   const recommendations: string[] = [];
 
   if (metrics.averageDurationSeconds < 45) {
-    insights.push(`平均録音時間は ${metrics.averageDurationSeconds} 秒で短めです。比較録音向きですが、定着確認は少し不足しています。`);
-    recommendations.push("同じフレーズを 60〜90 秒に伸ばして録音し、後半の安定感も確認する");
+    insights.push(
+      `平均録音時間は ${metrics.averageDurationSeconds} 秒で短めです。比較録音向きですが、定着確認は少し不足しています。`,
+    );
+    recommendations.push(
+      "同じフレーズを 60〜90 秒に伸ばして録音し、後半の安定感も確認する",
+    );
   } else if (metrics.averageDurationSeconds > 180) {
-    insights.push(`平均録音時間は ${Math.round(metrics.averageDurationSeconds / 60)} 分で長めです。集中して弾けています。`);
-    recommendations.push("長い録音の中に 30 秒だけの比較テイクも混ぜると改善点が見つけやすくなります。");
+    insights.push(
+      `平均録音時間は ${
+        Math.round(metrics.averageDurationSeconds / 60)
+      } 分で長めです。集中して弾けています。`,
+    );
+    recommendations.push(
+      "長い録音の中に 30 秒だけの比較テイクも混ぜると改善点が見つけやすくなります。",
+    );
   } else {
-    insights.push(`平均録音時間は ${metrics.averageDurationSeconds} 秒で、改善確認にちょうど良い長さです。`);
+    insights.push(
+      `平均録音時間は ${metrics.averageDurationSeconds} 秒で、改善確認にちょうど良い長さです。`,
+    );
   }
 
   if (metrics.topPresets.length > 0) {
     const mainPreset = metrics.topPresets[0].preset;
     insights.push(`最も使っているジャンルは ${mainPreset} です。`);
     if (metrics.topPresets.length === 1) {
-      recommendations.push("別ジャンルのプリセットを 1 本だけ混ぜて、右手とダイナミクスの引き出しを増やす");
+      recommendations.push(
+        "別ジャンルのプリセットを 1 本だけ混ぜて、右手とダイナミクスの引き出しを増やす",
+      );
     }
   }
 
   if (metrics.averageBpm > 140) {
-    insights.push(`平均テンポは ${metrics.averageBpm} BPM と速めです。勢いはありますが走りやすさに注意です。`);
-    recommendations.push("1 段階遅いテンポでも同じフレーズを録音して、ピッキングの粒を比較する");
+    insights.push(
+      `平均テンポは ${metrics.averageBpm} BPM と速めです。勢いはありますが走りやすさに注意です。`,
+    );
+    recommendations.push(
+      "1 段階遅いテンポでも同じフレーズを録音して、ピッキングの粒を比較する",
+    );
   } else if (metrics.averageBpm > 0 && metrics.averageBpm < 80) {
-    insights.push(`平均テンポは ${metrics.averageBpm} BPM とゆったりめです。音価のコントロール練習に向いています。`);
-    recommendations.push("最後の 1 テイクだけ 10 BPM 上げて、フォームが崩れないか確認する");
+    insights.push(
+      `平均テンポは ${metrics.averageBpm} BPM とゆったりめです。音価のコントロール練習に向いています。`,
+    );
+    recommendations.push(
+      "最後の 1 テイクだけ 10 BPM 上げて、フォームが崩れないか確認する",
+    );
   }
 
   if (metrics.streak >= 7) {
-    insights.push(`${metrics.streak} 日連続で録音できています。かなり良い習慣化です。`);
+    insights.push(
+      `${metrics.streak} 日連続で録音できています。かなり良い習慣化です。`,
+    );
   } else if (metrics.streak == 0) {
     recommendations.push("明日も 1 テイクだけ録って、連続日数を作り始める");
   }
@@ -959,24 +1061,25 @@ function buildFallbackRecordingFeedback(
     export_format: string;
   },
 ) {
-  const presetLabel = RECORDING_PRESETS[recording.preset]?.description ?? recording.preset;
+  const presetLabel = RECORDING_PRESETS[recording.preset]?.description ??
+    recording.preset;
   const durationSeconds = recording.duration_seconds ?? 0;
-  const lead =
-    durationSeconds < 45
-      ? "フレーズの芯はつかめています。"
-      : durationSeconds > 180
-      ? "しっかり弾き切れていて、練習の密度も見えます。"
-      : "まとまりのある録音になっています。";
+  const lead = durationSeconds < 45
+    ? "フレーズの芯はつかめています。"
+    : durationSeconds > 180
+    ? "しっかり弾き切れていて、練習の密度も見えます。"
+    : "まとまりのある録音になっています。";
 
-  const tempo =
-    recording.bpm >= 140
-      ? "テンポが速めなので、ピッキングの粒立ちを少し意識するとさらに安定しそうです。"
-      : recording.bpm > 0 && recording.bpm < 80
-      ? "ゆっくり目なので、音の伸びとリズムの置き方を丁寧に確認するのに向いています。"
-      : `BPM ${recording.bpm} 前後で、フォーム確認とグルーブ作りのバランスが取りやすい設定です。`;
+  const tempo = recording.bpm >= 140
+    ? "テンポが速めなので、ピッキングの粒立ちを少し意識するとさらに安定しそうです。"
+    : recording.bpm > 0 && recording.bpm < 80
+    ? "ゆっくり目なので、音の伸びとリズムの置き方を丁寧に確認するのに向いています。"
+    : `BPM ${recording.bpm} 前後で、フォーム確認とグルーブ作りのバランスが取りやすい設定です。`;
 
   const tagLine = recording.tags.length > 0
-    ? `今回のテーマは ${recording.tags.slice(0, 3).map((tag) => `#${tag}`).join(" ")} ですね。`
+    ? `今回のテーマは ${
+      recording.tags.slice(0, 3).map((tag) => `#${tag}`).join(" ")
+    } ですね。`
     : `${presetLabel} と ${recording.tuning} チューニングの相性を次回も比較すると改善点が見えやすくなります。`;
 
   const shareLine = recording.is_public
@@ -988,7 +1091,9 @@ function buildFallbackRecordingFeedback(
 
 function mapAudioMime(mimeType: string, exportFormat: string): string {
   const raw = (mimeType || exportFormat).toLowerCase();
-  if (raw.includes("m4a") || raw.includes("mp4") || raw.includes("aac")) return "audio/mp4";
+  if (raw.includes("m4a") || raw.includes("mp4") || raw.includes("aac")) {
+    return "audio/mp4";
+  }
   if (raw.includes("mp3") || raw.includes("mpeg")) return "audio/mpeg";
   if (raw.includes("ogg")) return "audio/ogg";
   if (raw.includes("flac")) return "audio/flac";
@@ -1010,18 +1115,21 @@ async function generateRecordingFeedback(
   filePath: string,
   fileMimeType: string,
 ): Promise<{ text: string; source: string }> {
-  const metaPrompt = `録音情報: ${JSON.stringify({
-    タイトル: recording.title,
-    長さ: `${recording.duration_seconds}秒`,
-    プリセット: recording.preset,
-    チューニング: recording.tuning,
-    BPM: recording.bpm,
-    タグ: recording.tags,
-  })}`;
+  const metaPrompt = `録音情報: ${
+    JSON.stringify({
+      タイトル: recording.title,
+      長さ: `${recording.duration_seconds}秒`,
+      プリセット: recording.preset,
+      チューニング: recording.tuning,
+      BPM: recording.bpm,
+      タグ: recording.tags,
+    })
+  }`;
 
   // Try to download audio for real analysis (Gemini inline_data, max ~15MB)
   const INLINE_SIZE_LIMIT = 15 * 1024 * 1024;
-  let audioPart: { inline_data: { mime_type: string; data: string } } | null = null;
+  let audioPart: { inline_data: { mime_type: string; data: string } } | null =
+    null;
 
   try {
     const { data: blob, error: dlErr } = await adminClient.storage
@@ -1063,7 +1171,9 @@ async function generateRecordingFeedback(
   );
 
   if (!response.ok) {
-    throw new Error(`Gemini recording feedback request failed: ${response.status}`);
+    throw new Error(
+      `Gemini recording feedback request failed: ${response.status}`,
+    );
   }
 
   const payload = await response.json();
@@ -1072,7 +1182,10 @@ async function generateRecordingFeedback(
     throw new Error("Gemini recording feedback was empty");
   }
 
-  return { text: raw.replace(/\s+/g, " ").trim(), source: audioPart ? "gemini_audio" : "gemini_meta" };
+  return {
+    text: raw.replace(/\s+/g, " ").trim(),
+    source: audioPart ? "gemini_audio" : "gemini_meta",
+  };
 }
 
 async function generateGeminiCoaching(
@@ -1145,12 +1258,14 @@ function defaultPracticeMenu(mainPreset: string) {
     {
       title: "弱点フレーズ反復",
       duration: "10分",
-      description: `${presetLabel} を意識しつつ、気になる 1 フレーズだけを反復録音する`,
+      description:
+        `${presetLabel} を意識しつつ、気になる 1 フレーズだけを反復録音する`,
     },
     {
       title: "本番テイク",
       duration: "10分",
-      description: "メトロノームあり 1 本、なし 1 本の 2 テイクを録って比較する",
+      description:
+        "メトロノームあり 1 本、なし 1 本の 2 テイクを録って比較する",
     },
     {
       title: "クールダウン",
@@ -1169,7 +1284,8 @@ function mapRecordingRow(
     recordingId: row.id,
     title: row.title,
     durationSeconds: row.duration_seconds,
-    durationDisplay: row.duration_display ?? formatDuration(row.duration_seconds),
+    durationDisplay: row.duration_display ??
+      formatDuration(row.duration_seconds),
     preset: row.preset,
     tuning: row.tuning,
     bpm: row.bpm,
@@ -1214,7 +1330,9 @@ function calculateStreak(createdAtValues: string[]) {
 
   const uniqueDays = [
     ...new Set(
-      createdAtValues.map((value) => new Date(value).toISOString().slice(0, 10)),
+      createdAtValues.map((value) =>
+        new Date(value).toISOString().slice(0, 10)
+      ),
     ),
   ].sort().reverse();
 
@@ -1267,7 +1385,10 @@ function buildWeeklyBreakdown(
     weeks.push({
       week: weekStart.toISOString().slice(0, 10),
       minutes: Math.round(
-        subset.reduce((sum, session) => sum + (session.duration_seconds / 60), 0),
+        subset.reduce(
+          (sum, session) => sum + (session.duration_seconds / 60),
+          0,
+        ),
       ),
       sessions: subset.length,
     });
@@ -1302,10 +1423,13 @@ function buildShareUrl(recordingId: string) {
 
 // Fire-and-forget: post a public recording announcement to X (@kanta13jp1).
 // Failure is logged but never throws so it never blocks the main flow.
-async function postPublicRecordingToX(recording: GuitarRecordingRow): Promise<void> {
+async function postPublicRecordingToX(
+  recording: GuitarRecordingRow,
+): Promise<void> {
   if (!SERVICE_ROLE_KEY || !SUPABASE_URL) return;
 
-  const durationStr = recording.duration_display ?? formatDuration(recording.duration_seconds);
+  const durationStr = recording.duration_display ??
+    formatDuration(recording.duration_seconds);
   const preset = (recording.preset ?? "").replace(/_/g, " ");
   const shareUrl = buildShareUrl(recording.id);
   const appUrl = APP_URL;

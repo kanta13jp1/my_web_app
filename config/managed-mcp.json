@@ -1,0 +1,570 @@
+{
+  "schemaVersion": 1,
+  "status": "active",
+  "defaultDecision": "deny",
+  "lastUpdated": "2026-05-08",
+  "ownerModel": {
+    "activeInstances": [
+      "Claude Code #1",
+      "Codex #1"
+    ],
+    "policyOwner": "Claude Code #1",
+    "implementationOwner": "Codex #1",
+    "notes": "Historical extra Codex WBS labels are absorbed by Codex #1 under the current two-instance flow."
+  },
+  "sessionStartPolicy": {
+    "warnOnUnmanagedServer": true,
+    "warnOnDeniedServer": true,
+    "warnOnExpiredAuth": true,
+    "warnOnDangerousPermissions": true
+  },
+  "highRiskScopes": [
+    "admin",
+    "delete",
+    "send",
+    "purchase",
+    "external_share",
+    "credential_access",
+    "shell_execute",
+    "filesystem_write",
+    "production_write"
+  ],
+  "dangerousPermissionPatterns": [
+    "defaultMode\\s*=\\s*bypassPermissions",
+    "skipDangerousModePermissionPrompt\\s*=\\s*true",
+    "sandbox\\s*=\\s*elevated",
+    "Bash\\(git reset",
+    "Bash\\(git checkout --",
+    "Bash\\(rm -rf",
+    "Bash\\(del ",
+    "Bash\\(taskkill",
+    "PowerShell\\(Stop-Process",
+    "printenv\\s+.*(KEY|TOKEN|SECRET)",
+    "service[_ -]?role"
+  ],
+  "allowedMcpServers": [
+    {
+      "id": "github",
+      "displayName": "GitHub",
+      "aliases": [
+        "github@openai-curated",
+        "github@claude-plugins-official",
+        "mcp__codex_apps__github",
+        "mcp__plugin_github_github",
+        "mcp__github"
+      ],
+      "purpose": "Issue, PR, branch, review comment, and CI evidence work for WBS execution.",
+      "permissions": [
+        "read",
+        "suggest",
+        "create_comment",
+        "update_comment",
+        "ci_log_read"
+      ],
+      "dataClassification": [
+        "source_code",
+        "issue_metadata",
+        "ci_logs"
+      ],
+      "approver": "Claude Code #1",
+      "humanApprovalRequiredFor": [
+        "merge",
+        "delete",
+        "admin",
+        "external_share"
+      ],
+      "auditLog": "GitHub issue comments, PR timeline, branch history, and Actions logs.",
+      "allowedReason": "Required for Codex #1 to ship scoped PRs and prove CI green under WBS due-date order.",
+      "auth": {
+        "required": true,
+        "status": "managed",
+        "expiresAt": null
+      }
+    },
+    {
+      "id": "notion",
+      "displayName": "Notion",
+      "aliases": [
+        "notion@openai-curated",
+        "mcp_servers.notion",
+        "notion"
+      ],
+      "purpose": "Read and summarize Notion specs or implementation plans when explicitly referenced.",
+      "permissions": [
+        "read",
+        "suggest"
+      ],
+      "dataClassification": [
+        "internal_docs",
+        "planning_notes"
+      ],
+      "approver": "Claude Code #1",
+      "humanApprovalRequiredFor": [
+        "create",
+        "update",
+        "delete",
+        "external_share"
+      ],
+      "auditLog": "Notion page history plus issue/PR links that cite the readback.",
+      "allowedReason": "Supports spec-to-implementation intake without adding extra live agent instances.",
+      "auth": {
+        "required": true,
+        "status": "managed",
+        "expiresAt": null
+      }
+    },
+    {
+      "id": "slack",
+      "displayName": "Slack",
+      "aliases": [
+        "slack@openai-curated",
+        "slack"
+      ],
+      "purpose": "Read Slack context and draft updates for WBS coordination when the user asks.",
+      "permissions": [
+        "read",
+        "suggest"
+      ],
+      "dataClassification": [
+        "internal_messages",
+        "coordination_notes"
+      ],
+      "approver": "Claude Code #1",
+      "humanApprovalRequiredFor": [
+        "send",
+        "external_share",
+        "delete"
+      ],
+      "auditLog": "Slack message permalink plus issue/PR note before any outbound send.",
+      "allowedReason": "Coordination data may inform WBS routing, but outbound writes stay human-approved.",
+      "auth": {
+        "required": true,
+        "status": "managed",
+        "expiresAt": null
+      }
+    },
+    {
+      "id": "google-drive",
+      "displayName": "Google Drive",
+      "aliases": [
+        "google-drive@openai-curated",
+        "google-docs@openai-curated",
+        "google-sheets@openai-curated",
+        "google-slides@openai-curated",
+        "claude.ai google drive",
+        "google drive"
+      ],
+      "purpose": "Read referenced Drive, Docs, Sheets, and Slides artifacts for issue evidence.",
+      "permissions": [
+        "read",
+        "suggest"
+      ],
+      "dataClassification": [
+        "internal_docs",
+        "user_files"
+      ],
+      "approver": "Claude Code #1",
+      "humanApprovalRequiredFor": [
+        "create",
+        "update",
+        "delete",
+        "external_share"
+      ],
+      "auditLog": "Drive file URL, readback summary, and issue/PR link.",
+      "allowedReason": "Needed for referenced source intake while preserving manual approval for file writes.",
+      "auth": {
+        "required": true,
+        "status": "managed",
+        "expiresAt": null
+      }
+    },
+    {
+      "id": "google-calendar",
+      "displayName": "Google Calendar",
+      "aliases": [
+        "google-calendar@openai-curated",
+        "claude.ai google calendar",
+        "google calendar"
+      ],
+      "purpose": "Read availability and daily context when calendar evidence is explicitly requested.",
+      "permissions": [
+        "read",
+        "suggest"
+      ],
+      "dataClassification": [
+        "calendar_metadata",
+        "personal_schedule"
+      ],
+      "approver": "Claude Code #1",
+      "humanApprovalRequiredFor": [
+        "create",
+        "update",
+        "delete",
+        "external_share"
+      ],
+      "auditLog": "Calendar action summary and issue/PR link before any change.",
+      "allowedReason": "Calendar context may guide WBS scheduling, while event mutations remain approval-gated.",
+      "auth": {
+        "required": true,
+        "status": "managed",
+        "expiresAt": null
+      }
+    },
+    {
+      "id": "gmail",
+      "displayName": "Gmail",
+      "aliases": [
+        "gmail@openai-curated",
+        "gmail"
+      ],
+      "purpose": "Read referenced email threads and draft replies only when the user asks.",
+      "permissions": [
+        "read",
+        "suggest"
+      ],
+      "dataClassification": [
+        "email_metadata",
+        "private_messages"
+      ],
+      "approver": "Claude Code #1",
+      "humanApprovalRequiredFor": [
+        "send",
+        "delete",
+        "external_share"
+      ],
+      "auditLog": "Email thread reference plus explicit user approval before send/delete.",
+      "allowedReason": "Useful for user-requested inbox triage without autonomous outbound email.",
+      "auth": {
+        "required": true,
+        "status": "managed",
+        "expiresAt": null
+      }
+    },
+    {
+      "id": "notebooklm",
+      "displayName": "NotebookLM",
+      "aliases": [
+        "notebooklm",
+        "notebooklm-py"
+      ],
+      "purpose": "Harness-engineering source intake and long-context research summaries.",
+      "permissions": [
+        "read",
+        "suggest",
+        "source_add"
+      ],
+      "dataClassification": [
+        "internal_docs",
+        "research_notes"
+      ],
+      "approver": "Claude Code #1",
+      "humanApprovalRequiredFor": [
+        "external_share",
+        "delete",
+        "bulk_upload"
+      ],
+      "auditLog": "Notebook id, source URL/path, generated summary, and issue/PR link.",
+      "allowedReason": "Issue #1586 depends on NotebookLM recheck evidence, but source changes stay recorded.",
+      "auth": {
+        "required": true,
+        "status": "managed",
+        "expiresAt": null
+      }
+    },
+    {
+      "id": "context7",
+      "displayName": "Context7",
+      "aliases": [
+        "context7",
+        "mcp__context7"
+      ],
+      "purpose": "Read-only public documentation lookup for implementation details.",
+      "permissions": [
+        "read",
+        "suggest"
+      ],
+      "dataClassification": [
+        "public_docs"
+      ],
+      "approver": "Claude Code #1",
+      "humanApprovalRequiredFor": [
+        "external_share",
+        "write",
+        "admin"
+      ],
+      "auditLog": "Issue/PR note with the package or documentation source consulted.",
+      "allowedReason": "Public-doc lookup is allowed when scoped; any write-capable variant is denied by default.",
+      "auth": {
+        "required": false,
+        "status": "managed",
+        "expiresAt": null
+      }
+    },
+    {
+      "id": "playwright",
+      "displayName": "Playwright MCP",
+      "aliases": [
+        "mcp__playwright",
+        "playwright"
+      ],
+      "purpose": "Browser screenshots, console inspection, and visual evidence for UI checks.",
+      "permissions": [
+        "read",
+        "suggest",
+        "browser_interact"
+      ],
+      "dataClassification": [
+        "public_web",
+        "local_app_state"
+      ],
+      "approver": "Claude Code #1",
+      "humanApprovalRequiredFor": [
+        "credential_entry",
+        "purchase",
+        "external_share"
+      ],
+      "auditLog": "Playwright artifacts, screenshots, and PR validation summary.",
+      "allowedReason": "UI verification needs deterministic browser evidence without adding extra live instances.",
+      "auth": {
+        "required": false,
+        "status": "managed",
+        "expiresAt": null
+      }
+    },
+    {
+      "id": "claude-mem",
+      "displayName": "Claude Memory Search",
+      "aliases": [
+        "claude-mem@thedotmack",
+        "mcp__plugin_claude-mem_mcp-search",
+        "plugin_claude-mem_mcp-search"
+      ],
+      "purpose": "Read-only local memory lookup for handoff and historical context.",
+      "permissions": [
+        "read",
+        "suggest"
+      ],
+      "dataClassification": [
+        "local_memory",
+        "project_notes"
+      ],
+      "approver": "Claude Code #1",
+      "humanApprovalRequiredFor": [
+        "delete",
+        "external_share",
+        "bulk_export"
+      ],
+      "auditLog": "Issue/PR note that identifies which memory source informed the change.",
+      "allowedReason": "Memory lookup reduces duplicate WBS investigation while writes remain outside Codex #1 scope.",
+      "auth": {
+        "required": false,
+        "status": "managed",
+        "expiresAt": null
+      }
+    },
+    {
+      "id": "scheduled-tasks",
+      "displayName": "Scheduled Tasks",
+      "aliases": [
+        "mcp__scheduled-tasks",
+        "scheduled-tasks"
+      ],
+      "purpose": "Read existing scheduled task state when reconciling automation issues.",
+      "permissions": [
+        "read"
+      ],
+      "dataClassification": [
+        "automation_metadata"
+      ],
+      "approver": "Claude Code #1",
+      "humanApprovalRequiredFor": [
+        "create",
+        "update",
+        "delete"
+      ],
+      "auditLog": "Automation id, issue link, and explicit user approval for mutations.",
+      "allowedReason": "Read-only schedule inspection helps avoid duplicate automations.",
+      "auth": {
+        "required": false,
+        "status": "managed",
+        "expiresAt": null
+      }
+    },
+    {
+      "id": "browser-use",
+      "displayName": "Browser Use",
+      "aliases": [
+        "browser-use@openai-bundled",
+        "browser-use"
+      ],
+      "purpose": "In-app browser navigation for local or public UI inspection.",
+      "permissions": [
+        "read",
+        "suggest",
+        "browser_interact"
+      ],
+      "dataClassification": [
+        "public_web",
+        "local_app_state"
+      ],
+      "approver": "Claude Code #1",
+      "humanApprovalRequiredFor": [
+        "credential_entry",
+        "purchase",
+        "external_share"
+      ],
+      "auditLog": "Browser target URL and screenshot/console evidence in the PR summary.",
+      "allowedReason": "Codex #1 can gather UI evidence without launching another development instance.",
+      "auth": {
+        "required": false,
+        "status": "managed",
+        "expiresAt": null
+      }
+    },
+    {
+      "id": "documents",
+      "displayName": "Documents Runtime",
+      "aliases": [
+        "documents@openai-primary-runtime",
+        "documents"
+      ],
+      "purpose": "Local document rendering and verification for explicit file tasks.",
+      "permissions": [
+        "read",
+        "suggest",
+        "local_file_write"
+      ],
+      "dataClassification": [
+        "local_files"
+      ],
+      "approver": "Claude Code #1",
+      "humanApprovalRequiredFor": [
+        "external_share",
+        "delete"
+      ],
+      "auditLog": "Changed local file path and render verification summary.",
+      "allowedReason": "Local runtime is allowed for user-requested document artifacts only.",
+      "auth": {
+        "required": false,
+        "status": "managed",
+        "expiresAt": null
+      }
+    },
+    {
+      "id": "spreadsheets",
+      "displayName": "Spreadsheets Runtime",
+      "aliases": [
+        "spreadsheets@openai-primary-runtime",
+        "spreadsheets"
+      ],
+      "purpose": "Local spreadsheet inspection, formatting, and verification for explicit file tasks.",
+      "permissions": [
+        "read",
+        "suggest",
+        "local_file_write"
+      ],
+      "dataClassification": [
+        "local_files"
+      ],
+      "approver": "Claude Code #1",
+      "humanApprovalRequiredFor": [
+        "external_share",
+        "delete"
+      ],
+      "auditLog": "Changed local file path and verification summary.",
+      "allowedReason": "Local runtime is allowed for user-requested spreadsheet artifacts only.",
+      "auth": {
+        "required": false,
+        "status": "managed",
+        "expiresAt": null
+      }
+    },
+    {
+      "id": "presentations",
+      "displayName": "Presentations Runtime",
+      "aliases": [
+        "presentations@openai-primary-runtime",
+        "presentations"
+      ],
+      "purpose": "Local slide deck rendering and verification for explicit file tasks.",
+      "permissions": [
+        "read",
+        "suggest",
+        "local_file_write"
+      ],
+      "dataClassification": [
+        "local_files"
+      ],
+      "approver": "Claude Code #1",
+      "humanApprovalRequiredFor": [
+        "external_share",
+        "delete"
+      ],
+      "auditLog": "Changed local file path and render verification summary.",
+      "allowedReason": "Local runtime is allowed for user-requested presentation artifacts only.",
+      "auth": {
+        "required": false,
+        "status": "managed",
+        "expiresAt": null
+      }
+    }
+  ],
+  "deniedMcpServers": [
+    {
+      "id": "unmanaged-external",
+      "displayName": "Unmanaged external MCP server",
+      "aliases": [
+        "unknown-marketplace",
+        "third-party-mcp"
+      ],
+      "deniedReason": "Default-deny boundary: no external MCP server may be added without this file recording purpose, scopes, data classification, approver, and audit log.",
+      "approver": "Claude Code #1",
+      "reviewAfter": "2026-08-31"
+    },
+    {
+      "id": "direct-production-db",
+      "displayName": "Direct production database MCP",
+      "aliases": [
+        "prod-db",
+        "production-db",
+        "service-role-db"
+      ],
+      "deniedReason": "Production data access must go through reviewed Supabase scripts, GitHub Actions, or explicit user-approved runbooks.",
+      "approver": "Claude Code #1",
+      "reviewAfter": "2026-08-31"
+    },
+    {
+      "id": "context7-write",
+      "displayName": "Context7 write-capable variant",
+      "aliases": [
+        "context7-write",
+        "context7-admin"
+      ],
+      "deniedReason": "Context7 is approved for public documentation lookup only; write/admin variants are out of scope.",
+      "approver": "Claude Code #1",
+      "reviewAfter": "2026-08-31"
+    },
+    {
+      "id": "caveman",
+      "displayName": "Caveman plugin marketplace",
+      "aliases": [
+        "caveman@caveman",
+        "caveman"
+      ],
+      "deniedReason": "Not part of the two-instance WBS execution lane; re-enable only with a task-specific packet and approval.",
+      "approver": "Claude Code #1",
+      "reviewAfter": "2026-08-31"
+    },
+    {
+      "id": "superpowers",
+      "displayName": "Superpowers plugin marketplace",
+      "aliases": [
+        "superpowers@superpowers-marketplace",
+        "superpowers"
+      ],
+      "deniedReason": "Broad plugin surface is not required for scoped WBS PRs and must remain blocked unless explicitly approved.",
+      "approver": "Claude Code #1",
+      "reviewAfter": "2026-08-31"
+    }
+  ]
+}

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// ヘルスコーチ — Liven 対抗
-/// fitness-health-tracker + recipe-meal-planner Edge Function 連携
+/// lifestyle-hub (fitness.* / meal.* / recipe.*) 連携
 class HealthCoachPage extends StatefulWidget {
   const HealthCoachPage({super.key});
 
@@ -50,12 +50,12 @@ class _HealthCoachPageState extends State<HealthCoachPage>
     try {
       final results = await Future.wait([
         _supabase.functions.invoke(
-          'fitness-health-tracker',
-          body: {'action': 'get_summary'},
+          'lifestyle-hub',
+          body: {'action': 'fitness.stats'},
         ),
         _supabase.functions.invoke(
-          'recipe-meal-planner',
-          body: {'action': 'get_today_meals'},
+          'lifestyle-hub',
+          body: {'action': 'meal.list_plans'},
         ),
       ]);
       final fitnessData = results[0].data;

@@ -23,6 +23,7 @@ class _StatsPageState extends State<StatsPage> {
     final gameService =
         Provider.of<GamificationService>(context, listen: false);
     await gameService.initializeUserStats();
+    if (!mounted) return;
     if (mounted) setState(() => _isLoading = false);
   }
 

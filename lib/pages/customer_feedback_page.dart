@@ -41,8 +41,8 @@ class _CustomerFeedbackPageState extends State<CustomerFeedbackPage> {
     });
     try {
       final response = await _supabase.functions.invoke(
-        'customer-feedback',
-        body: {'action': 'list'},
+        'social-commerce-hub',
+        body: {'action': 'feedback.list'},
       );
       final data = response.data;
       if (data is Map<String, dynamic> && data['feedbacks'] is List) {
@@ -70,8 +70,8 @@ class _CustomerFeedbackPageState extends State<CustomerFeedbackPage> {
     });
     try {
       await _supabase.functions.invoke(
-        'customer-feedback',
-        body: {'action': 'submit', 'feedback': text},
+        'social-commerce-hub',
+        body: {'action': 'feedback.submit', 'comment': text},
       );
       _feedbackController.clear();
       await _fetchFeedbacks();

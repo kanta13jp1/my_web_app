@@ -1,0 +1,16 @@
+{
+  "task_id": "cs-check",
+  "status": "success",
+  "executed_at": "2026-04-27T23:50:00Z",
+  "environment": "web-version",
+  "summary": "Edge Function UI追加: 0件 / チケット: ticket-cache参照(403/Supabase制限中) / Issue修正: 2件(#861/#858) / Schedule健全性: 正常 / Supabase制限解除: fix-supabase-network.yml起動済み",
+  "details": {
+    "ef_ui_added": 0,
+    "tickets_handled": 0,
+    "issues_closed": 2,
+    "prs_reviewed": 5,
+    "supabase_http_code": "403",
+    "supabase_fix_triggered": true,
+    "cs_check_yml_push_fix": "GitHub API方式に変更済み"
+  }
+}

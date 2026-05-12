@@ -18,8 +18,7 @@ class _DailyMotivationCardState extends State<DailyMotivationCard> {
   late int _quoteIndex;
   bool _sharing = false;
 
-  static const _supabaseBase =
-      'https://smmkxxavexumewbfaqpy.supabase.co/functions/v1';
+  static const _appBase = 'https://my-web-app-b67f4.web.app';
 
   @override
   void initState() {
@@ -32,9 +31,7 @@ class _DailyMotivationCardState extends State<DailyMotivationCard> {
 
   PhilosopherQuote get _quote => PhilosopherQuote.quotes[_quoteIndex];
 
-  String get _shareUrl => '$_supabaseBase/share-quote?id=$_quoteIndex';
-
-  String get _imageUrl => '$_supabaseBase/generate-quote-image?id=$_quoteIndex';
+  String get _shareUrl => '$_appBase/';
 
   Future<void> _shareOnX() async {
     final text = Uri.encodeComponent(
@@ -51,6 +48,7 @@ class _DailyMotivationCardState extends State<DailyMotivationCard> {
     if (!mounted) return;
     setState(() => _sharing = true);
     await Future<void>.delayed(const Duration(seconds: 2));
+    if (!mounted) return;
     if (mounted) setState(() => _sharing = false);
   }
 
@@ -166,21 +164,6 @@ class _DailyMotivationCardState extends State<DailyMotivationCard> {
                     onTap: _copyShareLink,
                   ),
                   const Spacer(),
-                  GestureDetector(
-                    onTap: () => launchUrl(
-                      Uri.parse(_imageUrl),
-                      mode: LaunchMode.externalApplication,
-                    ),
-                    child: Text(
-                      '画像を開く',
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: const Color(0xFF7C3AED).withAlpha(180),
-                        decoration: TextDecoration.underline,
-                        height: 1.5,
-                      ),
-                    ),
-                  ),
                 ],
               ),
             ],

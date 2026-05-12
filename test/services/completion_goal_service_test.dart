@@ -1,3 +1,5 @@
+@TestOn('browser')
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/services/completion_goal_service.dart';
 

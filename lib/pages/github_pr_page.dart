@@ -48,8 +48,8 @@ class _GithubPrPageState extends State<GithubPrPage> {
     });
     try {
       final res = await _supabase.functions.invoke(
-        'github-pr-manager',
-        body: {'action': 'get_prs'},
+        'enterprise-hub',
+        body: {'action': 'github.list_prs'},
       );
       final data = res.data;
       if (data is Map<String, dynamic>) {
@@ -93,9 +93,9 @@ class _GithubPrPageState extends State<GithubPrPage> {
     });
     try {
       await _supabase.functions.invoke(
-        'github-pr-manager',
+        'enterprise-hub',
         body: {
-          'action': 'configure',
+          'action': 'github.configure',
           'token': token,
           'repo': repo,
         },
@@ -108,6 +108,7 @@ class _GithubPrPageState extends State<GithubPrPage> {
       }
       await _fetchData();
     } catch (e) {
+      if (!mounted) return;
       if (mounted) setState(() => _errorMessage = '保存に失敗しました: $e');
     } finally {
       if (mounted) setState(() => _isSaving = false);

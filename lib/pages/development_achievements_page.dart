@@ -30,6 +30,7 @@ class _DevelopmentAchievementsPageState
         body: {'action': 'achievements.list'},
       );
       final data = res.data;
+      if (!mounted) return;
       setState(() {
         if (data is Map && data['achievements'] is List) {
           _items = data['achievements'] as List;
@@ -40,9 +41,10 @@ class _DevelopmentAchievementsPageState
         }
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() => _error = e.toString());
     } finally {
-      setState(() => _loading = false);
+      if (mounted) setState(() => _loading = false);
     }
   }
 

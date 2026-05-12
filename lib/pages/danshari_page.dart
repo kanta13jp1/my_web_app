@@ -42,6 +42,7 @@ class _DanshariPageState extends State<DanshariPage> {
           .order('updated_at', ascending: true) // 古い順
           .limit(10); // 1回のクエストは10件まで
 
+      if (!mounted) return;
       setState(() {
         _staleNotes =
             (response as List).map((data) => Note.fromJson(data)).toList();
@@ -75,6 +76,7 @@ class _DanshariPageState extends State<DanshariPage> {
         }).eq('id', note.id);
       }
 
+      if (!mounted) return;
       setState(() {
         if (_currentIndex < _staleNotes.length - 1) {
           _currentIndex++;
