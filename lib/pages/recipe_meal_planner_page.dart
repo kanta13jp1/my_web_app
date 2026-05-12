@@ -167,17 +167,17 @@ class _RecipeMealPlannerPageState extends State<RecipeMealPlannerPage>
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _errorMessage != null
-          ? _buildError()
-          : TabBarView(
-              controller: _tabController,
-              children: [
-                _buildRecipesTab(),
-                _buildWeekPlanTab(),
-                _buildShoppingListTab(),
-                _buildMealLogTab(),
-                const MealNutritionTracker(),
-              ],
-            ),
+              ? _buildError()
+              : TabBarView(
+                  controller: _tabController,
+                  children: [
+                    _buildRecipesTab(),
+                    _buildWeekPlanTab(),
+                    _buildShoppingListTab(),
+                    _buildMealLogTab(),
+                    const MealNutritionTracker(),
+                  ],
+                ),
     );
   }
 
@@ -431,8 +431,8 @@ class _RecipeMealPlannerPageState extends State<RecipeMealPlannerPage>
                 Text(
                   '本日のサマリ',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+                        fontWeight: FontWeight.bold,
+                      ),
                 ),
               ],
             ),
@@ -440,9 +440,9 @@ class _RecipeMealPlannerPageState extends State<RecipeMealPlannerPage>
             Text(
               '合計 ${_formatNumber(kcal)} kcal',
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                color: _accentIndigo,
-                fontWeight: FontWeight.bold,
-              ),
+                    color: _accentIndigo,
+                    fontWeight: FontWeight.bold,
+                  ),
             ),
             const SizedBox(height: 6),
             Text(

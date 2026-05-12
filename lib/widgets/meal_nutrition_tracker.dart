@@ -248,8 +248,8 @@ class _MealNutritionTrackerState extends State<MealNutritionTracker> {
                 Text(
                   warnings.isEmpty ? '今週の栄養バランスは安定しています' : '栄養アラート',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+                        fontWeight: FontWeight.bold,
+                      ),
                 ),
               ],
             ),
@@ -394,9 +394,7 @@ class _MealNutritionTrackerState extends State<MealNutritionTracker> {
           ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 8),
-        ...logs
-            .take(14)
-            .map(
+        ...logs.take(14).map(
               (log) => Card(
                 child: ListTile(
                   leading: const Icon(Icons.restaurant_menu),

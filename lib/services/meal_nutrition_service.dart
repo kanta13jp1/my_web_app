@@ -152,8 +152,7 @@ class MealNutritionLog {
 
   static MealNutritionLog fromJson(Map<String, dynamic> json) {
     return MealNutritionLog(
-      loggedAt:
-          DateTime.tryParse(json['loggedAt'] as String? ?? '') ??
+      loggedAt: DateTime.tryParse(json['loggedAt'] as String? ?? '') ??
           DateTime.now(),
       estimate: MealNutritionEstimate.fromJson(
         (json['estimate'] as Map?)?.cast<String, dynamic>() ??
@@ -307,9 +306,9 @@ class MealNutritionService {
   MealNutritionEstimate estimate(String rawText) {
     final normalized = normalize(rawText);
     final profile = catalog.cast<MealNutritionProfile?>().firstWhere(
-      (candidate) => candidate!.matches(normalized),
-      orElse: () => null,
-    );
+          (candidate) => candidate!.matches(normalized),
+          orElse: () => null,
+        );
 
     if (profile != null) {
       return MealNutritionEstimate(
@@ -348,7 +347,8 @@ class MealNutritionService {
     final weekLogs = logs.where((log) {
       final day = _dateOnly(log.loggedAt);
       return !day.isBefore(start) && !day.isAfter(anchor);
-    }).toList()..sort((a, b) => b.loggedAt.compareTo(a.loggedAt));
+    }).toList()
+      ..sort((a, b) => b.loggedAt.compareTo(a.loggedAt));
 
     final total = weekLogs.fold(
       const NutritionFacts(
