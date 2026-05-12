@@ -1,0 +1,16 @@
+{
+  "task_id": "cs-check",
+  "status": "success",
+  "executed_at": "2026-05-12T16:09:45Z",
+  "environment": "web-version",
+  "summary": "Edge Function UI追加: 0件 / チケット: 0件 / PR: 0件 / Issue修正: 0件 / Schedule健全性: 異常(cs-check 57h停止検知 / daily-report継続停止)",
+  "details": {
+    "edge_functions_added": 0,
+    "tickets_handled": 0,
+    "prs_reviewed": 0,
+    "issues_fixed": 0,
+    "schedule_gap_hours": 57,
+    "last_schedule_commit": "feae130 自動: CS チェック 2026-05-09-07:00 (WEB版)",
+    "new_issues_created": ["#2391"]
+  }
+}
