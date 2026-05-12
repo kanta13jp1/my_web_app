@@ -4,11 +4,10 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'ai_hub_chat_service.dart';
 
-typedef UniversalShareFunctionInvoker =
-    Future<Map<String, dynamic>> Function(
-      String functionName,
-      Map<String, dynamic> body,
-    );
+typedef UniversalShareFunctionInvoker = Future<Map<String, dynamic>> Function(
+  String functionName,
+  Map<String, dynamic> body,
+);
 
 class UniversalSharePageContext {
   final String routePath;
@@ -126,9 +125,9 @@ class UniversalXShareService {
     SupabaseClient? supabase,
     AiHubChatService? chatService,
     UniversalShareFunctionInvoker? functionInvoker,
-  }) : _supabase = supabase,
-       _chatService = chatService ?? AiHubChatService(supabase: supabase),
-       _functionInvoker = functionInvoker;
+  })  : _supabase = supabase,
+        _chatService = chatService ?? AiHubChatService(supabase: supabase),
+        _functionInvoker = functionInvoker;
 
   Future<UniversalXShareDraft> generateDraft(
     UniversalSharePageContext context,
@@ -209,8 +208,7 @@ class UniversalXShareService {
       requestBody['hedraGenerationId'] = normalizedGenerationId;
     }
     final data = await _invoke('viral-video-ad-generator', requestBody);
-    final url =
-        data['generatedVideoUrl']?.toString() ??
+    final url = data['generatedVideoUrl']?.toString() ??
         data['generatedDownloadUrl']?.toString() ??
         data['generatedPreviewUrl']?.toString() ??
         data['videoUrl']?.toString() ??
@@ -218,8 +216,7 @@ class UniversalXShareService {
         data['url']?.toString();
     return UniversalXMediaResult(
       url: _emptyToNull(url),
-      status:
-          data['videoStatus']?.toString() ??
+      status: data['videoStatus']?.toString() ??
           data['status']?.toString() ??
           'unknown',
       raw: data,
@@ -238,8 +235,8 @@ class UniversalXShareService {
       'text': sanitizeTweet(text, url: context.url),
       'mediaUrl':
           normalizedMediaUrl != null && _isPublicHttpUrl(normalizedMediaUrl)
-          ? normalizedMediaUrl
-          : null,
+              ? normalizedMediaUrl
+              : null,
       'dryRun': dryRun,
       'source': 'universal_x_share',
       'route': context.routePath,
@@ -274,19 +271,25 @@ class UniversalXShareService {
     final title = _shareTitleFor(context);
     final isFinanceUx = _isMyFinanceUxContext(context);
     final text = isFinanceUx
-        ? sanitizeTweet('''動くスマホアプリUX検証動画「マイファイナンス」
+        ? sanitizeTweet(
+            '''動くスマホアプリUX検証動画「マイファイナンス」
 お金の浪費を減らすため、資産・支出・KGI/CSF/KPIを一画面で検証します。
 GPT image2 → GPT-5.5 → Seedance 2.0
 
 ${context.url}
 
-#AI動画 #FlutterWeb #資産管理''', url: context.url)
-        : sanitizeTweet('''$title をアップデートしました。
+#AI動画 #FlutterWeb #資産管理''',
+            url: context.url,
+          )
+        : sanitizeTweet(
+            '''$title をアップデートしました。
 自分株式会社の中で、今日の改善をそのまま使える形にしています。
 
 ${context.url}
 
-#buildinpublic #FlutterWeb #Supabase''', url: context.url);
+#buildinpublic #FlutterWeb #Supabase''',
+            url: context.url,
+          );
     return UniversalXShareDraft(
       text: text,
       imagePrompt: isFinanceUx
@@ -346,8 +349,8 @@ ${context.url}
     return data is Map<String, dynamic>
         ? data
         : data is Map
-        ? Map<String, dynamic>.from(data)
-        : <String, dynamic>{'success': false, 'message': data?.toString()};
+            ? Map<String, dynamic>.from(data)
+            : <String, dynamic>{'success': false, 'message': data?.toString()};
   }
 
   static UniversalXShareDraft _parseDraft(
@@ -368,20 +371,20 @@ ${context.url}
         );
         final hashtags = decoded['hashtags'] is List
             ? (decoded['hashtags'] as List)
-                  .map((entry) => entry.toString().trim())
-                  .where((entry) => entry.isNotEmpty)
-                  .toList()
+                .map((entry) => entry.toString().trim())
+                .where((entry) => entry.isNotEmpty)
+                .toList()
             : fallback.hashtags;
         return UniversalXShareDraft(
           text: text,
           imagePrompt:
               decoded['imagePrompt']?.toString().trim().isNotEmpty == true
-              ? decoded['imagePrompt'].toString().trim()
-              : fallback.imagePrompt,
+                  ? decoded['imagePrompt'].toString().trim()
+                  : fallback.imagePrompt,
           videoPrompt:
               decoded['videoPrompt']?.toString().trim().isNotEmpty == true
-              ? decoded['videoPrompt'].toString().trim()
-              : fallback.videoPrompt,
+                  ? decoded['videoPrompt'].toString().trim()
+                  : fallback.videoPrompt,
           hashtags: hashtags,
           fallbackUsed: true,
           source: 'ai-json',
@@ -489,8 +492,8 @@ ${draft.videoPrompt}
     return value is Map<String, dynamic>
         ? value
         : value is Map
-        ? Map<String, dynamic>.from(value)
-        : <String, dynamic>{};
+            ? Map<String, dynamic>.from(value)
+            : <String, dynamic>{};
   }
 
   static String? _extractNestedUrl(Map<String, dynamic> data) {

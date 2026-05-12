@@ -24,8 +24,7 @@ void main() {
       invoker: (_) async => {
         'success': true,
         'provider': 'groq',
-        'text':
-            '''
+        'text': '''
 {
   "text": "AI大学をアップデートしました。\\n${page.url}\\n#buildinpublic #FlutterWeb",
   "imagePrompt": "16:9 product UI share image for AI University",
